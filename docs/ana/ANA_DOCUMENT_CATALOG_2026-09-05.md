@@ -53,17 +53,59 @@ knows precisely what is left to read. This is the mechanism that makes "a
 sampled page recorded as reviewed" impossible, and the tests exercise the
 refusal first (`server/services/vault/__tests__/document-catalog.service.test.ts`).
 
-### Three AnA tools (`server/services/ana/document-catalog-tools.ts`)
+### Four AnA tools (defs `document-catalog-tool-defs.ts`, handlers `document-catalog-tools.ts`)
 
 | Tool | What it does |
 |---|---|
-| `list_project_documents` | Enumerates the vault (program-scoped via `projects.regulatory_program_id`, else org-wide): filed location, catalog state per document. Uncataloged and extraction-failed files are labeled as exactly that. |
+| `list_project_documents` | Enumerates the vault (program-scoped via `projects.regulatory_program_id`, else org-wide): filed location, catalog state per document. Uncataloged and extraction-failed files are labeled as exactly that. Also returns the org's **chat uploads** from the evidence spine (`listClientDocuments`, `currentOnly` — superseded re-uploads excluded) with each one's `fileId`, so a file attached in a past conversation reopens through `read_uploaded_document`. A failed chat-upload listing is reported as an error, never as "no chat uploads". |
 | `read_project_document` | Serves the extracted text in windows, records a receipt per window, reports coverage + remaining unread ranges. On extraction failure it says so with the recorded reason instead of returning empty text. |
 | `catalog_project_document` | Writes the comprehension tier — refused below full coverage; embeds the record for semantic recall. |
+| `search_project_documents` | Semantic (pgvector cosine) search over the comprehension records (`document-catalog-search.ts`), org-checked. Only cataloged documents are searchable — the response counts the unsearchable ones so absence is never read as nonexistence — and an unreachable embedding provider or a vector-less database is reported as unavailability, never as an empty result. |
 
 Definitions are in `ALL_ANA_TOOLS_RAW` (registry-consistency suite holds
 def ↔ handler parity); handlers registered via the inject-and-sibling pattern;
 UI step labels in `agentic-loop.ts` `TOOL_LABELS`.
+
+### Passage retrieval — the vault corpus is live (`document-chunking.service.ts`)
+
+**Flag:** `ana.vault_chunking` (requires the catalog flag too) · env override `ANA_VAULT_CHUNKING_FORCE_ON=true`
+**Migration:** `migrations/20260905b_vault_document_chunks.sql`
+
+`advancedRAGPipeline`'s `'vault'` corpus — the `ragRouter` default — read
+`vault.document_chunks`, a table that existed only in the install-fresh drizzle
+baseline (absent from every deploy-migrated database) and whose only writer
+was `server/workers/vectorization-worker.ts`: unreferenced dead code reading a
+column the canonical shape never had, embedding through a direct OpenAI
+client. The platform's primary retrieval corpus was a reader with no store and
+a store with no writer.
+
+Now: the migration creates the table durably (reader's exact shape, GIN
+full-text + ivfflat cosine indexes, its own RLS policy set — 070_gcc only runs
+on fresh installs), and ingest chunks + embeds each document's extracted text
+through the governed provider seam, post-commit, all-or-nothing per document.
+The catalog carries a chunking ledger (`chunk_status`/`chunk_count`/
+`chunk_error`): a document whose passages could not be indexed says so — there
+is no partially indexed document and no silent gap. Oversized documents
+(> 500 chunks) are refused rather than truncated into fake coverage. The dead
+worker is deleted and purged from the CI baselines it sat in.
+
+Making the reader live also surfaced (and fixed) a latent reader bug: the
+dense arm's threshold predicate `… < 1 - $2` made Postgres infer the parameter
+as *integer* from the literal, so any float threshold failed with 22P02 —
+unreachable until the table existed. Both corpus sites now cast `$2::float8`,
+pinned by the end-to-end dbtest (`tests/db/document-catalog-recall.dbtest.ts`:
+ingest → chunks embedded → `ragRetrieve` returns the passage).
+
+### Memory ingestion embeds what it stores (`client-intelligence-memory.ts`)
+
+`ingestDocument` and `ingestProjectDocument` (the path behind
+`remember_document_in_project`) now embed every memory entry they insert,
+through the governed provider seam. Semantic recall over
+`client_memory_entries` / `project_memory_entries` filters
+`embedding IS NOT NULL`, so before this fix every ingest-created entry was
+durable but invisible — only the consolidation job's promoted summaries were
+findable. An embedding failure is logged and the entries stay (unembedded,
+honestly logged as unreachable), matching the consolidation job's policy.
 
 ### Session recall (`server/services/ana-session-bootstrap.ts`)
 
@@ -94,16 +136,18 @@ nothing like every other bootstrap source.
 
 ## Known gaps / next steps (deliberately out of scope here)
 
-- **Chat-upload convergence:** files uploaded through chat (`file_uploads` /
-  `cre_evidence_sources`) still have no join to `vault.documents`; the catalog
-  covers the vault path. The Data Room's checksum join remains read-time only.
-- **Vault chunk-level RAG:** `vectorization-worker.ts` is still unreferenced
-  and reads a column that does not exist (`content_text` vs `extracted_text`);
-  vault documents remain unchunked in the `'vault'` retrieval corpus. The
-  catalog embedding gives document-level semantic recall in the meantime.
+- **Chat-upload convergence (structural):** discovery is closed —
+  `list_project_documents` surfaces chat uploads with reopenable `fileId`s —
+  but chat uploads still have no `vault.documents` row, no read receipts, and
+  no coverage-gated catalog entry of their own; `remember_document_in_project`
+  (now embedding its entries) is their durable-memory path. A join key from
+  `cre_evidence_sources` to `vault.documents` remains open.
+- **Legacy vault documents are unchunked:** chunking runs at ingest, so
+  documents uploaded before the flag flipped stay outside passage retrieval
+  until re-ingested (their catalog rows carry no `chunk_status`, which is the
+  honest "never attempted" state). A backfill sweep is the natural follow-on.
 - **`vault.documents.page_count`** is still never populated at ingest
   (`pageCount` is declared and stays null); the catalog records char/word
   counts and carries `page_count` for when ingest starts supplying it.
-- **Semantic retrieval over catalog embeddings** (query-time search across
-  `document_catalog.embedding`) — the column is populated; a retrieval hook in
-  `ragRouter` is the natural next slice.
+- **Bootstrap recall of chat uploads:** the session-start digest lists vault
+  documents only; chat uploads are reachable via the discovery tool.

@@ -1601,6 +1601,17 @@ export const C2C_MIGRATION_FILES = [
   // reconciliation and placement entries above (same table, same discipline).
   'migrations/20260905_document_catalog.sql',
 
+  // ── Vault passage retrieval: the chunk store the RAG reader queries ───────
+  // advancedRAGPipeline's 'vault' corpus reads vault.document_chunks, which
+  // existed only in the drizzle install-fresh baseline — on every deploy-
+  // migrated database the platform's default retrieval corpus had no table at
+  // all. Creates it durably with the reader's exact shape + indexes, carries
+  // its own RLS policy set (070_gcc only runs on fresh installs), and adds the
+  // chunk_status/chunk_count/chunk_error ledger to vault.document_catalog so
+  // a document whose passages could not be indexed says so. Must follow the
+  // catalog entry above (it ALTERs that table); additive and guarded like it.
+  'migrations/20260905b_vault_document_chunks.sql',
+
   // ── Time-limited module grants ─────────────────────────────────────────────
   // Adds a nullable `expires_at` (+ who set it, when) to module_subscriptions,
   // so a grant can be opened until a date instead of only on or off. Strictly

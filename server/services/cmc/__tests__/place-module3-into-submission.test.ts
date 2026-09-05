@@ -18,9 +18,13 @@ vi.mock('../final-export-gate', () => ({
 
 const getSequence = vi.fn();
 const upsertLeaf = vi.fn();
+const listSequences = vi.fn<(...args: any[]) => Promise<any[]>>(async () => []);
+const listLeaves = vi.fn<(...args: any[]) => Promise<any[]>>(async () => []);
 vi.mock('../../submission-service/submission-service', () => ({
   getSequence: (...args: unknown[]) => getSequence(...args),
   upsertLeaf: (...args: unknown[]) => upsertLeaf(...args),
+  listSequences: (...args: unknown[]) => listSequences(...args),
+  listLeaves: (...args: unknown[]) => listLeaves(...args),
 }));
 
 const poolQueries: Array<{ sql: string; params: unknown[] }> = [];
@@ -66,6 +70,10 @@ describe('placeModule3IntoSubmission', () => {
     evaluateFinalExportGate.mockReset();
     getSequence.mockReset();
     upsertLeaf.mockReset();
+    listSequences.mockReset();
+    listSequences.mockResolvedValue([]);
+    listLeaves.mockReset();
+    listLeaves.mockResolvedValue([]);
     poolQueries.length = 0;
     inserted.length = 0;
     sectionRows = [];
@@ -96,6 +104,46 @@ describe('placeModule3IntoSubmission', () => {
     expect(getSequence).not.toHaveBeenCalled();
     expect(upsertLeaf).not.toHaveBeenCalled();
     expect(inserted).toHaveLength(0);
+  });
+
+  it('files a section already placed in an earlier sequence as replace of that leaf, not as new', async () => {
+    // This always filed 'new', so an amendment's m3.2.S.7 was announced to the
+    // agency as brand-new content with no lifecycle link to the leaf it revises.
+    evaluateFinalExportGate.mockResolvedValue(GATE_PASS);
+    getSequence.mockResolvedValue({ id: 20, submissionId: 10, sequenceNumber: '0001', status: 'draft' });
+    listSequences.mockResolvedValue([
+      { id: 20, submissionId: 10, sequenceNumber: '0001' },
+      { id: 10, submissionId: 10, sequenceNumber: '0000' },
+      { id: 30, submissionId: 10, sequenceNumber: '0002' }, // later — never a parent
+    ]);
+    listLeaves.mockImplementation(async (sequenceId: number) =>
+      sequenceId === 10
+        ? [
+            { id: 700, sectionCode: 'm3.2.S.1', documentType: 'cmc_module3_section', lifecycleOp: 'new' },
+            { id: 701, sectionCode: 'm3.2.P.8', documentType: 'protocol', lifecycleOp: 'new' }, // not a Module 3 placement
+          ]
+        : sequenceId === 30
+          ? [{ id: 800, sectionCode: 'm3.2.P.8', documentType: 'cmc_module3_section', lifecycleOp: 'new' }]
+          : [],
+    );
+    upsertLeaf.mockImplementation(async (input: { sectionCode: string }) => ({ id: 900, sectionCode: input.sectionCode }));
+    sectionRows = [
+      { sectionKey: '3.2.S.1', narrativeText: 'Revised general information.' },
+      { sectionKey: '3.2.P.8', narrativeText: 'Stability narrative.' },
+    ];
+
+    const result = await placeModule3IntoSubmission({ orgId: 7, userId: 42, cmcProjectId: 'proj-1', submissionId: 10, sequenceId: 20 });
+    expect(result.placed).toBe(true);
+
+    const s1 = upsertLeaf.mock.calls.find((c) => c[0].sectionCode === 'm3.2.S.1')![0];
+    expect(s1.lifecycleOp).toBe('replace');
+    expect(s1.parentLeafId).toBe(700);
+    const p8 = upsertLeaf.mock.calls.find((c) => c[0].sectionCode === 'm3.2.P.8')![0];
+    expect(p8.lifecycleOp).toBe('new');
+    expect(p8.parentLeafId ?? null).toBeNull();
+    // Every sequence read is tenant-scoped.
+    expect(listSequences).toHaveBeenCalledWith(10, { organizationId: 7 });
+    expect(listLeaves).toHaveBeenCalledWith(10, { organizationId: 7 });
   });
 
   it('snapshots approved sections into coauthor_documents and places m-prefixed leaves', async () => {

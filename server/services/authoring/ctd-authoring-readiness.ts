@@ -43,6 +43,12 @@ export interface CtdModuleStatus {
 
 export interface CtdAuthoringReadinessResult {
   ready: boolean;
+  /**
+   * Whether at least one module QC verdict was supplied. With none, `ready`
+   * was true (absence is a warning and only errors gate readiness) and the
+   * report printed "READY — no blocking findings" over nothing assessed.
+   */
+  assessed: boolean;
   modules: CtdModuleStatus[];
   findings: CtdReadinessFinding[];
   counts: { errors: number; warnings: number };
@@ -164,7 +170,8 @@ export function aggregateCtdAuthoringReadiness(input: CtdAuthoringReadinessInput
   const errors = findings.filter((f) => f.severity === 'error').length;
   const warnings = findings.length - errors;
 
-  return { ready: errors === 0, modules, findings, counts: { errors, warnings } };
+  const assessed = modules.some((m) => m.present);
+  return { ready: errors === 0 && assessed, assessed, modules, findings, counts: { errors, warnings } };
 }
 
 function severityRank(s: CtdReadinessSeverity): number {

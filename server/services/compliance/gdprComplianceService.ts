@@ -116,8 +116,51 @@ export interface DataSubjectRequest {
   responseDeadline: Date;
   completedAt: Date | null;
   responseDetails: string | null;
+  /** What was actually carried out. NULL on rows completed before this existed. */
+  executionEvidence: DataSubjectRequestExecution | null;
   organizationId: string;
 }
+
+/**
+ * The work performed to satisfy a data subject request.
+ *
+ * `completeDataSubjectRequest` used to take free text and nothing else. For an
+ * erasure that made "completed" a claim under GDPR Art. 17 that personal data
+ * is gone, while Art. 5(2) requires the controller to be able to DEMONSTRATE
+ * it — and prose cannot be checked. This structure can.
+ *
+ * `scopes` carries the distinction that free text collapses: a subject who
+ * genuinely holds no data yields `rows: 0` across the scopes that were
+ * SEARCHED, which is a true and defensible outcome, whereas an empty `scopes`
+ * list means nothing was searched at all. Those are the same sentence in prose
+ * and different facts in an inspection, so an empty list is refused.
+ */
+export interface DataSubjectRequestExecution {
+  action: 'erased' | 'exported' | 'rectified' | 'restricted' | 'decision_recorded';
+  /** Every store searched, with the number of rows affected in each. */
+  scopes: Array<{ scope: string; rows: number }>;
+  /** The operator or job that carried it out. */
+  performedBy: string;
+  performedAt?: Date;
+}
+
+/**
+ * The action that has to have been performed for each kind of request. A
+ * request is not satisfied by an action aimed at a different right — recording
+ * an export against an erasure would leave the data in place while the row
+ * reads "completed".
+ */
+const REQUIRED_ACTION: Record<
+  DataSubjectRequest['requestType'],
+  DataSubjectRequestExecution['action']
+> = {
+  erasure: 'erased',
+  access: 'exported',
+  portability: 'exported',
+  rectification: 'rectified',
+  restriction: 'restricted',
+  objection: 'decision_recorded',
+};
 
 /**
  * Cross-Border Transfer Assessment — GDPR Articles 44-49
@@ -609,21 +652,119 @@ export async function createDataSubjectRequest(
  * @param responseDetails - Description of how the request was fulfilled
  * @returns The updated DataSubjectRequest
  */
+/**
+ * Refuse evidence that would not survive being asked about.
+ *
+ * Each rejection here corresponds to a way the old free-text field could read
+ * as a completed request while describing nothing that happened.
+ */
+function assertExecutionSatisfies(
+  requestType: DataSubjectRequest['requestType'],
+  execution: DataSubjectRequestExecution | undefined
+): void {
+  if (!execution) {
+    throw new Error(
+      `Cannot complete data subject request: no record of what was carried out. ` +
+        `A '${requestType}' request marked completed asserts the right was honoured, ` +
+        `and GDPR Art. 5(2) requires that to be demonstrable.`
+    );
+  }
+
+  const required = REQUIRED_ACTION[requestType];
+  if (execution.action !== required) {
+    throw new Error(
+      `Cannot complete a '${requestType}' request with action '${execution.action}': ` +
+        `that right is satisfied by '${required}'. Recording one right's action against ` +
+        `another leaves the obligation unmet while the record reads completed.`
+    );
+  }
+
+  if (!Array.isArray(execution.scopes) || execution.scopes.length === 0) {
+    throw new Error(
+      `Cannot complete data subject request: the evidence lists no searched scope. ` +
+        `A subject who holds no data yields rows: 0 across the stores that WERE ` +
+        `searched; an empty list means none were, and the two must not be recorded ` +
+        `the same way.`
+    );
+  }
+
+  const malformed = execution.scopes.find(
+    (s) => !s || typeof s.scope !== 'string' || !s.scope || !Number.isInteger(s.rows) || s.rows < 0
+  );
+  if (malformed) {
+    throw new Error(
+      `Cannot complete data subject request: a scope entry is malformed ` +
+        `(${JSON.stringify(malformed)}). Each entry needs a named scope and a ` +
+        `non-negative integer row count.`
+    );
+  }
+
+  if (!execution.performedBy || !execution.performedBy.trim()) {
+    throw new Error(
+      'Cannot complete data subject request: the evidence does not say who or what ' +
+        'carried it out.'
+    );
+  }
+}
+
+/**
+ * Mark a data subject request completed, recording what was actually done.
+ *
+ * This used to set status='completed' with free-text response_details and
+ * perform nothing. Nothing erased, nothing exported, nothing rectified — the
+ * row was the whole outcome. For an erasure request that row asserts under
+ * GDPR Art. 17 that the subject's personal data is gone, and Art. 5(2) puts
+ * the burden on the controller to demonstrate it. A sentence of prose cannot
+ * be checked, and it cannot distinguish "we searched and found nothing" from
+ * "we never looked" — the two readings that matter most.
+ *
+ * So completion now requires evidence of execution, and refuses without it.
+ * This deliberately does NOT implement subject-level erasure: which stores hold
+ * a data subject's content, and how they are purged, is unsettled and belongs
+ * to whoever owns that area. What is settled is that the platform must not
+ * record a right as honoured when it has no account of honouring it. Until an
+ * executor exists, this function fails closed and no request can be marked
+ * completed — which is the true state of affairs, and is why nothing here
+ * fabricates a default.
+ *
+ * @throws when evidence is absent, records no searched scope, or describes an
+ *         action that does not satisfy the right that was requested.
+ */
 export async function completeDataSubjectRequest(
   id: string,
-  responseDetails: string
+  responseDetails: string,
+  execution: DataSubjectRequestExecution
 ): Promise<DataSubjectRequest> {
   try {
     await ensureTables();
+
+    const existing = await pool.query(
+      `SELECT request_type FROM gdpr_data_subject_requests WHERE id = $1`,
+      [id]
+    );
+    if (existing.rows.length === 0) {
+      throw new Error(`Data subject request ${id} not found`);
+    }
+    const requestType = existing.rows[0].request_type as DataSubjectRequest['requestType'];
+
+    assertExecutionSatisfies(requestType, execution);
+
+    const evidence = {
+      action: execution.action,
+      scopes: execution.scopes,
+      performedBy: execution.performedBy,
+      performedAt: (execution.performedAt ?? new Date()).toISOString(),
+    };
 
     const result = await pool.query(
       `UPDATE gdpr_data_subject_requests
        SET status = 'completed',
            completed_at = NOW(),
-           response_details = $1
-       WHERE id = $2
+           response_details = $1,
+           execution_evidence = $2
+       WHERE id = $3
        RETURNING *`,
-      [responseDetails, id]
+      [responseDetails, JSON.stringify(evidence), id]
     );
 
     if (result.rows.length === 0) {
@@ -876,6 +1017,8 @@ function mapDataSubjectRequestRow(row: Record<string, unknown>): DataSubjectRequ
     responseDeadline: new Date(row.response_deadline as string),
     completedAt: row.completed_at ? new Date(row.completed_at as string) : null,
     responseDetails: (row.response_details as string) ?? null,
+    executionEvidence:
+      (row.execution_evidence as DataSubjectRequestExecution | null) ?? null,
     organizationId: row.organization_id as string,
   };
 }

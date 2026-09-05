@@ -71,8 +71,10 @@ import {
   bundleStorageBucket,
   bundleStorageKey,
   putBundle,
+  deleteBundle,
   readBundleBytes,
 } from '../services/submission-bundle-storage';
+import { leafFileName } from '../services/ectd/leaf-source-resolver';
 import { validateEctdLeafs } from '../services/submission-gateways/ectd-structural-validator';
 import { ValidationError as PackagerValidationError } from '../services/submission-gateways/types';
 import type { EctdFinding } from '../services/submission-gateways/ectd-structural-validator';
@@ -119,6 +121,9 @@ const createPackageSchema = z.object({
 const createArtifactSectionMapSchema = z.object({
   artifactId: z.number({ required_error: 'artifactId is required' }),
   sectionDbId: z.number({ required_error: 'sectionDbId is required' }),
+  // Mapping a document into a package section changes what would be filed
+  // with an agency: a governed change, recorded with the operator's reason.
+  reason: z.string().min(8, 'reason must be at least 8 characters'),
   documentFamily: z.string().optional(),
   ownerUserId: z.number().optional(),
   ownerRole: z.string().optional(),
@@ -352,6 +357,22 @@ router.post('/artifact-section-map', async (req: Request, res: Response) => {
         .json({ error: 'Artifact and target section package must belong to the same project' });
     }
 
+    // One mapping per (artifact, section): a repeat is answered with the
+    // existing row, not a second row that would ship the document twice.
+    const [existing] = await db
+      .select()
+      .from(c2cArtifactSectionMap)
+      .where(
+        and(
+          eq(c2cArtifactSectionMap.artifactId, artifactId),
+          eq(c2cArtifactSectionMap.sectionDbId, sectionDbId),
+          eq(c2cArtifactSectionMap.orgId, orgId),
+        ),
+      );
+    if (existing) {
+      return res.status(200).json({ data: existing, duplicate: true });
+    }
+
     const [mapping] = await db
       .insert(c2cArtifactSectionMap)
       .values({
@@ -366,9 +387,86 @@ router.post('/artifact-section-map', async (req: Request, res: Response) => {
       })
       .returning();
 
-    res.status(201).json({ data: mapping });
+    // A bundle assembled before this mapping no longer reflects the package's
+    // content: it is cleared so the transmit gate cannot ship it, and the
+    // content revision is bumped so an assembly in flight discards its zip.
+    const staleBundleCleared = await markContentChanged(pkg.id);
+    const ledgerWriteFailed = await recordPackageGovernedAction({
+      orgId,
+      userId: actorUserId,
+      packageDbId: pkg.id,
+      reason: parsed.data.reason,
+      payload: { change: 'artifact-mapped', mappingId: mapping.id, artifactId, sectionDbId, documentFamily: documentFamily ?? null, staleBundleCleared },
+    });
+
+    res.status(201).json({ data: mapping, staleBundleCleared, ledgerWriteFailed });
   } catch (e) {
     return serverError(res, logger, 'saving artifact section map', e);
+  }
+});
+
+const deleteArtifactSectionMapBody = z.object({
+  reason: z.string().min(8, 'reason must be at least 8 characters'),
+});
+
+/**
+ * DELETE /artifact-section-map/:mappingId
+ *
+ * Remove an artifact from a package section. There was no way to do this
+ * through the API, so a mapping that made a package unplaceable (LEAF-UNPLACED)
+ * or duplicated a document could not be corrected once created. Tenant-scoped
+ * through the mapping row's own org; governed (reason recorded); a bundle
+ * assembled with the mapping in place is cleared as stale.
+ */
+router.delete('/artifact-section-map/:mappingId', async (req: Request, res: Response) => {
+  try {
+    const orgId = getOrgId(req);
+    const userId = getUserId(req);
+    const parsed = deleteArtifactSectionMapBody.safeParse(req.body ?? {});
+    if (!parsed.success) {
+      return res.status(400).json({ error: 'Validation failed', details: parsed.error.flatten().fieldErrors });
+    }
+    const mappingId = Number(req.params.mappingId);
+    if (!Number.isSafeInteger(mappingId) || mappingId <= 0 || mappingId > 2147483647) {
+      return res.status(404).json({ error: 'Mapping not found' });
+    }
+
+    const [mapping] = await db
+      .select({
+        id: c2cArtifactSectionMap.id,
+        artifactId: c2cArtifactSectionMap.artifactId,
+        sectionDbId: c2cArtifactSectionMap.sectionDbId,
+        packageDbId: c2cPackageSections.packageDbId,
+      })
+      .from(c2cArtifactSectionMap)
+      .innerJoin(c2cPackageSections, eq(c2cPackageSections.id, c2cArtifactSectionMap.sectionDbId))
+      .where(and(eq(c2cArtifactSectionMap.id, mappingId), eq(c2cArtifactSectionMap.orgId, orgId)));
+    if (!mapping) return res.status(404).json({ error: 'Mapping not found' });
+
+    const [deleted] = await db
+      .delete(c2cArtifactSectionMap)
+      .where(and(eq(c2cArtifactSectionMap.id, mappingId), eq(c2cArtifactSectionMap.orgId, orgId)))
+      .returning();
+    if (!deleted) return res.status(404).json({ error: 'Mapping not found' });
+
+    const staleBundleCleared = await markContentChanged(mapping.packageDbId);
+    const ledgerWriteFailed = await recordPackageGovernedAction({
+      orgId,
+      userId,
+      packageDbId: mapping.packageDbId,
+      reason: parsed.data.reason,
+      payload: {
+        change: 'artifact-unmapped',
+        mappingId,
+        artifactId: mapping.artifactId,
+        sectionDbId: mapping.sectionDbId,
+        staleBundleCleared,
+      },
+    });
+
+    res.json({ data: { deleted: true, mappingId, staleBundleCleared, ledgerWriteFailed } });
+  } catch (e) {
+    return serverError(res, logger, 'deleting artifact-section mapping', e);
   }
 });
 
@@ -1515,33 +1613,77 @@ async function recordPackageGovernedAction(params: {
   }
 }
 
-/** The package's CURRENT metadata, re-read at write time so a merge never
- *  resurrects a snapshot taken before a concurrent change (an identifier
- *  recorded while a bundle was being assembled used to be silently reverted). */
-async function currentPackageMetadata(packageDbId: number, fallback: Record<string, unknown>): Promise<Record<string, unknown>> {
-  const [row] = await db
-    .select({ metadata: c2cSubmissionPackages.metadata })
-    .from(c2cSubmissionPackages)
-    .where(eq(c2cSubmissionPackages.id, packageDbId));
-  return row?.metadata && typeof row.metadata === 'object' ? (row.metadata as Record<string, unknown>) : fallback;
+/**
+ * Serialize EVERY writer of a package's metadata on the row itself: a
+ * transaction, SELECT … FOR UPDATE, compute the new metadata from what is
+ * current UNDER THE LOCK, write, commit. A re-read followed by a separate
+ * UPDATE (the previous fix) still lost a write that landed between the two
+ * statements — an identifier recorded while a bundle was being assembled was
+ * reverted, and a backbone built with the old application number was stored
+ * as transmittable. `mutate` returns the metadata to write, or null to write
+ * nothing (the decision is still made against the locked row).
+ */
+async function withPackageMetadataLock<T>(
+  packageDbId: number,
+  mutate: (current: Record<string, unknown>) =>
+    | Promise<{ metadata: Record<string, unknown> | null; result: T }>
+    | { metadata: Record<string, unknown> | null; result: T },
+): Promise<T> {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const { rows } = await client.query(
+      'SELECT metadata FROM c2c_submission_packages WHERE id = $1 FOR UPDATE',
+      [packageDbId],
+    );
+    const raw = rows[0]?.metadata;
+    const current: Record<string, unknown> =
+      raw && typeof raw === 'object' ? (raw as Record<string, unknown>) : typeof raw === 'string' ? JSON.parse(raw) : {};
+    const out = await mutate(current);
+    if (out.metadata) {
+      await client.query(
+        'UPDATE c2c_submission_packages SET metadata = $2::json, updated_at = now() WHERE id = $1',
+        [packageDbId, JSON.stringify(out.metadata)],
+      );
+    }
+    await client.query('COMMIT');
+    return out.result;
+  } catch (e) {
+    try { await client.query('ROLLBACK'); } catch { /* noop */ }
+    throw e;
+  } finally {
+    client.release();
+  }
 }
 
 /**
- * Compose `<base>-<disc>.pdf` within the eCTD file-name limit (FILENAME_PATTERN:
- * 64 characters including the extension), trimming the base — never the
- * discriminator — and appending a numeric tiebreaker only when the name is
- * already taken. The result always satisfies FILENAME_PATTERN.
+ * The package's content revision: bumped under the row lock by every mapping
+ * change and compared by assemble before a bundle is stored. Absent (packages
+ * created before the revision existed) reads as 0, never NaN.
  */
-function ectdLeafFileName(base: string, disc: string, taken: Set<string>): string {
-  const MAX = 64;
-  const compose = (suffix: string): string => {
-    const tail = `-${disc}${suffix}.pdf`;
-    const head = base.slice(0, Math.max(1, MAX - tail.length)).replace(/-+$/, '') || 'leaf';
-    return `${head}${tail}`;
-  };
-  let name = compose('');
-  for (let n = 2; taken.has(name); n += 1) name = compose(`-${n}`);
-  return name;
+function contentRevisionOf(metadata: Record<string, unknown>): number {
+  const raw = metadata.contentRevision;
+  return typeof raw === 'number' && Number.isSafeInteger(raw) && raw >= 0 ? raw : 0;
+}
+
+/**
+ * Record that a package's content changed (an artifact mapped or unmapped).
+ * Two effects, one locked write: the content revision is bumped so an assembly
+ * that read its content BEFORE the change refuses to store its bundle (its
+ * lock compares revisions), and a stored bundle descriptor is cleared because
+ * its zip carries the old content and the transmit gate must not ship it.
+ * Clearing alone was not enough: an assemble already past its content read
+ * stored a zip without the new mapping right after the descriptor was cleared.
+ * Returns whether a descriptor was cleared.
+ */
+async function markContentChanged(packageDbId: number): Promise<boolean> {
+  return withPackageMetadataLock(packageDbId, (current) => {
+    const { bundle: stale, ...withoutBundle } = current;
+    return {
+      metadata: { ...withoutBundle, contentRevision: contentRevisionOf(current) + 1 },
+      result: stale !== undefined,
+    };
+  });
 }
 
 /**
@@ -1677,30 +1819,25 @@ router.put('/packages/:packageId/regulatory-identifiers', async (req: Request, r
       .where(and(packageKeyClause(String(req.params.packageId)), eq(c2cSubmissionPackages.orgId, orgId)));
     if (!pkg) return res.status(404).json({ error: 'Package not found' });
 
-    const existingMetadata =
-      pkg.metadata && typeof pkg.metadata === 'object' ? (pkg.metadata as Record<string, unknown>) : {};
-    const previous = readRegulatoryIdentifiers(existingMetadata).values;
     const next = {
       applicationNumber: usableIdentifier('applicationNumber', parsed.data.applicationNumber)!,
       applicantId: usableIdentifier('applicantId', parsed.data.applicantId)!,
       applicantName: usableIdentifier('applicantName', parsed.data.applicantName)!,
     };
-    const changed = REGULATORY_IDENTIFIER_FIELDS.some((f) => previous[f] !== next[f]);
     const regulatory = { ...next, recordedAt: new Date().toISOString(), recordedBy: userId };
 
-    // A bundle assembled under different identifiers carries the OLD ones in its
-    // backbone. Clear it so the transmit gate cannot ship it; re-assemble.
-    const current = await currentPackageMetadata(pkg.id, existingMetadata);
-    const { bundle: existingBundle, ...metadataWithoutBundle } = current;
-    const staleBundleCleared = changed && existingBundle !== undefined;
-    const metadata = staleBundleCleared
-      ? { ...metadataWithoutBundle, regulatory }
-      : { ...current, regulatory };
-
-    await db
-      .update(c2cSubmissionPackages)
-      .set({ metadata, updatedAt: new Date() })
-      .where(eq(c2cSubmissionPackages.id, pkg.id));
+    // Decided and written under the row lock: `previous` (the audit row's FROM
+    // values), `changed`, and whether a bundle assembled under the OLD
+    // identifiers — its backbone carries them — must be cleared so the transmit
+    // gate cannot ship it.
+    const { previous, changed, staleBundleCleared } = await withPackageMetadataLock(pkg.id, (current) => {
+      const previous = readRegulatoryIdentifiers(current).values;
+      const changed = REGULATORY_IDENTIFIER_FIELDS.some((f) => previous[f] !== next[f]);
+      const { bundle: existingBundle, ...metadataWithoutBundle } = current;
+      const staleBundleCleared = changed && existingBundle !== undefined;
+      const metadata = staleBundleCleared ? { ...metadataWithoutBundle, regulatory } : { ...current, regulatory };
+      return { metadata, result: { previous, changed, staleBundleCleared } };
+    });
 
     // Governed action: who, when, what, FROM → TO, reason.
     const ledgerWriteFailed = await recordPackageGovernedAction({
@@ -1808,6 +1945,12 @@ router.post('/packages/:packageId/assemble', async (req: Request, res: Response)
     const sequence = parsed.data.sequence ?? '0000';
     const existingMetadata =
       pkg.metadata && typeof pkg.metadata === 'object' ? (pkg.metadata as Record<string, unknown>) : {};
+    // The content revision this assembly starts from. The section content is
+    // read below; every mapping change bumps the revision under the row lock,
+    // so a revision that differs when the bundle is about to be stored means
+    // the zip may not contain what the package now maps. Taken BEFORE the
+    // content read so a change between the two also discards (safe side).
+    const contentRevisionAtStart = contentRevisionOf(existingMetadata);
 
     // Region code used in m1/<region>/.. leaf paths (per ICH M4 / regional M1).
     const regionCode = region === 'EMA' ? 'eu' : region === 'PMDA' ? 'jp' : region === 'CA' ? 'ca' : 'us';
@@ -1955,7 +2098,12 @@ router.post('/packages/:packageId/assemble', async (req: Request, res: Response)
         const disc = artifact
           ? artifact.artifactId.replace(/^artifact_/, '').slice(-12).toLowerCase().replace(/[^a-z0-9]/g, '') || `a${artifact.artifactDbId}`
           : `s${section.id}`;
-        const fileName = ectdLeafFileName(leafSlug(section.sectionKey), disc, seenPaths);
+        // Composed by the canonical leaf-name helper (label gives way, the
+        // discriminator is kept whole, 64-character rule); a numeric tiebreaker
+        // is appended to the discriminator only when the name is already taken
+        // in THIS package.
+        let fileName = leafFileName(section.sectionKey, disc);
+        for (let n = 2; seenPaths.has(fileName); n += 1) fileName = leafFileName(section.sectionKey, `${disc}-${n}`);
         seenPaths.add(fileName);
         // The leaf's IN-PACKAGE path, derived the way the canonical packager
         // derives it (`m<module>/<section-dashed>/<file>`, Module 1 under the
@@ -2052,6 +2200,14 @@ router.post('/packages/:packageId/assemble', async (req: Request, res: Response)
           applicationId: applicationNumber ?? `UNASSIGNED-${leafSlug(pkg.packageId)}`,
           sequence,
           submissionType: 'original',
+          /* The FDA backbone has to state what is being filed. This used to
+             pass nothing, and the packager defaulted the application type to
+             `fdaat1` — NDA — so every package assembled here declared itself a
+             New Drug Application whatever it actually was. `packageFamily` is
+             the pathway ('ind', '510k', 'cer', 'ivdr_td'); the packager
+             resolves it, and refuses the ones that have no eCTD Module 1 code
+             rather than mislabelling them. */
+          fda: { applicationType: pkg.packageFamily },
           sponsorId: applicantId ?? `UNASSIGNED-ORG-${orgId}`,
           sponsorName: applicantName ?? `UNASSIGNED (organization ${orgId})`,
           productName: pkg.title,
@@ -2086,22 +2242,19 @@ router.post('/packages/:packageId/assemble', async (req: Request, res: Response)
           validation.findings.push({ severity: 'error', ruleId: 'PACKAGER-REFUSED', message: packErr.message });
           validation.errorCount += 1;
         }
-        const currentOnRefusal = await currentPackageMetadata(pkg.id, existingMetadata);
-        const { bundle: _staleBundle, ...metadataWithoutBundle } = currentOnRefusal;
-        const staleBundleCleared = _staleBundle !== undefined;
         const refusal = {
           errorCount: validation.errorCount,
           warningCount: validation.warningCount,
           infoCount: validation.infoCount,
           findings: validation.findings,
         };
-        await db
-          .update(c2cSubmissionPackages)
-          .set({
+        const staleBundleCleared = await withPackageMetadataLock(pkg.id, (current) => {
+          const { bundle: staleBundle, ...metadataWithoutBundle } = current;
+          return {
             metadata: { ...metadataWithoutBundle, assemblyRefusal: { at: new Date().toISOString(), by: userId, validation: refusal } },
-            updatedAt: new Date(),
-          })
-          .where(eq(c2cSubmissionPackages.id, pkg.id));
+            result: staleBundle !== undefined,
+          };
+        });
         // Clearing a transmittable bundle is a mutation of regulated content:
         // it is recorded like any other, and a lost ledger row is reported.
         const ledgerWriteFailed = await recordPackageGovernedAction({
@@ -2191,31 +2344,65 @@ router.post('/packages/:packageId/assemble', async (req: Request, res: Response)
       assembledBy: userId,
     };
 
-    // Store the descriptor under metadata.bundle and bump updated_at — merged
-    // onto the package's CURRENT metadata, never the snapshot taken before the
-    // (slow) packaging step: an identifier recorded meanwhile used to be
-    // silently reverted. And a backbone built with identifiers that have since
-    // changed is stale by definition: it is not stored.
-    const currentMetadata = await currentPackageMetadata(pkg.id, existingMetadata);
-    if (identifiersAtBuild) {
-      const now = readRegulatoryIdentifiers(currentMetadata).values;
-      const drifted = REGULATORY_IDENTIFIER_FIELDS.some((f) => now[f] !== identifiersAtBuild!.values[f]);
-      if (drifted) {
-        return res.status(409).json({
-          error:
-            'The regulatory identifiers changed while the bundle was being assembled; its backbone carries the old ones, so it was not stored. Assemble again.',
-          code: 'STALE_ASSEMBLY',
-          gate: 'identifiers_changed',
-        });
+    // Store the descriptor under metadata.bundle — decided and written under
+    // the row lock against the package's CURRENT metadata, never the snapshot
+    // taken before the (slow) packaging step. A zip is stale by definition
+    // when the package's content changed since this assembly read it (a
+    // mapping added or removed) or when the backbone was built with
+    // identifiers that have since changed: it is not stored, the zip written
+    // above is removed, and the discard is recorded with its cause.
+    const discardCause = await withPackageMetadataLock<'content_changed' | 'identifiers_changed' | null>(
+      pkg.id,
+      (current) => {
+        if (contentRevisionOf(current) !== contentRevisionAtStart) {
+          return { metadata: null, result: 'content_changed' };
+        }
+        if (identifiersAtBuild) {
+          const now = readRegulatoryIdentifiers(current).values;
+          const drifted = REGULATORY_IDENTIFIER_FIELDS.some((f) => now[f] !== identifiersAtBuild!.values[f]);
+          if (drifted) return { metadata: null, result: 'identifiers_changed' };
+        }
+        return { metadata: { ...current, bundle: descriptor }, result: null };
+      },
+    );
+    if (discardCause) {
+      // Nothing references this zip: remove both copies. A bundle that WAS
+      // stored (and may have been transmitted) is never deleted — it is the
+      // record; this one never became one.
+      await fs.promises.unlink(bundlePath).catch(() => {});
+      const durableCopy = storage.provider === 's3' ? storage.key : null;
+      let durableCopyDeleted = false;
+      if (durableCopy) {
+        try {
+          await deleteBundle(durableCopy);
+          durableCopyDeleted = true;
+        } catch (delErr) {
+          console.error(
+            '[submission-ops] assemble-discard-durable-delete-failed',
+            delErr instanceof Error ? delErr.message : delErr,
+          );
+        }
       }
+      const ledgerWriteFailed = await recordPackageGovernedAction({
+        orgId,
+        userId,
+        packageDbId: pkg.id,
+        reason: parsed.data.reason,
+        payload: { change: 'assembly-discarded', cause: discardCause, sha256, region, format, durableCopy, durableCopyDeleted },
+      });
+      return res.status(409).json({
+        error:
+          discardCause === 'identifiers_changed'
+            ? 'The regulatory identifiers changed while the bundle was being assembled; its backbone carries the old ones, so it was not stored. Assemble again.'
+            : 'An artifact was mapped or unmapped while the bundle was being assembled; the zip may not contain what the package now maps, so it was not stored. Assemble again.',
+        code: 'STALE_ASSEMBLY',
+        gate: discardCause,
+        // A durable copy that could not be removed is named so it can be.
+        durableCopy: durableCopy && !durableCopyDeleted ? durableCopy : null,
+        durableCopyDeleted,
+        ledgerWriteFailed,
+      });
     }
-    await db
-      .update(c2cSubmissionPackages)
-      .set({
-        metadata: { ...currentMetadata, bundle: descriptor },
-        updatedAt: new Date(),
-      })
-      .where(eq(c2cSubmissionPackages.id, pkg.id));
 
     // Audit: medium-risk governed transition (no reauth). Written in its own
     // transaction via the shared ledger primitive. The flag carries the outcome
@@ -2490,7 +2677,17 @@ router.post('/packages/:packageId/preflight', async (req: Request, res: Response
     // JSONB pattern as assemble's `bundle` descriptor). Summary only — the
     // finding bodies are already derivable (internal ones live on
     // metadata.bundle.validation; external ones are re-runnable). A failed
-    // write must not lose the computed findings: log and still respond.
+    // write must not lose the computed findings: log and still respond,
+    // saying the summary was not persisted.
+    //
+    // Written under the package row lock against the CURRENT row, and only
+    // while the bundle this run evaluated is still the stored one. The
+    // unlocked write of the pre-run snapshot this replaces reverted
+    // identifiers recorded while the (slow) external validators ran and put
+    // a bundle cleared as stale back as transmittable. A run whose bundle was
+    // cleared or replaced meanwhile describes a bundle the package no longer
+    // has, so its findings are not the package's: nothing is written and the
+    // caller is told to run preflight again.
     const preflightSummary = {
       ranAt: new Date().toISOString(),
       ranBy: (req as any).user?.id ?? null,
@@ -2507,19 +2704,28 @@ router.post('/packages/:packageId/preflight', async (req: Request, res: Response
         ...(v.error ? { error: v.error } : {}),
       })),
     };
+    let persisted: 'stored' | 'superseded' | 'failed' = 'failed';
     try {
-      await db
-        .update(c2cSubmissionPackages)
-        .set({
-          metadata: { ...metadata, preflight: preflightSummary },
-          updatedAt: new Date(),
-        })
-        .where(eq(c2cSubmissionPackages.id, pkg.id));
+      persisted = await withPackageMetadataLock<'stored' | 'superseded'>(pkg.id, (current) => {
+        const stored = current.bundle as { sha256?: unknown } | undefined;
+        if (!stored || String(stored.sha256 ?? '') !== String(bundle.sha256 ?? '')) {
+          return { metadata: null, result: 'superseded' };
+        }
+        return { metadata: { ...current, preflight: preflightSummary }, result: 'stored' };
+      });
     } catch (persistErr) {
       console.error(
         '[submission-ops] preflight-persist-failed',
         persistErr instanceof Error ? persistErr.message : persistErr,
       );
+    }
+    if (persisted === 'superseded') {
+      return res.status(409).json({
+        gate: 'bundle_superseded',
+        error:
+          'The bundle was cleared or replaced while preflight ran, so these findings describe a bundle the package no longer has. Assemble if needed, then run preflight again.',
+        evaluatedSha256: bundle.sha256 ?? null,
+      });
     }
 
     return res.json({
@@ -2536,6 +2742,9 @@ router.post('/packages/:packageId/preflight', async (req: Request, res: Response
         blocking: errorCount > 0,
         errorCount,
         warningCount,
+        // False when the summary could not be written: the findings above are
+        // still this run's, but portfolio rollups will not reflect it.
+        persisted: persisted === 'stored',
       },
     });
   } catch (e) {

@@ -329,6 +329,9 @@ router.post('/submission/:id/annual-reports', limiter, requireRole(AUTHOR), asyn
     const row = await createAnnualReportDraft({ submissionId, report, indEffectiveDate: b.indEffectiveDate }, ctx);
     res.status(201).json(row);
   } catch (err) {
+    if (err instanceof AnnualReportError) {
+      return res.status(err.code === 'VALIDATION' ? 400 : 404).json({ error: { code: err.code, message: err.message } });
+    }
     fail(res, err);
   }
 });
@@ -440,6 +443,11 @@ const ICSR_TX_CODE_STATUS: Record<IcsrTransmissionErrorCode, number> = {
   NOT_READY: 422,
   GATEWAY_NOT_CONFIGURED: 503,
   GATEWAY_TRANSMIT_FAILED: 502,
+  // An acknowledgement that cannot be read, names another message, or arrives
+  // for a report never transmitted is refused; the row is unchanged.
+  ACK_UNREADABLE: 422,
+  ACK_MISMATCH: 422,
+  INVALID_STATE: 409,
 };
 
 /**
@@ -522,7 +530,10 @@ router.post('/icsr-transmissions/:txId/acknowledge', limiter, requireRole(AUTHOR
     res.json(await recordIcsrAcknowledgment(id, b.ackXml, ctx));
   } catch (err) {
     if (err instanceof IcsrTransmissionError) {
-      return res.status(404).json({ error: { code: err.code, message: err.message } });
+      // Every service refusal used to surface as 404 here, so a refused
+      // acknowledgement (unreadable, wrong message, never transmitted) read
+      // as "no such transmission" to the caller.
+      return res.status(ICSR_TX_CODE_STATUS[err.code]).json({ error: { code: err.code, message: err.message, ...err.details } });
     }
     fail(res, err);
   }

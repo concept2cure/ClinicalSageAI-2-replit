@@ -503,14 +503,18 @@ export async function executeGovernedTransmit(
         orgId: organizationId,
         userId,
         command: 'sign',
-        target: `submission:${input.packageId ?? input.programId ?? 'pkg'}`,
+        target: `submission:${input.packageId ?? input.programId ?? `transmittal-${result.transmittalId}`}`,
         reason,
         payload: {
           meaning: 'submission',
           region,
           gateway,
           bundleSha256: bundle.sha256,
-          transactionId: (result as unknown as { transactionId?: unknown })?.transactionId ?? null,
+          // GatewayTransmitResult carries `transmissionId`. This read a
+          // `transactionId` that no gateway sets — through a cast to unknown that
+          // hid the type error — so every Part 11 sign row recorded null and the
+          // ledger could not be joined to the agency receipt or basket id.
+          transmissionId: result.transmissionId ?? null,
         },
         domain: 'mdx',
         surface: input.surface ?? 'submission-gateway',

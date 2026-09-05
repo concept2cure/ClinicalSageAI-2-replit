@@ -30,7 +30,7 @@ const logger = createScopedLogger('ind-annual-report-persistence');
 export type AnnualReportCtx = { organizationId: number; userId: number };
 
 export class AnnualReportError extends Error {
-  constructor(public code: 'NOT_FOUND', message: string) {
+  constructor(public code: 'NOT_FOUND' | 'VALIDATION', message: string) {
     super(message);
     this.name = 'AnnualReportError';
   }
@@ -42,6 +42,12 @@ const d = (v: unknown): Date | undefined => {
   return Number.isNaN(date.getTime()) ? undefined : date;
 };
 
+const requireDate = (v: unknown, field: string): Date => {
+  const date = d(v);
+  if (!date) throw new AnnualReportError('VALIDATION', `${field} must be a valid date.`);
+  return date;
+};
+
 /**
  * Coerce the period-input dates (which arrive as ISO strings over HTTP) to Date
  * so the pure assembler's date arithmetic is safe.
@@ -49,10 +55,13 @@ const d = (v: unknown): Date | undefined => {
 function coerceInput(raw: any): IndAnnualReportInput {
   return {
     ...raw,
-    reportingPeriodStart: d(raw.reportingPeriodStart) ?? new Date(0),
-    reportingPeriodEnd: d(raw.reportingPeriodEnd) ?? new Date(0),
-    safetyReportsInPeriod: (raw.safetyReportsInPeriod ?? []).map((r: any) => ({ ...r, submittedAt: d(r.submittedAt) ?? new Date(0) })),
-    ibChanges: (raw.ibChanges ?? []).map((c: any) => ({ ...c, effectiveDate: d(c.effectiveDate) ?? new Date(0) })),
+    // An absent or unparsable date used to become 1 January 1970, so a
+    // draft with no period dates assembled and persisted as a report covering
+    // the epoch. Refuse instead.
+    reportingPeriodStart: requireDate(raw.reportingPeriodStart, 'reportingPeriodStart'),
+    reportingPeriodEnd: requireDate(raw.reportingPeriodEnd, 'reportingPeriodEnd'),
+    safetyReportsInPeriod: (raw.safetyReportsInPeriod ?? []).map((r: any) => ({ ...r, submittedAt: requireDate(r.submittedAt, 'safetyReportsInPeriod[].submittedAt') })),
+    ibChanges: (raw.ibChanges ?? []).map((c: any) => ({ ...c, effectiveDate: requireDate(c.effectiveDate, 'ibChanges[].effectiveDate') })),
     studyStatuses: raw.studyStatuses ?? [],
   };
 }
@@ -153,11 +162,27 @@ export async function markAnnualReportFiled(
  * List a submission's annual reports that are not yet filed and whose 60-day
  * deadline has passed (the overdue feed). Org-scoped; pure filtering.
  */
+export type OverdueAnnualReportRow = IndAnnualReportRow & {
+  /**
+   * 'overdue' — unfiled and past its 60-day deadline. 'deadline_unknown' —
+   * unfiled with no due date because no IND effective date was recorded, so
+   * whether it is overdue cannot be known. These used to be dropped from the
+   * feed, reading identically to a report safely on schedule.
+   */
+  overdueState: 'overdue' | 'deadline_unknown';
+};
+
 export async function listOverdueAnnualReports(
   submissionId: number,
   ctx: { organizationId: number },
   asOf: Date = new Date(),
-): Promise<IndAnnualReportRow[]> {
+): Promise<OverdueAnnualReportRow[]> {
   const rows = await listAnnualReports(submissionId, ctx);
-  return rows.filter((r) => r.status !== 'filed' && r.dueDate != null && new Date(r.dueDate).getTime() < asOf.getTime());
+  const out: OverdueAnnualReportRow[] = [];
+  for (const r of rows) {
+    if (r.status === 'filed') continue;
+    if (r.dueDate == null) out.push({ ...r, overdueState: 'deadline_unknown' });
+    else if (new Date(r.dueDate).getTime() < asOf.getTime()) out.push({ ...r, overdueState: 'overdue' });
+  }
+  return out;
 }

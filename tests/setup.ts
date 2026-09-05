@@ -23,6 +23,17 @@ process.env.DATABASE_URL_DEV = process.env.DATABASE_URL_DEV || process.env.DATAB
 
 import { vi, beforeAll, afterAll, afterEach } from 'vitest';
 
+// Testing-library's findBy*/waitFor budget is 1 s by default. The largest
+// surfaces (DocumentAuthoring is ~5,000 lines) take longer than that to
+// mount under a loaded CI runner, and a test then fails on a control that
+// simply had not rendered yet. 5 s is still well inside the 10 s per-test
+// limit; a test that passes in 200 ms is unaffected. Only jsdom files have a
+// document, so node-environment tests never load the DOM library.
+if (typeof document !== 'undefined') {
+  const { configure } = await import('@testing-library/dom');
+  configure({ asyncUtilTimeout: 5000 });
+}
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // MOCK DATABASE
 // ═══════════════════════════════════════════════════════════════════════════════

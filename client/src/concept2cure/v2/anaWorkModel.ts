@@ -12,7 +12,7 @@
 
 import type { AnaChatMessage, AnaToolCall, RunControlStatus } from '../components/ana/useAnaChat';
 import type { AnaProgressPhase } from '../components/ana/useAnaChat.types';
-import { formatElapsed, formatStepDuration } from '../components/ana/anaProgress';
+import { formatElapsed, formatStepDuration, LENS_PHRASE } from '../components/ana/anaProgress';
 
 export interface AnaWorkContext {
   /** The open programme, by name (or id when that is all the shell has). */
@@ -49,8 +49,19 @@ export function stateLineFor(
     return `Still working · ${elapsed}`;
   }
   if (turn.stopped) return `Stopped after ${elapsed}`;
+  // A timeout or a lost connection closes the record with its last phase
+  // marked stopped and never sets `stopped` (that flag is the person's own
+  // stop). Both are turns that did not finish, and neither may read
+  // "Finished".
+  if (progressCutShort(turn)) return `Did not finish · ${elapsed}`;
   if (typeof turn.completedAt === 'number') return `Finished in ${elapsed}`;
   return '';
+}
+
+/** True when the turn's progress record ended in a phase marked stopped. */
+export function progressCutShort(turn: AnaChatMessage): boolean {
+  const last = turn.progress?.[turn.progress.length - 1];
+  return last?.status === 'stopped';
 }
 
 /** Wall-clock elapsed for the turn: to its recorded end, or to now while in flight. */
@@ -86,17 +97,6 @@ export function stepDuration(c: AnaToolCall, now: number): string {
   return '';
 }
 
-/** Group calls by agentic-loop round, preserving order. */
-export function byRound(calls: AnaToolCall[]): Array<{ round: number; calls: AnaToolCall[] }> {
-  const groups = new Map<number, AnaToolCall[]>();
-  for (const c of calls) {
-    const r = typeof c.round === 'number' && c.round > 0 ? c.round : 1;
-    if (!groups.has(r)) groups.set(r, []);
-    groups.get(r)!.push(c);
-  }
-  return [...groups.entries()].sort((a, b) => a[0] - b[0]).map(([round, cs]) => ({ round, calls: cs }));
-}
-
 export function clip(text: string, max: number): string {
   return text.length > max ? `${text.slice(0, max - 1)}…` : text;
 }
@@ -124,12 +124,17 @@ function actionRows(m: AnaChatMessage, i: number): OutputRow[] {
     }));
 }
 
-/** Everything the conversation has produced, across every assistant turn. */
-export function collectOutputs(messages: AnaChatMessage[]): OutputRow[] {
+/**
+ * Everything the conversation has produced, across every assistant turn.
+ * `drafts: false` leaves the draft rows to a host that lists them as
+ * artifact cards of its own.
+ */
+export function collectOutputs(messages: AnaChatMessage[], opts: { drafts?: boolean } = {}): OutputRow[] {
+  const withDrafts = opts.drafts !== false;
   const rows: OutputRow[] = [];
   messages.forEach((m, i) => {
     if (m.role !== 'assistant') return;
-    if (m.generatedDraft?.title) {
+    if (withDrafts && m.generatedDraft?.title) {
       rows.push({ key: `d-${i}`, icon: 'fileText', label: `Drafted ${m.generatedDraft.title}`, note: draftNote(m) });
     }
     rows.push(...actionRows(m, i));
@@ -154,14 +159,17 @@ export function contextRows(
   context: AnaWorkContext | undefined,
   turn: AnaChatMessage | null,
 ): Array<[string, string]> {
+  // The lens arrives as its classifier code ("audit"); the row says what a
+  // colleague would ("an audit"), through the one table the transcript uses.
   const lens = turn?.detectedLens;
+  const lensPhrase = lens && lens !== 'auto' ? LENS_PHRASE[lens] ?? null : null;
   const candidates: Array<[string, string | null | undefined]> = [
     ['Project', context?.project],
     ['Working in', context?.module],
     ['Surface', context?.surface],
     ['Engine', context?.engine],
     ['Effort used', turn?.effortUsed],
-    ['Read as', lens === 'auto' ? null : lens],
+    ['Read as', lensPhrase],
     ['Drafting', turn?.detectedDocumentType],
   ];
   return candidates.filter((r): r is [string, string] => typeof r[1] === 'string' && r[1].length > 0);

@@ -148,6 +148,7 @@ describe('the progress record over a real stream', () => {
     });
     await act(async () => {
       ctl.enqueue(ev({ type: 'status', phase: 'running_tools', message: 'Running 3 steps…' }));
+      ctl.enqueue(ev({ type: 'tool_use', round: 1, name: 'search_literature', label: 'Searching the literature' }));
       await drain();
     });
     await act(async () => {
@@ -160,6 +161,13 @@ describe('the progress record over a real stream', () => {
     expect(m.stopped).toBe(true);
     expect(m.progress?.at(-1)).toMatchObject({ phase: 'running_tools', status: 'stopped' });
     expect(typeof m.completedAt).toBe('number');
+    // The step in flight is closed with the turn — a row still saying
+    // "running" beside "Stopped after 12s" would be a contradiction.
+    expect(m.toolCalls?.[0]).toMatchObject({
+      status: 'error',
+      message: 'Not finished — the run was stopped.',
+    });
+    expect(typeof m.toolCalls?.[0].endedAt).toBe('number');
   });
 
   it('holds a steer as pending from acceptance until the server confirms it landed', async () => {
@@ -190,11 +198,13 @@ describe('the progress record over a real stream', () => {
     expect(result.current.pendingSteers).toEqual(['Focus on the safety endpoints']);
 
     await act(async () => {
-      ctl.enqueue(ev({ type: 'interjected', round: 2, message: 'Focus on the safety endpoints' }));
+      // The server trims and caps the echo; it is matched by position, so an
+      // echo that differs from what was typed still clears the oldest steer.
+      ctl.enqueue(ev({ type: 'interjected', round: 2, message: 'Focus on the safety' }));
       await drain();
     });
     expect(result.current.pendingSteers).toEqual([]);
-    expect(lastAssistant(result).interjections).toEqual(['Focus on the safety endpoints']);
+    expect(lastAssistant(result).interjections).toEqual(['Focus on the safety']);
 
     await act(async () => {
       ctl.enqueue(ev({ type: 'done' }));

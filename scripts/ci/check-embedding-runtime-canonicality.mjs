@@ -52,7 +52,6 @@ const APPROVED = new Set([
   // Search/index helpers that embed queries.
   'server/services/semanticSearch.js',
   // Workers — pre-existing batch path.
-  'server/workers/vectorization-worker.ts',
   'server/workers/entity-extraction-worker.ts',
   // Additional pre-existing direct callers documented at gate-introduction
   // time (2026-05-07). Migration target: enhancedEmbeddingService.embed().

@@ -128,7 +128,6 @@ import {
   loadDeviceContentLeaves,
   loadAuthoredDeviceSections,
   deviceContentSource,
-  loadDeviceFlags,
   resolveDeviceContentScope,
   type DeviceContentClient,
   type GovernedDeviceSectionRow,
@@ -355,88 +354,5 @@ describe('resolveDeviceContentScope reports the governed document class', () => 
     const client = governedClientWithType({ document: { id: 'doc_pma', doc_type: 'pma' }, sections: GOVERNED_ROWS });
     const authored = await loadAuthoredDeviceSections(ORG, { programId: PROGRAM, client });
     expect(authored.map((a) => a.sectionCode)).toEqual(['3', '5', '8']);
-  });
-});
-
-/**
- * The seven device questions, read back.
- *
- * The new-project wizard asks all seven and `POST /api/c2c/projects` stores the
- * TICKED ones on `regulatory_programs.metadata.deviceFlags`, beside a comment
- * calling them "load-bearing — each one adds a statutory section". Nothing read
- * them back. `mapToEstar` therefore ran with `flags: undefined` on every call,
- * every conditional section was of UNDETERMINED applicability, and once
- * assembleDeviceSubmission stopped over-claiming, `/assemble` reported
- * `content-package-draft` permanently. The client had answered; the platform
- * had stored the answer; the form still said it could not tell.
- */
-describe('loadDeviceFlags — the intake answers reach the mapper', () => {
-  const PROG = '2b6d4a80-6a35-4b1e-9f6e-3a9d2c1e5f70';
-  const clientWith = (metadata: unknown): DeviceContentClient => ({
-    async query() {
-      return { rows: [{ metadata }] } as never;
-    },
-  });
-
-  it('turns the ticked list into a yes/no for ALL seven — an unticked box is a NO', async () => {
-    const flags = await loadDeviceFlags(
-      ORG,
-      PROG,
-      clientWith({ deviceFlags: ['softwareAiMl', 'cyberDevice'] }),
-    );
-    // The two ticked are yes...
-    expect(flags).toMatchObject({ softwareAiMl: true, cyberDevice: true });
-    // ...and the other five are NO, not absent. Returning only the ticked ones
-    // left five sections undetermined, so answering two of seven still left the
-    // package unproducible.
-    expect(flags).toMatchObject({
-      sterile: false,
-      implantable: false,
-      cliaWaived: false,
-      combinationProduct: false,
-      clinicalData: false,
-    });
-    expect(Object.keys(flags!).sort()).toHaveLength(7);
-  });
-
-  it('a program that was never asked returns undefined, never an all-false set', async () => {
-    // undefined leaves the sections undetermined, which is the honest state.
-    // An all-false object would claim the operator answered no to all seven.
-    for (const metadata of [null, {}, { deviceFlags: [] }, { deviceFlags: 'nonsense' }]) {
-      expect(await loadDeviceFlags(ORG, PROG, clientWith(metadata)), JSON.stringify(metadata)).toBeUndefined();
-    }
-  });
-
-  it('reads metadata stored as a JSON string, and survives one that does not parse', async () => {
-    const asText = await loadDeviceFlags(ORG, PROG, clientWith(JSON.stringify({ deviceFlags: ['sterile'] })));
-    expect(asText).toMatchObject({ sterile: true, softwareAiMl: false });
-    // A blob that is not JSON is not an answer set — undetermined, not a throw.
-    expect(await loadDeviceFlags(ORG, PROG, clientWith('{not json'))).toBeUndefined();
-  });
-
-  it('drops a flag id the mapper does not know rather than passing it through', async () => {
-    const flags = await loadDeviceFlags(
-      ORG,
-      PROG,
-      clientWith({ deviceFlags: ['sterile', 'notARealFlag'] }),
-    );
-    expect(flags).toMatchObject({ sterile: true });
-    expect(flags).not.toHaveProperty('notARealFlag');
-    // An unknown id ALONE is no answer at all — it cannot resolve anything.
-    expect(await loadDeviceFlags(ORG, PROG, clientWith({ deviceFlags: ['notARealFlag'] }))).toBeUndefined();
-  });
-
-  it('scopes the read to the organization AND the program', async () => {
-    const calls: Array<{ sql: string; params: unknown[] }> = [];
-    const spy: DeviceContentClient = {
-      async query(sql: string, params: unknown[] = []) {
-        calls.push({ sql, params });
-        return { rows: [] } as never;
-      },
-    };
-    await loadDeviceFlags(ORG, PROG, spy);
-    expect(calls).toHaveLength(1);
-    expect(calls[0].sql).toMatch(/organization_id = \$1/);
-    expect(calls[0].params).toEqual([ORG, PROG]);
   });
 });

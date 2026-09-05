@@ -1772,6 +1772,9 @@
 .c2c-v2 .ana-activity-toggle:focus-visible{outline:2px solid var(--accent-200);outline-offset:2px;border-radius:var(--radius-md);}
 .c2c-v2 .ana-activity-toggle svg{font-size:12px;}
 .c2c-v2 .ana-activity-body{display:flex;flex-direction:column;gap:3px;margin-top:5px;padding-left:9px;border-left:1px solid var(--border);}
+/* The collapsed body stays mounted so the toggle's aria-controls resolves;
+   display:flex above would otherwise beat the user-agent [hidden] rule. */
+.c2c-v2 .ana-activity-body[hidden]{display:none;}
 .c2c-v2 .ana-activity-phase{display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--text-300);}
 /* The running clock beside the live phase: tabular so "57s" → "1m 00s" does
    not jiggle the line, and the same --text-300 as the phase it qualifies. */
@@ -1836,16 +1839,12 @@
 .c2c-v2 .ana-work-toggle[aria-pressed="true"]{color:var(--accent-200);border-color:var(--accent-100);background:var(--accent-000);}
 .c2c-v2 .ana-work-toggle:focus-visible{outline:2px solid var(--accent-200);outline-offset:2px;}
 .c2c-v2 .ana-work-hdr{display:flex;align-items:center;gap:8px;padding:9px 12px;border-bottom:1px solid var(--border);background:var(--bg-050);}
-.c2c-v2 .ana-work-title{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--text-100);}
+.c2c-v2 .ana-work-title{display:inline-flex;align-items:center;gap:6px;margin:0;font:inherit;font-size:12px;font-weight:600;line-height:inherit;color:var(--text-100);}
 .c2c-v2 .ana-work-mark{display:inline-flex;color:var(--accent-200);}
 .c2c-v2 .ana-work-mark svg{font-size:13px;}
 .c2c-v2 .ana-work-elapsed{margin-left:auto;display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--text-300);font-variant-numeric:tabular-nums;white-space:nowrap;}
 .c2c-v2 .ana-work-pulse{display:inline-flex;color:var(--accent-200);animation:ana-activity-pulse 1600ms ease-out infinite;}
 .c2c-v2 .ana-work-pulse svg{font-size:11px;}
-.c2c-v2 .ana-work-x{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border:0;border-radius:var(--radius-sm);background:none;color:var(--text-400);cursor:pointer;transition:color 200ms ease-out,background 200ms ease-out;}
-.c2c-v2 .ana-work-x:hover{color:var(--text-100);background:var(--bg-200);}
-.c2c-v2 .ana-work-x:focus-visible{outline:2px solid var(--accent-200);outline-offset:1px;}
-.c2c-v2 .ana-work-x svg{font-size:12px;}
 .c2c-v2 .ana-work-idle{padding:12px;font-size:11.5px;line-height:1.55;color:var(--text-300);}
 .c2c-v2 .ana-work-sec{border-bottom:1px solid var(--border);}
 .c2c-v2 .ana-work-sec:last-child{border-bottom:0;}
@@ -1918,7 +1917,7 @@
 .c2c-v2 .ana-work-v{color:var(--text-100);min-width:0;overflow-wrap:anywhere;}
 @media (prefers-reduced-motion:reduce){
   .c2c-v2 .ana-work-pulse{animation:none;opacity:1;}
-  .c2c-v2 .ana-work-x,.c2c-v2 .ana-work-sec-h,.c2c-v2 .ana-work-link,.c2c-v2 .ana-work-toggle{transition:none;}
+  .c2c-v2 .ana-work-sec-h,.c2c-v2 .ana-work-link,.c2c-v2 .ana-work-toggle{transition:none;}
 }
 
 /* ── Page header ── */
@@ -2759,7 +2758,10 @@
 
 .c2c-v2 .ct-composer-wrap{flex-shrink:0;border-top:1px solid var(--border);padding:14px 24px 16px;background:var(--bg-000);}
 .c2c-v2 .ct-composer{max-width:768px;margin:0 auto;display:flex;align-items:flex-end;gap:8px;border:1px solid var(--border);border-radius:14px;padding:8px 10px;background:var(--bg-000);box-shadow:var(--v2-shadow-sm);}
-.c2c-v2 .ct-composer:focus-within{border-color:var(--accent-100);}
+/* --accent-200, not --accent-100: the textarea inside drops its own outline, so
+   this border IS the focus indicator and needs 3:1 (SC 1.4.11); accent-100
+   measures 2.96:1 on --bg-000. */
+.c2c-v2 .ct-composer:focus-within{border-color:var(--accent-200);}
 .c2c-v2 .ct-comp-attach{flex-shrink:0;width:32px;height:32px;border-radius:8px;background:none;border:none;color:var(--text-400);cursor:pointer;display:flex;align-items:center;justify-content:center;}
 .c2c-v2 .ct-comp-attach:hover{background:var(--bg-100);color:var(--text-200);}.c2c-v2 .ct-comp-attach svg{width:17px;height:17px;}
 .c2c-v2 .ct-composer textarea{flex:1;border:none;background:none;resize:none;font-family:var(--font-sans);font-size:14px;line-height:1.5;color:var(--text-100);padding:7px 2px;max-height:160px;outline:none;}

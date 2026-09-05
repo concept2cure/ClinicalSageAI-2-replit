@@ -189,6 +189,23 @@ Test Files  7 passed (7)
 | `ci:check-css-selector-shadowing` | **fails on the base too**: `client/src/concept2cure/mdx/app.css` `.mdx-shell` at lines 21 and 3056. Not touched by this change; reproduced identically with the change stashed. |
 | `eslint` on the changed TS files | 0 errors, 6 warnings — the same six the base carries (complexity / max-lines / the pre-existing unused `onRefine`). |
 
+### CI on the pushed heads (GitHub Actions, `concept2cure-v2`)
+
+The branch was red before WO-11 landed and stayed red for the same reasons; nothing WO-11 pushed
+added a failure.
+
+| Head | Lint job | Test job |
+|---|---|---|
+| `e3d7453a` (last WO-11 push) | failed at two steps only: *ESLint warning ratchet (may only shrink)* and *Reasoning Tier readiness suite*; typecheck-no-regression 0 errors; ESLint run, CSS shadowing, phantom tokens, collisions, contrast all passed | **passed** |
+| `e3c9ed6f` (the other author's commit 15 s before it) | failed at exactly the same two steps | passed |
+| `34b41250` (first WO-11 push) | failed; typecheck-no-regression 0 errors | 5 failures in 4 server-side files (`device-510k-estar` journey, `submission-orchestrator`, `stabilityPoolabilityRoute`, `device-market-advisor`) — none touched by WO-11 |
+| `95425d30` (the commit before the first push) | failed, including the ESLint ratchet | failed |
+
+Every run of the CI workflow on 2026-09-03 (78 of 78) failed on the branch; the two failures
+seen on 2026-09-05 are a missing server module (`server/routes/c2c/exports.ts`) and one
+Part 11 snapshot test, neither in this stream's territory. WO-11's files are unchanged on the
+current head (`106214a0` at the time of writing) and the carriage test is still present.
+
 ### The seam, made to fail
 
 `toTurn` is module-private, so — unlike the rail's `adaptChatMessage`, which has

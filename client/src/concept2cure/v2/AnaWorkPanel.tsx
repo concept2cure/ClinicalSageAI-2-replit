@@ -44,6 +44,7 @@ import type { AnaChatMessage, AnaToolCall, RunControlStatus } from '../component
 import type { AnaProgressPhase } from '../components/ana/useAnaChat.types';
 import { tallyTools, type ToolTally } from '../components/ana/anaProgress';
 import type { AgentActivityView } from './useAgentActivity';
+import { useNow } from './useNow';
 import {
   collectOutputs,
   contextRows,
@@ -85,20 +86,13 @@ export interface AnaWorkPanelProps {
    * the panel without a per-turn record.
    */
   announce?: boolean;
-  /** Hosts pass their own collapse control; the panel renders the button. */
-  onClose?: () => void;
-}
-
-/** A 1 Hz clock while something is in flight; frozen otherwise. */
-function useNow(active: boolean): number {
-  const [now, setNow] = React.useState(() => Date.now());
-  React.useEffect(() => {
-    if (!active) return;
-    setNow(Date.now());
-    const t = setInterval(() => setNow(Date.now()), 1000);
-    return () => clearInterval(t);
-  }, [active]);
-  return now;
+  /**
+   * Leave drafts out of Outputs. The conversation surface renders every draft
+   * as an artifact card directly beneath the dock, and a title that appears
+   * twice in one column is one more thing a reviewer has to read for no new
+   * information. Other hosts have no artifact list and keep the rows.
+   */
+  omitDrafts?: boolean;
 }
 
 interface WorkModel {
@@ -116,45 +110,68 @@ interface WorkModel {
 }
 
 /** Every fact the sections render, derived once from the turns. */
-function useWorkModel(messages: AnaChatMessage[], streaming: boolean, runStatus: RunControlStatus): WorkModel {
-  const turn = [...messages].reverse().find((m) => m.role === 'assistant') ?? null;
-  const lastUser = [...messages].reverse().find((m) => m.role === 'user') ?? null;
+function useWorkModel(
+  messages: AnaChatMessage[],
+  streaming: boolean,
+  runStatus: RunControlStatus,
+  omitDrafts: boolean,
+): WorkModel {
+  /* Everything that depends only on the turns is derived once per change to
+     them. The clock re-renders the panel every second while live and every
+     streamed token re-renders it too; walking every message's outputs and
+     tools on each of those is wasted on three hosts at once. */
+  const derived = React.useMemo(() => {
+    let turn: AnaChatMessage | null = null;
+    let lastUser: AnaChatMessage | null = null;
+    for (let i = messages.length - 1; i >= 0 && (!turn || !lastUser); i -= 1) {
+      const m = messages[i];
+      if (!turn && m.role === 'assistant') turn = m;
+      else if (!lastUser && m.role === 'user') lastUser = m;
+    }
+    const calls = turn?.toolCalls ?? [];
+    return {
+      turn,
+      lastUser,
+      phases: turn?.progress ?? [],
+      calls,
+      tally: tallyTools(calls),
+      outputs: collectOutputs(messages, { drafts: !omitDrafts }),
+    };
+  }, [messages, omitDrafts]);
+  const { turn, phases } = derived;
   const live = Boolean(streaming && turn?.streaming);
   const now = useNow(live);
   const stateLine = stateLineFor(turn, live, runStatus, elapsedFor(turn, now));
-  const phases = turn?.progress ?? [];
-  const calls = turn?.toolCalls ?? [];
   return {
-    turn,
-    lastUser,
+    ...derived,
     live,
     now,
     stateLine,
-    phases,
-    calls,
-    tally: tallyTools(calls),
-    outputs: collectOutputs(messages),
     spoken: spokenLine(phases, live, stateLine, turn?.statusPhase),
   };
 }
 
-function PanelHeader({ stateLine, pulsing, onClose }: { stateLine: string; pulsing: boolean; onClose?: () => void }) {
+/**
+ * The title bar. It carries no close control of its own: every host already
+ * has one show/hide toggle for the dock, and a second control for the same
+ * state — a few pixels below the first, with the same icon — was two
+ * affordances for one non-primary action. The host's toggle is the one.
+ */
+function PanelHeader({ stateLine, pulsing }: { stateLine: string; pulsing: boolean }) {
   return (
     <div className="ana-work-hdr">
-      <span className="ana-work-title">
+      {/* A real heading: the dock's five sections are h3s, so the dock itself
+          must be the h2 between them and the page title wherever it is hosted
+          (SC 1.3.1). Styled to the header's type, not the document's. */}
+      <h2 className="ana-work-title">
         <span className="ana-work-mark" aria-hidden="true">{I.activity}</span>
         AnA at work
-      </span>
+      </h2>
       {stateLine && (
         <span className="ana-work-elapsed">
           {pulsing && <span className="ana-work-pulse" aria-hidden="true">{I.dot}</span>}
           {stateLine}
         </span>
-      )}
-      {onClose && (
-        <button type="button" className="ana-work-x" onClick={onClose} aria-label="Hide AnA at work">
-          {I.close}
-        </button>
       )}
     </div>
   );
@@ -181,15 +198,27 @@ function PanelSections({
   context?: AnaWorkContext;
   queue?: AgentActivityView;
 }) {
-  const [open, setOpen] = React.useState<Record<SectionKey, boolean>>({
+  const { turn, live, now, phases, calls, tally, outputs } = m;
+  const [open, setOpen] = React.useState<Record<SectionKey, boolean>>(() => ({
     progress: true,
     queue: true,
-    tools: true,
-    outputs: false,
+    /* Closed by default: its rows are the Work queue's rows again in more
+       forensic form (durations, raw inputs) — detail that belongs behind a
+       click, like Context — and with both open a multi-round turn outgrew
+       the rail and pushed the conversation below the fold. */
+    tools: false,
+    outputs: outputs.length > 0,
     context: false,
-  });
+  }));
   const toggle = (k: SectionKey) => () => setOpen((o) => ({ ...o, [k]: !o[k] }));
-  const { turn, live, now, phases, calls, tally, outputs } = m;
+  /* Outputs opens itself ONCE, when the first output lands — a state write,
+     not an OR in the render, so the person can still collapse it afterwards.
+     (`open || outputs.length > 0` made the header a button that did nothing.) */
+  const hadOutputs = React.useRef(outputs.length > 0);
+  React.useEffect(() => {
+    if (outputs.length > 0 && !hadOutputs.current) setOpen((o) => ({ ...o, outputs: true }));
+    hadOutputs.current = outputs.length > 0;
+  }, [outputs.length]);
   const settled = phases.filter((p) => p.status !== 'active').length;
   return (
     <>
@@ -220,7 +249,7 @@ function PanelSections({
       <Section
         title="Outputs"
         meta={outputs.length > 0 ? `${outputs.length}` : undefined}
-        open={open.outputs || outputs.length > 0}
+        open={open.outputs}
         onToggle={toggle('outputs')}
       >
         <OutputsBody outputs={outputs} />
@@ -245,13 +274,13 @@ export function AnaWorkPanel({
   context,
   queue,
   announce = false,
-  onClose,
+  omitDrafts = false,
 }: AnaWorkPanelProps) {
-  const m = useWorkModel(messages, streaming, runStatus);
+  const m = useWorkModel(messages, streaming, runStatus, omitDrafts);
   return (
     <div className="ana-work" data-live={m.live ? 'true' : 'false'}>
       {announce && <span aria-live="polite" style={SR_ONLY_STYLE}>{m.spoken}</span>}
-      <PanelHeader stateLine={m.stateLine} pulsing={m.live && runStatus !== 'paused'} onClose={onClose} />
+      <PanelHeader stateLine={m.stateLine} pulsing={m.live && runStatus !== 'paused'} />
       {!m.turn && (
         <div className="ana-work-idle">
           AnA has not started a turn in this conversation. Ask something and her progress, steps and

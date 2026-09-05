@@ -73,10 +73,28 @@ Findings recorded on the bundle at assembly:
 | `REGULATORY-IDENTIFIER-MISSING` | error | see step 1 |
 | `PACKAGER-REFUSED` | error | the canonical packager refused outright; the stale bundle is cleared and the response is 422 |
 
+To correct a placement, map or unmap the artifact: `POST /api/submission-ops/artifact-section-map`
+(one mapping per artifact and section — a repeat answers the existing row) and
+`DELETE /api/submission-ops/artifact-section-map/:mappingId` (governed; reason required).
+Either clears a bundle assembled before the change and bumps the package's content
+revision; assemble again.
+
+Concurrent changes are decided under the package row lock, never from the snapshot an
+assembly started with. A bundle is not stored, its zip (local and durable copies) is
+removed and the discard is recorded when, while it was being built, an artifact was
+mapped or unmapped (`STALE_ASSEMBLY`, `gate: content_changed`) or the regulatory
+identifiers changed (`gate: identifiers_changed`). The response is a 409; assemble again.
+A change to an artifact's own content after it was mapped is not detected by the
+revision: re-assemble after editing content.
+
 The assemble response returns the bundle descriptor with counts only; the findings
 themselves are persisted on the package and served by
 `POST /api/submission-ops/packages/:id/preflight`. The Dispatch surface shows them in the
-findings card after an assembly that carries errors, and after any refusal.
+findings card after an assembly that carries errors, and after any refusal. Preflight
+persists its summary under the same lock and only while the bundle it evaluated is still
+the stored one: a bundle cleared or replaced during the run answers 409
+`gate: bundle_superseded` (run preflight again), and a summary that could not be written
+is reported as `persisted: false` with the findings still returned.
 
 `region` (FDA/EMA/PMDA) and `sequence` (exactly four digits) may be given in the body.
 The format follows the region (`pmda_ectd` ⇔ PMDA; `ectd` ⇔ FDA/EMA; `estar` ⇔ FDA;

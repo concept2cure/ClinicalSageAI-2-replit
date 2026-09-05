@@ -37,6 +37,7 @@ import {
   resolveToRegistryEntry, getSubmissionTypeLabel,
   type GatewayAcknowledgment, type GatewayStatusResult, type GatewayTransmitRequest,
   type GatewayTransmitResult, type SubmissionGateway, type SubmissionStatus,
+  requiredAgencyMetadata
 } from './types';
 
 interface HcCredentials {
@@ -202,7 +203,7 @@ export class HealthCanadaGateway implements SubmissionGateway {
 
   async isConfigured(_orgId: number, environment: 'staging' | 'production'): Promise<boolean> {
     try { await loadHcCredentials(environment); return true; }
-    catch (err) { return !(err instanceof CredentialError); }
+    catch { return false; } // an unreadable cert or key is not 'configured'
   }
 
   async transmit(req: GatewayTransmitRequest): Promise<GatewayTransmitResult> {
@@ -214,6 +215,7 @@ export class HealthCanadaGateway implements SubmissionGateway {
       ? { ...req, submissionType: resolvedEntry.applicationType }
       : req;
 
+    const agency = requiredAgencyMetadata(normalizedReq);
     const transmittalId = await createTransmittalRow(normalizedReq);
     try {
       const creds = await loadHcCredentials(normalizedReq.environment);
@@ -225,8 +227,8 @@ export class HealthCanadaGateway implements SubmissionGateway {
         JSON.stringify({
           companyId:      creds.companyId,
           dossierId:      normalizedReq.metadata?.applicationId ?? normalizedReq.metadata?.dossierId ?? null,
-          sequenceNumber: normalizedReq.metadata?.sequence ?? '0000',
-          submissionType: normalizedReq.submissionType ?? 'initial',
+          sequenceNumber: agency.sequenceNumber,
+          submissionType: agency.submissionType,
           productName:    normalizedReq.metadata?.productName ?? null,
           sha256:         normalizedReq.bundle.sha256,
         }),
@@ -273,7 +275,19 @@ export class HealthCanadaGateway implements SubmissionGateway {
       catch {
         throw new GatewayError('Health Canada CESG returned non-JSON success', resp.httpStatus, null, resp.body.toString('utf8'));
       }
-      const receiptId = parsed.receiptId ?? parsed.submissionId ?? `hc-${Date.now()}`;
+      const receiptId = parsed.receiptId ?? parsed.submissionId ?? null;
+      if (!receiptId) {
+        // A 2xx whose body names no receipt is not an accepted submission. This
+        // minted `hc-<timestamp>` here, recorded the row as received with an
+        // acknowledgement time from the platform clock, told the operator
+        // "accepted. Receipt: hc-…", and later polled the agency for a
+        // receipt that never existed. CESP refuses the same case; so does this.
+        await updateTransmittal(transmittalId, {
+          status: 'rejected', httpStatus: resp.httpStatus,
+          errorClass: 'gateway', errorMessage: 'Agency returned success with no receipt identifier in the body.',
+        });
+        throw new GatewayError('HC response missing a receipt identifier', resp.httpStatus, null, parsed);
+      }
       await updateTransmittal(transmittalId, {
         status: 'received', transmissionId: receiptId,
         httpStatus: resp.httpStatus, ackReceivedAt: new Date(),
@@ -311,6 +325,7 @@ export class HealthCanadaGateway implements SubmissionGateway {
       throw new GatewayError(`Transmittal ${transmittalId} not found`, 404, null, null);
     }
     /* Live status poll via /receipts/{id}. */
+    let pollError: string | null = 'The agency status poll did not complete.';
     try {
       const env = (rows[0].metadata?.environment as 'staging' | 'production' | undefined) ?? 'production';
       const creds = await loadHcCredentials(env);
@@ -339,6 +354,7 @@ export class HealthCanadaGateway implements SubmissionGateway {
           await updateTransmittal(transmittalId, { status: mapped });
         }
         return {
+          source: 'agency',
           transmittalId,
           transmissionId: rows[0].transmission_id,
           status: mapped,
@@ -346,10 +362,9 @@ export class HealthCanadaGateway implements SubmissionGateway {
           rawResponse: parsed,
         };
       }
-    } catch {
-      /* Fall through to last-known DB state. */
-    }
+    } catch (err) { pollError = err instanceof Error ? err.message : String(err); }
     return {
+      source: 'stored', pollError,
       transmittalId,
       transmissionId: rows[0].transmission_id,
       status: rows[0].status as SubmissionStatus,

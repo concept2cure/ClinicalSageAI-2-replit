@@ -24,7 +24,9 @@ vi.mock('../server/routes/c2c/actions', () => ({
 const { dbState } = vi.hoisted(() => ({
   dbState: {
     pkg: null as any,
-    updates: [] as any[],
+    // Every metadata write, tagged with the path it took: 'lock' (the package
+    // row lock's UPDATE) or 'drizzle' (an unlocked db.update — must be none).
+    updates: [] as Array<{ via: 'lock' | 'drizzle'; metadata: any }>,
     failUpdate: false,
   },
 }));
@@ -43,16 +45,41 @@ function makeDb() {
     update() { return chain; },
     set(payload: any) {
       if (dbState.failUpdate) throw new Error('simulated metadata write failure');
-      dbState.updates.push(payload);
+      dbState.updates.push({ via: 'drizzle', metadata: payload.metadata });
       return chain;
     },
   };
   return chain;
 }
 
+/** The pool client: serves the package row lock (SELECT … FOR UPDATE) from the
+ *  stubbed package AT LOCK TIME — so a test can change the row while a validator
+ *  runs — and captures the metadata the locked UPDATE writes. */
+const clientQuery = vi.fn(async (sql: string, params: unknown[] = []) => {
+  if (/FOR UPDATE/.test(sql)) return { rows: [{ metadata: dbState.pkg?.metadata ?? null }] };
+  if (/^UPDATE c2c_submission_packages/.test(sql)) {
+    if (dbState.failUpdate) throw new Error('simulated metadata write failure');
+    dbState.updates.push({ via: 'lock', metadata: JSON.parse(String(params[1])) });
+  }
+  return { rows: [] };
+});
+const connectFn = vi.fn(() => Promise.resolve({ query: clientQuery, release: vi.fn() }));
 vi.mock('../server/db', () => ({
   get db() { return makeDb(); },
-  pool: { connect: vi.fn(), query: vi.fn() },
+  pool: { connect: (...a: unknown[]) => connectFn(...a), query: vi.fn() },
+}));
+
+/* ─── A configurable agency validator: the real registry (its env gating is
+   what the unconfigured cases exercise) with the HTTP call replaced, so a test
+   can land a concurrent write while the validator "runs". ─────────────── */
+const runHttpValidatorFn = vi.fn();
+vi.mock('../server/services/submission-gateways/validator-registry', async (importOriginal) => ({
+  ...(await importOriginal<any>()),
+  runHttpValidator: (...a: unknown[]) => runHttpValidatorFn(...a),
+}));
+vi.mock('../server/services/submission-bundle-storage', async (importOriginal) => ({
+  ...(await importOriginal<any>()),
+  readBundleBytes: vi.fn().mockResolvedValue(Buffer.from('PK-ZIP', 'utf8')),
 }));
 
 // Avoid pulling heavy engine modules through the route's imports.
@@ -81,6 +108,9 @@ beforeEach(() => {
   dbState.pkg = null;
   dbState.updates = [];
   dbState.failUpdate = false;
+  connectFn.mockClear();
+  clientQuery.mockClear();
+  runHttpValidatorFn.mockReset();
   // Ensure no external validators are configured.
   delete process.env.FDA_VALIDATOR_URL;
   delete process.env.EMA_VALIDATOR_URL;
@@ -89,6 +119,16 @@ beforeEach(() => {
   fetchSpy.mockReset();
   vi.stubGlobal('fetch', fetchSpy);
 });
+
+const IDS = { applicationNumber: 'IND123456', applicantId: 'DUNS-123456789', applicantName: 'Acme Biologics Inc' };
+const BUNDLE = {
+  sha256: 'e'.repeat(64), sizeBytes: 9, format: 'ectd', path: '/bundles/pkg-locked.zip', storage: { provider: 'local' },
+  validation: { errorCount: 0, warningCount: 0, infoCount: 0, findings: [] },
+};
+const pkgWith = (metadata: Record<string, unknown>) => ({
+  id: 5, packageId: 'pkg_locked', orgId: 99, status: 'locked', packageFamily: 'ind', metadata,
+});
+const preflight = () => request(makeApp()).post('/api/submission-ops/packages/pkg_locked/preflight').send({});
 
 describe('POST /api/submission-ops/packages/:packageId/preflight', () => {
   it('404s when the package is not in the tenant', async () => {
@@ -154,9 +194,12 @@ describe('POST /api/submission-ops/packages/:packageId/preflight', () => {
     expect(fetchSpy).not.toHaveBeenCalled();
 
     // The run summary is persisted under metadata.preflight; the assemble
-    // descriptor (metadata.bundle) is preserved by the spread.
+    // descriptor (metadata.bundle) is preserved by the spread. Written under
+    // the package row lock, never by an unlocked update.
+    expect(res.body.data.persisted).toBe(true);
     expect(dbState.updates.length).toBe(1);
     const persisted = dbState.updates[0];
+    expect(persisted.via).toBe('lock');
     expect(persisted.metadata.bundle).toBeDefined();
     expect(persisted.metadata.preflight).toMatchObject({
       errorCount: 0,
@@ -235,9 +278,53 @@ describe('POST /api/submission-ops/packages/:packageId/preflight', () => {
     dbState.failUpdate = true;
 
     const res = await request(makeApp()).post('/api/submission-ops/packages/pkg_persistfail/preflight').send({});
-    // A failed derived-cache write must not lose the run's results.
+    // A failed derived-cache write must not lose the run's results — and the
+    // response says the summary was NOT persisted rather than implying it was.
     expect(res.status).toBe(200);
     expect(res.body.data.blocking).toBe(false);
+    expect(res.body.data.persisted).toBe(false);
     expect(dbState.updates.length).toBe(0);
+    expect(clientQuery).toHaveBeenCalledWith('ROLLBACK');
+  });
+
+  it('REFUSES to persist a run whose bundle was cleared or replaced meanwhile, and never writes its pre-run snapshot over the row', async () => {
+    // A configured agency validator: its HTTP call is where a colleague's
+    // PUT regulatory-identifiers lands — new application number, and the
+    // bundle assembled under the old one cleared.
+    process.env.FDA_VALIDATOR_URL = 'https://validator.example.invalid/run';
+    dbState.pkg = pkgWith({ regulatory: IDS, bundle: BUNDLE });
+    runHttpValidatorFn.mockImplementationOnce(async () => {
+      dbState.pkg = pkgWith({ regulatory: { ...IDS, applicationNumber: 'IND999999' } });
+      return [];
+    });
+    const res = await preflight();
+    // The findings describe a bundle the package no longer has.
+    expect(res.status).toBe(409);
+    expect(res.body.gate).toBe('bundle_superseded');
+    expect(res.body.evaluatedSha256).toBe(BUNDLE.sha256);
+    // Nothing was written: the newer identifiers stand and the cleared
+    // bundle is NOT put back as transmittable. The decision took the lock.
+    expect(dbState.updates).toEqual([]);
+    expect(clientQuery.mock.calls.some((c) => /FOR UPDATE/.test(String(c[0])))).toBe(true);
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it('persists against the LOCKED row: a change that landed while the validator ran is kept, not reverted', async () => {
+    process.env.FDA_VALIDATOR_URL = 'https://validator.example.invalid/run';
+    dbState.pkg = pkgWith({ regulatory: IDS, bundle: BUNDLE });
+    runHttpValidatorFn.mockImplementationOnce(async () => {
+      // Same bundle; a colleague added something else to the row meanwhile.
+      dbState.pkg = pkgWith({ regulatory: IDS, bundle: BUNDLE, noteAddedMeanwhile: 'kept' });
+      return [{ severity: 'warning', ruleId: 'FDA-1234', message: 'Agency warning' }];
+    });
+    const res = await preflight();
+    expect(res.status).toBe(200);
+    expect(res.body.data.persisted).toBe(true);
+    expect(res.body.data.warningCount).toBe(1);
+    expect(dbState.updates).toHaveLength(1);
+    expect(dbState.updates[0].via).toBe('lock');
+    expect(dbState.updates[0].metadata.noteAddedMeanwhile).toBe('kept');
+    expect(dbState.updates[0].metadata.bundle).toEqual(BUNDLE);
+    expect(dbState.updates[0].metadata.preflight.bundleSha256).toBe(BUNDLE.sha256);
   });
 });

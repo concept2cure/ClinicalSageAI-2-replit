@@ -25,7 +25,6 @@ import {
   resolveCtdSectionsForDocType,
 } from '../services/ind/ctd/index.js';
 import { getGateway } from '../services/ai-gateway/index.js';
-import { getMasterDocumentBuilder } from '../services/docx/masterDocumentBuilder.js';
 
 // Also import device registry
 let getDeviceSections: ((type: '510K' | 'PMA' | 'DE_NOVO' | 'CER') => Array<{ code: string; title: string; required: boolean; guidance: string }>) | null = null;
@@ -385,121 +384,13 @@ router.post('/generate-section', async (req: Request, res: Response) => {
   }
 });
 
-// ─── POST /api/ind/generate-form ──────────────────────────────────────────────
-
-router.post('/generate-form', async (req: Request, res: Response) => {
-  try {
-    const { formType, projectId, sponsorName, investigatorName, productName, indication, phase } = req.body;
-
-    const builder = getMasterDocumentBuilder();
-
-    const sections = [{
-      number: '1',
-      title: `FDA Form ${formType}`,
-      content: `<h2>FDA Form ${formType}</h2>
-<p><strong>Sponsor:</strong> ${sponsorName || '[Sponsor Name]'}</p>
-<p><strong>Investigator:</strong> ${investigatorName || '[Investigator Name]'}</p>
-<p><strong>Product:</strong> ${productName || '[Product Name]'}</p>
-<p><strong>Indication:</strong> ${indication || '[Indication]'}</p>
-<p><strong>Phase:</strong> ${phase || '[Phase]'}</p>
-<p><strong>Date:</strong> ${new Date().toISOString().split('T')[0]}</p>`,
-    }];
-
-    const result = await builder.generateFromScratch({
-      documentType: `fda-form-${formType}`,
-      sections,
-      outputFormat: 'docx',
-      documentTitle: `FDA_Form_${formType}`,
-    });
-
-    res.json({
-      success: true,
-      data: {
-        outputPath: result.outputPath,
-        format: result.format,
-        sizeBytes: result.sizeBytes,
-        formType,
-        message: `FDA Form ${formType} generated as DOCX.`,
-      },
-    });
-  } catch (error: any) {
-    res.status(500).json({ success: false, error: error.message || 'Form generation failed' });
-  }
-});
-
-// ─── POST /api/ind/assemble ───────────────────────────────────────────────────
-
-router.post('/assemble', async (req: Request, res: Response) => {
-  try {
-    const { projectId, sponsorName, productName } = req.body;
-
-    // Fetch all artifacts via internal API
-    let artifacts: Array<{ id: string; title: string; ctdSection?: string; status?: string; content?: string }> = [];
-    try {
-      const port = process.env.PORT || 5000;
-      const fetchRes = await fetch(`http://localhost:${port}/api/concept2cure/projects/${projectId}/artifacts`, {
-        headers: { 'Content-Type': 'application/json' },
-      });
-      if (fetchRes.ok) {
-        const json = await fetchRes.json();
-        artifacts = json.data?.artifacts || json.data || [];
-      }
-    } catch {
-      return res.status(500).json({ success: false, error: 'Failed to fetch project artifacts' });
-    }
-
-    // Check readiness
-    const required = IND_SECTIONS.filter(s => s.required);
-    const missing = required.filter(s => !artifacts.find(a => a.ctdSection === s.code));
-
-    if (missing.length > 0) {
-      return res.json({
-        success: false,
-        error: 'Not all required sections are complete',
-        data: {
-          missing: missing.map(s => ({ code: s.code, title: s.title, module: s.module })),
-          missingCount: missing.length,
-          totalRequired: required.length,
-          completedRequired: required.length - missing.length,
-        },
-      });
-    }
-
-    // Generate eCTD backbone XML
-    const builder = getMasterDocumentBuilder();
-    const modules = [1, 2, 3, 4, 5].map(n => ({
-      number: String(n),
-      title: ['Administrative', 'CTD Summaries', 'Quality', 'Nonclinical', 'Clinical'][n - 1],
-      documents: artifacts
-        .filter(a => a.ctdSection?.startsWith(String(n)))
-        .map(a => ({
-          id: a.id,
-          title: a.title,
-          filePath: `m${n}/${a.ctdSection}/${(a.title || 'document').replace(/[^a-zA-Z0-9]/g, '_')}.docx`,
-        })),
-    }));
-
-    const ectdXml = await builder.generateEctdXml({
-      submissionType: 'initial',
-      // 'Sponsor' reads as the applicant's name in the backbone's
-      // <applicant-name>; an absent applicant must say it is absent.
-      applicantName: sponsorName || 'UNASSIGNED (applicant)',
-      productName: productName || 'Investigational Product',
-      modules,
-    });
-
-    res.json({
-      success: true,
-      data: {
-        ectdXml,
-        sectionCount: artifacts.length,
-        modules: modules.map(m => ({ number: m.number, title: m.title, documentCount: m.documents.length })),
-        message: 'eCTD package assembled. Ready for export.',
-      },
-    });
-  } catch (error: any) {
-    res.status(500).json({ success: false, error: error.message || 'Assembly failed' });
-  }
-});
+// The former POST /generate-form and POST /assemble handlers were removed.
+// Neither had a caller. /generate-form returned a one-paragraph summary
+// document named `FDA_Form_<n>.docx` that was not the FDA form (the real
+// fill path is services/ind-forms/ind-form-fill-service.ts); /assemble
+// counted a section complete when any artifact existed for it, regardless
+// of the needsData flag /generate-section records, and reported "Ready for
+// export" over a hand-rolled backbone that hardcoded sequence 0000 and
+// operation=new. Assembly is services/ectd/assemble-from-core.ts.
 
 export default router;

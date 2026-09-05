@@ -1139,6 +1139,13 @@ registerToolHandler('assemble_briefing_book', async (input, ctx) => {
 
     // 2. Assemble the markdown + required_strings.
     const assembled = briefing.assembleBriefingBook(meeting, context);
+    // The fixture's "Questions for the Agency" are a fictional sponsor's. With a
+    // real product name and no key_questions supplied, they read as this
+    // product's questions in the content the authoring tool promotes, while the
+    // fixture disclosure lived only on the sibling premortem/message fields.
+    if (dataSource === 'fixture' && (!overrideQuestions || overrideQuestions.length === 0)) {
+      assembled.content = `> SAMPLE DATA — the questions for the Agency below are a fixture; the sponsor has not supplied its own key questions. Replace them before this book is reviewed.\n\n${assembled.content}`;
+    }
 
     // 3. Pre-mortem — anticipated FDA pushback per sponsor question.
     const runPremortem = input.run_premortem !== false;
@@ -5109,7 +5116,9 @@ registerToolHandler('assess_nonclinical_safety', async (input: Record<string, un
       recommendedStartingDoseMg: a.fihDose?.recommendedStartingDoseMg ?? null,
       limitedBy: a.fihDose?.limitedBy ?? null,
       adverseFindings: a.toxProfile?.adverseFindings.map(f => `${f.finding} (${f.organ})`) ?? [],
-      programGaps: a.programGaps?.gaps ?? [],
+      // null, not [], when the study battery was never assessed.
+      programAssessed: a.programAssessed,
+      programGaps: a.programGaps ? a.programGaps.gaps : null,
       blockers: a.blockers,
       overviewCompleteness: a.overview?.completeness ?? null,
       summary: a.summary,
@@ -6305,27 +6314,18 @@ registerToolHandler('generate_document', async (input: Record<string, unknown>) 
     });
   }
 
-  // eCTD backbone XML
-  if (documentType === 'ectd_backbone') {
-    const xml = await builder.generateEctdXml({
-      submissionType: 'original',
-      // 'Applicant' is not an applicant. An absent identity says so.
-      applicantName: (input.applicant as string) || 'UNASSIGNED (applicant)',
-      productName: (input.product as string) || 'Product',
-      modules: [],
+  // 'ectd_backbone' and 'icsr' used to be generated here from scratch: a
+  // backbone with sequence 0000 and operation=new hardcoded, no modules and
+  // a 'Product' placeholder; an ICSR with an invented report id and 'Unknown'
+  // drug and reaction. Neither was a regulatory artefact. The backbone comes
+  // from the submission packager and an ICSR from the safety-report register.
+  if (documentType === 'ectd_backbone' || documentType === 'icsr') {
+    return JSON.stringify({
+      success: false,
+      message: documentType === 'ectd_backbone'
+        ? 'An eCTD backbone is produced by assembling a submission sequence, not drafted as a document. Use the submission assembly tools.'
+        : 'An ICSR is composed from a recorded safety report, not drafted as a document. Use the IND safety-report tools.',
     });
-    return JSON.stringify({ success: true, format: 'xml', content: xml, message: 'eCTD backbone XML generated.' });
-  }
-
-  // ICSR XML
-  if (documentType === 'icsr') {
-    const xml = await builder.generateIcsrXml({
-      safetyReportId: (input.safety_report_id as string) || `ICSR-${Date.now()}`,
-      reaction: (input.reaction as string) || 'Unknown',
-      drug: (input.drug as string) || 'Unknown',
-      seriousness: (input.seriousness as 'serious' | 'non-serious') || 'non-serious',
-    });
-    return JSON.stringify({ success: true, format: 'xml', content: xml, message: 'ICSR E2B(R3) XML generated.' });
   }
 
   return JSON.stringify({
@@ -7531,7 +7531,7 @@ registerToolHandler('create_q_sub', async (input, ctx) => {
   }
 
   try {
-    const { createQSubmission, TenantAccessError } = await import(
+    const { createQSubmission } = await import(
       '../q-sub/q-sub.service.js'
     );
     const row = await createQSubmission(ctx.organizationId, {
@@ -7584,7 +7584,7 @@ registerToolHandler('update_q_sub_commitment_rolled_in', async (input, ctx) => {
   }
 
   try {
-    const { setCommitmentRolledIn, TenantAccessError } = await import(
+    const { setCommitmentRolledIn } = await import(
       '../q-sub/q-sub.service.js'
     );
     const updated = await setCommitmentRolledIn(ctx.organizationId, {
@@ -8406,6 +8406,13 @@ registerToolHandler('package_ectd_for_region', async (input, ctx) => {
       applicationId: String(input.application_id),
       sequence:      String(input.sequence),
       submissionType: String(input.submission_type),
+      /* `submission_type` on this tool means 'original | amendment | ...', so it
+         cannot also carry the filing identity. Without an application type the
+         packager used to default to `fdaat1` — NDA — for every package this
+         tool built. It now refuses, so the tool asks for it. */
+      ...(typeof input.application_type === 'string' && input.application_type.trim()
+        ? { fda: { applicationType: input.application_type.trim() } }
+        : {}),
       sponsorId:     String(input.sponsor_id),
       sponsorName:   String(input.sponsor_name),
       productName:   String(input.product_name),
@@ -15631,6 +15638,7 @@ registerToolHandler('assemble_device_submission', async (input: Record<string, u
       variant,
       leaves,
       presentTemplates: Array.isArray(input.presentTemplates) ? (input.presentTemplates as unknown[]).map(String) : undefined,
+      deviceFlags: input.deviceFlags && typeof input.deviceFlags === 'object' ? (input.deviceFlags as Record<string, boolean>) : undefined,
       market: typeof input.market === 'string' ? (input.market as any) : undefined,
       availableArtifacts: Array.isArray(input.availableArtifacts) ? (input.availableArtifacts as unknown[]).map(String) : undefined,
       environment: input.environment === 'production' ? 'production' : input.environment === 'staging' ? 'staging' : undefined,

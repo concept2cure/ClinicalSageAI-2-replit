@@ -1239,13 +1239,6 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
      memory with the rail, and the background queue read only while shown. */
   const [workDockOpen, setWorkDockOpen] = useWorkDockVisible();
   const anaWorkQueue = useAgentActivity(workDockOpen, ana.isStreaming);
-  /* Focus goes to the header toggle before the dock (and its close button)
-     unmounts, so a keyboard user is not dropped onto <body>. */
-  const workToggleRef = useRef<HTMLButtonElement>(null);
-  const hideWorkDock = () => {
-    workToggleRef.current?.focus();
-    setWorkDockOpen(false);
-  };
   const anaComposerRef = useRef<HTMLTextAreaElement>(null);
   const anaReturnFocusRef = useRef<HTMLElement | null>(null);
   const anaWasOpenRef = useRef(false);
@@ -3181,7 +3174,10 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
                     </span>
                   </button>
                   {open &&
-                    (sectionsState === 'loading' ? (
+                    (sectionsState === 'loading' || sectionsState === 'idle' ? (
+                      /* 'idle' with a document open is the render before the
+                         read starts — not a document with no sections. Saying
+                         "No sections yet" there was a fact nobody had read. */
                       <div className="scaf-note" style={{ padding: '6px 12px' }}>
                         Loading sections…
                       </div>
@@ -4041,14 +4037,13 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
               <button
                 type="button"
-                ref={workToggleRef}
                 className="ana-work-toggle"
                 aria-pressed={workDockOpen}
                 aria-label={workDockOpen ? 'Hide AnA at work' : 'Show AnA at work'}
                 title={workDockOpen ? 'Hide AnA at work' : 'Show AnA at work'}
                 onClick={() => setWorkDockOpen(!workDockOpen)}
               >
-                {I.activity} At work
+                {I.activity} AnA at work
               </button>
               <button
                 type="button"
@@ -4082,7 +4077,6 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
                       ? activeDoc.title
                       : null,
                 }}
-                onClose={hideWorkDock}
               />
             </div>
           )}

@@ -69,6 +69,7 @@ export function PvCockpit({ onAsk }: SurfaceViewProps) {
   const [ov, setOv] = useState<Overview | null>(null);
   const [ovState, setOvState] = useState<'loading' | 'ready' | 'error'>('loading');
   const [matrix, setMatrix] = useState<ComplianceRow[]>([]);
+  const [matrixState, setMatrixState] = useState<'loading' | 'ready' | 'error'>('loading');
   const [toast, fireToast] = useToast();
 
   // Disproportionality screener state (2×2: a=drug+event, b=drug+other, c=other+event, d=other+other).
@@ -91,7 +92,10 @@ export function PvCockpit({ onAsk }: SurfaceViewProps) {
         readData<ComplianceRow[]>('GET', '/api/pharmacovigilance/compliance-matrix'),
       ]);
       if (!o.ok) setOvState('error'); else { setOv(o.data); setOvState('ready'); }
-      setMatrix(Array.isArray(m.data) ? m.data : []);
+      // A failed matrix read used to collapse into "No compliance data yet" —
+      // an outage read as a clean, event-free tenant.
+      if (!m.ok) { setMatrixState('error'); setMatrix([]); }
+      else { setMatrix(Array.isArray(m.data) ? m.data : []); setMatrixState('ready'); }
     })();
   }, []);
 
@@ -147,7 +151,7 @@ export function PvCockpit({ onAsk }: SurfaceViewProps) {
       summary:
         `Pharmacovigilance cockpit. Safety KPIs are ${ovState}` +
         (kpi ? `, ${kpi.overdueReports} report(s) overdue and ${kpi.pendingSignals} signal(s) pending` : '') +
-        `. Regional compliance matrix holds ${matrix.length} row(s).`,
+        matrixState === 'error' ? '. The regional compliance matrix could not be read; compliance is unknown.' : `. Regional compliance matrix holds ${matrix.length} row(s).`,
       facts: {
         kpiState: ovState,
         ...(kpi
@@ -161,7 +165,7 @@ export function PvCockpit({ onAsk }: SurfaceViewProps) {
               complianceRatePct: kpi.complianceRate,
             }
           : {}),
-        complianceMatrixRows: matrix.length,
+        complianceMatrixRows: matrixState === 'ready' ? matrix.length : null,
         // The screener result only exists once the user has run it. Absent is
         // not "no signal" — saying so keeps AnA from reading a blank as a null
         // result, the same mistake the compliance table refuses to make.
@@ -177,7 +181,7 @@ export function PvCockpit({ onAsk }: SurfaceViewProps) {
         'Calculate a reporting deadline',
       ],
     }),
-    [ovState, kpi, matrix.length, scrRes, dlRes],
+    [ovState, kpi, matrix.length, matrixState, scrRes, dlRes],
   );
   usePublishSurfaceContext('pv-cockpit', anaContext);
 
@@ -294,9 +298,11 @@ export function PvCockpit({ onAsk }: SurfaceViewProps) {
 
       {/* Compliance matrix */}
       <div className="pj-card">
-        <div className="pj-card-h"><span className="t">Regional reporting compliance</span><span className="s" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>{matrix.length}{ask && <button className="reg-cta" onClick={() => ask('Explain our expedited and periodic safety reporting obligations by region, and which of them our current compliance matrix shows we are not meeting. Say which regions have no compliance status recorded rather than assuming compliant.')}>{I.sparkles} Explain obligations</button>}</span></div>
+        <div className="pj-card-h"><span className="t">Regional reporting compliance</span><span className="s" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>{matrixState === 'ready' ? matrix.length : '—'}{ask && <button className="reg-cta" onClick={() => ask('Explain our expedited and periodic safety reporting obligations by region, and which of them our current compliance matrix shows we are not meeting. Say which regions have no compliance status recorded rather than assuming compliant.')}>{I.sparkles} Explain obligations</button>}</span></div>
         <div className="pj-card-b" style={{ padding: 0 }}>
-          {matrix.length === 0 ? <div style={{ padding: 16 }}><EmptyState icon={I.layers} title="No compliance data yet" hint="Per-region adverse-event reporting compliance appears here once events are logged." /></div>
+          {matrixState === 'loading' ? <div style={{ padding: 16 }}><EmptyState icon={I.zap} title="Loading compliance matrix…" /></div>
+            : matrixState === 'error' ? <div style={{ padding: 16 }}><EmptyState tone="error" icon={I.alertTriangle} title="Couldn’t load the compliance matrix" hint="Per-region reporting compliance could not be read, so it is unknown, not clear. Sign in to your tenant and retry." /></div>
+            : matrix.length === 0 ? <div style={{ padding: 16 }}><EmptyState icon={I.layers} title="No compliance data yet" hint="Per-region adverse-event reporting compliance appears here once events are logged." /></div>
             : <table className="reg-tbl"><thead><tr><th>Region</th><th>Events</th><th>Overdue</th><th style={{ textAlign: 'right' }}>Status</th></tr></thead>
               {/* A compliance row can arrive with `region` or `complianceStatus` unset — a
                   region with no events yet, or a row written before the status column was

@@ -463,7 +463,19 @@ export interface TransmitSequenceParams {
   sequenceId: number;
   ctx: { organizationId: number; userId: number };
   signatureActionId: string;
+  /**
+   * Required. This defaulted to 'production' — the exact defect
+   * submission-gateways/types.ts records as the reason TransmitAuthorization
+   * exists — so an omitted environment sent the package to the live agency
+   * endpoint.
+   */
   environment?: 'staging' | 'production';
+  /**
+   * The agency application number (IND/NDA/BLA). Required to transmit — an
+   * absent one used to be spelled UNASSIGNED-SEQ-<id> in the backbone and on
+   * the SFTP path and sent anyway. Both stay optional in the TYPE so the HTTP
+   * route's optional fields still compile; transmitSequence refuses at runtime.
+   */
   applicationId?: string;
   sponsorId?: string;
   sponsorName?: string;
@@ -488,7 +500,17 @@ export interface TransmitSequenceResult {
  */
 export async function transmitSequence(params: TransmitSequenceParams): Promise<TransmitSequenceResult> {
   const { sequenceId, ctx, signatureActionId } = params;
-  const environment = params.environment ?? 'production';
+  if (params.environment !== 'staging' && params.environment !== 'production') {
+    throw new SubmissionError('VALIDATION', 'Transmit requires an explicit environment: staging or production.');
+  }
+  const environment = params.environment;
+  const applicationId = typeof params.applicationId === 'string' ? params.applicationId.trim() : '';
+  if (!applicationId || /^UNASSIGNED/i.test(applicationId)) {
+    throw new SubmissionError(
+      'VALIDATION',
+      'Transmit requires the agency application number; a sequence with none recorded is assembled for inspection only, never sent.',
+    );
+  }
 
   const seq = await getSequence(sequenceId, ctx);
   if (seq.status !== 'dispatched') {
@@ -553,7 +575,7 @@ export async function transmitSequence(params: TransmitSequenceParams): Promise<
     // <name>/<company-name> in the regional backbone, and the application id is
     // also a package filename component. An unassigned value SAYS it is
     // unassigned, in the wording the transmit path already uses.
-    applicationId: params.applicationId ?? `UNASSIGNED-SEQ-${sequenceId}`,
+    applicationId,
     sponsorId: params.sponsorId ?? `UNASSIGNED-ORG-${ctx.organizationId}`,
     sponsorName: params.sponsorName ?? `UNASSIGNED (organization ${ctx.organizationId})`,
   });
@@ -607,7 +629,7 @@ export async function transmitSequence(params: TransmitSequenceParams): Promise<
       bundle: assembled.bundle,
       environment,
       submissionType: seq.type ?? undefined,
-      metadata: { applicationId: params.applicationId ?? `UNASSIGNED-SEQ-${sequenceId}`, sequence: seq.sequenceNumber, environment },
+      metadata: { applicationId, sequence: seq.sequenceNumber, environment },
       // Gate 1 above already verified this signature governs THIS sequence and
       // was made by THIS actor; the gateway layer now requires that proof to be
       // named rather than merely to have happened somewhere up the stack.

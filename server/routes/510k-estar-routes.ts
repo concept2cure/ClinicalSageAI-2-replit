@@ -51,7 +51,6 @@ import {
 import {
   loadDeviceContentLeaves,
   loadAuthoredDeviceSections,
-  loadDeviceFlags,
   resolveDeviceContentScope,
   sectionsToEditorJson,
   type AuthoredDeviceSection,
@@ -61,6 +60,8 @@ import { and, eq } from 'drizzle-orm';
 import { requestDb } from '../db/requestDb';
 import { fda510kProjects } from '../../shared/schema';
 import { regulatoryPrograms } from '../../shared/schema/programs';
+import { loadProgramDeviceFlags } from '../services/pathway-engines/estar/program-device-flags';
+import { requireEditorAccess } from '../middleware/orgMembership';
 import { isMissingAnchorColumn, resolveProgramProjectAnchor } from '../services/c2c/program-project-anchor';
 import {
   getEstarRegistration,
@@ -90,12 +91,10 @@ import {
 } from '../services/entitlements/require-entitlement';
 import { getMarketSpec } from '../services/market-specs/market-submission-specs';
 import { validateLeavesAgainstMarketSpec, type LeafFileDescriptor } from '../services/market-specs/market-formatting-validator';
-import { requireEditorAccess } from '../middleware/orgMembership';
 
 const logger = createScopedLogger('510k-estar-routes');
 
 const router = Router();
-
 
 const attachmentSchema = z.object({
   filename: z.string().min(1),
@@ -1060,8 +1059,31 @@ router.post('/official', authMiddleware, requireEditorAccess, requireAssemblyEnt
 
 const PMA_SUBMISSION_TYPE_VALUES = PMA_SUBMISSION_TYPES.map((t) => t.value) as [string, ...string[]];
 
+/**
+ * The seven device properties that decide whether a conditional eSTAR section
+ * is owed (estar-mapper DeviceFlagId). Unanswered ⇒ the section is
+ * UNDETERMINED, which blocks a claim of a submittable eSTAR; it is never read
+ * as "not applicable". No route accepted these before, so every conditional
+ * section was undetermined on every call and the assembler — which then
+ * ignored undetermined — reported official eSTARs it could not vouch for.
+ */
+const deviceFlagsSchema = z
+  .object({
+    combinationProduct: z.boolean().optional(),
+    softwareAiMl: z.boolean().optional(),
+    cyberDevice: z.boolean().optional(),
+    sterile: z.boolean().optional(),
+    implantable: z.boolean().optional(),
+    cliaWaived: z.boolean().optional(),
+    clinicalData: z.boolean().optional(),
+  })
+  .strict()
+  .optional();
+
 const assembleSchema = z.object({
   pathway: z.enum(['510k', 'de_novo', 'pma']).default('510k'),
+  /** Device properties deciding conditional-section applicability (see deviceFlagsSchema). */
+  deviceFlags: deviceFlagsSchema,
   /** PMA only: original vs a 21 CFR 814.39 supplement/notice (scopes the modules owed). */
   pmaSubmissionType: z.enum(PMA_SUBMISSION_TYPE_VALUES).optional(),
   variant: z.enum(ESTAR_VARIANTS).default('device'),
@@ -1097,28 +1119,23 @@ router.post('/assemble', authMiddleware, requireEditorAccess, requireAssemblyEnt
   try {
     const orgId = getOrganizationId(req);
     const { scope, source } = await resolveDeviceContentScope(orgId, { programId, documentId });
-    const [leaves, vendored, deviceFlags] = await Promise.all([
+    const [leaves, vendored] = await Promise.all([
       loadDeviceContentLeaves(orgId, scope),
       listVendoredTemplates(),
-      /* The intake answers. assembleDeviceSubmission reports a section whose
-         applicability is not established as UNDETERMINED and refuses to call
-         the package producible — correctly. With no caller ever supplying these
-         flags, all seven conditional sections stayed undetermined forever, so
-         `artifactKind` could never leave 'content-package-draft' no matter how
-         complete the content was. The client had already answered.
-
-         Keyed on the request's programId rather than the content scope, which
-         drops the program id when a filing's sections still live in the legacy
-         store. */
-      programId ? loadDeviceFlags(orgId, programId) : Promise.resolve(undefined),
     ]);
 
+    // The device questions the program answered at intake. Without them every
+    // conditional section is undetermined and no program can report a
+    // producible official eSTAR.
+    const anchorProgramId = scope.programId ?? programId;
+    const storedDeviceFlags = anchorProgramId ? await loadProgramDeviceFlags(orgId, anchorProgramId) : undefined;
     const result = assembleDeviceSubmission({
       pathway,
       pmaSubmissionType: pmaSubmissionType as (typeof PMA_SUBMISSION_TYPES)[number]['value'] | undefined,
       variant,
       leaves,
-      deviceFlags,
+      // A caller-stated answer wins; the program's intake answers are the fallback.
+      deviceFlags: validation.data.deviceFlags ?? storedDeviceFlags,
       presentTemplates: vendored.map((t) => t.fileName),
       market: market as never,
       environment: process.env.NODE_ENV === 'production' ? 'production' : 'staging',
@@ -1531,6 +1548,8 @@ const filingLeafSchema = z.object({
 const filingReadinessSchema = z.object({
   catalogKey: z.string().min(1),
   variant: z.enum(['device', 'ivd']).default('device'),
+  /** Device properties deciding conditional-section applicability (see deviceFlagsSchema). */
+  deviceFlags: deviceFlagsSchema,
   // Optional explicit registration (what-if); omit to use the org's persisted record.
   registration: z
     .object({
@@ -1605,22 +1624,6 @@ router.post('/filing-readiness', authMiddleware, async (req, res) => {
     const contentLeaves = content ? await loadDeviceContentLeaves(organizationId!, content.scope) : [];
     const effectiveLeaves = [...(leaves as FilingLeaf[]), ...contentLeaves];
 
-    /* The seven device questions the client answered at intake. Without them
-       every conditional section — sterilization, software, cybersecurity, CLIA
-       waiver, implant labelling, combination product, financial disclosure — is
-       of UNDETERMINED applicability, and readiness can never resolve. The
-       answers are stored; this reads them back.
-
-       Keyed on the REQUEST's programId, not the resolved content scope. The
-       flags describe the device, and the scope describes where its sections are
-       stored — a program whose content still lives in the legacy store resolves
-       to `legacy_org_wide` with no programId at all, and reading the flags off
-       that would silently skip them for exactly the filings that have not
-       migrated yet. `undefined` (no answers on file) leaves those sections
-       undetermined, which is the honest state. */
-    const deviceFlags =
-      organizationId && programId ? await loadDeviceFlags(organizationId, programId) : undefined;
-
     // Resolve official-template producibility from the single source of truth. The
     // PreSTAR family shares one template across variants; marketing pathways use
     // the device/ivd variant. Empty data ⇒ side-effect-free readiness probe.
@@ -1629,15 +1632,18 @@ router.post('/filing-readiness', authMiddleware, async (req, res) => {
     const templateVariant: EstarTemplateVariant = isPreStar ? 'prestar' : variant;
     const fill = await fillEstarSubmission({ type: entry.programType, variant: templateVariant, data: {} });
 
+    const readinessProgramId = content?.scope.programId ?? programId;
+    const storedDeviceFlags =
+      organizationId && readinessProgramId ? await loadProgramDeviceFlags(organizationId, readinessProgramId) : undefined;
     const result = assessEstarFilingReadiness({
       catalogKey: catalogKey as EstarCatalogKey,
       variant,
       registration,
       leaves: effectiveLeaves,
       qSubType,
+      deviceFlags: validation.data.deviceFlags ?? storedDeviceFlags,
       templateAvailable: fill.templateAvailable,
       fieldMapPopulated: fill.fieldMapPopulated,
-      deviceFlags,
     });
 
     if (!result) {

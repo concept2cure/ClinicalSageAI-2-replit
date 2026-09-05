@@ -126,6 +126,11 @@ vi.mock('../../server/auth', () => ({
 const ORG = 1;
 const OTHER_ORG = 2;
 const USER = 1;
+/** A device that is none of the seven conditional things (see estar-mapper DeviceFlagId). */
+const PLAIN_DEVICE = {
+  combinationProduct: false, softwareAiMl: false, cyberDevice: false, sterile: false,
+  implantable: false, cliaWaived: false, clinicalData: false,
+} as const;
 const OTHER_USER = 2;
 
 let jdb: JourneyDb;
@@ -356,29 +361,10 @@ describe('golden journey — device 510(k) eSTAR path', () => {
         programType: '510k',
         primaryAgency: 'FDA',
         indication: 'Continuous glucose monitoring in adults',
-        /*
-         * The seven device questions, answered at intake exactly as the
-         * new-project wizard sends them. They are not decoration: each one
-         * decides whether a statutory eSTAR section is owed, and until they are
-         * answered `mapToEstar` reports every conditional section — sterilization,
-         * software, cybersecurity, CLIA waiver, implant labelling, combination
-         * product, financial disclosure — as of UNDETERMINED applicability. A
-         * package with undetermined sections is honestly not producible, so a
-         * journey that skipped these questions could never reach
-         * artifactKind 'official-estar' no matter how complete its content was.
-         *
-         * This CGM is a non-sterile, non-implantable software device that
-         * submits clinical data, so three of the seven are answered yes and the
-         * rest resolve to not-applicable.
-         */
-        deviceClassification: {
-          /* Flags ONLY. The classification facts (product code, regulation
-             number, device class) are asserted ABSENT further down, where the
-             governed-source preview proves a blank field still names its home —
-             supplying them here would quietly satisfy those rows and retire the
-             assertion this journey exists to make. */
-          flags: ['softwareAiMl', 'cyberDevice', 'clinicalData'],
-        },
+        // The device questions, answered: none of the conditional sections
+        // apply. Left unanswered, the eSTAR mapper reports them as undetermined
+        // and the assembly below rightly refuses to call the set complete.
+        deviceClassification: { flags: [] },
       });
       expect(res.status, JSON.stringify(res.body)).toBe(201);
       programId = res.body.data.id;
@@ -519,23 +505,6 @@ describe('golden journey — device 510(k) eSTAR path', () => {
         { number: 'A4', title: 'Section A3', key: 'truthful_accurate_statement', category: 'truthful_accurate', content: 'Truthful and Accurate Statement per 21 CFR 807.87(k), signed by the responsible official.' },
         { number: 'A5', title: 'Section A4', key: 'k510_summary', category: '510k_summary', content: '510(k) Summary per 21 CFR 807.92 describing the device, its indications and the predicate comparison.' },
         { number: 'D4', title: 'Section A5', key: 'risk_management', category: 'risk_management', content: 'ISO 14971 risk management file: hazard analysis, risk controls and residual risk acceptability.' },
-        /*
-         * The three sections the intake ANSWERS make required. This device was
-         * declared software, cyber-connected and clinical-data-bearing at
-         * intake, so FDA's premarket software guidance, FD&C Act §524B and
-         * 21 CFR Part 54 each owe a section. Before the device flags were read
-         * back these three sat in `undetermined` and the package could never be
-         * called producible; now they are REQUIRED, and a required section that
-         * is not authored is honestly missing. Authoring them is what closes
-         * the loop the journey exists to prove: the client answered, the answer
-         * decided the required set, the content satisfied it.
-         *
-         * Neutral titles again — only the documentType rule can satisfy these
-         * slots, so a regression in that path surfaces here.
-         */
-        { number: 'D5', title: 'Section A6', key: 'software', category: 'software', content: 'Documentation Level assessment, software architecture, SRS/SDS, verification and validation records, and the SBOM for the GlucoTrack reader application.' },
-        { number: 'D6', title: 'Section A7', key: 'cybersecurity', category: 'cybersecurity', content: 'Threat model, security architecture views, vulnerability management plan and the postmarket update process for the connected transmitter.' },
-        { number: 'D7', title: 'Section A8', key: 'financial_disclosure', category: 'financial_disclosure', content: 'Form FDA 3454 certification for each clinical investigator in the accuracy study, with disclosure statements where certification was not available.' },
       ];
       for (const s of authored) await authorSection(s);
       const n = await jdb.pool.query(
@@ -550,6 +519,7 @@ describe('golden journey — device 510(k) eSTAR path', () => {
       const res = await asPrincipal(ORG, USER)(request(app).post('/api/510k/estar/assemble')).send({
         pathway: '510k',
         variant: 'device',
+        programId,
       });
       expect(res.status, JSON.stringify(res.body)).toBe(200);
       // The SE section exists as a row but carries no content, so it is not a
@@ -604,6 +574,8 @@ describe('golden journey — device 510(k) eSTAR path', () => {
       const res = await asPrincipal(ORG, USER)(request(app).post('/api/510k/estar/assemble')).send({
         pathway: '510k',
         variant: 'device',
+        programId,
+        deviceFlags: PLAIN_DEVICE,
       });
       expect(res.status).toBe(200);
       expect(res.body.estar.summary.missingRequired).toEqual([]);
@@ -612,22 +584,35 @@ describe('golden journey — device 510(k) eSTAR path', () => {
 
     // ── 5. The honest artifactKind with a complete content set ──────────────
     const assembled = await R.step('assemble-reports-official-estar-producible-from-real-content', async () => {
+      // Without the device's properties every conditional section is
+      // UNDETERMINED, and an undetermined section blocks the official-eSTAR
+      // claim; the assembler used to ignore that. Asserted below: the same call
+      // without deviceFlags is honestly a draft package.
+      const undetermined = await asPrincipal(ORG, USER)(request(app).post('/api/510k/estar/assemble')).send({
+        pathway: '510k',
+        variant: 'device',
+        market: 'us',
+      });
+      expect(undetermined.status).toBe(200);
+      expect(undetermined.body.artifactKind).toBe('content-package-draft');
+      expect(undetermined.body.blockers.join(' ')).toMatch(/applicability is not established/);
+
       const res = await asPrincipal(ORG, USER)(request(app).post('/api/510k/estar/assemble')).send({
         pathway: '510k',
         variant: 'device',
         market: 'us',
-        /* Program-scoped, because the verdict below is about THIS filing. The
-           device flags answered at intake live on the program, so an org-wide
-           call cannot resolve which conditional sections are owed and honestly
-           reports the package as a draft. */
+        // The program is the subject: it names the content scope and carries the
+        // device questions answered at intake; a caller may also state them, as
+        // this one does, and a stated answer wins.
         programId,
+        deviceFlags: PLAIN_DEVICE,
       });
       expect(res.status).toBe(200);
       // The decisive honesty output: every required section is authored AND the
       // official nIVD eSTAR v7.0 is vendored with a verified field map, so the
       // real official eSTAR is producible — asserted from the same deterministic
       // engine that used to (rightly) report 'content-package-draft'.
-      expect(res.body.artifactKind).toBe('official-estar');
+      expect(res.body.artifactKind, JSON.stringify(res.body.blockers)).toBe('official-estar');
       expect(res.body.canProduceOfficialEstar).toBe(true);
       expect(res.body.template.available).toBe(true);
       expect(res.body.template.requiredFileName).toBe('eSTAR-510k-non-ivd.pdf');

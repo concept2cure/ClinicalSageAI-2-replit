@@ -28,6 +28,7 @@ vi.mock('../C2CForm', () => ({
   // was mounted, so the record-identifiers / assemble / transmit wiring can each
   // be driven end to end.
   C2CForm: ({ config, onSubmit }: any) => {
+    (globalThis as any).__c2cFormConfig = config; // the mounted form, for picker assertions
     const values =
       config.title === 'Record regulatory identifiers'
         ? { packageId: '77', applicationNumber: 'IND123456', applicantId: 'DUNS-123456789', applicantName: 'Acme Biologics Inc', reason: 'Recording the IND number assigned by CDER' }
@@ -319,8 +320,12 @@ describe('GatewayTransmittals — real dispatch layer', () => {
     fireEvent.click(screen.getByTestId('form-submit'));
     const card = await screen.findByRole('region', { name: 'Structural gate refusal' });
     expect(card.textContent).toMatch(/No assembled bundle/);
-    expect(card.textContent).toMatch(/The refusal carried no findings\./);
+    // The absence of an itemized list is stated as exactly that — never as
+    // "no findings", which reads as an assessment result the empty array
+    // cannot evidence (the empty-state gate flags that phrasing).
+    expect(card.textContent).toMatch(/did not include an itemized findings list/);
     expect(card.textContent).not.toMatch(/recorded on the stored bundle/);
+    expect(card.textContent).not.toMatch(/no findings/i);
   });
 
   it('says when the findings for an assembled-with-errors bundle could not be loaded, instead of an empty table under an error count', async () => {
@@ -339,6 +344,54 @@ describe('GatewayTransmittals — real dispatch layer', () => {
     expect(card.textContent).toMatch(/3 error-severity findings/);
     expect(card.textContent).toMatch(/could not be loaded \(HTTP 409/);
     expect(card.querySelector('table')).toBeNull();
+    // The badge does not read "0 findings" beside a sentence counting three.
+    expect(card.querySelector('.s')?.textContent).toBe('findings unavailable');
+  });
+
+  it('a lost ledger entry on a SUCCESSFUL transmission is announced as an alert, never an unqualified success', async () => {
+    apiRequest.mockImplementation(async (method: string, url: string) => {
+      if (method === 'GET' && url === '/api/mdx/gateways') return env(GATEWAYS);
+      if (method === 'GET' && url === '/api/mdx/gateways/transmittals') return env(LOG);
+      if (method === 'POST' && url.endsWith('/transmit')) {
+        return env({
+          transmittalId: 4242, transmissionId: 'ESG-NEW-9', status: 'received', ledgerWriteFailed: true,
+          ledgerWarning: 'The transmission completed, but its governed-action ledger entry could not be written. Record this transmittal manually and raise it with your administrator before relying on the audit trail.',
+        }, 201);
+      }
+      return env(null);
+    });
+    render(<GatewayTransmittals {...props()} />);
+    await screen.findByText('FDA ESG');
+    fireEvent.click(screen.getByRole('button', { name: /^Transmit$/ }));
+    fireEvent.click(screen.getByTestId('form-submit'));
+    const toast = await screen.findByText(/gateway ref ESG-NEW-9.*ledger entry could not be written/);
+    expect(toast.closest('[role="alert"]')).not.toBeNull();
+  });
+
+  it('recording identifiers removes only the identifiers finding; an unrelated finding stays on the card', async () => {
+    apiRequest.mockImplementation(async (method: string, url: string) => {
+      if (method === 'GET' && url === '/api/mdx/gateways') return env(GATEWAYS);
+      if (method === 'GET' && url === '/api/mdx/gateways/transmittals') return env(LOG);
+      if (method === 'POST' && url.endsWith('/assemble')) return env({ packageId: 'pkg_77', bundle: { sha256: 'f'.repeat(64), leafCount: 2, validation: { errorCount: 2, warningCount: 0, infoCount: 0 } } });
+      if (method === 'POST' && url.endsWith('/preflight')) return env({ findings: [
+        { severity: 'error', ruleId: 'REGULATORY-IDENTIFIER-MISSING', message: 'missing regulatory.applicationNumber' },
+        { severity: 'error', ruleId: 'LEAF-UNPLACED', message: 'Misc (misc-attachment): no placeable CTD section is declared.' },
+      ] });
+      if (method === 'PUT') return env({ packageId: 'pkg_77', changed: true, staleBundleCleared: true, ledgerWriteFailed: false });
+      return env(null);
+    });
+    render(<GatewayTransmittals {...props()} />);
+    await screen.findByText('FDA ESG');
+    fireEvent.click(screen.getByRole('button', { name: /Assemble bundle/ }));
+    fireEvent.click(screen.getByTestId('form-submit'));
+    const card = await screen.findByRole('region', { name: 'Packager refusal' });
+    fireEvent.click(card.querySelector('button')!);
+    fireEvent.click(screen.getByTestId('form-submit'));
+    await screen.findByText(/Identifiers recorded on package pkg_77/);
+    const after = screen.getByRole('region', { name: 'Packager refusal' });
+    expect(after.textContent).toMatch(/The findings below remain from the last assembly and still stand/);
+    expect(after.textContent).toMatch(/LEAF-UNPLACED/);
+    expect(after.textContent).not.toMatch(/REGULATORY-IDENTIFIER-MISSING/);
   });
 
   it('recording identifiers from the card’s own button clears the card it came from, and a lost ledger entry is announced as an alert', async () => {
@@ -360,6 +413,40 @@ describe('GatewayTransmittals — real dispatch layer', () => {
     const toast = await screen.findByText(/The governance ledger could not be written/);
     expect(toast.closest('[role="alert"]')).not.toBeNull();
     expect(screen.queryByRole('region', { name: 'Packager refusal' })).toBeNull();
+  });
+
+  it('offers the org’s packages as ONE picker across transmit, assemble and identifiers, and falls back to the numeric id — saying so — when the list cannot be loaded', async () => {
+    const PACKAGES = [{ id: 77, packageId: 'pkg_77', title: 'IND 123456 initial', status: 'locked', packageFamily: 'ind' }];
+    apiRequest.mockImplementation(async (method: string, url: string) => {
+      if (method === 'GET' && url === '/api/mdx/gateways') return env(GATEWAYS);
+      if (method === 'GET' && url === '/api/mdx/gateways/transmittals') return env(LOG);
+      if (method === 'GET' && url === '/api/submission-ops/packages') return env(PACKAGES);
+      return env(null);
+    });
+    render(<GatewayTransmittals {...props()} />);
+    await screen.findByText('FDA ESG');
+    for (const button of [/Assemble bundle/, /Record identifiers/, /^Transmit$/]) {
+      fireEvent.click(screen.getByRole('button', { name: button }));
+      const field = (globalThis as any).__c2cFormConfig.fields.find((f: any) => f.key === 'packageId');
+      expect(field.type, String(button)).toBe('select');
+      expect(field.options).toEqual([{ value: '77', label: '#77 · IND 123456 initial · locked' }]);
+      fireEvent.keyDown(document, { key: 'Escape' }); // the mock ignores it; the next click re-mounts a form
+    }
+    cleanup();
+
+    // The list fails: the forms fall back to the numeric id and say the list could not be loaded.
+    apiRequest.mockImplementation(async (method: string, url: string) => {
+      if (method === 'GET' && url === '/api/mdx/gateways') return env(GATEWAYS);
+      if (method === 'GET' && url === '/api/mdx/gateways/transmittals') return env(LOG);
+      if (method === 'GET' && url === '/api/submission-ops/packages') return { ok: false, status: 500, json: async () => ({ error: 'db down' }) } as Response;
+      return env(null);
+    });
+    render(<GatewayTransmittals {...props()} />);
+    await screen.findByText('FDA ESG');
+    fireEvent.click(screen.getByRole('button', { name: /Assemble bundle/ }));
+    const fallback = (globalThis as any).__c2cFormConfig.fields.find((f: any) => f.key === 'packageId');
+    expect(fallback.type).toBe('number');
+    expect(fallback.desc).toMatch(/could not be loaded; enter the numeric package id/);
   });
 
   it('polls the live gateway status for a transmittal', async () => {

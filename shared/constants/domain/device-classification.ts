@@ -131,8 +131,11 @@ export function normalizeDeviceClassification(raw: unknown): {
   if (intendedUse) out.intendedUse = intendedUse.slice(0, 4000);
 
   if (Array.isArray(r.flags)) {
-    const flags = [...new Set(r.flags.filter((f): f is DeviceFlagId => typeof f === 'string' && FLAG_IDS.has(f)))];
-    if (flags.length) out.flags = flags;
+    // An empty list is an ANSWER — the questions were asked and none apply —
+    // and it is kept as one. Dropping it made "none apply" indistinguishable
+    // from "never asked", and the eSTAR mapper treats the latter as sections of
+    // undetermined applicability that block filing readiness.
+    out.flags = [...new Set(r.flags.filter((f): f is DeviceFlagId => typeof f === 'string' && FLAG_IDS.has(f)))];
   }
 
   return { value: out, rejected };

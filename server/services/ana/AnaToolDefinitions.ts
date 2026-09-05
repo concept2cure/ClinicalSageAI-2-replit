@@ -27,13 +27,15 @@ import { GET_BIOTECH_PROGRAM_STATUS } from './biotech-program.js';
 // audit → review → placement → provenance → readiness) over concept2cure_artifacts.
 // Handler registered from document-spine.ts via the inject-and-sibling pattern.
 import { COMMIT_DOCUMENT_REVISION } from './document-spine.js';
-// Project-folder discovery + whole-document read + comprehension record.
-// Handlers registered from document-catalog-tools.ts (inject-and-sibling).
+// Project-folder discovery + whole-document read + comprehension record +
+// semantic catalog search. Handlers registered from document-catalog-tools.ts
+// (inject-and-sibling).
 import {
   LIST_PROJECT_DOCUMENTS,
   READ_PROJECT_DOCUMENT,
   CATALOG_PROJECT_DOCUMENT,
-} from './document-catalog-tools.js';
+  SEARCH_PROJECT_DOCUMENTS,
+} from './document-catalog-tool-defs.js';
 // BLA biologics + CTD nonclinical/clinical tool definitions extracted to their
 // own module (decomposition tranche 2). Imported so the enabled-tools array can
 // reference them exactly as before.
@@ -853,7 +855,7 @@ export const GENERATE_DOCUMENT: AnaTool = {
       document_type: {
         type: 'string',
         description: 'Type of document to generate',
-        enum: ['csr', 'ctd_module1', 'ctd_module2', 'ctd_module3', 'ctd_module4', 'ctd_module5', 'cer', '510k', 'pma', 'protocol', 'sap', 'ib', 'icsr', 'ectd_backbone'],
+        enum: ['csr', 'ctd_module1', 'ctd_module2', 'ctd_module3', 'ctd_module4', 'ctd_module5', 'cer', '510k', 'pma', 'protocol', 'sap', 'ib'],
       },
       title: {
         type: 'string',
@@ -1278,6 +1280,7 @@ export const PACKAGE_ECTD_FOR_REGION: AnaTool = {
       application_id:  { type: 'string', description: 'IND/NDA number (FDA), procedure number (EMA), application number (PMDA), dossier id (Health Canada).' },
       sequence:        { type: 'string', description: '4-digit submission sequence, e.g. 0001.' },
       submission_type: { type: 'string', description: 'original | amendment | response | annual_report | safety.' },
+      application_type: { type: 'string', description: 'REQUIRED for region "fda": what is being filed — nda | snda | anda | bla | ind | dmf. The us-regional backbone carries this as the application-type attribute, and it is a statement about the filing, so the packager refuses to guess it. Device pathways (510k, de_novo, pma) have no eCTD Module 1 code and are not filed on this backbone.' },
       sponsor_id:      { type: 'string', description: 'DUNS / EMA org id / PMDA applicant id.' },
       sponsor_name:    { type: 'string' },
       product_name:    { type: 'string' },
@@ -2126,6 +2129,7 @@ export const ALL_ANA_TOOLS_RAW: AnaTool[] = [
   LIST_PROJECT_DOCUMENTS,
   READ_PROJECT_DOCUMENT,
   CATALOG_PROJECT_DOCUMENT,
+  SEARCH_PROJECT_DOCUMENTS,
   CHECK_DOSSIER_CONSISTENCY,
   CHECK_NUMERICAL_INTEGRITY,
   COMPUTE_SAMPLE_SIZE,

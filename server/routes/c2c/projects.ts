@@ -598,7 +598,7 @@ router.post('/', async (req: Request, res: Response) => {
        required-content model rather than describing the product. */
     ...(dc.reviewPanel ? { reviewPanel: dc.reviewPanel } : {}),
     ...(dc.regulationNumber ? { regulationNumber: dc.regulationNumber } : {}),
-    ...(dc.flags?.length ? { deviceFlags: dc.flags } : {}),
+    ...(Array.isArray(dc.flags) ? { deviceFlags: dc.flags } : {}),
   });
   const createdBy = userId != null ? String(userId) : 'system';
 
