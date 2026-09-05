@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-05T09:01:21.133Z",
+  "generatedAt": "2026-09-05T09:06:19.178Z",
   "git": {
-    "sha": "ab3112861685de1fbe1bc95d188572321e550884",
+    "sha": "36f7a4af9b0152c04ff03a500aaf95166994802d",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -533,6 +533,15 @@
         ]
       },
       {
+        "basename": "conversations",
+        "count": 3,
+        "paths": [
+          "server/routes/c2c/conversations.ts",
+          "ui_kits/mdx/data/conversations.js",
+          "ui_kits/mdx/surfaces/Conversations.jsx"
+        ]
+      },
+      {
         "basename": "engineering",
         "count": 3,
         "paths": [
@@ -997,14 +1006,6 @@
         "paths": [
           "server/routes/conversation-health.ts",
           "server/services/conversation-health.ts"
-        ]
-      },
-      {
-        "basename": "conversations",
-        "count": 2,
-        "paths": [
-          "ui_kits/mdx/data/conversations.js",
-          "ui_kits/mdx/surfaces/Conversations.jsx"
         ]
       },
       {
@@ -1980,7 +1981,7 @@
       },
       {
         "file": "server/routes/concept2cure.ts",
-        "bytes": 521487
+        "bytes": 507974
       },
       {
         "file": "server/services/ind/ctd/authoring-guidance.ts",
@@ -2138,7 +2139,7 @@
       },
       {
         "file": "server/routes/concept2cure.ts",
-        "lines": 13899
+        "lines": 13489
       },
       {
         "file": "server/routes/authoring.router.ts",
@@ -2498,7 +2499,7 @@
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
-      "duplicateGroups": 401,
+      "duplicateGroups": 402,
       "largeByBytes": 29,
       "largeByLines": 75
     },
