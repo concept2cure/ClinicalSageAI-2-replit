@@ -106,6 +106,10 @@ vi.mock('../../server/services/auditService', () => ({
 vi.mock('../../server/services/pathway-engines/estar/estar-content-leaves', () => ({
   loadDeviceContentLeaves: mockLoadContentLeaves,
   loadAuthoredDeviceSections: mockLoadAuthoredSections,
+  /* The seven intake device answers. These PMA cases assert the module scoring,
+     not the conditional-section resolution, so the program here has none on
+     file — which the route reads as "not asked" and leaves undetermined. */
+  loadDeviceFlags: async () => undefined,
   resolveDeviceContentScope: async (_org: number, o: { programId?: string; documentId?: number }) =>
     o.programId
       ? { scope: { programId: o.programId }, source: 'governed_program', docType: scopeState.docType }

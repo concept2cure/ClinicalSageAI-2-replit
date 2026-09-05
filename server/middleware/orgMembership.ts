@@ -418,3 +418,80 @@ export async function checkOrgMembership(
   }
   return result;
 }
+
+/* ── The governed-write role gate ─────────────────────────────────────────── */
+
+/**
+ * Organization roles permitted to WRITE governed regulatory data — the device
+ * profile, the eSTAR registration, the CER/510(k) authoring and export paths.
+ * Everything an FDA submission is built from.
+ *
+ * THE VOCABULARY IS `organization_users.role`, AND ONLY THAT. `req.userRole` is
+ * set in exactly two places (server/auth.ts and
+ * middleware/establishRequestTenantScope.ts) and both resolve it from that
+ * column, whose documented values are `admin | manager | member | viewer` with
+ * a default of `member`. So `viewer` is the one org role this set excludes, and
+ * it is the whole line: a viewer reads, everyone else in the organization can
+ * work.
+ *
+ * WHAT THIS REPLACED, AND WHY IT MATTERED. Four route files each carried a
+ * private copy of this gate admitting `{admin, owner, editor, super_admin}`.
+ * Of those four names only `admin` is an organization role — `owner` and
+ * `super_admin` belong to the separate PLATFORM role vocabulary, and `editor`
+ * appears in no vocabulary in this repository at all. The set therefore
+ * resolved, in practice, to admin-only: `manager` was refused despite sitting
+ * directly above `member`, and `member` — what SSO provisioning assigns
+ * (server/routes/sso.ts) — was refused too. Every user an enterprise client
+ * onboarded through SSO was 403'd out of the entire eSTAR workflow, on a gate
+ * that read as though it admitted four roles.
+ *
+ * `owner` and `super_admin` are KEPT deliberately. They cannot appear in
+ * `organization_users.role`, so keeping them widens nothing; removing them
+ * could lock out a platform administrator if any path ever does surface a
+ * platform role here. `editor` is dropped: it is reachable from nowhere.
+ */
+export const GOVERNED_WRITE_ROLES: ReadonlySet<string> = new Set([
+  'admin',
+  'manager',
+  'member',
+  // Platform roles — unreachable through organization_users.role, kept so that
+  // narrowing this set can never be what locks a platform admin out.
+  'owner',
+  'super_admin',
+]);
+
+/**
+ * Guard for a route that writes governed regulatory data: the caller must hold
+ * a writing role AND a usable numeric organization context, which is attached
+ * to `req.resolvedOrganizationId` for the handler.
+ *
+ * ONE implementation, because there were three. The four copies this replaces
+ * had already drifted in ways that mattered rather than merely looked untidy:
+ * `cerv2-ai-routes` ran `Number(orgId)` with no finiteness check, so a
+ * malformed context reached the handler as `NaN` instead of a 400; and
+ * `cerv2-export-routes` reversed the precedence to `req.tenantId ||
+ * req.tenantContext?.organizationId`, reading a different source than its three
+ * siblings for the same decision. A permission rule that exists four times is a
+ * permission rule with four answers.
+ *
+ * Order is deliberate: role first, then organization context. A caller who may
+ * not write is told so without the route disclosing whether their org context
+ * would have resolved.
+ */
+export function requireEditorAccess(req: any, res: any, next: () => void) {
+  const role = String(req.userRole || req.user?.role || '').toLowerCase();
+  if (!role || !GOVERNED_WRITE_ROLES.has(role)) {
+    return res.status(403).json({ error: 'Insufficient permissions' });
+  }
+  // Middleware-derived sources only — never a client-supplied header.
+  const orgId = req.tenantContext?.organizationId ?? req.user?.organizationId ?? req.tenantId;
+  if (!orgId) {
+    return res.status(400).json({ error: 'Organization context required' });
+  }
+  const numericOrgId = parseFiniteInt(orgId);
+  if (numericOrgId === null || numericOrgId <= 0) {
+    return res.status(400).json({ error: 'Valid numeric organization context required' });
+  }
+  req.resolvedOrganizationId = numericOrgId;
+  return next();
+}

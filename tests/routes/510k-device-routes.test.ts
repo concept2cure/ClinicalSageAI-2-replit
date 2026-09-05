@@ -138,14 +138,14 @@ const PROGRAM = {
 /**
  * An EDITOR principal with a real numeric actor id — what the platform's
  * authentication middleware attaches. Both matter to the governed profile
- * WRITE: it is editor+ only, and it is audited against the session's actor
+ * WRITE: it is role-gated (GOVERNED_WRITE_ROLES) and audited against the session's actor
  * (no actor ⇒ refused rather than audited against an invented id).
  */
 function makeReq(overrides: Record<string, unknown> = {}) {
   const req = createMockRequest(overrides) as any;
-  req.user = { id: 7, organizationId: 2, role: 'editor' };
+  req.user = { id: 7, organizationId: 2, role: 'manager' };
   req.userId = 7;
-  req.userRole = 'editor';
+  req.userRole = 'manager';
   return req;
 }
 
@@ -243,8 +243,17 @@ describe('510(k) device profile + openFDA lookups', () => {
  * SUBMISSION. It used to carry only `requireEntitlement`, which is a
  * subscription-TIER check and a no-op unless ENTITLEMENTS_ENFORCE is set — so
  * any authenticated member of the org, a read-only viewer included, could
- * rewrite them, and nothing recorded who did. The sibling governed write
- * (PUT /api/510k/estar/registration) is editor+ and audits every change.
+ * rewrite them, and nothing recorded who did.
+ *
+ * WHO MAY WRITE is now one decision in one place: GOVERNED_WRITE_ROLES in
+ * middleware/orgMembership.ts. The organization vocabulary is
+ * `admin | manager | member | viewer`, so `viewer` is the single org role
+ * refused here — a viewer reads, everyone else in the organization can work.
+ * The four private copies this route used to carry admitted
+ * `{admin, owner, editor, super_admin}`, of which only `admin` is an
+ * organization role at all: `manager` was refused despite sitting above
+ * `member`, and `member` — what SSO provisioning assigns — was refused too, so
+ * every SSO-onboarded user was locked out of the whole workflow.
  */
 describe('PUT /profile — the governed write is role-gated and audited', () => {
   beforeEach(() => {
@@ -257,7 +266,7 @@ describe('PUT /profile — the governed write is role-gated and audited', () => 
     expect(names.slice(0, 2)).toEqual(['requireEditorAccess', 'requireEntitlementMiddleware']);
   });
 
-  it.each(['viewer', 'member', 'reviewer', ''])(
+  it.each(['viewer', 'reviewer', 'guest', ''])(
     'a %s is refused 403 and NO row is updated and NO audit row is written',
     async (role) => {
       const req = makeChainReq(role, {
@@ -275,7 +284,7 @@ describe('PUT /profile — the governed write is role-gated and audited', () => 
     },
   );
 
-  it.each(['editor', 'admin', 'owner', 'super_admin'])('an %s succeeds', async (role) => {
+  it.each(['admin', 'manager', 'member', 'owner', 'super_admin'])('a %s succeeds', async (role) => {
     const req = makeChainReq(role, { query: { ident: 'BX-204' }, body: { commonName: 'CGM' } });
     const res = createMockResponse() as any;
 
@@ -286,7 +295,7 @@ describe('PUT /profile — the governed write is role-gated and audited', () => 
   });
 
   it('a successful patch writes exactly ONE audit row naming the changed fields', async () => {
-    const req = makeChainReq('editor', {
+    const req = makeChainReq('manager', {
       query: { ident: 'BX-204' },
       body: { commonName: 'Continuous glucose monitor', regulationNumber: '21 CFR 862.1355' },
     });
@@ -307,7 +316,7 @@ describe('PUT /profile — the governed write is role-gated and audited', () => 
   });
 
   it('a rejected patch writes NO audit row', async () => {
-    const req = makeChainReq('editor', { query: { ident: 'BX-204' }, body: { deviceClass: 'IV' } });
+    const req = makeChainReq('manager', { query: { ident: 'BX-204' }, body: { deviceClass: 'IV' } });
     const res = createMockResponse() as any;
 
     await runChain('/profile', 'put')(req, res);
@@ -319,7 +328,7 @@ describe('PUT /profile — the governed write is role-gated and audited', () => 
 
   it('a program outside the caller org writes no audit row either', async () => {
     mockSelectRows.mockReturnValue([]);
-    const req = makeChainReq('editor', { query: { ident: 'BX-204' }, body: { commonName: 'CGM' } });
+    const req = makeChainReq('manager', { query: { ident: 'BX-204' }, body: { commonName: 'CGM' } });
     const res = createMockResponse() as any;
 
     await runChain('/profile', 'put')(req, res);
@@ -329,7 +338,7 @@ describe('PUT /profile — the governed write is role-gated and audited', () => 
   });
 
   it('refuses the write when no actor resolves — never audits an invented id', async () => {
-    const req = makeChainReq('editor', { query: { ident: 'BX-204' }, body: { commonName: 'CGM' } });
+    const req = makeChainReq('manager', { query: { ident: 'BX-204' }, body: { commonName: 'CGM' } });
     delete req.userId;
     delete req.user.id;
     const res = createMockResponse() as any;

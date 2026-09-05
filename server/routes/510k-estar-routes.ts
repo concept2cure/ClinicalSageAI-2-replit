@@ -61,6 +61,7 @@ import { requestDb } from '../db/requestDb';
 import { fda510kProjects } from '../../shared/schema';
 import { regulatoryPrograms } from '../../shared/schema/programs';
 import { loadProgramDeviceFlags } from '../services/pathway-engines/estar/program-device-flags';
+import { requireEditorAccess } from '../middleware/orgMembership';
 import { isMissingAnchorColumn, resolveProgramProjectAnchor } from '../services/c2c/program-project-anchor';
 import {
   getEstarRegistration,
@@ -94,26 +95,6 @@ import { validateLeavesAgainstMarketSpec, type LeafFileDescriptor } from '../ser
 const logger = createScopedLogger('510k-estar-routes');
 
 const router = Router();
-
-const allowedRoles = new Set(['admin', 'owner', 'editor', 'super_admin']);
-const requireEditorAccess = (req: any, res: any, next: () => void) => {
-  const role = String(req.userRole || req.user?.role || '').toLowerCase();
-  if (!role || !allowedRoles.has(role)) {
-    return res.status(403).json({ error: 'Insufficient permissions' });
-  }
-  const tenantOrg = req.tenantContext?.organizationId;
-  const userOrg = req.user?.organizationId || req.tenantId;
-  const orgId = tenantOrg || userOrg;
-  if (!orgId) {
-    return res.status(400).json({ error: 'Organization context required' });
-  }
-  const numericOrgId = Number(orgId);
-  if (!Number.isFinite(numericOrgId) || numericOrgId <= 0) {
-    return res.status(400).json({ error: 'Valid numeric organization context required' });
-  }
-  req.resolvedOrganizationId = numericOrgId;
-  return next();
-};
 
 const attachmentSchema = z.object({
   filename: z.string().min(1),
