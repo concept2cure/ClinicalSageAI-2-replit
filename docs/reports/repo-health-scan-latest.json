@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-05T19:25:29.114Z",
+  "generatedAt": "2026-09-05T19:41:33.379Z",
   "git": {
-    "sha": "437bae987718398594924cd187793b3b1322dae7",
+    "sha": "d01632dec30ea170af571c476591c66ee88760cc",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2017,7 +2017,7 @@
       },
       {
         "file": "server/routes/c2c/artifacts.ts",
-        "bytes": 176730
+        "bytes": 176975
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
@@ -2175,7 +2175,7 @@
       },
       {
         "file": "server/routes/c2c/artifacts.ts",
-        "lines": 4610
+        "lines": 4614
       },
       {
         "file": "server/storage.ts",
