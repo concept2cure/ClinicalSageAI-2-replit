@@ -261,6 +261,20 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
     () => (receiptDate ? indlClock(receiptDate.toISOString()) : null),
     [receiptDate],
   );
+  /**
+   * What the clock is computed FROM. 21 CFR 312.40(b) starts the 30-day period
+   * at FDA's RECEIPT of the IND; the only date this surface has is the
+   * program's target submission date, which is a plan. A target date more than
+   * 30 days in the past therefore produced status 'safe_to_proceed', a
+   * good-tone chip, and the clock's own sentence — "clinical investigations may
+   * proceed (21 CFR 312.40(b))" — for an IND the FDA may never have received.
+   * That sentence authorises dosing the first human subject; it may only be
+   * said over a recorded receipt. Until the checklist carries one, the clock is
+   * a projection and says so in every register it speaks in.
+   */
+  // Typed as boolean, not narrowed to `false`: the receipt-backed branches stay
+  // live code for the day the checklist carries a recorded FDA receipt date.
+  const clockFromReceipt: boolean = false;
   const clearDate = useMemo(
     () => (clock ? new Date(clock.thirtyDayDate) : null),
     [clock],
@@ -308,8 +322,11 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
             `form(s) done. ${R.ready ? 'Assessed READY to file.' : 'NOT yet ready to file.'}`
           : 'The checklist held nothing to evaluate, so filing readiness has NOT been assessed — this is not a zero-percent verdict.') +
         (clock
-          ? ` The 30-day clock: ${clock.status}, ${clock.daysUntilThirtyDay} day(s) to the 30-day date, ` +
-            `${clock.safeToProceed ? 'safe to proceed' : clock.onHold ? 'ON HOLD' : 'not yet cleared'}.`
+          ? clockFromReceipt
+            ? ` The 30-day clock: ${clock.status}, ${clock.daysUntilThirtyDay} day(s) to the 30-day date, ` +
+              `${clock.safeToProceed ? 'safe to proceed' : clock.onHold ? 'ON HOLD' : 'not yet cleared'}.`
+            : ` FDA receipt has NOT been recorded, so the 312.40(b) 30-day period has not started; ` +
+              `${clock.daysUntilThirtyDay} day(s) is a projection from the program's target submission date, not a clearance.`
           : ' No target submission date is recorded, so no 30-day clock is projected.'),
       facts: {
         openTab: tab,
@@ -336,9 +353,19 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
         })),
         thirtyDayClock: clock
           ? {
-              status: clock.status, thirtyDayDate: clock.thirtyDayDate,
-              daysUntil: clock.daysUntilThirtyDay, safeToProceed: clock.safeToProceed,
-              onHold: clock.onHold, rationale: clock.rationale,
+              // `basis` is the load-bearing field: over a projection AnA must
+              // not be able to tell anyone they are clear to proceed, so
+              // safeToProceed is null — unknown — rather than the projection's
+              // own true.
+              basis: clockFromReceipt ? 'fda-receipt' : 'projection-from-target-submission-date',
+              status: clockFromReceipt ? clock.status : 'not_started',
+              thirtyDayDate: clock.thirtyDayDate,
+              daysUntil: clock.daysUntilThirtyDay,
+              safeToProceed: clockFromReceipt ? clock.safeToProceed : null,
+              onHold: clockFromReceipt ? clock.onHold : null,
+              rationale: clockFromReceipt
+                ? clock.rationale
+                : 'FDA receipt has not been recorded, so the 21 CFR 312.40(b) 30-day period has not started; the date is projected from the program’s target submission date.',
             }
           : null,
         targetSubmissionDateRecorded: Boolean(targetReceiptDate),
@@ -350,7 +377,7 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
         'Switch between the file-the-IND and lifecycle tabs',
       ],
     };
-  }, [loading, error, checklist, tab, R, forms, sections, clock, targetReceiptDate]);
+  }, [loading, error, checklist, tab, R, forms, sections, clock, clockFromReceipt, targetReceiptDate]);
   usePublishSurfaceContext('ind-checklist', anaContext);
 
   /* Cover-letter exemplar — the first deliverable wired end-to-end (POST
@@ -454,7 +481,10 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
   const drug = prog.drugName ?? prog.code;
   // Honest chip: with no recorded target date there is no clock state to name.
   const cst = clock
-    ? INDL_CLOCK_STATUS[clock.status] || { label: '--', tone: 'info' }
+    ? clockFromReceipt
+      ? INDL_CLOCK_STATUS[clock.status] || { label: '--', tone: 'info' }
+      // A projection never wears the cleared-to-proceed chip.
+      : { label: 'Projected from target date', tone: 'info' }
     : { label: 'No target date', tone: 'info' };
   const formsDone = forms.filter((f) => f.done).length;
   const deliverables = INDL_DELIVERABLES.filter((d) => d.group === tab);
@@ -1204,7 +1234,7 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
             </div>
             <div className="indl-clock-big">
               {clock ? clock.daysUntilThirtyDay : '--'}
-              <span>days to safe-to-proceed</span>
+              <span>{clockFromReceipt ? 'days to safe-to-proceed' : 'days, projected from the target date'}</span>
             </div>
             <div className="indl-clock-rows">
               <div>
@@ -1222,13 +1252,16 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
             </div>
             <p className="indl-clock-note">
               {clock ? (
-                <>
-                  {clock.rationale}{' '}
+                clockFromReceipt ? (
+                  <>{clock.rationale}</>
+                ) : (
                   <span className="indl-proj">
-                    Projection from the program's recorded target submission
-                    date, until FDA receipt.
+                    FDA receipt has not been recorded for this IND, so the
+                    312.40(b) 30-day period has not started. The date above is
+                    projected from the program's target submission date — it is
+                    a plan, not a clearance to proceed.
                   </span>
-                </>
+                )
               ) : (
                 <>
                   No target submission date is recorded for this program, so
