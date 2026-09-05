@@ -63,6 +63,29 @@ COPY --from=builder /app/migrations ./migrations
 COPY --from=builder /app/db/migrations ./db/migrations
 COPY --from=builder /app/scripts/db ./scripts/db
 
+# Vendored agency artifacts, read from disk at RUNTIME by cwd-relative
+# drop-points that all resolve under `assets/`:
+#
+#   assets/estar-templates/        the official FDA eSTAR PDFs, pinned by their
+#                                  checksums.txt — estar-template-registry.ts
+#   assets/ectd-dtd/               eCTD DTDs — ectd/dtd-bundler.ts
+#   assets/ectd-schema/            eCTD schemas — ectd/schema-bundler.ts
+#   assets/fda-recognized-standards/  FDA's recognition list
+#
+# Without this the directory does not exist in the image, `listVendoredTemplates`
+# returns [] and every produce answers 422 with "the official template is not
+# vendored. Place it in assets/estar-templates/" — an instruction the client
+# cannot act on, because it names a path inside a container they do not have.
+# The whole official-eSTAR path was dead in the deployed product and worked only
+# from a repo checkout. The escape hatches (ESTAR_TEMPLATE_DIR, ECTD_DTD_DIR,
+# ECTD_SCHEMA_DIR) are set by no deployment surface — not deploy-aws.yml, not the
+# ECS task definition, not either compose file — so nothing was covering for it.
+#
+# 11 MB, almost all of it the two eSTAR PDFs. They are committed and pinned;
+# .dockerignore excludes only *.md here, so the PDFs and checksums.txt both ship
+# and template integrity still verifies at runtime.
+COPY --from=builder /app/assets ./assets
+
 # Create non-root user for security
 RUN groupadd -r appuser && useradd -r -g appuser -d /app appuser && chown -R appuser:appuser /app
 
