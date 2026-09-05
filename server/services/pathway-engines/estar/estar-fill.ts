@@ -93,29 +93,20 @@ async function resolveTemplateBytes(
 }
 
 /**
- * Fill the official FDA eSTAR PDF for any eSTAR program submission — 510(k), De
- * Novo, PMA (device or IVD), or a PreSTAR request (Q-Sub / IDE / 513(g)). Honest
- * fail-closed: returns `filled: false` with blockers when the template or a
- * verified field map is missing — never a fabricated artifact.
+ * Resolve the template and the field map, and record on `base` every reason the
+ * descriptor cannot produce. Returns the pair when both are usable, or null when
+ * a blocker was recorded — the caller returns `base` on null.
+ *
+ * Split out of {@link fillEstarSubmission} because these are the PRE-conditions,
+ * and reading them together is the only way to see that a missing template, a
+ * swapped one and an unpopulated map are three distinct refusals with three
+ * distinct remedies, not one generic failure.
  */
-export async function fillEstarSubmission(input: FillEstarInput): Promise<FillEstarResult> {
-  const descriptor = descriptorFor(input.type, input.variant);
-  const base: FillEstarResult = {
-    descriptorId: descriptor?.id ?? null,
-    templateAvailable: false,
-    fieldMapPopulated: false,
-    filled: false,
-    filledFields: [],
-    skippedFields: [],
-    warnings: [],
-    blockers: [],
-  };
-
-  if (!descriptor) {
-    base.blockers.push(`No eSTAR template descriptor for ${input.type}/${input.variant}.`);
-    return base;
-  }
-
+async function resolveProducibleInputs(
+  input: FillEstarInput,
+  descriptor: { id: string; expectedFileName: string },
+  base: FillEstarResult,
+): Promise<{ templateBytes: Uint8Array | Buffer; fieldMap: OfficialPdfFieldMap } | null> {
   const { bytes: templateBytes, integrity } = await resolveTemplateBytes(
     input,
     descriptor.expectedFileName,
@@ -161,7 +152,38 @@ export async function fillEstarSubmission(input: FillEstarInput): Promise<FillEs
     );
   }
 
-  if (base.blockers.length > 0) return base;
+
+  if (base.blockers.length > 0) return null;
+  return { templateBytes: templateBytes!, fieldMap: fieldMap! };
+}
+
+/**
+ * Fill the official FDA eSTAR PDF for any eSTAR program submission — 510(k), De
+ * Novo, PMA (device or IVD), or a PreSTAR request (Q-Sub / IDE / 513(g)). Honest
+ * fail-closed: returns `filled: false` with blockers when the template or a
+ * verified field map is missing — never a fabricated artifact.
+ */
+export async function fillEstarSubmission(input: FillEstarInput): Promise<FillEstarResult> {
+  const descriptor = descriptorFor(input.type, input.variant);
+  const base: FillEstarResult = {
+    descriptorId: descriptor?.id ?? null,
+    templateAvailable: false,
+    fieldMapPopulated: false,
+    filled: false,
+    filledFields: [],
+    skippedFields: [],
+    warnings: [],
+    blockers: [],
+  };
+
+  if (!descriptor) {
+    base.blockers.push(`No eSTAR template descriptor for ${input.type}/${input.variant}.`);
+    return base;
+  }
+
+  const resolved = await resolveProducibleInputs(input, descriptor, base);
+  if (!resolved) return base;
+  const { templateBytes, fieldMap } = resolved;
 
   // Both present → fill the official template. Which layer depends on the file:
   // FDA's eSTAR is a dynamic Adobe LiveCycle XFA form whose AcroForm `/Fields`
@@ -169,14 +191,14 @@ export async function fillEstarSubmission(input: FillEstarInput): Promise<FillEs
   // what the template actually is rather than assuming. Neither path throws on a
   // missing field (skip+warn), so the output stays honest about what was and
   // wasn't populated.
-  const dynamicXfa = isDynamicXfaPdf(templateBytes!);
+  const dynamicXfa = isDynamicXfaPdf(templateBytes);
   base.templateKind = dynamicXfa ? 'dynamic-xfa' : 'acroform';
   const result = dynamicXfa
-    ? await fillXfaDatasets(templateBytes!, fieldMap!, input.data, {
+    ? await fillXfaDatasets(templateBytes, fieldMap, input.data, {
         flatten: input.flatten ?? false,
         missingFieldPolicy: 'skip',
       })
-    : await fillOfficialPdf(templateBytes!, fieldMap!, input.data, {
+    : await fillOfficialPdf(templateBytes, fieldMap, input.data, {
         flatten: input.flatten ?? false,
         missingFieldPolicy: 'skip',
       });
