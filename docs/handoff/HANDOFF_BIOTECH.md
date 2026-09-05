@@ -371,6 +371,42 @@ ledger pair), 11.70 supersession, the sha256 audit chain, re-authentication
 (bcrypt, optional TOTP, honest authenticationMethod), and the dispatch-readiness
 distinction between "gate clear" and "never reviewed".
 
+### Eleventh audit — Part 11 UX on the transmit act and the e-signature dialogs (2026-09-05)
+
+Read-only Part 11 UX audit of the gateway transmit surface, the Submission
+Center's e-signature flow and the shared sign modal. Fixed on
+`concept2cure-v2`, each test failing on revert:
+
+- The governed transmit's `sign` is now an electronic signature, not only a
+  ledger row. It recorded `meaning: 'submission'` — a constant nobody declared
+  — and wrote no `electronic_signatures` row at all, so the one irreversible
+  act in the platform had no 11.50 manifestation anywhere. It now persists the
+  row inside the ledger transaction: resolved printed name, the meaning the
+  signer declared, the factors verifyReauth actually checked (never stronger),
+  and the sha256 of the exact bundle bytes handed to the agency as the 11.70
+  binding (basis `transmitted-bundle-sha256`). A failed signature write rolls
+  the ledger back and is reported as `ledgerWriteFailed`.
+- The HTTP transmit body requires `meaning` (authorship / review / approval /
+  responsibility / release); anything else is refused before any gateway call.
+  The AnA transmit handler refuses a sign-off with no signature purpose
+  (`PART11_SIGNATURE_REQUIRED`) instead of substituting one.
+- The transmittal log resolves `submitted_by` to the person and the surface
+  shows who transmitted. The transmit form asks for the meaning; every refusal
+  closes the drawer so a rejected password cannot be resubmitted with one
+  click; the rollback form requires the password it re-verifies. The shared
+  sign modal clears its credentials on every failed attempt. The Submission
+  Center shows the signer their own identity on the dialog and names signer and
+  meaning in the success notice.
+
+Decision items, not changed: there is no read endpoint or UI that shows the
+persisted signature record for a typed target (sequence, transmittal) — the
+manifestation is only in the success notice and the database; and role gating
+of the governed routes still depends on `GOVERNANCE_RBAC_ENFORCE`.
+
+Reported, not fixed: the trunk-wide ESLint warning ratchet is red at
+`7d74394eb` (14 over the 6637 baseline: unused-vars +6, max-lines +5,
+complexity +2), from concurrent streams; this batch is neutral against it.
+
 ### Note for the concurrent device stream
 
 On 2026-09-04, at JM's direct instruction to complete the biotech/pharma workflow
@@ -616,6 +652,7 @@ If neither has happened: report the blockage, name what is needed, and stop.
 | 2026-09-05 | A | Eighth audit — M2.7/CSR/labeling + FDA submission types | Unextracted SAE/death counts stated as such in 2.5/2.7, 2.7 prints its gaps; withdrawal refused rather than coded as an original — revert-proven; two decisions recorded | §1 above |
 | 2026-09-05 | A | Ninth audit — IB / nonclinical / briefing builders | Nothing-assessed readiness report is NOT ASSESSED; dose-only FIH is not ready; fixture questions labelled in content; IB fallback names no source — revert-proven | §1 above |
 | 2026-09-05 | A | Tenth audit — Part 11 sequence chain | Step-bound, single-use, content-bound sequence signatures; atomic chained audit on freeze/dispatch/transmit; no re-send; SoD owner for sequences — proven in the NDA golden journey | §1 above |
+| 2026-09-05 | A | Eleventh audit — Part 11 UX on transmit + sign dialogs | Transmit writes a real electronic signature (declared meaning, printed name, verified factors, bundle-digest binding) in the ledger transaction; meaning required on the route and the AnA path; attribution on the log; refused credentials leave the field — revert-proven | §1 above |
 | | | | | |
 
 **Rule:** the last row with an empty "What was proven" cell is the open work.
