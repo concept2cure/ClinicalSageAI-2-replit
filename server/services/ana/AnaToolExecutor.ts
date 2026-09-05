@@ -165,6 +165,7 @@ import {
 import { registerAgenticWorkflowHandlers } from './agentic-workflow-tools.js';
 import { registerBiotechProgramHandlers } from './biotech-program.js';
 import { registerDocumentSpineHandlers } from './document-spine.js';
+import { registerDocumentCatalogHandlers } from './document-catalog-tools.js';
 import { assertWithinDocumentWorkspace } from './document-workspace.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -14984,6 +14985,10 @@ registerBiotechProgramHandlers(registerToolHandler);
 // The canonical document revision spine (commit_document_revision) — the one
 // atomic flow every AnA-authored document mutation runs through — same pattern.
 registerDocumentSpineHandlers(registerToolHandler);
+
+// Project-folder document catalog (list/read/catalog over vault.documents,
+// with read-coverage enforcement) — same injected-register pattern.
+registerDocumentCatalogHandlers(registerToolHandler);
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Agentic Execution Loop

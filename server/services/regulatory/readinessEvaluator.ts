@@ -254,13 +254,32 @@ function scoreToLevel(score: number): ReadinessResult['level'] {
   return 'not_ready';
 }
 
+/**
+ * Fail-closed result for when the registry entry cannot be resolved.
+ *
+ * When `getApplicationType` returns nothing (a stale, renamed, retired, or
+ * mistyped registry id), the evaluator does NOT know a single required section
+ * or artifact for this filing. It must NOT certify completeness it never checked.
+ *
+ * The pre-fix version returned `artifactReadiness.completionPercent: 100`,
+ * `gaps: []`, and `level: 'early'` — so an unknown filing read as "100% of
+ * required artifacts present, zero gaps." The Report-OS orchestrator only raises
+ * blockers `if (readiness.gaps.length > 0)`, so that empty gaps array let the
+ * indeterminate case flow through as if it were clean. This is the
+ * "nothing-assessed rendered as assessed-and-clear" failure mode: an
+ * indeterminate assessment is now reported as `not_ready` with a critical gap
+ * that names the unresolved registry id, and artifact completeness is 0 (nothing
+ * was verified against a known requirement set) rather than a fabricated 100.
+ */
 function buildFallbackResult(input: ReadinessInput): ReadinessResult {
   const totalSections = input.sections.length;
   const completed = input.sections.filter(s => ['approved', 'locked'].includes(s.status)).length;
 
   return {
-    score: totalSections > 0 ? Math.round((completed / totalSections) * 100) : 0,
-    level: 'early',
+    // Requirements are unknown, so the readiness score is not meaningful; report
+    // the floor rather than a section-only figure that could read "100% ready".
+    score: 0,
+    level: 'not_ready',
     applicationDisplayName: input.registryIdOrLegacy,
     dossierStandard: 'unknown',
     sectionReadiness: {
@@ -271,8 +290,22 @@ function buildFallbackResult(input: ReadinessInput): ReadinessResult {
       notStarted: input.sections.filter(s => s.status === 'not_started').length,
       completionPercent: totalSections > 0 ? Math.round((completed / totalSections) * 100) : 0,
     },
-    artifactReadiness: { required: 0, present: 0, approved: 0, missing: [], completionPercent: 100 },
-    gaps: [],
+    // `required: 0` here means "unknown", NOT "legitimately zero required
+    // artifacts" — so completeness is 0 (nothing verified), never 100.
+    artifactReadiness: { required: 0, present: 0, approved: 0, missing: [], completionPercent: 0 },
+    gaps: [
+      {
+        type: 'artifact',
+        code: 'UNKNOWN_REGISTRY_ENTRY',
+        title: 'Registry entry not found',
+        severity: 'critical',
+        message:
+          `No registry entry could be resolved for "${input.registryIdOrLegacy}" — ` +
+          'the required sections and artifacts for this filing could not be ' +
+          'determined, so this readiness figure is not meaningful. Verify the ' +
+          'application/submission type before relying on this assessment.',
+      },
+    ],
     regionalWarnings: [],
   };
 }

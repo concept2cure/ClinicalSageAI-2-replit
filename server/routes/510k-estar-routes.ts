@@ -316,16 +316,28 @@ interface DraftPackageEntry {
 /**
  * The draft-package families /build can produce, derived from the class of the
  * governed document that answered the content load (PMA_ASSEMBLY):
- *   - '510k' — the six fixed 510(k) section PDFs (also what the legacy store
- *              and a client-supplied payload get, exactly as before);
- *   - 'pma'  — one PDF per authored 21 CFR 814.20 section in outline order plus
- *              the combined PDF/DOCX. A governed PMA used to be forced through
- *              the 510(k) renderer: most of its sections dropped, the
- *              510(k)-only slots stamped "content not found", the ZIP labelled
- *              and ledgered as a 510(k) package.
- * Neither is an eSTAR; the labels below say so.
+ *   - '510k'   — a governed 510(k), or the legacy store / a client payload;
+ *   - 'pma'    — a governed PMA (21 CFR 814.20 outline);
+ *   - 'denovo' — a governed De Novo request;
+ *   - 'cer'    — a governed clinical evaluation report.
+ *
+ * How the files are cut depends on WHERE the content came from, not only on
+ * the family. Governed content renders one PDF per authored section, in
+ * outline order and named by rule-pack key, plus the combined PDF/DOCX. Only
+ * the legacy store keeps the six fixed 510(k) slots those slots were built for.
+ *
+ * It was not so. Every family but PMA went through the six-slot renderer, which
+ * picks one heading per named bucket and stamps "content not found" for the
+ * rest. The FDA 510(k) rule pack scaffolds 18 sections — Form 3514,
+ * indications for use, technological comparison, predicate devices,
+ * biocompatibility, sterilization, software, cybersecurity among them — and
+ * the delivered ZIP, registered as a governed artifact and audit-logged,
+ * carried six files. Twelve authored sections were absent, and nothing said
+ * so. A De Novo or a CER was cut the same way and ledgered as a 510(k)
+ * package. The route's own comment described this defect as fixed, for PMA.
+ * None is an eSTAR; the labels below say so.
  */
-type DraftPackageFamily = '510k' | 'pma';
+type DraftPackageFamily = '510k' | 'pma' | 'denovo' | 'cer';
 
 const DRAFT_PACKAGE_LABELS: Record<
   DraftPackageFamily,
@@ -345,29 +357,56 @@ const DRAFT_PACKAGE_LABELS: Record<
     ctdSection: 'm2.5',
     suggestedPlacement: 'Module 2 / PMA content package (draft)',
   },
+  denovo: {
+    filenameSuffix: 'denovo-content-package-draft',
+    package: 'De Novo content package draft (not an eSTAR)',
+    title: 'De Novo content package (draft)',
+    ctdSection: 'm1.5',
+    suggestedPlacement: 'Module 1 / De Novo content package (draft)',
+  },
+  cer: {
+    filenameSuffix: 'cer-content-package-draft',
+    package: 'Clinical evaluation report package draft (not an eSTAR)',
+    title: 'Clinical evaluation report package (draft)',
+    ctdSection: 'm2.5',
+    suggestedPlacement: 'Module 2 / Clinical evaluation report package (draft)',
+  },
+};
+
+/** The style pack and combined-document class each family renders with. */
+const DRAFT_PACKAGE_RENDERING: Record<DraftPackageFamily, { pack: string; docType: string }> = {
+  '510k': { pack: '510k_v1', docType: 'cerv2_510k' },
+  pma: { pack: 'pma_v1', docType: 'cerv2_pma' },
+  // De Novo content is 510(k)-shaped; the combined document is titled
+  // generically rather than as a 510(k), which it is not.
+  denovo: { pack: '510k_v1', docType: 'cerv2_denovo' },
+  cer: { pack: 'cer_mdr_v1', docType: 'cerv2_cer' },
 };
 
 function draftPackageFamilyFor(source: string, docType: string | undefined): DraftPackageFamily {
-  return source === 'governed_program' && docType === 'pma' ? 'pma' : '510k';
+  if (source !== 'governed_program') return '510k';
+  return docType === 'pma' || docType === 'denovo' || docType === 'cer' ? docType : '510k';
 }
 
 /**
- * Render the package's files for its family. The 510(k) family keeps its six
- * fixed slots; the PMA family is every authored section (the editor JSON holds
- * one H1 per authored governed section, in path_order) named by its rule-pack
- * key, plus the combined document through the generic cerv2_pma renderers.
+ * Render the package's files. Governed content is every authored section (the
+ * editor JSON holds one H1 per authored governed section, in path_order) named
+ * by its rule-pack key, plus the combined document, whatever the family. Only
+ * legacy-store content keeps the six fixed 510(k) slots.
  */
 async function renderDraftPackageEntries(
   family: DraftPackageFamily,
   content: unknown,
   packageId: string,
   sections: ReadonlyArray<AuthoredDeviceSection>,
+  governed: boolean,
 ): Promise<DraftPackageEntry[]> {
-  if (family === 'pma') {
+  if (governed) {
+    const rendering = DRAFT_PACKAGE_RENDERING[family];
     const [perSection, combinedPdf, combinedDocx] = await Promise.all([
-      renderPdfBuffersPerSection(content, stylePacks['pma_v1']),
-      renderCombinedPdf('cerv2_pma', content),
-      renderCombinedDocx('cerv2_pma', content),
+      renderPdfBuffersPerSection(content, stylePacks[rendering.pack] ?? stylePacks['510k_v1']),
+      renderCombinedPdf(rendering.docType, content),
+      renderCombinedDocx(rendering.docType, content),
     ]);
     // The per-section PDFs come back in document order, which is the loader's
     // outline order; the rule-pack key rides along only when the two line up.
@@ -481,6 +520,8 @@ router.post('/build', authMiddleware, requireEditorAccess, requireAssemblyEntitl
   // payload and the legacy store are 510(k)-shaped exactly as before.
   let family: DraftPackageFamily = '510k';
   let authoredSections: AuthoredDeviceSection[] = [];
+  /** Which store answered the content load; 'client_payload' when none was read. */
+  let deviceContentSource = 'client_payload';
 
   if (content === undefined && useProjectContent) {
     // A program anchor reads ITS governed document (the rows the editor saves
@@ -491,6 +532,7 @@ router.post('/build', authMiddleware, requireEditorAccess, requireAssemblyEntitl
       programId: documentId === undefined ? (anchor.programUuid ?? undefined) : undefined,
       documentId,
     });
+    deviceContentSource = source;
     const sections = await loadAuthoredDeviceSections(orgId, scope);
     if (sections.length === 0) {
       return res.status(422).json({
@@ -532,7 +574,14 @@ router.post('/build', authMiddleware, requireEditorAccess, requireAssemblyEntitl
 
   try {
     const labels = DRAFT_PACKAGE_LABELS[family];
-    const entries = await renderDraftPackageEntries(family, content, meta.id, authoredSections);
+    const entries = await renderDraftPackageEntries(
+      family,
+      content,
+      meta.id,
+      authoredSections,
+      deviceContentSource === 'governed_program',
+    );
+    const sectionsRendered = entries.filter((e) => /\.pdf$/i.test(e.name) && !/_Combined\.pdf$/.test(e.name)).length;
     const zipBuffer = await buildZipBuffer(entries, attachments);
     const filename = `${sanitizeFilename(meta.id)}_${labels.filenameSuffix}.zip`;
 
@@ -576,6 +625,13 @@ router.post('/build', authMiddleware, requireEditorAccess, requireAssemblyEntitl
       attachmentCount: attachments.length,
       package: labels.package,
       packageFamily: family,
+      // Which store answered, and how much of it reached the ZIP. The success
+      // response never said; only the 422 branch echoed the source, so a
+      // package cut from the wrong store or missing most of its sections was
+      // indistinguishable from a complete one.
+      deviceContentSource,
+      sectionsAuthored: authoredSections.length,
+      sectionsRendered,
       officialEstarPdf: false,
       programId: anchor.programUuid ?? undefined,
       formattingErrors: (formattingReport as { errors?: number } | undefined)?.errors ?? 0,
@@ -602,7 +658,14 @@ router.post('/build', authMiddleware, requireEditorAccess, requireAssemblyEntitl
       // The advisory formatting report rides alongside the governed consequence so
       // the UI can surface "N formatting issues to fix before submitting" without
       // blocking the draft export.
-      return res.status(200).json({ ...consequence, formattingReport: formattingReport ?? null });
+      return res.status(200).json({
+        ...consequence,
+        formattingReport: formattingReport ?? null,
+        deviceContentSource,
+        packageFamily: family,
+        sectionsAuthored: authoredSections.length,
+        sectionsRendered,
+      });
     }
 
     // Program-spine (UUID) project: the artifact registry cannot place this
@@ -626,7 +689,14 @@ router.post('/build', authMiddleware, requireEditorAccess, requireAssemblyEntitl
       metadata: exportMetadata,
     });
 
-    return res.status(200).json({ ...unplaced, formattingReport: formattingReport ?? null });
+    return res.status(200).json({
+      ...unplaced,
+      formattingReport: formattingReport ?? null,
+      deviceContentSource,
+      packageFamily: family,
+      sectionsAuthored: authoredSections.length,
+      sectionsRendered,
+    });
   } catch (error: any) {
     logger.error('governed export failure', { err: error instanceof Error ? error.message : String(error) });
     return res.status(500).json({

@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-04T19:34:32.663Z",
+  "generatedAt": "2026-09-05T02:05:13.182Z",
   "git": {
-    "sha": "e9738f979d80fb1209ca244145fb3df7f3d1f24d",
+    "sha": "ede0c34370083ab8a8a032ec568e7cf241a3a049",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2145,7 +2145,7 @@
     "largeFilesByBytes": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 1002477
+        "bytes": 1002758
       },
       {
         "file": "shared/schema.ts",
@@ -2241,7 +2241,7 @@
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "bytes": 120988
+        "bytes": 121343
       },
       {
         "file": "server/services/__tests__/ana-ri.test.ts",
@@ -2303,7 +2303,7 @@
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 19444
+        "lines": 19449
       },
       {
         "file": "server/routes/concept2cure.ts",
@@ -2383,7 +2383,7 @@
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "lines": 2685
+        "lines": 2695
       },
       {
         "file": "server/services/module3Composer.ts",
@@ -2590,6 +2590,10 @@
         "lines": 1785
       },
       {
+        "file": "server/routes/510k-estar-routes.ts",
+        "lines": 1757
+      },
+      {
         "file": "server/services/ana/submission-chat-handler.ts",
         "lines": 1756
       },
@@ -2612,10 +2616,6 @@
       {
         "file": "client/src/concept2cure/v2/surfaces/TaskBoard.tsx",
         "lines": 1693
-      },
-      {
-        "file": "server/routes/510k-estar-routes.ts",
-        "lines": 1687
       },
       {
         "file": "server/services/nonclinical-adme/nonclinical-adme-knowledge.ts",
