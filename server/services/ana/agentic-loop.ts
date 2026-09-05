@@ -464,6 +464,7 @@ const TOOL_LABELS: Record<string, (input: Record<string, unknown>) => string> = 
       ? 'Reading the document — continuing where it left off'
       : 'Reading the document in full',
   catalog_project_document: () => 'Recording what this document is',
+  search_project_documents: i => `Searching the project files for ${quoteArg(i.query)}`,
   // Document vault / governed reads — legible "she's reading the right thing".
   list_vault_documents: () => 'Listing the document vault',
   read_vault_document: () => 'Reading the vault document',
