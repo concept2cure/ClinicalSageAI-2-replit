@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-05T10:53:23.597Z",
+  "generatedAt": "2026-09-05T12:06:50.597Z",
   "git": {
-    "sha": "7b24422c7501c329e8e6a372238b75107866e3a0",
+    "sha": "7816d9332aa979e841bd8a1ec67a240a3ce0e7ef",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -12,11 +12,11 @@
   },
   "managedMirrors": [],
   "summary": {
-    "duplicateBasenames": 208,
+    "duplicateBasenames": 209,
     "contentDuplicateGroups": 0,
     "contentDuplicateFiles": 0,
-    "largeFilesByBytes": 39,
-    "largeFilesByLines": 91
+    "largeFilesByBytes": 40,
+    "largeFilesByLines": 92
   },
   "findings": {
     "duplicateBasenames": [
@@ -854,6 +854,14 @@
         "paths": [
           "server/routes/api-keys.ts",
           "shared/schema/api-keys.ts"
+        ]
+      },
+      {
+        "basename": "artifacts",
+        "count": 2,
+        "paths": [
+          "server/routes/c2c/artifacts.ts",
+          "ui_kits/ectd_coauthor/artifacts.js"
         ]
       },
       {
@@ -1980,10 +1988,6 @@
         "bytes": 855958
       },
       {
-        "file": "server/routes/concept2cure.ts",
-        "bytes": 483387
-      },
-      {
         "file": "server/services/ind/ctd/authoring-guidance.ts",
         "bytes": 474008
       },
@@ -1994,6 +1998,10 @@
       {
         "file": "server/routes/authoring.router.ts",
         "bytes": 321182
+      },
+      {
+        "file": "server/routes/concept2cure.ts",
+        "bytes": 306768
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
@@ -2010,6 +2018,10 @@
       {
         "file": "server/routes/ana-features.ts",
         "bytes": 179440
+      },
+      {
+        "file": "server/routes/c2c/artifacts.ts",
+        "bytes": 174925
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
@@ -2139,7 +2151,7 @@
       },
       {
         "file": "server/routes/concept2cure.ts",
-        "lines": 12848
+        "lines": 8227
       },
       {
         "file": "server/routes/authoring.router.ts",
@@ -2164,6 +2176,10 @@
       {
         "file": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
         "lines": 5104
+      },
+      {
+        "file": "server/routes/c2c/artifacts.ts",
+        "lines": 4571
       },
       {
         "file": "server/storage.ts",
@@ -2499,13 +2515,13 @@
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
-      "duplicateGroups": 402,
-      "largeByBytes": 29,
-      "largeByLines": 75
+      "duplicateGroups": 403,
+      "largeByBytes": 30,
+      "largeByLines": 76
     },
     {
       "owner": "Unassigned (TBD)",
-      "duplicateGroups": 154,
+      "duplicateGroups": 155,
       "largeByBytes": 2,
       "largeByLines": 7
     },
