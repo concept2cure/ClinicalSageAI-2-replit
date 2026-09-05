@@ -1,9 +1,9 @@
 /**
- * The review domain moved out of routes/concept2cure.ts into routes/c2c/reviews.ts
- * (ledger L53, first domain). Both routers mount at /api/concept2cure, so the
- * split is only safe if every review path is answered by exactly one of them:
- * a path left behind in the main router would shadow or double-register, and a
- * path lost in the move would 404 where a client expects a review.
+ * Domains move out of routes/concept2cure.ts into routes/c2c/*.ts one at a time
+ * (ledger L53). Every router mounts at /api/concept2cure, so a split is only
+ * safe if each moved path is answered by exactly one of them: a path left
+ * behind in the main router would shadow or double-register, and a path lost
+ * in the move would 404 where a client expects it.
  *
  * Read from the routers' own layer stacks — the registration is the fact.
  */
@@ -49,5 +49,32 @@ describe('review routes live in one router', () => {
     const projectScoped = [...inReviews].filter((p) => /\/projects\/:projectId\/artifacts\/:artifactId\/review-(threads|tasks)$/.test(p));
     expect(projectScoped.length).toBeGreaterThan(0);
     for (const p of projectScoped) expect(inMain.has(p), `${p} should no longer be on the main router`).toBe(false);
+  });
+});
+
+const NOTIFICATION_PATHS = [
+  'GET /notifications/my',
+  'POST /notifications/:id/read',
+  'POST /notifications/:id/dismiss',
+  'POST /notifications/mark-all-read',
+  'GET /notifications/project',
+  'GET /projects/:projectId/work-items',
+  'GET /projects/:projectId/readiness-summary',
+  'POST /escalation/process',
+];
+
+describe('notification, work-item and escalation routes live in one router', () => {
+  it('the notifications router answers every one of them, and the main router none', async () => {
+    const notifications = (await import('../notifications')).default as unknown as { stack: Layer[] };
+    const main = (await import('../../concept2cure')).default as unknown as { stack: Layer[] };
+    const inNotifications = new Set(registered(notifications));
+    const inMain = new Set(registered(main));
+    for (const p of NOTIFICATION_PATHS) {
+      expect(inNotifications.has(p), `${p} should be on the notifications router`).toBe(true);
+      expect(inMain.has(p), `${p} should no longer be on the main router`).toBe(false);
+    }
+    // The submission-package export stayed with the export domain on purpose.
+    expect(inMain.has('POST /projects/:projectId/submission-package')).toBe(true);
+    expect(inNotifications.has('POST /projects/:projectId/submission-package')).toBe(false);
   });
 });

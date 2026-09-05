@@ -48,9 +48,7 @@ import {
   sendSuccess,
 } from './shared';
 import { verifyProjectAccess } from './project-access';
-// The notification and work-item writers still live in the monolith; they
-// move with the notifications domain in the next slice.
-import { createNotification, upsertProjectWorkItem } from '../concept2cure';
+import { createNotification, upsertProjectWorkItem } from './notifications';
 
 const logger = createScopedLogger('concept2cure-reviews');
 const router = Router();
