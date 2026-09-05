@@ -82,6 +82,16 @@ an instruction.
 
 ## 4. Current state — Phase 1 COMPLETE and verified; Phase 2 BUILT and proven structurally
 
+> **2026-09-05 — read this before trusting anything below.** Until this date the
+> production container never shipped `assets/`, so the official FDA eSTAR templates did not
+> exist at runtime and EVERY produce answered 422 with "the official template is not
+> vendored. Place it in assets/estar-templates/" — a path inside a container no client has.
+> The whole official-eSTAR path worked only from a repo checkout. Every capability recorded
+> below was real in development and unreachable in the deployed product. `Dockerfile.optimized`
+> now copies `assets/`, and `deploy-migration-mechanism.contract.test.ts` asserts it, derived
+> by scanning the server source for `process.cwd(), 'assets/…'` drop-points so a new one is
+> covered the day it is written.
+
 `estar-fill` returns `filled: true` with an empty `blockers` array for `510k-device`,
 and the output PDF was read back field by field: **20 of 20 pass.**
 
@@ -203,7 +213,7 @@ look at when the file is opened are listed in §6.
 
 ## 6. Next authorized action
 
-**Open the filled eSTAR in Adobe Acrobat and work the form as a client would.** Everything
+**1. Open the filled eSTAR in Adobe Acrobat and work the form as a client would.** Everything
 that can be established without Acrobat has been. The template's own scripts have been read
 and pinned (`docs/reports/estar-acrobat-behaviour-2026-09-04.md`), and an independent XFA
 engine confirms every write binds. What remains is the one thing no agent can do here:
@@ -230,6 +240,14 @@ The check, in order:
 Then, the reading of `client_workspaces` as the applicant (Phase 2 report §3 and §7):
 confirm it, or name the rule you want, before a customer files on it.
 
+**2. Decide whether the org-wide assembly verdict on the Submission Center is worth
+keeping.** It posts `{pathway, variant}` with no `programId` — "ONE org-wide device-assembly
+verdict for the section header" — and the seven device answers that decide which conditional
+sections are owed live on the PROGRAM. So that call can never resolve them and will always
+report "draft content package only — not submittable", however complete any single filing
+is. The program-scoped call resolves correctly. Making the header per-program is a design
+change to a surface outside this stream, so it is named here rather than made.
+
 Two data-shape decisions are waiting on JM, both measured and both blocked on schema, not
 code (report §4a):
 
@@ -239,6 +257,11 @@ code (report §4a):
 - **The two telephone columns** would have to be constrained at capture to 8–15 digits, which
   is what the template's own validation message asks for, before the source fields can be
   written.
+- **An operator who answers NO to all seven device questions leaves no trace.**
+  `POST /api/c2c/projects` writes the `deviceFlags` key only when at least one box is ticked,
+  so "asked, none apply" and "never asked" are stored identically — and the second correctly
+  leaves every conditional section undetermined, which blocks producing. Always writing the
+  key at intake fixes it; a reader cannot invent the difference.
 
 ## 7. Other JM-only tasks on this stream
 
@@ -304,6 +327,7 @@ code (report §4a):
 | 2026-09-03 | A | WO-8 Phase 1 — unblock eSTAR fill | `filled: true`, 20/20 read-back, 91 tests pass | `docs/reports/wo8-phase1-estar-unblock-2026-09-03.md` |
 | 2026-09-03 | B | WO-8 Phase 2 — device + diagnostic, whole stream (JM: "get medical device and diagnostic fully done now") | official eSTAR filled from governed records with per-field provenance on the 510(k) and IVD surfaces; device golden journey green; second pass: IVD 510(k) on the IVD eSTAR, entitlement lock before the first click, no crash on an unreadable section list; 62 test files / 898 tests green across the eSTAR engine, forms, routes, MDX kit and the device golden journey | `docs/reports/wo8-phase2-estar-demo-2026-09-03.md` |
 | 2026-09-04 | C | WO-8 Phase 3 + Acrobat (JM: "get the medical device and diagnostic entire workflow completed, including the PDF or the Acrobat file from eSTAR… not adding new unnecessary features, getting what we have to actually work") | every administrative key has a governed home; De Novo and PMA produce; the template's own scripts read and pinned, settling why no `submissionType` is written; the two SOURCE fields FDA rebuilds the summary cells from are now written, so the applicant's first click rebuilds three values it used to erase; a refused save names its refusal; two keys on one form box can no longer collapse silently; PUT /profile is editor-gated and audited | `docs/reports/estar-acrobat-behaviour-2026-09-04.md` |
+| 2026-09-05 | D | Audit + resolve (JM: "continue and resolve", "go to work") | An eight-lens adversarial audit of the whole device + diagnostic stream, three refuters per finding. Fixed: the production image never shipped the FDA templates, so no client could produce anything; the governed-write role gate named three roles the platform cannot grant and locked out every SSO-provisioned user, now ONE implementation in `middleware/orgMembership.ts`; a device program opened on the Diagnostics tab was produced on the IVD template; the seven intake device answers were stored and never read back, so every conditional section stayed undetermined; two ESLint errors whose documented honesty rule had no test. Packaging, role-vocabulary and duplication checks added, each shown failing first | `docs/reports/estar-acrobat-behaviour-2026-09-04.md` + this file |
 | | | | | |
 
 **Rule:** the last row with an empty "What was proven" cell is the open work. A session
