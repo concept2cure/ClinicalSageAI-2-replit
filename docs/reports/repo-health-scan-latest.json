@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-05T12:14:28.591Z",
+  "generatedAt": "2026-09-05T12:17:50.786Z",
   "git": {
-    "sha": "6a564f9ca3962fe84e0c8a5c59eaf0f48bedd457",
+    "sha": "2b1583cc543997e8debe36b985a8c30bf573b72b",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -16,7 +16,7 @@
     "contentDuplicateGroups": 0,
     "contentDuplicateFiles": 0,
     "largeFilesByBytes": 40,
-    "largeFilesByLines": 92
+    "largeFilesByLines": 93
   },
   "findings": {
     "duplicateBasenames": [
@@ -2001,7 +2001,7 @@
       },
       {
         "file": "server/routes/concept2cure.ts",
-        "bytes": 306768
+        "bytes": 240355
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
@@ -2150,16 +2150,16 @@
         "lines": 19448
       },
       {
-        "file": "server/routes/concept2cure.ts",
-        "lines": 8227
-      },
-      {
         "file": "server/routes/authoring.router.ts",
         "lines": 7407
       },
       {
         "file": "server/statistics-service.ts",
         "lines": 6920
+      },
+      {
+        "file": "server/routes/concept2cure.ts",
+        "lines": 6454
       },
       {
         "file": "server/services/ind/ctd/authoring-guidance.ts",
@@ -2430,6 +2430,10 @@
         "lines": 1809
       },
       {
+        "file": "server/routes/c2c/ai-editing.ts",
+        "lines": 1809
+      },
+      {
         "file": "ui_kits/home/Projects.jsx",
         "lines": 1795
       },
@@ -2517,7 +2521,7 @@
       "owner": "Backend Platform (server/routes + server/services owners)",
       "duplicateGroups": 403,
       "largeByBytes": 30,
-      "largeByLines": 76
+      "largeByLines": 77
     },
     {
       "owner": "Unassigned (TBD)",
