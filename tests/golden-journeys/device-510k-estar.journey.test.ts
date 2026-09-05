@@ -161,21 +161,24 @@ let anchorProjectId = 0;
 /** fda_510k_projects.id — the numeric anchor the eSTAR route resolves. */
 let deviceProjectId = 0;
 
+/** The tables the journey's first migration expects to already exist. */
+const BASELINE_TABLES = [
+  'organizations',
+  'users',
+  'client_workspaces',
+  'projects',
+  'audit_logs',
+  'cerv2_510k_sections',
+  'cerv2_section_versions',
+  'fda_510k_projects',
+  'concept2cure_artifacts',
+  'concept2cure_artifact_versions',
+  'concept2cure_provenance_events',
+  'regulatory_audit_logs',
+];
+
 beforeAll(async () => {
-  const baseline = extractTableDdl('migrations/0000_sweet_joseph.sql', [
-    'organizations',
-    'users',
-    'client_workspaces',
-    'projects',
-    'audit_logs',
-    'cerv2_510k_sections',
-    'cerv2_section_versions',
-    'fda_510k_projects',
-    'concept2cure_artifacts',
-    'concept2cure_artifact_versions',
-    'concept2cure_provenance_events',
-    'regulatory_audit_logs',
-  ]);
+  const baseline = extractTableDdl('migrations/0000_sweet_joseph.sql', BASELINE_TABLES);
 
   jdb = await createJourneyDb({
     prereqSql: baseline,
@@ -313,7 +316,6 @@ afterAll(async () => {
   await assertNoDegradedTenantEnrichment();
   assertNoSchemaGaps(jdb);
   const { jsonPath, mdPath } = R.write('device-510k-estar');
-  // eslint-disable-next-line no-console
   console.info(`[journey] manifest: ${jsonPath}\n[journey] report:   ${mdPath}`);
   await jdb?.close();
 });
