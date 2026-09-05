@@ -51,6 +51,7 @@ import {
 import {
   loadDeviceContentLeaves,
   loadAuthoredDeviceSections,
+  loadDeviceFlags,
   resolveDeviceContentScope,
   sectionsToEditorJson,
   type AuthoredDeviceSection,
@@ -1096,9 +1097,20 @@ router.post('/assemble', authMiddleware, requireEditorAccess, requireAssemblyEnt
   try {
     const orgId = getOrganizationId(req);
     const { scope, source } = await resolveDeviceContentScope(orgId, { programId, documentId });
-    const [leaves, vendored] = await Promise.all([
+    const [leaves, vendored, deviceFlags] = await Promise.all([
       loadDeviceContentLeaves(orgId, scope),
       listVendoredTemplates(),
+      /* The intake answers. assembleDeviceSubmission reports a section whose
+         applicability is not established as UNDETERMINED and refuses to call
+         the package producible — correctly. With no caller ever supplying these
+         flags, all seven conditional sections stayed undetermined forever, so
+         `artifactKind` could never leave 'content-package-draft' no matter how
+         complete the content was. The client had already answered.
+
+         Keyed on the request's programId rather than the content scope, which
+         drops the program id when a filing's sections still live in the legacy
+         store. */
+      programId ? loadDeviceFlags(orgId, programId) : Promise.resolve(undefined),
     ]);
 
     const result = assembleDeviceSubmission({
@@ -1106,6 +1118,7 @@ router.post('/assemble', authMiddleware, requireEditorAccess, requireAssemblyEnt
       pmaSubmissionType: pmaSubmissionType as (typeof PMA_SUBMISSION_TYPES)[number]['value'] | undefined,
       variant,
       leaves,
+      deviceFlags,
       presentTemplates: vendored.map((t) => t.fileName),
       market: market as never,
       environment: process.env.NODE_ENV === 'production' ? 'production' : 'staging',
@@ -1592,6 +1605,22 @@ router.post('/filing-readiness', authMiddleware, async (req, res) => {
     const contentLeaves = content ? await loadDeviceContentLeaves(organizationId!, content.scope) : [];
     const effectiveLeaves = [...(leaves as FilingLeaf[]), ...contentLeaves];
 
+    /* The seven device questions the client answered at intake. Without them
+       every conditional section — sterilization, software, cybersecurity, CLIA
+       waiver, implant labelling, combination product, financial disclosure — is
+       of UNDETERMINED applicability, and readiness can never resolve. The
+       answers are stored; this reads them back.
+
+       Keyed on the REQUEST's programId, not the resolved content scope. The
+       flags describe the device, and the scope describes where its sections are
+       stored — a program whose content still lives in the legacy store resolves
+       to `legacy_org_wide` with no programId at all, and reading the flags off
+       that would silently skip them for exactly the filings that have not
+       migrated yet. `undefined` (no answers on file) leaves those sections
+       undetermined, which is the honest state. */
+    const deviceFlags =
+      organizationId && programId ? await loadDeviceFlags(organizationId, programId) : undefined;
+
     // Resolve official-template producibility from the single source of truth. The
     // PreSTAR family shares one template across variants; marketing pathways use
     // the device/ivd variant. Empty data ⇒ side-effect-free readiness probe.
@@ -1608,6 +1637,7 @@ router.post('/filing-readiness', authMiddleware, async (req, res) => {
       qSubType,
       templateAvailable: fill.templateAvailable,
       fieldMapPopulated: fill.fieldMapPopulated,
+      deviceFlags,
     });
 
     if (!result) {

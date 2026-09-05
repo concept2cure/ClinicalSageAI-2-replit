@@ -42,6 +42,8 @@ import { db, pool } from '../../../db';
 import { cerv2510kSections } from '../../../../shared/schema';
 import { sectionPlainText } from '../../c2c/section-content';
 import type { FilingLeaf } from './estar-filing-readiness';
+import type { DeviceFlags, DeviceFlagId } from './estar-mapper';
+import { DEVICE_FLAGS } from '../../../../shared/constants/domain/device-classification';
 
 /** The subset of a cerv2_510k_sections row the adapter needs. */
 export interface DeviceSectionInput {
@@ -304,6 +306,83 @@ export async function loadGovernedDeviceDocument(
   const row = doc.rows[0];
   if (!row?.id) return null;
   return { id: row.id, docType: String(row.doc_type ?? '') };
+}
+
+/**
+ * The seven device questions the client already answered, read back.
+ *
+ * THE ANSWERS WERE BEING THROWN AWAY. The new-project wizard asks all seven
+ * (sterile, software/AI-ML, cyber device, implantable, CLIA-waived, combination
+ * product, clinical data) and `POST /api/c2c/projects` stores them on
+ * `regulatory_programs.metadata` as `deviceFlags`, with a comment saying they
+ * are "load-bearing — each one adds a statutory section, so they drive the
+ * required-content model". Nothing in the product ever read them back: a
+ * repository-wide search for a reader of `metadata.deviceFlags` returned
+ * nothing, so `mapToEstar` ran with `flags: undefined` on every call.
+ *
+ * The consequence only became visible once assembleDeviceSubmission stopped
+ * over-claiming. With no flags, all seven conditional sections are of
+ * UNDETERMINED applicability, so `/assemble` reports `content-package-draft`
+ * and `canProduceOfficialEstar: false` — correctly, and permanently. The client
+ * answered the questions, the platform stored the answers, and the form still
+ * said it could not tell whether a sterilization section was owed.
+ *
+ * Org-scoped on the same (org_id, program) pair as every other governed read
+ * here. A program with no stored answers returns `undefined`, never an empty or
+ * all-false object: "never asked" and "asked, answered no to all seven" are
+ * different claims, and only the first leaves the sections undetermined.
+ *
+ * KNOWN GAP, not papered over: those two states are currently stored
+ * IDENTICALLY. `POST /api/c2c/projects` writes the `deviceFlags` key only when
+ * at least one box is ticked, so an operator who answers no to all seven leaves
+ * no trace, and their conditional sections stay undetermined as though they had
+ * never been asked. Fixing that means always writing the key at intake — a
+ * change on the write side, not here; this reader cannot invent the difference.
+ */
+export async function loadDeviceFlags(
+  organizationId: number,
+  programId: string,
+  client: DeviceContentClient = pool,
+): Promise<DeviceFlags | undefined> {
+  const res = await client.query<{ metadata?: unknown }>(
+    `SELECT metadata FROM regulatory_programs
+      WHERE organization_id = $1 AND id = $2
+      LIMIT 1`,
+    [organizationId, programId],
+  );
+  const raw = res.rows[0]?.metadata;
+  const meta = typeof raw === 'string' ? safeJson(raw) : raw;
+  const stored = (meta as { deviceFlags?: unknown } | null | undefined)?.deviceFlags;
+  if (!Array.isArray(stored) || stored.length === 0) return undefined;
+
+  /*
+   * Stored as the ID LIST of the boxes the operator TICKED; the mapper wants a
+   * yes/no per flag. A list that carries any id means the operator saw all seven
+   * checkboxes and submitted them, so an id that is absent is a NO — considered
+   * and declined — not a question nobody asked. Returning only the ticked ones
+   * would leave the other four permanently `undetermined`, which is why
+   * answering three of seven still left the package unproducible.
+   *
+   * An id the mapper does not know is dropped rather than passed through: a flag
+   * it cannot interpret would do nothing while looking answered.
+   */
+  const known = new Set(DEVICE_FLAGS.map((f) => f.id as string));
+  const ticked = stored.filter((id): id is string => typeof id === 'string' && known.has(id));
+  if (ticked.length === 0) return undefined;
+
+  const flags: DeviceFlags = {};
+  for (const { id } of DEVICE_FLAGS) flags[id as DeviceFlagId] = ticked.includes(id);
+  return flags;
+}
+
+function safeJson(raw: string): unknown {
+  try {
+    return JSON.parse(raw);
+  } catch {
+    /* A metadata blob that does not parse is not an answer set. Undetermined is
+       the honest outcome, and it is what the caller gets from `undefined`. */
+    return null;
+  }
 }
 
 /** The sections of one governed document, in outline order. */

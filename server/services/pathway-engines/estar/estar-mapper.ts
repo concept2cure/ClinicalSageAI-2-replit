@@ -34,20 +34,16 @@ export interface EstarInputLeaf {
   substantive?: boolean; // optional: undefined ⇒ NOT substantive (fail-closed)
 }
 
+import type { DeviceFlagId as SharedDeviceFlagId } from '../../../../shared/constants/domain/device-classification';
+
 /**
  * The seven conditional flags W1-5 names, which are exactly the seven in
  * DEVICE_FLAGS (shared/constants/domain/device-classification.ts) that the
  * project intake already collects. The two work-order items join here: W1-6
  * asks the question, W1-5 uses the answer.
  */
-export type DeviceFlagId =
-  | 'combinationProduct'
-  | 'softwareAiMl'
-  | 'cyberDevice'
-  | 'sterile'
-  | 'implantable'
-  | 'cliaWaived'
-  | 'clinicalData';
+export type { DeviceFlagId } from '../../../../shared/constants/domain/device-classification';
+type DeviceFlagId = SharedDeviceFlagId;
 
 export type DeviceFlags = Partial<Record<DeviceFlagId, boolean>>;
 
