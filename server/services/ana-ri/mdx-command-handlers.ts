@@ -392,92 +392,47 @@ export async function sectionUpdate(
   }
 
   const { pool } = await import('../../db');
+  const { writeKitSectionTx, KitSectionNotFoundError } = await import('../cerv2/kit-section-write');
+
+  /* One transaction, one writer (ledger L160). This command used to issue
+     three bare pool statements — UPDATE, SELECT max(version), INSERT version —
+     that could commit separately, and recorded no lineage at all. It now runs
+     the shared kit-section writer on a single transaction client, so the
+     content, its version row and its span lineage land together or not at
+     all, exactly as the write_kit_section tool and the human PATCH do. */
+  const client = await pool.connect();
+  let written;
+  try {
+    await client.query('BEGIN');
+    try {
+      written = await writeKitSectionTx(client, ctx.organizationId, { sectionId }, {
+        content: newContent,
+        status: nextStatus,
+        completionPercentage: nextCompletion,
+        changeSummary: `Edited via AnA (thread ${ctx.threadId ?? '-'})`,
+        actorUserId: ctx.userId,
+        changedByName: `ana:${ctx.userId}`,
+      });
+    } catch (e) {
+      await client.query('ROLLBACK').catch(() => undefined);
+      if (e instanceof KitSectionNotFoundError) {
+        return { success: false, action, message: e.message, error: 'NOT_FOUND' };
+      }
+      throw e;
+    }
+    await client.query('COMMIT');
+  } catch (err) {
+    return mapServiceError(action, err);
+  } finally {
+    client.release();
+  }
+  const before = written.before;
+  const targetStatus = written.row.status;
+  const targetCompletion = written.row.completionPercentage;
+  const nextVersion = written.versionNumber;
+  const fieldsChanged = written.fieldsChanged;
 
   try {
-    const existing = await pool.query(
-      `SELECT id, section_number, section_title, status, content, completion_percentage
-         FROM cerv2_510k_sections
-        WHERE organization_id = $1 AND id = $2 LIMIT 1`,
-      [ctx.organizationId, sectionId],
-    );
-    if (existing.rows.length === 0) {
-      return {
-        success: false,
-        action,
-        message: `Section ${sectionId} not found in your organization.`,
-        error: 'NOT_FOUND',
-      };
-    }
-    const before = existing.rows[0];
-
-    const targetStatus = nextStatus ?? before.status ?? 'drafting';
-    const targetCompletion =
-      nextCompletion ?? Number(before.completion_percentage ?? 0);
-    const now = new Date();
-
-    await pool.query(
-      `UPDATE cerv2_510k_sections
-          SET content = $1,
-              status = $2,
-              completion_percentage = $3,
-              updated_at = $4,
-              last_edited_by = $5
-        WHERE organization_id = $6 AND id = $7`,
-      [newContent, targetStatus, targetCompletion, now, ctx.userId, ctx.organizationId, sectionId],
-    );
-
-    // Insert a version row so the diff trail mirrors the human edit path.
-    const versionRow = await pool.query(
-      `SELECT COALESCE(MAX(version_number), 0) AS max_version
-         FROM cerv2_section_versions
-        WHERE organization_id = $1 AND section_id = $2`,
-      [ctx.organizationId, sectionId],
-    );
-    const nextVersion = Number(versionRow.rows[0]?.max_version ?? 0) + 1;
-    const fieldsChanged: string[] = ['content'];
-    if (nextStatus !== null && nextStatus !== before.status) fieldsChanged.push('status');
-    if (
-      nextCompletion !== null &&
-      nextCompletion !== Number(before.completion_percentage ?? 0)
-    ) {
-      fieldsChanged.push('completion_percentage');
-    }
-
-    await pool.query(
-      `INSERT INTO cerv2_section_versions
-        (section_id, organization_id, version_number, change_type, change_summary,
-         content, status, completion_percentage, fields_changed,
-         previous_values, new_values,
-         changed_by, changed_by_name, changed_at, created_at)
-       VALUES ($1, $2, $3, 'edited', $4,
-               $5, $6, $7, $8,
-               $9, $10,
-               $11, $12, $13, $13)`,
-      [
-        sectionId,
-        ctx.organizationId,
-        nextVersion,
-        `Edited via AnA (thread ${ctx.threadId ?? '-'})`,
-        newContent,
-        targetStatus,
-        targetCompletion,
-        fieldsChanged,
-        JSON.stringify({
-          content: before.content ?? '',
-          status: before.status ?? 'todo',
-          completion_percentage: Number(before.completion_percentage ?? 0),
-        }),
-        JSON.stringify({
-          content: newContent,
-          status: targetStatus,
-          completion_percentage: targetCompletion,
-        }),
-        ctx.userId,
-        `ana:${ctx.userId}`,
-        now,
-      ],
-    );
-
     void auditService.logAction({
       tenantId: ctx.organizationId,
       userId: ctx.userId,

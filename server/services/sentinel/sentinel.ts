@@ -147,9 +147,18 @@ export class AISentinel {
           await this.persistFinding(finding);
         }
 
-        console.log(
-          `[Sentinel] ${analyzerType}: ${result.findings.length} findings from ${result.projectsScanned} projects in ${result.durationMs}ms`
-        );
+        // An analyzer that could not assess must not read like one that assessed
+        // and found nothing — "0 findings from 0 projects" is the same sentence
+        // for both, and the reason is the only thing that tells them apart.
+        if (result.unavailable) {
+          console.warn(
+            `[Sentinel] ${analyzerType}: NOT ASSESSED — ${result.unavailable.reason}`
+          );
+        } else {
+          console.log(
+            `[Sentinel] ${analyzerType}: ${result.findings.length} findings from ${result.projectsScanned} projects in ${result.durationMs}ms`
+          );
+        }
       } catch (error) {
         console.error(`[Sentinel] ${analyzerType} analyzer failed:`, error);
       }
@@ -582,97 +591,54 @@ export class AISentinel {
 
   // ── Analyzer 5: Budget Burn Rate ────────────────────────────────────────
 
-  private async analyzeBudgetBurn(orgId: number, config: SentinelConfig): Promise<AnalyzerResult> {
+  /**
+   * Budget burn — UNAVAILABLE: the platform stores no project spend.
+   *
+   * This analyzer used to run
+   *   SELECT id, name, budget, budget_spent, … FROM projects
+   * and `projects.budget_spent` does not exist. It is not merely absent from
+   * this database: it appears in no migration and in no Drizzle model anywhere
+   * in the repository — the only occurrences were in this file. So the query
+   * raised `column "budget_spent" does not exist` on every scan, for every
+   * organization, since it was written. scan() catches per-analyzer failures,
+   * so the crash was invisible: budget_burn looked like an enabled analyzer
+   * that simply never found anything.
+   *
+   * The near miss is worse than the crash. The row handler read
+   * `const budgetSpent = proj.budget_spent || 0` and then reported
+   * "Spent $0 of $250,000 budget" as a finding. Had the column ever existed and
+   * been NULL — the normal state for a project nobody has costed — the analyzer
+   * would have asserted a spend figure of zero as fact, and raised burn-rate
+   * findings computed from it. A fabricated financial statement about a
+   * customer's programme is the one output this analyzer must never produce.
+   *
+   * There is no honest source to substitute. A schema-wide search found no
+   * project-level spend column at all; `cro_milestones.actual_cost` and
+   * `regulatory_obligations.actual_cost` are per-milestone and per-obligation
+   * costs in different domains, and rolling either up into "project spend"
+   * would invent the very number this analyzer is not allowed to invent.
+   *
+   * So it reports itself unavailable, with the reason, and returns no findings.
+   * That is distinguishable from "assessed and clean" by `unavailable` — see
+   * AnalyzerResult. Restoring the feature needs a spend source first: a real
+   * `projects.budget_spent` (or a defined rollup) that something actually
+   * writes. Until then, silence with a reason beats a confident zero.
+   */
+  private async analyzeBudgetBurn(orgId: number, _config: SentinelConfig): Promise<AnalyzerResult> {
     const start = Date.now();
-    const findings: SentinelFinding[] = [];
-    const burnThreshold = config.thresholds.budgetBurnThreshold;
-
-    const budgetResult = await this.pool.query(
-      `SELECT id, name, budget, budget_spent, budget_status, progress, start_date, target_end_date
-       FROM projects
-       WHERE organization_id = $1
-         AND budget IS NOT NULL
-         AND budget > 0
-         AND status NOT IN ('completed', 'archived')`,
-      [orgId]
-    );
-
-    for (const proj of budgetResult.rows) {
-      const budgetSpent = proj.budget_spent || 0;
-      const burnPercent = Math.round((budgetSpent / proj.budget) * 100);
-      const progress = proj.progress || 0;
-
-      if (burnPercent >= burnThreshold) {
-        const severity: FindingSeverity =
-          burnPercent >= 100 ? 'critical' : burnPercent >= 90 ? 'high' : 'medium';
-        findings.push({
-          findingId: uuidv4(),
-          organizationId: orgId,
-          projectId: proj.id,
-          analyzerType: 'budget_burn',
-          severity,
-          title: `Budget at ${burnPercent}% for "${proj.name}" (${progress}% complete)`,
-          summary: `Spent $${budgetSpent.toLocaleString()} of $${proj.budget.toLocaleString()} budget at ${progress}% progress.`,
-          details: {
-            budget: proj.budget,
-            budgetSpent,
-            burnPercent,
-            progress,
-            budgetStatus: proj.budget_status,
-            burnVsProgressRatio: progress > 0 ? (burnPercent / progress).toFixed(2) : 'N/A',
-          },
-          recommendations:
-            burnPercent >= 100
-              ? [
-                  'Freeze non-essential spending',
-                  'Request budget increase',
-                  'Review scope for cost reduction',
-                ]
-              : [
-                  'Monitor spending closely',
-                  'Review top cost categories',
-                  'Assess remaining scope feasibility',
-                ],
-          affectedItems: [{ type: 'project', id: proj.id, label: proj.name }],
-          status: 'open',
-          metadata: {},
-          createdAt: new Date(),
-        });
-      }
-
-      // Burn vs progress mismatch (spending too fast relative to progress)
-      if (progress > 0 && burnPercent > 0) {
-        const ratio = burnPercent / progress;
-        if (ratio > 1.5 && burnPercent > 30) {
-          findings.push({
-            findingId: uuidv4(),
-            organizationId: orgId,
-            projectId: proj.id,
-            analyzerType: 'budget_burn',
-            severity: ratio > 2.0 ? 'high' : 'medium',
-            title: `Budget burn outpacing progress for "${proj.name}"`,
-            summary: `Spending at ${burnPercent}% but only ${progress}% complete (${ratio.toFixed(1)}x burn-to-progress ratio).`,
-            details: { burnPercent, progress, ratio: parseFloat(ratio.toFixed(2)) },
-            recommendations: [
-              'Investigate cost drivers',
-              'Compare actuals to budget plan',
-              'Consider work-effort re-estimation',
-            ],
-            affectedItems: [{ type: 'project', id: proj.id, label: proj.name }],
-            status: 'open',
-            metadata: {},
-            createdAt: new Date(),
-          });
-        }
-      }
-    }
-
     return {
-      findings,
+      findings: [],
       analyzerType: 'budget_burn',
       durationMs: Date.now() - start,
-      projectsScanned: budgetResult.rows.length,
+      projectsScanned: 0,
       timestamp: new Date(),
+      unavailable: {
+        reason:
+          'Budget burn cannot be assessed: the platform records no project spend. ' +
+          '`projects.budget_spent` is created by no migration and declared in no schema, ' +
+          'and no other table holds a project-level spend figure. Provide a spend source ' +
+          'before enabling this analyzer; it will not estimate one.',
+      },
     };
   }
 

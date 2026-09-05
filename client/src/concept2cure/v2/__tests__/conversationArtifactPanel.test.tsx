@@ -214,7 +214,15 @@ describe('ConversationThread artifact panel — the controls complete their chai
     expect(btn.disabled).toBe(true);
     fireEvent.click(btn);
     expect(calls.some((c) => c.method === 'PUT')).toBe(false);
-    expect(btn.title).toMatch(/not in the governed record/i);
+    /* Was /not in the governed record/i. That sentence was a VERDICT on the
+       governed record inferred from one missing SSE event, and it was removed
+       because it is false in the commonest of the three states that withhold
+       the event: an identical content hash returns { created: false } with a
+       real artifactId, so the draft IS in the record — under an id this turn
+       was never told. The reason now describes the reporting channel, which is
+       the only thing the client actually knows, and this assertion follows it.
+       The panel note below already used that wording; the two now agree. */
+    expect(btn.title).toMatch(/No stored version was reported/i);
     expect(screen.getByText(/No stored version was reported/i)).toBeTruthy();
   });
 

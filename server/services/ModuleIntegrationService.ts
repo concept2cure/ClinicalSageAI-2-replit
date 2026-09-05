@@ -9,6 +9,21 @@
 import { eq, and, inArray } from 'drizzle-orm';
 import type { RequestDb } from '../db/requestDb';
 import { WorkflowService } from './WorkflowService';
+import { DocumentAttachmentService } from './module-integration/attachment-service';
+import { DocumentNotFoundException } from './module-integration/errors';
+
+// The attachment family is its own three modules under module-integration/.
+// Re-exported here so the names this service's callers already import keep
+// resolving from one place, and so a route can catch what it throws without
+// knowing which file it came from.
+export { DocumentAttachmentService } from './module-integration/attachment-service';
+export {
+  DocumentNotFoundException,
+  AttachmentNotFoundException,
+  AttachmentRejectedException,
+} from './module-integration/errors';
+export { type DocumentAttachmentInput } from './module-integration/attachment-input';
+
 import {
   unifiedDocuments,
   moduleDocuments,
@@ -51,21 +66,20 @@ export interface RegisterDocumentInput {
   metadata?: Record<string, unknown>;
 }
 
-/**
- * Exception for document not found errors
- */
-export class DocumentNotFoundException extends Error {
-  constructor(documentId: number | string) {
-    super(`Document with ID ${documentId} not found`);
-    this.name = 'DocumentNotFoundException';
-  }
-}
-
 export class ModuleIntegrationService {
   private workflowService: WorkflowService;
 
+  /**
+   * Attachments are their own service now; this holds one so getDocument can
+   * carry `attachments`. Routes that act on attachments use it directly rather
+   * than reaching through here — a facade that only forwards is a second name
+   * for the same capability.
+   */
+  readonly attachments: DocumentAttachmentService;
+
   constructor(private db: RequestDb) {
     this.workflowService = new WorkflowService(db);
+    this.attachments = new DocumentAttachmentService(db);
   }
 
   /**
@@ -338,11 +352,21 @@ export class ModuleIntegrationService {
       )
       .limit(1);
 
+    // Attachments ride on the existing document read rather than a new
+    // endpoint. GET /api/module-integration/document/:id is already mounted,
+    // already org-scoped, and is where a caller looking at a document would
+    // expect to see what is attached to it. The attachment service re-runs the
+    // ownership check this method has just done; one indexed PK lookup is a
+    // cheap price for a single implementation of the tenant walk, and it
+    // matches the defence-in-depth this file already practises.
+    const attachments = await this.attachments.list(documentId, organizationId);
+
     return {
       ...document[0],
       moduleType: moduleDoc[0]?.moduleType,
       originalId: moduleDoc[0]?.originalId,
       version: latestVersion[0],
+      attachments,
     };
   }
 
@@ -491,57 +515,6 @@ export class ModuleIntegrationService {
         action: 'update',
         value: `Updated from version ${previousVersionId} to ${currentVersionId}`,
       },
-    });
-  }
-
-  /**
-   * Add an attachment to a document
-   *
-   * @param documentId Document ID
-   * @param attachmentData Attachment data
-   * @param userId User adding the attachment
-   */
-  async addDocumentAttachment(documentId: number, attachmentData: any, userId: string) {
-    return this.db.transaction(async (tx: any) => {
-      // Add the attachment
-
-      // Log the action
-      await tx.insert(documentAuditLogs).values({
-        documentId,
-        action: 'attachment_added',
-        performedBy: userId,
-        details: {
-          field: 'attachments',
-          action: 'add',
-          value: attachmentData.fileName,
-        },
-      });
-    });
-  }
-
-  /**
-   * Remove an attachment from a document
-   *
-   * @param documentId Document ID
-   * @param attachmentId Attachment ID
-   * @param userId User removing the attachment
-   */
-  async removeDocumentAttachment(documentId: number, attachmentId: number, userId: string) {
-    return this.db.transaction(async (tx: any) => {
-      // Get attachment details first
-      // Remove the attachment
-
-      // Log the action
-      await tx.insert(documentAuditLogs).values({
-        documentId,
-        action: 'attachment_removed',
-        performedBy: userId,
-        details: {
-          field: 'attachments',
-          action: 'remove',
-          value: attachmentId,
-        },
-      });
     });
   }
 }

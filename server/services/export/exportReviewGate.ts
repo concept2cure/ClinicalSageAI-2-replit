@@ -1,7 +1,9 @@
 /**
  * Export review gate — the ONE implementation of the export-governance
  * validation contract shared by every export surface (concept2cure chat
- * exports, eCTD package export, CERV2 document exports).
+ * exports, eCTD package export, CERV2 document exports, and the Artifacts
+ * Center export, which reuses shouldEnforceExportReviewGate() against its
+ * persisted review state).
  *
  * This module owns the decision logic only:
  *   1. the governance payload schema,
@@ -38,10 +40,28 @@ export const REVIEWER_ATTRIBUTION_FIELDS = [
   'governance.reviewTimestamp',
 ] as const;
 
+/**
+ * The ONE enable decision for every export review gate.
+ *
+ * Production is ALWAYS enforced — no environment variable may disable it.
+ * (Deliberate behavior change: CONCEPT2CURE_REQUIRE_EXPORT_HUMAN_REVIEW='false'
+ * previously disabled the gate even in production; that fail-open hole is
+ * closed. Fail closed, never fabricate.)
+ *
+ * Outside production the gate is opt-in via EITHER legacy spelling — both are
+ * kept working so existing docs/runbooks stay valid (e.g.
+ * docs/proof/golden-journeys/WO-06_GOVERNED_EVIDENCE_DRAFT.md starts the
+ * server with EXPORT_REVIEW_GATE=enforce):
+ *   CONCEPT2CURE_REQUIRE_EXPORT_HUMAN_REVIEW='true'  → enforced
+ *   EXPORT_REVIEW_GATE='enforce'                      → enforced
+ * Any other value (including 'false' / 'off' / unset) leaves it off in
+ * non-production only.
+ */
 export function shouldEnforceExportReviewGate(): boolean {
+  if (process.env.NODE_ENV === 'production') return true;
   if (process.env.CONCEPT2CURE_REQUIRE_EXPORT_HUMAN_REVIEW === 'true') return true;
-  if (process.env.CONCEPT2CURE_REQUIRE_EXPORT_HUMAN_REVIEW === 'false') return false;
-  return process.env.NODE_ENV === 'production';
+  if (process.env.EXPORT_REVIEW_GATE === 'enforce') return true;
+  return false;
 }
 
 export type ExportGovernanceRejection = {

@@ -37,20 +37,19 @@ import type { AnaChatMessage } from '../../components/ana/useAnaChat';
 /* The surface's live data reads — held offline so the render under test is the
    turn adaptation and nothing else. */
 vi.mock('../dataConnect', () => ({
-  useLive: () => ({ data: null, sample: true, loading: false }),
   connected: () => false,
   EmptyState: ({ title }: { title: string }) => <div>{title}</div>,
-  SampleTag: () => null,
 }));
 
 /* useAnaChat is the real streaming client (POST /api/ana-ri/stream). The
    messages it would produce are the input to this test, so it is replaced with
    a fixed transcript rather than a network. */
 const chatMessages: { current: AnaChatMessage[] } = { current: [] };
+const chatStreaming = { current: false };
 vi.mock('../../components/ana/useAnaChat', () => ({
   useAnaChat: () => ({
     messages: chatMessages.current,
-    isStreaming: false,
+    isStreaming: chatStreaming.current,
     isLoadingThread: false,
     loadThread: vi.fn().mockResolvedValue(undefined),
     send: vi.fn(),
@@ -97,6 +96,7 @@ const USER_TURN: AnaChatMessage = { id: 'm1', role: 'user', text: 'Revert 2.5.4.
 
 beforeEach(() => {
   (window as unknown as { C2C_CONVO?: unknown }).C2C_CONVO = { id: 'new' };
+  chatStreaming.current = false;
 });
 afterEach(() => {
   cleanup();
@@ -139,5 +139,66 @@ describe('ConversationThread — 21 CFR Part 11 signature gate', () => {
     expect(screen.queryByRole('dialog')).toBeNull();
     expect(document.body.textContent).not.toMatch(/signature required/i);
     expect(document.body.textContent).not.toMatch(/Reason for change/i);
+    // The fail-closed direction of the work record too: a settled turn that
+    // ran nothing carries no record, not an empty one.
+    expect(document.querySelector('.ct-col .ana-activity')).toBeNull();
+  });
+});
+
+/**
+ * The same seam, the same defect class, one work order later (WO-11).
+ *
+ * `toTurn` carried `thinking` and dropped the phase, the tool calls, the
+ * rounds, the lens and the draft — so while AnA ran deterministic engines
+ * across rounds, this surface showed three animated dots. The rail's adapter
+ * had the identical bug and got a carriage test (anaMessageCarriage.test.ts);
+ * this one did not, and the review of the fix showed why that matters: with
+ * `activity` set back to `undefined`, every suite for this surface stayed
+ * green. `toTurn` is module-private, so the seam is asserted through the
+ * render: what the turn reported has to be visible in the thread column.
+ */
+describe('ConversationThread — the turn\'s work record reaches the thread', () => {
+  const TOOL = { name: 'compute_sample_size', label: 'Sample size — biostatistics engine', round: 1 };
+
+  it('in flight: the phase line and the tool row are in the thread, on one turn, with no dots', () => {
+    chatMessages.current = [
+      USER_TURN,
+      {
+        id: 'm2',
+        role: 'assistant',
+        text: '',
+        streaming: true,
+        statusPhase: 'Loading project memory…',
+        toolCalls: [{ ...TOOL, status: 'running' }],
+      } as AnaChatMessage,
+    ];
+    chatStreaming.current = true;
+    render(<ConversationThread {...OWNED_PROPS} />);
+
+    const body = document.querySelector('.ct-col .ana-activity-body');
+    expect(body).not.toBeNull();
+    expect(body!.textContent).toContain('Loading project memory…');
+    expect(body!.textContent).toContain('Sample size — biostatistics engine');
+    // One AnA turn for the in-flight message — not that turn plus a second
+    // avatar carrying three dots.
+    expect(document.querySelectorAll('.ct-col .ct-ana-av').length).toBe(1);
+    expect(document.querySelector('.ct-typing')).toBeNull();
+  });
+
+  it('settled: the record survives the answer, collapsed to its summary', () => {
+    chatMessages.current = [
+      USER_TURN,
+      {
+        id: 'm2',
+        role: 'assistant',
+        text: 'n = 212 per arm.',
+        toolCalls: [{ ...TOOL, status: 'success' }],
+      } as AnaChatMessage,
+    ];
+    render(<ConversationThread {...OWNED_PROPS} />);
+
+    const toggle = document.querySelector('.ct-col .ana-activity-toggle');
+    expect(toggle).not.toBeNull();
+    expect(toggle!.textContent).toContain('1 step completed');
   });
 });

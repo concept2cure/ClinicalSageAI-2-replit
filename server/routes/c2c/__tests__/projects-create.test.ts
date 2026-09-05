@@ -295,6 +295,38 @@ describe('POST /api/c2c/projects', () => {
     expect(res.body.error).toBe('PENDING_STORE');
   });
 
+  it('does NOT call it a provisioning failure when the named relation EXISTS', async () => {
+    // A 42P01 names a relation in its message, and the route used to take that
+    // name at face value and tell the operator to provision it. The drug-NDA
+    // golden journey produces exactly that against a relation the same database
+    // still resolves, so the one code path whose job is to say what is wrong
+    // was confidently saying the wrong thing — and the operator's next step,
+    // provisioning a store that is already there, dead-ends too.
+    query
+      .mockResolvedValueOnce({ rows: [] })                                   // BEGIN
+      .mockRejectedValueOnce(
+        Object.assign(new Error('relation "audit_logs" does not exist'), { code: '42P01' }),
+      )
+      .mockResolvedValueOnce({ rows: [] })                                   // ROLLBACK
+      .mockResolvedValueOnce({ rows: [{ reg: 'audit_logs' }] });             // to_regclass — it IS there
+    const res = await request(appWith(7, 3)).post('/api/c2c/projects').send(validBody);
+    expect(res.status).not.toBe(503);
+    expect(res.body.error).not.toBe('PENDING_STORE');
+  });
+
+  it('still calls it a provisioning failure when the relation really is absent', async () => {
+    query
+      .mockResolvedValueOnce({ rows: [] })                                   // BEGIN
+      .mockRejectedValueOnce(
+        Object.assign(new Error('relation "audit_logs" does not exist'), { code: '42P01' }),
+      )
+      .mockResolvedValueOnce({ rows: [] })                                   // ROLLBACK
+      .mockResolvedValueOnce({ rows: [{ reg: null }] });                     // to_regclass — genuinely missing
+    const res = await request(appWith(7, 3)).post('/api/c2c/projects').send(validBody);
+    expect(res.status).toBe(503);
+    expect(res.body.error).toBe('PENDING_STORE');
+  });
+
   it('refuses the create when the org is at its licensed program quota', async () => {
     // The quota ships in warn mode so it cannot retroactively lock out tenants
     // already over a limit that was never enforced; enforce is what this asserts.

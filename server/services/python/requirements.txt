@@ -29,7 +29,10 @@ openpyxl==3.1.5
 # AI/NLP dependencies
 # AI/NLP dependencies
 openai==2.37.0
-transformers==5.9.0
+# CVE-2026-9856 (HIGH): save_pretrained accepted a chat-template name that
+# traversed out of the target directory, so a template could write an arbitrary
+# file. Fixed in 5.10.0 — the Trivy filesystem scan fails the build below it.
+transformers==5.10.0
 torch==2.12.0
 sentence-transformers==5.5.1
 

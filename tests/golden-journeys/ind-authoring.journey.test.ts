@@ -27,7 +27,7 @@ import express from 'express';
 import request from 'supertest';
 import { SignJWT } from 'jose';
 import { randomBytes } from 'node:crypto';
-import { createJourneyDb, JourneyRecorder, type JourneyDb } from './harness';
+import { createJourneyDb, JourneyRecorder, type JourneyDb, assertNoSchemaGaps, assertNoDegradedTenantEnrichment } from './harness';
 
 // The authoring router carries its own jose JWT verification (HS256 over
 // JWT_SECRET) — so this journey authenticates with REAL signed tokens, and the
@@ -132,7 +132,10 @@ const PREREQ = `
     ip_address    TEXT,
     user_agent    TEXT
   );
-  CREATE TABLE organizations (id SERIAL PRIMARY KEY, name TEXT);
+  -- \`uuid\` as db/migrations/20260129_add_org_uuid_alignment.sql adds it; the
+  -- org-membership middleware LEFT JOINs it on every request and, without it,
+  -- degrades to a membership-only decision with orgUuid = null (ledger L148).
+  CREATE TABLE organizations (id SERIAL PRIMARY KEY, name TEXT, uuid UUID NOT NULL DEFAULT gen_random_uuid());
   -- users.id is INTEGER, standing in for the production serial. It was UUID for
   -- a history join that read u.id = r.created_by::uuid; that join was removed
   -- (Postgres rejects integer = uuid at parse time) and now compares as text,
@@ -224,6 +227,16 @@ beforeAll(async () => {
       // to a raw actor id. It is on the durable apply path
       // (C2C_MIGRATION_FILES) — this list was simply behind it.
       'migrations/20260728_authoring_comments_threading.sql',
+      // Object-level authorization. The section-edit gate and the creator
+      // auto-grant both go through the canonical permission service now
+      // (services/authoring/authoring-permissions.ts), which reads and writes
+      // the grant's identity and lifecycle columns — principal_id, granted_by,
+      // valid_from/valid_until, revoked_at. Without this migration the journey
+      // ran against a doc_permissions narrower than the code under test: the
+      // decision threw 42703 and fail-closed denied, which the harness catches
+      // rather than letting the journey pass on a database smaller than
+      // production's. On the durable apply path via AUTHORING_SUBSYSTEM_FILES.
+      'db/migrations/20260727_authoring_object_permissions.sql',
     ],
   });
   h.db = jdb.db;
@@ -239,6 +252,14 @@ beforeAll(async () => {
 }, T);
 
 afterAll(async () => {
+  // A journey that ran against a database missing a table its subject writes
+  // to proves less than it claims (ledger L145).
+  // Ordered BEFORE the schema-gap check on purpose: a degraded membership is
+  // usually CAUSED by a missing column, and the gap check would otherwise
+  // throw first and report the symptom while hiding which claims were
+  // proven without an org context (ledger L148).
+  await assertNoDegradedTenantEnrichment();
+  assertNoSchemaGaps(jdb);
   const { jsonPath, mdPath } = R.write('ind-authoring');
   // eslint-disable-next-line no-console
   console.info(`[journey] manifest: ${jsonPath}\n[journey] report:   ${mdPath}`);
@@ -249,6 +270,7 @@ describe('Journey A phase 1 — authoring loop over HTTP (canonical DDL)', () =>
   let docId: string;
   let sectionId: string;
   let firstRevisionId: string;
+  let commentId: string;
   let freezeHash: string;
 
   it('runs the authoring spine', async () => {
@@ -322,6 +344,7 @@ describe('Journey A phase 1 — authoring loop over HTTP (canonical DDL)', () =>
         request(app).post(`/api/authoring/sections/${sectionId}/comment`),
       ).send({ doc_id: docId, body: 'Confirm the effect size against the SAP before freeze.' });
       expect(c.status).toBe(201);
+      commentId = c.body.comment.id;
       const cite = await asUser(AUTHOR)(
         request(app).post(`/api/authoring/sections/${sectionId}/cite`),
       ).send({
@@ -383,6 +406,20 @@ describe('Journey A phase 1 — authoring loop over HTTP (canonical DDL)', () =>
       ).send({ pin: AUTHOR_PIN });
       expect(res.status).toBe(200);
       return { pinCreated: true, identitySource: 'verified JWT (getActorEmail)' };
+    });
+
+    // ── 7b. Settle before the seal ───────────────────────────────────────────
+    // Freeze refuses to silently seal a document that is still asking questions:
+    // the reviewer's open comment must be resolved (or the freeze explicitly
+    // acknowledge it) before the content is hashed and signed. A pre-signature
+    // filing freeze is the clean-seal case, so the journey resolves the open
+    // review comment here rather than acknowledging an unfinished document.
+    await R.step('resolve-review-comment-before-seal', async () => {
+      const res = await asUser(AUTHOR)(
+        request(app).patch(`/api/authoring/comments/${commentId}`),
+      ).send({ status: 'resolved', resolution_note: 'Effect size confirmed against the SAP.' });
+      expect(res.status).toBe(200);
+      return { commentResolved: true, commentId };
     });
 
     // ── 8. Freeze — immutable snapshot with content hash ─────────────────────

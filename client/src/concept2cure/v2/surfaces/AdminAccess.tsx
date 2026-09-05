@@ -2,6 +2,8 @@ import React, { useMemo, useState } from 'react';
 import { I } from '../icons';
 import { useLiveData, EmptyState } from '../dataConnect';
 import { usePublishSurfaceContext } from '../surfaceContext';
+import { useSurfaceActionHandlers } from '../surfaceActions';
+import { ceremonyOpen } from '../ceremony';
 import { apiRequest, serverMessage } from '@/lib/queryClient';
 import { C2CForm, type C2CFormConfig } from '../C2CForm';
 import { C2CToast, useToast } from '../toast';
@@ -176,7 +178,31 @@ export function AdminAccess({ onAsk }: SurfaceViewProps) {
         );
         return;
       }
-      fireToast(`${(v.name || '').trim()} invited as ${v.role}.`);
+      // The server says how the invitee gets their setup link. When this
+      // deployment has no email delivery, the link comes back once, here, and
+      // the admin hands it over — so put it on the clipboard and say so.
+      const body = await res.json().catch(() => null);
+      const inv = body && typeof body === 'object' ? (body as { invitation?: { delivery?: string; setupUrl?: string } }).invitation : undefined;
+      const who = (v.name || '').trim();
+      if (inv && inv.delivery === 'failed') {
+        fireToast(
+          `${who} was added as ${v.role}, but no activation link could be issued — they cannot sign in yet. Ask them to use "Forgot password", or retry the invitation.`,
+          'error',
+        );
+      } else if (inv && inv.delivery === 'link' && inv.setupUrl) {
+        let copied = false;
+        try {
+          await navigator.clipboard?.writeText(inv.setupUrl);
+          copied = true;
+        } catch {
+          copied = false;
+        }
+        fireToast(
+          `${who} invited as ${v.role}. This server sends no email, so ${copied ? 'their password setup link is on your clipboard' : `share this setup link with them: ${inv.setupUrl}`} — it expires in 21 days.`,
+        );
+      } else {
+        fireToast(`${who} invited as ${v.role}. An invitation email with their password setup link was sent.`);
+      }
       setAdminEpoch((n) => n + 1);
     } catch (e) {
       fireToast(
@@ -273,6 +299,52 @@ export function AdminAccess({ onAsk }: SurfaceViewProps) {
       ],
     };
   }, [loading, error, hasData, tab, allMembers.length, activeMembers, mfaMembers, roles.length, apiKeys.length, audit.length, sso, stateFilter, member]);
+  /* View state only. Every mutation this screen offers — invite, grant,
+     scope edit, key revoke, setting change — is a governed administrator act
+     that routes through the rail's §11.50 sign-off, and none is reachable
+     from here. Switching under an open invite/revoke form would discard it. */
+  useSurfaceActionHandlers('admin-console', {
+    'admin-console.open-tab': (params) => {
+      const target = String(params.tab ?? '');
+      const meta = TABS.find((t) => t.id === target);
+      if (!meta) return { ok: false, reason: `No admin tab named "${params.tab}".` };
+      if (tab === target) return { ok: true, detail: `Already on ${meta.label}` };
+      if (ceremonyOpen()) {
+        return {
+          ok: false,
+          reason:
+            'A governed form is open on this screen — switching tabs would discard it. ' +
+            'Let the person finish or cancel it first.',
+        };
+      }
+      setTab(target as TabId);
+      return { ok: true, detail: `Opened ${meta.label}` };
+    },
+    'admin-console.filter-members': (params) => {
+      const target = String(params.state ?? '');
+      if (!['all', 'active', 'invited', 'disabled'].includes(target)) {
+        return { ok: false, reason: `No member state named "${params.state}".` };
+      }
+      if (ceremonyOpen()) {
+        return {
+          ok: false,
+          reason:
+            'A governed form is open on this screen — changing the view would discard it. ' +
+            'Let the person finish or cancel it first.',
+        };
+      }
+      const switched = tab !== 'members';
+      if (switched) setTab('members');
+      setStateFilter(target);
+      return {
+        ok: true,
+        detail:
+          `Filtered members to ${target}` + (switched ? ' on the members tab' : '') +
+          ' — counts on screen are aggregates; individual records stay on the screen',
+      };
+    },
+  });
+
   usePublishSurfaceContext('admin-console', anaContext);
 
   return (

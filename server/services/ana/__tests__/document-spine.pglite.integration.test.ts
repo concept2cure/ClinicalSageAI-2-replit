@@ -94,7 +94,11 @@ CREATE TABLE IF NOT EXISTS audit_logs (
   id TEXT PRIMARY KEY, tenant_id INTEGER, user_id INTEGER, action TEXT, table_name TEXT,
   record_id TEXT, actor_id INTEGER, target TEXT, target_type TEXT, target_id TEXT, reason TEXT,
   payload_hash TEXT, ana_action_id TEXT, sha256_chain TEXT,
-  occurred_at TIMESTAMPTZ NOT NULL DEFAULT now(), hmac_seal TEXT
+  occurred_at TIMESTAMPTZ NOT NULL DEFAULT now(), hmac_seal TEXT,
+  old_values   JSON,
+  new_values   JSON,
+  ip_address   TEXT,
+  user_agent   TEXT
 );
 CREATE TABLE IF NOT EXISTS c2c_ana_actions (
   id TEXT PRIMARY KEY, org_id INTEGER NOT NULL, conversation_id TEXT, domain TEXT NOT NULL,
@@ -135,6 +139,13 @@ beforeEach(async () => {
   pg = new PGlite();
   await pg.exec(ARTIFACTS_DDL);
   await pg.exec(COMMAND_VOCAB_MIGRATION); // the real fix, applied on top of the narrow CHECK
+  // The lineage gate the artifact writer now enlists (ledger L160): a real
+  // organizations row for the FK, the evidence spine and the span-lineage store.
+  await pg.exec(`CREATE TABLE IF NOT EXISTS organizations (id SERIAL PRIMARY KEY, name TEXT);`);
+  await pg.exec(`INSERT INTO organizations (id, name) VALUES (3, 'org-3') ON CONFLICT DO NOTHING;`);
+  for (const rel of ['db/migrations/20260724_clinical_regulatory_evidence_spine.sql', 'db/migrations/20260803_document_span_lineage.sql']) {
+    await pg.exec(fs.readFileSync(path.resolve(__dirname, '../../../../', rel), 'utf8'));
+  }
   const client = { query: (sql: string, params?: unknown[]) => pg.query(sql, params) as Promise<{ rows: any[] }> };
   emitted = [];
   deps = {

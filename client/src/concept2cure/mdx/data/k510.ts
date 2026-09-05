@@ -1,5 +1,13 @@
 /**
  * 510(k) pathway fixtures — ported verbatim from data.jsx.
+ *
+ * The "Assemble eSTAR" step used to read "20 sections · validation". Nothing
+ * produced that 20: the readiness engine modelled 11 slots and the eSTAR
+ * manifest listed different numbers again, so a hand-typed count on a stage
+ * label was a third answer that could only ever drift further from the model
+ * (MDX_WORK_ORDER W1-5). The count is gone rather than corrected to 24 — a
+ * literal here would drift again the next time the model changes, and the step
+ * label does not need a number to say what the step is.
  */
 
 export type EstarStatus = 'complete' | 'review' | 'draft' | 'na' | 'empty';
@@ -63,7 +71,7 @@ export const K510_STAGES: K510Stage[] = [
   { id: 'predicate',  label: 'Predicate search',        meta: 'Precedent intelligence' },
   { id: 'testing',    label: 'Performance testing',     meta: 'Bench · analytical · clinical' },
   { id: 'se',         label: 'Substantial equivalence', meta: 'SE matrix · differences' },
-  { id: 'assemble',   label: 'Assemble eSTAR',          meta: '20 sections · validation' },
+  { id: 'assemble',   label: 'Assemble eSTAR',          meta: 'sections · validation' },
   { id: 'submit',     label: 'Submit',                  meta: 'eSTAR + cover letter' },
 ];
 

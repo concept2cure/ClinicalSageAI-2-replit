@@ -42,123 +42,20 @@ import { getOpenAIClient } from './openai-client';
 
 const openai = getOpenAIClient();
 
-// ── Enum validators ──
-
-const VALID_DRIFT_TYPES = new Set([
-  'summary_detail_mismatch',
-  'claim_escalation_without_evidence',
-  'endpoint_framing_drift',
-  'cmc_maturity_overstatement',
-  'narrative_statistical_mismatch',
-  'document_contradiction',
-  'stale_downstream_summary',
-]);
-
-const VALID_SEVERITIES = new Set(['critical', 'high', 'medium', 'low', 'informational']);
-
-const VALID_REVIEWER_LENSES = new Set([
-  'skeptical_reviewer',
-  'evidence_sufficiency_skeptic',
-  'cmc_heavy_reviewer',
-  'clinical_risk_reviewer',
-  'compliance_inspection',
-  'claims_challenger',
-  'biostatistics_skeptic',
-]);
-
-const VALID_SUPPORT_STRENGTHS = new Set([
-  'direct',
-  'indirect',
-  'weak',
-  'stale',
-  'contradictory',
-  'unsupported',
-]);
-
-function validateDriftType(val: string): string {
-  return VALID_DRIFT_TYPES.has(val) ? val : 'document_contradiction';
-}
-
-function validateSeverity(val: string): string {
-  return VALID_SEVERITIES.has(val) ? val : 'medium';
-}
-
-function validateSupportStrength(val: string): string {
-  return VALID_SUPPORT_STRENGTHS.has(val) ? val : 'unsupported';
-}
-
-function safeJsonParse<T>(raw: string | null | undefined, fallback: T): T {
-  if (!raw) return fallback;
-  try {
-    return JSON.parse(raw) as T;
-  } catch {
-    return fallback;
-  }
-}
-
-// ── Types ──
-
-interface ClaimExtractionResult {
-  claims: Array<{
-    claimText: string;
-    claimType: string;
-    sectionPath: string;
-    confidence: number;
-    sourceLocation?: { page?: number; paragraph?: number };
-  }>;
-}
-
-interface EvidenceAssessment {
-  claimId: number;
-  claimText: string;
-  supportStrength: 'direct' | 'indirect' | 'weak' | 'stale' | 'contradictory' | 'unsupported';
-  relevanceScore: number;
-  evidenceText: string;
-  isStatistical: boolean;
-  statisticalDetail?: Record<string, unknown>;
-}
-
-interface DriftDetection {
-  driftType: string;
-  severity: 'critical' | 'high' | 'medium' | 'low' | 'informational';
-  description: string;
-  sourceExcerpt?: string;
-  targetExcerpt?: string;
-  suggestedFix?: string;
-}
-
-interface ChallengeResult {
-  reviewerLens: string;
-  challengeText: string;
-  targetSection?: string;
-  severity: 'critical' | 'high' | 'medium' | 'low' | 'informational';
-  deficiencyLikelihood: number;
-  suggestedResponse?: string;
-  suggestedArtifact?: string;
-}
-
-interface FragilityZone {
-  section: string;
-  sectionId?: number;
-  score: number;
-  issues: string[];
-}
-
-interface NextBestArtifactPrediction {
-  artifactType: string;
-  rationale: string;
-  priority: 'critical' | 'high' | 'medium';
-  targetSection?: string;
-}
-
-interface FullAssessmentResult {
-  assessment: SubmissionTwinAssessment;
-  claims: SubmissionTwinClaim[];
-  driftAlerts: SubmissionTwinDriftAlert[];
-  challenges: SubmissionTwinChallenge[];
-  weakZones: FragilityZone[];
-  nextBestArtifact: NextBestArtifactPrediction | null;
-}
+// Enum validators + AI-facing result shapes — see submission-twin-model.ts
+import {
+  VALID_REVIEWER_LENSES,
+  validateDriftType,
+  validateSeverity,
+  safeJsonParse,
+  type ClaimExtractionResult,
+  type EvidenceAssessment,
+  type DriftDetection,
+  type ChallengeResult,
+  type FragilityZone,
+  type NextBestArtifactPrediction,
+  type FullAssessmentResult,
+} from './submission-twin-model';
 
 // ── Service ──
 

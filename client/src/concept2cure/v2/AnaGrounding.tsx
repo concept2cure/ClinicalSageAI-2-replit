@@ -89,12 +89,38 @@ export function AnaGrounding({ evidence }: { evidence?: AnaGroundingEvidence }) 
      tells a reviewer there is a problem and not which sentence has it. */
   const firstFlag = flaggedClaims && flaggedClaims.length > 0 ? flaggedClaims[0] : null;
 
+  /* ASSESSED, BUT NOTHING GRADED, IS NOT A PASS EITHER.
+   *
+   * `validated` gating the numbers closed half of this. The other half is that
+   * the server's `validated` is `totalIssues === 0 || …`, so an answer the
+   * claim extractor found NOTHING in comes back validated with every count at
+   * zero — and this row rendered a green check reading the bare "Claims
+   * grounded". Grounded on what? No claim was graded; the extractor identified
+   * none to grade.
+   *
+   * That is the same false reassurance the "not assessed" branch above exists
+   * to prevent, arriving by the other route: there, zero meant ungraded; here,
+   * zero means nothing found. Neither is a clean bill of health, and only one
+   * of them was being reported honestly.
+   *
+   * The check is kept for the case it was earned — claims were graded and
+   * came back grounded — and dropped for the case where there is nothing to
+   * certify. */
+  const gradedNothing = total === 0;
+
   return (
     <div className="ana-grounding">
       <div className="ana-grounding-row">
-        <span className="ana-grounding-ic is-ok" aria-hidden="true">{I.check}</span>
+        <span
+          className={`ana-grounding-ic ${gradedNothing ? 'is-unknown' : 'is-ok'}`}
+          aria-hidden="true"
+        >
+          {gradedNothing ? I.info : I.check}
+        </span>
         <span>
-          {total > 0 ? `${groundedClaims} of ${total} claims grounded` : 'Claims grounded'}
+          {gradedNothing
+            ? 'No claims identified to check in this answer'
+            : `${groundedClaims} of ${total} claims grounded`}
           {sourceCount > 0 ? ` · ${sourceCount} ${sourceCount === 1 ? 'source' : 'sources'}` : ''}
         </span>
       </div>

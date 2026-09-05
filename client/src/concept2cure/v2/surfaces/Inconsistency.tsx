@@ -7,6 +7,7 @@ import { assessmentState } from '../assessmentState';
 import type { AnswerLeadProps } from '../AnswerLead';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { usePublishSurfaceContext } from '../surfaceContext';
+import { useSurfaceActionHandlers } from '../surfaceActions';
 import { C2CForm } from '../C2CForm';
 import type { C2CFormConfig } from '../C2CForm';
 import '../styles/project-home-v2.css';
@@ -80,7 +81,7 @@ function currentProjectId(): string | null {
     const p = (window as unknown as { C2C_PROJECT?: { id?: string | number } }).C2C_PROJECT;
     const id = p && p.id != null ? String(p.id).trim() : '';
     return id || null;
-  } catch (_e) {
+  } catch {
     return null;
   }
 }
@@ -558,6 +559,43 @@ export function Inconsistency({ onAsk, onNav }: SurfaceViewProps) {
       availableActions: ['Switch the FDA/EMA overlay (re-scores the gate on screen)'],
     };
   }, [projectId, boardState.loading, boardState.error, boardData, hasBoard, lead, neverScanned, clean, gate, progCode, filingLabel, reg, openN, resolvedN, total]);
+  /* The regulator overlay is a client-side re-scoring of the same findings.
+     The applied detail states the verdict UNDER THE NEW OVERLAY — recomputed
+     through `giPromotionGate`, the same pure function the screen scores with,
+     so no second derivation exists to drift. Scans, resolutions and assumption
+     revaluations stay governed acts AnA proposes in conversation. */
+  useSurfaceActionHandlers('inconsistency', {
+    'inconsistency.set-regulator': (params) => {
+      const target = params.regulator === 'EMA' ? 'EMA' : 'FDA';
+      if (!projectId) {
+        return { ok: false, reason: 'The board is project-scoped and no project is open.' };
+      }
+      if (boardState.loading && !boardData) {
+        return { ok: false, reason: 'The inconsistency board is still loading.', retry: true };
+      }
+      if (boardState.error) {
+        return { ok: false, reason: 'The inconsistency board could not be read, so no overlay can be scored against it.' };
+      }
+      if (reg === target) return { ok: true, detail: `Already showing the ${target} overlay` };
+      setReg(target);
+      if (neverScanned) {
+        return {
+          ok: true,
+          detail: `Switched to the ${target} overlay — no scan has reported on this filing, so the gate stays NOT ASSESSED under either regulator`,
+        };
+      }
+      const next = giPromotionGate(findings, target);
+      return {
+        ok: true,
+        detail:
+          `Switched to the ${target} overlay — the gate re-scores to ` +
+          (next.blocked
+            ? `BLOCKED (${next.blocking.length} blocking contradiction(s))`
+            : `clear, with ${next.needApproval.length} needing sign-off and ${next.needReview.length} needing review`),
+      };
+    },
+  });
+
   usePublishSurfaceContext('inconsistency', anaContext);
 
   return (

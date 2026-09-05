@@ -1,0 +1,91 @@
+/**
+ * Rich section editor (editor/RichSectionEditor.tsx) — ribbon, find/link/
+ * caption/cite bars, suggestion review, prose canvas, footer.
+ *
+ * These rules lived in an inline <style> inside the component, which put them
+ * where no stylesheet gate could see them: the class-coverage gate reads the
+ * built CSS chunks and listed all 30 rse-* classes as "rendered without a
+ * rule", and every value carried a hard-coded hex fallback beside its token
+ * (ledger L139). Moved here verbatim minus the fallbacks — the tokens resolve
+ * under both shells that mount the editor (.c2c-v2 and .mdx-shell), so the
+ * selectors stay component-scoped by their rse- prefix rather than by shell.
+ */
+
+.rse-root { display:flex; flex-direction:column; min-height:0; background:var(--bg-000); border-radius:inherit; }
+.rse-gate { display:flex; gap:10px; align-items:baseline; padding:8px 12px; font-size:12px; color:var(--text-300); background:var(--bg-50); border-bottom:1px solid var(--border); }
+.rse-ribbon { display:flex; align-items:center; gap:2px; padding:4px 8px; background:var(--bg-000); border-bottom:1px solid var(--border); flex-wrap:wrap; }
+.rse-sel { font-size:11px; border:1px solid var(--border-control); border-radius:4px; padding:2px 6px; background:var(--bg-50); color:var(--text-100); cursor:pointer; height:24px; }
+.rse-sep { width:1px; height:18px; background:var(--border); margin:0 3px; }
+.rse-rb { min-width:24px; height:24px; padding:0 4px; font-size:12px; border:1px solid transparent; border-radius:4px; background:transparent; cursor:pointer; color:var(--text-200); display:inline-flex; align-items:center; justify-content:center; }
+.rse-rb[data-active] { background:var(--bg-100); border-color:var(--border); }
+.rse-chip { font-size:11px; height:24px; padding:0 10px; border-radius:12px; border:1px solid var(--warning); color:var(--warning); background:transparent; cursor:pointer; font-weight:600; }
+.rse-track { display:flex; align-items:center; gap:4px; font-size:10px; color:var(--text-400); cursor:pointer; margin-left:6px; }
+.rse-review { border-bottom:1px solid var(--border); background:var(--bg-50); max-height:200px; overflow-y:auto; }
+.rse-review-h { display:flex; gap:10px; padding:6px 12px; font-size:11px; font-weight:600; color:var(--text-300); }
+.rse-review-row { display:flex; align-items:center; gap:8px; padding:4px 12px; font-size:12px; }
+.rse-review-jump { display:flex; align-items:baseline; gap:8px; flex:1; min-width:0; background:none; border:none; cursor:pointer; text-align:left; padding:0; }
+.rse-review-kind { font-size:10px; font-weight:700; text-transform:uppercase; }
+.rse-review-kind[data-kind="insertion"] { color:var(--success); }
+.rse-review-kind[data-kind="deletion"] { color:var(--error); }
+.rse-review-by { font-weight:600; color:var(--text-200); white-space:nowrap; }
+.rse-review-txt { color:var(--text-300); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.rse-link { font-size:11px; border:none; background:none; color:var(--accent-100); cursor:pointer; padding:2px 4px; }
+.rse-link:disabled { color:var(--text-400); cursor:default; }
+.rse-find { display:flex; align-items:center; gap:6px; padding:6px 10px; background:var(--bg-50); border-bottom:1px solid var(--border); flex-wrap:wrap; }
+.rse-find-label { display:inline-flex; align-items:center; gap:4px; font-size:11px; font-weight:600; color:var(--text-300); }
+.rse-find-input { flex:0 1 220px; min-width:120px; height:24px; font-size:12px; padding:2px 8px; border:1px solid var(--border-control); border-radius:4px; background:var(--bg-000); color:var(--text-100); }
+.rse-find-count { font-size:11px; color:var(--text-400); min-width:64px; }
+.rse-find-err { font-size:11px; color:var(--error); }
+.rse-find-note { font-size:10px; color:var(--warning); }
+.rse-find-hit { background:color-mix(in srgb, var(--warning) 25%, transparent); border-radius:2px; }
+.rse-find-hit-active { background:color-mix(in srgb, var(--warning) 50%, transparent); box-shadow:0 0 0 1px var(--warning); }
+.rse-hl-glyph { background:color-mix(in srgb, var(--warning) 30%, transparent); padding:0 3px; border-radius:2px; }
+.rse-body { flex:1; min-height:0; overflow-y:auto; }
+.rse-body .tiptap { outline:none; min-height:320px; padding:18px 20px; font-size:14px; line-height:1.75; color:var(--text-100); font-family:var(--font-serif,Georgia,"Times New Roman",serif); }
+/* Measure lives on the prose blocks, not the canvas: a CTD table must be
+   free to use the full column while paragraphs keep a readable line. */
+.rse-body .tiptap > p, .rse-body .tiptap > h1, .rse-body .tiptap > h2, .rse-body .tiptap > h3, .rse-body .tiptap > ul, .rse-body .tiptap > ol, .rse-body .tiptap > blockquote { max-width:78ch; }
+.rse-body .tiptap p { margin:0 0 12px; }
+.rse-body .tiptap h1 { font-size:18px; font-weight:700; margin:0 0 8px; }
+.rse-body .tiptap h2 { font-size:15px; font-weight:700; margin:20px 0 8px; }
+.rse-body .tiptap h3 { font-size:13px; font-weight:600; margin:16px 0 6px; }
+.rse-body .tiptap ul, .rse-body .tiptap ol { margin:0 0 12px 24px; }
+.rse-body .tiptap li { margin-bottom:6px; }
+.rse-body .tiptap table { width:100%; border-collapse:collapse; margin:16px 0; font-size:13px; }
+.rse-body .tiptap th { padding:8px 12px; background:var(--bg-50); border:1px solid var(--border); font-weight:600; text-align:left; }
+.rse-body .tiptap td { padding:7px 12px; border:1px solid var(--border); }
+.rse-body .tiptap mark { background:color-mix(in srgb, var(--warning) 28%, transparent); padding:0 1px; border-radius:2px; }
+.rse-img { margin:16px auto; max-width:100%; text-align:center; }
+.rse-img img { max-width:100%; height:auto; border-radius:4px; }
+.rse-img img:not([src]) { display:none; }
+.rse-img-status { display:block; font-size:11px; color:var(--text-400); padding:16px 12px; background:var(--bg-50); border:1px dashed var(--border-control); border-radius:4px; }
+.rse-img[data-error="1"] .rse-img-status { color:var(--error); border-color:var(--error); }
+.rse-body .tiptap .ProseMirror-selectednode { outline:2px solid var(--accent-100); outline-offset:2px; border-radius:4px; }
+.rse-body .tiptap a { color:var(--accent-100); text-decoration:underline; text-underline-offset:2px; }
+.rse-body .tiptap .selectedCell { outline:2px solid color-mix(in srgb, var(--accent-100) 55%, transparent); outline-offset:-2px; }
+.rse-body .tiptap p.is-editor-empty:first-child::before { content:attr(data-placeholder); float:left; color:var(--text-400); pointer-events:none; height:0; }
+.rse-ins { background:color-mix(in srgb, var(--success) 14%, transparent); text-decoration:underline; text-decoration-color:var(--success); }
+.rse-del { background:color-mix(in srgb, var(--error) 12%, transparent); text-decoration:line-through; text-decoration-color:var(--error); }
+.rse-comment-anchor { background:color-mix(in srgb, var(--accent-100) 14%, transparent); border-bottom:1px dotted var(--accent-100); cursor:pointer; }
+/* A resolved cross-reference reads as a reference; a broken one reads as
+   broken, in words. Colour is never the only signal — the missing state
+   says what is wrong in full. */
+/* The numbered caption a table or figure carries in the canvas. Drawn
+   by a decoration, never by content: the number is a rendering of
+   position, and putting it into the document would write it into the
+   governed record — the exact defect this feature removes. Placed below
+   the object, which is where the print stylesheet puts it. */
+.rse-caption { display:block; margin:-8px 0 14px; font-size:11px; font-style:italic; color:var(--text-300); text-align:center; }
+.rse-caption[data-kind="table"] { text-align:left; }
+.rse-xref { color:var(--accent-100); border-bottom:1px solid color-mix(in srgb, var(--accent-100) 40%, transparent); white-space:nowrap; }
+.rse-xref[data-missing="1"] { color:var(--error); border-bottom:1px dashed var(--error); font-style:italic; white-space:normal; }
+/* A citation shows the number its source holds in this document's
+   reference list — derived from position, never stored. */
+.rse-cite { color:var(--accent-100); white-space:nowrap; }
+.rse-cite[data-missing="1"] { color:var(--error); border-bottom:1px dashed var(--error); font-style:italic; white-space:normal; }
+.rse-source { width:100%; min-height:320px; resize:vertical; border:none; outline:none; padding:18px 20px; font-size:13px; line-height:1.6; font-family:ui-monospace,SFMono-Regular,Menlo,monospace; color:var(--text-100); background:var(--bg-000); }
+.rse-empty-cta { padding:10px 20px 0; }
+.rse-foot { display:flex; align-items:center; gap:8px; padding:6px 12px; background:var(--bg-000); border-top:1px solid var(--border); font-size:10px; color:var(--text-400); flex-wrap:wrap; }
+.rse-save { display:flex; align-items:center; gap:5px; }
+.rse-dot { width:6px; height:6px; border-radius:50%; display:inline-block; }
+.rse-foot-sep { color:var(--bg-200); }

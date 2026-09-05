@@ -22,9 +22,12 @@ vi.mock('@/services/portal/authService', () => ({
 }));
 
 import { CmcModule } from '../surfaces/CmcModule';
+import { AccessRequests, AccessRequestQueue } from '../surfaces/AccessRequests';
+import { ResearchAdmin } from '../surfaces/ResearchAdmin';
 import { __resetCeremonies, ceremonyOpen, registerCeremonyOpen } from '../ceremony';
 import {
   __resetSurfaceActionBus,
+  advertisedScreenActions,
   applySurfaceAction,
   registeredSurfaceId,
 } from '../surfaceActions';
@@ -100,5 +103,86 @@ describe('CmcModule — a driven tab switch refuses over a mounted governed form
 
     const applied = apply('cmc.open-tab', { tab: 'specs' });
     expect(applied.status).toBe('applied');
+  });
+});
+
+/* ── The single-slot fix: a shared queue must not claim the bus ──────────── */
+
+describe('AccessRequests — the queue registers only for its OWN surface', () => {
+  beforeEach(() => {
+    apiRequest.mockReset();
+    apiRequest.mockImplementation(async () => ok({ requests: [], scope: 'organization' }));
+  });
+
+  it('the org-scoped mount claims the bus', async () => {
+    render(<AccessRequests />);
+    await waitFor(() => expect(registeredSurfaceId()).toBe('access-requests'));
+
+    const out = apply('access-requests.set-filter', { show: 'everything' });
+    expect(out.status).toBe('applied');
+    expect(out.detail).toContain('answered included');
+  });
+
+  it('the SAME queue mounted inside master-licensing claims NOTHING', async () => {
+    // scope="all" is the master-licensing tab. Before the hook accepted a null
+    // id, this registration replaced master-licensing's own — so directives for
+    // the screen the user was actually on found a registration for someone else.
+    render(<AccessRequestQueue scope="all" />);
+    await waitFor(() => expect(document.querySelector('.mar-note, .pj-card, div')).not.toBeNull());
+    expect(registeredSurfaceId()).toBeNull();
+  });
+});
+
+/* ── An unconnected section says so, even when the switch succeeds ───────── */
+
+describe('ResearchAdmin — a successful switch does not imply data arrived', () => {
+  beforeEach(() => {
+    apiRequest.mockReset();
+    apiRequest.mockImplementation(async () => ok({ data: [] }));
+  });
+
+  it('opening an unconnected section reports that it is not connected', async () => {
+    render(
+      <ResearchAdmin
+        surface={{ id: 'research-admin', label: 'Research admin' } as never}
+        onAsk={vi.fn()}
+        onNav={vi.fn()}
+        segment="biopharma"
+      />,
+    );
+    await waitFor(() => expect(registeredSurfaceId()).toBe('research-admin'));
+
+    const out = apply('research-admin.open-section', { section: 'coverage' });
+    expect(out.status).toBe('applied');
+    expect(out.detail).toContain('not connected to the workspace');
+
+    const training = apply('research-admin.open-section', { section: 'training' });
+    expect(training.status).toBe('applied');
+    expect(training.detail).not.toContain('not connected');
+  });
+});
+
+/* ── Runtime discovery: the wave-6 actions reach module_context ─────────── */
+
+describe('advertisedScreenActions — the new actions are discoverable at runtime', () => {
+  it('every wave-6 surface advertises its actions, so AnA needs no list_screen_actions round-trip', () => {
+    // This is the path V2App folds into module_context every turn:
+    // advertisedScreenActions(activeId) → screen_actions. If a surface's
+    // actions do not surface here, AnA cannot know they exist even though the
+    // handler is registered.
+    const expected: Record<string, string[]> = {
+      'master-licensing': ['master-licensing.open-tab', 'master-licensing.filter-modules', 'master-licensing.search-modules'],
+      'pdev-cmc': ['pdev-cmc.filter-activities', 'pdev-cmc.set-view'],
+      pyramid: ['pyramid.select-type', 'pyramid.open-tab', 'pyramid.focus-phase', 'pyramid.open-task'],
+      'ectd-publishing': ['ectd-publishing.set-version', 'ectd-publishing.open-list', 'ectd-publishing.filter-codes'],
+      licensing: ['licensing.set-pricing-model', 'licensing.set-cycle'],
+      'admin-console': ['admin-console.open-tab', 'admin-console.filter-members'],
+    };
+    for (const [surface, ids] of Object.entries(expected)) {
+      const advertised = advertisedScreenActions(surface).map((a) => a.id);
+      for (const id of ids) {
+        expect(advertised, `${surface} should advertise ${id}`).toContain(id);
+      }
+    }
   });
 });

@@ -9,7 +9,7 @@
  * it was signed, which is the single question a signature exists to answer. It
  * was also the ONLY signature verification reachable in production: the
  * canonical validator that does re-derive the content digest
- * (`part11ComplianceService.validateElectronicSignature`) had no caller outside
+ * (`part11ComplianceService.validateElectronicSignature`, since removed) had no caller outside
  * a contract test.
  *
  * WHAT IS LOCKED HERE. The §11.70 binding is now re-derived through the SAME
@@ -46,13 +46,20 @@ vi.mock('../part11ComplianceService', () => ({
 }));
 
 import { verifySignatureIntegrity } from '../auth-security-service';
-import * as crypto from 'crypto';
+import { manifestSignatureHash } from '../part11/signature-persistence';
 
 const SIGNED_AT = new Date('2026-08-14T10:00:00.000Z');
 const BOUND_DIGEST = 'c'.repeat(64);
 
-/** Build a row whose identifier hash is internally consistent, so the only
- *  thing under test is the content binding. */
+/** Build a row the way the WRITER builds one: the manifest is the attributed
+ *  record, and signature_hash is the writer's own hash of it.
+ *
+ *  This fixture used to hash an identifier payload {documentId, versionId,
+ *  signerId, ...} that no writer produces, so the suite proved the verifier
+ *  against a row shape that does not exist — while the verifier reported every
+ *  REAL signature as COMPROMISED. It now uses the exported recipe, so a change
+ *  to how the writer hashes breaks this test instead of silently breaking
+ *  production. */
 function signatureRow(over: Record<string, unknown> = {}) {
   const base = {
     id: 1,
@@ -66,17 +73,16 @@ function signatureRow(over: Record<string, unknown> = {}) {
     signedAt: SIGNED_AT,
     isValid: true,
     boundPayloadDigest: BOUND_DIGEST,
+    signatureManifest: {
+      kind: 'governed-sign',
+      meaning: 'Approved',
+      signerId: 42,
+      signerEmail: 'reviewer@example.com',
+      signedAt: SIGNED_AT.toISOString(),
+      boundPayloadDigest: BOUND_DIGEST,
+    },
     ...over,
   };
-  const payload = JSON.stringify({
-    documentId: base.documentId,
-    versionId: base.versionId,
-    signerId: base.signerId,
-    signerEmail: base.signerEmail,
-    signatureType: base.signatureType,
-    signatureMeaning: base.signatureMeaning,
-    timestamp: base.signedAt?.toISOString(),
-  });
   /* An explicit signatureHash in `over` wins — that is how the tampered-row
      case is built. Recomputing unconditionally here would silently discard the
      override and make that test assert nothing. */
@@ -85,7 +91,7 @@ function signatureRow(over: Record<string, unknown> = {}) {
     signatureHash:
       typeof over.signatureHash === 'string'
         ? over.signatureHash
-        : crypto.createHash('sha256').update(payload).digest('hex'),
+        : manifestSignatureHash(base.signatureManifest),
   };
 }
 

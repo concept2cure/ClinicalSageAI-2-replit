@@ -399,3 +399,83 @@ the identity-console forbidden state with a payload scan proving no
 token/CIDR/org-id, the orchestration gates-error words, and the program
 journey's identity line. `ID_BASELINE` 68 → **114 exact**, landed across
 five pushes as each verified slice completed.
+
+### Wave 6 landed (2026-08-30) — hands on the sighted screens
+
+Wave 5 gave AnA eyes on every screen (114 of 120 publish, 6 exempt, 0
+blind). Wave 6 gives her hands where the eyes went, and first widens two
+things that gated it:
+
+- **Navigation reach.** `NAVIGATION_TARGETS` grew 31 → 76: the whole
+  device family, the pdev workstreams, and every analysis and admin
+  surface wave 5 sighted are now `navigate_to` destinations. The
+  reachability gate proves each resolves to a real surface view, never
+  the scaffold.
+- **The ceremony channel** (`v2/ceremony.ts`). Surface-action handlers
+  must refuse a view change that would unmount a person's half-finished
+  governed form, but several kits open those forms from child panes the
+  registering component cannot see (the recorded wave-2 CMC limitation).
+  So the two components every governed dialog renders through — `C2CForm`
+  and `GovernedConfirmDialog` — register on mount and report through one
+  module-level counter; `ceremonyOpen()` is a synchronous refusal input,
+  read at apply time. `cmc.open-tab` now refuses over any mounted pane
+  form, proven end to end (open the batch form → refusal → cancel → the
+  same directive applies).
+
+**39 view-state actions across 18 surfaces**, each landing with its
+handler in the same change (the registry's totality rule — an action AnA
+can resolve but no surface performs is a fabricated ability). The bus
+gained a real fix: registration is a single global slot, and the
+access-request queue mounts both as its own surface and as a
+master-licensing tab, so `useSurfaceActionHandlers` now takes a `null` id
+and registers nothing (the escape the publisher already had); the queue
+passes null on the `all` scope. Proven both ways.
+
+**Governance held structurally.** No grant, entitlement change, checkout,
+wizard step, SCIM ceremony, cross-tenant workspace selection, metered
+launch, or task-status write is drivable. `GOVERNED_VERB_PATTERN` gained
+`grant|checkout|purchase`, shown failing first on the three ids someone
+would try next now that the admin and licensing consoles are operable.
+The honest details carry the weight: an unconnected research-admin
+section says so even when the switch succeeds, a pdev filter refuses a
+state whose chip the person cannot click, and the inconsistency overlay
+reports the verdict it re-scores to through `giPromotionGate` — the same
+pure function the screen scores with, so no second derivation can drift.
+
+Runtime discovery is automatic: `advertisedScreenActions(activeId)` folds
+each surface's operable vocabulary into `module_context` every turn, so
+the 39 actions need no `list_screen_actions` round-trip
+(`anaDrivesWave6.test.tsx` pins six surfaces' advertised sets). Registry
+now **74 actions**. Wiring proof: `anaDrivesWave6.test.tsx` — the
+ceremony refusal, the single-slot fix both ways, an unconnected section's
+honest detail, and the discovery fold.
+
+### Medtech demonstration (2026-08-31)
+
+The three original demos all walk the pharma lane (projects → authoring →
+vault → submissions). Waves 5–6 made the whole device family navigable and
+gave AnA eyes on it, but no demonstration showed it — a 510(k) or EU MDR
+prospect watching the sales demo saw pharma workflows. `sales-medtech`
+fills that: device portfolio → the 510(k) pathway → predicate
+intelligence → design controls → the ISO 14971 risk file (with a real
+`risk.set-matrix-view` to the residual matrix, the one operable beat that
+needs no live data) → EU MDR clinical evaluation → the significant-change
+worklist → the submission packages, closing on the same governance rule.
+It rides the same engine, budgets and validator as the others (the
+totality gate proves every stop resolves and fits the demo budget), and
+the Shell's Demonstrations menu picks it up from `listDemoScripts()` with
+no client change. Predicate search and residual-risk acceptance stay human
+acts, narrated as such.
+
+`training-medtech` is its operational counterpart — the device answer to
+`training-orientation`. Act-dense like the pharma training tour ("work
+one hazard, do not slide it"): it navigates the device portfolio, task
+workbench and 510(k) pathway, then operates the ISO 14971 risk file
+hands-on (`risk.select-hazard` runtime-filled from the file on screen,
+then `risk.set-matrix-view` to residual), works a real significant-change
+determination (`change-assessment.select-change`), and closes through EU
+MDR clinical evaluation and the submission packages. Hazard selection and
+change determinations are runtime-filled from the surface in front of
+AnA, exactly as the pharma tour fills `projects.open-program`. The
+platform now demonstrates both lanes symmetrically — a training
+walkthrough and a sales demonstration for pharma and for medtech.

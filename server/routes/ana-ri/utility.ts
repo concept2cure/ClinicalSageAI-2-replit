@@ -142,6 +142,21 @@ export function mountUtilityRoutes(router: Router): void {
     try {
       const { project_id, section_code, module_code, limit } = req.query;
 
+      // project_id arrives from the query string, so it names a project the
+      // caller may not own. Decision records live in an in-memory Map, not a
+      // FORCE'd RLS table, so nothing behind this handler will scope the read
+      // — authenticateToken proves who is asking, not what they may see.
+      const { numericOrgId } = extractRequestContext(req);
+      if (!numericOrgId) {
+        return sendError(
+          res,
+          403,
+          'An organization context is required to read a decision trail.',
+          null,
+          'TENANT_CONTEXT_REQUIRED'
+        );
+      }
+
       if (!project_id || typeof project_id !== 'string') {
         return sendError(
           res,
@@ -162,12 +177,14 @@ export function mountUtilityRoutes(router: Router): void {
         sectionCode: typeof section_code === 'string' ? section_code : undefined,
         moduleCode: typeof module_code === 'string' ? module_code : undefined,
         limit: safeLimit,
+        organizationId: numericOrgId,
       });
 
       const decisionAwareStatus = decisionLifecycleService.computeDecisionAwareStatus(
         project_id,
         {
           moduleCode: typeof module_code === 'string' ? module_code : undefined,
+          organizationId: numericOrgId,
         }
       );
 

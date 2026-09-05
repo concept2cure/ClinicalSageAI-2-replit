@@ -136,6 +136,23 @@ if ! npm run --silent ci:migration-set-order 2>&1; then
   exit 1
 fi
 echo "   ✅ Migration apply-order passed."
+
+# Cheap, no database, and guards a privilege-escalation footgun: `SET
+# app.bypass_rls` is SESSION-scoped, so it survives client.release() and the
+# next checkout — a different tenant — inherits a full RLS bypass across 142
+# policies. There are 17 copyable examples in unmounted services; this stops an
+# eighteenth appearing in reachable code.
+echo "   Validating no new session-scoped RLS bypass..."
+if ! npm run --silent ci:session-scoped-rls-bypass 2>&1; then
+  echo ""
+  echo "🚫 ERROR: Session-scoped RLS bypass check FAILED."
+  echo "   Use 'SET LOCAL app.bypass_rls' inside an explicit transaction so"
+  echo "   Postgres discards it at COMMIT/ROLLBACK, as guardQuery() does in"
+  echo "   server/routes/innovation-routes.ts."
+  echo ""
+  exit 1
+fi
+echo "   ✅ No new session-scoped RLS bypass."
 echo "   Validating ledger integrity (row ids, evidence paths)..."
 if ! node scripts/ops/ledger-check.mjs >/dev/null 2>&1; then
   echo ""
@@ -167,5 +184,26 @@ if ! npm run --silent check:catalog-copy 2>&1; then
   exit 1
 fi
 echo "   ✅ Catalog copy passed."
+
+# ── Fabricated signer identity (unconditional) ──
+#
+# 21 CFR 11.50(a)(1) asks for the PRINTED NAME OF THE SIGNER, and §11.10(e) for
+# who acted. Four writers used to manufacture one when the real name was not to
+# hand -- `user-41`, `user-41@unknown.local`, and `''` into NOT NULL columns --
+# because the column forbade null and refusing felt like the harder option. Once
+# written, an invented identity is indistinguishable from a real one, which is
+# the entire function of the column. In one writer the §11.200 attribution hash
+# was computed over the invented email, so the signature could not be re-derived
+# from the real signer and verification would read as tampering.
+echo "   Checking for manufactured signer identity..."
+if ! npm run --silent ci:fabricated-identity 2>&1; then
+  echo ""
+  echo "🚫 ERROR: Fabricated-identity check FAILED."
+  echo "   A NOT NULL column is not a reason to invent a person. Resolve the"
+  echo "   signer with resolveSignerIdentity and let it refuse."
+  echo ""
+  exit 1
+fi
+echo "   ✅ Fabricated-identity check passed."
 
 echo "✅ Pre-push checks complete — all gates passed."

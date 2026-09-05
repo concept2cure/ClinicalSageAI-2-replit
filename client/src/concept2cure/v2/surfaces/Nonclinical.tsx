@@ -7,7 +7,7 @@ import '../styles/project-home-v2.css';
 import { C2CForm } from '../C2CForm';
 import type { C2CFormConfig } from '../C2CForm';
 import { C2CToast, useToast } from '../toast';
-import { apiRequest, serverMessage } from '@/lib/queryClient';
+import { apiRequest, serverMessage, redactInternals, ApiRequestError } from '@/lib/queryClient';
 
 /* ── Inline fixture types ── */
 
@@ -368,7 +368,26 @@ export function Nonclinical({ onAsk, onNav }: SurfaceViewProps) {
             const r = j as { findings?: Array<{ severity: string; message: string; basis?: string }>; riskLevel?: string };
             return { study: st.id, ok: true, risk: r.riskLevel, findings: Array.isArray(r.findings) ? r.findings : [] };
           } catch (e) {
-            return { study: st.id, ok: false, findings: [], error: e instanceof Error ? e.message : String(e) };
+            /* ── This was `e instanceof Error ? e.message : String(e)` ────────
+               i.e. whatever was thrown, verbatim, straight onto the row that
+               renders below. `apiRequest` throws `ApiRequestError`, whose
+               message has already been through `extractApiError` and IS display
+               copy — but it is not the only thing that lands here. A `fetch`
+               that never reaches the server rejects with a TypeError
+               ("Failed to fetch"), and any unexpected throw inside this block
+               (a malformed body, a property read on a null response) rejects
+               with its own TypeError text. Those messages are internal shape,
+               not copy, and none of them is something a regulatory director can
+               act on. So only an ApiRequestError's message is carried through;
+               everything else becomes the written sentence. The row still says
+               the check did not run — going quiet here would read as a study
+               that passed. */
+            return {
+              study: st.id,
+              ok: false,
+              findings: [],
+              error: e instanceof ApiRequestError && e.message ? e.message : undefined,
+            };
           }
         }),
       );
@@ -554,7 +573,7 @@ export function Nonclinical({ onAsk, onNav }: SurfaceViewProps) {
           'Nonclinical (CTD Module 4): the Module 2.6 / Module 4 / SEND projection could not be read, so no ' +
           'completeness or SEND readiness figure is on screen — that is a failure, not a zero.' +
           (studiesUnavailable ? ' The study registry did not load either.' : ` ${studies.length} GLP study(ies) are in the registry.`),
-        facts: { ...base, projectionUnavailable: 'the /api/nonclinical-summary projection read failed' },
+        facts: { ...base, projectionUnavailable: 'the Module 2.6 / Module 4 / SEND projection read failed' },
         availableActions: ['Retry the Module 2.6 / Module 4 projection read'],
       };
     }
@@ -716,7 +735,18 @@ export function Nonclinical({ onAsk, onNav }: SurfaceViewProps) {
                 <div key={r.study} className="nc-send-row">
                   <span className="nc-send-study">{r.study}</span>
                   {!r.ok ? (
-                    <span className="nc-send-f err">Not checked — {r.error}</span>
+                    /* ── This was `Not checked — {r.error}`, rendering the
+                       error string with no filter. Both producers of that field
+                       can hold text that must not reach a screen: the !res.ok
+                       branch above falls back to `HTTP ${res.status}`, and the
+                       catch could hand over any thrown message. `redactInternals`
+                       is the shared last gate `<ErrorState>` already applies to
+                       every message it renders — routed through here for the same
+                       guarantee on this inline row. The failure stays visible and
+                       still says the check did not run. */
+                    <span className="nc-send-f err">
+                      Not checked — {redactInternals(r.error, 'the check did not complete')}
+                    </span>
                   ) : r.findings.length === 0 ? (
                     <span className="nc-send-f ok">No findings{r.risk ? ` · risk ${r.risk}` : ''}</span>
                   ) : (

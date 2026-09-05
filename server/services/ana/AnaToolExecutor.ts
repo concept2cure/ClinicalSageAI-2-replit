@@ -146,7 +146,6 @@ import type {
   GatewayMessage,
   AnaGatewayResponse,
   AnaToolUse,
-  AnaTool,
   StreamCallback,
 } from '../ai-gateway/types';
 import { ragRouter } from '../ragRouter';
@@ -166,6 +165,7 @@ import {
 import { registerAgenticWorkflowHandlers } from './agentic-workflow-tools.js';
 import { registerBiotechProgramHandlers } from './biotech-program.js';
 import { registerDocumentSpineHandlers } from './document-spine.js';
+import { registerDocumentCatalogHandlers } from './document-catalog-tools.js';
 import { assertWithinDocumentWorkspace } from './document-workspace.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -412,13 +412,35 @@ registerToolHandler('project_knowledge_search', async (input, ctx) => {
     }
     const locatorOf = (d: (typeof docs)[number]): string | null =>
       d.locator || d.sectionTitle || (typeof d.pageNumber === 'number' ? `p.${d.pageNumber}` : null);
+    // Which passages can be CITED, not just read: a passage cut from a Data
+    // Room artifact resolves to a canonical evidence source (the same resolver
+    // the human draft route uses); the ids travel back on the passage so the
+    // model can hand them to write_q_sub_section / write_kit_section as
+    // `sources` and the quoted clauses are recorded against the source
+    // (ledger L154). A passage with no resolvable source says so — null,
+    // never a guessed id.
+    let evidenceIds = new Map<string, number>();
+    if (ctx?.organizationId) {
+      try {
+        const { evidenceSourceIdsForRetrieval } = await import('./drafting-source-lineage.js');
+        evidenceIds = await evidenceSourceIdsForRetrieval(
+          ctx.organizationId,
+          docs.map((d) => d.sourceArtifactId ?? null),
+        );
+      } catch {
+        evidenceIds = new Map();
+      }
+    }
     const passages = docs.map((d, i) => ({
       rank: i + 1,
       title: d.title || 'Untitled',
       relevance: typeof d.finalScore === 'number' ? Number(d.finalScore.toFixed(3)) : null,
       locator: locatorOf(d),
       text: (d.compressedContent || d.content || '').slice(0, 800),
+      artifact_id: d.sourceArtifactId ?? null,
+      evidence_source_id: d.sourceArtifactId ? (evidenceIds.get(d.sourceArtifactId) ?? null) : null,
     }));
+    const citable = passages.filter((p) => p.evidence_source_id !== null).length;
     const provenance = docs.map(d => {
       const locator = locatorOf(d);
       return buildProvenance({
@@ -438,9 +460,13 @@ registerToolHandler('project_knowledge_search', async (input, ctx) => {
       resultCount: passages.length,
       passages,
       provenance,
+      citable,
       citation_hint:
         "Ground statements in these passages and cite each by its document title and locator (page/section); " +
-        "these are the organization's own project documents.",
+        "these are the organization's own project documents. " +
+        (citable > 0
+          ? `${citable} passage(s) carry an evidence_source_id: when you write a section with write_q_sub_section or write_kit_section, pass those passages as sources (evidence_source_id + the passage text as excerpt) so every clause you quote verbatim is recorded against its Data Room source.`
+          : 'None of these passages resolves to a Data Room source, so none can be recorded as a citation by the drafting tools; text drafted from them is recorded as your own assertion.'),
     });
   } catch (err: any) {
     return `Project knowledge search failed: ${err?.message ?? 'unknown error'}.`;
@@ -4146,7 +4172,7 @@ registerToolHandler('analyze_predicate_device', async (input) => {
         });
       }
     }
-  } catch (e) {
+  } catch {
     // Fall through
   }
 
@@ -6283,7 +6309,8 @@ registerToolHandler('generate_document', async (input: Record<string, unknown>) 
   if (documentType === 'ectd_backbone') {
     const xml = await builder.generateEctdXml({
       submissionType: 'original',
-      applicantName: (input.applicant as string) || 'Applicant',
+      // 'Applicant' is not an applicant. An absent identity says so.
+      applicantName: (input.applicant as string) || 'UNASSIGNED (applicant)',
       productName: (input.product as string) || 'Product',
       modules: [],
     });
@@ -7899,10 +7926,23 @@ registerToolHandler('write_q_sub_section', async (input, ctx) => {
   if (!ctx?.organizationId) {
     return JSON.stringify({ error: 'write_q_sub_section requires tenant context.' });
   }
+  // Matches create_qms_document / approve_qms_document / revise_qms_document,
+  // which all refuse without an identified actor. This handler wrote author
+  // lineage as String(ctx.userId ?? 'system') — a literal, into
+  // document_span_lineage.asserted_by, whose CHECK requires that column to be
+  // NOT NULL for an author_assertion. Satisfying an attribution constraint with
+  // a placeholder defeats what the constraint is for: the prose is regulatory
+  // text bound for FDA, and 'system' is not a person who can stand behind it.
+  if (!ctx.userId) {
+    return JSON.stringify({
+      error: 'write_q_sub_section requires user context — section prose cannot be attributed without an identified author (21 CFR Part 11).',
+    });
+  }
   const qSubId     = typeof input.q_sub_id === 'string' ? input.q_sub_id : '';
   const sectionKey = typeof input.section_key === 'string' ? input.section_key : '';
   const content    = typeof input.content === 'string' ? input.content : '';
   const note       = typeof input.summary_note === 'string' ? input.summary_note : '';
+  const rawSources = input.sources;
   if (!UUID_RE.test(qSubId)) {
     return JSON.stringify({ error: 'q_sub_id must be a UUID.' });
   }
@@ -7933,10 +7973,16 @@ registerToolHandler('write_q_sub_section', async (input, ctx) => {
     if (own.rows.length === 0) {
       return JSON.stringify({ error: 'Q-Sub not found in this organization.' });
     }
-    // Authored regulatory prose: content and its author lineage commit together
-    // in one transaction (same gate as the human PUT route), so an AnA-drafted
-    // section body is never persisted without provenance.
-    const { enforceAuthorLineage } = await import('../clinical-regulatory-evidence/lineage-gate.js');
+    // Authored regulatory prose: content and its lineage commit together in one
+    // transaction (same gate as the human accept route), so an AnA-drafted
+    // section body is never persisted without provenance. With `sources`, the
+    // clauses the text quotes verbatim are recorded against those Data Room
+    // sources and the rest against the author (ledger L154); without, every
+    // clause is the author's assertion.
+    const { enforceAuthorLineage, enforceSourceAndAuthorLineage } = await import(
+      '../clinical-regulatory-evidence/lineage-gate.js'
+    );
+    const { resolveDraftSources, describeDraftLineage } = await import('./drafting-source-lineage.js');
     const client = await pool.connect();
     try {
       await client.query('BEGIN');
@@ -7956,16 +8002,18 @@ registerToolHandler('write_q_sub_section', async (input, ctx) => {
          RETURNING id, section_key, draft_source, drafted_at`,
         [qSubId, ctx.organizationId, sectionKey, content, note],
       );
-      await enforceAuthorLineage(
-        client,
-        ctx.organizationId,
-        { documentTable: 'q_sub_section_bodies', documentId: String(rows[0].id) },
-        content,
-        String(ctx.userId ?? 'system'),
-      );
+      const ref = { documentTable: 'q_sub_section_bodies', documentId: String(rows[0].id) };
+      const { sources, dropped } = await resolveDraftSources(ctx.organizationId, rawSources, client);
+      let gate = null;
+      if (sources.length > 0) {
+        gate = await enforceSourceAndAuthorLineage(client, ctx.organizationId, ref, content, String(ctx.userId), sources);
+      } else {
+        await enforceAuthorLineage(client, ctx.organizationId, ref, content, String(ctx.userId));
+      }
       await client.query('COMMIT');
       return JSON.stringify({
         ok: true, ...rows[0],
+        lineage: describeDraftLineage(gate, sources, dropped),
         message: `Wrote ${sectionKey} into Q-Sub ${qSubId}. Awaiting human accept.`,
       });
     } catch (txErr) {
@@ -10724,8 +10772,10 @@ registerToolHandler('update_consent_element', async (input, ctx) => {
   if (!Number.isInteger(elementId)) return JSON.stringify({ error: 'element_id is required.' });
   const { updateElementTx } = await import('../protocol-consent/protocol-consent-service.js');
   return governedPdev(ctx, 'update', `consent-element:${elementId}`, 'Consent element updated via AnA', input, async (client) => {
-    await updateElementTx(client, ctx.organizationId!, elementId, { content: typeof input.content === 'string' ? input.content : null, present: typeof input.present === 'boolean' ? input.present : undefined });
-    return { elementId };
+    const { resolveDraftSources, describeDraftLineage } = await import('./drafting-source-lineage.js');
+    const { sources, dropped } = await resolveDraftSources(ctx.organizationId!, input.sources, client);
+    const gate = await updateElementTx(client, ctx.organizationId!, elementId, { content: typeof input.content === 'string' ? input.content : null, present: typeof input.present === 'boolean' ? input.present : undefined, sources }, ctx.userId!);
+    return { elementId, lineage: describeDraftLineage(gate, sources, dropped) };
   });
 });
 
@@ -10767,8 +10817,10 @@ registerToolHandler('update_dms_plan_element', async (input, ctx) => {
   if (!Number.isInteger(elementId)) return JSON.stringify({ error: 'element_id is required.' });
   const { updateElementTx } = await import('../dmsp/dmsp-service.js');
   return governedPdev(ctx, 'update', `dms-plan-element:${elementId}`, 'DMS plan element updated via AnA', input, async (client) => {
-    await updateElementTx(client, ctx.organizationId!, elementId, { content: typeof input.content === 'string' ? input.content : null, addressed: typeof input.addressed === 'boolean' ? input.addressed : undefined });
-    return { elementId };
+    const { resolveDraftSources, describeDraftLineage } = await import('./drafting-source-lineage.js');
+    const { sources, dropped } = await resolveDraftSources(ctx.organizationId!, input.sources, client);
+    const gate = await updateElementTx(client, ctx.organizationId!, elementId, { content: typeof input.content === 'string' ? input.content : null, addressed: typeof input.addressed === 'boolean' ? input.addressed : undefined, sources }, ctx.userId!);
+    return { elementId, lineage: describeDraftLineage(gate, sources, dropped) };
   });
 });
 
@@ -10892,8 +10944,10 @@ registerToolHandler('update_biosketch_section', async (input, ctx) => {
   if (!Number.isInteger(sectionId)) return JSON.stringify({ error: 'section_id is required.' });
   const { updateSectionTx } = await import('../biosketch/biosketch-service.js');
   return governedPdev(ctx, 'update', `biosketch-section:${sectionId}`, 'Biosketch section updated via AnA', input, async (client) => {
-    await updateSectionTx(client, ctx.organizationId!, sectionId, { content: typeof input.content === 'string' ? input.content : null, addressed: typeof input.addressed === 'boolean' ? input.addressed : undefined }, ctx.userId!);
-    return { sectionId };
+    const { resolveDraftSources, describeDraftLineage } = await import('./drafting-source-lineage.js');
+    const { sources, dropped } = await resolveDraftSources(ctx.organizationId!, input.sources, client);
+    const gate = await updateSectionTx(client, ctx.organizationId!, sectionId, { content: typeof input.content === 'string' ? input.content : null, addressed: typeof input.addressed === 'boolean' ? input.addressed : undefined, sources }, ctx.userId!);
+    return { sectionId, lineage: describeDraftLineage(gate, sources, dropped) };
   });
 });
 
@@ -11238,10 +11292,13 @@ registerToolHandler('update_protocol_section', async (input, ctx) => {
   try {
     await client.query('BEGIN');
     await setTenantContextTx(client, ctx.organizationId);
-    await updateSectionTx(client, ctx.organizationId, sectionId, { content: typeof input.content === 'string' ? input.content : null, status: typeof input.status === 'string' ? input.status : undefined }, ctx.userId);
+    const { resolveDraftSources, describeDraftLineage } = await import('./drafting-source-lineage.js');
+    const { sources, dropped } = await resolveDraftSources(ctx.organizationId, input.sources, client);
+    const gate = await updateSectionTx(client, ctx.organizationId, sectionId, { content: typeof input.content === 'string' ? input.content : null, status: typeof input.status === 'string' ? input.status : undefined, sources }, ctx.userId);
+    const lineage = describeDraftLineage(gate, sources, dropped);
     await recordGovernedAction(client, { orgId: ctx.organizationId, userId: ctx.userId, command: 'update', target: `protocol-section:${sectionId}`, reason: fcoiReason(input, 'Protocol section edited via AnA'), payload: { status: input.status }, domain: 'protocol_development', surface: 'ana' });
     await client.query('COMMIT');
-    return JSON.stringify({ ok: true, sectionId, message: `Updated protocol section ${sectionId}.` });
+    return JSON.stringify({ ok: true, sectionId, lineage, message: `Updated protocol section ${sectionId}.` });
   } catch (err) {
     await client.query('ROLLBACK').catch(() => undefined);
     return JSON.stringify({ error: `update_protocol_section failed: ${err instanceof Error ? err.message : String(err)}` });
@@ -14380,6 +14437,14 @@ registerToolHandler('write_kit_section', async (input, ctx) => {
       error: 'write_kit_section requires tenant context (organizationId) — nothing was written.',
     });
   }
+  // Same rule as write_q_sub_section: kit sections become a 510(k)/PMA/CER, and
+  // prose bound for a regulator cannot be attributed to a placeholder.
+  if (!ctx.userId) {
+    return JSON.stringify({
+      error: 'write_kit_section requires user context — section prose cannot be attributed without an identified author (21 CFR Part 11).',
+    });
+  }
+  const rawSources = input.sources;
   const allowedStatus = new Set(['drafting', 'ready_for_review', 'in_review']);
   if (!allowedStatus.has(status)) {
     return JSON.stringify({
@@ -14420,71 +14485,42 @@ registerToolHandler('write_kit_section', async (input, ctx) => {
        nothing is unsafe there — but four writers of one table is three too
        many, and re-pointing untested route paths is its own change. Tracked as
        ledger L39. */
-    const { recordCerv2SectionVersion } = await import('../cerv2/section-version.js');
+    const { writeKitSectionTx, KitSectionNotFoundError } = await import('../cerv2/kit-section-write.js');
+    const { resolveDraftSources, describeDraftLineage } = await import('./drafting-source-lineage.js');
     const client = await pool.connect();
     let row: any;
+    let lineageReport: import('./drafting-source-lineage.js').DraftLineageReport | null = null;
     try {
       await client.query('BEGIN');
-
-      /* Read the prior state FOR UPDATE inside the transaction: it is both the
-         `previousValues` snapshot and the row lock that stops two concurrent
-         writers computing the same next version number. */
-      const prior = await client.query(
-        `SELECT id, content, status, completion_percentage
-           FROM cerv2_510k_sections
-          WHERE organization_id = $1 AND section_key = $2
-          FOR UPDATE`,
-        [ctx.organizationId, sectionKey],
-      );
-      if (prior.rows.length === 0) {
-        await client.query('ROLLBACK');
-        return JSON.stringify({
-          error: `No section found for organization with section_key='${sectionKey}'. The kit's section taxonomy must be seeded first (run \`npm run db:seed:mdx-content\`).`,
+      /* The ONE kit-section writer (services/cerv2/kit-section-write): FOR UPDATE
+         snapshot, content write, version row and lineage gate, on this
+         transaction — shared with the AnA-RI section.update command so a kit
+         section has exactly one way of being written by AnA (ledger L160). */
+      const { sources, dropped } = await resolveDraftSources(ctx.organizationId, rawSources, client);
+      let written;
+      try {
+        written = await writeKitSectionTx(client, ctx.organizationId, { sectionKey }, {
+          content,
+          status,
+          completionPercentage: completionPct,
+          note,
+          /* The tool's own note when the caller supplied one. Falling back to a
+             fixed string is deliberate and honest — it names the actor and the
+             mechanism rather than inventing a rationale nobody gave. */
+          changeSummary: (note && String(note).trim()) || 'Drafted by AnA (no summary supplied)',
+          sources,
+          actorUserId: ctx.userId,
         });
+      } catch (e) {
+        if (e instanceof KitSectionNotFoundError) {
+          await client.query('ROLLBACK');
+          return JSON.stringify({ error: e.message });
+        }
+        throw e;
       }
-      const before = prior.rows[0];
-
-      const updated = await client.query(
-        `UPDATE cerv2_510k_sections
-            SET content                = $3,
-                status                 = $4,
-                completion_percentage  = $5,
-                draft_source           = 'ana',
-                drafted_at             = NOW(),
-                drafted_summary        = NULLIF($6, ''),
-                accepted_at            = NULL,
-                accepted_by            = NULL,
-                updated_at             = NOW()
-          WHERE organization_id = $1 AND section_key = $2
-          RETURNING id, section_number, section_title, section_key, status,
-                    completion_percentage AS "completionPercentage",
-                    drafted_at AS "draftedAt"`,
-        [ctx.organizationId, sectionKey, content, status, completionPct, note],
-      );
-
-      await recordCerv2SectionVersion(client, {
-        sectionId: before.id,
-        organizationId: ctx.organizationId,
-        changeType: 'edited',
-        /* The tool's own note when the caller supplied one. Falling back to a
-           fixed string is deliberate and honest — it names the actor and the
-           mechanism rather than inventing a rationale nobody gave. */
-        changeSummary: (note && String(note).trim()) || 'Drafted by AnA (no summary supplied)',
-        content,
-        status,
-        completionPercentage: completionPct,
-        previousValues: {
-          content: before.content ?? '',
-          status: before.status ?? null,
-          completion_percentage: before.completion_percentage ?? null,
-        },
-        newValues: { content, status, completion_percentage: completionPct },
-        fieldsChanged: ['content', 'status', 'completion_percentage'],
-        changedBy: ctx.userId ?? null,
-      });
-
+      lineageReport = describeDraftLineage(written.gate, sources, dropped);
       await client.query('COMMIT');
-      row = updated.rows[0];
+      row = written.row;
     } catch (txErr) {
       await client.query('ROLLBACK').catch(() => {});
       throw txErr;
@@ -14519,6 +14555,7 @@ registerToolHandler('write_kit_section', async (input, ctx) => {
     return JSON.stringify({
       ok:                  true,
       id:                  row.id,
+      lineage:             lineageReport,
       sectionNumber:       row.section_number,
       sectionTitle:        row.section_title,
       sectionKey:          row.section_key,
@@ -14948,6 +14985,10 @@ registerBiotechProgramHandlers(registerToolHandler);
 // The canonical document revision spine (commit_document_revision) — the one
 // atomic flow every AnA-authored document mutation runs through — same pattern.
 registerDocumentSpineHandlers(registerToolHandler);
+
+// Project-folder document catalog (list/read/catalog over vault.documents,
+// with read-coverage enforcement) — same injected-register pattern.
+registerDocumentCatalogHandlers(registerToolHandler);
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Agentic Execution Loop
@@ -15550,30 +15591,43 @@ registerToolHandler('assess_submission_package', async (input: Record<string, un
   }
 });
 
-// Device/IVD eSTAR assembly state (510(k) / De Novo) — wires the deterministic
-// device-assembly engine that previously had no AnA tool surface. No render/
-// transmit; computes the producible artifact kind + every blocker, honestly.
+// Device/IVD eSTAR assembly state (510(k) / De Novo / PMA) — wires the
+// deterministic device-assembly engine that previously had no AnA tool surface.
+// No render/transmit; computes the producible artifact kind + every blocker,
+// honestly. A PMA is scored against the 21 CFR 814 modules (pma-mapper).
 registerToolHandler('assemble_device_submission', async (input: Record<string, unknown>) => {
   try {
     const pathway = input.pathway;
     const variant = input.variant;
-    if (pathway !== '510k' && pathway !== 'de_novo') {
-      return JSON.stringify({ status: 'needs_parameters', message: "pathway must be '510k' or 'de_novo'." });
+    if (pathway !== '510k' && pathway !== 'de_novo' && pathway !== 'pma') {
+      return JSON.stringify({ status: 'needs_parameters', message: "pathway must be '510k', 'de_novo' or 'pma'." });
+    }
+    // The ONE PMA submission-type taxonomy (21 CFR 814.20 / 814.39) lives in pma-mapper.
+    const { PMA_SUBMISSION_TYPES } = await import('../pathway-engines/pma/pma-mapper.js');
+    const pmaTypeValues = PMA_SUBMISSION_TYPES.map((t) => t.value);
+    const pmaSubmissionType = input.pmaSubmissionType;
+    if (pmaSubmissionType !== undefined && !(pmaTypeValues as unknown[]).includes(pmaSubmissionType)) {
+      return JSON.stringify({ status: 'needs_parameters', message: `pmaSubmissionType must be one of ${pmaTypeValues.join(', ')}.` });
     }
     if (variant !== 'device' && variant !== 'ivd') {
       return JSON.stringify({ status: 'needs_parameters', message: "variant must be 'device' or 'ivd'." });
     }
     if (!Array.isArray(input.leaves)) {
-      return JSON.stringify({ status: 'needs_parameters', message: 'leaves[] is required (each: { sectionCode, title, documentType? }).' });
+      return JSON.stringify({ status: 'needs_parameters', message: 'leaves[] is required (each: { sectionCode, title, documentType?, substantive? }).' });
     }
+    // Fails closed: a leaf is treated as a draft/placeholder (not substantive)
+    // unless the caller explicitly asserts it carries real, finalized content —
+    // a title match alone must never count as "present".
     const leaves = (input.leaves as Array<Record<string, unknown>>).map(l => ({
       sectionCode: String(l.sectionCode ?? ''),
       title: String(l.title ?? ''),
       documentType: typeof l.documentType === 'string' ? l.documentType : undefined,
+      substantive: l.substantive === true,
     }));
     const { assembleDeviceSubmission } = await import('../pathway-engines/device-assembly/assemble-device-submission.js');
     const result = assembleDeviceSubmission({
       pathway,
+      pmaSubmissionType: pmaSubmissionType as (typeof pmaTypeValues)[number] | undefined,
       variant,
       leaves,
       presentTemplates: Array.isArray(input.presentTemplates) ? (input.presentTemplates as unknown[]).map(String) : undefined,
@@ -15797,6 +15851,356 @@ registerToolHandler('assess_batch_poolability', async (input: Record<string, unk
    caller's tenant to be readable. The eligibility rules and the assessment
    itself live in services/cmc/recorded-stability, shared verbatim with the HTTP
    route the stability surface posts to, so the two can never disagree. */
+/* ── Register discovery ──
+   assess_recorded_batch_poolability tells the model to "list the stability
+   register first and use the ids it returns" — and nothing could list any
+   register, so the pointer was dead and the model had to ask the human for
+   ids the product already holds. Identity rows only: never the full result
+   series, so this is safe to call broadly. Org-scoped, read-only. */
+registerToolHandler('list_cmc_registers', async (input, ctx) => {
+  const orgId = ctx?.organizationId;
+  if (!orgId) return 'An active organization context is required to read the CMC registers.';
+  const wanted = typeof input.register === 'string' ? input.register : null;
+  const search = typeof input.search === 'string' && input.search.trim() ? input.search.trim() : null;
+  const rawLimit = Number(input.limit);
+  const limit = Number.isFinite(rawLimit) && rawLimit > 0 ? Math.min(Math.floor(rawLimit), 100) : 25;
+  try {
+    const { getPool } = await import('../../db.js');
+    const pool = getPool();
+    // One row shape per register: what it IS and what state it is in — the
+    // identity a recorded assessment needs, and nothing more.
+    const REGISTERS: Record<string, { sql: string; searchCols: string[] }> = {
+      stability: {
+        sql: `SELECT id, study_title AS "studyTitle", product_name AS "productName",
+                     batch_number AS "batchNumber", study_type AS "studyType",
+                     storage_conditions AS "storageConditions", duration, status,
+                     (stability_data IS NOT NULL) AS "hasRecordedResults"
+                FROM stability_studies WHERE organization_id = $1`,
+        searchCols: ['study_title', 'product_name', 'batch_number'],
+      },
+      method: {
+        sql: `SELECT id, method_code AS "methodCode", title, technique, analyte, status,
+                     validation_date AS "validationDate"
+                FROM analytical_methods WHERE organization_id = $1`,
+        searchCols: ['method_code', 'title', 'analyte'],
+      },
+      specification: {
+        sql: `SELECT id, material_type AS "materialType", material_name AS "materialName",
+                     approval_status AS "approvalStatus", updated_at AS "updatedAt"
+                FROM quality_specifications WHERE tenant_id = $1`,
+        searchCols: ['material_name', 'material_type'],
+      },
+      batch: {
+        sql: `SELECT id, batch_number AS "batchNumber", product_name AS "productName",
+                     batch_type AS "batchType", scale, status, disposition,
+                     manufacturing_date AS "manufacturingDate"
+                FROM cmc_batch_records WHERE organization_id = $1`,
+        searchCols: ['batch_number', 'product_name'],
+      },
+      qc_result: {
+        sql: `SELECT id, sample_id AS "sampleId", sample_type AS "sampleType",
+                     test_method AS "testMethod", pass_fail_status AS "passFailStatus",
+                     test_date AS "testDate", (reviewed_by IS NOT NULL) AS "reviewed"
+                FROM qc_testing WHERE organization_id = $1`,
+        searchCols: ['sample_id', 'test_method'],
+      },
+      /* The two registers §3.2.S.5/§3.2.S.6/§3.2.P.6/§3.2.P.7 compose from.
+         `scope` is listed because it decides which section a row files under,
+         and the presence flags are listed rather than the packages themselves:
+         a model asking "is the E&L work on file" must get an answer without
+         pulling every analyte result into the context. */
+      container_closure: {
+        sql: `SELECT id, system_name AS "systemName", scope,
+                     component_type AS "componentType", supplier, status,
+                     (suitability_justification IS NOT NULL AND suitability_justification <> '') AS "hasSuitabilityJustification",
+                     (extractables_leachables IS NOT NULL) AS "hasExtractablesLeachables",
+                     (integrity_testing IS NOT NULL) AS "hasIntegrityTesting"
+                FROM cmc_container_closures WHERE organization_id = $1`,
+        searchCols: ['system_name', 'container_description', 'supplier'],
+      },
+      /* One row per impurity, with the ICH inputs a threshold comparison needs
+         (class, level with its unit, the daily dose) surfaced so a model can see
+         WHY an impurity is or is not assessable without pulling the record. */
+      impurity_profile: {
+        sql: `SELECT id, impurity_name AS "impurityName", material_name AS "materialName",
+                     scope, impurity_type AS "impurityType",
+                     observed_level AS "observedLevel", level_unit AS "levelUnit",
+                     specification_limit AS "specificationLimit",
+                     maximum_daily_dose AS "maximumDailyDose", status,
+                     (qualification_basis IS NOT NULL AND qualification_basis <> '') AS "hasQualificationBasis",
+                     (structure IS NOT NULL AND structure <> '') AS "hasStructure"
+                FROM cmc_impurity_profiles WHERE organization_id = $1`,
+        searchCols: ['impurity_name', 'material_name', 'analytical_method'],
+      },
+      /* The method and the shape of the profile, not the profile itself: a
+         broad discovery call must not pull every timepoint of every batch. */
+      dissolution_profile: {
+        sql: `SELECT id, product_name AS "productName", batch_number AS "batchNumber",
+                     purpose, apparatus, medium, rotation_speed AS "rotationSpeed",
+                     units_tested AS "unitsTested", specification, status,
+                     test_date AS "testDate",
+                     CASE WHEN jsonb_typeof(results) = 'array'
+                          THEN jsonb_array_length(results) ELSE 0 END AS "timepointCount",
+                     (comparison_results IS NOT NULL) AS "hasReferenceProfile"
+                FROM cmc_dissolution_profiles WHERE organization_id = $1`,
+        searchCols: ['product_name', 'batch_number', 'medium'],
+      },
+      /* The materials, with the origin §3.2.A.3 answers the TSE/BSE question
+         from surfaced directly: a model asked "is any excipient animal-derived"
+         must be able to see which ones have no origin recorded at all. */
+      material_spec: {
+        sql: `SELECT id, material_name AS "materialName", material_role AS "materialRole",
+                     function_in_formulation AS "function", grade,
+                     compendial_monograph AS "compendialMonograph", supplier, origin,
+                     novel_excipient AS "novelExcipient", status,
+                     (tse_certificate IS NOT NULL AND tse_certificate <> '') AS "hasTseCertificate",
+                     (origin IS NULL OR origin = '') AS "originNotRecorded"
+                FROM cmc_material_specs WHERE organization_id = $1`,
+        searchCols: ['material_name', 'grade', 'supplier'],
+      },
+      formulation_record: {
+        sql: `SELECT id, formulation_name AS "formulationName", version, dosage_form AS "dosageForm",
+                     strength, batch_size AS "batchSize", supersedes, status,
+                     CASE WHEN jsonb_typeof(components) = 'array'
+                          THEN jsonb_array_length(components) ELSE 0 END AS "componentCount"
+                FROM cmc_formulation_records WHERE organization_id = $1`,
+        searchCols: ['formulation_name', 'version', 'dosage_form'],
+      },
+      /* The process as a SHAPE, not the process itself: a discovery call must
+         not pull every unit operation and every parameter into the context. The
+         counts are what a model needs to see that a process is recorded but
+         describes no steps, or carries parameters with no proven range. */
+      manufacturing_process: {
+        sql: `SELECT id, process_name AS "processName", process_type AS "processType",
+                     batch_size AS "batchSize", validation_status AS "validationStatus",
+                     CASE WHEN jsonb_typeof(process_steps) = 'array'
+                          THEN jsonb_array_length(process_steps) ELSE 0 END AS "stepCount",
+                     CASE WHEN jsonb_typeof(critical_process_parameters) = 'array'
+                          THEN jsonb_array_length(critical_process_parameters) ELSE 0 END AS "cppCount",
+                     CASE WHEN jsonb_typeof(process_controls) = 'array'
+                          THEN jsonb_array_length(process_controls) ELSE 0 END AS "inProcessControlCount",
+                     (reprocessing IS NOT NULL AND reprocessing <> '') AS "hasReprocessingStatement"
+                FROM manufacturing_processes WHERE organization_id = $1`,
+        searchCols: ['process_name', 'process_type', 'process_description'],
+      },
+      /* §3.2.S.3.1 asks three questions and each study answers one, so the TYPE
+         is the field a model needs: without it, three studies of one kind read
+         as a characterised substance. */
+      characterization: {
+        sql: `SELECT id, study_title AS "studyTitle", study_type AS "studyType", scope,
+                     technique, attribute, result, result_unit AS "resultUnit",
+                     study_reference AS "studyReference", status,
+                     (result IS NULL OR result = '') AND (conclusion IS NULL OR conclusion = '')
+                       AS "establishesNothing",
+                     (result IS NOT NULL AND result <> '' AND (result_unit IS NULL OR result_unit = ''))
+                       AS "unitNotRecorded"
+                FROM cmc_characterization_studies WHERE organization_id = $1`,
+        searchCols: ['study_title', 'technique', 'attribute'],
+      },
+      reference_standard: {
+        sql: `SELECT id, standard_code AS "standardCode", standard_name AS "standardName",
+                     scope, standard_type AS "standardType", lot_number AS "lotNumber",
+                     status, retest_date AS "retestDate", expiry_date AS "expiryDate",
+                     (characterization IS NOT NULL) AS "hasCharacterization",
+                     (certificate_of_analysis IS NOT NULL AND certificate_of_analysis <> '') AS "hasCertificateOfAnalysis"
+                FROM cmc_reference_standards WHERE organization_id = $1`,
+        searchCols: ['standard_code', 'standard_name', 'lot_number'],
+      },
+    };
+    const keys = wanted && REGISTERS[wanted] ? [wanted] : Object.keys(REGISTERS);
+    const out: Record<string, unknown> = {};
+    for (const key of keys) {
+      const spec = REGISTERS[key];
+      const params: unknown[] = [orgId];
+      let sql = spec.sql;
+      if (search) {
+        params.push(`%${search}%`);
+        const idx = params.length;
+        sql += ` AND (${spec.searchCols.map((c) => `${c} ILIKE $${idx}`).join(' OR ')})`;
+      }
+      sql += ` ORDER BY id DESC LIMIT ${limit}`;
+      try {
+        const { rows } = await pool.query(sql, params);
+        out[key] = rows;
+      } catch (err: any) {
+        // A register whose table is absent on this deployment is reported as
+        // unavailable — never as an empty register, which would read as
+        // "you have recorded nothing".
+        out[key] = { unavailable: true, reason: err?.message || 'register unreadable' };
+      }
+    }
+    const counts = Object.fromEntries(
+      Object.entries(out).map(([k, v]) => [k, Array.isArray(v) ? v.length : 'unavailable']),
+    );
+    return JSON.stringify({
+      status: 'listed',
+      scope: wanted ? `register: ${wanted}` : 'all registers',
+      search: search ?? null,
+      limit,
+      counts,
+      registers: out,
+      instruction:
+        'These are the ids the recorded-data tools take. Report a register marked unavailable as unreadable, NOT as empty — and an empty register as "nothing is recorded here yet", never as a finding about the product.',
+    });
+  } catch (err: any) {
+    return JSON.stringify({ error: `list_cmc_registers failed: ${err?.message || 'unknown error'}` });
+  }
+});
+
+/* f2 over two profiles ON FILE — the same engine the typed-number tool and the
+   CMC dissolution surface call, so a model and a screen can never report
+   different similarity for the same two batches. */
+registerToolHandler('compare_recorded_dissolution', async (input, ctx) => {
+  const orgId = ctx?.organizationId;
+  if (!orgId) return 'An active organization context is required to read the dissolution register.';
+  const refId = Number(input.reference_profile_id);
+  const testId = Number(input.test_profile_id);
+  if (!Number.isInteger(refId) || refId <= 0 || !Number.isInteger(testId) || testId <= 0) {
+    return JSON.stringify({
+      status: 'needs_parameters',
+      message: 'Two numeric dissolution profile ids are required. Use list_cmc_registers to find them.',
+    });
+  }
+  if (refId === testId) {
+    return JSON.stringify({
+      status: 'needs_parameters',
+      message: 'A profile cannot be compared against itself; f2 would be 100 by construction.',
+    });
+  }
+  try {
+    const [{ db }, { cmcDissolutionProfiles }, { and, eq, inArray }, engine] = await Promise.all([
+      import('../../db.js'),
+      import('../../../shared/schema.js'),
+      import('drizzle-orm'),
+      import('../cmc/dissolution-comparison.js'),
+    ]);
+    const rows = await db
+      .select()
+      .from(cmcDissolutionProfiles)
+      .where(and(eq(cmcDissolutionProfiles.organizationId, orgId), inArray(cmcDissolutionProfiles.id, [refId, testId])));
+    const byId = new Map(rows.map((r: Record<string, any>) => [r.id, r]));
+    const reference = byId.get(refId);
+    const test = byId.get(testId);
+    if (!reference || !test) {
+      /* Never answered from a partial set: comparing one recorded profile
+         against nothing is a different question than the one asked. */
+      return JSON.stringify({
+        status: 'not_found',
+        message: `Not this organization's dissolution profiles: ${[!reference ? refId : null, !test ? testId : null].filter(Boolean).join(', ')}. No comparison is made.`,
+      });
+    }
+    const outcome = engine.compareDissolutionProfiles(
+      {
+        role: 'reference',
+        productName: reference.productName,
+        batchNumber: reference.batchNumber,
+        method: { apparatus: reference.apparatus, medium: reference.medium, rotationSpeed: reference.rotationSpeed },
+        points: engine.pointsFromRecordedProfile(reference.results),
+      },
+      {
+        role: 'test',
+        productName: test.productName,
+        batchNumber: test.batchNumber,
+        method: { apparatus: test.apparatus, medium: test.medium, rotationSpeed: test.rotationSpeed },
+        points: engine.pointsFromRecordedProfile(test.results),
+      },
+      { referenceUnits: reference.unitsTested, testUnits: test.unitsTested },
+    );
+    const identity = {
+      reference: { id: refId, batch: reference.batchNumber, apparatus: reference.apparatus, medium: reference.medium },
+      test: { id: testId, batch: test.batchNumber, apparatus: test.apparatus, medium: test.medium },
+      methodsMatch:
+        reference.apparatus === test.apparatus &&
+        reference.medium === test.medium &&
+        reference.rotationSpeed === test.rotationSpeed,
+    };
+    if (outcome.outcome === 'refused') {
+      return JSON.stringify({
+        status: 'not_comparable',
+        ...identity,
+        refusal: { code: outcome.code, message: outcome.message, offending: outcome.offending, alternative: outcome.alternative ?? null },
+        instruction:
+          'Relay this refusal verbatim. Do NOT re-run the comparison through assess_dissolution_similarity with the same numbers typed in: that is the same computation with the eligibility check removed.',
+      });
+    }
+    return JSON.stringify({
+      status: 'computed',
+      ...identity,
+      f2: outcome.f2Reported,
+      similar: outcome.f2Similar,
+      f1: outcome.f1Reported,
+      inputsUsed: outcome.inputsUsed,
+      checksEvaluated: outcome.checksEvaluated,
+      scope: outcome.scope,
+      instruction:
+        identity.methodsMatch
+          ? 'Report the f2 with the timepoints it used and the scope statement. It is not a bioequivalence conclusion.'
+          : 'The two profiles were run under DIFFERENT dissolution conditions. Report that alongside the f2: a comparison across methods does not establish similarity of the products.',
+    });
+  } catch (err: any) {
+    return JSON.stringify({ error: `compare_recorded_dissolution failed: ${err?.message || 'unknown error'}` });
+  }
+});
+
+/* ICH Q1E over a RECORDED study — the same engine the stability surface's
+   shelf-life panel calls (cmc/recorded-stability.estimateRecordedShelfLife),
+   so the model and the screen can never report different month counts. */
+registerToolHandler('estimate_recorded_shelf_life', async (input, ctx) => {
+  const orgId = ctx?.organizationId;
+  if (!orgId) return 'An active organization context is required to read the stability register.';
+  const id = Number(input.study_id);
+  if (!Number.isInteger(id) || id <= 0) {
+    return JSON.stringify({
+      status: 'needs_parameters',
+      message: 'A numeric stability study id is required. Use list_cmc_registers to find it.',
+    });
+  }
+  try {
+    const [{ db }, { stabilityStudies }, { and, eq }, { estimateRecordedShelfLife }] = await Promise.all([
+      import('../../db.js'),
+      import('../../../shared/schema.js'),
+      import('drizzle-orm'),
+      import('../cmc/recorded-stability.js'),
+    ]);
+    const [study] = await db
+      .select({
+        id: stabilityStudies.id,
+        studyTitle: stabilityStudies.studyTitle,
+        productName: stabilityStudies.productName,
+        batchNumber: stabilityStudies.batchNumber,
+        storageConditions: stabilityStudies.storageConditions,
+        duration: stabilityStudies.duration,
+        stabilityData: stabilityStudies.stabilityData,
+      })
+      .from(stabilityStudies)
+      .where(and(eq(stabilityStudies.id, id), eq(stabilityStudies.organizationId, orgId)));
+    if (!study) {
+      return JSON.stringify({
+        status: 'not_found',
+        message: `No stability study in this organization has id ${id}. List the register and use the ids it returns.`,
+      });
+    }
+    const outcome = await estimateRecordedShelfLife(study);
+    if (!outcome.ok) {
+      return JSON.stringify({
+        status: 'not_assessable',
+        message: outcome.error,
+        instruction:
+          'Relay this reason to the user verbatim. Do not work around it by falling back to estimate_shelf_life with numbers you read off the study — the refusal is a property of the data, not of the tool.',
+      });
+    }
+    return JSON.stringify({
+      status: 'computed',
+      engine: 'deterministic',
+      result: outcome.data,
+      instruction:
+        'Lead with the LIMITING attribute and the shelf life it supports, then report each attribute\'s estimate and every not-estimable reason verbatim. This is EVIDENCE for a shelf-life claim, not the claim: the registered shelf life is set by a person on the study close-out, and this tool writes nothing. Batch poolability is a separate question (assess_recorded_batch_poolability) and is not implied here.',
+    });
+  } catch (err: any) {
+    return JSON.stringify({ error: `estimate_recorded_shelf_life failed: ${err?.message || 'unknown error'}` });
+  }
+});
+
 registerToolHandler('assess_recorded_batch_poolability', async (input, ctx) => {
   const orgId = ctx?.organizationId;
   if (!orgId) return 'An active organization context is required to read the stability register.';
@@ -16360,7 +16764,7 @@ registerToolHandler('validate_cdisc_dataset', async (input: Record<string, unkno
 registerToolHandler('check_dataset_conformance', async (input: Record<string, unknown>) => {
   try {
     if (!input.spec || typeof input.spec !== 'object') return JSON.stringify({ status: 'needs_parameters', message: 'spec is required (the dataset spec).' });
-    const { checkDatasetConformance } = await import('../cdisc/define-xml.js');
+    const { checkDatasetConformance } = await import('../cdisc/define-spec-conformance.js');
     const result = checkDatasetConformance(input.spec as any);
     return JSON.stringify({ status: 'checked', engine: 'deterministic', result, instruction: 'Report errors (blocking) before warnings. Structural subset, not the full validator of record.' });
   } catch (err: any) {
@@ -16606,6 +17010,10 @@ registerToolHandler('generate_define_xml', async (input: Record<string, unknown>
   const spec = {
     studyName: raw.studyName,
     standard: raw.standard,
+    // defineVersion sits beside `spec` in the tool schema, but a model that
+    // wraps everything will put it inside; accept either, default 2.1.
+    defineVersion:
+      ((input as any).defineVersion ?? raw.defineVersion) === '2.0' ? '2.0' : '2.1',
     datasets: raw.datasets.map((ds: any) => ({
       ...ds,
       variables: (ds.variables ?? []).map((v: any) => ({
@@ -16624,10 +17032,11 @@ registerToolHandler('generate_define_xml', async (input: Record<string, unknown>
       })),
     })),
   };
-  // Emit define.xml v2.1.0 via the dataset-metadata generator (returns
-  // { xml, datasetCount, variableCount, gaps }). Structural conformance is a
-  // separate tool (check_dataset_conformance). runStatsTool wraps the result as
-  // { status: 'computed', engine, result }.
+  // Emit define.xml at the requested version via the one generator (returns
+  // { xml, defineVersion, valid, gaps, datasetCount, variableCount,
+  // codelistCount }), so the version in the result is the version in the file.
+  // Structural conformance is a separate tool (check_dataset_conformance).
+  // runStatsTool wraps the result as { status: 'computed', engine, result }.
   return runStatsTool('generate_define_xml', async () => {
     const { generateDefineXml } = await import('../cdisc/define-xml-generator.js');
     return generateDefineXml(spec as any);
@@ -18548,6 +18957,17 @@ registerToolHandler('update_vault_document', async (input, ctx) => {
            (artifact_id, organization_id, version, content, content_hash, change_description, created_by_id)
          VALUES ($1, $2, $3, $4, $5, $6, $7)`,
         [doc.id, ctx.organizationId, nextVersion, content, hash, reason, ctx.userId],
+      );
+      /* Lineage in the same transaction as the new version (ledger L160): the
+         vault tool carries no parked sources, so every clause is the acting
+         user's assertion; a gap rolls the version back. */
+      const { enforceAuthorLineage } = await import('../clinical-regulatory-evidence/lineage-gate.js');
+      await enforceAuthorLineage(
+        client,
+        ctx.organizationId,
+        { documentTable: 'concept2cure_artifacts', documentId: String(doc.id) },
+        content,
+        String(ctx.userId),
       );
       // Uniform provenance: a new vault version is an 'edit' event, same txn.
       await recordArtifactProvenance(client, {

@@ -150,11 +150,12 @@ describe('PDF rendering', () => {
     expect(res.headers['content-type']).toContain('application/pdf');
     expect(res.headers).toHaveProperty('x-form-field-coverage');
     expect(res.headers).toHaveProperty('x-form-used-official-template');
-    // 3674 is a pure dynamic XFA form with no fillable layer — with no official
-    // template installed it renders a faithful reconstruction, and the response
-    // must honestly say so (never the official Adobe-rendered PDF).
-    expect(res.headers['x-form-used-official-template']).toBe('false');
-    expect(res.headers['x-form-reconstructed']).toBe('true');
+    // 3674 is a dynamic XFA form: its AcroForm layer is empty, but its XFA
+    // packets carry 178 fillable fields, so the vendored FDA template fills
+    // through the datasets packet and the response says so honestly. The
+    // reconstruction is now only the fallback when no template is installed.
+    expect(res.headers['x-form-used-official-template']).toBe('true');
+    expect(res.headers['x-form-reconstructed']).toBe('false');
     expect(res.body.subarray(0, 5).toString('latin1')).toBe('%PDF-');
   });
 

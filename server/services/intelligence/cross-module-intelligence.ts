@@ -14,7 +14,7 @@
  */
 
 import { db } from '../../db.js';
-import { eq, and, sql } from 'drizzle-orm';
+import { sql } from 'drizzle-orm';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -74,14 +74,16 @@ export async function analyzeCrossModuleRelationships(
     detectOrphanedDocuments(ctx),
   ]);
 
-  if (staleRefs.status === 'fulfilled') {
-    insights.push(...staleRefs.value);
-  }
-  if (statusGaps.status === 'fulfilled') {
-    insights.push(...statusGaps.value);
-  }
-  if (orphanedDocs.status === 'fulfilled') {
-    insights.push(...orphanedDocs.value);
+  // Fail closed on a real read failure. The detectors already swallow the only
+  // legitimate empty (a missing table → []), so a REJECTED detector is an actual
+  // failure — and a report that dropped it would return totalInsights lower than
+  // the truth (potentially 0), which the intelligence surface reads as "all
+  // modules consistent." A consistency check that could not run is unknown, not
+  // clean: surface the failure (→ the caller's error path) rather than a
+  // fabricated all-clear.
+  for (const settled of [staleRefs, statusGaps, orphanedDocs]) {
+    if (settled.status === 'rejected') throw settled.reason;
+    insights.push(...settled.value);
   }
 
   // Count unique documents involved
@@ -114,6 +116,16 @@ export async function analyzeCrossModuleRelationships(
 // ═══════════════════════════════════════════════════════════════════════════════
 // DETECTORS
 // ═══════════════════════════════════════════════════════════════════════════════
+
+// A detector's query hits core tables (documents, evidence_links). A missing
+// table (42P01) is a legitimately-unprovisioned org → a genuine "nothing to
+// detect"; the detector swallows only that and returns []. Any OTHER error
+// (timeout, dropped connection, JOIN failure) is a real read failure and MUST
+// propagate — a swallowed failure here becomes a fabricated "0 inconsistencies /
+// everything consistent" all-clear on the intelligence surface.
+function rethrowUnlessMissingTable(e: unknown): void {
+  if ((e as { code?: string })?.code !== '42P01') throw e;
+}
 
 /**
  * Detect documents referencing other documents that have been updated more recently.
@@ -164,8 +176,8 @@ async function detectStaleReferences(
         detectedAt: new Date().toISOString(),
       });
     }
-  } catch {
-    // Non-fatal — table may not exist
+  } catch (e) {
+    rethrowUnlessMissingTable(e);
   }
 
   return insights;
@@ -218,8 +230,8 @@ async function detectStatusGaps(
         detectedAt: new Date().toISOString(),
       });
     }
-  } catch {
-    // Non-fatal
+  } catch (e) {
+    rethrowUnlessMissingTable(e);
   }
 
   return insights;
@@ -264,8 +276,8 @@ async function detectOrphanedDocuments(
         detectedAt: new Date().toISOString(),
       });
     }
-  } catch {
-    // Non-fatal — evidence_links table may not exist
+  } catch (e) {
+    rethrowUnlessMissingTable(e);
   }
 
   return insights;

@@ -21,7 +21,23 @@ const { mockDb, schemaTableStub } = vi.hoisted(() => ({
 vi.mock('../../server/db', () => ({
   db: mockDb,
   pool: {
-    query: vi.fn(),
+    // A bare vi.fn() resolves to undefined, and resolveClientWorkspaceId reads
+    // `owned.rows` off the result — so every request threw before reaching the
+    // project-scope check these tests exist for, and the handler's catch turned
+    // that into a 500 where the test expects a 404. The workspace lookup answers
+    // only for the workspace the tests claim in tenantContext
+    // ({ organizationId: '1', clientWorkspaceId: '1' }); anything else still
+    // gets no row, so the resolver's fail-closed behaviour stays exercisable.
+    query: vi.fn(async (sql: string, params?: unknown[]) => {
+      if (/client_workspaces/i.test(sql)) {
+        const wsId = Number(params?.[0] ?? 1);
+        const orgId = Number(params?.[1] ?? 1);
+        return wsId === 1 && orgId === 1
+          ? { rows: [{ id: 1 }], rowCount: 1 }
+          : { rows: [], rowCount: 0 };
+      }
+      return { rows: [], rowCount: 0 };
+    }),
   },
 }));
 

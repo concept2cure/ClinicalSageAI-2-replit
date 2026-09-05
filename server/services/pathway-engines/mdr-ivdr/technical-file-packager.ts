@@ -73,6 +73,8 @@ export function buildTechnicalFilePlan(args: {
   const files: TechnicalFilePlanFile[] = [];
   const skipped: TechnicalFilePlan['skipped'] = [];
   const seenPaths = new Set<string>();
+  /** Leaves some manifest section claimed (placed OR reported unresolvable). */
+  const claimed = new Set<CoreLeaf>();
 
   for (const entry of args.manifest.entries) {
     for (const source of entry.sources) {
@@ -81,6 +83,7 @@ export function buildTechnicalFilePlan(args: {
         skipped.push({ sectionId: entry.id, source, reason: 'no matching leaf for source' });
         continue;
       }
+      claimed.add(leaf);
       const resolved = args.resolveFile(leaf);
       if (!resolved) {
         skipped.push({ sectionId: entry.id, source, reason: 'no resolvable source file for the leaf document' });
@@ -95,6 +98,19 @@ export function buildTechnicalFilePlan(args: {
         sectionId: entry.id,
       });
     }
+  }
+
+  // Every input leaf that NO section claimed is reported, never dropped: an
+  // authored section whose key matches no Annex II/III slot (e.g. the
+  // conformity/registration group IV.*) would otherwise vanish from the
+  // package with no trace in the plan.
+  for (const leaf of args.leaves) {
+    if (claimed.has(leaf)) continue;
+    skipped.push({
+      sectionId: 'unmapped',
+      source: leaf.sectionCode || leaf.title,
+      reason: `no technical-file section matched this leaf (${leaf.sectionCode || leaf.title}: ${leaf.title})`,
+    });
   }
 
   return { manifest: args.manifest, files, skipped };

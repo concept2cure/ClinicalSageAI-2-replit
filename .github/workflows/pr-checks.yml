@@ -41,12 +41,14 @@ jobs:
       # reproducible choice for CI and the convention in this repo's other
       # workflows.
       - name: Install dependencies
+        id: install
         run: npm ci
 
       - name: Set PR base ref
         run: echo "BASE_REF=${{ github.base_ref }}" >> $GITHUB_ENV
 
       - name: Security pattern check
+        if: "!cancelled() && steps.install.conclusion == 'success'"
         # Hard gate. Scans server/ for the bug classes PRs #496-#503 fixed:
         # tenant-trust from req.body / req.query / x-*-id headers, direct
         # jwt.verify (must use verifyJwtWithRotation), and hardcoded org-id
@@ -55,6 +57,7 @@ jobs:
         run: npm run check:security-patterns
 
       - name: Compliance claim check
+        if: "!cancelled() && steps.install.conclusion == 'success'"
         # Hard gate. Customer-facing copy must not assert compliance the
         # platform cannot evidence. The signup screen previously advertised
         # "SOC 2 Type II" — for which no report of any type exists — alongside
@@ -66,6 +69,7 @@ jobs:
         run: npm run check:compliance-claims
 
       - name: Microcopy tone check
+        if: "!cancelled() && steps.install.conclusion == 'success'"
         # Hard gate. Customer-facing copy must not carry exclamation marks or
         # pictograph emoji — a design-system non-negotiable the 2026-07 UI/UX
         # audit found violated in the exact sites the rule was meant to
@@ -78,6 +82,7 @@ jobs:
         run: npm run check:microcopy
 
       - name: GA completion ledger check
+        if: "!cancelled() && steps.install.conclusion == 'success'"
         # Hard gate. docs/GA_COMPLETION_LEDGER_2026-08.md is the single register
         # of open GA work across every space; its failure mode is going stale —
         # a row citing a renamed file, a row marked `done` on an agent's
@@ -88,6 +93,7 @@ jobs:
         run: npm run check:ledger
 
       - name: Document alias map holds identities only
+        if: "!cancelled() && steps.install.conclusion == 'success'"
         # Hard gate. c2c_document_aliases is an identity map, not a registry.
         # The registry that owned identity AND metadata AND placement was built
         # here once and reverted, because it competed with the stores that
@@ -98,6 +104,7 @@ jobs:
         run: npm run ci:document-alias-attribute-free
 
       - name: Surfaces are discoverable, or declared not to be
+        if: "!cancelled() && steps.install.conclusion == 'success'"
         # Hard gate. The product renders 118 surfaces and the rail exposes 14;
         # the rest are found through the Apps catalog. Nothing kept those two
         # lists in step, so eight backed surfaces — mounted routes, live API
@@ -108,6 +115,7 @@ jobs:
         run: npm run ci:surface-discoverability
 
       - name: AnA can see the screen she is asked about
+        if: "!cancelled() && steps.install.conclusion == 'success'"
         # Ratchet, not a hard requirement. A surface tells AnA what it is showing
         # via usePublishSurfaceContext; the shell forwards it and the server
         # renders it into the prompt. That pipeline was completed end to end and
@@ -120,6 +128,7 @@ jobs:
         run: npm run ci:ana-surface-context
 
       - name: No server error carries the failure text to the client
+        if: "!cancelled() && steps.install.conclusion == 'success'"
         # Ratchet, not a hard requirement. serverError() copied err.message into
         # the response body while its docstring claimed the envelope was
         # sanitized, so a route with a missing relation answered the browser
@@ -133,16 +142,104 @@ jobs:
         run: npm run ci:server-error-leaks
 
       - name: No API route or table name in user-visible copy
+        if: "!cancelled() && steps.install.conclusion == 'success'"
         # Hard gate, and it was running nowhere. The script has existed since
         # W0-4 and was referenced only from package.json — absent from all 19
         # workflows and both husky hooks — so the rule it enforces was checked
         # only when somebody remembered to run it by hand.
         run: npm run ci:internals-in-copy
 
+      - name: No clearance copy chosen by an empty collection
+        if: "!cancelled() && steps.install.conclusion == 'success'"
+        # The same omission as the step above, one gate over. This one exists to
+        # make BIOPHARMA_WORK_ORDER.md's standing checklist item — "no AI
+        # narrative asserts readiness or absence of blockers over an empty state"
+        # — executable rather than checked by a human reading screens. It
+        # self-tests against the recovered pre-fix sources of NdaCockpit and
+        # BiopharmaSpecialty, carries a baseline that may only shrink, and until
+        # now ran nowhere. It caught real defects during the honest-state sweep
+        # only because someone ran it by hand.
+        run: npm run ci:empty-state-honesty
+
+      - name: No control promising an action it only asks about
+        if: "!cancelled() && steps.install.conclusion == 'success'"
+        # Twice, months apart and in unrelated code, a control named a governed
+        # act and its handler only sent a sentence to the chat pane: an "Attach
+        # to dossier" button that attached nothing, and a "Cite" button that
+        # created no citation. Both were caught by a human reading screens. The
+        # self-test runs against those two recovered pre-fix sources, so the gate
+        # is proven on the code that actually shipped the defect.
+        run: npm run ci:action-overclaim
+
+      - name: No success message before the response is checked
+        if: "!cancelled() && steps.install.conclusion == 'success'"
+        # apiRequest returns a 401 instead of throwing it. Three handlers, months
+        # apart, leaned on the throw alone and painted "recorded" / "attached" /
+        # "frozen and sealed" over a refused request on an expired session. The
+        # self-test runs against the recovered pre-fix freeze handler and proves
+        # the three repaired surfaces silent.
+        run: npm run ci:success-before-ok
+
+      - name: No hand-rolled error-envelope reads
+        if: "!cancelled() && steps.install.conclusion == 'success'"
+        # A surface that reads `json.error` / `typeof error === 'string'` by hand
+        # skips the two filters serverMessage applies — isErrorCode and
+        # looksInternal — so an enum token or an internal string reaches the UI.
+        # The gate existed with a baseline and ran nowhere; four fresh drift
+        # sites had already landed (DocumentAuthoring x2, HaqManager, Onboarding),
+        # each now routed through the canonical reader. Baseline 0.
+        run: npm run ci:error-envelope
+
+      - name: Filing-catalog copy stays canonical
+        if: "!cancelled() && steps.install.conclusion == 'success'"
+        # Passes clean today and was running nowhere; wiring it stops the next
+        # drift silently.
+        run: npm run check:catalog-copy
+
+      - name: INSERT columns are declared in the model
+        if: "!cancelled() && steps.install.conclusion == 'success'"
+        # A shrink-only ratchet, and it was running nowhere. The baseline had 11
+        # stale entries whose violations no longer occur; regenerating dropped
+        # exactly those 11 and absorbed nothing new (diff -11/+0). 49 real ones
+        # remain, awaiting burn-down; the ratchet now guards against the count
+        # growing.
+        run: npm run ci:insert-columns-declared
+
+      - name: Gates that existed but ran nowhere
+        if: "!cancelled() && steps.install.conclusion == 'success'"
+        # An audit of what CI actually executes found 88 gate files, 67 of them
+        # wired and 21 not. These twelve pass today and are enforced from here;
+        # several are load-bearing rather than cosmetic — session-scoped RLS
+        # bypass, ORM table reachability, governed export routes, and the
+        # ungated-fixture-fallback rule CLAUDE.md states as "no fixture data in
+        # governed paths".
+        #
+        # Three of the remaining unrun gates FAIL today and are deliberately not
+        # wired here, because wiring a failing gate breaks the build for
+        # everyone: ci:error-envelope, ci:insert-columns-declared and
+        # ci:tenant-resolvers. Each needs its violations resolved first, and
+        # ci:tenant-resolvers in particular reports a real tenant-isolation
+        # divergence that needs a decision, not a quick fix.
+        run: |
+          npm run ci:canonicalizers
+          npm run ci:commonjs-require
+          npm run ci:governed-export-consequence-shape
+          npm run ci:governed-export-routes
+          npm run ci:migration-set-order
+          npm run ci:model-migration-agreement
+          npm run ci:node-runtime
+          npm run ci:orm-reachability
+          npm run ci:reasoning-tier-ga-readiness
+          npm run ci:reasoning-tier-uat-evidence
+          npm run ci:session-scoped-rls-bypass
+          npm run ci:fixture-fallback
+
       - name: Verify tests for changed code
+        if: "!cancelled() && steps.install.conclusion == 'success'"
         run: bash scripts/ai/verify-tests.sh
 
       - name: Check for large files
+        if: "!cancelled() && steps.install.conclusion == 'success'"
         run: |
           echo "Checking for files over 500 lines..."
           LARGE_FILES=$(find . -name "*.ts" -o -name "*.tsx" -o -name "*.js" -o -name "*.jsx" | \
@@ -154,6 +251,7 @@ jobs:
           fi
 
       - name: Check for console.log
+        if: "!cancelled() && steps.install.conclusion == 'success'"
         run: |
           echo "Checking for console.log statements..."
           CONSOLE_LOGS=$(git diff "origin/$BASE_REF"...HEAD --name-only | \
@@ -166,6 +264,7 @@ jobs:
           fi
 
       - name: Check for deprecated imports
+        if: "!cancelled() && steps.install.conclusion == 'success'"
         run: |
           echo "Checking for deprecated imports..."
           DEPRECATED=$(git diff "origin/$BASE_REF"...HEAD --name-only | \
@@ -178,6 +277,7 @@ jobs:
           fi
 
       - name: Run linter on changed files
+        if: "!cancelled() && steps.install.conclusion == 'success'"
         # This step used to end in `--max-warnings 0 || echo "Lint warnings found"`.
         # The `|| echo` swallowed eslint's exit code, so the per-PR lint gate could
         # not fail — ever. It reported problems and passed regardless.

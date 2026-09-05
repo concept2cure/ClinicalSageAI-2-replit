@@ -84,7 +84,10 @@ describe('getResidualSolvent — Q3C(R8)', () => {
   it('benzene → class 1, 2 ppm', () => {
     const s = getResidualSolvent('benzene')!;
     expect(s.class).toBe(1);
-    expect(s.limit).toBe('2 ppm');
+    /* The limit is a NUMBER, not the prose '2 ppm' it used to be: a limit that
+       exists only as a string cannot be compared to a measurement, which is why
+       no recorded solvent was ever assessed against this table. */
+    expect(s.concentrationLimitPpm).toBe(2);
     expect(s.citation).toBe('ICH Q3C(R8)');
   });
 
@@ -106,9 +109,12 @@ describe('getResidualSolvent — Q3C(R8)', () => {
   });
 
   it('catalog has the expected class distribution', () => {
+    /* Q3C(R8) names five Class 1 solvents; the Class 2 and Class 3 tables are
+       long, and the earlier pin of 5/5 recorded how much of the guideline the
+       catalog was missing rather than what the guideline says. */
     expect(RESIDUAL_SOLVENTS.filter((s) => s.class === 1).length).toBe(5);
-    expect(RESIDUAL_SOLVENTS.filter((s) => s.class === 2).length).toBe(5);
-    expect(RESIDUAL_SOLVENTS.filter((s) => s.class === 3).length).toBe(5);
+    expect(RESIDUAL_SOLVENTS.filter((s) => s.class === 2).length).toBeGreaterThanOrEqual(25);
+    expect(RESIDUAL_SOLVENTS.filter((s) => s.class === 3).length).toBeGreaterThanOrEqual(25);
   });
 });
 
@@ -138,9 +144,14 @@ describe('getElementalImpurityPDE — Q3D(R2)', () => {
     expect(() => getElementalImpurityPDE('Pb', 'topical' as AdministrationRoute)).toThrow();
   });
 
-  it('catalog covers the 4 Class 1 elements', () => {
-    expect(ELEMENTAL_IMPURITIES.length).toBe(4);
-    expect(ELEMENTAL_IMPURITIES.every((e) => e.class === 'Class 1')).toBe(true);
+  it('catalog covers the Class 1 elements, and the classes Q3D also requires', () => {
+    /* The pin used to be `length === 4`, which recorded that only the Class 1
+       elements were modelled. Q3D(R2) Table A.2.1 also sets PDEs for Class 2A,
+       2B and 3, and a record naming any of them must be assessable. */
+    const symbols = ELEMENTAL_IMPURITIES.map((e) => e.symbol);
+    for (const s of ['Pb', 'As', 'Cd', 'Hg']) expect(symbols).toContain(s);
+    expect(ELEMENTAL_IMPURITIES.filter((e) => e.class === 'Class 1')).toHaveLength(4);
+    expect(ELEMENTAL_IMPURITIES.length).toBeGreaterThanOrEqual(20);
   });
 });
 

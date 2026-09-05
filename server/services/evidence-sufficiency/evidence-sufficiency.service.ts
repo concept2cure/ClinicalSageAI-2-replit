@@ -54,6 +54,10 @@ export interface AssessRequest {
   profile: DeviceProfileFlags;
   /** Optional: pre-computed claim health to enrich findings. */
   claimHealth?: {
+    /** How many current claims the check actually had to look at. Zero counts
+     *  mean nothing when this is 0 — see the not-assessed finding below. */
+    claimsRecorded?: number;
+    assessed?: boolean;
     orphanClaimCount?: number;
     contradictedClaimCount?: number;
     unsupportedClaimCount?: number;
@@ -286,6 +290,38 @@ export async function assessSufficiency(req: AssessRequest): Promise<Sufficiency
   }
 
   // 4. Cross-cutting findings from claim health (optional)
+  //
+  // ZERO CONTRADICTIONS FROM AN UNASSESSED STORE IS NOT A CLEAN RESULT. The
+  // contradiction and unsupported-claim checks below only ever ADD findings, so
+  // an empty claim store contributes nothing and the verdict comes out as
+  // though claim health had been examined and passed. It decides whether a
+  // submission is cleared for approval, so the absence of an assessment has to
+  // be visible in it rather than indistinguishable from a pass.
+  //
+  // Reported when the caller told us what the denominator was; a caller that
+  // omits claimHealth entirely is making no claim about it and gets no finding.
+  const claimHealthUnassessed =
+    req.claimHealth != null &&
+    (req.claimHealth.assessed === false ||
+      (req.claimHealth.claimsRecorded != null && req.claimHealth.claimsRecorded === 0));
+  if (claimHealthUnassessed) {
+    findings.push({
+      code: 'SUFF-CLAIM-HEALTH-NOT-ASSESSED',
+      // 'warning', not 'critical': an unassessed check is a gap in the
+      // evidence FOR the verdict, not a defect found in the submission.
+      // Critical here would block approval on the strength of an absence,
+      // which overcorrects in the other direction.
+      severity: 'warning',
+      message:
+        'Claim health was not assessed: no claims are recorded for this program, so the ' +
+        'orphan and contradiction counts are zero because nothing was examined — not because ' +
+        'nothing was found.',
+      citation: '21 CFR 807.87(e); 21 CFR 814.20(b)(2)',
+      recommendedFix:
+        'Record the claims this submission makes, then re-run the assessment so the counts ' +
+        'describe an examination that happened.',
+    });
+  }
   if (req.claimHealth?.contradictedClaimCount && req.claimHealth.contradictedClaimCount > 0) {
     findings.push({
       code: 'SUFF-CLAIM-CONTRADICT',

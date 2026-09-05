@@ -18,7 +18,7 @@
 
 import { and, eq, isNull, sql } from 'drizzle-orm';
 import { db } from '../../db';
-import { submissionLeaves, ectdSequences } from '../../../shared/schema/submissions';
+import { submissionLeaves, ectdSequences, submissions } from '../../../shared/schema/submissions';
 import { shadowReviewFindings, shadowReviewRuns } from '../../../shared/schema/shadow-review';
 import { getSubmissionRegionProfile } from '../region-profiles/region-profile-service';
 import { computeDispatchReadiness, type DispatchReadinessReport } from './dispatch-readiness';
@@ -72,19 +72,105 @@ export interface DispatchReadinessAssessment {
   leafCount: number;
 }
 
-/** Flatten a region profile's Module-1 tree to the section codes marked required. */
-function requiredModule1Codes(region: string): string[] {
+/**
+ * NODE_ENV values that are RECOGNIZED as non-production. Anything else — unset,
+ * misspelled, 'prod' — is treated as production so the fail-closed eValidator
+ * rule is not silently disabled by a misconfiguration.
+ */
+const NON_PRODUCTION_NODE_ENVS = new Set(['development', 'test', 'staging']);
+
+/**
+ * Resolve the environment for the fail-closed eValidator rule. Fails toward
+ * 'production': only a RECOGNIZED non-production NODE_ENV yields 'staging', so an
+ * unset/misspelled value keeps production enforcement on. Pure + exported for test.
+ */
+export function resolveDispatchEnvironment(
+  nodeEnv: string | undefined,
+): 'production' | 'staging' {
+  return NON_PRODUCTION_NODE_ENVS.has(nodeEnv ?? '') ? 'staging' : 'production';
+}
+
+/**
+ * Gate on Shadow Review having actually run. Zero completed runs is UNASSESSED,
+ * not clean — it must block dispatch, never clear it. Pure + exported for test.
+ */
+export function evaluateShadowPresenceGate(shadowReviewRunCount: number): DispatchGateResult {
+  return shadowReviewRunCount > 0
+    ? { cleared: true, blockers: [] }
+    : {
+        cleared: false,
+        blockers: [
+          'No completed Shadow Review has run for this sequence. A never-reviewed dossier is not cleared for dispatch — run Shadow Review before transmitting.',
+        ],
+      };
+}
+
+/**
+ * Completed Shadow Review runs for a sequence.
+ *
+ * Zero open criticals means nothing different whether the dossier is clean OR
+ * was never reviewed — so the count is read separately and fed to the presence
+ * gate, which surfaces that blind spot instead of letting it read as clean.
+ *
+ * Extracted from assessSequenceDispatchReadiness only to keep that function
+ * under the max-lines-per-function ceiling; the query and its filters are
+ * unchanged, including `status = 'complete'` and the soft-delete exclusion.
+ */
+async function countCompletedShadowRuns(
+  sequenceId: number,
+  organizationId: number,
+): Promise<number> {
+  const [{ value }] = await db
+    .select({ value: sql<number>`count(*)::int` })
+    .from(shadowReviewRuns)
+    .where(
+      and(
+        eq(shadowReviewRuns.sequenceId, sequenceId),
+        eq(shadowReviewRuns.organizationId, organizationId),
+        eq(shadowReviewRuns.status, 'complete'),
+        isNull(shadowReviewRuns.deletedAt)
+      )
+    );
+  return value ?? 0;
+}
+
+/**
+ * Flatten a region profile's Module-1 tree to the section codes marked required
+ * for this application type. A section that declares `requiredFor` is required
+ * only for those application types (a debarment certification for a marketing
+ * application, the general investigational plan for an IND); when the
+ * application type is unknown every required section is kept — conservative,
+ * as before.
+ */
+export function requiredModule1Codes(region: string, applicationType?: string | null): string[] {
   const profile = getSubmissionRegionProfile(region);
   if (!profile) return [];
+  const app = applicationType ? String(applicationType).toLowerCase() : null;
   const out: string[] = [];
   const walk = (sections: typeof profile.module1Sections): void => {
     for (const s of sections) {
-      if (s.required) out.push(s.number);
+      const applies = !s.requiredFor || !app || s.requiredFor.includes(app);
+      if (s.required && applies) out.push(s.number);
       if (s.childSections?.length) walk(s.childSections);
     }
   };
   walk(profile.module1Sections);
   return out;
+}
+
+/**
+ * The application type decides which Module 1 sections are required (an IND
+ * needs its plan and brochure; a marketing application its debarment
+ * certification and draft labeling). Tenant-scoped; null when the submission
+ * row is not visible to this organization.
+ */
+async function loadApplicationType(submissionId: number, organizationId: number): Promise<string | null> {
+  const [row] = await db
+    .select({ applicationType: submissions.applicationType })
+    .from(submissions)
+    .where(and(eq(submissions.id, submissionId), eq(submissions.organizationId, organizationId)))
+    .limit(1);
+  return row?.applicationType ?? null;
 }
 
 /**
@@ -105,6 +191,7 @@ export async function assessSequenceDispatchReadiness(
   if (!sequence) {
     throw Object.assign(new Error('Sequence not found in this organization.'), { code: 'NOT_FOUND' });
   }
+  const submissionApplicationType = await loadApplicationType(sequence.submissionId, organizationId);
 
   // 2. Tenant-scoped, non-deleted leaves.
   const leaves = await db
@@ -128,12 +215,27 @@ export async function assessSequenceDispatchReadiness(
       documentId: l.documentId,
     })),
     {
-      requiredSections: requiredModule1Codes(sequence.region),
+      requiredSections: requiredModule1Codes(sequence.region, submissionApplicationType),
       // An original is type 'original' or sequence number '0000'.
       isOriginalSequence: sequence.type === 'original' || sequence.sequenceNumber === '0000',
       sequenceNumber: sequence.sequenceNumber,
     }
   );
+
+  // Fail-visible on an unrecognized region: requiredModule1Codes returns [] for a
+  // region with no registered profile, so NO required-section is checked and the
+  // absence of MISSING_REQUIRED_SECTION findings does NOT mean the required
+  // sections are present. Surface it as a warning rather than reporting nothing
+  // missing.
+  if (!getSubmissionRegionProfile(sequence.region)) {
+    readiness.findings.push({
+      severity: 'warning',
+      code: 'UNKNOWN_REGION_PROFILE',
+      sectionCode: null,
+      message: `No submission region profile is registered for region "${sequence.region}"; required Module 1 section checking could not be performed.`,
+    });
+    readiness.warnings += 1;
+  }
 
   // 4. Open CRITICAL Shadow Review findings for this sequence (server truth).
   const [{ value: criticalCount }] = await db
@@ -153,21 +255,8 @@ export async function assessSequenceDispatchReadiness(
 
   const unacknowledgedShadowCriticals = criticalCount ?? 0;
 
-  // 4b. Has this sequence ever been Shadow-Reviewed? Zero open criticals means
-  //     nothing different whether the dossier is clean OR was never reviewed —
-  //     surface that blind spot so a never-reviewed dossier isn't dispatched blind.
-  const [{ value: shadowRunCount }] = await db
-    .select({ value: sql<number>`count(*)::int` })
-    .from(shadowReviewRuns)
-    .where(
-      and(
-        eq(shadowReviewRuns.sequenceId, sequenceId),
-        eq(shadowReviewRuns.organizationId, organizationId),
-        eq(shadowReviewRuns.status, 'complete'),
-        isNull(shadowReviewRuns.deletedAt)
-      )
-    );
-  const shadowReviewRunCount = shadowRunCount ?? 0;
+  // 4b. Has this sequence ever been Shadow-Reviewed? See countCompletedShadowRuns.
+  const shadowReviewRunCount = await countCompletedShadowRuns(sequenceId, organizationId);
 
   // 5. External agency-grade validation gate (P0-4), composed with the structural
   //    + shadow gate. Default-off: behavior is identical to before unless
@@ -181,7 +270,7 @@ export async function assessSequenceDispatchReadiness(
     report: params.externalValidationReport ?? null,
     configured: externalConfigured,
     requireEvalidator: evalidatorRequiredFromEnv(),
-    environment: process.env.NODE_ENV === 'production' ? 'production' : 'staging',
+    environment: resolveDispatchEnvironment(process.env.NODE_ENV),
   });
 
   // 6. Hard gate over the server-computed inputs, composed with the external gate.
@@ -189,10 +278,21 @@ export async function assessSequenceDispatchReadiness(
     validationErrors: readiness.errors,
     unacknowledgedShadowCriticals,
   });
-  const gate = mergeDispatchGates(structuralGate, {
-    cleared: externalGate.cleared,
-    blockers: externalGate.blockers,
-  });
+
+  // 6b. Never-Shadow-Reviewed is not clean, it is UNASSESSED. A sequence with
+  //     zero completed Shadow Review runs has zero open criticals for the same
+  //     reason an unread document has zero findings: nothing ran to produce any.
+  //     Like an undetermined count in the hard gate, that must not clear
+  //     dispatch — otherwise a dossier that was never adversarially reviewed is
+  //     transmitted to the agency with a `cleared: true` verdict. Block until at
+  //     least one completed Shadow Review run exists.
+  const shadowPresenceGate = evaluateShadowPresenceGate(shadowReviewRunCount);
+
+  const gate = mergeDispatchGates(
+    structuralGate,
+    { cleared: externalGate.cleared, blockers: externalGate.blockers },
+    shadowPresenceGate,
+  );
 
   return {
     sequenceId,
@@ -208,9 +308,10 @@ export async function assessSequenceDispatchReadiness(
       cleared: externalGate.cleared,
       blockers: externalGate.blockers,
     },
-    /** True when the gate is clear but no Shadow Review has run — dispatch is
-     *  permitted, but the dossier was never adversarially reviewed. */
-    shadowReviewMissing: gate.cleared && shadowReviewRunCount === 0,
+    /** True when no completed Shadow Review has run for this sequence. This now
+     *  also blocks the gate (§6b), so it is informational: it reports WHY the
+     *  gate is blocked when that is the only blocker. */
+    shadowReviewMissing: shadowReviewRunCount === 0,
     gate,
     readiness,
     leafCount: leaves.length,

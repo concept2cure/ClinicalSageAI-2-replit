@@ -2,8 +2,10 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { I } from '../icons';
 import { EmptyState, connected, liveGetOrNull, unwrapList, useLiveData } from '../dataConnect';
 import { apiRequest, serverMessage } from '@/lib/queryClient';
+import { assessmentState } from '../assessmentState';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { usePublishSurfaceContext } from '../surfaceContext';
+import { useSurfaceActionHandlers, notifySurfaceActionReady } from '../surfaceActions';
 import '../styles/project-home-v2.css';
 
 /* ── Display-contract types (mapped from the real orchestration backends) ── */
@@ -26,6 +28,21 @@ interface OrchReadiness {
     validation: OrchFinding[];
     ai: OrchFinding[];
   };
+  /**
+   * Positive evidence, taken from the assessment's OWN document inventory,
+   * that each findings class below had something to be computed from.
+   *
+   * The two groups are a partition of one blocker list, not the output of two
+   * checks that each ran, so the size of a group carries no information about
+   * whether its subject was examined. These do, and neither is derived from
+   * that size — deriving it would be the defect (assessmentState.ts).
+   *
+   * `documentsInventoried` — documents the assessment inventoried for this
+   * program. `documentsValidated` — of those, how many carry a recorded
+   * validation result.
+   */
+  documentsInventoried: number;
+  documentsValidated: number;
 }
 
 interface OrchStep {
@@ -155,6 +172,15 @@ export function mapReadiness(payload: unknown): OrchReadiness | null {
     !Array.isArray(d.blockers) || typeof d.assessedAt !== 'string'
   ) return null;
   const blockers = d.blockers as LiveBlocker[];
+  /* `documentInventory` is part of every ReadinessAssessment the engine
+     returns, and it is what tells "this class was evaluated and produced
+     nothing" apart from "there was nothing for it to evaluate". Read
+     defensively: it is not one of the four fields this mapper fails closed on,
+     so a payload without it yields zero evidence — which makes the view
+     decline to claim clearance, the correct outcome rather than a limitation. */
+  const inventory = Array.isArray((d as { documentInventory?: unknown }).documentInventory)
+    ? ((d as { documentInventory?: unknown }).documentInventory as Array<{ isValidated?: unknown }>)
+    : [];
   const toFinding = (b: LiveBlocker): OrchFinding => ({
     rule: String(b.message ?? ''),
     type: String(b.category ?? 'finding'),
@@ -175,6 +201,8 @@ export function mapReadiness(payload: unknown): OrchReadiness | null {
       // never a fabricated finding.
       ai: [],
     },
+    documentsInventoried: inventory.length,
+    documentsValidated: inventory.filter((x) => x != null && x.isValidated === true).length,
   };
 }
 
@@ -354,6 +382,30 @@ export function Orchestration({ onAsk, onNav }: SurfaceViewProps) {
     () => (!rdState.loading && !rdState.error ? mapReadiness(rdState.data) : null),
     [rdState.loading, rdState.error, rdState.data],
   );
+  /* ── `!r` alone used to select the "No readiness evaluation yet" panel ──────
+     `mapReadiness` returns null for two unrelated facts. It returns null when
+     there is no assessment to map (no program in scope, a 204, an unwrapped
+     `data: null`), and it returns null when a body DID arrive and failed the
+     four type checks at the top of the mapper — a changed envelope, a proxy's
+     page, a truncated response. The render below had one branch for both, so
+     the second was reported as the first: on a submission-readiness surface a
+     rejected payload told a regulatory director that nothing had been assessed,
+     which is a positive claim about the program that no read established.
+     assessmentState.ts states the rule outright — a failed read is never
+     rendered as an empty result — so the mapper's refusal is `unreadable`, and
+     only a genuine absence stays `not-assessed`. */
+  const rdShapeRejected =
+    !rdState.loading && !rdState.error && rdState.data != null && r == null;
+  const rdRead = assessmentState({
+    loading: rdState.loading,
+    // The two ways the evaluation fails to arrive: the read itself failed, or
+    // it succeeded and returned something that is not an evaluation.
+    unreadable: Boolean(rdState.error) || rdShapeRejected,
+    scopeExists: pid != null,
+    findingCount: 0,
+    // Positive evidence, never inferred from emptiness: a mapped assessment.
+    assessmentRan: r != null,
+  });
 
   // Runs — the project's real workflow executions. Held in local state so the
   // run controls can update optimistically (FLAGGED mock actions, see below);
@@ -700,6 +752,47 @@ export function Orchestration({ onAsk, onNav }: SurfaceViewProps) {
     cpsState.loading, cpsState.error, gatesReady, cps, pendingGateCount,
     rdState.loading, rdState.error, r, tplState.error, tplSettled, templates, sel,
   ]);
+  /* View state only. Approving or rejecting a gate is a separation-of-duties
+     decision, and starting, retrying or cancelling a run is a metered spend —
+     none is reachable from here. */
+  useSurfaceActionHandlers('orchestration', {
+    'orchestration.set-view': (params) => {
+      const target = String(params.view ?? '');
+      if (!['runs', 'approvals', 'readiness'].includes(target)) {
+        return { ok: false, reason: `No orchestration view named "${params.view}".` };
+      }
+      if (view === target) return { ok: true, detail: `Already on the ${target} view` };
+      setView(target);
+      return { ok: true, detail: `Opened the ${target} view` };
+    },
+    'orchestration.select-run': (params) => {
+      const raw = String(params.run ?? '').trim();
+      if (!raw) return { ok: false, reason: 'Name a run to select.' };
+      if (runsState.loading) {
+        return { ok: false, reason: 'The workflow runs are still loading.', retry: true };
+      }
+      if (runsState.error) {
+        return { ok: false, reason: 'The orchestration execution engine did not respond, so no runs are listed to select from.' };
+      }
+      const needle = raw.toLowerCase();
+      const exact = runs.filter((r) => r.id.toLowerCase() === needle || r.title.toLowerCase() === needle);
+      const hits = exact.length ? exact : runs.filter((r) => r.title.toLowerCase().includes(needle));
+      if (hits.length === 0) return { ok: false, reason: `No workflow run named "${raw}".` };
+      if (hits.length > 1) return { ok: false, reason: `"${raw}" matches ${hits.length} runs — name one exactly.` };
+      const run = hits[0];
+      const switched = view !== 'runs';
+      if (switched) setView('runs');
+      setSel(run.id);
+      return {
+        ok: true,
+        detail: `Selected ${run.title} (${run.status})` + (switched ? ' on the runs view' : ''),
+      };
+    },
+  });
+  useEffect(() => {
+    if (!runsState.loading && !runsState.error) notifySurfaceActionReady('orchestration');
+  }, [runsState.loading, runsState.error]);
+
   usePublishSurfaceContext('orchestration', anaContext);
 
   /* Cancel, Retry, Replay and "Open gate" all reach a real endpoint. The two
@@ -737,29 +830,64 @@ export function Orchestration({ onAsk, onNav }: SurfaceViewProps) {
   const stepIc = (st: string): React.ReactElement | null =>
     st === 'done' ? I.check : st === 'failed' ? I.close : st === 'awaiting' ? I.clock : st === 'paused' ? I.pause : null;
 
-  const findGroup = (label: string, sub: string, list: OrchFinding[]) => (
-    <div style={{ marginBottom: 18 }}>
-      <div className="orch-sec-l">{label} <span style={{ color: 'var(--text-500)', fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>{I.dot} {sub}</span></div>
-      {list.length === 0 ? (
-        <div className="orch-run-m" style={{ marginBottom: 6 }}>No findings in this class.</div>
-      ) : null}
-      {list.map((f, i) => (
-        <div key={i} className="orch-find">
-          <span className={'orch-find-dot ' + (SEV_TONE[f.sev] || 'idle')} />
-          <div className="orch-find-b">
-            <div className="orch-find-r">{f.rule}</div>
-            <div className="orch-find-d">{f.detail}</div>
+  /* ── An empty class is not a clean class ──────────────────────────────────
+     This read `list.length === 0 ? "No findings in this class." : null`, and
+     the sentence was chosen BY the emptiness. The two groups below are a
+     PARTITION of the one blocker list the assessment returned, not the output
+     of two checks that each ran, so an empty group has two causes and this said
+     the same thing about both.
+
+     On "Validation findings — eCTD · CDISC · hyperlink integrity" that
+     difference is the entire claim. The readiness engine raises a
+     validation-class blocker only for a document that CARRIES a recorded
+     validation result; a program in which nothing has ever been validated
+     therefore produces zero of them, and the group read as a clean validation
+     pass over documents no validator had ever opened.
+
+     `assessed` is the positive evidence, from the assessment's own inventory
+     rather than from the size of `list`: documents inventoried for the rules
+     class, documents carrying a validation result for the validation class.
+     'assessed-clear' stays reachable — a program whose documents are validated
+     and raise nothing still reads "No findings in this class." */
+  const findGroup = (
+    label: string,
+    sub: string,
+    list: OrchFinding[],
+    assessed: boolean,
+    notAssessed: string,
+  ) => {
+    const state = assessmentState({
+      scopeExists: true,
+      findingCount: list.length,
+      assessmentRan: assessed,
+    });
+    return (
+      <div style={{ marginBottom: 18 }}>
+        <div className="orch-sec-l">{label} <span style={{ color: 'var(--text-500)', fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>{I.dot} {sub}</span></div>
+        {state === 'assessed-clear' ? (
+          <div className="orch-run-m" style={{ marginBottom: 6 }}>No findings in this class.</div>
+        ) : null}
+        {state === 'not-assessed' ? (
+          <div className="orch-run-m" style={{ marginBottom: 6 }}>{notAssessed}</div>
+        ) : null}
+        {list.map((f, i) => (
+          <div key={i} className="orch-find">
+            <span className={'orch-find-dot ' + (SEV_TONE[f.sev] || 'idle')} />
+            <div className="orch-find-b">
+              <div className="orch-find-r">{f.rule}</div>
+              <div className="orch-find-d">{f.detail}</div>
+            </div>
+            <div className="orch-find-meta">
+              <span className="rd-chip tone-idle">{f.type.replace(/_/g, ' ')}</span>
+              <span className={'rd-chip tone-' + (f.status === 'fail' ? ORCH_TONE.failed : f.status === 'warn' ? ORCH_TONE.paused : ORCH_TONE.completed)}>
+                {f.status === 'fail' ? 'Fail' : f.status === 'warn' ? 'Warn' : 'Pass'}
+              </span>
+            </div>
           </div>
-          <div className="orch-find-meta">
-            <span className="rd-chip tone-idle">{f.type.replace(/_/g, ' ')}</span>
-            <span className={'rd-chip tone-' + (ORCH_TONE[f.status === 'fail' ? 'failed' : f.status === 'warn' ? 'paused' : 'completed'] || 'idle')}>
-              {f.status === 'fail' ? 'Fail' : f.status === 'warn' ? 'Warn' : 'Pass'}
-            </span>
-          </div>
-        </div>
-      ))}
-    </div>
-  );
+        ))}
+      </div>
+    );
+  };
 
   return (
     <div className="page-inner orch">
@@ -879,7 +1007,10 @@ export function Orchestration({ onAsk, onNav }: SurfaceViewProps) {
             tone="error"
             icon={I.alertTriangle}
             title="Couldn't load workflow runs"
-            hint="The orchestration execution engine didn't respond. These are the project's real workflow runs — sign in and retry, or check the service is reachable."
+            hint="The orchestration execution engine didn't respond. These are the project's real workflow runs — retry, or check the service is reachable."
+            retry={() => setRunsEpoch((n) => n + 1)}
+            retryLabel="Retry"
+            busy={runsState.loading}
           />
         ) : runs.length === 0 ? (
           <EmptyState
@@ -978,7 +1109,10 @@ export function Orchestration({ onAsk, onNav }: SurfaceViewProps) {
             tone="error"
             icon={I.alertTriangle}
             title="Couldn't load approval gates"
-            hint="The approval-checkpoint store didn't respond. These are the organization's real human-in-the-loop approval gates — sign in and retry, or check the service is reachable."
+            hint="The approval-checkpoint store didn't respond. These are the organization's real human-in-the-loop approval gates — retry, or check the service is reachable."
+            retry={() => setCpsReloadKey((n) => n + 1)}
+            retryLabel="Retry"
+            busy={cpsState.loading}
           />
         ) : cps.length === 0 ? (
           <EmptyState
@@ -1095,14 +1229,36 @@ export function Orchestration({ onAsk, onNav }: SurfaceViewProps) {
       )}
 
       {view === 'readiness' && (
-        rdState.loading ? (
+        rdRead === 'loading' ? (
           <div className="scaf-note" style={{ padding: '18px 10px' }}>Loading readiness…</div>
         ) : rdState.error ? (
+          /* UI standards §8: a failure always offers a way out. Each of these
+             three hints ENDED with "sign in and retry" while offering nothing to
+             retry with, so the instruction named an action the screen did not
+             provide. Every reload mechanism already existed and was simply never
+             wired to the failure that needs it. */
           <EmptyState
             tone="error"
             icon={I.alertTriangle}
             title="Couldn't load the readiness evaluation"
-            hint="The readiness engine didn't respond. The score is computed on demand from this program's governed objects — sign in and retry, or check the service is reachable."
+            hint="The readiness engine didn't respond. The score is computed on demand from this program's governed objects — retry, or check the service is reachable."
+            retry={() => setRdEpoch((n) => n + 1)}
+            retryLabel="Retry"
+            busy={rdState.loading}
+          />
+        ) : rdRead === 'unreadable' ? (
+          /* The branch that did not exist. Copy carries no parse detail and no
+             payload text — same guardrail as everywhere else on this surface —
+             and it deliberately does NOT say the program has not been
+             evaluated, because this state is the one in which that is unknown. */
+          <EmptyState
+            tone="error"
+            icon={I.alertTriangle}
+            title="Couldn't read the readiness evaluation"
+            hint="The readiness engine answered, but its response could not be read as an evaluation. No readiness result is being reported for this program either way — re-evaluate, and tell your administrator if it repeats."
+            retry={() => setRdEpoch((n) => n + 1)}
+            retryLabel="Re-evaluate"
+            busy={rdState.loading}
           />
         ) : !r ? (
           <EmptyState
@@ -1146,8 +1302,20 @@ export function Orchestration({ onAsk, onNav }: SurfaceViewProps) {
               {I.rotateCw} {rdState.loading ? 'Evaluating…' : 'Re-evaluate'}
             </button>
           </div>
-          {findGroup('Rules-based findings', 'readinessRules · required_item / quality_gate', r.findings.rules)}
-          {findGroup('Validation findings', 'eCTD · CDISC · hyperlink integrity', r.findings.validation)}
+          {findGroup(
+            'Rules-based findings',
+            'readinessRules · required_item / quality_gate',
+            r.findings.rules,
+            r.documentsInventoried > 0,
+            'This evaluation inventoried no documents for the program, so the readiness rules had nothing to examine. That is not a clean rules pass.',
+          )}
+          {findGroup(
+            'Validation findings',
+            'eCTD · CDISC · hyperlink integrity',
+            r.findings.validation,
+            r.documentsValidated > 0,
+            'No document in this program carries a recorded validation result, so no validation finding could be produced. That is not a clean validation pass.',
+          )}
           <div style={{ marginBottom: 18 }}>
             <div className="orch-sec-l">AI-inferred findings <span style={{ color: 'var(--text-500)', fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>{I.dot} cross-reference · claim-evidence</span></div>
             <div className="orch-run-m" style={{ marginBottom: 6 }}>Not yet available — the readiness engine does not compute an AI-inferred findings class. Cross-document consistency and claim-evidence findings will appear here once that capability ships.</div>

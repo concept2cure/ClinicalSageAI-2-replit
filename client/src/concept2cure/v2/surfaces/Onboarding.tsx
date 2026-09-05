@@ -11,6 +11,7 @@ import {
   licBundle as licBundleOf,
 } from '../fixtures/onboarding-data';
 import { getAuthHeaders, getOrgId } from '@/utils/authToken';
+import { serverMessage } from '@/lib/queryClient';
 import '../styles/project-home-v2.css';
 
 /* ── Helpers ── */
@@ -394,7 +395,7 @@ export function Onboarding({ onAsk, onNav }: SurfaceViewProps) {
           }),
         });
         nameSaved = res.ok;
-      } catch (_e) {
+      } catch {
         nameSaved = false;
       }
     }
@@ -411,7 +412,7 @@ export function Onboarding({ onAsk, onNav }: SurfaceViewProps) {
         }),
       });
       profileSaved = res.ok;
-    } catch (_e) {
+    } catch {
       profileSaved = false;
     }
 
@@ -436,7 +437,7 @@ export function Onboarding({ onAsk, onNav }: SurfaceViewProps) {
         // 201 = member created; 202 = pending cross-org invitation created.
         if (res.ok) invitesSent += 1;
         else invitesFailed.push(email);
-      } catch (_e) {
+      } catch {
         invitesFailed.push(email);
       }
     }
@@ -493,13 +494,15 @@ export function Onboarding({ onAsk, onNav }: SurfaceViewProps) {
             enterpriseRequest = 'failed';
             const body = await res.json().catch(() => null);
             const why =
-              (body && body.error && (body.error.message || body.error)) ||
+              // Was `body.error.message || body.error` — a by-hand envelope read
+              // that carried an enum token or internal text straight to the UI.
+              serverMessage(body) ??
               (res.status === 429
                 ? 'too many requests from here in the last hour'
                 : 'the intake did not say why');
             enterpriseNote = `The request was NOT recorded — ${why}. Nothing was sent; retry, or email our team directly.`;
           }
-        } catch (_e) {
+        } catch {
           enterpriseRequest = 'failed';
           enterpriseNote =
             'Could not reach the onboarding intake — the request was NOT recorded. Retry, or email our team directly.';
@@ -542,7 +545,7 @@ export function Onboarding({ onAsk, onNav }: SurfaceViewProps) {
           checkoutNote =
             'The billing service did not return a checkout link — no plan was provisioned. Retry from Usage & Billing.';
         }
-      } catch (_e) {
+      } catch {
         checkout = 'failed';
         checkoutNote =
           'Could not reach the billing service — no plan was provisioned. Retry from Usage & Billing.';

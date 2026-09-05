@@ -16,7 +16,7 @@
  * The second defect is a trial with an end date already in the past: a success
  * response for a change that gives the customer nothing.
  */
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const dbQuery = vi.hoisted(() => vi.fn());
 const writeModuleGrant = vi.hoisted(() => vi.fn());
@@ -56,6 +56,25 @@ function targetsResolve(previousExpiry: string | null = null) {
     .mockResolvedValueOnce({ rows: [{ module_id: 'pv-cockpit' }] })
     .mockResolvedValueOnce({ rows: [{ enabled: true, expires_at: previousExpiry }] });
 }
+
+/**
+ * parseTrialEnd takes `now` and the unit case passes NOW, but the route
+ * handlers fall through to its `new Date()` default — so the handler cases were
+ * graded against the real clock, with FUTURE hardcoded three weeks out. They
+ * would have started failing on 2026-09-23 with nothing changed in the code:
+ * a trial end date that is no longer in the future is correctly a 400.
+ *
+ * Freezing Date (only Date) pins NOW as the present for the handlers too, so
+ * FUTURE stays future.
+ */
+beforeAll(() => {
+  vi.useFakeTimers({ toFake: ['Date'] });
+  vi.setSystemTime(NOW);
+});
+
+afterAll(() => {
+  vi.useRealTimers();
+});
 
 beforeEach(() => {
   dbQuery.mockReset();

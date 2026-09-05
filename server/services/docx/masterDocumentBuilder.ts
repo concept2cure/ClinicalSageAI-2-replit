@@ -21,6 +21,7 @@ import { join } from 'path';
 import { randomUUID } from 'crypto';
 import JSZip from 'jszip';
 import { runDocxPdfPipeline } from '../docx-pdf-pipeline';
+import { inlineMarksToText } from '../../export/inline-marks-to-text.js';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -110,9 +111,15 @@ function ooxmlTable(headers: string[], rows: string[][], caption?: string): stri
 }
 
 /** Convert HTML to OOXML paragraphs */
-function htmlToOoxml(html: string): string {
+export function htmlToOoxml(html: string): string {
+  /* Inline semantic marks BEFORE anything else. Every structural rule below
+     strips inner tags with `replace(/<[^>]+>/g, '')`, which deletes a tag and
+     inserts nothing — so `10<sup>6</sup>` became `106`, and an unresolved
+     `<del>`/`<ins>` was silently settled into the built .docx. Shared with the
+     eCTD leaf renderer, which had the identical defect; see
+     server/export/inline-marks-to-text.ts for the full account. */
   // Decode entities first (& must be first to avoid double-decode)
-  let text = html
+  let text = inlineMarksToText(html)
     .replace(/&amp;/g, '&')
     .replace(/&nbsp;/g, ' ')
     .replace(/&lt;/g, '<')

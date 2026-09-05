@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { I } from '../icons';
 import { EmptyState, useLiveRows, ErrorState } from '../dataConnect';
 import { usePublishSurfaceContext } from '../surfaceContext';
+import { useSurfaceActionHandlers } from '../surfaceActions';
 import type { SurfaceViewProps } from '../surfaceViews';
 import '../styles/project-home-v2.css';
 
@@ -181,6 +182,31 @@ export function AuthoringEngine({ onAsk, onNav }: SurfaceViewProps) {
       },
     };
   }, [tab, tabLabel, sys, tpl.loading, tpl.error, tpl.rows]);
+  /* Capability-reference navigation only: this page reads no programs, and
+     drafting a document stays the person's request. */
+  useSurfaceActionHandlers('authoring-engine', {
+    'authoring-engine.open-tab': (params) => {
+      const target = String(params.tab ?? '');
+      const meta = tabs.find(([id]) => id === target);
+      if (!meta) return { ok: false, reason: `No authoring-engine tab named "${params.tab}".` };
+      if (tab === target) return { ok: true, detail: `Already on ${meta[1]}` };
+      setTab(target);
+      return { ok: true, detail: `Opened ${meta[1]}` };
+    },
+    'authoring-engine.select-system': (params) => {
+      const target = String(params.system ?? '');
+      const sys = AE_SYSTEMS.find((s) => s.id === target);
+      if (!sys) return { ok: false, reason: `No document system named "${params.system}".` };
+      const switched = tab !== 'systems';
+      if (switched) setTab('systems');
+      setSel(sys.id);
+      return {
+        ok: true,
+        detail: `Selected the ${sys.t} system (CTD ${sys.loc})` + (switched ? ' on the document-systems tab' : ''),
+      };
+    },
+  });
+
   usePublishSurfaceContext('authoring-engine', anaContext);
 
   return (

@@ -94,13 +94,16 @@ describe('buildForm1571', () => {
     expect(built.missingRequired).toContain('indication');
     expect(built.missingRequired).toContain('ind_type');
     expect(built.missingRequired).toContain('phase_of_study');
-    expect(built.missingRequired).toContain('authorized_rep_name');
     // sponsor_address required too
     expect(built.missingRequired).toContain('sponsor_address');
-    // order: sponsor_name before drug_name before authorized_rep_name
+    // authorized_rep_name is NOT required: the 1571 signature block is a
+    // signature, not a data box, and buildForm356h treats the same id the same
+    // way. While it was required, no official fill of this form could qualify.
+    expect(built.missingRequired).not.toContain('authorized_rep_name');
+    // order: sponsor_name before drug_name before phase_of_study
     const i = built.missingRequired;
     expect(i.indexOf('sponsor_name')).toBeLessThan(i.indexOf('drug_name'));
-    expect(i.indexOf('drug_name')).toBeLessThan(i.indexOf('authorized_rep_name'));
+    expect(i.indexOf('drug_name')).toBeLessThan(i.indexOf('phase_of_study'));
   });
 
   it('is deterministic — same input yields equal field maps', () => {
@@ -300,5 +303,33 @@ describe('NDA/BLA and IRB forms', () => {
     const built = buildForm1574(meta);
     expect(built.formId).toBe(FORM_1574);
     expect(built.missingRequired).toContain('irb_chair_name');
+  });
+});
+
+describe('the protocol number is never borrowed from the IND serial number', () => {
+  // The serial number is the IND submission sequence (0000, 0001…). The protocol
+  // number identifies the study. Both builders used to fall back from one to the
+  // other, and the 1572 map feeds db_prot_name_code — Box 6 of the official form
+  // — so an investigator signed a 1572 whose protocol number read "0000".
+  const META = { sponsorName: 'Acme Bio', drugName: 'ACME-001', serialNumber: '0000' };
+
+  it('1572 leaves the protocol number blank rather than printing the serial', () => {
+    const built = buildForm1572({ name: 'Dr Pat Smith', facilityName: 'Site A', irbName: 'WCG IRB' }, META);
+    expect(built.fields.protocol_numbers).toBe('');
+    expect(built.fields.protocol_numbers).not.toBe('0000');
+  });
+
+  it('1574 leaves it blank AND reports it missing, instead of silently passing the gate', () => {
+    const built = buildForm1574(META);
+    expect(built.fields.protocol_number).toBe('');
+    expect(built.missingRequired).toContain('protocol_number');
+  });
+
+  it('a real protocol number is still carried through both forms', () => {
+    const withProtocol = { ...META, protocolNumbers: 'C2C-1042-101' };
+    expect(buildForm1572({ name: 'Dr Pat Smith' }, withProtocol).fields.protocol_numbers).toBe('C2C-1042-101');
+    const f1574 = buildForm1574(withProtocol);
+    expect(f1574.fields.protocol_number).toBe('C2C-1042-101');
+    expect(f1574.missingRequired).not.toContain('protocol_number');
   });
 });

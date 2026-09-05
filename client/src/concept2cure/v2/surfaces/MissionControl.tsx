@@ -36,6 +36,7 @@ import type { SurfaceViewProps } from '../surfaceViews';
 import { EmptyState } from '../dataConnect';
 import { apiRequest, extractApiError, serverMessage } from '@/lib/queryClient';
 import { usePublishSurfaceContext } from '../surfaceContext';
+import { useSurfaceActionHandlers, notifySurfaceActionReady } from '../surfaceActions';
 import {
   MODALITIES,
   MODALITY_LABEL,
@@ -295,6 +296,42 @@ export function MissionControl(_props: SurfaceViewProps) {
     return () => { cancelled = true; };
   }, [selectedId]);
 
+  /* AnA can select a program by its name or code — the same row click a person
+     makes — so a drive can land on a specific program before reading its
+     readiness. Resolved against the REAL portfolio with honest misses; held
+     (retry) while the list is still loading, and re-attempted on the ready
+     signal below. Selecting is view-state only; nothing governed happens here. */
+  useSurfaceActionHandlers('mission-control', {
+    'mission-control.select-program': (params) => {
+      const raw = String(params.program ?? '').trim();
+      if (!raw) return { ok: false, reason: 'Name a program by its name or code.' };
+      if (programs.state === 'loading' || programs.state === 'idle') {
+        return { ok: false, reason: 'The program list is still loading.', retry: true };
+      }
+      if (programs.state === 'error') {
+        return { ok: false, reason: 'The program list did not load, so there are no programs to select from.' };
+      }
+      const list = programs.data ?? [];
+      if (list.length === 0) return { ok: false, reason: 'No programs are recorded in this organization yet.' };
+      const needle = raw.toLowerCase();
+      // Exact code, then exact name, then an unambiguous partial name.
+      const byCode = list.filter((p) => (p.code ?? '').toLowerCase() === needle);
+      const byName = list.filter((p) => p.name.toLowerCase() === needle);
+      const hits = byCode.length ? byCode
+        : byName.length ? byName
+        : list.filter((p) => p.name.toLowerCase().includes(needle));
+      if (hits.length === 0) return { ok: false, reason: `No program named "${raw}" in this organization.` };
+      if (hits.length > 1) return { ok: false, reason: `"${raw}" matches ${hits.length} programs — name one exactly.` };
+      const p = hits[0];
+      if (selectedId === p.id) return { ok: true, detail: `Already on ${p.name}` };
+      setSelectedId(p.id);
+      return { ok: true, detail: `Selected ${p.name}${p.code ? ` (${p.code})` : ''}` };
+    },
+  });
+  useEffect(() => {
+    if (programs.state === 'ready') notifySurfaceActionReady('mission-control');
+  }, [programs.state]);
+
   const createProgram = useCallback(async () => {
     if (!draft.name.trim()) { fireToast('Enter a program name.', 'error'); return; }
     setBusy(true);
@@ -366,6 +403,20 @@ export function MissionControl(_props: SurfaceViewProps) {
      ask the user to restate what is already on their screen. */
   const anaContext = useMemo(() => {
     if (!selected) {
+      // The program list's OWN state gates this branch — a loading or failed
+      // list must never read as a genuinely empty org. programCount:0 is only
+      // published once the list is actually 'ready'.
+      if (programs.state === 'loading' || programs.state === 'idle') {
+        return { summary: 'Mission Control — the program list is still loading; nothing to report yet.' };
+      }
+      if (programs.state === 'error') {
+        return {
+          summary:
+            'Mission Control — the program list could not be loaded, so no programs are shown because of a ' +
+            'failure, not because there are none.',
+          availableActions: ['Retry the program list read'],
+        };
+      }
       return {
         summary: 'Mission Control with no program selected.',
         facts: { programCount: asArray(programs.data).length },
@@ -375,7 +426,7 @@ export function MissionControl(_props: SurfaceViewProps) {
     return {
       summary:
         `Mission Control, program "${selected.name}"` +
-        (readiness.data ? ` at ${readiness.data.overallConfidence}% overall readiness.` : '.'),
+        (readiness.state === 'ready' && readiness.data ? ` at ${readiness.data.overallConfidence}% overall readiness.` : '.'),
       facts: {
         programId: selected.id,
         programName: selected.name,
@@ -383,13 +434,17 @@ export function MissionControl(_props: SurfaceViewProps) {
         modality: selectedModality ? MODALITY_LABEL[selectedModality] : null,
         regulatoryFrame: selectedModality ? frameSummary(selectedModality) : null,
         indication: selected.indication ?? null,
-        overallConfidence: readiness.data?.overallConfidence ?? null,
+        // Every count/list below is gated on its OWN read's state: `null` means
+        // the read is still in flight or failed (UNKNOWN), never a false 0/[]
+        // that reads as "assessed and found clear." Each of readiness / artifacts
+        // / risks / stale is an independent Load, so each is checked separately.
+        overallConfidence: readiness.state === 'ready' ? (readiness.data?.overallConfidence ?? null) : null,
         readinessLoaded: readiness.state === 'ready',
-        blockers: asArray<any>(readiness.data?.blockers).map(b => `${b.severity}: ${b.message}`),
-        nextActions: asArray<any>(readiness.data?.nextActions).map(a => `${a.action} — ${a.target}`),
-        artifactCount: asArray(artifacts.data).length,
-        riskCount: asArray(risks.data).length,
-        staleDependencyCount: asArray(stale.data).length,
+        blockers: readiness.state === 'ready' ? asArray<any>(readiness.data?.blockers).map(b => `${b.severity}: ${b.message}`) : null,
+        nextActions: readiness.state === 'ready' ? asArray<any>(readiness.data?.nextActions).map(a => `${a.action} — ${a.target}`) : null,
+        artifactCount: artifacts.state === 'ready' ? asArray(artifacts.data).length : null,
+        riskCount: risks.state === 'ready' ? asArray(risks.data).length : null,
+        staleDependencyCount: stale.state === 'ready' ? asArray(stale.data).length : null,
       },
       availableActions: [
         'Create a program',
@@ -398,7 +453,7 @@ export function MissionControl(_props: SurfaceViewProps) {
         'Explain what is blocking this program',
       ],
     };
-  }, [selected, selectedModality, programs.data, readiness.state, readiness.data, artifacts.data, risks.data, stale.data]);
+  }, [selected, selectedModality, programs.state, programs.data, readiness.state, readiness.data, artifacts.state, artifacts.data, risks.state, risks.data, stale.state, stale.data]);
 
   usePublishSurfaceContext('mission-control', anaContext);
 

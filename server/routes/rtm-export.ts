@@ -23,6 +23,91 @@ import { createScopedLogger } from '../utils/logger';
 const logger = createScopedLogger('rtm-export');
 const router = Router();
 
+/**
+ * A Requirements Traceability Matrix is read by a regulatory reviewer, so it may
+ * not report a state it did not establish.
+ *
+ * THE STORE THIS READS HAS NO WRITERS. `evidence_claims`, `evidence_sources` and
+ * `evidence_claim_links` are created by db/migrations/20260319_evidence_fabric.sql,
+ * which is on NO durable apply path — not in C2C_MIGRATION_FILES, not in the
+ * drizzle journal — and nothing anywhere in the repo INSERTs into them. So on a
+ * real database the queries below raise 42P01, and where the tables do exist
+ * they are empty.
+ *
+ * Both outcomes used to be reported as an answer. Zero claims produced
+ * `untracedClaims: 0` — which a reader takes as "nothing is untraced", i.e.
+ * everything is traced — beside `coverageScore: 0`, a MEASURED nought asserted
+ * where nothing was measured. And a missing relation produced a bare 500
+ * "Failed to generate traceability matrix", indistinguishable from a transient
+ * fault. The CSV route then registered a header-only file as a governed
+ * regulated export titled "RTM Export: Program N", hashed and filed, with
+ * nothing on the artifact saying it traces nothing.
+ *
+ * The rule is the repo's own (client/src/concept2cure/v2/assessmentState.ts): an
+ * empty result is not a finding of "none". These three states are now distinct
+ * everywhere they surface.
+ */
+type RtmState = 'store-unprovisioned' | 'no-claims-recorded' | 'claims-present';
+
+/** Postgres: undefined_table / undefined_column — the store was never created. */
+function isMissingRelation(err: unknown): boolean {
+  const code = (err as { code?: string } | null | undefined)?.code;
+  return code === '42P01' || code === '42703';
+}
+
+/**
+ * An empty matrix must SAY it is empty, on the artifact itself.
+ *
+ * With no claims the CSV was a header line and nothing else, and that file was
+ * hashed and filed as a governed regulated export titled "RTM Export: Program
+ * N". A reviewer opening it cannot tell an empty program from a feature that was
+ * never wired, while the governed record around it asserts a traceability matrix
+ * was produced. One row in the first column removes the ambiguity without
+ * blocking a legitimate export of a program that genuinely has no claims yet.
+ */
+const EMPTY_MATRIX_STATEMENT =
+  'No evidence claims are recorded for this program. This matrix is empty because ' +
+  'nothing has been recorded — it is not a finding that every claim is traced, and ' +
+  'no coverage figure was measured.';
+
+/**
+ * The one place an RTM request failure becomes a response.
+ *
+ * Both routes had the same three-branch catch, differing only in wording. Two
+ * copies of a fail-closed rule drift, and the branch that matters most here —
+ * an unprovisioned claim store is a 503 that says so, never a generic 500 a
+ * reader takes for a transient fault — is the one that must not drift.
+ */
+function respondToRtmFailure(
+  res: Response,
+  error: any,
+  programId: unknown,
+  verb: 'generate' | 'export',
+): Response {
+  if (isMissingRelation(error)) {
+    logger.error('RTM requested but the claim store is not provisioned', { programId, verb });
+    return res.status(503).json(STORE_UNPROVISIONED_BODY);
+  }
+  logger.error('RTM request failed', { error: error?.message, programId, verb });
+  if (typeof error?.message === 'string' && error.message.includes('Missing or invalid')) {
+    return res.status(400).json({ error: error.message });
+  }
+  return res.status(500).json({
+    error: verb === 'generate'
+      ? 'Failed to generate traceability matrix'
+      : 'Failed to export traceability matrix',
+  });
+}
+
+const STORE_UNPROVISIONED_BODY = {
+  error: {
+    code: 'CLAIM_STORE_UNPROVISIONED',
+    message:
+      'The evidence-claim store is not provisioned in this deployment, so no traceability ' +
+      'matrix can be produced. This is not an empty matrix — nothing was read.',
+  },
+} as const;
+
 function getOrganizationId(req: Request): number {
   const raw = (req as any).tenantId || (req as any).tenantContext?.organizationId || (req as any).user?.organizationId;
   const orgId = typeof raw === 'number' ? raw : parseInt(String(raw), 10);
@@ -107,27 +192,99 @@ router.get('/programs/:programId/rtm', async (req: Request, res: Response) => {
 
     const totalClaims = matrix.length;
     const tracedClaims = matrix.filter(m => m.isMapped).length;
-    const coverageScore = totalClaims > 0 ? Math.round((tracedClaims / totalClaims) * 100) : 0;
+    // null, not 0, when there is nothing to measure. A coverageScore of 0 is a
+    // measurement — "we checked, and none of it is traced" — and that is a
+    // different statement from "no claims are recorded". Only one of them is
+    // true here, and it was reporting the other.
+    const coverageScore = totalClaims > 0 ? Math.round((tracedClaims / totalClaims) * 100) : null;
+    const state: RtmState = totalClaims > 0 ? 'claims-present' : 'no-claims-recorded';
 
     return res.json({
       programId,
       generatedAt: new Date().toISOString(),
+      state,
       summary: {
         totalClaims,
         tracedClaims,
-        untracedClaims: totalClaims - tracedClaims,
+        // Only meaningful once claims exist. Previously `0 - 0 = 0`, which a
+        // reader takes as "nothing is untraced" — i.e. everything is traced.
+        untracedClaims: totalClaims > 0 ? totalClaims - tracedClaims : null,
         coverageScore,
       },
       matrix,
     });
   } catch (error: any) {
-    logger.error('Failed to generate RTM', { error: error.message });
-    if (error.message.includes('Missing or invalid')) {
-      return res.status(400).json({ error: error.message });
-    }
-    return res.status(500).json({ error: 'Failed to generate traceability matrix' });
+    return respondToRtmFailure(res, error, req.params.programId, 'generate');
   }
 });
+
+/**
+ * The CSV body of a traceability matrix: one row per claim-link, or one
+ * "Untraced" row for a claim with no links, under a fixed header.
+ *
+ * Extracted from the CSV route so that handler stays under the complexity
+ * ceiling — the branching here (escaping, linked vs unlinked, the empty-matrix
+ * statement) all belongs to row construction rather than to request handling.
+ * Behaviour is unchanged, including the column order, which downstream
+ * spreadsheets and any saved import mapping depend on.
+ */
+function buildRtmCsvRows(
+  claims: Array<Record<string, any>>,
+  linksByClaimId: Map<number, Array<Record<string, any>>>,
+): string[] {
+  const escapeCSV = (val: string | number | null | undefined): string => {
+    if (val === null || val === undefined) return '';
+    const str = String(val);
+    if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+      return `"${str.replace(/"/g, '""')}"`;
+    }
+    return str;
+  };
+
+  const header = [
+    'Claim ID', 'Claim Text', 'Claim Type', 'Confidence',
+    'Source Title', 'Source Type', 'Source File',
+    'Linked Section', 'Link Type', 'Strength', 'Status',
+  ];
+
+  const rows: string[] = [header.join(',')];
+
+  for (const claim of claims) {
+    const claimLinks = linksByClaimId.get(claim.claimId) || [];
+    if (claimLinks.length === 0) {
+      rows.push([
+        escapeCSV(claim.claimId),
+        escapeCSV(claim.claimText),
+        escapeCSV(claim.claimType),
+        escapeCSV(claim.confidence),
+        escapeCSV(claim.sourceTitle),
+        escapeCSV(claim.sourceType),
+        escapeCSV(claim.sourceFileName),
+        '', '', '', 'Untraced',
+      ].join(','));
+    } else {
+      for (const link of claimLinks) {
+        rows.push([
+          escapeCSV(claim.claimId),
+          escapeCSV(claim.claimText),
+          escapeCSV(claim.claimType),
+          escapeCSV(claim.confidence),
+          escapeCSV(claim.sourceTitle),
+          escapeCSV(claim.sourceType),
+          escapeCSV(claim.sourceFileName),
+          escapeCSV(link.sectionId),
+          escapeCSV(link.linkType),
+          escapeCSV(link.strength),
+          'Traced',
+        ].join(','));
+      }
+    }
+  }
+
+  if (claims.length === 0) rows.push(escapeCSV(EMPTY_MATRIX_STATEMENT));
+
+  return rows;
+}
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // GET /api/programs/:programId/rtm/csv — Export RTM as CSV
@@ -142,54 +299,7 @@ router.get('/programs/:programId/rtm/csv', async (req: Request, res: Response) =
 
     const { claims, linksByClaimId } = await fetchRTMData(programId, organizationId);
 
-    const escapeCSV = (val: string | number | null | undefined): string => {
-      if (val === null || val === undefined) return '';
-      const str = String(val);
-      if (str.includes(',') || str.includes('"') || str.includes('\n')) {
-        return `"${str.replace(/"/g, '""')}"`;
-      }
-      return str;
-    };
-
-    const header = [
-      'Claim ID', 'Claim Text', 'Claim Type', 'Confidence',
-      'Source Title', 'Source Type', 'Source File',
-      'Linked Section', 'Link Type', 'Strength', 'Status',
-    ];
-
-    const rows: string[] = [header.join(',')];
-
-    for (const claim of claims) {
-      const claimLinks = linksByClaimId.get(claim.claimId) || [];
-      if (claimLinks.length === 0) {
-        rows.push([
-          escapeCSV(claim.claimId),
-          escapeCSV(claim.claimText),
-          escapeCSV(claim.claimType),
-          escapeCSV(claim.confidence),
-          escapeCSV(claim.sourceTitle),
-          escapeCSV(claim.sourceType),
-          escapeCSV(claim.sourceFileName),
-          '', '', '', 'Untraced',
-        ].join(','));
-      } else {
-        for (const link of claimLinks) {
-          rows.push([
-            escapeCSV(claim.claimId),
-            escapeCSV(claim.claimText),
-            escapeCSV(claim.claimType),
-            escapeCSV(claim.confidence),
-            escapeCSV(claim.sourceTitle),
-            escapeCSV(claim.sourceType),
-            escapeCSV(claim.sourceFileName),
-            escapeCSV(link.sectionId),
-            escapeCSV(link.linkType),
-            escapeCSV(link.strength),
-            'Traced',
-          ].join(','));
-        }
-      }
-    }
+    const rows = buildRtmCsvRows(claims, linksByClaimId);
 
     const csvContent = rows.join('\n');
     const filename = `RTM_Program_${programId}_${new Date().toISOString().slice(0, 10)}.csv`;
@@ -231,11 +341,7 @@ router.get('/programs/:programId/rtm/csv', async (req: Request, res: Response) =
 
     return res.send(csvContent);
   } catch (error: any) {
-    logger.error('Failed to export RTM CSV', { error: error.message });
-    if (error.message.includes('Missing or invalid')) {
-      return res.status(400).json({ error: error.message });
-    }
-    return res.status(500).json({ error: 'Failed to export traceability matrix' });
+    return respondToRtmFailure(res, error, req.params.programId, 'export');
   }
 });
 

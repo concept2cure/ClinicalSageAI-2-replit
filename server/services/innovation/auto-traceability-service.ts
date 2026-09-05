@@ -18,6 +18,7 @@ import { Pool } from 'pg';
 import { ai } from '../../lib/unified-ai-client';
 import { getOpenAIClient } from '../openai-client';
 import crypto from 'crypto';
+import { releaseWithoutBypass } from './rlsBypassSession';
 
 // Types
 export type TraceLinkType = 
@@ -484,7 +485,7 @@ export class AutoTraceabilityService {
       AutoTraceabilityService.linkCache.push(mapped);
       return mapped;
     } finally {
-      client.release();
+      await releaseWithoutBypass(client);
     }
   }
 
@@ -704,7 +705,7 @@ export class AutoTraceabilityService {
       console.error('[AutoTrace] Matrix snapshot failed:', error);
       throw error;
     } finally {
-      client.release();
+      await releaseWithoutBypass(client);
     }
   }
 

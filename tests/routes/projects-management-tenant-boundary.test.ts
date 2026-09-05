@@ -56,11 +56,12 @@ vi.mock('@shared/schema', () => ({
   organizations: { id: { name: 'id' } },
 }));
 
-vi.mock('../../server/services/quotaEnforcementService.js', () => ({
-  default: {
-    getActiveLicenseForOrganization: vi.fn(async () => ({ id: 'lic_1' })),
-  },
-}));
+// A FRESH organization holds no row in `licenses`. The router used to read
+// that table on every handler and 403 when it found nothing — and nothing
+// ever wrote an organization-keyed row, so it found nothing for everyone. The
+// service that answered that lookup (quotaEnforcementService.js) had no other
+// caller and is gone; nothing here stubs it, so the suite proves the router
+// no longer asks.
 
 vi.mock('../../server/services/rules-engine', () => ({
   emitRuleEvent: vi.fn(async () => undefined),
@@ -77,6 +78,27 @@ vi.mock('../../server/services/atomicQuotaService.js', () => ({
 describe('projects-management tenant boundary', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+  });
+
+  it('lists projects for an organization that holds no `licenses` row (a fresh install is not a 403)', async () => {
+    const routerModule = await import('../../server/routes/projects-management');
+    const router = routerModule.default;
+    const layer = router.stack.find(
+      (l: any) => l.route?.path === '/' && l.route?.methods?.get
+    );
+    const handler = layer.route.stack[layer.route.stack.length - 1].handle;
+    const req = createMockRequest({}) as any;
+    req.user = { organizationId: 1 };
+    req.tenantContext = { organizationId: 1, clientWorkspaceId: 1 };
+    req.headers = { 'x-organization-id': '1', 'x-client-workspace-id': '1' };
+    req.query = {};
+    const res = createMockResponse();
+    await handler(req, res);
+    expect(res.status).not.toHaveBeenCalledWith(403);
+    expect(res.json).toHaveBeenCalled();
+    expect(res.json).not.toHaveBeenCalledWith(
+      expect.objectContaining({ error: 'No active license for this organization' })
+    );
   });
 
   it('rejects create when payload organizationId mismatches authenticated tenant', async () => {

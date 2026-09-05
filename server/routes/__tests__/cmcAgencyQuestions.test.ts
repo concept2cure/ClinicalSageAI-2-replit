@@ -54,6 +54,34 @@ beforeEach(() => {
   orgHolder.value = '42';
 });
 
+describe('GET /api/cmc/agency-questions', () => {
+  it('serves the org-scoped file; ?status=CLOSED reads the answered history', async () => {
+    mockQuery.mockResolvedValue({ rows: [{ ...ROW, status: 'CLOSED' }] });
+    const res = await request(makeApp()).get('/api/cmc/agency-questions?status=closed');
+    expect(res.status).toBe(200);
+    expect(res.body.data[0].status).toBe('CLOSED');
+    const [sql, params] = mockQuery.mock.calls[0] as [string, unknown[]];
+    expect(sql).toContain('from reg_questions');
+    expect(sql).toContain('organization_id = $1');
+    expect(sql).toMatch(/status = \$2/);
+    expect(params).toEqual([42, 'CLOSED']);
+  });
+
+  it('refuses an unknown status — never an empty list pretending to be one', async () => {
+    const res = await request(makeApp()).get('/api/cmc/agency-questions?status=ARCHIVED');
+    expect(res.status).toBe(400);
+    expect(mockQuery).not.toHaveBeenCalled();
+  });
+
+  it('no status serves the whole Module 3 file', async () => {
+    const res = await request(makeApp()).get('/api/cmc/agency-questions');
+    expect(res.status).toBe(200);
+    const [sql, params] = mockQuery.mock.calls[0] as [string, unknown[]];
+    expect(sql).not.toMatch(/status = \$/);
+    expect(params).toEqual([42]);
+  });
+});
+
 describe('POST /api/cmc/agency-questions', () => {
   it('stamps the VERIFIED org and starts the question OPEN — the body cannot choose a tenant', async () => {
     const res = await request(makeApp())
@@ -96,6 +124,26 @@ describe('POST /api/cmc/agency-questions', () => {
     expect(res.status).toBe(401);
     expect(mockQuery).not.toHaveBeenCalled();
   });
+
+  it("refuses a non-Module-3 section reference — refusal beats a 201 row the board's 3.x filter would make unreachable", async () => {
+    for (const bad of ['2.5', 'S.4.1', 'm2.7']) {
+      const res = await request(makeApp())
+        .post('/api/cmc/agency-questions')
+        .send({ questionText: 'Q', sectionReference: bad });
+      expect(res.status).toBe(400);
+      expect(String(res.body.error)).toMatch(/Module 3/);
+    }
+    expect(mockQuery).not.toHaveBeenCalled();
+  });
+
+  it('accepts an ABSENT section reference — the board lists unsectioned rows', async () => {
+    const res = await request(makeApp())
+      .post('/api/cmc/agency-questions')
+      .send({ questionText: 'Which stability protocol applies?' });
+    expect(res.status).toBe(201);
+    const [, params] = mockQuery.mock.calls[0] as [string, unknown[]];
+    expect(params[2]).toBeNull();
+  });
 });
 
 describe('PATCH /api/cmc/agency-questions/:id', () => {
@@ -132,5 +180,96 @@ describe('PATCH /api/cmc/agency-questions/:id', () => {
       .send({ status: 'DELETED' });
     expect(res.status).toBe(400);
     expect(mockQuery).not.toHaveBeenCalled();
+  });
+
+  it('expectedStatus guards the write: a row that moved on answers 409, not a silent overwrite', async () => {
+    // UPDATE … AND status = $n matches nothing; the follow-up SELECT finds the
+    // row CLOSED — the question changed since the caller's screen loaded.
+    mockQuery
+      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({ rows: [{ status: 'CLOSED' }] });
+    const res = await request(makeApp())
+      .patch('/api/cmc/agency-questions/7')
+      .send({ status: 'DRAFTED', expectedStatus: 'OPEN' });
+    expect(res.status).toBe(409);
+    expect(String(res.body.error)).toMatch(/CLOSED/);
+    const [sql, params] = mockQuery.mock.calls[0] as [string, unknown[]];
+    expect(sql).toMatch(/and status = \$\d+/);
+    expect(params).toContain('OPEN');
+  });
+
+  it('expectedStatus alone is a guard, not an update — 400, nothing touched', async () => {
+    const res = await request(makeApp())
+      .patch('/api/cmc/agency-questions/7')
+      .send({ expectedStatus: 'OPEN' });
+    expect(res.status).toBe(400);
+    expect(mockQuery).not.toHaveBeenCalled();
+  });
+
+  it('a vanished row with a guard still answers 404, not 409', async () => {
+    mockQuery.mockResolvedValue({ rows: [] });
+    const res = await request(makeApp())
+      .patch('/api/cmc/agency-questions/7')
+      .send({ status: 'DRAFTED', expectedStatus: 'OPEN' });
+    expect(res.status).toBe(404);
+  });
+
+  it('links a response draft only after verifying it exists IN THIS ORG', async () => {
+    const DOC = '9a1b2c3d-4e5f-4a6b-8c7d-0e1f2a3b4c5d';
+    mockQuery
+      .mockResolvedValueOnce({ rows: [{ '?column?': 1 }] }) // the org-scoped existence check
+      .mockResolvedValueOnce({ rows: [{ ...ROW, status: 'DRAFTED', response_doc_id: DOC }] });
+    const res = await request(makeApp())
+      .patch('/api/cmc/agency-questions/7')
+      .send({ status: 'DRAFTED', responseDocId: DOC });
+    expect(res.status).toBe(200);
+    expect(res.body.data.responseDocId).toBe(DOC);
+    const [checkSql, checkParams] = mockQuery.mock.calls[0] as [string, unknown[]];
+    expect(checkSql).toContain('from authoring_documents');
+    expect(checkSql).toMatch(/tenant_id = \$\d+/);
+    expect(checkParams).toEqual([DOC, 42]);
+    const [updSql] = mockQuery.mock.calls[1] as [string, unknown[]];
+    expect(updSql).toContain('response_doc_id');
+  });
+
+  it('refuses a dangling or cross-org responseDocId — nothing is linked', async () => {
+    mockQuery.mockResolvedValueOnce({ rows: [] }); // the doc is not in this org
+    const res = await request(makeApp())
+      .patch('/api/cmc/agency-questions/7')
+      .send({ responseDocId: '9a1b2c3d-4e5f-4a6b-8c7d-0e1f2a3b4c5d' });
+    expect(res.status).toBe(400);
+    expect(String(res.body.error)).toMatch(/could not be found/i);
+    // Only the existence check ran; no UPDATE was attempted.
+    expect(mockQuery).toHaveBeenCalledTimes(1);
+  });
+
+  it('refuses a malformed responseDocId before any query runs — and clearing the link stays legal', async () => {
+    const res = await request(makeApp())
+      .patch('/api/cmc/agency-questions/7')
+      .send({ responseDocId: 'not-a-uuid' });
+    expect(res.status).toBe(400);
+    expect(mockQuery).not.toHaveBeenCalled();
+
+    const clear = await request(makeApp())
+      .patch('/api/cmc/agency-questions/7')
+      .send({ responseDocId: null });
+    expect(clear.status).toBe(200);
+    // A null link needs no existence check — one UPDATE only.
+    expect(mockQuery).toHaveBeenCalledTimes(1);
+    const [sql] = mockQuery.mock.calls[0] as [string, unknown[]];
+    expect(sql).toContain('response_doc_id');
+  });
+
+  it('refuses re-sectioning a question OUT of Module 3 — clearing it stays legal', async () => {
+    const bad = await request(makeApp())
+      .patch('/api/cmc/agency-questions/7')
+      .send({ sectionReference: '2.7.1' });
+    expect(bad.status).toBe(400);
+    expect(mockQuery).not.toHaveBeenCalled();
+
+    const clear = await request(makeApp())
+      .patch('/api/cmc/agency-questions/7')
+      .send({ sectionReference: null });
+    expect(clear.status).toBe(200);
   });
 });

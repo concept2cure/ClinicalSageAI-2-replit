@@ -13,7 +13,7 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-const { qSubSvc, sectionPool, governedTransmit, audit, TenantAccessError } = vi.hoisted(() => {
+const { qSubSvc, sectionPool, governedTransmit, audit, TenantAccessError, kitWrite, KitSectionNotFoundError } = vi.hoisted(() => {
   class TenantAccessError extends Error {
     constructor(m: string) { super(m); this.name = 'TenantAccessError'; }
   }
@@ -24,6 +24,14 @@ const { qSubSvc, sectionPool, governedTransmit, audit, TenantAccessError } = vi.
     },
     sectionPool: {
       query: vi.fn(),
+      connect: vi.fn(),
+    },
+    // The one kit-section writer (services/cerv2/kit-section-write, ledger
+    // L160), doubled: what this suite pins is that the command opens a
+    // transaction, hands its client to the writer, and commits or rolls back.
+    kitWrite: { writeKitSectionTx: vi.fn() },
+    KitSectionNotFoundError: class KitSectionNotFoundError extends Error {
+      readonly code = 'KIT_SECTION_NOT_FOUND';
     },
     governedTransmit: {
       executeGovernedTransmit: vi.fn(),
@@ -32,6 +40,11 @@ const { qSubSvc, sectionPool, governedTransmit, audit, TenantAccessError } = vi.
     TenantAccessError,
   };
 });
+
+vi.mock('../../cerv2/kit-section-write', () => ({
+  writeKitSectionTx: kitWrite.writeKitSectionTx,
+  KitSectionNotFoundError,
+}));
 
 vi.mock('../../q-sub/q-sub.service', () => ({
   createQSubmission: (...a: any[]) => qSubSvc.createQSubmission(...a),
@@ -403,51 +416,47 @@ describe('section.update', () => {
     expect(r.message).toMatch(/completionPercentage/);
   });
 
-  it('returns NOT_FOUND when section not in org', async () => {
-    sectionPool.query.mockResolvedValueOnce({ rows: [] });
+  function fakeClient() {
+    const client = { query: vi.fn(async () => ({ rows: [] })), release: vi.fn() };
+    sectionPool.connect.mockResolvedValueOnce(client);
+    return client;
+  }
+  const WRITTEN = {
+    row: { id: 42, section_number: '6.0', section_title: 'Substantial Equivalence', section_key: 'se', status: 'validated', completionPercentage: 100, draftedAt: null },
+    before: { id: 42, section_number: '6.0', section_title: 'Substantial Equivalence', content: 'old body', status: 'drafting', completion_percentage: 40 },
+    versionNumber: 4,
+    fieldsChanged: ['content', 'status', 'completion_percentage'],
+    gate: null,
+  };
+
+  it('returns NOT_FOUND when section not in org — and rolls the transaction back', async () => {
+    const client = fakeClient();
+    kitWrite.writeKitSectionTx.mockRejectedValueOnce(new KitSectionNotFoundError('Section 42 not found in your organization.'));
     const r = await sectionUpdate(CTX, { ...goodGate, sectionId: 42, content: 'new body' });
     expect(r.success).toBe(false);
     expect(r.error).toBe('NOT_FOUND');
+    const statements = (client.query.mock.calls as unknown[][]).map((c) => c[0]);
+    expect(statements).toEqual(['BEGIN', 'ROLLBACK']);
+    expect(client.release).toHaveBeenCalled();
   });
 
-  it('updates content, writes a version row, audits agent.ana.section.edit', async () => {
-    sectionPool.query
-      // SELECT existing
-      .mockResolvedValueOnce({
-        rows: [{
-          id: 42,
-          section_number: '6.0',
-          section_title: 'Substantial Equivalence',
-          status: 'drafting',
-          content: 'old body',
-          completion_percentage: 40,
-        }],
-      })
-      // UPDATE cerv2_510k_sections
-      .mockResolvedValueOnce({ rows: [] })
-      // SELECT MAX(version_number)
-      .mockResolvedValueOnce({ rows: [{ max_version: 3 }] })
-      // INSERT cerv2_section_versions
-      .mockResolvedValueOnce({ rows: [] });
-
-    const r = await sectionUpdate(CTX, {
-      ...goodGate,
-      sectionId: 42,
-      content: 'OR-801 is substantially equivalent to K191822.',
-      status: 'validated',
-      completionPercentage: 100,
-    });
-
+  it('writes through the one kit-section writer inside a transaction, and audits agent.ana.section.edit', async () => {
+    const client = fakeClient();
+    kitWrite.writeKitSectionTx.mockResolvedValueOnce(WRITTEN);
+    const content = 'OR-801 is substantially equivalent to K191822.';
+    const r = await sectionUpdate(CTX, { ...goodGate, sectionId: 42, content, status: 'validated', completionPercentage: 100 });
     expect(r.success).toBe(true);
     expect(r.data?.versionNumber).toBe(4);
     expect(r.data?.previousLength).toBe('old body'.length);
-    expect(r.data?.newLength).toBe('OR-801 is substantially equivalent to K191822.'.length);
+    expect(r.data?.newLength).toBe(content.length);
     expect(r.data?.status).toBe('validated');
     expect(r.data?.completionPercentage).toBe(100);
-
-    // Four queries: SELECT existing, UPDATE, SELECT max(version), INSERT version.
-    expect(sectionPool.query).toHaveBeenCalledTimes(4);
-
+    // The writer got THIS transaction's client, the org, the section, and the actor.
+    expect(kitWrite.writeKitSectionTx).toHaveBeenCalledWith(
+      client, 11, { sectionId: 42 },
+      expect.objectContaining({ content, status: 'validated', completionPercentage: 100, actorUserId: 7, changedByName: 'ana:7' }),
+    );
+    expect((client.query.mock.calls as unknown[][]).map((c) => c[0])).toEqual(['BEGIN', 'COMMIT']);
     expect(audit.logAction).toHaveBeenCalledWith(
       expect.objectContaining({
         action: 'agent.ana.section.edit',
@@ -467,38 +476,21 @@ describe('section.update', () => {
     );
   });
 
-  it('preserves status when caller omits it (content-only edit)', async () => {
-    sectionPool.query
-      .mockResolvedValueOnce({
-        rows: [{
-          id: 42,
-          section_number: '6.0',
-          section_title: 'SE',
-          status: 'drafting',
-          content: 'old',
-          completion_percentage: 40,
-        }],
-      })
-      .mockResolvedValueOnce({ rows: [] })
-      .mockResolvedValueOnce({ rows: [{ max_version: 0 }] })
-      .mockResolvedValueOnce({ rows: [] });
-
-    const r = await sectionUpdate(CTX, {
-      ...goodGate,
-      sectionId: 42,
-      content: 'new body',
+  it('preserves status when caller omits it (content-only edit) — the writer is told nothing about status', async () => {
+    fakeClient();
+    kitWrite.writeKitSectionTx.mockResolvedValueOnce({
+      ...WRITTEN,
+      row: { ...WRITTEN.row, status: 'drafting', completionPercentage: 40 },
+      versionNumber: 1,
+      fieldsChanged: ['content'],
     });
-
+    const r = await sectionUpdate(CTX, { ...goodGate, sectionId: 42, content: 'content-only edit body' });
     expect(r.success).toBe(true);
     expect(r.data?.status).toBe('drafting'); // unchanged
     expect(r.data?.versionNumber).toBe(1);
-    expect(audit.logAction).toHaveBeenCalledWith(
-      expect.objectContaining({
-        details: expect.objectContaining({
-          fieldsChanged: ['content'],
-          statusChanged: null,
-        }),
-      }),
+    expect(kitWrite.writeKitSectionTx).toHaveBeenLastCalledWith(
+      expect.anything(), 11, { sectionId: 42 },
+      expect.objectContaining({ status: null, completionPercentage: null }),
     );
   });
 });

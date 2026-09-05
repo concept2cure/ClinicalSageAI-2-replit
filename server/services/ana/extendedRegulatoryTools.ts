@@ -161,9 +161,16 @@ const DEFINE_SPEC_SCHEMA = {
 export const GENERATE_DEFINE_XML: AnaTool = {
   name: 'generate_define_xml',
   description:
-    'Generate a CDISC define.xml v2.0 (ODM-based) document from a dataset spec (datasets, variables, codelists) for SDTM or ADaM. Runs structural conformance first and returns the XML plus the conformance findings. Covers mechanical metadata rules — NOT a full Pinnacle21/CDISC-CT rule engine. ' +
+    'Generate a CDISC define.xml (ODM-based) document from a dataset spec (datasets, variables, codelists) for SDTM or ADaM, at Define-XML 2.1 (default) or 2.0. Returns the XML, the version emitted, and a gap report (datasets with no key variables, variables citing an undefined codelist, missing labels). Structural conformance is the separate check_dataset_conformance tool; neither is a full Pinnacle21/CDISC-CT rule engine. ' +
     DETERMINISTIC_NOTE,
-  input_schema: { type: 'object', properties: { spec: DEFINE_SPEC_SCHEMA }, required: ['spec'] },
+  input_schema: {
+    type: 'object',
+    properties: {
+      spec: DEFINE_SPEC_SCHEMA,
+      defineVersion: { type: 'string', enum: ['2.0', '2.1'], description: "Define-XML version to emit. Default '2.1'." },
+    },
+    required: ['spec'],
+  },
 };
 
 export const CHECK_DATASET_CONFORMANCE: AnaTool = {

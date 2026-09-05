@@ -36,20 +36,35 @@
 
 import { Node, mergeAttributes } from '@tiptap/core';
 import { apiRequest } from '@/lib/queryClient';
+import { CAPTION_ID_ATTR } from '@shared/authoring/captions';
+import { AUTHORING_IMAGE_URL_PREFIX } from '../../components/ana/renderSafeMarkdown';
 
 /* ── Authenticated display cache ──────────────────────────────── */
 
 /** One fetch per image per page lifetime; object URLs are tiny handles. */
 const objectUrlCache = new Map<string, Promise<string>>();
 
-/** Is this src a same-app API reference that needs the auth header? */
+/** Is this src the governed figure reference — the ONLY same-app path the
+ *  resolver will fetch with the viewer's credentials? This was a bare
+ *  '/api/' test, which let any API path one author stored in section HTML
+ *  be fetched with the NEXT VIEWER's auth when the document rendered. */
 export function isApiImageSrc(src: string): boolean {
-  return src.startsWith('/api/');
+  return src.startsWith(AUTHORING_IMAGE_URL_PREFIX);
 }
+
+/** Thrown for a same-app API path outside the governed images route. */
+export const NOT_A_FIGURE_REF = 'NOT_A_FIGURE_REF';
 
 /** Resolve a src to something an <img> element can display. */
 export function resolveImageSrc(src: string): Promise<string> {
-  if (!isApiImageSrc(src)) return Promise.resolve(src);
+  if (!isApiImageSrc(src)) {
+    if (src.startsWith('/api/')) {
+      // Refuse outright rather than hand the path back for the <img> to fire
+      // as a native (cookie-carrying) request.
+      return Promise.reject(new Error(NOT_A_FIGURE_REF));
+    }
+    return Promise.resolve(src);
+  }
   let hit = objectUrlCache.get(src);
   if (!hit) {
     hit = (async () => {
@@ -69,7 +84,14 @@ export function resolveImageSrc(src: string): Promise<string> {
 
 export interface AuthoringImageAttrs {
   src: string;
+  /** The figure's caption. It is the alt text because that is the one string
+   *  both export renderers already print in the caption position; a second
+   *  field would be two stores for one sentence. */
   alt?: string | null;
+  /** The figure's identity, so a cross-reference can point at it. Never its
+   *  number — "Figure 3" is a rendering of where the figure currently sits.
+   *  See @shared/authoring/captions. */
+  captionId?: string | null;
 }
 
 declare module '@tiptap/core' {
@@ -97,6 +119,16 @@ export const AuthoringImage = Node.create({
         parseHTML: (el: HTMLElement) => el.getAttribute('alt'),
         renderHTML: (attrs: Record<string, unknown>) =>
           attrs.alt ? { alt: String(attrs.alt) } : {},
+      },
+      /* The figure's identity as a numbered object. Present only so a
+         cross-reference can point at this figure; never printed, and never the
+         number. A figure without one still numbers — the ordinal is positional
+         — it simply cannot be referenced. */
+      captionId: {
+        default: null,
+        parseHTML: (el: HTMLElement) => el.getAttribute(CAPTION_ID_ATTR),
+        renderHTML: (attrs: Record<string, unknown>) =>
+          attrs.captionId ? { [CAPTION_ID_ATTR]: String(attrs.captionId) } : {},
       },
     };
   },
@@ -159,8 +191,13 @@ export const AuthoringImage = Node.create({
 
       return {
         dom,
-        // A src change is a different image — rebuild the view.
-        update: (updated) => updated.type.name === 'image' && updated.attrs.src === src,
+        /* A src change is a different image — rebuild the view. So is an alt
+           change: alt is the figure's caption AND what a screen reader
+           announces, and a stale one would describe the previous words. */
+        update: (updated) =>
+          updated.type.name === 'image' &&
+          updated.attrs.src === src &&
+          (updated.attrs.alt ?? '') === (node.attrs.alt ?? ''),
         destroy: () => {
           alive = false;
         },

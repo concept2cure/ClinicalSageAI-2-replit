@@ -308,7 +308,19 @@ function toVisibility(src: EvidenceSource | null): EvidenceVisibility {
 }
 
 function toSourceRef(src: EvidenceSource | null, finding: RegulatoryFinding): SourceRef {
-  const version = src?.version != null ? Number.parseInt(String(src.version), 10) : NaN;
+  // `cre_evidence_sources.version` is TEXT and holds the label the DOCUMENT
+  // declares ("3", "3.2", "2b"); SourceRef.version is a number. The conversion
+  // used to be a bare `parseInt`, which silently reports a "3.2" document as
+  // version 3 — a number in a provenance field that is not the document's
+  // version and that a reader cannot tell apart from one that is. Anything the
+  // number cannot carry losslessly is reported as not recorded, which is the
+  // honest answer; the label itself stays readable on the source row.
+  //
+  // The narrowness is the point rather than the goal: SourceRef.version should
+  // be a string, matching the column. Widening it is a DTO change that reaches
+  // the client fixtures, so it is left as its own step.
+  const raw = src?.version != null ? String(src.version).trim() : '';
+  const version = /^\d+$/.test(raw) ? Number.parseInt(raw, 10) : NaN;
   return {
     sourceId: String(finding.sourceId),
     applicationType: src?.applicationType ?? '',

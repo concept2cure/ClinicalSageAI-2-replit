@@ -48,6 +48,7 @@ import type { SurfaceViewProps } from '../surfaceViews';
 import { EmptyState } from '../dataConnect';
 import { apiRequest, extractApiError } from '@/lib/queryClient';
 import { usePublishSurfaceContext } from '../surfaceContext';
+import { useSurfaceActionHandlers } from '../surfaceActions';
 import '../styles/project-home-v2.css';
 import { C2CToast, useToast } from '../toast';
 
@@ -213,6 +214,20 @@ export function FilingStrategy(_props: SurfaceViewProps) {
   const [toast, fireToast] = useToast();
   const [tab, setTab] = useState('sequence');
 
+  /* AnA can open any of the three tabs — the same view-state switch a person
+     makes. The registry enum has validated `tab`; the defensive lookup keeps the
+     handler honest if the registry drifts. */
+  useSurfaceActionHandlers('filing-strategy', {
+    'filing-strategy.open-tab': (params) => {
+      const target = params.tab;
+      const hit = TABS.find((t) => t[0] === target);
+      if (!hit) return { ok: false, reason: `"${target}" is not a filing-strategy tab.` };
+      if (tab === target) return { ok: true, detail: `Already on the ${hit[1]} tab` };
+      setTab(target);
+      return { ok: true, detail: `Opened the ${hit[1]} tab` };
+    },
+  });
+
   // Filing sequence
   const [seq, setSeq] = useState({ productType: '', therapeuticArea: '', optimizeFor: 'balanced' });
   const [agencies, setAgencies] = useState<string[]>(['FDA', 'EMA']);
@@ -274,7 +289,14 @@ export function FilingStrategy(_props: SurfaceViewProps) {
       productType: seq.productType || null,
       comparing: tab === 'divergence' ? [div.agencyA, div.agencyB] : null,
       sequenceLoaded: sequence.state === 'ready',
-      divergenceCount: asArray(divergences.data).length,
+      // State-aware, like `sequenceLoaded` above: a failed or not-yet-run
+      // divergence search must not read as "0 divergences" — that is the
+      // "absence of evidence reported as agreement" this surface exists to
+      // refuse. The count travels only when the search actually resolved.
+      divergenceState: divergences.state,
+      ...(divergences.state === 'ready'
+        ? { divergenceCount: asArray(divergences.data).length }
+        : {}),
     },
     availableActions: [
       'Explain why an agency is sequenced first',
@@ -282,7 +304,7 @@ export function FilingStrategy(_props: SurfaceViewProps) {
       'Compare optimising for speed versus risk',
       'Interpret the calibration report',
     ],
-  }), [tab, agencies, seq, div, sequence.state, divergences.data]);
+  }), [tab, agencies, seq, div, sequence.state, divergences.state, divergences.data]);
 
   usePublishSurfaceContext('filing-strategy', anaContext);
 

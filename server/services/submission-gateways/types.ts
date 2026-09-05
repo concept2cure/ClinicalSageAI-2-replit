@@ -99,6 +99,23 @@ export interface SubmissionBundle {
   sizeBytes: number;
   /** Region-specific format flag. */
   format: SubmissionFormat;
+  /**
+   * Per-sequence leaf manifest: each SHIPPED leaf's CTD section + final package
+   * href + md5 (+ optional op/title). The exporter/compiler persists this as the
+   * sequence's immutable `leaf_manifest`; the NEXT sequence loads it
+   * (loadPriorSequenceManifest) and diffs to derive replace/append/delete
+   * lifecycle operations. Raw shape (fed through buildLeafManifest before
+   * persisting) so the packager needs no ectd/ import. Optional: a bundle may be
+   * constructed outside the packager (integrity checks) without one.
+   */
+  leafManifest?: Array<{
+    ctdSection: string;
+    fileName: string;
+    href: string;
+    md5: string;
+    operation?: string;
+    title?: string;
+  }>;
   /** Optional human-readable display name. */
   displayName?: string;
   /**
@@ -126,6 +143,23 @@ export interface SubmissionBundle {
     present: string[];
     missing: string[];
     selfContained: boolean;
+  };
+  /**
+   * Optional regional Module 1 backbone status: whether the region has its OWN
+   * conformant M1 backbone (fda / ema / pmda / ca) or the written
+   * `<cc>-regional.xml` is an EMA-structure PLACEHOLDER (the eight widened
+   * regions). Set by the packager; consumed by the pre-transmit gate so a
+   * placeholder can never be read as region-conformant. Shape matches
+   * `RegionalBackboneStatus` in server/services/ectd/regional-backbone-readiness.ts.
+   */
+  regionalBackbone?: {
+    region: Region;
+    file: string;
+    regionConformant: boolean;
+    /** Not conformant because another region's structure is reused. */
+    placeholderOf?: Region;
+    /** Not conformant for the region's own builder: the specific gap. */
+    conformanceGap?: string;
   };
   /**
    * Optional Study Tagging File (STF) roll-up: how many per-study stf.xml files

@@ -40,6 +40,7 @@ import express from 'express';
 import request from 'supertest';
 import { SignJWT } from 'jose';
 import { createJourneyDb, type JourneyDb } from '../golden-journeys/harness';
+import { AUDIT_LOGS_PGLITE_DDL } from '../../server/db/pglite-harness';
 
 // >= 32 chars: server/config/environment.ts enforces a minimum secret length.
 const JWT_SECRET = 'authoring-section-gate-contract-secret-0727';
@@ -110,6 +111,13 @@ const DOC_B = '22222222-0000-4000-8000-000000000001';
 const SEC_B = '22222222-0000-4000-8000-0000000000a1';
 
 const PREREQ = `
+  /* Governed authoring writes land a hash-chained, HMAC-sealed §11.10(e) row,
+     and that write is fail-closed — the audit row and the mutation it records
+     commit together or neither does. Without this table the handler under test
+     500s on a save that is otherwise correct. Imported rather than restated so
+     it cannot drift from what writeChainedAuditRow writes; the CI gate
+     scripts/ci/check-audit-logs-fixture.mjs enforces that agreement. */
+  ${AUDIT_LOGS_PGLITE_DDL}
   CREATE TABLE organizations (id SERIAL PRIMARY KEY, name TEXT);
   CREATE TABLE users (id UUID PRIMARY KEY, name TEXT, email TEXT);
   INSERT INTO organizations (id, name) VALUES (${ORG_A}, 'org-a'), (${ORG_B}, 'org-b');
@@ -188,6 +196,14 @@ beforeAll(async () => {
       'db/migrations/20260817_doc_revisions_immutable_ledger.sql',
       'db/migrations/20260803_document_span_lineage.sql',
       'db/migrations/20260725_authoring_audit_trail.sql',
+      // The gate's decision is decideAuthoringPermission's — one object-level
+      // rule set shared with the canonical middleware — and that query reads
+      // the lifecycle columns (principal_id, valid_from/valid_until,
+      // revoked_at) this migration adds. Without it every decision here would
+      // throw on a missing column and fail closed, which is safe and useless:
+      // the gate would deny a valid grant and the suite would be proving the
+      // catch block.
+      'db/migrations/20260727_authoring_object_permissions.sql',
     ],
   });
   // exec, not the pool shim: the shim prepares a single statement.
@@ -206,6 +222,35 @@ afterAll(async () => {
   await jdb?.close();
 });
 
+/**
+ * Seed a grant straight into doc_permissions.
+ *
+ * The HTTP writer these cases used to call lived in authoring.router.ts and was
+ * deleted in 3eb7306: register-inline-routes mounts authoringPermissionsRouter
+ * on '/api' BEFORE authoring.router on '/api/authoring', and it owns the same
+ * full path, so the router-local copy had never executed in the running app.
+ * This file mounts authoring.router ALONE, which is why it kept reaching the
+ * shadowed duplicate — and why those calls 404 now that it is gone.
+ *
+ * Seeding directly is what this file already does for the AND/OR precedence
+ * case, for the reason stated there: the subject here is the section-edit
+ * GATE's predicate, not the writer. The canonical writer has its own coverage
+ * in services/authoring/__tests__/authoring-object-permissions.integration.test.ts.
+ */
+async function seedGrant(
+  docId: string,
+  email: string,
+  role: string,
+  sectionId: string | null = null,
+  tenantId: number = ORG_A,
+) {
+  await jdb.pool.query(
+    `INSERT INTO doc_permissions (doc_id, section_id, email, role, tenant_id)
+     VALUES ($1, $2, $3, $4, $5)`,
+    [docId, sectionId, email, role, tenantId],
+  );
+}
+
 describe('the permission store is REAL, not a phantom', () => {
   it('doc_permissions exists with the tenant-keyed shape the gate queries', async () => {
     const r = await jdb.pool.query(
@@ -220,8 +265,28 @@ describe('the permission store is REAL, not a phantom', () => {
     );
     // Before the fix this table had no CREATE statement anywhere in the repo,
     // so turning the gate on could only ever deny.
+    // The canonical shape: identity (principal_id or email), scope (doc,
+    // optional section, tenant), and the grant lifecycle the decision reads —
+    // a grant that has been revoked or has expired is not a grant.
     expect([...cols.keys()].sort()).toEqual(
-      ['created_at', 'doc_id', 'email', 'id', 'role', 'section_id', 'tenant_id'].sort(),
+      [
+        'created_at',
+        'doc_id',
+        'email',
+        'grant_reason',
+        'granted_by',
+        'id',
+        'principal_id',
+        'revoke_reason',
+        'revoked_at',
+        'revoked_by',
+        'role',
+        'section_id',
+        'tenant_id',
+        'updated_at',
+        'valid_from',
+        'valid_until',
+      ].sort(),
     );
     // INTEGER tenant key — the app RLS policy casts to ::INT.
     expect(cols.get('tenant_id')).toBe('integer');
@@ -265,6 +330,46 @@ describe('record immutability is UNCONDITIONAL (flag OFF — the deployed defaul
       .set('Authorization', `Bearer ${token}`)
       .send({ doc_id: DOC_FROZEN, body: 'post-freeze annotation' });
     expect(comment.status).toBe(403);
+  }, T);
+
+  /* The AI drafting routes are the reason the guard is a PREFIX match rather
+     than a list of paths: POST /sections/:sectionId/ai/draft and
+     .../ai/draft/accept are section writes that never touch the content PATCH.
+     The middleware's own comment claims it covers "the AnA draft accept", and
+     until now nothing checked that claim — so remounting either route off the
+     /sections/:sectionId prefix would silently drop the seal on the one write
+     path that puts machine-generated text into a signed record. */
+  it('an AI draft cannot be GENERATED into a frozen section', async () => {
+    const res = await request(app)
+      .post(`/api/authoring/sections/${SEC_FROZEN}/ai/draft`)
+      .set('Authorization', `Bearer ${await mint(QA_USER)}`)
+      .send({ region: 'FDA' });
+    expect(res.status).toBe(403);
+    // The seal is named, not reported as a missing grant: a sealed record and
+    // an unpermitted one have different remedies.
+    expect(res.body.error).toBe('DOCUMENT_FROZEN');
+  }, T);
+
+  it('an AI draft cannot be ACCEPTED into a frozen section', async () => {
+    const res = await request(app)
+      .post(`/api/authoring/sections/${SEC_FROZEN}/ai/draft/accept`)
+      .set('Authorization', `Bearer ${await mint(QA_USER)}`)
+      .send({ draftId: 'any-draft-id', body: 'Machine-generated text.' });
+    expect(res.status).toBe(403);
+    expect(res.body.error).toBe('DOCUMENT_FROZEN');
+    // Refused by the gate, before the handler could touch the record.
+    expect(await contentOf(SEC_FROZEN)).toBe('ORIGINAL');
+  }, T);
+
+  it('the same AI routes are reachable on a DRAFT section (the gate is the seal, not a blanket deny)', async () => {
+    const res = await request(app)
+      .post(`/api/authoring/sections/${SEC_DRAFT}/ai/draft`)
+      .set('Authorization', `Bearer ${await mint(QA_USER)}`)
+      .send({ region: 'FDA' });
+    // Whatever the generator does with an unconfigured model, it is NOT the
+    // frozen refusal — otherwise the two tests above would pass on a route that
+    // rejects everything.
+    expect(res.body?.error).not.toBe('DOCUMENT_FROZEN');
   }, T);
 
   it('a section in ANOTHER tenant is REFUSED by the gate, not merely missed by the handler', async () => {
@@ -332,21 +437,59 @@ describe('the fine-grained matrix WORKS when enabled (flag ON)', () => {
     expect(JSON.stringify(res.body)).not.toMatch(/does not exist/i);
   }, T);
 
-  it('a QA principal is authorised by role', async () => {
+  it('a bare QA role does NOT authorise a section it holds no grant on', async () => {
+    // This case used to assert 200, against a second copy of the decision that
+    // lived in this router and admitted a bare QA / RA_CMC role on any section
+    // of the tenant. That copy never decided anything in production: the
+    // canonical middleware (server/middleware/authoringObjectAuthorization.ts,
+    // mounted on '/api' ahead of this router) had already refused the same
+    // caller. The gate now asks decideAuthoringPermission — the middleware's
+    // own rule set — so a functional role is not an object grant here either.
     const res = await patchAs(QA_USER, SEC_DRAFT, 'EDITED-BY-QA');
-    expect(res.status).toBe(200);
-    expect(await contentOf(SEC_DRAFT)).toBe('EDITED-BY-QA');
+    expect(res.status).toBe(403);
+    expect(await contentOf(SEC_DRAFT)).not.toBe('EDITED-BY-QA');
+  }, T);
+
+  it('a global ADMIN is authorised without a per-object grant, as it is at the gateway', async () => {
+    // The one role-shaped branch the canonical decision keeps
+    // (GLOBAL_ADMIN_ROLES). Asserted here so the gate and the middleware are
+    // seen to answer the same question the same way.
+    const admin: Principal = {
+      id: 'fa1c2a10-0000-4000-8000-00000000a006',
+      email: 'admin@authoring.example',
+      organizationId: ORG_A,
+      roles: ['ADMIN'],
+    };
+    expect((await patchAs(admin, SEC_DRAFT, 'EDITED-BY-ADMIN')).status).toBe(200);
+    expect(await contentOf(SEC_DRAFT)).toBe('EDITED-BY-ADMIN');
+  }, T);
+
+  it('a revoked grant is not a grant', async () => {
+    // The lifecycle half of the canonical rule set: the row is still there and
+    // still names the right document, principal and role. Only revoked_at is
+    // set. The inline copy this gate used to run ignored the column entirely.
+    const revoked: Principal = {
+      id: 'fa1c2a10-0000-4000-8000-00000000a007',
+      email: 'revoked@authoring.example',
+      organizationId: ORG_A,
+    };
+    await seedGrant(DOC_DRAFT, revoked.email, 'AUTHOR');
+    expect((await patchAs(revoked, SEC_DRAFT, 'BEFORE-REVOCATION')).status).toBe(200);
+
+    await jdb.pool.query(
+      `UPDATE doc_permissions SET revoked_at = NOW()
+        WHERE doc_id = $1 AND lower(email) = lower($2)`,
+      [DOC_DRAFT, revoked.email],
+    );
+    const after = await patchAs(revoked, SEC_DRAFT, 'AFTER-REVOCATION');
+    expect(after.status).toBe(403);
+    expect(await contentOf(SEC_DRAFT)).toBe('BEFORE-REVOCATION');
   }, T);
 
   it('an AUTHOR granted on the document CAN edit its section', async () => {
-    const grant = await request(app)
-      .post(`/api/authoring/docs/${DOC_DRAFT}/permissions`)
-      .set('Authorization', `Bearer ${await mint(QA_USER)}`)
-      .send({ email: GRANTEE.email, role: 'AUTHOR' });
-    expect(grant.status).toBe(200);
-    // The grant must be written with the granter's VERIFIED tenant, or the
-    // tenant-scoped gate could never match it.
-    expect(grant.body.tenant_id).toBe(ORG_A);
+    // Tenant-keyed on purpose: a row written with the wrong tenant could never
+    // match the tenant-scoped gate, which is the thing under test.
+    await seedGrant(DOC_DRAFT, GRANTEE.email, 'AUTHOR');
 
     const res = await patchAs(GRANTEE, SEC_DRAFT, 'EDITED-BY-GRANTED-AUTHOR');
     expect(res.status).toBe(200);
@@ -356,11 +499,7 @@ describe('the fine-grained matrix WORKS when enabled (flag ON)', () => {
   it('a grant on a DIFFERENT document does NOT authorise this section', async () => {
     // GRANTEE already holds AUTHOR on DOC_DRAFT from the previous case; give
     // MEMBER a doc-level grant on an unrelated document instead.
-    const grant = await request(app)
-      .post(`/api/authoring/docs/${DOC_OTHER}/permissions`)
-      .set('Authorization', `Bearer ${await mint(QA_USER)}`)
-      .send({ email: MEMBER.email, role: 'AUTHOR' });
-    expect(grant.status).toBe(200);
+    await seedGrant(DOC_OTHER, MEMBER.email, 'AUTHOR');
 
     // Permitted on the document it was granted for …
     const allowed = await patchAs(MEMBER, SEC_OTHER, 'EDITED-ON-GRANTED-DOC');
@@ -412,11 +551,7 @@ describe('the fine-grained matrix WORKS when enabled (flag ON)', () => {
        ON CONFLICT (id) DO NOTHING`,
       [extra, DOC_OTHER, ORG_A],
     );
-    const grant = await request(app)
-      .post(`/api/authoring/docs/${DOC_OTHER}/permissions`)
-      .set('Authorization', `Bearer ${await mint(QA_USER)}`)
-      .send({ email: 'narrow@authoring.example', role: 'REVIEWER', section_id: extra });
-    expect(grant.status).toBe(200);
+    await seedGrant(DOC_OTHER, 'narrow@authoring.example', 'AUTHOR', extra);
 
     const narrow: Principal = {
       id: 'fa1c2a10-0000-4000-8000-00000000a004',
@@ -427,50 +562,70 @@ describe('the fine-grained matrix WORKS when enabled (flag ON)', () => {
     expect((await patchAs(narrow, SEC_OTHER, 'NARROW-LEAK')).status).toBe(403);
   }, T);
 
-  it('a grant naming a document in ANOTHER tenant is refused at the writer', async () => {
-    const res = await request(app)
-      .post(`/api/authoring/docs/${DOC_B}/permissions`)
-      .set('Authorization', `Bearer ${await mint(QA_USER)}`)
-      .send({ email: MEMBER.email, role: 'AUTHOR' });
-    expect(res.status).toBe(404);
-    const rows = await jdb.pool.query(`SELECT id FROM doc_permissions WHERE doc_id = $1`, [DOC_B]);
-    expect(rows.rows).toHaveLength(0);
+  it('a REVIEWER may review, not edit — the role decides the action', async () => {
+    // This grant was written as REVIEWER when the gate ran its own copy of the
+    // decision, which accepted AUTHOR and REVIEWER alike for an edit. The
+    // canonical rule set separates them (ROLE_ACTIONS in
+    // services/authoring/authoring-permissions.ts): a reviewer who can silently
+    // rewrite the text they are reviewing is not a reviewer.
+    const reviewer: Principal = {
+      id: 'fa1c2a10-0000-4000-8000-00000000a008',
+      email: 'reviewer@authoring.example',
+      organizationId: ORG_A,
+    };
+    await seedGrant(DOC_DRAFT, reviewer.email, 'REVIEWER');
+    const res = await patchAs(reviewer, SEC_DRAFT, 'EDITED-BY-REVIEWER');
+    expect(res.status).toBe(403);
+    expect(await contentOf(SEC_DRAFT)).not.toBe('EDITED-BY-REVIEWER');
   }, T);
 
-  it('an ungrantable role is rejected rather than stored as an inert row', async () => {
-    const res = await request(app)
-      .post(`/api/authoring/docs/${DOC_DRAFT}/permissions`)
-      .set('Authorization', `Bearer ${await mint(QA_USER)}`)
-      .send({ email: MEMBER.email, role: 'ADMIN' });
-    expect(res.status).toBe(400);
-  }, T);
+  /* Three cases lived here that tested the WRITER, not the gate:
+       - a grant naming a document in another tenant is refused
+       - an ungrantable role is rejected rather than stored as an inert row
+       - the permission listing is tenant-scoped
+     They addressed authoring.router.ts's own POST/GET for
+     /docs/:docId/permissions, which 3eb7306 deleted as a shadowed duplicate.
+     They are not re-pointed at the canonical writer here because that writer
+     takes a different contract (principalId rather than email, 201 rather than
+     200, and requirePermissionManager's owner/admin gate) and lives behind a
+     different auth chain than this file's JWT mint().
+
+     Their behaviour is covered against the canonical implementation in
+     services/authoring/__tests__/authoring-object-permissions.integration.test.ts:
+     'rejects cross-tenant document and section permission links at the database
+     boundary', 'does not let a permission on one section authorize a different
+     section', and 'grants reviewer and approver authority explicitly, without
+     edit escalation'.
+
+     The cross-tenant case is worth naming: after the deletion it still passed,
+     because it asserted 404 and a missing route also returns 404. A test that
+     goes on passing once its subject is gone is worse than one that fails. */
 
   it('a valid grant still cannot edit a FROZEN record', async () => {
-    const grant = await request(app)
-      .post(`/api/authoring/docs/${DOC_FROZEN}/permissions`)
-      .set('Authorization', `Bearer ${await mint(QA_USER)}`)
-      .send({ email: GRANTEE.email, role: 'AUTHOR' });
-    expect(grant.status).toBe(200);
+    await seedGrant(DOC_FROZEN, GRANTEE.email, 'AUTHOR');
 
     const res = await patchAs(GRANTEE, SEC_FROZEN, 'TAMPERED-WITH-GRANT');
     expect(res.status).toBe(403);
     expect(await contentOf(SEC_FROZEN)).toBe('ORIGINAL');
   }, T);
 
-  it('the permission listing is tenant-scoped', async () => {
-    const mine = await request(app)
-      .get(`/api/authoring/docs/${DOC_DRAFT}/permissions`)
-      .set('Authorization', `Bearer ${await mint(QA_USER)}`);
-    expect(mine.status).toBe(200);
-    expect(Array.isArray(mine.body)).toBe(true);
-    expect(mine.body.length).toBeGreaterThan(0);
+  it('a grant carrying the wrong tenant cannot be stored at all', async () => {
+    // Replaces the deleted listing endpoint's tenant-scoping case. The intent
+    // was to prove the gate ignores a grant belonging to another tenant; the
+    // schema turns out to make that row unstorable in the first place, which is
+    // the stronger statement. doc_permissions_doc_tenant_fkey ties (doc_id,
+    // tenant_id) to the document's own tenant, so a mismatched grant is refused
+    // by the database rather than merely unmatched by a query — no application
+    // path can leave one behind for a later predicate change to start honouring.
+    await expect(
+      seedGrant(DOC_DRAFT, 'stranger@authoring.example', 'AUTHOR', null, ORG_B),
+    ).rejects.toThrow(/foreign key|doc_tenant/i);
 
-    // Same document id, a caller from another tenant: no rows, ever.
-    const theirs = await request(app)
-      .get(`/api/authoring/docs/${DOC_DRAFT}/permissions`)
-      .set('Authorization', `Bearer ${await mint(OUTSIDER)}`);
-    expect(theirs.status).toBe(200);
-    expect(theirs.body).toHaveLength(0);
+    const rows = await jdb.pool.query(
+      `SELECT id FROM doc_permissions WHERE doc_id = $1 AND tenant_id = $2`,
+      [DOC_DRAFT, ORG_B],
+    );
+    expect(rows.rows).toHaveLength(0);
   }, T);
 });
 

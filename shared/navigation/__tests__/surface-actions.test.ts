@@ -83,6 +83,12 @@ describe('the governance boundary', () => {
       'quality.advance-change',
       'quality.approve-document',
       'deep-research.launch-research',
+      // Wave 6 put AnA's hands on the admin and licensing consoles — the ids
+      // someone would try next are a module grant and the two spellings of a
+      // payment start. Regex gaps until grant/checkout/purchase joined.
+      'master-licensing.grant-module',
+      'licensing.open-checkout',
+      'licensing.purchase-plan',
     ]) {
       expect(GOVERNED_VERB_PATTERN.test(bad), bad).toBe(true);
       expect(() => assertUngovernedActionId(bad)).toThrow(/governed/);

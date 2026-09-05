@@ -708,7 +708,7 @@ export function RegulatoryWorkspace({ onAsk }: SurfaceViewProps) {
         <header className="ed-doc-h">
           <div className="ed-crumbs">
             <span>Regulatory workspace</span>
-            <span className="sep">›</span>
+            <span className="sep" aria-hidden="true">›</span>
             <span className="here">{sec.num} {sec.label}</span>
           </div>
           <button className="btn primary" style={{ height: 30 }} onClick={() => onAsk(`Open ${sec.num} in the document editor`)}>

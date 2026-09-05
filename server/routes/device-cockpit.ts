@@ -26,6 +26,10 @@ const leafSchema = z.object({
   sectionCode: z.string(),
   title: z.string(),
   documentType: z.string().optional(),
+  // Fails closed: a hand-fed leaf is treated as a draft/placeholder (not
+  // substantive) unless the caller explicitly asserts it carries real,
+  // finalized content — a title match alone must never count as "present".
+  substantive: z.boolean().default(false),
 });
 
 const assessSchema = z.object({

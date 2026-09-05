@@ -118,14 +118,28 @@ describe('citation-accuracy regression guard — 21 CFR / ICH corrections', () =
     expect(basis).not.toContain('312.47(b)(2) (end-of-Phase-2');
   });
 
-  it('CTD 1.2 · comprehensive TOC cites 314.50(b) (Index), not 314.50(a) (the application form)', () => {
+  it('CTD 1.2 · is the cover letter, and no Module 1 guidance claims a table-of-contents heading (the eCTD backbone is the index)', () => {
+    // FDA eCTD Module 1 Specification v2.3: 1.1 forms, 1.2 cover letters. The
+    // former "1.2 Comprehensive Table of Contents" entry filed content under the
+    // cover-letter heading and asserted a document eCTD does not carry.
     const text = ctdSectionText('1.2');
-    expect(text).toContain('314.50(b)');
-    expect(text).not.toContain('table of contents is required by 21 CFR 314.50(a)');
+    expect(text.toLowerCase()).toContain('cover letter');
+    const m1Titles = Object.values(CTD_AUTHORING_GUIDANCE)
+      .filter((g) => g.module === 1)
+      .map((g) => g.title.toLowerCase());
+    expect(m1Titles.some((t) => t.includes('table of contents'))).toBe(false);
   });
 
-  it('CTD 1.4.1 · IB: 312.23(a)(5) enumerates content; 312.55 is the separate furnishing duty', () => {
-    const text = ctdSectionText('1.4.1');
+  it('CTD 1.20 · general investigational plan cites 312.23(a)(3) and files at FDA heading 1.20', () => {
+    const text = ctdSectionText('1.20');
+    expect(text).toContain('312.23(a)(3)');
+    expect(text).toContain('1.20');
+  });
+
+  it('CTD 1.14.4.1 · IB: 312.23(a)(5) enumerates content; 312.55 is the separate furnishing duty', () => {
+    // The IB files at FDA heading 1.14.4.1 (investigator brochure), not 1.4.1
+    // (letters of authorization).
+    const text = ctdSectionText('1.14.4.1');
     expect(text).toContain('312.23(a)(5)');
     expect(text).toContain('312.55 separately obligates');
     // the prior text wrongly said the IB's content "is described in 312.55"

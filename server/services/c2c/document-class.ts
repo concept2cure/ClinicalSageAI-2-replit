@@ -49,6 +49,11 @@ export const PROGRAM_TO_DOC_TYPE: Readonly<Record<string, string>> = {
   // by the Regulation itself (MDR Annex II+III, IVDR Annex II+III). There is
   // nothing to guess. migrations/20260810b supplies both packs.
   mdr: 'mdr', ivdr: 'ivdr',
+  // A DMF / ASMF is 3.2.S (+3.2.A/3.2.R) content: the harmonised Module 3 pack
+  // is its honest outline. It resolves through AGENCY_FALLBACKS to mod3:ich
+  // because no agency seeds a dmf-specific pack — the ICH baseline is the right
+  // claim for a master file whose applicant's part maps to 3.2.S per ICH M4Q.
+  dmf: 'mod3',
 };
 
 /**

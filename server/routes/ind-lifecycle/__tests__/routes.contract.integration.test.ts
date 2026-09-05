@@ -6,13 +6,50 @@
  * route categories (pure compute, DB read, DB write/file, PDF, CSV).
  */
 
-import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll, afterEach, vi } from 'vitest';
 import express from 'express';
 import request from 'supertest';
 import { createIndPgliteDb, type IndPgliteDb } from '../../../db/pglite-harness';
 
 const holder = vi.hoisted(() => ({ db: null as any }));
 vi.mock('../../../db', () => ({ get db() { return holder.db; } }));
+// The storage provider is the tenant boundary for rendered filing bytes; it is
+// mocked in-memory so the suite exercises the real store→leaf→resolve path
+// without writing real objects under the repo working directory.
+const vault = vi.hoisted(() => ({ objects: new Map<string, { bytes: Buffer; orgId: number }>(), seq: 0 }));
+vi.mock('../../../services/storage', () => ({
+  getStorageProvider: () => ({
+    name: 'test',
+    async put(opts: { orgId: number; bytes: Buffer; filename: string; mime: string }) {
+      const { createHash } = await import('crypto');
+      vault.seq += 1;
+      const vaultVersionId = `vv-test-${vault.seq}`;
+      vault.objects.set(vaultVersionId, { bytes: opts.bytes, orgId: opts.orgId });
+      return {
+        vaultFileId: `vault://${opts.orgId}/${opts.filename}`,
+        vaultVersionId,
+        sizeBytes: opts.bytes.length,
+        sha256: createHash('sha256').update(opts.bytes).digest('hex'),
+        provider: 'test',
+      };
+    },
+    async get(vaultVersionId: string, orgId: number) {
+      const hit = vault.objects.get(vaultVersionId);
+      if (!hit || hit.orgId !== orgId) return null;
+      const { createHash } = await import('crypto');
+      return {
+        bytes: hit.bytes,
+        sizeBytes: hit.bytes.length,
+        sha256: createHash('sha256').update(hit.bytes).digest('hex'),
+        mime: 'application/pdf',
+        filename: 'f.pdf',
+      };
+    },
+    async delete(vaultVersionId: string) {
+      return vault.objects.delete(vaultVersionId);
+    },
+  }),
+}));
 vi.mock('../../../services/auditService', () => ({ default: { logAction: vi.fn(async (..._a: any[]) => ({ persisted: true, chained: true, tamperProof: true })) } }));
 // Contract tests exercise route logic, not rate limiting; pass-through the limiter
 // so the volume of requests in this suite doesn't trip a 429.
@@ -20,6 +57,17 @@ vi.mock('../../../middleware/rateLimiter', () => ({
   createRateLimiter: () => (_req: any, _res: any, next: any) => next(),
   default: (_req: any, _res: any, next: any) => next(),
 }));
+// The ICSR gateway transport stays REAL by default (no gateway configured under
+// test → it returns a `simulated` receipt, which the route must refuse to record
+// as transmitted). Individual tests inject a real receipt or a transport failure.
+const icsrTransport = vi.hoisted(() => ({ override: null as null | ((built: any, opts?: any) => Promise<any>) }));
+vi.mock('../../../services/ind-lifecycle/icsr-gateway-transport', async importOriginal => {
+  const actual = await importOriginal<typeof import('../../../services/ind-lifecycle/icsr-gateway-transport')>();
+  return {
+    ...actual,
+    transmitIcsr: (built: any, opts?: any) => (icsrTransport.override ?? actual.transmitIcsr)(built, opts),
+  };
+});
 
 import indLifecycleRouter from '../../ind-lifecycle.routes';
 import { createSubmission } from '../../../services/submission-service/submission-service';
@@ -74,7 +122,9 @@ beforeAll(async () => {
     { organizationId: 1, userId: 9 },
   );
   seededSubmissionId = sub.id;
-  await persistAnnualReport(sub.id, '0000', { organizationId: 1, userId: 9 }, 'cs');
+  // No retained render for this fixture: the leaf files as metadata, which is
+  // the honest 'nothing was stored' path.
+  await persistAnnualReport(sub.id, '0000', { organizationId: 1, userId: 9 });
 });
 afterAll(async () => {
   await harness.close();
@@ -726,28 +776,119 @@ describe('persisted IND amendments (21 CFR 312.30/.31)', () => {
 });
 
 describe('persisted ICSR transmissions (E2B(R3) → FAERS/EudraVigilance)', () => {
-  it('prepare → transmit → acknowledge lifecycle (ready case)', async () => {
+  const ICSR_GATEWAY_ENV = ['ICSR_GATEWAY_URL', 'ICSR_GATEWAY_USERNAME', 'ICSR_GATEWAY_PASSWORD', 'ICSR_GATEWAY_CERT_PATH'] as const;
+  const savedGatewayEnv: Record<string, string | undefined> = {};
+  beforeAll(() => {
+    for (const k of ICSR_GATEWAY_ENV) { savedGatewayEnv[k] = process.env[k]; delete process.env[k]; }
+  });
+  afterAll(() => {
+    for (const k of ICSR_GATEWAY_ENV) {
+      if (savedGatewayEnv[k] === undefined) delete process.env[k];
+      else process.env[k] = savedGatewayEnv[k];
+    }
+  });
+  afterEach(() => { icsrTransport.override = null; });
+
+  const prepareReady = async (messageNumber: string) => {
     const prep = await request(app)
       .post(`/api/ind-lifecycle/submission/${seededSubmissionId}/icsr-transmissions`)
       .send({
         event: { ...reportableEvent(), suspectProduct: 'C2C-001', reactionPt: 'Hepatic failure' },
         gateway: 'FDA_FAERS',
         senderId: 'C2C',
-        messageNumber: 'MSG-1001',
+        messageNumber,
         icsr: { worldwideUniqueId: 'US-C2C-2026-000123', senderType: 'sponsor' },
       });
     expect(prep.status).toBe(201);
     expect(prep.body.status).toBe('prepared');
-    expect(prep.body.receiverId).toBe('ZZFDA');
     expect(prep.body.transmitReady).toBe(true);
-    const txId = prep.body.id;
-
+    return prep.body;
+  };
+  const rowOf = async (txId: string) => {
     const list = await request(app).get(`/api/ind-lifecycle/submission/${seededSubmissionId}/icsr-transmissions`);
-    expect(list.body.map((t: any) => t.id)).toContain(txId);
+    expect(list.status).toBe(200);
+    return list.body.find((t: any) => t.id === txId);
+  };
 
+  it('with NO gateway configured, transmit → 503 (NOT transmitted) and the row stays prepared', async () => {
+    // LIFE-03: this used to flip the row to 'transmitted' without a byte leaving
+    // the box. Under test, no ICSR_GATEWAY_* is set, so the real transport hands
+    // back a `simulated` receipt — which must never be recorded as transmitted.
+    const prep = await prepareReady('MSG-1000');
+
+    const tx = await request(app).post(`/api/ind-lifecycle/icsr-transmissions/${prep.id}/transmit`);
+    expect(tx.status).toBe(503);
+    expect(tx.body.error.code).toBe('GATEWAY_NOT_CONFIGURED');
+    expect(tx.body.error.message).toMatch(/not configured/i);
+    expect(tx.body.error.message).toMatch(/NOT transmitted/);
+    expect(tx.body.error.transmitted).toBe(false);
+
+    const row = await rowOf(prep.id);
+    expect(row.status).toBe('prepared');
+    expect(row.transmittedAt).toBeNull();
+    expect(row.transportReceiptId).toBeNull();
+  });
+
+  it('a simulated receipt handed back by the transport is never recorded as transmitted (503)', async () => {
+    const prep = await prepareReady('MSG-1000-SIM');
+    icsrTransport.override = async (built: any) => ({
+      simulated: true,
+      status: 'simulated',
+      gateway: built.gateway,
+      receiverId: built.receiverId,
+      messageId: 'MSG-1000-SIM',
+      receiptId: 'SIMULATED-MSG-1000-SIM',
+      timestamp: '2026-06-15T00:00:00.000Z',
+      message: 'SIMULATED ICSR transmission (non-production).',
+    });
+    const tx = await request(app).post(`/api/ind-lifecycle/icsr-transmissions/${prep.id}/transmit`);
+    expect(tx.status).toBe(503);
+    expect(tx.body.error.code).toBe('GATEWAY_NOT_CONFIGURED');
+    expect((await rowOf(prep.id)).status).toBe('prepared');
+  });
+
+  it('a transport failure → 502 (NOT transmitted) and the row stays prepared', async () => {
+    const prep = await prepareReady('MSG-1000-FAIL');
+    icsrTransport.override = async () => { throw new Error('AS2 MDN timeout'); };
+    const tx = await request(app).post(`/api/ind-lifecycle/icsr-transmissions/${prep.id}/transmit`);
+    expect(tx.status).toBe(502);
+    expect(tx.body.error.code).toBe('GATEWAY_TRANSMIT_FAILED');
+    expect(tx.body.error.message).toMatch(/NOT transmitted/);
+    expect(tx.body.error.transmitted).toBe(false);
+    expect((await rowOf(prep.id)).status).toBe('prepared');
+  });
+
+  it('prepare → transmit (real gateway receipt) → acknowledge lifecycle (ready case)', async () => {
+    const prep = await prepareReady('MSG-1001');
+    expect(prep.receiverId).toBe('ZZFDA');
+    const txId = prep.id;
+    expect((await rowOf(txId)).id).toBe(txId);
+
+    // A real, non-simulated gateway receipt is the ONLY thing that may move the
+    // row to 'transmitted'. Capture what the route handed the transport: it must
+    // be built from the persisted row, not re-composed from request input.
+    const seen: any[] = [];
+    icsrTransport.override = async (built: any) => {
+      seen.push(built);
+      return {
+        simulated: false,
+        status: 'transmitted',
+        gateway: built.gateway,
+        receiverId: built.receiverId,
+        messageId: 'MSG-1001',
+        receiptId: 'ESG-CORE-7F3A2C',
+        timestamp: '2026-06-15T00:00:00.000Z',
+        message: 'Accepted by gateway.',
+      };
+    };
     const tx = await request(app).post(`/api/ind-lifecycle/icsr-transmissions/${txId}/transmit`);
     expect(tx.status).toBe(200);
     expect(tx.body.status).toBe('transmitted');
+    expect(tx.body.transportReceiptId).toBe('ESG-CORE-7F3A2C');
+    expect(new Date(tx.body.transmittedAt).toISOString()).toBe('2026-06-15T00:00:00.000Z');
+    expect(seen).toHaveLength(1);
+    expect(seen[0]).toMatchObject({ gateway: 'FDA_FAERS', receiverId: 'ZZFDA', transmitReady: true, gaps: [] });
+    expect(seen[0].message).toBe(prep.message);
 
     const ack = await request(app)
       .post(`/api/ind-lifecycle/icsr-transmissions/${txId}/acknowledge`)
@@ -755,9 +896,10 @@ describe('persisted ICSR transmissions (E2B(R3) → FAERS/EudraVigilance)', () =
     expect(ack.status).toBe(200);
     expect(ack.body.status).toBe('acknowledged');
     expect(ack.body.ackCode).toBe('AA');
+    expect(ack.body.transportReceiptId).toBe('ESG-CORE-7F3A2C');
   });
 
-  it('rejects transmit when the ICSR is not transmit-ready (422)', async () => {
+  it('rejects transmit when the ICSR is not transmit-ready (422 with the gaps); transport never called', async () => {
     // No worldwide id + no suspect product → mandatory gaps → not ready.
     const evt = { ...reportableEvent(), id: 'ae-notready', suspectProduct: null };
     const prep = await request(app)
@@ -767,6 +909,9 @@ describe('persisted ICSR transmissions (E2B(R3) → FAERS/EudraVigilance)', () =
     const tx = await request(app).post(`/api/ind-lifecycle/icsr-transmissions/${prep.body.id}/transmit`);
     expect(tx.status).toBe(422);
     expect(tx.body.error.code).toBe('NOT_READY');
+    expect(tx.body.error.gaps.length).toBeGreaterThan(0);
+    expect(tx.body.error.gaps.map((g: any) => g.id)).toEqual(prep.body.gaps.map((g: any) => g.id));
+    expect((await rowOf(prep.body.id)).status).toBe('prepared');
   });
 
   it('an AR acknowledgment marks the transmission rejected with errors', async () => {

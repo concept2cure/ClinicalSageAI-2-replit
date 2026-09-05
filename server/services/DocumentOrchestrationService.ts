@@ -1,4 +1,6 @@
 import { db } from '../db';
+import { resolveSignerIdentity } from './part11/resolve-signer-identity.js';
+import { drizzleSignatureClient } from './part11/signature-persistence.js';
 import {
   fda510kProjects,
   fda510kDocuments,
@@ -429,17 +431,25 @@ class DocumentOrchestrationService {
     // Use the new document_audit_trail table for 21 CFR Part 11 compliance.
     // userName/userEmail are denormalized on the audit row for compliance, so
     // resolve them from the acting user record.
-    const [actingUser] = await db!
-      .select({ name: users.name, email: users.email })
-      .from(users)
-      .where(eq(users.id, userId))
-      .limit(1);
+    // The actor named on a governed audit row, resolved through the shared
+    // Part 11 lookup. This used to be a bare primary-key read of `users` —
+    // unscoped, so a user id from another tenant would have resolved a name and
+    // written it onto this org's audit trail — and it then defaulted the name to
+    // `user-${userId}` and the email to `''` when the read found nothing. An
+    // audit row whose actor is a synthesised string attributes an action to
+    // nobody while looking like it attributes it to someone.
+    const actingUser = await resolveSignerIdentity(
+      drizzleSignatureClient(db!),
+      userId,
+      organizationId,
+      `document ${action}`,
+    );
 
     await db!.insert(documentAuditTrail).values({
       organizationId,
       userId,
-      userName: actingUser?.name ?? `user-${userId}`,
-      userEmail: actingUser?.email ?? '',
+      userName: actingUser.name,
+      userEmail: actingUser.email,
       actionType: action,
       actionCategory: 'document',
       actionDescription: `${action} for project ${projectId}`,

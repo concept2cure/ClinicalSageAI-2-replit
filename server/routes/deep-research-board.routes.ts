@@ -233,21 +233,19 @@ export default function createDeepResearchBoardRoutes(): Router {
         getLicenseInfo(orgId),
       ]);
 
-      // Connectors — prefer the org-scoped configured status. Fail closed to the
-      // static catalog (public connectors ready, credentialed ones not-configured;
-      // identical to the client's own default seed) when connector_credentials is
-      // unprovisioned or the read fails.
+      // Connectors — the org-scoped configured status. getConnectorCatalog now
+      // handles the legitimately-unprovisioned case internally (missing
+      // connector_credentials → catalog with every credentialed connector
+      // not-configured), so a REJECTION here is a genuine read failure. Fail
+      // closed on it (→ the outer catch's 500 → the surface's board.error, which
+      // reports the inventory as UNKNOWN due to a failure). Serving the static
+      // CONNECTOR_CATALOG on a failed read published a bundle constant to the
+      // assistant as though it were this org's real connector inventory.
       let connectors: DrConnector[];
       if (catalogResult.status === 'fulfilled') {
         connectors = catalogResult.value.map((entry) => toDrConnector(entry, entry.configured));
       } else {
-        logger.warn('connector catalog read failed; using static catalog fallback', {
-          err:
-            catalogResult.reason instanceof Error
-              ? catalogResult.reason.message
-              : String(catalogResult.reason),
-        });
-        connectors = CONNECTOR_CATALOG.map((entry) => toDrConnector(entry, !entry.requiresCredentials));
+        throw catalogResult.reason;
       }
 
       // Persisted research runs — empty when deep_research_jobs is unprovisioned.

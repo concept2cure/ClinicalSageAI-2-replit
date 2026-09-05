@@ -56,6 +56,16 @@ const ANDA_IDE = path.join(REPO_ROOT, 'migrations/20260806b_anda_ide_filing_type
 const PMA_OUTLINE = path.join(REPO_ROOT, 'migrations/20260810_pma_fda_814_20_outline.sql');
 // EU MDR 2017/745 and IVDR 2017/746, plus the doc_type widening they need.
 const EU_DEVICE = path.join(REPO_ROOT, 'migrations/20260810b_eu_mdr_ivdr_outlines.sql');
+// ind:fda re-seeded with Module 1 numbered per the FDA eCTD Module 1 Specification
+// v2.3 (1.20 general investigational plan, 1.14.4.1 IB, 1.12.14 environmental
+// analysis) and Modules 2–5 at ICH M4 leaf granularity; supersedes ich-m4-v2.0.
+const IND_M1 = path.join(REPO_ROOT, 'migrations/20260901_ind_fda_m1_v2_3_outline.sql');
+// k510:fda and denovo:fda re-seeded to the eSTAR-era structure (no retired Form
+// 3514 cover sheet; Part 807 mandatory items present); supersedes the 2024 packs.
+const ESTAR_DEVICE = path.join(REPO_ROOT, 'migrations/20260901b_estar_510k_denovo_outlines.sql');
+// ind:fda ich-m4-v2.2: same outline, 1.3.1 and 5.2 optional for an initial IND
+// now that the compile gates read the pack's mandatory flags; supersedes v2.1.
+const IND_M1_V22 = path.join(REPO_ROOT, 'migrations/20260902_ind_fda_outline_v2_2_initial_ind_flags.sql');
 
 const ORG = 7;
 const PROJECT = '11111111-2222-3333-4444-555555555555';
@@ -75,7 +85,12 @@ const client = () => ({ query: (sql: string, p?: unknown[]) => pg.query(sql, p a
  * only that the ANDA test needs some migration; leaving the rest on proves it
  * needs THIS one.
  */
-async function boot(withOutlines = true, withAndaIde = withOutlines) {
+async function boot(
+  withOutlines = true,
+  withAndaIde = withOutlines,
+  withSept2026 = withOutlines,
+  withIndV22 = withSept2026,
+) {
   pg = new PGlite();
   await pg.exec(`
     CREATE TABLE organizations (id serial PRIMARY KEY);
@@ -86,7 +101,11 @@ async function boot(withOutlines = true, withAndaIde = withOutlines) {
       table_name text, record_id text, actor_id text, target text,
       target_type text, target_id text, reason text, payload_hash text,
       ana_action_id text, sha256_chain text,
-      occurred_at timestamptz DEFAULT now(), hmac_seal text
+      occurred_at timestamptz DEFAULT now(), hmac_seal text,
+      old_values   json,
+      new_values   json,
+      ip_address   text,
+      user_agent   text
     );
     INSERT INTO organizations DEFAULT VALUES;
     INSERT INTO users DEFAULT VALUES;
@@ -99,6 +118,22 @@ async function boot(withOutlines = true, withAndaIde = withOutlines) {
   if (withAndaIde) await pg.exec(fs.readFileSync(ANDA_IDE, 'utf8'));
   if (withOutlines) await pg.exec(fs.readFileSync(PMA_OUTLINE, 'utf8'));
   if (withOutlines) await pg.exec(fs.readFileSync(EU_DEVICE, 'utf8'));
+  if (withSept2026) await pg.exec(fs.readFileSync(IND_M1, 'utf8'));
+  if (withSept2026) await pg.exec(fs.readFileSync(ESTAR_DEVICE, 'utf8'));
+  if (withIndV22) await pg.exec(fs.readFileSync(IND_M1_V22, 'utf8'));
+}
+
+/** The one live pack for a (doc_type, agency), as the scaffolder selects it. */
+async function livePack(docType: string, agency: string) {
+  const r = await pg.query<{ version: string; required_sections: Array<{ key: string; parent_key: string | null; label: string; mandatory: boolean }> }>(
+    `SELECT version, required_sections FROM c2c_rule_packs
+      WHERE doc_type = $1 AND agency = $2 AND superseded_by IS NULL
+      ORDER BY effective_from DESC`,
+    [docType, agency],
+  );
+  expect(r.rows.length, `expected exactly one live ${docType}:${agency} pack`).toBe(1);
+  const secs = r.rows[0].required_sections;
+  return { version: r.rows[0].version, secs, keys: new Set(secs.map((x) => x.key)), labels: secs.map((x) => x.label) };
 }
 
 const scaffold = (programType: string, primaryAgency: string) =>
@@ -711,4 +746,114 @@ describe('the guard is falsifiable', () => {
     expect(r.skipped, 'an ANDA scaffolded without its rule pack').toBe('NO_RULE_PACK');
     expect(r.sectionCount ?? 0).toBe(0);
   }, 60_000);
+});
+
+
+describe('ind:fda files Module 1 where FDA files it, at the granularity an IND is authored at', () => {
+  beforeEach(() => boot());
+
+  it('the live pack is ich-m4-v2.2 with five modules and the 21 CFR 312.23 Module 1 content', async () => {
+    const pack = await livePack('ind', 'fda');
+    expect(pack.version).toBe('ich-m4-v2.2');
+    const roots = pack.secs.filter((x) => x.parent_key === null).map((x) => x.key);
+    expect(roots).toEqual(['M1', 'M2', 'M3', 'M4', 'M5']);
+    // FDA eCTD Module 1 Specification v2.3 headings an initial IND must carry.
+    for (const k of ['1.1.1', '1.1.2', '1.1.3', '1.2', '1.12.14', '1.14.4.1', '1.14.4.2', '1.20']) {
+      expect(pack.keys.has(k), `Module 1 heading ${k} missing`).toBe(true);
+    }
+    // No retired paper-IND numbering: 1.5 TOC, 1.6 plan, 1.7 IB, 1.9 EA.
+    for (const k of ['1.5', '1.6', '1.7', '1.8', '1.9']) {
+      expect(pack.keys.has(k), `paper-IND heading ${k} must not be in the eCTD outline`).toBe(false);
+    }
+    // ICH M4 leaves, not one blob per module.
+    for (const k of ['3.2.S.4', '3.2.P.5', '4.2.3.2', '5.3.5.1']) {
+      expect(pack.keys.has(k), `leaf ${k} missing`).toBe(true);
+    }
+    const orphans = pack.secs.filter((x) => x.parent_key !== null && !pack.keys.has(x.parent_key!));
+    expect(orphans).toEqual([]);
+  });
+
+  it('an FDA IND project scaffolds against the new pack, not the superseded 24-node one', async () => {
+    const res = await scaffold('ind', 'FDA');
+    expect(res.documentId).toBeTruthy();
+    const d = await pg.query<{ rule_pack_version: string }>(
+      `SELECT rule_pack_version FROM c2c_documents WHERE id = $1`, [res.documentId],
+    );
+    expect(d.rows[0].rule_pack_version).toBe('ich-m4-v2.2');
+    const n = await pg.query<{ n: string }>(
+      `SELECT count(*)::text AS n FROM c2c_document_sections WHERE document_id = $1`, [res.documentId],
+    );
+    expect(Number(n.rows[0].n)).toBeGreaterThan(80);
+  });
+
+  it('an initial IND is not asked for post-initial contact changes (1.3.1) or a prior-study listing (5.2)', async () => {
+    const pack = await livePack('ind', 'fda');
+    const flag = (k: string) => pack.secs.find((x) => x.key === k)?.mandatory;
+    expect(flag('1.3.1')).toBe(false);
+    expect(flag('5.2')).toBe(false);
+    // The initial-IND content is still mandatory.
+    for (const k of ['1.1.1', '1.2', '1.20', '1.14.4.1', '1.12.14', '5.3.5.1']) {
+      expect(flag(k), `${k} must stay mandatory`).toBe(true);
+    }
+  });
+
+  it('FALSIFIABLE: without 20260902 the live pack is v2.1 and still demands 1.3.1 and 5.2 of an initial IND', async () => {
+    await pg.close();
+    await boot(true, true, true, false);
+    const pack = await livePack('ind', 'fda');
+    expect(pack.version).toBe('ich-m4-v2.1');
+    expect(pack.secs.find((x) => x.key === '1.3.1')?.mandatory).toBe(true);
+    expect(pack.secs.find((x) => x.key === '5.2')?.mandatory).toBe(true);
+  });
+
+  it('FALSIFIABLE: without 20260901 the live ind:fda pack has no 1.20 and still uses the 24-node outline', async () => {
+    await pg.close();
+    await boot(true, true, false);
+    const pack = await livePack('ind', 'fda');
+    expect(pack.version).toBe('ich-m4-v2.0');
+    expect(pack.keys.has('1.20')).toBe(false);
+  });
+});
+
+describe('k510:fda and denovo:fda are eSTAR-era outlines', () => {
+  beforeEach(() => boot());
+
+  it('510(k): no retired Form 3514 cover sheet; the Part 807 mandatory items and cybersecurity exist', async () => {
+    const pack = await livePack('k510', 'fda');
+    expect(pack.version).toBe('fda-estar-510k-v1.0');
+    expect(pack.labels.some((l) => /3514/.test(l)), 'Form 3514 was retired with eSTAR').toBe(false);
+    const mandatory = pack.secs.filter((x) => x.mandatory).map((x) => x.label.toLowerCase());
+    expect(mandatory.some((l) => l.includes('510(k) summary'))).toBe(true);
+    expect(mandatory.some((l) => l.includes('truthful and accuracy'))).toBe(true);
+    expect(pack.labels.some((l) => /cybersecurity/i.test(l))).toBe(true);
+    expect(pack.labels.some((l) => /human factors/i.test(l))).toBe(true);
+    const orphans = pack.secs.filter((x) => x.parent_key !== null && !pack.keys.has(x.parent_key!));
+    expect(orphans).toEqual([]);
+  });
+
+  it('De Novo: no Form 3514, no table-of-contents slot, special controls and benefit-risk present', async () => {
+    const pack = await livePack('denovo', 'fda');
+    expect(pack.version).toBe('fda-estar-denovo-v1.0');
+    expect(pack.labels.some((l) => /3514/.test(l))).toBe(false);
+    expect(pack.labels.some((l) => /table of contents/i.test(l))).toBe(false);
+    expect(pack.labels.some((l) => /special controls/i.test(l))).toBe(true);
+    expect(pack.labels.some((l) => /benefit-risk/i.test(l))).toBe(true);
+  });
+
+  it('a 510(k) project scaffolds against the eSTAR-era pack', async () => {
+    const res = await scaffold('510k', 'FDA');
+    expect(res.documentId).toBeTruthy();
+    const d = await pg.query<{ rule_pack_version: string }>(
+      `SELECT rule_pack_version FROM c2c_documents WHERE id = $1`, [res.documentId],
+    );
+    expect(d.rows[0].rule_pack_version).toBe('fda-estar-510k-v1.0');
+  });
+
+  it('FALSIFIABLE: without 20260901b the live 510(k) pack still demands Form 3514', async () => {
+    await pg.close();
+    await boot(true, true, false);
+    const pack = await livePack('k510', 'fda');
+    expect(pack.version).toBe('fda-510k-2024');
+    expect(pack.labels.some((l) => /3514/.test(l))).toBe(true);
+  });
 });

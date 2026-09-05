@@ -13,11 +13,20 @@
  * request input) and every mutation is audited — mirroring
  * server/services/ind-master-data/ind-master-data-service.ts.
  *
+ * The caller passes the REQUEST-SCOPED Drizzle client (`requestDb(req)`), not
+ * the shared pool. This row holds the org's correspondent contact name, e-mail
+ * and telephone and its Declaration of Conformity entity — cross-tenant PII —
+ * and the request-scoped client carries `app.current_tenant_id`, so RLS filters
+ * every query here as a second, independent layer under the explicit
+ * `organizationId` predicates (kept as belt-and-braces, and as documentation of
+ * intent). A future slip in one of those predicates then reads nothing rather
+ * than another organization's contacts.
+ *
  * @module server/services/pathway-engines/estar/estar-registration-service
  */
 
 import { eq } from 'drizzle-orm';
-import { db } from '../../../db';
+import type { RequestDb } from '../../../db/requestDb';
 import {
   estarRegistrations,
   type EstarRegistrationRow,
@@ -53,10 +62,19 @@ export interface EstarRegistrationWrite {
   mdufaFeeTier?: string | null;
   variants?: Array<'device' | 'ivd'>;
   notes?: string | null;
+  // The official eSTAR's Correspondent Information and Declaration of
+  // Conformity facts — org-level, so they live on this row (WO-8 Phase 3).
+  correspondentCompanyName?: string | null;
+  correspondentContactEmail?: string | null;
+  correspondentTelephone?: string | null;
+  /** Pairs with declarationCompanyAddress: the DoC names ONE legal entity. */
+  declarationCompanyName?: string | null;
+  declarationCompanyAddress?: string | null;
 }
 
 /** The persisted registration for an org, or null when the client has none yet. */
 export async function getEstarRegistration(
+  db: RequestDb,
   ctx: { organizationId: number },
 ): Promise<EstarRegistrationRow | null> {
   const [row] = await db
@@ -72,10 +90,11 @@ export async function getEstarRegistration(
  * unique organization_id). Audited.
  */
 export async function upsertEstarRegistration(
+  db: RequestDb,
   input: EstarRegistrationWrite,
   ctx: Ctx,
 ): Promise<EstarRegistrationRow> {
-  const existing = await getEstarRegistration(ctx);
+  const existing = await getEstarRegistration(db, ctx);
   if (existing) {
     const [row] = await db
       .update(estarRegistrations)
@@ -132,9 +151,10 @@ export function toClientRegistration(row: EstarRegistrationRow): EstarClientRegi
  * satisfied) keyed on the org — so eligibility fails closed rather than throwing.
  */
 export async function resolveClientRegistration(
+  db: RequestDb,
   ctx: { organizationId: number },
 ): Promise<EstarClientRegistration> {
-  const row = await getEstarRegistration(ctx);
+  const row = await getEstarRegistration(db, ctx);
   if (!row) return { clientId: String(ctx.organizationId), satisfied: [] };
   return toClientRegistration(row);
 }

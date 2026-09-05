@@ -66,13 +66,14 @@ export const RUN_PROBABILISTIC_SENSITIVITY: AnaTool = {
 export const RUN_CDISC_PIPELINE: AnaTool = {
   name: 'run_cdisc_pipeline',
   description:
-    'Run the full CDISC pipeline over a dataset spec (SDTM/ADaM): structural + deeper conformance rules (required identifier vars, naming, types, codelist resolution + hygiene, duplicate vars, ADaM ADSL presence), generate define.xml v2.0, and return a consolidated submission-readiness report (error/warning counts + submissionReady). Honest scope: mechanical rules only, not a Pinnacle21/CDISC-CT substitute. ' + NOTE,
+    'Run the full CDISC pipeline over a dataset spec (SDTM/ADaM): structural + deeper conformance rules (required identifier vars, naming, types, codelist resolution + hygiene, duplicate vars, ADaM ADSL presence), generate define.xml, and return a consolidated submission-readiness report (error/warning counts + submissionReady + the Define-XML version emitted). Honest scope: mechanical rules only, not a Pinnacle21/CDISC-CT substitute. ' + NOTE,
   input_schema: {
     type: 'object',
     properties: {
       spec: {
         type: 'object',
-        description: 'The dataset spec (same shape as generate_define_xml): { studyName, standard, datasets[], codelists[] }.',
+        description:
+          "The dataset spec (same shape as generate_define_xml): { studyName, standard, datasets[], codelists[], defineVersion? }. defineVersion is '2.0' or '2.1' (default '2.1').",
       },
     },
     required: ['spec'],

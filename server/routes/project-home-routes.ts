@@ -86,9 +86,11 @@ function slug(s: string): string {
 }
 
 /**
- * A single tenant-scoped read that fails closed: returns [] on a missing table
- * (recording it in `pending`) or any other error, so one absent store degrades
- * gracefully instead of failing the whole aggregation.
+ * A single tenant-scoped read. A MISSING TABLE degrades gracefully to [] (and is
+ * recorded in `pending` so the caller can report the store as unprovisioned).
+ * Any OTHER error is a real read failure and is rethrown so the aggregation fails
+ * closed (→ the handler's 500) — returning [] there would report "0 rows" as a
+ * genuine empty (0 tasks, no blockers) built from a read that failed.
  */
 async function safeRows(
   label: string,
@@ -105,7 +107,7 @@ async function safeRows(
       return [];
     }
     logger.error(`${label} read failed`, { err: err instanceof Error ? err.message : String(err) });
-    return [];
+    throw err;
   }
 }
 

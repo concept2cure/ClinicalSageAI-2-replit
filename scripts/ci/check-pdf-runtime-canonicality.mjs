@@ -39,12 +39,10 @@ const APPROVED = new Set([
   'server/services/documentExportService.ts',
   'server/services/documentQuality/pdfValidationAttachment.ts',
   'server/services/biotech-artifact-generator.ts',
-  'server/services/pmaDocumentGenerator.js',
   'server/services/universal-packager.ts',
   'server/services/tools/index.ts',
   'server/routes/concept2cure.ts',
   'server/src/routes/stability.router.ts',
-  'server/pdf-processor.ts',
   // Additional pre-existing consumers (documented at gate-introduction time,
   // 2026-05-07). New PDF surfaces must use pdf-converter.ts instead of
   // adding entries here.

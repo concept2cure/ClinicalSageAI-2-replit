@@ -457,6 +457,13 @@ const TOOL_LABELS: Record<string, (input: Record<string, unknown>) => string> = 
     `Starting a background deep investigation${i.question ? ` — ${quoteArg(i.question)}` : ''}`,
   check_deep_investigation: () => 'Checking on the background investigation',
   get_client_journey: () => 'Getting your bearings — from license to submission',
+  // Project-folder catalog — legible "she knows the files and is studying them".
+  list_project_documents: () => 'Checking the project folder',
+  read_project_document: i =>
+    typeof i.offset === 'number' && i.offset > 0
+      ? 'Reading the document — continuing where it left off'
+      : 'Reading the document in full',
+  catalog_project_document: () => 'Recording what this document is',
   // Document vault / governed reads — legible "she's reading the right thing".
   list_vault_documents: () => 'Listing the document vault',
   read_vault_document: () => 'Reading the vault document',

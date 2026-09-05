@@ -1,0 +1,20 @@
+{
+  "$comment": "Literal class names a component renders that NO built CSS chunk defines, keyed file::class. A class with no rule behind it cannot style anything on any surface, whatever the component claims. This list may only SHRINK — by writing the rules, by importing the stylesheet that already has them, or by deleting the class from the markup. Regenerate with --write-baseline ONLY after removing entries, and only against a fresh `npm run build`.",
+  "$generated": "2026-09-03",
+  "entryCount": 11,
+  "classCount": 7,
+  "siteCount": 15,
+  "entries": [
+    "client/src/concept2cure/v2/surfaces/CmcModule.tsx::dim",
+    "client/src/concept2cure/v2/surfaces/CmcModule3Build.tsx::dim",
+    "client/src/concept2cure/v2/surfaces/CmcQuality.tsx::dim",
+    "client/src/concept2cure/v2/surfaces/DocJourney.tsx::dj",
+    "client/src/concept2cure/v2/surfaces/EctdCompile.tsx::dim",
+    "client/src/concept2cure/v2/surfaces/IdentityConsole.tsx::dim",
+    "client/src/concept2cure/v2/surfaces/IndLifecycle.tsx::good",
+    "client/src/concept2cure/v2/surfaces/LabelingPi.tsx::lp",
+    "client/src/concept2cure/v2/surfaces/NdaCockpit.tsx::nda",
+    "client/src/concept2cure/v2/surfaces/Orchestration.tsx::orch",
+    "client/src/concept2cure/v2/surfaces/Rbm.tsx::rbm"
+  ]
+}

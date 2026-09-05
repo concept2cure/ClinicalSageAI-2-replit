@@ -70,7 +70,8 @@ export const UI_V2_SURFACES: UiSurface[] = [
     discoveryCatalog: null,
     readiness: 'routes-ready',
     compliance: [PART11, A11Y, TONE],
-    notes: 'eTMF inspection-readiness (CRO deliverable). assessTmfCompleteness against the DIA TMF Reference Model (11 zones, ICH E6(R2) §8 essential docs) via GET /api/etmf/trials/:trialId/completeness; file gaps via POST .../artifacts. AnA GENERATES the inspection-readiness package (the hero deliverable), not a dashboard. GAP: the inspection-package ZIP + artifacts/bulk endpoints are on the feature branch claude/doc-mgmt-structure-alignment-4p91eu, not yet on concept2cure-v2 — the Download action wires to them live-first and degrades to an honest in-browser readiness report.',
+    notes: 'eTMF inspection-readiness (CRO deliverable). Completeness is assessed against the DIA TMF Reference Model — 11 zones, ICH E6(R2) §8 essential documents — and gaps are filed from the same screen. AnA generates the inspection-readiness package itself rather than showing a dashboard about it. The package ZIP is not built yet: Download produces the in-browser readiness report instead, and says so.',
+    engineering: 'assessTmfCompleteness via GET /api/etmf/trials/:trialId/completeness; file gaps via POST .../artifacts. The inspection-package ZIP and artifacts/bulk endpoints are unbuilt; Download degrades live-first.',
   },
   {
     id: 'filings-catalog',
@@ -86,7 +87,7 @@ export const UI_V2_SURFACES: UiSurface[] = [
     discoveryCatalog: null,
     readiness: 'routes-ready',
     compliance: [A11Y, TONE],
-    notes: 'Canonical taxonomy of 113 filing types across pharma/biotech, device, IVD, cross-cutting. Each routes into its execution workflow (IND/NDA/BLA/MAA/510k/PMA/De Novo/CER).',
+    notes: 'The canonical index of every regulatory filing type, across pharma/biotech, device, IVD and cross-cutting. Each routes into its execution workflow (IND/NDA/BLA/MAA/510k/PMA/De Novo/CER). The count is computed from the registry and shown on the page.',
   },
   {
     // Routable but unregistered until now. `/concept2cure/client-portal` is
@@ -144,7 +145,8 @@ export const UI_V2_SURFACES: UiSurface[] = [
     discoveryCatalog: null,
     readiness: 'routes-ready',
     compliance: [PART11, A11Y, TONE],
-    notes: 'The proven, deterministic last gate before transmit (dispatch-gate.ts). Composes structural validation + unacknowledged Shadow Review criticals + external eValidator; a client cannot talk it down (every input server-computed). Flags the cleared-but-never-reviewed blind spot. Bound to GET /api/submissions/sequences/:seqId/dispatch-readiness.',
+    notes: 'The deterministic last gate before transmit. Composes structural validation, unacknowledged Shadow Review criticals and the external eValidator; every input is computed server-side, so the client cannot talk the verdict down. Flags the cleared-but-never-reviewed blind spot.',
+    engineering: 'dispatch-gate.ts. Bound to GET /api/submissions/sequences/:seqId/dispatch-readiness.',
   },
   {
     id: 'shadow-review',
@@ -160,7 +162,8 @@ export const UI_V2_SURFACES: UiSurface[] = [
     discoveryCatalog: null,
     readiness: 'routes-ready',
     compliance: [PART11, A11Y, TONE],
-    notes: 'AnA simulates the reviewer who will read your submission (5 real lenses: FDA filing / EMA D120 / PMDA / MDR NB / IVDR NB) and scores the two gates that kill a filing — RTF (administrative) and CRL (substantive). Findings are model_assisted; the risk aggregation is the verbatim deterministic aggregateRisk (a single critical saturates). Bound to POST /api/submissions/sequences/:seqId/shadow-review.',
+    notes: 'AnA simulates the reviewer who will read your submission (5 real lenses: FDA filing / EMA D120 / PMDA / MDR NB / IVDR NB) and scores the two gates that kill a filing — RTF (administrative) and CRL (substantive). Findings are model_assisted; the risk aggregation is the verbatim deterministic aggregateRisk (a single critical saturates).',
+    engineering: 'Bound to POST /api/submissions/sequences/:seqId/shadow-review.',
   },
   {
     id: 'decision-lineage',
@@ -176,7 +179,8 @@ export const UI_V2_SURFACES: UiSurface[] = [
     discoveryCatalog: null,
     readiness: 'routes-ready',
     compliance: [PART11, A11Y, TONE],
-    notes: 'The immutable, Part-11 hash-chained decision trail behind every governed artifact (who decided what, when, on what evidence, signed how). Answer-first defensibility read, then the readable chain of governed decisions (5 node types), then chain-integrity verify + compliance frameworks + eCTD-compatible export. Bound to GET /api/decision-lineage/:entityType/:entityId + verify-chain. Contract ref (not yet a @shared file): @shared/types/decision-lineage',
+    notes: 'The immutable, Part-11 hash-chained decision trail behind every governed artifact (who decided what, when, on what evidence, signed how). Answer-first defensibility read, then the readable chain of governed decisions (5 node types), then chain-integrity verify + compliance frameworks + eCTD-compatible export.',
+    engineering: 'Bound to GET /api/decision-lineage/:entityType/:entityId + verify-chain. Contract ref (not yet a @shared file): @shared/types/decision-lineage.',
   },
   {
     id: 'ivd-completeness',
@@ -192,7 +196,8 @@ export const UI_V2_SURFACES: UiSurface[] = [
     discoveryCatalog: null,
     readiness: 'routes-ready',
     compliance: [A11Y, TONE],
-    notes: 'IVDR technical-file completeness (validate-completeness IVDR branch) — GSPR Annex I, Performance Evaluation Report Annex XIII, analytical + clinical performance, scientific validity, PMPF/PMS. IVD-only; derives from the diagnostics IVDR spine. Answer-first CE-marking readiness, not the borrowed device checklist. Contract ref (not yet a @shared file): @shared/regulatory/ivdr',
+    notes: 'IVDR technical-file completeness (validate-completeness IVDR branch) — GSPR Annex I, Performance Evaluation Report Annex XIII, analytical + clinical performance, scientific validity, PMPF/PMS. IVD-only; derives from the diagnostics IVDR spine. Answer-first CE-marking readiness, not the borrowed device checklist.',
+    engineering: 'Contract ref (not yet a @shared file): @shared/regulatory/ivdr.',
   },
   {
     id: 'batch-draft',
@@ -240,7 +245,8 @@ export const UI_V2_SURFACES: UiSurface[] = [
     discoveryCatalog: null,
     readiness: 'routes-ready',
     compliance: [PART11, A11Y, TONE],
-    notes: 'Change a governed value once and propagate it across every document that cites it. Draft sections update inline; approved/locked sections are flagged for re-approval with a task, on the audit trail. Matches Artos Inconsistency Intelligence / Weave content-update. Contract ref (not yet a @shared file): server/routes/assumption-decision-contradiction.ts',
+    notes: 'Change a governed value once and propagate it across every document that cites it. Draft sections update inline; approved and locked sections are flagged for re-approval with a task, on the audit trail.',
+    engineering: 'Matches Artos Inconsistency Intelligence / Weave content-update. Contract ref (not yet a @shared file): server/routes/assumption-decision-contradiction.ts.',
   },
   {
     id: 'source-tracer',
@@ -256,7 +262,8 @@ export const UI_V2_SURFACES: UiSurface[] = [
     discoveryCatalog: null,
     readiness: 'routes-ready',
     compliance: [PART11, A11Y, TONE],
-    notes: 'Sentence-level provenance bound to sourceLinks.ts: every sentence carries a typed SourceLink (sourceType ∈ trial_data|literature|regulatory_guidance|internal_data) with a 0–1 confidence. POST /sources/analyze finds untraced claims (claimsFound). Literature citations are verified against PubMed+CrossRef via /api/citations/verify (verified|not_found|unverifiable|error) — an unconfirmed citation is flagged, never assumed. Fixture-backed with a Sample-data pill until live-wired. Contract ref (not yet a @shared file): server/routes/sourceLinks.ts + server/routes/citations.ts',
+    notes: 'Sentence-level provenance: every sentence carries a typed source (trial data, literature, regulatory guidance or internal data) with a confidence score, and untraced claims are surfaced. Literature citations are checked against PubMed and CrossRef — an unconfirmed citation is flagged, never assumed. Still sample-backed, and labelled as such until it is wired to live data.',
+    engineering: 'POST /sources/analyze (claimsFound); verification via /api/citations/verify (verified|not_found|unverifiable|error). Contract ref (not yet a @shared file): server/routes/sourceLinks.ts + server/routes/citations.ts.',
   },
   {
     id: 'dossier',
@@ -320,7 +327,8 @@ export const UI_V2_SURFACES: UiSurface[] = [
     discoveryCatalog: null,
     readiness: 'routes-ready',
     compliance: [PART11, A11Y, TONE],
-    notes: 'Post-submission review phase: agency IR / Day-120 LoQ / CRL decomposed, source-traced responses with precedent intelligence, governed e-sign into the response package. Contract ref (not yet a @shared file): @shared/types/haq',
+    notes: 'Post-submission review phase: agency IR / Day-120 LoQ / CRL decomposed, source-traced responses with precedent intelligence, governed e-sign into the response package.',
+    engineering: 'Contract ref (not yet a @shared file): @shared/types/haq.',
   },
   {
     id: 'nda-cockpit',
@@ -619,7 +627,8 @@ export const UI_V2_SURFACES: UiSurface[] = [
     discoveryCatalog: null,
     readiness: 'contract-ready',
     compliance: [A11Y, TONE, 'motion-discipline'],
-    notes: 'Deterministic submission work breakdown — type selector (8 engine + 12 global types), dashboard (progress ring, phase strip, risk gauge, next-available tasks), phase→task drill-down with full-metadata detail sheet (risk, CTD bindings, guidance, deps, deliverables), analytics (resources/bottlenecks, document coverage, critical path), global pyramid browser. Task status is the only client-owned state. Contract ref (not yet a @shared file): services/regulatory/SubmissionPyramidEngine.ts · globalPyramids.ts · submission-type-bridge.ts',
+    notes: 'Deterministic submission work breakdown — submission-type selector, dashboard (progress ring, phase strip, risk gauge, next-available tasks), phase-to-task drill-down with a full-metadata detail sheet (risk, CTD bindings, guidance, dependencies, deliverables), analytics (resources and bottlenecks, document coverage, critical path), and the global pyramid browser. Task status is the only state the browser owns.',
+    engineering: 'Contract ref (not yet a @shared file): services/regulatory/SubmissionPyramidEngine.ts, globalPyramids.ts, submission-type-bridge.ts.',
   },
   {
     id: 'registrations',
@@ -683,7 +692,8 @@ export const UI_V2_SURFACES: UiSurface[] = [
     discoveryCatalog: null,
     readiness: 'routes-ready',
     compliance: [PART11, A11Y, TONE],
-    notes: 'Quality & Assurance: the SOP / controlled-document register (periodic review, read-and-understood training) and Change control (the change-control log + lifecycle flowchart, ICH Q10 / EU GMP Annex 15, linking changes to deviations, CAPAs and validation records). Backed by /api/mdx/qms/*.',
+    notes: 'Quality & Assurance: the SOP / controlled-document register (periodic review, read-and-understood training) and Change control (the change-control log + lifecycle flowchart, ICH Q10 / EU GMP Annex 15, linking changes to deviations, CAPAs and validation records).',
+    engineering: 'Backed by /api/mdx/qms/*.',
   },
   {
     id: 'doc-journey',
@@ -779,7 +789,8 @@ export const UI_V2_SURFACES: UiSurface[] = [
     discoveryCatalog: null,
     readiness: 'routes-ready',
     compliance: [PART11, A11Y, TONE, 'motion-discipline'],
-    notes: 'ICH E6(R3) RBQM domain shell — 10 surfaces (overview, risk review report, RACT, KRIs, QTLs, central monitoring, patient profiles, site risk, site oversight, monitoring plan) over the /api/mdx/rbm-* routes, read through the aggregated board (GET /api/mdx-rbm/rbm-board/:programId). 5 deterministic engines produce every score; assessment + plan approvals are Part 11 governed (reason-for-change + e-sign). Every in-surface edit is a real write followed by a board re-read — no local optimistic state. Write layer: client/src/concept2cure/v2/surfaces/rbmWrites.tsx.',
+    notes: 'ICH E6(R3) RBQM domain shell — overview, risk review report, RACT, KRIs, QTLs, central monitoring, patient profiles, site risk, site oversight and monitoring plan, read through one aggregated board. Every score is produced deterministically; assessment and plan approvals are Part 11 governed (reason-for-change plus e-signature). Every edit is a real write followed by a re-read — nothing is held optimistically in the browser.',
+    engineering: 'Routes: /api/mdx/rbm-*, aggregated by GET /api/mdx-rbm/rbm-board/:programId. 5 deterministic engines. Write layer: client/src/concept2cure/v2/surfaces/rbmWrites.tsx.',
   },
   {
     id: 'orchestration',
@@ -827,7 +838,8 @@ export const UI_V2_SURFACES: UiSurface[] = [
     discoveryCatalog: null,
     readiness: 'routes-ready',
     compliance: [PART11, A11Y, TONE],
-    notes: 'AnA Reporting Canvas — conversational governed reporting over the Report-OS render model (30 report types), per-segment catalog, entitlement tiers, best-practice packs. Contract ref (not yet a @shared file): server/services/report-os/taxonomy.ts',
+    notes: 'AnA Reporting Canvas — conversational governed reporting over the Report-OS render model, with a per-segment catalog, entitlement tiers and best-practice packs.',
+    engineering: 'Contract ref (not yet a @shared file): server/services/report-os/taxonomy.ts.',
   },
   {
     id: 'pediatric',
@@ -1103,7 +1115,8 @@ export const UI_V2_SURFACES: UiSurface[] = [
     discoveryCatalog: null,
     readiness: 'routes-ready',
     compliance: [A11Y, TONE],
-    notes: 'Read-only reference: 142 deterministic_registry tools across 24 domains, with the determinism-pedigree trust system and the shared deterministic-result rendering pattern. Contract ref (not yet a @shared file): server/services/ana/tool-pedigree.ts',
+    notes: 'Read-only reference for the deterministic tools AnA can run, grouped by domain, with the determinism-pedigree trust system and the shared result-rendering pattern.',
+    engineering: 'Contract ref (not yet a @shared file): server/services/ana/tool-pedigree.ts.',
   },
   {
     id: 'pharmacovigilance',
@@ -1314,7 +1327,8 @@ export const UI_V2_SURFACES: UiSurface[] = [
     discoveryCatalog: null,
     readiness: 'routes-ready',
     compliance: [A11Y, TONE],
-    notes: 'Plan usage limits, weekly caps, usage credits, rate limits by tier — billing-dashboard.ts router, MOUNTED AT /api/billing (verified against register-inline-routes 2026-07-05).',
+    notes: 'Plan usage limits, weekly caps, usage credits and rate limits by tier.',
+    engineering: 'billing-dashboard.ts router, mounted at /api/billing (verified against register-inline-routes 2026-07-05).',
   },
   {
     /* Wired into the shell (surfaceViews.ts:347, NAV_HIDDEN, and the

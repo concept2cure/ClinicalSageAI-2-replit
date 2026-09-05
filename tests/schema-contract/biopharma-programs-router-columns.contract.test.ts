@@ -73,6 +73,15 @@ const REGULATORY_PROGRAMS_DDL = `
     indication text,
     intended_use text,
     predicate_devices json,
+    -- The device-level eSTAR administrative facts (WO-8 Phase 3). They live on
+    -- the program because they describe the device, and the official FDA eSTAR
+    -- reads them through estar-administrative-data. Listed here because this
+    -- fixture is pinned to the Drizzle definition column-for-column below.
+    common_name text,
+    classification_name text,
+    regulation_number text,
+    associated_product_codes text,
+    indications_for_use_citation text,
     equivalent_devices json,
     status text NOT NULL,
     phase text,

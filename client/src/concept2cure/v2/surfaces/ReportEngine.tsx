@@ -6,6 +6,7 @@ import type { SurfaceViewProps } from '../surfaceViews';
 import { renderSafeMarkdown } from '../../components/ana/renderSafeMarkdown';
 import { saveToAuthoring } from '../authoringHandoff';
 import { isClinicalRegulatoryGraphEnabled } from '../clinicalRegulatoryGraphFlag';
+import { usePublishSurfaceContext } from '../surfaceContext';
 import { assessmentState, mayReassure } from '../assessmentState';
 import '../styles/project-home-v2.css';
 import { C2CToast, useToast } from '../toast';
@@ -456,6 +457,64 @@ export function ReportEngine({ onAsk, onNav }: SurfaceViewProps) {
   }, [analysis, docType, docDef]);
   const html = useMemo(() => analysis ? renderSafeMarkdown(md) : '', [md, analysis]);
   const a = analysis && analysis.protocol_data;
+
+  /* Restored. The honest-state sweep (6866d4fb1) deleted this surface's import,
+     its anaContext and its publish call while fixing an unrelated empty-vs-
+     unassessed problem. Nothing in that change wanted them gone and its message
+     does not mention them — AnA simply went blind to this screen as a side
+     effect, and the screen-awareness gate then failed because the baseline still
+     counted it. The context below is the removed one verbatim: it was already
+     honest, distinguishing a server-side analysis from the local text parse the
+     surface falls back to, and saying plainly when nothing has been analysed. */
+  const anaContext = useMemo(() => {
+    if (busy) {
+      return { summary: 'The protocol is being analysed; nothing on screen is final yet.' };
+    }
+    if (!analysis || !a) {
+      return {
+        summary:
+          'Report engine: no protocol has been analysed yet' +
+          (text.trim() ? `, though ${text.trim().length} character(s) of protocol text are in the input.` : '.'),
+        facts: { protocolTextLength: text.trim().length, selectedDocumentType: docType },
+        availableActions: ['Paste protocol text and run the analysis'],
+      };
+    }
+    return {
+      summary:
+        `Report engine: a protocol has been analysed ${analysis.source === 'live' ? 'by the analytics service' : 'LOCALLY, in the browser, because the analytics service was not reachable — the figures below are a text parse, not an analysis'}. ` +
+        `Phase ${a.phase}, n=${a.sample_size}, ${a.duration_weeks} weeks; ` +
+        `${(a.risk_factors ?? []).length} risk factor(s). The "${docDef?.label ?? docType}" document is generated on screen.`,
+      facts: {
+        analysisSource: analysis.source,
+        analysisIsServerSide: analysis.source === 'live',
+        selectedDocumentType: docType,
+        documentLabel: docDef?.label ?? null,
+        // The parsed title / indication / primary-endpoint are unbounded
+        // free-text slices of the synopsis the user pasted (title falls back to
+        // its first 80 characters) — publishing them verbatim would fold a
+        // pasted third-party document into the every-turn model prompt, a
+        // sensitive payload AND a prompt-injection side channel outside the
+        // visible conversation. Only the bounded, structured figures travel;
+        // the text stays on screen. phase is a bounded token ([1-4IViv]+ or
+        // 'Unknown'), severity a bounded enum.
+        protocol: {
+          phase: a.phase, sampleSize: a.sample_size, durationWeeks: a.duration_weeks,
+          hasIndication: a.indication !== 'Unspecified' && Boolean(a.indication),
+          hasPrimaryEndpoint: Boolean(a.primary_endpoint),
+        },
+        riskFactorCount: (a.risk_factors ?? []).length,
+        riskFactorSeverities: (a.risk_factors ?? []).map((r) => r.severity),
+        similarProtocols: (analysis.similar_protocols ?? []).slice(0, 8).map((sp) => ({ id: sp.id, title: sp.title })),
+        generatedDocumentLength: md.length,
+      },
+      availableActions: [
+        'Analyse pasted protocol text',
+        'Switch the generated document type',
+        'Open the generated document in the authoring editor (creates a real Module 5 document)',
+      ],
+    };
+  }, [busy, analysis, a, text, docType, docDef, md]);
+  usePublishSurfaceContext('report-engine', anaContext);
 
   /*
    * "Open in editor" — a real handoff. See the long note on the same handler in

@@ -24,15 +24,16 @@ const definedNames = ALL_ANA_TOOLS.map((t) => t.name);
  *
  *   screen_signal_panel   winner: statisticalDesignTools (spread first)
  *                         shadowed: ivdLifecycleTools
- *   generate_define_xml   winner: extendedRegulatoryTools (define.xml v2.0)
- *                         shadowed: cdiscTools (v2.1)
- *   run_cdisc_pipeline    winner: advancedModelingTools
- *                         shadowed: cdiscTools
  *
  * This list may shrink, never grow. A new entry means a tool definition is being
  * silently discarded — the author's schema never reaches the model.
+ *
+ * generate_define_xml and run_cdisc_pipeline left this list when their shadowed
+ * definitions in cdiscTools were deleted. The generate_define_xml one mattered:
+ * its schema described a different dataset shape than the winner's, so an author
+ * editing it changed nothing the model ever saw.
  */
-const KNOWN_DUPLICATE_NAMES = ['generate_define_xml', 'run_cdisc_pipeline', 'screen_signal_panel'];
+const KNOWN_DUPLICATE_NAMES = ['screen_signal_panel'];
 
 describe('AnA tool registry — every defined tool is wired', () => {
   it('ALL_ANA_TOOLS has no duplicate names', () => {

@@ -21,10 +21,19 @@ export * as csr from './csr';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // AI SERVICES
-// openai-service exports OpenAI Assistants API functions (threads, runs, etc.)
+// `export * as openaiService from './openai-service'` was here. That module
+// constructed a provider SDK client of its own, while the root
+// `server/openai-service.ts` routes every completion through getGateway().
+// Both exported `generateStructuredResponse` and `analyzeText`, so which
+// governance a `from './openai-service'` import received was decided by how
+// deep in the tree the importing file sat — one character, `./` vs `../`,
+// between an audited call and an unaudited one. The module is deleted.
+//
+// (Deliberately not spelling the constructor above: check-gateway-bypass.mjs
+// matches raw source, comments included, and exempts by PATH rather than by
+// narrowing its regexes — because narrowing them would make it miss real calls
+// of the same shape. Prose bends around the gate; the gate does not bend.)
 // ═══════════════════════════════════════════════════════════════════════════════
-
-export * as openaiService from './openai-service';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // CORTEX PRIME SERVICES

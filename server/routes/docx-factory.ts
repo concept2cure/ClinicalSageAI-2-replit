@@ -101,7 +101,6 @@ async function requireProgramAccess(req: Request, res: Response, next: NextFunct
     console.error('[docx-factory] program access check failed:', err.message);
     return res.status(500).json({
       error: 'Program access check failed',
-      detail: err.message,
     });
   }
 }
@@ -164,7 +163,7 @@ router.post(
       res.status(result.status).type(result.contentType).send(result.body);
     } catch (err: any) {
       console.error('[docx-factory] create template proxy error:', err.message);
-      res.status(502).json({ error: 'Shadow service unreachable', detail: err.message });
+      res.status(502).json({ error: 'Shadow service unreachable' });
     }
   }
 );
@@ -187,7 +186,7 @@ router.get(
       res.status(result.status).type(result.contentType).send(result.body);
     } catch (err: any) {
       console.error('[docx-factory] list templates proxy error:', err.message);
-      res.status(502).json({ error: 'Shadow service unreachable', detail: err.message });
+      res.status(502).json({ error: 'Shadow service unreachable' });
     }
   }
 );
@@ -214,7 +213,7 @@ router.post(
       res.status(result.status).type(result.contentType).send(result.body);
     } catch (err: any) {
       console.error('[docx-factory] create version proxy error:', err.message);
-      res.status(502).json({ error: 'Shadow service unreachable', detail: err.message });
+      res.status(502).json({ error: 'Shadow service unreachable' });
     }
   }
 );
@@ -238,7 +237,7 @@ router.get(
       res.status(result.status).type(result.contentType).send(result.body);
     } catch (err: any) {
       console.error('[docx-factory] list versions proxy error:', err.message);
-      res.status(502).json({ error: 'Shadow service unreachable', detail: err.message });
+      res.status(502).json({ error: 'Shadow service unreachable' });
     }
   }
 );
@@ -265,7 +264,7 @@ router.post(
       res.status(result.status).type(result.contentType).send(result.body);
     } catch (err: any) {
       console.error('[docx-factory] create render proxy error:', err.message);
-      res.status(502).json({ error: 'Shadow service unreachable', detail: err.message });
+      res.status(502).json({ error: 'Shadow service unreachable' });
     }
   }
 );
@@ -288,7 +287,7 @@ router.get(
       res.status(result.status).type(result.contentType).send(result.body);
     } catch (err: any) {
       console.error('[docx-factory] list renders proxy error:', err.message);
-      res.status(502).json({ error: 'Shadow service unreachable', detail: err.message });
+      res.status(502).json({ error: 'Shadow service unreachable' });
     }
   }
 );
@@ -312,7 +311,7 @@ router.get(
       res.status(result.status).type(result.contentType).send(result.body);
     } catch (err: any) {
       console.error('[docx-factory] get render proxy error:', err.message);
-      res.status(502).json({ error: 'Shadow service unreachable', detail: err.message });
+      res.status(502).json({ error: 'Shadow service unreachable' });
     }
   }
 );
@@ -340,7 +339,7 @@ router.get(
       res.status(result.status).type(result.contentType).send(result.body);
     } catch (err: any) {
       console.error('[docx-factory] list render events proxy error:', err.message);
-      res.status(502).json({ error: 'Shadow service unreachable', detail: err.message });
+      res.status(502).json({ error: 'Shadow service unreachable' });
     }
   }
 );
@@ -368,7 +367,7 @@ router.post(
       res.status(result.status).type(result.contentType).send(result.body);
     } catch (err: any) {
       console.error('[docx-factory] execute render proxy error:', err.message);
-      res.status(502).json({ error: 'Shadow service unreachable', detail: err.message });
+      res.status(502).json({ error: 'Shadow service unreachable' });
     }
   }
 );
@@ -485,7 +484,7 @@ router.get(
       res.status(200).send(buffer);
     } catch (err: any) {
       console.error('[docx-factory] artifact download proxy error:', err.message);
-      res.status(502).json({ error: 'Shadow service unreachable', detail: err.message });
+      res.status(502).json({ error: 'Shadow service unreachable' });
     }
   }
 );
@@ -521,7 +520,7 @@ router.post(
       res.status(result.status).type(result.contentType).send(result.body);
     } catch (err: any) {
       console.error('[docx-factory] seed proxy error:', err.message);
-      res.status(502).json({ error: 'Shadow service unreachable', detail: err.message });
+      res.status(502).json({ error: 'Shadow service unreachable' });
     }
   }
 );
@@ -545,7 +544,7 @@ router.get('/demo-packs', requireConfigured, async (req: Request, res: Response)
     res.status(result.status).type(result.contentType).send(result.body);
   } catch (err: any) {
     console.error('[docx-factory] demo-packs proxy error:', err.message);
-    res.status(502).json({ error: 'Shadow service unreachable', detail: err.message });
+    res.status(502).json({ error: 'Shadow service unreachable' });
   }
 });
 
@@ -560,7 +559,7 @@ router.get('/catalog/families', requireConfigured, async (_req: Request, res: Re
     res.status(result.status).type(result.contentType).send(result.body);
   } catch (err: any) {
     console.error('[docx-factory] catalog families proxy error:', err.message);
-    res.status(502).json({ error: 'Shadow service unreachable', detail: err.message });
+    res.status(502).json({ error: 'Shadow service unreachable' });
   }
 });
 
@@ -579,7 +578,7 @@ router.get('/catalog/doc-types', requireConfigured, async (req: Request, res: Re
     res.status(result.status).type(result.contentType).send(result.body);
   } catch (err: any) {
     console.error('[docx-factory] catalog doc-types proxy error:', err.message);
-    res.status(502).json({ error: 'Shadow service unreachable', detail: err.message });
+    res.status(502).json({ error: 'Shadow service unreachable' });
   }
 });
 
@@ -601,7 +600,7 @@ router.get('/catalog/templates', requireConfigured, async (req: Request, res: Re
     res.status(result.status).type(result.contentType).send(result.body);
   } catch (err: any) {
     console.error('[docx-factory] catalog templates proxy error:', err.message);
-    res.status(502).json({ error: 'Shadow service unreachable', detail: err.message });
+    res.status(502).json({ error: 'Shadow service unreachable' });
   }
 });
 

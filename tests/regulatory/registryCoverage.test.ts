@@ -9,6 +9,8 @@
  */
 
 import { describe, it, expect } from 'vitest';
+import path from 'node:path';
+import os from 'node:os';
 import {
   getDocumentCoverage,
   buildCoverageReport,
@@ -53,10 +55,35 @@ describe('Registry coverage', () => {
   describe('per-entry coverage', () => {
     it('US IND requires forms 1571/1572/3674 and they are FDA-registry backed and implemented', () => {
       const cov = getDocumentCoverage('US_IND')!;
-      const numbers = cov.requiredForms.map((f) => f.formNumber).filter(Boolean);
-      expect(numbers).toEqual(expect.arrayContaining(['1571', '1572', '3674']));
+      const numbers = cov.requiredForms.map((f) => f.formNumber).sort();
+      expect(numbers).toEqual(['1571', '1572', '3674']);
       expect(cov.requiredForms.every((f) => f.registered && f.implemented)).toBe(true);
+    });
+
+    it('US IND is reported form-backed: all three required editions now fill officially', () => {
+      // This asserted the opposite for as long as 1571 and 3674 were believed
+      // unfillable. 1572 fills its reviewed AcroForm map; 1571 and 3674 fill
+      // through their XFA datasets packet, which is where their fields actually
+      // live. The manifest remains the single source both this report and the
+      // fill service read, so the two cannot disagree.
+      const cov = getDocumentCoverage('US_IND')!;
+      expect(cov.requiredForms.every((f) => f.officialAssetTrusted)).toBe(true);
       expect(cov.formsFullyBacked).toBe(true);
+    });
+
+    it('and stops being form-backed the moment the official editions are not installed', () => {
+      // The gate still bites: it is the installed, integrity-checked asset that
+      // earns the claim, never the builder flag.
+      const previous = process.env.IND_FORM_TEMPLATES_DIR;
+      process.env.IND_FORM_TEMPLATES_DIR = path.join(os.tmpdir(), 'c2c-no-forms-installed');
+      try {
+        const cov = getDocumentCoverage('US_IND')!;
+        expect(cov.requiredForms.some((f) => f.officialAssetTrusted)).toBe(false);
+        expect(cov.formsFullyBacked).toBe(false);
+      } finally {
+        if (previous === undefined) delete process.env.IND_FORM_TEMPLATES_DIR;
+        else process.env.IND_FORM_TEMPLATES_DIR = previous;
+      }
     });
 
     it('the named regions have an eCTD backbone reference', () => {

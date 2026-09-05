@@ -157,6 +157,19 @@ export const NAVIGATION_TARGETS: readonly NavigationTarget[] = [
   // then the underlying tools (PV / HEOR) are still reachable from chat.
   { id: 'safety', label: 'Safety / Pharmacovigilance', description: 'The safety/PV workspace — SAE line listings, E2B(R3) ICSR composition, and PV deliverables for the project.', scope: 'project', group: 'module' },
   { id: 'market-access', label: 'Market Access / HEOR', description: 'The health-economics & market-access workspace — budget-impact, cost-effectiveness (ICER), Markov, and PSA modeling for payer dossiers.', scope: 'project', group: 'module' },
+  { id: 'nda-cockpit', label: 'NDA/BLA cockpit', description: 'The NDA/BLA marketing-application cockpit — CTD readiness, Module 1 admin, the PDUFA clock, Refuse-to-File risk, and biologics.', scope: 'project', group: 'module' },
+  { id: 'maa-cockpit', label: 'MAA cockpit', description: 'The EU MAA marketing-application cockpit.', scope: 'project', group: 'module' },
+  { id: 'haq-manager', label: 'Health-authority questions', description: 'The HAQ manager — agency questions grouped by round, with analysis, drafts and commitments.', scope: 'project', group: 'module' },
+  { id: 'mission-control', label: 'Mission control', description: 'The portfolio mission-control board — every program and its cross-program status.', scope: 'global', group: 'global' },
+  { id: 'biostat-workbench', label: 'Biostatistics workbench', description: 'The biostatistics workbench — reviewer-risk assessment plus the deterministic design engines (assurance, group-sequential, sample size, multiplicity, and more).', scope: 'global', group: 'module' },
+  { id: 'filing-strategy', label: 'Filing strategy', description: 'The filing-strategy workspace — filing-sequence optimization, agency divergence, and prediction calibration.', scope: 'project', group: 'module' },
+  { id: 'safety-narrative', label: 'Safety narratives', description: 'The safety-narrative workbench — the SAE case worklist with the ICH E3 §16 narrative composer and expedited-reporting clocks.', scope: 'project', group: 'module' },
+  { id: 'crl-library', label: 'FDA CRL library', description: 'The FDA Complete-Response-Letter evidence library — deficiency findings by discipline and severity across the corpus.', scope: 'global', group: 'module' },
+  { id: 'registrations', label: 'Registrations', description: 'The registrations & lifecycle workspace — marketing authorizations by market, the approvals tracker, renewals & variations, HA commitments, and submission strategy.', scope: 'project', group: 'module' },
+  { id: 'cro-portfolio', label: 'CRO portfolio', description: 'The CRO sponsor portfolio — the org’s sponsor roster and their program engagements.', scope: 'global', group: 'module' },
+  { id: 'agency-meetings', label: 'Agency meetings', description: 'The agency-meetings workspace — Type A/B/C and scientific-advice meetings with briefing books and minutes.', scope: 'global', group: 'module' },
+  { id: 'source-tracer', label: 'Source tracer', description: 'The source-tracer — every authored section with where each sentence came from: the cited sources and their verification state.', scope: 'global', group: 'module' },
+  { id: 'decision-lineage', label: 'Decision lineage', description: 'The decision-lineage graph — how a governed artifact was reached, node by node, with live hash-chain integrity.', scope: 'global', group: 'module' },
 
   // ── Device & diagnostics workstream (all render via MdxSurfaceHost; program
   // scope comes from the project in context when one is open) ──

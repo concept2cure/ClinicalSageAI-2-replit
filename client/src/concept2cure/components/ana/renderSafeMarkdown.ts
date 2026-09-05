@@ -69,9 +69,16 @@ const SANITIZE_CONFIG = {
  * tracking/exfil surface); authored sections carry their figures.
  *
  * The extra tags are the editor's own serialization set: img (the figure
- * reference), figure/figcaption (legacy stored content), s/mark (strike and
- * highlight marks), ins/del (track changes), and colspan/rowspan so merged
- * table cells don't silently un-merge in the read view.
+ * reference), figure/figcaption (legacy stored content), caption (a table's
+ * own), s/mark (strike and highlight marks), ins/del (track changes), and
+ * colspan/rowspan so merged table cells don't silently un-merge in the read
+ * view.
+ *
+ * `caption` was missing, and a missing tag here DELETES CONTENT: DOMPurify
+ * strips the element and its text, so a table's caption — the label a reviewer
+ * navigates by — was absent from every read-only view of a document whose
+ * editor and whose exported DOCX and PDF all show it. Same silent-loss class
+ * as the stripped figure above, and the same fix.
  *
  * API image references are rewritten `src` → `data-authsrc` during
  * sanitization: every API route authenticates by Authorization header only,
@@ -88,6 +95,7 @@ const AUTHORING_SANITIZE_CONFIG = {
     'img',
     'figure',
     'figcaption',
+    'caption',
     's',
     'mark',
     'ins',
@@ -98,6 +106,13 @@ const AUTHORING_SANITIZE_CONFIG = {
 
 /** The attribute AuthoredHtml resolves through the authenticated fetch. */
 export const AUTH_IMG_ATTR = 'data-authsrc';
+
+/** The ONE same-app route a stored figure reference may point at (POST
+ *  /api/authoring/images returns it; GET serves it). Everything under /api/
+ *  that is NOT this prefix must never reach the authenticated resolver — a
+ *  bare '/api/' test let any API path one author stored in section HTML be
+ *  fetched with the NEXT VIEWER's credentials when the document rendered. */
+export const AUTHORING_IMAGE_URL_PREFIX = '/api/authoring/images/';
 
 // Bounded LRU so the chat panel doesn't recompute identical markdown
 // every render during streaming. 200 entries ≈ one long conversation.
@@ -165,8 +180,13 @@ export function sanitizeAuthoringHtml(html: string): string {
   DOMPurify.addHook('afterSanitizeAttributes', (node) => {
     if (node.tagName === 'IMG') {
       const src = node.getAttribute('src') ?? '';
-      if (src.startsWith('/api/')) {
+      if (src.startsWith(AUTHORING_IMAGE_URL_PREFIX)) {
         node.setAttribute(AUTH_IMG_ATTR, src);
+        node.removeAttribute('src');
+      } else if (src.startsWith('/api/')) {
+        // Any OTHER same-app API path is not a figure reference: never leave
+        // it for the browser to fire as a native (cookie-carrying) request,
+        // and never hand it to the authenticated resolver either.
         node.removeAttribute('src');
       }
     }

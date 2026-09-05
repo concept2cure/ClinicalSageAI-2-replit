@@ -388,7 +388,7 @@ export function PostmarketSurface({
                             <div className="pv-capa-card-title">{c.title}</div>
                             <div className="pv-capa-card-foot">
                               <span className="ctable-strong">{c.device}</span>
-                              <span className="dot-sep">·</span>
+                              <span className="dot-sep" aria-hidden="true">·</span>
                               <span>{c.owner}</span>
                             </div>
                           </button>

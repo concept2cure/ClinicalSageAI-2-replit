@@ -144,7 +144,15 @@ vi.mock('../../server/db', () => {
     delete: vi.fn(() => ({ where: vi.fn().mockResolvedValue(undefined) })),
   };
 
-  return { db, pool: { query: vi.fn() } };
+  // resolveClientWorkspaceId now resolves the caller org's workspace from the
+  // database instead of fabricating id 1; answer that one query honestly and
+  // leave every other raw query empty.
+  const poolQuery = vi.fn(async (text: unknown) =>
+    typeof text === 'string' && text.includes('FROM client_workspaces')
+      ? { rows: [{ id: 7 }] }
+      : { rows: [] }
+  );
+  return { db, pool: { query: poolQuery } };
 });
 
 vi.mock('../../server/utils/logger', () => ({

@@ -19,6 +19,7 @@
 
 import React, { useMemo } from 'react';
 import { diffStoredContent, type DiffSegment } from './editor/textDiff';
+import './styles/redline.css';
 
 export function RedlineText({
   previous,
@@ -57,12 +58,6 @@ export function RedlineText({
           ),
         )}
       </p>
-      <style>{`
-        .rdl-note { font-size: 11px; color: var(--text-400,#667085); margin: 6px 0 0; }
-        .rdl-body { font-size: 12px; line-height: 1.7; margin: 6px 0 0; max-height: 260px; overflow-y: auto; white-space: pre-wrap; }
-        .rdl-ins { background: color-mix(in srgb, var(--success,#067647) 14%, transparent); text-decoration: underline; color: var(--success,#067647); }
-        .rdl-del { background: color-mix(in srgb, var(--error,#b42318) 12%, transparent); text-decoration: line-through; color: var(--error,#b42318); }
-      `}</style>
     </>
   );
 }

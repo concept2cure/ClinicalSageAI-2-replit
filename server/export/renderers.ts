@@ -1,6 +1,9 @@
 import fs from 'fs/promises';
 import PDFDocument from 'pdfkit';
 import { Cluster } from 'puppeteer-cluster';
+// The structure-preserving HTML reducer the eCTD leaf renderer uses. Shared
+// rather than reimplemented: a second copy is a second thing to forget.
+import { htmlToPlainText } from '../services/ectd/leaf-pdf-renderer';
 import {
   Document,
   Packer,
@@ -45,8 +48,10 @@ async function getCluster(): Promise<Cluster | null> {
       },
     }).catch((err: any) => {
       console.warn(
-        '[Renderers] Puppeteer cluster failed to launch – using PDFKit fallback:',
-        err?.message || err
+        '[Renderers] Puppeteer cluster failed to launch — every HTML export will be ' +
+          'rendered by the PDFKit fallback, which produces a plain-text document with ' +
+          'no style-pack CSS applied. Install puppeteer to restore styled rendering. ' +
+          'Cause: ' + (err?.message || err),
       );
       return null as any;
     }) as Promise<Cluster>;
@@ -206,6 +211,35 @@ export async function renderHtmlToPdfTracked(
   return { buffer, usedFallback: true };
 }
 
+/**
+ * The PDF used when the Puppeteer cluster cannot launch.
+ *
+ * This is not a rare degradation. `puppeteer` is an optional transitive
+ * dependency of puppeteer-cluster and is not in package.json at all, so
+ * `Cluster.launch()` fails with "Cannot find module 'puppeteer'" in every
+ * environment and THIS is the renderer that produces every HTML export the
+ * platform ships today.
+ *
+ * It used to reduce the whole document to a single unstructured blob:
+ *
+ *   html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ')  ->  one doc.text(...)
+ *
+ * which destroyed every heading, table row, list and paragraph boundary in one
+ * step. A results table came out as a run-on sentence of cell values with no
+ * delimiter — "Arm n ORR Active 10 mg 150 42%" — and only five HTML entities
+ * were decoded, so "37&deg;C" printed literally. Nothing on the page indicated
+ * that a table had ever been there.
+ *
+ * It now reduces the document through htmlToPlainText, the same tree walk the
+ * eCTD leaf renderer uses: table cells keep a delimiter, lists keep their
+ * numbering and nesting, figures leave a marker instead of vanishing, tracked
+ * changes stay marked, and the full named and numeric entity set is decoded.
+ * One implementation rather than a second copy to forget — these reducers had
+ * already drifted apart on the identical table-cell defect once.
+ *
+ * It remains a plain-text rendering: the style pack's CSS is not applied, which
+ * is why callers get `usedFallback` and why it is worth saying so out loud.
+ */
 function renderFallbackPdf(html: string): Promise<Buffer> {
   return new Promise(resolve => {
     const doc = new PDFDocument({
@@ -217,19 +251,20 @@ function renderFallbackPdf(html: string): Promise<Buffer> {
     doc.on('data', chunk => chunks.push(chunk));
     doc.on('end', () => resolve(Buffer.concat(chunks)));
 
-    const text = html
-      .replace(/<[^>]+>/g, ' ')
-      .replace(/&amp;/g, '&')
-      .replace(/&lt;/g, '<')
-      .replace(/&gt;/g, '>')
-      .replace(/&quot;/g, '"')
-      .replace(/&#39;/g, "'")
-      .replace(/\s+/g, ' ')
-      .trim();
+    const text = htmlToPlainText(html);
 
-    doc.fontSize(12).text(text || 'Document content not available.', {
-      align: 'left',
-    });
+    // Line by line, so the block boundaries the reducer computed survive: a
+    // single text() call with the whole string lets PDFKit reflow across them.
+    doc.fontSize(11);
+    if (!text) {
+      doc.text('Document content not available.', { align: 'left' });
+    } else {
+      for (const line of text.split('\n')) {
+        // An empty line is a paragraph break, not a line of text.
+        if (line.trim() === '') doc.moveDown(0.5);
+        else doc.text(line, { align: 'left' });
+      }
+    }
 
     doc.end();
   });
@@ -297,6 +332,29 @@ export async function renderPdfBuffersFor510k(
     performanceTesting: perfPdf,
     labeling: labelingPdf,
   };
+}
+
+/**
+ * Render ONE PDF per top-level section (H1) of the editor document, in
+ * document order, with no bucket selection and no placeholder for anything
+ * absent. The fixed-slot renderers above pick one heading per named bucket
+ * and print "content not found" for the rest — honest for a six-slot 510(k)
+ * package, lossy for a governed 67-section 21 CFR 814.20 outline, where most
+ * authored sections match no bucket and are silently dropped. Here every
+ * authored section is a file; nothing that was not authored is invented.
+ */
+export async function renderPdfBuffersPerSection(
+  content: any,
+  pack: StylePack,
+): Promise<Array<{ title: string; buffer: Buffer }>> {
+  const sections = extractSectionsFromEditor(content);
+  return Promise.all(
+    sections.map(async (section) => {
+      const html = buildSectionHtml(section.title, section.html, 'This section has no body text.');
+      const buffer = await renderHtmlToPdf(await renderHtmlWithStylePack(html, pack));
+      return { title: section.title, buffer };
+    }),
+  );
 }
 
 export async function renderPdfBuffersForPma(content: any, pack: StylePack = stylePacks['pma_v1']) {

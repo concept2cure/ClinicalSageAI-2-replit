@@ -542,7 +542,7 @@ export function SubmissionsSurface({ onAskAna }: WorkbenchProps) {
                 <div className="sub-row-title">{s.title}</div>
                 <div className="sub-row-meta">
                   <span>{s.target}</span>
-                  <span className="dot-sep">·</span>
+                  <span className="dot-sep" aria-hidden="true">·</span>
                   <span>
                     {s.files} files · {s.bytes}
                   </span>

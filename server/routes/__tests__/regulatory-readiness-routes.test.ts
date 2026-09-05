@@ -66,7 +66,11 @@ describe('human factors API', () => {
     });
     expect(res.status).toBe(200);
     expect(res.body.result.criticalTaskCount).toBe(1);
-    expect(res.body.result.residualRiskAcceptable).toBe(false);
+    // Was `residualRiskAcceptable` — a determination the service computed from a
+    // count and served in the response body. The endpoint now reports the
+    // critical-task gate it actually found, and never acceptability.
+    expect(res.body.result.criticalTaskGate).toBe('blocked');
+    expect(res.body.result).not.toHaveProperty('residualRiskAcceptable');
   });
 
   it('rejects an invalid severity with 400', async () => {

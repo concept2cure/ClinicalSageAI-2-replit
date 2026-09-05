@@ -1,6 +1,8 @@
 /**
  * EstarFilingPanel — the eSTAR filing journey, made clickable inside the PMA
- * surface: REGISTER (toggle the four FDA prerequisites → PUT /registration) →
+ * surface: REGISTER (toggle the four FDA prerequisites → PUT /registration;
+ * enter the correspondent and Declaration of Conformity facts the official
+ * eSTAR reads from the registration → the same PUT) →
  * SELECT a submission from the catalog → ASSESS filing-readiness against the
  * org's real authored content (POST /filing-readiness) → START TRACKING it
  * (POST /submissions) → ADVANCE its lifecycle (PATCH /submissions/:id).
@@ -11,7 +13,7 @@
  */
 
 import * as React from 'react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { EmptyState } from '../../v2/dataConnect';
 import {
   useEstarRegistration,
@@ -20,10 +22,20 @@ import {
   assessFilingReadiness,
   prerequisiteRows,
   registrationPatchToggling,
+  correspondentValues,
+  correspondentPatch,
+  ESTAR_CORRESPONDENT_FIELDS,
+  type EstarCorrespondentField,
   type EstarPrerequisiteId,
+  type EstarRegistrationPatch,
+  type EstarRegistrationRecord,
+  type EstarRegistrationView,
   type FilingReadinessResult,
   type EstarSubmissionView,
 } from '../hooks/useEstarFiling';
+import { describeSaveFailure, type SaveFailure } from '../hooks/useFetchJson';
+import { notifyOfficialEstarFieldsChanged } from '../hooks/useEstarOfficialFields';
+import { IntakeTextField } from './DeviceProfilePanel';
 
 /** Allowed next statuses (mirrors the server lifecycle) for the advance buttons. */
 const NEXT_STATUS: Record<string, string[]> = {
@@ -126,8 +138,161 @@ function SubmissionCard({
   );
 }
 
+type CorrespondentForm = Record<EstarCorrespondentField, string>;
+
+/* The correspondent trio shares one row; the Declaration of Conformity pair —
+   one legal entity's name and its address — stacks under it, name directly
+   above address, because the two must name the same company. */
+const CORRESPONDENT_ROW = ESTAR_CORRESPONDENT_FIELDS.filter((f) => !f.field.startsWith('declaration'));
+const DECLARATION_ROWS = ESTAR_CORRESPONDENT_FIELDS.filter((f) => f.field.startsWith('declaration'));
+
+function correspondentForm(stored: EstarRegistrationRecord | null | undefined): CorrespondentForm {
+  const values = correspondentValues(stored);
+  const form = {} as CorrespondentForm;
+  for (const f of ESTAR_CORRESPONDENT_FIELDS) form[f.field] = values[f.field] ?? '';
+  return form;
+}
+
+/**
+ * The correspondent / Declaration of Conformity block. Text fields on the org's
+ * eSTAR registration, shown as stored (blank when not held — never a
+ * placeholder value) and saved through the same PUT as the prerequisites, with
+ * those booleans preserved. A refused write names the refusal: this PUT is
+ * editor-only on the server, and telling a read-only operator that the server
+ * "rejected the update" sends them looking for a bad value in fields their role
+ * simply cannot write.
+ */
+function CorrespondentBlock({
+  stored,
+  satisfied,
+  save,
+  saveFailure,
+}: {
+  stored: EstarRegistrationRecord | null | undefined;
+  satisfied: readonly string[] | null | undefined;
+  save: (patch: EstarRegistrationPatch) => Promise<EstarRegistrationView | null>;
+  saveFailure: SaveFailure | null;
+}) {
+  const [form, setForm] = useState<CorrespondentForm>(() => correspondentForm(stored));
+  const [saving, setSaving] = useState(false);
+  const [status, setStatus] = useState<string | null>(null);
+  /* A failed save is held as a FLAG, not a sentence: the sentence depends on
+     `saveFailure`, which the hook sets in the same batch, so resolving it at
+     render time reads the current classification and not a stale closure. */
+  const [saveRefused, setSaveRefused] = useState(false);
+
+  /* What the form holds, and what it was last seeded from. An EDIT is a
+     difference between the two — not a difference from whatever the row says
+     now — so a row that changed elsewhere still re-seeds a form nobody has
+     typed into. */
+  const live = React.useRef<CorrespondentForm>(form);
+  const seeded = React.useRef<CorrespondentForm>(form);
+
+  function onField(field: EstarCorrespondentField, value: string) {
+    live.current = { ...live.current, [field]: value };
+    setForm(live.current);
+  }
+
+  /* Re-seed when the stored row changes (first load, refresh after a save) —
+     but never over text typed and not yet saved. Every read hands this block a
+     NEW row object, and save() refreshes the registration, so a prerequisite
+     toggled above re-seeded this form: a Declaration of Conformity company name
+     half-typed when the toggle was clicked vanished with no message, and the
+     next official eSTAR filed that field blank. An unsaved edit now stands
+     until its own Save replaces it. */
+  useEffect(() => {
+    const next = correspondentForm(stored);
+    const edited = ESTAR_CORRESPONDENT_FIELDS.some(
+      (f) => live.current[f.field] !== seeded.current[f.field],
+    );
+    seeded.current = next;
+    if (edited) return;
+    live.current = next;
+    setForm(next);
+  }, [stored]);
+
+  const base = correspondentForm(stored);
+  const dirty = ESTAR_CORRESPONDENT_FIELDS.some((f) => form[f.field].trim() !== base[f.field]);
+
+  async function onSave() {
+    if (!dirty || saving) return;
+    setSaving(true);
+    setStatus(null);
+    setSaveRefused(false);
+    const saved = await save(correspondentPatch(satisfied, form));
+    setSaving(false);
+    setSaveRefused(!saved);
+    setStatus(saved ? 'Saved' : null);
+    /* The official eSTAR preview reads this block and names it as the home of
+       the correspondent and Declaration of Conformity fields. Only an ACCEPTED
+       save changed anything, so only an accepted save asks it to re-read. */
+    if (saved) notifyOfficialEstarFieldsChanged();
+  }
+
+  return (
+    <>
+      <div className="section-hdr">
+        <div>
+          <div className="section-title">Correspondent and declaration</div>
+          <div className="section-sub">
+            Held on the org's eSTAR registration and written into the official eSTAR's
+            correspondent and Declaration of Conformity fields. The declaration's company name
+            and address are one legal entity, so both are held here. A blank field stays blank in
+            the eSTAR.
+          </div>
+        </div>
+      </div>
+      <div
+        style={{
+          margin: '8px 0 12px',
+          padding: '12px 14px',
+          border: '1px solid var(--border-100)',
+          borderRadius: 6,
+        }}
+      >
+        <div style={{ display: 'grid', gridTemplateColumns: '2fr 2fr 1fr', gap: 10 }}>
+          {CORRESPONDENT_ROW.map((f) => (
+            <IntakeTextField
+              key={f.field}
+              label={f.label}
+              value={form[f.field]}
+              maxLength={f.max}
+              onChange={(v) => onField(f.field, v)}
+            />
+          ))}
+        </div>
+        {DECLARATION_ROWS.map((f) => (
+          <div key={f.field} style={{ marginTop: 10 }}>
+            <IntakeTextField
+              label={f.label}
+              value={form[f.field]}
+              maxLength={f.max}
+              onChange={(v) => onField(f.field, v)}
+            />
+          </div>
+        ))}
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 10 }}>
+          <button
+            className="section-more"
+            disabled={saving || !dirty}
+            title={dirty ? 'Save the changed fields' : 'No changes to save'}
+            onClick={() => void onSave()}
+          >
+            {saving ? 'Saving…' : 'Save'}
+          </button>
+          {(status || saveRefused) && (
+            <span className="section-sub" role="status" style={{ margin: 0 }}>
+              {saveRefused ? describeSaveFailure(saveFailure ?? 'unavailable') : status}
+            </span>
+          )}
+        </div>
+      </div>
+    </>
+  );
+}
+
 export function EstarFilingPanel() {
-  const { registration, loading: regLoading, save } = useEstarRegistration();
+  const { registration, loading: regLoading, save, saveFailure } = useEstarRegistration();
   const { submissions, loading: subLoading, startTracking, advance } = useEstarSubmissions();
   const { catalog } = useEstarCatalog();
 
@@ -143,7 +308,14 @@ export function EstarFilingPanel() {
 
   async function onToggle(id: EstarPrerequisiteId) {
     setBusy(`reg:${id}`);
-    await save(registrationPatchToggling(satisfied, id));
+    /* `registration?.registration` — deliberately NOT `?? null`. The helper
+       reads undefined as "the registration has not loaded, so leave the text
+       alone" and null as "loaded, and the org holds no row". Coercing the
+       first onto the second sent explicit nulls for all five text columns
+       before the GET landed (or after it failed), so a toggle blanked the
+       correspondent and Declaration of Conformity facts the org already
+       held. Loaded-with-no-row still travels as null, which clears nothing. */
+    await save(registrationPatchToggling(satisfied, id, registration?.registration));
     setBusy(null);
   }
   async function onSelect(key: string) {
@@ -201,6 +373,14 @@ export function EstarFilingPanel() {
           </div>
         ))}
       </div>
+
+      {/* CORRESPONDENT + DECLARATION (same registration row, same PUT) */}
+      <CorrespondentBlock
+        stored={registration?.registration}
+        satisfied={satisfied}
+        save={save}
+        saveFailure={saveFailure}
+      />
 
       {/* SELECT + ASSESS */}
       <div className="section-hdr">

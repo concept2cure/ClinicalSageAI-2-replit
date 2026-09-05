@@ -102,10 +102,15 @@ const REQUIRED_DTDS = [
 const ESTAR_DESCRIPTORS = [
   { id: '510k-device', file: 'eSTAR-510k-non-ivd.pdf' },
   { id: '510k-ivd', file: 'eSTAR-510k-ivd.pdf' },
-  { id: 'de_novo-device', file: 'eSTAR-denovo-non-ivd.pdf' },
-  { id: 'de_novo-ivd', file: 'eSTAR-denovo-ivd.pdf' },
-  { id: 'pma-device', file: 'eSTAR-pma-non-ivd.pdf' },
-  { id: 'pma-ivd', file: 'eSTAR-pma-ivd.pdf' },
+  // De Novo and PMA are filed on the SAME two FDA PDFs as the 510(k): FDA ships
+  // one nIVD and one IVD eSTAR, each carrying all three marketing pathways.
+  // These four named eSTAR-denovo-*/eSTAR-pma-* until 2026-09-04, which asked
+  // procurement for files FDA does not publish and reported the two pathways
+  // blocked while they were producing.
+  { id: 'de_novo-device', file: 'eSTAR-510k-non-ivd.pdf' },
+  { id: 'de_novo-ivd', file: 'eSTAR-510k-ivd.pdf' },
+  { id: 'pma-device', file: 'eSTAR-510k-non-ivd.pdf' },
+  { id: 'pma-ivd', file: 'eSTAR-510k-ivd.pdf' },
   { id: 'q_sub-prestar', file: 'PreSTAR-q-sub.pdf' },
   { id: 'ide-prestar', file: 'PreSTAR-ide.pdf' },
   { id: '513g-prestar', file: 'PreSTAR-513g.pdf' },
@@ -642,25 +647,55 @@ record({
 }
 
 {
-  // Evidence of a database backup/restore rehearsal, as a committed artifact.
-  const candidates = [
-    'docs/runbooks/backup-restore.md',
-    'docs/runbooks/disaster-recovery.md',
-    'docs/operations/DISASTER_RECOVERY.md',
-  ];
-  const found = candidates.filter((c) => fs.existsSync(path.join(repoRoot, c)));
+  // Evidence of a database backup/restore rehearsal.
+  //
+  // THIS ROW USED TO BE SATISFIED BY A FILE EXISTING. It searched three paths
+  // for a markdown document and, finding one, flipped a GA BLOCKER to "ready" —
+  // so an empty `docs/runbooks/disaster-recovery.md` would have reported the DR
+  // rehearsal as done. A restore is proven by restoring, not by a document
+  // saying it was.
+  //
+  // It also named the wrong paths. The runbook, the drill and its CI proof all
+  // landed at names this list did not contain, so the report read "no DR runbook
+  // at any expected path" — telling Ops to start work that was already done, and
+  // costing exactly the GA time this report exists to save.
+  //
+  // Now it observes the three components separately and reports each. None of
+  // them alone closes the row: what is established is that the MECHANISM works
+  // against a disposable fixture in CI. What remains is a rehearsal against a
+  // production-shaped database with its observations committed — which the
+  // runbook itself is careful to say the drill does not provide ("single CI
+  // observations, not production RPO/RTO commitments or an SLA").
+  const RUNBOOK = 'docs/operations/database-disaster-recovery.md';
+  const DRILL = 'scripts/ops/dr-restore-drill.sh';
+  const PROOF_CI = '.github/workflows/database-dr-restore-proof.yml';
+  const has = (rel) => fs.existsSync(path.join(repoRoot, rel));
+  const present = [
+    has(RUNBOOK) ? `runbook ${RUNBOOK}` : null,
+    has(DRILL) ? `drill ${DRILL} (pg_dump --format=custom → pg_restore)` : null,
+    has(PROOF_CI) ? `CI proof ${PROOF_CI}` : null,
+  ].filter(Boolean);
+  const mechanismProven = has(RUNBOOK) && has(DRILL) && has(PROOF_CI);
   record({
     id: 'backup-restore-rehearsal',
     group: 'CI posture',
-    label: 'Database backup / restore rehearsal (DR runbook + a proven restore)',
-    status: found.length > 0 ? 'ready' : 'blocked',
+    // Kept blocked deliberately: see the note above. Only a production-shaped
+    // rehearsal closes it, and that is an operational act this probe cannot see.
+    status: 'blocked',
     severity: 'blocker',
-    observed: found.length > 0
-      ? `runbook present: ${found.join(', ')}`
-      : 'no DR runbook at any expected path; scripts/backup.sh archives SOURCE CODE only, not the database',
-    gate: 'no code gate — this is an operational obligation. docs/audit-2026-07/10-infra-and-ops.md records both restore-from-backup and reprovision-from-source as unproven paths.',
+    label: 'Database backup / restore rehearsal (DR runbook + a proven restore)',
+    observed: mechanismProven
+      ? `restore MECHANISM is proven in CI against a disposable fixture — ${present.join('; ')}. `
+        + 'Not yet observed: a rehearsal against a production-shaped database, with its '
+        + 'RPO/RTO observations and date committed. The runbook says so itself.'
+      : present.length > 0
+        ? `partial: ${present.join('; ')}. Missing the rest of the drill chain.`
+        : 'no DR runbook, drill or CI proof present; scripts/backup.sh archives SOURCE CODE only, not the database',
+    gate: 'no code gate — this is an operational obligation. The CI proof covers the mechanism, not the production estate.',
     owner: 'Ops / DB owner',
-    unblock: 'Run a real pg_dump + restore into a scratch branch, record RPO/RTO, commit the runbook with the rehearsal date.',
+    unblock: mechanismProven
+      ? 'Run scripts/ops/dr-restore-drill.sh against a production-shaped restore target, then commit the observed RPO/RTO and the rehearsal date to the runbook.'
+      : 'Run a real pg_dump + restore into a scratch database, record RPO/RTO, commit the runbook with the rehearsal date.',
   });
 }
 

@@ -1,15 +1,13 @@
 import { describe, it, expect } from 'vitest';
-import { assessPathwayReadiness, PATHWAYS, type PathwayLeaf } from '../index';
+import { assessPathwayReadiness, PATHWAYS } from '../index';
 import { mapToEstar } from '../estar/estar-mapper';
-
-const leaf = (over: Partial<PathwayLeaf> & { sectionCode: string }): PathwayLeaf => ({
-  title: over.title ?? over.sectionCode,
-  ...over,
-});
 
 describe('mapToEstar', () => {
   it('510(k) requires a substantial-equivalence comparison', () => {
-    const r = mapToEstar({ type: '510k', leaves: [leaf({ sectionCode: 'dd', title: 'Device description', documentType: 'device_description' })] });
+    const r = mapToEstar({
+      type: '510k',
+      leaves: [{ sectionCode: 'dd', title: 'Device description', documentType: 'device_description', substantive: true }],
+    });
     expect(r.summary.missingRequired).toContain('substantial-equivalence');
     expect(r.summary.ready).toBe(false);
   });

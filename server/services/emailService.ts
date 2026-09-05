@@ -96,7 +96,7 @@ function buildResetEmailHtml(resetUrl: string): string {
         <tr>
           <td style="background-color:#faf9f5;padding:24px 40px;text-align:center;">
             <p style="margin:0 0 8px;color:#75736d;font-size:11px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;">
-              &copy; ${new Date().getFullYear()} Concept2Cure, Inc. &middot; FDA 21 CFR Part 11 Compliant
+              &copy; ${new Date().getFullYear()} Concept2Cure, Inc. &middot; Built for 21 CFR Part 11: audit trail, electronic signature, record retention
             </p>
             <p style="margin:0;font-size:10px;">
               <a href="${process.env.APP_URL || 'https://concept2cure.com'}/concept2cure/legal/privacy" style="color:#b0aea5;text-decoration:none;">Privacy</a>
@@ -188,7 +188,7 @@ function buildOtpEmailHtml(code: string): string {
         <tr>
           <td style="background-color:#faf9f5;padding:24px 40px;text-align:center;">
             <p style="margin:0;color:#75736d;font-size:11px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;">
-              &copy; ${new Date().getFullYear()} Concept2Cure, Inc. &middot; FDA 21 CFR Part 11 Compliant
+              &copy; ${new Date().getFullYear()} Concept2Cure, Inc. &middot; Built for 21 CFR Part 11: audit trail, electronic signature, record retention
             </p>
           </td>
         </tr>
@@ -247,7 +247,7 @@ function buildWelcomeEmailHtml(name: string, loginUrl: string): string {
         <tr>
           <td style="background-color:#faf9f5;padding:24px 40px;text-align:center;">
             <p style="margin:0 0 8px;color:#75736d;font-size:11px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;">
-              &copy; ${new Date().getFullYear()} Concept2Cure, Inc. &middot; FDA 21 CFR Part 11 Compliant
+              &copy; ${new Date().getFullYear()} Concept2Cure, Inc. &middot; Built for 21 CFR Part 11: audit trail, electronic signature, record retention
             </p>
             <p style="margin:0;font-size:10px;">
               <a href="${process.env.APP_URL || 'https://concept2cure.com'}/concept2cure/legal/privacy" style="color:#b0aea5;text-decoration:none;">Privacy</a>
@@ -358,25 +358,37 @@ export async function sendGenericEmail(
 
 /**
  * Send an invitation email when an admin adds a team member.
+ *
+ * `setupUrl` is the password-setup link the route minted for the new account
+ * (server/services/password-setup-token.ts). This used to build its own
+ * `/concept2cure/signup?invite=<email>` link — a page that does not read
+ * `invite` and refuses an email that already has an account, which the invitee
+ * always has by the time the email is sent.
+ *
+ * Returns whether an email was actually handed to SMTP, so the caller can
+ * tell the admin the truth about delivery rather than assuming it.
  */
 export async function sendInvitationEmail(
   email: string,
   inviterName: string,
-  orgName: string
-): Promise<void> {
+  orgName: string,
+  setupUrl: string,
+  expiresAt: Date
+): Promise<boolean> {
   const transporter = getTransporter();
-  const signupUrl = `${process.env.APP_URL || 'https://concept2cure.com'}/concept2cure/signup?invite=${encodeURIComponent(email)}`;
+  const signupUrl = setupUrl;
+  const expiryDays = Math.max(1, Math.round((expiresAt.getTime() - Date.now()) / 86_400_000));
 
   if (!transporter) {
     log.warn('SMTP not configured — invitation email not sent', { to: email });
-    return;
+    return false;
   }
 
   await transporter.sendMail({
     from: `"Concept2Cure" <${FROM_ADDRESS}>`,
     to: email,
     subject: `${inviterName} invited you to ${orgName} on Concept2Cure`,
-    text: `${inviterName} has invited you to join ${orgName} on Concept2Cure.\n\nAccept invitation: ${signupUrl}\n\nThis invitation expires in 21 days.`,
+    text: `${inviterName} has invited you to join ${orgName} on Concept2Cure.\n\nSet your password and accept the invitation: ${signupUrl}\n\nThis invitation expires in ${expiryDays} day${expiryDays === 1 ? '' : 's'}.`,
     html: `<!DOCTYPE html>
 <html lang="en">
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
@@ -402,7 +414,7 @@ export async function sendInvitationEmail(
                 </a>
               </td></tr>
             </table>
-            <p style="margin:0;color:#75736d;font-size:12px;">This invitation expires in 21 days.</p>
+            <p style="margin:0;color:#75736d;font-size:12px;">This invitation expires in ${expiryDays} day${expiryDays === 1 ? '' : 's'}.</p>
           </td>
         </tr>
         <tr>
@@ -418,6 +430,7 @@ export async function sendInvitationEmail(
   });
 
   log.info('Invitation email sent', { to: email });
+  return true;
 }
 
 // ---------------------------------------------------------------------------
@@ -475,7 +488,7 @@ function buildReportDeliveryEmailHtml(payload: {
         <tr>
           <td style="background-color:#faf9f5;padding:24px 40px;text-align:center;">
             <p style="margin:0;color:#75736d;font-size:11px;">
-              &copy; ${new Date().getFullYear()} Concept2Cure, Inc. &middot; FDA 21 CFR Part 11 Compliant
+              &copy; ${new Date().getFullYear()} Concept2Cure, Inc. &middot; Built for 21 CFR Part 11: audit trail, electronic signature, record retention
             </p>
           </td>
         </tr>

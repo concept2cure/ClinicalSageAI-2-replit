@@ -14,6 +14,11 @@ import { researchCompanionService } from '../research-companion-service';
 
 interface ReportGenerationParams {
   protocolData?: any;
+  // Set by the route layer when a protocolId was supplied but could not be
+  // resolved to real protocol records (no protocol data store is wired up
+  // yet). Generators should treat this the same as "no protocol data" and
+  // must not fabricate protocol-grounded specifics to compensate.
+  protocolDataUnavailable?: boolean;
   relatedTrials?: any[];
   indication?: string;
   sessionId?: string;
@@ -35,6 +40,7 @@ interface Report {
     indication?: string;
     protocolId?: string;
     sessionId?: string;
+    protocolDataUnavailable?: boolean;
   };
 }
 
@@ -52,7 +58,8 @@ class BaseReportGenerator {
    * Generate a persona-specific report
    */
   async generateReport(params: ReportGenerationParams): Promise<Report> {
-    const { protocolData, relatedTrials, indication, sessionId } = params;
+    const { protocolData, protocolDataUnavailable, relatedTrials, indication, sessionId } =
+      params;
 
     // Generate common report components
     const components: ReportComponent[] = [
@@ -71,6 +78,7 @@ class BaseReportGenerator {
         indication,
         protocolId: protocolData?.id,
         sessionId,
+        ...(protocolDataUnavailable && { protocolDataUnavailable: true }),
       },
     };
   }
@@ -244,37 +252,22 @@ class InvestorReportGenerator extends BaseReportGenerator {
    * Generate market analysis
    */
   private async generateMarketAnalysis(indication?: string): Promise<any> {
-    // This would typically come from a market intelligence API or database
-    // For demonstration, we're providing simulated data
-
+    // Competitive-landscape specifics (named companies, market shares,
+    // pipeline counts, patent-expiration dates) must come from a market
+    // intelligence API or database. No such source is wired into this
+    // service, so — following the generateSuccessProbability pattern (see
+    // FORENSIC_CODE_AUDIT_2026-05-29.md HI-2) — we report this analysis as
+    // unavailable rather than fabricating specific companies, market
+    // shares, and dates as if they were current market fact.
     return {
-      competitiveLandscape: {
-        keyPlayers: [
-          { name: 'Pfizer', marketShare: '22%', pipeline: 4 },
-          { name: 'Novartis', marketShare: '18%', pipeline: 3 },
-          { name: 'Roche', marketShare: '15%', pipeline: 6 },
-          { name: 'Merck', marketShare: '12%', pipeline: 2 },
-        ],
-        marketConcentration: 'Moderate',
-        entryBarriers: 'High',
-      },
-      patentLandscape: {
-        keyPatentExpirations: [
-          { compound: 'Drug A', date: '2026-05' },
-          { compound: 'Drug B', date: '2028-11' },
-        ],
-        patentStrength: 'Strong',
-        exclusivityPeriod: '8-10 years',
-      },
-      marketTrends: {
-        growthFactors: ['Aging population', 'Increasing prevalence', 'Expanded insurance coverage'],
-        threatFactors: ['Pricing pressure', 'Regulatory changes', 'Alternative therapies'],
-        emergingOpportunities: [
-          'Precision medicine',
-          'Digital therapeutics',
-          'Value-based contracts',
-        ],
-      },
+      available: false,
+      source: 'none',
+      indication: indication ?? null,
+      note:
+        'Market analysis (competitive landscape, market shares, patent expirations, ' +
+        'market trends) is not derived from source records. Connect a market ' +
+        'intelligence data source to generate this section rather than fabricated ' +
+        'company names, market shares, and dates.',
     };
   }
 }
@@ -382,8 +375,18 @@ class RegulatoryReportGenerator extends BaseReportGenerator {
    * Generate regulatory requirements analysis
    */
   private async generateRegulatoryRequirements(indication?: string): Promise<any> {
-    // This would typically come from a regulatory intelligence database
-    // For demonstration, we're providing simulated data
+    // keyRequirements below is generic, non-fabricated regulatory-process
+    // scaffolding (e.g. "IND submission required before initiating clinical
+    // trials") that holds true regardless of source data and is kept as-is.
+    //
+    // recentGuidances is different: it named specific FDA/EMA guidance
+    // documents with specific titles and issue dates that were never
+    // actually looked up anywhere — invented citations to real agencies.
+    // That would typically come from a regulatory intelligence database;
+    // none is wired into this service, so — following the
+    // generateSuccessProbability pattern (see
+    // FORENSIC_CODE_AUDIT_2026-05-29.md HI-2) — we report it as unavailable
+    // rather than fabricating guidance titles and dates attributed to FDA/EMA.
 
     return {
       keyRequirements: {
@@ -409,28 +412,15 @@ class RegulatoryReportGenerator extends BaseReportGenerator {
           indication === 'Rare Disease' ? 'Orphan designation should be pursued' : '',
         ].filter(Boolean),
       },
-      recentGuidances: [
-        {
-          agency: 'FDA',
-          title: indication ? `${indication} Drug Development` : 'General Drug Development',
-          date: '2023-08',
-          keyPoints: [
-            'Patient-reported outcomes increasingly important',
-            'Real-world evidence acceptance expanding',
-            'Decentralized trial elements encouraged',
-          ],
-        },
-        {
-          agency: 'EMA',
-          title: 'Clinical Trial Design and Analysis',
-          date: '2023-06',
-          keyPoints: [
-            'Adaptive design acceptance increasing',
-            'Master protocol designs endorsed',
-            'Patient engagement throughout development emphasized',
-          ],
-        },
-      ],
+      recentGuidances: {
+        available: false,
+        source: 'none',
+        indication: indication ?? null,
+        note:
+          'Recent agency guidance references are not derived from source records ' +
+          '(e.g., a regulatory intelligence database). Connect that data source to ' +
+          'generate this section rather than fabricated guidance titles and dates.',
+      },
     };
   }
 }
@@ -465,34 +455,7 @@ class BiostatsReportGenerator extends BaseReportGenerator {
       {
         type: 'sample_size_analysis',
         title: 'Sample Size Analysis',
-        content: {
-          recommendedSampleSizes: [
-            { design: 'Traditional Parallel Group', n: 320, power: 0.9, alpha: 0.05 },
-            { design: 'Group Sequential (1 interim)', n: 265, power: 0.9, alpha: 0.05 },
-            { design: 'Adaptive Dose-Finding', n: 240, power: 0.9, alpha: 0.05 },
-            { design: 'Platform Trial Approach', n: 200, power: 0.9, alpha: 0.05 },
-          ],
-          sensitivityAnalysis: {
-            effectSizeSensitivity: [
-              { effectSize: '0.25 (small)', n: 506 },
-              { effectSize: '0.35 (medium-small)', n: 320 },
-              { effectSize: '0.50 (medium)', n: 172 },
-              { effectSize: '0.80 (large)', n: 70 },
-            ],
-            powerSensitivity: [
-              { power: 0.8, n: 246 },
-              { power: 0.85, n: 278 },
-              { power: 0.9, n: 320 },
-              { power: 0.95, n: 381 },
-            ],
-            dropoutSensitivity: [
-              { dropoutRate: '5%', finalN: 320, initialN: 337 },
-              { dropoutRate: '10%', finalN: 320, initialN: 356 },
-              { dropoutRate: '15%', finalN: 320, initialN: 377 },
-              { dropoutRate: '20%', finalN: 320, initialN: 400 },
-            ],
-          },
-        },
+        content: await this.generateSampleSizeAnalysis(indication),
       },
       {
         type: 'analysis_strategy',
@@ -525,8 +488,23 @@ class BiostatsReportGenerator extends BaseReportGenerator {
    * Generate statistical design recommendations
    */
   private async generateDesignRecommendations(indication?: string): Promise<any> {
-    // This would integrate with a statistical analysis service
-    // For demonstration, we're providing simulated data
+    // The design/endpoint catalog below (names, descriptions, generic
+    // advantages/disadvantages) is genuine, indication-independent
+    // statistical methodology text — kept as-is.
+    //
+    // The per-indication "recommendation" verdicts (e.g. "Highly
+    // Recommended" for a specific indication, "Preferred Approach") are
+    // different: they read as a tailored, data-driven conclusion but were
+    // just a hardcoded if/else with no trial-specific statistical analysis
+    // behind them. This would typically integrate with a statistical
+    // analysis service; none is wired into this method, so — following the
+    // generateSuccessProbability pattern (see
+    // FORENSIC_CODE_AUDIT_2026-05-29.md HI-2) — each verdict is now an
+    // honest "not available" note instead of a fabricated per-indication
+    // recommendation.
+    const RECOMMENDATION_UNAVAILABLE =
+      'Not available — a design recommendation requires trial-specific statistical ' +
+      'review and is not derived from source records.';
 
     return {
       recommendedDesigns: [
@@ -544,10 +522,7 @@ class BiostatsReportGenerator extends BaseReportGenerator {
             'More complex operations and statistical analysis',
             'Potential for bias if not properly implemented',
           ],
-          recommendation:
-            indication === 'Oncology' || indication === 'Rare Disease'
-              ? 'Highly Recommended'
-              : 'Consider',
+          recommendation: RECOMMENDATION_UNAVAILABLE,
         },
         {
           design: 'Sequential Parallel Comparison Design (SPCD)',
@@ -563,10 +538,7 @@ class BiostatsReportGenerator extends BaseReportGenerator {
             'More complex analysis',
             'Not suitable for all indications',
           ],
-          recommendation:
-            indication === 'Major Depressive Disorder' || indication === 'Psychiatry'
-              ? 'Highly Recommended'
-              : 'Not Recommended',
+          recommendation: RECOMMENDATION_UNAVAILABLE,
         },
         {
           design: 'Response-Adaptive Randomization',
@@ -582,7 +554,7 @@ class BiostatsReportGenerator extends BaseReportGenerator {
             'May introduce bias if not properly controlled',
             'Requires real-time data processing',
           ],
-          recommendation: 'Consider for Dose-Finding Studies',
+          recommendation: RECOMMENDATION_UNAVAILABLE,
         },
       ],
       endpointConsiderations: {
@@ -594,13 +566,13 @@ class BiostatsReportGenerator extends BaseReportGenerator {
               'May not capture complete patient experience',
               'Effect size interpretation challenges',
             ],
-            recommendation: 'Standard Approach',
+            recommendation: RECOMMENDATION_UNAVAILABLE,
           },
           {
             endpoint: 'Responder Analysis',
             advantages: ['Clinically meaningful', 'Easy to interpret', 'Patient-centric'],
             disadvantages: ['Reduced statistical power', 'Threshold selection challenges'],
-            recommendation: 'Complementary to Continuous Endpoint',
+            recommendation: RECOMMENDATION_UNAVAILABLE,
           },
           {
             endpoint: 'Time-to-Event',
@@ -610,10 +582,34 @@ class BiostatsReportGenerator extends BaseReportGenerator {
               'Well-accepted for certain outcomes',
             ],
             disadvantages: ['Requires longer follow-up', 'Different statistical methods'],
-            recommendation: indication === 'Oncology' ? 'Preferred Approach' : 'Secondary Endpoint',
+            recommendation: RECOMMENDATION_UNAVAILABLE,
           },
         ],
       },
+      indication: indication ?? null,
+    };
+  }
+
+  /**
+   * Generate the sample-size / power table.
+   */
+  private async generateSampleSizeAnalysis(indication?: string): Promise<any> {
+    // Sample sizes are a function of the trial's actual effect size, variance,
+    // and design assumptions — they cannot be produced without a real power
+    // calculation grounded in those trial-specific inputs. No statistical
+    // analysis service is wired into this method, so — following the
+    // generateSuccessProbability pattern (see
+    // FORENSIC_CODE_AUDIT_2026-05-29.md HI-2) — we report the table as
+    // unavailable rather than fabricating specific n values.
+    return {
+      available: false,
+      source: 'none',
+      indication: indication ?? null,
+      note:
+        'Sample size and sensitivity analysis figures are not derived from source ' +
+        'records. Provide trial-specific effect size, variance, and design ' +
+        'assumptions to a power-calculation service to generate this table rather ' +
+        'than fabricated sample sizes.',
     };
   }
 }
@@ -643,30 +639,7 @@ class CeoReportGenerator extends BaseReportGenerator {
       {
         type: 'strategic_overview',
         title: 'Strategic Overview',
-        content: {
-          marketOpportunity: {
-            size: '$4.3B by 2028',
-            growth: '12.6% CAGR',
-            keyMarkets: ['North America (42%)', 'Europe (27%)', 'Asia-Pacific (18%)'],
-            patientPopulation: '23.5M globally',
-          },
-          competitiveLandscape: {
-            marketLeaders: [
-              { company: 'Pfizer', share: '23%', keyStrength: 'Commercial infrastructure' },
-              { company: 'Novartis', share: '18%', keyStrength: 'Innovative pipeline' },
-              { company: 'Roche', share: '16%', keyStrength: 'Companion diagnostics' },
-            ],
-            emergingCompetitors: [
-              { company: 'BioXcel', focus: 'AI-driven discovery' },
-              { company: 'Moderna', focus: 'mRNA therapeutics' },
-            ],
-            disruptiveTechnologies: [
-              'Gene therapy approaches',
-              'Digital therapeutics',
-              'Microbiome interventions',
-            ],
-          },
-        },
+        content: await this.generateStrategicOverview(indication),
       },
       {
         type: 'executive_decision_support',
@@ -742,6 +715,30 @@ class CeoReportGenerator extends BaseReportGenerator {
         },
       },
     ];
+  }
+
+  /**
+   * Generate the market-opportunity / competitive-landscape strategic overview.
+   */
+  private async generateStrategicOverview(indication?: string): Promise<any> {
+    // Market size/growth figures, named competitors, market shares, and
+    // "emerging competitor" claims must come from real market intelligence.
+    // No such source is wired into this service, so — following the
+    // generateSuccessProbability pattern (see
+    // FORENSIC_CODE_AUDIT_2026-05-29.md HI-2) — we report the strategic
+    // overview as unavailable rather than fabricating specific market sizes
+    // and named companies (e.g. attributing invented market shares to
+    // Pfizer, Novartis, Roche, BioXcel, or Moderna).
+    return {
+      available: false,
+      source: 'none',
+      indication: indication ?? null,
+      note:
+        'Strategic overview (market opportunity sizing, competitive landscape, named ' +
+        'competitors) is not derived from source records. Connect a market ' +
+        'intelligence data source to generate this section rather than fabricated ' +
+        'market sizes and company names.',
+    };
   }
 }
 

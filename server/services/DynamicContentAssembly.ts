@@ -44,6 +44,22 @@ export interface AssemblyIdentity {
   organizationId: number;
 }
 
+/**
+ * Thrown when a caller references a projectId that does not belong to their
+ * organization (or that does not exist). Every read/write path in this service
+ * is gated on the caller's org, so this is the single signal the routes map to
+ * an HTTP failure — a 404, so a caller can never distinguish "not yours" from
+ * "does not exist" and thus cannot probe another tenant's project ids.
+ */
+export class ProjectAccessError extends Error {
+  readonly code = 'PROJECT_ACCESS_DENIED';
+  readonly statusCode = 404;
+  constructor(projectId: number) {
+    super(`Project ${projectId} is not accessible in this organization`);
+    this.name = 'ProjectAccessError';
+  }
+}
+
 export class DynamicContentAssembly {
   private crossReferenceMapper: CrossReferenceMapper;
   private conditionalRules: Map<string, ConditionalRule[]> = new Map();
@@ -131,6 +147,9 @@ export class DynamicContentAssembly {
   async assembleDocument(
     projectId: number,
     documentType: string,
+    /** The caller's verified organization id — the tenant boundary. Every read
+     *  and write below is scoped to it; a projectId from another org is denied. */
+    organizationId: number,
     options?: {
       includeOptional?: boolean;
       validateOnly?: boolean;
@@ -139,8 +158,10 @@ export class DynamicContentAssembly {
       identity?: AssemblyIdentity;
     }
   ): Promise<DocumentAssembly> {
-    // Get all workflow data for the project
-    const workflowData = await this.getWorkflowData(projectId);
+    // Get all workflow data for the project. getWorkflowData fails closed if the
+    // project does not belong to organizationId, so no cross-tenant read reaches
+    // any of the work below (and no save runs for a foreign project).
+    const workflowData = await this.getWorkflowData(projectId, organizationId);
     
     // Get document template sections
     const sections = this.getDocumentSections(documentType);
@@ -211,9 +232,16 @@ export class DynamicContentAssembly {
     
     // Save assembly to database if not validate-only.
     // Persisting requires real user/org identity — never fabricate attribution.
+    // The identity's org MUST match the verified tenant boundary we scoped the
+    // read to; otherwise the row would land under the wrong tenant, so skip.
     if (!options?.validateOnly && db) {
-      if (options?.identity) {
+      if (options?.identity && options.identity.organizationId === organizationId) {
         await this.saveAssembly(assembly, projectId, options.identity);
+      } else if (options?.identity) {
+        console.warn(
+          `[DynamicContentAssembly] Skipping DB save for assembly ${assembly.documentId}: ` +
+          `identity org ${options.identity.organizationId} does not match request org ${organizationId}.`
+        );
       } else {
         console.warn(
           `[DynamicContentAssembly] Skipping DB save for assembly ${assembly.documentId}: ` +
@@ -421,13 +449,47 @@ export class DynamicContentAssembly {
   }
   
   /**
-   * Get workflow data for a project
+   * Fail-closed tenant ownership check. Confirms the fda510kProjects row
+   * identified by `projectId` belongs to `organizationId` before any read or
+   * write touches it. Throws ProjectAccessError otherwise, which the routes
+   * translate to a 404 — this is the gate that stops one org reading or writing
+   * another org's project (the IDOR this service previously allowed).
    */
-  private async getWorkflowData(projectId: number): Promise<any> {
+  private async assertProjectOrg(projectId: number, organizationId: number): Promise<void> {
+    if (!db) return; // No database configured (dev): no tenant data exists to protect.
+    if (!Number.isFinite(projectId) || !Number.isFinite(organizationId)) {
+      throw new ProjectAccessError(projectId);
+    }
+
+    const rows = await db
+      .select({ id: fda510kProjects.id })
+      .from(fda510kProjects)
+      .where(
+        and(
+          eq(fda510kProjects.id, projectId),
+          eq(fda510kProjects.organizationId, organizationId)
+        )
+      )
+      .limit(1);
+
+    if (rows.length === 0) {
+      throw new ProjectAccessError(projectId);
+    }
+  }
+
+  /**
+   * Get workflow data for a project, scoped to the caller's organization.
+   */
+  private async getWorkflowData(projectId: number, organizationId: number): Promise<any> {
     if (!db) {
       return {};
     }
-    
+
+    // Fail closed before reading any stage data. fda510kStageProgress has no org
+    // column of its own; the tenant boundary lives on its parent fda510kProjects
+    // row, so ownership is verified there first.
+    await this.assertProjectOrg(projectId, organizationId);
+
     const stageProgress = await db
       .select()
       .from(fda510kStageProgress)
@@ -473,9 +535,19 @@ export class DynamicContentAssembly {
         {
           id: 'substantial_equivalence',
           title: 'Substantial Equivalence',
-          template: 'The subject device is substantially equivalent to [Predicate Device]...',
+          // Substantial equivalence is a DETERMINATION FDA makes on review of a
+          // documented comparison — it is not established by naming a predicate.
+          // The template therefore frames SE as the sponsor's claim resting on
+          // an explicit comparison, and never asserts "the subject device IS
+          // substantially equivalent" as settled fact. The comparison and the
+          // differences-rationale are required fields (below), and the actual
+          // comparison is a dependency, so a section carrying only a predicate
+          // name + K-number stays incomplete (never 100%, status never flips to
+          // 'complete') instead of shipping a fabricated SE conclusion.
+          template:
+            'Substantial equivalence to the predicate device [Predicate Device] (510(k) [Predicate K Number]) is claimed on the basis of the following comparison of intended use and technological characteristics: [SE Comparison]. Differences from the predicate and their effect on safety and effectiveness are addressed as follows: [SE Differences Rationale]. A determination of substantial equivalence is made by FDA upon review of this comparison.',
           required: true,
-          dependencies: ['predicate.kNumber']
+          dependencies: ['predicate.kNumber', 'equivalence.comparison']
         },
         {
           id: 'performance_data',
@@ -591,7 +663,13 @@ export class DynamicContentAssembly {
       ],
       'substantial_equivalence': [
         { sourcePath: 'predicate.deviceName', fieldName: 'Predicate Device', placeholder: '[Predicate Device]', required: true },
-        { sourcePath: 'predicate.kNumber', fieldName: 'Predicate K Number', placeholder: '[XXXXXX]', required: true }
+        { sourcePath: 'predicate.kNumber', fieldName: 'Predicate K Number', placeholder: '[Predicate K Number]', required: true },
+        // The SE claim is only substantiated by an actual comparison, not by a
+        // named predicate. These two required fields carry the comparison of
+        // intended use / technological characteristics and the assessment of
+        // differences; until both are present the section cannot reach 100%.
+        { sourcePath: 'equivalence.comparison', fieldName: 'SE Comparison', placeholder: '[SE Comparison]', required: true },
+        { sourcePath: 'equivalence.differencesRationale', fieldName: 'SE Differences Rationale', placeholder: '[SE Differences Rationale]', required: true }
       ],
       'performance_data': [
         { sourcePath: 'testing.results', fieldName: 'Test Results', placeholder: '[Test Results]', required: false }
@@ -643,7 +721,7 @@ export class DynamicContentAssembly {
   /**
    * Get completeness report for a project
    */
-  async getCompletenessReport(projectId: number): Promise<{
+  async getCompletenessReport(projectId: number, organizationId: number): Promise<{
     overall: number;
     byDocument: Record<string, number>;
     bySection: Record<string, number>;
@@ -658,7 +736,7 @@ export class DynamicContentAssembly {
     
     // Check each document type
     for (const docType of documentTypes) {
-      const assembly = await this.assembleDocument(projectId, docType, {
+      const assembly = await this.assembleDocument(projectId, docType, organizationId, {
         validateOnly: true
       });
       
@@ -709,10 +787,11 @@ export class DynamicContentAssembly {
   async generatePreview(
     projectId: number,
     documentType: string,
+    organizationId: number,
     format: 'html' | 'markdown' | 'json' = 'html',
     identity?: AssemblyIdentity
   ): Promise<string> {
-    const assembly = await this.assembleDocument(projectId, documentType, {
+    const assembly = await this.assembleDocument(projectId, documentType, organizationId, {
       includeOptional: true,
       format,
       identity

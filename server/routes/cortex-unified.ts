@@ -25,6 +25,7 @@ import {
   getOrCreateThread,
   getThreadMessages,
   getWindowedMessages,
+  ThreadAccessError,
   saveChatMessage,
 } from '../services/chat-thread-helpers.js';
 import { pool } from '../db.js';
@@ -313,8 +314,22 @@ router.post('/chat', requireAuth, async (req: Request, res: Response) => {
       sectionCode: section_code || undefined,
     });
 
-    // Get or create thread (prefix 'cortex' to distinguish from legacy chat)
-    const threadId = await getOrCreateThread(thread_id, userId, 'cortex');
+    // Get or create thread (prefix 'cortex' to distinguish from legacy chat).
+    // Resolved in the caller's organization and to the caller's own thread; a
+    // colleague's thread id is refused, an unknown or foreign one mints a
+    // fresh thread.
+    let threadId: string;
+    try {
+      threadId = await getOrCreateThread(thread_id, userId, 'cortex', organizationId);
+    } catch (e: any) {
+      if (e instanceof ThreadAccessError) {
+        return res.status(403).json({
+          error: 'That conversation belongs to another user',
+          code: e.code,
+        });
+      }
+      throw e;
+    }
 
     // Token budget: model max (128k for gpt-4o-mini) minus system prompt, new message, and response buffer
     const MODEL_MAX_TOKENS = 128_000;

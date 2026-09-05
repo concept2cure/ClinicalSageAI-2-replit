@@ -21,6 +21,7 @@ import {
   getSubmissionTypeContext,
   type SubmissionTypeContext,
 } from '../../../shared/regulatory/submission-type-bridge.js';
+import { releaseWithoutBypass } from './rlsBypassSession';
 
 // Types
 export interface LearningTemplate {
@@ -220,7 +221,7 @@ export class OutcomeBasedTemplateLearningService {
     OutcomeBasedTemplateLearningService.templateCache.push(mapped);
     return mapped;
     } finally {
-      client.release();
+      await releaseWithoutBypass(client);
     }
   }
 
@@ -347,7 +348,7 @@ export class OutcomeBasedTemplateLearningService {
     OutcomeBasedTemplateLearningService.usageCache.push(mapped);
     return mapped;
     } finally {
-      client.release();
+      await releaseWithoutBypass(client);
     }
   }
 
@@ -470,7 +471,7 @@ export class OutcomeBasedTemplateLearningService {
     OutcomeBasedTemplateLearningService.outcomeCache.push(mapped);
     return mapped;
     } finally {
-      client.release();
+      await releaseWithoutBypass(client);
     }
   }
 

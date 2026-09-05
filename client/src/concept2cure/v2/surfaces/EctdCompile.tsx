@@ -38,7 +38,7 @@ import { apiRequest } from '@/lib/queryClient';
 import { usePublishSurfaceContext } from '../surfaceContext';
 import '../styles/project-home-v2.css';
 import { C2CToast, useToast } from '../toast';
-import { downloadText } from '../download';
+import { downloadBlob, downloadText, safeFileName } from '../download';
 
 interface ModuleReadiness {
   moduleCode: string;
@@ -48,6 +48,15 @@ interface ModuleReadiness {
   completedRequired: number;
   completionPct: number;
   ready: boolean;
+}
+/** Where the required-section set came from: the program's live rule pack,
+ *  or the labelled ICH baseline when no pack applies (with the reason). */
+interface RequiredSectionSource {
+  source: 'rule_pack' | 'fallback';
+  docType?: string;
+  agency?: string;
+  packVersion?: string;
+  reason?: string;
 }
 interface StatusView {
   /** Legacy numeric project id, or null when the ident named a program. */
@@ -61,6 +70,7 @@ interface StatusView {
   /** Why the package cannot be transmitted. Empty exactly when submissionReady. */
   submissionBlockers?: string[];
   modules: ModuleReadiness[];
+  requiredSectionSource?: RequiredSectionSource;
   totalSections: number;
   totalRequired: number;
   totalCompleted: number;
@@ -86,6 +96,10 @@ interface CompileResult {
   submissionReady: boolean;
   submissionBlockers?: string[];
   leafFilesRendered?: number;
+  /** The governed submission a spine-backed compile ran against — the handle
+   *  the package-download endpoint needs. Absent on draft-backbone compiles. */
+  submissionId?: number;
+  sequenceNumber?: string;
   errors: string[];
   warnings: string[];
 }
@@ -104,7 +118,7 @@ async function readJson<T = any>(method: 'GET' | 'POST', path: string, body?: un
     const res = await apiRequest(method, path, body);
     const parsed = (await res.json().catch(() => null)) as T | null;
     return { ok: res.ok, status: res.status, body: parsed };
-  } catch (e) {
+  } catch {
     return { ok: false, status: 0, body: null };
   }
 }
@@ -145,9 +159,19 @@ export function EctdCompile({ onAsk }: SurfaceViewProps) {
   const [status, setStatus] = useState<StatusView | null>(null);
   const [statusState, setStatusState] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
   const [findings, setFindings] = useState<ValidationResult[] | null>(null);
+  // Distinguishes "validation ran and returned zero findings" (a real clean pass)
+  // from "validation did not run" (POST failed). Without this, an errored POST
+  // that set findings to [] rendered the same "No findings" panel as a clean
+  // pass — a false "validated clean" on the submission surface.
+  const [validationFailed, setValidationFailed] = useState(false);
   const [compileResult, setCompileResult] = useState<CompileResult | null>(null);
   const [history, setHistory] = useState<CompilationRow[]>([]);
-  const [busy, setBusy] = useState<'validate' | 'compile' | null>(null);
+  // The history read used to discard `ok` and collapse a 401/500/empty body into
+  // [] — rendering "No compilations yet" over a failed read, a false negative
+  // for a publisher asking whether this sequence was ever compiled. Now the read
+  // outcome is kept, exactly like statusState.
+  const [historyState, setHistoryState] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
+  const [busy, setBusy] = useState<'validate' | 'compile' | 'export' | null>(null);
   const [toast, fireToast] = useToast();
 
   const loadStatus = useCallback(async () => {
@@ -160,8 +184,10 @@ export function EctdCompile({ onAsk }: SurfaceViewProps) {
 
   const loadHistory = useCallback(async () => {
     if (identPath == null) return;
-    const { body } = await readJson<{ compilations?: CompilationRow[] }>('GET', `/api/ectd-compile/${identPath}/history`);
-    setHistory(Array.isArray(body?.compilations) ? body!.compilations! : []);
+    setHistoryState('loading');
+    const { ok, body } = await readJson<{ compilations?: CompilationRow[] }>('GET', `/api/ectd-compile/${identPath}/history`);
+    if (!ok || !body || !Array.isArray(body.compilations)) { setHistoryState('error'); setHistory([]); return; }
+    setHistory(body.compilations); setHistoryState('ready');
   }, [identPath]);
 
   useEffect(() => { void loadStatus(); void loadHistory(); }, [loadStatus, loadHistory]);
@@ -175,12 +201,48 @@ export function EctdCompile({ onAsk }: SurfaceViewProps) {
       );
       if (!ok || !body) {
         fireToast(st === 401 ? 'Sign in to your tenant to validate.' : `Validation didn’t run (HTTP ${st}).`, 'error');
-        setFindings([]); return;
+        // Do NOT collapse a failed run into an empty findings list — that reads
+        // as a clean pass. Flag the failure and keep any prior findings visible.
+        setValidationFailed(true); return;
       }
+      setValidationFailed(false);
       setFindings(body.results ?? []);
       fireToast(`Validation: ${body.summary.errors} error(s), ${body.summary.warnings} warning(s).`);
     } finally { setBusy(null); }
   }, [identPath, region, fireToast]);
+
+  /* The actual deliverable. The compile proves the package exists (leaf
+     counts, sha256) — this hands the publisher its BYTES through the governed
+     export route, which is fail-closed server-side: a package that fails
+     structural validation answers 422 and no zip is returned. Draft-backbone
+     compiles carry no submission spine and assemble no package, so the
+     button never renders for them. */
+  const doExport = useCallback(async () => {
+    const subId = compileResult?.submissionId;
+    if (subId == null) return;
+    setBusy('export');
+    try {
+      const res = await apiRequest('POST', `/api/ectd/export/${subId}`, { region });
+      if (!res.ok) {
+        const pj = (await res.json().catch(() => null)) as { error?: string } | null;
+        fireToast('The package was not returned — ' + (pj?.error ?? `HTTP ${res.status}`) + '.', 'error');
+        return;
+      }
+      const blob = await res.blob();
+      const cd = res.headers.get('Content-Disposition') ?? '';
+      const name =
+        /filename="([^"]+)"/.exec(cd)?.[1] ??
+        safeFileName(`ectd-${ident}-seq-${compileResult?.sequenceNumber ?? 'package'}`) + '.zip';
+      downloadBlob(name, blob);
+      fireToast(`eCTD package downloaded — ${name}.`);
+    } catch (e) {
+      // apiRequest throws on a refused build (422: validation failure or the
+      // completeness gate) with the server's own sentence — say it verbatim.
+      fireToast('The package was not returned — ' + (e instanceof Error ? e.message : String(e)), 'error');
+    } finally {
+      setBusy(null);
+    }
+  }, [compileResult, region, ident, fireToast]);
 
   const doCompile = useCallback(async () => {
     if (identPath == null) return;
@@ -192,6 +254,7 @@ export function EctdCompile({ onAsk }: SurfaceViewProps) {
         return;
       }
       setCompileResult(body);
+      setValidationFailed(false);
       setFindings(body.validationResults ?? null);
       fireToast(
         body.status === 'completed'
@@ -345,6 +408,16 @@ export function EctdCompile({ onAsk }: SurfaceViewProps) {
             // loading", when the truthful answer is the empty state below.
             <div style={{ padding: 16 }}><EmptyState icon={I.layers} title="No module readiness yet" hint="Readiness is derived from the program’s sections. Draft and approve sections, then readiness appears per CTD module." /></div>
           ) : (
+            <>
+            {/* Which required set the numbers below are measured against. A
+                generic baseline must never pass for the program's own outline. */}
+            {status.requiredSectionSource && (
+              <div style={{ padding: '8px 12px', fontSize: 12, color: 'var(--c2c-dim,#667085)', borderBottom: '1px solid var(--c2c-line,#eef0f3)' }}>
+                {status.requiredSectionSource.source === 'rule_pack'
+                  ? `Required sections from rule pack ${status.requiredSectionSource.docType ?? ''}:${status.requiredSectionSource.agency ?? ''} ${status.requiredSectionSource.packVersion ?? ''}`.replace(/\s+/g, ' ').trim()
+                  : `Required sections are the generic ICH baseline, not this program's outline. ${status.requiredSectionSource.reason ?? ''}`.trim()}
+              </div>
+            )}
             <table className="reg-tbl"><thead><tr><th>Module</th><th>Required complete</th><th>Sections</th><th>Completion</th><th style={{ textAlign: 'right' }}>Status</th></tr></thead>
               <tbody>{status.modules.map((m) => (
                 <tr key={m.moduleCode}>
@@ -359,6 +432,7 @@ export function EctdCompile({ onAsk }: SurfaceViewProps) {
                   </td>
                   <td style={{ textAlign: 'right' }}><span className={'rd-chip tone-' + (m.ready ? 'ok' : 'warn')}>{m.ready ? 'ready' : 'partial'}</span></td>
                 </tr>))}</tbody></table>
+            </>
           )}
         </div>
       </div>
@@ -394,6 +468,18 @@ export function EctdCompile({ onAsk }: SurfaceViewProps) {
                 </ul>
               </div>
             )}
+            {/* The deliverable itself — only a spine-backed compile with
+                rendered leaves has a package to hand over. */}
+            {compileResult.submissionId != null && (compileResult.leafFilesRendered ?? 0) > 0 && (
+              <button
+                className="btn primary"
+                style={{ height: 32, marginRight: 8 }}
+                disabled={busy != null}
+                onClick={() => void doExport()}
+              >
+                {I.download} {busy === 'export' ? 'Assembling package…' : 'Download package (.zip)'}
+              </button>
+            )}
             {compileResult.xmlBackbone && (
               <>
                 <button className="btn primary" style={{ height: 32 }} onClick={() => downloadXml(`ectd-backbone-${ident.replace(/[^a-zA-Z0-9._-]/g, '_')}-${region.toLowerCase()}.xml`, compileResult.xmlBackbone)}>
@@ -418,15 +504,17 @@ export function EctdCompile({ onAsk }: SurfaceViewProps) {
       )}
 
       {/* ── Validation findings ── */}
-      {findings && (
+      {(findings || validationFailed) && (
         <div className="pj-card">
-          <div className="pj-card-h"><span className="t">Validation findings</span><span className="s" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>{findings.length}{ask && findings.length > 0 && <button className="reg-cta" onClick={() => ask(`Triage these eCTD validation findings for ${region}: which are blocking versus advisory, what each rule actually requires, and the order to fix them in. Do not claim a finding is resolved without evidence.`)}>{I.sparkles} Triage findings</button>}</span></div>
+          <div className="pj-card-h"><span className="t">Validation findings</span><span className="s" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>{validationFailed ? '—' : findings!.length}{ask && !validationFailed && findings && findings.length > 0 && <button className="reg-cta" onClick={() => ask(`Triage these eCTD validation findings for ${region}: which are blocking versus advisory, what each rule actually requires, and the order to fix them in. Do not claim a finding is resolved without evidence.`)}>{I.sparkles} Triage findings</button>}</span></div>
           <div className="pj-card-b" style={{ padding: 0 }}>
-            {findings.length === 0 ? (
+            {validationFailed ? (
+              <div style={{ padding: 16 }}><EmptyState tone="error" icon={I.alertTriangle} title="Validation did not run" hint="The validation service did not return a result, so no findings are shown. This is NOT a clean result — re-run validation before relying on it." /></div>
+            ) : findings!.length === 0 ? (
               <div style={{ padding: 16 }}><EmptyState icon={I.checkCircle} title="No findings" hint="No blocking or advisory issues were raised for the selected region." /></div>
             ) : (
               <table className="reg-tbl"><thead><tr><th>Severity</th><th>Section</th><th>Message</th><th>Suggested fix</th></tr></thead>
-                <tbody>{findings.filter((f) => f.severity !== 'info').concat(findings.filter((f) => f.severity === 'info')).map((f, i) => (
+                <tbody>{findings!.filter((f) => f.severity !== 'info').concat(findings!.filter((f) => f.severity === 'info')).map((f, i) => (
                   <tr key={i}>
                     <td><span className={'rd-chip tone-' + sevTone(f.severity)}>{f.severity}</span></td>
                     <td className="mono">{f.sectionCode ?? '—'}</td>
@@ -440,9 +528,13 @@ export function EctdCompile({ onAsk }: SurfaceViewProps) {
 
       {/* ── History ── */}
       <div className="pj-card">
-        <div className="pj-card-h"><span className="t">Compilation history</span><span className="s">{history.length}</span></div>
+        <div className="pj-card-h"><span className="t">Compilation history</span><span className="s">{historyState === 'ready' ? history.length : historyState === 'error' ? 'not loaded' : '…'}</span></div>
         <div className="pj-card-b" style={{ padding: 0 }}>
-          {history.length === 0 ? (
+          {historyState === 'loading' || historyState === 'idle' ? (
+            <div style={{ padding: 16 }}><EmptyState icon={I.clock} title="Loading compilation history…" busy /></div>
+          ) : historyState === 'error' ? (
+            <div style={{ padding: 16 }}><EmptyState tone="error" icon={I.alertTriangle} title="Compilation history didn’t respond." hint="Whether this sequence has been compiled before is not known until it loads." retry={loadHistory} /></div>
+          ) : history.length === 0 ? (
             <div style={{ padding: 16 }}><EmptyState icon={I.clock} title="No compilations yet" hint="Each Compile run is recorded here with its status and version." /></div>
           ) : (
             <table className="reg-tbl"><thead><tr><th>Name</th><th>Type</th><th>Version</th><th>Status</th><th style={{ textAlign: 'right' }}>Compiled</th></tr></thead>

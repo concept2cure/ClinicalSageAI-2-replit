@@ -210,7 +210,7 @@ export function RbmReport({ board, onAsk }: SubProps) {
           <div className="rbm-report-m">As of {R.asOf} -- overall risk <RbmChip vocab="band" value={R.overallRisk} /> -- {R.attentionCount} attention items -- {R.approved ? 'assessment approved' : 'assessment approval pending'}</div>
         </div>
         <div className="rbm-report-acts">
-          <button className="rbm-btn" onClick={() => onAsk?.('Export the risk review report as markdown')}>{I.download}Export markdown</button>
+          <button className="rbm-btn" onClick={() => onAsk?.('Export the risk review report as markdown')} title="Sends this request to AnA in the rail — it does not download a file here">{I.sparkles}Ask AnA to export markdown</button>
           <button className="rbm-btn" onClick={() => window.print()}>{I.fileText}Print</button>
         </div>
       </div>

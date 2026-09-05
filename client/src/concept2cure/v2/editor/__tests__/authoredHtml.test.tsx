@@ -88,6 +88,23 @@ describe('AuthoredHtml', () => {
     expect(container.querySelector('p:not(.ed-figure-missing)')?.textContent).toBe('text');
   });
 
+  it('refuses a reference OUTSIDE the governed images route — no authenticated fetch fires', async () => {
+    apiRequest.mockImplementation(okImage);
+    // DOMPurify keeps data-* attributes, so a directly-authored data-authsrc
+    // survives sanitization: the RESOLVER is the gate. A same-app API path
+    // that is not a figure reference must never be fetched with the viewer's
+    // credentials on the author's behalf.
+    const { container } = render(
+      <AuthoredHtml html={'<img data-authsrc="/api/authoring/docs/other-doc/audit" alt="x">'} />,
+    );
+    await waitFor(() => {
+      expect(container.querySelector('.ed-figure-missing')?.textContent).toMatch(
+        /its reference points outside the image store/,
+      );
+    });
+    expect(apiRequest).not.toHaveBeenCalled();
+  });
+
   it('leaves external images alone and never calls the API for them', async () => {
     apiRequest.mockImplementation(okImage);
     const { container } = render(

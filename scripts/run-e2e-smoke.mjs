@@ -59,6 +59,10 @@ function resolvePlaywright() {
 function startDevServer() {
   const env = {
     ...process.env,
+    // The governed-export gate must be ON for the golden journey's
+    // denied-before-review step to mean anything (server-side toggle;
+    // non-production only — production is always enforced).
+    EXPORT_REVIEW_GATE: process.env.EXPORT_REVIEW_GATE || 'enforce',
     DATABASE_URL:
       process.env.DATABASE_URL ||
       'postgresql://postgres:postgres@localhost:5432/concept2cure-ri?sslmode=disable',
@@ -98,6 +102,9 @@ function stopDevServer(server) {
 async function main() {
   // Seed the login user the smoke authenticates as (idempotent upsert).
   await run('node', ['scripts/seed-admin.mjs']);
+  // Seed the governed-workflow identities (author/reviewer/admin) the golden
+  // journey authenticates as (idempotent upsert; same database).
+  await run('node', ['tests/e2e/seed-governed-workflow.cjs']);
 
   const server = startDevServer();
   let closed = false;
@@ -108,9 +115,19 @@ async function main() {
   try {
     await waitForServer(BASE_URL);
     const pw = resolvePlaywright();
-    await run(pw.cmd, [...pw.prefix, 'test', 'tests/e2e/authenticated-app-smoke.e2e.spec.ts'], {
-      env: { ...process.env, BASE_URL },
-    });
+    // Which specs to drive comes from argv so the CI workflow can run each one
+    // as its OWN step. That is not cosmetic: a combined step reports only
+    // "exit code 1", and CI logs are not always retrievable, so a failure in
+    // one spec is indistinguishable from the other. Separate steps make the
+    // failing surface readable from the job's step list alone. Defaults to
+    // both specs for a one-command local run.
+    const specs = process.argv.slice(2).filter(a => !a.startsWith('-'));
+    const toRun = specs.length
+      ? specs
+      : ['tests/e2e/authenticated-app-smoke.e2e.spec.ts', 'tests/e2e/golden-customer-journey.e2e.ts'];
+    for (const spec of toRun) {
+      await run(pw.cmd, [...pw.prefix, 'test', spec], { env: { ...process.env, BASE_URL } });
+    }
   } catch (error) {
     console.error(
       '\nTier 5 smoke failed. Ensure Playwright is installed ' +

@@ -5,7 +5,8 @@ import { notifySurfaceActionReady, useSurfaceActionHandlers } from '../surfaceAc
 import { I } from '../icons';
 import { EmptyState, useLiveRows } from '../dataConnect';
 import { apiRequest, extractApiError } from '@/lib/queryClient';
-import { AnswerLead } from '../AnswerLead';
+import { AnswerLead, UnresolvedLead } from '../AnswerLead';
+import { assessmentStateFor, hasAnswer, mayReassure } from '../assessmentState';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { C2CForm } from '../C2CForm';
 import type { C2CFormConfig } from '../C2CForm';
@@ -178,7 +179,7 @@ export function Risk({ onAsk }: SurfaceViewProps) {
       const r = rows.find(x => x.id === sel);
       const c2c = (window as any).C2C;
       if (c2c && r) c2c.setContext({ entityType: 'risk', entityId: r.id, entityLabel: r.id + ' -- ' + (r.hazard || 'risk') });
-    } catch (_e) { /* swallow */ }
+    } catch { /* swallow */ }
   }, [sel, rows]);
 
   const EN = RISK_ENUMS;
@@ -291,12 +292,58 @@ export function Risk({ onAsk }: SurfaceViewProps) {
     const prod = (r: RiskRow, resid: boolean) => { const si = sevI(r.sev) + 1; const pi = (probI(resid ? (r.probR || r.prob) : r.prob)) + 1; return si * pi; };
     const total = rows.length;
     const open = rows.filter(r => r.status === 'open' || r.status === 'mitigating').length;
-    const accepted = rows.filter(r => r.status === 'accepted' || r.res === 'Acceptable').length;
+    /* A RECORDED residual-risk determination: the server's authoritative
+       `acceptable` boolean (mapped to res === 'Acceptable') or the accepted
+       status. Nothing here is inferred from a risk product. */
+    const isAccepted = (r: RiskRow) => r.status === 'accepted' || r.res === 'Acceptable';
+    const accepted = rows.filter(isAccepted).length;
     const highResidual = rows.filter(r => prod(r, true) >= 15).length;
+    /* The hazards standing between this register and a clean residual-risk
+       picture: no recorded acceptance, or a residual score in the unacceptable
+       band even though one was recorded.
+
+       This is the finding count the narrative below now speaks from. It used to
+       speak from `highResidual === 0 && open === 0` — two filters that are
+       EMPTY over a register whose residual risk nobody has evaluated at all
+       (five hazards, status 'verified', acceptable NULL, every score under 15),
+       so the surface cleared itself over exactly the state it exists to
+       surface. `outstanding` counts those five. */
+    const outstanding = rows.filter(r => !isAccepted(r) || prod(r, true) >= 15).length;
+    const firstOutstanding = rows.find(r => !isAccepted(r) || prod(r, true) >= 15) ?? null;
     const avgInitial = (rows.reduce((s, r) => s + prod(r, false), 0) / (total || 1)).toFixed(1);
     const avgResidual = (rows.reduce((s, r) => s + prod(r, true), 0) / (total || 1)).toFixed(1);
-    return { total, open, accepted, highResidual, avgInitial, avgResidual };
+    return { total, open, accepted, highResidual, outstanding, firstOutstanding, avgInitial, avgResidual };
   }, [rows, view]);
+
+  /* ── What may be said about this risk file, and from which state ───────────
+     assessmentState.ts, applied to ISO 14971. An empty hazard register is not a
+     safe device; it is an unexamined one, and a register nobody has evaluated
+     the residual risk of is the same thing one hazard at a time.
+
+     `scopeExists` — hazards are actually recorded. Zero hazards is nothing an
+     analysis could have run against, so it can never reach 'assessed-clear'.
+
+     `findingCount` — hazards without a recorded acceptable residual risk, or
+     sitting in the unacceptable band.
+
+     `assessmentRan` — POSITIVE evidence that residual-risk evaluation happened:
+     at least one hazard carries a determination a human recorded (the server's
+     `acceptable` boolean, or the accepted status). This is a non-zero count of
+     recorded evaluations, NOT the absence of findings; deriving it from
+     `highResidual === 0` — the shape the copy below used — is the defect
+     itself. A register of hazards nobody has evaluated has `accepted === 0` and
+     lands on 'not-assessed', which is the honest answer.
+
+     Read health comes from `live` through assessmentStateFor, so a failed or
+     in-flight read can never be spoken as an empty result — including the case
+     where the read failed but a hazard written during this session leaves
+     `rows` non-empty. */
+  const riskState = assessmentStateFor(live, {
+    scopeExists: summary.total > 0,
+    findingCount: summary.outstanding,
+    assessmentRan: summary.accepted > 0,
+  });
+  const residualClear = mayReassure(riskState);
 
   /* What AnA can see of this screen.
      She knew the user was on "risk" and nothing else — not how many hazards are
@@ -320,10 +367,26 @@ export function Risk({ onAsk }: SurfaceViewProps) {
         availableActions: ['Retry the risk-file read'],
       };
     }
+    /* A read that succeeded and returned nothing. The counts below are all zero
+       in that state, and "0 open, 0 accepted, 0 with a residual score of 15 or
+       more" is what AnA would otherwise repeat back to the person accountable
+       for the risk file — three zeros that read as a clean file and mean an
+       empty one. The mean scores are worse: `total || 1` makes them "0.0" for a
+       register with nothing in it. */
+    if (summary.total === 0) {
+      return {
+        summary:
+          'No hazards are recorded in the ISO 14971 risk file, so no hazard analysis or residual-risk evaluation has been carried out here. ' +
+          'This is an unexamined risk file, not a clear one — say nothing about residual risk or benefit-risk from it.',
+        availableActions: ['Add the first hazard to the governed risk file'],
+      };
+    }
     return {
       summary:
         `Risk management (ISO 14971): ${summary.total} hazard(s) — ${summary.open} open or mitigating, ` +
         `${summary.accepted} accepted, ${summary.highResidual} with a residual score of 15 or more. ` +
+        `${summary.outstanding} hazard(s) carry no recorded acceptable residual risk or sit in the unacceptable band. ` +
+        `The overall benefit-risk conclusion is a documented manufacturer decision and is not recorded here. ` +
         `Mean score ${summary.avgInitial} initial, ${summary.avgResidual} residual. ` +
         `Matrix showing ${view} risk` +
         (row ? `; "${row.id} — ${row.hazard || 'hazard'}" selected` : ''),
@@ -332,6 +395,8 @@ export function Risk({ onAsk }: SurfaceViewProps) {
         openOrMitigating: summary.open,
         accepted: summary.accepted,
         highResidual: summary.highResidual,
+        withoutRecordedAcceptance: summary.outstanding,
+        residualRiskState: riskState,
         meanInitialScore: summary.avgInitial,
         meanResidualScore: summary.avgResidual,
         matrixView: view,
@@ -350,7 +415,7 @@ export function Risk({ onAsk }: SurfaceViewProps) {
         'Switch the matrix between initial and residual risk',
       ],
     };
-  }, [live.loading, live.error, summary, view, row]);
+  }, [live.loading, live.error, summary, view, row, riskState]);
   usePublishSurfaceContext('risk', anaContext);
 
   // addHazard — REAL, awaited write. POSTs to the governed risk file and adopts
@@ -512,27 +577,87 @@ export function Risk({ onAsk }: SurfaceViewProps) {
         />
       ) : (
       <>
+      {/* The lead speaks the headline conclusion of this surface, so it speaks
+          only from a state that HAS an answer. `rows` can be non-empty while
+          the read is in flight or has failed — a hazard written during this
+          session survives a failed refresh — and the narrative below would then
+          describe the whole risk file from that one row. */}
+      {!hasAnswer(riskState) ? (
+        <UnresolvedLead
+          state={riskState}
+          eyebrow="Where the risk file stands right now"
+          subject="hazards in the risk file"
+        />
+      ) : (
       <AnswerLead
         tone={summary.highResidual > 0 || summary.open > 0 ? 'urgent' : 'calm'}
         eyebrow="Where the risk file stands right now"
         headline={summary.highResidual > 0
           ? <><b>{summary.highResidual}</b> residual risk{summary.highResidual === 1 ? '' : 's'} sit{summary.highResidual === 1 ? 's' : ''} in the <b>unacceptable</b> band and {summary.open > 0 ? <><b>{summary.open}</b> evaluation{summary.open === 1 ? '' : 's'} {summary.open === 1 ? 'is' : 'are'} still open.</> : 'must be reduced before the RMF can conclude.'}</>
           : summary.open > 0
-            ? <><b>{summary.open}</b> risk evaluation{summary.open === 1 ? '' : 's'} {summary.open === 1 ? 'is' : 'are'} still open — everything else is controlled to an acceptable level.</>
-            : <>All <b>{summary.total}</b> hazards are controlled to an acceptable residual risk. The benefit-risk conclusion can proceed.</>}
-        body={<>Average risk dropped from <b>{summary.avgInitial}</b> initial to <b>{summary.avgResidual}</b> residual across {summary.total} hazards; {summary.accepted} accepted. Each hazard carries its control chain and V&amp;V evidence for the design history file.</>}
-        reassure="I will draft the benefit-risk rationale and the RMF section 8 conclusion from the controlled residual risks — you approve the judgment."
+            /* USED TO READ: "…still open — everything else is controlled to an
+               acceptable level." False whenever a non-open hazard carries no
+               recorded acceptance: a 'verified' hazard with `acceptable` NULL
+               was counted as "everything else" and reported as controlled. */
+            ? <><b>{summary.open}</b> risk evaluation{summary.open === 1 ? '' : 's'} {summary.open === 1 ? 'is' : 'are'} still open; <b>{summary.accepted}</b> of {summary.total} hazard{summary.total === 1 ? '' : 's'} carr{summary.accepted === 1 ? 'ies' : 'y'} a recorded acceptable residual risk.</>
+            : residualClear
+              /* USED TO READ: "All N hazards are controlled to an acceptable
+                 residual risk. The benefit-risk conclusion can proceed."
+                 Two defects in one sentence. It was selected by
+                 `highResidual === 0 && open === 0` — both EMPTY filters over a
+                 register whose residual risk had never been evaluated, so five
+                 hazards with `acceptable` NULL and scores under 15 read as
+                 fully controlled. And the second clause is a benefit-risk
+                 determination: under ISO 14971 that is a documented
+                 manufacturer decision, not a consequence of two counts reaching
+                 zero. What is left reports what the register shows and stops
+                 there. */
+              ? <>All <b>{summary.total}</b> hazard{summary.total === 1 ? '' : 's'} carr{summary.total === 1 ? 'ies' : 'y'} a recorded acceptable residual risk, and none sit{summary.total === 1 ? 's' : ''} in the unacceptable band.</>
+              : <><b>{summary.outstanding}</b> of {summary.total} hazard{summary.total === 1 ? '' : 's'} {summary.outstanding === 1 ? 'has' : 'have'} no recorded residual-risk acceptance. Residual risk is unevaluated for {summary.outstanding === 1 ? 'it' : 'those'}, not accepted.</>}
+        body={
+          /* USED TO READ: "Average risk dropped from X initial to Y residual …
+             Each hazard carries its control chain and V&V evidence for the
+             design history file." The drop is not a fact of the register — a
+             hazard with no recorded residual probability maps `probR` to
+             `prob`, so a file where nobody has re-scored anything reports the
+             identical figure twice and calls it a reduction. The control-chain
+             clause was flatly untrue: this screen reads the hazard register,
+             which carries neither control lists nor verification evidence. */
+          <>Mean risk score is <b>{summary.avgInitial}</b> initial and <b>{summary.avgResidual}</b> residual across {summary.total} hazard{summary.total === 1 ? '' : 's'}; {summary.accepted} carr{summary.accepted === 1 ? 'ies' : 'y'} a recorded acceptance. Control chains and verification evidence are not read on this screen.</>
+        }
+        reassure={
+          /* "…from the controlled residual risks" presumed the controls this
+             screen cannot see. The human approval it names is unchanged. */
+          'I will draft the benefit-risk rationale and the RMF section 8 conclusion from the recorded residual risks and their acceptance decisions — you approve the judgment.'
+        }
         action={summary.open > 0
           ? { label: 'Open the ' + (rows.find(r => r.status === 'open') || row).id + ' evaluation', onClick: () => setSel((rows.find(r => r.status === 'open') || row).id) }
-          : { label: 'Draft RMF conclusion', onClick: () => onAsk('Draft the ISO 14971 section 8 overall benefit-risk conclusion for the RMF') }}
+          /* Drafting the RMF conclusion is only offered once the register
+             actually supports one. It used to be the else-branch of "is
+             anything open", so it was offered over a register with no
+             residual-risk evaluation in it at all. */
+          : summary.firstOutstanding
+            ? { label: 'Open the ' + summary.firstOutstanding.id + ' evaluation', onClick: () => setSel(summary.firstOutstanding!.id) }
+            : { label: 'Draft RMF conclusion', onClick: () => onAsk('Draft the ISO 14971 section 8 overall benefit-risk conclusion for the RMF') }}
         secondary="Or work the matrix and hazards below."
       />
+      )}
 
       <div className="metrics">
         <div className="metric"><div className="metric-l">Hazards identified</div><div className="metric-n" style={{ fontSize: 22 }}>{summary.total}</div></div>
-        <div className="metric" data-tone="ok"><div className="metric-l">Residual acceptable</div><div className="metric-n" style={{ fontSize: 22 }}>{summary.accepted} / {summary.total}</div></div>
+        {/* The tone was the literal "ok" — the green, good-news treatment — on
+            every register including "Residual acceptable 0 / 12", where the
+            colour is the only thing a scanning reader takes from the tile and
+            it said the opposite of the number beside it. */}
+        <div className="metric" data-tone={summary.accepted === summary.total ? 'ok' : ''}><div className="metric-l">Residual acceptable</div><div className="metric-n" style={{ fontSize: 22 }}>{summary.accepted} / {summary.total}</div></div>
         <div className="metric" data-tone={summary.open ? 'warn' : ''}><div className="metric-l">Open evaluations</div><div className="metric-n" style={{ fontSize: 22 }}>{summary.open}</div></div>
-        <div className="metric" data-tone={summary.highResidual ? 'err' : 'ok'}><div className="metric-l">High residual (&gt;=15)</div><div className="metric-n" style={{ fontSize: 22 }}>{summary.highResidual}</div></div>
+        {/* The green tone here used to be the else-branch of a count: zero
+            hazards at 15 or more read as good news even over a register where
+            no residual probability has been recorded and every "residual"
+            score is really the initial one. The count stays as it is — it is
+            computed from recorded severity and probability — but the good-news
+            colour waits for the residual evaluation to have happened. */}
+        <div className="metric" data-tone={summary.highResidual ? 'err' : residualClear ? 'ok' : ''}><div className="metric-l">High residual (&gt;=15)</div><div className="metric-n" style={{ fontSize: 22 }}>{summary.highResidual}</div></div>
       </div>
 
       <div className="risk-split">
@@ -568,9 +693,21 @@ export function Risk({ onAsk }: SurfaceViewProps) {
             })}
           </div>
           <div className="riskmx-legend"><span><i className="z ok" />Acceptable</span><span><i className="z warn" />ALARP</span><span><i className="z err" />Unacceptable</span></div>
+          {/* USED TO READ: "Benefit-risk: favorable" whenever
+              `summary.highResidual` was 0 — a determination the surface is not
+              entitled to make, selected by a filter that is EMPTY over a
+              register nobody has evaluated. Two states produced the identical
+              green "favorable": a device whose residual risks were assessed and
+              accepted, and a register of hazards with `acceptable` NULL and
+              every score under 15. Under ISO 14971 the overall benefit-risk
+              conclusion is a documented manufacturer decision recorded in the
+              risk management file; it is not a consequence of a count reaching
+              zero, and it is not made on this screen. The counts the analysis
+              actually found are reported instead, and the citation is
+              unchanged. */}
           <div className="risk-br">
             {I.shieldCheck}
-            <span><b>Benefit-risk: {summary.highResidual ? 'gated' : 'favorable'}</b> — {summary.accepted} of {summary.total} residual risks Acceptable; {summary.open} open evaluation{summary.open === 1 ? '' : 's'} gate{summary.open === 1 ? 's' : ''} the RMF conclusion (ISO 14971 section 8).</span>
+            <span><b>Benefit-risk: not concluded here</b> — {summary.accepted} of {summary.total} residual risk{summary.total === 1 ? '' : 's'} carr{summary.accepted === 1 ? 'ies' : 'y'} a recorded acceptance; {summary.open} open evaluation{summary.open === 1 ? '' : 's'}; {summary.highResidual} at a residual score of 15 or more. The overall conclusion (ISO 14971 section 8) is a documented manufacturer decision.</span>
             <button className="risk-br-cta" onClick={() => onAsk('Draft the ISO 14971 section 8 overall benefit-risk conclusion for the RMF')}>{I.sparkles} Draft RMF conclusion</button>
           </div>
         </div>
@@ -585,7 +722,12 @@ export function Risk({ onAsk }: SurfaceViewProps) {
             <div className="rc-row"><span className="rc-k">Probability</span><span className="rc-v">{row.prob} ({probI(row.prob) + 1}){row.probR && row.probR !== row.prob && <span className="rc-move"> -- {row.probR} <span className="rc-move-tag">after controls</span></span>}</span></div>
             <div className="rc-row"><span className="rc-k">Strategy</span><span className="rc-v">{(EN.strategy.find(s => s[0] === row.strategy) || [])[1] || row.strategy} / {(EN.source.find(s => s[0] === row.source) || [])[1] || row.source}</span></div>
             <div className="rc-row"><span className="rc-k">Residual risk</span><span className="rc-v"><span className={`rd-chip tone-${row.res === 'Acceptable' ? 'ok' : 'warn'}`}>{row.res}</span></span></div>
-            <div className="rc-row"><span className="rc-k">Verification (DHF)</span><span className="rc-v">{row.ver || '—'}</span></div>
+            {/* USED TO READ: an em dash whenever `ver` was empty — which is
+                every hazard the register read produces, because the mapper has
+                no verification column to map and sets `ver: ''` on every row.
+                A dash in a key/value list reads as "nothing recorded"; the
+                honest statement is that this screen does not read it. */}
+            <div className="rc-row"><span className="rc-k">Verification (DHF)</span><span className="rc-v">{row.ver || 'Not read on this screen'}</span></div>
           </div>
 
           <div className="pj-seclbl" style={{ margin: '14px 0 8px' }}>Risk controls <span className="s">/ ISO 14971 section 7</span></div>
@@ -596,7 +738,24 @@ export function Risk({ onAsk }: SurfaceViewProps) {
                 <span className="risk-ctrl-m"><span className="mono">{(EN.ctrlType.find(t => t[0] === c.type) || [])[1] || c.type}</span><span className={`rd-chip tone-${ctrlTone[c.status] || 'idle'}`}>{(EN.ctrlStatus.find(s => s[0] === c.status) || [])[1] || c.status}</span></span>
               </div>
             ))}
-            {(!row.controls || !row.controls.length) && <div className="sp-q-s" style={{ padding: '6px 0' }}>No controls yet — add the first risk control.</div>}
+            {/* USED TO READ: "No controls yet — add the first risk control." on
+                every hazard with an empty control list. The hazard-register
+                read does not carry control lists — the mapper sets
+                `controls: []` on every row it maps — so that sentence appeared
+                against a hazard carrying a full, verified control chain just as
+                readily as against one carrying none. On an ISO 14971 surface
+                that is a claim that a hazard is unmitigated, made from data the
+                screen never read.
+
+                Two rows have a control list this screen can vouch for: one
+                created here this session (the server had just written it, so
+                there genuinely are no controls yet) and one a control was added
+                to here (non-empty, so it renders the list above). */}
+            {(!row.controls || !row.controls.length) && (
+              row._new
+                ? <div className="sp-q-s" style={{ padding: '6px 0' }}>No controls yet — add the first risk control.</div>
+                : <div className="sp-q-s" style={{ padding: '6px 0' }}>Risk controls for this hazard are not read on this screen. An empty list here is not a record that none exist.</div>
+            )}
           </div>
           <button className="btn ghost" style={{ width: '100%', justifyContent: 'center', marginTop: 8 }} onClick={() => setCtrlForm(true)}>{I.plus} Add risk control</button>
 

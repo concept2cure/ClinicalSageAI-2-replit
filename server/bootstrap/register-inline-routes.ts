@@ -79,7 +79,6 @@ import fdaFormsRoutes from '../routes/fda-forms.routes';
 import fieldSyncRoutes from '../routes/fieldSync.routes';
 import contentAssemblyRoutes from '../routes/contentAssembly.routes';
 import { createMiscInlineRoutes } from '../routes/misc-inline-routes';
-import licenseRoutes from '../routes/license-routes.js';
 import moduleSubscriptions from '../routes/module-subscriptions.js';
 import moduleAccessRequests from '../routes/module-access-requests.js';
 import licensing from '../routes/licensing.js';
@@ -189,7 +188,6 @@ export async function registerInlineLitCommerceRoutes({
    * identically to the working cases three functions away.
    */
   const litIntRoutes: ReadonlyArray<{ path: string; router: unknown; name: string }> = [
-    { path: '/', router: licenseRoutes, name: 'License Management' },
     { path: '/api/module-subscriptions', router: moduleSubscriptions, name: 'Module Subscriptions' },
     // Sits beside module-subscriptions deliberately: it is how a member who
     // cannot buy asks for a locked module, so it must stay reachable to an

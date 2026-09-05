@@ -531,7 +531,42 @@ export interface TechnicalFileAssembleRequest {
   productName?: string;
   manufacturer?: string;
 }
-export interface TechnicalFileAssembleResponse {
+/**
+ * The delivered technical-file consequence — the SAME governed-export contract
+ * the eSTAR /build route emits. `governed: true` when the program has a
+ * PM-spine project anchor (artifact registry + provenance + audit);
+ * `governed: false, audited: true` when it does not (delivered + audit-logged
+ * with the SHA-256, registry placement pending). Either way the ZIP bytes ride
+ * in `downloadable_output_ref` — an assemble no longer deletes the file before
+ * anyone can download it.
+ */
+export type TechnicalFileDeliveryConsequence =
+  | {
+      governed: true;
+      source_type: 'export_zip';
+      artifact_id: string;
+      artifact_version: number;
+      artifact_status: string;
+      placement_state: 'placed' | 'unplaced';
+      suggested_placement: string | null;
+      provenance_ref: string;
+      audit_ref: string;
+      delivered_artifact_sha256: string;
+      downloadable_output_ref: { encoding: 'base64'; mime_type: string; filename: string; data: string };
+    }
+  | {
+      governed: false;
+      audited: true;
+      source_type: 'export_zip';
+      artifact_id: null;
+      artifact_registry: string;
+      program_id: string | null;
+      sha256: string;
+      downloadable_output_ref: { encoding: 'base64'; mime_type: string; filename: string; data: string };
+    };
+
+/** Assembly facts shared by both technical-file delivery routes. */
+export interface TechnicalFileAssemblyReport {
   ok: true;
   regulation: 'mdr' | 'ivdr';
   ready: boolean;
@@ -540,7 +575,32 @@ export interface TechnicalFileAssembleResponse {
   fileCount: number;
   materialized: number;
   skipped: Array<{ sectionId: string; source: string; reason: string }>;
+  unresolvedLeaves: Array<{ documentTable: string | null; documentId: number | null; reason: string }>;
+  /** Materialized leaves whose source is still a draft/review artifact. */
+  unfinalized: number;
+  unfinalizedSections: Array<{ sectionCode: string; status: string }>;
 }
+
+export type TechnicalFileAssembleResponse = TechnicalFileAssemblyReport & TechnicalFileDeliveryConsequence;
+
+// ── Device technical-file EXPORT (POST /programs/:programId/technical-file/export) ─
+// Packages the program's GOVERNED mdr/ivdr document (c2c_document_sections —
+// the rows the MDx editor writes) into the technical-file ZIP and delivers it
+// through the governed-export consequence. 422 NO_AUTHORED_CONTENT when the
+// program has no authored section of that regulation; 413 EXPORT_TOO_LARGE
+// when the package exceeds the governed-export size cap; 404 when the program
+// is not in the caller's organization.
+export interface TechnicalFileExportRequest {
+  regulation: 'mdr' | 'ivdr';
+  productName?: string;
+  manufacturer?: string;
+}
+export type TechnicalFileExportResponse = TechnicalFileAssemblyReport &
+  TechnicalFileDeliveryConsequence & {
+    programId: string;
+    /** Authored sections projected into leaves (empty sections are not leaves). */
+    leafCount: number;
+  };
 
 // ── Dispatch readiness (GET /api/submissions/sequences/:seqId/dispatch-readiness) ─
 // Deterministic, SERVER-COMPUTED gate inputs — the tamper-proof counterpart to

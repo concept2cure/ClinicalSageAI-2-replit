@@ -29,8 +29,10 @@
  */
 import React from 'react';
 import { I } from '../icons';
-import { apiRequest, serverMessage } from '@/lib/queryClient';
-import { useLiveRows, useLiveData, hasKeys, liveGetOrNull, EmptyState } from '../dataConnect';
+import { apiRequest, serverMessage, redactInternals } from '@/lib/queryClient';
+import { useLiveRows, useLiveData, hasKeys, isRowsWith, liveGetOrNull, EmptyState } from '../dataConnect';
+import { assessmentStateFor } from '../assessmentState';
+import { documentSourceLabel } from '@shared/regulatory/canonical-document';
 import {
   SC_LENSES,
   SC_LIFECYCLE_OPS,
@@ -173,7 +175,7 @@ export function SeqPicker({
   if (error) {
     return (
       <div className="sc-verdict tone-err" role="status">
-        Couldn&#39;t load this submission&#39;s sequences — {error}. The workspaces below need a
+        Couldn&#39;t load this submission&#39;s sequences — {redactInternals(error, 'the read did not settle')}. The workspaces below need a
         sequence to work on.
       </div>
     );
@@ -275,7 +277,7 @@ function AddLeafForm({ seqId, onDone }: { seqId: number; onDone: (n: Notice) => 
     if (r.data && typeof r.data.id === 'number') {
       onDone({
         tone: 'ok',
-        text: `Leaf ${r.data.sectionCode} placed from “${doc.title}” — server-confirmed (leaf #${r.data.id}).`,
+        text: `Leaf ${typeof r.data.sectionCode === 'string' ? r.data.sectionCode : '(section code not returned)'} placed from “${doc.title}” — server-confirmed (leaf #${r.data.id}).`,
       });
       setDocId(null);
       setSection('');
@@ -290,7 +292,7 @@ function AddLeafForm({ seqId, onDone }: { seqId: number; onDone: (n: Notice) => 
         <div className="scaf-note">Loading the Co-Author documents…</div>
       ) : docs.error ? (
         <div className="sc-verdict tone-err" role="status">
-          Couldn&#39;t load the Co-Author documents — {docs.error}. Nothing to place.
+          Couldn&#39;t load the Co-Author documents — {redactInternals(docs.error, 'the read did not settle')}. Nothing to place.
         </div>
       ) : docRows.length === 0 ? (
         <div className="scaf-note">
@@ -353,7 +355,7 @@ function AddLeafForm({ seqId, onDone }: { seqId: number; onDone: (n: Notice) => 
             disabled={!doc || !section.trim() || saving}
             onClick={place}
           >
-            {I.layers} {saving ? 'Placing…' : 'Place leaf (PUT /leaves)'}
+            {I.layers} {saving ? 'Placing…' : 'Place leaf in the sequence'}
           </button>
           <button type="button" className="sc-trans-b" onClick={() => setOpen(false)} disabled={saving}>
             Cancel
@@ -367,7 +369,10 @@ function AddLeafForm({ seqId, onDone }: { seqId: number; onDone: (n: Notice) => 
 export function BuilderWorkspace({ seq }: { seq: SeqRow }) {
   const [bump, setBump] = React.useState(0);
   const leavesPath = `/api/submissions/sequences/${seq.id}/leaves`;
-  const leaves = useLiveRows<LeafRow>(leavesPath, [leavesPath, bump]);
+  /* The module header promises a wrong-shaped 200 reaches the error branch;
+     that held for the two useLiveData reads and not for these three, which
+     flattened a non-array body to zero rows and rendered "nothing here yet". */
+  const leaves = useLiveRows<LeafRow>(leavesPath, [leavesPath, bump], isRowsWith<LeafRow>('id', 'sectionCode'));
   const [notice, setNotice] = React.useState<Notice | null>(null);
   const locked = seq.status === 'frozen' || seq.status === 'dispatched';
 
@@ -420,9 +425,11 @@ export function BuilderWorkspace({ seq }: { seq: SeqRow }) {
                   <td>{l.granularity ?? '—'}</td>
                   <td>
                     {l.documentTable && l.documentId != null ? (
-                      <span className="sc-mono">
-                        {l.documentTable} #{l.documentId}
-                      </span>
+                      /* The source row, named rather than related. The id stays —
+                         it is how an auditor ties this leaf to its source — but
+                         it is qualified by a store name a reader can act on
+                         instead of by a relation name (documentSourceLabel). */
+                      <span className="sc-mono">{documentSourceLabel(l.documentTable, l.documentId)}</span>
                     ) : (
                       'unlinked'
                     )}
@@ -542,7 +549,9 @@ export function ValidationWorkspace({ sub, seq }: { sub: SubLike; seq: SeqRow })
           <div className="scaf-note" style={{ padding: '18px 10px' }}>
             Running the deterministic validation checks…
           </div>
-        ) : live.error || !a ? (
+        ) : live.error || !a || !Array.isArray(a.readiness?.findings) ? (
+          /* hasKeys checks the KEY `readiness` exists, not its shape; a readiness
+             object without `findings` rendered "nothing to flag" over nothing. */
           <EmptyState
             tone="error"
             icon={I.alertTriangle}
@@ -684,12 +693,39 @@ export function ShadowReviewWorkspace({ seq }: { seq: SeqRow }) {
   const [lens, setLens] = React.useState('fda_filing');
   const [bump, setBump] = React.useState(0);
   const runsPath = `/api/submissions/sequences/${seq.id}/shadow-review`;
-  const runs = useLiveRows<ShadowRunRow>(runsPath, [runsPath, bump]);
+  const runs = useLiveRows<ShadowRunRow>(runsPath, [runsPath, bump], isRowsWith<ShadowRunRow>('id', 'status'));
   const [selRun, setSelRun] = React.useState<number | null>(null);
   React.useEffect(() => setSelRun(null), [seq.id]);
   const run = runs.rows.find((r) => r.id === selRun) ?? runs.rows[0] ?? null;
   const findingsPath = run ? `/api/submissions/shadow-review/${run.id}/findings` : null;
-  const findings = useLiveRows<ShadowFindingRow>(findingsPath, [findingsPath, bump]);
+  /* Without a guard, a non-array body settled as zero rows and — with the run
+     complete — rendered "Run #N recorded no findings.": the false clear the
+     comment block below was written to prevent. */
+  const findings = useLiveRows<ShadowFindingRow>(findingsPath, [findingsPath, bump], isRowsWith<ShadowFindingRow>('id', 'runId', 'severity'));
+  /* ── A run row exists before the review does ───────────────────────────────
+     The findings panel used to say "Run #N recorded no findings." on the sole
+     condition that the findings read settled empty. The run row, however, is
+     INSERTED with status 'running' before the reviewer is called at all, and is
+     set to 'failed' — with no finding rows ever written — when that call does
+     not return a usable answer. The list is newest-first and the newest run is
+     the one selected by default, which is precisely the run most likely to be
+     in flight or to have aborted.
+
+     So the sentence rendered in two states where it was false: over a run still
+     executing, and over a run that failed outright. In both, zero findings means
+     the review never got as far as recording any — not that a reviewer read the
+     sequence and had nothing to raise. On a submission sequence that is the
+     sentence a regulatory director acts on.
+
+     Clearance is now gated on the run's own recorded completion, which is the
+     positive evidence assessmentState.ts asks for, and is deliberately NOT the
+     emptiness that produced the bug: a complete run can hold findings or hold
+     none, and those stay different states. */
+  const findingsState = assessmentStateFor(findings, {
+    scopeExists: Boolean(run),
+    findingCount: findings.rows.length,
+    assessmentRan: run?.status === 'complete',
+  });
   const [notice, setNotice] = React.useState<Notice | null>(null);
   const [running, setRunning] = React.useState(false);
 
@@ -706,9 +742,10 @@ export function ShadowReviewWorkspace({ seq }: { seq: SeqRow }) {
     if (r.data && typeof r.data.runId === 'number') {
       setNotice({
         tone: 'ok',
-        text: `Shadow review run ${r.data.runId} complete — ${r.data.findingCount} ${
-          r.data.findingCount === 1 ? 'finding' : 'findings'
-        } recorded.`,
+        text:
+          typeof r.data.findingCount === 'number'
+            ? `Shadow review run ${r.data.runId} complete — ${r.data.findingCount} ${r.data.findingCount === 1 ? 'finding' : 'findings'} recorded.`
+            : `Shadow review run ${r.data.runId} complete — the finding count was not returned; open the run to see them.`,
       });
       setSelRun(r.data.runId);
       setBump((b) => b + 1);
@@ -810,10 +847,22 @@ export function ShadowReviewWorkspace({ seq }: { seq: SeqRow }) {
                   <div className="scaf-note">Loading run #{run.id}&#39;s findings…</div>
                 ) : findings.error ? (
                   <div className="sc-verdict tone-err" role="status">
-                    Couldn&#39;t load run #{run.id}&#39;s findings — {findings.error}.
+                    Couldn&#39;t load run #{run.id}&#39;s findings — {redactInternals(findings.error, 'the read did not settle')}.
                   </div>
                 ) : findings.empty ? (
-                  <div className="scaf-note">Run #{run.id} recorded no findings.</div>
+                  findingsState === 'assessed-clear' ? (
+                    <div className="scaf-note">Run #{run.id} recorded no findings.</div>
+                  ) : run.status === 'running' ? (
+                    <div className="scaf-note">
+                      Run #{run.id} is still running, so it holds no findings yet. That is
+                      the absence of a result, not a clear one.
+                    </div>
+                  ) : (
+                    <div className="sc-verdict tone-err" role="status">
+                      Run #{run.id} did not complete, so no findings were recorded. That is
+                      the absence of a review, not a clear one — run the shadow review again.
+                    </div>
+                  )
                 ) : (
                   <div className="sp-list">
                     {findings.rows.map((f) => (
@@ -883,7 +932,7 @@ export function CrossRegionWorkspace({ sub, seq }: { sub: SubLike; seq: SeqRow }
     if (leaves.error) {
       setState({
         phase: 'error',
-        error: `couldn't read sequence ${seq.sequenceNumber}'s leaves for the analysis — ${leaves.error}`,
+        error: `couldn't read sequence ${seq.sequenceNumber}'s leaves for the analysis — ${redactInternals(leaves.error, 'the read did not settle')}`,
       });
       return;
     }
@@ -936,7 +985,7 @@ export function CrossRegionWorkspace({ sub, seq }: { sub: SubLike; seq: SeqRow }
         )}
         {state.phase === 'error' && (
           <div className="sc-verdict tone-err" role="status">
-            The gap analysis did not complete — {state.error}. No gaps were invented in its place.
+            The gap analysis did not complete — {redactInternals(state.error, 'the analysis did not settle')}. No gaps were invented in its place.
           </div>
         )}
         {state.phase === 'done' && state.data && (
@@ -1014,15 +1063,29 @@ export function DispatchWorkspace({
   const runQc = async () => {
     if (qc.phase === 'running') return;
     setQc({ phase: 'running' });
+    /* The server overrides the two COUNTS from the canonical core and passes
+       `leaves` straight through — and the QC prompt decides "required modules
+       present, forms present, lifecycle operations coherent" from `leaves`.
+       Sent empty, every checklist row was a verdict over a section inventory
+       the sequence does not have. Read the real leaves first, as the
+       cross-region analysis already does; refuse the run if they cannot be read. */
+    const leafRead = await liveGetOrNull<LeafRow[]>(`/api/submissions/sequences/${seq.id}/leaves`);
+    if (leafRead.error || !Array.isArray(leafRead.data)) {
+      setQc({
+        phase: 'error',
+        error: `couldn't read sequence ${seq.sequenceNumber}'s leaves for the advisory — ${redactInternals(leafRead.error, 'the read did not settle')}`,
+      });
+      return;
+    }
     const r = await mutateVerbatim<DispatchQcResult>('POST', `/api/submissions/${sub.id}/dispatch-qc`, {
       region: seq.region,
       // With sequenceId the server recomputes the gate inputs from the
-      // canonical core — the numbers below are floors it overrides, never
-      // client claims it trusts.
+      // canonical core — the two counts below are floors it overrides, never
+      // client claims it trusts. The leaves are the sequence's real inventory.
       sequenceId: seq.id,
       validationErrors: a?.validationErrors ?? 0,
       unresolvedShadowCriticals: a?.unacknowledgedShadowCriticals ?? 0,
-      leaves: [],
+      leaves: leafRead.data.map((l) => ({ sectionCode: l.sectionCode, operation: l.lifecycleOp })),
     });
     if (r.data && Array.isArray(r.data.checklist)) setQc({ phase: 'done', data: r.data });
     else setQc({ phase: 'error', error: r.error ?? 'unexpected response shape' });
@@ -1077,10 +1140,14 @@ export function DispatchWorkspace({
               run · {a.leafCount} {a.leafCount === 1 ? 'leaf' : 'leaves'} · status{' '}
               {SC_SEQ_STATUS[a.sequenceStatus]?.l ?? a.sequenceStatus}
             </div>
+            {/* `shadowReviewMissing` is a HARD blocker merged into the gate, so
+                this note only ever rendered directly beneath "Dispatch blocked"
+                — while saying the gate was clear and dispatch permitted. It
+                now says what it is: the reason the gate blocks. */}
             {a.shadowReviewMissing && (
               <div className="sc-verdict tone-warn" role="status">
-                The gate is clear but no Shadow Review has run — dispatch is permitted yet this
-                sequence has never been adversarially reviewed.
+                No completed Shadow Review has run for this sequence — that is one of the reasons the
+                gate blocks. Dispatch is not permitted until it has been adversarially reviewed.
               </div>
             )}
             <div className="sc-disp-actions">
@@ -1145,13 +1212,21 @@ export function DispatchWorkspace({
             )}
             {qc.phase === 'done' && qc.data && (
               <div className="sc-mt">
+                {/* The advisory's verdict is floored on the STRUCTURAL gate only —
+                    not the shadow-presence or external-validation gates the
+                    deterministic assessment merges in — so it could sit green
+                    under "Dispatch blocked" with no qualifier. It never outranks
+                    the gate, and says so; under a blocked gate it is never green. */}
                 <div
-                  className={`sc-verdict ${qc.data.clearedToDispatch ? 'tone-ok' : 'tone-warn'}`}
+                  className={`sc-verdict ${qc.data.clearedToDispatch && a?.gate.cleared ? 'tone-ok' : 'tone-warn'}`}
                   role="status"
                 >
                   QC advisory: {qc.data.clearedToDispatch ? 'cleared to dispatch' : 'not cleared'}
                   {qc.data.blockers.length > 0 ? ` — ${qc.data.blockers.join(' ')}` : ''}
                   {qc.data.warnings.length > 0 ? ` Warnings: ${qc.data.warnings.join(' ')}` : ''}
+                  {a && !a.gate.cleared
+                    ? ' The deterministic gate above still blocks dispatch; this advisory does not override it.'
+                    : ' Advisory only — the deterministic gate above decides.'}
                 </div>
                 <div className="sp-list">
                   {qc.data.checklist.map((c, i) => (

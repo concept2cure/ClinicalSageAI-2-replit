@@ -283,6 +283,26 @@ router.post('/:submissionId/sign-release', async (req: Request, res: Response) =
       password,
       boundPayloadDigest,
       signerRole: signerRole ?? undefined,
+      // Committed WITH the signature, not after it (ledger L138). This used to
+      // be an auditService.logAction call further down, on its own connection,
+      // after the signature had already committed.
+      transactionalAuditEvent: {
+        tenantId: organizationId,
+        userId: signerId,
+        action: 'release_signature_created',
+        resourceType: 'submission_release',
+        resourceId: runId,
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'] as string | undefined,
+        details: {
+          submissionId: submissionIdParam,
+          signatureMeaning,
+          // NEVER include the password or full digest in audit details — the
+          // digest is recoverable via the signature row + reproducing the
+          // orchestrator state; leaking it here would cost cardinality
+          // without buying forensic value.
+        },
+      },
     });
     signatureId = result.signatureId;
   } catch (err) {
@@ -318,54 +338,22 @@ router.post('/:submissionId/sign-release', async (req: Request, res: Response) =
   }
 
   // ── Audit the action ────────────────────────────────────────────────────
-  const auditWrite = await auditService.logAction({
-    tenantId: organizationId,
-    userId: signerId,
-    action: 'release_signature_created',
-    resourceType: 'submission_release',
-    resourceId: runId,
-    ipAddress: req.ip,
-    userAgent: req.headers['user-agent'] as string | undefined,
-    details: {
-      submissionId: submissionIdParam,
-      signatureId,
-      signatureMeaning,
-      // NEVER include the password or full digest in audit details — the
-      // digest is recoverable via the signature row + reproducing the
-      // orchestrator state; leaking it here would cost cardinality
-      // without buying forensic value.
-    },
-  });
-
-  /* This was `try { await logAction } catch { log.warn('non-fatal') }`, and the
-     catch could not fire: logAction swallows its persistence failures and
-     resolves normally. So on an audit outage the signer received
-     `200 { signatureId, signedAt }`, an electronic_signatures row already
-     committed on a separate connection, and NOT EVEN the route's own warning
-     was emitted. A §11.10(e) record silently did not exist.
-
-     The signature is real and is still returned — it committed before this
-     point and retracting it would be a worse lie than the one being fixed —
-     but the gap now travels with it, and the operator warning actually runs. */
-  if (!auditWrite.persisted) {
-    log.warn('release-signature audit write failed', {
-      organizationId,
-      runId,
-      signatureId,
-      reason: auditWrite.error,
-    });
-  }
+  // Nothing to do here any more. `release_signature_created` is written inside
+  // createElectronicSignature's transaction, so by the time execution reaches
+  // this line the event is committed with the signature.
+  //
+  // What this replaces, and why the replacement is stronger: the event used to
+  // be written here, after the signature had committed on another connection.
+  // logAction swallows its persistence failures and resolves normally, so an
+  // audit outage produced a committed signature, a 200, and — before the
+  // warning below was added — not even a log line. The warning made the gap
+  // visible; putting the write in the transaction removes it. A signature that
+  // cannot be audited now does not commit at all, which is the §11.10(e) claim
+  // the route is supposed to be able to make.
 
   return res.json({
     signatureId,
     signedAt: new Date().toISOString(),
-    ...(auditWrite.persisted
-      ? {}
-      : {
-          auditWriteFailed: true,
-          auditWarning:
-            'The signature was recorded, but its audit-trail entry could not be written. Raise this with your administrator before relying on the audit trail for this release.',
-        }),
   });
 });
 

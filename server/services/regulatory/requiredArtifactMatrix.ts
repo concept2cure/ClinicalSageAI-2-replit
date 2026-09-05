@@ -6,6 +6,11 @@
  * The readiness evaluator compares this matrix against actual governed
  * artifacts to determine submission readiness.
  *
+ * Section codes follow the FDA eCTD Module 1 Specification v2.3 for US entries
+ * (forms under 1.1, cover letter 1.2, brochure 1.14.4.1, prescribing information
+ * under 1.14.1) — held to the FDA heading list by
+ * tests/regulatory/fda-module1-numbering.test.ts.
+ *
  * @module server/services/regulatory/requiredArtifactMatrix
  */
 
@@ -39,26 +44,28 @@ export interface ArtifactRequirement {
 // ─── Artifact Matrices ────────────────────────────────────────────────────────
 
 const US_IND_ARTIFACTS: ArtifactRequirement[] = [
-  { artifactType: 'form_1571', label: 'Form FDA 1571', required: true, requiredForAmendment: true, sectionCodes: ['m1.2'], format: 'pdf', aiDraftable: false, assigneeRole: 'regulatory_lead', validationRules: ['signature_required', 'form_complete'] },
-  { artifactType: 'form_1572', label: 'Form FDA 1572', required: true, requiredForAmendment: false, sectionCodes: ['m1.2'], format: 'pdf', aiDraftable: false, assigneeRole: 'regulatory_lead', validationRules: ['signature_required'] },
-  { artifactType: 'form_3674', label: 'Form FDA 3674', required: true, requiredForAmendment: false, sectionCodes: ['m1.2'], format: 'pdf', aiDraftable: false, assigneeRole: 'regulatory_lead', validationRules: ['form_complete'] },
-  { artifactType: 'cover_letter', label: 'Cover Letter', required: true, requiredForAmendment: true, sectionCodes: ['m1.1'], format: 'pdf', aiDraftable: true, assigneeRole: 'regulatory_lead', validationRules: ['content_present'] },
-  { artifactType: 'toc', label: 'Table of Contents', required: true, requiredForAmendment: true, sectionCodes: ['m1.5'], format: 'pdf', aiDraftable: true, assigneeRole: 'publishing_lead', validationRules: ['content_present'] },
+  { artifactType: 'form_1571', label: 'Form FDA 1571', required: true, requiredForAmendment: true, sectionCodes: ['m1.1'], format: 'pdf', aiDraftable: false, assigneeRole: 'regulatory_lead', validationRules: ['signature_required', 'form_complete'] },
+  { artifactType: 'form_1572', label: 'Form FDA 1572', required: true, requiredForAmendment: false, sectionCodes: ['m1.1'], format: 'pdf', aiDraftable: false, assigneeRole: 'regulatory_lead', validationRules: ['signature_required'] },
+  { artifactType: 'form_3674', label: 'Form FDA 3674', required: true, requiredForAmendment: false, sectionCodes: ['m1.1'], format: 'pdf', aiDraftable: false, assigneeRole: 'regulatory_lead', validationRules: ['form_complete'] },
+  { artifactType: 'cover_letter', label: 'Cover Letter', required: true, requiredForAmendment: true, sectionCodes: ['m1.2'], format: 'pdf', aiDraftable: true, assigneeRole: 'regulatory_lead', validationRules: ['content_present'] },
+  // No 'toc' artifact: in eCTD the XML backbone is the table of contents; FDA
+  // Module 1 v2.3 has no heading for one (the former 'm1.5' is Application Status).
+  { artifactType: 'general_investigational_plan', label: 'Introductory Statement and General Investigational Plan', required: true, requiredForAmendment: false, sectionCodes: ['m1.20'], format: 'pdf', aiDraftable: true, assigneeRole: 'clinical_lead', validationRules: ['content_present'] },
   { artifactType: 'clinical_overview', label: 'Clinical Overview', required: true, requiredForAmendment: false, sectionCodes: ['m2.5'], format: 'pdf', aiDraftable: true, assigneeRole: 'clinical_lead', validationRules: ['content_present', 'references_complete'] },
   { artifactType: 'quality_overall_summary', label: 'Quality Overall Summary', required: true, requiredForAmendment: false, sectionCodes: ['m2.3'], format: 'pdf', aiDraftable: true, assigneeRole: 'cmc_lead', validationRules: ['content_present'] },
   { artifactType: 'nonclinical_overview', label: 'Nonclinical Overview', required: true, requiredForAmendment: false, sectionCodes: ['m2.4'], format: 'pdf', aiDraftable: true, assigneeRole: 'nonclinical_lead', validationRules: ['content_present'] },
-  { artifactType: 'protocol', label: 'Clinical Protocol', required: true, requiredForAmendment: false, sectionCodes: ['m5.3'], format: 'pdf', aiDraftable: false, assigneeRole: 'clinical_lead', validationRules: ['content_present', 'irb_approval'] },
-  { artifactType: 'investigator_brochure', label: 'Investigator Brochure', required: true, requiredForAmendment: false, sectionCodes: ['m5.3'], format: 'pdf', aiDraftable: false, assigneeRole: 'clinical_lead', validationRules: ['content_present'] },
+  { artifactType: 'protocol', label: 'Clinical Protocol', required: true, requiredForAmendment: false, sectionCodes: ['m5.3.5.1'], format: 'pdf', aiDraftable: false, assigneeRole: 'clinical_lead', validationRules: ['content_present', 'irb_approval'] },
+  { artifactType: 'investigator_brochure', label: 'Investigator Brochure', required: true, requiredForAmendment: false, sectionCodes: ['m1.14.4.1'], format: 'pdf', aiDraftable: false, assigneeRole: 'clinical_lead', validationRules: ['content_present'] },
 ];
 
 const US_NDA_ARTIFACTS: ArtifactRequirement[] = [
-  { artifactType: 'form_356h', label: 'Form FDA 356h', required: true, requiredForAmendment: true, sectionCodes: ['m1.2'], format: 'pdf', aiDraftable: false, assigneeRole: 'regulatory_lead', validationRules: ['signature_required', 'form_complete'] },
-  { artifactType: 'cover_letter', label: 'Cover Letter', required: true, requiredForAmendment: true, sectionCodes: ['m1.1'], format: 'pdf', aiDraftable: true, assigneeRole: 'regulatory_lead', validationRules: ['content_present'] },
+  { artifactType: 'form_356h', label: 'Form FDA 356h', required: true, requiredForAmendment: true, sectionCodes: ['m1.1'], format: 'pdf', aiDraftable: false, assigneeRole: 'regulatory_lead', validationRules: ['signature_required', 'form_complete'] },
+  { artifactType: 'cover_letter', label: 'Cover Letter', required: true, requiredForAmendment: true, sectionCodes: ['m1.2'], format: 'pdf', aiDraftable: true, assigneeRole: 'regulatory_lead', validationRules: ['content_present'] },
   { artifactType: 'clinical_overview', label: 'Clinical Overview', required: true, requiredForAmendment: false, sectionCodes: ['m2.5'], format: 'pdf', aiDraftable: true, assigneeRole: 'clinical_lead', validationRules: ['content_present'] },
   { artifactType: 'quality_overall_summary', label: 'Quality Overall Summary', required: true, requiredForAmendment: false, sectionCodes: ['m2.3'], format: 'pdf', aiDraftable: true, assigneeRole: 'cmc_lead', validationRules: ['content_present'] },
   { artifactType: 'nonclinical_overview', label: 'Nonclinical Overview', required: true, requiredForAmendment: false, sectionCodes: ['m2.4'], format: 'pdf', aiDraftable: true, assigneeRole: 'nonclinical_lead', validationRules: ['content_present'] },
   { artifactType: 'csr', label: 'Clinical Study Reports', required: true, requiredForAmendment: false, sectionCodes: ['m5.3'], format: 'pdf', aiDraftable: false, assigneeRole: 'clinical_lead', validationRules: ['content_present'] },
-  { artifactType: 'prescribing_info', label: 'Prescribing Information', required: true, requiredForAmendment: false, sectionCodes: ['m1.3'], format: 'pdf', aiDraftable: true, assigneeRole: 'regulatory_lead', validationRules: ['content_present'] },
+  { artifactType: 'prescribing_info', label: 'Prescribing Information', required: true, requiredForAmendment: false, sectionCodes: ['m1.14.1.3'], format: 'pdf', aiDraftable: true, assigneeRole: 'regulatory_lead', validationRules: ['content_present'] },
 ];
 
 const US_510K_ARTIFACTS: ArtifactRequirement[] = [

@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 
 import { usePublishSurfaceContext } from '../surfaceContext';
+import { useSurfaceActionHandlers, notifySurfaceActionReady } from '../surfaceActions';
 import { I } from '../icons';
 import { useLiveRows, EmptyState } from '../dataConnect';
 import { apiRequest, serverMessage } from '@/lib/queryClient';
@@ -84,6 +85,36 @@ export function SafetyNarrative({ onAsk, onNav }: SurfaceViewProps) {
 
   const [toast, fire] = useToast();
 
+  /* AnA can open any SAE case from the worklist by its id or study id — the same
+     row click a person makes — so a drive can land on a specific case before its
+     narrative is discussed. Editing the narrative stays a human act; this only
+     selects. Resolved against the REAL worklist with honest misses; held (retry)
+     while it loads, re-attempted on the ready signal below. */
+  useSurfaceActionHandlers('safety-narrative', {
+    'safety-narrative.select-case': (params) => {
+      const raw = String(params.case ?? '').trim();
+      if (!raw) return { ok: false, reason: 'Name a case by its id or study id.' };
+      if (live.loading) return { ok: false, reason: 'The SAE worklist is still loading.', retry: true };
+      if (live.error) return { ok: false, reason: 'The SAE worklist did not load, so there are no cases to open.' };
+      if (cases.length === 0) return { ok: false, reason: 'No SAE cases are recorded in this worklist yet.' };
+      const needle = raw.toLowerCase();
+      const byId = cases.filter((c) => c.id.toLowerCase() === needle);
+      const byStudy = cases.filter((c) => (c.studyId ?? '').toLowerCase() === needle);
+      const hits = byId.length ? byId
+        : byStudy.length ? byStudy
+        : cases.filter((c) => c.id.toLowerCase().includes(needle));
+      if (hits.length === 0) return { ok: false, reason: `No SAE case matching "${raw}".` };
+      if (hits.length > 1) return { ok: false, reason: `"${raw}" matches ${hits.length} cases — name one exactly.` };
+      const c = hits[0];
+      if (selId === c.id) return { ok: true, detail: `Already on case ${c.id}` };
+      setSelId(c.id);
+      return { ok: true, detail: `Opened case ${c.id}` };
+    },
+  });
+  useEffect(() => {
+    if (!live.loading && !live.error) notifySurfaceActionReady('safety-narrative');
+  }, [live.loading, live.error]);
+
   const sel = cases.find((c) => c.id === selId) || cases[0];
   const result = useMemo(() => (sel ? composeSafetyNarrative(sel) : null), [sel]);
   const nMissing = result ? result.missingFields.length : 0;
@@ -131,7 +162,7 @@ export function SafetyNarrative({ onAsk, onNav }: SurfaceViewProps) {
       },
       availableActions: [
         'Open an SAE case to see its narrative and its reporting clock',
-        'Complete a missing ICH E3 §16 field on the selected case and save it under an audited reason for change (PATCH /api/safety-narratives/cases/:id)',
+        'Complete a missing ICH E3 §16 field on the selected case and save it under an audited reason for change',
         'QC the composed narrative before handing it off',
       ],
     };

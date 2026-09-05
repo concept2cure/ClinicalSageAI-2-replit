@@ -11,18 +11,23 @@
 // Re-export OpenAI orchestrator (primary AI service)
 export * from './openai-orchestrator';
 
-// Re-export from root services that should be accessed via this module
-export {
-  createAssistant,
-  createThread,
-  addMessageToThread,
-  runAssistant,
-  getRunStatus,
-  listMessages,
-} from '../openai-service';
-// Legacy surfaces (waitForRunCompletion / getMessages / submitToolOutputs /
-// cancelRun) were removed from openai-service. Keep no-op stubs here so
-// downstream callers compile until they get updated.
+/* Six OpenAI Assistants re-exports (createAssistant / createThread /
+   addMessageToThread / runAssistant / getRunStatus / listMessages) stood here.
+   The comment above them said "re-export from ROOT services" — but
+   `../openai-service` from server/services/ai/ resolves to the SIBLING,
+   server/services/openai-service.ts, which was the ungoverned direct-OpenAI
+   client, not the root governed module. The root exports none of those symbols,
+   so the mis-stated intent had been silently correct about the path and wrong
+   about the governance for as long as it existed.
+
+   That module is deleted (no live caller anywhere: this barrel is reached only
+   through server/services/index.ts, which has zero importers). Assistants
+   threads/runs are not something the gateway abstracts today, so nothing is
+   re-pointed — when that capability is wanted it gets added deliberately,
+   through the gateway, rather than inherited from a dead barrel.
+
+   The no-op stubs below are kept as-is: they were already stubs, and removing
+   them is a separate question from the governance collision. */
 export const waitForRunCompletion: any = async () => undefined;
 export const getMessages: any = async () => [];
 export const submitToolOutputs: any = async () => undefined;

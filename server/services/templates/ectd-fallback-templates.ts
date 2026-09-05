@@ -1,6 +1,26 @@
 /**
- * eCTD fallback templates — static data extracted from server/index.ts
- * Based on FDA ICH guidelines and eCTD v4.0 structure
+ * eCTD fallback templates — the ONE copy.
+ *
+ * Static FDA/ICH CTD skeleton data: module numbering, section headings and the
+ * placeholder bodies a submission is scaffolded from.
+ *
+ * ── Why this note exists (GA ledger L48) ─────────────────────────────────────
+ * This catalog existed TWICE — here and at `server/data/fallback-templates.ts`
+ * — 1,134 lines each, byte-identical once comments are stripped, and BOTH were
+ * served: `routes/templates.ts` imported the other one, while
+ * `routes/misc-inline-routes.ts` and the ich-headings test imported this one.
+ *
+ * That is worse than ordinary duplication because this is REGULATORY REFERENCE
+ * DATA. A correction to an ICH heading or a module number applied to one copy
+ * leaves the other serving the superseded structure, and which CTD skeleton a
+ * caller received depended on which endpoint it happened to hit — with nothing
+ * anywhere reporting the divergence. A submission scaffolded from the stale
+ * copy is non-conformant, and the first party to notice is the agency.
+ *
+ * The other copy is deleted and its importers re-pointed here. This is the
+ * services-layer, domain-named home; `server/data/` was a generic bucket under
+ * a generic name, which is part of why the second copy was written instead of
+ * the first being found.
  */
 
 export const fallbackTemplates = [
@@ -903,13 +923,13 @@ The general information demonstrates that [DRUG_SUBSTANCE_NAME] is adequately ch
   {
     id: 12,
     name: 'Module_4_2_3_Safety_Pharmacology',
-    title: 'Module 4.2.3 - Safety Pharmacology',
-    template_name: 'Module 4.2.3 - Safety Pharmacology',
+    title: 'Module 4.2.1.3 - Safety Pharmacology',
+    template_name: 'Module 4.2.1.3 - Safety Pharmacology',
     region: 'FDA',
     version: '4.0',
     description: 'Safety pharmacology studies on vital organ systems',
     module_number: '4',
-    granule_id: 'm4-2-3-safety-pharmacology',
+    granule_id: 'm4-2-1-3-safety-pharmacology',
     category: 'nonclinical',
     content: `MODULE 4.2.3 - SAFETY PHARMACOLOGY
 
@@ -1015,13 +1035,13 @@ The safety pharmacology studies demonstrate that [TEST_ARTICLE_NAME] has an acce
   {
     id: 13,
     name: 'Module_4_3_1_Single_Dose_Toxicity',
-    title: 'Module 4.3.1 - Single Dose Toxicity',
-    template_name: 'Module 4.3.1 - Single Dose Toxicity',
+    title: 'Module 4.2.3.1 - Single Dose Toxicity',
+    template_name: 'Module 4.2.3.1 - Single Dose Toxicity',
     region: 'FDA',
     version: '4.0',
     description: 'Single dose toxicity studies',
     module_number: '4',
-    granule_id: 'm4-3-1-single-dose-toxicity',
+    granule_id: 'm4-2-3-1-single-dose-toxicity',
     category: 'nonclinical',
     content: `MODULE 4.3.1 - SINGLE DOSE TOXICITY
 

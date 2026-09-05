@@ -169,6 +169,8 @@ function rowToKit(row: ServerProgramRow): Program | null {
     title:        row.productName || row.name,
     code:         deriveCode(row),
     pathway,
+    productType:  row.productType,
+    regulatoryPath: row.regulatoryPath ?? undefined,
     stage,
     stageIdx,
     readiness:    row.progressPercent ?? 0,
@@ -231,7 +233,7 @@ export function useMdxPrograms(): UseMdxProgramsResult {
   const rows = Array.isArray(data?.data) ? data.data : null;
   const shapeError =
     data != null && rows === null
-      ? 'unexpected response shape for /api/regulatory-programs'
+      ? 'The regulatory programs register returned a response this screen could not read.'
       : null;
   const programs = useMemo(
     () => (rows ? rows.map(rowToKit).filter((p): p is Program => p !== null) : null),

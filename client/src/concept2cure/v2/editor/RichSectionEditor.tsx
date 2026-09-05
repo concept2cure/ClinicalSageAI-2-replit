@@ -51,7 +51,6 @@ import React, {
 } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import { generateJSON } from '@tiptap/core';
-import type { JSONContent } from '@tiptap/core';
 import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
 import { TableKit } from '@tiptap/extension-table';
@@ -61,7 +60,9 @@ import TextAlign from '@tiptap/extension-text-align';
 import Highlight from '@tiptap/extension-highlight';
 import { Collaboration } from '@tiptap/extension-collaboration';
 import { HocuspocusProvider } from '@hocuspocus/provider';
+import { redactInternals } from '@/lib/queryClient';
 import * as Y from 'yjs';
+import { structuralSignatureFromDom, structuralSignatureFromDoc, signatureDrift, docToPlainText } from './roundTrip';
 
 import { DataOriginsMenu } from '../../lineage';
 import {
@@ -81,10 +82,38 @@ import {
   looksLikeHtml,
   plainTextToHtml,
   htmlVisibleText,
+  assessPasteFidelity,
+  editorHeldDoc,
+  type StructuralSignature,
 } from './roundTrip';
 import { FindReplace, getFindState } from './findReplace';
 import { AuthoringImage } from './imageNode';
+import { CrossReference } from './crossReferenceNode';
+import { Citation, citationOrderKey } from './citationNode';
+import {
+  CaptionNumbering,
+  CaptionedTable,
+  captionAt,
+  captionOrderKey,
+  captionTargets,
+} from './captionNumbering';
+import type { CaptionedObject } from '@shared/authoring/captions';
+import type { Node as PMNode } from '@tiptap/pm/model';
+import {
+  crossReferenceLookupFor,
+  crossReferenceText,
+  normalizeCrossReferenceDisplay,
+  type CrossReferenceDisplay,
+  type CrossReferenceLookup,
+} from '@shared/authoring/cross-references';
+import {
+  citationLookupFor,
+  citationSourceName,
+  type CitationLookup,
+  type CitationSource,
+} from '@shared/authoring/citations';
 import { I } from '../icons';
+import '../styles/rich-section-editor.css';
 
 /* ── Public contract ──────────────────────────────────────────── */
 
@@ -121,7 +150,18 @@ export interface RichSectionEditorProps {
   /** Serialization contract of the backing store. Default 'html'. */
   format?: 'html' | 'text';
   /** Governed write-through. Throw/reject on failure — the footer reports it. */
-  onSave: (serialized: string) => void | Promise<void>;
+  /** Persist the serialized content.
+   *
+   *  `systemReason` is set only when the SAVE ITSELF is a mechanism acting,
+   *  not a person editing prose — today, applying a comment anchor. The host
+   *  requires the author to state a reason for their own edits, and a comment
+   *  anchor is not one of those: the author is leaving a note, and the save is
+   *  a consequence of that. Asking "why did this section change" there would
+   *  be a question about an act they did not perform.
+   *
+   *  It is a SYSTEM reason, never a substitute for the author's: it names the
+   *  mechanism and cannot be mistaken for something a person wrote. */
+  onSave: (serialized: string, systemReason?: string) => void | Promise<void>;
   /** Debounced autosave in ms, or null for explicit save (button / Mod-S). */
   autosaveMs?: number | null;
   onDirtyChange?: (dirty: boolean) => void;
@@ -161,6 +201,9 @@ export interface RichSectionEditorProps {
     onCreate: (anchor: CommentAnchorPayload) => Promise<string | null>;
     /** A click on annotated text — open the thread in the host's rail. */
     onOpen?: (commentId: string) => void;
+    /** The anchor's fate: `saved` is whether the section save that carries the
+     *  anchor mark succeeded. A thread can exist while its highlight does not. */
+    onAnchored?: (commentId: string, saved: boolean) => void;
   } | null;
   /** Image insertion. The host owns the upload (the governed image store is
    *  the authoring API's; the MDX drawer's plain-text store has none). Omit
@@ -169,6 +212,64 @@ export interface RichSectionEditorProps {
     /** Upload the file to the tenant's image store; resolve the reference the
      *  section's HTML will carry. Reject with a reason on refusal. */
     upload: (file: File) => Promise<{ id: string; url: string }>;
+  } | null;
+  /**
+   * Cross-references to other sections of the same document.
+   *
+   * The host owns the list because the host owns the document — this component
+   * never fetches one. `sections` is LIVE: renumber or retitle a section and
+   * every reference to it in the canvas re-renders, because a reference stores
+   * the target's id and resolves its text, which is the entire point of the
+   * capability. Omit to hide it; references already in the content still
+   * render, and say plainly that they could not be checked.
+   */
+  crossRefsApi?: {
+    sections: { id: string; code?: string | null; title?: string | null }[];
+    /**
+     * The document's captioned tables and figures OUTSIDE this section, split
+     * at it: everything in the sections ordered above, and everything below.
+     *
+     * Two lists rather than one because the ordinal is positional. This
+     * section's own objects are numbered BETWEEN them, so a table here shows
+     * the number the filing prints rather than restarting at 1 — the same
+     * reason the citation canvas is told which sources are cited above it.
+     * Both halves are also offered as reference targets, so "as shown in
+     * Table 7" can point at a table in another section.
+     *
+     * Omit to reference sections only; a reference already in the content that
+     * points at a table outside this section then says plainly that it could
+     * not be checked, rather than printing a number that would look right.
+     */
+    captionsBefore?: readonly CaptionedObject[];
+    captionsAfter?: readonly CaptionedObject[];
+  } | null;
+  /**
+   * Citations of the platform's governed sources.
+   *
+   * The host owns the library because the host owns the document and the
+   * tenant's source registry — this component never fetches one. `sources` is
+   * LIVE: a citation stores the source's id and resolves its number and name
+   * from this list, so a source that leaves the library makes every citation of
+   * it say so rather than print a number for something that is gone.
+   *
+   * `precedingSourceIds` is the source ids already cited by the sections
+   * ORDERED ABOVE this one, in reading order. It exists because the reference
+   * list belongs to the DOCUMENT while this editor holds one section: without
+   * it the canvas would number its own citations from 1 and show "[1]" for a
+   * claim the filing prints as "[7]", which is the plausible-looking wrong
+   * number the whole design exists to remove.
+   *
+   * `onCite` records the section→source link the platform already keeps (the
+   * Sources rail, and the change-propagation report that reads it), so an
+   * in-text citation and the section's recorded lineage cannot drift apart.
+   *
+   * Omit to hide the capability; citations already in the content still render,
+   * and say plainly that they could not be checked.
+   */
+  citationsApi?: {
+    sources: CitationSource[];
+    precedingSourceIds: readonly string[];
+    onCite?: (sourceId: string) => void | Promise<void>;
   } | null;
   /** Live co-editing over the server's /collab Hocuspocus socket. */
   collab?: {
@@ -192,6 +293,10 @@ const SAVE_META: Record<SaveState, { dot: string; label: string }> = {
 };
 
 const cacheKeyFor = (storageKey: string) => 'dc::' + storageKey;
+
+/** One shared empty list, so an absent caption directory does not produce a new
+ *  array identity on every render and re-run the memos that key on it. */
+const EMPTY_CAPTION_LIST: readonly CaptionedObject[] = Object.freeze([]);
 
 /** What the image store accepts — the formats a Word export can embed. SVG is
  *  deliberately absent (a script container, not a picture) and so is WebP
@@ -221,14 +326,27 @@ function serializeEditor(
     : ed.getHTML();
 }
 
-/** Text of a parsed TipTap JSON doc, every element boundary a break — the
- *  comparison normalizes whitespace, so all that matters is that words from
- *  adjacent blocks never fuse. */
-function jsonDocText(node: JSONContent): string {
-  if (node.type === 'text') return node.text ?? '';
-  if (node.type === 'hardBreak') return '\n';
-  const inner = (node.content ?? []).map(jsonDocText).join('');
-  return node.type === 'doc' ? inner : inner + '\n';
+/**
+ * Turn the structural drift the fidelity gate reported into the phrase the
+ * source-mode notice shows. Says WHAT changed, so a writer sees why rich mode
+ * was refused — a heading rank, a table's shape, a caption, a definition list —
+ * rather than a bare "the check failed".
+ */
+const STRUCTURAL_DRIFT_PHRASE: Record<keyof StructuralSignature, string> = {
+  headingLevels: 'a heading level',
+  tables: 'a table',
+  rows: 'a table row',
+  cells: 'a table cell',
+  captions: 'a table caption',
+  headerCells: 'a table header row',
+  defItems: 'a definition list',
+  images: 'an image',
+};
+function structuralDriftLabel(drift: (keyof StructuralSignature)[]): string {
+  const phrases = Array.from(new Set(drift.map((k) => STRUCTURAL_DRIFT_PHRASE[k])));
+  if (phrases.length === 0) return 'its structure';
+  if (phrases.length === 1) return phrases[0];
+  return phrases.slice(0, -1).join(', ') + ' and ' + phrases[phrases.length - 1];
 }
 
 /* ── Component ────────────────────────────────────────────────── */
@@ -318,6 +436,8 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
       track = null,
       commentsApi = null,
       imagesApi = null,
+      crossRefsApi = null,
+      citationsApi = null,
       collab = null,
     },
     ref,
@@ -343,6 +463,12 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
     const [collabStatus, setCollabStatus] = useState<
       'off' | 'connecting' | 'connected' | 'disconnected' | 'denied'
     >(collab ? 'connecting' : 'off');
+    /* The canvas is not a document until the first sync lands. Before that it
+       is EMPTY — and every status line used to agree with it: "All changes
+       saved · 0 words" and a Draft-with-AnA invitation over a section that has
+       content, permanently if the socket was refused. */
+    const [collabSynced, setCollabSynced] = useState(false);
+    const syncedOnceRef = useRef(false);
     const [restoreOffer, setRestoreOffer] = useState<string | null>(null);
     /* ── Find & replace bar state ──
        The query text lives here; the matches and the focused index live in
@@ -375,6 +501,142 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
     useEffect(() => {
       onResolveRef.current = track?.onResolve;
     });
+
+    /* ── Cross-reference directory ──
+       The extension set is built once per mount, but the document's sections
+       change WHILE the editor is open — renumbering one is exactly what every
+       reference to it has to survive. So the node reads the directory through
+       a ref on each resolve, and every live reference in the canvas is
+       repainted when the list changes. Nothing about the stored content is
+       touched by a repaint: the reference holds the target's id, and only its
+       displayed text is recomputed. */
+    const crossRefSections = crossRefsApi?.sections ?? null;
+    /* Keyed on the CONTENT of the directory, not the array's identity: the host
+       re-derives its list on every render, and repainting every reference on
+       every keystroke because of that would be a pointless cost. What matters
+       is whether a code or a title actually changed. */
+    const crossRefKey = crossRefSections
+      ? crossRefSections
+          .map((sec) => `${sec.id}\u0000${sec.code ?? ''}\u0000${sec.title ?? ''}`)
+          .join('\u0001')
+      : '';
+
+    /* ── Captioned tables and figures ──
+       A caption's number is its POSITION among the document's tables (or
+       figures), and this editor holds one section — so the host says what sits
+       above and below, and this section's objects are numbered between them.
+       Read through refs for the same reason the section directory is: the
+       extension set is built once per mount and these lists change while the
+       editor is open. */
+    const EMPTY_CAPTIONS: readonly CaptionedObject[] = EMPTY_CAPTION_LIST;
+    const captionsBefore = crossRefsApi?.captionsBefore ?? EMPTY_CAPTIONS;
+    const captionsAfter = crossRefsApi?.captionsAfter ?? EMPTY_CAPTIONS;
+    const captionsBeforeRef = useRef<readonly CaptionedObject[]>(captionsBefore);
+    captionsBeforeRef.current = captionsBefore;
+    const captionsAfterRef = useRef<readonly CaptionedObject[]>(captionsAfter);
+    captionsAfterRef.current = captionsAfter;
+    const captionsOutsideKey = [...captionsBefore, ...captionsAfter]
+      .map((o) => `${o.kind}\u0000${o.id ?? ''}\u0000${o.caption}`)
+      .join('\u0001');
+    /** This section's document as of the last transaction — what the live half
+     *  of the numbering is computed from. */
+    const liveDocRef = useRef<PMNode | null>(null);
+    /** The editor itself, for the effects declared above its construction. */
+    const editorRef = useRef<ReturnType<typeof useEditor> | null>(null);
+    /** This section's caption order, so a reference repaints when a table moves
+     *  and not on every keystroke. */
+    const [captionOrder, setCaptionOrder] = useState('');
+
+    const crossRefLookup = useMemo<CrossReferenceLookup | null>(() => {
+      if (!crossRefSections) return null;
+      const sections = crossReferenceLookupFor(crossRefSections);
+      return (targetId: string) => {
+        const section = sections(targetId);
+        if (section) return section;
+        /* A captioned TABLE or FIGURE is a cross-reference target exactly as a
+           section is — "Table 3" is its code and its caption is its title. The
+           same resolver, the same failure state, no second mechanism: see
+           @shared/authoring/captions. Recomputed per call because the live half
+           comes from the document being edited. */
+        const id = String(targetId);
+        return (
+          captionTargets(
+            captionsBeforeRef.current,
+            liveDocRef.current,
+            captionsAfterRef.current,
+          ).find((t) => t.id === id) ?? null
+        );
+      };
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [crossRefKey]);
+    const crossRefLookupRef = useRef<CrossReferenceLookup | null>(crossRefLookup);
+    crossRefLookupRef.current = crossRefLookup;
+    /** Live node views to repaint when the directory changes — including when a
+     *  table is inserted or captioned, which moves every number after it. */
+    const crossRefRepaint = useRef<Set<() => void>>(new Set());
+    useEffect(() => {
+      for (const paint of crossRefRepaint.current) paint();
+    }, [crossRefKey, captionsOutsideKey, captionOrder]);
+
+    /* The canvas's numbers are drawn by a decoration, and decorations are
+       recomputed from EDITOR STATE — so a change to the objects OUTSIDE this
+       section (a colleague captions a table in an earlier section during a
+       live co-edit) would leave the numbers here stale until the next
+       keystroke. A meta-only transaction redraws them; it changes no content,
+       so it marks nothing dirty and mints no revision. */
+    useEffect(() => {
+      if (!editorRef.current || editorRef.current.isDestroyed) return;
+      const view = editorRef.current.view;
+      view.dispatch(editorRef.current.state.tr.setMeta('captionNumbering', true));
+    }, [captionsOutsideKey]);
+
+    /** The tables and figures this section can point at, numbered as the
+     *  document numbers them. What the reference picker offers. */
+    const captionTargetList = useMemo(
+      () =>
+        captionTargets(captionsBefore, liveDocRef.current, captionsAfter),
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+      [captionsOutsideKey, captionOrder],
+    );
+
+    /* ── Citation library and numbering ──
+       Same shape as the cross-reference directory above, and for the same
+       reason: the extension set is built once per mount while the library and
+       the sections above this one change WHILE the editor is open, and a
+       citation's number is derived from position rather than stored.
+
+       A citation renumbers on more occasions than a cross-reference does: any
+       citation inserted or deleted anywhere earlier in the DOCUMENT moves it.
+       So the views are repainted when the library changes, when the sections
+       above this one change, and when this section's own citation order
+       changes — and not on every keystroke, which is what the order key is
+       for. */
+    const citationSources = citationsApi?.sources ?? null;
+    const citationKeyOfSources = citationSources
+      ? citationSources
+          .map((src) => `${src.id}\u0000${citationSourceName(src)}`)
+          .join('\u0001')
+      : '';
+    const citationLookup = useMemo<CitationLookup | null>(
+      () => (citationSources ? citationLookupFor(citationSources) : null),
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+      [citationKeyOfSources],
+    );
+    const citationLookupRef = useRef<CitationLookup | null>(citationLookup);
+    citationLookupRef.current = citationLookup;
+
+    /** The sources cited above this section — where this section's numbering
+     *  continues from. Read through a ref for the same reason the lookup is. */
+    const precedingKey = (citationsApi?.precedingSourceIds ?? []).join('\u0001');
+    const precedingRef = useRef<readonly string[]>(citationsApi?.precedingSourceIds ?? []);
+    precedingRef.current = citationsApi?.precedingSourceIds ?? [];
+
+    /** Live citation node views, and the order they were last painted in. */
+    const citationRepaint = useRef<Set<() => void>>(new Set());
+    const [citationOrder, setCitationOrder] = useState('');
+    useEffect(() => {
+      for (const paint of citationRepaint.current) paint();
+    }, [citationKeyOfSources, precedingKey, citationOrder]);
 
     /* ── Live co-editing runtime (one Y.Doc + provider per mount) ── */
     const collabRuntime = useMemo(() => {
@@ -424,7 +686,13 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
           // Yjs owns undo/redo when live co-editing is on.
           ...(collabRuntime ? { undoRedo: false } : {}),
         }),
-        TableKit.configure({ table: { resizable: false } }),
+        /* The kit's own `table` node is switched off and replaced by the one
+           that can hold a caption. Two table nodes in one schema would be two
+           documents' worth of ambiguity — `prosemirror-tables` resolves every
+           command through `tableRole`, which both would claim. */
+        TableKit.configure({ table: false }),
+        CaptionedTable.configure({ resizable: false }),
+        CaptionNumbering.configure({ before: () => captionsBeforeRef.current }),
         // CTD text is dense with cm², t½, CO₂ — these were declared in
         // package.json and imported nowhere, so sup/sub in stored content
         // flattened to plain text (BP-W1-1).
@@ -438,6 +706,15 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
         // The schema can hold a figure now; the fidelity gate stops refusing
         // rich mode for content that contains one (see `boot` below).
         AuthoringImage,
+        CrossReference.configure({
+          lookup: () => crossRefLookupRef.current,
+          repaint: crossRefRepaint.current,
+        }),
+        Citation.configure({
+          lookup: () => citationLookupRef.current,
+          preceding: () => precedingRef.current,
+          repaint: citationRepaint.current,
+        }),
         TrackChanges.configure({
           enabled: (track?.enabled ?? false) && !readOnly,
           author: track?.author ?? { id: 'unknown', name: 'Unknown author' },
@@ -459,8 +736,21 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
     const boot = useMemo(() => {
       const stored = value ?? '';
       if (format === 'text') {
-        // Plain text is always faithfully representable.
-        return { mode: 'rich' as const, html: plainTextToHtml(stored), verdict: null };
+        /* "Plain text is always faithfully representable" was false for
+           whitespace: the parse collapses runs of spaces and tabs, and three
+           blank lines become one break — a space-aligned table in a plain-text
+           section was silently rewritten on the first save. Round-trip it
+           exactly; on any difference, edit the raw string in source mode. */
+        const html = plainTextToHtml(stored);
+        try {
+          const back = docToPlainText(generateJSON(html, extensions));
+          if (back !== stored.replace(/\r\n/g, '\n')) {
+            return { mode: 'source' as const, html: null, verdict: null };
+          }
+        } catch {
+          return { mode: 'source' as const, html: null, verdict: null };
+        }
+        return { mode: 'rich' as const, html, verdict: null };
       }
       const html = looksLikeHtml(stored) ? stored : plainTextToHtml(stored);
       // The fidelity gate below compares TEXT, so markup that carries no text
@@ -475,7 +765,19 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
       }
       try {
         const json = generateJSON(html, extensions);
-        const verdict = assessFidelity(stored, jsonDocText(json));
+        // Compare against the doc the LIVE editor will hold, not the raw parse.
+        // generateJSON runs no plugins; the editor runs fixTables on first edit,
+        // padding a ragged table and clamping rowspan overflow into the record.
+        const held = editorHeldDoc(json, extensions);
+        const base = assessFidelity(stored, held.doc);
+        // A padded table shows as a cell-count drift; a rowspan/colspan clamp
+        // changes only an attribute and is invisible to every counter — so the
+        // rewrite boolean is ORed in, and when it is the only signal the notice
+        // names the table.
+        const verdict =
+          held.tablesRewritten && !base.lossy
+            ? { ...base, lossy: true, structuralDrift: ['tables' as const] }
+            : base;
         if (verdict.lossy) return { mode: 'source' as const, html: null, verdict };
         return { mode: 'rich' as const, html, verdict };
       } catch {
@@ -494,6 +796,9 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
        gate flagged as most delicate. In source mode the textarea is the
        document, so it is what gets counted. */
     const displayWords = boot.mode === 'source' ? wordsOf(htmlVisibleText(sourceText)) : words;
+    /* Before the first live sync the canvas holds nothing; no status may
+       describe it as a document. */
+    const canvasSettled = !collabRuntime || collabSynced;
 
     const editor = useEditor(
       {
@@ -525,6 +830,50 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
           // A pasted or dropped image file goes through the same validated
           // upload as the ribbon button. When images are not enabled here,
           // fall through to the default handling instead of swallowing it.
+          /* Runs before the parse: keep what the clipboard actually carried. */
+          transformPastedHTML: (html) => {
+            pastedHtmlRef.current = html;
+            return html;
+          },
+          /* Runs after the parse, on the slice actually about to be inserted.
+             Reports; never blocks or rewrites a paste — a writer mid-thought must
+             not be interrupted by a refusal, and the comparison is a count rather
+             than a diff, so it cannot say WHAT was dropped. */
+          transformPasted: (slice) => {
+            const html = pastedHtmlRef.current;
+            pastedHtmlRef.current = '';
+            if (html) {
+              const { expected, lost } = assessPasteFidelity(
+                html,
+                slice.content.textBetween(0, slice.content.size, ' ', ' '),
+              );
+              /* Words are one dimension. A Word table flattened into paragraphs,
+                 a heading demoted, a definition list collapsed — every word
+                 survives and the count says clean, and the next save writes the
+                 drifted structure into the record. The mount gate compares a
+                 structural signature; the paste gate now does too. */
+              let drift: (keyof StructuralSignature)[] = [];
+              try {
+                const dom = new DOMParser().parseFromString(html, 'text/html');
+                drift = signatureDrift(
+                  structuralSignatureFromDom(dom),
+                  structuralSignatureFromDoc({ type: 'doc', content: slice.content.toJSON() ?? [] }),
+                );
+              } catch {
+                drift = [];
+              }
+              if (lost > 0 || drift.length > 0) {
+                setPasteNotice(
+                  (lost > 0 ? `About ${lost} of ${expected} pasted words could not be kept. ` : '') +
+                    (drift.length > 0
+                      ? `The paste changed ${structuralDriftLabel(drift)} — the pasted content used structure this editor cannot store as it was. `
+                      : '') +
+                    'Check the pasted passage against your source before relying on it.',
+                );
+              }
+            }
+            return slice;
+          },
           handlePaste: (_view, event) => {
             if (!imagesEnabledRef.current) return false;
             const file = Array.from(event.clipboardData?.files ?? []).find((f) =>
@@ -553,10 +902,23 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
           const serialized = serialize(ed);
           const isDirty = serialized !== lastSavedRef.current;
           setDirty(isDirty);
-          setSaveState((s) => (isDirty ? (s === 'saving' ? s : 'dirty') : 'saved'));
+          /* Never leave 'saving' from a keystroke: editing back to the baseline
+             while a PATCH is in flight used to print "All changes saved" over
+             an unsettled write. The write's own settle recomputes the state. */
+          setSaveState((s) => (s === 'saving' ? s : isDirty ? 'dirty' : 'saved'));
           setWords(wordsOf(ed.getText()));
           setDocEmpty(ed.isEmpty);
           setSuggestions(collectSuggestions(ed.state.doc));
+          /* A citation added, deleted or moved renumbers the ones after it.
+             Comparing the order key rather than repainting unconditionally
+             keeps a keystroke from repainting every marker in the section. */
+          setCitationOrder(citationOrderKey(ed.state.doc));
+          /* A table or figure captioned, inserted, deleted or moved renumbers
+             the objects after it and every reference to them. Same order-key
+             comparison the citations use, and for the same reason: a keystroke
+             must not repaint the section. */
+          liveDocRef.current = ed.state.doc;
+          setCaptionOrder(captionOrderKey(ed.state.doc));
           cacheDraft(serialized);
           if (autosaveMs != null && isDirty) {
             if (autosaveTimer.current) clearTimeout(autosaveTimer.current);
@@ -576,11 +938,16 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
           setWords(wordsOf(ed.getText()));
           setDocEmpty(ed.isEmpty);
           setSuggestions(collectSuggestions(ed.state.doc));
+          setCitationOrder(citationOrderKey(ed.state.doc));
+          liveDocRef.current = ed.state.doc;
+          setCaptionOrder(captionOrderKey(ed.state.doc));
           setEditorReady(true);
         },
       },
       [],
     );
+
+    editorRef.current = editor;
 
     /* THE EDITOR MUST STOP ACCEPTING KEYSTROKES WHEN THE RECORD SEALS.
      *
@@ -603,14 +970,21 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
      * and losing them at save time". It did not; this is that fix. */
     useEffect(() => {
       if (!editor || editor.isDestroyed) return;
-      const shouldEdit = !readOnly && boot.mode === 'rich';
+      const shouldEdit = !readOnly && boot.mode === 'rich' && (!collabRuntime || collabSynced);
       if (editor.isEditable !== shouldEdit) editor.setEditable(shouldEdit);
-    }, [editor, readOnly, boot.mode]);
+    }, [editor, readOnly, boot.mode, collabRuntime, collabSynced]);
 
     /* Seed a first-ever collab doc from the stored content once synced. */
     useEffect(() => {
       if (!collabRuntime || !editor) return;
       const onSynced = () => {
+        /* A reconnect fires `synced` again. It used to re-declare the buffer
+           saved every time — flipping the footer to "All changes saved" over
+           unsaved work and disarming the unsaved-work guards, so a dropped
+           socket lost filing text on the next navigation. Transport events do
+           not touch the save state; only the FIRST sync sets the baseline. */
+        if (syncedOnceRef.current) return;
+        syncedOnceRef.current = true;
         const frag = collabRuntime.doc.getXmlFragment('default');
         if (frag.length === 0 && boot.html) {
           editor.commands.setContent(boot.html);
@@ -620,6 +994,9 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
         lastSavedRef.current = serializeEditor(editor, format);
         setDirty(false);
         setSaveState('saved');
+        setWords(wordsOf(editor.getText()));
+        setDocEmpty(editor.isEmpty);
+        setCollabSynced(true);
       };
       collabRuntime.provider.on('synced', onSynced);
       return () => {
@@ -627,6 +1004,22 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
       };
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [collabRuntime, editor]);
+
+    /* Live sync refused before the first sync: the socket will never seed the
+       canvas. Seed it from the stored content and edit solo — said plainly in
+       the footer — instead of leaving an empty, editable canvas forever. */
+    useEffect(() => {
+      if (!collabRuntime || !editor || editor.isDestroyed || collabSynced || collabStatus !== 'denied') return;
+      syncedOnceRef.current = true;
+      if (boot.html) editor.commands.setContent(boot.html);
+      lastSavedRef.current = serializeEditor(editor, format);
+      setDirty(false);
+      setSaveState('saved');
+      setWords(wordsOf(editor.getText()));
+      setDocEmpty(editor.isEmpty);
+      setCollabSynced(true);
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [collabRuntime, editor, collabSynced, collabStatus]);
 
     /* ── Serialization per the backing store's contract ── */
     const serialize = useCallback(
@@ -687,7 +1080,7 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
     }, [storageKey]);
 
     /* ── The one save path ── */
-    const doSave = useCallback(async (): Promise<boolean> => {
+    const doSave = useCallback(async (systemReason?: string): Promise<boolean> => {
       const serialized =
         boot.mode === 'source' ? sourceText : editor ? serialize(editor) : null;
       if (serialized == null) return false;
@@ -697,14 +1090,22 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
         autosaveTimer.current = null;
       }
       pendingAutosaveRef.current = null;
-      if (serialized === lastSavedRef.current) return true;
+      if (serialized === lastSavedRef.current) {
+        // Nothing outstanding — a stale "Save failed" from an earlier attempt
+        // must not keep standing over a buffer that matches the record.
+        setDirty(false);
+        setSaveState('saved');
+        return true;
+      }
       setSaveState('saving');
       try {
-        await onSave(serialized);
+        await onSave(serialized, systemReason);
         lastSavedRef.current = serialized;
-        setDirty(false);
-        onDirtyChange?.(false);
-        setSaveState('saved');
+        const nowSerialized = boot.mode === 'source' ? sourceText : editor ? serialize(editor) : serialized;
+        const stillDirty = nowSerialized !== serialized;
+        setDirty(stillDirty);
+        onDirtyChange?.(stillDirty);
+        setSaveState(stillDirty ? 'dirty' : 'saved');
         if (storageKey) {
           try {
             localStorage.removeItem(cacheKeyFor(storageKey));
@@ -754,8 +1155,11 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
        what is open — used to clear nothing and fire nothing: the timer was
        dropped with the component and the last edits never reached the server.
        Flush it directly instead of through `doSave`, which sets state on a
-       component that is going away. A rejection is not swallowed silently: the
-       device cache still holds the text and the next mount offers it back. */
+       component that is going away. A rejection has no on-screen outcome at
+       this point — the component is gone. When `storageKey` is set, the device
+       cache still holds the text and the next mount offers it back; a host that
+       sets `autosaveMs` without `storageKey` has no such net, and its last
+       edits are lost with no notice anywhere. */
     useEffect(
       () => () => {
         if (autosaveTimer.current) {
@@ -781,14 +1185,31 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
     const toggleTrack = useCallback(async () => {
       if (!track || !editor) return;
       const next = !trackOn;
+      if (!track.onToggle) {
+        /* With no persistence hook the flip would be decorative: a footer
+           asserting "Track changes on" for a governed column nothing wrote. */
+        setActionNotice('Track changes cannot be switched from this surface — it does not persist the mode, so the checkbox would claim a setting the record does not hold.');
+        return;
+      }
       try {
-        await track.onToggle?.(next);
+        await track.onToggle(next);
         setTrackOn(next);
         editor.commands.setTrackChangesEnabled(next && !readOnly);
-      } catch {
-        /* refused server-side — state stays truthful */
+      } catch (e) {
+        /* Refused server-side — the state stays truthful, and the author is
+           told why rather than watching the checkbox snap back in silence. */
+        setActionNotice('Track changes unchanged — ' + redactInternals(e instanceof Error ? e.message : '', 'the server refused the change') + '.');
       }
     }, [track, editor, trackOn, readOnly]);
+
+    /* The mode is a governed column that a colleague can change under this
+       mount (the row refreshes without a remount). Follow the prop. */
+    useEffect(() => {
+      const on = !!track?.enabled;
+      setTrackOn(on);
+      if (editor && !editor.isDestroyed) editor.commands.setTrackChangesEnabled(on && !readOnly);
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [track?.enabled]);
 
     /* ── Comment from selection ──
        The host resolves the server comment id (the thread row must exist
@@ -799,20 +1220,46 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
       if (!commentsApi || !editor) return;
       const { from, to } = editor.state.selection;
       if (from === to) return;
-      const quote = editor.state.doc.textBetween(from, to, ' ');
-      const id = await commentsApi.onCreate({ kind: 'text-range', quote, from, to });
-      if (id) {
-        editor.chain().focus().setTextSelection({ from, to }).setCommentAnchor(id).run();
-        await doSave();
+      /* The anchoring save serializes the WHOLE buffer under the system reason
+         below. With unsaved prose in it, two paragraphs the author never
+         reasoned for would be minted as a revision "Comment anchor applied" —
+         bypassing the §11.10(d) reason the save gate exists to require. */
+      if (dirty) {
+        setActionNotice('Save your edits before commenting on a selection — the comment anchor is saved with the section, and your unsaved edits would be recorded under "Comment anchor applied" instead of your own reason.');
+        return;
       }
-    }, [commentsApi, editor, doSave]);
+      const quote = editor.state.doc.textBetween(from, to, ' ');
+      let id: string | null = null;
+      try {
+        id = await commentsApi.onCreate({ kind: 'text-range', quote, from, to });
+      } catch (e) {
+        setActionNotice('The comment was not created — ' + redactInternals(e instanceof Error ? e.message : '', 'the server refused it') + '. Nothing was anchored.');
+        return;
+      }
+      if (!id) {
+        setActionNotice('The comment was not created, so nothing was anchored.');
+        return;
+      }
+      editor.chain().focus().setTextSelection({ from, to }).setCommentAnchor(id).run();
+      /* The save is a consequence of leaving a comment, not an edit to the
+         prose — so it states its own mechanism rather than borrowing whatever
+         reason the author gave for their last content change. */
+      const saved = await doSave('Comment anchor applied');
+      if (!saved) {
+        setActionNotice('The comment thread exists, but its anchor could not be saved with the section — other readers will not see the highlight until the section is saved.');
+      }
+      commentsApi.onAnchored?.(id, saved);
+    }, [commentsApi, editor, doSave, dirty]);
 
-    /* ── Cite the selection (parity with the retired DocCanvas) ── */
-    const citeSelection = useCallback(() => {
+    /* ── Ask the assistant for a source (parity with the retired DocCanvas) ──
+       This asks a question in the AnA pane. It is NOT the citation control —
+       see the ribbon note where it is rendered. */
+    const askForSource = useCallback(() => {
       if (!editor || !onAsk) return;
-      const { from, to } = editor.state.selection;
-      const s = editor.state.doc.textBetween(from, to, ' ').trim();
-      if (s) onAsk(`Cite this claim: "${s}"`);
+      const s = editor.state.doc
+        .textBetween(editor.state.selection.from, editor.state.selection.to, ' ')
+        .trim();
+      if (s) onAsk(`Suggest a source for this claim: "${s}"`);
     }, [editor, onAsk]);
 
     /* ── Find & replace ──
@@ -853,8 +1300,38 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
       ref,
       () => ({
         save: doSave,
-        insertSuggestion: (text: string, author: SuggestionAuthor) =>
-          editor ? editor.chain().focus().insertSuggestedContent(text, author).run() : false,
+        /* REPORTS SUCCESS ONLY IF THE TEXT CAN REACH THE SAVED DOCUMENT.
+         *
+         * This was `editor ? chain().insertSuggestedContent(…).run() : false`,
+         * and both halves lied in source mode. The TipTap instance still EXISTS
+         * there — it is constructed empty and non-editable while the raw
+         * <textarea> is what the author sees — so `editor` is truthy;
+         * `focus()` does not check editability and `insertSuggestedContent`
+         * unconditionally returns true, so `run()` returned true as well.
+         *
+         * Meanwhile `doSave` in source mode serializes `sourceText` and never
+         * the editor. So an AnA draft landed in an invisible ProseMirror
+         * document that is never rendered and never saved — discarded — and the
+         * caller, seeing `true`, told the author "Draft inserted as tracked
+         * suggestions — review each edit in the canvas, then save." They were
+         * sent to look for regulatory text in a canvas that does not show it,
+         * on precisely the sections the fidelity gate flagged as most delicate.
+         *
+         * The same held for a FROZEN section: this control is not disabled by
+         * `docSealed`, unlike the surrounding Draft-with-AnA button, so the
+         * insert silently went nowhere there too.
+         *
+         * The call site has always had an honest failure branch — "Couldn't
+         * insert — the canvas is not editable right now." It simply never
+         * fired. */
+        insertSuggestion: (text: string, author: SuggestionAuthor) => {
+          if (!editor || editor.isDestroyed) return false;
+          // Source mode: the textarea is the document; the editor is a shell.
+          if (boot.mode !== 'rich') return false;
+          // Frozen / read-only: the save path would refuse it anyway.
+          if (!editor.isEditable) return false;
+          return editor.chain().focus().insertSuggestedContent(text, author).run();
+        },
         getContent: () =>
           boot.mode === 'source' ? sourceText : editor ? serialize(editor) : '',
         takeAcceptedAuthors: () => {
@@ -984,6 +1461,174 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
       setLinkOpen(false);
     }, [editor]);
 
+    /* ── Cross-reference bar ──
+       Insert-by-picking, never by typing a number: the writer chooses a
+       SECTION and the editor stores that section's id. There is deliberately no
+       field in which to type "2.7.4.2", because a typed number is the unmanaged
+       text this replaces.
+
+       The list is the host's live directory, so the codes shown are the codes
+       as they stand right now. Choosing a section that has since been removed
+       is refused with the reason on screen rather than inserting a reference
+       that is broken from the moment it is written. */
+    const [xrefOpen, setXrefOpen] = useState(false);
+    const [xrefTarget, setXrefTarget] = useState('');
+    const [xrefDisplay, setXrefDisplay] = useState<CrossReferenceDisplay>('code-title');
+    const [xrefError, setXrefError] = useState<string | null>(null);
+    const xrefSelectRef = useRef<HTMLSelectElement>(null);
+
+    /** Everything this section can point at: the document's other sections, and
+     *  its captioned tables and figures. One list because a reference to a table
+     *  is the same kind of thing as a reference to a section — it stores the
+     *  target's identity and prints what the target is called now. */
+    const xrefChoices = useMemo(
+      () => [...(crossRefSections ?? []), ...captionTargetList],
+      [crossRefSections, captionTargetList],
+    );
+
+    const openXref = useCallback(() => {
+      setXrefError(null);
+      setXrefTarget((t) => t || xrefChoices[0]?.id || '');
+      setXrefOpen(true);
+    }, [xrefChoices]);
+
+    useEffect(() => {
+      if (xrefOpen) xrefSelectRef.current?.focus();
+    }, [xrefOpen]);
+
+    const closeXref = useCallback(() => {
+      setXrefOpen(false);
+      editor?.commands.focus();
+    }, [editor]);
+
+    /* ── Cite a source ──
+       Same shape as the cross-reference picker beside it, deliberately: this is
+       the third control in the editor that inserts an identity and renders a
+       derived string, and it should read like its siblings rather than invent a
+       third idiom. The pinpoint is free text because it is authored content —
+       "p. 142, Table 14.2.1" is a judgement about the source, not a value any
+       renderer could compute. */
+    const [citeOpen, setCiteOpen] = useState(false);
+    const [citeSource, setCiteSource] = useState('');
+    const [citeLocator, setCiteLocator] = useState('');
+    const [citeError, setCiteError] = useState<string | null>(null);
+    const citeSelectRef = useRef<HTMLSelectElement>(null);
+
+    const openCite = useCallback(() => {
+      setCiteError(null);
+      setCiteSource((cur) => cur || citationSources?.[0]?.id || '');
+      setCiteOpen(true);
+    }, [citationSources]);
+
+    useEffect(() => {
+      if (citeOpen) citeSelectRef.current?.focus();
+    }, [citeOpen]);
+
+    const closeCite = useCallback(() => {
+      setCiteOpen(false);
+      setCiteError(null);
+    }, []);
+
+    const applyCite = useCallback(() => {
+      if (!editor) return;
+      if (!citeSource) {
+        setCiteError('Choose the source to cite.');
+        return;
+      }
+      const inserted = editor
+        .chain()
+        .focus()
+        .insertCitation({ source: citeSource, locator: citeLocator })
+        .run();
+      if (!inserted) {
+        /* The picker offers the live library, so a refusal means it moved under
+           the writer. Inserting a citation that is already broken is not
+           something to do quietly. */
+        setCiteError(
+          'That source is no longer available to this document. Nothing was inserted.',
+        );
+        return;
+      }
+      /* Record the section→source link the platform already keeps, so the
+         Sources rail and the prose cannot drift apart — and so this citation
+         participates in the change report when the source's content moves.
+         Fire-and-forget: the citation is in the canvas either way, and the host
+         reports its own failure. */
+      void citationsApi?.onCite?.(citeSource);
+      setCiteLocator('');
+      setCiteOpen(false);
+      setCiteError(null);
+    }, [editor, citeSource, citeLocator, citationsApi]);
+
+    /* ── Caption bar ──
+       The one place a table's or a figure's caption can be written. It is
+       needed twice over: the editor's schema had no caption at all (a stored
+       `<caption>` was parsed into a CELL and written back into the record that
+       way), and a figure's caption was whatever the uploaded file happened to
+       be named.
+
+       There is deliberately no field in which to type a NUMBER. The number is
+       the object's position and is drawn beside the caption from it; a typed
+       one is the unmanaged text this replaces. */
+    const [captionOpen, setCaptionOpen] = useState(false);
+    const [captionText, setCaptionText] = useState('');
+    const [captionError, setCaptionError] = useState<string | null>(null);
+    const captionInputRef = useRef<HTMLInputElement>(null);
+
+    /** What the caret is on: a table, a selected figure, or neither. */
+    const captionSubject = editor ? captionAt(editor.state) : null;
+
+    const openCaption = useCallback(() => {
+      setCaptionError(null);
+      setCaptionText(editor ? (captionAt(editor.state)?.caption ?? '') : '');
+      setCaptionOpen(true);
+    }, [editor]);
+
+    useEffect(() => {
+      if (captionOpen) captionInputRef.current?.focus();
+    }, [captionOpen]);
+
+    const closeCaption = useCallback(() => {
+      setCaptionOpen(false);
+      setCaptionError(null);
+      editor?.commands.focus();
+    }, [editor]);
+
+    const applyCaption = useCallback(() => {
+      if (!editor) return;
+      const applied = editor.chain().focus().setObjectCaption(captionText).run();
+      if (!applied) {
+        /* The caret moved out of the object while the bar was open. Silently
+           captioning whatever it is on now would label the wrong table. */
+        setCaptionError(
+          'Put the cursor in a table, or select a figure, and try again. Nothing was changed.',
+        );
+        return;
+      }
+      setCaptionOpen(false);
+      setCaptionError(null);
+    }, [editor, captionText]);
+
+    const applyXref = useCallback(() => {
+      if (!editor) return;
+      if (!xrefTarget) {
+        setXrefError('Choose the section to reference.');
+        return;
+      }
+      const inserted = editor
+        .chain()
+        .focus()
+        .insertCrossReference({ target: xrefTarget, display: xrefDisplay })
+        .run();
+      if (!inserted) {
+        setXrefError(
+          'That target is no longer in this document. Nothing was inserted — reopen the list and choose again.',
+        );
+        return;
+      }
+      setXrefOpen(false);
+    }, [editor, xrefTarget, xrefDisplay]);
+
     /* ── Image insertion (ribbon button, paste, drop) ──
        Validation runs client-side for fast refusal and server-side as the
        authority. FAIL CLOSED: a refused or failed upload inserts nothing and
@@ -991,6 +1636,28 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
        the caret. The upload itself is the host's (`imagesApi.upload`) — this
        component never talks to a store directly. */
     const [imgNotice, setImgNotice] = useState<string | null>(null);
+
+    /* ── Paste fidelity ───────────────────────────────────────────────────────
+       The fail-closed gate at mount protects STORED content from a lossy parse.
+       Paste had no equivalent, and it is the highest-frequency way content
+       enters this editor: a medical writer drafts in Word, or lifts three pages
+       out of a previous CSR, and pastes. Anything the schema cannot represent is
+       dropped by the parse at that instant — the gate never sees it, because by
+       the time content is stored the loss has already happened and the stored
+       string and the parse agree with each other perfectly.
+
+       Word in particular carries constructs this schema has no node for. The
+       writer's own text is the one thing that must not disappear quietly, so the
+       paste is compared the same way the gate compares: the words the clipboard
+       carried against the words the parse kept. This REPORTS; it never blocks or
+       rewrites a paste, because a writer mid-thought must not be interrupted by
+       a refusal, and because the comparison is a word count rather than a
+       diff — precise enough to say "something was dropped", not to say what. */
+    const [pasteNotice, setPasteNotice] = useState<string | null>(null);
+    /* Outcomes of governed actions the footer cannot carry: a refused track
+       toggle, a comment that was not anchored. Rendered like the paste notice. */
+    const [actionNotice, setActionNotice] = useState<string | null>(null);
+    const pastedHtmlRef = useRef<string>('');
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const insertImageFile = useCallback(
@@ -1020,7 +1687,7 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
         } catch (e) {
           setImgNotice(
             'The image was not uploaded — ' +
-              (e instanceof Error ? e.message : String(e)) +
+              redactInternals(e instanceof Error ? e.message : '', 'the image store refused it') +
               '. Nothing was inserted.',
           );
           return false;
@@ -1059,7 +1726,7 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
       [editor],
     );
 
-    const isEmpty = editorReady && docEmpty;
+    const isEmpty = editorReady && docEmpty && canvasSettled;
     const full = chrome === 'full';
 
 
@@ -1083,8 +1750,12 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
         {boot.mode === 'source' && (
           <div className="rse-gate" role="status">
             Rich editing is off for this section: its stored content could not be
-            represented without altering text (the round-trip check failed), so
-            you are editing the raw source instead. Nothing was rewritten.
+            represented without altering{' '}
+            {boot.verdict && boot.verdict.structuralDrift.length > 0
+              ? structuralDriftLabel(boot.verdict.structuralDrift)
+              : 'text'}{' '}
+            (the round-trip check failed), so you are editing the raw source
+            instead. Nothing was rewritten.
           </div>
         )}
 
@@ -1093,6 +1764,24 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
           <div className="rse-gate" role="status">
             <span style={{ flex: 1 }}>{imgNotice}</span>
             <button type="button" className="rse-link" onClick={() => setImgNotice(null)}>
+              Dismiss
+            </button>
+          </div>
+        )}
+
+        {/* ── Paste fidelity notice (reports, never blocks) ── */}
+        {pasteNotice && (
+          <div className="rse-gate" role="status">
+            <span style={{ flex: 1 }}>{pasteNotice}</span>
+            <button type="button" className="rse-link" onClick={() => setPasteNotice(null)}>
+              Dismiss
+            </button>
+          </div>
+        )}
+        {actionNotice && (
+          <div className="rse-gate" role="alert">
+            <span style={{ flex: 1 }}>{actionNotice}</span>
+            <button type="button" className="rse-link" onClick={() => setActionNotice(null)}>
               Dismiss
             </button>
           </div>
@@ -1184,6 +1873,24 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
             >
               {I.link}
             </RB>
+            {crossRefsApi && (
+              <RB
+                title="Insert a cross-reference to another section"
+                active={xrefOpen}
+                onClick={() => (xrefOpen ? closeXref() : openXref())}
+              >
+                § Ref
+              </RB>
+            )}
+            {citationsApi && (
+              <RB
+                title="Cite a source — inserts a numbered citation and adds the source to this document’s reference list"
+                active={citeOpen}
+                onClick={() => (citeOpen ? closeCite() : openCite())}
+              >
+                Cite
+              </RB>
+            )}
             <span className="rse-sep" />
             {/* A CTD dossier is a tabular document — Module 3 most of all. The
                 editor could round-trip and export tables before it could make
@@ -1246,6 +1953,21 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
                 {I.image}
               </RB>
             )}
+            {/* A table and a figure in a CTD document are NUMBERED objects a
+                reviewer navigates by. The number is drawn from position; this
+                is where the words beside it are written. */}
+            <RB
+              title={
+                captionSubject
+                  ? `Caption this ${captionSubject.kind} — it is numbered by its position in the document`
+                  : 'Caption a table or figure — put the cursor in a table, or select a figure'
+              }
+              active={captionOpen}
+              disabled={!captionSubject}
+              onClick={() => (captionOpen ? closeCaption() : openCaption())}
+            >
+              Caption
+            </RB>
             <select
               className="rse-sel"
               value=""
@@ -1278,8 +2000,19 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
             {onAsk && (
               <>
                 <span className="rse-sep" />
-                <RB title="Cite the selected claim" onClick={citeSelection}>
-                  Cite
+                {/* THIS CONTROL WAS LABELLED "Cite" AND CITED NOTHING. It sends
+                    the selected sentence to the assistant pane as a question;
+                    it creates no citation, stores nothing, numbers nothing and
+                    puts nothing in the reference list. With a control beside it
+                    that does cite, a label claiming this one does too is not a
+                    naming quibble — it is a writer believing a claim is sourced
+                    when the filed document has no record of it. The label now
+                    says what it does. */}
+                <RB
+                  title="Ask AnA to suggest a source for the selected claim — this does not insert a citation"
+                  onClick={askForSource}
+                >
+                  Ask for a source
                 </RB>
               </>
             )}
@@ -1300,7 +2033,7 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
               </button>
             )}
             {track && (
-              <label className="rse-track" title="Suggest edits instead of applying them — every change is attributed and reviewable">
+              <label className="rse-track" title="Suggest text edits instead of applying them. Edits within a paragraph are captured as attributed suggestions; structural changes (paragraph joins and splits, table changes) and formatting apply directly and are not tracked.">
                 <input type="checkbox" checked={trackOn} onChange={() => void toggleTrack()} />
                 Track changes
               </label>
@@ -1494,6 +2227,245 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
           </div>
         )}
 
+        {/* ── Caption bar ── */}
+        {captionOpen && boot.mode === 'rich' && !readOnly && (
+          <div
+            className="rse-find"
+            role="group"
+            aria-label="Caption"
+            onKeyDown={(e) => {
+              if (e.key === 'Escape') {
+                e.preventDefault();
+                e.stopPropagation();
+                closeCaption();
+              }
+            }}
+          >
+            <span className="rse-find-label">
+              {captionSubject?.kind === 'figure' ? 'Figure caption' : 'Table caption'}
+            </span>
+            <input
+              ref={captionInputRef}
+              className="rse-find-input"
+              style={{ flex: '1 1 320px' }}
+              aria-label="Caption text"
+              placeholder="Summary of adverse events"
+              value={captionText}
+              onChange={(e) => {
+                setCaptionText(e.target.value);
+                setCaptionError(null);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  applyCaption();
+                }
+              }}
+            />
+            <button type="button" className="rse-link" onClick={applyCaption}>
+              Apply
+            </button>
+            {/* Said here rather than left for the writer to wonder about: the
+                number is not typed and cannot be. */}
+            <span className="rse-find-note">
+              Numbered automatically by position in the document.
+            </span>
+            {captionError && (
+              <span className="rse-find-err" role="alert">
+                {captionError}
+              </span>
+            )}
+            <span style={{ flex: 1 }} />
+            <button
+              type="button"
+              className="rse-link"
+              aria-label="Close caption editor"
+              onClick={closeCaption}
+            >
+              {I.close}
+            </button>
+          </div>
+        )}
+
+        {/* ── Cross-reference bar ── */}
+        {xrefOpen && crossRefsApi && boot.mode === 'rich' && !readOnly && (
+          <div
+            className="rse-find"
+            role="group"
+            aria-label="Cross-reference"
+            onKeyDown={(e) => {
+              if (e.key === 'Escape') {
+                e.preventDefault();
+                e.stopPropagation();
+                closeXref();
+              }
+            }}
+          >
+            <span className="rse-find-label">§ Cross-reference</span>
+            {xrefChoices.length > 0 ? (
+              <>
+                <select
+                  ref={xrefSelectRef}
+                  className="rse-sel"
+                  style={{ flex: '0 1 320px', height: 24 }}
+                  aria-label="Section, table or figure to reference"
+                  value={xrefTarget}
+                  onChange={(e) => {
+                    setXrefTarget(e.target.value);
+                    setXrefError(null);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      applyXref();
+                    }
+                  }}
+                >
+                  {crossRefSections && crossRefSections.length > 0 && (
+                    <optgroup label="Sections">
+                      {crossRefSections.map((sec) => (
+                        <option key={sec.id} value={sec.id}>
+                          {crossReferenceText(sec, 'code-title') || 'Untitled section'}
+                        </option>
+                      ))}
+                    </optgroup>
+                  )}
+                  {/* A captioned table or figure is a target exactly as a
+                      section is, and the number shown here is the one the
+                      filing prints — it is derived from position, not typed. */}
+                  {captionTargetList.length > 0 && (
+                    <optgroup label="Tables and figures">
+                      {captionTargetList.map((t) => (
+                        <option key={t.id} value={t.id}>
+                          {crossReferenceText(t, 'code-title')}
+                        </option>
+                      ))}
+                    </optgroup>
+                  )}
+                </select>
+                <select
+                  className="rse-sel"
+                  aria-label="How much of the target to show"
+                  value={xrefDisplay}
+                  onChange={(e) =>
+                    setXrefDisplay(normalizeCrossReferenceDisplay(e.target.value))
+                  }
+                >
+                  <option value="code-title">Number and title</option>
+                  <option value="code">Number only</option>
+                </select>
+                <button type="button" className="rse-link" onClick={applyXref}>
+                  Insert
+                </button>
+              </>
+            ) : (
+              /* Nothing to reference is a real state, said plainly rather
+                 than shown as an empty picker that looks broken. */
+              <span className="rse-find-note">
+                This document has no other sections, tables or figures to reference yet.
+              </span>
+            )}
+            {xrefError && (
+              <span className="rse-find-err" role="alert">
+                {xrefError}
+              </span>
+            )}
+            <span style={{ flex: 1 }} />
+            <button
+              type="button"
+              className="rse-link"
+              aria-label="Close cross-reference picker"
+              onClick={closeXref}
+            >
+              {I.close}
+            </button>
+          </div>
+        )}
+
+        {/* ── Citation bar ── */}
+        {citeOpen && citationsApi && boot.mode === 'rich' && !readOnly && (
+          <div
+            className="rse-find"
+            role="group"
+            aria-label="Cite a source"
+            onKeyDown={(e) => {
+              if (e.key === 'Escape') {
+                e.preventDefault();
+                e.stopPropagation();
+                closeCite();
+              }
+            }}
+          >
+            <span className="rse-find-label">Cite</span>
+            {citationSources && citationSources.length > 0 ? (
+              <>
+                <select
+                  ref={citeSelectRef}
+                  className="rse-sel"
+                  style={{ flex: '0 1 320px', height: 24 }}
+                  aria-label="Source to cite"
+                  value={citeSource}
+                  onChange={(e) => {
+                    setCiteSource(e.target.value);
+                    setCiteError(null);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      applyCite();
+                    }
+                  }}
+                >
+                  {citationSources.map((src) => (
+                    <option key={src.id} value={src.id}>
+                      {citationSourceName(src) || 'Untitled source'}
+                    </option>
+                  ))}
+                </select>
+                <input
+                  className="rse-find-input"
+                  type="text"
+                  style={{ flex: '0 1 180px' }}
+                  aria-label="Page or table within the source (optional)"
+                  placeholder="p. 142, Table 3 (optional)"
+                  value={citeLocator}
+                  onChange={(e) => setCiteLocator(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      applyCite();
+                    }
+                  }}
+                />
+                <button type="button" className="rse-link" onClick={applyCite}>
+                  Insert
+                </button>
+              </>
+            ) : (
+              /* No sources is a real state, said plainly rather than shown as an
+                 empty picker that looks broken. */
+              <span className="rse-find-note">
+                No sources are available to this document yet. Add one in the
+                Sources panel, then cite it here.
+              </span>
+            )}
+            {citeError && (
+              <span className="rse-find-err" role="alert">
+                {citeError}
+              </span>
+            )}
+            <span style={{ flex: 1 }} />
+            <button
+              type="button"
+              className="rse-link"
+              aria-label="Close the citation picker"
+              onClick={closeCite}
+            >
+              {I.close}
+            </button>
+          </div>
+        )}
+
         {/* ── Canvas ── */}
         <div className="rse-body" ref={editorHostRef}>
           {boot.mode === 'source' ? (
@@ -1555,20 +2527,32 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
         {full && (
           <div className="rse-foot">
             <span className="rse-save">
-              <span className="rse-dot" style={{ background: SAVE_META[saveState].dot }} />
-              {SAVE_META[saveState].label}
+              <span className="rse-dot" style={{ background: canvasSettled ? SAVE_META[saveState].dot : 'var(--warning)' }} />
+              {canvasSettled ? SAVE_META[saveState].label : 'Waiting for live sync — the canvas is locked until this section arrives'}
             </span>
-            <span className="rse-foot-sep">{'·'}</span>
-            <span>{displayWords.toLocaleString()} words</span>
+            <span className="rse-foot-sep" aria-hidden="true">{'·'}</span>
+            <span>
+              {canvasSettled ? `${displayWords.toLocaleString()} words` : 'word count pending'}
+              {canvasSettled && suggestions.length > 0 ? ' (including suggested edits)' : ''}
+            </span>
             {trackOn && (
               <>
-                <span className="rse-foot-sep">{'·'}</span>
-                <span style={{ color: 'var(--warning)', fontWeight: 600 }}>Track changes on</span>
+                <span className="rse-foot-sep" aria-hidden="true">{'·'}</span>
+                <span style={{ color: 'var(--warning)', fontWeight: 600 }} title="Text edits within a paragraph are captured; structural and formatting changes apply directly">Track changes on (text edits)</span>
               </>
             )}
-            {collabStatus !== 'off' && (
+            {collabStatus !== 'off' && boot.mode === 'source' && (
               <>
-                <span className="rse-foot-sep">{'·'}</span>
+                <span className="rse-foot-sep" aria-hidden="true">{'·'}</span>
+                {/* The textarea is not bound to the shared document: nothing the
+                    author types here is synced, and a save replaces the section
+                    wholesale. "Live sync connected" was rendered regardless. */}
+                <span data-collab="source">Live sync unavailable in source mode — editing solo; a save replaces the section</span>
+              </>
+            )}
+            {collabStatus !== 'off' && boot.mode === 'rich' && (
+              <>
+                <span className="rse-foot-sep" aria-hidden="true">{'·'}</span>
                 <span data-collab={collabStatus}>
                   {collabStatus === 'connected'
                     ? 'Live sync connected'
@@ -1605,70 +2589,6 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
           />
         )}
 
-        <style>{`
-        .rse-root { display:flex; flex-direction:column; min-height:0; background:var(--bg-000,#fff); border-radius:inherit; }
-        .rse-gate { display:flex; gap:10px; align-items:baseline; padding:8px 12px; font-size:12px; color:var(--text-300,#475467); background:var(--bg-50,#f9fafb); border-bottom:1px solid var(--border,#e4e7ec); }
-        .rse-ribbon { display:flex; align-items:center; gap:2px; padding:4px 8px; background:var(--bg-000,#fff); border-bottom:1px solid var(--border,#e4e7ec); flex-wrap:wrap; }
-        .rse-sel { font-size:11px; border:1px solid var(--border-control,#d0d5dd); border-radius:4px; padding:2px 6px; background:var(--bg-50,#f9fafb); color:var(--text-100,#101828); cursor:pointer; height:24px; }
-        .rse-sep { width:1px; height:18px; background:var(--border,#e4e7ec); margin:0 3px; }
-        .rse-rb { min-width:24px; height:24px; padding:0 4px; font-size:12px; border:1px solid transparent; border-radius:4px; background:transparent; cursor:pointer; color:var(--text-200,#344054); display:inline-flex; align-items:center; justify-content:center; }
-        .rse-rb[data-active] { background:var(--bg-100,#f2f4f7); border-color:var(--border,#e4e7ec); }
-        .rse-chip { font-size:11px; height:24px; padding:0 10px; border-radius:12px; border:1px solid var(--warning,#b54708); color:var(--warning,#b54708); background:transparent; cursor:pointer; font-weight:600; }
-        .rse-track { display:flex; align-items:center; gap:4px; font-size:10px; color:var(--text-400,#667085); cursor:pointer; margin-left:6px; }
-        .rse-review { border-bottom:1px solid var(--border,#e4e7ec); background:var(--bg-50,#f9fafb); max-height:200px; overflow-y:auto; }
-        .rse-review-h { display:flex; gap:10px; padding:6px 12px; font-size:11px; font-weight:600; color:var(--text-300,#475467); }
-        .rse-review-row { display:flex; align-items:center; gap:8px; padding:4px 12px; font-size:12px; }
-        .rse-review-jump { display:flex; align-items:baseline; gap:8px; flex:1; min-width:0; background:none; border:none; cursor:pointer; text-align:left; padding:0; }
-        .rse-review-kind { font-size:10px; font-weight:700; text-transform:uppercase; }
-        .rse-review-kind[data-kind="insertion"] { color:var(--success,#067647); }
-        .rse-review-kind[data-kind="deletion"] { color:var(--error,#b42318); }
-        .rse-review-by { font-weight:600; color:var(--text-200,#344054); white-space:nowrap; }
-        .rse-review-txt { color:var(--text-300,#475467); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-        .rse-link { font-size:11px; border:none; background:none; color:var(--accent-100,#2563eb); cursor:pointer; padding:2px 4px; }
-        .rse-link:disabled { color:var(--text-400,#667085); cursor:default; }
-        .rse-find { display:flex; align-items:center; gap:6px; padding:6px 10px; background:var(--bg-50,#f9fafb); border-bottom:1px solid var(--border,#e4e7ec); flex-wrap:wrap; }
-        .rse-find-label { display:inline-flex; align-items:center; gap:4px; font-size:11px; font-weight:600; color:var(--text-300,#475467); }
-        .rse-find-input { flex:0 1 220px; min-width:120px; height:24px; font-size:12px; padding:2px 8px; border:1px solid var(--border-control,#d0d5dd); border-radius:4px; background:var(--bg-000,#fff); color:var(--text-100,#101828); }
-        .rse-find-count { font-size:11px; color:var(--text-400,#667085); min-width:64px; }
-        .rse-find-err { font-size:11px; color:var(--error,#b42318); }
-        .rse-find-note { font-size:10px; color:var(--warning,#b54708); }
-        .rse-find-hit { background:color-mix(in srgb, var(--warning,#b54708) 25%, transparent); border-radius:2px; }
-        .rse-find-hit-active { background:color-mix(in srgb, var(--warning,#b54708) 50%, transparent); box-shadow:0 0 0 1px var(--warning,#b54708); }
-        .rse-hl-glyph { background:color-mix(in srgb, var(--warning,#b54708) 30%, transparent); padding:0 3px; border-radius:2px; }
-        .rse-body { flex:1; min-height:0; overflow-y:auto; }
-        .rse-body .tiptap { outline:none; min-height:320px; padding:18px 20px; font-size:14px; line-height:1.75; color:var(--text-100,#101828); font-family:var(--font-serif,Georgia,"Times New Roman",serif); }
-        /* Measure lives on the prose blocks, not the canvas: a CTD table must be
-           free to use the full column while paragraphs keep a readable line. */
-        .rse-body .tiptap > p, .rse-body .tiptap > h1, .rse-body .tiptap > h2, .rse-body .tiptap > h3, .rse-body .tiptap > ul, .rse-body .tiptap > ol, .rse-body .tiptap > blockquote { max-width:78ch; }
-        .rse-body .tiptap p { margin:0 0 12px; }
-        .rse-body .tiptap h1 { font-size:18px; font-weight:700; margin:0 0 8px; }
-        .rse-body .tiptap h2 { font-size:15px; font-weight:700; margin:20px 0 8px; }
-        .rse-body .tiptap h3 { font-size:13px; font-weight:600; margin:16px 0 6px; }
-        .rse-body .tiptap ul, .rse-body .tiptap ol { margin:0 0 12px 24px; }
-        .rse-body .tiptap li { margin-bottom:6px; }
-        .rse-body .tiptap table { width:100%; border-collapse:collapse; margin:16px 0; font-size:13px; }
-        .rse-body .tiptap th { padding:8px 12px; background:var(--bg-50,#f9fafb); border:1px solid var(--border,#e4e7ec); font-weight:600; text-align:left; }
-        .rse-body .tiptap td { padding:7px 12px; border:1px solid var(--border,#e4e7ec); }
-        .rse-body .tiptap mark { background:color-mix(in srgb, var(--warning,#b54708) 28%, transparent); padding:0 1px; border-radius:2px; }
-        .rse-img { margin:16px auto; max-width:100%; text-align:center; }
-        .rse-img img { max-width:100%; height:auto; border-radius:4px; }
-        .rse-img img:not([src]) { display:none; }
-        .rse-img-status { display:block; font-size:11px; color:var(--text-400,#667085); padding:16px 12px; background:var(--bg-50,#f9fafb); border:1px dashed var(--border-control,#d0d5dd); border-radius:4px; }
-        .rse-img[data-error="1"] .rse-img-status { color:var(--error,#b42318); border-color:var(--error,#b42318); }
-        .rse-body .tiptap .ProseMirror-selectednode { outline:2px solid var(--accent-100,#2563eb); outline-offset:2px; border-radius:4px; }
-        .rse-body .tiptap a { color:var(--accent-100,#2563eb); text-decoration:underline; text-underline-offset:2px; }
-        .rse-body .tiptap .selectedCell { outline:2px solid color-mix(in srgb, var(--accent-100,#2563eb) 55%, transparent); outline-offset:-2px; }
-        .rse-body .tiptap p.is-editor-empty:first-child::before { content:attr(data-placeholder); float:left; color:var(--text-400,#667085); pointer-events:none; height:0; }
-        .rse-ins { background:color-mix(in srgb, var(--success,#067647) 14%, transparent); text-decoration:underline; text-decoration-color:var(--success,#067647); }
-        .rse-del { background:color-mix(in srgb, var(--error,#b42318) 12%, transparent); text-decoration:line-through; text-decoration-color:var(--error,#b42318); }
-        .rse-comment-anchor { background:color-mix(in srgb, var(--accent-100,#2563eb) 14%, transparent); border-bottom:1px dotted var(--accent-100,#2563eb); cursor:pointer; }
-        .rse-source { width:100%; min-height:320px; resize:vertical; border:none; outline:none; padding:18px 20px; font-size:13px; line-height:1.6; font-family:ui-monospace,SFMono-Regular,Menlo,monospace; color:var(--text-100,#101828); background:var(--bg-000,#fff); }
-        .rse-empty-cta { padding:10px 20px 0; }
-        .rse-foot { display:flex; align-items:center; gap:8px; padding:6px 12px; background:var(--bg-000,#fff); border-top:1px solid var(--border,#e4e7ec); font-size:10px; color:var(--text-400,#667085); flex-wrap:wrap; }
-        .rse-save { display:flex; align-items:center; gap:5px; }
-        .rse-dot { width:6px; height:6px; border-radius:50%; display:inline-block; }
-        .rse-foot-sep { color:var(--bg-200,#eaecf0); }
-        `}</style>
       </div>
     );
   },

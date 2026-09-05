@@ -30,6 +30,7 @@ import type {
   PdevActivityView,
   PdevWorkstreamPayload,
 } from '../data/types';
+import { useSurfaceActionHandlers } from '../../v2/surfaceActions';
 
 interface WorkstreamProps {
   ws: PdevWorkstream;
@@ -111,6 +112,48 @@ export function PdevWorkstreamSurface({
     filterState === 'all'
       ? wsActivities
       : wsActivities.filter((a) => effectiveState(a) === filterState);
+
+  /* AnA operates this workstream through the SAME chips and view buttons the
+     person uses. One component serves four surfaces (pdev-cmc, -nonclinical,
+     -clinical, -regulatory), so the bus id — and the handler keys — come from
+     `ws`; the leaf registers because it mounts exactly when its surface is
+     shown. State changes, evidence, drafts and workflow decisions are governed
+     and stay in conversation. */
+  const surfaceId = `pdev-${ws}`;
+  useSurfaceActionHandlers(surfaceId, {
+    [`${surfaceId}.filter-activities`]: (params) => {
+      const target = String(params.state ?? '');
+      const legal = ['all', 'drafting', 'in_review', 'revision_required', 'approved'];
+      if (!legal.includes(target)) {
+        return { ok: false, reason: `No activity state named "${params.state}".` };
+      }
+      if (filterState === target) return { ok: true, detail: `Already filtered to ${target}` };
+      /* The chip row only renders a state that has activities in it. Driving a
+         filter the person cannot click would empty the board with no way back
+         on screen, so an empty state refuses instead. */
+      if (target !== 'all') {
+        const n = wsActivities.filter((a) => effectiveState(a) === target).length;
+        if (n === 0) {
+          return {
+            ok: false,
+            reason: `No activities are in ${target} right now — that filter is not offered on screen.`,
+          };
+        }
+      }
+      setFilterState(target as 'all' | PdevActivityState);
+      const shown =
+        target === 'all'
+          ? wsActivities.length
+          : wsActivities.filter((a) => effectiveState(a) === target).length;
+      return { ok: true, detail: `Filtered to ${target} — ${shown} activity(ies) listed` };
+    },
+    [`${surfaceId}.set-view`]: (params) => {
+      const target = params.view === 'list' ? 'list' : 'grid';
+      if (view === target) return { ok: true, detail: `Already in ${target} view` };
+      setViewAndPersist(target);
+      return { ok: true, detail: `Switched to ${target} view (sticky in this browser)` };
+    },
+  });
 
   const stageRollup = React.useMemo(
     () =>
@@ -254,7 +297,7 @@ export function PdevWorkstreamSurface({
                   <div className="pdev-activity-title">{a.registry.title}</div>
                   <div className="pdev-activity-meta">
                     <span>{a.state?.documentCount ?? 0} doc</span>
-                    <span className="dot-sep">·</span>
+                    <span className="dot-sep" aria-hidden="true">·</span>
                     <span>{a.state?.evidenceLinkCount ?? 0} evidence</span>
                   </div>
                   <div className="pdev-activity-foot">

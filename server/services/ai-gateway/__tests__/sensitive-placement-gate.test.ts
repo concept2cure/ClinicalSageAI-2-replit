@@ -9,6 +9,11 @@
  *  2. Non-production audit mode records a content-free structured warning when
  *     PHI/PII heads to a provider (the signal audit mode exists for), while
  *     still never blocking.
+ *  3. ONE env contract governs runtime enforcement: the gate enforces in
+ *     production always, and in ANY environment that sets
+ *     AI_SENSITIVE_DATA_POLICY_MODE=enforce or AI_PII_ENFORCEMENT=block. A
+ *     staging deployment that declares the policy mode the production boot
+ *     assert requires gets real dispatch-time enforcement, not silent audit.
  *
  * Production enforcement behavior is pinned by
  * sensitive-placement-integration.test.ts; the pure decision table by
@@ -107,6 +112,7 @@ describe('last-mile sensitive-dispatch gate', () => {
   it('audit mode records a content-free structured warning for PII-bound dispatch without blocking', async () => {
     process.env.NODE_ENV = 'development';
     delete process.env.AI_PII_ENFORCEMENT; // default: audit
+    delete process.env.AI_SENSITIVE_DATA_POLICY_MODE;
     delete process.env.AI_PROVIDER_PLACEMENT_APPROVALS;
     const gateway = buildGateway();
     const dispatchProvider = vi
@@ -138,6 +144,7 @@ describe('last-mile sensitive-dispatch gate', () => {
   it('audit mode survives malformed approvals: records the config failure, still never blocks', async () => {
     process.env.NODE_ENV = 'development';
     process.env.AI_PII_ENFORCEMENT = 'audit';
+    delete process.env.AI_SENSITIVE_DATA_POLICY_MODE;
     process.env.AI_PROVIDER_PLACEMENT_APPROVALS = '{not valid json';
     const gateway = buildGateway();
     const dispatchProvider = vi
@@ -166,6 +173,7 @@ describe('last-mile sensitive-dispatch gate', () => {
   it('audit mode stays silent for non-sensitive content', async () => {
     process.env.NODE_ENV = 'development';
     delete process.env.AI_PII_ENFORCEMENT; // default: audit
+    delete process.env.AI_SENSITIVE_DATA_POLICY_MODE;
     delete process.env.AI_PROVIDER_PLACEMENT_APPROVALS;
     const gateway = buildGateway();
     const dispatchProvider = vi
@@ -180,5 +188,72 @@ describe('last-mile sensitive-dispatch gate', () => {
     ).resolves.toMatchObject({ content: 'ok' });
     expect(dispatchProvider).toHaveBeenCalledTimes(1);
     expect(screenWarnCalls()).toHaveLength(0);
+  });
+
+  it('staging with AI_SENSITIVE_DATA_POLICY_MODE=enforce blocks an unapproved sensitive dispatch', async () => {
+    process.env.NODE_ENV = 'staging';
+    process.env.AI_SENSITIVE_DATA_POLICY_MODE = 'enforce';
+    delete process.env.AI_PII_ENFORCEMENT; // enforcement must come from the policy mode alone
+    delete process.env.AI_PROVIDER_PLACEMENT_APPROVALS; // no approvals -> unapproved provider
+    const gateway = buildGateway();
+    const dispatchProvider = vi.spyOn(gateway as any, 'dispatchProvider');
+
+    await expect(
+      gateway.route({
+        taskType: 'chat',
+        messages: [{ role: 'user', content: PII_TEXT }],
+      })
+    ).rejects.toMatchObject({
+      name: GatewayPolicyError.name,
+      message: expect.stringContaining('DENY_UNKNOWN_PROVIDER'),
+    });
+    // Enforced means enforced: no provider SDK path is ever reached.
+    expect(dispatchProvider).not.toHaveBeenCalled();
+  });
+
+  it('staging without AI_SENSITIVE_DATA_POLICY_MODE=enforce or AI_PII_ENFORCEMENT=block stays audit-mode: records, never blocks', async () => {
+    process.env.NODE_ENV = 'staging';
+    delete process.env.AI_SENSITIVE_DATA_POLICY_MODE;
+    delete process.env.AI_PII_ENFORCEMENT; // default: audit
+    delete process.env.AI_PROVIDER_PLACEMENT_APPROVALS;
+    const gateway = buildGateway();
+    const dispatchProvider = vi
+      .spyOn(gateway as any, 'dispatchProvider')
+      .mockResolvedValue(FAKE_RESPONSE);
+
+    await expect(
+      gateway.route({
+        taskType: 'chat',
+        messages: [{ role: 'user', content: PII_TEXT }],
+      })
+    ).resolves.toMatchObject({ content: 'ok' });
+    expect(dispatchProvider).toHaveBeenCalledTimes(1);
+
+    const calls = screenWarnCalls();
+    expect(calls.length).toBeGreaterThanOrEqual(1);
+    expect(calls[0][1]).toMatchObject({
+      reasonCode: 'DENY_UNKNOWN_PROVIDER',
+      enforcement: 'audit',
+    });
+  });
+
+  it('production enforcement is unchanged: blocks without either opt-in variable set', async () => {
+    process.env.NODE_ENV = 'production';
+    delete process.env.AI_SENSITIVE_DATA_POLICY_MODE;
+    delete process.env.AI_PII_ENFORCEMENT;
+    delete process.env.AI_PROVIDER_PLACEMENT_APPROVALS;
+    const gateway = buildGateway();
+    const dispatchProvider = vi.spyOn(gateway as any, 'dispatchProvider');
+
+    await expect(
+      gateway.route({
+        taskType: 'chat',
+        messages: [{ role: 'user', content: PII_TEXT }],
+      })
+    ).rejects.toMatchObject({
+      name: GatewayPolicyError.name,
+      message: expect.stringContaining('DENY_UNKNOWN_PROVIDER'),
+    });
+    expect(dispatchProvider).not.toHaveBeenCalled();
   });
 });

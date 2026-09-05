@@ -63,6 +63,13 @@ const CONTEXTUAL = {
   billing: 'account administration, not a subscribable capability',
   usage: 'account administration, not a subscribable capability',
   licensing: 'account administration — it is what grants catalog entries',
+  /* Both reached from the org-admin nav (Shell.tsx: `isOrgAdmin ? [{ to:
+     'master-licensing' }, { to: 'access-requests' }]`) — the same account-
+     administration family as licensing/billing/usage. Landed 2026-08-24 without
+     a declaration; the gate had been red since. Declared, not catalogued: a
+     catalog entry would list an admin console as a subscribable capability. */
+  'master-licensing': 'account administration, reached from the org-admin nav',
+  'access-requests': 'account administration, reached from the org-admin nav',
   training: 'account administration',
   'project-home': 'the landing surface for a project, routed to on selection',
   'conversation-thread': 'AnA rail destination, reached by asking a question',

@@ -23,6 +23,7 @@
  */
 
 import { Router, type Request, type Response } from 'express';
+import { resolveSignerIdentity } from '../services/part11/resolve-signer-identity.js';
 import bcrypt from 'bcryptjs';
 import { createHash } from 'crypto';
 import { pool } from '../db.js';
@@ -182,7 +183,10 @@ router.post('/sign', async (req: Request, res: Response) => {
     legalDisclaimer,
     deviceInfo,
     signatureType,
-    signerTitle,
+    // signerTitle is intentionally NOT read from the request body: a signer must
+    // not be able to assert an arbitrary credential/authority (e.g. "Chief
+    // Medical Officer") into the immutable §11.50 manifestation. It is resolved
+    // server-side from the signer's own users row below.
   } = req.body ?? {};
 
   if (!Number.isFinite(Number(documentId)) || !Number.isFinite(Number(versionId))) {
@@ -270,25 +274,41 @@ router.post('/sign', async (req: Request, res: Response) => {
   // Load signer profile so signer_name / signer_email are denormalised on
   // the signature row (required for offline audit reproduction per Part 11).
   const session = (req as any).user ?? {};
-  let signerName: string = session.name ?? '';
-  let signerEmail: string = session.email ?? '';
-  try {
-    // tenant-isolation-safe: signer self-lookup — userId is the authenticated user's own session id; denormalises signer_name/email onto the signature row for Part 11 offline audit.
-    const u = await pool.query(
-      `SELECT name, email FROM users WHERE id = $1 LIMIT 1`,
-      [userId]
-    );
-    if (u.rows[0]) {
-      signerName = signerName || u.rows[0].name || '';
-      signerEmail = signerEmail || u.rows[0].email || '';
-    }
-  } catch (err: any) {
-    if (err?.code !== '42P01') {
-      console.warn('[esignature] signer lookup failed:', err?.message);
-    }
+  const orgId = Number(session.organizationId);
+  if (!Number.isFinite(orgId)) {
+    return res.status(403).json({
+      error: 'Organization context required to sign (§11.10).',
+      code: 'ESIGNATURE_ORG_REQUIRED',
+    });
   }
-  if (!signerEmail) {
-    return res.status(400).json({ error: 'signer email not resolvable from session' });
+
+  // §11.50 printed name, email and title — resolved from the membership record
+  // through the shared Part 11 lookup, never from the session and never
+  // defaulted.
+  //
+  // What this replaces: `session.name ?? ''` / `session.email ?? ''` seeded the
+  // values from client-controlled session fields, then filled gaps from a BARE
+  // PRIMARY-KEY read of `users` — unscoped, so a user id belonging to another
+  // tenant would still have resolved a name. Only the email was checked before
+  // signing, so the printed NAME could be written empty; and a failed lookup was
+  // swallowed with a console.warn, degrading identity to whatever the session
+  // asserted at exactly the moment the server could not confirm it.
+  let signerName: string;
+  let signerEmail: string;
+  let resolvedSignerTitle: string | null;
+  try {
+    const signer = await resolveSignerIdentity(pool, userId, orgId, 'esignature sign');
+    signerName = signer.name;
+    signerEmail = signer.email;
+    resolvedSignerTitle = signer.title;
+  } catch (err: any) {
+    if (err?.code === 'SIGNER_NOT_ATTRIBUTABLE') {
+      return res.status(403).json({
+        error: 'Signer identity is not attributable in this organization (§11.100).',
+        code: 'ESIGNATURE_SIGNER_NOT_ATTRIBUTABLE',
+      });
+    }
+    throw err;
   }
 
   const signedAt = new Date();
@@ -297,37 +317,12 @@ router.post('/sign', async (req: Request, res: Response) => {
     req.socket?.remoteAddress ||
     undefined;
 
-  // Deterministic content hash (the bytes a regulator would re-derive to
-  // verify integrity). Includes everything that defines the signing event;
-  // does NOT include the password or MFA token.
-  const signatureHash = createHash('sha256')
-    .update(
-      JSON.stringify({
-        documentId: Number(documentId),
-        versionId: Number(versionId),
-        signaturePurpose,
-        signatureMeaning: signatureMeaning ?? null,
-        action,
-        signerId: userId,
-        signerEmail,
-        signedAt: signedAt.toISOString(),
-      })
-    )
-    .digest('hex');
-
   // §11.70 content binding: the signature must be linked to the *bytes* of the
   // version being signed, not just its id. Load the version's content
   // server-side and derive the deterministic binding digest stored in
   // bound_payload_digest. Fail CLOSED — never apply a signature to a version
   // that has no content (or whose row/table is absent). signatureHash above is
   // the §11.200 attribution hash; this is the §11.70 record-linking hash.
-  const orgId = Number(session.organizationId);
-  if (!Number.isFinite(orgId)) {
-    return res.status(403).json({
-      error: 'Organization context required to sign (§11.10).',
-      code: 'ESIGNATURE_ORG_REQUIRED',
-    });
-  }
   let boundPayloadDigest: string;
   try {
     // Tenant-scoped: the version is resolved only within the signer's org
@@ -368,6 +363,31 @@ router.post('/sign', async (req: Request, res: Response) => {
     });
   }
 
+  // §11.200 attribution manifest + hash. The hash MUST be computed over the
+  // EXACT object persisted as signature_manifest — previously the hash covered
+  // one set of fields while a DIFFERENT (thinner) object was stored, so the
+  // stored signature_hash did not authenticate the stored manifest and any
+  // re-derivation over the manifest always mismatched. Build the manifest once,
+  // then hash that same object. Computed here (after the §11.70 binding digest)
+  // so boundPayloadDigest is included. Excludes the password and MFA token.
+  const signatureManifest = {
+    documentId: Number(documentId),
+    versionId: Number(versionId),
+    signaturePurpose,
+    signatureMeaning: signatureMeaning ?? null,
+    action,
+    signerId: userId,
+    signerEmail,
+    signerRole,
+    signerTitle: resolvedSignerTitle,
+    deviceInfo: deviceInfo ?? null,
+    boundPayloadDigest,
+    signedAt: signedAt.toISOString(),
+  };
+  const signatureHash = createHash('sha256')
+    .update(JSON.stringify(signatureManifest))
+    .digest('hex');
+
   // 21 CFR Part 11 §11.10(e): the signature and its audit row are ONE
   // transaction. Previously the INSERT ran on an autocommit `pool.query`, so
   // the signature was durably committed BEFORE the audit write was attempted.
@@ -392,14 +412,14 @@ router.post('/sign', async (req: Request, res: Response) => {
       signaturePurpose,
       signerId: userId,
       signerName,
-      signerTitle: signerTitle ?? null,
+      signerTitle: resolvedSignerTitle,
       signerEmail,
       authenticationMethod: 'password+totp',
       authenticationTimestamp: signedAt,
       secondFactorVerified,
       signatureHash,
       signatureMeaning: signatureMeaning ?? null,
-      signatureManifest: { action, signerRole, deviceInfo: deviceInfo ?? null, boundPayloadDigest },
+      signatureManifest,
       isValid: signatureIsValid,
       complianceStatement: complianceStatement ?? null,
       legalDisclaimer: legalDisclaimer ?? null,

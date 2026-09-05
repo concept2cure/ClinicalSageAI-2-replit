@@ -36,14 +36,41 @@ for (const row of CV_CONTEXT_OF_USE.codes) {
 }
 
 /**
+ * The nearest FDA heading a section files under: the section itself when it is
+ * a published heading, else its closest published ancestor ('1.1.1' → '1.1',
+ * '1.3.4.2' → '1.3.4'). Returns null when neither exists (a heading that is an
+ * ancestor of published leaves — '1.3.1' over 1.3.1.1…1.3.1.5 — or a code
+ * outside the list).
+ */
+export function nearestUsRegionalHeading(ctdSection: string): string | null {
+  let section = ctdSection.replace(/^m/i, '');
+  while (section) {
+    if (SECTION_ELEMENT.has(section)) return section;
+    const cut = section.lastIndexOf('.');
+    if (cut < 0) return null;
+    section = section.slice(0, cut);
+  }
+  return null;
+}
+
+/**
  * Resolve the FDA us-regional heading element name for a CTD section.
- * Falls back to `m<section-dashed>` when the section is not in the FDA CoU
- * list (so an unknown section still nests under a syntactically valid element).
+ *
+ * A leaf whose code is a DESCENDANT of a published heading nests under that
+ * heading: the forms 1.1.1 / 1.1.2 / 1.1.3 file under `<m1-1-forms>`, a
+ * 1.3.4.x financial-disclosure leaf under 1.3.4. FDA's heading list is the
+ * leaf level of the regional hierarchy — there is no `<m1-1-1>` element, and
+ * emitting one produced a backbone that validated locally (no DTD vendored)
+ * and would fail the agency validator. Pinned by
+ * __tests__/fda-regional-sections.test.ts.
+ *
+ * Falls back to `m<section-dashed>` only when no published ancestor exists
+ * (so an unknown section still nests under a syntactically valid element).
  */
 export function usRegionalSectionElement(ctdSection: string): string {
   const section = ctdSection.replace(/^m/i, '');
-  const mapped = SECTION_ELEMENT.get(section);
-  if (mapped) return mapped;
+  const heading = nearestUsRegionalHeading(section);
+  if (heading) return SECTION_ELEMENT.get(heading)!;
   return `m${section.replace(/\./g, '-')}`;
 }
 

@@ -88,9 +88,21 @@ jobs:
         # The same from-scratch installer ci.yml's blank-db-provisioning job runs.
         run: node scripts/db/install-fresh.mjs
 
+      # Two steps, not one: a combined step reports only "exit code 1", and
+      # this job's logs are not always retrievable, so a failure in one spec
+      # would be indistinguishable from the other. Each spec boots its own
+      # server (~20s) and is attributable from the step list alone.
       - name: Run the authenticated browser smoke
-        # Seeds the login user, boots the server with dev-auth, drives the spec.
-        run: npm run test:e2e:smoke
+        # Seeds the smoke login user and the governed-workflow identities,
+        # boots the server (export review gate enforced), drives the app smoke.
+        run: npm run test:e2e:smoke -- tests/e2e/authenticated-app-smoke.e2e.spec.ts
+
+      - name: Run the WO-06 governed golden journey
+        # governed evidence draft → citation gate → denied pre-review export →
+        # reviewer assignment → approval under separation of duties →
+        # persistence, in a real browser against the same fresh database.
+        if: '!cancelled()'
+        run: npm run test:e2e:smoke -- tests/e2e/golden-customer-journey.e2e.ts
 
       - name: Upload smoke artifacts (traces, screenshots, results)
         if: always()

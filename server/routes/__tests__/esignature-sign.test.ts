@@ -109,7 +109,10 @@ const signBody = (over: Record<string, unknown> = {}) => ({
 function wireHappyPool() {
   hoisted.poolQuery.mockImplementation(async (sql: string) => {
     if (/SELECT password_hash FROM users/i.test(sql)) return { rows: [{ password_hash: PW_HASH }] };
-    if (/SELECT name, email FROM users/i.test(sql)) return { rows: [{ name: 'A Signer', email: 's@x.test' }] };
+    // The §11.50 signer lookup is org-scoped (users JOIN organization_users) —
+    // it used to be a bare primary-key read of `users`, which resolved a name
+    // for a user id belonging to any tenant.
+    if (/FROM users u\s+JOIN organization_users/i.test(sql)) return { rows: [{ name: 'A Signer', email: 's@x.test', title: 'Study Director' }] };
     if (/FROM document_versions/i.test(sql)) {
       return { rows: [{ document_id: 10, version_number: '1', content: 'body' }] };
     }
@@ -183,6 +186,22 @@ describe('POST /api/esignature/sign — §11.10(e) audit-trail invariant', () =>
     await (auditClient as any).query('SELECT 1');
     expect(hoisted.clientQuery).toHaveBeenCalledWith('SELECT 1');
   });
+
+  it('§11.50: ignores a client-supplied signerTitle and persists the server-resolved one', async () => {
+    const res = await request(makeApp())
+      .post('/api/esignature/sign')
+      .send(signBody({ signerTitle: 'Chief Medical Officer' })); // a claimed authority the signer does not hold
+    expect(res.status).toBe(201);
+    const insertCall = hoisted.clientQuery.mock.calls.find((c) =>
+      /INSERT INTO electronic_signatures/i.test(String(c[0])),
+    );
+    expect(insertCall).toBeDefined();
+    const params = JSON.stringify(insertCall![1] ?? []);
+    // The server-resolved title (from the users row) is persisted...
+    expect(params).toContain('Study Director');
+    // ...and the client-asserted one is NOT.
+    expect(params).not.toContain('Chief Medical Officer');
+  });
 });
 
 describe('POST /api/esignature/sign — input + authority guards', () => {
@@ -228,5 +247,28 @@ describe('POST /api/esignature/sign — input + authority guards', () => {
     const res = await request(makeApp()).post('/api/esignature/sign').send(signBody());
     expect(res.status).toBe(400);
     expect(res.body.error).toMatch(/mfaToken/i);
+  });
+});
+
+describe('POST /api/esignature/sign — §11.50 signer attribution', () => {
+  it('REGRESSION: refuses to sign when the signer is not attributable in the org', async () => {
+    // The route used to seed signer_name/signer_email from client-controlled
+    // session fields and fill gaps from an UNSCOPED read of `users`, checking
+    // only that an email came out. A signer with no membership in the signing
+    // org could therefore be written onto the signature as the printed name.
+    // Refusing is the only honest answer: §11.50 asks for the name of the
+    // signer, and this org cannot say who that is.
+    wireHappyPool();
+    hoisted.poolQuery.mockImplementation(async (sql: string) => {
+      if (/SELECT password_hash FROM users/i.test(sql)) return { rows: [{ password_hash: PW_HASH }] };
+      if (/FROM users u\s+JOIN organization_users/i.test(sql)) return { rows: [] }; // not a member
+      if (/FROM document_versions/i.test(sql)) {
+        return { rows: [{ document_id: 10, version_number: '1', content: 'body' }] };
+      }
+      return { rows: [] };
+    });
+    const res = await request(makeApp()).post('/api/esignature/sign').send(signBody());
+    expect(res.status).toBe(403);
+    expect(res.body.code).toBe('ESIGNATURE_SIGNER_NOT_ATTRIBUTABLE');
   });
 });

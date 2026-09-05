@@ -13,7 +13,7 @@
  *   - the document creator can edit their own section (creator auto-grant);
  *   - an unrelated same-tenant user is denied (least privilege);
  *   - a grant on ANOTHER document does NOT authorise this section (OR-bug fix);
- *   - a QA/RA_CMC role overrides;
+ *   - a bare QA/RA_CMC role does NOT override an object grant;
  *   - an APPROVED document is read-only even to the author;
  *   - a cross-tenant caller is denied;
  *   - commenting is NOT gated by edit permission (reviewers may annotate).
@@ -27,6 +27,7 @@ import express from 'express';
 import request from 'supertest';
 import { SignJWT } from 'jose';
 import { createJourneyDb, type JourneyDb } from '../golden-journeys/harness';
+import { AUDIT_LOGS_PGLITE_DDL } from '../../server/db/pglite-harness';
 
 const JWT_SECRET = 'section-perms-contract-secret-0728';
 process.env.JWT_SECRET = JWT_SECRET;
@@ -68,6 +69,13 @@ async function mint(u: { id: string; organizationId: number; email: string }, ro
 }
 
 const PREREQ = `
+  /* Governed authoring writes land a hash-chained, HMAC-sealed §11.10(e) row,
+     and that write is fail-closed — the audit row and the mutation it records
+     commit together or neither does. Without this table the handler under test
+     500s on a save that is otherwise correct. Imported rather than restated so
+     it cannot drift from what writeChainedAuditRow writes; the CI gate
+     scripts/ci/check-audit-logs-fixture.mjs enforces that agreement. */
+  ${AUDIT_LOGS_PGLITE_DDL}
   CREATE TABLE organizations (id SERIAL PRIMARY KEY, name TEXT);
   CREATE TABLE users (id UUID PRIMARY KEY, name TEXT, email TEXT);
   INSERT INTO organizations (id, name) VALUES (1, 'org-a'), (2, 'org-b');
@@ -93,9 +101,9 @@ beforeAll(async () => {
   jdb = await createJourneyDb({
     prereqSql: PREREQ,
     migrations: [
-      // doc_permissions is created by the loop-tables migration above (with BOTH
-      // composite tenant-parent FKs), so no separate permission-store migration
-      // is loaded here.
+      // doc_permissions is created by the loop-tables migration (with BOTH
+      // composite tenant-parent FKs) and brought up to the canonical shape by
+      // 20260727 below.
       'db/migrations/20260725_authoring_document_loop_tables.sql',
       'db/migrations/20260730_authoring_comments_router_columns.sql',
       // ALTERs doc_revisions above with the ledger columns the router now writes
@@ -111,6 +119,13 @@ beforeAll(async () => {
       // swallowing) a failure when enlisted in that transaction — so the table is
       // a hard prerequisite for PATCH here; without it the mutation aborts (500).
       'db/migrations/20260725_authoring_audit_trail.sql',
+      // The creator auto-grant and the gate both go through the canonical
+      // permission service now, which writes and reads the grant's identity and
+      // lifecycle columns (principal_id, granted_by, valid_from/valid_until,
+      // revoked_at). Without this migration the auto-grant INSERT fails and the
+      // document's own creator is denied — the state this suite would otherwise
+      // mistake for correct enforcement.
+      'db/migrations/20260727_authoring_object_permissions.sql',
     ],
   });
   h.db = jdb.db;
@@ -166,17 +181,37 @@ describe('G-01: object-level section-permission enforcement', () => {
     expect(denied.status).toBe(403);
 
     // 3. A grant on ANOTHER document must NOT authorise this section (OR-bug fix).
-    const grant = await asUser(QA)(request(app).post(`/api/authoring/docs/${docId2}/permissions`))
-      .send({ email: UNRELATED.email, role: 'AUTHOR' }); // doc-level grant, section_id NULL, on doc2
-    expect(grant.status).toBe(200);
+    //
+    // Seeded directly rather than posted. The HTTP writer this used to call was
+    // authoring.router.ts's own POST /docs/:docId/permissions, deleted in
+    // 3eb7306 as a shadowed duplicate: register-inline-routes mounts
+    // authoringPermissionsRouter on '/api' ahead of authoring.router on
+    // '/api/authoring', and it owns the same full path, so the router-local
+    // copy never ran in the app. This file mounts authoring.router alone, which
+    // is the only reason it ever reached it. The subject here is the gate's
+    // predicate, and the row it reads is the same either way.
+    await jdb.pool.query(
+      `INSERT INTO doc_permissions (doc_id, section_id, email, role, tenant_id)
+       VALUES ($1, NULL, $2, 'AUTHOR', 1)`, // doc-level grant, section_id NULL, on doc2
+      [docId2, UNRELATED.email],
+    );
     const stillDenied = await asUser(UNRELATED)(request(app).patch(`/api/authoring/sections/${sectionId1}`))
       .send({ content: 'v3 via cross-doc grant' });
     expect(stillDenied.status).toBe(403);
 
-    // 4. QA role overrides.
+    // 4. A bare QA role does NOT override the object grant.
+    //
+    // This asserted 200 while the gate ran its own copy of the decision, which
+    // admitted a functional QA / RA_CMC role on any section of the tenant. That
+    // copy never decided anything in the running app: the canonical middleware
+    // (server/middleware/authoringObjectAuthorization.ts) is mounted on '/api'
+    // ahead of this router and had already refused the same caller. The gate
+    // now asks decideAuthoringPermission — the middleware's own rule set — so
+    // the two agree, and a job title is not an authorization to alter a
+    // regulated record.
     const qaEdit = await asUser(QA)(request(app).patch(`/api/authoring/sections/${sectionId1}`))
       .send({ content: 'v4 by qa' });
-    expect(qaEdit.status).toBe(200);
+    expect(qaEdit.status).toBe(403);
 
     // 5. Commenting is gated by the SAME section permission as editing.
     //

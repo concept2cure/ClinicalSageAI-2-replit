@@ -2,7 +2,8 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { I } from '../icons';
 import { EmptyState, useLiveData } from '../dataConnect';
 import { usePublishSurfaceContext } from '../surfaceContext';
-import { apiRequest } from '@/lib/queryClient';
+import { useSurfaceActionHandlers, notifySurfaceActionReady } from '../surfaceActions';
+import { apiRequest, serverMessage } from '@/lib/queryClient';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { C2CForm } from '../C2CForm';
 import type { C2CFormConfig } from '../C2CForm';
@@ -115,6 +116,45 @@ export function HaqManager({ onAsk }: SurfaceViewProps) {
   const [activeId, setActiveId] = useState<string>('');
   const effActiveId = activeId || qs[0]?.id || '';
 
+  /* AnA can open any agency question by its id or a phrase from its text — the
+     same row click a person makes — switching rounds if the question lives in
+     another one, so its analysis, draft and commitments show. Resolved across
+     the REAL store with honest misses; held (retry) while the rounds load.
+     Selecting is view-state only — drafting an answer and committing a response
+     stay governed human acts, never reachable from here. */
+  useSurfaceActionHandlers('haq-manager', {
+    'haq-manager.select-question': (params) => {
+      const raw = String(params.question ?? '').trim();
+      if (!raw) return { ok: false, reason: 'Name a question by its id or a phrase from its text.' };
+      if (roundsState.loading) return { ok: false, reason: 'The HAQ rounds are still loading.', retry: true };
+      if (roundsState.error) {
+        return { ok: false, reason: 'The HAQ store did not respond, so there are no questions to open.' };
+      }
+      // Every question across every round, plus optimistic local adds, deduped
+      // by display id (persisted first so its real dbId wins over an add).
+      const seen = new Set<string>();
+      const all: HaqQuestion[] = [];
+      for (const cand of [...Object.values(questionsByRound).flat(), ...extra]) {
+        if (seen.has(cand.id)) continue;
+        seen.add(cand.id);
+        all.push(cand);
+      }
+      if (all.length === 0) return { ok: false, reason: 'No agency questions are recorded yet.' };
+      const needle = raw.toLowerCase();
+      const exact = all.filter((c) => c.id.toLowerCase() === needle);
+      const hits = exact.length ? exact : all.filter((c) => (c.q ?? '').toLowerCase().includes(needle));
+      if (hits.length === 0) return { ok: false, reason: `No agency question matching "${raw}".` };
+      if (hits.length > 1) return { ok: false, reason: `"${raw}" matches ${hits.length} questions — use the exact id.` };
+      const hit = hits[0];
+      if (hit.roundId && hit.roundId !== effRoundId) setRoundId(hit.roundId);
+      setActiveId(hit.id);
+      return { ok: true, detail: `Opened ${hit.id}` };
+    },
+  });
+  useEffect(() => {
+    if (!roundsState.loading && !roundsState.error) notifySurfaceActionReady('haq-manager');
+  }, [roundsState.loading, roundsState.error]);
+
   const HAQ_FORM: C2CFormConfig = {
     eyebrow: 'HAQ — log question',
     title: 'Log an agency question',
@@ -197,7 +237,7 @@ export function HaqManager({ onAsk }: SurfaceViewProps) {
             ((q && q.id) || 'question'),
         });
       }
-    } catch (_e) {
+    } catch {
       /* noop */
     }
   }, [effActiveId, effRoundId]);
@@ -250,7 +290,9 @@ export function HaqManager({ onAsk }: SurfaceViewProps) {
         | null;
       if (!res.ok || json?.success !== true || !json.data?.markdown) {
         fireToast(
-          'The package was not assembled — ' + (json?.error ?? `the server refused it (HTTP ${res.status})`),
+          // `json.error` was read raw — an enum token or internal string would
+          // have reached the toast. The canonical reader filters both.
+          'The package was not assembled — ' + (serverMessage(json) ?? `the server refused it (HTTP ${res.status})`),
           'error',
         );
         return;
@@ -359,7 +401,7 @@ export function HaqManager({ onAsk }: SurfaceViewProps) {
       <div className="haq">
         <div className="haq-head">
           <div>
-            <div className="sec-kicker">PLATFORM — POST-SUBMISSION</div>
+            <div className="reg-eyebrow">PLATFORM — POST-SUBMISSION</div>
             <h1 className="haq-title">Health authority questions</h1>
             <p className="haq-sub">
               Agency information requests and lists of questions — decomposed,

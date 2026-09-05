@@ -50,7 +50,14 @@ const BASELINE = path.join(ROOT, 'scripts/ci/internals-in-copy-baseline.json');
 /** Internals that must never appear in copy. */
 const INTERNALS = [
   { re: /\/api\//, what: 'API route' },
-  { re: /\b(project_sections|authoring_documents|authoring_sections|unified_tasks|regulatory_programs|c2c_document_sections|labeling_pi_sections|c2c_ana_actions|audit_logs|mdx_notifications|project_tasks|document_workflows|software_lifecycle_items|unified_documents)\b/, what: 'table name' },
+  // The relation list is hand-maintained, and a hand-maintained list is only as
+  // good as the last time someone extended it. It did not carry ANY of the
+  // submission-core relations — so `submission_leaves`, printed twice into the
+  // placement dialog's own body copy, was never a finding. The stores named in
+  // DOCUMENT_STORE_LABEL (shared/regulatory/canonical-document.ts) and the eCTD
+  // core relations are added here; that map is the list of stores a leaf can
+  // point at, which is exactly the set most likely to reach a screen.
+  { re: /\b(project_sections|authoring_documents|authoring_sections|unified_tasks|regulatory_programs|c2c_document_sections|labeling_pi_sections|c2c_ana_actions|audit_logs|mdx_notifications|project_tasks|document_workflows|software_lifecycle_items|unified_documents|submission_leaves|ectd_sequences|coauthor_documents|ctd_onboarding_documents|vault_documents|concept2cure_artifacts|c2c_documents|doc_revisions|q_sub_section_bodies|protocol_sections|protocol_documents|biosketch_sections|workflow_document_versions|module_documents)\b/, what: 'table name' },
   { re: /\b(GET|POST|PATCH|PUT|DELETE)\s+\//, what: 'HTTP method + path' },
   { re: /\bprocess\.env\.[A-Z_]+/, what: 'env var' },
   // ── Folded in from a parallel gate (check-ui-internals) that was doing the
@@ -66,7 +73,12 @@ const INTERNALS = [
   { re: /\b[A-Z][A-Z0-9]*(?:_[A-Z0-9]+)*_(?:URL|KEY|SECRET|TOKEN|DIR|PATH|PASSWORD|DSN|HOST|PORT)\b/, what: 'env var' },
   { re: /(?:^|[\s(])\/(?:home|usr|var|opt|app|etc)\//, what: 'absolute file path' },
   { re: /\.(?:ts|tsx|js|mjs|cjs):\d+/, what: 'source location' },
-  { re: /\b[\w.-]+\.(?:ts|tsx|mjs|cjs|sql)\b/, what: 'source file' },
+  // Extensions the product's own repo actually uses. The list started at
+  // ts|tsx|mjs|cjs|sql and let a `.md` filename through: document-authoring's
+  // customer-visible note read "See HANDOFF_TO_DESIGN_document_authoring.md",
+  // rendered as the tool card's whole description on Project Home. A rule that
+  // bans source paths in copy has to know what a source path looks like here.
+  { re: /\b[\w.-]+\.(?:ts|tsx|js|jsx|mjs|cjs|sql|md|json|ya?ml|sh|py)\b/, what: 'source file' },
 ];
 
 /** Copy-bearing JSX attributes: `hint="…"` / `title={'…'}`. */
@@ -109,11 +121,34 @@ const TEXT = />([^<>]{3,600})</g;
  * of code rather than prose. Without this the rule reads statements as
  * sentences; with it, `{I.rocket} IND Lifecycle -- /api/ind-checklist` reduces
  * to the sentence a user actually sees.
+ *
+ * ── Why a bare parenthesis is not the code signal it looks like ───────────────
+ * `(` and `)` were in the reject class, and they were pulling real weight: the
+ * TEXT rule anchors on `>` … `<`, so a generic call like
+ * `useLiveRows<Row>('/api/x', …)` presents its own argument list as a "text
+ * run", and ~20 of those exist. Rejecting on paren killed all of them.
+ *
+ * It also killed regulatory prose, which is full of parentheses — and with it
+ *   "Placement writes a submission_leaves row in the canonical core (audited,
+ *    org-scoped)."
+ *   "Programmatic access tokens (/api/api-keys) — org-scoped, hashed at rest…"
+ *   "Settings /api/billing (dashboard)"
+ * — a relation name and two live routes, sitting in body copy, unreported
+ * because they were written in sentences that used brackets.
+ *
+ * The two are separable without the collateral. An argument list captured this
+ * way ALWAYS opens with the paren (the generic's `>` is immediately before it)
+ * and ALWAYS quotes its route. Prose does neither: this codebase writes copy
+ * with typographic quotes, so a straight quote in a text run means a literal.
+ * So: reject a leading paren, reject a straight quote, and let sentences keep
+ * their brackets.
  */
 function jsxProse(run) {
   const text = run.replace(/\{[^{}]*\}/g, ' ').replace(/\s+/g, ' ').trim();
   if (text.length < 3) return '';
-  if (/[;=()]|=>|\breturn\b|\bconst\b|\bimport\b/.test(text)) return '';
+  if (/[;=]|=>|\breturn\b|\bconst\b|\bimport\b/.test(text)) return '';
+  if (text.startsWith('(')) return '';      // a generic call's argument list
+  if (/['"`]/.test(text)) return '';        // a straight quote means a literal, not prose
   return text;
 }
 
@@ -133,12 +168,29 @@ function jsxProse(run) {
  * the exact lane this gate exists to police. A second instance sat in
  * ReportEngine on the same CSS class. Both are fixed; this stops the third.
  *
- * Deliberately narrow: only literals inside an expression container that holds
- * NO call parenthesis. A ternary or member access renders its literals to the
- * user; `apiRequest('/api/x')` does not, and telling them apart by paren is
- * exact enough to carry an empty baseline without false positives.
+ * Deliberately narrow: only literals inside an expression container that makes
+ * NO call. A ternary or member access renders its literals to the user;
+ * `apiRequest('/api/x')` does not.
+ *
+ * ── The second blind spot, and why the first fix was not enough ───────────────
+ * "Holds no parenthesis" was the original test, and it is not the same rule as
+ * "makes no call". A parenthesis inside a QUOTED LITERAL is rendered text — it
+ * is part of what the user reads — but the container regex excluded `(` and `)`
+ * outright, so any literal that happened to contain a paren took its whole
+ * container out of scope. That hid the exact string it was written to catch:
+ *
+ *   {placing ? 'Placing…' : 'Place leaf (PUT /leaves)'}
+ *
+ * — a live HTTP method and path, on a button, in the placement dialog, wearing
+ * the one piece of punctuation that made the gate look away. The gate reported
+ * a clean empty baseline the entire time.
+ *
+ * So the container now admits parens, and the call test is applied to the
+ * residue AFTER string literals are blanked: a paren outside every quote is a
+ * call and the container is skipped; a paren inside one is prose and the
+ * literal is read.
  */
-const EXPR_IN_TEXT = /\{([^{}()]{0,300})\}/g;
+const EXPR_IN_TEXT = /\{([^{}]{0,300})\}/g;
 
 /**
  * `TEXT`'s 600-character bound exists so the rule cannot hang. It also means a
@@ -161,11 +213,135 @@ function jsxExprLiterals(run) {
   let m;
   while ((m = EXPR_IN_TEXT.exec(run)) !== null) {
     const body = m[1];
+    // Blank the quoted spans, then ask whether a call parenthesis survives.
+    // `fmt(x)` does; `'Place leaf (PUT /leaves)'` does not.
+    if (/\(/.test(body.replace(/['"`][^'"`]*['"`]/g, ' '))) continue;
     for (const lit of body.match(/['"`]([^'"`]{3,200})['"`]/g) || []) {
       out.push(lit.slice(1, -1));
     }
   }
   return out;
+}
+
+/**
+ * The third place copy lives, and the one the JSX rules cannot see.
+ *
+ * ATTR reads `title="…"` and TEXT reads what sits between tags — both are JSX
+ * POSITIONS. A great deal of this product's copy is not written there. It is
+ * written as a string constant and handed to a component:
+ *
+ *   export const IDENTITY_STATEMENT = 'This document lives in the governed …'
+ *   summary: 'Nonclinical (CTD Module 4): the /api/nonclinical-summary … '
+ *   title={governed ? 'Governed — …' : 'POST /sequences/:seqId/transition — …'}
+ *
+ * The last of those is a tooltip on a live button in the Submission Center;
+ * ATTR missed it because a ternary sits between the `=` and the quote. Nine
+ * such strings carry a route or a relation into copy, and the gate has never
+ * been able to see any of them.
+ *
+ * ── Why this needs a tokenizer and not another regex ─────────────────────────
+ * Matching `'…'` with a pattern captures the span BETWEEN two literals as
+ * though it were one: `rawJson('PATCH', `/api/quality/plans/${id}`, { status:
+ * 'active' })` reads as a literal `, `/api/quality/plans/…`, { status: ` and
+ * reports a route the user never sees. So the line is walked character by
+ * character, honouring escapes, and only real literals are considered.
+ *
+ * ── What counts as prose ─────────────────────────────────────────────────────
+ * 40+ characters with a space in it, and not itself a path. A route passed as
+ * an argument is the route and must say so; a sentence that MENTIONS one is the
+ * defect. `${…}` interpolations are stripped first — the interpolated
+ * expression is code, and stripping it is the same move jsxProse makes on
+ * `{…}`. Without it `documentSourceLabel('coauthor_documents', id)` inside a
+ * template reads as a relation in copy when what renders is a store's name.
+ */
+function stringLiterals(line) {
+  const out = [];
+  let i = 0;
+  while (i < line.length) {
+    const q = line[i];
+    if (q === "'" || q === '"' || q === '`') {
+      let j = i + 1;
+      let buf = '';
+      while (j < line.length) {
+        if (line[j] === '\\') { buf += line[j + 1] ?? ''; j += 2; continue; }
+        if (line[j] === q) break;
+        buf += line[j];
+        j++;
+      }
+      // Unterminated on this line = a multi-line template. Stop rather than
+      // guess: the rest of the line is inside a literal we cannot delimit.
+      if (j >= line.length) break;
+      out.push(buf);
+      i = j + 1;
+      continue;
+    }
+    i++;
+  }
+  return out;
+}
+
+/**
+ * Prose string literals on a line, with interpolations removed.
+ *
+ * A `console.*` line is skipped: its argument is a message to a DEVELOPER
+ * reading the browser console, and naming the file they must edit is the whole
+ * point of it. The rule polices what a regulatory director reads on a screen,
+ * not what an engineer reads in devtools.
+ */
+function proseLiterals(line) {
+  if (/\bconsole\.(?:warn|error|log|info|debug|trace)\s*\(/.test(line)) return [];
+  const out = [];
+  for (const raw of stringLiterals(line)) {
+    const lit = raw.replace(/\$\{[^{}]*\}/g, ' ').replace(/\s+/g, ' ').trim();
+    if (lit.length < 40 || !lit.includes(' ')) continue;
+    if (/^[./]/.test(lit)) continue; // a path literal IS the path
+    out.push(lit);
+  }
+  return out;
+}
+
+/**
+ * Copy that is DECLARED in shared/ but RENDERED by the client.
+ *
+ * The walk below is `client/src/**`, which is where copy usually lives — and
+ * that is exactly why this gate was green over 25 surface notes carrying API
+ * routes, source paths, a table name and an agent branch name. The surface
+ * registry declares them in `shared/constants/`, and the client renders each
+ * one verbatim: as the scaffold page's subtitle under the <h1>
+ * (surfaces/Surfaces.tsx), as the Coverage card note, and as the nav card's
+ * tooltip. A gate that only reads the file where copy is USED cannot see copy
+ * that is declared one directory over.
+ *
+ * Only the fields that reach a screen are read. `engineering` exists precisely
+ * so the routes and contract refs have somewhere to live that is NOT copy, so
+ * it is skipped here on purpose — flagging it would push the detail back into
+ * the rendered field or delete it, and both are worse.
+ */
+const SHARED_COPY_SOURCES = [
+  'shared/constants/ui-surface-registry.ts',
+  'shared/constants/ui-surface-registry.ui-v2.ts',
+];
+const RENDERED_FIELDS = /^\s*(notes|label|subtitle|blurb)\s*:\s*'((?:[^'\\]|\\.)*)'/;
+
+function sharedCopyFindings() {
+  const hits = [];
+  for (const file of SHARED_COPY_SOURCES) {
+    const full = path.join(ROOT, file);
+    if (!existsSync(full)) continue;
+    readFileSync(full, 'utf8')
+      .split('\n')
+      .forEach((line, i) => {
+        const m = RENDERED_FIELDS.exec(line);
+        if (!m) return;
+        const value = m[2];
+        for (const { re: bad, what } of INTERNALS) {
+          if (!bad.test(value)) continue;
+          hits.push({ file, line: i + 1, what, text: value.trim().slice(0, 110) });
+          break;
+        }
+      });
+  }
+  return hits;
 }
 
 function sourceFiles() {
@@ -190,7 +366,7 @@ function stripComments(text) {
 }
 
 function findings() {
-  const hits = [];
+  const hits = sharedCopyFindings();
   for (const file of sourceFiles()) {
     const raw = readFileSync(path.join(ROOT, file), 'utf8');
     const code = stripComments(raw);
@@ -210,6 +386,19 @@ function findings() {
       }
     };
     scan(ATTR, 2);
+
+    // Copy written as a string constant rather than in a JSX position. Applies
+    // to .ts as well as .tsx — hooks and services carry user-facing messages.
+    code.split('\n').forEach((line, i) => {
+      for (const value of proseLiterals(line)) {
+        for (const { re: bad, what } of INTERNALS) {
+          if (!bad.test(value)) continue;
+          hits.push({ file, line: i + 1, what, text: value.trim().slice(0, 110) });
+          break;
+        }
+      }
+    });
+
     // JSX text only exists in .tsx; scanning .ts with this rule reads code.
     if (file.endsWith('.tsx')) {
       scan(TEXT, 1, jsxProse);

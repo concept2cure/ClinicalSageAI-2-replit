@@ -18,8 +18,9 @@ import { notifySurfaceActionReady, useSurfaceActionHandlers } from '../surfaceAc
 import { apiRequest, serverMessage } from '@/lib/queryClient';
 import { AnswerLead } from '../AnswerLead';
 import type { SurfaceViewProps } from '../surfaceViews';
-import type { ReviewItem, ReviewComment, ReviewWorkflow } from '../fixtures/review-data';
+import type { ReviewItem, ReviewComment, ReviewWorkflow, WorkflowStep } from '../fixtures/review-data';
 import { STATUS_TONE, ESIGN_MEANINGS } from '../fixtures/review-data';
+import { assessmentStateFor, hasAnswer } from '../assessmentState';
 import { ReviewThreadsPane } from './ReviewThreads';
 import '../styles/project-home-v2.css';
 import { C2CToast, useToast } from '../toast';
@@ -357,7 +358,17 @@ export function Review({ onAsk, onNav }: SurfaceViewProps) {
       // the ready signal below — the navigate→act gap.
       if (boardState.loading && queue.length === 0)
         return { ok: false, reason: 'The review board is still loading.', retry: true };
-      if (queue.length === 0) return { ok: false, reason: 'Nothing is in review.' };
+      /* Was an unconditional 'Nothing is in review.' — the same unearned claim
+         the empty-queue panel used to make, spoken into AnA's channel instead
+         of onto the screen: a settled response that carried no board leaves the
+         queue empty without anything having been read. */
+      if (queue.length === 0)
+        return {
+          ok: false,
+          reason: Array.isArray(board?.queue)
+            ? 'Nothing is in review.'
+            : 'The review board could not be read.',
+        };
       const lower = wanted.toLowerCase();
       const exact = queue.find((r) => r.id === wanted || r.doc.toLowerCase() === lower);
       const contains = exact ? [] : queue.filter((r) => r.doc.toLowerCase().includes(lower));
@@ -383,7 +394,13 @@ export function Review({ onAsk, onNav }: SurfaceViewProps) {
         return { ok: false, reason: 'The review board could not be read.' };
       if (boardState.loading && queue.length === 0)
         return { ok: false, reason: 'The review board is still loading.', retry: true };
-      if (queue.length === 0) return { ok: false, reason: 'Nothing is in review.' };
+      if (queue.length === 0)
+        return {
+          ok: false,
+          reason: Array.isArray(board?.queue)
+            ? 'Nothing is in review.'
+            : 'The review board could not be read.',
+        };
       if (!queue.some((r) => r.state !== 'approved'))
         return { ok: false, reason: 'Every document in the queue is already approved.' };
       const next = openQueue();
@@ -431,7 +448,7 @@ export function Review({ onAsk, onNav }: SurfaceViewProps) {
           entityLabel: (r.prog ? r.prog + ' · ' : '') + r.doc,
         });
       }
-    } catch (_e) { /* noop */ }
+    } catch { /* noop */ }
   }, [sel, queue]);
 
   // ── The three honest states, before any row is dereferenced. No fixture ──
@@ -457,14 +474,39 @@ export function Review({ onAsk, onNav }: SurfaceViewProps) {
     );
   }
   if (queue.length === 0) {
+    /* "Nothing is in review" is a CLAIM — no document in this organization is
+       waiting on a decision — and it used to be the only branch an empty queue
+       could reach once the two above had been ruled out. Those two cover a read
+       that is in flight and a read that failed; they do not cover the third way
+       `queue` is empty: the request SETTLED WITHOUT A BOARD. `useLiveData`
+       reports a null/204 payload as `data: null` with no error, the seeding
+       effect below returns early on `!board`, and the queue stays at its
+       initial `[]` — so a response that carried no board at all rendered as a
+       positive statement about the organization's approval workload.
+
+       The board's own queue array is the positive evidence that the board was
+       read: a real board with nothing on it comes back as `queue: []`, which is
+       an array. No array means nothing was read, and the honest copy says that
+       instead of reassuring. */
+    const boardRead = Array.isArray(board?.queue);
     return (
       <div className="page-inner">
         <PageHead eyebrow="Project · review" title="Review & approval" sub={REVIEW_SUB} />
-        <EmptyState
-          title="Nothing is in review"
-          hint="When a document for your organization enters an approval workflow, it appears here with its queue, threaded comments and multi-step sign-off."
-          icon={I.shieldCheck}
-        />
+        {boardRead ? (
+          <EmptyState
+            title="Nothing is in review"
+            hint="When a document for your organization enters an approval workflow, it appears here with its queue, threaded comments and multi-step sign-off."
+            icon={I.shieldCheck}
+          />
+        ) : (
+          <EmptyState
+            tone="error"
+            title="The review board did not load"
+            hint="The request came back without a board, so this screen cannot tell you whether anything is awaiting review. Try again, and treat the queue as unread until it loads."
+            icon={I.alertTriangle}
+            retry={refreshBoard}
+          />
+        )}
         {/* Threads can exist even when no document is on the approval board. */}
         <ReviewThreadsPane onNotice={fireToast} board={boardContext} />
         <C2CToast msg={toast} />
@@ -634,14 +676,110 @@ export function Review({ onAsk, onNav }: SurfaceViewProps) {
   };
 
   const openCmts = thread.filter((c) => c.state === 'open').length;
+  /**
+   * "0 open" beside the Comments heading is a claim that nothing on this
+   * document is outstanding, and it was printed off `thread.length` alone.
+   * `thread` is seeded from the board, so it is empty both when the document
+   * genuinely has no open comments AND when the board came back without a
+   * thread at all (the seed reads `board.thread ?? []`) or a refresh failed
+   * before it could be re-read. The board carrying a thread ARRAY is the
+   * positive evidence that the comments were read; a count of open comments is
+   * still shown whenever there is one, since that is a fact in its own right.
+   */
+  const threadState = assessmentStateFor(boardState, {
+    scopeExists: true,
+    findingCount: openCmts,
+    assessmentRan: Array.isArray(board?.thread),
+  });
 
   /* ---- AnswerLead derivation ---- */
-  const signSteps = queue.filter((r) => {
+
+  /** The approval steps this board actually returned for a queue row. */
+  const stepsFor = (r: ReviewItem): WorkflowStep[] => {
     const w = workflows[r.id];
-    const cs = w && w.steps.find((s) => s.status === 'current');
-    return cs && cs.requiredActions.includes('sign');
+    return Array.isArray(w?.steps) ? w.steps : [];
+  };
+  /* "N documents are at YOUR sign-off step" — the board is read with the
+     default scope=all, so this counted every sign-off step in the org as the
+     reader's. Ownership is decided server-side (assignedTo vs. the caller) and
+     is now sent per item as `mine`; only those steps are attributed to you. */
+  const signSteps = queue.filter((r) => {
+    if (r.mine !== true) return false;
+    const cs = stepsFor(r).find((s) => s.status === 'current');
+    return Boolean(cs && (cs.requiredActions ?? []).includes('sign'));
   });
+  /**
+   * POSITIVE evidence that the approval chain behind this queue was READ: how
+   * many documents in the queue came back with their approval steps attached.
+   *
+   * It is deliberately NOT `signSteps.length === 0` — that is the emptiness the
+   * headline below used to mistake for an answer. A workflow can legitimately
+   * return `steps: []` (the board builds each entry from the approval rows it
+   * finds, and finds none when a workflow has no steps recorded yet), and
+   * `workflows` is `{}` outright whenever the board itself is unread, so a zero
+   * here means the sign-off question was never evaluated rather than answered.
+   */
+  const rowsWithStepsRead = queue.filter((r) => stepsFor(r).length > 0).length;
   const dueToday = queue.filter((r) => r.due === 'Today').length;
+  const stillMoving = queue.filter((r) => r.state !== 'approved').length;
+
+  /* ── What is waiting on your approval — the four states it may speak from ──
+     `tone` and `headline` were one conditional on `signSteps.length`: non-zero
+     said which documents are at your sign-off step, and ZERO said
+
+        "Nothing is blocked on your signature — N documents still moving
+         through review."
+
+     `signSteps` is derived from `workflows`, which is `board?.workflows ?? {}`.
+     It is therefore also zero in three states that are not "nothing is waiting
+     on you":
+
+       · a REFRESH IS IN FLIGHT after a write — the surface keeps rendering the
+         seeded queue (the loading guard above only fires while the queue is
+         empty), so the reassurance was spoken over a board mid-read;
+       · a REFRESH FAILED — `useLiveData` sets `data: null`, `workflows`
+         collapses to `{}` while the stale queue below stays on screen, and the
+         reviewer was told nothing needed their signature by a screen that had
+         just failed to read the approval chain;
+       · the board CAME BACK WITH ROWS BUT NO STEPS — nothing was evaluated.
+
+     Clearance here is the claim "no document in this queue is at a step that
+     requires your signature", so it now needs the steps to have been read. */
+  const signState = assessmentStateFor(boardState, {
+    scopeExists: queue.length > 0,
+    findingCount: signSteps.length,
+    assessmentRan: rowsWithStepsRead > 0,
+  });
+  const signHeadline =
+    signState === 'loading'
+      ? <>Reading the approval steps for the {queue.length} document{queue.length === 1 ? '' : 's'} in review…</>
+      : signState === 'unreadable'
+        ? <>The approval steps could not be read. The queue below is the last board that loaded, and nothing here tells you whether a sign-off is waiting on you.</>
+        : signState === 'not-assessed'
+          ? <>No approval steps came back for the documents in review, so this screen cannot say whether one is waiting on your sign-off. The queue is below.</>
+          : signState === 'assessed-with-findings'
+            ? <><b>{signSteps.length}</b> document{signSteps.length === 1 ? '' : 's'} {signSteps.length === 1 ? 'is' : 'are'} at your <b>sign-off step</b> and {signSteps.length === 1 ? 'needs' : 'need'} your sign-off{dueToday ? <> — <b>{dueToday}</b> due today</> : null}.</>
+            : <>Nothing is blocked on your signature — <b>{stillMoving}</b> document{stillMoving === 1 ? '' : 's'} still moving through review.</>;
+  /* An unread answer may not carry an action or reassurance: a next step over
+     an unread approval chain invites work on a premise nobody has checked. */
+  const signAction =
+    signState === 'assessed-with-findings'
+      ? { label: 'Review ' + signSteps[0].doc, onClick: () => setSel(signSteps[0].id) }
+      /* Was `onClick: () => {}` — the most prominent button on the screen,
+         doing nothing at all. It now selects the first document still moving
+         through review and brings the queue into view; when everything is
+         approved it says so instead of pretending there is a queue to open. */
+      : hasAnswer(signState) && stillMoving > 0
+        ? {
+            label: 'Open the queue',
+            /* The ONE openQueue path — shared with AnA's review.open-queue
+               surface action, so the button and the action cannot drift. */
+            onClick: () => { openQueue(); },
+          }
+        /* Every document is approved, or the board was not read. There is no
+           queue to open, so no button is offered — a button that reports a
+           state is not a button. */
+        : undefined;
 
   return (
     <div className="page-inner">
@@ -657,35 +795,19 @@ export function Review({ onAsk, onNav }: SurfaceViewProps) {
       />
 
       <AnswerLead
-        tone={signSteps.length ? 'urgent' : 'calm'}
+        tone={signState === 'assessed-with-findings' ? 'urgent' : 'calm'}
         eyebrow="What is waiting on your approval right now"
-        headline={
-          signSteps.length
-            ? <><b>{signSteps.length}</b> document{signSteps.length === 1 ? '' : 's'} {signSteps.length === 1 ? 'is' : 'are'} at your <b>sign-off step</b> and {signSteps.length === 1 ? 'needs' : 'need'} your sign-off{dueToday ? <> — <b>{dueToday}</b> due today</> : null}.</>
-            : <>Nothing is blocked on your signature — <b>{queue.filter((r) => r.state !== 'approved').length}</b> document{queue.filter((r) => r.state !== 'approved').length === 1 ? '' : 's'} still moving through review.</>
-        }
+        headline={signHeadline}
         body={<>Each document runs its governed workflow template; you approve, request changes with a reason, or delegate a step. Decisions recorded here are not electronic signatures — apply a binding signature from the authoring workspace.</>}
-        reassure="I'll surface exactly which step you own and pre-read the document so your sign-off is one informed click."
-        action={
-          signSteps.length
-            ? { label: 'Review ' + signSteps[0].doc, onClick: () => setSel(signSteps[0].id) }
-            /* Was `onClick: () => {}` — the most prominent button on the
-               screen, doing nothing at all. It now selects the first document
-               still moving through review and brings the queue into view; when
-               everything is approved it says so instead of pretending there is
-               a queue to open. */
-            : queue.some((r) => r.state !== 'approved')
-              ? {
-                  label: 'Open the queue',
-                  /* The ONE openQueue path — shared with AnA's review.open-queue
-                     surface action, so the button and the action cannot drift. */
-                  onClick: () => { openQueue(); },
-                }
-              /* Every document is approved. There is no queue to open, so no
-                 button is offered — the headline already says so, and a button
-                 that reports a state is not a button. */
-              : undefined
+        /* Reassurance is the one thing an unanswered read can never justify:
+           this promise used to be printed under a headline that had just failed
+           to read the approval chain. */
+        reassure={
+          hasAnswer(signState) && signState !== 'not-assessed'
+            ? "I'll surface exactly which step you own and pre-read the document so your sign-off is one informed click."
+            : undefined
         }
+        action={signAction}
         secondary="Or work the queue below."
       />
 
@@ -817,6 +939,16 @@ export function Review({ onAsk, onNav }: SurfaceViewProps) {
             </div>
           )}
 
+          {/* Was `{wf && (…)}` — with no workflow the whole approval chain
+              vanished silently, and an absent section reads as "this document
+              has no approval steps". `workflows` is `{}` whenever the board is
+              unread, so that is exactly what a failed refresh looked like: a
+              document under review with its governed chain quietly gone. */}
+          {!wf && (
+            <div className="esign-banner">
+              <span className="ico">{I.alertTriangle}</span> The approval chain for this document did not come back with the board. That is not a statement that it has no approval steps — it has not been read.
+            </div>
+          )}
           {wf && (
             <div className="rv-wf">
               <div className="rv-wf-h">
@@ -870,7 +1002,17 @@ export function Review({ onAsk, onNav }: SurfaceViewProps) {
 
           <div className="dr-seclbl" style={{ padding: '0 0 8px', display: 'flex', justifyContent: 'space-between' }}>
             <span>Comments</span>
-            <span style={{ color: 'var(--text-400)', fontWeight: 400 }}>{openCmts} open</span>
+            <span style={{ color: 'var(--text-400)', fontWeight: 400 }}>
+              {threadState === 'assessed-with-findings'
+                ? openCmts + ' open'
+                : threadState === 'loading'
+                  ? 'reading the thread…'
+                  : threadState === 'unreadable'
+                    ? 'thread not re-read'
+                    : threadState === 'not-assessed'
+                      ? 'thread not read'
+                      : '0 open'}
+            </span>
           </div>
 
           <div className="thread">

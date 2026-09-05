@@ -13,10 +13,14 @@
  * db_oth_qual checkboxes, and there is no study-title field). Such fields are
  * intentionally non-required in the builder so the official fill still qualifies.
  *
- * Only AcroForm forms appear here. The XFA forms (1571, 3674 dynamic; 3454, 3455
- * static) have no fillable AcroForm widgets and are handled by other renderers
- * (see docs/biotech/FDA_FORMS_FILL_STATUS.md).
+ * Two kinds of map live here. `OFFICIAL_FIELD_MAPS` targets the AcroForm forms
+ * by widget name. `OFFICIAL_XFA_FIELD_MAPS` targets the *dynamic XFA* forms
+ * (1571, 3674) by SOM path — those expose no AcroForm widgets at all, so a
+ * name-keyed map matches nothing on them and they are filled through the XFA
+ * `datasets` packet instead (see server/services/forms/fill-official-pdf).
  */
+
+import type { OfficialPdfFieldMap } from '../forms/fill-official-pdf';
 
 export interface OfficialFieldMap {
   [canonicalFieldId: string]: string;
@@ -101,4 +105,62 @@ export const OFFICIAL_FIELD_MAPS: Record<string, OfficialFieldMap> = {
 /** The official field map for a form id, or undefined if it has no AcroForm map. */
 export function officialFieldMap(formId: string): OfficialFieldMap | undefined {
   return OFFICIAL_FIELD_MAPS[formId];
+}
+
+/**
+ * Reviewed maps for the DYNAMIC XFA forms: canonical builder field id → the SOM
+ * path of the field inside the official FDA template.
+ *
+ * These two forms were long recorded as unfillable — their AcroForm `/Fields`
+ * array is empty, so `pdf-lib getFields()` returns nothing and the platform fell
+ * back to a drawn reconstruction stamped NOT the official form. That reading was
+ * of the wrong layer. Enumerated through the XFA packets instead, FDA 1571
+ * declares 283 fields of which 246 resolve to a fillable data node, and FDA 3674
+ * declares 190 of which 178 do.
+ *
+ * Every path below was ENUMERATED from the vendored template (`listXfaFields`),
+ * is declared exactly once by it, and resolves to a node in its `datasets`
+ * skeleton. None was hand-typed. A path the template does not declare is skipped
+ * with a warning at fill time rather than invented, so a stale map degrades to a
+ * blank box, never to a value written into the wrong box of a form a sponsor
+ * signs.
+ *
+ * DELIBERATELY UNMAPPED, and why — these are boxes the sponsor completes on the
+ * form itself, not data the platform may assert on their behalf:
+ *   - `ind_type` / `phase_of_study` — carried by `db_purpose*` and
+ *     `db_clin_inves_phases`, whose accepted tokens are set by the form's own
+ *     XFA script. Writing an unverified token would tick the wrong box.
+ *   - the certification checkboxes on 3674 (42 U.S.C. § 282(j)) — a sponsor
+ *     attestation, and the checkbox on/off values on these editions are not
+ *     verified against the template's items.
+ *   - the signature block — a signature, not a data field.
+ */
+export const OFFICIAL_XFA_FIELD_MAPS: Record<string, OfficialPdfFieldMap> = {
+  // FDA Form 1571 — Investigational New Drug Application (dynamic XFA, edition 2025-03-28).
+  FDA_1571: {
+    sponsor_name: { xfaSomPath: 'topmostSubform.Page1.db_sponsor_name', type: 'text' },
+    // The master data holds one address string; it goes to address line 1, the
+    // same convention the 1572 and 356h AcroForm maps already use.
+    sponsor_address: { xfaSomPath: 'topmostSubform.Page1.db_aplcnt_address_1', type: 'text' },
+    sponsor_contact_phone: { xfaSomPath: 'topmostSubform.Page1.db_aplcnt_phone', type: 'text' },
+    ind_number: { xfaSomPath: 'topmostSubform.Page1.db_ind_id', type: 'text' },
+    serial_number: { xfaSomPath: 'topmostSubform.Page1.db_serial_no', type: 'text' },
+    drug_name: { xfaSomPath: 'topmostSubform.Page1.db_drug_names', type: 'text' },
+    indication: { xfaSomPath: 'topmostSubform.Page1.db_indication', type: 'text' },
+    authorized_rep_title: { xfaSomPath: 'topmostSubform.Page2.db_sponsor_title', type: 'text' },
+  },
+
+  // FDA Form 3674 — Certification of Compliance, 42 U.S.C. § 282(j) (dynamic XFA,
+  // edition 2024-04-15). The product-name and NCT-number boxes repeat (…_1 … _105);
+  // the builder carries one of each, so the first row is mapped.
+  FDA_3674: {
+    sponsor_name: { xfaSomPath: 'topmostSubform.Page1.db_sponsor_name', type: 'text' },
+    drug_name: { xfaSomPath: 'topmostSubform.Page1.db_prdct_name_1', type: 'text' },
+    nct_number: { xfaSomPath: 'topmostSubform.Page2.db_NCT_nmbrs_1', type: 'text' },
+  },
+};
+
+/** The reviewed XFA map for a form id, or undefined when the form has none. */
+export function getOfficialXfaFieldMap(formId: string): OfficialPdfFieldMap | undefined {
+  return OFFICIAL_XFA_FIELD_MAPS[formId];
 }

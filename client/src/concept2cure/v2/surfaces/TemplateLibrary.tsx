@@ -721,8 +721,8 @@ export function TemplateLibrary({ onAsk }: SurfaceViewProps) {
               <button className="sp-ask" onClick={() => toggleVerify(sel)}>
                 {I.shieldCheck} {sel.verified ? 'Unverify' : 'Mark verified'}
               </button>
-              <button className="sp-ask" onClick={() => ask('Apply the "' + sel.name + '" template to the active document.')}>
-                {I.penLine} Apply to document
+              <button className="sp-ask" onClick={() => ask('Apply the "' + sel.name + '" template to the active document.')} title="Sends this request to AnA in the rail; it does not modify the document here">
+                {I.penLine} Ask AnA to apply this
               </button>
             </div>
           </div>

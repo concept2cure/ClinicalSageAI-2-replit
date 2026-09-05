@@ -95,6 +95,11 @@ const SUB_STATUS_TONE: Record<string, string> = {
   submitted: 'ok',
   archived: 'idle',
 };
+// The status cell printed the raw enum ("submitted") while every other chip on
+// the surface carries a label; an unknown value stays visible as itself.
+const SUB_STATUS_LABEL: Record<string, string> = {
+  planning: 'Planning', active: 'Active', submitted: 'Submitted', archived: 'Archived',
+};
 
 /* ── Device filings (eSTAR tracker) ─────────────────────────────────────────
    eSTAR is NOT eCTD: a tracked device filing never becomes an ectd_sequences
@@ -152,10 +157,14 @@ type AssemblyVerdictState =
 
 /** The device-section header line: the org-wide assembly verdict (one call). */
 function assemblyReadinessLine(v: AssemblyVerdictState): string {
-  if (v.state === 'loading') return 'Checking assembly readiness…';
-  if (v.state === 'error') return 'Assembly readiness unavailable right now';
+  // The verdict is fetched for ONE pathway/variant (510(k), device) while the
+  // card lists every eSTAR program type, device and IVD. The caption used to
+  // read "Assembly readiness: … · 0 blockers" over all of them; it now names
+  // the scope the call actually covers.
+  if (v.state === 'loading') return 'Checking 510(k) device assembly readiness…';
+  if (v.state === 'error') return '510(k) device assembly readiness unavailable right now';
   const kind = ARTIFACT_KIND_LABEL[v.artifactKind] ?? v.artifactKind;
-  return `Assembly readiness: ${kind} · ${v.blockerCount} blocker${v.blockerCount === 1 ? '' : 's'}`;
+  return `510(k) device assembly readiness: ${kind} · ${v.blockerCount} blocker${v.blockerCount === 1 ? '' : 's'} (other pathways not assessed here)`;
 }
 
 /** Review-clock cell: only states the tracker actually knows. */
@@ -304,27 +313,40 @@ export function SubmissionCenter({
    * empty state was instructing the user to press a button that could not do
    * what it said.
    *
-   * The route and its schema existed the whole time — createSubmissionSchema
-   * takes { type, projectId, targetAgency, targetDate? } — so this is a form
-   * over what the server already requires, with the project picked from the
-   * org's own programmes rather than typed as a uuid.
+   * The route and its schema existed the whole time — the MOUNTED router's
+   * createSubmissionSchema (routes/submissions.ts) takes { title,
+   * productName?, applicationType, clientType, primaryRegion } — so this is a
+   * form over what the server actually requires, with the programme picked
+   * from the org's own list to supply the product identity the compile spine
+   * links on. (An earlier body targeted a different, unmounted router's
+   * schema; every submit answered 400 VALIDATION.)
    */
   const [newOpen, setNewOpen] = React.useState(false);
   const [creating, setCreating] = React.useState(false);
   const createSubmission = async (v: Record<string, string>) => {
     if (creating) return;
-    const projectId = (v.projectId ?? '').trim();
-    if (!projectId) {
+    const programme = programmes.rows.find((p) => p.id === (v.projectId ?? '').trim());
+    if (!programme) {
       setNotice({ tone: 'err', text: 'Pick the programme this submission belongs to.' });
       return;
     }
     setCreating(true);
     setNotice(null);
+    /* The LIVE schema of POST /api/submissions (routes/submissions.ts):
+       { title, productName?, applicationType, clientType, primaryRegion }.
+       The previous body ({ type, projectId, targetAgency, targetDate })
+       belonged to a router that is NOT mounted at this path — every submit
+       was a 400 VALIDATION, so this form had never created anything.
+       productName carries the programme's identity on purpose: the eCTD
+       compile spine links program ↔ submission by matching application type
+       plus product/title, so this field is what makes the new submission
+       compilable from the programme's Module 3. */
     const r = await mutateVerbatim<SubRow>('POST', '/api/submissions', {
-      type: v.type,
-      projectId,
-      targetAgency: (v.targetAgency ?? '').trim(),
-      targetDate: v.targetDate || undefined,
+      title: (v.title ?? '').trim(),
+      productName: programme.title || programme.code || undefined,
+      applicationType: v.applicationType,
+      clientType: v.clientType,
+      primaryRegion: v.primaryRegion,
     });
     setCreating(false);
     if (r.data && (r.data as { id?: unknown }).id != null) {
@@ -332,7 +354,10 @@ export function SubmissionCenter({
       // Re-read rather than appending a client-built row: what appears is the
       // record the server created.
       setSubsBump((b) => b + 1);
-      setNotice({ tone: 'ok', text: `Submission created — ${v.type} for ${v.targetAgency}.` });
+      setNotice({
+        tone: 'ok',
+        text: `Submission created — ${SC_APPTYPES.find((x) => x.v === v.applicationType)?.l ?? v.applicationType} · ${SC_REGIONS.find((x) => x.v === v.primaryRegion)?.l ?? v.primaryRegion}.`,
+      });
     } else {
       setNotice({ tone: 'err', text: `Submission not created — ${r.error ?? 'the request failed'}.` });
     }
@@ -554,6 +579,11 @@ export function SubmissionCenter({
   }, [subs.loading, seqs.loading]);
 
   const appL = (v: string) => SC_APPTYPES.find((a) => a.v === v)?.l ?? v;
+  /* eSTAR program types are not eCTD application types: SC_APPTYPES has no
+     q_sub / ide / 513g, so the device table printed the raw DB token. */
+  const DEVICE_PROGRAM_LABEL: Record<string, string> = {
+    '510k': '510(k)', de_novo: 'De Novo', pma: 'PMA', q_sub: 'Q-Submission', ide: 'IDE', '513g': '513(g)',
+  };
   const regL = (v: string) => SC_REGIONS.find((a) => a.v === v)?.l ?? v;
 
   /* What AnA can see of this screen.
@@ -650,8 +680,7 @@ export function SubmissionCenter({
           <h1 className="sp-title">Submission Center</h1>
           <p className="sp-state">
             Plan, assemble, validate and dispatch regulatory submissions across regions — eCTD v3.2.2
-            / v4.0, eSTAR, MDR/IVDR. Eight workspaces scaffolded from the submission contract, each
-            backed by the canonical submission core and AnA tools.
+            / v4.0, eSTAR, MDR/IVDR. Eight workspaces scaffolded from the submission contract.
           </p>
         </div>
         {list.length > 0 && (
@@ -749,14 +778,31 @@ export function SubmissionCenter({
             submitLabel: creating ? 'Creating…' : 'Create submission',
             fields: [
               {
-                key: 'type', label: 'Submission type', type: 'select',
-                // The server's own enum — a type it would refuse is never offered.
-                options: ['510k', 'PMA', 'De_Novo', 'IND', 'NDA', 'BLA'],
-                default: 'IND', required: true, half: true,
+                key: 'title', label: 'Title', type: 'text',
+                placeholder: 'e.g. BX-701 — Initial IND', required: true,
               },
               {
-                key: 'targetAgency', label: 'Target agency', type: 'text',
-                placeholder: 'e.g. FDA CDER', required: true, half: true,
+                key: 'applicationType', label: 'Application type', type: 'select',
+                // The canonical vocabulary the rest of this surface renders —
+                // including the non-US applications (MAA, CTA) a global team
+                // opens as its second market.
+                options: SC_APPTYPES.map((a) => ({ value: a.v, label: a.l })),
+                default: 'ind', required: true, half: true,
+              },
+              {
+                key: 'primaryRegion', label: 'Primary region', type: 'select',
+                options: SC_REGIONS.map((r0) => ({ value: r0.v, label: r0.l })),
+                default: 'fda', required: true, half: true,
+              },
+              {
+                key: 'clientType', label: 'Client type', type: 'select',
+                options: [
+                  { value: 'pharma', label: 'Pharma' },
+                  { value: 'biotech', label: 'Biotech' },
+                  { value: 'mdx', label: 'Medical device' },
+                  { value: 'ivd', label: 'IVD' },
+                ],
+                default: 'biotech', required: true, half: true,
               },
               {
                 key: 'projectId', label: 'Programme', type: 'select',
@@ -764,9 +810,8 @@ export function SubmissionCenter({
                   value: p.id,
                   label: [p.code, p.title].filter(Boolean).join(' · ') || p.id,
                 })),
-                required: true,
+                required: true, half: true,
               },
-              { key: 'targetDate', label: 'Target date (optional)', type: 'date', half: true },
             ],
           }}
           onCancel={() => setNewOpen(false)}
@@ -844,7 +889,7 @@ export function SubmissionCenter({
                       <td className="sc-cap">{s.lifecycleStage}</td>
                       <td>
                         <span className={`rd-chip tone-${SUB_STATUS_TONE[s.status] ?? 'idle'}`}>
-                          {s.status}
+                          {SUB_STATUS_LABEL[s.status] ?? s.status}
                         </span>
                       </td>
                     </tr>
@@ -901,11 +946,11 @@ export function SubmissionCenter({
                         <b>{f.title ?? f.catalogKey}</b>
                         {f.title ? <span className="sp-row-s"> · {f.catalogKey}</span> : null}
                         {f.projectId != null ? (
-                          <span className="sp-row-s"> · project #{f.projectId}</span>
+                          <span className="sp-row-s"> · {programmes.rows.find((p) => p.id === String(f.projectId))?.title ?? 'programme not resolved'}</span>
                         ) : null}
                       </td>
                       <td>
-                        {appL(f.programType)} <span className="sc-cap">· {f.variant}</span>
+                        {DEVICE_PROGRAM_LABEL[f.programType] ?? f.programType} <span className="sc-cap">· {f.variant}</span>
                       </td>
                       <td>
                         <Chip map={ESTAR_FILING_STATUS} k={f.status} />
@@ -959,20 +1004,28 @@ export function SubmissionCenter({
               </div>
             </div>
             <div className="scaf-note sc-mt">
-              AnA builds the sequence plan from the region profile — required modules, granularity,
-              regional Module 1, and the validation profile for {regL(sub.primaryRegion)}.
+              {/* Read "AnA builds the sequence plan…" above a button that only
+                  opened the chat rail: a capability stated in the present
+                  indicative over an act nothing on this screen performs. */}
+              AnA can draft a sequence plan from the region profile — required modules, granularity,
+              regional Module 1, and the validation profile for {regL(sub.primaryRegion)} — as a
+              proposal in conversation.
             </div>
             <div className="cm-pushbar sc-mt">
               <button
                 type="button"
                 className="sp-primary sc-btn"
+                title="Opens the request in the AnA conversation. Nothing is generated or persisted by this button."
                 onClick={() =>
                   onAsk(
                     `Plan the ${regL(sub.primaryRegion)} ${appL(sub.applicationType)} submission for ${sub.title} from the region profile.`
                   )
                 }
               >
-                {I.sparkles} Generate plan (plan_submission)
+                {/* Was "Generate plan (plan_submission)" — a governed generative
+                    act promised by the label, a chat message delivered by the
+                    handler, and an internal tool id shown to the user. */}
+                {I.sparkles} Ask AnA to plan this sequence
               </button>
             </div>
           </div>
@@ -1113,7 +1166,7 @@ export function SubmissionCenter({
                               title={
                                 governed
                                   ? 'Governed — Part 11 e-signature and a clear dispatch gate required'
-                                  : 'POST /sequences/:seqId/transition — server-enforced lifecycle'
+                                  : 'Lifecycle transition — the server enforces which transitions are legal'
                               }
                               onClick={(e) => {
                                 e.stopPropagation();
@@ -1129,9 +1182,14 @@ export function SubmissionCenter({
                             </button>
                           );
                         })}
-                        {(SC_TRANSITIONS[s.status] ?? []).length === 0 && (
+                        {/* "terminal" was printed for ANY status absent from
+                            SC_TRANSITIONS — a dispatched sequence and a status
+                            this build has never heard of looked the same. */}
+                        {!(s.status in SC_TRANSITIONS) ? (
+                          <span className="sp-q-s">unknown status</span>
+                        ) : SC_TRANSITIONS[s.status].length === 0 ? (
                           <span className="sp-q-s">terminal</span>
-                        )}
+                        ) : null}
                       </span>
                     </div>
                   ))}

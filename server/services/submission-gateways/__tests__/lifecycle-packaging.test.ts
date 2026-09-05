@@ -47,7 +47,9 @@ describe('lifecycle packaging — manifest → operator → canonical packager',
       ]);
       const prior = manifestToPriorLeaves(priorManifest);
 
-      // --- Desired leaves for 0001 (real files; general changed, old-manufacture dropped).
+      // --- Desired leaves for 0001 (real files; general changed, old-manufacture
+      // WITHDRAWN by declaration). A leaf merely absent from a follow-up sequence
+      // is unchanged and still on file; only a declared withdrawal is a delete.
       const desired = [
         {
           ctdSection: '3.2.S.1', fileName: 'general.pdf', md5: md5(generalBytes),
@@ -56,6 +58,10 @@ describe('lifecycle packaging — manifest → operator → canonical packager',
         {
           ctdSection: '3.2.S.3', fileName: 'stability.pdf', md5: md5(newDocBytes),
           title: 'Drug Substance — Stability', sourcePath: newDocPath,
+        },
+        {
+          ctdSection: '3.2.S.2', fileName: 'old-manufacture.pdf', md5: '',
+          title: 'Drug Substance — Manufacture (withdrawn)', sourcePath: '', withdraw: true,
         },
       ];
 
@@ -113,6 +119,102 @@ describe('lifecycle packaging — manifest → operator → canonical packager',
       const md5Index = await zip.file('util/index-md5.txt')!.async('string');
       expect(md5Index).not.toContain('old-manufacture.pdf');
       expect(md5Index).toContain('general.pdf');
+    } finally {
+      await fs.rm(work, { recursive: true, force: true });
+    }
+  });
+
+  it('exposes a per-sequence leafManifest that round-trips into prior leaves for lifecycle diffing', async () => {
+    const { manifestToPriorLeaves, buildLeafManifest } = await import('../../ectd/sequence-manifest');
+    const work = await fs.mkdtemp(path.join(os.tmpdir(), 'ectd-manifest-'));
+    try {
+      const docPath = path.join(work, 'general.pdf');
+      await fs.writeFile(docPath, pdf('general'));
+      const bundle = await packageEctdSubmission({
+        region: 'fda', applicationId: 'IND000009', sequence: '0000', submissionType: 'IND',
+        sponsorId: 'IND000009', sponsorName: 'Sponsor', productName: 'Product',
+        outputDir: path.join(work, 'out'), environment: 'staging',
+        leaves: [{
+          ctdSection: '3.2.S.1', operation: 'new', sourcePath: docPath, fileName: 'general.pdf',
+          title: 'Drug Substance — General Information', md5: md5(pdf('general')),
+        }],
+      });
+      // The packager exposes the shipped leaf's section + final href + md5.
+      expect(Array.isArray(bundle.leafManifest)).toBe(true);
+      const leafManifest = bundle.leafManifest ?? [];
+      const entry = leafManifest.find((l) => l.ctdSection === '3.2.S.1')!;
+      expect(entry).toBeTruthy();
+      expect(entry.href).toMatch(/^m3\/.+general\.pdf$/);
+      expect(entry.md5).toBe(md5(pdf('general')));
+      // Round-trips: this is exactly what ectd-compile persists as leaf_manifest,
+      // and what the NEXT sequence loads to compute replace/append/delete.
+      const priors = manifestToPriorLeaves(buildLeafManifest(leafManifest));
+      expect(priors.find((p) => p.ctdSection === '3.2.S.1')?.md5).toBe(md5(pdf('general')));
+    } finally {
+      await fs.rm(work, { recursive: true, force: true });
+    }
+  });
+
+  it('hashes the shipped bytes for the manifest, ignoring a wrong caller-supplied leaf.md5', async () => {
+    const work = await fs.mkdtemp(path.join(os.tmpdir(), 'ectd-md5-'));
+    try {
+      const bytes = pdf('the real content that ships');
+      const docPath = path.join(work, 'general.pdf');
+      await fs.writeFile(docPath, bytes);
+      const bundle = await packageEctdSubmission({
+        region: 'fda', applicationId: 'IND000009', sequence: '0000', submissionType: 'IND',
+        sponsorId: 'IND000009', sponsorName: 'Sponsor', productName: 'Product',
+        outputDir: path.join(work, 'out'), environment: 'staging',
+        skipPdfaConversion: true, // shipped bytes == raw, so md5(bytes) is exact
+        leaves: [{
+          ctdSection: '3.2.S.1', operation: 'new', sourcePath: docPath, fileName: 'general.pdf',
+          title: 'Drug Substance — General Information',
+          // A STALE/WRONG pre-computed checksum. Before the fix this value was
+          // written into index-md5.txt verbatim, not matching the shipped bytes.
+          md5: 'deadbeefdeadbeefdeadbeefdeadbeef',
+        }],
+      });
+      const zip = await JSZip.loadAsync(await fs.readFile(bundle.path));
+      const md5Index = await zip.file('util/index-md5.txt')!.async('string');
+      expect(md5Index).toContain(md5(bytes));
+      expect(md5Index).not.toContain('deadbeefdeadbeefdeadbeefdeadbeef');
+      // The exposed leaf manifest is likewise the real hash.
+      expect((bundle.leafManifest ?? [])[0]?.md5).toBe(md5(bytes));
+    } finally {
+      await fs.rm(work, { recursive: true, force: true });
+    }
+  });
+
+  it('writes the ICH-required root index-md5.txt = MD5(index.xml) on the canonical packager', async () => {
+    const work = await fs.mkdtemp(path.join(os.tmpdir(), 'ectd-rootmd5-'));
+    try {
+      const docPath = path.join(work, 'general.pdf');
+      await fs.writeFile(docPath, pdf('general'));
+      const bundle = await packageEctdSubmission({
+        region: 'fda',
+        applicationId: 'IND000001',
+        sequence: '0000',
+        submissionType: 'IND',
+        sponsorId: 'IND000001',
+        sponsorName: 'Sponsor',
+        productName: 'Product',
+        outputDir: path.join(work, 'out'),
+        environment: 'staging',
+        leaves: [
+          {
+            ctdSection: '3.2.S.1', operation: 'new', sourcePath: docPath, fileName: 'general.pdf',
+            title: 'Drug Substance — General Information', md5: md5(pdf('general')),
+          },
+        ],
+      });
+      const zip = await JSZip.loadAsync(await fs.readFile(bundle.path));
+      const indexXml = await zip.file('index.xml')!.async('string');
+      // Root file present and equal to the bare MD5 of index.xml (FDA eValidator
+      // rejects a sequence whose root index-md5.txt is missing/mismatched).
+      const rootMd5 = await zip.file('index-md5.txt')!.async('string');
+      expect(rootMd5).toBe(createHash('md5').update(indexXml).digest('hex'));
+      // The util/ full-file manifest still ships alongside it.
+      expect(zip.file('util/index-md5.txt')).not.toBeNull();
     } finally {
       await fs.rm(work, { recursive: true, force: true });
     }

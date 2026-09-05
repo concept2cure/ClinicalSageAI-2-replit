@@ -1,4 +1,9 @@
 node_modules/
+# Also match a node_modules SYMLINK. The rule above ends in a slash, so it
+# matches directories ONLY — a worktree or CI checkout that symlinks
+# node_modules at a shared install is not covered by it, and `git add -A` will
+# happily stage the link. That has already put one into history once.
+node_modules
 dist/
 .cache/
 .cerv2_program_id
@@ -128,3 +133,10 @@ scripts/visual-qa/probe-*.spec.tsx
 
 # DR restore drill evidence (local runs; CI uploads it as an artifact)
 .dr-evidence/
+
+# ESLint JSON report: the CI lint step writes it so the warning ratchet can
+# reuse that run instead of linting twice. A plain filename, not a trailing
+# slash — `node_modules/` matched directories only, which is exactly how a
+# symlink of that name slipped into history.
+eslint-report.json
+.scratch/

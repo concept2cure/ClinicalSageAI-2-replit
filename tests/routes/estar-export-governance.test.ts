@@ -30,7 +30,7 @@ const {
     downloadable_output_ref: {
       encoding: 'base64',
       mime_type: 'application/zip',
-      filename: 'k123_eSTAR.zip',
+      filename: 'k123_content-package-draft.zip',
       data: Buffer.from('zip-data').toString('base64'),
     },
   })),
@@ -45,6 +45,15 @@ const {
 
 vi.mock('../../server/export/renderers', () => ({
   renderPdfBuffersFor510k: mockRender510k,
+  // Governed content now renders per section plus the combined document;
+  // without these the governed path threw into the route's 500 branch.
+  renderPdfBuffersPerSection: vi.fn(async (content: { content?: Array<Record<string, any>> }) =>
+    (content?.content ?? [])
+      .filter((n) => n.type === 'heading' && n.attrs?.level === 1)
+      .map((n) => ({ title: String(n.content?.[0]?.text ?? ''), buffer: Buffer.from('%PDF-section') })),
+  ),
+  renderCombinedPdf: vi.fn(async () => Buffer.from('%PDF-combined')),
+  renderCombinedDocx: vi.fn(async () => Buffer.from('PK-docx')),
 }));
 
 vi.mock('../../server/export/stylePacks/config', () => ({
@@ -57,7 +66,10 @@ vi.mock('../../server/auth', () => ({
   authMiddleware: (_req: any, _res: any, next: any) => next(),
 }));
 
-vi.mock('../../server/services/export/governedExportConsequence', () => ({
+// Stub only the registry-backed consequence; the audited-unplaced helper is
+// the real one (it writes the EXPORT_GENERATED row these tests observe).
+vi.mock('../../server/services/export/governedExportConsequence', async (importOriginal) => ({
+  ...(await importOriginal<Record<string, unknown>>()),
   createGovernedExportConsequence: mockGovernedConsequence,
 }));
 
@@ -75,6 +87,13 @@ vi.mock('../../server/services/auditService', () => ({
 vi.mock('../../server/services/pathway-engines/estar/estar-content-leaves', () => ({
   loadDeviceContentLeaves: mockLoadContentLeaves,
   loadAuthoredDeviceSections: mockLoadAuthoredSections,
+  // The scope resolver is data-driven in production (governed content present?);
+  // here a programId is taken as governed so the routing of the scope is what
+  // the tests observe.
+  resolveDeviceContentScope: async (_org: number, o: { programId?: string; documentId?: number }) =>
+    o.programId
+      ? { scope: { programId: o.programId }, source: 'governed_program' }
+      : { scope: { documentId: o.documentId }, source: o.documentId !== undefined ? 'legacy_document' : 'legacy_org_wide' },
   sectionsToEditorJson: (sections: Array<{ title: string; content: string }>) => ({
     type: 'doc',
     content: sections.flatMap((s) => [
@@ -145,14 +164,23 @@ describe('510(k) eSTAR governed export', () => {
     // Truthfulness invariant (B0): the loose section-PDF ZIP must NOT be
     // labelled as a submittable official eSTAR. The route records
     // officialEstarPdf:false and a draft placement so no downstream surface
-    // presents it as the official FDA eSTAR PDF that CDRH ingests.
+    // presents it as the official FDA eSTAR PDF that CDRH ingests — and the
+    // package label and file name say what it is (ESTAR-06): an eSTAR is an
+    // FDA-issued dynamic PDF, and no template is vendored, so nothing this
+    // route emits may carry that name.
     expect(mockGovernedConsequence).toHaveBeenCalledWith(
       expect.objectContaining({
         projectId: 33,
         suggestedPlacement: 'Module 1 / 510(k) content package (draft)',
-        metadata: expect.objectContaining({ officialEstarPdf: false }),
+        filename: 'k123_content-package-draft.zip',
+        metadata: expect.objectContaining({
+          officialEstarPdf: false,
+          package: 'content package draft (not an eSTAR)',
+        }),
       })
     );
+    const consequenceArg = mockGovernedConsequence.mock.calls[0][0] as { filename: string };
+    expect(consequenceArg.filename).not.toMatch(/eSTAR/);
 
     expect(res.status).toHaveBeenCalledWith(200);
     expect(res.json).toHaveBeenCalledWith(
@@ -166,7 +194,7 @@ describe('510(k) eSTAR governed export', () => {
         downloadable_output_ref: expect.objectContaining({
           encoding: 'base64',
           mime_type: 'application/zip',
-          filename: 'k123_eSTAR.zip',
+          filename: 'k123_content-package-draft.zip',
         }),
       })
     );
@@ -181,6 +209,49 @@ describe('510(k) eSTAR governed export', () => {
     await getHandler('/build')(req, res);
 
     expect(res.status).toHaveBeenCalledWith(404);
+    expect(mockRender510k).not.toHaveBeenCalled();
+    expect(mockGovernedConsequence).not.toHaveBeenCalled();
+  });
+
+  it('answers 500 PROJECT_RESOLUTION_FAILED — never 404 — when the anchor READ fails', async () => {
+    // query_canceled: a real database failure. "The lookup broke" and "no such
+    // project in your organization" are different facts; the first used to be
+    // swallowed into the second.
+    mockResolveRows.mockImplementationOnce(() => {
+      throw Object.assign(new Error('boom: canceling statement due to statement timeout'), { code: '57014' });
+    });
+
+    const req = makeReq();
+    const res = createMockResponse() as any;
+
+    await getHandler('/build')(req, res);
+
+    expect(res.status).not.toHaveBeenCalledWith(404);
+    expect(res.status).toHaveBeenCalledWith(500);
+    const payload = res.json.mock.calls[0][0];
+    expect(payload).toEqual({
+      error: 'PROJECT_RESOLUTION_FAILED',
+      message: 'Could not resolve the project for this export. The problem has been logged.',
+    });
+    // The failure text never reaches the body.
+    expect(JSON.stringify(payload)).not.toMatch(/boom|statement timeout|57014/);
+    expect(mockRender510k).not.toHaveBeenCalled();
+    expect(mockGovernedConsequence).not.toHaveBeenCalled();
+    expect(mockLogAction).not.toHaveBeenCalled();
+  });
+
+  it('still 404s on schema absence (42P01): a database without the table has no row to find', async () => {
+    mockResolveRows.mockImplementationOnce(() => {
+      throw Object.assign(new Error('relation "fda_510k_projects" does not exist'), { code: '42P01' });
+    });
+
+    const req = makeReq();
+    const res = createMockResponse() as any;
+
+    await getHandler('/build')(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(404);
+    expect(res.json).toHaveBeenCalledWith({ error: 'Project not found in your organization' });
     expect(mockRender510k).not.toHaveBeenCalled();
     expect(mockGovernedConsequence).not.toHaveBeenCalled();
   });
@@ -212,6 +283,8 @@ describe('510(k) eSTAR governed export', () => {
           sourceType: 'export_estar_zip',
           sha256: expect.stringMatching(/^[0-9a-f]{64}$/),
           artifactRegistry: 'unplaced_pending_document_identity_contract',
+          filename: 'BX-204_content-package-draft.zip',
+          package: 'content package draft (not an eSTAR)',
         }),
       })
     );
@@ -226,6 +299,7 @@ describe('510(k) eSTAR governed export', () => {
         downloadable_output_ref: expect.objectContaining({
           encoding: 'base64',
           mime_type: 'application/zip',
+          filename: 'BX-204_content-package-draft.zip',
         }),
       })
     );
@@ -313,6 +387,46 @@ describe('510(k) eSTAR governed export', () => {
       expect.anything(),
     );
     expect(res.status).toHaveBeenCalledWith(200);
+  });
+
+  it("a program anchor reads ITS governed document, not the org-wide legacy store (ESTAR-01/02)", async () => {
+    mockResolveRows.mockReturnValue([{ id: PROGRAM_UUID, name: 'BX-204 CGM' }]);
+    mockLoadAuthoredSections.mockResolvedValueOnce([
+      { title: 'Device Description', content: 'A continuous glucose monitor.' },
+    ]);
+
+    const req = makeReq({
+      body: {
+        meta: { id: 'BX-204', ident: PROGRAM_UUID, title: 'BX-204 draft package' },
+        useProjectContent: true,
+      },
+    });
+    const res = createMockResponse() as any;
+
+    await getHandler('/build')(req, res);
+
+    expect(mockLoadAuthoredSections).toHaveBeenCalledWith(2, { programId: PROGRAM_UUID });
+    expect(res.status).toHaveBeenCalledWith(200);
+  });
+
+  it('a program anchor with nothing authored in its governed document 422s and names the store', async () => {
+    mockResolveRows.mockReturnValue([{ id: PROGRAM_UUID, name: 'BX-204 CGM' }]);
+    mockLoadAuthoredSections.mockResolvedValueOnce([]);
+
+    const req = makeReq({
+      body: {
+        meta: { id: 'BX-204', ident: PROGRAM_UUID, title: 'BX-204 draft package' },
+        useProjectContent: true,
+      },
+    });
+    const res = createMockResponse() as any;
+
+    await getHandler('/build')(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(422);
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({ error: 'NO_AUTHORED_CONTENT', deviceContentSource: 'governed_program' }),
+    );
   });
 
   it('422s honestly when useProjectContent finds no authored sections', async () => {

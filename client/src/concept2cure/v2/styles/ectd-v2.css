@@ -22,7 +22,7 @@
   .ec-topbar{ grid-column:1 / -1; display:flex; align-items:center; gap:12px; padding:0 14px; background:var(--bg-000); border-bottom:1px solid var(--border); font-size:12px; color:var(--text-100); z-index:2; }
   .ec-crumbs{ display:flex; align-items:center; gap:6px; color:var(--text-300); font-weight:500; min-width:0; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
   .ec-crumbs b{ color:var(--text-100); font-weight:600; }
-  .ec-crumbs .sep{ color:var(--text-500); }
+  .ec-crumbs .sep{ color:var(--text-400); }
   .ec-spacer{ flex:1; }
   .ec-autosave{ display:inline-flex; align-items:center; gap:6px; padding:4px 10px; border-radius:999px; background:var(--bg-100); font-size:11px; font-weight:500; color:var(--text-300); white-space:nowrap; }
   .ec-autosave svg{ width:12px; height:12px; color:var(--success); }

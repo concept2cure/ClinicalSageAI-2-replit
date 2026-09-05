@@ -4,10 +4,9 @@
  * CDRH ingests the *official FDA eSTAR interactive PDF*, not a ZIP of rendered
  * section PDFs. To produce a real 510(k)/De Novo submission the platform must
  * fill that official template — which means the template file has to be present.
- * The official eSTAR PDFs are distributed by FDA and are NOT committed to the
- * repo (see `assets/estar-templates/README.md`); a maintainer drops the current
- * versions into `assets/estar-templates/` or points `ESTAR_TEMPLATE_DIR` at a
- * directory that holds them.
+ * The official eSTAR PDFs are distributed by FDA and vendored verbatim under
+ * `assets/estar-templates/`, pinned by its checksums.txt (see the README there);
+ * `ESTAR_TEMPLATE_DIR` can point at another directory that holds them.
  *
  * This module is the code half of that gap, mirroring `ectd/dtd-bundler.ts`:
  * it knows which official template each pathway needs, lists the vendored
@@ -20,6 +19,7 @@
  */
 
 import { promises as fs } from 'fs';
+import { createHash } from 'node:crypto';
 import * as path from 'path';
 
 import {
@@ -43,9 +43,44 @@ export type EstarTemplateType = EstarProgramSubmissionType;
 export type EstarTemplateVariant = 'device' | 'ivd' | 'prestar';
 
 /** A vendored official eSTAR template read from the drop-point directory. */
+/** Whether a vendored file matched the SHA-256 pinned for it in checksums.txt. */
+export type EstarTemplateIntegrity = 'verified' | 'mismatch' | 'unpinned';
+
 export interface VendoredEstarTemplate {
   fileName: string;
   bytes: Buffer;
+  /**
+   * 'verified'  — checksums.txt pins this filename and the bytes match.
+   * 'mismatch'  — it pins the filename and the bytes DO NOT match. Refused.
+   * 'unpinned'  — no checksums.txt, or it does not list this filename.
+   *
+   * Availability used to be a filename match and nothing else, so any PDF
+   * called eSTAR-510k-non-ivd.pdf — a retired v6.2 form, an edited copy, an
+   * unrelated document — made templateAvailable true and officialEstarPdf true,
+   * and the canonical→XFA field map then wrote values wherever THAT file's SOM
+   * paths happened to point. assets/estar-templates/checksums.txt has pinned
+   * both files all along, and says why: "the canonical→XFA field map … was
+   * enumerated from THESE EXACT BYTES, so a template swap without
+   * re-verification would silently change what gets written into a submission."
+   * Nothing read it.
+   */
+  integrity: EstarTemplateIntegrity;
+}
+
+/** The SHA-256 pins in a drop-point's checksums.txt, keyed by lowercase filename. */
+async function readPinnedChecksums(dir: string): Promise<Map<string, string>> {
+  const pins = new Map<string, string>();
+  let text: string;
+  try {
+    text = await fs.readFile(path.join(dir, 'checksums.txt'), 'utf8');
+  } catch {
+    return pins; // no manifest in this drop-point — every file reads as unpinned
+  }
+  for (const line of text.split('\n')) {
+    const m = /^([0-9a-f]{64})\s+(.+?)\s*$/i.exec(line.trim());
+    if (m) pins.set(m[2].toLowerCase(), m[1].toLowerCase());
+  }
+  return pins;
 }
 
 /**
@@ -71,21 +106,30 @@ export interface EstarTemplateDescriptor {
 
 /**
  * The official-template manifest — every FDA eSTAR template the platform fills.
- * Filenames/versions are placeholders pending the procurement drop — keep them in
- * sync with the files in `assets/estar-templates/` and the README. Do NOT
- * regenerate FDA's form. The nIVD/IVD eSTAR (v7.0) carries 510(k)/De Novo/PMA and
- * the PreSTAR2 (v3.0) carries Q-Sub/IDE/513(g); several logical descriptors may
- * resolve to the same physical FDA PDF (a maintainer can point them at one file).
+ * Keep filenames/versions in sync with the files in `assets/estar-templates/`
+ * (pinned in its checksums.txt) and the README. Do NOT regenerate FDA's form.
+ *
+ * FDA distributes the marketing pathways as ONE nIVD eSTAR PDF and ONE IVD eSTAR
+ * PDF (v7.0), each carrying 510(k), De Novo AND PMA — the pathway is chosen inside
+ * the form (`root.ApplicationType.USA.ATRadioButton110`), not by downloading a
+ * different file (see the family table in assets/estar-templates/README.md). So
+ * the six marketing descriptors resolve to two physical files: the three nIVD
+ * descriptors (510k/de_novo/pma × device) share `eSTAR-510k-non-ivd.pdf` and the
+ * three IVD descriptors share `eSTAR-510k-ivd.pdf`. The descriptor ids stay
+ * distinct because each pathway carries its OWN field map (the 510(k) Summary
+ * page and predicate fields are 510(k)-only). The PreSTAR2 (v3.0) descriptors
+ * stay `'unset'`: that template is not vendored.
  */
 export const ESTAR_TEMPLATE_MANIFEST: EstarTemplateDescriptor[] = [
   // nIVD / IVD eSTAR — marketing pathways
-  { id: '510k-device', type: '510k', variant: 'device', family: 'nivd', expectedFileName: 'eSTAR-510k-non-ivd.pdf', version: 'unset' },
-  { id: '510k-ivd', type: '510k', variant: 'ivd', family: 'ivd', expectedFileName: 'eSTAR-510k-ivd.pdf', version: 'unset' },
-  { id: 'de_novo-device', type: 'de_novo', variant: 'device', family: 'nivd', expectedFileName: 'eSTAR-denovo-non-ivd.pdf', version: 'unset' },
-  { id: 'de_novo-ivd', type: 'de_novo', variant: 'ivd', family: 'ivd', expectedFileName: 'eSTAR-denovo-ivd.pdf', version: 'unset' },
-  { id: 'pma-device', type: 'pma', variant: 'device', family: 'nivd', expectedFileName: 'eSTAR-pma-non-ivd.pdf', version: 'unset' },
-  { id: 'pma-ivd', type: 'pma', variant: 'ivd', family: 'ivd', expectedFileName: 'eSTAR-pma-ivd.pdf', version: 'unset' },
-  // PreSTAR2 — Early Submission Requests (serves both nIVD and IVD)
+  { id: '510k-device', type: '510k', variant: 'device', family: 'nivd', expectedFileName: 'eSTAR-510k-non-ivd.pdf', version: '7.0' },
+  { id: '510k-ivd', type: '510k', variant: 'ivd', family: 'ivd', expectedFileName: 'eSTAR-510k-ivd.pdf', version: '7.0' },
+  // De Novo and PMA are filed on the SAME vendored nIVD/IVD PDFs as 510(k) (FDA ships one file per family).
+  { id: 'de_novo-device', type: 'de_novo', variant: 'device', family: 'nivd', expectedFileName: 'eSTAR-510k-non-ivd.pdf', version: '7.0' },
+  { id: 'de_novo-ivd', type: 'de_novo', variant: 'ivd', family: 'ivd', expectedFileName: 'eSTAR-510k-ivd.pdf', version: '7.0' },
+  { id: 'pma-device', type: 'pma', variant: 'device', family: 'nivd', expectedFileName: 'eSTAR-510k-non-ivd.pdf', version: '7.0' },
+  { id: 'pma-ivd', type: 'pma', variant: 'ivd', family: 'ivd', expectedFileName: 'eSTAR-510k-ivd.pdf', version: '7.0' },
+  // PreSTAR2 — Early Submission Requests (serves both nIVD and IVD). Not vendored; stays 'unset'.
   { id: 'q_sub-prestar', type: 'q_sub', variant: 'prestar', family: 'prestar', expectedFileName: 'PreSTAR-q-sub.pdf', version: 'unset' },
   { id: 'ide-prestar', type: 'ide', variant: 'prestar', family: 'prestar', expectedFileName: 'PreSTAR-ide.pdf', version: 'unset' },
   { id: '513g-prestar', type: '513g', variant: 'prestar', family: 'prestar', expectedFileName: 'PreSTAR-513g.pdf', version: 'unset' },
@@ -119,11 +163,19 @@ export async function listVendoredTemplates(
   } catch {
     return [];
   }
+  const pins = await readPinnedChecksums(dir);
   const out: VendoredEstarTemplate[] = [];
   for (const name of names.sort()) {
     if (!name.toLowerCase().endsWith('.pdf')) continue;
     try {
-      out.push({ fileName: name, bytes: await fs.readFile(path.join(dir, name)) });
+      const bytes = await fs.readFile(path.join(dir, name));
+      const pinned = pins.get(name.toLowerCase());
+      const integrity: EstarTemplateIntegrity = !pinned
+        ? 'unpinned'
+        : createHash('sha256').update(bytes).digest('hex') === pinned
+          ? 'verified'
+          : 'mismatch';
+      out.push({ fileName: name, bytes, integrity });
     } catch {
       // Unreadable entry — skip; treated as absent by the readiness check.
     }
@@ -187,7 +239,15 @@ export function assessEstarTemplateReadiness(
     requiredFileName,
     programVersion: descriptor ? currentVersionFor(descriptor.family)?.version : undefined,
     present: input.present,
+    // `available` is the TRUTH signal — whether the official FDA eSTAR template
+    // is actually present so the platform can produce the official PDF. Every
+    // consumer deciding "official eSTAR producible" MUST gate on `available`.
     available,
+    // `cleared` reflects POLICY ENFORCEMENT ONLY (blockers.length === 0), which
+    // fires solely when requireTemplate is set AND the build is production. It
+    // is `true` by default (requireTemplate off) even when the template is
+    // ABSENT — so `cleared` must NOT be read as "the template exists / official
+    // eSTAR is producible". Use `available` for that.
     cleared: blockers.length === 0,
     blockers,
   };

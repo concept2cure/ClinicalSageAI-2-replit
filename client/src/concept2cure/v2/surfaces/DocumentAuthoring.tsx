@@ -70,6 +70,10 @@ import { I } from '../icons';
 import type { OwnedSurfaceViewProps } from '../surfaceViews';
 import { EmptyState } from '../dataConnect';
 import { useAnaChat, type AnaChatMessage } from '../../components/ana/useAnaChat';
+import { AnaWorkPanel } from '../AnaWorkPanel';
+import { useAgentActivity } from '../useAgentActivity';
+import { useWorkDockVisible } from '../workDock';
+import { shellProgramName } from '../shellProject';
 import { SignoffList } from '../SignoffList';
 import type { PendingSignoff } from '../../components/ana/useGovernedAction';
 import type { AuthoringContextPack } from '@shared/types/authoring-context';
@@ -85,6 +89,10 @@ import { AuthoringExports } from './AuthoringExports';
 import { RichSectionEditor, type RichSectionEditorHandle } from '../editor/RichSectionEditor';
 import type { SuggestionDecision } from '../editor/suggestions';
 import type { CommentAnchorPayload } from '../editor/commentAnchor';
+import { citedSourceIdsInHtml } from '../editor/citationNode';
+import { captionedObjectsInHtml } from '../editor/captionNumbering';
+import type { CaptionedObject } from '@shared/authoring/captions';
+import type { CitationSource } from '@shared/authoring/citations';
 import { useAuth } from '@/services/portal/authService';
 import { getAuthToken } from '@/utils/authToken';
 import { describeRulePackProvenance } from '@shared/rule-pack-provenance';
@@ -122,6 +130,20 @@ interface AuthDoc {
   status: string;
   updated_at: string | null;
   section_count: number | string | null;
+}
+
+/**
+ * Document-level structural findings (server: shared/regulatory/section-code).
+ *
+ * Neither is visible from any one section, which is why they travel with the
+ * list rather than with a row: a code filed twice puts two 3.2.S in the
+ * assembled dossier, and a stored order that disagrees with the codes means it
+ * assembles in the wrong order.
+ */
+interface SectionStructure {
+  duplicateCodes: string[];
+  outOfOrder: boolean;
+  suggestedOrder: string[];
 }
 
 interface AuthSection {
@@ -201,6 +223,8 @@ const AUDIT_EVENT_LABELS: Record<string, string> = {
   tracked_change_decision: 'tracked change decided',
   tracked_change_bulk_decision: 'tracked changes decided in bulk',
   REORDER_SECTIONS: 'sections reordered',
+  RENAME: 'renamed',
+  TRACK_CHANGES: 'track changes toggled',
   FREEZE: 'frozen',
   SIGN: 'signed',
   E_SIGN: 'e-signed',
@@ -246,7 +270,11 @@ export function describeAuditMetadata(
     /* The quoted text is what makes the row resolvable — accepting a
        suggestion strips its mark, so the document no longer holds it. */
     const quoted = text ? ` — “${text.length > 160 ? text.slice(0, 160) + '…' : text}”` : '';
-    const by = proposedBy ? ` (proposed by ${proposedBy})` : '';
+    /* `proposedBy` is copied by the server from the editing client's own
+       request (the editor's suggestion mark carries the author's display
+       name), not derived from a verified identity. Rendered unqualified it
+       read as the audit trail's finding; the qualifier keeps the two apart. */
+    const by = proposedBy ? ` (proposed by ${proposedBy}, as recorded by the editing client)` : '';
     return `${verb} ${what}${by}${quoted}`;
   }
 
@@ -272,6 +300,26 @@ export function describeAuditMetadata(
       (sample.length > 0 ? ` — including ${sample.join(', ')}` : '') +
       (omitted > 0 ? ` (${omitted} more not summarised on this row)` : '')
     );
+  }
+
+  if (metadata.source === 'section-metadata') {
+    /* A rename or a track-changes toggle. Renders what moved, from and to, so
+       the row is resolvable without opening the section — the same standard the
+       tracked-change rows above hold. */
+    const changes = Array.isArray(metadata.changes) ? metadata.changes : [];
+    const parts = changes
+      .map((c) => {
+        const ch = (c ?? {}) as Record<string, unknown>;
+        const field = typeof ch.field === 'string' ? ch.field : null;
+        const from = ch.from == null ? '—' : String(ch.from);
+        const to = ch.to == null ? '—' : String(ch.to);
+        if (field === 'title') return `title “${from}” → “${to}”`;
+        if (field === 'code') return `code ${from} → ${to}`;
+        if (field === 'track_changes') return `track changes turned ${ch.to ? 'on' : 'off'}`;
+        return null;
+      })
+      .filter((p): p is string => !!p);
+    return parts.length ? parts.join('; ') : null;
   }
 
   if (metadata.source === 'ai-draft-accept') {
@@ -503,7 +551,7 @@ interface SectionSource {
   citedAt: string | null;
   citationText: string | null;
   citedChecksum: string | null;
-  state: 'current' | 'changed' | 'unverified' | 'unresolved';
+  state: 'current' | 'changed' | 'superseded' | 'unverified' | 'unresolved';
   source: {
     id: number;
     title: string | null;
@@ -529,9 +577,23 @@ function sourceStateLabel(s: SectionSource): {
   switch (s.state) {
     case 'current':
       return {
-        text: 'Content unchanged since cited',
+        // Mirrors SourceTracer deliberately — see the note there. The old
+        // wording asserted the document was unchanged, which nothing here can
+        // establish: a revised document becomes a new source row rather than a
+        // changed checksum.
+        text: 'Matches the source record as stored',
         tone: 'ok',
-        hint: 'The checksum recorded when this section cited the source still matches the source today.',
+        hint: 'The checksum recorded at cite time still matches this source record. That is a statement about the RECORD, not the document: a revised document is ingested as a NEW source, which this citation does not point at, so a revision upstream is not detected here.',
+      };
+    case 'superseded':
+      return {
+        text: 'Source has been replaced since cited',
+        tone: 'warn',
+        hint:
+          'A newer version of this document was ingested after this section cited it. The ' +
+          'checksum still matches, because a source keeps its bytes and its hash forever — ' +
+          'the revision was recorded as a successor, and that is what says this citation ' +
+          'points at a superseded version.',
       };
     case 'changed':
       return {
@@ -564,7 +626,7 @@ async function readJson<T = any>(
     const res = await apiRequest('GET', path);
     const body = (await res.json().catch(() => null)) as T | null;
     return { ok: res.ok, status: res.status, body };
-  } catch (e) {
+  } catch {
     return { ok: false, status: 0, body: null };
   }
 }
@@ -845,6 +907,47 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
   // the leave-guard on filing actions.
   const [editorDirty, setEditorDirty] = useState(false);
   const [saving, setSaving] = useState(false);
+
+  /* ── REASON FOR CHANGE — stated once per section, carried on every save ──
+   *
+   * §11.10(d)/(e) wants to know WHY a governed record changed. Nothing on this
+   * surface ever asked: only the AI-draft dialog sent `changeReason`, so every
+   * ordinary save arrived without one and the filing's version ledger recorded
+   * that it was not stated.
+   *
+   * Sticky rather than per-save, which is the shape this repo already settled
+   * on for the same problem in ProtocolDev's schedule-of-assessments grid: the
+   * governed router wants a reason on every write, and "prompting per tick
+   * would be unusable — so the reason is stated ONCE for the editing session…
+   * what the regulation does not ask for is the same sentence retyped forty
+   * times." Save and ⌘S can each fire many times while working through one
+   * section, and each one is a real write.
+   *
+   * It gates SAVE, not editing. The SoA grid can sit read-only until a reason
+   * is given because it is one small governed table; this is the surface a
+   * writer spends the day in, and locking the canvas would make the editor
+   * hostile to the work it exists for. So: type freely, and state why before
+   * the record moves.
+   *
+   * Cleared on section change, because it describes THAT section's edit. A
+   * reason carried silently from one section to the next would attach one
+   * author's stated intent to a different part of the filing — a fabrication
+   * of exactly the kind the absent-reason handling was built to avoid.
+   *
+   * The ref exists because `saveSectionContent` is a useCallback that
+   * `RichSectionEditor` holds across renders; reading state through it
+   * directly would capture whatever the reason was when the callback was
+   * built. */
+  const [changeReason, setChangeReason] = useState('');
+  const changeReasonRef = useRef('');
+  useEffect(() => {
+    changeReasonRef.current = changeReason;
+  }, [changeReason]);
+  /* A reason describes the edit to ONE section. Carrying it across a section
+     change would attach one stated intent to a different part of the filing. */
+  useEffect(() => {
+    setChangeReason('');
+  }, [activeSectionId]);
   /** Bumped when the server replaces content out from under the editor
    *  (revert) so the canvas remounts on the new truth. */
   const [contentEpoch, setContentEpoch] = useState(0);
@@ -899,7 +1002,11 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
   // 'error' is a distinct state on purpose: an empty list because the read
   // failed and an empty list because there are no revisions are the same value
   // and opposite facts.
-  const [revisionsState, setRevisionsState] = useState<'ready' | 'error'>('ready');
+  /* 'loading' was missing: the rail rendered "No prior revisions" for the whole
+     of every GET, and kept the PREVIOUS section's revisions — with a live Revert
+     button — under the next section's header until its response landed. */
+  const [revisionsState, setRevisionsState] = useState<'loading' | 'ready' | 'error'>('ready');
+  const historySectionRef = useRef<string | null>(null);
   const [comments, setComments] = useState<AuthComment[]>([]);
   const [commentsState, setCommentsState] = useState<'loading' | 'ready' | 'error'>('loading');
   const [newComment, setNewComment] = useState('');
@@ -960,6 +1067,7 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
       (navSectionCode
         ? {
             docType: null,
+            docId: null,
             sectionCode: navSectionCode,
             sectionLabel: null,
             programId: null,
@@ -1026,15 +1134,18 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
 
   /** Every in-surface navigation that unmounts the canvas goes through here. */
   const requestLeave = useCallback(
-    (target: LeaveTarget) => {
+    (target: LeaveTarget): boolean => {
       const alreadyThere =
         target.kind === 'section' ? target.id === activeSectionId : target.id === activeDocId;
-      if (alreadyThere) return;
+      if (alreadyThere) return true;
       if (!dirty) {
         applyNav(target);
-        return;
+        return true;
       }
+      /* Held by the unsaved-work guard: the author can still cancel, so a
+         caller must not announce the open as done. Returns false so it knows. */
       setPendingLeave(target);
+      return false;
     },
     [dirty, activeSectionId, activeDocId, applyNav]
   );
@@ -1124,6 +1235,17 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
     onDriveEvent: liveDrive?.onDriveEvent,
     onArtifactSaved: liveDrive?.onWorkSaved,
   });
+  /* The live work dock for this pane (AnaWorkPanel): one shared show/hide
+     memory with the rail, and the background queue read only while shown. */
+  const [workDockOpen, setWorkDockOpen] = useWorkDockVisible();
+  const anaWorkQueue = useAgentActivity(workDockOpen, ana.isStreaming);
+  /* Focus goes to the header toggle before the dock (and its close button)
+     unmounts, so a keyboard user is not dropped onto <body>. */
+  const workToggleRef = useRef<HTMLButtonElement>(null);
+  const hideWorkDock = () => {
+    workToggleRef.current?.focus();
+    setWorkDockOpen(false);
+  };
   const anaComposerRef = useRef<HTMLTextAreaElement>(null);
   const anaReturnFocusRef = useRef<HTMLElement | null>(null);
   const anaWasOpenRef = useRef(false);
@@ -1236,19 +1358,36 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
     void loadDocs();
   }, [loadDocs]);
 
-  /* ── Load sections when the active document changes ── */
+  /* ── Load sections when the active document changes ──
+     Doc-scoped like the comments/audit loaders below: the ref stamps the
+     LATEST requested doc, and a response for any other doc is dropped whole.
+     Without it, a fast doc switch (the docId deep-link resolving while the
+     default document's larger section list was still in flight) let the
+     STALE response land last — the header named the linked document while
+     the outline and canvas held the other one's sections, and a save from
+     there would have written the wrong governed document. */
+  /** Document-level structural findings from GET …/sections. */
+  const [structure, setStructure] = useState<SectionStructure | null>(null);
+  const sectionsDocRef = useRef<string | null>(null);
   const loadSections = useCallback(async (docId: string) => {
+    sectionsDocRef.current = docId;
     setSectionsState('loading');
-    const { ok, body } = await readJson<{ sections?: AuthSection[] }>(
+    const { ok, body } = await readJson<{ sections?: AuthSection[]; structure?: SectionStructure }>(
       `/api/authoring/docs/${encodeURIComponent(docId)}/sections`
     );
+    if (sectionsDocRef.current !== docId) return;
     if (!ok || !body) {
       setSectionsState('error');
       setSections([]);
+      setStructure(null);
       return;
     }
     const list = Array.isArray(body.sections) ? body.sections : [];
     setSections(list);
+    /* Two document-level facts no single section can show: a code filed twice,
+       and a stored order that disagrees with the codes. Null when the server
+       did not send them, so an older server renders no claim either way. */
+    setStructure(body.structure ?? null);
     setSectionsState('ready');
     // A deep-link resolution may have named the section this load should land
     // on. Selected HERE, after setSections, so the buffer-sync effect below
@@ -1309,9 +1448,58 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
   const [treeScrollNonce, setTreeScrollNonce] = useState(0);
   useEffect(() => {
     if (targetAttemptedRef.current) return;
-    if (!sectionOpenTarget || docsState === 'loading' || filing.loading) return;
-    targetAttemptedRef.current = true;
+    if (!sectionOpenTarget || docsState === 'loading') return;
     const t = sectionOpenTarget;
+    if (docsState === 'error') {
+      /* A failed docs read must NOT spend the one attempt: the ref stays
+         unlatched, so when the list does load (a retry, a status-filter
+         change) this effect re-fires and the target still resolves — the
+         retry this notice promises actually exists. The tree pane already
+         reports the failed read; this says what it cost. */
+      setTargetNotice(
+        `Couldn’t open ${t.docId ? 'the linked document' : describeEditorTarget(t)} — ` +
+          'the document list failed to load, so nothing was resolved. ' +
+          'It opens automatically once documents load.'
+      );
+      return;
+    }
+    /* A doc-id target is the strongest claim a sender can make: it holds the
+       EXACT document (the correspondence card's linked response draft). No
+       search, no near-miss — the document is in the list or the miss is
+       stated. Resolved before the section flow because a sender with the id
+       has nothing to search for — and WITHOUT waiting on the filing outline
+       (only the section flow's docType/program guards consult it; waiting
+       here widened the window in which an author could type into the
+       default document before the switch landed). */
+    if (t.docId) {
+      targetAttemptedRef.current = true;
+      const linked = docs.find((d) => d.id === t.docId);
+      if (linked) {
+        // A docs-error notice posted moments ago must not outlive the open.
+        setTargetNotice(null);
+        /* Through the unsaved-work gate, not a bare setActiveDocId: a doc
+           switch unmounts the section-keyed canvas, and if the author typed
+           anything while this resolution was pending, the guard dialog gets
+           to hold the navigation (see requestLeave above). */
+        const opened = requestLeave({ kind: 'document', id: linked.id });
+        setTreeScrollNonce(n => n + 1);
+        /* "Opened …" used to fire regardless — including when the guard held
+           the navigation and the author then cancelled it. */
+        if (opened) fireToast(`Opened “${linked.title}” — the linked document.`);
+        else fireToast(`“${linked.title}” will open once you decide about the unsaved work here.`);
+      } else {
+        setTargetNotice(
+          'Couldn’t open the linked document — it isn’t in the documents in scope ' +
+            `(status filter: ${status.replace('_', ' ')}). It may sit under another ` +
+            'status or another project. Showing the editor’s default view instead.'
+        );
+      }
+      return;
+    }
+    // Only the section flow consults the governed outline; its guards below
+    // need the filing settled before the one attempt is spent.
+    if (filing.loading) return;
+    targetAttemptedRef.current = true;
     // A hand-off that named no section carried only program scope, which
     // window.C2C_PROJECT already delivered. Nothing more was claimed.
     if (!t.sectionCode && !t.sectionLabel) return;
@@ -1319,14 +1507,6 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
     // notices below only speak of one when the sender actually named it.
     const family = t.docType ? EDITOR_TARGET_DOC_LABELS[t.docType] : null;
     const wanted = describeEditorTarget(t);
-    if (docsState === 'error') {
-      // The tree pane already reports the failed read; this says what it cost.
-      setTargetNotice(
-        `Couldn’t open ${wanted} — the document list failed to load, so nothing was resolved. ` +
-          'Retry once documents load.'
-      );
-      return;
-    }
     if (t.programId && t.programId !== projectIdForOutline) {
       setTargetNotice(
         `Couldn’t open ${wanted} — it belongs to ${t.programTitle ?? 'a different program'}, ` +
@@ -1365,6 +1545,9 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
           targetSectionRef.current = { docId: d.id, sectionId: match.id };
           if (d.id === activeDocId) void loadSections(d.id);
           else setActiveDocId(d.id);
+          // A docs-error notice from before the list loaded must not outlive
+          // the successful open.
+          setTargetNotice(null);
           setTreeScrollNonce(n => n + 1);
           fireToast(
             `Opened ${match.code} · ${match.title}` +
@@ -1390,6 +1573,7 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
     status,
     activeDocId,
     loadSections,
+    requestLeave,
     fireToast,
   ]);
 
@@ -1566,6 +1750,9 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
 
   /* ── Load the right-rail data for the active section on demand ── */
   const loadHistory = useCallback(async (sectionId: string) => {
+    historySectionRef.current = sectionId;
+    setRevisionsState('loading');
+    setRevisions([]);
     // `ok` is honoured because a read FAILURE must never be rendered as an
     // assertion about the record. This destructured only `body`, so a 500 —
     // which this endpoint returned on every single call while its join was
@@ -1576,6 +1763,7 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
     const { ok, body } = await readJson<{ revisions?: AuthRevision[] }>(
       `/api/authoring/sections/${encodeURIComponent(sectionId)}/history`
     );
+    if (historySectionRef.current !== sectionId) return; // a later section is on screen
     if (!ok) {
       setRevisionsState('error');
       setRevisions([]);
@@ -1589,12 +1777,29 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
      empty list. This loader used to discard `ok` and render every failure as
      "No comments yet" — on a rail consulted to decide whether a document is
      clear of open review threads before freezing it, that conflation is the
-     dangerous one. */
+     dangerous one.
+
+     Doc-scoped, same as the section loader's targetSectionRef: the ref stamps
+     the LATEST requested doc, and a response for any other doc is dropped.
+     Without it, switching documents while a slow comments fetch was in flight
+     rendered document A's review threads under document B — and a reply or a
+     resolution made there acted on threads of a document not on screen. */
+  const commentsDocRef = useRef<string | null>(null);
   const loadComments = useCallback(async (docId: string) => {
+    commentsDocRef.current = docId;
     setCommentsState('loading');
+    /* The ref above stops a stale RESPONSE landing; nothing stopped the stale
+       DISPLAY. On a document switch the previous document's threads stayed on
+       screen — with live Resolve / Reply controls that write by comment id —
+       until the new read returned. Cleared here, with the thread focus. */
+    setComments([]);
+    setFocusedCommentId(null);
+    setReplyTo(null);
+    setResolveFor(null);
     const { ok, body } = await readJson<{ comments?: AuthComment[] }>(
       `/api/authoring/documents/${encodeURIComponent(docId)}/comments`
     );
+    if (commentsDocRef.current !== docId) return;
     if (!ok || !body) {
       setCommentsState('error');
       setComments([]);
@@ -1609,11 +1814,16 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
      reason, before/after content hashes — since the authoring store shipped,
      and no surface ever called it: the record §11.10(e) exists for was being
      written and could not be read. Newest first, as the server returns it. */
+  const auditDocRef = useRef<string | null>(null);
   const loadAudit = useCallback(async (docId: string) => {
+    // Doc-scoped like loadComments above: a Part 11 trail rendered under the
+    // wrong document is worse than a late one.
+    auditDocRef.current = docId;
     setAuditState('loading');
     const { ok, body } = await readJson<{ events?: AuthAuditEvent[] }>(
       `/api/authoring/docs/${encodeURIComponent(docId)}/audit?limit=100`
     );
+    if (auditDocRef.current !== docId) return;
     if (!ok || !body) {
       setAuditState('error');
       setAuditEvents([]);
@@ -1628,11 +1838,20 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
      an empty list: "we could not load what this section cites" and "this section
      cites nothing" are different facts, and on a regulated surface conflating
      them is the more dangerous mistake. */
+  const sourcesSectionRef = useRef<string | null>(null);
   const loadSources = useCallback(async (sectionId: string) => {
+    /* Section-scoped like the other loaders: without the ref, fast section
+       switching let §A's citation list resolve last and render as §B's
+       "Drafted from" — with Re-read / Remove buttons that then posted §A's
+       citation ids against §B — and fed the editor's citation picker the
+       wrong section's library for the same window. */
+    sourcesSectionRef.current = sectionId;
     setSourcesState('loading');
+    setSources([]);
     const { ok, body } = await readJson<{ sources?: SectionSource[] }>(
       `/api/authoring/sections/${encodeURIComponent(sectionId)}/sources`
     );
+    if (sourcesSectionRef.current !== sectionId) return;
     if (!ok || !body) {
       setSourcesState('error');
       setSources([]);
@@ -1683,7 +1902,11 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
     if (rail === 'history' && activeSectionId) void loadHistory(activeSectionId);
     if (rail === 'comments' && activeDocId) void loadComments(activeDocId);
     if (rail === 'audit' && activeDocId) void loadAudit(activeDocId);
-    if (rail === 'sources' && activeSectionId) {
+    /* Loaded whenever a section is open, not only when the Sources rail is:
+       the editor's citation picker offers this library, and a writer citing a
+       source mid-sentence should not have to open a rail first to make the
+       list exist. The rail re-reads on open through the same callbacks. */
+    if (activeSectionId) {
       void loadSources(activeSectionId);
       void loadProjectSources();
     }
@@ -1697,6 +1920,79 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
     loadSources,
     loadProjectSources,
   ]);
+
+  /* ── The source library the editor's citation picker offers ──
+     The sources this section already cites, then the rest of the project's Data
+     Room. Merged rather than kept apart because a writer citing mid-sentence is
+     choosing a source, not choosing between two lists; de-duplicated on the
+     source's identity so a source already cited appears once.
+
+     Only the id and the title travel here. That is all the canvas needs — the
+     picker's label and the node's cached name — and the reference list a
+     reviewer reads is assembled server-side at export, where the source
+     registry's sponsor, date and identifier are available. Nothing here is
+     invented to fill a field the client cannot see. */
+  const citationLibrary = useMemo<CitationSource[]>(() => {
+    const out: CitationSource[] = [];
+    const seen = new Set<string>();
+    const add = (id: unknown, title: string | null | undefined) => {
+      if (id == null) return;
+      const key = String(id);
+      if (seen.has(key)) return;
+      seen.add(key);
+      out.push({ id: key, title: title ?? null });
+    };
+    for (const s of sources) if (s.source) add(s.source.id, s.source.title);
+    for (const p of projectSources) add(p.id, p.title);
+    return out;
+  }, [sources, projectSources]);
+
+  /* ── Where this section's citation numbering continues from ──
+     A citation's number is its position in the DOCUMENT's reference list, and
+     the editor holds one section. Without the sources cited above it, the canvas
+     would number from 1 and show "[1]" for a claim the filed document prints as
+     "[7]" — a plausible-looking wrong number, which is the failure the whole
+     design exists to remove. Read from the sections' SAVED content, in the
+     document's own order, which is what the export will read too. */
+  const precedingSourceIds = useMemo<string[]>(() => {
+    if (!activeSectionId) return [];
+    const ids: string[] = [];
+    for (const sec of sections) {
+      if (sec.id === activeSectionId) break;
+      ids.push(...citedSourceIdsInHtml(sec.content ?? ''));
+    }
+    return ids;
+  }, [sections, activeSectionId]);
+
+  /* ── The document's tables and figures, either side of the open section ──
+     A caption's number is the object's POSITION among the document's tables
+     (or figures), and the editor holds one section. Without the objects above
+     it the canvas would number from 1 and show "Table 1" for an object the
+     filing prints as "Table 7" — a plausible-looking wrong number, which is
+     the failure this design exists to remove. The ones BELOW are supplied too,
+     because "as shown in Table 9" is routinely written above the table it
+     names and must resolve.
+
+     Read from the sections' SAVED content, in the document's own order, which
+     is what the export will read too. The open section's own objects are not
+     here: the canvas numbers those from its live document, so a table gets its
+     number the moment it is captioned rather than at the next save. */
+  const captionsAround = useMemo<{
+    before: CaptionedObject[];
+    after: CaptionedObject[];
+  }>(() => {
+    const before: CaptionedObject[] = [];
+    const after: CaptionedObject[] = [];
+    let seen = false;
+    for (const sec of sections) {
+      if (sec.id === activeSectionId) {
+        seen = true;
+        continue;
+      }
+      (seen ? after : before).push(...captionedObjectsInHtml(sec.content ?? ''));
+    }
+    return { before, after };
+  }, [sections, activeSectionId]);
 
   /* ── Record that this section is drafted from a source ── */
   const citeSource = useCallback(
@@ -1714,7 +2010,7 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
         if (!res.ok) {
           fireToast(
             'Couldn’t record the source — ' +
-              ((json as any)?.error ?? `HTTP ${res.status}`) +
+              (serverMessage(json) ?? 'the server refused it') +
               '. Nothing was saved.',
             'error'
           );
@@ -1726,10 +2022,17 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
             : 'Source re-resolved against its current content.'
         );
         setPicking(false);
+        if ((json as any)?.created) {
+          // Same staleness as the comment count: the section row is the only
+          // source of the rail button's number.
+          setSections(ss =>
+            ss.map(s => (s.id === activeSectionId ? { ...s, citation_count: num(s.citation_count) + 1 } : s))
+          );
+        }
         void loadSources(activeSectionId);
       } catch (e) {
         fireToast(
-          'Couldn’t record the source — ' + (e instanceof Error ? e.message : String(e)) + '.',
+          'Couldn’t record the source — ' + redactInternals(e instanceof Error ? e.message : '', 'the server could not be reached') + '.',
           'error'
         );
       }
@@ -1741,19 +2044,33 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
   const uncite = useCallback(
     async (sourceId: number) => {
       if (!activeSectionId) return;
-      const res = await apiRequest(
-        'DELETE',
-        `/api/authoring/sections/${activeSectionId}/cite-source/${sourceId}`
-      );
-      if (!res.ok) {
+      /* apiRequest THROWS on the server's actual refusal (404 "a frozen
+         citation is immutable") and RETURNS a 401. The old shape had no catch,
+         so the real refusal was an unhandled rejection with no toast and a row
+         that just sat there — while the only reachable message, on 401, blamed
+         freeze-immutability for an expired session. */
+      try {
+        const res = await apiRequest(
+          'DELETE',
+          `/api/authoring/sections/${activeSectionId}/cite-source/${sourceId}`
+        );
+        if (res.status === 401) {
+          fireToast('Not removed — your session isn’t authenticated. Nothing was changed.', 'error');
+          return;
+        }
+        if (!res.ok) {
+          const json = await res.json().catch(() => null);
+          fireToast('Couldn’t remove the citation — ' + (serverMessage(json) ?? 'the server refused it') + '. Nothing was changed.', 'error');
+          return;
+        }
+        fireToast('Citation removed.');
+        void loadSources(activeSectionId);
+      } catch (e) {
         fireToast(
-          'Couldn’t remove the citation — a frozen citation is immutable. Nothing was changed.',
+          'Couldn’t remove the citation — ' + redactInternals(e instanceof Error ? e.message : '', 'the server refused it') + '. Nothing was changed.',
           'error'
         );
-        return;
       }
-      fireToast('Citation removed.');
-      void loadSources(activeSectionId);
     },
     [activeSectionId, fireToast, loadSources]
   );
@@ -1764,23 +2081,35 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
   const reresolve = useCallback(
     async (citationId: string) => {
       if (!activeSectionId) return;
-      const res = await apiRequest(
-        'POST',
-        `/api/authoring/sections/${activeSectionId}/refresh-token`,
-        {
-          cite_id: citationId,
+      /* The route refuses with a phrased reason (frozen citation, source no
+         longer resolves) as a 404/409 — which apiRequest THROWS, and this
+         handler had no catch: "Re-read source" was a silent no-op on exactly
+         the cases the comment above promises a reason for. */
+      try {
+        const res = await apiRequest(
+          'POST',
+          `/api/authoring/sections/${activeSectionId}/refresh-token`,
+          {
+            cite_id: citationId,
+          }
+        );
+        const json = await res.json().catch(() => null);
+        if (res.status === 401) {
+          fireToast('Not re-read — your session isn’t authenticated. Nothing was changed.', 'error');
+          return;
         }
-      );
-      const json = await res.json().catch(() => null);
-      if (!res.ok) {
+        if (!res.ok) {
+          fireToast('Couldn’t re-read the source — ' + (serverMessage(json) ?? 'the server refused it') + '. Nothing was changed.', 'error');
+          return;
+        }
+        fireToast(serverMessage(json) ?? 'Source re-read.');
+        void loadSources(activeSectionId);
+      } catch (e) {
         fireToast(
-          (json as any)?.message ?? 'Couldn’t re-read the source. Nothing was changed.',
+          'Couldn’t re-read the source — ' + redactInternals(e instanceof Error ? e.message : '', 'the server refused it') + '. Nothing was changed.',
           'error'
         );
-        return;
       }
-      fireToast((json as any)?.message ?? 'Source re-read.');
-      void loadSources(activeSectionId);
     },
     [activeSectionId, fireToast, loadSources]
   );
@@ -1838,7 +2167,7 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
     } catch (e) {
       fireToast(
         'Couldn’t re-read this document’s sources — ' +
-          (e instanceof Error ? e.message : String(e)) +
+          redactInternals(e instanceof Error ? e.message : '', 'the server could not be reached') +
           '. Nothing was changed.',
         'error',
       );
@@ -1853,8 +2182,25 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
      the footer save-state, the device cache and this governed PATCH cannot
      disagree. Throwing on failure lets the editor report the truth. */
   const saveSectionContent = useCallback(
-    async (serialized: string) => {
+    async (serialized: string, systemReason?: string) => {
       if (!activeSection) throw new Error('No section open');
+
+      /* THE FUNNEL. Every content save arrives here — the Save button, ⌘S, and
+         the unsaved-work guard's Save — so the reason is required here rather
+         than only on the button, which is the one path a disabled attribute
+         can cover. Without this, ⌘S saved silently with no reason and the
+         button's requirement was decorative.
+         Refused visibly, never silently: an author who pressed ⌘S and saw
+         nothing happen would reasonably conclude their work was saved. */
+      if (!systemReason && !changeReasonRef.current.trim()) {
+        fireToast(
+          'Not saved — say why this section changed. It is recorded with the ' +
+            'revision, and the filing keeps it.',
+          'error',
+        );
+        throw new Error('reason-for-change required');
+      }
+
       setSaving(true);
       try {
         /* Authors whose insertions this reviewer accepted since the last save.
@@ -1869,10 +2215,17 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
            authors on one CTD section — a writer and a reviewer on the same
            §3.2.P.5 — end with the second save replacing the first's entire
            section, recorded in the revision ledger as an ordinary edit. */
+        /* §11.10(d)/(e) reason for change. Stated once per section per editing
+           session and carried on every save of that section — see
+           `changeReason` below for why it is sticky rather than per-save.
+           When it is absent the server records that it was NOT STATED; it does
+           not invent one. */
+        const reasonForChange = systemReason ?? changeReasonRef.current.trim();
         const res = await apiRequest('PATCH', `/api/authoring/sections/${activeSection.id}`, {
           content: serialized,
           ...(activeSection.updated_at ? { expectedUpdatedAt: activeSection.updated_at } : {}),
           ...(acceptedAuthors.length ? { acceptedAuthors } : {}),
+          ...(reasonForChange ? { changeReason: reasonForChange } : {}),
         });
         const json = await res.json().catch(() => null);
         if (res.status === 401) {
@@ -1908,7 +2261,15 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
             s.id === activeSection.id ? { ...s, ...(adopted ?? {}), content: persisted } : s
           )
         );
-        fireToast('Section saved — a revision was recorded (' + activeSection.code + ').');
+        /* "a revision was recorded" was asserted from the 2xx alone. The
+           server mints the revision in the same transaction and returns the
+           row's counter; the sentence now names what came back, and defers to
+           the History rail when nothing did. */
+        fireToast(
+          adopted && adopted.revision_count != null
+            ? `Section saved — revision ${num(adopted.revision_count)} recorded (${activeSection.code}).`
+            : `Section saved (${activeSection.code}) — open History to confirm the revision.`
+        );
         // Keep the history and audit rails fresh if open — a save writes both.
         if (rail === 'history') void loadHistory(activeSection.id);
         if (rail === 'audit' && activeDocId) void loadAudit(activeDocId);
@@ -1984,9 +2345,10 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
       error?: unknown;
     } | null;
     if (!res.ok || typeof json?.image?.url !== 'string') {
-      throw new Error(
-        typeof json?.error === 'string' ? json.error : `the image store returned HTTP ${res.status}`
-      );
+      // The envelope's error goes through the canonical reader, which drops an
+      // enum token or internal text before it reaches the thrown message a toast
+      // will show. A hand-rolled `typeof error === 'string'` skips both filters.
+      throw new Error(serverMessage(json) ?? `the image store returned HTTP ${res.status}`);
     }
     return { id: String(json.image.id), url: json.image.url };
   }, []);
@@ -1998,14 +2360,29 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
   const toggleTrackChanges = useCallback(
     async (on: boolean) => {
       if (!activeSection) throw new Error('No section open');
-      const res = await apiRequest('PATCH', `/api/authoring/sections/${activeSection.id}`, {
-        track_changes: on,
-      });
+      /* apiRequest THROWS the server's real refusal (a frozen document), and the
+         editor's toggleTrack swallows the rethrow to keep its state truthful —
+         so the author got no reason at all. The reason is said here, then the
+         throw still reverts the toggle. */
+      let res: Response;
+      try {
+        res = await apiRequest('PATCH', `/api/authoring/sections/${activeSection.id}`, {
+          track_changes: on,
+        });
+      } catch (e) {
+        fireToast(
+          'Couldn’t change track changes — ' +
+            redactInternals(e instanceof Error ? e.message : '', 'the server refused it') +
+            '. The mode is unchanged.',
+          'error'
+        );
+        throw new Error('track toggle refused', { cause: e });
+      }
       const json = await res.json().catch(() => null);
       if (!res.ok) {
         fireToast(
           'Couldn’t change track changes — ' +
-            ((json as any)?.error ?? `HTTP ${res.status}`) +
+            (serverMessage(json) ?? 'the server refused it') +
             '. The mode is unchanged.',
           'error'
         );
@@ -2064,7 +2441,7 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
         }
         if (!res.ok) {
           fireToast(
-            'Couldn’t revert — ' + ((json as any)?.error ?? `HTTP ${res.status}`) + '.',
+            'Couldn’t revert — ' + (serverMessage(json) ?? 'the server refused it') + '.',
             'error'
           );
           return;
@@ -2083,7 +2460,7 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
         void loadHistory(activeSection.id);
       } catch (e) {
         fireToast(
-          'Couldn’t revert — ' + (e instanceof Error ? e.message : String(e)) + '.',
+          'Couldn’t revert — ' + redactInternals(e instanceof Error ? e.message : '', 'the server could not be reached') + '.',
           'error'
         );
       }
@@ -2106,13 +2483,24 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
         ...(pending ? { anchor: pending.anchor } : {}),
       });
       const json = await res.json().catch(() => null);
+      /* On every failure the editor's anchor request must be answered: it
+         used to be left pending forever, and the Comment button then silently
+         did nothing for the rest of the mount. */
+      const abandonAnchor = () => {
+        if (!pending) return;
+        pending.resolve(null);
+        pendingAnchorRef.current = null;
+        setPendingAnchor(null);
+      };
       if (res.status === 401) {
+        abandonAnchor();
         fireToast('Comment not posted — your session isn’t authenticated. Sign in and retry.', 'error');
         return;
       }
       if (!res.ok) {
+        abandonAnchor();
         fireToast(
-          'Couldn’t post the comment — ' + ((json as any)?.error ?? `HTTP ${res.status}`) + '.',
+          'Couldn’t post the comment — ' + (serverMessage(json) ?? 'the server refused it') + '.',
           'error'
         );
         return;
@@ -2123,14 +2511,28 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
         pending.resolve(typeof created?.id === 'string' ? created.id : null);
         pendingAnchorRef.current = null;
         setPendingAnchor(null);
-        fireToast('Comment anchored to the selected text.');
+        /* "Comment anchored" was toasted here — before the save that carries
+           the anchor mark had been attempted. The thread exists; whether the
+           highlight is in the record is the editor's onAnchored report. */
+        fireToast('Comment created — anchoring it to the selected text…');
       } else {
         fireToast('Comment added.');
       }
+      /* The rail button's count comes from the section row, refreshed only by
+         loadSections — so it kept reading "Comments 3" when four existed.
+         Bumped here from the confirmed write. */
+      setSections(ss =>
+        ss.map(s => (s.id === activeSection.id ? { ...s, comment_count: num(s.comment_count) + 1 } : s))
+      );
       void loadComments(activeDocId);
     } catch (e) {
+      if (pending) {
+        pending.resolve(null);
+        pendingAnchorRef.current = null;
+        setPendingAnchor(null);
+      }
       fireToast(
-        'Couldn’t post the comment — ' + (e instanceof Error ? e.message : String(e)) + '.',
+        'Couldn’t post the comment — ' + redactInternals(e instanceof Error ? e.message : '', 'the server could not be reached') + '.',
         'error'
       );
     }
@@ -2168,7 +2570,7 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
         }
         if (!res.ok) {
           fireToast(
-            'Couldn’t post the reply — ' + ((json as any)?.error ?? `HTTP ${res.status}`) + '.',
+            'Couldn’t post the reply — ' + (serverMessage(json) ?? 'the server refused it') + '.',
             'error'
           );
           return;
@@ -2179,7 +2581,7 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
         void loadComments(activeDocId);
       } catch (e) {
         fireToast(
-          'Couldn’t post the reply — ' + (e instanceof Error ? e.message : String(e)) + '.',
+          'Couldn’t post the reply — ' + redactInternals(e instanceof Error ? e.message : '', 'the server could not be reached') + '.',
           'error'
         );
       }
@@ -2216,7 +2618,7 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
         if (!res.ok) {
           fireToast(
             'Couldn’t update the comment — ' +
-              ((json as any)?.error ?? `HTTP ${res.status}`) +
+              (serverMessage(json) ?? 'the server refused it') +
               '. Its status is unchanged.',
             'error'
           );
@@ -2230,7 +2632,7 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
         void loadComments(activeDocId);
       } catch (e) {
         fireToast(
-          'Couldn’t update the comment — ' + (e instanceof Error ? e.message : String(e)) + '.',
+          'Couldn’t update the comment — ' + redactInternals(e instanceof Error ? e.message : '', 'the server could not be reached') + '.',
           'error'
         );
       }
@@ -2279,17 +2681,19 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
         title,
       });
       const json = await res.json().catch(() => null);
+      /* apiRequest THROWS on any non-2xx EXCEPT 401 — which it returns. This
+         handler's comment used to say so and then forgot it: a 401 landed here,
+         `adopted` was undefined, the CLIENT's code/title were written into the
+         section list, and the toast said "Section renamed" over a rename the
+         server refused. Section code drives eCTD placement, so the tree and
+         the cross-reference resolvers then ran against a code the record did
+         not hold. The 401 is handled here, before anything is adopted. */
       if (res.status === 401) {
-        fireToast('Not renamed — your session isn’t authenticated.', 'error');
+        fireToast('Not renamed — your session isn’t authenticated. Nothing was changed.', 'error');
         return;
       }
       if (!res.ok) {
-        fireToast(
-          'Couldn’t rename the section — ' +
-            ((json as any)?.error ?? `HTTP ${res.status}`) +
-            '. Nothing was changed.',
-          'error'
-        );
+        fireToast('Couldn’t rename the section — ' + (serverMessage(json) ?? 'the server refused it') + '. Nothing was changed.', 'error');
         return;
       }
       const adopted = (json as { section?: AuthSection })?.section;
@@ -2299,8 +2703,25 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
       setRenaming(false);
       fireToast(`Section renamed — ${code} · ${title}. Its content and history are unchanged.`);
     } catch (e) {
+      const err = e as Partial<ApiRequestError> & { message?: string };
+      if (err?.status === 401) {
+        fireToast('Not renamed — your session isn’t authenticated.', 'error');
+        return;
+      }
+      /* The code is locked to the filing on a bound document — the server sent
+         a complete sentence explaining why, so show it as-is rather than
+         wrapping it in a second "couldn't rename" clause. */
+      if (err?.code === 'CODE_LOCKED_TO_FILING') {
+        fireToast(
+          redactInternals(err.message, 'This section’s code cannot be changed on a filed document.'),
+          'error',
+        );
+        return;
+      }
       fireToast(
-        'Couldn’t rename the section — ' + (e instanceof Error ? e.message : String(e)) + '.',
+        'Couldn’t rename the section — ' +
+          redactInternals(err?.message, 'the server did not accept it') +
+          ' Nothing was changed.',
         'error'
       );
     } finally {
@@ -2339,7 +2760,7 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
         if (!res.ok) {
           fireToast(
             'Couldn’t move the section — ' +
-              ((json as any)?.error ?? `HTTP ${res.status}`) +
+              (serverMessage(json) ?? 'the server refused it') +
               ' The order is unchanged.',
             'error'
           );
@@ -2353,7 +2774,7 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
         );
       } catch (e) {
         fireToast(
-          'Couldn’t move the section — ' + (e instanceof Error ? e.message : String(e)) + '.',
+          'Couldn’t move the section — ' + redactInternals(e instanceof Error ? e.message : '', 'the server could not be reached') + '.',
           'error'
         );
       } finally {
@@ -2391,7 +2812,7 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
       if (!res.ok || !json?.scan_results) {
         fireToast(
           'Couldn’t check the section — ' +
-            (typeof json?.error === 'string' ? json.error : `HTTP ${res.status}`) +
+            (serverMessage(json) ?? `HTTP ${res.status}`) +
             '. No result is shown because none was produced.',
           'error'
         );
@@ -2400,7 +2821,7 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
       setCheck(json.scan_results);
     } catch (e) {
       fireToast(
-        'Couldn’t check the section — ' + (e instanceof Error ? e.message : String(e)) + '.',
+        'Couldn’t check the section — ' + redactInternals(e instanceof Error ? e.message : '', 'the server could not be reached') + '.',
         'error'
       );
     } finally {
@@ -2492,7 +2913,7 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
         fireToast(
           `${batch.length === 1 ? 'That decision was' : `${batch.length} decisions were`} applied ` +
             'to the document but NOT recorded on the audit trail — ' +
-            (e instanceof Error ? e.message : String(e)) +
+            redactInternals(e instanceof Error ? e.message : '', 'the server could not be reached') +
             '. The content is still saved on the next save; report the missing record.',
           'error',
         );
@@ -2556,11 +2977,24 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
               ? `${filing.document.doc_type.toUpperCase()} · ${filing.document.agency.toUpperCase()} · ${
                   filing.flat.length
                 } sections`
-              : `${docs.length} document${docs.length === 1 ? '' : 's'} · ${status.replace(
-                  '_',
-                  ' '
-                )}`}
+              : docsState === 'ready'
+                ? `${docs.length} document${docs.length === 1 ? '' : 's'} · ${status.replace('_', ' ')}`
+                : docsState === 'error'
+                  ? /* was "0 documents · all", directly above "Couldn't load documents" */
+                    `documents not read · ${status.replace('_', ' ')}`
+                  : `reading documents… · ${status.replace('_', ' ')}`}
           </div>
+          {/* A failed outline read used to degrade this pane, silently, to the
+              flat document list — indistinguishable from a project with no
+              rule pack. The failure and the wait are now said. */}
+          {filing.loading && (
+            <div className="scaf-note" style={{ padding: '4px 0' }}>Reading the governed filing outline…</div>
+          )}
+          {filing.error && (
+            <div className="scaf-note" role="alert" style={{ padding: '4px 0' }}>
+              The governed filing outline could not be read — what is listed below is the document list, not the filing outline.
+            </div>
+          )}
           <div style={{ display: 'flex', gap: 6, marginTop: 8 }}>
             {/* The Module select is gone. It defaulted every filing type to
                 "M3" and hid the rest of the dossier behind a dropdown; the
@@ -2609,21 +3043,36 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
             style={{ flex: '0 0 auto', maxHeight: '46%', borderBottom: '1px solid var(--border)' }}
           >
             {filing.flat.map(node => {
-              const bound = findSectionForNode(sections, node.key);
+              /* `sections` is [] while the read is in flight and after it
+                 failed, so every node rendered dimmed, "not started in this
+                 document yet", with its "required" chip and a "no draft yet"
+                 toast on click — drafting-status claims produced by a read that
+                 had not happened. Unread is now its own state. */
+              const sectionsUnread = sectionsState !== 'ready';
+              const bound = sectionsUnread ? null : findSectionForNode(sections, node.key);
               const isActive = bound != null && bound.id === activeSectionId;
               return (
                 <button
                   key={node.key}
                   className="ed-tree-row"
                   data-active={isActive || undefined}
-                  style={{ paddingLeft: 10 + node.depth * 12, opacity: bound ? 1 : 0.62 }}
+                  style={{ paddingLeft: 10 + node.depth * 12, opacity: bound || sectionsUnread ? 1 : 0.62 }}
                   title={
-                    bound
-                      ? `${node.label} — open`
-                      : `${node.label} — not started in this document yet`
+                    sectionsUnread
+                      ? `${node.label} — this document’s sections have not been read yet`
+                      : bound
+                        ? `${node.label} — open`
+                        : `${node.label} — not started in this document yet`
                   }
                   onClick={() => {
-                    if (bound) {
+                    if (sectionsUnread) {
+                      fireToast(
+                        sectionsState === 'error'
+                          ? 'This document’s sections could not be read, so nothing is known about whether this part is drafted. Retry from the tree.'
+                          : 'This document’s sections are still being read.',
+                        'error'
+                      );
+                    } else if (bound) {
                       // The module rides with the navigation: a nav the guard
                       // holds must not move the create/export default to a
                       // section the author never opened.
@@ -2645,7 +3094,7 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
                   <span className="ed-lbl" style={{ fontWeight: node.depth === 0 ? 600 : 400 }}>
                     {node.label}
                   </span>
-                  {node.mandatory && !bound && (
+                  {node.mandatory && !bound && !sectionsUnread && (
                     <span
                       className="rd-chip tone-idle"
                       style={{ marginLeft: 'auto' }}
@@ -2727,7 +3176,8 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
                     <span className="ed-num">{d.module ?? '—'}</span>
                     <span className="ed-lbl">{d.title}</span>
                     <span className="rd-chip tone-idle" style={{ marginLeft: 'auto' }}>
-                      {num(d.section_count)}
+                      {/* null is "not counted", not zero */}
+                      {d.section_count == null ? '—' : num(d.section_count)}
                     </span>
                   </button>
                   {open &&
@@ -2747,7 +3197,31 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
                         No sections yet in this document.
                       </div>
                     ) : (
-                      sections.map(s => (
+                      <>
+                        {/* Document-level structure. Stated where the order is
+                            actually read, because that is where it misleads:
+                            the tree looks authoritative, and nothing in it
+                            shows that two sections share a code or that the
+                            order is not the one the dossier assembles in. */}
+                        {structure?.duplicateCodes.length ? (
+                          <div
+                            className="scaf-note"
+                            style={{ padding: '6px 12px', color: 'var(--c2c-err,#b42318)' }}
+                          >
+                            {structure.duplicateCodes.length === 1
+                              ? `Section code ${structure.duplicateCodes[0]} is used by more than one section.`
+                              : `${structure.duplicateCodes.length} section codes are each used by more than one section: ${structure.duplicateCodes.join(', ')}.`}{' '}
+                            A filed dossier cannot say which one a reference means.
+                          </div>
+                        ) : null}
+                        {structure?.outOfOrder ? (
+                          <div className="scaf-note" style={{ padding: '6px 12px' }}>
+                            These sections are stored in an order that differs from their
+                            section codes, and they assemble and export in the stored order.
+                            Reorder them if the stored order is not deliberate.
+                          </div>
+                        ) : null}
+                        {sections.map(s => (
                         <button
                           key={s.id}
                           className="ed-tree-row"
@@ -2765,7 +3239,8 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
                             />
                           )}
                         </button>
-                      ))
+                        ))}
+                      </>
                     ))}
                 </div>
               );
@@ -2779,13 +3254,13 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
         <header className="ed-doc-h">
           <div className="ed-crumbs">
             <span className="sep-first">{activeDoc?.module ?? 'eCTD'}</span>
-            <span className="sep">›</span>
+            <span className="sep" aria-hidden="true">›</span>
             <span className="doc-title" title={activeDoc?.title ?? undefined}>
               {activeDoc?.title ?? 'No document'}
             </span>
             {activeSection && (
               <>
-                <span className="sep">›</span>
+                <span className="sep" aria-hidden="true">›</span>
                 <span className="here">{activeSection.code}</span>
               </>
             )}
@@ -2794,6 +3269,7 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
             <AuthoringCreateExport
               docId={activeDoc?.id ?? null}
               docTitle={activeDoc?.title ?? null}
+              docStatus={activeDoc?.status ?? null}
               module={module}
               fireToast={fireToast}
               onDocCreated={d => {
@@ -2917,14 +3393,35 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
             >
               {I.fileDown} Exports
             </button>
+            {/* Reason for change, stated once per section and carried on every
+                save of it. Inline beside Save rather than a dialog: there is no
+                autosave here, but Save and ⌘S each fire many times while
+                working through a section, and a modal on each would be the
+                friction the regulation does not ask for. */}
+            {dirty && !docSealed && (
+              <input
+                className="de-input"
+                style={{ height: 30, width: 260 }}
+                value={changeReason}
+                onChange={e => setChangeReason(e.target.value)}
+                placeholder="Why this changed (required to save)"
+                aria-label="Reason for change"
+                data-testid="change-reason"
+              />
+            )}
             <button
               className="btn primary"
               style={{ height: 30 }}
               onClick={() => void editorRef.current?.save()}
-              disabled={!dirty || saving || docSealed}
+              disabled={!dirty || saving || docSealed || !changeReason.trim()}
               title={
-                docSealed ? 'This document is frozen — its content cannot be edited.' : undefined
+                docSealed
+                  ? 'This document is frozen — its content cannot be edited.'
+                  : dirty && !changeReason.trim()
+                    ? 'Say why this section changed — it is recorded with the revision.'
+                    : undefined
               }
+              data-testid="save-section"
             >
               {I.check} {saving ? 'Saving…' : docSealed ? 'Frozen' : dirty ? 'Save' : 'Saved'}
             </button>
@@ -3045,7 +3542,13 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
                   <div className="ed-mast-num">{activeDoc.module}</div>
                   <h1 className="ed-mast-t">{activeDoc.title}</h1>
                   <div className="ed-mast-meta">
-                    {sections.length} section{sections.length === 1 ? '' : 's'}
+                    {/* "0 sections" printed over a failed or in-flight read,
+                        directly above a body that said the read failed. */}
+                    {sectionsState === 'ready'
+                      ? `${sections.length} section${sections.length === 1 ? '' : 's'}`
+                      : sectionsState === 'error'
+                        ? 'sections not read'
+                        : 'reading sections…'}
                     {docSealed ? ' · frozen' : ''}
                   </div>
                 </div>
@@ -3056,6 +3559,13 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
                     title="Couldn’t read this document’s sections"
                     hint="The document is not empty — the read failed. Retry from the tree."
                   />
+                ) : sectionsState !== 'ready' ? (
+                  /* Every document open, and every reorder, passes through
+                     'loading' — and this pane said "This document has no
+                     sections yet" for the whole of it. The tree pane had the
+                     loading branch; the assembled document, the thing a
+                     reviewer receives, did not. */
+                  <EmptyState icon={I.fileText} title="Reading this document’s sections…" busy />
                 ) : sections.length === 0 ? (
                   <EmptyState
                     icon={I.fileText}
@@ -3438,8 +3948,63 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
                     commentsApi={{
                       onCreate: requestAnchoredComment,
                       onOpen: openCommentFromAnchor,
+                      onAnchored: (_id, saved) =>
+                        fireToast(
+                          saved
+                            ? 'Comment anchored to the selected text.'
+                            : 'Comment created, but its anchor could not be saved with the section — save the section to make the highlight visible to others.',
+                          saved ? undefined : 'error',
+                        ),
                     }}
                     imagesApi={{ upload: uploadSectionImage }}
+                    /* The document's own sections, as they stand right now.
+                       A cross-reference stores the target's id and resolves its
+                       number and title from this list, so renumbering or
+                       retitling a section corrects every reference to it in
+                       place — no referring section is edited, and no revision
+                       is minted for a change nobody made to its words. The
+                       same list the export resolves against server-side, so
+                       the canvas and the filed document say the same thing. */
+                    crossRefsApi={{
+                      sections: sections.map(s => ({
+                        id: s.id,
+                        code: s.code,
+                        title: s.title,
+                      })),
+                      /* And the document's captioned tables and figures, which
+                         are cross-reference targets exactly as sections are —
+                         "Table 3" is a rendering of where a table currently
+                         sits, so a reference to one stores its identity and
+                         resolves its number from this ordering. Split at the
+                         open section because the number is positional. */
+                      captionsBefore: captionsAround.before,
+                      captionsAfter: captionsAround.after,
+                    }}
+                    /* The governed sources this document can cite, and the
+                       numbering already used above this section. A citation
+                       stores the source's id and derives its number from
+                       position, so inserting one earlier renumbers the rest
+                       with no section's stored content touched. Inserting one
+                       also records the section→source link the Sources rail
+                       and the change report already read, so the prose and the
+                       recorded lineage cannot drift apart. */
+                    citationsApi={{
+                      sources: citationLibrary,
+                      precedingSourceIds,
+                      onCite: (sourceId: string) => {
+                        /* Only when the link is not already recorded: citing
+                           the same source a second time in the prose is not a
+                           new fact about this section's lineage, and re-posting
+                           it would announce a record that did not change. */
+                        const already = sources.some(
+                          s => s.source && String(s.source.id) === sourceId
+                        );
+                        const numeric = Number(sourceId);
+                        if (!already && Number.isInteger(numeric) && numeric > 0) {
+                          void citeSource(numeric);
+                        }
+                      },
+                    }}
                     collab={
                       liveCoedit && activeDoc
                         ? {
@@ -3473,16 +4038,54 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
                 ? ` · ${activeDoc.title}`
                 : ''}
             </span>
-            <button
-              type="button"
-              className="ed-comments-close"
-              aria-label="Close AnA panel"
-              title="Close AnA panel"
-              onClick={closeAna}
-            >
-              {I.close}
-            </button>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+              <button
+                type="button"
+                ref={workToggleRef}
+                className="ana-work-toggle"
+                aria-pressed={workDockOpen}
+                aria-label={workDockOpen ? 'Hide AnA at work' : 'Show AnA at work'}
+                title={workDockOpen ? 'Hide AnA at work' : 'Show AnA at work'}
+                onClick={() => setWorkDockOpen(!workDockOpen)}
+              >
+                {I.activity} At work
+              </button>
+              <button
+                type="button"
+                className="ed-comments-close"
+                aria-label="Close AnA panel"
+                title="Close AnA panel"
+                onClick={closeAna}
+              >
+                {I.close}
+              </button>
+            </span>
           </div>
+          {/* The live work dock — the same one the shell rail mounts. ABOVE
+              the log below, deliberately: that region is aria-live, and a
+              clock ticking inside a live region would be read out every
+              second. */}
+          {workDockOpen && (
+            <div className="ana-work-host">
+              <AnaWorkPanel
+                messages={ana.messages}
+                streaming={ana.isStreaming}
+                runStatus={ana.runStatus}
+                pendingSteers={ana.pendingSteers}
+                queue={anaWorkQueue}
+                context={{
+                  project: shellProgramName(),
+                  module: 'Document authoring',
+                  surface: activeSection
+                    ? `Section ${activeSection.code}`
+                    : activeDoc
+                      ? activeDoc.title
+                      : null,
+                }}
+                onClose={hideWorkDock}
+              />
+            </div>
+          )}
           <div
             ref={anaScrollRef}
             role="log"
@@ -3694,6 +4297,8 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
               title="Revision history unavailable"
               hint="The history could not be loaded. This is a failure to read the record — it does not mean the section has no revisions."
             />
+          ) : revisionsState === 'loading' ? (
+            <EmptyState icon={I.clock} title="Reading revision history…" busy />
           ) : revisions.length === 0 ? (
             <EmptyState
               icon={I.clock}

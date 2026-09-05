@@ -90,8 +90,12 @@ describe('evaluatePredicate', () => {
     it('is false for equal values (strictly greater)', () => {
       expect(evaluatePredicate(pred('x', 'gt', 100), { x: 100 })).toBe(false);
     });
-    it('is false when actual is a numeric string (no coercion)', () => {
-      expect(evaluatePredicate(pred('x', 'gt', 100), { x: '200' })).toBe(false);
+    it('coerces a numeric-string answer (the AnA tool surface sends numbers as strings)', () => {
+      // number-field answers arrive as strings from answer_intelligence_question;
+      // a strict typeof check silently defeated every numeric filing gate.
+      expect(evaluatePredicate(pred('x', 'gt', 100), { x: '200' })).toBe(true);
+      expect(evaluatePredicate(pred('x', 'gt', 100), { x: '50' })).toBe(false);
+      expect(evaluatePredicate(pred('x', 'gt', 100), { x: 'abc' })).toBe(false);
     });
     it('is false when the predicate value is non-numeric', () => {
       expect(evaluatePredicate(pred('x', 'gt', '100' as unknown as number), { x: 200 })).toBe(false);
@@ -108,8 +112,10 @@ describe('evaluatePredicate', () => {
     it('is false when actual number is not less', () => {
       expect(evaluatePredicate(pred('x', 'lt', 100), { x: 200 })).toBe(false);
     });
-    it('is false when actual is a numeric string (no coercion)', () => {
-      expect(evaluatePredicate(pred('x', 'lt', 100), { x: '50' })).toBe(false);
+    it('coerces a numeric-string answer (the AnA tool surface sends numbers as strings)', () => {
+      expect(evaluatePredicate(pred('x', 'lt', 100), { x: '50' })).toBe(true);
+      expect(evaluatePredicate(pred('x', 'lt', 100), { x: '200' })).toBe(false);
+      expect(evaluatePredicate(pred('x', 'lt', 100), { x: 'abc' })).toBe(false);
     });
     it('is false for a missing field', () => {
       expect(evaluatePredicate(pred('x', 'lt', 100), {})).toBe(false);

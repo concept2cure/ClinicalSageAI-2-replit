@@ -62,8 +62,23 @@ function apiError(status: number, body: unknown) {
   return e;
 }
 
+const LICENSING = '/api/admin/master/licensing';
+
+/* The two pickers read the licensing matrix — the same endpoint the Packaging
+   and Tenants tabs use. Northwind is on `standard`; `pv-cockpit` needs
+   `professional` (so a grant does something) and `basic-module` needs
+   `standard` (so a grant would change nothing). */
+const MATRIX = {
+  modules: [
+    { moduleId: 'pv-cockpit', name: 'PV cockpit', minTier: 'professional' },
+    { moduleId: 'basic-module', name: 'Basic module', minTier: 'standard' },
+  ],
+  organizations: [{ id: 42, name: 'Northwind Bio', tier: 'standard' }],
+};
+
 function wire(trials: unknown[], over: { post?: (u: string) => Promise<Response> } = {}) {
   apiRequest.mockImplementation(async (method: string, url: string) => {
+    if (method === 'GET' && url === LICENSING) return ok(MATRIX);
     if (method === 'GET' && url === TRIALS) {
       const rows = trials as Array<{ expired: boolean }>;
       return ok({
@@ -81,6 +96,20 @@ async function mount(trials: unknown[], over?: { post?: (u: string) => Promise<R
   wire(trials, over);
   render(<TrialsPanel />);
   await waitFor(() => expect(apiRequest).toHaveBeenCalledWith('GET', TRIALS));
+  await screen.findByTestId('ml-trial-open');
+}
+
+/** YYYY-MM-DD, N days out — the same arithmetic the control uses. */
+function inDays(n: number): string {
+  const d = new Date();
+  d.setDate(d.getDate() + n);
+  return d.toISOString().slice(0, 10);
+}
+
+function choose(org: string, mod: string, until: string) {
+  fireEvent.change(screen.getByLabelText('Workspace'), { target: { value: org } });
+  fireEvent.change(screen.getByLabelText('Module'), { target: { value: mod } });
+  fireEvent.change(screen.getByLabelText('Ends'), { target: { value: until } });
 }
 
 async function completeConfirmDialog(reason = 'purchase order received') {
@@ -218,5 +247,119 @@ describe('TrialsPanel — governed writes', () => {
     await completeConfirmDialog('ok');
     await new Promise((r) => setTimeout(r, 0));
     expect(post).not.toHaveBeenCalled();
+  });
+});
+
+/* ══════════════════════════════════════════════════════════════════════════
+   Opening a grant
+
+   The panel shipped able to convert and end trials and unable to create one:
+   POST /licensing/trials had no caller at all, so the only way to open a
+   30-day trial was a hand-written request. A screen that can only edit records
+   it cannot produce is the same defect as an endpoint nothing calls.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+describe('TrialsPanel — opening a grant', () => {
+  it('offers the control even when no trial exists yet', async () => {
+    // The empty state is exactly when somebody needs to open the first one.
+    await mount([]);
+    expect(screen.getByTestId('ml-trials-empty')).toBeTruthy();
+    expect(screen.getByTestId('ml-trial-open')).toBeTruthy();
+  });
+
+  it('will not submit until a workspace, a module and a date are all chosen', async () => {
+    await mount([]);
+    const btn = () => screen.getByRole('button', { name: /Open the grant/ }) as HTMLButtonElement;
+    expect(btn().disabled).toBe(true);
+
+    fireEvent.change(screen.getByLabelText('Workspace'), { target: { value: '42' } });
+    expect(btn().disabled).toBe(true);
+    fireEvent.change(screen.getByLabelText('Module'), { target: { value: 'pv-cockpit' } });
+    expect(btn().disabled).toBe(true);
+    fireEvent.change(screen.getByLabelText('Ends'), { target: { value: inDays(30) } });
+    expect(btn().disabled).toBe(false);
+  });
+
+  it('refuses a date in the past — an expiry already behind us grants nothing', async () => {
+    await mount([]);
+    choose('42', 'pv-cockpit', inDays(-1));
+    expect(
+      (screen.getByRole('button', { name: /Open the grant/ }) as HTMLButtonElement).disabled,
+    ).toBe(true);
+  });
+
+  it('says the grant would change nothing when the plan already includes the module', async () => {
+    await mount([]);
+    choose('42', 'basic-module', inDays(30));
+    // Northwind is on standard and basic-module needs standard. Recording a
+    // trial here and telling a customer it is running would be a lie.
+    expect(screen.getByTestId('ml-trial-consequence').textContent).toMatch(
+      /already includes Basic module/i,
+    );
+  });
+
+  it('says what access the grant actually buys when the plan does not include it', async () => {
+    await mount([]);
+    choose('42', 'pv-cockpit', inDays(30));
+    const note = screen.getByTestId('ml-trial-consequence').textContent ?? '';
+    expect(note).toMatch(/does not include PV cockpit/i);
+    expect(note).toMatch(/access ends when it does/i);
+  });
+
+  it('posts the end date as end-of-day, with the reason, and clears the form', async () => {
+    const post = vi.fn(async () => ok({ expiresAt: null }));
+    await mount([], { post });
+    const until = inDays(30);
+    choose('42', 'pv-cockpit', until);
+
+    fireEvent.click(screen.getByRole('button', { name: /Open the grant/ }));
+    await screen.findByRole('dialog');
+    expect(post).not.toHaveBeenCalled();
+
+    await completeConfirmDialog('30-day evaluation');
+    await waitFor(() => expect(post).toHaveBeenCalled());
+
+    const sent = apiRequest.mock.calls.find(
+      (c: unknown[]) => c[0] === 'POST' && c[1] === TRIALS,
+    );
+    expect(sent?.[2]).toMatchObject({
+      organizationId: 42,
+      moduleId: 'pv-cockpit',
+      reason: '30-day evaluation',
+    });
+    // End-of-day, so a grant "until the 23rd" includes the 23rd rather than
+    // lapsing as it begins.
+    expect((sent?.[2] as { until: string }).until).toBe(`${until}T23:59:59.000Z`);
+
+    await waitFor(() =>
+      expect((screen.getByLabelText('Module') as HTMLSelectElement).value).toBe(''),
+    );
+  });
+
+  it('leaves the form filled when the write fails, and says why', async () => {
+    const post = vi.fn(async () => {
+      throw apiError(404, { error: 'Tenant not found.' });
+    });
+    await mount([], { post });
+    choose('42', 'pv-cockpit', inDays(30));
+
+    fireEvent.click(screen.getByRole('button', { name: /Open the grant/ }));
+    await completeConfirmDialog('30-day evaluation');
+
+    await waitFor(() => expect(document.body.textContent).toMatch(/Tenant not found/i));
+    // Clearing a form whose write was refused throws away the operator's work
+    // and reads as success.
+    expect((screen.getByLabelText('Module') as HTMLSelectElement).value).toBe('pv-cockpit');
+  });
+
+  it('offers no pickers when the workspace list cannot be read', async () => {
+    apiRequest.mockImplementation(async (method: string, url: string) => {
+      if (method === 'GET' && url === TRIALS) return ok({ trials: [], live: 0, lapsed: 0 });
+      throw apiError(500, { error: 'matrix unavailable' });
+    });
+    render(<TrialsPanel />);
+    // Empty dropdowns over a failed read would look like "no workspaces exist".
+    expect(await screen.findByTestId('ml-trials-matrix-error')).toBeTruthy();
+    expect(screen.queryByTestId('ml-trial-open')).toBeNull();
   });
 });

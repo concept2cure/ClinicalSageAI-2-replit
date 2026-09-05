@@ -11,7 +11,11 @@ const { Client } = require('pg');
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 // Load from .env file (not shell env which may have stale creds)
-require('dotenv').config({ override: true });
+// No `override: true`: this script's own contract (below) is that the operator
+// names the database explicitly. Overriding a deliberately-set DATABASE_URL
+// with .env's value made the seed silently write to a different database than
+// the one the operator pointed it at — the exact guessing the comment forbids.
+require('dotenv').config();
 // No hardcoded fallback. This previously defaulted to a live `neondb_owner`
 // connection string, so running the seed with DATABASE_URL unset would silently
 // point at a real database using the OWNER role — strictly above the

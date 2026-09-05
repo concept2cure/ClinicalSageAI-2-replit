@@ -28,6 +28,10 @@ import { I } from './icons';
 import { TaskTray } from './TaskTray';
 import type { OnboardingWelcome } from './onboardingWelcome';
 import { AnaActivity, type AnaActivityProps } from './AnaActivity';
+import { AnaWorkPanel } from './AnaWorkPanel';
+import { useAgentActivity } from './useAgentActivity';
+import { useWorkDockVisible } from './workDock';
+import { shellProgramName } from './shellProject';
 import { stashNavParamsForTarget } from './navParams';
 import { listDemoScripts } from '@shared/navigation/demo-scripts';
 import { applySurfaceAction, validateDriveAction } from './surfaceActions';
@@ -35,7 +39,7 @@ import { AnaGrounding, type AnaGroundingEvidence } from './AnaGrounding';
 import { CrlPremortemPanel, type CrlPremortemArtifact } from '../components/ana/CrlPremortemPanel';
 import { SignoffList } from './SignoffList';
 import type { PendingSignoff } from '../components/ana/useGovernedAction';
-import type { AnaChatAction } from '../components/ana/useAnaChat';
+import type { AnaChatAction, AnaChatMessage } from '../components/ana/useAnaChat';
 import {
   AI_ACTIONS,
   ANA_MODES,
@@ -51,7 +55,6 @@ import {
   getAnaContext,
   getCoauthor,
   getSegment,
-  getSurfaceActions,
   type AnaContext,
 } from './registryModel';
 import { isClinicalRegulatoryGraphEnabled } from './clinicalRegulatoryGraphFlag';
@@ -417,9 +420,9 @@ export function TopBar({
     <header className="topbar">
       <div className="crumbs">
         <span>Concept2Cure.RI</span>
-        <span className="sep">›</span>
+        <span className="sep" aria-hidden="true">›</span>
         <span>{tier ? tier.label : ''}</span>
-        <span className="sep">›</span>
+        <span className="sep" aria-hidden="true">›</span>
         <span className="here">{surface.label}</span>
       </div>
       <div className="tb-spacer" />
@@ -469,7 +472,7 @@ export function TopBar({
         type="button"
         className="tb-task"
         title="New task — assign & track from this screen"
-        onClick={() => { try { (window as any).C2C?.open?.('task'); } catch (_e) { /* launcher not mounted */ } }}
+        onClick={() => { try { (window as any).C2C?.open?.('task'); } catch { /* launcher not mounted */ } }}
       >
         <span className="ico">{I.checkSquare ?? I.plus}</span>
         <span className="tb-task-lbl">Task</span>
@@ -479,7 +482,7 @@ export function TopBar({
         className="tb-btn"
         title="Collaborate — message a colleague about this screen"
         aria-label="Collaborate"
-        onClick={() => { try { (window as any).C2C?.open?.('collab'); } catch (_e) { /* launcher not mounted */ } }}
+        onClick={() => { try { (window as any).C2C?.open?.('collab'); } catch { /* launcher not mounted */ } }}
       >
         {I.messageSquare}
       </button>
@@ -507,6 +510,14 @@ function RailSignoffs({ signoffs }: { signoffs: PendingSignoff[] }) {
 }
 
 /* ── Persistent AnA rail ──────────────────────────────────────────────── */
+/** The open programme as the dock names it — the shell's one reader, or null. */
+function projectLabel(): string | null {
+  try {
+    return shellProgramName();
+  } catch {
+    return null;
+  }
+}
 export function AnaRail({
   open,
   setOpen,
@@ -528,6 +539,7 @@ export function AnaRail({
   onStop,
   onSteer,
   liveDrive,
+  work,
 }: {
   open: boolean;
   setOpen: (v: boolean) => void;
@@ -580,6 +592,16 @@ export function AnaRail({
      *  same commit-then-send sequencing as the tour. */
     onStartDemo?: (demoId: string, title: string) => void;
   };
+  /**
+   * The live work dock (AnaWorkPanel): the raw chat turns, not the adapted
+   * `messages` above, because the panel reads the progress record, tool
+   * timings and outputs that the rail's message shape does not carry. Absent
+   * → no dock (tests that render the rail without a chat instance).
+   */
+  work?: {
+    messages: AnaChatMessage[];
+    pendingSteers?: string[];
+  };
 }) {
   const [draft, setDraft] = React.useState('');
   /* The steer field is separate from `draft` on purpose: a steer joins the
@@ -589,6 +611,21 @@ export function AnaRail({
   const [agent, setAgent] = React.useState(false);
   const [plusOpen, setPlusOpen] = React.useState(false);
   const [modeOpen, setModeOpen] = React.useState(false);
+  /* The work dock: shown by default, hidden by one shared per-browser choice
+     (workDock.ts) that every host of the dock honours. */
+  const [workOpen, setWorkDock] = useWorkDockVisible();
+  const workVisible = Boolean(work) && workOpen;
+  /* The dock's own close button unmounts with the dock, so focus must be
+     handed to the header toggle BEFORE the state change — otherwise a
+     keyboard user's position falls to <body> with nothing to show for it. */
+  const workToggleRef = React.useRef<HTMLButtonElement>(null);
+  const hideWorkDock = () => {
+    workToggleRef.current?.focus();
+    setWorkDock(false);
+  };
+  /* Background investigations: read only while the dock shows them, and
+     re-read the moment a turn ends (a turn can start or finish one). */
+  const agentActivity = useAgentActivity(workVisible, streaming);
   const fileRef = React.useRef<HTMLInputElement>(null);
   const imgRef = React.useRef<HTMLInputElement>(null);
 
@@ -688,6 +725,19 @@ export function AnaRail({
           </div>
         </div>
         <div className="ana-actions">
+          {work && (
+            <button
+              type="button"
+              ref={workToggleRef}
+              className={`tb-btn${workOpen ? ' on' : ''}`}
+              onClick={() => setWorkDock(!workOpen)}
+              aria-pressed={workOpen}
+              title={workOpen ? 'Hide AnA at work' : 'Show AnA at work'}
+              aria-label={workOpen ? 'Hide AnA at work' : 'Show AnA at work'}
+            >
+              {I.activity}
+            </button>
+          )}
           <button type="button" className="tb-btn" title="New thread">
             {I.plus}
           </button>
@@ -704,6 +754,25 @@ export function AnaRail({
           announced by the narrow, always-mounted regions that own it:
           AnaActivity for what AnA is doing, and the upload region below. */}
       <div className="ana-body">
+        {/* The live dock: progress, queue, tools, outputs and context for the
+            turn in flight. Above the transcript so the person sees the work
+            before the words; AnaActivity below keeps the per-turn record. */}
+        {work && workVisible && (
+          <AnaWorkPanel
+            messages={work.messages}
+            streaming={streaming}
+            runStatus={runStatus}
+            pendingSteers={work.pendingSteers}
+            queue={agentActivity}
+            context={{
+              project: projectLabel(),
+              module: ac.module || null,
+              surface: surface.label,
+              engine: model,
+            }}
+            onClose={hideWorkDock}
+          />
+        )}
         {welcome && (
           <div className="ana-welcome">
             <div className="ana-welcome-greet">

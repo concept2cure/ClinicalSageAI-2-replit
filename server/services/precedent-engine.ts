@@ -34,6 +34,7 @@
 
 import { pool } from '../db.js';
 import { createScopedLogger } from '../utils/logger';
+import { search510kClearances as openFda510k } from './integrations/openfda-device-client';
 import { buildPrecedentOrgIsolation } from './precedent-isolation.js';
 import { resolveToRegistryEntry, getSubmissionTypeContext } from '../../shared/regulatory/submission-type-bridge.js';
 
@@ -89,6 +90,28 @@ export interface PrecedentRecord {
   similarityScore?: number;
   sourceType: string | null;
   confidenceScore: number;
+}
+
+/**
+ * Whether an external registry was consulted for a search, and what came back.
+ *
+ * Returned rather than logged so a surface can distinguish "the FDA registry
+ * holds no match for this product code" from "the FDA registry did not answer".
+ * Rendering the second as the first is the failure this type exists to prevent.
+ */
+export interface RegistryStatus {
+  /** False when the query had no terms the registry could be searched by. */
+  consulted: boolean;
+  available: boolean;
+  /** Set when available=false — what to tell the reader. */
+  reason?: string;
+  resultCount?: number;
+}
+
+/** openFDA dates are YYYYMMDD. Anything else becomes null rather than a guess. */
+function toIsoDate(raw: string): string | null {
+  const m = /^(\d{4})(\d{2})(\d{2})$/.exec(raw?.trim() ?? '');
+  return m ? `${m[1]}-${m[2]}-${m[3]}` : null;
 }
 
 export interface PrecedentComparison {
@@ -167,6 +190,18 @@ export interface ClaimCheckResult {
   warnings: ClaimWarning[];
   suggestedCitations: string[];
   recommendation: string;
+  /**
+   * Whether there was anything to check the claim AGAINST.
+   *
+   * `supported: false` carried two unrelated meanings: "precedents were
+   * consulted and they do not support this" and "nothing was consulted". The
+   * surface rendered both as "Needs support", so a claim checked against an
+   * empty corpus came back looking adjudicated. Only 'checked' may be read as
+   * a judgement about the claim (MDX_WORK_ORDER W2-8).
+   */
+  basis: 'checked' | 'no-precedents';
+  /** Whether the FDA registry was consulted for the precedents, and what came back. */
+  registry: RegistryStatus;
 }
 
 interface ClaimWarning {
@@ -297,7 +332,19 @@ async function loadAdcomTriggersFromStore(organizationId?: string): Promise<Advi
 export class PrecedentEngine {
   // ── 1. SEARCH: Find closest regulatory precedents ──────────────────────
 
-  async search(input: PrecedentSearchInput, organizationId?: number): Promise<PrecedentRecord[]> {
+  /**
+   * Precedent search, with the provenance of what was consulted.
+   *
+   * `search()` below is the records-only wrapper the eight existing callers
+   * use. This form exists because the FDA registry can be UNREACHABLE, and a
+   * caller that only receives an array cannot tell that apart from "the
+   * registry holds no match" — which is how a device search for a heavily
+   * cleared product code came to report zero precedents with no explanation.
+   */
+  async searchWithSources(
+    input: PrecedentSearchInput,
+    organizationId?: number,
+  ): Promise<{ records: PrecedentRecord[]; registry: RegistryStatus }> {
     const limit = Math.min(input.limit || 10, 50);
 
     // Resolve international / aliased submission types (e.g. 'EU_MAA', 'CA_NDS') to
@@ -323,10 +370,16 @@ export class PrecedentEngine {
     const unifiedResults = await this.searchUnifiedPrecedents(input, limit, organizationId);
     precedents.push(...unifiedResults);
 
-    // Strategy 2: Search 510(k) clearance universe (for device submissions)
-    if (['510(k)', '510k', 'PMA', 'De_Novo'].includes(input.submissionType)) {
-      const clearanceResults = await this.search510kClearances(input, limit);
-      precedents.push(...clearanceResults);
+    // Strategy 2: the FDA 510(k) registry (device submissions only).
+    let registry: RegistryStatus = {
+      consulted: false,
+      available: false,
+      reason: 'The FDA 510(k) registry covers device submissions; it was not consulted for this submission type.',
+    };
+    if (['510(k)', '510k', 'PMA', 'De_Novo', 'De Novo'].includes(input.submissionType)) {
+      const clearance = await this.search510kClearances(input, limit);
+      precedents.push(...clearance.records);
+      registry = clearance.registry;
     }
 
     // Strategy 3: Search adversarial precedents for FDA objection patterns
@@ -347,7 +400,16 @@ export class PrecedentEngine {
     deduped.sort((a, b) => (b.similarityScore || 0) - (a.similarityScore || 0));
 
     log.info(`Found ${deduped.length} precedents`);
-    return deduped.slice(0, limit);
+    return { records: deduped.slice(0, limit), registry };
+  }
+
+  /**
+   * Records-only precedent search — the long-standing signature, kept so the
+   * eight existing callers are untouched. A caller that needs to tell a reader
+   * WHY a device search came back thin should use searchWithSources().
+   */
+  async search(input: PrecedentSearchInput, organizationId?: number): Promise<PrecedentRecord[]> {
+    return (await this.searchWithSources(input, organizationId)).records;
   }
 
   private async searchUnifiedPrecedents(
@@ -406,88 +468,102 @@ export class PrecedentEngine {
     }
   }
 
+  /**
+   * Strategy 2 — the cleared-510(k) universe.
+   *
+   * ── What this used to do, and why it could only ever return nothing ─────────
+   * It ran a SELECT against `predicate.fda_510k_clearances` LEFT JOINed to
+   * `predicate.fda_product_codes`. Neither relation is created by any migration
+   * in this repository, and nothing anywhere writes to either — the only other
+   * mentions of the name are in CI scripts that parse SQL. So the query raised
+   * `relation "predicate.fda_510k_clearances" does not exist` on every call, the
+   * catch below turned that into `[]`, and the surface reported "no precedents".
+   *
+   * Searching product code BZH — one of the most cleared Class II codes in CDRH
+   * history — therefore returned zero, structurally, and would have gone on
+   * returning zero however much real data existed, because the failure was
+   * rendered as an empty result (MDX_WORK_ORDER W2-8).
+   *
+   * ── Where the data actually is ──────────────────────────────────────────────
+   * openFDA's device/510k dataset, reached through
+   * services/integrations/openfda-device-client — the client this repo already
+   * owns, already uses from routes/510k-device-routes.ts, and which is honest by
+   * construction: a network or API failure comes back as
+   * { available: false, unavailableReason } and never as a fabricated clearance.
+   * Building an ingest pipeline for a table nobody writes would be a second
+   * implementation of a capability that already has one.
+   *
+   * The registry status is RETURNED rather than logged, so the caller can tell a
+   * reader "the FDA registry was unreachable" instead of showing them an empty
+   * result set. That distinction is the whole defect.
+   */
   private async search510kClearances(
     input: PrecedentSearchInput,
-    limit: number
-  ): Promise<PrecedentRecord[]> {
-    const conditions: string[] = [];
-    const params: any[] = [];
-    let paramIdx = 1;
-
-    if (input.productCode) {
-      conditions.push(`c.product_code = $${paramIdx++}`);
-      params.push(input.productCode);
-    }
-    if (input.deviceName) {
-      conditions.push(`c.device_name ILIKE $${paramIdx++}`);
-      params.push(`%${input.deviceName}%`);
-    }
-    if (input.deviceClass) {
-      conditions.push(`p.device_class = $${paramIdx++}`);
-      params.push(input.deviceClass);
+    limit: number,
+  ): Promise<{ records: PrecedentRecord[]; registry: RegistryStatus }> {
+    if (!input.productCode && !input.deviceName) {
+      return {
+        records: [],
+        registry: {
+          consulted: false,
+          available: false,
+          reason: 'A product code or device name is needed to search the FDA 510(k) registry.',
+        },
+      };
     }
 
-    const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+    const out = await openFda510k({
+      productCode: input.productCode,
+      deviceName: input.deviceName,
+      limit,
+    });
 
-    const query = `
-      SELECT
-        c.k_number,
-        c.device_name,
-        c.applicant,
-        c.product_code,
-        c.decision_date,
-        c.decision_code,
-        c.clearance_type,
-        c.txt_content,
-        c.statement_or_summary,
-        c.third_party_review,
-        c.expedited_review,
-        p.device_class,
-        p.regulation_number,
-        p.review_panel,
-        p.name AS product_code_name
-      FROM predicate.fda_510k_clearances c
-      LEFT JOIN predicate.fda_product_codes p ON c.product_code = p.code
-      ${whereClause}
-      ORDER BY c.decision_date DESC NULLS LAST
-      LIMIT $${paramIdx}
-    `;
-    params.push(limit);
-
-    try {
-      const result = await pool.query(query, params);
-      return result.rows.map(row => ({
-        id: row.k_number,
-        submissionType: '510(k)',
-        productType: 'Device',
-        deviceClass: row.device_class || null,
-        therapeuticArea: row.review_panel || null,
-        indication: row.product_code_name || null,
-        clearanceNumber: row.k_number,
-        deviceName: row.device_name,
-        applicant: row.applicant,
-        decisionDate: row.decision_date?.toISOString?.() || null,
-        decisionOutcome: row.decision_code === 'SE' ? 'CLEARED' : row.decision_code || 'UNKNOWN',
-        clearanceType: row.clearance_type,
-        predicateDevice: null,
-        predicateKNumber: null,
-        strategySummary: row.txt_content ? row.txt_content.substring(0, 500) : null,
-        testingApproach: null,
-        trialDesign: null,
-        sampleSize: null,
-        primaryEndpoint: null,
-        endpointMet: null,
-        fdaComments: null,
-        fdaQuestions: [],
-        riskFactors: [],
-        similarityScore: 0.5, // Base score for structured match
-        sourceType: 'FDA_510k',
-        confidenceScore: 1.0,
-      }));
-    } catch (err: any) {
-      log.warn(`510(k) clearance search failed: ${err.message}`);
-      return [];
+    if (!out.available) {
+      log.warn(`FDA 510(k) registry unavailable: ${out.unavailableReason ?? 'unknown reason'}`);
+      return {
+        records: [],
+        registry: {
+          consulted: true,
+          available: false,
+          reason: out.unavailableReason ?? 'The FDA 510(k) registry did not respond.',
+        },
+      };
     }
+
+    const records: PrecedentRecord[] = out.results.map((r) => ({
+      id: r.kNumber,
+      submissionType: '510(k)',
+      productType: 'Device',
+      deviceClass: null,
+      therapeuticArea: null,
+      indication: null,
+      clearanceNumber: r.kNumber,
+      deviceName: r.deviceName || null,
+      applicant: r.applicant || null,
+      // openFDA decision_date is YYYYMMDD; ISO-8601 or null, never a guess.
+      decisionDate: toIsoDate(r.decisionDate),
+      decisionOutcome: r.decisionCode === 'SE' ? 'CLEARED' : r.decisionCode || 'UNKNOWN',
+      clearanceType: r.clearanceType || null,
+      predicateDevice: null,
+      predicateKNumber: null,
+      /* The registry record carries no summary text, no testing approach and no
+         endpoints. They stay null: a clearance we have not read is not a
+         clearance we can characterise. */
+      strategySummary: null,
+      testingApproach: null,
+      trialDesign: null,
+      sampleSize: null,
+      primaryEndpoint: null,
+      endpointMet: null,
+      fdaComments: null,
+      fdaQuestions: [],
+      riskFactors: [],
+      similarityScore: 0.5, // structured match on product code / device name
+      sourceType: 'FDA_510k',
+      confidenceScore: 1.0,
+    }));
+
+    return { records, registry: { consulted: true, available: true, resultCount: records.length } };
   }
 
   private async searchAdversarialPrecedents(
@@ -905,7 +981,17 @@ export class PrecedentEngine {
 
   async checkClaim(
     claim: string,
-    context: { submissionType: string; therapeuticArea?: string; indication?: string }
+    /* productCode / deviceName are what the FDA 510(k) registry can be searched
+       by. Without them a device claim check could reach the corpus but never
+       the registry, so it answered "no precedent" for claims about product
+       codes with hundreds of clearances. */
+    context: {
+      submissionType: string;
+      therapeuticArea?: string;
+      indication?: string;
+      productCode?: string;
+      deviceName?: string;
+    }
   ): Promise<ClaimCheckResult> {
     const bridgeEntry = resolveToRegistryEntry(context.submissionType);
     if (bridgeEntry) context = { ...context, submissionType: bridgeEntry.applicationType };
@@ -915,11 +1001,15 @@ export class PrecedentEngine {
     const warnings: ClaimWarning[] = [];
     const suggestedCitations: string[] = [];
 
-    // Search for relevant precedents based on the claim text
-    const precedents = await this.search({
+    // Search for relevant precedents based on the claim text. The provenance
+    // comes back with them: a claim checked against nothing must be able to say
+    // so, and must be able to say WHY when the reason is an unreachable registry.
+    const { records: precedents, registry } = await this.searchWithSources({
       submissionType: context.submissionType,
       therapeuticArea: context.therapeuticArea,
       indication: context.indication,
+      productCode: context.productCode,
+      deviceName: context.deviceName,
       query: claim,
       limit: 5,
     });
@@ -1007,11 +1097,22 @@ export class PrecedentEngine {
       warnings.filter(w => w.severity === 'high').length === 0 &&
       precedents.filter(p => ['CLEARED', 'APPROVED'].includes(p.decisionOutcome)).length > 0;
 
-    const recommendation = supported
-      ? `Claim is supported by ${precedents.filter(p => ['CLEARED', 'APPROVED'].includes(p.decisionOutcome)).length} approved precedent(s). Include referenced citations.`
-      : warnings.length > 0
-        ? `Claim requires additional supporting evidence. ${warnings.length} warning(s) identified from historical FDA precedents.`
-        : 'No direct precedents found for this claim. Consider adding literature references.';
+    /* Nothing was consulted, so nothing was judged. Saying "needs support" here
+       would be a finding about the claim drawn from the absence of a corpus. */
+    const basis: 'checked' | 'no-precedents' =
+      precedents.length === 0 && warnings.length === 0 ? 'no-precedents' : 'checked';
+
+    const approved = precedents.filter(p => ['CLEARED', 'APPROVED'].includes(p.decisionOutcome));
+    const recommendation =
+      basis === 'no-precedents'
+        ? registry.consulted && !registry.available
+          ? `No precedent was checked against this claim — ${registry.reason ?? 'the FDA registry did not respond'}. Nothing here says the claim is unsupported; it says it is unchecked.`
+          : 'No precedent was found to check this claim against, so it has not been assessed either way. Widen the search criteria, ingest a precedent, or add literature references.'
+        : supported
+          ? `Claim is supported by ${approved.length} approved precedent(s). Include referenced citations.`
+          : warnings.length > 0
+            ? `Claim requires additional supporting evidence. ${warnings.length} warning(s) identified from historical FDA precedents.`
+            : `Checked against ${precedents.length} precedent(s); none of them approved, so the claim is not yet supported by this corpus.`;
 
     return {
       claim,
@@ -1020,6 +1121,8 @@ export class PrecedentEngine {
       warnings,
       suggestedCitations: [...new Set(suggestedCitations)].slice(0, 5),
       recommendation,
+      basis,
+      registry,
     };
   }
 

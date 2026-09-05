@@ -31,6 +31,7 @@ import { I } from '../icons';
 import { useLiveData, useLiveRows, EmptyState } from '../dataConnect';
 import { apiRequest, serverMessage } from '@/lib/queryClient';
 import { usePublishSurfaceContext } from '../surfaceContext';
+import { useSurfaceActionHandlers, notifySurfaceActionReady } from '../surfaceActions';
 import type { SurfaceViewProps } from '../surfaceViews';
 import {
   PY_ROLES, PY_STATUS, PY_RISK,
@@ -493,13 +494,85 @@ export function PyramidShell(_props: SurfaceViewProps) {
     pyrState.loading, pyrState.error, pyrState.empty, pyrState.data,
     tasks, progressState.data, focusPhase, openTask,
   ]);
+  /* Navigation of the work breakdown. A task's STATUS control persists to the
+     server and stays the person's; these four only move the view. */
+  useSurfaceActionHandlers('pyramid', {
+    'pyramid.select-type': (params) => {
+      const raw = String(params.type ?? '').trim();
+      if (!raw) return { ok: false, reason: 'Name a submission type.' };
+      if (typesState.loading) return { ok: false, reason: 'The submission types are still loading.', retry: true };
+      if (typesState.error) {
+        return { ok: false, reason: 'The submission-type catalog could not be read, so there is nothing to pick from.' };
+      }
+      const needle = raw.toLowerCase();
+      const rows = typesState.rows;
+      const exact = rows.filter((t) => t.id.toLowerCase() === needle || t.label.toLowerCase() === needle);
+      const hits = exact.length ? exact : rows.filter((t) => t.label.toLowerCase().includes(needle));
+      if (hits.length === 0) return { ok: false, reason: `No submission type named "${raw}".` };
+      if (hits.length > 1) return { ok: false, reason: `"${raw}" matches ${hits.length} types — name one exactly.` };
+      const t = hits[0];
+      // The same reset the picker's own click performs.
+      setType(t.id);
+      setTab('dashboard');
+      setFocusPhase(null);
+      setOpenTask(null);
+      return { ok: true, detail: `Loaded the ${t.label} pyramid` };
+    },
+    'pyramid.open-tab': (params) => {
+      const target = String(params.tab ?? '');
+      if (!['dashboard', 'wbs', 'analytics', 'global'].includes(target)) {
+        return { ok: false, reason: `No pyramid tab named "${params.tab}".` };
+      }
+      if (tab === target) return { ok: true, detail: `Already on the ${target} tab` };
+      setTab(target);
+      if (target !== 'wbs') setFocusPhase(null);
+      return { ok: true, detail: `Opened the ${target} tab` };
+    },
+    'pyramid.focus-phase': (params) => {
+      if (!type) return { ok: false, reason: 'No submission type is picked yet, so there is no pyramid to focus.' };
+      const raw = String(params.phase ?? '').trim();
+      if (!raw) return { ok: false, reason: 'Name a phase to focus.' };
+      if (pyrState.loading) return { ok: false, reason: 'The pyramid is still loading.', retry: true };
+      if (pyrState.error || !pyr) {
+        return { ok: false, reason: 'The pyramid could not be read, so its phases are not listed.' };
+      }
+      const needle = raw.toLowerCase();
+      const exact = pyr.phases.filter((p) => p.id.toLowerCase() === needle || p.name.toLowerCase() === needle);
+      const hits = exact.length ? exact : pyr.phases.filter((p) => p.name.toLowerCase().includes(needle));
+      if (hits.length === 0) return { ok: false, reason: `No phase named "${raw}".` };
+      if (hits.length > 1) return { ok: false, reason: `"${raw}" matches ${hits.length} phases — name one exactly.` };
+      setFocusPhase(hits[0].id);
+      setTab('wbs');
+      return { ok: true, detail: `Focused ${hits[0].name} in the work breakdown` };
+    },
+    'pyramid.open-task': (params) => {
+      if (!type) return { ok: false, reason: 'No submission type is picked yet, so there are no tasks.' };
+      const raw = String(params.task ?? '').trim();
+      if (!raw) return { ok: false, reason: 'Name a task to open.' };
+      if (pyrState.loading) return { ok: false, reason: 'The pyramid is still loading.', retry: true };
+      if (pyrState.error || !pyr) {
+        return { ok: false, reason: 'The pyramid could not be read, so its tasks are not listed.' };
+      }
+      const needle = raw.toLowerCase();
+      const exact = pyr.tasks.filter((t) => t.id.toLowerCase() === needle || t.name.toLowerCase() === needle);
+      const hits = exact.length ? exact : pyr.tasks.filter((t) => t.name.toLowerCase().includes(needle));
+      if (hits.length === 0) return { ok: false, reason: `No task named "${raw}".` };
+      if (hits.length > 1) return { ok: false, reason: `"${raw}" matches ${hits.length} tasks — name one exactly.` };
+      setOpenTask(hits[0].id);
+      return { ok: true, detail: `Opened the ${hits[0].name} task sheet — its status control stays a human act` };
+    },
+  });
+  useEffect(() => {
+    if (!typesState.loading && !typesState.error && !pyrState.loading) notifySurfaceActionReady('pyramid');
+  }, [typesState.loading, typesState.error, pyrState.loading]);
+
   usePublishSurfaceContext('pyramid', anaContext);
 
   // ── Entry: submission type selector (four states) ──
   if (!type) {
     return (
       <div className="py" data-screen-label="Submission pyramid">
-        <div className="reg-h">
+        <div className="reg-head">
           <div>
             <div className="ph-eyebrow">Submission · planning</div>
             <h1 className="reg-title">Submission pyramid</h1>
@@ -582,7 +655,7 @@ export function PyramidShell(_props: SurfaceViewProps) {
 
   return (
     <div className="py" data-screen-label={`Submission pyramid · ${tab}`}>
-      <div className="reg-h">
+      <div className="reg-head">
         <div>
           <div className="ph-eyebrow">Submission · planning</div>
           <h1 className="reg-title">Submission pyramid</h1>

@@ -5,7 +5,7 @@
  *
  * Closes the loop in the kit's editor surfaces (K510Surface, PmaSurface,
  * CerSurface): the user sees "Drafted by AnA · 2m ago — Accept | Refine"
- * and either accepts the draft (clears draft_source, stamps accepted_at /
+ * and either accepts the draft (keeps draft_source, stamps accepted_at /
  * accepted_by, status flips to ready_for_review) or opens the editor at
  * that section to refine first.
  *

@@ -14,7 +14,13 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook, act, waitFor } from '@testing-library/react';
 import {
   useEstarExport,
+  useEstarEntitlement,
+  entitlementBlocksExport,
+  entitlementRequiredLine,
   exportStatusLine,
+  cleanRequestData,
+  fieldReportClause,
+  ESTAR_ENTITLEMENT_URL,
   type EstarExportOutcome,
 } from '../useEstarExport';
 
@@ -120,7 +126,12 @@ describe('useEstarExport — existing outcomes unchanged', () => {
     });
     expect(outcome?.ok).toBe(true);
     expect(outcome?.blockedByEntitlement).toBe(false);
-    expect(exportStatusLine(false, outcome ?? null)).toBe('Downloaded package');
+    // The response carries no downloadable_output_ref, so nothing was
+    // delivered. This asserted 'Downloaded package' — a success line over a
+    // response that contained no file.
+    expect(exportStatusLine(false, outcome ?? null)).toBe(
+      'Export accepted, but the server returned no file to download',
+    );
   });
 });
 
@@ -133,6 +144,7 @@ describe('exportStatusLine (pure)', () => {
   it('falls back honestly when the server named no tier', () => {
     const outcome: EstarExportOutcome = {
       ok: false,
+      delivered: false,
       governed: false,
       filename: null,
       formattingErrors: 0,
@@ -140,10 +152,272 @@ describe('exportStatusLine (pure)', () => {
       blockers: [],
       blockedByEntitlement: true,
       requiredTier: null,
+      fieldReport: null,
       error: 'NOT_ENTITLED',
     };
     expect(exportStatusLine(false, outcome)).toBe(
       'Requires a higher plan — device assembly readiness',
     );
+  });
+});
+
+/* ─── Phase 2: governed administrative data ────────────────────────────── */
+
+const SUCCESS: EstarExportOutcome = {
+  ok: true,
+  delivered: true,
+  governed: true,
+  filename: 'BX-204_eSTAR.pdf',
+  formattingErrors: 0,
+  formattingWarnings: 0,
+  blockers: [],
+  blockedByEntitlement: false,
+  requiredTier: null,
+  fieldReport: null,
+  error: null,
+};
+
+describe('cleanRequestData (pure) — only typed keys travel', () => {
+  it('drops empty, whitespace and non-string entries and trims the rest', () => {
+    expect(
+      cleanRequestData({
+        deviceCommonName: '  Glucose monitor ',
+        correspondentTelephone: '',
+        correspondentCompanyName: '   ',
+        indicationsForUseCitation: 'Section 4',
+        bogus: 42 as unknown as string,
+      }),
+    ).toEqual({ deviceCommonName: 'Glucose monitor', indicationsForUseCitation: 'Section 4' });
+    expect(cleanRequestData(undefined)).toEqual({});
+  });
+});
+
+describe('useEstarExport.exportOfficialEstar — useProgramData + data', () => {
+  it('sends useProgramData:true and only the non-empty trimmed keys', async () => {
+    fetchMock.mockResolvedValue(
+      jsonResponse({
+        governed: true,
+        officialEstarPdf: true,
+        fieldReport: {
+          mappedCount: 20,
+          filledCount: 7,
+          blankCount: 13,
+          blankKeys: ['deviceCommonName', 'declarationCompanyAddress'],
+          ignoredRequestKeys: ['deviceTradeName'],
+        },
+      }),
+    );
+    const { result } = renderHook(() => useEstarExport());
+    let outcome: EstarExportOutcome | undefined;
+    await act(async () => {
+      outcome = await result.current.exportOfficialEstar(PROGRAM, 'device', {
+        useProgramData: true,
+        data: { deviceCommonName: ' Glucose monitor ', correspondentTelephone: '   ', deviceTradeName: 'X' },
+      });
+    });
+    const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toBe('/api/510k/estar/official');
+    const body = JSON.parse(String(init.body)) as Record<string, unknown>;
+    expect(body.useProgramData).toBe(true);
+    expect(body.variant).toBe('device');
+    expect(body.data).toEqual({ deviceCommonName: 'Glucose monitor', deviceTradeName: 'X' });
+    // The report is parsed, not invented.
+    expect(outcome?.ok).toBe(true);
+    expect(outcome?.fieldReport).toEqual({
+      mappedCount: 20,
+      filledCount: 7,
+      blankCount: 13,
+      blankKeys: ['deviceCommonName', 'declarationCompanyAddress'],
+      ignoredRequestKeys: ['deviceTradeName'],
+    });
+  });
+
+  it('sends the pathway type from the option — de_novo and pma reach the wire', async () => {
+    fetchMock.mockResolvedValue(jsonResponse({ governed: true }));
+    const { result } = renderHook(() => useEstarExport());
+    await act(async () => {
+      await result.current.exportOfficialEstar(PROGRAM, 'device', { type: 'de_novo', useProgramData: true });
+    });
+    await act(async () => {
+      await result.current.exportOfficialEstar(PROGRAM, 'ivd', { type: 'pma', useProgramData: true });
+    });
+    const bodyOf = (i: number) =>
+      JSON.parse(String((fetchMock.mock.calls[i][1] as { body?: unknown }).body)) as Record<string, unknown>;
+    const first = bodyOf(0);
+    const second = bodyOf(1);
+    expect(first.type).toBe('de_novo');
+    expect(first.variant).toBe('device');
+    expect(second.type).toBe('pma');
+    expect(second.variant).toBe('ivd');
+  });
+
+  it('without a type option sends 510k — callers that predate the option keep their behaviour', async () => {
+    fetchMock.mockResolvedValue(jsonResponse({ governed: true }));
+    const { result } = renderHook(() => useEstarExport());
+    await act(async () => {
+      await result.current.exportOfficialEstar(PROGRAM, 'device', { useProgramData: true });
+    });
+    const body = JSON.parse(
+      String((fetchMock.mock.calls[0][1] as { body?: unknown }).body),
+    ) as Record<string, unknown>;
+    expect(body.type).toBe('510k');
+  });
+
+  it('without opts sends useProgramData:false and an empty data map (today\'s behaviour)', async () => {
+    fetchMock.mockResolvedValue(jsonResponse({ governed: true }));
+    const { result } = renderHook(() => useEstarExport());
+    let outcome: EstarExportOutcome | undefined;
+    await act(async () => {
+      outcome = await result.current.exportOfficialEstar(PROGRAM);
+    });
+    const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    const body = JSON.parse(String(init.body)) as Record<string, unknown>;
+    expect(body.useProgramData).toBe(false);
+    expect(body.type).toBe('510k');
+    expect(body.data).toEqual({});
+    // No report on the wire ⇒ null, never a fabricated count.
+    expect(outcome?.fieldReport).toBeNull();
+  });
+
+  it('a malformed fieldReport is null rather than partially trusted', async () => {
+    fetchMock.mockResolvedValue(jsonResponse({ governed: true, fieldReport: { filledCount: 'seven' } }));
+    const { result } = renderHook(() => useEstarExport());
+    let outcome: EstarExportOutcome | undefined;
+    await act(async () => {
+      outcome = await result.current.exportOfficialEstar(PROGRAM, 'ivd', { useProgramData: true });
+    });
+    expect(outcome?.fieldReport).toBeNull();
+  });
+});
+
+describe('exportStatusLine — administrative fill wording', () => {
+  it('names filled of mapped and the blank count', () => {
+    const outcome: EstarExportOutcome = {
+      ...SUCCESS,
+      fieldReport: {
+        mappedCount: 20,
+        filledCount: 7,
+        blankCount: 13,
+        blankKeys: [],
+        ignoredRequestKeys: [],
+      },
+    };
+    expect(exportStatusLine(false, outcome)).toBe(
+      'Downloaded BX-204_eSTAR.pdf · 7 of 20 administrative fields filled · 13 left blank',
+    );
+  });
+
+  it('omits the blank clause when nothing was left blank', () => {
+    const outcome: EstarExportOutcome = {
+      ...SUCCESS,
+      fieldReport: {
+        mappedCount: 20,
+        filledCount: 20,
+        blankCount: 0,
+        blankKeys: [],
+        ignoredRequestKeys: [],
+      },
+    };
+    expect(exportStatusLine(false, outcome)).toBe(
+      'Downloaded BX-204_eSTAR.pdf · 20 of 20 administrative fields filled',
+    );
+    expect(fieldReportClause(null)).toBe('');
+  });
+
+  it('a success without a report keeps the existing wording', () => {
+    expect(exportStatusLine(false, SUCCESS)).toBe('Downloaded BX-204_eSTAR.pdf');
+  });
+});
+
+describe('useEstarExport — reset()', () => {
+  it('forgets the last outcome, and is stable across renders', async () => {
+    fetchMock.mockResolvedValue(jsonResponse({ governed: true }));
+    const { result, rerender } = renderHook(() => useEstarExport());
+    const firstReset = result.current.reset;
+    await act(async () => {
+      await result.current.exportDraftPackage(PROGRAM);
+    });
+    await waitFor(() => expect(result.current.outcome?.ok).toBe(true));
+    act(() => result.current.reset());
+    expect(result.current.outcome).toBeNull();
+    rerender();
+    expect(result.current.reset).toBe(firstReset);
+  });
+});
+
+describe('useEstarEntitlement — the lock known before the first click', () => {
+  const VIEW = {
+    capability: 'device_assembly_readiness',
+    mode: 'on' as const,
+    enforced: true,
+    allowed: false,
+    requiredTier: 'standard',
+    tier: 'free',
+    reason: null,
+  };
+
+  it('reads the documented verdict from GET /api/510k/estar/entitlement', async () => {
+    fetchMock.mockResolvedValue(jsonResponse(VIEW));
+    const { result } = renderHook(() => useEstarEntitlement());
+    await waitFor(() => expect(result.current.entitlement).not.toBeNull());
+    expect(String(fetchMock.mock.calls[0][0])).toBe(ESTAR_ENTITLEMENT_URL);
+    expect(result.current.entitlement).toEqual(VIEW);
+    expect(entitlementBlocksExport(result.current.entitlement)).toBe(true);
+  });
+
+  it('a body that is not a verdict is no verdict — nothing locks on it', async () => {
+    fetchMock.mockResolvedValue(jsonResponse({ ok: true }));
+    const { result } = renderHook(() => useEstarEntitlement());
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    expect(result.current.entitlement).toBeNull();
+    expect(entitlementBlocksExport(result.current.entitlement)).toBe(false);
+  });
+
+  it('entitlementBlocksExport (pure): only an ENFORCED denial locks', () => {
+    expect(entitlementBlocksExport({ ...VIEW, mode: 'warn', enforced: false })).toBe(false);
+    expect(entitlementBlocksExport({ ...VIEW, mode: 'off', enforced: false, allowed: null })).toBe(false);
+    expect(entitlementBlocksExport({ ...VIEW, allowed: true })).toBe(false);
+    expect(entitlementBlocksExport(null)).toBe(false);
+    expect(entitlementBlocksExport(VIEW)).toBe(true);
+  });
+
+  it('entitlementRequiredLine is the one wording, after a 403 and before a click', () => {
+    expect(entitlementRequiredLine('standard')).toBe('Requires the standard plan — device assembly readiness');
+    expect(entitlementRequiredLine(null)).toBe('Requires a higher plan — device assembly readiness');
+    const outcome: EstarExportOutcome = {
+      ok: false, delivered: false, governed: false, filename: null, formattingErrors: 0, formattingWarnings: 0,
+      blockers: [], blockedByEntitlement: true, requiredTier: 'standard', fieldReport: null, error: 'NOT_ENTITLED',
+    };
+    expect(exportStatusLine(false, outcome)).toBe(entitlementRequiredLine('standard'));
+  });
+});
+
+describe('exportStatusLine — a produced package is not a delivered one', () => {
+  const BASE = {
+    ok: true, governed: true, filename: 'K250001_eSTAR.pdf', formattingErrors: 0, formattingWarnings: 0,
+    blockers: [], blockedByEntitlement: false, requiredTier: null, fieldReport: null, error: null,
+  };
+
+  it('says Downloaded only when the browser actually took the file', () => {
+    const line = exportStatusLine(false, { ...BASE, delivered: true } as EstarExportOutcome);
+    expect(line).toContain('Downloaded K250001_eSTAR.pdf');
+  });
+
+  it('says the download was blocked instead of claiming it arrived', () => {
+    // The official FDA eSTAR is the one artifact the user must actually
+    // receive; "Downloaded …" over a blocked download sends them to look in a
+    // downloads folder that has nothing in it.
+    const line = exportStatusLine(false, { ...BASE, delivered: false } as EstarExportOutcome);
+    expect(line).toContain('browser blocked the download');
+    expect(line).not.toContain('Downloaded');
+  });
+
+  it('keeps the formatting and registry clauses on the blocked line', () => {
+    const line = exportStatusLine(false, {
+      ...BASE, delivered: false, governed: false, formattingErrors: 2, formattingWarnings: 1,
+    } as EstarExportOutcome);
+    expect(line).toContain('browser blocked the download');
+    expect(line).toContain('2 formatting errors');
+    expect(line).toContain('artifact registry placement pending');
   });
 });

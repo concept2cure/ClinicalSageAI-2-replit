@@ -106,7 +106,11 @@ CREATE TABLE concept2cure_provenance_events (
 CREATE TABLE audit_logs (
   id text PRIMARY KEY, tenant_id integer, user_id integer, action text, table_name text, record_id text,
   actor_id integer, target text, target_type text, target_id text, reason text, payload_hash text,
-  ana_action_id text, sha256_chain text, occurred_at timestamptz NOT NULL DEFAULT now(), hmac_seal text
+  ana_action_id text, sha256_chain text, occurred_at timestamptz NOT NULL DEFAULT now(), hmac_seal text,
+  old_values   json,
+  new_values   json,
+  ip_address   text,
+  user_agent   text
 );
 `;
 
@@ -137,6 +141,13 @@ beforeAll(async () => {
   // REAL ledger DDL — including c2c_ana_actions_command_check, which pins the
   // command vocabulary the handlers are allowed to emit.
   await pglite.exec(fs.readFileSync(path.join(REPO_ROOT, 'migrations/20260527_mutation_primitives.sql'), 'utf8'));
+  // The lineage gate update_vault_document now enlists (ledger L160): a real
+  // organizations row for the FK, the evidence spine and the span-lineage store.
+  await pglite.exec(`CREATE TABLE IF NOT EXISTS organizations (id SERIAL PRIMARY KEY, name TEXT);`);
+  await pglite.exec(`INSERT INTO organizations (id, name) VALUES (1, 'org-1'), (9, 'org-9') ON CONFLICT DO NOTHING;`);
+  for (const rel of ['db/migrations/20260724_clinical_regulatory_evidence_spine.sql', 'db/migrations/20260803_document_span_lineage.sql']) {
+    await pglite.exec(fs.readFileSync(path.join(REPO_ROOT, rel), 'utf8'));
+  }
 });
 afterAll(async () => { await pglite.close(); });
 beforeEach(async () => {
@@ -364,6 +375,12 @@ describe('update_vault_document — new regulated version is audited atomically'
     expect((await pglite.query(`SELECT * FROM concept2cure_artifact_versions`)).rows).toHaveLength(2);
     expect(await auditRows()).toHaveLength(1);
     expect((await ledgerRows())[0].payload).toMatchObject({ kind: 'version', from: 1, to: 2 });
+    // Ledger L160: the new version's text is attributed, in the same transaction.
+    const spans = await q(
+      `SELECT count(*)::int AS n FROM document_span_lineage
+        WHERE document_table = 'concept2cure_artifacts' AND provenance_kind = 'author_assertion' AND deleted_at IS NULL`,
+    );
+    expect(Number(spans.rows[0].n)).toBeGreaterThanOrEqual(1);
   });
 
   it('FAILS CLOSED — a broken audit write rolls the new version back', async () => {

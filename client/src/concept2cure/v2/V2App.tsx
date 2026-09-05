@@ -99,6 +99,18 @@ import './styles/misc-surfaces-v2.css';
 import './styles/device-v2.css';
 import './styles/pathway-core-v2.css';
 import './styles/pathway-panels-v2.css';
+/* LAST, deliberately. `surface-text-ramp.css` re-bases `--text-400` /
+   `--text-300` on every element that establishes a tinted surface, so it has to
+   load after the sheets that declare those surfaces — a custom property set
+   earlier in the cascade would be overwritten by the rule it is correcting.
+   This is the v2/ slice — one generated sheet per shell tree, because Vite keeps
+   every shell CSS chunk in <head> for the session and a class defined in two
+   trees is a page-wide collision (ci:check-shell-css-collisions). It also
+   carries the stylesheets outside the three trees (index.css, styles/,
+   _shared/, quality/), which v2 owns as the root shell that mounts the others.
+   GENERATED: scripts/design/generate-surface-text-ramp.mjs, drift-checked by
+   ci:surface-text-ramp. See GA ledger L102. */
+import './styles/surface-text-ramp.css';
 import { restoreShellProject } from './shellProject';
 
 const PREFS_KEY = 'c2c-v2-prefs';
@@ -192,6 +204,11 @@ export function adaptChatMessage(m: AnaChatMessage): AnaMessage {
       toolCalls: m.toolCalls,
       thinking: m.thinking,
       draftTitle: m.generatedDraft?.title,
+      /* The clock. Sent-at has been on every turn since the hook was written
+         and was dropped here like the rest; completed-at is recorded on
+         post_done, stop and failure. */
+      startedAt: m.sentAt,
+      completedAt: m.completedAt,
     },
   };
 }
@@ -786,6 +803,10 @@ export function V2App() {
           onResume={() => void anaChat.resume()}
           onStop={() => anaChat.stop()}
           onSteer={(m) => void anaChat.interject(m)}
+          /* The live work dock reads the raw turns: progress phases, tool
+             timings, pending steers and outputs that the adapted rail message
+             shape does not carry. */
+          work={{ messages: anaChat.messages, pendingSteers: anaChat.pendingSteers }}
           liveDrive={{
             on: prefs.liveDrive,
             locked: drive.lock,

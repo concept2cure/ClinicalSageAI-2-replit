@@ -74,6 +74,8 @@ import {
   extractRequestText,
   getPiiEnforcement,
 } from './pii-screen.js';
+// In-flight concurrency limiter — bounds simultaneous outbound provider calls.
+import { Semaphore, resolveMaxConcurrency } from './concurrency.js';
 const log = createScopedLogger('ai-gateway');
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -327,61 +329,6 @@ const DETERMINISTIC_RESPONSES: Record<TaskType, string> = {
     'Set `ANTHROPIC_API_KEY` in your `.env` file to enable full regulatory intelligence. ' +
     'All governance features (promotion, contradictions, readiness) work independently of the AI provider.',
 };
-
-// ─────────────────────────────────────────────────────────────────────────────
-// In-flight concurrency limiter (bounded outbound AI calls)
-//
-// The gateway has retry / circuit-breaker / timeout, but nothing previously
-// capped the number of simultaneously in-flight outbound provider calls. A
-// burst of requests could pile up unbounded concurrent calls — driving cost,
-// latency, and provider rate-limit cascades. This semaphore bounds the number
-// of concurrent outbound calls; excess callers queue (FIFO) until a slot frees
-// up, so every request still completes, just not all at once.
-//
-// Tunable via AI_GATEWAY_MAX_CONCURRENCY (default 20). <= 0 / unset → default.
-// ─────────────────────────────────────────────────────────────────────────────
-
-class Semaphore {
-  private permits: number;
-  private readonly queue: Array<() => void> = [];
-
-  constructor(maxConcurrent: number) {
-    this.permits = Math.max(1, maxConcurrent);
-  }
-
-  private acquire(): Promise<void> {
-    if (this.permits > 0) {
-      this.permits--;
-      return Promise.resolve();
-    }
-    return new Promise<void>(resolve => this.queue.push(resolve));
-  }
-
-  private release(): void {
-    const next = this.queue.shift();
-    if (next) {
-      // Hand the permit directly to the next waiter (keeps the count balanced).
-      next();
-    } else {
-      this.permits++;
-    }
-  }
-
-  /** Run `fn` while holding a permit; the permit is always released, even on throw. */
-  async run<T>(fn: () => Promise<T>): Promise<T> {
-    await this.acquire();
-    try {
-      return await fn();
-    } finally {
-      this.release();
-    }
-  }
-}
-
-function resolveMaxConcurrency(): number {
-  const raw = Number.parseInt(process.env.AI_GATEWAY_MAX_CONCURRENCY ?? '', 10);
-  return Number.isFinite(raw) && raw > 0 ? raw : 20;
-}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Gateway Class
@@ -817,8 +764,16 @@ export class AIGateway {
     const detectedDataClass = request.sensitiveDataClass ?? 'unknown';
     // Development retains audit-only usefulness; production always uses the
     // explicit deployment contract and fails closed on unknown classification.
+    // AI_SENSITIVE_DATA_POLICY_MODE is the same deployment contract the
+    // production boot assert requires (strictly 'enforce'): any environment
+    // that declares it — staging included — gets dispatch-time enforcement,
+    // not just a passing boot check. AI_PII_ENFORCEMENT=block keeps its
+    // existing meaning as an equivalent opt-in.
     const enforcement = getPiiEnforcement();
-    const enforced = process.env.NODE_ENV === 'production' || enforcement === 'block';
+    const enforced =
+      process.env.NODE_ENV === 'production' ||
+      process.env.AI_SENSITIVE_DATA_POLICY_MODE === 'enforce' ||
+      enforcement === 'block';
     if (!enforced) {
       // 'off' disables screening entirely. 'audit' exists to make otherwise
       // invisible exposure visible, so it still RECORDS the placement signal

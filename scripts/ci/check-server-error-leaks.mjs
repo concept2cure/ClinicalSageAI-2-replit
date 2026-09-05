@@ -78,8 +78,19 @@ const STATUS_5XX = /\.status\(\s*(5\d\d)\s*\)/g;
  * is what keeps the gate precise: `.message` alone cannot be judged — a job
  * record, a validation result and a Zod issue all have one — but `err.message`
  * inside a 5xx body is the failure text by construction.
+ *
+ * The list used to be literal — err|error|e|ex|cause|reason|dbErr|dbError|pgErr
+ * — which meant a catch NAMED for what it was doing was invisible to the gate.
+ * `catch (promoteErr)`, `catch (renderErr)`, `catch (fallbackErr)`,
+ * `catch (artErr)` are all ordinary in this tree, and six 5xx bodies were
+ * shipping `<thing>Err.message` to the client while this gate reported green.
+ * A gate that is silent on a naming convention the codebase actually uses is
+ * not measuring what its name says. The trailing alternative matches any
+ * identifier ending in `Err`/`Error`; the fixed names stay for `e`, `ex`,
+ * `cause` and `reason`, which that pattern cannot cover.
  */
-const ERR_BINDING = '(?:err|error|e|ex|cause|reason|dbErr|dbError|pgErr)';
+const ERR_BINDING =
+  '(?:err|error|e|ex|cause|reason|[A-Za-z_$][\\w$]*(?:Err|Error))';
 
 /** `.message` read off a caught error, in any of the observed spellings. */
 const LEAK_PATTERNS = [
@@ -122,6 +133,32 @@ function stripComments(src) {
   return src.replace(/\/\*[\s\S]*?\*\//g, (m) => m.replace(/[^\n]/g, ' ')).replace(/\/\/[^\n]*/g, '');
 }
 
+/**
+ * Index just past the response statement beginning at `window[0]`.
+ *
+ * Walks from the `res.status(...)` call tracking bracket depth, skipping string
+ * and template literals so a `;` or brace inside a message cannot end it early,
+ * and stops at the first `;` at depth 0 — the actual end of the statement. Falls
+ * back to the whole window if the statement is unterminated within it.
+ */
+function responseStatementEnd(window) {
+  let depth = 0;
+  let quote = null;
+  for (let i = 0; i < window.length; i++) {
+    const c = window[i];
+    if (quote) {
+      if (c === '\\') { i++; continue; }
+      if (c === quote) quote = null;
+      continue;
+    }
+    if (c === "'" || c === '"' || c === '`') { quote = c; continue; }
+    if (c === '(' || c === '[' || c === '{') { depth++; continue; }
+    if (c === ')' || c === ']' || c === '}') { depth--; continue; }
+    if (c === ';' && depth <= 0) return i + 1;
+  }
+  return window.length;
+}
+
 const findings = [];
 for (const root of SCAN_ROOTS) {
   for (const file of walk(root)) {
@@ -132,9 +169,21 @@ for (const root of SCAN_ROOTS) {
     let m;
     while ((m = STATUS_5XX.exec(src)) !== null) {
       const window = src.slice(m.index, m.index + WINDOW);
-      // Only the body that is actually being sent: stop at the end of this
-      // statement so a later, unrelated line cannot be attributed here.
-      const body = window.slice(0, window.indexOf('\n\n') === -1 ? WINDOW : window.indexOf('\n\n'));
+      // Only the body that is actually being sent.
+      //
+      // This used to cut at the first BLANK LINE, which is not the end of a
+      // statement — and the common shape of a fail-closed handler has no blank
+      // line in it:
+      //
+      //     return res.status(503).json({ error: { code: 'X', message: 'static' } });
+      //   }
+      //   console.error('...', err instanceof Error ? err.message : String(err));
+      //
+      // so the LOGGER's `err.message` was attributed to the RESPONSE and a
+      // correct handler was reported as a leak. That is worse than a missed
+      // finding: a gate that fires on correct code is one people silence by
+      // widening the baseline, which is how a real leak gets in.
+      const body = window.slice(0, responseStatementEnd(window));
       if (!/\.json\s*\(|\.send\s*\(/.test(body)) continue;
       const hit = LEAK_PATTERNS.find((re) => re.test(body));
       if (!hit) continue;

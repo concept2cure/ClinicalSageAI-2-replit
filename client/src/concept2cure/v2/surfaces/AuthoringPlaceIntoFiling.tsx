@@ -47,6 +47,7 @@ import { liveGetOrNull } from '../dataConnect';
 import { mutateVerbatim } from './SubmissionSeqWorkspaces';
 import { SC_LIFECYCLE_OPS, SC_SEQ_STATUS } from '../fixtures/submission';
 import type { FireToast } from '../toast';
+import { documentSourceLabel } from '@shared/regulatory/canonical-document';
 
 /* ── Server row shapes (only the columns this dialog reads) ── */
 
@@ -87,12 +88,25 @@ interface PlacedLeaf {
  *  isSequenceLocked) — mirrored here so the picker can say WHY it excludes. */
 const isLocked = (status: string) => status === 'frozen' || status === 'dispatched';
 
-/** The one honest statement of why placement is a derivation. Pinned by test. */
+/**
+ * The one honest statement of why placement is a derivation. Pinned by test.
+ *
+ * It used to explain the derivation in the terms an engineer would use — that
+ * leaves point at integer document rows while authoring documents are
+ * uuid-keyed. True, and useless to the person reading it: a regulatory director
+ * cannot act on a key type, and the sentence left them no clearer about what
+ * pressing the button would do to their submission.
+ *
+ * What they DO need is the part that has regulatory consequence — that the
+ * thing filed is a point-in-time copy of the SAVED document, so anything
+ * unsaved does not travel with it. That fact is kept and made the subject of
+ * the sentence; the key-type explanation stays in this file's header, where the
+ * reader is the next engineer.
+ */
 export const IDENTITY_STATEMENT =
-  'This document lives in the governed authoring store, which the filing core cannot ' +
-  'reference directly (leaves point at integer document rows; authoring documents are ' +
-  'uuid-keyed). Placing files a point-in-time snapshot of the SAVED sections into the ' +
-  'Co-Author store — the filing core’s renderable source — and places that snapshot as the leaf.';
+  'The submission of record cannot point at a working draft, so placing does not move this ' +
+  'document — it files a point-in-time copy of the SAVED sections and places that copy as ' +
+  'the leaf. What reaches the sequence is exactly what has been saved, not what is on screen.';
 
 /**
  * Assemble the saved sections into one snapshot body — the SAME format the
@@ -235,6 +249,16 @@ export function AuthoringPlaceIntoFiling({
         title: docTitle,
         moduleNumber: section.trim(),
         content: body,
+        /* Names the source so the server can read ITS governed state. The
+           snapshot's status is derived there, never sent from here: a
+           client-supplied status would let any caller mark a draft approved
+           and make an incomplete package report itself complete.
+           Without this the snapshot was always 'draft', and the eCTD
+           completeness check — which correctly refuses to count a draft —
+           made this path structurally incapable of producing a filable
+           package, however thoroughly the document had been frozen and
+           signed. */
+        sourceAuthoringDocId: docId,
       });
       const snapshotId = snap.data?.document?.id;
       if (typeof snapshotId !== 'number') {
@@ -258,7 +282,8 @@ export function AuthoringPlaceIntoFiling({
           tone: 'err',
           text:
             `The leaf was refused — ${put.error ?? 'the request failed'}. ` +
-            `Snapshot #${snapshotId} was created in the Co-Author store, but nothing was placed in the sequence.`,
+            `The filing copy was created (${documentSourceLabel('coauthor_documents', snapshotId)}), ` +
+            `but nothing was placed in the sequence.`,
         });
         return;
       }
@@ -268,7 +293,7 @@ export function AuthoringPlaceIntoFiling({
         tone: 'ok',
         text:
           `Placed as leaf ${put.data.sectionCode} in sequence ${sequenceLabel} — ` +
-          `server-confirmed (leaf #${put.data.id}, snapshot coauthor_documents #${snapshotId}).`,
+          `server-confirmed (leaf #${put.data.id}, from ${documentSourceLabel('coauthor_documents', snapshotId)}).`,
       });
       fireToast(`Placed into filing — leaf ${put.data.sectionCode} in sequence ${seq.sequenceNumber}.`);
     } finally {
@@ -416,8 +441,8 @@ export function AuthoringPlaceIntoFiling({
               <div className="de-gov">
                 <span className="ico">{I.lock}</span>
                 <span className="de-gov-t">
-                  Placement writes a submission_leaves row in the canonical core (audited,
-                  org-scoped). The server refuses a frozen or dispatched sequence.
+                  Placement is recorded in the submission of record — audited and
+                  org-scoped. The server refuses a frozen or dispatched sequence.
                 </span>
               </div>
 
@@ -462,7 +487,7 @@ export function AuthoringPlaceIntoFiling({
                         : 'Snapshot the saved document and place it as a leaf'
                 }
               >
-                {I.layers} {placing ? 'Placing…' : 'Place leaf (PUT /leaves)'}
+                {I.layers} {placing ? 'Placing…' : 'Place leaf in the sequence'}
               </button>
             </div>
           </div>

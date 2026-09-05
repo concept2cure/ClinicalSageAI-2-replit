@@ -74,6 +74,32 @@ export interface AnaToolCall {
    * audit disclosure, this is the sentence.
    */
   message?: string;
+  /** Client clock (ms) when the `tool_use` event arrived. */
+  startedAt?: number;
+  /** Client clock (ms) when the `tool_result` event arrived. */
+  endedAt?: number;
+  /**
+   * How long the step took, measured SERVER-side around the handler and
+   * carried on `tool_result` — the same number the tool-telemetry row gets.
+   * Preferred over the client clocks, which include transport.
+   */
+  latencyMs?: number;
+}
+/**
+ * One phase a turn passed through, in order. Derived from the events the
+ * stream really emitted (see anaProgress.ts) — never a template: a turn that
+ * ran no tools has no "running steps" phase, and a phase exists only once its
+ * event has arrived. `active` is the one in flight; `stopped` means the turn
+ * was cut short in it (stop, cancel, failure, timeout).
+ */
+export interface AnaProgressPhase {
+  /** Server phase id (`orchestrating`, `running_tools`, …) or a client one (`composing`). */
+  phase: string;
+  /** The sentence shown for it — the server's own message when it sent one. */
+  label: string;
+  status: 'active' | 'done' | 'stopped';
+  startedAt: number;
+  endedAt?: number;
 }
 /**
  * Result of `verify_docx_against_source` — the audited "verify it against your
@@ -251,6 +277,18 @@ export interface AnaChatMessage {
   warnings?: string[];
   /** Timestamp (ms) when this turn was kicked off. Used for relative time chips. */
   sentAt?: number;
+  /**
+   * Client clock (ms) when the turn finished — the answer AND the server's
+   * background finishing work (`post_done`), or the moment it was stopped or
+   * failed. Absent while the turn is in flight. `latencyMs` above is the
+   * server's own answer-time; this is the wall-clock end for the elapsed line.
+   */
+  completedAt?: number;
+  /**
+   * The ordered phases this turn passed through — the numbered progress list
+   * in the work panel. See {@link AnaProgressPhase} for the honesty contract.
+   */
+  progress?: AnaProgressPhase[];
   /**
    * Draft produced by a document-generating tool this turn. The rail reads
    * `title` only; nothing routes `content` anywhere, so this is NOT
@@ -493,6 +531,14 @@ export interface UseAnaChatReturn {
   resume: () => Promise<boolean>;
   /** Interject a steering message into the running investigation. */
   interject: (message: string) => Promise<boolean>;
+  /**
+   * Steers the server has ACCEPTED (2xx on the control endpoint) but not yet
+   * spliced into a round — it consumes them only at the next round boundary
+   * and confirms each with an `interjected` event, which removes it here. What
+   * is waiting in the queue, so the person can see a steer is pending rather
+   * than wonder whether it was taken. Cleared when the run ends.
+   */
+  pendingSteers: string[];
   /** Reset the conversation (new thread). */
   reset: () => void;
   /** Hydrate the panel with an existing thread's messages. */

@@ -70,6 +70,22 @@ export const estarRegistrations = pgTable(
 
     notes: text('notes'),
 
+    // Org-level facts the official eSTAR's Correspondent Information section
+    // and Declaration of Conformity page ask for (WO-8 Phase 3;
+    // migrations/20260903_estar_registration_correspondent.sql). The eSTAR
+    // administrative-data projection reads them as governed sources
+    // (estar_registrations.<column>). Nullable: blank is reported, never guessed.
+    correspondentCompanyName: varchar('correspondent_company_name', { length: 256 }),
+    correspondentContactEmail: varchar('correspondent_contact_email', { length: 256 }),
+    correspondentTelephone: varchar('correspondent_telephone', { length: 64 }),
+    // The Declaration of Conformity is signed by ONE legal entity, so its
+    // company name pairs with declaration_company_address on this same row
+    // (migrations/20260904_estar_registration_declaration_company_name.sql).
+    // Blank falls back to the applicant workspace / organization name, which is
+    // what the DoC name resolved to before this column existed.
+    declarationCompanyName: varchar('declaration_company_name', { length: 256 }),
+    declarationCompanyAddress: text('declaration_company_address'),
+
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
     createdBy: integer('created_by'),

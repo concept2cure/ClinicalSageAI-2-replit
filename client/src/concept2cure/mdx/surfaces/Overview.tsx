@@ -231,19 +231,11 @@ export function Overview({ programs: sourcePrograms, onOpenProgram, onAskAna }: 
       {sourcePrograms.length === 0 && programs.length === 0 ? (
         <div
           className="empty-state"
-          style={{
-            padding: '40px 24px',
-            textAlign: 'center',
-            background: 'var(--bg-050)',
-            border: '1px dashed var(--border-100)',
-            borderRadius: 8,
-            color: 'var(--text-200)',
-          }}
         >
-          <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-100)', marginBottom: 6 }}>
+          <div className="empty-state-t">
             No programs yet
           </div>
-          <div style={{ fontSize: 12, marginBottom: 14 }}>
+          <div className="empty-state-s">
             Programs you create appear here. Start a 510(k), PMA, or CER program from the workflow above.
           </div>
           <button

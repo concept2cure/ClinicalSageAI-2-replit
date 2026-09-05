@@ -17,13 +17,14 @@
  *   DELETE /api/c2c/documents/:id/sections/:key/evidence/:evId — remove evidence link
  *   POST   /api/c2c/documents/:id/lock                  — lock document via /actions/lock
  *   POST   /api/c2c/documents/:id/submit                — submit (sets submitted_at)
- *   POST   /api/c2c/documents/:id/sections/:key/ai-draft — SSE streaming AnA draft
  *
- * The /ai-draft route (S1) heals the split-brain: AnA now drafts directly into
- * the governed c2c_documents model this UI reads, streaming tokens over SSE
- * instead of the legacy blocking JSON call on authoring_sections. It does NOT
- * persist — the human accepts a streamed draft via PATCH (draftSource:'ana'),
- * preserving the human-in-the-loop and Part-11 attribution contracts.
+ * There is no AI-draft route here any more (ledger L32). The SSE stream this
+ * module used to carry drafted against Data Room sources it never parked, so a
+ * draft accepted through PATCH could carry author lineage but never source
+ * lineage — and nothing in the client called it. Drafting lives in
+ * server/routes/authoring.router.ts (POST /api/authoring/sections/:id/ai/draft
+ * and its /accept), which parks the retrieved sources server-side and records
+ * verified source + author spans in the same transaction as the content.
  *
  * @module server/routes/c2c/documents
  */
@@ -872,17 +873,82 @@ router.post('/:id/lock', async (req: Request, res: Response) => {
 
 // ── POST /api/c2c/documents/:id/submit ───────────────────────────────────────
 //
-// Sets submitted_at and status='submitted'. Snapshot to concept2cure_artifacts
-// and gateway fire are Moat #5 scope — not wired here.
+// Sets submitted_at and status='submitted' — on evidence that a filing actually
+// happened. This route used to flip the status on a reason string alone: no
+// package assembled, no sequence dispatched, nothing left the platform, yet the
+// document (and every surface that reads its status) claimed it had been filed.
+// A status of 'submitted' is a regulatory claim, and this was the one place in
+// the product that could make it without a basis.
+//
+// Two bases are accepted. Whichever is given is persisted on the governed
+// ledger row this route already writes (c2c_ana_actions.payload, hash-chained
+// into audit_logs) beside the actor and the reason:
+//
+//   sequenceId     — an ectd_sequences row in the caller's organization that
+//                    has been dispatched (status 'dispatched', or dispatch_status
+//                    'sent' / 'acknowledged'). submission_leaves cannot tie a
+//                    sequence to a c2c document in the current schema — its
+//                    document_id is an INTEGER polymorphic key and
+//                    c2c_documents.id is TEXT — and c2c_documents has no
+//                    sequence column, so the tie is recorded on the ledger row
+//                    rather than inferred from a leaf that cannot exist.
+//   externalFiling — { channel, reference, filedAt }: an explicit attestation
+//                    that the filing was made outside the platform (ESG, CDRH
+//                    portal, CESP, courier), with the gateway receipt or portal
+//                    confirmation number. The operator's assertion, attributed
+//                    to them — not the platform's.
+//
+// Snapshot to concept2cure_artifacts is Moat #5 scope — not wired here.
+
+const DISPATCHED_DISPATCH_STATUSES = new Set(['sent', 'acknowledged']);
 
 router.post('/:id/submit', async (req: Request, res: Response) => {
   const userId = resolveUserId(req);
   const orgId  = resolveOrgId(req);
   if (!userId || !orgId) return send403(res);
 
-  const { reason } = req.body as { reason?: string };
+  const { reason, sequenceId, externalFiling } = req.body as {
+    reason?: string;
+    sequenceId?: unknown;
+    externalFiling?: unknown;
+  };
   if (!reason || typeof reason !== 'string' || reason.trim() === '') {
     return send400(res, 'reason required');
+  }
+
+  // Shape validation before any database work — the same hand validation the
+  // rest of this file uses.
+  let sequenceIdNum: number | null = null;
+  if (sequenceId !== undefined) {
+    const n = typeof sequenceId === 'string' ? Number(sequenceId) : sequenceId;
+    if (typeof n !== 'number' || !Number.isInteger(n) || n <= 0) {
+      return send400(res, 'sequenceId must be a positive integer');
+    }
+    sequenceIdNum = n;
+  }
+
+  let external: { channel: string; reference: string; filedAt: string } | null = null;
+  if (externalFiling !== undefined) {
+    const ef = externalFiling as Record<string, unknown> | null;
+    if (!ef || typeof ef !== 'object' || Array.isArray(ef)) {
+      return send400(res, 'externalFiling must be an object { channel, reference, filedAt }');
+    }
+    const channel   = typeof ef.channel   === 'string' ? ef.channel.trim()   : '';
+    const reference = typeof ef.reference === 'string' ? ef.reference.trim() : '';
+    const filedAt   = typeof ef.filedAt   === 'string' ? Date.parse(ef.filedAt) : NaN;
+    if (!channel)   return send400(res, 'externalFiling.channel required');
+    if (!reference) return send400(res, 'externalFiling.reference required (gateway receipt or portal confirmation number)');
+    if (Number.isNaN(filedAt)) return send400(res, 'externalFiling.filedAt must be an ISO 8601 date');
+    external = { channel, reference, filedAt: new Date(filedAt).toISOString() };
+  }
+
+  if (sequenceIdNum === null && external === null) {
+    return res.status(409).json({
+      error: 'FILING_EVIDENCE_REQUIRED',
+      message:
+        'Nothing has been filed. Supply the dispatched sequenceId, or an externalFiling ' +
+        '{ channel, reference, filedAt } attestation for a filing made outside the platform.',
+    });
   }
 
   try {
@@ -897,6 +963,42 @@ router.post('/:id/submit', async (req: Request, res: Response) => {
       return res.status(409).json({ error: 'ALREADY_SUBMITTED' });
     }
 
+    const filing: Record<string, unknown> = {};
+    if (sequenceIdNum !== null) {
+      // Org-scoped, like the 'ectd-sequence' target resolver in actions.ts: an
+      // id that does not resolve in this organization is indistinguishable
+      // from one that does not exist.
+      const seq = await pool.query(
+        `SELECT id, status, dispatch_status, sequence_number, region
+           FROM ectd_sequences
+          WHERE id = $1::int AND organization_id = $2 AND deleted_at IS NULL
+          LIMIT 1`,
+        [sequenceIdNum, orgId],
+      );
+      if (seq.rows.length === 0) return send400(res, 'SEQUENCE_NOT_FOUND');
+      const row = seq.rows[0] as {
+        status: string; dispatch_status: string | null; sequence_number: string; region: string;
+      };
+      const dispatched =
+        row.status === 'dispatched' ||
+        (row.dispatch_status != null && DISPATCHED_DISPATCH_STATUSES.has(row.dispatch_status));
+      if (!dispatched) {
+        return res.status(409).json({
+          error: 'SEQUENCE_NOT_DISPATCHED',
+          sequenceStatus: row.status,
+          dispatchStatus: row.dispatch_status,
+        });
+      }
+      filing.sequence = {
+        sequenceId: sequenceIdNum,
+        sequenceNumber: row.sequence_number,
+        region: row.region,
+        status: row.status,
+        dispatchStatus: row.dispatch_status,
+      };
+    }
+    if (external) filing.external = external;
+
     // Atomic: the governed-action audit and the submit UPDATE commit or roll back
     // together, so the ledger can never record a submission that didn't take.
     const client = await pool.connect();
@@ -904,7 +1006,7 @@ router.post('/:id/submit', async (req: Request, res: Response) => {
       await client.query('BEGIN');
       const result = await writeMutation(
         'transition',
-        { target: `document:${req.params.id}`, reason: reason.trim() },
+        { target: `document:${req.params.id}`, reason: reason.trim(), payload: { filing } },
         userId,
         orgId,
         'api',
@@ -918,7 +1020,7 @@ router.post('/:id/submit', async (req: Request, res: Response) => {
         [req.params.id],
       );
       await client.query('COMMIT');
-      return res.json({ ...result, status: 'submitted' });
+      return res.json({ ...result, status: 'submitted', filing });
     } catch (txnErr) {
       await client.query('ROLLBACK').catch(() => {});
       throw txnErr;
@@ -928,223 +1030,6 @@ router.post('/:id/submit', async (req: Request, res: Response) => {
   } catch (err: unknown) {
     console.error('[c2c/documents] POST /:id/submit', err);
     return res.status(500).json({ error: 'INTERNAL_ERROR' });
-  }
-});
-
-// ── POST /api/c2c/documents/:id/sections/:key/ai-draft ───────────────────────
-//
-// S1 — Streaming AnA draft on the CANONICAL model. Reuses the AI gateway's
-// native streaming (gateway.route({stream,onStream})) and the Data-Room hybrid
-// RAG retrieval that the legacy blocking route used, but emits tokens over SSE
-// so the author sees the draft form in real time instead of waiting for a whole
-// 3k-token completion.
-//
-// Contract: this route NEVER persists. It streams a proposed draft; the human
-// accepts it by calling PATCH …/sections/:key with {content, draftSource:'ana'},
-// which runs the Part-11 version trigger. Nothing is written to the governed
-// document without a human hand — the truthfulness/human-in-the-loop contract.
-//
-// SSE events: {type:'meta'} (sources retrieved, model), {type:'text',content},
-// {type:'thinking',content}, {type:'draft_complete', content, metadata},
-// {type:'error', message}, {type:'done'}.
-
-router.post('/:id/sections/:key/ai-draft', async (req: Request, res: Response) => {
-  const userId = resolveUserId(req);
-  const orgId  = resolveOrgId(req);
-  if (!userId || !orgId) return send403(res);
-
-  const { id, key } = req.params;
-  const { tone = 'professional', context, requirements } = (req.body ?? {}) as {
-    tone?: string; context?: string; requirements?: string;
-  };
-
-  // Resolve the section within its document + rule pack so the prompt carries
-  // real doc_type / agency / label / product context — org-scoped for tenancy.
-  let section: {
-    label: string; doc_type: string; agency: string;
-    title: string; product_code: string | null;
-  };
-  try {
-    // Document + product context (org-scoped for tenancy).
-    const docRes = await pool.query(
-      `SELECT d.doc_type, d.agency, d.title AS doc_title, d.rule_pack_version,
-              COALESCE(p.product_code, p.code, '') AS product_code
-       FROM c2c_documents d
-       LEFT JOIN regulatory_programs p ON p.id = d.project_id
-       WHERE d.id = $1 AND d.org_id = $2 LIMIT 1`,
-      [id, orgId],
-    );
-    if (docRes.rows.length === 0) return send404(res);
-    const r = docRes.rows[0] as any;
-
-    // Resolve the human-readable section label from the rule pack (same jsonb
-    // pattern PATCH uses); fall back to the key if the section isn't listed.
-    const labelRes = await pool.query(
-      `SELECT elem ->> 'label' AS label
-       FROM c2c_rule_packs rp,
-            jsonb_array_elements(rp.required_sections) AS elem
-       WHERE rp.doc_type = $1 AND rp.agency = $2 AND rp.version = $3
-             AND elem ->> 'key' = $4
-       LIMIT 1`,
-      [r.doc_type, r.agency, r.rule_pack_version, key],
-    );
-    const sectionLabel = (labelRes.rows[0] as any)?.label ?? key;
-
-    section = {
-      label: sectionLabel,
-      doc_type: r.doc_type,
-      agency: r.agency,
-      title: r.doc_title,
-      product_code: r.product_code || null,
-    };
-  } catch (err: unknown) {
-    console.error('[c2c/documents] ai-draft section resolve', err);
-    return res.status(500).json({ error: 'INTERNAL_ERROR' });
-  }
-
-  // Open the SSE stream.
-  res.writeHead(200, {
-    'Content-Type': 'text/event-stream',
-    'Cache-Control': 'no-cache, no-transform',
-    Connection: 'keep-alive',
-    'X-Accel-Buffering': 'no',
-  });
-  const sse = (payload: Record<string, unknown>) => {
-    res.write(`data: ${JSON.stringify(payload)}\n\n`);
-  };
-
-  // ── Data-Room hybrid RAG (same retrieval the legacy route used) ────────────
-  let evidenceBlock = '';
-  let sourcesRetrieved = 0;
-  /* 'empty' (retrieval ran, corpus had nothing above threshold) and 'failed'
-     (retrieval did not complete) are different facts, and only one of them
-     says anything about the Data Room. Conflating them meant an ungrounded
-     draft born of an outage looked exactly like an ordinary one. */
-  let retrievalStatus: 'ok' | 'empty' | 'failed' = 'empty';
-  let retrievalError: string | null = null;
-  try {
-    const { getEmbeddingService } = await import('../../services/enhancedEmbeddingService.js');
-    const embeddingService = getEmbeddingService(pool);
-    const searchQuery = `${section.doc_type} ${key} ${section.label} ${section.product_code || ''}`.trim();
-    const searchResults = await embeddingService.searchHybrid(searchQuery, 5, 0.65);
-    if (searchResults.length > 0) {
-      sourcesRetrieved = searchResults.length;
-      evidenceBlock =
-        '\n\n--- RETRIEVED EVIDENCE FROM DATA ROOM (cite as [SRC-n]) ---\n' +
-        searchResults
-          .map((r: any, i: number) => {
-            const content = r.content.length > 600 ? r.content.substring(0, 600) + '…' : r.content;
-            return `[SRC-${i + 1}] "${r.title}"\n${content}`;
-          })
-          .join('\n\n') +
-        '\n--- END EVIDENCE ---\n\n' +
-        'When your content relies on evidence above, cite it inline using [SRC-n]. ' +
-        'Do NOT fabricate citations for evidence not provided.';
-      retrievalStatus = 'ok';
-    } else {
-      // Retrieval RAN and the corpus held nothing above threshold — a fact
-      // about the Data Room, unlike a failure. Set explicitly rather than left
-      // to the initialiser so all three outcomes are visible at the branch.
-      retrievalStatus = 'empty';
-    }
-  } catch (e: any) {
-    retrievalStatus = 'failed';
-    retrievalError = e?.message ? String(e.message).slice(0, 300) : 'unknown error';
-    console.warn('[c2c/documents] ai-draft Data Room retrieval failed (non-fatal):', retrievalError);
-  }
-
-  sse({ type: 'meta', sourcesRetrieved, retrievalStatus, retrievalError });
-
-  // ── Stream the draft from the gateway ──────────────────────────────────────
-  try {
-    const { getGateway } = await import('../../services/ai-gateway/gateway.js');
-    const gw = getGateway();
-    if (gw.getEnabledProviders().length === 0) {
-      // Honest failure — no fabricated content when no provider is available.
-      sse({ type: 'error', message: 'AI drafting is unavailable (no model provider configured).' });
-      sse({ type: 'done' });
-      return res.end();
-    }
-
-    // Industry-specific tailoring: resolve the framework-grade system prompt for
-    // THIS build type from the Global Document Registry — the same authoring
-    // brain the batch drafter uses — so a 510(k) section drafts like a 510(k), an
-    // IVDR section speaks to the Annex XIII performance evaluation, a CTD section
-    // follows ICH M4, an eTMF artifact follows the DIA reference model. The map
-    // normalizes c2c doc_type ids to registry submission types; unmapped types
-    // fall back gracefully to the resolver's default.
-    const { resolveSystemPrompt } = await import('../../services/ana/AnaDocumentDraftingService.js');
-    const DOC_TYPE_TO_SUBMISSION: Record<string, string> = {
-      k510: '510k', pma: 'PMA', denovo: 'De Novo', ide: 'IDE',
-      ivdr: 'IVDR', ivdr_tf: 'IVDR', ivdr_pe: 'IVDR', cer: 'MDR',
-      nda: 'NDA', bla: 'BLA', anda: 'ANDA', maa: 'MAA', impd: 'EU_CTA',
-      ind: 'US_IND', ectd: 'NDA', dmf: 'DMF', tmf: 'US_IND',
-    };
-    const submissionType =
-      DOC_TYPE_TO_SUBMISSION[String(section.doc_type).toLowerCase()] ?? section.doc_type;
-    const systemPrompt = resolveSystemPrompt(submissionType);
-
-    const prompt = `Generate professional ${section.agency} regulatory content for:
-Document: ${section.title} (${section.doc_type})
-Section: ${key} — ${section.label}
-Product: ${section.product_code || 'the product'}
-Tone: ${tone}
-${context ? `Context: ${context}` : ''}
-${requirements ? `Requirements: ${requirements}` : ''}
-${evidenceBlock}
-
-Provide detailed, compliance-ready content following ${section.agency} guidelines. Do not invent quantitative results; where a value is unknown, state that it must be supplied.`;
-
-    let assembled = '';
-    const gwResponse = await gw.route({
-      taskType: 'document_drafting',
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: prompt },
-      ],
-      maxTokens: 3000,
-      temperature: 0.3,
-      stream: true,
-      onStream: (chunk: string, meta?: { type?: string }) => {
-        if (meta?.type === 'thinking') {
-          sse({ type: 'thinking', content: chunk });
-          return;
-        }
-        assembled += chunk;
-        sse({ type: 'text', content: chunk });
-      },
-      organizationId: orgId,
-      userId,
-      callerModule: 'c2c/documents/ai-draft',
-    });
-
-    const finalContent = (assembled || gwResponse.content || '').trim();
-    sse({
-      type: 'draft_complete',
-      content: finalContent,
-      metadata: {
-        tone,
-        agency: section.agency,
-        docType: section.doc_type,
-        submissionType,
-        sectionKey: key,
-        model: gwResponse.model,
-        provider: gwResponse.provider,
-        sourcesRetrieved,
-        /* An ungrounded draft caused by a retrieval outage must not look like
-           one produced against an empty corpus. */
-        retrievalStatus,
-        retrievalError,
-        generatedAt: new Date().toISOString(),
-      },
-    });
-    sse({ type: 'done' });
-    return res.end();
-  } catch (err: unknown) {
-    console.error('[c2c/documents] ai-draft stream', err);
-    sse({ type: 'error', message: err instanceof Error ? err.message : 'draft generation failed' });
-    sse({ type: 'done' });
-    return res.end();
   }
 });
 

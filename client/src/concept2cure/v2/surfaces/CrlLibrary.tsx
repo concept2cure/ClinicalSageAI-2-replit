@@ -34,10 +34,11 @@
  * is handed the shell's `onAsk` and the shell draws the rail that answers it.
  * The point of looking at a letter is being able to ask about it.
  */
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 
 import { I } from '../icons';
 import { EmptyState, useLiveData } from '../dataConnect';
+import { useSurfaceActionHandlers, notifySurfaceActionReady } from '../surfaceActions';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { AnswerLead } from '../AnswerLead';
 import {
@@ -296,6 +297,40 @@ export function CrlLibrary({ onAsk }: SurfaceViewProps) {
   const insufficient = res.data?.insufficientEvidence;
   const sel = findings.find((f) => f.findingId === selId) ?? findings[0] ?? null;
 
+  /* AnA can open any deficiency finding by its id — the same row click a person
+     makes — so a drive can land on a specific finding's detail. Resolved against
+     the REAL search results with honest misses; held (retry) while the search
+     loads, re-attempted on the ready signal below. */
+  useSurfaceActionHandlers('crl-library', {
+    'crl-library.select-finding': (params) => {
+      const raw = String(params.finding ?? '').trim();
+      if (!raw) return { ok: false, reason: 'Name a finding by its id.' };
+      // Gate on res.loading/res.error alone: during a refetch useLiveData keeps
+      // the PRIOR query's `findings`, so resolving then would select against
+      // stale results. Held (retry) re-attempts on the ready signal once the new
+      // search lands.
+      if (res.loading) {
+        return { ok: false, reason: 'The CRL findings are still loading.', retry: true };
+      }
+      if (res.error) {
+        return { ok: false, reason: 'The CRL search did not respond, so there are no findings to open.' };
+      }
+      if (findings.length === 0) return { ok: false, reason: 'No findings in these results to open.' };
+      const needle = raw.toLowerCase();
+      const exact = findings.filter((f) => f.findingId.toLowerCase() === needle);
+      const hits = exact.length ? exact : findings.filter((f) => f.findingId.toLowerCase().includes(needle));
+      if (hits.length === 0) return { ok: false, reason: `No finding matching "${raw}" in these results.` };
+      if (hits.length > 1) return { ok: false, reason: `"${raw}" matches ${hits.length} findings — name one exactly.` };
+      const f = hits[0];
+      if (selId === f.findingId) return { ok: true, detail: `Already on ${f.findingId}` };
+      setSelId(f.findingId);
+      return { ok: true, detail: `Opened ${f.findingId}` };
+    },
+  });
+  useEffect(() => {
+    if (!res.loading && !res.error) notifySurfaceActionReady('crl-library');
+  }, [res.loading, res.error]);
+
   const set = <K extends keyof CrlQuery>(k: K, v: CrlQuery[K]) => setQ({ ...q, [k]: v });
 
   /* What AnA can see of this screen.
@@ -311,10 +346,17 @@ export function CrlLibrary({ onAsk }: SurfaceViewProps) {
      every finding for the same reason it is on screen: an extracted, unreviewed
      finding must not be quoted back as established fact. */
   const anaContext = useMemo(() => {
-    if (res.loading && !res.data) {
+    // Gate on res.loading / res.error ALONE, not `&& !res.data`: useLiveData
+    // KEEPS the previous query's data while a new fetch is in flight, and this
+    // surface rebuilds `path` from `applied` on every Search — so during a
+    // refetch `res.data` is the PRIOR query's payload while `filters` below is
+    // the NEW query. Falling through would publish the old counts as though they
+    // answered the new filters (and a prior genuine zero as a false "no findings
+    // for these constraints"). A search in progress is not an answer.
+    if (res.loading) {
       return { summary: 'The regulatory evidence graph is still being searched; nothing on screen is final yet.' };
     }
-    if (res.error && !res.data) {
+    if (res.error) {
       return {
         summary:
           'The regulatory evidence graph could not be reached, so this screen is showing no findings ' +
@@ -524,27 +566,27 @@ export function CrlLibrary({ onAsk }: SurfaceViewProps) {
 
       {/* ── Coverage row. Every count with its denominator (§8.1). ── */}
       {coverage && (
-        <div className="pj-card crl-coverage" style={{ marginBottom: 14 }}>
+        <div className="pj-card crl-coverage">
           <div className="pj-card-b crl-coverage-b">
             <span className="crl-coverage-k">Coverage</span>
             <span>{coverage.scanned} letters scanned</span>
-            <span className="crl-sep">·</span>
+            <span className="crl-sep" aria-hidden="true">·</span>
             <span>{withDenominator(coverage.eligible, coverage.scanned)} eligible on these filters</span>
-            <span className="crl-sep">·</span>
+            <span className="crl-sep" aria-hidden="true">·</span>
             <span>
               {withDenominator(coverage.structured, coverage.eligible)} with structured findings
             </span>
-            <span className="crl-sep">·</span>
+            <span className="crl-sep" aria-hidden="true">·</span>
             <span className="crl-verified">
               {withDenominator(coverage.verified, coverage.structured)} verified
             </span>
-            <span className="crl-sep">·</span>
+            <span className="crl-sep" aria-hidden="true">·</span>
             <span className="crl-note">
               Public FDA evidence only — no tenant-private source is in this result.
             </span>
             {coverage.freshness && (
               <>
-                <span className="crl-sep">·</span>
+                <span className="crl-sep" aria-hidden="true">·</span>
                 <span className="crl-note">Corpus snapshot {coverage.freshness}</span>
               </>
             )}

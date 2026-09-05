@@ -488,6 +488,23 @@ export const C2C_MIGRATION_FILES = [
   'migrations/20260730_estar_registration.sql',
   'migrations/20260730_estar_submission.sql',
   'migrations/20260730_estar_submission_project_link.sql',
+  // WO-8 Phase 3: every administrative field of the official eSTAR has a
+  // governed home. Device-level facts (common name, classification name,
+  // regulation number, associated product codes, IFU citation) are columns on
+  // regulatory_programs — created at index 1 of this set by
+  // 20260524_program_workbench_schema. Org-level correspondent / Declaration
+  // of Conformity facts are columns on estar_registrations, so that ALTER
+  // MUST stay after 20260730_estar_registration above. Both are ADD COLUMN IF
+  // NOT EXISTS on existing tenant tables — no new table, so no RLS sweep entry.
+  'migrations/20260903_regulatory_programs_estar_device_fields.sql',
+  'migrations/20260903_estar_registration_correspondent.sql',
+  // The Declaration of Conformity's company NAME, beside the address the file
+  // above added. The DoC is signed by one legal entity, so its name and
+  // address must come from one row; the name used to be read from the
+  // applicant's workspace, which holds no address. Same table, so this MUST
+  // stay after 20260730_estar_registration; ADD COLUMN IF NOT EXISTS on an
+  // existing tenant table — no new table, so no RLS sweep entry.
+  'migrations/20260904_estar_registration_declaration_company_name.sql',
 
   // Work items: source_ref for string/UUID-keyed sources (correspondence
   // issues), so those rows stop sharing the (source_type, source_id=0) key.
@@ -854,6 +871,32 @@ export const C2C_MIGRATION_FILES = [
   // one, and a view reporting reviewed-but-changed when the tree moves out from
   // under an honest review. Marks nothing reviewed. Must run AFTER 20260810c.
   'migrations/20260810d_rule_pack_review_attribution.sql',
+  // ind:fda re-seeded as ich-m4-v2.1: Module 1 numbered per the FDA eCTD Module 1
+  // Specification v2.3 (1.20 general investigational plan, 1.14.4.1 IB, 1.12.14
+  // environmental analysis) and Modules 2–5 at ICH M4 leaf granularity. The
+  // v2.0 pack stopped at four M1 headings, so the compile gate's required
+  // 1.20 / 1.14.4.x could never be satisfied from the editor. Supersedes v2.0.
+  'migrations/20260901_ind_fda_m1_v2_3_outline.sql',
+  // ind:fda ich-m4-v2.2: same outline, two initial-IND flags corrected now that
+  // the compile/validate/readiness gates read the pack's mandatory flags —
+  // 1.3.1 (post-initial contact changes) and 5.2 (prior-study listing) are
+  // optional for an initial IND. Supersedes v2.1.
+  'migrations/20260902_ind_fda_outline_v2_2_initial_ind_flags.sql',
+  // k510:fda and denovo:fda re-seeded to the eSTAR-era structure: the retired
+  // Form 3514 cover sheet and the De Novo ToC are gone; the Part 807 mandatory
+  // items (510(k) summary/statement, truthful & accuracy, Class III cert,
+  // financial cert) and cybersecurity / EMC / human factors sections exist.
+  'migrations/20260901b_estar_510k_denovo_outlines.sql',
+  // LIFE-03: ind_icsr_transmissions gains transport_receipt_id — the gateway
+  // receipt that alone justifies status = 'transmitted'. Additive, nullable,
+  // guarded on the table existing (a fresh install gets it via drizzle push).
+  'migrations/20260902_ind_icsr_transmissions_transport_receipt.sql',
+  // LIFE-01: rendered_leaf_files — the retained bytes of a server-rendered
+  // filing document. The lifecycle routes rendered the safety/annual report,
+  // kept an md5 and discarded the bytes, so every filed lifecycle sequence
+  // assembled with zero leaf files and was permanently dispatch-blocked. New
+  // table only; no backfill (nothing records what pre-existing rows contained).
+  'migrations/20260903_rendered_leaf_files.sql',
   //   • 068_regulatory_schema_alignment — creates only regulatory.information_
   //     requests, which C-35's schema-qualification fix showed is not referenced
   //     by server code at all. It is dead schema, not a live gap; the "missing
@@ -1298,6 +1341,15 @@ export const C2C_MIGRATION_FILES = [
   // 20260814g's body and carries its mandatory-reason RAISE.
   'migrations/20260822_section_version_author_kind_unspecified.sql',
 
+  // ── A revised source document is linked to the one it replaces (L21) ───────
+  // checksum is written once and never updated, so a revision is ingested as a
+  // wholly NEW row with nothing pointing back at what it replaced. That made
+  // the Source Tracer's "changed since cited" branch unreachable. Additive
+  // columns only, and no backfill: nothing in the existing data says which row
+  // superseded which, and inferring it would manufacture a lineage the system
+  // never observed.
+  'migrations/20260829_cre_source_versioning.sql',
+
   // Constraint repair only: no table, no column, no data. 0001_phase13_full
   // meant to widen concept2cure_review_tasks.task_type to include
   // 'approval_task' but added a second CHECK instead of replacing phase13's
@@ -1537,6 +1589,18 @@ export const C2C_MIGRATION_FILES = [
   // must run AFTER the canonical-shape reconciliation above.
   'migrations/20260823_vault_document_placement.sql',
 
+  // ── Document catalog: comprehension + read-coverage on vault.documents ────
+  // Two tables. vault.document_catalog records per document HOW its text was
+  // extracted (or the recorded reason extraction failed — a failure is a row
+  // that says so, never an absent row) and, once AnA has read the whole file,
+  // WHAT it is: kind, purpose, summary, key_data, embedding.
+  // vault.document_read_receipts records every character span AnA was served,
+  // keyed to content_hash; the catalog write refuses below full coverage, so a
+  // sampled page can never be recorded as "reviewed". Additive, guarded on
+  // to_regclass('vault.documents'); must run AFTER the canonical-shape
+  // reconciliation and placement entries above (same table, same discipline).
+  'migrations/20260905_document_catalog.sql',
+
   // ── Time-limited module grants ─────────────────────────────────────────────
   // Adds a nullable `expires_at` (+ who set it, when) to module_subscriptions,
   // so a grant can be opened until a date instead of only on or off. Strictly
@@ -1598,6 +1662,178 @@ export const C2C_MIGRATION_FILES = [
   // policy denies the runtime role on a fresh install (core.programs is empty
   // there). Proven by tests/db/vault-ingest.dbtest.ts.
   'db/migrations/20260828_program_org_resolution_canonical.sql',
+
+  // ── Orphaned org-GUC policies on the IND section-tracking tables ───────────
+  // 20260220_ind_section_tracking.sql created five *_org_policy policies keyed
+  // on `app.organization_id`, a GUC nothing in the application sets — so they
+  // have never granted anyone access. They are not an outage (the canonical
+  // tenant_isolation_policy is PERMISSIVE and ORs alongside them, measured: own
+  // org sees its row, another org sees none) but their cast is unguarded, so
+  // one `set_config('app.organization_id','')` anywhere takes all five tables
+  // down with 22P02 — both expressions are evaluated no matter which one grants.
+  // Dropped rather than repaired: a repair would restate what the sweep already
+  // says. Ordered before the sweep so a table is never left without a policy.
+  'db/migrations/20260828_drop_orphaned_org_guc_policies.sql',
+
+  // ── Non-public tenant policies must fail CLOSED (ordered before the sweep) ──
+  // The gcc 074-078 migrations and the earlier form of the non-public sweep
+  // emitted `<col> = COALESCE(<resolver>, <col>)`, which collapses to
+  // `<col> = <col>` — TRUE for every row — whenever the org GUC is unset, empty
+  // or not a uuid. Measured as app_service with app.rls_enforce=on: an unset
+  // GUC and a GUC of '42' each returned BOTH tenants' rows. This rewrites them
+  // to the shadow-clause form the 793 public policies already use, so they do
+  // not filter when enforcement is off and filter strictly when it is on.
+  // Idempotent; matches on shape, not on policy name.
+  'db/migrations/20260828_fail_closed_org_coalesce_policies.sql',
+
+  // ── concept2cure_artifact_versions.updated_at (GA ledger L38) ─────────────
+  // artifactVersionStore.ts names updated_at in both of its INSERTs and
+  // shared/schema.ts declares it, but none of the three migrations that create
+  // this table do — so the column exists on a drizzle-push (install-fresh)
+  // database and not on a migration-provisioned one, and the 42703 lands on the
+  // long-lived deployments. Reproduced by dropping the column and replaying the
+  // writer's own column list. Idempotent ADD COLUMN with the model's exact
+  // type, nullability and default.
+  'db/migrations/20260828_artifact_versions_updated_at.sql',
+
+  // ── Five more columns the app writes that no migration creates ────────────
+  // Same class as the entry above, found by diffing a drizzle-pushed database
+  // against every column the migration files create and keeping only those a
+  // raw INSERT in server/ actually names: concept2cure_signatures and
+  // regulatory_audit_logs (created_at/updated_at — the Part 11 signature and
+  // the audit row beside it) and concept2cure_submission_snapshots.updated_at.
+  // Each confirmed by hand; the detection also flagged the knowledge-graph
+  // tenant columns, which turned out to be added dynamically by
+  // 20260813_knowledge_graph_tenant_keys.sql and are NOT included.
+  'db/migrations/20260828_align_written_columns_with_migrations.sql',
+
+  // ── file_uploads.checksum_sha256 (GA ledger L25) ──────────────────────────
+  // Nothing recorded a digest for an uploaded document, so no stored file was
+  // verifiable after the fact — bytes altered on disk, a truncated write or a
+  // bad restore were all served as the original, and keeping file_size
+  // consistent was enough to hide it. loadUploadedFile now re-derives SHA-256
+  // over the bytes it read and REFUSES a mismatch. Existing rows stay NULL by
+  // design: hashing today's bytes would record corruption as authentic.
+  'db/migrations/20260828_file_uploads_checksum.sql',
+
+  // ── ectd_compilations.submission_id (lifecycle predecessor key) ───────────
+  // The file shipped with the eCTD lifecycle work but was never added to this
+  // manifest, so an existing estate never gained the column — and the compile
+  // path's INSERT names it, failing every spine-backed compile with 42703
+  // ("column submission_id does not exist", 0 leaves rendered). Fresh installs
+  // get it from shared/schema.ts via drizzle-kit push; this is the
+  // existing-database half. Idempotent ADD COLUMN IF NOT EXISTS + index.
+  'db/migrations/20260828_ectd_compilations_submission_id.sql',
+
+  // ── reg_questions.response_doc_id (correspondence → drafted response) ─────
+  // "Draft response" creates a governed authoring document; this column links
+  // it back to the agency question so the correspondence file can OPEN the
+  // draft it says exists. Verified org-scoped at write time (no FK — the
+  // authoring tables are ensure-DDL'd lazily). Idempotent ADD COLUMN.
+  'db/migrations/20260830_reg_questions_response_doc.sql',
+  // Must follow the sweep above: that one keys on polqual (USING), which an
+  // INSERT policy does not have, so every write-only policy slipped through
+  // with its fail-open COALESCE intact. This closes them on polwithcheck.
+  'db/migrations/20260828_fail_closed_insert_withcheck_policies.sql',
+
+  // ── CMC container closure + reference standard registers ─────────────────
+  // The two canonical source types the Module 3 composer has demanded since it
+  // was modelled and no table anywhere held, so 3.2.S.5 / 3.2.S.6 / 3.2.P.6 /
+  // 3.2.P.7 could never leave zero completeness. Both registers store `scope`
+  // (drug_substance | drug_product | both) so the section a record files into
+  // is stored rather than guessed, and both carry project_id as a column so the
+  // canonical write-through does not depend on the client having sent one.
+  'db/migrations/20260901_cmc_container_closure_reference_standard_registers.sql',
+
+  // ── CMC register store parity + the dead third change-control store
+  //    (2026-08-23; root-tree files wired here 10 days late) ─────────────────
+  // Both sat in the root tree on no durable applier, so every database upgraded
+  // by deploy-migrate (every provisioned tenant) never got them: the Module 3
+  // Specifications register 500'd on create/update/approve (no
+  // quality_specifications), and the batch register rejected every create on
+  // the columns batchRecordRoutes writes. KNOWN_UNLISTED in the manifest test
+  // was not an honest home: quality_specifications is declared in
+  // shared/cmc-schema.ts and cmc_batch_records in shared/schema/
+  // regulatory-atoms.ts, neither of which drizzle.config.ts pushes; and a
+  // DROP CONSTRAINT + ADD COLUMN block on an existing table is exactly what
+  // push cannot reproduce.
+  // Order: after 20260730_cmc_evidence_tables (specification_audit_log, which
+  // the spec routes write with every row), after 20260730_cmc_change_control_
+  // store (the store that superseded c2c_cmc_changes), after 20260401_cmc_
+  // convergence_os (adds tenant_id to the batch table where it exists), and
+  // above the isolation pair below so quality_specifications.tenant_id INTEGER
+  // gets a policy. Note the spec routes filter `tenant_id = $n OR tenant_id IS
+  // NULL`; under RLS_ENFORCE=on NULL-tenant rows are invisible — pre-existing
+  // route semantics, not introduced by the policy.
+  // cmc_batch_records is created ONLY by root migrations/0006 (fresh installs),
+  // so the parity file's ALTER block is IF EXISTS-guarded: a database without
+  // the table gets a NOTICE and quality_specifications, not a halted deploy.
+  // Follow-up, out of scope here: 0006's batch table still has no durable
+  // creator, so the batch register stays honestly 42P01 on such a database.
+  'migrations/20260823_cmc_register_store_parity.sql',
+  // DROP TABLE IF EXISTS c2c_cmc_changes (seed-only demo content, zero live
+  // references). Its creator db/migrations/20260718_cmc_changes_store.sql is on
+  // no applier, so there is no create-then-drop ordering hazard; same shape as
+  // the 20260901 audit-table drop below.
+  'migrations/20260823_drop_dead_c2c_cmc_changes.sql',
+
+  // ── CMC impurity + dissolution registers ─────────────────────────────────
+  // The other two source types the Module 3 composer demands and nothing
+  // produced: 3.2.S.3 / 3.2.S.4 read impurity_profile, 3.2.P.2 / 3.2.P.5 read
+  // dissolution_profile. Both store the column the section rules scope on
+  // (scope / purpose) so a drug-substance impurity cannot green a drug-product
+  // section and a development profile cannot green the release specification.
+  'db/migrations/20260902_cmc_impurity_dissolution_registers.sql',
+  // The Clinical Operations surface's store. Its router used to CREATE SCHEMA
+  // and CREATE TABLE on the first request, which the non-superuser runtime role
+  // must refuse (42501) — so every call 500'd. Ordered after the CMC registers
+  // and before the sweep; it only needs public.organizations, which exists long
+  // before this point.
+  'db/migrations/20260902_clinical_ops_schema.sql',
+  // manufacturing.responses. Its router created the table on the first request
+  // — the comment there said so, naming migration 066's omission as the reason
+  // — which the runtime role may not do, so the finding-response surface 500'd.
+  'db/migrations/20260902_manufacturing_responses.sql',
+
+  // ── CMC material spec + formulation registers ────────────────────────────
+  // The producers for the composer's excipient, raw_material_spec and
+  // formulation_record source types. One table serves the two material types,
+  // keyed on material_role; `origin` is what lets 3.2.A.3 answer the
+  // human/animal-origin question from data instead of a regex over free text.
+  'db/migrations/20260903_cmc_material_formulation_registers.sql',
+
+  // ── CMC manufacturing process + characterisation registers ───────────────
+  // The last two source types the composer demanded with no producer:
+  // 3.2.S.2 reads manufacturing_process, 3.2.S.3 reads characterization.
+  // The manufacturing half ALTERs the existing manufacturing_processes table
+  // rather than adding one: that table already has two live readers
+  // (ich-compliance-checker, qbd-analyzer) and is cmc_process_steps' FK
+  // target, so it must be the table the writer fills. MUST stay after
+  // db/migrations/20260730_manufacturing_processes_reconstruction.sql, which
+  // creates it.
+  'db/migrations/20260903_cmc_manufacturing_characterization_registers.sql',
+
+  // ── The route of administration on the impurity register ─────────────────
+  // ICH Q3D sets a different permitted daily exposure per route, so an
+  // elemental impurity cannot be assessed without it. MUST stay after
+  // db/migrations/20260902_cmc_impurity_dissolution_registers.sql, which
+  // creates the table.
+  'db/migrations/20260903_cmc_impurity_route_of_administration.sql',
+
+  // ── Drop the audit-shaped tables that survived a from-scratch liveness
+  //    re-check (ledger L13; docs/AUDIT_STORE_INVENTORY_2026-08.md §5.1) ─────
+  // MUST stay near the end, and specifically AFTER every entry above that
+  // CREATEs one of its targets — 20260524_program_workbench_schema (index 1),
+  // 081_grdhe_regulatory_mapping_layer (112) and
+  // 20260211_phase6_6e_proof_pack_exports (115). The set is replayed whole on
+  // every deploy, so a drop ordered before its creator would be undone by the
+  // creator's own CREATE TABLE IF NOT EXISTS on the same run.
+  //
+  // It is empty-only and fails soft: a table holding rows is KEPT with a NOTICE,
+  // because an audit table with records is Part 11 evidence with a retention
+  // obligation regardless of whether anything still writes it. Re-running after
+  // the records are dispositioned picks it up with no edit.
+  'db/migrations/20260901_drop_dead_audit_tables.sql',
 
   UUID_TENANT_ISOLATION_NONPUBLIC,
 

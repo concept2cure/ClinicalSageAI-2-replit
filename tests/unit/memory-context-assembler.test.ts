@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('../../server/services/working-memory.js', () => ({
   getLatestWorkingMemoryByThread: vi.fn(),
@@ -24,7 +24,30 @@ const mockWorkingMemory = vi.mocked(getLatestWorkingMemoryByThread);
 const mockClientSearch = vi.mocked(searchMemoryEntriesSemantic);
 const mockProjectSearch = vi.mocked(searchProjectMemoryEntriesSemantic);
 
+/**
+ * The fixtures below carry absolute createdAt dates (2026-03-01, 2026-03-08),
+ * and structured forgetting in memory-orchestrator.shouldRemember drops a
+ * non-critical, unverified atom older than maxAgeDays measured from Date.now().
+ * Against the real clock those atoms simply age out: this suite passed while
+ * they were within the window and would start failing once they were not,
+ * with nothing changed in the code.
+ *
+ * Freezing Date (only Date) fixes their age at what the fixtures intend. The
+ * deliberately stale 2024-01-01 atoms further down stay stale, which is what
+ * they are there to prove.
+ */
+const NOW = new Date('2026-03-15T00:00:00.000Z');
+
 describe('MemoryContextAssembler', () => {
+  beforeAll(() => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(NOW);
+  });
+
+  afterAll(() => {
+    vi.useRealTimers();
+  });
+
   beforeEach(() => {
     vi.clearAllMocks();
     mockWorkingMemory.mockResolvedValue('Objective: finalize Module 3 overview');

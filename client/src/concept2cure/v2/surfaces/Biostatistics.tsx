@@ -2,6 +2,7 @@ import React, { useState, useMemo, useRef } from 'react';
 import { I } from '../icons';
 import { connected, useLiveRows, EmptyState } from '../dataConnect';
 import { usePublishSurfaceContext } from '../surfaceContext';
+import { useSurfaceActionHandlers } from '../surfaceActions';
 import { AnswerLead } from '../AnswerLead';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { renderSafeMarkdown } from '../../components/ana/renderSafeMarkdown';
@@ -515,8 +516,8 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
   const set = (k: string, v: unknown) => setInput((s) => ({ ...s, [k]: v }));
   const applyPreset = (k: string) => { setPreset(k); setInput(BS_PRESETS[k].input); };
 
-  const res = useMemo(() => { try { return BiostatEngine.compute(input); } catch (_e) { return null; } }, [input]);
-  const jud = useMemo(() => { try { return res && BiostatEngine.judge(input, res); } catch (_e) { return null; } }, [input, res]);
+  const res = useMemo(() => { try { return BiostatEngine.compute(input); } catch { return null; } }, [input]);
+  const jud = useMemo(() => { try { return res && BiostatEngine.judge(input, res); } catch { return null; } }, [input, res]);
   const dom = useMemo(() => domainAdapt(input), [input]);
   const reg = useMemo(() => regCustom(input), [input]);
   const docDef = BiostatDocs.byId(docType);
@@ -699,6 +700,28 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
       ],
     };
   }, [res, jud, docDef, preset, input.studyType, n, govDocs.loading, govDocs.error, govDocs.empty, govDocs.rows]);
+  /* Both actions are pure client-side recomputes of a deterministic design —
+     nothing is filed. Opening in the editor and attaching to the dossier stay
+     governed human acts. `applyPreset` is the SAME function the chips call. */
+  useSurfaceActionHandlers('biostatistics', {
+    'biostatistics.set-preset': (params) => {
+      const target = String(params.preset ?? '');
+      const meta = BS_PRESETS[target];
+      if (!meta) return { ok: false, reason: `No design preset named "${params.preset}".` };
+      if (preset === target) return { ok: true, detail: `Already on the ${meta.label} preset` };
+      applyPreset(target);
+      return { ok: true, detail: `Applied the ${meta.label} preset — the design recomputes on screen; nothing is filed` };
+    },
+    'biostatistics.set-doc-type': (params) => {
+      const target = String(params.docType ?? '');
+      const doc = BiostatDocs.REGISTRY.find((d) => d.id === target);
+      if (!doc) return { ok: false, reason: `No statistical document type named "${params.docType}".` };
+      if (docType === target) return { ok: true, detail: `Already drafting the ${doc.label}` };
+      setDocType(target);
+      return { ok: true, detail: `Switched the document to ${doc.label} — filing it stays a human act` };
+    },
+  });
+
   usePublishSurfaceContext('biostatistics', anaContext);
 
   return (

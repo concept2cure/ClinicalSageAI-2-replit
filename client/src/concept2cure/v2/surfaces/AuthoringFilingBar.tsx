@@ -25,7 +25,7 @@ import React, { useState } from 'react';
 import { I } from '../icons';
 import { C2CForm } from '../C2CForm';
 import type { C2CFormConfig } from '../C2CForm';
-import { apiRequest } from '@/lib/queryClient';
+import { apiRequest, extractApiError, redactInternals, type ApiRequestError } from '@/lib/queryClient';
 
 export interface AuthoringFilingBarProps {
   docId: string;
@@ -48,13 +48,54 @@ type Dialog = 'freeze' | 'esign' | null;
 
 const FROZEN_STATES = new Set(['FROZEN', 'APPROVED']);
 
-const FREEZE_FORM = (title: string): C2CFormConfig => ({
+/** What the server said is still outstanding on this document. */
+interface Unresolved { openComments: number; pendingEdits: number }
+
+/** "1 unresolved comment and 2 tracked changes" — the same phrasing the server
+ *  uses, built here so the dialog can restate it without echoing server text. */
+function describeUnresolved(u: Unresolved): string {
+  const parts: string[] = [];
+  if (u.openComments > 0) {
+    parts.push(`${u.openComments} unresolved comment${u.openComments === 1 ? '' : 's'}`);
+  }
+  if (u.pendingEdits > 0) {
+    parts.push(`${u.pendingEdits} tracked change${u.pendingEdits === 1 ? '' : 's'} nobody has accepted or rejected`);
+  }
+  return parts.join(' and ');
+}
+
+/* The freeze dialog has two shapes. Ordinarily it asks for a reason.
+ *
+ * When the server has REFUSED because the document is not settled, it asks
+ * again — naming exactly what is outstanding and making the choice explicit.
+ * That refusal is not a dead end and must not read like one: freezing a draft
+ * with open comments is a real thing to want, so the way forward is offered
+ * here rather than left for the user to guess. What it is NOT is a button that
+ * quietly proceeds: the acknowledgement is a deliberate selection, and the
+ * server records what was sealed over. */
+const FREEZE_FORM = (title: string, unresolved: Unresolved | null): C2CFormConfig => ({
   eyebrow: 'Part 11 · content freeze',
-  title: 'Freeze document',
-  sub: `Snapshot “${title}” into an immutable, hash-sealed version before signing or filing.`,
+  title: unresolved ? 'This document is not settled' : 'Freeze document',
+  sub: unresolved
+    ? `“${title}” still has ${describeUnresolved(unresolved)}. Freezing seals the ` +
+      'content for signature and filing, so the questions would go unanswered and the ' +
+      'proposed edits would reach a reviewer undecided.'
+    : `Snapshot “${title}” into an immutable, hash-sealed version before signing or filing.`,
   governed: true,
-  submitLabel: 'Freeze and seal',
+  submitLabel: unresolved ? 'Continue' : 'Freeze and seal',
   fields: [
+    ...(unresolved
+      ? [{
+          key: 'acknowledge',
+          label: 'How do you want to proceed?',
+          type: 'seg' as const,
+          required: true,
+          options: [
+            { value: 'resolve', label: 'Go back and resolve them' },
+            { value: 'seal', label: 'Seal it as it stands' },
+          ],
+        }]
+      : []),
     { key: 'reason', label: 'Reason for freeze', type: 'textarea', required: true, placeholder: 'e.g. Locking for QA review prior to approval' },
     { key: 'version', label: 'Version label (optional)', type: 'text', placeholder: 'e.g. v1.0.frozen' },
   ],
@@ -80,25 +121,63 @@ const ESIGN_FORM = (title: string): C2CFormConfig => ({
 
 export function AuthoringFilingBar({ docId, docTitle, docStatus, onChanged, fireToast }: AuthoringFilingBarProps) {
   const [dialog, setDialog] = useState<Dialog>(null);
+  /** Set when the server refused the freeze because work is outstanding. */
+  const [unresolved, setUnresolved] = useState<Unresolved | null>(null);
   const frozen = FROZEN_STATES.has(docStatus);
 
   const doFreeze = async (v: Record<string, string>) => {
+    /* The user chose "go back and resolve them" — close and let them work.
+       Offering the choice and then ignoring half of it would be worse than not
+       offering it. */
+    if (unresolved && v.acknowledge === 'resolve') {
+      setUnresolved(null);
+      setDialog(null);
+      return;
+    }
     try {
       const res = await apiRequest('POST', `/api/authoring/docs/${docId}/freeze`, {
         reason: v.reason,
         version: v.version || undefined,
+        /* Only ever sent after the server refused AND the user deliberately
+           chose to seal it anyway. Never a default, never inferred. */
+        ...(unresolved && v.acknowledge === 'seal' ? { acknowledgeUnresolved: true } : {}),
       });
       const json = await res.json().catch(() => null);
-      if (!res.ok) {
-        fireToast('Couldn’t freeze the document — ' + ((json as any)?.error ?? `HTTP ${res.status}`) + '. Nothing was sealed.', 'error');
-        return;
-      }
+      /* apiRequest throws on every non-2xx EXCEPT 401, which it returns so
+         callers can say "sign in" rather than "server error". This handler
+         relied on the throw alone, so an expired session fell straight through
+         to "Document frozen and sealed" — a seal claim, plus a refresh, over a
+         freeze the server refused. Same guard the e-sign handler below has. */
+      if (res.status === 401) { fireToast('Not frozen — your session isn’t authenticated. Sign in and try again; nothing was sealed.', 'error'); return; }
+      if (!res.ok) { fireToast('Couldn’t freeze the document — ' + (extractApiError(json, res.status).message) + '. Nothing was sealed.', 'error'); return; }
       const hash = (json as { contentHash?: string })?.contentHash;
       fireToast('Document frozen and sealed' + (hash ? ' · ' + String(hash).slice(0, 12) + '…' : '') + '.');
+      setUnresolved(null);
       setDialog(null);
       onChanged();
     } catch (e) {
-      fireToast('Couldn’t freeze the document — ' + (e instanceof Error ? e.message : String(e)) + '.', 'error');
+      /* `apiRequest` THROWS on a non-2xx, so the old `if (!res.ok)` branch above
+         was unreachable and every failure fell to this catch — where
+         `(json as any)?.error` would in any case have rendered "[object Object]"
+         now that the server answers with `{ code, message }`. */
+      const err = e as Partial<ApiRequestError> & { message?: string };
+      if (err?.code === 'DOCUMENT_NOT_SETTLED') {
+        const counts = (err.payload as { unresolved?: Unresolved } | undefined)?.unresolved;
+        /* Re-ask rather than report a failure: the document is not broken, it is
+           unfinished, and the dialog can say so and offer both ways forward. */
+        setUnresolved({
+          openComments: Number(counts?.openComments ?? 0),
+          pendingEdits: Number(counts?.pendingEdits ?? 0),
+        });
+        setDialog('freeze');
+        return;
+      }
+      const why = redactInternals(err?.message, 'the server did not accept it');
+      fireToast(
+        'Couldn’t freeze the document — ' + why + ' Nothing was sealed.' +
+          (err?.correlationId ? ` Reference ${err.correlationId}.` : ''),
+        'error',
+      );
     }
   };
 
@@ -135,7 +214,13 @@ export function AuthoringFilingBar({ docId, docTitle, docStatus, onChanged, fire
         {I.penLine} E-sign
       </button>
 
-      {dialog === 'freeze' && <C2CForm config={FREEZE_FORM(docTitle)} onCancel={() => setDialog(null)} onSubmit={doFreeze} />}
+      {dialog === 'freeze' && (
+        <C2CForm
+          config={FREEZE_FORM(docTitle, unresolved)}
+          onCancel={() => { setUnresolved(null); setDialog(null); }}
+          onSubmit={doFreeze}
+        />
+      )}
       {dialog === 'esign' && <C2CForm config={ESIGN_FORM(docTitle)} onCancel={() => setDialog(null)} onSubmit={doSign} />}
     </>
   );

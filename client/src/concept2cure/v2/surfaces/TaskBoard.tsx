@@ -282,7 +282,7 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
 
   const [view, setView] = useState('board');
   const [proj, setProj] = useState<string>(() => {
-    try { return (window as any).C2C_TASK_FILTER || 'all'; } catch (_e) { return 'all'; }
+    try { return (window as any).C2C_TASK_FILTER || 'all'; } catch { return 'all'; }
   });
   const [mine, setMine] = useState(false);
   const [mod, setMod] = useState('all');
@@ -601,6 +601,23 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
      scripts/ci/check-ana-surface-context.mjs now resolves aliases and fails a
      publish into an alias source rather than merely checking membership. */
   const anaContext = useMemo(() => {
+    // A failed board read must NOT publish "0 tasks, 0 open, 0 blocked" — that
+    // is a dead store reported to AnA as a clean board (the fail-open the
+    // repo's own rule forbids: an error is never rendered as an empty result).
+    // These two branches sit above the summary for the same reason every
+    // sibling surface guards them.
+    if (liveTasks.loading) {
+      return { summary: 'The task board is still loading; nothing on screen is final yet.' };
+    }
+    if (liveTasks.error) {
+      return {
+        summary:
+          'The task board could not be read, so this screen is showing no tasks because of a ' +
+          'failure, not because there are none — the counts below are unknown, not zero.',
+        facts: { readFailure: liveTasks.error },
+        availableActions: ['Retry the task-board read'],
+      };
+    }
     // `t.due` is server data, not a local invariant: a task row without it is a
     // plausible response and must not crash the board. Same class as the
     // ectd-compile defect — the guard has to cover the member, not the container.
@@ -641,7 +658,7 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
         'Filter the board by module, priority, assignee or search text',
       ],
     };
-  }, [list, stats, sel, view]);
+  }, [list, stats, sel, view, liveTasks.loading, liveTasks.error]);
   usePublishSurfaceContext('tasks', anaContext);
 
   /* Critical path: topological-ish chain over dependsOn, criticalPath:true */
@@ -716,7 +733,7 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
           tone="error"
           icon={I.alertTriangle}
           title="Couldn't load the task board"
-          hint="The org-wide unifiedTasks board didn't respond. These are the organization's tasks from GET /api/task-management/board — sign in and retry, or check the service is reachable."
+          hint="The org-wide task board didn't respond. These are the organization's tasks — sign in and retry, or check that the task service is reachable."
         />
       ) : liveTasks.empty ? (
         <EmptyState
@@ -738,7 +755,11 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
               : <>No task on this board is marked critical-path, so there is no path to report on yet.</>}
         body={critBlocked
           ? <>{critBlocked.blockedReason || 'It is blocked'} -- nothing downstream on the path can move until it clears. {heaviest && heaviest.open > 3 ? <>{nameOf(heaviest.k)} is also carrying {heaviest.open} open tasks; auto-assign can rebalance.</> : null}</>
-          : <>{overdue.length ? <>Clear the overdue work first, then the path flows. </> : null}{heaviest && heaviest.open >= 3 ? <>{nameOf(heaviest.k)} is the busiest at {heaviest.open} open tasks — workload-balanced auto-assign can spread the next batch.</> : <>Workload is balanced across the team.</>} {stats.appr ? <>{stats.appr} approval{stats.appr > 1 ? 's' : ''} pending an e-signature.</> : null}</>}
+          : <>{overdue.length ? <>Clear the overdue work first, then the path flows. </> : null}{/* "Workload is balanced across the team." used to fire whenever `heaviest`
+    was undefined — i.e. the filter matched zero tasks. Absence of workload
+    data was presented as a measured balance. Balance is claimed only when
+    there is assigned open work to be balanced. */}
+{heaviest && heaviest.open >= 3 ? <>{nameOf(heaviest.k)} is the busiest at {heaviest.open} open tasks — workload-balanced auto-assign can spread the next batch.</> : heaviest && heaviest.open > 0 ? <>Workload is balanced across the team.</> : <>No open work is assigned on this board, so there is no workload to balance.</>} {stats.appr ? <>{stats.appr} approval{stats.appr > 1 ? 's' : ''} pending an e-signature.</> : null}</>}
         reassure={
           critBlocked || overdue.length
             ? 'I will help you unblock the path and rebalance the team, one step at a time.'
@@ -782,7 +803,7 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
           </select>
           <button className={`tb-chip${mine ? ' on' : ''}`} onClick={() => setMine(m => !m)}>{I.user} My tasks</button>
         </div>
-        <div className="seg tb-views">
+        <div className="seg">
           {([['board', 'Board'], ['path', 'Critical path'], ['analytics', 'Analytics'], ['table', 'Table']] as const).map(([v, l]) => (
             <button key={v} className={`seg-b${view === v ? ' on' : ''}`} onClick={() => setView(v)}>{l}</button>
           ))}
@@ -890,7 +911,7 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
       )}
 
       {view === 'analytics' && (
-        <div className="tb-an">
+        <div>
           <div className="metrics">
             {([['Open tasks', stats.open, ''], ['On critical path', stats.crit, 'ai'], ['Regulatory impact', stats.reg, 'warn'], ['Blocked', stats.blocked, stats.blocked ? 'err' : ''], ['Approvals pending', stats.appr, 'warn']] as const).map((m, i) => (
               <div key={i} className="metric" data-tone={m[2]}><div className="metric-l">{m[0]}</div><div className="metric-n">{m[1]}</div></div>

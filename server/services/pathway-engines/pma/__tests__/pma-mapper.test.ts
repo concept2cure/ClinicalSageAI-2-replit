@@ -8,16 +8,16 @@ import {
   type PmaSubmissionType,
 } from '../pma-mapper';
 
-// Leaves covering every REQUIRED PMA section.
+// Leaves covering every REQUIRED PMA section. All finalized/substantive content.
 const completePmaLeaves: PmaInputLeaf[] = [
-  { sectionCode: '1', title: 'Cover letter and administrative information' },
-  { sectionCode: '2', title: 'Device description and indications for use' },
-  { sectionCode: '3', title: 'Manufacturing and quality system information' },
-  { sectionCode: '4', title: 'Nonclinical bench and biocompatibility studies' },
-  { sectionCode: '5', title: 'Clinical investigation — pivotal study' },
-  { sectionCode: '6', title: 'Proposed labeling' },
-  { sectionCode: '7', title: 'Summary of safety and effectiveness data' },
-  { sectionCode: '8', title: 'Statistical analysis plan and results' },
+  { sectionCode: '1', title: 'Cover letter and administrative information', substantive: true },
+  { sectionCode: '2', title: 'Device description and indications for use', substantive: true },
+  { sectionCode: '3', title: 'Manufacturing and quality system information', substantive: true },
+  { sectionCode: '4', title: 'Nonclinical bench and biocompatibility studies', substantive: true },
+  { sectionCode: '5', title: 'Clinical investigation — pivotal study', substantive: true },
+  { sectionCode: '6', title: 'Proposed labeling', substantive: true },
+  { sectionCode: '7', title: 'Summary of safety and effectiveness data', substantive: true },
+  { sectionCode: '8', title: 'Statistical analysis plan and results', substantive: true },
 ];
 
 describe('mapToPma', () => {
@@ -30,7 +30,7 @@ describe('mapToPma', () => {
   });
 
   it('reports missing required sections and partial completeness', () => {
-    const r = mapToPma({ leaves: [{ sectionCode: '1', title: 'Cover letter and administrative information' }] });
+    const r = mapToPma({ leaves: [{ sectionCode: '1', title: 'Cover letter and administrative information', substantive: true }] });
     expect(r.summary.ready).toBe(false);
     expect(r.summary.missingRequired).toContain('clinical');
     expect(r.summary.missingRequired).toContain('manufacturing');
@@ -62,12 +62,24 @@ describe('mapToPma', () => {
   it('matches by documentType as well as title', () => {
     const r = mapToPma({
       leaves: [
-        { sectionCode: 'a', title: 'untitled', documentType: 'manufacturing' },
-        { sectionCode: 'b', title: 'untitled', documentType: 'clinical_study' },
+        { sectionCode: 'a', title: 'untitled', documentType: 'manufacturing', substantive: true },
+        { sectionCode: 'b', title: 'untitled', documentType: 'clinical_study', substantive: true },
       ],
     });
     expect(r.sections.find((s) => s.id === 'manufacturing')?.present).toBe(true);
     expect(r.sections.find((s) => s.id === 'clinical')?.present).toBe(true);
+  });
+
+  it('honesty fix: a matched-but-non-substantive leaf (draft/placeholder) does NOT mark a required section present, and does NOT make the submission ready', () => {
+    // Same titles as completePmaLeaves — every required module TITLE-matches —
+    // but every leaf is a draft/placeholder stub (substantive: false). Before
+    // the fix this incorrectly reported ready:true off title matches alone.
+    const draftLeaves: PmaInputLeaf[] = completePmaLeaves.map((l) => ({ ...l, substantive: false }));
+    const r = mapToPma({ leaves: draftLeaves });
+    expect(r.sections.every((s) => !s.present)).toBe(true);
+    expect(r.summary.ready).toBe(false);
+    expect(r.summary.completeness).toBe(0);
+    expect(r.summary.missingRequired.length).toBeGreaterThan(0);
   });
 
   it('handles empty input honestly (nothing invented)', () => {
@@ -127,8 +139,8 @@ describe('PMA submission-type metadata', () => {
     it('a 30-day notice requires only admin + manufacturing (not clinical)', () => {
       const r = mapToPma({
         leaves: [
-          { sectionCode: '1', title: 'Cover letter and administrative information' },
-          { sectionCode: '3', title: 'Manufacturing process change description' },
+          { sectionCode: '1', title: 'Cover letter and administrative information', substantive: true },
+          { sectionCode: '3', title: 'Manufacturing process change description', substantive: true },
         ],
         submissionType: '30_day_notice',
       });
@@ -138,9 +150,9 @@ describe('PMA submission-type metadata', () => {
     });
 
     it('the same content is NOT complete as an original PMA (clinical becomes required)', () => {
-      const leaves = [
-        { sectionCode: '1', title: 'Cover letter and administrative information' },
-        { sectionCode: '3', title: 'Manufacturing and quality system information' },
+      const leaves: PmaInputLeaf[] = [
+        { sectionCode: '1', title: 'Cover letter and administrative information', substantive: true },
+        { sectionCode: '3', title: 'Manufacturing and quality system information', substantive: true },
       ];
       const original = mapToPma({ leaves, submissionType: 'original' });
       expect(original.summary.ready).toBe(false);
@@ -150,9 +162,9 @@ describe('PMA submission-type metadata', () => {
     it('a real-time supplement requires admin, device description, and labeling only', () => {
       const r = mapToPma({
         leaves: [
-          { sectionCode: '1', title: 'Cover letter and administrative information' },
-          { sectionCode: '2', title: 'Device description and indications for use' },
-          { sectionCode: '6', title: 'Proposed labeling' },
+          { sectionCode: '1', title: 'Cover letter and administrative information', substantive: true },
+          { sectionCode: '2', title: 'Device description and indications for use', substantive: true },
+          { sectionCode: '6', title: 'Proposed labeling', substantive: true },
         ],
         submissionType: 'real_time_supplement',
       });
@@ -164,9 +176,9 @@ describe('PMA submission-type metadata', () => {
     it('a panel-track supplement still requires new clinical data + SSED + stats', () => {
       const r = mapToPma({
         leaves: [
-          { sectionCode: '1', title: 'Cover letter and administrative information' },
-          { sectionCode: '2', title: 'Device description and indications for use' },
-          { sectionCode: '6', title: 'Proposed labeling' },
+          { sectionCode: '1', title: 'Cover letter and administrative information', substantive: true },
+          { sectionCode: '2', title: 'Device description and indications for use', substantive: true },
+          { sectionCode: '6', title: 'Proposed labeling', substantive: true },
         ],
         submissionType: 'panel_track_supplement',
       });

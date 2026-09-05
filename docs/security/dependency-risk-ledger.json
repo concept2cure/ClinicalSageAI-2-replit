@@ -1,15 +1,15 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-08-25T00:00:00.000Z",
+  "generatedAt": "2026-09-02T17:13:42.125Z",
   "scanner": {
     "name": "npm audit",
-    "npmVersion": "11.4.2",
+    "npmVersion": "10.9.7",
     "command": "npm audit --audit-level=high --json",
     "input": "package-lock.json",
     "resultArtifact": "dependency-audit-results.json"
   },
   "lockfileVersion": 3,
-  "lockfileSha256": "be38689142af560a1170929869d49ba7734d5d3f1d1366fb624bf33302105644",
+  "lockfileSha256": "e9661ee65c03294aa1c2dd48d2239c5bbf4852b6f741c85a4f37fd8fd3299144",
   "rootPackageVersion": "1.0.0",
   "findings": [
     {
@@ -23,8 +23,12 @@
       "dependencyType": "transitive",
       "disposition": "unreachable",
       "evidence": {
-        "packagePaths": ["concept2cure-riai > pptxgenjs@4.0.1 > image-size@1.2.1"],
-        "entryPoints": ["POST /api/concept2cure/artifacts/export-pptx -> generatePptxBuffer"],
+        "packagePaths": [
+          "concept2cure-riai > pptxgenjs@4.0.1 > image-size@1.2.1"
+        ],
+        "entryPoints": [
+          "POST /api/concept2cure/artifacts/export-pptx -> generatePptxBuffer"
+        ],
         "runtimeProof": [
           "The package is present in the lockfile but the resolved pptxgenjs Node runtime bundle does not import image-size.",
           "The production generator invokes addText/addShape only and the reachability guard fails if an image-capable API is introduced.",
@@ -52,8 +56,12 @@
       "dependencyType": "transitive",
       "disposition": "unreachable",
       "evidence": {
-        "packagePaths": ["concept2cure-riai > pptxgenjs@4.0.1 > image-size@1.2.1"],
-        "entryPoints": ["POST /api/concept2cure/artifacts/export-pptx -> generatePptxBuffer"],
+        "packagePaths": [
+          "concept2cure-riai > pptxgenjs@4.0.1 > image-size@1.2.1"
+        ],
+        "entryPoints": [
+          "POST /api/concept2cure/artifacts/export-pptx -> generatePptxBuffer"
+        ],
         "runtimeProof": [
           "The resolved pptxgenjs Node runtime bundle contains no image-size import, so its JXL/HEIF parsers are not loaded.",
           "No request title/content or separately returned Nano Banana cover image is passed to a pptxgenjs image API.",

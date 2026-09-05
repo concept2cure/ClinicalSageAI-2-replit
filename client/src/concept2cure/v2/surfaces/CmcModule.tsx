@@ -10,6 +10,7 @@ import type { C2CFormConfig } from '../C2CForm';
 import { EmptyState, liveGetOrNull, useLiveData, useLiveRows } from '../dataConnect';
 import { apiRequest } from '@/lib/queryClient';
 import { saveToAuthoring } from '../authoringHandoff';
+import { setEditorTarget } from '../editorTarget';
 import {
   specRowsFromApi,
   specCreateBody,
@@ -31,6 +32,14 @@ import {
 import {
   CmMethodLibrary,
   CmQcTesting,
+  CmContainerClosures,
+  CmReferenceStandards,
+  CmImpurityProfiles,
+  CmDissolutionProfiles,
+  CmMaterialSpecs,
+  CmFormulationRecords,
+  CmManufacturingProcesses,
+  CmCharacterizationStudies,
   CmChangeRegister,
   CmComparabilityStudies,
   CmProcessValidation,
@@ -120,6 +129,10 @@ interface CmcCorrespondence {
   priority: string | null; severity: string | null; status: string;
   region: string | null; dueDate: string | null; overdue: boolean;
   assignedTo: string | null;
+  /** The authoring document holding the drafted response, when one is linked. */
+  responseDocId?: string | null;
+  /** Served by the file's GET (the closed-history read); the board omits it. */
+  updatedAt?: string | null;
 }
 interface CmcSection { key: string; path: string; st: string; _new?: boolean; }
 interface CmcChangeType { id: string; label: string; risk: string; }
@@ -288,9 +301,9 @@ function signForm(target: string): C2CFormConfig {
 
 /* ── Cross-surface navigation helpers ── */
 function cmcNav(onNav: ((id: string) => void) | undefined, id: string) { onNav && onNav(id); }
-function cmcCtx(label: string) { try { if ((window as any).C2C) (window as any).C2C.setContext({ entityType: 'cmc', entityId: label, entityLabel: label }); } catch (_e) { /* noop */ } }
-function cmcTask(label: string) { cmcCtx(label); try { if ((window as any).C2C) (window as any).C2C.open('task'); } catch (_e) { /* noop */ } }
-function cmcCollab(label: string) { cmcCtx(label); try { if ((window as any).C2C) (window as any).C2C.open('collab'); } catch (_e) { /* noop */ } }
+function cmcCtx(label: string) { try { if ((window as any).C2C) (window as any).C2C.setContext({ entityType: 'cmc', entityId: label, entityLabel: label }); } catch { /* noop */ } }
+function cmcTask(label: string) { cmcCtx(label); try { if ((window as any).C2C) (window as any).C2C.open('task'); } catch { /* noop */ } }
+function cmcCollab(label: string) { cmcCtx(label); try { if ((window as any).C2C) (window as any).C2C.open('collab'); } catch { /* noop */ } }
 
 /* ── Shared subcomponents ── */
 
@@ -396,6 +409,12 @@ export function CmOverview({ ask, nav }: { ask: (text: string) => void; nav?: (i
   const computedAvgRpi = rpiNums.length ? Math.round(rpiNums.reduce((a, b) => a + b, 0) / rpiNums.length) : null;
   const avgRpi: number | null = kpis ? kpis.rpiAverage : computedAvgRpi;
   const irOverdue: number = kpis ? kpis.irOverdue : port.reduce((a, r) => a + (r.ir ?? 0), 0);
+  /* The overdue ATTRIBUTION comes from the same read as the COUNT. The lead
+     used to count from the correspondence KPI but name submissions from the
+     legacy per-row store — two sources, and when the legacy store was empty
+     the sentence attributed the count to "()" — an empty list. */
+  const overdueQs = (board.data?.correspondence ?? []).filter((c) => c.overdue);
+  const overdueSecs = [...new Set(overdueQs.map((c) => c.sectionRef).filter((s): s is string => !!s))];
 
   const approved = secs.filter((s) => s.st === 'approved').length;
   const readyPct = secs.length ? Math.round(100 * approved / secs.length) : 0;
@@ -463,7 +482,6 @@ export function CmOverview({ ask, nav }: { ask: (text: string) => void; nav?: (i
   const inReview = secs.filter((s) => s.st === 'review');
   const drafts = secs.filter((s) => s.st === 'draft');
   const nextSec = inReview[0] || drafts[0];
-  const irSubs = port.filter((p) => (p.ir ?? 0) > 0);
   /* ── BP-W0-3, the same defect as the NDA cockpit ───────────────────────────
      With zero submissions this lead read "Your Module 3 spans 0 submissions --
      preparedness is still computing across the portfolio" over a board that had
@@ -510,7 +528,7 @@ export function CmOverview({ ask, nav }: { ask: (text: string) => void; nav?: (i
           : port.length === 0
             ? <>Module 3 readiness is measured across an organization's submissions, and there are none recorded. Nothing about this package has been assessed. Create a submission and add its CMC sections, and its specifications, batch analyses, stability data and change control appear here.</>
             : irOverdue
-              ? <>You have <b>{irOverdue} information {irOverdue === 1 ? 'request' : 'requests'} overdue</b> ({irSubs.map((p) => p.sub).join(', ')}). {nextSec ? <>And §{nextSec.key} ({nextSec.path}) is still in {nextSec.st}, one of {inReview.length + drafts.length} sections not yet approved.</> : null}</>
+              ? <>You have <b>{irOverdue} information {irOverdue === 1 ? 'request' : 'requests'} overdue</b>{overdueSecs.length ? <> (§{overdueSecs.join(', §')})</> : null}. {nextSec ? <>And §{nextSec.key} ({nextSec.path}) is still in {nextSec.st}, one of {inReview.length + drafts.length} sections not yet approved.</> : null}</>
               : secs.length === 0
                 ? <>No governed CMC sections have been authored for {port.length === 1 ? 'this submission' : 'these submissions'} yet, so section approval has nothing to report.</>
                 : <>{approved} of {secs.length} sections are approved{nextSec ? <>. §{nextSec.key} ({nextSec.path}) is the next one to move — clear it{lowSub ? <> and {lowSub.sub} climbs with it</> : null}</> : null}.</>}
@@ -523,7 +541,7 @@ export function CmOverview({ ask, nav }: { ask: (text: string) => void; nav?: (i
         : mayReassure(cmcState, readyPct)
           ? "You're building steadily. I'll help you move the next section to approved."
           : undefined}
-      action={{ label: irOverdue ? 'Draft the overdue IR responses' : 'Advance the next section', onClick: () => ask(irOverdue ? ('Draft responses to the overdue CMC information requests for ' + irSubs.map((p) => p.sub).join(' and ')) : ('Prepare §' + (nextSec ? nextSec.key : '') + ' ' + (nextSec ? nextSec.path : '') + ' for approval')),
+      action={{ label: irOverdue ? 'Draft the overdue IR responses' : 'Advance the next section', onClick: () => ask(irOverdue ? ('Draft responses to the overdue Module 3 information requests' + (overdueSecs.length ? ' citing §' + overdueSecs.join(', §') : '')) : ('Prepare §' + (nextSec ? nextSec.key : '') + ' ' + (nextSec ? nextSec.path : '') + ' for approval')),
         /* The second action goes where the section actually moves: the build
            board, which is the only surface that can compile it, show what is
            blocking it and clear the export gate. */
@@ -826,9 +844,17 @@ function CmSpecs({ ask, nav }: { ask: (text: string) => void; nav?: (id: string)
         {rows.length > 0 && <div className="pj-card-b" style={{ paddingTop: 0 }}><CmPush label={'Approved specifications -> §3.2.S.4.1'} nav={nav} bar /></div>}
       </div>
       {/* specification (the limit) -> method (how it is measured) -> QC test
-          (the measurement actually performed against it). */}
+          (the measurement actually performed against it) -> reference standard
+          (what the measurement is reported against). */}
       <CmMethodLibrary />
       <CmQcTesting />
+      <CmReferenceStandards />
+      {/* The impurity file and the dissolution profile are both specification
+          content: §3.2.S.3.2 / §3.2.P.5.5 set the impurity limits a release
+          test is judged against, and §3.2.P.5 carries the dissolution
+          criterion. */}
+      <CmImpurityProfiles />
+      <CmDissolutionProfiles />
       {edit && <C2CForm config={FORM(edit === 'new' ? null : edit)} onCancel={() => setEdit(null)} onSubmit={save} />}
       {sign && <C2CForm config={signForm(sign.attr + ' -- ' + sign.material)} onCancel={() => setSign(null)} onSubmit={doSign} />}
       <C2CToast msg={toast} />
@@ -1882,12 +1908,32 @@ function CmMaterials({ ask, nav }: { ask: (text: string) => void; nav?: (id: str
       {/* The method library sits with the substance because §3.2.S.4.2 is the
           analytical procedures section: the substance's control depends on it. */}
       <CmMethodLibrary />
+      {/* What the substance IS (§3.2.S.3.1) and how it is MADE (§3.2.S.2.2).
+          Both sections have been demanded by the composer since it was written
+          and had no producer: characterisation had no table at all, and the
+          process wrote into a table the compliance checker read and no screen
+          filled. Each row states which side of the dossier it files under, so
+          one register serves the drug product's §3.2.P.3.3 too. */}
+      <CmCharacterizationStudies />
+      <CmManufacturingProcesses />
 
       <div className="cm-sub-head">Drug product — §3.2.P</div>
       <CmDrugProducts />
       {/* Process validation is the §3.2.P.3.5 evidence that the product's
           process does what its description says. */}
       <CmProcessValidation />
+
+      {/* The formulation IS the product's composition (§3.2.P.1), and the
+          materials are what it is made of and what each is controlled to
+          (§3.2.P.4 for an excipient, §3.2.S.2.3 for a raw material). */}
+      <CmFormulationRecords />
+      <CmMaterialSpecs />
+
+      <div className="cm-sub-head">Container closure — §3.2.S.6 / §3.2.P.7</div>
+      {/* The system that holds the material, and the extractables/leachables
+          package behind it. Both sections composed from nothing until this
+          register existed; each row states which of the two it files under. */}
+      <CmContainerClosures />
 
       <div className="pj-card" style={{ marginTop: 16 }}>
         <div className="pj-card-b" style={{ paddingTop: 4 }}>
@@ -2052,6 +2098,10 @@ export function CmPathway({ ask, nav }: { ask: (text: string) => void; nav?: (id
      could not be recorded at all. POST /api/cmc/agency-questions stamps the
      org from the verified session; the card reloads from the server. */
   const [logOpen, setLogOpen] = useState(false);
+  /* A second submit while the POST is in flight would write a second
+     PERMANENT row (questions close, never delete) — same guard idiom as the
+     change memo's openingRef. */
+  const loggingRef = useRef(false);
   const LOG_FORM: C2CFormConfig = {
     eyebrow: 'CMC — agency correspondence',
     title: 'Log an agency question',
@@ -2059,7 +2109,7 @@ export function CmPathway({ ask, nav }: { ask: (text: string) => void; nav?: (id
     submitLabel: 'Log question',
     fields: [
       { key: 'questionText', label: 'Question, as received', type: 'textarea', required: true, placeholder: 'Quote the agency’s question verbatim — never a paraphrase.' },
-      { key: 'sectionReference', label: 'CTD section', type: 'text', half: true, placeholder: 'e.g. 3.2.S.4.1' },
+      { key: 'sectionReference', label: 'Module 3 section (optional)', type: 'text', half: true, placeholder: 'e.g. 3.2.S.4.1 — this file holds 3.x questions' },
       { key: 'region', label: 'Agency / region', type: 'text', half: true, placeholder: 'e.g. FDA' },
       { key: 'priority', label: 'Priority', type: 'seg', options: ['low', 'medium', 'high'], default: 'medium', half: true },
       { key: 'dueDate', label: 'Response due', type: 'date', half: true },
@@ -2067,6 +2117,8 @@ export function CmPathway({ ask, nav }: { ask: (text: string) => void; nav?: (id
     ],
   };
   const logQuestion = async (v: Record<string, string>) => {
+    if (loggingRef.current) return;
+    loggingRef.current = true;
     try {
       const res = await apiRequest('POST', '/api/cmc/agency-questions', {
         questionText: v.questionText,
@@ -2087,7 +2139,55 @@ export function CmPathway({ ask, nav }: { ask: (text: string) => void; nav?: (id
       setCorrEpoch((e) => e + 1);
     } catch (e) {
       fireToast('Couldn’t log the question — ' + (e instanceof Error ? e.message : String(e)) + '.', 'error');
+    } finally {
+      loggingRef.current = false;
     }
+  };
+
+  /* The CLOSED file — the record the board's open filter deliberately leaves
+     out, readable at last. Loaded on demand (the open list is the working
+     set; the answered history is a look-up before the next agency
+     interaction and at inspection), with honest loading/error/empty states.
+     Reopening a mistaken close was legal in the API from day one and
+     impossible from every screen; the Reopen door closes that. */
+  const [closedOpen, setClosedOpen] = useState(false);
+  const [closedRows, setClosedRows] = useState<CmcCorrespondence[]>([]);
+  const [closedState, setClosedState] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
+  const loadClosed = async () => {
+    setClosedState('loading');
+    try {
+      const res = await apiRequest('GET', '/api/cmc/agency-questions?status=CLOSED');
+      const pj = (await res.json().catch(() => null)) as { success?: boolean; data?: unknown } | null;
+      if (!res.ok || !pj?.success) throw new Error(serverMessage(pj) ?? `HTTP ${res.status}`);
+      setClosedRows(Array.isArray(pj.data) ? (pj.data as CmcCorrespondence[]) : []);
+      setClosedState('ready');
+    } catch {
+      // A failed read is an ERROR, never an empty history claiming nothing
+      // was ever closed.
+      setClosedState('error');
+      setClosedRows([]);
+    }
+  };
+  const toggleClosed = () => {
+    const next = !closedOpen;
+    setClosedOpen(next);
+    if (next) void loadClosed();
+  };
+  const reopenQuestion = async (c: CmcCorrespondence) => {
+    try {
+      /* Reopen to the truthful state: DRAFTED when a response draft is linked
+         (that draft still exists), OPEN otherwise. Guarded — only a row still
+         CLOSED reopens; a 409 means someone already moved it. */
+      await apiRequest('PATCH', '/api/cmc/agency-questions/' + encodeURIComponent(String(c.id)), {
+        status: c.responseDocId ? 'DRAFTED' : 'OPEN',
+        expectedStatus: 'CLOSED',
+      });
+      fireToast('Question reopened' + (c.sectionRef ? ' · §' + c.sectionRef : '') + ' — back on the open list.');
+    } catch (e) {
+      fireToast('Couldn’t reopen the question — ' + (e instanceof Error ? e.message : String(e)), 'error');
+    }
+    setCorrEpoch((e) => e + 1);
+    void loadClosed();
   };
 
   /* Close = the question is answered and submitted; the row leaves the OPEN
@@ -2096,7 +2196,10 @@ export function CmPathway({ ask, nav }: { ask: (text: string) => void; nav?: (id
   const [closingId, setClosingId] = useState<string | number | null>(null);
   const closeQuestion = async (c: CmcCorrespondence) => {
     try {
-      const res = await apiRequest('PATCH', '/api/cmc/agency-questions/' + encodeURIComponent(String(c.id)), { status: 'CLOSED' });
+      // expectedStatus: closing applies to the row THIS screen read — if
+      // someone else already moved it, the server answers 409 with the
+      // current status instead of this click silently overwriting it.
+      const res = await apiRequest('PATCH', '/api/cmc/agency-questions/' + encodeURIComponent(String(c.id)), { status: 'CLOSED', expectedStatus: c.status });
       const json = await res.json().catch(() => null);
       if (!res.ok) {
         fireToast('Couldn’t close the question — ' + (serverMessage(json) ?? `HTTP ${res.status}`) + '. It stays open.', 'error');
@@ -2105,9 +2208,70 @@ export function CmPathway({ ask, nav }: { ask: (text: string) => void; nav?: (id
       fireToast('Question closed' + (c.sectionRef ? ' · §' + c.sectionRef : '') + ' — it leaves the open list and stays in the record.');
       setClosingId(null);
       setCorrEpoch((e) => e + 1);
+      // The closed file is on screen? Then the row must appear there NOW.
+      if (closedOpen) void loadClosed();
     } catch (e) {
       fireToast('Couldn’t close the question — ' + (e instanceof Error ? e.message : String(e)) + '.', 'error');
+      setCorrEpoch((e) => e + 1);
     }
+  };
+
+  /* Inline re-assignment. The Assigned column rendered the owner but only the
+     Log dialog could ever set one — changing who owns the response mid-life,
+     the everyday triage act, forced a raw API call. A blank value clears the
+     owner (the server stores NULL, the cell says so honestly). */
+  const [assigningId, setAssigningId] = useState<string | number | null>(null);
+  const [assignVal, setAssignVal] = useState('');
+  const saveAssignee = async (c: CmcCorrespondence) => {
+    const next = assignVal.trim();
+    if ((c.assignedTo ?? '') === next) {
+      setAssigningId(null);
+      return;
+    }
+    try {
+      await apiRequest(
+        'PATCH',
+        '/api/cmc/agency-questions/' + encodeURIComponent(String(c.id)),
+        { assignedTo: next || null },
+      );
+      fireToast(next ? 'Assigned to ' + next + '.' : 'Assignment cleared.');
+      setAssigningId(null);
+      setCorrEpoch((e) => e + 1);
+    } catch (e) {
+      fireToast(
+        'Couldn’t update the assignment — ' + (e instanceof Error ? e.message : String(e)),
+        'error',
+      );
+    }
+  };
+
+  /* The REVIEW leg of the lifecycle. IN_REVIEW has always been in the store's
+     status set and on the board's chips, but nothing in the product could SET
+     it — a drafted response went to its reviewer by email while the file
+     stayed DRAFTED, and a reviewer could not hand it back. Guarded like every
+     status write here: the transition applies only from the status this
+     screen read; a concurrent move answers 409 with the current status. */
+  const moveStatus = async (
+    c: CmcCorrespondence,
+    to: 'IN_REVIEW' | 'DRAFTED',
+    said: string,
+  ) => {
+    try {
+      await apiRequest(
+        'PATCH',
+        '/api/cmc/agency-questions/' + encodeURIComponent(String(c.id)),
+        { status: to, expectedStatus: c.status },
+      );
+      fireToast(said + (c.sectionRef ? ' · §' + c.sectionRef : '') + '.');
+    } catch (e) {
+      fireToast(
+        'Couldn’t update the question — ' + (e instanceof Error ? e.message : String(e)),
+        'error',
+      );
+    }
+    // Refetch on success AND failure: a 409 means this screen's row is
+    // stale, and the honest next state is the server's.
+    setCorrEpoch((e) => e + 1);
   };
 
   /* "Draft response" — the same real handoff as the change memo's editor
@@ -2166,23 +2330,54 @@ export function CmPathway({ ask, nav }: { ask: (text: string) => void; nav?: (id
          keeps. Only an OPEN question is advanced — a reviewer's IN_REVIEW is
          not downgraded by re-drafting. A failed status write does not undo
          the draft; it is stated, and we stay here so the statement is seen. */
-      if (c.status === 'OPEN') {
-        const patch = await apiRequest(
-          'PATCH',
-          '/api/cmc/agency-questions/' + encodeURIComponent(String(c.id)),
-          { status: 'DRAFTED' },
-        ).catch(() => null);
-        if (!patch?.ok) {
-          fireToast(
-            'The draft was created, but the question could not be marked DRAFTED — it stays OPEN in the file. Open the draft from the Document editor.',
-            'error',
-          );
-          setCorrEpoch((e) => e + 1);
-          return;
-        }
+      /* ONE guarded write for every status the board serves. An OPEN question
+         flips to DRAFTED because the draft now exists; DRAFTED and IN_REVIEW
+         keep their status (a reviewer's IN_REVIEW is never downgraded) while
+         the LINK follows the newest draft — the file must point at the draft
+         the responder is actually working in, whatever the lifecycle says.
+         expectedStatus makes the write conditional SERVER-side: this row was
+         read when the screen loaded, and if it moved on (someone closed the
+         question), the PATCH answers 409 instead of silently rewriting a
+         closed record. responseDocId is refused unless the document exists
+         in this org — the recorded link is a door that opens.
+         EVERY failure is surfaced: "draft created, file not updated" is a
+         split state the responder must hear about, so we stay on the card
+         where the statement is visible instead of navigating away from it. */
+      // apiRequest THROWS on a non-2xx (except 401) with the server's own
+      // sentence on the error — keep it, or the 409's "the question is CLOSED
+      // now" would be replaced by a vaguer line.
+      let thrownMsg: string | null = null;
+      const patch = await apiRequest(
+        'PATCH',
+        '/api/cmc/agency-questions/' + encodeURIComponent(String(c.id)),
+        {
+          ...(c.status === 'OPEN' ? { status: 'DRAFTED' } : {}),
+          expectedStatus: c.status,
+          responseDocId: res.docId,
+        },
+      ).catch((e: unknown) => {
+        thrownMsg = e instanceof Error && e.message ? e.message : null;
+        return null;
+      });
+      if (!patch?.ok) {
+        const pj = patch ? await patch.json().catch(() => null) : null;
+        fireToast(
+          'The draft was created, but the correspondence file was not updated — ' +
+            (serverMessage(pj) ?? thrownMsg ?? 'the question could not be updated; it is unchanged in the file.') +
+            ' Open the draft from the Document editor.',
+          'error',
+        );
+        setCorrEpoch((e) => e + 1);
+        return;
       }
-      if (nav) nav('document-authoring');
-      else {
+      if (nav) {
+        /* Open the editor ON the new draft — the deep-link channel names the
+           exact document, so the editor cannot land on "first doc in the
+           list". Set only when a navigation follows: the channel is one-shot
+           and a target nothing consumes is a stray claim. */
+        setEditorTarget({ docType: null, docId: res.docId });
+        nav('document-authoring');
+      } else {
         fireToast(res.message);
         setCorrEpoch((e) => e + 1);
       }
@@ -2299,16 +2494,65 @@ export function CmPathway({ ask, nav }: { ask: (text: string) => void; nav?: (id
                   </span>
                 </td>
                 <td className="mono">{c.status}</td>
-                <td>{c.assignedTo ?? '—'}</td>
+                <td>
+                  {assigningId === c.id ? (
+                    <span style={{ display: 'inline-flex', gap: 4, alignItems: 'center' }}>
+                      <input
+                        value={assignVal}
+                        autoFocus
+                        aria-label="Who owns the response — blank clears the assignment"
+                        placeholder="name or email"
+                        style={{ width: 150 }}
+                        onChange={(e) => setAssignVal(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') void saveAssignee(c);
+                          if (e.key === 'Escape') setAssigningId(null);
+                        }}
+                      />
+                      <button className="nda-open" onClick={() => void saveAssignee(c)}>Save</button>
+                      <button className="nda-open" onClick={() => setAssigningId(null)}>Cancel</button>
+                    </span>
+                  ) : (
+                    <button
+                      className="nda-open"
+                      title={c.assignedTo ? 'Change who owns the response' : 'Assign an owner for the response'}
+                      onClick={() => {
+                        setAssigningId(c.id);
+                        setAssignVal(c.assignedTo ?? '');
+                      }}
+                    >
+                      {c.assignedTo ?? 'Assign'}
+                    </button>
+                  )}
+                </td>
                 <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
                   <div style={{ display: 'inline-flex', gap: 6 }}>
+                    {/* The linked draft is a recorded fact on the row — the
+                        door renders only when the file names a document AND a
+                        navigator exists to honour it. */}
+                    {c.responseDocId && nav ? (
+                      <button
+                        className="nda-open"
+                        // Held while ANY draft write is in flight: navigating
+                        // to the editor mid-write would leave that write's
+                        // own editor target unconsumed on the channel.
+                        disabled={draftingId != null}
+                        title="Open the drafted response in the document editor"
+                        onClick={() => {
+                          setEditorTarget({ docType: null, docId: c.responseDocId });
+                          nav('document-authoring');
+                        }}
+                      >
+                        {I.fileText} Open draft
+                      </button>
+                    ) : null}
                     <button
                       className="nda-open"
                       disabled={draftingId != null}
                       title="Create a governed response draft quoting this question and open it in the editor"
                       onClick={() => void draftResponse(c)}
                     >
-                      {draftingId === c.id ? <>Creating…</> : <>{I.fileText} Draft response</>}
+                      {draftingId === c.id ? <>Creating…</> : c.responseDocId ? <>{I.fileText} Re-draft</> : <>{I.fileText} Draft response</>}
                     </button>
                     <button
                       className="nda-open"
@@ -2324,6 +2568,27 @@ export function CmPathway({ ask, nav }: { ask: (text: string) => void; nav?: (id
                     >
                       {I.checkSquare} Create task
                     </button>
+                    {/* The review leg: only the transition the row's CURRENT
+                        status allows is offered — the guard on the write is
+                        mirrored by the door that proposes it. */}
+                    {c.status === 'DRAFTED' ? (
+                      <button
+                        className="nda-open"
+                        title="Send the drafted response for review — the file shows IN_REVIEW"
+                        onClick={() => void moveStatus(c, 'IN_REVIEW', 'Sent for review')}
+                      >
+                        Send for review
+                      </button>
+                    ) : null}
+                    {c.status === 'IN_REVIEW' ? (
+                      <button
+                        className="nda-open"
+                        title="Hand the question back to drafting"
+                        onClick={() => void moveStatus(c, 'DRAFTED', 'Returned to drafting')}
+                      >
+                        Return to drafting
+                      </button>
+                    ) : null}
                     {/* Close leaves the open list (the record keeps the row),
                         so a misclick must confirm before it disappears. */}
                     {closingId === c.id ? (
@@ -2352,6 +2617,66 @@ export function CmPathway({ ask, nav }: { ask: (text: string) => void; nav?: (id
           </tbody>
             </table>
           )}
+          {/* ── The closed file ──
+              Rendered under BOTH branches above: a fresh screen with no open
+              questions still has (or will have) an answered history. */}
+          <div style={{ borderTop: '1px solid var(--c2c-line,#eef0f3)', marginTop: 10, paddingTop: 8 }}>
+            <button className="nda-open" onClick={toggleClosed}>
+              {closedOpen ? 'Hide the closed file' : 'Show the closed file'}
+            </button>
+            {closedOpen ? (
+              closedState === 'loading' ? (
+                <div className="cm-meta" style={{ marginTop: 8 }}>Loading the closed file…</div>
+              ) : closedState === 'error' ? (
+                <div className="sp-tone-err" style={{ marginTop: 8, fontSize: 12.5 }}>
+                  Couldn’t read the closed file — it didn’t load, and this list would be a lie if it rendered empty. Toggle to retry.
+                </div>
+              ) : closedRows.length === 0 ? (
+                <div className="cm-meta" style={{ marginTop: 8 }}>
+                  No closed questions yet — the answered file builds as questions close.
+                </div>
+              ) : (
+                <table className="reg-tbl" style={{ marginTop: 8 }}>
+                  <thead><tr><th>Closed</th><th>Section</th><th>Question</th><th>Assigned</th><th style={{ textAlign: 'right' }}>Actions</th></tr></thead>
+                  <tbody>
+                    {closedRows.map((c) => (
+                      <tr key={'cl-' + c.id}>
+                        <td style={{ whiteSpace: 'nowrap' }} className="cm-meta">
+                          {c.updatedAt ? new Date(c.updatedAt).toLocaleDateString() : '—'}
+                        </td>
+                        <td className="mono">{c.sectionRef ?? '—'}</td>
+                        <td title={c.question}>{c.question.length > 120 ? c.question.slice(0, 120) + '…' : c.question}</td>
+                        <td>{c.assignedTo ?? '—'}</td>
+                        <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
+                          <div style={{ display: 'inline-flex', gap: 6 }}>
+                            {c.responseDocId && nav ? (
+                              <button
+                                className="nda-open"
+                                title="Open the response that answered this question"
+                                onClick={() => {
+                                  setEditorTarget({ docType: null, docId: c.responseDocId });
+                                  nav('document-authoring');
+                                }}
+                              >
+                                {I.fileText} Open response
+                              </button>
+                            ) : null}
+                            <button
+                              className="nda-open"
+                              title="Reopen this question — it returns to the open list"
+                              onClick={() => void reopenQuestion(c)}
+                            >
+                              Reopen
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )
+            ) : null}
+          </div>
         </div>
       </div>
   );

@@ -4,6 +4,7 @@ import { useLiveRows, EmptyState } from '../dataConnect';
 import { apiRequest, serverMessage } from '@/lib/queryClient';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { usePublishSurfaceContext } from '../surfaceContext';
+import { useSurfaceActionHandlers } from '../surfaceActions';
 import { AnswerLead } from '../AnswerLead';
 import { IndFormsPanel } from './IndFormsPanel';
 import {
@@ -223,6 +224,22 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
   const [tab, setTab] = useState<'file' | 'lifecycle'>('file');
   // Status note from the Module-1 forms panel (build/QC/render outcomes).
   const [formsNote, setFormsNote] = useToast();
+
+  /* AnA can switch between the File-the-IND checklist and the Lifecycle view —
+     the same view-state toggle a person makes. The registry enum validates
+     `tab`; the defensive guard keeps the handler honest if it drifts. */
+  useSurfaceActionHandlers('ind-checklist', {
+    'ind-checklist.open-tab': (params) => {
+      const target = params.tab;
+      if (target !== 'file' && target !== 'lifecycle') {
+        return { ok: false, reason: `"${target}" is not an IND tab — choose file or lifecycle.` };
+      }
+      const label = target === 'file' ? 'File the IND' : 'Lifecycle';
+      if (tab === target) return { ok: true, detail: `Already on the ${label} view` };
+      setTab(target);
+      return { ok: true, detail: `Opened the ${label} view` };
+    },
+  });
 
   // Null-safe derivation with stable empty seeds while the checklist is
   // unresolved (loading or failed load) so the readiness memo below is stable.
@@ -985,8 +1002,9 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
                         '.',
                     )
                   }
+                  title="Sends this request to AnA in the rail — it does not download a file here"
                 >
-                  {I.download} Export
+                  {I.sparkles} Ask AnA to draft this
                 </button>
               </div>
             </div>
@@ -998,12 +1016,14 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
                   {prog.sponsorName && <span>{prog.sponsorName}</span>}
                   <span>Initial IND — eCTD v4.0 (FDA)</span>
                   <span>
-                    Assessed{' '}
-                    {new Date().toLocaleDateString([], {
-                      year: 'numeric',
-                      month: 'short',
-                      day: 'numeric',
-                    })}
+                    {R.assessed
+                      ? 'Assessed ' +
+                        new Date().toLocaleDateString([], {
+                          year: 'numeric',
+                          month: 'short',
+                          day: 'numeric',
+                        })
+                      : 'Not yet assessed'}
                   </span>
                 </div>
                 <div className="indl-overall">

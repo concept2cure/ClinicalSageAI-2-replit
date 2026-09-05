@@ -30,6 +30,7 @@
  */
 
 import type { EstarRow, EstarStatus, Predicate, PredicateStatus, SeRow } from '../data/k510';
+import type { OfficialEstarType, OfficialEstarVariant } from './useEstarOfficialFields';
 import { useFetchJson } from './useFetchJson';
 import {
   ESTAR_STATUS_MAP,
@@ -57,6 +58,7 @@ interface ServerSection {
      via write_kit_section and the user hasn't accepted. */
   draftSource?: string | null;
   draftedAt?: string | null;
+  acceptedAt?: string | null;
   draftedSummary?: string | null;
 }
 
@@ -87,10 +89,11 @@ function adaptSection(s: ServerSection): EstarRow {
   const id = typeof s.sectionNumber === 'number'
     ? s.sectionNumber
     : Number.parseInt(String(s.sectionNumber), 10) || s.id;
-  /* Surface AnA's draft when present + not yet accepted. The server clears
-     draftSource on accept, so the affordance disappears automatically. */
+  /* Surface AnA's draft when present + not yet accepted. Acceptance stamps
+     acceptedAt and KEEPS draftSource — the origin is a fact about the text,
+     not a pending flag (ledger L155). */
   const draft =
-    s.draftSource === 'ana' && s.draftedAt
+    s.draftSource === 'ana' && s.draftedAt && !s.acceptedAt
       ? {
           source: 'ana' as const,
           at: s.draftedAt,
@@ -139,6 +142,19 @@ export function useK510EstarSections(projectIdent: string | null): UseK510EstarR
     : null;
   const { data, loading, error, refresh } = useFetchJson<DocumentPreviewPayload>(url);
   if (!data) return { rows: null, blockerCount: 0, loading, error, refresh };
+  /* A 200 whose body is not `{ sections: [...] }` used to throw here — inside
+     render — and take the whole 510(k) surface down with it. That is the same
+     class of failure useMdxPrograms closed for the portfolio: an unreadable
+     body is a load failure to report, never a crash and never an empty list. */
+  if (!Array.isArray(data.sections)) {
+    return {
+      rows: null,
+      blockerCount: 0,
+      loading,
+      error: error ?? 'The eSTAR section list returned a response this screen could not read.',
+      refresh,
+    };
+  }
   const rows = data.sections.map(adaptSection).sort((a, b) => a.id - b.id);
   return {
     rows,
@@ -173,8 +189,8 @@ export interface UseEstarReadinessResult {
  * the official template is vendored AND its field map is populated.
  */
 export function useEstarReadiness(
-  type: '510k' | 'de_novo' = '510k',
-  variant: 'device' | 'ivd' = 'device',
+  type: OfficialEstarType = '510k',
+  variant: OfficialEstarVariant = 'device',
 ): UseEstarReadinessResult {
   const url = `/api/510k/estar/readiness?type=${encodeURIComponent(type)}&variant=${encodeURIComponent(variant)}`;
   const { data, loading, error } = useFetchJson<EstarReadiness>(url);

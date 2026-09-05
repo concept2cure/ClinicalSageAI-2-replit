@@ -19,13 +19,20 @@ import type { EstarInputLeaf } from '../../pathway-engines/estar/estar-mapper';
 
 // A leaf set covering every required 510(k) section so the eSTAR sections complete.
 const COMPLETE_510K_LEAVES: EstarInputLeaf[] = [
-  { sectionCode: 'cl', title: 'Cover letter', documentType: 'cover_letter' },
-  { sectionCode: 'ifu', title: 'Indications for use', documentType: 'indications_for_use' },
-  { sectionCode: 'dd', title: 'Device description', documentType: 'device_description' },
-  { sectionCode: 'lbl', title: 'Proposed labeling', documentType: 'labeling' },
-  { sectionCode: 'bio', title: 'Biocompatibility', documentType: 'biocompatibility' },
-  { sectionCode: 'perf', title: 'Performance testing', documentType: 'performance_testing' },
-  { sectionCode: 'se', title: 'Substantial equivalence', documentType: 'substantial_equivalence' },
+  { sectionCode: 'cl', title: 'Cover letter', documentType: 'cover_letter', substantive: true },
+  { sectionCode: 'ifu', title: 'Indications for use', documentType: 'indications_for_use', substantive: true },
+  { sectionCode: 'dd', title: 'Device description', documentType: 'device_description', substantive: true },
+  { sectionCode: 'lbl', title: 'Proposed labeling', documentType: 'labeling', substantive: true },
+  { sectionCode: 'bio', title: 'Biocompatibility', documentType: 'biocompatibility', substantive: true },
+  { sectionCode: 'perf', title: 'Performance testing', documentType: 'performance_testing', substantive: true },
+  { sectionCode: 'se', title: 'Substantial equivalence', documentType: 'substantial_equivalence', substantive: true },
+  // Always-required since W1-5: the statutory administrative forms and the
+  // risk file are part of every 510(k), so a "complete" set carries them.
+  { sectionCode: '3514', title: 'CDRH Premarket Review Submission Cover Sheet', documentType: 'cdrh_cover_sheet', substantive: true },
+  { sectionCode: '3601', title: 'MDUFA user fee cover sheet', documentType: 'user_fee', substantive: true },
+  { sectionCode: 'tas', title: 'Truthful and Accurate Statement', documentType: 'truthful_accurate', substantive: true },
+  { sectionCode: 'rm', title: 'Risk management file', documentType: 'risk_management', substantive: true },
+  { sectionCode: 'sum', title: '510(k) Summary', documentType: '510k_summary', substantive: true },
 ];
 
 const OFFICIAL_510K_DEVICE_TEMPLATE = 'eSTAR-510k-non-ivd.pdf';
@@ -77,7 +84,7 @@ describe('adviseDeviceReadiness', () => {
       pathway: '510k',
       variant: 'device',
       leaves: [
-        { sectionCode: 'cl', title: 'Cover letter', documentType: 'cover_letter' },
+        { sectionCode: 'cl', title: 'Cover letter', documentType: 'cover_letter', substantive: true },
       ],
       presentTemplates: [OFFICIAL_510K_DEVICE_TEMPLATE],
       environment: 'production',

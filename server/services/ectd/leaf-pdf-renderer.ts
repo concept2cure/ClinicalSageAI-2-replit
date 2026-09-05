@@ -20,7 +20,9 @@
  */
 
 import { PDFDocument, StandardFonts, rgb } from 'pdf-lib';
+import { parse as parseHtml } from 'node-html-parser';
 import { addBookmarks, type OutlineNode } from './pdf-bookmark-generator';
+import { inlineMarksToText } from '../../export/inline-marks-to-text.js';
 
 const PAGE_WIDTH = 612; // US Letter, points
 const PAGE_HEIGHT = 792;
@@ -209,12 +211,196 @@ export function toWinAnsiSafe(input: string): string {
  * serializeTable() before rendering. This is the leaf-source-resolver path,
  * which renders stored document HTML directly.
  */
-export function htmlToPlainText(input: string): string {
+/**
+ * Reduce stored document HTML to the plain text a leaf renders.
+ *
+ * -- Why this walks a tree instead of running regexes --------------------------
+ * The regex reducer this replaces lost content silently. Extracting text back
+ * out of rendered leaves with pdfjs turned up eight distinct failures, and the
+ * ones that matter share a shape: the page still reads as a finished sentence,
+ * so nothing on it tells a reviewer that anything is missing.
+ *
+ *   <img>     disappeared entirely. "See figure." / [K-M curve] / "After."
+ *             rendered as "See figure. After." - a cross-reference pointing at
+ *             nothing, with the alt text discarded too.
+ *   <dl>      ran together: an abbreviations list came out as
+ *             "AEAdverse eventSAESerious AE".
+ *   lists     lost numbering and nesting. Inclusion criteria and their
+ *             sub-criteria flattened into one column with "Exclusion", so which
+ *             criteria belonged to which heading was no longer recoverable, and
+ *             "as described in step 3" had no step 3 to point at.
+ *   entities  only five were decoded. "37&deg;C &plusmn;2" printed literally,
+ *             ampersands and all, into a filed document.
+ *   <pre>     lost its indentation to the whitespace collapse.
+ *   <style>   and <script> bodies leaked in as visible document text.
+ *   cells     containing a heading or a nested table left the row broken across
+ *             lines with a dangling " | ".
+ *
+ * node-html-parser is already a production dependency, is synchronous and pure,
+ * and decodes the full named and numeric entity set. Determinism matters here
+ * beyond readability: leaf checksums in the eCTD backbone are md5 over the
+ * rendered bytes, so identical input must always reduce to identical text.
+ *
+ * Parsing must never fail a submission export, so anything thrown falls back to
+ * the original tag-stripping reducer, which is total by construction.
+ */
+const BLOCK_TAGS = new Set([
+  'p', 'div', 'section', 'article', 'header', 'footer', 'main', 'aside',
+  'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'blockquote', 'figure', 'figcaption',
+  'form', 'fieldset', 'address', 'details', 'summary', 'caption',
+]);
+
+/** Markup machinery whose text is never document content. */
+const DROPPED_TAGS = new Set(['script', 'style', 'noscript', 'head', 'template', 'iframe']);
+
+/**
+ * Fences <pre> content so the whitespace-normalizing pass steps over it. U+0000
+ * cannot appear in parsed HTML text, and toWinAnsiSafe's keep-set excludes it,
+ * so a sentinel that somehow survived could never reach a rendered page.
+ */
+const PRE_SENTINEL = '\u0000';
+
+const DIGITS_AND_SIGN_ONLY = /^[0-9+-]+$/;
+
+interface WalkContext {
+  /** Nesting depth of the enclosing list, for indentation. */
+  listDepth: number;
+}
+
+function collapseInline(text: string): string {
+  return text.replace(/\s+/g, ' ');
+}
+
+function isElement(node: any): boolean {
+  return node?.nodeType === 1;
+}
+
+/** A node's child text, inline whitespace collapsed and trimmed. */
+function inlineText(node: any, ctx: WalkContext): string {
+  return collapseInline(walkChildren(node, ctx)).trim();
+}
+
+function tagOf(node: any): string | undefined {
+  return isElement(node) ? (node.rawTagName ?? '').toLowerCase() : undefined;
+}
+
+function renderListItems(list: any, ctx: WalkContext): string {
+  const ordered = tagOf(list) === 'ol';
+  const startAttr = Number.parseInt(list.getAttribute?.('start') ?? '', 10);
+  let counter = Number.isFinite(startAttr) ? startAttr : 1;
+  const indent = '  '.repeat(ctx.listDepth);
+  const childCtx: WalkContext = { listDepth: ctx.listDepth + 1 };
+
+  const lines: string[] = [];
+  for (const child of list.childNodes) {
+    if (tagOf(child) !== 'li') continue;
+
+    // A nested list inside the <li> renders after the item's own text, one level
+    // deeper. This hierarchy is what the flat reducer destroyed.
+    const nestedLists: any[] = [];
+    const ownParts: string[] = [];
+    for (const grand of child.childNodes) {
+      const tag = tagOf(grand);
+      if (tag === 'ul' || tag === 'ol') nestedLists.push(grand);
+      else ownParts.push(walkNode(grand, childCtx));
+    }
+
+    const marker = ordered ? counter + '. ' : '- ';
+    counter += 1;
+    lines.push(indent + marker + collapseInline(ownParts.join('')).trim());
+    for (const nested of nestedLists) lines.push(renderListItems(nested, childCtx));
+  }
+  return lines.join('\n');
+}
+
+function renderRow(row: any, ctx: WalkContext): string {
+  const cells: string[] = [];
+  for (const cell of row.childNodes) {
+    const tag = tagOf(cell);
+    if (tag !== 'td' && tag !== 'th') continue;
+    // A block element inside a cell (a heading, a nested table) must not break
+    // the row apart, so cell content is flattened onto one line.
+    cells.push(collapseInline(walkChildren(cell, ctx).replace(/\n+/g, ' ')).trim());
+  }
+  return cells.join(' | ');
+}
+
+function walkChildren(node: any, ctx: WalkContext): string {
+  let out = '';
+  for (const child of node.childNodes ?? []) out += walkNode(child, ctx);
+  return out;
+}
+
+function walkNode(node: any, ctx: WalkContext): string {
+  if (node?.nodeType === 3) return node.text ?? ''; // text node, entities decoded
+  if (!isElement(node)) return '';
+
+  const tag = tagOf(node) ?? '';
+  if (DROPPED_TAGS.has(tag)) return '';
+
+  switch (tag) {
+    case 'br':
+    case 'hr':
+      return '\n';
+
+    case 'img': {
+      // Never silent. Alt text is the figure's only description in a text
+      // rendering; the file name still tells a reviewer something was there.
+      const alt = collapseInline(node.getAttribute('alt') ?? '').trim();
+      const src = (node.getAttribute('src') ?? '').split(/[/\\]/).pop() ?? '';
+      return '\n[Figure: ' + (alt || src || 'image') + ']\n';
+    }
+
+    case 'pre':
+      // Verbatim, indentation included, fenced so normalization leaves it alone.
+      return '\n' + PRE_SENTINEL + node.text + PRE_SENTINEL + '\n';
+
+    // <sup> and the tracked-change marks are converted upstream by
+    // inlineMarksToText, which both export pipelines share; handling them again
+    // here would fork the contract that module exists to keep single.
+    case 'sub': {
+      const inner = inlineText(node, ctx);
+      if (!inner) return '';
+      // H<sub>2</sub>O reads as H2O; anything else keeps a visible marker.
+      return DIGITS_AND_SIGN_ONLY.test(inner) ? inner : '_' + inner;
+    }
+
+    case 'ul':
+    case 'ol':
+      return '\n' + renderListItems(node, ctx) + '\n';
+
+    case 'dl':
+      return '\n' + walkChildren(node, ctx) + '\n';
+    case 'dt':
+      return '\n' + inlineText(node, ctx) + ': ';
+    case 'dd':
+      return inlineText(node, ctx) + '\n';
+
+    case 'tr':
+      return renderRow(node, ctx) + '\n';
+    case 'td':
+    case 'th':
+      // Reached only for a cell walked outside a row (malformed markup).
+      return collapseInline(walkChildren(node, ctx)).trim() + ' ';
+    case 'table':
+    case 'thead':
+    case 'tbody':
+    case 'tfoot':
+      return '\n' + walkChildren(node, ctx) + '\n';
+
+    default:
+      if (BLOCK_TAGS.has(tag)) return '\n' + walkChildren(node, ctx) + '\n';
+      return walkChildren(node, ctx); // inline: span, strong, em, a, code, ...
+  }
+}
+
+/** The pre-tree reducer, kept as the fallback that cannot throw. */
+function legacyHtmlToPlainText(input: string): string {
   return input
     .replace(/<\s*\/\s*(?:td|th)\s*>\s*<\s*(?:td|th)\b[^>]*>/gi, ' | ')
     .replace(/<\s*(br|\/p|\/div|\/li|\/h[1-6]|\/tr)\s*>/gi, '\n')
     .replace(/<\s*(p|div|li|h[1-6]|tr)\b[^>]*>/gi, '\n')
-    .replace(/<[^>]+>/g, '') // remaining tags
+    .replace(/<[^>]+>/g, '')
     .replace(/&nbsp;/gi, ' ')
     .replace(/&amp;/gi, '&')
     .replace(/&lt;/gi, '<')
@@ -227,37 +413,98 @@ export function htmlToPlainText(input: string): string {
     .trim();
 }
 
+export function htmlToPlainText(input: string): string {
+  // Inline semantic marks become text BEFORE the tree is walked, through the
+  // module the DOCX pipeline shares: <del>/<ins> must survive as [-...-] and
+  // [+...+] because silently settling an unresolved suggestion either way
+  // fabricates a decision nobody made. One implementation, both callers - these
+  // two pipelines had already drifted apart on the identical table-cell defect.
+  const marked = inlineMarksToText(input);
+
+  let raw: string;
+  try {
+    raw = walkNode(parseHtml(marked) as any, { listDepth: 0 });
+  } catch (error) {
+    // Degrading is right - a parse failure must not fail a submission export -
+    // but it must not be invisible either: the fallback loses figures, list
+    // structure and most entities, so anyone looking at a leaf rendered this way
+    // needs to be able to find out that it was.
+    console.warn(
+      '[ectd-leaf] HTML parse failed; fell back to the tag-stripping reducer, ' +
+        'which does not preserve figures, list structure or entities: ' +
+        (error instanceof Error ? error.message : String(error)),
+    );
+    return legacyHtmlToPlainText(marked);
+  }
+
+  // Split out the verbatim <pre> regions so normalization cannot reach them.
+  const normalized = raw.split(PRE_SENTINEL).map((segment, index) => {
+    if (index % 2 === 1) return segment; // inside <pre>
+    return segment
+      .replace(/ ?\n ?\| ?/g, ' | ')  // a block inside a cell must not break the row
+      .split('\n')
+      // Collapse runs of spaces and tabs WITHIN a line, but never the leading
+      // indent: that indent is the only thing carrying list nesting depth, and
+      // collapsing it made every level render one space deep - which is to say,
+      // made a sub-criterion indistinguishable from the criterion below it.
+      .map((line) => {
+        const lead = /^ */.exec(line)?.[0] ?? '';
+        return lead + line.slice(lead.length).replace(/[^\S\n]+/g, ' ').trimEnd();
+      })
+      .join('\n')
+      .replace(/\n{3,}/g, '\n\n');
+  });
+
+  return normalized.join('').trim();
+}
+
 /** Word-wrap a single logical line to a pixel width for the given font/size. */
+/**
+ * Wrap one logical line to the page width, keeping its leading indentation.
+ *
+ * The indent is not decoration: it is the only thing that carries list nesting
+ * depth onto the rendered page, so a sub-criterion can be told apart from the
+ * criterion after it. This used to split the whole line on /\s+/, which dropped
+ * the indent before the first word was measured - htmlToPlainText could compute
+ * the hierarchy perfectly and none of it would reach the paper.
+ *
+ * Continuation lines carry the same indent, so a criterion that wraps stays
+ * visually inside its own level instead of falling back to the margin.
+ */
 function wrapLine(text: string, font: import('pdf-lib').PDFFont, maxWidth: number): string[] {
   if (text === '') return [''];
-  const words = text.split(/\s+/);
+
+  const indent = /^[ \t]*/.exec(text)?.[0] ?? '';
+  const words = text.slice(indent.length).split(/\s+/).filter(Boolean);
+  if (words.length === 0) return [''];
+
   const lines: string[] = [];
-  let current = '';
+  let current = indent;
   for (const word of words) {
-    const candidate = current ? `${current} ${word}` : word;
+    const candidate = current === indent ? `${current}${word}` : `${current} ${word}`;
     if (font.widthOfTextAtSize(candidate, FONT_SIZE) <= maxWidth) {
       current = candidate;
-    } else {
-      if (current) lines.push(current);
-      // A single word longer than the line: hard-break it by characters.
-      if (font.widthOfTextAtSize(word, FONT_SIZE) > maxWidth) {
-        let chunk = '';
-        for (const ch of word) {
-          if (font.widthOfTextAtSize(chunk + ch, FONT_SIZE) > maxWidth) {
-            lines.push(chunk);
-            chunk = ch;
-          } else {
-            chunk += ch;
-          }
+      continue;
+    }
+    if (current !== indent) lines.push(current);
+    // A single word wider than the line: hard-break it by characters.
+    if (font.widthOfTextAtSize(indent + word, FONT_SIZE) > maxWidth) {
+      let chunk = indent;
+      for (const ch of word) {
+        if (font.widthOfTextAtSize(chunk + ch, FONT_SIZE) > maxWidth && chunk !== indent) {
+          lines.push(chunk);
+          chunk = indent + ch;
+        } else {
+          chunk += ch;
         }
-        current = chunk;
-      } else {
-        current = word;
       }
+      current = chunk;
+    } else {
+      current = indent + word;
     }
   }
-  if (current) lines.push(current);
-  return lines;
+  if (current !== indent) lines.push(current);
+  return lines.length > 0 ? lines : [''];
 }
 
 /**

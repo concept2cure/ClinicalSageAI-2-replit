@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { I } from '../icons';
 import { downloadBlob, downloadText, safeFileName } from '../download';
-import { SampleTag, useLiveData, useLiveRows, EmptyState, liveMutateOrNull } from '../dataConnect';
+import { useLiveData, useLiveRows, EmptyState, liveMutateOrNull } from '../dataConnect';
 import { ApiRequestError, apiRequest, serverMessage } from '@/lib/queryClient';
 import { getAuthToken, getJwtOrgId } from '@/utils/authToken';
 import type { SurfaceViewProps } from '../surfaceViews';
@@ -527,7 +527,7 @@ export function Setup({ onAsk, onNav }: SurfaceViewProps) {
         eyebrow="Admin — organization"
         title={
           <React.Fragment>
-            Setup {!loadError && !loading && <SampleTag sample={false} />}
+            Setup
           </React.Fragment>
         }
         sub="Organization profile and module configuration, saved to the organization record and written to the audit trail. Controls the platform enforces rather than exposes are marked as enforced."
@@ -1026,16 +1026,24 @@ export function AuditTrail({ onAsk }: SurfaceViewProps) {
         hashChain: { total: chainStatus.total, verified: chainStatus.valid, intact: chainStatus.intact },
         hashChainViewOpen: chainView,
         // Enough to name an event back to the user, not the whole ledger.
+        // `actor` (an individual's name, or an email via the server's
+        // actorName fallback) and `reason` (user-authored signing/decision
+        // free-text) are deliberately NOT published: the name/email is PII and
+        // the free-text is both sensitive content and a prompt-injection vector
+        // folded verbatim into the model prompt. `meaning` (an
+        // APPROVAL/AUTHORSHIP/… enum) and `hasReason` carry the same grounding
+        // without the payload — the way this block already omits `e.ip`. The
+        // actor and reason stay on the ledger row, where the person reads them.
         recentEntries: log.slice(0, 10).map((e) => ({
-          id: e.id, when: e.when, actor: e.actor, event: e.event,
+          id: e.id, when: e.when, event: e.event,
           target: e.target, kind: e.kind, eSigned: e.sig,
-          reason: e.reason, meaning: e.meaning,
+          hasReason: Boolean(e.reason), meaning: e.meaning,
         })),
         selectedEntry: entry
           ? {
-              id: entry.id, when: entry.when, actor: entry.actor, event: entry.event,
+              id: entry.id, when: entry.when, event: entry.event,
               target: entry.target, kind: entry.kind, eSigned: entry.sig,
-              reason: entry.reason, meaning: entry.meaning,
+              hasReason: Boolean(entry.reason), meaning: entry.meaning,
             }
           : null,
         lastExportFailure: exportErr || null,
@@ -3128,7 +3136,7 @@ export function AdminConsole({ onAsk, onNav }: SurfaceViewProps) {
                 <EmptyState
                   icon={I.building}
                   title="Organization profile not yet available"
-                  hint="A governed org-profile read isn't wired yet. The profile (name, industry mode, tier, region, data residency) drives rail categories, pathways and pricing archetype; editing is governed via /api/setup."
+                  hint="A governed org-profile read isn't wired yet. The profile (name, industry mode, tier, region, data residency) drives rail categories, pathways and pricing archetype; editing is governed in Setup."
                 />
               </div>
             )}
@@ -3300,7 +3308,7 @@ export function AdminConsole({ onAsk, onNav }: SurfaceViewProps) {
             {sec === 'apikeys' && (
               <div>
                 <div className="scaf-note" style={{ marginBottom: 12 }}>
-                  Programmatic access tokens (/api/api-keys) -- org-scoped, hashed at rest,
+                  Programmatic access tokens — org-scoped, hashed at rest,
                   last-used tracked, revocable. Every use is audited.
                 </div>
                 {keysState.loading ? (

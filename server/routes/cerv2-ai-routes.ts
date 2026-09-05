@@ -19,9 +19,12 @@ import { ragRouter } from '../services/ragRouter.js';
 import { emitTraceEvent, createTraceId } from '../services/generation-guard.js';
 
 // AI generation is routed through the unified AI client (gateway-backed).
-import { ai } from '../lib/unified-ai-client';
+import { serverError } from '../lib/api-response';
+import { createScopedLogger } from '../utils/logger';
 
 const router = Router();
+
+const logger = createScopedLogger('cerv2-ai');
 
 // ── Rate limiting for AI endpoints (prevents runaway OpenAI costs) ──────────
 const aiRateLimiter = rateLimit({
@@ -111,9 +114,9 @@ const sectionTemplates: Record<string, Record<string, string>> = {
     pred: 'The primary predicate device is [PREDICATE DEVICE] ([K-NUMBER]), manufactured by [MANUFACTURER]. The reference predicate is [REFERENCE DEVICE] ([K-NUMBER]).',
     predicate_comparison:
       'The primary predicate device is [PREDICATE DEVICE] ([K-NUMBER]), manufactured by [MANUFACTURER]. The reference predicate is [REFERENCE DEVICE] ([K-NUMBER]).',
-    se: '[DEVICE NAME] is substantially equivalent to [PREDICATE DEVICE] ([PREDICATE K]) with respect to intended use, technological characteristics, and performance specifications. The subject device shares the same intended use as the predicate: [INTENDED USE]. Differences include: [LIST DIFFERENCES]. These differences do not raise new questions of safety or effectiveness.',
+    se: 'This section compares [DEVICE NAME] against the predicate [PREDICATE DEVICE] ([PREDICATE K]) with respect to intended use, technological characteristics, and performance specifications. Intended use of the subject device: [INTENDED USE]. Differences from the predicate: [LIST DIFFERENCES]. Effect of each difference on safety and effectiveness: [DIFFERENCES ASSESSMENT]. Substantial equivalence is determined by FDA upon review of this comparison: [SUBSTANTIAL EQUIVALENCE DETERMINATION].',
     se_discussion:
-      '[DEVICE NAME] is substantially equivalent to [PREDICATE DEVICE] ([PREDICATE K]) with respect to intended use, technological characteristics, and performance specifications. The subject device shares the same intended use as the predicate: [INTENDED USE]. Differences include: [LIST DIFFERENCES]. These differences do not raise new questions of safety or effectiveness.',
+      'This section compares [DEVICE NAME] against the predicate [PREDICATE DEVICE] ([PREDICATE K]) with respect to intended use, technological characteristics, and performance specifications. Intended use of the subject device: [INTENDED USE]. Differences from the predicate: [LIST DIFFERENCES]. Effect of each difference on safety and effectiveness: [DIFFERENCES ASSESSMENT]. Substantial equivalence is determined by FDA upon review of this comparison: [SUBSTANTIAL EQUIVALENCE DETERMINATION].',
     testing:
       'Bench testing was conducted per applicable FDA-recognized consensus standards including: [LIST STANDARDS]. Software validation was performed per IEC 62304. Biocompatibility testing was completed per the ISO 10993 series.',
     performance_testing:
@@ -121,9 +124,9 @@ const sectionTemplates: Record<string, Record<string, string>> = {
     labeling:
       'Proposed labeling includes: Instructions for Use (IFU), Quick Start Guide, and packaging labels. All labeling complies with 21 CFR 801 requirements.',
     concl:
-      'Based on the comparison of intended use, technological characteristics, and performance data, [DEVICE NAME] is substantially equivalent to [PREDICATE DEVICE] and should be cleared for commercial distribution.',
+      'Based on the comparison of intended use, technological characteristics, and performance data for [DEVICE NAME] against [PREDICATE DEVICE], the substantial equivalence conclusion is: [SUBSTANTIAL EQUIVALENCE DETERMINATION]. A determination of substantial equivalence, and any decision to clear the device for commercial distribution, is made by FDA on review of this submission.',
     conclusion:
-      'Based on the comparison of intended use, technological characteristics, and performance data, [DEVICE NAME] is substantially equivalent to [PREDICATE DEVICE] and should be cleared for commercial distribution.',
+      'Based on the comparison of intended use, technological characteristics, and performance data for [DEVICE NAME] against [PREDICATE DEVICE], the substantial equivalence conclusion is: [SUBSTANTIAL EQUIVALENCE DETERMINATION]. A determination of substantial equivalence, and any decision to clear the device for commercial distribution, is made by FDA on review of this submission.',
   },
   cerv2_pma: {
     // docTypes.js IDs: summary, nonclin, clin, mfgqa, labeling, risk, pms
@@ -144,9 +147,9 @@ const sectionTemplates: Record<string, Record<string, string>> = {
       "[DEVICE NAME] is manufactured at [COMPANY NAME]'s ISO 13485:2016 certified facility. The facility is compliant with 21 CFR Part 820 Quality System Regulation. All critical suppliers are qualified under a documented supplier management program.",
     labeling:
       "Proposed labeling includes: Physician's Manual, Patient's Manual, and Surgical Technique Guide. Labeling includes required Class III warnings, precautions, and a detailed summary of clinical trial results.",
-    risk: 'The benefits of [DEVICE NAME] significantly outweigh the risks for the intended patient population. The pivotal trial demonstrated clinically meaningful and statistically significant improvement in [OUTCOME] with an acceptable safety profile.',
+    risk: 'The benefit-risk balance of [DEVICE NAME] for the intended patient population is: [BENEFIT-RISK DETERMINATION]. Pivotal trial outcome in [OUTCOME]: [TRIAL RESULT]. Safety profile: [SAFETY PROFILE ASSESSMENT].',
     risk_analysis:
-      'The benefits of [DEVICE NAME] significantly outweigh the risks for the intended patient population. The pivotal trial demonstrated clinically meaningful and statistically significant improvement in [OUTCOME] with an acceptable safety profile.',
+      'The benefit-risk balance of [DEVICE NAME] for the intended patient population is: [BENEFIT-RISK DETERMINATION]. Pivotal trial outcome in [OUTCOME]: [TRIAL RESULT]. Safety profile: [SAFETY PROFILE ASSESSMENT].',
     pms: 'A post-approval study (PAS) is proposed to monitor long-term safety and effectiveness over [YEARS] years in [N] patients across [SITES] sites. Annual interim reports will be submitted.',
     pms_plan:
       'A post-approval study (PAS) is proposed to monitor long-term safety and effectiveness over [YEARS] years in [N] patients across [SITES] sites. Annual interim reports will be submitted.',
@@ -169,21 +172,21 @@ const sectionTemplates: Record<string, Record<string, string>> = {
     appraisal_methodology:
       'Each identified study was appraised per MEDDEV 2.7/1 rev. 4 criteria: scientific validity, relevance to the device, and methodological quality.',
     benefitrisk:
-      'Benefits: [LIST BENEFITS]. Risk reduction: [QUANTIFY]. Risks: [LIST RISKS WITH RATES]. The benefit-risk profile is favorable and supports conformity with the General Safety and Performance Requirements of MDR 2017/745.',
+      'Benefits: [LIST BENEFITS]. Risk reduction: [QUANTIFY]. Risks: [LIST RISKS WITH RATES]. Benefit-risk balance: [BENEFIT-RISK DETERMINATION]. Conformity with the General Safety and Performance Requirements of MDR 2017/745: [GSPR CONFORMITY DETERMINATION].',
     clinical_benefits:
       'Benefits: [LIST BENEFITS]. Risk reduction: [QUANTIFY]. Quality of life improvement: [MEASURES].',
     residual_risks:
-      'Risks: [LIST RISKS WITH RATES]. All risks are consistent with established [DEVICE CATEGORY] devices and are mitigated by [MITIGATION MEASURES].',
-    gspr: 'General Safety and Performance Requirements (GSPRs) per MDR Annex I have been systematically mapped to supporting evidence. All [N] applicable GSPRs are addressed.',
+      'Risks: [LIST RISKS WITH RATES]. Comparison to established [DEVICE CATEGORY] devices: [RISK COMPARISON]. Mitigation measures: [MITIGATION MEASURES]. Residual risk acceptability: [RESIDUAL RISK DETERMINATION].',
+    gspr: 'General Safety and Performance Requirements (GSPRs) per MDR Annex I are mapped to supporting evidence in the GSPR checklist. Per-requirement coverage status: [GSPR COVERAGE STATUS]. Outstanding GSPRs: [GSPR GAPS]. This mapping does not itself assert conformity; conformity is concluded per requirement from its evidence.',
     gspr_overview:
-      'General Safety and Performance Requirements (GSPRs) per MDR Annex I have been systematically mapped to supporting evidence. All [N] applicable GSPRs are addressed.',
+      'General Safety and Performance Requirements (GSPRs) per MDR Annex I are mapped to supporting evidence in the GSPR checklist. Per-requirement coverage status: [GSPR COVERAGE STATUS]. Outstanding GSPRs: [GSPR GAPS]. This mapping does not itself assert conformity; conformity is concluded per requirement from its evidence.',
     pms: 'A Post-Market Surveillance (PMS) plan and Post-Market Clinical Follow-up (PMCF) plan have been established in accordance with MDR Articles 83–86 and Annex XIV Part B.',
     pms_plan:
       'A Post-Market Surveillance (PMS) plan and Post-Market Clinical Follow-up (PMCF) plan have been established in accordance with MDR Articles 83–86 and Annex XIV Part B.',
     concl:
-      'Based on the clinical evaluation performed in accordance with MEDDEV 2.7/1 rev. 4, [DEVICE NAME] meets the relevant General Safety and Performance Requirements of MDR 2017/745. The benefit-risk profile is favorable.',
+      'Based on the clinical evaluation performed in accordance with MEDDEV 2.7/1 rev. 4 for [DEVICE NAME], conformity with the relevant General Safety and Performance Requirements of MDR 2017/745 is: [GSPR CONFORMITY DETERMINATION]. Benefit-risk balance: [BENEFIT-RISK DETERMINATION].',
     overall_conclusion:
-      'Based on the clinical evaluation performed in accordance with MEDDEV 2.7/1 rev. 4, [DEVICE NAME] meets the relevant General Safety and Performance Requirements of MDR 2017/745. The benefit-risk profile is favorable.',
+      'Based on the clinical evaluation performed in accordance with MEDDEV 2.7/1 rev. 4 for [DEVICE NAME], conformity with the relevant General Safety and Performance Requirements of MDR 2017/745 is: [GSPR CONFORMITY DETERMINATION]. Benefit-risk balance: [BENEFIT-RISK DETERMINATION].',
   },
 };
 
@@ -346,7 +349,7 @@ router.post(
       });
     } catch (err: any) {
       console.error('[CERV2 AI] Suggest error:', err);
-      res.status(500).json({ error: 'Suggestion failed', message: err.message });
+      return serverError(res, logger, 'saving suggest', err);
     }
   }
 );
@@ -383,7 +386,7 @@ router.post(
 ${similarities.length > 0 ? `- Shared characteristics: ${similarities.join('; ')}` : ''}
 ${differences.length > 0 ? `- Identified differences: ${differences.join('; ')}` : ''}
 
-Write a complete SE determination that demonstrates the subject device is substantially equivalent to the predicate device. Address all differences and explain why they do not raise new questions of safety or effectiveness.`;
+Write a complete SE analysis comparing the subject device to the predicate. Address each difference and objectively assess its effect on safety and effectiveness. State a substantial-equivalence determination only to the extent the comparison supports it; do not assert equivalence, or that differences raise no new questions of safety or effectiveness, beyond what the provided data establishes.`;
 
       const ragQuery = `510(k) substantial equivalence ${deviceName} ${predicateDevice} comparison technological characteristics`;
 
@@ -402,22 +405,32 @@ Write a complete SE determination that demonstrates the subject device is substa
         });
       }
 
-      // ── Template fallback ──
+      // ── Template fallback (AI unavailable) ──
+      // The AI gateway is unreachable, so no substantive SE analysis was
+      // produced. This fallback must NOT fabricate the determination the
+      // gateway would have drafted: it returns a structured skeleton that
+      // echoes the caller-supplied comparison inputs verbatim and leaves every
+      // ANALYTICAL conclusion (equivalence of characteristics, effect of
+      // differences, performance adequacy, and the SE determination itself) as
+      // an explicit [ALL-CAPS] placeholder for a human to complete. Substantial
+      // equivalence is FDA's determination; asserting it here from a down
+      // gateway would put an unsubstantiated regulatory conclusion into a
+      // 510(k). `incomplete: true` lets the client flag the draft.
       const simText =
         similarities.length > 0
-          ? `Both devices share the following characteristics: ${similarities.join('; ')}.`
-          : 'Detailed comparison of technological characteristics demonstrates equivalence in intended use and fundamental technology.';
+          ? `Both devices are stated to share the following characteristics: ${similarities.join('; ')}. Equivalence of these characteristics: [TECHNOLOGICAL EQUIVALENCE ASSESSMENT].`
+          : '[TECHNOLOGICAL CHARACTERISTICS COMPARISON TO BE COMPLETED].';
 
       const diffText =
         differences.length > 0
-          ? `Differences include: ${differences.join('; ')}. These differences do not raise new questions of safety or effectiveness.`
-          : 'No significant technological differences exist between the subject and predicate devices.';
+          ? `Stated differences: ${differences.join('; ')}. Effect of each difference on safety and effectiveness: [DIFFERENCES ASSESSMENT].`
+          : '[DIFFERENCES ANALYSIS TO BE COMPLETED].';
 
       const text = [
-        `${deviceName} is substantially equivalent to ${predicateDevice}${predicateK ? ` (${predicateK})` : ''} with respect to intended use, technological characteristics, and performance specifications.`,
+        `This substantial equivalence analysis compares ${deviceName} against the predicate device ${predicateDevice}${predicateK ? ` (${predicateK})` : ''} with respect to intended use, technological characteristics, and performance specifications. The determination below is not asserted by this draft and must be completed after review of the comparison.`,
         '',
         'Intended Use Comparison:',
-        `The subject device (${deviceName}) shares the same intended use as the predicate device (${predicateDevice}).`,
+        `Subject device: ${deviceName}. Predicate device: ${predicateDevice}. Intended-use equivalence: [INTENDED USE ASSESSMENT].`,
         '',
         'Technological Characteristics Comparison:',
         simText,
@@ -426,19 +439,20 @@ Write a complete SE determination that demonstrates the subject device is substa
         diffText,
         '',
         'Performance Data:',
-        `Performance testing data demonstrates that ${deviceName} performs at least as well as ${predicateDevice} for all validated test methods.`,
+        '[PERFORMANCE DATA SUMMARY TO BE COMPLETED].',
         '',
         'Conclusion:',
-        `Based on the foregoing comparison, ${deviceName} is substantially equivalent to ${predicateDevice} and should be cleared for commercial distribution in the United States.`,
+        `Substantial equivalence of ${deviceName} to ${predicateDevice} is determined by FDA upon review of the comparison above: [SUBSTANTIAL EQUIVALENCE DETERMINATION].`,
       ].join('\n');
 
       return res.json({
         text,
         source: 'template',
+        incomplete: true,
       });
     } catch (err: any) {
       console.error('[CERV2 AI] Equivalence error:', err);
-      res.status(500).json({ error: 'Equivalence generation failed', message: err.message });
+      return serverError(res, logger, 'saving equivalence', err);
     }
   }
 );
@@ -494,16 +508,23 @@ Provide a thorough analysis with quantified assessments where possible.`;
         });
       }
 
-      // ── Template fallback ──
+      // ── Template fallback (AI unavailable) ──
+      // The AI gateway is unreachable. This fallback echoes the caller-supplied
+      // benefits/risks verbatim but must NOT fabricate the benefit-risk
+      // determination, the acceptability of residual risks, or (for a CER) GSPR
+      // conformity — those are the reviewer's conclusions and asserting them
+      // from a down gateway would put an unsubstantiated favorable
+      // determination into a CER/PMA. Each conclusion is left as an explicit
+      // [ALL-CAPS] placeholder; `incomplete: true` lets the client flag it.
       const benefitText =
         benefits.length > 0
-          ? `Key clinical benefits include: ${benefits.join('; ')}.`
-          : `The clinical benefits of ${deviceName} have been evaluated based on available clinical data.`;
+          ? `Stated clinical benefits: ${benefits.join('; ')}.`
+          : '[CLINICAL BENEFITS TO BE COMPLETED].';
 
       const riskText =
         risks.length > 0
-          ? `Identified residual risks include: ${risks.join('; ')}. All identified risks are mitigated to acceptable levels through design controls, labeling, and post-market surveillance.`
-          : `Residual risks have been identified and assessed through the risk management process per ISO 14971. Risk mitigation measures are in place.`;
+          ? `Stated residual risks: ${risks.join('; ')}. Acceptability of each residual risk per ISO 14971: [RESIDUAL RISK ASSESSMENT].`
+          : '[CLINICAL RISKS TO BE COMPLETED].';
 
       const text = [
         `Benefit-Risk Determination for ${deviceName}`,
@@ -517,16 +538,20 @@ Provide a thorough analysis with quantified assessments where possible.`;
         riskText,
         '',
         'Determination:',
-        `Based on the totality of evidence, the benefits of ${deviceName} for the intended patient population significantly outweigh the identified risks. The benefit-risk profile is favorable${isCer ? ' and supports conformity with the General Safety and Performance Requirements of MDR 2017/745' : ' and supports a reasonable assurance of safety and effectiveness'}.`,
+        `The benefit-risk balance of ${deviceName} for the intended patient population is concluded by the reviewer from the benefits and risks above; it is not asserted by this draft: [BENEFIT-RISK DETERMINATION].`,
+        isCer
+          ? 'Conformity with the General Safety and Performance Requirements of MDR 2017/745: [GSPR CONFORMITY DETERMINATION].'
+          : 'Reasonable assurance of safety and effectiveness: [SAFETY AND EFFECTIVENESS DETERMINATION].',
       ].join('\n');
 
       return res.json({
         text,
         source: 'template',
+        incomplete: true,
       });
     } catch (err: any) {
       console.error('[CERV2 AI] Benefit-risk error:', err);
-      res.status(500).json({ error: 'Benefit-risk generation failed', message: err.message });
+      return serverError(res, logger, 'saving benefit risk', err);
     }
   }
 );
@@ -553,7 +578,7 @@ router.get(
       });
     } catch (err: any) {
       console.error('[CERV2 AI] Templates error:', err);
-      res.status(500).json({ error: 'Failed to retrieve templates', message: err.message });
+      return serverError(res, logger, 'loading templates', err);
     }
   }
 );
@@ -585,16 +610,16 @@ const enhancedMockContent: Record<string, Record<string, (ctx: any) => string>> 
         `## Substantial Equivalence Discussion`,
         ``,
         `### 1. Intended Use Comparison`,
-        `The subject device, ${ctx.deviceName || '[DEVICE NAME]'}, shares the same intended use as the predicate device, ${ctx.predicateDevice || '[PREDICATE]'}: ${ctx.intendedUse || '[INTENDED USE]'}. Both devices are intended to be used by healthcare professionals in hospital and clinical settings for the same patient population.`,
+        `Subject device: ${ctx.deviceName || '[DEVICE NAME]'}. Predicate device: ${ctx.predicateDevice || '[PREDICATE]'}. Intended use of the subject device: ${ctx.intendedUse || '[INTENDED USE]'}. Equivalence of intended use to the predicate: [INTENDED USE ASSESSMENT].`,
         ``,
         `### 2. Technological Characteristics`,
-        `Both the subject and predicate devices employ the same fundamental technology. The subject device utilizes the same operating principle and energy type as the predicate. Key design parameters including materials, dimensions, and performance specifications are comparable.`,
+        `Comparison of operating principle, energy type, materials, dimensions, and performance specifications between the subject and predicate devices: [TECHNOLOGICAL CHARACTERISTICS COMPARISON].`,
         ``,
         `### 3. Performance Data Summary`,
-        `Bench testing per applicable FDA-recognized consensus standards demonstrates the subject device performs at least as well as the predicate device across all validated test methods. Software verification and validation (per IEC 62304) confirm equivalent functionality.`,
+        `[PERFORMANCE DATA SUMMARY TO BE COMPLETED].`,
         ``,
         `### 4. Conclusion`,
-        `The technological differences between the subject and predicate devices do not raise new questions of safety or effectiveness. ${ctx.deviceName || '[DEVICE NAME]'} is substantially equivalent to ${ctx.predicateDevice || '[PREDICATE]'}${ctx.predicateK ? ` (${ctx.predicateK})` : ''}.`,
+        `Effect of the technological differences between the subject and predicate devices on safety and effectiveness: [DIFFERENCES ASSESSMENT]. Substantial equivalence of ${ctx.deviceName || '[DEVICE NAME]'} to ${ctx.predicateDevice || '[PREDICATE]'}${ctx.predicateK ? ` (${ctx.predicateK})` : ''} is determined by FDA upon review of this comparison: [SUBSTANTIAL EQUIVALENCE DETERMINATION].`,
       ].join('\n'),
 
     testing: ctx =>
@@ -608,14 +633,14 @@ const enhancedMockContent: Record<string, Record<string, (ctx: any) => string>> 
         `The device meets all applicable requirements of IEC 60601-1:2005+A1:2012 and IEC 60601-1-2:2014 (EMC). Leakage currents and dielectric strength are within specified limits.`,
         ``,
         `### Software Verification & Validation (IEC 62304)`,
-        `Software lifecycle processes comply with IEC 62304:2006+A1:2015. Unit, integration, and system testing achieved ≥95% code coverage with zero critical defects.`,
+        `Software lifecycle processes comply with IEC 62304:2006+A1:2015. Unit, integration, and system testing achieved [CODE COVERAGE]% code coverage with [DEFECT COUNT] critical defects noted.`,
         ``,
         `### Performance Specifications`,
         `Quantitative performance testing confirms ${ctx.deviceName || 'the device'} meets or exceeds all design input specifications under normal and fault conditions.`,
       ].join('\n'),
 
     concl: ctx =>
-      `Based on the foregoing comparison of intended use, technological characteristics, and performance data, ${ctx.deviceName || '[DEVICE NAME]'} is substantially equivalent to ${ctx.predicateDevice || '[PREDICATE DEVICE]'}${ctx.predicateK ? ` (${ctx.predicateK})` : ''} and should be cleared for marketing in the United States per Section 510(k) of the Federal Food, Drug, and Cosmetic Act.`,
+      `Based on the foregoing comparison of intended use, technological characteristics, and performance data for ${ctx.deviceName || '[DEVICE NAME]'} against ${ctx.predicateDevice || '[PREDICATE DEVICE]'}${ctx.predicateK ? ` (${ctx.predicateK})` : ''}, the substantial equivalence conclusion is: [SUBSTANTIAL EQUIVALENCE DETERMINATION]. A determination of substantial equivalence, and any decision to clear the device for marketing under Section 510(k) of the Federal Food, Drug, and Cosmetic Act, is made by FDA on review of this submission.`,
   },
 
   cerv2_pma: {
@@ -627,24 +652,24 @@ const enhancedMockContent: Record<string, Record<string, (ctx: any) => string>> 
         `A prospective, randomized, double-blind, controlled, multi-center pivotal trial was conducted to evaluate the safety and effectiveness of ${ctx.deviceName || '[DEVICE NAME]'}.`,
         ``,
         `### Enrollment`,
-        `A total of 300 subjects were enrolled at 15 investigational sites. The Intent-to-Treat (ITT) population comprised 285 subjects and the Per-Protocol (PP) population comprised 270 subjects.`,
+        `A total of [SUBJECT COUNT] subjects were enrolled at [SITE COUNT] investigational sites. The Intent-to-Treat (ITT) population comprised [ITT COUNT] subjects and the Per-Protocol (PP) population comprised [PP COUNT] subjects.`,
         ``,
         `### Primary Endpoint`,
-        `The primary effectiveness endpoint was met with a responder rate of 78.5% in the active group vs. 42.3% in the control group (p < 0.001). The pre-specified performance goal of 60% was exceeded.`,
+        `The primary effectiveness endpoint status is [ENDPOINT STATUS] with a responder rate of [RESPONDER RATE]% in the active group vs. [CONTROL RATE]% in the control group ([P-VALUE]). The pre-specified performance goal of [PERFORMANCE GOAL]% was [GOAL RESULT].`,
         ``,
         `### Safety`,
-        `The overall adverse event rate was 12.8% (active) vs. 11.5% (control), with no statistically significant difference between groups. No unanticipated adverse device effects (UADEs) were reported.`,
+        `The overall adverse event rate was [AE RATE]% (active) vs. [CONTROL AE RATE]% (control) ([AE P-VALUE]). [UADE SUMMARY].`,
       ].join('\n'),
 
     risk: ctx =>
       [
         `## Benefit-Risk Determination`,
         ``,
-        `The probable benefits of ${ctx.deviceName || '[DEVICE NAME]'} include clinically meaningful improvement in primary efficacy outcomes, demonstrated by a statistically significant difference from control (p < 0.001). The benefit is durable through the 12-month follow-up period.`,
+        `Probable benefits of ${ctx.deviceName || '[DEVICE NAME]'} in primary efficacy outcomes: [BENEFIT SUMMARY]. Statistical significance versus control: [STATISTICAL SIGNIFICANCE] ([P-VALUE]). Durability through the [FOLLOW-UP PERIOD] follow-up period: [DURABILITY ASSESSMENT].`,
         ``,
-        `Probable risks include device-related adverse events occurring at a rate consistent with the predicate/comparator (12.8% vs. 11.5%). All risks are mitigatable through proper patient selection, labeling, and post-market surveillance.`,
+        `Probable risks include device-related adverse events occurring at a rate of [AE RATE]% vs. [CONTROL AE RATE]% for the predicate/comparator. Risk mitigation (patient selection, labeling, post-market surveillance) and residual-risk acceptability: [RISK MITIGATION ASSESSMENT].`,
         ``,
-        `**Determination:** The probable benefits to health from use of ${ctx.deviceName || '[DEVICE NAME]'} outweigh its probable risks when used as intended, providing a reasonable assurance of safety and effectiveness.`,
+        `**Determination:** The benefit-risk balance of ${ctx.deviceName || '[DEVICE NAME]'} when used as intended, and whether it provides a reasonable assurance of safety and effectiveness, is concluded by the reviewer from the benefits and risks above: [BENEFIT-RISK DETERMINATION].`,
       ].join('\n'),
   },
 
@@ -654,35 +679,35 @@ const enhancedMockContent: Record<string, Record<string, (ctx: any) => string>> 
         `## Benefit-Risk Analysis (EU MDR 2017/745)`,
         ``,
         `### Clinical Benefits`,
-        `The clinical evaluation demonstrates that ${ctx.deviceName || '[DEVICE NAME]'} provides the following clinical benefits:`,
-        `- Reduction in procedure time by approximately 30% vs. standard of care`,
-        `- Improvement in primary clinical outcome measure (effect size: 0.65, 95% CI: 0.42–0.88)`,
-        `- Enhanced patient quality of life scores at 6 and 12 months post-intervention`,
+        `Clinical benefits of ${ctx.deviceName || '[DEVICE NAME]'} assessed in the clinical evaluation:`,
+        `- Procedure time versus standard of care: [PROCEDURE TIME REDUCTION]% ([PROCEDURE TIME ASSESSMENT])`,
+        `- Primary clinical outcome measure (effect size: [EFFECT SIZE], 95% CI: [CONFIDENCE INTERVAL])`,
+        `- Patient quality of life scores at [FOLLOW-UP TIMEPOINTS] post-intervention: [QOL ASSESSMENT]`,
         ``,
         `### Residual Risks`,
-        `After implementation of risk controls per ISO 14971:2019, the following residual risks remain:`,
-        `- Minor procedural complications: 3.2% (comparable to State of the Art)`,
-        `- Device-related adverse events: 1.8% (below the threshold established in MEDDEV 2.7/1 rev. 4)`,
+        `After implementation of risk controls per ISO 14971:2019, the following residual risks are assessed:`,
+        `- Procedural complications: [COMPLICATION RATE]% (comparison to state of the art: [COMPLICATION COMPARISON])`,
+        `- Device-related adverse events: [AE RATE]% (relative to the threshold established in MEDDEV 2.7/1 rev. 4: [AE THRESHOLD ASSESSMENT])`,
         ``,
         `### Conclusion`,
-        `The benefit-risk ratio is favorable. The demonstrated clinical benefits significantly outweigh the residual risks, supporting conformity with the General Safety and Performance Requirements of MDR 2017/745 Annex I.`,
+        `Benefit-risk balance: [BENEFIT-RISK DETERMINATION]. Conformity with the General Safety and Performance Requirements of MDR 2017/745 Annex I: [GSPR CONFORMITY DETERMINATION].`,
       ].join('\n'),
 
     gspr: ctx =>
       [
         `## GSPR Compliance Mapping`,
         ``,
-        `All applicable General Safety and Performance Requirements per MDR 2017/745 Annex I have been systematically evaluated:`,
+        `Applicable General Safety and Performance Requirements per MDR 2017/745 Annex I are listed below. Conformity status per requirement is concluded from its supporting evidence and is not asserted by this template.`,
         ``,
         `| GSPR # | Requirement | Status | Evidence Reference |`,
         `|--------|-------------|--------|-------------------|`,
-        `| 1 | General requirements | ✅ Compliant | Risk Management File, DHF |`,
-        `| 2 | Risk management | ✅ Compliant | ISO 14971 Risk Analysis Report |`,
-        `| 3 | Design & manufacture | ✅ Compliant | QMS (ISO 13485), DHF |`,
-        `| 4 | Safety and performance | ✅ Compliant | V&V Reports, Clinical Data |`,
-        `| 5 | Acceptable benefit-risk | ✅ Compliant | CER Section – B/R Analysis |`,
-        `| 6 | Chemical properties | ✅ Compliant | Biocompatibility Report |`,
-        `| 7 | Infection & microbial | ${ctx.deviceClass === 'III' ? '✅ Compliant' : 'N/A'} | Sterility Validation |`,
+        `| 1 | General requirements | [GSPR STATUS] | [EVIDENCE REFERENCE] |`,
+        `| 2 | Risk management | [GSPR STATUS] | [EVIDENCE REFERENCE] |`,
+        `| 3 | Design & manufacture | [GSPR STATUS] | [EVIDENCE REFERENCE] |`,
+        `| 4 | Safety and performance | [GSPR STATUS] | [EVIDENCE REFERENCE] |`,
+        `| 5 | Acceptable benefit-risk | [GSPR STATUS] | [EVIDENCE REFERENCE] |`,
+        `| 6 | Chemical properties | [GSPR STATUS] | [EVIDENCE REFERENCE] |`,
+        `| 7 | Infection & microbial | [GSPR STATUS] | [EVIDENCE REFERENCE] |`,
         ``,
         `Detailed traceability is maintained in the GSPR Compliance Matrix (Annex A).`,
       ].join('\n'),
@@ -694,14 +719,14 @@ const enhancedMockContent: Record<string, Record<string, (ctx: any) => string>> 
         `### Current Clinical Knowledge`,
         `The current state of the art for devices in this therapeutic area is characterized by:`,
         `- Established clinical pathways with well-documented outcomes`,
-        `- Multiple device options from various manufacturers with at least 5 years of market history`,
+        `- Multiple device options from various manufacturers with [MARKET HISTORY YEARS]+ years of market history`,
         `- Published consensus standards and clinical guidelines (e.g., ESC, AHA, NICE)`,
         ``,
         `### Available Alternatives`,
-        `Alternative treatment options include pharmacological management, surgical intervention, and competitor medical devices. The subject device addresses known limitations of current alternatives, including [SPECIFIC ADVANTAGES].`,
+        `Alternative treatment options include pharmacological management, surgical intervention, and competitor medical devices. Potential advantages of the subject device over current alternatives: [SPECIFIC ADVANTAGES].`,
         ``,
         `### Unmet Clinical Need`,
-        `Gaps in current treatment approaches include limited long-term durability data, patient compliance challenges, and the need for less-invasive options. ${ctx.deviceName || '[DEVICE NAME]'} addresses these gaps through [MECHANISM].`,
+        `Gaps in current treatment approaches include limited long-term durability data, patient compliance challenges, and the need for less-invasive options. Whether and how ${ctx.deviceName || '[DEVICE NAME]'} addresses these gaps: [MECHANISM].`,
       ].join('\n'),
   },
 };
@@ -781,7 +806,7 @@ router.post(
       });
     } catch (err: any) {
       console.error('[CERV2 AI] Analyze-section error:', err);
-      res.status(500).json({ error: 'Section analysis failed', message: err.message });
+      return serverError(res, logger, 'saving analyze section', err);
     }
   }
 );
@@ -958,7 +983,7 @@ router.post(
       });
     } catch (err: any) {
       console.error('[CERV2 AI] Validate error:', err);
-      res.status(500).json({ error: 'Validation failed', message: err.message });
+      return serverError(res, logger, 'validating', err);
     }
   }
 );
@@ -983,5 +1008,16 @@ router.get('/health', (_req: Request, res: Response) => {
     timestamp: new Date().toISOString(),
   });
 });
+
+// ── Exposed for tests only ───────────────────────────────────────────────────
+// The AI-unavailable fallback content and the completeness gate that must
+// flag it as incomplete are exercised directly by tests, without needing a
+// live AI gateway, RAG service, or authenticated request/response cycle.
+export const __testInternals = {
+  enhancedMockContent,
+  sectionTemplates,
+  validateSectionServer,
+  PLACEHOLDER_REGEX,
+};
 
 export default router;

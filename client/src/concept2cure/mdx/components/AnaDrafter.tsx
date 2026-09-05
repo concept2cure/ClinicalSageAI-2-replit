@@ -433,7 +433,7 @@ function DrafterDraftedBody({ draft, setDraft, deficiencies, activeDefId, setAct
 
 function DrafterIntro({ draft, setDraft }: { draft: ResponseDraft; setDraft: (d: ResponseDraft) => void }) {
   return (
-    <div className="dr-section dr-intro">
+    <div className="dr-section">
       <div className="dr-section-hdr">
         <div className="dr-section-num">A</div>
         <div className="dr-section-titles">
@@ -448,7 +448,7 @@ function DrafterIntro({ draft, setDraft }: { draft: ResponseDraft; setDraft: (d:
 
 function DrafterClosing({ draft, setDraft }: { draft: ResponseDraft; setDraft: (d: ResponseDraft) => void }) {
   return (
-    <div className="dr-section dr-closing">
+    <div className="dr-section">
       <div className="dr-section-hdr">
         <div className="dr-section-num">Z</div>
         <div className="dr-section-titles">

@@ -29,6 +29,7 @@
  */
 import { pool } from '../../db';
 import { getSectionByCode } from '../../../services/regulatory/ind-ectd-sections.js';
+import { compareSectionCode } from '../../../shared/regulatory/section-code';
 
 const MAX_DOCS = 10;
 
@@ -222,7 +223,7 @@ export async function assembleOrgIndChecklists(orgId: number): Promise<Record<st
     const sections = [...statusByCode.entries()]
       .filter(([code]) => !FORM_CODES.has(code))
       .map(([code, v]) => enrichSection(code, v.status, v.name))
-      .sort((a, b) => a.code.localeCompare(b.code, undefined, { numeric: true }));
+      .sort((a, b) => compareSectionCode(a.code, b.code));
 
     const forms = FORM_SECTIONS.map((f) => ({
       id: f.id, title: f.title, label: f.label, ref: f.ref,

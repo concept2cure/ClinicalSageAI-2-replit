@@ -15,12 +15,28 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
+import { recordSchemaGaps, type SchemaGap } from '../../server/db/pglite-harness';
+
+export type { SchemaGap };
 
 export const REPO_ROOT = path.resolve(__dirname, '..', '..');
 
 /** Canonical migrations a journey database carries, in order. */
 export const CANONICAL_JOURNEY_MIGRATIONS = [
+  // Cross-cutting: the 21 CFR Part 11 tamper-evident store. Four journeys were
+  // asserting Part 11 claims while every write to it failed with `relation
+  // "audit.tamper_proof_log" does not exist` — swallowed by the caller, which
+  // falls back to a console writer and logs the failure as non-fatal. That
+  // fallback is correct in production and fatal to the evidence here, so the
+  // journeys passed. Self-contained and role-guarded, so it runs under PGlite.
+  'db/migrations/20260813_audit_tamper_proof_log.sql',
   'db/migrations/20260323_assumption_decision_contradiction.sql',
+  // The reactive dependency layer — governed_dependencies / impact_propagation_log.
+  // The HAQ-correction journey's whole subject is propagating a correction across
+  // dependent documents, and it was running with neither table present: every
+  // dependency read and every propagation write failed and was swallowed, and the
+  // journey still reported the correction propagating.
+  'db/migrations/20260323_reactive_dependency_layer.sql',
   'db/migrations/20260725_governance_boundary_tables.sql',
   'db/migrations/20260725_resolution_orchestration_tables.sql',
   'db/migrations/20260725_bundle_execution_receipts.sql',
@@ -28,7 +44,12 @@ export const CANONICAL_JOURNEY_MIGRATIONS = [
 
 /** FK prerequisites + two tenants for isolation assertions. */
 export const JOURNEY_PREREQUISITES = `
-  CREATE TABLE organizations (id SERIAL PRIMARY KEY, name TEXT);
+  -- \`uuid\` as db/migrations/20260129_add_org_uuid_alignment.sql adds it. The
+  -- org-membership middleware LEFT JOINs it on every request and, when the
+  -- column is missing, falls back to a membership-only decision with
+  -- orgUuid = null — so without it the authoring journey exercised the degraded
+  -- path on every request and never the enriched one (ledger L148).
+  CREATE TABLE organizations (id SERIAL PRIMARY KEY, name TEXT, uuid UUID NOT NULL DEFAULT gen_random_uuid());
   CREATE TABLE users (id SERIAL PRIMARY KEY, email TEXT);
   CREATE TABLE projects (id SERIAL PRIMARY KEY, organization_id INTEGER, name TEXT);
   CREATE TABLE concept2cure_artifacts (id SERIAL PRIMARY KEY, artifact_id UUID DEFAULT gen_random_uuid(), organization_id INTEGER, status TEXT, updated_at TIMESTAMPTZ DEFAULT NOW());
@@ -89,7 +110,99 @@ export interface JourneyDb {
       release: () => void;
     }>;
   };
+  /**
+   * Every query this journey issued that failed because the SCHEMA did not have
+   * what the code asked for — an undefined table (42P01) or an undefined column
+   * (42703). See `assertNoSchemaGaps`.
+   */
+  schemaGaps: SchemaGap[];
   close: () => Promise<void>;
+}
+
+/**
+ * A journey that provoked a missing table or column and still passed is proving
+ * less than it claims.
+ *
+ * Journeys build their database by naming the tables they need
+ * (`extractTableDdl`) — a hand-maintained list, and the failure mode is not that
+ * the list is short but that a SHORT LIST IS INVISIBLE. The route under test
+ * writes to a table nobody named; the write fails; the service swallows it
+ * (audit and telemetry writers are deliberately non-fatal, which is correct in
+ * production and fatal to the evidence here); the assertion under test still
+ * passes; and the journey reports that a regulated claim holds.
+ *
+ * Found in `submission-release-signature.journey.test.ts` (ledger L138/L145):
+ * it asserted the §11.10(e) audit claim of the Part 11 release gate with NO
+ * `audit_logs` table in the database at all. Nothing failed, because the write
+ * that needed it was outside the transaction and swallowed its own error.
+ *
+ * Call this in an `afterAll` in every journey. `__tests__/journey-schema-gaps.test.ts`
+ * enforces that every journey does.
+ */
+/**
+ * A journey that ran every request on the org-membership degraded fallback
+ * proved its tenant claims with `app.current_org_id` empty.
+ *
+ * Ledger L148: `ind-authoring` did exactly that — its `organizations` stub
+ * predated `20260129_add_org_uuid_alignment`, the enrichment LEFT JOIN threw
+ * 42703 on every request, and the membership-only fallback answered with
+ * `orgUuid = null`. Membership was still decided correctly, which is why
+ * nothing failed, and the only trace was a warning a test cannot read. That
+ * residual was carried on L148 rather than closed; this closes it.
+ *
+ * Call it in the same `afterAll` as `assertNoSchemaGaps`. A journey that WANTS
+ * to exercise the fallback asserts the count itself instead.
+ */
+export async function assertNoDegradedTenantEnrichment(): Promise<void> {
+  const { degradedEnrichmentCount, degradedEnrichmentSample } = await import(
+    '../../server/middleware/orgMembership'
+  );
+  const n = degradedEnrichmentCount();
+  if (n === 0) return;
+  const seen = degradedEnrichmentSample()
+    .map((d) => `  user ${d.userId} / org ${d.organizationId}: ${d.error}`)
+    .join('\n');
+  throw new Error(
+    `${n} request(s) in this journey answered on the org-membership DEGRADED fallback, ` +
+      `so app.current_org_id was empty for them and any tenant-scoping this journey ` +
+      `asserts was proven without it:\n\n${seen}\n\n` +
+      `Usually the journey's own \`organizations\` stub is missing a column the real ` +
+      `schema has (the uuid alignment migration adds one). Fix the stub, not this check.`,
+  );
+}
+
+export function assertNoSchemaGaps(
+  jdb: Pick<JourneyDb, 'schemaGaps'>,
+  /**
+   * Relations this journey is KNOWN to run without, each with the ledger row
+   * that owns closing it. Shrink-only by convention: an entry here is a journey
+   * proving less than it claims, recorded so it is visible rather than silent.
+   * Never add one to make a run green — add the missing table instead.
+   */
+  known: readonly { relation: string; row: string }[] = [],
+): void {
+  const allowed = new Set(known.map((k) => k.relation));
+  const unexplained = jdb.schemaGaps.filter(
+    (g) => ![...allowed].some((rel) => g.message.includes(`"${rel}"`)),
+  );
+  jdb = { schemaGaps: unexplained };
+  if (jdb.schemaGaps.length === 0) return;
+  const seen = new Set<string>();
+  const lines = jdb.schemaGaps
+    .filter((g) => {
+      const k = `${g.code}:${g.message}`;
+      if (seen.has(k)) return false;
+      seen.add(k);
+      return true;
+    })
+    .map((g) => `  [${g.code}] ${g.message}\n      ${g.sql}`);
+  throw new Error(
+    `This journey ran against a database missing ${seen.size} relation(s)/column(s) its own ` +
+      `subject asked for, and still reached its assertions:\n\n${lines.join('\n')}\n\n` +
+      `Add the missing table(s) to this journey's extractTableDdl list, or the missing ` +
+      `column(s) via the ALTER the real migration performs. A journey whose database is ` +
+      `smaller than the code under test proves less than it says it does.`,
+  );
 }
 
 /**
@@ -106,6 +219,10 @@ export interface JourneyDb {
  * Single connection (PGlite), which is what the request-scoped client is: one
  * connection carrying the tenant session variables. Ported from the proven shim
  * in server/routes/__tests__/saved-precedent-queries.rls.test.ts.
+ *
+ * Missing relations on this client are recorded at the PGlite seam by
+ * `recordSchemaGaps` (attached in `createJourneyDb`), so it carries no
+ * instrumentation of its own.
  */
 export function makeRequestDbClient(pglite: import('@electric-sql/pglite').PGlite) {
   return {
@@ -146,6 +263,9 @@ export async function createJourneyDb(options?: {
   const { drizzle } = await import('drizzle-orm/pglite');
 
   const pglite = new PGlite();
+  // Attached before any statement runs, so DDL gaps in the journey's own
+  // extractTableDdl list are observed too.
+  const schemaGaps = recordSchemaGaps(pglite);
   await pglite.exec(options?.prereqSql ?? JOURNEY_PREREQUISITES);
   for (const f of options?.migrations ?? CANONICAL_JOURNEY_MIGRATIONS) {
     await pglite.exec(fs.readFileSync(path.join(REPO_ROOT, f), 'utf8'));
@@ -163,6 +283,11 @@ export async function createJourneyDb(options?: {
   // second form (e.g. createSubmissionTx inside the C2C intake transaction);
   // without it PGlite is handed an object where it expects a string and the
   // route reports an opaque INTERNAL_ERROR.
+  // Missing relations are NOT recorded here. Drizzle (`db` below) talks to
+  // PGlite directly and never passes through this shim, so a shim-level
+  // recorder missed every statement the ORM issued — `recordSchemaGaps`
+  // (above) sits at the PGlite seam instead and sees both.
+
   const runQuery = async (textOrConfig: unknown, params?: unknown[]) => {
     const text =
       typeof textOrConfig === 'string' ? textOrConfig : (textOrConfig as { text: string }).text;
@@ -187,6 +312,7 @@ export async function createJourneyDb(options?: {
 
   return {
     pglite,
+    schemaGaps,
     db: drizzle(pglite),
     pool: {
       query: runQuery,
@@ -291,6 +417,19 @@ export class JourneyRecorder {
       return evidence;
     } catch (err) {
       if (err instanceof Error && /expected a block/.test(err.message)) throw err;
+      // A thrown error is how a service-level block manifests — but a failed
+      // assertion inside the step is the TEST failing, not the subject
+      // blocking, and must not be filed as the block the step exists to prove.
+      if (err instanceof Error && err.name === 'AssertionError') {
+        this.steps.push({
+          seq: this.seq,
+          name,
+          kind: 'known-bad',
+          status: 'failed',
+          evidence: { error: err.message },
+        });
+        throw err;
+      }
       const evidence = { thrown: err instanceof Error ? err.message : String(err) };
       this.steps.push({ seq: this.seq, name, kind: 'known-bad', status: 'blocked-as-expected', evidence });
       return evidence;

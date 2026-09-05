@@ -96,13 +96,28 @@ export const stabilityStudies = pgTable('stability_studies', {
 });
 
 // Manufacturing Information
+/**
+ * The manufacturing process register -- the producer for the Module 3
+ * composer's `manufacturing_process` source type (3.2.S.2 / 3.2.P.3).
+ *
+ * The table is older than this model's writer: it was reconstructed from its
+ * two readers (server/services/cmc/ich-compliance-checker.ts and
+ * server/services/cmc/qbd-analyzer.ts) in
+ * db/migrations/20260730_manufacturing_processes_reconstruction.sql, which
+ * could only see the six columns those readers SELECT. This model declared
+ * twelve, and `projectId` as a NOT NULL foreign key the reconstruction never
+ * created. db/migrations/20260903_cmc_manufacturing_characterization_registers
+ * adds the missing columns; `projectId` is declared here as the table actually
+ * has it -- nullable, no FK -- because a model that claims a constraint the
+ * database does not enforce is how a read comes back typed non-null and is
+ * null at runtime.
+ */
 export const manufacturingProcesses = pgTable('manufacturing_processes', {
   id: uuid('id').defaultRandom().primaryKey(),
-  projectId: uuid('project_id')
-    .notNull()
-    .references(() => cmcProjects.id, { onDelete: 'cascade' }),
+  organizationId: integer('organization_id').notNull(),
+  projectId: uuid('project_id'),
   processName: text('process_name').notNull(),
-  processType: text('process_type').notNull(), // Drug Substance, Drug Product
+  processType: text('process_type'), // drug_substance | drug_product -- the side the record files into
   processDescription: text('process_description'),
   processSteps: jsonb('process_steps'),
   criticalProcessParameters: jsonb('critical_process_parameters'),
@@ -112,7 +127,11 @@ export const manufacturingProcesses = pgTable('manufacturing_processes', {
   batchSize: text('batch_size'),
   yieldData: jsonb('yield_data'),
   scaleUpData: jsonb('scale_up_data'),
+  processDevelopment: text('process_development'),
+  reprocessing: text('reprocessing'),
   validationStatus: text('validation_status').default('not-started'),
+  validatedBy: text('validated_by'),
+  validationDate: timestamp('validation_date'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });

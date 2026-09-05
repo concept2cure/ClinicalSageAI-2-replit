@@ -296,7 +296,7 @@ export function SopRegister({ onAsk, filter, onFilterChange }: SopRegisterProps)
                   {(d.status === 'draft' || d.status === 'in_review') && (
                     <button
                       className="qms-chip"
-                      title="Approve and make effective"
+                      title="Opens the approval in AnA — you still capture the e-signature; it is not approved by clicking here"
                       onClick={() =>
                         onAsk(
                           `Approve ${d.docNumber} ${d.title} (v${d.version}) and make it effective — confirm the reviewer ` +
@@ -305,7 +305,7 @@ export function SopRegister({ onAsk, filter, onFilterChange }: SopRegisterProps)
                         )
                       }
                     >
-                      {I.check} Approve
+                      {I.sparkle} Ask AnA to approve
                     </button>
                   )}
                   {d.status === 'effective' && (

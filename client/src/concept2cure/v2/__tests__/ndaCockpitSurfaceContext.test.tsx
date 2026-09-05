@@ -125,4 +125,23 @@ describe('the NDA cockpit never tells AnA an unassessed risk is clear', () => {
     expect(seen!.summary).toMatch(/failed read, not a clean program/i);
     expect(seen!.facts).toBeUndefined();
   });
+
+  it('does not report Module 1 clear when only the Module-1 read failed', async () => {
+    // m1Live (/api/nda-cockpit/m1) is a SEPARATE read, deliberately excluded
+    // from filingState — so /modules and /rtf answering does not mean Module 1
+    // was read. A failed /m1 must publish an UNKNOWN (null) Module-1 count, never
+    // a false "0 Module 1 admin item(s) open" that a filing team reads as done.
+    apiRequest.mockImplementation(async (_m: string, url: string) => {
+      if (url.includes('/nda-cockpit/modules')) {
+        return res({ data: [{ id: 'm1', name: 'Module 1', ready: 40 }] });
+      }
+      if (url.includes('/nda-cockpit/m1')) return res({ error: 'module-1 store unavailable' }, 503);
+      return res({ data: [] });
+    });
+    renderCockpit();
+    await settled();
+    expect(seen!.facts!.module1AdminOpen).toBeNull();
+    expect(seen!.summary).not.toMatch(/\b0 Module 1 admin item/i);
+    expect(seen!.summary).toMatch(/Module 1 admin status could not be read/i);
+  });
 });

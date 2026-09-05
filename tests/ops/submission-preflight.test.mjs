@@ -55,8 +55,16 @@ test('the CLI checks every DTD the packager actually requires', () => {
 });
 
 test('the CLI checks every official eSTAR template in the manifest', () => {
-  const templates = [...new Set(manifestTemplateNames())];
-  assert.ok(templates.length >= 9, `expected the full eSTAR program, got ${templates.length}`);
+  // The manifest still describes the whole eSTAR program — nine descriptors.
+  const descriptors = manifestTemplateNames();
+  assert.ok(descriptors.length >= 9, `expected the full eSTAR program, got ${descriptors.length}`);
+  // …but they do NOT resolve to nine files. FDA ships one nIVD PDF and one IVD
+  // PDF, each carrying 510(k), De Novo and PMA, so the six marketing
+  // descriptors name two files between them. This asserted nine DISTINCT files
+  // until 2026-09-04, which was only true while De Novo and PMA pointed at
+  // eSTAR-denovo-*/eSTAR-pma-* names FDA does not publish. What the CLI owes is
+  // coverage of every distinct file the manifest actually names.
+  const templates = [...new Set(descriptors)];
   const missing = templates.filter((f) => !CLI.includes(f));
   assert.deepEqual(
     missing,
@@ -73,6 +81,21 @@ test('the CLI does not check artifacts that no source requires (no phantom gaps)
   const cliDtds = [...CLI.matchAll(/'([a-z0-9-]+\.dtd)'/gi)].map((m) => m[1]);
   const phantom = cliDtds.filter((f) => !required.has(f));
   assert.deepEqual(phantom, [], `preflight names DTDs no source requires: ${phantom.join(', ')}`);
+
+  // The same rule for the eSTAR templates, which this check did NOT cover until
+  // 2026-09-04 — and that blind spot is why the CLI asked procurement for four
+  // FDA files that do not exist (eSTAR-denovo-*.pdf, eSTAR-pma-*.pdf) and
+  // reported De Novo and PMA blocked, with a green gate, for as long as it did.
+  // A preflight naming an artifact no source requires reports a gap nobody can
+  // close, which is the same defect wearing the other coat.
+  const declared = new Set(manifestTemplateNames());
+  const cliTemplates = [...CLI.matchAll(/'([A-Za-z0-9-]+\.pdf)'/g)].map((m) => m[1]);
+  const phantomTemplates = cliTemplates.filter((f) => !declared.has(f));
+  assert.deepEqual(
+    phantomTemplates,
+    [],
+    `preflight names eSTAR templates ESTAR_TEMPLATE_MANIFEST does not: ${phantomTemplates.join(', ')}`,
+  );
 });
 
 test('the CLI exits non-zero when artifacts are missing (so it can gate a pipeline)', () => {

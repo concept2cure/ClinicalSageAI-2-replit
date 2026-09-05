@@ -597,224 +597,16 @@ export const csrAdverseEvents = pgTable(
 );
 
 // ---------------------------------------------------------------------------
-// 1.8 Safety Summaries — Aggregate safety data per study
+// 1.8–1.12 Quantitative results tables — extracted to a sibling module
 // ---------------------------------------------------------------------------
-export const csrSafetySummaries = pgTable(
-  'csr_safety_summaries',
-  {
-    id: serial('id').primaryKey(),
-    studyId: integer('study_id')
-      .notNull()
-      .references(() => csrStudies.id, { onDelete: 'cascade' }),
-    armId: integer('arm_id')
-      .references(() => csrTreatmentArms.id),
-
-    // TEAE summary
-    anyTEAE: integer('any_teae'),
-    anyTreatmentRelatedTEAE: integer('any_treatment_related_teae'),
-    anySeriousAE: integer('any_serious_ae'),
-    anyTreatmentRelatedSAE: integer('any_treatment_related_sae'),
-    deathsDuringStudy: integer('deaths_during_study'),
-    treatmentRelatedDeaths: integer('treatment_related_deaths'),
-    discontinuationDueToAE: integer('discontinuation_due_to_ae'),
-    doseReductionDueToAE: integer('dose_reduction_due_to_ae'),
-    doseInterruptionDueToAE: integer('dose_interruption_due_to_ae'),
-
-    // Safety population
-    safetyPopulationN: integer('safety_population_n'),
-
-    // Lab safety
-    labAbnormalities: json('lab_abnormalities'),
-    vitalSignAbnormalities: json('vital_sign_abnormalities'),
-    ecgFindings: json('ecg_findings'),
-
-    // Narratives
-    teaeSummaryText: text('teae_summary_text'),
-    saeSummaryText: text('sae_summary_text'),
-    deathNarratives: text('death_narratives'),
-    safetyConclusion: text('safety_conclusion'),
-
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at').defaultNow().notNull(),
-  },
-  table => ({
-    studyIdx: index('csr_safety_study_idx').on(table.studyId),
-  })
-);
-
-// ---------------------------------------------------------------------------
-// 1.9 Pharmacokinetic Data — PK parameters per arm
-// ---------------------------------------------------------------------------
-export const csrPharmacokinetics = pgTable(
-  'csr_pharmacokinetics',
-  {
-    id: serial('id').primaryKey(),
-    studyId: integer('study_id')
-      .notNull()
-      .references(() => csrStudies.id, { onDelete: 'cascade' }),
-    armId: integer('arm_id')
-      .references(() => csrTreatmentArms.id),
-
-    // PK Parameter
-    parameterName: varchar('parameter_name', { length: 50 }).notNull(),
-    parameterUnit: varchar('parameter_unit', { length: 30 }),
-    analyteOrMatrix: varchar('analyte_or_matrix', { length: 100 }),
-
-    // Values (geometric mean unless noted)
-    meanValue: real('mean_value'),
-    geometricMean: real('geometric_mean'),
-    medianValue: real('median_value'),
-    coefficientOfVariation: real('cv_percent'),
-    ciLower: real('ci_lower'),
-    ciUpper: real('ci_upper'),
-    nSubjects: integer('n_subjects'),
-
-    // Context
-    dosingCondition: varchar('dosing_condition', { length: 100 }),
-    samplingTimepoint: varchar('sampling_timepoint', { length: 100 }),
-    isSteadyState: boolean('is_steady_state').default(false),
-    foodEffect: varchar('food_effect', { length: 30 }),
-
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at').defaultNow().notNull(),
-  },
-  table => ({
-    studyIdx: index('csr_pk_study_idx').on(table.studyId),
-    paramIdx: index('csr_pk_param_idx').on(table.parameterName),
-  })
-);
-
-// ---------------------------------------------------------------------------
-// 1.10 Dose Response — Dose-efficacy and dose-safety relationships
-// ---------------------------------------------------------------------------
-export const csrDoseResponse = pgTable(
-  'csr_dose_response',
-  {
-    id: serial('id').primaryKey(),
-    studyId: integer('study_id')
-      .notNull()
-      .references(() => csrStudies.id, { onDelete: 'cascade' }),
-    endpointId: integer('endpoint_id')
-      .references(() => csrEndpoints.id),
-
-    dose: real('dose').notNull(),
-    doseUnit: varchar('dose_unit', { length: 30 }).notNull(),
-    responseType: varchar('response_type', { length: 50 }).notNull(),
-    responseValue: real('response_value'),
-    responseUnit: varchar('response_unit', { length: 50 }),
-    nSubjects: integer('n_subjects'),
-    standardError: real('standard_error'),
-    pValueVsPlacebo: real('p_value_vs_placebo'),
-
-    // Model fit
-    modelType: varchar('model_type', { length: 50 }),
-    ed50: real('ed50'),
-    emax: real('emax'),
-    hillCoefficient: real('hill_coefficient'),
-
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-  },
-  table => ({
-    studyIdx: index('csr_dr_study_idx').on(table.studyId),
-  })
-);
-
-// ---------------------------------------------------------------------------
-// 1.11 Biomarker Data — Biomarker measurements and correlations
-// ---------------------------------------------------------------------------
-export const csrBiomarkers = pgTable(
-  'csr_biomarkers',
-  {
-    id: serial('id').primaryKey(),
-    studyId: integer('study_id')
-      .notNull()
-      .references(() => csrStudies.id, { onDelete: 'cascade' }),
-    armId: integer('arm_id')
-      .references(() => csrTreatmentArms.id),
-
-    biomarkerName: text('biomarker_name').notNull(),
-    biomarkerType: varchar('biomarker_type', { length: 50 }),
-    assayMethod: text('assay_method'),
-    specimen: varchar('specimen', { length: 50 }),
-
-    // Values
-    baselineValue: real('baseline_value'),
-    endpointValue: real('endpoint_value'),
-    changeFromBaseline: real('change_from_baseline'),
-    percentChange: real('percent_change'),
-    unit: varchar('unit', { length: 50 }),
-    nSubjects: integer('n_subjects'),
-
-    // Correlation with clinical endpoint
-    correlatedEndpointId: integer('correlated_endpoint_id')
-      .references(() => csrEndpoints.id),
-    correlationCoefficient: real('correlation_coefficient'),
-    correlationPValue: real('correlation_p_value'),
-
-    // Classification
-    isPredictive: boolean('is_predictive'),
-    isPrognostic: boolean('is_prognostic'),
-    isPharmacodynamic: boolean('is_pharmacodynamic'),
-    qualificationStatus: varchar('qualification_status', { length: 50 }),
-
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at').defaultNow().notNull(),
-  },
-  table => ({
-    studyIdx: index('csr_bio_study_idx').on(table.studyId),
-    nameIdx: index('csr_bio_name_idx').on(table.biomarkerName),
-    typeIdx: index('csr_bio_type_idx').on(table.biomarkerType),
-  })
-);
-
-// ---------------------------------------------------------------------------
-// 1.12 Statistical Analysis Records — Full SAP traceability
-// ---------------------------------------------------------------------------
-export const csrStatisticalAnalyses = pgTable(
-  'csr_statistical_analyses',
-  {
-    id: serial('id').primaryKey(),
-    studyId: integer('study_id')
-      .notNull()
-      .references(() => csrStudies.id, { onDelete: 'cascade' }),
-    endpointId: integer('endpoint_id')
-      .references(() => csrEndpoints.id),
-
-    analysisName: text('analysis_name').notNull(),
-    analysisType: varchar('analysis_type', { length: 50 }).notNull(),
-    analysisPopulation: varchar('analysis_population', { length: 50 }),
-
-    // Methods
-    primaryModel: text('primary_model'),
-    covariates: json('covariates'),
-    stratificationFactors: json('stratification_factors'),
-    multiplicityAdjustmentMethod: text('multiplicity_adjustment_method'),
-    missingDataHandling: text('missing_data_handling'),
-    sensitivityAnalysisDescription: text('sensitivity_analysis_description'),
-
-    // Sample size
-    sampleSizeJustification: text('sample_size_justification'),
-    powerCalculation: text('power_calculation'),
-    assumedEffectSize: real('assumed_effect_size'),
-    plannedPower: real('planned_power'),
-    alphaLevel: real('alpha_level'),
-
-    // Interim analysis
-    hasInterimAnalysis: boolean('has_interim_analysis').default(false),
-    interimAnalysisDetails: text('interim_analysis_details'),
-    stoppingRules: text('stopping_rules'),
-
-    // DMC
-    dataSources: json('data_sources'),
-
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at').defaultNow().notNull(),
-  },
-  table => ({
-    studyIdx: index('csr_stat_study_idx').on(table.studyId),
-    typeIdx: index('csr_stat_type_idx').on(table.analysisType),
-  })
-);
+// Safety summaries, pharmacokinetics, dose-response, biomarkers, and
+// statistical-analysis records live in csr-knowledge-db-results.ts. The
+// `export *` keeps the aggregate surface of this module (and of
+// shared/schema.ts, which star-exports it) identical, and lets
+// scripts/db/install-fresh.mjs's declaredTableNames() walker — which follows
+// literal `export * from` re-exports — still count those tables as push
+// inputs for the drizzle entrypoints.
+export * from './csr-knowledge-db-results';
 
 // ---------------------------------------------------------------------------
 // 1.13 CSR Sections — Raw section text with embeddings for RAG
@@ -1509,53 +1301,6 @@ export const csrModelPerformance = pgTable(
   })
 );
 
-// ---------------------------------------------------------------------------
-// 3.8 Extraction Audit Log — Track every extraction event for provenance
-// ---------------------------------------------------------------------------
-export const csrExtractionLog = pgTable(
-  'csr_extraction_log',
-  {
-    id: serial('id').primaryKey(),
-    studyId: integer('study_id')
-      .references(() => csrStudies.id),
-    organizationId: integer('organization_id')
-      .notNull()
-      .references(() => organizations.id),
-
-    sourceFile: text('source_file'),
-    sourceType: varchar('source_type', { length: 30 }).notNull(),
-    extractorVersion: varchar('extractor_version', { length: 20 }),
-
-    // Processing details
-    status: varchar('status', { length: 20 }).notNull(),
-    startedAt: timestamp('started_at').notNull(),
-    completedAt: timestamp('completed_at'),
-    durationMs: integer('duration_ms'),
-
-    // Quality metrics
-    overallConfidence: real('overall_confidence'),
-    sectionConfidences: json('section_confidences'),
-    sectionsExtracted: integer('sections_extracted'),
-    tablesExtracted: integer('tables_extracted'),
-    figuresExtracted: integer('figures_extracted'),
-    warningCount: integer('warning_count'),
-    errorCount: integer('error_count'),
-    warnings: json('warnings'),
-    errors: json('errors'),
-
-    // Triggering context
-    triggeredBy: integer('triggered_by').references(() => users.id),
-    triggerMethod: varchar('trigger_method', { length: 30 }),
-
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-  },
-  table => ({
-    studyIdx: index('csr_extlog_study_idx').on(table.studyId),
-    orgIdx: index('csr_extlog_org_idx').on(table.organizationId),
-    statusIdx: index('csr_extlog_status_idx').on(table.status),
-  })
-);
-
 // ============================================================================
 // EXPORT SUMMARY — All tables in this module
 // ============================================================================
@@ -1593,7 +1338,6 @@ export const CSR_KNOWLEDGE_DB_TABLES = [
   'csrKnowledgeEdges',
   'csrTrainingData',
   'csrModelPerformance',
-  'csrExtractionLog',
 ] as const;
 
 export type CsrKnowledgeDbTableName = typeof CSR_KNOWLEDGE_DB_TABLES[number];

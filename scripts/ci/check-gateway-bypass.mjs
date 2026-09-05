@@ -197,6 +197,65 @@ if (removed.length > 0) {
   );
 }
 
+/* ── Governance must not be decided by directory depth ───────────────────────
+ *
+ * `server/openai-service.ts` routes every completion through getGateway().
+ * `server/services/openai-service.ts` constructed its own provider client. Both
+ * exported `generateStructuredResponse` and `analyzeText` — the same names, with
+ * compatible-looking signatures. So whether an `import … from './openai-service'`
+ * was audited depended on how deep in the tree the importing file sat: from
+ * `server/services/`, `./` reached the ungoverned one and `../` the governed
+ * one. One character, and nothing in review would show it.
+ *
+ * The bypass check above cannot see this. It matches per FILE, and a file that
+ * merely IMPORTS a colliding name constructs no client, so it looks clean.
+ *
+ * The ungoverned module is deleted. This stops the shape returning: no basename
+ * under server/ may exist both at the root and inside a subdirectory when the
+ * root one is a governed AI entry point. A future sibling named
+ * `openai-service.ts`, `anthropic-service.ts` or the like is a name collision
+ * whose resolution is positional, and it fails here before it can be imported.
+ */
+const GOVERNED_ROOT_ENTRY_POINTS = ['openai-service', 'anthropic-service', 'ai-service'];
+
+function collidingGovernedEntryPoints() {
+  const out = [];
+  for (const base of GOVERNED_ROOT_ENTRY_POINTS) {
+    const rootFile = path.join(repoRoot, 'server', `${base}.ts`);
+    let rootExists = true;
+    try { readFileSync(rootFile); } catch { rootExists = false; }
+    if (!rootExists) continue;
+    let found = '';
+    try {
+      found = execFileSync(
+        'find',
+        [path.join(repoRoot, 'server'), '-mindepth', '2', '-name', `${base}.ts`],
+        { encoding: 'utf8' }
+      );
+    } catch { found = ''; }
+    for (const line of found.split('\n').map((l) => l.trim()).filter(Boolean)) {
+      out.push(path.relative(repoRoot, line));
+    }
+  }
+  return out;
+}
+
+const collisions = collidingGovernedEntryPoints();
+if (collisions.length > 0) {
+  console.error(
+    `\n🚫 [check-gateway-bypass] ${collisions.length} module(s) shadow a governed root AI entry point:\n  ` +
+      collisions.join('\n  ') +
+      '\n'
+  );
+  console.error(
+    'A sibling with the same basename as a governed root entry point makes governance positional:\n' +
+      "  from server/services/, `./openai-service` and `../openai-service` are different modules\n" +
+      '  with the same export names and opposite auditing. Rename it to say what it is\n' +
+      '  (e.g. openai-direct-client.ts) and route its callers through getGateway().'
+  );
+  process.exit(1);
+}
+
 if (added.length > 0) {
   console.error(
     `\n🚫 [check-gateway-bypass] ${added.length} NEW gateway bypass(es) detected:\n  ${added.join('\n  ')}\n`

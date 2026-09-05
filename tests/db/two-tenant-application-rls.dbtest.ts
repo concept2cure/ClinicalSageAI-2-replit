@@ -11,6 +11,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import express from 'express';
 import request from 'supertest';
 import jwt from 'jsonwebtoken';
+import { activeJwtSecret } from '../../server/utils/jwtVerify';
 import { Pool } from 'pg';
 import { databaseUrl } from '../setup.db';
 import { authenticateToken } from '../../server/middleware/auth';
@@ -47,10 +48,29 @@ const programB = '90302000-0000-4000-8000-000000000002';
 let savedQueryA: number;
 let savedQueryB: number;
 
+/**
+ * Mint an access token with the SAME secret the server will verify it against.
+ *
+ * This signed with `process.env.JWT_SECRET` directly, which is not necessarily
+ * the secret the verifier resolves. Both getJwtSecret (server/config/
+ * environment.ts, the signing side) and currentSecret (server/utils/
+ * jwtVerify.ts, the verifying side) read `JWT_SECRET_<SUFFIX>` FIRST and only
+ * fall back to `JWT_SECRET` — and NODE_ENV=test maps to the DEV suffix. config
+ * resolves once at module import; the verifier resolves on every call. A .env
+ * load between those two moments makes them disagree, and on this repo's own
+ * .env (which sets JWT_SECRET_DEV) they did: every request in this file came
+ * back 401 "invalid signature", so the twelve isolation assertions below
+ * reported an auth failure instead of the cross-tenant result they exist to
+ * prove. CI has no .env, so both resolved to JWT_SECRET there and the suite was
+ * green — which is why this only ever failed locally.
+ *
+ * activeJwtSecret() resolves the secret the same way, at the same moment, as
+ * the verifier that will check the token, so the two cannot drift.
+ */
 function accessToken(userId: number, organizationId: number): string {
   return jwt.sign(
     { type: 'access', userId, organizationId: String(organizationId), role: 'member' },
-    process.env.JWT_SECRET!,
+    activeJwtSecret(),
     { expiresIn: '5m' }
   );
 }

@@ -17,8 +17,6 @@ import { Router, Request, Response } from 'express';
 import { createHash } from 'crypto';
 import {
   getAnaDraftingService,
-  type DocumentDraftRequest,
-  type RegulatoryFramework,
 } from '../services/ana/AnaDocumentDraftingService';
 import { getGateway } from '../services/ai-gateway/gateway';
 import {
@@ -26,8 +24,12 @@ import {
   EFFORT_LEVELS,
   DEFAULT_EFFORT,
 } from '../services/ai-gateway/effort';
+import { serverError } from '../lib/api-response';
+import { createScopedLogger } from '../utils/logger';
 
 const router = Router();
+
+const logger = createScopedLogger('ana-intelligence');
 
 /**
  * Model-governance provenance (decision register #727 item 8): every
@@ -127,10 +129,7 @@ router.post('/draft', async (req: Request, res: Response) => {
     });
   } catch (error: any) {
     console.error('[Claude Intelligence] Draft error:', error.message);
-    res.status(500).json({
-      error: 'Document drafting failed',
-      details: error.message,
-    });
+    return serverError(res, logger, 'drafting', error);
   }
 });
 
@@ -215,7 +214,7 @@ router.post('/draft/stream', async (req: Request, res: Response) => {
       res.write(`data: ${JSON.stringify({ type: 'error', error: error.message })}\n\n`);
       res.end();
     } else {
-      res.status(500).json({ error: error.message });
+      return serverError(res, logger, 'saving stream', error);
     }
   }
 });
@@ -256,7 +255,7 @@ router.post('/review', async (req: Request, res: Response) => {
     res.json({ success: true, data: result });
   } catch (error: any) {
     console.error('[Claude Intelligence] Review error:', error.message);
-    res.status(500).json({ error: error.message });
+    return serverError(res, logger, 'saving review', error);
   }
 });
 
@@ -301,7 +300,7 @@ router.post('/gap-analysis', async (req: Request, res: Response) => {
     res.json({ success: true, data: result });
   } catch (error: any) {
     console.error('[Claude Intelligence] Gap analysis error:', error.message);
-    res.status(500).json({ error: error.message });
+    return serverError(res, logger, 'saving gap analysis', error);
   }
 });
 
@@ -345,7 +344,7 @@ router.post('/vision', async (req: Request, res: Response) => {
     res.json({ success: true, data: result });
   } catch (error: any) {
     console.error('[Claude Intelligence] Vision error:', error.message);
-    res.status(500).json({ error: error.message });
+    return serverError(res, logger, 'saving vision', error);
   }
 });
 
@@ -411,7 +410,7 @@ router.post('/batch', async (req: Request, res: Response) => {
     }
   } catch (error: any) {
     console.error('[Claude Intelligence] Batch error:', error.message);
-    res.status(500).json({ error: error.message });
+    return serverError(res, logger, 'saving batch', error);
   }
 });
 
@@ -451,7 +450,7 @@ router.post('/quick', async (req: Request, res: Response) => {
     res.json({ success: true, data: { content: result } });
   } catch (error: any) {
     console.error('[Claude Intelligence] Quick error:', error.message);
-    res.status(500).json({ error: error.message });
+    return serverError(res, logger, 'saving quick', error);
   }
 });
 
@@ -532,7 +531,7 @@ router.post('/agent', async (req: Request, res: Response) => {
     });
   } catch (error: any) {
     console.error('[Claude Intelligence] Agent error:', error.message);
-    res.status(500).json({ error: error.message });
+    return serverError(res, logger, 'saving agent', error);
   }
 });
 

@@ -150,6 +150,22 @@ export function programTypeFor(sel: SelTpl | null, uiSeg: string): string {
   // prefix match would file a Japanese device approval as a J-NDA. The
   // pathwayKey carries the intent now.
   if (id.includes('jnda') || pw === 'jnda') return 'jnda';
+  // A 505(b)(2) IS an NDA (21 CFR 314.50 dossier) and a 351(k) IS a BLA. Their
+  // pathway keys ('505b2', 'biosimilar') matched nothing below and fell through
+  // to the final `'ind'` default — so a marketing-application customer was
+  // scaffolded a 108-section IND and an IND submission spine. 'biosimilar' is
+  // shared across regions, so the region prefix picks the application.
+  if (pw === '505b2') return 'nda';
+  if (pw === 'biosimilar') {
+    if (id.startsWith('us_')) return 'bla';
+    if (id.startsWith('eu_')) return 'maa';
+    if (id.startsWith('jp_')) return 'jnda';
+    return 'nda';
+  }
+  // A DMF is Module 3 content (3.2.S / 3.2.A / 3.2.R) with a letter of
+  // authorization — not an IND. It files against the harmonised Module 3 pack
+  // (mod3:ich) via PROGRAM_TO_DOC_TYPE, never a 108-section IND outline.
+  if (pw === 'dmf' || id === 'us_dmf' || id === 'eu_asmf') return 'dmf';
   if (id.includes('bla') || pw === 'bla') return 'bla';
   if (id.includes('maa') || pw === 'maa') return 'maa';
   if (id.includes('anda') || pw === 'anda') return 'anda';
@@ -957,9 +973,14 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
         blockedCount: blocked.length,
         averageReadiness: health[1].n,
         // Enough to name a programme back to the user, not the whole row set.
+        // `p.lead` is deliberately NOT published: the server projects it as
+        // COALESCE(u.name, u.email, '—'), so a lead with no name set resolves to
+        // an EMAIL — PII that must not enter the model prompt. It stays on the
+        // card (where the person reads it); the sibling ProjectHome publisher
+        // drops the team member's email for the same reason.
         programs: list.slice(0, 12).map(p => ({
           id: p.id, code: p.code, title: p.title, workstream: p.ws, stage: p.stage,
-          status: p.status, readiness: p.readiness, lead: p.lead, due: p.due,
+          status: p.status, readiness: p.readiness, due: p.due,
           blocker: p.blocker ?? null,
         })),
       },
@@ -977,7 +998,7 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
     try {
       publishShellProject({ id: pr.id, title: pr.title, code: pr.code, ws: pr.ws, status: pr.status });
       if (window.C2C?.setSurface) window.C2C.setSurface('project-home', pr.title);
-    } catch (_) { /* noop */ }
+    } catch { /* noop */ }
     onNav('project-home');
   };
 

@@ -105,7 +105,7 @@ const SUMMARIES: Record<string, string> = {
   'GET /api/ind-lifecycle/amendments/{amendmentId}': 'Fetch one tracked IND amendment (org-scoped)',
   'POST /api/ind-lifecycle/submission/{id}/icsr-transmissions': 'Prepare + persist an E2B(R3) ICSR transmission (FAERS/EudraVigilance)',
   'GET /api/ind-lifecycle/submission/{id}/icsr-transmissions': "List a submission's ICSR transmissions",
-  'POST /api/ind-lifecycle/icsr-transmissions/{txId}/transmit': 'Mark a prepared ICSR transmission transmitted (gated on readiness)',
+  'POST /api/ind-lifecycle/icsr-transmissions/{txId}/transmit': 'Transmit a prepared ICSR to its agency gateway; only a real gateway receipt marks it transmitted (422 not-ready with gaps, 503 gateway not configured, 502 transport failure — row stays prepared)',
   'POST /api/ind-lifecycle/icsr-transmissions/{txId}/acknowledge': 'Record an agency ACK (AA/AE/AR) against a transmission',
   'POST /api/ind-lifecycle/submission/{id}/cross-references': 'Record an external file dependency (m1.4)',
   'GET /api/ind-lifecycle/submission/{id}/cross-references': "List a submission's cross-references",

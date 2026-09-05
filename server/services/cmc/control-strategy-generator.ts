@@ -325,13 +325,29 @@ async function loadStabilityPlan(orgId: number, projectId: string): Promise<Stab
   const testParameters = studies.flatMap(s => parseList(s.testParameters));
   const timePoints = studies.flatMap(s => parseList(s.timePoints));
 
+  // The STORAGE CONDITIONS shown are the project's recorded program ONLY when
+  // both the long-term and accelerated conditions came from an actual matched
+  // study. If either falls back to the generic ICH template constant (no study
+  // whose studyType names 'long'/'accel'), the conditions are NOT recorded data —
+  // mark provenance ich_default (with a note) so the justification does not
+  // present ICH-template conditions as the project's real stability program.
+  const conditionsFromStudies = longTerm !== undefined && accelerated !== undefined;
+
   return {
     longTermCondition: longTerm || template.longTermCondition,
     acceleratedCondition: accelerated || template.acceleratedCondition,
     testParameters: Array.from(new Set(testParameters)).slice(0, 20),
     timePoints: Array.from(new Set(timePoints)).slice(0, 20),
     ichBasis: ['ICH Q1A(R2)', 'ICH Q1E'],
-    derivedFrom: 'project_data',
+    derivedFrom: conditionsFromStudies ? 'project_data' : 'ich_default',
+    ...(conditionsFromStudies
+      ? {}
+      : {
+          note:
+            'Stability studies are recorded for this project, but no long-term/accelerated study '
+            + 'condition was matched; the storage conditions shown are generic ICH Q1A(R2) template '
+            + 'values, not the recorded program.',
+        }),
   };
 }
 

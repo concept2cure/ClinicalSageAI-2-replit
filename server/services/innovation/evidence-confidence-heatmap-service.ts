@@ -17,6 +17,7 @@
 import { Pool } from 'pg';
 import crypto from 'crypto';
 import { ai } from '../../lib/unified-ai-client';
+import { releaseWithoutBypass } from './rlsBypassSession';
 
 // Types
 export interface EvidenceScoringConfig {
@@ -194,7 +195,7 @@ export class EvidenceConfidenceHeatmapService {
       EvidenceConfidenceHeatmapService.scoringConfigs.push(mapped);
       return mapped;
     } finally {
-      client.release();
+      await releaseWithoutBypass(client);
     }
   }
 
@@ -218,7 +219,7 @@ export class EvidenceConfidenceHeatmapService {
 
       return configs;
     } finally {
-      client.release();
+      await releaseWithoutBypass(client);
     }
   }
 
@@ -511,7 +512,7 @@ export class EvidenceConfidenceHeatmapService {
       console.error('[EvidenceHeatmap] Assessment failed:', error);
       throw error;
     } finally {
-      client.release();
+      await releaseWithoutBypass(client);
     }
   }
 

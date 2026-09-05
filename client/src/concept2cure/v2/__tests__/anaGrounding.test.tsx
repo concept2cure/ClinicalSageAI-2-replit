@@ -112,6 +112,50 @@ describe('AnaGrounding — not assessed is not a clean bill of health', () => {
     expect(container.firstChild).toBeNull();
   });
 
+  describe('assessed, but nothing graded, is not a pass either', () => {
+    /* The other route to the same false reassurance, and the one `validated`
+       could not close. The server computes `validated` as
+       `totalIssues === 0 || …`, so an answer the claim extractor found NOTHING
+       in comes back validated with every count at zero — and this row drew a
+       green check reading the bare "Claims grounded".
+
+       Grounded on what? No claim was graded; none was identified to grade.
+       Above, zero means ungraded; here, zero means nothing found. Neither is a
+       clean bill of health and only one of them was said honestly. */
+    const nothingGraded = {
+      validated: true, sourceCount: 0, groundedClaims: 0, weakClaims: 0, missingSupport: 0,
+    };
+
+    it('does not claim claims are grounded when none were graded', () => {
+      const { container } = render(<AnaGrounding evidence={nothingGraded} />);
+      const text = container.textContent ?? '';
+      expect(text).not.toMatch(/claims grounded/i);
+      expect(text).toMatch(/no claims identified/i);
+    });
+
+    it('does not wear the check it has not earned', () => {
+      const { container } = render(<AnaGrounding evidence={nothingGraded} />);
+      expect(
+        container.querySelector('.ana-grounding-ic.is-ok'),
+        'a green check certifying nothing',
+      ).toBeNull();
+      expect(container.querySelector('.ana-grounding-ic.is-unknown')).toBeTruthy();
+    });
+
+    it('still certifies an answer whose claims WERE graded and grounded', () => {
+      /* The working path. The check is earned here and must remain. */
+      const { container } = render(
+        <AnaGrounding
+          evidence={{
+            validated: true, sourceCount: 3, groundedClaims: 4, weakClaims: 0, missingSupport: 0,
+          }}
+        />,
+      );
+      expect(container.textContent).toMatch(/4 of 4 claims grounded/i);
+      expect(container.querySelector('.ana-grounding-ic.is-ok')).toBeTruthy();
+    });
+  });
+
   it('never states the verdict in colour alone', () => {
     // WCAG 1.4.1: each row carries its own glyph and its own words.
     const { container } = render(<AnaGrounding evidence={graded} />);

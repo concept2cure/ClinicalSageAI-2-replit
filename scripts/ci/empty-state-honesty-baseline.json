@@ -1,7 +1,5 @@
 {
   "files": [
-    "client/src/concept2cure/components/ana/CrlPremortemPanel.tsx",
-    "client/src/concept2cure/v2/surfaces/Orchestration.tsx",
-    "client/src/concept2cure/v2/surfaces/SubmissionSeqWorkspaces.tsx"
+    "client/src/concept2cure/v2/surfaces/Nonclinical.tsx"
   ]
 }

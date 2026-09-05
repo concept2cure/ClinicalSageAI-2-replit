@@ -10,8 +10,18 @@
  */
 
 import { Router, Request, Response } from 'express';
+import { promises as fs } from 'fs';
 import { z } from 'zod';
+import { and, eq } from 'drizzle-orm';
 import { requireRole } from '../middleware/auth';
+import { isUuid } from '../middleware/uuidParam';
+import { requestDb } from '../db/requestDb';
+import { regulatoryPrograms } from '../../shared/schema/programs';
+import { resolveProgramProjectAnchor } from '../services/c2c/program-project-anchor';
+import {
+  createGovernedExportConsequence,
+  createAuditedUnplacedExport,
+} from '../services/export/governedExportConsequence';
 import { createRateLimiter } from '../middleware/rateLimiter';
 import {
   createSubmission,
@@ -23,7 +33,6 @@ import {
   listLeaves,
   upsertLeaf,
   removeLeaf,
-  SubmissionError,
 } from '../services/submission-service/submission-service';
 import { assessPathwayReadiness, PATHWAYS, type Pathway } from '../services/pathway-engines';
 import {
@@ -72,6 +81,7 @@ const CODE_STATUS: Record<string, number> = {
   INVALID_STATE: 409,
   GOVERNED_REQUIRED: 403,
   DISPATCH_BLOCKED: 422,
+  NO_AUTHORED_CONTENT: 422,
   FORBIDDEN: 403,
   VALIDATION: 400,
   RATE_LIMITED: 429,
@@ -1233,10 +1243,97 @@ router.get('/sequences/:seqId/technical-file', limiter, requireRole(AUTHOR), asy
   }
 });
 
+// ── Device technical-file DELIVERY (shared by both technical-file routes) ─────
+// The assembled ZIP bytes go through the SAME governed-export consequence the
+// eSTAR /build route uses: `createGovernedExportConsequence` (artifact registry
+// + provenance + EXPORT_GENERATED audit) when a PM-spine project anchors the
+// program, `createAuditedUnplacedExport` (delivered + audit-logged with the
+// SHA-256, registry placement pending) otherwise. Either way the caller gets
+// the bytes — an assemble must never delete the package before anyone can
+// download it, and must never answer with a checksum of a file that no longer
+// exists.
+const GOVERNED_EXPORT_SIZE_CAP_RE = /INVALID_GOVERNED_EXPORT_INPUT: binaryOutput exceeds max size/;
+
+interface TechnicalFileDelivery {
+  bytes: Buffer;
+  filename: string;
+  regulation: 'mdr' | 'ivdr';
+  /** The manifest.json content — the artifact's source content for provenance. */
+  manifest: unknown;
+  title: string;
+  backendRoute: string;
+  /** Program-scoped delivery: the program and its PM-spine anchor (null when unanchored). */
+  program: { id: string; anchorProjectId: number | null } | null;
+  /** Audit anchor for the unplaced path. */
+  resourceType: string;
+  resourceId: string;
+  /** Assembly facts carried into the export metadata. */
+  report: Record<string, unknown>;
+}
+
+async function deliverTechnicalFile(ctx: Ctx, d: TechnicalFileDelivery) {
+  const metadata: Record<string, unknown> = {
+    format: 'zip',
+    package: `EU ${d.regulation.toUpperCase()} technical file (Annex II/III tree + manifest + checksums)`,
+    regulation: d.regulation,
+    programId: d.program?.id,
+    ...d.report,
+  };
+  if (d.program && d.program.anchorProjectId !== null) {
+    return createGovernedExportConsequence({
+      organizationId: ctx.organizationId,
+      projectId: d.program.anchorProjectId,
+      userId: ctx.userId,
+      title: d.title,
+      contentForArtifact: JSON.stringify(d.manifest),
+      sourceType: 'export_zip',
+      ctdSection: d.regulation === 'mdr' ? 'eu-mdr-annex-ii' : 'eu-ivdr-annex-ii',
+      suggestedPlacement: `EU ${d.regulation.toUpperCase()} technical documentation (Annex II/III)`,
+      backendRoute: d.backendRoute,
+      binaryOutput: d.bytes,
+      mimeType: 'application/zip',
+      filename: d.filename,
+      metadata,
+    });
+  }
+  return createAuditedUnplacedExport({
+    organizationId: ctx.organizationId,
+    userId: ctx.userId,
+    sourceType: 'export_zip',
+    backendRoute: d.backendRoute,
+    resourceType: d.resourceType,
+    resourceId: d.resourceId,
+    programUuid: d.program?.id ?? null,
+    filename: d.filename,
+    mimeType: 'application/zip',
+    buffer: d.bytes,
+    metadata,
+  });
+}
+
+/** Technical-file error mapping: the governed size cap is an honest 413, everything else goes through `fail`. */
+function technicalFileFail(res: Response, err: unknown): void {
+  const message = err instanceof Error ? err.message : String(err);
+  if (GOVERNED_EXPORT_SIZE_CAP_RE.test(message)) {
+    res.status(413).json({
+      error: {
+        code: 'EXPORT_TOO_LARGE',
+        message:
+          'The assembled technical file exceeds the governed-export size cap and was not delivered. ' +
+          'Reduce the package (split large section bodies) or raise GOVERNED_EXPORT_MAX_BYTES.',
+      },
+    });
+    return;
+  }
+  fail(res, err);
+}
+
 // ── Device technical-file ASSEMBLE (materialize the MDR/IVDR ZIP) ─────────────
 // Device counterpart of POST /assemble: materializes the sequence's leaves into a
 // real technical-file ZIP (Annex II/III tree + manifest.json + checksums) with
-// valid PDF leaves. Returns a sanitized descriptor (no server paths). Does NOT
+// valid PDF leaves, reads the bytes BEFORE the staging directory is removed, and
+// delivers them through the governed-export consequence (a sequence carries no
+// PM-spine program anchor, so this is the audited-unplaced delivery). Does NOT
 // transmit — submit/transmit stays behind the governed transmit path + e-sign.
 const techFileAssembleSchema = z.object({
   regulation: z.enum(['mdr', 'ivdr']),
@@ -1258,13 +1355,47 @@ router.post('/sequences/:seqId/technical-file/assemble', limiter, requireRole(AU
       organizationId: ctx.organizationId,
       userId: ctx.userId,
       regulation: parsed.data.regulation,
-      applicationId: parsed.data.applicationId ?? `SEQ-${seqId}`,
+      applicationId: parsed.data.applicationId ?? `UNASSIGNED-SEQ-${seqId}`,
       productName: parsed.data.productName,
       manufacturer: parsed.data.manufacturer,
     });
-    // Assemble-only: the response carries metadata, not bytes — the staged
-    // temp package is not needed once we've read the descriptor.
-    await result.cleanup();
+    let bytes: Buffer;
+    let manifest: unknown = null;
+    try {
+      // Read the bytes while the staged package still exists; cleanup runs in
+      // `finally` so the temp dir is removed on every path, including a throw.
+      bytes = await fs.readFile(result.bundle.path);
+      try {
+        const { default: JSZip } = await import('jszip');
+        const zip = await JSZip.loadAsync(bytes);
+        const manifestJson = await zip.file('manifest.json')?.async('string');
+        manifest = manifestJson ? JSON.parse(manifestJson) : null;
+      } catch {
+        manifest = null;
+      }
+    } finally {
+      await result.cleanup();
+    }
+    const report = {
+      ready: result.ready,
+      fileCount: result.bundle.fileCount,
+      materialized: result.materialized,
+      skipped: result.skipped.length,
+      unresolved: result.unresolvedLeaves.length,
+      unfinalized: result.unfinalized,
+    };
+    const consequence = await deliverTechnicalFile(ctx, {
+      bytes,
+      filename: result.bundle.path.split('/').pop() ?? `SEQ-${seqId}-technical-file-${parsed.data.regulation}.zip`,
+      regulation: parsed.data.regulation,
+      manifest: manifest ?? { regulation: parsed.data.regulation, sequenceId: seqId, ...report },
+      title: result.bundle.displayName,
+      backendRoute: 'POST /api/submissions/sequences/:seqId/technical-file/assemble',
+      program: null,
+      resourceType: 'ectd_sequence',
+      resourceId: String(seqId),
+      report,
+    });
     // Sanitized — never expose the server temp path.
     res.json({
       ok: true,
@@ -1276,9 +1407,100 @@ router.post('/sequences/:seqId/technical-file/assemble', limiter, requireRole(AU
       materialized: result.materialized,
       skipped: result.skipped,
       unresolvedLeaves: result.unresolvedLeaves,
+      unfinalized: result.unfinalized,
+      unfinalizedSections: result.unfinalizedSections,
+      ...consequence,
     });
   } catch (err) {
-    fail(res, err);
+    technicalFileFail(res, err);
+  }
+});
+
+// ── Device technical-file EXPORT from the GOVERNED document ───────────────────
+// Packages the program's authored mdr/ivdr document (c2c_documents +
+// c2c_document_sections — the rows the MDx editor and the eu-mdr / eu-ivdr rule
+// packs write) into the technical-file ZIP and delivers it through the governed
+// export consequence. The program is proved to belong to the caller's org via
+// the request-scoped client BEFORE the assembler runs (404 otherwise — a foreign
+// program is indistinguishable from a missing one). 422 NO_AUTHORED_CONTENT when
+// nothing of that regulation has been authored; never an empty package.
+const techFileExportSchema = z.object({
+  regulation: z.enum(['mdr', 'ivdr']),
+  productName: z.string().min(1).max(256).optional(),
+  manufacturer: z.string().min(1).max(256).optional(),
+});
+router.post('/programs/:programId/technical-file/export', limiter, requireRole(AUTHOR), async (req, res) => {
+  const ctx = ctxOf(req);
+  if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+  const programId = String(Array.isArray(req.params.programId) ? req.params.programId[0] : req.params.programId ?? '');
+  if (!isUuid(programId)) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid program id.' } });
+  const parsed = techFileExportSchema.safeParse(req.body ?? {});
+  if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
+  try {
+    const rdb = requestDb(req);
+    const [program] = await rdb
+      .select({ id: regulatoryPrograms.id, name: regulatoryPrograms.name, productName: regulatoryPrograms.productName })
+      .from(regulatoryPrograms)
+      .where(and(eq(regulatoryPrograms.id, programId), eq(regulatoryPrograms.organizationId, ctx.organizationId)))
+      .limit(1);
+    if (!program) {
+      return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Program not found.' } });
+    }
+
+    const { assembleTechnicalFileFromProgram } = await import('../services/pathway-engines/mdr-ivdr/assemble-technical-file-from-core');
+    const result = await assembleTechnicalFileFromProgram({
+      programId,
+      organizationId: ctx.organizationId,
+      userId: ctx.userId,
+      regulation: parsed.data.regulation,
+      productName: parsed.data.productName ?? program.productName ?? undefined,
+      manufacturer: parsed.data.manufacturer,
+    });
+
+    const anchorProjectId = await resolveProgramProjectAnchor(rdb, {
+      programId,
+      orgId: ctx.organizationId,
+      context: 'submissions.technical-file.export',
+    });
+    const report = {
+      ready: result.ready,
+      fileCount: result.fileCount,
+      materialized: result.materialized,
+      leafCount: result.leafCount,
+      skipped: result.skipped.length,
+      unresolved: result.unresolvedLeaves.length,
+      unfinalized: result.unfinalized,
+    };
+    const consequence = await deliverTechnicalFile(ctx, {
+      bytes: result.buffer,
+      filename: result.filename,
+      regulation: parsed.data.regulation,
+      manifest: result.manifest,
+      title: `${program.name ?? programId} — EU ${parsed.data.regulation.toUpperCase()} technical file`,
+      backendRoute: 'POST /api/submissions/programs/:programId/technical-file/export',
+      program: { id: programId, anchorProjectId },
+      resourceType: 'device_technical_file',
+      resourceId: programId,
+      report,
+    });
+    res.json({
+      ok: true,
+      regulation: parsed.data.regulation,
+      programId,
+      ready: result.ready,
+      sha256: result.sha256,
+      sizeBytes: result.sizeBytes,
+      fileCount: result.fileCount,
+      materialized: result.materialized,
+      leafCount: result.leafCount,
+      skipped: result.skipped,
+      unresolvedLeaves: result.unresolvedLeaves,
+      unfinalized: result.unfinalized,
+      unfinalizedSections: result.unfinalizedSections,
+      ...consequence,
+    });
+  } catch (err) {
+    technicalFileFail(res, err);
   }
 });
 
@@ -1304,9 +1526,11 @@ router.post('/sequences/:seqId/assemble', limiter, requireRole(AUTHOR), async (r
       sequenceId: seqId,
       organizationId: ctx.organizationId,
       userId: ctx.userId,
-      applicationId: parsed.data.applicationId ?? `SEQ-${seqId}`,
-      sponsorId: parsed.data.sponsorId ?? `ORG-${ctx.organizationId}`,
-      sponsorName: parsed.data.sponsorName ?? `Organization ${ctx.organizationId}`,
+      // Never fabricate an agency identifier — these reach the regional
+      // backbone and the package filename. Unassigned values say so.
+      applicationId: parsed.data.applicationId ?? `UNASSIGNED-SEQ-${seqId}`,
+      sponsorId: parsed.data.sponsorId ?? `UNASSIGNED-ORG-${ctx.organizationId}`,
+      sponsorName: parsed.data.sponsorName ?? `UNASSIGNED (organization ${ctx.organizationId})`,
     });
     // Assemble-only: the response carries metadata, not bytes — the staged
     // temp package is not needed once we've read the descriptor.

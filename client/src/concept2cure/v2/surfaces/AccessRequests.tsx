@@ -37,6 +37,8 @@ import React from 'react';
 import { I } from '../icons';
 import { useLiveData, ErrorState, EmptyState, hasKeys } from '../dataConnect';
 import { usePublishSurfaceContext } from '../surfaceContext';
+import { useSurfaceActionHandlers } from '../surfaceActions';
+import { ceremonyOpen } from '../ceremony';
 import { apiCall, apiErrorText } from '../apiCall';
 import { C2CToast, useToast } from '../toast';
 import {
@@ -181,6 +183,37 @@ export function AccessRequestQueue({ scope }: { scope: 'organization' | 'all' })
       ],
     };
   }, [live.loading, live.error, rows, openCount, showAnswered, truncated]);
+  /* Registered only for the administrator's own queue. The identical
+     component also renders as a master-licensing tab (scope="all"), and the
+     bus is a single slot — claiming it there would answer for a screen the
+     user is not on. Approving and declining stay governed decisions behind
+     their reason dialog; only the queue's own filter is driven. */
+  useSurfaceActionHandlers(scope === 'organization' ? 'access-requests' : null, {
+    'access-requests.set-filter': (params) => {
+      const target = String(params.show ?? '');
+      if (target !== 'waiting' && target !== 'everything') {
+        return { ok: false, reason: `No access-request filter named "${params.show}".` };
+      }
+      const want = target === 'everything';
+      if (showAnswered === want) {
+        return { ok: true, detail: `Already showing ${target === 'waiting' ? 'waiting requests' : 'every request'}` };
+      }
+      if (ceremonyOpen()) {
+        return {
+          ok: false,
+          reason:
+            'A decision dialog is open on this screen — changing the filter would discard it. ' +
+            'Let the person finish or cancel it first.',
+        };
+      }
+      setShowAnswered(want);
+      return {
+        ok: true,
+        detail: want ? 'Showing every request, answered included' : 'Showing only requests still waiting',
+      };
+    },
+  });
+
   usePublishSurfaceContext('access-requests', scope === 'organization' ? anaContext : null);
 
   const ask = (row: AccessRequestRow, decision: 'approved' | 'declined') => {

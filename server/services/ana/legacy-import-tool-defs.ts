@@ -548,6 +548,21 @@ export const WRITE_KIT_SECTION: AnaTool = {
         description:
           'One-line note for the audit trail describing what this draft covers (e.g. "drafted SE discussion citing K251234 + reference device").',
       },
+      sources: {
+        type: 'array',
+        description:
+          "The passages the text was grounded in, exactly as project_knowledge_search returned them: pass each passage's evidence_source_id (or artifact_id) and its text as excerpt. Every clause of the content that quotes an excerpt verbatim is recorded as a citation of that Data Room source; everything else is recorded as your own assertion. Only sources that exist in this organization are accepted — any other entry is dropped and reported back.",
+        items: {
+          type: 'object',
+          properties: {
+            evidence_source_id: { type: 'integer', description: 'cre_evidence_sources.id from a retrieval passage.' },
+            artifact_id: { type: 'string', description: 'The retrieval artifact id, when no evidence_source_id was returned.' },
+            excerpt: { type: 'string', description: 'The passage text as retrieved (required).' },
+            title: { type: 'string' },
+          },
+          required: ['excerpt'],
+        },
+      },
     },
     required: ['section_key', 'content'],
   },

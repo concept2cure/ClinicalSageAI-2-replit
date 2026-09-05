@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { I } from '../icons';
 import { EmptyState, useLiveRows } from '../dataConnect';
 import { usePublishSurfaceContext } from '../surfaceContext';
+import { useSurfaceActionHandlers, notifySurfaceActionReady } from '../surfaceActions';
 import type { SurfaceViewProps } from '../surfaceViews';
 import '../styles/project-home-v2.css';
 
@@ -181,6 +182,29 @@ export function ChangeAssessment({ onAsk }: SurfaceViewProps) {
       ],
     };
   }, [live.loading, live.error, items, item, triggers, jurisdictions]);
+  /* Selection only — the FDA and EU MDR determinations this screen shows are
+     computed from the change record; recording one stays a human act. */
+  useSurfaceActionHandlers('change-assessment', {
+    'change-assessment.select-change': (params) => {
+      const raw = String(params.change ?? '').trim();
+      if (!raw) return { ok: false, reason: 'Name a change to select.' };
+      if (live.loading) return { ok: false, reason: 'The change worklist is still loading.', retry: true };
+      if (live.error) {
+        return { ok: false, reason: 'The change worklist could not be read, so there is nothing to select from.' };
+      }
+      const needle = raw.toLowerCase();
+      const exact = items.filter((c) => c.id.toLowerCase() === needle || c.title.toLowerCase() === needle);
+      const hits = exact.length ? exact : items.filter((c) => c.title.toLowerCase().includes(needle));
+      if (hits.length === 0) return { ok: false, reason: `No change named "${raw}".` };
+      if (hits.length > 1) return { ok: false, reason: `"${raw}" matches ${hits.length} changes — name one exactly.` };
+      setSel(hits[0].id);
+      return { ok: true, detail: `Selected ${hits[0].id} — ${hits[0].title}` };
+    },
+  });
+  useEffect(() => {
+    if (!live.loading && !live.error) notifySurfaceActionReady('change-assessment');
+  }, [live.loading, live.error]);
+
   usePublishSurfaceContext('change-assessment', anaContext);
 
   return (

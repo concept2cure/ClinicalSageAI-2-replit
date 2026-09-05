@@ -26,6 +26,18 @@
   position: relative;
 }
 .mdx-shell .pwt-btn:hover { color: var(--text-100); }
+/* The panel the bar labels had no rule at all, and the misalignment was
+   measurable: `.pwt-bar` insets its tabs by 24px on top of `.page-inner`'s own
+   24, so the first tab label sat at x=64 while the panel's first child sat at
+   x=24 — 40px apart, on the 510(k), CER, PMA and diagnostics surfaces. The
+   panel also butted straight against the bar's border, top edge on bottom edge
+   with no rhythm between them. Matching the bar's inset puts the panel's
+   content box where the bar's is; the remaining 16px to the label is
+   `.pwt-btn`'s own padding, which is its hit area and should stay.
+   mdx only: `PathwayTabBar` renders inside `.mdx-shell` and nowhere else, so a
+   copy in `v2/styles/pathway-core-v2.css` would be a new cross-shell collision
+   for a class the v2 shell never mounts. */
+.mdx-shell .pwt-pane { padding: 16px 24px 0; }
 .mdx-shell .pwt-btn.active {
   color: var(--text-100); font-weight: 500;
   border-bottom-color: var(--accent-100);
@@ -163,7 +175,7 @@
 .mdx-shell .cs-num { color: var(--text-100); font-weight: 600; }
 .mdx-shell .cs-num.err { color: var(--error); }
 .mdx-shell .cs-num.warn { color: var(--warning); }
-.mdx-shell .cs-sep { color: var(--text-500); }
+.mdx-shell .cs-sep { color: var(--text-400); }
 
 .mdx-shell .corr-grid {
   display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
@@ -574,6 +586,11 @@
 .mdx-shell .dd-att-ico.kind-csv  { color: #2d8659; }
 .mdx-shell .dd-att-ico.kind-img  { color: #8e44ad; }
 .mdx-shell .dd-att-ico.kind-code { color: var(--text-300); }
+/* `kind-file` is the fallback (`f.kind || 'file'`) and deliberately has no rule
+   of its own: `.dd-att-ico` above already sets `color: var(--text-300)`, which
+   IS the neutral treatment an unrecognised attachment kind should get. Listed
+   here because five kinds are named above and the sixth — the one that runs
+   whenever the kind is unknown — is otherwise invisible in this sheet. */
 
 .mdx-shell .dd-att-meta { flex: 1; min-width: 0; }
 .mdx-shell .dd-att-name {
@@ -623,3 +640,7 @@
 .mdx-shell .dd-act-sig { font-family: var(--font-mono); font-size: 10.5px; color: var(--text-300); }
 .mdx-shell .dd-act-file { color: var(--text-300); }
 .mdx-shell .dd-act-sub { font-size: 10.5px; color: var(--text-400); margin-top: 2px; }
+/* audit and correspondence detail panes, the correspondence bar's left group (ledger L139) */
+.audit-det { display: flex; flex-direction: column; gap: 8px; }
+.corr-bar-l { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.corr-det { display: flex; flex-direction: column; gap: 8px; }

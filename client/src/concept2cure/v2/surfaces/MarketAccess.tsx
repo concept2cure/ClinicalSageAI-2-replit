@@ -3,6 +3,7 @@ import { I } from '../icons';
 import { useLiveRows, EmptyState } from '../dataConnect';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { usePublishSurfaceContext } from '../surfaceContext';
+import { useSurfaceActionHandlers } from '../surfaceActions';
 import '../styles/project-home-v2.css';
 import { shellProgramName } from '../shellProject';
 
@@ -82,6 +83,20 @@ export function MarketAccess({ onAsk }: SurfaceViewProps) {
     ['strategy', 'Access strategy'],
   ];
 
+  /* AnA can open any of the four tabs — the same view-state switch a person
+     makes by clicking. The registry enum has already validated `tab`; the
+     defensive lookup keeps the handler honest if the registry drifts. */
+  useSurfaceActionHandlers('market-access', {
+    'market-access.open-tab': (params) => {
+      const target = params.tab;
+      const hit = tabs.find((t) => t[0] === target);
+      if (!hit) return { ok: false, reason: `"${target}" is not a market-access tab.` };
+      if (tab === target) return { ok: true, detail: `Already on the ${hit[1]} tab` };
+      setTab(target);
+      return { ok: true, detail: `Opened the ${hit[1]} tab` };
+    },
+  });
+
   /* Code-centric view of the same real rows: the billing codes in play across
      the org's payer positions (a projection, not a second store). */
   const coded = positions.filter((p) => p.code);
@@ -118,7 +133,10 @@ export function MarketAccess({ onAsk }: SurfaceViewProps) {
         positions: positions.slice(0, 12).map((pp) => ({
           id: pp.id, program: pp.program, market: pp.market, payer: pp.payer,
           mechanism: pp.mechanism, code: pp.code, status: pp.status,
-          decisionDate: pp.decisionDate, note: pp.note,
+          // `note` is a user-authored free-text payer-position note
+          // (market_access_positions.note) — its presence travels, the prose
+          // stays on screen, matching the rest of the subsystem.
+          decisionDate: pp.decisionDate, hasNote: Boolean(pp.note),
         })),
       },
       availableActions: [
@@ -130,10 +148,10 @@ export function MarketAccess({ onAsk }: SurfaceViewProps) {
   usePublishSurfaceContext('market-access', anaContext);
 
   return (
-    <div className="reg ma">
+    <div className="reg">
       <div className="reg-head">
         <div>
-          <div className="reg-kicker">Platform · commercial</div>
+          <div className="reg-eyebrow">Platform · commercial</div>
           <h1 className="reg-title">Market access &amp; reimbursement</h1>
           <p className="reg-sub">
             Payer coverage, value dossiers and coding strategy — the bridge from
@@ -182,7 +200,7 @@ export function MarketAccess({ onAsk }: SurfaceViewProps) {
       </div>
 
       {tab === 'coverage' && (
-        <div className="reg-panel">
+        <div className="reg-card">
           {/* Four-state body: loading -> error -> empty -> real */}
           {live.loading ? (
             <div className="reg-sub2" style={{ padding: '18px 14px' }}>Loading payer positions…</div>
@@ -252,7 +270,7 @@ export function MarketAccess({ onAsk }: SurfaceViewProps) {
       )}
 
       {tab === 'dossier' && (
-        <div className="reg-panel">
+        <div className="reg-card">
           <div className="ma-dossier-h">
             <div>
               <b>Global value dossier</b>
@@ -281,7 +299,7 @@ export function MarketAccess({ onAsk }: SurfaceViewProps) {
       )}
 
       {tab === 'coding' && (
-        <div className="reg-panel">
+        <div className="reg-card">
           {live.loading ? (
             <div className="reg-sub2" style={{ padding: '18px 14px' }}>Loading payer positions…</div>
           ) : live.error ? (
@@ -345,7 +363,7 @@ export function MarketAccess({ onAsk }: SurfaceViewProps) {
       )}
 
       {tab === 'strategy' && (
-        <div className="reg-panel reg-panel-pad">
+        <div className="reg-card reg-pad">
           {/* ── This was four bullets of invented market-access advice ────────
               "AnA's access sequencing for BX-204, positioned against Libre 3 on
               cost-comparability" — with a specific HCPCS code (E2103), a named

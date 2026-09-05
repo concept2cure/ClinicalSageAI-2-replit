@@ -336,9 +336,13 @@
 
 /* UI standards §8: a failure always offers a recovery path. Sized to the 24px
    floor SC 2.5.8 sets on every pointer type, and to 44px where the pointer is
-   coarse. `.tbtn` has no base rule anywhere in client/src and the universal
-   `.c2c-v2 button` reset strips its padding, so the dismiss control is sized
-   here rather than inherited. */
+   coarse. `.tbtn` (below) is the 24px icon button; the dismiss control needs
+   the larger target, so it is sized here rather than inherited. */
+/* Icon-only tool button: clear-search, close-drawer. The universal `.c2c-v2 button`
+   reset strips padding, so the 24px pointer floor (SC 2.5.8) is set here. */
+.c2c-v2 .tbtn{display:inline-flex;align-items:center;justify-content:center;min-width:24px;min-height:24px;padding:2px 6px;border:0;border-radius:var(--radius-md);background:transparent;color:var(--text-400);cursor:pointer;}
+.c2c-v2 .tbtn:hover{color:var(--text-100);background:var(--bg-100);}
+.c2c-v2 .tbtn svg{width:14px;height:14px;}
 .c2c-v2 .c2c-error-retry {
   min-height: 32px; padding: 7px 14px;
   font-size: 12px; font-weight: 500; color: var(--accent-200);
@@ -487,6 +491,43 @@
 .c2c-v2 .reg-pill.neutral{background:var(--bg-200);color:var(--text-300);}
 .c2c-v2 .reg-pill.idle{background:var(--bg-100);color:var(--text-400);}
 .c2c-v2 .reg-pill.review{background:var(--ai-muted);color:var(--ai);}
+/* Regulatory-change worklist — one card per tracked change (RegChange.tsx).
+   The card is a disclosure: the top row is the button, the body opens under
+   it. Severity is carried by .reg-pill (shared), kind by .rci-kind. */
+.c2c-v2 .rci-feed{display:flex;flex-direction:column;gap:10px;}
+.c2c-v2 .rci-card{background:var(--bg-000);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;transition:border-color var(--dur) ease-out;}
+.c2c-v2 .rci-card[data-open]{border-color:var(--accent-muted);}
+.c2c-v2 .rci-top{display:flex;align-items:center;gap:12px;width:100%;padding:12px 14px;background:none;border:0;text-align:left;cursor:pointer;color:inherit;font:inherit;}
+.c2c-v2 .rci-top:hover{background:var(--bg-050);}
+.c2c-v2 .rci-top:focus-visible{outline:2px solid var(--accent-100);outline-offset:-2px;}
+.c2c-v2 .rci-kind{flex-shrink:0;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;padding:2px 7px;border-radius:4px;background:var(--bg-100);color:var(--text-300);}
+.c2c-v2 .rci-mid{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px;}
+.c2c-v2 .rci-title{font-size:13px;font-weight:600;color:var(--text-100);line-height:1.4;}
+.c2c-v2 .rci-meta{font-size:11px;color:var(--text-400);display:inline-flex;align-items:center;gap:5px;flex-wrap:wrap;}
+.c2c-v2 .rci-meta svg{width:10px;height:10px;}
+.c2c-v2 .rci-chev{flex-shrink:0;color:var(--text-400);display:inline-flex;}
+.c2c-v2 .rci-chev svg{width:14px;height:14px;}
+.c2c-v2 .rci-body{padding:4px 14px 14px;border-top:1px solid var(--border);}
+.c2c-v2 .rci-summary{font-size:12.5px;line-height:1.6;color:var(--text-200);margin:10px 0 12px;}
+.c2c-v2 .rci-impact-h{display:inline-flex;align-items:center;gap:6px;font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--text-400);margin-bottom:6px;}
+.c2c-v2 .rci-impact-h svg{width:12px;height:12px;}
+.c2c-v2 .rci-impact{display:grid;grid-template-columns:minmax(160px,1fr) 2fr;gap:12px;padding:8px 0;border-top:1px solid var(--border);font-size:12.5px;}
+.c2c-v2 .rci-impact:last-of-type{border-bottom:1px solid var(--border);}
+.c2c-v2 .rci-imp-dev{font-weight:600;color:var(--text-100);display:flex;flex-direction:column;gap:2px;}
+.c2c-v2 .rci-imp-sub{font-size:11px;font-weight:400;color:var(--text-400);}
+.c2c-v2 .rci-imp-what{color:var(--text-200);line-height:1.5;}
+.c2c-v2 .rci-foot{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:12px;}
+.c2c-v2 .rci-doc{display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:12px;color:var(--text-300);}
+.c2c-v2 .rci-doc b{font-weight:600;color:var(--text-100);}
+.c2c-v2 .rci-doc svg{width:13px;height:13px;color:var(--text-400);}
+.c2c-v2 .rci-acts{display:flex;gap:8px;}
+.c2c-v2 .rci-act{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:500;padding:5px 11px;border-radius:var(--radius-md);border:1px solid var(--border);background:var(--bg-000);color:var(--text-200);cursor:pointer;transition:background var(--dur) ease-out;}
+.c2c-v2 .rci-act:hover{background:var(--bg-050);}
+.c2c-v2 .rci-act.pri{border-color:var(--accent-muted);background:var(--accent-000);color:var(--accent-200);}
+.c2c-v2 .rci-act.pri:hover{background:var(--accent-muted);}
+.c2c-v2 .rci-act svg{width:12px;height:12px;}
+/* "Action required" severity — the one tone the worklist uses that the pill family lacked */
+.c2c-v2 .reg-pill.err{background:color-mix(in srgb,var(--error) 12%,transparent);color:var(--error);}
 /* Market access extras */
 .c2c-v2 .reg-row-act{text-align:right;white-space:nowrap;}
 .c2c-v2 .reg-ask{display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--accent-200);border:1px solid var(--accent-muted);border-radius:var(--radius-md);background:var(--accent-000);padding:4px 9px;}
@@ -526,6 +567,9 @@
 .c2c-v2 .reg-doc-n{font-size:12.5px;font-weight:500;color:var(--text-100);flex:1;min-width:0;}
 .c2c-v2 .reg-doc-sec{font-size:11px;color:var(--text-400);font-family:var(--font-mono);flex-shrink:0;}
 .c2c-v2 .reg-doc-go{display:inline-flex;color:var(--text-500);flex-shrink:0;}.c2c-v2 .reg-doc-go svg{width:14px;height:14px;}
+.c2c-v2 .reg-doc-open{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:500;padding:5px 11px;border-radius:var(--radius-md);border:1px solid var(--accent-muted);background:var(--accent-000);color:var(--accent-200);cursor:pointer;}
+.c2c-v2 .reg-doc-open:hover{background:var(--accent-muted);}.c2c-v2 .reg-doc-open svg{width:12px;height:12px;}
+.c2c-v2 .reg-st{display:inline-flex;align-items:center;padding:2px 8px;border-radius:99px;font-size:10.5px;font-weight:600;text-transform:capitalize;background:var(--bg-100);color:var(--text-300);}
 .c2c-v2 .reg-doc:hover .reg-doc-go{color:var(--accent-100);}
 .c2c-v2 .reg-cert{display:flex;align-items:center;gap:9px;width:100%;text-align:left;margin-top:3px;background:var(--accent-000);border:1px solid var(--accent-muted);border-radius:var(--radius-md);padding:9px 11px;cursor:pointer;font-size:12px;color:var(--text-200);}
 .c2c-v2 .reg-cert:hover{border-color:var(--accent-100);}
@@ -899,6 +943,7 @@
 .c2c-v2 .tb-detail-note[data-warn]{color:#7a4a0f;}.c2c-v2.dark .tb-detail-note[data-warn]{color:var(--warning);}
 .c2c-v2 .tb-dep-row{font-size:11.5px;color:var(--text-200);display:flex;align-items:center;gap:6px;margin-bottom:5px;}
 .c2c-v2 .tb-dep-row .ico{font-size:12px;color:var(--text-400);}
+.c2c-v2 .tb-dep-row.dn svg{color:var(--warning);}
 .c2c-v2 .tb-detail-f{display:flex;align-items:center;gap:8px;margin-top:18px;padding-top:14px;border-top:1px solid var(--border);}
 @media (max-width:1100px){.c2c-v2 .tb-kanban{grid-template-columns:repeat(2,1fr);}}
 /* New-task intake (reuses .tb-detail modal shell) */
@@ -1051,6 +1096,8 @@
 .c2c-v2 .pj-card{background:var(--bg-000);border:1px solid var(--border);border-radius:var(--radius-lg);padding:14px;}
 .c2c-v2 .pj-card-h{display:flex;align-items:center;gap:8px;margin-bottom:9px;}
 .c2c-v2 .pj-card-h h3{font-size:12.5px;font-weight:600;color:var(--text-100);margin:0;}
+.c2c-v2 .pj-card-h-go{margin-left:auto;display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:500;color:var(--accent-200);white-space:nowrap;}
+.c2c-v2 .pj-card-h-go:hover{color:var(--accent-100);}.c2c-v2 .pj-card-h-go svg{width:12px;height:12px;}
 .c2c-v2 .pj-card-h .sec-sub{font-size:10.5px;color:var(--text-400);margin-left:auto;}
 .c2c-v2 .pj-vis{display:inline-flex;align-items:center;gap:4px;font-size:10px;color:var(--text-400);margin-left:auto;border:1px solid var(--border);border-radius:20px;padding:2px 8px;}
 .c2c-v2 .pj-vis .ico{font-size:11px;}
@@ -1089,7 +1136,7 @@
 .c2c-v2 .pj-crumb-i{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;color:var(--text-300);}
 .c2c-v2 .pj-crumb-i[data-cur]{color:var(--text-100);font-weight:600;}
 .c2c-v2 .pj-crumb-k{font-size:9px;text-transform:uppercase;letter-spacing:.05em;color:var(--text-300);background:var(--bg-100);padding:1px 6px;border-radius:5px;}
-.c2c-v2 .pj-crumb-sep{color:var(--text-500);font-size:13px;display:inline-flex;}
+.c2c-v2 .pj-crumb-sep{color:var(--text-400);font-size:13px;display:inline-flex;}
 /* pyramid phases */
 .c2c-v2 .pj-phases{flex:1;display:flex;flex-direction:column;gap:7px;min-width:0;}
 .c2c-v2 .pj-phase{display:flex;align-items:flex-start;gap:11px;width:100%;text-align:left;padding:9px 10px;border:1px solid var(--border);border-radius:var(--radius-md);background:var(--bg-000);transition:border-color var(--dur);}
@@ -1325,7 +1372,7 @@
 .c2c-v2 .main{grid-column:2;grid-row:1;height:100vh;display:flex;flex-direction:column;min-width:0;min-height:0;background:var(--bg-000);}
 .c2c-v2 .topbar{height:var(--topbar);display:flex;align-items:center;gap:12px;padding:0 16px;border-bottom:1px solid var(--border);flex-shrink:0;}
 .c2c-v2 .crumbs{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--text-300);min-width:0;flex-shrink:1;overflow:hidden;white-space:nowrap;}
-.c2c-v2 .crumbs .sep{color:var(--text-500);}
+.c2c-v2 .crumbs .sep{color:var(--text-400);}
 .c2c-v2 .crumbs .here{color:var(--text-100);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .c2c-v2 .tb-spacer{flex:1;}
 .c2c-v2 .tb-cmdk{display:flex;align-items:center;gap:8px;height:30px;padding:0 10px;border:1px solid var(--border);border-radius:var(--radius-lg);color:var(--text-400);font-size:12px;background:var(--bg-050);min-width:0;flex-shrink:1;max-width:230px;transition:border-color var(--dur);}
@@ -1537,6 +1584,11 @@
 .c2c-v2 .ana-sugg .ico{color:var(--accent-100);font-size:14px;flex-shrink:0;}
 .c2c-v2 .ana-msg{display:flex;flex-direction:column;gap:3px;}
 .c2c-v2 .ana-msg .who{font-size:10px;color:var(--text-400);font-weight:500;}
+/* governed sign-offs AnA asks for inside a message, and the outcome line each one becomes */
+.c2c-v2 .ana-msg-signoffs{display:flex;flex-direction:column;gap:6px;margin-top:6px;}
+.c2c-v2 .ana-signoff-done{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--success);}
+.c2c-v2 .ana-signoff-done[data-tone="error"]{color:var(--error);}
+.c2c-v2 .ana-signoff-done svg{width:13px;height:13px;flex-shrink:0;}
 .c2c-v2 .ana-msg .bd{font-size:12.5px;line-height:1.5;}
 .c2c-v2 .ana-msg.user .bd{background:var(--bg-200);padding:8px 11px;border-radius:12px 12px 4px 12px;align-self:flex-end;max-width:88%;}
 .c2c-v2 .ana-msg.ana .bd{font-family:var(--font-serif);}
@@ -1714,12 +1766,16 @@
    spring — and it stops entirely under prefers-reduced-motion, where the dot
    still reads as present, just still. */
 .c2c-v2 .ana-activity{margin-top:8px;}
+.c2c-v2 .ana-activity-label{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .c2c-v2 .ana-activity-toggle{display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--text-300);background:none;border:0;padding:2px 0;cursor:pointer;transition:color 200ms ease-out;}
 .c2c-v2 .ana-activity-toggle:hover{color:var(--text-200);}
 .c2c-v2 .ana-activity-toggle:focus-visible{outline:2px solid var(--accent-200);outline-offset:2px;border-radius:var(--radius-md);}
 .c2c-v2 .ana-activity-toggle svg{font-size:12px;}
 .c2c-v2 .ana-activity-body{display:flex;flex-direction:column;gap:3px;margin-top:5px;padding-left:9px;border-left:1px solid var(--border);}
 .c2c-v2 .ana-activity-phase{display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--text-300);}
+/* The running clock beside the live phase: tabular so "57s" → "1m 00s" does
+   not jiggle the line, and the same --text-300 as the phase it qualifies. */
+.c2c-v2 .ana-activity-clock{font-variant-numeric:tabular-nums;white-space:nowrap;color:var(--text-300);}
 /* Indented to the same text column as the phase and the step rows, which begin
    after a 12px glyph and a 6px gap. Flush left, it read as a PARENT of the
    line above it rather than a sibling. */
@@ -1762,6 +1818,108 @@
 
 .c2c-v2 .ana-chip-gov{display:inline-flex;align-items:center;margin-left:3px;color:var(--text-400);}
 .c2c-v2 .ana-chip-gov svg{font-size:10px;}
+
+/* ── AnA at work — the live dock (AnaWorkPanel) ─────────────────────────── */
+/* Same rules as the activity record above: body text is --text-300 or darker
+   (the --text-400 exception is for large text and glyphs only), motion is the
+   one 1.6s opacity pulse reused from the activity dot, and it stops under
+   prefers-reduced-motion. Sections stack; each header is a real button. */
+.c2c-v2 .ana-work{display:flex;flex-direction:column;background:var(--bg-000);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;}
+/* An owned pane (authoring, eCTD co-author) mounts the dock at the top of its
+   own scroll region; this is the gutter it sits in there. */
+.c2c-v2 .ana-work-host{padding:10px 12px 0;}
+/* The dock toggle in a pane header — the rail uses .tb-btn; owned panes
+   carry no top bar, so they get a small pressed-state button of their own. */
+.c2c-v2 .ana-work-toggle{display:inline-flex;align-items:center;gap:5px;font:inherit;font-size:11px;color:var(--text-300);background:none;border:1px solid var(--border);border-radius:999px;padding:2px 9px;cursor:pointer;transition:color 200ms ease-out,border-color 200ms ease-out,background 200ms ease-out;}
+.c2c-v2 .ana-work-toggle svg{font-size:12px;}
+.c2c-v2 .ana-work-toggle:hover{color:var(--text-100);border-color:var(--text-300);}
+.c2c-v2 .ana-work-toggle[aria-pressed="true"]{color:var(--accent-200);border-color:var(--accent-100);background:var(--accent-000);}
+.c2c-v2 .ana-work-toggle:focus-visible{outline:2px solid var(--accent-200);outline-offset:2px;}
+.c2c-v2 .ana-work-hdr{display:flex;align-items:center;gap:8px;padding:9px 12px;border-bottom:1px solid var(--border);background:var(--bg-050);}
+.c2c-v2 .ana-work-title{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--text-100);}
+.c2c-v2 .ana-work-mark{display:inline-flex;color:var(--accent-200);}
+.c2c-v2 .ana-work-mark svg{font-size:13px;}
+.c2c-v2 .ana-work-elapsed{margin-left:auto;display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--text-300);font-variant-numeric:tabular-nums;white-space:nowrap;}
+.c2c-v2 .ana-work-pulse{display:inline-flex;color:var(--accent-200);animation:ana-activity-pulse 1600ms ease-out infinite;}
+.c2c-v2 .ana-work-pulse svg{font-size:11px;}
+.c2c-v2 .ana-work-x{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border:0;border-radius:var(--radius-sm);background:none;color:var(--text-400);cursor:pointer;transition:color 200ms ease-out,background 200ms ease-out;}
+.c2c-v2 .ana-work-x:hover{color:var(--text-100);background:var(--bg-200);}
+.c2c-v2 .ana-work-x:focus-visible{outline:2px solid var(--accent-200);outline-offset:1px;}
+.c2c-v2 .ana-work-x svg{font-size:12px;}
+.c2c-v2 .ana-work-idle{padding:12px;font-size:11.5px;line-height:1.55;color:var(--text-300);}
+.c2c-v2 .ana-work-sec{border-bottom:1px solid var(--border);}
+.c2c-v2 .ana-work-sec:last-child{border-bottom:0;}
+.c2c-v2 .ana-work-sec-h{display:flex;align-items:center;gap:6px;width:100%;padding:8px 12px;border:0;background:none;font:inherit;font-size:11.5px;font-weight:600;color:var(--text-100);text-align:left;cursor:pointer;transition:background 200ms ease-out;}
+.c2c-v2 .ana-work-sec-h:hover{background:var(--bg-050);}
+.c2c-v2 .ana-work-sec-h:focus-visible{outline:2px solid var(--accent-200);outline-offset:-2px;}
+.c2c-v2 .ana-work-sec-t{flex:1;min-width:0;}
+.c2c-v2 .ana-work-sec-m{font-size:10.5px;font-weight:500;color:var(--text-300);font-variant-numeric:tabular-nums;white-space:nowrap;}
+.c2c-v2 .ana-work-sec-chev{display:inline-flex;color:var(--text-400);}
+.c2c-v2 .ana-work-sec-chev svg{font-size:12px;}
+.c2c-v2 .ana-work-sec-hh{margin:0;font:inherit;font-size:inherit;font-weight:inherit;line-height:inherit;}
+.c2c-v2 .ana-work-sec-b{display:flex;flex-direction:column;gap:8px;padding:2px 12px 10px;}
+/* `display:flex` above would otherwise beat the user-agent's [hidden] rule and
+   a collapsed section would stay visible. The body stays in the DOM collapsed
+   (aria-controls needs its target to exist); this is what hides it. */
+.c2c-v2 .ana-work-sec-b[hidden],.c2c-v2 .ana-work-pre[hidden]{display:none;}
+.c2c-v2 .ana-work-group{display:flex;flex-direction:column;gap:4px;}
+.c2c-v2 .ana-work-group-h{font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:var(--text-300);margin-top:4px;}
+.c2c-v2 .ana-work-round{display:flex;flex-direction:column;gap:3px;}
+.c2c-v2 .ana-work-round-h{font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:var(--text-300);margin-top:3px;}
+/* The numbered plan. The number sits in a ring; a done phase swaps it for a
+   check, a stopped one for a cross, and the active one carries the accent. */
+.c2c-v2 .ana-work-phases{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;}
+.c2c-v2 .ana-work-phase{display:grid;grid-template-columns:18px 1fr auto;column-gap:8px;align-items:center;font-size:11.5px;color:var(--text-300);}
+.c2c-v2 .ana-work-num{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:999px;border:1px solid var(--border);font-size:10px;font-weight:600;color:var(--text-300);font-variant-numeric:tabular-nums;}
+.c2c-v2 .ana-work-num svg{font-size:11px;}
+.c2c-v2 .ana-work-phase.is-active{color:var(--text-100);}
+.c2c-v2 .ana-work-phase.is-active .ana-work-num{border-color:var(--accent-200);color:var(--accent-200);}
+.c2c-v2 .ana-work-phase.is-done .ana-work-num{border-color:var(--success);color:var(--success);}
+.c2c-v2 .ana-work-phase.is-stopped .ana-work-num{border-color:var(--warning);color:var(--warning);}
+.c2c-v2 .ana-work-phase-l{min-width:0;overflow-wrap:anywhere;}
+.c2c-v2 .ana-work-phase-t{font-size:10.5px;color:var(--text-300);font-variant-numeric:tabular-nums;white-space:nowrap;}
+.c2c-v2 .ana-work-current{grid-column:2 / span 2;display:inline-flex;align-items:center;gap:4px;font-size:11px;color:var(--text-300);}
+.c2c-v2 .ana-work-current svg{font-size:11px;}
+/* Steps, queue rows and outputs share one row shape. */
+/* A grid, not a wrapping flex row: glyph | label | trailing on one line, with
+   the label free to wrap INSIDE its column. The first version wrapped the whole
+   row, so a long label ("Searching the literature for IRB accreditation
+   standards") pushed the check onto a line of its own and "done" onto a third —
+   seen in the Chromium render, not in jsdom. Notes, the inputs link and the
+   inputs block take their own line under the label. */
+.c2c-v2 .ana-work-step{display:grid;grid-template-columns:12px minmax(0,1fr) auto;column-gap:6px;row-gap:3px;align-items:start;font-size:11.5px;line-height:1.45;color:var(--text-300);}
+.c2c-v2 .ana-work-glyph{display:inline-flex;color:var(--text-400);margin-top:2px;}
+.c2c-v2 .ana-work-glyph svg{font-size:12px;}
+.c2c-v2 .ana-work-step.is-success .ana-work-glyph{color:var(--success);}
+.c2c-v2 .ana-work-step.is-error .ana-work-glyph{color:var(--warning);}
+.c2c-v2 .ana-work-step.is-running .ana-work-glyph{color:var(--accent-200);}
+.c2c-v2 .ana-work-step-l{min-width:0;overflow-wrap:anywhere;}
+.c2c-v2 .ana-work-step-t{font-size:10.5px;color:var(--text-300);font-variant-numeric:tabular-nums;white-space:nowrap;padding-top:1px;}
+.c2c-v2 .ana-work-note{grid-column:2 / -1;color:var(--warning);font-size:10.5px;}
+.c2c-v2 .ana-work-link{grid-column:2;justify-self:start;font:inherit;font-size:10.5px;color:var(--text-300);background:none;border:0;padding:0;text-decoration:underline;cursor:pointer;transition:color 200ms ease-out;}
+.c2c-v2 .ana-work-link:hover{color:var(--text-100);}
+.c2c-v2 .ana-work-link:focus-visible{outline:2px solid var(--accent-200);outline-offset:2px;border-radius:var(--radius-sm);}
+.c2c-v2 .ana-work-pre{grid-column:2 / -1;box-sizing:border-box;margin:0;padding:6px 8px;max-height:160px;overflow:auto;font-family:var(--font-mono);font-size:10.5px;line-height:1.5;color:var(--text-200);background:var(--bg-100);border:1px solid var(--border);border-radius:var(--radius-sm);white-space:pre-wrap;overflow-wrap:anywhere;}
+.c2c-v2 .ana-work-pre:focus-visible{outline:2px solid var(--accent-200);outline-offset:1px;}
+.c2c-v2 .ana-work-sum{font-size:11.5px;color:var(--text-300);line-height:1.5;}
+.c2c-v2 .ana-work-empty{font-size:11px;color:var(--text-300);line-height:1.5;}
+.c2c-v2 .ana-work-err{display:flex;align-items:center;flex-wrap:wrap;gap:6px;font-size:11px;color:var(--warning);}
+.c2c-v2 .ana-work-err .ana-work-link{grid-column:auto;}
+.c2c-v2 .ana-work-err svg{font-size:12px;}
+.c2c-v2 .ana-work-qi{display:flex;flex-direction:column;gap:2px;padding:6px 8px;border:1px solid var(--border);border-radius:var(--radius-md);background:var(--bg-050);}
+.c2c-v2 .ana-work-qi-q{font-size:11.5px;color:var(--text-100);overflow-wrap:anywhere;}
+.c2c-v2 .ana-work-qi-s{font-size:10.5px;color:var(--text-300);}
+.c2c-v2 .ana-work-asof{font-size:10px;color:var(--text-300);}
+.c2c-v2 .ana-work-chips{display:flex;flex-wrap:wrap;gap:5px;}
+.c2c-v2 .ana-work-chip{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:999px;border:1px solid var(--border);background:var(--bg-100);font-size:10.5px;color:var(--text-300);}
+.c2c-v2 .ana-work-chip svg{font-size:10px;}
+.c2c-v2 .ana-work-kv{display:grid;grid-template-columns:84px 1fr;column-gap:8px;align-items:start;font-size:11.5px;}
+.c2c-v2 .ana-work-k{font-size:9.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--text-300);font-weight:600;padding-top:2px;}
+.c2c-v2 .ana-work-v{color:var(--text-100);min-width:0;overflow-wrap:anywhere;}
+@media (prefers-reduced-motion:reduce){
+  .c2c-v2 .ana-work-pulse{animation:none;opacity:1;}
+  .c2c-v2 .ana-work-x,.c2c-v2 .ana-work-sec-h,.c2c-v2 .ana-work-link,.c2c-v2 .ana-work-toggle{transition:none;}
+}
 
 /* ── Page header ── */
 .c2c-v2 .ph{display:flex;align-items:flex-start;justify-content:space-between;gap:20px;margin-bottom:24px;}
@@ -1927,6 +2085,10 @@
 .c2c-v2 .tone-ai{background:var(--ai-muted);color:var(--ai);}
 .c2c-v2 .tone-warn{background:var(--warning-muted);color:var(--warning);}
 .c2c-v2 .tone-idle{background:var(--idle-muted);color:var(--text-300);}
+/* `dim` and `err` are emitted by fifteen call sites (`rd-chip tone-` + tone) and had no rule: a
+   "no sources" or "failed" chip rendered as unstyled text. */
+.c2c-v2 .tone-dim{background:var(--bg-100);color:var(--text-400);}
+.c2c-v2 .tone-err{background:var(--error-muted);color:var(--error);}
 
 /* ── Labeling / IFU workbench ── */
 .c2c-v2 .lbl-symgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
@@ -2013,6 +2175,12 @@
 .c2c-v2 .scaf-row{display:flex;align-items:center;gap:8px;font-size:12px;padding:5px 0;border-bottom:1px solid var(--border);}
 .c2c-v2 .scaf-row:last-child{border-bottom:0;}
 .c2c-v2 .scaf-row .mono{font-size:11px;color:var(--text-200);}
+.c2c-v2 .scaf-readiness{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px;}
+.c2c-v2 .scaf-readiness-blurb{font-size:12.5px;color:var(--text-300);line-height:1.5;}
+.c2c-v2 .scaf-ok{display:inline-flex;color:var(--success);flex-shrink:0;}.c2c-v2 .scaf-ok svg{width:12px;height:12px;}
+.c2c-v2 .scaf-k{flex:1;color:var(--text-300);}
+.c2c-v2 .scaf-row .scaf-v{color:var(--text-100);text-align:right;}
+.c2c-v2 .scaf-ana{margin-top:14px;}
 .c2c-v2 .scaf-tag{display:inline-block;font-family:var(--font-mono);font-size:11px;padding:3px 8px;border-radius:var(--radius-md);background:var(--bg-200);color:var(--text-200);margin:0 6px 6px 0;}
 .c2c-v2 .scaf-note{margin-top:14px;padding:14px 16px;border:1px solid var(--border);border-left:3px solid var(--accent-100);border-radius:var(--radius-md);background:var(--bg-000);font-size:13px;line-height:1.55;color:var(--text-200);}
 .c2c-v2 .scaf-install{margin-top:18px;border:1px solid var(--border);border-radius:var(--radius-xl);overflow:hidden;}
@@ -2043,6 +2211,9 @@
 .c2c-v2 .gri-det{max-width:720px;}
 .c2c-v2 .gri-back{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--text-400);margin-bottom:16px;}
 .c2c-v2 .gri-back:hover{color:var(--text-100);}
+/* the chevron icon points right; as a back affordance it points the way back */
+.c2c-v2 .gri-back-ic{display:inline-flex;transform:rotate(180deg);}.c2c-v2 .gri-back-ic svg{width:12px;height:12px;}
+.c2c-v2 .gri-routes{display:flex;flex-wrap:wrap;margin-top:12px;}
 .c2c-v2 .gri-form{border:1px solid var(--border);border-radius:var(--radius-xl);padding:20px;background:var(--bg-050);margin-top:18px;}
 .c2c-v2 .gri-field{margin-bottom:14px;}
 .c2c-v2 .gri-field label{display:block;font-size:12px;font-weight:500;margin-bottom:5px;}
@@ -2052,6 +2223,8 @@
 .c2c-v2 .gri-input:focus{border-color:var(--accent-100);}
 .c2c-v2 select.gri-input{cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%238a8880' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;padding-right:30px;}
 .c2c-v2 .gri-toggle{display:flex;align-items:center;gap:10px;}
+.c2c-v2 .gri-toggle-l{font-size:12px;color:var(--text-200);}
+.c2c-v2 .gri-run-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px;padding-top:14px;border-top:1px solid var(--border);}
 .c2c-v2 .gri-switch{width:38px;height:22px;border-radius:999px;background:var(--bg-300);position:relative;transition:background var(--dur);flex-shrink:0;}
 .c2c-v2 .gri-switch::after{content:"";position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:#fff;transition:transform var(--dur);box-shadow:var(--v2-shadow-sm);}
 .c2c-v2 .gri-switch[data-on="true"]{background:var(--accent-100);}
@@ -2313,6 +2486,8 @@
 
 /* ════════ NDA / BLA filing cockpit ════════ */
 .c2c-v2 .reg-wrap{height:100%;overflow-y:auto;padding:26px 30px 60px;max-width:1100px;margin:0 auto;}
+/* outer frame of the HAQ and NDA screens: gives the scroll column below a definite height */
+.c2c-v2 .cv-body{height:100%;min-height:0;}
 .c2c-v2 .reg-intro{font-size:13px;line-height:1.6;color:var(--text-400);margin:0;max-width:680px;}
 .c2c-v2 .reg-kpi-v[data-tone="warn"]{color:var(--warning);}
 .c2c-v2 .reg-kpi-v[data-tone="err"]{color:var(--error);}
@@ -2488,12 +2663,18 @@
 .c2c-v2 .ct-head-r{display:flex;align-items:center;gap:8px;flex-shrink:0;}
 .c2c-v2 .ct-head-model{display:inline-flex;align-items:center;gap:4px;font-size:11px;color:var(--text-400);}
 .c2c-v2 .ct-head-model svg{width:12px;height:12px;}
-.c2c-v2 .ct-head-open{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:500;color:var(--accent-100);background:none;border:1px solid var(--border);border-radius:7px;padding:6px 10px;cursor:pointer;white-space:nowrap;flex-shrink:0;}
+/* --accent-200, not --accent-100: the identity orange is the colour the brand
+   is SEEN in, and this is 11.5px text — at that size --accent-100 measures
+   2.96:1 on --bg-000 (same reason as .ph-eyebrow). */
+.c2c-v2 .ct-head-open{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:500;color:var(--accent-200);background:none;border:1px solid var(--border);border-radius:7px;padding:6px 10px;cursor:pointer;white-space:nowrap;flex-shrink:0;}
 .c2c-v2 .ct-head-open:hover{background:var(--bg-050);}
 .c2c-v2 .ct-head-open svg{width:13px;height:13px;}
 
 .c2c-v2 .ct-scroll{flex:1;min-height:0;overflow-y:auto;}
 .c2c-v2 .ct-col{max-width:768px;margin:0 auto;padding:26px 24px 40px;display:flex;flex-direction:column;gap:22px;}
+/* The reading measure is widened in steps below the composer rules — see
+   the @media block after .ct-comp-foot, which must follow every rule it
+   overrides. */
 
 .c2c-v2 .ct-turn{display:flex;}
 .c2c-v2 .ct-user{justify-content:flex-end;}
@@ -2501,22 +2682,15 @@
 .c2c-v2 .ct-ana{gap:13px;align-items:flex-start;}
 .c2c-v2 .ct-ana-av{width:28px;height:28px;border-radius:8px;background:var(--accent-100);color:#fff;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;margin-top:2px;}
 .c2c-v2 .ct-ana-body{flex:1;min-width:0;display:flex;flex-direction:column;gap:10px;}
+/* .ana-activity carries margin-top:8px for the rail's 3px message gap; this
+   body already spaces its children by 10px. */
+.c2c-v2 .ct-ana-body .ana-activity{margin-top:0;}
 
-.c2c-v2 .ct-think{align-self:flex-start;text-align:left;background:none;border:none;cursor:pointer;display:flex;flex-direction:column;gap:7px;padding:0;}
-/* --text-300, not --text-400: 11.5px is small text, so SC 1.4.3 wants 4.5:1
-   and --text-400 measures 3.37:1 light / 4.27:1 dark. Same defect, and same
-   reason the contrast gate stayed green on it, as the ana-activity block. */
-.c2c-v2 .ct-think-h{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;color:var(--text-300);}
-.c2c-v2 .ct-think-h svg{width:13px;height:13px;transition:transform var(--dur);}
-.c2c-v2 .ct-think.on .ct-think-h svg:last-child{transform:rotate(180deg);}
-.c2c-v2 .ct-think-b{font-size:12.5px;line-height:1.6;color:var(--text-300);border-left:2px solid var(--border);padding:2px 0 2px 12px;font-style:italic;}
-
-.c2c-v2 .ct-tool{display:flex;align-items:center;gap:8px;font-size:11.5px;font-family:var(--font-mono);background:var(--bg-050);border:1px solid var(--border);border-radius:8px;padding:7px 10px;flex-wrap:wrap;}
-.c2c-v2 .ct-tool-ic{color:var(--text-400);display:inline-flex;}.c2c-v2 .ct-tool-ic svg{width:13px;height:13px;}
-.c2c-v2 .ct-tool-n{font-weight:600;color:var(--text-200);}
-.c2c-v2 .ct-tool-a{color:var(--text-400);min-width:0;overflow:hidden;text-overflow:ellipsis;}
-.c2c-v2 .ct-tool-r{margin-left:auto;color:var(--success);display:inline-flex;align-items:center;gap:4px;}
-.c2c-v2 .ct-tool-r svg{width:12px;height:12px;}
+/* `.ct-think*` (the thread's own "Thought for a moment" disclosure) and
+   `.ct-tool*` (a tool row `toTurn` never populated, so it never rendered)
+   were here. The turn's reasoning and its tool calls are both drawn by
+   <AnaActivity /> now — `.ana-activity*` above — the one renderer for the
+   work record on every surface. Deleted with their renderers. */
 
 .c2c-v2 .ct-prop{border:1px solid var(--accent-100);border-radius:12px;overflow:hidden;background:var(--bg-000);box-shadow:var(--v2-shadow-sm);}
 .c2c-v2 .ct-prop-h{display:flex;align-items:center;gap:9px;padding:11px 13px;background:var(--accent-000);border-bottom:1px solid var(--border);}
@@ -2580,10 +2754,8 @@
 .c2c-v2 .ct-empty-chip{background:var(--bg-050);border:1px solid var(--border);border-radius:20px;padding:8px 14px;font-size:12px;color:var(--text-200);cursor:pointer;}
 .c2c-v2 .ct-empty-chip:hover{background:var(--bg-100);border-color:var(--accent-100);}
 
-.c2c-v2 .ct-typing{display:flex;gap:4px;padding:6px 0;}
-.c2c-v2 .ct-typing span{width:7px;height:7px;border-radius:50%;background:var(--text-500);animation:ctblink 1.2s infinite;}
-.c2c-v2 .ct-typing span:nth-child(2){animation-delay:.2s;}.c2c-v2 .ct-typing span:nth-child(3){animation-delay:.4s;}
-@keyframes ctblink{0%,60%,100%{opacity:.25;}30%{opacity:1;}}
+/* `.ct-typing` — the three animated dots — is gone with its renderer: the
+   in-flight turn's own activity record is the waiting state. */
 
 .c2c-v2 .ct-composer-wrap{flex-shrink:0;border-top:1px solid var(--border);padding:14px 24px 16px;background:var(--bg-000);}
 .c2c-v2 .ct-composer{max-width:768px;margin:0 auto;display:flex;align-items:flex-end;gap:8px;border:1px solid var(--border);border-radius:14px;padding:8px 10px;background:var(--bg-000);box-shadow:var(--v2-shadow-sm);}
@@ -2607,11 +2779,29 @@
 .c2c-v2 .ct-att-x{border:none;background:none;color:var(--text-400);cursor:pointer;font-size:14px;line-height:1;padding:0 2px;}
 .c2c-v2 .ct-att-x:hover{color:var(--text-100);}
 .c2c-v2 .ct-comp-foot{max-width:768px;margin:8px auto 0;font-size:10.5px;color:var(--text-300);display:flex;align-items:center;gap:5px;justify-content:center;text-align:center;}
+/* A reading measure, widened in steps rather than removed: long-form
+   regulatory prose is unreadable at a 1400px line, and 768px beside a 384px
+   dock read as a strip with dead margin on a wide display. The composer, its
+   attachment row and its footer track the column so the reply box stays
+   aligned with the transcript above it. Placed after all four base rules,
+   which an @media override must be to win. */
+@media (min-width:1600px){.c2c-v2 .ct-col,.c2c-v2 .ct-composer,.c2c-v2 .ct-comp-atts,.c2c-v2 .ct-comp-foot{max-width:860px;}}
+@media (min-width:1920px){.c2c-v2 .ct-col,.c2c-v2 .ct-composer,.c2c-v2 .ct-comp-atts,.c2c-v2 .ct-comp-foot{max-width:940px;}}
 .c2c-v2 .ct-comp-foot svg{width:11px;height:11px;flex-shrink:0;}
 
 /* ── conversation + live artifact panel split ── */
 .c2c-v2 .ct-main{flex:1;min-height:0;display:flex;}
 .c2c-v2 .ct-conv{flex:1;min-width:0;display:flex;flex-direction:column;}
+/* The side column stacks AnA's live work dock over the artifact panel. The
+   dock takes the height it needs and the artifacts take the remainder; the
+   dock is capped only once there are artifacts to make room for, so with an
+   empty panel a long run gets the whole column instead of scrolling its own
+   history out of a half-height box (this was max-height:52% unconditionally,
+   beside an artifact panel that sat mostly empty). */
+.c2c-v2 .ct-side{display:flex;flex-direction:column;flex-shrink:0;min-height:0;}
+.c2c-v2 .ct-side-work{width:384px;box-sizing:border-box;flex:1 1 auto;min-height:0;overflow-y:auto;padding:12px 12px 0;border-left:1px solid var(--border);background:var(--bg-050);}
+.c2c-v2 .ct-side[data-artifacts="true"] .ct-side-work{max-height:60%;}
+.c2c-v2 .ct-side .ct-artifacts{flex:0 1 auto;}
 .c2c-v2 .ct-artifacts{width:384px;flex-shrink:0;border-left:1px solid var(--border);background:var(--bg-050);display:flex;flex-direction:column;min-height:0;}
 .c2c-v2 .ct-art-panel-h{display:flex;align-items:center;justify-content:space-between;padding:14px 16px 4px;}
 .c2c-v2 .ct-art-panel-t{display:flex;align-items:center;gap:7px;font-size:13px;font-weight:600;color:var(--text-100);}
@@ -2623,11 +2813,9 @@
 .c2c-v2 .ct-art-list{flex:1;min-height:0;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:10px;}
 .c2c-v2 .ct-art-empty{font-size:12px;line-height:1.6;color:var(--text-300);padding:18px 6px;}
 
-.c2c-v2 .ct-art-rail{align-self:stretch;flex-shrink:0;width:48px;border-left:1px solid var(--border);background:var(--bg-050);display:flex;flex-direction:column;align-items:center;gap:8px;padding-top:18px;cursor:pointer;}
-.c2c-v2 .ct-art-rail:hover{background:var(--bg-100);}
-.c2c-v2 .ct-art-rail-ic{color:var(--accent-100);} .c2c-v2 .ct-art-rail-ic svg{width:18px;height:18px;}
-.c2c-v2 .ct-art-rail-n{background:var(--accent-100);color:#fff;border-radius:99px;font-size:10px;font-weight:700;min-width:18px;text-align:center;padding:1px 5px;}
-.c2c-v2 .ct-art-rail-l{writing-mode:vertical-rl;font-size:11px;color:var(--text-400);letter-spacing:.06em;text-transform:uppercase;margin-top:4px;}
+/* `.ct-art-rail*` — the 48px "Artifacts" stub the collapsed side column left
+   behind — is gone with its renderer: hidden now means not rendered, and the
+   thread header's labelled toggle brings the column back. */
 
 .c2c-v2 .ct-art{border:1px solid var(--border);border-radius:11px;background:var(--bg-000);overflow:hidden;}
 .c2c-v2 .ct-art[data-open]{border-color:var(--accent-muted);}
@@ -2670,6 +2858,7 @@
 .c2c-v2 .ct-art-prov-g{display:flex;flex-direction:column;gap:3px;font-size:11px;color:var(--text-400);line-height:1.45;}
 .c2c-v2 .ct-art-audit{display:inline-flex;align-items:center;gap:4px;color:var(--text-300);}.c2c-v2 .ct-art-audit svg{width:11px;height:11px;}
 .c2c-v2 .ct-art-actions{display:flex;gap:6px;flex-wrap:wrap;}
+.c2c-v2 .ct-art-edit{flex:0 0 auto;}
 .c2c-v2 .ct-art-actions button{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:500;padding:7px 10px;border-radius:7px;border:1px solid var(--border);background:var(--bg-000);color:var(--text-200);cursor:pointer;}
 .c2c-v2 .ct-art-actions button:hover{background:var(--bg-100);}.c2c-v2 .ct-art-actions button svg{width:13px;height:13px;}
 /* A disabled artifact action looked exactly like an enabled one — the artifact
@@ -2896,6 +3085,7 @@
    switched to the gradient, because resolving a contradiction should not
    silently change what a user sees. */
 .c2c-v2 .lp-page.hl{background:#fff;}
+.c2c-v2 .lp-smpc{margin-top:14px;}
 .c2c-v2 .lp-bw{border:2px solid var(--text-100);border-radius:6px;padding:14px 16px;font-size:13px;font-weight:600;color:var(--text-100);font-family:var(--font-serif,Georgia,serif);line-height:1.6;text-transform:uppercase;letter-spacing:.01em;}
 .c2c-v2 .lp-page-h{font-family:var(--font-serif,Georgia,serif);font-size:16px;font-weight:700;color:var(--text-100);margin-bottom:10px;}
 .c2c-v2 .lp-page-p{font-family:var(--font-serif,Georgia,serif);font-size:13.5px;line-height:1.7;color:var(--text-100);margin:0 0 10px;}
@@ -2965,7 +3155,7 @@
 .c2c-v2 .rch{display:flex;align-items:center;gap:6px;padding:6px 10px;background:var(--bg-200);border-bottom:1px solid var(--border);font-size:11px;flex-shrink:0;}
 .c2c-v2 .rch-seg{font-size:14px;color:var(--accent-200);}
 .c2c-v2 .rch-name{font-weight:600;color:var(--text-100);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:220px;}
-.c2c-v2 .rch-sep{color:var(--text-500);}
+.c2c-v2 .rch-sep{color:var(--text-400);}
 .c2c-v2 .rch-chip{font-size:10px;padding:1px 6px;border-radius:3px;background:var(--bg-300);color:var(--text-300);white-space:nowrap;}
 .c2c-v2 .rch-chip.tone-ai{background:color-mix(in srgb,var(--accent-100) 12%,transparent);color:var(--accent-200);}
 .c2c-v2 .rch-chip.tone-ok{background:color-mix(in srgb,var(--success) 10%,transparent);color:var(--success);}
@@ -3312,6 +3502,7 @@
 .c2c-v2 .adc-head-main{flex:1;min-width:0;}
 .c2c-v2 .adc-kicker{font-size:10px;font-weight:600;letter-spacing:.03em;text-transform:uppercase;color:var(--text-400);}
 .c2c-v2 .adc-name{font-size:13.5px;font-weight:600;color:var(--text-100);margin-top:1px;line-height:1.3;}
+.c2c-v2 .adc-conf-n{font-variant-numeric:tabular-nums;}
 .c2c-v2 .adc-conf{flex:none;display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:600;padding:2px 7px;border-radius:100px;}
 .c2c-v2 .adc-conf svg{width:11px;height:11px;}
 .c2c-v2 .adc-conf.high{background:color-mix(in srgb,var(--success) 14%,transparent);color:var(--success);}

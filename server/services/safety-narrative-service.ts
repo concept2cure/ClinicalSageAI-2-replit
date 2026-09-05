@@ -68,11 +68,22 @@ export interface SafetyNarrative {
   regulatoryConcerns: string[];
   citedTables: string[];
   wordCount: number;
+  /**
+   * True when the AI-generated narrative was withheld because it contained
+   * numbers/identifiers not grounded in the source safety data (the
+   * hallucination guard tripped), the AI response was empty/unparseable, or
+   * the gateway call failed. When true, `fullNarrative`/`sections` hold a
+   * deterministic, source-grounded summary in place of AI prose — never
+   * fabricated filing text.
+   */
+  aiNarrativeWithheld?: boolean;
 }
 
 export interface SAECaseData {
   caseId: string;
-  patientAge: number;
+  // null = not reported. Never coerce a missing age to 0 — a narrative that
+  // states "a 0-year-old subject" is a fabricated clinical fact.
+  patientAge: number | null;
   patientSex: string;
   relevantMedicalHistory: string[];
   treatmentArm: string;
@@ -81,7 +92,8 @@ export interface SAECaseData {
   eventTerm: string;
   eventDescription: string;
   onsetDate: string;
-  onsetStudyDay: number;
+  // null = not reported. Never coerce a missing onset day to 0 ("Study Day 0").
+  onsetStudyDay: number | null;
   seriousnessCriteria: string[];
   severity: string;
   actionTaken: string;
@@ -122,6 +134,8 @@ export interface BenefitRiskNarrative {
   riskDimensions: Array<{ dimension: string; assessment: string }>;
   overallConclusion: string;
   uncertainties: string[];
+  /** See {@link SafetyNarrative.aiNarrativeWithheld} — same semantics. */
+  aiNarrativeWithheld?: boolean;
 }
 
 export interface SignalData {
@@ -143,6 +157,112 @@ export interface CrossStudySafetyInput {
   saeSummary: string;
   dose: string;
 }
+
+// ---------------------------------------------------------------------------
+// Grounding guard
+// ---------------------------------------------------------------------------
+//
+// Every ai.chat() call below produces narrative prose that ships VERBATIM
+// into a regulatory filing (CSR/IB/CER/DSUR safety sections, SAE narratives,
+// benefit-risk assessments). There is no human review gate between the model
+// and the filing, so an invented incidence rate, subject count, or SAE count
+// would ship as if it were real data.
+//
+// This guard mirrors the pattern in
+// server/services/cmc/module3-narrative-builder.ts: build a "grounding set"
+// of every 4+ digit number and identifier-shaped token present in the INPUT
+// safety data, then confirm the AI's OUTPUT introduces no numeric/identifier
+// token outside that set. A single ungrounded token fails the narrative
+// closed — the caller gets a deterministic, source-grounded summary (built
+// straight from the same input, so it cannot itself be hallucinated) plus an
+// explicit "withheld" marker, never the AI prose.
+//
+// The regex classes are intentionally narrow (4+ digit runs; identifier-like
+// alphanumeric tokens) so the guard does not false-positive on ordinary
+// prose, small percentages, ages, or study-day counts — the same tradeoff
+// module3-narrative-builder makes.
+
+/** Matches 4+ digit runs (subject counts, years, large incidence counts, etc.). */
+const FOUR_PLUS_DIGIT_RE = /\b\d{4,}\b/g;
+
+/**
+ * Matches identifier-like tokens — anything containing 4+ consecutive digits
+ * OR an alphabetic prefix with at least 2 embedded digits (e.g. "BX204-301",
+ * "ICSR-8841", "Site9001"). Fabricated case/study identifiers are the other
+ * common vehicle for hallucinated specifics beyond raw numbers.
+ */
+const IDENTIFIER_RE = /[A-Za-z][A-Za-z0-9._-]*[0-9][A-Za-z0-9._-]*\d[A-Za-z0-9._-]*/g;
+
+/**
+ * Recursively walk a value and accumulate every 4+ digit numeric token and
+ * identifier-like token found in its string/number representations. Object
+ * keys are NOT included — only values, matching module3-narrative-builder.
+ */
+function collectGroundingTokens(value: unknown, acc: Set<string>, depth = 0): void {
+  if (depth > 8) return; // belt-and-suspenders against pathological nesting
+  if (value === null || value === undefined) return;
+
+  if (typeof value === 'number') {
+    if (Number.isFinite(value)) {
+      const s = String(value);
+      if (/\d{4,}/.test(s)) acc.add(s);
+    }
+    return;
+  }
+
+  if (typeof value === 'string') {
+    const digitMatches = value.match(FOUR_PLUS_DIGIT_RE);
+    if (digitMatches) for (const m of digitMatches) acc.add(m);
+    const idMatches = value.match(IDENTIFIER_RE);
+    if (idMatches) for (const m of idMatches) acc.add(m);
+    return;
+  }
+
+  if (typeof value === 'boolean') return;
+
+  if (Array.isArray(value)) {
+    for (const item of value) collectGroundingTokens(item, acc, depth + 1);
+    return;
+  }
+
+  if (typeof value === 'object') {
+    for (const v of Object.values(value as Record<string, unknown>)) {
+      collectGroundingTokens(v, acc, depth + 1);
+    }
+  }
+}
+
+/** Build the set of grounding tokens allowed to appear in AI output, from one or more input sources. */
+function buildGroundingSet(...sources: unknown[]): Set<string> {
+  const acc = new Set<string>();
+  for (const s of sources) collectGroundingTokens(s, acc, 0);
+  return acc;
+}
+
+/**
+ * Scan `text` for 4+ digit numeric tokens AND identifier-shaped tokens that
+ * are NOT present in `allowed`. Both regexes are applied symmetrically —
+ * without this, an identifier-shaped fabrication without a 4+ digit run
+ * (e.g. "BATCH-AB12CD") would bypass the guard. Returns the unknown tokens
+ * (empty array = guard passes).
+ */
+function findUngroundedTokens(text: string, allowed: Set<string>): string[] {
+  const unknown = new Set<string>();
+  const numericMatches = text.match(FOUR_PLUS_DIGIT_RE) || [];
+  for (const m of numericMatches) {
+    if (!allowed.has(m)) unknown.add(m);
+  }
+  const idMatches = text.match(IDENTIFIER_RE) || [];
+  for (const m of idMatches) {
+    if (!allowed.has(m)) unknown.add(m);
+  }
+  return Array.from(unknown);
+}
+
+/** Marker prefixed onto every deterministic fallback so the withheld state is never silent. */
+const AI_NARRATIVE_WITHHELD_MARKER =
+  'AI narrative withheld: contained figures not grounded in the source data; ' +
+  'deterministic summary shown, requires manual authoring.';
 
 // ---------------------------------------------------------------------------
 // Internal helpers
@@ -318,6 +438,11 @@ ${labSummaryLines}
 
 Generate the complete safety narrative following ICH E3 Section 12 conventions. Return valid JSON only.`;
 
+    // Grounding set: every 4+ digit number / identifier present anywhere in
+    // the INPUT safety data. The AI's output may not introduce numeric or
+    // identifier tokens outside this set — see "Grounding guard" above.
+    const groundingSet = buildGroundingSet(request);
+
     const aiResult = await ai.chat(
       [
         { role: 'system', content: systemPrompt },
@@ -327,25 +452,60 @@ Generate the complete safety narrative following ICH E3 Section 12 conventions. 
     );
 
     const raw = aiResult.content ?? '{}';
-    const parsed = JSON.parse(raw) as {
+    let parsed: {
       sections: Array<{ sectionCode: string; title: string; content: string }>;
       keyFindings: string[];
       regulatoryConcerns: string[];
-    };
+    } | null = null;
+    try {
+      parsed = JSON.parse(raw);
+    } catch {
+      parsed = null;
+    }
 
-    const sections = (parsed.sections ?? []).map((s) => ({
+    const sections = (parsed?.sections ?? []).map((s) => ({
       sectionCode: s.sectionCode,
       title: s.title,
       content: s.content,
     }));
+    const keyFindings = parsed?.keyFindings ?? [];
+    const regulatoryConcerns = parsed?.regulatoryConcerns ?? [];
+
+    // Hallucination guard: scan every piece of AI-authored prose (section
+    // content, key findings, regulatory concerns) for numeric/identifier
+    // tokens absent from the source safety data.
+    const candidateText = [
+      ...sections.map((s) => s.content),
+      ...keyFindings,
+      ...regulatoryConcerns,
+    ].join('\n');
+    const ungrounded = parsed === null ? [] : findUngroundedTokens(candidateText, groundingSet);
+    const shouldFallBack = parsed === null || sections.length === 0 || ungrounded.length > 0;
+
+    if (shouldFallBack) {
+      const deterministic = this.buildDeterministicAggregateNarrative(
+        request,
+        armSummary,
+        teaeSummaryLines,
+        saeSummaryLines,
+        deathSummaryLines,
+        discontSummaryLines,
+        labSummaryLines,
+      );
+      return {
+        ...deterministic,
+        citedTables,
+        aiNarrativeWithheld: true,
+      };
+    }
 
     const fullNarrative = sections.map((s) => `${s.sectionCode} ${s.title}\n\n${s.content}`).join('\n\n');
 
     return {
       fullNarrative,
       sections,
-      keyFindings: parsed.keyFindings ?? [],
-      regulatoryConcerns: parsed.regulatoryConcerns ?? [],
+      keyFindings,
+      regulatoryConcerns,
       citedTables,
       wordCount: fullNarrative.split(/\s+/).length,
     };
@@ -392,11 +552,14 @@ Style requirements:
 
     const actionReadable = this.formatActionTaken(saeData.actionTaken);
     const outcomeReadable = this.formatOutcome(saeData.outcome);
+    const ageStr = saeData.patientAge != null ? `${saeData.patientAge}-year-old` : 'age not reported';
+    const onsetDayStr =
+      saeData.onsetStudyDay != null ? `Study Day ${saeData.onsetStudyDay}` : 'study day not reported';
 
     const userPrompt = `Generate an SAE narrative for the following case.
 
 CASE ID: ${saeData.caseId}
-PATIENT: ${saeData.patientAge}-year-old ${saeData.patientSex}
+PATIENT: ${ageStr} ${saeData.patientSex}
 TREATMENT ARM: ${saeData.treatmentArm}
 STUDY DRUG: ${saeData.drugName}, ${saeData.dose}
 RELEVANT MEDICAL HISTORY: ${medHistoryStr}
@@ -404,7 +567,7 @@ CONCOMITANT MEDICATIONS: ${conmedsStr}
 
 EVENT: ${saeData.eventTerm}
 EVENT DESCRIPTION: ${saeData.eventDescription}
-ONSET DATE: ${saeData.onsetDate} (Study Day ${saeData.onsetStudyDay})
+ONSET DATE: ${saeData.onsetDate} (${onsetDayStr})
 SERIOUSNESS CRITERIA: ${seriousnessStr}
 SEVERITY: ${saeData.severity}
 ACTION TAKEN: ${actionReadable}
@@ -418,6 +581,9 @@ ${labValuesStr}
 
 Write the complete SAE narrative in regulatory format.`;
 
+    // Grounding set from the INPUT case data only.
+    const groundingSet = buildGroundingSet(saeData);
+
     const aiResult = await ai.chat(
       [
         { role: 'system', content: systemPrompt },
@@ -426,7 +592,61 @@ Write the complete SAE narrative in regulatory format.`;
       { taskType: 'regulatory_review', temperature: 0.15, maxTokens: 2000, callerModule: 'safety-narrative-service' }
     );
 
-    return (aiResult.content ?? '').trim();
+    const narrative = (aiResult.content ?? '').trim();
+
+    if (!narrative) {
+      return this.buildDeterministicSAECaseSummary(saeData);
+    }
+
+    const ungrounded = findUngroundedTokens(narrative, groundingSet);
+    if (ungrounded.length > 0) {
+      return this.buildDeterministicSAECaseSummary(saeData);
+    }
+
+    return narrative;
+  }
+
+  /**
+   * Deterministic, fully source-grounded replacement for the AI SAE
+   * narrative when the hallucination guard trips (or the AI response was
+   * empty). Composed directly from the input case fields — it cannot
+   * itself introduce an ungrounded figure.
+   */
+  private buildDeterministicSAECaseSummary(saeData: SAECaseData): string {
+    const medHistoryStr = saeData.relevantMedicalHistory.length > 0
+      ? saeData.relevantMedicalHistory.join(', ')
+      : 'No clinically significant medical history reported';
+
+    const conmedsStr = saeData.concomitantMedications && saeData.concomitantMedications.length > 0
+      ? saeData.concomitantMedications.join(', ')
+      : 'None reported';
+
+    const labValuesStr = saeData.relevantLabValues && saeData.relevantLabValues.length > 0
+      ? saeData.relevantLabValues
+          .map((lv) => `${lv.parameter}: ${lv.value} (${lv.date})`)
+          .join('; ')
+      : 'No relevant laboratory values reported';
+
+    const actionReadable = this.formatActionTaken(saeData.actionTaken);
+    const outcomeReadable = this.formatOutcome(saeData.outcome);
+    const ageStr = saeData.patientAge != null ? `${saeData.patientAge}-year-old` : 'age not reported';
+    const onsetDayStr =
+      saeData.onsetStudyDay != null ? `Study Day ${saeData.onsetStudyDay}` : 'study day not reported';
+
+    const lines = [
+      AI_NARRATIVE_WITHHELD_MARKER,
+      '',
+      `Case ${saeData.caseId}: ${ageStr} ${saeData.patientSex}, treatment arm ${saeData.treatmentArm}, receiving ${saeData.drugName} ${saeData.dose}.`,
+      `Relevant medical history: ${medHistoryStr}. Concomitant medications: ${conmedsStr}.`,
+      `Event: ${saeData.eventTerm} — ${saeData.eventDescription || 'no description provided'}. Onset: ${saeData.onsetDate} (${onsetDayStr}).`,
+      `Seriousness criteria: ${saeData.seriousnessCriteria.join(', ') || 'not specified'}. Severity: ${saeData.severity}. Action taken: ${actionReadable}. Causality assessment: ${saeData.causalityAssessment}.`,
+      saeData.dechallenge ? `Dechallenge: ${saeData.dechallenge}.` : '',
+      saeData.rechallenge ? `Rechallenge: ${saeData.rechallenge}.` : '',
+      `Relevant laboratory values: ${labValuesStr}.`,
+      `Outcome: ${outcomeReadable}.`,
+    ].filter((line) => line !== '');
+
+    return lines.join('\n');
   }
 
   // -------------------------------------------------------------------------
@@ -482,6 +702,9 @@ CONTEXT:
 
 Return valid JSON only.`;
 
+    // Grounding set from the INPUT benefit-risk request only.
+    const groundingSet = buildGroundingSet(request);
+
     const aiResult = await ai.chat(
       [
         { role: 'system', content: systemPrompt },
@@ -491,7 +714,29 @@ Return valid JSON only.`;
     );
 
     const raw = aiResult.content ?? '{}';
-    const parsed = JSON.parse(raw) as BenefitRiskNarrative;
+    let parsed: BenefitRiskNarrative | null = null;
+    try {
+      parsed = JSON.parse(raw);
+    } catch {
+      parsed = null;
+    }
+
+    if (parsed === null || !parsed.narrative) {
+      return { ...this.buildDeterministicBenefitRiskNarrative(request), aiNarrativeWithheld: true };
+    }
+
+    const candidateText = [
+      parsed.narrative ?? '',
+      ...(parsed.benefitDimensions ?? []).map((d) => `${d.dimension} ${d.assessment}`),
+      ...(parsed.riskDimensions ?? []).map((d) => `${d.dimension} ${d.assessment}`),
+      parsed.overallConclusion ?? '',
+      ...(parsed.uncertainties ?? []),
+    ].join('\n');
+    const ungrounded = findUngroundedTokens(candidateText, groundingSet);
+
+    if (ungrounded.length > 0) {
+      return { ...this.buildDeterministicBenefitRiskNarrative(request), aiNarrativeWithheld: true };
+    }
 
     return {
       narrative: parsed.narrative ?? '',
@@ -499,6 +744,37 @@ Return valid JSON only.`;
       riskDimensions: parsed.riskDimensions ?? [],
       overallConclusion: parsed.overallConclusion ?? '',
       uncertainties: parsed.uncertainties ?? [],
+    };
+  }
+
+  /**
+   * Deterministic, fully source-grounded replacement for the AI benefit-risk
+   * narrative when the hallucination guard trips (or the AI response was
+   * empty/unparseable). Built entirely from the request fields — it cannot
+   * itself introduce an ungrounded figure.
+   */
+  private buildDeterministicBenefitRiskNarrative(request: BenefitRiskRequest): BenefitRiskNarrative {
+    const narrative = [
+      AI_NARRATIVE_WITHHELD_MARKER,
+      '',
+      `Treatment: ${request.treatmentName} — Indication: ${request.indication}.`,
+      `Primary endpoint: ${request.efficacySummary.primaryEndpointResult}. Clinical benefit: ${request.efficacySummary.clinicalBenefit}. Effect size: ${request.efficacySummary.effectSize} (${request.efficacySummary.statisticalSignificance}).`,
+      `Overall safety profile: ${request.safetySummary.overallSafetyProfile}. Most common AEs: ${request.safetySummary.mostCommonAEs.join(', ') || 'none reported'}. Serious risks: ${request.safetySummary.seriousRisks.join(', ') || 'none reported'}. Manageable risks: ${request.safetySummary.manageableRisks.join(', ') || 'none reported'}. Unmet need: ${request.safetySummary.unmetNeed}.`,
+      `Context: available therapies — ${request.context.availableTherapies.join(', ') || 'none specified'}; disease severity — ${request.context.diseaseSeverity}; patient population — ${request.context.patientPopulation}.`,
+    ].join('\n');
+
+    return {
+      narrative,
+      benefitDimensions: [
+        { dimension: 'Clinical benefit', assessment: request.efficacySummary.clinicalBenefit },
+        { dimension: 'Effect size', assessment: request.efficacySummary.effectSize },
+      ],
+      riskDimensions: [
+        { dimension: 'Serious risks', assessment: request.safetySummary.seriousRisks.join(', ') || 'None reported' },
+        { dimension: 'Manageable risks', assessment: request.safetySummary.manageableRisks.join(', ') || 'None reported' },
+      ],
+      overallConclusion: AI_NARRATIVE_WITHHELD_MARKER,
+      uncertainties: [AI_NARRATIVE_WITHHELD_MARKER],
     };
   }
 
@@ -545,6 +821,9 @@ ${signalDescriptions}
 
 Write the complete signal assessment narrative. Include an introductory sentence and a concluding summary paragraph that synthesises the overall signal landscape.`;
 
+    // Grounding set from the INPUT signals only.
+    const groundingSet = buildGroundingSet(signals);
+
     const aiResult = await ai.chat(
       [
         { role: 'system', content: systemPrompt },
@@ -553,7 +832,35 @@ Write the complete signal assessment narrative. Include an introductory sentence
       { taskType: 'regulatory_review', temperature: 0.2, maxTokens: 4000, callerModule: 'safety-narrative-service' }
     );
 
-    return (aiResult.content ?? '').trim();
+    const narrative = (aiResult.content ?? '').trim();
+
+    if (!narrative) {
+      return this.buildDeterministicSignalSummary(signals);
+    }
+
+    const ungrounded = findUngroundedTokens(narrative, groundingSet);
+    if (ungrounded.length > 0) {
+      return this.buildDeterministicSignalSummary(signals);
+    }
+
+    return narrative;
+  }
+
+  /**
+   * Deterministic, fully source-grounded replacement for the AI signal
+   * summary when the hallucination guard trips (or the AI response was
+   * empty). Built entirely from the input signal records.
+   */
+  private buildDeterministicSignalSummary(signals: SignalData[]): string {
+    const lines = [AI_NARRATIVE_WITHHELD_MARKER, ''];
+    for (const s of signals) {
+      lines.push(
+        `${s.signalName} (${s.preferredTerm}): source=${s.source}; strength of evidence=${s.strengthOfEvidence}; ` +
+          `clinical significance=${s.clinicalSignificance}; current label status=${s.currentLabelStatus}; ` +
+          `recommended action=${s.recommendedAction}.`,
+      );
+    }
+    return lines.join('\n');
   }
 
   // -------------------------------------------------------------------------
@@ -600,6 +907,9 @@ ${studyDescriptions}
 
 Write the complete integrated safety narrative.`;
 
+    // Grounding set from the INPUT study data only.
+    const groundingSet = buildGroundingSet(studies);
+
     const aiResult = await ai.chat(
       [
         { role: 'system', content: systemPrompt },
@@ -608,12 +918,111 @@ Write the complete integrated safety narrative.`;
       { taskType: 'regulatory_review', temperature: 0.2, maxTokens: 4000, callerModule: 'safety-narrative-service' }
     );
 
-    return (aiResult.content ?? '').trim();
+    const narrative = (aiResult.content ?? '').trim();
+
+    if (!narrative) {
+      return this.buildDeterministicCrossStudySummary(studies);
+    }
+
+    const ungrounded = findUngroundedTokens(narrative, groundingSet);
+    if (ungrounded.length > 0) {
+      return this.buildDeterministicCrossStudySummary(studies);
+    }
+
+    return narrative;
+  }
+
+  /**
+   * Deterministic, fully source-grounded replacement for the AI cross-study
+   * safety summary when the hallucination guard trips (or the AI response
+   * was empty). Built entirely from the input study records.
+   */
+  private buildDeterministicCrossStudySummary(studies: CrossStudySafetyInput[]): string {
+    const lines = [AI_NARRATIVE_WITHHELD_MARKER, ''];
+    for (const s of studies) {
+      const topAEsStr = s.topAEs.map((ae) => `${ae.term} (${ae.incidence}%)`).join(', ') || 'none reported';
+      lines.push(
+        `Study ${s.studyId} (Phase ${s.studyPhase}), population: ${s.population}, N=${s.nSubjects}, dose: ${s.dose}. ` +
+          `Top AEs: ${topAEsStr}. SAE summary: ${s.saeSummary}.`,
+      );
+    }
+    return lines.join('\n');
   }
 
   // -------------------------------------------------------------------------
   // Private helpers — structured data formatting
   // -------------------------------------------------------------------------
+
+  /**
+   * Deterministic, fully source-grounded replacement for the AI aggregate
+   * narrative when the hallucination guard trips (or the AI response was
+   * empty/unparseable). Built entirely from the already-computed
+   * deterministic summary strings — it cannot itself introduce an
+   * ungrounded figure. Every section is prefixed with the withheld marker
+   * so the honest fallback is never mistaken for AI-authored prose.
+   */
+  private buildDeterministicAggregateNarrative(
+    request: AggregateSafetyRequest,
+    armSummary: string,
+    teaeSummaryLines: string,
+    saeSummaryLines: string,
+    deathSummaryLines: string,
+    discontSummaryLines: string,
+    labSummaryLines: string,
+  ): Pick<SafetyNarrative, 'fullNarrative' | 'sections' | 'keyFindings' | 'regulatoryConcerns' | 'wordCount'> {
+    const sections: SafetyNarrative['sections'] = [
+      {
+        sectionCode: SECTION_CODES.overview.code,
+        title: SECTION_CODES.overview.title,
+        content: `${AI_NARRATIVE_WITHHELD_MARKER}\n\nStudy ${request.studyTitle} (${request.studyId}), indication: ${request.indication}. Treatment arms: ${armSummary || 'not provided'}.`,
+      },
+      {
+        sectionCode: SECTION_CODES.exposure.code,
+        title: SECTION_CODES.exposure.title,
+        content: `${AI_NARRATIVE_WITHHELD_MARKER}\n\n${armSummary || 'No treatment arm data provided.'}`,
+      },
+      {
+        sectionCode: SECTION_CODES.teae.code,
+        title: SECTION_CODES.teae.title,
+        content: `${AI_NARRATIVE_WITHHELD_MARKER}\n\n${teaeSummaryLines}`,
+      },
+      {
+        sectionCode: SECTION_CODES.sae.code,
+        title: SECTION_CODES.sae.title,
+        content: `${AI_NARRATIVE_WITHHELD_MARKER}\n\n${saeSummaryLines}`,
+      },
+      {
+        sectionCode: SECTION_CODES.deaths.code,
+        title: SECTION_CODES.deaths.title,
+        content: `${AI_NARRATIVE_WITHHELD_MARKER}\n\n${deathSummaryLines}`,
+      },
+      {
+        sectionCode: SECTION_CODES.discontinuations.code,
+        title: SECTION_CODES.discontinuations.title,
+        content: `${AI_NARRATIVE_WITHHELD_MARKER}\n\n${discontSummaryLines}`,
+      },
+      {
+        sectionCode: SECTION_CODES.labs.code,
+        title: SECTION_CODES.labs.title,
+        content: `${AI_NARRATIVE_WITHHELD_MARKER}\n\n${labSummaryLines}`,
+      },
+      {
+        sectionCode: SECTION_CODES.conclusion.code,
+        title: SECTION_CODES.conclusion.title,
+        content: `${AI_NARRATIVE_WITHHELD_MARKER}\n\nA safety conclusion narrative requires manual authoring by a regulatory medical writer using the deterministic tables above; none is offered here to avoid presenting unverified interpretation as fact.`,
+      },
+    ];
+
+    const fullNarrative = sections.map((s) => `${s.sectionCode} ${s.title}\n\n${s.content}`).join('\n\n');
+
+    return {
+      fullNarrative,
+      sections,
+      keyFindings: [AI_NARRATIVE_WITHHELD_MARKER],
+      regulatoryConcerns: [AI_NARRATIVE_WITHHELD_MARKER],
+      wordCount: fullNarrative.split(/\s+/).length,
+    };
+  }
 
   private buildTEAESummary(request: AggregateSafetyRequest): string {
     if (request.teaeData.length === 0) return 'No TEAE data provided.';

@@ -9,7 +9,25 @@ import {
   NONCLINICAL_STUDY_REPORT_STRUCTURE,
   disciplineFor,
   normalizeStudy,
+  detectSectionGaps,
+  sectionStatus,
 } from '../nonclinical-study-report-builder';
+
+const section = (num: string) => NONCLINICAL_STUDY_REPORT_STRUCTURE.find((s) => s.number === num)!;
+
+// A fully-extracted repeat-dose tox study MINUS the dose-group design, hitting
+// the PreclinicalStudy branch of normalizeStudy (extractionConfidence present).
+const toxStudy = {
+  extractionConfidence: 0.9,
+  studyType: 'repeat_dose_tox',
+  studyTitle: '28-day rat tox',
+  species: 'rat',
+  routeOfAdministration: 'oral gavage',
+  keyFindings: 'No adverse findings up to the high dose.',
+  noael: '100 mg/kg/day',
+  targetOrganToxicity: [],
+  safetyMargins: [],
+} as any;
 
 describe('NONCLINICAL_STUDY_REPORT_STRUCTURE', () => {
   it('defines a non-empty, well-formed section registry', () => {
@@ -69,5 +87,37 @@ describe('normalizeStudy', () => {
     expect(out.studyType).toBe('repeat_dose_tox');
     expect(disciplineFor(out.studyType)).toBe('toxicology');
     expect(Array.isArray(out.targetOrganToxicity)).toBe(true);
+    // Dose groups default to empty (not captured) rather than being absent.
+    expect(Array.isArray(out.doseGroups)).toBe(true);
+    expect(out.doseGroups).toHaveLength(0);
+  });
+});
+
+describe('gap engine does not report a section complete over unfilled critical data', () => {
+  it('§4 Materials & Methods is partial (not rendered) when dose-group design is absent', () => {
+    const study = normalizeStudy(toxStudy); // species + route present, no dose groups
+    const s4 = section('4');
+    const gaps = detectSectionGaps(s4, study);
+    expect(gaps).toContain('dose-group design');
+    // Before the fix §4 required only species+route → 0 gaps → 'rendered'.
+    expect(sectionStatus(s4, gaps)).toBe('partial');
+  });
+
+  it('§4 becomes rendered once dose groups are present', () => {
+    const study = normalizeStudy({
+      ...toxStudy,
+      doseGroups: [{ group: 'High', doseLevel: '100 mg/kg/day' }],
+    });
+    const s4 = section('4');
+    expect(sectionStatus(s4, detectSectionGaps(s4, study))).toBe('rendered');
+  });
+
+  it('§6 Discussion & Conclusion is partial (not rendered) when NOAEL is absent, even with key findings', () => {
+    const study = normalizeStudy({ ...toxStudy, noael: null });
+    const s6 = section('6');
+    const gaps = detectSectionGaps(s6, study);
+    expect(gaps).toContain('NOAEL');
+    // Before the fix §6 required only keyFindings → 0 gaps → 'rendered'.
+    expect(sectionStatus(s6, gaps)).toBe('partial');
   });
 });

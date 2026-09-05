@@ -10,6 +10,7 @@
 import React from 'react';
 import { registerCeremonyOpen } from './ceremony';
 import { I } from './icons';
+import { useDialog } from './useDialog';
 
 export interface C2CFormFieldOption {
   value: string;
@@ -80,10 +81,16 @@ export function C2CForm({ config, onCancel, onSubmit }: C2CFormProps) {
     return o;
   });
   const [err, setErr] = React.useState('');
+  /* The fields a failed submit found empty: each is marked aria-invalid and
+     described by the error message, so the error is tied to the control
+     (WCAG 3.3.1) rather than being a summary the user must go and find. */
+  const [invalidKeys, setInvalidKeys] = React.useState<ReadonlySet<string>>(() => new Set());
+  const errId = `${uid}-error`;
 
   const set = (k: string, val: string) => {
     setV((s) => ({ ...s, [k]: val }));
     if (err) setErr('');
+    if (invalidKeys.size) setInvalidKeys(new Set());
   };
 
   const missing = () => fields.filter((f) => f.required && !String(v[f.key] ?? '').trim());
@@ -97,18 +104,18 @@ export function C2CForm({ config, onCancel, onSubmit }: C2CFormProps) {
           ': ' +
           m.map((f) => f.label).join(', '),
       );
+      setInvalidKeys(new Set(m.map((f) => f.key)));
       return;
     }
     onSubmit(v);
   };
 
-  React.useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onCancel();
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [onCancel]);
+  /* Focus hand-off + Escape via the repo's shared dialog hook: focus moves
+     into the panel on open and back to the opener on close (WCAG 2.4.3). The
+     drawer used to handle Escape itself and never moved focus at all, so a
+     keyboard user opening "Record identifiers" was left focused on the page
+     behind the overlay. */
+  const panelRef = useDialog(onCancel);
 
   // The ceremony channel: while this form is mounted, AnA's surface actions
   // can refuse view changes that would disturb it (see v2/ceremony.ts).
@@ -121,7 +128,9 @@ export function C2CForm({ config, onCancel, onSubmit }: C2CFormProps) {
         f.type === 'textarea' ? 'de-textarea' : f.type === 'select' ? 'de-select' : 'de-input',
       value: v[f.key],
       'aria-required': f.required || undefined,
-      'aria-describedby': f.desc ? descId(f.key) : undefined,
+      'aria-invalid': invalidKeys.has(f.key) || undefined,
+      'aria-describedby':
+        [f.desc ? descId(f.key) : null, invalidKeys.has(f.key) ? errId : null].filter(Boolean).join(' ') || undefined,
       onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
         set(f.key, e.target.value),
     };
@@ -185,7 +194,7 @@ export function C2CForm({ config, onCancel, onSubmit }: C2CFormProps) {
 
   return (
     <div className="de-bd" onMouseDown={(e) => { if (e.target === e.currentTarget) onCancel(); }}>
-      <div className="de" role="dialog" aria-label={title}>
+      <div className="de" role="dialog" aria-modal="true" aria-label={title} tabIndex={-1} ref={panelRef}>
         <div className="de-h">
           <div>
             {eyebrow && <div className="de-h-eye">{eyebrow}</div>}
@@ -226,7 +235,7 @@ export function C2CForm({ config, onCancel, onSubmit }: C2CFormProps) {
               </span>
             </div>
           )}
-          {err && <div className="de-err">{err}</div>}
+          {err && <div className="de-err" id={errId} role="alert">{err}</div>}
         </div>
         <div className="de-f">
           <button className="de-btn ghost" onClick={onCancel}>

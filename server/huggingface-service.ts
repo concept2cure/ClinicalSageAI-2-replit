@@ -1,7 +1,6 @@
 import { ProtocolData } from './protocol-analyzer-service';
 import axios from 'axios';
 import {
-  getHuggingfaceModels,
   getModelForTask,
   generateSystemPrompt,
 } from './config/huggingface-models';

@@ -538,13 +538,39 @@ ALTER TABLE cortex.drift_detection ENABLE ROW LEVEL SECURITY;
 ALTER TABLE cortex.federated_learning_state ENABLE ROW LEVEL SECURITY;
 
 -- Learning experiences: org-isolated write, sanitized global read for distillation
+-- ── Tenant policies here FAIL CLOSED (revised 2026-08-28) ──────────────────
+-- These policies were written as `org_id = COALESCE(identity.current_org_id(),
+-- org_id)`. identity.current_org_id() returns NULL when app.current_org_id is
+-- unset, empty or not a uuid, and COALESCE then substitutes the row's OWN
+-- org_id — so the predicate becomes `org_id = org_id`, TRUE for every row in
+-- the table. A scope that could not be resolved granted EVERYTHING.
+--
+-- Measured before the change, as the non-superuser app_service role with
+-- app.rls_enforce=on, on two rows under different org_ids: an unset GUC
+-- returned BOTH tenants' rows, and so did a GUC of '42' — which is exactly
+-- what an INTEGER org id looks like arriving at a uuid-keyed schema. Both
+-- inputs are reachable; establishRequestTenantScope writes the GUC as
+-- `orgUuid ?? ''`.
+--
+-- The fallback was there to keep unscoped raw-pool readers working. That is
+-- now carried by the app.rls_enforce shadow clause instead — the same switch
+-- the 793 public-schema policies use — so enforcement OFF does not filter and
+-- enforcement ON filters strictly. Under enforcement an unscoped connection
+-- never reaches SQL anyway: poolInstrumentation fails closed on one.
+--
+-- `OR org_id IS NULL` is deliberately kept where it appears: those are
+-- unattributed rows treated as shared reference data, which is a separate
+-- product decision.
+
 DROP POLICY IF EXISTS learning_exp_write ON cortex.learning_experiences;
 CREATE POLICY learning_exp_write ON cortex.learning_experiences
-    FOR INSERT WITH CHECK (org_id = COALESCE(identity.current_org_id(), org_id));
+    FOR INSERT WITH CHECK ((NULLIF(current_setting('app.rls_enforce', TRUE), '') IS DISTINCT FROM 'on')
+        OR org_id = identity.current_org_id());
 
 DROP POLICY IF EXISTS learning_exp_read ON cortex.learning_experiences;
 CREATE POLICY learning_exp_read ON cortex.learning_experiences
-    FOR SELECT USING (org_id = COALESCE(identity.current_org_id(), org_id));
+    FOR SELECT USING ((NULLIF(current_setting('app.rls_enforce', TRUE), '') IS DISTINCT FROM 'on')
+        OR org_id = identity.current_org_id());
 
 -- Distilled insights: global read (these are privacy-safe)
 DROP POLICY IF EXISTS insights_read ON cortex.distilled_insights;

@@ -63,6 +63,16 @@ import './app.css';
 import './pathway-tabs.css';
 import './files-tree.css';
 import './drafter.css';
+/* LAST, deliberately. `surface-text-ramp.css` re-bases `--text-400` /
+   `--text-300` on every element that establishes a tinted surface, so it has to
+   load after the sheets that declare those surfaces — a custom property set
+   earlier in the cascade would be overwritten by the rule it is correcting.
+   This is the mdx/ slice: one generated sheet per shell tree, because Vite keeps
+   every shell CSS chunk in <head> for the session and a class defined in two
+   trees is a page-wide collision (ci:check-shell-css-collisions).
+   GENERATED: scripts/design/generate-surface-text-ramp.mjs, drift-checked by
+   ci:surface-text-ramp. See GA ledger L102. */
+import './surface-text-ramp.css';
 import { publishShellProject } from '../v2/shellProject';
 import { usePublishSurfaceContext } from '../v2/surfaceContext';
 
@@ -447,9 +457,10 @@ export function MdxSurfaceHost({ nav, onAsk, onNav }: MdxSurfaceHostProps) {
    * The scope root. Not optional, and not decoration.
    *
    * Every rule in app.css, pathway-tabs.css, files-tree.css and drafter.css is
-   * scoped under `.mdx-shell` — 845 of app.css's 846 rules, and 100% of the
-   * other three. The class is what makes any of the kit's styling apply, and it
-   * also carries the custom-property block those rules read. Without an element
+   * scoped under `.mdx-shell` — 1,067/1,067, 247/247, 73/73 and 188/188 as of
+   * the surfaces.css port, measured with a CSS parser rather than counted by
+   * hand. The class is what makes any of the kit's styling apply, and it also
+   * carries the custom-property block those rules read. Without an element
    * carrying it, the surfaces render as unstyled markup with no tokens.
    *
    * `data-surface` drops the shell LAYOUT the same class used to carry — a

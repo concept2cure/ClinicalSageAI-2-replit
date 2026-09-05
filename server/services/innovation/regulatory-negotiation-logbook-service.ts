@@ -19,6 +19,7 @@ import { getOpenAIClient } from '../openai-client';
 import crypto from 'crypto';
 
 import { createScopedLogger } from '../../utils/logger.js';
+import { releaseWithoutBypass } from './rlsBypassSession';
 
 const logger = createScopedLogger('regulatory-negotiation-logbook-service');
 
@@ -209,7 +210,7 @@ export class RegulatoryNegotiationLogbookService {
       // Always release. The previous code only released on the happy
       // path; an INSERT throw (constraint violation, RLS rejection,
       // network blip) leaked the connection forever.
-      client.release();
+      await releaseWithoutBypass(client);
     }
   }
 

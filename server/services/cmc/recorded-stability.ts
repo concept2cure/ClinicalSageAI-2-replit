@@ -71,26 +71,73 @@ export function parseNumeric(value: unknown): number | null {
  * Returns null when nothing numeric is recorded — the caller then reports the
  * parameter as not estimable and says why.
  */
+export interface ParsedAcceptanceCriterion {
+  /** The bound the shelf life is estimated against. */
+  limit: number;
+  direction: 'increasing' | 'decreasing';
+  /** The other bound of a two-sided range, or null for a one-sided criterion. */
+  upperLimit: number | null;
+  twoSided: boolean;
+}
+
+/**
+ * A two-sided range, matched as a RANGE rather than as two numbers.
+ *
+ * The separator is an ASCII hyphen, an en or em dash, or the word "to". The
+ * lower bound may itself be negative; the separator may not be, which is the
+ * whole point — see the note on the parser.
+ */
+const RANGE_RE =
+  /(-?\d+(?:\.\d+)?)\s*(?:[–—]|-|\bto\b)\s*(-?\d+(?:\.\d+)?)/i;
+
 export function parseAcceptanceCriterion(
   candidates: unknown[]
-): { limit: number; direction: 'increasing' | 'decreasing' } | null {
+): ParsedAcceptanceCriterion | null {
   for (const candidate of candidates) {
     const text = String(candidate ?? '').trim();
     if (!text) continue;
-    const numbers = (text.match(/-?\d+(?:\.\d+)?/g) ?? []).map(Number).filter(Number.isFinite);
-    if (numbers.length === 0) continue;
 
+    /* One-sided forms first: an explicit comparator settles the direction, and
+       a criterion like "NLT -5.0 C" is legitimately about a negative quantity,
+       so the minus sign must survive. */
     if (/(?:<=|≤|<|nmt|not more than|max)/i.test(text)) {
-      return { limit: numbers[0], direction: 'increasing' };
+      const n = (text.match(/-?\d+(?:\.\d+)?/g) ?? []).map(Number).filter(Number.isFinite);
+      if (n.length > 0) return { limit: n[0], direction: 'increasing', upperLimit: null, twoSided: false };
+      continue;
     }
     if (/(?:>=|≥|>|nlt|not less than|min)/i.test(text)) {
-      return { limit: numbers[0], direction: 'decreasing' };
+      const n = (text.match(/-?\d+(?:\.\d+)?/g) ?? []).map(Number).filter(Number.isFinite);
+      if (n.length > 0) return { limit: n[0], direction: 'decreasing', upperLimit: null, twoSided: false };
+      continue;
     }
-    if (numbers.length >= 2) {
-      // A range: the attribute is bounded on both sides, and the failure mode a
-      // shelf life is set by is the decreasing one.
-      return { limit: Math.min(...numbers), direction: 'decreasing' };
+
+    /* Then a two-sided range, matched as ONE pattern.
+       The old code pulled every number with /-?\d+(?:\.\d+)?/g and took the
+       minimum. On "98.0-102.0%" — how an assay range is normally typed — the
+       separating hyphen was consumed as a minus sign, so the range read as
+       [98.0, -102.0] and the spec limit became -102: a potency that must stay
+       above 98% compared against minus one hundred and two, which nothing can
+       fail, and a shelf life that ran to the search horizon. It parsed
+       correctly only when the hyphen happened to be spaced or was a dash. */
+    const range = text.match(RANGE_RE);
+    if (range) {
+      const a = Number(range[1]);
+      const b = Number(range[2]);
+      if (Number.isFinite(a) && Number.isFinite(b) && a !== b) {
+        const lower = Math.min(a, b);
+        const upper = Math.max(a, b);
+        /* The failure mode a shelf life is set by is the decreasing one: an
+           assay drifts down out of its range. Both bounds are carried so the
+           caller can state the criterion as recorded. */
+        return { limit: lower, direction: 'decreasing', upperLimit: upper, twoSided: true };
+      }
+      /* Two identical bounds are not a range. Estimating against them would
+         report a shelf life against a limit the record does not set. */
+      continue;
     }
+
+    /* A bare number with no comparator and no range states no direction, so it
+       states no limit this engine can use. */
   }
   return null;
 }
@@ -334,11 +381,10 @@ export async function assessRecordedPoolability(
   const assessed = assessments.filter(a => a.assessable) as Array<{
     parameter: string;
     shelfLife: number;
+    statisticalCrossing?: number;
     decision: string;
   }>;
-  const limiting = assessed.length
-    ? assessed.reduce((min, a) => (a.shelfLife < min.shelfLife ? a : min))
-    : null;
+  const limiting = assessed.length ? assessed.reduce(moreConstraining) : null;
 
   return {
     ok: true,
@@ -357,6 +403,168 @@ export async function assessRecordedPoolability(
       supportedShelfLife: limiting ? limiting.shelfLife : null,
       limitingDecision: limiting ? limiting.decision : null,
       assessments,
+    },
+  };
+}
+
+
+/* The attribute a shelf-life claim is limited by. The proposable shelf life is
+   the ICH Q1E-capped number, so two attributes that both exceed the
+   extrapolation limit tie on it; the tie is broken by the statistical
+   crossing, which is where each attribute's data actually run out. Without
+   the tie-break the first attribute in recorded order was reported as
+   limiting, which is an artefact of ordering, not of the data. */
+function moreConstraining<T extends { shelfLife: number; statisticalCrossing?: number }>(min: T, a: T): T {
+  if (a.shelfLife !== min.shelfLife) return a.shelfLife < min.shelfLife ? a : min;
+  return (a.statisticalCrossing ?? Infinity) < (min.statisticalCrossing ?? Infinity) ? a : min;
+}
+
+/* ── Single-study ICH Q1E estimate over a RECORDED study ────────────────────
+   Extracted from POST /api/cmc/stability-studies/:id/shelf-life so the route
+   and AnA's recorded-estimate tool run the SAME code. Two copies of a
+   shelf-life fit is two answers to a question a registered shelf life is set
+   from — the duplication this repo's working agreement forbids. */
+
+export interface RecordedShelfLifeStudy {
+  id: number | string;
+  studyTitle?: string | null;
+  productName?: string | null;
+  batchNumber?: string | null;
+  storageConditions?: unknown;
+  duration?: number | null;
+  stabilityData?: unknown;
+}
+
+export type RecordedShelfLifeOutcome =
+  | { ok: false; error: string }
+  | {
+      ok: true;
+      data: {
+        studyId: number | string;
+        studyTitle?: string | null;
+        productName?: string | null;
+        batchNumber?: string | null;
+        storageConditions?: unknown;
+        basis: string;
+        scopeLimit: string;
+        maxTimeEvaluated: number;
+        limitingParameter: string | null;
+        supportedShelfLife: number | null;
+        estimates: Array<Record<string, unknown>>;
+      };
+    };
+
+/**
+ * Fit the recorded pull points of ONE stability study per ICH Q1E.
+ *
+ * Refuses — rather than caveats — when the study cannot support a fit: no
+ * recorded results, or results spanning more than one storage condition with
+ * no per-result condition to separate them. The output is a month count
+ * someone sets a registered shelf life from, and a footnote on a
+ * plausible-looking number does not survive being copied into a summary.
+ */
+export async function estimateRecordedShelfLife(
+  study: RecordedShelfLifeStudy,
+): Promise<RecordedShelfLifeOutcome> {
+  const { estimateShelfLife } = await import('./shelf-life');
+  const series = readRecordedStabilityResults(study.stabilityData);
+  if (series.length === 0) {
+    return { ok: false, error: 'This study has no recorded pull-point results — there is nothing to fit.' };
+  }
+
+  const placedAt = (Array.isArray(study.storageConditions) ? study.storageConditions : [])
+    .map((c) => String(c ?? '').trim())
+    .filter(Boolean);
+  if (placedAt.length > 1) {
+    return {
+      ok: false,
+      error: `This study is placed at ${placedAt.length} storage conditions (${placedAt.join(', ')}) and its results are not recorded against a condition, so the points for one condition cannot be separated from the others. Register one study per condition to fit a shelf life.`,
+    };
+  }
+
+  const byParameter = groupByParameter(series);
+  const duration = Number(study.duration);
+  const maxTime = Number.isFinite(duration) && duration > 0 ? Math.max(120, duration * 2) : 120;
+
+  const estimates: Array<Record<string, unknown>> = [];
+  for (const [parameter, points] of byParameter) {
+    const usable = points
+      .map((p) => ({ time: parseNumeric(p.timePoint), value: parseNumeric(p.result) }))
+      .filter((p): p is { time: number; value: number } => p.time !== null && p.value !== null);
+    const criterion = parseAcceptanceCriterion(points.map((p) => p.specification));
+
+    if (usable.length < 3) {
+      estimates.push({
+        parameter,
+        estimable: false,
+        reason: `ICH Q1E regression needs at least 3 numeric timepoints; ${usable.length} of ${points.length} recorded ${points.length === 1 ? 'result is' : 'results are'} numeric.`,
+        pointsRecorded: points.length,
+        pointsUsable: usable.length,
+      });
+      continue;
+    }
+    if (!criterion) {
+      estimates.push({
+        parameter,
+        estimable: false,
+        reason:
+          'No numeric specification limit was recorded against these results, so there is no limit for the confidence bound to intersect. Record the acceptance criterion (e.g. "<= 2.0%" or ">= 95.0%") on the pull-point results.',
+        pointsRecorded: points.length,
+        pointsUsable: usable.length,
+      });
+      continue;
+    }
+
+    try {
+      const result = estimateShelfLife({
+        data: usable,
+        specLimit: criterion.limit,
+        direction: criterion.direction,
+        maxTime,
+      });
+      estimates.push({
+        parameter,
+        estimable: true,
+        specLimit: criterion.limit,
+        direction: criterion.direction,
+        pointsUsed: usable.length,
+        ...result,
+      });
+    } catch (e) {
+      estimates.push({
+        parameter,
+        estimable: false,
+        reason: e instanceof Error ? e.message : String(e),
+        pointsRecorded: points.length,
+        pointsUsable: usable.length,
+      });
+    }
+  }
+
+  // The programme-level answer is the most constraining attribute, which is
+  // what a shelf-life claim is actually limited by.
+  const estimable = estimates.filter((e) => e.estimable) as Array<{
+    parameter: string;
+    shelfLife: number;
+    statisticalCrossing?: number;
+  }>;
+  const limiting = estimable.length ? estimable.reduce(moreConstraining) : null;
+
+  return {
+    ok: true,
+    data: {
+      studyId: study.id,
+      studyTitle: study.studyTitle,
+      productName: study.productName,
+      batchNumber: study.batchNumber,
+      storageConditions: study.storageConditions,
+      basis: 'ICH Q1E — ordinary least squares, one-sided 95% mean confidence limit vs the specification limit',
+      scopeLimit:
+        'Single attribute, single factor, one batch. Batch poolability (ICH Q1E ANCOVA) is assessed separately and is not implied by this estimate.',
+      maxTimeEvaluated: maxTime,
+      limitingParameter: limiting ? limiting.parameter : null,
+      supportedShelfLife: limiting ? limiting.shelfLife : null,
+      estimates,
     },
   };
 }

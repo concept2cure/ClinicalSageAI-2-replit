@@ -64,7 +64,13 @@ describe('BP-W0-6 — authoring export, Word branch', () => {
       if (s.includes('FROM authoring_documents')) {
         return {
           rowCount: 1,
-          rows: [{ id: 'D1', title: 'Tox Summary', module: 'M2', status: 'draft', created_at: new Date() }],
+          // 'approved', not 'draft': a Part 11 filing export is refused (409) unless the
+          // document is FROZEN or APPROVED. An editable document has no immutable
+          // snapshot, so exporting it byte-for-byte like an approved one — with the
+          // §11.50 signature manifest appended — would present whatever signatures
+          // exist as certifying a final record that does not exist. Exporting an
+          // approved document is what this route is for.
+          rows: [{ id: 'D1', title: 'Tox Summary', module: 'M2', status: 'approved', created_at: new Date() }],
         };
       }
       if (s.includes('FROM authoring_sections')) {

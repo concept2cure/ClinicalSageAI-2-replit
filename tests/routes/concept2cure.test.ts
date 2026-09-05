@@ -136,7 +136,40 @@ vi.mock('../../server/db', () => {
     })),
   };
 
-  return { db };
+  /*
+   * `pool` is exported too, because the route module uses BOTH. Several handlers
+   * run raw SQL through pool.query — resolveClientWorkspaceId being the one every
+   * create path hits first, now that it reads the caller org's workspace from the
+   * database instead of returning a fabricated constant outside production.
+   * Without this export the module threw `No "pool" export is defined on the
+   * "../../server/db" mock` on entry, which the route caught and reported as a
+   * plain 500. That is the route behaving correctly; the mock was incomplete.
+   *
+   * The workspace lookup answers with a row ONLY for the workspace these tests
+   * claim in tenantContext ({ organizationId: '1', clientWorkspaceId: '1' }), so
+   * the fixture models a workspace that genuinely belongs to the caller's org
+   * rather than waving every query through. resolveClientWorkspaceId fails closed
+   * when that row is absent — it refuses a workspace outside the caller's org —
+   * and that behaviour stays exercisable here.
+   */
+  const pool = {
+    query: vi.fn(async (sql: unknown, params?: unknown[]) => {
+      if (typeof sql === 'string' && /client_workspaces/i.test(sql)) {
+        const wsId = Number((params as unknown[] | undefined)?.[0] ?? 1);
+        const orgId = Number((params as unknown[] | undefined)?.[1] ?? 1);
+        return wsId === 1 && orgId === 1
+          ? { rows: [{ id: 1 }], rowCount: 1 }
+          : { rows: [], rowCount: 0 };
+      }
+      return { rows: [], rowCount: 0 };
+    }),
+    connect: vi.fn(async () => ({
+      query: vi.fn(async () => ({ rows: [], rowCount: 0 })),
+      release: vi.fn(),
+    })),
+  };
+
+  return { db, pool, getPool: () => pool };
 });
 
 vi.mock('../../server/services/ai-gateway/gateway.js', () => ({

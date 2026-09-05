@@ -34,6 +34,10 @@ import {
 import { DEDICATED_SECTION_BLUEPRINT_IDS } from '../sectionBlueprintCatalog.js';
 import { DEDICATED_TASK_BLUEPRINT_IDS } from '../taskBlueprintCatalog.js';
 import { FDAFormsRegistry, governedFormDefinition } from '../../../config/FDAFormsRegistry.js';
+import { readFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+import { join as joinPath } from 'node:path';
+import { getOfficialXfaFieldMap } from '../../ind-forms/official-field-maps.js';
 import type {
   RegulatoryApplicationType,
   Region,
@@ -58,6 +62,13 @@ export interface RequiredFormCoverage {
   registered: boolean;
   /** Registry marks it as a fully-implemented builder (`implementationStatus: 'full'`). */
   implemented: boolean;
+  /**
+   * The official FDA edition is installed AND its manifest is reviewed and
+   * fillable (`assetTrusted` + `fillSupported` + non-empty `fieldMap`). Without
+   * it the builder renders a labeled draft or a reconstruction — never the
+   * form FDA ingests — so a filing is not form-backed however 'full' the code.
+   */
+  officialAssetTrusted: boolean;
 }
 
 export interface DocumentCoverage {
@@ -126,6 +137,80 @@ function taskTier(entry: RegulatoryApplicationType): BlueprintTier {
   return 'generic';
 }
 
+/**
+ * Whether the official FDA edition of a form is installed and reviewed for
+ * filling. Reads the sidecar manifest the fill service gates on
+ * (`templates/forms/acroforms/<formId>.pdf.manifest.json`, or
+ * IND_FORM_TEMPLATES_DIR) — the same file, so this report and the renderer
+ * cannot disagree. Absent or unreviewed ⇒ false. Never throws.
+ *
+ * ── Why the coverage report has to read it ───────────────────────────────────
+ * `implementationStatus: 'full'` describes the BUILDER (field builders, QC,
+ * rendering), not whether an official FDA edition is installed and fillable.
+ * Reporting US NDA/BLA/IND as "forms fully backed" on the builder flag alone
+ * told a product owner the package would carry the official 356h/1571 when it
+ * would not.
+ *
+ * TWO CONTRACTS, because there are two kinds of official form and the renderer
+ * fills both:
+ *   - AcroForm (1572, 356h, 3454, 3455): the field map lives in the manifest, so
+ *     a named reviewer must vouch for it — `assetTrusted` + `fillSupported` +
+ *     a non-empty `fieldMap` + `reviewedBy`.
+ *   - dynamic XFA (1571, 3674): no AcroForm widgets exist to name, so the map is
+ *     the code-reviewed OFFICIAL_XFA_FIELD_MAPS and the evidence is integrity —
+ *     `xfaDynamic` + `fillSupported`, an fda.gov `sourceUrl`, and a `sha256` that
+ *     matches the bytes on disk. These are exactly the checks readXfaTemplate
+ *     makes, so the report and the renderer still cannot disagree.
+ */
+function officialFormAssetTrusted(formId: string): boolean {
+  const dir = process.env.IND_FORM_TEMPLATES_DIR || joinPath(process.cwd(), 'templates', 'forms', 'acroforms');
+  try {
+    const raw = readFileSync(joinPath(dir, `${formId}.pdf.manifest.json`), 'utf8');
+    const m = JSON.parse(raw) as {
+      assetTrusted?: unknown;
+      fillSupported?: unknown;
+      fieldMap?: unknown;
+      reviewedBy?: unknown;
+      xfaDynamic?: unknown;
+      sourceUrl?: unknown;
+      sha256?: unknown;
+    };
+    const fieldMapPopulated =
+      m.fieldMap !== null && typeof m.fieldMap === 'object' && Object.keys(m.fieldMap as object).length > 0;
+    if (m.assetTrusted === true && m.fillSupported === true && fieldMapPopulated && Boolean(m.reviewedBy)) {
+      return true;
+    }
+    return xfaFillable(dir, formId, m);
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * The dynamic-XFA half of the contract above: mirrors readXfaTemplate's checks
+ * so this report cannot claim a form the renderer would refuse, nor deny one it
+ * would fill.
+ */
+function xfaFillable(
+  dir: string,
+  formId: string,
+  m: { xfaDynamic?: unknown; fillSupported?: unknown; sourceUrl?: unknown; sha256?: unknown },
+): boolean {
+  if (m.xfaDynamic !== true || m.fillSupported !== true) return false;
+  const map = getOfficialXfaFieldMap(formId);
+  if (!map || Object.keys(map).length === 0) return false;
+  try {
+    const url = new URL(String(m.sourceUrl ?? ''));
+    const sourceIsFda =
+      url.protocol === 'https:' && (url.hostname === 'fda.gov' || url.hostname.endsWith('.fda.gov'));
+    if (!sourceIsFda) return false;
+    const bytes = readFileSync(joinPath(dir, `${formId}.pdf`));
+    return createHash('sha256').update(bytes).digest('hex') === m.sha256;
+  } catch {
+    return false;
+  }
+}
+
 function requiredFormCoverage(entry: RegulatoryApplicationType): RequiredFormCoverage[] {
   return entry.requiredArtifacts
     .filter((a) => /^form[\s_-]/i.test(a) || /^form_?\d/i.test(a))
@@ -136,7 +221,14 @@ function requiredFormCoverage(entry: RegulatoryApplicationType): RequiredFormCov
       const implemented = registered
         ? governedFormDefinition(form!).implementationStatus === 'full'
         : false;
-      return { artifact, formNumber: registered ? form!.formNumber : undefined, registered, implemented };
+      const officialAssetTrusted = registered ? officialFormAssetTrusted(form!.formId) : false;
+      return {
+        artifact,
+        formNumber: registered ? form!.formNumber : undefined,
+        registered,
+        implemented,
+        officialAssetTrusted,
+      };
     });
 }
 
@@ -154,7 +246,12 @@ export function getDocumentCoverage(idOrEntry: string | RegulatoryApplicationTyp
   const section = sectionTier(entry);
   const task = taskTier(entry);
   const requiredForms = requiredFormCoverage(entry);
-  const formsFullyBacked = requiredForms.every((f) => f.registered && f.implemented);
+  // A filing is form-backed only when every required form is registered,
+  // has a full builder AND the official FDA edition is installed and reviewed
+  // for filling. The third condition is what the package actually carries.
+  const formsFullyBacked = requiredForms.every(
+    (f) => f.registered && f.implemented && f.officialAssetTrusted,
+  );
 
   return {
     id: entry.id,

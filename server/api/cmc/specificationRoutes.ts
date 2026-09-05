@@ -5,6 +5,7 @@ import { writeThroughSpecification } from '../../services/cmc-write-through';
 import { recordGovernedAction, verifyReauth } from '../../routes/c2c/actions';
 import { createScopedLogger } from '../../utils/logger';
 import * as metricsModule from '../../metrics.js';
+import { governedSignatureSchema, resolveActorUserId } from './governance';
 
 const router = express.Router();
 const logger = createScopedLogger('cmc-specs');
@@ -58,37 +59,11 @@ const updateSpecSchema = z.object({
 
 // Governed approval: high-risk e-signature. Approval can ONLY happen here, not
 // via the ungoverned PUT path.
-/**
- * The meanings a signature may carry, per 21 CFR §11.50(a)(3): the signed
- * record must show "the meaning (such as review, approval, responsibility, or
- * authorship) associated with the signature".
- *
- * This is an enum rather than free text because the meaning is part of the
- * signed record, not a comment on it, and because the signer's UI offers
- * exactly these four.
- */
-export const SIGNATURE_MEANINGS = ['approval', 'review', 'responsibility', 'authorship'] as const;
+/* The signature meanings (21 CFR §11.50(a)(3)) and the governed-signature body
+   both live in ./governance — one definition shared with every CMC surface that
+   signs, so two surfaces can never disagree about what a signature is. */
+const approveSpecSchema = governedSignatureSchema;
 
-const approveSpecSchema = z.object({
-  reason: z.string().min(8, 'A reason of at least 8 characters is required.'),
-  /* Defaulted rather than required so an existing caller that omits it keeps
-     working and still records a meaning — approval is what this endpoint does. */
-  meaning: z.enum(SIGNATURE_MEANINGS).optional().default('approval'),
-  reauth: z
-    .object({
-      password: z.string().optional(),
-      totp: z.string().optional(),
-    })
-    .optional(),
-  idempotencyKey: z.string().optional(),
-});
-
-function resolveActorUserId(req: express.Request): number {
-  const r = req as any;
-  const raw = r.userId ?? r.user?.id ?? 0;
-  const n = typeof raw === 'string' ? parseInt(raw, 10) : Number(raw);
-  return Number.isFinite(n) && n > 0 ? n : 0;
-}
 
 // GET /api/cmc/specifications/:projectId - List specs for a project
 router.get('/:projectId', async (req, res) => {

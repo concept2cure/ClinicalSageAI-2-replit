@@ -467,4 +467,36 @@ export const PURGE_CHILD_TABLES: readonly string[] = Object.freeze([
   // have reached it even in principle. A leaf (its only FK is to organizations,
   // which a purge updates rather than deletes), so its position here is free.
   'regulatory_twin_simulations',
+  /* The container closure and reference standard registers. Customer content
+     in full — the extractables/leachables package behind a packaging system and
+     the Certificate of Analysis of a reference standard are the tenant's data,
+     not ours. Both are leaves (their only FKs are to organizations, which a
+     purge updates rather than deletes, and users), so their position here is
+     free; they are listed so a purge ERASES them rather than leaving them as
+     residue for the coverage ratchet to baseline. */
+  'cmc_container_closures',
+  'cmc_reference_standards',
+  /* The impurity and dissolution registers, for the same reason: an impurity
+     profile with its qualification basis and a dissolution profile with its
+     per-unit results are the tenant's data. Leaves, like the two above. */
+  'cmc_impurity_profiles',
+  'cmc_dissolution_profiles',
+  /* The material specifications and the formulation record: supplier names,
+     grades, batch formulae and overages are the tenant's own. Leaves. */
+  'cmc_material_specs',
+  'cmc_formulation_records',
+  /* The characterisation register, same shape and same reason. */
+  'cmc_characterization_studies',
+  /* manufacturing_processes has an FK child (cmc_process_steps, ON DELETE
+     CASCADE) so it is not a leaf, but it is org-keyed and it now holds the
+     tenant's synthetic route, batch sizes and equipment: purged, not left as
+     residue. */
+  'manufacturing_processes',
+  /* The rendered-leaf register: the per-leaf PDF bytes a sequence was built
+     from, addressed by vault version and pinned by sha256/md5. That is the
+     tenant's own submission content and its integrity record — a tenant that
+     asks to be erased must not keep the fingerprints of its filing here. A
+     leaf (its only FKs are to organizations, which a purge updates rather than
+     deletes, and users), so its position at the end is free. */
+  'rendered_leaf_files',
 ]);

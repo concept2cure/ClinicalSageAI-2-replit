@@ -264,4 +264,40 @@ describe('Health Canada (CA) package validator', () => {
     );
     expect(findings.filter((f) => f.region === 'CA')).toHaveLength(0);
   });
+
+  it('rejects a valid HC prefix followed by trailing garbage (end-anchored)', () => {
+    const findings = validateRegionalPackage(
+      { region: 'CA', applicationNumber: 'NDS123456ZZZ', sequenceNumber: '0000', submissionType: 'initial' },
+      [{ sectionCode: 'm1', filePath: 'm1/ca/ca-regional.xml', mimeType: 'application/xml', fileSize: 10 }]
+    );
+    // Before the fix the un-anchored regex matched "NDS123456" at the start and
+    // passed the malformed identifier.
+    expect(findings.some((f) => f.ruleId === 'HC-REP-003')).toBe(true);
+  });
+});
+
+describe('gateway size limit is reported unverified, never silently skipped', () => {
+  const usLeaves = [
+    { sectionCode: 'm1', filePath: 'm1/us/us-regional.xml', mimeType: 'application/xml', fileSize: 10 },
+    { sectionCode: 'm1.2', filePath: 'm1/us/cover.pdf', mimeType: 'application/pdf', fileSize: 100 },
+  ];
+
+  it('emits a warning when totalSizeBytes is not supplied (FDA)', () => {
+    const findings = validateRegionalPackage(
+      { region: 'US', applicationNumber: '123456', sequenceNumber: '0000', submissionType: 'original' },
+      usLeaves,
+    );
+    const sizeFinding = findings.find((f) => f.ruleId === 'FDA-ESG-003');
+    expect(sizeFinding).toBeDefined();
+    expect(sizeFinding!.severity).toBe('warning');
+    expect(sizeFinding!.message).toMatch(/could not be verified/i);
+  });
+
+  it('does not emit the unverified warning when a size is supplied under the limit', () => {
+    const findings = validateRegionalPackage(
+      { region: 'US', applicationNumber: '123456', sequenceNumber: '0000', submissionType: 'original', totalSizeBytes: 1024 },
+      usLeaves,
+    );
+    expect(findings.some((f) => f.ruleId === 'FDA-ESG-003')).toBe(false);
+  });
 });

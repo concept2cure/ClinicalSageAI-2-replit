@@ -360,9 +360,17 @@ export function PdevApp({
         const blocking = rows.filter(
           (c) => c.authorityState === 'blocks_promotion',
         ).length;
+        /* Was "No contradictions detected — a real zero." — the same claim the
+           registry surface itself stopped making, still being handed to AnA as a
+           structured fact. The registry is a read over
+           contradictionEngineService.searchFindings, which returns
+           contradictions the engine has already DETECTED and persisted, so an
+           empty list is equally the shape of a program nothing has ever scanned.
+           Calling that "a real zero" asserted the one thing the payload cannot
+           establish, to the component most likely to repeat it in prose. */
         detail =
           rows.length === 0
-            ? ' No contradictions detected — a real zero.'
+            ? ' The registry is empty; it lists contradictions the engine has detected, so this does not confirm a scan has run.'
             : ` ${rows.length} contradiction${rows.length === 1 ? '' : 's'} on screen; ${blocking} block${blocking === 1 ? 's' : ''} promotion.`;
         facts.contradictions = rows.length;
         facts.blocksPromotion = blocking;

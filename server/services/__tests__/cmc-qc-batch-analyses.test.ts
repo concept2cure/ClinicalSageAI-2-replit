@@ -98,6 +98,12 @@ describe('qc_result reaches the batch-analyses sections', () => {
     expect(ruleFor('3.2.S.7').requiredSourceTypes).not.toContain('qc_result');
   });
 
+  /* A 'finished-product' sample is DRUG PRODUCT evidence, so §3.2.P.5 is the
+     section it completes. This test previously asserted on §3.2.S.4 — and
+     passed, because completeness was unscoped while the renderer files the
+     row only to §3.2.P.5.4: the section went green on a table it never
+     rendered. The required fields are side-scoped now
+     (drugSubstanceBatchAnalyses / drugProductBatchAnalyses). */
   it('composes the results into the section and counts them as an input', () => {
     const sources = [
       {
@@ -108,9 +114,18 @@ describe('qc_result reaches the batch-analyses sections', () => {
       { sourceType: 'qc_result' as const, sourcePayload: mapQcTestingPayload(qcRow()) },
     ];
     const composed = composeModule3FromCanonicalSources(sources as never);
+    const p5 = composed.find(c => c.sectionKey === '3.2.P.5')!;
+    expect(p5.missingInputs).not.toContain('drugProductBatchAnalyses');
+    /* §3.2.P.5.5 is the impurity characterisation subsection, so the section
+       also requires an impurity profile it can compare to an ICH threshold.
+       This fixture records none, and the section says so rather than reporting
+       itself served — the recorded QC result satisfies its own input and
+       nothing more. */
+    expect(p5.missingInputs).toEqual(['drugProductImpurityProfileComplete']);
+    expect(p5.completeness).toBe(75);
+    // …and the section that will NOT render this row stays honestly short.
     const s4 = composed.find(c => c.sectionKey === '3.2.S.4')!;
-    expect(s4.missingInputs).not.toContain('batchAnalyses');
-    expect(s4.completeness).toBe(100);
+    expect(s4.missingInputs).toContain('drugSubstanceBatchAnalyses');
   });
 
   it('reports batchAnalyses as MISSING when only pending QC exists', () => {
@@ -124,8 +139,8 @@ describe('qc_result reaches the batch-analyses sections', () => {
       },
     ];
     const composed = composeModule3FromCanonicalSources(sources as never);
-    const s4 = composed.find(c => c.sectionKey === '3.2.S.4')!;
-    expect(s4.missingInputs).toContain('batchAnalyses');
-    expect(s4.completeness).toBeLessThan(100);
+    const p5 = composed.find(c => c.sectionKey === '3.2.P.5')!;
+    expect(p5.missingInputs).toContain('drugProductBatchAnalyses');
+    expect(p5.completeness).toBeLessThan(100);
   });
 });

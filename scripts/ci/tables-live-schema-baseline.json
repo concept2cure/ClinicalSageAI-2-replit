@@ -1,9 +1,9 @@
 {
   "_comment": "Tables the server QUERIES that do not exist on a database built by a full, successful provisioning run (install-fresh + deploy-migrate). Unlike ci:unbacked-tables and ci:migration-reachability — which compare the repo to itself and can only tell you whether some file CLAIMS to create a table — every entry here was checked against a real PostgreSQL and was not there. Each one is an endpoint that 500s on \"relation does not exist\", or a write inside a try/catch that silently discards its data. This file may only SHRINK: fix an entry (add the creating migration to a durable applier, or delete the dead query) and remove it here. Re-running --baseline to make a failure go away converts a caught defect into an accepted one.",
-  "generatedAt": "2026-08-13T03:51:34.426Z",
-  "liveRelationCount": 1246,
-  "referencedCount": 787,
-  "count": 85,
+  "generatedAt": "2026-09-02T21:49:45.720Z",
+  "liveRelationCount": 1272,
+  "referencedCount": 774,
+  "count": 73,
   "tables": {
     "academic_embeddings": [
       "server/academic-knowledge-tracker.ts"
@@ -38,29 +38,6 @@
     ],
     "audit.audit_logs": [
       "server/services/cognitive-ecosystem/cognitive-audit.service.ts"
-    ],
-    "clinical_ops.deviations": [
-      "server/routes/clinical-operations-routes.ts",
-      "server/services/regulatory-programs.service.ts"
-    ],
-    "clinical_ops.endpoint_results": [
-      "server/services/regulatory-programs.service.ts"
-    ],
-    "clinical_ops.enrollment_records": [
-      "server/routes/clinical-operations-routes.ts"
-    ],
-    "clinical_ops.milestones": [
-      "server/routes/clinical-operations-routes.ts"
-    ],
-    "clinical_ops.monitoring_visits": [
-      "server/routes/clinical-operations-routes.ts"
-    ],
-    "clinical_ops.sites": [
-      "server/routes/clinical-operations-routes.ts"
-    ],
-    "clinical_ops.studies": [
-      "server/routes/clinical-operations-routes.ts",
-      "server/services/regulatory-programs.service.ts"
     ],
     "cmc_ai_tool_executions": [
       "server/api/cmc/playbookRoutes.ts"
@@ -189,25 +166,11 @@
     "lumen.v_verification_summary": [
       "server/api/neuro-symbolic/routes.ts"
     ],
-    "manufacturing.responses": [
-      "server/routes/manufacturing-routes.ts"
-    ],
     "medline": [
       "server/db/setupLiterature.ts"
     ],
     "pg_stat_statements": [
       "server/utils/database-optimizer.ts"
-    ],
-    "project_workflows": [
-      "server/api/cmc/routes.ts"
-    ],
-    "quality_specifications": [
-      "server/api/cmc/module3OperatingSystemRoutes.ts",
-      "server/api/cmc/specificationRoutes.ts",
-      "server/routes/c2c/actions.ts",
-      "server/services/ana-ri/module3-command-handlers.ts",
-      "server/services/cmc/ich-compliance-checker.ts",
-      "server/services/cmc/qbd-analyzer.ts"
     ],
     "reg_changes": [
       "server/src/services/reg/rpi.ts"
@@ -217,7 +180,6 @@
     ],
     "reg_m3_sections": [
       "server/api/cmc/portfolio.ts",
-      "server/api/cmc/regulatory_aiDraft.ts",
       "server/src/services/reg/rpi.ts"
     ],
     "reg_rpi_snapshots": [
@@ -225,7 +187,6 @@
     ],
     "reg_submissions": [
       "server/api/cmc/portfolio.ts",
-      "server/api/cmc/regulatory_aiDraft.ts",
       "server/routes/cmc-module3-board.routes.ts",
       "server/src/services/integrations/gmail.ts",
       "server/src/services/reg/rpi.ts"

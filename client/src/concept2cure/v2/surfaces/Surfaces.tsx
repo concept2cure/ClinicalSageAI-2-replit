@@ -638,7 +638,7 @@ export function GlobalRiBrowser({ onAsk }: { onAsk: (text: string) => void }) {
           tone="error"
           icon={I.alertTriangle}
           title="Couldn't load the global-RI catalog"
-          hint="The regulatory-intelligence capability catalog didn't respond. Sign in with regulatory-author access and retry, or check the /api/global-ri service is reachable."
+          hint="The regulatory-intelligence capability catalog didn't respond. Sign in with regulatory-author access and retry, or check that the regulatory-intelligence service is reachable."
         />
       </div>
     );

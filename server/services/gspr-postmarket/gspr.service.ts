@@ -304,8 +304,16 @@ export async function computeCoverage(
   const totalApplicable = inScope.length;
   const decided =
     mappedApplies + mappedNotApplicable + mappedPartial; // 'tbd' and unmapped don't count
+  // FAIL CLOSED on an empty in-scope set. totalApplicable === 0 means no GSPR
+  // requirements are in scope — almost always an UNSEEDED catalog (gspr_requirements
+  // is populated only by scripts/seed-gspr.ts, not by the migration), or a
+  // regulation/product-type the catalog has no rows for — NOT a conformant device.
+  // Reporting 100% coverage + a passing conformity gate for "assessed nothing"
+  // would put an unsubstantiated Annex I / GSPR conformity claim into a CER.
+  // Honest value: 0% coverage, and the gate fails (mirrors the sibling guard in
+  // post-market-readiness.ts, `req.length > 0 && ...`).
   const coveragePercent =
-    totalApplicable === 0 ? 100 : Math.round((decided / totalApplicable) * 1000) / 10;
+    totalApplicable === 0 ? 0 : Math.round((decided / totalApplicable) * 1000) / 10;
 
   return {
     programId,
@@ -322,6 +330,7 @@ export async function computeCoverage(
     findings,
     coveragePercent,
     passesGate:
+      totalApplicable > 0 &&
       unmapped === 0 &&
       nonConformantCount === 0 &&
       mappedTbd === 0,

@@ -221,27 +221,6 @@ export default function createManufacturingRoutes(pool: Pool): Router {
     });
   }
 
-  /**
-   * Ensure the manufacturing.responses table exists (lightweight).
-   * This covers the gap where migration-066 does not include a responses table.
-   */
-  let responsesTableReady = false;
-  async function ensureResponsesTable(): Promise<void> {
-    if (responsesTableReady) return;
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS manufacturing.responses (
-        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-        finding_id TEXT NOT NULL,
-        section TEXT,
-        response_text TEXT NOT NULL,
-        evidence_ids JSONB DEFAULT '[]',
-        org_id UUID,
-        created_at TIMESTAMPTZ DEFAULT NOW(),
-        updated_at TIMESTAMPTZ DEFAULT NOW()
-      );
-    `);
-    responsesTableReady = true;
-  }
 
   // ═══════════════════════════════════════════════════════════════════════════
   // 1. GET /overview — KPI snapshot
@@ -889,7 +868,6 @@ export default function createManufacturingRoutes(pool: Pool): Router {
 
   router.get('/responses', async (req: Request, res: Response) => {
     try {
-      await ensureResponsesTable();
       const orgId = requireOrgId(req, res);
       if (!orgId) return;
 
@@ -914,7 +892,6 @@ export default function createManufacturingRoutes(pool: Pool): Router {
 
   router.post('/response', async (req: Request, res: Response) => {
     try {
-      await ensureResponsesTable();
       const orgId = requireOrgId(req, res);
       if (!orgId) return;
       const parsed = responseSchema.safeParse(req.body);

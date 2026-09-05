@@ -41,6 +41,17 @@ export interface AnalyzerResult {
   durationMs: number;
   projectsScanned: number;
   timestamp: Date;
+  /**
+   * Set when the analyzer could NOT assess, as opposed to assessing and finding
+   * nothing. Without this the two are the same value — `findings: []`,
+   * `projectsScanned: 0` — and a check that cannot run reads exactly like a
+   * check that ran clean. That is the shape this codebase treats as a defect:
+   * an error must never be rendered as an empty result.
+   *
+   * `reason` is shown to whoever reads the scan, so it says what is missing and
+   * what would make the analyzer work again.
+   */
+  unavailable?: { reason: string };
 }
 
 export interface SentinelConfig {

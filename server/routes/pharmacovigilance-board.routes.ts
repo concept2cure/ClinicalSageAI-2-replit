@@ -216,8 +216,19 @@ export default function createPharmacovigilanceBoardRoutes(): Router {
         getUpcomingReports(orgId),
       ]);
 
-      const events = eventsSettled.status === 'fulfilled' ? eventsSettled.value : [];
-      const reports = reportsSettled.status === 'fulfilled' ? reportsSettled.value : [];
+      // A REJECTED read is a real DB failure — getAdverseEvents / getUpcomingReports
+      // already map the legitimately-unprovisioned 42P01 case to [], so a rejection
+      // is never "no data yet." Surfacing it (→ the outer catch's 500) is not
+      // optional on THIS surface: the client's useLiveData then sets `error` and
+      // the pharmacovigilance publisher reports the board as UNREADABLE. Coercing a
+      // rejection to [] here published "no disproportionality signal" to the
+      // assistant — a manufactured safety clearance from a read that failed. A
+      // safety-surveillance board fails closed, and half a board (one read down) is
+      // still unreadable, not a partial all-clear.
+      if (eventsSettled.status === 'rejected') throw eventsSettled.reason;
+      if (reportsSettled.status === 'rejected') throw reportsSettled.reason;
+      const events = eventsSettled.value;
+      const reports = reportsSettled.value;
 
       const signals = deriveSignals(events);
 

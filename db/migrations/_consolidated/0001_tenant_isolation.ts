@@ -3,7 +3,6 @@
  *
  * This migration creates and sets up Row-Level Security for tenant isolation.
  */
-import { SQL } from 'drizzle-orm';
 import { setupRlsForAllTables, createTenantTriggerFunction } from '../server/db/tenantRls';
 
 /**

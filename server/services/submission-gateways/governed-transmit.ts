@@ -42,7 +42,7 @@ import { dirname } from 'path';
 
 import { pool } from '../../db';
 import { getGateway } from './index';
-import type { GatewayName, GatewayTransmitResult, Region } from './types';
+import type { GatewayName, GatewayTransmitResult, Region, SubmissionBundle } from './types';
 import { findActiveTransmittal } from './fda-esg';
 import { getBundle } from '../submission-bundle-storage';
 import {
@@ -112,6 +112,35 @@ export interface ResolvedBundle {
   displayName?: string;
   storage?: { provider: 'local' } | { provider: 's3'; bucket: string; key: string };
   validation?: { errorCount: number; warningCount?: number; infoCount?: number; findings?: unknown[] };
+  // Evidence the canonical packager recorded about the bundle at assemble time.
+  // Forwarded to the gateway so evaluatePreTransmit can enforce the operator's
+  // ECTD_REQUIRE_PDFA / _DTD / _REGIONAL_BACKBONE opt-ins against it — without
+  // these the gate could only warn "cannot prove" and never block.
+  submissionGrade?: SubmissionBundle['submissionGrade'];
+  dtdStatus?: SubmissionBundle['dtdStatus'];
+  regionalBackbone?: SubmissionBundle['regionalBackbone'];
+}
+
+/* Shape guards for the stored evidence blocks (see ResolvedBundle). Each
+   requires exactly the fields the pre-transmit gate reads, so an object that
+   would make the gate misread or throw is never forwarded. */
+function isSubmissionGrade(v: unknown): v is NonNullable<SubmissionBundle['submissionGrade']> {
+  const g = v as Record<string, unknown> | null;
+  return (
+    !!g && typeof g === 'object' &&
+    Array.isArray(g.notConverted) && Number.isInteger(g.pdfLeaves) && Number.isInteger(g.pdfaConverted)
+  );
+}
+function isDtdStatus(v: unknown): v is NonNullable<SubmissionBundle['dtdStatus']> {
+  const d = v as Record<string, unknown> | null;
+  return !!d && typeof d === 'object' && typeof d.selfContained === 'boolean' && Array.isArray(d.missing);
+}
+function isRegionalBackbone(v: unknown): v is NonNullable<SubmissionBundle['regionalBackbone']> {
+  const r = v as Record<string, unknown> | null;
+  return (
+    !!r && typeof r === 'object' &&
+    typeof r.regionConformant === 'boolean' && typeof r.region === 'string' && typeof r.file === 'string'
+  );
 }
 
 /**
@@ -182,6 +211,12 @@ async function loadStoredBundle(
     // Internal eCTD structural validation findings, so the transmit hard-gate
     // can block on error-severity findings.
     validation: stored.validation && typeof stored.validation === 'object' ? stored.validation : undefined,
+    // Evidence blocks are shape-checked like sha256/sizeBytes: a malformed block
+    // is DROPPED (the gate then warns "cannot prove"), never forwarded — `{}` as
+    // a PDF/A grade was read by the gate as full compliance.
+    submissionGrade: isSubmissionGrade(stored.submissionGrade) ? stored.submissionGrade : undefined,
+    dtdStatus: isDtdStatus(stored.dtdStatus) ? stored.dtdStatus : undefined,
+    regionalBackbone: isRegionalBackbone(stored.regionalBackbone) ? stored.regionalBackbone : undefined,
   };
 }
 
@@ -417,6 +452,10 @@ export async function executeGovernedTransmit(
       sizeBytes: bundle.sizeBytes,
       format: bundle.format,
       displayName: bundle.displayName,
+      // Packager evidence for the pre-transmit gate (see ResolvedBundle).
+      submissionGrade: bundle.submissionGrade,
+      dtdStatus: bundle.dtdStatus,
+      regionalBackbone: bundle.regionalBackbone,
     },
     environment,
     submissionType: input.submissionType,

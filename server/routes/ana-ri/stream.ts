@@ -44,6 +44,7 @@ import { recordAnaTurn } from '../../services/ana-ri-metrics.js';
 import {
   getOrCreateThread,
   getThreadMessages,
+  ThreadAccessError,
   saveChatMessage as saveMessage,
 } from '../../services/chat-thread-helpers.js';
 import { planKernelExecution } from '../../services/kernel-router.js';
@@ -518,21 +519,42 @@ export function mountStreamRoute(router: Router): void {
         enrichment.block +
         (driveState.enabled ? buildLiveDrivePromptBlock(driveState.mode) : '');
 
-      // Thread resolution (before message building so we can load server history)
-      let threadId = thread_id;
+      // Thread resolution (before message building so we can load server history).
+      //
+      // The id the CLIENT sent is never used as-is. getOrCreateThread resolves
+      // it in the caller's organization and to the caller's own thread, or
+      // mints a fresh one; a colleague's thread id is refused outright. If the
+      // resolution fails for any other reason, `threadId` stays null so that
+      // NO history is loaded from an id nothing has verified — the previous
+      // shape kept the caller-supplied id and read its transcript into the
+      // model context even after persistence had failed.
+      let threadId: string | null = null;
       let persistenceFailed = false;
       if (orgId) {
         try {
           threadId = await getOrCreateThread(
             thread_id || null,
-            typeof userId === 'number' ? userId : undefined,
+            typeof userId === 'number' || typeof userId === 'string' ? userId : undefined,
             'ana-ri',
             Number(orgId)
           );
           await saveMessage(threadId, 'user', message);
         } catch (e: any) {
+          if (e instanceof ThreadAccessError) {
+            console.warn('[AnA RI Stream] Refused caller-supplied thread id:', e.code);
+            res.write(
+              `data: ${JSON.stringify({
+                type: 'error',
+                code: e.code,
+                error: 'That conversation belongs to another user.',
+              })}\n\n`
+            );
+            res.end();
+            return;
+          }
           console.error('[AnA RI Stream] Thread persistence failed:', e?.message);
           persistenceFailed = true;
+          threadId = null;
         }
       }
 
@@ -1132,14 +1154,17 @@ export function mountStreamRoute(router: Router): void {
                 errorMessage: toolErrorMessage,
                 latencyMs: Date.now() - toolStart,
               });
-              return { toolUse, resultStr, toolStatus, toolErrorMessage };
+              // The same server-measured duration the telemetry row gets, so the
+              // client's work panel can show how long each step really took
+              // rather than timing the round-trip from its own side.
+              return { toolUse, resultStr, toolStatus, toolErrorMessage, latencyMs: Date.now() - toolStart };
             },
             4
           );
 
           const entries: ToolResultEntry[] = [];
           const roundFailures: FailedToolCall[] = [];
-          for (const { toolUse, resultStr, toolStatus, toolErrorMessage } of ran) {
+          for (const { toolUse, resultStr, toolStatus, toolErrorMessage, latencyMs } of ran) {
             entries.push({ tool_use_id: toolUse.id, content: resultStr, name: toolUse.name });
             const stepLabel = describeToolPlan([toolUse])[0].label;
             // Record this call in the turn's tool-trace memory + evidence corpus.
@@ -1172,6 +1197,7 @@ export function mountStreamRoute(router: Router): void {
                 name: toolUse.name,
                 label: stepLabel,
                 status: toolStatus,
+                latencyMs,
                 ...(humanMessage ? { message: humanMessage } : {}),
                 result: resultStr,
               })}\n\n`
@@ -1621,7 +1647,7 @@ export function mountStreamRoute(router: Router): void {
         streamProjectId,
         orgId,
         userId: typeof userId === 'number' ? userId : undefined,
-        threadId,
+        threadId: threadId ?? undefined,
         userName: (req as any).user?.name,
         effectiveRole,
         sectionCode,

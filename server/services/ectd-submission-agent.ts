@@ -138,10 +138,25 @@ export class EctdSubmissionAgent {
       ],
     );
 
-    // Update submission status to assembling if still draft
+    // Adding a document invalidates any prior validation: the persisted
+    // ectd_submission_validations rows covered the OLD document set and say
+    // nothing about the one just added. Regress the submission out of
+    // 'validated' (as well as 'draft') back to 'assembling' AND delete the stale
+    // validation rows, so submitToGateway's gate — which blocks when there are
+    // zero validation rows — forces a fresh validateSubmission over the current
+    // document set. Without this, a document added after validate (e.g. one with
+    // a non-conformant filename, no checksum, or a missing required module)
+    // would sail through submit on a stale "0 errors" verdict that never
+    // examined it.
     await pool.query(
-      `UPDATE ectd_submissions SET status = 'assembling', updated_at = NOW()
-       WHERE id = $1 AND org_id = $2 AND status = 'draft'`,
+      `UPDATE ectd_submissions
+         SET status = CASE WHEN status IN ('draft','validated') THEN 'assembling' ELSE status END,
+             updated_at = NOW()
+       WHERE id = $1 AND org_id = $2`,
+      [submissionId, orgId],
+    );
+    await pool.query(
+      `DELETE FROM ectd_submission_validations WHERE submission_id = $1 AND org_id = $2`,
       [submissionId, orgId],
     );
 

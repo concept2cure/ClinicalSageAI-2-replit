@@ -771,8 +771,9 @@ export function DeepResearch({ onAsk }: SurfaceViewProps) {
                       className="sp-primary"
                       style={{ padding: '8px 14px' }}
                       onClick={() => ask('Save this deep-research synthesis to the Vault with its citations.')}
+                      title="Sends this request to AnA in the rail — nothing is saved here until AnA confirms"
                     >
-                      {I.vault} Save to Vault
+                      {I.vault} Ask AnA to save to the Vault
                     </button>
                     <button
                       className="sp-ask"

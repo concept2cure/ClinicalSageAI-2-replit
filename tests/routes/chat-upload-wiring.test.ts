@@ -34,12 +34,16 @@ const {
   mockCreateSource,
   mockFindSourceByChecksum,
   mockResolveGovernedContext,
+  mockFindSupersededCandidate,
+  mockCreateSupersedingSource,
 } = vi.hoisted(() => ({
   mockPoolQuery: vi.fn(),
   mockGetEmbeddingService: vi.fn(),
   mockCreateSource: vi.fn(),
   mockFindSourceByChecksum: vi.fn(),
   mockResolveGovernedContext: vi.fn(),
+  mockFindSupersededCandidate: vi.fn(),
+  mockCreateSupersedingSource: vi.fn(),
 }));
 
 vi.mock('../../server/services/concept2cure/governedDocumentContractService.js', () => ({
@@ -59,6 +63,10 @@ vi.mock('../../server/services/enhancedEmbeddingService.js', () => ({
 vi.mock('../../server/services/clinical-regulatory-evidence/evidence-spine.service.js', () => ({
   createSource: mockCreateSource,
   findSourceByChecksum: mockFindSourceByChecksum,
+  // The upload handler destructures these before creating identity; a mocked
+  // ESM module throws on a missing export, so both must be present.
+  findSupersededCandidate: mockFindSupersededCandidate,
+  createSupersedingSource: mockCreateSupersedingSource,
 }));
 
 // The chat router pulls a large graph; stub what the upload path never reaches.
@@ -131,6 +139,8 @@ beforeEach(() => {
   mockGetEmbeddingService.mockReturnValue({ embedAtom: vi.fn().mockResolvedValue(undefined) });
   mockFindSourceByChecksum.mockResolvedValue(null);
   mockCreateSource.mockResolvedValue({ id: 41 });
+  mockFindSupersededCandidate.mockResolvedValue(null);
+  mockCreateSupersedingSource.mockResolvedValue({ source: { id: 41 } });
   // Only reached when a projectId is supplied; the handler reads
   // `.validation.valid`, so a null stub throws before the response is written.
   mockResolveGovernedContext.mockReturnValue({

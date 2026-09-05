@@ -21,7 +21,7 @@ merge is recommended.
 | **CANONICAL** | `audit_logs` — the reference substrate everything else is measured against | 1 |
 | **(a) DUPLICATE** | Records `audit_logs` semantics (who / what / when / old→new) in a second table. Merge candidates, **not** delete candidates — rows exist and readers depend on them | 3 |
 | **(b) DOMAIN HISTORY** | Carries payload the flat audit schema cannot express. **Keep**; must become chain-reachable | 23 |
-| **(c) DEAD — no writer** | Nothing in the repo ever inserts. Delete list (§5.1) | 43 |
+| **(c) DEAD — no writer** | Originally 43. **Re-verified from scratch 2026-09-01 (ledger L13): 24 of the 43 failed.** 19 survive; 13 of those are dropped by `db/migrations/20260901_drop_dead_audit_tables.sql`, 6 are withheld (§5.1) | ~~43~~ 19 |
 | **(c) DEAD — no reader** | Rows land; nothing in the app ever reads them back. Delete only with owner sign-off (§5.2) | 11 |
 | | **Total audit-ish tables** | **81** |
 
@@ -225,73 +225,200 @@ exported at `cognitive-ecosystem/index.ts:29`, and consumed by the route module
 
 ## 5. Verdict (c) — dead
 
-### 5.1 No writer — nothing can ever land here. **Delete list for a later slice.**
+### 5.1 No writer — the delete list, re-verified and executed (ledger L13)
 
-Evidence for every row: `grep -rniE "INSERT INTO <name>|insert\(<drizzleConst>\)" server client shared scripts tests` returns nothing outside migrations and schema definitions.
+**Status: executed 2026-09-01, at 13 of the 43 rows published below.**
+`db/migrations/20260901_drop_dead_audit_tables.sql` (registered in
+`C2C_MIGRATION_FILES`, immediately before the two tenant-isolation steps that
+must stay last). Guard: `scripts/ci/check-dead-audit-tables.mjs`
+(`npm run ci:dead-audit-tables`), pinned by
+`scripts/ci/dead-audit-tables-baseline.json` and self-tested against PGlite by
+`scripts/ci/check-dead-audit-tables.selftest.mjs`.
 
-| Table | Creator migration | What exists today |
+#### 5.1.0 The count was wrong. 24 of 43 are not dead.
+
+The list below was published as "43 dead — delete list for a later slice". Every
+row was re-derived from scratch before anything was dropped, and **24 failed
+re-verification.** The reason is one methodological gap stated in the original
+evidence line:
+
+> `grep -rniE "INSERT INTO <name>|insert\(<drizzleConst>\)" server client shared scripts tests`
+
+That grep never opened `db/migrations/`. These are Part 11 stores, and in this
+codebase Part 11 stores are written by **PL/pgSQL** — `SECURITY DEFINER`
+functions and `BEFORE INSERT` hash-chain triggers that live in the migration
+that creates the table. A repo-wide grep of TypeScript cannot see any of them.
+
+The clearest instance is the one the document argued hardest:
+
+> `compliance.audit_trail` … Its only writer is the in-migration PL/pgSQL
+> function at `080_…:631`; `grep -rn "log_audit_event" server` returns nothing
+
+The function is not called `log_audit_event`. It is
+`compliance.write_audit_entry`, `server/services/cortexComplianceService.ts:166`
+calls it on every governed write, `compliance.create_electronic_signature`
+calls it again at `080_…:720`, and `080_…:631` is the `INSERT INTO
+compliance.audit_trail` it performs. A grep for the wrong identifier returning
+nothing is not evidence of absence.
+
+**Failed re-verification — removed from the delete list.** Each row names the
+specific finding that disqualifies it.
+
+| Table | Why it is NOT dead |
+|---|---|
+| `audit_trail` | Two live readers, not one: `routes/part11-compliance.ts:618-619` (raw SQL) **and** `routes/ana-features.ts:277-280` (Drizzle `.from(auditTrail)`, intelligence feed). Carries a parent-scoped RLS policy through `leaf_id → leaves` (`20260813_child_table_parent_scoped_rls.sql:91`) and is asserted in `tests/db/child-table-parent-scoped-rls.dbtest.ts:184` |
+| `compliance.audit_trail` | Live writer chain server → `compliance.write_audit_entry()` → `INSERT` (`080_…:166 call, :631 insert, :720 e-signature path`); live readers `cortexComplianceService.ts:218,242`; immutability trigger `080_…:137` |
+| `regulatory_harmonization.audit_log` | Live reader `grdheService.ts:1451` (`getAuditLog`); DB writer `regulatory_harmonization.log_audit()` at `081_…:1510`; `BEFORE INSERT` hash-chain trigger `081_…:1325-1328`; partitioned parent of three monthly partitions; a view reads it at `081_…:1305` |
+| `ana_kernel_decision_log` | Live reader: `SELECT final_decision, enforced_decision, COUNT(*) … FROM ana_kernel_decision_log` (`server/src/control-plane/persistent-queries.ts:42`), plus the hash-chain verifier at `:106`. Hash + immutability triggers from `20260325_ana_kernel_log_immutability_hashchain.sql` |
+| `auth_audit_log` | Seed-script writer: `INSERT INTO auth_audit_log (…)` at `scripts/seed-ga-demo.mjs:420`; retention `DELETE` in the purge function at `_consolidated/001_auth_security_tables.sql:239` |
+| `analytical_audit_trail` | Three trigger-function `INSERT`s at `_consolidated/001_analytical_methods_schema.sql:276,291,307` |
+| `cortex.calibration_log` | `INSERT` at `075_gcc_epistemic_intelligence.sql:782` |
+| `fhir.resource_history` | `INSERT`s at `058_gcc_fhir_resources.sql:589,618` (the FHIR versioning path) |
+| `authoring_audit_events` | A member of the Part-11 authoring subsystem, which is judged **as a unit**: `scripts/db/authoring-subsystem.mjs:162` provisions it and `server/db/ensureCoreTables.ts:176` gates readiness on it. Dropping it makes `/readyz` report the subsystem PARTIAL, which fails readiness closed. Named by three contract tests |
+| `proof_audit_logs` | `tests/migrations/proofAuditLogs.test.ts` asserts the table, its columns, its two immutability triggers and its RLS; `scripts/verify-migration.mjs` verifies the same; it holds an entry in `scripts/ci/model-migration-agreement-baseline.json` |
+| `audit.concomitant_audit_logs` | Read by three views in `006_gcc_dashboard_views.sql` (`:82,:227,:355`) — a durable `_gcc_` file; inbound FK `_legacy/008_…:96`; `UPDATE` + trigger `_legacy/010_…:383,421` |
+| `audit.config_bundles` | Writer `INSERT` `_legacy/011_…:173`; inbound FKs from `_legacy/011:117,134`, `_legacy/013:64,272`, `_legacy/033:34`, `_legacy/034:67`; immutability + attribution triggers; a view at `_legacy/011:210` |
+| `audit.dataset_snapshots` | Inbound FKs `_legacy/033_…:33`, `_legacy/034_…:66` |
+| `audit.e_signatures` | Immutability + attribution triggers `_legacy/009_…:194,211`; read by four views/joins `_legacy/009_…:307,373,390,488`; chain trigger `_legacy/035_…:175`; `UPDATE` `_legacy/010_…:474` |
+| `audit.entity_chain_events` | Self-referencing FK; immutability trigger `_legacy/035_…:36`; writer `INSERT` at `_legacy/035_…:75` |
+| `audit.event_log` | `INSERT` + `UPDATE` at `054_gcc_part11_audit.sql:281,332`; three more `INSERT`s at `057_gcc_product_master.sql:561,570,585`; views at `054_…:610,626` and `056_gcc_test_runner.sql:452`; named in `tests/schema-contract/uuid-tenant-isolation.contract.test.ts:121` |
+| `audit.idempotency_keys` | `SELECT :97`, `INSERT :118`, `DELETE :144` — all in `019_gcc_idempotency_ratelimit.sql` |
+| `audit.purge_approvals` | Immutability trigger `018_gcc_purge_workflow.sql:248`; status trigger `:478`; read at `:328,370,436,508,546` |
+| `audit.purge_requests` | `UPDATE` at `018_…:453,462,468`; inbound FKs from `audit.purge_approvals` (`:211`) and `audit.tombstones` (`:262`); views |
+| `audit.rate_limit_buckets` | `INSERT :257`, two `UPDATE`s `:272,280` in `019_gcc_idempotency_ratelimit.sql` |
+| `audit.shadow_run_groups` | Inbound FK `_legacy/007_…:75`; `UPDATE` `_legacy/010_…:486`; views `_legacy/007:180`, `_legacy/011:201,206` |
+| `audit.signature_log` | `INSERT` at `054_gcc_part11_audit.sql:542` |
+| `audit.submission_events` | Immutability + attribution triggers `_legacy/009_…:548,566`; `UPDATE` `_legacy/010_…:498` |
+| `audit.tombstones` | Immutability trigger `018_gcc_purge_workflow.sql:306`; view join `:549` |
+
+A second, structural correction: §5.1's framing implied the `audit.*` rows were
+inert infrastructure to be "triaged with their owning subsystem". They are not
+inert. Eight of them (`event_log`, `signature_log`, `idempotency_keys`,
+`rate_limit_buckets`, `purge_requests`, `purge_approvals`, `tombstones`,
+`concomitant_audit_logs`) are written or read by files on the **durable** `_gcc_`
+apply path that `scripts/db/install-fresh.mjs` step 6/8 runs.
+
+One stale citation, corrected: `program_activity_log`'s note pointed at
+`routes/programs.ts:512`. That file does not exist. `program_activity_log` has
+**zero** code references of any kind, which strengthens rather than weakens the
+finding — the entry stays on the delete list.
+
+#### 5.1.1 Dropped
+
+Thirteen entries, all of which survived re-verification with zero writers, zero
+readers, no inbound foreign key, and no dependent view or trigger anywhere in
+`server/ client/ shared/ scripts/ tests/ db/ migrations/`:
+
+| Table | Creator | What existed at re-verification |
 |---|---|---|
-| `audit_trail` | `migrations/0000_sweet_joseph.sql:188` | **Read by a live Part 11 endpoint that can only ever return `[]`.** `server/routes/part11-compliance.ts:512` selects 14 columns from it; repo-wide `grep -rniE "insert into \"?audit_trail\b"` (all file types, node_modules excluded) returns **zero** writers. The endpoint also computes `chainIntegrity` from `row.hash_signature`, a column the DDL does not define. Owner: the Part 11 slice — flagged, not touched here |
-| `document_audit_log` (singular) | `migrations/0000_sweet_joseph.sql:2591` | `shared/schema.ts:5206` only |
-| `ai_audit_log` | `migrations/0000_sweet_joseph.sql:99` | `shared/schema.ts:14169` only; already listed in `docs/DEAD_TABLES_INVENTORY.md` |
-| `qmp_audit_trail` | `migrations/0000_sweet_joseph.sql:4608` | `shared/schema.ts:4544` only |
-| `proof_audit_logs` | `migrations/0000_sweet_joseph.sql:4558` + `db/migrations/20260129_proof_audit_logs.sql:11` | `shared/schema.ts:12516` and `tests/migrations/proofAuditLogs.test.ts` (which asserts the *table* exists, not that anything uses it). Has `hash_chain`/`previous_hash` columns and an immutability trigger — full Part 11 machinery, zero traffic |
-| `compliance.audit_trail` | `db/migrations/080_gcc_21cfr_part11_compliance.sql:62` | Read at `cortexComplianceService.ts:218,242`. Its only writer is the in-migration PL/pgSQL function at `080_…:631`; `grep -rn "log_audit_event" server` returns nothing. Chained (`record_hash`/`chain_hash`) and immutable — and empty |
-| `analytical_audit_trail` | `db/migrations/_consolidated/001_analytical_methods_schema.sql:166` | zero code references |
-| `auth_audit_log` | `db/migrations/_consolidated/001_auth_security_tables.sql:16` | only `server/db/_deprecated_migrations/001_auth_security_tables.sql` |
-| `auth_password_history` | `db/migrations/_consolidated/001_auth_security_tables.sql:87` | only `server/db/_deprecated_migrations/001_auth_security_tables.sql:87,94,95,264` |
-| `authoring_audit_events` | `db/migrations/20260730_authoring_subsystem_schema.sql:96` | Documented phantom: "never existed and never had a writer" (`tests/schema-contract/authoring-review-audit-comment.contract.test.ts:19`); the endpoint that once read it was repointed (`authoring.router.ts:5407`) |
-| `doc_activity_log` | `db/migrations/_consolidated/012_document_authoring_schema.sql:147` | zero code references |
-| `ind_protocol_history` | `db/migrations/_consolidated/protocol_schema.sql:16` | zero code references |
-| `qc_compliance_history` | `db/migrations/048_quality_step7.sql:35` | zero code references |
-| `strategy_audit` | `db/migrations/028_strategy_core.sql:42` | zero code references |
-| `cortex.calibration_log` | `db/migrations/075_gcc_epistemic_intelligence.sql:266` | zero code references |
-| `cortex.confidence_history` | `db/migrations/075_gcc_epistemic_intelligence.sql:328` | zero code references |
-| `fhir.resource_history` | `db/migrations/058_gcc_fhir_resources.sql:162` | zero code references |
-| `regulatory_harmonization.mapping_rule_history` | `db/migrations/081_grdhe_regulatory_mapping_layer.sql:543` | zero code references — despite carrying `signature_hash`/`signature_meaning` |
-| `regulatory_harmonization.audit_log` | `db/migrations/081_grdhe_regulatory_mapping_layer.sql:1121` (+ 3 monthly partitions) | Read at `grdheService.ts:1451`; no writer anywhere |
-| `predicate.proof_pack_audit_events` | `db/migrations/20260211_phase6_6e_proof_pack_exports.sql:70` | zero code references — despite the trust-chain columns added by `20260211_phase6_6g_proof_pack_trust_chain.sql:59-71` |
-| `ana_kernel_decision_log` | `db/migrations/20260324_ana_kernel_decision_log.sql:23` | A hash-chain **verifier** with no writer. `server/src/control-plane/persistent-queries.ts:106` names it as `HASH_CHAIN_TABLE` and the file says so itself at `:126`: "there is no writer today" |
-| `assumption_history` | `migrations/0010_operating_system_foundation.sql:162` | `shared/schema/operating-system.ts:259` only |
-| `coauthor_import_history` | `migrations/0000_sweet_joseph.sql:1558` | `shared/schema.ts:12034` only |
-| `coauthor_status_history` | `migrations/0000_sweet_joseph.sql:1606` | `shared/schema.ts:11616` only |
-| `csr_extraction_log` | `migrations/0005_csr_knowledge_database.sql:915` | `shared/schema/csr-knowledge-db.ts:1516` only |
-| `relation_extraction_log` | `migrations/0006_regulatory_atoms.sql:335` | `shared/schema/regulatory-atoms.ts:393` only |
-| `program_activity_log` | `migrations/20260524_program_workbench_schema.sql:222` | `shared/schema/programs.ts:309` only. `routes/programs.ts:512` names it as "the real feed" alongside `audit_logs` but notes neither is reachable from that router's id — an intended reader that was never built over a table that was never written |
-| `vault_document_audit_logs` | **no DDL anywhere** | Phantom name. Referenced only as a target by three consolidated migration helpers (`db/migrations/_consolidated/0002_add_organization_id.ts:20`, `0002_add_org_id_column.ts:26`, `0004_add_tenant_indexes.ts:30`) |
+| `assumption_history` | `migrations/0010_operating_system_foundation.sql:162` | `shared/schema/operating-system.ts:258` only; the only other mention is a defensive `vi.mock` entry in `server/services/__tests__/operating-system.test.ts:51` that no service consumes |
+| `auth_password_history` | `db/migrations/_consolidated/001_auth_security_tables.sql:87` | creator + `server/db/_deprecated_migrations/` copy only |
+| `doc_activity_log` | `db/migrations/_consolidated/012_document_authoring_schema.sql:147` | creator only |
+| `ind_protocol_history` | `db/migrations/_consolidated/protocol_schema.sql:16` | creator only |
+| `program_activity_log` | `migrations/20260524_program_workbench_schema.sql:222` | `shared/schema/programs.ts:308` only. Not on the drizzle push surface |
+| `qc_compliance_history` | `db/migrations/048_quality_step7.sql:35` | creator only |
+| `relation_extraction_log` | `migrations/0006_regulatory_atoms.sql:335` | `shared/schema/regulatory-atoms.ts:393` only. Not on the drizzle push surface |
+| `strategy_audit` | `db/migrations/028_strategy_core.sql:42` | creator only |
+| `vault_document_audit_logs` | **no DDL anywhere** | Phantom. Named only as a target by three `_consolidated/` helper scripts. Included so a database that acquired it out of band is cleaned up; on every database this repo provisions the drop is a no-op |
+| `audit.request_correlations` | `db/migrations/019_gcc_idempotency_ratelimit.sql:156` | creator + its four indexes only — the one table in `019_…` with no function touching it |
+| `cortex.confidence_history` | `db/migrations/075_gcc_epistemic_intelligence.sql:328` | creator + its own RLS policy only |
+| `predicate.proof_pack_audit_events` | `db/migrations/20260211_phase6_6e_proof_pack_exports.sql:70` | creator + the trust-chain `ALTER`s in `…6g` (which is on no durable apply path) + a comment in `…phase7_0a:61` |
+| `regulatory_harmonization.mapping_rule_history` | `db/migrations/081_grdhe_regulatory_mapping_layer.sql:543` | creator + a self-referencing FK, which dies with the table |
 
-**Audit-schema infrastructure, matched by the `audit.` prefix only** — same zero-reference
-finding, but these were never audit trails, so triage them with their owning subsystem
-rather than as part of an audit consolidation:
-`audit.concomitant_audit_logs` (`db/migrations/001_gcc_core.sql:232`),
-`audit.config_bundles` (`000_gcc_bootstrap_core.sql:90`),
-`audit.dataset_snapshots` (`000_gcc_bootstrap_core.sql:80`),
-`audit.e_signatures` (`_legacy/009_gcc_esign_and_submission_gate.sql:121`),
-`audit.entity_chain_events` (`_legacy/035_gcc_entity_chain_events.sql:8`),
-`audit.event_log` (`054_gcc_part11_audit.sql:94`),
-`audit.idempotency_keys` (`019_gcc_idempotency_ratelimit.sql:20`),
-`audit.purge_approvals` / `audit.purge_requests` (`018_gcc_purge_workflow.sql:208,94`),
-`audit.rate_limit_buckets` (`019_…:204`),
-`audit.request_correlations` (`019_…:156`),
-`audit.shadow_run_groups` (`_legacy/007_gcc_shadow_run_groups.sql:16`),
-`audit.signature_log` (`054_gcc_part11_audit.sql:168`),
-`audit.submission_events` (`_legacy/009_…:518`),
-`audit.tombstones` (`018_gcc_purge_workflow.sql:258`).
-Caveat worth keeping: `audit.event_log` appears in `tests/schema-contract/uuid-tenant-isolation.contract.test.ts:121` as an RLS-exempt "Part 11 trigger-written" table — the test creates its own copy, so this is an assertion about a design, not evidence of a writer.
+**Safety posture — empty-only, and it fails soft.** Static analysis over this
+repo can prove nothing *here* writes a table. It cannot prove nothing ever did:
+a retired writer, a one-off backfill, an out-of-repo job, or a restore from a
+database older than the code all produce an audit table with real records and no
+live writer, and dropping that is a records-retention incident. Nothing in the
+repo settles it — there is no fixture, no backfill migration and no production
+note for any of the thirteen — so the migration settles it at run time instead.
+Each table is dropped only when, on the database in front of it:
 
-**Before dropping any of the above**, confirm against a live database
-(`information_schema` + row counts). The same caveat `docs/DEAD_TABLES_INVENTORY.md` carries
-applies: static analysis cannot see a writer that lives outside this repo.
+1. it exists and is an ordinary or partitioned table;
+2. `count(*) = 0`;
+3. no *other* table has a foreign key pointing at it;
+4. `DROP TABLE … RESTRICT` succeeds — a view, matview or any other dependent
+   object stops the drop rather than being destroyed with it.
+
+Any table failing a condition is **kept**, with a `NOTICE` naming the reason, and
+the migration still exits 0. A non-empty table therefore survives and needs owner
+sign-off plus a retention disposition; re-running afterwards picks it up with no
+edit. Verified against real PostgreSQL — `scripts/ci/check-dead-audit-tables.selftest.mjs`
+provisions all thirteen, gives one a row, one an inbound FK and one a dependent
+view, applies the real migration file twice, and asserts those three survive and
+the other nine do not.
+
+#### 5.1.2 Withheld — dead in code, but the DROP would not hold
+
+Six entries survived re-verification and are still **not** dropped, because each
+is declared as a `pgTable` on the **drizzle push surface** — `shared/schema.ts`
+and the eight modules it `export *`s, which is exactly what `drizzle.config.ts`
+hands `drizzle-kit push`. `install-fresh.mjs` step 2/8 runs that push, so a
+SQL-only `DROP` produces a table that comes back on the next fresh install: a
+deletion that does not delete, which is the failure mode this ledger row exists
+to end, not to reproduce.
+
+| Table | Declaration to remove first |
+|---|---|
+| `document_audit_log` | `shared/schema.ts:5214` (+ `insertDocumentAuditLogSchema`, `DocumentAuditLogEntry`, and the `auditLog: many(documentAuditLog)` relation at `:15046`) |
+| `ai_audit_log` | `shared/schema.ts:14212` (+ `:14347`, `:14376`) |
+| `qmp_audit_trail` | `shared/schema.ts:4552` (+ `:4580`, `:4586`, and `auditTrail: many(qmpAuditTrail)` at `:4736`) |
+| `coauthor_import_history` | `shared/schema.ts:12077` (+ `:12149`, `:12155`) |
+| `coauthor_status_history` | `shared/schema.ts:11659` (+ `:12063`, `:12069`) |
+| `csr_extraction_log` | `shared/schema/csr-knowledge-db.ts:1307` (also RLS-enabled and policied by name in a hardcoded `DO` loop at `migrations/0005_csr_knowledge_database.sql:962,998`, which must lose the entry in the same change or the migration fails on replay) |
+
+None of the six drizzle constants, insert schemas or inferred types is imported
+anywhere outside its own declaring module — checked by name and by type name —
+so the removal is mechanical. It is withheld here only because it is a typed
+edit across `shared/schema.ts` and its `relations()` blocks, and it needs its own
+type-check to be honest about. `scripts/ci/check-dead-audit-tables.mjs` carries
+them in a `withheld` block as the burndown list; they move to `dropped` when the
+declarations go.
+
+A related caveat that does **not** block the thirteen: `assumption_history`,
+`program_activity_log` and `relation_extraction_log` also have `pgTable`
+declarations, in `shared/schema/operating-system.ts`, `programs.ts` and
+`regulatory-atoms.ts`. Those modules are **not** reachable from
+`drizzle.config.ts` (`shared/schema.ts` re-exports eight modules and none of them
+is these), so push never creates them. The declarations remain, and a future
+`db.select().from(programActivityLog)` would compile and then fail at run time —
+which is precisely what the guard's per-table mention set is there to catch.
+
+#### 5.1.3 Where the drop is durable, and where it is not
+
+`scripts/db/deploy-migrate.mjs` — the production entrypoint — applies the
+authoring subsystem and then `C2C_MIGRATION_FILES`, and deliberately does *not*
+apply the `_gcc_` tree. So in production the drop runs on every deploy, after
+every creator in the same set, and the tables stay gone. On a **fresh dev
+install** `install-fresh.mjs` provisions from push + the root overlay + the
+`_gcc_` tree without ever running the C2C set, so the tables are created and stay
+until `apply-c2c` runs. That asymmetry is pre-existing architecture, not
+something this migration introduces; it is written down here so the next reader
+does not mistake it for a failed drop.
 
 ### 5.2 No reader — rows land, nothing reads them. Sign-off required, not a free delete.
 
 These are not safe deletes: several are the *evidence of record* for a governed action. The
 right fix for most is a reader, not a `DROP`.
 
+> **Re-verified 2026-09-02 under the corrected method (§8, ledger L144).** The
+> "reader evidence" column below was gathered by grepping the application
+> languages only — the method that produced §5.1's 24 false "dead" verdicts. The
+> same eleven were re-checked over `db/migrations/` and `migrations/` for
+> `FROM|JOIN|REFERENCES|ON <name>` (creator, index, policy and comment lines
+> excluded). All eleven hold. Three have database-side hits, none of them a
+> reader: `charter_audit_events` has `BEFORE UPDATE`/`BEFORE DELETE` triggers
+> (immutability guards); `document_audit_trail` is counted once in a `DO` block
+> of `emergency_security_migration.sql` (`RAISE NOTICE`, one-off);
+> `ai_provider_audit_log` is read by the view `ai_provider_cost_summary` and the
+> functions `get_org_ai_usage` / `get_provider_health_metrics`, and nothing in
+> the application references any of the three — the reader chain ends inside
+> the database. Recorded per row.
+
 | Table | Writers | Reader evidence | Note |
 |---|---|---|---|
-| `charter_audit_events` | `routes/charters.ts:717` | `grep -rniE "FROM charter_audit_events\|from\(charterAuditEvents\)" server client` → nothing | **The sharpest case.** `charters.ts:745` states the row "IS the §11.10(e) coverage of record for the" charter domain. Written in-transaction with an `event_hash` — and unreadable through the application. Add a reader |
-| `document_audit_trail` | `DocumentOrchestrationService.ts:437` (Drizzle), `unifiedDocumentIngestion.js:1316` (raw, broken — §6.1) | none | Also has a DDL collision — §6.2 |
+| `charter_audit_events` | `routes/charters.ts:717` | `grep -rniE "FROM charter_audit_events\|from\(charterAuditEvents\)" server client` → nothing; migrations: only `BEFORE UPDATE`/`BEFORE DELETE` immutability triggers (`20260629_charter_tables_rebuild.sql:359-364`) | **The sharpest case.** `charters.ts:745` states the row "IS the §11.10(e) coverage of record for the" charter domain. Written in-transaction with an `event_hash` — and unreadable through the application. Add a reader |
+| `document_audit_trail` | `DocumentOrchestrationService.ts:437` (Drizzle), `unifiedDocumentIngestion.js:1316` (raw, broken — §6.1) | none in the application; migrations: one `COUNT(*)` into a `RAISE NOTICE` in `emergency_security_migration.sql:78` — a one-off diagnostic, not a reader | Also has a DDL collision — §6.2 |
 | `contradiction_consequence_log` | 9 sites: `contradiction-consequence-service.ts:451,499,553,696`, `contradiction-engine-service.ts:606`, `contradiction-resolution-orchestrator.ts:460,547,592,617` | none | Most-written dead table in the repo |
 | `ai.gateway_audit_log` | `ai-gateway/audit.ts:321` | `grep -rniE "FROM ai\.gateway_audit_log" server scripts` → nothing | The AI provenance ledger is **fail-closed on write** (`server/startup/…/aiProvenanceLedgerInvariant.test.ts:25`, `audit.ts:143-152`) and never read back. `scripts/ai-governance/generate-evidence-pack.ts:86` only *describes* it in prose |
 | `innovation.guardrail_api_audit` | `compliance-guardrails-sdk-service.ts:1027` | only `tests/integration/innovation-platform.test.ts:842,935` | |
@@ -300,7 +427,7 @@ right fix for most is a reader, not a `DROP`.
 | `embedding_audit_log` | `enhancedEmbeddingService.ts:685` | none | |
 | `sharepoint_audit_log` | `ESGSubmissionService.ts:513` | none | Has a `signature` column |
 | `cer_version_history` | `cerGenerationService.ts:342` | none | CER version snapshots written and never surfaced |
-| `ai_provider_audit_log` | `aiProviderRouter.ts:498` | none | |
+| `ai_provider_audit_log` | `aiProviderRouter.ts:498` | none in the application; migrations: view `ai_provider_cost_summary` and functions `get_org_ai_usage`, `get_provider_health_metrics` (`20260125_ai_provider_audit_log.sql`) read it, and nothing references any of the three | The reader chain ends inside the database — a reader exists, unreachable |
 
 ---
 
@@ -437,6 +564,19 @@ only, §6.4), plus `vault_document_audit_logs` (name only, §5.1) = **81**. Mont
 `FROM <name>` / `.from(<const>)` across `server/ client/ shared/ scripts/ tests/`. Test-only
 references are called out as such and never counted as production traffic.
 
+> **Corrected 2026-09-01 (ledger L13).** That scan stopped at the application
+> languages, and it is why §5.1 shipped 24 false "dead" verdicts. In this
+> codebase Part 11 stores are written by PL/pgSQL — `SECURITY DEFINER` functions
+> and `BEFORE INSERT` hash-chain triggers defined in the same migration that
+> creates the table — and no grep of `server/ client/ shared/` can see one. A
+> liveness verdict now also requires, over `db/migrations/` and `migrations/`
+> (including `_legacy/` and `_consolidated/`): `INSERT INTO`, `UPDATE`,
+> `DELETE FROM`, `FROM`/`JOIN`, `REFERENCES <name>`, and `TRIGGER … ON <name>`.
+> Grep for the identifier that is actually there: the row that argued hardest
+> for deleting `compliance.audit_trail` cited a function name
+> (`log_audit_event`) that does not exist in the file it cites — the writer is
+> `compliance.write_audit_entry`.
+
 **Deliberately out of scope.** Names ending in `_logs` that carry no `audit` and are not
 governance records — `api_usage_logs`, `fda_integration_logs`, `ind_template_usage_logs`
 (metering/telemetry) — and the large `*_events` family (`adverse_events`, `mdr_events`,
@@ -446,6 +586,9 @@ content.
 
 **What this method cannot see.** A writer or reader outside this repository; a trigger-driven
 write that no application SQL names (the `compliance.audit_trail` case in §5.1 is exactly
-that, caught only by reading the migration); and a table that exists in a deployed database
-but in no migration. Confirm against `information_schema` and live row counts before any
-`DROP`.
+that — §5.1 recorded it as dead on exactly this blind spot, and the L13 re-check overturned
+it); and a table that exists in a deployed database but in no migration. Confirm against
+`information_schema` and live row counts before any `DROP`.
+`db/migrations/20260901_drop_dead_audit_tables.sql` makes the row-count half of that
+confirmation part of the migration rather than a step someone has to remember: it drops only
+what is empty, and keeps anything with rows.

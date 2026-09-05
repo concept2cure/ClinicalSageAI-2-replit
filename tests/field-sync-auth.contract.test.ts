@@ -63,7 +63,42 @@ const PROJECT_A = 10; // owned by ORG_A
 const PROJECT_B = 20; // owned by ORG_B
 
 const PREREQ = `
-  CREATE TABLE organizations (id SERIAL PRIMARY KEY, name TEXT);
+  -- The tenant lifecycle guard reads the organization's posture on every
+  -- authenticated request and answers 503 TENANT_STATE_UNVERIFIED when it cannot
+  -- read one — "never assume active: a suspension must not lapse because a
+  -- lookup failed". With only (id, name) that read errored, so every request
+  -- 503'd before reaching the tenant-scoping this file exists to test. These are
+  -- the columns the posture read selects; both orgs are seeded active so the
+  -- cross-tenant cases fail on SCOPE rather than on posture. The rows are
+  -- seeded further down; status defaults to active, so that seed is enough.
+  CREATE TABLE organizations (
+    id SERIAL PRIMARY KEY,
+    name TEXT,
+    status TEXT NOT NULL DEFAULT 'active',
+    -- queryTenantPosture selects status AND paymentStatus together; omitting
+    -- this column made the whole select fail, which the guard reads as an
+    -- unreadable posture and refuses.
+    payment_status TEXT,
+    deletion_requested_at TIMESTAMPTZ,
+    deletion_requested_by INTEGER,
+    deletion_reason TEXT,
+    purge_eligible_at TIMESTAMPTZ,
+    purged_at TIMESTAMPTZ,
+    final_export_digest TEXT
+  );
+  -- The live org-membership re-check (enforceOrgMembership) runs on every
+  -- authenticated request and answers 503 when it cannot DETERMINE membership —
+  -- which is what an absent table is. That is correct fail-closed behaviour:
+  -- "we could not establish that you belong here" is not "you may proceed".
+  -- Without these rows every request 503'd before reaching the tenant-scoping
+  -- this file exists to test. Only ORG_A is seeded: the caller belongs to A, and
+  -- the cross-tenant cases below assert that A's token cannot reach B's project.
+  CREATE TABLE organization_users (
+    organization_id INTEGER NOT NULL,
+    user_id INTEGER NOT NULL,
+    role TEXT NOT NULL DEFAULT 'member'
+  );
+  INSERT INTO organization_users (organization_id, user_id, role) VALUES (1, 7, 'member');
   CREATE TABLE fda_510k_projects (
     id SERIAL PRIMARY KEY,
     organization_id INTEGER NOT NULL,
@@ -80,7 +115,14 @@ let jdb: JourneyDb;
 let app: express.Express;
 
 async function tokenFor(orgId: number) {
-  return new SignJWT({ userId: 7, id: 7, email: 'u@fieldsync.example', organizationId: orgId })
+  // `type: 'access'` is required, not decorative: requireAccessTokenReason
+  // refuses a token whose type is anything other than 'access' — INCLUDING
+  // absent (missing_token_type). That is deliberate, and it is what the
+  // refresh-token case below relies on: a token cannot be used as an access
+  // token merely by declining to say what it is. Without this claim every
+  // request here 401'd before reaching the tenant-scoping this file exists to
+  // test.
+  return new SignJWT({ userId: 7, id: 7, email: 'u@fieldsync.example', organizationId: orgId, type: 'access' })
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
     .setExpirationTime('1h')

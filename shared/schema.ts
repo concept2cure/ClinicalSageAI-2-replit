@@ -21,7 +21,6 @@ import {
   uuid,
   json,
   unique,
-  primaryKey,
   varchar,
   real,
   index,
@@ -1905,7 +1904,6 @@ export const documentVersions = pgTable(
 // AUDIT TRAIL (21 CFR PART 11 COMPLIANT - IMMUTABLE)
 // Field-level change tracking with electronic signature integration.
 // Use for: individual field changes, signature events, permission changes.
-// See also: documentAuditLog (higher-level version/review tracking)
 // ============================================================================
 
 export const documentAuditTrail = pgTable(
@@ -3849,6 +3847,403 @@ export const drugProducts = pgTable(
   })
 );
 
+/* ── Container closure systems — §3.2.S.6 / §3.2.P.7 ──────────────────────────
+ *
+ * The Module 3 composer has demanded a `container_closure` source since Module 3
+ * was modelled, and no table anywhere held one: §3.2.S.6 and §3.2.P.7 were
+ * unservable, and the extractables/leachables package a reviewer asks for first
+ * had nowhere to be recorded at all.
+ *
+ * `scope` decides which section a system files into. A drum that holds the drug
+ * substance is §3.2.S.6 evidence; a blister that holds the tablet is §3.2.P.7
+ * evidence. Recording one and greening both is the defect class that once put a
+ * finished-product QC result into §3.2.S.4.4, so the side is a stored column,
+ * never an inference at render time.
+ */
+export const cmcContainerClosures = pgTable(
+  'cmc_container_closures',
+  {
+    id: serial('id').primaryKey(),
+    organizationId: integer('organization_id')
+      .notNull()
+      .references(() => organizations.id),
+    /* The program the system belongs to. Unlike the older CMC registers this is
+       a COLUMN, so a record still knows its project after the request that
+       created it, and the canonical write-through no longer depends on a client
+       having remembered to put projectId in the body. */
+    projectId: text('project_id'),
+    scope: text('scope').default('drug_product').notNull(), // drug_substance | drug_product | both
+    systemName: text('system_name').notNull(),
+    componentType: text('component_type').default('primary').notNull(), // primary, secondary, administration-device
+    containerDescription: text('container_description').notNull(),
+    closureDescription: text('closure_description').notNull(),
+    /* [{ component, material, supplier, specification, compendialReference }] —
+       the materials of construction table §3.2.P.7 is built around. */
+    materialsOfConstruction: jsonb('materials_of_construction'),
+    compendialStandards: text('compendial_standards').array(), // USP <661>, Ph. Eur. 3.2.1, ...
+    suitabilityJustification: text('suitability_justification'),
+    /* { studyType, protocol, conditions, analyticalEvaluationThreshold,
+         results: [{ analyte, level, unit, threshold, assessment }], conclusion } */
+    extractablesLeachables: jsonb('extractables_leachables'),
+    /* { method, acceptanceCriteria, result, testDate } — CCI / seal integrity. */
+    integrityTesting: jsonb('integrity_testing'),
+    supplier: text('supplier'),
+    status: text('status').default('draft').notNull(), // draft, qualified, retired
+    qualifiedBy: integer('qualified_by').references(() => users.id),
+    qualificationDate: timestamp('qualification_date'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  table => ({
+    idx_cmc_container_closures_org: index('idx_cmc_container_closures_org').on(table.organizationId),
+    idx_cmc_container_closures_project: index('idx_cmc_container_closures_project').on(table.projectId),
+  })
+);
+
+/* ── Reference standards — §3.2.S.5 / §3.2.P.6 ────────────────────────────────
+ *
+ * Every assay result already in the system is reported against a reference
+ * standard, and the standard itself was recorded nowhere: §3.2.S.5 and §3.2.P.6
+ * had no source to compose from. A reviewer's first question about any potency
+ * number is which standard it was measured against and how that standard was
+ * qualified; both live here.
+ *
+ * `scope` follows the same rule as the container closure register — the section
+ * a standard files into is stored, not guessed.
+ */
+export const cmcReferenceStandards = pgTable(
+  'cmc_reference_standards',
+  {
+    id: serial('id').primaryKey(),
+    organizationId: integer('organization_id')
+      .notNull()
+      .references(() => organizations.id),
+    projectId: text('project_id'),
+    scope: text('scope').default('drug_substance').notNull(), // drug_substance | drug_product | both
+    standardCode: text('standard_code').notNull(),
+    standardName: text('standard_name').notNull(),
+    standardType: text('standard_type').default('primary').notNull(), // primary, secondary, working, compendial, system-suitability
+    materialSource: text('material_source'), // the DS lot it was prepared from, or the compendial catalogue entry
+    lotNumber: text('lot_number'),
+    assignedValue: text('assigned_value'), // e.g. "98.7% (as-is)" — the potency assay results are reported against
+    /* [{ attribute, method, result }] — how the standard was characterised, which
+       is what qualifies it as a standard rather than just another lot. */
+    characterization: jsonb('characterization'),
+    certificateOfAnalysis: text('certificate_of_analysis'),
+    qualificationProtocol: text('qualification_protocol'),
+    storageConditions: text('storage_conditions'),
+    expiryDate: timestamp('expiry_date'),
+    retestDate: timestamp('retest_date'),
+    status: text('status').default('draft').notNull(), // draft, qualified, expired, retired
+    qualifiedBy: integer('qualified_by').references(() => users.id),
+    qualificationDate: timestamp('qualification_date'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  table => ({
+    idx_cmc_reference_standards_org: index('idx_cmc_reference_standards_org').on(table.organizationId),
+    idx_cmc_reference_standards_project: index('idx_cmc_reference_standards_project').on(table.projectId),
+  })
+);
+
+/* ── Impurity profiles — §3.2.S.3.2 / §3.2.S.4 / §3.2.P.5.5 ───────────────────
+ *
+ * The composer has demanded an `impurity_profile` source since Module 3 was
+ * modelled. The only impurity storage that existed was an unstructured
+ * `drug_substances.impurities_profile` json blob that the product's own drug
+ * substance form never writes — so the ICH Q3A/Q3B story a reviewer works
+ * through first (what is it, how much of it, is it above the identification or
+ * qualification threshold, and if so what qualifies it) could not be recorded
+ * at all.
+ *
+ * One row per impurity per material. `scope` decides which side it files under,
+ * on the same rule as the container closure and reference standard registers.
+ *
+ * There is deliberately no `qualified` boolean: an impurity is reported as
+ * qualified only where a qualification BASIS is recorded, so the claim always
+ * carries its own evidence rather than a checkbox somebody ticked.
+ */
+export const cmcImpurityProfiles = pgTable(
+  'cmc_impurity_profiles',
+  {
+    id: serial('id').primaryKey(),
+    organizationId: integer('organization_id')
+      .notNull()
+      .references(() => organizations.id),
+    projectId: text('project_id'),
+    scope: text('scope').default('drug_substance').notNull(), // drug_substance | drug_product | both
+    materialName: text('material_name').notNull(),
+    impurityName: text('impurity_name').notNull(),
+    /* ICH Q3A governs process-related impurities and degradation products of a
+       drug substance; Q3B governs degradation products of a drug product;
+       residual solvents are Q3C and elemental impurities Q3D, with their own
+       limits. The type is stored so the threshold engine can refuse to apply a
+       Q3A/Q3B threshold to a class those guidelines do not cover. */
+    impurityType: text('impurity_type').default('process-related').notNull(),
+    origin: text('origin'),
+    casNumber: text('cas_number'),
+    molecularFormula: text('molecular_formula'),
+    structure: text('structure'),
+    relativeRetentionTime: text('relative_retention_time'),
+    analyticalMethod: text('analytical_method'),
+    observedLevel: text('observed_level'),
+    /* Deliberately NO default. A column default of '%' filled in a unit the
+       analyst did not record, which made the assessment engine's "a level with
+       no unit cannot be compared to a threshold" refusal unreachable and turned
+       a ppm figure into a percentage — the exact defect the refusal exists to
+       prevent. The form requires a unit; the column does not invent one. */
+    levelUnit: text('level_unit'),
+    /* ICH Q3D sets a different permitted daily exposure per route — cadmium is
+       5 µg/day oral against 2 parenteral — so an elemental impurity cannot be
+       assessed without it. Nullable: an organic impurity does not need it, and
+       the assessment refuses honestly when it is absent rather than defaulting
+       to oral, which is the most permissive route for most elements. */
+    routeOfAdministration: text('route_of_administration'),
+    specificationLimit: text('specification_limit'),
+    /* The thresholds AS RECORDED. The Q3A/Q3B engine derives them from the
+       maximum daily dose; where an applicant has recorded its own, the record
+       governs and the engine's derivation is reported alongside it rather than
+       silently replacing it. */
+    reportingThreshold: text('reporting_threshold'),
+    identificationThreshold: text('identification_threshold'),
+    qualificationThreshold: text('qualification_threshold'),
+    maximumDailyDose: text('maximum_daily_dose'),
+    /* How the impurity is qualified — a study, a comparator exposure, a
+       compendial monograph. Its PRESENCE is what qualification means here. */
+    qualificationBasis: text('qualification_basis'),
+    controlStrategy: text('control_strategy'),
+    batchesObserved: text('batches_observed').array(),
+    status: text('status').default('draft').notNull(), // draft | specified | qualified | retired
+    /* Qualification is a Part 11 signature over the recorded qualification
+       basis, not a status a save can set: who reached the toxicological
+       conclusion, and when. The register refuses the signature when the basis
+       is empty, so these columns are never populated over nothing. */
+    qualifiedBy: integer('qualified_by').references(() => users.id),
+    qualificationDate: timestamp('qualification_date'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  table => ({
+    idx_cmc_impurity_profiles_org: index('idx_cmc_impurity_profiles_org').on(table.organizationId),
+    idx_cmc_impurity_profiles_project: index('idx_cmc_impurity_profiles_project').on(table.projectId),
+  })
+);
+
+/* ── Dissolution profiles — §3.2.P.2 / §3.2.P.5 ───────────────────────────────
+ *
+ * The other source type §3.2.P.5 demands and nothing produced. A dissolution
+ * result is not one number: it is a method (apparatus, medium, speed), a set of
+ * units, and a mean with its variability at each timepoint — and a comparison
+ * against a reference profile is what a formulation or site change turns on.
+ *
+ * `purpose` plays the role `scope` plays in the other registers: a development
+ * profile belongs to §3.2.P.2 and a release-specification profile to §3.2.P.5,
+ * and one must not complete the other's section.
+ */
+export const cmcDissolutionProfiles = pgTable(
+  'cmc_dissolution_profiles',
+  {
+    id: serial('id').primaryKey(),
+    organizationId: integer('organization_id')
+      .notNull()
+      .references(() => organizations.id),
+    projectId: text('project_id'),
+    // development | release-specification | comparability | biowaiver
+    purpose: text('purpose').default('development').notNull(),
+    productName: text('product_name').notNull(),
+    batchNumber: text('batch_number'),
+    strength: text('strength'),
+    apparatus: text('apparatus').notNull(), // USP I (basket), USP II (paddle), USP III, USP IV
+    rotationSpeed: text('rotation_speed'),
+    medium: text('medium').notNull(),
+    mediumVolume: text('medium_volume'),
+    temperature: text('temperature'),
+    sinker: text('sinker'),
+    /* The acceptance criterion, as recorded — e.g. "Q = 80% at 30 min". */
+    specification: text('specification'),
+    unitsTested: integer('units_tested'),
+    /* [{ timepoint, meanPercent, sd, rsd, min, max, n }] — the profile itself.
+       A mean with no n and no variability is not a profile a comparison can be
+       computed from, and the f2 engine refuses on exactly that. */
+    results: jsonb('results'),
+    /* The reference profile a comparison is against, in the same row shape. */
+    comparisonBatch: text('comparison_batch'),
+    comparisonResults: jsonb('comparison_results'),
+    /* There is deliberately no pass_fail column. Whether a profile meets its
+       acceptance criterion is a comparison against the recorded specification,
+       which the composed section performs from the profile itself; a typed
+       verdict is a conclusion with no working shown, and nothing read it. */
+    testDate: timestamp('test_date'),
+    status: text('status').default('draft').notNull(), // draft | reported | retired
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  table => ({
+    idx_cmc_dissolution_profiles_org: index('idx_cmc_dissolution_profiles_org').on(table.organizationId),
+    idx_cmc_dissolution_profiles_project: index('idx_cmc_dissolution_profiles_project').on(table.projectId),
+  })
+);
+
+/* ── Material specifications — §3.2.P.4 excipients, and the raw materials ─────
+ *
+ * ONE table for two of the composer's source types, because they are one shape:
+ * a material with a role, a grade, a monograph it complies with, a supplier and
+ * a specification. `materialRole` decides which source type the write-through
+ * emits — an excipient is §3.2.P.4 content, a raw or starting material is
+ * §3.2.S.2.3 content — so the section a record files into is stored, on the
+ * same rule as `scope` and `purpose` in the registers above.
+ *
+ * `origin` is the load-bearing column. §3.2.A.3 has to answer whether any
+ * excipient is of human or animal origin, and it was answering from a regex
+ * over free text: a formulation naming gelatin was caught only by the word
+ * "gelatin" appearing. Recorded origin is the honest source, and an excipient
+ * with NO recorded origin is a question the section must ask rather than
+ * answer.
+ */
+export const cmcMaterialSpecs = pgTable(
+  'cmc_material_specs',
+  {
+    id: serial('id').primaryKey(),
+    organizationId: integer('organization_id')
+      .notNull()
+      .references(() => organizations.id),
+    projectId: text('project_id'),
+    // excipient | raw-material | starting-material | reagent | processing-aid
+    materialRole: text('material_role').default('excipient').notNull(),
+    materialName: text('material_name').notNull(),
+    /* What it does in the formulation — diluent, disintegrant, lubricant,
+       coating, capsule shell. §3.2.P.1's composition table is built on it. */
+    functionInFormulation: text('function_in_formulation'),
+    grade: text('grade'),
+    /* The monograph it is claimed to comply with (USP/NF, Ph. Eur., JP), and
+       whether that compliance is claimed or an in-house specification governs. */
+    compendialMonograph: text('compendial_monograph'),
+    compendialCompliance: text('compendial_compliance'),
+    supplier: text('supplier'),
+    manufacturerSite: text('manufacturer_site'),
+    /* plant | mineral | synthetic | animal | human | fermentation | unrecorded.
+       Never inferred from the name: §3.2.A.3 reads this. */
+    origin: text('origin'),
+    originDetail: text('origin_detail'),
+    /* The TSE/BSE certificate reference for a material of animal origin. */
+    tseCertificate: text('tse_certificate'),
+    /* [{ test, method, acceptanceCriteria }] — the specification itself. */
+    testParameters: jsonb('test_parameters'),
+    analyticalProcedures: text('analytical_procedures'),
+    /* An excipient not described in a pharmacopoeia needs its own safety
+       package (ICH M4Q 3.2.P.4.6), and the section must say so. */
+    novelExcipient: boolean('novel_excipient').default(false).notNull(),
+    novelExcipientJustification: text('novel_excipient_justification'),
+    status: text('status').default('draft').notNull(), // draft | specified | retired
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  table => ({
+    idx_cmc_material_specs_org: index('idx_cmc_material_specs_org').on(table.organizationId),
+    idx_cmc_material_specs_project: index('idx_cmc_material_specs_project').on(table.projectId),
+  })
+);
+
+/* ── Formulation records — §3.2.P.1 composition, §3.2.P.3.2 batch formula ─────
+ *
+ * The batch formula: what goes into the product, how much of each, and what
+ * that scales to for one unit. §3.2.P.1's quantitative composition table read a
+ * first-match `components` array off whatever source carried one, so a project
+ * with several formulation versions rendered one of them and dropped the rest —
+ * and the version that rendered was whichever arrived first.
+ */
+export const cmcFormulationRecords = pgTable(
+  'cmc_formulation_records',
+  {
+    id: serial('id').primaryKey(),
+    organizationId: integer('organization_id')
+      .notNull()
+      .references(() => organizations.id),
+    projectId: text('project_id'),
+    formulationName: text('formulation_name').notNull(),
+    version: text('version'),
+    dosageForm: text('dosage_form'),
+    strength: text('strength'),
+    batchSize: text('batch_size'),
+    /* [{ component, role, amountPerUnit, unit, amountPerBatch, percentWeight,
+          overage, overageJustification, compendialReference, origin }] */
+    components: jsonb('components'),
+    theoreticalYield: text('theoretical_yield'),
+    /* An overage is a regulatory question in its own right (ICH Q8): it must be
+       justified, and the section states when one is recorded without a reason. */
+    overageJustification: text('overage_justification'),
+    /* Which formulation this one supersedes, so a version history is readable. */
+    supersedes: text('supersedes'),
+    status: text('status').default('draft').notNull(), // draft | current | superseded
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  table => ({
+    idx_cmc_formulation_records_org: index('idx_cmc_formulation_records_org').on(table.organizationId),
+    idx_cmc_formulation_records_project: index('idx_cmc_formulation_records_project').on(table.projectId),
+  })
+);
+
+/* ── Characterisation studies — §3.2.S.3.1 ────────────────────────────────────
+ *
+ * The composer has demanded a `characterization` source type since it was
+ * written and nothing produced one, so §3.2.S.3 could never be complete: its
+ * three required fields were answered, if at all, out of three free-text
+ * columns on the drug substance register.
+ *
+ * One row is one study, typed by what the study establishes. §3.2.S.3.1 asks
+ * for structure, physicochemical properties and biological activity, and those
+ * come from different experiments run at different times -- so unlike the
+ * registers where a *Complete key had to close the composer's union across
+ * sources, the union is the correct reading here: an NMR study and a solubility
+ * study together do establish two of the three, and neither establishes the
+ * third.
+ */
+export const cmcCharacterizationStudies = pgTable(
+  'cmc_characterization_studies',
+  {
+    id: serial('id').primaryKey(),
+    organizationId: integer('organization_id')
+      .notNull()
+      .references(() => organizations.id),
+    projectId: text('project_id'),
+    /* Which side of the dossier the study files into. Stored, not guessed:
+       the same rule as `materialRole` on the material register and `purpose`
+       on the dissolution register. */
+    scope: text('scope').default('drug_substance').notNull(),
+    /* structural | physicochemical | biological — decides which of §3.2.S.3.1's
+       three required fields this study can answer. A solubility measurement
+       does not elucidate a structure, and the composer must not read it as if
+       it did. */
+    studyType: text('study_type').default('structural').notNull(),
+    studyTitle: text('study_title').notNull(),
+    technique: text('technique'),
+    attribute: text('attribute'),
+    result: text('result'),
+    /* No default. A number whose unit is assumed is a number that means
+       nothing; the section says the unit is not recorded rather than
+       inventing one. */
+    resultUnit: text('result_unit'),
+    acceptanceReference: text('acceptance_reference'),
+    conclusion: text('conclusion'),
+    studyReference: text('study_reference'),
+    performedBy: text('performed_by'),
+    performedDate: timestamp('performed_date'),
+    /* [{ label, value, unit, note }] — spectra assignments, peak tables, the
+       per-parameter detail behind a single headline result. */
+    supportingData: jsonb('supporting_data'),
+    status: text('status').default('draft').notNull(), // draft | in-review | qualified | retired
+    qualifiedBy: text('qualified_by'),
+    qualificationDate: timestamp('qualification_date'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at').defaultNow().notNull(),
+  },
+  table => ({
+    idx_cmc_characterization_studies_org: index('idx_cmc_characterization_studies_org').on(table.organizationId),
+    idx_cmc_characterization_studies_project: index('idx_cmc_characterization_studies_project').on(table.projectId),
+  })
+);
+
 // Regulatory Documents Table
 export const regulatoryDocuments = pgTable(
   'regulatory_documents',
@@ -3918,6 +4313,48 @@ export const insertDrugProductSchema = createInsertSchemaOmit(drugProducts, {
   updatedAt: true,
 });
 
+export const insertCmcContainerClosureSchema = createInsertSchemaOmit(cmcContainerClosures, {
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertCmcReferenceStandardSchema = createInsertSchemaOmit(cmcReferenceStandards, {
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertCmcImpurityProfileSchema = createInsertSchemaOmit(cmcImpurityProfiles, {
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertCmcDissolutionProfileSchema = createInsertSchemaOmit(cmcDissolutionProfiles, {
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertCmcMaterialSpecSchema = createInsertSchemaOmit(cmcMaterialSpecs, {
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertCmcFormulationRecordSchema = createInsertSchemaOmit(cmcFormulationRecords, {
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertCmcCharacterizationStudySchema = createInsertSchemaOmit(cmcCharacterizationStudies, {
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 // CMC Types
 export type AnalyticalMethod = InferSelectModel<typeof analyticalMethods>;
 export type InsertAnalyticalMethod = z.infer<typeof insertAnalyticalMethodSchema>;
@@ -3933,6 +4370,20 @@ export type DrugSubstance = InferSelectModel<typeof drugSubstances>;
 export type InsertDrugSubstance = z.infer<typeof insertDrugSubstanceSchema>;
 export type DrugProduct = InferSelectModel<typeof drugProducts>;
 export type InsertDrugProduct = z.infer<typeof insertDrugProductSchema>;
+export type CmcContainerClosure = InferSelectModel<typeof cmcContainerClosures>;
+export type InsertCmcContainerClosure = z.infer<typeof insertCmcContainerClosureSchema>;
+export type CmcReferenceStandard = InferSelectModel<typeof cmcReferenceStandards>;
+export type InsertCmcReferenceStandard = z.infer<typeof insertCmcReferenceStandardSchema>;
+export type CmcImpurityProfile = InferSelectModel<typeof cmcImpurityProfiles>;
+export type InsertCmcImpurityProfile = z.infer<typeof insertCmcImpurityProfileSchema>;
+export type CmcDissolutionProfile = InferSelectModel<typeof cmcDissolutionProfiles>;
+export type InsertCmcDissolutionProfile = z.infer<typeof insertCmcDissolutionProfileSchema>;
+export type CmcMaterialSpec = InferSelectModel<typeof cmcMaterialSpecs>;
+export type InsertCmcMaterialSpec = z.infer<typeof insertCmcMaterialSpecSchema>;
+export type CmcFormulationRecord = InferSelectModel<typeof cmcFormulationRecords>;
+export type InsertCmcFormulationRecord = z.infer<typeof insertCmcFormulationRecordSchema>;
+export type CmcCharacterizationStudy = InferSelectModel<typeof cmcCharacterizationStudies>;
+export type InsertCmcCharacterizationStudy = z.infer<typeof insertCmcCharacterizationStudySchema>;
 
 // Regulatory Document Insert Schema
 export const insertRegulatoryDocumentSchema = createInsertSchemaOmit(regulatoryDocuments, {
@@ -4545,48 +4996,6 @@ export type QualityManagementPlan = InferSelectModel<typeof qualityManagementPla
 export type InsertQualityManagementPlan = z.infer<typeof insertQualityManagementPlanSchema>;
 
 /**
- * QMP Audit Trail Table
- *
- * Tracks changes to quality management plans for compliance and audit purposes.
- */
-export const qmpAuditTrail = pgTable(
-  'qmp_audit_trail',
-  {
-    id: serial('id').primaryKey(),
-    organizationId: integer('organization_id')
-      .notNull()
-      .references(() => organizations.id),
-    qmpId: integer('qmp_id')
-      .notNull()
-      .references(() => qualityManagementPlans.id),
-    userId: integer('user_id').references(() => users.id),
-    actionType: text('action_type').notNull(), // create, update, approve, review, retire
-    entityType: text('entity_type').notNull(), // qmp, ctq_factor, section_gate, etc.
-    entityId: text('entity_id').notNull(),
-    description: text('description').notNull(),
-    previousState: json('previous_state'),
-    newState: json('new_state'),
-    ipAddress: text('ip_address'),
-    userAgent: text('user_agent'),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at').defaultNow(),
-  },
-  table => ({
-    idx_qmp_audit_trail_org: index('idx_qmp_audit_trail_org').on(table.organizationId),
-  })
-);
-
-// QMP Audit Trail Insert Schema
-export const insertQmpAuditTrailSchema = createInsertSchemaOmit(qmpAuditTrail, {
-  id: true,
-  createdAt: true,
-});
-
-// QMP Audit Trail Types
-export type QmpAuditTrail = InferSelectModel<typeof qmpAuditTrail>;
-export type InsertQmpAuditTrail = z.infer<typeof insertQmpAuditTrailSchema>;
-
-/**
  * CTQ (Critical-to-Quality) Factors Table
  *
  * Stores critical quality factors with risk-based categorization.
@@ -4733,7 +5142,6 @@ export const qualityManagementPlansRelations = relations(
     }),
     ctqFactors: many(ctqFactors),
     sectionGating: many(qmpSectionGating),
-    auditTrail: many(qmpAuditTrail),
     traceabilityMatrix: many(qmpTraceabilityMatrix),
   })
 );
@@ -5203,56 +5611,6 @@ export const insertSimpleDocumentSchema = createInsertSchemaOmit(simpleDocuments
 // Simple Document Types
 export type SimpleDocument = InferSelectModel<typeof simpleDocuments>;
 export type InsertSimpleDocument = z.infer<typeof insertSimpleDocumentSchema>;
-
-/**
- * Document Audit Log Table
- *
- * Higher-level document version and review tracking for compliance.
- * Use for: version transitions, reviews, approvals, compliance scoring.
- * See also: documentAuditTrail (field-level immutable audit trail)
- */
-export const documentAuditLog = pgTable(
-  'document_audit_log',
-  {
-    id: serial('id').primaryKey(),
-    organizationId: integer('organization_id')
-      .notNull()
-      .references(() => organizations.id),
-    documentId: integer('document_id')
-      .notNull()
-      .references(() => documents.id),
-    userId: integer('user_id')
-      .notNull()
-      .references(() => users.id),
-    action: text('action').notNull(), // created, modified, reviewed, approved, rejected, published, archived, restored
-    previousVersion: text('previous_version'),
-    newVersion: text('new_version').notNull(),
-    changes: json('changes'), // Array of change objects: {field, oldValue, newValue, changeType}
-    metadata: json('metadata'), // contentLength, wordCount, complianceScore, ipAddress, userAgent, sessionId
-    comments: text('comments'),
-    reviewDetails: json('review_details'), // reviewerId, reviewerName, reviewType, decision, feedback
-    complianceScore: integer('compliance_score'), // 0-100 score
-    ipAddress: text('ip_address'),
-    userAgent: text('user_agent'),
-    sessionId: text('session_id'),
-    timestamp: timestamp('timestamp').defaultNow().notNull(),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at').defaultNow(),
-  },
-  table => ({
-    idx_document_audit_log_org: index('idx_document_audit_log_org').on(table.organizationId),
-  })
-);
-
-// Document Audit Log Insert Schema
-export const insertDocumentAuditLogSchema = createInsertSchemaOmit(documentAuditLog, {
-  id: true,
-  timestamp: true,
-});
-
-// Document Audit Log Types
-export type DocumentAuditLogEntry = InferSelectModel<typeof documentAuditLog>;
-export type InsertDocumentAuditLog = z.infer<typeof insertDocumentAuditLogSchema>;
 
 /**
  * Projects Table
@@ -8388,6 +8746,12 @@ export const ectdCompilations = pgTable(
     // index.xml cannot serve as that exact prior state. Nullable: older rows and
     // metadata-only compilations have none.
     leafManifest: json('leaf_manifest'),
+    // Stable per-SUBMISSION key (submissions.id) so a later sequence can locate
+    // the correct prior sequence's leaf_manifest to diff against. application_number
+    // was not reliable for this — some compile paths set it to a sequence-specific
+    // fallback. Nullable: metadata-only / project-level compilations have none.
+    // See db/migrations/20260828_ectd_compilations_submission_id.sql.
+    submissionId: integer('submission_id'),
     // Nullable for the same reason: service-initiated compilations have no
     // interactive user. The one existing writer that set it used a hardcoded 1.
     compiledBy: integer('compiled_by'),
@@ -8404,6 +8768,7 @@ export const ectdCompilations = pgTable(
     compilationModuleIdx: index('ectd_compilations_module_idx').on(table.moduleId),
     compilationStatusIdx: index('ectd_compilations_status_idx').on(table.status),
     compilationDateIdx: index('ectd_compilations_date_idx').on(table.compiledAt),
+    compilationSubmissionSeqIdx: index('ectd_compilations_submission_seq_idx').on(table.submissionId, table.sequenceNumber),
   })
 );
 
@@ -10335,6 +10700,10 @@ export const regQuestions = pgTable(
     region: text('region'), // FDA, EMA, etc.
     dueDate: date('due_date'),
     assignedTo: text('assigned_to'),
+    // The authoring document holding the drafted response ("Draft response" on
+    // the CMC correspondence card). Nullable: linked when a draft exists.
+    // Existing-database half: db/migrations/20260830_reg_questions_response_doc.sql.
+    responseDocId: uuid('response_doc_id'),
     metadata: json('metadata'),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at').defaultNow().notNull(),
@@ -11640,62 +12009,6 @@ export const coauthorDocumentVersions = pgTable(
 );
 
 /**
- * Co-Author Document Status History Table
- *
- * Tracks all status transitions for eCTD Co-Author documents
- * Provides audit trail for document lifecycle management
- */
-export const coauthorStatusHistory = pgTable(
-  'coauthor_status_history',
-  {
-    id: serial('id').primaryKey(),
-    documentId: integer('document_id')
-      .notNull()
-      .references(() => coauthorDocuments.id, { onDelete: 'cascade' }),
-    organizationId: integer('organization_id')
-      .notNull()
-      .references(() => organizations.id),
-
-    // Status Transition Information
-    fromStatus: text('from_status'), // null for initial status
-    toStatus: text('to_status').notNull(), // draft, in-review, approved, published
-
-    // Change Context
-    reason: text('reason'), // Reason for status change
-    comments: text('comments'), // Additional comments or feedback
-
-    // For approval workflow
-    isApproval: boolean('is_approval').default(false), // Whether this is an approval action
-    approvalLevel: text('approval_level'), // Level of approval if applicable (e.g., 'manager', 'director', 'fda')
-
-    // User Information
-    changedById: integer('changed_by_id')
-      .notNull()
-      .references(() => users.id),
-    changedByName: text('changed_by_name').notNull(), // Store name for display even if user is deleted
-    changedByRole: text('changed_by_role'), // User's role at time of change
-
-    // Email Notification Tracking
-    notificationSent: boolean('notification_sent').default(false),
-    notificationSentAt: timestamp('notification_sent_at'),
-    notificationRecipients: json('notification_recipients'), // Array of email addresses
-
-    // Metadata
-    metadata: json('metadata'), // Additional context-specific data
-    changedAt: timestamp('changed_at').defaultNow().notNull(),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at').defaultNow(),
-  },
-  table => ({
-    documentIdx: index('coauthor_status_document_idx').on(table.documentId),
-    orgIdx: index('coauthor_status_org_idx').on(table.organizationId),
-    statusIdx: index('coauthor_status_to_idx').on(table.toStatus),
-    changedByIdx: index('coauthor_status_changed_by_idx').on(table.changedById),
-    changedAtIdx: index('coauthor_status_changed_at_idx').on(table.changedAt),
-  })
-);
-
-/**
  * Component Content Management System (CCMS) Tables
  * For granular component-based storage and versioning
  */
@@ -12047,102 +12360,6 @@ export const insertDocumentVectorSchema = createInsertSchemaOmit(documentVectors
 // Document Vectors Types
 export type DocumentVector = InferSelectModel<typeof documentVectors>;
 export type InsertDocumentVector = z.infer<typeof insertDocumentVectorSchema>;
-
-// Co-Author Status History Insert Schema
-export const insertCoauthorStatusHistorySchema = createInsertSchemaOmit(coauthorStatusHistory, {
-  id: true,
-  changedAt: true,
-});
-
-// Co-Author Status History Types
-export type CoauthorStatusHistory = InferSelectModel<typeof coauthorStatusHistory>;
-export type InsertCoauthorStatusHistory = z.infer<typeof insertCoauthorStatusHistorySchema>;
-
-/**
- * eCTD Co-Author Import History Table
- *
- * Tracks imports from IND submissions into eCTD documents with full audit trail
- */
-export const coauthorImportHistory = pgTable(
-  'coauthor_import_history',
-  {
-    id: serial('id').primaryKey(),
-    organizationId: integer('organization_id')
-      .notNull()
-      .references(() => organizations.id),
-
-    // Import Source
-    sourceType: text('source_type').notNull(), // 'ind_submission', 'ind_document', 'cmc_data', 'csr_data'
-    sourceId: text('source_id').notNull(), // ID of the source record (submission_id, document_id, etc.)
-    indSubmissionId: text('ind_submission_id').references(() => indSubmissions.submissionId),
-
-    // Import Target
-    targetDocumentId: integer('target_document_id')
-      .notNull()
-      .references(() => coauthorDocuments.id, { onDelete: 'cascade' }),
-    targetModule: text('target_module').notNull(), // e.g., 'Module 2.5', 'Module 2.7'
-
-    // Import Details
-    importType: text('import_type').notNull(), // 'full', 'partial', 'merge'
-    sectionsImported: json('sections_imported').notNull(), // Array of section identifiers that were imported
-    fieldMappings: json('field_mappings').notNull(), // Mapping of source fields to target sections
-
-    // Import Result
-    status: text('status').notNull(), // 'pending', 'in_progress', 'completed', 'failed'
-    progress: integer('progress').default(0), // 0-100
-
-    // Content Changes
-    contentBefore: text('content_before'), // Snapshot of content before import
-    contentAfter: text('content_after'), // Snapshot of content after import
-    changesSummary: json('changes_summary'), // Summary of what was changed
-
-    // Data Mapping Configuration
-    mappingConfiguration: json('mapping_configuration'), // Flexible field mapping rules
-    transformationsApplied: json('transformations_applied'), // Any transformations applied during import
-
-    // Conflict Resolution
-    conflictResolution: text('conflict_resolution'), // 'merge', 'overwrite', 'skip'
-    conflicts: json('conflicts'), // Array of conflicts encountered
-
-    // Error Handling
-    errorMessage: text('error_message'),
-    errorDetails: json('error_details'),
-
-    // User Information
-    importedById: integer('imported_by_id')
-      .notNull()
-      .references(() => users.id),
-    importedByName: text('imported_by_name').notNull(),
-
-    // Timestamps
-    startedAt: timestamp('started_at').defaultNow().notNull(),
-    completedAt: timestamp('completed_at'),
-
-    // Metadata
-    metadata: json('metadata'), // Additional import-specific metadata,
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at').defaultNow(),
-  },
-  table => ({
-    orgIdx: index('coauthor_import_org_idx').on(table.organizationId),
-    targetDocIdx: index('coauthor_import_target_doc_idx').on(table.targetDocumentId),
-    sourceIdx: index('coauthor_import_source_idx').on(table.sourceType, table.sourceId),
-    statusIdx: index('coauthor_import_status_idx').on(table.status),
-    indSubmissionIdx: index('coauthor_import_ind_submission_idx').on(table.indSubmissionId),
-    importedByIdx: index('coauthor_import_by_idx').on(table.importedById),
-    startedAtIdx: index('coauthor_import_started_idx').on(table.startedAt),
-  })
-);
-
-// Co-Author Import History Insert Schema
-export const insertCoauthorImportHistorySchema = createInsertSchemaOmit(coauthorImportHistory, {
-  id: true,
-  startedAt: true,
-});
-
-// Co-Author Import History Types
-export type CoauthorImportHistory = InferSelectModel<typeof coauthorImportHistory>;
-export type InsertCoauthorImportHistory = z.infer<typeof insertCoauthorImportHistorySchema>;
 
 /**
  * ======================================================================================
@@ -14197,36 +14414,6 @@ export type InsertCoauthorDocumentVersion = z.infer<typeof insertCoauthorDocumen
  * Includes NER extraction, global change management, and audit trail for 21 CFR Part 11
  */
 
-// AI Audit Log for comprehensive tracking of all AI operations
-export const aiAuditLog = pgTable(
-  'ai_audit_log',
-  {
-    id: uuid('id')
-      .primaryKey()
-      .default(sql`gen_random_uuid()`),
-    transactionId: uuid('transaction_id').unique().notNull(),
-    userId: text('user_id'),
-    aiService: varchar('ai_service', { length: 50 }).notNull(), // 'ner-extract', 'generate-embedding', 'consistency-check'
-    promptFull: text('prompt_full'),
-    modelUsed: varchar('model_used', { length: 50 }),
-    responseStructured: json('response_structured'),
-    affectedUdis: json('affected_udis'), // Array of component UDIs
-    tokensUsed: integer('tokens_used').default(0),
-    success: boolean('success').default(false),
-    approvalStatus: varchar('approval_status', { length: 20 }),
-    digitalSignature: text('digital_signature'),
-    createdAt: timestamp('created_at').defaultNow(),
-    updatedAt: timestamp('updated_at').defaultNow(),
-    ipAddress: varchar('ip_address', { length: 45 }),
-    sessionId: varchar('session_id'),
-  },
-  table => ({
-    transactionIdx: index('ai_audit_transaction_idx').on(table.transactionId),
-    serviceIdx: index('ai_audit_service_idx').on(table.aiService),
-    createdIdx: index('ai_audit_created_idx').on(table.createdAt),
-  })
-);
-
 // Change Requests for global change management
 export const changeRequests = pgTable(
   'change_requests',
@@ -14333,11 +14520,6 @@ export const replacementRules = pgTable(
 );
 
 // Insert schemas for Phase 3 tables
-export const insertAiAuditLogSchema = createInsertSchemaOmit(aiAuditLog, {
-  id: true,
-  createdAt: true,
-});
-
 export const insertChangeRequestSchema = createInsertSchemaOmit(changeRequests, {
   id: true,
   createdAt: true,
@@ -14362,9 +14544,6 @@ export const insertReplacementRuleSchema = createInsertSchemaOmit(replacementRul
 });
 
 // Type definitions for Phase 3 tables
-export type AiAuditLog = InferSelectModel<typeof aiAuditLog>;
-export type InsertAiAuditLog = z.infer<typeof insertAiAuditLogSchema>;
-
 export type ChangeRequest = InferSelectModel<typeof changeRequests>;
 export type InsertChangeRequest = z.infer<typeof insertChangeRequestSchema>;
 
@@ -15032,7 +15211,6 @@ export const documentsRelations = relations(documents, ({ one, many }) => ({
   }),
   versions: many(documentVersions),
   auditTrail: many(documentAuditTrail),
-  auditLog: many(documentAuditLog),
 }));
 
 export const clientWorkspacesRelations = relations(clientWorkspaces, ({ one, many }) => ({

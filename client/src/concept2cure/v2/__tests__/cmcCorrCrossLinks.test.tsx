@@ -187,6 +187,9 @@ describe('CmPathway — logging and closing agency questions', () => {
   beforeEach(() => {
     apiRequest.mockReset();
     delete (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT;
+    // The editor-target channel is one-shot; a target left by one test must
+    // not satisfy an assertion in the next.
+    delete window.C2C_EDITOR_TARGET;
   });
 
   it('Log question POSTs the form and reloads the card from the server', async () => {
@@ -207,7 +210,7 @@ describe('CmPathway — logging and closing agency questions', () => {
     fireEvent.change(await screen.findByLabelText(/Question, as received/), {
       target: { value: 'Justify the scale-up comparability approach.' },
     });
-    fireEvent.change(screen.getByLabelText(/CTD section/), { target: { value: '3.2.S.2' } });
+    fireEvent.change(screen.getByLabelText(/Module 3 section/), { target: { value: '3.2.S.2' } });
     // The dialog's submit shares its label with the card-header opener — the
     // dialog renders after it, so the LAST match is the submit.
     const submits = screen.getAllByRole('button', { name: /^Log question$/ });
@@ -252,6 +255,201 @@ describe('CmPathway — logging and closing agency questions', () => {
     await screen.findByText(/Question closed · §3\.2\.P\.8\.1/);
   });
 
+  it('Close carries the guard: the write names the status this screen read', async () => {
+    const patches: Array<{ body: unknown }> = [];
+    apiRequest.mockImplementation(async (method: string, url: string, body?: unknown) => {
+      if (method === 'PATCH' && url === '/api/cmc/agency-questions/9') {
+        patches.push({ body });
+        return res({ success: true, data: { id: 9, status: 'CLOSED' } });
+      }
+      if (method === 'GET' && url === '/api/cmc/module3-board') return res(CORR_BOARD);
+      return res({ success: true, data: [] });
+    });
+    render(<CmPathway ask={() => {}} />);
+    await screen.findByText('Clarify the shelf-life claim.');
+    fireEvent.click(screen.getByTitle(/Close this question/));
+    fireEvent.click(screen.getByRole('button', { name: /^Close$/ }));
+    await waitFor(() => expect(patches).toHaveLength(1));
+    expect(patches[0].body).toMatchObject({ status: 'CLOSED', expectedStatus: 'OPEN' });
+  });
+
+  it('a DRAFTED question can be SENT FOR REVIEW — the transition the row allows, guarded', async () => {
+    const patches: Array<{ body: unknown }> = [];
+    apiRequest.mockImplementation(async (method: string, url: string, body?: unknown) => {
+      if (method === 'PATCH' && url === '/api/cmc/agency-questions/9') {
+        patches.push({ body });
+        return res({ success: true, data: { id: 9, status: 'IN_REVIEW' } });
+      }
+      if (method === 'GET' && url === '/api/cmc/module3-board') {
+        return res({
+          ...CORR_BOARD,
+          data: { ...CORR_BOARD.data, correspondence: [{ ...CORR_BOARD.data.correspondence[0], status: 'DRAFTED' }] },
+        });
+      }
+      return res({ success: true, data: [] });
+    });
+    render(<CmPathway ask={() => {}} />);
+    await screen.findByText('Clarify the shelf-life claim.');
+    // The opposite leg is not offered on a DRAFTED row.
+    expect(screen.queryByRole('button', { name: /Return to drafting/ })).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: /Send for review/ }));
+    await waitFor(() => expect(patches).toHaveLength(1));
+    expect(patches[0].body).toMatchObject({ status: 'IN_REVIEW', expectedStatus: 'DRAFTED' });
+    await screen.findByText(/Sent for review/);
+  });
+
+  it('an IN_REVIEW question can be RETURNED TO DRAFTING — and only that', async () => {
+    const patches: Array<{ body: unknown }> = [];
+    apiRequest.mockImplementation(async (method: string, url: string, body?: unknown) => {
+      if (method === 'PATCH' && url === '/api/cmc/agency-questions/9') {
+        patches.push({ body });
+        return res({ success: true, data: { id: 9, status: 'DRAFTED' } });
+      }
+      if (method === 'GET' && url === '/api/cmc/module3-board') {
+        return res({
+          ...CORR_BOARD,
+          data: { ...CORR_BOARD.data, correspondence: [{ ...CORR_BOARD.data.correspondence[0], status: 'IN_REVIEW' }] },
+        });
+      }
+      return res({ success: true, data: [] });
+    });
+    render(<CmPathway ask={() => {}} />);
+    await screen.findByText('Clarify the shelf-life claim.');
+    expect(screen.queryByRole('button', { name: /Send for review/ })).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: /Return to drafting/ }));
+    await waitFor(() => expect(patches).toHaveLength(1));
+    expect(patches[0].body).toMatchObject({ status: 'DRAFTED', expectedStatus: 'IN_REVIEW' });
+  });
+
+  it('a stale send-for-review states the 409 and refetches — never a silent overwrite', async () => {
+    let boardCalls = 0;
+    apiRequest.mockImplementation(async (method: string, url: string) => {
+      if (method === 'PATCH' && url === '/api/cmc/agency-questions/9') {
+        const err = new Error('The question is CLOSED now — it changed since this screen loaded. Nothing was updated.');
+        throw err;
+      }
+      if (method === 'GET' && url === '/api/cmc/module3-board') {
+        boardCalls += 1;
+        return res({
+          ...CORR_BOARD,
+          data: { ...CORR_BOARD.data, correspondence: [{ ...CORR_BOARD.data.correspondence[0], status: 'DRAFTED' }] },
+        });
+      }
+      return res({ success: true, data: [] });
+    });
+    render(<CmPathway ask={() => {}} />);
+    await screen.findByText('Clarify the shelf-life claim.');
+    fireEvent.click(screen.getByRole('button', { name: /Send for review/ }));
+    await screen.findByText(/Couldn’t update the question — The question is CLOSED now/);
+    // The stale row is re-read: the honest next state is the server's.
+    await waitFor(() => expect(boardCalls).toBeGreaterThanOrEqual(2));
+  });
+
+  it('the Assigned cell is editable in place: rename PATCHes the owner, blank clears it', async () => {
+    const patches: Array<{ body: unknown }> = [];
+    apiRequest.mockImplementation(async (method: string, url: string, body?: unknown) => {
+      if (method === 'PATCH' && url === '/api/cmc/agency-questions/9') {
+        patches.push({ body });
+        return res({ success: true, data: { id: 9, assignedTo: 'r.lead@example.test' } });
+      }
+      if (method === 'GET' && url === '/api/cmc/module3-board') return res(CORR_BOARD);
+      return res({ success: true, data: [] });
+    });
+    render(<CmPathway ask={() => {}} />);
+    await screen.findByText('Clarify the shelf-life claim.');
+
+    // Unassigned renders as an 'Assign' door, not a dead dash.
+    fireEvent.click(screen.getByRole('button', { name: 'Assign' }));
+    const input = screen.getByLabelText(/Who owns the response/);
+    fireEvent.change(input, { target: { value: 'r.lead@example.test' } });
+    fireEvent.keyDown(input, { key: 'Enter' });
+    await waitFor(() => expect(patches).toHaveLength(1));
+    expect(patches[0].body).toEqual({ assignedTo: 'r.lead@example.test' });
+    await screen.findByText(/Assigned to r\.lead@example\.test/);
+  });
+
+  it('clearing the assignment sends NULL — the server stores the truth, not an empty string', async () => {
+    const patches: Array<{ body: unknown }> = [];
+    apiRequest.mockImplementation(async (method: string, url: string, body?: unknown) => {
+      if (method === 'PATCH' && url === '/api/cmc/agency-questions/9') {
+        patches.push({ body });
+        return res({ success: true, data: { id: 9, assignedTo: null } });
+      }
+      if (method === 'GET' && url === '/api/cmc/module3-board') {
+        return res({
+          ...CORR_BOARD,
+          data: { ...CORR_BOARD.data, correspondence: [{ ...CORR_BOARD.data.correspondence[0], assignedTo: 'old.owner@x' }] },
+        });
+      }
+      return res({ success: true, data: [] });
+    });
+    render(<CmPathway ask={() => {}} />);
+    await screen.findByText('Clarify the shelf-life claim.');
+
+    fireEvent.click(screen.getByRole('button', { name: 'old.owner@x' }));
+    const input = screen.getByLabelText(/Who owns the response/);
+    fireEvent.change(input, { target: { value: '' } });
+    fireEvent.keyDown(input, { key: 'Enter' });
+    await waitFor(() => expect(patches).toHaveLength(1));
+    expect(patches[0].body).toEqual({ assignedTo: null });
+  });
+
+  it('the closed file is readable, and Reopen returns a question to the open list — guarded', async () => {
+    const patches: Array<{ body: unknown }> = [];
+    let closedReads = 0;
+    apiRequest.mockImplementation(async (method: string, url: string, body?: unknown) => {
+      if (method === 'GET' && url === '/api/cmc/agency-questions?status=CLOSED') {
+        closedReads += 1;
+        return res({
+          success: true,
+          data: [
+            {
+              id: 31, question: 'Justify the impurity limit for compound Z.', sectionRef: '3.2.S.4.5',
+              priority: 'medium', severity: 'MAJOR', status: 'CLOSED', region: 'FDA', dueDate: null,
+              overdue: false, assignedTo: 'r.lead@x', responseDocId: 'DOC-ANS', updatedAt: '2026-08-20T09:00:00Z',
+            },
+          ],
+        });
+      }
+      if (method === 'PATCH' && url === '/api/cmc/agency-questions/31') {
+        patches.push({ body });
+        return res({ success: true, data: { id: 31, status: 'DRAFTED' } });
+      }
+      if (method === 'GET' && url === '/api/cmc/module3-board') return res(CORR_BOARD);
+      return res({ success: true, data: [] });
+    });
+    render(<CmPathway ask={() => {}} nav={() => {}} />);
+    await screen.findByText('Clarify the shelf-life claim.');
+
+    fireEvent.click(screen.getByRole('button', { name: /Show the closed file/ }));
+    await screen.findByText('Justify the impurity limit for compound Z.');
+    // The answered response is a door from the history too.
+    expect(screen.getByTitle('Open the response that answered this question')).toBeTruthy();
+
+    fireEvent.click(screen.getByRole('button', { name: /^Reopen$/ }));
+    await waitFor(() => expect(patches).toHaveLength(1));
+    // Reopens to the TRUTHFUL state — DRAFTED, because a response draft is
+    // linked — and only from CLOSED (the guard).
+    expect(patches[0].body).toMatchObject({ status: 'DRAFTED', expectedStatus: 'CLOSED' });
+    // Both halves refetch: the open board (corrEpoch) and the history.
+    await waitFor(() => expect(closedReads).toBeGreaterThanOrEqual(2));
+  });
+
+  it('a failed closed-file read is an ERROR on screen, never an empty history', async () => {
+    apiRequest.mockImplementation(async (method: string, url: string) => {
+      if (method === 'GET' && url === '/api/cmc/agency-questions?status=CLOSED') {
+        return res({ success: false, error: 'The correspondence file could not be read.' }, 500);
+      }
+      if (method === 'GET' && url === '/api/cmc/module3-board') return res(CORR_BOARD);
+      return res({ success: true, data: [] });
+    });
+    render(<CmPathway ask={() => {}} />);
+    await screen.findByText('Clarify the shelf-life claim.');
+    fireEvent.click(screen.getByRole('button', { name: /Show the closed file/ }));
+    await screen.findByText(/Couldn’t read the closed file/);
+    expect(screen.queryByText(/No closed questions yet/)).toBeNull();
+  });
+
   it('a refused log says so and records nothing locally', async () => {
     apiRequest.mockImplementation(async (method: string, url: string) => {
       if (method === 'POST' && url === '/api/cmc/agency-questions') {
@@ -285,6 +483,9 @@ describe('CmPathway — draft response advances the question to DRAFTED', () => 
   beforeEach(() => {
     apiRequest.mockReset();
     delete (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT;
+    // The editor-target channel is one-shot; a target left by one test must
+    // not satisfy an assertion in the next.
+    delete window.C2C_EDITOR_TARGET;
   });
 
   function wireDraft(status: string, patches: Array<{ url: string; body: unknown }>) {
@@ -318,15 +519,19 @@ describe('CmPathway — draft response advances the question to DRAFTED', () => 
 
     fireEvent.click(screen.getByTitle(/Create a governed response draft/));
     await waitFor(() => expect(patches).toHaveLength(1));
-    expect(patches[0].body).toMatchObject({ status: 'DRAFTED' });
+    // The flip carries the LINK: the file records which document holds the
+    // response, so "Open draft" works after any reload.
+    expect(patches[0].body).toMatchObject({ status: 'DRAFTED', responseDocId: 'DOC9' });
     await waitFor(() => expect(navd).toContain('document-authoring'));
+    // The editor opens ON the new draft — the deep-link channel names it.
+    expect(window.C2C_EDITOR_TARGET).toMatchObject({ docId: 'DOC9' });
     // Ordering: the authoring write came before the status flip — a DRAFTED
     // status with no draft behind it would be the dishonest order.
     const urls = apiRequest.mock.calls.map((c) => String(c[1]));
     expect(urls.indexOf('/api/authoring/docs')).toBeLessThan(urls.indexOf('/api/cmc/agency-questions/9'));
   });
 
-  it('a question already IN_REVIEW is not downgraded by re-drafting', async () => {
+  it('a question already IN_REVIEW keeps its status but the LINK follows the new draft', async () => {
     const patches: Array<{ url: string; body: unknown }> = [];
     const navd: string[] = [];
     wireDraft('IN_REVIEW', patches);
@@ -334,7 +539,71 @@ describe('CmPathway — draft response advances the question to DRAFTED', () => 
     await screen.findByText('Clarify the shelf-life claim.');
 
     fireEvent.click(screen.getByTitle(/Create a governed response draft/));
+    await waitFor(() => expect(patches).toHaveLength(1));
+    // The link follows the newest draft; NO status field is sent, so the
+    // reviewer's IN_REVIEW cannot be downgraded, and the guard means a
+    // concurrently closed question answers 409 instead of being re-linked.
+    expect(patches[0].body).toMatchObject({ responseDocId: 'DOC9', expectedStatus: 'IN_REVIEW' });
+    expect((patches[0].body as Record<string, unknown>).status).toBeUndefined();
     await waitFor(() => expect(navd).toContain('document-authoring'));
-    expect(patches).toHaveLength(0);
+  });
+
+  it('a failed link write is SAID, and the user stays on the card — never navigated away from the statement', async () => {
+    const navd: string[] = [];
+    apiRequest.mockImplementation(async (method: string, url: string) => {
+      if (method === 'POST' && url === '/api/authoring/docs') {
+        return res({ success: true, document: { id: 'DOC9', title: 'Response…' } }, 201);
+      }
+      if (method === 'POST' && url === '/api/authoring/sections') {
+        return res({ success: true, section: { id: 'SEC9', code: 'agency_question_response' } }, 201);
+      }
+      if (method === 'PATCH' && url === '/api/cmc/agency-questions/9') {
+        // A concurrent close: the expectedStatus guard answers 409.
+        return res({ success: false, error: 'The question is CLOSED now — it changed since this screen loaded. Nothing was updated.' }, 409);
+      }
+      if (method === 'GET' && url === '/api/cmc/module3-board') return res(CORR_BOARD);
+      return res({ success: true, data: [] });
+    });
+    render(<CmPathway ask={() => {}} nav={(id) => navd.push(id)} />);
+    await screen.findByText('Clarify the shelf-life claim.');
+
+    fireEvent.click(screen.getByTitle(/Create a governed response draft/));
+    // The split state is stated with the server's own sentence…
+    await screen.findByText(/The draft was created, but the correspondence file was not updated — The question is CLOSED now/);
+    // …and the user is NOT navigated into the editor believing the file followed.
+    expect(navd).toHaveLength(0);
+  });
+
+  it('a linked question renders the Open-draft door, which targets the EXACT document', async () => {
+    const navd: string[] = [];
+    apiRequest.mockImplementation(async (method: string, url: string) => {
+      if (method === 'GET' && url === '/api/cmc/module3-board') {
+        return res({
+          ...CORR_BOARD,
+          data: {
+            ...CORR_BOARD.data,
+            correspondence: [
+              { ...CORR_BOARD.data.correspondence[0], status: 'DRAFTED', responseDocId: 'DOC42' },
+            ],
+          },
+        });
+      }
+      return res({ success: true, data: [] });
+    });
+    render(<CmPathway ask={() => {}} nav={(id) => navd.push(id)} />);
+    await screen.findByText('Clarify the shelf-life claim.');
+
+    fireEvent.click(screen.getByTitle('Open the drafted response in the document editor'));
+    expect(navd).toContain('document-authoring');
+    expect(window.C2C_EDITOR_TARGET).toMatchObject({ docId: 'DOC42' });
+  });
+
+  it('an unlinked question offers no Open-draft door — a door must open something', async () => {
+    wireDraft('OPEN', []);
+    render(<CmPathway ask={() => {}} nav={() => {}} />);
+    await screen.findByText('Clarify the shelf-life claim.');
+    expect(
+      screen.queryByTitle('Open the drafted response in the document editor'),
+    ).toBeNull();
   });
 });

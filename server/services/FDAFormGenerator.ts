@@ -424,7 +424,13 @@ export default class FDAFormGenerator {
       applicantName: organization?.name || 'Not Specified',
       deviceName: fda510kProject?.deviceName || 'Not Specified',
       certifierName: workflowData?.certification?.certifierName || workflowData?.setup?.projectLead || '',
-      certifierTitle: workflowData?.certification?.certifierTitle || 'Regulatory Affairs Manager',
+      // Never fabricate the signer's title. It appears in the certification body
+      // ("in my capacity as <title>") and the signature block of a Part 11
+      // certification statement, so an invented 'Regulatory Affairs Manager'
+      // asserts a capacity the signer never claimed — and it counted toward the
+      // stored completeness. Blank until provided; the render shows '(Title)' and
+      // the completeness calc treats it as unfilled (see below).
+      certifierTitle: workflowData?.certification?.certifierTitle || '',
       // Certification attestations are the signer's to make — never hardcode them
       // true. Source each from an explicit input and default to false (unchecked)
       // so a generated draft never pre-certifies compliance the user hasn't affirmed.
@@ -438,11 +444,11 @@ export default class FDAFormGenerator {
         typeof workflowData?.certification?.clinicalStudiesConducted === 'boolean'
           ? workflowData.certification.clinicalStudiesConducted
           : undefined,
-      // Tri-state, for the same reason as clinicalStudies directly above: the
-      // renderer checks the "No financial interests to disclose" box whenever
-      // this is falsy, so `|| false` turned "nobody has answered yet" into an
-      // affirmative 21 CFR Part 54 certification under the certifier's typed
-      // name. Absence is not a disclosure.
+      // Tri-state, same rule as clinicalStudies above: a `|| false` default
+      // auto-checked "No financial interests to disclose (Form FDA 3454
+      // attached)" — an affirmative financial-disclosure certification the signer
+      // never made. Until they explicitly state it, this is undefined and NEITHER
+      // disclosure box is checked (see render).
       financialInterests:
         typeof workflowData?.certification?.financialInterests === 'boolean'
           ? workflowData.certification.financialInterests

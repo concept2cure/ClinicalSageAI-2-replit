@@ -46,11 +46,23 @@ const FDA_SERIOUSNESS_CODES: Record<string, string> = {
   other_medically_important: 'OT',
 };
 
-// Patient sex mapping
+// Patient sex mapping.
+//
+// The administrativeGenderCode element below is emitted with codeSystem
+// 2.16.840.1.113883.5.1 (HL7 AdministrativeGender), whose ONLY defined codes are
+// M / F / UN. The ICH E2B numeric codes (1=Male, 2=Female, 0=Unknown) belong to
+// the bare E2B <patientsex> element (see emaAEE2BR3.ts), NOT to this OID-qualified
+// HL7 v3 coded attribute — emitting them here files an undefined code against the
+// gender code system. Keys cover both the canonical PatientInfo.sex ('M'/'F'/'U')
+// and looser word forms; unknown/undifferentiated maps to 'UN'.
 const FDA_SEX_CODES: Record<string, string> = {
-  male: '1',
-  female: '2',
-  unknown: '0',
+  m: 'M',
+  male: 'M',
+  f: 'F',
+  female: 'F',
+  u: 'UN',
+  un: 'UN',
+  unknown: 'UN',
 };
 
 // Report type mapping
@@ -79,16 +91,38 @@ const FDA_CAUSALITY_CODES: Record<string, string> = {
  */
 function formatFDADate(date: Date | string | undefined, includeTime: boolean = false): string {
   if (!date) return '';
-  const d = new Date(date);
 
   if (includeTime) {
-    return d
+    // Datetime (e.g. message creation time): emit as UTC CCYYMMDDHHMMSS, matching
+    // the sibling EMA generator's formatE2BDateTime.
+    return new Date(date)
       .toISOString()
       .replace(/[-:T]/g, '')
       .replace(/\.\d{3}Z/, '');
   }
 
-  return d.toISOString().split('T')[0].replace(/-/g, '');
+  // Date-only output (CCYYMMDD). Do NOT round-trip through UTC: toISOString()
+  // renders a non-UTC calendar date as the previous/next day, so a stored
+  // 2026-03-15 could file as 20260314 — a data-integrity defect in a safety
+  // report. The date is formatted timezone-agnostically instead.
+  if (typeof date === 'string') {
+    // Take the calendar date verbatim from the leading ISO date (YYYY-MM-DD),
+    // ignoring any time-of-day or timezone portion. Never constructs a Date, so
+    // the result is identical in every runtime timezone.
+    const isoMatch = date.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (isoMatch) {
+      return `${isoMatch[1]}${isoMatch[2]}${isoMatch[3]}`;
+    }
+  }
+
+  // Date object (or non-ISO string): use the local calendar parts, which reflect
+  // the date as constructed rather than after a UTC conversion. Mirrors
+  // formatE2BDate in the sibling EMA generator.
+  const d = new Date(date);
+  const year = d.getFullYear().toString().padStart(4, '0');
+  const month = (d.getMonth() + 1).toString().padStart(2, '0');
+  const day = d.getDate().toString().padStart(2, '0');
+  return `${year}${month}${day}`;
 }
 
 /**
@@ -130,12 +164,14 @@ function generateMessageId(): string {
 }
 
 /**
- * Map ICH sex code to FDA sex code
+ * Map patient sex to the HL7 AdministrativeGender code (M / F / UN) required by the
+ * administrativeGenderCode element's codeSystem 2.16.840.1.113883.5.1. Returns 'UN'
+ * (undifferentiated/unknown) when sex is absent or unrecognised so the emitted code
+ * is always a value defined by that code system.
  */
 function mapSexCode(sex: string | undefined): string {
-  if (!sex) return '0';
-  const ichCode = CODE_SYSTEMS.ICH_SEX[sex.toLowerCase()] || sex;
-  return FDA_SEX_CODES[sex.toLowerCase()] || ichCode || '0';
+  if (!sex) return 'UN';
+  return FDA_SEX_CODES[sex.toLowerCase()] || 'UN';
 }
 
 /**

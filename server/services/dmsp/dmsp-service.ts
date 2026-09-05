@@ -12,6 +12,12 @@
 
 import { pool } from '../../db';
 import {
+  enforceAuthorLineage,
+  enforceSourceAndAuthorLineage,
+  type SourceAndAuthorLineageResult,
+} from '../clinical-regulatory-evidence/lineage-gate';
+import type { RetrievedSource } from '../clinical-regulatory-evidence/source-attribution';
+import {
   dmspElementTemplates,
   evaluateDmspCompleteness,
   type DmspCompletenessResult,
@@ -69,7 +75,7 @@ function assertEditable(status: string): void {
 
 // ─── Elements ──────────────────────────────────────────────────────────────
 
-export async function updateElementTx(client: Queryable, orgId: number, elementId: number, input: { content?: string | null; addressed?: boolean }): Promise<void> {
+export async function updateElementTx(client: Queryable, orgId: number, elementId: number, input: { content?: string | null; addressed?: boolean ; sources?: RetrievedSource[] }, actorUserId: number): Promise<SourceAndAuthorLineageResult | null> {
   const el = await client.query(
     `SELECT e.id, p.status AS plan_status, p.id AS plan_id FROM dms_plan_elements e JOIN dms_plans p ON p.id = e.plan_id
       WHERE e.id = $1 AND e.organization_id = $2 LIMIT 1`,
@@ -81,7 +87,20 @@ export async function updateElementTx(client: Queryable, orgId: number, elementI
     `UPDATE dms_plan_elements SET content = COALESCE($3, content), addressed = COALESCE($4, addressed), updated_at = now() WHERE id = $1 AND organization_id = $2`,
     [elementId, orgId, input.content ?? null, input.addressed ?? null],
   );
+  // Prose gate (ledger L158): the element's text and its lineage commit in the
+  // caller's transaction, exactly as protocol and biosketch sections do. With
+  // `sources` (an AnA draft naming the Data Room passages it quoted) the
+  // verbatim clauses are recorded against those sources and the rest against
+  // the author; without, every clause is the author's assertion. A status-only
+  // edit (content absent) no-ops the gate inside the helper.
+  let lineage: SourceAndAuthorLineageResult | null = null;
+  if (input.sources && input.sources.length > 0 && typeof input.content === 'string') {
+    lineage = await enforceSourceAndAuthorLineage(client, orgId, { documentTable: 'dms_plan_elements', documentId: String(elementId) }, input.content, String(actorUserId), input.sources);
+  } else {
+    await enforceAuthorLineage(client, orgId, { documentTable: 'dms_plan_elements', documentId: String(elementId) }, input.content ?? null, String(actorUserId));
+  }
   await client.query(`UPDATE dms_plans SET status = CASE WHEN status = 'draft' THEN 'in_development' ELSE status END, updated_at = now() WHERE id = $1 AND organization_id = $2`, [el.rows[0].plan_id, orgId]);
+  return lineage;
 }
 
 // ─── Completeness + finalize ─────────────────────────────────────────────────

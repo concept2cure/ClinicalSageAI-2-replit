@@ -228,3 +228,37 @@ describe('buildInvestigatorBrochure (deterministic with mocked AI)', () => {
     expect(partial.completeness).toBeGreaterThan(0);
   });
 });
+
+describe('IB template mode does not report un-drafted sections complete', () => {
+  const fullTemplateRequest: IBBuildRequest = {
+    templateOnly: true,
+    product: { productName: 'BX-115', formulation: '10 mg tablet', physicalChemicalProperties: 'white powder' },
+    nonclinicalOverview: fakeSummary('2.4', 'Repeat-dose tox NOAEL 50 mg/kg.'),
+    clinicalOverview: fakeSummary('2.5', 'Phase 1 PK characterized.'),
+    clinicalSummary: fakeSummary('2.7', 'Favorable safety.'),
+    safety: { identifiedRisks: ['nausea'] }, // NOTE: no marketingExperience
+  };
+
+  it('§1 Summary is NOT rendered in template mode — it still carries the "to be drafted" placeholder', async () => {
+    const job = await buildInvestigatorBrochure(fullTemplateRequest);
+    const summary = job.sections.find(s => s.number === '1')!;
+    // Its input domains are all present, so pre-fix it reported 'rendered'
+    // while the body still said "[Integrated summary to be drafted ...]".
+    expect(summary.content).toMatch(/\[Integrated summary to be drafted/i);
+    expect(summary.status).not.toBe('rendered');
+  });
+
+  it('§5.3 Marketing Experience does not assert "not currently marketed" when unknown', async () => {
+    const job = await buildInvestigatorBrochure(fullTemplateRequest);
+    const marketing = job.sections.find(s => s.number === '5.3')!;
+    expect(marketing.content).not.toMatch(/not currently marketed in any country/i);
+    expect(marketing.content).toMatch(/to be confirmed by the Sponsor/i);
+    expect(marketing.status).not.toBe('rendered');
+  });
+
+  it('a boilerplate section with an optional [Sponsor] placeholder still renders', async () => {
+    const job = await buildInvestigatorBrochure(fullTemplateRequest);
+    const titlePage = job.sections.find(s => s.number === '0')!;
+    expect(titlePage.status).toBe('rendered'); // boilerplate exempt from the placeholder demotion
+  });
+});

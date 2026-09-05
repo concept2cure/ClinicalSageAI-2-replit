@@ -228,9 +228,10 @@ export async function findContradictedClaims(programId: number): Promise<Contrad
  * cross-framework section coverage report needs to be built per-framework.
  */
 export async function programClaimsReport(programId: number) {
-  const [orphanClaims, contradictedClaims] = await Promise.all([
+  const [orphanClaims, contradictedClaims, recorded] = await Promise.all([
     findOrphanClaims(programId),
     findContradictedClaims(programId),
+    countCurrentClaims(programId),
   ]);
 
   return {
@@ -238,8 +239,38 @@ export async function programClaimsReport(programId: number) {
     orphanClaims,
     contradictedClaims,
     summary: {
+      // HOW MANY CLAIMS THERE WERE TO CHECK, reported alongside what was found.
+      //
+      // Without it, `orphanClaimCount: 0, contradictedClaimCount: 0` reads as
+      // "this program's evidence is fully linked and internally consistent" —
+      // and it reads exactly the same way when there are no claims at all.
+      // Those are opposite states. This store currently has no writer anywhere
+      // in the product, so the second is the one every caller actually gets,
+      // and the counts have been reporting a clean bill of health for an
+      // assessment that never ran.
+      //
+      // It matters downstream: evidence-sufficiency takes contradictedClaimCount
+      // as claimHealth, and a zero there withholds a finding from a verdict that
+      // decides whether a submission is cleared for approval.
+      claimsRecorded: recorded,
+      assessed: recorded > 0,
       orphanClaimCount: orphanClaims.length,
       contradictedClaimCount: contradictedClaims.length,
     },
   };
+}
+
+/** Current, non-withdrawn claims for a program — the denominator the counts above need. */
+async function countCurrentClaims(programId: number): Promise<number> {
+  const rows = await db
+    .select({ id: evidenceClaims.id })
+    .from(evidenceClaims)
+    .where(
+      and(
+        eq(evidenceClaims.programId, programId),
+        eq(evidenceClaims.isCurrent, true),
+        sql`${evidenceClaims.status} not in ('withdrawn','superseded')`
+      )
+    );
+  return rows.length;
 }

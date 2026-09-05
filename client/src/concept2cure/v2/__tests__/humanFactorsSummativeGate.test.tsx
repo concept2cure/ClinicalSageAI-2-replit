@@ -77,7 +77,13 @@ function mount() {
 }
 
 /** The one sentence the gate prints when it is CLEAR. */
-const CLEAR = /summative usability testing may proceed/i;
+/* Was /summative usability testing may proceed/i. That sentence was removed on
+   purpose: summative readiness rests on the whole HFE/UE file, and under
+   IEC 62366-1 residual-risk acceptability is a documented manufacturer
+   determination — neither follows from a count of unmitigated critical tasks,
+   so the screen no longer asserts either. The gate still clears; it now reports
+   what the analysis FOUND, and that is what this matcher looks for. */
+const CLEAR = /No unmitigated critical tasks/i;
 const BLOCKED = /must be mitigated before summative testing/i;
 
 /** The completeness sentence is split across <b> nodes, so read the tree. */

@@ -361,14 +361,9 @@ function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: strin
         tabIndex={0}
         onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') fileRef.current?.click(); }}
         aria-label="Add sources to this project"
-        style={{
-          border: '1px dashed var(--border,#d0d5dd)', borderRadius: 10, padding: '14px 16px',
-          display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer',
-          background: dragging ? 'var(--accent-muted,#eef2ff)' : 'transparent', marginBottom: 12,
-        }}
       >
         <span aria-hidden="true">{I.paperclip}</span>
-        <span style={{ fontSize: 13 }}>
+        <span className="pj-dropzone-t">
           <b>Add sources</b> — drop files here or click to browse. They&rsquo;re read on upload and
           become available to AnA for this project.
         </span>
@@ -476,10 +471,6 @@ function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: strin
                   <div
                     key={s.id}
                     className="pj-src"
-                    style={{
-                      display: 'flex', alignItems: 'center', gap: 10, padding: '8px 10px',
-                      borderBottom: '1px solid var(--border-subtle,#eaecf0)',
-                    }}
                   >
                     {/* Pin as context. Only a source whose text was actually
                         read can ground a draft, so an unreadable one cannot be
@@ -626,6 +617,34 @@ const SCHED_STATUS_TONE: Record<string, string> = {
   at_risk: 'tone-warn',
   slipped: 'tone-warn',
   blocked: 'tone-warn',
+};
+
+/**
+ * The program-header status chip was hardcoded `tone-ok`, so a program whose
+ * recorded status was blocked, at_risk or on_hold wore a GREEN pill — a health
+ * verdict drawn without consulting the value it was tied to. A director scanning
+ * the top of the page for at-a-glance health read green-next-to-"blocked" as
+ * good news. `status` is a free-text column, so this maps the values that
+ * carry a verdict and defaults everything else to NEUTRAL: an unknown status
+ * must never read as healthy.
+ */
+const PROGRAM_STATUS_TONE: Record<string, string> = {
+  active: 'tone-ok',
+  on_track: 'tone-ok',
+  completed: 'tone-ok',
+  at_risk: 'tone-warn',
+  blocked: 'tone-warn',
+  slipped: 'tone-warn',
+  on_hold: 'tone-warn',
+  suspended: 'tone-warn',
+  cancelled: 'tone-warn',
+  inactive: 'tone-idle',
+  archived: 'tone-idle',
+};
+/** Same defect one chip over: "priority: low" wore a warn tone. */
+const PRIORITY_TONE: Record<string, string> = {
+  critical: 'tone-warn',
+  high: 'tone-warn',
 };
 
 function SchedulePanel({ pid, onAsk }: { pid: string | null; onAsk: (q: string) => void }) {
@@ -1179,7 +1198,7 @@ export function ProjectHome({ onNav, onAsk, segment }: SurfaceViewProps) {
       availableActions: [
         'Move through the programme lifecycle stages',
         'Open a recent draft section in the document editor',
-        'Open this project\u2019s documents in the Vault surface, or its filings in the Submission Center',
+        'Open this project’s documents in the Vault surface, or its filings in the Submission Center',
         'Read the per-module completion rollup and the recent audited activity',
       ],
     };
@@ -1239,8 +1258,8 @@ export function ProjectHome({ onNav, onAsk, segment }: SurfaceViewProps) {
             {submissionType && <span className="rd-chip tone-idle">{submissionType}</span>}
             {region && <span className="rd-chip tone-idle">{region}</span>}
             {indication && <span className="rd-chip tone-idle">{indication}</span>}
-            {status && <span className="rd-chip tone-ok">{status}</span>}
-            {priority && <span className="rd-chip tone-warn">priority: {priority}</span>}
+            {status && <span className={`rd-chip ${PROGRAM_STATUS_TONE[status] ?? 'tone-idle'}`}>{status}</span>}
+            {priority && <span className={`rd-chip ${PRIORITY_TONE[priority] ?? 'tone-idle'}`}>priority: {priority}</span>}
             {phase && <span className="rd-chip tone-idle">{phase}</span>}
           </div>
         </div>

@@ -70,21 +70,108 @@ async function ensureChatTables(): Promise<void> {
  * @param userId - Optional user ID to associate
  * @param prefix - Thread ID prefix ('thread' for legacy, 'cortex' for Cortex)
  */
+/**
+ * A caller-supplied thread id that this caller may not use.
+ *
+ * `THREAD_FORBIDDEN` — the thread exists in the caller's organization but is
+ * owned by a different user. There is no sharing model for AnA conversations,
+ * so a colleague's transcript is not readable or appendable by id.
+ */
+export class ThreadAccessError extends Error {
+  readonly code: 'THREAD_FORBIDDEN';
+  readonly threadId: string;
+  constructor(code: 'THREAD_FORBIDDEN', threadId: string) {
+    super(`${code}: thread ${threadId} is not accessible to this caller`);
+    this.name = 'ThreadAccessError';
+    this.code = code;
+    this.threadId = threadId;
+  }
+}
+
+function threadOwnerMatches(rowUserId: unknown, userId: number | string | null | undefined): boolean {
+  // A thread with no recorded owner (legacy / system-created rows) is scoped by
+  // organization alone. A thread WITH an owner is that user's: an unidentified
+  // caller does not get it either.
+  if (rowUserId === null || rowUserId === undefined) return true;
+  if (userId === null || userId === undefined || userId === '') return false;
+  return String(rowUserId) === String(userId);
+}
+
+/**
+ * Resolve a caller-supplied thread id AS THE CALLER: scoped to the caller's
+ * organization and, where the thread has an owner, to that owner.
+ *
+ * ── Why this exists ───────────────────────────────────────────────────────────
+ * getOrCreateThread used to accept any id after `SELECT id FROM chat_threads
+ * WHERE id = $1` — no organization predicate, no owner predicate — and the
+ * AnA stream route then loaded that thread's last twenty messages into the
+ * model context and appended the caller's message to it. With Row-Level
+ * Security enforcing, the org half of that was caught by the policy on
+ * chat_threads / chat_messages (the request-scoped micro-transaction carries
+ * the tenant); with it off (dev, staging, any system-scoped code path) it was
+ * a cross-tenant read AND write by id. The policy is org-keyed, so the
+ * cross-USER half — a colleague's conversation, by an id of the shape
+ * `ana-ri_<timestamp>_<9 base36 chars>` — was never caught anywhere.
+ *
+ * Returns null when no thread of that id exists IN THIS ORGANIZATION. A
+ * foreign organization's row is never resolved, so the caller cannot learn
+ * whether the id exists elsewhere; getOrCreateThread simply mints a fresh
+ * thread, which is what it always did for an unknown id.
+ *
+ * @throws ThreadAccessError THREAD_FORBIDDEN — the thread exists here and is
+ *         owned by someone else.
+ */
+export async function resolveAccessibleThread(
+  threadId: string,
+  organizationId: number | null | undefined,
+  userId?: number | string | null
+): Promise<{ id: string; user_id: number | null; organization_id: number | null } | null> {
+  await ensureChatTables();
+  const orgId = organizationId === null || organizationId === undefined ? null : Number(organizationId);
+  // No organization to scope by → nothing can be proven about the id, so it
+  // resolves to nothing. Callers without a tenant get a fresh thread.
+  if (orgId === null || !Number.isFinite(orgId)) return null;
+  const existing = await pool.query(
+    'SELECT id, user_id, organization_id FROM chat_threads WHERE id = $1 AND organization_id = $2',
+    [threadId, orgId]
+  );
+  const row = existing.rows[0] as
+    | { id: string; user_id: number | null; organization_id: number | null }
+    | undefined;
+  if (!row) return null;
+  if (!threadOwnerMatches(row.user_id, userId)) {
+    throw new ThreadAccessError('THREAD_FORBIDDEN', threadId);
+  }
+  return row;
+}
+
+/**
+ * Return `threadId` when the caller may use it, otherwise create a new thread
+ * for the caller. A caller-supplied id is honoured ONLY when it resolves in the
+ * caller's organization to a thread the caller owns (or that has no owner);
+ * see resolveAccessibleThread. Anything else — unknown id, an id that exists
+ * only in another tenant, no tenant to scope by — mints a fresh thread, so no
+ * foreign row is ever read or written through this function.
+ *
+ * @throws ThreadAccessError when the id names a colleague's thread.
+ */
 export async function getOrCreateThread(
   threadId: string | null,
-  userId?: number,
+  userId?: number | string | null,
   prefix: string = 'thread',
   organizationId?: number | null
 ): Promise<string> {
   await ensureChatTables();
   if (threadId) {
-    const existing = await pool.query('SELECT id FROM chat_threads WHERE id = $1', [threadId]);
-    if (existing.rows.length > 0) return threadId;
+    const accessible = await resolveAccessibleThread(threadId, organizationId, userId);
+    if (accessible) return accessible.id;
   }
   const newId = `${prefix}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  const ownerId =
+    userId === null || userId === undefined || userId === '' ? null : Number(userId);
   await pool.query(
     'INSERT INTO chat_threads (id, user_id, organization_id, created_at, updated_at) VALUES ($1, $2, $3, NOW(), NOW())',
-    [newId, userId || null, organizationId || null]
+    [newId, Number.isFinite(ownerId as number) ? ownerId : null, organizationId || null]
   );
   return newId;
 }
@@ -109,6 +196,23 @@ export async function ensureThread(
      ON CONFLICT (id) DO NOTHING`,
     [threadId, userId ?? null, organizationId ?? null]
   );
+  // ON CONFLICT DO NOTHING is silent about WHOSE row won. A stable external id
+  // that already exists in another organization, or under another owner, must
+  // not be handed back as if it were this caller's — that is the same hole as
+  // the caller-supplied id above, reached through a different door.
+  const row = (
+    await pool.query('SELECT user_id, organization_id FROM chat_threads WHERE id = $1', [threadId])
+  ).rows[0] as { user_id: number | null; organization_id: number | null } | undefined;
+  if (row) {
+    const wantOrg = organizationId === null || organizationId === undefined ? null : Number(organizationId);
+    const haveOrg = row.organization_id === null ? null : Number(row.organization_id);
+    if (haveOrg !== null && wantOrg !== null && haveOrg !== wantOrg) {
+      throw new ThreadAccessError('THREAD_FORBIDDEN', threadId);
+    }
+    if (!threadOwnerMatches(row.user_id, userId)) {
+      throw new ThreadAccessError('THREAD_FORBIDDEN', threadId);
+    }
+  }
   return threadId;
 }
 

@@ -3,21 +3,34 @@ import { z } from 'zod';
 import { db } from '../db';
 import { auditEvents, projects, clientWorkspaces, organizations } from '@shared/schema';
 import { and, eq } from 'drizzle-orm';
-import quotaEnforcementService from '../services/quotaEnforcementService.js';
 import { getRequestActor, getTenantContext } from '../utils/tenantContext';
 import { emitRuleEvent } from '../services/rules-engine';
 import { createScopedLogger } from '../utils/logger.js';
 
 const log = createScopedLogger('projects-management');
 
-// Destructured off the default export. getActiveLicenseForOrganization is a
-// named export of the (untyped .js) service, but its ambient type only surfaces
-// a default, so a named import fails typecheck. The runtime bug this once hid —
-// the function being absent from the default object, so this bound `undefined`
-// and every handler threw "getActiveLicenseForOrganization is not a function" —
-// is fixed at the source: the default export in quotaEnforcementService.js is
-// now exhaustive and includes it.
-const { getActiveLicenseForOrganization } = quotaEnforcementService;
+// ── Why there is no `licenses` check in this router ────────────────────────
+//
+// Every handler here used to open with a lookup of
+// `licenses WHERE organization_id = $1 AND status = 'active'` and answered
+// 403 'No active license for this organization' when it found nothing. No
+// writer in the platform produces that row: the licenses table is the
+// consultant → client-workspace licence (keyed by client_id, reached through
+// client_workspaces.organization_id), and the only writer it ever had — the
+// license-management router, since removed because every one of its handlers
+// threw — never set organization_id. So the check could only ever deny —
+// on a fresh install, on a paying enterprise tenant, on every organization —
+// and the V2 task board and collaboration launcher, which read /api/projects,
+// showed the 403 as an error on day one. It was a third gate with its own dead
+// rule set on top of the two that actually decide access:
+//   · the tenant lifecycle guard on the /api boundary (organization status and
+//     payment posture — server/middleware/tenantLifecycleGuard.ts), and
+//   · the module entitlement gate mounted across every route family
+//     (/api/projects belongs to the `projects` and `project-home` modules —
+//     server/middleware/moduleEntitlementGate.ts).
+// Project quotas are enforced where the project is created
+// (atomicCreateProject reads the workspace and organization limits). One
+// decision per question; this router asks none of them twice.
 
 const router = Router();
 
@@ -62,11 +75,6 @@ router.get('/', async (req, res) => {
       // security-allow: source-telemetry
       from: req.headers['x-organization-id'] ? 'header' : 'query',
     });
-
-    const license = await getActiveLicenseForOrganization(organizationId);
-    if (!license) {
-      return res.status(403).json({ error: 'No active license for this organization' });
-    }
 
     // Get projects from database
     const orgProjects = await db
@@ -114,11 +122,6 @@ router.get('/:projectId', async (req, res) => {
       return res.status(400).json({ error: 'Invalid project ID' });
     }
 
-    const license = await getActiveLicenseForOrganization(organizationId);
-    if (!license) {
-      return res.status(403).json({ error: 'No active license for this organization' });
-    }
-
     const whereClause = clientWorkspaceId
       ? and(
           eq(projects.id, projectId),
@@ -163,11 +166,6 @@ router.post('/', async (req, res) => {
       });
     }
     const organizationId = authenticatedOrgId;
-
-    const license = await getActiveLicenseForOrganization(organizationId);
-    if (!license) {
-      return res.status(403).json({ error: 'No active license for this organization' });
-    }
 
     // Find an available client workspace for the organization first
     const availableClients = await db
@@ -241,6 +239,14 @@ router.post('/', async (req, res) => {
         quotaInfo?: unknown;
       }>;
     };
+    // The authenticated user's numeric id, for created_by_id / owner_id and the
+    // audit row. Identities that are not users rows (a non-numeric subject)
+    // record null rather than a made-up id.
+    const rawActorId = (req as any).user?.id ?? (req as any).user?.userId;
+    const actorUserId =
+      rawActorId != null && Number.isInteger(Number(rawActorId)) && Number(rawActorId) > 0
+        ? Number(rawActorId)
+        : null;
     const result = await atomicQuotaService.atomicCreateProject(organizationId, {
       name: validatedData.name,
       description: validatedData.description || null,
@@ -249,6 +255,7 @@ router.post('/', async (req, res) => {
       dueDate: validatedData.dueDate ? new Date(validatedData.dueDate) : null,
       clientWorkspaceId: clientWorkspaceId,
       status: 'active',
+      createdById: actorUserId,
     });
 
     if (!result.success) {
@@ -260,7 +267,7 @@ router.post('/', async (req, res) => {
           details: result.details,
         });
       }
-      return res.status(400).json({
+      return res.status(result.error === 'ORGANIZATION_NOT_FOUND' ? 404 : 400).json({
         success: false,
         error: result.error,
         message: result.message,
@@ -279,7 +286,7 @@ router.post('/', async (req, res) => {
         eventType: 'project_create',
         entityType: 'project',
         entityId: result.data.id,
-        userId: null,
+        userId: actorUserId,
         userName,
         userRole,
         ipAddress: req.ip,
@@ -337,11 +344,6 @@ router.delete('/:projectId', async (req, res) => {
 
     if (Number.isNaN(projectId)) {
       return res.status(400).json({ error: 'Invalid project ID' });
-    }
-
-    const license = await getActiveLicenseForOrganization(organizationId);
-    if (!license) {
-      return res.status(403).json({ error: 'No active license for this organization' });
     }
 
     // Check if project exists
@@ -414,11 +416,6 @@ router.patch('/:projectId', async (req, res) => {
 
     if (Number.isNaN(projectId)) {
       return res.status(400).json({ error: 'Invalid project ID' });
-    }
-
-    const license = await getActiveLicenseForOrganization(organizationId);
-    if (!license) {
-      return res.status(403).json({ error: 'No active license for this organization' });
     }
 
     const updates = updateProjectSchema.parse(req.body);

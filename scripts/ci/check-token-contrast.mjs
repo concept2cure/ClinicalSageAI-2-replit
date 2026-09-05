@@ -78,6 +78,14 @@ const ENFORCED = [
   ['text-200', 'bg-000'],
   ['text-300', 'bg-000'],
   ['text-300', 'bg-100'],
+  /* --bg-200 is the hover and sunken fill. It was never asserted against any
+     text token, so every pair in this file answered "is this readable on the
+     page" and none answered "is it readable on the fill the page puts under
+     rows". This list applies to BOTH themes, and --text-300 on --bg-200 is
+     4.90 in dark but 4.39 in light — so it cannot be enforced here without
+     asserting something false about light. It is pinned in EXCEPTIONS instead,
+     at the light figure, which is the honest split rather than the convenient
+     one. */
   ['error', 'bg-000'],
   ['error', 'bg-100'],
   ['error', 'error-muted'],
@@ -185,7 +193,36 @@ const EXCEPTIONS = [
       + 'because bg-100/bg-200 still fall short (4.13 / 3.84) — see '
       + '`npm run visual-qa:contrast-why`' },
   { theme: 'light', fg: 'text-500', bg: 'bg-000', min: 2.11,
-    why: 'faintest ramp step, 22 files; verify each use is disabled/decorative' },
+    why: 'faintest ramp step. 2026-09-03 discharged the "verify each use is '
+      + 'disabled/decorative" half: every separator class in the product used '
+      + 'it (18 declarations across 11 stylesheets, one of which had already '
+      + 'been moved to --text-400 on its own), so the ramp step was colouring '
+      + 'breadcrumb and metadata glyphs at 2.11:1. All 18 now take --text-400 '
+      + '(4.50:1) — subordinate to the --text-300 crumbs beside them at 5.21:1, '
+      + 'and perceivable. What is left on --text-500 is genuinely disabled or '
+      + 'ornamental' },
+
+  /* The grounds this file did not look at until 2026-09-03.
+     Every text pair here was asserted against --bg-000 alone, so a token could
+     pass the gate and still fail AA on the sidebar (--bg-100) and the hover /
+     sunken fill (--bg-200) — the two other surfaces text lands on. Measured,
+     three of the six fall short. Recorded rather than enforced for the same
+     reason the ramp above is: darkening the ramp again reaches every surface.
+     Pinned so they can only improve, and so the number is visible.
+     `visual-qa:contrast` measures what actually renders and finds no failing
+     element in these pairs today — that is why they are exceptions and not
+     failures, and it is a fact about which fills currently carry text, not a
+     property of the tokens. */
+  { theme: 'light', fg: 'text-400', bg: 'bg-100', min: 4.08,
+    why: 'muted ramp on the sidebar fill; passes on --bg-000 (4.50) and not here' },
+  { theme: 'light', fg: 'text-400', bg: 'bg-200', min: 3.79,
+    why: 'muted ramp on the hover / sunken fill — the worst light text pair in the palette' },
+  { theme: 'light', fg: 'text-300', bg: 'bg-200', min: 4.39,
+    why: 'the body-muted step on the hover fill, 0.11 short; ENFORCED on --bg-000 and --bg-100' },
+  { theme: 'dark', fg: 'text-400', bg: 'bg-100', min: 3.93,
+    why: 'same ramp, dark side' },
+  { theme: 'dark', fg: 'text-400', bg: 'bg-200', min: 3.24,
+    why: 'same ramp, dark side — the worst text pair in either theme' },
   { theme: 'dark', fg: 'text-400', bg: 'bg-000', min: 4.50,
     why: 'same ramp, dark side; #8e8c84, raised from 4.27 to an AA pass' },
   { theme: 'dark', fg: 'text-500', bg: 'bg-000', min: 2.76,

@@ -23,7 +23,6 @@
 
 import { Router, Request, Response } from 'express';
 import archiver from 'archiver';
-import { createHash } from 'crypto';
 import { z } from 'zod';
 import rateLimit from 'express-rate-limit';
 import { and, eq } from 'drizzle-orm';
@@ -37,7 +36,10 @@ import {
 } from '../export/renderers';
 import { PassThrough } from 'stream';
 import { authMiddleware } from '../auth';
-import { createGovernedExportConsequence } from '../services/export/governedExportConsequence';
+import {
+  createGovernedExportConsequence,
+  createAuditedUnplacedExport,
+} from '../services/export/governedExportConsequence';
 import {
   applyExportGovernanceHeaders,
   evaluateExportGovernance,
@@ -47,7 +49,6 @@ import { requestDb } from '../db/requestDb';
 import { fda510kProjects, projects } from '../../shared/schema';
 import { regulatoryPrograms } from '../../shared/schema/programs';
 import { resolveProgramProjectAnchor } from '../services/c2c/program-project-anchor';
-import auditService from '../services/auditService';
 import {
   loadAuthoredDeviceSections,
   sectionsToEditorJson,
@@ -344,8 +345,9 @@ async function resolveExportRequest(
  * Delivery path for program-spine (UUID) anchors with no PM-spine project row:
  * the artifact registry cannot place the export yet, so deliver the file and
  * audit-log it with its SHA-256 (provenance preserved), saying plainly that
- * registry placement is pending rather than pretending it happened. Mirrors
- * the audited-unplaced contract in 510k-estar-routes.ts.
+ * registry placement is pending rather than pretending it happened. The ONE
+ * implementation is `createAuditedUnplacedExport` (shared with the eSTAR and
+ * technical-file routes); this is only the res.json adapter.
  */
 async function respondAuditedUnplaced(
   req: Request,
@@ -361,40 +363,20 @@ async function respondAuditedUnplaced(
     metadata: Record<string, unknown>;
   }
 ) {
-  const sha256 = createHash('sha256').update(opts.buffer).digest('hex');
-  await auditService.logAction({
+  const body = await createAuditedUnplacedExport({
     organizationId: (req as any).resolvedOrganizationId,
     userId: getUserId(req),
-    action: 'EXPORT_GENERATED',
+    sourceType: opts.sourceType,
+    backendRoute: opts.backendRoute,
     resourceType: 'cerv2_export',
     resourceId: opts.programUuid ?? opts.fallbackResourceId,
-    details: {
-      backendRoute: opts.backendRoute,
-      sourceType: opts.sourceType,
-      filename: opts.filename,
-      sha256,
-      artifactRegistry: 'unplaced_pending_document_identity_contract',
-      ...opts.metadata,
-    },
+    programUuid: opts.programUuid,
+    filename: opts.filename,
+    mimeType: opts.mimeType,
+    buffer: opts.buffer,
+    metadata: opts.metadata,
   });
-
-  return res.status(200).json({
-    governed: false,
-    audited: true,
-    source_type: opts.sourceType,
-    artifact_id: null,
-    artifact_registry:
-      'unplaced — artifact registry requires a PM-spine project row; ' +
-      'export is audit-logged with its SHA-256 (pending document-identity contract)',
-    program_id: opts.programUuid,
-    sha256,
-    downloadable_output_ref: {
-      encoding: 'base64',
-      mime_type: opts.mimeType,
-      filename: opts.filename,
-      data: opts.buffer.toString('base64'),
-    },
-  });
+  return res.status(200).json(body);
 }
 
 const sanitizeFilename = (value: string) =>
@@ -551,9 +533,14 @@ router.post('/pdf', authMiddleware, requireEditorAccess, async (req: Request, re
       pdfBuffer = await renderCombinedPdf(docType, content);
     } catch (renderErr: any) {
       logger.error('PDF render failed', { err: renderErr instanceof Error ? renderErr.message : String(renderErr) });
+      // renderErr.message is the renderer's own text — font paths, temp-file
+      // locations, spawn errors. The stable code stays; the detail goes to the log.
+      logger.error('PDF rendering failed', {
+        err: renderErr instanceof Error ? renderErr.message : String(renderErr),
+      });
       return res.status(500).json({
         error: 'PDF rendering failed',
-        message: renderErr.message || 'The document could not be converted to PDF',
+        message: 'The document could not be converted to PDF. The problem has been logged.',
       });
     }
 
@@ -632,9 +619,12 @@ router.post('/docx', authMiddleware, requireEditorAccess, async (req: Request, r
       docxBuffer = await renderCombinedDocx(docType, content);
     } catch (renderErr: any) {
       logger.error('DOCX render failed', { err: renderErr instanceof Error ? renderErr.message : String(renderErr) });
+      logger.error('DOCX rendering failed', {
+        err: renderErr instanceof Error ? renderErr.message : String(renderErr),
+      });
       return res.status(500).json({
         error: 'DOCX rendering failed',
-        message: renderErr.message || 'The document could not be converted to DOCX',
+        message: 'The document could not be converted to DOCX. The problem has been logged.',
       });
     }
 

@@ -27,7 +27,6 @@ import {
   scaffoldProjectDocuments,
   type ScaffoldResult,
 } from '../../services/c2c/scaffold-project-documents.js';
-import { createSubmissionTx } from '../../services/submission-service/submission-service.js';
 import {
   ensureProgramProjectAnchor,
   type AnchorResult,
@@ -49,11 +48,22 @@ import {
 } from '../../../shared/constants/domain/vault-taxonomy.js';
 import { sectionHasContentSql, completeStatusSqlList } from '../../services/c2c/section-content.js';
 import {
-  listProductTypes,
   productTypeForFilingType,
   DEVICE_FAMILY_PRODUCT_TYPES,
   workstreamSqlCase,
 } from '../../../shared/constants/domain/product-types.js';
+/* The create endpoint's validation tables (VALID_PROGRAM_TYPES /
+   VALID_PRODUCT_TYPES / DRUG_APPLICATION_TYPES) and its canonical
+   submission-spine plumbing live in ./project-intake.ts — pure domain helpers
+   with no route or tenancy logic, split out when this file outgrew the repo
+   line-count gate. */
+import {
+  VALID_PROGRAM_TYPES,
+  VALID_PRODUCT_TYPES,
+  DRUG_APPLICATION_TYPES,
+  ensureSubmissionSpine,
+  baseCodeFrom,
+} from './project-intake.js';
 import {
   devicePathFor,
   normalizeDeviceClassification,
@@ -97,20 +107,67 @@ const router = Router();
  * do I provision?" — is answered by one log lookup on an id the user can read
  * off the screen and quote, so nothing is lost except the disclosure.
  */
-function pendingStore(
+/**
+ * Returns null when the 42P01 is NOT a provisioning problem, so the caller
+ * reports a server error instead.
+ *
+ * A 42P01 names a relation in its message and the route used to take that name
+ * at face value. It is not always the cause. On this route the golden drug-NDA
+ * journey produces `relation "audit_logs" does not exist` from inside the
+ * project-creation transaction while `to_regclass('public.audit_logs')` returns
+ * the table — so the operator was being told to provision a store that is
+ * already there, on the one code path whose whole job is to say what is wrong.
+ * A false diagnosis on a fail-closed path is worse than a generic one: it sends
+ * the reader somewhere confidently, and the second hop dead-ends too.
+ *
+ * So the relation is CHECKED before it is named. If it resolves, this is not a
+ * missing store and the caller must not say it is.
+ */
+async function pendingStore(
   err: unknown,
   step: string,
   req: Request,
-): { error: string; step: string; message: string; correlationId: string } {
+): Promise<{ error: string; step: string; message: string; correlationId: string } | null> {
   const raw = (err as { message?: string })?.message ?? '';
   const match = /relation "([^"]+)" does not exist/i.exec(raw);
   const store = match ? match[1] : null;
   const correlationId = (req as unknown as { requestId?: string }).requestId || randomUUID();
 
+  // Verified on a FRESH connection: the one the error came from may be in an
+  // aborted transaction, where every further statement fails regardless.
+  let resolves: boolean | null = null;
+  if (store) {
+    try {
+      const probe = await pool.query('SELECT to_regclass($1) AS reg', [store]);
+      resolves = Boolean((probe.rows[0] as { reg?: string } | undefined)?.reg);
+    } catch {
+      // Could not check. Say so rather than asserting either way.
+      resolves = null;
+    }
+  }
+
+  if (resolves === true) {
+    logger.error('42P01 names a relation that EXISTS — not a provisioning failure', {
+      correlationId,
+      step,
+      store,
+      code: (err as { code?: string })?.code ?? null,
+      route: req.originalUrl,
+      detail: raw.slice(0, 300),
+    });
+    return null;
+  }
+
   logger.error('Store not provisioned — request failed closed', {
     correlationId,
     step,
     store,
+    // Three-valued on purpose: 'absent' means to_regclass was asked and said
+    // no; 'unverified' means the check itself could not run (an aborted
+    // transaction fails every further statement) and the claim below is an
+    // assumption. Collapsing those two would make an unchecked guess read
+    // exactly like a confirmed finding.
+    storeCheck: resolves === false ? 'absent' : 'unverified',
     code: (err as { code?: string })?.code ?? null,
     route: req.originalUrl,
   });
@@ -306,151 +363,6 @@ function allowProgramMutation(
  *  and none bucket into MDX / Biotech / Pharma (the surface's filter tabs). */
 const WS_CASE = workstreamSqlCase('p.program_type');
 
-/** Canonical program / product types accepted by the create endpoint. Program
- *  types line up with WS_CASE above; product types match the store's CHECK-free
- *  but conventional set (drug/biologic/device/ivd). */
-const VALID_PROGRAM_TYPES = new Set([
-  '510k', 'de_novo', 'pma', 'ivd', 'device', 'cer', 'ide',
-  // 'cta' was mapped in PROGRAM_TO_DOC_TYPE and backed by a rule pack, but was
-  // missing here — so the API rejected the one European filing a biotech running
-  // trials needs most. Opened now that cta:ema carries a real CTR 536/2014
-  // outline (migrations/20260806); opening it against the previous two-node pack
-  // would have shipped the hollow dossier this codebase spent a migration ending.
-  'ind', 'cta', 'bla', 'biologic', 'nda', 'maa', 'jnda', 'anda',
-  // EU MDR / IVDR technical documentation. Thirteen registry rows offered these
-  // and every one created a US NDA, because the API had no value for them to
-  // land on. Backed by real packs as of migrations/20260810b.
-  'mdr', 'ivdr',
-]);
-const VALID_PRODUCT_TYPES = new Set<string>(listProductTypes());
-
-/**
- * Program types whose intake must also create the canonical `submissions` row —
- * the spine every canonical-core surface reads (IndLifecycle checklist,
- * NdaCockpit, SubmissionCenter sequences, DispatchReadiness). Value = the
- * canonical submissions.application_type. Only concrete drug/biologic
- * APPLICATION types map; 'biologic' is a product class with no named
- * application, and inventing one ('bla'?) would fabricate a filing identity the
- * customer never declared, so it is deliberately absent. Device/IVD program
- * types (510k/pma/mdr/…) run on their own pathway stores, not this spine.
- */
-const DRUG_APPLICATION_TYPES: Record<string, string> = {
-  ind: 'ind',
-  cta: 'cta',
-  nda: 'nda',
-  bla: 'bla',
-  maa: 'maa',
-  jnda: 'jnda',
-  anda: 'anda',
-};
-
-/** productType (validated: drug|biologic|device|ivd) → canonical clientType. */
-const CLIENT_TYPE_BY_PRODUCT: Record<string, string> = {
-  drug: 'pharma',
-  biologic: 'biotech',
-  device: 'mdx',
-  ivd: 'ivd',
-};
-
-/** Wizard agency values → canonical submissions.primary_region. */
-const AGENCY_TO_REGION: Record<string, string> = {
-  FDA: 'fda',
-  EMA: 'eu',
-  PMDA: 'jp',
-  MHRA: 'uk',
-  HEALTH_CANADA: 'ca',
-  TGA: 'au',
-  NMPA: 'cn',
-  SWISSMEDIC: 'ch',
-  ANVISA: 'br',
-  CDSCO: 'in',
-  MFDS: 'kr',
-  HSA: 'sg',
-};
-
-/** Region each application type files in when the agency doesn't say. Total
- *  over DRUG_APPLICATION_TYPES, so a region always resolves deterministically. */
-const REGION_BY_APPLICATION: Record<string, string> = {
-  ind: 'fda',
-  nda: 'fda',
-  bla: 'fda',
-  anda: 'fda',
-  cta: 'eu', // CTR 536/2014 — the cta rule pack is cta:ema
-  maa: 'eu',
-  jnda: 'jp',
-};
-
-/**
- * Ensure the canonical submission spine for a drug-program intake, INSIDE the
- * caller's transaction.
- *
- * Idempotent by the SAME identity convention the ind-checklist-view-assembler
- * uses to match program ↔ submission (product_name / title, case-insensitive,
- * per application type): when a matching submission already exists in the org
- * it is linked rather than duplicated, so re-creating a program for the same
- * product never forks a second spine. When none exists, the row is created via
- * the canonical submission-service insert on this client — commit and rollback
- * are atomic with the program.
- *
- * Fail-closed: any error propagates so the whole transaction rolls back — a
- * drug program without its submission spine is exactly the permanently-empty
- * canonical core this exists to end.
- */
-async function ensureSubmissionSpine(params: {
-  client: PoolClient;
-  orgId: number;
-  userId: number;
-  /** Program name → submissions.title (assembler identity key). */
-  name: string;
-  /** Program product_name → submissions.product_name (assembler identity key). */
-  productName: string;
-  applicationType: string;
-  productType: string;
-  primaryAgency: string;
-}): Promise<{ id: number; created: boolean }> {
-  const { client, orgId, userId, name, productName, applicationType } = params;
-  const identityKeys = [...new Set([productName, name].map((v) => v.trim().toLowerCase()).filter(Boolean))];
-  const existing = await client.query(
-    `SELECT id FROM submissions
-      WHERE organization_id = $1 AND deleted_at IS NULL
-        AND lower(application_type) = $2
-        AND (lower(coalesce(product_name, '')) = ANY($3) OR lower(title) = ANY($3))
-      ORDER BY updated_at DESC NULLS LAST, id DESC
-      LIMIT 1`,
-    [orgId, applicationType, identityKeys],
-  );
-  if (existing.rows.length > 0) {
-    return { id: Number((existing.rows[0] as { id: number | string }).id), created: false };
-  }
-  const region =
-    AGENCY_TO_REGION[params.primaryAgency.toUpperCase().replace(/\s+/g, '_')] ??
-    REGION_BY_APPLICATION[applicationType];
-  const row = await createSubmissionTx(
-    client,
-    {
-      title: name,
-      productName,
-      applicationType,
-      clientType: CLIENT_TYPE_BY_PRODUCT[params.productType],
-      primaryRegion: region,
-    },
-    { organizationId: orgId, userId },
-  );
-  return { id: Number(row.id), created: true };
-}
-
-/** A tester-friendly, org-unique program code derived from the product/name. */
-function baseCodeFrom(productName: string, name: string): string {
-  const src = (productName || name || 'PRJ').trim();
-  // Keep an existing "BX-204"-style code intact; else initials of the words.
-  const cleaned = src.replace(/[^A-Za-z0-9\- ]/g, '').trim();
-  if (/^[A-Za-z]{1,4}[- ]?\d{2,4}$/.test(cleaned)) {
-    return cleaned.replace(/\s+/g, '-').toUpperCase();
-  }
-  const initials = cleaned.split(/\s+/).map((w) => w[0] ?? '').join('').slice(0, 4).toUpperCase();
-  return initials || 'PRJ';
-}
-
 // ── GET /api/c2c/projects ─────────────────────────────────────────────────────
 //
 // Portfolio list shaped to the v2 Projects surface's display contract
@@ -636,7 +548,9 @@ router.post('/', async (req: Request, res: Response) => {
     // documented PENDING_STORE contract rather than reporting a missing table
     // as a billing refusal.
     if ((e as { code?: string })?.code === '42P01') {
-      return res.status(503).json(pendingStore(e, 'the licensed-program quota check', req));
+      const pending = await pendingStore(e, 'the licensed-program quota check', req);
+      if (pending) return res.status(503).json(pending);
+      return serverError(res, logger, 'the licensed-program quota check', e);
     }
     throw e;
   }
@@ -916,7 +830,9 @@ router.post('/', async (req: Request, res: Response) => {
     });
   } catch (err: unknown) {
     if ((err as { code?: string })?.code === '42P01') {
-      return res.status(503).json(pendingStore(err, 'creating the project', req));
+      const pending = await pendingStore(err, 'creating the project', req);
+      if (pending) return res.status(503).json(pending);
+      return serverError(res, logger, 'creating the project', err);
     }
     return serverError(res, logger, 'creating the project', err);
   }
@@ -1151,7 +1067,9 @@ router.get('/:id/evidence', async (req: Request, res: Response) => {
     // cannot distinguish "no pinned evidence" from "the query failed".
     if ((err as { code?: string })?.code === '42P01') {
       // c2c_project_pinned_evidence may not exist in all environments yet.
-      return res.status(503).json(pendingStore(err, 'reading pinned evidence', req));
+      const pending = await pendingStore(err, 'reading pinned evidence', req);
+      if (pending) return res.status(503).json(pending);
+      return serverError(res, logger, 'reading pinned evidence', err);
     }
     return serverError(res, logger, 'loading the pinned evidence', err, { programId: String(req.params.id) });
   }
@@ -1270,7 +1188,9 @@ router.get('/:id/activity', async (req: Request, res: Response) => {
     // The activity feed is an audit-log read; a caught failure must not render
     // as an empty feed (indistinguishable from a project with no activity).
     if ((err as { code?: string })?.code === '42P01') {
-      return res.status(503).json(pendingStore(err, 'reading the activity feed', req));
+      const pending = await pendingStore(err, 'reading the activity feed', req);
+      if (pending) return res.status(503).json(pending);
+      return serverError(res, logger, 'reading the activity feed', err);
     }
     return serverError(res, logger, 'loading the project activity', err, { programId: String(req.params.id) });
   }

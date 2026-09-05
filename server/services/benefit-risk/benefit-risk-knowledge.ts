@@ -567,11 +567,13 @@ export function structureBenefitRiskFramework(
   }
   const benefitScore = benefits.length > 0 ? round(benefitAgg / benefits.length, 3) : 0;
   const benefitConclusion =
-    benefitScore >= 0.55
-      ? 'The demonstrated benefit is clinically meaningful and supported with acceptable certainty.'
-      : benefitScore >= 0.3
-        ? 'The benefit is modest or carries notable uncertainty; its weight in the balance is limited.'
-        : 'The benefit is small or insufficiently substantiated to anchor a favourable conclusion.';
+    benefits.length === 0
+      ? 'No benefits were characterized on the supplied evidence; the Benefit row cannot anchor any favourable weight.'
+      : benefitScore >= 0.55
+        ? 'The demonstrated benefit is clinically meaningful and supported with acceptable certainty.'
+        : benefitScore >= 0.3
+          ? 'The benefit is modest or carries notable uncertainty; its weight in the balance is limited.'
+          : 'The benefit is small or insufficiently substantiated to anchor a favourable conclusion.';
 
   // ── Row 4: Risk and Risk Management ───────────────────────────────────────
   const riskEvidence: string[] = [];
@@ -602,12 +604,18 @@ export function structureBenefitRiskFramework(
     riskAgg += s * rev * manage;
   }
   const riskScore = risks.length > 0 ? round(riskAgg / risks.length, 3) : 0;
+  // riskScore is 0 both when risks are genuinely minimal AND when NO risks were
+  // characterized; only the latter must not read as a favourable safety finding.
+  // An uncharacterized safety profile is a non-determination, not "readily
+  // manageable" — the seal is the wrong place to imply a risk grade nobody gave.
   const riskConclusion =
-    riskScore >= 0.6
-      ? 'The principal risks are serious and/or irreversible; effective risk management is essential to a favourable conclusion.'
-      : riskScore >= 0.35
-        ? 'The risks are of moderate concern and appear addressable through labeling and routine pharmacovigilance.'
-        : 'The identified risks are limited in severity and reversibility and are readily manageable.';
+    risks.length === 0
+      ? 'No risks were characterized on the supplied evidence; the safety profile is not established and no risk determination can be made.'
+      : riskScore >= 0.6
+        ? 'The principal risks are serious and/or irreversible; effective risk management is essential to a favourable conclusion.'
+        : riskScore >= 0.35
+          ? 'The risks are of moderate concern and appear addressable through labeling and routine pharmacovigilance.'
+          : 'The identified risks are limited in severity and reversibility and are readily manageable.';
 
   const rows: FdaFrameworkRow[] = [
     {
@@ -635,7 +643,19 @@ export function structureBenefitRiskFramework(
   // Integrated narrative — deterministic composition of the four rows.
   const net = round(benefitScore - riskScore, 3);
   let netPhrase: string;
-  if (net >= 0.2) {
+  // A directional balance requires BOTH sides characterized. With either side
+  // empty, net is an artefact of a zero score (an uncharacterized dimension),
+  // not a real margin — so net>=0 must NOT read as "benefit exceeds risk".
+  // Refuse the direction and name what was not characterized.
+  if (benefits.length === 0 || risks.length === 0) {
+    const missing =
+      benefits.length === 0 && risks.length === 0
+        ? 'neither benefit nor risk was characterized'
+        : benefits.length === 0
+          ? 'no benefit was characterized'
+          : 'no risk was characterized';
+    netPhrase = `the overall balance cannot be determined on the supplied evidence, because ${missing}`;
+  } else if (net >= 0.2) {
     netPhrase = 'the weight of benefit clearly exceeds the weight of risk';
   } else if (net >= 0.0) {
     netPhrase = 'benefit modestly exceeds risk, with the margin sensitive to risk management';
@@ -1143,7 +1163,11 @@ export function assessBenefitRiskBalance(
 
   // ── Verdict (deterministic thresholds) ────────────────────────────────────
   let verdict: BRVerdict;
-  if (benefits.length === 0) {
+  // Both sides must be characterized for a directional verdict. Guarding only
+  // empty benefits let benefits-with-no-risks reach 'favourable' (riskWeight 0
+  // → high net) against an uncharacterized safety profile — a favourable
+  // determination the evidence does not support. Empty EITHER side ⇒ indeterminate.
+  if (benefits.length === 0 || risks.length === 0) {
     verdict = 'indeterminate';
   } else if (net >= 0.18 && confidence >= 0.65) {
     verdict = 'favourable';

@@ -65,6 +65,58 @@ export const SOURCE_ID_KIND: Record<DocumentSourceSystem, 'integer' | 'uuid'> = 
 };
 
 /**
+ * How a source store is NAMED to a reader.
+ *
+ * A leaf in a sequence points at its source row polymorphically, as
+ * (documentTable, documentId). Both halves are internal: `coauthor_documents`
+ * is a relation name and `#501` is a primary key, and the Submission Center
+ * was rendering the pair verbatim into the leaf table — "coauthor_documents
+ * #501" — on a screen whose reader is a regulatory director. That is the
+ * information-disclosure class the house forbids in client copy
+ * (BIOPHARMA_WORK_ORDER guardrail 3; scripts/ci/check-internals-in-copy.mjs),
+ * and it is also simply unreadable: the relation tells the reader nothing
+ * about which document they are looking at.
+ *
+ * This is the one place that answers "what do we CALL that store". Both the
+ * leaf table and the placement dialog read it, so the vocabulary cannot drift
+ * between the screen that places a document and the screen that lists it.
+ *
+ * The id is deliberately KEPT. It is how a reader raises the row with support
+ * and how an auditor ties a leaf to its source — what changes is that it is
+ * now qualified by a name that means something ("Authored document #501"),
+ * not by a relation.
+ */
+export const DOCUMENT_STORE_LABEL: Readonly<Record<string, string>> = Object.freeze({
+  coauthor_documents: 'Authored document',
+  unified_documents: 'Module document',
+  ctd_onboarding_documents: 'Uploaded file',
+  vault_documents: 'Vault document',
+  concept2cure_artifacts: 'AnA draft',
+  authoring_sections: 'Authored section',
+  authoring_documents: 'Authored document',
+  q_sub_section_bodies: 'Q-Sub section',
+  labeling_pi_sections: 'Labeling section',
+  protocol_sections: 'Protocol section',
+  protocol_documents: 'Protocol',
+  biosketch_sections: 'Biosketch section',
+});
+
+/**
+ * The reader-facing name of a source store, with the id appended when there is
+ * one: `documentSourceLabel('coauthor_documents', 501)` → 'Authored document #501'.
+ *
+ * An UNRECOGNISED store falls back to 'Filed document' rather than to the raw
+ * relation name. Falling back to the name would mean every store added after
+ * this map was written leaks by default — the failure mode has to be the safe
+ * one, not the informative one, because nobody re-reads a fallback branch when
+ * they add a table.
+ */
+export function documentSourceLabel(table: string | null | undefined, id?: string | number | null): string {
+  const name = (table && DOCUMENT_STORE_LABEL[table]) || 'Filed document';
+  return id == null || id === '' ? name : `${name} #${id}`;
+}
+
+/**
  * A typed reference from the canonical document to a row in a source system.
  * `nativeId` is ALWAYS the string form of the row's real id — this is what lets
  * an integer writer and a UUID writer coexist under one canonical identity.

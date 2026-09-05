@@ -18,15 +18,26 @@
   <module-1 title="Administrative Information and Prescribing Information">
     <m1-1 title="Forms">
       <m1-1-1 title="Form FDA 1571 - Investigational New Drug Application"/>
-      <m1-1-2 title="Form FDA 3674 - Certification: Financial Interests and Arrangements"/>
+      <m1-1-2 title="Form FDA 1572 - Statement of Investigator"/>
+      <m1-1-3 title="Form FDA 3674 - Certification of Compliance (ClinicalTrials.gov)"/>
     </m1-1>
     <m1-2 title="Cover Letters">
       <m1-2-1 title="Cover Letter"/>
     </m1-2>
     <m1-3 title="Administrative Information">
       <m1-3-1 title="Contact and Manufacturing Information"/>
-      <m1-3-2 title="Environmental Assessment"/>
+      <m1-3-4 title="Financial Certification and Disclosure (Forms FDA 3454/3455)"/>
     </m1-3>
+    <m1-12 title="Other Correspondence">
+      <m1-12-14 title="Environmental Analysis"/>
+    </m1-12>
+    <m1-14 title="Labeling">
+      <m1-14-4 title="Investigational Drug Labeling">
+        <m1-14-4-1 title="Investigator's Brochure"/>
+        <m1-14-4-2 title="Investigational Drug Labeling"/>
+      </m1-14-4>
+    </m1-14>
+    <m1-20 title="General Investigational Plan for Initial IND"/>
   </module-1>
   
   <module-2 title="Common Technical Document Summaries">

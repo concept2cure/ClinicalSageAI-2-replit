@@ -1,8 +1,9 @@
-import React, { useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { I } from '../icons';
 import { useLiveRows, useLiveData, EmptyState } from '../dataConnect';
 import { apiRequest, serverMessage } from '@/lib/queryClient';
 import { usePublishSurfaceContext } from '../surfaceContext';
+import { useSurfaceActionHandlers, notifySurfaceActionReady } from '../surfaceActions';
 import type { SurfaceViewProps } from '../surfaceViews';
 import {
   // Canonical reference config (kept — not fixture DATA): the node-type display
@@ -23,7 +24,7 @@ function dlTime(iso: string): string {
   try {
     const d = new Date(iso);
     return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
-  } catch (_e) {
+  } catch {
     return iso;
   }
 }
@@ -60,6 +61,36 @@ export function DecisionLineage({ onAsk }: SurfaceViewProps) {
 
   const [sel, setSel] = useState(0);
   const g: LineageGraph | undefined = graphs[sel] || graphs[0];
+
+  /* AnA can open the lineage graph for an artifact by its label — the same row
+     click a person makes — so a drive can land on a specific artifact's
+     derivation. Resolved against the REAL graphs with honest misses; held
+     (retry) while they load, re-attempted on the ready signal below. */
+  useSurfaceActionHandlers('decision-lineage', {
+    'decision-lineage.select-graph': (params) => {
+      const raw = String(params.artifact ?? '').trim();
+      if (!raw) return { ok: false, reason: 'Name an artifact by its label.' };
+      if (loading) return { ok: false, reason: 'The lineage graphs are still loading.', retry: true };
+      if (error) return { ok: false, reason: 'The lineage graphs did not load, so there are none to open.' };
+      if (graphs.length === 0) return { ok: false, reason: 'No decision-lineage graphs are recorded yet.' };
+      const needle = raw.toLowerCase();
+      let idx = graphs.findIndex((x) => x.artifactLabel.toLowerCase() === needle);
+      if (idx < 0) {
+        const partial = graphs
+          .map((x, i) => ({ label: x.artifactLabel.toLowerCase(), i }))
+          .filter((p) => p.label.includes(needle));
+        if (partial.length === 0) return { ok: false, reason: `No artifact labelled "${raw}".` };
+        if (partial.length > 1) return { ok: false, reason: `"${raw}" matches ${partial.length} artifacts — name one exactly.` };
+        idx = partial[0].i;
+      }
+      if (sel === idx) return { ok: true, detail: `Already on ${graphs[idx].artifactLabel}` };
+      setSel(idx);
+      return { ok: true, detail: `Opened ${graphs[idx].artifactLabel}` };
+    },
+  });
+  useEffect(() => {
+    if (!loading && !error) notifySurfaceActionReady('decision-lineage');
+  }, [loading, error]);
 
   // Export runner state — which format is in flight, and the last error (shown
   // inline by the export controls). The surface has no toast; keep it contained.
@@ -193,18 +224,26 @@ export function DecisionLineage({ onAsk }: SurfaceViewProps) {
      three-valued on purpose — verified, broken, and not-yet-answered are three
      different facts, and collapsing the third into "broken" would have AnA
      report tampering on a slow endpoint. */
-  const anaContext = useMemo(
-    () => ({
-      summary: loading
-        ? 'Decision lineage, still loading the org\'s governed decision trails.'
-        : error
-          ? 'Decision lineage could not be loaded — the trails are unavailable, not empty.'
-          : empty
-            ? 'Decision lineage: no governed decision trails recorded for this org yet.'
-            : `Decision lineage: ${graphs.length} governed trail(s)` +
-              (g ? `, "${g.artifactLabel}" selected with ${g.nodes?.length ?? 0} node(s)` : '') + '.',
+  const anaContext = useMemo(() => {
+    // Publish NO counts while loading or on a failed read — a zeroed trailCount
+    // beside an 'error' flag reads as a false "0 governed trails" on a Part-11
+    // audit-trail surface. Only the success branch carries facts.
+    if (loading) {
+      return { summary: 'Decision lineage, still loading the org\'s governed decision trails.' };
+    }
+    if (error) {
+      return {
+        summary: 'Decision lineage could not be loaded — the trails are unavailable, not empty.',
+        availableActions: ['Retry the decision-lineage read'],
+      };
+    }
+    return {
+      summary: empty
+        ? 'Decision lineage: no governed decision trails recorded for this org yet.'
+        : `Decision lineage: ${graphs.length} governed trail(s)` +
+          (g ? `, "${g.artifactLabel}" selected with ${g.nodes?.length ?? 0} node(s)` : '') + '.',
       facts: {
-        trailsState: loading ? 'loading' : error ? 'error' : empty ? 'empty' : 'ready',
+        trailsState: empty ? 'empty' : 'ready',
         trailCount: graphs.length,
         ...(g
           ? {
@@ -227,9 +266,8 @@ export function DecisionLineage({ onAsk }: SurfaceViewProps) {
         'Explain what the hash-chain verification result means',
         'Export this lineage trail',
       ],
-    }),
-    [loading, error, empty, graphs.length, g, chainState.loading, chain],
-  );
+    };
+  }, [loading, error, empty, graphs.length, g, chainState.loading, chain]);
   usePublishSurfaceContext('decision-lineage', anaContext);
 
   return (

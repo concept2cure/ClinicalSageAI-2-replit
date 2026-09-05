@@ -30,6 +30,17 @@ function ok(data: unknown) {
   return { ok: true, status: 200, json: async () => data } as Response;
 }
 
+/* An expired-token 401 as authenticateToken returns it. apiRequest does NOT
+   throw on 401, so this response reaches the caller — the case that used to fall
+   through Vault's filing handler into a fabricated success. */
+function unauthorized() {
+  return {
+    ok: false,
+    status: 401,
+    json: async () => ({ error: { code: 'AUTH_002', message: 'Invalid or expired token' } }),
+  } as Response;
+}
+
 function uploadDoc(over: Record<string, unknown> = {}) {
   return {
     id: `up-${DOC_ID}`,
@@ -295,5 +306,41 @@ describe('Vault — filing decisions are governed commits, not local patches', (
     // The tree is re-read from the server — what the Vault shows is what it stored.
     await waitFor(() => expect(reads).toBeGreaterThan(before));
     expect(await screen.findByText(/Filed to Module 3 · Quality/)).toBeTruthy();
+  });
+
+  it('a rejected filing (expired session) is reported as refused, never as recorded', async () => {
+    /* apiRequest does not reject on 401, so a refused filing RETURNS here rather
+       than throwing into the catch. Before the fix the handler skipped res.ok
+       and landed on the tone:'ok' branch, telling the user the placement was
+       "Recorded in the audit trail" — a Part 11 claim on a write that never
+       happened. The fix guards res.ok and reports the refusal. */
+    let reads = 0;
+    let filed = false;
+    mockApi(
+      () => {
+        reads += 1;
+        return ok(vaultPayload());
+      },
+      () => {
+        filed = true;
+        return unauthorized();
+      },
+    );
+    render(<Vault {...props()} />);
+
+    await screen.findByTestId('vault-filing-block');
+    const before = reads;
+    fireEvent.click(screen.getByTestId('vault-confirm-filing'));
+
+    await waitFor(() => expect(filed).toBe(true));
+    const body = () => document.body.textContent ?? '';
+    // Never the fabricated success, in any of its wordings.
+    await waitFor(() =>
+      expect(/Recorded in the audit trail|Filed to|Moved to Unfiled/i.test(body())).toBe(false),
+    );
+    // It says the filing was refused.
+    expect(/was not recorded/i.test(body())).toBe(true);
+    // And it does not re-read the tree as if something changed.
+    expect(reads).toBe(before);
   });
 });

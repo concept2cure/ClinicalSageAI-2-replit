@@ -81,6 +81,9 @@ export function normalizeRegion(input?: string): CtdRegion {
 // ── Module 1 — regional administrative (per region) ────────────────────────────
 
 const M1_FDA: CtdSectionDef[] = [
+  // FDA eCTD Module 1 Specification v2.3 headings — the same list the packager
+  // derives its us-regional.xml elements from (controlled-vocab/cv-v4-data.ts).
+  // Held to that list by tests/regulatory/fda-module1-numbering.test.ts.
   { code: '1.1', title: 'Forms (FDA 356h, 1571/1572, 3674)', required: true, regulatoryRef: 'FDA eCTD M1 v2.3' },
   { code: '1.2', title: 'Cover letter', required: true, aiDraftable: true },
   {
@@ -88,8 +91,10 @@ const M1_FDA: CtdSectionDef[] = [
     title: 'Administrative information',
     required: true,
     children: [
-      { code: '1.3.1', title: 'Contact / sponsor / applicant information', required: true },
+      { code: '1.3.1', title: 'Contact / sponsor / applicant information (changes of address, agent, sponsor, ownership)', required: false },
+      { code: '1.3.3', title: 'Debarment certification (marketing applications)', required: false },
       { code: '1.3.4', title: 'Financial certification and disclosure (3454/3455)', required: true },
+      { code: '1.3.5', title: 'Patent information, patent certification, exclusivity claim', required: false },
     ],
   },
   {
@@ -101,12 +106,32 @@ const M1_FDA: CtdSectionDef[] = [
       { code: '1.4.2', title: 'Statements of right of reference', required: false },
     ],
   },
-  { code: '1.5', title: 'Application status (debarment, etc.)', required: false },
+  { code: '1.5', title: 'Application status (withdrawal, inactivation, reactivation, reinstatement)', required: false },
   { code: '1.6', title: 'Meeting materials (pre-IND / pre-NDA / Type B-C)', required: false, aiDraftable: true },
-  { code: '1.9', title: 'Pediatric administrative information (PSP)', required: false },
-  { code: '1.11', title: 'Information about the product', required: false },
-  { code: '1.12', title: 'Other correspondence (incl. environmental analysis)', required: false },
-  { code: '1.14', title: 'Labeling (proposed / annotated labeling, PI, Medication Guide)', required: true, aiDraftable: true },
+  { code: '1.9', title: 'Pediatric administrative information (PSP, waivers, deferrals)', required: false },
+  { code: '1.11', title: 'Information amendment: information not covered under Modules 2 to 5', required: false },
+  {
+    code: '1.12',
+    title: 'Other correspondence',
+    required: false,
+    children: [
+      { code: '1.12.1', title: 'Pre-IND correspondence', required: false },
+      { code: '1.12.14', title: 'Environmental analysis / claim of categorical exclusion', required: true, aiDraftable: true },
+    ],
+  },
+  { code: '1.13', title: 'Annual report', required: false, aiDraftable: true },
+  {
+    code: '1.14',
+    title: 'Labeling',
+    required: true,
+    aiDraftable: true,
+    children: [
+      { code: '1.14.1', title: 'Draft labeling (proposed / annotated PI, Medication Guide, carton and container)', required: false, aiDraftable: true },
+      { code: '1.14.4.1', title: "Investigator's brochure (IND)", required: false, aiDraftable: true },
+      { code: '1.14.4.2', title: 'Investigational drug labeling (IND)', required: false },
+    ],
+  },
+  { code: '1.20', title: 'Introductory statement and general investigational plan (initial IND)', required: false, aiDraftable: true, regulatoryRef: '21 CFR 312.23(a)(3)' },
 ];
 
 const M1_EMA: CtdSectionDef[] = [

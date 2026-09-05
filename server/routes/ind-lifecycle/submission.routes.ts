@@ -6,7 +6,7 @@
 
 import { Router } from 'express';
 import { requireRole } from '../../middleware/auth';
-import { validateSequenceLeaves } from '../../services/ind-lifecycle/ind-sequence-validation';
+import { validateSequenceLeaves, filingTypeForSequence } from '../../services/ind-lifecycle/ind-sequence-validation';
 import { buildPackageManifest } from '../../services/ind-lifecycle/ind-package-manifest';
 import { evaluateDispatchGate } from '../../services/ind-lifecycle/ind-dispatch-gate';
 import { deriveIndActionItems } from '../../services/ind-lifecycle/ind-action-items';
@@ -19,7 +19,7 @@ import { buildIndPortfolio, buildIndPortfolioEntry, isIndSubmission, buildPortfo
 import { getLatestDispatchSnapshot } from '../../services/ind-lifecycle/ind-dispatch-snapshot-service';
 import { getSubmission, listSubmissions, listSequences, listLeaves } from '../../services/submission-service/submission-service';
 import { getCrossReferenceRegister } from '../../services/ind-lifecycle/ind-cross-reference-persistence';
-import { AUTHOR, limiter, ctxOf, body, fail, noAuth, readinessFrom, validationFrom } from './shared';
+import { AUTHOR, limiter, ctxOf, body, fail, noAuth, readinessFrom, validationFrom, filingTypeParam, FILING_TYPE_VALUES } from './shared';
 
 const router = Router();
 
@@ -32,14 +32,17 @@ function submissionIdOf(raw: string | string[] | undefined): number | null {
 
 /**
  * Build a snapshot-annotated dispatch gate for every sequence in a submission.
- * Shared by the cockpit and drift routes.
+ * Shared by the cockpit and drift routes. Each sequence is validated as the
+ * filing type its stored type + leaves imply (filingTypeForSequence) unless the
+ * body pins one for all of them.
  */
 async function annotatedGatesForSubmission(
   sequences: Awaited<ReturnType<typeof listSequences>>,
   b: any,
   ctx: Ctx,
 ): Promise<SequenceGateSummary[]> {
-  const filingType = b.filingType === 'amendment' ? 'amendment' : 'initial';
+  const explicitFilingType = filingTypeParam(b.filingType);
+  if (explicitFilingType === null) throw new Error(`VALIDATION: filingType must be one of ${FILING_TYPE_VALUES}.`);
   const readiness = readinessFrom(b.readinessInput);
   const clock = b.clockInput?.receiptDate ? evaluateRegulatoryClock(b.clockInput) : null;
   const timeline = b.timelineInput?.receiptDate ? buildIndTimeline(b.timelineInput) : null;
@@ -54,6 +57,7 @@ async function annotatedGatesForSubmission(
   return Promise.all(
     sequences.map(async (seq) => {
       const leaves = await listLeaves(seq.id, ctx);
+      const filingType = explicitFilingType ?? filingTypeForSequence(seq.type, leaves);
       const sequenceValidation = validateSequenceLeaves({ filingType, leaves: leaves.map((l) => ({ sectionCode: l.sectionCode })) });
       const manifest = buildPackageManifest({
         sequenceNumber: seq.sequenceNumber,

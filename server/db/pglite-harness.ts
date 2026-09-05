@@ -177,6 +177,7 @@ CREATE TABLE IF NOT EXISTS ind_icsr_transmissions (
   status                      TEXT NOT NULL DEFAULT 'prepared',
   transmit_ready              BOOLEAN NOT NULL DEFAULT FALSE,
   transmitted_at              TIMESTAMPTZ,
+  transport_receipt_id        TEXT,
   acknowledged_at             TIMESTAMPTZ,
   ack_code                    TEXT,
   acknowledged_message_number TEXT,
@@ -278,22 +279,69 @@ CREATE TABLE IF NOT EXISTS submission_leaves (
   updated_at      TIMESTAMPTZ DEFAULT now(),
   deleted_at      TIMESTAMPTZ
 );
+
+-- rendered_leaf_files: the retained bytes of a server-rendered filing document
+-- (the IND safety report, annual report, LOA). Part of the CORE because the
+-- lifecycle filing path writes it and submission_leaves points at it; the leaf
+-- resolver reads it back through the storage provider. Migration
+-- migrations/20260903_rendered_leaf_files.sql.
+CREATE TABLE IF NOT EXISTS rendered_leaf_files (
+  id                SERIAL PRIMARY KEY,
+  organization_id   INTEGER NOT NULL,
+  vault_version_id  TEXT NOT NULL,
+  sha256            TEXT NOT NULL,
+  md5               TEXT NOT NULL,
+  mime              TEXT NOT NULL,
+  byte_size         INTEGER NOT NULL,
+  file_name         TEXT NOT NULL,
+  rendered_from     TEXT NOT NULL,
+  section_code      TEXT,
+  created_by        INTEGER,
+  created_at        TIMESTAMPTZ NOT NULL DEFAULT now()
+);
 `;
 
 /**
- * Minimal audit_logs DDL (just the columns the chain + seal verifiers read),
- * for testing audit-integrity verification in-process.
+ * audit_logs DDL — EVERY COLUMN `writeChainedAuditRow` WRITES, not just the
+ * ones the chain + seal verifiers read.
+ *
+ * It used to be the reader's subset, described as "minimal … for testing
+ * audit-integrity verification in-process". That was true of the verifier and
+ * false of the fixture as a whole: `writeChainedAuditRow` INSERTs sixteen
+ * columns, so any suite that used this table and reached a governed write got
+ * `column "old_values" of relation "audit_logs" does not exist` — and because
+ * the chained write is deliberately fail-closed (the audit row and the mutation
+ * commit together or neither does), that error rolled the mutation back.
+ *
+ * The consequence was worse than a broken test: this fixture made the chained
+ * audit path UNEXERCISABLE. A suite could only stay green by never reaching it,
+ * so the two suites that do verify it (esignature-audit-atomicity, the IND
+ * authoring journey) each declared their own fuller copy, and everything else
+ * silently tested a world in which governed writes leave no chain entry.
+ *
+ * Keep this in agreement with the INSERT in `writeChainedAuditRow`
+ * (server/services/auditService.ts). `scripts/ci/check-audit-logs-fixture.mjs`
+ * enforces that agreement — a fixture the writer cannot write into is a fixture
+ * that hides the writer.
  */
 export const AUDIT_LOGS_PGLITE_DDL = `
 CREATE TABLE IF NOT EXISTS audit_logs (
   id           TEXT PRIMARY KEY,
+  tenant_id    INTEGER,
+  user_id      INTEGER,
   action       TEXT,
+  table_name   TEXT,
+  record_id    TEXT,
   actor_id     INTEGER,
   target       TEXT,
   payload_hash TEXT,
-  occurred_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
   sha256_chain TEXT,
-  hmac_seal    TEXT
+  occurred_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
+  hmac_seal    TEXT,
+  old_values   JSON,
+  new_values   JSON,
+  ip_address   TEXT,
+  user_agent   TEXT
 );
 `;
 
@@ -425,10 +473,128 @@ CREATE TABLE IF NOT EXISTS concept2cure_artifacts (
 );
 `;
 
+/**
+ * Governed authoring store — c2c_documents + c2c_document_sections, the rows
+ * the MDx editor and the eu-mdr / eu-ivdr rule packs write. Used by the
+ * leaf-source-resolver and technical-file assembler tests to prove that an
+ * authored MDR/IVDR section can be materialized into a package. Column names
+ * mirror migrations/20260528_phase9_document_schema.sql; NO FK to
+ * regulatory_programs (not part of this harness) and no triggers, so the
+ * fixture stays self-contained. Only the columns the resolver/loader read plus
+ * the NOT NULL columns needed to insert a row are included.
+ */
+export const GOVERNED_SECTIONS_PGLITE_DDL = `
+CREATE TABLE IF NOT EXISTS c2c_documents (
+  id                 TEXT PRIMARY KEY,
+  org_id             INTEGER NOT NULL,
+  project_id         UUID NOT NULL,
+  doc_type           TEXT NOT NULL,
+  agency             TEXT NOT NULL,
+  rule_pack_version  TEXT NOT NULL,
+  title              TEXT NOT NULL,
+  status             TEXT NOT NULL DEFAULT 'draft',
+  readiness          INTEGER NOT NULL DEFAULT 0,
+  created_at         TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at         TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS c2c_document_sections (
+  id                 BIGSERIAL PRIMARY KEY,
+  document_id        TEXT NOT NULL REFERENCES c2c_documents(id) ON DELETE CASCADE,
+  section_key        TEXT NOT NULL,
+  parent_key         TEXT,
+  label              TEXT NOT NULL,
+  path_order         INTEGER NOT NULL,
+  mandatory          BOOLEAN NOT NULL DEFAULT false,
+  status             TEXT NOT NULL DEFAULT 'todo',
+  content            JSONB NOT NULL DEFAULT '{}'::jsonb,
+  created_at         TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at         TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE (document_id, section_key)
+);
+`;
+
+/** A statement that failed because the database lacked a relation or column. */
+export interface SchemaGap {
+  /** Postgres SQLSTATE: 42P01 undefined_table, 42703 undefined_column. */
+  code: string;
+  message: string;
+  /** The statement, trimmed — enough to identify the caller. */
+  sql: string;
+}
+
+const SCHEMA_GAP_CODES = new Set(['42P01', '42703']); // undefined_table, undefined_column
+
+type StatementRunner = {
+  query: (sql: string, params?: unknown[], options?: unknown) => Promise<unknown>;
+  exec: (sql: string, options?: unknown) => Promise<unknown>;
+};
+
+/**
+ * Record every statement this PGlite instance rejects for a missing relation or
+ * column, at the one seam every caller shares: `pglite.query`, `pglite.exec`,
+ * and the client `pglite.transaction` hands its callback. Drizzle, a pool shim,
+ * a request-scoped client and a raw `pglite.exec` from the test all land here,
+ * so a write the code under test swallows (audit and telemetry writers are
+ * deliberately non-fatal) is still observed. A shim layered above PGlite cannot
+ * promise that — Drizzle talks to PGlite directly and never sees the shim.
+ *
+ * Recorded, then rethrown unchanged — the code under test must see exactly what
+ * it would see in production. Consumed by `assertNoSchemaGaps` in
+ * tests/golden-journeys/harness.ts.
+ */
+export function recordSchemaGaps(pglite: PGlite): SchemaGap[] {
+  const gaps: SchemaGap[] = [];
+  const noteAndRethrow = (sql: string, err: unknown): never => {
+    const code = (err as { code?: string })?.code ?? '';
+    if (SCHEMA_GAP_CODES.has(code)) {
+      gaps.push({
+        code,
+        message: (err as Error).message,
+        sql: sql.replace(/\s+/g, ' ').trim().slice(0, 160),
+      });
+    }
+    throw err;
+  };
+  const instrument = (runner: StatementRunner) => {
+    const query = runner.query.bind(runner);
+    const exec = runner.exec.bind(runner);
+    runner.query = async (sql, params, options) => {
+      try {
+        return await query(sql, params, options);
+      } catch (err) {
+        return noteAndRethrow(sql, err);
+      }
+    };
+    runner.exec = async (sql, options) => {
+      try {
+        return await exec(sql, options);
+      } catch (err) {
+        return noteAndRethrow(sql, err);
+      }
+    };
+  };
+  instrument(pglite as unknown as StatementRunner);
+  const transaction = pglite.transaction.bind(pglite) as PGlite['transaction'];
+  pglite.transaction = ((callback: (tx: unknown) => Promise<unknown>) =>
+    transaction(tx => {
+      instrument(tx as unknown as StatementRunner);
+      return callback(tx);
+    })) as PGlite['transaction'];
+  return gaps;
+}
+
 export interface IndPgliteDb {
   pglite: PGlite;
   /** Drizzle instance over PGlite (insert/select against the pg-core schema). */
   db: ReturnType<typeof drizzle>;
+  /**
+   * Every statement this harness rejected for a missing relation or column —
+   * see `recordSchemaGaps`. Pass the harness to `assertNoSchemaGaps` in
+   * `afterAll` so a journey cannot pass against a database smaller than the
+   * code it exercises.
+   */
+  schemaGaps: SchemaGap[];
   close: () => Promise<void>;
 }
 
@@ -438,13 +604,20 @@ export interface IndPgliteDb {
  * submission_leaves (for the full filing → sequence → leaf flow).
  */
 export async function createIndPgliteDb(
-  opts: { submissionCore?: boolean; leafSources?: boolean; formArtifacts?: boolean } = {}
+  opts: {
+    submissionCore?: boolean;
+    leafSources?: boolean;
+    formArtifacts?: boolean;
+    governedSections?: boolean;
+  } = {}
 ): Promise<IndPgliteDb> {
   const pglite = new PGlite();
+  const schemaGaps = recordSchemaGaps(pglite);
   await pglite.exec(IND_PGLITE_DDL);
   if (opts.submissionCore) await pglite.exec(SUBMISSION_CORE_PGLITE_DDL);
   if (opts.leafSources) await pglite.exec(LEAF_SOURCE_PGLITE_DDL);
   if (opts.formArtifacts) await pglite.exec(FORM_ARTIFACT_PGLITE_DDL);
+  if (opts.governedSections) await pglite.exec(GOVERNED_SECTIONS_PGLITE_DDL);
   const db = drizzle(pglite);
-  return { pglite, db, close: () => pglite.close() };
+  return { pglite, db, schemaGaps, close: () => pglite.close() };
 }

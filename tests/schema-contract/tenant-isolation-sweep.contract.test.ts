@@ -84,6 +84,25 @@ async function baseSchemaFixture(): Promise<PGlite> {
   // overlay, not the journal). The D11d IVDR entries FK it, so the fixture
   // must present it the way a real deploy does.
   await safe(readMig('migrations/20260524_program_workbench_schema.sql'));
+  // Same class as regulatory_programs above, for the same reason. The batch
+  // slice starts at BATCH_START, which sits AFTER this file in the applied set,
+  // so ectd_compilations reaches the batch with only the columns the drizzle
+  // journal gives it. 20260828_ectd_compilations_submission_id.sql — which IS
+  // in the batch — indexes (submission_id, sequence_number), and sequence_number
+  // is added here. A real deploy runs both in this order and is unaffected; the
+  // fixture has to present the same starting state or it fails the set for a
+  // gap of its own making.
+  await safe(readMig('db/migrations/20260730_ectd_compilations_sequence_columns.sql'));
+  // Same class again, for the same reason. manufacturing_processes is created at
+  // index 54 of the set — before BATCH_START — by the reconstruction that
+  // derived it from its two readers when it turned out to have no writer.
+  // db/migrations/20260903_cmc_manufacturing_characterization_registers.sql, in
+  // the batch, ALTERs that table to add the columns its own model has always
+  // declared, and ALTER TABLE ... ADD COLUMN IF NOT EXISTS does not guard the
+  // TABLE's existence. A real deploy runs the creator first and is unaffected;
+  // the fixture has to present the same starting state or it fails the set for
+  // a gap of its own making.
+  await safe(readMig('db/migrations/20260730_manufacturing_processes_reconstruction.sql'));
   return pg;
 }
 

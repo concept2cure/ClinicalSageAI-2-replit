@@ -26,7 +26,7 @@
 import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
 import express from 'express';
 import request from 'supertest';
-import { createJourneyDb, extractTableDdl, JourneyRecorder, type JourneyDb } from './harness';
+import { createJourneyDb, extractTableDdl, JourneyRecorder, type JourneyDb, assertNoSchemaGaps, assertNoDegradedTenantEnrichment } from './harness';
 
 const T = 180_000;
 
@@ -93,11 +93,41 @@ beforeAll(async () => {
     // part11ComplianceService writes a device_audit_trail row as part of
     // creating a signature; this one IS in the baseline.
     'device_audit_trail',
+    // …and, since ledger L138, the route's own `release_signature_created`
+    // event is written on the SAME transaction rather than after it. This
+    // journey exists to prove the §11.10(e) claim, and it was proving it
+    // without an audit_logs table in the database at all — the audit half of
+    // the gate had nothing to land in and nothing noticed.
+    'audit_logs',
   ]);
 
   jdb = await createJourneyDb({
     // `submissions` is an FK target of the orchestrator port.
-    prereqSql: `${baseline}\nCREATE TABLE IF NOT EXISTS submissions (id SERIAL PRIMARY KEY, organization_id INTEGER);`,
+    // The chain columns audit_logs carries in production come from two later
+    // migrations (20260527_mutation_primitives for the chain/actor fields,
+    // 20260129_add_org_industry_stripe_audit_logs for the value fields), not
+    // from the baseline. writeChainedAuditRow reads sha256_chain to
+    // link the new row to the previous one, so without them the §11.10(e)
+    // write cannot happen — which, since L138, correctly refuses the signature.
+    prereqSql: [
+      baseline,
+      'CREATE TABLE IF NOT EXISTS submissions (id SERIAL PRIMARY KEY, organization_id INTEGER);',
+      `ALTER TABLE audit_logs
+         ADD COLUMN IF NOT EXISTS table_name    TEXT,
+         ADD COLUMN IF NOT EXISTS record_id     TEXT,
+         ADD COLUMN IF NOT EXISTS old_values    JSONB,
+         ADD COLUMN IF NOT EXISTS new_values    JSONB,
+         ADD COLUMN IF NOT EXISTS actor_id      INTEGER,
+         ADD COLUMN IF NOT EXISTS target        TEXT,
+         ADD COLUMN IF NOT EXISTS target_type   TEXT,
+         ADD COLUMN IF NOT EXISTS target_id     TEXT,
+         ADD COLUMN IF NOT EXISTS reason        TEXT,
+         ADD COLUMN IF NOT EXISTS payload_hash  TEXT,
+         ADD COLUMN IF NOT EXISTS ana_action_id TEXT,
+         ADD COLUMN IF NOT EXISTS sha256_chain  TEXT,
+         ADD COLUMN IF NOT EXISTS occurred_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
+         ADD COLUMN IF NOT EXISTS hmac_seal     TEXT;`,
+    ].join('\n'),
     // The C-17 port is what makes organization_id / bound_payload_digest /
     // superseded_by exist at all. Without it this journey cannot get past the
     // signature-binding step — which is precisely the defect it guards.
@@ -105,6 +135,8 @@ beforeAll(async () => {
     // the run table at all; the e-sig port (C-17) adds the binding columns and
     // widens the status CHECK so a run can be parked in 'awaiting-signature'.
     migrations: [
+      // The Part 11 tamper-evident store (ledger L145) — cross-cutting.
+      'db/migrations/20260813_audit_tamper_proof_log.sql',
       'db/migrations/20260725_submission_orchestrator_store_port.sql',
       'db/migrations/20260725_esig_gate_columns_port.sql',
       // Without this, verifyUserCredentials' SELECT of users.locked_until throws
@@ -217,6 +249,14 @@ beforeAll(async () => {
 }, T);
 
 afterAll(async () => {
+  // A journey that ran against a database missing a table its subject writes
+  // to proves less than it claims (ledger L145).
+  // Ordered BEFORE the schema-gap check on purpose: a degraded membership is
+  // usually CAUSED by a missing column, and the gap check would otherwise
+  // throw first and report the symptom while hiding which claims were
+  // proven without an org context (ledger L148).
+  await assertNoDegradedTenantEnrichment();
+  assertNoSchemaGaps(jdb);
   const { jsonPath, mdPath } = R.write('submission-release-signature');
   // eslint-disable-next-line no-console
   console.info(`[journey] manifest: ${jsonPath}\n[journey] report:   ${mdPath}`);

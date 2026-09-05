@@ -120,6 +120,35 @@ describe('DocumentAuthoring — editor deep-link target', () => {
     expect(screen.queryByText(/Couldn’t find/)).toBeNull();
   });
 
+  it('a docId target opens the EXACT document — no search, not the default', async () => {
+    // The strongest claim a sender can make: the correspondence card holds the
+    // linked response draft's id. D2 is NOT the default (D1 is first).
+    setEditorTarget({ docType: null, docId: 'D2' });
+
+    render(<DocumentAuthoring {...props()} />);
+    await waitFor(() => expect(window.C2C_EDITOR_TARGET).toBeUndefined());
+
+    // D2's section is on the canvas — the id resolved directly.
+    await waitFor(() => {
+      expect(canvasText()).toBe('SE discussion body.');
+    });
+    expect(await screen.findByText(/Opened “510\(k\) Submission” — the linked document/)).toBeTruthy();
+    expect(screen.queryByText(/Couldn’t open/)).toBeNull();
+  });
+
+  it('a docId not in scope lands on the default view with an honest miss — never a near-miss open', async () => {
+    setEditorTarget({ docType: null, docId: 'D-GONE' });
+
+    render(<DocumentAuthoring {...props()} />);
+    await waitFor(() => expect(window.C2C_EDITOR_TARGET).toBeUndefined());
+
+    const notice = await screen.findByText(/Couldn’t open the linked document/);
+    expect(notice.textContent).toMatch(/default view/i);
+    await waitFor(() => {
+      expect(canvasText()).toBe('Default document content.');
+    });
+  });
+
   it('shows the honest miss notice and falls back to the default view when nothing matches', async () => {
     setEditorTarget({
       docType: 'k510',

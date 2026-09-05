@@ -318,9 +318,15 @@ const FDA_APPLICATION_PREFIX = /^(IND|NDA|BLA|ANDA|DMF|DDT)-?\d{4,6}$/i;
 // Anchored at both ends so trailing characters do not slip through as conformant.
 const EU_APPLICATION_PREFIX = /^(EMEA\/H\/C\/\d{4,6}|[A-Z]{2}\/H\/\d{4,6}\/\d{4})$/;
 const PMDA_APPLICATION_PREFIX = /^\d{8}$/;
-const HC_APPLICATION_PREFIX = /^(SNDS|NDS|ANDS|DIN)-?\d+/i;
+// Anchored at both ends (like the FDA/EU/PMDA patterns) so a valid-looking prefix
+// followed by garbage does not slip through as a conformant identifier.
+const HC_APPLICATION_PREFIX = /^(SNDS|NDS|ANDS|DIN)-?\d+$/i;
 const SEQUENCE_PATTERN = /^\d{4}$/;
-const FILENAME_PATTERN = /^[a-z0-9][a-z0-9.-]{0,63}$/;
+/** eCTD leaf file name: lowercase, [a-z0-9.-], at most 64 characters including
+ *  the extension (ICH eCTD v3.2.2 Appendix; EMA-CESP-005). Exported so the
+ *  assemble path composes names to it and the structural validator refuses
+ *  names that break it — one rule, not three spellings of it. */
+export const FILENAME_PATTERN = /^[a-z0-9][a-z0-9.-]{0,63}$/;
 
 const FDA_GATEWAY_LIMIT_BYTES = 4 * 1024 * 1024 * 1024;
 const EMA_CESP_LIMIT_BYTES = 600 * 1024 * 1024;
@@ -483,7 +489,18 @@ function validateFDAPackage(
     });
   }
 
-  if (context.totalSizeBytes && context.totalSizeBytes > FDA_GATEWAY_LIMIT_BYTES) {
+  if (context.totalSizeBytes == null) {
+    // Do not silently skip the gateway size rule when the size is unknown —
+    // "unverified" must not read as "conformant".
+    findings.push({
+      ruleId: 'FDA-ESG-003',
+      region: 'US',
+      severity: 'warning',
+      message: 'Package size could not be verified against the FDA ESG 4 GB gateway limit (totalSizeBytes not supplied)',
+      fix: 'Supply totalSizeBytes so the gateway size limit can be checked',
+      scope: 'package',
+    });
+  } else if (context.totalSizeBytes > FDA_GATEWAY_LIMIT_BYTES) {
     findings.push({
       ruleId: 'FDA-ESG-003',
       region: 'US',
@@ -531,7 +548,16 @@ function validateEMAPackage(
     });
   }
 
-  if (context.totalSizeBytes && context.totalSizeBytes > EMA_CESP_LIMIT_BYTES) {
+  if (context.totalSizeBytes == null) {
+    findings.push({
+      ruleId: 'EMA-CESP-004',
+      region: 'EU',
+      severity: 'warning',
+      message: 'Package size could not be verified against the CESP 600 MB recommended limit (totalSizeBytes not supplied)',
+      fix: 'Supply totalSizeBytes so the CESP size limit can be checked',
+      scope: 'package',
+    });
+  } else if (context.totalSizeBytes > EMA_CESP_LIMIT_BYTES) {
     findings.push({
       ruleId: 'EMA-CESP-004',
       region: 'EU',
@@ -570,7 +596,16 @@ function validatePMDAPackage(
     });
   }
 
-  if (context.totalSizeBytes && context.totalSizeBytes > PMDA_LIMIT_BYTES) {
+  if (context.totalSizeBytes == null) {
+    findings.push({
+      ruleId: 'PMDA-003',
+      region: 'JP',
+      severity: 'warning',
+      message: 'Package size could not be verified against the PMDA 1 GB recommended limit (totalSizeBytes not supplied)',
+      fix: 'Supply totalSizeBytes so the PMDA size limit can be checked',
+      scope: 'package',
+    });
+  } else if (context.totalSizeBytes > PMDA_LIMIT_BYTES) {
     findings.push({
       ruleId: 'PMDA-003',
       region: 'JP',
