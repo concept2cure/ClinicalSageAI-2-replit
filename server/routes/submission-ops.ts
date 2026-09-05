@@ -1611,31 +1611,59 @@ async function recordPackageGovernedAction(params: {
 }
 
 /**
+ * Serialize EVERY writer of a package's metadata on the row itself: a
+ * transaction, SELECT … FOR UPDATE, compute the new metadata from what is
+ * current UNDER THE LOCK, write, commit. A re-read followed by a separate
+ * UPDATE (the previous fix) still lost a write that landed between the two
+ * statements — an identifier recorded while a bundle was being assembled was
+ * reverted, and a backbone built with the old application number was stored
+ * as transmittable. `mutate` returns the metadata to write, or null to write
+ * nothing (the decision is still made against the locked row).
+ */
+async function withPackageMetadataLock<T>(
+  packageDbId: number,
+  mutate: (current: Record<string, unknown>) =>
+    | Promise<{ metadata: Record<string, unknown> | null; result: T }>
+    | { metadata: Record<string, unknown> | null; result: T },
+): Promise<T> {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const { rows } = await client.query(
+      'SELECT metadata FROM c2c_submission_packages WHERE id = $1 FOR UPDATE',
+      [packageDbId],
+    );
+    const raw = rows[0]?.metadata;
+    const current: Record<string, unknown> =
+      raw && typeof raw === 'object' ? (raw as Record<string, unknown>) : typeof raw === 'string' ? JSON.parse(raw) : {};
+    const out = await mutate(current);
+    if (out.metadata) {
+      await client.query(
+        'UPDATE c2c_submission_packages SET metadata = $2::json, updated_at = now() WHERE id = $1',
+        [packageDbId, JSON.stringify(out.metadata)],
+      );
+    }
+    await client.query('COMMIT');
+    return out.result;
+  } catch (e) {
+    try { await client.query('ROLLBACK'); } catch { /* noop */ }
+    throw e;
+  } finally {
+    client.release();
+  }
+}
+
+/**
  * Clear a package's stored bundle descriptor when its content changed (an
  * artifact mapped or unmapped): the zip carries the old content and the
  * transmit gate must not ship it. Returns whether a descriptor was cleared.
- * Merges onto the package's current metadata, never a stale snapshot.
  */
 async function clearStaleBundle(packageDbId: number): Promise<boolean> {
-  const current = await currentPackageMetadata(packageDbId, {});
-  if (current.bundle === undefined) return false;
-  const { bundle: _stale, ...withoutBundle } = current;
-  await db
-    .update(c2cSubmissionPackages)
-    .set({ metadata: withoutBundle, updatedAt: new Date() })
-    .where(eq(c2cSubmissionPackages.id, packageDbId));
-  return true;
-}
-
-/** The package's CURRENT metadata, re-read at write time so a merge never
- *  resurrects a snapshot taken before a concurrent change (an identifier
- *  recorded while a bundle was being assembled used to be silently reverted). */
-async function currentPackageMetadata(packageDbId: number, fallback: Record<string, unknown>): Promise<Record<string, unknown>> {
-  const [row] = await db
-    .select({ metadata: c2cSubmissionPackages.metadata })
-    .from(c2cSubmissionPackages)
-    .where(eq(c2cSubmissionPackages.id, packageDbId));
-  return row?.metadata && typeof row.metadata === 'object' ? (row.metadata as Record<string, unknown>) : fallback;
+  return withPackageMetadataLock(packageDbId, (current) => {
+    if (current.bundle === undefined) return { metadata: null, result: false };
+    const { bundle: _stale, ...withoutBundle } = current;
+    return { metadata: withoutBundle, result: true };
+  });
 }
 
 /**
@@ -1789,33 +1817,25 @@ router.put('/packages/:packageId/regulatory-identifiers', async (req: Request, r
       .where(and(packageKeyClause(String(req.params.packageId)), eq(c2cSubmissionPackages.orgId, orgId)));
     if (!pkg) return res.status(404).json({ error: 'Package not found' });
 
-    const existingMetadata =
-      pkg.metadata && typeof pkg.metadata === 'object' ? (pkg.metadata as Record<string, unknown>) : {};
-    // `previous` (the audit row's FROM values) and `changed` come from the
-    // metadata re-read at write time, so a concurrent change is compared
-    // against, not overwritten from a stale snapshot.
-    const current = await currentPackageMetadata(pkg.id, existingMetadata);
-    const previous = readRegulatoryIdentifiers(current).values;
     const next = {
       applicationNumber: usableIdentifier('applicationNumber', parsed.data.applicationNumber)!,
       applicantId: usableIdentifier('applicantId', parsed.data.applicantId)!,
       applicantName: usableIdentifier('applicantName', parsed.data.applicantName)!,
     };
-    const changed = REGULATORY_IDENTIFIER_FIELDS.some((f) => previous[f] !== next[f]);
     const regulatory = { ...next, recordedAt: new Date().toISOString(), recordedBy: userId };
 
-    // A bundle assembled under different identifiers carries the OLD ones in its
-    // backbone. Clear it so the transmit gate cannot ship it; re-assemble.
-    const { bundle: existingBundle, ...metadataWithoutBundle } = current;
-    const staleBundleCleared = changed && existingBundle !== undefined;
-    const metadata = staleBundleCleared
-      ? { ...metadataWithoutBundle, regulatory }
-      : { ...current, regulatory };
-
-    await db
-      .update(c2cSubmissionPackages)
-      .set({ metadata, updatedAt: new Date() })
-      .where(eq(c2cSubmissionPackages.id, pkg.id));
+    // Decided and written under the row lock: `previous` (the audit row's FROM
+    // values), `changed`, and whether a bundle assembled under the OLD
+    // identifiers — its backbone carries them — must be cleared so the transmit
+    // gate cannot ship it.
+    const { previous, changed, staleBundleCleared } = await withPackageMetadataLock(pkg.id, (current) => {
+      const previous = readRegulatoryIdentifiers(current).values;
+      const changed = REGULATORY_IDENTIFIER_FIELDS.some((f) => previous[f] !== next[f]);
+      const { bundle: existingBundle, ...metadataWithoutBundle } = current;
+      const staleBundleCleared = changed && existingBundle !== undefined;
+      const metadata = staleBundleCleared ? { ...metadataWithoutBundle, regulatory } : { ...current, regulatory };
+      return { metadata, result: { previous, changed, staleBundleCleared } };
+    });
 
     // Governed action: who, when, what, FROM → TO, reason.
     const ledgerWriteFailed = await recordPackageGovernedAction({
@@ -2201,22 +2221,19 @@ router.post('/packages/:packageId/assemble', async (req: Request, res: Response)
           validation.findings.push({ severity: 'error', ruleId: 'PACKAGER-REFUSED', message: packErr.message });
           validation.errorCount += 1;
         }
-        const currentOnRefusal = await currentPackageMetadata(pkg.id, existingMetadata);
-        const { bundle: _staleBundle, ...metadataWithoutBundle } = currentOnRefusal;
-        const staleBundleCleared = _staleBundle !== undefined;
         const refusal = {
           errorCount: validation.errorCount,
           warningCount: validation.warningCount,
           infoCount: validation.infoCount,
           findings: validation.findings,
         };
-        await db
-          .update(c2cSubmissionPackages)
-          .set({
+        const staleBundleCleared = await withPackageMetadataLock(pkg.id, (current) => {
+          const { bundle: staleBundle, ...metadataWithoutBundle } = current;
+          return {
             metadata: { ...metadataWithoutBundle, assemblyRefusal: { at: new Date().toISOString(), by: userId, validation: refusal } },
-            updatedAt: new Date(),
-          })
-          .where(eq(c2cSubmissionPackages.id, pkg.id));
+            result: staleBundle !== undefined,
+          };
+        });
         // Clearing a transmittable bundle is a mutation of regulated content:
         // it is recorded like any other, and a lost ledger row is reported.
         const ledgerWriteFailed = await recordPackageGovernedAction({
@@ -2306,31 +2323,40 @@ router.post('/packages/:packageId/assemble', async (req: Request, res: Response)
       assembledBy: userId,
     };
 
-    // Store the descriptor under metadata.bundle and bump updated_at — merged
-    // onto the package's CURRENT metadata, never the snapshot taken before the
-    // (slow) packaging step: an identifier recorded meanwhile used to be
-    // silently reverted. And a backbone built with identifiers that have since
-    // changed is stale by definition: it is not stored.
-    const currentMetadata = await currentPackageMetadata(pkg.id, existingMetadata);
-    if (identifiersAtBuild) {
-      const now = readRegulatoryIdentifiers(currentMetadata).values;
-      const drifted = REGULATORY_IDENTIFIER_FIELDS.some((f) => now[f] !== identifiersAtBuild!.values[f]);
-      if (drifted) {
-        return res.status(409).json({
-          error:
-            'The regulatory identifiers changed while the bundle was being assembled; its backbone carries the old ones, so it was not stored. Assemble again.',
-          code: 'STALE_ASSEMBLY',
-          gate: 'identifiers_changed',
-        });
+    // Store the descriptor under metadata.bundle — decided and written under
+    // the row lock against the package's CURRENT metadata, never the snapshot
+    // taken before the (slow) packaging step. A backbone built with identifiers
+    // that have since changed is stale by definition: it is not stored, the
+    // zip written above is removed, and the discard is recorded.
+    const stored = await withPackageMetadataLock(pkg.id, (current) => {
+      if (identifiersAtBuild) {
+        const now = readRegulatoryIdentifiers(current).values;
+        const drifted = REGULATORY_IDENTIFIER_FIELDS.some((f) => now[f] !== identifiersAtBuild!.values[f]);
+        if (drifted) return { metadata: null, result: false };
       }
+      return { metadata: { ...current, bundle: descriptor }, result: true };
+    });
+    if (!stored) {
+      await fs.promises.unlink(bundlePath).catch(() => {});
+      const durableCopy = storage.provider === 's3' ? storage.key : null;
+      const ledgerWriteFailed = await recordPackageGovernedAction({
+        orgId,
+        userId,
+        packageDbId: pkg.id,
+        reason: parsed.data.reason,
+        payload: { change: 'assembly-discarded', cause: 'identifiers_changed', sha256, region, format, durableCopy },
+      });
+      return res.status(409).json({
+        error:
+          'The regulatory identifiers changed while the bundle was being assembled; its backbone carries the old ones, so it was not stored. Assemble again.',
+        code: 'STALE_ASSEMBLY',
+        gate: 'identifiers_changed',
+        // A durable (S3) copy written before the check is named so it can be
+        // removed; the local file has been.
+        durableCopy,
+        ledgerWriteFailed,
+      });
     }
-    await db
-      .update(c2cSubmissionPackages)
-      .set({
-        metadata: { ...currentMetadata, bundle: descriptor },
-        updatedAt: new Date(),
-      })
-      .where(eq(c2cSubmissionPackages.id, pkg.id));
 
     // Audit: medium-risk governed transition (no reauth). Written in its own
     // transaction via the shared ledger primitive. The flag carries the outcome
