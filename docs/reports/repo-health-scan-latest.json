@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-09-05T13:00:24.633Z",
+  "generatedAt": "2026-09-05T13:01:53.649Z",
   "git": {
-    "sha": "9a1563cb58429b57f47b9a85172a2a8b6c652834",
-    "branch": "ana-w2"
+    "sha": "ffd2b2ea9d6f0ba0596703f6bf4333e397f1e1c9",
+    "branch": "concept2cure-v2"
   },
   "thresholds": {
     "maxBytes": 100000,
