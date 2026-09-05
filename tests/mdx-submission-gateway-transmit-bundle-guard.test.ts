@@ -512,10 +512,25 @@ describe('POST transmit — packager evidence is forwarded to the pre-transmit g
     expect(arg.bundle.regionalBackbone).toEqual(evidence.regionalBackbone);
   });
 
+  it('forwards the region the bundle was BUILT for (descriptor.region) as a gateway region, so device bundles are region-checked too', async () => {
+    packages = [{ id: 5, orgId: CALLER_ORG, bundle: goodDescriptor({ format: 'estar', region: 'FDA' }) }];
+    transmitFn.mockResolvedValueOnce({ transmittalId: 4246, transmissionId: 'mdn-built', status: 'received', transport: 'as2', httpStatus: 200 });
+    const res = await request(makeApp())
+      .post('/api/mdx/gateways/fda/esg/transmit')
+      .send({ packageId: 5, environment: 'staging', ...REAUTH });
+    expect(res.status).toBe(201);
+    expect(transmitFn.mock.calls[0][0].bundle.builtRegion).toBe('fda');
+  });
+
   it('DROPS malformed evidence blocks instead of forwarding them (`{}` as a PDF/A grade read as full compliance)', async () => {
     packages = [{
       id: 5, orgId: CALLER_ORG,
-      bundle: goodDescriptor({ submissionGrade: {}, dtdStatus: { selfContained: 'yes' }, regionalBackbone: { region: 'fda' } }),
+      bundle: goodDescriptor({
+        submissionGrade: {}, dtdStatus: { selfContained: 'yes' },
+        // Well-shaped on the fields the old guard checked, but placeholderOf is
+        // not a string — the gate used to throw on it (a 500, not a refusal).
+        regionalBackbone: { region: 'fda', file: 'm1/us/us-regional.xml', regionConformant: false, placeholderOf: 5 },
+      }),
     }];
     transmitFn.mockResolvedValueOnce({ transmittalId: 4245, transmissionId: 'mdn-malformed', status: 'received', transport: 'as2', httpStatus: 200 });
     const res = await request(makeApp())

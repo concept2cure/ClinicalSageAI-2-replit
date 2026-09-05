@@ -1462,9 +1462,68 @@ function leafSlug(value: string): string {
  * record-identifiers → assemble → transmit loop should not need to know both.
  */
 function packageKeyClause(key: string) {
-  return /^\d+$/.test(key)
-    ? eq(c2cSubmissionPackages.id, Number(key))
+  // A numeric key must fit the int4 row id; an out-of-range digit string is
+  // simply not a package (404), never a Postgres range error (500).
+  const n = /^\d{1,10}$/.test(key) ? Number(key) : NaN;
+  return Number.isSafeInteger(n) && n > 0 && n <= 2147483647
+    ? eq(c2cSubmissionPackages.id, n)
     : eq(c2cSubmissionPackages.packageId, key);
+}
+
+/**
+ * Record a governed action for a package mutation on the transmit path, in its
+ * own transaction via the shared ledger primitive. Returns true when the ledger
+ * could NOT be written: the mutation itself is kept (a bundle or an identifier
+ * change must not be lost over an audit outage) and the caller must SAY so in
+ * its response — never report a clean success over a missing audit row.
+ */
+async function recordPackageGovernedAction(params: {
+  orgId: number;
+  userId: number;
+  packageDbId: number;
+  reason: string;
+  payload: Record<string, unknown>;
+}): Promise<boolean> {
+  try {
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      await recordGovernedAction(client as any, {
+        orgId: params.orgId,
+        userId: params.userId,
+        command: 'transition',
+        target: `submission:${params.packageDbId}`,
+        reason: params.reason,
+        payload: params.payload,
+        domain: 'mdx',
+        surface: 'submission-gateway',
+      });
+      await client.query('COMMIT');
+      return false;
+    } catch (ledgerErr) {
+      try { await client.query('ROLLBACK'); } catch { /* noop */ }
+      throw ledgerErr;
+    } finally {
+      client.release();
+    }
+  } catch (ledgerErr) {
+    console.error(
+      '[submission-ops] governed-action-ledger-write-failed',
+      ledgerErr instanceof Error ? ledgerErr.message : ledgerErr,
+    );
+    return true;
+  }
+}
+
+/** The package's CURRENT metadata, re-read at write time so a merge never
+ *  resurrects a snapshot taken before a concurrent change (an identifier
+ *  recorded while a bundle was being assembled used to be silently reverted). */
+async function currentPackageMetadata(packageDbId: number, fallback: Record<string, unknown>): Promise<Record<string, unknown>> {
+  const [row] = await db
+    .select({ metadata: c2cSubmissionPackages.metadata })
+    .from(c2cSubmissionPackages)
+    .where(eq(c2cSubmissionPackages.id, packageDbId));
+  return row?.metadata && typeof row.metadata === 'object' ? (row.metadata as Record<string, unknown>) : fallback;
 }
 
 /**
@@ -1541,13 +1600,20 @@ async function buildLeafPdf(title: string, markdown: string): Promise<Buffer> {
 
 const assembleBody = z.object({
   // Optional explicit overrides; otherwise derived from packageFamily.
-  region: z.enum(['FDA', 'EMA', 'PMDA']).optional(),
+  // Health Canada is a transmit target (ca / hc_cesg) and the packager builds
+  // its backbone, so it must be assemblable too — the gate's own remediation
+  // ("re-assemble for CA") used to be a 400 here.
+  region: z.enum(['FDA', 'EMA', 'PMDA', 'CA']).optional(),
   format: z.enum(SUBMISSION_FORMATS).optional(),
   // An eCTD sequence number is exactly four digits (ICH eCTD v3.2.2 §3.2). The
   // value becomes a filesystem path component in the canonical packager, so the
   // charset is enforced here — a free-form string was a path-traversal vector.
   sequence: z.string().regex(/^\d{4}$/, 'sequence must be exactly four digits (e.g. 0000)').optional(),
-  reason: z.string().min(8).optional(),
+  // Governed transition: the operator's reason is recorded on the audit row.
+  // It used to be optional with a placeholder ('eCTD bundle assembled')
+  // written in its place — a fabricated justification on a hash-chained
+  // ledger, and a control the UI promised that the server did not enforce.
+  reason: z.string().min(8, 'reason must be at least 8 characters'),
 });
 
 /**
@@ -1624,56 +1690,38 @@ router.put('/packages/:packageId/regulatory-identifiers', async (req: Request, r
 
     // A bundle assembled under different identifiers carries the OLD ones in its
     // backbone. Clear it so the transmit gate cannot ship it; re-assemble.
-    const { bundle: existingBundle, ...metadataWithoutBundle } = existingMetadata;
+    const current = await currentPackageMetadata(pkg.id, existingMetadata);
+    const { bundle: existingBundle, ...metadataWithoutBundle } = current;
     const staleBundleCleared = changed && existingBundle !== undefined;
     const metadata = staleBundleCleared
       ? { ...metadataWithoutBundle, regulatory }
-      : { ...existingMetadata, regulatory };
+      : { ...current, regulatory };
 
     await db
       .update(c2cSubmissionPackages)
       .set({ metadata, updatedAt: new Date() })
       .where(eq(c2cSubmissionPackages.id, pkg.id));
 
-    // Governed action, same posture as assemble: the write is real and must not
-    // be lost over an audit outage, but the caller is told when the ledger row
-    // could not be written.
-    let ledgerWriteFailed = false;
-    try {
-      const client = await pool.connect();
-      try {
-        await client.query('BEGIN');
-        await recordGovernedAction(client as any, {
-          orgId,
-          userId,
-          command: 'transition',
-          target: `submission:${pkg.id}`,
-          reason: parsed.data.reason,
-          payload: {
-            change: 'regulatory-identifiers',
-            applicationNumber: next.applicationNumber,
-            applicantId: next.applicantId,
-            applicantName: next.applicantName,
-            changed,
-            staleBundleCleared,
-          },
-          domain: 'mdx',
-          surface: 'submission-gateway',
-        });
-        await client.query('COMMIT');
-      } catch (ledgerErr) {
-        try { await client.query('ROLLBACK'); } catch { /* noop */ }
-        throw ledgerErr;
-      } finally {
-        client.release();
-      }
-    } catch (ledgerErr) {
-      ledgerWriteFailed = true;
-      console.error(
-        '[submission-ops] regulatory-identifiers-ledger-write-failed',
-        ledgerErr instanceof Error ? ledgerErr.message : ledgerErr,
-      );
-    }
+    // Governed action: who, when, what, FROM → TO, reason.
+    const ledgerWriteFailed = await recordPackageGovernedAction({
+      orgId,
+      userId,
+      packageDbId: pkg.id,
+      reason: parsed.data.reason,
+      payload: {
+        change: 'regulatory-identifiers',
+        previous: {
+          applicationNumber: previous.applicationNumber,
+          applicantId: previous.applicantId,
+          applicantName: previous.applicantName,
+        },
+        applicationNumber: next.applicationNumber,
+        applicantId: next.applicantId,
+        applicantName: next.applicantName,
+        changed,
+        staleBundleCleared,
+      },
+    });
 
     return res.json({
       success: true,
@@ -1762,7 +1810,7 @@ router.post('/packages/:packageId/assemble', async (req: Request, res: Response)
       pkg.metadata && typeof pkg.metadata === 'object' ? (pkg.metadata as Record<string, unknown>) : {};
 
     // Region code used in m1/<region>/.. leaf paths (per ICH M4 / regional M1).
-    const regionCode = region === 'EMA' ? 'eu' : region === 'PMDA' ? 'jp' : 'us';
+    const regionCode = region === 'EMA' ? 'eu' : region === 'PMDA' ? 'jp' : region === 'CA' ? 'ca' : 'us';
 
     // Build eCTD leafs from section content. Section content is sourced from the
     // artifacts mapped to each section (c2c_artifact_section_map -> concept2cure
@@ -1780,7 +1828,7 @@ router.post('/packages/:packageId/assemble', async (req: Request, res: Response)
     // are computed over it, never over a parallel list that can diverge.
     const isEctdFormat = format === 'ectd' || format === 'pmda_ectd';
     // Placement is region-aware: Module 1 headings are published per agency.
-    const packagerRegion = region === 'EMA' ? 'ema' : region === 'PMDA' ? 'pmda' : 'fda';
+    const packagerRegion = region === 'EMA' ? 'ema' : region === 'PMDA' ? 'pmda' : region === 'CA' ? 'ca' : 'fda';
     const seenPaths = new Set<string>();
     const leafs: { path: string; mediaType: string; content: Buffer }[] = [];
     const emptyLeafPaths: string[] = [];
@@ -1793,7 +1841,10 @@ router.post('/packages/:packageId/assemble', async (req: Request, res: Response)
     // (artifact, section), so a duplicate row — or the same artifact mapped
     // into two sections — used to ship a second copy under a suffixed name with
     // no finding. artifactDbId → the section label it shipped from.
-    const shippedArtifacts = new Map<number, string>();
+    // Keyed on artifact AND placement: the same document legitimately files at
+    // two sections (a literature reference cited from 4.3 and 5.4), and that is
+    // two leaves — only the same artifact at the SAME section is a duplicate.
+    const shippedArtifacts = new Map<string, string>();
 
     for (const section of sections) {
       const mapped = await db
@@ -1858,11 +1909,12 @@ router.post('/packages/:packageId/assemble', async (req: Request, res: Response)
         const unitLabel = artifact
           ? `${artifact.title} (${artifact.artifactId} v${artifact.version}) in ${sectionLabel}`
           : sectionLabel;
-        if (artifact && shippedArtifacts.has(artifact.artifactDbId)) {
+        const shipKey = artifact && placement.code ? `${artifact.artifactDbId}@${placement.code}` : null;
+        if (shipKey && shippedArtifacts.has(shipKey)) {
           placementFindings.push({
             severity: 'warning',
             ruleId: 'LEAF-DUPLICATE-MAPPING',
-            message: `${unitLabel}: this artifact already ships as a leaf from ${shippedArtifacts.get(artifact.artifactDbId)}; an artifact is one leaf, so this mapping was skipped. Remove the duplicate mapping.`,
+            message: `${unitLabel}: this artifact already ships as a leaf at ${placement.code} from ${shippedArtifacts.get(shipKey)}; the same document at the same section is one leaf, so this mapping was skipped. Remove the duplicate mapping.`,
           });
           continue;
         }
@@ -1928,7 +1980,7 @@ router.post('/packages/:packageId/assemble', async (req: Request, res: Response)
         const bytes = await buildLeafPdf(title, markdown);
         ctdLeaves.push({ ctdSection: placement.code, fileName, bytes, title });
         leafs.push({ path: modulePath, mediaType: 'application/pdf', content: bytes });
-        if (artifact) shippedArtifacts.set(artifact.artifactDbId, sectionLabel);
+        if (shipKey) shippedArtifacts.set(shipKey, sectionLabel);
       }
     }
 
@@ -1960,6 +2012,9 @@ router.post('/packages/:packageId/assemble', async (req: Request, res: Response)
           regionalBackbone?: unknown;
         }
       | undefined;
+    // The identifiers the backbone was BUILT with, compared against the
+    // package's current ones before the bundle is stored (see below).
+    let identifiersAtBuild: ReturnType<typeof readRegulatoryIdentifiers> | null = null;
     let zip: Buffer;
     if (isEctdFormat) {
       // Placement findings: LEAF-UNPLACED is error-severity so the governed
@@ -1978,6 +2033,7 @@ router.post('/packages/:packageId/assemble', async (req: Request, res: Response)
       // an internal id dressed up as an agency identifier. Both also become
       // filename components in the packager, so the charset is enforced.
       const identifiers = readRegulatoryIdentifiers(existingMetadata);
+      identifiersAtBuild = identifiers;
       const { applicationNumber, applicantId, applicantName } = identifiers.values;
       const missingIdentifiers = identifiers.missing;
       if (missingIdentifiers.length > 0) {
@@ -2030,7 +2086,9 @@ router.post('/packages/:packageId/assemble', async (req: Request, res: Response)
           validation.findings.push({ severity: 'error', ruleId: 'PACKAGER-REFUSED', message: packErr.message });
           validation.errorCount += 1;
         }
-        const { bundle: _staleBundle, ...metadataWithoutBundle } = existingMetadata;
+        const currentOnRefusal = await currentPackageMetadata(pkg.id, existingMetadata);
+        const { bundle: _staleBundle, ...metadataWithoutBundle } = currentOnRefusal;
+        const staleBundleCleared = _staleBundle !== undefined;
         const refusal = {
           errorCount: validation.errorCount,
           warningCount: validation.warningCount,
@@ -2044,10 +2102,20 @@ router.post('/packages/:packageId/assemble', async (req: Request, res: Response)
             updatedAt: new Date(),
           })
           .where(eq(c2cSubmissionPackages.id, pkg.id));
+        // Clearing a transmittable bundle is a mutation of regulated content:
+        // it is recorded like any other, and a lost ledger row is reported.
+        const ledgerWriteFailed = await recordPackageGovernedAction({
+          orgId,
+          userId,
+          packageDbId: pkg.id,
+          reason: parsed.data.reason,
+          payload: { change: 'assembly-refused', staleBundleCleared, errorCount: refusal.errorCount, region, format },
+        });
         return res.status(422).json({
           error: packErr.message,
           code: 'PACKAGER_REFUSED',
-          staleBundleCleared: _staleBundle !== undefined,
+          staleBundleCleared,
+          ledgerWriteFailed,
           validation: refusal,
         });
       } finally {
@@ -2055,7 +2123,9 @@ router.post('/packages/:packageId/assemble', async (req: Request, res: Response)
       }
     } else {
       const zipBuffer = await buildECTDZip({
-        region,
+        // Device formats pin FDA (eSTAR) or EMA (EUDAMED); a CA region is
+        // refused by the region/format check above, so it cannot reach here.
+        region: region as 'FDA' | 'EMA' | 'PMDA',
         sequence,
         operation: 'new',
         leafs,
@@ -2121,11 +2191,28 @@ router.post('/packages/:packageId/assemble', async (req: Request, res: Response)
       assembledBy: userId,
     };
 
-    // Store the descriptor under metadata.bundle (JSONB) and bump updated_at.
+    // Store the descriptor under metadata.bundle and bump updated_at — merged
+    // onto the package's CURRENT metadata, never the snapshot taken before the
+    // (slow) packaging step: an identifier recorded meanwhile used to be
+    // silently reverted. And a backbone built with identifiers that have since
+    // changed is stale by definition: it is not stored.
+    const currentMetadata = await currentPackageMetadata(pkg.id, existingMetadata);
+    if (identifiersAtBuild) {
+      const now = readRegulatoryIdentifiers(currentMetadata).values;
+      const drifted = REGULATORY_IDENTIFIER_FIELDS.some((f) => now[f] !== identifiersAtBuild!.values[f]);
+      if (drifted) {
+        return res.status(409).json({
+          error:
+            'The regulatory identifiers changed while the bundle was being assembled; its backbone carries the old ones, so it was not stored. Assemble again.',
+          code: 'STALE_ASSEMBLY',
+          gate: 'identifiers_changed',
+        });
+      }
+    }
     await db
       .update(c2cSubmissionPackages)
       .set({
-        metadata: { ...existingMetadata, bundle: descriptor },
+        metadata: { ...currentMetadata, bundle: descriptor },
         updatedAt: new Date(),
       })
       .where(eq(c2cSubmissionPackages.id, pkg.id));
@@ -2143,8 +2230,8 @@ router.post('/packages/:packageId/assemble', async (req: Request, res: Response)
           userId,
           command: 'transition',
           target: `submission:${pkg.id}`,
-          reason: parsed.data.reason ?? 'eCTD bundle assembled',
-          payload: { sha256, sizeBytes, format, leafCount: leafs.length },
+          reason: parsed.data.reason,
+          payload: { sha256, sizeBytes, format, region, leafCount: leafs.length },
           domain: 'mdx',
           surface: 'submission-gateway',
         });
