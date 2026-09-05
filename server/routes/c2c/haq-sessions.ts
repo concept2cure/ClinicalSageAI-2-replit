@@ -172,10 +172,24 @@ router.put('/projects/:projectId/haq-session', async (req: Request, res: Respons
         });
       });
 
+      // The rewritten session content is what an assembled submission bundle
+      // was built FROM, so every package this artifact is mapped into holds a
+      // zip that no longer reflects it. Invalidate at the edit; the transmit
+      // gate's content fingerprint remains the backstop. Never throws.
+      const { markPackagesContentChangedForArtifact } = await import(
+        '../../services/ectd/package-content-change'
+      );
+      const bundleInvalidation = await markPackagesContentChangedForArtifact(
+        existing.id,
+        organizationId,
+        { userId, cause: 'content' },
+      );
+
       return sendSuccess(res, {
         artifactId: existing.artifactId,
         updated: true,
         questionCount: questions.length,
+        bundleInvalidation,
       });
     } else {
       // Create new HAQ session artifact
