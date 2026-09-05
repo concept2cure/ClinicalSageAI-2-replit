@@ -296,14 +296,3 @@ export function withDenominator(n: number, total: number): string {
   return `${n} of ${total}`;
 }
 
-/**
- * The literal insufficient-evidence sentence (§10.1). Emitted verbatim rather
- * than softened into a hedged estimate — "insufficient evidence" is an answer.
- */
-export function insufficientEvidenceText(
-  what: string,
-  usable: number,
-  total: number,
-): string {
-  return `Insufficient structured evidence to estimate ${what} reliably — ${withDenominator(usable, total)}.`;
-}

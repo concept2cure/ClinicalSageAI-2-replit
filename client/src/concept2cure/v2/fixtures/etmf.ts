@@ -188,59 +188,9 @@ export function tmfArtifactName(code: string): string {
    pivotal — relapsed multiple myeloma (Phase 3)" · 42 sites`. Etmf.tsx reads the
    real trial from /api/etmf and imports only `tmfArtifactName` (the DIA TMF
    Reference Model catalog, which is reference config). Nothing else referenced
-   it. */
+   it.
 
-export const ETMF_FILINGS: Record<string, FilingEntry> = {
-  tmf_plan: { status: 'final', lagDays: 6 }, monitoring_plan: { status: 'final', lagDays: 9 },
-  protocol: { status: 'final', lagDays: 3 }, investigators_brochure: { status: 'final', lagDays: 5 },
-  sample_crf: { status: 'final', lagDays: 12 }, sample_icf: { status: 'final', lagDays: 8 },
-  regulatory_submission: { status: 'final', lagDays: 4 }, regulatory_approval: { status: 'final', lagDays: 7 },
-  irb_submission: { status: 'final', lagDays: 11 }, irb_approval: { status: 'in_review', lagDays: 14 }, irb_composition: { status: 'final', lagDays: 19 },
-  site_signature_sheet: { status: 'in_review', lagDays: 22 }, investigator_cv: { status: 'final', lagDays: 16 }, financial_disclosure: { status: 'final', lagDays: 61 },
-  ip_accountability: { status: 'final', lagDays: 9 }, ip_shipment: { status: 'in_review', lagDays: 13 },
-  safety_management_plan: { status: 'final', lagDays: 5 }, sae_reports: { status: 'final', lagDays: 2 }, susar_reports: { status: 'final', lagDays: 3 },
-  lab_certification: { status: 'final', lagDays: 88 }, lab_normal_ranges: { status: 'final', lagDays: 20 },
-  vendor_contract: { status: 'in_review', lagDays: 42 },
-  data_management_plan: { status: 'final', lagDays: 15 }, sap: { status: 'final', lagDays: 7 },
-};
-
-/* Timeliness -- contemporaneous-filing read (>30 days late = a red flag). */
-export function assessTmfTimeliness(
-  provided?: string[],
-  filings?: Record<string, FilingEntry>,
-): TimelinessResult {
-  const f = filings || ETMF_FILINGS;
-  const LATE = 30;
-  let onTime = 0;
-  const late: { code: string; name: string; lagDays: number }[] = [];
-  let worst = 0;
-  (provided || []).forEach((code) => {
-    const entry = f[code];
-    if (!entry) return;
-    if (entry.lagDays > LATE) {
-      late.push({ code, name: tmfArtifactName(code), lagDays: entry.lagDays });
-    } else {
-      onTime++;
-    }
-    if (entry.lagDays > worst) worst = entry.lagDays;
-  });
-  late.sort((a, b) => b.lagDays - a.lagDays);
-  return { onTime, late: late.length, lateList: late, worstLag: worst, timely: late.length === 0, threshold: LATE };
-}
-
-/* Quality -- QC lifecycle read (final = QC-complete; else awaiting QC). */
-export function assessTmfQc(
-  provided?: string[],
-  filings?: Record<string, FilingEntry>,
-): QcResult {
-  const f = filings || ETMF_FILINGS;
-  let finalCount = 0;
-  const inQc: { code: string; name: string; status: string }[] = [];
-  (provided || []).forEach((code) => {
-    const entry = f[code];
-    if (!entry) return;
-    if (entry.status === 'final') finalCount++;
-    else inQc.push({ code, name: tmfArtifactName(code), status: entry.status });
-  });
-  return { final: finalCount, inQc: inQc.length, inQcList: inQc, qcClean: inQc.length === 0 };
-}
+   ETMF_FILINGS is deleted for the same reason, and the note above it already
+   claimed it had been: Etmf.tsx says "the ETMF_FILINGS fixture that fabricated
+   those signals is removed" while the fabricated filings were still sitting in
+   this file, in the bundle. They are gone now, and the comment is true. */
