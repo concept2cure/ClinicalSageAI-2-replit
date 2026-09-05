@@ -197,6 +197,7 @@
     "ci:route-ownership-matrix:check": "node scripts/ci/check-route-ownership-matrix.mjs --check",
     "db:push": "drizzle-kit push",
     "db:seed": "node scripts/seed-ga-demo.mjs",
+    "db:backfill-document-aliases": "node scripts/backfill-document-aliases.mjs",
     "db:seed:admin": "node scripts/seed-admin.mjs",
     "db:seed:mdx-beta": "node scripts/seed-mdx-beta.mjs",
     "db:seed:mdx-content": "node scripts/seed-mdx-content.mjs",
