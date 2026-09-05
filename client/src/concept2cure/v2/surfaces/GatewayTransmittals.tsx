@@ -73,13 +73,33 @@ function refusalFindings(raw: any): RefusalFinding[] {
 }
 const IDENTIFIERS_RULE = 'REGULATORY-IDENTIFIER-MISSING';
 
-/** The numeric submission package id the dispatch layer uses, shared by the
- *  transmit, assemble and identifier forms so an operator works with ONE id. */
-const PACKAGE_FIELD = (def?: string): C2CFormField => ({
-  key: 'packageId', label: 'Package id', type: 'number', required: true, half: true, default: def,
-  desc: 'Numeric submission package id — the same id the transmit form takes.',
-});
-const IDENTIFIERS_FORM = (def?: string): C2CFormConfig => ({
+/** A row of GET /api/submission-ops/packages, as the picker needs it. */
+interface PackageOption { id: number; packageId?: string; title?: string; status?: string; packageFamily?: string }
+
+/**
+ * The package picker shared by the transmit, assemble and identifier forms so
+ * an operator works with ONE package across the loop. The org's packages are
+ * offered by title and status (the numeric id is the value the routes take);
+ * when the list could not be loaded the field falls back to the numeric id and
+ * says so — never an empty picker presented as "no packages".
+ */
+const PACKAGE_FIELD = (def: string | undefined, packages: PackageOption[] | null): C2CFormField =>
+  packages && packages.length > 0
+    ? {
+        key: 'packageId', label: 'Package', type: 'select', required: true, half: true, default: def,
+        options: packages.map((p) => ({
+          value: String(p.id),
+          label: `#${p.id} · ${p.title ?? p.packageId ?? 'untitled'} · ${p.status ?? 'status unknown'}`,
+        })),
+        desc: 'Only a locked package can be assembled and transmitted.',
+      }
+    : {
+        key: 'packageId', label: 'Package id', type: 'number', required: true, half: true, default: def,
+        desc: packages === null
+          ? 'The package list could not be loaded; enter the numeric package id.'
+          : 'No submission packages yet; enter the numeric package id.',
+      };
+const IDENTIFIERS_FORM = (def: string | undefined, packages: PackageOption[] | null): C2CFormConfig => ({
   eyebrow: 'Regulatory dispatch · governed change',
   title: 'Record regulatory identifiers',
   sub: 'The agency application number and applicant identity the Module 1 backbone carries. Recorded on the package with your reason. A bundle assembled under different identifiers is cleared and must be assembled again.',
@@ -88,21 +108,21 @@ const IDENTIFIERS_FORM = (def?: string): C2CFormConfig => ({
   governed: 'Governed change — your reason is recorded with it in the audit trail. If the ledger entry cannot be written, the change is still applied and the response says so.',
   submitLabel: 'Record',
   fields: [
-    PACKAGE_FIELD(def),
+    PACKAGE_FIELD(def, packages),
     { key: 'applicationNumber', label: 'Application number', type: 'text', required: true, half: true, placeholder: 'e.g. IND123456', desc: 'Letters, digits, ".", "_" or "-"; up to 64 characters.' },
     { key: 'applicantId', label: 'Applicant id', type: 'text', required: true, half: true, placeholder: 'e.g. DUNS number', desc: 'Same character set as the application number.' },
     { key: 'applicantName', label: 'Applicant name', type: 'text', required: true },
     { key: 'reason', label: 'Reason (governed)', type: 'textarea', required: true, placeholder: 'At least 8 characters — recorded with the change.' },
   ],
 });
-const ASSEMBLE_FORM = (def?: string): C2CFormConfig => ({
+const ASSEMBLE_FORM = (def: string | undefined, packages: PackageOption[] | null): C2CFormConfig => ({
   eyebrow: 'Regulatory dispatch · governed transition',
   title: 'Assemble bundle',
   sub: 'Builds the eCTD bundle for a locked package through the canonical packager and records the structural findings on it. Transmit refuses a bundle that carries error-severity findings.',
   governed: 'Governed transition — your reason is recorded with the assembly. Assembly does not re-authenticate you; transmit does. If the ledger entry cannot be written, the bundle is still built and the response says so.',
   submitLabel: 'Assemble',
   fields: [
-    PACKAGE_FIELD(def),
+    PACKAGE_FIELD(def, packages),
     { key: 'region', label: 'Region', type: 'select', options: ['FDA', 'EMA', 'PMDA', 'CA'], default: 'FDA', half: true },
     { key: 'sequence', label: 'Sequence', type: 'text', default: '0000', half: true, placeholder: '0000', desc: 'Four digits.' },
     { key: 'reason', label: 'Reason (governed)', type: 'textarea', required: true, placeholder: 'At least 8 characters — recorded with the assembly.' },
@@ -126,7 +146,7 @@ function statusTone(s: string) {
   return 'warn';
 }
 
-const TRANSMIT_FORM: C2CFormConfig = {
+const TRANSMIT_FORM = (def: string | undefined, packages: PackageOption[] | null): C2CFormConfig => ({
   eyebrow: 'Regulatory dispatch · §11 re-authentication',
   title: 'Transmit to agency gateway',
   sub: 'The transmit is gated server-side: your credentials are re-verified, the structural gate runs, and the transmittal is recorded before transport.',
@@ -134,13 +154,13 @@ const TRANSMIT_FORM: C2CFormConfig = {
   fields: [
     { key: 'region', label: 'Region', type: 'select', options: REGIONS, default: 'fda', half: true },
     { key: 'gateway', label: 'Gateway', type: 'select', options: GATEWAYS, default: 'esg', half: true },
-    { key: 'packageId', label: 'Package id (stored bundle)', type: 'number', half: true, desc: 'Numeric submission package whose stored bundle descriptor is transmitted.' },
+    PACKAGE_FIELD(def, packages),
     { key: 'submissionType', label: 'Submission type', type: 'text', half: true, placeholder: 'e.g. original' },
     { key: 'reason', label: 'Reason for transmission (governed)', type: 'textarea', required: true, placeholder: 'At least 8 characters — recorded with the transmittal.' },
     { key: 'password', label: 'Password (re-authentication)', type: 'password', required: true, half: true },
     { key: 'totp', label: 'Authentication code (if enabled)', type: 'text', half: true },
   ],
-};
+});
 const ROLLBACK_FORM = (id: number): C2CFormConfig => ({
   eyebrow: 'Regulatory dispatch',
   title: `Roll back transmittal #${id}`,
@@ -162,6 +182,9 @@ export function GatewayTransmittals({ onAsk }: SurfaceViewProps) {
      explaining. */
   const ask = onAsk;
   const [gateways, setGateways] = useState<GatewayInfo[]>([]);
+  /* The org's submission packages for the picker; null = the list could not be
+     loaded (the forms then fall back to the numeric id and say so). */
+  const [packages, setPackages] = useState<PackageOption[] | null>(null);
   const [rows, setRows] = useState<Transmittal[]>([]);
   const [state, setState] = useState<'loading' | 'ready' | 'error'>('loading');
   const [dialog, setDialog] = useState<'transmit' | 'identifiers' | 'assemble' | { rollback: number } | null>(null);
@@ -183,10 +206,14 @@ export function GatewayTransmittals({ onAsk }: SurfaceViewProps) {
 
   const load = useCallback(async () => {
     setState('loading');
-    const [g, t] = await Promise.all([
+    const [g, t, p] = await Promise.all([
       readData<GatewayInfo[]>('GET', '/api/mdx/gateways'),
       readData<Transmittal[]>('GET', '/api/mdx/gateways/transmittals'),
+      readData<PackageOption[]>('GET', '/api/submission-ops/packages'),
     ]);
+    // The package list feeds the picker only; its failure must not hide the
+    // gateways or the transmittal log, so it degrades to the numeric id.
+    setPackages(p.ok && Array.isArray(p.data) ? p.data : null);
     // Fail to 'error' if EITHER read fails. Previously this required BOTH to
     // fail (&&), so a single failed read (e.g. the transmittal log) rendered its
     // honest-empty copy ("No transmittals yet") as if the org genuinely had
@@ -570,9 +597,9 @@ export function GatewayTransmittals({ onAsk }: SurfaceViewProps) {
         </div>
       )}
 
-      {dialog === 'transmit' && <C2CForm config={TRANSMIT_FORM} onCancel={() => setDialog(null)} onSubmit={transmit} />}
-      {dialog === 'identifiers' && <C2CForm config={IDENTIFIERS_FORM(lastPackageId || undefined)} onCancel={() => setDialog(null)} onSubmit={recordIdentifiers} />}
-      {dialog === 'assemble' && <C2CForm config={ASSEMBLE_FORM(lastPackageId || undefined)} onCancel={() => setDialog(null)} onSubmit={assemble} />}
+      {dialog === 'transmit' && <C2CForm config={TRANSMIT_FORM(lastPackageId || undefined, packages)} onCancel={() => setDialog(null)} onSubmit={transmit} />}
+      {dialog === 'identifiers' && <C2CForm config={IDENTIFIERS_FORM(lastPackageId || undefined, packages)} onCancel={() => setDialog(null)} onSubmit={recordIdentifiers} />}
+      {dialog === 'assemble' && <C2CForm config={ASSEMBLE_FORM(lastPackageId || undefined, packages)} onCancel={() => setDialog(null)} onSubmit={assemble} />}
       {dialog && typeof dialog === 'object' && <C2CForm config={ROLLBACK_FORM(dialog.rollback)} onCancel={() => setDialog(null)} onSubmit={rollback} />}
       <C2CToast msg={toast} />
     </div>
