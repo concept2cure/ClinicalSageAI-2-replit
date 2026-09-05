@@ -21,15 +21,28 @@ const { mockQuery, orgHolder } = vi.hoisted(() => ({
 vi.mock('../../db.js', () => ({
   query: (...a: unknown[]) => mockQuery(...a),
 }));
-vi.mock('../../utils/tenantContext.js', () => ({
-  getSecureOrgId: () => orgHolder.value,
-}));
 
 import createCmcAgencyQuestionRoutes from '../cmc-agency-questions.routes';
 
 function makeApp() {
   const app = express();
   app.use(express.json());
+  // Populate the verified identity the way the /api auth gate does, rather than
+  // mocking the tenant helper. The route resolves its org through the canonical
+  // resolveOrgId (server/types/auth-request); this used to mock
+  // utils/tenantContext's getSecureOrgId instead, which meant the suite proved
+  // nothing about how the route actually derives a tenant — it only proved the
+  // mock was consulted. Driving req.user is what the real chain does, so the
+  // real resolution runs here.
+  app.use((req, _res, next) => {
+    if (orgHolder.value !== null) {
+      (req as express.Request & { user?: unknown }).user = {
+        id: 1,
+        organizationId: orgHolder.value,
+      };
+    }
+    next();
+  });
   app.use('/api/cmc/agency-questions', createCmcAgencyQuestionRoutes());
   return app;
 }
