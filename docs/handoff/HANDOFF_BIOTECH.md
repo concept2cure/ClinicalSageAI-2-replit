@@ -538,6 +538,38 @@ Also noted, not changed: `concept2cure_artifacts` — where `POST
 five tables `ectd/leaf-source-resolver` reads, so a form saved as a governed
 artifact cannot currently become a leaf by that route either.
 
+### Fifteenth — the IND 30-day clock (21 CFR 312.40) (2026-09-05)
+
+The IND lifecycle surface computed the 312.40(b) 30-day clock from
+`regulatory_programs.target_submission_date` — the sponsor's PLAN — and passed
+it as `receiptDate`. A target more than 30 days past produced status
+`safe_to_proceed`, a good-tone "Safe to proceed" chip, and the clock's own
+sentence as the card's primary line: "clinical investigations may proceed
+(21 CFR 312.40(b))" — for an IND FDA may never have received. That sentence
+authorises dosing the first human subject. The AnA context published
+`safeToProceed: true` with the same rationale.
+
+Fixed: the clock now carries its basis. A projection reads "Projected from
+target date", says FDA receipt has not been recorded so the period has not
+started, labels the day count as projected, and publishes
+`basis: 'projection-from-target-submission-date'` with `safeToProceed: null`.
+The receipt-backed branches stay live for a future recorded receipt date.
+
+DECISION recorded, not implemented: `submission_transmittals.ack_received_at` is
+not wired to the clock. The stored acknowledgement is not typed — an AS2 MDN is
+a transport receipt, while FDA's 312.40 receipt is the Center's ACK1 — so
+treating it as the regulatory receipt would assert a date the evidence does not
+establish, and a wrong start date moves the day a sponsor may dose. Wiring it
+needs the ESG ack chain to record WHICH acknowledgement arrived.
+
+Verified and unchanged: the server-side clock (`ind-regulatory-clock.ts`) is
+correct for a real receipt date and refuses without one; `ind-dashboard` reports
+`clock: null` / `safeToProceed: null` honestly when no input is supplied.
+
+Gap noted, not closed: nothing in the schema persists an FDA receipt date or the
+clinical-hold event timeline, so the clock has no live input anywhere — the
+calculator is right and unfed.
+
 ### Note for the concurrent device stream
 
 On 2026-09-04, at JM's direct instruction to complete the biotech/pharma workflow
@@ -787,6 +819,7 @@ If neither has happened: report the blockage, name what is needed, and stop.
 | 2026-09-05 | A | Twelfth audit — submission-package orchestrator | Resumed runs face the same §11.70 sign gate; a skipped gate is `partial`, not `complete`; a failed run/audit read is not a missing run; regenerate persists what it computed; unrecorded sample size is not n=0 — revert-proven | §1 above |
 | 2026-09-05 | A | Thirteenth audit — CMC Module 3 export gate | Provenance derived from section lineage instead of asserted, so a required blocking check works; one shared governed-state evaluation, so readiness cannot out-run the gate; unevaluated fabric is not clearance — revert-proven | §1 above |
 | 2026-09-05 | A | Fourteenth — IND filing transmittal pair; eSTAR + IND form PDFs proven | eSTAR fill verified end to end against the vendored FDA template (20/20 fields read back, encrypted incremental update); 1571/1572/3674/356h fill officially; every filed IND sequence now carries the m1.1 Form 1571 + m1.2 cover letter its own validator requires, and names the placements still awaiting bytes — revert-proven | §1 above |
+| 2026-09-05 | A | Fifteenth — the IND 30-day clock | A clock projected from the program's target submission date no longer shows a cleared-to-proceed chip, prints "clinical investigations may proceed", or publishes safeToProceed true to AnA; basis is named and safeToProceed is unknown — revert-proven; the ack-type decision recorded | §1 above |
 | | | | | |
 
 **Rule:** the last row with an empty "What was proven" cell is the open work.
