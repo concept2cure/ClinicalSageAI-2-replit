@@ -57,7 +57,8 @@ vi.mock('../server/services/mfaService', () => ({
   verifyToken: vi.fn().mockResolvedValue(true),
 }));
 
-const REAUTH = { reason: 'governed transmit reason', reauth: { password: 'pw-123456' } };
+// §11.50: a transmit is signed under a meaning the signer declares; the body carries it.
+const REAUTH = { reason: 'governed transmit reason', meaning: 'release', reauth: { password: 'pw-123456' } };
 
 const { transmitFn, statusFn, ackFn, isConfigFn, configStatusFn } = vi.hoisted(() => ({
   transmitFn:     vi.fn(),

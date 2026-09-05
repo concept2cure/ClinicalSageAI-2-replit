@@ -97,22 +97,25 @@ router.get('/gateways/transmittals', async (req: Request, res: Response) => {
   if (!parsed.success) return clientError(res, 422, 'Invalid query', parsed.error.flatten().fieldErrors);
   const { program_id: pid, region, status, limit = 100 } = parsed.data;
 
-  const filters: string[] = [`organization_id = $1`];
+  const filters: string[] = [`t.organization_id = $1`];
   const args: unknown[] = [orgId];
-  if (pid)    { args.push(pid);    filters.push(`program_id = $${args.length}`); }
-  if (region) { args.push(region); filters.push(`region = $${args.length}`); }
-  if (status) { args.push(status); filters.push(`status = $${args.length}`); }
+  if (pid)    { args.push(pid);    filters.push(`t.program_id = $${args.length}`); }
+  if (region) { args.push(region); filters.push(`t.region = $${args.length}`); }
+  if (status) { args.push(status); filters.push(`t.status = $${args.length}`); }
   args.push(limit);
 
   try {
+    // submitted_by resolved to a person: a governed row shows who, not a bare id.
     const { rows } = await pool.query(
-      `SELECT id, organization_id, program_id, package_id, region, gateway, format,
-              submission_type, transport, transmission_id, status, http_status,
-              error_class, error_message, bundle_size_bytes, submitted_by, submitted_at,
-              ack_received_at, completed_at, metadata
-         FROM submission_transmittals
+      `SELECT t.id, t.organization_id, t.program_id, t.package_id, t.region, t.gateway, t.format,
+              t.submission_type, t.transport, t.transmission_id, t.status, t.http_status,
+              t.error_class, t.error_message, t.bundle_size_bytes, t.submitted_by, t.submitted_at,
+              t.ack_received_at, t.completed_at, t.metadata,
+              u.name AS submitted_by_name
+         FROM submission_transmittals t
+         LEFT JOIN users u ON u.id = t.submitted_by
         WHERE ${filters.join(' AND ')}
-        ORDER BY submitted_at DESC
+        ORDER BY t.submitted_at DESC
         LIMIT $${args.length}`,
       args,
     );
@@ -171,6 +174,8 @@ const transmitBody = z.object({
   }).optional(),
   metadata: z.record(z.unknown()).optional(),
   reason: z.string().min(8, 'A reason of at least 8 characters is required.'),
+  /** §11.50: the meaning the signer declares for this transmission. */
+  meaning: z.enum(['authorship', 'review', 'approval', 'responsibility', 'release']),
   reauth: z
     .object({
       password: z.string().optional(),
@@ -222,6 +227,11 @@ router.post('/gateways/:region/:gateway/transmit', async (req: Request, res: Res
       submissionType: p.submissionType,
       metadata:       p.metadata,
       reason:         p.reason,
+      meaning:        p.meaning,
+      // Only the factors verifyReauth actually verified for this envelope.
+      authenticationMethod: p.reauth?.password ? (p.reauth?.totp ? 'password+totp' : 'password') : 'session',
+      secondFactorVerified: Boolean(p.reauth?.totp),
+      ipAddress:      req.ip ?? null,
       reauthVerifiedAt,
       clientBundle:   p.bundle ?? null,
       recordGovernedAction,

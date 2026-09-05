@@ -38,7 +38,8 @@ vi.mock('../server/services/mfaService', () => ({
 }));
 
 /** Re-auth body that satisfies verifyReauth in these tests. */
-const REAUTH = { reason: 'governed transmit reason', reauth: { password: 'pw-123456' } };
+// §11.50: a transmit is signed under a meaning the signer declares; the body carries it.
+const REAUTH = { reason: 'governed transmit reason', meaning: 'release', reauth: { password: 'pw-123456' } };
 
 /* Stub the submission-gateway service so the route tests don't run the
    real transport code. vi.mock is hoisted, so the mocks reference vars
@@ -170,6 +171,24 @@ describe('submission gateway routes — auth gate', () => {
 
 /* ─── Gateways list + config status ──────────────────────────────── */
 
+describe('GET /api/mdx/gateways/transmittals', () => {
+  it('resolves submitted_by to the person, so the log names who transmitted', async () => {
+    let captured = '';
+    queryFn.mockImplementation((sql: string) => {
+      if (typeof sql === 'string' && sql.includes('FROM submission_transmittals')) {
+        captured = sql;
+        return Promise.resolve({ rows: [{ id: 3, region: 'fda', gateway: 'esg', status: 'received', submitted_by: 11, submitted_by_name: 'Dr Ada Lovelace' }], rowCount: 1 });
+      }
+      return Promise.resolve({ rows: [], rowCount: 0 });
+    });
+    const res = await request(makeApp()).get('/api/mdx/gateways/transmittals');
+    expect(res.status).toBe(200);
+    expect(captured).toMatch(/LEFT JOIN users u ON u\.id = t\.submitted_by/);
+    expect(captured).toMatch(/submitted_by_name/);
+    expect(res.body.data[0].submitted_by_name).toBe('Dr Ada Lovelace');
+  });
+});
+
 describe('GET /api/mdx/gateways', () => {
   it('returns one row per gateway with configured flag', async () => {
     configStatusFn.mockResolvedValueOnce([
@@ -229,6 +248,38 @@ describe('POST /api/mdx/gateways/:region/:gateway/transmit', () => {
     expect(res.status).toBe(201);
     expect(res.body.data.transmittalId).toBe(42);
     expect(res.body.data.transmissionId).toBe('mdn-12345');
+  });
+
+  it('refuses a transmit that declares no §11.50 signature meaning — nothing reaches the gateway', async () => {
+    const withoutMeaning: Partial<typeof REAUTH> = { ...REAUTH };
+    delete withoutMeaning.meaning;
+    const res = await request(makeApp())
+      .post('/api/mdx/gateways/fda/esg/transmit')
+      .send({
+        environment: 'staging',
+        bundle: { path: '/tmp/ectd.zip', sha256: 'a'.repeat(64), sizeBytes: 123456, format: 'ectd' },
+        application_id: 'IND-12345',
+        sequence: '0001',
+        ...withoutMeaning,
+      });
+    expect(res.status).toBe(422);
+    expect(res.body.details?.meaning ?? res.body.error).toBeTruthy();
+    expect(transmitFn).not.toHaveBeenCalled();
+  });
+
+  it('refuses a meaning outside the §11.50 vocabulary', async () => {
+    const res = await request(makeApp())
+      .post('/api/mdx/gateways/fda/esg/transmit')
+      .send({
+        environment: 'staging',
+        bundle: { path: '/tmp/ectd.zip', sha256: 'a'.repeat(64), sizeBytes: 123456, format: 'ectd' },
+        application_id: 'IND-12345',
+        sequence: '0001',
+        ...REAUTH,
+        meaning: 'submission',
+      });
+    expect(res.status).toBe(422);
+    expect(transmitFn).not.toHaveBeenCalled();
   });
 
   it('loads the stored bundle when only packageId is supplied (no explicit bundle)', async () => {

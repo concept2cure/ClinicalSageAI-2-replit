@@ -108,6 +108,8 @@ export const BINDING_BASIS = {
   C2C_DOCUMENT_SECTIONS: 'c2c-document-sections-sha256',
   /** sha256 over a single c2c document section's content + version at signing time. */
   C2C_DOCUMENT_SECTION: 'c2c-document-section-sha256',
+  /** sha256 of the exact bundle bytes handed to the agency gateway (governed transmit). */
+  TRANSMITTED_BUNDLE_SHA256: 'transmitted-bundle-sha256',
   /** sha256 over the certified financial-disclosure snapshot (21 CFR 54 Form 3454/3455). */
   FINANCIAL_DISCLOSURE_CONTENT: 'financial-disclosure-content-sha256',
   /**

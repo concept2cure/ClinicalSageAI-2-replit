@@ -42,6 +42,7 @@
  */
 
 import { promises as fsp } from 'fs';
+import { persistGovernedActionSignature, BINDING_BASIS } from '../part11/signature-persistence';
 import { dirname } from 'path';
 
 import { pool } from '../../db';
@@ -270,7 +271,7 @@ export type RecordGovernedAction = (
     domain?: string;
     surface?: string;
   },
-) => Promise<unknown>;
+) => Promise<{ actionId: string; auditId: string; sha256Chain: string }>;
 
 export interface GovernedTransmitInput {
   region: Region;
@@ -284,6 +285,16 @@ export interface GovernedTransmitInput {
   metadata?: Record<string, unknown>;
   /** Operator's stated reason. Recorded on the governed `sign` ledger entry. */
   reason: string;
+  /**
+   * The §11.50 meaning the signer declared for THIS transmission
+   * (authorship/review/approval/responsibility/release). It was the constant
+   * 'submission' here — a meaning nobody chose, recorded as if they had.
+   */
+  meaning: string;
+  /** The re-authentication factors the caller actually verified ('password', 'password+totp', 'session'). */
+  authenticationMethod: string;
+  secondFactorVerified: boolean;
+  ipAddress?: string | null;
   /**
    * When the human's re-authentication was VERIFIED for this transmit, by the
    * caller that verified it. Never synthesised here — a made-up timestamp is a
@@ -582,14 +593,23 @@ export async function executeGovernedTransmit(
     const client = await pool.connect();
     try {
       await client.query('BEGIN');
-      await recordGovernedAction(client, {
+      const signedTarget = `submission:${input.packageId ?? input.programId ?? `transmittal-${result.transmittalId}`}`;
+      const signPayload = {
+          meaning: input.meaning,
+          region,
+          gateway,
+          bundleSha256: bundle.sha256,
+          transmittalId: result.transmittalId,
+          transmissionId: result.transmissionId ?? null,
+      };
+      const recorded = await recordGovernedAction(client, {
         orgId: organizationId,
         userId,
         command: 'sign',
-        target: `submission:${input.packageId ?? input.programId ?? `transmittal-${result.transmittalId}`}`,
+        target: signedTarget,
         reason,
         payload: {
-          meaning: 'submission',
+          meaning: input.meaning,
           region,
           gateway,
           bundleSha256: bundle.sha256,
@@ -606,6 +626,31 @@ export async function executeGovernedTransmit(
         },
         domain: 'mdx',
         surface: input.surface ?? 'submission-gateway',
+      });
+      // The transmit's sign is an electronic signature (11.50/11.70), not only
+      // a ledger row: printed name, declared meaning, authentication method and
+      // a digest of the exact bundle bytes the agency received. Freeze and
+      // dispatch always wrote this row; transmit — the irreversible act — never
+      // did, so no signature manifestation existed for it anywhere.
+      await persistGovernedActionSignature(client, {
+        orgId: organizationId,
+        userId,
+        target: signedTarget,
+        reason,
+        payload: signPayload,
+        actionId: recorded.actionId,
+        auditId: recorded.auditId,
+        sha256Chain: recorded.sha256Chain,
+        authenticationMethod: input.authenticationMethod,
+        secondFactorVerified: input.secondFactorVerified,
+        ipAddress: input.ipAddress ?? null,
+        occurredAt: new Date(),
+        binding: {
+          digest: bundle.sha256,
+          basis: BINDING_BASIS.TRANSMITTED_BUNDLE_SHA256,
+          note: `sha256 of the ${bundle.sizeBytes}-byte bundle handed to ${region}/${gateway}; verified against the staged bytes before transport.`,
+        },
+        manifestKind: 'governed-transmit',
       });
       await client.query('COMMIT');
     } catch (ledgerErr) {

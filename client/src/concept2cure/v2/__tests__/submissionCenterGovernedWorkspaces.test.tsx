@@ -441,6 +441,8 @@ describe('governed freeze — the real e-sign chain, never bypassed', () => {
     );
     expect(screen.getByRole('alert').textContent).not.toContain('SEPARATION_OF_DUTIES');
     expect(freezeCalled).toBe(0);
+    // The refused credential does not stay in the field: a retry re-enters it.
+    expect((screen.getByLabelText(/Password/) as HTMLInputElement).value).toBe('');
   });
 });
 

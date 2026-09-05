@@ -553,6 +553,17 @@ describe('k510_workflow.transmit', () => {
     expect(governedTransmit.executeGovernedTransmit).not.toHaveBeenCalled();
   });
 
+  it('refuses a verified sign-off that declares no §11.50 signature meaning', async () => {
+    const r = await esgTransmit(
+      { ...SIGNED_CTX, signoff: { ...SIGNED_CTX.signoff, signaturePurpose: undefined } } as any,
+      GOOD_TRANSMIT,
+    );
+    expect(r.success).toBe(false);
+    expect(r.error).toBe('PART11_SIGNATURE_REQUIRED');
+    expect(r.message).toMatch(/meaning/i);
+    expect(governedTransmit.executeGovernedTransmit).not.toHaveBeenCalled();
+  });
+
   it('refuses without an assembled packageId', async () => {
     const r = await esgTransmit(SIGNED_CTX, { ...GOOD_TRANSMIT, packageId: undefined });
     expect(r.error).toBe('INVALID_INPUT');
@@ -594,6 +605,10 @@ describe('k510_workflow.transmit', () => {
     // synthesise one.
     expect(call.reauthVerifiedAt).toBe(VERIFIED_AT);
     expect(call.reason).toBe(GOOD_TRANSMIT.reason);
+    // The signer's declared purpose is the §11.50 meaning on the signature —
+    // never a constant chosen by the platform.
+    expect(call.meaning).toBe('approval');
+    expect(call.authenticationMethod).toBe('password');
 
     expect(audit.logAction).toHaveBeenCalledWith(
       expect.objectContaining({

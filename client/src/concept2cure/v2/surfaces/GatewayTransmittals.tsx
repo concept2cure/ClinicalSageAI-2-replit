@@ -55,6 +55,7 @@ interface Transmittal {
   id: number; region?: string | null; gateway?: string | null; format?: string | null; submission_type?: string | null;
   transmission_id?: string | null; status?: string | null; error_class?: string | null; error_message?: string | null;
   submitted_at?: string | null; ack_received_at?: string | null; completed_at?: string | null;
+  submitted_by?: number | null; submitted_by_name?: string | null;
 }
 
 interface RefusalFinding { ruleId?: string; severity?: string; message?: string }
@@ -157,6 +158,14 @@ const TRANSMIT_FORM = (def: string | undefined, packages: PackageOption[] | null
     PACKAGE_FIELD(def, packages),
     { key: 'submissionType', label: 'Submission type', type: 'text', half: true, placeholder: 'e.g. original' },
     { key: 'reason', label: 'Reason for transmission (governed)', type: 'textarea', required: true, placeholder: 'At least 8 characters — recorded with the transmittal.' },
+    // §11.50: what the signer asserts by transmitting. Recorded on the electronic signature.
+    { key: 'meaning', label: 'Signature meaning', type: 'select', required: true, default: 'release', options: [
+      { value: 'release', label: 'Release — I authorize submission to the agency' },
+      { value: 'approval', label: 'Approval — I approve this package for submission' },
+      { value: 'responsibility', label: 'Responsibility — I take responsibility for this package' },
+      { value: 'review', label: 'Review — I reviewed this package' },
+      { value: 'authorship', label: 'Authorship — I authored this package' },
+    ] },
     { key: 'password', label: 'Password (re-authentication)', type: 'password', required: true, half: true },
     { key: 'totp', label: 'Authentication code (if enabled)', type: 'text', half: true },
   ],
@@ -170,7 +179,7 @@ const ROLLBACK_FORM = (id: number): C2CFormConfig => ({
   governed: true, submitLabel: 'Roll back',
   fields: [
     { key: 'reason', label: 'Reason (governed)', type: 'textarea', required: true, placeholder: 'At least 8 characters.' },
-    { key: 'password', label: 'Password (re-authentication)', type: 'password', half: true },
+    { key: 'password', label: 'Password (re-authentication)', type: 'password', required: true, half: true },
     { key: 'totp', label: 'Authentication code', type: 'text', half: true },
   ],
 });
@@ -232,6 +241,7 @@ export function GatewayTransmittals({ onAsk }: SurfaceViewProps) {
     const gateway = v.gateway || 'esg';
     const body: Record<string, unknown> = {
       reason: v.reason,
+      meaning: v.meaning || 'release',
       reauth: { password: v.password, totp: v.totp || undefined },
     };
     if (v.packageId) body.packageId = Number(v.packageId);
@@ -239,16 +249,19 @@ export function GatewayTransmittals({ onAsk }: SurfaceViewProps) {
     setLastPackageId(v.packageId ?? '');
     setRefusal(null);
     const { ok, status, raw } = await readData('POST', `/api/mdx/gateways/${region}/${gateway}/transmit`, body);
-    if (status === 401) { fireToast('Not transmitted — re-authentication failed (§11). Nothing left the platform.', 'error'); return; }
+    // Every refusal closes the drawer: the rejected password must not sit in
+    // the field for a resubmit, and the toast carries the reason.
+    if (status === 401) { setDialog(null); fireToast('Not transmitted — re-authentication failed (§11). Nothing left the platform.', 'error'); return; }
     if (status === 409) {
       // The error envelope is { error, details }: the holder's id and status
       // travel in details (they were read from a `data` key that an error
       // response never carries, so the toast always said "#?" / "in flight").
       const held = (raw as any)?.details ?? (raw as any)?.data ?? raw;
+      setDialog(null);
       fireToast(`Not transmitted — transmittal #${held?.transmittalId ?? '?'} is already active (${held?.status ?? 'in flight'}). Roll it back first.`, 'error');
       return;
     }
-    if (status === 412) { fireToast('Not transmitted — gateway credentials are not configured for this environment.', 'error'); return; }
+    if (status === 412) { setDialog(null); fireToast('Not transmitted — gateway credentials are not configured for this environment.', 'error'); return; }
     if (status === 422) {
       const message = String((raw as any)?.error ?? 'validation failed');
       // Close the drawer so the findings card is not mounted beneath its overlay.
@@ -260,7 +273,7 @@ export function GatewayTransmittals({ onAsk }: SurfaceViewProps) {
       fireToast('Not transmitted — the structural gate rejected the bundle: ' + message + '.', 'error');
       return;
     }
-    if (!ok) { fireToast(`Transmit failed (HTTP ${status}) — ` + ((raw as any)?.error ?? 'nothing was sent') + '.', 'error'); return; }
+    if (!ok) { setDialog(null); fireToast(`Transmit failed (HTTP ${status}) — ` + ((raw as any)?.error ?? 'nothing was sent') + '.', 'error'); return; }
     setDialog(null);
     // The gateway result is flattened onto data and its tracking field is
     // transmissionId (it was read as a nested transactionId, which no gateway
@@ -562,7 +575,7 @@ export function GatewayTransmittals({ onAsk }: SurfaceViewProps) {
         <div className="pj-card-h"><span className="t">Transmittal log</span><span className="s">{rows.length}</span></div>
         <div className="pj-card-b" style={{ padding: 0 }}>
           {rows.length === 0 ? <div style={{ padding: 16 }}><EmptyState icon={I.clock} title="No transmittals yet" hint="Every transmit is recorded here with its gateway reference, status, acknowledgment, and rollback history." /></div>
-            : <table className="reg-tbl"><thead><tr><th>#</th><th>Route</th><th>Gateway ref</th><th>Status</th><th>Submitted</th><th style={{ textAlign: 'right' }}>Actions</th></tr></thead>
+            : <table className="reg-tbl"><thead><tr><th>#</th><th>Route</th><th>Gateway ref</th><th>Status</th><th>Submitted</th><th>Transmitted by</th><th style={{ textAlign: 'right' }}>Actions</th></tr></thead>
               <tbody>{rows.map((t) => (
                 <tr key={t.id}>
                   <td className="mono">#{t.id}</td>
@@ -575,6 +588,8 @@ export function GatewayTransmittals({ onAsk }: SurfaceViewProps) {
                   <td>{t.status && <span className={'rd-chip tone-' + statusTone(t.status)}>{t.status}</span>}
                     {t.error_message && <div style={{ fontSize: 11, color: 'var(--c2c-err,#b42318)' }}>{t.error_message}</div>}</td>
                   <td style={{ whiteSpace: 'nowrap' }}>{t.submitted_at ? new Date(t.submitted_at).toLocaleString() : '—'}</td>
+                  {/* Who: resolved to a person by the server; a bare id is shown as such, never as a name. */}
+                  <td>{t.submitted_by_name ?? (t.submitted_by != null ? `user #${t.submitted_by}` : '—')}</td>
                   <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
                     <button className="nda-open" onClick={() => checkStatus(t.id)}>{I.zap} Status</button>
                     <button className="nda-open" style={{ marginLeft: 6 }} onClick={() => downloadAck(t.id)} disabled={!t.ack_received_at} title={t.ack_received_at ? 'Download the acknowledgment or transmittal record — the file states which' : 'Nothing to download yet'}>{I.download} ACK</button>

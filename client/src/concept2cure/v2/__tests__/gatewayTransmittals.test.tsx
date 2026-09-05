@@ -34,7 +34,7 @@ vi.mock('../C2CForm', () => ({
         ? { packageId: '77', applicationNumber: 'IND123456', applicantId: 'DUNS-123456789', applicantName: 'Acme Biologics Inc', reason: 'Recording the IND number assigned by CDER' }
         : config.title === 'Assemble bundle'
           ? { packageId: '77', region: 'FDA', sequence: '0001', reason: 'Assemble sequence 0001 for FDA' }
-          : { region: 'fda', gateway: 'esg', packageId: '77', submissionType: 'original', reason: 'Dispatch sequence 0003 to FDA', password: 'pw', totp: '123456' };
+          : { region: 'fda', gateway: 'esg', packageId: '77', submissionType: 'original', reason: 'Dispatch sequence 0003 to FDA', meaning: 'approval', password: 'pw', totp: '123456' };
     return <button data-testid="form-submit" onClick={() => onSubmit(values)}>{config.submitLabel}</button>;
   },
 }));
@@ -57,7 +57,7 @@ function ackResponse(provenance: 'agency' | 'platform-record', body: string) {
 const props = () => ({ surface: { id: 'gateway-transmittals', label: 'Dispatch' } as any, onAsk: vi.fn(), onNav: vi.fn(), segment: 'biopharma' });
 
 const GATEWAYS = [{ region: 'fda', gateway: 'esg', name: 'FDA ESG', configured: true, environment: 'production' }];
-const LOG = [{ id: 3, region: 'fda', gateway: 'esg', submission_type: 'original', transmission_id: 'ESG-XYZ', status: 'acknowledged', submitted_at: '2026-07-21T00:00:00Z', ack_received_at: '2026-07-21T01:00:00Z' }];
+const LOG = [{ id: 3, region: 'fda', gateway: 'esg', submission_type: 'original', transmission_id: 'ESG-XYZ', status: 'acknowledged', submitted_at: '2026-07-21T00:00:00Z', ack_received_at: '2026-07-21T01:00:00Z', submitted_by: 11, submitted_by_name: 'Dr Ada Lovelace' }];
 
 afterEach(() => cleanup());
 beforeEach(() => {
@@ -95,6 +95,8 @@ describe('GatewayTransmittals — real dispatch layer', () => {
       expect(call).toBeTruthy();
       const body = call![2] as any;
       expect(body.reason).toBe('Dispatch sequence 0003 to FDA');
+      // §11.50: the meaning the signer chose travels with the signature.
+      expect(body.meaning).toBe('approval');
       expect(body.reauth).toEqual({ password: 'pw', totp: '123456' });
       expect(body.packageId).toBe(77);
     });
@@ -113,6 +115,33 @@ describe('GatewayTransmittals — real dispatch layer', () => {
     fireEvent.click(screen.getByRole('button', { name: /^Transmit$/ }));
     fireEvent.click(screen.getByTestId('form-submit'));
     expect(await screen.findByText(/re-authentication failed.*Nothing left the platform/)).toBeTruthy();
+    // The rejected password must not sit in the drawer for a one-click resubmit.
+    expect(screen.queryByTestId('form-submit')).toBeNull();
+  });
+
+  it('the transmittal log names who transmitted, from the server-resolved person', async () => {
+    apiRequest.mockImplementation(async (method: string, url: string) => {
+      if (method === 'GET' && url === '/api/mdx/gateways') return env(GATEWAYS);
+      if (method === 'GET' && url === '/api/mdx/gateways/transmittals') return env(LOG);
+      return env(null);
+    });
+    render(<GatewayTransmittals {...props()} />);
+    expect(await screen.findByText('Dr Ada Lovelace')).toBeTruthy();
+  });
+
+  it('the transmit form asks the signer to declare the §11.50 meaning', async () => {
+    apiRequest.mockImplementation(async (method: string, url: string) => {
+      if (method === 'GET' && url === '/api/mdx/gateways') return env(GATEWAYS);
+      if (method === 'GET' && url === '/api/mdx/gateways/transmittals') return env(LOG);
+      return env(null);
+    });
+    render(<GatewayTransmittals {...props()} />);
+    await screen.findByText('FDA ESG');
+    fireEvent.click(screen.getByRole('button', { name: /^Transmit$/ }));
+    const cfg = (globalThis as any).__c2cFormConfig;
+    const meaning = cfg.fields.find((f: any) => f.key === 'meaning');
+    expect(meaning?.required).toBe(true);
+    expect(meaning?.options.map((o: any) => o.value).sort()).toEqual(['approval', 'authorship', 'release', 'responsibility', 'review']);
   });
 
   it('surfaces the 409 active-transmittal lock with the holder id', async () => {
