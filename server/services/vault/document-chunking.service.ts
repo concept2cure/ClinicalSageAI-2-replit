@@ -236,20 +236,34 @@ export async function chunkAndEmbedDocument(args: {
   }
 }
 
-/** Record the chunking outcome on the document's catalog ledger. */
+/**
+ * Record the chunking outcome on the document's catalog ledger.
+ *
+ * Reaches the row through the same program → organization join the chunk
+ * writer uses. Keyed on document_id alone this wrote ACROSS tenants on the one
+ * path that most needed it: when the writer refuses a foreign document, the
+ * refusal itself was stamped onto that other tenant's catalog row — flipping
+ * their chunk_status to 'chunk_failed' and leaving them an error about an
+ * organization that is not theirs. A refusal must leave their record untouched.
+ */
 export async function recordChunkOutcome(args: {
   documentId: string;
+  /** The caller's organization; the document must belong to one of its programs. */
+  organizationId: number;
   result: ChunkWriteResult;
 }): Promise<void> {
   await pool.query(
-    `UPDATE vault.document_catalog SET
+    `UPDATE vault.document_catalog c SET
        chunk_status = $2, chunk_count = $3, chunk_error = $4, updated_at = NOW()
-     WHERE document_id = $1`,
+      FROM vault.documents d
+      JOIN regulatory_programs p ON p.id = d.program_id
+     WHERE c.document_id = d.id AND d.id = $1 AND p.organization_id = $5`,
     [
       args.documentId,
       args.result.ok ? 'chunked' : 'chunk_failed',
       args.result.ok ? args.result.chunkCount : null,
       args.result.error ?? null,
+      args.organizationId,
     ],
   );
 }
@@ -266,7 +280,7 @@ export async function chunkDocumentForIngest(
 ): Promise<void> {
   try {
     const result = await chunkAndEmbedDocument({ documentId, organizationId, text });
-    await recordChunkOutcome({ documentId, result });
+    await recordChunkOutcome({ documentId, organizationId, result });
     if (!result.ok) {
       logger.warn('Vault chunking failed — recorded on the catalog ledger', {
         documentId,

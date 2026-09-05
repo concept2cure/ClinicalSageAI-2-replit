@@ -189,7 +189,13 @@ router.post('/:submissionId/sign-release', async (req: Request, res: Response) =
   const { runId, password, signatureMeaning, reason } = parsed.data;
 
   // ── Load + verify the run ───────────────────────────────────────────────
-  const run = await getRun(runId, organizationId);
+  let run;
+  try {
+    run = await getRun(runId, organizationId);
+  } catch (err) {
+    log.error('sign-release: run read failed', { runId, message: err instanceof Error ? err.message : String(err) });
+    return res.status(500).json({ error: 'run_read_failed' });
+  }
   if (!run) {
     // 404 collapses miss-or-cross-org per the orchestrator contract.
     return res.status(404).json({ error: 'run_not_found' });
