@@ -1839,7 +1839,7 @@
 .c2c-v2 .ana-work-toggle[aria-pressed="true"]{color:var(--accent-200);border-color:var(--accent-100);background:var(--accent-000);}
 .c2c-v2 .ana-work-toggle:focus-visible{outline:2px solid var(--accent-200);outline-offset:2px;}
 .c2c-v2 .ana-work-hdr{display:flex;align-items:center;gap:8px;padding:9px 12px;border-bottom:1px solid var(--border);background:var(--bg-050);}
-.c2c-v2 .ana-work-title{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--text-100);}
+.c2c-v2 .ana-work-title{display:inline-flex;align-items:center;gap:6px;margin:0;font:inherit;font-size:12px;font-weight:600;line-height:inherit;color:var(--text-100);}
 .c2c-v2 .ana-work-mark{display:inline-flex;color:var(--accent-200);}
 .c2c-v2 .ana-work-mark svg{font-size:13px;}
 .c2c-v2 .ana-work-elapsed{margin-left:auto;display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--text-300);font-variant-numeric:tabular-nums;white-space:nowrap;}
