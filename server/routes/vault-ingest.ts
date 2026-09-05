@@ -263,7 +263,7 @@ export default function createVaultIngestRoutes(): Router {
     // can be recorded in the catalog as a failure rather than surfacing later
     // as a document that merely looks empty).
     let extractedText: string | null = null;
-    let pageCount: number | null = null;
+    const pageCount: number | null = null;
     let wordCount: number | null = null;
     let extractionMethod = 'none';
     let extractionConfidence: number | undefined;
@@ -540,7 +540,7 @@ export default function createVaultIngestRoutes(): Router {
          recorded as chunk_failed with its reason, never thrown. */
       if (chunkingEnabled && extractedText) {
         const textForChunks: string = extractedText;
-        await runScoped(() => chunkDocumentForIngest(String(doc.id), textForChunks));
+        await runScoped(() => chunkDocumentForIngest(String(doc.id), orgId, textForChunks));
       }
 
       logger.info('Vault document ingested', {

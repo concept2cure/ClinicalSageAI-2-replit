@@ -108,6 +108,22 @@ export interface ChunkWriteResult {
 const EMBED_BATCH = 64;
 const CHUNK_EMBEDDING_MODEL = 'text-embedding-3-small';
 
+/** Whether the document belongs to one of the organization's programs. */
+async function documentIsInOrganization(
+  client: { query: (sql: string, params: unknown[]) => Promise<{ rowCount: number | null; rows: unknown[] }> },
+  documentId: string,
+  organizationId: number,
+): Promise<boolean> {
+  const owned = await client.query(
+    `SELECT 1 FROM vault.documents d
+       JOIN regulatory_programs p ON p.id = d.program_id
+      WHERE d.id = $1 AND p.organization_id = $2
+      LIMIT 1`,
+    [documentId, organizationId],
+  );
+  return (owned.rowCount ?? owned.rows.length) > 0;
+}
+
 /**
  * Chunk the document's extracted text, embed every chunk through the governed
  * provider seam, and replace the document's chunk set in one transaction.
@@ -116,6 +132,8 @@ const CHUNK_EMBEDDING_MODEL = 'text-embedding-3-small';
  */
 export async function chunkAndEmbedDocument(args: {
   documentId: string;
+  /** The caller's organization; the document must belong to one of its programs. */
+  organizationId: number;
   text: string;
 }): Promise<ChunkWriteResult> {
   const chunks = chunkExtractedText(args.text);
@@ -154,17 +172,40 @@ export async function chunkAndEmbedDocument(args: {
     };
   }
 
+  // vault.documents carries no organization_id; a document belongs to a tenant
+  // through its program (regulatory_programs.organization_id), which is also
+  // what the table's RLS policies resolve. Every statement below reaches the
+  // chunk table only through that join, so a document id from another
+  // organization matches nothing — and is refused up front rather than
+  // silently indexed to zero rows.
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
-    await client.query(`DELETE FROM vault.document_chunks WHERE document_id = $1`, [args.documentId]);
+    if (!(await documentIsInOrganization(client, args.documentId, args.organizationId))) {
+      await client.query('ROLLBACK');
+      return {
+        ok: false,
+        chunkCount: 0,
+        error: 'Document is not in the caller\'s organization; refusing to index it.',
+      };
+    }
+    await client.query(
+      `DELETE FROM vault.document_chunks c
+        USING vault.documents d
+         JOIN regulatory_programs p ON p.id = d.program_id
+        WHERE c.document_id = d.id AND d.id = $1 AND p.organization_id = $2`,
+      [args.documentId, args.organizationId],
+    );
     for (let i = 0; i < chunks.length; i++) {
       const c = chunks[i];
-      await client.query(
+      const inserted = await client.query(
         `INSERT INTO vault.document_chunks
            (document_id, chunk_index, chunk_text, char_start, char_end,
             embedding, embedding_model, token_count, vectorized_at)
-         VALUES ($1, $2, $3, $4, $5, $6::vector, $7, $8, NOW())`,
+         SELECT d.id, $2, $3, $4, $5, $6::vector, $7, $8, NOW()
+           FROM vault.documents d
+           JOIN regulatory_programs p ON p.id = d.program_id
+          WHERE d.id = $1 AND p.organization_id = $9`,
         [
           args.documentId,
           c.index,
@@ -174,8 +215,12 @@ export async function chunkAndEmbedDocument(args: {
           vectors[i],
           CHUNK_EMBEDDING_MODEL,
           Math.ceil(c.text.length / 4),
+          args.organizationId,
         ],
       );
+      if ((inserted.rowCount ?? 0) !== 1) {
+        throw new Error(`chunk ${c.index} matched no document in organization ${args.organizationId}`);
+      }
     }
     await client.query('COMMIT');
     return { ok: true, chunkCount: chunks.length };
@@ -214,9 +259,13 @@ export async function recordChunkOutcome(args: {
  * fail because its retrieval index could not be built, but the ledger must say
  * exactly what happened.
  */
-export async function chunkDocumentForIngest(documentId: string, text: string): Promise<void> {
+export async function chunkDocumentForIngest(
+  documentId: string,
+  organizationId: number,
+  text: string,
+): Promise<void> {
   try {
-    const result = await chunkAndEmbedDocument({ documentId, text });
+    const result = await chunkAndEmbedDocument({ documentId, organizationId, text });
     await recordChunkOutcome({ documentId, result });
     if (!result.ok) {
       logger.warn('Vault chunking failed — recorded on the catalog ledger', {
