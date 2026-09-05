@@ -352,6 +352,22 @@ router.post('/artifact-section-map', async (req: Request, res: Response) => {
         .json({ error: 'Artifact and target section package must belong to the same project' });
     }
 
+    // One mapping per (artifact, section): a repeat is answered with the
+    // existing row, not a second row that would ship the document twice.
+    const [existing] = await db
+      .select()
+      .from(c2cArtifactSectionMap)
+      .where(
+        and(
+          eq(c2cArtifactSectionMap.artifactId, artifactId),
+          eq(c2cArtifactSectionMap.sectionDbId, sectionDbId),
+          eq(c2cArtifactSectionMap.orgId, orgId),
+        ),
+      );
+    if (existing) {
+      return res.status(200).json({ data: existing, duplicate: true });
+    }
+
     const [mapping] = await db
       .insert(c2cArtifactSectionMap)
       .values({
@@ -366,9 +382,78 @@ router.post('/artifact-section-map', async (req: Request, res: Response) => {
       })
       .returning();
 
-    res.status(201).json({ data: mapping });
+    // A bundle assembled before this mapping no longer reflects the package's
+    // content; it is cleared so the transmit gate cannot ship it.
+    const staleBundleCleared = await clearStaleBundle(pkg.id);
+
+    res.status(201).json({ data: mapping, staleBundleCleared });
   } catch (e) {
     return serverError(res, logger, 'saving artifact section map', e);
+  }
+});
+
+const deleteArtifactSectionMapBody = z.object({
+  reason: z.string().min(8, 'reason must be at least 8 characters'),
+});
+
+/**
+ * DELETE /artifact-section-map/:mappingId
+ *
+ * Remove an artifact from a package section. There was no way to do this
+ * through the API, so a mapping that made a package unplaceable (LEAF-UNPLACED)
+ * or duplicated a document could not be corrected once created. Tenant-scoped
+ * through the mapping row's own org; governed (reason recorded); a bundle
+ * assembled with the mapping in place is cleared as stale.
+ */
+router.delete('/artifact-section-map/:mappingId', async (req: Request, res: Response) => {
+  try {
+    const orgId = getOrgId(req);
+    const userId = getUserId(req);
+    const parsed = deleteArtifactSectionMapBody.safeParse(req.body ?? {});
+    if (!parsed.success) {
+      return res.status(400).json({ error: 'Validation failed', details: parsed.error.flatten().fieldErrors });
+    }
+    const mappingId = Number(req.params.mappingId);
+    if (!Number.isSafeInteger(mappingId) || mappingId <= 0 || mappingId > 2147483647) {
+      return res.status(404).json({ error: 'Mapping not found' });
+    }
+
+    const [mapping] = await db
+      .select({
+        id: c2cArtifactSectionMap.id,
+        artifactId: c2cArtifactSectionMap.artifactId,
+        sectionDbId: c2cArtifactSectionMap.sectionDbId,
+        packageDbId: c2cPackageSections.packageDbId,
+      })
+      .from(c2cArtifactSectionMap)
+      .innerJoin(c2cPackageSections, eq(c2cPackageSections.id, c2cArtifactSectionMap.sectionDbId))
+      .where(and(eq(c2cArtifactSectionMap.id, mappingId), eq(c2cArtifactSectionMap.orgId, orgId)));
+    if (!mapping) return res.status(404).json({ error: 'Mapping not found' });
+
+    const [deleted] = await db
+      .delete(c2cArtifactSectionMap)
+      .where(and(eq(c2cArtifactSectionMap.id, mappingId), eq(c2cArtifactSectionMap.orgId, orgId)))
+      .returning();
+    if (!deleted) return res.status(404).json({ error: 'Mapping not found' });
+
+    const staleBundleCleared = await clearStaleBundle(mapping.packageDbId);
+    const ledgerWriteFailed = await recordPackageGovernedAction({
+      orgId,
+      userId,
+      packageDbId: mapping.packageDbId,
+      reason: parsed.data.reason,
+      payload: {
+        change: 'artifact-unmapped',
+        mappingId,
+        artifactId: mapping.artifactId,
+        sectionDbId: mapping.sectionDbId,
+        staleBundleCleared,
+      },
+    });
+
+    res.json({ data: { deleted: true, mappingId, staleBundleCleared, ledgerWriteFailed } });
+  } catch (e) {
+    return serverError(res, logger, 'deleting artifact-section mapping', e);
   }
 });
 
@@ -1513,6 +1598,23 @@ async function recordPackageGovernedAction(params: {
     );
     return true;
   }
+}
+
+/**
+ * Clear a package's stored bundle descriptor when its content changed (an
+ * artifact mapped or unmapped): the zip carries the old content and the
+ * transmit gate must not ship it. Returns whether a descriptor was cleared.
+ * Merges onto the package's current metadata, never a stale snapshot.
+ */
+async function clearStaleBundle(packageDbId: number): Promise<boolean> {
+  const current = await currentPackageMetadata(packageDbId, {});
+  if (current.bundle === undefined) return false;
+  const { bundle: _stale, ...withoutBundle } = current;
+  await db
+    .update(c2cSubmissionPackages)
+    .set({ metadata: withoutBundle, updatedAt: new Date() })
+    .where(eq(c2cSubmissionPackages.id, packageDbId));
+  return true;
 }
 
 /** The package's CURRENT metadata, re-read at write time so a merge never

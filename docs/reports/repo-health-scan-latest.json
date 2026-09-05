@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-05T02:54:00.233Z",
+  "generatedAt": "2026-09-05T06:42:06.061Z",
   "git": {
-    "sha": "f459c38d5507c36c871e505a1efe3330ca4c7e29",
+    "sha": "eba1073dbaebacf2f5854bde6d5690d781a48ca7",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -15,7 +15,7 @@
     "duplicateBasenames": 209,
     "contentDuplicateGroups": 4,
     "contentDuplicateFiles": 10,
-    "largeFilesByBytes": 38,
+    "largeFilesByBytes": 39,
     "largeFilesByLines": 90
   },
   "findings": {
@@ -2021,7 +2021,7 @@
       },
       {
         "file": "shared/schema.ts",
-        "bytes": 855581
+        "bytes": 855958
       },
       {
         "file": "server/routes/concept2cure.ts",
@@ -2166,12 +2166,16 @@
       {
         "file": "server/services/ana/intelligence-questions/flows/ind-submission.ts",
         "bytes": 108007
+      },
+      {
+        "file": "server/routes/submission-ops.ts",
+        "bytes": 100656
       }
     ],
     "largeFilesByLines": [
       {
         "file": "shared/schema.ts",
-        "lines": 20150
+        "lines": 20155
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
@@ -2258,6 +2262,10 @@
         "lines": 2695
       },
       {
+        "file": "server/routes/submission-ops.ts",
+        "lines": 2649
+      },
+      {
         "file": "server/services/module3Composer.ts",
         "lines": 2624
       },
@@ -2272,10 +2280,6 @@
       {
         "file": "server/routes/knowledge-base.ts",
         "lines": 2588
-      },
-      {
-        "file": "server/routes/submission-ops.ts",
-        "lines": 2547
       },
       {
         "file": "server/api/cmc/routes.ts",
@@ -2463,7 +2467,7 @@
       },
       {
         "file": "server/routes/510k-estar-routes.ts",
-        "lines": 1757
+        "lines": 1784
       },
       {
         "file": "server/services/ana/submission-chat-handler.ts",
@@ -2536,7 +2540,7 @@
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
       "duplicateGroups": 398,
-      "largeByBytes": 28,
+      "largeByBytes": 29,
       "largeByLines": 74
     },
     {

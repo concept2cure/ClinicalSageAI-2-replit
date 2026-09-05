@@ -37,12 +37,22 @@ const COMPLETE_510K_LEAVES: EstarInputLeaf[] = [
 
 const OFFICIAL_510K_DEVICE_TEMPLATE = 'eSTAR-510k-non-ivd.pdf';
 
+/* A device that is none of the seven conditional things. Without an answer a
+   conditional section is UNDETERMINED, and an undetermined section blocks a
+   claim of a submittable eSTAR — the assembler used to ignore that and this
+   test passed on the defect. */
+const PLAIN_DEVICE = {
+  combinationProduct: false, softwareAiMl: false, cyberDevice: false, sterile: false,
+  implantable: false, cliaWaived: false, clinicalData: false,
+} as const;
+
 describe('adviseDeviceReadiness', () => {
   it('returns submittable advice when sections are complete and the official template is present', () => {
     const advice = adviseDeviceReadiness({
       pathway: '510k',
       variant: 'device',
       leaves: COMPLETE_510K_LEAVES,
+      deviceFlags: PLAIN_DEVICE,
       presentTemplates: [OFFICIAL_510K_DEVICE_TEMPLATE],
       environment: 'production',
       requireTemplate: true,

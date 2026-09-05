@@ -94,8 +94,13 @@ describe('Readiness Evaluator', () => {
       artifacts: [],
     });
 
-    expect(result.level).toBe('early');
+    // An unknown registry entry is a filing whose requirements cannot be known.
+    // It used to read 'early' — 0 of 0 required sections, i.e. "100% of nothing"
+    // — and readinessEvaluator now fails closed to not_ready with a critical gap
+    // (fix(readiness), 19acd257f). This assertion was left on the old value.
+    expect(result.level).toBe('not_ready');
     expect(result.score).toBe(0);
+    expect(result.dossierStandard).toBe('unknown');
   });
 
   it('returns ready for fully completed project', () => {
