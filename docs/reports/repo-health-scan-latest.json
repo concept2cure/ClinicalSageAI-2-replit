@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-05T07:59:18.468Z",
+  "generatedAt": "2026-09-05T08:09:51.206Z",
   "git": {
-    "sha": "78825532a163fc4878cc47a933a6e01f9aaff184",
+    "sha": "fd39adaf6c80b6eb7864eaffc629080252d7b488",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -450,6 +450,16 @@
         ]
       },
       {
+        "basename": "shared",
+        "count": 4,
+        "paths": [
+          "server/routes/ana-ri/shared.ts",
+          "server/routes/c2c/shared.ts",
+          "server/routes/chat/shared.ts",
+          "server/routes/ind-lifecycle/shared.ts"
+        ]
+      },
+      {
         "basename": "workbench",
         "count": 4,
         "paths": [
@@ -709,15 +719,6 @@
           "client/src/__tests__/setup.js",
           "server/routes/setup.ts",
           "tests/setup.ts"
-        ]
-      },
-      {
-        "basename": "shared",
-        "count": 3,
-        "paths": [
-          "server/routes/ana-ri/shared.ts",
-          "server/routes/chat/shared.ts",
-          "server/routes/ind-lifecycle/shared.ts"
         ]
       },
       {
@@ -1970,7 +1971,7 @@
       },
       {
         "file": "server/routes/concept2cure.ts",
-        "bytes": 618608
+        "bytes": 604771
       },
       {
         "file": "server/services/ind/ctd/authoring-guidance.ts",
@@ -2128,7 +2129,7 @@
       },
       {
         "file": "server/routes/concept2cure.ts",
-        "lines": 16487
+        "lines": 16059
       },
       {
         "file": "server/routes/authoring.router.ts",
@@ -2264,7 +2265,7 @@
       },
       {
         "file": "server/routes/c2c/reviews.ts",
-        "lines": 2241
+        "lines": 2242
       },
       {
         "file": "server/services/trial-statistics/trial-statistics-knowledge.ts",
@@ -2488,7 +2489,7 @@
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
-      "duplicateGroups": 398,
+      "duplicateGroups": 399,
       "largeByBytes": 29,
       "largeByLines": 75
     },
