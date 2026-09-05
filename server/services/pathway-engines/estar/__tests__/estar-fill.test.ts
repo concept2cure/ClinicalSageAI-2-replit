@@ -10,7 +10,7 @@ import {
   readXfaDatasetsValues,
   type OfficialPdfFieldMap,
 } from '../../../forms/fill-official-pdf';
-import { listVendoredTemplates } from '../estar-template-registry';
+import { isUsableEstarTemplate, listVendoredTemplates } from '../estar-template-registry';
 
 // Build a synthetic AcroForm PDF standing in for the official eSTAR template.
 async function makeSyntheticEstar(): Promise<Uint8Array> {
@@ -417,6 +417,47 @@ describe.skipIf(!fsSync.existsSync(NIVD_TEMPLATE))(
         expect(r.filled).toBe(false);
         expect(r.pdfBytes).toBeUndefined();
         expect(r.blockers.join(' ')).toMatch(/does not match the SHA-256 pinned/);
+      } finally {
+        if (prev === undefined) delete process.env.ESTAR_TEMPLATE_DIR;
+        else process.env.ESTAR_TEMPLATE_DIR = prev;
+      }
+    });
+
+    /*
+     * The same pin, asked as a question every OTHER caller can ask. `estar-fill`
+     * refused a swapped template from the start; `/assemble` and
+     * `/scaffold-field-map` were deciding availability from the FILE NAME, so
+     * the route reported "official eSTAR producible · 0 blockers" for bytes the
+     * fill behind the button would refuse — and a scaffolder would have
+     * enumerated the wrong file's SOM paths into a new field map.
+     */
+    it('isUsableEstarTemplate refuses a mismatch and allows verified or unpinned', () => {
+      expect(isUsableEstarTemplate({ integrity: 'mismatch' })).toBe(false);
+      expect(isUsableEstarTemplate({ integrity: 'verified' })).toBe(true);
+      // Unpinned is a WARNING in estar-fill, not a refusal — an unpinned file is
+      // unverified, not known-wrong, and refusing it would break a drop-point
+      // that has not been pinned yet.
+      expect(isUsableEstarTemplate({ integrity: 'unpinned' })).toBe(true);
+    });
+
+    it('a swapped template is excluded from the list a caller judges availability from', async () => {
+      const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'estar-swapped-list-'));
+      const impostor = await PDFDocument.create();
+      impostor.addPage();
+      await fs.writeFile(path.join(dir, 'eSTAR-510k-non-ivd.pdf'), Buffer.from(await impostor.save()));
+      await fs.writeFile(
+        path.join(dir, 'checksums.txt'),
+        `${'0'.repeat(64)}  eSTAR-510k-non-ivd.pdf\n`,
+      );
+      const prev = process.env.ESTAR_TEMPLATE_DIR;
+      process.env.ESTAR_TEMPLATE_DIR = dir;
+      try {
+        const vendored = await listVendoredTemplates();
+        // The file IS on disk under the expected name — that is the whole trap.
+        expect(vendored.map((t) => t.fileName)).toContain('eSTAR-510k-non-ivd.pdf');
+        expect(vendored.find((t) => t.fileName === 'eSTAR-510k-non-ivd.pdf')!.integrity).toBe('mismatch');
+        // And it is absent from what a caller may treat as present.
+        expect(vendored.filter(isUsableEstarTemplate).map((t) => t.fileName)).toEqual([]);
       } finally {
         if (prev === undefined) delete process.env.ESTAR_TEMPLATE_DIR;
         else process.env.ESTAR_TEMPLATE_DIR = prev;

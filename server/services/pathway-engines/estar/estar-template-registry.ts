@@ -253,6 +253,25 @@ export function assessEstarTemplateReadiness(
   };
 }
 
+/**
+ * May this vendored file be treated as the official template?
+ *
+ * `checksums.txt` pins these bytes precisely because the canonical field map was
+ * ENUMERATED from them: a file with the right name and different bytes — a
+ * retired v6.2 form, an edited copy — has different SOM paths, so filling it
+ * writes our governed values into whatever boxes THAT file happens to have.
+ *
+ * `estar-fill` has always refused a `mismatch` and merely warned on `unpinned`.
+ * This states the same rule where every other caller can reach it, because two
+ * of them were deciding availability from the FILE NAME alone: `/assemble`
+ * reported "official eSTAR producible · 0 blockers" on a swapped template that
+ * the fill behind the button would then refuse, and `/scaffold-field-map` would
+ * happily enumerate a wrong file's fields to seed a new map.
+ */
+export function isUsableEstarTemplate(t: { integrity: EstarTemplateIntegrity }): boolean {
+  return t.integrity !== 'mismatch';
+}
+
 /** Read the opt-in eSTAR template enforcement flag from the environment. */
 export function estarTemplateRequiredFromEnv(env: NodeJS.ProcessEnv = process.env): boolean {
   return String(env.ESTAR_REQUIRE_TEMPLATE ?? '').toLowerCase() === 'true';
@@ -265,5 +284,6 @@ export default {
   descriptorsForFamily,
   listVendoredTemplates,
   assessEstarTemplateReadiness,
+  isUsableEstarTemplate,
   estarTemplateRequiredFromEnv,
 };

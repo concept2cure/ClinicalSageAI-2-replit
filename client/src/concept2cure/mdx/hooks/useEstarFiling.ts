@@ -100,13 +100,42 @@ export function correspondentValues(
   return out;
 }
 
-/** Pure: the four prerequisite booleans as the PUT body carries them. */
+/**
+ * Pure: the four prerequisite booleans as the PUT body carries them.
+ *
+ * A PREREQUISITE WE HAVE NOT READ IS NOT AN UNMET ONE. `satisfied` is null or
+ * undefined whenever the registration read has not landed or has FAILED, and
+ * `new Set(satisfied ?? [])` turned that into "none of the four are satisfied" —
+ * so saving the correspondent block, or toggling any one prerequisite, wrote
+ * `false` over all four. An organization that had recorded its FDA ESG account,
+ * its CDRH Portal account, its DUNS/FEI identity and its MDUFA fee account lost
+ * every one of them to a save about something else, on a read they never saw
+ * fail.
+ *
+ * The text fields beside these have always had this guard — `registrationPatchToggling`
+ * documents `stored === undefined` as "not loaded, do not touch the text". The
+ * booleans did not.
+ *
+ * So: with `satisfied` unknown, assert only what the operator just did. A
+ * toggled prerequisite is a fact — they clicked it — and the other three are
+ * omitted, which the PUT leaves untouched (every field is `.optional()` in
+ * registrationWriteSchema and Drizzle's `.set()` skips undefined keys).
+ */
 function prerequisiteBooleans(
   satisfied: readonly string[] | null | undefined,
   toggleId?: EstarPrerequisiteId,
 ): EstarRegistrationPatch {
-  const set = new Set(satisfied ?? []);
   const patch: EstarRegistrationPatch = {};
+  if (satisfied == null) {
+    /* Unknown. The toggle is the one thing we do know: it flips off whatever the
+       operator saw on screen, which for an unread registration is unset. */
+    if (toggleId) {
+      const toggled = ESTAR_PREREQUISITES.find((p) => p.id === toggleId);
+      if (toggled) patch[toggled.field] = true;
+    }
+    return patch;
+  }
+  const set = new Set(satisfied);
   for (const p of ESTAR_PREREQUISITES) {
     patch[p.field] = p.id === toggleId ? !set.has(p.id) : set.has(p.id);
   }
