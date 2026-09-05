@@ -8,11 +8,10 @@
  * @module shared/schema/programs
  */
 
-import { relations, InferSelectModel, sql } from 'drizzle-orm';
+import { relations, InferSelectModel } from 'drizzle-orm';
 import {
   integer,
   pgTable,
-  serial,
   text,
   timestamp,
   boolean,
