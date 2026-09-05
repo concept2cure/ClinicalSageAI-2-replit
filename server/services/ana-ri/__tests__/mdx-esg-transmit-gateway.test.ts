@@ -29,6 +29,7 @@ import { promises as fs } from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 import { createHash, generateKeyPairSync, createSign } from 'crypto';
+import { fingerprintPackageContent, type PackageContentRow } from '../../ectd/package-content-fingerprint';
 
 /* ─── DB stub ────────────────────────────────────────────────────── */
 
@@ -46,10 +47,25 @@ const { poolQueries, storedBundle, httpsRequests, mdnResponse, audit, recordGove
     })),
   }));
 
+/** The package's content as the transmit gate re-reads it; the stored
+ *  descriptor carries its fingerprint, so the zip still reflects the package. */
+const CONTENT: PackageContentRow[] = [
+  { sectionDbId: 13, sectionKey: 'estar-summary', artifactDbId: 1, ctdSection: null, content: '510(k) summary' },
+];
+const CONTENT_FINGERPRINT = fingerprintPackageContent(CONTENT);
+
 function queryImpl(sql: string, args: unknown[] = []) {
   poolQueries.push({ sql, args });
   if (sql.includes('FROM c2c_submission_packages')) {
     return Promise.resolve({ rows: [{ metadata: { bundle: storedBundle.value } }], rowCount: 1 });
+  }
+  if (sql.includes('FROM c2c_package_sections')) {
+    return Promise.resolve({
+      rows: CONTENT.map((r) => ({
+        section_db_id: r.sectionDbId, section_key: r.sectionKey, artifact_db_id: r.artifactDbId, ctd_section: r.ctdSection, content: r.content,
+      })),
+      rowCount: CONTENT.length,
+    });
   }
   if (sql.includes('INSERT INTO submission_transmittals')) {
     return Promise.resolve({ rows: [{ id: 4242 }], rowCount: 1 });
@@ -206,6 +222,7 @@ beforeEach(() => {
     format: 'estar',
     displayName: '510k-pkg-42.zip',
     validation: { errorCount: 0, warningCount: 1 },
+    contentFingerprint: CONTENT_FINGERPRINT,
   };
 });
 

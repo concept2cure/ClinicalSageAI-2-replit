@@ -46,6 +46,11 @@ import type { GatewayName, GatewayTransmitResult, Region, SubmissionBundle } fro
 import { findActiveTransmittal } from './fda-esg';
 import { getBundle } from '../submission-bundle-storage';
 import {
+  fingerprintPackageContent,
+  isCurrentContentFingerprint,
+  readPackageContentRows,
+} from '../ectd/package-content-fingerprint';
+import {
   bundleTrustEnforced,
   hasUnsafePathSyntax,
   isBundleStorageKey,
@@ -69,6 +74,8 @@ export type GovernedTransmitRefusalCode =
   | 'BUNDLE_OUTSIDE_NAMESPACE'
   | 'BUNDLE_STORAGE_KEY_OUTSIDE_NAMESPACE'
   | 'BUNDLE_VALIDATION_ERRORS'
+  | 'BUNDLE_CONTENT_DRIFT'
+  | 'BUNDLE_CONTENT_UNPROVEN'
   | 'ACTIVE_TRANSMITTAL';
 
 /** A refusal the caller should surface verbatim to the operator. */
@@ -123,6 +130,11 @@ export interface ResolvedBundle {
   // region identity must hold for bundles that carry no backbone evidence
   // (device formats) too.
   builtRegion?: Region;
+  // Fingerprint of the content (sections, mappings, declared placements,
+  // artifact content) the zip was built from, as the assemble route recorded
+  // it. Recomputed from the database at transmit; a difference refuses. Only
+  // a value from the CURRENT scheme is carried — anything else is unproven.
+  contentFingerprint?: string;
 }
 
 /* Shape guards for the stored evidence blocks (see ResolvedBundle). Each
@@ -234,6 +246,7 @@ async function loadStoredBundle(
     dtdStatus: isDtdStatus(stored.dtdStatus) ? stored.dtdStatus : undefined,
     regionalBackbone: isRegionalBackbone(stored.regionalBackbone) ? stored.regionalBackbone : undefined,
     builtRegion: builtRegionOf(stored.region),
+    contentFingerprint: isCurrentContentFingerprint(stored.contentFingerprint) ? stored.contentFingerprint : undefined,
   };
 }
 
@@ -419,6 +432,44 @@ export async function executeGovernedTransmit(
       422,
       { findings: bundle.validation?.findings ?? [] },
     );
+  }
+
+  // Content integrity: the zip must still reflect the package. The descriptor
+  // carries the fingerprint of the sections, mappings, declared placements and
+  // artifact content it was built from; it is recomputed from the database
+  // here and any difference refuses. The mapping routes clear a stale bundle
+  // when a mapping changes, but an artifact edited after assembly changes
+  // nothing on the package row — only this comparison catches it. A stored
+  // descriptor without a fingerprint (assembled before it existed) is UNKNOWN,
+  // and UNKNOWN blocks wherever descriptor trust is enforced, exactly like
+  // missing structural-validation evidence.
+  if (input.packageId != null && !input.clientBundle) {
+    if (bundle.contentFingerprint) {
+      let current: string;
+      try {
+        current = fingerprintPackageContent(
+          await readPackageContentRows(pool, input.packageId, organizationId),
+        );
+      } catch (err) {
+        throw new GovernedTransmitInternalError('transmit-content-fingerprint', err);
+      }
+      if (current !== bundle.contentFingerprint) {
+        throw new GovernedTransmitRefusal(
+          'BUNDLE_CONTENT_DRIFT',
+          'The package content changed since this bundle was assembled (an artifact edited, mapped or unmapped, ' +
+            'or a section changed), so the zip no longer reflects it; re-assemble the package before transmitting.',
+          422,
+          { assembledFingerprint: bundle.contentFingerprint, currentFingerprint: current },
+        );
+      }
+    } else if (bundleTrustEnforced()) {
+      throw new GovernedTransmitRefusal(
+        'BUNDLE_CONTENT_UNPROVEN',
+        'Bundle records no content fingerprint, so whether it still reflects the package is UNKNOWN; ' +
+          're-assemble the package before transmitting.',
+        422,
+      );
+    }
   }
 
   // Rematerialize the local bundle file from durable storage if a container
