@@ -178,7 +178,8 @@ export async function persistAnnualReport(
   submissionId: number,
   sequenceNumber: string,
   ctx: PersistCtx,
-  source?: RenderedLeafSource,
+  /** Retained bytes per CTD section — the same shape every other persister takes. */
+  sourceBySection?: LeafSourceBySection,
 ): Promise<PersistedAmendment> {
   const sequence = await createSequence(
     { submissionId, region: 'fda', sequenceNumber, type: 'annual' },
@@ -191,7 +192,7 @@ export async function persistAnnualReport(
       { filingLabel: 'IND Annual Report' },
     ),
     ctx,
-    source ? { 'm1.13': source } : undefined,
+    sourceBySection,
   );
   return { sequence, leaves, leavesAwaitingDocument: awaitingDocument(leaves) };
 }
@@ -204,6 +205,7 @@ export async function persistAmendmentPlan(
   plan: IndAmendmentPlan,
   sequenceNumber: string,
   ctx: PersistCtx,
+  sourceBySection?: LeafSourceBySection,
 ): Promise<PersistedAmendment> {
   const sequence = await createSequence(
     { submissionId, region: plan.region, sequenceNumber, type: plan.sequenceType },
@@ -213,6 +215,7 @@ export async function persistAmendmentPlan(
     sequence.id,
     withTransmittalPair(plan.leaves, { indNumber: plan.indNumber, filingLabel: 'IND amendment' }),
     ctx,
+    sourceBySection,
   );
   return { sequence, leaves, leavesAwaitingDocument: awaitingDocument(leaves) };
 }

@@ -135,9 +135,7 @@ describe('persistAnnualReport', () => {
     // The contract is a leaf SOURCE, not a bare md5: a checksum alone left the
     // leaf unresolvable and the sequence permanently dispatch-blocked (LIFE-01).
     await persistAnnualReport(7, '0004', ctx, {
-      documentTable: 'rendered_leaf_files',
-      documentId: 91,
-      checksum: 'abc123md5',
+      'm1.13': { documentTable: 'rendered_leaf_files', documentId: 91, checksum: 'abc123md5' },
     });
     const annual = upsertLeaf.mock.calls.map((c) => c[0]).find((l) => l.sectionCode === 'm1.13');
     expect(annual).toMatchObject({

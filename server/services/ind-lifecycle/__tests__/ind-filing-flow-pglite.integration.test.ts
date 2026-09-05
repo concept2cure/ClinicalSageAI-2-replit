@@ -88,9 +88,7 @@ describe('annual-report filing flow against PGlite', () => {
     expect(submission.id).toBeGreaterThan(0);
 
     const { sequence, leaves } = await persistAnnualReport(submission.id, '0001', ctx, {
-      documentTable: 'rendered_leaf_files',
-      documentId: RENDERED_ANNUAL_ID,
-      checksum: 'md5-annual-abc',
+      'm1.13': { documentTable: 'rendered_leaf_files', documentId: RENDERED_ANNUAL_ID, checksum: 'md5-annual-abc' },
     });
     expect(sequence.type).toBe('annual');
     expect(sequence.submissionId).toBe(submission.id);
