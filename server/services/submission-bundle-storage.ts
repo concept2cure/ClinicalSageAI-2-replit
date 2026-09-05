@@ -99,6 +99,18 @@ export async function putBundle(key: string, body: Buffer): Promise<void> {
 }
 
 /**
+ * Remove a bundle zip from durable storage. Used ONLY for a bundle that was
+ * never stored on its package — an assembly discarded because the package's
+ * identifiers changed while it was being built. A bundle that was stored (and
+ * may have been transmitted) is never deleted: it is the record.
+ */
+export async function deleteBundle(key: string): Promise<void> {
+  const { DeleteObjectCommand } = await import('@aws-sdk/client-s3');
+  const client = await makeClient();
+  await client.send(new DeleteObjectCommand({ Bucket: bundleStorageBucket(), Key: key }));
+}
+
+/**
  * Download a bundle zip from durable storage, collecting the body stream into a
  * Buffer. Used by the transmit route to rematerialize a bundle whose local file
  * was lost to a container recycle.
