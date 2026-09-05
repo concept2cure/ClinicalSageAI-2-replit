@@ -105,3 +105,33 @@ describe('the Communication Center routes live in one router', () => {
     }
   });
 });
+
+const TASK_PATHS = [
+  'GET /projects/:projectId/tasks',
+  'POST /projects/:projectId/tasks',
+  'PUT /projects/:projectId/tasks/:taskId',
+  'DELETE /projects/:projectId/tasks/:taskId',
+  'POST /projects/:projectId/tasks/bulk',
+  'GET /projects/:projectId/tasks/summary',
+  'GET /submission-milestones/:type',
+  'GET /submission-milestones',
+  'POST /projects/:projectId/tasks/assess',
+];
+
+describe('project task routes live in one router', () => {
+  it('the tasks router answers every one of them, and the main router none', async () => {
+    const tasks = (await import('../tasks')).default as unknown as { stack: Layer[] };
+    const main = (await import('../../concept2cure')).default as unknown as { stack: Layer[] };
+    const inTasks = new Set(registered(tasks));
+    const inMain = new Set(registered(main));
+    for (const p of TASK_PATHS) {
+      expect(inTasks.has(p), `${p} should be on the tasks router`).toBe(true);
+      expect(inMain.has(p), `${p} should no longer be on the main router`).toBe(false);
+    }
+    // The project reads that shared the old banner stayed with the project domain.
+    for (const p of ['GET /projects/:projectId/cmc', 'GET /projects/:projectId/context', 'GET /projects/:projectId/transform-context']) {
+      expect(inMain.has(p), `${p} should still be on the main router`).toBe(true);
+      expect(inTasks.has(p)).toBe(false);
+    }
+  });
+});
