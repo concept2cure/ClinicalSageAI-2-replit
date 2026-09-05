@@ -343,6 +343,54 @@ describe('GatewayTransmittals — real dispatch layer', () => {
     expect(card.textContent).toMatch(/3 error-severity findings/);
     expect(card.textContent).toMatch(/could not be loaded \(HTTP 409/);
     expect(card.querySelector('table')).toBeNull();
+    // The badge does not read "0 findings" beside a sentence counting three.
+    expect(card.querySelector('.s')?.textContent).toBe('findings unavailable');
+  });
+
+  it('a lost ledger entry on a SUCCESSFUL transmission is announced as an alert, never an unqualified success', async () => {
+    apiRequest.mockImplementation(async (method: string, url: string) => {
+      if (method === 'GET' && url === '/api/mdx/gateways') return env(GATEWAYS);
+      if (method === 'GET' && url === '/api/mdx/gateways/transmittals') return env(LOG);
+      if (method === 'POST' && url.endsWith('/transmit')) {
+        return env({
+          transmittalId: 4242, transmissionId: 'ESG-NEW-9', status: 'received', ledgerWriteFailed: true,
+          ledgerWarning: 'The transmission completed, but its governed-action ledger entry could not be written. Record this transmittal manually and raise it with your administrator before relying on the audit trail.',
+        }, 201);
+      }
+      return env(null);
+    });
+    render(<GatewayTransmittals {...props()} />);
+    await screen.findByText('FDA ESG');
+    fireEvent.click(screen.getByRole('button', { name: /^Transmit$/ }));
+    fireEvent.click(screen.getByTestId('form-submit'));
+    const toast = await screen.findByText(/gateway ref ESG-NEW-9.*ledger entry could not be written/);
+    expect(toast.closest('[role="alert"]')).not.toBeNull();
+  });
+
+  it('recording identifiers removes only the identifiers finding; an unrelated finding stays on the card', async () => {
+    apiRequest.mockImplementation(async (method: string, url: string) => {
+      if (method === 'GET' && url === '/api/mdx/gateways') return env(GATEWAYS);
+      if (method === 'GET' && url === '/api/mdx/gateways/transmittals') return env(LOG);
+      if (method === 'POST' && url.endsWith('/assemble')) return env({ packageId: 'pkg_77', bundle: { sha256: 'f'.repeat(64), leafCount: 2, validation: { errorCount: 2, warningCount: 0, infoCount: 0 } } });
+      if (method === 'POST' && url.endsWith('/preflight')) return env({ findings: [
+        { severity: 'error', ruleId: 'REGULATORY-IDENTIFIER-MISSING', message: 'missing regulatory.applicationNumber' },
+        { severity: 'error', ruleId: 'LEAF-UNPLACED', message: 'Misc (misc-attachment): no placeable CTD section is declared.' },
+      ] });
+      if (method === 'PUT') return env({ packageId: 'pkg_77', changed: true, staleBundleCleared: true, ledgerWriteFailed: false });
+      return env(null);
+    });
+    render(<GatewayTransmittals {...props()} />);
+    await screen.findByText('FDA ESG');
+    fireEvent.click(screen.getByRole('button', { name: /Assemble bundle/ }));
+    fireEvent.click(screen.getByTestId('form-submit'));
+    const card = await screen.findByRole('region', { name: 'Packager refusal' });
+    fireEvent.click(card.querySelector('button')!);
+    fireEvent.click(screen.getByTestId('form-submit'));
+    await screen.findByText(/Identifiers recorded on package pkg_77/);
+    const after = screen.getByRole('region', { name: 'Packager refusal' });
+    expect(after.textContent).toMatch(/The findings below remain from the last assembly and still stand/);
+    expect(after.textContent).toMatch(/LEAF-UNPLACED/);
+    expect(after.textContent).not.toMatch(/REGULATORY-IDENTIFIER-MISSING/);
   });
 
   it('recording identifiers from the card’s own button clears the card it came from, and a lost ledger entry is announced as an alert', async () => {

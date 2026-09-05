@@ -1,4 +1,5 @@
 import fs from 'fs/promises';
+import fsSync from 'node:fs';
 import PDFDocument from 'pdfkit';
 import { Cluster } from 'puppeteer-cluster';
 // The structure-preserving HTML reducer the eCTD leaf renderer uses. Shared
@@ -38,23 +39,94 @@ const normalizeHeading = (value: string) =>
     .replace(/[^a-z0-9]+/g, ' ')
     .trim();
 
+/**
+ * Chromium locations tried when the driver is `puppeteer-core`, which ships no
+ * browser of its own. Same list and same reasoning as
+ * scripts/visual-qa/playwright.mjs. `undefined` means "let the driver decide",
+ * which is correct for full `puppeteer` and for a machine that downloaded one.
+ */
+const CHROMIUM_CANDIDATES = [
+  process.env.PUPPETEER_EXECUTABLE_PATH,
+  process.env.CHROMIUM_PATH,
+  '/opt/pw-browsers/chromium',
+  '/usr/bin/chromium',
+  '/usr/bin/chromium-browser',
+  '/usr/bin/google-chrome',
+];
+
+/**
+ * Resolve a Puppeteer driver without requiring one.
+ *
+ * `puppeteer` is a peerDependency of puppeteer-cluster and is deliberately not
+ * a dependency here: it downloads a ~200MB Chromium on every install, for a
+ * feature many deployments do not exercise. But puppeteer-cluster also accepts
+ * a driver explicitly, so `puppeteer-core` — a few hundred KB, no bundled
+ * browser — is enough when a Chromium already exists on the host, which is the
+ * common case in a container that has one for other reasons.
+ *
+ * So both are tried and neither is required. An operator who wants styled
+ * output installs either one; nothing else changes. Until then the fallback
+ * runs, and — since this function is the reason it runs — it now says which of
+ * the two things is missing, the driver or the browser, rather than leaving
+ * "Cannot find module 'puppeteer'" to be interpreted.
+ */
+async function resolvePuppeteer(): Promise<{ mod: any; executablePath?: string } | null> {
+  for (const name of ['puppeteer', 'puppeteer-core']) {
+    let mod: any;
+    try {
+      mod = await import(/* @vite-ignore */ name);
+    } catch {
+      continue; // not installed here — try the next
+    }
+    const driver = mod?.default ?? mod;
+    if (!driver?.launch) continue;
+
+    // Full `puppeteer` knows where its own browser is; `puppeteer-core` does not.
+    if (name === 'puppeteer') return { mod: driver };
+
+    const executablePath = CHROMIUM_CANDIDATES.find((c) => c && fsSync.existsSync(c));
+    if (!executablePath) {
+      console.warn(
+        '[Renderers] puppeteer-core is installed but no Chromium was found. Set ' +
+          'PUPPETEER_EXECUTABLE_PATH, or install `puppeteer`, to restore styled rendering.',
+      );
+      return null;
+    }
+    return { mod: driver, executablePath };
+  }
+  return null;
+}
+
 async function getCluster(): Promise<Cluster | null> {
   if (!clusterPromise) {
-    clusterPromise = Cluster.launch({
-      concurrency: Cluster.CONCURRENCY_CONTEXT,
-      maxConcurrency: 2,
-      puppeteerOptions: {
-        args: ['--no-sandbox', '--disable-setuid-sandbox'],
-      },
-    }).catch((err: any) => {
+    clusterPromise = (async () => {
+      const resolved = await resolvePuppeteer();
+      if (!resolved) {
+        console.warn(
+          '[Renderers] No Puppeteer driver installed — every HTML export is rendered by ' +
+            'the PDFKit fallback, which produces a plain-text document with no style-pack ' +
+            'CSS applied. Install `puppeteer`, or `puppeteer-core` alongside an existing ' +
+            'Chromium, to restore styled rendering.',
+        );
+        return null;
+      }
+      return Cluster.launch({
+        concurrency: Cluster.CONCURRENCY_CONTEXT,
+        maxConcurrency: 2,
+        puppeteer: resolved.mod,
+        puppeteerOptions: {
+          args: ['--no-sandbox', '--disable-setuid-sandbox'],
+          ...(resolved.executablePath ? { executablePath: resolved.executablePath } : {}),
+        },
+      });
+    })().catch((err: any) => {
       console.warn(
         '[Renderers] Puppeteer cluster failed to launch — every HTML export will be ' +
           'rendered by the PDFKit fallback, which produces a plain-text document with ' +
-          'no style-pack CSS applied. Install puppeteer to restore styled rendering. ' +
-          'Cause: ' + (err?.message || err),
+          'no style-pack CSS applied. Cause: ' + (err?.message || err),
       );
-      return null as any;
-    }) as Promise<Cluster>;
+      return null;
+    }) as Promise<Cluster | null>;
   }
   return clusterPromise;
 }
@@ -74,20 +146,88 @@ function nodeToText(node: any): string {
   return '';
 }
 
+/**
+ * TipTap marks → the tags the rest of the export pipeline already understands.
+ *
+ * The DOCX branch of this same file has always read `node.marks` (see
+ * textNodeToRun); the HTML branch never did, so one authored section exported
+ * two ways said two different things — "10⁶ CFU/mL" in the .docx and "106
+ * CFU/mL" in the PDF. `insertion`/`deletion` matter most: suggestions.ts
+ * renders them as <ins>/<del>, and downstream inlineMarksToText keeps both
+ * sides of an unresolved change visible as [+…+] and [-…-]. Dropping the mark
+ * here settled the change silently, one layer above the module built to stop
+ * exactly that.
+ *
+ * Order is outermost-first and fixed, so identical input yields identical
+ * bytes — pdf-converter hashes these renders.
+ */
+const MARK_TAGS: Array<[string, string]> = [
+  ['insertion', 'ins'],
+  ['deletion', 'del'],
+  ['bold', 'strong'],
+  ['italic', 'em'],
+  ['underline', 'u'],
+  ['strike', 's'],
+  ['code', 'code'],
+  ['superscript', 'sup'],
+  ['subscript', 'sub'],
+];
+
+function applyMarks(html: string, marks: any[]): string {
+  let out = html;
+  // Innermost first, so the array order above ends up as the nesting order.
+  for (let i = MARK_TAGS.length - 1; i >= 0; i--) {
+    const [markType, tag] = MARK_TAGS[i];
+    if (marks.some((m: any) => m?.type === markType)) out = `<${tag}>${out}</${tag}>`;
+  }
+  const link = marks.find((m: any) => m?.type === 'link');
+  const href = link?.attrs?.href;
+  if (typeof href === 'string' && href) out = `<a href="${escapeHtml(href)}">${out}</a>`;
+  return out;
+}
+
+/** Cell text for a table cell, whose children are block nodes. */
+function cellToHtml(cell: any): string {
+  const inner = (cell.content || []).map(nodeToHtml).join('');
+  // Strip the wrapping <p> a single-paragraph cell produces; a block inside a
+  // cell is what made the reducer break the row.
+  const single = inner.match(/^<p>([\s\S]*)<\/p>$/);
+  return single ? single[1] : inner;
+}
+
 function nodeToHtml(node: any): string {
   if (!node) return '';
   if (node.type === 'text') {
-    return escapeHtml(node.text || '');
+    return applyMarks(escapeHtml(node.text || ''), node.marks || []);
+  }
+  if (node.type === 'hardBreak') return '<br>';
+  if (node.type === 'horizontalRule') return '<hr>';
+  if (node.type === 'image') {
+    /* An image node has no `content`, so the generic fall-through returned ''
+       and figures disappeared out of 510(k) and CER PDFs with nothing left to
+       show one had been there. htmlToPlainText turns this into
+       "[Figure: <alt>]". */
+    const src = String(node.attrs?.src ?? '');
+    const alt = String(node.attrs?.alt ?? node.attrs?.title ?? '');
+    return `<img src="${escapeHtml(src)}" alt="${escapeHtml(alt)}">`;
   }
   if (node.type === 'paragraph') {
     const text = (node.content || []).map(nodeToHtml).join('');
     return text.trim() ? `<p>${text}</p>` : '';
   }
   if (node.type === 'heading') {
-    const text = escapeHtml(nodeToText(node).trim());
+    // Through the children, not nodeToText: a heading carries marks too.
+    const text = (node.content || []).map(nodeToHtml).join('').trim();
     const level = node.attrs?.level || 2;
     const safeLevel = Math.min(Math.max(level, 1), 4);
     return `<h${safeLevel}>${text}</h${safeLevel}>`;
+  }
+  if (node.type === 'blockquote') {
+    const inner = (node.content || []).map(nodeToHtml).join('');
+    return inner.trim() ? `<blockquote>${inner}</blockquote>` : '';
+  }
+  if (node.type === 'codeBlock') {
+    return `<pre><code>${escapeHtml(nodeToText(node))}</code></pre>`;
   }
   if (node.type === 'bulletList') {
     const items = (node.content || []).map(nodeToHtml).join('');
@@ -100,6 +240,30 @@ function nodeToHtml(node: any): string {
   if (node.type === 'listItem') {
     const items = (node.content || []).map(nodeToHtml).join('');
     return items.trim() ? `<li>${items}</li>` : '';
+  }
+  if (node.type === 'table') {
+    /* Fell through to a bare join of its children, so every cell ran together
+       with no delimiter — the same defect already fixed in the eCTD leaf
+       renderer, on the other document the same content is filed as. */
+    const rows = (node.content || [])
+      .filter((r: any) => r?.type === 'tableRow')
+      .map(nodeToHtml)
+      .join('');
+    return rows ? `<table>${rows}</table>` : '';
+  }
+  if (node.type === 'tableRow') {
+    const cells = (node.content || [])
+      .filter((c: any) => c?.type === 'tableCell' || c?.type === 'tableHeader')
+      .map((c: any) => {
+        const tag = c.type === 'tableHeader' ? 'th' : 'td';
+        // colspan/rowspan carried through so a merged cell is not silently
+        // renumbered into the wrong column.
+        const colspan = Number(c.attrs?.colspan) > 1 ? ` colspan="${Number(c.attrs.colspan)}"` : '';
+        const rowspan = Number(c.attrs?.rowspan) > 1 ? ` rowspan="${Number(c.attrs.rowspan)}"` : '';
+        return `<${tag}${colspan}${rowspan}>${cellToHtml(c)}</${tag}>`;
+      })
+      .join('');
+    return cells ? `<tr>${cells}</tr>` : '';
   }
   if (Array.isArray(node.content)) {
     return node.content.map(nodeToHtml).join('');
@@ -238,9 +402,37 @@ export async function renderHtmlToPdfTracked(
  * already drifted apart on the identical table-cell defect once.
  *
  * It remains a plain-text rendering: the style pack's CSS is not applied, which
- * is why callers get `usedFallback` and why it is worth saying so out loud.
+ * is why callers get `usedFallback`.
+ *
+ * ── Why the page says so itself ──────────────────────────────────────────────
+ * `usedFallback` only helps a caller that reads it, and most do not:
+ * renderHtmlToPdf() exists to discard it, and the 510(k), PMA, CER, per-section
+ * and authoring exports all go through that. So the document came back looking
+ * like the finished thing, was attached to a filing, and nothing anywhere —
+ * not the file, not an audit record — said it was a plain-text stand-in for a
+ * styled, paginated document. That is the failure this repo's second working
+ * rule names directly: an error is never rendered as an empty result.
+ *
+ * A flag a caller may ignore cannot carry that. The artifact has to. So the
+ * notice is on page one, where the person about to file it reads it, and it
+ * survives every caller that throws the flag away. It states what happened and
+ * what is missing; it does not apologise or instruct.
+ *
+ * It is deliberately NOT a watermark or a diagonal DRAFT stamp: this is a real
+ * export of real content and the content is intact — what is missing is the
+ * typesetting. Overstating that would push people to ignore it.
  */
-function renderFallbackPdf(html: string): Promise<Buffer> {
+
+/** Set on page one of every fallback render. Asserted by the tests. */
+export const FALLBACK_PDF_NOTICE =
+  'Plain-text rendering. The document styling could not be applied, so this ' +
+  'file shows the content without its page layout, fonts or table rules. The ' +
+  'text is complete and unmodified. Do not file this rendering as the ' +
+  'formatted document.';
+
+/** Exported so the fallback's own guarantees can be tested directly, rather
+ *  than only when the ambient environment happens to lack a driver. */
+export function renderFallbackPdf(html: string): Promise<Buffer> {
   return new Promise(resolve => {
     const doc = new PDFDocument({
       margins: { top: 72, bottom: 72, left: 72, right: 72 },
@@ -250,6 +442,14 @@ function renderFallbackPdf(html: string): Promise<Buffer> {
 
     doc.on('data', chunk => chunks.push(chunk));
     doc.on('end', () => resolve(Buffer.concat(chunks)));
+
+    // The notice precedes the content, boxed off from it so no reader mistakes
+    // it for part of the document.
+    doc.fontSize(9);
+    doc.text(FALLBACK_PDF_NOTICE, { align: 'left' });
+    doc.moveDown(0.4);
+    doc.text('\u2500'.repeat(64), { align: 'left' });
+    doc.moveDown(0.8);
 
     const text = htmlToPlainText(html);
 

@@ -144,6 +144,36 @@ export function summarizeToolWork(calls: AnaToolCall[] | undefined): string {
   return `${head} · ${n} ${n === 1 ? 'tool' : 'tools'}`;
 }
 
+/**
+ * Group calls by agentic-loop round, preserving order. The one implementation
+ * for the transcript record and the dock; a single-round turn is one group.
+ */
+export function byRound(calls: AnaToolCall[]): Array<{ round: number; calls: AnaToolCall[] }> {
+  const groups = new Map<number, AnaToolCall[]>();
+  for (const c of calls) {
+    const r = typeof c.round === 'number' && c.round > 0 ? c.round : 1;
+    if (!groups.has(r)) groups.set(r, []);
+    groups.get(r)!.push(c);
+  }
+  return [...groups.entries()].sort((a, b) => a[0] - b[0]).map(([round, cs]) => ({ round, calls: cs }));
+}
+
+/**
+ * Close every step still "running" when the turn ends before they report —
+ * a stop, a timeout, a lost connection. A step the turn never heard back
+ * from did not complete, and a row that keeps saying "running" beside
+ * "Stopped after 12s" is a contradiction on screen. `note` is the sentence
+ * the row shows for why. Pure; returns the same array when nothing is open.
+ */
+export function settleRunningCalls(
+  calls: AnaToolCall[] | undefined,
+  note: string,
+  now: number,
+): AnaToolCall[] | undefined {
+  if (!calls || !calls.some(c => c.status === 'running')) return calls;
+  return calls.map(c => (c.status === 'running' ? { ...c, status: 'error', endedAt: now, message: note } : c));
+}
+
 /** The step currently in flight, if any — the row the panel highlights. */
 export function currentStep(calls: AnaToolCall[] | undefined): AnaToolCall | null {
   const list = calls ?? [];

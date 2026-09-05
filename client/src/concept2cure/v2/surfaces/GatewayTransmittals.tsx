@@ -240,7 +240,16 @@ export function GatewayTransmittals({ onAsk }: SurfaceViewProps) {
     // sends, so the confirmation never showed the reference).
     const dataOut = (raw as any)?.data ?? {};
     const txId = dataOut.transmissionId ?? dataOut.result?.transmissionId ?? dataOut.result?.transactionId ?? dataOut.transactionId;
-    fireToast('Transmitted via ' + region.toUpperCase() + '/' + gateway + (txId ? ' · gateway ref ' + txId : '') + '.');
+    // The transmission is real even when its governed-action ledger entry could
+    // not be written; the server says so and an irreversible send must not read
+    // as an unqualified success.
+    const ledgerLost = dataOut.ledgerWriteFailed
+      ? ' ' + String(dataOut.ledgerWarning ?? 'The governed-action ledger entry for this transmission could not be written; record it manually.')
+      : '';
+    fireToast(
+      'Transmitted via ' + region.toUpperCase() + '/' + gateway + (txId ? ' · gateway ref ' + txId : '') + '.' + ledgerLost,
+      ledgerLost ? 'error' : undefined,
+    );
     void load();
   }, [load, fireToast]);
 
@@ -287,9 +296,20 @@ export function GatewayTransmittals({ onAsk }: SurfaceViewProps) {
     if (!ok) { fireToast(`Not recorded (HTTP ${status}) — ` + ((raw as any)?.error ?? 'nothing changed') + '.', 'error'); return; }
     const d = (raw as any)?.data ?? {};
     setDialog(null);
-    // The findings card described a bundle that may no longer exist (a changed
-    // identifier clears it) or a blocker that was just resolved; drop it.
-    setRefusal(null);
+    // The identifiers finding is resolved; any OTHER finding on the card still
+    // stands (a packager refusal is not fixed by recording an application
+    // number), so only the resolved one leaves the card.
+    setRefusal((prev) => {
+      if (!prev) return null;
+      const remaining = prev.findings.filter((f) => f.ruleId !== IDENTIFIERS_RULE);
+      if (remaining.length === 0) return null;
+      return {
+        ...prev,
+        findings: remaining,
+        fetchFailure: undefined,
+        message: 'Identifiers recorded. The findings below remain from the last assembly and still stand; assemble again to refresh them.',
+      };
+    });
     fireToast(
       'Identifiers recorded on package ' + (d.packageId ?? v.packageId)
         + (d.staleBundleCleared
@@ -513,7 +533,11 @@ export function GatewayTransmittals({ onAsk }: SurfaceViewProps) {
               {refusal.findings.some((f) => f.ruleId === IDENTIFIERS_RULE) && (
                 <button className="nda-open" onClick={() => setDialog('identifiers')}>{I.penLine} Record identifiers</button>
               )}
-              <span className="s">{refusal.findings.length} finding{refusal.findings.length === 1 ? '' : 's'}</span>
+              <span className="s">
+                {refusal.fetchFailure && refusal.findings.length === 0
+                  ? 'findings unavailable'
+                  : `${refusal.findings.length} finding${refusal.findings.length === 1 ? '' : 's'}`}
+              </span>
             </span>
           </div>
           <div className="pj-card-b" style={{ padding: 0 }}>

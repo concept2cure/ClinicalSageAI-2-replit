@@ -44,6 +44,7 @@ import type { AnaChatMessage, AnaToolCall, RunControlStatus } from '../component
 import type { AnaProgressPhase } from '../components/ana/useAnaChat.types';
 import { tallyTools, type ToolTally } from '../components/ana/anaProgress';
 import type { AgentActivityView } from './useAgentActivity';
+import { useNow } from './useNow';
 import {
   collectOutputs,
   contextRows,
@@ -89,18 +90,6 @@ export interface AnaWorkPanelProps {
   onClose?: () => void;
 }
 
-/** A 1 Hz clock while something is in flight; frozen otherwise. */
-function useNow(active: boolean): number {
-  const [now, setNow] = React.useState(() => Date.now());
-  React.useEffect(() => {
-    if (!active) return;
-    setNow(Date.now());
-    const t = setInterval(() => setNow(Date.now()), 1000);
-    return () => clearInterval(t);
-  }, [active]);
-  return now;
-}
-
 interface WorkModel {
   turn: AnaChatMessage | null;
   lastUser: AnaChatMessage | null;
@@ -117,23 +106,37 @@ interface WorkModel {
 
 /** Every fact the sections render, derived once from the turns. */
 function useWorkModel(messages: AnaChatMessage[], streaming: boolean, runStatus: RunControlStatus): WorkModel {
-  const turn = [...messages].reverse().find((m) => m.role === 'assistant') ?? null;
-  const lastUser = [...messages].reverse().find((m) => m.role === 'user') ?? null;
+  /* Everything that depends only on the turns is derived once per change to
+     them. The clock re-renders the panel every second while live and every
+     streamed token re-renders it too; walking every message's outputs and
+     tools on each of those is wasted on three hosts at once. */
+  const derived = React.useMemo(() => {
+    let turn: AnaChatMessage | null = null;
+    let lastUser: AnaChatMessage | null = null;
+    for (let i = messages.length - 1; i >= 0 && (!turn || !lastUser); i -= 1) {
+      const m = messages[i];
+      if (!turn && m.role === 'assistant') turn = m;
+      else if (!lastUser && m.role === 'user') lastUser = m;
+    }
+    const calls = turn?.toolCalls ?? [];
+    return {
+      turn,
+      lastUser,
+      phases: turn?.progress ?? [],
+      calls,
+      tally: tallyTools(calls),
+      outputs: collectOutputs(messages),
+    };
+  }, [messages]);
+  const { turn, phases } = derived;
   const live = Boolean(streaming && turn?.streaming);
   const now = useNow(live);
   const stateLine = stateLineFor(turn, live, runStatus, elapsedFor(turn, now));
-  const phases = turn?.progress ?? [];
-  const calls = turn?.toolCalls ?? [];
   return {
-    turn,
-    lastUser,
+    ...derived,
     live,
     now,
     stateLine,
-    phases,
-    calls,
-    tally: tallyTools(calls),
-    outputs: collectOutputs(messages),
     spoken: spokenLine(phases, live, stateLine, turn?.statusPhase),
   };
 }
@@ -181,15 +184,23 @@ function PanelSections({
   context?: AnaWorkContext;
   queue?: AgentActivityView;
 }) {
-  const [open, setOpen] = React.useState<Record<SectionKey, boolean>>({
+  const { turn, live, now, phases, calls, tally, outputs } = m;
+  const [open, setOpen] = React.useState<Record<SectionKey, boolean>>(() => ({
     progress: true,
     queue: true,
     tools: true,
-    outputs: false,
+    outputs: outputs.length > 0,
     context: false,
-  });
+  }));
   const toggle = (k: SectionKey) => () => setOpen((o) => ({ ...o, [k]: !o[k] }));
-  const { turn, live, now, phases, calls, tally, outputs } = m;
+  /* Outputs opens itself ONCE, when the first output lands — a state write,
+     not an OR in the render, so the person can still collapse it afterwards.
+     (`open || outputs.length > 0` made the header a button that did nothing.) */
+  const hadOutputs = React.useRef(outputs.length > 0);
+  React.useEffect(() => {
+    if (outputs.length > 0 && !hadOutputs.current) setOpen((o) => ({ ...o, outputs: true }));
+    hadOutputs.current = outputs.length > 0;
+  }, [outputs.length]);
   const settled = phases.filter((p) => p.status !== 'active').length;
   return (
     <>
@@ -220,7 +231,7 @@ function PanelSections({
       <Section
         title="Outputs"
         meta={outputs.length > 0 ? `${outputs.length}` : undefined}
-        open={open.outputs || outputs.length > 0}
+        open={open.outputs}
         onToggle={toggle('outputs')}
       >
         <OutputsBody outputs={outputs} />

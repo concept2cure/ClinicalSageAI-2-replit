@@ -307,6 +307,14 @@ export function Rbm({ onNav, liveDrive }: OwnedSurfaceViewProps) {
             msgs={anaMsgs}
             onAsk={askAna}
             onClose={() => setAnaOpen(false)}
+            /* The live work dock reads the raw turns: phases, tool timings,
+               pending steers and outputs the pane's message shape does not carry. */
+            work={{
+              messages: anaChat.messages,
+              streaming: anaChat.isStreaming,
+              runStatus: anaChat.runStatus,
+              pendingSteers: anaChat.pendingSteers,
+            }}
           />
         ) : (
           <button

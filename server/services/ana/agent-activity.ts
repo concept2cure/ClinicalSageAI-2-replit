@@ -116,13 +116,25 @@ export function buildAgentActivityPromptBlock(summary: AgentActivitySummary): st
 }
 
 /**
- * Load the tenant's live agent-activity summary. Fail-soft — returns an empty
- * summary on any error so neither the route nor the greeting path is blocked.
+ * Load the tenant's live agent-activity summary. THROWS on a failed read —
+ * this is what the live panel route calls, and a panel must be able to tell
+ * "nothing is running" from "the read failed". An empty summary here is a
+ * positive claim the database made, never a stand-in for an error.
+ */
+export async function loadAgentActivity(organizationId: number): Promise<AgentActivitySummary> {
+  const rows = await listRecentInvestigations(organizationId, 8);
+  return summarizeAgentActivity(rows);
+}
+
+/**
+ * The greeting path's view: fail-soft, returns an empty summary on any error
+ * so a broken investigations table never blocks a chat turn. Only for the
+ * proactive prompt block — a route rendering a queue to a person uses
+ * {@link loadAgentActivity} so its failure is a failure.
  */
 export async function getAgentActivity(organizationId: number): Promise<AgentActivitySummary> {
   try {
-    const rows = await listRecentInvestigations(organizationId, 8);
-    return summarizeAgentActivity(rows);
+    return await loadAgentActivity(organizationId);
   } catch {
     return { activeCount: 0, stalledCount: 0, recentlyCompletedCount: 0, items: [] };
   }
