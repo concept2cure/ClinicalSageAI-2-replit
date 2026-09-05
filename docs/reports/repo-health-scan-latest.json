@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-05T12:23:30.183Z",
+  "generatedAt": "2026-09-05T12:26:42.971Z",
   "git": {
-    "sha": "bfaffdfe1eb3ac7df8c9028f511fd7c719f0c753",
+    "sha": "1af1e2a1a10d6af9b1bb75b7bb36865922b062d6",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2001,7 +2001,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
-        "bytes": 233636
+        "bytes": 233267
       },
       {
         "file": "server/routes/concept2cure.ts",
@@ -2175,7 +2175,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
-        "lines": 5104
+        "lines": 5095
       },
       {
         "file": "server/routes/c2c/artifacts.ts",
@@ -2426,12 +2426,12 @@
         "lines": 1813
       },
       {
-        "file": "client/src/concept2cure/v2/Shell.tsx",
+        "file": "server/routes/c2c/ai-editing.ts",
         "lines": 1809
       },
       {
-        "file": "server/routes/c2c/ai-editing.ts",
-        "lines": 1809
+        "file": "client/src/concept2cure/v2/Shell.tsx",
+        "lines": 1799
       },
       {
         "file": "ui_kits/home/Projects.jsx",
