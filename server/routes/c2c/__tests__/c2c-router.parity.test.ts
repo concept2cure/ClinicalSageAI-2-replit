@@ -288,3 +288,31 @@ describe('the program twin and project-context reads live in one router', () => 
     }
   });
 });
+
+const CONTEXT_INTELLIGENCE_PATHS = [
+  'GET /conversations/:conversationId/health',
+  'GET /conversations/:conversationId/working-memory',
+  'POST /conversations/:conversationId/summarize',
+  'POST /conversations/:conversationId/promote',
+  'POST /conversations/:conversationId/extract-decisions',
+  'POST /intelligence/analyze',
+  'POST /intelligence/evaluate',
+  'GET /precedents',
+  'GET /patents',
+  'GET /compliance',
+  'GET /team/workload',
+  'POST /feedback',
+];
+
+describe('the context-integrity and intelligence endpoints live in one router', () => {
+  it('the context-intelligence router answers every one of them, and the main router none', async () => {
+    const ci = (await import('../context-intelligence')).default as unknown as { stack: Layer[] };
+    const main = (await import('../../concept2cure')).default as unknown as { stack: Layer[] };
+    const inCi = new Set(registered(ci));
+    const inMain = new Set(registered(main));
+    for (const p of CONTEXT_INTELLIGENCE_PATHS) {
+      expect(inCi.has(p), `${p} should be on the context-intelligence router`).toBe(true);
+      expect(inMain.has(p), `${p} should no longer be on the main router`).toBe(false);
+    }
+  });
+});

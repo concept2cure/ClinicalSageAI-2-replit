@@ -18,7 +18,8 @@ import * as crypto from 'crypto';
 import { db } from '../../db';
 import { regulatoryAuditLogs } from '../../../shared/schema';
 
-const DOMPurify = (DOMPurifyImport as any).default || DOMPurifyImport;
+/** The one DOMPurify instance the Concept2Cure routers sanitise with. */
+export const DOMPurify = (DOMPurifyImport as any).default || DOMPurifyImport;
 const logger = createScopedLogger('concept2cure-api');
 const metrics = (
   metricsModule as {

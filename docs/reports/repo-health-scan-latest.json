@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-05T12:33:53.794Z",
+  "generatedAt": "2026-09-05T12:36:05.883Z",
   "git": {
-    "sha": "b462e330ff981544c5fe8032e2fb70a576f58332",
+    "sha": "17da357f6669ca689010e8ad918a619750110d66",
     "branch": "ana-w2"
   },
   "thresholds": {
@@ -2012,10 +2012,6 @@
         "bytes": 202559
       },
       {
-        "file": "server/routes/concept2cure.ts",
-        "bytes": 196167
-      },
-      {
         "file": "server/routes/ana-features.ts",
         "bytes": 179440
       },
@@ -2026,6 +2022,10 @@
       {
         "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
         "bytes": 167533
+      },
+      {
+        "file": "server/routes/concept2cure.ts",
+        "bytes": 161868
       },
       {
         "file": "server/routes/authoring-actions.ts",
@@ -2166,10 +2166,6 @@
         "lines": 5415
       },
       {
-        "file": "server/routes/concept2cure.ts",
-        "lines": 5304
-      },
-      {
         "file": "server/services/ana-ri/command-executor.ts",
         "lines": 5211
       },
@@ -2184,6 +2180,10 @@
       {
         "file": "server/storage.ts",
         "lines": 4444
+      },
+      {
+        "file": "server/routes/concept2cure.ts",
+        "lines": 4409
       },
       {
         "file": "server/routes/authoring-actions.ts",
