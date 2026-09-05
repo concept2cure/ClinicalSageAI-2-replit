@@ -29,6 +29,7 @@ import type { OfficialPdfFieldMap } from '../services/forms/fill-official-pdf';
 import { assembleDeviceSubmission } from '../services/pathway-engines/device-assembly/assemble-device-submission';
 import {
   descriptorFor,
+  isUsableEstarTemplate,
   listVendoredTemplates,
   type EstarTemplateVariant,
 } from '../services/pathway-engines/estar/estar-template-registry';
@@ -763,8 +764,13 @@ router.post('/scaffold-field-map', authMiddleware, requireEditorAccess, async (r
       templateBytes = Buffer.from(templateBase64, 'base64');
     } else {
       const vendored = await listVendoredTemplates();
+      /* Scaffolding a field map from a file whose bytes are not the pinned ones
+         produces a map of THAT file's SOM paths, which is how a wrong locator
+         gets into the canonical map in the first place. */
       const hit = vendored.find(
-        (t) => t.fileName.toLowerCase() === descriptor.expectedFileName.toLowerCase(),
+        (t) =>
+          t.fileName.toLowerCase() === descriptor.expectedFileName.toLowerCase() &&
+          isUsableEstarTemplate(t),
       );
       templateBytes = hit ? hit.bytes : null;
     }
@@ -1136,7 +1142,12 @@ router.post('/assemble', authMiddleware, requireEditorAccess, requireAssemblyEnt
       leaves,
       // A caller-stated answer wins; the program's intake answers are the fallback.
       deviceFlags: validation.data.deviceFlags ?? storedDeviceFlags,
-      presentTemplates: vendored.map((t) => t.fileName),
+      /* By NAME was the bug: a file called eSTAR-510k-non-ivd.pdf whose bytes do
+         not match checksums.txt counted as present, so this route answered
+         "official eSTAR producible · 0 blockers" for a template the fill behind
+         the Generate button then refuses. Availability is the same question in
+         both places, so it gets the same answer. */
+      presentTemplates: vendored.filter(isUsableEstarTemplate).map((t) => t.fileName),
       market: market as never,
       environment: process.env.NODE_ENV === 'production' ? 'production' : 'staging',
     });
