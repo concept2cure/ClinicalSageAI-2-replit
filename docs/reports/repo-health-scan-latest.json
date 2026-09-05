@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-05T02:05:13.182Z",
+  "generatedAt": "2026-09-05T02:20:14.504Z",
   "git": {
-    "sha": "ede0c34370083ab8a8a032ec568e7cf241a3a049",
+    "sha": "059460bb91ef2d4b3d9f7a7a08d88943ab2881c7",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2402,6 +2402,10 @@
         "lines": 2588
       },
       {
+        "file": "server/routes/submission-ops.ts",
+        "lines": 2547
+      },
+      {
         "file": "server/api/cmc/routes.ts",
         "lines": 2512
       },
@@ -2412,10 +2416,6 @@
       {
         "file": "server/services/ai-gateway/gateway.ts",
         "lines": 2466
-      },
-      {
-        "file": "server/routes/submission-ops.ts",
-        "lines": 2460
       },
       {
         "file": "server/services/labeling/labeling-intelligence-knowledge.ts",
@@ -2626,12 +2626,12 @@
         "lines": 1668
       },
       {
-        "file": "server/routes/submissions.ts",
+        "file": "server/services/clinical-outcome-assessment/coa-knowledge.ts",
         "lines": 1650
       },
       {
-        "file": "server/services/clinical-outcome-assessment/coa-knowledge.ts",
-        "lines": 1650
+        "file": "server/routes/submissions.ts",
+        "lines": 1649
       },
       {
         "file": "server/services/unifiedDocumentIngestion.js",

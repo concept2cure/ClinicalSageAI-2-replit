@@ -98,7 +98,7 @@ export interface RegionalBackboneGateResult {
 /** One sentence naming why a backbone is not conformant. */
 function nonConformanceReason(status: RegionalBackboneStatus): string {
   if (status.placeholderOf) {
-    return `it reuses the ${status.placeholderOf.toUpperCase()} regional structure as a placeholder`;
+    return `it reuses the ${String(status.placeholderOf).toUpperCase()} regional structure as a placeholder`;
   }
   return status.conformanceGap ?? 'its structure has not been verified against the agency DTD';
 }

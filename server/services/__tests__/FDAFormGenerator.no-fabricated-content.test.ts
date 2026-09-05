@@ -70,6 +70,10 @@ describe('FDAFormGenerator — no fabricated regulatory content', () => {
     const noInput = html.lastIndexOf('<input', noIdx);
     // Undefined → the "none to disclose" affirmation is NOT pre-checked.
     expect(html.slice(noInput, noIdx)).not.toContain('checked');
+    // Nor is its opposite: an unanswered form asserts neither Part 54 posture.
+    const yesIdx = html.indexOf('Financial interests disclosed');
+    expect(yesIdx).toBeGreaterThan(-1);
+    expect(html.slice(html.lastIndexOf('<input', yesIdx), yesIdx)).not.toContain('checked');
     // An explicit "no interests" declaration DOES check the affirmation.
     const declared = await gen.generateForm3654({
       workflowData: { certification: { clinicalStudiesConducted: true, financialInterests: false } },
@@ -90,5 +94,21 @@ describe('FDAFormGenerator — no fabricated regulatory content', () => {
     // The full standard fee must not appear as a fabricated default.
     expect(out.htmlContent).not.toContain('19,870');
     expect(out.completeness).toBe(0);
+  });
+
+  it('Form 3881 does not default a device to Prescription Use', async () => {
+    const gen = new FDAFormGenerator();
+    // No device_information at all → the 21 CFR 801 Subpart D / OTC split was
+    // never answered, so neither classification may be asserted.
+    const out = await gen.generateForm3881({});
+    expect(out.formData.prescriptionUse).toBe(false);
+    expect(out.formData.overCounterUse).toBe(false);
+    const html: string = out.htmlContent;
+    for (const label of ['<strong>Prescription Use</strong>', '<strong>Over-The-Counter Use</strong>']) {
+      const labelIdx = html.indexOf(label);
+      expect(labelIdx).toBeGreaterThan(-1);
+      const inputIdx = html.lastIndexOf('<input', labelIdx);
+      expect(html.slice(inputIdx, labelIdx)).not.toContain('checked');
+    }
   });
 });
