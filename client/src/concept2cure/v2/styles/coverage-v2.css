@@ -1173,7 +1173,7 @@
 .c2c-v2 .bd-metric-note{ margin-left:auto; font-size:10.5px; color:var(--text-400); }
 .c2c-v2 .bd-prog{ display:flex; align-items:center; gap:12px; flex:1; }
 .c2c-v2 .bd-prog-track{ flex:1; max-width:340px; height:6px; background:var(--bg-100); border-radius:100px; overflow:hidden; }
-.c2c-v2 .bd-prog-fill{ height:100%; background:var(--accent-200); border-radius:100px; transition:width .4s ease; }
+.c2c-v2 .bd-prog-fill{ height:100%; background:var(--accent-200); border-radius:100px; transition:width var(--dur) var(--ease); }
 .c2c-v2 .bd-prog-txt{ font-size:12px; color:var(--text-300); font-weight:500; white-space:nowrap; }
 
 /* cards */
@@ -1560,3 +1560,15 @@
 @media (max-width:720px){ .c2c-v2 .dr2-gates{ grid-template-columns:1fr; } }
 .c2c-v2 .lic-st{text-transform:capitalize;}
 .c2c-v2 .lic-st-free{color:var(--text-300);}
+
+/* Reduced-motion policy for this stylesheet. The three [data-fresh] row
+   flashes fade to the resting background, so suppressing them lands there.
+   `.bd-dots i` is a loading indicator: it keeps its opacity pulse but is
+   slowed to a single step rather than removed, so the busy state stays
+   legible without motion. */
+@media (prefers-reduced-motion: reduce) {
+  .c2c-v2 .hf-row[data-fresh],
+  .c2c-v2 .dc-mrow[data-fresh],
+  .c2c-v2 .ct-row[data-fresh] { animation: none; }
+  .c2c-v2 .bd-dots i { animation: none; opacity: .6; }
+}

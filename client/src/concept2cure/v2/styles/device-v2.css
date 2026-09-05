@@ -157,7 +157,7 @@
   .ph-risk-row{display:flex;align-items:center;gap:8px;font-size:11px;}
   .ph-risk-label{min-width:60px;color:var(--text-400);}
   .ph-risk-bar{flex:1;height:7px;border-radius:999px;background:var(--bg-200);overflow:hidden;}
-  .ph-risk-fill{height:100%;border-radius:999px;transition:width .3s ease;}
+  .ph-risk-fill{height:100%;border-radius:999px;transition:width var(--dur) var(--ease);}
   .ph-risk-fill[data-tone="ok"]{background:var(--success);}
   .ph-risk-fill[data-tone="warn"]{background:var(--warning);}
   .ph-risk-fill[data-tone="err"]{background:var(--error);}

@@ -31,7 +31,7 @@ interface CpData {
    envelope that lost its object — unwraps to a bare `[]`, and `[]` is TRUTHY, so
    it walked past `if (loading || !cp)` and `cp.programs.length` threw during
    render. The client was then told their portal was broken by the boundary,
-   instead of the "We couldn't load your workspace" panel this file already draws
+   instead of the "Your workspace could not be loaded" panel this file already draws
    thirty lines below. `{}`, a 200 carrying `{ error }`, a bare array and a JSON
    scalar all landed the same way — six of the seven skews in the probe.
 
@@ -107,7 +107,7 @@ export function ClientPortal({ onNav }: OwnedSurfaceViewProps) {
           ) : (
             <EmptyState
               tone="error"
-              title="We couldn't load your workspace"
+              title="Your workspace could not be loaded"
               hint="The client portal is temporarily unavailable. Please reload in a moment."
               icon={I.alertTriangle}
             />
