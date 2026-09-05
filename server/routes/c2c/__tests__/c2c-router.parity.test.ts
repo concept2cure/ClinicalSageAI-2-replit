@@ -363,3 +363,25 @@ describe('the governance and platform-operations routes live in one router', () 
     }
   });
 });
+
+const KNOWLEDGE_SOURCE_PATHS = [
+  'GET /projects/:projectId/apps',
+  'POST /projects/:projectId/apps',
+  'DELETE /projects/:projectId/apps/:appId',
+  'POST /documents/upload',
+  'DELETE /documents/:documentId',
+  'PATCH /documents/:documentId/activation',
+];
+
+describe('the connected-app and knowledge-document routes live in one router', () => {
+  it('the knowledge-sources router answers every one of them, and the main router none', async () => {
+    const own = (await import('../knowledge-sources')).default as unknown as { stack: Layer[] };
+    const main = (await import('../../concept2cure')).default as unknown as { stack: Layer[] };
+    const inOwn = new Set(registered(own));
+    const inMain = new Set(registered(main));
+    for (const p of KNOWLEDGE_SOURCE_PATHS) {
+      expect(inOwn.has(p), `${p} should be on the knowledge-sources router`).toBe(true);
+      expect(inMain.has(p), `${p} should no longer be on the main router`).toBe(false);
+    }
+  });
+});

@@ -53,7 +53,7 @@ vi.mock('../../server/middleware/redisRateLimiter', () => ({
   createRedisRateLimiter: () => (_req: any, _res: any, next: any) => next(),
 }));
 
-import concept2cureRouter from '../../server/routes/concept2cure';
+import concept2cureRouter from '../../server/routes/c2c/knowledge-sources';
 
 function getRouteHandler(path: string, method: 'post' | 'put' | 'get' = 'post') {
   const layer = concept2cureRouter.stack.find((l: any) => l.route?.path === path && l.route?.methods?.[method]);

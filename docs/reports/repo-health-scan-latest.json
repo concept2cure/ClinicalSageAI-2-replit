@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-05T13:00:24.633Z",
+  "generatedAt": "2026-09-05T13:03:44.527Z",
   "git": {
-    "sha": "9a1563cb58429b57f47b9a85172a2a8b6c652834",
+    "sha": "ffd2b2ea9d6f0ba0596703f6bf4333e397f1e1c9",
     "branch": "ana-w2"
   },
   "thresholds": {
@@ -2040,10 +2040,6 @@
         "bytes": 145402
       },
       {
-        "file": "server/routes/concept2cure.ts",
-        "bytes": 138714
-      },
-      {
         "file": "server/services/labeling/labeling-intelligence-knowledge.ts",
         "bytes": 138123
       },
@@ -2116,6 +2112,10 @@
         "bytes": 110971
       },
       {
+        "file": "server/routes/concept2cure.ts",
+        "bytes": 109695
+      },
+      {
         "file": "server/services/rwe/rwe-methodology-knowledge.ts",
         "bytes": 109447
       },
@@ -2182,10 +2182,6 @@
         "lines": 4444
       },
       {
-        "file": "server/routes/concept2cure.ts",
-        "lines": 3776
-      },
-      {
         "file": "server/routes/authoring-actions.ts",
         "lines": 3610
       },
@@ -2216,6 +2212,10 @@
       {
         "file": "server/services/regulatory-strategy/regulatory-strategy-knowledge.ts",
         "lines": 3067
+      },
+      {
+        "file": "server/routes/concept2cure.ts",
+        "lines": 3007
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
@@ -2515,7 +2515,15 @@
       }
     ]
   },
-  "comparison": null,
+  "comparison": {
+    "baseline": "docs/reports/repo-health-scan-latest.json",
+    "delta": {
+      "duplicateBasenames": 0,
+      "contentDuplicateGroups": 0,
+      "largeFilesByBytes": 0,
+      "largeFilesByLines": 0
+    }
+  },
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",

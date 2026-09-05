@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-05T12:57:46.412Z",
+  "generatedAt": "2026-09-05T13:03:42.238Z",
   "onSharedPool": [
     "server/routes/admin-security.ts",
     "server/routes/ana-cortex.ts",
@@ -19,6 +19,7 @@
     "server/routes/c2c/conversations.ts",
     "server/routes/c2c/exports.ts",
     "server/routes/c2c/haq-sessions.ts",
+    "server/routes/c2c/knowledge-sources.ts",
     "server/routes/c2c/notifications.ts",
     "server/routes/c2c/program-twin.ts",
     "server/routes/c2c/project-access.ts",
@@ -103,6 +104,7 @@
       "server/routes/c2c/conversations.ts",
       "server/routes/c2c/exports.ts",
       "server/routes/c2c/haq-sessions.ts",
+      "server/routes/c2c/knowledge-sources.ts",
       "server/routes/c2c/notifications.ts",
       "server/routes/c2c/program-twin.ts",
       "server/routes/c2c/project-access.ts",

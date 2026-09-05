@@ -548,3 +548,17 @@ export function normalizeKnowledge(settings: Record<string, unknown>): ProjectKn
     memoryEnabled,
   };
 }
+
+/** A third-party app connected to a project's memory, as stored in project settings. */
+export interface ConnectedAppRecord {
+  appId: string;
+  connectedAt: string;
+  status: 'active' | 'paused';
+  memoryRole?: string;
+}
+
+/** Read a project's connected apps out of its settings. */
+export function normalizeConnectedApps(settings: Record<string, unknown>): ConnectedAppRecord[] {
+  const apps = settings.connectedApps;
+  return Array.isArray(apps) ? (apps as ConnectedAppRecord[]) : [];
+}
