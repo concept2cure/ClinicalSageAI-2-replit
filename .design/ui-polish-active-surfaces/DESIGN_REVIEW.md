@@ -54,6 +54,27 @@ Measured: 223 elements at `#ad5132` on `#262624`, plus 49 sitting on a white
 accent ground in dark mode. Fixed by re-declaring the aliases under
 `.c2c-v2.dark` so substitution re-runs where the dark values are in scope.
 
+## Fixed since this review was written
+
+- **No fake or mock fixtures.** 82 unreferenced exports across 21 files, 1,442
+  lines of fabricated life-sciences data, deleted: three invented programmes
+  (incl. a fabricated "NDA 212345"), seven invented colleagues, fabricated
+  serious adverse event cases, contradiction findings, precedent results,
+  protocol documents, risk register rows and eTMF filing signals. `Etmf.tsx`
+  said twice that the fabricated filings "is removed" while they were still in
+  the bundle; that is now true. Proven by ci:typecheck:no-regression at 0
+  against a 0 baseline — anything still referenced would fail to compile.
+- **The Part 11 signature fields now have names.** "Meaning of signature" and
+  "Reason for sign-off" had sibling `<label>`s with no association, so neither
+  field recording regulatory intent was announced. Fixed there and across 18
+  controls in two intake forms, using htmlFor/id so the visible label is also
+  clickable. Revert-proven test added.
+- **Five modals gained a keyboard exit.** TaskDetail, TaskCreate,
+  WorkflowStart, ESignTaskModal and Review's e-signature dialog now route
+  through the existing `useDialog` helper: role, aria-modal, Escape, focus.
+- **101 loading states announced.** role="status" added across 58 surfaces,
+  matching the 56 that already had it.
+
 ## Must fix — NOT done here, needs an owner
 
 1. **RBM approve endpoints have no authorization gate.**
@@ -69,20 +90,14 @@ accent ground in dark mode. Fixed by re-declaring the aliases under
    inheriting `--accent-on-strong` (`#141413`, correct ON an accent fill) onto
    the page background, where it is not. Needs per-element work.
 
-3. **~50 surfaces render loading as a bare `<div className="scaf-note">`**
-   with no `role="status"`, while their own error and empty branches use the
-   shared `EmptyState`. The licensing family does it correctly with
-   `role="status"`. Mechanical, but touches ~50 files.
+3. **Loading still renders as a bare note, not the shared `EmptyState`.** The
+   announcement is fixed (above) but the three states of one surface still look
+   like three different components. A visual consolidation, worth doing alone.
 
-4. **Dialogs without dialog semantics.** `AnaCommand.tsx`, `CollabLauncher.tsx`,
-   `Review.tsx` (the e-signature dialog), `FilingsCatalog.tsx`, and three of
-   `TaskBoard.tsx`'s four modals have no `role="dialog"`, no `aria-modal`, no
-   Escape handler and no focus management. The `useDialog` helper already used
-   elsewhere is the fix.
-
-5. **~18 unlabelled form controls** in the CollabLauncher and TaskBoard modal
-   forms, including "Meaning of signature" and "Reason for sign-off" inside the
-   e-signature dialog. Labels are siblings, not wrappers, with no `htmlFor`.
+4. **Dialogs still without semantics:** `AnaCommand.tsx` (two, plus close
+   buttons with no accessible name), `CollabLauncher.tsx` and
+   `FilingsCatalog.tsx`. `useDialog` is also a partial trap by design — Tab can
+   still leave an open panel.
 
 6. **Keyboard-unreachable controls**: `ProtocolDev.tsx` heat-map cell and risk
    row, `Orchestration.tsx` nav chip, `QmpWorkspace.tsx` table cell.
