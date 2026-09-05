@@ -61,7 +61,7 @@ export class MhraGateway implements SubmissionGateway {
 
   async isConfigured(_orgId: number, env: 'staging' | 'production'): Promise<boolean> {
     try { await loadCreds(env); return true; }
-    catch (e) { return !(e instanceof CredentialError); }
+    catch { return false; } // an unreadable cert or key is not 'configured'
   }
 
   async transmit(req: GatewayTransmitRequest): Promise<GatewayTransmitResult> {
@@ -147,6 +147,7 @@ export class MhraGateway implements SubmissionGateway {
     );
     if (rows.length === 0 || !rows[0].transmission_id)
       throw new GatewayError(`Transmittal ${transmittalId} not found`, 404, null, null);
+    let pollError: string | null = 'The agency status poll did not complete.';
     try {
       const env = (rows[0].metadata?.environment as 'staging' | 'production' | undefined) ?? 'production';
       const creds = await loadCreds(env);
@@ -166,10 +167,12 @@ export class MhraGateway implements SubmissionGateway {
           : (rows[0].status as SubmissionStatus);
         if (mapped !== rows[0].status) await patchTransmittal(transmittalId, { status: mapped });
         return { transmittalId, transmissionId: rows[0].transmission_id!, status: mapped,
+          source: 'agency',
           ackReceivedAt: rows[0].ack_received_at, rawResponse: p };
       }
-    } catch { /* fall through to DB state */ }
+    } catch (err) { pollError = err instanceof Error ? err.message : String(err); }
     return { transmittalId, transmissionId: rows[0].transmission_id!,
+      source: 'stored', pollError,
       status: rows[0].status as SubmissionStatus, ackReceivedAt: rows[0].ack_received_at };
   }
 

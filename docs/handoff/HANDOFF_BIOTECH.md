@@ -152,6 +152,36 @@ revert:
 One finding did not reproduce: the stored amendment plan keeps every leaf's
 `documentId` and `parentLeafGuid` (the PGlite register test now asserts it).
 
+### Fourth audit — ESG acknowledgement chain and IND initial assembly (2026-09-05)
+
+Two read-only audits. Fixed on `concept2cure-v2`, each with a test that fails
+on revert:
+
+- `isConfigured()` on all 13 gateways answered true for any failure other than
+  a missing variable, so an unreadable (unmounted, rotated-away) certificate
+  showed the gateway as configured until the transmit failed. Any failure to
+  load credentials is now "not configured".
+- `checkStatus()` results carry `source: 'agency' | 'stored'` and, when a poll
+  failed, `pollError`. Every gateway swallowed the poll failure and handed back
+  the stored row as if it were the agency's answer; FDA ESG and EUDAMED have no
+  live poll at all and were labelled "live poll" on the transmittals surface.
+  The surface now says "last recorded state · the agency was not asked" for a
+  stored result, and the status toast carries the server's reason.
+- `POST /api/ind-generation/assemble` and `/generate-form` were removed (no
+  callers). The first counted a section complete when any artifact existed,
+  ignoring the `needsData` flag its sibling records, and answered "Ready for
+  export" over a hand-rolled backbone with sequence 0000 and operation=new
+  hardcoded; the second returned a one-paragraph summary named
+  `FDA_Form_<n>.docx`. The toy `generateEctdXml`/`generateIcsrXml` builders are
+  gone, and the ANA `generate_document` tool no longer offers `ectd_backbone`
+  or `icsr` (it used to draft an ICSR around an invented report id and
+  "Unknown" drug/reaction).
+
+Still open from the ESG audit, a real feature not a fix: FDA ESG has no live
+status poll (SFTP `/outgoing/` ack1/ack2/ack3 reconciliation). The stored row is
+now labelled as such; the poll itself needs the ESG account and the ack format
+verified against a live test account.
+
 ### Note for the concurrent device stream
 
 On 2026-09-04, at JM's direct instruction to complete the biotech/pharma workflow
@@ -390,6 +420,7 @@ If neither has happened: report the blockage, name what is needed, and stop.
 | 2026-09-03 | A | WO-9 Phase 1 Steps 0–6 + XFA decision | DTD gate defect found and fixed; vendoring blocked on egress; forms XFA status measured | `docs/reports/wo9-phase1-ectd-unblock-2026-09-03.md` |
 | 2026-09-05 | A | Third audit fixes — IND lifecycle + gateways | Receipt-less 2xx refused on 11 gateways; ledger receipt key; amendment placement + cover letter; 312.33 due date; ICSR ACK refusals; transmit refusals — all revert-proven | §1 above |
 | 2026-09-05 | A | Third audit, remainder | ESG MDN verified before acceptance; sequence/type required on every gateway; C.1.7 from the event; no epoch dates; unassessed expectedness stated as such — all revert-proven; finding 12 did not reproduce | §1 above |
+| 2026-09-05 | A | Fourth audit — ESG acks + IND assembly | isConfigured honest on 13 gateways; status provenance (agency/stored + pollError) end to end; orphaned assemble/generate-form routes and toy backbone/ICSR generators removed — revert-proven | §1 above |
 | | | | | |
 
 **Rule:** the last row with an empty "What was proven" cell is the open work.

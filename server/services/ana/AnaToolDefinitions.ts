@@ -855,7 +855,7 @@ export const GENERATE_DOCUMENT: AnaTool = {
       document_type: {
         type: 'string',
         description: 'Type of document to generate',
-        enum: ['csr', 'ctd_module1', 'ctd_module2', 'ctd_module3', 'ctd_module4', 'ctd_module5', 'cer', '510k', 'pma', 'protocol', 'sap', 'ib', 'icsr', 'ectd_backbone'],
+        enum: ['csr', 'ctd_module1', 'ctd_module2', 'ctd_module3', 'ctd_module4', 'ctd_module5', 'cer', '510k', 'pma', 'protocol', 'sap', 'ib'],
       },
       title: {
         type: 'string',
