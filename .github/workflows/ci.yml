@@ -351,6 +351,22 @@ jobs:
         if: "!cancelled() && steps.install.conclusion == 'success'"
         run: npm run ci:workflow-targets
 
+      # A required security scan that gets cancelled by the next push produces
+      # no release evidence for the commit it was meant to certify — 74 of the
+      # last 100 canonical-branch CodeQL runs, before codeql.yml and
+      # semgrep.yml were keyed per-SHA. The guard renders each policy-required
+      # workflow's concurrency group for two commits on the canonical branch
+      # and refuses if they collide while cancel-in-progress is on.
+      - name: Guardrails — required workflows keep a per-commit run on the canonical branch
+        if: "!cancelled() && steps.install.conclusion == 'success'"
+        run: npm run ci:required-workflow-concurrency
+
+      # The guard's own detection logic is code that can regress; the self-test
+      # feeds it the exact shape that shipped and requires a refusal.
+      - name: Guardrails — concurrency guard rejects simulated drift
+        if: "!cancelled() && steps.install.conclusion == 'success'"
+        run: npm run ci:required-workflow-concurrency:self-test
+
       - name: Guardrails — ECS deploy uses pinned task-def revisions (rollback safety)
         if: "!cancelled() && steps.install.conclusion == 'success'"
         # The production deploy registers a pinned task-def revision

@@ -95,6 +95,8 @@
     "ci:path-containment": "node scripts/ci/check-path-containment.mjs",
     "ci:path-containment:write-baseline": "node scripts/ci/check-path-containment.mjs --write-baseline",
     "ci:workflow-targets": "node scripts/ci/check-workflow-targets.mjs",
+    "ci:required-workflow-concurrency": "node scripts/ci/check-required-workflow-concurrency.mjs",
+    "ci:required-workflow-concurrency:self-test": "node scripts/ci/check-required-workflow-concurrency.mjs --self-test",
     "ci:workflow-targets:write-baseline": "node scripts/ci/check-workflow-targets.mjs --write-baseline",
     "ci:tenant-entry-points:write-baseline": "node scripts/ci/check-tenant-entry-points.mjs --write-baseline",
     "ci:unreferenced-modules": "node scripts/ci/check-unreferenced-modules.mjs",

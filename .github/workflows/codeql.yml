@@ -15,7 +15,23 @@ permissions:
   actions: read
 
 concurrency:
-  group: codeql-${{ github.workflow }}-${{ github.ref }}
+  # A newer push must NOT cancel this commit's analysis on the canonical branch.
+  #
+  # config/release-evidence-policy.v1.json lists "CodeQL / Analyze (CodeQL
+  # javascript-typescript)" and "… (CodeQL python)" among the jobs a release
+  # candidate REQUIRES, and ci.yml's assemble-release-evidence job reads that
+  # conclusion from the CodeQL run at this exact SHA. A group keyed only on the
+  # ref meant every push superseded the previous commit's analysis: over the
+  # seventeen hours to 2026-09-06T01:04Z, 74 of the last 100 canonical-branch
+  # CodeQL runs ended `cancelled`, and each of those commits recorded
+  # `required workflow CodeQL/Analyze (…) is cancelled` and could not produce a
+  # release-evidence package at all. The gate was right; the scan was missing.
+  #
+  # Keyed by SHA on the canonical branch, so each commit's analysis runs to
+  # completion and no two commits ever share a group. Everywhere else — pull
+  # requests, forks, the weekly schedule off other refs — superseding an
+  # in-flight scan is still the right economy and is unchanged.
+  group: codeql-${{ github.workflow }}-${{ github.ref }}-${{ github.ref_name == 'concept2cure-v2' && github.sha || 'ref' }}
   cancel-in-progress: true
 
 jobs:
