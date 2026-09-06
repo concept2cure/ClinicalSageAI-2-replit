@@ -178,3 +178,116 @@ describe('POST /documents/:id/tracked-change-decisions/bulk', () => {
     expect(md.changesOmittedFromSummary).toBeUndefined();
   });
 });
+
+describe('the FROZEN/APPROVED document lock — accept/reject must not write past it', () => {
+  /**
+   * Neither handler resolved the parent document at all: no existence check,
+   * no status check. `checkSectionWritable` already refuses a FROZEN/APPROVED
+   * document on every other authoring write (manual save, history revert, AI
+   * draft accept) via the /sections/:sectionId prefix guard — these two routes
+   * sit under /documents/:id instead, outside that guard, and reached the
+   * INSERT unconditionally. The sibling helper `checkDocumentWritable` already
+   * exists in services/authoring/document-lock.ts for exactly this document-id
+   * shape.
+   */
+  function dispatchByStatus(status: string | null) {
+    mockQuery.mockImplementation(async (sql: string) => {
+      if (/FROM authoring_documents/.test(sql)) {
+        return { rows: status ? [{ status, locked_at: null }] : [] };
+      }
+      return { rowCount: 1, rows: [{ id: 'row-1' }] };
+    });
+  }
+
+  it('refuses a single accept/reject against a FROZEN document — no row written', async () => {
+    dispatchByStatus('FROZEN');
+    const res = await request(makeApp())
+      .post('/api/authoring/documents/D-frozen/tracked-change-decisions')
+      .set('Authorization', await bearer())
+      .send({ changeId: 'insertion:x', decision: 'accept' });
+
+    expect(res.status).toBe(403);
+    expect(res.body.error).toBe('DOCUMENT_FROZEN');
+    expect(
+      mockQuery.mock.calls.some(c => /INSERT INTO authoring_tracked_change_decisions/.test(String(c[0]))),
+    ).toBe(false);
+    expect(
+      mockQuery.mock.calls.some(c => /INSERT INTO authoring_audit_trail/.test(String(c[0]))),
+    ).toBe(false);
+  });
+
+  it('refuses a single accept/reject against an APPROVED document', async () => {
+    dispatchByStatus('APPROVED');
+    const res = await request(makeApp())
+      .post('/api/authoring/documents/D-approved/tracked-change-decisions')
+      .set('Authorization', await bearer())
+      .send({ changeId: 'insertion:x', decision: 'reject' });
+    expect(res.status).toBe(403);
+    expect(res.body.error).toBe('DOCUMENT_FROZEN');
+  });
+
+  it('still accepts against an ordinary DRAFT document — the fix is not a blanket deny', async () => {
+    dispatchByStatus('DRAFT');
+    const res = await request(makeApp())
+      .post('/api/authoring/documents/D-draft/tracked-change-decisions')
+      .set('Authorization', await bearer())
+      .send({ changeId: 'insertion:x', decision: 'accept' });
+    expect(res.status).toBe(200);
+  });
+
+  it('refuses a bulk accept against a FROZEN document — no rows written', async () => {
+    dispatchByStatus('FROZEN');
+    const res = await request(makeApp())
+      .post('/api/authoring/documents/D-frozen/tracked-change-decisions/bulk')
+      .set('Authorization', await bearer())
+      .send({ decision: 'accept', changeIds: ['a', 'b'] });
+
+    expect(res.status).toBe(403);
+    expect(res.body.error).toBe('DOCUMENT_FROZEN');
+    expect(
+      mockQuery.mock.calls.some(c => /INSERT INTO authoring_tracked_change_decisions/.test(String(c[0]))),
+    ).toBe(false);
+  });
+
+  it('still accepts a bulk decision against an ordinary DRAFT document', async () => {
+    dispatchByStatus('DRAFT');
+    const res = await request(makeApp())
+      .post('/api/authoring/documents/D-draft/tracked-change-decisions/bulk')
+      .set('Authorization', await bearer())
+      .send({ decision: 'accept', changeIds: ['a', 'b'] });
+    expect(res.status).toBe(200);
+  });
+});
+
+describe('bulk audit metadata carries what the single route already carries', () => {
+  it('records sectionId and each change\'s proposedAt, mirroring the single route', async () => {
+    const res = await request(makeApp())
+      .post('/api/authoring/documents/D1/tracked-change-decisions/bulk')
+      .set('Authorization', await bearer())
+      .send({
+        decision: 'accept',
+        changeIds: ['a', 'b'],
+        sectionId: 'S9',
+        changes: [
+          { changeId: 'a', changeType: 'insertion', text: 'first', at: '2026-08-24T16:30:00Z' },
+          { changeId: 'b', changeType: 'insertion', text: 'second', at: '2026-08-24T16:31:00Z' },
+        ],
+      });
+
+    expect(res.status).toBe(200);
+    const md = auditMetadata();
+    // The single route records this at the top level of its metadata.
+    expect(md.sectionId).toBe('S9');
+    expect(md.changes[0].proposedAt).toBe('2026-08-24T16:30:00Z');
+    expect(md.changes[1].proposedAt).toBe('2026-08-24T16:31:00Z');
+  });
+
+  it('omits sectionId when the caller sends none, same as the single route', async () => {
+    const res = await request(makeApp())
+      .post('/api/authoring/documents/D1/tracked-change-decisions/bulk')
+      .set('Authorization', await bearer())
+      .send({ decision: 'accept', changeIds: ['a'] });
+    expect(res.status).toBe(200);
+    expect(auditMetadata().sectionId).toBeUndefined();
+  });
+});
