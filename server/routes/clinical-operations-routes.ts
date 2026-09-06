@@ -90,18 +90,47 @@ export default function createClinicalOperationsRoutes(pool: Pool): Router {
   /**
    * The caller's organization, as the INTEGER clinical_ops.studies.org_id is.
    *
-   * It was read as an opaque string and compared with `($1::INT IS NULL OR
-   * org_id = $1)` against a TEXT column. The column is INTEGER now — every
-   * other tenant key in this database is, the RLS predicate casts to ::INT,
-   * and regulatory-programs.service.ts already writes `org_id::text = $2`,
-   * which only makes sense against a non-text column. A value that is not a
-   * positive integer resolves to null, which the queries read as "no tenant
-   * filter" exactly as before.
+   * ── What "no tenant filter" meant ──────────────────────────────────────────
+   * This resolver returned null for a request with no tenant on it, and every
+   * query in this router spelled its predicate as an OR against a null check
+   * on the tenant parameter — which is TRUE when that parameter is null.
+   * So a context-less request did not read the wrong organization's
+   * clinical operations. It read EVERY organization's: studies, sites,
+   * enrollment, monitoring visits, protocol deviations and milestones, across
+   * the whole database. The write endpoints carried the same escape, so it
+   * could modify another sponsor's study too.
+   *
+   * A conditional tenant predicate is not a predicate; it is a default. The
+   * gate below resolves the org once and refuses without it, so `getOrgId`
+   * always returns a positive integer and the `IS NULL` branch is dead — which
+   * is why every query now states `org_id = $N` unconditionally.
    */
-  function getOrgId(req: Request): number | null {
-    const raw = (req as any).tenantId ?? (req as any).tenantContext?.organizationId;
+  function resolveOrgId(req: Request): number | null {
+    const raw = (req as any).tenantId ?? (req as any).tenantContext?.organizationId
+      ?? (req as any).organizationId ?? (req as any).user?.organizationId;
     const n = Number(raw);
     return Number.isInteger(n) && n > 0 ? n : null;
+  }
+
+  /** Where the resolved org is parked for the handlers, once, per request. */
+  const CLINOPS_ORG = Symbol.for('clinicalOps.orgId');
+
+  /* One gate for every endpoint in this router, so a new one cannot be added
+     without it — and so the tenant predicate below can be unconditional. */
+  router.use((req: Request, res: Response, next) => {
+    const orgId = resolveOrgId(req);
+    if (orgId === null) {
+      return res.status(403).json({
+        error: 'Organization context required.',
+        code: 'CLINOPS_ORG_REQUIRED',
+      });
+    }
+    (req as any)[CLINOPS_ORG] = orgId;
+    next();
+  });
+
+  function getOrgId(req: Request): number {
+    return (req as any)[CLINOPS_ORG] as number;
   }
 
   function safeError(res: Response, error: any, code: string, label: string): Response {
@@ -139,7 +168,7 @@ export default function createClinicalOperationsRoutes(pool: Pool): Router {
 
       const studiesResult = await pool.query(
         `SELECT status, COUNT(*) as count, SUM(enrolled) as enrolled, SUM(target_enrollment) as target
-         FROM clinical_ops.studies WHERE ($1::INT IS NULL OR org_id = $1)
+         FROM clinical_ops.studies WHERE org_id = $1
          GROUP BY status`,
         [orgId],
       );
@@ -147,7 +176,7 @@ export default function createClinicalOperationsRoutes(pool: Pool): Router {
       const deviationsResult = await pool.query(
         `SELECT category, COUNT(*) as count FROM clinical_ops.deviations
          WHERE status = 'open' AND study_id IN (
-           SELECT id FROM clinical_ops.studies WHERE ($1::INT IS NULL OR org_id = $1)
+           SELECT id FROM clinical_ops.studies WHERE org_id = $1
          ) GROUP BY category`,
         [orgId],
       );
@@ -156,7 +185,7 @@ export default function createClinicalOperationsRoutes(pool: Pool): Router {
         `SELECT COUNT(*) as count FROM clinical_ops.monitoring_visits
          WHERE status = 'scheduled' AND scheduled_date <= (CURRENT_DATE + INTERVAL '30 days')
          AND study_id IN (
-           SELECT id FROM clinical_ops.studies WHERE ($1::INT IS NULL OR org_id = $1)
+           SELECT id FROM clinical_ops.studies WHERE org_id = $1
          )`,
         [orgId],
       );
@@ -235,7 +264,7 @@ export default function createClinicalOperationsRoutes(pool: Pool): Router {
                         target_enrollment   AS target,
                         status,
                         note
-                   FROM clinical_ops.studies WHERE ($1::INT IS NULL OR org_id = $1)`;
+                   FROM clinical_ops.studies WHERE org_id = $1`;
       const params: any[] = [orgId];
 
       if (status) {
@@ -292,7 +321,7 @@ export default function createClinicalOperationsRoutes(pool: Pool): Router {
       const { id } = req.params;
       const orgId = getOrgId(req);
       const result = await pool.query(
-        `SELECT * FROM clinical_ops.studies WHERE id = $1 AND ($2::INT IS NULL OR org_id = $2)`,
+        `SELECT * FROM clinical_ops.studies WHERE id = $1 AND org_id = $2`,
         [id, orgId],
       );
       if (result.rows.length === 0) {
@@ -331,13 +360,14 @@ export default function createClinicalOperationsRoutes(pool: Pool): Router {
       }
 
       setClauses.push(`updated_at = NOW()`);
-      // Add org_id guard
+      /* The tenant guard on this UPDATE was appended only `if (orgId)`, and
+         orgId was null for a request with no tenant on it — so the statement
+         ran as `WHERE id = $1` alone and could modify ANY sponsor's study by
+         id. The gate above makes orgId a positive integer for every request
+         that reaches here, so the clause is unconditional. */
       const orgId = getOrgId(req);
-      let whereClause = 'WHERE id = $1';
-      if (orgId) {
-        params.push(orgId);
-        whereClause += ` AND org_id = $${params.length}`;
-      }
+      params.push(orgId);
+      const whereClause = `WHERE id = $1 AND org_id = $${params.length}`;
       const result = await pool.query(
         `UPDATE clinical_ops.studies SET ${setClauses.join(', ')} ${whereClause} RETURNING *`,
         params,
@@ -367,7 +397,7 @@ export default function createClinicalOperationsRoutes(pool: Pool): Router {
       const result = await pool.query(
         `SELECT s.* FROM clinical_ops.sites s
          INNER JOIN clinical_ops.studies st ON s.study_id = st.id
-         WHERE s.study_id = $1 AND ($2::INT IS NULL OR st.org_id = $2)
+         WHERE s.study_id = $1 AND st.org_id = $2
          ORDER BY s.name`,
         [studyId, orgId],
       );
@@ -423,13 +453,12 @@ export default function createClinicalOperationsRoutes(pool: Pool): Router {
         return res.status(400).json({ success: false, error: `status must be one of: ${validStatuses.join(', ')}` });
       }
 
+      /* Same shape as the study UPDATE above: guarded only `if (orgId)`, so a
+         request with no tenant could set any sponsor's site status. */
       const orgId = getOrgId(req);
       const siteParams: any[] = [id, status];
-      let siteWhere = 'WHERE id = $1';
-      if (orgId) {
-        siteParams.push(orgId);
-        siteWhere += ` AND org_id = $${siteParams.length}`;
-      }
+      siteParams.push(orgId);
+      const siteWhere = `WHERE id = $1 AND org_id = $${siteParams.length}`;
       const result = await pool.query(
         `UPDATE clinical_ops.sites SET status = $2, last_activity = NOW() ${siteWhere} RETURNING *`,
         siteParams,
@@ -457,7 +486,7 @@ export default function createClinicalOperationsRoutes(pool: Pool): Router {
       const result = await pool.query(
         `SELECT * FROM clinical_ops.enrollment_records
          WHERE study_id = $1
-           AND study_id IN (SELECT s.id FROM clinical_ops.studies s WHERE ($2::INT IS NULL OR s.org_id = $2))
+           AND study_id IN (SELECT s.id FROM clinical_ops.studies s WHERE s.org_id = $2)
          ORDER BY period`,
         [studyId, getOrgId(req)],
       );
@@ -527,7 +556,7 @@ export default function createClinicalOperationsRoutes(pool: Pool): Router {
 
       let sql = `SELECT * FROM clinical_ops.monitoring_visits
         WHERE study_id = $1
-          AND study_id IN (SELECT s.id FROM clinical_ops.studies s WHERE ($2::INT IS NULL OR s.org_id = $2))`;
+          AND study_id IN (SELECT s.id FROM clinical_ops.studies s WHERE s.org_id = $2)`;
       const params: any[] = [studyId, getOrgId(req)];
 
       if (status) {
@@ -581,7 +610,7 @@ export default function createClinicalOperationsRoutes(pool: Pool): Router {
              findings_count = COALESCE($2, mv.findings_count),
              notes = COALESCE($3, mv.notes)
          WHERE mv.id = $1
-           AND mv.study_id IN (SELECT s.id FROM clinical_ops.studies s WHERE ($4::INT IS NULL OR s.org_id = $4))
+           AND mv.study_id IN (SELECT s.id FROM clinical_ops.studies s WHERE s.org_id = $4)
          RETURNING *`,
         [id, findingsCount ?? null, notes ?? null, getOrgId(req)],
       );
@@ -609,7 +638,7 @@ export default function createClinicalOperationsRoutes(pool: Pool): Router {
 
       let sql = `SELECT * FROM clinical_ops.deviations
         WHERE study_id = $1
-          AND study_id IN (SELECT s.id FROM clinical_ops.studies s WHERE ($2::INT IS NULL OR s.org_id = $2))`;
+          AND study_id IN (SELECT s.id FROM clinical_ops.studies s WHERE s.org_id = $2)`;
       const params: any[] = [studyId, getOrgId(req)];
 
       if (category) {
@@ -665,7 +694,7 @@ export default function createClinicalOperationsRoutes(pool: Pool): Router {
          SET status = 'resolved', resolution_date = CURRENT_DATE,
              corrective_action = COALESCE($2, d.corrective_action)
          WHERE d.id = $1
-           AND d.study_id IN (SELECT s.id FROM clinical_ops.studies s WHERE ($3::INT IS NULL OR s.org_id = $3))
+           AND d.study_id IN (SELECT s.id FROM clinical_ops.studies s WHERE s.org_id = $3)
          RETURNING *`,
         [id, correctiveAction ?? null, getOrgId(req)],
       );
@@ -692,7 +721,7 @@ export default function createClinicalOperationsRoutes(pool: Pool): Router {
       const result = await pool.query(
         `SELECT * FROM clinical_ops.milestones
          WHERE study_id = $1
-           AND study_id IN (SELECT s.id FROM clinical_ops.studies s WHERE ($2::INT IS NULL OR s.org_id = $2))
+           AND study_id IN (SELECT s.id FROM clinical_ops.studies s WHERE s.org_id = $2)
          ORDER BY target_date`,
         [studyId, getOrgId(req)],
       );
@@ -736,7 +765,7 @@ export default function createClinicalOperationsRoutes(pool: Pool): Router {
         `UPDATE clinical_ops.milestones m
          SET status = 'completed', actual_date = CURRENT_DATE
          WHERE m.id = $1
-           AND m.study_id IN (SELECT s.id FROM clinical_ops.studies s WHERE ($2::INT IS NULL OR s.org_id = $2))
+           AND m.study_id IN (SELECT s.id FROM clinical_ops.studies s WHERE s.org_id = $2)
          RETURNING *`,
         [id, getOrgId(req)],
       );
@@ -766,13 +795,13 @@ export default function createClinicalOperationsRoutes(pool: Pool): Router {
       const [studyResult, enrollmentResult] = await Promise.all([
         pool.query(
           `SELECT target_enrollment, enrolled, start_date FROM clinical_ops.studies
-           WHERE id = $1 AND ($2::INT IS NULL OR org_id = $2)`,
+           WHERE id = $1 AND org_id = $2`,
           [studyId, orgId],
         ),
         pool.query(
           `SELECT period, actual_count FROM clinical_ops.enrollment_records
            WHERE study_id = $1
-             AND study_id IN (SELECT s.id FROM clinical_ops.studies s WHERE ($2::INT IS NULL OR s.org_id = $2))
+             AND study_id IN (SELECT s.id FROM clinical_ops.studies s WHERE s.org_id = $2)
            ORDER BY period`,
           [studyId, orgId],
         ),
