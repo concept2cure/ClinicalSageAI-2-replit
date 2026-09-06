@@ -1,0 +1,3600 @@
+[
+  {
+    "label": "before",
+    "width": 1440,
+    "surface": "home",
+    "url": "http://localhost:5000/concept2cure/home",
+    "vw": 1440,
+    "title": "Concept2Cure - AI-Powered Regulatory Intelligence Platform",
+    "shell": true,
+    "gridCols": "56px 1352px 32px",
+    "railCollapsed": "true",
+    "anaOpen": "false",
+    "editor": null,
+    "rail": {
+      "x": 0,
+      "w": 56,
+      "h": 900,
+      "vis": true
+    },
+    "main": {
+      "x": 56,
+      "w": 1352,
+      "h": 900,
+      "vis": true
+    },
+    "ana": null,
+    "seam": {
+      "x": 1408,
+      "w": 32,
+      "h": 900,
+      "vis": true
+    },
+    "page": {
+      "x": 56,
+      "w": 1352,
+      "h": 852,
+      "vis": true
+    },
+    "railScrim": null,
+    "composers": [
+      {
+        "sel": ".landing-composer textarea",
+        "x": 413,
+        "w": 638,
+        "h": 92,
+        "vis": true,
+        "offscreen": false
+      }
+    ],
+    "anaComposerOffscreen": null,
+    "bodyScrollW": 1440,
+    "h1": "Good evening, Demo",
+    "navButtons": 20,
+    "dialogs": 0,
+    "errors": []
+  },
+  {
+    "label": "before",
+    "width": 1440,
+    "surface": "conversation-thread",
+    "url": "http://localhost:5000/concept2cure/conversation-thread",
+    "vw": 1440,
+    "title": "Concept2Cure - AI-Powered Regulatory Intelligence Platform",
+    "shell": true,
+    "gridCols": "56px 1384px 0px",
+    "railCollapsed": "true",
+    "anaOpen": "false",
+    "editor": "true",
+    "rail": {
+      "x": 0,
+      "w": 56,
+      "h": 900,
+      "vis": true
+    },
+    "main": {
+      "x": 56,
+      "w": 1384,
+      "h": 900,
+      "vis": true
+    },
+    "ana": null,
+    "seam": null,
+    "page": {
+      "x": 56,
+      "w": 1384,
+      "h": 852,
+      "vis": true
+    },
+    "railScrim": null,
+    "composers": [
+      {
+        "sel": ".ct-composer textarea",
+        "x": 223,
+        "w": 666,
+        "h": 35,
+        "vis": true,
+        "offscreen": false
+      }
+    ],
+    "anaComposerOffscreen": null,
+    "bodyScrollW": 1440,
+    "h1": null,
+    "navButtons": 20,
+    "dialogs": 0,
+    "errors": []
+  },
+  {
+    "label": "before",
+    "width": 1440,
+    "surface": "projects",
+    "url": "http://localhost:5000/concept2cure/projects",
+    "vw": 1440,
+    "title": "Concept2Cure - AI-Powered Regulatory Intelligence Platform",
+    "shell": true,
+    "gridCols": "56px 1352px 32px",
+    "railCollapsed": "true",
+    "anaOpen": "false",
+    "editor": null,
+    "rail": {
+      "x": 0,
+      "w": 56,
+      "h": 900,
+      "vis": true
+    },
+    "main": {
+      "x": 56,
+      "w": 1352,
+      "h": 900,
+      "vis": true
+    },
+    "ana": null,
+    "seam": {
+      "x": 1408,
+      "w": 32,
+      "h": 900,
+      "vis": true
+    },
+    "page": {
+      "x": 56,
+      "w": 1352,
+      "h": 852,
+      "vis": true
+    },
+    "railScrim": null,
+    "composers": [],
+    "anaComposerOffscreen": null,
+    "bodyScrollW": 1440,
+    "h1": "Projects",
+    "navButtons": 20,
+    "dialogs": 0,
+    "errors": []
+  },
+  {
+    "label": "before",
+    "width": 1440,
+    "surface": "project-home",
+    "url": "http://localhost:5000/concept2cure/project-home",
+    "vw": 1440,
+    "title": "Concept2Cure - AI-Powered Regulatory Intelligence Platform",
+    "shell": true,
+    "gridCols": "56px 1352px 32px",
+    "railCollapsed": "true",
+    "anaOpen": "false",
+    "editor": null,
+    "rail": {
+      "x": 0,
+      "w": 56,
+      "h": 900,
+      "vis": true
+    },
+    "main": {
+      "x": 56,
+      "w": 1352,
+      "h": 900,
+      "vis": true
+    },
+    "ana": null,
+    "seam": {
+      "x": 1408,
+      "w": 32,
+      "h": 900,
+      "vis": true
+    },
+    "page": {
+      "x": 56,
+      "w": 1352,
+      "h": 852,
+      "vis": true
+    },
+    "railScrim": null,
+    "composers": [],
+    "anaComposerOffscreen": null,
+    "bodyScrollW": 1440,
+    "h1": "Project",
+    "navButtons": 20,
+    "dialogs": 0,
+    "errors": []
+  },
+  {
+    "label": "before",
+    "width": 1440,
+    "surface": "communication-center",
+    "url": "http://localhost:5000/concept2cure/communication-center",
+    "vw": 1440,
+    "title": "Concept2Cure - AI-Powered Regulatory Intelligence Platform",
+    "shell": true,
+    "gridCols": "56px 1352px 32px",
+    "railCollapsed": "true",
+    "anaOpen": "false",
+    "editor": null,
+    "rail": {
+      "x": 0,
+      "w": 56,
+      "h": 900,
+      "vis": true
+    },
+    "main": {
+      "x": 56,
+      "w": 1352,
+      "h": 900,
+      "vis": true
+    },
+    "ana": null,
+    "seam": {
+      "x": 1408,
+      "w": 32,
+      "h": 900,
+      "vis": true
+    },
+    "page": {
+      "x": 56,
+      "w": 1352,
+      "h": 852,
+      "vis": true
+    },
+    "railScrim": null,
+    "composers": [],
+    "anaComposerOffscreen": null,
+    "bodyScrollW": 1440,
+    "h1": "Communication center",
+    "navButtons": 20,
+    "dialogs": 0,
+    "errors": []
+  },
+  {
+    "label": "before",
+    "width": 1440,
+    "surface": "apps",
+    "url": "http://localhost:5000/concept2cure/apps",
+    "vw": 1440,
+    "title": "Concept2Cure - AI-Powered Regulatory Intelligence Platform",
+    "shell": true,
+    "gridCols": "56px 1352px 32px",
+    "railCollapsed": "true",
+    "anaOpen": "false",
+    "editor": null,
+    "rail": {
+      "x": 0,
+      "w": 56,
+      "h": 900,
+      "vis": true
+    },
+    "main": {
+      "x": 56,
+      "w": 1352,
+      "h": 900,
+      "vis": true
+    },
+    "ana": null,
+    "seam": {
+      "x": 1408,
+      "w": 32,
+      "h": 900,
+      "vis": true
+    },
+    "page": {
+      "x": 56,
+      "w": 1352,
+      "h": 852,
+      "vis": true
+    },
+    "railScrim": null,
+    "composers": [],
+    "anaComposerOffscreen": null,
+    "bodyScrollW": 1440,
+    "h1": "Apps catalog",
+    "navButtons": 20,
+    "dialogs": 0,
+    "errors": []
+  },
+  {
+    "label": "before",
+    "width": 1440,
+    "surface": "tasks",
+    "url": "http://localhost:5000/concept2cure/tasks",
+    "vw": 1440,
+    "title": "Concept2Cure - AI-Powered Regulatory Intelligence Platform",
+    "shell": true,
+    "gridCols": "56px 1352px 32px",
+    "railCollapsed": "true",
+    "anaOpen": "false",
+    "editor": null,
+    "rail": {
+      "x": 0,
+      "w": 56,
+      "h": 900,
+      "vis": true
+    },
+    "main": {
+      "x": 56,
+      "w": 1352,
+      "h": 900,
+      "vis": true
+    },
+    "ana": null,
+    "seam": {
+      "x": 1408,
+      "w": 32,
+      "h": 900,
+      "vis": true
+    },
+    "page": {
+      "x": 56,
+      "w": 1352,
+      "h": 852,
+      "vis": true
+    },
+    "railScrim": null,
+    "composers": [],
+    "anaComposerOffscreen": null,
+    "bodyScrollW": 1440,
+    "h1": "Task board",
+    "navButtons": 20,
+    "dialogs": 0,
+    "errors": []
+  },
+  {
+    "label": "before",
+    "width": 1440,
+    "surface": "submission-center",
+    "url": "http://localhost:5000/concept2cure/submission-center",
+    "vw": 1440,
+    "title": "Concept2Cure - AI-Powered Regulatory Intelligence Platform",
+    "shell": true,
+    "gridCols": "56px 1352px 32px",
+    "railCollapsed": "true",
+    "anaOpen": "false",
+    "editor": null,
+    "rail": {
+      "x": 0,
+      "w": 56,
+      "h": 900,
+      "vis": true
+    },
+    "main": {
+      "x": 56,
+      "w": 1352,
+      "h": 900,
+      "vis": true
+    },
+    "ana": null,
+    "seam": {
+      "x": 1408,
+      "w": 32,
+      "h": 900,
+      "vis": true
+    },
+    "page": {
+      "x": 56,
+      "w": 1352,
+      "h": 852,
+      "vis": true
+    },
+    "railScrim": null,
+    "composers": [],
+    "anaComposerOffscreen": null,
+    "bodyScrollW": 1440,
+    "h1": "Submission center",
+    "navButtons": 20,
+    "dialogs": 0,
+    "errors": []
+  },
+  {
+    "label": "before",
+    "width": 1440,
+    "surface": "review",
+    "url": "http://localhost:5000/concept2cure/review",
+    "vw": 1440,
+    "title": "Concept2Cure - AI-Powered Regulatory Intelligence Platform",
+    "shell": true,
+    "gridCols": "56px 1352px 32px",
+    "railCollapsed": "true",
+    "anaOpen": "false",
+    "editor": null,
+    "rail": {
+      "x": 0,
+      "w": 56,
+      "h": 900,
+      "vis": true
+    },
+    "main": {
+      "x": 56,
+      "w": 1352,
+      "h": 900,
+      "vis": true
+    },
+    "ana": null,
+    "seam": {
+      "x": 1408,
+      "w": 32,
+      "h": 900,
+      "vis": true
+    },
+    "page": {
+      "x": 56,
+      "w": 1352,
+      "h": 852,
+      "vis": true
+    },
+    "railScrim": null,
+    "composers": [],
+    "anaComposerOffscreen": null,
+    "bodyScrollW": 1440,
+    "h1": "Review & approval",
+    "navButtons": 20,
+    "dialogs": 0,
+    "errors": []
+  },
+  {
+    "label": "before",
+    "width": 1440,
+    "surface": "document-authoring",
+    "url": "http://localhost:5000/concept2cure/document-authoring",
+    "vw": 1440,
+    "title": "Concept2Cure - AI-Powered Regulatory Intelligence Platform",
+    "shell": true,
+    "gridCols": "56px 1384px 0px",
+    "railCollapsed": "true",
+    "anaOpen": "false",
+    "editor": "true",
+    "rail": {
+      "x": 0,
+      "w": 56,
+      "h": 900,
+      "vis": true
+    },
+    "main": {
+      "x": 56,
+      "w": 1384,
+      "h": 900,
+      "vis": true
+    },
+    "ana": null,
+    "seam": null,
+    "page": {
+      "x": 56,
+      "w": 1384,
+      "h": 852,
+      "vis": true
+    },
+    "railScrim": null,
+    "composers": [],
+    "anaComposerOffscreen": null,
+    "bodyScrollW": 1440,
+    "h1": null,
+    "navButtons": 20,
+    "dialogs": 0,
+    "errors": []
+  },
+  {
+    "label": "before",
+    "width": 1440,
+    "surface": "biostatistics",
+    "url": "http://localhost:5000/concept2cure/biostatistics",
+    "vw": 1440,
+    "title": "Concept2Cure - AI-Powered Regulatory Intelligence Platform",
+    "shell": true,
+    "gridCols": "56px 1352px 32px",
+    "railCollapsed": "true",
+    "anaOpen": "false",
+    "editor": null,
+    "rail": {
+      "x": 0,
+      "w": 56,
+      "h": 900,
+      "vis": true
+    },
+    "main": {
+      "x": 56,
+      "w": 1352,
+      "h": 900,
+      "vis": true
+    },
+    "ana": null,
+    "seam": {
+      "x": 1408,
+      "w": 32,
+      "h": 900,
+      "vis": true
+    },
+    "page": {
+      "x": 56,
+      "w": 1352,
+      "h": 852,
+      "vis": true
+    },
+    "railScrim": null,
+    "composers": [],
+    "anaComposerOffscreen": null,
+    "bodyScrollW": 1440,
+    "h1": "Biostatistics",
+    "navButtons": 20,
+    "dialogs": 0,
+    "errors": []
+  },
+  {
+    "label": "before",
+    "width": 1280,
+    "surface": "home",
+    "url": "http://localhost:5000/concept2cure/home",
+    "vw": 1280,
+    "title": "Concept2Cure - AI-Powered Regulatory Intelligence Platform",
+    "shell": true,
+    "gridCols": "56px 1192px 32px",
+    "railCollapsed": "true",
+    "anaOpen": "false",
+    "editor": null,
+    "rail": {
+      "x": 0,
+      "w": 56,
+      "h": 900,
+      "vis": true
+    },
+    "main": {
+      "x": 56,
+      "w": 1192,
+      "h": 900,
+      "vis": true
+    },
+    "ana": null,
+    "seam": {
+      "x": 1248,
+      "w": 32,
+      "h": 900,
+      "vis": true
+    },
+    "page": {
+      "x": 56,
+      "w": 1192,
+      "h": 852,
+      "vis": true
+    },
+    "railScrim": null,
+    "composers": [
+      {
+        "sel": ".landing-composer textarea",
+        "x": 333,
+        "w": 638,
+        "h": 92,
+        "vis": true,
+        "offscreen": false
+      }
+    ],
+    "anaComposerOffscreen": null,
+    "bodyScrollW": 1280,
+    "h1": "Good evening, Demo",
+    "navButtons": 20,
+    "dialogs": 0,
+    "errors": []
+  },
+  {
+    "label": "before",
+    "width": 1280,
+    "surface": "conversation-thread",
+    "url": "http://localhost:5000/concept2cure/conversation-thread",
+    "vw": 1280,
+    "title": "Concept2Cure - AI-Powered Regulatory Intelligence Platform",
+    "shell": true,
+    "gridCols": "56px 1224px 0px",
+    "railCollapsed": "true",
+    "anaOpen": "false",
+    "editor": "true",
+    "rail": {
+      "x": 0,
+      "w": 56,
+      "h": 900,
+      "vis": true
+    },
+    "main": {
+      "x": 56,
+      "w": 1224,
+      "h": 900,
+      "vis": true
+    },
+    "ana": null,
+    "seam": null,
+    "page": {
+      "x": 56,
+      "w": 1224,
+      "h": 852,
+      "vis": true
+    },
+    "railScrim": null,
+    "composers": [
+      {
+        "sel": ".ct-composer textarea",
+        "x": 143,
+        "w": 666,
+        "h": 35,
+        "vis": true,
+        "offscreen": false
+      }
+    ],
+    "anaComposerOffscreen": null,
+    "bodyScrollW": 1280,
+    "h1": null,
+    "navButtons": 20,
+    "dialogs": 0,
+    "errors": []
+  },
+  {
+    "label": "before",
+    "width": 1280,
+    "surface": "projects",
+    "url": "http://localhost:5000/concept2cure/projects",
+    "vw": 1280,
+    "title": "Concept2Cure - AI-Powered Regulatory Intelligence Platform",
+    "shell": true,
+    "gridCols": "56px 1192px 32px",
+    "railCollapsed": "true",
+    "anaOpen": "false",
+    "editor": null,
+    "rail": {
+      "x": 0,
+      "w": 56,
+      "h": 900,
+      "vis": true
+    },
+    "main": {
+      "x": 56,
+      "w": 1192,
+      "h": 900,
+      "vis": true
+    },
+    "ana": null,
+    "seam": {
+      "x": 1248,
+      "w": 32,
+      "h": 900,
+      "vis": true
+    },
+    "page": {
+      "x": 56,
+      "w": 1192,
+      "h": 852,
+      "vis": true
+    },
+    "railScrim": null,
+    "composers": [],
+    "anaComposerOffscreen": null,
+    "bodyScrollW": 1280,
+    "h1": "Projects",
+    "navButtons": 20,
+    "dialogs": 0,
+    "errors": []
+  },
+  {
+    "label": "before",
+    "width": 1280,
+    "surface": "project-home",
+    "url": "http://localhost:5000/concept2cure/project-home",
+    "vw": 1280,
+    "title": "Concept2Cure - AI-Powered Regulatory Intelligence Platform",
+    "shell": true,
+    "gridCols": "56px 1192px 32px",
+    "railCollapsed": "true",
+    "anaOpen": "false",
+    "editor": null,
+    "rail": {
+      "x": 0,
+      "w": 56,
+      "h": 900,
+      "vis": true
+    },
+    "main": {
+      "x": 56,
+      "w": 1192,
+      "h": 900,
+      "vis": true
+    },
+    "ana": null,
+    "seam": {
+      "x": 1248,
+      "w": 32,
+      "h": 900,
+      "vis": true
+    },
+    "page": {
+      "x": 56,
+      "w": 1192,
+      "h": 852,
+      "vis": true
+    },
+    "railScrim": null,
+    "composers": [],
+    "anaComposerOffscreen": null,
+    "bodyScrollW": 1280,
+    "h1": "Project",
+    "navButtons": 20,
+    "dialogs": 0,
+    "errors": []
+  },
+  {
+    "label": "before",
+    "width": 1280,
+    "surface": "communication-center",
+    "url": "http://localhost:5000/concept2cure/communication-center",
+    "vw": 1280,
+    "title": "Concept2Cure - AI-Powered Regulatory Intelligence Platform",
+    "shell": true,
+    "gridCols": "56px 1192px 32px",
+    "railCollapsed": "true",
+    "anaOpen": "false",
+    "editor": null,
+    "rail": {
+      "x": 0,
+      "w": 56,
+      "h": 900,
+      "vis": true
+    },
+    "main": {
+      "x": 56,
+      "w": 1192,
+      "h": 900,
+      "vis": true
+    },
+    "ana": null,
+    "seam": {
+      "x": 1248,
+      "w": 32,
+      "h": 900,
+      "vis": true
+    },
+    "page": {
+      "x": 56,
+      "w": 1192,
+      "h": 852,
+      "vis": true
+    },
+    "railScrim": null,
+    "composers": [],
+    "anaComposerOffscreen": null,
+    "bodyScrollW": 1280,
+    "h1": "Communication center",
+    "navButtons": 20,
+    "dialogs": 0,
+    "errors": []
+  },
+  {
+    "label": "before",
+    "width": 1280,
+    "surface": "apps",
+    "url": "http://localhost:5000/concept2cure/apps",
+    "vw": 1280,
+    "title": "Concept2Cure - AI-Powered Regulatory Intelligence Platform",
+    "shell": true,
+    "gridCols": "56px 1192px 32px",
+    "railCollapsed": "true",
+    "anaOpen": "false",
+    "editor": null,
+    "rail": {
+      "x": 0,
+      "w": 56,
+      "h": 900,
+      "vis": true
+    },
+    "main": {
+      "x": 56,
+      "w": 1192,
+      "h": 900,
+      "vis": true
+    },
+    "ana": null,
+    "seam": {
+      "x": 1248,
+      "w": 32,
+      "h": 900,
+      "vis": true
+    },
+    "page": {
+      "x": 56,
+      "w": 1192,
+      "h": 852,
+      "vis": true
+    },
+    "railScrim": null,
+    "composers": [],
+    "anaComposerOffscreen": null,
+    "bodyScrollW": 1280,
+    "h1": "Apps catalog",
+    "navButtons": 20,
+    "dialogs": 0,
+    "errors": []
+  },
+  {
+    "label": "before",
+    "width": 1280,
+    "surface": "tasks",
+    "url": "http://localhost:5000/concept2cure/tasks",
+    "vw": 1280,
+    "title": "Concept2Cure - AI-Powered Regulatory Intelligence Platform",
+    "shell": true,
+    "gridCols": "56px 1192px 32px",
+    "railCollapsed": "true",
+    "anaOpen": "false",
+    "editor": null,
+    "rail": {
+      "x": 0,
+      "w": 56,
+      "h": 900,
+      "vis": true
+    },
+    "main": {
+      "x": 56,
+      "w": 1192,
+      "h": 900,
+      "vis": true
+    },
+    "ana": null,
+    "seam": {
+      "x": 1248,
+      "w": 32,
+      "h": 900,
+      "vis": true
+    },
+    "page": {
+      "x": 56,
+      "w": 1192,
+      "h": 852,
+      "vis": true
+    },
+    "railScrim": null,
+    "composers": [],
+    "anaComposerOffscreen": null,
+    "bodyScrollW": 1280,
+    "h1": "Task board",
+    "navButtons": 20,
+    "dialogs": 0,
+    "errors": []
+  },
+  {
+    "label": "before",
+    "width": 1280,
+    "surface": "submission-center",
+    "url": "http://localhost:5000/concept2cure/submission-center",
+    "vw": 1280,
+    "title": "Concept2Cure - AI-Powered Regulatory Intelligence Platform",
+    "shell": true,
+    "gridCols": "56px 1192px 32px",
+    "railCollapsed": "true",
+    "anaOpen": "false",
+    "editor": null,
+    "rail": {
+      "x": 0,
+      "w": 56,
+      "h": 900,
+      "vis": true
+    },
+    "main": {
+      "x": 56,
+      "w": 1192,
+      "h": 900,
+      "vis": true
+    },
+    "ana": null,
+    "seam": {
+      "x": 1248,
+      "w": 32,
+      "h": 900,
+      "vis": true
+    },
+    "page": {
+      "x": 56,
+      "w": 1192,
+      "h": 852,
+      "vis": true
+    },
+    "railScrim": null,
+    "composers": [],
+    "anaComposerOffscreen": null,
+    "bodyScrollW": 1280,
+    "h1": "Submission center",
+    "navButtons": 20,
+    "dialogs": 0,
+    "errors": []
+  },
+  {
+    "label": "before",
+    "width": 1280,
+    "surface": "review",
+    "url": "http://localhost:5000/concept2cure/review",
+    "vw": 1280,
+    "title": "Concept2Cure - AI-Powered Regulatory Intelligence Platform",
+    "shell": true,
+    "gridCols": "56px 1192px 32px",
+    "railCollapsed": "true",
+    "anaOpen": "false",
+    "editor": null,
+    "rail": {
+      "x": 0,
+      "w": 56,
+      "h": 900,
+      "vis": true
+    },
+    "main": {
+      "x": 56,
+      "w": 1192,
+      "h": 900,
+      "vis": true
+    },
+    "ana": null,
+    "seam": {
+      "x": 1248,
+      "w": 32,
+      "h": 900,
+      "vis": true
+    },
+    "page": {
+      "x": 56,
+      "w": 1192,
+      "h": 852,
+      "vis": true
+    },
+    "railScrim": null,
+    "composers": [],
+    "anaComposerOffscreen": null,
+    "bodyScrollW": 1280,
+    "h1": "Review & approval",
+    "navButtons": 20,
+    "dialogs": 0,
+    "errors": []
+  },
+  {
+    "label": "before",
+    "width": 1280,
+    "surface": "document-authoring",
+    "url": "http://localhost:5000/concept2cure/document-authoring",
+    "vw": 1280,
+    "title": "Concept2Cure - AI-Powered Regulatory Intelligence Platform",
+    "shell": true,
+    "gridCols": "56px 1224px 0px",
+    "railCollapsed": "true",
+    "anaOpen": "false",
+    "editor": "true",
+    "rail": {
+      "x": 0,
+      "w": 56,
+      "h": 900,
+      "vis": true
+    },
+    "main": {
+      "x": 56,
+      "w": 1224,
+      "h": 900,
+      "vis": true
+    },
+    "ana": null,
+    "seam": null,
+    "page": {
+      "x": 56,
+      "w": 1224,
+      "h": 852,
+      "vis": true
+    },
+    "railScrim": null,
+    "composers": [],
+    "anaComposerOffscreen": null,
+    "bodyScrollW": 1280,
+    "h1": null,
+    "navButtons": 20,
+    "dialogs": 0,
+    "errors": []
+  },
+  {
+    "label": "before",
+    "width": 1280,
+    "surface": "biostatistics",
+    "url": "http://localhost:5000/concept2cure/biostatistics",
+    "vw": 1280,
+    "title": "Concept2Cure - AI-Powered Regulatory Intelligence Platform",
+    "shell": true,
+    "gridCols": "56px 1192px 32px",
+    "railCollapsed": "true",
+    "anaOpen": "false",
+    "editor": null,
+    "rail": {
+      "x": 0,
+      "w": 56,
+      "h": 900,
+      "vis": true
+    },
+    "main": {
+      "x": 56,
+      "w": 1192,
+      "h": 900,
+      "vis": true
+    },
+    "ana": null,
+    "seam": {
+      "x": 1248,
+      "w": 32,
+      "h": 900,
+      "vis": true
+    },
+    "page": {
+      "x": 56,
+      "w": 1192,
+      "h": 852,
+      "vis": true
+    },
+    "railScrim": null,
+    "composers": [],
+    "anaComposerOffscreen": null,
+    "bodyScrollW": 1280,
+    "h1": "Biostatistics",
+    "navButtons": 20,
+    "dialogs": 0,
+    "errors": []
+  },
+  {
+    "label": "before",
+    "width": 1024,
+    "surface": "home",
+    "url": "http://localhost:5000/concept2cure/home",
+    "vw": 1024,
+    "title": "Concept2Cure - AI-Powered Regulatory Intelligence Platform",
+    "shell": true,
+    "gridCols": "56px 936px 32px",
+    "railCollapsed": "true",
+    "anaOpen": "false",
+    "editor": null,
+    "rail": {
+      "x": 0,
+      "w": 56,
+      "h": 900,
+      "vis": true
+    },
+    "main": {
+      "x": 56,
+      "w": 936,
+      "h": 900,
+      "vis": true
+    },
+    "ana": null,
+    "seam": {
+      "x": 992,
+      "w": 32,
+      "h": 900,
+      "vis": true
+    },
+    "page": {
+      "x": 56,
+      "w": 936,
+      "h": 852,
+      "vis": true
+    },
+    "railScrim": null,
+    "composers": [
+      {
+        "sel": ".landing-composer textarea",
+        "x": 205,
+        "w": 638,
+        "h": 92,
+        "vis": true,
+        "offscreen": false
+      }
+    ],
+    "anaComposerOffscreen": null,
+    "bodyScrollW": 1024,
+    "h1": "Good evening, Demo",
+    "navButtons": 20,
+    "dialogs": 0,
+    "errors": []
+  },
+  {
+    "label": "before",
+    "width": 1024,
+    "surface": "conversation-thread",
+    "url": "http://localhost:5000/concept2cure/conversation-thread",
+    "vw": 1024,
+    "title": "Concept2Cure - AI-Powered Regulatory Intelligence Platform",
+    "shell": true,
+    "gridCols": "56px 968px 0px",
+    "railCollapsed": "true",
+    "anaOpen": "false",
+    "editor": "true",
+    "rail": {
+      "x": 0,
+      "w": 56,
+      "h": 900,
+      "vis": true
+    },
+    "main": {
+      "x": 56,
+      "w": 968,
+      "h": 900,
+      "vis": true
+    },
+    "ana": null,
+    "seam": null,
+    "page": {
+      "x": 56,
+      "w": 968,
+      "h": 852,
+      "vis": true
+    },
+    "railScrim": null,
+    "composers": [
+      {
+        "sel": ".ct-composer textarea",
+        "x": 131,
+        "w": 434,
+        "h": 35,
+        "vis": true,
+        "offscreen": false
+      }
+    ],
+    "anaComposerOffscreen": null,
+    "bodyScrollW": 1024,
+    "h1": null,
+    "navButtons": 20,
+    "dialogs": 0,
+    "errors": []
+  },
+  {
+    "label": "before",
+    "width": 1024,
+    "surface": "projects",
+    "url": "http://localhost:5000/concept2cure/projects",
+    "vw": 1024,
+    "title": "Concept2Cure - AI-Powered Regulatory Intelligence Platform",
+    "shell": true,
+    "gridCols": "56px 936px 32px",
+    "railCollapsed": "true",
+    "anaOpen": "false",
+    "editor": null,
+    "rail": {
+      "x": 0,
+      "w": 56,
+      "h": 900,
+      "vis": true
+    },
+    "main": {
+      "x": 56,
+      "w": 936,
+      "h": 900,
+      "vis": true
+    },
+    "ana": null,
+    "seam": {
+      "x": 992,
+      "w": 32,
+      "h": 900,
+      "vis": true
+    },
+    "page": {
+      "x": 56,
+      "w": 936,
+      "h": 852,
+      "vis": true
+    },
+    "railScrim": null,
+    "composers": [],
+    "anaComposerOffscreen": null,
+    "bodyScrollW": 1024,
+    "h1": "Projects",
+    "navButtons": 20,
+    "dialogs": 0,
+    "errors": []
+  },
+  {
+    "label": "before",
+    "width": 1024,
+    "surface": "project-home",
+    "url": "http://localhost:5000/concept2cure/project-home",
+    "vw": 1024,
+    "title": "Concept2Cure - AI-Powered Regulatory Intelligence Platform",
+    "shell": true,
+    "gridCols": "56px 936px 32px",
+    "railCollapsed": "true",
+    "anaOpen": "false",
+    "editor": null,
+    "rail": {
+      "x": 0,
+      "w": 56,
+      "h": 900,
+      "vis": true
+    },
+    "main": {
+      "x": 56,
+      "w": 936,
+      "h": 900,
+      "vis": true
+    },
+    "ana": null,
+    "seam": {
+      "x": 992,
+      "w": 32,
+      "h": 900,
+      "vis": true
+    },
+    "page": {
+      "x": 56,
+      "w": 936,
+      "h": 852,
+      "vis": true
+    },
+    "railScrim": null,
+    "composers": [],
+    "anaComposerOffscreen": null,
+    "bodyScrollW": 1024,
+    "h1": "Project",
+    "navButtons": 20,
+    "dialogs": 0,
+    "errors": []
+  },
+  {
+    "label": "before",
+    "width": 1024,
+    "surface": "communication-center",
+    "url": "http://localhost:5000/concept2cure/communication-center",
+    "vw": 1024,
+    "title": "Concept2Cure - AI-Powered Regulatory Intelligence Platform",
+    "shell": true,
+    "gridCols": "56px 936px 32px",
+    "railCollapsed": "true",
+    "anaOpen": "false",
+    "editor": null,
+    "rail": {
+      "x": 0,
+      "w": 56,
+      "h": 900,
+      "vis": true
+    },
+    "main": {
+      "x": 56,
+      "w": 936,
+      "h": 900,
+      "vis": true
+    },
+    "ana": null,
+    "seam": {
+      "x": 992,
+      "w": 32,
+      "h": 900,
+      "vis": true
+    },
+    "page": {
+      "x": 56,
+      "w": 936,
+      "h": 852,
+      "vis": true
+    },
+    "railScrim": null,
+    "composers": [],
+    "anaComposerOffscreen": null,
+    "bodyScrollW": 1024,
+    "h1": "Communication center",
+    "navButtons": 20,
+    "dialogs": 0,
+    "errors": []
+  },
+  {
+    "label": "before",
+    "width": 1024,
+    "surface": "apps",
+    "url": "http://localhost:5000/concept2cure/apps",
+    "vw": 1024,
+    "title": "Concept2Cure - AI-Powered Regulatory Intelligence Platform",
+    "shell": true,
+    "gridCols": "56px 936px 32px",
+    "railCollapsed": "true",
+    "anaOpen": "false",
+    "editor": null,
+    "rail": {
+      "x": 0,
+      "w": 56,
+      "h": 900,
+      "vis": true
+    },
+    "main": {
+      "x": 56,
+      "w": 936,
+      "h": 900,
+      "vis": true
+    },
+    "ana": null,
+    "seam": {
+      "x": 992,
+      "w": 32,
+      "h": 900,
+      "vis": true
+    },
+    "page": {
+      "x": 56,
+      "w": 936,
+      "h": 852,
+      "vis": true
+    },
+    "railScrim": null,
+    "composers": [],
+    "anaComposerOffscreen": null,
+    "bodyScrollW": 1024,
+    "h1": "Apps catalog",
+    "navButtons": 20,
+    "dialogs": 0,
+    "errors": []
+  },
+  {
+    "label": "before",
+    "width": 1024,
+    "surface": "tasks",
+    "url": "http://localhost:5000/concept2cure/tasks",
+    "vw": 1024,
+    "title": "Concept2Cure - AI-Powered Regulatory Intelligence Platform",
+    "shell": true,
+    "gridCols": "56px 936px 32px",
+    "railCollapsed": "true",
+    "anaOpen": "false",
+    "editor": null,
+    "rail": {
+      "x": 0,
+      "w": 56,
+      "h": 900,
+      "vis": true
+    },
+    "main": {
+      "x": 56,
+      "w": 936,
+      "h": 900,
+      "vis": true
+    },
+    "ana": null,
+    "seam": {
+      "x": 992,
+      "w": 32,
+      "h": 900,
+      "vis": true
+    },
+    "page": {
+      "x": 56,
+      "w": 936,
+      "h": 852,
+      "vis": true
+    },
+    "railScrim": null,
+    "composers": [],
+    "anaComposerOffscreen": null,
+    "bodyScrollW": 1024,
+    "h1": "Task board",
+    "navButtons": 20,
+    "dialogs": 0,
+    "errors": []
+  },
+  {
+    "label": "before",
+    "width": 1024,
+    "surface": "submission-center",
+    "url": "http://localhost:5000/concept2cure/submission-center",
+    "vw": 1024,
+    "title": "Concept2Cure - AI-Powered Regulatory Intelligence Platform",
+    "shell": true,
+    "gridCols": "56px 936px 32px",
+    "railCollapsed": "true",
+    "anaOpen": "false",
+    "editor": null,
+    "rail": {
+      "x": 0,
+      "w": 56,
+      "h": 900,
+      "vis": true
+    },
+    "main": {
+      "x": 56,
+      "w": 936,
+      "h": 900,
+      "vis": true
+    },
+    "ana": null,
+    "seam": {
+      "x": 992,
+      "w": 32,
+      "h": 900,
+      "vis": true
+    },
+    "page": {
+      "x": 56,
+      "w": 936,
+      "h": 852,
+      "vis": true
+    },
+    "railScrim": null,
+    "composers": [],
+    "anaComposerOffscreen": null,
+    "bodyScrollW": 1024,
+    "h1": "Submission center",
+    "navButtons": 20,
+    "dialogs": 0,
+    "errors": []
+  },
+  {
+    "label": "before",
+    "width": 1024,
+    "surface": "review",
+    "url": "http://localhost:5000/concept2cure/review",
+    "vw": 1024,
+    "title": "Concept2Cure - AI-Powered Regulatory Intelligence Platform",
+    "shell": true,
+    "gridCols": "56px 936px 32px",
+    "railCollapsed": "true",
+    "anaOpen": "false",
+    "editor": null,
+    "rail": {
+      "x": 0,
+      "w": 56,
+      "h": 900,
+      "vis": true
+    },
+    "main": {
+      "x": 56,
+      "w": 936,
+      "h": 900,
+      "vis": true
+    },
+    "ana": null,
+    "seam": {
+      "x": 992,
+      "w": 32,
+      "h": 900,
+      "vis": true
+    },
+    "page": {
+      "x": 56,
+      "w": 936,
+      "h": 852,
+      "vis": true
+    },
+    "railScrim": null,
+    "composers": [],
+    "anaComposerOffscreen": null,
+    "bodyScrollW": 1024,
+    "h1": "Review & approval",
+    "navButtons": 20,
+    "dialogs": 0,
+    "errors": []
+  },
+  {
+    "label": "before",
+    "width": 1024,
+    "surface": "document-authoring",
+    "url": "http://localhost:5000/concept2cure/document-authoring",
+    "vw": 1024,
+    "title": "Concept2Cure - AI-Powered Regulatory Intelligence Platform",
+    "shell": true,
+    "gridCols": "56px 968px 0px",
+    "railCollapsed": "true",
+    "anaOpen": "false",
+    "editor": "true",
+    "rail": {
+      "x": 0,
+      "w": 56,
+      "h": 900,
+      "vis": true
+    },
+    "main": {
+      "x": 56,
+      "w": 968,
+      "h": 900,
+      "vis": true
+    },
+    "ana": null,
+    "seam": null,
+    "page": {
+      "x": 56,
+      "w": 968,
+      "h": 852,
+      "vis": true
+    },
+    "railScrim": null,
+    "composers": [],
+    "anaComposerOffscreen": null,
+    "bodyScrollW": 1024,
+    "h1": null,
+    "navButtons": 20,
+    "dialogs": 0,
+    "errors": []
+  },
+  {
+    "label": "before",
+    "width": 1024,
+    "surface": "biostatistics",
+    "url": "http://localhost:5000/concept2cure/biostatistics",
+    "vw": 1024,
+    "title": "Concept2Cure - AI-Powered Regulatory Intelligence Platform",
+    "shell": true,
+    "gridCols": "56px 936px 32px",
+    "railCollapsed": "true",
+    "anaOpen": "false",
+    "editor": null,
+    "rail": {
+      "x": 0,
+      "w": 56,
+      "h": 900,
+      "vis": true
+    },
+    "main": {
+      "x": 56,
+      "w": 936,
+      "h": 900,
+      "vis": true
+    },
+    "ana": null,
+    "seam": {
+      "x": 992,
+      "w": 32,
+      "h": 900,
+      "vis": true
+    },
+    "page": {
+      "x": 56,
+      "w": 936,
+      "h": 852,
+      "vis": true
+    },
+    "railScrim": null,
+    "composers": [],
+    "anaComposerOffscreen": null,
+    "bodyScrollW": 1024,
+    "h1": "Biostatistics",
+    "navButtons": 20,
+    "dialogs": 0,
+    "errors": []
+  },
+  {
+    "label": "before",
+    "width": 834,
+    "surface": "home",
+    "url": "http://localhost:5000/concept2cure/home",
+    "vw": 834,
+    "title": "Concept2Cure - AI-Powered Regulatory Intelligence Platform",
+    "shell": true,
+    "gridCols": "56px 746px 32px",
+    "railCollapsed": "true",
+    "anaOpen": "false",
+    "editor": null,
+    "rail": {
+      "x": 0,
+      "w": 56,
+      "h": 900,
+      "vis": true
+    },
+    "main": {
+      "x": 56,
+      "w": 746,
+      "h": 900,
+      "vis": true
+    },
+    "ana": null,
+    "seam": {
+      "x": 802,
+      "w": 32,
+      "h": 900,
+      "vis": true
+    },
+    "page": {
+      "x": 56,
+      "w": 746,
+      "h": 852,
+      "vis": true
+    },
+    "railScrim": null,
+    "composers": [
+      {
+        "sel": ".landing-composer textarea",
+        "x": 110,
+        "w": 638,
+        "h": 92,
+        "vis": true,
+        "offscreen": false
+      }
+    ],
+    "anaComposerOffscreen": null,
+    "bodyScrollW": 834,
+    "h1": "Good evening, Demo",
+    "navButtons": 20,
+    "dialogs": 0,
+    "errors": []
+  },
+  {
+    "label": "before",
+    "width": 834,
+    "surface": "conversation-thread",
+    "url": "http://localhost:5000/concept2cure/conversation-thread",
+    "vw": 834,
+    "title": "Concept2Cure - AI-Powered Regulatory Intelligence Platform",
+    "shell": true,
+    "gridCols": "56px 778px 0px",
+    "railCollapsed": "true",
+    "anaOpen": "false",
+    "editor": "true",
+    "rail": {
+      "x": 0,
+      "w": 56,
+      "h": 900,
+      "vis": true
+    },
+    "main": {
+      "x": 56,
+      "w": 778,
+      "h": 900,
+      "vis": true
+    },
+    "ana": null,
+    "seam": null,
+    "page": {
+      "x": 56,
+      "w": 778,
+      "h": 852,
+      "vis": true
+    },
+    "railScrim": null,
+    "composers": [
+      {
+        "sel": ".ct-composer textarea",
+        "x": 131,
+        "w": 244,
+        "h": 35,
+        "vis": true,
+        "offscreen": false
+      }
+    ],
+    "anaComposerOffscreen": null,
+    "bodyScrollW": 834,
+    "h1": null,
+    "navButtons": 20,
+    "dialogs": 0,
+    "errors": []
+  },
+  {
+    "label": "before",
+    "width": 834,
+    "surface": "projects",
+    "url": "http://localhost:5000/concept2cure/projects",
+    "vw": 834,
+    "title": "Concept2Cure - AI-Powered Regulatory Intelligence Platform",
+    "shell": true,
+    "gridCols": "56px 746px 32px",
+    "railCollapsed": "true",
+    "anaOpen": "false",
+    "editor": null,
+    "rail": {
+      "x": 0,
+      "w": 56,
+      "h": 900,
+      "vis": true
+    },
+    "main": {
+      "x": 56,
+      "w": 746,
+      "h": 900,
+      "vis": true
+    },
+    "ana": null,
+    "seam": {
+      "x": 802,
+      "w": 32,
+      "h": 900,
+      "vis": true
+    },
+    "page": {
+      "x": 56,
+      "w": 746,
+      "h": 852,
+      "vis": true
+    },
+    "railScrim": null,
+    "composers": [],
+    "anaComposerOffscreen": null,
+    "bodyScrollW": 834,
+    "h1": "Projects",
+    "navButtons": 20,
+    "dialogs": 0,
+    "errors": []
+  },
+  {
+    "label": "before",
+    "width": 834,
+    "surface": "project-home",
+    "url": "http://localhost:5000/concept2cure/project-home",
+    "vw": 834,
+    "title": "Concept2Cure - AI-Powered Regulatory Intelligence Platform",
+    "shell": true,
+    "gridCols": "56px 746px 32px",
+    "railCollapsed": "true",
+    "anaOpen": "false",
+    "editor": null,
+    "rail": {
+      "x": 0,
+      "w": 56,
+      "h": 900,
+      "vis": true
+    },
+    "main": {
+      "x": 56,
+      "w": 746,
+      "h": 900,
+      "vis": true
+    },
+    "ana": null,
+    "seam": {
+      "x": 802,
+      "w": 32,
+      "h": 900,
+      "vis": true
+    },
+    "page": {
+      "x": 56,
+      "w": 746,
+      "h": 852,
+      "vis": true
+    },
+    "railScrim": null,
+    "composers": [],
+    "anaComposerOffscreen": null,
+    "bodyScrollW": 834,
+    "h1": "Project",
+    "navButtons": 20,
+    "dialogs": 0,
+    "errors": []
+  },
+  {
+    "label": "before",
+    "width": 834,
+    "surface": "communication-center",
+    "url": "http://localhost:5000/concept2cure/communication-center",
+    "vw": 834,
+    "title": "Concept2Cure - AI-Powered Regulatory Intelligence Platform",
+    "shell": true,
+    "gridCols": "56px 746px 32px",
+    "railCollapsed": "true",
+    "anaOpen": "false",
+    "editor": null,
+    "rail": {
+      "x": 0,
+      "w": 56,
+      "h": 900,
+      "vis": true
+    },
+    "main": {
+      "x": 56,
+      "w": 746,
+      "h": 900,
+      "vis": true
+    },
+    "ana": null,
+    "seam": {
+      "x": 802,
+      "w": 32,
+      "h": 900,
+      "vis": true
+    },
+    "page": {
+      "x": 56,
+      "w": 746,
+      "h": 852,
+      "vis": true
+    },
+    "railScrim": null,
+    "composers": [],
+    "anaComposerOffscreen": null,
+    "bodyScrollW": 834,
+    "h1": "Communication center",
+    "navButtons": 20,
+    "dialogs": 0,
+    "errors": []
+  },
+  {
+    "label": "before",
+    "width": 834,
+    "surface": "apps",
+    "url": "http://localhost:5000/concept2cure/apps",
+    "vw": 834,
+    "title": "Concept2Cure - AI-Powered Regulatory Intelligence Platform",
+    "shell": true,
+    "gridCols": "56px 746px 32px",
+    "railCollapsed": "true",
+    "anaOpen": "false",
+    "editor": null,
+    "rail": {
+      "x": 0,
+      "w": 56,
+      "h": 900,
+      "vis": true
+    },
+    "main": {
+      "x": 56,
+      "w": 746,
+      "h": 900,
+      "vis": true
+    },
+    "ana": null,
+    "seam": {
+      "x": 802,
+      "w": 32,
+      "h": 900,
+      "vis": true
+    },
+    "page": {
+      "x": 56,
+      "w": 746,
+      "h": 852,
+      "vis": true
+    },
+    "railScrim": null,
+    "composers": [],
+    "anaComposerOffscreen": null,
+    "bodyScrollW": 834,
+    "h1": "Apps catalog",
+    "navButtons": 20,
+    "dialogs": 0,
+    "errors": []
+  },
+  {
+    "label": "before",
+    "width": 834,
+    "surface": "tasks",
+    "url": "http://localhost:5000/concept2cure/tasks",
+    "vw": 834,
+    "title": "Concept2Cure - AI-Powered Regulatory Intelligence Platform",
+    "shell": true,
+    "gridCols": "56px 746px 32px",
+    "railCollapsed": "true",
+    "anaOpen": "false",
+    "editor": null,
+    "rail": {
+      "x": 0,
+      "w": 56,
+      "h": 900,
+      "vis": true
+    },
+    "main": {
+      "x": 56,
+      "w": 746,
+      "h": 900,
+      "vis": true
+    },
+    "ana": null,
+    "seam": {
+      "x": 802,
+      "w": 32,
+      "h": 900,
+      "vis": true
+    },
+    "page": {
+      "x": 56,
+      "w": 746,
+      "h": 852,
+      "vis": true
+    },
+    "railScrim": null,
+    "composers": [],
+    "anaComposerOffscreen": null,
+    "bodyScrollW": 834,
+    "h1": "Task board",
+    "navButtons": 20,
+    "dialogs": 0,
+    "errors": []
+  },
+  {
+    "label": "before",
+    "width": 834,
+    "surface": "submission-center",
+    "url": "http://localhost:5000/concept2cure/submission-center",
+    "vw": 834,
+    "title": "Concept2Cure - AI-Powered Regulatory Intelligence Platform",
+    "shell": true,
+    "gridCols": "56px 746px 32px",
+    "railCollapsed": "true",
+    "anaOpen": "false",
+    "editor": null,
+    "rail": {
+      "x": 0,
+      "w": 56,
+      "h": 900,
+      "vis": true
+    },
+    "main": {
+      "x": 56,
+      "w": 746,
+      "h": 900,
+      "vis": true
+    },
+    "ana": null,
+    "seam": {
+      "x": 802,
+      "w": 32,
+      "h": 900,
+      "vis": true
+    },
+    "page": {
+      "x": 56,
+      "w": 746,
+      "h": 852,
+      "vis": true
+    },
+    "railScrim": null,
+    "composers": [],
+    "anaComposerOffscreen": null,
+    "bodyScrollW": 834,
+    "h1": "Submission center",
+    "navButtons": 20,
+    "dialogs": 0,
+    "errors": []
+  },
+  {
+    "label": "before",
+    "width": 834,
+    "surface": "review",
+    "url": "http://localhost:5000/concept2cure/review",
+    "vw": 834,
+    "title": "Concept2Cure - AI-Powered Regulatory Intelligence Platform",
+    "shell": true,
+    "gridCols": "56px 746px 32px",
+    "railCollapsed": "true",
+    "anaOpen": "false",
+    "editor": null,
+    "rail": {
+      "x": 0,
+      "w": 56,
+      "h": 900,
+      "vis": true
+    },
+    "main": {
+      "x": 56,
+      "w": 746,
+      "h": 900,
+      "vis": true
+    },
+    "ana": null,
+    "seam": {
+      "x": 802,
+      "w": 32,
+      "h": 900,
+      "vis": true
+    },
+    "page": {
+      "x": 56,
+      "w": 746,
+      "h": 852,
+      "vis": true
+    },
+    "railScrim": null,
+    "composers": [],
+    "anaComposerOffscreen": null,
+    "bodyScrollW": 834,
+    "h1": "Review & approval",
+    "navButtons": 20,
+    "dialogs": 0,
+    "errors": []
+  },
+  {
+    "label": "before",
+    "width": 834,
+    "surface": "document-authoring",
+    "url": "http://localhost:5000/concept2cure/document-authoring",
+    "vw": 834,
+    "title": "Concept2Cure - AI-Powered Regulatory Intelligence Platform",
+    "shell": true,
+    "gridCols": "56px 778px 0px",
+    "railCollapsed": "true",
+    "anaOpen": "false",
+    "editor": "true",
+    "rail": {
+      "x": 0,
+      "w": 56,
+      "h": 900,
+      "vis": true
+    },
+    "main": {
+      "x": 56,
+      "w": 778,
+      "h": 900,
+      "vis": true
+    },
+    "ana": null,
+    "seam": null,
+    "page": {
+      "x": 56,
+      "w": 778,
+      "h": 852,
+      "vis": true
+    },
+    "railScrim": null,
+    "composers": [],
+    "anaComposerOffscreen": null,
+    "bodyScrollW": 834,
+    "h1": null,
+    "navButtons": 20,
+    "dialogs": 0,
+    "errors": []
+  },
+  {
+    "label": "before",
+    "width": 834,
+    "surface": "biostatistics",
+    "url": "http://localhost:5000/concept2cure/biostatistics",
+    "vw": 834,
+    "title": "Concept2Cure - AI-Powered Regulatory Intelligence Platform",
+    "shell": true,
+    "gridCols": "56px 746px 32px",
+    "railCollapsed": "true",
+    "anaOpen": "false",
+    "editor": null,
+    "rail": {
+      "x": 0,
+      "w": 56,
+      "h": 900,
+      "vis": true
+    },
+    "main": {
+      "x": 56,
+      "w": 746,
+      "h": 900,
+      "vis": true
+    },
+    "ana": null,
+    "seam": {
+      "x": 802,
+      "w": 32,
+      "h": 900,
+      "vis": true
+    },
+    "page": {
+      "x": 56,
+      "w": 746,
+      "h": 852,
+      "vis": true
+    },
+    "railScrim": null,
+    "composers": [],
+    "anaComposerOffscreen": null,
+    "bodyScrollW": 834,
+    "h1": "Biostatistics",
+    "navButtons": 20,
+    "dialogs": 0,
+    "errors": []
+  },
+  {
+    "label": "before",
+    "width": 768,
+    "surface": "home",
+    "url": "http://localhost:5000/concept2cure/home",
+    "vw": 768,
+    "title": "Concept2Cure - AI-Powered Regulatory Intelligence Platform",
+    "shell": true,
+    "gridCols": "56px 680px 32px",
+    "railCollapsed": "true",
+    "anaOpen": "false",
+    "editor": null,
+    "rail": {
+      "x": 0,
+      "w": 56,
+      "h": 900,
+      "vis": true
+    },
+    "main": {
+      "x": 56,
+      "w": 680,
+      "h": 900,
+      "vis": true
+    },
+    "ana": null,
+    "seam": {
+      "x": 736,
+      "w": 32,
+      "h": 900,
+      "vis": true
+    },
+    "page": {
+      "x": 56,
+      "w": 680,
+      "h": 852,
+      "vis": true
+    },
+    "railScrim": null,
+    "composers": [
+      {
+        "sel": ".landing-composer textarea",
+        "x": 77,
+        "w": 638,
+        "h": 92,
+        "vis": true,
+        "offscreen": false
+      }
+    ],
+    "anaComposerOffscreen": null,
+    "bodyScrollW": 768,
+    "h1": "Good evening, Demo",
+    "navButtons": 20,
+    "dialogs": 0,
+    "errors": []
+  },
+  {
+    "label": "before",
+    "width": 768,
+    "surface": "conversation-thread",
+    "url": "http://localhost:5000/concept2cure/conversation-thread",
+    "vw": 768,
+    "title": "Concept2Cure - AI-Powered Regulatory Intelligence Platform",
+    "shell": true,
+    "gridCols": "56px 712px 0px",
+    "railCollapsed": "true",
+    "anaOpen": "false",
+    "editor": "true",
+    "rail": {
+      "x": 0,
+      "w": 56,
+      "h": 900,
+      "vis": true
+    },
+    "main": {
+      "x": 56,
+      "w": 712,
+      "h": 900,
+      "vis": true
+    },
+    "ana": null,
+    "seam": null,
+    "page": {
+      "x": 56,
+      "w": 712,
+      "h": 852,
+      "vis": true
+    },
+    "railScrim": null,
+    "composers": [
+      {
+        "sel": ".ct-composer textarea",
+        "x": 131,
+        "w": 178,
+        "h": 35,
+        "vis": true,
+        "offscreen": false
+      }
+    ],
+    "anaComposerOffscreen": null,
+    "bodyScrollW": 768,
+    "h1": null,
+    "navButtons": 20,
+    "dialogs": 0,
+    "errors": []
+  },
+  {
+    "label": "before",
+    "width": 768,
+    "surface": "projects",
+    "url": "http://localhost:5000/concept2cure/projects",
+    "vw": 768,
+    "title": "Concept2Cure - AI-Powered Regulatory Intelligence Platform",
+    "shell": true,
+    "gridCols": "56px 680px 32px",
+    "railCollapsed": "true",
+    "anaOpen": "false",
+    "editor": null,
+    "rail": {
+      "x": 0,
+      "w": 56,
+      "h": 900,
+      "vis": true
+    },
+    "main": {
+      "x": 56,
+      "w": 680,
+      "h": 900,
+      "vis": true
+    },
+    "ana": null,
+    "seam": {
+      "x": 736,
+      "w": 32,
+      "h": 900,
+      "vis": true
+    },
+    "page": {
+      "x": 56,
+      "w": 680,
+      "h": 852,
+      "vis": true
+    },
+    "railScrim": null,
+    "composers": [],
+    "anaComposerOffscreen": null,
+    "bodyScrollW": 768,
+    "h1": "Projects",
+    "navButtons": 20,
+    "dialogs": 0,
+    "errors": []
+  },
+  {
+    "label": "before",
+    "width": 768,
+    "surface": "project-home",
+    "url": "http://localhost:5000/concept2cure/project-home",
+    "vw": 768,
+    "title": "Concept2Cure - AI-Powered Regulatory Intelligence Platform",
+    "shell": true,
+    "gridCols": "56px 680px 32px",
+    "railCollapsed": "true",
+    "anaOpen": "false",
+    "editor": null,
+    "rail": {
+      "x": 0,
+      "w": 56,
+      "h": 900,
+      "vis": true
+    },
+    "main": {
+      "x": 56,
+      "w": 680,
+      "h": 900,
+      "vis": true
+    },
+    "ana": null,
+    "seam": {
+      "x": 736,
+      "w": 32,
+      "h": 900,
+      "vis": true
+    },
+    "page": {
+      "x": 56,
+      "w": 680,
+      "h": 852,
+      "vis": true
+    },
+    "railScrim": null,
+    "composers": [],
+    "anaComposerOffscreen": null,
+    "bodyScrollW": 768,
+    "h1": "Project",
+    "navButtons": 20,
+    "dialogs": 0,
+    "errors": []
+  },
+  {
+    "label": "before",
+    "width": 768,
+    "surface": "communication-center",
+    "url": "http://localhost:5000/concept2cure/communication-center",
+    "vw": 768,
+    "title": "Concept2Cure - AI-Powered Regulatory Intelligence Platform",
+    "shell": true,
+    "gridCols": "56px 680px 32px",
+    "railCollapsed": "true",
+    "anaOpen": "false",
+    "editor": null,
+    "rail": {
+      "x": 0,
+      "w": 56,
+      "h": 900,
+      "vis": true
+    },
+    "main": {
+      "x": 56,
+      "w": 680,
+      "h": 900,
+      "vis": true
+    },
+    "ana": null,
+    "seam": {
+      "x": 736,
+      "w": 32,
+      "h": 900,
+      "vis": true
+    },
+    "page": {
+      "x": 56,
+      "w": 680,
+      "h": 852,
+      "vis": true
+    },
+    "railScrim": null,
+    "composers": [],
+    "anaComposerOffscreen": null,
+    "bodyScrollW": 768,
+    "h1": "Communication center",
+    "navButtons": 20,
+    "dialogs": 0,
+    "errors": []
+  },
+  {
+    "label": "before",
+    "width": 768,
+    "surface": "apps",
+    "url": "http://localhost:5000/concept2cure/apps",
+    "vw": 768,
+    "title": "Concept2Cure - AI-Powered Regulatory Intelligence Platform",
+    "shell": true,
+    "gridCols": "56px 680px 32px",
+    "railCollapsed": "true",
+    "anaOpen": "false",
+    "editor": null,
+    "rail": {
+      "x": 0,
+      "w": 56,
+      "h": 900,
+      "vis": true
+    },
+    "main": {
+      "x": 56,
+      "w": 680,
+      "h": 900,
+      "vis": true
+    },
+    "ana": null,
+    "seam": {
+      "x": 736,
+      "w": 32,
+      "h": 900,
+      "vis": true
+    },
+    "page": {
+      "x": 56,
+      "w": 680,
+      "h": 852,
+      "vis": true
+    },
+    "railScrim": null,
+    "composers": [],
+    "anaComposerOffscreen": null,
+    "bodyScrollW": 768,
+    "h1": "Apps catalog",
+    "navButtons": 20,
+    "dialogs": 0,
+    "errors": []
+  },
+  {
+    "label": "before",
+    "width": 768,
+    "surface": "tasks",
+    "url": "http://localhost:5000/concept2cure/tasks",
+    "vw": 768,
+    "title": "Concept2Cure - AI-Powered Regulatory Intelligence Platform",
+    "shell": true,
+    "gridCols": "56px 680px 32px",
+    "railCollapsed": "true",
+    "anaOpen": "false",
+    "editor": null,
+    "rail": {
+      "x": 0,
+      "w": 56,
+      "h": 900,
+      "vis": true
+    },
+    "main": {
+      "x": 56,
+      "w": 680,
+      "h": 900,
+      "vis": true
+    },
+    "ana": null,
+    "seam": {
+      "x": 736,
+      "w": 32,
+      "h": 900,
+      "vis": true
+    },
+    "page": {
+      "x": 56,
+      "w": 680,
+      "h": 852,
+      "vis": true
+    },
+    "railScrim": null,
+    "composers": [],
+    "anaComposerOffscreen": null,
+    "bodyScrollW": 768,
+    "h1": "Task board",
+    "navButtons": 20,
+    "dialogs": 0,
+    "errors": []
+  },
+  {
+    "label": "before",
+    "width": 768,
+    "surface": "submission-center",
+    "url": "http://localhost:5000/concept2cure/submission-center",
+    "vw": 768,
+    "title": "Concept2Cure - AI-Powered Regulatory Intelligence Platform",
+    "shell": true,
+    "gridCols": "56px 680px 32px",
+    "railCollapsed": "true",
+    "anaOpen": "false",
+    "editor": null,
+    "rail": {
+      "x": 0,
+      "w": 56,
+      "h": 900,
+      "vis": true
+    },
+    "main": {
+      "x": 56,
+      "w": 680,
+      "h": 900,
+      "vis": true
+    },
+    "ana": null,
+    "seam": {
+      "x": 736,
+      "w": 32,
+      "h": 900,
+      "vis": true
+    },
+    "page": {
+      "x": 56,
+      "w": 680,
+      "h": 852,
+      "vis": true
+    },
+    "railScrim": null,
+    "composers": [],
+    "anaComposerOffscreen": null,
+    "bodyScrollW": 768,
+    "h1": "Submission center",
+    "navButtons": 20,
+    "dialogs": 0,
+    "errors": []
+  },
+  {
+    "label": "before",
+    "width": 768,
+    "surface": "review",
+    "url": "http://localhost:5000/concept2cure/review",
+    "vw": 768,
+    "title": "Concept2Cure - AI-Powered Regulatory Intelligence Platform",
+    "shell": true,
+    "gridCols": "56px 680px 32px",
+    "railCollapsed": "true",
+    "anaOpen": "false",
+    "editor": null,
+    "rail": {
+      "x": 0,
+      "w": 56,
+      "h": 900,
+      "vis": true
+    },
+    "main": {
+      "x": 56,
+      "w": 680,
+      "h": 900,
+      "vis": true
+    },
+    "ana": null,
+    "seam": {
+      "x": 736,
+      "w": 32,
+      "h": 900,
+      "vis": true
+    },
+    "page": {
+      "x": 56,
+      "w": 680,
+      "h": 852,
+      "vis": true
+    },
+    "railScrim": null,
+    "composers": [],
+    "anaComposerOffscreen": null,
+    "bodyScrollW": 768,
+    "h1": "Review & approval",
+    "navButtons": 20,
+    "dialogs": 0,
+    "errors": []
+  },
+  {
+    "label": "before",
+    "width": 768,
+    "surface": "document-authoring",
+    "url": "http://localhost:5000/concept2cure/document-authoring",
+    "vw": 768,
+    "title": "Concept2Cure - AI-Powered Regulatory Intelligence Platform",
+    "shell": true,
+    "gridCols": "56px 712px 0px",
+    "railCollapsed": "true",
+    "anaOpen": "false",
+    "editor": "true",
+    "rail": {
+      "x": 0,
+      "w": 56,
+      "h": 900,
+      "vis": true
+    },
+    "main": {
+      "x": 56,
+      "w": 712,
+      "h": 900,
+      "vis": true
+    },
+    "ana": null,
+    "seam": null,
+    "page": {
+      "x": 56,
+      "w": 712,
+      "h": 852,
+      "vis": true
+    },
+    "railScrim": null,
+    "composers": [],
+    "anaComposerOffscreen": null,
+    "bodyScrollW": 768,
+    "h1": null,
+    "navButtons": 20,
+    "dialogs": 0,
+    "errors": []
+  },
+  {
+    "label": "before",
+    "width": 768,
+    "surface": "biostatistics",
+    "url": "http://localhost:5000/concept2cure/biostatistics",
+    "vw": 768,
+    "title": "Concept2Cure - AI-Powered Regulatory Intelligence Platform",
+    "shell": true,
+    "gridCols": "56px 680px 32px",
+    "railCollapsed": "true",
+    "anaOpen": "false",
+    "editor": null,
+    "rail": {
+      "x": 0,
+      "w": 56,
+      "h": 900,
+      "vis": true
+    },
+    "main": {
+      "x": 56,
+      "w": 680,
+      "h": 900,
+      "vis": true
+    },
+    "ana": null,
+    "seam": {
+      "x": 736,
+      "w": 32,
+      "h": 900,
+      "vis": true
+    },
+    "page": {
+      "x": 56,
+      "w": 680,
+      "h": 852,
+      "vis": true
+    },
+    "railScrim": null,
+    "composers": [],
+    "anaComposerOffscreen": null,
+    "bodyScrollW": 768,
+    "h1": "Biostatistics",
+    "navButtons": 20,
+    "dialogs": 0,
+    "errors": []
+  },
+  {
+    "label": "before",
+    "width": 430,
+    "surface": "home",
+    "url": "http://localhost:5000/concept2cure/home",
+    "vw": 430,
+    "title": "Concept2Cure - AI-Powered Regulatory Intelligence Platform",
+    "shell": true,
+    "gridCols": "56px 342px 32px",
+    "railCollapsed": "true",
+    "anaOpen": "false",
+    "editor": null,
+    "rail": {
+      "x": 0,
+      "w": 56,
+      "h": 844,
+      "vis": true
+    },
+    "main": {
+      "x": 56,
+      "w": 342,
+      "h": 844,
+      "vis": true
+    },
+    "ana": null,
+    "seam": {
+      "x": 398,
+      "w": 32,
+      "h": 844,
+      "vis": true
+    },
+    "page": {
+      "x": 56,
+      "w": 342,
+      "h": 796,
+      "vis": true
+    },
+    "railScrim": null,
+    "composers": [
+      {
+        "sel": ".landing-composer textarea",
+        "x": 77,
+        "w": 300,
+        "h": 92,
+        "vis": true,
+        "offscreen": false
+      }
+    ],
+    "anaComposerOffscreen": null,
+    "bodyScrollW": 430,
+    "h1": "Good evening, Demo",
+    "navButtons": 20,
+    "dialogs": 0,
+    "errors": []
+  },
+  {
+    "label": "before",
+    "width": 430,
+    "surface": "conversation-thread",
+    "url": "http://localhost:5000/concept2cure/conversation-thread",
+    "vw": 430,
+    "title": "Concept2Cure - AI-Powered Regulatory Intelligence Platform",
+    "shell": true,
+    "gridCols": "56px 374px 0px",
+    "railCollapsed": "true",
+    "anaOpen": "false",
+    "editor": "true",
+    "rail": {
+      "x": 0,
+      "w": 56,
+      "h": 844,
+      "vis": true
+    },
+    "main": {
+      "x": 56,
+      "w": 374,
+      "h": 844,
+      "vis": true
+    },
+    "ana": null,
+    "seam": null,
+    "page": {
+      "x": 56,
+      "w": 374,
+      "h": 796,
+      "vis": true
+    },
+    "railScrim": null,
+    "composers": [
+      {
+        "sel": ".ct-composer textarea",
+        "x": 131,
+        "w": 4,
+        "h": 35,
+        "vis": true,
+        "offscreen": false
+      }
+    ],
+    "anaComposerOffscreen": null,
+    "bodyScrollW": 430,
+    "h1": null,
+    "navButtons": 20,
+    "dialogs": 0,
+    "errors": []
+  },
+  {
+    "label": "before",
+    "width": 430,
+    "surface": "projects",
+    "url": "http://localhost:5000/concept2cure/projects",
+    "vw": 430,
+    "title": "Concept2Cure - AI-Powered Regulatory Intelligence Platform",
+    "shell": true,
+    "gridCols": "56px 342px 32px",
+    "railCollapsed": "true",
+    "anaOpen": "false",
+    "editor": null,
+    "rail": {
+      "x": 0,
+      "w": 56,
+      "h": 844,
+      "vis": true
+    },
+    "main": {
+      "x": 56,
+      "w": 342,
+      "h": 844,
+      "vis": true
+    },
+    "ana": null,
+    "seam": {
+      "x": 398,
+      "w": 32,
+      "h": 844,
+      "vis": true
+    },
+    "page": {
+      "x": 56,
+      "w": 342,
+      "h": 796,
+      "vis": true
+    },
+    "railScrim": null,
+    "composers": [],
+    "anaComposerOffscreen": null,
+    "bodyScrollW": 430,
+    "h1": "Projects",
+    "navButtons": 20,
+    "dialogs": 0,
+    "errors": []
+  },
+  {
+    "label": "before",
+    "width": 430,
+    "surface": "project-home",
+    "url": "http://localhost:5000/concept2cure/project-home",
+    "vw": 430,
+    "title": "Concept2Cure - AI-Powered Regulatory Intelligence Platform",
+    "shell": true,
+    "gridCols": "56px 342px 32px",
+    "railCollapsed": "true",
+    "anaOpen": "false",
+    "editor": null,
+    "rail": {
+      "x": 0,
+      "w": 56,
+      "h": 844,
+      "vis": true
+    },
+    "main": {
+      "x": 56,
+      "w": 342,
+      "h": 844,
+      "vis": true
+    },
+    "ana": null,
+    "seam": {
+      "x": 398,
+      "w": 32,
+      "h": 844,
+      "vis": true
+    },
+    "page": {
+      "x": 56,
+      "w": 342,
+      "h": 796,
+      "vis": true
+    },
+    "railScrim": null,
+    "composers": [],
+    "anaComposerOffscreen": null,
+    "bodyScrollW": 430,
+    "h1": "Project",
+    "navButtons": 20,
+    "dialogs": 0,
+    "errors": []
+  },
+  {
+    "label": "before",
+    "width": 430,
+    "surface": "communication-center",
+    "url": "http://localhost:5000/concept2cure/communication-center",
+    "vw": 430,
+    "title": "Concept2Cure - AI-Powered Regulatory Intelligence Platform",
+    "shell": true,
+    "gridCols": "56px 342px 32px",
+    "railCollapsed": "true",
+    "anaOpen": "false",
+    "editor": null,
+    "rail": {
+      "x": 0,
+      "w": 56,
+      "h": 844,
+      "vis": true
+    },
+    "main": {
+      "x": 56,
+      "w": 342,
+      "h": 844,
+      "vis": true
+    },
+    "ana": null,
+    "seam": {
+      "x": 398,
+      "w": 32,
+      "h": 844,
+      "vis": true
+    },
+    "page": {
+      "x": 56,
+      "w": 342,
+      "h": 796,
+      "vis": true
+    },
+    "railScrim": null,
+    "composers": [],
+    "anaComposerOffscreen": null,
+    "bodyScrollW": 430,
+    "h1": "Communication center",
+    "navButtons": 20,
+    "dialogs": 0,
+    "errors": []
+  },
+  {
+    "label": "before",
+    "width": 430,
+    "surface": "apps",
+    "url": "http://localhost:5000/concept2cure/apps",
+    "vw": 430,
+    "title": "Concept2Cure - AI-Powered Regulatory Intelligence Platform",
+    "shell": true,
+    "gridCols": "56px 342px 32px",
+    "railCollapsed": "true",
+    "anaOpen": "false",
+    "editor": null,
+    "rail": {
+      "x": 0,
+      "w": 56,
+      "h": 844,
+      "vis": true
+    },
+    "main": {
+      "x": 56,
+      "w": 342,
+      "h": 844,
+      "vis": true
+    },
+    "ana": null,
+    "seam": {
+      "x": 398,
+      "w": 32,
+      "h": 844,
+      "vis": true
+    },
+    "page": {
+      "x": 56,
+      "w": 342,
+      "h": 796,
+      "vis": true
+    },
+    "railScrim": null,
+    "composers": [],
+    "anaComposerOffscreen": null,
+    "bodyScrollW": 430,
+    "h1": "Apps catalog",
+    "navButtons": 20,
+    "dialogs": 0,
+    "errors": []
+  },
+  {
+    "label": "before",
+    "width": 430,
+    "surface": "tasks",
+    "url": "http://localhost:5000/concept2cure/tasks",
+    "vw": 430,
+    "title": "Concept2Cure - AI-Powered Regulatory Intelligence Platform",
+    "shell": true,
+    "gridCols": "56px 342px 32px",
+    "railCollapsed": "true",
+    "anaOpen": "false",
+    "editor": null,
+    "rail": {
+      "x": 0,
+      "w": 56,
+      "h": 844,
+      "vis": true
+    },
+    "main": {
+      "x": 56,
+      "w": 342,
+      "h": 844,
+      "vis": true
+    },
+    "ana": null,
+    "seam": {
+      "x": 398,
+      "w": 32,
+      "h": 844,
+      "vis": true
+    },
+    "page": {
+      "x": 56,
+      "w": 342,
+      "h": 796,
+      "vis": true
+    },
+    "railScrim": null,
+    "composers": [],
+    "anaComposerOffscreen": null,
+    "bodyScrollW": 430,
+    "h1": "Task board",
+    "navButtons": 20,
+    "dialogs": 0,
+    "errors": []
+  },
+  {
+    "label": "before",
+    "width": 430,
+    "surface": "submission-center",
+    "url": "http://localhost:5000/concept2cure/submission-center",
+    "vw": 430,
+    "title": "Concept2Cure - AI-Powered Regulatory Intelligence Platform",
+    "shell": true,
+    "gridCols": "56px 342px 32px",
+    "railCollapsed": "true",
+    "anaOpen": "false",
+    "editor": null,
+    "rail": {
+      "x": 0,
+      "w": 56,
+      "h": 844,
+      "vis": true
+    },
+    "main": {
+      "x": 56,
+      "w": 342,
+      "h": 844,
+      "vis": true
+    },
+    "ana": null,
+    "seam": {
+      "x": 398,
+      "w": 32,
+      "h": 844,
+      "vis": true
+    },
+    "page": {
+      "x": 56,
+      "w": 342,
+      "h": 796,
+      "vis": true
+    },
+    "railScrim": null,
+    "composers": [],
+    "anaComposerOffscreen": null,
+    "bodyScrollW": 430,
+    "h1": "Submission center",
+    "navButtons": 20,
+    "dialogs": 0,
+    "errors": []
+  },
+  {
+    "label": "before",
+    "width": 430,
+    "surface": "review",
+    "url": "http://localhost:5000/concept2cure/review",
+    "vw": 430,
+    "title": "Concept2Cure - AI-Powered Regulatory Intelligence Platform",
+    "shell": true,
+    "gridCols": "56px 342px 32px",
+    "railCollapsed": "true",
+    "anaOpen": "false",
+    "editor": null,
+    "rail": {
+      "x": 0,
+      "w": 56,
+      "h": 844,
+      "vis": true
+    },
+    "main": {
+      "x": 56,
+      "w": 342,
+      "h": 844,
+      "vis": true
+    },
+    "ana": null,
+    "seam": {
+      "x": 398,
+      "w": 32,
+      "h": 844,
+      "vis": true
+    },
+    "page": {
+      "x": 56,
+      "w": 342,
+      "h": 796,
+      "vis": true
+    },
+    "railScrim": null,
+    "composers": [],
+    "anaComposerOffscreen": null,
+    "bodyScrollW": 430,
+    "h1": "Review & approval",
+    "navButtons": 20,
+    "dialogs": 0,
+    "errors": []
+  },
+  {
+    "label": "before",
+    "width": 430,
+    "surface": "document-authoring",
+    "url": "http://localhost:5000/concept2cure/document-authoring",
+    "vw": 430,
+    "title": "Concept2Cure - AI-Powered Regulatory Intelligence Platform",
+    "shell": true,
+    "gridCols": "56px 374px 0px",
+    "railCollapsed": "true",
+    "anaOpen": "false",
+    "editor": "true",
+    "rail": {
+      "x": 0,
+      "w": 56,
+      "h": 844,
+      "vis": true
+    },
+    "main": {
+      "x": 56,
+      "w": 374,
+      "h": 844,
+      "vis": true
+    },
+    "ana": null,
+    "seam": null,
+    "page": {
+      "x": 56,
+      "w": 374,
+      "h": 796,
+      "vis": true
+    },
+    "railScrim": null,
+    "composers": [],
+    "anaComposerOffscreen": null,
+    "bodyScrollW": 430,
+    "h1": null,
+    "navButtons": 20,
+    "dialogs": 0,
+    "errors": []
+  },
+  {
+    "label": "before",
+    "width": 430,
+    "surface": "biostatistics",
+    "url": "http://localhost:5000/concept2cure/biostatistics",
+    "vw": 430,
+    "title": "Concept2Cure - AI-Powered Regulatory Intelligence Platform",
+    "shell": true,
+    "gridCols": "56px 342px 32px",
+    "railCollapsed": "true",
+    "anaOpen": "false",
+    "editor": null,
+    "rail": {
+      "x": 0,
+      "w": 56,
+      "h": 844,
+      "vis": true
+    },
+    "main": {
+      "x": 56,
+      "w": 342,
+      "h": 844,
+      "vis": true
+    },
+    "ana": null,
+    "seam": {
+      "x": 398,
+      "w": 32,
+      "h": 844,
+      "vis": true
+    },
+    "page": {
+      "x": 56,
+      "w": 342,
+      "h": 796,
+      "vis": true
+    },
+    "railScrim": null,
+    "composers": [],
+    "anaComposerOffscreen": null,
+    "bodyScrollW": 430,
+    "h1": "Biostatistics",
+    "navButtons": 20,
+    "dialogs": 0,
+    "errors": []
+  },
+  {
+    "label": "before",
+    "width": 390,
+    "surface": "home",
+    "url": "http://localhost:5000/concept2cure/home",
+    "vw": 390,
+    "title": "Concept2Cure - AI-Powered Regulatory Intelligence Platform",
+    "shell": true,
+    "gridCols": "56px 302px 32px",
+    "railCollapsed": "true",
+    "anaOpen": "false",
+    "editor": null,
+    "rail": {
+      "x": 0,
+      "w": 56,
+      "h": 844,
+      "vis": true
+    },
+    "main": {
+      "x": 56,
+      "w": 302,
+      "h": 844,
+      "vis": true
+    },
+    "ana": null,
+    "seam": {
+      "x": 358,
+      "w": 32,
+      "h": 844,
+      "vis": true
+    },
+    "page": {
+      "x": 56,
+      "w": 302,
+      "h": 796,
+      "vis": true
+    },
+    "railScrim": null,
+    "composers": [
+      {
+        "sel": ".landing-composer textarea",
+        "x": 77,
+        "w": 260,
+        "h": 92,
+        "vis": true,
+        "offscreen": false
+      }
+    ],
+    "anaComposerOffscreen": null,
+    "bodyScrollW": 390,
+    "h1": "Good evening, Demo",
+    "navButtons": 20,
+    "dialogs": 0,
+    "errors": []
+  },
+  {
+    "label": "before",
+    "width": 390,
+    "surface": "conversation-thread",
+    "url": "http://localhost:5000/concept2cure/conversation-thread",
+    "vw": 390,
+    "title": "Concept2Cure - AI-Powered Regulatory Intelligence Platform",
+    "shell": true,
+    "gridCols": "56px 334px 0px",
+    "railCollapsed": "true",
+    "anaOpen": "false",
+    "editor": "true",
+    "rail": {
+      "x": 0,
+      "w": 56,
+      "h": 844,
+      "vis": true
+    },
+    "main": {
+      "x": 56,
+      "w": 334,
+      "h": 844,
+      "vis": true
+    },
+    "ana": null,
+    "seam": null,
+    "page": {
+      "x": 56,
+      "w": 334,
+      "h": 796,
+      "vis": true
+    },
+    "railScrim": null,
+    "composers": [
+      {
+        "sel": ".ct-composer textarea",
+        "x": 131,
+        "w": 4,
+        "h": 35,
+        "vis": true,
+        "offscreen": false
+      }
+    ],
+    "anaComposerOffscreen": null,
+    "bodyScrollW": 390,
+    "h1": null,
+    "navButtons": 20,
+    "dialogs": 0,
+    "errors": []
+  },
+  {
+    "label": "before",
+    "width": 390,
+    "surface": "projects",
+    "url": "http://localhost:5000/concept2cure/projects",
+    "vw": 390,
+    "title": "Concept2Cure - AI-Powered Regulatory Intelligence Platform",
+    "shell": true,
+    "gridCols": "56px 302px 32px",
+    "railCollapsed": "true",
+    "anaOpen": "false",
+    "editor": null,
+    "rail": {
+      "x": 0,
+      "w": 56,
+      "h": 844,
+      "vis": true
+    },
+    "main": {
+      "x": 56,
+      "w": 302,
+      "h": 844,
+      "vis": true
+    },
+    "ana": null,
+    "seam": {
+      "x": 358,
+      "w": 32,
+      "h": 844,
+      "vis": true
+    },
+    "page": {
+      "x": 56,
+      "w": 302,
+      "h": 796,
+      "vis": true
+    },
+    "railScrim": null,
+    "composers": [],
+    "anaComposerOffscreen": null,
+    "bodyScrollW": 390,
+    "h1": "Projects",
+    "navButtons": 20,
+    "dialogs": 0,
+    "errors": []
+  },
+  {
+    "label": "before",
+    "width": 390,
+    "surface": "project-home",
+    "url": "http://localhost:5000/concept2cure/project-home",
+    "vw": 390,
+    "title": "Concept2Cure - AI-Powered Regulatory Intelligence Platform",
+    "shell": true,
+    "gridCols": "56px 302px 32px",
+    "railCollapsed": "true",
+    "anaOpen": "false",
+    "editor": null,
+    "rail": {
+      "x": 0,
+      "w": 56,
+      "h": 844,
+      "vis": true
+    },
+    "main": {
+      "x": 56,
+      "w": 302,
+      "h": 844,
+      "vis": true
+    },
+    "ana": null,
+    "seam": {
+      "x": 358,
+      "w": 32,
+      "h": 844,
+      "vis": true
+    },
+    "page": {
+      "x": 56,
+      "w": 302,
+      "h": 796,
+      "vis": true
+    },
+    "railScrim": null,
+    "composers": [],
+    "anaComposerOffscreen": null,
+    "bodyScrollW": 390,
+    "h1": "Project",
+    "navButtons": 20,
+    "dialogs": 0,
+    "errors": []
+  },
+  {
+    "label": "before",
+    "width": 390,
+    "surface": "communication-center",
+    "url": "http://localhost:5000/concept2cure/communication-center",
+    "vw": 390,
+    "title": "Concept2Cure - AI-Powered Regulatory Intelligence Platform",
+    "shell": true,
+    "gridCols": "56px 302px 32px",
+    "railCollapsed": "true",
+    "anaOpen": "false",
+    "editor": null,
+    "rail": {
+      "x": 0,
+      "w": 56,
+      "h": 844,
+      "vis": true
+    },
+    "main": {
+      "x": 56,
+      "w": 302,
+      "h": 844,
+      "vis": true
+    },
+    "ana": null,
+    "seam": {
+      "x": 358,
+      "w": 32,
+      "h": 844,
+      "vis": true
+    },
+    "page": {
+      "x": 56,
+      "w": 302,
+      "h": 796,
+      "vis": true
+    },
+    "railScrim": null,
+    "composers": [],
+    "anaComposerOffscreen": null,
+    "bodyScrollW": 390,
+    "h1": "Communication center",
+    "navButtons": 20,
+    "dialogs": 0,
+    "errors": []
+  },
+  {
+    "label": "before",
+    "width": 390,
+    "surface": "apps",
+    "url": "http://localhost:5000/concept2cure/apps",
+    "vw": 390,
+    "title": "Concept2Cure - AI-Powered Regulatory Intelligence Platform",
+    "shell": true,
+    "gridCols": "56px 302px 32px",
+    "railCollapsed": "true",
+    "anaOpen": "false",
+    "editor": null,
+    "rail": {
+      "x": 0,
+      "w": 56,
+      "h": 844,
+      "vis": true
+    },
+    "main": {
+      "x": 56,
+      "w": 302,
+      "h": 844,
+      "vis": true
+    },
+    "ana": null,
+    "seam": {
+      "x": 358,
+      "w": 32,
+      "h": 844,
+      "vis": true
+    },
+    "page": {
+      "x": 56,
+      "w": 302,
+      "h": 796,
+      "vis": true
+    },
+    "railScrim": null,
+    "composers": [],
+    "anaComposerOffscreen": null,
+    "bodyScrollW": 390,
+    "h1": "Apps catalog",
+    "navButtons": 20,
+    "dialogs": 0,
+    "errors": []
+  },
+  {
+    "label": "before",
+    "width": 390,
+    "surface": "tasks",
+    "url": "http://localhost:5000/concept2cure/tasks",
+    "vw": 390,
+    "title": "Concept2Cure - AI-Powered Regulatory Intelligence Platform",
+    "shell": true,
+    "gridCols": "56px 302px 32px",
+    "railCollapsed": "true",
+    "anaOpen": "false",
+    "editor": null,
+    "rail": {
+      "x": 0,
+      "w": 56,
+      "h": 844,
+      "vis": true
+    },
+    "main": {
+      "x": 56,
+      "w": 302,
+      "h": 844,
+      "vis": true
+    },
+    "ana": null,
+    "seam": {
+      "x": 358,
+      "w": 32,
+      "h": 844,
+      "vis": true
+    },
+    "page": {
+      "x": 56,
+      "w": 302,
+      "h": 796,
+      "vis": true
+    },
+    "railScrim": null,
+    "composers": [],
+    "anaComposerOffscreen": null,
+    "bodyScrollW": 390,
+    "h1": "Task board",
+    "navButtons": 20,
+    "dialogs": 0,
+    "errors": []
+  },
+  {
+    "label": "before",
+    "width": 390,
+    "surface": "submission-center",
+    "url": "http://localhost:5000/concept2cure/submission-center",
+    "vw": 390,
+    "title": "Concept2Cure - AI-Powered Regulatory Intelligence Platform",
+    "shell": true,
+    "gridCols": "56px 302px 32px",
+    "railCollapsed": "true",
+    "anaOpen": "false",
+    "editor": null,
+    "rail": {
+      "x": 0,
+      "w": 56,
+      "h": 844,
+      "vis": true
+    },
+    "main": {
+      "x": 56,
+      "w": 302,
+      "h": 844,
+      "vis": true
+    },
+    "ana": null,
+    "seam": {
+      "x": 358,
+      "w": 32,
+      "h": 844,
+      "vis": true
+    },
+    "page": {
+      "x": 56,
+      "w": 302,
+      "h": 796,
+      "vis": true
+    },
+    "railScrim": null,
+    "composers": [],
+    "anaComposerOffscreen": null,
+    "bodyScrollW": 390,
+    "h1": "Submission center",
+    "navButtons": 20,
+    "dialogs": 0,
+    "errors": []
+  },
+  {
+    "label": "before",
+    "width": 390,
+    "surface": "review",
+    "url": "http://localhost:5000/concept2cure/review",
+    "vw": 390,
+    "title": "Concept2Cure - AI-Powered Regulatory Intelligence Platform",
+    "shell": true,
+    "gridCols": "56px 302px 32px",
+    "railCollapsed": "true",
+    "anaOpen": "false",
+    "editor": null,
+    "rail": {
+      "x": 0,
+      "w": 56,
+      "h": 844,
+      "vis": true
+    },
+    "main": {
+      "x": 56,
+      "w": 302,
+      "h": 844,
+      "vis": true
+    },
+    "ana": null,
+    "seam": {
+      "x": 358,
+      "w": 32,
+      "h": 844,
+      "vis": true
+    },
+    "page": {
+      "x": 56,
+      "w": 302,
+      "h": 796,
+      "vis": true
+    },
+    "railScrim": null,
+    "composers": [],
+    "anaComposerOffscreen": null,
+    "bodyScrollW": 390,
+    "h1": "Review & approval",
+    "navButtons": 20,
+    "dialogs": 0,
+    "errors": []
+  },
+  {
+    "label": "before",
+    "width": 390,
+    "surface": "document-authoring",
+    "url": "http://localhost:5000/concept2cure/document-authoring",
+    "vw": 390,
+    "title": "Concept2Cure - AI-Powered Regulatory Intelligence Platform",
+    "shell": true,
+    "gridCols": "56px 334px 0px",
+    "railCollapsed": "true",
+    "anaOpen": "false",
+    "editor": "true",
+    "rail": {
+      "x": 0,
+      "w": 56,
+      "h": 844,
+      "vis": true
+    },
+    "main": {
+      "x": 56,
+      "w": 334,
+      "h": 844,
+      "vis": true
+    },
+    "ana": null,
+    "seam": null,
+    "page": {
+      "x": 56,
+      "w": 334,
+      "h": 796,
+      "vis": true
+    },
+    "railScrim": null,
+    "composers": [],
+    "anaComposerOffscreen": null,
+    "bodyScrollW": 390,
+    "h1": null,
+    "navButtons": 20,
+    "dialogs": 0,
+    "errors": []
+  },
+  {
+    "label": "before",
+    "width": 390,
+    "surface": "biostatistics",
+    "url": "http://localhost:5000/concept2cure/biostatistics",
+    "vw": 390,
+    "title": "Concept2Cure - AI-Powered Regulatory Intelligence Platform",
+    "shell": true,
+    "gridCols": "56px 302px 32px",
+    "railCollapsed": "true",
+    "anaOpen": "false",
+    "editor": null,
+    "rail": {
+      "x": 0,
+      "w": 56,
+      "h": 844,
+      "vis": true
+    },
+    "main": {
+      "x": 56,
+      "w": 302,
+      "h": 844,
+      "vis": true
+    },
+    "ana": null,
+    "seam": {
+      "x": 358,
+      "w": 32,
+      "h": 844,
+      "vis": true
+    },
+    "page": {
+      "x": 56,
+      "w": 302,
+      "h": 796,
+      "vis": true
+    },
+    "railScrim": null,
+    "composers": [],
+    "anaComposerOffscreen": null,
+    "bodyScrollW": 390,
+    "h1": "Biostatistics",
+    "navButtons": 20,
+    "dialogs": 0,
+    "errors": []
+  }
+]
