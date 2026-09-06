@@ -42,6 +42,9 @@
 .rse-hl-glyph { background:color-mix(in srgb, var(--warning) 30%, transparent); padding:0 3px; border-radius:2px; }
 .rse-body { flex:1; min-height:0; overflow-y:auto; }
 .rse-body .tiptap { outline:none; min-height:320px; padding:18px 20px; font-size:14px; line-height:1.75; color:var(--text-100); font-family:var(--font-serif,Georgia,"Times New Roman",serif); }
+/* Borderless editor fill — restore keyboard focus as an inset outline so
+   the ring sits inside the flush edit surface without shifting layout. */
+.rse-body .tiptap:focus-visible { outline:2px solid var(--accent-200); outline-offset:-2px; }
 /* Measure lives on the prose blocks, not the canvas: a CTD table must be
    free to use the full column while paragraphs keep a readable line. */
 .rse-body .tiptap > p, .rse-body .tiptap > h1, .rse-body .tiptap > h2, .rse-body .tiptap > h3, .rse-body .tiptap > ul, .rse-body .tiptap > ol, .rse-body .tiptap > blockquote { max-width:78ch; }
@@ -84,6 +87,8 @@
 .rse-cite { color:var(--accent-100); white-space:nowrap; }
 .rse-cite[data-missing="1"] { color:var(--error); border-bottom:1px dashed var(--error); font-style:italic; white-space:normal; }
 .rse-source { width:100%; min-height:320px; resize:vertical; border:none; outline:none; padding:18px 20px; font-size:13px; line-height:1.6; font-family:ui-monospace,SFMono-Regular,Menlo,monospace; color:var(--text-100); background:var(--bg-000); }
+/* Borderless source textarea — inset outline restores keyboard focus. */
+.rse-source:focus-visible { outline:2px solid var(--accent-200); outline-offset:-2px; }
 .rse-empty-cta { padding:10px 20px 0; }
 .rse-foot { display:flex; align-items:center; gap:8px; padding:6px 12px; background:var(--bg-000); border-top:1px solid var(--border); font-size:10px; color:var(--text-400); flex-wrap:wrap; }
 .rse-save { display:flex; align-items:center; gap:5px; }

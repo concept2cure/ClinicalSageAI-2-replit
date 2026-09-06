@@ -49,6 +49,9 @@ import {
   verifyIntegrityChain,
 } from './shared';
 import { verifyProjectAccess } from './project-access';
+import { isSigningAuthorized } from '../../services/part11/signing-authority.js';
+import { reverifySigner } from '../../services/part11/reverify-signer.js';
+import { signerReverificationDeps } from '../../services/part11/reverify-signer-deps.js';
 
 const logger = createScopedLogger('concept2cure-artifacts');
 const router = Router();
@@ -193,12 +196,20 @@ const createArtifactSchema = z.object({
     .optional(),
 });
 
+/* `authenticationMethod` and `secondFactorVerified` are DELIBERATELY ABSENT.
+   They used to be accepted here — a free string and a boolean, taken from the
+   request body and persisted verbatim onto the Part 11 signature row. That is an
+   assertion by the party being authenticated, and it is the exact defect POST
+   /api/part11/signatures was deleted for (see routes/part11-compliance.ts:359-380).
+   Both are now DERIVED from what reverifySigner actually checked. */
 const createSignatureSchema = z.object({
   signatureType: z.string().min(1).max(50).optional(),
   signaturePurpose: z.string().min(1).max(500),
   signatureMeaning: z.string().max(500).optional(),
-  authenticationMethod: z.string().min(1).max(50),
-  secondFactorVerified: z.boolean().optional(),
+  /** Re-authenticated server-side at the moment of signing (§11.200). */
+  password: z.string().min(1),
+  /** Required when the signer has MFA enrolled; verified server-side. */
+  mfaToken: z.string().optional(),
   signatureManifest: z.record(z.any()).optional(),
   version: z.number().int().min(1).optional(),
 });
@@ -1523,14 +1534,32 @@ router.post(
         return sendError(res, 404, 'Project not found');
       }
 
-      // ── Signing role check ────────────────────────────────────────
+      /* §11.10(g) — identity is not authority. This used to inline
+         ['admin','approver','reviewer'], which is the DEFAULT of the shared
+         policy but ignores the ESIGNATURE_SIGNING_ROLES override, so a
+         deployment that narrowed its signing roles was still wide open here. */
       const signerRole = (req.userRole || 'user').toLowerCase();
-      const canSign = ['admin', 'approver', 'reviewer'].includes(signerRole);
-      if (!canSign) {
-        return sendError(res, 403, 'Your role does not permit electronic signatures');
+      if (!isSigningAuthorized(signerRole)) {
+        return sendError(
+          res,
+          403,
+          'Your role does not permit applying an electronic signature (21 CFR Part 11 §11.10(g)).',
+        );
       }
 
       const data = createSignatureSchema.parse(req.body);
+
+      /* §11.200(a)(1) — re-verify the signer HERE, at the moment of signing,
+         against stored credentials. The route previously reached the INSERT with
+         nothing but a role check. */
+      const reverified = await reverifySigner(
+        userId,
+        { password: data.password, mfaToken: data.mfaToken },
+        signerReverificationDeps(),
+      );
+      if (!reverified.ok) {
+        return sendError(res, reverified.status, reverified.error);
+      }
 
       const [artifact] = await db
         .select()
@@ -1603,9 +1632,10 @@ router.post(
           signerName,
           signerEmail,
           signerRole: req.userRole || 'user',
-          authenticationMethod: data.authenticationMethod,
+          // Server-derived from the re-verification above — never a client value.
+          authenticationMethod: reverified.authenticationMethod,
           authenticationTimestamp: signedAt,
-          secondFactorVerified: data.secondFactorVerified ?? false,
+          secondFactorVerified: reverified.secondFactorVerified,
           signatureHash,
           signatureManifest,
           ipAddress: getClientIp(req),

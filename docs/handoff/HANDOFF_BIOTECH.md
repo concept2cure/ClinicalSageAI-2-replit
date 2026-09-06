@@ -968,6 +968,51 @@ Revert-proven: reverting the schema to `z.string()` fails the free-text and
 malformed-date tests. Two more hold the opposite line — a real yyyy-mm-dd date
 is not blocked, and a short reason is still refused.
 
+### Twenty-ninth — a request with no tenant read every sponsor's clinical operations (2026-09-06)
+
+`clinical-operations-routes.ts` resolved the caller's org and returned **null**
+for a request with no tenant on it. Every query then spelled its predicate
+
+```sql
+WHERE ($1::INT IS NULL OR org_id = $1)
+```
+
+which is TRUE when the parameter is null. So a context-less request did not read
+the *wrong* organization's clinical operations — it read **every**
+organization's: studies, sites, enrollment, monitoring visits, protocol
+deviations and milestones, across the whole database. Fifteen query sites
+carried the escape. Protocol deviations are GCP records; enrollment and site
+status are competitive information.
+
+The two UPDATEs were worse. `PUT /studies/:id` and `PUT /sites/:id/status`
+appended their guard only `if (orgId)`, so without a tenant the statement ran as
+`WHERE id = $1` alone — enough to change another sponsor's study record, or set
+a site's status, by id.
+
+The resolver's own comment described this accurately and treated it as
+acceptable: *"A value that is not a positive integer resolves to null, which the
+queries read as 'no tenant filter' exactly as before."* A conditional tenant
+predicate is not a predicate; it is a default.
+
+One router-level gate (the shape `haq-manager` and `inline-annotations` got)
+resolves the org once and 403s without it. Because that guarantees a positive
+integer, the `IS NULL` branch is dead, and all fifteen predicates now state
+`org_id = $N` unconditionally rather than leaving an escape for the next reader
+to trip over. Both UPDATEs build `WHERE id = $1 AND org_id = $N` with no branch.
+
+Revert-proven: restoring the fail-open resolver and the escape fails five of the
+eight new tests. The router had one test (display shape); it has nine.
+
+**The sweep, so nobody runs it twice.** `IS NULL OR <col> = $N` across
+`server/**`, six sites beyond clinical-ops:
+
+| Where | Verdict |
+|---|---|
+| `module-access-requests.ts:262` | **Correct.** The null appears only when `scope=all`, and `denyQueueRead` refuses that scope for anyone but the platform owner. An authorized cross-workspace view, documented as one. |
+| `admin/master-admin.ts:475,484` | **Correct.** Behind `router.use(requirePlatformAdmin)`; the parameter is a display filter named `client` precisely so it is not mistaken for the caller's tenant. |
+| `admin/licensing-history.ts:394` | **Correct.** Mounted inside that same guarded router. |
+| `clinical-regulatory-evidence/index.ts:177` | **Recorded, not changed.** A different shape: `f.organization_id IS NULL OR = $1` is a NULL *column* test, so unattributed reference findings count toward an org's "cited" coverage metric. That inflates a metric rather than returning another tenant's content, and whether shared reference rows *should* count is a product decision, not a defect to fix blind. |
+
 ### For the vault stream — the ESLint ratchet is red on trunk, and Lint is the only failing job
 
 `max-lines-per-function` went 1190 → 1192. It reproduces on a clean checkout with
@@ -1317,6 +1362,7 @@ If neither has happened: report the blockage, name what is needed, and stop.
 | 2026-09-06 | A | Twenty-sixth — inline annotations: identity, tenancy, audit | A Part 11-labelled decision endpoint stopped recording "Current User" as the approver, defaulting to organization 1, and writing its audit rows into tenant 0 with no actor; ci:fabricated-identity gained the literal-constant pattern it was missing, seen failing on all four sites first — revert-proven | §1 above |
 | 2026-09-06 | A | Twenty-seventh — typed-target signature read | The §11.50 manifestation for a transmitted submission, a frozen sequence or a dispatched release is reachable at last: every HTTP read was anchored on a document_id those rows do not have — revert-proven; the display half is recorded as still open | §1 above |
 | 2026-09-06 | A | Twenty-eighth — RIM registration dates | A hand-typed renewal or approval date is refused by name and format instead of coming back as Postgres's own syntax error through a fail() that passed any unmapped exception text to the caller — revert-proven | §1 above |
+| 2026-09-06 | A | Twenty-ninth — clinical-operations tenancy | A request with no tenant context read EVERY organization's studies, sites, enrollment, monitoring visits and protocol deviations, and could UPDATE another sponsor's study by id; the router gains a gate and all fifteen predicates become unconditional — revert-proven, and the escape swept across the server (4 authorized admin views, 1 recorded) | §1 above |
 | | | | | |
 
 **Rule:** the last row with an empty "What was proven" cell is the open work.

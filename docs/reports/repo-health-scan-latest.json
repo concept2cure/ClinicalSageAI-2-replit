@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-06T08:22:39.594Z",
+  "generatedAt": "2026-09-06T08:55:54.467Z",
   "git": {
-    "sha": "d5c22a80c3d120339d1ce0c156e4e23ba6950e30",
+    "sha": "a2d7748a25072564c822530d2b4686d730e6ab47",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2017,7 +2017,7 @@
       },
       {
         "file": "server/routes/c2c/artifacts.ts",
-        "bytes": 176975
+        "bytes": 178549
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
@@ -2175,7 +2175,7 @@
       },
       {
         "file": "server/routes/c2c/artifacts.ts",
-        "lines": 4614
+        "lines": 4644
       },
       {
         "file": "server/storage.ts",
@@ -2330,6 +2330,10 @@
         "lines": 2068
       },
       {
+        "file": "server/services/bioequivalence/bioequivalence-knowledge.ts",
+        "lines": 2029
+      },
+      {
         "file": "server/services/gmp-quality-systems/gmp-quality-systems-knowledge.ts",
         "lines": 2024
       },
@@ -2352,10 +2356,6 @@
       {
         "file": "server/services/advanced-therapy/atmp-knowledge.ts",
         "lines": 2002
-      },
-      {
-        "file": "server/services/bioequivalence/bioequivalence-knowledge.ts",
-        "lines": 1962
       },
       {
         "file": "server/services/gcp-operations/gcp-operations-knowledge.ts",

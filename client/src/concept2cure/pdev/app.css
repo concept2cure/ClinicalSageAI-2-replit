@@ -656,6 +656,10 @@
   display: flex; gap: 6px; padding: 8px;
   background: var(--canvas-elevated); border-radius: 8px;
 }
+/* The composer textarea clears its own outline and the container has no
+   border to recolor — ring the container with a box-shadow so keyboard
+   focus is visible. Matches the .pdev-*:focus ring elsewhere in this file. */
+.pdev-ana-composer:focus-within { box-shadow: 0 0 0 2px var(--accent-000); }
 .pdev-ana-composer textarea { flex: 1; resize: none; font-size: 12px; background: transparent; outline: 0; border: 0; }
 .pdev-ana-send { padding: 6px 8px; background: var(--accent-100); color: white; border-radius: 6px; }
 .pdev-ana-send:disabled { background: var(--bg-200); color: var(--text-400); }
@@ -1114,6 +1118,8 @@
   padding: 8px 12px; background: var(--bg-050);
   border: 1px solid var(--border-100); border-radius: 6px;
 }
+/* Borderless inner input clears its outline — ring the container instead. */
+.pdev-search-input:focus-within { border-color: var(--accent-100); box-shadow: 0 0 0 3px var(--accent-000); }
 .pdev-search-input .ico { color: var(--text-400); }
 .pdev-search-input input {
   flex: 1; font-size: 13px; background: transparent; outline: 0; border: 0;
