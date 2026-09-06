@@ -65,6 +65,16 @@ function assessment(over: Record<string, unknown> = {}) {
     judgment: { overallVerdict: 'adequate', overallRisk: 'low', actionRecommendation: 'proceed' },
     provenance: { engine: 'c2c-stats', engineVersion: '1.0.0', inputsSha256: 'abcdef0123456789' },
     filing: { programId: PROGRAM.id, programType: 'NDA', applicationType: 'nda', projectId: 42 },
+    validation: { riskLevel: 'high', summary: '1 major finding', counts: { critical: 0, major: 1, minor: 0, info: 0 } },
+    review: {
+      overallRisk: 'high',
+      standardsChecked: ['ICH E9(R1) §A.6'],
+      verdict: { challengeLikelihood: 'moderate', mostVulnerable: 'Missing data', recommendedActions: ['Missing data: Make MMRM or multiple imputation the primary approach.'] },
+      rows: [
+        { element: 'Primary endpoint', risk: 'low', finding: 'Single primary endpoint with a complete ICH E9(R1) estimand.', action: 'No action required.', codes: [] },
+        { element: 'Missing data', risk: 'high', finding: 'LOCF as the primary missing-data method.', action: 'Make MMRM or multiple imputation the primary approach.', codes: ['MIS-002'] },
+      ],
+    },
     placements: PLACEMENTS,
     existingDeliverables: [],
     proposedTasks: [
@@ -250,6 +260,22 @@ describe('Biostatistics — study design bridge', () => {
     await waitFor(() => expect(posted.some((p) => p.path.endsWith('/STUDY-1/tasks'))).toBe(true));
     expect(posted.find((p) => p.path.endsWith('/tasks'))!.body).toEqual({ keys: ['deliverable:full_statistical_analysis_plan'] });
     expect(await screen.findByText(/1 task raised on the board/)).toBeTruthy();
+  });
+
+  it('renders the statistical review as a risk table with the verdict and the gate codes', async () => {
+    route();
+    mount();
+    await waitFor(() => expect(designRow('BX-204 pivotal in T2D')).toBeTruthy());
+    fireEvent.click(designRow('BX-204 pivotal in T2D'));
+    await waitFor(() => expect(alphaField().value).toBe('0.04'));
+    expect(screen.getByText(/high statistical risk/)).toBeTruthy();
+    expect(screen.getByText(/Regulatory challenge likelihood/).textContent).toMatch(/moderate.*Missing data/);
+    const table = screen.getByRole('table', { name: /Statistical risk summary/ });
+    expect(within(table).getByText('MIS-002')).toBeTruthy();
+    expect(within(table).getByText(/LOCF as the primary/)).toBeTruthy();
+    expect(within(table).getByText(/Make MMRM or multiple imputation/)).toBeTruthy();
+    // A clean row is still a row — it says which standard it meets.
+    expect(within(table).getByText(/complete ICH E9\(R1\) estimand/)).toBeTruthy();
   });
 
   it('cross-links open the protocol workspace, the task board and the submission center', async () => {

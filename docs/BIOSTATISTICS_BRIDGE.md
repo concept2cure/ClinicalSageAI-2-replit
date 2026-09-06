@@ -42,6 +42,21 @@ Consequences, all measured before this change:
 | `POST /designs/:studyId/tasks` `{ keys[], reason? }` | governed | raises the chosen blueprints on `unified_tasks` (`moduleType: 'Biostatistics'`, `sourceEntityType: 'study_design'`, `metadata.blueprintKey`), skipping keys already open |
 | `GET /filing-placements?applicationType=` | read | the placement catalog for one filing type |
 
+## The statistical review (added 2026-09-06, biostatistics-engine pass)
+
+The assessment now carries the design gates' report (`validation`) and a reviewer-shaped `review`: one row per statistical element — primary endpoint, design framework, sample size, multiplicity, analysis methods, missing data, populations, interim analysis — with a risk level (low / medium / high / critical), the finding, the action, and the gate codes the row rests on; plus a defensibility verdict (challenge likelihood, most vulnerable element, recommended actions). `server/services/biostatistics-bridge/statistical-review.ts` assembles it; the engine's judgment can only raise a row's risk, never lower a gate finding.
+
+Four gates were added to `server/services/study-design/design-gates.ts` to cover the review's §III–§IV rules the spine did not enforce:
+
+| Gate | Codes | Catches |
+|---|---|---|
+| `populationGate` | POP-001..004 | no analysis populations; no primary analysis set; superiority primary on per-protocol; no safety population |
+| `methodEndpointGate` | MTH-001..003 | no planned analysis for a required endpoint; method that does not fit the endpoint type (t-test on survival, chi-square on ordinal); ANOVA without baseline |
+| `missingDataGate` | MIS-001..004 | no missing-data strategy; LOCF as primary (major without sensitivity analyses); complete-case primary; censoring under a treatment-policy estimand |
+| `interimAnalysisGate` | INT-001..005 | interims with no spending function (critical); invalid information-fraction schedule; no boundaries; no DMC; DMC without a statistician |
+
+Critical and major findings become proposed tasks keyed `finding:<code>`, so they reach the board with the standard cited.
+
 ## Client
 
 - **Biostatistics designer** (`surfaces/Biostatistics.tsx` + `surfaces/biostatBridge.tsx`): a *Study design* card lists the open program's designs (org-wide when none is open); picking one seeds the engine from the server adapter's input and shows the assessment — server sizing with provenance, readiness, gaps by severity, the filing type, the governed *Apply sample size to design* (reason required) and *Raise tasks* (checkbox list, already-open keys excluded) forms, and links to the protocol workspace, task board and submission center. The document bar states where the current document files (`5.3.5.1 (M5) · required — …`), and the authoring hand-off uses that module. The governed-documents list is narrowed to the open program (`?programId=`).

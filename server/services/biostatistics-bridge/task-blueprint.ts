@@ -22,6 +22,7 @@
 
 import type { JudgmentResult, StatisticalInput, StatisticalDocumentType } from '../ana-biostats/types';
 import type { DesignGap } from './design-adapter';
+import type { DesignFinding } from '../study-design/design-gates';
 import {
   APPLICATION_TYPE_LABELS,
   DELIVERABLE_LABELS,
@@ -59,6 +60,8 @@ export interface BlueprintContext {
   applicationType: ApplicationType | null;
   /** Statistical document types already persisted for the program — skipped from the checklist. */
   existingDeliverables?: StatisticalDocumentType[];
+  /** The design gates' findings; critical and major ones become tasks keyed by their code. */
+  findings?: DesignFinding[];
 }
 
 const fmtPct = (v: number) => `${Math.round(v * 100)}%`;
@@ -217,7 +220,24 @@ export function tasksFromAssessment(ctx: BlueprintContext): TaskBlueprint[] {
     }
   }
 
-  // 6. Filing checklist: the required/expected deliverables for the filing.
+  // 6. Gate findings: every critical or major finding is work someone owns.
+  //    Keyed by the finding's stable code, so a re-run proposes the same task
+  //    until the gate clears.
+  for (const f of (ctx.findings ?? []).filter((x) => x.severity === 'critical' || x.severity === 'major')) {
+    out.push({
+      key: `finding:${f.code}`,
+      title: `${f.title}${f.endpointName ? ` (${f.endpointName})` : ''}`,
+      description: `${f.detail}${f.suggestedFix ? ' ' + f.suggestedFix : ''}${f.standard ? ` [${f.standard}]` : ''}`,
+      priority: f.severity === 'critical' ? 'critical' : 'high',
+      category: f.code.startsWith('MTH') || f.code.startsWith('MIS') || f.code.startsWith('PWR') ? 'analysis' : 'compliance',
+      taskType: 'action',
+      regulatoryImpact: true,
+      criticalPath: f.severity === 'critical',
+      trigger: `Design gate ${f.code} (${f.section})`,
+    });
+  }
+
+  // 7. Filing checklist: the required/expected deliverables for the filing.
   if (ctx.applicationType) {
     const have = new Set(ctx.existingDeliverables ?? []);
     const label = APPLICATION_TYPE_LABELS[ctx.applicationType];

@@ -47,6 +47,7 @@ import {
 } from '../services/authoring/revision-ledger';
 import {
   checkSectionWritable,
+  checkDocumentWritable,
   LOCKED_DOCUMENT_STATUSES as LOCKED_STATUSES,
 } from '../services/authoring/document-lock';
 
@@ -6971,6 +6972,17 @@ router.post('/documents/:id/tracked-change-decisions', async (req: Request, res:
       });
     }
 
+    /* This route sits under /documents/:id, outside the /sections/:sectionId
+       prefix guard that refuses a FROZEN/APPROVED document on every other
+       authoring write. Nothing else here resolves the parent document at all,
+       so an accept against a sealed filing reached the INSERT unconditionally
+       and the hash-chained audit event below recorded a decision the record
+       itself was no longer able to accept. */
+    const lock = await checkDocumentWritable(pool, String(artifactId), tenantId);
+    if (!lock.writable && lock.code === 'DOCUMENT_FROZEN') {
+      return res.status(403).json({ error: 'DOCUMENT_FROZEN', message: lock.reason });
+    }
+
     const result = await pool.query(
       `INSERT INTO authoring_tracked_change_decisions
          (artifact_id, change_id, decision, user_id, user_name, tenant_id)
@@ -7055,6 +7067,15 @@ router.post('/documents/:id/tracked-change-decisions/bulk', async (req: Request,
       });
     }
 
+    // See the single-decision route above: this endpoint is equally outside
+    // the /sections/:sectionId lock guard, and "Accept all" is the single
+    // click by which an entire AI draft is adopted — the case with the most
+    // to lose from writing past a sealed document.
+    const lock = await checkDocumentWritable(pool, String(artifactId), tenantId);
+    if (!lock.writable && lock.code === 'DOCUMENT_FROZEN') {
+      return res.status(403).json({ error: 'DOCUMENT_FROZEN', message: lock.reason });
+    }
+
     // Upsert each decision
     const results = [];
     for (const changeId of changeIds) {
@@ -7088,6 +7109,11 @@ router.post('/documents/:id/tracked-change-decisions/bulk', async (req: Request,
             ? c.authorId
             : null,
       text: typeof c?.text === 'string' ? c.text.slice(0, 200) : null,
+      // The single-decision route above records this; the client already sends
+      // it (DocumentAuthoring.tsx's flushDecisions puts `at` on every change in
+      // the batch), and "Accept all" is the case that adopts the most text at
+      // once — the case that most needs to say when each change was proposed.
+      proposedAt: typeof c?.at === 'string' ? c.at : null,
     }));
     await createAuditEvent(
       artifactId,
@@ -7097,6 +7123,9 @@ router.post('/documents/:id/tracked-change-decisions/bulk', async (req: Request,
         changeIds,
         decision,
         count: changeIds.length,
+        // Same client field the single route records at the top level of its
+        // metadata (authoring.router.ts, POST /documents/:id/tracked-change-decisions).
+        ...(typeof req.body?.sectionId === 'string' ? { sectionId: req.body.sectionId } : {}),
         ...(summarised.length > 0 ? { changes: summarised } : {}),
         ...(rawChanges.length > MAX_SUMMARISED
           ? { changesOmittedFromSummary: rawChanges.length - MAX_SUMMARISED }
