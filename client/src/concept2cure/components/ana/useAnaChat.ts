@@ -50,7 +50,7 @@ export type {
   AnaProgressPhase,
 } from './useAnaChat.types';
 
-import { advanceProgress, closeProgress, CLIENT_PHASE_LABELS } from './anaProgress';
+import { advanceProgress, closeProgress, settleRunningCalls, CLIENT_PHASE_LABELS } from './anaProgress';
 
 import type {
   AnaChatAction,
@@ -814,11 +814,12 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
               // Surface the accepted steer as a small note on the assistant turn.
               const msg: string = typeof event.message === 'string' ? event.message : '';
               if (msg) {
-                // Confirmed spliced into a round: it is no longer waiting.
-                setPendingSteers(prev => {
-                  const i = prev.indexOf(msg);
-                  return i === -1 ? prev : [...prev.slice(0, i), ...prev.slice(i + 1)];
-                });
+                // Confirmed spliced into a round: it is no longer waiting. The
+                // oldest pending steer is the one consumed — the server drains
+                // its queue in order and echoes each as it goes — and it is
+                // matched by position, not text, because the echo is trimmed
+                // and capped server-side and a long steer would never match.
+                setPendingSteers(prev => (prev.length > 0 ? prev.slice(1) : prev));
                 setMessages(prev =>
                   prev.map(m =>
                     m.id === assistantId
@@ -1185,6 +1186,7 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
                 statusPhase: undefined,
                 completedAt: Date.now(),
                 progress: closeProgress(m.progress, 'stopped', Date.now()),
+                toolCalls: settleRunningCalls(m.toolCalls, 'Not finished — AnA stopped responding.', Date.now()),
                 warnings: [...(m.warnings || []), 'Response timed out'],
               };
             })
@@ -1201,6 +1203,7 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
                     stopped: true,
                     completedAt: Date.now(),
                     progress: closeProgress(m.progress, 'stopped', Date.now()),
+                    toolCalls: settleRunningCalls(m.toolCalls, 'Not finished — the run was stopped.', Date.now()),
                   }
                 : m
             )
@@ -1220,6 +1223,7 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
                 statusPhase: undefined,
                 completedAt: Date.now(),
                 progress: closeProgress(m.progress, 'stopped', Date.now()),
+                toolCalls: settleRunningCalls(m.toolCalls, 'Not finished — the connection was lost.', Date.now()),
               };
             })
           );

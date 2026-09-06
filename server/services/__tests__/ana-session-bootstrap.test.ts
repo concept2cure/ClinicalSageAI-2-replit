@@ -102,4 +102,57 @@ describe('formatSessionBootstrap', () => {
     });
     expect(out).not.toContain('What I learned');
   });
+
+  it('recalls project files with their filed location and what each is for', () => {
+    const out = formatSessionBootstrap({
+      projectAtoms: [],
+      clientAtoms: [],
+      outcomeLessons: [],
+      vaultFiles: [
+        {
+          fileName: 'tox-28day.pdf',
+          documentTitle: '28-Day Rat Tox Report',
+          programName: 'AZR-110 IND',
+          folderId: 'module-4',
+          ctdSection: '4.2.3.2',
+          placementStatus: 'confirmed',
+          catalogStatus: 'cataloged',
+          documentKind: 'GLP 28-day rat toxicology study report',
+          purpose: 'Supports Module 4 repeat-dose tox.',
+        },
+      ],
+    });
+    expect(out).toContain('Project files on record');
+    expect(out).toContain('28-Day Rat Tox Report');
+    expect(out).toContain('module-4 · 4.2.3.2');
+    expect(out).toContain('GLP 28-day rat toxicology study report');
+  });
+
+  it('says honestly when a file has not been studied or failed extraction', () => {
+    const out = formatSessionBootstrap({
+      projectAtoms: [],
+      clientAtoms: [],
+      outcomeLessons: [],
+      vaultFiles: [
+        {
+          fileName: 'coa-batch-23-104.pdf',
+          documentTitle: 'CoA batch 23-104',
+          placementStatus: 'unfiled',
+          catalogStatus: 'extracted',
+        },
+        {
+          fileName: 'scan-blurry.pdf',
+          documentTitle: 'Scanned protocol',
+          placementStatus: 'suggested',
+          folderId: 'module-5',
+          catalogStatus: 'extraction_failed',
+        },
+      ],
+    });
+    expect(out).toContain('not yet studied');
+    expect(out).toContain('unfiled — needs review');
+    expect(out).toContain('extraction FAILED');
+    // A file awaiting study must never be presented as understood.
+    expect(out).not.toContain('cataloged');
+  });
 });

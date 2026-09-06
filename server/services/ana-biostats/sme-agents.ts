@@ -14,15 +14,8 @@
  */
 
 import type {
-  StatisticalInput,
-  ComputationResult,
-  JudgmentResult,
-  DomainAdaptation,
-  RegulatoryCustomization,
   StatisticalDocumentType,
   ClientTrack,
-  RiskLevel,
-  ActionRecommendation,
   RoleExplanations,
 } from './types';
 

@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { I } from '../icons';
 import { connected, useLiveRows, EmptyState } from '../dataConnect';
 import { usePublishSurfaceContext } from '../surfaceContext';
@@ -9,6 +9,17 @@ import { renderSafeMarkdown } from '../../components/ana/renderSafeMarkdown';
 import { saveToAuthoring } from '../authoringHandoff';
 import '../styles/project-home-v2.css';
 import { C2CToast, useToast } from '../toast';
+import { consumeNavParams } from '../navParams';
+import { readShellProject } from '../shellProject';
+import {
+  DesignBridgePanel,
+  FilingPlacementNote,
+  StudyDesignCard,
+  placementForDoc,
+  resolveDesign,
+  useBridgeDesigns,
+  useDesignAssessment,
+} from './biostatBridge';
 
 /* ═══════════════════════════════════════════════════════════════════
    Biostatistics — a document-producing statistical workbench.
@@ -414,7 +425,7 @@ const BiostatDocs = (() => {
     if (j.fragility.category !== 'robust') s += `- Effect-size sensitivity (fragility index ${j.fragility.fragilityIndex})\n`;
     return s + `\n` + foot();
   };
-  const fullSAP: GenFn = (i, c, j, _d, r) => { const n = c.adjustedTotal ?? c.sampleSize.total, body = (r && r.body) || i.regulatoryBody || 'FDA'; let s = `# Statistical Analysis Plan\n\n*${track(i.clientTrack)} -- ${i.studyType} -- ${i.objectiveType}*\n\n## 1. Introduction\n\nThis Statistical Analysis Plan (SAP) specifies the analyses for a ${i.studyType} study with a ${i.endpointType} primary endpoint. It is written to ${body} expectations and should be finalized and signed prior to database lock and unblinding.\n\n## 2. Study Objectives and Endpoints\n\n- **Primary objective**: ${i.objectiveType} evaluation via the ${i.endpointType} primary endpoint.\n- **Study type**: ${i.studyType}${i.nonInferiorityMargin ? ` (non-inferiority margin ${i.nonInferiorityMargin})` : ''}${i.equivalenceMargin ? ` (equivalence margin ${i.equivalenceMargin})` : ''}.\n\n## 3. Study Design\n\n- Design: ${i.studyType}\n- Number of groups: ${i.numberOfGroups ?? 2}\n- Allocation ratio: ${i.allocationRatio}:1\n- Comparator: ${i.comparatorType ?? 'placebo'}\n\n## 4. Analysis Populations\n\n- **Intention-to-treat (ITT)**: all randomized subjects, analyzed as randomized. Primary population for efficacy.\n- **Per-protocol (PP)**: subjects without major protocol deviations. ${i.studyType === 'non_inferiority' || i.studyType === 'equivalence' ? 'Co-primary for non-inferiority/equivalence per ICH E9.' : 'Supportive.'}\n- **Safety**: all subjects who received any study intervention, analyzed as treated.\n\n## 5. Sample Size Determination\n\nA total of **${n} subjects** (${c.sampleSize.perGroup} per group) provides **${(c.power * 100).toFixed(1)}% power** at a two-sided a = ${i.alpha} to detect the planned effect (${i.effectSize}).\n\n${c.formula}\n\nAssumed attrition: ${(i.attritionRate * 100).toFixed(0)}%.\n\n## 6. Primary Analysis Method\n\n${c.method}\n\n*Endpoint-method fit*: ${j.endpointMethodFit.rationale}\n\n## 7. Multiplicity\n\nSingle primary endpoint — no multiplicity adjustment required for the primary comparison. Pre-specify a testing hierarchy for key secondary endpoints.\n\n## 8. Estimand (ICH E9(R1))\n\n${i.estimandStrategy ? `Strategy for intercurrent events: **${i.estimandStrategy}**. Define population, variable (${i.endpointType}), intercurrent-event handling, and population-level summary measure explicitly.` : 'Define the estimand (population, variable, intercurrent-event strategy, summary measure) before study conduct per ICH E9(R1).'}\n\n## 9. Missing Data\n\n${i.missingDataMethod ? `Primary approach: **${i.missingDataMethod}**, with a tipping-point sensitivity analysis.` : 'Pre-specify the missing-data approach (e.g. MMRM for longitudinal endpoints, multiple imputation otherwise) and a tipping-point sensitivity analysis.'}\n\n## 10. Sensitivity Analyses\n\n- Tipping-point analysis for missing-data assumptions\n- ITT vs PP concordance\n`;
+  const fullSAP: GenFn = (i, c, j, _d, r) => { const n = c.adjustedTotal ?? c.sampleSize.total, body = (r && r.body) || i.regulatoryBody || 'FDA'; let s = `# Statistical Analysis Plan\n\n*${track(i.clientTrack)} — ${i.studyType} — ${i.objectiveType}*\n\n## 1. Introduction\n\nThis Statistical Analysis Plan (SAP) specifies the analyses for a ${i.studyType} study with a ${i.endpointType} primary endpoint. It is written to ${body} expectations and should be finalized and signed prior to database lock and unblinding.\n\n## 2. Study Objectives and Endpoints\n\n- **Primary objective**: ${i.objectiveType} evaluation via the ${i.endpointType} primary endpoint.\n- **Study type**: ${i.studyType}${i.nonInferiorityMargin ? ` (non-inferiority margin ${i.nonInferiorityMargin})` : ''}${i.equivalenceMargin ? ` (equivalence margin ${i.equivalenceMargin})` : ''}.\n\n## 3. Study Design\n\n- Design: ${i.studyType}\n- Number of groups: ${i.numberOfGroups ?? 2}\n- Allocation ratio: ${i.allocationRatio}:1\n- Comparator: ${i.comparatorType ?? 'placebo'}\n\n## 4. Analysis Populations\n\n- **Intention-to-treat (ITT)**: all randomized subjects, analyzed as randomized. Primary population for efficacy.\n- **Per-protocol (PP)**: subjects without major protocol deviations. ${i.studyType === 'non_inferiority' || i.studyType === 'equivalence' ? 'Co-primary for non-inferiority/equivalence per ICH E9.' : 'Supportive.'}\n- **Safety**: all subjects who received any study intervention, analyzed as treated.\n\n## 5. Sample Size Determination\n\nA total of **${n} subjects** (${c.sampleSize.perGroup} per group) provides **${(c.power * 100).toFixed(1)}% power** at a two-sided a = ${i.alpha} to detect the planned effect (${i.effectSize}).\n\n${c.formula}\n\nAssumed attrition: ${(i.attritionRate * 100).toFixed(0)}%.\n\n## 6. Primary Analysis Method\n\n${c.method}\n\n*Endpoint-method fit*: ${j.endpointMethodFit.rationale}\n\n## 7. Multiplicity\n\nSingle primary endpoint — no multiplicity adjustment required for the primary comparison. Pre-specify a testing hierarchy for key secondary endpoints.\n\n## 8. Estimand (ICH E9(R1))\n\n${i.estimandStrategy ? `Strategy for intercurrent events: **${i.estimandStrategy}**. Define population, variable (${i.endpointType}), intercurrent-event handling, and population-level summary measure explicitly.` : 'Define the estimand (population, variable, intercurrent-event strategy, summary measure) before study conduct per ICH E9(R1).'}\n\n## 9. Missing Data\n\n${i.missingDataMethod ? `Primary approach: **${i.missingDataMethod}**, with a tipping-point sensitivity analysis.` : 'Pre-specify the missing-data approach (e.g. MMRM for longitudinal endpoints, multiple imputation otherwise) and a tipping-point sensitivity analysis.'}\n\n## 10. Sensitivity Analyses\n\n- Tipping-point analysis for missing-data assumptions\n- ITT vs PP concordance\n`;
     if (j.fragility.category !== 'robust') s += `- Effect-size sensitivity (fragility index ${j.fragility.fragilityIndex})\n`;
     s += `\n## 11. Interim Analyses\n\n${i.interimAnalyses && i.interimAnalyses > 0 ? `${i.interimAnalyses} planned interim ${i.interimAnalyses === 1 ? 'analysis' : 'analyses'} governed by a pre-specified alpha-spending function (e.g. O'Brien-Fleming). See the Interim Analysis Plan and DSMB Charter.` : 'No interim efficacy analyses planned. Safety monitoring per the DSMB charter, if applicable.'}\n\n## 12. Planned Outputs\n\nTables, listings and figures are specified in the TLF Shell Plan. Disposition, demographics, primary/secondary efficacy, and safety summaries are mandatory.\n\n`;
     return s + foot();
@@ -439,7 +450,7 @@ const BiostatDocs = (() => {
     s += `| Final | 100% | +/-1.97 |\n\n*Boundaries are indicative; compute exact boundaries with the chosen spending function (Lan-DeMets) at finalization.*\n\n## 4. Stopping Rules\n\n- **Efficacy**: cross the upper boundary at an interim look.\n- **Futility**: non-binding boundary (e.g. conditional power < 20%).\n- **Safety**: per DSMB charter, independent of efficacy boundaries.\n\n## 5. Governance\n\nInterim analyses are performed by an unblinded independent statistician and reviewed by the DSMB. The sponsor remains blinded.${r ? ` ${r.body} expects pre-specification of all boundaries before the first look.` : ''}\n\n`;
     return s + foot();
   };
-  const tlfShell: GenFn = (i, c, _j, _d, _r) => { let s = `# Tables, Listings & Figures (TLF) Shell Plan\n\nPlanned outputs for a ${i.studyType} study (N = ${c.adjustedTotal ?? c.sampleSize.total}). Shells are organized by ICH E3 domain.\n\n## Tables\n\n| ID | Title | Population |\n|---|---|---|\n| 14.1.1 | Subject disposition | All randomized |\n| 14.1.2 | Protocol deviations | All randomized |\n| 14.1.3 | Demographics and baseline characteristics | ITT; Safety |\n| 14.2.1 | Primary endpoint (${i.endpointType}) analysis -- ${c.method} | ITT |\n| 14.2.2 | Primary endpoint — PP sensitivity | PP |\n| 14.2.3 | Secondary endpoints | ITT |\n| 14.3.1 | Exposure | Safety |\n| 14.3.2 | Adverse events overview | Safety |\n| 14.3.3 | AEs by SOC/PT | Safety |\n| 14.3.4 | Serious adverse events | Safety |\n| 14.3.5 | Laboratory shifts | Safety |\n\n## Figures\n\n| ID | Title |\n|---|---|\n| F-1 | Subject disposition (CONSORT) |\n`;
+  const tlfShell: GenFn = (i, c, _j, _d, _r) => { let s = `# Tables, Listings & Figures (TLF) Shell Plan\n\nPlanned outputs for a ${i.studyType} study (N = ${c.adjustedTotal ?? c.sampleSize.total}). Shells are organized by ICH E3 domain.\n\n## Tables\n\n| ID | Title | Population |\n|---|---|---|\n| 14.1.1 | Subject disposition | All randomized |\n| 14.1.2 | Protocol deviations | All randomized |\n| 14.1.3 | Demographics and baseline characteristics | ITT; Safety |\n| 14.2.1 | Primary endpoint (${i.endpointType}) analysis — ${c.method} | ITT |\n| 14.2.2 | Primary endpoint — PP sensitivity | PP |\n| 14.2.3 | Secondary endpoints | ITT |\n| 14.3.1 | Exposure | Safety |\n| 14.3.2 | Adverse events overview | Safety |\n| 14.3.3 | AEs by SOC/PT | Safety |\n| 14.3.4 | Serious adverse events | Safety |\n| 14.3.5 | Laboratory shifts | Safety |\n\n## Figures\n\n| ID | Title |\n|---|---|\n| F-1 | Subject disposition (CONSORT) |\n`;
     if (i.endpointType === 'time_to_event') s += `| F-2 | Kaplan-Meier curve, primary endpoint |\n`;
     s += `| F-3 | Primary endpoint by visit / forest plot of subgroups |\n\n## Listings\n\n| ID | Title |\n|---|---|\n| 16.2.1 | Subject disposition |\n| 16.2.4 | Protocol deviations |\n| 16.2.7 | Adverse events |\n\n`;
     return s + foot();
@@ -507,20 +518,54 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
   const [docType, setDocType] = useState('sample_size_rationale');
   const [toast, fireToast] = useToast();
 
+  /* ── The study design bridge ──────────────────────────────────────────────
+     The engine used to take its study from four presets and nothing else. It
+     now loads the program's PERSISTED study designs (the design-as-data spine,
+     GET /api/biostat-bridge/designs) and seeds itself from the one the person
+     picks — or the one the protocol workspace / AnA handed over on the nav
+     channel (`studyId`). The seed is the server adapter's translation of the
+     design (with its honest gaps); the numbers on screen are still this
+     surface's deterministic recompute, exactly as for a preset. */
+  const program = readShellProject();
+  const [designReload, setDesignReload] = useState(0);
+  const designs = useBridgeDesigns(designReload);
+  const [selectedStudyId, setSelectedStudyId] = useState<string | null>(() => consumeNavParams('biostatistics')?.studyId ?? null);
+  const bridge = useDesignAssessment(selectedStudyId);
+  const loadedDesign = bridge.assessment;
+  useEffect(() => {
+    const seed = loadedDesign?.adapter.input;
+    if (!seed) return;
+    // The adapter emits the engine's StatisticalInput; BiostatInput is the same
+    // vocabulary (this file's engine is the server engine ported verbatim).
+    setInput(seed as unknown as BiostatInput);
+    setPreset('design');
+  }, [loadedDesign]);
+
   // Governed statistical documents — the ONE stored, org-scoped slice of this
   // surface (the design/document body is computed in-browser deterministically).
   // GET /api/ana-biostats/governed-documents reads real persisted artifacts
   // (concept2cure_artifacts, type 'statistical_summary'), org-scoped. Real rows,
   // an honest empty state, or an honest failed-load state — never a fixture.
-  const govDocs = useLiveRows<BiostatPlan>('/api/ana-biostats/governed-documents');
+  // Narrowed to the open program when one is open (the route resolves the
+  // program UUID to the artifact store's project id, tenant-scoped); the card's
+  // sub-label says which scope it is showing.
+  const govDocsPath = program
+    ? '/api/ana-biostats/governed-documents?programId=' + encodeURIComponent(String(program.id))
+    : '/api/ana-biostats/governed-documents';
+  const govDocs = useLiveRows<BiostatPlan>(govDocsPath);
   const set = (k: string, v: unknown) => setInput((s) => ({ ...s, [k]: v }));
   const applyPreset = (k: string) => { setPreset(k); setInput(BS_PRESETS[k].input); };
 
-  const res = useMemo(() => { try { return BiostatEngine.compute(input); } catch (_e) { return null; } }, [input]);
-  const jud = useMemo(() => { try { return res && BiostatEngine.judge(input, res); } catch (_e) { return null; } }, [input, res]);
+  const res = useMemo(() => { try { return BiostatEngine.compute(input); } catch { return null; } }, [input]);
+  const jud = useMemo(() => { try { return res && BiostatEngine.judge(input, res); } catch { return null; } }, [input, res]);
   const dom = useMemo(() => domainAdapt(input), [input]);
   const reg = useMemo(() => regCustom(input), [input]);
   const docDef = BiostatDocs.byId(docType);
+  /* Where THIS document files for the program's application type — from the
+     bridge's placement catalog. Null when no design is loaded or the program
+     has no filing type; the authoring hand-off then keeps its historical M5. */
+  const placement = placementForDoc(loadedDesign, docType);
+  const filingModule = placement?.module ?? 'M5';
   const md = useMemo(() => { try { return res && jud && docDef ? docDef.gen(input, res, jud, dom, reg) : ''; } catch (e: unknown) { return '# Error\n\n' + (e instanceof Error ? e.message : String(e)); } }, [input, res, jud, dom, reg, docType, docDef]);
   const html = useMemo(() => renderSafeMarkdown(md), [md]);
 
@@ -579,7 +624,7 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
       // Statistical documentation files under Module 5; the server would
       // default to M3.
       const r = await saveToAuthoring({
-        title, module: 'M5', code: docDef?.id || 'statistical_document',
+        title, module: filingModule, code: docDef?.id || 'statistical_document',
         content: md, subject: 'the document',
       });
       // Navigate only on a clean write. On a half-failure the document exists
@@ -644,11 +689,15 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
          reporting — the only difference from "Open in editor" is that this one
          does not navigate away. */
       const r = await saveToAuthoring({
-        title: label, module: 'M5', code: docDef?.id || 'statistical_document',
+        title: label, module: filingModule, code: docDef?.id || 'statistical_document',
         content: md, subject: 'the document',
       });
       if (!r.ok) { fireToast(r.message, 'error'); return; }
-      fireToast(label + ' filed to the dossier under Module 5 — open it from Document authoring.');
+      fireToast(
+        placement && placement.required === 'not_applicable'
+          ? label + ' saved under ' + filingModule + ' as an internal design document — it is not a submission document for this filing.'
+          : label + ' filed to the dossier under Module ' + filingModule.slice(1) + (placement?.code ? ' (' + placement.code + ')' : '') + ' — open it from Document authoring.',
+      );
     } finally {
       attachingRef.current = false;
       setAttaching(false);
@@ -672,11 +721,20 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
           ? 'no governed statistical documents persisted yet'
           : govDocs.rows.length + ' governed statistical document(s) persisted (org-scoped)';
     const govFacts = !govDocs.loading && !govDocs.error ? { governedDocumentsPersisted: govDocs.rows.length } : {};
+    const designFacts = loadedDesign
+      ? {
+          loadedStudyDesign: { studyId: loadedDesign.studyId, title: loadedDesign.title, readinessPct: loadedDesign.readiness.percent },
+          blockingDesignGaps: loadedDesign.adapter.gaps.filter((g) => g.severity === 'blocking').map((g) => g.field),
+          applicationType: loadedDesign.filing.applicationType,
+          proposedTasks: loadedDesign.proposedTasks.length,
+          documentFilesUnder: placement ? (placement.code ?? 'not filed') : null,
+        }
+      : { loadedStudyDesign: null, persistedDesignsListed: designs.loading || designs.error ? null : designs.rows.length };
     if (!res || !jud) {
       return {
         summary:
           'Biostatistics — the design engine could not compute a result for the current inputs, so no sample size, power or verdict is on screen; ' + gov + '.',
-        facts: { documentType: docDef?.label ?? null, preset: presetLabel, designComputed: false, ...govFacts },
+        facts: { documentType: docDef?.label ?? null, preset: presetLabel, designComputed: false, ...govFacts, ...designFacts },
       };
     }
     return {
@@ -691,19 +749,30 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
         achievedPowerPct: Number((res.power * 100).toFixed(1)),
         overallVerdict: jud.overallVerdict,
         ...govFacts,
+        ...designFacts,
       },
       availableActions: [
+        'Load one of the program\'s persisted study designs into the engine',
         'Adjust any design input or preset — the document rewrites deterministically',
         'Pick a different statistical document type to generate',
         'Refine the document with AnA',
         'Opening in the editor and attaching to the dossier both file a real governed document (genesis revision + Part 11 audit row) — AnA proposes them in conversation, never through screen controls.',
       ],
     };
-  }, [res, jud, docDef, preset, input.studyType, n, govDocs.loading, govDocs.error, govDocs.empty, govDocs.rows]);
+  }, [res, jud, docDef, preset, input.studyType, n, govDocs.loading, govDocs.error, govDocs.empty, govDocs.rows, loadedDesign, placement, designs.loading, designs.error, designs.rows.length]);
   /* Both actions are pure client-side recomputes of a deterministic design —
      nothing is filed. Opening in the editor and attaching to the dossier stay
      governed human acts. `applyPreset` is the SAME function the chips call. */
   useSurfaceActionHandlers('biostatistics', {
+    'biostatistics.load-design': (params) => {
+      if (designs.loading) return { ok: false, reason: 'The study designs are still loading.', retry: true };
+      if (designs.error) return { ok: false, reason: 'The study designs did not load, so none can be selected.' };
+      const r = resolveDesign(designs.rows, String(params.design ?? ''));
+      if (!r.ok) return { ok: false, reason: r.reason };
+      if (selectedStudyId === r.row.studyId) return { ok: true, detail: `Already loaded "${r.row.title}"` };
+      setSelectedStudyId(r.row.studyId);
+      return { ok: true, detail: `Loading "${r.row.title}" — the engine recomputes from the design; nothing is filed` };
+    },
     'biostatistics.set-preset': (params) => {
       const target = String(params.preset ?? '');
       const meta = BS_PRESETS[target];
@@ -747,8 +816,9 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
       )}
 
       <div className="bs-doc-layout">
-        {/* Left: what to produce + design inputs */}
+        {/* Left: the study, what to produce, design inputs, the assessment */}
         <div className="bs-side">
+          <StudyDesignCard designs={designs} selectedId={selectedStudyId} onSelect={setSelectedStudyId} />
           <div className="pj-card">
             <div className="pj-card-h"><span className="t">Document</span><span className="s">what to produce</span></div>
             <div className="pj-card-b" style={{ padding: 10 }}>
@@ -767,7 +837,10 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
           <div className="pj-card">
             <div className="pj-card-h"><span className="t">Study design</span><span className="s">document rewrites live</span></div>
             <div className="pj-card-b" style={{ padding: 12 }}>
-              <div className="bs-presets">{Object.entries(BS_PRESETS).map(([k, p]) => <button key={k} className={'bs-preset' + (preset === k ? ' on' : '')} onClick={() => applyPreset(k)}>{p.label}</button>)}</div>
+              <div className="bs-presets">
+                {loadedDesign && <button className={'bs-preset' + (preset === 'design' ? ' on' : '')} onClick={() => { const seed = loadedDesign.adapter.input; if (seed) { setInput(seed as unknown as BiostatInput); setPreset('design'); } }} disabled={!loadedDesign.adapter.input} title={loadedDesign.adapter.input ? 'The loaded study design' : 'The loaded design cannot be sized until its blocking gaps are resolved'}>{I.sigma} {loadedDesign.title}</button>}
+                {Object.entries(BS_PRESETS).map(([k, p]) => <button key={k} className={'bs-preset' + (preset === k ? ' on' : '')} onClick={() => applyPreset(k)}>{p.label}</button>)}
+              </div>
               <div className="bs-fields">
                 <label className="bs-f"><span>Track</span><select value={input.clientTrack} onChange={(e) => set('clientTrack', e.target.value)}>{['biotech_pharma', 'medical_device', 'diagnostics_ivd'].map((x) => <option key={x} value={x}>{x.replace(/_/g, ' / ')}</option>)}</select></label>
                 <label className="bs-f"><span>Agency</span><select value={input.regulatoryBody} onChange={(e) => set('regulatoryBody', e.target.value)}>{['FDA', 'EMA', 'MHRA', 'PMDA', 'NMPA', 'TGA', 'Health_Canada'].map((x) => <option key={x}>{x}</option>)}</select></label>
@@ -792,6 +865,15 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
               </div>}
             </div>
           </div>
+          {selectedStudyId && (
+            <DesignBridgePanel
+              state={bridge}
+              onNav={onNav}
+              fireToast={fireToast}
+              onApplied={() => { bridge.reload(); setDesignReload((k) => k + 1); }}
+              onTasksRaised={() => bridge.reload()}
+            />
+          )}
         </div>
 
         {/* Center: the DOCUMENT -- the deliverable */}
@@ -806,7 +888,7 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
                   document with a server origin, on the one line a reviewer reads to
                   find out exactly that. It also printed an API route into customer
                   UI, which the work order forbids outright. */}
-                Deterministic engine -- v1.0.0 — draft</span></div>
+                Deterministic engine — v1.0.0 — draft</span>{placement && <span className="bs-doc-prov" style={{ marginLeft: 8 }}><FilingPlacementNote placement={placement} /></span>}</div>
             <div className="bs-doc-bar-a">
               <button className="bs-da" onClick={() => ask('Refine the ' + (docDef?.label || 'document') + ': ' + (docDef?.blurb || ''))}>{I.sparkles} Refine with AnA</button>
               <button className="bs-da primary" onClick={() => void openEditor()} disabled={opening}>{I.penLine} {opening ? 'Saving to the editor…' : 'Open in editor'}</button>
@@ -822,10 +904,10 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
         {/* The list is org-scoped (every persisted statistical_summary artifact for the
             tenant), so the sub-label reads "org-scoped" — not "this project", which would
             misrepresent an organization/portfolio-wide list as a single project's. */}
-        <div className="pj-card-h"><span className="t">Governed statistical documents</span><span className="s">{govDocs.rows.length > 0 ? govDocs.rows.length + ' persisted · org-scoped' : 'org-scoped'}</span></div>
+        <div className="pj-card-h"><span className="t">Governed statistical documents</span><span className="s">{(govDocs.rows.length > 0 ? govDocs.rows.length + ' persisted · ' : '') + (program ? 'this program' : 'org-scoped')}</span></div>
         <div className="pj-card-b" style={{ padding: 8 }}>
           {govDocs.loading ? (
-            <div className="scaf-note" style={{ padding: '18px 10px' }}>Loading governed documents…</div>
+            <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>Loading governed documents…</div>
           ) : govDocs.error ? (
             <EmptyState
               tone="error"

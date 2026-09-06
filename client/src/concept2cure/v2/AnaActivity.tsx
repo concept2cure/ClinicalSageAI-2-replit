@@ -39,24 +39,10 @@ import React from 'react';
 import { SR_ONLY_STYLE } from '../hooks/useChatUpload';
 import { I } from './icons';
 import type { AnaToolCall } from '../components/ana/useAnaChat';
-import { formatElapsed } from '../components/ana/anaProgress';
+import { byRound, formatElapsed, LENS_PHRASE } from '../components/ana/anaProgress';
+import { statusGlyph } from './AnaWorkSections';
+import { useNow } from './useNow';
 
-/** How AnA read the question. Rendered as her opening decision, not a label. */
-/**
- * Noun phrases, deliberately. These complete "Reading this as …", and the
- * first draft used verb phrases that either broke the sentence ("Reading this
- * as auditing it", "…as comparing") or claimed a deliberation that did not
- * happen: a lens is assigned by a classifier, so "thinking strategically" and
- * "weighing the risk" describe an act nothing performed. Naming the CATEGORY
- * of question is both true and how a colleague would say it.
- */
-const LENS_PHRASE: Record<string, string> = {
-  audit: 'an audit',
-  improve: 'a request to strengthen the argument',
-  risk: 'a risk question',
-  strategy: 'a strategy question',
-  compare: 'a comparison',
-};
 
 export interface AnaActivityProps {
   /** True while the turn is still in flight. */
@@ -83,17 +69,7 @@ export interface AnaActivityProps {
   completedAt?: number;
 }
 
-/** A 1 Hz clock while the turn is live; frozen otherwise. */
-function useNow(active: boolean): number {
-  const [now, setNow] = React.useState(() => Date.now());
-  React.useEffect(() => {
-    if (!active) return;
-    setNow(Date.now());
-    const t = setInterval(() => setNow(Date.now()), 1000);
-    return () => clearInterval(t);
-  }, [active]);
-  return now;
-}
+
 
 /**
  * How much of a still-streaming thought to show. Long enough to be a real
@@ -125,26 +101,6 @@ function latestThought(thinking: string): string {
   return `…${space > 0 ? cut.slice(space + 1) : cut}`;
 }
 
-function glyph(status: AnaToolCall['status']): React.ReactElement {
-  if (status === 'success') return I.check;
-  if (status === 'error') return I.alertTriangle;
-  return I.dot;
-}
-
-/**
- * Group calls by agentic-loop round, preserving order. A single-round turn
- * renders flat — the round headings only earn their space once AnA actually
- * went back for more.
- */
-function byRound(calls: AnaToolCall[]): Array<{ round: number; calls: AnaToolCall[] }> {
-  const groups = new Map<number, AnaToolCall[]>();
-  for (const c of calls) {
-    const r = typeof c.round === 'number' && c.round > 0 ? c.round : 1;
-    if (!groups.has(r)) groups.set(r, []);
-    groups.get(r)!.push(c);
-  }
-  return [...groups.entries()].sort((a, b) => a[0] - b[0]).map(([round, cs]) => ({ round, calls: cs }));
-}
 
 export function AnaActivity({
   streaming,
@@ -240,8 +196,11 @@ export function AnaActivity({
         </button>
       )}
 
-      {expanded && (
-        <div className="ana-activity-body" id={bodyId}>
+      {/* Mounted while collapsed and hidden with the attribute, so the
+          toggle's aria-controls always resolves (SC 4.1.2) — the same rule as
+          the dock's sections. */}
+      {(
+        <div className="ana-activity-body" id={bodyId} hidden={!expanded}>
           {/* The live phase. `polite` so a screen-reader user hears progress
               without it interrupting the answer as it arrives. */}
           {streaming && phase && (
@@ -300,7 +259,7 @@ export function AnaActivity({
                   key={`${round}-${i}-${c.name}`}
                   className={`ana-activity-step is-${c.status}`}
                 >
-                  <span className="ana-activity-glyph" aria-hidden="true">{glyph(c.status)}</span>
+                  <span className="ana-activity-glyph" aria-hidden="true">{statusGlyph(c.status)}</span>
                   <span className="ana-activity-label">{c.label || c.name}</span>
                   {c.status === 'error' && (
                     /* The server writes a sentence for this — "AnA couldn't

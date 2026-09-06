@@ -14,6 +14,7 @@ import { C2CForm } from '../C2CForm';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { usePublishSurfaceContext } from '../surfaceContext';
 import { C2CToast, useToast } from '../toast';
+import { StudyDesignStatisticsTab } from './biostatBridge';
 
 const Ic = PG.Ic;
 
@@ -25,6 +26,10 @@ const TABS = [
   { id: 'objectives',  label: 'Objectives',              icon: 'clipboardList' },
   { id: 'eligibility', label: 'Eligibility',             icon: 'checkSquare' },
   { id: 'soa',         label: 'Schedule of assessments', icon: 'grid' },
+  // The protocol's statistics live on its study design (the design-as-data
+  // spine), read through the biostatistics bridge; the tab links into the
+  // designer with the design pre-loaded instead of retyped.
+  { id: 'statistics',  label: 'Statistics',              icon: 'sigma' },
   { id: 'risks',       label: 'Risk register',           icon: 'alertTriangle' },
   { id: 'milestones',  label: 'Milestones',              icon: 'gitBranch' },
   { id: 'budget',      label: 'Budget',                  icon: 'barChart' },
@@ -560,7 +565,7 @@ export function ConsentTab({ doc, onToggle }: ConsentTabProps) {
    the registry could accept it without ever checking the props it actually
    receives. `onAsk` is required and non-null now, which is what the surface has
    always been handed. */
-export function ProtocolWorkspace({ onAsk }: SurfaceViewProps) {
+export function ProtocolWorkspace({ onAsk, onNav }: SurfaceViewProps) {
   // GET /api/protocol-dev → the org's in-development protocol(s), already shaped
   // to the PdevDoc render contract (server/routes/protocol-dev.routes.ts reads
   // the real c2c_protocol_dev table via pool, org-scoped, JSONB rehydrated).
@@ -640,7 +645,7 @@ export function ProtocolWorkspace({ onAsk }: SurfaceViewProps) {
   usePublishSurfaceContext('protocol-dev', anaContext);
 
   if (loading) {
-    return <div className="pd-wrap"><div className="scaf-note" style={{ margin: 16 }}>Loading protocol…</div></div>;
+    return <div className="pd-wrap"><div role="status" className="scaf-note" style={{ margin: 16 }}>Loading protocol…</div></div>;
   }
   if (error) {
     return (
@@ -659,11 +664,11 @@ export function ProtocolWorkspace({ onAsk }: SurfaceViewProps) {
           hint="Start a clinical protocol to author it here — sections, objectives, schedule of assessments, risk register, budget, amendments, and review threads are all governed on this document." />
       </div>);
   }
-  return <ProtocolWorkspaceDoc doc={doc} onAsk={onAsk} onChanged={() => setReloadKey((k) => k + 1)} />;
+  return <ProtocolWorkspaceDoc doc={doc} onAsk={onAsk} onNav={onNav} onChanged={() => setReloadKey((k) => k + 1)} />;
 }
 
 /* ---- Workspace body — a real, loaded protocol document ---- */
-function ProtocolWorkspaceDoc({ doc, onAsk, onChanged }: { doc: PdevDoc; onAsk: (msg: string) => void; onChanged?: () => void }) {
+function ProtocolWorkspaceDoc({ doc, onAsk, onNav, onChanged }: { doc: PdevDoc; onAsk: (msg: string) => void; onNav: (id: string) => void; onChanged?: () => void }) {
   const [tab, setTab] = useState('document');
   const [activeSec, setActiveSec] = useState(doc.openSection);
   // Which governed form is open — the four registers plus the three actions
@@ -749,6 +754,7 @@ function ProtocolWorkspaceDoc({ doc, onAsk, onChanged }: { doc: PdevDoc; onAsk: 
       case 'objectives':  return <ObjectivesTab doc={doc} onAdd={() => openReg('objective')} />;
       case 'eligibility': return <EligibilityTab doc={doc} onAdd={() => openReg('eligibility')} />;
       case 'soa':         return <SoaTab doc={doc} canWrite={canWrite} onError={(m) => fireToast(m, 'error')} />;
+      case 'statistics':  return <StudyDesignStatisticsTab onNav={onNav} />;
       case 'risks':       return <RiskTab doc={doc} onAdd={() => openReg('risk')} />;
       case 'milestones':  return <MilestonesTab doc={doc} onAdd={() => openReg('milestone')} />;
       case 'budget':      return <BudgetTab doc={doc} />;

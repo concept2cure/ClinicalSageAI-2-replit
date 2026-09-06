@@ -11,6 +11,9 @@
  */
 
 import { governedActor } from '../../part11/governed-actor';
+import { queryableFromDrizzle } from '../../../db/drizzle-queryable';
+import { enforceAuthorLineage } from '../../clinical-regulatory-evidence/lineage-gate';
+import { recordArtifactProvenance } from '../../provenance/artifact-provenance';
 import { concept2cureArtifacts, concept2cureArtifactVersions } from '../../../../shared/schema';
 import { registerActionHandler } from '../action-registry';
 import { fetchContentForProcessing, artifactWhereClause } from '../shared-utils';
@@ -229,6 +232,45 @@ const handler: AIActionHandler = {
           changeDescription: `AI refinement via validation findings (${findings.length} findings)`,
           createdById: ctx.user.userId,
         });
+        /* Lineage in the same transaction as the refined content (ledger
+           L160): every clause of the refined text is recorded as the acting
+           user's assertion — the refinement has no parked sources to quote —
+           and a gap rolls the refinement back. */
+        const client = queryableFromDrizzle(tx);
+        await enforceAuthorLineage(
+          client,
+          ctx.user.organizationId,
+          { documentTable: 'concept2cure_artifacts', documentId: String(artifact.id) },
+          refinedContent,
+          String(ctx.user.userId),
+        );
+        // The refinement's provenance event, in the same transaction as the
+        // content it describes (the artifact-provenance guard): an AI edit the
+        // platform applied is traceable through the artifact's lifecycle or it
+        // does not commit.
+        await recordArtifactProvenance(client, {
+          artifactId: artifact.id,
+          organizationId: ctx.user.organizationId,
+          eventType: 'edit',
+          eventAction: 'ai_refine_with_validation',
+          actorId: ctx.user.userId,
+          details: { actionId: ctx.actionId, findingsAddressed: findings.length, version: nextVersion },
+          backendService: 'services/ai-actions/handlers/refine-with-validation',
+        });
+      });
+
+      // The refined text is what an assembled submission bundle was built
+      // FROM: every package this artifact is mapped into now holds a zip that
+      // no longer reflects it. Invalidate at the edit rather than leaving it to
+      // the transmit gate's content fingerprint (which remains the backstop).
+      // Never throws — the refinement has committed and is not rolled back
+      // over an invalidation failure.
+      const { markPackagesContentChangedForArtifact } = await import(
+        '../../ectd/package-content-change'
+      );
+      await markPackagesContentChangedForArtifact(artifact.id, ctx.user.organizationId, {
+        userId: ctx.user.userId,
+        cause: 'content',
       });
 
       updatedObjects.push({

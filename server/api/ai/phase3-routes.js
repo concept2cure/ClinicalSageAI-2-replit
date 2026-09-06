@@ -3,7 +3,7 @@ import { z } from 'zod';
 import crypto from 'crypto';
 import regulatoryAIPhase3 from '../../services/regulatoryAIServicePhase3.js';
 import { db } from '../../db.js';
-import { components, componentVersions, documentVersions, organizationUsers } from '../../../shared/schema.js';
+import { components, documentVersions, organizationUsers } from '../../../shared/schema.js';
 import { eq, and, sql } from 'drizzle-orm';
 import { authedOrgId } from '../../utils/authedOrgId.js';
 

@@ -75,6 +75,19 @@ export const vaultDocuments = vault.table(
       .default(sql`gen_random_uuid()`),
     programId: uuid('program_id').notNull(),
 
+    /* Owning tenant, resolved from `program_id` -> regulatory_programs.organization_id
+       (INTEGER there, so INTEGER here). NULL = unattributable — the program is
+       missing or soft-deleted — and quarantined by
+       idx_vault_documents_unattributed rather than guessed; it becomes NOT NULL
+       in the change that adds the org predicate, once that index is empty.
+
+       This column does NOT by itself isolate tenants. Neither sweep policies it:
+       the integer sweep is `public`-only and this is `vault`, and the non-public
+       sweep is an explicit uuid-keyed list. vault.documents is still ENABLE
+       ROW LEVEL SECURITY without FORCE, which the owner role bypasses.
+       See migrations/20260905_vault_documents_organization_id.sql. */
+    organizationId: integer('organization_id'),
+
     documentCode: text('document_code').notNull(),
     documentTitle: text('document_title').notNull(),
     documentType: text('document_type').notNull(),
@@ -229,6 +242,64 @@ export const vaultRetentionPolicies = vault.table('retention_policies', {
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
 });
+
+/**
+ * Legal holds — a litigation, investigation or inspection hold that suspends
+ * disposition of the documents it covers.
+ *
+ * ── Why this exists ──────────────────────────────────────────────────────────
+ * `server/jobs/retentionCron.ts` resolved each expired document's policy and,
+ * when that policy said `hardDelete`, issued `db.delete(vaultDocuments)` — an
+ * unconditional, unrecoverable destruction of a governed record. Nothing
+ * anywhere consulted a hold: a grep for legal_hold / legalHold / litigation
+ * across server/, shared/ and client/ returned only unapplied legacy DDL that no
+ * runner applies. Destroying a record under hold is spoliation, and it is the
+ * one operation in the retention path that cannot be undone.
+ *
+ * The sweep has never actually fired — nothing writes `retention_until`, so
+ * `findExpiredDocuments` matches nothing — which is why this lands NOW. The
+ * guard has to exist before the clock starts, not after.
+ *
+ * ── Scope ────────────────────────────────────────────────────────────────────
+ * A hold is a RECORD, not a flag on a document: it has an author, a reason, a
+ * date it was placed and a date it was lifted, because those are the questions
+ * asked about a hold long after it ends. Holds are additive — a document under
+ * two holds is released only when both are lifted.
+ *
+ * `scope` is deliberately coarse: 'program' (every document of a program) or
+ * 'document' (one). Custodian- and matter-level scoping is a real requirement
+ * for a mature e-discovery flow and is NOT modelled here; a program-wide hold
+ * is the honest blunt instrument until it is.
+ */
+export const vaultLegalHolds = vault.table(
+  'legal_holds',
+  {
+    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+    organizationId: integer('organization_id').notNull(),
+    /** Human reference — a matter number, inspection id, or ticket. */
+    reference: text('reference').notNull(),
+    /** Why disposition is suspended. Required: an unexplained hold cannot be lifted safely. */
+    reason: text('reason').notNull(),
+    /** 'program' | 'document'. */
+    scope: text('scope').notNull(),
+    /** Set when scope='program'. */
+    programId: uuid('program_id'),
+    /** Set when scope='document'. */
+    documentId: uuid('document_id'),
+    placedBy: integer('placed_by'),
+    placedAt: timestamp('placed_at', { withTimezone: true }).defaultNow().notNull(),
+    /** NULL while the hold is ACTIVE. A lifted hold is kept, never deleted. */
+    liftedAt: timestamp('lifted_at', { withTimezone: true }),
+    liftedBy: integer('lifted_by'),
+    /** Why it was lifted — the counterpart to `reason`, asked just as often. */
+    liftReason: text('lift_reason'),
+  },
+  table => ({
+    byProgram: index('vault_legal_holds_program_idx').on(table.programId),
+    byDocument: index('vault_legal_holds_document_idx').on(table.documentId),
+    byOrg: index('vault_legal_holds_org_idx').on(table.organizationId),
+  })
+);
 
 /**
  * Document archives — an immutable snapshot of a document taken by the retention

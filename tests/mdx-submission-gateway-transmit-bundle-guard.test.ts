@@ -57,7 +57,8 @@ vi.mock('../server/services/mfaService', () => ({
   verifyToken: vi.fn().mockResolvedValue(true),
 }));
 
-const REAUTH = { reason: 'governed transmit reason', reauth: { password: 'pw-123456' } };
+// §11.50: a transmit is signed under a meaning the signer declares; the body carries it.
+const REAUTH = { reason: 'governed transmit reason', meaning: 'release', reauth: { password: 'pw-123456' } };
 
 const { transmitFn, statusFn, ackFn, isConfigFn, configStatusFn } = vi.hoisted(() => ({
   transmitFn:     vi.fn(),
@@ -100,6 +101,7 @@ import gatewayRouter from '../server/routes/mdx-submission-gateway';
 // The pure gate the (here-mocked) gateway registry runs on req.bundle. NOT part
 // of the mocked index module, so this is the real implementation.
 import { evaluatePreTransmit } from '../server/services/submission-gateways/pre-transmit-check';
+import { fingerprintPackageContent, sha256Hex, type PackageContentRow } from '../server/services/ectd/package-content-fingerprint';
 
 /** Caller's verified principal. Tenant 99, user 777. */
 const CALLER_ORG = 99;
@@ -125,6 +127,29 @@ type StoredPackage = { id: number; orgId: number; bundle: unknown };
 let packages: StoredPackage[] = [];
 const packageSelects: Array<unknown[]> = [];
 
+/** The package's content as the transmit gate re-reads it. A good descriptor
+ *  carries the fingerprint of CONTENT; a test edits `contentRows` to drift it. */
+const CONTENT: PackageContentRow[] = [
+  { sectionDbId: 13, sectionKey: '2.5', sectionLabel: 'Clinical Overview', sortOrder: 0, artifactDbId: 1, title: 'Clinical overview', version: 1, ctdSection: null, contentSha256: sha256Hex('Clinical overview text') },
+];
+const CONTENT_FINGERPRINT = fingerprintPackageContent(CONTENT);
+const EDITED_CONTENT = CONTENT.map((r) => ({ ...r, contentSha256: sha256Hex('Clinical overview text, edited after assembly') }));
+let contentRows: PackageContentRow[] = CONTENT;
+const contentSelects: Array<unknown[]> = [];
+/** The governed-action ledger client: every INSERT it sees is inspectable. */
+const ledgerQuery = vi.fn();
+/** The `sign` row's payload as the ledger received it (a JSON param). */
+function signPayload(): Record<string, any> | undefined {
+  for (const call of ledgerQuery.mock.calls) {
+    for (const p of (call[1] as unknown[]) ?? []) {
+      const obj = typeof p === 'string' && p.includes('contentFingerprint') ? JSON.parse(p)
+        : p && typeof p === 'object' && 'contentFingerprint' in (p as object) ? (p as Record<string, any>) : null;
+      if (obj) return obj;
+    }
+  }
+  return undefined;
+}
+
 function installDb() {
   queryFn.mockReset();
   queryFn.mockImplementation((sql: string, params: unknown[] = []) => {
@@ -138,6 +163,16 @@ function installDb() {
       return row
         ? Promise.resolve({ rows: [{ metadata: { bundle: row.bundle } }], rowCount: 1 })
         : Promise.resolve({ rows: [], rowCount: 0 });
+    }
+    if (typeof sql === 'string' && sql.includes('FROM c2c_package_sections')) {
+      contentSelects.push(params);
+      return Promise.resolve({
+        rows: contentRows.map((r) => ({
+          section_db_id: r.sectionDbId, section_key: r.sectionKey, section_label: r.sectionLabel, sort_order: r.sortOrder, artifact_db_id: r.artifactDbId,
+          title: r.title, version: r.version, ctd_section: r.ctdSection, content_sha256: r.contentSha256,
+        })),
+        rowCount: contentRows.length,
+      });
     }
     return Promise.resolve({ rows: [], rowCount: 0 });
   });
@@ -191,11 +226,23 @@ beforeEach(() => {
 
   packages = [];
   packageSelects.length = 0;
+  contentRows = CONTENT;
+  contentSelects.length = 0;
   installDb();
   connectFn.mockReset();
+  ledgerQuery.mockReset();
+  // The signer must be attributable or §11.100 refuses to persist the signature
+  // manifestation at all — and the manifest is where the transmit records WHAT
+  // it filed. Without this row the double silently exercised only the ledger
+  // half of the sign.
+  ledgerQuery.mockImplementation(async (sql: unknown) =>
+    /FROM users u/.test(String(sql))
+      ? { rows: [{ name: 'Test Signer', email: 'signer@example.test', title: 'RA Lead' }], rowCount: 1 }
+      : { rows: [], rowCount: 0 },
+  );
   connectFn.mockImplementation(() =>
     Promise.resolve({
-      query: vi.fn().mockResolvedValue({ rows: [], rowCount: 0 }),
+      query: (...args: unknown[]) => ledgerQuery(...args),
       release: vi.fn(),
     }),
   );
@@ -220,6 +267,7 @@ function goodDescriptor(overrides: Record<string, unknown> = {}) {
     emptyLeafCount: 0,
     storage: { provider: 'local' },
     validation: { errorCount: 0, warningCount: 1, infoCount: 0, findings: [] },
+    contentFingerprint: CONTENT_FINGERPRINT,
     assembledAt: new Date().toISOString(),
     assembledBy: 777,
     ...overrides,
@@ -456,8 +504,193 @@ describe('POST transmit — legitimate validated package (C2C-SUB-003)', () => {
     // …and identity from the verified principal, never the body.
     expect(arg.organizationId).toBe(CALLER_ORG);
     expect(arg.userId).toBe(777);
-    // Ownership was proven with a tenant-scoped read.
+    // Ownership was proven with a tenant-scoped read…
     expect(packageSelects).toEqual([[5, CALLER_ORG]]);
+    // …and so was the content the bundle still reflects — before the bytes
+    // left, and again after the gateway accepted them, so the window between
+    // the check and the send is evidenced rather than assumed closed.
+    expect(contentSelects).toEqual([[5, CALLER_ORG], [5, CALLER_ORG]]);
+    expect(res.body.data.contentAfterTransmit).toBe('match');
+    // The governed `sign` row records what content state the zip was proven
+    // against: assembled fingerprint, the fingerprint at transmit, and after.
+    const payload = signPayload();
+    expect(payload, 'sign ledger row carries the content fingerprint evidence').toBeDefined();
+    expect(payload!.contentFingerprint).toEqual({ assembled: CONTENT_FINGERPRINT, atTransmit: CONTENT_FINGERPRINT, afterTransmit: 'match' });
+    expect(payload!.bundleSha256).toBe(legitSha);
+  });
+
+});
+
+/*
+ * Split out of the positive control above for the same reason: recording what
+ * was filed, so the NEXT eCTD sequence has a baseline to diff against, is its
+ * own concern and its own block.
+ */
+describe('POST transmit — filed-sequence history (C2C-SUB-003)', () => {
+
+  it('records the sequence it just filed, so the NEXT sequence has a baseline to diff against', async () => {
+    packages = [{ id: 5, orgId: CALLER_ORG, bundle: goodDescriptor({
+      sequence: '0000', submissionType: 'original',
+      leafManifest: [{ ctdSection: '2.5', fileName: 'clinical-overview.pdf', href: 'm2/25-clin-overview/clinical-overview.pdf', md5: 'md5-co', operation: 'new' }],
+    }) }];
+    transmitFn.mockResolvedValueOnce({ transmittalId: 4244, transmissionId: 'mdn-filed', status: 'received', transport: 'as2', httpStatus: 200 });
+    const res = await request(makeApp())
+      .post('/api/mdx/gateways/fda/esg/transmit')
+      .send({ packageId: 5, environment: 'staging', ...REAUTH });
+    expect(res.status).toBe(201);
+    expect(res.body.data.filedSequenceRecorded).toBe(true);
+    // The history was appended under the package row lock, carrying the leaf
+    // inventory the next sequence diffs against.
+    const write = ledgerQuery.mock.calls.find((c) => /^UPDATE c2c_submission_packages/.test(String(c[0])));
+    expect(write, 'the filed history was written').toBeDefined();
+    const written = JSON.parse(String((write![1] as unknown[])[1]));
+    expect(written.filedSequences).toHaveLength(1);
+    expect(written.filedSequences[0]).toMatchObject({ sequence: '0000', submissionType: 'original', sha256: legitSha, transmittalId: 4244 });
+    expect(written.filedSequences[0].leaves[0]).toMatchObject({ ctdSection: '2.5', fileName: 'clinical-overview.pdf', md5: 'md5-co' });
+  });
+
+  it('a bundle that files no sequence records no history, and says so rather than reporting a failure', async () => {
+    packages = [{ id: 5, orgId: CALLER_ORG, bundle: goodDescriptor() }];
+    transmitFn.mockResolvedValueOnce({ transmittalId: 4245, transmissionId: 'mdn-nofile', status: 'received', transport: 'as2', httpStatus: 200 });
+    const res = await request(makeApp())
+      .post('/api/mdx/gateways/fda/esg/transmit')
+      .send({ packageId: 5, environment: 'staging', ...REAUTH });
+    expect(res.status).toBe(201);
+    expect(res.body.data.filedSequenceRecorded).toBe('not-applicable');
+    expect(res.body.data.filedSequenceReason).toBe('no-sequence');
+    expect(ledgerQuery.mock.calls.some((c) => /^UPDATE c2c_submission_packages/.test(String(c[0])))).toBe(false);
+  });
+
+});
+
+/*
+ * What the transmit path RECORDS about the eCTD sequence it just filed —
+ * separate from whether the bytes were accepted. A lost baseline is silent
+ * unless it is said, so each case here is about what the caller and the
+ * Part 11 record are told.
+ */
+describe('POST transmit — the sequence it filed (C2C-SUB-003)', () => {
+  it('a sequence whose leaf inventory is UNREADABLE is a lost baseline, not a non-event', async () => {
+    /* One entry missing `href`. The reader drops a partial inventory whole —
+       because a prior state missing a leaf computes `new` for a document that
+       is already on file — but that guard sat only on the reader: the manifest
+       was written to the history, reported as recorded, and then dropped by the
+       very guard meant to prevent it. The filing is at the agency and every
+       subsequent diff is blind to it. */
+    packages = [{ id: 5, orgId: CALLER_ORG, bundle: goodDescriptor({
+      sequence: '0000', submissionType: 'original',
+      leafManifest: [
+        { ctdSection: '2.5', fileName: 'clinical-overview.pdf', href: 'm2/2-5/clinical-overview.pdf', md5: 'md5-co' },
+        { ctdSection: '3.2.P.1', fileName: 'description.pdf', md5: 'md5-desc' }, // no href
+      ],
+    }) }];
+    transmitFn.mockResolvedValueOnce({ transmittalId: 4246, transmissionId: 'mdn-partial', status: 'received', transport: 'as2', httpStatus: 200 });
+    const res = await request(makeApp())
+      .post('/api/mdx/gateways/fda/esg/transmit')
+      .send({ packageId: 5, environment: 'staging', ...REAUTH });
+    expect(res.status).toBe(201);
+    expect(res.body.data.filedSequenceRecorded).toBe(false);
+    expect(res.body.data.filedSequenceReason).toBe('no-usable-manifest');
+    // Nothing half-readable is persisted: a history that cannot be read back is
+    // worse than one that is honestly missing.
+    expect(ledgerQuery.mock.calls.some((c) => /^UPDATE c2c_submission_packages/.test(String(c[0])))).toBe(false);
+    // And the operator is told, because the NEXT assemble will otherwise refuse
+    // with "file sequence 0000 first" — which they did.
+    expect(res.body.data.filedSequenceWarning).toMatch(/no readable leaf inventory/);
+  });
+
+  it('an eCTD sequence with no inventory at all is reported as a failure, not as "not applicable"', async () => {
+    // Every descriptor assembled before the inventory existed is this case.
+    packages = [{ id: 5, orgId: CALLER_ORG, bundle: goodDescriptor({ sequence: '0001', submissionType: 'Efficacy Supplement' }) }];
+    transmitFn.mockResolvedValueOnce({ transmittalId: 4247, transmissionId: 'mdn-nomanifest', status: 'received', transport: 'as2', httpStatus: 200 });
+    const res = await request(makeApp())
+      .post('/api/mdx/gateways/fda/esg/transmit')
+      .send({ packageId: 5, environment: 'staging', ...REAUTH });
+    expect(res.status).toBe(201);
+    expect(res.body.data.filedSequenceRecorded).toBe(false);
+    expect(res.body.data.filedSequenceReason).toBe('no-usable-manifest');
+  });
+
+  it('the Part 11 sign row records WHICH sequence the signature filed, and whether the history took it', async () => {
+    // The ledger recorded that a bundle was transmitted but not which eCTD
+    // sequence it filed, so an auditor reconstructing the lifecycle from the
+    // signatures could not — and a lost baseline left no durable trace at all.
+    packages = [{ id: 5, orgId: CALLER_ORG, bundle: goodDescriptor({
+      sequence: '0000', submissionType: 'original',
+      leafManifest: [{ ctdSection: '2.5', fileName: 'clinical-overview.pdf', href: 'm2/2-5/clinical-overview.pdf', md5: 'md5-co', operation: 'new' }],
+    }) }];
+    transmitFn.mockResolvedValueOnce({ transmittalId: 4248, transmissionId: 'mdn-sign', status: 'received', transport: 'as2', httpStatus: 200 });
+    const res = await request(makeApp())
+      .post('/api/mdx/gateways/fda/esg/transmit')
+      .send({ packageId: 5, environment: 'staging', ...REAUTH });
+    expect(res.status).toBe(201);
+    expect(signPayload()).toMatchObject({
+      sequence: '0000', submissionType: 'original',
+      filedSequenceRecorded: true, filedSequenceReason: 'recorded',
+    });
+    // And in the signature MANIFEST — the attributed record an auditor reads.
+    // The payload only reaches the signature as a digest, which answers no
+    // question about what was filed.
+    const manifest = ledgerQuery.mock.calls
+      .flatMap((c) => ((c[1] as unknown[]) ?? []))
+      .map((p) => { try { return typeof p === 'string' ? JSON.parse(p) : p; } catch { return null; } })
+      .find((o) => o && typeof o === 'object' && (o as any).kind === 'governed-transmit');
+    expect(manifest, 'the transmit signature manifest was persisted').toBeDefined();
+    expect(manifest).toMatchObject({ sequence: '0000', filedSequenceRecorded: true });
+  });
+});
+
+/*
+ * Split out of the block above: the merge that added the filed-sequence tests
+ * took that describe callback to 117 lines against a 100-line limit. These are
+ * a distinct concern — what the transmit path does when the package CONTENT
+ * changed after assembly — so they get their own block rather than an arbitrary
+ * cut.
+ */
+describe('POST transmit — content changed since assembly (C2C-SUB-003)', () => {
+
+  it('a content change that lands WHILE the gateway is sending is recorded on the sign row and announced in the response — never silently a clean transmit', async () => {
+    packages = [{ id: 5, orgId: CALLER_ORG, bundle: goodDescriptor() }];
+    transmitFn.mockImplementationOnce(async () => {
+      contentRows = EDITED_CONTENT; // an artifact edit commits during the AS2 send
+      return { transmittalId: 4243, transmissionId: 'mdn-race', status: 'received', transport: 'as2', httpStatus: 200 };
+    });
+    const res = await request(makeApp())
+      .post('/api/mdx/gateways/fda/esg/transmit')
+      .send({ packageId: 5, environment: 'staging', ...REAUTH });
+    expect(res.status).toBe(201); // the agency has the assembled bytes; that is not undone
+    expect(res.body.data.contentAfterTransmit).toBe('drift');
+    expect(res.body.data.contentWarning).toMatch(/changed while the transmission was in progress/i);
+    expect(res.body.data.contentWarning).toMatch(/re-assemble/i);
+    expect(signPayload()?.contentFingerprint).toEqual({ assembled: CONTENT_FINGERPRINT, atTransmit: CONTENT_FINGERPRINT, afterTransmit: 'drift' });
+  });
+
+  it('refuses a stored descriptor whose package CONTENT changed since assembly (an artifact edited after the zip was built), before the gateway is reached', async () => {
+    packages = [{ id: 5, orgId: CALLER_ORG, bundle: goodDescriptor() }];
+    contentRows = EDITED_CONTENT;
+    const res = await request(makeApp())
+      .post('/api/mdx/gateways/fda/esg/transmit')
+      .send({ packageId: 5, environment: 'staging', ...REAUTH });
+
+    expect(res.status).toBe(422);
+    expect(res.body.error).toMatch(/content changed since this bundle was assembled/i);
+    expect(res.body.error).toMatch(/re-assemble/i);
+    expect(transmitFn).not.toHaveBeenCalled();
+  });
+
+  it('refuses a stored descriptor with NO content fingerprint, or one from an older scheme (UNKNOWN is blocking, never a match)', async () => {
+    const { contentFingerprint: _none, ...withoutFingerprint } = goodDescriptor() as any;
+    for (const bundle of [withoutFingerprint, goodDescriptor({ contentFingerprint: 'v1:' + 'a'.repeat(64) })]) {
+      transmitFn.mockReset();
+      packages = [{ id: 5, orgId: CALLER_ORG, bundle }];
+      const res = await request(makeApp())
+        .post('/api/mdx/gateways/fda/esg/transmit')
+        .send({ packageId: 5, environment: 'staging', ...REAUTH });
+      expect(res.status, JSON.stringify(bundle.contentFingerprint)).toBe(422);
+      expect(res.body.error).toMatch(/no content fingerprint/i);
+      expect(res.body.error).toMatch(/UNKNOWN/);
+      expect(transmitFn).not.toHaveBeenCalled();
+    }
   });
 
   it('warnings alone do not block a validated package', async () => {
@@ -510,6 +743,37 @@ describe('POST transmit — packager evidence is forwarded to the pre-transmit g
     expect(arg.bundle.dtdStatus).toEqual(evidence.dtdStatus);
     expect(arg.bundle.submissionGrade).toEqual(evidence.submissionGrade);
     expect(arg.bundle.regionalBackbone).toEqual(evidence.regionalBackbone);
+  });
+
+  it('forwards the region the bundle was BUILT for (descriptor.region) as a gateway region, so device bundles are region-checked too', async () => {
+    packages = [{ id: 5, orgId: CALLER_ORG, bundle: goodDescriptor({ format: 'estar', region: 'FDA' }) }];
+    transmitFn.mockResolvedValueOnce({ transmittalId: 4246, transmissionId: 'mdn-built', status: 'received', transport: 'as2', httpStatus: 200 });
+    const res = await request(makeApp())
+      .post('/api/mdx/gateways/fda/esg/transmit')
+      .send({ packageId: 5, environment: 'staging', ...REAUTH });
+    expect(res.status).toBe(201);
+    expect(transmitFn.mock.calls[0][0].bundle.builtRegion).toBe('fda');
+  });
+
+  it('DROPS malformed evidence blocks instead of forwarding them (`{}` as a PDF/A grade read as full compliance)', async () => {
+    packages = [{
+      id: 5, orgId: CALLER_ORG,
+      bundle: goodDescriptor({
+        submissionGrade: {}, dtdStatus: { selfContained: 'yes' },
+        // Well-shaped on the fields the old guard checked, but placeholderOf is
+        // not a string — the gate used to throw on it (a 500, not a refusal).
+        regionalBackbone: { region: 'fda', file: 'm1/us/us-regional.xml', regionConformant: false, placeholderOf: 5 },
+      }),
+    }];
+    transmitFn.mockResolvedValueOnce({ transmittalId: 4245, transmissionId: 'mdn-malformed', status: 'received', transport: 'as2', httpStatus: 200 });
+    const res = await request(makeApp())
+      .post('/api/mdx/gateways/fda/esg/transmit')
+      .send({ packageId: 5, environment: 'staging', ...REAUTH });
+    expect(res.status).toBe(201);
+    const arg = transmitFn.mock.calls[0][0];
+    expect(arg.bundle.submissionGrade).toBeUndefined();
+    expect(arg.bundle.dtdStatus).toBeUndefined();
+    expect(arg.bundle.regionalBackbone).toBeUndefined();
   });
 
   it('and the gate REFUSES that exact forwarded shape when the operator opts in (production + ECTD_REQUIRE_DTD / _PDFA)', () => {

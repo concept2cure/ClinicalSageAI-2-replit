@@ -388,6 +388,8 @@ export interface BiostatsWorkflowRequest {
   documentType?: StatisticalDocumentType;
   autoAttachToDossier?: boolean;
   reviewRequired?: boolean;
+  /** The c2c_document_sections id the attach step maps the artifact into; required for autoAttachToDossier to do anything. */
+  dossierSectionId?: number;
 }
 
 export interface BiostatsWorkflowResponse {

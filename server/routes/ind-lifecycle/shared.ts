@@ -83,13 +83,15 @@ export function sendPdf(res: Response, filename: string, buf: Buffer): void {
 }
 
 /** Build a readiness report from a `readinessInput` body fragment, or null. */
-export function readinessFrom(input: any) {
+export function readinessFrom(input: any, overdueSafetyReports?: number) {
   if (!input || (input.filingType !== 'initial' && input.filingType !== 'amendment')) return null;
   return evaluateIndReadiness({
     filingType: input.filingType,
     sectionStatus: input.sectionStatus ?? {},
     completedForms: input.completedForms,
-    overdueSafetyReports: input.overdueSafetyReports,
+    // The submission-scoped routes pass the register's count; a caller-supplied
+    // number is only used where no submission is in scope.
+    overdueSafetyReports: overdueSafetyReports ?? input.overdueSafetyReports,
   });
 }
 

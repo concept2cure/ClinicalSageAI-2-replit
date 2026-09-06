@@ -33,10 +33,25 @@ import type { AnaProgressPhase, AnaToolCall } from './useAnaChat.types';
  * answer landing and the server's background finishing work reporting in.
  */
 export const CLIENT_PHASE_LABELS = {
-  reasoning: 'Reasoning through the question',
-  composing: 'Composing the answer',
-  finalizing: 'Checking evidence and recording the turn',
+  reasoning: 'Reasoning through the question…',
+  composing: 'Composing the answer…',
+  finalizing: 'Checking evidence and recording the turn…',
 } as const;
+
+/**
+ * How AnA read the question, as a noun phrase that completes "Reading this
+ * as …" and stands alone after "Read as". One table for the transcript record
+ * and the dock's Context row: a lens is assigned by a classifier, so naming
+ * the CATEGORY of question is both true and how a colleague would say it —
+ * never a verb phrase claiming a deliberation nothing performed.
+ */
+export const LENS_PHRASE: Record<string, string> = {
+  audit: 'an audit',
+  improve: 'a request to strengthen the argument',
+  risk: 'a risk question',
+  strategy: 'a strategy question',
+  compare: 'a comparison',
+};
 
 /**
  * Append a phase unless it is the one already active. A repeat of the same
@@ -142,6 +157,36 @@ export function summarizeToolWork(calls: AnaToolCall[] | undefined): string {
   const head = shown.join(', ') + (more > 0 ? ` and ${more} more` : '');
   const n = list.length;
   return `${head} · ${n} ${n === 1 ? 'tool' : 'tools'}`;
+}
+
+/**
+ * Group calls by agentic-loop round, preserving order. The one implementation
+ * for the transcript record and the dock; a single-round turn is one group.
+ */
+export function byRound(calls: AnaToolCall[]): Array<{ round: number; calls: AnaToolCall[] }> {
+  const groups = new Map<number, AnaToolCall[]>();
+  for (const c of calls) {
+    const r = typeof c.round === 'number' && c.round > 0 ? c.round : 1;
+    if (!groups.has(r)) groups.set(r, []);
+    groups.get(r)!.push(c);
+  }
+  return [...groups.entries()].sort((a, b) => a[0] - b[0]).map(([round, cs]) => ({ round, calls: cs }));
+}
+
+/**
+ * Close every step still "running" when the turn ends before they report —
+ * a stop, a timeout, a lost connection. A step the turn never heard back
+ * from did not complete, and a row that keeps saying "running" beside
+ * "Stopped after 12s" is a contradiction on screen. `note` is the sentence
+ * the row shows for why. Pure; returns the same array when nothing is open.
+ */
+export function settleRunningCalls(
+  calls: AnaToolCall[] | undefined,
+  note: string,
+  now: number,
+): AnaToolCall[] | undefined {
+  if (!calls || !calls.some(c => c.status === 'running')) return calls;
+  return calls.map(c => (c.status === 'running' ? { ...c, status: 'error', endedAt: now, message: note } : c));
 }
 
 /** The step currently in flight, if any — the row the panel highlights. */

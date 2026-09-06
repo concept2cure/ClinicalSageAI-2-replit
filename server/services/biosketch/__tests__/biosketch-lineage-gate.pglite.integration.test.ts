@@ -90,6 +90,27 @@ describe('biosketch prose lineage gate', () => {
     expect(await spanCount(String(sectionId))).toBeGreaterThan(0);
   });
 
+  it('updateSectionTx with sources records the verbatim clause against the source and the rest as the author (ledger L154)', async () => {
+    const sectionId = await seedBiosketchWithSection();
+    const src = await exec.query(
+      `INSERT INTO cre_evidence_sources (organization_id, visibility_class, source_type, title, checksum, ingestion_status, extraction_status)
+       VALUES ($1, 'tenant_private', 'client_document', 'csr.pdf', 'sha-l154-b', 'ingested', 'extracted') RETURNING id`,
+      [ORG],
+    );
+    const sourceId = (src.rows[0] as { id: number }).id;
+    const content = 'The primary endpoint was met at week twelve in the intent-to-treat population. These findings were consistent across every prespecified subgroup we examined.';
+    const lineage = await updateSectionTx(exec as any, ORG, sectionId, { content, addressed: true, sources: [{ sourceId, content: 'Clinical study report. The primary endpoint was met at week twelve in the intent-to-treat population. More.' }] }, USER);
+    expect(lineage?.sourceSpans).toBe(1);
+    expect(lineage?.authorSpans).toBeGreaterThanOrEqual(1);
+    const kinds = await exec.query(
+      `SELECT provenance_kind, reference_id FROM document_span_lineage WHERE document_table = $1 AND document_id = $2 AND deleted_at IS NULL`,
+      ['biosketch_sections', String(sectionId)],
+    );
+    const rows = kinds.rows as Array<{ provenance_kind: string; reference_id: string | null }>;
+    expect(rows.some((k) => k.provenance_kind === 'cre_evidence_source' && k.reference_id === String(sourceId))).toBe(true);
+    expect(rows.some((k) => k.provenance_kind === 'author_assertion')).toBe(true);
+  });
+
   it('updateSectionTx addressed-only edit records NO lineage (gate no-ops on absent content)', async () => {
     const sectionId = await seedBiosketchWithSection();
     await updateSectionTx(exec as any, ORG, sectionId, { addressed: true }, USER);

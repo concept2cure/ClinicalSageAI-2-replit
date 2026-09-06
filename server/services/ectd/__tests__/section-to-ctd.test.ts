@@ -31,6 +31,11 @@ describe('normalizeCtdCode (syntax only)', () => {
     expect(normalizeCtdCode('m3.2.S.4.2')).toBe('3.2.S.4.2');
     expect(normalizeCtdCode(' 2.5 ')).toBe('2.5');
   });
+  it('canonicalises alpha segments to ICH uppercase so one heading is one code', () => {
+    expect(normalizeCtdCode('3.2.s.1')).toBe('3.2.S.1');
+    expect(normalizeCtdCode('m3.2.p.1')).toBe('3.2.P.1');
+    expect(resolveArtifactPlacement('module3_cmc', '3.2.s.1').code).toBe('3.2.S.1');
+  });
   it('rejects non-code values', () => {
     for (const v of ['module3_cmc', 'labeling', '', null, undefined, '6.1', 'cer']) {
       expect(normalizeCtdCode(v as string)).toBeNull();
@@ -179,6 +184,7 @@ describe('every code this resolver EMITS is placed at a real terminal heading by
       expect(placements.every((p) => p.code)).toBe(true);
       const bundle = await packageLeafBytes({
         region: 'fda', applicationId: 'IND1', sequence: '0000', submissionType: 'original',
+        fda: { applicationType: 'ind', submissionType: 'original' }, // the backbone must state what is being filed
         sponsorId: 'S', sponsorName: 'S', productName: 'P', environment: 'staging', outputDir,
         leaves: placements.map((p, i) => ({
           ctdSection: p.code!, fileName: `leaf-${i}.pdf`, bytes: pdf(String(i)), title: `Leaf ${i}`,

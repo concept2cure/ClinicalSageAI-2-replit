@@ -198,71 +198,8 @@ export const GI_OVERLAYS: GiOverlay[] = [
 
 /* ── Program context (canonical: BX-204 = NDA 212345, pharma) ── */
 
-export const GI_PROGRAM: GiProgram = {
-  projectId: 204, code: 'BX-204', name: 'Bextrelimab',
-  app: 'NDA 212345', filing: 'NDA', stage: 'Pre-submission assembly',
-  indication: 'Oncology -- RTK-X solid tumors',
-};
 
 /* ── Sample findings — mapped to contradiction_findings columns ── */
-
-export const GI_FINDINGS: GiFinding[] = [
-  {
-    id: 'CF-1', projectId: 204, contradictionType: 'dosage_conflict', severity: 'critical',
-    title: 'Dosage mismatch between Protocol v2 and SAP v1',
-    objectA: { type: 'document', id: 'PROTO-v2', label: 'Clinical Protocol v2 -- S6 Dosage' },
-    objectB: { type: 'document', id: 'SAP-v1', label: 'SAP v1 -- S3 Analysis populations' },
-    sourceClassification: 'structured_record_conflict', truthHierarchyLevel: 1, llmRole: 'none',
-    confidenceScore: 0.98, confidenceLevel: 'high',
-    description: 'Protocol specifies 10 mg/kg Q3W; the SAP exposure-response analysis assumes 8 mg/kg Q3W. The two governed records disagree on the administered dose.',
-    deterministicRule: 'DOSE-XREF-01 -- administered dose must match across Protocol, SAP and CSR.',
-    consequenceType: 'dossier_review_attachment', reviewState: 'unresolved', detectedBy: 'AnA',
-    factId: null,
-  },
-  {
-    id: 'CF-2', projectId: 204, contradictionType: 'assumption_drift', severity: 'medium',
-    title: 'Dropout-rate assumption drift (clinical)',
-    objectA: { type: 'assumption', id: 'ASM-dropout-proto', label: 'Protocol dropout -- 15%' },
-    objectB: { type: 'assumption', id: 'ASM-dropout-sap', label: 'SAP dropout -- 25%' },
-    sourceClassification: 'structured_record_conflict', truthHierarchyLevel: 2, llmRole: 'none',
-    confidenceScore: 0.91, confidenceLevel: 'high',
-    description: 'Category "dropout", domain "clinical": the Protocol assumes 15% and the SAP assumes 25%. Same category and domain, different assumed value -- a drift.',
-    deterministicRule: 'DRIFT-01 -- assumptions sharing category+domain must share a value.',
-    consequenceType: 'review_thread', reviewState: 'unresolved', detectedBy: 'AnA', factId: null,
-  },
-  {
-    id: 'CF-3', projectId: 204, contradictionType: 'specification_conflict', severity: 'high',
-    title: 'Moisture specification vs stability data',
-    objectA: { type: 'section', id: '3.2.S.4.1', label: 'S3.2.S.4.1 Specification -- NMT 0.3% w/w' },
-    objectB: { type: 'data', id: '3.2.S.7', label: 'S3.2.S.7 Stability -- 0.35% at 25C/60%RH (6 mo)' },
-    sourceClassification: 'deterministic_rule_conflict', truthHierarchyLevel: 2, llmRole: 'none',
-    confidenceScore: 0.95, confidenceLevel: 'high',
-    description: 'Moisture spec in 3.2.S.4.1 (NMT 0.3% w/w) conflicts with 6-month stability data (3.2.S.7) showing 0.35% at 25C/60%RH. Acceptance criterion requires revision.',
-    deterministicRule: 'SPEC-STAB-01 -- release/shelf spec must bound observed stability results.',
-    consequenceType: 'review_thread', reviewState: 'unresolved', detectedBy: 'AnA', factId: 'shelf',
-  },
-  {
-    id: 'CF-4', projectId: 204, contradictionType: 'batch_record_discordance', severity: 'medium',
-    title: 'Batch-yield discordance -- BX204-DS-009',
-    objectA: { type: 'section', id: '3.2.S.2', label: 'S3.2.S.2 Manufacture -- 68.4% yield' },
-    objectB: { type: 'record', id: 'QC-BR-009', label: 'QC release batch record -- 71.2%' },
-    sourceClassification: 'structured_record_conflict', truthHierarchyLevel: 3, llmRole: 'none',
-    confidenceScore: 0.88, confidenceLevel: 'medium',
-    description: 'Batch BX204-DS-009 yield in 3.2.S.2 (68.4%) differs from the QC release batch record (71.2%). Calculation-method inconsistency.',
-    deterministicRule: 'YIELD-XREF-01 -- reported yield must reconcile with the QC batch record.',
-    consequenceType: 'review_thread', reviewState: 'unresolved', detectedBy: 'AnA', factId: null,
-  },
-  {
-    id: 'CF-5', projectId: 204, contradictionType: 'nomenclature', severity: 'low',
-    title: 'Inconsistent excipient nomenclature',
-    objectA: { type: 'section', id: '3.2.P.4', label: 'S3.2.P.4 -- "Polysorbate 80"' },
-    objectB: { type: 'section', id: '3.2.P.5', label: 'S3.2.P.5 -- "Tween 80"' },
-    sourceClassification: 'llm_assisted_semantic_conflict', truthHierarchyLevel: 4, llmRole: 'explanation_only',
-    confidenceScore: 0.72, confidenceLevel: 'medium',
-    description: '"Polysorbate 80" and "Tween 80" are used interchangeably across S3.2.P.4 and S3.2.P.5. Standardise to the INN.',
-    deterministicRule: null, consequenceType: 'review_thread', reviewState: 'unresolved', detectedBy: 'AnA', factId: null,
-  },
-];
 
 /* The per-segment binding (GI_BY_SEG / giForSeg) is deleted.
 
@@ -273,31 +210,7 @@ export const GI_FINDINGS: GiFinding[] = [
    rather than left dormant — a sample programme sitting in an exported const is
    one import away from being rendered again. */
 
-export const GI_ASSUMPTIONS: GiAssumption[] = [
-  { id: 'ASM-1', category: 'dropout', domainTrack: 'clinical', assumedValue: '15%', status: 'active', title: 'Protocol dropout', source: 'Clinical Protocol v2 -- S9.2' },
-  { id: 'ASM-2', category: 'dropout', domainTrack: 'clinical', assumedValue: '25%', status: 'active', title: 'SAP dropout', source: 'SAP v1 -- S5 Sample size' },
-  { id: 'ASM-3', category: 'effect_size', domainTrack: 'clinical', assumedValue: 'ORR 38.6%', status: 'active', title: 'Primary effect size', source: 'CSR-201 -- locked dataset' },
-];
-
 /* ── Decision records (test: proposed -> approved -> executed traceability) ── */
-
-export const GI_DECISIONS: GiDecision[] = [
-  {
-    id: 'DEC-1', title: 'Adopt 10 mg/kg Q3W as the governed dose', actionState: 'proposed',
-    executedArtifactId: null, executedArtifactVersion: null, decidedBy: '--',
-    rationale: 'Reconcile Protocol and SAP to the Protocol-specified dose; update SAP exposure-response.',
-  },
-  {
-    id: 'DEC-2', title: 'Set governed dropout assumption to 20% (blended)', actionState: 'approved',
-    executedArtifactId: null, executedArtifactVersion: null, decidedBy: 'J. Chen',
-    rationale: 'Split the difference pending DSMB read; document in SAP amendment.',
-  },
-  {
-    id: 'DEC-3', title: 'Widen moisture acceptance to NMT 0.4% w/w', actionState: 'executed',
-    executedArtifactId: 42, executedArtifactVersion: 3, decidedBy: 'CMC lead',
-    rationale: 'Align S3.2.S.4.1 with observed stability; justified by ICH Q6A.',
-  },
-];
 
 /* ════ Pure logic (verbatim behavior from the test) ════ */
 

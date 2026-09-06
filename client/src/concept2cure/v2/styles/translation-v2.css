@@ -128,7 +128,7 @@
 .txw-qa{margin-top:7px;display:flex;flex-direction:column;gap:3px;}
 .txw-qa-f{display:flex;gap:5px;align-items:flex-start;font-size:10px;line-height:1.45;padding:4px 7px;border-radius:5px;background:var(--bg-100);}
 .txw-qa-f[data-sev="error"]{background:var(--error-muted);color:var(--error);}
-.txw-qa-f[data-sev="warning"]{background:var(--warning-muted);color:#7a4a0f;}
+.txw-qa-f[data-sev="warning"]{background:var(--warning-muted);color:var(--warning);}
 .txw-qa-f[data-sev="info"]{background:var(--ai-muted);color:var(--ai);}
 .txw-qa-f svg{width:11px;height:11px;flex-shrink:0;margin-top:1px;}
 .txw-qa-f .txw-qa-code{font-family:var(--font-mono);font-size:9px;background:rgba(255,255,255,.5);padding:0 4px;border-radius:3px;color:inherit;flex-shrink:0;}
@@ -199,6 +199,8 @@
 .txw-wide-col-body{flex:1;min-height:0;overflow-y:auto;padding:18px 22px;font-size:13.5px;line-height:1.75;color:var(--text-100);}
 .txw-wide-col[data-lang="ja"] .txw-wide-col-body{font-family:'Hiragino Kaku Gothic ProN','Yu Gothic Medium','Noto Sans JP','Meiryo',var(--font-sans);font-size:14px;line-height:1.85;}
 .txw-wide-col-body textarea{width:100%;min-height:240px;font:inherit;color:inherit;border:0;outline:0;background:transparent;resize:none;}
+/* Borderless translation editor — inset outline restores keyboard focus. */
+.txw-wide-col-body textarea:focus-visible{outline:2px solid var(--accent-200);outline-offset:-2px;}
 .txw-wide-foot{padding:12px 20px;background:var(--bg-050);border-top:1px solid var(--border);display:flex;align-items:center;gap:10px;flex-shrink:0;flex-wrap:wrap;}
 .txw-wide-foot .txw-wide-foot-step{flex:1;min-width:200px;}
 

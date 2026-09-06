@@ -209,7 +209,8 @@ const CSRInputSchema = z.object({
   studyDesign: z.string(),
   primaryEndpoint: z.string(),
   primaryResult: z.string(),
-  sampleSize: z.number(),
+  /** null = not recorded; never 0, which reads as "no subjects enrolled". */
+  sampleSize: z.number().nullable(),
   ittPopulation: z.number().optional(),
   treatmentArms: z.array(z.string()).optional(),
   topAEs: z.array(z.object({ pt: z.string(), rate: z.string(), severity: z.string().optional() })).optional(),
@@ -496,10 +497,15 @@ router.get('/runs/:runId', async (req: Request, res: Response) => {
   const organizationId = requireTenant(req, res);
   if (organizationId == null) return;
 
-  const run = await getRun(String(req.params.runId), organizationId);
-  if (!run) return res.status(404).json({ error: 'run_not_found' });
-  // Redact the sign step's snapshot from the response (see redactStepOutputRef).
-  return res.json({ ...run, steps: run.steps.map(redactStepOutputRef) });
+  try {
+    const run = await getRun(String(req.params.runId), organizationId);
+    if (!run) return res.status(404).json({ error: 'run_not_found' });
+    // Redact the sign step's snapshot from the response (see redactStepOutputRef).
+    return res.json({ ...run, steps: run.steps.map(redactStepOutputRef) });
+  } catch (err) {
+    // A read that failed is not a run that does not exist.
+    return serverError(res, log, 'reading the run', err);
+  }
 });
 
 /**
@@ -515,11 +521,17 @@ router.get('/runs/:runId/audit', async (req: Request, res: Response) => {
   if (organizationId == null) return;
 
   const runId = String(req.params.runId);
-  const run = await getRun(runId, organizationId);
-  if (!run) return res.status(404).json({ error: 'run_not_found' });
+  try {
+    const run = await getRun(runId, organizationId);
+    if (!run) return res.status(404).json({ error: 'run_not_found' });
 
-  const events = await getRunAudit(runId, organizationId);
-  return res.json({ runId, events });
+    const events = await getRunAudit(runId, organizationId);
+    return res.json({ runId, events });
+  } catch (err) {
+    // The audit trail is the compliance record: a failed read must not render
+    // as "no recorded actions".
+    return serverError(res, log, 'reading the run audit', err);
+  }
 });
 
 /**
@@ -537,7 +549,12 @@ router.post('/runs/:runId/regenerate', async (req: Request, res: Response) => {
   const organizationId = requireTenant(req, res);
   if (organizationId == null) return;
 
-  const previousRun = await getRun(String(req.params.runId), organizationId);
+  let previousRun;
+  try {
+    previousRun = await getRun(String(req.params.runId), organizationId);
+  } catch (err) {
+    return serverError(res, log, 'reading the run', err);
+  }
   if (!previousRun) return res.status(404).json({ error: 'run_not_found' });
 
   const RegenSchema = buildRunSchema({
@@ -558,8 +575,11 @@ router.post('/runs/:runId/regenerate', async (req: Request, res: Response) => {
       },
       changedStep as StepKey | undefined
     );
+    // Every step re-ran on a NEW run; `regenerated` is the list of steps that
+    // were stale on the superseded run, not a subset that was recomputed.
     return res.json({
       runId: result.run.runId,
+      supersededRunId: result.supersededRunId,
       status: result.run.status,
       regenerated: result.regenerated,
       steps: result.run.steps.map(s => ({ key: s.key, status: s.status })),

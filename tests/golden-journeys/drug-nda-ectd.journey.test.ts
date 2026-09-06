@@ -283,11 +283,13 @@ afterAll(async () => {
 });
 
 /** Record a governed Part 11 `sign` action on a typed target, as `userId`. */
-async function signTarget(target: string, userId: number, reason: string) {
+async function signTarget(target: string, userId: number, reason: string, intent: 'freeze' | 'dispatch' | 'transmit' = 'freeze') {
   return asPrincipal(ORG, userId)(request(app).post('/api/c2c/actions/sign')).send({
     target,
     reason,
-    payload: { meaning: 'approval' },
+    // The meaning of the signature names the step it authorizes (11.50); the
+    // server refuses a sign action whose intent is another step.
+    payload: { intent, meaning: 'approval' },
     reauth: { password: PASSWORD },
   });
 }
@@ -832,6 +834,51 @@ describe('golden journey — drug NDA / eCTD', () => {
       };
     });
 
+    // ── 11.70: the signature is bound to the leaf manifest it signed ────────
+    await R.expectBlocked('a-leaf-placed-after-signing-invalidates-the-signature', async () => {
+      // The digest was persisted at sign time and never consulted, so a leaf
+      // edited after signing was frozen under a signature applied to other bytes.
+      const placed = await asPrincipal(ORG, USER)(
+        request(app).put(`/api/submissions/sequences/${sequenceId}/leaves`),
+      ).send({ sectionCode: '2.7', title: 'Clinical Summary', lifecycleOp: 'new', documentTable: 'coauthor_documents', documentId: 100 });
+      expect(placed.status, JSON.stringify(placed.body)).toBe(200);
+      const res = await asPrincipal(ORG, SIGNER)(
+        request(app).post(`/api/submissions/sequences/${sequenceId}/freeze`),
+      ).send({ signatureActionId });
+      const seq = await jdb.pool.query(`SELECT status FROM ectd_sequences WHERE id = $1`, [sequenceId]);
+      return {
+        blocked:
+          res.status === 403 &&
+          res.body?.error?.code === 'GOVERNED_REQUIRED' &&
+          /changed after it was signed/.test(String(res.body?.error?.message)) &&
+          (seq.rows[0] as { status: string } | undefined)?.status === 'validated',
+        status: res.status,
+        code: res.body?.error?.code,
+        message: res.body?.error?.message,
+      };
+    });
+
+    await R.step('re-sign-the-current-leaf-manifest', async () => {
+      const res = await signTarget(`ectd-sequence:${sequenceId}`, SIGNER, 'Approved for freeze: re-signed after the 2.7 leaf was placed.');
+      expect(res.status, JSON.stringify(res.body)).toBe(200);
+      signatureActionId = res.body.actionId;
+      return { actionId: signatureActionId };
+    });
+
+    await R.expectBlocked('a-signature-whose-intent-is-dispatch-does-not-freeze', async () => {
+      // 11.50: the meaning of the signature is the step it authorizes.
+      const dispatchSign = await signTarget(`ectd-sequence:${sequenceId}`, SIGNER, 'Approved for dispatch.', 'dispatch');
+      expect(dispatchSign.status, JSON.stringify(dispatchSign.body)).toBe(200);
+      const res = await asPrincipal(ORG, SIGNER)(
+        request(app).post(`/api/submissions/sequences/${sequenceId}/freeze`),
+      ).send({ signatureActionId: dispatchSign.body.actionId });
+      return {
+        blocked: res.status === 403 && res.body?.error?.code === 'GOVERNED_REQUIRED' && /intent 'dispatch', not 'freeze'/.test(String(res.body?.error?.message)),
+        status: res.status,
+        message: res.body?.error?.message,
+      };
+    });
+
     // ── The freeze that is actually authorized ─────────────────────────────
     await R.step('the-matching-signature-freezes-the-sequence', async () => {
       const res = await asPrincipal(ORG, SIGNER)(
@@ -859,6 +906,24 @@ describe('golden journey — drug NDA / eCTD', () => {
       expect(a.new_values.signatureActionId).toBe(signatureActionId);
       expect(a.new_values.validationErrors).toBe(0);
       return { status: s.status, frozenAt: !!s.frozen_at, auditedSignature: a.new_values.signatureActionId };
+    });
+
+    await R.expectBlocked('the-spent-freeze-signature-does-not-authorize-dispatch', async () => {
+      // One sign used to authorize freeze, dispatch and transmit alike: a
+      // replay of the freeze-time actionId dispatched the sequence.
+      const res = await asPrincipal(ORG, SIGNER)(
+        request(app).post(`/api/submissions/sequences/${sequenceId}/dispatch`),
+      ).send({ signatureActionId });
+      const seq = await jdb.pool.query(`SELECT status FROM ectd_sequences WHERE id = $1`, [sequenceId]);
+      return {
+        blocked:
+          res.status === 403 &&
+          res.body?.error?.code === 'GOVERNED_REQUIRED' &&
+          (seq.rows[0] as { status: string } | undefined)?.status === 'frozen',
+        status: res.status,
+        code: res.body?.error?.code,
+        message: res.body?.error?.message,
+      };
     });
 
     await R.expectBlocked('a-frozen-sequences-leaves-are-immutable', async () => {

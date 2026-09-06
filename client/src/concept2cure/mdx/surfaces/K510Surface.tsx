@@ -8,7 +8,6 @@ import { I } from '../icons';
 import { K510_ESTAR, K510_PREDICATES, K510_SE_ROWS, K510_STAGES } from '../data/k510';
 import type { Program } from '../data/programs';
 import {
-  useEstarReadiness,
   useK510EstarSections,
   useK510PredicateFallback,
   useK510Predicates,
@@ -21,7 +20,8 @@ import { AnaDraftBanner } from '../components/AnaDraftBanner';
 import { PathwayPanes } from './pathway/PathwayPanes';
 import { DeviceProfilePanel } from './DeviceProfilePanel';
 import { EstarFilingPanel } from './EstarFilingPanel';
-import { useSampleRows, useSampleValue } from '../lib/useSampleRows';
+import { OfficialEstarPanel, officialEstarTypeFor, officialEstarVariantFor } from './OfficialEstarPanel';
+import { useSampleRows } from '../lib/useSampleRows';
 import type { EditorSectionRef } from '../../v2/editorTarget';
 import { downloadCsv } from '../../v2/download';
 
@@ -64,17 +64,11 @@ export function K510Surface({ program, onAskAna, onOpenEditor }: K510SurfaceProp
     predicateFallbackActive ? fallbackProfile.profile?.productCode ?? null : null,
   );
 
-  /* Can the OFFICIAL FDA eSTAR PDF be produced yet? Read-only probe — drives the
-     "Generate official eSTAR" button's disabled-with-reason state so the gate is
-     visible rather than hidden. `ready` flips true only once the official
-     template is vendored and its field map is populated (no code change). */
-  const estarReadiness = useEstarReadiness('510k', 'device');
-  const officialReady = estarReadiness.readiness?.ready ?? false;
-  const officialBlockers = estarReadiness.readiness?.blockers ?? [];
-
-  /* Real export actions — POST /api/510k/estar/build and /official. The
-     package assembles server-side from the org's authored sections; the
-     response's base64 payload downloads in-browser. */
+  /* The draft package export — POST /api/510k/estar/build. The package
+     assembles server-side from the org's authored sections; the response's
+     base64 payload downloads in-browser. The OFFICIAL eSTAR PDF has one home,
+     OfficialEstarPanel below, which owns the readiness gate and the field
+     preview — this header no longer carries a second Generate control. */
   const estarExport = useEstarExport();
   const exportStatus = exportStatusLine(estarExport.busy, estarExport.outcome);
 
@@ -165,27 +159,6 @@ export function K510Surface({ program, onAskAna, onOpenEditor }: K510SurfaceProp
         >
           Export 510(k) package {I.download}
         </button>
-        <button
-          className="section-more"
-          style={{ marginLeft: 8 }}
-          disabled={!officialReady || estarReadiness.loading || estarExport.busy || !program || entitlementLocked}
-          title={
-            lockedTitle ??
-            (estarReadiness.loading
-              ? 'Checking official eSTAR availability…'
-              : officialReady
-                ? 'Generate the official FDA eSTAR interactive PDF — the submittable artifact CDRH ingests'
-                : `Official eSTAR not yet available — ${
-                    officialBlockers.join(' · ') || 'template not vendored / field map not populated'
-                  }`)
-          }
-          onClick={() => {
-            if (!program) return;
-            void estarExport.exportOfficialEstar({ id: program.id, code: program.code, title: program.title });
-          }}
-        >
-          Generate official eSTAR (PDF) {I.download}
-        </button>
       </div>
 
       {exportStatus && (
@@ -232,22 +205,9 @@ export function K510Surface({ program, onAskAna, onOpenEditor }: K510SurfaceProp
       {predicates.error && !predicates.rows && (
         <div
           className="banner-warn"
-          style={{
-            margin: '12px 0',
-            padding: '10px 14px',
-            background: 'var(--bg-050)',
-            border: '1px solid var(--border-100)',
-            borderLeft: '3px solid var(--accent-100)',
-            borderRadius: 6,
-            fontSize: 12,
-            color: 'var(--text-200)',
-            display: 'flex',
-            gap: 8,
-            alignItems: 'center',
-          }}
           role="status"
         >
-          <span style={{ color: 'var(--accent-100)' }}>{I.alertCircle}</span>
+          <span className="banner-ic">{I.alertCircle}</span>
           <span>
             Predicate intelligence is configuring for your tenant. The table below shows the canonical
             example data so you can preview the workflow; live K-number candidates appear here once the
@@ -536,17 +496,6 @@ export function K510Surface({ program, onAskAna, onOpenEditor }: K510SurfaceProp
                 </button>
               </div>
             </div>
-            {!estarReadiness.loading && !officialReady ? (
-              <div role="status" style={{ padding: '8px 12px', fontSize: 12, lineHeight: 1.5 }}>
-                <span className="status-pill review">Official eSTAR PDF — not yet available</span>{' '}
-                <span style={{ opacity: 0.75 }}>
-                  {(officialBlockers.length
-                    ? officialBlockers
-                    : ['official FDA template not vendored', 'field map not populated']
-                  ).join(' · ')}
-                </span>
-              </div>
-            ) : null}
             <div className="estar">
               {sourceEstar.map(s => (
                 <React.Fragment key={s.id}>
@@ -577,6 +526,15 @@ export function K510Surface({ program, onAskAna, onOpenEditor }: K510SurfaceProp
           </div>
         </div>
       </div>
+
+      {/* The official FDA eSTAR PDF — readiness gate, the governed field
+          preview and the one Generate control. */}
+      {/* The variant follows the program's product type: an IVD program that
+          files a 510(k) lands here (pathway k510) and must be produced on the
+          IVD eSTAR, not the nIVD one. The type follows the program's
+          regulatory path: a De Novo program also lands here (the kit folds
+          De Novo into k510) and must be produced as a De Novo, not a 510(k). */}
+      <OfficialEstarPanel program={program} type={officialEstarTypeFor(program)} variant={officialEstarVariantFor(program)} />
 
       {/* eSTAR filing journey — register → assess → produce-gate → track,
           org-scoped from the session. eSTAR covers 510(k)/De Novo too. */}

@@ -143,13 +143,31 @@ export function assembleDeviceSubmission(
     );
   }
 
+  // Sections whose applicability nobody has established. The eSTAR mapper
+  // reports them separately from missingRequired and already folds them into
+  // summary.ready; this consumer recomputed readiness from missingRequired
+  // alone, so a sterile, software-bearing, network-connected device with none
+  // of that documentation — and no deviceFlags supplied, which no route caller
+  // does — was reported canProduceOfficialEstar with an empty error list. An
+  // RTA refusal reported as a submittable eSTAR.
+  const undetermined = 'undetermined' in estar.summary ? estar.summary.undetermined : [];
+  if (undetermined.length > 0) {
+    blockers.push(
+      `${undetermined.length} eSTAR section(s) whose applicability is not established: ` +
+        `${undetermined.join(', ')}. Answer the device questions (sterile, software, ` +
+        `connected, implant, combination product) so the required set is known.`,
+    );
+  }
+
   // Official-template blockers (cannot produce the artifact CDRH ingests).
   for (const b of template.blockers) blockers.push(b);
 
   // Market overlay blockers (honest about transmit/assemble gaps).
   if (market) for (const b of market.blockers) blockers.push(b);
 
-  const sectionsComplete = estar.summary.missingRequired.length === 0;
+  // The mapper's own verdict: no required section missing AND no section
+  // undetermined. Never recomputed here from part of it.
+  const sectionsComplete = estar.summary.ready;
   const canProduceOfficialEstar = sectionsComplete && template.available;
 
   let artifactKind: DeviceArtifactKind;

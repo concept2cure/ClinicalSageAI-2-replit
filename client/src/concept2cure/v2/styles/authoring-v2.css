@@ -292,6 +292,7 @@
     background: var(--bg-000);
     border-color: var(--border);
   }
+  .ed-full { min-width: 0; }
   .ed-full-mast {
     padding-bottom: 20px;
     margin-bottom: 28px;
@@ -484,11 +485,11 @@
   }
   .ed-flag[data-sev='warn'] {
     background: var(--warning-muted);
-    color: #7a4a0f;
+    color: var(--warning);
   }
   .ed-flag[data-sev='err'] {
     background: var(--error-muted);
-    color: #7a1f1f;
+    color: var(--error);
   }
   .ed-flag .ico {
     font-size: 14px;
@@ -513,7 +514,7 @@
     font-family: var(--font-sans);
     opacity: 0;
     transform: translateY(4px);
-    transition: all 180ms var(--ease);
+    transition: opacity 180ms var(--ease), transform 180ms var(--ease);
     pointer-events: none;
     box-shadow: var(--shadow-lg);
     z-index: 5;

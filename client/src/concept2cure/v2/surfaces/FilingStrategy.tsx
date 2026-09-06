@@ -304,7 +304,7 @@ export function FilingStrategy(_props: SurfaceViewProps) {
       'Compare optimising for speed versus risk',
       'Interpret the calibration report',
     ],
-  }), [tab, agencies, seq, div, sequence.state, divergences.data]);
+  }), [tab, agencies, seq, div, sequence.state, divergences.state, divergences.data]);
 
   usePublishSurfaceContext('filing-strategy', anaContext);
 

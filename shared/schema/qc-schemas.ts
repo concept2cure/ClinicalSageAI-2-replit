@@ -14,7 +14,7 @@
  *
  * TODO: Either build QC routes/services or remove these tables to reduce schema bloat.
  */
-import { relations, InferSelectModel } from 'drizzle-orm';
+import { InferSelectModel } from 'drizzle-orm';
 import {
   integer,
   pgTable,
@@ -22,15 +22,10 @@ import {
   text,
   timestamp,
   boolean,
-  uuid,
   json,
-  unique,
-  primaryKey,
   varchar,
-  real,
   index,
   uniqueIndex,
-  foreignKey,
   decimal,
   date,
 } from 'drizzle-orm/pg-core';

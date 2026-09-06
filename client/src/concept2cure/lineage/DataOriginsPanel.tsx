@@ -34,12 +34,12 @@ import {
   type SelectionQuery,
 } from './dataOriginsApi';
 
-const INK = 'var(--c2c-ink, #111827)';
-const MUTED = 'var(--c2c-muted, #6b7280)';
-const RULE = 'var(--c2c-rule, rgba(127,127,127,0.22))';
+const INK = 'var(--text-100)';
+const MUTED = 'var(--text-400)';
+const RULE = 'var(--border)';
 const OK = '#047857';
 const WARN = '#b45309';
-const PANEL_BG = 'var(--c2c-surface, rgba(127,127,127,0.06))';
+const PANEL_BG = 'var(--bg-000)';
 
 const USAGE_LABEL: Record<string, string> = {
   quoted: 'Quoted verbatim',

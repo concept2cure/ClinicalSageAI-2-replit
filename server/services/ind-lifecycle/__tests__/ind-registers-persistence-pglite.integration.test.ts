@@ -250,10 +250,28 @@ describe('annual-report register (312.33) against PGlite', () => {
     expect(emitted.details.sequenceId).toBe(43);
   });
 
-  it('a draft without an indEffectiveDate has no due date and never turns overdue', async () => {
+  it('refuses a draft with no reporting period dates (VALIDATION) and persists nothing', async () => {
+    // Absent dates used to coerce to 1 January 1970 and the draft was stored
+    // as a report covering the epoch.
+    const before = (await listAnnualReports(31, ctx)).length;
+    const noStart: Record<string, unknown> = { ...annualReportInput() };
+    delete noStart.reportingPeriodStart;
+    await expect(createAnnualReportDraft({ submissionId: 31, report: noStart }, ctx)).rejects.toMatchObject({ code: 'VALIDATION' });
+    await expect(
+      createAnnualReportDraft({ submissionId: 31, report: { ...annualReportInput(), reportingPeriodEnd: 'not a date' } }, ctx),
+    ).rejects.toMatchObject({ code: 'VALIDATION' });
+    expect((await listAnnualReports(31, ctx)).length).toBe(before);
+  });
+
+  it('a draft without an indEffectiveDate has no due date, and the overdue feed says its deadline is unknown', async () => {
+    // It used to be dropped from the feed, reading identically to a report
+    // safely on schedule.
     const row = await createAnnualReportDraft({ submissionId: 13, report: annualReportInput() }, ctx);
     expect(row.dueDate).toBeNull();
-    expect((await listOverdueAnnualReports(13, ctx, new Date('2099-01-01'))).map((r) => r.id)).not.toContain(row.id);
+    const feed = await listOverdueAnnualReports(13, ctx, new Date('2099-01-01'));
+    const entry = feed.find((r) => r.id === row.id);
+    expect(entry?.overdueState).toBe('deadline_unknown');
+    expect(feed.filter((r) => r.overdueState === 'overdue').map((r) => r.id)).not.toContain(row.id);
   });
 });
 
@@ -272,6 +290,8 @@ describe('amendment register (312.30/.31) against PGlite', () => {
     expect(got.id).toBe(row.id);
     expect((got.plan as any).sequenceType).toBe('amendment');
     expect((got.plan as any).leaves).toHaveLength(2);
+    const stored = (got.plan as any).leaves.find((l: any) => l.documentId === 'doc-1');
+    expect(stored).toMatchObject({ documentId: 'doc-1', parentLeafGuid: 'guid-1', sectionCode: 'm1.2', lifecycleOp: 'replace' });
 
     expect((await listAmendments(21, ctx)).map((r) => r.id)).toContain(row.id);
 

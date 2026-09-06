@@ -19,6 +19,9 @@ The goal: **kits are the only UI** — every rendered MDX surface traces to a ca
 The v2 `design-system/` mirror is stale (`synced_at: 2026-04-29`). Port every MDX file from **this `files/` directory** instead. The copy of `FilesTreePane.jsx` here is the **corrected** one (see `05` §1 — the old version referenced approval/audit fields that don't exist in the data).
 
 ## `files/` — the 10-file June bundle
+
+> 2026-09-05: two of the ten — `data-correspondence-detail.jsx` and `data-pathway-tabs.jsx` — were byte-identical to the kit files now at `ui_kits/mdx_phase2/` and are removed from this folder (one copy per file; the repo-health gate holds content duplicates at zero). The other eight stay here because they differ from the kit copies and record what was handed over.
+
 Drop the 7 data/CSS files into `design-system/ui_kits/mdx/`, then port all 10 into `client/src/concept2cure/mdx/` per runbook Step 3:
 - `dossier-store.jsx`, `data-pathway-tabs.jsx`, `data-correspondence-detail.jsx`, `data-submissions.jsx`
 - `pathway-tabs.css`, `files-tree.css`, `drafter.css`

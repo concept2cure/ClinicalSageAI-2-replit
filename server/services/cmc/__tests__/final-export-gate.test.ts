@@ -53,6 +53,7 @@ beforeEach(() => {
 describe('evaluateFinalExportGate — completeness is checked, not just approval', () => {
   it('REFUSES export when an approved section compiled at 0% completeness', async () => {
     queryImpl.mockImplementation(async (sql: string) => {
+      if (sql.includes('cmc_section_lineage')) return { rows: [{ n: 0 }] };
       if (sql.includes('FROM cmc_module3_sections')) {
         return {
           rows: [
@@ -64,6 +65,7 @@ describe('evaluateFinalExportGate — completeness is checked, not just approval
         };
       }
       if (sql.includes('FROM cmc_contradictions')) return { rows: [] };
+      if (sql.includes('cmc_section_lineage')) return { rows: [{ n: 0 }] };
       return { rows: [] };
     });
 
@@ -75,10 +77,12 @@ describe('evaluateFinalExportGate — completeness is checked, not just approval
 
   it('ALLOWS export when every approved section is actually complete', async () => {
     queryImpl.mockImplementation(async (sql: string) => {
+      if (sql.includes('cmc_section_lineage')) return { rows: [{ n: 0 }] };
       if (sql.includes('FROM cmc_module3_sections')) {
         return { rows: [section({ completeness: 100 }), section({ completeness: 100 })] };
       }
       if (sql.includes('FROM cmc_contradictions')) return { rows: [] };
+      if (sql.includes('cmc_section_lineage')) return { rows: [{ n: 0 }] };
       return { rows: [] };
     });
 
@@ -92,6 +96,7 @@ describe('evaluateFinalExportGate — completeness is checked, not just approval
     // the compiler could not fill — the gate must trust missingInputs, not
     // just the percentage.
     queryImpl.mockImplementation(async (sql: string) => {
+      if (sql.includes('cmc_section_lineage')) return { rows: [{ n: 0 }] };
       if (sql.includes('FROM cmc_module3_sections')) {
         return {
           rows: [
@@ -101,6 +106,7 @@ describe('evaluateFinalExportGate — completeness is checked, not just approval
         };
       }
       if (sql.includes('FROM cmc_contradictions')) return { rows: [] };
+      if (sql.includes('cmc_section_lineage')) return { rows: [{ n: 0 }] };
       return { rows: [] };
     });
 
@@ -111,6 +117,7 @@ describe('evaluateFinalExportGate — completeness is checked, not just approval
 
   it('names which sections are incomplete in the refusal', async () => {
     queryImpl.mockImplementation(async (sql: string) => {
+      if (sql.includes('cmc_section_lineage')) return { rows: [{ n: 0 }] };
       if (sql.includes('FROM cmc_module3_sections')) {
         return {
           rows: [
@@ -119,6 +126,7 @@ describe('evaluateFinalExportGate — completeness is checked, not just approval
         };
       }
       if (sql.includes('FROM cmc_contradictions')) return { rows: [] };
+      if (sql.includes('cmc_section_lineage')) return { rows: [{ n: 0 }] };
       return { rows: [] };
     });
 

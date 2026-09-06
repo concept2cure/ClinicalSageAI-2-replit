@@ -361,14 +361,9 @@ function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: strin
         tabIndex={0}
         onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') fileRef.current?.click(); }}
         aria-label="Add sources to this project"
-        style={{
-          border: '1px dashed var(--border,#d0d5dd)', borderRadius: 10, padding: '14px 16px',
-          display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer',
-          background: dragging ? 'var(--accent-muted,#eef2ff)' : 'transparent', marginBottom: 12,
-        }}
       >
         <span aria-hidden="true">{I.paperclip}</span>
-        <span style={{ fontSize: 13 }}>
+        <span className="pj-dropzone-t">
           <b>Add sources</b> — drop files here or click to browse. They&rsquo;re read on upload and
           become available to AnA for this project.
         </span>
@@ -476,10 +471,6 @@ function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: strin
                   <div
                     key={s.id}
                     className="pj-src"
-                    style={{
-                      display: 'flex', alignItems: 'center', gap: 10, padding: '8px 10px',
-                      borderBottom: '1px solid var(--border-subtle,#eaecf0)',
-                    }}
                   >
                     {/* Pin as context. Only a source whose text was actually
                         read can ground a draft, so an unreadable one cannot be
@@ -1260,7 +1251,7 @@ export function ProjectHome({ onNav, onAsk, segment }: SurfaceViewProps) {
       <div className="pj-top">
         <div className="pj-top-l">
           <h1 className="pj-title">{title}</h1>
-          {progState.loading && <div className="pj-desc" style={{ color: 'var(--text-400)' }}>Loading project…</div>}
+          {progState.loading && <div role="status" className="pj-desc" style={{ color: 'var(--text-400)' }}>Loading project…</div>}
           {desc && <div className="pj-desc">{desc}</div>}
           <div className="pj-tags">
             {clientType && <span className="rd-chip tone-ai">{clientType}</span>}

@@ -35,7 +35,9 @@ export type RenderedLeafSourceKind =
   | 'ind_safety_report'
   | 'e2b_r3_icsr'
   | 'ind_annual_report'
-  | 'ind_letter_of_authorization';
+  | 'ind_letter_of_authorization'
+  /** Form FDA 1571, the Module 1 transmittal every IND sequence carries at m1.1. */
+  | 'ind_form_1571';
 
 export interface StoreRenderedLeafFileInput {
   organizationId: number;

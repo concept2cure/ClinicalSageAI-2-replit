@@ -13,6 +13,7 @@ import { I } from './icons';
 import type { AnaChatMessage, AnaToolCall, MessageAttachment } from '../components/ana/useAnaChat';
 import type { AnaProgressPhase } from '../components/ana/useAnaChat.types';
 import {
+  byRound,
   currentStep,
   formatElapsed,
   formatStepDuration,
@@ -20,9 +21,10 @@ import {
   type ToolTally,
 } from '../components/ana/anaProgress';
 import type { AgentActivityView } from './useAgentActivity';
-import { byRound, clip, formatClock, stepDuration, type OutputRow } from './anaWorkModel';
+import { clip, formatClock, stepDuration, SENDING_PLACEHOLDER, type OutputRow } from './anaWorkModel';
 
-function glyph(status: AnaToolCall['status']): React.ReactElement {
+/** The one status glyph: check / warning triangle / dot. Shared with AnaActivity. */
+export function statusGlyph(status: AnaToolCall['status']): React.ReactElement {
   if (status === 'success') return I.check;
   if (status === 'error') return I.alertTriangle;
   return I.dot;
@@ -45,18 +47,23 @@ export function Section({
   children: React.ReactNode;
 }) {
   const id = React.useId();
+  /* The body stays mounted and is hidden with the `hidden` attribute rather
+     than conditionally rendered: the header's aria-controls must point at an
+     element that exists while the section is collapsed, or the reference
+     dangles (SC 4.1.2). The title is a real heading wrapping the disclosure
+     button, so a screen reader browsing by heading finds the five sections. */
   return (
     <section className="ana-work-sec" data-open={open ? 'true' : 'false'}>
-      <button type="button" className="ana-work-sec-h" aria-expanded={open} aria-controls={id} onClick={onToggle}>
-        <span className="ana-work-sec-t">{title}</span>
-        {meta ? <span className="ana-work-sec-m">{meta}</span> : null}
-        <span className="ana-work-sec-chev" aria-hidden="true">{open ? I.chevDown : I.chevRight}</span>
-      </button>
-      {open && (
-        <div className="ana-work-sec-b" id={id}>
-          {children}
-        </div>
-      )}
+      <h3 className="ana-work-sec-hh">
+        <button type="button" className="ana-work-sec-h" aria-expanded={open} aria-controls={id} onClick={onToggle}>
+          <span className="ana-work-sec-t">{title}</span>
+          {meta ? <span className="ana-work-sec-m">{meta}</span> : null}
+          <span className="ana-work-sec-chev" aria-hidden="true">{open ? I.chevDown : I.chevRight}</span>
+        </button>
+      </h3>
+      <div className="ana-work-sec-b" id={id} hidden={!open}>
+        {children}
+      </div>
     </section>
   );
 }
@@ -77,7 +84,7 @@ export function Row({
 }) {
   return (
     <div className={`ana-work-step is-${status}`}>
-      <span className="ana-work-glyph" aria-hidden="true">{icon ?? glyph(status)}</span>
+      <span className="ana-work-glyph" aria-hidden="true">{icon ?? statusGlyph(status)}</span>
       <span className="ana-work-step-l">{label}</span>
       {trailing ? <span className="ana-work-step-t">{trailing}</span> : null}
       {children}
@@ -87,17 +94,34 @@ export function Row({
 
 function ToolRow({ c, now }: { c: AnaToolCall; now: number }) {
   const [open, setOpen] = React.useState(false);
+  const inputsId = React.useId();
   const hasInput = c.input !== undefined && c.input !== null;
   return (
     <Row status={c.status} label={c.label || c.name} trailing={c.status === 'running' ? 'running' : stepDuration(c, now)}>
       {c.status === 'error' && <span className="ana-work-note">{c.message || 'did not complete'}</span>}
       {hasInput && (
-        <button type="button" className="ana-work-link" aria-expanded={open} onClick={() => setOpen((o) => !o)}>
+        <button
+          type="button"
+          className="ana-work-link"
+          aria-expanded={open}
+          aria-controls={inputsId}
+          onClick={() => setOpen((o) => !o)}
+        >
           {open ? 'Hide inputs' : 'Inputs'}
         </button>
       )}
-      {hasInput && open && (
-        <pre className="ana-work-pre" tabIndex={0} aria-label="Inputs AnA passed to this step">
+      {hasInput && (
+        /* Mounted while the row exists so aria-controls resolves; a scroll
+           container with a tab stop, named as a region like the reasoning
+           block in AnaActivity (SC 2.1.1). */
+        <pre
+          className="ana-work-pre"
+          id={inputsId}
+          hidden={!open}
+          tabIndex={0}
+          role="region"
+          aria-label="Inputs AnA passed to this step"
+        >
           {JSON.stringify(c.input, null, 2)}
         </pre>
       )}
@@ -105,10 +129,17 @@ function ToolRow({ c, now }: { c: AnaToolCall; now: number }) {
   );
 }
 
+/**
+ * A phase's clock. Live and settled phases share one format above ten
+ * seconds ("2m 05s" stays "2m 05s" the instant it completes); below that a
+ * settled phase reads at step precision ("800 ms", "2.4s"), which the live
+ * whole-second clock cannot show.
+ */
 function phaseTime(p: AnaProgressPhase, now: number): string {
   if (p.status === 'active') return formatElapsed(now - p.startedAt);
   if (p.status === 'stopped') return 'stopped';
-  return formatStepDuration((p.endedAt ?? p.startedAt) - p.startedAt);
+  const ms = (p.endedAt ?? p.startedAt) - p.startedAt;
+  return ms < 10_000 ? formatStepDuration(ms) : formatElapsed(ms);
 }
 
 function PhaseItem({ p, index, now, step }: { p: AnaProgressPhase; index: number; now: number; step: AnaToolCall | null }) {
@@ -150,7 +181,7 @@ export function ProgressBody({ turn, live, now }: { turn: AnaChatMessage; live: 
       <ol className="ana-work-phases" aria-label="Progress">
         <li className="ana-work-phase is-active" aria-current="step">
           <span className="ana-work-num">1</span>
-          <span className="ana-work-phase-l">{turn.statusPhase || 'Sending to AnA…'}</span>
+          <span className="ana-work-phase-l">{turn.statusPhase || SENDING_PLACEHOLDER}</span>
         </li>
       </ol>
     );
@@ -170,13 +201,15 @@ export function RunQueue({ calls, tally, live }: { calls: AnaToolCall[]; tally: 
       <div className="ana-work-group-h">This run</div>
       {tally.total === 0 && (
         <div className="ana-work-empty">
-          {live ? 'No tool steps have been queued yet.' : 'This turn needed no tool steps.'}
+          {live ? 'This turn has queued no tool steps yet.' : 'This turn needed no tool steps.'}
         </div>
       )}
       {byRound(calls).map(({ round, calls: cs }) => (
         <div key={round} className="ana-work-round">
+          {/* The transcript record's words for the same rounds: round 2
+              exists because round 1 did not settle it. */}
           {tally.rounds > 1 && (
-            <div className="ana-work-round-h">{round === 1 ? 'First pass' : `Round ${round}`}</div>
+            <div className="ana-work-round-h">{round === 1 ? 'First pass' : `Went back · round ${round}`}</div>
           )}
           {cs.map((c, i) => (
             <Row
@@ -255,7 +288,10 @@ export function ToolsBody({
   now: number;
   usedInConversation: string[];
 }) {
-  const summary = summarizeToolWork(calls);
+  // Lower-cased by the summariser so it can be embedded mid-sentence; here it
+  // stands alone as a line, so it opens with a capital like its neighbours.
+  const raw = summarizeToolWork(calls);
+  const summary = raw ? raw.charAt(0).toUpperCase() + raw.slice(1) : '';
   return (
     <>
       {turn && (

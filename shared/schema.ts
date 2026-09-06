@@ -6762,6 +6762,11 @@ export const c2cArtifactSectionMap = pgTable(
     orgIdx: index('c2c_artsec_org_idx').on(table.orgId),
     ownerIdx: index('c2c_artsec_owner_idx').on(table.ownerUserId),
     docFamilyIdx: index('c2c_artsec_docfamily_idx').on(table.documentFamily),
+    // One mapping per (artifact, section). A duplicate row used to ship the
+    // same document twice into an agency package; the assemble gate now
+    // tolerates it, the database no longer permits it
+    // (migrations/20260906_artifact_section_map_unique.sql).
+    artifactSectionUq: uniqueIndex('c2c_artsec_artifact_section_uq').on(table.artifactId, table.sectionDbId),
   })
 );
 export type C2cArtifactSectionMap = InferSelectModel<typeof c2cArtifactSectionMap>;

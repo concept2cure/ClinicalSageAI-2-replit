@@ -137,8 +137,11 @@ router.patch('/elements/:id', async (req, res) => {
   if (!Number.isInteger(id)) return res.status(400).json({ error: { code: 'BAD_REQUEST', message: 'Invalid id.' } });
   const parsed = elementSchema.safeParse(req.body ?? {});
   if (!parsed.success) return res.status(400).json({ error: { code: 'VALIDATION', details: parsed.error.flatten() } });
-  await governed(req, res, 'update', parsed.data.reason, async (client, orgId) => {
-    await updateElementTx(client, orgId, id, parsed.data);
+  await governed(req, res, 'update', parsed.data.reason, async (client, orgId, userId) => {
+    // The element's prose is attributed to the person saving it (lineage gate
+    // inside updateElementTx, ledger L158); governed() already refuses a
+    // request with no identified user.
+    await updateElementTx(client, orgId, id, parsed.data, userId);
     recordDmsPlanElementUpdated();
     return { target: `dms-plan-element:${id}`, payload: { addressed: parsed.data.addressed }, body: { id } };
   });

@@ -251,7 +251,7 @@ export function BiopharmaJourney({ onAsk, onNav }: SurfaceViewProps) {
     onNav(id);
   };
   const setSeg = (v: string) => {
-    try { (window as any).__C2C_SEGMENT = v; } catch (_e) { /* noop */ }
+    try { (window as any).__C2C_SEGMENT = v; } catch { /* noop */ }
     setSegState(v);
     setSel(null);
   };
@@ -313,7 +313,7 @@ export function BiopharmaJourney({ onAsk, onNav }: SurfaceViewProps) {
   if (loading) {
     return (
       <div className="pj">
-        <div className="scaf-note" style={{ padding: '40px 16px', textAlign: 'center' }}>Loading program journey…</div>
+        <div role="status" className="scaf-note" style={{ padding: '40px 16px', textAlign: 'center' }}>Loading program journey…</div>
       </div>
     );
   }

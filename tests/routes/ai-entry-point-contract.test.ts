@@ -114,10 +114,11 @@ describe('Stage 12 — Governed Document Contract Enforcement', () => {
       )).toBe(true);
     });
 
-    it('concept2cure.ts artifact creation route exists', () => {
+    it('the artifact creation route exists on the artifacts router', () => {
+      // Moved from routes/concept2cure.ts in L53 slice 8.
       expect(fileContains(
-        'server/routes/concept2cure.ts',
-        'artifacts'
+        'server/routes/c2c/artifacts.ts',
+        "'/projects/:projectId/artifacts'"
       )).toBe(true);
     });
   });

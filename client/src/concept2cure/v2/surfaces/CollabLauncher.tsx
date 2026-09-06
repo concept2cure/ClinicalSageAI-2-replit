@@ -114,8 +114,8 @@ const defer = (typeof queueMicrotask === 'function')
 
 function emit(): void {
   defer(() => {
-    subs.forEach(fn => { try { fn(); } catch (_e) { /* subscriber error */ } });
-    try { window.dispatchEvent(new CustomEvent('c2c:tasks')); } catch (_e) { /* noop */ }
+    subs.forEach(fn => { try { fn(); } catch { /* subscriber error */ } });
+    try { window.dispatchEvent(new CustomEvent('c2c:tasks')); } catch { /* noop */ }
   });
 }
 
@@ -282,7 +282,7 @@ export const C2C = {
     try {
       const proj = (window as any).C2C_PROJECT as { id?: string } | undefined;
       if (proj?.id) live.project = String(proj.id);
-    } catch (_e) { /* no window / no selection — keep whatever ctx holds */ }
+    } catch { /* no window / no selection — keep whatever ctx holds */ }
 
     // Only adopt the URL's surface when nothing has refined the context for a
     // specific entity; a surface that called setContext({ entityLabel }) is
@@ -297,7 +297,7 @@ export const C2C = {
           live.entityType = d.et;
           live.moduleType = d.mod;
         }
-      } catch (_e) { /* no location — keep ctx */ }
+      } catch { /* no location — keep ctx */ }
     }
 
     return live;
@@ -515,35 +515,35 @@ function QuickTask({ ctx: surfaceCtx, onClose, onCreated, onGoToBoard }: QuickTa
         <span className="cl-ctx-chip"><span className="ico">{I.target || I.crosshair || I.zap}</span>{surfaceCtx.entityLabel || surfaceCtx.surfaceLabel}</span>
         <span className="cl-ctx-meta">stamped as <code>sourceEntityType: {surfaceCtx.entityType}</code></span>
       </div>
-      <div className="cl-field"><label>Task<i>*</i></label>
-        <input type="text" autoFocus value={f.title} onChange={e => set('title', e.target.value)}
+      <div className="cl-field"><label htmlFor="cl-task">Task<i>*</i></label>
+        <input id="cl-task" type="text" autoFocus value={f.title} onChange={e => set('title', e.target.value)}
           placeholder={'e.g. Review ' + C2C.surfaceNoun(surfaceCtx.surfaceId) + ' and resolve open items'} />
       </div>
       <div className="cl-frow">
-        <div className="cl-field"><label>Project</label>
-          <select value={f.project} onChange={e => set('project', e.target.value)}>
+        <div className="cl-field"><label htmlFor="cl-project">Project</label>
+          <select id="cl-project" value={f.project} onChange={e => set('project', e.target.value)}>
             {C2C.projects.map(p => <option key={p.id} value={p.id}>{p.label}</option>)}
           </select>
         </div>
-        <div className="cl-field"><label>Module</label>
-          <select value={f.moduleType} onChange={e => set('moduleType', e.target.value)}>
+        <div className="cl-field"><label htmlFor="cl-module">Module</label>
+          <select id="cl-module" value={f.moduleType} onChange={e => set('moduleType', e.target.value)}>
             {Object.keys(C2C.mod).map(m => <option key={m} value={m}>{m}</option>)}
           </select>
         </div>
       </div>
       <div className="cl-frow">
-        <div className="cl-field"><label>Type</label>
-          <select value={f.taskType} onChange={e => set('taskType', e.target.value)}>
+        <div className="cl-field"><label htmlFor="cl-type">Type</label>
+          <select id="cl-type" value={f.taskType} onChange={e => set('taskType', e.target.value)}>
             {Object.keys(CL_TYPE).map(t => <option key={t} value={t}>{CL_TYPE[t]}</option>)}
           </select>
         </div>
-        <div className="cl-field"><label>Priority</label>
-          <select value={f.priority} onChange={e => set('priority', e.target.value)}>
+        <div className="cl-field"><label htmlFor="cl-priority">Priority</label>
+          <select id="cl-priority" value={f.priority} onChange={e => set('priority', e.target.value)}>
             {CL_PRI.map(p => <option key={p} value={p}>{p}</option>)}
           </select>
         </div>
-        <div className="cl-field"><label>Due in (days)</label>
-          <input type="number" min="0" max="120" value={f.dueDays} onChange={e => set('dueDays', +e.target.value)} />
+        <div className="cl-field"><label htmlFor="cl-due-in-days">Due in (days)</label>
+          <input id="cl-due-in-days" type="number" min="0" max="120" value={f.dueDays} onChange={e => set('dueDays', +e.target.value)} />
         </div>
       </div>
       <div className="cl-field"><label>Assign to</label>
@@ -595,8 +595,8 @@ function QuickTask({ ctx: surfaceCtx, onClose, onCreated, onGoToBoard }: QuickTa
           </button>
         </div>
       </div>
-      <div className="cl-field"><label>Note <span className="cl-opt">-- optional</span></label>
-        <textarea rows={2} value={f.note} onChange={e => set('note', e.target.value)} placeholder="Add context for the assignee..." />
+      <div className="cl-field"><label htmlFor="cl-note-optional">Note <span className="cl-opt">-- optional</span></label>
+        <textarea id="cl-note-optional" rows={2} value={f.note} onChange={e => set('note', e.target.value)} placeholder="Add context for the assignee..." />
       </div>
       {/* The old banner here warned that this "Adds this to the in-session task
           board only". That is no longer true — the task is persisted — so the
@@ -914,7 +914,7 @@ export function CollabLayer({ onNav }: CollabLayerProps) {
             </button>
             <button className="cl-fab-mi" onClick={() => { setTab('collab'); setOpen(true); setMenuOpen(false); }}>
               <span className="ico">{I.messageSquare}</span>
-              <span><b>Collaborate</b><em>Message -- @mention — route</em></span>
+              <span><b>Collaborate</b><em>Message — @mention — route</em></span>
             </button>
             <button className="cl-fab-mi" onClick={() => { onNav?.('tasks'); setMenuOpen(false); }}>
               <span className="ico">{I.layoutPanels || I.grid}</span>

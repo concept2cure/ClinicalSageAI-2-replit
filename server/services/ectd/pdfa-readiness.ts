@@ -24,6 +24,12 @@ export interface LeafGradeRecord {
   isPdf: boolean;
   /** True when the bytes were actually converted to PDF/A by the pipeline. */
   converted: boolean;
+  /**
+   * True when the leaf carries an /Encrypt dictionary. The eCTD PDF spec
+   * prohibits secured PDFs outright, independent of PDF/A; the packager
+   * refuses to ship one rather than folding it into the PDF/A grade.
+   */
+  encrypted?: boolean;
 }
 
 /** Roll-up of submission-grade status across every leaf in a package. */

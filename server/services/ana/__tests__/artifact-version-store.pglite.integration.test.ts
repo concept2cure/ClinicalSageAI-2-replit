@@ -12,6 +12,8 @@
  */
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { PGlite } from '@electric-sql/pglite';
+import fs from 'node:fs';
+import path from 'node:path';
 import { upsertDocumentArtifactVersionTx } from '../artifactVersionStore.js';
 
 // Minimal DDL mirroring the columns the store writes/reads on the canonical
@@ -85,6 +87,13 @@ const base = {
 beforeAll(async () => {
   pg = new PGlite();
   await pg.exec(DDL);
+  // The lineage gate the artifact writer now enlists (ledger L160): a real
+  // organizations row for the FK, the evidence spine and the span-lineage store.
+  await pg.exec(`CREATE TABLE IF NOT EXISTS organizations (id SERIAL PRIMARY KEY, name TEXT);`);
+  await pg.exec(`INSERT INTO organizations (id, name) VALUES (1, 'org-1') ON CONFLICT DO NOTHING;`);
+  for (const rel of ['db/migrations/20260724_clinical_regulatory_evidence_spine.sql', 'db/migrations/20260803_document_span_lineage.sql']) {
+    await pg.exec(fs.readFileSync(path.resolve(__dirname, '../../../../', rel), 'utf8'));
+  }
   client = { query: (sql: string, params?: unknown[]) => pg.query(sql, params) as Promise<{ rows: any[] }> };
 });
 afterAll(async () => {

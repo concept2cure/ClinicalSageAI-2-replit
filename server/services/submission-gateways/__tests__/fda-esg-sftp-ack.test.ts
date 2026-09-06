@@ -94,6 +94,7 @@ function sftpSizedRequest() {
     },
     environment: 'production' as const,
     submissionType: 'original',
+    fda: { applicationType: 'nda' }, // a package must declare what it is; this used to default to NDA silently
     metadata: { applicationId: 'IND123456', sequence: '0001', environment: 'production' },
       authorization: {
         kind: 'governed-http' as const,

@@ -348,7 +348,7 @@ export function RbmRact({ board, onReload }: SubProps) {
         <div className="rbm-asmt">
           <div className="rbm-asmt-l">
             <b>{asmt.framework}</b>
-            <span>Version {asmt.version} -- <RbmChip vocab={asmt.status === 'active' ? 'action' : 'item'} value={asmt.status === 'active' ? 'done' : 'open'} /> {asmt.status === 'active' ? 'active' : 'draft — approval pending'} -- {items.length} CtQ factors, {items.filter(x => x.critical).length} critical</span>
+            <span>Version {asmt.version} — <RbmChip vocab={asmt.status === 'active' ? 'action' : 'item'} value={asmt.status === 'active' ? 'done' : 'open'} /> {asmt.status === 'active' ? 'active' : 'draft — approval pending'} — {items.length} CtQ factors, {items.filter(x => x.critical).length} critical</span>
             {asmt.approval ? <span className="rbm-audit">{I.check}Approved by {asmt.approval.by} -- {asmt.approval.when} -- &quot;{asmt.approval.reason}&quot;</span> : null}
           </div>
           {history.length > 1 && (

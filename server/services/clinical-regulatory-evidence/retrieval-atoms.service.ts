@@ -252,7 +252,7 @@ export function projectDesignLesson(l: DesignLesson): AtomDraft[] {
     title: `Design lesson: ${truncateTitle(l.lessonStatement)}`,
     content: composeContent([
       ['Lesson', l.lessonStatement],
-      ['Applicability', applicability || null],
+      ['EvidenceApplicability', applicability || null],
       ['Supporting sources', l.supportingSourceIds?.length ?? 0],
       ['Contradicting sources', l.contradictingSourceIds?.length ?? 0],
       ['Minimum evidence count', l.minimumEvidenceCount],

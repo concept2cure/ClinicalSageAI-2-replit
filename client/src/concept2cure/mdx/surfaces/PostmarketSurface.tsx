@@ -10,7 +10,7 @@
  * "Situational awareness" accordion.
  *
  * Cross-program surface. Port basis:
- * design-system/ui_kits/mdx/surfaces/Postmarket.jsx.
+ * ui_kits/mdx/surfaces/Postmarket.jsx.
  */
 
 import * as React from 'react';

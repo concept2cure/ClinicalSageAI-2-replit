@@ -33,6 +33,7 @@ import {
   resolveToRegistryEntry, getSubmissionTypeLabel,
   type GatewayAcknowledgment, type GatewayStatusResult, type GatewayTransmitRequest,
   type GatewayTransmitResult, type SubmissionGateway, type SubmissionStatus,
+  requiredAgencyMetadata
 } from './types';
 
 /* ─── CESP credentials ───────────────────────────────────────────── */
@@ -256,7 +257,7 @@ export class EmaCespGateway implements SubmissionGateway {
 
   async isConfigured(_orgId: number, environment: 'staging' | 'production'): Promise<boolean> {
     try { loadCespCredentials(environment); return true; }
-    catch (err) { return !(err instanceof CredentialError); }
+    catch { return false; } // an unreadable cert or key is not 'configured'
   }
 
   async transmit(req: GatewayTransmitRequest): Promise<GatewayTransmitResult> {
@@ -268,6 +269,7 @@ export class EmaCespGateway implements SubmissionGateway {
       ? { ...req, submissionType: resolvedEntry.applicationType }
       : req;
 
+    const agency = requiredAgencyMetadata(normalizedReq);
     const transmittalId = await createTransmittalRow(normalizedReq, 'cesp', 'rest');
     try {
       const creds = loadCespCredentials(normalizedReq.environment);
@@ -278,9 +280,9 @@ export class EmaCespGateway implements SubmissionGateway {
       const metadata = {
         organisationId:    creds.organisationId,
         productName:       normalizedReq.metadata?.productName ?? null,
-        submissionType:    normalizedReq.submissionType ?? 'initial',
+        submissionType:    agency.submissionType,
         procedureNumber:   normalizedReq.metadata?.applicationId ?? null,
-        sequenceNumber:    normalizedReq.metadata?.sequence ?? null,
+        sequenceNumber:    agency.sequenceNumber,
         sha256:            normalizedReq.bundle.sha256,
       };
 
@@ -357,6 +359,7 @@ export class EmaCespGateway implements SubmissionGateway {
       throw new GatewayError(`Transmittal ${transmittalId} not found`, 404, null, null);
     }
     /* Live status poll. */
+    let pollError: string | null = 'The agency status poll did not complete.';
     try {
       const environment = (rows[0].metadata?.environment as 'staging' | 'production' | undefined) ?? 'production';
       const creds = loadCespCredentials(environment);
@@ -378,6 +381,7 @@ export class EmaCespGateway implements SubmissionGateway {
           await updateTransmittal(transmittalId, { status: mapped });
         }
         return {
+          source: 'agency',
           transmittalId,
           transmissionId: rows[0].transmission_id,
           status: mapped as SubmissionStatus,
@@ -385,10 +389,9 @@ export class EmaCespGateway implements SubmissionGateway {
           rawResponse: parsed,
         };
       }
-    } catch {
-      /* Fall through to last-known DB state on poll failure. */
-    }
+    } catch (err) { pollError = err instanceof Error ? err.message : String(err); }
     return {
+      source: 'stored', pollError,
       transmittalId,
       transmissionId: rows[0].transmission_id,
       status: rows[0].status as SubmissionStatus,
@@ -421,6 +424,11 @@ export class EmaCespGateway implements SubmissionGateway {
 
 /* ─── EUDAMED gateway implementation ─────────────────────────────── */
 
+/** The receipt identifier EUDAMED names in a 2xx body, or null when it names none. */
+function eudamedReceiptId(parsed: { uuid?: string; id?: string }): string | null {
+  return parsed.uuid ?? parsed.id ?? null;
+}
+
 export class EudamedGateway implements SubmissionGateway {
   readonly region    = 'ema' as const;
   readonly gateway   = 'eudamed' as const;
@@ -428,7 +436,7 @@ export class EudamedGateway implements SubmissionGateway {
 
   async isConfigured(_orgId: number, environment: 'staging' | 'production'): Promise<boolean> {
     try { loadEudamedCredentials(environment); return true; }
-    catch (err) { return !(err instanceof CredentialError); }
+    catch { return false; } // an unreadable cert or key is not 'configured'
   }
 
   async transmit(req: GatewayTransmitRequest): Promise<GatewayTransmitResult> {
@@ -470,7 +478,19 @@ export class EudamedGateway implements SubmissionGateway {
       catch {
         throw new GatewayError('EUDAMED returned non-JSON success', resp.httpStatus, null, resp.body.toString('utf8'));
       }
-      const txnId = parsed.uuid ?? parsed.id ?? `eudamed-${Date.now()}`;
+      const txnId = eudamedReceiptId(parsed);
+      if (!txnId) {
+        // A 2xx whose body names no receipt is not an accepted submission. This
+        // minted `eudamed-<timestamp>` here, recorded the row as received with an
+        // acknowledgement time from the platform clock, told the operator
+        // "accepted. Receipt: eudamed-…", and later polled the agency for a
+        // receipt that never existed. CESP refuses the same case; so does this.
+        await updateTransmittal(transmittalId, {
+          status: 'rejected', httpStatus: resp.httpStatus,
+          errorClass: 'gateway', errorMessage: 'Agency returned success with no receipt identifier in the body.',
+        });
+        throw new GatewayError('EUDAMED response missing a receipt identifier', resp.httpStatus, null, parsed);
+      }
       await updateTransmittal(transmittalId, {
         status: 'received', transmissionId: txnId,
         httpStatus: resp.httpStatus, ackReceivedAt: new Date(),
@@ -505,6 +525,7 @@ export class EudamedGateway implements SubmissionGateway {
       throw new GatewayError(`Transmittal ${transmittalId} not found`, 404, null, null);
     }
     return {
+      source: 'stored',
       transmittalId,
       transmissionId: rows[0].transmission_id,
       status: rows[0].status as SubmissionStatus,

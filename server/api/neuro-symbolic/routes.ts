@@ -31,7 +31,7 @@ import { MultiAgentCouncilService, ValidationError, CouncilError } from '../../s
 import { getEntityExtractionWorker } from '../../workers/entity-extraction-worker';
 
 // Survivability imports
-import { rateLimitMiddleware, RateLimitResult } from '../../lib/rate-limiting';
+import { rateLimitMiddleware } from '../../lib/rate-limiting';
 import { getTamperProofAuditLog } from '../../lib/tamper-proof-audit';
 import { getGracefulDegradationService, FeatureUnavailableError } from '../../lib/graceful-degradation';
 import { CircuitBreakerError } from '../../lib/circuit-breaker';

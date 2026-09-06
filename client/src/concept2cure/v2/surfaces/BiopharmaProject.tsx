@@ -189,6 +189,7 @@ function RegulatoryPanel({
                     <button
                       type="button"
                       className="sp-go"
+                      aria-label="Trace evidence for this finding"
                       onClick={() => onAsk(`Trace the evidence behind FDA finding ${f.findingId}.`)}
                     >
                       {I.route}
@@ -457,7 +458,7 @@ export function CsrWorkflow({ onAsk }: SurfaceViewProps) {
       />
 
       {boardRes.loading ? (
-        <div className="scaf-note" style={{ marginTop: 16, maxWidth: 760 }}>
+        <div role="status" className="scaf-note" style={{ marginTop: 16, maxWidth: 760 }}>
           Loading CSR workflow…
         </div>
       ) : boardRes.error ? (
@@ -643,7 +644,7 @@ export function RegulatoryWorkspace({ onAsk }: SurfaceViewProps) {
   if (wsRes.loading) {
     return (
       <div className="page-inner">
-        <div className="scaf-note" style={{ marginTop: 16, maxWidth: 760 }}>
+        <div role="status" className="scaf-note" style={{ marginTop: 16, maxWidth: 760 }}>
           Loading regulatory workspace…
         </div>
       </div>

@@ -109,8 +109,13 @@ describe('AnaActivity — the work is visible while it happens', () => {
     // are CSS combinator syntax, and jsdom exposes no global CSS.escape to quote
     // them with. The id lookup takes the string literally, which is what an AT
     // resolving aria-controls does anyway.
+    // Resolves while collapsed too — a reference that only exists once the
+    // disclosure is open is a dangling one the rest of the time.
+    expect(document.getElementById(controls!)).toBeTruthy();
+    expect(document.getElementById(controls!)?.hasAttribute('hidden')).toBe(true);
     act(() => { toggle.click(); });
     expect(document.getElementById(controls!)).toBeTruthy();
+    expect(document.getElementById(controls!)?.hasAttribute('hidden')).toBe(false);
     expect(toggle.getAttribute('aria-expanded')).toBe('true');
   });
 
@@ -223,7 +228,11 @@ describe('AnaActivity — the work is visible while it happens', () => {
     const toggle = container.querySelector('.ana-activity-toggle');
     expect(toggle).toBeTruthy();
     expect(toggle?.getAttribute('aria-expanded')).toBe('false');
-    expect(screen.queryByText('Sample size — biostatistics engine')).toBeNull();
+    // Collapsed: the record stays in the DOM, hidden, so the toggle's
+    // aria-controls keeps pointing at something that exists.
+    const body = container.querySelector('.ana-activity-body') as HTMLElement;
+    expect(body.hasAttribute('hidden')).toBe(true);
+    expect(body.id).toBe(toggle?.getAttribute('aria-controls'));
     expect(toggle?.textContent).toContain('1 step completed');
   });
 });

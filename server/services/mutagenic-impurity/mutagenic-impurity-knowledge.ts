@@ -33,7 +33,7 @@ export type AdministrationRoute = 'oral' | 'parenteral' | 'dermal' | 'inhalation
 export type CohortOfConcern = 'not_coc' | 'CoC_aflatoxin_like' | 'CoC_nitrosamine' | 'CoC_alkyl_azoxy';
 export type SyntheticStep = 'early' | 'intermediate' | 'late' | 'final';
 export type DevelopmentPhase = 'clinical_phase1' | 'clinical_phase2' | 'clinical_phase3' | 'commercial';
-export type ImpurityClass = 1 | 2 | 3 | 4 | 5;
+export type MutagenicImpurityClass = 1 | 2 | 3 | 4 | 5;
 export type NitrosamineRiskLevel = 'high' | 'medium' | 'low' | 'no_risk';
 
 export interface Citation {
@@ -459,7 +459,7 @@ export interface ClassifyInput {
 }
 
 export interface ClassificationResult {
-  impurityClass: ImpurityClass;
+  impurityClass: MutagenicImpurityClass;
   className: string;
   classDescription: string;
   controlApproach: string;
@@ -497,7 +497,7 @@ export function classifyMutagenicImpurity(params: ClassifyInput): Classification
   } = params;
 
   const decisionTree: DecisionStep[] = [];
-  let impurityClass: ImpurityClass;
+  let impurityClass: MutagenicImpurityClass;
   let className: string;
   let classDescription: string;
   let controlApproach: string;
@@ -646,7 +646,7 @@ export function classifyMutagenicImpurity(params: ClassifyInput): Classification
 function evaluateCohortOfConcern(
   isCoCStructure: boolean,
   specificAlerts: string[],
-  impurityClass: ImpurityClass,
+  impurityClass: MutagenicImpurityClass,
 ): ClassificationResult['cohortOfConcernAssessment'] {
   const lowerAlerts = specificAlerts.map(a => a.toLowerCase());
   const isNitroso = lowerAlerts.some(a =>
@@ -715,7 +715,7 @@ function evaluateCohortOfConcern(
 }
 
 function buildClassificationSummary(
-  impurityClass: ImpurityClass,
+  impurityClass: MutagenicImpurityClass,
   className: string,
   controlApproach: string,
   relationship: ImpurityRelationship,
@@ -2013,7 +2013,7 @@ export function assessNitrosamineRisk(params: NitrosamineRiskInput): Nitrosamine
 // ─────────────────────────────────────────────────────────────────────────────
 
 export interface ControlStrategyInput {
-  impurityClass: ImpurityClass;
+  impurityClass: MutagenicImpurityClass;
   drugProductType: string;
   maxDailyDoseG: number;
   treatmentDuration: TreatmentDuration;

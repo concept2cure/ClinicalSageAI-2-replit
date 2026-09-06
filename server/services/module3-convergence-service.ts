@@ -13,6 +13,8 @@ import { randomUUID } from 'crypto';
 import { getPool } from '../db';
 import { createSourceHash } from './cmc-module3-compiler';
 import { composeModule3FromCanonicalSources, MODULE3_SECTION_RULES, tablesToMarkdown, CmcSourceType } from './module3Composer';
+import { enforceAuthorLineage } from './clinical-regulatory-evidence/lineage-gate';
+import { governedActor } from './part11/governed-actor';
 import {
   resolveCmcArtifactProject,
   type ArtifactProjectResolution,
@@ -480,6 +482,7 @@ export async function bridgeCompileToArtifact(
 
     let artifactId: string;
     let isNew: boolean;
+    let artifactPk: number;
 
     if (existing.rows.length > 0) {
       // Update existing artifact
@@ -498,17 +501,19 @@ export async function bridgeCompileToArtifact(
          WHERE organization_id = $4 AND id = $5`,
         [fullContent, contentHash, JSON.stringify(metadata), orgId, row.id],
       );
+      artifactPk = Number(row.id);
     } else {
       // Create new governed artifact
       artifactId = `m3-${sectionKey}-${randomUUID().slice(0, 8)}`;
       isNew = true;
 
-      await client.query(
+      const inserted = await client.query<{ id: number }>(
         `INSERT INTO concept2cure_artifacts
            (organization_id, project_id, artifact_id, type, category, title,
             content, content_hash, version, ctd_section, status, metadata, created_by_id)
          VALUES ($1, $2, $3, 'markdown', 'document', $4,
-                 $5, $6, 1, $7, 'draft', $8::jsonb, $9)`,
+                 $5, $6, 1, $7, 'draft', $8::jsonb, $9)
+         RETURNING id`,
         [
           orgId,
           artifactProjectId,
@@ -521,7 +526,24 @@ export async function bridgeCompileToArtifact(
           opts.createdById ?? null,
         ],
       );
+      artifactPk = Number(inserted.rows[0].id);
     }
+
+    /* Lineage in the same transaction as the composed text (ledger L160).
+       A composed Module 3 section is prose assembled from recorded facts by a
+       deterministic composer; the actor is the identified user when the
+       bridge ran for one, otherwise the NAMED machine actor — never a
+       placeholder. The per-source `cmc_section_lineage` rows above say which
+       records the section was built from; these spans say who stands behind
+       the sentences. */
+    const actor = governedActor(opts.createdById ?? null, 'module3-convergence');
+    await enforceAuthorLineage(
+      client,
+      orgId,
+      { documentTable: 'concept2cure_artifacts', documentId: String(artifactPk) },
+      fullContent,
+      actor.userId > 0 ? String(actor.userId) : String(actor.userEmail),
+    );
 
     // Record provenance event
     await client.query(

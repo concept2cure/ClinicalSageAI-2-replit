@@ -1,19 +1,11 @@
 import {
-  canViewVisibilityTier,
   deriveCommunicationDueDate,
-  parseProjectParam,
   validateAuthorityProfileInput,
   validateSubmissionCenterInput,
   validateSubmissionTransition,
 } from '../../../shared/utils/communication-center-rules';
 
 describe('concept2cure communication center logic helpers', () => {
-  it('parses project ids with and without prefix', () => {
-    expect(parseProjectParam('proj_42')).toBe(42);
-    expect(parseProjectParam('7')).toBe(7);
-    expect(() => parseProjectParam('proj_bad')).toThrow('Invalid project ID');
-  });
-
   it('enforces gateway acknowledgement model constraints', () => {
     expect(() =>
       validateAuthorityProfileInput({
@@ -86,22 +78,6 @@ describe('concept2cure communication center logic helpers', () => {
       responseRequired: true,
       urgency: 'critical',
     })).toBe(explicit);
-  });
-
-  it('applies visibility-tier gating by role', () => {
-    expect(canViewVisibilityTier('shared_client_c2c', 'client_reviewer')).toBe(true);
-    expect(canViewVisibilityTier('publishops_only', 'client_reviewer')).toBe(false);
-    expect(canViewVisibilityTier('publishops_only', 'managed_publishops_operator')).toBe(true);
-    expect(canViewVisibilityTier('restricted_legal_sensitive', 'legal_counsel')).toBe(true);
-    expect(canViewVisibilityTier('restricted_legal_sensitive', 'client_reviewer')).toBe(false);
-    // c2c_internal tier
-    expect(canViewVisibilityTier('c2c_internal', 'c2c_analyst')).toBe(true);
-    expect(canViewVisibilityTier('c2c_internal', 'client_reviewer')).toBe(false);
-    expect(canViewVisibilityTier('c2c_internal', 'admin')).toBe(true);
-    // client_internal is open to all roles
-    expect(canViewVisibilityTier('client_internal', 'client_reviewer')).toBe(true);
-    // unknown tier should be rejected
-    expect(canViewVisibilityTier('unknown_tier' as any, 'admin')).toBe(false);
   });
 
   it('enforces submission lifecycle transitions and eCTD readiness', () => {

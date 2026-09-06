@@ -30,14 +30,26 @@ export interface StabilityPointRecord {
   specification?: unknown;
 }
 
+export interface RecordedStabilityRead {
+  points: StabilityPointRecord[];
+  /**
+   * The column held a recorded value that could not be parsed. Distinct from a
+   * study with no recorded results: one is unreadable data, the other is absent
+   * data, and a stability section must not read the first as the second.
+   */
+  unreadable: boolean;
+}
+
 /** The recorded pull-point results on a study, whatever shape the column holds. */
-export function readRecordedStabilityResults(value: unknown): StabilityPointRecord[] {
+export function readRecordedStabilityResults(value: unknown): RecordedStabilityRead {
   let raw = value;
   if (typeof raw === 'string' && raw.trim()) {
     try {
       raw = JSON.parse(raw);
     } catch {
-      return [];
+      // Recorded, and unreadable. Returning an empty list here made a corrupt
+      // stability payload look exactly like a study that recorded nothing.
+      return { points: [], unreadable: true };
     }
   }
   const list = Array.isArray(raw)
@@ -45,9 +57,12 @@ export function readRecordedStabilityResults(value: unknown): StabilityPointReco
     : raw && typeof raw === 'object' && Array.isArray((raw as { results?: unknown }).results)
       ? (raw as { results: unknown[] }).results
       : [];
-  return list.filter(
-    (r): r is StabilityPointRecord => Boolean(r) && typeof r === 'object'
-  );
+  return {
+    points: list.filter(
+      (r): r is StabilityPointRecord => Boolean(r) && typeof r === 'object'
+    ),
+    unreadable: false,
+  };
 }
 
 /** The first finite number in a recorded value ("98.4%" → 98.4), else null. */
@@ -268,7 +283,7 @@ export async function assessRecordedPoolability(
 
   const perStudy = studies.map(s => ({
     study: s,
-    byParameter: groupByParameter(readRecordedStabilityResults(s.stabilityData)),
+    byParameter: groupByParameter(readRecordedStabilityResults(s.stabilityData).points),
   }));
 
   const parameters = Array.from(
@@ -455,6 +470,22 @@ export type RecordedShelfLifeOutcome =
     };
 
 /**
+ * Why a recorded series cannot be fitted, or null when it can.
+ *
+ * Unreadable is not empty: a corrupt payload must be refused with its own
+ * reason rather than reported as a study that recorded nothing.
+ */
+function refuseUnfittableSeries(read: RecordedStabilityRead): string | null {
+  if (read.unreadable) {
+    return 'This study\u2019s recorded results could not be read, so no shelf life can be fitted from them.';
+  }
+  if (read.points.length === 0) {
+    return 'This study has no recorded pull-point results \u2014 there is nothing to fit.';
+  }
+  return null;
+}
+
+/**
  * Fit the recorded pull points of ONE stability study per ICH Q1E.
  *
  * Refuses — rather than caveats — when the study cannot support a fit: no
@@ -467,10 +498,10 @@ export async function estimateRecordedShelfLife(
   study: RecordedShelfLifeStudy,
 ): Promise<RecordedShelfLifeOutcome> {
   const { estimateShelfLife } = await import('./shelf-life');
-  const series = readRecordedStabilityResults(study.stabilityData);
-  if (series.length === 0) {
-    return { ok: false, error: 'This study has no recorded pull-point results — there is nothing to fit.' };
-  }
+  const read = readRecordedStabilityResults(study.stabilityData);
+  const seriesRefusal = refuseUnfittableSeries(read);
+  if (seriesRefusal) return { ok: false, error: seriesRefusal };
+  const series = read.points;
 
   const placedAt = (Array.isArray(study.storageConditions) ? study.storageConditions : [])
     .map((c) => String(c ?? '').trim())
@@ -516,19 +547,59 @@ export async function estimateRecordedShelfLife(
     }
 
     try {
-      const result = estimateShelfLife({
-        data: usable,
-        specLimit: criterion.limit,
-        direction: criterion.direction,
-        maxTime,
-      });
+      /* A TWO-SIDED criterion has two ways to fail, and this estimate used to
+         evaluate only one of them. `parseAcceptanceCriterion` resolves a range
+         like "4.5 - 6.5" to the LOWER bound with direction 'decreasing' and
+         carries the upper bound alongside — but this call passed only
+         `criterion.limit`/`criterion.direction`, discarding it. For an attribute
+         drifting toward the DISCARDED bound the one-sided confidence limit moves
+         away from the evaluated one, g(t) grows monotonically, and the estimate
+         returned the full Q1E allowance — e.g. pH against "4.5 - 6.5" reading
+         5.0/5.4/5.8/6.4 reported the whole search horizon while the upper
+         confidence limit crosses 6.5 at roughly 20 months. Because
+         `supportedShelfLife` is the minimum across attributes, an over-long
+         figure on the truly limiting attribute becomes the programme answer,
+         and the per-parameter row asserted the attribute "stays within spec"
+         against a criterion half of which was never evaluated.
+
+         Evaluate every bound the criterion actually sets and report the shorter
+         (limiting) one — the same "most constraining wins" rule already applied
+         across attributes, applied within an attribute. */
+      const bounds: Array<{ specLimit: number; direction: 'decreasing' | 'increasing' }> = [
+        { specLimit: criterion.limit, direction: criterion.direction },
+      ];
+      if (criterion.twoSided && criterion.upperLimit !== null) {
+        bounds.push({ specLimit: criterion.upperLimit, direction: 'increasing' });
+      }
+
+      const runs = bounds.map((b) => ({
+        ...b,
+        result: estimateShelfLife({ data: usable, specLimit: b.specLimit, direction: b.direction, maxTime }),
+      }));
+      const limitingRun = runs.reduce((a, b) => (b.result.shelfLife < a.result.shelfLife ? b : a));
+
       estimates.push({
         parameter,
         estimable: true,
-        specLimit: criterion.limit,
-        direction: criterion.direction,
+        specLimit: limitingRun.specLimit,
+        direction: limitingRun.direction,
         pointsUsed: usable.length,
-        ...result,
+        ...(criterion.twoSided && criterion.upperLimit !== null
+          ? {
+              acceptanceCriterion: {
+                lowerLimit: criterion.limit,
+                upperLimit: criterion.upperLimit,
+                twoSided: true,
+                boundsEvaluated: runs.map((r) => ({
+                  specLimit: r.specLimit,
+                  direction: r.direction,
+                  shelfLife: r.result.shelfLife,
+                })),
+                limitingBound: limitingRun.direction === 'increasing' ? 'upper' : 'lower',
+              },
+            }
+          : {}),
+        ...limitingRun.result,
       });
     } catch (e) {
       estimates.push({

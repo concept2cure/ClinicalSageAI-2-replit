@@ -75,3 +75,16 @@ describe('PvCockpit — real PV engine', () => {
     expect(screen.getByText(/15 day/)).toBeTruthy();
   });
 });
+
+describe('PvCockpit — a failed compliance-matrix read is an error, not an empty matrix', () => {
+  it('says the matrix could not be read instead of "No compliance data yet"', async () => {
+    apiRequest.mockImplementation(async (_method: string, url: string) => {
+      if (url === '/api/pharmacovigilance/overview') return ok(OVERVIEW);
+      if (url === '/api/pharmacovigilance/compliance-matrix') throw new Error('503 Service Unavailable');
+      return ok({});
+    });
+    render(<PvCockpit {...props()} />);
+    expect(await screen.findByText(/Couldn’t load the compliance matrix/)).toBeTruthy();
+    expect(screen.queryByText(/No compliance data yet/)).toBeNull();
+  });
+});

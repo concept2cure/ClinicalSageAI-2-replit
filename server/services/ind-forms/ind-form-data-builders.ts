@@ -276,7 +276,12 @@ export function buildForm1571(meta: IndProjectMetadata): BuiltForm {
     { id: 'us_agent_name', value: s(agent.name), required: false },
     { id: 'us_agent_address', value: s(agent.address), required: false },
     { id: 'us_agent_phone', value: s(agent.phone), required: false },
-    { id: 'authorized_rep_name', value: s(sponsor.authorizedRepName), required: true },
+    // The 1571 signature block is a signature, not a data box: the official form
+    // carries the representative as first/middle/last plus a signature widget,
+    // with no single full-name field to write into. buildForm356h already made
+    // exactly this call for the same two ids; 1571 was the outlier, and while it
+    // stayed required no official fill of this form could ever qualify.
+    { id: 'authorized_rep_name', value: s(sponsor.authorizedRepName), required: false },
     { id: 'authorized_rep_title', value: s(sponsor.authorizedRepTitle), required: false },
   ];
 
@@ -339,7 +344,13 @@ export function buildForm1572(
     { id: 'irb_address', value: s(investigator.irbAddress), required: false },
     { id: 'sub_investigators', value: subInv, required: false },
     { id: 'study_title', value: s(meta.studyTitle), required: false },
-    { id: 'protocol_numbers', value: s(meta.protocolNumbers) || s(meta.serialNumber), required: false },
+    // NOT `|| meta.serialNumber`. The serial number is the IND submission
+    // sequence (0000, 0001…); the protocol number identifies the study
+    // (C2C-1042-101). They are unrelated identifiers, and this map feeds
+    // db_prot_name_code — Box 6 of the official 1572 — so the fallback printed
+    // "0000" into the protocol box of a form an investigator signs. A protocol
+    // number the platform does not hold is blank, not borrowed.
+    { id: 'protocol_numbers', value: s(meta.protocolNumbers), required: false },
   ];
 
   return assemble(FORM_1572, specs);
@@ -607,7 +618,11 @@ export function buildForm1574(meta: IndProjectMetadata): BuiltForm {
   return assemble(FORM_1574, [
     { id: 'sponsor_name', value: s(meta.sponsorName) || s(meta.sponsor?.name), required: true },
     { id: 'drug_name', value: s(meta.drugName), required: true },
-    { id: 'protocol_number', value: s(meta.protocolNumbers) || s(meta.serialNumber), required: true },
+    // Same substitution as the 1572 carried, and here the field is required, so
+    // the serial number silently satisfied the gate: a 1574 reported complete
+    // while its protocol number was an IND sequence number. Blank now, and
+    // reported in missingRequired.
+    { id: 'protocol_number', value: s(meta.protocolNumbers), required: true },
     { id: 'irb_name_address', value: s(meta.irbNameAddress), required: true },
     { id: 'irb_chair_name', value: s(meta.irbChairName), required: true },
     { id: 'irb_assurance_number', value: s(meta.irbAssuranceNumber), required: false },

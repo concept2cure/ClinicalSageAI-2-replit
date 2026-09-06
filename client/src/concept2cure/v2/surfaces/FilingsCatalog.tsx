@@ -67,7 +67,7 @@ function FilingDetail({
       <div className="fc-detail" onClick={(e) => e.stopPropagation()}>
         <div className="fc-detail-top">
           <div className="fc-detail-crumb">{segLabel}{catLabel ? ' -- ' + catLabel : ''}</div>
-          <button className="fc-detail-x" onClick={onClose}>{I.close}</button>
+          <button className="fc-detail-x" aria-label="Close" onClick={onClose}>{I.close}</button>
         </div>
         <h2 className="fc-detail-t">{it.n}</h2>
         {wfLabel && <div className="fc-detail-wf">{I.gitCompare || I.arrowRight} Routes into the {wfLabel} workflow</div>}
@@ -224,7 +224,7 @@ export function FilingsCatalog({ onAsk, onNav }: SurfaceViewProps) {
         <div className="fc-search">
           <span className="fc-search-ic">{I.search}</span>
           <input value={q} onChange={(e) => setQ(e.target.value)} aria-label="Search filings" placeholder="Search by name, authority, or pathway — CSR, 510(k), EMA..." autoFocus />
-          {q && <button className="fc-search-x" onClick={() => setQ('')}>{I.close}</button>}
+          {q && <button className="fc-search-x" aria-label="Clear search" onClick={() => setQ('')}>{I.close}</button>}
         </div>
       </div>
 

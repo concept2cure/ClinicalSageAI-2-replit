@@ -346,19 +346,47 @@ async function assertPurgePermitted(
 }
 
 /** Empty one tenant-owned table. Absent tables are skipped; other errors abort. */
+/**
+ * Tenant-owned tables that are NOT keyed by organization_id, with the predicate
+ * that scopes them to a tenant instead.
+ *
+ * `vault.document_chunks` is keyed only by document_id — it inherits its tenancy
+ * from the document it belongs to. Purging it with the uniform
+ * `WHERE organization_id = $1` raised 42703 (undefined_column), which
+ * purgeChildTable treats as "not in this deployment's schema" and skips
+ * silently, so a purge left every chunk of every deleted document in place.
+ *
+ * Frozen and module-local for the same reason the table list is: a purge must
+ * never take a predicate derived from request input.
+ */
+const PURGE_PARENT_SCOPED: Readonly<Record<string, string>> = Object.freeze({
+  'vault.document_chunks':
+    'document_id IN (SELECT id FROM vault.documents WHERE organization_id = $1)',
+});
+
 async function purgeChildTable(
   pool: Pool,
   table: string,
   organizationId: number
 ): Promise<void> {
-  // Table names come from the frozen constant below, never from a caller's
-  // string, so interpolation here cannot be influenced by request input. The
-  // regex is a belt-and-braces assertion on that invariant.
-  if (!/^[a-z_][a-z0-9_]*$/.test(table)) {
+  /* Table names come from the frozen constant below, never from a caller's
+     string, so interpolation here cannot be influenced by request input. The
+     regex is a belt-and-braces assertion on that invariant.
+
+     It now admits an optional SCHEMA QUALIFIER, and that is the fix for a real
+     gap rather than a generalisation for its own sake: the list carried
+     `vault_documents` and `document_chunks`, which resolve to
+     `public.vault_documents` and `public.document_chunks`. Neither exists — the
+     real tables are `vault.documents` and `vault.document_chunks` — so both
+     raised 42P01 and were skipped, silently, while the list read as though the
+     vault were covered. A dot could not be written before this, because the old
+     regex rejected it. */
+  if (!/^[a-z_][a-z0-9_]*(\.[a-z_][a-z0-9_]*)?$/.test(table)) {
     throw new OffboardingStateError('INVALID_PURGE_TABLE', `Unsafe table name: ${table}`);
   }
+  const predicate = PURGE_PARENT_SCOPED[table] ?? 'organization_id = $1';
   try {
-    await pool.query(`DELETE FROM ${table} WHERE organization_id = $1`, [organizationId]);
+    await pool.query(`DELETE FROM ${table} WHERE ${predicate}`, [organizationId]);
   } catch (error) {
     // A table absent from this deployment's schema is expected — the schema
     // varies by edition. A different error is not, and must abort the purge
@@ -456,8 +484,21 @@ export const PURGE_CHILD_TABLES: readonly string[] = Object.freeze([
   'client_workspaces',
   'projects',
   'documents',
-  'vault_documents',
-  'document_chunks',
+  /* SCHEMA-QUALIFIED, and chunks BEFORE documents.
+     These were `vault_documents` and `document_chunks` — names that resolve to
+     public.* tables which do not exist, so both were skipped as 42P01 while the
+     list read as though the vault were purged. The vault holds the customer's
+     actual regulatory documents; leaving them was the largest hole in this list.
+     Chunks are ordered first because their scoping predicate reads
+     vault.documents, so they must be deleted while their parents still exist.
+
+     HONEST SCOPE: this deletes the document RECORDS and their chunks. It does
+     NOT delete the stored object bytes, which live outside the database
+     (uploads/vault/<program>/<sha256><ext> under the local provider). Purging
+     those is a storage-lifecycle concern this function does not perform, and
+     saying so here is better than implying an erasure that did not happen. */
+  'vault.document_chunks',
+  'vault.documents',
   'regulatory_programs',
   'file_uploads',
   // Digital-twin simulations. Customer content: each row stores the tenant's
@@ -492,4 +533,11 @@ export const PURGE_CHILD_TABLES: readonly string[] = Object.freeze([
      tenant's synthetic route, batch sizes and equipment: purged, not left as
      residue. */
   'manufacturing_processes',
+  /* The rendered-leaf register: the per-leaf PDF bytes a sequence was built
+     from, addressed by vault version and pinned by sha256/md5. That is the
+     tenant's own submission content and its integrity record — a tenant that
+     asks to be erased must not keep the fingerprints of its filing here. A
+     leaf (its only FKs are to organizations, which a purge updates rather than
+     deletes, and users), so its position at the end is free. */
+  'rendered_leaf_files',
 ]);

@@ -60,7 +60,9 @@ import TextAlign from '@tiptap/extension-text-align';
 import Highlight from '@tiptap/extension-highlight';
 import { Collaboration } from '@tiptap/extension-collaboration';
 import { HocuspocusProvider } from '@hocuspocus/provider';
+import { redactInternals } from '@/lib/queryClient';
 import * as Y from 'yjs';
+import { structuralSignatureFromDom, structuralSignatureFromDoc, signatureDrift, docToPlainText } from './roundTrip';
 
 import { DataOriginsMenu } from '../../lineage';
 import {
@@ -199,6 +201,9 @@ export interface RichSectionEditorProps {
     onCreate: (anchor: CommentAnchorPayload) => Promise<string | null>;
     /** A click on annotated text — open the thread in the host's rail. */
     onOpen?: (commentId: string) => void;
+    /** The anchor's fate: `saved` is whether the section save that carries the
+     *  anchor mark succeeded. A thread can exist while its highlight does not. */
+    onAnchored?: (commentId: string, saved: boolean) => void;
   } | null;
   /** Image insertion. The host owns the upload (the governed image store is
    *  the authoring API's; the MDX drawer's plain-text store has none). Omit
@@ -458,6 +463,12 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
     const [collabStatus, setCollabStatus] = useState<
       'off' | 'connecting' | 'connected' | 'disconnected' | 'denied'
     >(collab ? 'connecting' : 'off');
+    /* The canvas is not a document until the first sync lands. Before that it
+       is EMPTY — and every status line used to agree with it: "All changes
+       saved · 0 words" and a Draft-with-AnA invitation over a section that has
+       content, permanently if the socket was refused. */
+    const [collabSynced, setCollabSynced] = useState(false);
+    const syncedOnceRef = useRef(false);
     const [restoreOffer, setRestoreOffer] = useState<string | null>(null);
     /* ── Find & replace bar state ──
        The query text lives here; the matches and the focused index live in
@@ -725,8 +736,21 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
     const boot = useMemo(() => {
       const stored = value ?? '';
       if (format === 'text') {
-        // Plain text is always faithfully representable.
-        return { mode: 'rich' as const, html: plainTextToHtml(stored), verdict: null };
+        /* "Plain text is always faithfully representable" was false for
+           whitespace: the parse collapses runs of spaces and tabs, and three
+           blank lines become one break — a space-aligned table in a plain-text
+           section was silently rewritten on the first save. Round-trip it
+           exactly; on any difference, edit the raw string in source mode. */
+        const html = plainTextToHtml(stored);
+        try {
+          const back = docToPlainText(generateJSON(html, extensions));
+          if (back !== stored.replace(/\r\n/g, '\n')) {
+            return { mode: 'source' as const, html: null, verdict: null };
+          }
+        } catch {
+          return { mode: 'source' as const, html: null, verdict: null };
+        }
+        return { mode: 'rich' as const, html, verdict: null };
       }
       const html = looksLikeHtml(stored) ? stored : plainTextToHtml(stored);
       // The fidelity gate below compares TEXT, so markup that carries no text
@@ -772,6 +796,9 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
        gate flagged as most delicate. In source mode the textarea is the
        document, so it is what gets counted. */
     const displayWords = boot.mode === 'source' ? wordsOf(htmlVisibleText(sourceText)) : words;
+    /* Before the first live sync the canvas holds nothing; no status may
+       describe it as a document. */
+    const canvasSettled = !collabRuntime || collabSynced;
 
     const editor = useEditor(
       {
@@ -820,11 +847,28 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
                 html,
                 slice.content.textBetween(0, slice.content.size, ' ', ' '),
               );
-              if (lost > 0) {
+              /* Words are one dimension. A Word table flattened into paragraphs,
+                 a heading demoted, a definition list collapsed — every word
+                 survives and the count says clean, and the next save writes the
+                 drifted structure into the record. The mount gate compares a
+                 structural signature; the paste gate now does too. */
+              let drift: (keyof StructuralSignature)[] = [];
+              try {
+                const dom = new DOMParser().parseFromString(html, 'text/html');
+                drift = signatureDrift(
+                  structuralSignatureFromDom(dom),
+                  structuralSignatureFromDoc({ type: 'doc', content: slice.content.toJSON() ?? [] }),
+                );
+              } catch {
+                drift = [];
+              }
+              if (lost > 0 || drift.length > 0) {
                 setPasteNotice(
-                  `About ${lost} of ${expected} pasted words could not be kept — the pasted content ` +
-                    'used formatting this editor cannot store. Check the pasted passage against ' +
-                    'your source before relying on it.',
+                  (lost > 0 ? `About ${lost} of ${expected} pasted words could not be kept. ` : '') +
+                    (drift.length > 0
+                      ? `The paste changed ${structuralDriftLabel(drift)} — the pasted content used structure this editor cannot store as it was. `
+                      : '') +
+                    'Check the pasted passage against your source before relying on it.',
                 );
               }
             }
@@ -858,7 +902,10 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
           const serialized = serialize(ed);
           const isDirty = serialized !== lastSavedRef.current;
           setDirty(isDirty);
-          setSaveState((s) => (isDirty ? (s === 'saving' ? s : 'dirty') : 'saved'));
+          /* Never leave 'saving' from a keystroke: editing back to the baseline
+             while a PATCH is in flight used to print "All changes saved" over
+             an unsettled write. The write's own settle recomputes the state. */
+          setSaveState((s) => (s === 'saving' ? s : isDirty ? 'dirty' : 'saved'));
           setWords(wordsOf(ed.getText()));
           setDocEmpty(ed.isEmpty);
           setSuggestions(collectSuggestions(ed.state.doc));
@@ -923,14 +970,21 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
      * and losing them at save time". It did not; this is that fix. */
     useEffect(() => {
       if (!editor || editor.isDestroyed) return;
-      const shouldEdit = !readOnly && boot.mode === 'rich';
+      const shouldEdit = !readOnly && boot.mode === 'rich' && (!collabRuntime || collabSynced);
       if (editor.isEditable !== shouldEdit) editor.setEditable(shouldEdit);
-    }, [editor, readOnly, boot.mode]);
+    }, [editor, readOnly, boot.mode, collabRuntime, collabSynced]);
 
     /* Seed a first-ever collab doc from the stored content once synced. */
     useEffect(() => {
       if (!collabRuntime || !editor) return;
       const onSynced = () => {
+        /* A reconnect fires `synced` again. It used to re-declare the buffer
+           saved every time — flipping the footer to "All changes saved" over
+           unsaved work and disarming the unsaved-work guards, so a dropped
+           socket lost filing text on the next navigation. Transport events do
+           not touch the save state; only the FIRST sync sets the baseline. */
+        if (syncedOnceRef.current) return;
+        syncedOnceRef.current = true;
         const frag = collabRuntime.doc.getXmlFragment('default');
         if (frag.length === 0 && boot.html) {
           editor.commands.setContent(boot.html);
@@ -940,6 +994,9 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
         lastSavedRef.current = serializeEditor(editor, format);
         setDirty(false);
         setSaveState('saved');
+        setWords(wordsOf(editor.getText()));
+        setDocEmpty(editor.isEmpty);
+        setCollabSynced(true);
       };
       collabRuntime.provider.on('synced', onSynced);
       return () => {
@@ -947,6 +1004,22 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
       };
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [collabRuntime, editor]);
+
+    /* Live sync refused before the first sync: the socket will never seed the
+       canvas. Seed it from the stored content and edit solo — said plainly in
+       the footer — instead of leaving an empty, editable canvas forever. */
+    useEffect(() => {
+      if (!collabRuntime || !editor || editor.isDestroyed || collabSynced || collabStatus !== 'denied') return;
+      syncedOnceRef.current = true;
+      if (boot.html) editor.commands.setContent(boot.html);
+      lastSavedRef.current = serializeEditor(editor, format);
+      setDirty(false);
+      setSaveState('saved');
+      setWords(wordsOf(editor.getText()));
+      setDocEmpty(editor.isEmpty);
+      setCollabSynced(true);
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [collabRuntime, editor, collabSynced, collabStatus]);
 
     /* ── Serialization per the backing store's contract ── */
     const serialize = useCallback(
@@ -1017,14 +1090,22 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
         autosaveTimer.current = null;
       }
       pendingAutosaveRef.current = null;
-      if (serialized === lastSavedRef.current) return true;
+      if (serialized === lastSavedRef.current) {
+        // Nothing outstanding — a stale "Save failed" from an earlier attempt
+        // must not keep standing over a buffer that matches the record.
+        setDirty(false);
+        setSaveState('saved');
+        return true;
+      }
       setSaveState('saving');
       try {
         await onSave(serialized, systemReason);
         lastSavedRef.current = serialized;
-        setDirty(false);
-        onDirtyChange?.(false);
-        setSaveState('saved');
+        const nowSerialized = boot.mode === 'source' ? sourceText : editor ? serialize(editor) : serialized;
+        const stillDirty = nowSerialized !== serialized;
+        setDirty(stillDirty);
+        onDirtyChange?.(stillDirty);
+        setSaveState(stillDirty ? 'dirty' : 'saved');
         if (storageKey) {
           try {
             localStorage.removeItem(cacheKeyFor(storageKey));
@@ -1074,8 +1155,11 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
        what is open — used to clear nothing and fire nothing: the timer was
        dropped with the component and the last edits never reached the server.
        Flush it directly instead of through `doSave`, which sets state on a
-       component that is going away. A rejection is not swallowed silently: the
-       device cache still holds the text and the next mount offers it back. */
+       component that is going away. A rejection has no on-screen outcome at
+       this point — the component is gone. When `storageKey` is set, the device
+       cache still holds the text and the next mount offers it back; a host that
+       sets `autosaveMs` without `storageKey` has no such net, and its last
+       edits are lost with no notice anywhere. */
     useEffect(
       () => () => {
         if (autosaveTimer.current) {
@@ -1101,14 +1185,31 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
     const toggleTrack = useCallback(async () => {
       if (!track || !editor) return;
       const next = !trackOn;
+      if (!track.onToggle) {
+        /* With no persistence hook the flip would be decorative: a footer
+           asserting "Track changes on" for a governed column nothing wrote. */
+        setActionNotice('Track changes cannot be switched from this surface — it does not persist the mode, so the checkbox would claim a setting the record does not hold.');
+        return;
+      }
       try {
-        await track.onToggle?.(next);
+        await track.onToggle(next);
         setTrackOn(next);
         editor.commands.setTrackChangesEnabled(next && !readOnly);
-      } catch {
-        /* refused server-side — state stays truthful */
+      } catch (e) {
+        /* Refused server-side — the state stays truthful, and the author is
+           told why rather than watching the checkbox snap back in silence. */
+        setActionNotice('Track changes unchanged — ' + redactInternals(e instanceof Error ? e.message : '', 'the server refused the change') + '.');
       }
     }, [track, editor, trackOn, readOnly]);
+
+    /* The mode is a governed column that a colleague can change under this
+       mount (the row refreshes without a remount). Follow the prop. */
+    useEffect(() => {
+      const on = !!track?.enabled;
+      setTrackOn(on);
+      if (editor && !editor.isDestroyed) editor.commands.setTrackChangesEnabled(on && !readOnly);
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [track?.enabled]);
 
     /* ── Comment from selection ──
        The host resolves the server comment id (the thread row must exist
@@ -1119,16 +1220,36 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
       if (!commentsApi || !editor) return;
       const { from, to } = editor.state.selection;
       if (from === to) return;
-      const quote = editor.state.doc.textBetween(from, to, ' ');
-      const id = await commentsApi.onCreate({ kind: 'text-range', quote, from, to });
-      if (id) {
-        editor.chain().focus().setTextSelection({ from, to }).setCommentAnchor(id).run();
-        /* The save is a consequence of leaving a comment, not an edit to the
-           prose — so it states its own mechanism rather than borrowing whatever
-           reason the author gave for their last content change. */
-        await doSave('Comment anchor applied');
+      /* The anchoring save serializes the WHOLE buffer under the system reason
+         below. With unsaved prose in it, two paragraphs the author never
+         reasoned for would be minted as a revision "Comment anchor applied" —
+         bypassing the §11.10(d) reason the save gate exists to require. */
+      if (dirty) {
+        setActionNotice('Save your edits before commenting on a selection — the comment anchor is saved with the section, and your unsaved edits would be recorded under "Comment anchor applied" instead of your own reason.');
+        return;
       }
-    }, [commentsApi, editor, doSave]);
+      const quote = editor.state.doc.textBetween(from, to, ' ');
+      let id: string | null = null;
+      try {
+        id = await commentsApi.onCreate({ kind: 'text-range', quote, from, to });
+      } catch (e) {
+        setActionNotice('The comment was not created — ' + redactInternals(e instanceof Error ? e.message : '', 'the server refused it') + '. Nothing was anchored.');
+        return;
+      }
+      if (!id) {
+        setActionNotice('The comment was not created, so nothing was anchored.');
+        return;
+      }
+      editor.chain().focus().setTextSelection({ from, to }).setCommentAnchor(id).run();
+      /* The save is a consequence of leaving a comment, not an edit to the
+         prose — so it states its own mechanism rather than borrowing whatever
+         reason the author gave for their last content change. */
+      const saved = await doSave('Comment anchor applied');
+      if (!saved) {
+        setActionNotice('The comment thread exists, but its anchor could not be saved with the section — other readers will not see the highlight until the section is saved.');
+      }
+      commentsApi.onAnchored?.(id, saved);
+    }, [commentsApi, editor, doSave, dirty]);
 
     /* ── Ask the assistant for a source (parity with the retired DocCanvas) ──
        This asks a question in the AnA pane. It is NOT the citation control —
@@ -1533,6 +1654,9 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
        a refusal, and because the comparison is a word count rather than a
        diff — precise enough to say "something was dropped", not to say what. */
     const [pasteNotice, setPasteNotice] = useState<string | null>(null);
+    /* Outcomes of governed actions the footer cannot carry: a refused track
+       toggle, a comment that was not anchored. Rendered like the paste notice. */
+    const [actionNotice, setActionNotice] = useState<string | null>(null);
     const pastedHtmlRef = useRef<string>('');
     const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -1563,7 +1687,7 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
         } catch (e) {
           setImgNotice(
             'The image was not uploaded — ' +
-              (e instanceof Error ? e.message : String(e)) +
+              redactInternals(e instanceof Error ? e.message : '', 'the image store refused it') +
               '. Nothing was inserted.',
           );
           return false;
@@ -1602,7 +1726,7 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
       [editor],
     );
 
-    const isEmpty = editorReady && docEmpty;
+    const isEmpty = editorReady && docEmpty && canvasSettled;
     const full = chrome === 'full';
 
 
@@ -1650,6 +1774,14 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
           <div className="rse-gate" role="status">
             <span style={{ flex: 1 }}>{pasteNotice}</span>
             <button type="button" className="rse-link" onClick={() => setPasteNotice(null)}>
+              Dismiss
+            </button>
+          </div>
+        )}
+        {actionNotice && (
+          <div className="rse-gate" role="alert">
+            <span style={{ flex: 1 }}>{actionNotice}</span>
+            <button type="button" className="rse-link" onClick={() => setActionNotice(null)}>
               Dismiss
             </button>
           </div>
@@ -1901,7 +2033,7 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
               </button>
             )}
             {track && (
-              <label className="rse-track" title="Suggest edits instead of applying them — every change is attributed and reviewable">
+              <label className="rse-track" title="Suggest text edits instead of applying them. Edits within a paragraph are captured as attributed suggestions; structural changes (paragraph joins and splits, table changes) and formatting apply directly and are not tracked.">
                 <input type="checkbox" checked={trackOn} onChange={() => void toggleTrack()} />
                 Track changes
               </label>
@@ -2395,18 +2527,30 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
         {full && (
           <div className="rse-foot">
             <span className="rse-save">
-              <span className="rse-dot" style={{ background: SAVE_META[saveState].dot }} />
-              {SAVE_META[saveState].label}
+              <span className="rse-dot" style={{ background: canvasSettled ? SAVE_META[saveState].dot : 'var(--warning)' }} />
+              {canvasSettled ? SAVE_META[saveState].label : 'Waiting for live sync — the canvas is locked until this section arrives'}
             </span>
             <span className="rse-foot-sep" aria-hidden="true">{'·'}</span>
-            <span>{displayWords.toLocaleString()} words</span>
+            <span>
+              {canvasSettled ? `${displayWords.toLocaleString()} words` : 'word count pending'}
+              {canvasSettled && suggestions.length > 0 ? ' (including suggested edits)' : ''}
+            </span>
             {trackOn && (
               <>
                 <span className="rse-foot-sep" aria-hidden="true">{'·'}</span>
-                <span style={{ color: 'var(--warning)', fontWeight: 600 }}>Track changes on</span>
+                <span style={{ color: 'var(--warning)', fontWeight: 600 }} title="Text edits within a paragraph are captured; structural and formatting changes apply directly">Track changes on (text edits)</span>
               </>
             )}
-            {collabStatus !== 'off' && (
+            {collabStatus !== 'off' && boot.mode === 'source' && (
+              <>
+                <span className="rse-foot-sep" aria-hidden="true">{'·'}</span>
+                {/* The textarea is not bound to the shared document: nothing the
+                    author types here is synced, and a save replaces the section
+                    wholesale. "Live sync connected" was rendered regardless. */}
+                <span data-collab="source">Live sync unavailable in source mode — editing solo; a save replaces the section</span>
+              </>
+            )}
+            {collabStatus !== 'off' && boot.mode === 'rich' && (
               <>
                 <span className="rse-foot-sep" aria-hidden="true">{'·'}</span>
                 <span data-collab={collabStatus}>

@@ -63,11 +63,15 @@ beforeAll(async () => {
     VALUES (100, ${ORG}, 'Drug Substance General', '<p>DS general v1</p>', '3.2'),
            (101, ${ORG}, 'Drug Product Description', '<p>DP description new</p>', '3.2');
 
-    -- 0001 keeps the DS leaf (m3.2.s.1) and ADDS a new DP leaf (m3.2.p.1).
+    -- 0001 keeps the DS leaf (m3.2.s.1), ADDS a new DP leaf (m3.2.p.1), and
+    -- DECLARES the withdrawal of the old manufacture leaf (m3.2.s.2). A delete
+    -- row names no document: there is nothing to render, only something to
+    -- point at. The prior stability leaf (m3.2.s.3) is simply not mentioned.
     INSERT INTO submission_leaves (sequence_id, section_code, title, lifecycle_op, document_table, document_id, organization_id, created_by, checksum)
     VALUES
-      (2, 'm3.2.s.1', 'Drug Substance General',   'new', 'coauthor_documents', 100, ${ORG}, ${USER}, NULL),
-      (2, 'm3.2.p.1', 'Drug Product Description', 'new', 'coauthor_documents', 101, ${ORG}, ${USER}, NULL);
+      (2, 'm3.2.s.1', 'Drug Substance General',   'new',    'coauthor_documents', 100,  ${ORG}, ${USER}, NULL),
+      (2, 'm3.2.p.1', 'Drug Product Description', 'new',    'coauthor_documents', 101,  ${ORG}, ${USER}, NULL),
+      (2, 'm3.2.s.2', 'Old Manufacture',          'delete', NULL,                 NULL, ${ORG}, ${USER}, NULL);
   `);
 
   // Prior (0000) manifest: it contained the DS leaf AND a manufacture leaf that
@@ -76,6 +80,8 @@ beforeAll(async () => {
   const priorManifest = [
     { ctdSection: 'm3.2.s.1', fileName: 'drug-substance-general.pdf', href: 'm3/32-s-1/drug-substance-general.pdf', md5: 'a'.repeat(32), operation: 'new' },
     { ctdSection: 'm3.2.s.2', fileName: 'old-manufacture.pdf', href: 'm3/32-s-2/old-manufacture.pdf', md5: 'b'.repeat(32), operation: 'new' },
+    // Present in 0000, unmentioned by 0001: still on file, must NOT be deleted.
+    { ctdSection: 'm3.2.s.3', fileName: 'stability.pdf', href: 'm3/32-s-3/stability.pdf', md5: 'c'.repeat(32), operation: 'new' },
   ];
   await harness.pglite.query(
     `INSERT INTO ectd_compilations (organization_id, submission_id, sequence_number, leaf_manifest)
@@ -100,15 +106,20 @@ describe('lifecycle from the canonical spine (submission-id keyed)', () => {
     });
     const indexXml = await indexXmlOf(result.bundle.path);
 
-    // The leaf dropped since 0000 (m3.2.s.2 / old-manufacture.pdf) becomes a
-    // backbone-only delete whose modified-file points back into ../0000/. This is
-    // only possible if the prior manifest was located by submission_id and diffed.
+    // The leaf 0001 DECLARES withdrawn (m3.2.s.2 / old-manufacture.pdf) becomes
+    // a backbone-only delete whose modified-file points back into ../0000/.
+    // This is only possible if the prior manifest was located by submission_id
+    // and diffed.
     expect(indexXml).toMatch(/operation="delete"/);
     expect(indexXml).toContain('../0000/m3/32-s-2/old-manufacture.pdf');
 
+    // The prior leaf 0001 does not mention (m3.2.s.3 / stability.pdf) is still
+    // on file, unchanged. It used to be withdrawn too — every leaf a follow-up
+    // sequence did not itself carry was emitted as a delete.
+    expect(indexXml).not.toContain('stability.pdf');
+    expect((indexXml.match(/operation="delete"/g) ?? []).length).toBe(1);
+
     // The genuinely new DP leaf (absent from 0000) stays operation="new".
     expect(indexXml).toMatch(/operation="new"/);
-    // Not every leaf is 'new' — lifecycle actually ran.
-    expect(indexXml).toMatch(/operation="delete"/);
   });
 });

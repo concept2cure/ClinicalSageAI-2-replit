@@ -69,6 +69,7 @@ describe('regional backbone DOCTYPE resolves to the bundled util/dtd/ folder', (
           applicationId: '123456',
           sequence: '0000',
           submissionType: 'original',
+          fda: { applicationType: 'nda' }, // a package must declare what it is; this used to default to NDA silently
           sponsorId: 'D',
           sponsorName: 'S',
           productName: 'P',
@@ -99,6 +100,7 @@ describe('regional backbone DOCTYPE resolves to the bundled util/dtd/ folder', (
         applicationId: '123456',
         sequence: '0000',
         submissionType: 'original',
+        fda: { applicationType: 'nda' }, // a package must declare what it is; this used to default to NDA silently
         sponsorId: 'D',
         sponsorName: 'S',
         productName: 'P',

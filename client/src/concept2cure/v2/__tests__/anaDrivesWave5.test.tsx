@@ -19,6 +19,7 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
 }));
 vi.mock('@/services/portal/authService', () => ({
   useAuth: () => ({ user: { id: 7, firstName: 'Ada' } }),
+  useAuthUser: () => ({ id: 7, firstName: 'Ada' }),
 }));
 vi.mock('@/utils/authToken', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/utils/authToken')>()),
@@ -100,7 +101,7 @@ describe('EctdCoauthor — open-tab views, never runs', () => {
   beforeEach(() => {
     apiRequest.mockReset();
     apiRequest.mockImplementation(async (method: string, url: string) => {
-      if (method === 'GET' && url === '/api/coauthor/documents') return ok(ECTD_DOCS);
+      if (method === 'GET' && String(url).split('?')[0] === '/api/coauthor/documents') return ok(ECTD_DOCS);
       return ok({});
     });
   });

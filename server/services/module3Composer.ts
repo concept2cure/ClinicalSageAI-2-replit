@@ -240,18 +240,23 @@ function assessRecordedStability(stabilitySources: CanonicalSource[]): {
   compared: number;
   outOfSpec: Array<{ parameter: string; timePoint: string; result: number; criterion: string }>;
   uncomparable: number;
+  /** Recorded stability payloads that could not be parsed — data, not absence. */
+  unreadable: number;
 } {
   const outOfSpec: Array<{ parameter: string; timePoint: string; result: number; criterion: string }> = [];
   let compared = 0;
   let uncomparable = 0;
+  let unreadable = 0;
 
   for (const s of stabilitySources) {
     const payload = (s.sourcePayload || {}) as Record<string, unknown>;
-    const series = [
-      ...readRecordedStabilityResults(payload.results),
-      ...readRecordedStabilityResults(payload.stabilityData ?? payload.stability_data),
-      ...readRecordedStabilityResults(payload.stabilityParameters),
+    const reads = [
+      readRecordedStabilityResults(payload.results),
+      readRecordedStabilityResults(payload.stabilityData ?? payload.stability_data),
+      readRecordedStabilityResults(payload.stabilityParameters),
     ];
+    unreadable += reads.filter((r) => r.unreadable).length;
+    const series = reads.flatMap((r) => r.points);
     for (const point of series) {
       const value = parseNumeric(point.result);
       if (value === null) continue;
@@ -284,7 +289,7 @@ function assessRecordedStability(stabilitySources: CanonicalSource[]): {
       }
     }
   }
-  return { compared, outOfSpec, uncomparable };
+  return { compared, outOfSpec, uncomparable, unreadable };
 }
 
 /**
@@ -301,7 +306,12 @@ function stabilityConclusion(
   sources: CanonicalSource[],
   material: 'drug substance' | 'drug product',
 ): string {
-  const { compared, outOfSpec, uncomparable } = assessRecordedStability(sources);
+  const { compared, outOfSpec, uncomparable, unreadable } = assessRecordedStability(sources);
+  // Said in every branch: a payload that could not be read is a gap in the
+  // evidence this section rests on, whatever the readable points show.
+  const unread = unreadable > 0
+    ? ` ${unreadable} recorded stability payload(s) could not be read, so any results they hold were not assessed here.`
+    : '';
 
   if (outOfSpec.length > 0) {
     const named = outOfSpec
@@ -311,7 +321,7 @@ function stabilityConclusion(
     return (
       `${outOfSpec.length} of the ${compared} recorded result(s) compared here fall outside its recorded acceptance criterion ` +
       `(${named}${outOfSpec.length > 4 ? `; and ${outOfSpec.length - 4} more` : ''}). ` +
-      `The stability conclusion and the proposed storage period are NOT established by this section.`
+      `The stability conclusion and the proposed storage period are NOT established by this section.` + unread
     );
   }
   if (compared > 0) {
@@ -320,16 +330,16 @@ function stabilityConclusion(
       `supporting stability of the ${material} under the proposed storage conditions` +
       (uncomparable > 0
         ? `. A further ${uncomparable} recorded result(s) carry no acceptance criterion and were not compared.`
-        : '.')
+        : '.') + unread
     );
   }
   if (uncomparable > 0) {
     return (
       `${uncomparable} recorded result(s) carry no recorded acceptance criterion, so whether they conform is NOT verified by this section. ` +
-      `Any conclusion stated on the study is the applicant's and was not checked against the data here.`
+      `Any conclusion stated on the study is the applicant's and was not checked against the data here.` + unread
     );
   }
-  return `The stability conclusion and proposed storage period are subject to review of the stability results summarized above and are not asserted in this section.`;
+  return `The stability conclusion and proposed storage period are subject to review of the stability results summarized above and are not asserted in this section.` + unread;
 }
 
 function readStabilitySignal(stabilitySources: CanonicalSource[]): StabilityOutcome {
@@ -338,7 +348,10 @@ function readStabilitySignal(stabilitySources: CanonicalSource[]): StabilityOutc
      when that is the basis. */
   const measured = assessRecordedStability(stabilitySources);
   if (measured.outOfSpec.length > 0) return 'concern';
-  if (measured.compared > 0) return 'pass';
+  // A payload that could not be read is not evidence of stability, so the
+  // readable points alone may not carry the section to 'pass'.
+  if (measured.compared > 0 && measured.unreadable === 0) return 'pass';
+  if (measured.unreadable > 0) return 'defer';
 
   const NEG = /\b(oos|out[\s-]?of[\s-]?spec(?:ification)?|fail(?:ed|ing|ure)?|degrad\w*|non[\s-]?conform\w*|does not (?:meet|conform)|not within|exceed\w*|reject\w*|unstable)\b/i;
   const POS = /\b(pass(?:ed|ing)?|meets?|within (?:the )?(?:spec(?:ification)?|acceptance|limits?|criteria)|conform\w*|compl(?:ies|iant|y)|no significant change|satisfactory|in[\s-]?spec(?:ification)?)\b/i;
@@ -1259,7 +1272,7 @@ function dissolutionRendering(
   for (const p of profiles) {
     for (const pt of profilePoints(p)) {
       pointRows.push([
-        String(p.batchNumber || p.productName || '—'),
+        String(p.batchNumber || '—'),
         String(pt.timepoint ?? pt.timepointMin ?? '—'),
         pt.meanPercent !== undefined && pt.meanPercent !== null && pt.meanPercent !== '' ? String(pt.meanPercent) : '—',
         pt.sd !== undefined && pt.sd !== null && pt.sd !== '' ? String(pt.sd) : '—',
@@ -1288,7 +1301,7 @@ function dissolutionRendering(
     if (!Array.isArray(ref) || ref.length === 0) continue;
     for (const pt of ref.filter((r) => r && typeof r === 'object') as Array<Record<string, any>>) {
       referenceRows.push([
-        String(p.batchNumber || p.productName || '—'),
+        String(p.batchNumber || '—'),
         String(p.comparisonBatch || 'reference batch not named'),
         String(pt.timepoint ?? pt.timepointMin ?? '—'),
         pt.meanPercent !== undefined && pt.meanPercent !== null && pt.meanPercent !== '' ? String(pt.meanPercent) : '—',

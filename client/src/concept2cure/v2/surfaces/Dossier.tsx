@@ -166,10 +166,10 @@ export function Dossier({ onNav }: SurfaceViewProps) {
         ) : (
           <>
             <div style={{ display: 'flex', gap: 18, flexWrap: 'wrap', margin: '14px 0' }}>
-              <div><div style={{ fontSize: 24, fontWeight: 700 }}>{payload.summary.totalSections}</div><div style={{ fontSize: 12, color: 'var(--c2c-dim,#667085)' }}>Sections</div></div>
-              <div><div style={{ fontSize: 24, fontWeight: 700, color: 'var(--c2c-ok,#12b76a)' }}>{payload.summary.readySections}</div><div style={{ fontSize: 12, color: 'var(--c2c-dim,#667085)' }}>Ready</div></div>
-              <div><div style={{ fontSize: 24, fontWeight: 700 }}>{payload.summary.inProgressSections}</div><div style={{ fontSize: 12, color: 'var(--c2c-dim,#667085)' }}>In progress</div></div>
-              <div><div style={{ fontSize: 24, fontWeight: 700 }}>{payload.summary.draftSections}</div><div style={{ fontSize: 12, color: 'var(--c2c-dim,#667085)' }}>Draft</div></div>
+              <div><div style={{ fontSize: 24, fontWeight: 700 }}>{payload.summary.totalSections}</div><div style={{ fontSize: 12, color: 'var(--text-400)' }}>Sections</div></div>
+              <div><div style={{ fontSize: 24, fontWeight: 700, color: 'var(--success)' }}>{payload.summary.readySections}</div><div style={{ fontSize: 12, color: 'var(--text-400)' }}>Ready</div></div>
+              <div><div style={{ fontSize: 24, fontWeight: 700 }}>{payload.summary.inProgressSections}</div><div style={{ fontSize: 12, color: 'var(--text-400)' }}>In progress</div></div>
+              <div><div style={{ fontSize: 24, fontWeight: 700 }}>{payload.summary.draftSections}</div><div style={{ fontSize: 12, color: 'var(--text-400)' }}>Draft</div></div>
             </div>
             <div className="pj-card">
               <div className="pj-card-h"><span className="t">Section readiness</span><span className="s">weakest-artifact rollup</span></div>
@@ -188,7 +188,7 @@ export function Dossier({ onNav }: SurfaceViewProps) {
           </>
         )}
 
-        <div style={{ marginTop: 14, fontSize: 13, color: 'var(--c2c-dim,#667085)' }}>
+        <div style={{ marginTop: 14, fontSize: 13, color: 'var(--text-400)' }}>
           The nested folder/document tree isn’t connected yet (no backend serves that contract), so none is shown.{' '}
           <button type="button" onClick={() => onNav && onNav('dossier-map')}
             style={{ background: 'none', border: 'none', padding: 0, color: 'var(--accent-200)', font: 'inherit', cursor: 'pointer', textDecoration: 'underline' }}>
