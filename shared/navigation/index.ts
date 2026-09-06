@@ -201,7 +201,14 @@ export const NAVIGATION_TARGETS: readonly NavigationTarget[] = [
 
   // ── Analysis & authoring tools ──
   { id: 'batch-draft', label: 'Batch draft', description: 'Parallel section drafting over the eCTD Co-Author document spine (running a batch stays a human click).', scope: 'global', group: 'module' },
-  { id: 'biostatistics', label: 'Biostatistics designer', description: 'The deterministic biostatistics design engine — sample size, power, and governed statistical documents.', scope: 'global', group: 'module' },
+  {
+    id: 'biostatistics', label: 'Biostatistics designer', description: 'The deterministic biostatistics design engine — sample size, power, and governed statistical documents.', scope: 'global', group: 'module',
+    // Consumed by the surface on mount: it loads THAT persisted study design
+    // (cdisc_prm_studies.study_id) through the biostatistics bridge and seeds
+    // the engine from it — how the protocol workspace and the task board hand a
+    // study to the designer without the person retyping it.
+    params: [{ name: 'studyId', required: false, description: 'A persisted study design id (as listed by the bridge) to load into the designer on arrival.' }],
+  },
   { id: 'change-assessment', label: 'Change assessment', description: 'The 510(k)-change / MDR significant-change worklist with FDA and EU determinations.', scope: 'global', group: 'module' },
   { id: 'doc-journey', label: 'Document journey', description: 'A document’s lifecycle rail — the read-only reconstruction of its real audit trail.', scope: 'global', group: 'module' },
   { id: 'ectd-publishing', label: 'eCTD publishing reference', description: 'Spec versions and controlled vocabularies — read-only; nothing here publishes, transmits, or freezes a sequence.', scope: 'global', group: 'module' },

@@ -91,6 +91,7 @@ export class AnaBiostatsOrchestrator {
         {
           autoAttachToDossier: request.autoAttachToDossier,
           reviewRequired: request.reviewRequired,
+          dossierSectionId: request.dossierSectionId,
         }
       );
     }
