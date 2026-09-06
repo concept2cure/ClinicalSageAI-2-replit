@@ -613,6 +613,29 @@ Verified and unchanged on that surface: the grid's failed-read vs empty-read
 distinction, the per-row lazy dossier read, and the data-standards chips'
 shipped / not_integrated states.
 
+### Eighteenth — the agency-correspondence loop (2026-09-06)
+
+`buildCorrespondence` (cmc-module3-board) reads open Module 3 agency questions
+with `limit 50`, and the overdue-IR KPI was the overdue count OF THAT PAGE —
+rendered on the CMC surface as "You have N information requests overdue". An org
+with more than fifty open Module 3 questions was told it had fewer overdue than
+it did, and the cited-section list was capped with it. The count now comes from
+a COUNT over the same predicates; `meta` carries `correspondenceTotalOpen`,
+`correspondenceOverdueTotal` and `correspondenceTruncated`. A totals row that
+does not come back falls back to the page rather than zeroing the KPI. The board
+route had no test; it has one now.
+
+Verified and unchanged in that loop: `cmc-agency-questions.routes` (org from the
+verified JWT only, org predicate on every UPDATE, cross-tenant row answers as
+absent, no DELETE by design); the board's `provisioned:false` fail-closed, which
+lets the surface tell "no backend here" from "no open questions".
+
+Open, not changed: `provisioned:false` is returned for ANY exception, so a
+transient database error reads as "correspondence unprovisioned" and the KPI
+silently switches to the legacy per-submission `ir` sum — a different metric
+under the same label. Splitting unreadable from unprovisioned there needs the
+same treatment `getRun` got in the twelfth batch.
+
 ### Note for the concurrent device stream
 
 On 2026-09-04, at JM's direct instruction to complete the biotech/pharma workflow
@@ -865,6 +888,7 @@ If neither has happened: report the blockage, name what is needed, and stop.
 | 2026-09-05 | A | Fifteenth — the IND 30-day clock | A clock projected from the program's target submission date no longer shows a cleared-to-proceed chip, prints "clinical investigations may proceed", or publishes safeToProceed true to AnA; basis is named and safeToProceed is unknown — revert-proven; the ack-type decision recorded | §1 above |
 | 2026-09-05 | A | Sixteenth — PV seriousness + Module 3 stability readability | An unassessed adverse event no longer reports itself as not serious / no expedited clock (determination unchanged, reason honest, three-state chip); an unreadable stability payload is no longer counted as a study that recorded nothing — both revert-proven | §1 above |
 | 2026-09-06 | A | Seventeenth — RIM renewal-schedule coverage | The renewals tab and the surface context name the registrations that carry no renewal-due date, so "what lapses first" is not answered from a filtered subset — revert-proven | §1 above |
+| 2026-09-06 | A | Eighteenth — agency-correspondence loop | The overdue-IR KPI counts the store instead of the overdue rows of a 50-row page; truncation and totals are published; the board route gains its first test — revert-proven | §1 above |
 | | | | | |
 
 **Rule:** the last row with an empty "What was proven" cell is the open work.
