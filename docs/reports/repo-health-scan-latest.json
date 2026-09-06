@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-06T22:34:30.150Z",
+  "generatedAt": "2026-09-06T23:02:18.133Z",
   "git": {
-    "sha": "2aad9bb06f2b9f8bb1d6baf8bba147fd53c90c11",
+    "sha": "aabe5f07fd4c9455b13d2a403c8c02bef5dbc60f",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2001,7 +2001,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
-        "bytes": 233213
+        "bytes": 235674
       },
       {
         "file": "server/statistics-service.ts",
@@ -2167,7 +2167,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
-        "lines": 5095
+        "lines": 5135
       },
       {
         "file": "server/routes/c2c/artifacts.ts",
