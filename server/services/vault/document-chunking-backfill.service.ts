@@ -33,7 +33,7 @@ export interface Queryable {
   query<T = any>(text: string, values?: unknown[]): Promise<{ rows: T[]; rowCount: number | null }>;
 }
 
-export interface BackfillOptions {
+export interface ChunkBackfillOptions {
   /** Write chunks. Omitted or false → report only, nothing is written. */
   apply?: boolean;
   /** Documents examined per run (default 50, max 500). */
@@ -49,7 +49,7 @@ export interface BackfillSkip {
   reason: string;
 }
 
-export interface BackfillReport {
+export interface ChunkBackfillReport {
   /** Candidates this run looked at (equal to the limit ⇒ more may remain). */
   examined: number;
   /** Documents whose passages are now indexed (0 on a dry run). */
@@ -81,8 +81,8 @@ interface CandidateRow {
  */
 export async function backfillVaultChunks(
   organizationId: number,
-  opts: BackfillOptions = {},
-): Promise<BackfillReport> {
+  opts: ChunkBackfillOptions = {},
+): Promise<ChunkBackfillReport> {
   const exec = opts.exec ?? (pool as unknown as Queryable);
   const apply = opts.apply === true;
   const limit = Math.max(1, Math.min(opts.limit ?? 50, 500));
@@ -110,7 +110,7 @@ export async function backfillVaultChunks(
     [organizationId, limit],
   );
 
-  const report: BackfillReport = {
+  const report: ChunkBackfillReport = {
     examined: candidates.length,
     indexed: 0,
     chunksWritten: 0,

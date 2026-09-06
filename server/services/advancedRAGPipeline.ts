@@ -382,6 +382,79 @@ export class AdvancedRAGPipeline {
   /**
    * Main retrieval function with configurable strategies
    */
+
+  /**
+   * Step 1 of retrieve(): choose the initial candidate set by strategy.
+   *
+   * Extracted from retrieve() verbatim — every branch, every `limit`
+   * multiplier, every tokensUsed accumulation, and the 'advanced' branch's
+   * assignment of retrievalStrategy are unchanged. retrieve() reached 101 lines
+   * against a 100-line limit when the vault tenant-scoping landed, and this
+   * switch is the one self-contained step in it: given the strategy it returns
+   * candidates, and nothing else in the method reaches into it.
+   */
+  private async retrieveCandidates(
+    deps: StrategyDeps,
+    query: string,
+    limit: number,
+    strategy: RetrievalOptions['strategy'],
+  ): Promise<{ candidates: RetrievedDocument[]; tokensUsed: number; retrievalStrategy: string }> {
+    let candidates: RetrievedDocument[];
+    let tokensUsed = 0;
+    // Same free-form label retrieve() kept: defaults to the requested strategy,
+    // and only the composite branch overwrites it.
+    let retrievalStrategy: string = strategy;
+
+      switch (strategy) {
+        case 'hyde': {
+          const result = await hydeRetrieval(deps, query, limit * 3);
+          candidates = result.documents;
+          tokensUsed += result.tokensUsed;
+          break;
+        }
+
+        case 'multi_query': {
+          const result = await multiQueryRetrieval(deps, query, limit * 3);
+          candidates = result.documents;
+          tokensUsed += result.tokensUsed;
+          break;
+        }
+
+        case 'step_back': {
+          const result = await stepBackRetrieval(deps, query, limit * 3);
+          candidates = result.documents;
+          tokensUsed += result.tokensUsed;
+          break;
+        }
+
+        case 'decompose': {
+          const result = await decomposeRetrieval(deps, query, limit * 3);
+          candidates = result.documents;
+          tokensUsed += result.tokensUsed;
+          break;
+        }
+
+        case 'advanced': {
+          // Combine HyDE + Multi-Query
+          const [hyde, multi] = await Promise.all([
+            hydeRetrieval(deps, query, limit * 2),
+            multiQueryRetrieval(deps, query, limit * 2),
+          ]);
+          candidates = mergeByMaxScore([...hyde.documents, ...multi.documents]);
+          tokensUsed += hyde.tokensUsed + multi.tokensUsed;
+          retrievalStrategy = 'advanced';
+          break;
+        }
+
+        case 'basic':
+        default:
+          candidates = await deps.search(query, limit * 3);
+          break;
+      }
+
+    return { candidates, tokensUsed, retrievalStrategy };
+  }
+
   async retrieve(
     query: string,
     options: RetrievalOptions = { strategy: 'basic' }
@@ -403,9 +476,6 @@ export class AdvancedRAGPipeline {
     };
 
     let candidates: RetrievedDocument[];
-    // Descriptive label for RAGContext.retrievalStrategy (free-form string);
-    // the 'advanced' strategy reports the composite 'hyde+multi_query'.
-    let retrievalStrategy: string = options.strategy;
     let tokensUsed = 0;
 
     // Primitives the query-transform strategies fan out through, bound to this
@@ -426,53 +496,14 @@ export class AdvancedRAGPipeline {
       scope.filters = mergeFilters(extracted.filters, options.filters);
     }
 
-    // Step 1: Initial retrieval based on strategy
-    switch (options.strategy) {
-      case 'hyde': {
-        const result = await hydeRetrieval(deps, query, limit * 3);
-        candidates = result.documents;
-        tokensUsed += result.tokensUsed;
-        break;
-      }
-
-      case 'multi_query': {
-        const result = await multiQueryRetrieval(deps, query, limit * 3);
-        candidates = result.documents;
-        tokensUsed += result.tokensUsed;
-        break;
-      }
-
-      case 'step_back': {
-        const result = await stepBackRetrieval(deps, query, limit * 3);
-        candidates = result.documents;
-        tokensUsed += result.tokensUsed;
-        break;
-      }
-
-      case 'decompose': {
-        const result = await decomposeRetrieval(deps, query, limit * 3);
-        candidates = result.documents;
-        tokensUsed += result.tokensUsed;
-        break;
-      }
-
-      case 'advanced': {
-        // Combine HyDE + Multi-Query
-        const [hyde, multi] = await Promise.all([
-          hydeRetrieval(deps, query, limit * 2),
-          multiQueryRetrieval(deps, query, limit * 2),
-        ]);
-        candidates = mergeByMaxScore([...hyde.documents, ...multi.documents]);
-        tokensUsed += hyde.tokensUsed + multi.tokensUsed;
-        retrievalStrategy = 'advanced';
-        break;
-      }
-
-      case 'basic':
-      default:
-        candidates = await deps.search(query, limit * 3);
-        break;
-    }
+    // Step 1: Initial retrieval based on strategy (see retrieveCandidates).
+    const initial = await this.retrieveCandidates(deps, query, limit, options.strategy);
+    candidates = initial.candidates;
+    tokensUsed += initial.tokensUsed;
+    // Descriptive label for RAGContext.retrievalStrategy (free-form string).
+    // Assigned once, read once, so it is a const now that the switch that used
+    // to set it lives in retrieveCandidates.
+    const retrievalStrategy: string = initial.retrievalStrategy;
 
     const totalCandidates = candidates.length;
 

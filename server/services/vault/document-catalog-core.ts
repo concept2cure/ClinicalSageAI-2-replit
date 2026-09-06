@@ -18,7 +18,7 @@ export interface Span {
   end: number;
 }
 
-export interface CoverageReport {
+export interface SpanCoverageReport {
   /** Total characters of extracted text the spans are measured against. */
   charCount: number;
   /** Characters covered by the union of the recorded spans (clamped). */
@@ -48,7 +48,7 @@ export function mergeSpans(spans: Span[], charCount: number): Span[] {
 }
 
 /** Exact integer coverage of `spans` over a text of `charCount` characters. */
-export function computeCoverage(spans: Span[], charCount: number): CoverageReport {
+export function computeCoverage(spans: Span[], charCount: number): SpanCoverageReport {
   if (charCount <= 0) {
     // A document with no extracted text has nothing to cover; "complete" here
     // would launder an extraction failure into a full read, so it is false.
@@ -134,7 +134,7 @@ export function buildExtractionOutcome(input: {
 export interface CatalogGateVerdict {
   allowed: boolean;
   reason: string | null;
-  coverage: CoverageReport;
+  coverage: SpanCoverageReport;
 }
 
 /**
@@ -143,7 +143,7 @@ export interface CatalogGateVerdict {
  * On refusal the verdict carries the uncovered ranges so the caller can go
  * read exactly what is missing.
  */
-export function assertCatalogWriteAllowed(coverage: CoverageReport): CatalogGateVerdict {
+export function assertCatalogWriteAllowed(coverage: SpanCoverageReport): CatalogGateVerdict {
   if (coverage.charCount <= 0) {
     return {
       allowed: false,

@@ -26,7 +26,7 @@ import {
   computeCoverage,
   assertCatalogWriteAllowed,
   type Span,
-  type CoverageReport,
+  type SpanCoverageReport,
   type CatalogStatus,
   type ExtractionOutcome,
 } from './document-catalog-core.js';
@@ -240,7 +240,7 @@ export async function getReadCoverage(
   documentId: string,
   contentHash: string,
   charCount: number,
-): Promise<CoverageReport> {
+): Promise<SpanCoverageReport> {
   const res = await pool.query(
     `SELECT char_start, char_end FROM vault.document_read_receipts
       WHERE document_id = $1 AND content_hash = $2`,
@@ -253,7 +253,7 @@ export async function getReadCoverage(
 export interface CompleteCatalogResult {
   ok: boolean;
   refusal?: string;
-  coverage?: CoverageReport;
+  coverage?: SpanCoverageReport;
   embeddingStatus?: 'embedded' | 'failed';
 }
 

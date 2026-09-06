@@ -231,7 +231,15 @@ beforeEach(() => {
   installDb();
   connectFn.mockReset();
   ledgerQuery.mockReset();
-  ledgerQuery.mockResolvedValue({ rows: [], rowCount: 0 });
+  // The signer must be attributable or §11.100 refuses to persist the signature
+  // manifestation at all — and the manifest is where the transmit records WHAT
+  // it filed. Without this row the double silently exercised only the ledger
+  // half of the sign.
+  ledgerQuery.mockImplementation(async (sql: unknown) =>
+    /FROM users u/.test(String(sql))
+      ? { rows: [{ name: 'Test Signer', email: 'signer@example.test', title: 'RA Lead' }], rowCount: 1 }
+      : { rows: [], rowCount: 0 },
+  );
   connectFn.mockImplementation(() =>
     Promise.resolve({
       query: (...args: unknown[]) => ledgerQuery(...args),
@@ -510,6 +518,136 @@ describe('POST transmit — legitimate validated package (C2C-SUB-003)', () => {
     expect(payload!.contentFingerprint).toEqual({ assembled: CONTENT_FINGERPRINT, atTransmit: CONTENT_FINGERPRINT, afterTransmit: 'match' });
     expect(payload!.bundleSha256).toBe(legitSha);
   });
+
+});
+
+/*
+ * Split out of the positive control above for the same reason: recording what
+ * was filed, so the NEXT eCTD sequence has a baseline to diff against, is its
+ * own concern and its own block.
+ */
+describe('POST transmit — filed-sequence history (C2C-SUB-003)', () => {
+
+  it('records the sequence it just filed, so the NEXT sequence has a baseline to diff against', async () => {
+    packages = [{ id: 5, orgId: CALLER_ORG, bundle: goodDescriptor({
+      sequence: '0000', submissionType: 'original',
+      leafManifest: [{ ctdSection: '2.5', fileName: 'clinical-overview.pdf', href: 'm2/25-clin-overview/clinical-overview.pdf', md5: 'md5-co', operation: 'new' }],
+    }) }];
+    transmitFn.mockResolvedValueOnce({ transmittalId: 4244, transmissionId: 'mdn-filed', status: 'received', transport: 'as2', httpStatus: 200 });
+    const res = await request(makeApp())
+      .post('/api/mdx/gateways/fda/esg/transmit')
+      .send({ packageId: 5, environment: 'staging', ...REAUTH });
+    expect(res.status).toBe(201);
+    expect(res.body.data.filedSequenceRecorded).toBe(true);
+    // The history was appended under the package row lock, carrying the leaf
+    // inventory the next sequence diffs against.
+    const write = ledgerQuery.mock.calls.find((c) => /^UPDATE c2c_submission_packages/.test(String(c[0])));
+    expect(write, 'the filed history was written').toBeDefined();
+    const written = JSON.parse(String((write![1] as unknown[])[1]));
+    expect(written.filedSequences).toHaveLength(1);
+    expect(written.filedSequences[0]).toMatchObject({ sequence: '0000', submissionType: 'original', sha256: legitSha, transmittalId: 4244 });
+    expect(written.filedSequences[0].leaves[0]).toMatchObject({ ctdSection: '2.5', fileName: 'clinical-overview.pdf', md5: 'md5-co' });
+  });
+
+  it('a bundle that files no sequence records no history, and says so rather than reporting a failure', async () => {
+    packages = [{ id: 5, orgId: CALLER_ORG, bundle: goodDescriptor() }];
+    transmitFn.mockResolvedValueOnce({ transmittalId: 4245, transmissionId: 'mdn-nofile', status: 'received', transport: 'as2', httpStatus: 200 });
+    const res = await request(makeApp())
+      .post('/api/mdx/gateways/fda/esg/transmit')
+      .send({ packageId: 5, environment: 'staging', ...REAUTH });
+    expect(res.status).toBe(201);
+    expect(res.body.data.filedSequenceRecorded).toBe('not-applicable');
+    expect(res.body.data.filedSequenceReason).toBe('no-sequence');
+    expect(ledgerQuery.mock.calls.some((c) => /^UPDATE c2c_submission_packages/.test(String(c[0])))).toBe(false);
+  });
+
+});
+
+/*
+ * What the transmit path RECORDS about the eCTD sequence it just filed —
+ * separate from whether the bytes were accepted. A lost baseline is silent
+ * unless it is said, so each case here is about what the caller and the
+ * Part 11 record are told.
+ */
+describe('POST transmit — the sequence it filed (C2C-SUB-003)', () => {
+  it('a sequence whose leaf inventory is UNREADABLE is a lost baseline, not a non-event', async () => {
+    /* One entry missing `href`. The reader drops a partial inventory whole —
+       because a prior state missing a leaf computes `new` for a document that
+       is already on file — but that guard sat only on the reader: the manifest
+       was written to the history, reported as recorded, and then dropped by the
+       very guard meant to prevent it. The filing is at the agency and every
+       subsequent diff is blind to it. */
+    packages = [{ id: 5, orgId: CALLER_ORG, bundle: goodDescriptor({
+      sequence: '0000', submissionType: 'original',
+      leafManifest: [
+        { ctdSection: '2.5', fileName: 'clinical-overview.pdf', href: 'm2/2-5/clinical-overview.pdf', md5: 'md5-co' },
+        { ctdSection: '3.2.P.1', fileName: 'description.pdf', md5: 'md5-desc' }, // no href
+      ],
+    }) }];
+    transmitFn.mockResolvedValueOnce({ transmittalId: 4246, transmissionId: 'mdn-partial', status: 'received', transport: 'as2', httpStatus: 200 });
+    const res = await request(makeApp())
+      .post('/api/mdx/gateways/fda/esg/transmit')
+      .send({ packageId: 5, environment: 'staging', ...REAUTH });
+    expect(res.status).toBe(201);
+    expect(res.body.data.filedSequenceRecorded).toBe(false);
+    expect(res.body.data.filedSequenceReason).toBe('no-usable-manifest');
+    // Nothing half-readable is persisted: a history that cannot be read back is
+    // worse than one that is honestly missing.
+    expect(ledgerQuery.mock.calls.some((c) => /^UPDATE c2c_submission_packages/.test(String(c[0])))).toBe(false);
+    // And the operator is told, because the NEXT assemble will otherwise refuse
+    // with "file sequence 0000 first" — which they did.
+    expect(res.body.data.filedSequenceWarning).toMatch(/no readable leaf inventory/);
+  });
+
+  it('an eCTD sequence with no inventory at all is reported as a failure, not as "not applicable"', async () => {
+    // Every descriptor assembled before the inventory existed is this case.
+    packages = [{ id: 5, orgId: CALLER_ORG, bundle: goodDescriptor({ sequence: '0001', submissionType: 'Efficacy Supplement' }) }];
+    transmitFn.mockResolvedValueOnce({ transmittalId: 4247, transmissionId: 'mdn-nomanifest', status: 'received', transport: 'as2', httpStatus: 200 });
+    const res = await request(makeApp())
+      .post('/api/mdx/gateways/fda/esg/transmit')
+      .send({ packageId: 5, environment: 'staging', ...REAUTH });
+    expect(res.status).toBe(201);
+    expect(res.body.data.filedSequenceRecorded).toBe(false);
+    expect(res.body.data.filedSequenceReason).toBe('no-usable-manifest');
+  });
+
+  it('the Part 11 sign row records WHICH sequence the signature filed, and whether the history took it', async () => {
+    // The ledger recorded that a bundle was transmitted but not which eCTD
+    // sequence it filed, so an auditor reconstructing the lifecycle from the
+    // signatures could not — and a lost baseline left no durable trace at all.
+    packages = [{ id: 5, orgId: CALLER_ORG, bundle: goodDescriptor({
+      sequence: '0000', submissionType: 'original',
+      leafManifest: [{ ctdSection: '2.5', fileName: 'clinical-overview.pdf', href: 'm2/2-5/clinical-overview.pdf', md5: 'md5-co', operation: 'new' }],
+    }) }];
+    transmitFn.mockResolvedValueOnce({ transmittalId: 4248, transmissionId: 'mdn-sign', status: 'received', transport: 'as2', httpStatus: 200 });
+    const res = await request(makeApp())
+      .post('/api/mdx/gateways/fda/esg/transmit')
+      .send({ packageId: 5, environment: 'staging', ...REAUTH });
+    expect(res.status).toBe(201);
+    expect(signPayload()).toMatchObject({
+      sequence: '0000', submissionType: 'original',
+      filedSequenceRecorded: true, filedSequenceReason: 'recorded',
+    });
+    // And in the signature MANIFEST — the attributed record an auditor reads.
+    // The payload only reaches the signature as a digest, which answers no
+    // question about what was filed.
+    const manifest = ledgerQuery.mock.calls
+      .flatMap((c) => ((c[1] as unknown[]) ?? []))
+      .map((p) => { try { return typeof p === 'string' ? JSON.parse(p) : p; } catch { return null; } })
+      .find((o) => o && typeof o === 'object' && (o as any).kind === 'governed-transmit');
+    expect(manifest, 'the transmit signature manifest was persisted').toBeDefined();
+    expect(manifest).toMatchObject({ sequence: '0000', filedSequenceRecorded: true });
+  });
+});
+
+/*
+ * Split out of the block above: the merge that added the filed-sequence tests
+ * took that describe callback to 117 lines against a 100-line limit. These are
+ * a distinct concern — what the transmit path does when the package CONTENT
+ * changed after assembly — so they get their own block rather than an arbitrary
+ * cut.
+ */
+describe('POST transmit — content changed since assembly (C2C-SUB-003)', () => {
 
   it('a content change that lands WHILE the gateway is sending is recorded on the sign row and announced in the response — never silently a clean transmit', async () => {
     packages = [{ id: 5, orgId: CALLER_ORG, bundle: goodDescriptor() }];

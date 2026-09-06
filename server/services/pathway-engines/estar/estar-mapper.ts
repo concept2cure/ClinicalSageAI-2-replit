@@ -90,12 +90,12 @@ export interface EstarSlot {
  * a submission whose sterilization section is absent, on a device nobody has
  * said is sterile, must not read as complete.
  */
-export type Applicability = 'required' | 'not-applicable' | 'undetermined' | 'when-applicable';
+export type EstarApplicability = 'required' | 'not-applicable' | 'undetermined' | 'when-applicable';
 
 export interface EstarSlotStatus extends EstarSlot {
   present: boolean;
   sources: string[];
-  applicability: Applicability;
+  applicability: EstarApplicability;
 }
 
 export interface EstarResult {
@@ -271,7 +271,7 @@ const SLOTS_DE_NOVO: SlotDef[] = [
  * direction that assumption fails in is the dangerous one: a sterile device
  * whose sterilization section is missing would read as complete.
  */
-function applicabilityOf(slot: SlotDef, flags: DeviceFlags | undefined): Applicability {
+function applicabilityOf(slot: SlotDef, flags: DeviceFlags | undefined): EstarApplicability {
   if (slot.necessity === 'always') return 'required';
   if (slot.necessity === 'when-applicable') return 'when-applicable';
   const value = flags?.[slot.flag as DeviceFlagId];

@@ -389,6 +389,68 @@ const router = Router();
 // written by BOTH paths.
 
 /**
+ * GET /signatures/by-target?target=<signed_target>
+ *
+ * ── Why this exists: a §11.50 manifestation nobody could reach ───────────────
+ * `electronic_signatures` rows come from two writers. Document signing fills
+ * `document_id`; the governed-action path — `persistGovernedActionSignature`,
+ * which records a submission TRANSMITTED to an agency, a sequence frozen, a
+ * release dispatched — fills `signed_target` and leaves `document_id` null.
+ *
+ * Every HTTP read was anchored on a document. `GET /signatures/:documentId`
+ * filters `document_id = $1`, so it returns nothing for a governed-action row,
+ * and `GET /signatures/:signatureId/manifest` needs an integer id that only
+ * that list could have handed you. The manifestations for the platform's most
+ * consequential signed actions were therefore written and then unreachable —
+ * and §11.50(b) requires the manifestation to be "included as part of any human
+ * readable form of the electronic record".
+ *
+ * The target is the anchor the ledger already records, so this is the discovery
+ * step that was missing, not a new kind of record. Same column set as the
+ * by-document list, same mandatory tenant predicate, same fail-closed states:
+ * an unprovisioned store is a 503, never an empty (and therefore "unsigned")
+ * result.
+ *
+ * Registered BEFORE `/signatures/:documentId` — Express matches in order, and
+ * the param route would otherwise swallow the literal path.
+ */
+router.get('/signatures/by-target', async (req: Request, res: Response) => {
+  const orgId = requestOrgId(req);
+  if (orgId == null) {
+    return res.status(403).json({ error: 'Tenant context required' });
+  }
+  const target = typeof req.query.target === 'string' ? req.query.target.trim() : '';
+  if (!target) {
+    return res.status(400).json({ success: false, error: 'target is required' });
+  }
+
+  const pool: SqlClient = requestSql(req);
+  try {
+    const result = await pool.query(
+      `
+      SELECT id, document_id, version_id, signed_target, signature_type,
+             signature_purpose, signer_id, signer_name, signer_title, signer_email,
+             signature_meaning, signature_hash, binding_basis,
+             second_factor_verified, is_valid, signed_at, ip_address
+      FROM electronic_signatures
+      WHERE signed_target = $1 AND organization_id = $2
+      ORDER BY signed_at DESC, id DESC
+    `,
+      [target, orgId]
+    );
+    res.json({ success: true, data: result.rows });
+  } catch (err) {
+    const code = (err as { code?: string } | null)?.code;
+    if (code === '42P01') {
+      console.warn('[Part11] electronic_signatures table not provisioned; failing closed');
+      return res.status(503).json({ success: false, error: 'SIGNATURE_STORE_UNPROVISIONED' });
+    }
+    console.error('[Part11] Signature target read failed:', (err as Error)?.message);
+    return res.status(500).json({ success: false, error: 'Failed to retrieve signatures' });
+  }
+});
+
+/**
  * GET /signatures/:documentId
  * Get all signatures for a document
  */

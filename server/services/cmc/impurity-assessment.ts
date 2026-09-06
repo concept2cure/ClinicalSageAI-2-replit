@@ -25,7 +25,7 @@ import {
   assessResidualSolvent,
   resolveImpurityThresholds,
   type AdministrationRoute,
-  type ImpurityClass,
+  type ImpurityCategory,
   type ResolvedThreshold,
 } from '../global-ri/impurities-thresholds';
 
@@ -254,7 +254,7 @@ export function normaliseLevelToPercent(
 }
 
 /** The register's impurity_type column, mapped onto the guideline's classes. */
-export function impurityClassOf(raw: unknown): ImpurityClass {
+export function impurityClassOf(raw: unknown): ImpurityCategory {
   const v = String(raw ?? '').trim().toLowerCase().replace(/[\s_]+/g, '-');
   if (!v) return 'unresolved';
   /* Exact matches first — these are the values the register's own control
@@ -262,7 +262,7 @@ export function impurityClassOf(raw: unknown): ImpurityClass {
      material" matched `residual` before anything else and was sent to Q3C as a
      solvent. Only an unrecognised string falls through to the substring
      vocabulary below, which exists for records written by an integration. */
-  const EXACT: Record<string, ImpurityClass> = {
+  const EXACT: Record<string, ImpurityCategory> = {
     'process-related': 'organic',
     organic: 'organic',
     degradation: 'degradation',

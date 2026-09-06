@@ -502,6 +502,77 @@ interface M3ArtifactRow {
 }
 
 /**
+ * Read a vault document's bytes and prove they are the bytes that were
+ * recorded, or say precisely why not.
+ *
+ * Extracted from the download handler rather than left inline. In a governed
+ * store the integrity check is the load-bearing part of serving a file — "the
+ * row's content_hash is verified against the bytes on disk before they are
+ * sent", as that handler's own docblock puts it — and a check that exists only
+ * as thirty lines in the middle of a route cannot be reused by the next reader
+ * of the same bytes, or tested on its own.
+ *
+ * Every refusal is 409 rather than 404 on purpose: the RECORD exists in all
+ * three cases, so answering "not found" would be a different, false statement.
+ * The distinct codes let a caller tell a catalogued-without-content row from a
+ * missing file from an altered one — three different operational problems.
+ *
+ * Returns a discriminated result rather than throwing, so the caller owns the
+ * response shape and no failure escapes as a 500 that reads like an outage.
+ */
+export type VerifiedVaultBytes =
+  | { ok: true; bytes: Buffer }
+  | { ok: false; status: number; error: string; message?: string };
+
+export async function readVerifiedVaultBytes(
+  storageKey: string,
+  recordedHash: string | null,
+  documentId: string,
+): Promise<VerifiedVaultBytes> {
+  const resolved = path.resolve(process.cwd(), storageKey);
+  // Refuse a key that escapes the storage root. `s3_key` is written by this
+  // codebase today, but a path-traversal read is not a risk worth carrying on
+  // the assumption that it always will be.
+  const root = path.resolve(process.cwd(), 'uploads');
+  if (!resolved.startsWith(root + path.sep)) {
+    logger.error('vault download refused: storage key escapes the uploads root', { documentId });
+    return { ok: false, status: 409, error: 'NO_STORED_FILE' };
+  }
+
+  let bytes: Buffer;
+  try {
+    bytes = await fs.readFile(resolved);
+  } catch {
+    logger.error('vault download: stored file missing on disk', { documentId, key: storageKey });
+    return {
+      ok: false,
+      status: 409,
+      error: 'STORED_FILE_MISSING',
+      message:
+        'The vault record exists but its stored file could not be read. Nothing was downloaded.',
+    };
+  }
+
+  if (recordedHash) {
+    const actual = createHash('sha256').update(bytes).digest('hex');
+    if (actual !== recordedHash) {
+      logger.error('vault download refused: content hash mismatch', {
+        documentId, recorded: recordedHash.slice(0, 12), actual: actual.slice(0, 12),
+      });
+      return {
+        ok: false,
+        status: 409,
+        error: 'CONTENT_HASH_MISMATCH',
+        message:
+          'The stored file does not match the hash recorded for it, so it was not served. Report this — the vault copy may have been altered.',
+      };
+    }
+  }
+
+  return { ok: true, bytes };
+}
+
+/**
  * The Module 3 (CMC) branch: governed §3.x artifacts the CMC compile bridge
  * files into concept2cure_artifacts, reached through the program→project
  * anchor (the same EXISTS idiom mdx-vault.ts uses — org predicate repeated on
@@ -868,42 +939,15 @@ export default function createProjectVaultRoutes(): Router {
         });
       }
 
-      const resolved = path.resolve(process.cwd(), doc.s3_key);
-      // Refuse a key that escapes the storage root. `s3_key` is written by this
-      // codebase today, but a path-traversal read is not a risk worth carrying
-      // on the assumption that it always will be.
-      const root = path.resolve(process.cwd(), 'uploads');
-      if (!resolved.startsWith(root + path.sep)) {
-        logger.error('vault download refused: storage key escapes the uploads root', { documentId });
-        return res.status(409).json({ success: false, error: 'NO_STORED_FILE' });
-      }
-
-      let bytes: Buffer;
-      try {
-        bytes = await fs.readFile(resolved);
-      } catch {
-        logger.error('vault download: stored file missing on disk', { documentId, key: doc.s3_key });
-        return res.status(409).json({
+      const read = await readVerifiedVaultBytes(doc.s3_key, doc.content_hash, documentId);
+      if (!read.ok) {
+        return res.status(read.status).json({
           success: false,
-          error: 'STORED_FILE_MISSING',
-          message: 'The vault record exists but its stored file could not be read. Nothing was downloaded.',
+          error: read.error,
+          ...(read.message ? { message: read.message } : {}),
         });
       }
-
-      if (doc.content_hash) {
-        const actual = createHash('sha256').update(bytes).digest('hex');
-        if (actual !== doc.content_hash) {
-          logger.error('vault download refused: content hash mismatch', {
-            documentId, recorded: doc.content_hash.slice(0, 12), actual: actual.slice(0, 12),
-          });
-          return res.status(409).json({
-            success: false,
-            error: 'CONTENT_HASH_MISMATCH',
-            message:
-              'The stored file does not match the hash recorded for it, so it was not served. Report this — the vault copy may have been altered.',
-          });
-        }
-      }
+      const bytes = read.bytes;
 
       /* AUDIT BEFORE THE BYTES LEAVE — 21 CFR 11.10(e).
          This handler served a governed document with no audit row of any kind:

@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-06T05:48:02.863Z",
+  "generatedAt": "2026-09-06T08:22:39.594Z",
   "git": {
-    "sha": "99eb230816f34bc00c0e1c7f85f491265625ba86",
+    "sha": "d5c22a80c3d120339d1ce0c156e4e23ba6950e30",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2057,7 +2057,7 @@
       },
       {
         "file": "server/services/mutagenic-impurity/mutagenic-impurity-knowledge.ts",
-        "bytes": 132966
+        "bytes": 133020
       },
       {
         "file": "server/services/cmc-quality/cmc-quality-knowledge.ts",
@@ -2072,12 +2072,12 @@
         "bytes": 131521
       },
       {
-        "file": "server/services/ana/intelligence-questions/flows/nda-submission.ts",
-        "bytes": 127662
+        "file": "server/routes/submission-ops.ts",
+        "bytes": 129833
       },
       {
-        "file": "server/routes/submission-ops.ts",
-        "bytes": 122473
+        "file": "server/services/ana/intelligence-questions/flows/nda-submission.ts",
+        "bytes": 127662
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
@@ -2198,6 +2198,10 @@
         "lines": 3326
       },
       {
+        "file": "server/routes/submission-ops.ts",
+        "lines": 3166
+      },
+      {
         "file": "server/services/submission-package-orchestrator.ts",
         "lines": 3158
       },
@@ -2212,10 +2216,6 @@
       {
         "file": "server/services/regulatory-strategy/regulatory-strategy-knowledge.ts",
         "lines": 3067
-      },
-      {
-        "file": "server/routes/submission-ops.ts",
-        "lines": 3046
       },
       {
         "file": "server/routes/concept2cure.ts",
@@ -2515,7 +2515,7 @@
       },
       {
         "file": "server/services/advancedRAGPipeline.ts",
-        "lines": 1538
+        "lines": 1569
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/IndLifecycle.tsx",

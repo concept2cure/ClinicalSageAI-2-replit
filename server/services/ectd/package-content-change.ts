@@ -157,6 +157,53 @@ export async function recordPackageGovernedAction(params: {
   }
 }
 
+/* ─── A sequence was filed ───────────────────────────────────────── */
+
+/**
+ * Append a sequence to the package's FILED history — the record of what this
+ * application has actually put on file, which the next sequence diffs against
+ * to derive each leaf's lifecycle operation.
+ *
+ * Called only when an agency gateway has accepted the bytes. A bundle that was
+ * assembled and never transmitted is not on file, and treating it as if it were
+ * would make the following sequence file `replace` against a version the agency
+ * has never seen.
+ *
+ * Append-only and idempotent on the sequence number: re-recording a sequence
+ * already present leaves the history untouched, so a retried post-transmit
+ * write cannot double-count a filing. Returns false when the history could not
+ * be written — the transmit still happened, and the caller must SAY so rather
+ * than let the next sequence silently diff against a stale history.
+ */
+export async function recordFiledSequence(
+  packageDbId: number,
+  entry: {
+    sequence: string;
+    submissionType: string;
+    sha256: string;
+    transmittalId?: number | null;
+    leaves: Array<{ ctdSection: string; fileName: string; href: string; md5: string; operation?: string; title?: string }>;
+  },
+): Promise<boolean> {
+  try {
+    return await withPackageMetadataLock<boolean>(packageDbId, (current) => {
+      const history = Array.isArray(current.filedSequences) ? [...(current.filedSequences as unknown[])] : [];
+      const already = history.some(
+        (h) => !!h && typeof h === 'object' && (h as { sequence?: unknown }).sequence === entry.sequence,
+      );
+      if (already) return { metadata: null, result: true };
+      history.push({ ...entry, filedAt: new Date().toISOString() });
+      return { metadata: { ...current, filedSequences: history }, result: true };
+    });
+  } catch (e) {
+    console.error(
+      '[package-content-change] filed-sequence-record-failed',
+      { packageDbId, sequence: entry.sequence, message: e instanceof Error ? e.message : String(e) },
+    );
+    return false;
+  }
+}
+
 /* ─── An artifact changed ────────────────────────────────────────── */
 
 /** What about the artifact changed. Named in the audit row, so an auditor can

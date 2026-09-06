@@ -125,7 +125,14 @@ const ASSEMBLE_FORM = (def: string | undefined, packages: PackageOption[] | null
   fields: [
     PACKAGE_FIELD(def, packages),
     { key: 'region', label: 'Region', type: 'select', options: ['FDA', 'EMA', 'PMDA', 'CA'], default: 'FDA', half: true },
-    { key: 'sequence', label: 'Sequence', type: 'text', default: '0000', half: true, placeholder: '0000', desc: 'Four digits.' },
+    { key: 'sequence', label: 'Sequence', type: 'text', default: '0000', half: true, placeholder: '0000', desc: 'Four digits. 0000 is the original filing.' },
+    {
+      key: 'submissionType', label: 'Submission type', type: 'text', half: true, placeholder: 'e.g. Efficacy Supplement',
+      // "amendment" is the word that comes to mind and the one FDA has no code
+      // for, so the example here is a term that files. The full list travels
+      // with the refusal rather than being restated in a field description.
+      desc: 'Required for any sequence after 0000: only the original is an original by definition. FDA files from a fixed list — Original Application, Efficacy Supplement, Annual Report and others; other regions take their own term. A term that cannot be filed is refused with the list.',
+    },
     { key: 'reason', label: 'Reason (governed)', type: 'textarea', required: true, placeholder: 'At least 8 characters — recorded with the assembly.' },
   ],
 });
@@ -446,6 +453,13 @@ export function GatewayTransmittals({ onAsk }: SurfaceViewProps) {
     const ledger = (raw as any)?.ledgerWriteFailed
       ? ' ' + String((raw as any)?.ledgerWarning ?? 'The governed-action ledger entry could not be written; record this assembly manually.')
       : '';
+    // A follow-up sequence carries what CHANGED, so say what it does to what is
+    // already on file rather than leaving the operator to infer it from a leaf
+    // count that is smaller than the package.
+    const life = b.lifecycle?.summary;
+    const lifecycleNote = life && (b.sequence ?? '0000') !== '0000'
+      ? ` Sequence ${b.sequence}: ${life.new} new, ${life.replace} replaced, ${life.unchanged} left unchanged on file.`
+      : '';
     setDialog(null);
     if (errors > 0) {
       // The bundle exists, but transmit will refuse it. The findings live on the
@@ -465,7 +479,7 @@ export function GatewayTransmittals({ onAsk }: SurfaceViewProps) {
     // No error-severity findings is not "ready": the transmit gate still checks
     // region identity, the gateway size limit and the operator's conformance
     // opt-ins before bytes leave. Say what was proven, not more.
-    fireToast(`Bundle assembled for ${d.packageId ?? v.packageId} · ${b.leafCount ?? '?'} leaves · ${warnings} warning${warnings === 1 ? '' : 's'} · sha256 ${String(b.sha256 ?? '').slice(0, 12)}. No error-severity findings; the transmit gate still checks region, size and conformance opt-ins.${ledger}`, ledger ? 'error' : undefined);
+    fireToast(`Bundle assembled for ${d.packageId ?? v.packageId} · ${b.leafCount ?? '?'} leaves · ${warnings} warning${warnings === 1 ? '' : 's'} · sha256 ${String(b.sha256 ?? '').slice(0, 12)}. No error-severity findings; the transmit gate still checks region, size and conformance opt-ins.${lifecycleNote}${ledger}`, ledger ? 'error' : undefined);
   }, [fireToast, loadFindings]);
 
   /** Re-run preflight for the last package and show what it reports now. */
