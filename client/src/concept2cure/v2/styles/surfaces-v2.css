@@ -12,6 +12,9 @@
 .c2c-v2 .landing-greet h1{font-size:28px;font-weight:500;letter-spacing:-.02em;color:var(--text-100);}
 .c2c-v2 .landing-mark{font-size:32px;color:var(--accent-100);line-height:1;}
 .c2c-v2 .landing-composer{width:100%;background:var(--bg-000);border:1px solid var(--bg-200);border-radius:16px;padding:0;box-shadow:0 1px 6px rgba(0,0,0,.06);display:flex;flex-direction:column;overflow:hidden;position:relative;}
+/* The composer textarea clears its own outline — ring the composer when
+   focus lands inside it. The base drop-shadow is preserved after the ring. */
+.c2c-v2 .landing-composer:focus-within{border-color:var(--accent-200);box-shadow:0 0 0 3px var(--accent-000),0 1px 6px rgba(0,0,0,.06);}
 .c2c-v2 .landing-input{width:100%;border:none;outline:none;background:transparent;resize:none;font-size:15px;line-height:1.5;padding:16px 18px 8px;color:var(--text-100);font-family:inherit;}
 .c2c-v2 .landing-input::placeholder{color:var(--text-400);}
 .c2c-v2 .landing-crow{display:flex;align-items:center;justify-content:space-between;padding:6px 10px 10px;}
