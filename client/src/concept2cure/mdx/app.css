@@ -1421,6 +1421,11 @@
    only colored element is the Accept button (Claude orange).
    ─────────────────────────────────────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
+  /* Neutralize state-change transition motion for users who request reduced
+     motion. Transitions only — per-element animation handling stays
+     authoritative (e.g. the .data-state-spinner rule below deliberately slows,
+     not stops, its spinner; a blanket animation nuke would override that). */
+  .mdx-shell * { transition-duration: 1ms !important; }
 }
 
 
