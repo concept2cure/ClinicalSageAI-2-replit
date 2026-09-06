@@ -376,6 +376,16 @@ export async function registerInlineAiWorkflowRoutes({
     console.error('❌ Failed to mount Study Design routes:', error);
   }
 
+  // Biostatistics bridge — study design ↔ biostatistics engines ↔ filing
+  // placement ↔ task board (server/services/biostatistics-bridge).
+  try {
+    const biostatBridgeModule = await import('../routes/biostat-bridge');
+    app.use('/api/biostat-bridge', authMiddleware, biostatBridgeModule.default);
+    console.info('✅ Biostatistics bridge routes mounted (/api/biostat-bridge)');
+  } catch (error) {
+    console.error('❌ Failed to mount Biostatistics bridge routes:', error);
+  }
+
   // Financial disclosures — 21 CFR 54 (FCOI, Forms FDA 3454/3455 → Module 1).
   try {
     const fcoiModule = await import('../routes/financial-disclosures');
