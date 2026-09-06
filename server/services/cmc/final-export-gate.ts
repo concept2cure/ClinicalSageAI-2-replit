@@ -8,7 +8,17 @@
  *
  * Fail-closed convergence, unchanged: export (and therefore placement) is
  * refused if the compiler gate refuses, the governed document fabric blocks,
- * governed decisions are unresolved, or any section went stale after approval.
+ * governed decisions are unresolved, any section went stale after approval,
+ * OR an approved section is not actually complete.
+ *
+ * That last clause was missing until it was found live: a project with every
+ * section's `approval_state` at 'approved' passed this gate while three of
+ * those sections had compiled at 0% completeness, every required input
+ * missing — the compiler itself stores `completeness` and `missingInputs` in
+ * the same row's `deterministic_json` at compile time
+ * (module3OperatingSystemRoutes.ts), and this gate never read either. A
+ * signer's "approved" is a claim about content they reviewed, not a claim the
+ * content exists; the gate must not let the first stand in for the second.
  */
 import { getPool } from '../../db';
 import { canFinalizeExport } from '../cmc-module3-compiler';
@@ -24,6 +34,8 @@ export interface FinalExportGateVerdict {
     staleSections: number;
     openCriticalContradictions: number;
     canonicalGovernedState: Record<string, unknown> | null;
+    /** Approved sections the compiler did not actually establish, by key. */
+    incompleteApprovedSections: string[];
   };
 }
 
@@ -37,7 +49,7 @@ export async function evaluateFinalExportGate(params: {
 
   const [sectionsRes, contradictionsRes] = await Promise.all([
     pool.query(
-      `SELECT approval_state, stale FROM cmc_module3_sections WHERE organization_id = $1 AND project_id = $2`,
+      `SELECT section_key, approval_state, stale, deterministic_json FROM cmc_module3_sections WHERE organization_id = $1 AND project_id = $2`,
       [orgId, projectId]
     ),
     pool.query(
@@ -52,6 +64,33 @@ export async function evaluateFinalExportGate(params: {
   // endpoint, which requires staleSections === 0 before export.
   const staleSections = sections.filter((s: any) => Boolean(s.stale)).length;
   const allApproved = sections.length > 0 && sections.every((s: any) => s.approval_state === 'approved');
+
+  // An approved section whose OWN compiled record says it is incomplete —
+  // completeness under 100, or a required input still named missing — is not
+  // exportable no matter what its approval_state claims. `deterministic_json`
+  // may be a string (raw driver rows) or already parsed (mocked/pooled
+  // clients); both are read the same way.
+  const parsedJson = (row: any): Record<string, unknown> => {
+    const raw = row.deterministic_json ?? row.deterministicJson;
+    if (raw && typeof raw === 'object') return raw as Record<string, unknown>;
+    if (typeof raw === 'string') {
+      try {
+        return JSON.parse(raw);
+      } catch {
+        return {};
+      }
+    }
+    return {};
+  };
+  const incompleteApprovedSections = sections
+    .filter((s: any) => s.approval_state === 'approved')
+    .filter((s: any) => {
+      const json = parsedJson(s);
+      const completeness = typeof json.completeness === 'number' ? json.completeness : null;
+      const missing = Array.isArray(json.missingInputs) ? json.missingInputs : [];
+      return completeness !== 100 || missing.length > 0;
+    })
+    .map((s: any) => String(s.section_key ?? s.sectionKey ?? 'unknown section'));
   const allowed = canFinalizeExport({
     approvalState: allApproved ? 'approved' : 'draft',
     contradictions: contradictionsRes.rows || [],
@@ -114,13 +153,19 @@ export async function evaluateFinalExportGate(params: {
     staleSections,
     openCriticalContradictions: openCritical,
     canonicalGovernedState,
+    incompleteApprovedSections,
   };
 
   // Fail-closed convergence: block if the existing check OR the fabric blocks OR
-  // governed decisions are unresolved OR any section went stale after approval.
-  if (!allowed || fabricBlocks || governedDecisionsBlock || staleSections > 0) {
+  // governed decisions are unresolved OR any section went stale after approval
+  // OR an approved section is not what the compiler established.
+  if (!allowed || fabricBlocks || governedDecisionsBlock || staleSections > 0 || incompleteApprovedSections.length > 0) {
     const errorMsg =
-      staleSections > 0
+      incompleteApprovedSections.length > 0
+        ? `${incompleteApprovedSections.length} approved section(s) are not complete and cannot be exported: ` +
+          `${incompleteApprovedSections.join(', ')}. An approval is a claim about content that was reviewed; ` +
+          `the compiler records these as missing required inputs. Record the inputs, recompile and re-approve.`
+        : staleSections > 0
         ? `${staleSections} section(s) went stale after approval and must be re-approved before final export`
         : governedDecisionsBlock && allowed && !fabricBlocks
           ? `Unresolved governed decisions block final export (${(canonicalGovernedState as any).decisionLifecycle?.unresolvedCount || 0} unresolved, ${(canonicalGovernedState as any).decisionLifecycle?.escalatedCount || 0} escalated)`
