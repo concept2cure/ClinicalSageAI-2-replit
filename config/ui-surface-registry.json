@@ -1,0 +1,72 @@
+{
+  "$comment": "UI shell authority registry — read by scripts/audit-ui-authority.ts (npm run audit:ui-authority). Every entry with a `path` is checked against the tree: `active` must exist, `deleted` must not, `demoted` must exist and be imported by nothing under client/src. Entries without a path are destinations, checked against the rail arrays in client/src/concept2cure/v2/registryModel.ts and the account menu in Shell.tsx. Updated 2026-09-06 (docs/audits/ANA_UI_FORENSIC_AUDIT_2026-09-06.md).",
+  "version": "2026-09-06",
+  "decision": {
+    "date": "2026-07-28",
+    "owner": "product owner",
+    "summary": "The rail is NOT to be collapsed to the constitution's five destinations (PR #1187 reverted in full); .pj-title, .ana-ctx-section and .ana-greet-t stay serif. The navigation shipping today is the intended navigation.",
+    "recordedIn": "docs/audits/ANA_UI_FORENSIC_AUDIT_2026-07-28.md"
+  },
+  "surfaces": {
+    "shell": {
+      "entry": { "path": "client/src/main.tsx", "status": "active", "role": "providers + <App/>" },
+      "app-router": { "path": "client/src/App.jsx", "status": "active", "role": "outer <Switch>: auth aliases, /client-portal redirects, catch-all → ZenRouter" },
+      "zen-router": { "path": "client/src/concept2cure/router/ZenRouter.tsx", "status": "active", "role": "auth entry + redirects; mounts the persistent v2 shell for / and /concept2cure/*" },
+      "v2-app": { "path": "client/src/concept2cure/v2/V2App.tsx", "status": "active", "role": "THE shell frame: .c2c-v2.shell grid rail | main | ana; internal surface routing" },
+      "v2-chrome": { "path": "client/src/concept2cure/v2/Shell.tsx", "status": "active", "role": "Rail, TopBar, AnaRail (composer), CmdK" },
+      "surface-views": { "path": "client/src/concept2cure/v2/surfaceViews.ts", "status": "active", "role": "surface id → lazy component + full/ownsConversation layout flags" },
+      "routing": { "path": "client/src/concept2cure/v2/routing.ts", "status": "active", "role": "/concept2cure/<seg> ↔ surface id" }
+    },
+    "nav": {
+      "registry-model": { "path": "client/src/concept2cure/v2/registryModel.ts", "status": "active", "role": "the one nav source: RAIL_CORE / RAIL_SPECIALIST / RAIL_EXPLORE / RAIL_QUICK, NAV_HIDDEN, SEGMENT_MODULES, DEEP_LINK_ALIASES" },
+      "ui-surface-registry": { "path": "shared/constants/ui-surface-registry.ts", "status": "active", "role": "surface catalog (navTier, apiPrefixes, readiness)" },
+      "ui-surface-registry-v2": { "path": "shared/constants/ui-surface-registry.ui-v2.ts", "status": "active", "role": "v2 surface catalog entries" },
+      "navigation-contract": { "path": "shared/navigation/index.ts", "status": "active", "role": "AnA navigate_to targets (fail-closed resolver)" },
+      "surface-actions": { "path": "shared/navigation/surface-actions.ts", "status": "active", "role": "AnA act_on_screen catalog" }
+    },
+    "tokens": {
+      "canonical": { "path": "design-system/colors_and_type.css", "status": "active", "role": "the only token source; pinned by tests/ui/token-authority.test.ts" },
+      "alias-shim": { "path": "client/src/index.css", "status": "active", "role": "alias shim only (--accent-*, --dur, --rail); may not redeclare bg/text/border/radius/font" },
+      "shell-metrics": { "path": "client/src/concept2cure/v2/styles/app-v2.css", "status": "active", "role": "shell layout metrics (--rail, --ana) + chrome CSS + responsive rules" }
+    },
+    "views": {
+      "home": { "path": "client/src/concept2cure/v2/surfaces/Surfaces.tsx", "status": "active", "role": "Home landing: greeting + composer seeding conversation-thread (chat-first front door)" },
+      "chats": { "path": "client/src/concept2cure/v2/surfaces/ConversationThread.tsx", "status": "active", "role": "full-page general/project chat (ownsConversation)" },
+      "projects": { "path": "client/src/concept2cure/v2/surfaces/Projects.tsx", "status": "active", "role": "portfolio + new-project wizard" },
+      "project-landing": { "path": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx", "status": "active", "role": "project home; conversation panel + capability grid + readiness (shape escalated, see work order)" },
+      "communication-center": { "path": "client/src/concept2cure/v2/surfaces/CommunicationCenter.tsx", "status": "active", "role": "agency-communication loop: FDA loop, agency inbox, meetings & commitments, authority profiles; not a rail item (deep link, ⌘K, project home, AnA navigate_to)" },
+      "apps": { "path": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx", "status": "active", "role": "Apps catalog (module subscriptions) + admin console, licensing, usage, billing" },
+      "tasks": { "path": "client/src/concept2cure/v2/surfaces/TaskBoard.tsx", "status": "active", "role": "task board (unified_tasks)" },
+      "review": { "path": "client/src/concept2cure/v2/surfaces/Review.tsx", "status": "active", "role": "review readiness" },
+      "submission-center": { "path": "client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx", "status": "active", "role": "submission workspaces (builder, validation, dispatch)" },
+      "editor": { "path": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx", "status": "active", "role": "the canonical editor (ownsConversation)" },
+      "vault": { "path": "client/src/concept2cure/v2/surfaces/Vault.tsx", "status": "active", "role": "project vault" }
+    },
+    "hosted": {
+      "mdx-host": { "path": "client/src/concept2cure/mdx/MdxSurfaceHost.tsx", "status": "active", "role": "former second app, now a chromeless hosted surface inside the v2 shell" },
+      "pdev-app": { "path": "client/src/concept2cure/pdev/App.tsx", "status": "active", "role": "former second app, now hosted surfaces inside the v2 shell (rail/topbar/AnA rail belong to the shell)" }
+    },
+    "legacy": {
+      "zen-app": { "path": "client/src/concept2cure/ZenApp.tsx", "status": "deleted" },
+      "zen-app-constants": { "path": "client/src/concept2cure/zen-app-constants.ts", "status": "deleted" },
+      "zen-sidebar": { "path": "client/src/concept2cure/components/sidebar/ZenSidebar.tsx", "status": "deleted" },
+      "ana-persistent-panel": { "path": "client/src/concept2cure/components/chat/AnaPersistentPanel.tsx", "status": "deleted" },
+      "project-workspace-shell": { "path": "client/src/concept2cure/components/workspace/ProjectWorkspaceShell.tsx", "status": "deleted" },
+      "editor-panel": { "path": "client/src/concept2cure/components/editor/EditorPanel.tsx", "status": "deleted" },
+      "global-operating-shell": { "path": "client/src/concept2cure/components/shell/GlobalOperatingShell.tsx", "status": "deleted" },
+      "industry-workspace-shell": { "path": "client/src/concept2cure/components/shell/IndustryWorkspaceShell.tsx", "status": "deleted" },
+      "tool-panel": { "path": "client/src/concept2cure/components/ToolPanel.tsx", "status": "deleted" }
+    },
+    "destinations": {
+      "chats": { "status": "active", "railTarget": "conversation-thread", "note": "Explore › Conversation, plus the Home composer and the AnA rail" },
+      "projects": { "status": "active", "railTarget": "projects" },
+      "communication-center": { "status": "active", "railTarget": null, "note": "not a rail item by the 2026-07-28 decision; reachable via ⌘K, deep link, project home, AnA navigate_to" },
+      "apps": { "status": "active", "railTarget": "apps" },
+      "settings": { "status": "active", "railTarget": null, "accountMenu": ["Admin", "Licensing", "Access requests", "Usage & limits", "Billing", "View all plans", "Set up a workspace", "Log out"] }
+    }
+  },
+  "limits": {
+    "ownsConversationMax": 7,
+    "railButtonsMax": 24
+  }
+}
