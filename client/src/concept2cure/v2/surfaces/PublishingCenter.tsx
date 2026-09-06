@@ -290,7 +290,7 @@ export function PublishingCenter(_props: SurfaceViewProps) {
       {/* ── Header: version selector ── */}
       <div className="pj-card">
         <div className="pj-card-h">
-          <span className="t">Publishing Center</span>
+          <span className="t">Publishing center</span>
           {/* The NAME is the trap; this sentence existed only in the assistant
               context, never on screen. */}
           <span className="s">eCTD backbone, controlled vocabulary &amp; qualification — read-only reference. Nothing here publishes, transmits, validates or freezes a sequence.</span>

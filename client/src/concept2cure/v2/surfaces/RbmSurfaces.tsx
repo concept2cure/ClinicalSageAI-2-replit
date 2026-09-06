@@ -326,7 +326,7 @@ export function RbmAnaDock({ nav, study, msgs, onAsk, onClose, work }: {
   return (
     <aside className="rbm-ana" aria-label="AnA — risk-based monitoring">
       <div className="rbm-ana-hdr">
-        <div className="rbm-ana-id"><span className="mk">{'✻'}</span><div><div className="nm">AnA — RBM co-monitor</div><div className="md">bound to {study} -- {nav.label}</div></div></div>
+        <div className="rbm-ana-id"><span className="mk">{'✻'}</span><div><div className="nm">AnA — RBM co-monitor</div><div className="md">bound to {study} — {nav.label}</div></div></div>
         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
           {work && (
             <button

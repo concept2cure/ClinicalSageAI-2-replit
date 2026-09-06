@@ -245,7 +245,7 @@
    ════════════════════════════════════════════════════════════════════ */
 .c2c-v2 .sp{height:100%;overflow-y:auto;padding:26px 30px 72px;max-width:1000px;margin:0 auto;}
 .c2c-v2 .sp-head{display:flex;align-items:flex-start;justify-content:space-between;gap:20px;margin-bottom:14px;}
-.c2c-v2 .sp-eyebrow{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--accent-200);}
+.c2c-v2 .sp-eyebrow{display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--accent-200);}
 .c2c-v2 .sp-title{font-size:23px;font-weight:600;color:var(--text-100);margin:4px 0 6px;}
 .c2c-v2 .sp-state{font-size:13px;line-height:1.6;color:var(--text-400);margin:0;max-width:600px;}
 .c2c-v2 .sp-state b{color:var(--text-200);font-weight:600;}

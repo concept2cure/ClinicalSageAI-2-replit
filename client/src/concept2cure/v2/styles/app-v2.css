@@ -1937,7 +1937,7 @@
 .c2c-v2 .ph{display:flex;align-items:flex-start;justify-content:space-between;gap:20px;margin-bottom:24px;}
 /* --accent-200, not --accent-100: the identity orange is the colour the brand
    is SEEN in, and this is text. At 11px it measured 2.96:1. */
-.c2c-v2 .ph-eyebrow{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--accent-200);font-weight:600;margin-bottom:6px;}
+.c2c-v2 .ph-eyebrow{display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--accent-200);font-weight:600;margin-bottom:6px;}
 .c2c-v2 .ph-title{font-size:24px;font-weight:600;letter-spacing:-.02em;margin:0;}
 .c2c-v2 .ph-sub{font-size:13px;color:var(--text-300);margin-top:6px;max-width:680px;line-height:1.5;}
 .c2c-v2 .btn{display:inline-flex;align-items:center;gap:7px;height:32px;padding:0 14px;border-radius:var(--radius-lg);font-size:12.5px;font-weight:500;transition:all var(--dur);white-space:nowrap;}
@@ -2492,7 +2492,14 @@
 .c2c-v2 .mtg-commit-c{flex:1;font-size:12.5px;color:var(--text-100);}
 .c2c-v2 .mtg-commit-meta{font-size:11px;color:var(--text-400);}
 @media(max-width:880px){.c2c-v2 .mtg-split{grid-template-columns:1fr;}}
-.c2c-v2 .reg-eyebrow{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--accent-200);}
+/* A one-line row, not a text run. `.c2c-v2 svg { display: block }` (app-v2.css:164)
+   is right for icon buttons and wrong inside flowing text: these eyebrows read
+   `Label {I.dot} qualifier`, and a block-level separator forces a break on BOTH
+   sides of itself, so a 599px-wide eyebrow with room to spare rendered three
+   lines tall. Measured across the surfaces, 12 eyebrows do this. Flex puts the
+   text runs and the separator back on one line without touching the global svg
+   rule that the icon buttons depend on. */
+.c2c-v2 .reg-eyebrow{display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--accent-200);}
 
 /* ════════ NDA / BLA filing cockpit ════════ */
 .c2c-v2 .reg-wrap{height:100%;overflow-y:auto;padding:26px 30px 60px;max-width:1100px;margin:0 auto;}

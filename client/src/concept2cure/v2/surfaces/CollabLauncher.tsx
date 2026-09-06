@@ -914,7 +914,7 @@ export function CollabLayer({ onNav }: CollabLayerProps) {
             </button>
             <button className="cl-fab-mi" onClick={() => { setTab('collab'); setOpen(true); setMenuOpen(false); }}>
               <span className="ico">{I.messageSquare}</span>
-              <span><b>Collaborate</b><em>Message -- @mention — route</em></span>
+              <span><b>Collaborate</b><em>Message — @mention — route</em></span>
             </button>
             <button className="cl-fab-mi" onClick={() => { onNav?.('tasks'); setMenuOpen(false); }}>
               <span className="ico">{I.layoutPanels || I.grid}</span>
