@@ -1300,6 +1300,57 @@ export const SURFACE_ACTIONS: readonly SurfaceActionTarget[] = [
       },
     ],
   },
+
+  // ── Program journey (biopharma lifecycle) ──
+  {
+    id: 'program-journey.select-stage',
+    surfaceId: 'program-journey',
+    label: 'Select a lifecycle stage',
+    description:
+      'On the program journey, select one of the 9 lifecycle stages (discovery through post-approval) by its id or label so its gate, deliverables and agency interactions show — the same stage click a person makes. Resolved against the fixed stage catalog with honest misses; held while the program record loads.',
+    params: [
+      { name: 'stage', required: true, description: 'The stage id (e.g. "preind") or its label (e.g. "Pre-IND / enabling"), case-insensitive.' },
+    ],
+  },
+  {
+    id: 'program-journey.switch-segment',
+    surfaceId: 'program-journey',
+    label: 'Switch the biotech/pharma segment view',
+    description: 'On the program journey, switch between the biotech (BLA) and pharma (NDA) segment view.',
+    params: [
+      { name: 'segment', required: true, description: 'The segment to view.', enum: ['biotech', 'pharma'] },
+    ],
+  },
+
+  // ── Usage & billing ──
+  // UsageBilling is ONE component mounted under TWO registry ids ('usage' /
+  // 'billing') depending on which nav target brought the person here — only
+  // one publishes at a time (usePublishSurfaceContext('usage', activeId===
+  // 'usage' ? ctx : null), symmetrically for 'billing'). Independently, the
+  // SAME rendered screen has three internal on-screen tabs (usage / billing /
+  // limits — the `tab` state, already reported as `facts.openTab` regardless
+  // of activeId). The act channel mirrors the publish gating: whichever
+  // registry id is currently mounted owns the switch between all three tabs.
+  {
+    id: 'usage.open-tab',
+    surfaceId: 'usage',
+    label: 'Open a usage/billing tab',
+    description:
+      'Switch between the usage-metering, billing/invoices, and plan-limits tabs. Read-only: it never changes a plan, adds a payment method, or triggers a charge — those stay deliberate human acts elsewhere on the screen.',
+    params: [
+      { name: 'tab', required: true, description: 'The tab to open.', enum: ['usage', 'billing', 'limits'] },
+    ],
+  },
+  {
+    id: 'billing.open-tab',
+    surfaceId: 'billing',
+    label: 'Open a usage/billing tab',
+    description:
+      'Switch between the billing/invoices, usage-metering, and plan-limits tabs. Read-only: it never changes a plan, adds a payment method, or triggers a charge — those stay deliberate human acts elsewhere on the screen.',
+    params: [
+      { name: 'tab', required: true, description: 'The tab to open.', enum: ['usage', 'billing', 'limits'] },
+    ],
+  },
 ] as const;
 
 const ACTIONS_BY_ID: ReadonlyMap<string, SurfaceActionTarget> = new Map(
