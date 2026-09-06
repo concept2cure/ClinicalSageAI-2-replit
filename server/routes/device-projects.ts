@@ -163,6 +163,52 @@ router.post('/', requireEditorAccess, async (req: Request, res: Response) => {
   }
 });
 
+/**
+ * The PUT's field rules, in one place. Returns the message for the first field
+ * that fails, or null when the patch is acceptable. Every field is optional —
+ * this is a patch, and an absent key means "leave it alone".
+ *
+ * Extracted so the handler reads as what it DOES (authorize, validate, load,
+ * write, audit) rather than as a wall of length checks.
+ */
+function validatePatch(p: Record<string, unknown>): string | null {
+  if (p.deviceName !== undefined) {
+    const trimmed = String(p.deviceName).trim();
+    if (trimmed.length === 0) return 'deviceName cannot be empty';
+    if (trimmed.length > MAX_NAME_LENGTH) {
+      return `deviceName must be ${MAX_NAME_LENGTH} characters or fewer`;
+    }
+  }
+  if (p.deviceClass !== undefined && !VALID_DEVICE_CLASSES.includes(String(p.deviceClass))) {
+    return `deviceClass must be one of: ${VALID_DEVICE_CLASSES.join(', ')}`;
+  }
+  if (p.manufacturer !== undefined && String(p.manufacturer).length > MAX_TEXT_LENGTH) {
+    return `manufacturer must be ${MAX_TEXT_LENGTH} characters or fewer`;
+  }
+  if (p.intendedUse !== undefined && String(p.intendedUse).length > MAX_TEXT_LENGTH) {
+    return `intendedUse must be ${MAX_TEXT_LENGTH} characters or fewer`;
+  }
+  if (p.attachedDocuments !== undefined && !Array.isArray(p.attachedDocuments)) {
+    return 'attachedDocuments must be an array';
+  }
+  if (
+    p.state !== undefined &&
+    (typeof p.state !== 'object' || p.state === null || Array.isArray(p.state))
+  ) {
+    return 'state must be a JSON object';
+  }
+  if (
+    p.progress !== undefined &&
+    (typeof p.progress !== 'number' || p.progress < 0 || p.progress > 100)
+  ) {
+    return 'progress must be a number between 0 and 100';
+  }
+  if (p.status !== undefined && !VALID_STATUSES.includes(String(p.status))) {
+    return `status must be one of: ${VALID_STATUSES.join(', ')}`;
+  }
+  return null;
+}
+
 /** PUT /api/device-projects/:id — update an existing device project (org-scoped) */
 router.put('/:id', requireEditorAccess, async (req: Request, res: Response) => {
   try {
@@ -191,50 +237,17 @@ router.put('/:id', requireEditorAccess, async (req: Request, res: Response) => {
       progress,
     } = req.body || {};
 
-    if (deviceName !== undefined) {
-      const trimmedName = String(deviceName).trim();
-      if (trimmedName.length === 0) {
-        return res.status(400).json({ error: 'deviceName cannot be empty' });
-      }
-      if (trimmedName.length > MAX_NAME_LENGTH) {
-        return res
-          .status(400)
-          .json({ error: `deviceName must be ${MAX_NAME_LENGTH} characters or fewer` });
-      }
-    }
-    if (deviceClass !== undefined && !VALID_DEVICE_CLASSES.includes(String(deviceClass))) {
-      return res
-        .status(400)
-        .json({ error: `deviceClass must be one of: ${VALID_DEVICE_CLASSES.join(', ')}` });
-    }
-    if (manufacturer !== undefined && String(manufacturer).length > MAX_TEXT_LENGTH) {
-      return res
-        .status(400)
-        .json({ error: `manufacturer must be ${MAX_TEXT_LENGTH} characters or fewer` });
-    }
-    if (intendedUse !== undefined && String(intendedUse).length > MAX_TEXT_LENGTH) {
-      return res
-        .status(400)
-        .json({ error: `intendedUse must be ${MAX_TEXT_LENGTH} characters or fewer` });
-    }
-    if (attachedDocuments !== undefined && !Array.isArray(attachedDocuments)) {
-      return res.status(400).json({ error: 'attachedDocuments must be an array' });
-    }
-    if (
-      state !== undefined &&
-      (typeof state !== 'object' || state === null || Array.isArray(state))
-    ) {
-      return res.status(400).json({ error: 'state must be a JSON object' });
-    }
-    if (
-      progress !== undefined &&
-      (typeof progress !== 'number' || progress < 0 || progress > 100)
-    ) {
-      return res.status(400).json({ error: 'progress must be a number between 0 and 100' });
-    }
-    if (status !== undefined && !VALID_STATUSES.includes(String(status))) {
-      return res.status(400).json({ error: `status must be one of: ${VALID_STATUSES.join(', ')}` });
-    }
+    const invalid = validatePatch({
+      deviceName,
+      status,
+      manufacturer,
+      deviceClass,
+      intendedUse,
+      state,
+      attachedDocuments,
+      progress,
+    });
+    if (invalid) return res.status(400).json({ error: invalid });
 
     const [existing] = await db
       .select()
