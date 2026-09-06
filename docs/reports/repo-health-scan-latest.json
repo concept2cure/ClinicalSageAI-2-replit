@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-06T01:29:30.693Z",
+  "generatedAt": "2026-09-06T01:43:53.426Z",
   "git": {
-    "sha": "7414f8b6c56f8b7afac87c586957ecf4f0508f75",
+    "sha": "254df00710245e8e3e93cbd40d1d1b867c503e0c",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2085,7 +2085,7 @@
       },
       {
         "file": "server/routes/submission-ops.ts",
-        "bytes": 116352
+        "bytes": 116794
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/protocol-development.ts",
@@ -2223,7 +2223,7 @@
       },
       {
         "file": "server/routes/submission-ops.ts",
-        "lines": 2944
+        "lines": 2948
       },
       {
         "file": "server/src/routes/stability.router.ts",
