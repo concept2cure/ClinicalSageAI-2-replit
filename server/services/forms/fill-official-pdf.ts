@@ -619,11 +619,42 @@ function decryptObjectData(sec: PdfSecurity, num: number, gen: number, data: Buf
   return pad >= 1 && pad <= 16 && pad <= out.length ? out.subarray(0, out.length - pad) : out;
 }
 
+/**
+ * The IV is SYNTHETIC — derived from the plaintext under the object key — and
+ * not `crypto.randomBytes(16)`, which is what it was.
+ *
+ * WHY. A random IV made the filled eSTAR non-deterministic: the same submission
+ * exported twice produced two different files. Measured on the vendored nIVD
+ * template — three fills from identical inputs gave three different SHA-256
+ * digests at an identical 5,284,860 bytes. That matters because
+ * server/services/export/governedExportConsequence.ts hashes the delivered PDF
+ * and persists `deliveredArtifactSha256` into the artifact, the provenance event
+ * and the audit row as the integrity hash of a governed export. Nothing stores
+ * the bytes, so the only way to check that hash is to regenerate the file — and
+ * regeneration could never reproduce it. A 21 CFR Part 11 audit trail was
+ * recording an integrity hash over bytes that could not be re-derived, and a
+ * filer comparing two exports of the same submission could not tell "identical"
+ * from "changed".
+ *
+ * WHY THIS IS SAFE HERE. A deterministic IV leaks plaintext equality: the same
+ * content under the same key encrypts to the same ciphertext. The plaintext here
+ * is the form's own `datasets` packet inside a PDF whose standard-security
+ * handler has an EMPTY user password — the key derives from /O, /P and /ID,
+ * all of which are in the file, so anyone holding the document can already
+ * decrypt it. (This module's own reader does exactly that, and so did the
+ * independent verifier used to confirm the fill.) The encryption is a
+ * permissions marker, not confidentiality, so equality-leakage discloses
+ * nothing that was not already readable.
+ *
+ * It is a synthetic IV, not a fixed one: HMAC over the plaintext means two
+ * different datasets packets never share an IV, which is the property that
+ * actually matters for CBC.
+ */
 function encryptObjectData(sec: PdfSecurity, num: number, gen: number, data: Buffer): Buffer {
   if (!sec.encrypted) return data;
   const k = objectKey(sec, num, gen);
   if (!sec.aes) return rc4(k, data);
-  const iv = crypto.randomBytes(16);
+  const iv = crypto.createHmac('sha256', k).update(data).digest().subarray(0, 16);
   const c = crypto.createCipheriv('aes-128-cbc', k, iv);
   return Buffer.concat([iv, c.update(data), c.final()]);
 }

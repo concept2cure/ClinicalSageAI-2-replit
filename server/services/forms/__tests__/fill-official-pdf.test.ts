@@ -11,6 +11,7 @@ import { PDFDocument, StandardFonts } from 'pdf-lib';
 import { promises as fs } from 'fs';
 import fsSync from 'fs';
 import path from 'path';
+import { createHash } from 'crypto';
 
 import {
   fillOfficialPdf,
@@ -242,6 +243,43 @@ describe.skipIf(!hasEstarTemplate)('dynamic XFA templates (official FDA eSTAR)',
   let template: Buffer;
   beforeAll(async () => {
     template = await fs.readFile(ESTAR_TEMPLATE);
+  });
+
+  /**
+   * The filled eSTAR must be a FUNCTION of its inputs.
+   *
+   * `encryptObjectData` used `crypto.randomBytes(16)` for the AES-CBC IV, so the
+   * same submission exported twice produced two different files — three fills
+   * from identical inputs gave three different SHA-256 digests at an identical
+   * 5,284,860 bytes. governedExportConsequence.ts hashes the delivered PDF and
+   * persists `deliveredArtifactSha256` into the artifact, the provenance event
+   * and the audit row as the integrity hash of a governed export; nothing stores
+   * the bytes, so that hash could only ever be checked by regenerating the file,
+   * and regeneration could not reproduce it. A Part 11 audit trail was recording
+   * an integrity hash over bytes nobody could re-derive.
+   */
+  it('produces byte-identical output for identical inputs', async () => {
+    const map = ESTAR_FIELD_MAPS['510k-device'];
+    const data = { deviceTradeName: 'AcuTrace', applicantCompanyName: 'Northwind Medical, Inc.' };
+    const runs = await Promise.all([1, 2, 3].map(() => fillXfaDatasets(template, map, data)));
+    const digests = runs.map((r) => createHash('sha256').update(r.bytes).digest('hex'));
+    expect(new Set(digests).size, `non-deterministic: ${digests.join(' ')}`).toBe(1);
+  });
+
+  /* Determinism must come from a SYNTHETIC IV, never a fixed one: two different
+     datasets packets sharing an IV is the failure CBC actually cares about. */
+  it('gives different content a different IV', async () => {
+    const map = ESTAR_FIELD_MAPS['510k-device'];
+    const a = (await fillXfaDatasets(template, map, { deviceTradeName: 'Device A' })).bytes;
+    const b = (await fillXfaDatasets(template, map, { deviceTradeName: 'Device B' })).bytes;
+    /* The appended incremental update's stream body starts with the 16-byte IV. */
+    const ivOf = (buf: Buffer | Uint8Array) => {
+      const tail = Buffer.from(buf).subarray(template.length).toString('latin1');
+      const m = /stream\r?\n/.exec(tail);
+      if (!m) throw new Error('no appended stream found');
+      return Buffer.from(tail.slice(m.index + m[0].length, m.index + m[0].length + 16), 'latin1').toString('hex');
+    };
+    expect(ivOf(a)).not.toBe(ivOf(b));
   });
 
   it('is detected as dynamic XFA, and its AcroForm layer is empty', async () => {
