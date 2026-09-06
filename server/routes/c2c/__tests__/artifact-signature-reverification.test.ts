@@ -59,15 +59,18 @@ vi.mock('../../../db', () => {
 });
 
 // The signer's credentials, as the shared Part 11 deps would report them.
-const passwordMatches = vi.fn(async () => true);
+// Declared with the parameter they are actually called with, so the call sites
+// below type-check without an `as never` cast that TypeScript does not honour
+// for arity (TS2554 counts arguments before it looks at their types).
+const passwordMatches = vi.fn(async (_password: string) => true);
 const mfaEnrolled = vi.fn(async () => false);
-const mfaVerifies = vi.fn(async () => true);
+const mfaVerifies = vi.fn(async (_token: string) => true);
 vi.mock('../../../services/part11/reverify-signer-deps.js', () => ({
   signerReverificationDeps: () => ({
     loadPasswordHash: async () => '$2a$10$hash',
-    comparePassword: (p: string) => passwordMatches(p as never),
+    comparePassword: (p: string) => passwordMatches(p),
     isMfaEnabled: () => mfaEnrolled(),
-    verifyMfaToken: (_u: number, t: string) => mfaVerifies(t as never),
+    verifyMfaToken: (_u: number, t: string) => mfaVerifies(t),
     warn: () => {},
   }),
   loadPasswordHash: async () => '$2a$10$hash',
