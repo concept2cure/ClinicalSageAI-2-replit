@@ -178,7 +178,16 @@ async function buildSpinePortfolio(
  */
 async function buildCorrespondence(
   tenantId: number,
-): Promise<{ rows: CorrespondenceRow[]; provisioned: boolean }> {
+): Promise<{
+  rows: CorrespondenceRow[];
+  provisioned: boolean;
+  /** Open questions matching the filter, BEFORE the page limit. */
+  totalOpen: number;
+  /** Overdue among ALL of them — not among the page. */
+  overdueTotal: number;
+  /** True when the page shows fewer than the store holds. */
+  truncated: boolean;
+}> {
   try {
     const rows = (
       await q(
@@ -208,7 +217,31 @@ async function buildCorrespondence(
       response_doc_id: string | null;
       overdue: boolean;
     }>;
+    /* The counts come from the STORE, not from the page above. `irOverdue` —
+       rendered as "You have N information requests overdue" — was the overdue
+       count of this LIMIT 50 page, so an org with more than fifty open Module 3
+       questions was told it had fewer overdue than it did. A page is for
+       reading; a count is for acting on. */
+    const totals = (
+      await q(
+        `select count(*)::int as total,
+                count(*) filter (
+                  where due_date is not null and due_date < current_date
+                )::int as overdue
+           from reg_questions
+          where organization_id = $1
+            and status in ('OPEN','DRAFTED','IN_REVIEW')
+            and (section_reference ilike '3.%' or section_reference ilike 'm3%'
+                 or section_reference is null)`,
+        [tenantId],
+      )
+    ).rows[0] as { total: number; overdue: number } | undefined;
+    const totalOpen = Number(totals?.total ?? rows.length);
+
     return {
+      totalOpen,
+      overdueTotal: Number(totals?.overdue ?? rows.filter((r) => r.overdue).length),
+      truncated: totalOpen > rows.length,
       rows: rows.map((r) => ({
         id: r.id,
         question: r.question_text,
@@ -228,7 +261,7 @@ async function buildCorrespondence(
     logger.warn('reg_questions read failed — correspondence unprovisioned', {
       err: err instanceof Error ? err.message : String(err),
     });
-    return { rows: [], provisioned: false };
+    return { rows: [], provisioned: false, totalOpen: 0, overdueTotal: 0, truncated: false };
   }
 }
 
@@ -405,7 +438,7 @@ export default function createCmcModule3BoardRoutes(): Router {
          disagree. The legacy per-submission sum remains only the fallback for
          environments where that read is unprovisioned. */
       const irOverdue = correspondence.provisioned
-        ? correspondence.rows.filter((r) => r.overdue).length
+        ? correspondence.overdueTotal
         : portfolio.rows
             .map((r) => r.ir)
             .filter((v): v is number => typeof v === 'number')
@@ -452,6 +485,11 @@ export default function createCmcModule3BoardRoutes(): Router {
             spinePortfolioProvisioned: spine.provisioned,
             sectionsProvisioned: sections ? sections.provisioned : null,
             correspondenceProvisioned: correspondence.provisioned,
+            /* The card shows a page; these describe the store behind it, so a
+               surface can say "50 of 128" rather than imply it holds them all. */
+            correspondenceTotalOpen: correspondence.provisioned ? correspondence.totalOpen : null,
+            correspondenceOverdueTotal: correspondence.provisioned ? correspondence.overdueTotal : null,
+            correspondenceTruncated: correspondence.provisioned ? correspondence.truncated : null,
             generatedAt: new Date().toISOString(),
           },
         },
