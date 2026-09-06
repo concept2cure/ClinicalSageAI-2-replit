@@ -798,16 +798,166 @@ the same category as the absent `response` sequence filing path.
 Revert-proven: restoring the stored `clockDays` fails all four clock tests;
 restoring the `|| 1` default fails the refusal test.
 
-### For the device stream — the ESLint ratchet is red on trunk, and not from here
+### Twenty-fourth — an IND amendment was two required sections short (2026-09-06)
 
-As of `ee0c4bc51` the ratchet reports 6598 against a baseline of 6597, all of it
-`complexity` (1688 → 1689). It reproduces on a clean checkout of trunk with no
-working-tree changes, so it is not from the labeling or agency-meetings work.
-`server/routes/device-projects.ts` now carries three `complexity` warnings —
-the handler at :72, `validatePatch` at :174 (extracted in `906c94faf`), and the
-handler at :213 — where it carried two. Extracting `validatePatch` left both the
-new function and the handler over the threshold. This is the device stream's
-file per §2, so it is reported rather than changed.
+`evaluateIndReadiness` built its required set as
+`getRequiredSections().filter(s => isAmendment ? s.requiredForAmendment : s.required)`
+— and `getRequiredSections()` already narrows to `required === true`. Filtering
+that by `requiredForAmendment` can only ever return the intersection of the two
+flags, so a section required for an amendment but not for an initial IND was
+dropped before the predicate saw it.
+
+Two are exactly that, deliberately: **m5.3.5.1** and **m5.3.5.2**, the ICH E3
+clinical study reports for controlled and uncontrolled studies. An initial IND
+has no study results to file; an information amendment under 21 CFR 312.31(a)(2)
+reporting new clinical data does. Every amendment therefore came back with two
+required sections silently unassessed. The amendment set was 14; it is 16.
+Sourcing from `getAllINDSections()` applies the intended predicate to the whole
+set, and the initial set is byte-identical. The test helper made the same
+mistake and would have hidden the fix; it sources from the same place now.
+
+Same function, second finding: `overallPercentage` ended `totalItems === 0 ? 100`,
+its own comment calling it "vacuously 100%". An empty required set reported 100%
+with no blockers and, since `ready === blockers.length === 0`, READY TO FILE.
+Now null plus a `nothing_assessed` blocker. **Defence in depth, not proven:** no
+filing type produces an empty set (initial 30, amendment 16), so that branch is
+unreachable through the public API and carries no test seen to fail. The comment
+in the code says so.
+
+### Twenty-fifth — the same shape in five more gates (2026-09-06)
+
+Sweeping for `requiredTotal === 0 ? 100` found five more, each one line, each
+feeding a gate a user acts on. The pattern is always the constant 100 paired
+with a readiness flag derived from an emptiness test an empty set satisfies
+vacuously.
+
+| Where | Gate | What an empty set produced |
+|---|---|---|
+| `protocol-consent-logic` (45 CFR 46.116) | `readyToApprove`, enforced by `approveConsentFormTx` | a consent form with **no elements at all, approved** |
+| `protocol-development-logic` | `readyToFinalize` | an unsectioned protocol finalized |
+| `dmsp-logic` (NIH NOT-OD-21-013) | `readyToFinalize` | an empty DMS plan finalized |
+| `biosketch-logic` (FORMS-H) | `readyToFinalize` | an empty biosketch finalized |
+| `registration-projection` (FDAAA 801) | `registrable` | an empty record "ready to submit" to CT.gov / CTIS |
+
+The consent one is the most consequential and is reachable: a form created but
+never populated, or whose element rows failed to load. Its critical finding is
+not decoration — the refusal `approveConsentFormTx` throws is built by *joining
+the critical findings*, so without one the message would read "Cannot approve — "
+and stop.
+
+`dmsp`'s covering test was named "treats no elements as vacuously complete" —
+the defect written down, exactly as the TMF one was.
+
+Four of the five are reachable and revert-proven. `registration-projection` is
+marked **defence in depth** in the code alongside the IND guard above: both
+projectors build fixed module lists, so an empty set is unreachable through
+`projectRegistration`, and reaching it would mean inventing a test-only input.
+
+Every fix also carries a test that a genuinely complete form, plan, protocol or
+record STILL passes its gate, so the new state cannot swallow a real assessment.
+
+### Twenty-sixth — "Current User" approved it, for organization 1, into tenant 0 (2026-09-06)
+
+`server/routes/inline-annotations.ts` is mounted at `/api/inline-annotations`,
+records approve / reject / resolve decisions on selected text inside regulated
+documents, and its own header claims *"@compliance FDA 21 CFR Part 11 — all
+annotations immutably audit-logged"*. Three things were wrong with that claim at
+once.
+
+**Whose document.** `getOrgId` ended `|| 1`; a request with no tenant context
+read and wrote *organization 1's* annotations and decisions. This is the last
+instance of the `haq-manager` shape — a sweep of every org resolver in
+`server/routes` found 15 whose return type is a bare `number`, and every other
+one throws. One router-level gate now 403s without an org, so a new endpoint
+cannot be added without the check.
+
+**Who acted.** `createdBy` and `resolvedBy` were the literal `'Current User'`, in
+three places. The actor now comes from the request — name, else email, else
+`user #<id>` — and a write that cannot name who made it is **refused** rather
+than attributed to a placeholder. `createdByUserId` / `resolvedByUserId` carry
+the id so the label is not the only link back to a person.
+
+**The audit row.** Every `logAction` call omitted `tenantId` and `userId`, and
+`auditService` resolves a missing tenant to **0** and a missing actor to null —
+so every row this Part 11-labelled route wrote landed under tenant 0 with no
+actor. All three calls now carry tenant, actor, ip and user-agent.
+
+Also: four catch blocks handed the caller `err.message`. `ci:server-error-leaks`
+drops 246 → 242 and the baseline is shrunk to lock it in. `client-branding.ts`
+carried a fourth `'Current User'` as the author of every document template.
+
+**The gate that exists to catch this did not.** `ci:fabricated-identity` — the CI
+step named "no invented signer or applicant identity" — reported zero the whole
+time. Every one of its patterns catches an identity that is *interpolated* or
+used as a *fallback*; none caught a literal constant, the simplest form. A
+pattern for it is added, drawing the line between a name that reads as a PERSON
+and one that names a PROCESS: an explicit unassigned marker is accepted, and so
+is a lowercase slug (`system`, `span-lineage-backfill`), because an action
+genuinely taken by the platform has no person to name and saying so is true.
+
+Seen failing first: with the pattern added and the code untouched the gate
+reports 6 — the 2 honest process names drove the person-versus-process
+refinement, the 4 real ones are fixed. It reports 0 now.
+
+Revert-proven: restoring `|| 1` fails both refusal tests; restoring
+`'Current User'` fails the identity tests; dropping tenantId/userId fails the
+audit-row test. The route had no tests; it has seven.
+
+### RESOLVED — the ESLint ratchet regression on trunk
+
+Reported here at `ee0c4bc51`: 6598 against a baseline of 6597, all `complexity`,
+reproducing on a clean checkout. `server/routes/device-projects.ts` had gone from
+two `complexity` warnings to three when `validatePatch` was extracted in
+`906c94faf`. **The device stream has since fixed it.** Trunk now measures 6596 —
+one *below* baseline — and the ratchet's own advice is to ratchet down so the
+gain is locked in. That is the device stream's gain to lock; the baseline file is
+left alone here.
+
+While it was red it failed exactly one CI step, #86 "Guardrails — ESLint warning
+ratchet", on runs including `a0f3c0244`. Every other step in that run passed,
+Test included; the run's `failure` conclusion was entirely that one step.
+
+### For the migration stream — Blank DB Provisioning is red on trunk
+
+The newest run at the time of writing (`89685b4b9`, a merge carrying
+`00d51259d0` "Give vault.documents a tenant key") fails exactly one job:
+**Blank DB Provisioning + Deploy Migration**. That job provisions a blank
+Postgres with `install-fresh.mjs`, then runs `deploy-migrate.mjs` twice for
+idempotence, then checks RLS coverage. No batch in this session touched a
+migration, DDL, or the migration set, and the job is *skipped* on this session's
+own runs. Reported rather than investigated, per the territory split.
+
+### Twenty-third — a Trial Master File nobody indexed is not inspection-ready (2026-09-06)
+
+`evaluateCompleteness` (`server/services/etmf/etmf-logic.ts`) returned
+`completenessPct: 100` when the required-artifact set was empty, and because
+`present === totalRequired` is `0 === 0`, it also returned the verdict
+**`inspection_ready`**. A trial whose TMF index holds no expected artifacts was
+therefore reported as complete and ready for inspection. Its unit test said so
+in its own title — "returns 100 when nothing is required" — which is the defect
+written down and locked in.
+
+The live consumer that matters most is AnA's `review_tmf_completeness` tool,
+which handed the sponsor the sentence **"TMF 100% complete — inspection ready"**
+straight into conversation. ICH E6(R2) §8 readiness is a claim a sponsor makes
+standing in front of an inspector; nothing had been indexed, so nothing had been
+checked, and that is the absence of an assessment rather than the result of one.
+
+An empty required set now yields `completenessPct: null` and a fourth verdict,
+`not_assessed`. AnA says the TMF has no expected artifacts indexed, that this is
+not a complete TMF, and that it is not an inspection-readiness verdict. A single
+required artifact that is final still reads `inspection_ready`, so the new state
+cannot swallow a real result — that case is a test of its own.
+
+Verified honest and unchanged: `assessTmfCompleteness`
+(`server/services/etmf/tmf-completeness.ts`), which serves the Etmf surface, takes
+its required set from the fixed TMF Reference Model, so its denominator is never
+zero and its `ready` is true only when every zone is complete. The surface's own
+`assessmentRan` already required `totalRequired > 0`. The defect was confined to
+the pure gap-check and its AnA/route callers.
+
+Revert-proven: restoring `totalRequired === 0 ? 100` fails both not-assessed
+tests.
 
 ### Note for the concurrent device stream
 
@@ -1066,6 +1216,10 @@ If neither has happened: report the blockage, name what is needed, and stop.
 | 2026-09-06 | A | Twentieth — the agency-meeting request | The audit entry the request dialog promises is now written in the same transaction as the row (or the request is refused); the pending clock names the agency that holds the request instead of the FDA every time; request ids no longer collide within a millisecond — revert-proven | §1 above |
 | 2026-09-06 | A | Twenty-first — the SPL download | The SPL is nested as SPL nests it, carries the product and the NDC the user typed, and takes ids from a 128-bit derivation instead of a 32-bit hash; the two SPL generators become one; the structural check no longer passes a document missing the sections it calls required — revert-proven | §1 above |
 | 2026-09-06 | A | Twenty-second — health-authority questions | The response clock is derived from the recorded due date instead of a stored figure nothing refreshes, states overdue as overdue, and shows no countdown where no due date is recorded; the HAQ store stops defaulting to organization 1 — revert-proven | §1 above |
+| 2026-09-06 | A | Twenty-third — TMF inspection readiness | A trial with no expected artifacts indexed no longer reports 100% complete and inspection_ready, and AnA no longer says so in conversation: an empty required set is a fourth verdict, not-assessed, with a null percentage — revert-proven | §1 above |
+| 2026-09-06 | A | Twenty-fourth — IND amendment required set | An amendment is assessed against the two ICH E3 clinical study report sections it requires and was silently dropping; an empty required set is no longer 100% and ready to file — revert-proven |  §1 above |
+| 2026-09-06 | A | Twenty-fifth — five more empty-denominator gates | Informed consent, protocol finalize, DMS plan, biosketch and CT.gov/CTIS registration no longer treat "nothing recorded" as "everything done"; the consent one had been approving forms with no elements at all — four revert-proven, one marked defence in depth | §1 above |
+| 2026-09-06 | A | Twenty-sixth — inline annotations: identity, tenancy, audit | A Part 11-labelled decision endpoint stopped recording "Current User" as the approver, defaulting to organization 1, and writing its audit rows into tenant 0 with no actor; ci:fabricated-identity gained the literal-constant pattern it was missing, seen failing on all four sites first — revert-proven | §1 above |
 | | | | | |
 
 **Rule:** the last row with an empty "What was proven" cell is the open work.

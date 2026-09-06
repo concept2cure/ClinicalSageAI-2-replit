@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-06T02:39:48.532Z",
+  "generatedAt": "2026-09-06T05:48:02.863Z",
   "git": {
-    "sha": "dec9a2eb421c3e3ed748e5b99afc4ef10e9ca545",
+    "sha": "99eb230816f34bc00c0e1c7f85f491265625ba86",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -16,7 +16,7 @@
     "contentDuplicateGroups": 0,
     "contentDuplicateFiles": 0,
     "largeFilesByBytes": 40,
-    "largeFilesByLines": 94
+    "largeFilesByLines": 95
   },
   "findings": {
     "duplicateBasenames": [
@@ -1981,7 +1981,7 @@
     "largeFilesByBytes": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 1003926
+        "bytes": 1004300
       },
       {
         "file": "shared/schema.ts",
@@ -2147,7 +2147,7 @@
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 19457
+        "lines": 19462
       },
       {
         "file": "server/routes/authoring.router.ts",
@@ -2514,6 +2514,10 @@
         "lines": 1602
       },
       {
+        "file": "server/services/advancedRAGPipeline.ts",
+        "lines": 1538
+      },
+      {
         "file": "client/src/concept2cure/v2/surfaces/IndLifecycle.tsx",
         "lines": 1532
       }
@@ -2525,7 +2529,7 @@
       "owner": "Backend Platform (server/routes + server/services owners)",
       "duplicateGroups": 403,
       "largeByBytes": 30,
-      "largeByLines": 77
+      "largeByLines": 78
     },
     {
       "owner": "Unassigned (TBD)",

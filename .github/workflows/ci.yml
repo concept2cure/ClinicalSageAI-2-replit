@@ -1177,6 +1177,24 @@ jobs:
           fi
           echo "RLS coverage OK: every non-allowlisted org-keyed base table carries tenant_isolation_policy."
 
+      - name: RLS parent-scope delegates exist (the coverage gate depends on them)
+        # The coverage gate above accepts core.can_access_program /
+        # core.can_write_program as isolation for 22 tables across six schemas.
+        # Those functions resolve their delegate from pg_proc AT CALL TIME and
+        # `RETURN TRUE` when none exists — so a database that never provisioned
+        # identity.* fails OPEN silently, with the coverage gate still reporting
+        # full coverage. This asserts the branch cannot fire. Without it the
+        # parent-scope clause would bless a predicate that may decide nothing.
+        run: |
+          set -euo pipefail
+          UNSOUND=$(psql "$DATABASE_URL" -tA -f scripts/db/rls-parent-scope-delegates-check.sql)
+          if [[ -n "$UNSOUND" ]]; then
+            echo "::error::parent-scoped RLS helper(s) fall through to RETURN TRUE on this database:"
+            echo "$UNSOUND"
+            exit 1
+          fi
+          echo "RLS parent-scope delegates OK: every core.* helper a live policy depends on resolves to identity.* or auth.*."
+
       - name: Verify the readiness contract independently
         # deploy-migrate.mjs checks this itself; asserting it again from psql
         # means a regression in the script's own verification cannot hide a

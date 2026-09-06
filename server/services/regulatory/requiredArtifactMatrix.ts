@@ -114,6 +114,24 @@ export function getRequiredArtifacts(registryIdOrLegacy: string): ArtifactRequir
 }
 
 /**
+ * Whether an artifact matrix is DEFINED for this registry entry at all.
+ *
+ * `getRequiredArtifacts` returns `[]` for two different situations that must not
+ * be treated alike: a filing type whose matrix genuinely lists nothing, and a
+ * filing type this module has no matrix for. Only the second is "not assessed",
+ * and a caller that reports completeness has to tell them apart — otherwise an
+ * unmodelled filing type reports 100% complete with zero gaps
+ * (server/services/regulatory/readinessEvaluator.ts).
+ *
+ * There are 9 matrices today against a far larger application registry, so the
+ * undefined case is the common one, not the edge.
+ */
+export function hasArtifactMatrix(registryIdOrLegacy: string): boolean {
+  const registryId = resolveRegistryId(registryIdOrLegacy) || registryIdOrLegacy;
+  return Object.prototype.hasOwnProperty.call(ARTIFACT_MATRICES, registryId);
+}
+
+/**
  * Get only the required artifacts (not optional).
  */
 export function getMandatoryArtifacts(registryIdOrLegacy: string): ArtifactRequirement[] {

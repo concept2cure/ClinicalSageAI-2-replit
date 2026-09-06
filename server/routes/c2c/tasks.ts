@@ -143,7 +143,18 @@ router.get('/projects/:projectId/tasks', async (req: Request, res: Response) => 
 
     const { status, priority, category } = req.query;
 
-    const query = db.select().from(projectTasks).where(eq(projectTasks.projectId, projectId));
+    // Tenant scope. `project_tasks.id` and `projects.id` are both serial, so a
+    // projectId-only predicate let any authenticated user of any tenant read any
+    // other tenant's task list by counting up. Same defect the PUT and DELETE
+    // below already carry a note about, on the read side.
+    const organizationId = getOrganizationId(req);
+
+    const query = db
+      .select()
+      .from(projectTasks)
+      .where(
+        and(eq(projectTasks.projectId, projectId), eq(projectTasks.organizationId, organizationId))
+      );
 
     const tasks = await query.orderBy(projectTasks.dueDate).limit(500);
 
@@ -182,14 +193,22 @@ router.post('/projects/:projectId/tasks', async (req: Request, res: Response) =>
 
     const data = taskSchema.parse(req.body);
 
-    // Resolve organizationId from the project
-    const [project] = await db.select().from(projects).where(eq(projects.id, projectId));
+    // Resolve the project WITHIN the caller's org. Reading it unscoped and then
+    // taking its organizationId is what let a caller in org A write a task into
+    // org B's project — the insert was attributed to the victim's org, so it was
+    // invisible to the author and live for the victim. A project belonging to
+    // someone else is a 404 here, not a source of an org id.
+    const organizationId = getOrganizationId(req);
+    const [project] = await db
+      .select()
+      .from(projects)
+      .where(and(eq(projects.id, projectId), eq(projects.organizationId, organizationId)));
     if (!project) return sendError(res, 404, 'Project not found');
 
     const inserted = (await db
       .insert(projectTasks)
       .values({
-        organizationId: project.organizationId,
+        organizationId,
         projectId,
         name: data.name,
         description: data.description || null,
@@ -311,7 +330,13 @@ router.post('/projects/:projectId/tasks/bulk', async (req: Request, res: Respons
       );
     }
 
-    const [project] = await db.select().from(projects).where(eq(projects.id, projectId));
+    // Tenant scope — see the POST twin above. Unscoped, this generated a whole
+    // milestone set into another tenant's project.
+    const organizationId = getOrganizationId(req);
+    const [project] = await db
+      .select()
+      .from(projects)
+      .where(and(eq(projects.id, projectId), eq(projects.organizationId, organizationId)));
     if (!project) return sendError(res, 404, 'Project not found');
 
     const target = targetDate
@@ -326,7 +351,7 @@ router.post('/projects/:projectId/tasks/bulk', async (req: Request, res: Respons
     const taskValues = milestones.map((m, i) => {
       const dueDate = new Date(now.getTime() + (timeSpan * (i + 1)) / totalMilestones);
       return {
-        organizationId: project.organizationId,
+        organizationId,
         projectId,
         name: m.name,
         description: `${submissionType.toUpperCase()} milestone: ${m.name}`,
@@ -366,10 +391,16 @@ router.get('/projects/:projectId/tasks/summary', async (req: Request, res: Respo
     const projectId = parseInt(paramStr(req.params.projectId), 10);
     if (isNaN(projectId)) return sendError(res, 400, 'Invalid project ID');
 
+    // Tenant scope — the health score and overdue count are derived from these
+    // rows, so unscoped this reported another tenant's project health.
+    const organizationId = getOrganizationId(req);
+
     const tasks = await db
       .select()
       .from(projectTasks)
-      .where(eq(projectTasks.projectId, projectId))
+      .where(
+        and(eq(projectTasks.projectId, projectId), eq(projectTasks.organizationId, organizationId))
+      )
       .limit(1000);
 
     const now = new Date();
@@ -444,13 +475,23 @@ router.post('/projects/:projectId/tasks/assess', async (req: Request, res: Respo
     const projectId = parseInt(paramStr(req.params.projectId), 10);
     if (isNaN(projectId)) return sendError(res, 400, 'Invalid project ID');
 
-    const [project] = await db.select().from(projects).where(eq(projects.id, projectId)).limit(1);
+    // Tenant scope — this handler feeds AnA's assessment, so unscoped it
+    // narrated another tenant's project and task list back to the caller.
+    const organizationId = getOrganizationId(req);
+
+    const [project] = await db
+      .select()
+      .from(projects)
+      .where(and(eq(projects.id, projectId), eq(projects.organizationId, organizationId)))
+      .limit(1);
     if (!project) return sendError(res, 404, 'Project not found');
 
     const tasks = await db
       .select()
       .from(projectTasks)
-      .where(eq(projectTasks.projectId, projectId))
+      .where(
+        and(eq(projectTasks.projectId, projectId), eq(projectTasks.organizationId, organizationId))
+      )
       .orderBy(desc(projectTasks.createdAt));
 
     const totalTasks = tasks.length;
