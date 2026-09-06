@@ -81,12 +81,26 @@ export const CONTENT_DRIFT_MESSAGE =
 export const CONTENT_UNPROVEN_MESSAGE =
   'Bundle records no content fingerprint, so whether it still reflects the package is UNKNOWN; ' +
   're-assemble the package before transmitting.';
+/** A version bump makes every stored descriptor unproven at once. Saying it
+ *  "records no fingerprint" would be false for those — it records one this
+ *  build cannot compare — and the remedy differs in nothing but the wording,
+ *  which is exactly why the wording should be true. */
+export const CONTENT_SCHEME_OUTDATED_MESSAGE =
+  `Bundle was fingerprinted under an older scheme than ${CONTENT_FINGERPRINT_VERSION}, so whether it still ` +
+  'reflects the package is UNKNOWN; re-assemble the package before transmitting.';
+
+/** Which wording an unproven assessment deserves. */
+export function unprovenMessage(reason: 'absent' | 'older-scheme'): string {
+  return reason === 'older-scheme' ? CONTENT_SCHEME_OUTDATED_MESSAGE : CONTENT_UNPROVEN_MESSAGE;
+}
 
 export type ContentAssessment =
   | { state: 'match'; current: string }
   | { state: 'drift'; current: string; assembled: string }
-  /** The descriptor carries no fingerprint from the current scheme: nothing is read. */
-  | { state: 'unproven' };
+  /** The descriptor carries no fingerprint from the current scheme: nothing is
+   *  read. `reason` separates "never had one" from "had one this build cannot
+   *  compare", which a version bump makes the common case. */
+  | { state: 'unproven'; reason: 'absent' | 'older-scheme' };
 
 interface QueryClient {
   query: (sql: string, params: unknown[]) => Promise<{ rows: Record<string, unknown>[] }>;
@@ -103,7 +117,10 @@ export async function assessPackageContent(
   orgId: number,
   storedFingerprint: unknown,
 ): Promise<ContentAssessment> {
-  if (!isCurrentContentFingerprint(storedFingerprint)) return { state: 'unproven' };
+  if (!isCurrentContentFingerprint(storedFingerprint)) {
+    const older = typeof storedFingerprint === 'string' && /^v\d+:[0-9a-f]{64}$/.test(storedFingerprint);
+    return { state: 'unproven', reason: older ? 'older-scheme' : 'absent' };
+  }
   const current = fingerprintPackageContent(await readPackageContentRows(client, packageDbId, orgId));
   return current === storedFingerprint
     ? { state: 'match', current }

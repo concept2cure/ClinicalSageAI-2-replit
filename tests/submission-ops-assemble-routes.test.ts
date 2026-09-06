@@ -352,8 +352,8 @@ describe('POST /api/submission-ops/packages/:packageId/assemble', () => {
   it('records the CONTENT FINGERPRINT the bundle was built from (sections, mappings, declared placements, artifact content) so the transmit gate can prove the zip still reflects the package', async () => {
     dbState.pkg = lockedPkg();
     dbState.sections = [
-      { id: 13, sectionKey: '2.5', sectionLabel: 'Clinical Overview', sortOrder: 0 },
-      { id: 14, sectionKey: '3.2.P.1', sectionLabel: 'Description and Composition', sortOrder: 0 },
+      { id: 13, sectionKey: '2.5', sectionLabel: 'Clinical Overview', sortOrder: 2 },
+      { id: 14, sectionKey: '3.2.P.1', sectionLabel: 'Description and Composition', sortOrder: 1 },
     ];
     const co = art('co', null, 1);
     dbState.mappedByCall = [[co], []]; // 3.2.P.1 has nothing mapped: a placeholder leaf, still part of the content
@@ -361,8 +361,8 @@ describe('POST /api/submission-ops/packages/:packageId/assemble', () => {
     expect(res.status).toBe(200);
     expect(dbState.updateSet.metadata.bundle.contentFingerprint).toBe(
       fingerprintPackageContent([
-        { sectionDbId: 13, sectionKey: '2.5', sectionLabel: 'Clinical Overview', sortOrder: 0, artifactDbId: 1, title: co.title, version: 1, ctdSection: null, contentSha256: sha256Hex(co.content) },
-        { sectionDbId: 14, sectionKey: '3.2.P.1', sectionLabel: 'Description and Composition', sortOrder: 0, artifactDbId: null, title: null, version: null, ctdSection: null, contentSha256: null },
+        { sectionDbId: 13, sectionKey: '2.5', sectionLabel: 'Clinical Overview', sortOrder: 2, artifactDbId: 1, title: co.title, version: 1, ctdSection: null, contentSha256: sha256Hex(co.content) },
+        { sectionDbId: 14, sectionKey: '3.2.P.1', sectionLabel: 'Description and Composition', sortOrder: 1, artifactDbId: null, title: null, version: null, ctdSection: null, contentSha256: null },
       ]),
     );
   });
@@ -382,8 +382,8 @@ describe('POST /api/submission-ops/packages/:packageId/assemble', () => {
   it('records the content fingerprint for a DEVICE format too (eSTAR), where the leaf model differs', async () => {
     dbState.pkg = { ...lockedPkg(), packageFamily: '510k' };
     dbState.sections = [
-      { id: 21, sectionKey: 'device-description', sectionLabel: 'Device Description', sortOrder: 0 },
-      { id: 22, sectionKey: 'labeling', sectionLabel: 'Labeling', sortOrder: 0 },
+      { id: 21, sectionKey: 'device-description', sectionLabel: 'Device Description', sortOrder: 3 },
+      { id: 22, sectionKey: 'labeling', sectionLabel: 'Labeling', sortOrder: 4 },
     ];
     const dd = art('dd', null, 4);
     dbState.mappedByCall = [[dd], []];
@@ -392,8 +392,8 @@ describe('POST /api/submission-ops/packages/:packageId/assemble', () => {
     expect(res.body.data.bundle.format).toBe('estar');
     expect(dbState.updateSet.metadata.bundle.contentFingerprint).toBe(
       fingerprintPackageContent([
-        { sectionDbId: 21, sectionKey: 'device-description', sectionLabel: 'Device Description', sortOrder: 0, artifactDbId: 4, title: dd.title, version: 1, ctdSection: null, contentSha256: sha256Hex(dd.content) },
-        { sectionDbId: 22, sectionKey: 'labeling', sectionLabel: 'Labeling', sortOrder: 0, artifactDbId: null, title: null, version: null, ctdSection: null, contentSha256: null },
+        { sectionDbId: 21, sectionKey: 'device-description', sectionLabel: 'Device Description', sortOrder: 3, artifactDbId: 4, title: dd.title, version: 1, ctdSection: null, contentSha256: sha256Hex(dd.content) },
+        { sectionDbId: 22, sectionKey: 'labeling', sectionLabel: 'Labeling', sortOrder: 4, artifactDbId: null, title: null, version: null, ctdSection: null, contentSha256: null },
       ]),
     );
   });
