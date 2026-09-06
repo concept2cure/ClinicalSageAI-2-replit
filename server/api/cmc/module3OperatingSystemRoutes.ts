@@ -6,13 +6,14 @@ import {
   summarizeSectionDiff,
   createSourceHash,
 } from '../../services/cmc-module3-compiler';
-import { composeModule3FromCanonicalSources, impactedSectionsForSourceType } from '../../services/module3Composer';
+import { CMC_SOURCE_TYPES, composeModule3FromCanonicalSources, impactedSectionsForSourceType } from '../../services/module3Composer';
 import { composeAppendices, composeRegional, emittableAppendices } from '../../services/module3-extensions';
 import { regionCodeForPrimaryRegion, resolveSubmissionSpine } from '../../services/cmc/submission-spine';
 import { detectContradictions, deriveImpactTasks } from '../../services/cmc-impact-contradiction-engine';
 import { syncContradictionTasks } from '../../services/cmc/contradiction-tasks';
 import { buildCanonicalGovernedState } from '../../services/governed-ana-execution.js';
 import { evaluateFinalExportGate, evaluateModule3GovernedState } from '../../services/cmc/final-export-gate';
+import { readCompiledRecord, type CompiledRecordStatus } from '../../services/cmc/compiled-record';
 import { placeModule3IntoSubmission } from '../../services/cmc/place-module3-into-submission';
 import { bridgeCompileToArtifact } from '../../services/module3-convergence-service';
 import { verifyReauth, recordGovernedAction } from '../../routes/c2c/actions';
@@ -33,22 +34,9 @@ const router = express.Router();
 const logger = createScopedLogger('cmc-module3-os');
 
 const upsertSourceObjectSchema = z.object({
-  sourceType: z.enum([
-    'drug_substance',
-    'drug_product',
-    'specification',
-    'method',
-    'stability',
-    'batch',
-    'change_control',
-    'comparability',
-    'manufacturing_process',
-    'characterization',
-    'reference_standard',
-    'container_closure',
-    'excipient',
-    'qc_result',
-  ]),
+  /* Derived from the composer's own list — the enum here used to be a
+     hand-copied subset that refused five types the composer requires. */
+  sourceType: z.enum(CMC_SOURCE_TYPES),
   sourceKey: z.string().min(1),
   sourcePayload: z.record(z.any()),
   version: z.number().int().positive().optional(),
@@ -57,6 +45,23 @@ const upsertSourceObjectSchema = z.object({
 const resolveContradictionSchema = z.object({
   resolutionNote: z.string().min(3),
 });
+
+/**
+ * Why an approval is refused on an incomplete compiled record, in the signer's
+ * own terms: which section, how complete, which inputs are still missing, and
+ * what to do about it. Rendered verbatim by the surface.
+ */
+function incompleteSectionRefusal(sectionKey: string, record: CompiledRecordStatus): string {
+  const verdict =
+    record.completeness == null
+      ? `§${sectionKey} has no compiled completeness record and cannot be approved.`
+      : `§${sectionKey} is ${record.completeness}% complete and cannot be approved.`;
+  const remedy =
+    record.missingInputs.length > 0
+      ? ` Missing required inputs: ${record.missingInputs.join(', ')}. Record them and recompile.`
+      : ' Recompile the section so the compiler records what it establishes.';
+  return verdict + remedy;
+}
 
 function getOrgId(req: express.Request): number {
   const orgId = parseInt(
@@ -117,13 +122,21 @@ router.get('/sections/:projectId', async (req, res) => {
     const pool = getPool();
     const { rows } = await pool.query(
       `SELECT section_key as "sectionKey", section_path as "sectionPath", stale, stale_reason as "staleReason",
-              approval_state as "approvalState", updated_at as "updatedAt"
+              approval_state as "approvalState", updated_at as "updatedAt", deterministic_json as "deterministicJson"
        FROM cmc_module3_sections
        WHERE organization_id = $1 AND project_id = $2
        ORDER BY section_key`,
       [orgId, projectId]
     );
-    return res.json({ success: true, data: rows });
+    /* The compiler's completeness and missing inputs travel with every row,
+       read by the one rule the approve route and the export gate apply — so a
+       surface can show the signer what those two will refuse before they sign.
+       The compiled blob itself stays behind: this is a register, not the dossier. */
+    const data = rows.map(({ deterministicJson, ...row }: Record<string, unknown>) => {
+      const record = readCompiledRecord({ deterministicJson });
+      return { ...row, completeness: record.completeness, missingInputs: record.missingInputs };
+    });
+    return res.json({ success: true, data });
   } catch (error) {
     if ((error instanceof Error ? error.message : String(error)).includes('Organization context required')) {
       return res.status(401).json({ success: false, error: 'Organization context required' });
@@ -730,6 +743,24 @@ router.post('/sections/:projectId/:sectionKey/approve', async (req, res) => {
       if (!section) {
         await client.query('ROLLBACK');
         return res.status(404).json({ success: false, error: 'Section not found' });
+      }
+
+      /* The export gate's rule, applied at the signature. An approval is a
+         claim about content that was reviewed; this section's own compiled
+         record says the content is not there. Found live: 21/21 approved,
+         three at 0% completeness, and the gate refusing the whole export
+         after every signature was already on the ledger. Refuse here, with
+         the same reading the gate uses, so the signer is told NOW — and
+         nothing is written: no version row, no state flip, no governed
+         action, no signature. */
+      const compiledRecord = readCompiledRecord(section);
+      if (!compiledRecord.complete) {
+        await client.query('ROLLBACK');
+        return res.status(409).json({
+          success: false,
+          error: incompleteSectionRefusal(sectionKey, compiledRecord),
+          data: { completeness: compiledRecord.completeness, missingInputs: compiledRecord.missingInputs },
+        });
       }
 
       const verRes = await client.query(
