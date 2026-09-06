@@ -326,8 +326,12 @@ export function AgencyMeetings({ onAsk, onNav }: SurfaceViewProps) {
   const MTG_FORM: C2CFormConfig = {
     eyebrow: 'Agency interaction · new request',
     title: 'Request an agency meeting',
+    /* This line promised an audit entry that POST /api/agency-meetings did not
+       write, and named a "briefing-book plan" this form does not collect. The
+       route now writes the chained entry in the same transaction as the row, so
+       the claim is true; the copy names only what is actually recorded. */
     governed:
-      'A meeting request is a governed interaction — the request and its briefing-book plan are recorded with an audit entry.',
+      'A meeting request is a governed interaction — the request is recorded with an audit entry. The briefing book is built afterwards, on the meeting.',
     submitLabel: 'Create request',
     fields: [
       {
