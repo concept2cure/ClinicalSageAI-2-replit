@@ -922,7 +922,7 @@ export function EctdCoauthor({ liveDrive }: OwnedSurfaceViewProps) {
                   <div
                     style={{
                       minHeight: 420,
-                      border: '1px solid var(--c2c-line,#e4e7ec)',
+                      border: '1px solid var(--border)',
                       borderRadius: 10,
                       overflow: 'hidden',
                       display: 'flex',

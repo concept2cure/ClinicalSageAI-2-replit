@@ -270,7 +270,7 @@ export function describeAcceptFailure(
 const NOTE_TONE: Record<'ok' | 'warn' | 'error', React.CSSProperties> = {
   ok: {},
   warn: { borderLeftColor: 'var(--warning,#b54708)' },
-  error: { borderLeftColor: 'var(--c2c-err,#b42318)' },
+  error: { borderLeftColor: 'var(--error)' },
 };
 
 export function AuthoringAiDraft({
@@ -646,7 +646,7 @@ export function AuthoringAiDraft({
                 fontSize: 12,
                 lineHeight: 1.5,
                 padding: 8,
-                border: '1px solid var(--c2c-line,#e4e7ec)',
+                border: '1px solid var(--border)',
                 borderRadius: 6,
                 resize: 'vertical',
               }}

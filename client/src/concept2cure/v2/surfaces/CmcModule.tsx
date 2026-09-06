@@ -2620,7 +2620,7 @@ export function CmPathway({ ask, nav }: { ask: (text: string) => void; nav?: (id
           {/* ── The closed file ──
               Rendered under BOTH branches above: a fresh screen with no open
               questions still has (or will have) an answered history. */}
-          <div style={{ borderTop: '1px solid var(--c2c-line,#eef0f3)', marginTop: 10, paddingTop: 8 }}>
+          <div style={{ borderTop: '1px solid var(--border)', marginTop: 10, paddingTop: 8 }}>
             <button className="nda-open" onClick={toggleClosed}>
               {closedOpen ? 'Hide the closed file' : 'Show the closed file'}
             </button>

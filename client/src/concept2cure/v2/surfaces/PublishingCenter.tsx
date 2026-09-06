@@ -296,7 +296,7 @@ export function PublishingCenter(_props: SurfaceViewProps) {
           <span className="s">eCTD backbone, controlled vocabulary &amp; qualification — read-only reference. Nothing here publishes, transmits, validates or freezes a sequence.</span>
         </div>
         <div className="pj-card-b" style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
-          <label style={{ fontSize: 12, color: 'var(--c2c-dim,#667085)' }}>eCTD version</label>
+          <label style={{ fontSize: 12, color: 'var(--text-400)' }}>eCTD version</label>
           <select className="c2c-input" style={{ height: 30 }} value={version} onChange={(e) => setVersion(e.target.value as EctdVersion)}>
             <option value="v4.0">eCTD v4.0 · HL7 RPS</option>
             <option value="v3.2.2">eCTD v3.2.2</option>
@@ -353,7 +353,7 @@ export function PublishingCenter(_props: SurfaceViewProps) {
               <EmptyState tone="error" icon={I.alertTriangle} title="Couldn’t load the v3.2.2 vocabulary" hint="The controlled-vocabulary service didn’t respond, or answered in a shape this panel can’t read." />
             ) : listing?.v3?.length ? (
               <>
-                <p style={{ fontSize: 12.5, color: 'var(--c2c-dim,#667085)', marginTop: 0 }}>
+                <p style={{ fontSize: 12.5, color: 'var(--text-400)', marginTop: 0 }}>
                   eCTD v3.2.2 carries its US-regional controlled values as coded attributes
                   (<span className="mono">fdaat</span>/<span className="mono">fdast</span>/<span className="mono">fdasst</span>/<span className="mono">fdaft</span>) in <span className="mono">us-regional.xml</span>.
                 </p>
@@ -368,7 +368,7 @@ export function PublishingCenter(_props: SurfaceViewProps) {
           ) : (
             <>
               <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap', marginBottom: 10 }}>
-                <label style={{ fontSize: 12, color: 'var(--c2c-dim,#667085)' }}>Code list</label>
+                <label style={{ fontSize: 12, color: 'var(--text-400)' }}>Code list</label>
                 <select aria-label="Controlled vocabulary list" className="c2c-input" style={{ height: 30, minWidth: 260 }} value={selectedList} onChange={(e) => setSelectedList(e.target.value)}>
                   {(listing?.v4 ?? []).map((l) => (
                     <option key={l.id} value={l.id}>{V4_LABELS[l.id] ?? l.id} ({l.codeCount})</option>

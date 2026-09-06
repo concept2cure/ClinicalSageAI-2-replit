@@ -196,7 +196,7 @@ export function PvCockpit({ onAsk }: SurfaceViewProps) {
             : !kpi ? <EmptyState icon={I.bell} title="No safety data yet" hint="Adverse-event, signal, and periodic-report metrics for your organization appear here." />
             : <div style={{ display: 'flex', gap: 18, flexWrap: 'wrap' }}>
                 {KPIS.map(([label, val, warn]) => (
-                  <div key={label}><div style={{ fontSize: 26, fontWeight: 700, color: warn ? 'var(--c2c-err,#b42318)' : undefined }}>{val}</div><div style={{ fontSize: 12, color: 'var(--c2c-dim,#667085)' }}>{label}</div></div>
+                  <div key={label}><div style={{ fontSize: 26, fontWeight: 700, color: warn ? 'var(--error)' : undefined }}>{val}</div><div style={{ fontSize: 12, color: 'var(--text-400)' }}>{label}</div></div>
                 ))}
               </div>}
         </div>

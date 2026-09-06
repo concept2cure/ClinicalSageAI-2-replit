@@ -165,8 +165,8 @@ export function InvestigatorBrochure({ onAsk }: SurfaceViewProps) {
             style={{
               display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap',
               margin: '4px 0 18px', padding: '12px 16px',
-              border: '1px solid var(--c2c-border, #e3e6ea)', borderRadius: 10,
-              background: 'var(--c2c-surface, #fff)',
+              border: '1px solid var(--border)', borderRadius: 10,
+              background: 'var(--bg-000)',
             }}
           >
             <div>
@@ -174,8 +174,8 @@ export function InvestigatorBrochure({ onAsk }: SurfaceViewProps) {
               <div style={{ fontSize: 12, opacity: 0.7 }}>required sections ready</div>
             </div>
             <div style={{ flex: 1, minWidth: 160 }}>
-              <div style={{ height: 8, borderRadius: 6, background: 'var(--c2c-track, #eceff2)', overflow: 'hidden' }}>
-                <div style={{ height: '100%', width: `${completeness}%`, background: 'var(--c2c-ok, #2f9e6f)' }} />
+              <div style={{ height: 8, borderRadius: 6, background: 'var(--bg-200)', overflow: 'hidden' }}>
+                <div style={{ height: '100%', width: `${completeness}%`, background: 'var(--success)' }} />
               </div>
             </div>
             <div style={{ fontSize: 12, opacity: 0.8 }}>
@@ -190,8 +190,8 @@ export function InvestigatorBrochure({ onAsk }: SurfaceViewProps) {
                 style={{
                   display: 'flex', alignItems: 'flex-start', gap: 12,
                   padding: '10px 14px', borderRadius: 8,
-                  border: '1px solid var(--c2c-border, #e3e6ea)',
-                  background: 'var(--c2c-surface, #fff)',
+                  border: '1px solid var(--border)',
+                  background: 'var(--bg-000)',
                   marginLeft: s.depth * 22,
                 }}
               >
@@ -219,7 +219,7 @@ export function InvestigatorBrochure({ onAsk }: SurfaceViewProps) {
                     <div style={{ fontSize: 12, opacity: 0.7, marginTop: 3 }}>{s.description}</div>
                   )}
                   {Array.isArray(s.gaps) && s.gaps.length > 0 && (
-                    <div style={{ fontSize: 12, marginTop: 6, color: 'var(--c2c-warn-ink, #8a5a00)' }}>
+                    <div style={{ fontSize: 12, marginTop: 6, color: 'var(--warning)' }}>
                       Needs: {s.gaps.join(' · ')}
                     </div>
                   )}

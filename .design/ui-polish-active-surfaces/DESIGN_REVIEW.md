@@ -29,9 +29,11 @@ up exactly as `V2App.tsx` renders it, changed the picture:
 |---|---|---|
 | light | 4056 | 0 |
 | dark (before fixes) | 4056 | 326 (8.0%) |
-| dark (after fixes) | 4056 | 45 (1.1%) |
+| dark (after fixes) | 4093 | 8 (0.2%) |
 
-Two root causes accounted for 281 of the 326.
+Four root causes accounted for 318 of the 326. All four are the same shape —
+something that resolves once, in a scope where the dark values are not in
+view — which is why measuring one theme could never have found them.
 
 **1. The generated text ramp's dark correction never applied.**
 `scripts/design/generate-surface-text-ramp.mjs` emits its dark re-base as
@@ -75,6 +77,36 @@ accent ground in dark mode. Fixed by re-declaring the aliases under
 - **101 loading states announced.** role="status" added across 58 surfaces,
   matching the 56 that already had it.
 
+**3. The whole semantic alias layer was frozen to its light values.**
+`--ink`, `--ink-body/muted/subtle/disabled/inverse`, `--canvas`,
+`--canvas-muted/sunken/inverse`, `--border-focus`, `--accent-hover`, `--info`
+and `--info-muted` are declared at `:root` as `var()` indirections and were
+never re-declared in the dark block. Same mechanism as the accent aliases, but
+in the canonical token file and covering the layer its own comment calls "what
+C2C product code uses". The global heading rule paints h1/h2 with `var(--ink)`,
+so every bare heading rendered #141413 on the #262624 page: 30 of the 45
+failures that remained at that point. Fixed by re-declaring all 14 inside the
+dark block, with identical right-hand sides — the same indirection evaluated in
+the right scope, not a second palette to keep in step.
+
+**4. 73 phantom `--c2c-*` tokens rendered a hardcoded light-mode literal.**
+None of `--c2c-dim`, `--c2c-line`, `--c2c-err`, `--c2c-ok`, `--c2c-surface` and
+the rest is declared anywhere in the repo, so all 73 `var(--c2c-x, #fallback)`
+sites always rendered the fallback — an invented Tailwind-ish palette, not the
+brand's, wrong in light and unreadable in dark. Repointed at the canonical
+token carrying the same meaning. The phantom-token baseline drops from 26
+tokens across 136 sites to 14 across 63.
+
+## A gate that could be broken by prose
+
+Adding the alias block broke `ci:token-contrast`: it splits the token file on
+braces and does not skip comments, and the comment explaining the fix quoted a
+CSS rule. That cut the dark block in half and the gate could no longer find
+`--bg-000` in either half. It refused to report success rather than passing over
+half a palette, which is the right failure — but the parse should not have been
+breakable by prose, so it now strips comments first. Verified by re-introducing
+the same braced comment and watching it parse cleanly.
+
 ## Must fix — NOT done here, needs an owner
 
 1. **RBM approve endpoints have no authorization gate.**
@@ -86,9 +118,11 @@ accent ground in dark mode. Fixed by re-declaring the aliases under
    author can sign their own risk assessment. This is missing enforcement, not a
    hidden button, and choosing the role model is a product decision.
 
-2. **45 remaining dark-mode contrast failures.** Largest cluster is 33 elements
-   inheriting `--accent-on-strong` (`#141413`, correct ON an accent fill) onto
-   the page background, where it is not. Needs per-element work.
+2. **8 remaining dark-mode contrast failures**, down from 326. What is left is
+   genuinely per-element rather than one more frozen token: 3 headings still
+   reaching `--ink` through a path the alias fix does not cover, 3 at
+   `--text-400` on `--canvas-elevated` (3.6:1, a token pair a designer should
+   settle), and 2 white labels on the success and accent fills.
 
 3. **Loading still renders as a bare note, not the shared `EmptyState`.** The
    announcement is fixed (above) but the three states of one surface still look
