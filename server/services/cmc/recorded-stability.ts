@@ -23,11 +23,20 @@
  * @module server/services/cmc/recorded-stability
  */
 
+import { assessTrend, type TrendOutcome, type TrendPoint } from './stability-trending';
+
 export interface StabilityPointRecord {
   timePoint?: unknown;
   parameter?: unknown;
   result?: unknown;
   specification?: unknown;
+  /**
+   * The storage condition THIS result was pulled at, where the writer records
+   * one. The stability surface records the condition set on the study, not on
+   * the result; a per-result condition is read when present and never invented.
+   */
+  condition?: unknown;
+  storageCondition?: unknown;
 }
 
 export interface RecordedStabilityRead {
@@ -72,6 +81,13 @@ export function parseNumeric(value: unknown): number | null {
   if (!m) return null;
   const n = Number(m[0]);
   return Number.isFinite(n) ? n : null;
+}
+
+/** The (time, value) pairs of a recorded series that read as numbers — the rest are dropped, never zeroed. */
+export function numericSeries(points: StabilityPointRecord[]): TrendPoint[] {
+  return points
+    .map(p => ({ time: parseNumeric(p.timePoint), value: parseNumeric(p.result) }))
+    .filter((p): p is TrendPoint => p.time !== null && p.value !== null);
 }
 
 /**
@@ -179,6 +195,51 @@ export function conditionKey(codes: unknown): string {
     .filter(Boolean)
     .sort()
     .join(' + ');
+}
+
+/** One attribute's results at one storage condition — the unit a trend is assessed on. */
+export interface RecordedSeries {
+  parameter: string;
+  /** The condition label, '' when neither the results nor the study record one. */
+  condition: string;
+  /** True when the results carried no condition and the study's condition set was used. */
+  conditionInheritedFromStudy: boolean;
+  points: StabilityPointRecord[];
+}
+
+/**
+ * Group a study's recorded results by attribute AND storage condition.
+ *
+ * Built on {@link groupByParameter}: each attribute's results are then split
+ * by the condition recorded ON the result, falling back to the study's own
+ * condition set when a result records none. The fallback is reported, not
+ * hidden, because a study placed at two conditions whose results carry neither
+ * has one undifferentiated series across two degradation regimes — the caller
+ * refuses that rather than fitting through it.
+ */
+export function groupByParameterAndCondition(
+  points: StabilityPointRecord[],
+  studyConditions: unknown,
+): RecordedSeries[] {
+  const studyKey = conditionKey(studyConditions);
+  const series: RecordedSeries[] = [];
+  for (const [parameter, list] of groupByParameter(points)) {
+    const byCondition = new Map<string, RecordedSeries>();
+    for (const point of list) {
+      const own = String(point.condition ?? point.storageCondition ?? '').trim();
+      const key = own || studyKey;
+      const inherited = !own;
+      const bucket = byCondition.get(`${inherited ? 'study' : 'own'}:${key}`);
+      if (bucket) {
+        bucket.points.push(point);
+      } else {
+        const entry = { parameter, condition: key, conditionInheritedFromStudy: inherited, points: [point] };
+        byCondition.set(`${inherited ? 'study' : 'own'}:${key}`, entry);
+        series.push(entry);
+      }
+    }
+  }
+  return series;
 }
 
 /** The shape the poolability assessment needs from a stability study row. */
@@ -320,9 +381,7 @@ export async function assessRecordedPoolability(
         excluded.push({ batchId, reason: `Did not record ${parameter}.` });
         continue;
       }
-      const usable = points
-        .map(p => ({ time: parseNumeric(p.timePoint), value: parseNumeric(p.result) }))
-        .filter((p): p is { time: number; value: number } => p.time !== null && p.value !== null);
+      const usable = numericSeries(points);
       if (usable.length < 3 || new Set(usable.map(p => p.time)).size < 2) {
         excluded.push({
           batchId,
@@ -519,9 +578,7 @@ export async function estimateRecordedShelfLife(
 
   const estimates: Array<Record<string, unknown>> = [];
   for (const [parameter, points] of byParameter) {
-    const usable = points
-      .map((p) => ({ time: parseNumeric(p.timePoint), value: parseNumeric(p.result) }))
-      .filter((p): p is { time: number; value: number } => p.time !== null && p.value !== null);
+    const usable = numericSeries(points);
     const criterion = parseAcceptanceCriterion(points.map((p) => p.specification));
 
     if (usable.length < 3) {
@@ -636,6 +693,112 @@ export async function estimateRecordedShelfLife(
       limitingParameter: limiting ? limiting.parameter : null,
       supportedShelfLife: limiting ? limiting.shelfLife : null,
       estimates,
+    },
+  };
+}
+
+/* ── Out-of-trend assessment over a RECORDED study ──────────────────────────
+   The trend engine (stability-trending.ts) is pure and takes a parsed
+   criterion. This is the one place the recorded results are read, grouped by
+   attribute and condition, and handed to it — the HTTP route, AnA and the
+   Module 3 composer all call this, so a series is judged the same way
+   wherever the question is asked. Synchronous, because the composer is. */
+
+export interface RecordedTrendingStudy {
+  id: number | string;
+  storageConditions?: unknown;
+  stabilityData?: unknown;
+}
+
+export interface RecordedTrendSeries {
+  parameter: string;
+  /** '' when no condition is recorded anywhere. */
+  condition: string;
+  pointsRecorded: number;
+  pointsUsable: number;
+  /** The acceptance criterion as recorded on the results, or null. */
+  criterionRecordedAs: string | null;
+  outcome: TrendOutcome;
+}
+
+export type RecordedTrendingOutcome =
+  | { ok: false; error: string }
+  | {
+      ok: true;
+      data: {
+        studyId: number | string;
+        basis: string;
+        alpha: number;
+        series: RecordedTrendSeries[];
+      };
+    };
+
+const TRENDING_ALPHA = 0.05;
+
+/**
+ * Assess every recorded attribute/condition series of ONE study for
+ * out-of-trend results, its slope, and the projected crossing of its recorded
+ * criterion.
+ *
+ * Refuses at the study level when there is nothing readable to assess, and
+ * per series — with the reason on the series — when a criterion is missing or
+ * unreadable, the series is too short, or the study spans conditions its
+ * results do not separate. The refusals are the output a section prints;
+ * nothing is dropped to make the rest look assessed.
+ */
+export function assessRecordedTrending(study: RecordedTrendingStudy): RecordedTrendingOutcome {
+  const read = readRecordedStabilityResults(study.stabilityData);
+  const seriesRefusal = refuseUnfittableSeries(read);
+  if (seriesRefusal) return { ok: false, error: seriesRefusal };
+
+  const spansConditions = conditionKey(study.storageConditions).includes(' + ');
+  const series: RecordedTrendSeries[] = [];
+
+  for (const group of groupByParameterAndCondition(read.points, study.storageConditions)) {
+    const usable = numericSeries(group.points);
+    const recordedCriteria = group.points
+      .map(p => String(p.specification ?? '').trim())
+      .filter(Boolean);
+    const criterionRecordedAs = recordedCriteria[0] ?? null;
+    const criterion = parseAcceptanceCriterion(group.points.map(p => p.specification));
+
+    let outcome: TrendOutcome;
+    if (spansConditions && group.conditionInheritedFromStudy) {
+      outcome = {
+        ok: false,
+        reason: 'CONDITION_NOT_SEPARABLE',
+        detail: `the study is placed at more than one storage condition (${group.condition}) and these results record none, so the points of one condition cannot be separated from the others`,
+        pointsUsable: usable.length,
+      };
+    } else if (criterionRecordedAs !== null && !criterion) {
+      outcome = {
+        ok: false,
+        reason: 'CRITERION_UNPARSEABLE',
+        detail: `the acceptance criterion is recorded as "${criterionRecordedAs}", which states no comparator or range a limit can be read from`,
+        pointsUsable: usable.length,
+      };
+    } else {
+      outcome = assessTrend(usable, criterion, { alpha: TRENDING_ALPHA });
+    }
+
+    series.push({
+      parameter: group.parameter,
+      condition: group.condition,
+      pointsRecorded: group.points.length,
+      pointsUsable: usable.length,
+      criterionRecordedAs,
+      outcome,
+    });
+  }
+
+  return {
+    ok: true,
+    data: {
+      studyId: study.id,
+      basis:
+        'PhRMA CMC Statistics and Stability Expert Teams out-of-trend method — regression control chart: each pull point against the two-sided 95% prediction interval of the line fitted to all prior points; slope with 95% CI over the whole series; projected crossing of the recorded acceptance criterion where the slope heads toward it',
+      alpha: TRENDING_ALPHA,
+      series,
     },
   };
 }

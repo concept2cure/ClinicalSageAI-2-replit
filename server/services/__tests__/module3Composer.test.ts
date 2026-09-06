@@ -22,6 +22,24 @@ describe('module3Composer', () => {
     expect(impacted).toContain('3.2.S.7');
     expect(impacted).toContain('3.2.P.8');
   });
+
+  it('marks the appendices (3.2.A.*) that require a changed source type impacted too', () => {
+    /* The appendix rules live in module3-extensions with their own
+       requiredSourceTypes; this walked MODULE3_SECTION_RULES only, so an
+       approved 3.2.A.1 never went stale when the container closure it was
+       composed from changed. One rule table per file, one answer here. */
+    expect(impactedSectionsForSourceType('container_closure')).toContain('3.2.A.1');
+    expect(impactedSectionsForSourceType('characterization')).toContain('3.2.A.2');
+    expect(impactedSectionsForSourceType('formulation_record')).toContain('3.2.A.3');
+    const forDrugProduct = impactedSectionsForSourceType('drug_product');
+    expect(forDrugProduct).toContain('3.2.A.1');
+    expect(forDrugProduct).toContain('3.2.A.3');
+    // The core sections are still there, and no key is listed twice.
+    expect(forDrugProduct).toContain('3.2.P.1');
+    expect(new Set(forDrugProduct).size).toBe(forDrugProduct.length);
+    // A source no appendix requires impacts no appendix.
+    expect(impactedSectionsForSourceType('qc_result').filter((k) => k.startsWith('3.2.A.'))).toEqual([]);
+  });
 });
 
 describe('3.2.P.2 dissolution tables — the Batch column is a batch number or nothing', () => {
