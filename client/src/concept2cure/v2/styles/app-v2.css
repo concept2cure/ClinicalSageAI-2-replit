@@ -3696,3 +3696,15 @@
 
 /* Precedent engine — the comparison the engine returned, shown as it came back. */
 .c2c-v2 .pe-compare{margin:0;font-family:var(--font-mono,monospace);font-size:11.5px;line-height:1.6;color:var(--text-200);white-space:pre-wrap;word-break:break-word;max-height:340px;overflow:auto;}
+
+/* ── Reduced motion ─────────────────────────────────────────────────────────
+   Neutralize state-change transition motion across every v2 surface for users
+   who request reduced motion (motion-discipline non-negotiable). Scoped to the
+   shell root so it also covers component-module surfaces rendered inside it
+   (e.g. the AnA panels, whose CSS-module classes live outside this file but
+   whose DOM sits under .c2c-v2 at runtime). Transitions only — the per-
+   component animation reduced-motion rules elsewhere in this file stay
+   authoritative, so intentional slowed (not stopped) animations survive. ── */
+@media (prefers-reduced-motion: reduce) {
+  .c2c-v2 * { transition-duration: 1ms !important; }
+}
