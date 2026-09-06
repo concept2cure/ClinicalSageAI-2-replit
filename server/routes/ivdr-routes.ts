@@ -1386,39 +1386,47 @@ export default function createIVDRRoutes(pool: Pool): Router {
       // Mark job as in-progress (ephemeral — see TODO(phase-2) at the Map)
       submissionJobs[jobKey] = { status: 'generating', startedAt: new Date().toISOString() };
 
-      // Gather the project's IVDR data in parallel
+      /* Gather the project's IVDR data in parallel.
+         These five reads are NOT caught. They used to swallow a failure into
+         `{ rows: [] }`, which the manifest then reported as `count: 0`,
+         `hasClassification: false` and `status: 'completed'` — a submission
+         package telling a manufacturer no classification was on file when the
+         truth was that it could not be read. A rejection now reaches the
+         handler's catch, which marks the job failed and answers an error.
+         The exclusion counts below stay caught, because null there is already
+         reported as 'unavailable' rather than as zero. */
       const [classifications, validations, evidence, cdxWorkflows, gsprAssessment, unassignedResult] = await Promise.all([
         pool.query(
           `SELECT * FROM ivdr_classifications
             WHERE organization_id = $1 AND program_id = $2
             ORDER BY created_at DESC`,
           [orgId, projectId]
-        ).catch(() => ({ rows: [] })),
+        ),
         pool.query(
           `SELECT v.* FROM ivdr_analytical_validations v
             LEFT JOIN ivdr_classifications c ON v.classification_id = c.id
             WHERE v.organization_id = $1 AND c.program_id = $2
             ORDER BY v.created_at DESC`,
           [orgId, projectId]
-        ).catch(() => ({ rows: [] })),
+        ),
         pool.query(
           `SELECT e.* FROM ivdr_clinical_evidence e
             LEFT JOIN ivdr_classifications c ON e.classification_id = c.id
             WHERE e.organization_id = $1 AND c.program_id = $2
             ORDER BY e.created_at DESC`,
           [orgId, projectId]
-        ).catch(() => ({ rows: [] })),
+        ),
         pool.query(
           `SELECT w.* FROM ivdr_cdx_workflows w
             LEFT JOIN ivdr_classifications c ON w.classification_id = c.id
             WHERE w.organization_id = $1 AND c.program_id = $2
             ORDER BY w.created_at DESC`,
           [orgId, projectId]
-        ).catch(() => ({ rows: [] })),
+        ),
         pool.query(
           `SELECT * FROM ivdr_gspr_assessments WHERE project_id = $1 AND organization_id = $2`,
           [projectId, orgId]
-        ).catch(() => ({ rows: [] })),
+        ),
         /* Rows this organisation owns that cannot be attributed to ANY
            programme — no classification link, or a classification whose
            program_id is NULL (the legacy 001-shape). They are excluded from
@@ -1588,99 +1596,73 @@ export default function createIVDRRoutes(pool: Pool): Router {
   router.get('/eudamed-export/:projectId', async (req: Request, res: Response) => {
     try {
       const orgId = getServerOrgId(req);
-      const { projectId } = req.params;
+      const { projectId } = req.params as { projectId: string };
 
-      // Gather classification and GSPR data
+      /* This endpoint took a projectId and scoped only the GSPR read by it.
+         Classification, CDx and clinical evidence were read ORG-WIDE, the
+         first two as "the most recently created row in the organisation" —
+         so a manufacturer exporting EUDAMED data for one assay got another
+         assay's risk class, intended purpose and rule trace under the device
+         name of whichever classification happened to be newest, plus a study
+         count covering the whole portfolio. Same scoping as the submission
+         package: validate the programme, prove ownership, then read through
+         program_id. */
+      if (!UUID_RE.test(projectId)) {
+        return res.status(422).json({
+          error: 'projectId must be a regulatory programme UUID',
+          code: 'IVDR_EUDAMED_BAD_PROJECT',
+        });
+      }
+      const ownership = await pool.query(
+        `SELECT 1 FROM regulatory_programs
+          WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL
+          LIMIT 1`,
+        [projectId, orgId]
+      );
+      if (ownership.rows.length === 0) {
+        return res.status(404).json({
+          error: 'Project not found in this organization',
+          code: 'IVDR_EUDAMED_PROJECT_NOT_FOUND',
+        });
+      }
+
+      /* Uncaught, for the reason the submission package gathers are: an export
+         that reports "Not classified" because the read failed is indistinguishable
+         from one reporting a device that genuinely has no classification. */
       const [classResult, gsprResult, cdxResult, evidenceResult] = await Promise.all([
         pool.query(
-          `SELECT * FROM ivdr_classifications WHERE organization_id = $1 ORDER BY created_at DESC LIMIT 1`,
-          [orgId]
-        ).catch(() => ({ rows: [] })),
+          `SELECT * FROM ivdr_classifications
+            WHERE organization_id = $1 AND program_id = $2
+            ORDER BY created_at DESC LIMIT 1`,
+          [orgId, projectId]
+        ),
         pool.query(
           `SELECT * FROM ivdr_gspr_assessments WHERE project_id = $1 AND organization_id = $2`,
           [projectId, orgId]
-        ).catch(() => ({ rows: [] })),
+        ),
         pool.query(
-          `SELECT * FROM ivdr_cdx_workflows WHERE organization_id = $1 ORDER BY created_at DESC LIMIT 1`,
-          [orgId]
-        ).catch(() => ({ rows: [] })),
+          `SELECT w.* FROM ivdr_cdx_workflows w
+            LEFT JOIN ivdr_classifications c ON w.classification_id = c.id
+            WHERE w.organization_id = $1 AND c.program_id = $2
+            ORDER BY w.created_at DESC LIMIT 1`,
+          [orgId, projectId]
+        ),
         pool.query(
-          `SELECT COUNT(*) as total, COUNT(*) FILTER (WHERE status = 'completed') as completed FROM ivdr_clinical_evidence WHERE organization_id = $1`,
-          [orgId]
-        ).catch(() => ({ rows: [{ total: 0, completed: 0 }] })),
+          `SELECT COUNT(*) AS total, COUNT(*) FILTER (WHERE e.status = 'completed') AS completed
+             FROM ivdr_clinical_evidence e
+             LEFT JOIN ivdr_classifications c ON e.classification_id = c.id
+            WHERE e.organization_id = $1 AND c.program_id = $2`,
+          [orgId, projectId]
+        ),
       ]);
 
-      const classification = classResult.rows[0] || null;
-      const gspr = gsprResult.rows[0] || null;
-      const cdx = cdxResult.rows[0] || null;
-      const evidenceSummary = evidenceResult.rows[0] || { total: 0, completed: 0 };
-
-      // Compute GSPR compliance stats if available
-      let gsprCompliancePercent = 0;
-      if (gspr && gspr.requirements) {
-        const reqs = gspr.requirements;
-        const applicable = reqs.filter((r: any) => r.status !== 'not_applicable');
-        const compliant = applicable.filter((r: any) => r.status === 'compliant');
-        gsprCompliancePercent = applicable.length > 0
-          ? Math.round((compliant.length / applicable.length) * 100)
-          : 0;
-      }
-
-      // Build EUDAMED-compatible export
-      const eudamedExport = {
-        exportVersion: '1.0.0',
-        exportDate: new Date().toISOString(),
-        regulatoryFramework: 'IVDR EU 2017/746',
-        deviceIdentification: {
-          // UDI-DI / Basic UDI-DI / manufacturer SRN are issued by GS1/HIBCC/EUDAMED
-          // and must not be synthesized from internal IDs. No stored registration
-          // record exists for this org/project, so they are reported as null
-          // (identifiers not yet issued/recorded).
-          basicUdiDi: null,
-          udiDi: null,
-          deviceName: classification?.device_name || gspr?.device_name || 'Unknown Device',
-          tradeName: classification?.device_name || gspr?.device_name || null,
-          manufacturerSRN: null,
-        },
-        manufacturer: {
-          organizationId: orgId,
-          role: 'manufacturer',
-          registrationStatus: 'not_registered',
-        },
-        classification: {
-          riskClass: classification?.ivdr_class || 'Not classified',
-          classificationRule: classification?.rule_trace ? 'Annex VIII' : null,
-          ruleTrace: classification?.rule_trace || [],
-          intendedPurpose: classification?.intended_purpose || null,
-        },
-        riskClass: classification?.ivdr_class || 'Not classified',
-        companionDiagnostic: {
-          isCDx: cdx ? true : false,
-          linkedMedicinalProduct: cdx?.therapeutic_area || null,
-          cdxStatus: cdx?.status || null,
-        },
-        certificates: {
-          euDeclarationOfConformity: classification?.ivdr_class === 'A' ? 'self-declaration' : 'notified_body_required',
-          notifiedBodyRequired: classification?.ivdr_class !== 'A',
-          // No certificate record is tracked here; do not fabricate a status.
-          certificateStatus: null,
-        },
-        clinicalEvidence: {
-          totalStudies: Number(evidenceSummary.total) || 0,
-          completedStudies: Number(evidenceSummary.completed) || 0,
-          performanceEvaluationAvailable: Number(evidenceSummary.total) > 0,
-        },
-        gsprCompliance: {
-          assessmentAvailable: !!gspr,
-          compliancePercent: gsprCompliancePercent,
-          totalRequirements: gspr ? gspr.requirements.length : 23,
-        },
-        postMarketSurveillance: {
-          pmsPlanRequired: true,
-          psurFrequency: classification?.ivdr_class === 'D' || classification?.ivdr_class === 'C' ? 'annual' : 'biennial',
-          vigilanceSystem: 'required',
-        },
-      };
+      const eudamedExport = buildEudamedExport({
+        orgId,
+        classification: classResult.rows[0] || null,
+        gspr: gsprResult.rows[0] || null,
+        cdx: cdxResult.rows[0] || null,
+        evidenceSummary: evidenceResult.rows[0] || { total: 0, completed: 0 },
+      });
 
       return res.json({ eudamedExport });
     } catch (error: any) {
@@ -1694,6 +1676,91 @@ export default function createIVDRRoutes(pool: Pool): Router {
 // ═══════════════════════════════════════════════════════════════════════════════
 // HELPERS
 // ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * The EUDAMED actor/device registration blob. Extracted from the route so the
+ * handler stays inside the function-length limit; the shape is unchanged.
+ */
+function buildEudamedExport(input: {
+  orgId: number | string;
+  classification: Record<string, any> | null;
+  gspr: Record<string, any> | null;
+  cdx: Record<string, any> | null;
+  evidenceSummary: Record<string, any>;
+}) {
+  const { orgId, classification, gspr, cdx, evidenceSummary } = input;
+      
+  // Compute GSPR compliance stats if available
+  let gsprCompliancePercent = 0;
+  if (gspr && Array.isArray(gspr.requirements)) {
+    const reqs = gspr.requirements;
+    const applicable = reqs.filter((r: any) => r.status !== 'not_applicable');
+    const compliant = applicable.filter((r: any) => r.status === 'compliant');
+    gsprCompliancePercent = applicable.length > 0
+      ? Math.round((compliant.length / applicable.length) * 100)
+      : 0;
+  }
+
+  // Build EUDAMED-compatible export
+  return {
+    exportVersion: '1.0.0',
+    exportDate: new Date().toISOString(),
+    regulatoryFramework: 'IVDR EU 2017/746',
+    deviceIdentification: {
+      // UDI-DI / Basic UDI-DI / manufacturer SRN are issued by GS1/HIBCC/EUDAMED
+      // and must not be synthesized from internal IDs. No stored registration
+      // record exists for this org/project, so they are reported as null
+      // (identifiers not yet issued/recorded).
+      basicUdiDi: null,
+      udiDi: null,
+      deviceName: classification?.device_name || gspr?.device_name || 'Unknown Device',
+      tradeName: classification?.device_name || gspr?.device_name || null,
+      manufacturerSRN: null,
+    },
+    manufacturer: {
+      organizationId: orgId,
+      role: 'manufacturer',
+      registrationStatus: 'not_registered',
+    },
+    classification: {
+      riskClass: classification?.ivdr_class || 'Not classified',
+      classificationRule: classification?.rule_trace ? 'Annex VIII' : null,
+      ruleTrace: classification?.rule_trace || [],
+      intendedPurpose: classification?.intended_purpose || null,
+    },
+    riskClass: classification?.ivdr_class || 'Not classified',
+    companionDiagnostic: {
+      isCDx: cdx ? true : false,
+      linkedMedicinalProduct: cdx?.therapeutic_area || null,
+      cdxStatus: cdx?.status || null,
+    },
+    certificates: {
+      euDeclarationOfConformity: classification?.ivdr_class === 'A' ? 'self-declaration' : 'notified_body_required',
+      notifiedBodyRequired: classification?.ivdr_class !== 'A',
+      // No certificate record is tracked here; do not fabricate a status.
+      certificateStatus: null,
+    },
+    clinicalEvidence: {
+      totalStudies: Number(evidenceSummary.total) || 0,
+      completedStudies: Number(evidenceSummary.completed) || 0,
+      performanceEvaluationAvailable: Number(evidenceSummary.total) > 0,
+    },
+    gsprCompliance: {
+      assessmentAvailable: !!gspr,
+      compliancePercent: gsprCompliancePercent,
+      /* The stored assessment's own requirement count. The constant 23 that
+         stood here was reported for projects that had no assessment at all,
+         which reads as 23 requirements on file and none met; and reading
+         .length off an assessment whose requirements column was null threw. */
+      totalRequirements: Array.isArray(gspr?.requirements) ? gspr.requirements.length : null,
+    },
+    postMarketSurveillance: {
+      pmsPlanRequired: true,
+      psurFrequency: classification?.ivdr_class === 'D' || classification?.ivdr_class === 'C' ? 'annual' : 'biennial',
+      vigilanceSystem: 'required',
+    },
+  };
+}
 
 /**
  * Verdicts for the analytical validation record AS IT WILL STAND after a
