@@ -157,19 +157,37 @@ const whenApplicable = (
 ): SlotDef => ({ id, label, authority, appliesWhen, match, necessity: 'when-applicable', required: false });
 
 // Shared eSTAR administrative + technical spine (FDA eSTAR template).
+/*
+ * WHY THERE IS NO `cdrh-cover-sheet` SLOT.
+ *
+ * This required "CDRH Premarket Review Submission Cover Sheet (FDA 3514)" of
+ * every device. FDA retired that paper cover sheet when eSTAR became mandatory
+ * — 510(k) on 2023-10-01, De Novo on 2025-10-01 — because the eSTAR itself
+ * captures the data. migrations/20260901b_estar_510k_denovo_outlines.sql exists
+ * to strike those sections from the k510 and denovo outlines, and says so in its
+ * header. Only half of that change landed: the outlines lost the section, this
+ * mapper kept demanding it, so every governed 510(k) scored one required slot
+ * short and the readiness surface told a paying customer to produce a form FDA
+ * no longer accepts.
+ */
 const baseSlots: SlotDef[] = [
   // ── Administrative, all statutory ─────────────────────────────────────────
   always('cover-letter', 'Cover letter / submission cover sheet', 'FDA eSTAR administrative section',
     any(dt('cover_letter', 'cover_sheet'), ti('cover letter', 'cover sheet'))),
-  always('cdrh-cover-sheet', 'CDRH Premarket Review Submission Cover Sheet (FDA 3514)', 'Form FDA 3514',
-    any(dt('cdrh_cover_sheet', 'form_3514'), ti('3514', 'premarket review submission cover sheet'))),
   always('user-fee-cover-sheet', 'MDUFA user-fee cover sheet and payment (FDA 3601)',
     'Form FDA 3601; MDUFA. An unpaid submission is not accepted and no substantive review begins.',
     any(dt('user_fee', 'form_3601', 'mdufa_cover_sheet'), ti('3601', 'user fee', 'mdufa'))),
   always('indications-for-use', 'Indications for use (FDA 3881)', 'Form FDA 3881',
     any(dt('indications_for_use', 'ifu_statement', 'form_3881'), ti('indications for use', '3881'))),
+  /* The statute calls this the "truthful and accurate" statement; the k510 and
+     denovo rule packs both title their section "Truthful and accuracy
+     statement". One letter, and it cost the filer the slot: the section they
+     had written and approved scored as absent, forever. Matched on the
+     citation too, which is in the pack's own label and cannot drift the way a
+     phrase does. */
   always('truthful-accurate-statement', 'Truthful and Accurate Statement', '21 CFR 807.87(k)',
-    any(dt('truthful_accurate', 'truthful_and_accurate'), ti('truthful and accurate', 'truthful & accurate'))),
+    any(dt('truthful_accurate', 'truthful_and_accurate', 'truthful_and_accuracy'),
+        ti('truthful and accurate', 'truthful & accurate', 'truthful and accuracy', '807.87(k)'))),
 
   // ── Technical spine ───────────────────────────────────────────────────────
   always('device-description', 'Device description', '21 CFR 807.87(f)',

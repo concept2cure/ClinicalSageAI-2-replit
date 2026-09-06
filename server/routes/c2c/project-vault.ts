@@ -891,6 +891,126 @@ export default function createProjectVaultRoutes(): Router {
    * the file it recorded is not a governed store, and a silent mismatch is how
    * a superseded or tampered copy leaves the building.
    */
+  /**
+   * GET /:id/search?q=&limit=&offset=
+   *
+   * Search a program's vault by CONTENT and metadata.
+   *
+   * ── Why this exists ────────────────────────────────────────────────────────
+   * The Vault surface had no search input at all. Its only text filtering was a
+   * client-side substring match over the rows already in memory, which cannot
+   * match document content and silently misses everything the tree did not
+   * happen to load. On a document management system, a reviewer who cannot find
+   * a document concludes it is absent.
+   *
+   * Ranked full text over title, file name and extracted body, using the SAME
+   * expression the GIN index is built on (migrations/20260906_vault_documents_fulltext.sql)
+   * — a retyped variant still returns correct rows, by sequential scan, and the
+   * only symptom is a slow endpoint once the corpus is large.
+   *
+   * Paginated, because a vault is not a page. `total` is the real count, so the
+   * surface can say "12 of 340" rather than implying the first page is all of it.
+   */
+  router.get('/:id/search', async (req: Request, res: Response) => {
+    const orgId = resolveOrgId(req);
+    if (!orgId) return res.status(403).json({ success: false, error: 'FORBIDDEN' });
+
+    const id = Array.isArray(req.params.id) ? (req.params.id[0] ?? '') : req.params.id;
+    if (!UUID_RE.test(id)) return res.status(404).json({ success: false, error: 'NOT_FOUND' });
+
+    const q = typeof req.query.q === 'string' ? req.query.q.trim() : '';
+    const limit = Math.min(Math.max(parseInt(String(req.query.limit ?? '25'), 10) || 25, 1), 100);
+    const offset = Math.max(parseInt(String(req.query.offset ?? '0'), 10) || 0, 0);
+
+    /* An empty query is not "match everything" — that is the browse view, which
+       is what GET /:id already serves. Returning the whole vault here would make
+       an empty search box look like a search that found everything. */
+    if (!q) {
+      return res.json({
+        success: true,
+        data: { query: '', results: [], total: 0, limit, offset, reason: 'EMPTY_QUERY' },
+      });
+    }
+
+    try {
+      // The program must be this org's before any of its documents are listed —
+      // the same guard the read and download routes apply.
+      const prog = await pool.query(
+        `SELECT id FROM regulatory_programs
+          WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL LIMIT 1`,
+        [id, orgId],
+      );
+      if (prog.rows.length === 0) return res.status(404).json({ success: false, error: 'NOT_FOUND' });
+
+      /* `websearch_to_tsquery` rather than `to_tsquery`: it accepts arbitrary
+         user text (quotes, OR, -negation) and never raises a syntax error, so a
+         stray colon in a search box is a query, not a 500. */
+      const MATCH = `vault.document_search_vector(d.document_title, d.file_name, left(d.extracted_text, 900000))
+                     @@ websearch_to_tsquery('english', $2)`;
+
+      const counted = await pool.query(
+        `SELECT count(*)::int AS total
+           FROM vault.documents d
+          WHERE d.program_id = $1 AND d.deleted_at IS NULL AND ${MATCH}`,
+        [id, q],
+      );
+
+      const rows = await pool.query(
+        `SELECT d.id, d.document_title, d.file_name, d.document_type, d.file_size,
+                d.folder_id, d.ctd_section, d.placement_status, d.created_at,
+                ts_rank_cd(
+                  vault.document_search_vector(d.document_title, d.file_name, left(d.extracted_text, 900000)),
+                  websearch_to_tsquery('english', $2)
+                ) AS rank,
+                -- A snippet from the body so a hit on content is legible as one.
+                -- ts_headline is expensive, so it runs on the returned page only.
+                ts_headline('english', COALESCE(left(d.extracted_text, 900000), ''),
+                            websearch_to_tsquery('english', $2),
+                            'MaxFragments=1, MaxWords=28, MinWords=8, ShortWord=2') AS snippet
+           FROM vault.documents d
+          WHERE d.program_id = $1 AND d.deleted_at IS NULL AND ${MATCH}
+          ORDER BY rank DESC, d.created_at DESC
+          LIMIT $3 OFFSET $4`,
+        [id, q, limit, offset],
+      );
+
+      return res.json({
+        success: true,
+        data: {
+          query: q,
+          total: counted.rows[0]?.total ?? 0,
+          limit,
+          offset,
+          results: rows.rows.map(r => ({
+            id: r.id,
+            title: r.document_title || r.file_name || 'Untitled',
+            fileName: r.file_name,
+            documentType: r.document_type,
+            size: prettySize(r.file_size),
+            folderId: r.folder_id,
+            ctdSection: r.ctd_section,
+            placementStatus: r.placement_status,
+            // Only offered when the match was in the body; a snippet echoing the
+            // title back is noise.
+            snippet: typeof r.snippet === 'string' && r.snippet.trim() ? r.snippet : null,
+          })),
+        },
+      });
+    } catch (err) {
+      /* An error is never an empty result. A search that failed and a search that
+         found nothing are the same screen otherwise, and the second is the one a
+         reviewer will believe. */
+      logger.error('vault search failed', {
+        err: err instanceof Error ? err.message : String(err),
+      });
+      return res.status(500).json({
+        success: false,
+        error: 'SEARCH_FAILED',
+        message: 'The vault could not be searched. This is not an empty result — nothing was searched.',
+      });
+    }
+  });
+
   router.get('/:id/documents/:documentId/download', async (req: Request, res: Response) => {
     const orgId = resolveOrgId(req);
     if (!orgId) return res.status(403).json({ success: false, error: 'FORBIDDEN' });

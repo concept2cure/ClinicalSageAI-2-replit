@@ -41,6 +41,14 @@ import {
   CONTENT_CHANGED_DURING_TRANSMIT,
 } from '../services/submission-gateways/governed-transmit';
 import { recordGovernedAction, verifyReauth } from './c2c/actions';
+/* Re-authentication proves WHO is acting; it does not prove they MAY. Every
+   mutating route below ran the §11.50 re-auth gate and then transmitted, with no
+   check on the caller's organization role — so a read-only `viewer`, who knows
+   their own password, could put a real submission on FDA's Electronic
+   Submissions Gateway in production. The re-auth gate made that worse rather
+   than better: the envelope carried a verified human signature, so the audit
+   trail read as a deliberate release by a person entitled to make it. */
+import { requireEditorAccess } from '../middleware/orgMembership';
 
 const router = Router();
 const log = createScopedLogger('mdx-submission-gateway');
@@ -184,7 +192,7 @@ const transmitBody = z.object({
     .optional(),
 });
 
-router.post('/gateways/:region/:gateway/transmit', async (req: Request, res: Response) => {
+router.post('/gateways/:region/:gateway/transmit', requireEditorAccess, async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
   if (orgId === null) return orgRequired(res);
   const userId = getUserId(req);
@@ -259,11 +267,17 @@ router.post('/gateways/:region/:gateway/transmit', async (req: Request, res: Res
       // The bytes are with the agency either way; what a false here costs is
       // the baseline the NEXT sequence diffs against, so it is said, not implied.
       filedSequenceRecorded: outcome.filedSequenceRecorded,
+      filedSequenceReason: outcome.filedSequenceReason,
       ...(outcome.filedSequenceRecorded === false
         ? {
             filedSequenceWarning:
               'The transmission completed, but this sequence could not be added to the package filed history. ' +
-              'Record it manually before assembling the next sequence, which derives each leaf operation from that history.',
+              (outcome.filedSequenceReason === 'no-usable-manifest'
+                // Said plainly, because the next assembly will otherwise refuse
+                // with "file sequence 0000 first" — which the operator did.
+                ? 'Its bundle descriptor carries no readable leaf inventory (it was assembled before the inventory was recorded, or the stored one is malformed), ' +
+                  'so there is nothing to add. Re-assemble the package before the next sequence so it has a baseline to diff against.'
+                : 'Record it manually before assembling the next sequence, which derives each leaf operation from that history.'),
           }
         : {}),
       ...(outcome.contentAfterTransmit === 'drift' ? { contentWarning: CONTENT_CHANGED_DURING_TRANSMIT } : {}),
@@ -367,7 +381,7 @@ const rollbackBody = z.object({
     .optional(),
 });
 
-router.post('/gateways/transmittals/:id/rollback', async (req: Request, res: Response) => {
+router.post('/gateways/transmittals/:id/rollback', requireEditorAccess, async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
   if (orgId === null) return orgRequired(res);
   const userId = getUserId(req);
@@ -441,7 +455,7 @@ const findingBody = z.object({
   lineNumber:  z.number().int().nonnegative().optional().nullable(),
 });
 
-router.post('/gateways/transmittals/:id/findings', async (req: Request, res: Response) => {
+router.post('/gateways/transmittals/:id/findings', requireEditorAccess, async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
   if (orgId === null) return orgRequired(res);
   const id = Number(req.params.id);
@@ -481,7 +495,7 @@ const resolveBody = z.object({
   resolutionNote: z.string().max(2000).optional(),
 });
 
-router.patch('/gateways/findings/:findingId/resolve', async (req: Request, res: Response) => {
+router.patch('/gateways/findings/:findingId/resolve', requireEditorAccess, async (req: Request, res: Response) => {
   const orgId = getOrgId(req);
   if (orgId === null) return orgRequired(res);
   const id = Number(req.params.findingId);

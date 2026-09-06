@@ -32,8 +32,10 @@ import {
 } from './span-lineage.service';
 import {
   attributeQuotedSpans,
+  attributeAssertedParaphraseSpans,
   quotedCoverage,
   type RetrievedSource,
+  type ParaphraseAssertion,
 } from './source-attribution';
 
 export interface AuthorLineageRef {
@@ -88,13 +90,19 @@ export async function enforceAuthorLineage(
 }
 
 export interface SourceAndAuthorLineageResult {
-  /** Verified-quote source spans recorded (exceeds clause count when multi-sourced). */
+  /** Total cre_evidence_source spans recorded — quoted + paraphrased (exceeds
+   *  clause count when a clause is multi-sourced). */
   sourceSpans: number;
-  /** Author spans recorded for the non-quoted remainder. */
+  /** Verified-quote source spans (a checkable substring fact). */
+  quotedSpans: number;
+  /** Model-asserted paraphrase source spans (an assertion, not a verified fact). */
+  paraphrasedSpans: number;
+  /** Author spans recorded for the remainder (neither quoted nor paraphrased). */
   authorSpans: number;
-  /** Distinct cre_evidence_sources cited. */
+  /** Distinct cre_evidence_sources cited (across both quoted and paraphrased). */
   distinctSources: number;
-  /** Percent of non-whitespace content verifiably quoted from a source. */
+  /** Percent of non-whitespace content VERIFIABLY quoted from a source (quoted
+   *  only — paraphrase is a claim and is deliberately not counted as coverage). */
   coverage: number;
 }
 
@@ -103,13 +111,20 @@ export interface SourceAndAuthorLineageResult {
  * transaction — the automated-attribution counterpart of enforceAuthorLineage.
  *
  * Where enforceAuthorLineage attributes every clause to the author, this splits
- * the content: a clause whose text appears VERBATIM in one of the retrieved
- * `sources` is recorded as a verified `quoted` source span; every other clause is
- * recorded as an author assertion. The union covers the content, so
- * assertLineageCoversContent passes exactly as it does for pure author lineage —
- * and the source half is honest by construction (only checkable substring facts
- * are cited; text the model paraphrased or wrote itself falls to the author, never
- * to a guessed citation).
+ * the content three ways, in priority order:
+ *   1. a clause whose text appears VERBATIM in a retrieved source → verified
+ *      `quoted` source span (a checkable substring fact);
+ *   2. otherwise, a clause the model ASSERTED it derived from a retrieved source
+ *      (via `opts.assertions`) → `paraphrased` source span, recorded explicitly as
+ *      the model's claim, never as a verified quote, and only for a source that was
+ *      actually retrieved — a verified quote always wins over a claim about the
+ *      same characters;
+ *   3. everything else → an author assertion.
+ * The union covers the content, so assertLineageCoversContent passes exactly as it
+ * does for pure author lineage. The source half stays honest by construction:
+ * quotes are checkable, paraphrase is marked as an assertion, and nothing is
+ * attributed to a source the model was not given. With no `assertions` passed the
+ * paraphrase pass is empty and behavior is identical to the quote-only path.
  *
  * Both span kinds are REPLACED, not merely added: re-accepting a draft re-states
  * the whole set, so a quote or clause the new text no longer contains is retired
@@ -134,27 +149,51 @@ export async function enforceSourceAndAuthorLineage(
   content: string | null | undefined,
   actor: string,
   sources: RetrievedSource[],
-  opts: { minQuoteChars?: number } = {},
+  opts: { minQuoteChars?: number; assertions?: ParaphraseAssertion[] } = {},
 ): Promise<SourceAndAuthorLineageResult> {
   if (content == null || typeof content !== 'string' || content.length === 0) {
     // Nothing authored → retire whatever was previously attributed so the reads
     // stop answering for content that is gone, then no-op the gate.
     await replaceSourceSpans(orgId, ref, [], { createdBy: actor }, exec);
     await replaceAuthorSpans(orgId, ref, [], { assertedBy: actor, createdBy: actor }, exec);
-    return { sourceSpans: 0, authorSpans: 0, distinctSources: 0, coverage: 0 };
+    return {
+      sourceSpans: 0,
+      quotedSpans: 0,
+      paraphrasedSpans: 0,
+      authorSpans: 0,
+      distinctSources: 0,
+      coverage: 0,
+    };
   }
 
   // 1. Verified-quote spans — pure, deterministic, zero model trust. Clause
-  //    granularity matches author lineage so the two partition the same clauses.
+  //    granularity matches author lineage so the passes partition the same clauses.
   const quoted = attributeQuotedSpans(content, sources, {
     granularity: 'clause',
     minQuoteChars: opts.minQuoteChars,
     multiSource: true,
   });
+  const quotedRanges = new Set(quoted.map((s) => `${s.charStart}:${s.charEnd}`));
+
+  // 2. Model-asserted paraphrase spans for clauses the verified pass did NOT
+  //    claim. Recorded as 'paraphrased' (an assertion), never 'quoted', and only
+  //    for a source that was actually retrieved — a verified fact always wins over
+  //    a claim about the same characters (alreadyQuotedRanges enforces that).
+  const paraphrased = attributeAssertedParaphraseSpans(content, sources, opts.assertions ?? [], {
+    granularity: 'clause',
+    minQuoteChars: opts.minQuoteChars,
+    multiSource: true,
+    alreadyQuotedRanges: quotedRanges,
+  });
+
+  // 3. Both kinds are cre_evidence_source rows, so they persist as ONE set through
+  //    a single replaceSourceSpans call — that way the retire step keeps both and
+  //    does not treat the other usage's rows as stale.
+  const sourceSpans = [...quoted, ...paraphrased];
   await replaceSourceSpans(
     orgId,
     ref,
-    quoted.map((s) => ({
+    sourceSpans.map((s) => ({
       charStart: s.charStart,
       charEnd: s.charEnd,
       spanText: s.spanText,
@@ -165,25 +204,26 @@ export async function enforceSourceAndAuthorLineage(
     exec,
   );
 
-  // 2. Author spans for the remainder: every clause NOT covered by a verified
-  //    quote. attributeQuotedSpans attributes WHOLE clause spans, so a quoted
-  //    clause shares its (start,end) with a detected clause — range membership is
-  //    exact, and multi-sourced clauses (several quoted rows, one range) collapse
-  //    to a single excluded clause.
-  const quotedRanges = new Set(quoted.map((s) => `${s.charStart}:${s.charEnd}`));
+  // 4. Author spans for the true remainder: every clause attributed to neither a
+  //    verified quote nor a paraphrase assertion. Clause offsets are exact, so
+  //    range membership is exact.
+  const attributedRanges = new Set<string>(quotedRanges);
+  for (const s of paraphrased) attributedRanges.add(`${s.charStart}:${s.charEnd}`);
   const authorSpans = detectSpans(content, 'clause')
-    .filter((s) => !quotedRanges.has(`${s.charStart}:${s.charEnd}`))
+    .filter((s) => !attributedRanges.has(`${s.charStart}:${s.charEnd}`))
     .map((s) => ({ charStart: s.charStart, charEnd: s.charEnd, spanText: s.text }));
   await replaceAuthorSpans(orgId, ref, authorSpans, { assertedBy: actor, createdBy: actor }, exec);
 
-  // 3. Ask the database what it is about to commit. A gap throws and rolls the
+  // 5. Ask the database what it is about to commit. A gap throws and rolls the
   //    content write back with it.
   await assertLineageCoversContent(orgId, ref, content, exec);
 
   return {
-    sourceSpans: quoted.length,
+    sourceSpans: sourceSpans.length,
+    quotedSpans: quoted.length,
+    paraphrasedSpans: paraphrased.length,
     authorSpans: authorSpans.length,
-    distinctSources: new Set(quoted.map((s) => s.sourceId)).size,
+    distinctSources: new Set(sourceSpans.map((s) => s.sourceId)).size,
     coverage: quotedCoverage(content, quoted),
   };
 }

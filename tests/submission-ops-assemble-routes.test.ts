@@ -778,6 +778,81 @@ describe('POST /api/submission-ops/packages/:packageId/assemble', () => {
     });
   });
 
+  it('the descriptor and its validation describe the leaves that SHIPPED, not the ones the drop removed', async () => {
+    // The drop rebuilt only the packager's leaf list. leafCount, the empty
+    // section list and validateEctdLeafs all still ran over the pre-drop set,
+    // so the stored descriptor claimed leaves the zip does not contain — and
+    // the transmit gate blocked on findings about them.
+    dbState.pkg = lockedPkg();
+    dbState.sections = [
+      { id: 11, sectionKey: 'cover-letter', sectionLabel: 'Cover Letter', sortOrder: 0 },
+      { id: 13, sectionKey: '2.5', sectionLabel: 'Clinical Overview', sortOrder: 1 },
+      { id: 14, sectionKey: '3.2.P.1', sectionLabel: 'Description', sortOrder: 2 }, // no artifact → placeholder
+    ];
+    dbState.mappedByCall = [[art('cover', null)], [art('co', null, 2)], []];
+    expect((await post()).status).toBe(200);
+    expect(dbState.updateSet.metadata.bundle.leafCount).toBe(3);
+    expect(dbState.updateSet.metadata.bundle.emptyLeafCount).toBe(1);
+    const filed = filedFrom('0000');
+
+    // 0001: only the cover letter changed. The other two are byte-identical.
+    packageLeafBytesFn.mockClear();
+    (dbState as any)._pkgResolved = false;
+    dbState.pkg = lockedPkg({ regulatory: REGULATORY, filedSequences: [filed] });
+    dbState.sections = [
+      { id: 11, sectionKey: 'cover-letter', sectionLabel: 'Cover Letter', sortOrder: 0 },
+      { id: 13, sectionKey: '2.5', sectionLabel: 'Clinical Overview', sortOrder: 1 },
+      { id: 14, sectionKey: '3.2.P.1', sectionLabel: 'Description', sortOrder: 2 },
+    ];
+    dbState.mappedByCall = [[{ ...art('cover', null), content: 'revised' }], [art('co', null, 2)], []];
+    const res = await post({ sequence: '0001', submissionType: 'Efficacy Supplement' });
+    expect(res.status).toBe(200);
+    const stored = dbState.updateSet.metadata.bundle;
+    expect(stored.leafCount).toBe(1);                 // one leaf is in the zip
+    expect(stored.leafManifest).toHaveLength(1);
+    expect(res.body.data.bundle.leafCount).toBe(1);
+    // The unshipped placeholder is not an empty section OF THIS SEQUENCE.
+    expect(stored.emptyLeafCount).toBe(0);
+    // And nothing validation says names a leaf that is not in the bundle.
+    for (const f of stored.validation.findings as Array<{ message: string }>) {
+      expect(f.message, f.message).not.toMatch(/2-5|3-2-p-1/);
+    }
+  });
+
+  it('REFUSES a follow-up in which nothing changed rather than storing a leafless bundle as transmittable', async () => {
+    dbState.pkg = lockedPkg();
+    dbState.sections = [{ id: 11, sectionKey: 'cover-letter', sectionLabel: 'Cover Letter', sortOrder: 0 }];
+    dbState.mappedByCall = [[art('cover', null)]];
+    expect((await post()).status).toBe(200);
+    const filed = filedFrom('0000');
+    const before = dbState.updateSet.metadata.bundle;
+
+    packageLeafBytesFn.mockClear();
+    (dbState as any)._pkgResolved = false;
+    dbState.pkg = lockedPkg({ regulatory: REGULATORY, filedSequences: [filed] });
+    dbState.sections = [{ id: 11, sectionKey: 'cover-letter', sectionLabel: 'Cover Letter', sortOrder: 0 }];
+    dbState.mappedByCall = [[art('cover', null)]];
+    const res = await post({ sequence: '0001', submissionType: 'Efficacy Supplement' });
+    expect(res.status).toBe(409);
+    expect(res.body).toMatchObject({ code: 'NOTHING_TO_FILE', gate: 'sequence_lifecycle' });
+    expect(packageLeafBytesFn).not.toHaveBeenCalled();
+    // The bundle already on the package is untouched — a refusal is not a discard.
+    expect(dbState.updateSet.metadata.bundle).toEqual(before);
+  });
+
+  it('REFUSES a gap and a backfill: a sequence out of order is diffed against filings made after it', async () => {
+    const filedTwo = [FILED_0000, { ...FILED_0000, sequence: '0001' }];
+    for (const [sequence, expected] of [['0005', /the next is 0002/], ['0001', /already been transmitted/]] as const) {
+      (dbState as any)._pkgResolved = false;
+      dbState.pkg = lockedPkg({ foo: 'bar', regulatory: REGULATORY, filedSequences: filedTwo });
+      dbState.sections = [{ id: 11, sectionKey: 'cover-letter', sectionLabel: 'Cover Letter', sortOrder: 0 }];
+      dbState.mappedByCall = [[art('cover', null)]];
+      const res = await post({ sequence, submissionType: 'Efficacy Supplement' });
+      expect(res.status, sequence).toBe(409);
+      expect(res.body.error, sequence).toMatch(expected);
+    }
+  });
+
   it('stores the leaf manifest on the descriptor — the inventory the NEXT sequence diffs against', async () => {
     dbState.pkg = lockedPkg();
     dbState.sections = [{ id: 11, sectionKey: 'cover-letter', sectionLabel: 'Cover Letter', sortOrder: 0 }];

@@ -3564,8 +3564,9 @@ router.post('/sections/:sectionId/ai/draft', async (req: Request, res: Response)
             })
             .join('\n\n') +
           '\n--- END EVIDENCE ---\n\n' +
-          'When your content relies on evidence above, cite it inline using [SRC-n]. ' +
-          'Do NOT fabricate citations for evidence not provided.';
+          'Record which sources you used ONLY through the structured "attributions" ' +
+          'field requested below — do NOT put [SRC-n] markers in the drafted prose, ' +
+          'and never cite a source not shown above.';
         retrievalStatus = 'ok';
       } else {
         // Retrieval RAN and the corpus had nothing above threshold. Distinct
@@ -3599,6 +3600,11 @@ ${context ? `Context: ${context}` : ''}
 ${requirements ? `Requirements: ${requirements}` : ''}
 ${evidenceBlock}
 
+Return ONLY a JSON object of this exact shape:
+{"content": "<the drafted section as clean prose>", "attributions": [{"quote": "<a sentence copied verbatim from content>", "src": <the SRC number>}]}
+- "content" is the full section a reviewer reads — do NOT put [SRC-n] markers in it.
+- Add one "attributions" entry for each sentence you DERIVED from a provided [SRC-n] source: "quote" copied EXACTLY from "content", "src" the integer n.
+- Omit sentences that are your own analysis or not based on a provided source. Never cite a src not shown above.
 Provide detailed, compliance-ready content following ${region} guidelines.`;
 
         const gwResponse = await gw.route({
@@ -3606,10 +3612,44 @@ Provide detailed, compliance-ready content following ${region} guidelines.`;
           messages: [{ role: 'user', content: prompt }],
           maxTokens: 3000,
           temperature: 0.3,
+          // Structured envelope so the model can report which sentences it derived
+          // from which source (source-attribution Phase 4). On the default
+          // Anthropic provider jsonMode is prompt-instructed; the parse below is
+          // tolerant and degrades to plain prose so a malformed response can never
+          // break drafting.
+          jsonMode: true,
           callerModule: 'authoring-router/generate-draft',
         });
 
-        const generatedContent = gwResponse.content?.trim() || '';
+        // Parse the structured envelope tolerantly. On ANY shortfall, fall back to
+        // treating the whole response as the draft with no attributions — the draft
+        // still lands and is attributed by verified quotes + author lineage
+        // (Phase 3). Structured paraphrase is additive; it must never break drafting.
+        let generatedContent = '';
+        let modelAttributions: Array<{ quote: string; src: number }> = [];
+        {
+          const rawResponse = gwResponse.content?.trim() || '';
+          let parsed: any = null;
+          try {
+            const fenced = rawResponse.replace(/^```(?:json)?/i, '').replace(/```$/i, '').trim();
+            const start = fenced.indexOf('{');
+            const end = fenced.lastIndexOf('}');
+            if (start !== -1 && end > start) parsed = JSON.parse(fenced.slice(start, end + 1));
+          } catch {
+            parsed = null;
+          }
+          if (parsed && typeof parsed.content === 'string' && parsed.content.trim()) {
+            generatedContent = parsed.content.trim();
+            if (Array.isArray(parsed.attributions)) {
+              modelAttributions = parsed.attributions
+                .filter((a: any) => a && typeof a.quote === 'string' && Number.isInteger(Number(a.src)))
+                .map((a: any) => ({ quote: String(a.quote), src: Number(a.src) }));
+            }
+          } else {
+            // No usable structured content — treat the response as plain prose.
+            generatedContent = rawResponse;
+          }
+        }
         if (generatedContent) {
           // Park the draft + the sources it came from so the accept endpoint can
           // record verified span-level source lineage (Phase 3). Best-effort:
@@ -3642,6 +3682,21 @@ Provide detailed, compliance-ready content following ${region} guidelines.`;
                 title: c.title || null,
               }));
             attributableSources = new Set(candidateSources.map((s) => s.evidenceSourceId)).size;
+
+            // Resolve the model's [SRC-n] paraphrase claims to canonical source
+            // ids. SRC-n is the 1-based position in retrievedChunks (the order the
+            // evidence block showed the model); keep only a claim whose chunk
+            // resolved to a canonical cre_evidence_sources.id — an unresolved or
+            // out-of-range src is dropped, never guessed at. The accept gate
+            // re-checks each id is one that was retrieved before recording it.
+            const assertions = modelAttributions
+              .map((a) => {
+                const chunk = retrievedChunks[a.src - 1];
+                const esid = chunk && chunk.sourceId ? evidenceByRaw.get(chunk.sourceId) : undefined;
+                return esid && a.quote.trim() ? { quote: a.quote, sourceId: esid } : null;
+              })
+              .filter((x): x is { quote: string; sourceId: number } => x !== null);
+
             const { createDraftCandidate } = await import(
               '../services/clinical-regulatory-evidence/draft-candidate-store.js'
             );
@@ -3663,6 +3718,7 @@ Provide detailed, compliance-ready content following ${region} guidelines.`;
                 promptSha256: crypto.createHash('sha256').update(prompt).digest('hex'),
                 generatedAt: new Date().toISOString(),
               },
+              assertions,
             );
             draftId = candidate.id;
           } catch (attrErr: any) {
@@ -3943,6 +3999,11 @@ router.post('/sections/:sectionId/ai/draft/accept', async (req: Request, res: Re
         acceptedContent,
         actor,
         sources,
+        // The model's own paraphrase claims, parked at draft time with their
+        // source ids already resolved. The gate records each still-present,
+        // still-retrieved one as a usage='paraphrased' span — an assertion behind
+        // the verified-quote pass, never ahead of it.
+        { assertions: candidate.assertions },
       );
 
       /* AND THE ACCEPTED DRAFT REACHES THE FILING.

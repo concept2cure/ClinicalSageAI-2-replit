@@ -139,7 +139,13 @@ the FILED history and its fold — and delegates the diff itself to the canonica
 
 - **Filed means transmitted.** The history is appended by governed transmit when the
   gateway accepts the bytes, never at assembly. A bundle that was built and never sent is
-  not at the agency and must not be a baseline.
+  not at the agency and must not be a baseline. The append is shape-checked with the same
+  guard the reader applies, so an unreadable inventory is never persisted: it is reported
+  as `filedSequenceRecorded: false` with `filedSequenceReason: 'no-usable-manifest'`, and
+  the response says to re-assemble before the next sequence. A descriptor assembled before
+  the inventory existed is exactly this case. The governed `sign` row and its signature
+  manifest both record which sequence the signature filed and whether the history took it —
+  a lost baseline used to leave no durable trace beyond a server log.
 - **The baseline is a fold, not the last sequence.** A leaf untouched since 0000 is still
   compared to 0000, and `modified-file` points at the sequence folder that actually holds
   the version being superseded. A leaf whose last operation was `delete` has been
@@ -153,10 +159,13 @@ the FILED history and its fold — and delegates the diff itself to the canonica
 - **Absence is not withdrawal.** A leaf on file but missing from this assembly stays on
   file, unchanged and unmentioned.
 
-Four refusals answer 409 with a `code` and `gate: sequence_lifecycle`, in preference to a
+Six refusals answer 409 with a `code` and `gate: sequence_lifecycle`, in preference to a
 guess: `NO_PRIOR_SEQUENCE` (a follow-up on a package that has transmitted nothing),
-`SEQUENCE_ALREADY_FILED`, `SUBMISSION_TYPE_REQUIRED` (only 0000 is an original by
-definition) and `SUBMISSION_TYPE_UNKNOWN`. The last two carry
+`SEQUENCE_ALREADY_FILED`, `SEQUENCE_OUT_OF_ORDER` (the only ordering this knows is the
+sequence number, so a gap or a backfill would be diffed against filings made after it),
+`NOTHING_TO_FILE` (every leaf already on file, byte for byte — the zip would carry no leaf
+and consume a sequence number to say nothing), `SUBMISSION_TYPE_REQUIRED` (only 0000 is an
+original by definition) and `SUBMISSION_TYPE_UNKNOWN`. The last two carry
 `acceptedSubmissionTypes`: FDA files from a fixed vocabulary and 'amendment' is not in it,
 so the refusal names the terms that resolve rather than leaving the operator to guess —
 the value used to reach the packager and fail there with the reason discarded. EMA, PMDA

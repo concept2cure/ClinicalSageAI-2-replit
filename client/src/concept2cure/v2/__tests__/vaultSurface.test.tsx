@@ -344,3 +344,115 @@ describe('Vault — filing decisions are governed commits, not local patches', (
     expect(reads).toBe(before);
   });
 });
+
+/**
+ * Search.
+ *
+ * The surface had no search input at all — `q` existed and was driven ONLY by
+ * AnA's vault.search action, so the assistant could search this screen and the
+ * person looking at it could not. What filtering there was ran client-side over
+ * the rows the tree happened to deliver: it could not match document CONTENT,
+ * and it missed anything the read did not carry.
+ *
+ * The honesty case is the one that matters. A search that FAILED and a search
+ * that found nothing render the same screen unless the surface distinguishes
+ * them, and "no documents match your search" is the more believable of the two
+ * — which is exactly why it must not be shown for an error.
+ */
+describe('Vault — search', () => {
+  function mockSearch(searchResponse: () => Response) {
+    apiRequest.mockReset();
+    apiRequest.mockImplementation(async (method: string, url: string) => {
+      if (url.startsWith(`/api/c2c/project-vault/${PID}/search`)) return searchResponse();
+      if (url === `/api/c2c/project-vault/${PID}` && method === 'GET') return ok(vaultPayload());
+      return ok({});
+    });
+  }
+
+  it('renders a search input the human can actually use', async () => {
+    mockSearch(() => ok({ success: true, data: { query: '', total: 0, limit: 100, offset: 0, results: [] } }));
+    render(<Vault {...props()} />);
+    expect(await screen.findByLabelText('Search this vault')).toBeTruthy();
+  });
+
+  it('searches on the server and shows the hits, not a substring filter', async () => {
+    mockSearch(() =>
+      ok({
+        success: true,
+        data: {
+          query: 'shelf life',
+          total: 1,
+          limit: 100,
+          offset: 0,
+          results: [
+            {
+              id: DOC_ID,
+              title: 'Stability Report',
+              fileName: 'stability.pdf',
+              documentType: 'REPORT',
+              size: '1.0 MB',
+              folderId: 'module-3',
+              ctdSection: '3.2.P.8',
+              placementStatus: 'confirmed',
+              // A body match: this phrase is in no title anywhere in the tree,
+              // so a client-side substring filter could never have found it.
+              snippet: 'the <b>shelf life</b> was established at 24 months',
+            },
+          ],
+        },
+      }),
+    );
+    render(<Vault {...props()} />);
+    fireEvent.change(await screen.findByLabelText('Search this vault'), {
+      target: { value: 'shelf life' },
+    });
+
+    expect((await screen.findAllByText('Stability Report')).length).toBeGreaterThan(0);
+    // The ts_headline markers are stripped — a highlight arriving as literal
+    // markup would read as corruption.
+    await waitFor(() =>
+      expect(document.body.textContent).toContain('the shelf life was established at 24 months'),
+    );
+    expect(document.body.textContent).not.toContain('<b>');
+  });
+
+  it('reports a FAILED search as a failure, never as zero matches', async () => {
+    mockSearch(() => ({
+      ok: false,
+      status: 500,
+      json: async () => ({ success: false, error: 'SEARCH_FAILED', message: 'nothing was searched' }),
+    }) as Response);
+    render(<Vault {...props()} />);
+    fireEvent.change(await screen.findByLabelText('Search this vault'), {
+      target: { value: 'stability' },
+    });
+
+    await waitFor(() => expect(screen.getByRole('alert')).toBeTruthy());
+    expect(screen.getByRole('alert').textContent).toMatch(/not a result of zero matches/i);
+  });
+
+  it('says how many of the total are shown when the page is not all of them', async () => {
+    mockSearch(() =>
+      ok({
+        success: true,
+        data: {
+          query: 'x',
+          total: 340,
+          limit: 100,
+          offset: 0,
+          results: [
+            {
+              id: DOC_ID, title: 'One of many', fileName: 'a.pdf', documentType: 'REPORT',
+              size: null, folderId: null, ctdSection: null, placementStatus: 'confirmed', snippet: null,
+            },
+          ],
+        },
+      }),
+    );
+    render(<Vault {...props()} />);
+    fireEvent.change(await screen.findByLabelText('Search this vault'), { target: { value: 'x' } });
+    // "1 of 340" — implying the page is the whole result set is the failure this
+    // avoids.
+    await waitFor(() => expect(document.body.textContent).toContain('1 of 340'));
+  });
+});

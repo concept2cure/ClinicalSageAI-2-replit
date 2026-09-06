@@ -16,9 +16,11 @@
 import { describe, it, expect } from 'vitest';
 import {
   attributeQuotedSpans,
+  attributeAssertedParaphraseSpans,
   quotedCoverage,
   normalizeForMatch,
   type RetrievedSource,
+  type ParaphraseAssertion,
 } from '../source-attribution';
 
 const S1 = 'The primary endpoint was met at week twelve.';
@@ -204,5 +206,78 @@ describe('quotedCoverage — how much traces to a source', () => {
     ];
     const spans = attributeQuotedSpans(GENERATED, sources, { granularity: 'sentence' });
     expect(quotedCoverage(GENERATED, spans)).toBe(100);
+  });
+});
+
+describe('attributeAssertedParaphraseSpans — model claims, recorded honestly', () => {
+  // A source that does NOT contain S1 verbatim, so any attribution of S1 to it can
+  // only be the model's asserted derivation, never a verified quote.
+  const unrelated: RetrievedSource[] = [{ sourceId: 101, content: 'Wholly unrelated manufacturing controls narrative.' }];
+
+  it('records a clause the model asserts it derived, as usage=paraphrased', () => {
+    const assertions: ParaphraseAssertion[] = [{ quote: S1, sourceId: 101 }];
+    const spans = attributeAssertedParaphraseSpans(GENERATED, unrelated, assertions, { granularity: 'sentence' });
+    expect(spans).toHaveLength(1);
+    expect(spans[0].spanText).toBe(S1);
+    expect(spans[0].sourceId).toBe(101);
+    expect(spans[0].usage).toBe('paraphrased');
+  });
+
+  it('does not tag a clause the model never quoted back', () => {
+    // Only S1 is asserted; S2 is in the generated text but in no assertion.
+    const spans = attributeAssertedParaphraseSpans(GENERATED, unrelated, [{ quote: S1, sourceId: 101 }], {
+      granularity: 'sentence',
+    });
+    expect(spans.some((s) => s.spanText === S2)).toBe(false);
+  });
+
+  it('yields to a verified quote — a clause already quoted is left to the quote pass', () => {
+    const quoted = attributeQuotedSpans(GENERATED, [{ sourceId: 101, content: `Intro. ${S1} End.` }], {
+      granularity: 'sentence',
+    });
+    const alreadyQuotedRanges = new Set(quoted.map((s) => `${s.charStart}:${s.charEnd}`));
+    const spans = attributeAssertedParaphraseSpans(GENERATED, unrelated, [{ quote: S1, sourceId: 101 }], {
+      granularity: 'sentence',
+      alreadyQuotedRanges,
+    });
+    expect(spans.some((s) => s.spanText === S1)).toBe(false);
+  });
+
+  it('drops an assertion naming a source that was not retrieved', () => {
+    const spans = attributeAssertedParaphraseSpans(GENERATED, unrelated, [{ quote: S1, sourceId: 999 }], {
+      granularity: 'sentence',
+    });
+    expect(spans).toHaveLength(0);
+  });
+
+  it('declines a clause shorter than the length floor', () => {
+    const spans = attributeAssertedParaphraseSpans(GENERATED, unrelated, [{ quote: S1, sourceId: 101 }], {
+      granularity: 'sentence',
+      minQuoteChars: 500, // no clause is this long
+    });
+    expect(spans).toHaveLength(0);
+  });
+
+  it('records the same clause against every source the model claims (multiSource)', () => {
+    const sources: RetrievedSource[] = [
+      { sourceId: 101, content: 'a' },
+      { sourceId: 202, content: 'b' },
+    ];
+    const assertions: ParaphraseAssertion[] = [
+      { quote: S1, sourceId: 101 },
+      { quote: S1, sourceId: 202 },
+    ];
+    const spans = attributeAssertedParaphraseSpans(GENERATED, sources, assertions, { granularity: 'sentence' });
+    expect(spans.filter((s) => s.spanText === S1).map((s) => s.sourceId).sort()).toEqual([101, 202]);
+  });
+
+  it('returns nothing for empty assertions, and preserves the offset invariant', () => {
+    expect(attributeAssertedParaphraseSpans(GENERATED, unrelated, [], { granularity: 'sentence' })).toEqual([]);
+    const spans = attributeAssertedParaphraseSpans(GENERATED, unrelated, [{ quote: S1, sourceId: 101 }], {
+      granularity: 'sentence',
+    });
+    for (const s of spans) {
+      expect(GENERATED.slice(s.charStart, s.charEnd)).toBe(s.spanText);
+    }
   });
 });

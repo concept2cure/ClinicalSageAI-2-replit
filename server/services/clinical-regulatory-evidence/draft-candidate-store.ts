@@ -31,6 +31,7 @@
 
 import { pool } from '../../db';
 import type { Queryable } from './span-lineage.service';
+import type { ParaphraseAssertion } from './source-attribution';
 
 /** Default executor — the pool (its own transaction per statement). */
 const defaultExec: Queryable = pool as unknown as Queryable;
@@ -70,6 +71,11 @@ export interface DraftCandidate {
   /** null when the draft predates generator capture, or the route did not
    *  supply one — never a guess at the current default model. */
   generator: DraftGenerator | null;
+  /** The model's self-reported paraphrase claims ([{ quote, sourceId }]). Fed to
+   *  the accept gate, which records each still-present, still-resolvable claim as
+   *  a usage='paraphrased' span. Empty when the draft carried none (source-
+   *  attribution Phase 4). */
+  assertions: ParaphraseAssertion[];
 }
 
 /**
@@ -88,6 +94,7 @@ export async function createDraftCandidate(
   createdBy: string | null,
   exec: Queryable = defaultExec,
   generator: DraftGenerator | null = null,
+  assertions: ParaphraseAssertion[] = [],
 ): Promise<{ id: string; expiresAt: string }> {
   try {
     await exec.query(
@@ -101,8 +108,8 @@ export async function createDraftCandidate(
 
   const { rows } = await exec.query<{ id: string; expires_at: string }>(
     `INSERT INTO authoring_ai_draft_candidates
-       (section_id, organization_id, content, sources, created_by, generator, expires_at)
-     VALUES ($1, $2, $3, $4::jsonb, $5, $6::jsonb, NOW() + INTERVAL '2 hours')
+       (section_id, organization_id, content, sources, created_by, generator, assertions, expires_at)
+     VALUES ($1, $2, $3, $4::jsonb, $5, $6::jsonb, $7::jsonb, NOW() + INTERVAL '2 hours')
      RETURNING id, expires_at`,
     [
       sectionId,
@@ -111,6 +118,7 @@ export async function createDraftCandidate(
       JSON.stringify(sources ?? []),
       createdBy,
       generator ? JSON.stringify(generator) : null,
+      JSON.stringify(Array.isArray(assertions) ? assertions : []),
     ],
   );
   return { id: rows[0].id, expiresAt: String(rows[0].expires_at) };
@@ -135,10 +143,11 @@ export async function consumeDraftCandidate(
     sources: unknown;
     created_by: string | null;
     generator: unknown;
+    assertions: unknown;
   }>(
     `DELETE FROM authoring_ai_draft_candidates
       WHERE id = $1 AND organization_id = $2 AND section_id = $3 AND expires_at >= NOW()
-      RETURNING id, section_id, content, sources, created_by, generator`,
+      RETURNING id, section_id, content, sources, created_by, generator, assertions`,
     [draftId, orgId, sectionId],
   );
   if (rows.length === 0) return null;
@@ -176,6 +185,26 @@ export async function consumeDraftCandidate(
     };
   }
 
+  // Same tolerance as `sources`: usually parsed jsonb, possibly a string. Keep
+  // only well-formed claims — a non-empty quote string and a positive integer
+  // source id — so a malformed entry cannot smuggle an unresolved id into the
+  // accept gate (which itself re-checks the source is one that was retrieved).
+  const rawAssertions = Array.isArray(r.assertions)
+    ? r.assertions
+    : typeof r.assertions === 'string'
+      ? safeParseArray(r.assertions)
+      : [];
+  const assertions: ParaphraseAssertion[] = rawAssertions
+    .filter(
+      (a: any) =>
+        a &&
+        typeof a.quote === 'string' &&
+        a.quote.length > 0 &&
+        Number.isInteger(Number(a.sourceId)) &&
+        Number(a.sourceId) > 0,
+    )
+    .map((a: any) => ({ quote: a.quote as string, sourceId: Number(a.sourceId) }));
+
   return {
     id: r.id,
     sectionId: r.section_id,
@@ -183,6 +212,7 @@ export async function consumeDraftCandidate(
     sources,
     createdBy: r.created_by,
     generator,
+    assertions,
   };
 }
 

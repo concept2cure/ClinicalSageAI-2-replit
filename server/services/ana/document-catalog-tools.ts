@@ -49,6 +49,49 @@ const DISABLED_MESSAGE =
 
 type CatalogService = typeof import('../vault/document-catalog.service.js');
 
+/**
+ * A chat upload's file_id, as minted by the chat-upload route
+ * (`file_<epoch>_<rand>`). Vault documents are UUIDs, so the two id spaces are
+ * distinguishable on sight.
+ */
+const CHAT_UPLOAD_ID = /^file_[0-9]+_[a-z0-9]+$/i;
+
+/**
+ * The refusal for a document id the vault does not hold.
+ *
+ * "Not found" was the only answer here, and it was wrong in the one case that
+ * matters most: list_project_documents returns the org's chat uploads beside
+ * its vault documents, each with the file_id that reopens it, so the obvious
+ * next call carries an id these tools do not take. Answering that with
+ * absence — for a file we had just listed — is the failure this whole surface
+ * exists to prevent, and under the persona's client-files rule AnA would relay
+ * it to the client as "your document isn't there".
+ *
+ * So the two cases are told apart: an id shaped like a chat upload is in the
+ * wrong STORE (say which tool reads it), and anything else genuinely is not a
+ * vault document this organization holds.
+ */
+function unknownDocumentRefusal(documentId: string, toolName: string): string {
+  if (CHAT_UPLOAD_ID.test(documentId)) {
+    return JSON.stringify({
+      ok: false,
+      error:
+        `${documentId} is a chat-uploaded file, not a vault document, so ${toolName} cannot take it. ` +
+        'Read it with read_uploaded_document (or inspect_uploaded_document first, for a large one) using that same file_id. ' +
+        'The file exists — do not report it as missing. Durable catalog records live on vault documents; ' +
+        'to give this file one, it has to be ingested into the project vault first.',
+      idSpace: 'chat_upload',
+    });
+  }
+  return JSON.stringify({
+    ok: false,
+    error:
+      `No vault document with id ${documentId} is in your organization's programs. ` +
+      'Call list_project_documents to see what the project folder actually holds — vault documents carry UUID ids.',
+    idSpace: 'unknown',
+  });
+}
+
 /** Shared preamble: tenant present + feature on, else the honest refusal. */
 async function requireCatalog(
   ctx: ToolContext | undefined,
@@ -281,7 +324,7 @@ async function handleReadProjectDocument(
   }
   const doc = await svc.loadDocumentForOrg(documentId, orgId, { includeText: true });
   if (!doc) {
-    return JSON.stringify({ error: "Document not found in your organization's programs." });
+    return unknownDocumentRefusal(documentId, 'read_project_document');
   }
 
   const text = doc.extractedText ?? '';
@@ -360,6 +403,11 @@ async function handleCatalogProjectDocument(
 
   const parsed = parseCatalogInput(input);
   if ('error' in parsed) return JSON.stringify(parsed);
+  // Told apart before the round trip: a chat upload has no vault row, and the
+  // service's "not found" would read as absence for a file we just listed.
+  if (CHAT_UPLOAD_ID.test(parsed.documentId)) {
+    return unknownDocumentRefusal(parsed.documentId, 'catalog_project_document');
+  }
   const result = await svc.completeCatalog({
     ...parsed,
     organizationId: orgId,

@@ -139,11 +139,15 @@ describe('FDA backbone declares only a filing identity it was given', () => {
   it('the unresolved-submission-type refusal names terms that actually resolve', async () => {
     // A refusal that suggests a word the vocabulary does not hold sends the
     // operator round the same loop.
-    // `as Error` narrowed only the catch branch, so the awaited value stayed
-    // `Error | SubmissionBundle` and `.message` did not typecheck. Rejecting is
-    // the point of the case, so say so: a resolve is a failure of the test.
+    // `.catch(e => e as Error)` typed this as `Error | SubmissionBundle`, because
+    // the promise can also RESOLVE — which is both the TS2339 and a hole in the
+    // test: a pack that stopped rejecting would have reached the assertions with
+    // a bundle and failed on a confusing "undefined is not a string" instead of
+    // saying the refusal never happened. Rejecting is now asserted explicitly.
     const err = await pack({ submissionType: 'ind', sequence: '0001' }).then(
-      () => { throw new Error('expected pack() to reject an unresolved submission type'); },
+      () => {
+        throw new Error('expected pack() to reject an unresolved submission type, but it resolved');
+      },
       (e: unknown) => e as Error,
     );
     expect(err.message).toContain('Efficacy Supplement');

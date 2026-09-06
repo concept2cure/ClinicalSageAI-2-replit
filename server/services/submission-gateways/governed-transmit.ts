@@ -51,6 +51,7 @@ import type { GatewayName, GatewayTransmitResult, Region, SubmissionBundle } fro
 import { findActiveTransmittal } from './fda-esg';
 import { getBundle } from '../submission-bundle-storage';
 import { recordFiledSequence } from '../ectd/package-content-change';
+import { isFiledLeaf } from '../ectd/package-sequence-lifecycle';
 import {
   assessPackageContent,
   isCurrentContentFingerprint,
@@ -263,7 +264,18 @@ async function loadStoredBundle(
     contentFingerprint: isCurrentContentFingerprint(stored.contentFingerprint) ? stored.contentFingerprint : undefined,
     sequence: typeof stored.sequence === 'string' && /^\d{4}$/.test(stored.sequence) ? stored.sequence : undefined,
     submissionType: typeof stored.submissionType === 'string' ? stored.submissionType : undefined,
-    leafManifest: Array.isArray(stored.leafManifest) ? stored.leafManifest : undefined,
+    // Shape-checked with the SAME guard the reader applies, and dropped whole
+    // when any entry fails it. readFiledSequences drops a partial inventory
+    // because a prior state missing a leaf computes `new` for a document that
+    // is already on file — but that guard sat only on the READER. An
+    // unreadable manifest passed through here was written to the history,
+    // reported as recorded, and then silently dropped by the very guard meant
+    // to prevent it: the filing was at the agency and invisible to every
+    // subsequent diff. Dropping it here makes the loss visible instead.
+    leafManifest:
+      Array.isArray(stored.leafManifest) && stored.leafManifest.every(isFiledLeaf)
+        ? (stored.leafManifest as ResolvedBundle['leafManifest'])
+        : undefined,
   };
 }
 
@@ -344,9 +356,22 @@ export interface GovernedTransmitOutcome {
    * filed history. The bytes are with the agency either way; what is lost is
    * the baseline the NEXT sequence diffs against, so the caller must say so
    * rather than let a follow-up be planned against a stale history.
-   * 'not-applicable' for a bundle that files no eCTD sequence.
+   * 'not-applicable' ONLY for a bundle that files no eCTD sequence.
    */
   filedSequenceRecorded: boolean | 'not-applicable';
+  /**
+   * Why the filing was not recorded, when it was not. `'not-applicable'` used
+   * to cover two unrelated cases: a bundle that files no sequence, and an eCTD
+   * bundle whose descriptor carries no usable leaf inventory. The second is a
+   * lost baseline reported as a non-event — the filing reaches the agency, the
+   * history does not learn about it, and the NEXT assembly is refused with
+   * "file sequence 0000 first", which the operator did.
+   */
+  filedSequenceReason:
+    | 'recorded'
+    | 'no-sequence'          // not an eCTD sequence filing (or a dev/test client bundle)
+    | 'no-usable-manifest'   // an eCTD sequence whose leaf inventory is absent or unreadable
+    | 'write-failed';        // the append itself did not land
 }
 
 /** Operator wording for a content change that landed during the send. */
@@ -606,18 +631,32 @@ export async function executeGovernedTransmit(
   // of it — an audit outage must not also cost the lifecycle baseline. Never
   // throws: the transmit is irreversible and is not undone by a failure here.
   let filedSequenceRecorded: GovernedTransmitOutcome['filedSequenceRecorded'] = 'not-applicable';
-  if (input.packageId != null && !input.clientBundle && bundle.sequence && bundle.leafManifest) {
-    filedSequenceRecorded = await recordFiledSequence(input.packageId, {
-      sequence: bundle.sequence,
-      submissionType: bundle.submissionType ?? '',
-      sha256: bundle.sha256,
-      transmittalId: result.transmittalId ?? null,
-      leaves: bundle.leafManifest,
-    });
-    if (!filedSequenceRecorded) {
-      input.log?.error('transmit-filed-sequence-record-failed', {
+  let filedSequenceReason: GovernedTransmitOutcome['filedSequenceReason'] = 'no-sequence';
+  if (input.packageId != null && !input.clientBundle && bundle.sequence) {
+    if (!bundle.leafManifest?.length) {
+      // An eCTD sequence WITH no readable inventory is not a non-event: the
+      // filing is at the agency and the history will not know it happened.
+      // Reported as a failure so the caller can say so, where it used to stay
+      // 'not-applicable' and say nothing at all.
+      filedSequenceRecorded = false;
+      filedSequenceReason = 'no-usable-manifest';
+      input.log?.error('transmit-filed-sequence-no-manifest', {
         packageId: String(input.packageId), sequence: bundle.sequence, region, gateway,
       });
+    } else {
+      filedSequenceRecorded = await recordFiledSequence(input.packageId, {
+        sequence: bundle.sequence,
+        submissionType: bundle.submissionType ?? '',
+        sha256: bundle.sha256,
+        transmittalId: result.transmittalId ?? null,
+        leaves: bundle.leafManifest,
+      });
+      filedSequenceReason = filedSequenceRecorded ? 'recorded' : 'write-failed';
+      if (!filedSequenceRecorded) {
+        input.log?.error('transmit-filed-sequence-record-failed', {
+          packageId: String(input.packageId), sequence: bundle.sequence, region, gateway,
+        });
+      }
     }
   }
 
@@ -632,6 +671,18 @@ export async function executeGovernedTransmit(
     try {
       await client.query('BEGIN');
       const signedTarget = `submission:${input.packageId ?? input.programId ?? `transmittal-${result.transmittalId}`}`;
+      /* WHAT was filed, alongside who signed for it. Without these the ledger
+         records that a bundle was transmitted but not which eCTD sequence it
+         filed, so an auditor reconstructing the lifecycle from the signatures
+         cannot — and a lost baseline (filedSequenceRecorded false) left no
+         durable trace at all beyond a server log and one field in an HTTP
+         response the operator may never have seen. */
+      const filedSequenceFacts = {
+        sequence: bundle.sequence ?? null,
+        submissionType: bundle.submissionType ?? null,
+        filedSequenceRecorded,
+        filedSequenceReason,
+      };
       const signPayload = {
           meaning: input.meaning,
           region,
@@ -639,6 +690,7 @@ export async function executeGovernedTransmit(
           bundleSha256: bundle.sha256,
           transmittalId: result.transmittalId,
           transmissionId: result.transmissionId ?? null,
+          ...filedSequenceFacts,
       };
       const recorded = await recordGovernedAction(client, {
         orgId: organizationId,
@@ -661,6 +713,7 @@ export async function executeGovernedTransmit(
           contentFingerprint: provenAgainst
             ? { assembled: provenAgainst.assembled, atTransmit: provenAgainst.atTransmit, afterTransmit: contentAfterTransmit }
             : null,
+          ...filedSequenceFacts,
         },
         domain: 'mdx',
         surface: input.surface ?? 'submission-gateway',
@@ -688,6 +741,10 @@ export async function executeGovernedTransmit(
           basis: BINDING_BASIS.TRANSMITTED_BUNDLE_SHA256,
           note: `sha256 of the ${bundle.sizeBytes}-byte bundle handed to ${region}/${gateway}; verified against the staged bytes before transport.`,
         },
+        // In the attributed record itself, not only in the digest it is bound
+        // to: the manifest is what an auditor reads, and "which eCTD sequence
+        // did this signature file" is not answerable from a hash.
+        extraManifest: filedSequenceFacts,
         manifestKind: 'governed-transmit',
       });
       await client.query('COMMIT');
@@ -712,5 +769,6 @@ export async function executeGovernedTransmit(
     ledgerWriteFailed,
     contentAfterTransmit,
     filedSequenceRecorded,
+    filedSequenceReason,
   };
 }

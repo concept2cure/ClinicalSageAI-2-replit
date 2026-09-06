@@ -29,7 +29,7 @@
 .c2c-v2 .cc-loop{ background:var(--bg-000); border:1px solid var(--border); border-radius:14px; padding:20px 22px; margin-bottom:8px; }
 .c2c-v2 .cc-loop-track{ display:flex; align-items:flex-start; }
 .c2c-v2 .cc-loop-node{ display:flex; flex-direction:column; align-items:center; gap:7px; width:88px; flex-shrink:0; text-align:center; }
-.c2c-v2 .cc-loop-dot{ width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:650; background:var(--bg-000); border:2px solid var(--border-strong); color:var(--text-400); z-index:1; transition:all var(--dur,.2s); }
+.c2c-v2 .cc-loop-dot{ width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:650; background:var(--bg-000); border:2px solid var(--border-strong); color:var(--text-400); z-index:1; transition:background var(--dur,.2s), border-color var(--dur,.2s), box-shadow var(--dur,.2s), color var(--dur,.2s); }
 .c2c-v2 .cc-loop-node.done .cc-loop-dot{ background:var(--success); border-color:var(--success); color:#fff; }
 .c2c-v2 .cc-loop-node.done .cc-loop-dot svg{ width:14px; height:14px; }
 .c2c-v2 .cc-loop-node.cur .cc-loop-dot{ background:var(--accent-100); border-color:var(--accent-100); color:#fff; box-shadow:0 0 0 4px var(--accent-000); }
@@ -81,7 +81,7 @@
 /* ── Agency inbox ── */
 .c2c-v2 .cc-inbox-head{ display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; }
 .c2c-v2 .cc-owner{ display:inline-flex; background:var(--bg-100); border-radius:8px; padding:2px; }
-.c2c-v2 .cc-owner-b{ font-size:12px; font-weight:550; color:var(--text-300); background:transparent; border:0; padding:5px 12px; border-radius:6px; cursor:pointer; transition:all var(--dur,.2s); }
+.c2c-v2 .cc-owner-b{ font-size:12px; font-weight:550; color:var(--text-300); background:transparent; border:0; padding:5px 12px; border-radius:6px; cursor:pointer; transition:background var(--dur,.2s), box-shadow var(--dur,.2s), color var(--dur,.2s); }
 .c2c-v2 .cc-owner-b.on{ background:var(--bg-000); color:var(--text-100); box-shadow:0 1px 2px rgba(20,20,19,.05); }
 .c2c-v2 .cc-comms{ display:flex; flex-direction:column; gap:8px; }
 .c2c-v2 .cc-comm{ display:flex; gap:12px; background:var(--bg-000); border:1px solid var(--border); border-radius:12px; padding:14px 16px; transition:border-color var(--dur,.2s); }

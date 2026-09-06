@@ -2154,6 +2154,12 @@ router.post('/packages/:packageId/assemble', async (req: Request, res: Response)
     // below; they are what makes a follow-up sequence packageable at all.
     const ctdLeaves: Array<{
       ctdSection: string; fileName: string; bytes: Buffer; title: string;
+      // The leaf's path in `leafs`, so that when the lifecycle drops a leaf as
+      // unchanged the same leaf can be dropped from the set validation, the
+      // leaf count and the empty-section list are computed over. They used to
+      // describe the pre-drop set, so the descriptor and the transmit gate both
+      // described a package the bytes were not.
+      modulePath: string;
       operation?: LeafBytes['operation']; modifiedFile?: string;
     }> = [];
     // Placement findings (unplaced / disagreement), merged into the validation
@@ -2356,7 +2362,7 @@ router.post('/packages/:packageId/assemble', async (req: Request, res: Response)
           markdown,
           contentModifiedAt: sectionContentAt(artifact ? [artifact] : []),
         });
-        ctdLeaves.push({ ctdSection: placement.code, fileName, bytes, title });
+        ctdLeaves.push({ ctdSection: placement.code, fileName, bytes, title, modulePath });
         leafs.push({ path: modulePath, mediaType: 'application/pdf', content: bytes });
         if (shipKey) shippedArtifacts.set(shipKey, sectionLabel);
       }
@@ -2416,6 +2422,22 @@ router.post('/packages/:packageId/assemble', async (req: Request, res: Response)
         const plan = planByKey.get(`${l.ctdSection}/${l.fileName}`);
         if (!plan) continue; // unchanged since the last filing
         kept.push({ ...l, operation: plan.operation as any, ...(plan.modifiedFile ? { modifiedFile: plan.modifiedFile } : {}) });
+      }
+      // The drop applies to EVERYTHING computed over the leaf set, not just to
+      // what reaches the packager. `leafs` is the set validation runs on and the
+      // set leafCount reports; leaving it whole meant the descriptor claimed
+      // leaves the zip does not contain and the transmit gate blocked on
+      // findings about them.
+      const keptPaths = new Set(kept.map((l) => l.modulePath));
+      const droppedLeafs = leafs.filter((l) => !keptPaths.has(l.path));
+      if (droppedLeafs.length > 0) {
+        const survivors = leafs.filter((l) => keptPaths.has(l.path));
+        leafs.length = 0;
+        leafs.push(...survivors);
+        const keptEmpty = emptyLeafPaths.filter((p) => keptPaths.has(p));
+        emptyLeafPaths.length = 0;
+        emptyLeafPaths.push(...keptEmpty);
+        emptyLeafCount = keptEmpty.length;
       }
       ctdLeaves.length = 0;
       ctdLeaves.push(...kept);

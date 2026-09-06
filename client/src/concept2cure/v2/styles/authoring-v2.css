@@ -514,7 +514,7 @@
     font-family: var(--font-sans);
     opacity: 0;
     transform: translateY(4px);
-    transition: all 180ms var(--ease);
+    transition: opacity 180ms var(--ease), transform 180ms var(--ease);
     pointer-events: none;
     box-shadow: var(--shadow-lg);
     z-index: 5;
