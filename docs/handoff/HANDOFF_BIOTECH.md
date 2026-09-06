@@ -599,6 +599,20 @@ recorded shelf-life fit. It now reports `{ points, unreadable }`; the conclusion
 names unread payloads in every branch, the signal cannot reach 'pass' while one
 is unreadable, and the shelf-life fit refuses with its own reason.
 
+### Seventeenth — the RIM renewal schedule's coverage (2026-09-06)
+
+`Registrations` → Renewals & variations listed the registrations carrying a
+renewal-due date and dropped the rest silently, so a grid where one of three is
+dated read as a complete renewal plan. The tab now names the count it cannot
+place, and the surface context publishes `registrationsWithRenewalDate` /
+`registrationsWithoutRenewalDate` beside `soonestRenewal`, with the summary
+qualifying the soonest as "of the N with a recorded renewal date" and stating
+that what lapses first is not established while any registration lacks one.
+
+Verified and unchanged on that surface: the grid's failed-read vs empty-read
+distinction, the per-row lazy dossier read, and the data-standards chips'
+shipped / not_integrated states.
+
 ### Note for the concurrent device stream
 
 On 2026-09-04, at JM's direct instruction to complete the biotech/pharma workflow
@@ -850,6 +864,7 @@ If neither has happened: report the blockage, name what is needed, and stop.
 | 2026-09-05 | A | Fourteenth — IND filing transmittal pair; eSTAR + IND form PDFs proven | eSTAR fill verified end to end against the vendored FDA template (20/20 fields read back, encrypted incremental update); 1571/1572/3674/356h fill officially; every filed IND sequence now carries the m1.1 Form 1571 + m1.2 cover letter its own validator requires, and names the placements still awaiting bytes — revert-proven | §1 above |
 | 2026-09-05 | A | Fifteenth — the IND 30-day clock | A clock projected from the program's target submission date no longer shows a cleared-to-proceed chip, prints "clinical investigations may proceed", or publishes safeToProceed true to AnA; basis is named and safeToProceed is unknown — revert-proven; the ack-type decision recorded | §1 above |
 | 2026-09-05 | A | Sixteenth — PV seriousness + Module 3 stability readability | An unassessed adverse event no longer reports itself as not serious / no expedited clock (determination unchanged, reason honest, three-state chip); an unreadable stability payload is no longer counted as a study that recorded nothing — both revert-proven | §1 above |
+| 2026-09-06 | A | Seventeenth — RIM renewal-schedule coverage | The renewals tab and the surface context name the registrations that carry no renewal-due date, so "what lapses first" is not answered from a filtered subset — revert-proven | §1 above |
 | | | | | |
 
 **Rule:** the last row with an empty "What was proven" cell is the open work.
