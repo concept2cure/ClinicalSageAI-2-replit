@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-06T09:53:18.708Z",
+  "generatedAt": "2026-09-06T21:41:05.804Z",
   "git": {
-    "sha": "6a89c1dded5118ca2c7c3f183b806b38a06d9839",
+    "sha": "a6fd1038cc22417ee240051b73b59e245c3bd7b5",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -1985,7 +1985,7 @@
       },
       {
         "file": "shared/schema.ts",
-        "bytes": 855958
+        "bytes": 856859
       },
       {
         "file": "server/services/ind/ctd/authoring-guidance.ts",
@@ -2021,7 +2021,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
-        "bytes": 168500
+        "bytes": 175238
       },
       {
         "file": "server/routes/authoring-actions.ts",
@@ -2029,7 +2029,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
-        "bytes": 153173
+        "bytes": 153155
       },
       {
         "file": "server/services/regulatory-strategy/regulatory-strategy-knowledge.ts",
@@ -2057,7 +2057,7 @@
       },
       {
         "file": "server/services/mutagenic-impurity/mutagenic-impurity-knowledge.ts",
-        "bytes": 133020
+        "bytes": 133370
       },
       {
         "file": "server/services/cmc-quality/cmc-quality-knowledge.ts",
@@ -2112,6 +2112,10 @@
         "bytes": 112601
       },
       {
+        "file": "client/src/concept2cure/v2/surfaces/cmcRegisterForms.ts",
+        "bytes": 112142
+      },
+      {
         "file": "server/services/__tests__/cmcWriteThroughMappers.test.ts",
         "bytes": 110971
       },
@@ -2122,10 +2126,6 @@
       {
         "file": "server/services/rwe/rwe-methodology-knowledge.ts",
         "bytes": 109447
-      },
-      {
-        "file": "client/src/concept2cure/v2/surfaces/cmcRegisterForms.ts",
-        "bytes": 109215
       },
       {
         "file": "shared/regulatory/project-bootstrap.ts",
@@ -2143,7 +2143,7 @@
     "largeFilesByLines": [
       {
         "file": "shared/schema.ts",
-        "lines": 20155
+        "lines": 20166
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
@@ -2214,16 +2214,16 @@
         "lines": 3116
       },
       {
+        "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
+        "lines": 3077
+      },
+      {
         "file": "server/services/regulatory-strategy/regulatory-strategy-knowledge.ts",
         "lines": 3067
       },
       {
         "file": "server/routes/concept2cure.ts",
         "lines": 3007
-      },
-      {
-        "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
-        "lines": 2967
       },
       {
         "file": "server/src/routes/stability.router.ts",
@@ -2275,7 +2275,7 @@
       },
       {
         "file": "server/services/mutagenic-impurity/mutagenic-impurity-knowledge.ts",
-        "lines": 2340
+        "lines": 2345
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/bla-submission.ts",
@@ -2358,6 +2358,10 @@
         "lines": 2002
       },
       {
+        "file": "client/src/concept2cure/v2/surfaces/cmcRegisterForms.ts",
+        "lines": 1950
+      },
+      {
         "file": "server/services/gcp-operations/gcp-operations-knowledge.ts",
         "lines": 1927
       },
@@ -2366,20 +2370,16 @@
         "lines": 1924
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/cmcRegisterForms.ts",
-        "lines": 1920
-      },
-      {
         "file": "server/services/ana-ri/orchestrator.ts",
         "lines": 1917
       },
       {
-        "file": "server/routes/regulatory-digital-twin.ts",
-        "lines": 1898
+        "file": "client/src/concept2cure/v2/surfaces/cmcRegisters.tsx",
+        "lines": 1910
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/cmcRegisters.tsx",
-        "lines": 1890
+        "file": "server/routes/regulatory-digital-twin.ts",
+        "lines": 1898
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/device-510k.ts",

@@ -1840,6 +1840,7 @@ export const C2C_MIGRATION_FILES = [
   // db/migrations/20260902_cmc_impurity_dissolution_registers.sql, which
   // creates the table.
   'db/migrations/20260903_cmc_impurity_route_of_administration.sql',
+  'db/migrations/20260906_cmc_impurity_m7_inputs.sql',
 
   // ── Drop the audit-shaped tables that survived a from-scratch liveness
   //    re-check (ledger L13; docs/AUDIT_STORE_INVENTORY_2026-08.md §5.1) ─────

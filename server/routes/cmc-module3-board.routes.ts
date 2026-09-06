@@ -38,6 +38,7 @@ import { Router, type Request, type Response } from 'express';
 import { query as q } from '../db.js';
 import { getSecureOrgId } from '../utils/tenantContext.js';
 import { createScopedLogger } from '../utils/logger.js';
+import { readCompiledRecord } from '../services/cmc/compiled-record.js';
 
 const logger = createScopedLogger('cmc-module3-board');
 
@@ -99,6 +100,10 @@ interface SectionRow {
   key: string;
   path: string;
   st: 'approved' | 'review' | 'draft';
+  /** The compiler's own score for the section; null when it never scored it. */
+  completeness: number | null;
+  /** The required inputs the compiler found missing — what an approval would sign over. */
+  missingInputs: string[];
 }
 
 /** Resolve the JWT-derived org id as the integer tenant_id / organization_id, or null. */
@@ -378,7 +383,7 @@ async function buildSections(
   try {
     const rows = (
       await q(
-        `select section_key, section_path, approval_state
+        `select section_key, section_path, approval_state, deterministic_json
            from cmc_module3_sections
           where organization_id = $1 and project_id = $2
           order by section_key`,
@@ -388,13 +393,23 @@ async function buildSections(
       section_key: string;
       section_path: string | null;
       approval_state: string | null;
+      deterministic_json: unknown;
     }>;
     return {
-      rows: rows.map((r) => ({
-        key: r.section_key,
-        path: r.section_path ?? '',
-        st: mapApprovalState(r.approval_state),
-      })),
+      /* completeness / missingInputs are read by the same rule the approve
+         route and the export gate apply, so the Overview shows the signer
+         exactly what those two will refuse. Found live: 21/21 approved, three
+         at 0%, and no completeness anywhere on the table. */
+      rows: rows.map((r) => {
+        const record = readCompiledRecord(r);
+        return {
+          key: r.section_key,
+          path: r.section_path ?? '',
+          st: mapApprovalState(r.approval_state),
+          completeness: record.completeness,
+          missingInputs: record.missingInputs,
+        };
+      }),
       provisioned: true,
       unreadable: false,
     };

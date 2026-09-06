@@ -24,6 +24,10 @@
 import { getPool } from '../../db';
 import { canFinalizeExport } from '../cmc-module3-compiler';
 import { buildCanonicalGovernedState } from '../governed-ana-execution.js';
+/* One definition of "complete" — shared with the section-approve route, the
+   section listing and the board, so an approval can never accept what this
+   gate will refuse. */
+import { compiledRecordIsComplete, parsedDeterministicJson } from './compiled-record';
 
 export interface Module3GovernedState {
   totalSections: number;
@@ -57,37 +61,6 @@ export interface FinalExportGateVerdict {
   /** Present when refused — the reason, exactly as the guard endpoint words it. */
   error?: string;
   data: Module3GovernedState;
-}
-
-/**
- * The compiler's own record of a section, stored in `deterministic_json` at
- * compile time. `deterministic_json` may arrive as a string (raw driver rows)
- * or already parsed (pooled/mocked clients); both are read the same way, and
- * anything unreadable is treated as "nothing established" — never as complete.
- */
-function parsedDeterministicJson(row: any): Record<string, unknown> {
-  const raw = row.deterministic_json ?? row.deterministicJson;
-  if (raw && typeof raw === 'object') return raw as Record<string, unknown>;
-  if (typeof raw === 'string') {
-    try {
-      return JSON.parse(raw);
-    } catch {
-      return {};
-    }
-  }
-  return {};
-}
-
-/**
- * A section's compiled record is complete only when the compiler scored it at
- * exactly 100 AND left no required input named missing. A record with no
- * completeness figure at all was never compiled through the composer and
- * cannot be called complete.
- */
-function compiledRecordIsComplete(json: Record<string, unknown>): boolean {
-  const completeness = typeof json.completeness === 'number' ? json.completeness : null;
-  const missing = Array.isArray(json.missingInputs) ? json.missingInputs : [];
-  return completeness === 100 && missing.length === 0;
 }
 
 /**

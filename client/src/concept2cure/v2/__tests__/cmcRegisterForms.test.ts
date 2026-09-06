@@ -931,3 +931,35 @@ describe('manufacturingProcessPatch — the round trip preserves what it cannot 
     ]);
   });
 });
+
+/* ── Impurity register: ICH M7 inputs round-trip ──────────────────────────── */
+import { impurityProfileBody, impurityProfilePatch, impurityProfileForm } from '../surfaces/cmcRegisterForms';
+
+describe('impurity register — the ICH M7 inputs are carried, never defaulted', () => {
+  const base = { impurityName: 'NDMA', materialName: 'BX-204', scope: 'drug_substance', impurityType: 'mutagenic', levelUnit: 'ppm', status: 'draft' };
+
+  it('sends the M7 inputs when recorded and omits them when blank', () => {
+    const withM7 = impurityProfileBody({ ...base, amesResult: 'positive', structuralAlert: 'yes', treatmentDuration: 'lifetime', cohortOfConcern: 'CoC_nitrosamine' }, 'p1');
+    expect(withM7).toMatchObject({ amesResult: 'positive', structuralAlert: 'yes', treatmentDuration: 'lifetime', cohortOfConcern: 'CoC_nitrosamine' });
+    const blank = impurityProfileBody(base, 'p1');
+    for (const k of ['amesResult', 'structuralAlert', 'carcinogenicityData', 'treatmentDuration', 'cohortOfConcern']) {
+      expect(blank, k).not.toHaveProperty(k);
+    }
+  });
+
+  it('clears an M7 input explicitly on update, rather than leaving a stale value', () => {
+    const patch = impurityProfilePatch({ ...base, amesResult: '' });
+    expect(patch.amesResult).toBeNull();
+    expect(patch.cohortOfConcern).toBeNull();
+  });
+
+  it('offers no default for any M7 input — blank is the first option', () => {
+    const fields = impurityProfileForm(null).fields;
+    for (const k of ['amesResult', 'structuralAlert', 'carcinogenicityData', 'treatmentDuration', 'cohortOfConcern']) {
+      const f = fields.find((x) => x.key === k);
+      expect(f, k).toBeTruthy();
+      expect(f?.default, k).toBe('');
+      expect((f as { options?: string[] }).options?.[0], k).toBe('');
+    }
+  });
+});
