@@ -1868,6 +1868,17 @@ export const C2C_MIGRATION_FILES = [
   // so nobody reads the column as isolation it does not provide.
   'migrations/20260905_vault_documents_organization_id.sql',
 
+  // Full-text index over vault.documents, plus the one named definition of "the
+  // searchable text of a vault document" that the search route must match
+  // character-for-character to use it. Ordered after the organization_id file
+  // only for readability — it depends on nothing that file adds.
+  'migrations/20260906_vault_documents_fulltext.sql',
+
+  // Legal holds. Lands while the retention sweep is still inert (nothing writes
+  // retention_until), which is the point: the guard has to exist before the
+  // clock starts, not after the first record is destroyed.
+  'migrations/20260906b_vault_legal_holds.sql',
+
   // The three IVDR append-only history tables carry no tenant column of their
   // own — their tenant is their parent's, reached by foreign key — so BOTH
   // sweeps below are blind to them: the integer sweep matches on

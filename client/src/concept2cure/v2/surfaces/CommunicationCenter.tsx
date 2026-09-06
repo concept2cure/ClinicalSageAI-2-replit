@@ -844,6 +844,7 @@ export function CommunicationCenter({ onAsk, onNav }: SurfaceViewProps) {
                   </span>
                   <button
                     className="cc-btn sm"
+                    aria-label="Ask AnA about this interaction"
                     onClick={() =>
                       onAsk(
                         'Summarize the ' +
@@ -900,6 +901,7 @@ export function CommunicationCenter({ onAsk, onNav }: SurfaceViewProps) {
                   </span>
                   <button
                     className="cc-btn sm"
+                    aria-label="Ask AnA about this commitment"
                     onClick={() =>
                       onAsk(
                         'What is needed to fulfill this ' +

@@ -40,9 +40,39 @@ entries" table below — enforced by `scripts/ci/check-baseline-justifications.m
 
 ## Justified entries (remain in baseline)
 
-_None — the baseline is empty as of 2026-08-07._ Every previously-justified
-entry is now dispositioned inline (grep `tenant-isolation-safe:`) or via the
-file allowlist; see the 2026-08-07 Resolved subsection for the per-file mapping.
+### 2026-09-06 — the optional-tenant-predicate rule, and what it surfaced
+
+`check-tenant-isolation.mjs` gained a rule for a shape it used to accept:
+
+```sql
+WHERE ($1::INT IS NULL OR org_id = $1)
+```
+
+The old test asked only whether a statement MENTIONED a tenant column, and this
+one does — which is why it read as safe. It is TRUE whenever the parameter is
+null, so the predicate is optional and the caller decides. That is how
+`clinical-operations-routes.ts` came to serve every organization's studies,
+sites, enrollment, monitoring visits and protocol deviations to a request with
+no tenant on it, across fifteen query sites, while this gate reported nothing.
+
+Running the corrected rule took the baseline from 2 to 12. **These entries are
+frozen, not blessed.** Each is a deliberate optional-org affordance whose own
+author documented it; none has been re-argued from scratch here, and each is
+listed with its owner so it can be. The value delivered today is that no NEW
+escape can be added silently.
+
+| File | Entries | What the null case means, per the code | Disposition |
+|---|---|---|---|
+| `server/services/kernel-observability.ts` | 4 | Aggregate `COUNT`/`AVG` over `ai_kernel_decision_records`; a null org is the platform-wide observability roll-up. | Frozen. Aggregates, not row reads — but the roll-up should say whether it is platform-wide or one tenant's. Kernel stream. |
+| `server/services/ana-ri/context-enrichment.ts` | 4 | Reads `project_memory_entries` for AnA context. The comment says a null `$2` is for "legacy paths without org context" and "preserves prior behavior exactly". Still bounded by `project_id = $1`. | Frozen. The strongest candidate to fix: it feeds a model's answer, and `orgId` is an optional parameter that every route caller could be made to supply. AnA stream. |
+| `server/services/deep-research-orchestrator.ts` | 1 | `getJobStatus`; its comment states org is "optional only for internal callers that just created the job" and that "Route handlers MUST pass the authenticated org". | Frozen. The MUST is a convention, not enforcement — a required parameter would make it one. Research stream. |
+| `server/services/kernel-adaptive-policy.ts` | 1 | Policy read with the same optional-org shape. | Frozen. Kernel stream. |
+| `server/routes/admin/licensing-history.ts` | 1 | Platform-admin licensing history; mounted inside the router guarded by `requirePlatformAdmin`, and the null is an explicit cross-tenant display filter. | Frozen — genuinely authorized. `admin/master-admin.ts`, the same pattern, is already in `ALLOWLIST_FILES`; this file arguably belongs there too rather than in the baseline. |
+| `server/services/advancedRAGPipeline.ts` | 1 | Pre-existing entry, unrelated to this rule (a raw `rag_chunks` join with no tenant column mentioned at all). | Frozen, pre-dates this change. |
+
+Every previously-justified entry from before this date is dispositioned inline
+(grep `tenant-isolation-safe:`) or via the file allowlist; see the 2026-08-07
+Resolved subsection for the per-file mapping.
 
 ## Resolved (no longer in baseline)
 
