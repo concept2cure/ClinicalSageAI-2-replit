@@ -79,7 +79,7 @@ function unknownDocumentRefusal(documentId: string, toolName: string): string {
         `${documentId} is a chat-uploaded file, not a vault document, so ${toolName} cannot take it. ` +
         'Read it with read_uploaded_document (or inspect_uploaded_document first, for a large one) using that same file_id. ' +
         'The file exists — do not report it as missing. Durable catalog records live on vault documents; ' +
-        'to give this file one, it has to be ingested into the project vault first.',
+        'file_chat_upload_to_vault files this one into the project vault so it gains one.',
       idSpace: 'chat_upload',
     });
   }
@@ -481,6 +481,139 @@ async function handleSearchProjectDocuments(
   }
 }
 
+
+/**
+ * File a chat upload into the project vault, through the SAME governed ingest
+ * the Vault surface uses (ingestVaultDocument) — never a second admission path.
+ *
+ * This is the affordance the id-space refusal above points at: a chat upload
+ * has no vault row, so it can be reopened but never cataloged, chunked or
+ * searched. Filing it gives it all three. The refusal named the action before
+ * anything could perform it, which is its own kind of dishonesty.
+ */
+interface FilingInput {
+  fileId: string;
+  documentTitle: string;
+  documentType: string;
+  documentCode?: string;
+  folderId?: string;
+  programId: string | null;
+}
+
+/** Validate the filing inputs; a miss is a structured refusal, not a throw. */
+function parseFilingInput(input: Record<string, unknown>): FilingInput | { error: string } {
+  const str = (v: unknown): string => (typeof v === 'string' ? v.trim() : '');
+  const fileId = str(input.file_id);
+  const documentTitle = str(input.document_title);
+  const documentType = str(input.document_type);
+  if (!fileId || !documentTitle || !documentType) {
+    return { error: 'file_chat_upload_to_vault requires file_id, document_title and document_type.' };
+  }
+  const documentCode = str(input.document_code) || undefined;
+  const folderId = str(input.folder_id) || undefined;
+  const programId = str(input.program_id) || null;
+  return { fileId, documentTitle, documentType, documentCode, folderId, programId };
+}
+
+/**
+ * A stable per-program code derived from the file name when none is given —
+ * the ingest upserts on (program, code, version), so filing the same file
+ * twice updates one row instead of growing duplicates.
+ */
+function derivedDocumentCode(fileName: string, fallback: string): string {
+  return (
+    fileName
+      .replace(/\.[^.]+$/, '')
+      .replace(/[^A-Za-z0-9._-]+/g, '-')
+      .slice(0, 64) || fallback
+  );
+}
+
+/** What the user is told about where the file landed — never merely "done". */
+function filedMessage(documentCode: string, filing: { placementStatus: string; folderLabel?: string | null; folderId?: string | null }): string {
+  const where =
+    filing.placementStatus === 'unfiled'
+      ? 'not placed in a folder — it needs filing'
+      : `${filing.folderLabel ?? filing.folderId}, ${filing.placementStatus}`;
+  return (
+    `Filed into the vault as ${documentCode} (${where}). ` +
+    'Tell the user where it landed. It can now be read with read_project_document and recorded with ' +
+    'catalog_project_document using the documentId above.'
+  );
+}
+
+/**
+ * File a chat upload into the project vault, through the SAME governed ingest
+ * the Vault surface uses (ingestVaultDocument) — never a second admission path.
+ *
+ * This is the affordance the id-space refusal above points at: a chat upload
+ * has no vault row, so it can be reopened but never cataloged, chunked or
+ * searched. Filing it gives it all three. The refusal named the action before
+ * anything could perform it, which is its own kind of dishonesty.
+ */
+async function handleFileChatUploadToVault(
+  input: Record<string, unknown>,
+  ctx?: ToolContext,
+): Promise<string> {
+  const gate = await requireCatalog(ctx, 'file_chat_upload_to_vault');
+  if ('refusal' in gate) return JSON.stringify({ error: gate.refusal });
+  const { svc, orgId } = gate;
+
+  const parsed = parseFilingInput(input);
+  if ('error' in parsed) return JSON.stringify(parsed);
+  if (!CHAT_UPLOAD_ID.test(parsed.fileId)) {
+    return JSON.stringify({
+      ok: false,
+      error:
+        `${parsed.fileId} is not a chat upload's file_id. This tool files a chat-uploaded file into the vault; ` +
+        'a document already in the vault does not need filing — read it with read_project_document.',
+      idSpace: 'unknown',
+    });
+  }
+
+  const programId =
+    parsed.programId ??
+    (typeof ctx?.projectId === 'number'
+      ? await svc.resolveProgramForProject(ctx.projectId, orgId)
+      : null);
+  if (!programId) {
+    return JSON.stringify({
+      ok: false,
+      error:
+        'No regulatory program to file this into: none was given and the active project is not anchored to one. ' +
+        'Ask which program it belongs to, or pass program_id.',
+    });
+  }
+
+  const { loadUploadedFile } = await import('./uploaded-file-access.js');
+  const file = await loadUploadedFile(parsed.fileId, orgId);
+
+  const { ingestVaultDocument } = await import('../vault/vault-ingest.service.js');
+  const result = await ingestVaultDocument({
+    organizationId: orgId,
+    userId: ctx?.userId ?? null,
+    programId,
+    documentCode: parsed.documentCode ?? derivedDocumentCode(file.fileName, parsed.fileId),
+    documentTitle: parsed.documentTitle,
+    documentType: parsed.documentType,
+    folderId: parsed.folderId,
+    fileBuffer: file.buffer,
+    fileName: file.fileName,
+    mimeType: file.mimeType,
+  });
+
+  if (!result.ok) {
+    return JSON.stringify({ ok: false, refused: true, code: result.code, reason: result.message });
+  }
+  return JSON.stringify({
+    ok: true,
+    documentId: result.document.id,
+    fileName: result.document.fileName,
+    filing: result.filing,
+    message: filedMessage(result.document.documentCode, result.filing),
+  });
+}
+
 /** Errors become structured tool results, matching the house handler style. */
 function withCaughtErrors(
   name: string,
@@ -503,6 +636,10 @@ type RegisterFn = (
 ) => void;
 
 export function registerDocumentCatalogHandlers(register: RegisterFn): void {
+  register(
+    'file_chat_upload_to_vault',
+    withCaughtErrors('file_chat_upload_to_vault', handleFileChatUploadToVault),
+  );
   register('list_project_documents', withCaughtErrors('list_project_documents', handleListProjectDocuments));
   register('read_project_document', withCaughtErrors('read_project_document', handleReadProjectDocument));
   register(

@@ -1421,6 +1421,11 @@
    only colored element is the Accept button (Claude orange).
    ─────────────────────────────────────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
+  /* Neutralize state-change transition motion for users who request reduced
+     motion. Transitions only — per-element animation handling stays
+     authoritative (e.g. the .data-state-spinner rule below deliberately slows,
+     not stops, its spinner; a blanket animation nuke would override that). */
+  .mdx-shell * { transition-duration: 1ms !important; }
 }
 
 
@@ -4001,6 +4006,12 @@
 }
 .mdx-shell .eng-awareness-head .section-sub {
   margin-left: 12px;
+  /* --text-400 stands on this sheet's white --canvas-elevated in light
+     (4.74:1, reasoned about above for .docs-*), but --canvas-elevated inverts
+     to #30302e in dark, where --text-400 falls to 3.93:1 at 11px. --text-300
+     is the same deviation .docs-esig-na already takes for the one row sitting
+     on a tinted ground rather than white: 5.95:1 dark, 5.49:1 light. */
+  color: var(--text-300);
 }
 .mdx-shell .eng-awareness-body {
   padding: 18px;

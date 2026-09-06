@@ -189,6 +189,7 @@ function RegulatoryPanel({
                     <button
                       type="button"
                       className="sp-go"
+                      aria-label="Trace evidence for this finding"
                       onClick={() => onAsk(`Trace the evidence behind FDA finding ${f.findingId}.`)}
                     >
                       {I.route}

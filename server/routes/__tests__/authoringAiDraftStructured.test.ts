@@ -24,7 +24,10 @@ const { mockQuery, getGateway, getEmbeddingService, resolveIds, createDraftCandi
   getGateway: vi.fn(),
   getEmbeddingService: vi.fn(),
   resolveIds: vi.fn(),
-  createDraftCandidate: vi.fn(async () => ({ id: 'draft-1', expiresAt: 'later' })),
+  // The rest parameter is what gives the mock a call signature: with a
+  // zero-arg implementation its recorded calls type as the empty tuple, so
+  // neither the spread below nor a positional read of mock.calls compiles.
+  createDraftCandidate: vi.fn(async (..._a: unknown[]) => ({ id: 'draft-1', expiresAt: 'later' })),
 }));
 
 vi.mock('../../db', () => ({

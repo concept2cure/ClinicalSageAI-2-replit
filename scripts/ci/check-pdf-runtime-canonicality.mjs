@@ -52,6 +52,19 @@ const APPROVED = new Set([
   'server/routes/integration-test.ts',
   'server/routes/planner-routes.ts',
   'server/routes/report-os.ts',
+  // eCTD leaf rendering — pdfkit directly, and deliberately. The canonical
+  // converter cannot pin what this file must pin: PDFKit stamps /CreationDate
+  // and /ModDate from the wall clock and writes its own version into /Producer
+  // and /Creator, so identical content renders to different bytes. Two things
+  // downstream depend on it not doing that — a follow-up eCTD sequence decides
+  // which leaves changed by comparing md5 against what the prior sequence
+  // filed, and the Part 11 signature binds a bundle sha256. Non-deterministic
+  // bytes make every leaf differ from itself, re-filing an entire application
+  // at an agency as `replace` on a dependency bump. The file's own header
+  // carries the full reasoning; it routes text rendering through
+  // documentExportService (already approved) and uses pdfkit only to pin the
+  // metadata. Added 2026-09-06 (ledger L175).
+  'server/services/ectd/leaf-pdf.ts',
   'server/services/ivdrPackHtml.ts',
   // AnA-integration consumers (landed 2026-06-29 via the ana-integration
   // merge while this gate was advisory-only; documented at CI-wiring time,

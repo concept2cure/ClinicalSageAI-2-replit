@@ -1072,6 +1072,7 @@ export function PrecedentEngine({ onAsk }: SurfaceViewProps) {
                           </span>
                           <button
                             className="sp-go"
+                            aria-label="Ask AnA to explain and pre-empt this"
                             onClick={() => ask('Explain and pre-empt: ' + f.label)}
                           >
                             {I.sparkles}

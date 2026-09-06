@@ -191,19 +191,29 @@ async function readProjectMemory(
   limit = 5,
   orgId?: number,
 ): Promise<string | null> {
+  /* No organization, no memory.
+     This read carried `($2::int IS NULL OR organization_id = $2)` — a tenant
+     guard the caller could switch off, described as preserving "prior behavior
+     exactly" for "legacy paths without org context". What it preserved was a
+     read of project_memory_entries across every tenant, and what this function
+     returns goes into a MODEL'S PROMPT: another sponsor's notes and decisions
+     would have been summarised back to the user as their own context.
+     `enrichWithClientJourney` and `enrichWithAgentActivity` in this same file
+     already return '' without an org; these memory reads now agree with them.
+     Contributing nothing is a smaller loss than contributing someone else's. */
+  if (!Number.isFinite(orgId) || (orgId as number) <= 0) return '';
+
   try {
     const catPlaceholders = categories.map((_, i) => `$${i + 3}`).join(', ');
     const limitParam = `$${categories.length + 3}`;
-    // Tenant guard: when the caller has org context we enforce it; a NULL $2
-    // (legacy paths without org context) preserves prior behavior exactly.
     const result = await pool.query(
       `SELECT content, title, confidence, importance, category
        FROM project_memory_entries
-       WHERE project_id = $1 AND ($2::int IS NULL OR organization_id = $2)
+       WHERE project_id = $1 AND organization_id = $2
          AND category IN (${catPlaceholders})
        ORDER BY importance DESC, created_at DESC
        LIMIT ${limitParam}`,
-      [projectId, orgId ?? null, ...categories, limit]
+      [projectId, orgId, ...categories, limit]
     );
 
     if (result.rows.length === 0) return '';
@@ -289,16 +299,19 @@ async function enrichWithPrecedents(projectId: string | number, orgId?: number):
     predicate_device: 'Predicate Device Comparators',
   };
 
+  // Same rule as readProjectMemory: no organization, no memory.
+  if (!Number.isFinite(orgId) || (orgId as number) <= 0) return '';
+
   try {
     const catPlaceholders = categories.map((_, i) => `$${i + 3}`).join(', ');
     const result = await pool.query(
       `SELECT content, title, confidence, importance, category
        FROM project_memory_entries
-       WHERE project_id = $1 AND ($2::int IS NULL OR organization_id = $2)
+       WHERE project_id = $1 AND organization_id = $2
          AND category IN (${catPlaceholders})
        ORDER BY importance DESC, created_at DESC
        LIMIT $${categories.length + 3}`,
-      [projectId, orgId ?? null, ...categories, 12]
+      [projectId, orgId, ...categories, 12]
     );
 
     if (result.rows.length === 0) return '';
@@ -471,16 +484,19 @@ async function enrichWithRecommendations(projectId: string | number, orgId?: num
 }
 
 async function enrichWithClaims(projectId: string | number, orgId?: number): Promise<string> {
+  // Same rule as readProjectMemory: no organization, no memory.
+  if (!Number.isFinite(orgId) || (orgId as number) <= 0) return '';
+
   // Try to build evidence chains from stored memory
   try {
     const result = await pool.query(
       `SELECT content, title, confidence, category
        FROM project_memory_entries
-       WHERE project_id = $1 AND ($2::int IS NULL OR organization_id = $2)
+       WHERE project_id = $1 AND organization_id = $2
          AND category IN ('evidence_assessment', 'claim_evidence_map', 'evidence_gap')
        ORDER BY importance DESC, created_at DESC
        LIMIT $3`,
-      [projectId, orgId ?? null, 8]
+      [projectId, orgId, 8]
     );
 
     if (result.rows.length > 0) {
@@ -591,15 +607,18 @@ async function enrichWithDeficiencies(submissionType?: string): Promise<string> 
 }
 
 async function enrichWithKnowledgeSearch(query: string, projectId: string | number, orgId?: number): Promise<string> {
+  // Same rule as readProjectMemory: no organization, no memory.
+  if (!Number.isFinite(orgId) || (orgId as number) <= 0) return '';
+
   try {
     // Search project memory entries semantically
     const result = await pool.query(
       `SELECT title, content, category, confidence, importance
        FROM project_memory_entries
-       WHERE project_id = $1 AND ($2::int IS NULL OR organization_id = $2)
+       WHERE project_id = $1 AND organization_id = $2
        ORDER BY importance DESC, created_at DESC
        LIMIT $3`,
-      [projectId, orgId ?? null, 10]
+      [projectId, orgId, 10]
     );
 
     if (result.rows.length === 0) return '';

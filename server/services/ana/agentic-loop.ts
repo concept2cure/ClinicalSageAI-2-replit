@@ -459,6 +459,7 @@ const TOOL_LABELS: Record<string, (input: Record<string, unknown>) => string> = 
   get_client_journey: () => 'Getting your bearings — from license to submission',
   // Project-folder catalog — legible "she knows the files and is studying them".
   list_project_documents: () => 'Checking the project folder',
+  file_chat_upload_to_vault: () => 'Filing the document into the project vault',
   read_project_document: i =>
     typeof i.offset === 'number' && i.offset > 0
       ? 'Reading the document — continuing where it left off'

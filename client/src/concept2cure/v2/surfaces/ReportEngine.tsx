@@ -618,7 +618,7 @@ export function ReportEngine({ onAsk, onNav }: SurfaceViewProps) {
                   and this one was not even the endpoint being called
                   (/api/analytics/analyze-protocol-text), so it told a reviewer
                   nothing true and nothing useful. */}
-                {analysis.source === 'live' ? 'Live analytics service' : 'Ported generator — offline'} -- draft</span></div>
+                {analysis.source === 'live' ? 'Live analytics service' : 'Ported generator — offline'} — draft</span></div>
               <div className="bs-doc-bar-a">
                 <button className="bs-da" onClick={() => ask('Refine the ' + (docDef?.label || 'document') + ' for this protocol')}>{I.sparkles} Refine</button>
                 <button className="bs-da primary" onClick={() => void openEditor()} disabled={opening}>{I.penLine} {opening ? 'Saving to the editor…' : 'Open in editor'}</button>

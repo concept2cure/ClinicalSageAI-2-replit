@@ -461,7 +461,7 @@ export function MissionControl(_props: SurfaceViewProps) {
     <div className="cm-body">
       <div className="pj-card">
         <div className="pj-card-h">
-          <span className="t">Mission Control</span>
+          <span className="t">Mission control</span>
           <span className="s">Programs, readiness and what is blocking them</span>
         </div>
         <div className="pj-card-b" style={{ fontSize: 13, color: 'var(--text-300, #6b6963)', lineHeight: 1.5 }}>
