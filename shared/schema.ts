@@ -3999,6 +3999,17 @@ export const cmcImpurityProfiles = pgTable(
        the assessment refuses honestly when it is absent rather than defaulting
        to oral, which is the most permissive route for most elements. */
     routeOfAdministration: text('route_of_administration'),
+    /* ICH M7(R2) inputs. The mutagenic class is decided from the Ames result
+       and the structural-alert status (two complementary (Q)SAR assessments);
+       the acceptable intake is staged by treatment duration and cut far lower
+       for a cohort-of-concern structure. All nullable and NONE defaulted: an
+       unrecorded Ames result is not a negative one, and the assessment refuses
+       rather than assuming. */
+    amesResult: text('ames_result'), // positive | negative | not-tested
+    structuralAlert: text('structural_alert'), // yes | no | unknown
+    carcinogenicityData: text('carcinogenicity_data'), // positive | negative | not-tested
+    treatmentDuration: text('treatment_duration'), // single-dose | up-to-1-month | 1-to-12-months | 1-to-10-years | lifetime
+    cohortOfConcern: text('cohort_of_concern'), // not_coc | CoC_nitrosamine | CoC_aflatoxin_like | CoC_alkyl_azoxy
     specificationLimit: text('specification_limit'),
     /* The thresholds AS RECORDED. The Q3A/Q3B engine derives them from the
        maximum daily dose; where an applicant has recorded its own, the record
