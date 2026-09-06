@@ -460,19 +460,36 @@ is mandatory, not advisory.
 
 The section plans were written independently and double-count. Reconciled:
 
-**This week — 3 engineer-days, no schema changes, all independently valuable**
+**This week — 3 engineer-days, no schema changes, all independently valuable.
+ALL SEVEN SHIPPED**, each verified by making the check fail first.
 
-| | Fix | Where |
+| | Fix | Outcome |
 |---|---|---|
-| 1 | Add `organizationId` to the four unscoped task handlers | `c2c/tasks.ts:146,186,314,372` |
-| 2 | Add the explicit org join to both vault retrieval arms | `advancedRAGPipeline.ts:895,935` |
-| 3 | Delete the duplicate signing route; consolidate onto `esignature.ts` | `c2c/artifacts.ts:1510` |
-| 4 | Audit-before-send on the vault download, 5xx if the audit fails | `project-vault.ts:823` |
-| 5 | `completionPercent` → 0 + a critical gap when no matrix exists | `readinessEvaluator.ts:176` |
-| 6 | Point `Etmf.tsx` at `useVaultUpload`; delete the hand-rolled upload | `Etmf.tsx:281-291` |
-| 7 | Refuse the destructive `ON CONFLICT`; 409 on a content conflict | `vault-ingest.ts:396` |
+| 1 | Org predicate on the unscoped task handlers | Done — it was **five of seven**, not four of six: the `assess` route was also unscoped. |
+| 2 | Explicit org join on both vault retrieval arms | Done, plus a refusal when no tenant is resolvable. |
+| 3 | Delete the duplicate signing route | Done — extracted to `services/part11/reverify-signer.ts`; both routes consolidated onto it. |
+| 4 | Audit-before-send on the vault download | Done — a failed audit refuses the download. |
+| 5 | `completionPercent` when no matrix exists | Done — and it was **225 of 234** filing types, not an edge case. |
+| 6 | Fix the eTMF File action | Done — the program comes from the shell channel; no trial→program link was needed. |
+| 7 | Refuse the destructive `ON CONFLICT` | Done, plus the second unique constraint that was 500ing. |
 
-Each gets a failing test first. Items 1, 3 and 4 are the ones a customer security review finds.
+**Also shipped, beyond that list:**
+
+- `CLAUDE.md` RULE 1 and `ci:migration-drop-safety` — every migration replays, so
+  removing schema is an amendment, not a DROP. In pre-push, proven on the real case.
+- `organization_id` on `vault.documents`, backfilled, unattributable rows quarantined.
+- `ci:drizzle-tenant-scope` — ratchets the class the raw-SQL scanner structurally
+  cannot see. **151 pre-existing sites baselined** so no new one lands.
+- Vault full-text search: GIN index, ranked and paginated org-scoped endpoint, and
+  the search box the surface never had.
+- Legal holds — the retention sweep cannot destroy a record under hold, and fails
+  closed if it cannot read them.
+- The tenant purge and the tenant export both reach the vault now. Both named it and
+  neither touched it: the purge used `public.vault_documents`, the export swept
+  `public` only.
+
+Still open from §4: the leaf id-space (§4.5) — a vault document has a tenant now but
+still cannot become a submission leaf until `submission_leaves.document_id` widens.
 
 **Weeks 2–4 — make the vault usable**
 Server-side vault search with a GIN index and pagination; a search box in `Vault.tsx`; wire the

@@ -9,6 +9,7 @@
  */
 
 import type { AnaTool } from '../ai-gateway/types';
+import { VAULT_INGEST_DOCUMENT_TYPES } from '../../../shared/constants/domain/vault-taxonomy.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -112,7 +113,55 @@ export const SEARCH_PROJECT_DOCUMENTS: AnaTool = {
   },
 };
 
+
+export const FILE_CHAT_UPLOAD_TO_VAULT: AnaTool = {
+  name: 'file_chat_upload_to_vault',
+  description:
+    'File a chat-uploaded document into the project vault, so it becomes a real project-folder document: ' +
+    'placed in the dossier, catalogable, semantically searchable, and retrievable passage-by-passage in future ' +
+    'sessions. A chat upload alone is reachable only by its file_id and carries no durable comprehension record; ' +
+    'this is what gives it one. Use it when a client attaches something that belongs to the program — a study ' +
+    'report, a CoA, a protocol — rather than a throwaway. It performs the SAME governed admission as an upload ' +
+    'through the Vault surface (virus scan, stored bytes, 21 CFR Part 11 audit entry, filing proposal), so tell ' +
+    'the user the file was filed and where. Returns the vault document_id: read it with read_project_document ' +
+    'and record what it is with catalog_project_document.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      file_id: {
+        type: 'string',
+        description: 'The chat upload\u0027s file_id, from list_project_documents\u0027 `chatUploads` array (e.g. "file_1712345678_ab12cd").',
+      },
+      document_title: {
+        type: 'string',
+        description: 'The document\u0027s title as it should read in the vault (e.g. "28-Day Rat Tox Study TOX-77-A").',
+      },
+      document_type: {
+        type: 'string',
+        enum: [...VAULT_INGEST_DOCUMENT_TYPES],
+        description:
+          'The regulatory document type. Choose the one the document IS; use OTHER when unsure — a filename is not grounds to claim a type.',
+      },
+      program_id: {
+        type: 'string',
+        description: 'Regulatory program UUID to file it under. Defaults to the active project\u0027s program.',
+      },
+      document_code: {
+        type: 'string',
+        description: 'Optional stable code for the document within the program. Defaults to one derived from the file name.',
+      },
+      folder_id: {
+        type: 'string',
+        description:
+          'Optional explicit dossier folder. Omit to let the classifier propose a placement (which a person then confirms) — do not guess a folder to avoid an unfiled state.',
+      },
+    },
+    required: ['file_id', 'document_title', 'document_type'],
+  },
+};
+
 export const DOCUMENT_CATALOG_TOOLS: AnaTool[] = [
+  FILE_CHAT_UPLOAD_TO_VAULT,
   LIST_PROJECT_DOCUMENTS,
   READ_PROJECT_DOCUMENT,
   CATALOG_PROJECT_DOCUMENT,

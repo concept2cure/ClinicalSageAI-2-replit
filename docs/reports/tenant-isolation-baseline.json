@@ -1,12 +1,10 @@
 {
-  "generatedAt": "2026-09-06T09:09:32.276Z",
+  "generatedAt": "2026-09-06T09:21:36.450Z",
   "fingerprints": [
     "server/routes/admin/licensing-history.ts#de79288a97cb:audit_logs,users",
+    "server/routes/c2c/project-vault.ts#264b5030acc4:documents",
+    "server/routes/c2c/project-vault.ts#61054d905301:documents",
     "server/services/advancedRAGPipeline.ts#134b510a783e:rag_chunks,rag_documents",
-    "server/services/ana-ri/context-enrichment.ts#6623109e56b0:project_memory_entries",
-    "server/services/ana-ri/context-enrichment.ts#af5893afea34:project_memory_entries",
-    "server/services/ana-ri/context-enrichment.ts#c80af74195fb:project_memory_entries",
-    "server/services/ana-ri/context-enrichment.ts#ee5538377092:project_memory_entries",
     "server/services/deep-research-orchestrator.ts#3f65c4aa2be4:deep_research_jobs",
     "server/services/kernel-adaptive-policy.ts#a5493933404b:",
     "server/services/kernel-observability.ts#19741e77de83:",

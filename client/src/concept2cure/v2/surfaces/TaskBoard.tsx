@@ -21,7 +21,7 @@ import {
 import '../styles/project-home-v2.css';
 
 /* ═══════════════════════════════════════════════════════════════════
-   Task Board -- the org-wide unifiedTasks board served by
+   Task Board -- the org-wide unified task board served by
    /api/task-management. Org-scoped by design; filter to a project
    below. Tasks from sections, the pyramid engine, the legacy WBS and
    modules are surfaced here with their origin store labelled.
@@ -30,7 +30,7 @@ import '../styles/project-home-v2.css';
    ═══════════════════════════════════════════════════════════════════ */
 
 /**
- * Display row for the org-wide unifiedTasks board. Mirrors the server
+ * Display row for the org-wide unified task board. Mirrors the server
  * TaskBoardItem shape returned by GET /api/task-management/board
  * (server/routes/taskBoard.routes.ts). impactScore / phase / estimatedHours are
  * REAL nullable columns and render null-safe (never fabricated); the backend
@@ -740,7 +740,7 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
         <EmptyState
           icon={I.checkSquare}
           title="No tasks on the board yet"
-          hint="This is the org-wide unifiedTasks board. Create a task or start a workflow from a template and it appears here once it is persisted, with its origin store labelled."
+          hint="This is the org-wide unified task board. Create a task or start a workflow from a template and it appears here once it is persisted, with its origin store labelled."
         />
       ) : (
       <>
@@ -880,7 +880,7 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
 
       {view === 'path' && (
         <div className="tb-path">
-          <div className="tb-path-h">Critical path -- {critChain.length} tasks — computed from the <code>taskDependencies</code> DAG (getCriticalPath)</div>
+          <div className="tb-path-h">Critical path — {critChain.length} tasks — computed from the <code>taskDependencies</code> DAG (getCriticalPath)</div>
           {critChain.map((t, i) => (
             <div
               key={t.taskId}

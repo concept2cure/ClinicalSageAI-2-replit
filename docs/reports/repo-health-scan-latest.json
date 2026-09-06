@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-06T09:17:32.353Z",
+  "generatedAt": "2026-09-06T09:31:23.216Z",
   "git": {
-    "sha": "dd376b0d19dc6984d843c5b445cb8c6ce7a11604",
+    "sha": "7f754a9e090e7c2f3d1e0292d13a4d345f094087",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2029,7 +2029,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
-        "bytes": 153154
+        "bytes": 153173
       },
       {
         "file": "server/services/regulatory-strategy/regulatory-strategy-knowledge.ts",
@@ -2081,7 +2081,7 @@
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "bytes": 121805
+        "bytes": 121863
       },
       {
         "file": "server/services/__tests__/ana-ri.test.ts",
@@ -2235,7 +2235,7 @@
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "lines": 2699
+        "lines": 2701
       },
       {
         "file": "server/services/module3Composer.ts",

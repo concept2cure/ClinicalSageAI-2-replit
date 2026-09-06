@@ -16,7 +16,7 @@
  * ── Why this test extracts the real SQL ──────────────────────────────────────
  * The behaviour under test IS the ON CONFLICT clause, and a paraphrase of it in
  * a fixture would drift from the route without either one failing. So the clause
- * is pulled out of vault-ingest.ts by regex and executed against a real
+ * is pulled out of vault-ingest.service.ts by regex and executed against a real
  * PostgreSQL (PGlite) — if someone edits or removes the predicate, the extract
  * fails or the assertions do.
  *
@@ -32,7 +32,14 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..', '..');
-const ROUTE = fs.readFileSync(path.join(repoRoot, 'server', 'routes', 'vault-ingest.ts'), 'utf8');
+/* The governed ingest moved out of the route into the vault service — ONE
+   implementation, so the AnA tool that files a chat upload performs the same
+   admission. This test reads it where it now lives; pointing at the route
+   would silently stop testing anything, since the SQL is no longer there. */
+const ROUTE = fs.readFileSync(
+  path.join(repoRoot, 'server', 'services', 'vault', 'vault-ingest.service.ts'),
+  'utf8',
+);
 
 /** The shipped ON CONFLICT clause, including its refusal predicate. */
 const ON_CONFLICT = (() => {
@@ -41,7 +48,7 @@ const ON_CONFLICT = (() => {
   );
   if (!m) {
     throw new Error(
-      'Could not find the ON CONFLICT clause with its content_hash predicate in vault-ingest.ts. ' +
+      'Could not find the ON CONFLICT clause with its content_hash predicate in vault-ingest.service.ts. ' +
         'If the refusal was removed, a re-upload destroys the governed record again — see this file header.',
     );
   }
@@ -57,10 +64,10 @@ async function ingest(
 ): Promise<{ rows?: Record<string, unknown>[]; errCode?: string }> {
   const sql = `
     INSERT INTO vault.documents (
-      program_id, document_code, document_title, document_type, version,
+      program_id, organization_id, document_code, document_title, document_type, version,
       s3_bucket, s3_key, file_name, file_size, mime_type, content_hash,
       classification, placement_status, processing_status
-    ) VALUES ($1,$2,'t','CSR',$3,'local',$4,'f.pdf',10,'application/pdf',$5,'INTERNAL','unfiled','PENDING')
+    ) VALUES ($1,1,$2,'t','CSR',$3,'local',$4,'f.pdf',10,'application/pdf',$5,'INTERNAL','unfiled','PENDING')
     ${clause}
     RETURNING id, content_hash, s3_key`;
   try {
@@ -92,6 +99,12 @@ beforeAll(async () => {
     CREATE TABLE vault.documents (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
       program_id UUID NOT NULL,
+      -- The ingest INSERT writes this (added after the fixture was first
+      -- written, by the change that made a new vault upload attributable).
+      -- Omitting it made every statement here fail 42703 rather than exercise
+      -- the ON CONFLICT clause — which is the fixture drifting from the route,
+      -- exactly what extracting the real SQL is meant to surface.
+      organization_id INTEGER,
       document_code TEXT NOT NULL,
       document_title TEXT, document_type TEXT,
       version TEXT DEFAULT '1.0',
@@ -105,6 +118,11 @@ beforeAll(async () => {
       placement_confidence TEXT, placement_rationale TEXT,
       placed_by INT, placed_at TIMESTAMPTZ,
       processing_status TEXT, created_by INT,
+      -- The tenant key the real table carries (its own migration) and the
+      -- ingest writes; the retrieval path filters on it, so a row left NULL is
+      -- an orphan no tenant can retrieve.
+      organization_id INT,
+      created_at TIMESTAMPTZ DEFAULT NOW(),
       updated_at TIMESTAMPTZ DEFAULT NOW(),
       CONSTRAINT vault_documents_program_doc_version UNIQUE (program_id, document_code, version)
     );

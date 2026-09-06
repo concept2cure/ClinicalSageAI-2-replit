@@ -541,3 +541,73 @@ describe('backfilling documents ingested before chunking existed', () => {
     for (const s of withFailed.skipped) expect(s.reason).toMatch(/text|Extraction/i);
   });
 });
+
+describe('filing a chat upload into the vault', () => {
+  it('performs the same governed admission the Vault surface does, and the file becomes catalogable', async () => {
+    const { createHash } = await import('node:crypto');
+    const { promises: fsp } = await import('node:fs');
+    const nodePath = await import('node:path');
+
+    const BODY = Buffer.from(
+      'Certificate of Analysis, batch 23-104. Assay 99.4% of label claim. Appearance conforms.',
+      'utf8',
+    );
+    const FILE_ID = `file_${Date.now()}_coa23104`;
+    const storagePath = `uploads/org-${orgId}/${FILE_ID}`;
+    const resolved = nodePath.resolve(process.cwd(), storagePath);
+    await fsp.mkdir(nodePath.dirname(resolved), { recursive: true });
+    await fsp.writeFile(resolved, BODY);
+
+    await owner.query(
+      `INSERT INTO file_uploads
+         (id, user_id, organization_id, original_name, mime_type, file_size, storage_path, checksum_sha256, status)
+       VALUES ($1, $2, $3, $4, 'text/plain', $5, $6, $7, 'ready')`,
+      [
+        FILE_ID, userId, orgId, 'coa-batch-23-104.txt', BODY.length, storagePath,
+        createHash('sha256').update(BODY).digest('hex'),
+      ],
+    );
+
+    const filed = await callTool('file_chat_upload_to_vault', {
+      file_id: FILE_ID,
+      document_title: 'CoA batch 23-104',
+      document_type: 'REPORT',
+      program_id: programId,
+    });
+    expect(filed.ok).toBe(true);
+    const docId = filed.documentId;
+
+    // A real vault document, carrying the tenant key the retrieval path needs.
+    const doc = await owner.query(
+      `SELECT organization_id, document_title, content_hash, extracted_text FROM vault.documents WHERE id = $1`,
+      [docId],
+    );
+    expect(doc.rows[0].organization_id).toBe(orgId);
+    expect(doc.rows[0].document_title).toBe('CoA batch 23-104');
+    expect(doc.rows[0].content_hash).toBe(createHash('sha256').update(BODY).digest('hex'));
+    expect(doc.rows[0].extracted_text).toContain('99.4%');
+
+    // The Part 11 record of who filed it — the same chained audit row the
+    // route writes, because it is the same ingest.
+    const audit = await owner.query(
+      `SELECT 1 FROM audit_logs WHERE action = 'vault.document.ingest' AND record_id = $1`,
+      [String(docId)],
+    );
+    expect(audit.rowCount).toBe(1);
+
+    // And the catalog tier, so it is immediately readable + catalogable.
+    const cat = await owner.query(
+      `SELECT catalog_status, char_count FROM vault.document_catalog WHERE document_id = $1`,
+      [docId],
+    );
+    expect(cat.rows[0].catalog_status).toBe('extracted');
+    expect(cat.rows[0].char_count).toBeGreaterThan(0);
+
+    // The whole point: the tool that used to refuse this id now takes it.
+    const read = await callTool('read_project_document', { document_id: docId });
+    expect(read.ok).toBe(true);
+    expect(read.window.text).toContain('batch 23-104');
+
+    await owner.query(`DELETE FROM file_uploads WHERE id = $1`, [FILE_ID]);
+  });
+});
