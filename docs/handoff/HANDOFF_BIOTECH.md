@@ -751,6 +751,53 @@ Revert-proven: restoring the previous `spl-generation-service` fails six of the
 seven new tests — structuredBody nesting, the NDC, the product element, the
 version/document-id relationship, and both validator rules.
 
+### Twenty-second — the health-authority question path (2026-09-06)
+
+**The response clock was a memory, not a measurement.** `clockDays` is a stored
+field on the letter and nothing refreshes it — no endpoint writes a letter, so
+whatever was recorded when it was logged is what HaqManager renders, forever, as
+"**6d** of 14d left". A missed FDA Information Request or EMA Day-120 response is
+the exact failure this screen exists to prevent, and the styling compounded it:
+`clockDays <= 7` drives the urgency colour, so a stale 12 stayed calm
+indefinitely while a passed deadline still showed days remaining.
+
+`GET /rounds` now derives `clockDays` from the recorded due date against today,
+publishes `clockBasis` so a reader can see how it was arrived at, and keeps the
+stored figure as `clockDaysRecorded` — reference, never "remaining". Negative is
+overdue, and the round reads "12d overdue — was due <date>". An unparseable or
+absent due date yields `null` and no countdown at all, because a number would
+have to be invented; the round reads "No response due date recorded". The
+remaining-time bar is clamped and empties as the clock runs down.
+
+**The org resolver ended `|| 1`.** Every other governed route in this repository
+refuses without org context; this one silently read and wrote *organization 1's*
+health-authority questions. The `/api` auth boundary establishes tenant context
+ahead of the mount, so the fallback was reachable only in warn mode or for a
+principal carrying no `organizationId` — not a reason to keep a default that
+writes agency correspondence into a tenant nobody named. One router-level gate
+resolves the org once and 403s without it, so a new endpoint cannot be added
+without the check. The mount comment already claimed "auth + tenant-scope live
+inside the router"; now they do.
+
+Also corrected: the `/rounds` header described the surface as falling back to
+"its codebase fixture when the store is empty". It does not (the surface is
+`useLiveData` with an honest empty), and a comment inviting a future reader to
+reintroduce a fixture does not belong in a governed path.
+
+Verified and unchanged: `POST /letters/:id/assemble` is fail-closed — it refuses
+with the list of unapproved questions and their statuses rather than shipping a
+draft as approved, and the surface's assemble button is disabled below 100% and
+on an empty round.
+
+Recorded, not built: **a letter carries no closure state.** A round whose package
+has been assembled and sent keeps counting down and stays in the open list, and
+nothing on the workbench can say which rounds are answered. Nothing *claims* a
+round is closed, so this is a missing capability rather than a false statement —
+the same category as the absent `response` sequence filing path.
+
+Revert-proven: restoring the stored `clockDays` fails all four clock tests;
+restoring the `|| 1` default fails the refusal test.
+
 ### For the device stream — the ESLint ratchet is red on trunk, and not from here
 
 As of `ee0c4bc51` the ratchet reports 6598 against a baseline of 6597, all of it
@@ -1018,6 +1065,7 @@ If neither has happened: report the blockage, name what is needed, and stop.
 | 2026-09-06 | A | Nineteenth — unreadable vs unprovisioned on the CMC board | A failed read of the agency-question store no longer reads as "0 information requests overdue": 42P01 is told apart from a failed read, `irOverdue` is null when unknown, and both the tile and the lead say the count is not established — revert-proven | §1 above |
 | 2026-09-06 | A | Twentieth — the agency-meeting request | The audit entry the request dialog promises is now written in the same transaction as the row (or the request is refused); the pending clock names the agency that holds the request instead of the FDA every time; request ids no longer collide within a millisecond — revert-proven | §1 above |
 | 2026-09-06 | A | Twenty-first — the SPL download | The SPL is nested as SPL nests it, carries the product and the NDC the user typed, and takes ids from a 128-bit derivation instead of a 32-bit hash; the two SPL generators become one; the structural check no longer passes a document missing the sections it calls required — revert-proven | §1 above |
+| 2026-09-06 | A | Twenty-second — health-authority questions | The response clock is derived from the recorded due date instead of a stored figure nothing refreshes, states overdue as overdue, and shows no countdown where no due date is recorded; the HAQ store stops defaulting to organization 1 — revert-proven | §1 above |
 | | | | | |
 
 **Rule:** the last row with an empty "What was proven" cell is the open work.
