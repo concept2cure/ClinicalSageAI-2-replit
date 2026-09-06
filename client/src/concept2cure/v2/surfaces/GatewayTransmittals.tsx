@@ -42,7 +42,7 @@ import { EmptyState } from '../dataConnect';
 import { usePublishSurfaceContext } from '../surfaceContext';
 import { C2CForm } from '../C2CForm';
 import type { C2CFormConfig, C2CFormField } from '../C2CForm';
-import { apiRequest } from '@/lib/queryClient';
+import { apiRequest, serverMessage } from '@/lib/queryClient';
 import '../styles/project-home-v2.css';
 import { C2CToast, useToast } from '../toast';
 import { downloadBlob } from '../download';
@@ -302,7 +302,12 @@ export function GatewayTransmittals({ onAsk }: SurfaceViewProps) {
   const checkStatus = useCallback(async (id: number) => {
     const { ok, status, data, raw } = await readData<Record<string, unknown>>('GET', `/api/mdx/gateways/transmittals/${id}/status`);
     if (!ok || !data) {
-      const reason = typeof raw?.error === 'string' ? raw.error : `HTTP ${status}`;
+      /* `raw.error` is as often an enum token (GATEWAY_NOT_CONFIGURED) as a
+         sentence, and a token in a toast is internals shown as copy. The shared
+         reader keeps the sentence, drops the token, and also finds the ones this
+         missed entirely — `message`, and the `detail` a governed refusal puts
+         its reason in. */
+      const reason = serverMessage(raw) ?? `HTTP ${status}`;
       fireToast(`Status check failed: ${reason}.`, 'error');
       return;
     }
