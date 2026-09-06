@@ -189,15 +189,48 @@ describe('every writer of a fingerprint-covered artifact column is accounted for
         'bundle was built from (leaf placement, titles and order). Route it through the section ' +
         'routes in submission-ops.ts, which commit the row write with markContentChanged.',
     ).toEqual(SECTION_WRITER_FILES);
-    // Those routes go through the canonical primitive, not a local copy.
+    // Those routes go through the canonical primitive, not a local copy: every
+    // section write must sit INSIDE a markContentChanged callback's body, so
+    // it commits with the revision bump. Checking only that a call appears
+    // earlier in the file is not enough — a write moved out of the callback
+    // but left textually after it passed that, while running in its own
+    // unlocked transaction.
     const ops = readFileSync(join(process.cwd(), 'server/routes/submission-ops.ts'), 'utf8');
-    for (const form of [/INSERT INTO c2c_package_sections/, /UPDATE c2c_package_sections/, /DELETE FROM c2c_package_sections/]) {
-      const at = ops.search(form);
-      expect(at, `${form} not found`).toBeGreaterThan(-1);
-      // Each raw section write sits inside a markContentChanged callback: the
-      // nearest preceding one is closer than the nearest preceding route entry.
-      const before = ops.slice(0, at);
-      expect(before.lastIndexOf('markContentChanged('), String(form)).toBeGreaterThan(before.lastIndexOf('router.'));
+    const writes = [
+      ...ops.matchAll(/INSERT INTO c2c_package_sections|UPDATE c2c_package_sections\b|DELETE FROM c2c_package_sections|\.(?:insert|update|delete)\((?:schema\.)?c2cPackageSections\)/g),
+    ];
+    // The one exemption: POST /packages seeds the list while creating the
+    // package. A package being created cannot hold a bundle, so there is
+    // nothing to invalidate — and that is the ONLY write allowed outside a
+    // callback.
+    const creation = ops.indexOf("router.post('/packages',");
+    expect(creation, "POST /packages not found").toBeGreaterThan(-1);
+    const creationEnds = ops.indexOf('\nrouter.', creation + 1);
+    const exempt = (at: number) => at > creation && at < creationEnds;
+
+    expect(writes.length, 'no writer of this table should have appeared or vanished unreviewed').toBe(4);
+    expect(writes.filter((w) => exempt(w.index!)).length, 'exactly one creation-time seed').toBe(1);
+    for (const w of writes) {
+      if (exempt(w.index!)) continue;
+      expect(insideMarkContentChangedCallback(ops, w.index!), `"${w[0]}" is outside a markContentChanged callback`).toBe(true);
     }
   });
 });
+
+/** True when `offset` falls inside the body of the nearest enclosing
+ *  `markContentChanged(` callback — brace-matched, not merely "after it". */
+function insideMarkContentChangedCallback(src: string, offset: number): boolean {
+  const call = src.lastIndexOf('markContentChanged(', offset);
+  if (call === -1) return false;
+  const bodyStart = src.indexOf('{', src.indexOf('=>', call));
+  if (bodyStart === -1 || bodyStart > offset) return false;
+  let depth = 0;
+  for (let i = bodyStart; i < src.length; i += 1) {
+    if (src[i] === '{') depth += 1;
+    else if (src[i] === '}') {
+      depth -= 1;
+      if (depth === 0) return offset < i;
+    }
+  }
+  return false;
+}

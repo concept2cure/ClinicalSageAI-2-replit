@@ -44,6 +44,21 @@ export interface PriorLeaf {
    * carries its operation, but a downstream step must supply modified-file).
    */
   href?: string;
+  /**
+   * The lifecycle operation this leaf carried in its OWN sequence, when known.
+   * Used when folding several prior sequences into one effective prior state: a
+   * leaf whose last operation was `delete` is no longer on file and must drop
+   * out of that fold. Not used by the diff itself.
+   */
+  operation?: string;
+  /**
+   * The sequence this leaf was actually last published in (e.g. '0000'), when
+   * known. The prior state of an application is the fold of every preceding
+   * sequence, so different prior leaves can live in different sequence folders;
+   * the `modified-file` pointer must traverse to the one that actually holds
+   * this leaf. When absent, the caller's single-sequence prefix is used.
+   */
+  sequenceNumber?: string;
 }
 
 /**
@@ -106,8 +121,18 @@ function keyOf(leaf: { leafKey?: string; ctdSection: string; fileName: string })
 function modifiedFileFor(prev: PriorLeaf, prefix: string): string | undefined {
   if (!prev.href) return undefined;
   const href = prev.href.replace(/^\//, '');
-  if (!prefix) return href;
-  return `${prefix.replace(/\/+$/, '')}/${href}`;
+  // The prior state of an application is the FOLD of every preceding sequence,
+  // so prior leaves do not all live in the same sequence folder: a leaf filed in
+  // 0000 and not re-filed in 0001 is still on file, in ../0000/. When the leaf
+  // names the sequence it was actually last published in, traverse to THAT
+  // sequence — pointing a supersede at the most recent predecessor would name a
+  // path that does not contain the file. Falls back to the caller's
+  // single-sequence prefix when the leaf does not carry its own sequence.
+  const seq = (prev.sequenceNumber ?? '').trim();
+  const effectivePrefix =
+    seq && /^[0-9A-Za-z._-]+$/.test(seq) ? `../${seq}/` : prefix;
+  if (!effectivePrefix) return href;
+  return `${effectivePrefix.replace(/\/+$/, '')}/${href}`;
 }
 
 /**

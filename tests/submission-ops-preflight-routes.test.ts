@@ -273,7 +273,9 @@ describe('POST /api/submission-ops/packages/:packageId/preflight', () => {
     expect(finding).toMatchObject({ severity: 'warning' });
     expect(finding.message).toMatch(/no content fingerprint/i);
     let byId = Object.fromEntries(res.body.data.validators.map((v: any) => [v.id, v]));
-    expect(byId.content_integrity).toMatchObject({ ran: false, errorCount: 0, warningCount: 1 });
+    // The assessment DID run — it read the descriptor and found nothing it can
+    // compare. `ran: false` would read as "not looked at".
+    expect(byId.content_integrity).toMatchObject({ ran: true, errorCount: 0, warningCount: 1 });
     expect(poolQuery.mock.calls.some((c) => /FROM c2c_package_sections/.test(String(c[0])))).toBe(false);
 
     // Enforced (production): the same bundle is a blocking error, as transmit refuses it.
@@ -290,7 +292,21 @@ describe('POST /api/submission-ops/packages/:packageId/preflight', () => {
     finding = res.body.data.findings.find((f: any) => f.ruleId === 'BUNDLE-CONTENT-UNPROVEN');
     expect(finding).toMatchObject({ severity: 'error' });
     byId = Object.fromEntries(res.body.data.validators.map((v: any) => [v.id, v]));
-    expect(byId.content_integrity).toMatchObject({ ran: false, errorCount: 1 });
+    expect(byId.content_integrity).toMatchObject({ ran: true, errorCount: 1 });
+  });
+
+  it('a bundle fingerprinted under an OLDER scheme says so, rather than claiming it records none', async () => {
+    // A version bump makes every stored descriptor unproven at once; telling
+    // the operator it "records no fingerprint" would be false for all of them.
+    dbState.pkg = pkgWith({ regulatory: IDS, bundle: { ...BUNDLE, contentFingerprint: 'v2:' + 'a'.repeat(64) } });
+    const res = await preflight();
+    expect(res.status).toBe(200);
+    const finding = res.body.data.findings.find((f: any) => f.ruleId === 'BUNDLE-CONTENT-UNPROVEN');
+    expect(finding.message).toMatch(/fingerprinted under an older scheme than v3/);
+    expect(finding.message).toMatch(/re-assemble/);
+    expect(finding.message).not.toMatch(/records no content fingerprint/);
+    // Nothing was read: an unproven descriptor is not compared against anything.
+    expect(poolQuery.mock.calls.some((c) => /FROM c2c_package_sections/.test(String(c[0])))).toBe(false);
   });
 
   it('a content read that fails is an error, never a pass', async () => {

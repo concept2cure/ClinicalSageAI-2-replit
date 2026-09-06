@@ -80,7 +80,7 @@ import {
   fingerprintPackageContent,
   sha256Hex,
   CONTENT_DRIFT_MESSAGE,
-  CONTENT_UNPROVEN_MESSAGE,
+  unprovenMessage,
   type PackageContentRow,
 } from '../services/ectd/package-content-fingerprint';
 import {
@@ -89,6 +89,7 @@ import {
   markContentChanged,
   recordPackageGovernedAction,
   withPackageMetadataLock,
+  type LockClient,
 } from '../services/ectd/package-content-change';
 import { bundleTrustEnforced } from '../services/submission-gateways/bundle-namespace';
 import { validateEctdLeafs } from '../services/submission-gateways/ectd-structural-validator';
@@ -341,7 +342,17 @@ const deleteSectionSchema = z.object({
   reason: z.string().min(8, 'reason must be at least 8 characters'),
 });
 
-/** Resolve a tenant-owned package and one of its sections. */
+/**
+ * Resolve a tenant-owned package and one of its sections — for the 404 alone.
+ * The values read here are NOT the ones an edit decides on: both routes below
+ * re-read the row under the package lock, because a section read outside it is
+ * the lost update the lock exists to prevent.
+ *
+ * Tenancy comes from the section's PACKAGE, as it does in mapArtifactToSection
+ * — one key for a section across both primitives. Scoping by the section row's
+ * own org_id instead left a row whose stamp disagreed with its package
+ * uneditable and undeletable by everyone, while still shipping in the bundle.
+ */
 async function resolvePackageSection(packageKey: string, sectionKey: string, orgId: number) {
   const [pkg] = await db
     .select({ id: c2cSubmissionPackages.id })
@@ -356,8 +367,41 @@ async function resolvePackageSection(packageKey: string, sectionKey: string, org
   const [section] = await db
     .select()
     .from(c2cPackageSections)
-    .where(and(sectionClause, eq(c2cPackageSections.packageDbId, pkg.id), eq(c2cPackageSections.orgId, orgId)));
+    .where(and(sectionClause, eq(c2cPackageSections.packageDbId, pkg.id)));
   return { pkg, section: section ?? null };
+}
+
+/** A section edit that turned out to change nothing: rolls the transaction
+ *  back so nothing is bumped, carrying the row it decided against. */
+class SectionUnchanged extends Error {
+  readonly name = 'SectionUnchanged';
+  constructor(readonly current: { sectionKey: string; sectionLabel: string; sortOrder: number }) { super('unchanged'); }
+}
+/** The three columns a section edit can move, all covered by the fingerprint. */
+type SectionValues = { sectionKey: string; sectionLabel: string; sortOrder: number };
+
+/** A section still holding something a person put there. */
+class SectionNotEmpty extends Error {
+  readonly name = 'SectionNotEmpty';
+  constructor(readonly mappedCount: number, readonly milestoneLinks: number) { super('not empty'); }
+}
+
+/** The section row as the edit decides on it, read under the package lock. */
+async function lockedSection(client: LockClient, sectionDbId: number, packageDbId: number) {
+  const { rows } = await client.query(
+    `SELECT section_key, section_label, sort_order FROM c2c_package_sections
+      WHERE id = $1 AND package_db_id = $2 FOR UPDATE`,
+    [sectionDbId, packageDbId],
+  );
+  if (rows.length === 0) throw new SectionGone('section gone');
+  const r = rows[0] as Record<string, unknown>;
+  return {
+    sectionKey: String(r.section_key ?? ''),
+    sectionLabel: String(r.section_label ?? ''),
+    // NULL and 0 are the same order everywhere the value is read (assemble's
+    // `?? 0`, the fingerprint reader's null check), so they compare as equal.
+    sortOrder: r.sort_order == null ? 0 : Number(r.sort_order),
+  };
 }
 
 router.post('/packages/:packageId/sections', async (req: Request, res: Response) => {
@@ -419,34 +463,50 @@ router.patch('/packages/:packageId/sections/:sectionId', async (req: Request, re
     if (!pkg) return res.status(404).json({ error: 'Package not found' });
     if (!section) return res.status(404).json({ error: 'Section not found' });
 
-    const next = {
-      sectionKey: parsed.data.sectionKey ?? section.sectionKey,
-      sectionLabel: parsed.data.sectionLabel ?? section.sectionLabel,
-      sortOrder: parsed.data.sortOrder ?? section.sortOrder ?? 0,
-    };
-    const previous = {
-      sectionKey: section.sectionKey,
-      sectionLabel: section.sectionLabel,
-      sortOrder: section.sortOrder ?? 0,
-    };
-    const changed =
-      next.sectionKey !== previous.sectionKey ||
-      next.sectionLabel !== previous.sectionLabel ||
-      next.sortOrder !== previous.sortOrder;
-    if (!changed) {
-      // Nothing about the package's content moved, so nothing is invalidated
-      // and nothing is recorded — a no-op is not a governed change.
-      return res.json({ data: { id: section.id, ...previous }, changed: false, staleBundleCleared: false, ledgerWriteFailed: false });
+    // The row the edit decides on is read UNDER the package lock, and only the
+    // fields the caller named are rewritten. Deciding from a row read before
+    // the lock reverted a rename that committed in between and then recorded an
+    // audit row asserting the key had never moved — the lost update this lock
+    // exists to prevent.
+    let outcome: { staleBundleCleared: boolean; result: { previous: SectionValues; next: SectionValues } } | null = null;
+    let unchanged: SectionValues | null = null;
+    try {
+      outcome = await markContentChanged(pkg.id, async (client) => {
+        const previous = await lockedSection(client, section.id, pkg.id);
+        const next: SectionValues = {
+          sectionKey: parsed.data.sectionKey ?? previous.sectionKey,
+          sectionLabel: parsed.data.sectionLabel ?? previous.sectionLabel,
+          sortOrder: parsed.data.sortOrder ?? previous.sortOrder,
+        };
+        if (
+          next.sectionKey === previous.sectionKey &&
+          next.sectionLabel === previous.sectionLabel &&
+          next.sortOrder === previous.sortOrder
+        ) {
+          // Nothing about the package's content moved: roll back so nothing is
+          // invalidated and nothing is recorded — a no-op is not a governed change.
+          throw new SectionUnchanged(previous);
+        }
+        await client.query(
+          `UPDATE c2c_package_sections SET section_key = $2, section_label = $3, sort_order = $4, updated_at = now()
+            WHERE id = $1`,
+          [section.id, next.sectionKey, next.sectionLabel, next.sortOrder],
+        );
+        return { previous, next };
+      });
+    } catch (e) {
+      if (e instanceof SectionUnchanged) unchanged = e.current;
+      else if (e instanceof SectionGone) return res.status(404).json({ error: 'Section not found' });
+      else throw e;
+    }
+    if (unchanged) {
+      return res.json({
+        data: { id: section.id, ...unchanged },
+        changed: false, staleBundleCleared: false, ledgerWriteFailed: false,
+      });
     }
 
-    const outcome = await markContentChanged(pkg.id, async (client) => {
-      await client.query(
-        `UPDATE c2c_package_sections SET section_key = $2, section_label = $3, sort_order = $4, updated_at = now()
-          WHERE id = $1`,
-        [section.id, next.sectionKey, next.sectionLabel, next.sortOrder],
-      );
-      return true as const;
-    });
+    const { previous, next } = outcome!.result;
     const ledgerWriteFailed = await recordPackageGovernedAction({
       orgId,
       userId,
@@ -457,13 +517,13 @@ router.patch('/packages/:packageId/sections/:sectionId', async (req: Request, re
         sectionDbId: section.id,
         previous,
         next,
-        staleBundleCleared: outcome.staleBundleCleared,
+        staleBundleCleared: outcome!.staleBundleCleared,
       },
     });
     res.json({
       data: { id: section.id, ...next },
       changed: true,
-      staleBundleCleared: outcome.staleBundleCleared,
+      staleBundleCleared: outcome!.staleBundleCleared,
       ledgerWriteFailed,
     });
   } catch (e) {
@@ -485,36 +545,59 @@ router.delete('/packages/:packageId/sections/:sectionId', async (req: Request, r
     if (!pkg) return res.status(404).json({ error: 'Package not found' });
     if (!section) return res.status(404).json({ error: 'Section not found' });
 
-    // The mapping table cascades on section delete, so removing a section that
-    // still holds artifacts would silently unmap them. Refuse and name the
-    // count: unmapping regulated content is its own governed act.
-    const [mapped] = await db
-      .select({ n: count() })
-      .from(c2cArtifactSectionMap)
-      .where(and(eq(c2cArtifactSectionMap.sectionDbId, section.id), eq(c2cArtifactSectionMap.orgId, orgId)));
-    const mappedCount = Number(mapped?.n ?? 0);
-    if (mappedCount > 0) {
+    // Everything a section owns cascades when it goes. What a person put there
+    // — a mapped artifact, a milestone's gate assignment — is refused rather
+    // than destroyed: each is its own governed act. Derived rows (readiness
+    // snapshots) do cascade, and linked blockers are unlinked, so the counts
+    // are named in the audit row instead of vanishing unrecorded.
+    //
+    // Counted UNDER the lock, with the delete, in one transaction: counting
+    // first and deleting afterwards let a mapping created in between be
+    // cascaded away with only a `section-removed` record to show for it.
+    // The org is not a predicate here — the section already belongs to a
+    // package of this tenant, so ANY row pointing at it must block the delete,
+    // whatever org id the row itself carries.
+    let outcome: {
+      staleBundleCleared: boolean;
+      result: { readinessSnapshotsRemoved: number; blockersUnlinked: number };
+    } | null = null;
+    let notEmpty: SectionNotEmpty | null = null;
+    try {
+      outcome = await markContentChanged(pkg.id, async (client) => {
+        await lockedSection(client, section.id, pkg.id);
+        const countOf = async (sql: string) =>
+          Number(((await client.query(sql, [section.id])).rows[0] as any)?.n ?? 0);
+        const mappedCount = await countOf('SELECT count(*)::int AS n FROM c2c_artifact_section_map WHERE section_db_id = $1');
+        const milestoneLinks = await countOf('SELECT count(*)::int AS n FROM c2c_milestone_sections WHERE section_db_id = $1');
+        if (mappedCount > 0 || milestoneLinks > 0) throw new SectionNotEmpty(mappedCount, milestoneLinks);
+        const readinessSnapshotsRemoved = await countOf('SELECT count(*)::int AS n FROM c2c_readiness_snapshots WHERE section_db_id = $1');
+        const blockersUnlinked = await countOf('SELECT count(*)::int AS n FROM c2c_blockers WHERE section_db_id = $1');
+        const { rows } = await client.query(
+          'DELETE FROM c2c_package_sections WHERE id = $1 RETURNING id',
+          [section.id],
+        );
+        if (rows.length === 0) throw new SectionGone('section gone');
+        return { readinessSnapshotsRemoved, blockersUnlinked };
+      });
+    } catch (e) {
+      if (e instanceof SectionNotEmpty) notEmpty = e;
+      else if (e instanceof SectionGone) return res.status(404).json({ error: 'Section not found' });
+      else throw e;
+    }
+    if (notEmpty) {
+      const holds = [
+        notEmpty.mappedCount > 0 ? `${notEmpty.mappedCount} mapped artifact${notEmpty.mappedCount === 1 ? '' : 's'}` : null,
+        notEmpty.milestoneLinks > 0 ? `${notEmpty.milestoneLinks} milestone gate assignment${notEmpty.milestoneLinks === 1 ? '' : 's'}` : null,
+      ].filter(Boolean);
       return res.status(409).json({
         error:
-          `This section still holds ${mappedCount} mapped artifact${mappedCount === 1 ? '' : 's'}; ` +
-          'unmap them first (DELETE /api/submission-ops/artifact-section-map/:mappingId) so each removal is recorded on its own.',
+          `This section still holds ${holds.join(' and ')}; remove them first ` +
+          '(DELETE /api/submission-ops/artifact-section-map/:mappingId for a mapping) so each removal is recorded on its own.',
         code: 'SECTION_NOT_EMPTY',
-        mappedCount,
+        mappedCount: notEmpty.mappedCount,
+        milestoneLinks: notEmpty.milestoneLinks,
       });
     }
-
-    const outcome = await markContentChanged(pkg.id, async (client) => {
-      const { rows } = await client.query(
-        'DELETE FROM c2c_package_sections WHERE id = $1 AND org_id = $2 RETURNING id',
-        [section.id, orgId],
-      );
-      if (rows.length === 0) throw new SectionGone('section gone');
-      return true as const;
-    }).catch((e) => {
-      if (e instanceof SectionGone) return null;
-      throw e;
-    });
-    if (!outcome) return res.status(404).json({ error: 'Section not found' });
 
     const ledgerWriteFailed = await recordPackageGovernedAction({
       orgId,
@@ -525,12 +608,20 @@ router.delete('/packages/:packageId/sections/:sectionId', async (req: Request, r
         change: 'section-removed',
         sectionDbId: section.id,
         sectionKey: section.sectionKey,
-        staleBundleCleared: outcome.staleBundleCleared,
+        // What the cascade took with it, rather than leaving it unrecorded.
+        readinessSnapshotsRemoved: outcome!.result.readinessSnapshotsRemoved,
+        blockersUnlinked: outcome!.result.blockersUnlinked,
+        staleBundleCleared: outcome!.staleBundleCleared,
       },
     });
     res.json({
-      data: { deleted: true, sectionDbId: section.id },
-      staleBundleCleared: outcome.staleBundleCleared,
+      data: {
+        deleted: true,
+        sectionDbId: section.id,
+        readinessSnapshotsRemoved: outcome!.result.readinessSnapshotsRemoved,
+        blockersUnlinked: outcome!.result.blockersUnlinked,
+      },
+      staleBundleCleared: outcome!.staleBundleCleared,
       ledgerWriteFailed,
     });
   } catch (e) {
@@ -2832,7 +2923,10 @@ router.post('/packages/:packageId/preflight', async (req: Request, res: Response
           contentValidator.errorCount = 1;
         } else if (assessment.state === 'unproven') {
           const severity = bundleTrustEnforced() ? 'error' : 'warning';
-          findings.push({ severity, ruleId: 'BUNDLE-CONTENT-UNPROVEN', message: CONTENT_UNPROVEN_MESSAGE });
+          findings.push({ severity, ruleId: 'BUNDLE-CONTENT-UNPROVEN', message: unprovenMessage(assessment.reason) });
+          // The assessment DID run — it read the descriptor and found nothing
+          // it can compare. Reporting ran:false would read as "not looked at".
+          contentValidator.ran = true;
           if (severity === 'error') contentValidator.errorCount = 1;
           else contentValidator.warningCount = 1;
         } else {

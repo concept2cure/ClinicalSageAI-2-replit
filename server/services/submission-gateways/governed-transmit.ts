@@ -54,7 +54,7 @@ import {
   assessPackageContent,
   isCurrentContentFingerprint,
   CONTENT_DRIFT_MESSAGE,
-  CONTENT_UNPROVEN_MESSAGE,
+  unprovenMessage,
   type ContentAssessment,
 } from '../ectd/package-content-fingerprint';
 import {
@@ -492,7 +492,7 @@ export async function executeGovernedTransmit(
       });
     }
     if (assessment.state === 'unproven' && bundleTrustEnforced()) {
-      throw new GovernedTransmitRefusal('BUNDLE_CONTENT_UNPROVEN', CONTENT_UNPROVEN_MESSAGE, 422);
+      throw new GovernedTransmitRefusal('BUNDLE_CONTENT_UNPROVEN', unprovenMessage(assessment.reason), 422);
     }
     if (assessment.state === 'match') provenAgainst = { assembled: assessment.current, atTransmit: assessment.current };
   }

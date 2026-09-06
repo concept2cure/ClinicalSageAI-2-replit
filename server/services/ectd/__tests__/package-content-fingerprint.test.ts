@@ -12,6 +12,7 @@ import {
   isCurrentContentFingerprint,
   readPackageContentRows,
   sha256Hex,
+  unprovenMessage,
   CONTENT_FINGERPRINT_VERSION,
   type PackageContentRow,
 } from '../package-content-fingerprint';
@@ -83,11 +84,28 @@ describe('assessPackageContent', () => {
     expect(drift).toEqual({ state: 'drift', current: fp(edited), assembled });
   });
 
-  it('is UNPROVEN, without reading anything, for a missing or older-scheme fingerprint', async () => {
-    for (const stored of [undefined, null, '', 'v1:' + 'a'.repeat(64), 'a'.repeat(64)]) {
+  it('is UNPROVEN, without reading anything, for a missing or older-scheme fingerprint — and says WHICH', async () => {
+    // A version bump makes every stored descriptor unproven at once, so "no
+    // fingerprint" and "a fingerprint this build cannot compare" must not be
+    // reported in the same words: only one of them is true of those bundles.
+    for (const stored of [undefined, null, '', 'a'.repeat(64), 42]) {
       const client = clientFor(ROWS);
-      expect(await assessPackageContent(client, 5, 99, stored), String(stored)).toEqual({ state: 'unproven' });
+      expect(await assessPackageContent(client, 5, 99, stored), String(stored)).toEqual({ state: 'unproven', reason: 'absent' });
       expect(client.calls).toBe(0);
+    }
+    for (const stored of ['v1:' + 'a'.repeat(64), 'v2:' + 'b'.repeat(64)]) {
+      const client = clientFor(ROWS);
+      expect(await assessPackageContent(client, 5, 99, stored), stored).toEqual({ state: 'unproven', reason: 'older-scheme' });
+      expect(client.calls).toBe(0);
+    }
+  });
+
+  it('the two unproven wordings each say what is actually true of the bundle', () => {
+    expect(unprovenMessage('absent')).toMatch(/records no content fingerprint/);
+    expect(unprovenMessage('older-scheme')).toMatch(/fingerprinted under an older scheme than v3/);
+    for (const reason of ['absent', 'older-scheme'] as const) {
+      expect(unprovenMessage(reason)).toMatch(/UNKNOWN/);
+      expect(unprovenMessage(reason)).toMatch(/re-assemble the package before transmitting/);
     }
   });
 });

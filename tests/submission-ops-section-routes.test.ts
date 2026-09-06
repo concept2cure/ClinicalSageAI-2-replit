@@ -32,6 +32,14 @@ const { dbState } = vi.hoisted(() => ({
     deleted: [] as unknown[][],
     deleteReturns: null as any[] | null,
     failWrite: false,
+    /** The section row as the LOCKED read sees it — a test can make this differ
+     *  from what the pre-lock lookup returned, which is the lost-update race. */
+    lockedSection: null as null | { section_key: string; section_label: string; sort_order: number | null },
+    /** Counts the locked guard reads, by table. */
+    counts: {} as Record<string, number>,
+    /** Runs on the locked section read: lets a test land a concurrent write
+     *  INSIDE the lock's window, which is where the TOCTOU used to be. */
+    onLock: null as null | (() => void),
   },
 }));
 
@@ -52,7 +60,13 @@ function makeDb() {
 
 const clientQuery = vi.fn(async (sql: string, params: unknown[] = []) => {
   dbState.statements.push(sql.trim().split(/\s+/).slice(0, 3).join(' '));
+  if (/FROM c2c_package_sections\s+WHERE id = \$1 AND package_db_id = \$2 FOR UPDATE/.test(sql)) {
+    dbState.onLock?.();
+    return { rows: dbState.lockedSection ? [dbState.lockedSection] : [] };
+  }
   if (/FOR UPDATE/.test(sql)) return { rows: [{ metadata: dbState.pkgMetadata }] };
+  const counted = sql.match(/count\(\*\)::int AS n FROM (\w+)/)?.[1];
+  if (counted) return { rows: [{ n: dbState.counts[counted] ?? 0 }] };
   if (/^UPDATE c2c_submission_packages/.test(sql)) {
     if (dbState.failWrite) throw new Error('lock write failed');
     dbState.updates.push({ metadata: JSON.parse(String(params[1])) });
@@ -108,6 +122,9 @@ beforeEach(() => {
   dbState.deleted = [];
   dbState.deleteReturns = null;
   dbState.failWrite = false;
+  dbState.lockedSection = { section_key: '2.5', section_label: 'Clinical Overview', sort_order: 0 };
+  dbState.counts = {};
+  dbState.onLock = null;
   recordGovernedActionFn.mockReset();
   recordGovernedActionFn.mockResolvedValue({ actionId: 'act_x', auditId: 'aud_x', sha256Chain: 'c' });
   connectFn.mockClear();
@@ -198,9 +215,58 @@ describe('PATCH /api/submission-ops/packages/:packageId/sections/:sectionId', ()
     const res = await patch({ sectionKey: '2.5', sectionLabel: 'Clinical Overview', sortOrder: 0, ...REASON });
     expect(res.status).toBe(200);
     expect(res.body).toMatchObject({ changed: false, staleBundleCleared: false });
+    // Knowing it is a no-op requires reading the row under the lock, so the
+    // lock IS taken — and then rolled back, writing and recording nothing.
     expect(dbState.updates).toHaveLength(0);
-    expect(connectFn).not.toHaveBeenCalled();
+    expect(clientQuery).toHaveBeenCalledWith('ROLLBACK');
+    expect(clientQuery).not.toHaveBeenCalledWith('COMMIT');
     expect(recordGovernedActionFn).not.toHaveBeenCalled();
+  });
+
+  it('decides against the LOCKED row, never the one read before it: a rename that commits in between is not reverted', async () => {
+    // The pre-lock lookup still shows '2.5'; by the time the row is locked a
+    // concurrent governed rename has moved it to '3.2.P.1'. A label-only patch
+    // must keep that key and report it as the previous value — deciding from
+    // the stale read wrote '2.5' back and recorded that the key never moved.
+    dbState.queue = [PKG, SECTION];
+    dbState.pkgMetadata = { bundle: BUNDLE };
+    dbState.lockedSection = { section_key: '3.2.P.1', section_label: 'Clinical Overview', sort_order: 0 };
+    const res = await patch({ sectionLabel: 'Clinical Overview (rev 2)', ...REASON });
+    expect(res.status).toBe(200);
+    expect(res.body.data.sectionKey).toBe('3.2.P.1');
+    const ledger = recordGovernedActionFn.mock.calls[0][1];
+    expect(ledger.payload.previous.sectionKey).toBe('3.2.P.1');
+    expect(ledger.payload.next.sectionKey).toBe('3.2.P.1');
+    // The row written carries the concurrent key, not the stale one.
+    expect(dbState.inserted.at(-1)).toEqual([11, '3.2.P.1', 'Clinical Overview (rev 2)', 0]);
+  });
+
+  it('a patch whose target value the LOCKED row already holds is a no-op, not a bundle-destroying write', async () => {
+    dbState.queue = [PKG, SECTION];
+    dbState.pkgMetadata = { bundle: BUNDLE };
+    dbState.lockedSection = { section_key: '3.2.P.1', section_label: 'Clinical Overview', sort_order: 0 };
+    const res = await patch({ sectionKey: '3.2.P.1', ...REASON });
+    expect(res.body).toMatchObject({ changed: false, staleBundleCleared: false });
+    expect(dbState.updates).toHaveLength(0);
+    expect(recordGovernedActionFn).not.toHaveBeenCalled();
+  });
+
+  it('a section that vanished before the lock is a 404, not a write against nothing', async () => {
+    dbState.queue = [PKG, SECTION];
+    dbState.lockedSection = null;
+    const res = await patch({ sectionKey: '3.2.P.1', ...REASON });
+    expect(res.status).toBe(404);
+    expect(dbState.updates).toHaveLength(0);
+    expect(clientQuery).toHaveBeenCalledWith('ROLLBACK');
+  });
+
+  it('NULL and 0 are the same sort order, so setting 0 on a NULL row is a no-op', async () => {
+    dbState.queue = [PKG, SECTION];
+    dbState.lockedSection = { section_key: '2.5', section_label: 'Clinical Overview', sort_order: null };
+    const res = await patch({ sortOrder: 0, ...REASON });
+    expect(res.body).toMatchObject({ changed: false });
+    expect(res.body.data.sortOrder).toBe(0);
+    expect(dbState.updates).toHaveLength(0);
   });
 
   it('TRIMS a padded key rather than storing it — the key becomes a leaf path component — and a trimmed no-op is still a no-op', async () => {
@@ -233,32 +299,69 @@ describe('DELETE /api/submission-ops/packages/:packageId/sections/:sectionId', (
     request(makeApp()).delete(`/api/submission-ops/packages/5/sections/${section}`).send(body);
 
   it('REFUSES to remove a section that still holds artifacts — the cascade would unmap them with no record of its own', async () => {
-    dbState.queue = [PKG, SECTION, [{ n: 2 }]];
+    dbState.queue = [PKG, SECTION];
     dbState.pkgMetadata = { bundle: BUNDLE };
+    dbState.counts = { c2c_artifact_section_map: 2 };
     const res = await del();
     expect(res.status).toBe(409);
     expect(res.body).toMatchObject({ code: 'SECTION_NOT_EMPTY', mappedCount: 2 });
-    expect(res.body.error).toMatch(/unmap them first/);
+    expect(res.body.error).toMatch(/remove them first/);
     expect(dbState.deleted).toHaveLength(0);
     expect(dbState.updates).toHaveLength(0);
+    expect(clientQuery).toHaveBeenCalledWith('ROLLBACK');
     expect(recordGovernedActionFn).not.toHaveBeenCalled();
   });
 
+  it('counts UNDER the lock: a mapping created after the request began is still refused, never cascaded away', async () => {
+    // Counting before taking the lock let a mapping land in the window and be
+    // destroyed by the cascade, with only a `section-removed` record for it.
+    dbState.queue = [PKG, SECTION];
+    dbState.pkgMetadata = { bundle: BUNDLE };
+    dbState.onLock = () => { dbState.counts.c2c_artifact_section_map = 1; };
+    const res = await del();
+    expect(res.status).toBe(409);
+    expect(res.body).toMatchObject({ code: 'SECTION_NOT_EMPTY', mappedCount: 1 });
+    expect(dbState.deleted).toHaveLength(0);
+  });
+
+  it('REFUSES a section a milestone still gates — that link cascades too, and is not an artifact mapping', async () => {
+    dbState.queue = [PKG, SECTION];
+    dbState.pkgMetadata = { bundle: BUNDLE };
+    dbState.counts = { c2c_milestone_sections: 2 };
+    const res = await del();
+    expect(res.status).toBe(409);
+    expect(res.body).toMatchObject({ code: 'SECTION_NOT_EMPTY', mappedCount: 0, milestoneLinks: 2 });
+    expect(res.body.error).toMatch(/2 milestone gate assignments/);
+    expect(dbState.deleted).toHaveLength(0);
+  });
+
+  it('NAMES the collateral the cascade takes — derived readiness rows removed, blockers unlinked — instead of losing it', async () => {
+    dbState.queue = [PKG, SECTION];
+    dbState.pkgMetadata = { bundle: BUNDLE };
+    dbState.counts = { c2c_readiness_snapshots: 3, c2c_blockers: 1 };
+    const res = await del();
+    expect(res.status).toBe(200);
+    expect(res.body.data).toMatchObject({ deleted: true, readinessSnapshotsRemoved: 3, blockersUnlinked: 1 });
+    expect(recordGovernedActionFn.mock.calls[0][1].payload).toMatchObject({
+      change: 'section-removed', readinessSnapshotsRemoved: 3, blockersUnlinked: 1,
+    });
+  });
+
   it('removes an EMPTY section, invalidating the bundle that shipped its placeholder leaf', async () => {
-    dbState.queue = [PKG, SECTION, [{ n: 0 }]];
+    dbState.queue = [PKG, SECTION];
     dbState.pkgMetadata = { bundle: BUNDLE, contentRevision: 1 };
     const res = await del();
     expect(res.status).toBe(200);
     expect(res.body).toMatchObject({ staleBundleCleared: true, ledgerWriteFailed: false });
     expect(res.body.data).toMatchObject({ deleted: true, sectionDbId: 11 });
-    expect(dbState.deleted[0]).toEqual([11, 99]);
+    expect(dbState.deleted[0]).toEqual([11]);
     expect(dbState.updates[0].metadata).toEqual({ contentRevision: 2 });
     expect(order(/^DELETE FROM c2c_package_sections/)).toBeLessThan(order(/^UPDATE c2c_submission_packages/));
     expect(recordGovernedActionFn.mock.calls[0][1].payload).toMatchObject({ change: 'section-removed', sectionDbId: 11, sectionKey: '2.5' });
   });
 
   it('a section that vanished between the check and the delete is a 404 with nothing bumped', async () => {
-    dbState.queue = [PKG, SECTION, [{ n: 0 }]];
+    dbState.queue = [PKG, SECTION];
     dbState.pkgMetadata = { bundle: BUNDLE };
     dbState.deleteReturns = [];
     const res = await del();
@@ -269,7 +372,7 @@ describe('DELETE /api/submission-ops/packages/:packageId/sections/:sectionId', (
   });
 
   it('reports a ledger outage instead of pretending the removal was audited', async () => {
-    dbState.queue = [PKG, SECTION, [{ n: 0 }]];
+    dbState.queue = [PKG, SECTION];
     dbState.pkgMetadata = { bundle: BUNDLE };
     recordGovernedActionFn.mockRejectedValueOnce(new Error('audit db down'));
     const res = await del();

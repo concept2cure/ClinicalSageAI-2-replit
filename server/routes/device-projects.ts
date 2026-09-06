@@ -164,47 +164,53 @@ router.post('/', requireEditorAccess, async (req: Request, res: Response) => {
 });
 
 /**
- * The PUT's field rules, in one place. Returns the message for the first field
- * that fails, or null when the patch is acceptable. Every field is optional —
- * this is a patch, and an absent key means "leave it alone".
+ * The PUT's field rules, one per field, in the order the handler reports them.
+ * A rule runs only when its key is PRESENT — this is a patch, and an absent key
+ * means "leave it alone" — and returns the refusal message or null.
  *
- * Extracted so the handler reads as what it DOES (authorize, validate, load,
- * write, audit) rather than as a wall of length checks.
+ * A table rather than a chain of ifs: the rules are independent of one another,
+ * so expressing them as a chain made one function carry the branch count of all
+ * eight (complexity 22, over the limit of 15) while saying nothing a reader
+ * could not get from the list.
+ *
+ * Each rule states the condition under which the field is REFUSED — the same
+ * predicate the chain used, not its inverse. Written as an inverse, `progress`
+ * silently changed meaning: `typeof v === 'number' && v >= 0 && v <= 100` is not
+ * the negation of `typeof v !== 'number' || v < 0 || v > 100` when v is NaN,
+ * which every comparison answers false to. A differential run over 200k patches
+ * caught it; keep the refusal form.
  */
-function validatePatch(p: Record<string, unknown>): string | null {
-  if (p.deviceName !== undefined) {
-    const trimmed = String(p.deviceName).trim();
+const PATCH_RULES: ReadonlyArray<readonly [string, (value: unknown) => string | null]> = [
+  ['deviceName', value => {
+    const trimmed = String(value).trim();
     if (trimmed.length === 0) return 'deviceName cannot be empty';
-    if (trimmed.length > MAX_NAME_LENGTH) {
-      return `deviceName must be ${MAX_NAME_LENGTH} characters or fewer`;
-    }
-  }
-  if (p.deviceClass !== undefined && !VALID_DEVICE_CLASSES.includes(String(p.deviceClass))) {
-    return `deviceClass must be one of: ${VALID_DEVICE_CLASSES.join(', ')}`;
-  }
-  if (p.manufacturer !== undefined && String(p.manufacturer).length > MAX_TEXT_LENGTH) {
-    return `manufacturer must be ${MAX_TEXT_LENGTH} characters or fewer`;
-  }
-  if (p.intendedUse !== undefined && String(p.intendedUse).length > MAX_TEXT_LENGTH) {
-    return `intendedUse must be ${MAX_TEXT_LENGTH} characters or fewer`;
-  }
-  if (p.attachedDocuments !== undefined && !Array.isArray(p.attachedDocuments)) {
-    return 'attachedDocuments must be an array';
-  }
-  if (
-    p.state !== undefined &&
-    (typeof p.state !== 'object' || p.state === null || Array.isArray(p.state))
-  ) {
-    return 'state must be a JSON object';
-  }
-  if (
-    p.progress !== undefined &&
-    (typeof p.progress !== 'number' || p.progress < 0 || p.progress > 100)
-  ) {
-    return 'progress must be a number between 0 and 100';
-  }
-  if (p.status !== undefined && !VALID_STATUSES.includes(String(p.status))) {
-    return `status must be one of: ${VALID_STATUSES.join(', ')}`;
+    return trimmed.length > MAX_NAME_LENGTH ? `deviceName must be ${MAX_NAME_LENGTH} characters or fewer` : null;
+  }],
+  ['deviceClass', value =>
+    (!VALID_DEVICE_CLASSES.includes(String(value)) ? `deviceClass must be one of: ${VALID_DEVICE_CLASSES.join(', ')}` : null)],
+  ['manufacturer', value =>
+    (String(value).length > MAX_TEXT_LENGTH ? `manufacturer must be ${MAX_TEXT_LENGTH} characters or fewer` : null)],
+  ['intendedUse', value =>
+    (String(value).length > MAX_TEXT_LENGTH ? `intendedUse must be ${MAX_TEXT_LENGTH} characters or fewer` : null)],
+  ['attachedDocuments', value => (!Array.isArray(value) ? 'attachedDocuments must be an array' : null)],
+  ['state', value =>
+    (typeof value !== 'object' || value === null || Array.isArray(value) ? 'state must be a JSON object' : null)],
+  ['progress', value =>
+    (typeof value !== 'number' || value < 0 || value > 100 ? 'progress must be a number between 0 and 100' : null)],
+  ['status', value =>
+    (!VALID_STATUSES.includes(String(value)) ? `status must be one of: ${VALID_STATUSES.join(', ')}` : null)],
+];
+
+/**
+ * Returns the message for the first field that fails, or null when the patch is
+ * acceptable. Kept separate from the handler so the handler reads as what it
+ * DOES (authorize, validate, load, write, audit).
+ */
+export function validatePatch(p: Record<string, unknown>): string | null {
+  for (const [key, check] of PATCH_RULES) {
+    if (p[key] === undefined) continue;
+    const message = check(p[key]);
+    if (message !== null) return message;
   }
   return null;
 }

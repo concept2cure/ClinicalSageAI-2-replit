@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-06T01:50:28.609Z",
+  "generatedAt": "2026-09-06T02:31:36.914Z",
   "git": {
-    "sha": "c2d32465097dbfdc405670666a1cb046a914d7df",
+    "sha": "72766972e7562a9df8eee7f7732412a88a3d770d",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2076,16 +2076,16 @@
         "bytes": 127662
       },
       {
+        "file": "server/routes/submission-ops.ts",
+        "bytes": 122473
+      },
+      {
         "file": "server/services/ana/AnaToolDefinitions.ts",
         "bytes": 121805
       },
       {
         "file": "server/services/__tests__/ana-ri.test.ts",
         "bytes": 117471
-      },
-      {
-        "file": "server/routes/submission-ops.ts",
-        "bytes": 117131
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/protocol-development.ts",
@@ -2214,16 +2214,16 @@
         "lines": 3067
       },
       {
+        "file": "server/routes/submission-ops.ts",
+        "lines": 3046
+      },
+      {
         "file": "server/routes/concept2cure.ts",
         "lines": 3007
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
         "lines": 2967
-      },
-      {
-        "file": "server/routes/submission-ops.ts",
-        "lines": 2952
       },
       {
         "file": "server/src/routes/stability.router.ts",
