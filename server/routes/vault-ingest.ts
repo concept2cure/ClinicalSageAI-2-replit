@@ -435,6 +435,20 @@ export default function createVaultIngestRoutes(): Router {
           -- the ownership guard above proved this program belongs to $27.
           organization_id = COALESCE(vault.documents.organization_id, EXCLUDED.organization_id),
           updated_at = NOW()
+        -- REFUSE A DESTRUCTIVE OVERWRITE.
+        -- Without this predicate the DO UPDATE replaced s3_key, content_hash,
+        -- file_size, file_name and extracted_text on the existing row, so
+        -- uploading DIFFERENT bytes under the same (program, code, version)
+        -- destroyed the governed record of what was admitted. The version
+        -- column is free text supplied by the client, defaulting to 1.0, and the
+        -- Vault client sends the raw filename as document_code, so that was the
+        -- DEFAULT path, not an edge case: uploading Protocol.pdf twice erased
+        -- the first.
+        -- Restricting the update to a matching hash keeps the idempotent retry
+        -- (same bytes, same place — re-runs placement and returns the row) and
+        -- turns a genuine conflict into zero RETURNING rows, which the handler
+        -- converts to a 409 rather than a silent replacement.
+        WHERE vault.documents.content_hash = EXCLUDED.content_hash
         RETURNING id, processing_status, created_at, updated_at,
                   folder_id, evidence_kind, ctd_section, placement_status,
                   placement_confidence, placement_rationale`,
@@ -470,6 +484,24 @@ export default function createVaultIngestRoutes(): Router {
       );
 
       const doc = result.rows[0];
+
+      /* ON CONFLICT ... DO UPDATE ... WHERE that matches nothing yields no row.
+         The record already exists at this (program, code, version) with
+         different content, and replacing it would destroy the hash the audit
+         trail says was admitted. Refuse, and say what to do: a new version is a
+         new record, not an edit of the old one. */
+      if (!doc) {
+        await client.query('ROLLBACK');
+        return res.status(409).json({
+          error: {
+            code: 'VERSION_CONTENT_CONFLICT',
+            message:
+              `A different document is already recorded at code "${data.documentCode}" ` +
+              `version "${data.version ?? '1.0'}" for this program. Nothing was changed. ` +
+              'Upload it under a new version rather than replacing the existing record.',
+          },
+        });
+      }
 
       /* The catalog's extraction tier, in the SAME transaction as the document
          row: when cataloging is on, a document cannot enter the corpus with
@@ -601,6 +633,27 @@ export default function createVaultIngestRoutes(): Router {
       } catch (rollbackErr: any) {
         logger.error('Vault ingest rollback failed', { err: rollbackErr?.message });
       }
+      /* vault.documents carries a SECOND unique constraint that the ON CONFLICT
+         clause does not target: idx_vault_documents_program_hash_unique on
+         (program_id, content_hash), from db/migrations/044c_gcc_vault_schema.sql:106.
+         Uploading the same bytes under a different document_code therefore
+         raised an unhandled 23505 and 500'd — the case a user hits first, by
+         filing one PDF under two names. It is a refusal, not a server error. */
+      if (err?.code === '23505') {
+        logger.info('Vault ingest refused: content already recorded in this program', {
+          constraint: err?.constraint,
+        });
+        return res.status(409).json({
+          error: {
+            code: 'DUPLICATE_CONTENT',
+            message:
+              'These exact bytes are already recorded in this program under a different ' +
+              'document code. Nothing was changed — file the existing document rather than ' +
+              'admitting a second copy of it.',
+          },
+        });
+      }
+
       logger.error('Vault ingest failed — nothing recorded', { err: err?.message });
       res.status(500).json({
         error: {
