@@ -154,11 +154,13 @@ export default function createVaultIngestRoutes(): Router {
             fn,
           );
 
-    // Tenant ownership guard: `vault.documents` has no organization_id column,
-    // so nothing at the database layer confines this write to the caller's
-    // tenant. The canonical org→program mapping is `regulatory_programs`
-    // (uuid id, integer organization_id), and this check is the only thing
-    // standing between two tenants until that column exists.
+    // Tenant ownership guard. `vault.documents` now carries organization_id
+    // (migrations/20260905_vault_documents_organization_id.sql), and the INSERT
+    // below writes it — the retrieval path filters on it, so a row left NULL is
+    // an orphan no tenant can retrieve. This check is what makes writing it
+    // safe: the canonical org→program mapping is `regulatory_programs` (uuid
+    // id, integer organization_id), and a caller who does not own the program
+    // is refused here before any row is written.
     const authedUser = (req as any).user;
     const rawOrg = authedUser?.organizationId ?? authedUser?.tenantId;
     const orgId = Number(rawOrg);
@@ -381,7 +383,7 @@ export default function createVaultIngestRoutes(): Router {
           folder_id, evidence_kind, ctd_section,
           placement_status, placement_confidence, placement_rationale,
           placed_by, placed_at,
-          processing_status, created_by
+          processing_status, created_by, organization_id
         ) VALUES (
           $1, $2, $3, $4,
           $5, $6, $7, $8, $9, $10,
@@ -391,7 +393,7 @@ export default function createVaultIngestRoutes(): Router {
           $19, $20, $21,
           $22, $23, $24,
           $25, CASE WHEN $25::integer IS NULL THEN NULL ELSE NOW() END,
-          'PENDING', $26
+          'PENDING', $26, $27
         )
         ON CONFLICT (program_id, document_code, version) DO UPDATE SET
           document_title = EXCLUDED.document_title,
@@ -429,6 +431,9 @@ export default function createVaultIngestRoutes(): Router {
           placed_at = CASE WHEN vault.documents.placement_status = 'confirmed'
                            THEN vault.documents.placed_at ELSE EXCLUDED.placed_at END,
           processing_status = 'PENDING',
+          -- Repairs a row that predates the tenant key without ever moving one:
+          -- the ownership guard above proved this program belongs to $27.
+          organization_id = COALESCE(vault.documents.organization_id, EXCLUDED.organization_id),
           updated_at = NOW()
         RETURNING id, processing_status, created_at, updated_at,
                   folder_id, evidence_kind, ctd_section, placement_status,
@@ -460,6 +465,7 @@ export default function createVaultIngestRoutes(): Router {
           placement.rationale,
           placement.placedBy,
           userId,
+          orgId,
         ],
       );
 
