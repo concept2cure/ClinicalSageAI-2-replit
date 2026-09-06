@@ -288,6 +288,12 @@ router.post('/spl', async (req: Request, res: Response) => {
       });
     }
 
+    /* No version is passed: `labeling_pi_sections` records no label version, so
+       there is nothing here to advance one from. Every SPL this route builds is
+       therefore version 1 of its setId. FDA expects the version to advance for
+       each new version of the same labeling, so a resubmission after a label
+       change needs a version the store does not yet hold. `SplGenerationInput`
+       takes one the moment there is something to read. */
     const result = generateSplXml({
       productName,
       ndc: typeof b.ndc === 'string' && b.ndc.trim() !== '' ? b.ndc.trim() : undefined,
