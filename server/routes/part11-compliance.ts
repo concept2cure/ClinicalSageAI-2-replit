@@ -389,6 +389,68 @@ const router = Router();
 // written by BOTH paths.
 
 /**
+ * GET /signatures/by-target?target=<signed_target>
+ *
+ * ── Why this exists: a §11.50 manifestation nobody could reach ───────────────
+ * `electronic_signatures` rows come from two writers. Document signing fills
+ * `document_id`; the governed-action path — `persistGovernedActionSignature`,
+ * which records a submission TRANSMITTED to an agency, a sequence frozen, a
+ * release dispatched — fills `signed_target` and leaves `document_id` null.
+ *
+ * Every HTTP read was anchored on a document. `GET /signatures/:documentId`
+ * filters `document_id = $1`, so it returns nothing for a governed-action row,
+ * and `GET /signatures/:signatureId/manifest` needs an integer id that only
+ * that list could have handed you. The manifestations for the platform's most
+ * consequential signed actions were therefore written and then unreachable —
+ * and §11.50(b) requires the manifestation to be "included as part of any human
+ * readable form of the electronic record".
+ *
+ * The target is the anchor the ledger already records, so this is the discovery
+ * step that was missing, not a new kind of record. Same column set as the
+ * by-document list, same mandatory tenant predicate, same fail-closed states:
+ * an unprovisioned store is a 503, never an empty (and therefore "unsigned")
+ * result.
+ *
+ * Registered BEFORE `/signatures/:documentId` — Express matches in order, and
+ * the param route would otherwise swallow the literal path.
+ */
+router.get('/signatures/by-target', async (req: Request, res: Response) => {
+  const orgId = requestOrgId(req);
+  if (orgId == null) {
+    return res.status(403).json({ error: 'Tenant context required' });
+  }
+  const target = typeof req.query.target === 'string' ? req.query.target.trim() : '';
+  if (!target) {
+    return res.status(400).json({ success: false, error: 'target is required' });
+  }
+
+  const pool: SqlClient = requestSql(req);
+  try {
+    const result = await pool.query(
+      `
+      SELECT id, document_id, version_id, signed_target, signature_type,
+             signature_purpose, signer_id, signer_name, signer_title, signer_email,
+             signature_meaning, signature_hash, binding_basis,
+             second_factor_verified, is_valid, signed_at, ip_address
+      FROM electronic_signatures
+      WHERE signed_target = $1 AND organization_id = $2
+      ORDER BY signed_at DESC, id DESC
+    `,
+      [target, orgId]
+    );
+    res.json({ success: true, data: result.rows });
+  } catch (err) {
+    const code = (err as { code?: string } | null)?.code;
+    if (code === '42P01') {
+      console.warn('[Part11] electronic_signatures table not provisioned; failing closed');
+      return res.status(503).json({ success: false, error: 'SIGNATURE_STORE_UNPROVISIONED' });
+    }
+    console.error('[Part11] Signature target read failed:', (err as Error)?.message);
+    return res.status(500).json({ success: false, error: 'Failed to retrieve signatures' });
+  }
+});
+
+/**
  * GET /signatures/:documentId
  * Get all signatures for a document
  */
@@ -765,6 +827,9 @@ router.get('/audit-trail/chain-integrity', async (req: Request, res: Response) =
     const brokenLinks: Array<{ id: number; sequenceNumber: number; orgId: number; expected: string; actual: string }> = [];
     const prevHashByOrg: Record<number, string> = {};
     let totalVerified = 0;
+    // Rows carrying no record_hash at all. These are NOT verifiable, and counting
+    // them as verified is what let an unhashed table report a fully intact chain.
+    let unhashedEntries = 0;
 
     for (const row of rows) {
       const oid = row.organization_id;
@@ -779,6 +844,19 @@ router.get('/audit-trail/chain-integrity', async (req: Request, res: Response) =
           expected: prevHash || '(genesis)',
           actual: row.previous_hash || '(null)',
         });
+      }
+
+      // A row with no record_hash was never hashed — the hash-chain trigger
+      // (db/migrations/20260222_audit_events_hash_chain.sql) is not in
+      // C2C_MIGRATION_FILES, so on a canonically-provisioned database every row
+      // is NULL. Such a row cannot be verified and must not be counted as
+      // verified: the truthiness guard below used to skip it silently, leaving
+      // brokenLinks empty and reporting "intact / integrityValid: true" over a
+      // chain in which nothing was checked.
+      if (!row.record_hash) {
+        unhashedEntries++;
+        prevHashByOrg[oid] = row.record_hash;
+        continue;
       }
 
       // Recompute record_hash using the same formula as the DB trigger
@@ -796,7 +874,7 @@ router.get('/audit-trail/chain-integrity', async (req: Request, res: Response) =
       const expectedHash = computeHash(payload);
 
       // Allow for timestamp format differences — also verify without reformatting
-      if (row.record_hash && row.record_hash !== expectedHash) {
+      if (row.record_hash !== expectedHash) {
         // Try raw timestamp string as PostgreSQL stores it
         const rawPayload =
           (row.sequence_number ?? '') + '|' +
@@ -825,25 +903,41 @@ router.get('/audit-trail/chain-integrity', async (req: Request, res: Response) =
       totalVerified++;
     }
 
-    const isIntact = brokenLinks.length === 0;
+    // Precedence: a positive finding of tampering outranks "cannot tell". Only a
+    // chain in which EVERY row was actually re-computed may be called intact.
+    const anyBroken = brokenLinks.length > 0;
+    const anyUnhashed = unhashedEntries > 0;
+    const chainStatus = anyBroken ? 'broken' : anyUnhashed ? 'unverifiable' : 'intact';
+    // null = "not verified, and not known to be intact" — the third state the
+    // Part 11 console already renders as "Not verifiable". Reporting `true` here
+    // over unhashed rows asserted tamper-evidence that was never established.
+    const integrityValid = anyBroken ? false : anyUnhashed ? null : true;
 
     res.json({
       success: true,
       data: {
-        chainStatus: isIntact ? 'intact' : 'broken',
-        integrityValid: isIntact,
-        totalEntries: totalVerified,
+        chainStatus,
+        integrityValid,
+        totalEntries: rows.length,
+        verifiedEntries: totalVerified,
+        unhashedEntries,
         brokenLinks: brokenLinks.length,
         brokenLinkDetails: brokenLinks.slice(0, 20), // First 20 for diagnostics
-        lastHash: rows[rows.length - 1]?.record_hash || lastAuditHash,
+        // No fallback: a hash that appears in no row must not be presented as the
+        // chain's last hash.
+        lastHash: rows[rows.length - 1]?.record_hash ?? null,
         hashAlgorithm: 'SHA-256',
         chainType: 'linear-hash-chain',
         verifiedAt: new Date().toISOString(),
         genesisHash: computeHash('GENESIS_BLOCK_TRIALSAGE'),
         compliance: {
           '§11.10(e)': 'Audit trail preserves complete change history with computer-generated timestamps',
-          tamperEvident: 'Each entry is cryptographically linked to its predecessor via SHA-256 hash chain',
-          verificationMethod: 'Full re-computation of SHA-256 hash chain from database records',
+          tamperEvident: anyUnhashed
+            ? `${unhashedEntries} of ${rows.length} entry(ies) carry no record_hash, so cryptographic linkage could NOT be verified for them.`
+            : 'Each entry is cryptographically linked to its predecessor via SHA-256 hash chain',
+          verificationMethod: anyUnhashed
+            ? `Re-computation attempted over ${rows.length} entry(ies); ${totalVerified} carried a record_hash and were re-computed, ${unhashedEntries} were unhashed and could not be verified.`
+            : 'Full re-computation of SHA-256 hash chain from database records',
         },
       },
     });

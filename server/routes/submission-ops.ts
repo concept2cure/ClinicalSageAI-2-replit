@@ -75,6 +75,13 @@ import {
   readBundleBytes,
 } from '../services/submission-bundle-storage';
 import { leafFileName } from '../services/ectd/leaf-source-resolver';
+import type { LeafBytes } from '../services/ectd/package-leaf-bytes';
+import {
+  planSequence,
+  readFiledSequences,
+  SequenceLifecycleRefusal,
+  type SequencePlan,
+} from '../services/ectd/package-sequence-lifecycle';
 import {
   assessPackageContent,
   fingerprintPackageContent,
@@ -1937,6 +1944,13 @@ const assembleBody = z.object({
   // value becomes a filesystem path component in the canonical packager, so the
   // charset is enforced here — a free-form string was a path-traversal vector.
   sequence: z.string().regex(/^\d{4}$/, 'sequence must be exactly four digits (e.g. 0000)').optional(),
+  /**
+   * What this sequence is filing. Sequence 0000 is an original by definition
+   * and needs none; any later sequence must declare one, because the regional
+   * backbone has to state whether it is an amendment, a supplement or an
+   * annual report, and the packager refuses to guess (see planSequence).
+   */
+  submissionType: z.string().trim().min(1).max(120).optional(),
   // Governed transition: the operator's reason is recorded on the audit row.
   // It used to be optional with a placeholder ('eCTD bundle assembled')
   // written in its place — a fabricated justification on a hash-chained
@@ -2168,7 +2182,12 @@ router.post('/packages/:packageId/assemble', async (req: Request, res: Response)
     const leafs: { path: string; mediaType: string; content: Buffer }[] = [];
     const emptyLeafPaths: string[] = [];
     let emptyLeafCount = 0;
-    const ctdLeaves: Array<{ ctdSection: string; fileName: string; bytes: Buffer; title: string }> = [];
+    // `operation` / `modifiedFile` are filled in by the sequence-lifecycle plan
+    // below; they are what makes a follow-up sequence packageable at all.
+    const ctdLeaves: Array<{
+      ctdSection: string; fileName: string; bytes: Buffer; title: string;
+      operation?: LeafBytes['operation']; modifiedFile?: string;
+    }> = [];
     // Placement findings (unplaced / disagreement), merged into the validation
     // result below so the governed transmit gate sees them.
     const placementFindings: Array<{ severity: 'error' | 'warning'; ruleId: string; message: string }> = [];
@@ -2353,6 +2372,51 @@ router.post('/packages/:packageId/assemble', async (req: Request, res: Response)
       }
     }
 
+    // ─── eCTD sequence lifecycle ────────────────────────────────────────
+    //
+    // An eCTD application is a sequence of filings, and every sequence after
+    // 0000 says leaf by leaf what it does to what is already on file. Until
+    // this ran, the route set no operation on any leaf, so the packager
+    // refused every later sequence outright — the package path could file an
+    // original and nothing else.
+    //
+    // The diff is the canonical `computeLifecycleOperations`, reached through
+    // planSequence, which supplies the package-specific half: the sequences
+    // this package actually TRANSMITTED (a bundle assembled and never sent is
+    // not on file) folded into what is currently on file.
+    let lifecycle: SequencePlan | null = null;
+    if (isEctdFormat) {
+      try {
+        lifecycle = planSequence({
+          sequence,
+          submissionType: parsed.data.submissionType,
+          filed: readFiledSequences(existingMetadata),
+          desired: ctdLeaves.map((l) => ({
+            ctdSection: l.ctdSection,
+            fileName: l.fileName,
+            md5: createHash('md5').update(l.bytes).digest('hex'),
+            title: l.title,
+          })),
+        });
+      } catch (e) {
+        if (!(e instanceof SequenceLifecycleRefusal)) throw e;
+        return res.status(409).json({ error: e.message, code: e.code, gate: 'sequence_lifecycle' });
+      }
+      // Apply the plan: each shipping leaf carries its operation (and, when it
+      // supersedes one already on file, the modified-file pointer to it), and a
+      // leaf byte-identical to what is on file does not ship at all — a
+      // sequence carries what changed, not the whole tree.
+      const planByKey = new Map(lifecycle.leaves.map((l) => [`${l.ctdSection}/${l.fileName}`, l]));
+      const kept: typeof ctdLeaves = [];
+      for (const l of ctdLeaves) {
+        const plan = planByKey.get(`${l.ctdSection}/${l.fileName}`);
+        if (!plan) continue; // unchanged since the last filing
+        kept.push({ ...l, operation: plan.operation as any, ...(plan.modifiedFile ? { modifiedFile: plan.modifiedFile } : {}) });
+      }
+      ctdLeaves.length = 0;
+      ctdLeaves.push(...kept);
+    }
+
     // Internal eCTD structural validation (pre-flight). Findings are stored on
     // the descriptor and surfaced to the UI; transmit hard-blocks on errors.
     // This is INTERNAL structural validation only — NOT an agency validator.
@@ -2381,6 +2445,15 @@ router.post('/packages/:packageId/assemble', async (req: Request, res: Response)
           regionalBackbone?: unknown;
         }
       | undefined;
+    /**
+     * What the packager actually put in the bundle, leaf by leaf, with each
+     * leaf's published href and checksum. This is the inventory a LATER
+     * sequence diffs against once this one is transmitted, so it is stored on
+     * the descriptor and copied into the package's filed history at transmit.
+     */
+    let canonicalLeafManifest: Array<{
+      ctdSection: string; fileName: string; href: string; md5: string; operation?: string; title?: string;
+    }> | null = null;
     // The identifiers the backbone was BUILT with, compared against the
     // package's current ones before the bundle is stored (see below).
     let identifiersAtBuild: ReturnType<typeof readRegulatoryIdentifiers> | null = null;
@@ -2420,7 +2493,7 @@ router.post('/packages/:packageId/assemble', async (req: Request, res: Response)
           region: packagerRegion,
           applicationId: applicationNumber ?? `UNASSIGNED-${leafSlug(pkg.packageId)}`,
           sequence,
-          submissionType: 'original',
+          submissionType: parsed.data.submissionType ?? 'original',
           /* The FDA backbone has to state what is being filed. This used to
              pass nothing, and the packager defaulted the application type to
              `fdaat1` — NDA — so every package assembled here declared itself a
@@ -2428,7 +2501,7 @@ router.post('/packages/:packageId/assemble', async (req: Request, res: Response)
              the pathway ('ind', '510k', 'cer', 'ivdr_td'); the packager
              resolves it, and refuses the ones that have no eCTD Module 1 code
              rather than mislabelling them. */
-          fda: { applicationType: pkg.packageFamily },
+          fda: { applicationType: pkg.packageFamily, ...(parsed.data.submissionType ? { submissionType: parsed.data.submissionType } : {}) },
           sponsorId: applicantId ?? `UNASSIGNED-ORG-${orgId}`,
           sponsorName: applicantName ?? `UNASSIGNED (organization ${orgId})`,
           productName: pkg.title,
@@ -2437,6 +2510,7 @@ router.post('/packages/:packageId/assemble', async (req: Request, res: Response)
           leaves: ctdLeaves,
         });
         zip = await fs.promises.readFile(canonical.path);
+        canonicalLeafManifest = canonical.leafManifest ?? null;
         canonicalEvidence = {
           format: canonical.format as typeof format,
           submissionGrade: canonical.submissionGrade,
@@ -2565,6 +2639,18 @@ router.post('/packages/:packageId/assemble', async (req: Request, res: Response)
       // Fingerprint of the content the zip was built from; governed transmit
       // recomputes it and refuses a bundle the package has since moved past.
       contentFingerprint: fingerprintPackageContent(contentRows),
+      // ─── what this bundle files, for the sequence AFTER it ───────────
+      // The sequence number and submission type the backbone declares, the
+      // lifecycle plan that produced its operations, and the leaf inventory
+      // the packager published. Governed transmit copies the inventory into
+      // the package's filed history when the bytes are accepted, and the next
+      // sequence diffs against that.
+      sequence,
+      submissionType: parsed.data.submissionType ?? (sequence === '0000' ? 'original' : null),
+      lifecycle: lifecycle
+        ? { summary: lifecycle.summary, omittedCount: lifecycle.omitted.length }
+        : undefined,
+      leafManifest: canonicalLeafManifest ?? undefined,
       assembledAt,
       assembledBy: userId,
     };

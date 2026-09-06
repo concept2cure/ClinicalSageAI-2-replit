@@ -856,6 +856,98 @@ projectors build fixed module lists, so an empty set is unreachable through
 Every fix also carries a test that a genuinely complete form, plan, protocol or
 record STILL passes its gate, so the new state cannot swallow a real assessment.
 
+### Twenty-sixth — "Current User" approved it, for organization 1, into tenant 0 (2026-09-06)
+
+`server/routes/inline-annotations.ts` is mounted at `/api/inline-annotations`,
+records approve / reject / resolve decisions on selected text inside regulated
+documents, and its own header claims *"@compliance FDA 21 CFR Part 11 — all
+annotations immutably audit-logged"*. Three things were wrong with that claim at
+once.
+
+**Whose document.** `getOrgId` ended `|| 1`; a request with no tenant context
+read and wrote *organization 1's* annotations and decisions. This is the last
+instance of the `haq-manager` shape — a sweep of every org resolver in
+`server/routes` found 15 whose return type is a bare `number`, and every other
+one throws. One router-level gate now 403s without an org, so a new endpoint
+cannot be added without the check.
+
+**Who acted.** `createdBy` and `resolvedBy` were the literal `'Current User'`, in
+three places. The actor now comes from the request — name, else email, else
+`user #<id>` — and a write that cannot name who made it is **refused** rather
+than attributed to a placeholder. `createdByUserId` / `resolvedByUserId` carry
+the id so the label is not the only link back to a person.
+
+**The audit row.** Every `logAction` call omitted `tenantId` and `userId`, and
+`auditService` resolves a missing tenant to **0** and a missing actor to null —
+so every row this Part 11-labelled route wrote landed under tenant 0 with no
+actor. All three calls now carry tenant, actor, ip and user-agent.
+
+Also: four catch blocks handed the caller `err.message`. `ci:server-error-leaks`
+drops 246 → 242 and the baseline is shrunk to lock it in. `client-branding.ts`
+carried a fourth `'Current User'` as the author of every document template.
+
+**The gate that exists to catch this did not.** `ci:fabricated-identity` — the CI
+step named "no invented signer or applicant identity" — reported zero the whole
+time. Every one of its patterns catches an identity that is *interpolated* or
+used as a *fallback*; none caught a literal constant, the simplest form. A
+pattern for it is added, drawing the line between a name that reads as a PERSON
+and one that names a PROCESS: an explicit unassigned marker is accepted, and so
+is a lowercase slug (`system`, `span-lineage-backfill`), because an action
+genuinely taken by the platform has no person to name and saying so is true.
+
+Seen failing first: with the pattern added and the code untouched the gate
+reports 6 — the 2 honest process names drove the person-versus-process
+refinement, the 4 real ones are fixed. It reports 0 now.
+
+Revert-proven: restoring `|| 1` fails both refusal tests; restoring
+`'Current User'` fails the identity tests; dropping tenantId/userId fails the
+audit-row test. The route had no tests; it has seven.
+
+### Twenty-seventh — a signature that could be written but not read (2026-09-06)
+
+`electronic_signatures` has two writers. Document signing fills `document_id`;
+`persistGovernedActionSignature` — the path recording a submission **transmitted
+to an agency**, a sequence frozen, a release dispatched — fills `signed_target`
+and leaves `document_id` null.
+
+Every HTTP read was anchored on a document. `GET /signatures/:documentId`
+filters `document_id = $1`, so it returns nothing for those rows.
+`GET /signatures/:signatureId/manifest` serves them correctly but needs an
+integer id that only the by-document list could hand you. The only by-target
+reads in the codebase are internal — revocation resolution, and one in
+`submission-service`. So the §11.50 manifestations for the platform's most
+consequential signed actions were written and then unreachable, while §11.50(b)
+requires the manifestation to be "included as part of any human readable form of
+the electronic record".
+
+This is the item the handoff has carried as *"no typed-target signature read
+endpoint/UI"*. `GET /signatures/by-target?target=<signed_target>` is the
+discovery step that was missing, not a new kind of record — the target is the
+anchor the ledger already writes. Same column set as the by-document list, the
+same **mandatory** tenant predicate (no org is a 403, never an unscoped read of
+signature rows), and the same fail-closed states: an unprovisioned store is a
+503, because an empty list here would read as "this action was never signed".
+
+Registered **before** `/signatures/:documentId` — Express matches in order and
+the param route would otherwise swallow the literal path and query
+`document_id = 'by-target'`, which is what three of the seven tests catch when
+the route is removed.
+
+**Half the gap, and this is the honest half.** The manifestation is now
+REACHABLE. Putting it in front of a person — a signature block on the
+transmittal, the sequence, the release — is a surface, and the brief for this
+session is to avoid new UI. That remains open, and it is now the only thing
+between the stored manifestation and §11.50(b) being met end to end.
+
+### For the vault stream — the ESLint ratchet is +2 on trunk
+
+The ratchet measures 6598 against baseline 6596, all `max-lines-per-function`
+(1190 → 1192), and it reproduces on a clean checkout of trunk with no
+working-tree changes. `server/routes/c2c/project-vault.ts` is the only
+recently-changed file carrying that rule (4 occurrences); it was changed in
+`f53c522f4` "Audit the vault download before the bytes leave", which adds audit
+writes inside download handlers. Reported rather than changed, per §2.
+
 ### RESOLVED — the ESLint ratchet regression on trunk
 
 Reported here at `ee0c4bc51`: 6598 against a baseline of 6597, all `complexity`,
@@ -1172,6 +1264,8 @@ If neither has happened: report the blockage, name what is needed, and stop.
 | 2026-09-06 | A | Twenty-third — TMF inspection readiness | A trial with no expected artifacts indexed no longer reports 100% complete and inspection_ready, and AnA no longer says so in conversation: an empty required set is a fourth verdict, not-assessed, with a null percentage — revert-proven | §1 above |
 | 2026-09-06 | A | Twenty-fourth — IND amendment required set | An amendment is assessed against the two ICH E3 clinical study report sections it requires and was silently dropping; an empty required set is no longer 100% and ready to file — revert-proven |  §1 above |
 | 2026-09-06 | A | Twenty-fifth — five more empty-denominator gates | Informed consent, protocol finalize, DMS plan, biosketch and CT.gov/CTIS registration no longer treat "nothing recorded" as "everything done"; the consent one had been approving forms with no elements at all — four revert-proven, one marked defence in depth | §1 above |
+| 2026-09-06 | A | Twenty-sixth — inline annotations: identity, tenancy, audit | A Part 11-labelled decision endpoint stopped recording "Current User" as the approver, defaulting to organization 1, and writing its audit rows into tenant 0 with no actor; ci:fabricated-identity gained the literal-constant pattern it was missing, seen failing on all four sites first — revert-proven | §1 above |
+| 2026-09-06 | A | Twenty-seventh — typed-target signature read | The §11.50 manifestation for a transmitted submission, a frozen sequence or a dispatched release is reachable at last: every HTTP read was anchored on a document_id those rows do not have — revert-proven; the display half is recorded as still open | §1 above |
 | | | | | |
 
 **Rule:** the last row with an empty "What was proven" cell is the open work.

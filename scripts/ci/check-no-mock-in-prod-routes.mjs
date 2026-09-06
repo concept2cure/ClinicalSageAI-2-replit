@@ -117,6 +117,100 @@ function stripCommentsAndStrings(source) {
 
 const prodGatePattern = /(NODE_ENV\s*===\s*['"]production['"])|(process\.env\.ENABLE_MOCK_)/;
 
+/**
+ * SECOND RULE — fabricated scholarly provenance (ledger L171).
+ *
+ * The rule above matches IDENTIFIERS after comments and string literals are
+ * stripped, because a mock is a named thing (`MOCK_PROGRAMS`, `mockData`) and
+ * matching prose is what made the old guard measure nothing. That is right for
+ * mocks and structurally blind to the other way a route lies: emitting content
+ * that ASSERTS provenance it never obtained. Nothing there is called "mock".
+ *
+ * POST /api/analytics/demo-analysis built, per request, three academic
+ * references by interpolating the caller's own indication and phase into title
+ * templates, attached invented authors, journal, volume, pages — and a DOI:
+ *
+ *     title: 'Endpoint selection for regulatory approval in ' + protocolData.indication,
+ *     authors: 'Baxter P, Thompson J, Wilson C',
+ *     doi: '10.1007/s43441-024-00521-1',
+ *
+ * A DOI is a resolvable identifier for one specific published work. A route
+ * that manufactures one is not formatting a citation, it is minting evidence,
+ * and this product exists to assemble filings for regulators. Two earlier
+ * sessions had already removed `Math.random()` from the IND score and the
+ * dropout rate in that same handler, one of them noting that a fabricated
+ * number "dressed with academic citations" is "the dangerous case" — and left
+ * the citations.
+ *
+ * So this rule reads STRING LITERALS, deliberately, where the mock rule
+ * discards them: here the content IS the finding. The signal is sharp — across
+ * the whole of server/routes/ there were five hardcoded DOIs and all five were
+ * in that one handler, so this is not a heuristic with a tolerance.
+ *
+ * The rule is about LITERALS, not about DOIs. A route returning a DOI it read
+ * from a row is reporting stored data and matches nothing here; a route with
+ * one written into its source did not look it up. Whether the paper is real is
+ * not the question and cannot be the remedy: the route never consulted it, so
+ * it must not present it as the basis of its advice.
+ */
+const DOI_LITERAL = /\b10\.\d{4,9}\/[^\s"'`,;)\]]+/;
+
+/**
+ * String literals with their line numbers — the inverse of
+ * stripCommentsAndStrings, and skipping comments for the same reason it does:
+ * a comment explaining this rule may quote a DOI (the one above does), and a
+ * guard that fires on its own documentation teaches people to delete the
+ * documentation.
+ */
+function stringLiteralsOf(source) {
+  const out = [];
+  let i = 0;
+  let line = 1;
+  const n = source.length;
+
+  while (i < n) {
+    const c = source[i];
+    const next = source[i + 1];
+
+    if (c === '\n') { line += 1; i += 1; continue; }
+
+    if (c === '/' && next === '/') {
+      while (i < n && source[i] !== '\n') i += 1;
+      continue;
+    }
+    if (c === '/' && next === '*') {
+      i += 2;
+      while (i < n && !(source[i] === '*' && source[i + 1] === '/')) {
+        if (source[i] === '\n') line += 1;
+        i += 1;
+      }
+      i += 2;
+      continue;
+    }
+
+    if (c === '"' || c === "'" || c === '`') {
+      const quote = c;
+      const startLine = line;
+      let value = '';
+      i += 1;
+      while (i < n && source[i] !== quote) {
+        if (source[i] === '\\') { value += source[i + 1] ?? ''; i += 2; continue; }
+        if (source[i] === '\n') line += 1;
+        value += source[i];
+        i += 1;
+      }
+      i += 1;
+      out.push({ line: startLine, value });
+      continue;
+    }
+
+    i += 1;
+  }
+
+  return out;
+}
+
+
 const betaPathHints = [
   'ana-ri',
   'authoring-actions',
@@ -168,6 +262,21 @@ for (const file of walk(routesDir)) {
     file: rel,
     message: 'contains mock/simulated/placeholder markers in route handler scope',
   });
+}
+
+// Second pass for the provenance rule: it reads string literals, so it cannot
+// share the `hasSuspicious` early-continue above (a file that names nothing
+// "mock" is exactly where a manufactured citation hides).
+for (const file of walk(routesDir)) {
+  const rel = path.relative(repoRoot, file);
+  for (const literal of stringLiteralsOf(fs.readFileSync(file, 'utf8'))) {
+    const match = DOI_LITERAL.exec(literal.value);
+    if (!match) continue;
+    findings.push({
+      file: rel,
+      message: `emits a hardcoded DOI (${match[0]}) at line ${literal.line} — a citation the route never looked up`,
+    });
+  }
 }
 
 findings.sort((a, b) => (a.file === b.file ? a.message.localeCompare(b.message) : a.file.localeCompare(b.file)));

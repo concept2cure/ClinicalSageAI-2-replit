@@ -50,6 +50,7 @@ import { getGateway } from './index';
 import type { GatewayName, GatewayTransmitResult, Region, SubmissionBundle } from './types';
 import { findActiveTransmittal } from './fda-esg';
 import { getBundle } from '../submission-bundle-storage';
+import { recordFiledSequence } from '../ectd/package-content-change';
 import {
   assessPackageContent,
   isCurrentContentFingerprint,
@@ -142,6 +143,12 @@ export interface ResolvedBundle {
   // it. Recomputed from the database at transmit; a difference refuses. Only
   // a value from the CURRENT scheme is carried — anything else is unproven.
   contentFingerprint?: string;
+  /** The sequence this bundle files, what it declares itself to be, and the
+   *  leaf inventory the packager published — the record the NEXT sequence
+   *  diffs against, once an agency has accepted these bytes. */
+  sequence?: string;
+  submissionType?: string;
+  leafManifest?: Array<{ ctdSection: string; fileName: string; href: string; md5: string; operation?: string; title?: string }>;
 }
 
 /* Shape guards for the stored evidence blocks (see ResolvedBundle). Each
@@ -254,6 +261,9 @@ async function loadStoredBundle(
     regionalBackbone: isRegionalBackbone(stored.regionalBackbone) ? stored.regionalBackbone : undefined,
     builtRegion: builtRegionOf(stored.region),
     contentFingerprint: isCurrentContentFingerprint(stored.contentFingerprint) ? stored.contentFingerprint : undefined,
+    sequence: typeof stored.sequence === 'string' && /^\d{4}$/.test(stored.sequence) ? stored.sequence : undefined,
+    submissionType: typeof stored.submissionType === 'string' ? stored.submissionType : undefined,
+    leafManifest: Array.isArray(stored.leafManifest) ? stored.leafManifest : undefined,
   };
 }
 
@@ -329,6 +339,14 @@ export interface GovernedTransmitOutcome {
    * failed; 'not-assessed' means no fingerprint was assessed (dev/test only).
    */
   contentAfterTransmit: 'match' | 'drift' | 'unknown' | 'not-assessed';
+  /**
+   * False when the sequence just filed could NOT be appended to the package's
+   * filed history. The bytes are with the agency either way; what is lost is
+   * the baseline the NEXT sequence diffs against, so the caller must say so
+   * rather than let a follow-up be planned against a stale history.
+   * 'not-applicable' for a bundle that files no eCTD sequence.
+   */
+  filedSequenceRecorded: boolean | 'not-applicable';
 }
 
 /** Operator wording for a content change that landed during the send. */
@@ -583,6 +601,26 @@ export async function executeGovernedTransmit(
     }
   }
 
+  // The agency has the bytes: this sequence is now ON FILE, and the next one
+  // must diff against it. Recorded before the ledger write and independently
+  // of it — an audit outage must not also cost the lifecycle baseline. Never
+  // throws: the transmit is irreversible and is not undone by a failure here.
+  let filedSequenceRecorded: GovernedTransmitOutcome['filedSequenceRecorded'] = 'not-applicable';
+  if (input.packageId != null && !input.clientBundle && bundle.sequence && bundle.leafManifest) {
+    filedSequenceRecorded = await recordFiledSequence(input.packageId, {
+      sequence: bundle.sequence,
+      submissionType: bundle.submissionType ?? '',
+      sha256: bundle.sha256,
+      transmittalId: result.transmittalId ?? null,
+      leaves: bundle.leafManifest,
+    });
+    if (!filedSequenceRecorded) {
+      input.log?.error('transmit-filed-sequence-record-failed', {
+        packageId: String(input.packageId), sequence: bundle.sequence, region, gateway,
+      });
+    }
+  }
+
   // Record the governed sign AFTER the external transmit succeeds. The external
   // transmit is irreversible, so if the ledger write fails we report it and
   // still return the transmit result (the gateway already accepted the
@@ -673,5 +711,6 @@ export async function executeGovernedTransmit(
     bundle: { sha256: bundle.sha256, sizeBytes: bundle.sizeBytes, format: bundle.format },
     ledgerWriteFailed,
     contentAfterTransmit,
+    filedSequenceRecorded,
   };
 }

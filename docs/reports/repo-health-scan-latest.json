@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-06T03:19:46.361Z",
+  "generatedAt": "2026-09-06T06:31:24.994Z",
   "git": {
-    "sha": "7e8b2b7b6ab7be721d924dd3a45e77c31c3360c4",
+    "sha": "9f48c6c5a5807374d7234f169322a7f96396b8ce",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -16,7 +16,7 @@
     "contentDuplicateGroups": 0,
     "contentDuplicateFiles": 0,
     "largeFilesByBytes": 40,
-    "largeFilesByLines": 94
+    "largeFilesByLines": 95
   },
   "findings": {
     "duplicateBasenames": [
@@ -2077,7 +2077,7 @@
       },
       {
         "file": "server/routes/submission-ops.ts",
-        "bytes": 122473
+        "bytes": 127021
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
@@ -2202,6 +2202,10 @@
         "lines": 3158
       },
       {
+        "file": "server/routes/submission-ops.ts",
+        "lines": 3132
+      },
+      {
         "file": "server/services/cmc-quality/cmc-quality-knowledge.ts",
         "lines": 3119
       },
@@ -2212,10 +2216,6 @@
       {
         "file": "server/services/regulatory-strategy/regulatory-strategy-knowledge.ts",
         "lines": 3067
-      },
-      {
-        "file": "server/routes/submission-ops.ts",
-        "lines": 3046
       },
       {
         "file": "server/routes/concept2cure.ts",
@@ -2514,6 +2514,10 @@
         "lines": 1602
       },
       {
+        "file": "server/services/advancedRAGPipeline.ts",
+        "lines": 1569
+      },
+      {
         "file": "client/src/concept2cure/v2/surfaces/IndLifecycle.tsx",
         "lines": 1532
       }
@@ -2525,7 +2529,7 @@
       "owner": "Backend Platform (server/routes + server/services owners)",
       "duplicateGroups": 403,
       "largeByBytes": 30,
-      "largeByLines": 77
+      "largeByLines": 78
     },
     {
       "owner": "Unassigned (TBD)",

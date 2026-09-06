@@ -309,6 +309,10 @@ function buildLocator(row: VaultChunkRow): string | undefined {
   return undefined;
 }
 
+/** RFC-4122 shape. Guards the `::uuid` casts on the vault retrieval path so a
+ *  malformed org id is an authorization refusal, not a 22P02 query failure. */
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 async function withTenantContext<T>(
   pool: pg.Pool,
   organizationUuid: string | undefined,
@@ -378,6 +382,79 @@ export class AdvancedRAGPipeline {
   /**
    * Main retrieval function with configurable strategies
    */
+
+  /**
+   * Step 1 of retrieve(): choose the initial candidate set by strategy.
+   *
+   * Extracted from retrieve() verbatim — every branch, every `limit`
+   * multiplier, every tokensUsed accumulation, and the 'advanced' branch's
+   * assignment of retrievalStrategy are unchanged. retrieve() reached 101 lines
+   * against a 100-line limit when the vault tenant-scoping landed, and this
+   * switch is the one self-contained step in it: given the strategy it returns
+   * candidates, and nothing else in the method reaches into it.
+   */
+  private async retrieveCandidates(
+    deps: StrategyDeps,
+    query: string,
+    limit: number,
+    strategy: RetrievalOptions['strategy'],
+  ): Promise<{ candidates: RetrievedDocument[]; tokensUsed: number; retrievalStrategy: string }> {
+    let candidates: RetrievedDocument[];
+    let tokensUsed = 0;
+    // Same free-form label retrieve() kept: defaults to the requested strategy,
+    // and only the composite branch overwrites it.
+    let retrievalStrategy: string = strategy;
+
+      switch (strategy) {
+        case 'hyde': {
+          const result = await hydeRetrieval(deps, query, limit * 3);
+          candidates = result.documents;
+          tokensUsed += result.tokensUsed;
+          break;
+        }
+
+        case 'multi_query': {
+          const result = await multiQueryRetrieval(deps, query, limit * 3);
+          candidates = result.documents;
+          tokensUsed += result.tokensUsed;
+          break;
+        }
+
+        case 'step_back': {
+          const result = await stepBackRetrieval(deps, query, limit * 3);
+          candidates = result.documents;
+          tokensUsed += result.tokensUsed;
+          break;
+        }
+
+        case 'decompose': {
+          const result = await decomposeRetrieval(deps, query, limit * 3);
+          candidates = result.documents;
+          tokensUsed += result.tokensUsed;
+          break;
+        }
+
+        case 'advanced': {
+          // Combine HyDE + Multi-Query
+          const [hyde, multi] = await Promise.all([
+            hydeRetrieval(deps, query, limit * 2),
+            multiQueryRetrieval(deps, query, limit * 2),
+          ]);
+          candidates = mergeByMaxScore([...hyde.documents, ...multi.documents]);
+          tokensUsed += hyde.tokensUsed + multi.tokensUsed;
+          retrievalStrategy = 'advanced';
+          break;
+        }
+
+        case 'basic':
+        default:
+          candidates = await deps.search(query, limit * 3);
+          break;
+      }
+
+    return { candidates, tokensUsed, retrievalStrategy };
+  }
+
   async retrieve(
     query: string,
     options: RetrievalOptions = { strategy: 'basic' }
@@ -399,9 +476,6 @@ export class AdvancedRAGPipeline {
     };
 
     let candidates: RetrievedDocument[];
-    // Descriptive label for RAGContext.retrievalStrategy (free-form string);
-    // the 'advanced' strategy reports the composite 'hyde+multi_query'.
-    let retrievalStrategy: string = options.strategy;
     let tokensUsed = 0;
 
     // Primitives the query-transform strategies fan out through, bound to this
@@ -422,53 +496,14 @@ export class AdvancedRAGPipeline {
       scope.filters = mergeFilters(extracted.filters, options.filters);
     }
 
-    // Step 1: Initial retrieval based on strategy
-    switch (options.strategy) {
-      case 'hyde': {
-        const result = await hydeRetrieval(deps, query, limit * 3);
-        candidates = result.documents;
-        tokensUsed += result.tokensUsed;
-        break;
-      }
-
-      case 'multi_query': {
-        const result = await multiQueryRetrieval(deps, query, limit * 3);
-        candidates = result.documents;
-        tokensUsed += result.tokensUsed;
-        break;
-      }
-
-      case 'step_back': {
-        const result = await stepBackRetrieval(deps, query, limit * 3);
-        candidates = result.documents;
-        tokensUsed += result.tokensUsed;
-        break;
-      }
-
-      case 'decompose': {
-        const result = await decomposeRetrieval(deps, query, limit * 3);
-        candidates = result.documents;
-        tokensUsed += result.tokensUsed;
-        break;
-      }
-
-      case 'advanced': {
-        // Combine HyDE + Multi-Query
-        const [hyde, multi] = await Promise.all([
-          hydeRetrieval(deps, query, limit * 2),
-          multiQueryRetrieval(deps, query, limit * 2),
-        ]);
-        candidates = mergeByMaxScore([...hyde.documents, ...multi.documents]);
-        tokensUsed += hyde.tokensUsed + multi.tokensUsed;
-        retrievalStrategy = 'advanced';
-        break;
-      }
-
-      case 'basic':
-      default:
-        candidates = await deps.search(query, limit * 3);
-        break;
-    }
+    // Step 1: Initial retrieval based on strategy (see retrieveCandidates).
+    const initial = await this.retrieveCandidates(deps, query, limit, options.strategy);
+    candidates = initial.candidates;
+    tokensUsed += initial.tokensUsed;
+    // Descriptive label for RAGContext.retrievalStrategy (free-form string).
+    // Assigned once, read once, so it is a const now that the switch that used
+    // to set it lives in retrieveCandidates.
+    const retrievalStrategy: string = initial.retrievalStrategy;
 
     const totalCandidates = candidates.length;
 
@@ -869,7 +904,33 @@ export class AdvancedRAGPipeline {
 
     // Metadata pre-filters on the joined documents table. Each arm has its own
     // param array, so each gets its own clause with arm-local placeholders.
-    const denseParams: Array<string | number | Date> = [vector, threshold, limit];
+    /* REFUSE WITHOUT A TENANT, rather than searching every tenant's vault.
+       `organizationUuid` is optional on this path and `withTenantContext` simply
+       does not set `app.current_org_id` when it is absent — so the two comments
+       below that called these queries "RLS-scoped" were describing a boundary
+       that, with no org, was never established. Both queries also carried no org
+       predicate of their own, delegating entirely to RLS on vault.documents and
+       vault.document_chunks, which are ENABLE ROW LEVEL SECURITY without FORCE
+       (db/migrations/044c_gcc_vault_schema.sql:112,
+       migrations/20260905b_vault_document_chunks.sql:76). Postgres does not
+       apply ENABLE-only policies to the table OWNER, and
+       server/db/getDatabaseUrl.ts:77-83 falls back to the owner URL when
+       APP_DATABASE_URL is unset — the default single-role deployment. So on that
+       shape there was no tenant boundary on vault retrieval at all.
+       Returning nothing is the honest answer to "search this tenant's vault"
+       asked with no tenant. */
+    if (!organizationUuid || !UUID_RE.test(organizationUuid)) {
+      /* A malformed value is refused rather than passed to `$N::uuid`, which
+         raises 22P02 and would surface as a retrieval failure rather than as
+         the authorization refusal it actually is. */
+      console.warn(
+        '[RAG] vault retrieval skipped: no usable organizationUuid on the request. ' +
+          'Refusing rather than searching across tenants.'
+      );
+      return [];
+    }
+
+    const denseParams: Array<string | number | Date> = [vector, threshold, limit, organizationUuid];
     const denseFilter = buildDocFilterClause(filters, denseParams, VAULT_FILTER_COLUMNS);
 
     // Ship the stored vector (as text) only when MMR will reuse it. SELECT-list
@@ -893,7 +954,10 @@ export class AdvancedRAGPipeline {
     });
 
     return withTenantContext(this.pool, organizationUuid, async client => {
-      // tenant-isolation-safe: RLS-scoped — withTenantContext sets app.current_org_id; vault.documents/document_chunks are org-filtered by RLS policy (fails closed with no org context).
+      // tenant-isolation-safe: the WHERE carries an explicit organization
+      // predicate ($4 -> organizations.uuid -> organizations.id ->
+      // vault.documents.organization_id). RLS is defence in depth here, not the
+      // boundary — see the refusal above for why it could not be relied on.
       const { rows: denseRows } = await client.query<VaultChunkRow>(
         `
         SELECT
@@ -916,6 +980,11 @@ export class AdvancedRAGPipeline {
           -- from the integer literal, and a float threshold like 0.65 then
           -- fails with 22P02 before the query ever runs.
           AND (c.embedding <=> $1::vector) < 1 - $2::float8
+          -- Explicit tenant predicate. A document with a NULL organization_id is
+          -- unattributable (migrations/20260905_vault_documents_organization_id.sql)
+          -- and this predicate excludes it, which is the intended refusal: an
+          -- orphan document belongs to no tenant and is returned to none.
+          AND d.organization_id IN (SELECT o.id FROM organizations o WHERE o.uuid = $4::uuid)
         ORDER BY c.embedding <=> $1::vector
         LIMIT $3
       `,
@@ -930,10 +999,11 @@ export class AdvancedRAGPipeline {
       // performance_indexes.sql so this stays index-backed. A lexical failure
       // must not break retrieval — fall back to the dense arm alone.
       let lexical: RetrievedDocument[];
-      const lexParams: Array<string | number | Date> = [query, limit];
+      const lexParams: Array<string | number | Date> = [query, limit, organizationUuid];
       const lexFilter = buildDocFilterClause(filters, lexParams, VAULT_FILTER_COLUMNS);
       try {
-        // tenant-isolation-safe: RLS-scoped — same withTenantContext (app.current_org_id) as the dense arm above; vault.* are org-filtered by RLS policy.
+        // tenant-isolation-safe: same explicit organization predicate as the
+        // dense arm, on this arm's own placeholder ($3).
         const { rows: lexRows } = await client.query<VaultChunkRow>(
           `
           SELECT
@@ -950,6 +1020,7 @@ export class AdvancedRAGPipeline {
           JOIN vault.documents d ON d.id = c.document_id
           WHERE c.embedding IS NOT NULL${lexFilter}
             AND to_tsvector('english', c.chunk_text) @@ websearch_to_tsquery('english', $1)
+            AND d.organization_id IN (SELECT o.id FROM organizations o WHERE o.uuid = $3::uuid)
           ORDER BY ts_rank_cd(to_tsvector('english', c.chunk_text), websearch_to_tsquery('english', $1)) DESC
           LIMIT $2
         `,

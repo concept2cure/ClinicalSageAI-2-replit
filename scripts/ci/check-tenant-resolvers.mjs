@@ -49,6 +49,18 @@ const EXEMPT = new Set([
 const TENANT_FIELDS =
   /\b(?:tenantId|organizationId|tenantContext\?\.organizationId|resolvedOrganizationId)\b/;
 
+/**
+ * A DIRECT read of an identity field off a request-like object —
+ * `req.organizationId`, `req.user?.organizationId`, `(req as X).tenantId`.
+ * This is the thing the gate is actually about: a function that decides the
+ * answer itself, from the raw request, in its own precedence order.
+ */
+const RAW_REQUEST_FIELD_READ =
+  /\b(?:req|request|authReq|reqAny|r)\s*(?:as\s+[\w<>.]+\s*)?\)?\s*[?.]{1,2}\s*(?:\w+\s*[?.]{1,2}\s*)*(?:tenantId|organizationId|resolvedOrganizationId)\b/;
+
+/** The shared, JWT-first resolver in server/utils/tenantContext.ts. */
+const DELEGATES_TO_SHARED = /\bgetSecureOrgId\s*\(/;
+
 function findLocalResolvers(source) {
   const hits = [];
   const lines = source.split('\n');
@@ -59,9 +71,19 @@ function findLocalResolvers(source) {
     }
     // …and whose body reads the raw request fields rather than delegating.
     const body = lines.slice(i, i + 16).join('\n');
-    if (TENANT_FIELDS.test(body) && /\breq\b|\brequest\b/i.test(body)) {
-      hits.push(i + 1);
-    }
+    if (!(TENANT_FIELDS.test(body) && /\breq\b|\brequest\b/i.test(body))) continue;
+
+    // A wrapper that DELEGATES the org answer to the shared resolver and never
+    // reads an identity field off the request itself introduces no second
+    // precedence order, so it is reuse rather than "a second answer". Three
+    // such wrappers were counted only because they name a local variable
+    // `tenantId` — `const tenantId = Number(getSecureOrgId(req))` — which the
+    // field regex above cannot distinguish from a read of `req.tenantId`.
+    // Match the READ, not the word: the gate's own sentence says "reads the raw
+    // request fields RATHER THAN DELEGATING", and delegation is what these do.
+    if (!RAW_REQUEST_FIELD_READ.test(body) && DELEGATES_TO_SHARED.test(body)) continue;
+
+    hits.push(i + 1);
   }
   return hits;
 }

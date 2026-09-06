@@ -511,6 +511,38 @@ describe('POST transmit — legitimate validated package (C2C-SUB-003)', () => {
     expect(payload!.bundleSha256).toBe(legitSha);
   });
 
+  it('records the sequence it just filed, so the NEXT sequence has a baseline to diff against', async () => {
+    packages = [{ id: 5, orgId: CALLER_ORG, bundle: goodDescriptor({
+      sequence: '0000', submissionType: 'original',
+      leafManifest: [{ ctdSection: '2.5', fileName: 'clinical-overview.pdf', href: 'm2/25-clin-overview/clinical-overview.pdf', md5: 'md5-co', operation: 'new' }],
+    }) }];
+    transmitFn.mockResolvedValueOnce({ transmittalId: 4244, transmissionId: 'mdn-filed', status: 'received', transport: 'as2', httpStatus: 200 });
+    const res = await request(makeApp())
+      .post('/api/mdx/gateways/fda/esg/transmit')
+      .send({ packageId: 5, environment: 'staging', ...REAUTH });
+    expect(res.status).toBe(201);
+    expect(res.body.data.filedSequenceRecorded).toBe(true);
+    // The history was appended under the package row lock, carrying the leaf
+    // inventory the next sequence diffs against.
+    const write = ledgerQuery.mock.calls.find((c) => /^UPDATE c2c_submission_packages/.test(String(c[0])));
+    expect(write, 'the filed history was written').toBeDefined();
+    const written = JSON.parse(String((write![1] as unknown[])[1]));
+    expect(written.filedSequences).toHaveLength(1);
+    expect(written.filedSequences[0]).toMatchObject({ sequence: '0000', submissionType: 'original', sha256: legitSha, transmittalId: 4244 });
+    expect(written.filedSequences[0].leaves[0]).toMatchObject({ ctdSection: '2.5', fileName: 'clinical-overview.pdf', md5: 'md5-co' });
+  });
+
+  it('a bundle that files no sequence records no history, and says so rather than reporting a failure', async () => {
+    packages = [{ id: 5, orgId: CALLER_ORG, bundle: goodDescriptor() }];
+    transmitFn.mockResolvedValueOnce({ transmittalId: 4245, transmissionId: 'mdn-nofile', status: 'received', transport: 'as2', httpStatus: 200 });
+    const res = await request(makeApp())
+      .post('/api/mdx/gateways/fda/esg/transmit')
+      .send({ packageId: 5, environment: 'staging', ...REAUTH });
+    expect(res.status).toBe(201);
+    expect(res.body.data.filedSequenceRecorded).toBe('not-applicable');
+    expect(ledgerQuery.mock.calls.some((c) => /^UPDATE c2c_submission_packages/.test(String(c[0])))).toBe(false);
+  });
+
   it('a content change that lands WHILE the gateway is sending is recorded on the sign row and announced in the response — never silently a clean transmit', async () => {
     packages = [{ id: 5, orgId: CALLER_ORG, bundle: goodDescriptor() }];
     transmitFn.mockImplementationOnce(async () => {

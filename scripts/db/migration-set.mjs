@@ -1858,6 +1858,23 @@ export const C2C_MIGRATION_FILES = [
   // so nobody reads the column as isolation it does not provide.
   'migrations/20260905_vault_documents_organization_id.sql',
 
+  // The three IVDR append-only history tables carry no tenant column of their
+  // own — their tenant is their parent's, reached by foreign key — so BOTH
+  // sweeps below are blind to them: the integer sweep matches on
+  // organization_id/org_id/tenant_id, and the non-public one is an explicit
+  // uuid-keyed list. They sat with relrowsecurity = false and zero policies.
+  //
+  // Measured on the dev database as the app role `c2c` with rls_enforce='on'
+  // and current_tenant_id='9002': the policied PARENT returned 1 of 2 rows and
+  // the history table returned 2 of 2, the second reading "org 9001 secret LoD".
+  // One IVD manufacturer could read another's limit-of-detection history.
+  //
+  // It installs a parent-scoped policy, which the sweep's own header names as a
+  // shape it will not clobber (C-30's doc-scoped policies key on a parent's
+  // tenant the same way). It therefore runs BEFORE the sweeps, so their
+  // pg_policies guard sees it and leaves it alone.
+  'migrations/20260906_ivdr_history_tenant_isolation.sql',
+
   UUID_TENANT_ISOLATION_NONPUBLIC,
 
   // ── Tenant isolation for everything the set just created (ledger C-33) ───
