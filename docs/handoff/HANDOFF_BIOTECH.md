@@ -856,6 +856,53 @@ projectors build fixed module lists, so an empty set is unreachable through
 Every fix also carries a test that a genuinely complete form, plan, protocol or
 record STILL passes its gate, so the new state cannot swallow a real assessment.
 
+### Twenty-sixth — "Current User" approved it, for organization 1, into tenant 0 (2026-09-06)
+
+`server/routes/inline-annotations.ts` is mounted at `/api/inline-annotations`,
+records approve / reject / resolve decisions on selected text inside regulated
+documents, and its own header claims *"@compliance FDA 21 CFR Part 11 — all
+annotations immutably audit-logged"*. Three things were wrong with that claim at
+once.
+
+**Whose document.** `getOrgId` ended `|| 1`; a request with no tenant context
+read and wrote *organization 1's* annotations and decisions. This is the last
+instance of the `haq-manager` shape — a sweep of every org resolver in
+`server/routes` found 15 whose return type is a bare `number`, and every other
+one throws. One router-level gate now 403s without an org, so a new endpoint
+cannot be added without the check.
+
+**Who acted.** `createdBy` and `resolvedBy` were the literal `'Current User'`, in
+three places. The actor now comes from the request — name, else email, else
+`user #<id>` — and a write that cannot name who made it is **refused** rather
+than attributed to a placeholder. `createdByUserId` / `resolvedByUserId` carry
+the id so the label is not the only link back to a person.
+
+**The audit row.** Every `logAction` call omitted `tenantId` and `userId`, and
+`auditService` resolves a missing tenant to **0** and a missing actor to null —
+so every row this Part 11-labelled route wrote landed under tenant 0 with no
+actor. All three calls now carry tenant, actor, ip and user-agent.
+
+Also: four catch blocks handed the caller `err.message`. `ci:server-error-leaks`
+drops 246 → 242 and the baseline is shrunk to lock it in. `client-branding.ts`
+carried a fourth `'Current User'` as the author of every document template.
+
+**The gate that exists to catch this did not.** `ci:fabricated-identity` — the CI
+step named "no invented signer or applicant identity" — reported zero the whole
+time. Every one of its patterns catches an identity that is *interpolated* or
+used as a *fallback*; none caught a literal constant, the simplest form. A
+pattern for it is added, drawing the line between a name that reads as a PERSON
+and one that names a PROCESS: an explicit unassigned marker is accepted, and so
+is a lowercase slug (`system`, `span-lineage-backfill`), because an action
+genuinely taken by the platform has no person to name and saying so is true.
+
+Seen failing first: with the pattern added and the code untouched the gate
+reports 6 — the 2 honest process names drove the person-versus-process
+refinement, the 4 real ones are fixed. It reports 0 now.
+
+Revert-proven: restoring `|| 1` fails both refusal tests; restoring
+`'Current User'` fails the identity tests; dropping tenantId/userId fails the
+audit-row test. The route had no tests; it has seven.
+
 ### RESOLVED — the ESLint ratchet regression on trunk
 
 Reported here at `ee0c4bc51`: 6598 against a baseline of 6597, all `complexity`,
@@ -1172,6 +1219,7 @@ If neither has happened: report the blockage, name what is needed, and stop.
 | 2026-09-06 | A | Twenty-third — TMF inspection readiness | A trial with no expected artifacts indexed no longer reports 100% complete and inspection_ready, and AnA no longer says so in conversation: an empty required set is a fourth verdict, not-assessed, with a null percentage — revert-proven | §1 above |
 | 2026-09-06 | A | Twenty-fourth — IND amendment required set | An amendment is assessed against the two ICH E3 clinical study report sections it requires and was silently dropping; an empty required set is no longer 100% and ready to file — revert-proven |  §1 above |
 | 2026-09-06 | A | Twenty-fifth — five more empty-denominator gates | Informed consent, protocol finalize, DMS plan, biosketch and CT.gov/CTIS registration no longer treat "nothing recorded" as "everything done"; the consent one had been approving forms with no elements at all — four revert-proven, one marked defence in depth | §1 above |
+| 2026-09-06 | A | Twenty-sixth — inline annotations: identity, tenancy, audit | A Part 11-labelled decision endpoint stopped recording "Current User" as the approver, defaulting to organization 1, and writing its audit rows into tenant 0 with no actor; ci:fabricated-identity gained the literal-constant pattern it was missing, seen failing on all four sites first — revert-proven | §1 above |
 | | | | | |
 
 **Rule:** the last row with an empty "What was proven" cell is the open work.

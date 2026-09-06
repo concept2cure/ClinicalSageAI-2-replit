@@ -905,6 +905,49 @@ export default function createProjectVaultRoutes(): Router {
         }
       }
 
+      /* AUDIT BEFORE THE BYTES LEAVE — 21 CFR 11.10(e).
+         This handler served a governed document with no audit row of any kind:
+         nothing recorded who read what, or when. The sibling filing route below
+         (:1069) already writes a hash-chained row for a MOVE, so a document's
+         placement changes were attributable and its disclosures were not.
+         Ordered before the response deliberately. A read that cannot be recorded
+         is refused rather than served unrecorded — an inspector asking "who has
+         had this document" must not be answered with a gap, and an audit trail
+         that drops writes under load is not one. The filing route takes the same
+         position by writing inside its transaction. */
+      const actorId: number | null = (req as any).user?.id ?? null;
+      try {
+        await writeChainedAuditRow(pool, {
+          tenantId: orgId,
+          userId: actorId ?? undefined,
+          action: 'vault.document.download',
+          resourceType: 'vault_document',
+          resourceId: documentId,
+          ipAddress: req.ip,
+          userAgent: req.headers['user-agent'],
+          details: {
+            programId: id,
+            documentTitle: doc.document_title,
+            fileName: doc.file_name,
+            fileSize: doc.file_size,
+            // The hash of the bytes actually served, already verified above, so
+            // the trail records WHICH edition left rather than only that one did.
+            contentHash: doc.content_hash,
+          },
+        });
+      } catch (auditErr) {
+        logger.error('vault download refused: audit write failed', {
+          documentId,
+          err: auditErr instanceof Error ? auditErr.message : String(auditErr),
+        });
+        return res.status(500).json({
+          success: false,
+          error: 'AUDIT_WRITE_FAILED',
+          message:
+            'The download was not served because it could not be recorded in the audit trail. Nothing was sent.',
+        });
+      }
+
       const name = doc.file_name || doc.document_title || 'document';
       const safe = name.replace(/[^A-Za-z0-9_.-]+/g, '_').replace(/^_+|_+$/g, '') || 'document';
       res.setHeader('Content-Type', doc.mime_type || 'application/octet-stream');
