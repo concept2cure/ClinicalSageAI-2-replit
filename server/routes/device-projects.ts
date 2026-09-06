@@ -6,15 +6,26 @@
  *
  * Routes:
  *   GET    /api/device-projects      — list (org-scoped)
- *   POST   /api/device-projects      — create
- *   PUT    /api/device-projects/:id  — update
- *   DELETE /api/device-projects/:id  — delete
+ *   POST   /api/device-projects      — create   (editor+, audited)
+ *   PUT    /api/device-projects/:id  — update   (editor+, audited)
+ *   DELETE /api/device-projects/:id  — delete   (editor+, audited)
+ *
+ * The three WRITES were org-scoped and nothing else: any authenticated member
+ * of the organization, a read-only viewer included, could rename or DELETE any
+ * medical-device project in it, and no row recorded who. A device project is
+ * the spine an FDA submission is assembled against, and a delete is not
+ * recoverable. They now carry the same governed-write gate as the sibling
+ * device writes (`requireEditorAccess`, one implementation in
+ * middleware/orgMembership) and each writes an audit row against the session's
+ * actor. The read stays open.
  */
 
 import { Router, type Request, type Response } from 'express';
 import { and, eq, desc } from 'drizzle-orm';
 import { projects } from '@shared/schema';
 import { db } from '../db';
+import { governedActorId, requireEditorAccess } from '../middleware/orgMembership';
+import auditService from '../services/auditService';
 
 const router = Router();
 
@@ -58,12 +69,15 @@ router.get('/', async (req: Request, res: Response) => {
 });
 
 /** POST /api/device-projects — create a new device project */
-router.post('/', async (req: Request, res: Response) => {
+router.post('/', requireEditorAccess, async (req: Request, res: Response) => {
   try {
     const organization_id = Number(req.tenantId || req.tenantContext?.organizationId);
     if (!organization_id) {
       return res.status(403).json({ error: 'Organization context required' });
     }
+    /* Refused rather than audited against an invented actor. */
+    const actorId = governedActorId(req);
+    if (actorId === null) return res.status(403).json({ error: 'Authenticated actor required' });
 
     const {
       deviceName,
@@ -132,6 +146,15 @@ router.post('/', async (req: Request, res: Response) => {
       })
       .returning();
 
+    await auditService.logAction({
+      organizationId: organization_id,
+      userId: actorId,
+      action: 'DEVICE_PROJECT_CREATED',
+      resourceType: 'device_project',
+      resourceId: String(row.id),
+      details: { name: row.name ?? null },
+    });
+
     console.log('✅ Created device project:', row.id, `(org=${organization_id})`);
     res.status(201).json(row);
   } catch (error: any) {
@@ -141,7 +164,7 @@ router.post('/', async (req: Request, res: Response) => {
 });
 
 /** PUT /api/device-projects/:id — update an existing device project (org-scoped) */
-router.put('/:id', async (req: Request, res: Response) => {
+router.put('/:id', requireEditorAccess, async (req: Request, res: Response) => {
   try {
     const projectId = Number(req.params.id);
     if (!projectId || isNaN(projectId)) {
@@ -152,6 +175,9 @@ router.put('/:id', async (req: Request, res: Response) => {
     if (!organization_id) {
       return res.status(403).json({ error: 'Organization context required' });
     }
+    /* Refused rather than audited against an invented actor. */
+    const actorId = governedActorId(req);
+    if (actorId === null) return res.status(403).json({ error: 'Authenticated actor required' });
 
     const {
       deviceName,
@@ -239,8 +265,20 @@ router.put('/:id', async (req: Request, res: Response) => {
         metadata: mergedMeta,
         updatedAt: new Date(),
       })
-      .where(eq(projects.id, projectId))
+      /* The same predicate the ownership select above used. That select already
+         404s a project outside the org, so this is not the control — it is the
+         write refusing to depend on a read for its own scoping. */
+      .where(and(eq(projects.id, projectId), eq(projects.organizationId, organization_id)))
       .returning();
+
+    await auditService.logAction({
+      organizationId: organization_id,
+      userId: actorId,
+      action: 'DEVICE_PROJECT_UPDATED',
+      resourceType: 'device_project',
+      resourceId: String(projectId),
+      details: { fields: Object.keys(req.body || {}) },
+    });
 
     console.log('✅ Updated device project:', projectId, `(org=${organization_id})`);
     res.json(updated);
@@ -251,7 +289,7 @@ router.put('/:id', async (req: Request, res: Response) => {
 });
 
 /** DELETE /api/device-projects/:id — remove a device project (org-scoped) */
-router.delete('/:id', async (req: Request, res: Response) => {
+router.delete('/:id', requireEditorAccess, async (req: Request, res: Response) => {
   try {
     const projectId = Number(req.params.id);
     if (!projectId || isNaN(projectId)) {
@@ -262,6 +300,9 @@ router.delete('/:id', async (req: Request, res: Response) => {
     if (!organization_id) {
       return res.status(403).json({ error: 'Organization context required' });
     }
+    /* Refused rather than audited against an invented actor. */
+    const actorId = governedActorId(req);
+    if (actorId === null) return res.status(403).json({ error: 'Authenticated actor required' });
 
     const [deleted] = await db
       .delete(projects)
@@ -271,6 +312,15 @@ router.delete('/:id', async (req: Request, res: Response) => {
     if (!deleted) {
       return res.status(404).json({ error: 'Project not found' });
     }
+
+    await auditService.logAction({
+      organizationId: organization_id,
+      userId: actorId,
+      action: 'DEVICE_PROJECT_DELETED',
+      resourceType: 'device_project',
+      resourceId: String(projectId),
+      details: { name: deleted.name ?? null },
+    });
 
     console.log('✅ Deleted device project:', projectId, `(org=${organization_id})`);
     res.json({ success: true, id: projectId });

@@ -495,3 +495,17 @@ export function requireEditorAccess(req: any, res: any, next: () => void) {
   req.resolvedOrganizationId = numericOrgId;
   return next();
 }
+
+/**
+ * The acting user for a governed write, from the SESSION only.
+ *
+ * Null when nothing numeric resolves, and a caller that must audit refuses
+ * rather than writing an audit row against an invented actor
+ * (scripts/ci/check-fabricated-identity: a column that must be filled is never
+ * filled with a guess). Lives beside `requireEditorAccess` because the two are
+ * asked together on every governed write — who may do this, and who is doing it.
+ */
+export function governedActorId(req: any): number | null {
+  const n = Number(req.userId ?? req.user?.id);
+  return Number.isInteger(n) && n > 0 ? n : null;
+}

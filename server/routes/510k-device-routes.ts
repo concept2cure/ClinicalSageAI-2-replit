@@ -50,7 +50,7 @@ import {
 } from '../services/integrations/openfda-device-client';
 import { lookupRecognizedStandards } from '../services/fda-recognized-standards/recognized-standards.service';
 import { createScopedLogger } from '../utils/logger.js';
-import { requireEditorAccess } from '../middleware/orgMembership';
+import { governedActorId, requireEditorAccess } from '../middleware/orgMembership';
 
 const logger = createScopedLogger('510k-device-routes');
 const router = Router();
@@ -118,11 +118,6 @@ async function findProgram(req: Request, orgId: number, ident: string) {
  * (scripts/ci/check-fabricated-identity: a column that must be filled is never a
  * reason to manufacture an identity).
  */
-function getActorId(req: any): number | null {
-  const n = Number(req.userId ?? req.user?.id);
-  return Number.isInteger(n) && n > 0 ? n : null;
-}
-
 const identSchema = z.object({ ident: z.string().min(1) });
 
 router.get('/profile', async (req, res) => {
@@ -186,7 +181,7 @@ router.put('/profile', requireEditorAccess, requireEntitlement('device_assembly_
   if (orgId === null) return res.status(403).json({ error: 'Organization context required' });
   // Part 11 §11.10(e): an inspector must be able to ask WHO set the device facts
   // that appear on the filed form, so no actor ⇒ no write.
-  const actorId = getActorId(req);
+  const actorId = governedActorId(req);
   if (actorId === null) return res.status(403).json({ error: 'Authenticated actor required' });
   const identParsed = identSchema.safeParse(req.query);
   if (!identParsed.success) return res.status(400).json({ error: 'ident is required' });
