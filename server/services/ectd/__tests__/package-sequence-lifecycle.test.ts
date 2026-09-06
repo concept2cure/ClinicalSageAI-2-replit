@@ -224,6 +224,53 @@ describe('planSequence', () => {
     })).not.toThrow();
   });
 
+  it('REFUSES a gap and a backfill alike — the only ordering this knows is the sequence number', () => {
+    // With 0000 filed, 0002/0007/9999 were all accepted with identical plans, a
+    // gap never named. Worse the other way: with 0000 and 0002 filed, a
+    // backfilled 0001 was accepted and pointed modified-file at ../0002/ — a
+    // sequence superseding one filed after it.
+    for (const seq of ['0002', '0007', '9999']) {
+      try {
+        planSequence({ sequence: seq, submissionType: 'Efficacy Supplement', filed: [SEQ_0000], desired: desired([['2.5', 'a.pdf', 'm9']]) });
+        throw new Error('expected a refusal');
+      } catch (e) {
+        expect((e as SequenceLifecycleRefusal).code, seq).toBe('SEQUENCE_OUT_OF_ORDER');
+        expect((e as Error).message, seq).toContain('the next is 0001');
+      }
+    }
+    const filed = [SEQ_0000, { ...SEQ_0000, sequence: '0002' }];
+    try {
+      planSequence({ sequence: '0001', submissionType: 'Efficacy Supplement', filed, desired: desired([['2.5', 'a.pdf', 'm9']]) });
+      throw new Error('expected a refusal');
+    } catch (e) {
+      expect((e as SequenceLifecycleRefusal).code).toBe('SEQUENCE_OUT_OF_ORDER');
+      expect((e as Error).message).toMatch(/diffed against filings made after it/);
+    }
+    // The next one is still fine.
+    expect(() => planSequence({ sequence: '0003', submissionType: 'Efficacy Supplement', filed, desired: desired([['2.5', 'a.pdf', 'm9']]) })).not.toThrow();
+  });
+
+  it('REFUSES a sequence in which nothing changed — a filing that files nothing consumes a sequence number to say nothing', () => {
+    // Every leaf byte-identical to what is on file: the zip would carry no leaf,
+    // an <ectd:ectd/> with no module element and an empty regional backbone,
+    // and it stored as a transmittable, error-free bundle.
+    try {
+      planSequence({
+        sequence: '0001', submissionType: 'Efficacy Supplement', filed: [SEQ_0000],
+        desired: desired([['2.5', 'clinical-overview.pdf', 'md5-co-v1'], ['3.2.P.1', 'description.pdf', 'md5-desc-v1']]),
+      });
+      throw new Error('expected a refusal');
+    } catch (e) {
+      expect((e as SequenceLifecycleRefusal).code).toBe('NOTHING_TO_FILE');
+      expect((e as Error).message).toMatch(/all 2 of this package's leaves are already on file/);
+    }
+    // One changed leaf is a filing.
+    expect(() => planSequence({
+      sequence: '0001', submissionType: 'Efficacy Supplement', filed: [SEQ_0000],
+      desired: desired([['2.5', 'clinical-overview.pdf', 'md5-co-v2'], ['3.2.P.1', 'description.pdf', 'md5-desc-v1']]),
+    })).not.toThrow();
+  });
+
   it('diffs against the FOLD, not the last sequence: a leaf untouched since 0000 is still compared to 0000', () => {
     const seq1: FiledSequence = { ...SEQ_0000, sequence: '0001', leaves: [leaf('2.5', 'clinical-overview.pdf', 'md5-co-v2')] };
     const plan = planSequence({

@@ -231,7 +231,15 @@ beforeEach(() => {
   installDb();
   connectFn.mockReset();
   ledgerQuery.mockReset();
-  ledgerQuery.mockResolvedValue({ rows: [], rowCount: 0 });
+  // The signer must be attributable or §11.100 refuses to persist the signature
+  // manifestation at all — and the manifest is where the transmit records WHAT
+  // it filed. Without this row the double silently exercised only the ledger
+  // half of the sign.
+  ledgerQuery.mockImplementation(async (sql: unknown) =>
+    /FROM users u/.test(String(sql))
+      ? { rows: [{ name: 'Test Signer', email: 'signer@example.test', title: 'RA Lead' }], rowCount: 1 }
+      : { rows: [], rowCount: 0 },
+  );
   connectFn.mockImplementation(() =>
     Promise.resolve({
       query: (...args: unknown[]) => ledgerQuery(...args),
@@ -549,9 +557,87 @@ describe('POST transmit — filed-sequence history (C2C-SUB-003)', () => {
       .send({ packageId: 5, environment: 'staging', ...REAUTH });
     expect(res.status).toBe(201);
     expect(res.body.data.filedSequenceRecorded).toBe('not-applicable');
+    expect(res.body.data.filedSequenceReason).toBe('no-sequence');
     expect(ledgerQuery.mock.calls.some((c) => /^UPDATE c2c_submission_packages/.test(String(c[0])))).toBe(false);
   });
 
+});
+
+/*
+ * What the transmit path RECORDS about the eCTD sequence it just filed —
+ * separate from whether the bytes were accepted. A lost baseline is silent
+ * unless it is said, so each case here is about what the caller and the
+ * Part 11 record are told.
+ */
+describe('POST transmit — the sequence it filed (C2C-SUB-003)', () => {
+  it('a sequence whose leaf inventory is UNREADABLE is a lost baseline, not a non-event', async () => {
+    /* One entry missing `href`. The reader drops a partial inventory whole —
+       because a prior state missing a leaf computes `new` for a document that
+       is already on file — but that guard sat only on the reader: the manifest
+       was written to the history, reported as recorded, and then dropped by the
+       very guard meant to prevent it. The filing is at the agency and every
+       subsequent diff is blind to it. */
+    packages = [{ id: 5, orgId: CALLER_ORG, bundle: goodDescriptor({
+      sequence: '0000', submissionType: 'original',
+      leafManifest: [
+        { ctdSection: '2.5', fileName: 'clinical-overview.pdf', href: 'm2/2-5/clinical-overview.pdf', md5: 'md5-co' },
+        { ctdSection: '3.2.P.1', fileName: 'description.pdf', md5: 'md5-desc' }, // no href
+      ],
+    }) }];
+    transmitFn.mockResolvedValueOnce({ transmittalId: 4246, transmissionId: 'mdn-partial', status: 'received', transport: 'as2', httpStatus: 200 });
+    const res = await request(makeApp())
+      .post('/api/mdx/gateways/fda/esg/transmit')
+      .send({ packageId: 5, environment: 'staging', ...REAUTH });
+    expect(res.status).toBe(201);
+    expect(res.body.data.filedSequenceRecorded).toBe(false);
+    expect(res.body.data.filedSequenceReason).toBe('no-usable-manifest');
+    // Nothing half-readable is persisted: a history that cannot be read back is
+    // worse than one that is honestly missing.
+    expect(ledgerQuery.mock.calls.some((c) => /^UPDATE c2c_submission_packages/.test(String(c[0])))).toBe(false);
+    // And the operator is told, because the NEXT assemble will otherwise refuse
+    // with "file sequence 0000 first" — which they did.
+    expect(res.body.data.filedSequenceWarning).toMatch(/no readable leaf inventory/);
+  });
+
+  it('an eCTD sequence with no inventory at all is reported as a failure, not as "not applicable"', async () => {
+    // Every descriptor assembled before the inventory existed is this case.
+    packages = [{ id: 5, orgId: CALLER_ORG, bundle: goodDescriptor({ sequence: '0001', submissionType: 'Efficacy Supplement' }) }];
+    transmitFn.mockResolvedValueOnce({ transmittalId: 4247, transmissionId: 'mdn-nomanifest', status: 'received', transport: 'as2', httpStatus: 200 });
+    const res = await request(makeApp())
+      .post('/api/mdx/gateways/fda/esg/transmit')
+      .send({ packageId: 5, environment: 'staging', ...REAUTH });
+    expect(res.status).toBe(201);
+    expect(res.body.data.filedSequenceRecorded).toBe(false);
+    expect(res.body.data.filedSequenceReason).toBe('no-usable-manifest');
+  });
+
+  it('the Part 11 sign row records WHICH sequence the signature filed, and whether the history took it', async () => {
+    // The ledger recorded that a bundle was transmitted but not which eCTD
+    // sequence it filed, so an auditor reconstructing the lifecycle from the
+    // signatures could not — and a lost baseline left no durable trace at all.
+    packages = [{ id: 5, orgId: CALLER_ORG, bundle: goodDescriptor({
+      sequence: '0000', submissionType: 'original',
+      leafManifest: [{ ctdSection: '2.5', fileName: 'clinical-overview.pdf', href: 'm2/2-5/clinical-overview.pdf', md5: 'md5-co', operation: 'new' }],
+    }) }];
+    transmitFn.mockResolvedValueOnce({ transmittalId: 4248, transmissionId: 'mdn-sign', status: 'received', transport: 'as2', httpStatus: 200 });
+    const res = await request(makeApp())
+      .post('/api/mdx/gateways/fda/esg/transmit')
+      .send({ packageId: 5, environment: 'staging', ...REAUTH });
+    expect(res.status).toBe(201);
+    expect(signPayload()).toMatchObject({
+      sequence: '0000', submissionType: 'original',
+      filedSequenceRecorded: true, filedSequenceReason: 'recorded',
+    });
+    // And in the signature MANIFEST — the attributed record an auditor reads.
+    // The payload only reaches the signature as a digest, which answers no
+    // question about what was filed.
+    const manifest = ledgerQuery.mock.calls
+      .flatMap((c) => ((c[1] as unknown[]) ?? []))
+      .map((p) => { try { return typeof p === 'string' ? JSON.parse(p) : p; } catch { return null; } })
+      .find((o) => o && typeof o === 'object' && (o as any).kind === 'governed-transmit');
+    expect(manifest, 'the transmit signature manifest was persisted').toBeDefined();
+    expect(manifest).toMatchObject({ sequence: '0000', filedSequenceRecorded: true });
+  });
 });
 
 /*

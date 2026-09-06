@@ -48,7 +48,13 @@ export interface FiledSequence {
 
 const SEQUENCE_RE = /^\d{4}$/;
 
-function isFiledLeaf(v: unknown): v is FiledLeaf {
+/**
+ * Whether a value is a readable filed-leaf record. Exported because the WRITER
+ * must apply it too: a manifest that only the reader rejects is written to the
+ * history, reported as recorded, and then dropped when the next sequence reads
+ * it — the filing is at the agency and invisible to every subsequent diff.
+ */
+export function isFiledLeaf(v: unknown): v is FiledLeaf {
   const l = v as Record<string, unknown> | null;
   return (
     !!l && typeof l === 'object' &&
@@ -125,8 +131,10 @@ export class SequenceLifecycleRefusal extends Error {
     readonly code:
       | 'NO_PRIOR_SEQUENCE'
       | 'SEQUENCE_ALREADY_FILED'
+      | 'SEQUENCE_OUT_OF_ORDER'
       | 'SUBMISSION_TYPE_REQUIRED'
-      | 'SUBMISSION_TYPE_UNKNOWN',
+      | 'SUBMISSION_TYPE_UNKNOWN'
+      | 'NOTHING_TO_FILE',
     message: string,
     /** For SUBMISSION_TYPE_UNKNOWN: the terms the region will accept, so the
      *  caller can offer them rather than making the operator guess again. */
@@ -222,6 +230,23 @@ export function planSequence(params: {
       `Sequence ${sequence} has already been transmitted for this package. Use the next unused sequence number.`,
     );
   }
+  // Sequences are consecutive. A gap and a backfill are both operator errors,
+  // and neither is a diff this module can compute honestly: the ONLY ordering it
+  // knows is the sequence number, so filing 0001 after 0002 makes the fold treat
+  // the higher number as current and points the new sequence's modified-file
+  // FORWARD, at a sequence filed after it. Nothing downstream would notice.
+  const highest = filed.reduce((max, f) => (f.sequence > max ? f.sequence : max), '0000');
+  const expected = String(Number(highest) + 1).padStart(4, '0');
+  if (sequence !== expected) {
+    throw new SequenceLifecycleRefusal(
+      'SEQUENCE_OUT_OF_ORDER',
+      `Sequence ${sequence} is not the next one for this package: ${highest} is the highest filed, so the next is ${expected}. ` +
+        (sequence < expected
+          ? 'A sequence filed out of order would be diffed against filings made after it.'
+          : 'A gap would leave the agency without the sequences in between.') +
+        ' If a sequence was filed outside this system, its record has to reach this package before a follow-up can be built on it.',
+    );
+  }
   if (!declaredType) {
     throw new SequenceLifecycleRefusal(
       'SUBMISSION_TYPE_REQUIRED',
@@ -255,6 +280,20 @@ export function planSequence(params: {
   const omitted = desired
     .filter((d) => !shipped.has(`${d.ctdSection}/${d.fileName}`) && priorByKey.has(`${d.ctdSection}/${d.fileName}`))
     .map((d) => ({ ctdSection: d.ctdSection, fileName: d.fileName }));
+
+  // Everything the operator asked to file is already on file, unchanged. There
+  // is a sequence to build here only in the sense that a zip can be produced:
+  // it would carry no leaf, an <ectd:ectd/> with no module element, and an
+  // empty regional backbone — and transmitting it would consume a sequence
+  // number at the agency to say nothing. Refuse rather than let a filing that
+  // files nothing look like a successful assembly.
+  if (desired.length > 0 && leaves.length === 0) {
+    throw new SequenceLifecycleRefusal(
+      'NOTHING_TO_FILE',
+      `Sequence ${sequence} would file nothing: all ${omitted.length} of this package's leaves are already on file, byte for byte. ` +
+        'Change what you intend to file, or withdraw a document explicitly — a sequence that carries no leaf is not a filing.',
+    );
+  }
 
   return {
     leaves: leaves.map((l) => ({

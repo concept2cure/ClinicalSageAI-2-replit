@@ -259,11 +259,17 @@ router.post('/gateways/:region/:gateway/transmit', async (req: Request, res: Res
       // The bytes are with the agency either way; what a false here costs is
       // the baseline the NEXT sequence diffs against, so it is said, not implied.
       filedSequenceRecorded: outcome.filedSequenceRecorded,
+      filedSequenceReason: outcome.filedSequenceReason,
       ...(outcome.filedSequenceRecorded === false
         ? {
             filedSequenceWarning:
               'The transmission completed, but this sequence could not be added to the package filed history. ' +
-              'Record it manually before assembling the next sequence, which derives each leaf operation from that history.',
+              (outcome.filedSequenceReason === 'no-usable-manifest'
+                // Said plainly, because the next assembly will otherwise refuse
+                // with "file sequence 0000 first" — which the operator did.
+                ? 'Its bundle descriptor carries no readable leaf inventory (it was assembled before the inventory was recorded, or the stored one is malformed), ' +
+                  'so there is nothing to add. Re-assemble the package before the next sequence so it has a baseline to diff against.'
+                : 'Record it manually before assembling the next sequence, which derives each leaf operation from that history.'),
           }
         : {}),
       ...(outcome.contentAfterTransmit === 'drift' ? { contentWarning: CONTENT_CHANGED_DURING_TRANSMIT } : {}),
