@@ -71,3 +71,19 @@ describe('evaluateBiosketchCompleteness', () => {
     expect(r.findings).toHaveLength(0);
   });
 });
+
+/**
+ * `requiredTotal === 0 ? 100`, feeding `readyToFinalize` — the gate the service
+ * enforces on finalize. With no required sections recorded the `missing` list
+ * is empty too, so an empty biosketch scored 100% and finalized.
+ */
+describe('evaluateBiosketchCompleteness — an empty biosketch is not a complete one', () => {
+  it('publishes no percentage and does not finalize', () => {
+    const r = evaluateBiosketchCompleteness([]);
+    expect(r.addressedPct).toBeNull();
+    expect(r.readyToFinalize).toBe(false);
+    const critical = r.findings.filter((f) => f.severity === 'critical');
+    expect(critical).toHaveLength(1);
+    expect(critical[0].message).toMatch(/no required sections recorded/i);
+  });
+});

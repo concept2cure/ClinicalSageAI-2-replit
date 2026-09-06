@@ -65,7 +65,11 @@ export interface ConsentFinding {
 
 export interface ConsentCompletenessResult {
   /** Percent of REQUIRED elements both present and with content (0–100). */
-  requiredPresentPct: number;
+  /**
+   * Percentage of required elements satisfied. NULL when the form records no
+   * required elements — there is then no ratio and no assessment.
+   */
+  requiredPresentPct: number | null;
   requiredTotal: number;
   requiredPresent: number;
   missingRequired: string[];
@@ -84,7 +88,14 @@ export function evaluateConsentCompleteness(elements: ConsentElementView[]): Con
   const satisfied = (e: ConsentElementView): boolean => e.present && typeof e.content === 'string' && e.content.trim().length > 0;
   const requiredPresent = required.filter(satisfied).length;
   const requiredTotal = required.length;
-  const requiredPresentPct = requiredTotal === 0 ? 100 : Math.round((requiredPresent / requiredTotal) * 100);
+  /* This ended `requiredTotal === 0 ? 100`. A consent form with NO element
+     rows — created but never populated, or whose elements failed to load —
+     scored 100%, produced an empty missingRequired list, and therefore passed
+     `readyToApprove`. approveConsentFormTx would then have set it to approved:
+     an informed-consent form with no elements at all, through the 45 CFR
+     46.116 gate. Nothing had been checked, so there is no percentage. */
+  const requiredPresentPct: number | null =
+    requiredTotal === 0 ? null : Math.round((requiredPresent / requiredTotal) * 100);
 
   const missingRequired = required.filter((e) => !satisfied(e)).map((e) => e.elementKey);
 
@@ -97,6 +108,19 @@ export function evaluateConsentCompleteness(elements: ConsentElementView[]): Con
     findings.push({ severity: 'warning', message: `Optional element "${e.elementKey}" is marked present but has no content.` });
   }
 
-  const readyToApprove = missingRequired.length === 0;
+  /* A form with no required elements is not a complete form; it is a form
+     nothing has been asserted about. The finding is critical so the refusal
+     approveConsentFormTx throws carries a sentence — it builds its message by
+     joining the critical findings, and with none it would have read
+     "Cannot approve — " and stopped. */
+  if (requiredTotal === 0) {
+    findings.push({
+      severity: 'critical',
+      message:
+        'This consent form has no required elements recorded, so its completeness has not been assessed (45 CFR 46.116). An empty form is not a complete one.',
+    });
+  }
+
+  const readyToApprove = requiredTotal > 0 && missingRequired.length === 0;
   return { requiredPresentPct, requiredTotal, requiredPresent, missingRequired, findings, readyToApprove };
 }
