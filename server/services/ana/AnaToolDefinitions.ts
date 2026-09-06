@@ -1448,17 +1448,27 @@ const START_INTELLIGENCE_FLOW: AnaTool = {
   name: 'start_intelligence_flow',
   description:
     'Start an intelligence questioning flow for a regulatory document type. ' +
-    'When a user wants to build a protocol, CSR, IND, SOP, 510(k), CER, or other regulatory document, ' +
+    'When a user wants to build a protocol, CSR, IND, SOP, 510(k), CER, CMC specification, or other regulatory document, ' +
     'invoke this tool to launch the guided questioning flow. The engine will return structured questions ' +
-    'that the user answers step by step, with branching logic, validation, and regulatory issue detection.',
+    'that the user answers step by step, with branching logic, validation, and regulatory issue detection. ' +
+    'Under an organization context the interview is PERSISTED: the response carries a `session_id`, and every ' +
+    'later answer_intelligence_question / resume_intelligence_flow / commit_intelligence_flow call needs only ' +
+    'that id — not the flow_state. Keep the session_id; it is how a dropped conversation is resumed.',
   input_schema: {
     type: 'object',
     properties: {
       document_type: {
         type: 'string',
         description:
-          'The type of regulatory document to build. Examples: "protocol", "csr", "ind", "sop", "510k", "cer", ' +
+          'The type of regulatory document to build. Examples: "protocol", "csr", "ind", "sop", "510k", "cer", "cmc", ' +
           '"clinical protocol", "clinical study report", "IND submission", "standard operating procedure".',
+      },
+      project_id: {
+        type: 'string',
+        description:
+          'The program / project id (text) to bind the session to when the conversation has no active project. ' +
+          'Ignored when the active project is known. A CMC interview can only be committed to the registers ' +
+          'of a bound project.',
       },
     },
     required: ['document_type'],
@@ -1470,17 +1480,24 @@ const ANSWER_INTELLIGENCE_QUESTION: AnaTool = {
   description:
     'Submit an answer to the current intelligence question in an active flow. ' +
     'The engine validates the answer, runs issue checks, and advances to the next question ' +
-    'or completes the flow with a structured output. The engine is stateless: pass back the ' +
-    'entire `flow_state` object returned by the previous start_intelligence_flow / ' +
-    'answer_intelligence_question call (not just an id) so it can resume.',
+    'or completes the flow with a structured output. Pass the `session_id` from start_intelligence_flow: ' +
+    'the engine loads the interview state from the session, records the step, and returns the session_id ' +
+    'again — flow_state is then not needed and is ignored. Only when there is NO session (the flow was started ' +
+    'without an organization context) pass back the entire `flow_state` object returned by the previous call.',
   input_schema: {
     type: 'object',
     properties: {
+      session_id: {
+        type: 'string',
+        description:
+          'The persisted interview session id returned by start_intelligence_flow. When given, the state is ' +
+          'loaded from and saved to the session; flow_state is ignored.',
+      },
       flow_state: {
         type: 'object',
         description:
-          'The full flow state object returned by the previous call (start_intelligence_flow or the ' +
-          'prior answer_intelligence_question). Round-trip it verbatim — the engine holds no state of its own.',
+          'Only when no session_id exists: the full flow state object returned by the previous call ' +
+          '(start_intelligence_flow or the prior answer_intelligence_question), round-tripped verbatim.',
       },
       node_id: {
         type: 'string',
@@ -1493,7 +1510,56 @@ const ANSWER_INTELLIGENCE_QUESTION: AnaTool = {
           'values are the user\'s answers (strings, numbers, booleans, or arrays for multi-select).',
       },
     },
-    required: ['flow_state', 'node_id', 'answers'],
+    required: ['node_id', 'answers'],
+  },
+};
+
+const RESUME_INTELLIGENCE_FLOW: AnaTool = {
+  name: 'resume_intelligence_flow',
+  description:
+    'Resume a persisted intelligence questioning flow by its session_id — after a dropped conversation, a new ' +
+    'thread, or when the user asks to continue an interview. Returns the current question (or the completion ' +
+    'summary if the interview already finished, with the register records it was committed to, if any).',
+  input_schema: {
+    type: 'object',
+    properties: {
+      session_id: {
+        type: 'string',
+        description: 'The interview session id returned by start_intelligence_flow.',
+      },
+    },
+    required: ['session_id'],
+  },
+};
+
+const COMMIT_INTELLIGENCE_FLOW: AnaTool = {
+  name: 'commit_intelligence_flow',
+  description:
+    'Commit a COMPLETED CMC interview to the CMC registers that feed Module 3: the answers are projected onto ' +
+    'register records (drug substance, drug product, container closure system, drug substance and drug product ' +
+    'manufacturing processes, formulation record, novel excipient material spec, structural characterisation study) ' +
+    'and written through the registers\' own write paths. Refuses when the session is not complete or is not bound ' +
+    'to a project. A failure mid-way is reported with exactly which records were written and which were not; ' +
+    'a retry writes only the remainder. Answers no register can take are listed with the reason — say so to the user. ' +
+    'Use dry_run to show the user what would be recorded before writing.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      session_id: {
+        type: 'string',
+        description: 'The interview session id returned by start_intelligence_flow.',
+      },
+      project_id: {
+        type: 'string',
+        description:
+          'Binds a session that was started without a project. Never overrides the project the session already has.',
+      },
+      dry_run: {
+        type: 'boolean',
+        description: 'When true, return the commit plan (register + body per record) without writing anything.',
+      },
+    },
+    required: ['session_id'],
   },
 };
 
@@ -2596,6 +2662,8 @@ export const ALL_ANA_TOOLS_RAW: AnaTool[] = [
   // Intelligence Questioning Engine — guided flows for document generation
   START_INTELLIGENCE_FLOW,
   ANSWER_INTELLIGENCE_QUESTION,
+  RESUME_INTELLIGENCE_FLOW,
+  COMMIT_INTELLIGENCE_FLOW,
   LIST_INTELLIGENCE_FLOWS,
   // War Game Simulation — FDA auditor pressure-testing of intelligence flow output
   START_WAR_GAME,
