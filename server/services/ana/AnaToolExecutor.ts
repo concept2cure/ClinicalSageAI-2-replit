@@ -18906,6 +18906,22 @@ registerToolHandler('save_document_to_vault', async (input, ctx) => {
          VALUES ($1, $2, 1, $3, $4, $5, $6)`,
         [ins.rows[0].id, ctx.organizationId, content, hash, reason, ctx.userId],
       );
+      /* Span lineage in the same transaction as the artifact + immutable version
+         (ledger L160, mirroring update_vault_document): save_document_to_vault
+         receives its content directly and carries no parked Data Room sources, so
+         every clause is the acting user's assertion. Recording it here closes the
+         one vault write that persisted regulated prose with NO span lineage at
+         all — a gap invisible to check-lineage-save-gate because it writes by
+         INSERT, which that guard's content-write discovery does not match. A
+         lineage gap rolls the whole document back. */
+      const { enforceAuthorLineage } = await import('../clinical-regulatory-evidence/lineage-gate.js');
+      await enforceAuthorLineage(
+        client,
+        ctx.organizationId,
+        { documentTable: 'concept2cure_artifacts', documentId: String(ins.rows[0].id) },
+        content,
+        String(ctx.userId),
+      );
       // Uniform provenance: a vault document authored by AnA is a 'generation'
       // event, in the same transaction as the artifact + version.
       await recordArtifactProvenance(client, {

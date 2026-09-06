@@ -333,6 +333,16 @@ describe('save_document_to_vault — vault artifact + version + audit are one tr
     expect(audits).toHaveLength(1);
     expect(audits[0].target).toBe(`vault-document:${res.artifact_id}`);
     expect(audits[0].actor_id).toBe(10);
+
+    // Ledger L160 (extended to the create path): the vault document's text is
+    // attributed in the same transaction. save_document_to_vault previously
+    // recorded NO span lineage at all — a regulated INSERT the content-write
+    // guard could not even see.
+    const spans = await q(
+      `SELECT count(*)::int AS n FROM document_span_lineage
+        WHERE document_table = 'concept2cure_artifacts' AND provenance_kind = 'author_assertion' AND deleted_at IS NULL`,
+    );
+    expect(Number(spans.rows[0].n)).toBeGreaterThanOrEqual(1);
   });
 
   it('REFUSES without a project — a vault document belonging to no project is an orphaned capture', async () => {
