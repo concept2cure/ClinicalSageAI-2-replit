@@ -139,7 +139,13 @@ describe('FDA backbone declares only a filing identity it was given', () => {
   it('the unresolved-submission-type refusal names terms that actually resolve', async () => {
     // A refusal that suggests a word the vocabulary does not hold sends the
     // operator round the same loop.
-    const err = await pack({ submissionType: 'ind', sequence: '0001' }).catch((e) => e as Error);
+    // `as Error` narrowed only the catch branch, so the awaited value stayed
+    // `Error | SubmissionBundle` and `.message` did not typecheck. Rejecting is
+    // the point of the case, so say so: a resolve is a failure of the test.
+    const err = await pack({ submissionType: 'ind', sequence: '0001' }).then(
+      () => { throw new Error('expected pack() to reject an unresolved submission type'); },
+      (e: unknown) => e as Error,
+    );
     expect(err.message).toContain('Efficacy Supplement');
     expect(err.message).toContain('Annual Report');
     for (const term of submissionTypeTerms('fda') ?? []) {
