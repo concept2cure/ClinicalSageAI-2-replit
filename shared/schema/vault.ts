@@ -75,6 +75,19 @@ export const vaultDocuments = vault.table(
       .default(sql`gen_random_uuid()`),
     programId: uuid('program_id').notNull(),
 
+    /* Owning tenant, resolved from `program_id` -> regulatory_programs.organization_id
+       (INTEGER there, so INTEGER here). NULL = unattributable — the program is
+       missing or soft-deleted — and quarantined by
+       idx_vault_documents_unattributed rather than guessed; it becomes NOT NULL
+       in the change that adds the org predicate, once that index is empty.
+
+       This column does NOT by itself isolate tenants. Neither sweep policies it:
+       the integer sweep is `public`-only and this is `vault`, and the non-public
+       sweep is an explicit uuid-keyed list. vault.documents is still ENABLE
+       ROW LEVEL SECURITY without FORCE, which the owner role bypasses.
+       See migrations/20260905_vault_documents_organization_id.sql. */
+    organizationId: integer('organization_id'),
+
     documentCode: text('document_code').notNull(),
     documentTitle: text('document_title').notNull(),
     documentType: text('document_type').notNull(),
