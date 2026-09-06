@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-06T02:31:36.914Z",
+  "generatedAt": "2026-09-06T02:39:48.532Z",
   "git": {
-    "sha": "72766972e7562a9df8eee7f7732412a88a3d770d",
+    "sha": "dec9a2eb421c3e3ed748e5b99afc4ef10e9ca545",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2390,6 +2390,10 @@
         "lines": 1869
       },
       {
+        "file": "server/routes/ivdr-routes.ts",
+        "lines": 1866
+      },
+      {
         "file": "server/services/rare-disease/rare-disease-knowledge.ts",
         "lines": 1866
       },
@@ -2460,10 +2464,6 @@
       {
         "file": "server/services/combination-products/combination-products-knowledge.ts",
         "lines": 1726
-      },
-      {
-        "file": "server/routes/ivdr-routes.ts",
-        "lines": 1710
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/TaskBoard.tsx",
