@@ -316,16 +316,20 @@ router.get('/packages/:packageId/sections', async (req: Request, res: Response) 
  * row write in the SAME transaction as the package's content-revision bump and
  * stale-bundle clear — see services/ectd/package-content-change.
  */
+// The key becomes a leaf path component through leafSlug, so surrounding
+// whitespace is stripped rather than stored: ' 2.5 ' and '2.5' must not be two
+// different sections that file their leaves at two different paths. The value
+// is otherwise never rewritten — same contract as the identifiers route.
 const createSectionSchema = z.object({
-  sectionKey: z.string().min(1).max(120),
-  sectionLabel: z.string().min(1).max(300),
+  sectionKey: z.string().trim().min(1).max(120),
+  sectionLabel: z.string().trim().min(1).max(300),
   sortOrder: z.number().int().min(0).max(10000).optional(),
   reason: z.string().min(8, 'reason must be at least 8 characters'),
 });
 const updateSectionSchema = z
   .object({
-    sectionKey: z.string().min(1).max(120).optional(),
-    sectionLabel: z.string().min(1).max(300).optional(),
+    sectionKey: z.string().trim().min(1).max(120).optional(),
+    sectionLabel: z.string().trim().min(1).max(300).optional(),
     sortOrder: z.number().int().min(0).max(10000).optional(),
     reason: z.string().min(8, 'reason must be at least 8 characters'),
   })

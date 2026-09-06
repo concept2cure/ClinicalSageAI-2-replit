@@ -14,7 +14,7 @@
 
 import * as React from 'react';
 import { useEffect, useState } from 'react';
-import { EmptyState } from '../../v2/dataConnect';
+import { EmptyState, ErrorState } from '../../v2/dataConnect';
 import {
   useEstarRegistration,
   useEstarSubmissions,
@@ -292,8 +292,31 @@ function CorrespondentBlock({
 }
 
 export function EstarFilingPanel() {
-  const { registration, loading: regLoading, save, saveFailure } = useEstarRegistration();
-  const { submissions, loading: subLoading, startTracking, advance } = useEstarSubmissions();
+  /*
+   * BOTH `error`s were dropped on the floor, and both reads then failed into a
+   * sentence that reads like an answer. A registration that could not be read
+   * rendered "Not yet registered — toggle the prerequisites you hold", telling
+   * an organization that holds all four FDA prerequisites that it holds none,
+   * and inviting the very toggle that used to overwrite them. A submissions
+   * read that failed rendered "No tracked filings yet" over filings that exist.
+   * "An error is never rendered as an empty result" (CLAUDE.md).
+   */
+  const {
+    registration,
+    loading: regLoading,
+    error: regError,
+    refresh: refreshRegistration,
+    save,
+    saveFailure,
+  } = useEstarRegistration();
+  const {
+    submissions,
+    loading: subLoading,
+    error: subError,
+    refresh: refreshSubmissions,
+    startTracking,
+    advance,
+  } = useEstarSubmissions();
   const { catalog } = useEstarCatalog();
 
   const [selectedKey, setSelectedKey] = useState<string>('');
@@ -349,12 +372,23 @@ export function EstarFilingPanel() {
           <div className="section-sub">
             {regLoading
               ? 'Loading registration…'
-              : registered
-                ? `Registered · ${satisfiedCount}/4 FDA prerequisites held`
-                : 'Not yet registered — toggle the prerequisites you hold'}
+              : regError
+                ? 'The registration could not be read'
+                : registered
+                  ? `Registered · ${satisfiedCount}/4 FDA prerequisites held`
+                  : 'Not yet registered — toggle the prerequisites you hold'}
           </div>
         </div>
       </div>
+      {regError ? (
+        <ErrorState
+          testId="estar-registration-read-error"
+          variant="inline"
+          title="The eSTAR registration could not be read"
+          message={regError}
+          retry={refreshRegistration}
+        />
+      ) : null}
       <div className="health">
         {rows.map((r) => (
           <div key={r.id} className="health-card">
@@ -419,20 +453,31 @@ export function EstarFilingPanel() {
           <div className="section-sub">
             {subLoading
               ? 'Loading…'
-              : submissions && submissions.length > 0
-                ? `${submissions.length} filing${submissions.length === 1 ? '' : 's'} tracked`
-                : 'No tracked filings yet'}
+              : subError
+                ? 'The tracked filings could not be read'
+                : submissions && submissions.length > 0
+                  ? `${submissions.length} filing${submissions.length === 1 ? '' : 's'} tracked`
+                  : 'No tracked filings yet'}
           </div>
         </div>
       </div>
-      {submissions && submissions.length > 0 ? (
+      {subError ? (
+        <ErrorState
+          testId="estar-submissions-read-error"
+          variant="inline"
+          title="The tracked filings could not be read"
+          message={subError}
+          retry={refreshSubmissions}
+        />
+      ) : null}
+      {subError ? null : submissions && submissions.length > 0 ? (
         <div className="pma-modules">
           {submissions.map((s) => (
             <SubmissionCard key={s.id} s={s} busy={busy === s.id} onAdvance={onAdvance} />
           ))}
         </div>
       ) : (
-        !subLoading && (
+        !subLoading && !subError && (
           /* An empty result rendered NOTHING — the whole body was conditioned on
              having rows, so a program with no tracked filings got a header and
              blank space, which reads as a surface that failed to draw rather

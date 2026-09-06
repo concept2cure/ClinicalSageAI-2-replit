@@ -375,6 +375,64 @@ describe('EstarFilingPanel — a toggle before the registration lands', () => {
    * prerequisites — the ESG account, the CDRH Portal account, the DUNS/FEI
    * identity and the MDUFA fee account.
    */
+  /*
+   * The failure the operator was never shown. Both reads dropped their `error`,
+   * so a registration that could not be read rendered "Not yet registered —
+   * toggle the prerequisites you hold" — telling an organization that holds all
+   * four FDA prerequisites that it holds none, and inviting the toggle that
+   * used to overwrite them — and a failed submissions read rendered "No tracked
+   * filings yet" over filings that exist.
+   */
+  it('a FAILED registration read says so — it never reads as "not yet registered"', async () => {
+    mockReads((url) => {
+      if (url.includes('/registration')) {
+        return Promise.resolve({ ok: false, status: 500, text: () => Promise.resolve('boom') } as Response);
+      }
+      if (url.includes('/catalog')) return okJson({ catalog: [] });
+      return okJson({ submissions: [] });
+    });
+    render(<EstarFilingPanel />);
+
+    await waitFor(() => expect(screen.getByTestId('estar-registration-read-error')).toBeTruthy());
+    expect(screen.getByText('The registration could not be read')).toBeTruthy();
+    // The claim that would have been made instead, and the invitation with it.
+    expect(screen.queryByText(/Not yet registered/)).toBeNull();
+  });
+
+  it('a FAILED submissions read says so — it never reads as "no tracked filings yet"', async () => {
+    mockReads((url) => {
+      if (url.includes('/submissions')) {
+        return Promise.resolve({ ok: false, status: 500, text: () => Promise.resolve('boom') } as Response);
+      }
+      if (url.includes('/catalog')) return okJson({ catalog: [] });
+      return okJson({ registered: true, registration: REGISTRATION, clientRegistration: { clientId: 'o1', satisfied: [] } });
+    });
+    render(<EstarFilingPanel />);
+
+    await waitFor(() => expect(screen.getByTestId('estar-submissions-read-error')).toBeTruthy());
+    // The header sentence and the error banner both say it; one query for both.
+    expect(screen.getAllByText('The tracked filings could not be read').length).toBeGreaterThan(0);
+    // Neither the header sentence nor the empty-state body may claim emptiness.
+    expect(screen.queryAllByText(/No tracked filings yet/)).toEqual([]);
+  });
+
+  it('an ACTUAL empty result still reads as empty, not as a failure', async () => {
+    // The other half of the rule: a read that succeeded with nothing in it must
+    // not be dressed up as an error either.
+    mockReads((url) => {
+      if (url.includes('/catalog')) return okJson({ catalog: [] });
+      if (url.includes('/submissions')) return okJson({ submissions: [] });
+      return okJson({ registered: true, registration: REGISTRATION, clientRegistration: { clientId: 'o1', satisfied: [] } });
+    });
+    render(<EstarFilingPanel />);
+
+    await waitFor(() =>
+      expect(screen.getAllByText(/No tracked filings yet/).length).toBeGreaterThan(0),
+    );
+    expect(screen.queryByTestId('estar-submissions-read-error')).toBeNull();
+    expect(screen.queryByTestId('estar-registration-read-error')).toBeNull();
+  });
+
   it('saving the correspondent block after a FAILED read writes no prerequisite at all', async () => {
     mockReads((url) => {
       if (url.includes('/registration')) {

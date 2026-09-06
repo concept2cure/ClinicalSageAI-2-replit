@@ -203,6 +203,22 @@ describe('PATCH /api/submission-ops/packages/:packageId/sections/:sectionId', ()
     expect(recordGovernedActionFn).not.toHaveBeenCalled();
   });
 
+  it('TRIMS a padded key rather than storing it — the key becomes a leaf path component — and a trimmed no-op is still a no-op', async () => {
+    dbState.queue = [PKG, SECTION];
+    dbState.pkgMetadata = { bundle: BUNDLE };
+    // ' 2.5 ' is the section's existing key once trimmed: nothing changed.
+    const noop = await patch({ sectionKey: '  2.5  ', ...REASON });
+    expect(noop.status).toBe(200);
+    expect(noop.body.changed).toBe(false);
+    expect(dbState.updates).toHaveLength(0);
+
+    dbState.queue = [PKG, SECTION];
+    const real = await patch({ sectionKey: '  3.2.P.1  ', ...REASON });
+    expect(real.status).toBe(200);
+    expect(real.body.data.sectionKey).toBe('3.2.P.1');
+    expect(recordGovernedActionFn.mock.calls[0][1].payload.next.sectionKey).toBe('3.2.P.1');
+  });
+
   it('REFUSES an empty change and a missing reason, and 404s a section outside the package', async () => {
     expect((await patch({ ...REASON })).status).toBe(400);          // nothing to change
     expect((await patch({ sectionKey: '2.5' })).status).toBe(400);  // no reason
