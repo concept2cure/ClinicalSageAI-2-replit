@@ -13003,7 +13003,12 @@ registerToolHandler('review_tmf_completeness', async (input, ctx) => {
     const r = evaluateCompleteness(artifacts);
     return JSON.stringify({
       ok: true, completenessPct: r.completenessPct, verdict: r.verdict, gapCount: r.gaps.length, gaps: r.gaps.slice(0, 20),
-      message: `TMF ${r.completenessPct}% complete — ${r.verdict.replace(/_/g, ' ')}${r.gaps.length ? `; ${r.gaps.length} gap(s)` : ''}.`,
+      /* A TMF with no expected artifacts indexed used to come back here as
+         "TMF 100% complete — inspection ready". Nothing had been checked. */
+      message:
+        r.verdict === 'not_assessed'
+          ? 'This TMF has no expected artifacts indexed, so its completeness has not been assessed. This is not a complete TMF and not an inspection-readiness verdict.'
+          : `TMF ${r.completenessPct}% complete — ${r.verdict.replace(/_/g, ' ')}${r.gaps.length ? `; ${r.gaps.length} gap(s)` : ''}.`,
     });
   } catch (err) {
     return JSON.stringify({ error: `review_tmf_completeness failed: ${err instanceof Error ? err.message : String(err)}` });

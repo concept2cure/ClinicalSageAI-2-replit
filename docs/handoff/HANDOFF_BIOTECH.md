@@ -798,16 +798,61 @@ the same category as the absent `response` sequence filing path.
 Revert-proven: restoring the stored `clockDays` fails all four clock tests;
 restoring the `|| 1` default fails the refusal test.
 
-### For the device stream — the ESLint ratchet is red on trunk, and not from here
+### RESOLVED — the ESLint ratchet regression on trunk
 
-As of `ee0c4bc51` the ratchet reports 6598 against a baseline of 6597, all of it
-`complexity` (1688 → 1689). It reproduces on a clean checkout of trunk with no
-working-tree changes, so it is not from the labeling or agency-meetings work.
-`server/routes/device-projects.ts` now carries three `complexity` warnings —
-the handler at :72, `validatePatch` at :174 (extracted in `906c94faf`), and the
-handler at :213 — where it carried two. Extracting `validatePatch` left both the
-new function and the handler over the threshold. This is the device stream's
-file per §2, so it is reported rather than changed.
+Reported here at `ee0c4bc51`: 6598 against a baseline of 6597, all `complexity`,
+reproducing on a clean checkout. `server/routes/device-projects.ts` had gone from
+two `complexity` warnings to three when `validatePatch` was extracted in
+`906c94faf`. **The device stream has since fixed it.** Trunk now measures 6596 —
+one *below* baseline — and the ratchet's own advice is to ratchet down so the
+gain is locked in. That is the device stream's gain to lock; the baseline file is
+left alone here.
+
+While it was red it failed exactly one CI step, #86 "Guardrails — ESLint warning
+ratchet", on runs including `a0f3c0244`. Every other step in that run passed,
+Test included; the run's `failure` conclusion was entirely that one step.
+
+### For the migration stream — Blank DB Provisioning is red on trunk
+
+The newest run at the time of writing (`89685b4b9`, a merge carrying
+`00d51259d0` "Give vault.documents a tenant key") fails exactly one job:
+**Blank DB Provisioning + Deploy Migration**. That job provisions a blank
+Postgres with `install-fresh.mjs`, then runs `deploy-migrate.mjs` twice for
+idempotence, then checks RLS coverage. No batch in this session touched a
+migration, DDL, or the migration set, and the job is *skipped* on this session's
+own runs. Reported rather than investigated, per the territory split.
+
+### Twenty-third — a Trial Master File nobody indexed is not inspection-ready (2026-09-06)
+
+`evaluateCompleteness` (`server/services/etmf/etmf-logic.ts`) returned
+`completenessPct: 100` when the required-artifact set was empty, and because
+`present === totalRequired` is `0 === 0`, it also returned the verdict
+**`inspection_ready`**. A trial whose TMF index holds no expected artifacts was
+therefore reported as complete and ready for inspection. Its unit test said so
+in its own title — "returns 100 when nothing is required" — which is the defect
+written down and locked in.
+
+The live consumer that matters most is AnA's `review_tmf_completeness` tool,
+which handed the sponsor the sentence **"TMF 100% complete — inspection ready"**
+straight into conversation. ICH E6(R2) §8 readiness is a claim a sponsor makes
+standing in front of an inspector; nothing had been indexed, so nothing had been
+checked, and that is the absence of an assessment rather than the result of one.
+
+An empty required set now yields `completenessPct: null` and a fourth verdict,
+`not_assessed`. AnA says the TMF has no expected artifacts indexed, that this is
+not a complete TMF, and that it is not an inspection-readiness verdict. A single
+required artifact that is final still reads `inspection_ready`, so the new state
+cannot swallow a real result — that case is a test of its own.
+
+Verified honest and unchanged: `assessTmfCompleteness`
+(`server/services/etmf/tmf-completeness.ts`), which serves the Etmf surface, takes
+its required set from the fixed TMF Reference Model, so its denominator is never
+zero and its `ready` is true only when every zone is complete. The surface's own
+`assessmentRan` already required `totalRequired > 0`. The defect was confined to
+the pure gap-check and its AnA/route callers.
+
+Revert-proven: restoring `totalRequired === 0 ? 100` fails both not-assessed
+tests.
 
 ### Note for the concurrent device stream
 
@@ -1066,6 +1111,7 @@ If neither has happened: report the blockage, name what is needed, and stop.
 | 2026-09-06 | A | Twentieth — the agency-meeting request | The audit entry the request dialog promises is now written in the same transaction as the row (or the request is refused); the pending clock names the agency that holds the request instead of the FDA every time; request ids no longer collide within a millisecond — revert-proven | §1 above |
 | 2026-09-06 | A | Twenty-first — the SPL download | The SPL is nested as SPL nests it, carries the product and the NDC the user typed, and takes ids from a 128-bit derivation instead of a 32-bit hash; the two SPL generators become one; the structural check no longer passes a document missing the sections it calls required — revert-proven | §1 above |
 | 2026-09-06 | A | Twenty-second — health-authority questions | The response clock is derived from the recorded due date instead of a stored figure nothing refreshes, states overdue as overdue, and shows no countdown where no due date is recorded; the HAQ store stops defaulting to organization 1 — revert-proven | §1 above |
+| 2026-09-06 | A | Twenty-third — TMF inspection readiness | A trial with no expected artifacts indexed no longer reports 100% complete and inspection_ready, and AnA no longer says so in conversation: an empty required set is a fourth verdict, not-assessed, with a null percentage — revert-proven | §1 above |
 | | | | | |
 
 **Rule:** the last row with an empty "What was proven" cell is the open work.
