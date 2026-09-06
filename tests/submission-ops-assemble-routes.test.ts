@@ -17,6 +17,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import express from 'express';
 import request from 'supertest';
+import { createHash } from 'crypto';
 
 /* ─── Mock the eCTD zip builder: return a deterministic buffer. ──────── */
 const buildECTDZipFn = vi.fn();
@@ -78,6 +79,14 @@ const { dbState } = vi.hoisted(() => ({
   },
 }));
 
+/** Row timestamps the real tables declare NOT NULL. Leaf PDFs are stamped from
+ *  the content's own dates rather than the wall clock (services/ectd/leaf-pdf),
+ *  so a double that omitted them would be modelling a row the database cannot
+ *  hold — and would make every assembly fail. Fixed values, so two assemblies
+ *  of the same fixture produce the same bytes, which is the point. */
+const ROW_TIMES = { createdAt: new Date('2026-01-02T03:04:05Z'), updatedAt: new Date('2026-01-02T03:04:05Z') };
+const withTimes = <T extends object>(rows: T[]): T[] => rows.map((r) => ({ ...ROW_TIMES, ...r }));
+
 // A thin chainable stub matching the subset of drizzle used by the route.
 function makeDb() {
   let mode: 'pkg' | 'sections' | 'mapped' | null = null;
@@ -103,10 +112,10 @@ function makeDb() {
         // An entry may be a function: a concurrent change that lands DURING
         // the content read (it mutates dbState and returns the rows).
         const next = dbState.mappedByCall.shift();
-        return Promise.resolve(typeof next === 'function' ? next() : next ?? []);
+        return Promise.resolve(withTimes(typeof next === 'function' ? next() : next ?? []));
       }
       // sections query resolves to the sections array.
-      return Promise.resolve(dbState.sections);
+      return Promise.resolve(withTimes(dbState.sections));
     },
     then(resolve: any) {
       // package query: `const [pkg] = await db.select().from(...).where(...)`
@@ -182,11 +191,14 @@ const findings = (res: any): Array<{ ruleId: string; severity: string; message: 
 };
 
 /** A sequence this package actually transmitted — the baseline a follow-up
- *  sequence diffs against. Its leaf is the cover letter the fixtures build. */
+ *  sequence diffs against. The key is the one the route COMPUTES for the cover
+ *  letter the fixtures build (placement '1.2', leafFileName('cover-letter',
+ *  'cover')); an md5 that is merely different from the rendered one, so this
+ *  fixture is a `replace`. For an `unchanged` baseline use `filedFrom`. */
 const FILED_0000 = {
   sequence: '0000', submissionType: 'original', sha256: 'a'.repeat(64), transmittalId: 1,
   filedAt: '2026-01-01T00:00:00.000Z',
-  leaves: [{ ctdSection: 'm1.2', fileName: 'cover-letter.pdf', href: 'm1/us/12-cover/cover-letter.pdf', md5: 'prior-md5' }],
+  leaves: [{ ctdSection: '1.2', fileName: 'cover-letter-cover.pdf', href: 'm1/us/1-2/cover-letter-cover.pdf', md5: 'prior-md5' }],
 };
 
 const PACKAGER_EVIDENCE = {
@@ -216,13 +228,38 @@ beforeEach(() => {
   buildECTDZipFn.mockResolvedValue(Buffer.from('PK-ZIP-CONTENT', 'utf8'));
   // The canonical packager writes the bundle to disk; the route reads it back
   // (readFile is stubbed to the same deterministic bytes).
-  packageLeafBytesFn.mockResolvedValue({
+  // The manifest is derived from the leaves it is HANDED, exactly as the real
+  // packager derives it (regional-packager: ctdSection/fileName/href/md5 + op).
+  // A mock that returned a fixed object instead made the descriptor's manifest
+  // — the inventory the next sequence diffs against — untestable: a route that
+  // stored none at all passed this suite unchanged.
+  packageLeafBytesFn.mockImplementation(async (opts: any) => ({
     path: '/tmp/c2c-assemble-test/pkg.zip',
     sha256: 'f'.repeat(64),
     sizeBytes: Buffer.byteLength('PK-ZIP-CONTENT'),
     format: 'ectd',
+    leafManifest: (opts?.leaves ?? []).map((l: any) => ({
+      ctdSection: l.ctdSection,
+      fileName: l.fileName,
+      href: `m${String(l.ctdSection).charAt(0)}/${String(l.ctdSection).replace(/\./g, '-')}/${l.fileName}`,
+      md5: createHash('md5').update(l.bytes).digest('hex'),
+      ...(l.operation ? { operation: l.operation } : {}),
+      ...(l.title ? { title: l.title } : {}),
+    })),
     ...PACKAGER_EVIDENCE,
-  });
+  }));
+});
+
+/** The filed record a successful assemble + transmit would leave behind: the
+ *  descriptor's own leaf manifest, round-tripped. Building the baseline from
+ *  what the route ACTUALLY produced is the only way a follow-up case can
+ *  exercise `replace` and `unchanged` — a hand-written key that the route can
+ *  never compute silently exercises `new` and nothing else, which is what the
+ *  earlier fixture did. */
+const filedFrom = (sequence: string, submissionType = 'original') => ({
+  sequence, submissionType, sha256: 'a'.repeat(64), transmittalId: 1,
+  filedAt: '2026-01-01T00:00:00.000Z',
+  leaves: dbState.updateSet.metadata.bundle.leafManifest as Array<Record<string, unknown>>,
 });
 
 describe('package identity: one id contract across the package API', () => {
@@ -651,20 +688,140 @@ describe('POST /api/submission-ops/packages/:packageId/assemble', () => {
     });
     dbState.sections = [{ id: 11, sectionKey: 'cover-letter', sectionLabel: 'Cover Letter', sortOrder: 0 }];
     dbState.mappedByCall = [[art('cover', null)]];
-    const res = await post({ sequence: '0003', submissionType: 'amendment' });
+    const res = await post({ sequence: '0003', submissionType: 'Annual Report' });
     expect(res.status).toBe(200);
     const opts = packageLeafBytesFn.mock.calls[0][0];
     expect(opts.sequence).toBe('0003');
     // The backbone is told what is being filed — only 0000 is an original.
-    expect(opts.submissionType).toBe('amendment');
-    expect(opts.fda.submissionType).toBe('amendment');
+    expect(opts.submissionType).toBe('Annual Report');
+    expect(opts.fda.submissionType).toBe('Annual Report');
   });
+
+  it("REFUSES a submission type the region has no code for — 'amendment' reached the packager and 500'd", async () => {
+    // The word an operator reaches for first is not an fdast term. It passed
+    // every check on this route, rendered every leaf, and then threw inside the
+    // FDA backbone builder as a bare INTERNAL_ERROR.
+    dbState.pkg = lockedPkg({ foo: 'bar', regulatory: REGULATORY, filedSequences: [FILED_0000] });
+    dbState.sections = [{ id: 11, sectionKey: 'cover-letter', sectionLabel: 'Cover Letter', sortOrder: 0 }];
+    dbState.mappedByCall = [[art('cover', null)]];
+    const res = await post({ sequence: '0001', submissionType: 'amendment' });
+    expect(res.status).toBe(409);
+    expect(res.body).toMatchObject({ code: 'SUBMISSION_TYPE_UNKNOWN', gate: 'sequence_lifecycle' });
+    // It names terms that actually resolve, as a list the surface can offer.
+    expect(res.body.acceptedSubmissionTypes).toContain('Efficacy Supplement');
+    expect(res.body.error).toContain('Annual Report');
+    expect(packageLeafBytesFn).not.toHaveBeenCalled();
+  });
+
+  it('names the accepted terms when a follow-up declares no submission type at all', async () => {
+    dbState.pkg = lockedPkg({ foo: 'bar', regulatory: REGULATORY, filedSequences: [FILED_0000] });
+    dbState.sections = [{ id: 11, sectionKey: 'cover-letter', sectionLabel: 'Cover Letter', sortOrder: 0 }];
+    dbState.mappedByCall = [[art('cover', null)]];
+    const res = await post({ sequence: '0001' });
+    expect(res.status).toBe(409);
+    expect(res.body.code).toBe('SUBMISSION_TYPE_REQUIRED');
+    expect(res.body.acceptedSubmissionTypes).toContain('Original Application');
+    expect(res.body.error).not.toMatch(/amendment/);
+  });
+
+  it('a changed leaf reaches the PACKAGER as a replace, pointing at the sequence that holds the version it supersedes', async () => {
+    // Without an operation on the leaf the packager refuses every sequence but
+    // 0000; without modified-file the superseded version stays current at the
+    // agency. Both are properties of what the packager is HANDED, so that is
+    // what this asserts — a router that dropped either passed the old suite.
+    dbState.pkg = lockedPkg({ regulatory: REGULATORY, filedSequences: [FILED_0000] });
+    dbState.sections = [{ id: 11, sectionKey: 'cover-letter', sectionLabel: 'Cover Letter', sortOrder: 0 }];
+    dbState.mappedByCall = [[art('cover', null)]];
+    const res = await post({ sequence: '0001', submissionType: 'Efficacy Supplement' });
+    expect(res.status).toBe(200);
+    const sent = packageLeafBytesFn.mock.calls[0][0].leaves;
+    expect(sent).toHaveLength(1);
+    expect(sent[0]).toMatchObject({ ctdSection: '1.2', fileName: 'cover-letter-cover.pdf', operation: 'replace' });
+    expect(sent[0].modifiedFile).toContain('0000');
+    expect(res.body.data.bundle.lifecycle.summary).toMatchObject({ replace: 1, new: 0, unchanged: 0 });
+  });
+
+  it('a leaf byte-identical to the one on file is NOT handed to the packager — a sequence carries what changed', async () => {
+    // The baseline is this route's own output, round-tripped, so "identical"
+    // means identical in fact and not by construction. This is also the end to
+    // end proof that leaf rendering is reproducible: a wall-clock timestamp in
+    // the PDF makes every leaf differ from itself and this case fail.
+    dbState.pkg = lockedPkg();
+    dbState.sections = [
+      { id: 11, sectionKey: 'cover-letter', sectionLabel: 'Cover Letter', sortOrder: 0 },
+      { id: 13, sectionKey: '2.5', sectionLabel: 'Clinical Overview', sortOrder: 1 },
+    ];
+    dbState.mappedByCall = [[art('cover', null)], [art('co', null, 2)]];
+    expect((await post()).status).toBe(200);
+    const filed = filedFrom('0000');
+    expect(filed.leaves).toHaveLength(2);
+
+    // Second sequence: the cover letter is edited, the clinical overview is not.
+    packageLeafBytesFn.mockClear();
+    (dbState as any)._pkgResolved = false;
+    dbState.pkg = lockedPkg({ regulatory: REGULATORY, filedSequences: [filed] });
+    dbState.sections = [
+      { id: 11, sectionKey: 'cover-letter', sectionLabel: 'Cover Letter', sortOrder: 0 },
+      { id: 13, sectionKey: '2.5', sectionLabel: 'Clinical Overview', sortOrder: 1 },
+    ];
+    dbState.mappedByCall = [
+      [{ ...art('cover', null), content: 'Real content cover, revised' }],
+      [art('co', null, 2)],
+    ];
+    const res = await post({ sequence: '0001', submissionType: 'Efficacy Supplement' });
+    expect(res.status).toBe(200);
+    const sent = packageLeafBytesFn.mock.calls[0][0].leaves;
+    expect(sent.map((l: any) => l.fileName)).toEqual(['cover-letter-cover.pdf']);
+    expect(sent[0].operation).toBe('replace');
+    expect(res.body.data.bundle.lifecycle).toMatchObject({
+      summary: { replace: 1, unchanged: 1, new: 0 }, omittedCount: 1,
+    });
+  });
+
+  it('stores the leaf manifest on the descriptor — the inventory the NEXT sequence diffs against', async () => {
+    dbState.pkg = lockedPkg();
+    dbState.sections = [{ id: 11, sectionKey: 'cover-letter', sectionLabel: 'Cover Letter', sortOrder: 0 }];
+    dbState.mappedByCall = [[art('cover', null)]];
+    expect((await post()).status).toBe(200);
+    const manifest = dbState.updateSet.metadata.bundle.leafManifest;
+    expect(manifest).toHaveLength(1);
+    expect(manifest[0]).toMatchObject({ ctdSection: '1.2', fileName: 'cover-letter-cover.pdf', operation: 'new' });
+    expect(manifest[0].md5).toMatch(/^[0-9a-f]{32}$/);
+  });
+
+  it('assembling does NOT file the sequence: only a successful transmit puts a leaf on file', async () => {
+    // If assemble wrote the filed history, a bundle that was built and never
+    // sent would become the baseline the next sequence diffs against, and the
+    // sequence number would be consumed by an assembly nobody transmitted.
+    dbState.pkg = lockedPkg();
+    dbState.sections = [{ id: 11, sectionKey: 'cover-letter', sectionLabel: 'Cover Letter', sortOrder: 0 }];
+    dbState.mappedByCall = [[art('cover', null)]];
+    expect((await post()).status).toBe(200);
+    expect(dbState.updateSet.metadata.filedSequences).toBeUndefined();
+  });
+
+  it('assembles the same content to the same bytes twice — the lifecycle diff and the signed digest both depend on it', async () => {
+    const setup = () => {
+      (dbState as any)._pkgResolved = false;
+      dbState.pkg = lockedPkg();
+      dbState.sections = [{ id: 11, sectionKey: 'cover-letter', sectionLabel: 'Cover Letter', sortOrder: 0 }];
+      dbState.mappedByCall = [[art('cover', null)]];
+    };
+    setup();
+    expect((await post()).status).toBe(200);
+    const first = packageLeafBytesFn.mock.calls[0][0].leaves.map((l: any) => l.bytes.toString('base64'));
+    packageLeafBytesFn.mockClear();
+    await new Promise((r) => setTimeout(r, 1100)); // cross the second boundary
+    setup();
+    expect((await post()).status).toBe(200);
+    expect(packageLeafBytesFn.mock.calls[0][0].leaves.map((l: any) => l.bytes.toString('base64'))).toEqual(first);
+  }, 20_000);
 
   it('REFUSES a follow-up sequence on a package that has transmitted nothing — an assembled-but-unsent bundle is not on file', async () => {
     dbState.pkg = lockedPkg();
     dbState.sections = [{ id: 11, sectionKey: 'cover-letter', sectionLabel: 'Cover Letter', sortOrder: 0 }];
     dbState.mappedByCall = [[art('cover', null)]];
-    const res = await post({ sequence: '0003', submissionType: 'amendment' });
+    const res = await post({ sequence: '0003', submissionType: 'Annual Report' });
     expect(res.status).toBe(409);
     expect(res.body).toMatchObject({ code: 'NO_PRIOR_SEQUENCE', gate: 'sequence_lifecycle' });
     expect(packageLeafBytesFn).not.toHaveBeenCalled();

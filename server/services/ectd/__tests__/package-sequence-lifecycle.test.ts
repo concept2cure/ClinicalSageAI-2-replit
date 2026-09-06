@@ -16,6 +16,7 @@ import {
   SequenceLifecycleRefusal,
   type FiledSequence,
 } from '../package-sequence-lifecycle';
+import { resolveSubmissionTypeCode, submissionTypeTerms } from '../controlled-vocab';
 
 const leaf = (ctdSection: string, fileName: string, md5: string, extra: Record<string, unknown> = {}) =>
   ({ ctdSection, fileName, href: `m${ctdSection.charAt(0)}/${ctdSection}/${fileName}`, md5, ...extra }) as any;
@@ -27,6 +28,13 @@ const SEQ_0000: FiledSequence = {
 };
 const desired = (rows: Array<[string, string, string]>) =>
   rows.map(([ctdSection, fileName, md5]) => ({ ctdSection, fileName, md5, title: fileName }));
+
+/** The FDA vocabulary, reached through the same resolver the packager uses —
+ *  a second, stricter copy here would refuse terms the backbone accepts. */
+const FDA_VOCAB = {
+  terms: submissionTypeTerms('fda')!,
+  accepts: (v: string) => resolveSubmissionTypeCode(v) !== null,
+};
 
 describe('readFiledSequences', () => {
   it('reads a well-formed history oldest-first', () => {
@@ -95,7 +103,7 @@ describe('planSequence', () => {
 
   it('a follow-up REPLACES what changed, keeps what is new as new, and OMITS what is byte-identical', () => {
     const plan = planSequence({
-      sequence: '0001', submissionType: 'amendment', filed: [SEQ_0000],
+      sequence: '0001', submissionType: 'Efficacy Supplement', filed: [SEQ_0000],
       desired: desired([
         ['2.5', 'clinical-overview.pdf', 'md5-co-v2'],   // changed → replace
         ['3.2.P.1', 'description.pdf', 'md5-desc-v1'],   // identical → omitted
@@ -115,7 +123,7 @@ describe('planSequence', () => {
 
   it('a leaf on file but absent from this assembly stays on file — absence is not withdrawal', () => {
     const plan = planSequence({
-      sequence: '0001', submissionType: 'amendment', filed: [SEQ_0000],
+      sequence: '0001', submissionType: 'Efficacy Supplement', filed: [SEQ_0000],
       desired: desired([['2.5', 'clinical-overview.pdf', 'md5-co-v2']]),
     });
     expect(plan.leaves.map((l) => l.fileName)).toEqual(['clinical-overview.pdf']);
@@ -124,10 +132,10 @@ describe('planSequence', () => {
   });
 
   it('REFUSES a follow-up when nothing has been transmitted: an assembled-but-unsent 0000 is not on file', () => {
-    expect(() => planSequence({ sequence: '0001', submissionType: 'amendment', filed: [], desired: desired([['2.5', 'a.pdf', 'm1']]) }))
+    expect(() => planSequence({ sequence: '0001', submissionType: 'Efficacy Supplement', filed: [], desired: desired([['2.5', 'a.pdf', 'm1']]) }))
       .toThrow(SequenceLifecycleRefusal);
     try {
-      planSequence({ sequence: '0001', submissionType: 'amendment', filed: [], desired: desired([['2.5', 'a.pdf', 'm1']]) });
+      planSequence({ sequence: '0001', submissionType: 'Efficacy Supplement', filed: [], desired: desired([['2.5', 'a.pdf', 'm1']]) });
     } catch (e) {
       expect((e as SequenceLifecycleRefusal).code).toBe('NO_PRIOR_SEQUENCE');
       expect((e as Error).message).toMatch(/File sequence 0000 first/);
@@ -141,7 +149,7 @@ describe('planSequence', () => {
     ];
     for (const [sequence, filed] of cases) {
       try {
-        planSequence({ sequence, submissionType: 'amendment', filed, desired: desired([['2.5', 'a.pdf', 'm1']]) });
+        planSequence({ sequence, submissionType: 'Efficacy Supplement', filed, desired: desired([['2.5', 'a.pdf', 'm1']]) });
         throw new Error('expected a refusal');
       } catch (e) {
         expect((e as SequenceLifecycleRefusal).code, sequence).toBe('SEQUENCE_ALREADY_FILED');
@@ -160,10 +168,66 @@ describe('planSequence', () => {
     }
   });
 
+  it('REFUSES a term the region has no code for, and says which terms it does — an unfilable type is not a 500 out of the packager', () => {
+    // 'amendment' is the ordinary English word for a follow-up filing and is
+    // NOT an fdast term. It used to pass every check here and throw deep in
+    // the FDA backbone builder, so the obvious value produced an unexplained
+    // failure with no way back to one that works.
+    try {
+      planSequence({
+        sequence: '0001', submissionType: 'amendment', filed: [SEQ_0000],
+        desired: desired([['2.5', 'a.pdf', 'm2']]),
+        submissionTypeVocabulary: FDA_VOCAB,
+      });
+      throw new Error('expected a refusal');
+    } catch (e) {
+      const r = e as SequenceLifecycleRefusal;
+      expect(r.code).toBe('SUBMISSION_TYPE_UNKNOWN');
+      expect(r.message).toContain('Efficacy Supplement');
+      expect(r.acceptedSubmissionTypes).toContain('Annual Report');
+    }
+  });
+
+  it('checks the vocabulary on 0000 too — a term the backbone cannot carry is unfilable whatever it diffs to', () => {
+    expect(() => planSequence({
+      sequence: '0000', submissionType: 'amendment', filed: [], desired: desired([['2.5', 'a.pdf', 'm1']]),
+      submissionTypeVocabulary: FDA_VOCAB,
+    })).toThrow(/not a submission type this region can file/);
+  });
+
+  it('accepts what the region accepts, and names its terms when it asks for one', () => {
+    // The refusal has to point at values that resolve, or it sends the operator
+    // back to guess again.
+    for (const ok of ['Efficacy Supplement', 'supplement', 'Annual Report', 'original']) {
+      expect(() => planSequence({
+        sequence: '0001', submissionType: ok, filed: [SEQ_0000], desired: desired([['2.5', 'a.pdf', 'm2']]),
+        submissionTypeVocabulary: FDA_VOCAB,
+      }), ok).not.toThrow();
+    }
+    try {
+      planSequence({ sequence: '0001', filed: [SEQ_0000], desired: desired([['2.5', 'a.pdf', 'm2']]), submissionTypeVocabulary: FDA_VOCAB });
+      throw new Error('expected a refusal');
+    } catch (e) {
+      const r = e as SequenceLifecycleRefusal;
+      expect(r.code).toBe('SUBMISSION_TYPE_REQUIRED');
+      expect(r.message).not.toMatch(/amendment/);
+      expect(r.message).toContain('Efficacy Supplement');
+    }
+  });
+
+  it('a region with no vocabulary takes the operator at their word — the list is not invented', () => {
+    // EMA, PMDA and Health Canada escape this value into the backbone as free
+    // text; refusing a term against an FDA list would be wrong for them.
+    expect(() => planSequence({
+      sequence: '0001', submissionType: 'Type II variation', filed: [SEQ_0000],
+      desired: desired([['2.5', 'a.pdf', 'm2']]), submissionTypeVocabulary: null,
+    })).not.toThrow();
+  });
+
   it('diffs against the FOLD, not the last sequence: a leaf untouched since 0000 is still compared to 0000', () => {
     const seq1: FiledSequence = { ...SEQ_0000, sequence: '0001', leaves: [leaf('2.5', 'clinical-overview.pdf', 'md5-co-v2')] };
     const plan = planSequence({
-      sequence: '0002', submissionType: 'amendment', filed: [SEQ_0000, seq1],
+      sequence: '0002', submissionType: 'Efficacy Supplement', filed: [SEQ_0000, seq1],
       desired: desired([['3.2.P.1', 'description.pdf', 'md5-desc-v2']]),
     });
     expect(plan.summary).toMatchObject({ replace: 1, new: 0 });
