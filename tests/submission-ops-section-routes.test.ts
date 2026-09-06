@@ -99,10 +99,13 @@ vi.mock('../server/services/ectd/package-leaf-bytes', () => ({ packageLeafBytes:
 
 import submissionOpsRouter from '../server/routes/submission-ops';
 
-function makeApp() {
+function makeApp(role = 'admin') {
   const app = express();
   app.use(express.json());
-  app.use((req, _res, next) => { (req as any).user = { id: 777, organizationId: 99 }; next(); });
+  app.use((req, _res, next) => { /* A role, because every write on this router is now role-gated. These harnesses
+       attached none and still passed, which is exactly what they failed to notice. */
+    (req as any).user = { id: 777, organizationId: 99, role };
+    (req as any).userRole = role; next(); });
   app.use('/api/submission-ops', submissionOpsRouter);
   return app;
 }
@@ -379,5 +382,58 @@ describe('DELETE /api/submission-ops/packages/:packageId/sections/:sectionId', (
     expect(res.status).toBe(200);
     expect(res.body.ledgerWriteFailed).toBe(true);
     expect(dbState.updates).toHaveLength(1); // the removal itself is not lost
+  });
+});
+
+/**
+ * This router owns the submission PACKAGE — create it, put documents in it, set
+ * the agency application number and applicant identity the regional Module 1
+ * backbone is built from, publish it, and assemble the bundle shipped to FDA
+ * ESG. Every mutating route was guarded by nothing but `getOrgId(req)`, which is
+ * tenant scoping, not authorization: a read-only `viewer` could do all of it.
+ *
+ * Gating the gateway's /transmit alone would have left the last door on a
+ * corridor with no others — a viewer still chose WHAT was sent and UNDER WHOSE
+ * application number, and only the final click was checked.
+ */
+describe('submission-ops — role gate on every write', () => {
+  const WRITES: Array<[string, string]> = [
+    ['post', '/api/submission-ops/packages'],
+    ['post', '/api/submission-ops/packages/5/sections'],
+    ['patch', '/api/submission-ops/packages/5/sections/11'],
+    ['delete', '/api/submission-ops/packages/5/sections/11'],
+    ['post', '/api/submission-ops/artifact-section-map'],
+    ['delete', '/api/submission-ops/artifact-section-map/3'],
+    ['post', '/api/submission-ops/packages/5/milestones'],
+    ['post', '/api/submission-ops/policies'],
+    ['put', '/api/submission-ops/policies/1'],
+    ['delete', '/api/submission-ops/policies/1'],
+    ['patch', '/api/submission-ops/blockers/1'],
+    ['post', '/api/submission-ops/automation/run'],
+    ['post', '/api/submission-ops/packages/5/publish'],
+    ['put', '/api/submission-ops/packages/5/regulatory-identifiers'],
+    ['post', '/api/submission-ops/packages/5/assemble'],
+  ];
+
+  it.each(WRITES)('%s %s is refused for a read-only viewer', async (method, url) => {
+    const res = await (request(makeApp('viewer')) as any)[method](url).send({});
+    expect(res.status, JSON.stringify(res.body)).toBe(403);
+  });
+
+  it.each(WRITES)('%s %s is not refused for a member', async (method, url) => {
+    const res = await (request(makeApp('member')) as any)[method](url).send({});
+    expect(res.status, JSON.stringify(res.body)).not.toBe(403);
+  });
+
+  /* Deliberately open: these three write nothing. Two are computations shaped as
+     POSTs, and the third is a reader's own receipt. Gating them would take a
+     read away from the role that is supposed to have it. */
+  it.each([
+    ['post', '/api/submission-ops/policies/resolve'],
+    ['post', '/api/submission-ops/packages/5/preflight'],
+    ['post', '/api/submission-ops/digests/1/read'],
+  ])('%s %s stays open to a viewer — it writes nothing', async (method, url) => {
+    const res = await (request(makeApp('viewer')) as any)[method](url).send({});
+    expect(res.status, JSON.stringify(res.body)).not.toBe(403);
   });
 });

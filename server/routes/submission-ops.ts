@@ -106,6 +106,24 @@ import {
 import { serverError } from '../lib/api-response';
 import { createScopedLogger } from '../utils/logger';
 
+/*
+ * Every mutating route in this file was gated by nothing but `getOrgId(req)`,
+ * which is tenant scoping, not authorization. This router owns the submission
+ * PACKAGE — create it, put documents in it, set the agency application number
+ * and applicant identity the regional Module 1 backbone is built from, publish
+ * it, and assemble the bundle that is shipped to FDA ESG. A read-only `viewer`
+ * could do all of it.
+ *
+ * Gating /transmit alone (which this file does not own) would have left the
+ * last door on a corridor with no others: a viewer still chose WHAT was sent
+ * and UNDER WHOSE application number, and only the final click was checked.
+ *
+ * Three POST routes are deliberately NOT gated because they write nothing:
+ * `/policies/resolve` and `/packages/:packageId/preflight` are computations
+ * shaped as POSTs, and `/digests/:digestId/read` is a reader's own receipt.
+ */
+import { requireEditorAccess } from '../middleware/orgMembership';
+
 const router = Router();
 
 const logger = createScopedLogger('submission-ops');
@@ -204,7 +222,7 @@ router.get('/packages', async (req: Request, res: Response) => {
   }
 });
 
-router.post('/packages', async (req: Request, res: Response) => {
+router.post('/packages', requireEditorAccess, async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
     const userId = getUserId(req);
@@ -408,7 +426,7 @@ async function lockedSection(client: LockClient, sectionDbId: number, packageDbI
   };
 }
 
-router.post('/packages/:packageId/sections', async (req: Request, res: Response) => {
+router.post('/packages/:packageId/sections', requireEditorAccess, async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
     const userId = getUserId(req);
@@ -453,7 +471,7 @@ router.post('/packages/:packageId/sections', async (req: Request, res: Response)
   }
 });
 
-router.patch('/packages/:packageId/sections/:sectionId', async (req: Request, res: Response) => {
+router.patch('/packages/:packageId/sections/:sectionId', requireEditorAccess, async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
     const userId = getUserId(req);
@@ -535,7 +553,7 @@ router.patch('/packages/:packageId/sections/:sectionId', async (req: Request, re
   }
 });
 
-router.delete('/packages/:packageId/sections/:sectionId', async (req: Request, res: Response) => {
+router.delete('/packages/:packageId/sections/:sectionId', requireEditorAccess, async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
     const userId = getUserId(req);
@@ -637,7 +655,7 @@ router.delete('/packages/:packageId/sections/:sectionId', async (req: Request, r
 // ARTIFACT-SECTION MAPPING
 // ============================================================
 
-router.post('/artifact-section-map', async (req: Request, res: Response) => {
+router.post('/artifact-section-map', requireEditorAccess, async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
     const actorUserId = getUserId(req);
@@ -703,7 +721,7 @@ const deleteArtifactSectionMapBody = z.object({
  * through the mapping row's own org; governed (reason recorded); a bundle
  * assembled with the mapping in place is cleared as stale.
  */
-router.delete('/artifact-section-map/:mappingId', async (req: Request, res: Response) => {
+router.delete('/artifact-section-map/:mappingId', requireEditorAccess, async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
     const userId = getUserId(req);
@@ -858,7 +876,7 @@ router.get('/packages/:packageId/milestones', async (req: Request, res: Response
   }
 });
 
-router.post('/packages/:packageId/milestones', async (req: Request, res: Response) => {
+router.post('/packages/:packageId/milestones', requireEditorAccess, async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
     const userId = getUserId(req);
@@ -937,7 +955,7 @@ router.get('/policies', async (req: Request, res: Response) => {
   }
 });
 
-router.post('/policies', async (req: Request, res: Response) => {
+router.post('/policies', requireEditorAccess, async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
     const userId = getUserId(req);
@@ -1000,7 +1018,7 @@ router.post('/policies', async (req: Request, res: Response) => {
   }
 });
 
-router.put('/policies/:policyId', async (req: Request, res: Response) => {
+router.put('/policies/:policyId', requireEditorAccess, async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
     // SECURITY: Whitelist allowed update fields to prevent field injection
@@ -1039,7 +1057,7 @@ router.put('/policies/:policyId', async (req: Request, res: Response) => {
   }
 });
 
-router.delete('/policies/:policyId', async (req: Request, res: Response) => {
+router.delete('/policies/:policyId', requireEditorAccess, async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
     const [deleted] = await db
@@ -1216,7 +1234,7 @@ router.get('/blockers', async (req: Request, res: Response) => {
   }
 });
 
-router.patch('/blockers/:blockerId', async (req: Request, res: Response) => {
+router.patch('/blockers/:blockerId', requireEditorAccess, async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
     const { status, nextAction, resolvedById } = req.body;
@@ -1418,7 +1436,7 @@ router.get('/hotspots', async (req: Request, res: Response) => {
 // AUTOMATION
 // ============================================================
 
-router.post('/automation/run', async (req: Request, res: Response) => {
+router.post('/automation/run', requireEditorAccess, async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
     const { projectId, packageDbId } = req.body;
@@ -1689,7 +1707,7 @@ router.get('/command-center', async (req: Request, res: Response) => {
  * 3. Requires explicit confirmation header
  * 4. Creates audit trail entry
  */
-router.post('/packages/:packageId/publish', async (req: Request, res: Response) => {
+router.post('/packages/:packageId/publish', requireEditorAccess, async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
     const userId = getUserId(req);
@@ -1960,7 +1978,7 @@ const regulatoryIdentifiersBody = z.object({
   reason: z.string().min(8, 'reason must be at least 8 characters'),
 });
 
-router.put('/packages/:packageId/regulatory-identifiers', async (req: Request, res: Response) => {
+router.put('/packages/:packageId/regulatory-identifiers', requireEditorAccess, async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
     const userId = getUserId(req);
@@ -2039,7 +2057,7 @@ router.put('/packages/:packageId/regulatory-identifiers', async (req: Request, r
   }
 });
 
-router.post('/packages/:packageId/assemble', async (req: Request, res: Response) => {
+router.post('/packages/:packageId/assemble', requireEditorAccess, async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
     const userId = getUserId(req);
