@@ -72,6 +72,7 @@ const { dbState } = vi.hoisted(() => ({
   dbState: {
     pkg: null as any,
     sections: [] as any[],
+    sectionOrderBy: null as any,   // the ordering the sections query asked for
     mappedByCall: [] as any[][], // FIFO list of artifact rows per section query
     updateSet: null as any,
   },
@@ -96,7 +97,8 @@ function makeDb() {
     },
     innerJoin() { return chain; },
     where() { return chain; },
-    orderBy() {
+    orderBy(...order: any[]) {
+      if (mode !== 'mapped') dbState.sectionOrderBy = order;
       if (mode === 'mapped') {
         // An entry may be a function: a concurrent change that lands DURING
         // the content read (it mutates dbState and returns the rows).
@@ -143,6 +145,8 @@ import submissionOpsRouter from '../server/routes/submission-ops';
 import { ValidationError as PackagerValidationError } from '../server/services/submission-gateways/types';
 import { recordGovernedAction } from '../server/routes/c2c/actions';
 import { fingerprintPackageContent, sha256Hex } from '../server/services/ectd/package-content-fingerprint';
+import { asc } from 'drizzle-orm';
+import { c2cPackageSections } from '../shared/schema';
 
 function makeApp() {
   const app = express();
@@ -197,6 +201,7 @@ beforeEach(() => {
   connectFn.mockClear();
   dbState.pkg = null;
   dbState.sections = [];
+  dbState.sectionOrderBy = null;
   dbState.mappedByCall = [];
   dbState.updateSet = null;
   (dbState as any)._pkgResolved = false;
@@ -360,6 +365,18 @@ describe('POST /api/submission-ops/packages/:packageId/assemble', () => {
         { sectionDbId: 14, sectionKey: '3.2.P.1', sectionLabel: 'Description and Composition', sortOrder: 0, artifactDbId: null, title: null, version: null, ctdSection: null, contentSha256: null },
       ]),
     );
+  });
+
+  it('walks the sections in a DETERMINISTIC order: the row id breaks a tie on sortOrder, so identical content cannot assemble to different bytes', async () => {
+    // Without the tiebreaker two sections sharing a sortOrder come back in
+    // whatever order Postgres chooses, and this loop decides both the leaf
+    // order in the backbone and which of two colliding leaf names is suffixed.
+    dbState.pkg = lockedPkg();
+    dbState.sections = [{ id: 13, sectionKey: '2.5', sectionLabel: 'Clinical Overview', sortOrder: 0 }];
+    dbState.mappedByCall = [[art('co', null)]];
+    const res = await post();
+    expect(res.status).toBe(200);
+    expect(dbState.sectionOrderBy).toEqual([asc(c2cPackageSections.sortOrder), asc(c2cPackageSections.id)]);
   });
 
   it('records the content fingerprint for a DEVICE format too (eSTAR), where the leaf model differs', async () => {
