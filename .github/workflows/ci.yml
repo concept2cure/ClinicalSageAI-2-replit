@@ -778,15 +778,25 @@ jobs:
           TEST_DATABASE_URL: postgresql://postgres@localhost:5432/concept2cure-ri_test
 
   coverage:
-    name: Coverage (advisory)
+    name: Coverage (ratchet)
     runs-on: ubuntu-latest
     needs: lint
-    # Closes the GA testing finding "never measures coverage". Runs the vitest
-    # suite with the v8 coverage provider against a real Postgres so the
-    # DB-backed paths are counted, and reports the numbers every run. Advisory
-    # for now (thresholds overridden to 0 in test:coverage so it never blocks) —
-    # the 70/60/70/70 target in vitest.config.ts is the goal; once the suite
-    # reaches it, drop the threshold overrides in test:coverage to enforce.
+    # Runs the vitest suite with the v8 coverage provider against a real
+    # Postgres so the DB-backed paths are counted, then ENFORCES that coverage
+    # has not gone down.
+    #
+    # It used to only measure. The run passed --coverage.thresholds.*=0 AND
+    # carried continue-on-error, so the job could not fail twice over; the GA
+    # readiness report listed it as outstanding with the note that it
+    # "measures, it never blocks". That is a gate that has only ever been seen
+    # to pass.
+    #
+    # Enforcing the 70/60/70/70 target in vitest.config.ts today would fail
+    # every build until thousands of tests exist, so it would be reverted and
+    # the job would go back to blocking nothing. Instead the ratchet pins what
+    # the suite actually achieves and refuses a DROP — enforceable immediately,
+    # and coverage can only rise toward the target. Same measure-freeze-improve
+    # pattern as the eslint, tenant-resolver and typecheck baselines.
     services:
       postgres:
         image: pgvector/pgvector:pg15
@@ -832,18 +842,24 @@ jobs:
         run: npm install --no-save @vitest/coverage-v8@4.1.7
 
       - name: Measure coverage
-        # Inlined (not a package.json script) so package.json stays unchanged —
-        # this is an advisory CI-only measurement. Thresholds overridden to 0 so
-        # it reports actual coverage every run without ever blocking; the
-        # 70/60/70/70 target in vitest.config.ts is the goal to enforce later.
-        # continue-on-error: this job MEASURES coverage; it must never fail the
-        # PR (test pass/fail is owned by the Test job, not this one).
+        # continue-on-error STAYS on this step, deliberately: test pass/fail is
+        # owned by the Test job, and a flaky test must not be reported as a
+        # failure twice. vitest's own thresholds stay at 0 for the same reason —
+        # the enforcement lives in the ratchet step below, which is the thing
+        # this job is allowed to fail on. json-summary is what the ratchet reads.
         continue-on-error: true
-        run: NODE_OPTIONS="--max-old-space-size=4096" npx vitest run --config vitest.config.ts --coverage --coverage.thresholds.lines=0 --coverage.thresholds.functions=0 --coverage.thresholds.branches=0 --coverage.thresholds.statements=0
+        run: NODE_OPTIONS="--max-old-space-size=4096" npx vitest run --config vitest.config.ts --coverage --coverage.reporter=json-summary --coverage.reporter=text-summary --coverage.thresholds.lines=0 --coverage.thresholds.functions=0 --coverage.thresholds.branches=0 --coverage.thresholds.statements=0
         env:
           CI: true
           DATABASE_URL: postgresql://postgres@localhost:5432/concept2cure-ri_test
           TEST_DATABASE_URL: postgresql://postgres@localhost:5432/concept2cure-ri_test
+
+      - name: Coverage may not go down
+        # NO continue-on-error — this is the gate. Fails when any metric falls
+        # more than the ratchet's tolerance below scripts/ci/coverage-baseline.json,
+        # and fails when no summary was produced at all (coverage unverified is
+        # not coverage passed).
+        run: npm run ci:coverage-ratchet
 
       - name: Upload coverage report
         if: always()
