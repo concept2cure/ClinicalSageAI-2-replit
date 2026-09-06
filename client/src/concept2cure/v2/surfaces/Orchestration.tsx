@@ -1001,7 +1001,7 @@ export function Orchestration({ onAsk, onNav }: SurfaceViewProps) {
 
       {view === 'runs' && (
         runsState.loading && runs.length === 0 ? (
-          <div className="scaf-note" style={{ padding: '18px 10px' }}>Loading workflow runs…</div>
+          <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>Loading workflow runs…</div>
         ) : runsState.error && runs.length === 0 ? (
           <EmptyState
             tone="error"
@@ -1103,7 +1103,7 @@ export function Orchestration({ onAsk, onNav }: SurfaceViewProps) {
 
       {view === 'approvals' && (
         cpsState.loading && cps.length === 0 ? (
-          <div className="scaf-note" style={{ padding: '18px 10px' }}>Loading approval gates…</div>
+          <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>Loading approval gates…</div>
         ) : cpsState.error && cps.length === 0 ? (
           <EmptyState
             tone="error"
@@ -1230,7 +1230,7 @@ export function Orchestration({ onAsk, onNav }: SurfaceViewProps) {
 
       {view === 'readiness' && (
         rdRead === 'loading' ? (
-          <div className="scaf-note" style={{ padding: '18px 10px' }}>Loading readiness…</div>
+          <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>Loading readiness…</div>
         ) : rdState.error ? (
           /* UI standards §8: a failure always offers a way out. Each of these
              three hints ENDED with "sign in and retry" while offering nothing to

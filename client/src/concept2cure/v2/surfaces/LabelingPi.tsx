@@ -523,7 +523,7 @@ export function LabelingPI({ onAsk }: SurfaceViewProps) {
       </div>
 
       {loading ? (
-        <div className="scaf-note" style={{ padding: '18px 10px' }}>Loading the label worklist…</div>
+        <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>Loading the label worklist…</div>
       ) : error ? (
         <ErrorState
           title="Couldn't load the label"
@@ -544,7 +544,7 @@ export function LabelingPI({ onAsk }: SurfaceViewProps) {
            and readiness rollup from /api/labeling-smpc. */
         <div className="lp-smpc">
           {smpc.loading ? (
-            <div className="scaf-note" style={{ padding: '18px 10px' }}>Loading the EU SmPC…</div>
+            <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>Loading the EU SmPC…</div>
           ) : smpc.error ? (
             <ErrorState title="Couldn't load the EU SmPC" message={smpc.error} retry={() => setReload((r) => r + 1)} />
           ) : !smpc.data ? (

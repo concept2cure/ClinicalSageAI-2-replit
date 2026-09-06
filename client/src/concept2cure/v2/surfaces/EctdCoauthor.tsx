@@ -678,7 +678,7 @@ export function EctdCoauthor({ liveDrive }: OwnedSurfaceViewProps) {
         <div className="ec-tree-head"><b>eCTD backbone</b><span className="mono">M1--5</span></div>
         <div className="ec-tree-search">{I.search}<input aria-label="Find a section" placeholder="Find section..." value={treeQuery} onChange={(e) => setTreeQuery(e.target.value)} /></div>
         {loading ? (
-          <div className="ec-empty">Loading eCTD documents…</div>
+          <div role="status" className="ec-empty">Loading eCTD documents…</div>
         ) : error ? (
           <div className="ec-empty sp-tone-warn">Couldn't load eCTD documents.</div>
         ) : docs.length === 0 ? (
@@ -881,7 +881,7 @@ export function EctdCoauthor({ liveDrive }: OwnedSurfaceViewProps) {
           <div className="ec-art-doc">
             <div className="ec-doc-inner">
               {loading ? (
-                <div className="ec-empty">Loading eCTD documents…</div>
+                <div role="status" className="ec-empty">Loading eCTD documents…</div>
               ) : error ? (
                 <EmptyState
                   tone="error"
@@ -922,7 +922,7 @@ export function EctdCoauthor({ liveDrive }: OwnedSurfaceViewProps) {
                   <div
                     style={{
                       minHeight: 420,
-                      border: '1px solid var(--c2c-line,#e4e7ec)',
+                      border: '1px solid var(--border)',
                       borderRadius: 10,
                       overflow: 'hidden',
                       display: 'flex',

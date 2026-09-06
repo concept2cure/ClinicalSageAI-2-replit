@@ -604,7 +604,7 @@ export function PrecedentEngine({ onAsk }: SurfaceViewProps) {
               </button>
             </span>
           ))}
-          {savedNote && <span style={{ fontSize: 12, color: 'var(--c2c-dim,#667085)' }}>{savedNote}</span>}
+          {savedNote && <span style={{ fontSize: 12, color: 'var(--text-400)' }}>{savedNote}</span>}
         </div>
       )}
     </div>

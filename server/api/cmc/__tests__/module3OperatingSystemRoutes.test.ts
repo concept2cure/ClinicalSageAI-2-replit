@@ -24,8 +24,12 @@ vi.mock('../../../routes/c2c/actions', () => ({
 // Canonical governed-state evaluation is a heavyweight service call the approve
 // handler makes before the write transaction; stub it so the test drives only
 // the SQL/audit sequence (the handler already degrades gracefully if it fails).
+let fabricThrows = false;
 vi.mock('../../../services/governed-ana-execution.js', () => ({
-  buildCanonicalGovernedState: async () => ({ ok: true }),
+  buildCanonicalGovernedState: async () => {
+    if (fabricThrows) throw new Error('fabric unavailable');
+    return { ok: true };
+  },
 }));
 
 import router from '../module3OperatingSystemRoutes';
@@ -56,7 +60,9 @@ describe('module3OperatingSystemRoutes', () => {
   it('returns readiness snapshot from canonical section/contradiction data', async () => {
     mockQuery
       .mockResolvedValueOnce({ rows: [{ approval_state: 'approved', stale: false }, { approval_state: 'draft', stale: true }] })
-      .mockResolvedValueOnce({ rows: [{ severity: 'critical', status: 'open' }, { severity: 'high', status: 'resolved' }] });
+      .mockResolvedValueOnce({ rows: [{ severity: 'critical', status: 'open' }, { severity: 'high', status: 'resolved' }] })
+      // Provenance coverage: sections with no cmc_section_lineage row.
+      .mockResolvedValueOnce({ rows: [{ n: 0 }] });
 
     const res = await request(app).get('/api/cmc/module3-os/readiness/proj-1');
 
@@ -173,7 +179,8 @@ describe('module3OperatingSystemRoutes', () => {
   it('blocks final export when not all sections approved and critical contradictions open', async () => {
     mockQuery
       .mockResolvedValueOnce({ rows: [{ approval_state: 'approved' }, { approval_state: 'draft' }] })
-      .mockResolvedValueOnce({ rows: [{ severity: 'critical', status: 'open' }] });
+      .mockResolvedValueOnce({ rows: [{ severity: 'critical', status: 'open' }] })
+      .mockResolvedValueOnce({ rows: [{ n: 0 }] });
 
     const res = await request(app).post('/api/cmc/module3-os/guard/final-export/proj-1').send({});
     expect(res.status).toBe(409);
@@ -187,11 +194,63 @@ describe('module3OperatingSystemRoutes', () => {
     // silently, shipping an approval that no longer matched its source.
     mockQuery
       .mockResolvedValueOnce({ rows: [{ approval_state: 'approved', stale: false }, { approval_state: 'approved', stale: true }] })
-      .mockResolvedValueOnce({ rows: [] });
+      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({ rows: [{ n: 0 }] });
 
     const res = await request(app).post('/api/cmc/module3-os/guard/final-export/proj-1').send({});
     expect(res.status).toBe(409);
     expect(res.body.error).toContain('stale');
     expect(res.body.data.staleSections).toBe(1);
+  });
+
+  it('blocks final export when a section has no recorded source lineage', async () => {
+    // Everything approved, nothing stale, no contradictions — the only defect is
+    // that one section has no cmc_section_lineage row, so its content cannot be
+    // traced to a source. `hasProvenance`/`provenanceComplete` used to be passed
+    // to the governed fabric as the literal `true`, which disabled a REQUIRED
+    // export check ("audit trail required for export").
+    mockQuery
+      .mockResolvedValueOnce({ rows: [{ approval_state: 'approved', stale: false }, { approval_state: 'approved', stale: false }] })
+      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({ rows: [{ n: 1 }] });
+
+    const res = await request(app).post('/api/cmc/module3-os/guard/final-export/proj-1').send({});
+    expect(res.status).toBe(409);
+    expect(res.body.error).toMatch(/source lineage|audit trail/i);
+    expect(res.body.data.sectionsWithoutProvenance).toBe(1);
+  });
+
+  it('readiness is not export-ready when a section has no recorded source lineage', async () => {
+    mockQuery
+      .mockResolvedValueOnce({ rows: [{ approval_state: 'approved', stale: false }] })
+      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({ rows: [{ n: 1 }] });
+
+    const res = await request(app).get('/api/cmc/module3-os/readiness/proj-1');
+    expect(res.status).toBe(200);
+    expect(res.body.data.sectionsWithoutProvenance).toBe(1);
+    expect(res.body.data.exportReady).toBe(false);
+  });
+
+  it('readiness does not report export-ready when the governed state could not be evaluated', async () => {
+    // A fully approved, fully traced project — the ONLY thing missing is a
+    // verdict from the governed-decision fabric. The read used to compute
+    // exportReady from approvals alone and stamp the degraded state beside it,
+    // so the surface showed "export ready" in exactly the state where the gate
+    // fails closed and refuses.
+    fabricThrows = true;
+    try {
+      mockQuery
+        .mockResolvedValueOnce({ rows: [{ approval_state: 'approved', stale: false }] })
+        .mockResolvedValueOnce({ rows: [] })
+        .mockResolvedValueOnce({ rows: [{ n: 0 }] });
+
+      const res = await request(app).get('/api/cmc/module3-os/readiness/proj-1');
+      expect(res.status).toBe(200);
+      expect(res.body.data.governedStateEvaluated).toBe(false);
+      expect(res.body.data.exportReady).toBe(false);
+    } finally {
+      fabricThrows = false;
+    }
   });
 });

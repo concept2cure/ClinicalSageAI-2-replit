@@ -12,7 +12,7 @@ import { regionCodeForPrimaryRegion, resolveSubmissionSpine } from '../../servic
 import { detectContradictions, deriveImpactTasks } from '../../services/cmc-impact-contradiction-engine';
 import { syncContradictionTasks } from '../../services/cmc/contradiction-tasks';
 import { buildCanonicalGovernedState } from '../../services/governed-ana-execution.js';
-import { evaluateFinalExportGate } from '../../services/cmc/final-export-gate';
+import { evaluateFinalExportGate, evaluateModule3GovernedState } from '../../services/cmc/final-export-gate';
 import { placeModule3IntoSubmission } from '../../services/cmc/place-module3-into-submission';
 import { bridgeCompileToArtifact } from '../../services/module3-convergence-service';
 import { verifyReauth, recordGovernedAction } from '../../routes/c2c/actions';
@@ -570,70 +570,41 @@ router.get('/readiness/:projectId', async (req, res) => {
   try {
     const orgId = getOrgId(req);
     const projectIdRaw = req.params.projectId; const projectId = Array.isArray(projectIdRaw) ? projectIdRaw[0] : (projectIdRaw ?? "");
-    const pool = getPool();
-    const [sections, contradictions] = await Promise.all([
-      pool.query(
-        `SELECT approval_state, stale
-         FROM cmc_module3_sections
-         WHERE organization_id = $1 AND project_id = $2`,
-        [orgId, projectId]
-      ),
-      pool.query(
-        `SELECT severity, status
-         FROM cmc_contradictions
-         WHERE organization_id = $1 AND project_id = $2`,
-        [orgId, projectId]
-      ),
-    ]);
 
-    const totalSections = sections.rows.length;
-    const approvedSections = sections.rows.filter((r: any) => r.approval_state === 'approved').length;
-    const staleSections = sections.rows.filter((r: any) => Boolean(r.stale)).length;
-    const openCriticalContradictions = contradictions.rows.filter(
-      (r: any) => r.severity === 'critical' && r.status !== 'resolved'
-    ).length;
+    // The same evaluation the final-export gate runs, so this read cannot be
+    // more optimistic than the gate it previews. It used to compute
+    // `exportReady` from approvals alone and stamp a degraded governed state
+    // beside it — reporting "export ready" in the exact state where the gate
+    // fails closed and refuses.
+    const { state } = await evaluateModule3GovernedState({
+      orgId,
+      projectId,
+      actorId: (req as any).user?.id || 'system',
+    });
 
-    const exportReady = totalSections > 0 && approvedSections === totalSections && staleSections === 0 && openCriticalContradictions === 0;
-
-    let canonicalGovernedState: Record<string, any> | null = null;
-    try {
-      const unresolvedContradictions = contradictions.rows.filter((r: any) => r.status !== 'resolved').length;
-      canonicalGovernedState = await buildCanonicalGovernedState({
-        context: {
-          organizationId: String(orgId),
-          projectId: String(projectId),
-          actorId: (req as any).user?.id || 'system',
-          intendedAction: 'export',
-          documentType: 'cmc_module3',
-          ctdSection: '3',
-        },
-        documentState: {
-          hasContent: totalSections > 0,
-          hasEvidence: totalSections > 0,
-          hasBeenReviewed: approvedSections > 0,
-          hasApproval: exportReady,
-          hasPlacement: true,
-          placementValid: true,
-          hasProvenance: true,
-          unresolvedContradictionCount: unresolvedContradictions,
-          criticalContradictionCount: openCriticalContradictions,
-          isStale: staleSections > 0,
-          completenessScore: totalSections > 0 ? approvedSections / totalSections : 0,
-        },
-      });
-    } catch {
-      canonicalGovernedState = { error: 'Canonical governed-state evaluation failed', degraded: true };
-    }
+    const exportReady =
+      state.totalSections > 0 &&
+      state.approvedSections === state.totalSections &&
+      state.staleSections === 0 &&
+      state.openCriticalContradictions === 0 &&
+      state.sectionsWithoutProvenance === 0 &&
+      state.governedStateEvaluated &&
+      !state.fabricBlocks &&
+      !state.governedDecisionsBlock;
 
     return res.json({
       success: true,
       data: {
-        totalSections,
-        approvedSections,
-        staleSections,
-        openCriticalContradictions,
+        totalSections: state.totalSections,
+        approvedSections: state.approvedSections,
+        staleSections: state.staleSections,
+        openCriticalContradictions: state.openCriticalContradictions,
+        sectionsWithoutProvenance: state.sectionsWithoutProvenance,
+        // False means the governed-decision fabric did not return a verdict —
+        // NOT that it looked and cleared the project.
+        governedStateEvaluated: state.governedStateEvaluated,
         exportReady,
-        canonicalGovernedState,
+        canonicalGovernedState: state.canonicalGovernedState,
       },
     });
   } catch (error) {

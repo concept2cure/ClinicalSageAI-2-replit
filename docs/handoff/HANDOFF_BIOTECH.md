@@ -458,6 +458,214 @@ Still red on trunk and NOT this stream's: the ESLint warning ratchet stands 14
 over its 6637 baseline (unused-vars +6, max-lines +5, complexity +2) from other
 streams; this batch and the eleventh are net-neutral against it.
 
+### Thirteenth audit — the CMC Module 3 export gate and its readiness read (2026-09-05)
+
+- The final-export gate and `GET /readiness/:projectId` each built their own
+  `documentState` for the governed-decision fabric, and both passed the literals
+  `hasProvenance: true` / `provenanceComplete: true`. Provenance completeness is
+  a REQUIRED, blocking export check ("audit trail required for export"), so
+  asserting it disabled the control: a section with no `cmc_section_lineage` row
+  — content with no traceable source — cleared it. Now derived from the lineage
+  rows the compile path writes with every section; a gap refuses the export and
+  names the count.
+- One shared evaluation (`evaluateModule3GovernedState`) for both callers, so
+  the readiness read cannot out-run the gate it previews. It used to compute
+  `exportReady` from approvals alone and stamp a degraded governed state beside
+  it — "export ready", with Place into submission revealed, in the exact state
+  where the gate fails closed. The read now carries `governedStateEvaluated`,
+  and the surface states both reasons alongside the counts it already listed.
+- `hasPlacement` / `placementValid` stay `true` and say why: the gate runs
+  BEFORE placement and is what authorizes it.
+
+Checked and NOT changed: `aiGenerated: false` is correct for this table — the
+AI narrative refinement runs in the orchestrator's `m3.refine` step and does not
+write `cmc_module3_sections`; the placement path's own gate call, tenant checks,
+lifecycle `replace` derivation and skip reasons; `canFinalizeExport` (now run
+over the real contradiction rows rather than a reconstructed count).
+
+Open, not changed: `server/services/cmc/readiness.ts` exports a `readinessScore`
+that returns 100 for a project with nothing assessed; it is unreferenced (and
+sits in the unreferenced-modules baseline), so it was left alone rather than
+given a caller.
+
+### Fourteenth — the IND filing paths and the Module 1 transmittal pair (2026-09-05)
+
+Verified first, by running the real code: **the eSTAR PDF works end to end.**
+`fillEstarSubmission` against the vendored official nIVD eSTAR produces a
+5,285,132-byte PDF with all 20 mapped administrative fields written, no
+blockers, `templateKind: 'dynamic-xfa'`; reading the values back out of the
+produced file returns 20 of 20 at their real SOM paths. The original FDA bytes
+are preserved byte-for-byte with an ENCRYPTED incremental update appended (the
+template carries /Encrypt, and fill-official-pdf derives the security key and
+encrypts the object it writes). Reachable for a paying client: Submission Center
+→ `device-510k` → K510/IVD/PMA surface → OfficialEstarPanel → `POST
+/api/510k/estar/official`, entitlement-gated and tenant-scoped.
+
+The pharma equivalent also works: FDA 1571, 1572, 3674 and 356h all fill from
+their vendored official templates with `usedOfficialTemplate: true` (1571 and
+3674 are pure dynamic XFA and fill through the datasets packet).
+
+The gap found and fixed: **nothing placed the Module 1 transmittal pair.**
+`ind-sequence-validation` requires Form 1571 at m1.1 and a cover letter at m1.2
+on every post-original filing type. A filed 312.32 safety report carried m1.12.4
+alone; a filed 312.33 annual report carried m1.13 alone; an amendment got a
+cover letter from the planner and never a 1571. Every such sequence was invalid
+against the platform's own required-placement set the moment it was created, so
+the dispatch gate refused a sequence the product had reported as filed. The pair
+is now placed once, in `ind-lifecycle-persistence` (the module all four filing
+paths go through), matched on documentType so a different m1.2 document cannot
+stand in and the planner's own cover letter is not duplicated. A filing also
+returns `leavesAwaitingDocument` — the required placements created with no bytes
+behind them yet.
+
+That follow-on is now DONE: a filing that names a `sponsorId` renders the 1571
+from the sponsor registry + the submission record (`assembleFormMetadata` →
+`generateIndForm`) and attaches the bytes at m1.1 through the same
+`rendered_leaf_files` path the safety-report PDF uses. It fails closed — no
+sponsorId, an unreadable record, a fall-back off the official template, or a
+missing required field all leave the leaf unsourced — and `form1571.reason` on
+the filing response says which, naming the missing fields. `persistAnnualReport`
+and `persistAmendmentPlan` now take the same per-section source map as the other
+persisters.
+
+Known limit: the submission row holds product name and title but not indication,
+IND type or study phase, so those must be supplied in the request's `form1571`
+block until a project lookup provides them — the refusal names them, so a caller
+is never left guessing.
+
+Also noted, not changed: `concept2cure_artifacts` — where `POST
+/api/ind-forms/:formId/artifact` persists a governed form — is not one of the
+five tables `ectd/leaf-source-resolver` reads, so a form saved as a governed
+artifact cannot currently become a leaf by that route either.
+
+### Fifteenth — the IND 30-day clock (21 CFR 312.40) (2026-09-05)
+
+The IND lifecycle surface computed the 312.40(b) 30-day clock from
+`regulatory_programs.target_submission_date` — the sponsor's PLAN — and passed
+it as `receiptDate`. A target more than 30 days past produced status
+`safe_to_proceed`, a good-tone "Safe to proceed" chip, and the clock's own
+sentence as the card's primary line: "clinical investigations may proceed
+(21 CFR 312.40(b))" — for an IND FDA may never have received. That sentence
+authorises dosing the first human subject. The AnA context published
+`safeToProceed: true` with the same rationale.
+
+Fixed: the clock now carries its basis. A projection reads "Projected from
+target date", says FDA receipt has not been recorded so the period has not
+started, labels the day count as projected, and publishes
+`basis: 'projection-from-target-submission-date'` with `safeToProceed: null`.
+The receipt-backed branches stay live for a future recorded receipt date.
+
+DECISION recorded, not implemented: `submission_transmittals.ack_received_at` is
+not wired to the clock. The stored acknowledgement is not typed — an AS2 MDN is
+a transport receipt, while FDA's 312.40 receipt is the Center's ACK1 — so
+treating it as the regulatory receipt would assert a date the evidence does not
+establish, and a wrong start date moves the day a sponsor may dose. Wiring it
+needs the ESG ack chain to record WHICH acknowledgement arrived.
+
+Verified and unchanged: the server-side clock (`ind-regulatory-clock.ts`) is
+correct for a real receipt date and refuses without one; `ind-dashboard` reports
+`clock: null` / `safeToProceed: null` honestly when no input is supplied.
+
+Gap noted, not closed: nothing in the schema persists an FDA receipt date or the
+clinical-hold event timeline, so the clock has no live input anywhere — the
+calculator is right and unfed.
+
+### Sixteenth — pharmacovigilance: an unassessed case is not a non-reportable one (2026-09-05)
+
+The SAE worklist read `adverse_events.seriousness_criteria` and returned `[]`
+whether the column recorded "no criterion met" or held nothing at all.
+Downstream spoke the first meaning over the second: the queue chip read
+"Non-serious" for a case never assessed — the chip that takes a case off the
+expedited path — and the 312.32(c) clock reported "No expedited reporting clock
+— not serious, not unexpected (listed), no suspected causality" over a case with
+none of those three facts recorded.
+
+The determination logic is UNTOUCHED (the work order's PV-engine boundary): an
+unassessed case still yields category 'none' with no due date, asserted in the
+tests. What changed is what the platform claims to know — the clock returns
+`unassessedInputs` and says which inputs were never assessed plus "This is NOT a
+determination that the case is non-reportable"; a recorded-and-negative input
+still reads as the finding it is; the assembler distinguishes NULL from a
+recorded empty list and carries `seriousnessAssessed`; the queue chip has three
+states. The PGlite helper could only write a recorded empty list, so the
+unrecorded case was unreachable from the suite.
+
+### Fifteenth-b — Module 3 stability readability (2026-09-05)
+
+`readRecordedStabilityResults` returned `[]` for a recorded-results column whose
+JSON did not parse — the value a study with no pull points produces — so a
+corrupt payload became "no stability data" in §3.2.S.7 / §3.2.P.8 and in the
+recorded shelf-life fit. It now reports `{ points, unreadable }`; the conclusion
+names unread payloads in every branch, the signal cannot reach 'pass' while one
+is unreadable, and the shelf-life fit refuses with its own reason.
+
+### Seventeenth — the RIM renewal schedule's coverage (2026-09-06)
+
+`Registrations` → Renewals & variations listed the registrations carrying a
+renewal-due date and dropped the rest silently, so a grid where one of three is
+dated read as a complete renewal plan. The tab now names the count it cannot
+place, and the surface context publishes `registrationsWithRenewalDate` /
+`registrationsWithoutRenewalDate` beside `soonestRenewal`, with the summary
+qualifying the soonest as "of the N with a recorded renewal date" and stating
+that what lapses first is not established while any registration lacks one.
+
+Verified and unchanged on that surface: the grid's failed-read vs empty-read
+distinction, the per-row lazy dossier read, and the data-standards chips'
+shipped / not_integrated states.
+
+### Eighteenth — the agency-correspondence loop (2026-09-06)
+
+`buildCorrespondence` (cmc-module3-board) reads open Module 3 agency questions
+with `limit 50`, and the overdue-IR KPI was the overdue count OF THAT PAGE —
+rendered on the CMC surface as "You have N information requests overdue". An org
+with more than fifty open Module 3 questions was told it had fewer overdue than
+it did, and the cited-section list was capped with it. The count now comes from
+a COUNT over the same predicates; `meta` carries `correspondenceTotalOpen`,
+`correspondenceOverdueTotal` and `correspondenceTruncated`. A totals row that
+does not come back falls back to the page rather than zeroing the KPI. The board
+route had no test; it has one now.
+
+Verified and unchanged in that loop: `cmc-agency-questions.routes` (org from the
+verified JWT only, org predicate on every UPDATE, cross-tenant row answers as
+absent, no DELETE by design); the board's `provisioned:false` fail-closed, which
+lets the surface tell "no backend here" from "no open questions".
+
+Open, not changed: `provisioned:false` is returned for ANY exception, so a
+transient database error reads as "correspondence unprovisioned" and the KPI
+silently switches to the legacy per-submission `ir` sum — a different metric
+under the same label. Splitting unreadable from unprovisioned there needs the
+same treatment `getRun` got in the twelfth batch.
+
+### Nineteenth — closing that: a failed read is not "none overdue" (2026-09-06)
+
+The item left open above, closed in the file it was found in. All four board
+read blocks answered any exception with `provisioned:false`, and the KPI read
+that as "this environment has no question store" and fell back to the legacy
+per-submission `ir` sum. With `reg_questions` unreadable the per-submission
+reads fail too, their counts degrade to `null`, and the sum is zero — so a
+failed read rendered as a confident **"0 information requests overdue"**.
+
+`isUnprovisioned()` distinguishes Postgres `42P01` (undefined_table — genuinely
+no store) from a read that did not complete. Each block returns `unreadable`
+alongside `provisioned`; `meta` carries `correspondenceUnreadable`,
+`portfolioUnreadable` and `sectionsUnreadable`; `kpis.irOverdue` is
+`number | null`, null when either read failed. The legacy fallback survives only
+where the table is truly absent, which is the case it was written for.
+
+On the surface, an unknown count is an em dash labelled "count not established,
+the question store could not be read" — no deep-link (a door must open
+something), no urgent tone, no reassurance — and the answer lead says the figure
+is not established and is to be treated as unknown rather than as none.
+
+Revert-proven both sides: forcing `isUnprovisioned` to `true` fails "publishes
+no overdue count when the question store cannot be read"; forcing `irUnknown`
+to `false` fails "an unestablished count is shown as unknown, never as zero".
+
+Still true of the rest of the file: the same `provisioned/unreadable` split now
+exists for the spine, legacy portfolio and section reads, but only the
+correspondence one is consumed by a KPI. The three new `meta` booleans are
+published for surfaces that need them and are not yet read anywhere else.
+
 ### Note for the concurrent device stream
 
 On 2026-09-04, at JM's direct instruction to complete the biotech/pharma workflow
@@ -705,6 +913,13 @@ If neither has happened: report the blockage, name what is needed, and stop.
 | 2026-09-05 | A | Tenth audit — Part 11 sequence chain | Step-bound, single-use, content-bound sequence signatures; atomic chained audit on freeze/dispatch/transmit; no re-send; SoD owner for sequences — proven in the NDA golden journey | §1 above |
 | 2026-09-05 | A | Eleventh audit — Part 11 UX on transmit + sign dialogs | Transmit writes a real electronic signature (declared meaning, printed name, verified factors, bundle-digest binding) in the ledger transaction; meaning required on the route and the AnA path; attribution on the log; refused credentials leave the field — revert-proven | §1 above |
 | 2026-09-05 | A | Twelfth audit — submission-package orchestrator | Resumed runs face the same §11.70 sign gate; a skipped gate is `partial`, not `complete`; a failed run/audit read is not a missing run; regenerate persists what it computed; unrecorded sample size is not n=0 — revert-proven | §1 above |
+| 2026-09-05 | A | Thirteenth audit — CMC Module 3 export gate | Provenance derived from section lineage instead of asserted, so a required blocking check works; one shared governed-state evaluation, so readiness cannot out-run the gate; unevaluated fabric is not clearance — revert-proven | §1 above |
+| 2026-09-05 | A | Fourteenth — IND filing transmittal pair; eSTAR + IND form PDFs proven | eSTAR fill verified end to end against the vendored FDA template (20/20 fields read back, encrypted incremental update); 1571/1572/3674/356h fill officially; every filed IND sequence now carries the m1.1 Form 1571 + m1.2 cover letter its own validator requires, and names the placements still awaiting bytes — revert-proven | §1 above |
+| 2026-09-05 | A | Fifteenth — the IND 30-day clock | A clock projected from the program's target submission date no longer shows a cleared-to-proceed chip, prints "clinical investigations may proceed", or publishes safeToProceed true to AnA; basis is named and safeToProceed is unknown — revert-proven; the ack-type decision recorded | §1 above |
+| 2026-09-05 | A | Sixteenth — PV seriousness + Module 3 stability readability | An unassessed adverse event no longer reports itself as not serious / no expedited clock (determination unchanged, reason honest, three-state chip); an unreadable stability payload is no longer counted as a study that recorded nothing — both revert-proven | §1 above |
+| 2026-09-06 | A | Seventeenth — RIM renewal-schedule coverage | The renewals tab and the surface context name the registrations that carry no renewal-due date, so "what lapses first" is not answered from a filtered subset — revert-proven | §1 above |
+| 2026-09-06 | A | Eighteenth — agency-correspondence loop | The overdue-IR KPI counts the store instead of the overdue rows of a 50-row page; truncation and totals are published; the board route gains its first test — revert-proven | §1 above |
+| 2026-09-06 | A | Nineteenth — unreadable vs unprovisioned on the CMC board | A failed read of the agency-question store no longer reads as "0 information requests overdue": 42P01 is told apart from a failed read, `irOverdue` is null when unknown, and both the tile and the lead say the count is not established — revert-proven | §1 above |
 | | | | | |
 
 **Rule:** the last row with an empty "What was proven" cell is the open work.

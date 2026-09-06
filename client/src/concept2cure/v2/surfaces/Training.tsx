@@ -95,7 +95,7 @@ export function Training({ onAsk }: SurfaceViewProps) {
           <div className="sec-sub">{paths.rows.length} paths</div>
         </div>
         {paths.loading ? (
-          <div className="scaf-note" style={{ padding: '18px 10px' }}>Loading learning paths…</div>
+          <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>Loading learning paths…</div>
         ) : paths.error ? (
           <EmptyState
             tone="error"
@@ -141,7 +141,7 @@ export function Training({ onAsk }: SurfaceViewProps) {
           <div className="sec-title">Certifications</div>
         </div>
         {certs.loading ? (
-          <div className="scaf-note" style={{ padding: '18px 10px' }}>Loading certifications…</div>
+          <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>Loading certifications…</div>
         ) : certs.error ? (
           <EmptyState
             tone="error"

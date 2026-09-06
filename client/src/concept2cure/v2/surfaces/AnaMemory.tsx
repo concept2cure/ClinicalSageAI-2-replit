@@ -152,7 +152,7 @@ export function AnaMemory({ onAsk }: SurfaceViewProps) {
       <C2CToast msg={toast} position="top" />
 
       {loading ? (
-        <div className="amem-lead-sub" style={{ padding: '18px 14px' }}>Loading AnA's memory…</div>
+        <div role="status" className="amem-lead-sub" style={{ padding: '18px 14px' }}>Loading AnA's memory…</div>
       ) : atomsError ? (
         <EmptyState
           tone="error"

@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-05T19:03:11.299Z",
+  "generatedAt": "2026-09-06T01:16:59.121Z",
   "git": {
-    "sha": "8ac8875190a45f6cf30f2c466dfc0f3989038833",
+    "sha": "8f6b773670d47d74f68d69a78baf7a6558d17685",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -16,7 +16,7 @@
     "contentDuplicateGroups": 0,
     "contentDuplicateFiles": 0,
     "largeFilesByBytes": 40,
-    "largeFilesByLines": 93
+    "largeFilesByLines": 94
   },
   "findings": {
     "duplicateBasenames": [
@@ -2001,11 +2001,11 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
-        "bytes": 233267
+        "bytes": 233213
       },
       {
         "file": "server/statistics-service.ts",
-        "bytes": 221753
+        "bytes": 221721
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
@@ -2017,11 +2017,11 @@
       },
       {
         "file": "server/routes/c2c/artifacts.ts",
-        "bytes": 176730
+        "bytes": 176975
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
-        "bytes": 167533
+        "bytes": 168500
       },
       {
         "file": "server/routes/authoring-actions.ts",
@@ -2029,7 +2029,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
-        "bytes": 153056
+        "bytes": 153154
       },
       {
         "file": "server/services/regulatory-strategy/regulatory-strategy-knowledge.ts",
@@ -2069,7 +2069,7 @@
       },
       {
         "file": "server/services/module3Composer.ts",
-        "bytes": 130705
+        "bytes": 131521
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/nda-submission.ts",
@@ -2175,7 +2175,7 @@
       },
       {
         "file": "server/routes/c2c/artifacts.ts",
-        "lines": 4610
+        "lines": 4614
       },
       {
         "file": "server/storage.ts",
@@ -2219,7 +2219,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
-        "lines": 2958
+        "lines": 2967
       },
       {
         "file": "server/src/routes/stability.router.ts",
@@ -2239,7 +2239,7 @@
       },
       {
         "file": "server/services/module3Composer.ts",
-        "lines": 2624
+        "lines": 2637
       },
       {
         "file": "server/services/biosimilar/biosimilar-knowledge.ts",
@@ -2442,12 +2442,12 @@
         "lines": 1794
       },
       {
-        "file": "server/routes/ana-cortex-ft.ts",
-        "lines": 1785
+        "file": "server/routes/510k-estar-routes.ts",
+        "lines": 1786
       },
       {
-        "file": "server/routes/510k-estar-routes.ts",
-        "lines": 1775
+        "file": "server/routes/ana-cortex-ft.ts",
+        "lines": 1785
       },
       {
         "file": "server/services/ana/submission-chat-handler.ts",
@@ -2466,12 +2466,12 @@
         "lines": 1710
       },
       {
-        "file": "server/services/ana/notifications-study-memory-tool-defs.ts",
-        "lines": 1696
+        "file": "client/src/concept2cure/v2/surfaces/TaskBoard.tsx",
+        "lines": 1702
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/TaskBoard.tsx",
-        "lines": 1693
+        "file": "server/services/ana/notifications-study-memory-tool-defs.ts",
+        "lines": 1696
       },
       {
         "file": "server/services/nonclinical-adme/nonclinical-adme-knowledge.ts",
@@ -2512,6 +2512,10 @@
       {
         "file": "server/services/toxicology/toxicology-knowledge.ts",
         "lines": 1602
+      },
+      {
+        "file": "client/src/concept2cure/v2/surfaces/IndLifecycle.tsx",
+        "lines": 1532
       }
     ]
   },
@@ -2539,7 +2543,7 @@
       "owner": "Concept2Cure Frontend (client/src/concept2cure maintainers)",
       "duplicateGroups": 56,
       "largeByBytes": 5,
-      "largeByLines": 8
+      "largeByLines": 9
     },
     {
       "owner": "Frontend Platform (client/src maintainers)",

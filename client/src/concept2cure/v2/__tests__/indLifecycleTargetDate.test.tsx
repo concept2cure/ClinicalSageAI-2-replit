@@ -28,7 +28,14 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
   apiRequest,
 }));
 
+import { useActiveSurfaceContext, type SurfaceContext } from '../surfaceContext';
 import { IndLifecycle } from '../surfaces/IndLifecycle';
+
+let seenContext: SurfaceContext | null = null;
+function ClockProbe() {
+  seenContext = useActiveSurfaceContext('ind-checklist');
+  return null;
+}
 
 const props = () => ({ onAsk: vi.fn(), onNav: vi.fn() }) as any;
 
@@ -95,6 +102,43 @@ describe('IndLifecycle — 30-day clock from the RECORDED target date only', () 
 
     expect(await screen.findByText(fmt(target))).toBeTruthy();
     expect(screen.queryByText('No target date set')).toBeNull();
+  });
+});
+
+describe('IndLifecycle — a projected 30-day clock never speaks as the regulatory one', () => {
+  /* 21 CFR 312.40(b) starts the 30-day period at FDA's RECEIPT of the IND. The
+     only date this surface holds is the program's TARGET submission date. With
+     a target more than 30 days in the past the clock reached 'safe_to_proceed'
+     and the screen showed a good-tone "Safe to proceed" chip over the clock's
+     own sentence — "clinical investigations may proceed (21 CFR 312.40(b))" —
+     for an IND the FDA may never have received. That sentence authorises dosing
+     the first human subject. */
+  const LONG_PAST = new Date(Date.now() - 90 * 86400000).toISOString();
+
+  it('does not show a cleared-to-proceed chip or the may-proceed sentence over a target date', async () => {
+    mockApi(LONG_PAST);
+    render(<IndLifecycle {...props()} />);
+    await screen.findByText('Projected from target date');
+
+    expect(screen.queryByText('Safe to proceed')).toBeNull();
+    expect(document.body.textContent).not.toContain('clinical investigations may proceed');
+    expect(document.body.textContent).toContain('FDA receipt has not been recorded');
+    expect(screen.getByText('Projected from target date')).toBeTruthy();
+  });
+
+  it('publishes the clock to AnA as a projection with safeToProceed unknown', async () => {
+    mockApi(LONG_PAST);
+    render(<><IndLifecycle {...props()} /><ClockProbe /></>);
+    await screen.findByText('Projected from target date');
+
+    const facts = (seenContext as any)?.facts ?? {};
+    expect(facts.thirtyDayClock).toBeTruthy();
+    expect(facts.thirtyDayClock.basis).toBe('projection-from-target-submission-date');
+    // Unknown, not the projection's own `true` — AnA must not be able to tell
+    // anyone they are clear to proceed off a planning field.
+    expect(facts.thirtyDayClock.safeToProceed).toBeNull();
+    expect(facts.thirtyDayClock.status).toBe('not_started');
+    expect(String((seenContext as any)?.summary)).toMatch(/FDA receipt has NOT been recorded/);
   });
 });
 

@@ -24,6 +24,10 @@ import {
   type LeafSourceBySection,
 } from '../../services/ind-lifecycle/ind-lifecycle-persistence';
 import { storeRenderedLeafFile, leafSourceFor, type RenderedLeafSource } from '../../services/ectd/rendered-leaf-files';
+import { getSubmission } from '../../services/submission-service/submission-service';
+import { getSponsor } from '../../services/ind-master-data/ind-master-data-service';
+import { assembleFormMetadata } from '../../services/ind-forms/form-context-assembler';
+import { generateIndForm, FORM_1571 } from '../../services/ind-forms';
 import { AUTHOR, limiter, ctxOf, body, fail, noAuth, coerceEventDates } from './shared';
 
 const router = Router();
@@ -34,6 +38,73 @@ function fileTargetValid(b: any): boolean {
   return Number.isInteger(submissionId) && submissionId > 0 && /^\d{4}$/.test(String(b.sequenceNumber ?? ''));
 }
 
+
+/**
+ * Render the Module 1 transmittal form — FDA 1571 — for the m1.1 leaf every IND
+ * sequence carries, from the sponsor registry and the submission record.
+ *
+ * The platform has produced a genuine filled 1571 from the vendored official FDA
+ * template for a while (ind-form-fill-service, dynamic-XFA datasets fill), and
+ * the filing paths placed an m1.1 leaf with nothing behind it. This closes that:
+ * the leaf points at the real form when one can be produced.
+ *
+ * Fail closed, three ways — a blank or partial official FDA form filed as the
+ * transmittal is worse than a leaf that says it has no document yet:
+ *   - no sponsorId, or the sponsor/submission cannot be read → no source;
+ *   - the fill fell back off the official template → no source;
+ *   - the form is missing a required field → no source, naming the fields.
+ * The reason travels back on the filing response.
+ */
+async function form1571LeafSource(
+  b: Record<string, unknown>,
+  ctx: { organizationId: number; userId: number },
+): Promise<{ source?: RenderedLeafSource; attached: boolean; reason?: string }> {
+  const sponsorId = typeof b.sponsorId === 'string' ? b.sponsorId.trim() : '';
+  if (!sponsorId) {
+    return { attached: false, reason: 'No sponsorId was supplied, so Form FDA 1571 was not produced; the m1.1 leaf has no document yet.' };
+  }
+  try {
+    const [sponsor, submission] = await Promise.all([
+      getSponsor(sponsorId, ctx),
+      getSubmission(Number(b.submissionId), ctx),
+    ]);
+    const overrides = (b.form1571 && typeof b.form1571 === 'object' ? b.form1571 : {}) as Record<string, unknown>;
+    const meta = assembleFormMetadata({
+      sponsor,
+      overrides: {
+        drugName: submission.productName ?? submission.title,
+        serialNumber: String(b.sequenceNumber ?? ''),
+        ...(typeof b.indNumber === 'string' && b.indNumber ? { indNumber: b.indNumber } : {}),
+        ...overrides,
+      },
+    });
+    const form = await generateIndForm(FORM_1571, meta);
+    if (!form.usedOfficialTemplate) {
+      return { attached: false, reason: 'Form FDA 1571 did not fill on the official FDA template, so it was not attached to the m1.1 leaf.' };
+    }
+    if (form.missingRequired.length > 0) {
+      return {
+        attached: false,
+        reason: `Form FDA 1571 is missing required field(s): ${form.missingRequired.join(', ')}. It was not attached to the m1.1 leaf.`,
+      };
+    }
+    const stored = await storeRenderedLeafFile({
+      organizationId: ctx.organizationId,
+      userId: ctx.userId,
+      bytes: Buffer.from(form.pdfBytes),
+      mime: 'application/pdf',
+      fileName: 'form-fda-1571.pdf',
+      renderedFrom: 'ind_form_1571',
+      sectionCode: 'm1.1',
+    });
+    return { source: leafSourceFor(stored), attached: true };
+  } catch (err) {
+    return {
+      attached: false,
+      reason: `Form FDA 1571 could not be produced (${err instanceof Error ? err.message : String(err)}); the m1.1 leaf has no document yet.`,
+    };
+  }
+}
 
 /**
  * A tracked draft named on a file call is the draft being filed. The register
@@ -134,6 +205,9 @@ router.post('/safety-report/file', limiter, requireRole(AUTHOR), async (req, res
         }),
       );
     }
+    // The m1.1 transmittal form, from the sponsor registry when one is named.
+    const form1571 = await form1571LeafSource(b, ctx);
+    if (form1571.source) sources['m1.1'] = form1571.source;
     const filed = await persistSafetyReportIntent(Number(b.submissionId), amendmentIntent, String(b.sequenceNumber), ctx, sources);
     // When filing a tracked draft, mark it filed + link the sequence.
     let draft;
@@ -144,7 +218,7 @@ router.post('/safety-report/file', limiter, requireRole(AUTHOR), async (req, res
         if (!(e instanceof SafetyReportError)) throw e; // unknown/foreign draft id is non-fatal to the filing
       }
     }
-    res.status(201).json({ ...filed, ...(draft ? { draft } : {}) });
+    res.status(201).json({ ...filed, form1571, ...(draft ? { draft } : {}) });
   } catch (err) {
     fail(res, err);
   }
@@ -176,10 +250,10 @@ router.post('/annual-report/file', limiter, requireRole(AUTHOR), async (req, res
         return res.status(409).json({ error: { code: 'DRAFT_INCOMPLETE', message: `The named draft has ${loaded.draft.gapCount} open 312.33 section(s). Complete them, or file with acknowledgeGaps: true to record that they were filed open.`, gapCount: loaded.draft.gapCount } });
       }
     }
-    let source: RenderedLeafSource | undefined;
+    const sources: LeafSourceBySection = {};
     if (b.productName && b.indNumber) {
       const pdf = await renderIndAnnualReportPdf(assembleIndAnnualReport(b));
-      source = leafSourceFor(
+      sources['m1.13'] = leafSourceFor(
         await storeRenderedLeafFile({
           organizationId: ctx.organizationId,
           userId: ctx.userId,
@@ -191,7 +265,9 @@ router.post('/annual-report/file', limiter, requireRole(AUTHOR), async (req, res
         }),
       );
     }
-    const filed = await persistAnnualReport(Number(b.submissionId), String(b.sequenceNumber), ctx, source);
+    const form1571 = await form1571LeafSource(b, ctx);
+    if (form1571.source) sources['m1.1'] = form1571.source;
+    const filed = await persistAnnualReport(Number(b.submissionId), String(b.sequenceNumber), ctx, sources);
     // When filing a tracked draft, mark it filed + link the sequence.
     let draft;
     if (b.draftId) {
@@ -203,7 +279,7 @@ router.post('/annual-report/file', limiter, requireRole(AUTHOR), async (req, res
     }
     // Filing a draft with open 312.33 sections is recorded on the response.
     const filedWithOpenGaps = draft && Number(draft.gapCount) > 0 ? Number(draft.gapCount) : undefined;
-    res.status(201).json({ ...filed, ...(draft ? { draft } : {}), ...(filedWithOpenGaps ? { filedWithOpenGaps } : {}) });
+    res.status(201).json({ ...filed, form1571, ...(draft ? { draft } : {}), ...(filedWithOpenGaps ? { filedWithOpenGaps } : {}) });
   } catch (err) {
     fail(res, err);
   }
@@ -229,7 +305,14 @@ router.post('/amendment/file', limiter, requireRole(AUTHOR), async (req, res) =>
       if (b.indNumber && String(loaded.draft.indNumber) !== String(b.indNumber)) return draftRefusal(res, mismatch('IND'));
     }
     const plan = planIndAmendment(b);
-    const filed = await persistAmendmentPlan(Number(b.submissionId), plan, String(b.sequenceNumber), ctx);
+    const form1571 = await form1571LeafSource(b, ctx);
+    const filed = await persistAmendmentPlan(
+      Number(b.submissionId),
+      plan,
+      String(b.sequenceNumber),
+      ctx,
+      form1571.source ? { 'm1.1': form1571.source } : undefined,
+    );
     // When filing a tracked draft, mark it filed + link the sequence.
     let draft;
     if (b.draftId) {
@@ -239,7 +322,7 @@ router.post('/amendment/file', limiter, requireRole(AUTHOR), async (req, res) =>
         if (!(e instanceof AmendmentError)) throw e; // unknown/foreign draft id is non-fatal
       }
     }
-    res.status(201).json({ ...filed, ...(draft ? { draft } : {}) });
+    res.status(201).json({ ...filed, form1571, ...(draft ? { draft } : {}) });
   } catch (err) {
     fail(res, err);
   }

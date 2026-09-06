@@ -170,7 +170,7 @@ export function SeqPicker({
   onSel: (id: number) => void;
 }) {
   if (loading) {
-    return <div className="scaf-note sc-mb">Loading this submission&#39;s sequences…</div>;
+    return <div role="status" className="scaf-note sc-mb">Loading this submission&#39;s sequences…</div>;
   }
   if (error) {
     return (
@@ -289,7 +289,7 @@ function AddLeafForm({ seqId, onDone }: { seqId: number; onDone: (n: Notice) => 
   return (
     <div className="sc-mt">
       {docs.loading ? (
-        <div className="scaf-note">Loading the Co-Author documents…</div>
+        <div role="status" className="scaf-note">Loading the Co-Author documents…</div>
       ) : docs.error ? (
         <div className="sc-verdict tone-err" role="status">
           Couldn&#39;t load the Co-Author documents — {redactInternals(docs.error, 'the read did not settle')}. Nothing to place.
@@ -385,7 +385,7 @@ export function BuilderWorkspace({ seq }: { seq: SeqRow }) {
       <div className="pj-card-b">
         <VerdictNote notice={notice} />
         {leaves.loading ? (
-          <div className="scaf-note" style={{ padding: '18px 10px' }}>
+          <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>
             Loading the sequence&#39;s leaves…
           </div>
         ) : leaves.error ? (
@@ -791,7 +791,7 @@ export function ShadowReviewWorkspace({ seq }: { seq: SeqRow }) {
         </div>
         <VerdictNote notice={notice} />
         {runs.loading ? (
-          <div className="scaf-note" style={{ padding: '18px 10px' }}>
+          <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>
             Loading the shadow-review runs…
           </div>
         ) : runs.error ? (
@@ -844,7 +844,7 @@ export function ShadowReviewWorkspace({ seq }: { seq: SeqRow }) {
               <div className="sc-mt">
                 {run.summary ? <div className="scaf-note sc-mb">{run.summary}</div> : null}
                 {findings.loading ? (
-                  <div className="scaf-note">Loading run #{run.id}&#39;s findings…</div>
+                  <div role="status" className="scaf-note">Loading run #{run.id}&#39;s findings…</div>
                 ) : findings.error ? (
                   <div className="sc-verdict tone-err" role="status">
                     Couldn&#39;t load run #{run.id}&#39;s findings — {redactInternals(findings.error, 'the read did not settle')}.

@@ -1,6 +1,6 @@
 import { db } from './db';
 import { csrReports, csrDetails } from 'shared/schema';
-import { eq, sql, and, gte, lte, desc, count, avg, max, min, inArray } from 'drizzle-orm';
+import { eq, sql, and, desc, inArray } from 'drizzle-orm';
 import * as math from 'mathjs';
 import { Rng, createRng, seedFromObject } from './services/stats/rng';
 import { buildProvenance, type StatsProvenance } from './services/stats/computation-provenance';

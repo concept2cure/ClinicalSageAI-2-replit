@@ -213,12 +213,12 @@ export function IndFormsPanel({ note }: { note: FireToast }) {
             <tr key={f}>
               <td style={{ fontWeight: 600 }}>{FORM_LABELS[f] ?? 'FDA ' + f}</td>
               <td>
-                {!chk ? <span style={{ color: 'var(--c2c-dim,#667085)', fontSize: 13 }}>Not checked yet</span>
+                {!chk ? <span style={{ color: 'var(--text-400)', fontSize: 13 }}>Not checked yet</span>
                   : missing && missing.length > 0
                     ? <span className="rd-chip tone-warn" title={missing.join(', ')}>{missing.length} required missing</span>
                     : <span className="rd-chip tone-ok">required fields present</span>}
                 {missing && missing.length > 0 && (
-                  <div style={{ fontSize: 12, color: 'var(--c2c-dim,#667085)', marginTop: 2 }}>{missing.slice(0, 4).join(', ')}{missing.length > 4 ? '…' : ''}</div>
+                  <div style={{ fontSize: 12, color: 'var(--text-400)', marginTop: 2 }}>{missing.slice(0, 4).join(', ')}{missing.length > 4 ? '…' : ''}</div>
                 )}
               </td>
               <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>

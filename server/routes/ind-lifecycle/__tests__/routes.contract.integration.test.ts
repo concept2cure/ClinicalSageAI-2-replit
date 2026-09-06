@@ -482,6 +482,77 @@ describe('DB-write + program surface (full HTTP flow)', () => {
   });
 });
 
+describe('Module 1 transmittal — the m1.1 Form 1571 leaf', () => {
+  it('POST /safety-report/file places the Module 1 transmittal pair, and says the 1571 has no document without a sponsor', async () => {
+    const res = await request(app)
+      .post('/api/ind-lifecycle/safety-report/file')
+      .send({ submissionId: seededSubmissionId, sequenceNumber: '0007', event: reportableEvent() });
+    expect(res.status).toBe(201);
+    const codes = res.body.leaves.map((l: any) => l.sectionCode);
+    // ind-sequence-validation requires both on every post-original IND filing.
+    expect(codes).toContain('m1.1');
+    expect(codes).toContain('m1.2');
+    // No sponsorId was named, so no official 1571 was produced — said plainly,
+    // and the leaf carries no document rather than a blank official form.
+    expect(res.body.form1571.attached).toBe(false);
+    expect(res.body.form1571.reason).toMatch(/sponsorId/i);
+    const m11 = res.body.leaves.find((l: any) => l.sectionCode === 'm1.1');
+    expect(m11.documentId ?? null).toBeNull();
+    expect(res.body.leavesAwaitingDocument).toEqual(expect.arrayContaining(['m1.1', 'm1.2']));
+  });
+
+  it('POST /safety-report/file attaches the REAL filled Form 1571 to m1.1 when a sponsor is named', async () => {
+    const [sponsor] = await harness.db.execute(
+      `INSERT INTO ind_sponsors (organization_id, name, address_line1, city, state_province, postal_code, country, contact_name, contact_phone, contact_email, signatory_name, signatory_title)
+       VALUES (1, 'Concept2Cure Therapeutics, Inc.', '1 Market Street', 'San Francisco', 'CA', '94105', 'USA', 'Ada Lovelace', '+1 415 555 0100', 'ra@example.com', 'Ada Lovelace', 'Head of Regulatory')
+       RETURNING id` as any,
+    ).then((r: any) => (Array.isArray(r) ? r : r.rows));
+
+    const res = await request(app)
+      .post('/api/ind-lifecycle/safety-report/file')
+      .send({
+        submissionId: seededSubmissionId,
+        sequenceNumber: '0008',
+        event: reportableEvent(),
+        sponsorId: sponsor.id,
+        indNumber: '123456',
+        // The project facts Form 1571 requires that the submission row does not
+        // hold. Without them the fill is refused by field name — the case the
+        // previous test's sibling assertion covers.
+        form1571: { indication: 'Relapsed multiple myeloma', indType: 'Commercial IND', studyPhase: 'Phase 1' },
+      });
+    expect(res.status).toBe(201);
+    // The official FDA template is vendored, so this is the real filled form —
+    // not a reconstruction and not a blank.
+    expect(res.body.form1571.attached, res.body.form1571.reason).toBe(true);
+    const m11 = res.body.leaves.find((l: any) => l.sectionCode === 'm1.1');
+    expect(m11.documentTable).toBe('rendered_leaf_files');
+    expect(typeof m11.documentId).toBe('number');
+    expect(typeof m11.checksum).toBe('string');
+    expect(res.body.leavesAwaitingDocument).not.toContain('m1.1');
+  });
+
+  it('refuses to attach a Form 1571 that is missing required fields, naming them', async () => {
+    // Fail closed: a partial official FDA form filed as the transmittal is worse
+    // than a leaf that says it has no document yet.
+    const [sponsor] = await harness.db.execute(
+      `INSERT INTO ind_sponsors (organization_id, name, address_line1, city, state_province, postal_code, country, signatory_name)
+       VALUES (1, 'Partial Data Sponsor', '2 Market Street', 'San Francisco', 'CA', '94105', 'USA', 'Ada Lovelace')
+       RETURNING id` as any,
+    ).then((r: any) => (Array.isArray(r) ? r : r.rows));
+    const res = await request(app)
+      .post('/api/ind-lifecycle/safety-report/file')
+      .send({ submissionId: seededSubmissionId, sequenceNumber: '0009', event: reportableEvent(), sponsorId: sponsor.id });
+    expect(res.status).toBe(201);
+    expect(res.body.form1571.attached).toBe(false);
+    expect(res.body.form1571.reason).toMatch(/missing required field/i);
+    expect(res.body.form1571.reason).toMatch(/indication/);
+    const m11 = res.body.leaves.find((l: any) => l.sectionCode === 'm1.1');
+    expect(m11.documentId ?? null).toBeNull();
+  });
+});
+
+
 describe('persisted cross-references (eCTD m1.4)', () => {
   let crossRefId: string;
 

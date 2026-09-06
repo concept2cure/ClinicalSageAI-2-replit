@@ -421,7 +421,7 @@ export function HaqManager({ onAsk }: SurfaceViewProps) {
         </div>
 
         {roundsState.loading ? (
-          <div className="scaf-note" style={{ padding: '18px 10px' }}>
+          <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>
             Loading agency questions…
           </div>
         ) : roundsState.error ? (

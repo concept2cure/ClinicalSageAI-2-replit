@@ -46,6 +46,22 @@
   --v2-shadow-lg: 0 12px 28px -6px rgb(20 20 19 / .14), 0 4px 10px -4px rgb(20 20 19 / .08);
 }
 .c2c-v2.dark {
+  /* The accent aliases MUST be re-resolved here, not only at :root.
+     A custom property is substituted where it is DECLARED, so
+     `--accent-200: var(--accent-main-200)` at :root captures whatever
+     --accent-main-200 is ON :ROOT — and the canonical dark block is
+     `.dark, [data-theme="dark"]`, which matches THIS element (V2App renders
+     `c2c-v2 shell dark`), never <html>. The aliases therefore froze at their
+     light values for the whole dark theme: --accent-200 stayed #ad5132 instead
+     of #e8916f, and --accent-000 stayed the near-white #faf0ec instead of the
+     translucent dark fill. Measured in Chromium, that was 223 elements at
+     #ad5132 on #262624 plus 49 more sitting on a white accent ground, out of
+     326 dark-mode failures total. Re-declaring here re-runs the substitution
+     in a context where the dark values are the ones in scope. */
+  --accent-000: var(--accent-main-000);
+  --accent-100: var(--accent-main-100);
+  --accent-200: var(--accent-main-200);
+
   --idle-muted: rgba(176, 174, 165, .16);
   --v2-shadow-sm: 0 1px 3px 0 rgb(0 0 0 / .35);
   --v2-shadow-md: 0 4px 8px -2px rgb(0 0 0 / .4);

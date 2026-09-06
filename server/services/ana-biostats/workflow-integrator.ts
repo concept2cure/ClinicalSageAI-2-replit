@@ -50,7 +50,6 @@ async function getSchema() {
   return _schema;
 }
 
-import { mapArtifactToSection } from '../ectd/package-content-change';
 import type {
   GovernedStatisticalDocument,
   JudgmentResult,
@@ -322,6 +321,10 @@ export class WorkflowIntegrator {
     userId: number
   ): Promise<WorkflowActionResult> {
     try {
+      // Imported lazily, like getDb/getSchema above: the canonical module pulls
+      // the pool and the governed-action ledger, and this file is built to load
+      // in environments that have neither.
+      const { mapArtifactToSection } = await import('../ectd/package-content-change');
       const outcome = await mapArtifactToSection({
         orgId: organizationId,
         artifactDbId,

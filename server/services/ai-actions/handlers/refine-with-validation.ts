@@ -259,6 +259,20 @@ const handler: AIActionHandler = {
         });
       });
 
+      // The refined text is what an assembled submission bundle was built
+      // FROM: every package this artifact is mapped into now holds a zip that
+      // no longer reflects it. Invalidate at the edit rather than leaving it to
+      // the transmit gate's content fingerprint (which remains the backstop).
+      // Never throws — the refinement has committed and is not rolled back
+      // over an invalidation failure.
+      const { markPackagesContentChangedForArtifact } = await import(
+        '../../ectd/package-content-change'
+      );
+      await markPackagesContentChangedForArtifact(artifact.id, ctx.user.organizationId, {
+        userId: ctx.user.userId,
+        cause: 'content',
+      });
+
       updatedObjects.push({
         type: 'artifact',
         id: request.targetId,

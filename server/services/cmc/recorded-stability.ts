@@ -30,14 +30,26 @@ export interface StabilityPointRecord {
   specification?: unknown;
 }
 
+export interface RecordedStabilityRead {
+  points: StabilityPointRecord[];
+  /**
+   * The column held a recorded value that could not be parsed. Distinct from a
+   * study with no recorded results: one is unreadable data, the other is absent
+   * data, and a stability section must not read the first as the second.
+   */
+  unreadable: boolean;
+}
+
 /** The recorded pull-point results on a study, whatever shape the column holds. */
-export function readRecordedStabilityResults(value: unknown): StabilityPointRecord[] {
+export function readRecordedStabilityResults(value: unknown): RecordedStabilityRead {
   let raw = value;
   if (typeof raw === 'string' && raw.trim()) {
     try {
       raw = JSON.parse(raw);
     } catch {
-      return [];
+      // Recorded, and unreadable. Returning an empty list here made a corrupt
+      // stability payload look exactly like a study that recorded nothing.
+      return { points: [], unreadable: true };
     }
   }
   const list = Array.isArray(raw)
@@ -45,9 +57,12 @@ export function readRecordedStabilityResults(value: unknown): StabilityPointReco
     : raw && typeof raw === 'object' && Array.isArray((raw as { results?: unknown }).results)
       ? (raw as { results: unknown[] }).results
       : [];
-  return list.filter(
-    (r): r is StabilityPointRecord => Boolean(r) && typeof r === 'object'
-  );
+  return {
+    points: list.filter(
+      (r): r is StabilityPointRecord => Boolean(r) && typeof r === 'object'
+    ),
+    unreadable: false,
+  };
 }
 
 /** The first finite number in a recorded value ("98.4%" → 98.4), else null. */
@@ -268,7 +283,7 @@ export async function assessRecordedPoolability(
 
   const perStudy = studies.map(s => ({
     study: s,
-    byParameter: groupByParameter(readRecordedStabilityResults(s.stabilityData)),
+    byParameter: groupByParameter(readRecordedStabilityResults(s.stabilityData).points),
   }));
 
   const parameters = Array.from(
@@ -455,6 +470,22 @@ export type RecordedShelfLifeOutcome =
     };
 
 /**
+ * Why a recorded series cannot be fitted, or null when it can.
+ *
+ * Unreadable is not empty: a corrupt payload must be refused with its own
+ * reason rather than reported as a study that recorded nothing.
+ */
+function refuseUnfittableSeries(read: RecordedStabilityRead): string | null {
+  if (read.unreadable) {
+    return 'This study\u2019s recorded results could not be read, so no shelf life can be fitted from them.';
+  }
+  if (read.points.length === 0) {
+    return 'This study has no recorded pull-point results \u2014 there is nothing to fit.';
+  }
+  return null;
+}
+
+/**
  * Fit the recorded pull points of ONE stability study per ICH Q1E.
  *
  * Refuses — rather than caveats — when the study cannot support a fit: no
@@ -467,10 +498,10 @@ export async function estimateRecordedShelfLife(
   study: RecordedShelfLifeStudy,
 ): Promise<RecordedShelfLifeOutcome> {
   const { estimateShelfLife } = await import('./shelf-life');
-  const series = readRecordedStabilityResults(study.stabilityData);
-  if (series.length === 0) {
-    return { ok: false, error: 'This study has no recorded pull-point results — there is nothing to fit.' };
-  }
+  const read = readRecordedStabilityResults(study.stabilityData);
+  const seriesRefusal = refuseUnfittableSeries(read);
+  if (seriesRefusal) return { ok: false, error: seriesRefusal };
+  const series = read.points;
 
   const placedAt = (Array.isArray(study.storageConditions) ? study.storageConditions : [])
     .map((c) => String(c ?? '').trim())

@@ -570,7 +570,7 @@ export function AgencyMeetings({ onAsk, onNav }: SurfaceViewProps) {
       </div>
 
       {loading ? (
-        <div className="reg-sub2" style={{ padding: '18px 14px' }}>
+        <div role="status" className="reg-sub2" style={{ padding: '18px 14px' }}>
           Loading agency meetings…
         </div>
       ) : error ? (

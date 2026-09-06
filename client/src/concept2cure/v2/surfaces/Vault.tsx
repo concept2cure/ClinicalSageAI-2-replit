@@ -861,7 +861,7 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
           hint="The Vault (DMS) shows the governed document tree for the project you have open. Open a project from Projects or Project management to load its CTD / eSTAR / IVDR / TMF spine."
         />
       ) : vaultState.loading ? (
-        <div className="scaf-note" style={{ padding: '18px 10px' }}>
+        <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>
           Loading the project vault…
         </div>
       ) : vaultState.error ? (

@@ -143,7 +143,7 @@ interface CmcChangeResult { type: CmcChangeType; markets: string[]; desc: string
    the display object directly (portfolio / sections / kpis / meta). rpi / ir /
    rpiAverage / section counts are number | null — honestly null when the
    backend cannot measure them; rendered as "—", never fabricated. */
-interface CmcBoardKpis { submissions: number; rpiAverage: number | null; irOverdue: number; sectionsApproved: number | null; sectionsTotal: number | null; readyPercent: number | null; }
+interface CmcBoardKpis { submissions: number; rpiAverage: number | null; /** null when the question store could not be read — NOT zero. */ irOverdue: number | null; sectionsApproved: number | null; sectionsTotal: number | null; readyPercent: number | null; }
 interface CmcBoardMeta { projectId: string | null; portfolioProvisioned: boolean; sectionsProvisioned: boolean | null; generatedAt: string; }
 interface CmcBoardData {
   portfolio?: CmcPortfolio[];
@@ -408,7 +408,11 @@ export function CmOverview({ ask, nav }: { ask: (text: string) => void; nav?: (i
   const rpiNums = port.map((r) => r.rpi).filter((v): v is number => typeof v === 'number');
   const computedAvgRpi = rpiNums.length ? Math.round(rpiNums.reduce((a, b) => a + b, 0) / rpiNums.length) : null;
   const avgRpi: number | null = kpis ? kpis.rpiAverage : computedAvgRpi;
-  const irOverdue: number = kpis ? kpis.irOverdue : port.reduce((a, r) => a + (r.ir ?? 0), 0);
+  /* null means "the overdue count is not established" — the backend could not
+     read the agency-question store. It is NOT zero, and it must not silently
+     become the legacy per-row sum, which counts something else. */
+  const irOverdue: number | null = kpis ? kpis.irOverdue : port.reduce((a, r) => a + (r.ir ?? 0), 0);
+  const irUnknown = irOverdue == null;
   /* The overdue ATTRIBUTION comes from the same read as the COUNT. The lead
      used to count from the correspondence KPI but name submissions from the
      legacy per-row store — two sources, and when the legacy store was empty
@@ -498,7 +502,7 @@ export function CmOverview({ ask, nav }: { ask: (text: string) => void; nav?: (i
     loading: board.loading,
     unreadable: Boolean(board.error),
     scopeExists: port.length > 0,
-    findingCount: irOverdue,
+    findingCount: irOverdue ?? 0,
     assessmentRan: secs.length > 0,
   });
   const cmLead = (
@@ -508,7 +512,7 @@ export function CmOverview({ ask, nav }: { ask: (text: string) => void; nav?: (i
          NDA cockpit — same session, same assessmentState taxonomy — used it
          for the identical state. Two sibling surfaces rendering one state in
          two visual languages is the drift this work is meant to remove. */
-      tone={irOverdue ? 'urgent' : cmcState === 'assessed-clear' ? 'good' : 'calm'}
+      tone={irUnknown ? 'calm' : irOverdue ? 'urgent' : cmcState === 'assessed-clear' ? 'good' : 'calm'}
       eyebrow={cmcState === 'not-assessed' && port.length === 0
         ? 'Is your CMC package ready'
         : 'Is your CMC package ready across all ' + port.length + ' submissions'}
@@ -527,7 +531,9 @@ export function CmOverview({ ask, nav }: { ask: (text: string) => void; nav?: (i
           ? <>Nothing is being asserted about readiness until the read settles.</>
           : port.length === 0
             ? <>Module 3 readiness is measured across an organization's submissions, and there are none recorded. Nothing about this package has been assessed. Create a submission and add its CMC sections, and its specifications, batch analyses, stability data and change control appear here.</>
-            : irOverdue
+            : irUnknown
+              ? <>The agency-question store could not be read, so the number of overdue information requests is <b>not established</b> — treat it as unknown, not as none. {nextSec ? <>Of what did read: §{nextSec.key} ({nextSec.path}) is still in {nextSec.st}, one of {inReview.length + drafts.length} sections not yet approved.</> : null}</>
+              : irOverdue
               ? <>You have <b>{irOverdue} information {irOverdue === 1 ? 'request' : 'requests'} overdue</b>{overdueSecs.length ? <> (§{overdueSecs.join(', §')})</> : null}. {nextSec ? <>And §{nextSec.key} ({nextSec.path}) is still in {nextSec.st}, one of {inReview.length + drafts.length} sections not yet approved.</> : null}</>
               : secs.length === 0
                 ? <>No governed CMC sections have been authored for {port.length === 1 ? 'this submission' : 'these submissions'} yet, so section approval has nothing to report.</>
@@ -536,7 +542,9 @@ export function CmOverview({ ask, nav }: { ask: (text: string) => void; nav?: (i
          requires evidence that work is in progress. mayReassure gates it on the
          assessed-clear state and on a non-zero readiness percentage; every
          other state renders no reassurance rather than a softened one. */
-      reassure={irOverdue
+      reassure={irUnknown
+        ? undefined
+        : irOverdue
         ? "Answer the IRs first — they're time-boxed. I'll draft the responses and route the sign-offs with you."
         : mayReassure(cmcState, readyPct)
           ? "You're building steadily. I'll help you move the next section to approved."
@@ -579,12 +587,13 @@ export function CmOverview({ ask, nav }: { ask: (text: string) => void; nav?: (i
             <div className="cm-kpis" style={{ gridTemplateColumns: 'minmax(150px, 240px)' }}>
               <Kpi
                 l="IR overdue"
-                v={irOverdue}
-                tone={irOverdue ? 'err' : 'ok'}
-                onClick={irOverdue > 0
+                v={irUnknown ? '—' : irOverdue}
+                tone={irUnknown ? undefined : irOverdue ? 'err' : 'ok'}
+                s={irUnknown ? 'count not established, the question store could not be read' : undefined}
+                onClick={!irUnknown && irOverdue > 0
                   ? () => (window as unknown as { __cmSetTab?: (id: string) => void }).__cmSetTab?.('pathway')
                   : undefined}
-                title={irOverdue > 0 ? 'Open the agency correspondence — overdue first' : undefined}
+                title={!irUnknown && irOverdue > 0 ? 'Open the agency correspondence — overdue first' : undefined}
               />
             </div>
           )}
@@ -2620,13 +2629,13 @@ export function CmPathway({ ask, nav }: { ask: (text: string) => void; nav?: (id
           {/* ── The closed file ──
               Rendered under BOTH branches above: a fresh screen with no open
               questions still has (or will have) an answered history. */}
-          <div style={{ borderTop: '1px solid var(--c2c-line,#eef0f3)', marginTop: 10, paddingTop: 8 }}>
+          <div style={{ borderTop: '1px solid var(--border)', marginTop: 10, paddingTop: 8 }}>
             <button className="nda-open" onClick={toggleClosed}>
               {closedOpen ? 'Hide the closed file' : 'Show the closed file'}
             </button>
             {closedOpen ? (
               closedState === 'loading' ? (
-                <div className="cm-meta" style={{ marginTop: 8 }}>Loading the closed file…</div>
+                <div role="status" className="cm-meta" style={{ marginTop: 8 }}>Loading the closed file…</div>
               ) : closedState === 'error' ? (
                 <div className="sp-tone-err" style={{ marginTop: 8, fontSize: 12.5 }}>
                   Couldn’t read the closed file — it didn’t load, and this list would be a lie if it rendered empty. Toggle to retry.

@@ -640,7 +640,7 @@ export function ProtocolWorkspace({ onAsk }: SurfaceViewProps) {
   usePublishSurfaceContext('protocol-dev', anaContext);
 
   if (loading) {
-    return <div className="pd-wrap"><div className="scaf-note" style={{ margin: 16 }}>Loading protocol…</div></div>;
+    return <div className="pd-wrap"><div role="status" className="scaf-note" style={{ margin: 16 }}>Loading protocol…</div></div>;
   }
   if (error) {
     return (

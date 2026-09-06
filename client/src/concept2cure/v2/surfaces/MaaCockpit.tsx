@@ -162,7 +162,7 @@ export function MaaCockpit({ onAsk }: SurfaceViewProps) {
       </div>
 
       {loading ? (
-        <div className="scaf-note" style={{ padding: '18px 10px' }}>Loading Module 1 readiness…</div>
+        <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>Loading Module 1 readiness…</div>
       ) : error ? (
         <EmptyState
           tone="error"

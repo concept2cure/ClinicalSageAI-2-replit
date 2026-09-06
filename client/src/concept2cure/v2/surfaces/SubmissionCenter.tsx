@@ -682,7 +682,7 @@ export function SubmissionCenter({
       <div className="sp-head">
         <div>
           <div className="sp-eyebrow">Submission</div>
-          <h1 className="sp-title">Submission Center</h1>
+          <h1 className="sp-title">Submission center</h1>
           <p className="sp-state">
             Plan, assemble, validate and dispatch regulatory submissions across regions — eCTD v3.2.2
             / v4.0, eSTAR, MDR/IVDR. Eight workspaces scaffolded from the submission contract.
@@ -845,7 +845,7 @@ export function SubmissionCenter({
           </div>
           <div className="pj-card-b pj-card-b-flush">
             {subs.loading ? (
-              <div className="scaf-note" style={{ padding: '18px 10px' }}>
+              <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>
                 Loading submissions…
               </div>
             ) : subs.error ? (
@@ -916,7 +916,7 @@ export function SubmissionCenter({
           </div>
           <div className="pj-card-b pj-card-b-flush">
             {deviceRes.loading ? (
-              <div className="scaf-note" style={{ padding: '18px 10px' }}>
+              <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>
                 Loading device filings…
               </div>
             ) : deviceRes.error ? (
@@ -1100,7 +1100,7 @@ export function SubmissionCenter({
           </div>
           <div className="pj-card-b">
             {seqs.loading ? (
-              <div className="scaf-note" style={{ padding: '18px 10px' }}>
+              <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>
                 Loading sequences…
               </div>
             ) : seqs.error ? (

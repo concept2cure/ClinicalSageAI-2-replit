@@ -201,7 +201,7 @@ export function ShadowReview({ onAsk, onNav }: SurfaceViewProps) {
       <div className="sr-body">
         {/* Four-state body: loading -> error -> empty -> real */}
         {live.loading ? (
-          <div className="scaf-note" style={{ padding: '18px 10px' }}>Loading the simulated-reviewer worklist…</div>
+          <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>Loading the simulated-reviewer worklist…</div>
         ) : live.error ? (
           <EmptyState
             tone="error"

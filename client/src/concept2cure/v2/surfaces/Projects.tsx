@@ -1123,7 +1123,7 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
       </div>
 
       {live.loading ? (
-        <div className="scaf-note" style={{ padding: '18px 10px' }}>Loading programs…</div>
+        <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>Loading programs…</div>
       ) : live.error ? (
         // The hint used to read "…(projected from regulatory_programs)…",
         // naming a governed store's table on screen: an information-disclosure

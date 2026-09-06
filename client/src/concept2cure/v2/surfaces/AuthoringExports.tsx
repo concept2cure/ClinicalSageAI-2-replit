@@ -132,7 +132,7 @@ const VERDICT_STYLE: Record<StalenessVerdict['kind'], React.CSSProperties> = {
   'never-exported': {},
   current: {},
   uncheckable: { borderLeftColor: 'var(--warning,#b54708)' },
-  drifted: { borderLeftColor: 'var(--c2c-err,#b42318)' },
+  drifted: { borderLeftColor: 'var(--error)' },
 };
 
 export interface AuthoringExportsProps {
@@ -326,7 +326,7 @@ export function AuthoringExports({ docId, refreshKey = 0 }: AuthoringExportsProp
                   gap: 2,
                   fontSize: 11,
                   paddingBottom: 8,
-                  borderBottom: '1px solid var(--c2c-line,#e4e7ec)',
+                  borderBottom: '1px solid var(--border)',
                 }}
               >
                 <div style={{ display: 'flex', gap: 6, alignItems: 'baseline' }}>

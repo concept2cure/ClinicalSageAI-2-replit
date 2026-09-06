@@ -214,7 +214,7 @@ export function AuthoringEngine({ onAsk, onNav }: SurfaceViewProps) {
       <div className="reg-head" style={{ marginBottom: 6 }}>
         <div>
           <div className="reg-eyebrow">Biotech & Pharma {I.dot} authoring</div>
-          <h1 className="reg-title">AnA Authoring Engine</h1>
+          <h1 className="reg-title">AnA authoring engine</h1>
           <p className="reg-sub">One route from raw data to a final draft across the CTD. Each document type has its own drafting system that works from evidence you have locked, cites each claim to its source, and surfaces anything it could not ground — across text, tables, figures and graphs.</p>
         </div>
         <button className="reg-ask" onClick={() => ask('Draft my next CTD document with the right document-type system, grounded on the locked evidence')}>{I.sparkles} Draft with AnA</button>
@@ -336,7 +336,7 @@ export function AuthoringEngine({ onAsk, onNav }: SurfaceViewProps) {
               the three states it can actually be in: still loading, failed to
               read, and genuinely none. */}
           {tpl.loading ? (
-            <div className="scaf-note" style={{ padding: '18px 10px' }}>Loading your templates…</div>
+            <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>Loading your templates…</div>
           ) : tpl.error ? (
             <ErrorState
               title="Couldn't load your templates"

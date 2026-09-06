@@ -848,7 +848,7 @@ export function ConversationThread({ onNav, liveDrive }: OwnedSurfaceViewProps) 
           <div className="ct-scroll" ref={scrollRef} onScroll={onScroll}>
             <div className="ct-col">
               {loadingHistory && (
-                <div className="scaf-note" style={{ padding: '18px 10px' }}>Loading conversation…</div>
+                <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>Loading conversation…</div>
               )}
               {loadErr && turns.length === 0 && (
                 <EmptyState

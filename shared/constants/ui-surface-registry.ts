@@ -188,7 +188,7 @@ export const UI_SURFACES: UiSurface[] = [
   },
   {
     id: 'artifacts-center',
-    label: 'Artifacts Center',
+    label: 'Artifacts center',
     navTier: 'global',
     layoutMode: 'artifacts-center',
     icon: 'sparkles',
@@ -294,7 +294,7 @@ export const UI_SURFACES: UiSurface[] = [
   },
   {
     id: 'submission-center',
-    label: 'Submission Center',
+    label: 'Submission center',
     navTier: 'project',
     layoutMode: 'submissions',
     icon: 'rocket',
@@ -311,7 +311,7 @@ export const UI_SURFACES: UiSurface[] = [
   },
   {
     id: 'submission-twin',
-    label: 'Submission Twin',
+    label: 'Submission twin',
     navTier: 'project',
     layoutMode: 'submissions',
     icon: 'layers',
@@ -378,7 +378,7 @@ export const UI_SURFACES: UiSurface[] = [
   },
   {
     id: 'ectd-publishing',
-    label: 'Publishing Center',
+    label: 'Publishing center',
     navTier: 'project',
     layoutMode: 'submissions',
     icon: 'gitBranch',

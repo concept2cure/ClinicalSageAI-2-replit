@@ -36,7 +36,14 @@ function parseBlocks(src) {
   // Light is the :root block declaring --bg-000: #faf9f5; dark is the one
   // declaring #262624. Matching on the VALUE rather than the selector because
   // the dark selector has changed shape before (.dark, [data-theme=dark]).
-  const blocks = [...src.matchAll(/\{([^{}]*)\}/g)].map((m) => m[1]);
+  // Comments first: this splits on braces, and a brace inside a /* */ comment
+  // is not a block boundary. One explaining the alias layer — it quoted a CSS
+  // rule, braces and all — cut the dark block in half, and the gate then could
+  // not find --bg-000 in either half. It refused to report success rather than
+  // reporting a pass over half a palette, which is the right failure, but the
+  // parse should not have been breakable by prose in the first place.
+  const withoutComments = src.replace(/\/\*[\s\S]*?\*\//g, '');
+  const blocks = [...withoutComments.matchAll(/\{([^{}]*)\}/g)].map((m) => m[1]);
   const read = (b) =>
     Object.fromEntries(
       [...b.matchAll(/--([a-z0-9-]+):\s*([^;]+);/g)].map((m) => [m[1], m[2].trim()]),

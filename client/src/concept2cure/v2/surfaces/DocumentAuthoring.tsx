@@ -3122,7 +3122,7 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
 
         <div className="ed-tree-scroll">
           {docsState === 'loading' ? (
-            <div className="scaf-note" style={{ padding: 16 }}>
+            <div role="status" className="scaf-note" style={{ padding: 16 }}>
               Loading documents…
             </div>
           ) : docsState === 'error' ? (
@@ -3178,13 +3178,13 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
                       /* 'idle' with a document open is the render before the
                          read starts — not a document with no sections. Saying
                          "No sections yet" there was a fact nobody had read. */
-                      <div className="scaf-note" style={{ padding: '6px 12px' }}>
+                      <div role="status" className="scaf-note" style={{ padding: '6px 12px' }}>
                         Loading sections…
                       </div>
                     ) : sectionsState === 'error' ? (
                       <div
                         className="scaf-note"
-                        style={{ padding: '6px 12px', color: 'var(--c2c-err,#b42318)' }}
+                        style={{ padding: '6px 12px', color: 'var(--error)' }}
                       >
                         Couldn’t load sections.
                       </div>
@@ -3202,7 +3202,7 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
                         {structure?.duplicateCodes.length ? (
                           <div
                             className="scaf-note"
-                            style={{ padding: '6px 12px', color: 'var(--c2c-err,#b42318)' }}
+                            style={{ padding: '6px 12px', color: 'var(--error)' }}
                           >
                             {structure.duplicateCodes.length === 1
                               ? `Section code ${structure.duplicateCodes[0]} is used by more than one section.`
@@ -3515,7 +3515,7 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
               alignItems: 'baseline',
               padding: '8px 16px',
               fontSize: 12,
-              borderBottom: '1px solid var(--c2c-line,#e4e7ec)',
+              borderBottom: '1px solid var(--border)',
             }}
           >
             <span style={{ flex: 1, minWidth: 0 }}>{targetNotice}</span>
@@ -3813,7 +3813,7 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
                                 textTransform: 'uppercase',
                                 fontSize: 10,
                                 paddingTop: 2,
-                                ...(d.severity === 'high' ? { color: 'var(--c2c-err,#b42318)' } : {}),
+                                ...(d.severity === 'high' ? { color: 'var(--error)' } : {}),
                               }}
                             >
                               {d.severity}
@@ -3860,7 +3860,7 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
                 <div
                   style={{
                     minHeight: 460,
-                    border: '1px solid var(--c2c-line,#e4e7ec)',
+                    border: '1px solid var(--border)',
                     borderRadius: 10,
                     overflow: 'hidden',
                     display: 'flex',
@@ -4179,7 +4179,7 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
               )
             )}
           </div>
-          <div style={{ padding: '10px 12px', borderTop: '1px solid var(--c2c-line,#e4e7ec)' }}>
+          <div style={{ padding: '10px 12px', borderTop: '1px solid var(--border)' }}>
             <textarea
               className="c2c-input"
               ref={anaComposerRef}
@@ -4255,7 +4255,7 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
                 {I.shieldCheck} {ledger === 'checking' ? 'Recomputing ledger…' : 'Verify ledger'}
               </button>
               {ledger === 'error' && (
-                <span style={{ color: 'var(--c2c-err,#b42318)' }}>
+                <span style={{ color: 'var(--error)' }}>
                   Couldn’t recompute the ledger — this is a failed check, not a verdict about the
                   record.
                 </span>
@@ -4270,7 +4270,7 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
                     {ledger.preLedgerCount > 0 ? `; ${ledger.preLedgerCount} pre-ledger` : ''}.
                   </span>
                 ) : (
-                  <span style={{ color: 'var(--c2c-err,#b42318)', fontWeight: 600 }}>
+                  <span style={{ color: 'var(--error)', fontWeight: 600 }}>
                     Ledger BROKEN at {ledger.breaks.length} point
                     {ledger.breaks.length === 1 ? '' : 's'} —{' '}
                     {ledger.breaks.map(b => b.reason).join(', ')}. The history has been altered or
@@ -4409,7 +4409,7 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
               hint="The read failed. This is a failure to READ the record — it does not mean no governed acts occurred. Retry, or check the service is reachable."
             />
           ) : auditState === 'loading' && auditEvents.length === 0 ? (
-            <div className="scaf-note" style={{ padding: 12 }}>
+            <div role="status" className="scaf-note" style={{ padding: 12 }}>
               Loading the audit trail…
             </div>
           ) : auditEvents.length === 0 ? (
@@ -4528,7 +4528,7 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
               className="scaf-note"
               role="alert"
               data-testid="refresh-skipped"
-              style={{ margin: 12, fontSize: 12, borderLeftColor: 'var(--c2c-err,#b42318)' }}
+              style={{ margin: 12, fontSize: 12, borderLeftColor: 'var(--error)' }}
             >
               <div style={{ display: 'flex', gap: 8, alignItems: 'baseline' }}>
                 <b>
@@ -4559,7 +4559,7 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
               hint="Select a section to see the sources it is drafted from."
             />
           ) : sourcesState === 'loading' ? (
-            <div className="scaf-note" style={{ padding: 12 }}>
+            <div role="status" className="scaf-note" style={{ padding: 12 }}>
               Loading this section’s sources…
             </div>
           ) : sourcesState === 'error' ? (
@@ -4571,7 +4571,7 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
           ) : (
             <>
               <div
-                style={{ padding: '10px 12px', borderBottom: '1px solid var(--c2c-line,#e4e7ec)' }}
+                style={{ padding: '10px 12px', borderBottom: '1px solid var(--border)' }}
               >
                 {!picking ? (
                   <button
@@ -4705,7 +4705,7 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
           <div className="ed-comments-h">Comments</div>
           {activeSection && (
             <div
-              style={{ padding: '10px 12px', borderBottom: '1px solid var(--c2c-line,#e4e7ec)' }}
+              style={{ padding: '10px 12px', borderBottom: '1px solid var(--border)' }}
             >
               {/* The range being commented on, handed over by the editor's
                   Comment button. Posting resolves the server id back to the

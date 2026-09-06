@@ -336,7 +336,7 @@ export function AuthoringPlaceIntoFiling({
               <div className="de-field">
                 <label className="de-label" htmlFor="apf-sub">Target submission</label>
                 {subs.state === 'loading' ? (
-                  <div className="de-desc">Loading this organization’s submissions…</div>
+                  <div role="status" className="de-desc">Loading this organization’s submissions…</div>
                 ) : subs.state === 'error' ? (
                   <div className="de-err" role="status">
                     Couldn’t load the submissions — {subs.error}. There is no target to place into.
@@ -367,7 +367,7 @@ export function AuthoringPlaceIntoFiling({
                 <div className="de-field">
                   <label className="de-label" htmlFor="apf-seq">Sequence</label>
                   {seqs.state === 'loading' ? (
-                    <div className="de-desc">Loading the submission’s sequences…</div>
+                    <div role="status" className="de-desc">Loading the submission’s sequences…</div>
                   ) : seqs.state === 'error' ? (
                     <div className="de-err" role="status">
                       Couldn’t load the sequences — {seqs.error}. There is no sequence to place into.
