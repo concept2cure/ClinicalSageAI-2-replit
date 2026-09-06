@@ -72,7 +72,7 @@
     },
     "protocols": {
       "readerCount": 2,
-      "reason": "NOT ADJUDICATED \u2014 surfaced 2026-09-02 when UPDATE-only writers stopped counting as writers: something updates rows here but nothing in server/ or the migrations inserts them, so no row can ever match. Give it a real writer, drop the readers, or say why an empty read is correct."
+      "reason": "ADJUDICATED 2026-09-05 (ledger L167): `protocols` has NO insert anywhere in the repo \u2014 not in server code, not in migrations, not even a seed \u2014 so it is empty on every deployment. Its one UPDATE (protocol-analyzer-service.ts:422) writes an embedding cache onto a row it just read, so it is empty-by-construction rather than an independent writer. Two consumers: findSimilarProtocols, which therefore always returns [], and strategic-report-generator, which has no callers and already fails closed ('Protocol not found'). The empty read is NOT correct \u2014 but the harm sits in the consumer, not here: POST /api/analytics/demo-analysis renders the always-zero count into a wisdom_trace 'Evidence Base' as \"Compared against database of 0 similar protocols\". See L167 for that and for the gate hole around it."
     },
     "qSubCommitments": {
       "readerCount": 4,
