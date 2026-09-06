@@ -35,7 +35,7 @@
 .opr-conf { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: var(--success); }
 .opr-conf.low { color: var(--warning); }
 .opr-field-input { width: 100%; box-sizing: border-box; border: 1px solid var(--border-control); background: var(--bg-000); color: var(--text-100); border-radius: var(--radius-sm); padding: 7px 10px; font-size: 13px; font-family: inherit; }
-.opr-field-input:focus { outline: none; border-color: var(--accent-200); }
+.opr-field-input:focus { outline: none; border-color: var(--accent-200); box-shadow: 0 0 0 3px var(--accent-000); }
 .opr-field-input:disabled { background: var(--bg-100); color: var(--text-400); }
 .opr-field[data-low] .opr-field-input { border-color: var(--warning); }
 

@@ -1317,7 +1317,7 @@
   resize: none;
   min-height: 40px;
 }
-.mdx-shell .ed-claude-input textarea:focus { border-color: var(--accent-100); }
+.mdx-shell .ed-claude-input textarea:focus { border-color: var(--accent-100); box-shadow: 0 0 0 3px var(--accent-000); }
 .mdx-shell .ed-claude-input-foot {
   display: flex; align-items: center; justify-content: space-between;
   padding-top: 6px;
