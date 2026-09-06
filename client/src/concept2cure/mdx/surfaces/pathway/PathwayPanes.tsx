@@ -520,7 +520,7 @@ function ApprovalsPane({ approvals, onOpenSection, currentUser = 'You' }: { appr
               </div>
               <span className="audit-signed" title="Signed · Part 11">{I.lock}</span>
               {a.target_id && (
-                <button className="ap-link" onClick={() => onOpenSection({ id: a.target_id!, label: a.target })}>
+                <button className="ap-link" aria-label={`Open ${a.target}`} onClick={() => onOpenSection({ id: a.target_id!, label: a.target })}>
                   {I.arrowRight}
                 </button>
               )}
