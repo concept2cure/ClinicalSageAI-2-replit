@@ -24,15 +24,18 @@ import { mockPool } from '../../../../tests/setup';
 /* The register creates (services/cmc/register-writes.ts) are the one write
    path each register has; here they are stood in for, so these tests pin the
    executor's bookkeeping around them, not the inserts. */
-const registerCreates = vi.hoisted(() => ({
-  createDrugSubstance: vi.fn(),
-  createDrugProduct: vi.fn(),
-  createContainerClosure: vi.fn(),
-  createManufacturingProcess: vi.fn(),
-  createFormulationRecord: vi.fn(),
-  createMaterialSpec: vi.fn(),
-  createCharacterizationStudy: vi.fn(),
-}));
+type RegisterCreate = (...args: unknown[]) => Promise<{ row: { id: number }; module3Linked: boolean; module3Warning?: string }>;
+/* Not hoisted: the projector imports the register service lazily, at commit
+   time, so this factory runs long after module initialisation. */
+const registerCreates = {
+  createDrugSubstance: vi.fn<RegisterCreate>(),
+  createDrugProduct: vi.fn<RegisterCreate>(),
+  createContainerClosure: vi.fn<RegisterCreate>(),
+  createManufacturingProcess: vi.fn<RegisterCreate>(),
+  createFormulationRecord: vi.fn<RegisterCreate>(),
+  createMaterialSpec: vi.fn<RegisterCreate>(),
+  createCharacterizationStudy: vi.fn<RegisterCreate>(),
+};
 vi.mock('../../cmc/register-writes', () => registerCreates);
 
 
