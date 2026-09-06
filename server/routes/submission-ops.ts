@@ -304,6 +304,236 @@ router.get('/packages/:packageId/sections', async (req: Request, res: Response) 
   }
 });
 
+/**
+ * A package's section list is part of what an assembled bundle is built FROM:
+ * the section key routes each leaf to its ICH module, the label becomes the
+ * placeholder leaf's title, and the sort order decides the order the leaves
+ * appear in the backbone. Until these routes existed the list was fixed at
+ * package creation, so a mistyped key could only be escaped by abandoning the
+ * package.
+ *
+ * All three are governed (a reason is recorded), tenant-scoped, and commit the
+ * row write in the SAME transaction as the package's content-revision bump and
+ * stale-bundle clear — see services/ectd/package-content-change.
+ */
+const createSectionSchema = z.object({
+  sectionKey: z.string().min(1).max(120),
+  sectionLabel: z.string().min(1).max(300),
+  sortOrder: z.number().int().min(0).max(10000).optional(),
+  reason: z.string().min(8, 'reason must be at least 8 characters'),
+});
+const updateSectionSchema = z
+  .object({
+    sectionKey: z.string().min(1).max(120).optional(),
+    sectionLabel: z.string().min(1).max(300).optional(),
+    sortOrder: z.number().int().min(0).max(10000).optional(),
+    reason: z.string().min(8, 'reason must be at least 8 characters'),
+  })
+  .refine(
+    (v) => v.sectionKey !== undefined || v.sectionLabel !== undefined || v.sortOrder !== undefined,
+    { message: 'Nothing to change: give a sectionKey, a sectionLabel or a sortOrder.' },
+  );
+const deleteSectionSchema = z.object({
+  reason: z.string().min(8, 'reason must be at least 8 characters'),
+});
+
+/** Resolve a tenant-owned package and one of its sections. */
+async function resolvePackageSection(packageKey: string, sectionKey: string, orgId: number) {
+  const [pkg] = await db
+    .select({ id: c2cSubmissionPackages.id })
+    .from(c2cSubmissionPackages)
+    .where(and(packageKeyClause(packageKey), eq(c2cSubmissionPackages.orgId, orgId)));
+  if (!pkg) return { pkg: null, section: null };
+  const n = /^\d{1,10}$/.test(sectionKey) ? Number(sectionKey) : NaN;
+  const sectionClause =
+    Number.isSafeInteger(n) && n > 0 && n <= 2147483647
+      ? eq(c2cPackageSections.id, n)
+      : eq(c2cPackageSections.sectionId, sectionKey);
+  const [section] = await db
+    .select()
+    .from(c2cPackageSections)
+    .where(and(sectionClause, eq(c2cPackageSections.packageDbId, pkg.id), eq(c2cPackageSections.orgId, orgId)));
+  return { pkg, section: section ?? null };
+}
+
+router.post('/packages/:packageId/sections', async (req: Request, res: Response) => {
+  try {
+    const orgId = getOrgId(req);
+    const userId = getUserId(req);
+    const parsed = createSectionSchema.safeParse(req.body ?? {});
+    if (!parsed.success) {
+      return res.status(400).json({ error: 'Validation failed', details: parsed.error.flatten().fieldErrors });
+    }
+    const [pkg] = await db
+      .select({ id: c2cSubmissionPackages.id })
+      .from(c2cSubmissionPackages)
+      .where(and(packageKeyClause(String(req.params.packageId)), eq(c2cSubmissionPackages.orgId, orgId)));
+    if (!pkg) return res.status(404).json({ error: 'Package not found' });
+
+    const sectionId = `sec_${randomUUID()}`;
+    const outcome = await markContentChanged(pkg.id, async (client) => {
+      const { rows } = await client.query(
+        `INSERT INTO c2c_package_sections (section_id, org_id, package_db_id, section_key, section_label, sort_order)
+         VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
+        [sectionId, orgId, pkg.id, parsed.data.sectionKey, parsed.data.sectionLabel, parsed.data.sortOrder ?? 0],
+      );
+      return rows[0] as Record<string, unknown>;
+    });
+    const ledgerWriteFailed = await recordPackageGovernedAction({
+      orgId,
+      userId,
+      packageDbId: pkg.id,
+      reason: parsed.data.reason,
+      payload: {
+        change: 'section-added',
+        sectionDbId: Number(outcome.result.id),
+        sectionKey: parsed.data.sectionKey,
+        staleBundleCleared: outcome.staleBundleCleared,
+      },
+    });
+    res.status(201).json({
+      data: { id: Number(outcome.result.id), sectionId, sectionKey: parsed.data.sectionKey, sectionLabel: parsed.data.sectionLabel },
+      staleBundleCleared: outcome.staleBundleCleared,
+      ledgerWriteFailed,
+    });
+  } catch (e) {
+    return serverError(res, logger, 'adding a package section', e);
+  }
+});
+
+router.patch('/packages/:packageId/sections/:sectionId', async (req: Request, res: Response) => {
+  try {
+    const orgId = getOrgId(req);
+    const userId = getUserId(req);
+    const parsed = updateSectionSchema.safeParse(req.body ?? {});
+    if (!parsed.success) {
+      return res.status(400).json({ error: 'Validation failed', details: parsed.error.flatten().fieldErrors });
+    }
+    const { pkg, section } = await resolvePackageSection(
+      String(req.params.packageId), String(req.params.sectionId), orgId,
+    );
+    if (!pkg) return res.status(404).json({ error: 'Package not found' });
+    if (!section) return res.status(404).json({ error: 'Section not found' });
+
+    const next = {
+      sectionKey: parsed.data.sectionKey ?? section.sectionKey,
+      sectionLabel: parsed.data.sectionLabel ?? section.sectionLabel,
+      sortOrder: parsed.data.sortOrder ?? section.sortOrder ?? 0,
+    };
+    const previous = {
+      sectionKey: section.sectionKey,
+      sectionLabel: section.sectionLabel,
+      sortOrder: section.sortOrder ?? 0,
+    };
+    const changed =
+      next.sectionKey !== previous.sectionKey ||
+      next.sectionLabel !== previous.sectionLabel ||
+      next.sortOrder !== previous.sortOrder;
+    if (!changed) {
+      // Nothing about the package's content moved, so nothing is invalidated
+      // and nothing is recorded — a no-op is not a governed change.
+      return res.json({ data: { id: section.id, ...previous }, changed: false, staleBundleCleared: false, ledgerWriteFailed: false });
+    }
+
+    const outcome = await markContentChanged(pkg.id, async (client) => {
+      await client.query(
+        `UPDATE c2c_package_sections SET section_key = $2, section_label = $3, sort_order = $4, updated_at = now()
+          WHERE id = $1`,
+        [section.id, next.sectionKey, next.sectionLabel, next.sortOrder],
+      );
+      return true as const;
+    });
+    const ledgerWriteFailed = await recordPackageGovernedAction({
+      orgId,
+      userId,
+      packageDbId: pkg.id,
+      reason: parsed.data.reason,
+      payload: {
+        change: 'section-updated',
+        sectionDbId: section.id,
+        previous,
+        next,
+        staleBundleCleared: outcome.staleBundleCleared,
+      },
+    });
+    res.json({
+      data: { id: section.id, ...next },
+      changed: true,
+      staleBundleCleared: outcome.staleBundleCleared,
+      ledgerWriteFailed,
+    });
+  } catch (e) {
+    return serverError(res, logger, 'updating a package section', e);
+  }
+});
+
+router.delete('/packages/:packageId/sections/:sectionId', async (req: Request, res: Response) => {
+  try {
+    const orgId = getOrgId(req);
+    const userId = getUserId(req);
+    const parsed = deleteSectionSchema.safeParse(req.body ?? {});
+    if (!parsed.success) {
+      return res.status(400).json({ error: 'Validation failed', details: parsed.error.flatten().fieldErrors });
+    }
+    const { pkg, section } = await resolvePackageSection(
+      String(req.params.packageId), String(req.params.sectionId), orgId,
+    );
+    if (!pkg) return res.status(404).json({ error: 'Package not found' });
+    if (!section) return res.status(404).json({ error: 'Section not found' });
+
+    // The mapping table cascades on section delete, so removing a section that
+    // still holds artifacts would silently unmap them. Refuse and name the
+    // count: unmapping regulated content is its own governed act.
+    const [mapped] = await db
+      .select({ n: count() })
+      .from(c2cArtifactSectionMap)
+      .where(and(eq(c2cArtifactSectionMap.sectionDbId, section.id), eq(c2cArtifactSectionMap.orgId, orgId)));
+    const mappedCount = Number(mapped?.n ?? 0);
+    if (mappedCount > 0) {
+      return res.status(409).json({
+        error:
+          `This section still holds ${mappedCount} mapped artifact${mappedCount === 1 ? '' : 's'}; ` +
+          'unmap them first (DELETE /api/submission-ops/artifact-section-map/:mappingId) so each removal is recorded on its own.',
+        code: 'SECTION_NOT_EMPTY',
+        mappedCount,
+      });
+    }
+
+    const outcome = await markContentChanged(pkg.id, async (client) => {
+      const { rows } = await client.query(
+        'DELETE FROM c2c_package_sections WHERE id = $1 AND org_id = $2 RETURNING id',
+        [section.id, orgId],
+      );
+      if (rows.length === 0) throw new SectionGone('section gone');
+      return true as const;
+    }).catch((e) => {
+      if (e instanceof SectionGone) return null;
+      throw e;
+    });
+    if (!outcome) return res.status(404).json({ error: 'Section not found' });
+
+    const ledgerWriteFailed = await recordPackageGovernedAction({
+      orgId,
+      userId,
+      packageDbId: pkg.id,
+      reason: parsed.data.reason,
+      payload: {
+        change: 'section-removed',
+        sectionDbId: section.id,
+        sectionKey: section.sectionKey,
+        staleBundleCleared: outcome.staleBundleCleared,
+      },
+    });
+    res.json({
+      data: { deleted: true, sectionDbId: section.id },
+      staleBundleCleared: outcome.staleBundleCleared,
+      ledgerWriteFailed,
+    });
+  } catch (e) {
+    return serverError(res, logger, 'removing a package section', e);
+  }
+});
+
 // ============================================================
 // ARTIFACT-SECTION MAPPING
 // ============================================================
@@ -1544,6 +1774,8 @@ function packageKeyClause(key: string) {
 
 /** Thrown inside a mapping transaction to roll it back without bumping. */
 class MappingGone extends Error { readonly name = 'MappingGone'; }
+/** Thrown inside a section transaction to roll it back without bumping. */
+class SectionGone extends Error { readonly name = 'SectionGone'; }
 
 /**
  * Best-effort ICH module (1–5) for a c2c_package_sections sectionKey. These
@@ -1884,6 +2116,7 @@ router.post('/packages/:packageId/assemble', async (req: Request, res: Response)
         // An empty section is part of the content too: it ships a placeholder.
         contentRows.push({
           sectionDbId: section.id, sectionKey: section.sectionKey, sectionLabel: section.sectionLabel,
+          sortOrder: Number(section.sortOrder ?? 0),
           artifactDbId: null, title: null, version: null, ctdSection: null, contentSha256: null,
         });
       }
@@ -1894,6 +2127,7 @@ router.post('/packages/:packageId/assemble', async (req: Request, res: Response)
           sectionDbId: section.id,
           sectionKey: section.sectionKey,
           sectionLabel: section.sectionLabel,
+          sortOrder: Number(section.sortOrder ?? 0),
           artifactDbId: a.artifactDbId,
           title: a.title ?? '',
           version: Number(a.version ?? 0),

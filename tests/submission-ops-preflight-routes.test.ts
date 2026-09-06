@@ -72,7 +72,7 @@ const poolQuery = vi.fn(async (sql: string, _params: unknown[] = []) => {
   if (/FROM c2c_package_sections/.test(sql)) {
     return {
       rows: dbState.contentRows.map((r) => ({
-        section_db_id: r.sectionDbId, section_key: r.sectionKey, section_label: r.sectionLabel, artifact_db_id: r.artifactDbId,
+        section_db_id: r.sectionDbId, section_key: r.sectionKey, section_label: r.sectionLabel, sort_order: r.sortOrder, artifact_db_id: r.artifactDbId,
         title: r.title, version: r.version, ctd_section: r.ctdSection, content_sha256: r.contentSha256,
       })),
     };
@@ -140,7 +140,7 @@ beforeEach(() => {
 /** What the stored bundles below were built from; the package still holds it
  *  unless a test edits dbState.contentRows. */
 const CONTENT: PackageContentRow[] = [
-  { sectionDbId: 13, sectionKey: '2.5', sectionLabel: 'Clinical Overview', artifactDbId: 1, title: 'Clinical overview', version: 1, ctdSection: null, contentSha256: sha256Hex('Clinical overview text') },
+  { sectionDbId: 13, sectionKey: '2.5', sectionLabel: 'Clinical Overview', sortOrder: 0, artifactDbId: 1, title: 'Clinical overview', version: 1, ctdSection: null, contentSha256: sha256Hex('Clinical overview text') },
 ];
 const CONTENT_FINGERPRINT = fingerprintPackageContent(CONTENT);
 const IDS = { applicationNumber: 'IND123456', applicantId: 'DUNS-123456789', applicantName: 'Acme Biologics Inc' };

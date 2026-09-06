@@ -17,30 +17,33 @@ import {
 } from '../package-content-fingerprint';
 
 const ROWS: PackageContentRow[] = [
-  { sectionDbId: 13, sectionKey: '2.5', sectionLabel: 'Clinical Overview', artifactDbId: 1, title: 'Clinical overview', version: 1, ctdSection: null, contentSha256: sha256Hex('Clinical overview text') },
-  { sectionDbId: 14, sectionKey: 'module3_cmc', sectionLabel: 'Module 3', artifactDbId: 2, title: 'Description', version: 3, ctdSection: '3.2.P.1', contentSha256: sha256Hex('Description') },
-  { sectionDbId: 15, sectionKey: 'cover-letter', sectionLabel: 'Cover Letter', artifactDbId: null, title: null, version: null, ctdSection: null, contentSha256: null },
+  { sectionDbId: 13, sectionKey: '2.5', sectionLabel: 'Clinical Overview', sortOrder: 0, artifactDbId: 1, title: 'Clinical overview', version: 1, ctdSection: null, contentSha256: sha256Hex('Clinical overview text') },
+  { sectionDbId: 14, sectionKey: 'module3_cmc', sectionLabel: 'Module 3', sortOrder: 0, artifactDbId: 2, title: 'Description', version: 3, ctdSection: '3.2.P.1', contentSha256: sha256Hex('Description') },
+  { sectionDbId: 15, sectionKey: 'cover-letter', sectionLabel: 'Cover Letter', sortOrder: 0, artifactDbId: null, title: null, version: null, ctdSection: null, contentSha256: null },
 ];
 const fp = (rows: PackageContentRow[]) => fingerprintPackageContent(rows);
 const sqlRows = (rows: PackageContentRow[]) =>
   rows.map((r) => ({
-    section_db_id: r.sectionDbId, section_key: r.sectionKey, section_label: r.sectionLabel,
+    section_db_id: r.sectionDbId, section_key: r.sectionKey, section_label: r.sectionLabel, sort_order: r.sortOrder,
     artifact_db_id: r.artifactDbId, title: r.title, version: r.version, ctd_section: r.ctdSection, content_sha256: r.contentSha256,
   }));
 
 describe('fingerprintPackageContent', () => {
-  it('is deterministic, order-independent and versioned', () => {
+  it('is deterministic, independent of the order rows ARRIVE in, and versioned', () => {
     expect(fp(ROWS)).toBe(fp(ROWS));
+    // Independent of row arrival order — which is not the same as being blind
+    // to the sortOrder VALUE (covered below).
     expect(fp([...ROWS].reverse())).toBe(fp(ROWS));
-    expect(CONTENT_FINGERPRINT_VERSION).toBe('v2');
+    expect(CONTENT_FINGERPRINT_VERSION).toBe('v3');
     expect(fp(ROWS)).toMatch(new RegExp(`^${CONTENT_FINGERPRINT_VERSION}:[0-9a-f]{64}$`));
     expect(isCurrentContentFingerprint(fp(ROWS))).toBe(true);
-    for (const bad of [undefined, null, '', 'v1:' + 'a'.repeat(64), 'v0:' + 'a'.repeat(64), 'a'.repeat(64), 42]) {
+    // Every earlier scheme reads as unproven, never as a match or a drift.
+    for (const bad of [undefined, null, '', 'v2:' + 'a'.repeat(64), 'v1:' + 'a'.repeat(64), 'v0:' + 'a'.repeat(64), 'a'.repeat(64), 42]) {
       expect(isCurrentContentFingerprint(bad), String(bad)).toBe(false);
     }
   });
 
-  it('CHANGES for every covered field: content, title, version, declared placement, section key, section label, a mapping added or removed, an empty section', () => {
+  it('CHANGES for every covered field: content, title, version, declared placement, section key, section label, section order, a mapping added or removed, an empty section', () => {
     const base = fp(ROWS);
     const edit = (id: number, patch: Partial<PackageContentRow>) => ROWS.map((r) => (r.artifactDbId === id ? { ...r, ...patch } : r));
     const variants = [
@@ -50,8 +53,9 @@ describe('fingerprintPackageContent', () => {
       edit(2, { ctdSection: '3.2.P.2' }),                                                // declared placement
       ROWS.map((r) => (r.sectionDbId === 14 ? { ...r, sectionKey: 'module3' } : r)),    // section key (placement)
       ROWS.map((r) => (r.sectionDbId === 14 ? { ...r, sectionLabel: 'Module 3 CMC' } : r)), // section label (leaf title)
-      ROWS.filter((r) => r.artifactDbId !== 2).concat({ sectionDbId: 14, sectionKey: 'module3_cmc', sectionLabel: 'Module 3', artifactDbId: null, title: null, version: null, ctdSection: null, contentSha256: null }), // unmapped
-      ROWS.concat({ sectionDbId: 15, sectionKey: 'cover-letter', sectionLabel: 'Cover Letter', artifactDbId: 9, title: 'Cover', version: 1, ctdSection: null, contentSha256: sha256Hex('Cover letter') }), // mapped
+      ROWS.map((r) => (r.sectionDbId === 14 ? { ...r, sortOrder: 5 } : r)),                // section order (leaf order in index.xml)
+      ROWS.filter((r) => r.artifactDbId !== 2).concat({ sectionDbId: 14, sectionKey: 'module3_cmc', sectionLabel: 'Module 3', sortOrder: 0, artifactDbId: null, title: null, version: null, ctdSection: null, contentSha256: null }), // unmapped
+      ROWS.concat({ sectionDbId: 15, sectionKey: 'cover-letter', sectionLabel: 'Cover Letter', sortOrder: 0, artifactDbId: 9, title: 'Cover', version: 1, ctdSection: null, contentSha256: sha256Hex('Cover letter') }), // mapped
       ROWS.filter((r) => r.sectionDbId !== 15),                                          // section gone
     ].map(fp);
     for (const v of variants) expect(v).not.toBe(base);
@@ -60,7 +64,7 @@ describe('fingerprintPackageContent', () => {
 
   it('cannot be forged through a key containing the separator or a newline', () => {
     const row = (sectionKey: string): PackageContentRow =>
-      ({ sectionDbId: 1, sectionKey, sectionLabel: 'x', artifactDbId: null, title: null, version: null, ctdSection: null, contentSha256: null });
+      ({ sectionDbId: 1, sectionKey, sectionLabel: 'x', sortOrder: 0, artifactDbId: null, title: null, version: null, ctdSection: null, contentSha256: null });
     expect(fp([row('x"]\n["y')])).not.toBe(fp([row('x'), row('y')]));
   });
 });

@@ -25,13 +25,18 @@ import { createHash } from 'crypto';
 
 /** Bumped whenever the covered fields or the encoding change, so a bundle
  *  fingerprinted under an older scheme reads as "cannot prove", never as a
- *  false match or a false drift. v2: title, version, section label, digest. */
-export const CONTENT_FINGERPRINT_VERSION = 'v2';
+ *  false match or a false drift. v2: title, version, section label, digest.
+ *  v3: section sort order. */
+export const CONTENT_FINGERPRINT_VERSION = 'v3';
 
 export interface PackageContentRow {
   sectionDbId: number;
   sectionKey: string;
   sectionLabel: string;
+  /** Assemble walks sections in this order, so it decides the order the leaves
+   *  appear in the backbone's index.xml — part of what the zip was built from,
+   *  even though it changes no leaf's own bytes. */
+  sortOrder: number;
   /** null: a section with no mapped artifact (ships as a placeholder leaf). */
   artifactDbId: number | null;
   title: string | null;
@@ -47,14 +52,17 @@ export function sha256Hex(text: string): string {
 }
 
 /**
- * Deterministic and order-independent: rows are encoded as JSON tuples (so a
- * `|` or newline inside a key cannot forge a boundary), sorted, then hashed.
+ * Deterministic and independent of the order the rows arrive in: rows are
+ * encoded as JSON tuples (so a `|` or newline inside a key cannot forge a
+ * boundary), sorted, then hashed. Note that this is not the same as being
+ * blind to `sortOrder`, which is a covered VALUE — a reordered section list
+ * produces a different fingerprint.
  */
 export function fingerprintPackageContent(rows: readonly PackageContentRow[]): string {
   const lines = rows.map((r) =>
     JSON.stringify([
-      r.sectionDbId, r.sectionKey, r.sectionLabel, r.artifactDbId, r.title ?? null, r.version ?? null,
-      r.ctdSection ?? null, r.contentSha256 ?? null,
+      r.sectionDbId, r.sectionKey, r.sectionLabel, r.sortOrder, r.artifactDbId, r.title ?? null,
+      r.version ?? null, r.ctdSection ?? null, r.contentSha256 ?? null,
     ]),
   );
   lines.sort();
@@ -116,7 +124,7 @@ export async function readPackageContentRows(
   orgId: number,
 ): Promise<PackageContentRow[]> {
   const { rows } = await client.query(
-    `SELECT s.id AS section_db_id, s.section_key, s.section_label,
+    `SELECT s.id AS section_db_id, s.section_key, s.section_label, s.sort_order,
             ma.artifact_db_id, ma.title, ma.version, ma.ctd_section, ma.content_sha256
        FROM c2c_package_sections s
        LEFT JOIN (
@@ -136,6 +144,9 @@ export async function readPackageContentRows(
       sectionDbId: Number(r.section_db_id),
       sectionKey: String(r.section_key ?? ''),
       sectionLabel: String(r.section_label ?? ''),
+      // The column is nullable; assemble's `asc(sortOrder)` puts NULL last in
+      // Postgres, and 0 is the schema default — both sides read it the same way.
+      sortOrder: r.sort_order == null ? 0 : Number(r.sort_order),
       artifactDbId: mapped ? Number(r.artifact_db_id) : null,
       title: mapped ? String(r.title ?? '') : null,
       version: mapped ? Number(r.version ?? 0) : null,

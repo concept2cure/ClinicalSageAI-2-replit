@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-06T01:16:59.121Z",
+  "generatedAt": "2026-09-06T01:29:30.693Z",
   "git": {
-    "sha": "8f6b773670d47d74f68d69a78baf7a6558d17685",
+    "sha": "7414f8b6c56f8b7afac87c586957ecf4f0508f75",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2084,6 +2084,10 @@
         "bytes": 117471
       },
       {
+        "file": "server/routes/submission-ops.ts",
+        "bytes": 116352
+      },
+      {
         "file": "server/services/ana/intelligence-questions/flows/protocol-development.ts",
         "bytes": 116241
       },
@@ -2134,10 +2138,6 @@
       {
         "file": "server/services/ana/intelligence-questions/flows/ind-submission.ts",
         "bytes": 108007
-      },
-      {
-        "file": "server/routes/submission-ops.ts",
-        "bytes": 106684
       }
     ],
     "largeFilesByLines": [
@@ -2222,16 +2222,16 @@
         "lines": 2967
       },
       {
+        "file": "server/routes/submission-ops.ts",
+        "lines": 2944
+      },
+      {
         "file": "server/src/routes/stability.router.ts",
         "lines": 2832
       },
       {
         "file": "server/services/__tests__/ana-ri.test.ts",
         "lines": 2759
-      },
-      {
-        "file": "server/routes/submission-ops.ts",
-        "lines": 2710
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
