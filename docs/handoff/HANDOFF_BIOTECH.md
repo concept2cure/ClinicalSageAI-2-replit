@@ -798,6 +798,64 @@ the same category as the absent `response` sequence filing path.
 Revert-proven: restoring the stored `clockDays` fails all four clock tests;
 restoring the `|| 1` default fails the refusal test.
 
+### Twenty-fourth — an IND amendment was two required sections short (2026-09-06)
+
+`evaluateIndReadiness` built its required set as
+`getRequiredSections().filter(s => isAmendment ? s.requiredForAmendment : s.required)`
+— and `getRequiredSections()` already narrows to `required === true`. Filtering
+that by `requiredForAmendment` can only ever return the intersection of the two
+flags, so a section required for an amendment but not for an initial IND was
+dropped before the predicate saw it.
+
+Two are exactly that, deliberately: **m5.3.5.1** and **m5.3.5.2**, the ICH E3
+clinical study reports for controlled and uncontrolled studies. An initial IND
+has no study results to file; an information amendment under 21 CFR 312.31(a)(2)
+reporting new clinical data does. Every amendment therefore came back with two
+required sections silently unassessed. The amendment set was 14; it is 16.
+Sourcing from `getAllINDSections()` applies the intended predicate to the whole
+set, and the initial set is byte-identical. The test helper made the same
+mistake and would have hidden the fix; it sources from the same place now.
+
+Same function, second finding: `overallPercentage` ended `totalItems === 0 ? 100`,
+its own comment calling it "vacuously 100%". An empty required set reported 100%
+with no blockers and, since `ready === blockers.length === 0`, READY TO FILE.
+Now null plus a `nothing_assessed` blocker. **Defence in depth, not proven:** no
+filing type produces an empty set (initial 30, amendment 16), so that branch is
+unreachable through the public API and carries no test seen to fail. The comment
+in the code says so.
+
+### Twenty-fifth — the same shape in five more gates (2026-09-06)
+
+Sweeping for `requiredTotal === 0 ? 100` found five more, each one line, each
+feeding a gate a user acts on. The pattern is always the constant 100 paired
+with a readiness flag derived from an emptiness test an empty set satisfies
+vacuously.
+
+| Where | Gate | What an empty set produced |
+|---|---|---|
+| `protocol-consent-logic` (45 CFR 46.116) | `readyToApprove`, enforced by `approveConsentFormTx` | a consent form with **no elements at all, approved** |
+| `protocol-development-logic` | `readyToFinalize` | an unsectioned protocol finalized |
+| `dmsp-logic` (NIH NOT-OD-21-013) | `readyToFinalize` | an empty DMS plan finalized |
+| `biosketch-logic` (FORMS-H) | `readyToFinalize` | an empty biosketch finalized |
+| `registration-projection` (FDAAA 801) | `registrable` | an empty record "ready to submit" to CT.gov / CTIS |
+
+The consent one is the most consequential and is reachable: a form created but
+never populated, or whose element rows failed to load. Its critical finding is
+not decoration — the refusal `approveConsentFormTx` throws is built by *joining
+the critical findings*, so without one the message would read "Cannot approve — "
+and stop.
+
+`dmsp`'s covering test was named "treats no elements as vacuously complete" —
+the defect written down, exactly as the TMF one was.
+
+Four of the five are reachable and revert-proven. `registration-projection` is
+marked **defence in depth** in the code alongside the IND guard above: both
+projectors build fixed module lists, so an empty set is unreachable through
+`projectRegistration`, and reaching it would mean inventing a test-only input.
+
+Every fix also carries a test that a genuinely complete form, plan, protocol or
+record STILL passes its gate, so the new state cannot swallow a real assessment.
+
 ### RESOLVED — the ESLint ratchet regression on trunk
 
 Reported here at `ee0c4bc51`: 6598 against a baseline of 6597, all `complexity`,
@@ -1112,6 +1170,8 @@ If neither has happened: report the blockage, name what is needed, and stop.
 | 2026-09-06 | A | Twenty-first — the SPL download | The SPL is nested as SPL nests it, carries the product and the NDC the user typed, and takes ids from a 128-bit derivation instead of a 32-bit hash; the two SPL generators become one; the structural check no longer passes a document missing the sections it calls required — revert-proven | §1 above |
 | 2026-09-06 | A | Twenty-second — health-authority questions | The response clock is derived from the recorded due date instead of a stored figure nothing refreshes, states overdue as overdue, and shows no countdown where no due date is recorded; the HAQ store stops defaulting to organization 1 — revert-proven | §1 above |
 | 2026-09-06 | A | Twenty-third — TMF inspection readiness | A trial with no expected artifacts indexed no longer reports 100% complete and inspection_ready, and AnA no longer says so in conversation: an empty required set is a fourth verdict, not-assessed, with a null percentage — revert-proven | §1 above |
+| 2026-09-06 | A | Twenty-fourth — IND amendment required set | An amendment is assessed against the two ICH E3 clinical study report sections it requires and was silently dropping; an empty required set is no longer 100% and ready to file — revert-proven |  §1 above |
+| 2026-09-06 | A | Twenty-fifth — five more empty-denominator gates | Informed consent, protocol finalize, DMS plan, biosketch and CT.gov/CTIS registration no longer treat "nothing recorded" as "everything done"; the consent one had been approving forms with no elements at all — four revert-proven, one marked defence in depth | §1 above |
 | | | | | |
 
 **Rule:** the last row with an empty "What was proven" cell is the open work.
