@@ -324,6 +324,15 @@ jobs:
         # 3:1 non-text floor.
         run: npm run ci:token-contrast
 
+      - name: Guardrails — theme aliases frozen to their light values
+        if: "!cancelled() && steps.install.conclusion == 'success'"
+        # A custom property is substituted where it is DECLARED, and :root is
+        # never .dark — so `--ink: var(--text-100)` at :root keeps the LIGHT
+        # value for the whole dark theme while every call site still reads
+        # var(--ink) and looks theme-aware. Found five times in one session,
+        # including once in the fix for another instance of itself.
+        run: npm run ci:frozen-theme-aliases
+
       - name: Guardrails — tenant-isolation in raw SQL (no regressions)
         if: "!cancelled() && steps.install.conclusion == 'success'"
         run: npm run ci:tenant-isolation:no-regression
