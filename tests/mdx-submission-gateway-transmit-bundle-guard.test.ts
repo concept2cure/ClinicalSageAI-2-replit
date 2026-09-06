@@ -511,6 +511,15 @@ describe('POST transmit — legitimate validated package (C2C-SUB-003)', () => {
     expect(payload!.bundleSha256).toBe(legitSha);
   });
 
+});
+
+/*
+ * Split out of the positive control above for the same reason: recording what
+ * was filed, so the NEXT eCTD sequence has a baseline to diff against, is its
+ * own concern and its own block.
+ */
+describe('POST transmit — filed-sequence history (C2C-SUB-003)', () => {
+
   it('records the sequence it just filed, so the NEXT sequence has a baseline to diff against', async () => {
     packages = [{ id: 5, orgId: CALLER_ORG, bundle: goodDescriptor({
       sequence: '0000', submissionType: 'original',
@@ -542,6 +551,17 @@ describe('POST transmit — legitimate validated package (C2C-SUB-003)', () => {
     expect(res.body.data.filedSequenceRecorded).toBe('not-applicable');
     expect(ledgerQuery.mock.calls.some((c) => /^UPDATE c2c_submission_packages/.test(String(c[0])))).toBe(false);
   });
+
+});
+
+/*
+ * Split out of the block above: the merge that added the filed-sequence tests
+ * took that describe callback to 117 lines against a 100-line limit. These are
+ * a distinct concern — what the transmit path does when the package CONTENT
+ * changed after assembly — so they get their own block rather than an arbitrary
+ * cut.
+ */
+describe('POST transmit — content changed since assembly (C2C-SUB-003)', () => {
 
   it('a content change that lands WHILE the gateway is sending is recorded on the sign row and announced in the response — never silently a clean transmit', async () => {
     packages = [{ id: 5, orgId: CALLER_ORG, bundle: goodDescriptor() }];

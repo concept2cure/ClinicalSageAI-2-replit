@@ -195,6 +195,18 @@ describe('ingest with the catalog on — the extraction tier is recorded', () =>
       extraction_error: null,
       char_count: TXT_BODY.length,
     });
+
+    /* The tenant key must be written at ingest. vault.documents gained
+       organization_id with a one-time backfill from the program, but the
+       retrieval path filters on it — so a row the INSERT leaves NULL is an
+       orphan that belongs to no tenant and is returned to none. Nothing
+       backfills a row written after the migration, which made every new upload
+       silently unretrievable. */
+    const tenant = await owner.query(
+      `SELECT organization_id FROM vault.documents WHERE id = $1`,
+      [txtDocId],
+    );
+    expect(tenant.rows[0].organization_id).toBe(orgId);
   });
 
   it('an upload extraction cannot read is recorded as a FAILURE with a reason', async () => {
@@ -324,6 +336,11 @@ describe('the read-coverage gate, end to end through the tool handlers', () => {
       { document_id: txtDocId },
       { id: otherOrgId, uuid: otherOrgUuid },
     );
-    expect(read.error).toMatch(/not found/i);
+    // Refused, and the refusal must not confirm the document exists elsewhere:
+    // "no vault document with this id is in YOUR programs" is all a foreign
+    // caller may learn.
+    expect(read.ok).toBe(false);
+    expect(read.error).toMatch(/No vault document with id/);
+    expect(read.error).not.toMatch(/another organization|belongs to|exists/i);
   });
 });

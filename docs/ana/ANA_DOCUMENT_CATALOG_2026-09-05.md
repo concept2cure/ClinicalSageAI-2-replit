@@ -66,6 +66,25 @@ Definitions are in `ALL_ANA_TOOLS_RAW` (registry-consistency suite holds
 def ↔ handler parity); handlers registered via the inject-and-sibling pattern;
 UI step labels in `agentic-loop.ts` `TOOL_LABELS`.
 
+### Two id spaces, told apart (`document-catalog-tools.ts`)
+
+`list_project_documents` returns vault documents (UUID ids) *and* chat uploads
+(`file_<epoch>_<rand>` ids) — so the obvious next call carries an id the
+read/catalog tools do not take. Both used to answer it with **"Document not
+found in your organization's programs"**: absence, reported for a file the same
+surface had just listed, which under the persona's client-files rule AnA would
+relay to the client verbatim. The listing meant to help had reintroduced the
+original defect.
+
+The refusal now distinguishes *wrong store* from *absent*. A chat-upload id is
+told it is a chat-uploaded file, that **the file exists**, which tool reads it
+(`read_uploaded_document`), and how it could gain a durable record (ingest into
+the vault). An unrecognised UUID is told plainly that the vault does not hold
+it, and pointed at the listing. Both tools' `document_id` descriptions now name
+the id space up front, so the wrong call is less likely to be made at all.
+`server/services/ana/__tests__/document-catalog-tools-id-space.test.ts` pins it;
+all three cases fail against the old single "not found".
+
 ### Passage retrieval — the vault corpus is live (`document-chunking.service.ts`)
 
 **Flag:** `ana.vault_chunking` (requires the catalog flag too) · env override `ANA_VAULT_CHUNKING_FORCE_ON=true`
@@ -95,6 +114,27 @@ as *integer* from the literal, so any float threshold failed with 22P02 —
 unreachable until the table existed. Both corpus sites now cast `$2::float8`,
 pinned by the end-to-end dbtest (`tests/db/document-catalog-recall.dbtest.ts`:
 ingest → chunks embedded → `ragRetrieve` returns the passage).
+
+### The tenant key the write path forgot (`vault-ingest.ts`)
+
+`vault.documents` gained an `organization_id` (its own migration, with a
+one-time backfill from each document's program) and the vault retrieval SQL
+gained an explicit predicate on it — correct hardening, since RLS alone was not
+the boundary. But the *write* path was never updated: the ingest INSERT did not
+list the column, and no trigger populated it. The backfill therefore repaired
+every existing row once, while **every document uploaded afterwards was written
+NULL** — and the new predicate excludes NULL by design ("an orphan document
+belongs to no tenant and is returned to none"). The net effect was silent and
+total: new uploads were invisible to the vault corpus, with nothing failing
+loudly to say so.
+
+The INSERT now writes `organization_id` from the org whose ownership of the
+program the route already verified (a caller who does not own it is refused
+before any row is written), and the `ON CONFLICT` path repairs a still-NULL row
+on re-upload without ever moving one between tenants. Two tests pin it, and
+both fail with the column omitted: a direct assertion that ingest stores the
+tenant key, and the end-to-end retrieval test — which is how the defect
+surfaced at all.
 
 ### Backfilling documents older than the feature
 

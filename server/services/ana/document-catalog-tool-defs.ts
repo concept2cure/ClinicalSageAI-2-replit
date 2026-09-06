@@ -50,7 +50,7 @@ export const READ_PROJECT_DOCUMENT: AnaTool = {
   input_schema: {
     type: 'object',
     properties: {
-      document_id: { type: 'string', description: 'The vault document UUID from list_project_documents.' },
+      document_id: { type: 'string', description: 'The vault document UUID from list_project_documents\u0027 `documents` array. NOT a chat upload\u0027s file_id (file_1712345678_ab12cd) — those come from the `chatUploads` array and are read with read_uploaded_document.' },
       max_chars: { type: 'number', description: 'Maximum characters to return in this window (default 30000, max 80000).' },
       offset: { type: 'number', description: 'Character offset to start from (default 0; advance it to page through the whole document).' },
     },
@@ -71,7 +71,7 @@ export const CATALOG_PROJECT_DOCUMENT: AnaTool = {
   input_schema: {
     type: 'object',
     properties: {
-      document_id: { type: 'string', description: 'The vault document UUID.' },
+      document_id: { type: 'string', description: 'The vault document UUID. A chat upload\u0027s file_id cannot be cataloged — durable comprehension records live on vault documents.' },
       document_kind: {
         type: 'string',
         description: 'What the document IS, specifically (e.g. "GLP 28-day rat toxicology study report", "Certificate of Analysis, batch 23-104", "Investigator CV").',
