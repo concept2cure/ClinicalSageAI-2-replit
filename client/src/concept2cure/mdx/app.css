@@ -1593,7 +1593,7 @@
   border: 1px solid var(--border-100);
   border-radius: var(--radius-md);
   overflow: hidden;
-  transition: all var(--dur) var(--ease);
+  transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
 }
 /* The kit hovers on `box-shadow: var(--shadow-xs)`, which in this cascade is
    `0 1px 0 hsl(0 0% 0% / 0)` — a shadow at alpha 0, so no hover feedback at all
@@ -1703,7 +1703,7 @@
   display: inline-flex; align-items: center; justify-content: center;
   width: 28px; height: 28px; border-radius: 999px;
   color: var(--text-400);
-  transition: all var(--dur) var(--ease);
+  transition: background var(--dur) var(--ease), color var(--dur) var(--ease);
   cursor: pointer;
 }
 .mdx-shell .docs-action-chip:hover { background: var(--accent-000); color: var(--accent-200); }
@@ -1764,7 +1764,7 @@
   padding: 12px 12px 10px; border-radius: var(--radius-md);
   background: var(--bg-000); border: 1px solid var(--border);
   text-align: left; cursor: pointer;
-  transition: all var(--dur) var(--ease);
+  transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease), transform var(--dur) var(--ease);
   font-family: inherit;
   display: flex; flex-direction: column; gap: 8px;
 }
@@ -2003,7 +2003,7 @@
   border-radius: var(--radius-md); background: var(--bg-000);
   text-align: left; cursor: pointer; font-family: inherit;
   display: flex; flex-direction: column; gap: 8px;
-  transition: all var(--dur) var(--ease);
+  transition: background var(--dur) var(--ease), border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease), transform var(--dur) var(--ease);
 }
 .mdx-shell .val-prog-card:hover { border-color: var(--border-strong); transform: translateY(-1px); }
 .mdx-shell .val-prog-card[data-on="true"] { border-color: var(--accent-100); background: var(--accent-000); }
@@ -2073,7 +2073,7 @@
   border-radius: var(--radius-md); background: var(--bg-000);
   text-align: left; cursor: pointer; font-family: inherit;
   display: flex; flex-direction: column; gap: 6px;
-  transition: all var(--dur) var(--ease);
+  transition: background var(--dur) var(--ease), border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
 }
 .mdx-shell .sub-row:hover { border-color: var(--border-strong); }
 .mdx-shell .sub-row[data-on="true"] { border-color: var(--accent-100); background: var(--accent-000); }
@@ -2178,7 +2178,7 @@
   border-radius: var(--radius-md); background: var(--bg-000);
   text-align: left; cursor: pointer; font-family: inherit;
   display: flex; flex-direction: column; gap: 8px;
-  transition: all var(--dur) var(--ease);
+  transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease), transform var(--dur) var(--ease);
   min-height: 140px;
 }
 .mdx-shell .tpl-card:hover {
@@ -3108,7 +3108,7 @@
   border: 1px solid var(--border-100);
   border-radius: var(--radius-md);
   text-align: left;
-  transition: all var(--dur) var(--ease);
+  transition: background var(--dur) var(--ease), border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
 }
 .mdx-shell .eng-dhf-cell:hover {
   border-color: var(--border);
@@ -3196,7 +3196,7 @@
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
-  transition: all var(--dur) var(--ease);
+  transition: box-shadow var(--dur) var(--ease), transform var(--dur) var(--ease);
 }
 .mdx-shell .eng-heat-cell.empty {
   color: var(--text-300);
@@ -3247,7 +3247,7 @@
   background: var(--canvas-elevated);
   border: 1px solid var(--border-100);
   border-radius: var(--radius-md);
-  transition: all var(--dur) var(--ease);
+  transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
 }
 .mdx-shell .eng-risk-row:hover {
   box-shadow: var(--shadow-xs);
@@ -3424,7 +3424,7 @@
   background: var(--canvas-elevated);
   border: 1px solid var(--border-100);
   border-radius: var(--radius-md);
-  transition: all var(--dur) var(--ease);
+  transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
 }
 .mdx-shell .pv-capa-card:hover {
   box-shadow: var(--shadow-xs);
@@ -3465,7 +3465,7 @@
   background: var(--canvas-elevated);
   border: 1px solid var(--border-100);
   border-radius: var(--radius-md);
-  transition: all var(--dur) var(--ease);
+  transition: box-shadow var(--dur) var(--ease);
 }
 .mdx-shell .pv-trend:hover {
   box-shadow: var(--shadow-xs);
@@ -3528,7 +3528,7 @@
   width: 14px;
   background: var(--bg-200);
   border-radius: 3px 3px 0 0;
-  transition: all var(--dur) var(--ease);
+  transition: background var(--dur) var(--ease);
 }
 .mdx-shell .anl-pace-col[data-thisyear="true"] .anl-pace-bar {
   background: var(--accent-100);
@@ -3599,7 +3599,7 @@
   top: 4px;
   height: 14px;
   border-radius: 2px;
-  transition: all var(--dur) var(--ease);
+  transition: background var(--dur) var(--ease);
 }
 .mdx-shell .anl-phase-bar.fast {
   background: var(--success);
@@ -3670,7 +3670,7 @@
   background: var(--canvas-elevated);
   border: 1px solid var(--border-100);
   border-radius: var(--radius-md);
-  transition: all var(--dur) var(--ease);
+  transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
 }
 .mdx-shell .anl-blocker:hover {
   box-shadow: var(--shadow-xs);
@@ -3722,7 +3722,7 @@
   background: var(--canvas-elevated);
   border: 1px solid var(--border-100);
   border-radius: var(--radius-md);
-  transition: all var(--dur) var(--ease);
+  transition: box-shadow var(--dur) var(--ease);
 }
 .mdx-shell .anl-reviewer:hover {
   box-shadow: var(--shadow-xs);
@@ -3884,7 +3884,7 @@
   background: var(--canvas-elevated);
   border: 1px solid var(--border-100);
   border-radius: var(--radius-md);
-  transition: all var(--dur) var(--ease);
+  transition: border-color var(--dur) var(--ease), box-shadow var(--dur) var(--ease);
   font-size: 12px;
 }
 .mdx-shell .eng-blocker-row:hover {
