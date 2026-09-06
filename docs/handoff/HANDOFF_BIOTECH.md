@@ -939,14 +939,35 @@ transmittal, the sequence, the release — is a surface, and the brief for this
 session is to avoid new UI. That remains open, and it is now the only thing
 between the stored manifestation and §11.50(b) being met end to end.
 
-### For the vault stream — the ESLint ratchet is +2 on trunk
+### For the vault stream — the ESLint ratchet is red on trunk, and Lint is the only failing job
 
-The ratchet measures 6598 against baseline 6596, all `max-lines-per-function`
-(1190 → 1192), and it reproduces on a clean checkout of trunk with no
-working-tree changes. `server/routes/c2c/project-vault.ts` is the only
-recently-changed file carrying that rule (4 occurrences); it was changed in
-`f53c522f4` "Audit the vault download before the bytes leave", which adds audit
-writes inside download handlers. Reported rather than changed, per §2.
+`max-lines-per-function` went 1190 → 1192. It reproduces on a clean checkout with
+no working-tree changes, and it is the ONLY thing failing: on `da2e93fcd`
+(run 11521) Lint is the sole failed job of fourteen. It has been red on every
+commit on the canonical branch since `f53c522f4`.
+
+The offenders, measured at `e36bd6bd3` — all in
+`server/routes/c2c/project-vault.ts`, the file `f53c522f4` ("Audit the vault
+download before the bytes leave") changed by adding audit writes inside the
+download handlers:
+
+```
+554:16  Function 'createProjectVaultRoutes' has too many lines (496)
+561:58  Async arrow function has too many lines (186)
+823:89  Async arrow function has too many lines (115)
+968:64  Async arrow function has too many lines (191)
+```
+
+Reported rather than changed, per §2: extracting four handlers out of a route
+file another stream is actively editing is not the one-line unblock the gateway
+stream took in `aad5583eb`, and it would conflict. Two of the four are the
+handlers that commit grew.
+
+Also seen and NOT persistent: Integration Tests failed on runs 11519 and 11520
+and passed again on 11521 with no relevant change between them. Its log tail is
+the Postgres service container's stderr — full of RLS-probe errors that are the
+tests working — so do not read a failure out of it; use `list_workflow_jobs` and
+read the step list.
 
 ### RESOLVED — the ESLint ratchet regression on trunk
 
