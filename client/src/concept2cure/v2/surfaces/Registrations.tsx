@@ -286,6 +286,12 @@ export function Registrations({ onAsk }: SurfaceViewProps) {
     .map((r) => ({ r, days: daysUntil(r.renewal_due_date) }))
     .filter((x) => x.days != null)
     .sort((a, b) => (a.days as number) - (b.days as number));
+  /* Registrations the renewal schedule cannot place: no renewal-due date on the
+     RIM record, or one that will not parse. The schedule showed only the dated
+     ones and said nothing about the rest, so a grid where three of twelve carry
+     a date read as a complete renewal plan — and the registration that lapses
+     first may well be one of the nine. */
+  const withoutRenewalDate = regs.length - renewals.length;
 
   /* What AnA can see of this screen.
      She knew the user was on "registrations" and nothing else — not how many
@@ -316,7 +322,10 @@ export function Registrations({ onAsk }: SurfaceViewProps) {
         `Market registrations: ${regs.length} registration(s) across ${countries} country/countries and ${products} product(s) — ` +
         `${approved} approved, ${review} submitted or under review` +
         (soonest
-          ? `; soonest renewal ${productLabel(soonest.r)} in ${soonest.r.country} due in ${soonest.days} day(s)`
+          ? `; of the ${renewals.length} with a recorded renewal date the soonest is ${productLabel(soonest.r)} in ${soonest.r.country}, due in ${soonest.days} day(s)`
+          : '') +
+        (withoutRenewalDate > 0
+          ? `. ${withoutRenewalDate} registration(s) carry no renewal date, so what lapses first is NOT established by this grid`
           : ''),
       facts: {
         registrationCount: regs.length,
@@ -324,6 +333,10 @@ export function Registrations({ onAsk }: SurfaceViewProps) {
         submittedOrUnderReview: review,
         countries,
         products,
+        // The renewal schedule covers only the dated registrations; naming the
+        // rest is what keeps `soonestRenewal` from reading as "what lapses first".
+        registrationsWithRenewalDate: renewals.length,
+        registrationsWithoutRenewalDate: withoutRenewalDate,
         soonestRenewal: soonest
           ? {
               product: productLabel(soonest.r),
@@ -340,7 +353,7 @@ export function Registrations({ onAsk }: SurfaceViewProps) {
         'Switch between the registrations grid and the data-standards view',
       ],
     };
-  }, [grid.loading, grid.error, regs, approved, review, countries, products, renewals, tab]);
+  }, [grid.loading, grid.error, regs, approved, review, countries, products, renewals, withoutRenewalDate, tab]);
   usePublishSurfaceContext('registrations', anaContext);
 
   // Group the real rows by product for the design's grouped table layout.
@@ -469,6 +482,12 @@ export function Registrations({ onAsk }: SurfaceViewProps) {
                 ))}
               </tbody>
             </table>
+          )}
+          {!grid.loading && !grid.error && withoutRenewalDate > 0 && (
+            <div className="reg-pad reg-note">
+              {withoutRenewalDate} registration(s) carry no renewal-due date in RIM and are not on this
+              schedule. What lapses first is not established until every registration carries one.
+            </div>
           )}
         </div>
       )}
