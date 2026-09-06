@@ -31,6 +31,11 @@ import { verifyToken as verifyMfaToken, isMfaEnabled } from '../services/mfaServ
 import { writeChainedAuditRow } from '../services/auditService';
 import { buildVersionBindingDigest } from '../services/part11/version-binding.js';
 import { isSigningAuthorized } from '../services/part11/signing-authority';
+import { reverifySigner } from '../services/part11/reverify-signer.js';
+import {
+  signerReverificationDeps,
+  loadPasswordHash,
+} from '../services/part11/reverify-signer-deps.js';
 import {
   persistElectronicSignature,
   BINDING_BASIS,
@@ -53,22 +58,9 @@ function resolveUserRole(req: Request): string {
   return String(raw).trim().toLowerCase();
 }
 
-async function loadUserPasswordHash(userId: number): Promise<string | null> {
-  try {
-    // tenant-isolation-safe: re-auth self-lookup — userId is the authenticated user's own session id (resolveUserId, never client-supplied); users is a global identity keyed by PK.
-    const result = await pool.query(
-      `SELECT password_hash FROM users WHERE id = $1 LIMIT 1`,
-      [userId]
-    );
-    return result.rows[0]?.password_hash || null;
-  } catch (err: any) {
-    // Schema drift / table missing — fail closed.
-    if (err?.code !== '42P01') {
-      console.warn('[esignature] password lookup failed:', err?.message);
-    }
-    return null;
-  }
-}
+/* The password loader lives in services/part11/reverify-signer-deps.ts so the
+   signing path and this pre-check verify against the same read. */
+const loadUserPasswordHash = loadPasswordHash;
 
 /**
  * POST /api/esignature/verify-password
@@ -219,57 +211,27 @@ router.post('/sign', async (req: Request, res: Response) => {
     });
   }
 
-  // 21 CFR Part 11 §11.200(a)(1): RE-VERIFY the signer's identity server-side at
-  // the moment of signing. We never trust a client-supplied "already verified"
-  // flag — the password (first factor) and, when the user has MFA enabled, the
-  // TOTP/backup code (second factor) are checked here against stored credentials.
-  if (typeof password !== 'string' || password.length === 0) {
-    return res.status(400).json({ error: 'password is required to sign (Part 11 §11.200)' });
+  /* 21 CFR Part 11 §11.200(a)(1): RE-VERIFY the signer's identity server-side at
+     the moment of signing — the password, and the second factor when enrolled.
+     This block used to be inline here, correctly, and was NOT used by the other
+     signing surface, which took a client-asserted `secondFactorVerified` boolean
+     instead. It now lives in services/part11/reverify-signer.ts so both call the
+     same policy; see that module's header for the history. */
+  const reverified = await reverifySigner(
+    userId,
+    { password, mfaToken },
+    signerReverificationDeps(),
+  );
+  if (!reverified.ok) {
+    return res.status(reverified.status).json({ error: reverified.error, code: reverified.code });
   }
-  const passwordHash = await loadUserPasswordHash(userId);
-  let passwordVerified = false;
-  if (passwordHash) {
-    try {
-      passwordVerified = await bcrypt.compare(password, passwordHash);
-    } catch (err: any) {
-      console.warn('[esignature] bcrypt compare failed during sign:', err?.message);
-      passwordVerified = false;
-    }
-  }
-  if (!passwordVerified) {
-    return res.status(401).json({ error: 'Signature rejected: password verification failed (§11.200)' });
-  }
-
-  // Second factor: required only when the signer actually has MFA enabled. When
-  // enabled, the server must verify the supplied token — a missing/invalid token
-  // (or any failure of the MFA service) fails closed.
-  let mfaRequired = false;
-  let secondFactorVerified = false;
-  try {
-    mfaRequired = await isMfaEnabled(userId);
-  } catch (err: any) {
-    // Cannot determine MFA state → fail closed rather than skip the factor.
-    console.warn('[esignature] isMfaEnabled check failed:', err?.message);
-    return res.status(401).json({ error: 'Signature rejected: unable to verify second factor (§11.200)' });
-  }
-  if (mfaRequired) {
-    if (typeof mfaToken !== 'string' || !/^\d{6}$/.test(mfaToken)) {
-      return res.status(400).json({ error: 'mfaToken (6 digits) is required to sign; MFA is enabled for this account (§11.200)' });
-    }
-    try {
-      secondFactorVerified = await verifyMfaToken(userId, mfaToken);
-    } catch (err: any) {
-      console.warn('[esignature] MFA verify failed during sign:', err?.message);
-      secondFactorVerified = false;
-    }
-    if (!secondFactorVerified) {
-      return res.status(401).json({ error: 'Signature rejected: second-factor verification failed (§11.200)' });
-    }
-  }
-
-  // Server-derived validity — never a client boolean. Both required factors
-  // passed by the time we get here.
-  const signatureIsValid = passwordVerified && (!mfaRequired || secondFactorVerified);
+  /* Server-derived, never a client boolean. `reverifySigner` returns ok ONLY
+     when the password verified and, where a second factor is enrolled, the
+     token verified too — so reaching this line is itself the proof that every
+     required factor passed. `secondFactorVerified` distinguishes the two valid
+     shapes (password alone vs password+MFA) for the persisted row. */
+  const secondFactorVerified = reverified.secondFactorVerified;
+  const signatureIsValid = true;
 
   // Load signer profile so signer_name / signer_email are denormalised on
   // the signature row (required for offline audit reproduction per Part 11).
@@ -414,7 +376,10 @@ router.post('/sign', async (req: Request, res: Response) => {
       signerName,
       signerTitle: resolvedSignerTitle,
       signerEmail,
-      authenticationMethod: 'password+totp',
+      /* Was hardcoded 'password+totp' regardless of whether a second factor
+         was ever presented — a false statement on a Part 11 record for any
+         signer without MFA enrolled. Now reports what was actually verified. */
+      authenticationMethod: reverified.authenticationMethod,
       authenticationTimestamp: signedAt,
       secondFactorVerified,
       signatureHash,
