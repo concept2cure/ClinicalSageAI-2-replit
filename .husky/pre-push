@@ -137,6 +137,24 @@ if ! npm run --silent ci:migration-set-order 2>&1; then
 fi
 echo "   ✅ Migration apply-order passed."
 
+# The sibling hazard to apply-order, and the same shape of invisible: the
+# applier re-executes EVERY file on every deploy (scripts/db/migration-set.mjs
+# applyMigrationFiles — no skip branch; the journal records a drift status the
+# caller discards). So a DROP of something another file in the set re-creates
+# either reverts on the next deploy or re-runs forever, and the deploy is green
+# both ways. Cheap: it reads the files, no database.
+echo "   Validating DROPs are replay-safe..."
+if ! npm run --silent ci:migration-drop-safety 2>&1; then
+  echo ""
+  echo "🚫 ERROR: Replay-safe DROP check FAILED."
+  echo "   Every migration re-runs on every deploy, so a DROP cannot remove what"
+  echo "   another file in the set re-creates. Amend the creating migration in"
+  echo "   place (CLAUDE.md RULE 1) instead of appending a DROP."
+  echo ""
+  exit 1
+fi
+echo "   ✅ Replay-safe DROPs passed."
+
 # Cheap, no database, and guards a privilege-escalation footgun: `SET
 # app.bypass_rls` is SESSION-scoped, so it survives client.release() and the
 # next checkout — a different tenant — inherits a full RLS bypass across 142

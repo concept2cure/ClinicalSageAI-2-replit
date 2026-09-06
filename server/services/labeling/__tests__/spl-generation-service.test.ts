@@ -104,13 +104,38 @@ describe('validateSplStructure', () => {
     );
   });
 
-  it('flags missing sections with warnings', () => {
+  /* These were warnings, so a document with no Indications, no Warnings and no
+     Dosage came back `valid: true` — and the surface says "It passes the
+     structural check". The function's own message calls them required. */
+  it('a document missing the required sections does not pass', () => {
     const minimal = '<document><id root="abc-123"/></document>';
     const result = validateSplStructure(minimal);
 
-    // Should have warning for missing component and warnings for each missing section code
-    const warnings = result.findings.filter((f) => f.severity === 'warning');
-    expect(warnings.length).toBeGreaterThanOrEqual(5);
+    expect(result.valid).toBe(false);
+    const missing = result.findings.filter(
+      (f) => f.rule.startsWith('section-') && f.severity === 'error',
+    );
+    expect(missing.length).toBe(5);
+  });
+
+  /* SPL nests sections document/component/structuredBody/component/section.
+     The `<component>` probe matches the SECTION wrappers, so a flat document
+     satisfied it and nothing else looked. */
+  it('sections outside component/structuredBody do not pass', () => {
+    const flat =
+      '<document><id root="abc"/>' +
+      ['34089-3', '34067-9', '34070-3', '34071-1', '34068-7']
+        .map((c) => `<component><section><code code="${c}"/></section></component>`)
+        .join('') +
+      '</document>';
+    const result = validateSplStructure(flat);
+
+    expect(result.valid).toBe(false);
+    expect(result.findings).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ rule: 'structured-body', severity: 'error' }),
+      ]),
+    );
   });
 
   it('flags missing id element', () => {
@@ -138,5 +163,61 @@ describe('validateSplStructure', () => {
   it('rejects non-string input', () => {
     expect(() => validateSplStructure(null as any)).toThrow('xml is required');
     expect(() => validateSplStructure('' as any)).toThrow('xml is required');
+  });
+});
+
+/**
+ * What the convenience layer used to emit, and what a customer got.
+ *
+ * The LabelingPi surface collects an NDC, POSTs it to /api/labeling-pi/spl, and
+ * downloads the result as the submission format. The NDC appeared nowhere in
+ * that file; the sections sat directly under <document> rather than inside
+ * component/structuredBody, so the XML would not load into FDA's tooling; and
+ * ids came from a 32-bit string hash, which is not a space to put a setId in.
+ */
+describe('generateSplXml — the document is an SPL document', () => {
+  it('nests sections in component/structuredBody, as SPL does', () => {
+    const { xml } = generateSplXml(VALID_INPUT);
+    expect(xml).toContain('<structuredBody>');
+    // …and the validator agrees, which is what the surface renders.
+    expect(validateSplStructure(xml).valid).toBe(true);
+  });
+
+  it('carries the NDC the caller supplied, on FDA’s NDC code system', () => {
+    const { xml } = generateSplXml(VALID_INPUT);
+    expect(xml).toContain('code="12345-678-90"');
+    expect(xml).toContain('codeSystem="2.16.840.1.113883.6.69"');
+  });
+
+  it('carries the product and its ingredients as subject/manufacturedProduct', () => {
+    const { xml } = generateSplXml(VALID_INPUT);
+    const subject = xml.slice(xml.indexOf('<subject>'), xml.indexOf('</subject>'));
+    expect(subject).toContain('<manufacturedProduct>');
+    expect(subject).toContain('Testazolam');
+    expect(subject).toContain('Mockitol');
+    expect(subject).toContain('10 mg');
+  });
+
+  it('gives two different products different set ids', () => {
+    const a = generateSplXml(VALID_INPUT);
+    const b = generateSplXml({ ...VALID_INPUT, productName: 'OtherDrug ER' });
+    const setId = (xml: string) => /<setId root="([^"]+)"/.exec(xml)?.[1];
+    expect(setId(a.xml)).toBeTruthy();
+    expect(setId(a.xml)).not.toBe(setId(b.xml));
+    // A real 128-bit id, not a 32-bit hash smeared into UUID shape.
+    expect(setId(a.xml)).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/);
+  });
+
+  /* setId is the identity FDA uses to say "this is a new version of that
+     label". It must NOT move between versions; the document id must. */
+  it('a new version keeps the set id and takes a new document id', () => {
+    const v1 = generateSplXml({ ...VALID_INPUT, version: 1 }).xml;
+    const v2 = generateSplXml({ ...VALID_INPUT, version: 2 }).xml;
+    const setId = (xml: string) => /<setId root="([^"]+)"/.exec(xml)?.[1];
+    const docId = (xml: string) => /<id root="([^"]+)"/.exec(xml)?.[1];
+
+    expect(setId(v2)).toBe(setId(v1));
+    expect(docId(v2)).not.toBe(docId(v1));
+    expect(v2).toContain('<versionNumber value="2"');
   });
 });

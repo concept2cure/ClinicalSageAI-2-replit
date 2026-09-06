@@ -1846,6 +1846,18 @@ export const C2C_MIGRATION_FILES = [
   // the records are dispositioned picks it up with no edit.
   'db/migrations/20260901_drop_dead_audit_tables.sql',
 
+  // vault.documents gains a tenant key, backfilled from the owning program, with
+  // unattributable rows left NULL and indexed rather than guessed. Ordered here
+  // because it must run after every file that shapes vault.documents (044c
+  // creates it; 20260821 reconciles its columns; 20260823 adds the placement
+  // columns) and after regulatory_programs exists to backfill from.
+  //
+  // Purely additive: no policy, no FORCE, no NOT NULL. Neither isolation sweep
+  // will pick it up — the integer sweep is public-only and the non-public one is
+  // an explicit uuid-keyed list — which is stated in the migration's own header
+  // so nobody reads the column as isolation it does not provide.
+  'migrations/20260905_vault_documents_organization_id.sql',
+
   UUID_TENANT_ISOLATION_NONPUBLIC,
 
   // ── Tenant isolation for everything the set just created (ledger C-33) ───

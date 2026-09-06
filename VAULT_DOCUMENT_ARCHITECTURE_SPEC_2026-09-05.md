@@ -283,7 +283,8 @@ replacement exists.
 | # | Step | Deletes | Notes |
 |---|---|---|---|
 | 0 | Migration-amendment policy, in `CLAUDE.md` | — | Blocks everything else. Half a day. |
-| 1 | `organization_id` + `document_type_id` on `vault.documents`; `submission_leaves.document_id` UUID fix | nothing | Pure unblocking. Makes a vault document leafable. |
+| 1a | `organization_id` on `vault.documents`, backfilled, unattributable rows quarantined | nothing | **Shipped** — `migrations/20260905_vault_documents_organization_id.sql`. |
+| 1b | `submission_leaves.document_id` INTEGER → TEXT + `document_version_id` | nothing | Its own change: ~128 coercion sites, and a surviving `Number()` yields `NaN`, resolves to nothing and ships an incomplete sequence silently. |
 | 2 | `regulatory_structure_versions` / `_nodes`, seeded **mechanically from `c2c_rule_packs`** | nothing | Zero transcription risk — the rows already exist. |
 | 3 | `regulatory_document_types` + generated-constant drift test, then the `vault-taxonomy.ts` deletions in one commit | the three vocabularies | The zero-duplication change. |
 | 4 | `document_placements` + the `20260823` amendment | `folder_id`, `ctd_section`, `evidence_kind` | Where the architecture actually lands. |
@@ -309,7 +310,21 @@ plausible one reports a number.
 
 ## 8. What I would do first
 
-Step 0, then step 1. Step 0 is half a day of writing a policy and is the thing that makes every
-subsequent DDL real rather than inert. Step 1 is two columns and a type change, deletes nothing, and
-closes the single most important parity gap in the previous assessment: a document in the Vault can
-finally become a submission.
+Step 0, then step 1. **Both are now done** — step 0 as `RULE 1` in `CLAUDE.md` with
+`ci:migration-drop-safety` enforcing it, step 1a as
+`migrations/20260905_vault_documents_organization_id.sql`.
+
+**A correction to this table's original step 1.** It listed `document_type_id` alongside
+`organization_id`, which cannot be added before `regulatory_document_types` exists in step 3. It
+belongs there, and has moved.
+
+**Step 1b is deliberately not bundled with 1a.** Widening `submission_leaves.document_id` from
+INTEGER to TEXT touches ~128 `documentId` coercion sites across the server. Its failure mode is a
+surviving `Number()` that yields `NaN`, resolves to no leaf, and ships an incomplete sequence with a
+valid-looking checksum — precisely the class `leaf-source-resolver.ts` was written to end.
+Landing that in the same commit as a schema addition is how that bug reaches an agency. Change the
+type first with zero behaviour change, let the compiler enumerate the call sites, and assert in
+`leafSourceKey` that a non-numeric id never reaches `Number()`.
+
+So: after 1a, a vault document has a tenant. It still cannot become a leaf until 1b lands. That is
+one of the two blockers removed, not both, and the remaining one is named.

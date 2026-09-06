@@ -704,6 +704,64 @@ screen as "no regulator interactions recorded", the same class the CMC board's
 nineteenth entry fixed. Reaching it means changing the shared reader every v2
 surface uses, which is a wider change than this one.
 
+### Twenty-first — the SPL a customer downloads (2026-09-06)
+
+LabelingPi's SPL tab collects product identity, POSTs it with the org's own
+stored USPI prose, and downloads the result as the FDA submission format. Four
+findings, the last of which is that the screen said the first three were fine.
+
+**Sections sat outside `structuredBody`.** SPL nests them
+document/component/structuredBody/component/section; `spl-generation-service`
+emitted them as direct children of `<document>`, so the file would not load into
+FDA's tooling. `validateSplStructure` did not notice: its only nesting probe
+looks for a `<component>` tag, and the section wrappers *are* `<component>` — so
+the toast read "It passes the structural check".
+
+**The NDC and route were accepted and dropped.** There was no
+`subject/manufacturedProduct` element at all; the product appeared only inside a
+prose DESCRIPTION sentence. A drug label document without its product element is
+not a drug label, and an NDC the user typed should not vanish.
+
+**Ids came from a 32-bit string hash** smeared into UUID shape. `setId` is the
+identity FDA uses to decide two submissions are versions of the same labeling; a
+32-bit space shared across every tenant is a collision waiting to be someone
+else's label.
+
+**Zero duplication.** `spl-generation-service` no longer assembles XML: it maps
+its inputs onto an `SplSpec` and hands assembly to `spl-generator`, which
+already nested `structuredBody`, derived sha1-wide GUIDs, and derived the
+document id from `setId + version` so a new version takes a new document id.
+`SplSpec` gains an optional `product` block (name, NDC on code system
+2.16.840.1.113883.6.69, ingredients, route) that both entry points carry — AnA
+called one module, the route the other, and they disagreed. The duplicate
+assembly, its GUID function and its section builder are deleted.
+
+`validateSplStructure` also stops disagreeing with itself: a section its own
+message calls "required" was a warning, so a document with no Indications and no
+Dosage came back `valid: true`. Those are errors now, as is a section outside
+`component/structuredBody`.
+
+Recorded at the call site, not fixed: `labeling_pi_sections` holds no label
+version, so every SPL this route builds is version 1 of its setId. FDA expects
+the version to advance for each new version of the same labeling, so a
+resubmission after a label change needs a version the store does not hold.
+`SplGenerationInput` takes one the moment there is something to read.
+
+Revert-proven: restoring the previous `spl-generation-service` fails six of the
+seven new tests — structuredBody nesting, the NDC, the product element, the
+version/document-id relationship, and both validator rules.
+
+### For the device stream — the ESLint ratchet is red on trunk, and not from here
+
+As of `ee0c4bc51` the ratchet reports 6598 against a baseline of 6597, all of it
+`complexity` (1688 → 1689). It reproduces on a clean checkout of trunk with no
+working-tree changes, so it is not from the labeling or agency-meetings work.
+`server/routes/device-projects.ts` now carries three `complexity` warnings —
+the handler at :72, `validatePatch` at :174 (extracted in `906c94faf`), and the
+handler at :213 — where it carried two. Extracting `validatePatch` left both the
+new function and the handler over the threshold. This is the device stream's
+file per §2, so it is reported rather than changed.
+
 ### Note for the concurrent device stream
 
 On 2026-09-04, at JM's direct instruction to complete the biotech/pharma workflow
@@ -959,6 +1017,7 @@ If neither has happened: report the blockage, name what is needed, and stop.
 | 2026-09-06 | A | Eighteenth — agency-correspondence loop | The overdue-IR KPI counts the store instead of the overdue rows of a 50-row page; truncation and totals are published; the board route gains its first test — revert-proven | §1 above |
 | 2026-09-06 | A | Nineteenth — unreadable vs unprovisioned on the CMC board | A failed read of the agency-question store no longer reads as "0 information requests overdue": 42P01 is told apart from a failed read, `irOverdue` is null when unknown, and both the tile and the lead say the count is not established — revert-proven | §1 above |
 | 2026-09-06 | A | Twentieth — the agency-meeting request | The audit entry the request dialog promises is now written in the same transaction as the row (or the request is refused); the pending clock names the agency that holds the request instead of the FDA every time; request ids no longer collide within a millisecond — revert-proven | §1 above |
+| 2026-09-06 | A | Twenty-first — the SPL download | The SPL is nested as SPL nests it, carries the product and the NDC the user typed, and takes ids from a 128-bit derivation instead of a 32-bit hash; the two SPL generators become one; the structural check no longer passes a document missing the sections it calls required — revert-proven | §1 above |
 | | | | | |
 
 **Rule:** the last row with an empty "What was proven" cell is the open work.

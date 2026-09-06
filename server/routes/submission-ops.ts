@@ -265,7 +265,7 @@ router.get('/packages/:packageId', async (req: Request, res: Response) => {
       .select()
       .from(c2cPackageSections)
       .where(eq(c2cPackageSections.packageDbId, pkg.id))
-      .orderBy(asc(c2cPackageSections.sortOrder));
+      .orderBy(asc(c2cPackageSections.sortOrder), asc(c2cPackageSections.id));
 
     res.json({ data: { ...pkg, sections } });
   } catch (e) {
@@ -296,7 +296,7 @@ router.get('/packages/:packageId/sections', async (req: Request, res: Response) 
       .select()
       .from(c2cPackageSections)
       .where(eq(c2cPackageSections.packageDbId, pkg.id))
-      .orderBy(asc(c2cPackageSections.sortOrder));
+      .orderBy(asc(c2cPackageSections.sortOrder), asc(c2cPackageSections.id));
 
     res.json({ data: sections });
   } catch (e) {
@@ -316,16 +316,20 @@ router.get('/packages/:packageId/sections', async (req: Request, res: Response) 
  * row write in the SAME transaction as the package's content-revision bump and
  * stale-bundle clear — see services/ectd/package-content-change.
  */
+// The key becomes a leaf path component through leafSlug, so surrounding
+// whitespace is stripped rather than stored: ' 2.5 ' and '2.5' must not be two
+// different sections that file their leaves at two different paths. The value
+// is otherwise never rewritten — same contract as the identifiers route.
 const createSectionSchema = z.object({
-  sectionKey: z.string().min(1).max(120),
-  sectionLabel: z.string().min(1).max(300),
+  sectionKey: z.string().trim().min(1).max(120),
+  sectionLabel: z.string().trim().min(1).max(300),
   sortOrder: z.number().int().min(0).max(10000).optional(),
   reason: z.string().min(8, 'reason must be at least 8 characters'),
 });
 const updateSectionSchema = z
   .object({
-    sectionKey: z.string().min(1).max(120).optional(),
-    sectionLabel: z.string().min(1).max(300).optional(),
+    sectionKey: z.string().trim().min(1).max(120).optional(),
+    sectionLabel: z.string().trim().min(1).max(300).optional(),
     sortOrder: z.number().int().min(0).max(10000).optional(),
     reason: z.string().min(8, 'reason must be at least 8 characters'),
   })
@@ -1264,7 +1268,7 @@ router.get('/hotspots', async (req: Request, res: Response) => {
       .select()
       .from(c2cPackageSections)
       .where(eq(c2cPackageSections.packageDbId, pkg.id))
-      .orderBy(asc(c2cPackageSections.sortOrder));
+      .orderBy(asc(c2cPackageSections.sortOrder), asc(c2cPackageSections.id));
 
     const hotspots = await Promise.all(
       sections.map(async (section: any) => {
@@ -1996,12 +2000,16 @@ router.post('/packages/:packageId/assemble', async (req: Request, res: Response)
       });
     }
 
-    // Load sections (same query as the sections route).
+    // Load sections (same query as the sections route). The row id breaks a
+    // tie on sortOrder: without it two sections sharing an order come back in
+    // whatever order Postgres chooses, and this loop decides both the leaf
+    // order in the backbone and which of two colliding leaf names takes the
+    // `-2` suffix — so the same content could assemble to different bytes.
     const sections = await db
       .select()
       .from(c2cPackageSections)
       .where(eq(c2cPackageSections.packageDbId, pkg.id))
-      .orderBy(asc(c2cPackageSections.sortOrder));
+      .orderBy(asc(c2cPackageSections.sortOrder), asc(c2cPackageSections.id));
 
     // Resolve region/format up front so leaf paths can be routed to the correct
     // ICH module region directory.
