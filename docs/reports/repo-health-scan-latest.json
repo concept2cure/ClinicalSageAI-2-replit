@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-06T06:31:24.994Z",
+  "generatedAt": "2026-09-06T06:54:59.613Z",
   "git": {
-    "sha": "9f48c6c5a5807374d7234f169322a7f96396b8ce",
+    "sha": "f4f837cd39f92d26664047dd1ef0119b62cfa9cf",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2057,7 +2057,7 @@
       },
       {
         "file": "server/services/mutagenic-impurity/mutagenic-impurity-knowledge.ts",
-        "bytes": 132966
+        "bytes": 133020
       },
       {
         "file": "server/services/cmc-quality/cmc-quality-knowledge.ts",
