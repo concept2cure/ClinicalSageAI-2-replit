@@ -1068,6 +1068,61 @@ strongest candidate to fix, since it feeds a model's answer and every route
 caller could supply the org. The durable win is that no NEW escape can be added
 silently.
 
+### Thirty-first — AnA stopped reading across tenants into a prompt (2026-09-06)
+
+The rule added in the thirtieth entry immediately earned itself. Four reads of
+`project_memory_entries` in `ana-ri/context-enrichment.ts` carried the escape,
+with a comment saying a NULL `$2` is for "legacy paths without org context" and
+"preserves prior behavior exactly". What it preserved was a read across every
+tenant — and **what these functions return goes into a model's prompt**, so
+another sponsor's notes and decisions would have been summarised back to the
+user as their own context.
+
+Not a redesign, a consistency correction: `enrichWithClientJourney` and
+`enrichWithAgentActivity`, in this same file, already returned `''` without an
+org. The memory reads now agree with them. Both callers already pass the
+request's resolved organization; they simply let `undefined` through.
+
+Tested through `/claims`, which dispatches the enricher deterministically rather
+than hoping a natural-language trigger fires: no org → **zero**
+`project_memory_entries` reads issued; org 7 → every read carries
+`organization_id = $2` bound to 7. Revert-proven. Baseline 12 → 10.
+
+### TRUNK IS RED, TWICE, AND NEITHER IS FROM THIS SESSION
+
+Both reproduce on a clean checkout with no working-tree changes. Both fail the
+**Lint** job, so every commit on the branch is red.
+
+**1. `ci:eslint-ratchet` — 6597 vs baseline 6596**, all `max-lines-per-function`.
+Offenders pinned at `e36bd6bd3`, all in `server/routes/c2c/project-vault.ts`,
+the file `f53c522f4` ("Audit the vault download before the bytes leave") grew by
+adding audit writes inside the download handlers:
+
+```
+554:16  Function 'createProjectVaultRoutes' has too many lines (496)
+561:58  Async arrow function has too many lines (186)
+823:89  Async arrow function has too many lines (115)
+968:64  Async arrow function has too many lines (191)
+```
+
+**2. `ci:typecheck:no-regression` — baseline 0, now 3 errors.** All TS2493 in
+`server/routes/__tests__/authoringAiDraftStructured.test.ts` at L133, L159 and
+L160: `createDraftCandidate.mock.calls[0]` is inferred as the empty tuple `[]`,
+so `call[2]` and `call[7]` have no such index. Test-file only, no behaviour —
+the fix is a cast on the `mock.calls[0]` read, the same class hit and fixed in
+`part11-signatures-by-target.test.ts` the same day.
+
+Both reported rather than changed, per §2: extracting four handlers from a route
+file another stream is actively editing is not the one-line unblock the gateway
+stream took in `aad5583eb`, and the test file belongs to whoever is mid-edit on
+it. If either is still red after several check-ins, the typecheck one is the
+safer of the two to take.
+
+Also seen and NOT persistent: Integration Tests failed on runs 11519 and 11520
+and passed again on 11521 with no relevant change. Its log tail is the Postgres
+service container's stderr — full of RLS-probe errors that are the tests
+working — so do not read a failure out of it; use `list_workflow_jobs`.
+
 ### For the vault stream — the ESLint ratchet is red on trunk, and Lint is the only failing job
 
 `max-lines-per-function` went 1190 → 1192. It reproduces on a clean checkout with
@@ -1419,6 +1474,7 @@ If neither has happened: report the blockage, name what is needed, and stop.
 | 2026-09-06 | A | Twenty-eighth — RIM registration dates | A hand-typed renewal or approval date is refused by name and format instead of coming back as Postgres's own syntax error through a fail() that passed any unmapped exception text to the caller — revert-proven | §1 above |
 | 2026-09-06 | A | Twenty-ninth — clinical-operations tenancy | A request with no tenant context read EVERY organization's studies, sites, enrollment, monitoring visits and protocol deviations, and could UPDATE another sponsor's study by id; the router gains a gate and all fifteen predicates become unconditional — revert-proven, and the escape swept across the server (4 authorized admin views, 1 recorded) | §1 above |
 | 2026-09-06 | A | Thirtieth — IND + kernel tenancy, and the gate rule | An IND application was listable, readable, updatable and deletable across every sponsor, and the kernel audit trail listable; ci:tenant-isolation gained the optional-tenant-predicate rule that should have caught all three, seen failing on the real defect after a first regex that missed it — baseline 2 → 12, each frozen entry justified in writing | §1 above |
+| 2026-09-06 | A | Thirty-first — AnA context enrichment | Four reads of project_memory_entries that fed a MODEL'S PROMPT stopped falling back to an unscoped read when the caller had no organization; they now behave like the two enrichers in the same file that already refused — revert-proven, baseline 12 → 10 | §1 above |
 | | | | | |
 
 **Rule:** the last row with an empty "What was proven" cell is the open work.
