@@ -1024,7 +1024,7 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
                  believable claim. */
               <div className="scaf-note" role="alert" style={{ margin: '8px 0 0', color: 'var(--error)' }}>
                 The vault could not be searched, so nothing was searched — this is
-                not a result of zero matches. {redactInternals(searchState.error)}
+                not a result of zero matches. {redactInternals(searchState.error, 'The search did not complete.')}
               </div>
             )}
             {searching && searchState.loading && !searchState.error && (

@@ -34,6 +34,10 @@ vi.mock('../../../services/governed-ana-execution.js', () => ({
 
 import router from '../module3OperatingSystemRoutes';
 
+// The compiler's record of a fully established section. Approved fixtures carry
+// it so each test below fails on the ONE defect it names, not on completeness.
+const COMPLETE = { completeness: 100, missingInputs: [] as string[] };
+
 describe('module3OperatingSystemRoutes', () => {
   const app = express();
   app.use(express.json());
@@ -59,7 +63,7 @@ describe('module3OperatingSystemRoutes', () => {
 
   it('returns readiness snapshot from canonical section/contradiction data', async () => {
     mockQuery
-      .mockResolvedValueOnce({ rows: [{ approval_state: 'approved', stale: false }, { approval_state: 'draft', stale: true }] })
+      .mockResolvedValueOnce({ rows: [{ approval_state: 'approved', stale: false, deterministic_json: COMPLETE }, { approval_state: 'draft', stale: true }] })
       .mockResolvedValueOnce({ rows: [{ severity: 'critical', status: 'open' }, { severity: 'high', status: 'resolved' }] })
       // Provenance coverage: sections with no cmc_section_lineage row.
       .mockResolvedValueOnce({ rows: [{ n: 0 }] });
@@ -178,7 +182,7 @@ describe('module3OperatingSystemRoutes', () => {
 
   it('blocks final export when not all sections approved and critical contradictions open', async () => {
     mockQuery
-      .mockResolvedValueOnce({ rows: [{ approval_state: 'approved' }, { approval_state: 'draft' }] })
+      .mockResolvedValueOnce({ rows: [{ approval_state: 'approved', deterministic_json: COMPLETE }, { approval_state: 'draft' }] })
       .mockResolvedValueOnce({ rows: [{ severity: 'critical', status: 'open' }] })
       .mockResolvedValueOnce({ rows: [{ n: 0 }] });
 
@@ -193,7 +197,7 @@ describe('module3OperatingSystemRoutes', () => {
     // guard SELECTed no `stale` column and hardcoded isStale:false, so this exported
     // silently, shipping an approval that no longer matched its source.
     mockQuery
-      .mockResolvedValueOnce({ rows: [{ approval_state: 'approved', stale: false }, { approval_state: 'approved', stale: true }] })
+      .mockResolvedValueOnce({ rows: [{ approval_state: 'approved', stale: false, deterministic_json: COMPLETE }, { approval_state: 'approved', stale: true, deterministic_json: COMPLETE }] })
       .mockResolvedValueOnce({ rows: [] })
       .mockResolvedValueOnce({ rows: [{ n: 0 }] });
 
@@ -210,7 +214,7 @@ describe('module3OperatingSystemRoutes', () => {
     // to the governed fabric as the literal `true`, which disabled a REQUIRED
     // export check ("audit trail required for export").
     mockQuery
-      .mockResolvedValueOnce({ rows: [{ approval_state: 'approved', stale: false }, { approval_state: 'approved', stale: false }] })
+      .mockResolvedValueOnce({ rows: [{ approval_state: 'approved', stale: false, deterministic_json: COMPLETE }, { approval_state: 'approved', stale: false, deterministic_json: COMPLETE }] })
       .mockResolvedValueOnce({ rows: [] })
       .mockResolvedValueOnce({ rows: [{ n: 1 }] });
 
@@ -222,7 +226,7 @@ describe('module3OperatingSystemRoutes', () => {
 
   it('readiness is not export-ready when a section has no recorded source lineage', async () => {
     mockQuery
-      .mockResolvedValueOnce({ rows: [{ approval_state: 'approved', stale: false }] })
+      .mockResolvedValueOnce({ rows: [{ approval_state: 'approved', stale: false, deterministic_json: COMPLETE }] })
       .mockResolvedValueOnce({ rows: [] })
       .mockResolvedValueOnce({ rows: [{ n: 1 }] });
 
@@ -241,7 +245,7 @@ describe('module3OperatingSystemRoutes', () => {
     fabricThrows = true;
     try {
       mockQuery
-        .mockResolvedValueOnce({ rows: [{ approval_state: 'approved', stale: false }] })
+        .mockResolvedValueOnce({ rows: [{ approval_state: 'approved', stale: false, deterministic_json: COMPLETE }] })
         .mockResolvedValueOnce({ rows: [] })
         .mockResolvedValueOnce({ rows: [{ n: 0 }] });
 
@@ -252,5 +256,54 @@ describe('module3OperatingSystemRoutes', () => {
     } finally {
       fabricThrows = false;
     }
+  });
+
+  it('blocks final export when an approved section compiled incomplete, and names it', async () => {
+    // Every section approved, none stale, lineage intact, no contradictions.
+    // The only defect: §3.2.P.6 was approved while its own compiled record
+    // says 0% complete with required inputs missing. Verified live before
+    // this pin: such a project passed the gate and placed a leaf reading
+    // "No container closure system is recorded".
+    mockQuery
+      .mockResolvedValueOnce({
+        rows: [
+          { section_key: '3.2.S.1', approval_state: 'approved', stale: false, deterministic_json: COMPLETE },
+          {
+            section_key: '3.2.P.6',
+            approval_state: 'approved',
+            stale: false,
+            deterministic_json: { completeness: 0, missingInputs: ['containerClosureDescription'] },
+          },
+        ],
+      })
+      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({ rows: [{ n: 0 }] });
+
+    const res = await request(app).post('/api/cmc/module3-os/guard/final-export/proj-1').send({});
+    expect(res.status).toBe(409);
+    expect(res.body.error).toMatch(/not complete/i);
+    expect(res.body.error).toContain('3.2.P.6');
+    expect(res.body.data.incompleteApprovedSections).toEqual(['3.2.P.6']);
+  });
+
+  it('readiness is not export-ready when an approved section compiled incomplete', async () => {
+    mockQuery
+      .mockResolvedValueOnce({
+        rows: [
+          {
+            section_key: '3.2.P.8',
+            approval_state: 'approved',
+            stale: false,
+            deterministic_json: JSON.stringify({ completeness: 60, missingInputs: ['shelfLifeJustification'] }),
+          },
+        ],
+      })
+      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({ rows: [{ n: 0 }] });
+
+    const res = await request(app).get('/api/cmc/module3-os/readiness/proj-1');
+    expect(res.status).toBe(200);
+    expect(res.body.data.incompleteApprovedSections).toEqual(['3.2.P.8']);
+    expect(res.body.data.exportReady).toBe(false);
   });
 });

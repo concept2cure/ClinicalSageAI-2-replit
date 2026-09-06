@@ -588,6 +588,7 @@ router.get('/readiness/:projectId', async (req, res) => {
       state.staleSections === 0 &&
       state.openCriticalContradictions === 0 &&
       state.sectionsWithoutProvenance === 0 &&
+      state.incompleteApprovedSections.length === 0 &&
       state.governedStateEvaluated &&
       !state.fabricBlocks &&
       !state.governedDecisionsBlock;
@@ -600,6 +601,9 @@ router.get('/readiness/:projectId', async (req, res) => {
         staleSections: state.staleSections,
         openCriticalContradictions: state.openCriticalContradictions,
         sectionsWithoutProvenance: state.sectionsWithoutProvenance,
+        // Approved sections whose own compiled record says they are not
+        // complete. An approval is not evidence the content exists.
+        incompleteApprovedSections: state.incompleteApprovedSections,
         // False means the governed-decision fabric did not return a verdict —
         // NOT that it looked and cleared the project.
         governedStateEvaluated: state.governedStateEvaluated,
