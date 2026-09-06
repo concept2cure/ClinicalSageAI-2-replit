@@ -121,7 +121,17 @@ export function foldFiledState(filed: readonly FiledSequence[]): PriorLeaf[] {
 /** Why a sequence cannot be assembled, in the operator's own terms. */
 export class SequenceLifecycleRefusal extends Error {
   readonly name = 'SequenceLifecycleRefusal';
-  constructor(readonly code: 'NO_PRIOR_SEQUENCE' | 'SEQUENCE_ALREADY_FILED' | 'SUBMISSION_TYPE_REQUIRED', message: string) {
+  constructor(
+    readonly code:
+      | 'NO_PRIOR_SEQUENCE'
+      | 'SEQUENCE_ALREADY_FILED'
+      | 'SUBMISSION_TYPE_REQUIRED'
+      | 'SUBMISSION_TYPE_UNKNOWN',
+    message: string,
+    /** For SUBMISSION_TYPE_UNKNOWN: the terms the region will accept, so the
+     *  caller can offer them rather than making the operator guess again. */
+    readonly acceptedSubmissionTypes?: readonly string[],
+  ) {
     super(message);
   }
 }
@@ -154,8 +164,36 @@ export function planSequence(params: {
   submissionType?: string | null;
   filed: readonly FiledSequence[];
   desired: Array<{ ctdSection: string; fileName: string; md5: string; title: string }>;
+  /**
+   * The region's submission-type vocabulary, when it has one. Supply it and an
+   * unfilable term is refused HERE, with the list of what would work, instead
+   * of throwing out of the packager three steps later as an unexplained
+   * failure. `undefined`/`null` means the region takes free text — true of
+   * every region but FDA.
+   *
+   * The caller passes the matcher rather than the module reaching for it: this
+   * plan is region-agnostic, and `accepts` must stay the canonical resolver
+   * (which matches labels loosely — 'supplement' resolves to 'Efficacy
+   * Supplement') rather than a second, stricter copy of it here.
+   */
+  submissionTypeVocabulary?: { readonly terms: readonly string[]; accepts(value: string): boolean } | null;
 }): SequencePlan {
   const { sequence, filed, desired } = params;
+
+  // A declared submission type is checked against the region's vocabulary
+  // before anything else, 0000 included: a term the backbone cannot carry is
+  // an unfilable sequence whatever it diffs to.
+  const declaredType = params.submissionType?.trim();
+  const vocab = params.submissionTypeVocabulary;
+  if (declaredType && vocab && !vocab.accepts(declaredType)) {
+    throw new SequenceLifecycleRefusal(
+      'SUBMISSION_TYPE_UNKNOWN',
+      `'${declaredType}' is not a submission type this region can file. The backbone carries a ` +
+        `code from a fixed list, so a term outside it has no code to become. Accepted: ` +
+        `${vocab.terms.join(', ')}.`,
+      vocab.terms,
+    );
+  }
 
   if (sequence === '0000') {
     if (filed.some((f) => f.sequence === '0000')) {
@@ -184,11 +222,17 @@ export function planSequence(params: {
       `Sequence ${sequence} has already been transmitted for this package. Use the next unused sequence number.`,
     );
   }
-  if (!params.submissionType || params.submissionType.trim().length === 0) {
+  if (!declaredType) {
     throw new SequenceLifecycleRefusal(
       'SUBMISSION_TYPE_REQUIRED',
       `Sequence ${sequence} must declare what is being filed (its submission type). ` +
-        'Only sequence 0000 is an original by definition; a follow-up could be an amendment, a supplement or an annual report, and the backbone has to say which.',
+        'Only sequence 0000 is an original by definition; the backbone has to say what a follow-up is.' +
+        // Named from the region's own vocabulary, never from ordinary English:
+        // suggesting 'amendment' sent operators to a term no FDA backbone can
+        // carry, and the packager then failed with no way back to a term that
+        // works.
+        (vocab ? ` Accepted: ${vocab.terms.join(', ')}.` : ''),
+      vocab?.terms,
     );
   }
 

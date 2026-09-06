@@ -60,12 +60,9 @@ import {
   REGULATORY_IDENTIFIER_FIELDS,
 } from '../services/ectd/regulatory-identifiers';
 import { recordGovernedAction } from './c2c/actions';
-import PDFDocument from 'pdfkit';
-import { PassThrough } from 'stream';
-import {
-  renderMarkdownToPDF,
-  mapSectionToECTDPath,
-} from '../services/documentExportService';
+import { mapSectionToECTDPath } from '../services/documentExportService';
+import { buildLeafPdf } from '../services/ectd/leaf-pdf';
+import { resolveSubmissionTypeCode, submissionTypeTerms } from '../services/ectd/controlled-vocab';
 import {
   isBundleStorageEnabled,
   bundleStorageBucket,
@@ -1904,35 +1901,6 @@ function sectionKeyToEctdPath(sectionKey: string, regionCode: string): string {
   return mod === 1 ? `m1/${regionCode}/${slug}.pdf` : `m${mod}/${slug}.pdf`;
 }
 
-/**
- * Renders a single eCTD leaf as a real PDF: a bold title line followed by the
- * section markdown rendered via the canonical pdfkit markdown renderer. Resolves
- * a `%PDF`-prefixed Buffer. Mirrors the buffer pattern in documentExportService.
- */
-async function buildLeafPdf(title: string, markdown: string): Promise<Buffer> {
-  const doc: any = new (PDFDocument as any)({
-    size: 'A4',
-    margins: { top: 72, right: 72, bottom: 72, left: 72 },
-    bufferPages: true,
-  });
-
-  const chunks: Buffer[] = [];
-  const bufferStream = new PassThrough();
-  bufferStream.on('data', (chunk: Buffer) => chunks.push(chunk));
-  doc.pipe(bufferStream);
-
-  doc.fontSize(14).font('Helvetica-Bold').text(title);
-  doc.moveDown();
-  doc.fontSize(11).font('Helvetica');
-  renderMarkdownToPDF(doc, markdown, 11);
-
-  doc.end();
-
-  return new Promise<Buffer>((resolve) => {
-    bufferStream.on('end', () => resolve(Buffer.concat(chunks)));
-  });
-}
-
 const assembleBody = z.object({
   // Optional explicit overrides; otherwise derived from packageFamily.
   // Health Canada is a transmit target (ca / hc_cesg) and the packager builds
@@ -2216,6 +2184,10 @@ router.post('/packages/:packageId/assemble', async (req: Request, res: Response)
           // The artifact's declared eCTD placement — the most specific evidence
           // for the leaf's real CTD section when the section key is a product label.
           ctdSection: concept2cureArtifacts.ctdSection,
+          // Stamped into the leaf PDF instead of the wall clock, so re-assembling
+          // unchanged content produces the same bytes and the sequence lifecycle
+          // can see that nothing changed. See services/ectd/leaf-pdf.ts.
+          updatedAt: concept2cureArtifacts.updatedAt,
         })
         .from(c2cArtifactSectionMap)
         .innerJoin(
@@ -2255,6 +2227,16 @@ router.post('/packages/:packageId/assemble', async (req: Request, res: Response)
       }
 
       const sectionLabel = `${section.sectionLabel} (${section.sectionKey})`;
+      // The instant the content in this section last changed. A leaf's PDF
+      // timestamps come from here rather than from `new Date()`: rendering has
+      // to be reproducible or the sequence lifecycle can never see that a
+      // document is unchanged. An empty section has no artifact, so its own row
+      // dates the placeholder it ships.
+      const sectionContentAt = (rows: Array<{ updatedAt: Date | null }>): Date =>
+        rows.reduce<Date | null>((newest, r) => {
+          const t = r.updatedAt ? new Date(r.updatedAt) : null;
+          return t && (!newest || t > newest) ? t : newest;
+        }, null) ?? new Date(section.updatedAt ?? section.createdAt);
 
       if (!isEctdFormat) {
         // Non-eCTD: one path-keyed leaf per section; de-dupe collisions by
@@ -2275,7 +2257,11 @@ router.post('/packages/:packageId/assemble', async (req: Request, res: Response)
             .map((a) => `### ${a.title} (${a.artifactId} v${a.version})\n\n${a.content ?? ''}\n`)
             .join('\n');
         }
-        leafs.push({ path: leafPath, mediaType: 'application/pdf', content: await buildLeafPdf(sectionLabel, markdown) });
+        leafs.push({
+          path: leafPath,
+          mediaType: 'application/pdf',
+          content: await buildLeafPdf({ title: sectionLabel, markdown, contentModifiedAt: sectionContentAt(mapped) }),
+        });
         continue;
       }
 
@@ -2365,7 +2351,11 @@ router.post('/packages/:packageId/assemble', async (req: Request, res: Response)
           markdown = `### ${artifact.title} (${artifact.artifactId} v${artifact.version})\n\n${artifact.content ?? ''}\n`;
         }
         const title = artifact ? `${artifact.title} — ${sectionLabel}` : sectionLabel;
-        const bytes = await buildLeafPdf(title, markdown);
+        const bytes = await buildLeafPdf({
+          title,
+          markdown,
+          contentModifiedAt: sectionContentAt(artifact ? [artifact] : []),
+        });
         ctdLeaves.push({ ctdSection: placement.code, fileName, bytes, title });
         leafs.push({ path: modulePath, mediaType: 'application/pdf', content: bytes });
         if (shipKey) shippedArtifacts.set(shipKey, sectionLabel);
@@ -2387,9 +2377,16 @@ router.post('/packages/:packageId/assemble', async (req: Request, res: Response)
     let lifecycle: SequencePlan | null = null;
     if (isEctdFormat) {
       try {
+        // The region's own vocabulary, so an unfilable submission type is
+        // refused here — with the terms that would work — rather than throwing
+        // out of the packager once the leaves are already rendered.
+        const terms = submissionTypeTerms(packagerRegion);
         lifecycle = planSequence({
           sequence,
           submissionType: parsed.data.submissionType,
+          submissionTypeVocabulary: terms
+            ? { terms, accepts: (v: string) => resolveSubmissionTypeCode(v) !== null }
+            : null,
           filed: readFiledSequences(existingMetadata),
           desired: ctdLeaves.map((l) => ({
             ctdSection: l.ctdSection,
@@ -2400,7 +2397,14 @@ router.post('/packages/:packageId/assemble', async (req: Request, res: Response)
         });
       } catch (e) {
         if (!(e instanceof SequenceLifecycleRefusal)) throw e;
-        return res.status(409).json({ error: e.message, code: e.code, gate: 'sequence_lifecycle' });
+        return res.status(409).json({
+          error: e.message,
+          code: e.code,
+          gate: 'sequence_lifecycle',
+          // The list travels as data too, so a surface can offer the terms
+          // instead of asking the operator to read them out of a sentence.
+          ...(e.acceptedSubmissionTypes ? { acceptedSubmissionTypes: e.acceptedSubmissionTypes } : {}),
+        });
       }
       // Apply the plan: each shipping leaf carries its operation (and, when it
       // supersedes one already on file, the modified-file pointer to it), and a
@@ -2780,6 +2784,14 @@ router.post('/packages/:packageId/assemble', async (req: Request, res: Response)
           sizeBytes: descriptor.sizeBytes,
           format: descriptor.format,
           leafCount: descriptor.leafCount,
+          // What this bundle files. The operator asked for a sequence and a
+          // submission type, so the answer says which sequence was built and
+          // what the diff against the filed history decided — "3 left unchanged
+          // on file" is the difference between a follow-up and a re-filing of
+          // the whole application, and it is not visible anywhere else.
+          sequence: descriptor.sequence,
+          submissionType: descriptor.submissionType,
+          lifecycle: descriptor.lifecycle,
           storage: { provider: descriptor.storage.provider },
           validation: {
             errorCount: descriptor.validation.errorCount,

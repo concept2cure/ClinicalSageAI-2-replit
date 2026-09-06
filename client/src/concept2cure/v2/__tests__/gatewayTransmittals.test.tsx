@@ -462,6 +462,79 @@ describe('GatewayTransmittals — real dispatch layer', () => {
     expect(card.textContent).toMatch(/nothing on this bundle is cleared/);
   });
 
+  it('offers the submission type a follow-up sequence needs, and says what the sequence did to what is already on file', async () => {
+    apiRequest.mockImplementation(async (method: string, url: string) => {
+      if (method === 'GET' && url === '/api/mdx/gateways') return env(GATEWAYS);
+      if (method === 'GET' && url === '/api/mdx/gateways/transmittals') return env(LOG);
+      if (method === 'POST' && url.endsWith('/assemble')) {
+        return env({
+          packageId: 'pkg_77',
+          bundle: {
+            sha256: 'f'.repeat(64), leafCount: 2, sequence: '0001',
+            validation: { errorCount: 0, warningCount: 0, infoCount: 0 },
+            lifecycle: { summary: { new: 1, replace: 1, append: 0, delete: 0, unchanged: 3 }, omittedCount: 3 },
+          },
+        });
+      }
+      return env(null);
+    });
+    render(<GatewayTransmittals {...props()} />);
+    await screen.findByText('FDA ESG');
+    fireEvent.click(screen.getByRole('button', { name: /Assemble bundle/ }));
+    // The form asks what a follow-up is filing — the server refuses without it.
+    const field = (globalThis as any).__c2cFormConfig.fields.find((f: any) => f.key === 'submissionType');
+    expect(field).toBeTruthy();
+    expect(field.desc).toMatch(/Required for any sequence after 0000/);
+    // The example has to be a term that FILES. 'amendment' is the word an
+    // operator reaches for and the one FDA has no code for, so suggesting it
+    // sent them to a refusal — and before that, to a bare 500.
+    expect(field.placeholder).not.toMatch(/amendment/i);
+    expect(field.placeholder).toMatch(/Efficacy Supplement/);
+    fireEvent.click(screen.getByTestId('form-submit'));
+    // A sequence carries what changed, so the leaf count alone would mislead.
+    await screen.findByText(/Sequence 0001: 1 new, 1 replaced, 3 left unchanged on file/);
+  });
+
+  it('a follow-up refused for want of a submission type shows the server’s own reason', async () => {
+    apiRequest.mockImplementation(async (method: string, url: string) => {
+      if (method === 'GET' && url === '/api/mdx/gateways') return env(GATEWAYS);
+      if (method === 'GET' && url === '/api/mdx/gateways/transmittals') return env(LOG);
+      if (method === 'POST' && url.endsWith('/assemble')) {
+        return { ok: false, status: 409, json: async () => ({
+          error: 'Sequence 0001 must declare what is being filed (its submission type).',
+          code: 'SUBMISSION_TYPE_REQUIRED', gate: 'sequence_lifecycle',
+        }) } as Response;
+      }
+      return env(null);
+    });
+    render(<GatewayTransmittals {...props()} />);
+    await screen.findByText('FDA ESG');
+    fireEvent.click(screen.getByRole('button', { name: /Assemble bundle/ }));
+    fireEvent.click(screen.getByTestId('form-submit'));
+    await screen.findByText(/must declare what is being filed/);
+  });
+
+  it('a submission type the region cannot file shows the terms that would work', async () => {
+    apiRequest.mockImplementation(async (method: string, url: string) => {
+      if (method === 'GET' && url === '/api/mdx/gateways') return env(GATEWAYS);
+      if (method === 'GET' && url === '/api/mdx/gateways/transmittals') return env(LOG);
+      if (method === 'POST' && url.endsWith('/assemble')) {
+        return { ok: false, status: 409, json: async () => ({
+          error: "'amendment' is not a submission type this region can file. Accepted: Original Application, Efficacy Supplement, Annual Report.",
+          code: 'SUBMISSION_TYPE_UNKNOWN', gate: 'sequence_lifecycle',
+          acceptedSubmissionTypes: ['Original Application', 'Efficacy Supplement', 'Annual Report'],
+        }) } as Response;
+      }
+      return env(null);
+    });
+    render(<GatewayTransmittals {...props()} />);
+    await screen.findByText('FDA ESG');
+    fireEvent.click(screen.getByRole('button', { name: /Assemble bundle/ }));
+    fireEvent.click(screen.getByTestId('form-submit'));
+    // A refusal that named no alternative would send the operator back to guess.
+    await screen.findByText(/Accepted: Original Application, Efficacy Supplement, Annual Report/);
+  });
+
   it('a content change that landed DURING the send is announced as an alert with the server’s warning, never a clean confirmation', async () => {
     apiRequest.mockImplementation(async (method: string, url: string) => {
       if (method === 'GET' && url === '/api/mdx/gateways') return env(GATEWAYS);
