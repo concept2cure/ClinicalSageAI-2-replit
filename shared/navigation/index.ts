@@ -220,6 +220,8 @@ export const NAVIGATION_TARGETS: readonly NavigationTarget[] = [
   { id: 'pyramid', label: 'Submission pyramid', description: 'The submission work-breakdown pyramid — phases, tasks and critical path per submission type.', scope: 'global', group: 'module' },
   { id: 'authoring-engine', label: 'Authoring engine', description: 'What the authoring engine is built to do per document type — capability reference, no program data.', scope: 'global', group: 'module' },
   { id: 'orchestration', label: 'Orchestration', description: 'Workflow runs, human-in-the-loop approval gates, and dispatch readiness.', scope: 'global', group: 'module' },
+  { id: 'usage', label: 'Usage', description: 'The org\'s real-time usage metering — API calls, storage, seats, against plan limits.', scope: 'global', group: 'module' },
+  { id: 'billing', label: 'Billing', description: 'The org\'s billing and invoices — plan, payment method, and invoice history.', scope: 'global', group: 'module' },
   { id: 'report-governance', label: 'Report governance', description: 'The sealed-report lifecycle — integrity verification, provenance, seal and revoke ceremonies.', scope: 'global', group: 'module' },
   { id: 'research-admin', label: 'Research administration', description: 'Research administration — the CITI training matrix (other sections connect later).', scope: 'global', group: 'module' },
 
