@@ -31,6 +31,42 @@
 -- give the background jobs a super-admin-scoped connection and THEN policy the
 -- table — not to widen this carve-out.
 --
+-- PARENT-SCOPED ISOLATION IS ISOLATION (ledger L170). This gate asks "does a
+-- policy named tenant_isolation_policy exist?" as a PROXY for "is this table
+-- isolated?". The proxy is right for every table the two sweeps policy, and
+-- wrong for a table isolated by the codebase's other sanctioned mechanism: the
+-- parent-scoped predicates core.can_access_program / core.can_write_program
+-- (C-30), which resolve the parent row's owner and compare it to the request's
+-- org. Twenty-two tables across six schemas are isolated that way, and the
+-- deploy-time sweep already recognises them -- it "never clobbers a subsystem's
+-- own, including C-30's parent-scoped ones". Only this gate did not.
+--
+-- vault.documents is the case that exposed it. It has been program-scoped since
+-- 044c_gcc_vault_schema.sql (rls_vault_documents_select USING
+-- core.can_access_program(program_id)); the gate never looked at it because it
+-- had no integer tenant column. The moment 20260905_vault_documents_organization_id
+-- gave it one, the gate began demanding a policy NAME from a table that was
+-- already isolated -- and CI went red on every commit on the canonical branch.
+-- Adding tenant_isolation_policy to satisfy the name would have been decoration;
+-- widening the deploy sweep to cover the vault schema would have added FORCE ROW
+-- LEVEL SECURITY, which that migration's header explains takes the vault offline.
+--
+-- So a table is ALSO covered when its SELECT policy delegates to a sanctioned
+-- parent-scoped helper. Two limits keep that from becoming a hole:
+--
+--   * It is MECHANISM-based, not a table list. Any future table using the same
+--     helpers is covered; anything else still fails. There is nothing to add an
+--     exemption to.
+--   * A trivially-true permissive SELECT policy DISQUALIFIES the table, because
+--     permissive policies OR together -- a `USING (true)` alongside the scoped
+--     one would defeat it while still matching the helper test.
+--
+-- The helpers' own fail-open branch (core.can_access_program RETURNs TRUE when
+-- neither identity.* nor auth.* delegate exists) is what would make this
+-- recognition hollow. It is asserted separately, in the same CI job, by
+-- scripts/db/rls-parent-scope-delegates-check.sql -- this clause is only sound
+-- while that assertion passes.
+--
 -- Emits one row per offending table (empty result = full coverage).
 SELECT c.table_schema || '.' || c.table_name || ' (' || c.column_name || ')' AS unprotected
 FROM information_schema.columns c
@@ -63,5 +99,27 @@ WHERE c.table_schema NOT IN ('pg_catalog', 'information_schema')
     WHERE p.schemaname = c.table_schema
       AND p.tablename = c.table_name
       AND p.policyname = 'tenant_isolation_policy'
+  )
+  -- Parent-scoped isolation (see header): a SELECT policy delegating to a
+  -- sanctioned helper counts as coverage...
+  AND NOT (
+    EXISTS (
+      SELECT 1 FROM pg_policies p
+      WHERE p.schemaname = c.table_schema
+        AND p.tablename = c.table_name
+        AND p.cmd IN ('SELECT', 'ALL')
+        AND p.permissive = 'PERMISSIVE'
+        AND p.qual ~ '\mcan_(access|write)_(program|org)\M'
+    )
+    -- ...but only if nothing beside it reads everything. Permissive policies OR
+    -- together, so one `USING (true)` makes the scoped one decorative.
+    AND NOT EXISTS (
+      SELECT 1 FROM pg_policies p
+      WHERE p.schemaname = c.table_schema
+        AND p.tablename = c.table_name
+        AND p.cmd IN ('SELECT', 'ALL')
+        AND p.permissive = 'PERMISSIVE'
+        AND btrim(coalesce(p.qual, 'true')) IN ('true', '(true)')
+    )
   )
 ORDER BY 1;
