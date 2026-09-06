@@ -27,7 +27,7 @@ import { describe, it, expect, vi } from 'vitest';
 import {
   buildInterviewCommitPlan,
   commitInterviewSession,
-  notWiredRegisterWriter,
+  productionRegisterWriter,
   INTERVIEW_REGISTER_WRITE_PATHS,
   type RegisterWriter,
 } from '../interview-commit';
@@ -605,27 +605,58 @@ describe('commitInterviewSession', () => {
   });
 });
 
-describe('the production writer is not wired', () => {
-  it('names the register path it cannot reach and the handler to extract, and never claims a write', async () => {
+/* The production writer routes each register to its ONE canonical create in
+   services/cmc/register-writes.ts — the same function the HTTP route calls —
+   under the session's tenant and project. Mocked here; the creates' own
+   behaviour (parse, refusal, insert, link) is pinned in register-writes.test. */
+const creates = {
+  createDrugSubstance: vi.fn(),
+  createDrugProduct: vi.fn(),
+  createContainerClosure: vi.fn(),
+  createManufacturingProcess: vi.fn(),
+  createFormulationRecord: vi.fn(),
+  createMaterialSpec: vi.fn(),
+  createCharacterizationStudy: vi.fn(),
+};
+vi.mock('../register-writes', () => creates);
+
+describe('the production writer', () => {
+  const scope = { organizationId: ORG, projectId: 'prog-1', userId: 7 };
+
+  it('writes a container closure through createContainerClosure under the session tenant and project', async () => {
     const plan = buildInterviewCommitPlan('cmc_specification', ANSWERS);
     const entry = plan.entries.find(e => e.register === 'container_closure')!;
-    await expect(
-      notWiredRegisterWriter(entry, { organizationId: ORG, projectId: 'prog-1', userId: 7 }),
-    ).rejects.toThrow(/^NOT_WIRED: .*POST \/api\/cmc\/container-closures.*server\/api\/cmc\/routes\.ts/);
+    creates.createContainerClosure.mockResolvedValueOnce({ row: { id: 42 }, module3Linked: true });
+
+    const result = await productionRegisterWriter(entry, scope);
+
+    expect(creates.createContainerClosure).toHaveBeenCalledWith(
+      ORG,
+      { ...entry.body, projectId: 'prog-1' },
+      { projectId: 'prog-1' },
+    );
+    expect(result).toEqual({ id: 42, module3Linked: true, module3Warning: undefined });
   });
 
-  it('so a commit through it refuses with the reason and writes nothing', async () => {
-    const { q, statements } = fakePool(sessionRow());
-    const outcome = await commitInterviewSession(
-      { organizationId: ORG, sessionId: SESSION_ID, userId: 7 },
-      { writer: notWiredRegisterWriter, q },
-    );
-    expect(outcome.ok).toBe(false);
-    if (outcome.ok) return;
-    expect(outcome.code).toBe('WRITE_FAILED');
-    expect(outcome.failed?.error).toMatch(/^NOT_WIRED/);
-    expect(outcome.committed).toEqual([]);
-    expect(outcome.status).toBe('complete');
-    expect(statements.some(s => /status = 'committed'/.test(s.text))).toBe(false);
+  it('the project is always the session\'s, never one named in the plan body', async () => {
+    const plan = buildInterviewCommitPlan('cmc_specification', ANSWERS);
+    const entry = { ...plan.entries.find(e => e.register === 'drug_substance')!, body: { name: 'X', projectId: 'someone-elses' } };
+    creates.createDrugSubstance.mockResolvedValueOnce({ row: { id: 1 }, module3Linked: false, module3Warning: 'w' });
+
+    const result = await productionRegisterWriter(entry, scope);
+
+    expect(creates.createDrugSubstance.mock.calls[0][1]).toMatchObject({ projectId: 'prog-1' });
+    expect(result.module3Warning).toBe('w');
+  });
+
+  it('every register in the plan has a create, and a refusal from it fails the entry, not the process', async () => {
+    const plan = buildInterviewCommitPlan('cmc_specification', ANSWERS);
+    const registers = new Set(plan.entries.map(e => e.register));
+    for (const register of registers) {
+      const entry = plan.entries.find(e => e.register === register)!;
+      const key = ('create' + register.split('_').map(w => w[0].toUpperCase() + w.slice(1)).join('')) as keyof typeof creates;
+      creates[key].mockRejectedValueOnce(new Error('governed refusal'));
+      await expect(productionRegisterWriter(entry, scope)).rejects.toThrow('governed refusal');
+    }
   });
 });

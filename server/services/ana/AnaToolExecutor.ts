@@ -18670,19 +18670,17 @@ registerToolHandler('resume_intelligence_flow', async (input, ctx) => {
   }
 });
 
-/* The commit projects a completed CMC interview onto the registers. The
-   production writer is NOT WIRED: every register's canonical write is an HTTP
-   handler in server/api/cmc/routes.ts with no service beneath it, and a second
-   write path here is the duplication the working agreement forbids. The
-   commit therefore refuses by name, with the session left 'complete', until
-   those handlers are extracted — see INTERVIEW_REGISTER_WRITE_PATHS. */
+/* The commit projects a completed CMC interview onto the registers through
+   each register's ONE canonical create (services/cmc/register-writes.ts — the
+   same functions the HTTP routes call), under the session's tenant and
+   project. A partial commit is reported with what landed, never hidden. */
 registerToolHandler('commit_intelligence_flow', async (input, ctx) => {
   const sessionId = intelligenceSessionId(input);
   if (!sessionId) return JSON.stringify({ error: 'session_id is required' });
 
   try {
     const { loadInterviewSession } = await import('../cmc/interview-sessions.js');
-    const { buildInterviewCommitPlan, commitInterviewSession, notWiredRegisterWriter, INTERVIEW_REGISTER_WRITE_PATHS } =
+    const { buildInterviewCommitPlan, commitInterviewSession, productionRegisterWriter, INTERVIEW_REGISTER_WRITE_PATHS } =
       await import('../cmc/interview-commit.js');
 
     if (input.dry_run === true) {
@@ -18706,7 +18704,7 @@ registerToolHandler('commit_intelligence_flow', async (input, ctx) => {
         userId: ctx?.userId ?? null,
         projectId: intelligenceProjectId(input, ctx),
       },
-      { writer: notWiredRegisterWriter },
+      { writer: productionRegisterWriter },
     );
 
     try {

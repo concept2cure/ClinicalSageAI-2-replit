@@ -12,12 +12,29 @@
  *   • a cross-org session id is refused and nothing is written;
  *   • the stateless flow_state path still works for callers with no session;
  *   • resume reads the session back;
- *   • commit refuses by name while the register writer is not wired, leaves
+ *   • commit writes each plan entry through the register service's canonical
+ *     create under the session's tenant and project, records the refs and
+ *     marks the session committed; a refused entry stops the commit, leaves
  *     the session 'complete', and dry_run shows the plan without writing.
  */
 import { describe, it, expect, beforeEach, type Mock } from 'vitest';
 
 import { mockPool } from '../../../../tests/setup';
+
+/* The register creates (services/cmc/register-writes.ts) are the one write
+   path each register has; here they are stood in for, so these tests pin the
+   executor's bookkeeping around them, not the inserts. */
+const registerCreates = vi.hoisted(() => ({
+  createDrugSubstance: vi.fn(),
+  createDrugProduct: vi.fn(),
+  createContainerClosure: vi.fn(),
+  createManufacturingProcess: vi.fn(),
+  createFormulationRecord: vi.fn(),
+  createMaterialSpec: vi.fn(),
+  createCharacterizationStudy: vi.fn(),
+}));
+vi.mock('../../cmc/register-writes', () => registerCreates);
+
 
 /* The runtime instruments the pool on import (server/db/poolInstrumentation
    wraps `pool.query`, keeping a bound reference to the original vi.fn). The
@@ -302,18 +319,52 @@ describe('commit_intelligence_flow', () => {
     expect(statements.filter(s => /UPDATE/.test(s.text))).toEqual([]);
   });
 
-  it('refuses while the register writer is not wired: names the path, leaves the session complete, writes nothing', async () => {
+  it('commits every plan entry through the register creates under the session tenant and project, and marks the session committed', async () => {
+    let nextId = 100;
+    for (const create of Object.values(registerCreates)) {
+      create.mockReset();
+      create.mockImplementation(async () => ({ row: { id: nextId++ }, module3Linked: true }));
+    }
+    const statements = scriptPool((text) =>
+      /SELECT[\s\S]*FROM cmc_interview_sessions/.test(text)
+        ? [sessionRow(completeState, { status: 'complete' })]
+        : /UPDATE cmc_interview_sessions/.test(text)
+          ? [sessionRow(completeState, { status: 'committed' })]
+          : null,
+    );
+    const out = await call('commit_intelligence_flow', { session_id: SESSION_ID }, CTX);
+    expect(out.error).toBeUndefined();
+    expect(out.status).toBe('intelligence_flow_committed');
+    const calls = Object.values(registerCreates).flatMap(c => c.mock.calls);
+    expect(calls.length).toBeGreaterThan(0);
+    for (const [orgId, body, link] of calls) {
+      expect(orgId).toBe(ORG);
+      // The SESSION's project (the stored row's '91'), not the caller's context.
+      expect(body).toMatchObject({ projectId: '91' });
+      expect(link).toEqual({ projectId: '91' });
+    }
+    expect(statements.some(s => /status = 'committed'/.test(s.text))).toBe(true);
+  });
+
+  it('a refused entry stops the commit with the refusal, leaves the session complete, and reports what did land', async () => {
+    let nextId = 200;
+    for (const create of Object.values(registerCreates)) {
+      create.mockReset();
+      create.mockImplementation(async () => ({ row: { id: nextId++ }, module3Linked: true }));
+    }
+    registerCreates.createContainerClosure.mockRejectedValue(
+      new Error('Qualification is a governed action and is recorded with a signature. POST /api/cmc/container-closures/:id/qualify with a reason and re-authentication.'),
+    );
     const statements = scriptPool((text) =>
       /SELECT[\s\S]*FROM cmc_interview_sessions/.test(text) ? [sessionRow(completeState, { status: 'complete' })] : null,
     );
     const out = await call('commit_intelligence_flow', { session_id: SESSION_ID }, CTX);
     expect(out.status).toBeUndefined();
     expect(out.code).toBe('WRITE_FAILED');
-    expect(out.error).toMatch(/NOT_WIRED/);
-    expect(out.failed.error).toMatch(/POST \/api\/cmc\/container-closures/);
+    expect(out.failed.register).toBe('container_closure');
+    expect(out.failed.error).toMatch(/governed action/);
     expect(out.session_status).toBe('complete');
-    expect(out.committed_record_refs).toEqual([]);
-    expect(statements.filter(s => /status = 'committed'/.test(s.text))).toEqual([]);
+    expect(statements.some(s => /status = 'committed'/.test(s.text))).toBe(false);
   });
 
   it('refuses a session that is not complete', async () => {

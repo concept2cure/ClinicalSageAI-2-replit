@@ -97,8 +97,19 @@ export function observeWriteThroughFailure(
 }
 
 /**
+ * Where the program comes from when the row does not carry it: the HTTP route
+ * passes its request (the body's projectId is read); an in-process caller —
+ * the interview commit projector — names it directly.
+ */
+export type ProjectSource = Pick<express.Request, 'body'> | { projectId?: string | null };
+
+function isRequestSource(source: ProjectSource): source is Pick<express.Request, 'body'> {
+  return 'body' in source;
+}
+
+/**
  * The project a canonical write-through is keyed on: the stored row first,
- * and the request body only when a request is given.
+ * and the request body (or the named project) only when a source is given.
  *
  * The registers whose tables carry no project column (analytical methods,
  * process validation, stability, QC, change control, drug substance, drug
@@ -109,14 +120,16 @@ export function observeWriteThroughFailure(
  */
 export function writeThroughProjectId(
   row: Pick<LinkableRow, 'projectId' | 'project_id'>,
-  req?: express.Request,
+  source?: ProjectSource,
 ): string | null {
   const stored = typeof row.projectId === 'string' ? row.projectId.trim() : '';
   if (stored) return stored;
   const raw = typeof row.project_id === 'string' ? row.project_id.trim() : '';
   if (raw) return raw;
-  if (!req) return null;
-  const sent = (req.body as { projectId?: unknown } | undefined)?.projectId;
+  if (!source) return null;
+  const sent = isRequestSource(source)
+    ? (source.body as { projectId?: unknown } | undefined)?.projectId
+    : source.projectId;
   return typeof sent === 'string' && sent.trim() ? sent.trim() : null;
 }
 
@@ -138,9 +151,9 @@ export async function linkToModule3(
   orgId: number,
   row: LinkableRow,
   writeThrough: WriteThroughFn,
-  req?: express.Request,
+  source?: ProjectSource,
 ): Promise<Module3Linkage> {
-  const projectId = writeThroughProjectId(row, req);
+  const projectId = writeThroughProjectId(row, source);
   if (!projectId) {
     return { module3Linked: false, module3Warning: MODULE3_NO_PROJECT_WARNING };
   }

@@ -117,3 +117,13 @@ describe('linkToModule3 — what the response says, and what is metered', () => 
     expect(logError).toHaveBeenCalledTimes(1);
   });
 });
+
+describe('writeThroughProjectId — an in-process caller names the project directly', () => {
+  it('reads a plain { projectId } source the way it reads a request body', () => {
+    expect(writeThroughProjectId({ projectId: null }, { projectId: 'prog-9' })).toBe('prog-9');
+    expect(writeThroughProjectId({ projectId: null }, { projectId: '  ' })).toBeNull();
+    expect(writeThroughProjectId({ projectId: null }, { projectId: null })).toBeNull();
+    // The stored row still wins over any source.
+    expect(writeThroughProjectId({ projectId: 'stored' }, { projectId: 'prog-9' })).toBe('stored');
+  });
+});

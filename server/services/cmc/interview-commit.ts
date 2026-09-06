@@ -30,16 +30,12 @@
  *                              reports it. Partial commits are reported, not
  *                              hidden.
  *
- * ── Why the production writer is NOT wired ───────────────────────────────────
- * Every register's canonical write path is an HTTP handler in
- * server/api/cmc/routes.ts — zod body parse, governed-field stripping, the
- * drizzle insert, and `linkToModule3` (the awaited canonical write-through) —
- * with no service function beneath it and no in-process way to invoke it with
- * a tenant context. Re-implementing those steps here would be a second write
- * path for the same registers, which the working agreement forbids; editing
- * routes.ts is outside this change. So `notWiredRegisterWriter` refuses, by
- * name, and the commit reports the refusal. The extraction it needs is listed
- * on INTERVIEW_REGISTER_WRITE_PATHS.
+ * ── The production writer ────────────────────────────────────────────────────
+ * Each register's canonical create is a service function in
+ * services/cmc/register-writes.ts — zod parse, governed-field stripping, the
+ * drizzle insert, and the awaited Module 3 link — which the HTTP route and
+ * `productionRegisterWriter` both call. One write path per register; the
+ * projector adds only the session's tenant and project.
  *
  * ── Projection rules ─────────────────────────────────────────────────────────
  *   • prose answers go to the register's TEXT columns as typed;
@@ -83,9 +79,10 @@ export type InterviewRegister =
   | 'characterization_study';
 
 /**
- * Where each register is written today, and what a production writer needs
- * extracted from it. `handler` names the Express handler whose body — parse,
- * insert, Module 3 link — is the one canonical write for that register.
+ * Where each register is written: the service create in register-writes.ts
+ * that is the one canonical write for that register, and the route that
+ * exposes it. Reported on a dry run so the reviewer can see where each plan
+ * entry will land.
  */
 export const INTERVIEW_REGISTER_WRITE_PATHS: Record<
   InterviewRegister,
@@ -94,37 +91,37 @@ export const INTERVIEW_REGISTER_WRITE_PATHS: Record<
   drug_substance: {
     path: '/api/cmc/drug-substances',
     table: 'drug_substances',
-    handler: "router.post('/drug-substances') in server/api/cmc/routes.ts (drugSubstanceBody.parse → db.insert(drugSubstances) → writeThroughDrugSubstance)",
+    handler: "createDrugSubstance in server/services/cmc/register-writes.ts — the same function POST /api/cmc/drug-substances calls",
   },
   drug_product: {
     path: '/api/cmc/drug-products',
     table: 'drug_products',
-    handler: "router.post('/drug-products') in server/api/cmc/routes.ts (drugProductBody.parse → db.insert(drugProducts) → writeThroughDrugProduct)",
+    handler: "createDrugProduct in server/services/cmc/register-writes.ts — the same function POST /api/cmc/drug-products calls",
   },
   container_closure: {
     path: '/api/cmc/container-closures',
     table: 'cmc_container_closures',
-    handler: "router.post('/container-closures') in server/api/cmc/routes.ts (containerClosureBody.parse → refusesUngovernedQualification → withoutGovernedFields → db.insert(cmcContainerClosures) → linkToModule3(writeThroughContainerClosure))",
+    handler: "createContainerClosure in server/services/cmc/register-writes.ts — the same function POST /api/cmc/container-closures calls",
   },
   manufacturing_process: {
     path: '/api/cmc/manufacturing-processes',
     table: 'manufacturing_processes',
-    handler: "router.post('/manufacturing-processes') in server/api/cmc/routes.ts (manufacturingProcessBody.parse → refusesUngovernedQualification(PROCESS_VOCAB) → db.insert(manufacturingProcesses) → linkToModule3(writeThroughManufacturingProcess))",
+    handler: "createManufacturingProcess in server/services/cmc/register-writes.ts — the same function POST /api/cmc/manufacturing-processes calls",
   },
   formulation_record: {
     path: '/api/cmc/formulation-records',
     table: 'cmc_formulation_records',
-    handler: "router.post('/formulation-records') in server/api/cmc/routes.ts (formulationRecordBody.parse → currentFormulationConflict → db.insert(cmcFormulationRecords) → linkToModule3(writeThroughFormulationRecord))",
+    handler: "createFormulationRecord in server/services/cmc/register-writes.ts — the same function POST /api/cmc/formulation-records calls",
   },
   material_spec: {
     path: '/api/cmc/material-specs',
     table: 'cmc_material_specs',
-    handler: "router.post('/material-specs') in server/api/cmc/routes.ts (materialSpecBody.parse → withoutOrgId → db.insert(cmcMaterialSpecs) → linkToModule3(writeThroughMaterialSpec))",
+    handler: "createMaterialSpec in server/services/cmc/register-writes.ts — the same function POST /api/cmc/material-specs calls",
   },
   characterization_study: {
     path: '/api/cmc/characterization-studies',
     table: 'cmc_characterization_studies',
-    handler: "router.post('/characterization-studies') in server/api/cmc/routes.ts (characterizationStudyBody.parse → db.insert(cmcCharacterizationStudies) → linkToModule3(writeThroughCharacterizationStudy))",
+    handler: "createCharacterizationStudy in server/services/cmc/register-writes.ts — the same function POST /api/cmc/characterization-studies calls",
   },
 };
 
@@ -548,17 +545,38 @@ export interface RegisterWriteResult {
 export type RegisterWriter = (entry: InterviewCommitPlanEntry, scope: RegisterWriteScope) => Promise<RegisterWriteResult>;
 
 /**
- * The production writer, until the register write paths are extracted from
- * their HTTP handlers into service functions. Refuses by name; never claims.
+ * The production writer: each plan entry through its register's ONE canonical
+ * create, under the session's tenant and project. The project is always the
+ * session's — a plan body never names one — so an interview cannot file a
+ * record under a program it was not run for.
  */
-export const notWiredRegisterWriter: RegisterWriter = async (planEntry) => {
-  const target = INTERVIEW_REGISTER_WRITE_PATHS[planEntry.register];
-  throw new Error(
-    `NOT_WIRED: no in-process write path exists for the ${planEntry.register} register (${target.table}). ` +
-      `Its only canonical write is POST ${target.path} — ${target.handler}. ` +
-      `That handler body must be extracted into a service function taking (orgId, projectId, body) ` +
-      `so both the route and this commit call it; nothing was written.`,
-  );
+export const productionRegisterWriter: RegisterWriter = async (planEntry, scope) => {
+  const writes = await import('./register-writes.js');
+  const body = { ...planEntry.body, projectId: scope.projectId };
+  const link = { projectId: scope.projectId };
+  const created = await (() => {
+    switch (planEntry.register) {
+      case 'drug_substance':
+        return writes.createDrugSubstance(scope.organizationId, body, link);
+      case 'drug_product':
+        return writes.createDrugProduct(scope.organizationId, body, link);
+      case 'container_closure':
+        return writes.createContainerClosure(scope.organizationId, body, link);
+      case 'manufacturing_process':
+        return writes.createManufacturingProcess(scope.organizationId, body, link);
+      case 'formulation_record':
+        return writes.createFormulationRecord(scope.organizationId, body, link);
+      case 'material_spec':
+        return writes.createMaterialSpec(scope.organizationId, body, link);
+      case 'characterization_study':
+        return writes.createCharacterizationStudy(scope.organizationId, body, link);
+    }
+  })();
+  return {
+    id: created.row.id,
+    module3Linked: created.module3Linked,
+    module3Warning: created.module3Warning,
+  };
 };
 
 export type InterviewCommitFailureCode =
