@@ -666,6 +666,44 @@ exists for the spine, legacy portfolio and section reads, but only the
 correspondence one is consumed by a KPI. The three new `meta` booleans are
 published for surfaces that need them and are not yet read anywhere else.
 
+### Twentieth — the agency-meeting request (2026-09-06)
+
+Three defects on one POST, all visible to a sponsor.
+
+**The audit entry the dialog promised did not exist.** `MTG_FORM`'s governed
+line read "a meeting request is a governed interaction — the request and its
+briefing-book plan are recorded with an audit entry", and the AnA context
+repeated it as "audit-logged". `agency-meetings.routes` wrote no audit row —
+its own header said "NOT a governed/audited action". A regulated surface
+claiming an audit trail it does not have is the defect, not the wording, so the
+meeting row and its sha256-chained `audit_logs` entry are now written on one
+client in one transaction (`writeChainedAuditRow`, the transaction-enlistable
+writer built for exactly this). Either both exist or the request is refused.
+The copy also drops the "briefing-book plan" the form does not collect.
+
+**The clock named the FDA for every agency.** `clock` was the constant
+`'FDA grant/deny pending'`, and the form offers EMA · CHMP/SAWP, PMDA, Health
+Canada and MHRA — so an EMA Scientific Advice request was filed, and shown back
+in the Clock column, as waiting on the FDA. `pendingClockFor(agency)` names the
+agency that actually holds it. Deliberately still no PDUFA day count: FDA
+response and briefing-document goals differ by meeting type (A / B / B-EOP / C /
+D / INTERACT) and do not apply outside the FDA at all. A wrong deadline on this
+screen is worse than no deadline.
+
+**Two requests in one millisecond collided.** `id = 'mtg-' + Date.now()` is the
+primary key; the second sponsor got "could not save meeting request".
+
+Revert-proven: removing the audit write fails both audit tests; restoring the
+constant clock fails the EMA and PMDA tests; restoring the bare timestamp id
+fails the collision test.
+
+Recorded, not changed: `GET /api/agency-meetings` returns
+`{ data: [], meta: { pendingStore: true } }` on 42P01, and `liveGetOrNull`
+unwraps the envelope and drops `meta` — so an unprovisioned store still reads on
+screen as "no regulator interactions recorded", the same class the CMC board's
+nineteenth entry fixed. Reaching it means changing the shared reader every v2
+surface uses, which is a wider change than this one.
+
 ### Note for the concurrent device stream
 
 On 2026-09-04, at JM's direct instruction to complete the biotech/pharma workflow
@@ -920,6 +958,7 @@ If neither has happened: report the blockage, name what is needed, and stop.
 | 2026-09-06 | A | Seventeenth — RIM renewal-schedule coverage | The renewals tab and the surface context name the registrations that carry no renewal-due date, so "what lapses first" is not answered from a filtered subset — revert-proven | §1 above |
 | 2026-09-06 | A | Eighteenth — agency-correspondence loop | The overdue-IR KPI counts the store instead of the overdue rows of a 50-row page; truncation and totals are published; the board route gains its first test — revert-proven | §1 above |
 | 2026-09-06 | A | Nineteenth — unreadable vs unprovisioned on the CMC board | A failed read of the agency-question store no longer reads as "0 information requests overdue": 42P01 is told apart from a failed read, `irOverdue` is null when unknown, and both the tile and the lead say the count is not established — revert-proven | §1 above |
+| 2026-09-06 | A | Twentieth — the agency-meeting request | The audit entry the request dialog promises is now written in the same transaction as the row (or the request is refused); the pending clock names the agency that holds the request instead of the FDA every time; request ids no longer collide within a millisecond — revert-proven | §1 above |
 | | | | | |
 
 **Rule:** the last row with an empty "What was proven" cell is the open work.
