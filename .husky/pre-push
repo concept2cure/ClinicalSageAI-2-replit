@@ -155,6 +155,22 @@ if ! npm run --silent ci:migration-drop-safety 2>&1; then
 fi
 echo "   ✅ Replay-safe DROPs passed."
 
+# The Drizzle blind spot. check-security-patterns and the raw-SQL tenant scanner
+# read string literals; a query built with the Drizzle query builder is invisible
+# to both, which is how five of seven handlers in routes/c2c/tasks.ts shipped
+# filtering on a serial projectId alone. Ratcheted against a baseline of 151
+# pre-existing sites: this fails only on a NEW one.
+echo "   Validating no new unscoped Drizzle query on tenant data..."
+if ! npm run --silent ci:drizzle-tenant-scope 2>&1; then
+  echo ""
+  echo "🚫 ERROR: Drizzle tenant-scope check FAILED."
+  echo "   A route handler takes its ids from the URL and a serial id is enumerable"
+  echo "   across the estate. Constrain the organization in the statement."
+  echo ""
+  exit 1
+fi
+echo "   ✅ Drizzle tenant scope passed."
+
 # Cheap, no database, and guards a privilege-escalation footgun: `SET
 # app.bypass_rls` is SESSION-scoped, so it survives client.release() and the
 # next checkout — a different tenant — inherits a full RLS bypass across 142
