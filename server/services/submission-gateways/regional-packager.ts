@@ -57,6 +57,7 @@ import {
   resolveSubmissionSubTypeCode,
   resolveFormTypeCode,
   resolveContactTypeCode,
+  submissionTypeTerms,
   usRegionalSectionElement,
 } from '../ectd/controlled-vocab';
 import { generateStfFiles, type StfLeaf, type StfStudyMeta } from '../ectd/stf-generator';
@@ -270,7 +271,13 @@ function buildFdaBackbone(input: PackagerInput, resolve: (l: EctdLeaf) => LeafRe
   const inferredApp = resolveApplicationTypeCode(input.submissionType);
   const appTypeCode = explicitApp ?? inferredApp;
   if (!appTypeCode) {
-    throw new Error(
+    /* A REFUSAL, so it is thrown as one. These two were the only plain Errors
+       left in this module: every other refusal here is a ValidationError, and
+       callers branch on that type to render the reason. A plain Error slipped
+       past those branches and reached the operator as a bare 500 — 'amendment'
+       is an ordinary word for a follow-up filing and no fdast term, so the
+       obvious value produced an unexplained failure. */
+    throw new ValidationError(
       `Cannot build the FDA regional backbone: no application type was supplied, and ` +
         `${JSON.stringify(input.submissionType)} is not one. The eCTD Module 1 ` +
         `application-type vocabulary covers NDA, sNDA, ANDA, BLA, IND and master ` +
@@ -279,6 +286,7 @@ function buildFdaBackbone(input: PackagerInput, resolve: (l: EctdLeaf) => LeafRe
         `fda.applicationType. Defaulting to fdaat1 would declare this package a ` +
         `New Drug Application, which is a statement about the filing, not a ` +
         `formatting detail.`,
+      [],
     );
   }
 
@@ -294,13 +302,15 @@ function buildFdaBackbone(input: PackagerInput, resolve: (l: EctdLeaf) => LeafRe
       ? 'fdast1'
       : null;
   if (!subTypeCode) {
-    throw new Error(
+    throw new ValidationError(
       `Cannot build the FDA regional backbone: submission-type is unresolved for ` +
         `sequence ${input.sequence} (${JSON.stringify(subTypeSource ?? null)}). Only ` +
         `sequence 0000 can be derived as an Original Application; a follow-up must ` +
-        `supply fda.submissionType, because an efficacy supplement, a CMC ` +
-        `supplement and an annual report are different filings and the backbone ` +
-        `has to say which this is.`,
+        `supply fda.submissionType from the eCTD Module 1 vocabulary — ` +
+        `${(submissionTypeTerms('fda') ?? []).join(', ')} — because ` +
+        `an efficacy supplement, a CMC supplement and an annual report are different ` +
+        `filings and the backbone has to say which this is.`,
+      [],
     );
   }
 

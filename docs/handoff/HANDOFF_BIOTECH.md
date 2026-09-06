@@ -939,14 +939,64 @@ transmittal, the sequence, the release — is a surface, and the brief for this
 session is to avoid new UI. That remains open, and it is now the only thing
 between the stored manifestation and §11.50(b) being met end to end.
 
-### For the vault stream — the ESLint ratchet is +2 on trunk
+### Twenty-eighth — a renewal date refused in Postgres's words (2026-09-06)
 
-The ratchet measures 6598 against baseline 6596, all `max-lines-per-function`
-(1190 → 1192), and it reproduces on a clean checkout of trunk with no
-working-tree changes. `server/routes/c2c/project-vault.ts` is the only
-recently-changed file carrying that rule (4 occurrences); it was changed in
-`f53c522f4` "Audit the vault download before the bytes leave", which adds audit
-writes inside download handlers. Reported rather than changed, per §2.
+`rim_registrations.approval_date` and `.renewal_due_date` are Postgres DATE
+columns; the route's Zod schema had both as bare `z.string()`. The store never
+held a bad date — the database rejected it, which is the part that matters — but
+the refusal reached the caller as a 500 carrying `invalid input syntax for type
+date: "next spring"`. A renewal deadline is typed by hand and a lapsed
+registration takes a product off the market in that country, so the refusal has
+to name the field and the format. `dateStr` is the shape this codebase already
+uses for it (`research-agreements`, `invention-disclosure`), applied to
+`approvalDate`, `renewalDueDate` and the label `approvedDate`.
+
+`fail()` is how the Postgres text escaped: it passed ANY unmapped error's
+`.message` into the body. The three codes it maps — NOT_FOUND, INVALID_STATE,
+BAD_INPUT — are the service's own, written for the caller, and still pass
+through; everything else is logged and answered plainly.
+`ci:server-error-leaks` 242 → 239, baseline shrunk.
+
+Checked and left alone: the RIM write path is already governed (reason ≥ 8
+chars, org and user resolved, transactional through `recordGovernedAction`), and
+`today()` is used only as "now" when summarising the grid, never as a default
+for a date the user did not supply. The Registrations surface is **read-only** —
+these endpoints are reached by API and AnA, which is why the refusal text is
+what matters here.
+
+Revert-proven: reverting the schema to `z.string()` fails the free-text and
+malformed-date tests. Two more hold the opposite line — a real yyyy-mm-dd date
+is not blocked, and a short reason is still refused.
+
+### For the vault stream — the ESLint ratchet is red on trunk, and Lint is the only failing job
+
+`max-lines-per-function` went 1190 → 1192. It reproduces on a clean checkout with
+no working-tree changes, and it is the ONLY thing failing: on `da2e93fcd`
+(run 11521) Lint is the sole failed job of fourteen. It has been red on every
+commit on the canonical branch since `f53c522f4`.
+
+The offenders, measured at `e36bd6bd3` — all in
+`server/routes/c2c/project-vault.ts`, the file `f53c522f4` ("Audit the vault
+download before the bytes leave") changed by adding audit writes inside the
+download handlers:
+
+```
+554:16  Function 'createProjectVaultRoutes' has too many lines (496)
+561:58  Async arrow function has too many lines (186)
+823:89  Async arrow function has too many lines (115)
+968:64  Async arrow function has too many lines (191)
+```
+
+Reported rather than changed, per §2: extracting four handlers out of a route
+file another stream is actively editing is not the one-line unblock the gateway
+stream took in `aad5583eb`, and it would conflict. Two of the four are the
+handlers that commit grew.
+
+Also seen and NOT persistent: Integration Tests failed on runs 11519 and 11520
+and passed again on 11521 with no relevant change between them. Its log tail is
+the Postgres service container's stderr — full of RLS-probe errors that are the
+tests working — so do not read a failure out of it; use `list_workflow_jobs` and
+read the step list.
 
 ### RESOLVED — the ESLint ratchet regression on trunk
 
@@ -1266,6 +1316,7 @@ If neither has happened: report the blockage, name what is needed, and stop.
 | 2026-09-06 | A | Twenty-fifth — five more empty-denominator gates | Informed consent, protocol finalize, DMS plan, biosketch and CT.gov/CTIS registration no longer treat "nothing recorded" as "everything done"; the consent one had been approving forms with no elements at all — four revert-proven, one marked defence in depth | §1 above |
 | 2026-09-06 | A | Twenty-sixth — inline annotations: identity, tenancy, audit | A Part 11-labelled decision endpoint stopped recording "Current User" as the approver, defaulting to organization 1, and writing its audit rows into tenant 0 with no actor; ci:fabricated-identity gained the literal-constant pattern it was missing, seen failing on all four sites first — revert-proven | §1 above |
 | 2026-09-06 | A | Twenty-seventh — typed-target signature read | The §11.50 manifestation for a transmitted submission, a frozen sequence or a dispatched release is reachable at last: every HTTP read was anchored on a document_id those rows do not have — revert-proven; the display half is recorded as still open | §1 above |
+| 2026-09-06 | A | Twenty-eighth — RIM registration dates | A hand-typed renewal or approval date is refused by name and format instead of coming back as Postgres's own syntax error through a fail() that passed any unmapped exception text to the caller — revert-proven | §1 above |
 | | | | | |
 
 **Rule:** the last row with an empty "What was proven" cell is the open work.

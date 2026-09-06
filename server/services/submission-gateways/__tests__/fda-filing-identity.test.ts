@@ -35,6 +35,8 @@ import * as path from 'path';
 import { createHash } from 'crypto';
 import JSZip from 'jszip';
 import { packageEctdSubmission, type EctdLeaf } from '../regional-packager';
+import { ValidationError as PackagerValidationError } from '../types';
+import { resolveSubmissionTypeCode, submissionTypeTerms } from '../../ectd/controlled-vocab';
 
 const md5 = (b: Buffer) => createHash('md5').update(b).digest('hex');
 
@@ -120,5 +122,28 @@ describe('FDA backbone declares only a filing identity it was given', () => {
     await expect(pack({ submissionType: 'ind', sequence: '0001' })).rejects.toThrow(
       /submission-type/i,
     );
+  }, 60_000);
+
+  it('both refusals are ValidationErrors — the type every caller branches on to show the reason', async () => {
+    /* These two were the last plain Errors in the packager. Callers render a
+       ValidationError as a 422 carrying its sentence and rethrow anything else
+       as an internal fault, so a refusal thrown as a plain Error reached the
+       operator as a bare 500 with the reason discarded — which is exactly what
+       'amendment' did: an ordinary English word for a follow-up filing, and no
+       fdast term. */
+    for (const over of [{ submissionType: '510k' }, { submissionType: 'ind', sequence: '0001' }]) {
+      await expect(pack(over), JSON.stringify(over)).rejects.toBeInstanceOf(PackagerValidationError);
+    }
+  }, 60_000);
+
+  it('the unresolved-submission-type refusal names terms that actually resolve', async () => {
+    // A refusal that suggests a word the vocabulary does not hold sends the
+    // operator round the same loop.
+    const err = await pack({ submissionType: 'ind', sequence: '0001' }).catch((e) => e as Error);
+    expect(err.message).toContain('Efficacy Supplement');
+    expect(err.message).toContain('Annual Report');
+    for (const term of submissionTypeTerms('fda') ?? []) {
+      expect(resolveSubmissionTypeCode(term), term).not.toBeNull();
+    }
   }, 60_000);
 });

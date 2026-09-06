@@ -129,6 +129,40 @@ relaxed.
 The format follows the region (`pmda_ectd` ⇔ PMDA; `ectd` ⇔ FDA/EMA; `estar` ⇔ FDA;
 `eudamed_register` ⇔ EMA); a contradictory pair is a 400.
 
+#### 2a. The sequence lifecycle
+
+An eCTD application is a sequence of filings. 0000 is the original; every later sequence
+states, leaf by leaf, what it does to what is already on file. `planSequence`
+(`services/ectd/package-sequence-lifecycle`) supplies the package-specific half of that —
+the FILED history and its fold — and delegates the diff itself to the canonical
+`lifecycle-operator`.
+
+- **Filed means transmitted.** The history is appended by governed transmit when the
+  gateway accepts the bytes, never at assembly. A bundle that was built and never sent is
+  not at the agency and must not be a baseline.
+- **The baseline is a fold, not the last sequence.** A leaf untouched since 0000 is still
+  compared to 0000, and `modified-file` points at the sequence folder that actually holds
+  the version being superseded. A leaf whose last operation was `delete` has been
+  withdrawn and drops out.
+- **A sequence carries what changed.** A leaf byte-identical to the one on file does not
+  ship at all; the response reports it as `unchanged` with an `omittedCount`. This is why
+  leaf rendering is reproducible (`services/ectd/leaf-pdf`): PDF timestamps come from the
+  content's own dates, not the wall clock, so identical content renders to identical
+  bytes. Without that every leaf differs from itself and every follow-up re-files the
+  whole application as `replace`.
+- **Absence is not withdrawal.** A leaf on file but missing from this assembly stays on
+  file, unchanged and unmentioned.
+
+Four refusals answer 409 with a `code` and `gate: sequence_lifecycle`, in preference to a
+guess: `NO_PRIOR_SEQUENCE` (a follow-up on a package that has transmitted nothing),
+`SEQUENCE_ALREADY_FILED`, `SUBMISSION_TYPE_REQUIRED` (only 0000 is an original by
+definition) and `SUBMISSION_TYPE_UNKNOWN`. The last two carry
+`acceptedSubmissionTypes`: FDA files from a fixed vocabulary and 'amendment' is not in it,
+so the refusal names the terms that resolve rather than leaving the operator to guess —
+the value used to reach the packager and fail there with the reason discarded. EMA, PMDA
+and Health Canada take this field as free text on this path, so nothing is checked against
+a list they do not have.
+
 ### 3. Transmit
 
 `executeGovernedTransmit` refuses (422) a stored bundle with `errorCount > 0`, with no

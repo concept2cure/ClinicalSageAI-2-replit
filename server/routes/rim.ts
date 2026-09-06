@@ -12,6 +12,7 @@
 import { Router, type Request, type Response } from 'express';
 import { z } from 'zod';
 import { pool } from '../db';
+import { createScopedLogger } from '../utils/logger';
 import { recordGovernedAction } from './c2c/actions';
 import { setTenantContextTx } from '../services/tenant/governed-tenant-context';
 import {
@@ -40,16 +41,36 @@ function resolveOrgId(req: Request): number | null {
   const n = raw == null ? NaN : typeof raw === 'string' ? parseInt(raw, 10) : Number(raw);
   return Number.isFinite(n) ? n : null;
 }
+const logger = createScopedLogger('rim');
 const CODE_STATUS: Record<string, number> = { NOT_FOUND: 404, INVALID_STATE: 409, BAD_INPUT: 400 };
 function fail(res: Response, err: unknown): void {
   const code = (err as { code?: string } | null)?.code;
   if (code && CODE_STATUS[code]) {
+    // These three codes are the service's OWN, and their messages are written
+    // for the caller — they pass through as authored.
     res.status(CODE_STATUS[code]).json({ error: { code, message: err instanceof Error ? err.message : 'Request failed.' } });
     return;
   }
-  res.status(500).json({ error: { code: 'INTERNAL', message: err instanceof Error ? err.message : 'Request failed.' } });
+  /* Anything else is unrecognised, which in practice means the database's own
+     text: a bad renewal date reached the caller as
+     `invalid input syntax for type date: "next spring"`. The reason it could is
+     fixed above (dateStr), but an unmapped error must not carry Postgres's
+     wording into a user-facing response either way. */
+  logger.error('rim request failed', {
+    code: code ?? null,
+    err: err instanceof Error ? err.message : String(err),
+  });
+  res.status(500).json({ error: { code: 'INTERNAL', message: 'Request failed.' } });
 }
 const reason = z.string().trim().min(8, 'Provide a reason of at least 8 characters.');
+/* `approval_date` and `renewal_due_date` are Postgres DATE columns, and these
+   fields were bare `z.string()`. Postgres rejected anything unparseable — so
+   the store never held a bad date, which is the important part — but the
+   refusal arrived as a 500 carrying `invalid input syntax for type date:
+   "next spring"`. A renewal deadline is a field a regulatory lead types by
+   hand; the refusal should name the field and the format. Same shape the rest
+   of this codebase already uses (research-agreements, invention-disclosure). */
+const dateStr = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Use yyyy-mm-dd.');
 const MARKET_STATUS = z.enum(['planned', 'submitted', 'under_review', 'approved', 'withdrawn', 'suspended', 'cancelled']);
 const LABEL_TYPE = z.enum(['uspi', 'smpc', 'pil', 'core_data_sheet', 'carton_labeling', 'patient_leaflet']);
 function today(): string { return new Date().toISOString().slice(0, 10); }
@@ -116,8 +137,8 @@ const registrationSchema = z.object({
   marketStatus: MARKET_STATUS.optional(),
   registrationNumber: z.string().max(120).optional(),
   marketingAuthHolder: z.string().max(300).optional(),
-  approvalDate: z.string().optional(),
-  renewalDueDate: z.string().optional(),
+  approvalDate: dateStr.optional(),
+  renewalDueDate: dateStr.optional(),
   reason,
 });
 router.put('/products/:id/registrations', async (req, res) => {
@@ -150,7 +171,7 @@ const labelSchema = z.object({
   labelType: LABEL_TYPE,
   version: z.string().max(30).optional(),
   status: z.enum(['draft', 'in_review', 'approved']).optional(),
-  approvedDate: z.string().optional(),
+  approvedDate: dateStr.optional(),
   reason,
 });
 router.post('/products/:id/labels', async (req, res) => {
