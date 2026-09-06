@@ -181,6 +181,14 @@ const findings = (res: any): Array<{ ruleId: string; severity: string; message: 
   return dbState.updateSet.metadata.bundle.validation.findings;
 };
 
+/** A sequence this package actually transmitted — the baseline a follow-up
+ *  sequence diffs against. Its leaf is the cover letter the fixtures build. */
+const FILED_0000 = {
+  sequence: '0000', submissionType: 'original', sha256: 'a'.repeat(64), transmittalId: 1,
+  filedAt: '2026-01-01T00:00:00.000Z',
+  leaves: [{ ctdSection: 'm1.2', fileName: 'cover-letter.pdf', href: 'm1/us/12-cover/cover-letter.pdf', md5: 'prior-md5' }],
+};
+
 const PACKAGER_EVIDENCE = {
   submissionGrade: { pdfLeaves: 2, pdfaConverted: 2, notConverted: [] },
   dtdStatus: { selfContained: false, missing: ['ich-ectd-3-2.dtd'] },
@@ -636,13 +644,30 @@ describe('POST /api/submission-ops/packages/:packageId/assemble', () => {
     expect(writeFileFn).not.toHaveBeenCalled();
   });
 
-  it('accepts a four-digit sequence and passes it through', async () => {
+  it('accepts a four-digit sequence and passes it through, once there is a filing for it to follow', async () => {
+    dbState.pkg = lockedPkg({
+      foo: 'bar', regulatory: REGULATORY,
+      filedSequences: [FILED_0000, { ...FILED_0000, sequence: '0002' }],
+    });
+    dbState.sections = [{ id: 11, sectionKey: 'cover-letter', sectionLabel: 'Cover Letter', sortOrder: 0 }];
+    dbState.mappedByCall = [[art('cover', null)]];
+    const res = await post({ sequence: '0003', submissionType: 'amendment' });
+    expect(res.status).toBe(200);
+    const opts = packageLeafBytesFn.mock.calls[0][0];
+    expect(opts.sequence).toBe('0003');
+    // The backbone is told what is being filed — only 0000 is an original.
+    expect(opts.submissionType).toBe('amendment');
+    expect(opts.fda.submissionType).toBe('amendment');
+  });
+
+  it('REFUSES a follow-up sequence on a package that has transmitted nothing — an assembled-but-unsent bundle is not on file', async () => {
     dbState.pkg = lockedPkg();
     dbState.sections = [{ id: 11, sectionKey: 'cover-letter', sectionLabel: 'Cover Letter', sortOrder: 0 }];
     dbState.mappedByCall = [[art('cover', null)]];
-    const res = await post({ sequence: '0003' });
-    expect(res.status).toBe(200);
-    expect(packageLeafBytesFn.mock.calls[0][0].sequence).toBe('0003');
+    const res = await post({ sequence: '0003', submissionType: 'amendment' });
+    expect(res.status).toBe(409);
+    expect(res.body).toMatchObject({ code: 'NO_PRIOR_SEQUENCE', gate: 'sequence_lifecycle' });
+    expect(packageLeafBytesFn).not.toHaveBeenCalled();
   });
 
   it('400s when region and format disagree (FDA + pmda_ectd)', async () => {

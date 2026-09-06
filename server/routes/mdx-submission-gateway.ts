@@ -256,6 +256,16 @@ router.post('/gateways/:region/:gateway/transmit', async (req: Request, res: Res
       // The package content re-assessed after the send; a change that landed
       // while the bytes were leaving is said, never folded into a clean 201.
       contentAfterTransmit: outcome.contentAfterTransmit,
+      // The bytes are with the agency either way; what a false here costs is
+      // the baseline the NEXT sequence diffs against, so it is said, not implied.
+      filedSequenceRecorded: outcome.filedSequenceRecorded,
+      ...(outcome.filedSequenceRecorded === false
+        ? {
+            filedSequenceWarning:
+              'The transmission completed, but this sequence could not be added to the package filed history. ' +
+              'Record it manually before assembling the next sequence, which derives each leaf operation from that history.',
+          }
+        : {}),
       ...(outcome.contentAfterTransmit === 'drift' ? { contentWarning: CONTENT_CHANGED_DURING_TRANSMIT } : {}),
       ...(outcome.ledgerWriteFailed
         ? {
