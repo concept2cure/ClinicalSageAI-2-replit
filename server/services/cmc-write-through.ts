@@ -8,10 +8,17 @@
  *
  * This closes the gap between legacy CMC data tables and the Module 3 canonical layer.
  *
- * Usage: call `writeThroughToCanonicalSource(...)` after any CMC create/update that
- * should feed Module 3 documentation.
+ * Usage: call `writeThroughToCanonicalSource(...)` (or a `writeThroughX` wrapper)
+ * after any CMC create/update that should feed Module 3 documentation, and READ
+ * the outcome. It never throws and never returns null: it answers
+ * `{ ok: true, ... }` or `{ ok: false, code, reason }`, with the no-project
+ * refusal distinct from a failed write. Route handlers reach it through
+ * services/cmc/link-to-module3, which reports the outcome in the response and
+ * meters a failure — that module is the one place a propagation failure is
+ * observed, so this one does not log.
  */
 
+import type { PoolClient } from 'pg';
 import { getPool } from '../db';
 import { createSourceHash } from './cmc-module3-compiler';
 import {
@@ -44,12 +51,39 @@ import unifiedTaskService from './unifiedTaskService';
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
+/** What a successful canonical write produced. */
 export interface WriteThroughResult {
   sourceObjectId: string;
   sourceHash: string;
   staleSections: string[];
   isNew: boolean;
 }
+
+/**
+ * Why a canonical write did not happen.
+ *
+ *  - `no_project`: the record names no CMC project, so there is nothing to key
+ *    the source object on. A REFUSAL, not a failure — the record is saved to
+ *    its register and does not feed Module 3 until it is filed under a program.
+ *  - `write_failed`: the upsert transaction did not complete. The register row
+ *    stands; the dossier layer has not received it, and `reason` says why.
+ */
+export type WriteThroughFailureCode = 'no_project' | 'write_failed';
+
+/**
+ * The outcome of a canonical write, discriminated on `ok`.
+ *
+ * This used to be `WriteThroughResult | null`, and null meant BOTH "no project
+ * was given" and "the transaction failed" — so a caller could not tell a
+ * refusal from a fault, and the fire-and-forget register sites that did
+ * `writeThroughX(...).catch(observe)` observed nothing, because a function
+ * that swallows its own errors never rejects. A Module 3 propagation failure
+ * was invisible: the register row saved, the API said success, the dossier
+ * never received the record.
+ */
+export type WriteThroughOutcome =
+  | ({ ok: true } & WriteThroughResult)
+  | { ok: false; code: WriteThroughFailureCode; reason: string };
 
 interface WriteThroughInput {
   orgId: number;
@@ -846,6 +880,14 @@ export function mapImpurityProfilePayload(record: Record<string, any>): Record<s
        it the assessment refuses, which is correct — Q3D's oral PDE is the most
        permissive of the three for most elements and may not be assumed. */
     routeOfAdministration: alias(record, 'routeOfAdministration', 'route_of_administration'),
+    /* ICH M7(R2) inputs — carried as recorded, never defaulted. The assessment
+       refuses a mutagenic impurity with no Ames result rather than reading the
+       blank as negative. */
+    amesResult: alias(record, 'amesResult', 'ames_result'),
+    structuralAlert: alias(record, 'structuralAlert', 'structural_alert'),
+    carcinogenicityData: alias(record, 'carcinogenicityData', 'carcinogenicity_data'),
+    treatmentDuration: alias(record, 'treatmentDuration', 'treatment_duration'),
+    cohortOfConcern: alias(record, 'cohortOfConcern', 'cohort_of_concern'),
     specificationLimit: alias(record, 'specificationLimit', 'specification_limit'),
     reportingThreshold: alias(record, 'reportingThreshold', 'reporting_threshold'),
     identificationThreshold: alias(record, 'identificationThreshold', 'identification_threshold'),
@@ -1056,6 +1098,9 @@ export function mapFormulationRecordPayload(record: Record<string, any>): Record
     components: rows.length > 0 ? rows : null,
     theoreticalYield: alias(record, 'theoreticalYield', 'theoretical_yield'),
     overageJustification: alias(record, 'overageJustification', 'overage_justification'),
+    /* §3.2.P.2.2's required input. Emitted only when a rationale is actually
+       recorded — null otherwise, so the section stays honestly incomplete. */
+    formulationDevelopment: String(alias(record, 'formulationDevelopment', 'formulation_development')).trim() || null,
     unjustifiedOverageCount: unjustifiedOverages.length,
     supersedes: record.supersedes || '',
     status,
@@ -1106,6 +1151,7 @@ export function mapManufacturingProcessPayload(record: Record<string, any>): Rec
   const controls = jsonObjectRows(record.processControls ?? record.process_controls);
   const equipment = jsonObjectRows(record.equipmentList ?? record.equipment_list);
   const validationStatus = String(alias(record, 'validationStatus', 'validation_status')).trim();
+  const processDevelopment = String(alias(record, 'processDevelopment', 'process_development')).trim();
 
   /* The ordered unit operations ARE the process description when no prose one
      was written: "the process consists of X, then Y, then Z" is sourced from
@@ -1187,7 +1233,13 @@ export function mapManufacturingProcessPayload(record: Record<string, any>): Rec
     scaleUpData: hasRecordedValue(record.scaleUpData ?? record.scale_up_data)
       ? (record.scaleUpData ?? record.scale_up_data)
       : null,
-    processDevelopment: alias(record, 'processDevelopment', 'process_development'),
+    processDevelopment,
+    /* §3.2.P.2's required field, drug-PRODUCT side only. The section is
+       Pharmaceutical Development of the drug product (§3.2.P.2.3 is its
+       manufacturing process development); a drug-substance process's
+       development history is §3.2.S.2.6 content and must not complete it.
+       Emitted only when something was recorded — null, never a placeholder. */
+    manufacturingProcessDev: forProduct && processDevelopment ? processDevelopment : null,
     reprocessing: record.reprocessing || '',
     processValidationStatus: validationStatus,
     /* §3.2.S.2's completeness key, drug-substance side only. */
@@ -1276,23 +1328,83 @@ export function mapCharacterizationStudyPayload(record: Record<string, any>): Re
 
 // ── Core write-through function ────────────────────────────────────────────
 
+/** The text a failure is reported with — never empty, never "[object Object]". */
+function failureReason(err: unknown): string {
+  if (err instanceof Error) return err.message || err.name;
+  if (typeof err === 'string' && err.trim()) return err;
+  try {
+    const encoded = JSON.stringify(err);
+    if (encoded && encoded !== '{}') return encoded;
+  } catch {
+    /* circular or otherwise unencodable: fall through to String() */
+  }
+  return String(err);
+}
+
+/**
+ * The optional review task for a NEW source object. Non-blocking: the canonical
+ * write is already committed, so a missing review task is not a propagation
+ * failure and never changes the outcome.
+ */
+async function createReviewTaskFor(
+  input: WriteThroughInput,
+  sourceObjectId: string,
+  staleSections: string[],
+): Promise<void> {
+  const { orgId, sourceType, sourceKey } = input;
+  const label = SOURCE_TYPE_LABELS[sourceType] || sourceType;
+  try {
+    await unifiedTaskService.createUnifiedTask({
+      moduleType: 'CMC',
+      title: `Review: ${label} data entry`,
+      description: `New ${label} data was entered for this project and needs review before it can be merged into Module 3 documentation. Impacted sections: ${staleSections.join(', ') || 'none identified'}.`,
+      category: 'data-review',
+      taskType: 'review',
+      priority: 'medium',
+      sourceEntityId: sourceObjectId,
+      sourceEntityType: `cmc_source_object:${sourceType}`,
+      organizationId: orgId,
+      projectId: input.numericProjectId,
+      metadata: {
+        sourceType,
+        sourceKey,
+        sourceObjectId,
+        staleSections,
+        origin: 'cmc_write_through',
+      },
+    });
+  } catch (taskErr) {
+    console.warn('[CMC Write-Through] Failed to create review task:', taskErr);
+  }
+}
+
 /**
  * Upserts a canonical source object from a CMC data-entry record and marks
  * impacted Module 3 sections stale.
  *
- * This is non-blocking for the caller — failures are logged but do not
- * prevent the primary CMC save from succeeding.
+ * Never throws and never blocks the primary CMC save: the register row is real
+ * recorded data whether or not the dossier layer accepted it this second, so a
+ * failure here is REPORTED in the outcome rather than raised — and it is the
+ * caller's job to say so (see services/cmc/link-to-module3). The canonical
+ * transaction is rolled back on failure; the register row never is.
  */
-export async function writeThroughToCanonicalSource(input: WriteThroughInput): Promise<WriteThroughResult | null> {
+export async function writeThroughToCanonicalSource(input: WriteThroughInput): Promise<WriteThroughOutcome> {
   const { orgId, projectId, sourceType, sourceKey, sourcePayload, createdBy } = input;
 
   if (!projectId) {
-    console.warn('[CMC Write-Through] No projectId provided — skipping canonical source upsert');
-    return null;
+    return {
+      ok: false,
+      code: 'no_project',
+      reason: `No projectId was provided for ${sourceType} ${sourceKey}; the canonical source upsert was not attempted`,
+    };
   }
 
-  const pool = getPool();
-  const client = await pool.connect();
+  let client: PoolClient;
+  try {
+    client = await getPool().connect();
+  } catch (err) {
+    return { ok: false, code: 'write_failed', reason: failureReason(err) };
+  }
 
   try {
     await client.query('BEGIN');
@@ -1356,44 +1468,23 @@ export async function writeThroughToCanonicalSource(input: WriteThroughInput): P
 
     // 4. Optionally create a review task in the unified task system
     if (input.createReviewTask && isNew) {
-      const label = SOURCE_TYPE_LABELS[sourceType] || sourceType;
-      try {
-        await unifiedTaskService.createUnifiedTask({
-          moduleType: 'CMC',
-          title: `Review: ${label} data entry`,
-          description: `New ${label} data was entered for this project and needs review before it can be merged into Module 3 documentation. Impacted sections: ${staleSections.join(', ') || 'none identified'}.`,
-          category: 'data-review',
-          taskType: 'review',
-          priority: 'medium',
-          sourceEntityId: String(sourceObjectId),
-          sourceEntityType: `cmc_source_object:${sourceType}`,
-          organizationId: orgId,
-          projectId: input.numericProjectId,
-          metadata: {
-            sourceType,
-            sourceKey,
-            sourceObjectId: String(sourceObjectId),
-            staleSections,
-            origin: 'cmc_write_through',
-          },
-        });
-      } catch (taskErr) {
-        // Non-blocking: task creation failure should not affect the write-through
-        console.warn('[CMC Write-Through] Failed to create review task:', taskErr);
-      }
+      await createReviewTaskFor(input, String(sourceObjectId), staleSections);
     }
 
     return {
+      ok: true,
       sourceObjectId: String(sourceObjectId),
       sourceHash,
       staleSections,
       isNew,
     };
   } catch (err) {
-    await client.query('ROLLBACK');
-    // Non-blocking: log and return null so the primary CMC save still succeeds
-    console.error('[CMC Write-Through] Failed to upsert canonical source:', err);
-    return null;
+    try {
+      await client.query('ROLLBACK');
+    } catch {
+      /* the failure being reported is the original one, not the rollback's */
+    }
+    return { ok: false, code: 'write_failed', reason: failureReason(err) };
   } finally {
     client.release();
   }
@@ -1403,7 +1494,7 @@ export async function writeThroughToCanonicalSource(input: WriteThroughInput): P
 
 export async function writeThroughDrugSubstance(
   orgId: number, projectId: string, recordId: string, record: Record<string, any>, createdBy?: string,
-): Promise<WriteThroughResult | null> {
+): Promise<WriteThroughOutcome> {
   return writeThroughToCanonicalSource({
     orgId, projectId, sourceType: 'drug_substance',
     sourceKey: `drug_substance:${recordId}`,
@@ -1414,7 +1505,7 @@ export async function writeThroughDrugSubstance(
 
 export async function writeThroughDrugProduct(
   orgId: number, projectId: string, recordId: string, record: Record<string, any>, createdBy?: string,
-): Promise<WriteThroughResult | null> {
+): Promise<WriteThroughOutcome> {
   return writeThroughToCanonicalSource({
     orgId, projectId, sourceType: 'drug_product',
     sourceKey: `drug_product:${recordId}`,
@@ -1425,7 +1516,7 @@ export async function writeThroughDrugProduct(
 
 export async function writeThroughAnalyticalMethod(
   orgId: number, projectId: string, recordId: string, record: Record<string, any>, createdBy?: string,
-): Promise<WriteThroughResult | null> {
+): Promise<WriteThroughOutcome> {
   return writeThroughToCanonicalSource({
     orgId, projectId, sourceType: 'method',
     sourceKey: `method:${recordId}`,
@@ -1436,7 +1527,7 @@ export async function writeThroughAnalyticalMethod(
 
 export async function writeThroughStabilityStudy(
   orgId: number, projectId: string, recordId: string, record: Record<string, any>, createdBy?: string,
-): Promise<WriteThroughResult | null> {
+): Promise<WriteThroughOutcome> {
   return writeThroughToCanonicalSource({
     orgId, projectId, sourceType: 'stability',
     sourceKey: `stability:${recordId}`,
@@ -1447,7 +1538,7 @@ export async function writeThroughStabilityStudy(
 
 export async function writeThroughQcTesting(
   orgId: number, projectId: string, recordId: string, record: Record<string, any>, createdBy?: string,
-): Promise<WriteThroughResult | null> {
+): Promise<WriteThroughOutcome> {
   return writeThroughToCanonicalSource({
     orgId, projectId, sourceType: 'qc_result',
     sourceKey: `qc_result:${recordId}`,
@@ -1458,7 +1549,7 @@ export async function writeThroughQcTesting(
 
 export async function writeThroughSpecification(
   orgId: number, projectId: string, recordId: string, record: Record<string, any>, createdBy?: string,
-): Promise<WriteThroughResult | null> {
+): Promise<WriteThroughOutcome> {
   return writeThroughToCanonicalSource({
     orgId, projectId, sourceType: 'specification',
     sourceKey: `specification:${recordId}`,
@@ -1469,7 +1560,7 @@ export async function writeThroughSpecification(
 
 export async function writeThroughBatchRecord(
   orgId: number, projectId: string, recordId: string, record: Record<string, any>, createdBy?: string,
-): Promise<WriteThroughResult | null> {
+): Promise<WriteThroughOutcome> {
   return writeThroughToCanonicalSource({
     orgId, projectId, sourceType: 'batch',
     sourceKey: `batch:${recordId}`,
@@ -1480,7 +1571,7 @@ export async function writeThroughBatchRecord(
 
 export async function writeThroughChangeControl(
   orgId: number, projectId: string, recordId: string, record: Record<string, any>, createdBy?: string,
-): Promise<WriteThroughResult | null> {
+): Promise<WriteThroughOutcome> {
   return writeThroughToCanonicalSource({
     orgId, projectId, sourceType: 'change_control',
     sourceKey: `change_control:${recordId}`,
@@ -1491,7 +1582,7 @@ export async function writeThroughChangeControl(
 
 export async function writeThroughComparability(
   orgId: number, projectId: string, recordId: string, record: Record<string, any>, createdBy?: string,
-): Promise<WriteThroughResult | null> {
+): Promise<WriteThroughOutcome> {
   return writeThroughToCanonicalSource({
     orgId, projectId, sourceType: 'comparability',
     sourceKey: `comparability:${recordId}`,
@@ -1502,7 +1593,7 @@ export async function writeThroughComparability(
 
 export async function writeThroughContainerClosure(
   orgId: number, projectId: string, recordId: string, record: Record<string, any>, createdBy?: string,
-): Promise<WriteThroughResult | null> {
+): Promise<WriteThroughOutcome> {
   return writeThroughToCanonicalSource({
     orgId, projectId, sourceType: 'container_closure',
     sourceKey: `container_closure:${recordId}`,
@@ -1513,7 +1604,7 @@ export async function writeThroughContainerClosure(
 
 export async function writeThroughReferenceStandard(
   orgId: number, projectId: string, recordId: string, record: Record<string, any>, createdBy?: string,
-): Promise<WriteThroughResult | null> {
+): Promise<WriteThroughOutcome> {
   return writeThroughToCanonicalSource({
     orgId, projectId, sourceType: 'reference_standard',
     sourceKey: `reference_standard:${recordId}`,
@@ -1524,7 +1615,7 @@ export async function writeThroughReferenceStandard(
 
 export async function writeThroughImpurityProfile(
   orgId: number, projectId: string, recordId: string, record: Record<string, any>, createdBy?: string,
-): Promise<WriteThroughResult | null> {
+): Promise<WriteThroughOutcome> {
   return writeThroughToCanonicalSource({
     orgId, projectId, sourceType: 'impurity_profile',
     sourceKey: `impurity_profile:${recordId}`,
@@ -1535,7 +1626,7 @@ export async function writeThroughImpurityProfile(
 
 export async function writeThroughDissolutionProfile(
   orgId: number, projectId: string, recordId: string, record: Record<string, any>, createdBy?: string,
-): Promise<WriteThroughResult | null> {
+): Promise<WriteThroughOutcome> {
   return writeThroughToCanonicalSource({
     orgId, projectId, sourceType: 'dissolution_profile',
     sourceKey: `dissolution_profile:${recordId}`,
@@ -1552,7 +1643,7 @@ export async function writeThroughDissolutionProfile(
  */
 export async function writeThroughMaterialSpec(
   orgId: number, projectId: string, recordId: string, record: Record<string, any>, createdBy?: string,
-): Promise<WriteThroughResult | null> {
+): Promise<WriteThroughOutcome> {
   const role = normalizeMaterialRole(record.materialRole ?? record.material_role);
   const sourceType: CmcSourceType = EXCIPIENT_ROLES.includes(role) ? 'excipient' : 'raw_material_spec';
   return writeThroughToCanonicalSource({
@@ -1565,7 +1656,7 @@ export async function writeThroughMaterialSpec(
 
 export async function writeThroughFormulationRecord(
   orgId: number, projectId: string, recordId: string, record: Record<string, any>, createdBy?: string,
-): Promise<WriteThroughResult | null> {
+): Promise<WriteThroughOutcome> {
   return writeThroughToCanonicalSource({
     orgId, projectId, sourceType: 'formulation_record',
     sourceKey: `formulation_record:${recordId}`,
@@ -1576,7 +1667,7 @@ export async function writeThroughFormulationRecord(
 
 export async function writeThroughManufacturingProcess(
   orgId: number, projectId: string, recordId: string, record: Record<string, any>, createdBy?: string,
-): Promise<WriteThroughResult | null> {
+): Promise<WriteThroughOutcome> {
   return writeThroughToCanonicalSource({
     orgId, projectId, sourceType: 'manufacturing_process',
     sourceKey: `manufacturing_process:${recordId}`,
@@ -1587,7 +1678,7 @@ export async function writeThroughManufacturingProcess(
 
 export async function writeThroughCharacterizationStudy(
   orgId: number, projectId: string, recordId: string, record: Record<string, any>, createdBy?: string,
-): Promise<WriteThroughResult | null> {
+): Promise<WriteThroughOutcome> {
   return writeThroughToCanonicalSource({
     orgId, projectId, sourceType: 'characterization',
     sourceKey: `characterization:${recordId}`,
@@ -1598,7 +1689,7 @@ export async function writeThroughCharacterizationStudy(
 
 export async function writeThroughProcessValidation(
   orgId: number, projectId: string, recordId: string, record: Record<string, any>, createdBy?: string,
-): Promise<WriteThroughResult | null> {
+): Promise<WriteThroughOutcome> {
   return writeThroughToCanonicalSource({
     orgId, projectId, sourceType: 'process_validation',
     sourceKey: `process_validation:${recordId}`,

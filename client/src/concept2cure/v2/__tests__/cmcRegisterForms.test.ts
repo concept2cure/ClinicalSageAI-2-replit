@@ -963,3 +963,15 @@ describe('impurity register — the ICH M7 inputs are carried, never defaulted',
     }
   });
 });
+
+/* ── Formulation register: §3.2.P.2.2 development rationale round-trip ────── */
+import { formulationRecordBody, formulationRecordPatch } from '../surfaces/cmcRegisterForms';
+
+describe('formulation register — the development rationale is carried, and cleared explicitly', () => {
+  it('sends formulationDevelopment when recorded, omits it when blank, nulls it on update', () => {
+    const base = { formulationName: 'BX-701 5 mg tablet', status: 'current' };
+    expect(formulationRecordBody({ ...base, formulationDevelopment: 'QTPP-driven choice of IR tablet' }, 'p1').formulationDevelopment).toBe('QTPP-driven choice of IR tablet');
+    expect(formulationRecordBody(base, 'p1')).not.toHaveProperty('formulationDevelopment');
+    expect(formulationRecordPatch({ ...base, formulationDevelopment: '' }).formulationDevelopment).toBeNull();
+  });
+});

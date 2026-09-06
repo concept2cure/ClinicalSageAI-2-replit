@@ -1206,6 +1206,17 @@ const impurity = (over: Record<string, unknown> = {}) =>
   });
 
 describe('mapImpurityProfilePayload — one row per impurity, assessed against ICH', () => {
+  it('carries the ICH M7 inputs as recorded and never defaults them', () => {
+    const withM7 = impurity({ impurityType: 'mutagenic', amesResult: 'positive', structuralAlert: 'yes', carcinogenicityData: 'not-tested', treatmentDuration: 'lifetime', cohortOfConcern: 'CoC_nitrosamine' });
+    expect(withM7).toMatchObject({ amesResult: 'positive', structuralAlert: 'yes', carcinogenicityData: 'not-tested', treatmentDuration: 'lifetime', cohortOfConcern: 'CoC_nitrosamine' });
+    // The stored row shape.
+    expect(mapImpurityProfilePayload({ impurity_name: 'X', impurity_type: 'mutagenic', ames_result: 'negative', structural_alert: 'no' })).toMatchObject({ amesResult: 'negative', structuralAlert: 'no' });
+    // Unrecorded stays unrecorded — the assessment refuses on it, it is not read as negative.
+    const blank = impurity({ impurityType: 'mutagenic' });
+    expect(blank.amesResult ?? '').toBe('');
+    expect(blank.structuralAlert ?? '').toBe('');
+  });
+
   it('renders a ppm level as ppm, never as a percentage', () => {
     /* The table this replaced printed `${observedLevel}%` unconditionally, so a
        residual solvent recorded at 300 ppm appeared in a filing as 300% — a
@@ -1860,6 +1871,36 @@ describe('mapManufacturingProcessPayload — the process, not one sentence about
     expect(s2.missingInputs).toContain('manufacturingProcessComplete');
   });
 
+  it('emits §3.2.P.2\'s manufacturingProcessDev from the recorded process development, drug-product side only', () => {
+    /* §3.2.P.2 requires `manufacturingProcessDev` and nothing produced it, so
+       the section could never complete. The register captures the development
+       history in process_development; a drug-PRODUCT process (§3.2.P.2.3) is
+       what the pharmaceutical development section describes — a drug-substance
+       process's development belongs to §3.2.S.2.6 and must not complete it. */
+    const dev = 'Roller compaction selected over wet granulation after the moisture-sensitivity study DS-014.';
+    const dp = mapManufacturingProcessPayload(process({ processType: 'Drug Product', processDevelopment: dev }));
+    expect(dp.manufacturingProcessDev).toBe(dev);
+    expect(required('3.2.P.2')).toContain('manufacturingProcessDev');
+
+    const ds = mapManufacturingProcessPayload(process({ processType: 'Drug Substance', processDevelopment: dev }));
+    expect(ds.manufacturingProcessDev).toBeNull();
+  });
+
+  it('never emits a placeholder for manufacturingProcessDev when no development was recorded', () => {
+    const none = mapManufacturingProcessPayload(process({ processType: 'Drug Product', processDevelopment: '' }));
+    expect(none.manufacturingProcessDev).toBeNull();
+    const snake = mapManufacturingProcessPayload(process({ processType: 'Drug Product', processDevelopment: undefined, process_development: '   ' }));
+    expect(snake.manufacturingProcessDev).toBeNull();
+  });
+
+  /* NOT pinned here: §3.2.P.2 composing from this field. MODULE3_SECTION_RULES'
+     3.2.P.2 rule (module3Composer.ts) does not list `manufacturing_process` in
+     its requiredSourceTypes, so the composer never matches a process source
+     for that section and `manufacturingProcessDev` cannot count toward its
+     completeness until that rule names the register. The mapper's side of the
+     contract — emit the field, drug-product side, only when recorded — is what
+     the two tests above pin. */
+
   it('§3.2.P.3 renders the register rather than the drug product form when both exist', () => {
     /* The section read `processSteps` through a first-match array helper, so
        once the register began emitting rows the two shapes competed for one
@@ -2130,5 +2171,15 @@ describe('review: what the register data is allowed to CLAIM', () => {
     const narrative = composed.find((c) => c.sectionKey === '3.2.P.4')!.narrativeDraft;
     expect(narrative).not.toContain('each controlled to the specification');
     expect(narrative).toContain('record neither a specification nor a compendial monograph');
+  });
+});
+
+describe('mapFormulationRecordPayload — §3.2.P.2.2 has a producer', () => {
+  it('emits formulationDevelopment from the recorded rationale, and null when none is recorded', () => {
+    const base = { formulationName: 'BX-701 5 mg tablet', status: 'current', components: [{ component: 'BX-701', role: 'Active' }] };
+    expect(mapFormulationRecordPayload({ ...base, formulationDevelopment: 'Immediate-release tablet chosen over capsule for dose uniformity; MCC:lactose ratio fixed at 2:1 after prototypes F1-F3.' }).formulationDevelopment).toMatch(/prototypes F1-F3/);
+    expect(mapFormulationRecordPayload({ ...base, formulation_development: 'stored shape' }).formulationDevelopment).toBe('stored shape');
+    expect(mapFormulationRecordPayload({ ...base, formulationDevelopment: '   ' }).formulationDevelopment).toBeNull();
+    expect(mapFormulationRecordPayload(base).formulationDevelopment).toBeNull();
   });
 });

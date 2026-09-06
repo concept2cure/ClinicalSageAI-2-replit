@@ -4183,6 +4183,10 @@ export const cmcFormulationRecords = pgTable(
     /* An overage is a regulatory question in its own right (ICH Q8): it must be
        justified, and the section states when one is recorded without a reason. */
     overageJustification: text('overage_justification'),
+    /* §3.2.P.2.2 — the development of the formulation (ICH Q8): why these
+       components, these amounts, these overages. The only producer of the
+       section's `formulationDevelopment` input; nullable, never defaulted. */
+    formulationDevelopment: text('formulation_development'),
     /* Which formulation this one supersedes, so a version history is readable. */
     supersedes: text('supersedes'),
     status: text('status').default('draft').notNull(), // draft | current | superseded
