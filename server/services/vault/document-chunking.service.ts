@@ -40,7 +40,7 @@ export async function isVaultChunkingEnabled(organizationId?: number | null): Pr
 // Pure chunker
 // ─────────────────────────────────────────────────────────────────────────────
 
-export interface TextChunk {
+export interface DocumentTextChunk {
   index: number;
   text: string;
   /** Exact half-open span over the extracted text this chunk was cut from. */
@@ -48,7 +48,7 @@ export interface TextChunk {
   charEnd: number;
 }
 
-export interface ChunkOptions {
+export interface DocumentChunkOptions {
   /** Target maximum characters per chunk (~1000 tokens at 4 chars/token). */
   maxChars?: number;
   /** Characters of trailing context repeated at the head of the next chunk. */
@@ -66,13 +66,13 @@ export const MAX_CHUNKS = 500;
  * reproduces every chunk (the overlap prefix is context, carried inside the
  * span of the PREVIOUS chunk it repeats).
  */
-export function chunkExtractedText(text: string, opts: ChunkOptions = {}): TextChunk[] {
+export function chunkExtractedText(text: string, opts: DocumentChunkOptions = {}): DocumentTextChunk[] {
   const maxChars = Math.max(500, opts.maxChars ?? DEFAULT_MAX_CHARS);
   const overlap = Math.min(Math.max(0, opts.overlapChars ?? DEFAULT_OVERLAP), Math.floor(maxChars / 2));
   const len = text.length;
   if (len === 0) return [];
 
-  const chunks: TextChunk[] = [];
+  const chunks: DocumentTextChunk[] = [];
   let start = 0;
   while (start < len) {
     let end = Math.min(len, start + maxChars);

@@ -27,13 +27,13 @@ import {
   type AliasExecutor,
 } from './document-alias-map.js';
 
-export interface BackfillOptions {
+export interface DocumentAliasBackfillOptions {
   organizationId: number;
   /** Write rows. Without it the same analysis runs and nothing is written. */
   apply: boolean;
 }
 
-export interface BackfillReport {
+export interface DocumentAliasBackfillReport {
   organizationId: number;
   apply: boolean;
   /** The alias migration has not been applied; nothing else was examined. */
@@ -85,12 +85,12 @@ async function existingAliases(exec: AliasExecutor, organizationId: number, stor
 
 type Ref = { store: 'authoring_documents' | 'coauthor_documents' | 'c2c_documents'; nativeId: string; canonicalId: string };
 
-export async function backfillDocumentAliases(exec: AliasExecutor, opts: BackfillOptions): Promise<BackfillReport> {
+export async function backfillDocumentAliases(exec: AliasExecutor, opts: DocumentAliasBackfillOptions): Promise<DocumentAliasBackfillReport> {
   if (!Number.isInteger(opts.organizationId) || opts.organizationId <= 0) {
     throw new Error('backfillDocumentAliases requires a positive organizationId (one tenant per run)');
   }
   const org = opts.organizationId;
-  const report: BackfillReport = {
+  const report: DocumentAliasBackfillReport = {
     organizationId: org,
     apply: opts.apply,
     relationAbsent: false,
@@ -130,7 +130,7 @@ type Bucket = { toRecord: number; alreadyRecorded: number };
 type Record_ = (ref: Ref, bucket: Bucket) => Promise<void>;
 
 /** authoring_documents: the uuid is the identity; a bound c2c document is the same document there. */
-async function backfillAuthoring(exec: AliasExecutor, org: number, report: BackfillReport, record: Record_): Promise<Set<string>> {
+async function backfillAuthoring(exec: AliasExecutor, org: number, report: DocumentAliasBackfillReport, record: Record_): Promise<Set<string>> {
   const authoringIds = new Set<string>();
   if (!(await tablePresent(exec, 'authoring_documents'))) return authoringIds;
   const hasBinding = await columnPresent(exec, 'authoring_documents', 'c2c_document_id');
@@ -178,7 +178,7 @@ function namedAuthoringSource(metadata: unknown): string {
 }
 
 /** coauthor_documents: only what the row itself says it came from. */
-async function backfillCoauthor(exec: AliasExecutor, org: number, report: BackfillReport, record: Record_, authoringIds: Set<string>): Promise<void> {
+async function backfillCoauthor(exec: AliasExecutor, org: number, report: DocumentAliasBackfillReport, record: Record_, authoringIds: Set<string>): Promise<void> {
   if (!(await tablePresent(exec, 'coauthor_documents'))) return;
   const rows = await exec.query(
     `SELECT id::text AS id, metadata::text AS metadata FROM coauthor_documents WHERE organization_id = $1 ORDER BY id`,

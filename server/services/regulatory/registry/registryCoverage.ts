@@ -293,7 +293,7 @@ export interface RegionCoverage {
   catalogOnly: number;
 }
 
-export interface CoverageReport {
+export interface RegistryCoverageReport {
   summary: CoverageSummary;
   byRegion: RegionCoverage[];
   entries: DocumentCoverage[];
@@ -307,7 +307,7 @@ export function computeCoverage(): DocumentCoverage[] {
 }
 
 /** Build the full portfolio coverage report. */
-export function buildCoverageReport(): CoverageReport {
+export function buildCoverageReport(): RegistryCoverageReport {
   const entries = computeCoverage();
 
   const byReadiness: Record<ReadinessTier, number> = { production_ready: 0, buildable: 0, catalog_only: 0 };
