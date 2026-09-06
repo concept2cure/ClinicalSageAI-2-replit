@@ -1874,6 +1874,11 @@ export const C2C_MIGRATION_FILES = [
   // only for readability — it depends on nothing that file adds.
   'migrations/20260906_vault_documents_fulltext.sql',
 
+  // Legal holds. Lands while the retention sweep is still inert (nothing writes
+  // retention_until), which is the point: the guard has to exist before the
+  // clock starts, not after the first record is destroyed.
+  'migrations/20260906b_vault_legal_holds.sql',
+
   // The three IVDR append-only history tables carry no tenant column of their
   // own — their tenant is their parent's, reached by foreign key — so BOTH
   // sweeps below are blind to them: the integer sweep matches on
