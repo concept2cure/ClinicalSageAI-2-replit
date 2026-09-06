@@ -591,44 +591,29 @@ router.get('/signatures/:signatureId/manifest', async (req: Request, res: Respon
 });
 
 /**
- * POST /signatures/:signatureId/revoke
- * Revoke an electronic signature with reason documentation
+ * POST /signatures/:signatureId/revoke — REMOVED.
+ *
+ * The handler never touched `electronic_signatures`: no existence check, no
+ * tenant scoping (unlike every sibling route in this file), and no UPDATE. It
+ * appended an audit entry and answered
+ *
+ *     { success: true, data: { signatureId, revoked: true, revokedBy, ... } }
+ *
+ * so a caller was told a §11.70 signature had been revoked while the row kept
+ * `is_valid = true` and `superseded_by NULL`, and the submission orchestrator
+ * went on returning it as the active release signature. The audit entry itself
+ * almost certainly never persisted either — `audit_events.organization_id` is
+ * NOT NULL and appendAuditEntry is called here with no organization, so the
+ * INSERT raises 23502 into a swallowing .catch.
+ *
+ * Deleted rather than repaired, for the same reason POST /signatures was: it had
+ * no caller in client/ or server/, and the canonical revocation already exists —
+ * persistGovernedSignatureRevocation (server/services/part11/signature-persistence.ts),
+ * which resolves org-scoped, refuses when it cannot identify what it is
+ * revoking, and writes superseded_by / is_valid / verification_status under a
+ * compare-and-set. Callers use POST /api/c2c/actions (server/routes/c2c/actions.ts).
+ * Zero duplication: one revocation path.
  */
-router.post(
-  '/signatures/:signatureId/revoke',
-  createPolicyGuard({
-    action: 'part11.signature.revoke',
-    module: 'part11-compliance',
-    resourceType: 'electronic_signature',
-  }),
-  async (req: Request, res: Response) => {
-    const { signatureId } = req.params as { signatureId: string };
-    const { revokedBy, reason } = req.body;
-
-    if (!revokedBy || !reason) {
-      return res.status(400).json({ error: 'revokedBy and reason required per §11.10(e)' });
-    }
-
-    appendAuditEntry({
-      entityType: 'signature',
-      entityId: String(signatureId),
-      action: 'revoke_signature',
-      userId: revokedBy,
-      userName: revokedBy,
-      userRole: 'admin',
-      changeReason: reason,
-      timestamp: new Date(),
-      ipAddress: req.ip || 'unknown',
-      userAgent: req.get('user-agent') || 'unknown',
-      sessionId: (req as any).sessionId || 'unknown',
-    });
-
-    res.json({
-      success: true,
-      data: { signatureId, revoked: true, revokedBy, reason, revokedAt: new Date() },
-    });
-  }
-);
 
 // ============================
 // AUDIT TRAIL (§11.10(e))
