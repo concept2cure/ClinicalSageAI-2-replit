@@ -74,10 +74,27 @@ export interface BridgeTaskBlueprint {
   trigger: string;
   deliverable?: string;
 }
+export interface ReviewRow {
+  element: string;
+  risk: 'low' | 'medium' | 'high' | 'critical';
+  finding: string;
+  action: string;
+  codes: string[];
+}
+export interface StatisticalReview {
+  rows: ReviewRow[];
+  verdict: { challengeLikelihood: 'low' | 'moderate' | 'high'; mostVulnerable: string | null; recommendedActions: string[] };
+  standardsChecked: string[];
+  overallRisk: 'low' | 'medium' | 'high' | 'critical';
+}
 export interface DesignAssessment {
   studyId: string;
   title: string;
   readiness: StatisticalReadiness;
+  /** The design gates' report (ICH E9 / E9(R1) / E10 / E3), as /api/study-design returns it. */
+  validation?: { riskLevel: string; summary: string; counts: Record<string, number> };
+  /** The reviewer's risk table and defensibility verdict. */
+  review?: StatisticalReview;
   adapter: { input: Record<string, unknown> | null; gaps: DesignGap[]; mapped: string[] };
   computation: { method: string; sampleSize: { total: number; perGroup: number }; adjustedTotal?: number; power: number } | null;
   judgment: { overallVerdict: string; overallRisk: string; actionRecommendation: string } | null;
@@ -175,6 +192,7 @@ export function openDesignInBiostatistics(studyId: string, onNav: (id: string) =
 
 const pct = (v: number | null) => (v === null ? '—' : `${Math.round(v * 100)}%`);
 const readinessTone = (p: number) => (p >= 80 ? 'ok' : p >= 50 ? 'warn' : 'err');
+const riskTone = (r: string) => (r === 'low' ? 'ok' : r === 'medium' ? 'warn' : 'err');
 const gradeLabel: Record<BridgePlacement['required'], string> = {
   required: 'required', expected: 'expected', conditional: 'conditional', not_applicable: 'not filed',
 };
@@ -283,6 +301,11 @@ export function DesignBridgePanel({ state, onNav, onApplied, onTasksRaised, fire
           </ul>
         )}
 
+        {/* Statistical review — the gates' findings and the engine's judgment as
+            one risk table with a verdict (biostatistics-engine review format).
+            Rows cite the gate codes they rest on. */}
+        {a.review && <StatisticalReviewTable review={a.review} />}
+
         {/* Filing */}
         <div style={{ fontSize: 12 }}>
           {app ? (
@@ -321,6 +344,42 @@ export function DesignBridgePanel({ state, onNav, onApplied, onTasksRaised, fire
         <RaiseTasksForm assessment={a} onCancel={() => setForm(null)}
           onDone={(msg) => { setForm(null); fireToast(msg); onTasksRaised(); }}
           onError={(msg) => fireToast(msg, 'error')} />
+      )}
+    </div>
+  );
+}
+
+// ─── Statistical review table ────────────────────────────────────────────────
+
+export function StatisticalReviewTable({ review }: { review: StatisticalReview }) {
+  const [open, setOpen] = useState(review.overallRisk !== 'low');
+  const v = review.verdict;
+  return (
+    <div style={{ display: 'grid', gap: 6 }}>
+      <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', fontSize: 12 }}>
+        <span className={'rd-chip tone-' + riskTone(review.overallRisk)}>{review.overallRisk} statistical risk</span>
+        <span>Regulatory challenge likelihood: <b>{v.challengeLikelihood}</b>{v.mostVulnerable ? <> — most vulnerable: <b>{v.mostVulnerable}</b></> : null}</span>
+        <button className="btn" style={{ height: 24, fontSize: 11, marginLeft: 'auto' }} aria-expanded={open} onClick={() => setOpen((o) => !o)}>
+          {open ? 'Hide' : 'Show'} review
+        </button>
+      </div>
+      {open && (
+        <div style={{ overflowX: 'auto' }}>
+          <table className="reg-tbl" aria-label="Statistical risk summary">
+            <thead><tr><th>Element</th><th>Risk</th><th>Finding</th><th>Action</th></tr></thead>
+            <tbody>
+              {review.rows.map((r) => (
+                <tr key={r.element}>
+                  <td style={{ whiteSpace: 'nowrap' }}>{r.element}{r.codes.length ? <span style={{ ...muted, display: 'block', fontFamily: 'var(--font-mono)' }}>{r.codes.join(' ')}</span> : null}</td>
+                  <td><span className={'rd-chip tone-' + riskTone(r.risk)}>{r.risk}</span></td>
+                  <td style={{ fontSize: 12 }}>{r.finding}</td>
+                  <td style={{ fontSize: 12 }}>{r.action}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          {review.standardsChecked.length > 0 && <div style={muted}>Standards checked: {review.standardsChecked.join(' · ')}</div>}
+        </div>
       )}
     </div>
   );

@@ -55,6 +55,8 @@ import {
   type FilingPlacement,
 } from './filing-placement';
 import { tasksFromAssessment, type TaskBlueprint } from './task-blueprint';
+import { buildStatisticalReview, type StatisticalReview } from './statistical-review';
+import type { DesignValidationReport } from '../study-design/design-validation';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -84,6 +86,10 @@ export interface DesignAssessment {
   adapter: DesignAdapterResult;
   computation: ComputationResult | null;
   judgment: JudgmentResult | null;
+  /** The design gates' report (ICH E9 / E9(R1) / E10 / E3), as /api/study-design returns it. */
+  validation: DesignValidationReport;
+  /** The reviewer's risk table and defensibility verdict, assembled from the gates and the engines. */
+  review: StatisticalReview;
   provenance: { engine: string; engineVersion: string; inputsSha256: string | null; reproducible: true };
   filing: ProgramFilingContext;
   placements: FilingPlacement[];
@@ -222,10 +228,11 @@ function computeFor(adapter: DesignAdapterResult): { computation: ComputationRes
 export async function assessDesign(organizationId: number, studyId: string): Promise<DesignAssessment | null> {
   const loaded = await loadStudyDesign(studyId, organizationId);
   if (!loaded) return null;
-  const { design } = loaded;
+  const { design, validation } = loaded;
 
   const adapter = studyDesignToStatisticalInput(design);
   const { computation, judgment, inputsSha256 } = computeFor(adapter);
+  const review = buildStatisticalReview({ validation, judgment, computation, input: adapter.input, gaps: adapter.gaps });
   const filing = await programFilingContext(organizationId, design.programId);
   const [existingDeliverables, existingTaskKeys] = await Promise.all([
     existingStatisticalDeliverables(organizationId, filing.projectId),
@@ -239,6 +246,7 @@ export async function assessDesign(organizationId: number, studyId: string): Pro
     gaps: adapter.gaps,
     applicationType: filing.applicationType,
     existingDeliverables,
+    findings: validation.findings,
   });
 
   return {
@@ -248,6 +256,8 @@ export async function assessDesign(organizationId: number, studyId: string): Pro
     adapter,
     computation,
     judgment,
+    validation,
+    review,
     provenance: { engine: STATS_ENGINE, engineVersion: STATS_ENGINE_VERSION, inputsSha256, reproducible: true },
     filing,
     placements: filing.applicationType ? placementsForApplication(filing.applicationType) : [],

@@ -119,6 +119,24 @@ describe('tasksFromAssessment', () => {
     for (const t of deliverables) expect(t.title).toContain('NDA');
   });
 
+  it('critical and major gate findings become tasks keyed by their code; minors do not', () => {
+    const out = tasksFromAssessment({
+      ...base,
+      judgment: judgment(),
+      input: input(),
+      findings: [
+        { code: 'INT-001', section: '§13 Interim analysis', severity: 'critical', title: 'Interim analyses with no alpha-spending function', detail: 'd', suggestedFix: 'Name the spending function.', standard: 'ICH E9 §4.5' },
+        { code: 'MIS-002', section: '§12 Missing data', severity: 'major', title: 'LOCF as the primary missing-data method', detail: 'd', suggestedFix: 'Use MMRM or MI.' },
+        { code: 'POP-004', section: '§9 Analysis populations', severity: 'minor', title: 'No safety population defined', detail: 'd' },
+      ],
+    });
+    expect(out.map((t) => t.key)).toEqual(['finding:INT-001', 'finding:MIS-002']);
+    expect(out[0]).toMatchObject({ priority: 'critical', criticalPath: true, category: 'compliance' });
+    expect(out[1]).toMatchObject({ priority: 'high', criticalPath: false, category: 'analysis' });
+    expect(out[0].description).toContain('Name the spending function.');
+    expect(out[0].description).toContain('ICH E9 §4.5');
+  });
+
   it('is deterministic and de-duplicated across re-runs', () => {
     const ctx = { ...base, judgment: judgment({ overallVerdict: 'inadequate' as const }), input: input({ interimAnalyses: 1 }), applicationType: 'ind' as const };
     const a = tasksFromAssessment(ctx);
