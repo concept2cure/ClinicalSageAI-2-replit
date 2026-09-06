@@ -44,6 +44,7 @@ import {
   verifyLedger,
   type RevisionOrigin,
   machineContributors,
+  MACHINE_AUTHOR_IDS,
 } from '../services/authoring/revision-ledger';
 import {
   checkSectionWritable,
@@ -6940,6 +6941,45 @@ router.post('/users/pin', async (req: Request, res: Response) => {
 
 // ── Tracked Change Decisions (persist accept/reject) ──────────────────────────
 
+/**
+ * Who PROPOSED a tracked change, for the audit event — never validated against
+ * a roster, because there is no roster this could safely check. `authorId` on
+ * a human mark is the editor's own email (client/src/concept2cure/v2/editor/
+ * suggestions.ts), not a numeric user id, so it cannot be matched against
+ * doc_permissions or organization_users; a legitimate proposer can also be a
+ * live co-author whose mark predates any grant, a person whose grant was later
+ * revoked, or (per suggestions.ts's own doc comment) simply the case where the
+ * proposer and the decider are different people entirely — refusing an
+ * unrecognised proposer would drop a verified, hash-audited DECISION to guard
+ * an unverifiable PROPOSAL, which is the wrong thing to fail closed on here.
+ *
+ * What IS checkable is whether the claimed proposer is this server's own AI
+ * system, because that identity is a closed, server-owned vocabulary
+ * (MACHINE_AUTHOR_IDS — the same list machineContributors validates against
+ * for the revision ledger). So the one thing this function does is stop a
+ * caller from relabelling that identity: when `authorId` names a machine
+ * author, the CANONICAL name is recorded and the caller's own `authorName` is
+ * discarded, exactly as machineContributors discards it for the same reason
+ * ("the id is the claim being checked, and echoing a caller-supplied display
+ * name would put unvalidated text in the attribution position of a filed
+ * record" — revision-ledger.ts). Everything else is recorded as what it is:
+ * text the editing client asserted, not a verified identity — the audit rail
+ * already renders it qualified as "(proposed by X, as recorded by the editing
+ * client)" (DocumentAuthoring.tsx), and `proposedByVerified` carries that same
+ * fact into the stored row for any reader that does not go through the rail.
+ */
+function describeProposer(authorName: unknown, authorId: unknown): {
+  proposedBy?: string;
+  proposedByVerified?: boolean;
+} {
+  if (typeof authorId === 'string' && MACHINE_AUTHOR_IDS[authorId]) {
+    return { proposedBy: MACHINE_AUTHOR_IDS[authorId], proposedByVerified: true };
+  }
+  const claimed = typeof authorName === 'string' ? authorName : typeof authorId === 'string' ? authorId : null;
+  if (!claimed) return {};
+  return { proposedBy: claimed.slice(0, 200), proposedByVerified: false };
+}
+
 // authoring_tracked_change_decisions is now provisioned by
 // db/migrations/20260730_authoring_runtime_ddl.sql. Retained as a no-op so
 // existing call sites need no change; the router no longer issues runtime DDL.
@@ -7024,12 +7064,11 @@ router.post('/documents/:id/tracked-change-decisions', async (req: Request, res:
         ...(typeof req.body?.sectionId === 'string' ? { sectionId: req.body.sectionId } : {}),
         /* Who PROPOSED the change, which is not who decided it — that is the
            audit row's own actor. A redline record that cannot tell the two
-           apart says nothing about review at all. */
-        ...(typeof req.body?.authorName === 'string'
-          ? { proposedBy: req.body.authorName }
-          : typeof req.body?.authorId === 'string'
-            ? { proposedBy: req.body.authorId }
-            : {}),
+           apart says nothing about review at all. See describeProposer above
+           for why this is canonicalised only for a machine author and
+           otherwise recorded as caller-asserted text, never validated as a
+           human identity. */
+        ...describeProposer(req.body?.authorName, req.body?.authorId),
         ...(typeof req.body?.at === 'string' ? { proposedAt: req.body.at } : {}),
       },
       tenantId
@@ -7108,22 +7147,24 @@ router.post('/documents/:id/tracked-change-decisions/bulk', async (req: Request,
        that looks complete is worse than one that admits its limit. */
     const MAX_SUMMARISED = 20;
     const rawChanges = Array.isArray(req.body?.changes) ? req.body.changes : [];
-    const summarised = rawChanges.slice(0, MAX_SUMMARISED).map((c: any) => ({
+    const summarised = rawChanges.slice(0, MAX_SUMMARISED).map((c: any) => {
+      // See describeProposer above (single-decision route): canonical name for
+      // a recognised machine author, otherwise caller-asserted text flagged as
+      // such via proposedByVerified.
+      const proposer = describeProposer(c?.authorName, c?.authorId);
+      return {
       changeId: typeof c?.changeId === 'string' ? c.changeId : null,
       changeType: typeof c?.changeType === 'string' ? c.changeType : null,
-      proposedBy:
-        typeof c?.authorName === 'string'
-          ? c.authorName
-          : typeof c?.authorId === 'string'
-            ? c.authorId
-            : null,
+      proposedBy: proposer.proposedBy ?? null,
+      proposedByVerified: proposer.proposedByVerified ?? null,
       text: typeof c?.text === 'string' ? c.text.slice(0, 200) : null,
       // The single-decision route above records this; the client already sends
       // it (DocumentAuthoring.tsx's flushDecisions puts `at` on every change in
       // the batch), and "Accept all" is the case that adopts the most text at
       // once — the case that most needs to say when each change was proposed.
       proposedAt: typeof c?.at === 'string' ? c.at : null,
-    }));
+      };
+    });
     await createAuditEvent(
       artifactId,
       'tracked_change_bulk_decision',
