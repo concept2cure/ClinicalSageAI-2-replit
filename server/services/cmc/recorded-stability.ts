@@ -547,19 +547,59 @@ export async function estimateRecordedShelfLife(
     }
 
     try {
-      const result = estimateShelfLife({
-        data: usable,
-        specLimit: criterion.limit,
-        direction: criterion.direction,
-        maxTime,
-      });
+      /* A TWO-SIDED criterion has two ways to fail, and this estimate used to
+         evaluate only one of them. `parseAcceptanceCriterion` resolves a range
+         like "4.5 - 6.5" to the LOWER bound with direction 'decreasing' and
+         carries the upper bound alongside — but this call passed only
+         `criterion.limit`/`criterion.direction`, discarding it. For an attribute
+         drifting toward the DISCARDED bound the one-sided confidence limit moves
+         away from the evaluated one, g(t) grows monotonically, and the estimate
+         returned the full Q1E allowance — e.g. pH against "4.5 - 6.5" reading
+         5.0/5.4/5.8/6.4 reported the whole search horizon while the upper
+         confidence limit crosses 6.5 at roughly 20 months. Because
+         `supportedShelfLife` is the minimum across attributes, an over-long
+         figure on the truly limiting attribute becomes the programme answer,
+         and the per-parameter row asserted the attribute "stays within spec"
+         against a criterion half of which was never evaluated.
+
+         Evaluate every bound the criterion actually sets and report the shorter
+         (limiting) one — the same "most constraining wins" rule already applied
+         across attributes, applied within an attribute. */
+      const bounds: Array<{ specLimit: number; direction: 'decreasing' | 'increasing' }> = [
+        { specLimit: criterion.limit, direction: criterion.direction },
+      ];
+      if (criterion.twoSided && criterion.upperLimit !== null) {
+        bounds.push({ specLimit: criterion.upperLimit, direction: 'increasing' });
+      }
+
+      const runs = bounds.map((b) => ({
+        ...b,
+        result: estimateShelfLife({ data: usable, specLimit: b.specLimit, direction: b.direction, maxTime }),
+      }));
+      const limitingRun = runs.reduce((a, b) => (b.result.shelfLife < a.result.shelfLife ? b : a));
+
       estimates.push({
         parameter,
         estimable: true,
-        specLimit: criterion.limit,
-        direction: criterion.direction,
+        specLimit: limitingRun.specLimit,
+        direction: limitingRun.direction,
         pointsUsed: usable.length,
-        ...result,
+        ...(criterion.twoSided && criterion.upperLimit !== null
+          ? {
+              acceptanceCriterion: {
+                lowerLimit: criterion.limit,
+                upperLimit: criterion.upperLimit,
+                twoSided: true,
+                boundsEvaluated: runs.map((r) => ({
+                  specLimit: r.specLimit,
+                  direction: r.direction,
+                  shelfLife: r.result.shelfLife,
+                })),
+                limitingBound: limitingRun.direction === 'increasing' ? 'upper' : 'lower',
+              },
+            }
+          : {}),
+        ...limitingRun.result,
       });
     } catch (e) {
       estimates.push({
