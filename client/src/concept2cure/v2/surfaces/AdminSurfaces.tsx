@@ -1353,7 +1353,7 @@ export function AuditTrail({ onAsk }: SurfaceViewProps) {
             }}
           >
             <div style={{ fontWeight: 600, fontSize: 14 }}>{entry.id} -- Entry detail</div>
-            <button className="tbtn" onClick={() => setSel(null)} style={{ fontSize: 16 }}>
+            <button className="tbtn" aria-label="Close" onClick={() => setSel(null)} style={{ fontSize: 16 }}>
               {I.close}
             </button>
           </div>
