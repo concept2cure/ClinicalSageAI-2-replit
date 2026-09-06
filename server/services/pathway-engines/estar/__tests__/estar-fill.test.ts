@@ -256,7 +256,6 @@ const SHARED_ADMINISTRATIVE_DATA = {
   applicantContactEmail: 'regulatory@concept2cure.example',
   correspondentCompanyName: 'Concept2Cure Regulatory Services',
   correspondentContactEmail: 'correspondent@concept2cure.example',
-  associatedProductCodes: 'NBW, QBJ',
   declarationCompanyName: 'Concept2Cure, Inc.',
   declarationCompanyAddress: '1 Example Way, Boston, MA 02110',
   declarationDeviceTradeName: 'AcuSense CGM System',
@@ -265,6 +264,17 @@ const SHARED_ADMINISTRATIVE_DATA = {
 
 /** 510(k)-only values that a De Novo/PMA must NOT write even when supplied. */
 const K510_ONLY_DATA = {
+  /*
+   * `associatedProductCodes` is here, not in the shared set, because its box is
+   * `Classification.USAKnownClassification.DDTextField517a` and the single
+   * assignment that reveals that subform sits inside `if (this.rawValue == "1")`
+   * in the pathway radio's change handler — the 510(k) branch. De Novo reveals
+   * `Classification` but not that block; PMA reveals neither. And the block is
+   * the KNOWN-classification section: a De Novo is by definition a device with
+   * no predicate and no existing classification, so a code written there
+   * asserts something the pathway says does not exist.
+   */
+  associatedProductCodes: 'NBW, QBJ',
   deviceTradeName: 'AcuSense CGM System',
   predicateSubmissionNumber: 'K203456',
 };
@@ -291,11 +301,14 @@ describe('De Novo / PMA field maps are the pathway-neutral subset (no template n
   });
 
   it.each(['de_novo-device', 'pma-device', 'de_novo-ivd', 'pma-ivd'])(
-    '%s never addresses the 510(k) Summary page or the predicate fields',
+    '%s never addresses the 510(k) Summary page, the predicate fields or the known-classification block',
     (id) => {
       const paths = Object.values(ESTAR_FIELD_MAPS[id]).map((s) => s.xfaSomPath ?? '');
       expect(paths.length).toBeGreaterThan(0);
-      expect(paths.filter((p) => /PMNSummary|PredicatesSE/.test(p))).toEqual([]);
+      // USAKnownClassification joins the list: it is revealed only by the 510(k)
+      // branch of the pathway radio, and it is the known-classification block a
+      // De Novo has no predicate for.
+      expect(paths.filter((p) => /PMNSummary|PredicatesSE|USAKnownClassification/.test(p))).toEqual([]);
     },
   );
 

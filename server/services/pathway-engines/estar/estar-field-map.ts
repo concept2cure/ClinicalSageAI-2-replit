@@ -122,16 +122,30 @@ const PRODUCT_CODES: OfficialPdfFieldSpec = {
  * this template (510(k), De Novo, PMA) shares. Re-enumerated from the vendored
  * `eSTAR-510k-non-ivd.pdf` with `listXfaFields` on 2026-09-03 (WO-8 Phase 3),
  * each verified `inDatasets`. Deliberately EXCLUDES the 510(k) Summary page
- * (`AdministrativeDocumentation.PMNSummary.*`) and the predicate fields
- * (`PredicatesSE.PredicateReference.*`): those are 510(k)-only and a De Novo or
- * PMA must never write them.
+ * (`AdministrativeDocumentation.PMNSummary.*`), the predicate fields
+ * (`PredicatesSE.PredicateReference.*`) and the known-classification block
+ * (`Classification.USAKnownClassification.*`): all three are 510(k)-only and a
+ * De Novo or PMA must never write them.
+ *
+ * `associatedProductCodes` was in this set until 2026-09-05 and did not belong.
+ * Measured in the pathway radio's own change handler (42,145 bytes): the single
+ * `Classification.USAKnownClassification.presence = "visible"` assignment sits
+ * inside `if (this.rawValue == "1")`, the 510(k) branch. De Novo (2) reveals
+ * `Classification` but not that subform; PMA (3) reveals neither. So on those
+ * two pathways the value went into a box the applicant never sees.
+ *
+ * Invisibility is the smaller half. The block is the KNOWN-classification
+ * section — the classification a predicate already holds — and a De Novo is by
+ * definition a device with no predicate and no existing classification. Writing
+ * an associated product code there asserts, on a filed submission, something
+ * the pathway says does not exist. It stays on the two 510(k) maps, which spell
+ * their fields out rather than spreading this set.
  */
 const NIVD_SHARED_ADMINISTRATIVE_FIELDS: OfficialPdfFieldMap = {
   applicantCompanyName: { xfaSomPath: 'root.AdministrativeInformation.ApplicantInformation.ADTextField210', type: 'text', caption: 'Company Name' },
   applicantContactEmail: { xfaSomPath: 'root.AdministrativeInformation.ApplicantInformation.ADTextField160', type: 'text', caption: 'Email' },
   correspondentCompanyName: { xfaSomPath: 'root.AdministrativeInformation.CorrespondentInformation.ADTextField410', type: 'text', caption: 'Company Name' },
   correspondentContactEmail: { xfaSomPath: 'root.AdministrativeInformation.CorrespondentInformation.ADTextField360', type: 'text', caption: 'Email' },
-  associatedProductCodes: { xfaSomPath: 'root.Classification.USAKnownClassification.DDTextField517a', type: 'text', caption: 'Associated Product Code(s)' },
   declarationCompanyName: { xfaSomPath: 'root.AdministrativeDocumentation.DoC.DCTextField120', type: 'text', caption: 'Company Name' },
   declarationCompanyAddress: { xfaSomPath: 'root.AdministrativeDocumentation.DoC.DCTextField130', type: 'text', caption: 'Company Address' },
   declarationDeviceTradeName: DECLARATION_DEVICE_TRADE_NAME,
@@ -149,7 +163,6 @@ const IVD_SHARED_ADMINISTRATIVE_FIELDS: OfficialPdfFieldMap = {
   applicantContactEmail: { xfaSomPath: 'root.AdministrativeInformation.ApplicantInformation.ADTextField160', type: 'text', caption: 'Email' },
   correspondentCompanyName: { xfaSomPath: 'root.AdministrativeInformation.CorrespondentInformation.ADTextField410', type: 'text', caption: 'Company Name' },
   correspondentContactEmail: { xfaSomPath: 'root.AdministrativeInformation.CorrespondentInformation.ADTextField360', type: 'text', caption: 'Email' },
-  associatedProductCodes: { xfaSomPath: 'root.Classification.USAKnownClassification.DDTextField517a', type: 'text', caption: 'Associated Product Code(s)' },
   declarationCompanyName: { xfaSomPath: 'root.AdministrativeDocumentation.DoC.DCTextField120', type: 'text', caption: 'Company Name' },
   declarationCompanyAddress: { xfaSomPath: 'root.AdministrativeDocumentation.DoC.DCTextField130', type: 'text', caption: 'Company Address' },
   declarationDeviceTradeName: DECLARATION_DEVICE_TRADE_NAME,
