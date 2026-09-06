@@ -2572,6 +2572,10 @@ router.patch('/sections/:sectionId', async (req: Request, res: Response) => {
           actorId: String(updatedByUser),
           tenantId,
           reason: typeof req.body?.changeReason === 'string' ? req.body.changeReason : undefined,
+          // Same signal createRevision's `origin` already uses two blocks up.
+          // Only the machine-author id is ever written here — never a guessed
+          // 'human' for the zero-contributor case, see commit-section-to-filing.ts.
+          draftSource: contributors.length > 0 ? contributors[0].id : null,
         });
       }
 
@@ -4035,6 +4039,11 @@ router.post('/sections/:sectionId/ai/draft/accept', async (req: Request, res: Re
           typeof req.body?.changeReason === 'string' && req.body.changeReason.trim()
             ? req.body.changeReason
             : undefined,
+        // Unconditional, unlike the manual-save call site above: this whole
+        // route exists to accept an AI draft, so the content it commits is by
+        // definition AI-drafted — there is no ambiguous zero-contributor case
+        // here the way there is on an ordinary interactive save.
+        draftSource: 'ana',
       });
 
       await client.query('COMMIT');

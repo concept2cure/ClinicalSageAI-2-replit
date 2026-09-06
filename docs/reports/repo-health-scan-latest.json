@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-06T21:53:19.535Z",
+  "generatedAt": "2026-09-06T22:01:23.715Z",
   "git": {
-    "sha": "ea4befb4613fd288c3ed00c3a7b3ea2d8e6da43b",
+    "sha": "ac8d766944d6290c1eb275e11ea4886c17cc313f",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -1997,7 +1997,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "bytes": 326804
+        "bytes": 327456
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
@@ -2081,7 +2081,7 @@
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "bytes": 121863
+        "bytes": 125182
       },
       {
         "file": "server/services/__tests__/ana-ri.test.ts",
@@ -2151,7 +2151,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "lines": 7497
+        "lines": 7506
       },
       {
         "file": "server/statistics-service.ts",
@@ -2234,12 +2234,12 @@
         "lines": 2779
       },
       {
-        "file": "server/services/__tests__/ana-ri.test.ts",
-        "lines": 2759
+        "file": "server/services/ana/AnaToolDefinitions.ts",
+        "lines": 2769
       },
       {
-        "file": "server/services/ana/AnaToolDefinitions.ts",
-        "lines": 2701
+        "file": "server/services/__tests__/ana-ri.test.ts",
+        "lines": 2759
       },
       {
         "file": "server/services/biosimilar/biosimilar-knowledge.ts",
