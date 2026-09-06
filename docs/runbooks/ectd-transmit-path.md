@@ -83,6 +83,15 @@ Findings recorded on the bundle at assembly:
 To correct a placement, map or unmap the artifact: `POST /api/submission-ops/artifact-section-map`
 (one mapping per artifact and section — a repeat answers the existing row) and
 `DELETE /api/submission-ops/artifact-section-map/:mappingId` (governed; reason required).
+
+To correct the package's section list itself — the key routes each leaf to its ICH module,
+the label becomes the placeholder leaf's title, and the sort order decides the order the
+leaves appear in the backbone — use `POST /api/submission-ops/packages/:id/sections`,
+`PATCH /api/submission-ops/packages/:id/sections/:sectionId` (key, label and/or order) and
+`DELETE .../sections/:sectionId`. All three are governed and invalidate like a mapping
+change. Removing a section that still holds artifacts is refused (`SECTION_NOT_EMPTY`)
+rather than letting the cascade unmap them with no record of its own; unmap them first. A
+PATCH that changes nothing is a no-op: it invalidates nothing and records nothing.
 Either clears a bundle assembled before the change and bumps the package's content
 revision; assemble again.
 
@@ -130,7 +139,7 @@ pre-transmit gate:
 
 | Check | Posture |
 | --- | --- |
-| content integrity — the descriptor's fingerprint of what the zip was built from (each section's id, key and label; each mapping; each artifact's title, version, declared CTD section and a digest of its content), recomputed from the database with a database-side digest so no content is transported (`BUNDLE_CONTENT_DRIFT`) | hard whenever a stored descriptor carries a fingerprint of the current scheme, in every environment; a descriptor without one, or from an older scheme, is unproven (`BUNDLE_CONTENT_UNPROVEN`) and blocks wherever descriptor trust is enforced, exactly like missing validation evidence. The dev/test-only client-supplied descriptor is not a stored bundle and is not assessed. After the gateway accepts the bytes the content is assessed again: the governed `sign` row records the fingerprint the zip was proven against and the after-send state, and a change that landed during the send is returned as `contentAfterTransmit: 'drift'` with `contentWarning` — the agency has the assembled bundle; re-assemble before any further transmission |
+| content integrity — the descriptor's fingerprint of what the zip was built from (each section's id, key, label and sort order; each mapping; each artifact's title, version, declared CTD section and a digest of its content), recomputed from the database with a database-side digest so no content is transported (`BUNDLE_CONTENT_DRIFT`) | hard whenever a stored descriptor carries a fingerprint of the current scheme, in every environment; a descriptor without one, or from an older scheme, is unproven (`BUNDLE_CONTENT_UNPROVEN`) and blocks wherever descriptor trust is enforced, exactly like missing validation evidence. The dev/test-only client-supplied descriptor is not a stored bundle and is not assessed. After the gateway accepts the bytes the content is assessed again: the governed `sign` row records the fingerprint the zip was proven against and the after-send state, and a change that landed during the send is returned as `contentAfterTransmit: 'drift'` with `contentWarning` — the agency has the assembled bundle; re-assemble before any further transmission |
 | gateway size limit | hard, always |
 | region identity — the region the bundle was built for (its regional backbone, or the region recorded on its descriptor) and its format tag (`estar` ⇔ FDA, `eudamed_register` ⇔ EMA, `pmda_ectd` ⇔ PMDA, `ectd` never PMDA) must match the target gateway | hard whenever the bundle records its region; a bundle assembled before region identity was recorded is reported as unprovable, never treated as matching |
 | PDF/A submission grade | blocks in production only when `ECTD_REQUIRE_PDFA=true`; a grade without evidence is "cannot prove", never a pass |

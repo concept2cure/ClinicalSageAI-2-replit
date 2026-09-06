@@ -90,12 +90,13 @@ afterAll(async () => {
   await pg.close();
 });
 
+/** `sortOrder` mirrors the seeded sort_order of each section. */
 const expectedRows = (): PackageContentRow[] => [
-  { sectionDbId: 1, sectionKey: '2.5', sectionLabel: 'Clinical Overview', artifactDbId: 1, title: 'Clinical overview', version: 1, ctdSection: null, contentSha256: sha256Hex(TRICKY) },
-  { sectionDbId: 2, sectionKey: 'module3_cmc', sectionLabel: 'Module 3', artifactDbId: 2, title: 'Description', version: 3, ctdSection: '3.2.P.1', contentSha256: sha256Hex('Desc') },
-  { sectionDbId: 2, sectionKey: 'module3_cmc', sectionLabel: 'Module 3', artifactDbId: 4, title: 'Empty', version: 1, ctdSection: null, contentSha256: sha256Hex('') },
-  { sectionDbId: 3, sectionKey: 'cover-letter', sectionLabel: 'Cover Letter', artifactDbId: null, title: null, version: null, ctdSection: null, contentSha256: null },
-  { sectionDbId: 5, sectionKey: 'labeling', sectionLabel: 'Labeling', artifactDbId: null, title: null, version: null, ctdSection: null, contentSha256: null },
+  { sectionDbId: 1, sectionKey: '2.5', sectionLabel: 'Clinical Overview', sortOrder: 2, artifactDbId: 1, title: 'Clinical overview', version: 1, ctdSection: null, contentSha256: sha256Hex(TRICKY) },
+  { sectionDbId: 2, sectionKey: 'module3_cmc', sectionLabel: 'Module 3', sortOrder: 1, artifactDbId: 2, title: 'Description', version: 3, ctdSection: '3.2.P.1', contentSha256: sha256Hex('Desc') },
+  { sectionDbId: 2, sectionKey: 'module3_cmc', sectionLabel: 'Module 3', sortOrder: 1, artifactDbId: 4, title: 'Empty', version: 1, ctdSection: null, contentSha256: sha256Hex('') },
+  { sectionDbId: 3, sectionKey: 'cover-letter', sectionLabel: 'Cover Letter', sortOrder: 0, artifactDbId: null, title: null, version: null, ctdSection: null, contentSha256: null },
+  { sectionDbId: 5, sectionKey: 'labeling', sectionLabel: 'Labeling', sortOrder: 3, artifactDbId: null, title: null, version: null, ctdSection: null, contentSha256: null },
 ];
 
 describe('readPackageContentRows on a real engine', () => {
@@ -104,14 +105,19 @@ describe('readPackageContentRows on a real engine', () => {
     expect(rows).toEqual(expectedRows());
   });
 
-  it('is indifferent to section sort order but not to a cascade-deleted artifact', async () => {
+  it('CHANGES when the sections are reordered — that changes the order the leaves appear in the backbone — and when an artifact is cascade-deleted', async () => {
     const before = fingerprintPackageContent(await readPackageContentRows(client, PKG, ORG));
     await pg.exec('UPDATE c2c_package_sections SET sort_order = 9 WHERE id = 1');
-    expect(fingerprintPackageContent(await readPackageContentRows(client, PKG, ORG))).toBe(before);
+    const reordered = fingerprintPackageContent(await readPackageContentRows(client, PKG, ORG));
+    expect(reordered).not.toBe(before);
     await pg.exec('DELETE FROM concept2cure_artifacts WHERE id = 2'); // cascades to its mapping
     const after = await readPackageContentRows(client, PKG, ORG);
-    expect(after).toEqual(expectedRows().filter((r) => r.artifactDbId !== 2));
-    expect(fingerprintPackageContent(after)).not.toBe(before);
+    expect(after).toEqual(
+      expectedRows()
+        .filter((r) => r.artifactDbId !== 2)
+        .map((r) => (r.sectionDbId === 1 ? { ...r, sortOrder: 9 } : r)),
+    );
+    expect(fingerprintPackageContent(after)).not.toBe(reordered);
   });
 
   it('is scoped to the org: another tenant asking about the same package sees only its own mappings', async () => {

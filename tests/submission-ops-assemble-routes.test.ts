@@ -348,7 +348,7 @@ describe('POST /api/submission-ops/packages/:packageId/assemble', () => {
     dbState.pkg = lockedPkg();
     dbState.sections = [
       { id: 13, sectionKey: '2.5', sectionLabel: 'Clinical Overview', sortOrder: 0 },
-      { id: 14, sectionKey: '3.2.P.1', sectionLabel: 'Description and Composition', sortOrder: 1 },
+      { id: 14, sectionKey: '3.2.P.1', sectionLabel: 'Description and Composition', sortOrder: 0 },
     ];
     const co = art('co', null, 1);
     dbState.mappedByCall = [[co], []]; // 3.2.P.1 has nothing mapped: a placeholder leaf, still part of the content
@@ -356,8 +356,8 @@ describe('POST /api/submission-ops/packages/:packageId/assemble', () => {
     expect(res.status).toBe(200);
     expect(dbState.updateSet.metadata.bundle.contentFingerprint).toBe(
       fingerprintPackageContent([
-        { sectionDbId: 13, sectionKey: '2.5', sectionLabel: 'Clinical Overview', artifactDbId: 1, title: co.title, version: 1, ctdSection: null, contentSha256: sha256Hex(co.content) },
-        { sectionDbId: 14, sectionKey: '3.2.P.1', sectionLabel: 'Description and Composition', artifactDbId: null, title: null, version: null, ctdSection: null, contentSha256: null },
+        { sectionDbId: 13, sectionKey: '2.5', sectionLabel: 'Clinical Overview', sortOrder: 0, artifactDbId: 1, title: co.title, version: 1, ctdSection: null, contentSha256: sha256Hex(co.content) },
+        { sectionDbId: 14, sectionKey: '3.2.P.1', sectionLabel: 'Description and Composition', sortOrder: 0, artifactDbId: null, title: null, version: null, ctdSection: null, contentSha256: null },
       ]),
     );
   });
@@ -366,7 +366,7 @@ describe('POST /api/submission-ops/packages/:packageId/assemble', () => {
     dbState.pkg = { ...lockedPkg(), packageFamily: '510k' };
     dbState.sections = [
       { id: 21, sectionKey: 'device-description', sectionLabel: 'Device Description', sortOrder: 0 },
-      { id: 22, sectionKey: 'labeling', sectionLabel: 'Labeling', sortOrder: 1 },
+      { id: 22, sectionKey: 'labeling', sectionLabel: 'Labeling', sortOrder: 0 },
     ];
     const dd = art('dd', null, 4);
     dbState.mappedByCall = [[dd], []];
@@ -375,8 +375,8 @@ describe('POST /api/submission-ops/packages/:packageId/assemble', () => {
     expect(res.body.data.bundle.format).toBe('estar');
     expect(dbState.updateSet.metadata.bundle.contentFingerprint).toBe(
       fingerprintPackageContent([
-        { sectionDbId: 21, sectionKey: 'device-description', sectionLabel: 'Device Description', artifactDbId: 4, title: dd.title, version: 1, ctdSection: null, contentSha256: sha256Hex(dd.content) },
-        { sectionDbId: 22, sectionKey: 'labeling', sectionLabel: 'Labeling', artifactDbId: null, title: null, version: null, ctdSection: null, contentSha256: null },
+        { sectionDbId: 21, sectionKey: 'device-description', sectionLabel: 'Device Description', sortOrder: 0, artifactDbId: 4, title: dd.title, version: 1, ctdSection: null, contentSha256: sha256Hex(dd.content) },
+        { sectionDbId: 22, sectionKey: 'labeling', sectionLabel: 'Labeling', sortOrder: 0, artifactDbId: null, title: null, version: null, ctdSection: null, contentSha256: null },
       ]),
     );
   });
@@ -420,8 +420,8 @@ describe('POST /api/submission-ops/packages/:packageId/assemble', () => {
     dbState.pkg = lockedPkg();
     dbState.sections = [
       { id: 11, sectionKey: 'cover-letter', sectionLabel: 'Cover Letter', sortOrder: 0 },
-      { id: 12, sectionKey: 'module3_cmc', sectionLabel: 'Module 3 CMC', sortOrder: 1 },
-      { id: 13, sectionKey: '2.5', sectionLabel: 'Clinical Overview', sortOrder: 2 },
+      { id: 12, sectionKey: 'module3_cmc', sectionLabel: 'Module 3 CMC', sortOrder: 0 },
+      { id: 13, sectionKey: '2.5', sectionLabel: 'Clinical Overview', sortOrder: 0 },
     ];
     dbState.mappedByCall = [
       [art('cover', null, 1)], // placed from the section key's Module 1 heading (1.2)
@@ -483,8 +483,8 @@ describe('POST /api/submission-ops/packages/:packageId/assemble', () => {
     dbState.pkg = lockedPkg();
     dbState.sections = [
       { id: 11, sectionKey: 'cover-letter', sectionLabel: 'Cover Letter', sortOrder: 0 },
-      { id: 12, sectionKey: 'misc-attachment', sectionLabel: 'Misc', sortOrder: 1 }, // nothing inferable
-      { id: 13, sectionKey: 'module3_cmc', sectionLabel: 'Module 3 CMC', sortOrder: 2 }, // bare module: NOT a heading
+      { id: 12, sectionKey: 'misc-attachment', sectionLabel: 'Misc', sortOrder: 0 }, // nothing inferable
+      { id: 13, sectionKey: 'module3_cmc', sectionLabel: 'Module 3 CMC', sortOrder: 0 }, // bare module: NOT a heading
     ];
     dbState.mappedByCall = [[art('cover', null)], [], []];
 
@@ -533,7 +533,7 @@ describe('POST /api/submission-ops/packages/:packageId/assemble', () => {
     dbState.pkg = lockedPkg();
     dbState.sections = [
       { id: 12, sectionKey: 'module3_cmc', sectionLabel: 'Module 3 CMC', sortOrder: 0 },
-      { id: 14, sectionKey: '3.2.P.1', sectionLabel: 'Description', sortOrder: 1 },
+      { id: 14, sectionKey: '3.2.P.1', sectionLabel: 'Description', sortOrder: 0 },
     ];
     // Same artifactDbId 7 twice in one section (a duplicate map row) and again in another section.
     dbState.mappedByCall = [[art('dp', '3.2.P.1', 7), art('dp', '3.2.P.1', 7)], [art('dp', null, 7)]];
@@ -553,7 +553,7 @@ describe('POST /api/submission-ops/packages/:packageId/assemble', () => {
     dbState.pkg = lockedPkg();
     dbState.sections = [
       { id: 41, sectionKey: '4.3', sectionLabel: 'Literature References (M4)', sortOrder: 0 },
-      { id: 54, sectionKey: '5.4', sectionLabel: 'Literature References (M5)', sortOrder: 1 },
+      { id: 54, sectionKey: '5.4', sectionLabel: 'Literature References (M5)', sortOrder: 0 },
     ];
     dbState.mappedByCall = [[art('ref', null, 7)], [art('ref', null, 7)]];
     const res = await post();

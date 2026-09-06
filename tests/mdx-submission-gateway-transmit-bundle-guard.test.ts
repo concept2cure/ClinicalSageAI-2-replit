@@ -130,7 +130,7 @@ const packageSelects: Array<unknown[]> = [];
 /** The package's content as the transmit gate re-reads it. A good descriptor
  *  carries the fingerprint of CONTENT; a test edits `contentRows` to drift it. */
 const CONTENT: PackageContentRow[] = [
-  { sectionDbId: 13, sectionKey: '2.5', sectionLabel: 'Clinical Overview', artifactDbId: 1, title: 'Clinical overview', version: 1, ctdSection: null, contentSha256: sha256Hex('Clinical overview text') },
+  { sectionDbId: 13, sectionKey: '2.5', sectionLabel: 'Clinical Overview', sortOrder: 0, artifactDbId: 1, title: 'Clinical overview', version: 1, ctdSection: null, contentSha256: sha256Hex('Clinical overview text') },
 ];
 const CONTENT_FINGERPRINT = fingerprintPackageContent(CONTENT);
 const EDITED_CONTENT = CONTENT.map((r) => ({ ...r, contentSha256: sha256Hex('Clinical overview text, edited after assembly') }));
@@ -168,7 +168,7 @@ function installDb() {
       contentSelects.push(params);
       return Promise.resolve({
         rows: contentRows.map((r) => ({
-          section_db_id: r.sectionDbId, section_key: r.sectionKey, section_label: r.sectionLabel, artifact_db_id: r.artifactDbId,
+          section_db_id: r.sectionDbId, section_key: r.sectionKey, section_label: r.sectionLabel, sort_order: r.sortOrder, artifact_db_id: r.artifactDbId,
           title: r.title, version: r.version, ctd_section: r.ctdSection, content_sha256: r.contentSha256,
         })),
         rowCount: contentRows.length,

@@ -141,6 +141,27 @@ function censusOfWriters(): string[] {
   return [...found].sort();
 }
 
+/**
+ * The other table the fingerprint covers. A section's key routes its leaves to
+ * an ICH module, its label becomes the placeholder leaf's title, and its sort
+ * order decides the order the leaves appear in the backbone — so adding,
+ * renaming, reordering or removing one changes what a bundle was built from.
+ * Only the governed routes in submission-ops.ts write this table, and they
+ * invalidate; a writer anywhere else must be wired or baselined deliberately.
+ */
+const SECTION_WRITER_FILES = ['server/routes/submission-ops.ts'];
+
+function censusOfSectionWriters(): string[] {
+  const found = new Set<string>();
+  const FORMS = /(?:INSERT INTO|UPDATE|DELETE FROM)\s+c2c_package_sections|\.(?:insert|update|delete)\((?:schema\.)?c2cPackageSections\)/g;
+  for (const file of walk(join(process.cwd(), 'server'))) {
+    const src = readFileSync(file, 'utf8');
+    if (FORMS.test(src)) found.add(relative(process.cwd(), file));
+    FORMS.lastIndex = 0;
+  }
+  return [...found].sort();
+}
+
 describe('every writer of a fingerprint-covered artifact column is accounted for', () => {
   it('is exactly the wired routes plus the baselined backstop-only writers', () => {
     const census = censusOfWriters();
@@ -159,5 +180,24 @@ describe('every writer of a fingerprint-covered artifact column is accounted for
     const stale = BACKSTOP_ONLY.filter((f) => !census.includes(f));
     expect(stale, 'BACKSTOP_ONLY lists files that no longer write those columns; remove them').toEqual([]);
     expect(WIRED_FILES.every((f) => census.includes(f))).toBe(true);
+  });
+
+  it('the package section list is written ONLY by the governed routes that invalidate', () => {
+    expect(
+      censusOfSectionWriters(),
+      'A writer of c2c_package_sections outside the governed routes changes what an assembled ' +
+        'bundle was built from (leaf placement, titles and order). Route it through the section ' +
+        'routes in submission-ops.ts, which commit the row write with markContentChanged.',
+    ).toEqual(SECTION_WRITER_FILES);
+    // Those routes go through the canonical primitive, not a local copy.
+    const ops = readFileSync(join(process.cwd(), 'server/routes/submission-ops.ts'), 'utf8');
+    for (const form of [/INSERT INTO c2c_package_sections/, /UPDATE c2c_package_sections/, /DELETE FROM c2c_package_sections/]) {
+      const at = ops.search(form);
+      expect(at, `${form} not found`).toBeGreaterThan(-1);
+      // Each raw section write sits inside a markContentChanged callback: the
+      // nearest preceding one is closer than the nearest preceding route entry.
+      const before = ops.slice(0, at);
+      expect(before.lastIndexOf('markContentChanged('), String(form)).toBeGreaterThan(before.lastIndexOf('router.'));
+    }
   });
 });
