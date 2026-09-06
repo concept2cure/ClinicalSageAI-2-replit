@@ -128,6 +128,43 @@ durable but invisible — only the consolidation job's promoted summaries were
 findable. An embedding failure is logged and the entries stay (unembedded,
 honestly logged as unreachable), matching the consolidation job's policy.
 
+### The discipline that makes her use any of it (`server/services/ana-ri/persona.ts`)
+
+Every capability above shipped before any instruction to reach for it did. With
+~700 tools registered, a tool description is not a discipline — and the persona
+already carried a **Context Clarity Protocol** telling AnA to say plainly when
+something is not in her context. Applied to a file, that is precisely the
+reported behavior: a client asks about the tox report they uploaded last week
+and is told it cannot be seen, while the document sits in the vault one call
+away.
+
+`## THE CLIENT'S FILES (NON-NEGOTIABLE)` sits directly above that protocol and
+qualifies it. It establishes four things:
+
+1. **The project folder is not part of the CONTEXT SNAPSHOT** — it is a place
+   she *looks*. A file uploaded in a previous session is still there, so
+   "I don't see that document" is not an available answer until she has called
+   `list_project_documents` (or `search_project_documents` when she knows what
+   she needs but not which file holds it).
+2. **Consume, don't sample.** A scanned PDF is a document, not an image; the
+   OCRed text *is* its content. Page through with `read_project_document` until
+   the coverage it reports is complete — an opinion from the first page or the
+   filename is worth nothing on a regulatory record.
+3. **Record the comprehension once** with `catalog_project_document`, so the
+   client stops re-explaining their own file — and record only what the text
+   states.
+4. **Say plainly when a file cannot be read**, using the recorded reason.
+
+Both live chat paths (`ana-ri/stream.ts`, `chat/send-message.ts`) reach this
+through the orchestrator's `buildAnaRISystemPrompt`.
+`server/services/ana-ri/__tests__/persona-client-files.test.ts` is the tripwire:
+it asserts every tool the section names is registered *and* executable (a
+persona promising a call the runtime cannot serve teaches the model to
+hallucinate one — the CMC section carries the same guard), that each of the four
+disciplines is still stated, and that the section contains no backtick, since
+the persona body is a template literal and the first draft of this block
+terminated it.
+
 ### Session recall (`server/services/ana-session-bootstrap.ts`)
 
 Session bootstrap now includes **"Project files on record"**: up to 12 vault
