@@ -25,6 +25,25 @@ const store = createFeatureStore('client_branding');
 // (logo, colors, custom templates). The orgId now comes from the JWT
 // only, via requireAuthedOrgId; the query/body field is ignored.
 
+/**
+ * Who created this — from the request, never invented.
+ *
+ * `createdBy` was the literal string 'Current User', so every document template
+ * in the store records its author as words nobody is. requireAuthedOrgId has
+ * already established an authenticated principal by the time this runs, so a
+ * missing identity is an anomaly and the write is refused rather than attributed
+ * to a placeholder.
+ */
+function authorLabel(req: Request): string | null {
+  const u = (req as any).user as { id?: unknown; name?: unknown; email?: unknown } | undefined;
+  if (!u) return null;
+  const name = typeof u.name === 'string' && u.name.trim() !== '' ? u.name.trim() : null;
+  const email = typeof u.email === 'string' && u.email.trim() !== '' ? u.email.trim() : null;
+  if (name) return name;
+  if (email) return email;
+  return u.id == null ? null : `user #${String(u.id)}`;
+}
+
 router.get('/settings', async (req: Request, res: Response) => {
   try {
     const guard = requireAuthedOrgId(req, res);
@@ -254,6 +273,13 @@ router.post('/templates', async (req: Request, res: Response) => {
     if (!name || !category)
       return res.status(400).json({ error: 'name and category are required' });
 
+    const author = authorLabel(req);
+    if (!author) {
+      return res.status(403).json({
+        error: 'The signed-in user could not be identified, so the template was not created.',
+      });
+    }
+
     const templateData = {
       organizationId: orgId,
       name,
@@ -265,7 +291,7 @@ router.post('/templates', async (req: Request, res: Response) => {
       placeholders: placeholders || {},
       isActive: true,
       usageCount: 0,
-      createdBy: 'Current User',
+      createdBy: author,
     };
 
     const template = await store.insert(orgId, 'template', name, templateData);

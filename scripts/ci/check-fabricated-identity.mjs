@@ -83,6 +83,26 @@ const PATTERNS = [
     re: /\b(?:sponsor|applicant|company)_?(?:Name|Id|name|id)\s*:\s*`(?!UNASSIGNED)[^`]*\$\{[^}]*\}[^`]*`/,
     what: 'applicant identity manufactured from an id',
   },
+  // ── The simplest form, which walked straight through ──────────────────────
+  // Every pattern above catches an identity that is INTERPOLATED or used as a
+  // FALLBACK. None caught a literal: `createdBy: 'Current User'`, sitting three
+  // times in server/routes/inline-annotations.ts — a route whose own header
+  // claims "@compliance FDA 21 CFR Part 11 — all annotations immutably
+  // audit-logged", recording who approved or rejected text in a regulated
+  // document as the words "Current User". client-branding.ts carried a fourth.
+  //
+  // The line this draws is between a name that reads as a PERSON and one that
+  // names a PROCESS. Accepted: an explicit unassigned marker (UNASSIGNED,
+  // Unknown, Unspecified, Not Specified), and a machine identifier — all
+  // lowercase, slug-shaped, like `system` or `span-lineage-backfill`. An action
+  // genuinely taken by the platform has no person to name, and saying so is a
+  // true statement rather than a stand-in for one. Anything else — "Current
+  // User", "Admin User", a display name with capitals and spaces — is an
+  // identity nobody owns, written where an inspector reads who acted.
+  {
+    re: /\b(?:created|resolved|approved|rejected|reviewed|signed|changed|updated|closed|assigned|owned|acted)_?[Bb]y\s*:\s*(['"`])(?!(?:UNASSIGNED|Unknown|Unspecified|Not Specified)\1)(?![a-z][a-z0-9._-]*\1)[^'"`$]*\1/,
+    what: 'identity written as a literal constant (a name nobody is)',
+  },
 ];
 
 function sourceFiles() {
