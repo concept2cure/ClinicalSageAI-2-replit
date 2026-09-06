@@ -1374,6 +1374,16 @@ export const C2C_MIGRATION_FILES = [
   // the unrecorded window closes on its own.
   'migrations/20260814i_draft_candidate_generator.sql',
 
+  // ── Draft candidates carry the model's paraphrase assertions (Phase 4) ──────
+  // Adds `assertions` JSONB alongside the parked chunks + generator: the model's
+  // self-reported [{quote, sourceId}] claims about which source it DERIVED a
+  // passage from. The accept path records each still-present, still-resolvable
+  // claim as a usage='paraphrased' span — an assertion, never a verified quote,
+  // and only for a source that was actually retrieved. Nullable, no backfill; the
+  // 2-hour TTL closes the unrecorded window on its own. ADD COLUMN IF NOT EXISTS,
+  // so re-running is a no-op.
+  'migrations/20260906c_draft_candidate_assertions.sql',
+
   // ── Apps catalog additions, GA ledger L40 (added 2026-08-14) ─────────────
   // Eight built, routed, API-backed surfaces that appeared in no catalog, so a
   // user could reach them only by knowing the URL. INSERT … ON CONFLICT DO
@@ -1857,6 +1867,17 @@ export const C2C_MIGRATION_FILES = [
   // an explicit uuid-keyed list — which is stated in the migration's own header
   // so nobody reads the column as isolation it does not provide.
   'migrations/20260905_vault_documents_organization_id.sql',
+
+  // Full-text index over vault.documents, plus the one named definition of "the
+  // searchable text of a vault document" that the search route must match
+  // character-for-character to use it. Ordered after the organization_id file
+  // only for readability — it depends on nothing that file adds.
+  'migrations/20260906_vault_documents_fulltext.sql',
+
+  // Legal holds. Lands while the retention sweep is still inert (nothing writes
+  // retention_until), which is the point: the guard has to exist before the
+  // clock starts, not after the first record is destroyed.
+  'migrations/20260906b_vault_legal_holds.sql',
 
   // The three IVDR append-only history tables carry no tenant column of their
   // own — their tenant is their parent's, reached by foreign key — so BOTH

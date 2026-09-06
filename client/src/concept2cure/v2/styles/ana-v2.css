@@ -44,7 +44,7 @@
   /* Role lens */
   .ac-roles{ display:flex; align-items:center; gap:7px; margin-bottom:16px; flex-wrap:wrap; }
   .ac-roles-l{ font-size:11px; font-weight:600; color:var(--text-400); text-transform:uppercase; letter-spacing:.04em; margin-right:2px; }
-  .ac-role{ font-size:12px; font-weight:550; color:var(--text-300); background:var(--bg-000); border:1px solid var(--border); border-radius:20px; padding:5px 13px; cursor:pointer; transition:all .15s; }
+  .ac-role{ font-size:12px; font-weight:550; color:var(--text-300); background:var(--bg-000); border:1px solid var(--border); border-radius:20px; padding:5px 13px; cursor:pointer; transition:background .15s, border-color .15s, color .15s, font-weight .15s; }
   .ac-role:hover{ border-color:var(--accent-muted); }
   .ac-role[data-on]{ background:var(--text-100); border-color:var(--text-100); color:var(--bg-000); font-weight:600; }
 
