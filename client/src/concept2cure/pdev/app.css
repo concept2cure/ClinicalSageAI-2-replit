@@ -268,7 +268,7 @@
   display: inline-flex; align-items: center; gap: 6px;
   padding: 6px 12px; border-radius: 6px;
   font-size: 12px; font-weight: 500;
-  transition: all var(--pdev-dur) var(--pdev-ease); cursor: pointer;
+  transition: background var(--pdev-dur) var(--pdev-ease), border-color var(--pdev-dur) var(--pdev-ease), color var(--pdev-dur) var(--pdev-ease); cursor: pointer;
 }
 .pdev-btn.ghost {
   background: transparent; color: var(--text-200);
@@ -291,7 +291,7 @@
 .pdev-seg-btn {
   padding: 5px 10px; font-size: 11px; color: var(--text-300);
   border-right: 1px solid var(--border-100);
-  transition: all var(--pdev-dur) var(--pdev-ease);
+  transition: background var(--pdev-dur) var(--pdev-ease), color var(--pdev-dur) var(--pdev-ease), font-weight var(--pdev-dur) var(--pdev-ease);
 }
 .pdev-seg-btn:last-child { border-right: 0; }
 .pdev-seg-btn:hover { background: var(--bg-100); color: var(--text-200); }
@@ -304,7 +304,7 @@
 .pdev-filter-chip {
   padding: 4px 10px; font-size: 11px; color: var(--text-300);
   background: var(--bg-050); border: 1px solid var(--border-100); border-radius: 999px;
-  transition: all var(--pdev-dur) var(--pdev-ease);
+  transition: background var(--pdev-dur) var(--pdev-ease), border-color var(--pdev-dur) var(--pdev-ease), color var(--pdev-dur) var(--pdev-ease), font-weight var(--pdev-dur) var(--pdev-ease);
 }
 .pdev-filter-chip:hover { background: var(--bg-100); color: var(--text-100); }
 .pdev-filter-chip[data-on="true"] {
@@ -346,7 +346,7 @@
   display: flex; flex-direction: column; gap: 8px;
   padding: 14px; background: var(--bg-050);
   border: 1px solid var(--border-100); border-radius: 8px;
-  transition: all var(--pdev-dur) var(--pdev-ease);
+  transition: background var(--pdev-dur) var(--pdev-ease), border-color var(--pdev-dur) var(--pdev-ease), box-shadow var(--pdev-dur) var(--pdev-ease);
 }
 .pdev-workstream-card:hover {
   background: var(--canvas-elevated);
@@ -423,7 +423,7 @@
   padding: 12px 14px;
   background: var(--canvas-elevated);
   border: 1px solid var(--border-100); border-radius: 8px;
-  transition: all var(--pdev-dur) var(--pdev-ease);
+  transition: border-color var(--pdev-dur) var(--pdev-ease), box-shadow var(--pdev-dur) var(--pdev-ease), transform var(--pdev-dur) var(--pdev-ease);
 }
 .pdev-activity-card:hover {
   border-color: var(--border-200);
@@ -512,7 +512,7 @@
 .pdev-sheet-tab {
   padding: 10px 12px; font-size: 12px; color: var(--text-300);
   border-bottom: 2px solid transparent;
-  transition: all var(--pdev-dur) var(--pdev-ease);
+  transition: border-bottom-color var(--pdev-dur) var(--pdev-ease), color var(--pdev-dur) var(--pdev-ease), font-weight var(--pdev-dur) var(--pdev-ease), opacity var(--pdev-dur) var(--pdev-ease);
   display: inline-flex; align-items: center; gap: 6px;
 }
 .pdev-sheet-tab:hover:not([disabled]) { color: var(--text-100); }
@@ -656,6 +656,10 @@
   display: flex; gap: 6px; padding: 8px;
   background: var(--canvas-elevated); border-radius: 8px;
 }
+/* The composer textarea clears its own outline and the container has no
+   border to recolor — ring the container with a box-shadow so keyboard
+   focus is visible. Matches the .pdev-*:focus ring elsewhere in this file. */
+.pdev-ana-composer:focus-within { box-shadow: 0 0 0 2px var(--accent-000); }
 .pdev-ana-composer textarea { flex: 1; resize: none; font-size: 12px; background: transparent; outline: 0; border: 0; }
 .pdev-ana-send { padding: 6px 8px; background: var(--accent-100); color: white; border-radius: 6px; }
 .pdev-ana-send:disabled { background: var(--bg-200); color: var(--text-400); }
@@ -867,7 +871,7 @@
   display: flex; gap: 10px; padding: 10px 12px;
   border-radius: 6px; background: var(--bg-050);
   border: 1px solid transparent;
-  transition: all var(--pdev-dur) var(--pdev-ease);
+  transition: background var(--pdev-dur) var(--pdev-ease), border-color var(--pdev-dur) var(--pdev-ease);
   cursor: pointer;
 }
 .pdev-contradiction-row:hover {
@@ -1043,7 +1047,7 @@
   padding: 6px 10px; background: var(--bg-050);
   border: 1px solid var(--border-100); border-radius: 6px;
   font-size: 11px; text-align: left;
-  transition: all var(--pdev-dur) var(--pdev-ease);
+  transition: background var(--pdev-dur) var(--pdev-ease), border-color var(--pdev-dur) var(--pdev-ease), color var(--pdev-dur) var(--pdev-ease), font-weight var(--pdev-dur) var(--pdev-ease), opacity var(--pdev-dur) var(--pdev-ease);
 }
 .pdev-state-chip:hover:not(:disabled) { background: var(--bg-100); }
 .pdev-state-chip.on {
@@ -1084,7 +1088,7 @@
   background: var(--bg-050);
   border: 1px solid var(--border-100); border-radius: 6px;
   align-items: center;
-  transition: all var(--pdev-dur) var(--pdev-ease);
+  transition: background var(--pdev-dur) var(--pdev-ease), border-color var(--pdev-dur) var(--pdev-ease);
 }
 .pdev-evidence-pick-row { width: 100%; cursor: pointer; }
 .pdev-evidence-pick-row[data-on="true"] {
@@ -1114,6 +1118,8 @@
   padding: 8px 12px; background: var(--bg-050);
   border: 1px solid var(--border-100); border-radius: 6px;
 }
+/* Borderless inner input clears its outline — ring the container instead. */
+.pdev-search-input:focus-within { border-color: var(--accent-100); box-shadow: 0 0 0 3px var(--accent-000); }
 .pdev-search-input .ico { color: var(--text-400); }
 .pdev-search-input input {
   flex: 1; font-size: 13px; background: transparent; outline: 0; border: 0;

@@ -7390,6 +7390,16 @@ registerToolHandler('verify_docx_against_source', async (input, ctx) => {
     }
 
     const ok = missingRequiredStrings.length === 0 && additions === 0 && deletions === 0;
+    /* `expected_text` is optional — the guard above accepts required_strings
+       alone, and that is the DESIGNED path for the labeling / ODD / IND-module
+       planners, whose required_strings are section headers only. When no source
+       is supplied the diff never runs, so `additions`/`deletions` stay at their
+       initialized 0 and `ok` collapses to "no required header is missing". The
+       success message nevertheless asserted BOTH that the document "reproduces
+       the source" AND that there is "no content divergence" — two claims about a
+       comparison that never happened, relayed verbatim by the model as the
+       verdict on a USPI/SmPC .docx. Say only what was actually checked. */
+    const sourceDiffPerformed = Boolean(expectedText);
 
     return JSON.stringify({
       ok,
@@ -7398,15 +7408,25 @@ registerToolHandler('verify_docx_against_source', async (input, ctx) => {
       docCharCount: docText.length,
       requiredStringsChecked: requiredStrings.length,
       missingRequiredStrings,
+      // False when no expected_text was supplied: the document was NOT compared
+      // against any source, so `ok` speaks only to the required strings.
+      sourceDiffPerformed,
       // additions = lines in the document not in the source; deletions = source lines absent from the document.
-      divergence: expectedText ? { summary: divergenceSummary, additions, deletions } : undefined,
+      divergence: sourceDiffPerformed ? { summary: divergenceSummary, additions, deletions } : undefined,
       message: ok
-        ? `Verified — document reproduces the source${
-            requiredStrings.length ? ` and all ${requiredStrings.length} required string(s)` : ''
-          }; no content divergence.`
+        ? sourceDiffPerformed
+          ? `Verified — document reproduces the source${
+              requiredStrings.length ? ` and all ${requiredStrings.length} required string(s)` : ''
+            }; no content divergence.`
+          : `Verified — all ${requiredStrings.length} required string(s) are present. No source text was supplied, so the document was NOT compared against a source: this is not a finding of "no content divergence".`
         : `NOT verified — ${
-            missingRequiredStrings.length ? `${missingRequiredStrings.length} required string(s) missing; ` : ''
-          }${expectedText ? `${additions} added / ${deletions} dropped line(s) vs. source.` : ''}`.trim(),
+            missingRequiredStrings.length ? `${missingRequiredStrings.length} required string(s) missing` : ''
+          }${
+            missingRequiredStrings.length && sourceDiffPerformed ? '; ' : ''
+          }${sourceDiffPerformed ? `${additions} added / ${deletions} dropped line(s) vs. source` : ''}.`,
+      instruction: sourceDiffPerformed
+        ? 'Report the divergence counts as recorded.'
+        : 'Only the required strings were checked. Do NOT state that the document matches or reproduces a source, and do not claim there is no content divergence — no source was diffed.',
     });
   } catch (err) {
     return JSON.stringify({

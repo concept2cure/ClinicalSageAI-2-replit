@@ -968,6 +968,106 @@ Revert-proven: reverting the schema to `z.string()` fails the free-text and
 malformed-date tests. Two more hold the opposite line — a real yyyy-mm-dd date
 is not blocked, and a short reason is still refused.
 
+### Twenty-ninth — a request with no tenant read every sponsor's clinical operations (2026-09-06)
+
+`clinical-operations-routes.ts` resolved the caller's org and returned **null**
+for a request with no tenant on it. Every query then spelled its predicate
+
+```sql
+WHERE ($1::INT IS NULL OR org_id = $1)
+```
+
+which is TRUE when the parameter is null. So a context-less request did not read
+the *wrong* organization's clinical operations — it read **every**
+organization's: studies, sites, enrollment, monitoring visits, protocol
+deviations and milestones, across the whole database. Fifteen query sites
+carried the escape. Protocol deviations are GCP records; enrollment and site
+status are competitive information.
+
+The two UPDATEs were worse. `PUT /studies/:id` and `PUT /sites/:id/status`
+appended their guard only `if (orgId)`, so without a tenant the statement ran as
+`WHERE id = $1` alone — enough to change another sponsor's study record, or set
+a site's status, by id.
+
+The resolver's own comment described this accurately and treated it as
+acceptable: *"A value that is not a positive integer resolves to null, which the
+queries read as 'no tenant filter' exactly as before."* A conditional tenant
+predicate is not a predicate; it is a default.
+
+One router-level gate (the shape `haq-manager` and `inline-annotations` got)
+resolves the org once and 403s without it. Because that guarantees a positive
+integer, the `IS NULL` branch is dead, and all fifteen predicates now state
+`org_id = $N` unconditionally rather than leaving an escape for the next reader
+to trip over. Both UPDATEs build `WHERE id = $1 AND org_id = $N` with no branch.
+
+Revert-proven: restoring the fail-open resolver and the escape fails five of the
+eight new tests. The router had one test (display shape); it has nine.
+
+**The sweep, so nobody runs it twice.** `IS NULL OR <col> = $N` across
+`server/**`, six sites beyond clinical-ops:
+
+| Where | Verdict |
+|---|---|
+| `module-access-requests.ts:262` | **Correct.** The null appears only when `scope=all`, and `denyQueueRead` refuses that scope for anyone but the platform owner. An authorized cross-workspace view, documented as one. |
+| `admin/master-admin.ts:475,484` | **Correct.** Behind `router.use(requirePlatformAdmin)`; the parameter is a display filter named `client` precisely so it is not mistaken for the caller's tenant. |
+| `admin/licensing-history.ts:394` | **Correct.** Mounted inside that same guarded router. |
+| `clinical-regulatory-evidence/index.ts:177` | **Recorded, not changed.** A different shape: `f.organization_id IS NULL OR = $1` is a NULL *column* test, so unattributed reference findings count toward an org's "cited" coverage metric. That inflates a metric rather than returning another tenant's content, and whether shared reference rows *should* count is a product decision, not a defect to fix blind. |
+
+### Thirtieth — the IND itself, and the gate that should have caught all of it (2026-09-06)
+
+The clinical-operations shape had a **second spelling**: instead of an
+`IS NULL OR` escape in the SQL, the tenant clause is appended in JavaScript only
+`if (organizationId)`. Two more routers carried it.
+
+**`server/routes/ind.ts`.** `tenantHeaders` ended `|| null`. Without a tenant:
+`GET /applications` listed every sponsor's IND applications (the predicate
+stayed literally `WHERE 1=1`); `GET /applications/:id` read any IND by id — drug
+name, indication, sponsor; `PUT` updated any sponsor's IND; `DELETE` deleted any
+sponsor's draft IND. The delete is the sharpest illustration of the shape: its
+removal is written into the hash-chained `audit_events` table in the same
+transaction, fail-closed, citing 21 CFR 11.10(e) — meticulously audited, and not
+scoped to a tenant.
+
+**`server/routes/ana-ri/kernel.ts`.** `GET /kernel/decisions` — the kernel
+decision records, which is to say the audit trail — same shape, so a
+context-less request listed every organization's at once.
+
+Both now resolve the org once, 403 without it, and state every predicate
+unconditionally. Swept and found **correct**: `ectd-documents.ts` already
+refuses with 401 at every handler before its `if (organizationId)` runs, so that
+branch is dead rather than an escape.
+
+### The gate that should have caught all three
+
+`ci:tenant-isolation` reported nothing on any of them. Its test asks only whether
+a statement MENTIONS a tenant column — and `($1::INT IS NULL OR org_id = $1)`
+does. It gained a rule for that escape: same parameter on both sides, tenant-named
+column, deliberately **not** gated on `TENANT_SCOPED_TABLES` because the two
+tables this hid behind (`clinical_ops.studies`, `ind_applications`) are not on
+that hand-maintained list, so a table-gated rule would have inspected neither.
+
+**Worth knowing how the rule was nearly decorative.** The first regex required an
+alias before the column, so it matched the admin form `a.tenant_id` and *missed*
+the bare `org_id` — the exact clinical-operations shape. The gate ran clean and
+looked finished. Six shapes are asserted directly now, including both the
+defect's forms and three things that must NOT match.
+
+Seen failing on the case it exists to catch: restoring the escape to
+`clinical-operations-routes.ts` fails the gate with 4 new findings above baseline.
+
+**What it surfaced: 2 → 12.** Ten more instances neither grep had found —
+`kernel-observability` (4), `ana-ri/context-enrichment` (4),
+`deep-research-orchestrator` (1), `kernel-adaptive-policy` (1),
+`admin/licensing-history` (1). They are **frozen, not blessed**: each is a
+deliberate optional-org affordance its own author documented, none re-argued from
+scratch here, and rewriting the tenancy of four services owned by other streams
+is not an audit-pass decision. Each is recorded in
+`docs/reports/tenant-isolation-justifications.md` with what its null case means,
+its owner, and whether it should stay — `ana-ri/context-enrichment` being the
+strongest candidate to fix, since it feeds a model's answer and every route
+caller could supply the org. The durable win is that no NEW escape can be added
+silently.
+
 ### For the vault stream — the ESLint ratchet is red on trunk, and Lint is the only failing job
 
 `max-lines-per-function` went 1190 → 1192. It reproduces on a clean checkout with
@@ -1317,6 +1417,8 @@ If neither has happened: report the blockage, name what is needed, and stop.
 | 2026-09-06 | A | Twenty-sixth — inline annotations: identity, tenancy, audit | A Part 11-labelled decision endpoint stopped recording "Current User" as the approver, defaulting to organization 1, and writing its audit rows into tenant 0 with no actor; ci:fabricated-identity gained the literal-constant pattern it was missing, seen failing on all four sites first — revert-proven | §1 above |
 | 2026-09-06 | A | Twenty-seventh — typed-target signature read | The §11.50 manifestation for a transmitted submission, a frozen sequence or a dispatched release is reachable at last: every HTTP read was anchored on a document_id those rows do not have — revert-proven; the display half is recorded as still open | §1 above |
 | 2026-09-06 | A | Twenty-eighth — RIM registration dates | A hand-typed renewal or approval date is refused by name and format instead of coming back as Postgres's own syntax error through a fail() that passed any unmapped exception text to the caller — revert-proven | §1 above |
+| 2026-09-06 | A | Twenty-ninth — clinical-operations tenancy | A request with no tenant context read EVERY organization's studies, sites, enrollment, monitoring visits and protocol deviations, and could UPDATE another sponsor's study by id; the router gains a gate and all fifteen predicates become unconditional — revert-proven, and the escape swept across the server (4 authorized admin views, 1 recorded) | §1 above |
+| 2026-09-06 | A | Thirtieth — IND + kernel tenancy, and the gate rule | An IND application was listable, readable, updatable and deletable across every sponsor, and the kernel audit trail listable; ci:tenant-isolation gained the optional-tenant-predicate rule that should have caught all three, seen failing on the real defect after a first regex that missed it — baseline 2 → 12, each frozen entry justified in writing | §1 above |
 | | | | | |
 
 **Rule:** the last row with an empty "What was proven" cell is the open work.

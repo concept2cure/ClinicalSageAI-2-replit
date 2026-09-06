@@ -53,18 +53,57 @@ knows precisely what is left to read. This is the mechanism that makes "a
 sampled page recorded as reviewed" impossible, and the tests exercise the
 refusal first (`server/services/vault/__tests__/document-catalog.service.test.ts`).
 
-### Four AnA tools (defs `document-catalog-tool-defs.ts`, handlers `document-catalog-tools.ts`)
+### Five AnA tools (defs `document-catalog-tool-defs.ts`, handlers `document-catalog-tools.ts`)
 
 | Tool | What it does |
 |---|---|
 | `list_project_documents` | Enumerates the vault (program-scoped via `projects.regulatory_program_id`, else org-wide): filed location, catalog state per document. Uncataloged and extraction-failed files are labeled as exactly that. Also returns the org's **chat uploads** from the evidence spine (`listClientDocuments`, `currentOnly` — superseded re-uploads excluded) with each one's `fileId`, so a file attached in a past conversation reopens through `read_uploaded_document`. A failed chat-upload listing is reported as an error, never as "no chat uploads". |
 | `read_project_document` | Serves the extracted text in windows, records a receipt per window, reports coverage + remaining unread ranges. On extraction failure it says so with the recorded reason instead of returning empty text. |
 | `catalog_project_document` | Writes the comprehension tier — refused below full coverage; embeds the record for semantic recall. |
+| `file_chat_upload_to_vault` | Files a chat upload into the project vault through the canonical `ingestVaultDocument`, so it gains a dossier placement, a catalog record, chunks and semantic search. Refuses a vault UUID (already filed) and asks which program rather than guessing one. |
 | `search_project_documents` | Semantic (pgvector cosine) search over the comprehension records (`document-catalog-search.ts`), org-checked. Only cataloged documents are searchable — the response counts the unsearchable ones so absence is never read as nonexistence — and an unreachable embedding provider or a vector-less database is reported as unavailability, never as an empty result. |
 
 Definitions are in `ALL_ANA_TOOLS_RAW` (registry-consistency suite holds
 def ↔ handler parity); handlers registered via the inject-and-sibling pattern;
 UI step labels in `agentic-loop.ts` `TOOL_LABELS`.
+
+### One canonical ingest, and the tool that reaches it
+
+**Service:** `server/services/vault/vault-ingest.service.ts` · **Tool:** `file_chat_upload_to_vault`
+
+The id-space refusal above told AnA a chat upload "has to be ingested into the
+project vault first" — an action with no affordance, because the governed
+ingest lived inside the body of `POST /api/vault/ingest` and nothing else could
+reach it. Naming a remedy nothing can perform is its own dishonesty.
+
+The admission moved to `ingestVaultDocument`, which the route now calls: one
+implementation of what it means for a document to enter the governed corpus
+(ownership → virus scan → stored bytes → extraction outcome → placement
+proposal → INSERT + catalog tier + hash-chained Part 11 audit row in one
+transaction → passage index post-commit). A second ingest path would have been
+two answers to that question, drifting on whichever half someone forgot. The
+route kept the HTTP — multipart, status codes, response shape — and shrank from
+617 lines to 188; every failure is *returned* as `{ok:false, status, code,
+message}` carrying the same status and code the route has always sent, so the
+client contract is unchanged and the tool gets a reason it can say out loud.
+
+The service does not open a tenant scope: callers are already inside one (the
+route re-enters the scope multer destroyed and wraps the whole call; a tool call
+runs inside the turn's scope). That keeps the reason the scope is needed next to
+the thing that destroys it, and makes it one span rather than a dozen
+re-entries.
+
+`file_chat_upload_to_vault` then files a chat upload through that same function,
+so it gains everything a vault document has: a dossier placement, a catalog
+record, chunks, and semantic search. It refuses a vault UUID (already filed),
+asks which program rather than guessing one, derives a stable document code so
+filing the same file twice upserts one row, and relays a governed refusal with
+its own reason. The behaviour-preservation of the extraction is carried by the
+20 existing real-database tests — including the six that drive the HTTP route
+end to end (SHA-256, bytes on disk, the audit chain, atomicity, the
+cross-tenant refusal) — plus a new dbtest that files a real chat upload and
+proves the resulting vault document carries the tenant key, the audit row, the
+catalog tier, and is immediately readable.
 
 ### Two id spaces, told apart (`document-catalog-tools.ts`)
 

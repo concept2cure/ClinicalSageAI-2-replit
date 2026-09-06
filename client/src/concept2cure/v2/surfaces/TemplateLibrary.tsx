@@ -706,7 +706,7 @@ export function TemplateLibrary({ onAsk }: SurfaceViewProps) {
                 onChange={(e) => setEdit(e.target.value)}
                 onKeyDown={(e) => { if (e.key === 'Enter') applyEdit(); }}
               />
-              <button className="tl-edit-go" onClick={applyEdit} disabled={!edit.trim()}>
+              <button className="tl-edit-go" aria-label="Apply edit" onClick={applyEdit} disabled={!edit.trim()}>
                 {I.arrowUp || I.right}
               </button>
             </div>

@@ -1010,6 +1010,7 @@ export function Onboarding({ onAsk, onNav }: SurfaceViewProps) {
                       {invites.length > 1 && (
                         <button
                           className="ob-rm"
+                          aria-label="Remove invite"
                           onClick={() => rmInvite(i)}
                         >
                           {I.close || '×'}

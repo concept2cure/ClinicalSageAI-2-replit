@@ -31,6 +31,7 @@ import { COMMIT_DOCUMENT_REVISION } from './document-spine.js';
 // semantic catalog search. Handlers registered from document-catalog-tools.ts
 // (inject-and-sibling).
 import {
+  FILE_CHAT_UPLOAD_TO_VAULT,
   LIST_PROJECT_DOCUMENTS,
   READ_PROJECT_DOCUMENT,
   CATALOG_PROJECT_DOCUMENT,
@@ -2126,6 +2127,7 @@ export const ALL_ANA_TOOLS_RAW: AnaTool[] = [
   OCR_DOCUMENT_PAGES,
   READ_SPREADSHEET,
   EDIT_SPREADSHEET,
+  FILE_CHAT_UPLOAD_TO_VAULT,
   LIST_PROJECT_DOCUMENTS,
   READ_PROJECT_DOCUMENT,
   CATALOG_PROJECT_DOCUMENT,

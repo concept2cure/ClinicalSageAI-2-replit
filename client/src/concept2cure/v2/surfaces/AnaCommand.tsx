@@ -687,7 +687,7 @@ export function AnaCommand({ onAsk }: SurfaceViewProps) {
                 <div className="ac-gate-crumb">{progLabel}{gate ? ' · ' + gate.submissionType : ''} · pre-submission quality gate</div>
                 <div className="ac-gate-sub">readiness + CMC contradictions + CRL + RTF + ICH — one verdict, audited to Part 11</div>
               </div>
-              <button className="ac-gate-x" onClick={() => setGateOpen(false)}>{I.close}</button>
+              <button className="ac-gate-x" aria-label="Close" onClick={() => setGateOpen(false)}>{I.close}</button>
             </div>
             {gateRes.loading ? (
               <div className="scaf-note" style={{ padding: '28px 16px' }}>Running the pre-submission gate…</div>
@@ -753,7 +753,7 @@ export function AnaCommand({ onAsk }: SurfaceViewProps) {
                     : 'Review before running — this executes real steps and is audited'}
                 </div>
               </div>
-              <button className="ac-gate-x" onClick={closeRun}>{I.close}</button>
+              <button className="ac-gate-x" aria-label="Close" onClick={closeRun}>{I.close}</button>
             </div>
 
             {runErr ? (
