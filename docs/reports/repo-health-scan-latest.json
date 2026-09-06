@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-06T22:03:47.825Z",
+  "generatedAt": "2026-09-06T22:11:46.015Z",
   "git": {
-    "sha": "ec0a6a51009958cd60a22af0d27cc1ef1e449c3e",
+    "sha": "4b00ee485a6d8682b074100a09f58951f237b18c",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -15,7 +15,7 @@
     "duplicateBasenames": 209,
     "contentDuplicateGroups": 0,
     "contentDuplicateFiles": 0,
-    "largeFilesByBytes": 40,
+    "largeFilesByBytes": 39,
     "largeFilesByLines": 95
   },
   "findings": {
@@ -1981,7 +1981,7 @@
     "largeFilesByBytes": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 1016220
+        "bytes": 1016072
       },
       {
         "file": "shared/schema.ts",
@@ -2134,10 +2134,6 @@
       {
         "file": "server/services/ana/intelligence-questions/flows/ind-submission.ts",
         "bytes": 108007
-      },
-      {
-        "file": "server/api/cmc/routes.ts",
-        "bytes": 106895
       }
     ],
     "largeFilesByLines": [
@@ -2147,7 +2143,7 @@
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 19701
+        "lines": 19699
       },
       {
         "file": "server/routes/authoring.router.ts",
@@ -2270,10 +2266,6 @@
         "lines": 2379
       },
       {
-        "file": "server/api/cmc/routes.ts",
-        "lines": 2345
-      },
-      {
         "file": "server/services/mutagenic-impurity/mutagenic-impurity-knowledge.ts",
         "lines": 2345
       },
@@ -2292,6 +2284,10 @@
       {
         "file": "server/routes/c2c/reviews.ts",
         "lines": 2240
+      },
+      {
+        "file": "server/api/cmc/routes.ts",
+        "lines": 2191
       },
       {
         "file": "server/services/__tests__/cmcWriteThroughMappers.test.ts",
@@ -2528,7 +2524,7 @@
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
       "duplicateGroups": 403,
-      "largeByBytes": 30,
+      "largeByBytes": 29,
       "largeByLines": 78
     },
     {
