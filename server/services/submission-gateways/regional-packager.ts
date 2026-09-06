@@ -174,13 +174,34 @@ export interface PackagerInput {
 /* ─── Region-specific backbone builders ───────────────────────────── */
 
 /**
+ * Rebase a cross-sequence pointer authored relative to the SEQUENCE ROOT onto
+ * the backbone that will carry it.
+ *
+ * `computeLifecycleOperations` builds `modified-file` as '../<prior>/<the prior
+ * leaf's package-relative path>' — correct from index.xml, which is at the
+ * root. The FDA regional backbone is at m1/<region>/us-regional.xml, so the
+ * same string written there resolves two directories too deep. Every step down
+ * to the backbone is one more step back out.
+ *
+ * An absolute or already-anchored pointer is left alone: only a relative one is
+ * being re-expressed, not rewritten.
+ */
+function rebaseToBackbone(pointer: string, backboneDir: string): string {
+  if (!backboneDir || pointer.startsWith('/')) return pointer;
+  const depth = backboneDir.split('/').filter(Boolean).length;
+  return depth ? `${'../'.repeat(depth)}${pointer}` : pointer;
+}
+
+/**
  * Build one `<leaf>` element with the full ICH attribute set: operation,
  * inline `checksum`/`checksum-type="md5"` (matching the shipped bytes), the
  * backbone-relative `xlink:href`, and — for a lifecycle operation — the
  * `modified-file` pointer at the superseded leaf.
  */
 function leafElement(leaf: EctdLeaf, id: string, ref: LeafRef): string {
-  const modified = leaf.modifiedFile ? ` modified-file="${escapeXml(leaf.modifiedFile)}"` : '';
+  const modified = leaf.modifiedFile
+    ? ` modified-file="${escapeXml(rebaseToBackbone(leaf.modifiedFile, ref.backboneDir))}"`
+    : '';
   return `<leaf operation="${leaf.operation}"${modified} checksum="${ref.md5}" checksum-type="md5" xlink:href="${escapeXml(ref.href)}" xlink:type="simple" ID="${escapeXml(id)}">
   <title>${escapeXml(leaf.title)}</title>
 </leaf>`;
@@ -582,10 +603,19 @@ export async function packageEctdSubmission(input: PackagerInput): Promise<Submi
     // add a checksum line. A delete that DOES carry a sourcePath falls through
     // and is packaged normally (some callers ship superseding bytes with it).
     if (leaf.operation === 'delete' && !leaf.sourcePath) {
-      const fallbackHref = leaf.ctdSection.startsWith('1')
+      const inM1 = leaf.ctdSection.startsWith('1');
+      const fallbackHref = inM1
         ? `${sectionDashed}/${leaf.fileName}`
         : `m${leaf.ctdSection.charAt(0)}/${sectionDashed}/${leaf.fileName}`;
-      refByLeaf.set(leaf, { href: leaf.modifiedFile ?? fallbackHref, md5: leaf.md5 ?? '' });
+      // A withdrawal has no bytes of its own, so its href IS the pointer at the
+      // prior sequence — and therefore needs the same rebasing onto the
+      // backbone that carries it.
+      const backboneDir = inM1 ? m1FolderByRegion[region] : '';
+      refByLeaf.set(leaf, {
+        href: leaf.modifiedFile ? rebaseToBackbone(leaf.modifiedFile, backboneDir) : fallbackHref,
+        md5: leaf.md5 ?? '',
+        backboneDir,
+      });
       continue; // no bytes → no prepared entry, no ZIP file, no checksum line
     }
 
@@ -608,10 +638,14 @@ export async function packageEctdSubmission(input: PackagerInput): Promise<Submi
 
     let relPath: string;
     let href: string;
+    // Which backbone carries this leaf — the base its href and its
+    // modified-file pointer both resolve against.
+    let backboneDir = '';
     if (leaf.ctdSection.startsWith('1')) {
       // Module 1 → under the regional folder; href relative to the regional backbone.
       relPath = `${m1FolderByRegion[region]}/${sectionDashed}/${leaf.fileName}`;
       href = `${sectionDashed}/${leaf.fileName}`;
+      backboneDir = m1FolderByRegion[region];
     } else {
       // Module 2–5 → shared folders; href relative to index.xml at the root.
       // Study-report leaves (studyId set) go under a per-study subfolder so each
@@ -620,7 +654,7 @@ export async function packageEctdSubmission(input: PackagerInput): Promise<Submi
       relPath = `m${leaf.ctdSection.charAt(0)}/${sectionDashed}${studySub}/${leaf.fileName}`;
       href = relPath;
     }
-    const ref: LeafRef = { href, md5 };
+    const ref: LeafRef = { href, md5, backboneDir };
     refByLeaf.set(leaf, ref);
     prepared.push({ leaf, relPath, ref, bytes });
   }
@@ -691,7 +725,9 @@ export async function packageEctdSubmission(input: PackagerInput): Promise<Submi
           ctdSection: section, operation: 'new', sourcePath: '',
           fileName: 'stf.xml', title: `Study Tagging File — ${file.studyId}`,
         };
-        const ref: LeafRef = { href: relPath, md5 };
+        // A study tagging file lives under m5 and is referenced from index.xml
+        // at the root, so its href is already root-relative.
+        const ref: LeafRef = { href: relPath, md5, backboneDir: '' };
         refByLeaf.set(synthetic, ref);
         prepared.push({ leaf: synthetic, relPath, ref, bytes });
         stfSyntheticLeaves.push(synthetic);
