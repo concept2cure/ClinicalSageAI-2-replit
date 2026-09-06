@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-06T21:47:35.061Z",
+  "generatedAt": "2026-09-06T21:53:19.535Z",
   "git": {
-    "sha": "6ab61fb8ccba6d76b553215672ab536287d32955",
+    "sha": "ea4befb4613fd288c3ed00c3a7b3ea2d8e6da43b",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -1985,7 +1985,7 @@
       },
       {
         "file": "shared/schema.ts",
-        "bytes": 856859
+        "bytes": 857152
       },
       {
         "file": "server/services/ind/ctd/authoring-guidance.ts",
@@ -2045,7 +2045,7 @@
       },
       {
         "file": "server/services/module3Composer.ts",
-        "bytes": 139223
+        "bytes": 139484
       },
       {
         "file": "server/services/labeling/labeling-intelligence-knowledge.ts",
@@ -2104,20 +2104,16 @@
         "bytes": 114943
       },
       {
+        "file": "server/services/__tests__/cmcWriteThroughMappers.test.ts",
+        "bytes": 114898
+      },
+      {
         "file": ".claude/skills/gstack/scripts/gen-skill-docs.ts",
         "bytes": 114269
       },
       {
-        "file": "server/api/cmc/routes.ts",
-        "bytes": 112601
-      },
-      {
         "file": "client/src/concept2cure/v2/surfaces/cmcRegisterForms.ts",
-        "bytes": 112142
-      },
-      {
-        "file": "server/services/__tests__/cmcWriteThroughMappers.test.ts",
-        "bytes": 110971
+        "bytes": 112627
       },
       {
         "file": "server/routes/concept2cure.ts",
@@ -2138,12 +2134,16 @@
       {
         "file": "server/services/ana/intelligence-questions/flows/ind-submission.ts",
         "bytes": 108007
+      },
+      {
+        "file": "server/api/cmc/routes.ts",
+        "bytes": 106895
       }
     ],
     "largeFilesByLines": [
       {
         "file": "shared/schema.ts",
-        "lines": 20166
+        "lines": 20170
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
@@ -2231,7 +2231,7 @@
       },
       {
         "file": "server/services/module3Composer.ts",
-        "lines": 2776
+        "lines": 2779
       },
       {
         "file": "server/services/__tests__/ana-ri.test.ts",
@@ -2254,10 +2254,6 @@
         "lines": 2588
       },
       {
-        "file": "server/api/cmc/routes.ts",
-        "lines": 2512
-      },
-      {
         "file": "server/services/ana/intelligence-questions/flows/protocol-development.ts",
         "lines": 2504
       },
@@ -2272,6 +2268,10 @@
       {
         "file": ".claude/skills/gstack/scripts/gen-skill-docs.ts",
         "lines": 2379
+      },
+      {
+        "file": "server/api/cmc/routes.ts",
+        "lines": 2345
       },
       {
         "file": "server/services/mutagenic-impurity/mutagenic-impurity-knowledge.ts",
@@ -2294,6 +2294,10 @@
         "lines": 2240
       },
       {
+        "file": "server/services/__tests__/cmcWriteThroughMappers.test.ts",
+        "lines": 2186
+      },
+      {
         "file": "server/services/trial-statistics/trial-statistics-knowledge.ts",
         "lines": 2177
       },
@@ -2308,10 +2312,6 @@
       {
         "file": "server/services/dose-optimization/dose-optimization-knowledge.ts",
         "lines": 2155
-      },
-      {
-        "file": "server/services/__tests__/cmcWriteThroughMappers.test.ts",
-        "lines": 2135
       },
       {
         "file": "server/services/biomarkers/biomarker-knowledge.ts",
@@ -2359,7 +2359,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/cmcRegisterForms.ts",
-        "lines": 1950
+        "lines": 1953
       },
       {
         "file": "server/services/gcp-operations/gcp-operations-knowledge.ts",
@@ -2470,6 +2470,10 @@
         "lines": 1702
       },
       {
+        "file": "server/services/cmc-write-through.ts",
+        "lines": 1700
+      },
+      {
         "file": "server/services/ana/notifications-study-memory-tool-defs.ts",
         "lines": 1696
       },
@@ -2496,10 +2500,6 @@
       {
         "file": "services/regulatory/globalPyramids.ts",
         "lines": 1623
-      },
-      {
-        "file": "server/services/cmc-write-through.ts",
-        "lines": 1609
       },
       {
         "file": "server/services/contradiction-engine-service.ts",
