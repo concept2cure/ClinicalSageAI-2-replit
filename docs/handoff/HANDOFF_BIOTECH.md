@@ -636,6 +636,36 @@ silently switches to the legacy per-submission `ir` sum — a different metric
 under the same label. Splitting unreadable from unprovisioned there needs the
 same treatment `getRun` got in the twelfth batch.
 
+### Nineteenth — closing that: a failed read is not "none overdue" (2026-09-06)
+
+The item left open above, closed in the file it was found in. All four board
+read blocks answered any exception with `provisioned:false`, and the KPI read
+that as "this environment has no question store" and fell back to the legacy
+per-submission `ir` sum. With `reg_questions` unreadable the per-submission
+reads fail too, their counts degrade to `null`, and the sum is zero — so a
+failed read rendered as a confident **"0 information requests overdue"**.
+
+`isUnprovisioned()` distinguishes Postgres `42P01` (undefined_table — genuinely
+no store) from a read that did not complete. Each block returns `unreadable`
+alongside `provisioned`; `meta` carries `correspondenceUnreadable`,
+`portfolioUnreadable` and `sectionsUnreadable`; `kpis.irOverdue` is
+`number | null`, null when either read failed. The legacy fallback survives only
+where the table is truly absent, which is the case it was written for.
+
+On the surface, an unknown count is an em dash labelled "count not established,
+the question store could not be read" — no deep-link (a door must open
+something), no urgent tone, no reassurance — and the answer lead says the figure
+is not established and is to be treated as unknown rather than as none.
+
+Revert-proven both sides: forcing `isUnprovisioned` to `true` fails "publishes
+no overdue count when the question store cannot be read"; forcing `irUnknown`
+to `false` fails "an unestablished count is shown as unknown, never as zero".
+
+Still true of the rest of the file: the same `provisioned/unreadable` split now
+exists for the spine, legacy portfolio and section reads, but only the
+correspondence one is consumed by a KPI. The three new `meta` booleans are
+published for surfaces that need them and are not yet read anywhere else.
+
 ### Note for the concurrent device stream
 
 On 2026-09-04, at JM's direct instruction to complete the biotech/pharma workflow
@@ -889,6 +919,7 @@ If neither has happened: report the blockage, name what is needed, and stop.
 | 2026-09-05 | A | Sixteenth — PV seriousness + Module 3 stability readability | An unassessed adverse event no longer reports itself as not serious / no expedited clock (determination unchanged, reason honest, three-state chip); an unreadable stability payload is no longer counted as a study that recorded nothing — both revert-proven | §1 above |
 | 2026-09-06 | A | Seventeenth — RIM renewal-schedule coverage | The renewals tab and the surface context name the registrations that carry no renewal-due date, so "what lapses first" is not answered from a filtered subset — revert-proven | §1 above |
 | 2026-09-06 | A | Eighteenth — agency-correspondence loop | The overdue-IR KPI counts the store instead of the overdue rows of a 50-row page; truncation and totals are published; the board route gains its first test — revert-proven | §1 above |
+| 2026-09-06 | A | Nineteenth — unreadable vs unprovisioned on the CMC board | A failed read of the agency-question store no longer reads as "0 information requests overdue": 42P01 is told apart from a failed read, `irOverdue` is null when unknown, and both the tile and the lead say the count is not established — revert-proven | §1 above |
 | | | | | |
 
 **Rule:** the last row with an empty "What was proven" cell is the open work.
