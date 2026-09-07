@@ -44,6 +44,8 @@ import {
   verifyLedger,
   type RevisionOrigin,
   machineContributors,
+  acceptedMachineText,
+  ANA_MACHINE_AUTHOR_ID,
   MACHINE_AUTHOR_IDS,
 } from '../services/authoring/revision-ledger';
 import {
@@ -2334,6 +2336,12 @@ router.patch('/sections/:sectionId', async (req: Request, res: Response) => {
        only the ones it recognises as non-human, because a human co-author is
        already named by created_by. */
     const contributors = machineContributors(req.body?.acceptedAuthors);
+    /* And the accepted text itself. `contributors` says who drafted SOME of
+       this save; this says WHICH words, so the lineage gate can record the
+       machine's clauses as the machine's — accepted by this actor — instead
+       of as this actor's own assertion. Same closed vocabulary, same boundary:
+       an author the server does not name is dropped here. */
+    const acceptedMachine = acceptedMachineText(req.body?.acceptedMachineText);
     const tenantId = getTenantId(req);
     const updatedByUser = getActorId(req);
     if (!updatedByUser) {
@@ -2558,6 +2566,7 @@ router.patch('/sections/:sectionId', async (req: Request, res: Response) => {
         { documentTable: 'authoring_sections', documentId: String(sectionId) },
         content,
         updatedByUser,
+        { acceptedMachineText: acceptedMachine },
       );
 
       // ── Commit the working copy into the filing ─────────────────────────────
@@ -4009,7 +4018,15 @@ router.post('/sections/:sectionId/ai/draft/accept', async (req: Request, res: Re
         // source ids already resolved. The gate records each still-present,
         // still-retrieved one as a usage='paraphrased' span — an assertion behind
         // the verified-quote pass, never ahead of it.
-        { assertions: candidate.assertions },
+        {
+          assertions: candidate.assertions,
+          // The accepted content IS the machine's draft wherever the author
+          // left it unedited: a clause verbatim in what was generated is
+          // recorded as AnA's, accepted by this actor; a clause the author
+          // changed is the author's own. Attribution by verbatim match against
+          // the draft as generated — never by a flag on the whole save.
+          acceptedMachineText: [{ authorId: ANA_MACHINE_AUTHOR_ID, text: candidate.content }],
+        },
       );
 
       /* AND THE ACCEPTED DRAFT REACHES THE FILING.
