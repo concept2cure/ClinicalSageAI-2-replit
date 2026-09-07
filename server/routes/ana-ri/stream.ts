@@ -312,6 +312,10 @@ export function mountStreamRoute(router: Router): void {
                 type: 'intelligence_question',
                 question: parsed.question,
                 flowState: parsed.flowState,
+                /* The durable interview session. A client that carries this
+                   back as session_id on each answer keeps the interview
+                   across a dropped conversation; flow_state alone does not. */
+                sessionId: parsed.session_id ?? null,
               })}\n\n`
             );
             res.write(
@@ -328,6 +332,7 @@ export function mountStreamRoute(router: Router): void {
                 type: 'intelligence_flow_complete',
                 completion: parsed.completion,
                 flowState: parsed.flowState,
+                sessionId: parsed.session_id ?? null,
               })}\n\n`
             );
             res.write(
@@ -1275,6 +1280,7 @@ export function mountStreamRoute(router: Router): void {
                       type: 'intelligence_question',
                       question: parsed.question,
                       flowState: parsed.flowState,
+                      sessionId: parsed.session_id ?? null,
                     })}\n\n`
                   );
                 }
@@ -1284,6 +1290,7 @@ export function mountStreamRoute(router: Router): void {
                       type: 'intelligence_flow_complete',
                       completion: parsed.completion,
                       flowState: parsed.flowState,
+                      sessionId: parsed.session_id ?? null,
                     })}\n\n`
                   );
                 }
