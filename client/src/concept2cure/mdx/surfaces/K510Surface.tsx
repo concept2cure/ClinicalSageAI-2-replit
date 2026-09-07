@@ -22,6 +22,7 @@ import { DeviceProfilePanel } from './DeviceProfilePanel';
 import { EstarFilingPanel } from './EstarFilingPanel';
 import { OfficialEstarPanel, officialEstarTypeFor, officialEstarVariantFor } from './OfficialEstarPanel';
 import { useSampleRows } from '../lib/useSampleRows';
+import { useSampleMode } from '../components/DataGate';
 import type { EditorSectionRef } from '../../v2/editorTarget';
 import { downloadCsv } from '../../v2/download';
 
@@ -35,8 +36,12 @@ export interface K510SurfaceProps {
 }
 
 export function K510Surface({ program, onAskAna, onOpenEditor }: K510SurfaceProps) {
-  const activeStageIdx = program ? program.stageIdx : 4;
-  const programStatus = program ? program.status : 'active';
+  /* No program ⇒ no stage. -1 lights no dot in the strip and the header
+     says so, instead of the fixture's "Stage 5 of 7" on a device nobody
+     opened. */
+  const activeStageIdx = program ? program.stageIdx : -1;
+  const programStatus = program?.status ?? 'idle';
+  const sampleOn = useSampleMode();
   const programId = program?.id ?? null;
 
   /* Live data — three independent fetches that fall back to the kit
@@ -87,7 +92,9 @@ export function K510Surface({ program, onAskAna, onOpenEditor }: K510SurfaceProp
   const sourcePredicates = useSampleRows(predicates.rows, K510_PREDICATES);
   const sourceSeRows     = useSampleRows(seMatrix.rows, K510_SE_ROWS);
   const sourceEstar      = useSampleRows(estar.rows, K510_ESTAR);
-  const estarBlockerCount = estar.rows ? estar.blockerCount : K510_ESTAR.filter(s => s.blocker).length;
+  /* Through the same gate as the rows: outside sample mode an unresolved
+     source is zero blockers, never the fixture's one. */
+  const estarBlockerCount = estar.rows ? estar.blockerCount : sourceEstar.filter((s) => s.blocker).length;
   const estarTotal = sourceEstar.length;
 
   const initialSelectedKey = sourcePredicates[0]?.k ?? '';
@@ -116,18 +123,19 @@ export function K510Surface({ program, onAskAna, onOpenEditor }: K510SurfaceProp
 
   const selectedList = sourcePredicates.filter(p => selected.has(p.k));
   const multi = selectedList.length > 1;
-  const subjectName = program ? program.title : 'BX-204 CGM';
+  const subjectName = program?.title ?? 'Subject device';
 
   const workspace = (
     <>
       <div className="section-hdr">
         <div>
           <div className="section-title">
-            510(k) pathway · {program ? program.title : 'BX-204 Continuous Glucose Monitor'}
+            510(k) pathway · {program ? program.title : 'No program selected'}
           </div>
           <div className="section-sub">
-            Stage {activeStageIdx + 1} of 7 — {K510_STAGES[activeStageIdx]?.label} ·{' '}
-            {program ? program.dueLabel : 'FDA filing · 41 days'}
+            {program
+              ? `Stage ${activeStageIdx + 1} of ${K510_STAGES.length} — ${K510_STAGES[activeStageIdx]?.label ?? ''} · ${program.dueLabel}`
+              : 'Open a device program to see its stage and filing clock.'}
           </div>
         </div>
         <button
@@ -209,9 +217,13 @@ export function K510Surface({ program, onAskAna, onOpenEditor }: K510SurfaceProp
         >
           <span className="banner-ic">{I.alertCircle}</span>
           <span>
-            Predicate intelligence is configuring for your tenant. The table below shows the canonical
-            example data so you can preview the workflow; live K-number candidates appear here once the
-            shadow service is reachable.
+            {sampleOn
+              ? 'Predicate intelligence is not reachable for this tenant. The table below shows the ' +
+                'canonical example data because sample mode is on; live K-number candidates appear ' +
+                'here once the shadow service is reachable.'
+              : 'Predicate intelligence is not reachable for this tenant. Live K-number candidates ' +
+                'appear here once the shadow service is reachable; until then the reduced openFDA ' +
+                'clearance lookup below is the only source.'}
           </span>
         </div>
       )}

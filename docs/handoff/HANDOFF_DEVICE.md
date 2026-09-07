@@ -26,10 +26,15 @@ where things stand.
 
 **You may edit:**
 - `server/services/pathway-engines/estar/`
+- `server/services/pathway-engines/device-assembly/`
 - `server/services/forms/`
 - `assets/estar-templates/`
 - `server/routes/510k-estar-routes.ts`
-- `client/src/concept2cure/v2/surfaces/DeviceSurfaces.tsx` (Phase 2 only)
+- `server/routes/510k-device-routes.ts`
+- `client/src/concept2cure/mdx/` — the device and diagnostics surfaces, hooks and kit
+  (added 2026-09-07 when JM made this stream a product to own; it was never in the
+  platform stream's list, and its four honesty leaks were nobody's to fix)
+- `client/src/concept2cure/v2/surfaces/DeviceSurfaces.tsx`
 
 **You may not edit:**
 - anything under `server/services/ectd/`, `server/services/ind-forms/`, or
@@ -211,57 +216,36 @@ look at when the file is opened are listed in §6.
 
 ---
 
-## 6. Next authorized action
+## 6. The product roadmap — owned by the stream, not clicked one at a time
 
-**1. Open the filled eSTAR in Adobe Acrobat and work the form as a client would.** Everything
-that can be established without Acrobat has been. The template's own scripts have been read
-and pinned (`docs/reports/estar-acrobat-behaviour-2026-09-04.md`), and an independent XFA
-engine confirms every write binds. What remains is the one thing no agent can do here:
-Acrobat is not installed, and no agent may install it or route around that.
+**2026-09-07.** JM asked whether the device and diagnostics product is ready to sell as an
+end-to-end 510(k) system — ideation to filed eSTAR, FDA letters back, responses and
+resubmission — and, if not, made the answer this stream's to own. Four audits measured it
+(`docs/reports/device-market-readiness-2026-09-07.md`). **The answer is no.** The platform
+produces the real FDA form with 20 administrative boxes filled, 0 of 112 attachment slots
+populated, no transmission, no letter loop, and four fixture leaks on the demo surface.
+What is sellable today is governed authoring with eSTAR administrative pre-fill, audit trail
+and tenant isolation.
 
-The check, in order:
+The roadmap below replaces "JM names the click" for this stream. Work it in order; each
+item is a session or more, ends with a proof in `docs/reports/`, and a row in §9. Rules
+§2 still hold — fail closed, no new dependency, no file proliferation, seen failing first.
 
-1. Open the produced file in **Acrobat Pro** (not Reader — the template's own `initialize`
-   script warns on `app.viewerType == "Reader"`).
-2. Page 1 shows only the Application/Submission Type questions. **Click the pathway radio.**
-   That click is the reveal, and it is deliberately left to the applicant (§4 below).
-3. Check the four cells the click used to erase: the Declaration of Conformity device trade
-   name, the 510(k) Summary device trade name, the product code, and the classification name.
-   The first three should now be present — FDA's own scripts rebuild them from the two source
-   fields we write. **The classification name is expected to be blank**, and the reason is in
-   the report (§4a): filling it would mean assembling a string that looks like a selection
-   from FDA's catalog but was not.
-4. Tab through the applicant block. The Declaration of Conformity **company name is expected
-   to change to the applicant company name** if the two governed values differ — that is
-   FDA's form deriving that cell from the applicant block, recorded as
-   `rebuildOutcome: 'substitutes'`. Confirm whether that is acceptable to a filer, because
-   there is no source we could write that would hold a different entity there.
+| # | item | why this order | status |
+|---|---|---|---|
+| 1 | **Make the demo path honest.** Remove the four leaks in report §3: the hardcoded "BX-204 · Stage 5 of 7 · 41 days" header, the ungated blocker count, the banner promising withheld rows, and `MDX_HEALTH` on an empty overview. | Disqualifying for any demo; WO-8 Phase 3 acceptance; an hour. | **done 2026-09-07** — `k510HonestEmptyState.test.tsx`, seen failing on all four first |
+| 2 | **Predicate: select and persist.** `PUT /api/510k/device/profile` accepts `predicateDevices`; the 510(k) surface's selection writes it; the two predicate fields on the eSTAR fill from a user's action, not `seed-demo.ts`. SE comparison stays an authored section. | Unblocks the funnel's middle honestly without the absent ML service; removes a WO-8 stop condition ("depends on a seeded response"). | open |
+| 3 | **Retain and bind the filed artifact (Part 11).** Store the delivered eSTAR bytes immutably with their sha256; make draft→filed a governed, signed transition bound to that hash with a server-stamped `filedAt`; make the unplaced-export audit actually propagate failure. | A regulated buyer's QA opens these before field coverage. | open |
+| 4 | **Embed attachments in the official eSTAR** (repo checklist item B4). A slot map (section → one of the 112/140 `AddAttachment` slots → its `/CHAPTER n/CHn.nn/` manifest token → its indicator); a multi-object incremental-update writer that allocates `/EmbeddedFile` + `/Filespec` objects under the template's AESV2 key and rewrites the catalog's `/Names /EmbeddedFiles`; the `form`-packet occurrence + `AttachmentName`; bytes sourced from authored sections (rendered) and vault evidence. | The keystone. Without it nothing the platform authors reaches the filed form. Largest PDF engineering left; keep it on `node:crypto` + `pdf-lib`. | open |
+| 5 | **A device-native FDA letter loop.** Letter intake as a file (text extraction exists), 510(k)-aware deficiency parsing (RTA, AI-hold, SE/NSE) mapped to `cerv2_510k_sections`, responses drafted through the existing `/ai/draft`, an amendment package on item 4, `additional_info` carrying content not just a status. | JM named it; it depends on 4. | open |
+| 6 | **Transmission.** Prepare the package side for FDA ESG (S/MIME PKCS#7, or SFTP) and document the CDRH Portal upload; **blocked on FDA test accounts and certificates only JM can obtain.** | Last, and partly JM's. | blocked on JM |
 
-Then, the reading of `client_workspaces` as the applicant (Phase 2 report §3 and §7):
-confirm it, or name the rule you want, before a customer files on it.
+Outside this stream, flagged not taken: `ENTITLEMENTS_ENFORCE` defaults to off with no
+production startup assertion (`server/services/entitlements/require-entitlement.ts:61–67`) —
+platform stream.
 
-**2. Decide whether the org-wide assembly verdict on the Submission Center is worth
-keeping.** It posts `{pathway, variant}` with no `programId` — "ONE org-wide device-assembly
-verdict for the section header" — and the seven device answers that decide which conditional
-sections are owed live on the PROGRAM. So that call can never resolve them and will always
-report "draft content package only — not submittable", however complete any single filing
-is. The program-scoped call resolves correctly. Making the header per-program is a design
-change to a surface outside this stream, so it is named here rather than made.
-
-Two data-shape decisions are waiting on JM, both measured and both blocked on schema, not
-code (report §4a):
-
-- **The Declaration of Conformity address** would have to become structured columns (two
-  street lines, city, state, postal code, country as an ISO-3 code) before FDA's own rebuild
-  can carry it. One free-text column cannot be written into six fields without parsing.
-- **The two telephone columns** would have to be constrained at capture to 8–15 digits, which
-  is what the template's own validation message asks for, before the source fields can be
-  written.
-- **An operator who answers NO to all seven device questions leaves no trace.**
-  `POST /api/c2c/projects` writes the `deviceFlags` key only when at least one box is ticked,
-  so "asked, none apply" and "never asked" are stored identically — and the second correctly
-  leaves every conditional section undetermined, which blocks producing. Always writing the
-  key at intake fixes it; a reader cannot invent the difference.
+The Acrobat walk-through of §5 remains JM's and remains open; nothing in this roadmap
+depends on it, and item 4 will need it again once attachments embed.
 
 ## 7. Other JM-only tasks on this stream
 
@@ -339,6 +323,7 @@ code (report §4a):
 | 2026-09-07 | E | Close the IVD assumption (JM chose it from the open list; Acrobat report §7 named it) | `estar-field-map.template-behaviour.test.ts` measures BOTH vendored templates, each on its own; every script fact the field map depends on holds identically on `eSTAR-510k-ivd.pdf`; the one textual difference is one space in the reveal guard, seen failing against the nIVD-verbatim string before the IVD line was pinned; 22/22 in the file, whole estar suite green; the IVD map's keys are pinned as a strict subset lacking only the citation the IVD form does not ask | `docs/reports/estar-acrobat-behaviour-2026-09-04.md` §7 |
 | 2026-09-07 | E | Close the remaining IVD assumptions in `server/services/forms` (JM: "you choose") | Two more template-derived claims measured on the IVD form instead of inferred from nIVD: the saved `form` packet declares no node for any of the 21 leaves the IVD map writes and is byte-identical after a 19-field fill (seen failing on the pinned key count, 20 vs 19, before the IVD count was pinned); pdf.js renders the filled IVD eSTAR with the same page-1 selector behaviour as nIVD, and the two SOURCE writes carry the same string as their summary cells on both forms. Every test that reads a vendored template in `server/services/forms` now reads both. 29/29 and 12/12 in the two files; forms + estar + device golden journey green | `docs/reports/estar-acrobat-behaviour-2026-09-04.md` §7 |
 | 2026-09-07 | E | The governed projection on the IVD form (JM: "continue", choice delegated) | Both governed-fill blocks (`estar-administrative-data` and `.governed-homes`) now run on both vendored templates; all 19 mapped governed values land on the IVD form. Found and fixed: a governed fact the descriptor's map has no key for (the IVD citation) was projected and then silently dropped from the fill report, which read 19/19/0 with no advisory; `resolveOfficialEstarFields` now reports it as an advisory (key, home, value), seen failing first on the IVD template; the client status line already prints advisories | `docs/handoff/HANDOFF_DEVICE.md` §7.3 |
+| 2026-09-07 | E | Roadmap item 1 — make the demo path honest (JM: "this should be your product to own") | Four fixture leaks that bypassed the sample-mode gate are closed: no program selected now reads "No program selected" with no stage and no clock instead of "BX-204 · Stage 5 of 7 · 41 days"; the eSTAR blocker count goes through the same gate as the rows (0 sections · 0 blockers on an empty tenant); the shadow-service banner no longer promises example rows the gate withholds; the overview derives its health strip from the empty list instead of MDX_HEALTH. Guard test seen failing on all four before the fix; MDX client suite 42 files / 502 tests green. The market-readiness verdict and the owned roadmap are recorded | `docs/reports/device-market-readiness-2026-09-07.md`; §6 above |
 | | | | | |
 
 **Rule:** the last row with an empty "What was proven" cell is the open work. A session
