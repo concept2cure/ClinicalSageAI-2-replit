@@ -56,6 +56,7 @@ beforeAll(async () => {
   await pglite.exec(`INSERT INTO organizations (id, name) VALUES (${ORG}, 'org');`);
   await pglite.exec(migration('db/migrations/20260724_clinical_regulatory_evidence_spine.sql'));
   await pglite.exec(migration('db/migrations/20260803_document_span_lineage.sql'));
+  await pglite.exec(migration('migrations/20260907_span_lineage_accepted_machine_draft.sql'));
   await pglite.exec(`
     CREATE TABLE consent_forms (id SERIAL PRIMARY KEY, organization_id INTEGER NOT NULL, status TEXT NOT NULL DEFAULT 'draft', updated_at TIMESTAMPTZ DEFAULT now());
     CREATE TABLE consent_form_elements (id SERIAL PRIMARY KEY, organization_id INTEGER NOT NULL, consent_form_id INTEGER NOT NULL, content TEXT, present BOOLEAN DEFAULT false, updated_at TIMESTAMPTZ DEFAULT now());

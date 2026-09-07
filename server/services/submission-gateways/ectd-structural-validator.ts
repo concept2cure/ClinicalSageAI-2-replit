@@ -297,6 +297,20 @@ export async function validateEctdPackage(zipBuffer: Buffer): Promise<EctdZipVal
           'DTDs are vendored into util/dtd/.',
       );
     }
+
+    // Stylesheet self-containment: index.xml references a stylesheet via
+    // <?xml-stylesheet?>; a submission-ready package must bundle it under
+    // util/style/. eValidator flags a reference the package cannot resolve, and
+    // the backbone will not open through the ICH stylesheet in a browser.
+    const styleHref = /<\?xml-stylesheet[^>]*href="([^"]+)"/i.exec(indexContent)?.[1];
+    const hasBundledStylesheet = fileNames.some((f) => f.startsWith('util/style/') && f.endsWith('.xsl'));
+    if (styleHref && !hasBundledStylesheet) {
+      warnings.push(
+        `index.xml references stylesheet "${styleHref}" but no stylesheet is bundled under util/style/ — ` +
+          'the package is not self-contained and is not submission-ready until the ICH/regional ' +
+          'stylesheets are vendored into util/style/.',
+      );
+    }
   }
 
   // 2. Regional-backbone href resolution, relative to each backbone's own dir.

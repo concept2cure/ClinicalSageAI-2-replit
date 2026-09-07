@@ -143,7 +143,7 @@ beforeEach(async () => {
   // organizations row for the FK, the evidence spine and the span-lineage store.
   await pg.exec(`CREATE TABLE IF NOT EXISTS organizations (id SERIAL PRIMARY KEY, name TEXT);`);
   await pg.exec(`INSERT INTO organizations (id, name) VALUES (3, 'org-3') ON CONFLICT DO NOTHING;`);
-  for (const rel of ['db/migrations/20260724_clinical_regulatory_evidence_spine.sql', 'db/migrations/20260803_document_span_lineage.sql']) {
+  for (const rel of ['db/migrations/20260724_clinical_regulatory_evidence_spine.sql', 'db/migrations/20260803_document_span_lineage.sql', 'migrations/20260907_span_lineage_accepted_machine_draft.sql']) {
     await pg.exec(fs.readFileSync(path.resolve(__dirname, '../../../../', rel), 'utf8'));
   }
   const client = { query: (sql: string, params?: unknown[]) => pg.query(sql, params) as Promise<{ rows: any[] }> };

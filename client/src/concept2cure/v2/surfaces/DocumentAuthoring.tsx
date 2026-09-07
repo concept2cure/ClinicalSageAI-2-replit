@@ -2218,6 +2218,12 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
            whoever pressed accept. Read-and-clear: an author counts once, for
            the save that carried their text in. */
         const acceptedAuthors = editorRef.current?.takeAcceptedAuthors?.() ?? [];
+        /* And the accepted text itself, per insertion. The author list says
+           WHO contributed to this save; this says WHICH words, so the lineage
+           gate can record the machine's clauses as the machine's. The server
+           keeps only machine authors it names — a colleague's accepted text is
+           simply the document. */
+        const acceptedMachineText = editorRef.current?.takeAcceptedInsertions?.() ?? [];
         /* The concurrency token. `updated_at` is the value THIS editor loaded;
            the server refuses with 409 SECTION_CHANGED if the row has moved
            since. Without it the PATCH is a blind last-write-wins, and two
@@ -2234,6 +2240,7 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
           content: serialized,
           ...(activeSection.updated_at ? { expectedUpdatedAt: activeSection.updated_at } : {}),
           ...(acceptedAuthors.length ? { acceptedAuthors } : {}),
+          ...(acceptedMachineText.length ? { acceptedMachineText } : {}),
           ...(reasonForChange ? { changeReason: reasonForChange } : {}),
         });
         const json = await res.json().catch(() => null);
