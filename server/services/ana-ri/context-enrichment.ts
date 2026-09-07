@@ -207,20 +207,42 @@ async function readProjectMemory(
   try {
     const catPlaceholders = categories.map((_, i) => `$${i + 3}`).join(', ');
     const limitParam = `$${categories.length + 3}`;
+    /* `confidence_score` and `importance_level`, NOT `confidence`/`importance`.
+       Those two columns have never existed: the table declares
+       confidence_score real / importance_level text (shared/schema.ts), the
+       consolidation job inserts those names, and every other reader reads them.
+       So this statement raised 42703 on any provisioned database, the catch
+       below returned null, and the caller rendered '' or a "No {domain} data
+       found for this project yet" placeholder — project memory never reached
+       the model, and the surface asserted its absence.
+
+       The ordering is by SEVERITY, not by the text itself. `ORDER BY
+       importance_level DESC` sorts lexically — medium > low > high > critical —
+       so the entries that matter most sorted last, and with a LIMIT that
+       decided which ones were dropped rather than merely how they were
+       arranged. An unrecognised level sorts below every known one rather than
+       silently taking a middle rank. */
     const result = await pool.query(
-      `SELECT content, title, confidence, importance, category
+      `SELECT content, title, confidence_score, importance_level, category
        FROM project_memory_entries
        WHERE project_id = $1 AND organization_id = $2
          AND category IN (${catPlaceholders})
-       ORDER BY importance DESC, created_at DESC
+       ORDER BY CASE lower(coalesce(importance_level, ''))
+                  WHEN 'critical' THEN 4
+                  WHEN 'high'     THEN 3
+                  WHEN 'medium'   THEN 2
+                  WHEN 'low'      THEN 1
+                  ELSE 0
+                END DESC,
+                created_at DESC
        LIMIT ${limitParam}`,
       [projectId, orgId, ...categories, limit]
     );
 
     if (result.rows.length === 0) return '';
 
-    const items = result.rows.map((r: { confidence?: number; title?: string; content?: string }) => {
-      const conf = r.confidence ? ` [${Math.round(r.confidence * 100)}% confidence]` : '';
+    const items = result.rows.map((r: { confidence_score?: number; title?: string; content?: string }) => {
+      const conf = r.confidence_score ? ` [${Math.round(r.confidence_score * 100)}% confidence]` : '';
       const title = r.title ? `**${r.title}**` : '';
       return `- ${title}${conf}: ${(r.content || '').slice(0, 400)}`;
     }).join('\n');

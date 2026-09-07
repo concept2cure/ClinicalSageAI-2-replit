@@ -1696,7 +1696,15 @@ router.post('/compliance/check-rules', async (req, res) => {
 
     // Query complianceTracking table for real violations
     let rules: any[] = [];
-    let complianceScore = 100;
+    /* `null` until something is actually assessed, NOT 100. This started at 100
+       and stayed there for a project with no compliance_tracking records, under
+       a comment calling that a "clean state" — so the strongest claim this
+       endpoint can make was its answer for having looked at nothing, and it was
+       indistinguishable from a real 100. Zero records is also the DEFAULT: no
+       row is written until someone creates one, so every new project scored
+       100% compliant on the day it was created. */
+    let complianceScore: number | null = null;
+    let assessed = false;
     let recommendedActions: string[] = [];
 
     try {
@@ -1721,6 +1729,8 @@ router.post('/compliance/check-rules', async (req, res) => {
       const trackingRows = result.rows;
 
       if (trackingRows.length > 0) {
+        assessed = true;
+        complianceScore = 100;
         for (const row of trackingRows) {
           const ruleStatus = row.status === 'compliant' ? 'compliant' : 'violation';
           rules.push({
@@ -1738,9 +1748,11 @@ router.post('/compliance/check-rules', async (req, res) => {
           }
         }
       } else {
-        // No compliance tracking records exist yet — return clean state
+        /* Nothing recorded is nothing assessed. Reported as such — no score —
+           rather than as a clean bill of health for a check that never ran. */
         rules = [];
-        complianceScore = 100;
+        complianceScore = null;
+        assessed = false;
         recommendedActions = [];
       }
     } catch (e) {
@@ -1748,16 +1760,23 @@ router.post('/compliance/check-rules', async (req, res) => {
       return res.status(500).json({ success: false, error: 'Failed to check compliance rules' });
     }
 
-    complianceScore = Math.max(complianceScore, 0);
+    if (complianceScore !== null) complianceScore = Math.max(complianceScore, 0);
     const violations = rules.filter((r: any) => r.status === 'violation').length;
 
     const complianceCheck = {
       insightId,
       violations,
       rules,
+      /* Explicit, so a caller can tell an assessed-and-clean project from an
+         unassessed one. A score of null with assessed:false is the honest
+         answer; the two together are what make it unambiguous. */
+      assessed,
       complianceScore,
       recommendedActions,
       checkedAt: new Date().toISOString(),
+      ...(assessed
+        ? {}
+        : { message: 'No compliance records exist for this organization — nothing has been assessed.' }),
     };
 
     res.status(200).json({
