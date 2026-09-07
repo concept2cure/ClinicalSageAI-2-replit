@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-07T02:42:17.035Z",
+  "generatedAt": "2026-09-07T09:13:39.631Z",
   "git": {
-    "sha": "f23f0d1cd72487acc042597f6f0537ea84020224",
+    "sha": "be322123a0e85dc489bb01860404027fc2fd77ff",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2459,7 +2459,7 @@
       },
       {
         "file": "server/routes/ana-ri/stream.ts",
-        "lines": 1746
+        "lines": 1753
       },
       {
         "file": "server/services/combination-products/combination-products-knowledge.ts",
