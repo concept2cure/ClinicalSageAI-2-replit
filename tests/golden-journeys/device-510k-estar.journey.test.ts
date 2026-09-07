@@ -144,6 +144,9 @@ const R = new JourneyRecorder(
     'migrations/20260527_mutation_primitives.sql',
     'migrations/20260609_audit_hmac_seal.sql',
     'migrations/20260524_program_workbench_schema.sql',
+    // regulatory_programs.application_number (WO-9 Click 1): the column the
+    // create handler now writes; replayed here for the same reason 20260524 is.
+    'migrations/20260907_regulatory_programs_application_number.sql',
     'migrations/20260528_phase9_document_schema.sql',
     'migrations/20260814_projects_regulatory_program_anchor.sql',
     'migrations/20260817_reconcile_declared_updated_at_columns.sql',
@@ -196,6 +199,9 @@ beforeAll(async () => {
       'migrations/20260609_audit_hmac_seal.sql',
       // regulatory_programs — the uuid program spine intake writes.
       'migrations/20260524_program_workbench_schema.sql',
+      // regulatory_programs.application_number (WO-9 Click 1): the column the
+      // create handler now writes; replayed here for the same reason 20260524 is.
+      'migrations/20260907_regulatory_programs_application_number.sql',
       // c2c_documents / c2c_document_sections / c2c_rule_packs (13 packs,
       // including k510 × FDA) — the outline intake scaffolds.
       'migrations/20260528_phase9_document_schema.sql',

@@ -1905,6 +1905,11 @@ export const C2C_MIGRATION_FILES = [
   // pg_policies guard sees it and leaves it alone.
   'migrations/20260906_ivdr_history_tenant_isolation.sql',
 
+  // ── regulatory_programs.application_number (WO-9 Click 1) ──────────────────
+  // The agency-assigned IND / NDA / BLA / MAA number, distinct from the sponsor's
+  // own program code. Additive, IF NOT EXISTS, nullable — never fabricated.
+  'migrations/20260907_regulatory_programs_application_number.sql',
+
   UUID_TENANT_ISOLATION_NONPUBLIC,
 
   // ── Tenant isolation for everything the set just created (ledger C-33) ───

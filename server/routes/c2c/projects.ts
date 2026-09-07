@@ -483,6 +483,9 @@ router.post('/', async (req: Request, res: Response) => {
   const primaryAgency = str(body.primaryAgency) || 'FDA';
   const submissionTypeId = str(body.submissionTypeId) || null;
   const indication = str(body.indication) || null;
+  // Agency-assigned application number (IND / NDA / BLA / MAA). Optional: a
+  // program has none until the agency assigns one, and it is never invented.
+  const applicationNumber = str(body.applicationNumber) || null;
   const priority = ['low', 'medium', 'high', 'critical'].includes(str(body.priority))
     ? str(body.priority) : 'medium';
   // Accept 'YYYY-MM-DD' (wizard <input type=date>); '' → null.
@@ -616,10 +619,12 @@ router.post('/', async (req: Request, res: Response) => {
           target_agencies, product_name, indication, status, phase, priority,
           target_submission_date, progress_percent, lead_user_id, team_members,
           metadata, created_by, updated_by,
-          device_class, regulatory_path, product_code, intended_use, predicate_devices)
+          device_class, regulatory_path, product_code, intended_use, predicate_devices,
+          application_number)
        VALUES ($1, $2, $3, $4, $5, $6, $7::json, $8, $9, 'active', 'planning', $10,
                $11::timestamp, 0, $12, $13::json, $14::json, $15, $15,
-               $16, $17, $18, $19, $20::json)
+               $16, $17, $18, $19, $20::json,
+               $21)
        RETURNING id`,
       [
         orgId, name, code, programType, productType, primaryAgency,
@@ -633,6 +638,7 @@ router.post('/', async (req: Request, res: Response) => {
         dc.productCode ?? null,
         dc.intendedUse ?? null,
         JSON.stringify(dc.predicateK ? [{ kNumber: dc.predicateK }] : []),
+        applicationNumber,
       ],
     );
 
@@ -852,6 +858,9 @@ router.get('/:id', async (req: Request, res: Response) => {
     // (the previous projection referenced sponsor_name / lead_indication /
     // filing_date / pdufa_date / completion_percentage, none of which exist on
     // regulatory_programs — the read 500'd with 42703 on a real schema).
+    // application_number: migrations/20260907_regulatory_programs_application_number.sql.
+    // sponsor_name is the organisation's name — the sponsor of record in this
+    // data model (the same join biopharma/programs.ts makes).
     const { rows } = await pool.query(
       `SELECT
          p.id, p.code, p.name, p.program_type, p.status, p.phase, p.priority,
@@ -859,8 +868,11 @@ router.get('/:id', async (req: Request, res: Response) => {
          p.primary_agency, p.target_agencies,
          p.target_submission_date, p.actual_submission_date, p.approval_date,
          p.progress_percent, p.lead_user_id, p.team_members,
-         p.created_at, p.updated_at
+         p.created_at, p.updated_at,
+         p.application_number,
+         o.name AS sponsor_name
        FROM regulatory_programs p
+       LEFT JOIN organizations o ON o.id = p.organization_id
        WHERE p.id = $1 AND p.organization_id = $2 AND p.deleted_at IS NULL
        LIMIT 1`,
       [id, orgId],
