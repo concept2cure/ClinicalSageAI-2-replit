@@ -441,16 +441,33 @@ function sessionRow(overrides: Record<string, unknown> = {}) {
 }
 
 /** A pool that answers the load from `row` and echoes every UPDATE. */
-function fakePool(row: Record<string, unknown> | null) {
+function fakePool(row: Record<string, unknown> | null, opts: { projectInTenant?: boolean; staleSelect?: boolean } = {}) {
   const statements: Array<{ text: string; params: unknown[] }> = [];
+  const snapshot = row ? { ...row } : null;
   const q: Queryable = {
     async query(text: string, params: unknown[] = []) {
       statements.push({ text, params });
-      if (/^\s*SELECT/.test(text)) return { rows: row ? [row] : [], rowCount: row ? 1 : 0 };
+      // The tenant check on a project bound at commit time.
+      if (/SELECT 1 AS present/.test(text)) return { rows: opts.projectInTenant ? [{ present: 1 }] : [], rowCount: opts.projectInTenant ? 1 : 0 };
+      // `staleSelect`: another commit already moved the row on; this caller still reads the old snapshot.
+      if (/^\s*SELECT/.test(text)) {
+        const seen = opts.staleSelect ? snapshot : row;
+        return { rows: seen ? [seen] : [], rowCount: seen ? 1 : 0 };
+      }
       if (/^\s*UPDATE/.test(text) && row) {
-        const status = /status = 'committed'/.test(text) ? 'committed' : String(row.status);
+        /* The status machine as the service runs it: complete → committing on
+           begin, committing → committed on success, committing → complete on a
+           partial. A begin against a row that is not complete matches nothing. */
+        if (/SET status = 'committing'/.test(text)) {
+          if (row.status !== 'complete') return { rows: [], rowCount: 0 };
+          row.status = 'committing';
+          if (row.project_id == null && params[2] != null) row.project_id = params[2];
+          return { rows: [{ ...row }], rowCount: 1 };
+        }
+        const status = /status = 'committed'/.test(text) ? 'committed' : /status = 'complete'/.test(text) ? 'complete' : String(row.status);
         const refs = params[2] !== undefined ? JSON.parse(String(params[2])) : row.committed_record_refs;
-        return { rows: [{ ...row, status, committed_record_refs: refs }], rowCount: 1 };
+        row.status = status;
+        return { rows: [{ ...row, committed_record_refs: refs }], rowCount: 1 };
       }
       return { rows: [], rowCount: 0 };
     },
@@ -499,7 +516,7 @@ describe('commitInterviewSession', () => {
   });
 
   it('a project supplied at commit time binds a session that had none', async () => {
-    const { q } = fakePool(sessionRow({ project_id: null }));
+    const { q } = fakePool(sessionRow({ project_id: null }), { projectInTenant: true });
     const writer = vi.fn<RegisterWriter>(async (entry) => ({ id: `${entry.register}-id` }));
 
     const outcome = await commitInterviewSession(
@@ -658,5 +675,83 @@ describe('the production writer', () => {
       creates[key].mockRejectedValueOnce(new Error('governed refusal'));
       await expect(productionRegisterWriter(entry, scope)).rejects.toThrow('governed refusal');
     }
+  });
+});
+
+describe('commitInterviewSession — holds the session, checks the project, checks the plan', () => {
+  it('a session already held by another commit is refused, and nothing is written', async () => {
+    const { q } = fakePool(sessionRow({ status: 'committing' }));
+    const writer = vi.fn<RegisterWriter>();
+    const outcome = await commitInterviewSession({ organizationId: ORG, sessionId: SESSION_ID, userId: 7 }, { writer, q });
+    expect(outcome.ok).toBe(false);
+    if (outcome.ok) return;
+    expect(outcome.code).toBe('COMMIT_IN_PROGRESS');
+    expect(writer).not.toHaveBeenCalled();
+  });
+
+  it('the race: two callers both read complete; the one whose hold matches no row is refused', async () => {
+    const row = sessionRow({ status: 'complete' });
+    const { q, statements } = fakePool(row, { staleSelect: true });
+    row.status = 'committing'; // the other caller won between this caller's read and its hold
+    const writer = vi.fn<RegisterWriter>();
+    const outcome = await commitInterviewSession({ organizationId: ORG, sessionId: SESSION_ID, userId: 7 }, { writer, q });
+    expect(outcome.ok).toBe(false);
+    if (outcome.ok) return;
+    expect(outcome.code).toBe('COMMIT_IN_PROGRESS');
+    expect(statements.some(s => /SET status = 'committing'/.test(s.text))).toBe(true);
+    expect(writer).not.toHaveBeenCalled();
+  });
+
+  it('a plan entry the register would refuse stops the commit BEFORE any write, naming the entry and the reason', async () => {
+    const { q, statements } = fakePool(sessionRow());
+    const writer = vi.fn<RegisterWriter>(async (entry) => ({ id: `${entry.register}-id`, module3Linked: true }));
+    const validate = vi.fn(async (entry: { register: string }) =>
+      entry.register === 'manufacturing_process' ? 'manufacturing_process: projectId: Invalid uuid.' : null,
+    );
+    const outcome = await commitInterviewSession({ organizationId: ORG, sessionId: SESSION_ID, userId: 7 }, { writer, validate, q });
+    expect(outcome.ok).toBe(false);
+    if (outcome.ok) return;
+    expect(outcome.code).toBe('PLAN_INVALID');
+    expect(outcome.invalid?.map(i => i.register)).toEqual(['manufacturing_process', 'manufacturing_process']);
+    expect(outcome.error).toMatch(/Invalid uuid/);
+    expect(writer).not.toHaveBeenCalled();
+    expect(statements.some(s => /SET status = 'committing'/.test(s.text))).toBe(false);
+  });
+
+  it('a project supplied for an unbound session must belong to the tenant; when it does, the hold binds it and every write uses it', async () => {
+    const writer = vi.fn<RegisterWriter>(async (entry) => ({ id: `${entry.register}-id`, module3Linked: true }));
+    const stranger = fakePool(sessionRow({ project_id: null }), { projectInTenant: false });
+    const refused = await commitInterviewSession({ organizationId: ORG, sessionId: SESSION_ID, userId: 7, projectId: 'someone-elses' }, { writer, q: stranger.q });
+    expect(refused.ok).toBe(false);
+    if (refused.ok) return;
+    expect(refused.code).toBe('PROJECT_NOT_IN_TENANT');
+    expect(writer).not.toHaveBeenCalled();
+
+    const own = fakePool(sessionRow({ project_id: null }), { projectInTenant: true });
+    const outcome = await commitInterviewSession({ organizationId: ORG, sessionId: SESSION_ID, userId: 7, projectId: 'prog-9' }, { writer, q: own.q });
+    expect(outcome.ok).toBe(true);
+    const hold = own.statements.find(s => /SET status = 'committing'/.test(s.text))!;
+    expect(hold.params[2]).toBe('prog-9');
+    for (const call of writer.mock.calls) expect(call[1].projectId).toBe('prog-9');
+  });
+
+  it('a failed write releases the hold: the session is complete again with what landed recorded', async () => {
+    const row = sessionRow();
+    const { q, statements } = fakePool(row);
+    let n = 0;
+    const writer = vi.fn<RegisterWriter>(async (entry) => {
+      n += 1;
+      if (n === 2) throw new Error('register refused');
+      return { id: `${entry.register}-${n}`, module3Linked: true };
+    });
+    const outcome = await commitInterviewSession({ organizationId: ORG, sessionId: SESSION_ID, userId: 7 }, { writer, q });
+    expect(outcome.ok).toBe(false);
+    if (outcome.ok) return;
+    expect(outcome.code).toBe('WRITE_FAILED');
+    expect(outcome.status).toBe('complete');
+    const release = statements.find(s => /status = 'complete'/.test(s.text) && /AND status = 'committing'/.test(s.text))!;
+    expect(release).toBeTruthy();
+    expect(JSON.parse(String(release.params[2]))).toHaveLength(1);
+    expect(row.status).toBe('complete');
   });
 });

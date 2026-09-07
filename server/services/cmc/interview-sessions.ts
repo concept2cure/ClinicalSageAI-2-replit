@@ -35,7 +35,7 @@
 
 import type { FlowCategory, FlowState } from '../../../shared/types/intelligence-questions.js';
 
-export type InterviewSessionStatus = 'active' | 'complete' | 'committed' | 'abandoned';
+export type InterviewSessionStatus = 'active' | 'complete' | 'committing' | 'committed' | 'abandoned';
 
 /** One register record a commit produced — see interview-commit.ts. */
 export interface CommittedRecordRef {
@@ -73,7 +73,8 @@ export type InterviewSessionErrorCode =
   | 'SESSION_NOT_FOUND'
   | 'SESSION_NOT_WRITABLE'
   | 'SESSION_STATE_INVALID'
-  | 'COMMIT_REFS_REQUIRED';
+  | 'COMMIT_REFS_REQUIRED'
+  | 'SESSION_NOT_COMMITTABLE';
 
 export class InterviewSessionError extends Error {
   constructor(public readonly code: InterviewSessionErrorCode, message: string) {
@@ -315,9 +316,65 @@ export async function abandonInterviewSession(
 }
 
 /**
- * The refs of a PARTIAL commit. The status stays 'complete': the commit did
- * not finish, and saying so is the point — but what it DID write is on the
- * record, so a retry skips it instead of writing it twice.
+ * Does this project belong to the tenant? A program (regulatory_programs,
+ * uuid) or a legacy project (projects, integer) — compared as text so a
+ * numeric id never raises a uuid cast error. A session bound to a project at
+ * commit time must be bound to one of the tenant's own.
+ */
+export async function projectBelongsToTenant(
+  params: { organizationId: number | string | null | undefined; projectId: string },
+  q?: Queryable,
+): Promise<boolean> {
+  const organizationId = assertOrganizationId(params.organizationId);
+  const projectId = String(params.projectId ?? '').trim();
+  if (!projectId) return false;
+  const db = await resolveQueryable(q);
+  const { rows } = await db.query(
+    `SELECT 1 AS present FROM regulatory_programs WHERE id::text = $1 AND organization_id = $2
+     UNION ALL
+     SELECT 1 AS present FROM projects WHERE id::text = $1 AND organization_id = $2
+     LIMIT 1`,
+    [projectId, organizationId],
+  );
+  return rows.length > 0;
+}
+
+/**
+ * complete → committing: the session is held for ONE commit. A second commit
+ * of the same session finds it committing (or committed) and is refused, so
+ * two concurrent commits cannot both write every register row. A project
+ * supplied at commit time is bound here, once, and only if the session had
+ * none — a bound session never moves to another program.
+ */
+export async function beginInterviewCommit(
+  params: { organizationId: number | string | null | undefined; sessionId: unknown; projectId?: string | null },
+  q?: Queryable,
+): Promise<InterviewSession> {
+  const organizationId = assertOrganizationId(params.organizationId);
+  const sessionId = assertSessionId(params.sessionId);
+  const projectId = typeof params.projectId === 'string' && params.projectId.trim() ? params.projectId.trim() : null;
+
+  const db = await resolveQueryable(q);
+  const { rows } = await db.query(
+    `UPDATE cmc_interview_sessions
+        SET status = 'committing', project_id = COALESCE(project_id, $3), updated_at = now()
+      WHERE id = $1 AND organization_id = $2 AND status = 'complete'
+      ${RETURNING}`,
+    [sessionId, organizationId, projectId],
+  );
+  if (!rows[0]) {
+    throw new InterviewSessionError(
+      'SESSION_NOT_COMMITTABLE',
+      `Interview session ${sessionId} is not a complete session of this organization awaiting commit — it is being committed, was committed, or is not complete.`,
+    );
+  }
+  return mapRow(rows[0]);
+}
+
+/**
+ * The refs of a PARTIAL (or failed) commit. committing → complete: the commit
+ * did not finish, and saying so is the point — but what it DID write is on
+ * the record, so a retry skips it instead of writing it twice.
  */
 export async function recordCommittedRecordRefs(
   params: { organizationId: number | string | null | undefined; sessionId: unknown; refs: CommittedRecordRef[] },
@@ -329,21 +386,21 @@ export async function recordCommittedRecordRefs(
   const db = await resolveQueryable(q);
   const { rows } = await db.query(
     `UPDATE cmc_interview_sessions
-        SET committed_record_refs = $3::jsonb, updated_at = now()
-      WHERE id = $1 AND organization_id = $2 AND status = 'complete'
+        SET committed_record_refs = $3::jsonb, status = 'complete', updated_at = now()
+      WHERE id = $1 AND organization_id = $2 AND status = 'committing'
       ${RETURNING}`,
     [sessionId, organizationId, JSON.stringify(params.refs ?? [])],
   );
   if (!rows[0]) {
     throw new InterviewSessionError(
       'SESSION_NOT_WRITABLE',
-      `Interview session ${sessionId} is not a complete session of this organization; the partial commit could not be recorded.`,
+      `Interview session ${sessionId} is not a session of this organization under commit; the partial commit could not be recorded.`,
     );
   }
   return mapRow(rows[0]);
 }
 
-/** complete → committed, with every record the commit produced. */
+/** committing → committed, with every record the commit produced. */
 export async function markInterviewSessionCommitted(
   params: { organizationId: number | string | null | undefined; sessionId: unknown; refs: CommittedRecordRef[] },
   q?: Queryable,
@@ -358,14 +415,14 @@ export async function markInterviewSessionCommitted(
   const { rows } = await db.query(
     `UPDATE cmc_interview_sessions
         SET status = 'committed', committed_record_refs = $3::jsonb, updated_at = now()
-      WHERE id = $1 AND organization_id = $2 AND status = 'complete'
+      WHERE id = $1 AND organization_id = $2 AND status = 'committing'
       ${RETURNING}`,
     [sessionId, organizationId, JSON.stringify(params.refs)],
   );
   if (!rows[0]) {
     throw new InterviewSessionError(
       'SESSION_NOT_WRITABLE',
-      `Interview session ${sessionId} is not a complete session of this organization; it was not marked committed.`,
+      `Interview session ${sessionId} is not a session of this organization under commit; it was not marked committed.`,
     );
   }
   return mapRow(rows[0]);

@@ -65,6 +65,8 @@ import {
   type InterviewSession,
   type InterviewSessionStatus,
   type Queryable,
+  beginInterviewCommit,
+  projectBelongsToTenant,
 } from './interview-sessions.js';
 
 /* ─── Registers ──────────────────────────────────────────────────────────── */
@@ -584,10 +586,26 @@ export type InterviewCommitFailureCode =
   | 'INVALID_SESSION_ID'
   | 'SESSION_NOT_FOUND'
   | 'SESSION_NOT_COMPLETE'
+  | 'COMMIT_IN_PROGRESS'
   | 'PROJECT_REQUIRED'
+  | 'PROJECT_NOT_IN_TENANT'
   | 'NOTHING_TO_COMMIT'
+  | 'PLAN_INVALID'
   | 'WRITE_FAILED'
   | 'BOOKKEEPING_FAILED';
+
+/**
+ * Would the register refuse this plan entry's body? The reason, or null.
+ * Run over the WHOLE plan before its first write, so one doomed entry refuses
+ * the commit with nothing written instead of landing the entries before it.
+ */
+export type RegisterValidator = (entry: InterviewCommitPlanEntry, scope: RegisterWriteScope) => string | null | Promise<string | null>;
+
+/** The production validator: each register's own zod body, as its create parses it. */
+export const productionRegisterValidator: RegisterValidator = async (planEntry, scope) => {
+  const { registerBodyRefusal } = await import('./register-writes.js');
+  return registerBodyRefusal(planEntry.register, { ...planEntry.body, projectId: scope.projectId });
+};
 
 export type InterviewCommitOutcome =
   | {
@@ -613,6 +631,8 @@ export type InterviewCommitOutcome =
       failed?: { key: string; register: InterviewRegister; error: string };
       /** Plan entry keys not attempted because an earlier one failed. */
       remaining?: string[];
+      /** PLAN_INVALID: every entry the register would refuse, with the reason. Nothing was written. */
+      invalid?: Array<{ key: string; register: InterviewRegister; reason: string }>;
       unprojected: UnprojectedAnswer[];
     };
 
@@ -637,7 +657,7 @@ export async function commitInterviewSession(
     /** Binds a session that was started without a project. Never overrides one the session has. */
     projectId?: string | null;
   },
-  deps: { writer: RegisterWriter; q?: Queryable },
+  deps: { writer: RegisterWriter; validate?: RegisterValidator; q?: Queryable },
 ): Promise<InterviewCommitOutcome> {
   const sessionId = typeof params.sessionId === 'string' ? params.sessionId : String(params.sessionId ?? '');
 
@@ -666,6 +686,13 @@ export async function commitInterviewSession(
       unprojected: plan.unprojected,
     };
   }
+  if (session.status === 'committing') {
+    return {
+      ok: false, sessionId: session.id, status: session.status, code: 'COMMIT_IN_PROGRESS',
+      error: `Interview session ${session.id} is being committed by another call; nothing was written by this one.`,
+      committed: [], unprojected: plan.unprojected,
+    };
+  }
   if (session.status !== 'complete' || !session.state.complete) {
     return {
       ok: false, sessionId: session.id, status: session.status, code: 'SESSION_NOT_COMPLETE',
@@ -683,6 +710,28 @@ export async function commitInterviewSession(
       committed: [], unprojected: plan.unprojected,
     };
   }
+  /* A project bound at commit time is bound once, and only to one of the
+     tenant's own programs or projects — the records would otherwise file
+     under a dossier this tenant does not hold. */
+  if (!session.projectId) {
+    let belongs = false;
+    try {
+      belongs = await projectBelongsToTenant({ organizationId: session.organizationId, projectId }, deps.q);
+    } catch (err) {
+      return {
+        ok: false, sessionId: session.id, status: session.status, code: 'PROJECT_NOT_IN_TENANT',
+        error: `Could not verify that project ${projectId} belongs to this organization: ${message(err)}. Nothing was written.`,
+        committed: [], unprojected: plan.unprojected,
+      };
+    }
+    if (!belongs) {
+      return {
+        ok: false, sessionId: session.id, status: session.status, code: 'PROJECT_NOT_IN_TENANT',
+        error: `Project ${projectId} is not a program or project of this organization; the interview cannot be filed under it.`,
+        committed: [], unprojected: plan.unprojected,
+      };
+    }
+  }
 
   if (plan.entries.length === 0) {
     return {
@@ -698,6 +747,39 @@ export async function commitInterviewSession(
   const pending = plan.entries.filter(e => !existingKeys.has(e.key));
   const scope: RegisterWriteScope = { organizationId: session.organizationId, projectId, userId: params.userId ?? null };
   const written: CommittedRecordRef[] = [];
+
+  /* The whole plan is checked before the first write: an entry the register
+     would refuse (a body its zod schema rejects — a legacy numeric project id
+     on the uuid-keyed manufacturing register, say) refuses the commit with
+     nothing written, rather than landing the entries before it and stopping. */
+  if (deps.validate) {
+    const invalid: Array<{ key: string; register: InterviewRegister; reason: string }> = [];
+    for (const planEntry of pending) {
+      const reason = await deps.validate(planEntry, scope);
+      if (reason) invalid.push({ key: planEntry.key, register: planEntry.register, reason });
+    }
+    if (invalid.length > 0) {
+      return {
+        ok: false, sessionId: session.id, status: session.status, code: 'PLAN_INVALID',
+        error:
+          `${invalid.length} of ${pending.length} plan entr${invalid.length === 1 ? 'y' : 'ies'} would be refused by the register, so nothing was written: ` +
+          invalid.map(i => `${i.key} — ${i.reason}`).join(' | '),
+        committed: [], invalid, unprojected: plan.unprojected,
+      };
+    }
+  }
+
+  /* Hold the session for THIS commit. A second concurrent commit finds it
+     held and is refused instead of writing every register row a second time. */
+  try {
+    session = await beginInterviewCommit({ organizationId: session.organizationId, sessionId: session.id, projectId }, deps.q);
+  } catch (err) {
+    return {
+      ok: false, sessionId: session.id, status: session.status, code: 'COMMIT_IN_PROGRESS',
+      error: `Interview session ${session.id} could not be held for commit — another commit holds it, or it is no longer complete: ${message(err)}. Nothing was written.`,
+      committed: [], unprojected: plan.unprojected,
+    };
+  }
 
   for (let i = 0; i < pending.length; i += 1) {
     const planEntry = pending[i];
@@ -715,18 +797,18 @@ export async function commitInterviewSession(
       const failed = { key: planEntry.key, register: planEntry.register, error: message(err) };
       const remaining = pending.slice(i + 1).map(e => e.key);
       let bookkeeping = '';
-      if (written.length > 0) {
-        try {
-          await recordCommittedRecordRefs(
-            { organizationId: session.organizationId, sessionId: session.id, refs: [...existing, ...written] },
-            deps.q,
-          );
-        } catch (bkErr) {
-          bookkeeping = ` The ${written.length} record(s) written before the failure could not be recorded on the session: ${message(bkErr)}.`;
-        }
+      /* Always: this also releases the hold (committing → complete), with
+         whatever landed on the record so a retry skips it. */
+      try {
+        await recordCommittedRecordRefs(
+          { organizationId: session.organizationId, sessionId: session.id, refs: [...existing, ...written] },
+          deps.q,
+        );
+      } catch (bkErr) {
+        bookkeeping = ` The ${written.length} record(s) written before the failure could not be recorded on the session, and the session may still be held for commit: ${message(bkErr)}.`;
       }
       return {
-        ok: false, sessionId: session.id, status: session.status, code: 'WRITE_FAILED',
+        ok: false, sessionId: session.id, status: 'complete', code: 'WRITE_FAILED',
         error:
           `Commit stopped at ${planEntry.register} (${planEntry.key}): ${failed.error}. ` +
           `${written.length} record(s) were written by this call and ${remaining.length} plan entr${remaining.length === 1 ? 'y was' : 'ies were'} not attempted; ` +
