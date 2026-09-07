@@ -203,16 +203,16 @@ router.get('/build-state/:projectId', async (req, res) => {
 
     // Assemble build status for every section (SECTION_SOURCE_TYPES is the
     // composer's own rules, imported at module scope — see the note up top)
-    const sections = ALL_SECTION_KEYS.map((sectionKey) => {
+    /* One entry per section the canonical status reports — the core rules
+       plus whichever appendices the project's sources make emittable. Walking
+       the label map instead threw on a project with no appendix sources
+       (label present, status entry absent) and hid a stale 3.2.A.* on one
+       that had them. */
+    const sections = canonicalStatus.sections.map((canonical) => {
+      const sectionKey = canonical.sectionKey;
       const compiled = compiledMap.get(sectionKey);
       const artifact = artifactMap.get(sectionKey);
-      const requiredSourceTypes = SECTION_SOURCE_TYPES[sectionKey] || [];
-      const canonical = canonicalBySection.get(sectionKey);
-      if (!canonical) {
-        // The status reports one entry per composer rule, and the label map is
-        // those same keys. A gap is a broken invariant, never a 0%-complete row.
-        throw new Error(`Canonical Module 3 status has no entry for section ${sectionKey}`);
-      }
+      const requiredSourceTypes = SECTION_SOURCE_TYPES[sectionKey] || canonical.sourceTypes || [];
       // Live sources that actually compose (retired ones do not), scored by the
       // composer — the same figures compile stores and the export gate reads.
       const { sourceObjectCount, completeness, missingInputs } = canonical;

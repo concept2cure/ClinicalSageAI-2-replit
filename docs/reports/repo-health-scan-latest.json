@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-07T09:28:56.050Z",
+  "generatedAt": "2026-09-07T09:34:50.795Z",
   "git": {
-    "sha": "a92b93d86846c5cd2e2bab9cb49fea5af717ae45",
+    "sha": "cf3214fec301c989122da11024ad51141ffc00d4",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2422,12 +2422,12 @@
         "lines": 1824
       },
       {
-        "file": "server/services/safety-pharmacology/safety-pharmacology-knowledge.ts",
-        "lines": 1815
+        "file": "client/src/concept2cure/v2/Shell.tsx",
+        "lines": 1822
       },
       {
-        "file": "client/src/concept2cure/v2/Shell.tsx",
-        "lines": 1813
+        "file": "server/services/safety-pharmacology/safety-pharmacology-knowledge.ts",
+        "lines": 1815
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/device-pma.ts",
@@ -2474,12 +2474,12 @@
         "lines": 1700
       },
       {
-        "file": "server/services/ana/notifications-study-memory-tool-defs.ts",
+        "file": "server/services/ana-ri/context-enrichment.ts",
         "lines": 1696
       },
       {
-        "file": "server/services/ana-ri/context-enrichment.ts",
-        "lines": 1687
+        "file": "server/services/ana/notifications-study-memory-tool-defs.ts",
+        "lines": 1696
       },
       {
         "file": "server/services/nonclinical-adme/nonclinical-adme-knowledge.ts",

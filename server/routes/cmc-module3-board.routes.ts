@@ -486,8 +486,12 @@ export default function createCmcModule3BoardRoutes(): Router {
               .filter((v): v is number => typeof v === 'number')
               .reduce((a, b) => a + b, 0);
 
-      const sectionsTotal = sections ? sections.rows.length : null;
-      const sectionsApproved = sections
+      /* A failed section read publishes NO counts: 0 sections / 0 approved /
+         0% ready beside sectionsUnreadable:true was a believable figure over
+         a register nothing had read. */
+      const sectionsReadable = Boolean(sections && !sections.unreadable);
+      const sectionsTotal = sections && sectionsReadable ? sections.rows.length : null;
+      const sectionsApproved = sections && sectionsReadable
         ? sections.rows.filter((s) => s.st === 'approved').length
         : null;
       const readyPercent =
