@@ -397,9 +397,16 @@ function stabilityTrending(sources: CanonicalSource[]): string {
     unreadable += reads.filter((r) => r.unreadable).length;
     const points = reads.flatMap((r) => r.points);
     if (points.length === 0) continue;
+    /* The mapper writes the condition array; a payload written before it did
+       carries only the joined string, which is split back on its separator
+       so a two-condition study is still refused rather than fitted as one. */
+    const conditionSource =
+      Array.isArray(payload.storageConditions) && payload.storageConditions.length > 0
+        ? payload.storageConditions
+        : String(payload.storageCondition ?? '').split(/\s*,\s*/).filter(Boolean);
     const assessed = assessRecordedTrending({
       id: s.id,
-      storageConditions: payload.storageConditions ?? payload.storageCondition,
+      storageConditions: conditionSource,
       stabilityData: points,
     });
     if (!assessed.ok) {

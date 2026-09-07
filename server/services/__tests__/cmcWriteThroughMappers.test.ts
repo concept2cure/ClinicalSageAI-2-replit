@@ -2175,11 +2175,21 @@ describe('review: what the register data is allowed to CLAIM', () => {
 });
 
 describe('mapFormulationRecordPayload — §3.2.P.2.2 has a producer', () => {
-  it('emits formulationDevelopment from the recorded rationale, and null when none is recorded', () => {
+  it('emits formulationDevelopment from the recorded rationale, and null when none is recorded', async () => {
     const base = { formulationName: 'BX-701 5 mg tablet', status: 'current', components: [{ component: 'BX-701', role: 'Active' }] };
     expect(mapFormulationRecordPayload({ ...base, formulationDevelopment: 'Immediate-release tablet chosen over capsule for dose uniformity; MCC:lactose ratio fixed at 2:1 after prototypes F1-F3.' }).formulationDevelopment).toMatch(/prototypes F1-F3/);
     expect(mapFormulationRecordPayload({ ...base, formulation_development: 'stored shape' }).formulationDevelopment).toBe('stored shape');
     expect(mapFormulationRecordPayload({ ...base, formulationDevelopment: '   ' }).formulationDevelopment).toBeNull();
     expect(mapFormulationRecordPayload(base).formulationDevelopment).toBeNull();
+  });
+});
+
+describe('review: the stability mapper carries the condition array beside the joined string', () => {
+  it('emits storageConditions as an array so a multi-condition study can be told apart', async () => {
+    const { mapStabilityPayload } = await import('../cmc-write-through');
+    const p = mapStabilityPayload({ studyTitle: 'S1', storageConditions: ['25°C/60%RH', '40°C/75%RH'], stabilityData: [] });
+    expect(p.storageConditions).toEqual(['25°C/60%RH', '40°C/75%RH']);
+    expect(p.storageCondition).toBe('25°C/60%RH, 40°C/75%RH');
+    expect(mapStabilityPayload({ studyTitle: 'S2', stabilityData: [] }).storageConditions).toBeNull();
   });
 });

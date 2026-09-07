@@ -1894,6 +1894,10 @@ export const C2C_MIGRATION_FILES = [
   // character-for-character to use it. Ordered after the organization_id file
   // only for readability — it depends on nothing that file adds.
   'migrations/20260906_vault_documents_fulltext.sql',
+  // c2c_artifact_section_map: de-duplicate (artifact, section) rows and add the
+  // unique index shared/schema.ts declares. Was in no applier, so the schema's
+  // "the database no longer permits" a duplicate mapping was not true anywhere.
+  'migrations/20260906_artifact_section_map_unique.sql',
 
   // Legal holds. Lands while the retention sweep is still inert (nothing writes
   // retention_until), which is the point: the guard has to exist before the

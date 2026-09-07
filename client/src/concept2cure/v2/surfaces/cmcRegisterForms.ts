@@ -1358,12 +1358,13 @@ export function impurityProfileForm(row?: Partial<ImpurityProfileBody> | null): 
       { key: 'batchesObserved', label: 'Batches observed in', type: 'text', default: (row?.batchesObserved ?? []).join(', '), placeholder: 'e.g. B-001, B-002, B-003' },
       /* Shown for every class rather than only 'mutagenic': a process impurity
          with a structural alert is exactly the record M7 wants assessed, and
-         the assessment refuses (does not default) when these are blank. */
-      { key: 'amesResult', label: 'Ames result (M7)', type: 'select', options: ['', ...AMES_RESULTS], half: true, default: row?.amesResult ?? '', desc: 'ICH M7(R2): the bacterial mutagenicity result decides Class 2 vs 4/5. Blank means not recorded, not negative' },
-      { key: 'structuralAlert', label: 'Structural alert (M7)', type: 'select', options: ['', ...STRUCTURAL_ALERTS], half: true, default: row?.structuralAlert ?? '', desc: 'From two complementary (Q)SAR assessments. An alert with no Ames data is Class 3' },
-      { key: 'carcinogenicityData', label: 'Carcinogenicity data', type: 'select', options: ['', ...CARCINOGENICITY_DATA], half: true, default: row?.carcinogenicityData ?? '', desc: 'A known mutagenic carcinogen (Class 1) takes a compound-specific limit, not the TTC' },
-      { key: 'treatmentDuration', label: 'Treatment duration', type: 'select', options: ['', ...TREATMENT_DURATIONS], half: true, default: row?.treatmentDuration ?? '', desc: 'The M7 acceptable intake is staged: 120 µg/day up to a month, 20 to a year, 10 to ten years, 1.5 for life' },
-      { key: 'cohortOfConcern', label: 'Cohort of concern', type: 'select', options: ['', ...COHORTS_OF_CONCERN], half: true, default: row?.cohortOfConcern ?? '', desc: 'N-nitroso, aflatoxin-like and alkyl-azoxy structures carry compound-specific limits far below the TTC' },
+         the assessment refuses (does not default) when these are blank. The
+         renderer's own "Select…" is the blank; none is added here. */
+      { key: 'amesResult', label: 'Ames result (M7)', type: 'select', options: AMES_RESULTS, half: true, default: row?.amesResult ?? '', desc: 'ICH M7(R2): the bacterial mutagenicity result decides Class 2 vs 4/5. Blank means not recorded, not negative' },
+      { key: 'structuralAlert', label: 'Structural alert (M7)', type: 'select', options: STRUCTURAL_ALERTS, half: true, default: row?.structuralAlert ?? '', desc: 'From two complementary (Q)SAR assessments. An alert with no Ames data is Class 3' },
+      { key: 'carcinogenicityData', label: 'Carcinogenicity data', type: 'select', options: CARCINOGENICITY_DATA, half: true, default: row?.carcinogenicityData ?? '', desc: 'A known mutagenic carcinogen (Class 1) takes a compound-specific limit, not the TTC' },
+      { key: 'treatmentDuration', label: 'Treatment duration', type: 'select', options: TREATMENT_DURATIONS, half: true, default: row?.treatmentDuration ?? '', desc: 'The M7 acceptable intake is staged: 120 µg/day up to a month, 20 to a year, 10 to ten years, 1.5 for life' },
+      { key: 'cohortOfConcern', label: 'Cohort of concern', type: 'select', options: COHORTS_OF_CONCERN, half: true, default: row?.cohortOfConcern ?? '', desc: 'N-nitroso, aflatoxin-like and alkyl-azoxy structures carry compound-specific limits far below the TTC' },
       { key: 'reportingThreshold', label: 'Reporting threshold (as recorded)', type: 'text', half: true, default: row?.reportingThreshold ?? '', placeholder: 'Leave blank to use the ICH threshold for the dose' },
       { key: 'identificationThreshold', label: 'Identification threshold (as recorded)', type: 'text', half: true, default: row?.identificationThreshold ?? '' },
       { key: 'qualificationThreshold', label: 'Qualification threshold (as recorded)', type: 'text', half: true, default: row?.qualificationThreshold ?? '' },

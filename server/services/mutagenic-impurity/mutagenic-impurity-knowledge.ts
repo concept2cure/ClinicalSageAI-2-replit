@@ -929,8 +929,11 @@ export function calculateTTC(params: TTCInput): TTCResult {
        a thousandfold too high (1.5 µg/day at 1 g/day came out as 1500 ppm,
        against the guideline's own 1.5 ppm). */
     concentrationLimitPpm = acceptableIntakeUgPerDay / maxDailyDoseG;
-    // Round to appropriate precision
-    concentrationLimitPpm = Math.round(concentrationLimitPpm * 100) / 100;
+    /* Significant figures, not decimal places: a nitrosamine limit is tens of
+       ng/day, so 0.018 µg/day over 1 g/day is 0.018 ppm and over 5 g/day
+       0.0036 ppm — the earlier two-decimal rounding lifted the first to 0.02
+       and made the second 0, and the register comparison ran against those. */
+    concentrationLimitPpm = Number(concentrationLimitPpm.toPrecision(4));
 
     calculationSteps.push({
       step: 3,
