@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-06T23:02:18.133Z",
+  "generatedAt": "2026-09-07T02:01:01.302Z",
   "git": {
-    "sha": "aabe5f07fd4c9455b13d2a403c8c02bef5dbc60f",
+    "sha": "e9bd38851b029b3a8a7fe478c7dcb240d9609e0b",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2422,16 +2422,16 @@
         "lines": 1815
       },
       {
+        "file": "client/src/concept2cure/v2/Shell.tsx",
+        "lines": 1813
+      },
+      {
         "file": "server/services/ana/intelligence-questions/flows/device-pma.ts",
         "lines": 1813
       },
       {
         "file": "server/routes/c2c/ai-editing.ts",
         "lines": 1809
-      },
-      {
-        "file": "client/src/concept2cure/v2/Shell.tsx",
-        "lines": 1799
       },
       {
         "file": "ui_kits/home/Projects.jsx",
@@ -2455,7 +2455,7 @@
       },
       {
         "file": "server/routes/ana-ri/stream.ts",
-        "lines": 1737
+        "lines": 1746
       },
       {
         "file": "server/services/combination-products/combination-products-knowledge.ts",
