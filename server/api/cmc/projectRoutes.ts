@@ -428,7 +428,16 @@ router.post('/projects/:projectId/compliance', async (req, res) => {
     }
 
     const { projectId } = req.params;
-    const complianceData = { ...req.body, projectId };
+    // The organization comes from the VERIFIED project, never from the body.
+    // router.param('projectId') above has already confirmed this project belongs
+    // to the caller's org and attached it, so this is the authenticated owner —
+    // and stamping it is what lets the read be strict instead of widening to
+    // every unattributed row.
+    const ownerOrgId = (req as any).cmcProject?.organizationId;
+    if (ownerOrgId == null) {
+      return res.status(401).json({ error: 'Organization context required' });
+    }
+    const complianceData = { ...req.body, projectId, organizationId: Number(ownerOrgId) };
 
     // Fix date conversion issue
     if (complianceData.dueDate && typeof complianceData.dueDate === 'string') {

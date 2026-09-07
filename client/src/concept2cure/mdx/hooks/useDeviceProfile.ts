@@ -57,6 +57,72 @@ export interface DeviceProfileView {
   indicationsForUseCitation: string | null;
 }
 
+/**
+ * A predicate device the sponsor CLAIMS — the shape PUT /profile takes and the
+ * shape the json column stores. `id` identifies the claim (the K-number, for a
+ * predicate that has one); `name` is the device's trade name. The optional
+ * facts are omitted when not held, never sent as '': the official eSTAR
+ * reports a fact it does not hold as blank, and must not print an empty string
+ * into a filed form as though it were an answer.
+ */
+export interface PredicateDeviceInput {
+  id: string;
+  name: string;
+  kNumber?: string;
+  manufacturer?: string;
+  clearanceDate?: string;
+  productCode?: string;
+}
+
+/**
+ * What `predicate_devices` actually holds, read honestly.
+ *
+ * The official eSTAR fills its predicate submission number and trade name from
+ * ELEMENT [0] of this column, whatever that element is. So an entry this
+ * product cannot read is not skipped into invisibility — it is counted. A
+ * surface that showed the first READABLE entry as "the predicate on file"
+ * would name a device the form will not carry.
+ */
+export interface PredicateDevicesOnFile {
+  /** The readable entries, in stored order. */
+  devices: PredicateDeviceInput[];
+  /** Stored entries that are not a readable predicate (no id, no name, or not
+   *  an object at all — e.g. a legacy list of bare K-number strings). */
+  unreadable: number;
+}
+
+/** A stored predicate fact, or undefined — never '' (see PredicateDeviceInput). */
+function predicateText(v: unknown): string | undefined {
+  const t = typeof v === 'string' ? v.trim() : '';
+  return t.length > 0 ? t : undefined;
+}
+
+export function predicateDevicesOnFile(raw: unknown): PredicateDevicesOnFile {
+  if (!Array.isArray(raw)) return { devices: [], unreadable: 0 };
+  const devices: PredicateDeviceInput[] = [];
+  let unreadable = 0;
+  for (const entry of raw) {
+    const e = entry as Record<string, unknown> | null;
+    const id = e && typeof e === 'object' ? predicateText(e.id) : undefined;
+    const name = e && typeof e === 'object' ? predicateText(e.name) : undefined;
+    if (!id || !name) {
+      unreadable += 1;
+      continue;
+    }
+    const device: PredicateDeviceInput = { id, name };
+    const kNumber = predicateText(e!.kNumber);
+    const manufacturer = predicateText(e!.manufacturer);
+    const clearanceDate = predicateText(e!.clearanceDate);
+    const productCode = predicateText(e!.productCode);
+    if (kNumber) device.kNumber = kNumber;
+    if (manufacturer) device.manufacturer = manufacturer;
+    if (clearanceDate) device.clearanceDate = clearanceDate;
+    if (productCode) device.productCode = productCode;
+    devices.push(device);
+  }
+  return { devices, unreadable };
+}
+
 /** Fields PUT /profile accepts — send only what changed; the server rejects
  *  an empty patch. The five eSTAR facts accept '' to CLEAR the stored value
  *  (the server stores null); any other string is stored trimmed. */
@@ -72,6 +138,9 @@ export interface DeviceProfilePatch {
   regulationNumber?: string;
   associatedProductCodes?: string;
   indicationsForUseCitation?: string;
+  /** The claim of substantial equivalence. null (or []) WITHDRAWS it, so the
+   *  eSTAR's predicate fields go blank rather than keeping a stale claim. */
+  predicateDevices?: PredicateDeviceInput[] | null;
 }
 
 /** The five eSTAR device facts, in the order the intake form shows them. */

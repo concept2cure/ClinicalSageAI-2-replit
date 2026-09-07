@@ -13,6 +13,7 @@ import { impactedSectionsForSourceType, type ComposedSection } from '../module3C
 import { composeProjectModule3, persistComposedSection } from '../cmc/module3-compile';
 import { bridgeCompileToArtifact, classifyAndMapArtifactToSource, getModule3BuildStatus } from '../module3-convergence-service';
 import { detectContradictions, deriveImpactTasks } from '../cmc-impact-contradiction-engine';
+import { readContradictionRegisters } from '../cmc/contradiction-registers';
 
 interface CommandContext {
   userId: number;
@@ -48,7 +49,13 @@ export async function module3BuildAll(ctx: CommandContext, params: Record<string
 
     if (sourceObjects.length === 0) {
       await client.query('ROLLBACK');
-      return { success: true, action: 'module3_build_all', message: 'No source objects found. Upload and classify source documents first.', data: { compiledCount: 0 } };
+      /* A build that composed nothing is a refusal, not a success. Reported as
+         `success: true` with `compiledCount: 0` it reads to the caller — and to
+         the assistant relaying it — as a completed build of an empty Module 3,
+         which is the fabricated readiness this codebase forbids. The
+         single-section path (module3BuildSection) already refuses on the same
+         condition; this is the same answer in the same words. */
+      return { success: false, action: 'module3_build_all', message: 'No canonical source objects for this project — nothing to build from. Upload and classify source documents first.' };
     }
 
     for (const section of compiled) {
@@ -328,18 +335,16 @@ export async function module3Contradictions(ctx: CommandContext, params: Record<
   const projectId = (params.projectId as string) || String(ctx.activeProjectId || '');
   if (!projectId) return { success: false, action: 'module3_contradictions', message: 'Project ID required' };
 
-  const [specs, methods, stability, batch, comparability] = await Promise.all([
-    pool.query(`SELECT material_name as "materialName", acceptance_criteria as "acceptanceCriteria" FROM quality_specifications WHERE project_id = $1`, [projectId]),
-    pool.query(`SELECT method_name as "methodName", purpose FROM analytical_methods WHERE project_id = $1`, [projectId]),
-    pool.query(`SELECT study_name as "studyName", status FROM stability_studies WHERE project_id = $1`, [projectId]),
-    pool.query(`SELECT batch_number as "batchNumber", disposition FROM cmc_batch_records WHERE project_id = $1`, [projectId]),
-    pool.query(`SELECT assessment_name as "assessmentName", regulatory_risk_level as "regulatoryRiskLevel" FROM cmc_comparability_assessments WHERE project_id = $1`, [projectId]),
-  ]);
+  /* The ONE tenant-scoped register sweep (services/cmc/contradiction-registers).
+     This ran here as five inline queries filtered by project_id ALONE — the
+     caller supplies the project id, so any organization could read another
+     sponsor's specifications, batches and comparability assessments through it.
+     Two of the five also selected columns these tables do not have
+     (analytical_methods.method_name, stability_studies.study_name), so on a
+     provisioned database the sweep raised rather than returning rows. */
+  const registers = await readContradictionRegisters(pool, { organizationId: orgId, projectId });
 
-  const contradictions = detectContradictions({
-    specifications: specs.rows, methods: methods.rows, stability: stability.rows,
-    batch: batch.rows, comparability: comparability.rows,
-  });
+  const contradictions = detectContradictions(registers);
 
   if (contradictions.length === 0) {
     return { success: true, action: 'module3_contradictions', message: 'No contradictions detected in Module 3 data.', data: { contradictions: [] } };

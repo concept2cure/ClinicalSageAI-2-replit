@@ -13,6 +13,34 @@ import { resolveActorUserId } from './governance';
 const router = express.Router();
 
 
+
+/**
+ * The caller's organization, or null when the request carries no usable tenant.
+ *
+ * `cmc_batch_records` names its owner in TWO columns: `organization_id INTEGER
+ * NOT NULL` (migrations/0006, the original and authoritative one) and a later
+ * nullable `tenant_id TEXT` (db/migrations/20260401_cmc_convergence_os.sql,
+ * added to an already-populated table with no backfill). Reads therefore have
+ * to accept either — but they must NEVER accept `tenant_id IS NULL`, which made
+ * every pre-20260401 row visible to every organization.
+ *
+ * The two columns have different types, so a single bound parameter cannot
+ * serve both: Postgres infers it as text from `tenant_id = $n` and then rejects
+ * `organization_id = $n` with `operator does not exist: integer = text`. Hence
+ * `tenantParams`, which returns the same identity twice — once as text for
+ * tenant_id, once as a number for organization_id.
+ */
+function resolveOrgId(req: express.Request): number | null {
+  const raw = (req as any).tenantId ?? (req as any).tenantContext?.organizationId;
+  const n = typeof raw === 'string' ? parseInt(raw, 10) : Number(raw);
+  return Number.isFinite(n) && n > 0 ? n : null;
+}
+
+/** `[textForTenantId, intForOrganizationId]` — see resolveOrgId. */
+function tenantParams(orgId: number): [string, number] {
+  return [String(orgId), orgId];
+}
+
 // Validation schemas
 const createBatchSchema = z.object({
   projectId: z.string().uuid().optional(),
@@ -63,8 +91,8 @@ const releaseSchema = z.object({
 router.get('/:projectId', async (req, res) => {
   try {
     const { projectId } = req.params;
-    const tenantId = (req as any).tenantId || (req as any).tenantContext?.organizationId;
-    if (!tenantId) {
+    const orgId = resolveOrgId(req);
+    if (orgId === null) {
       return res.status(401).json({ error: 'Tenant context required' });
     }
     const pool = getPool();
@@ -72,9 +100,13 @@ router.get('/:projectId', async (req, res) => {
 
     const result = await pool.query(
       `SELECT * FROM cmc_batch_records
-       WHERE project_id = $1 AND (tenant_id = $2 OR tenant_id IS NULL)
+       WHERE project_id = $1 AND (tenant_id = $2 OR organization_id = $3)
        ORDER BY created_at DESC`,
-      [projectId, tenantId]
+      // tenant_id OR organization_id — never `OR tenant_id IS NULL`, which made
+      // every pre-20260401 row readable by every organization. Those rows are
+      // not unattributed; organization_id names their real owner. See
+      // resolveOrgId for why the identity is bound twice.
+      [projectId, ...tenantParams(orgId)]
     );
 
     res.json({
@@ -180,14 +212,15 @@ router.put('/:id', async (req, res) => {
 
     const data = validationResult.data;
     const pool = getPool();
-    const tenantId = (req as any).tenantId || (req as any).tenantContext?.organizationId;
-    if (!tenantId) {
+    const orgId = resolveOrgId(req);
+    if (orgId === null) {
       return res.status(401).json({ success: false, error: 'Tenant context required' });
     }
 
     // Verify record exists and belongs to tenant
     const existing = await pool.query(
-      `SELECT * FROM cmc_batch_records WHERE id = $1 AND (tenant_id = $2 OR tenant_id IS NULL)`, [id, tenantId]
+      `SELECT * FROM cmc_batch_records WHERE id = $1 AND (tenant_id = $2 OR organization_id = $3)`,
+      [id, ...tenantParams(orgId)]
     );
     if (existing.rows.length === 0) {
       return res.status(404).json({ success: false, error: 'Batch record not found' });
@@ -230,19 +263,29 @@ router.put('/:id', async (req, res) => {
       return res.status(400).json({ success: false, error: 'No updates provided' });
     }
 
-    values.push(id);
+    values.push(id, ...tenantParams(orgId));
+    // The UPDATE carries the tenant predicate itself. It used to be
+    // `WHERE id = $n` alone, inheriting its scope from the SELECT above — but a
+    // SELECT is not a lock, and a write scoped by primary key alone is one
+    // refactor away from being reachable without that SELECT at all.
     const updateQuery = `
       UPDATE cmc_batch_records
       SET ${updates.join(', ')}, updated_at = NOW()
-      WHERE id = $${paramIndex}
+      WHERE id = $${paramIndex} AND (tenant_id = $${paramIndex + 1} OR organization_id = $${paramIndex + 2})
       RETURNING *
     `;
 
     const updateResult = await pool.query(updateQuery, values);
 
     console.log(`[CMC Batch] Updated batch record ${id}`);
+    // Fail closed on an UPDATE that matched nothing: the row was re-tenanted or
+    // deleted between the existence SELECT and here. Reporting 200 over it
+    // would tell the caller a change landed that did not.
     const updatedBatch = updateResult.rows[0];
-    const linkage = await linkToModule3('write_through_batch', Number(tenantId), updatedBatch, writeThroughBatchRecord);
+    if (!updatedBatch) {
+      return res.status(404).json({ success: false, error: 'Batch record not found' });
+    }
+    const linkage = await linkToModule3('write_through_batch', orgId, updatedBatch, writeThroughBatchRecord);
 
     res.json({
       success: true,
@@ -279,9 +322,8 @@ router.post('/:id/release', async (req, res) => {
 
   const data = validationResult.data;
   const pool = getPool();
-  const tenantRaw = (req as any).tenantId || (req as any).tenantContext?.organizationId;
-  const orgId = typeof tenantRaw === 'string' ? parseInt(tenantRaw, 10) : Number(tenantRaw);
-  if (!Number.isFinite(orgId) || orgId <= 0) {
+  const orgId = resolveOrgId(req);
+  if (orgId === null) {
     return res.status(401).json({ success: false, error: 'Tenant context required' });
   }
   const userId = resolveActorUserId(req);
@@ -302,7 +344,8 @@ router.post('/:id/release', async (req, res) => {
 
     // Verify record exists and belongs to tenant
     const existing = await client.query(
-      `SELECT * FROM cmc_batch_records WHERE id = $1 AND (tenant_id = $2 OR tenant_id IS NULL)`, [id, orgId]
+      `SELECT * FROM cmc_batch_records WHERE id = $1 AND (tenant_id = $2 OR organization_id = $3)`,
+      [id, ...tenantParams(orgId)]
     );
     if (existing.rows.length === 0) {
       await client.query('ROLLBACK');
@@ -361,7 +404,7 @@ router.post('/:id/release', async (req, res) => {
            released_at = NOW(),
            status = $4,
            updated_at = NOW()
-       WHERE id = $5
+       WHERE id = $5 AND (tenant_id = $6 OR organization_id = $7)
        RETURNING *`,
       [
         JSON.stringify(releaseRecord),
@@ -369,8 +412,22 @@ router.post('/:id/release', async (req, res) => {
         data.releasedBy,
         releaseStatus === 'released' ? 'completed' : batch.status,
         id,
+        ...tenantParams(orgId),
       ]
     );
+
+    // Fail closed BEFORE the signature. If the UPDATE matched nothing — the row
+    // was re-tenanted or deleted after the existence SELECT — the handler used
+    // to continue: it recorded a governed e-signature against `batch:${id}`,
+    // COMMITted, and returned 200 with `batchRecord: undefined`. Under
+    // 21 CFR 11.50 a signature manifestation names the record it applies to, so
+    // a release signature over a record this transaction did not write is a
+    // falsified one, and the 200 tells a QA head a batch was dispositioned when
+    // no such disposition exists.
+    if (!updateResult.rows[0]) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({ success: false, error: 'Batch record not found' });
+    }
 
     const governance = await recordGovernedAction(client, {
       orgId,

@@ -62,6 +62,10 @@ export const regulatoryPrograms = pgTable(
     // Product information
     productName: text('product_name').notNull(),
     productCode: varchar('product_code', { length: 50 }),
+    /** Agency-assigned application number (IND / NDA / BLA / MAA). NULL until the
+     *  agency assigns one — never fabricated. Distinct from `code`, the sponsor's
+     *  own program code. migrations/20260907_regulatory_programs_application_number.sql */
+    applicationNumber: text('application_number'),
     indication: text('indication'),
     intendedUse: text('intended_use'),
 

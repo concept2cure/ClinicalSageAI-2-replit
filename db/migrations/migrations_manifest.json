@@ -1,9 +1,9 @@
 {
   "$schema": "https://concept2cure-riai.com/schemas/migrations-manifest-v1.json",
   "version": "1.0.0",
-  "generatedAt": "2026-09-03T21:13:15.719Z",
+  "generatedAt": "2026-09-07T09:37:37.079Z",
   "description": "Migration manifest for Concept2Cure.RI database schema. Documents execution order, dependencies, and resolves numbering conflicts.",
-  "totalMigrations": 301,
+  "totalMigrations": 305,
   "conflicts": {
     "summary": "20+ migrations share the same prefix number. This manifest defines canonical execution order.",
     "conflictingPrefixes": [
@@ -636,7 +636,11 @@
     "20260902_manufacturing_responses.sql",
     "20260903_cmc_impurity_route_of_administration.sql",
     "20260903_cmc_manufacturing_characterization_registers.sql",
-    "20260903_cmc_material_formulation_registers.sql"
+    "20260903_cmc_material_formulation_registers.sql",
+    "20260905_gdpr_dsar_execution_evidence.sql",
+    "20260906_cmc_formulation_development.sql",
+    "20260906_cmc_impurity_m7_inputs.sql",
+    "20260906_cmc_interview_sessions.sql"
   ],
   "skipFiles": [
     "031_REGULATORY_AUDIT_REPORT.md"

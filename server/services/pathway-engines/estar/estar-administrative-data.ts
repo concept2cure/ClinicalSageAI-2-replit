@@ -480,7 +480,30 @@ export function resolveOfficialEstarFields(
   }
 
   const ignoredRequestKeys = Object.keys(request).filter((k) => !written.has(k));
-  return { data, fields, ignoredRequestKeys, advisories: [...(input.governed.advisories ?? [])] };
+
+  // A governed fact this map has no key for is a fact the TEMPLATE has no box
+  // for. The IVD eSTAR does not ask for the Indications for Use citation, so a
+  // program that holds one cannot have it written on an IVD filing. It is
+  // reported, never dropped: a fill that said "19 mapped, 19 filled, 0 blank"
+  // and nothing else would have hidden a value the operator entered. Measured
+  // 2026-09-07 on the vendored IVD template; pinned in
+  // __tests__/estar-administrative-data.test.ts.
+  const unboxed = Object.entries(input.governed.values)
+    .filter(([key, value]) => !(key in input.fieldMap) && text(value) !== null)
+    .map(([key, value]) => {
+      const home = input.governed.provenance[key];
+      return (
+        `${key} is on file${home ? ` (${home})` : ''} as "${value}", ` +
+        `but this form has no field for it and it was not written.`
+      );
+    });
+
+  return {
+    data,
+    fields,
+    ignoredRequestKeys,
+    advisories: [...(input.governed.advisories ?? []), ...unboxed],
+  };
 }
 
 export interface OfficialEstarFieldReport {

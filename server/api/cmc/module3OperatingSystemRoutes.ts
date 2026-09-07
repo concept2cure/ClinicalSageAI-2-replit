@@ -10,6 +10,7 @@ import { CMC_SOURCE_TYPES, impactedSectionsForSourceType } from '../../services/
 import { compiledRecordOf, composeProjectModule3, persistComposedSection } from '../../services/cmc/module3-compile';
 import { detectContradictions, deriveImpactTasks } from '../../services/cmc-impact-contradiction-engine';
 import { syncContradictionTasks } from '../../services/cmc/contradiction-tasks';
+import { readContradictionRegisters } from '../../services/cmc/contradiction-registers';
 import { buildCanonicalGovernedState } from '../../services/governed-ana-execution.js';
 import { evaluateFinalExportGate, evaluateModule3GovernedState } from '../../services/cmc/final-export-gate';
 import { readCompiledRecord, type CompiledRecordStatus } from '../../services/cmc/compiled-record';
@@ -262,64 +263,17 @@ router.post('/contradictions/:projectId', async (req, res) => {
     const orgId = getOrgId(req);
     const projectIdRaw = req.params.projectId; const projectId = Array.isArray(projectIdRaw) ? projectIdRaw[0] : (projectIdRaw ?? "");
     const pool = getPool();
-    /* The sweep reads the REAL register shapes, tenant-scoped:
-       - quality_specifications / cmc_batch_records / cmc_comparability_
-         assessments carry a uuid project_id, so the project filter applies
-         only when the id IS a uuid (a legacy numeric id matches nothing —
-         honestly — instead of aborting the whole statement with 22P02);
-       - analytical_methods / stability_studies are the ORGANIZATION's
-         registers (no project column by design), read org-wide — and their
-         columns are `title` / `study_title`, which the previous SQL imagined
-         as method_name / study_name, so this endpoint had never returned
-         anything but 500 against a provisioned database. Every query also
-         carries the org — the old ones filtered by project alone, which on
-         the shared-uuid space was a cross-tenant read. */
-    const isUuidProject = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(projectId);
-    const noRows = Promise.resolve({ rows: [] as any[] });
-    const [specs, methods, stability, batch, comparability] = await Promise.all([
-      isUuidProject
-        ? pool.query(
-            `SELECT material_name as "materialName", acceptance_criteria as "acceptanceCriteria"
-             FROM quality_specifications
-             WHERE project_id = $1::uuid AND (tenant_id = $2 OR tenant_id IS NULL)`,
-            [projectId, orgId]
-          )
-        : noRows,
-      pool.query(
-        // The engine's contract reads `validationStatus` (ICH Q2 validated /
-        // verified / transferred); the table's column is `status`.
-        `SELECT title as "methodName", purpose, status as "validationStatus"
-         FROM analytical_methods WHERE organization_id = $1`,
-        [orgId]
-      ),
-      pool.query(
-        `SELECT study_title as "studyName", status FROM stability_studies WHERE organization_id = $1`,
-        [orgId]
-      ),
-      isUuidProject
-        ? pool.query(
-            `SELECT batch_number as "batchNumber", disposition FROM cmc_batch_records
-             WHERE project_id = $1::uuid AND (tenant_id = $2 OR organization_id = $2)`,
-            [projectId, orgId]
-          )
-        : noRows,
-      isUuidProject
-        ? pool.query(
-            `SELECT assessment_name as "assessmentName", regulatory_risk_level as "regulatoryRiskLevel"
-             FROM cmc_comparability_assessments
-             WHERE project_id = $1::uuid AND organization_id = $2`,
-            [projectId, orgId]
-          )
-        : noRows,
-    ]);
+    /* The ONE tenant-scoped register sweep
+       (services/cmc/contradiction-registers). This body used to live here and
+       in services/ana-ri/module3-command-handlers.ts, and the two copies had
+       already drifted: this one still carried `OR tenant_id IS NULL` on
+       quality_specifications — which made every legacy row readable by every
+       organization — and bound ONE parameter against cmc_batch_records'
+       `tenant_id TEXT` and `organization_id INTEGER`, which Postgres rejects
+       with `operator does not exist: integer = text`. */
+    const registers = await readContradictionRegisters(pool, { organizationId: orgId, projectId });
 
-    const contradictions = detectContradictions({
-      specifications: specs.rows,
-      methods: methods.rows,
-      stability: stability.rows,
-      batch: batch.rows,
-      comparability: comparability.rows,
-    });
+    const contradictions = detectContradictions(registers);
 
     // Wrap DELETE + INSERT in a transaction to prevent partial state
     const client = await pool.connect();
@@ -918,9 +872,16 @@ router.post('/place-into-submission/:projectId', async (req, res) => {
     });
 
     if (!result.placed) {
-      // The gate's verdict is the useful answer — surface it verbatim, as the
-      // guard endpoint would have.
-      return res.status(409).json({ success: false, error: result.error, data: result.data });
+      // Each refusal carries a DIFFERENT useful answer, so discriminate rather
+      // than reaching for one shape: the gate refusal carries the governed
+      // state it refused on, and 'nothing-placeable' carries the per-section
+      // reasons nothing could be filed. Dropping the latter would leave the
+      // caller a bare "placed nothing" with no remedy.
+      return res.status(409).json(
+        result.refusedBy === 'final-export-gate'
+          ? { success: false, error: result.error, data: result.data }
+          : { success: false, error: result.error, skipped: result.skipped },
+      );
     }
     return res.json({ success: true, data: result });
   } catch (error) {

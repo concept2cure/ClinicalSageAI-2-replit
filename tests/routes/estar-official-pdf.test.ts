@@ -1,3 +1,5 @@
+import { createHash } from 'node:crypto';
+
 import { describe, it, expect, vi, beforeEach, afterEach, beforeAll, afterAll } from 'vitest';
 import { promises as fs } from 'fs';
 import path from 'path';
@@ -82,8 +84,20 @@ vi.mock('../../server/services/pathway-engines/estar/estar-administrative-data',
   loadEstarAdministrativeInputs: mockLoadInputs,
 }));
 
+/* The REAL logAction resolves an AuditWriteResult and never rejects; a fake
+   that resolves `undefined` is a shape the service cannot produce, and the
+   unplaced delivery path now (correctly) refuses to hand over an export whose
+   audit row did not persist. */
 vi.mock('../../server/services/auditService', () => ({
-  default: { logAction: vi.fn(async () => undefined) },
+  default: { logAction: vi.fn(async () => ({ persisted: true, chained: true, tamperProof: true })) },
+}));
+
+/* Retention goes through the canonical vault ingest; the route's contract with
+   it is what these tests observe. The ingest's own behaviour is pinned in
+   server/services/vault/__tests__. */
+const { mockIngest } = vi.hoisted(() => ({ mockIngest: vi.fn() }));
+vi.mock('../../server/services/vault/vault-ingest.service', () => ({
+  ingestVaultDocument: mockIngest,
 }));
 
 import estarRoutes from '../../server/routes/510k-estar-routes';
@@ -410,7 +424,19 @@ describe('POST /api/510k/estar/official with useProgramData:true', () => {
         { key: 'deviceCommonName', caption: 'Common Name', filled: true, source: 'request', declaredSource: 'regulatory_programs.common_name' },
         { key: 'regulationNumber', caption: 'Regulation Number', filled: false, source: null, declaredSource: 'regulatory_programs.regulation_number' },
       ],
-      advisories: [],
+      /*
+       * The governed records project three facts this three-key stand-in map has
+       * no box for. Each is REPORTED, never dropped: a payload that said
+       * "2 of 3 filled" and nothing else would hide a value the operator holds.
+       * Measured through the route on 2026-09-07; the real-template case (the IVD
+       * form's missing Indications for Use citation) is pinned in
+       * server/services/pathway-engines/estar/__tests__/estar-administrative-data.test.ts.
+       */
+      advisories: [
+        'applicantCompanyName is on file (organizations.name) as "Acme Org", but this form has no field for it and it was not written.',
+        'declarationCompanyName is on file (organizations.name) as "Acme Org", but this form has no field for it and it was not written.',
+        'declarationDeviceTradeName is on file (regulatory_programs.product_name) as "Governed Monitor", but this form has no field for it and it was not written.',
+      ],
       ignoredRequestKeys: ['deviceTradeName', 'bogus'],
       /*
        * deviceCommonName WAS written — it is in filledCount — and the form's own
@@ -656,5 +682,114 @@ describe('resolveProjectAnchor — a failed read is an error, never "not found"'
     expect(res.status).toHaveBeenCalledWith(404);
     expect(res.json).toHaveBeenCalledWith({ error: 'Project not found in your organization' });
     expect(mockGovernedConsequence).not.toHaveBeenCalled();
+  });
+});
+
+// ── Roadmap item 3: the delivered eSTAR is retained before it is delivered ───
+
+/**
+ * The bytes CDRH ingests used to be produced, hashed, base64'd into the
+ * response and forgotten. Now they are admitted into the program's governed
+ * vault first, and a retention that should have happened and did not withholds
+ * the file rather than being reported beside it.
+ */
+describe('POST /api/510k/estar/official — retention of the delivered artifact', () => {
+  useTemplateFixture({ prefix: 'estar-official-retain-', template: makeAdministrativeEstar, map: ADMIN_MAP });
+
+  const PROGRAM = '2b6d4a80-6a35-4b1e-9f6e-3a9d2c1e5f70';
+  const priorRows = [{ id: 33, deviceName: 'Test Device' }];
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockLoadInputs.mockResolvedValue(GOVERNED_RECORDS);
+    fakeDbState.rows = [{ id: PROGRAM, name: 'BX-204 CGM' }];
+    mockIngest.mockImplementation(async (args: any) => ({
+      ok: true,
+      document: {
+        id: 'vault-doc-1',
+        contentHash: createHash('sha256').update(args.fileBuffer).digest('hex'),
+      },
+      filing: { folderId: 'k510/administrative', placementStatus: 'suggested' },
+    }));
+  });
+  afterAll(() => {
+    fakeDbState.rows = priorRows;
+  });
+
+  function officialReq(extra: Record<string, unknown> = {}) {
+    return makeReq({
+      meta: { id: 'k123', ident: PROGRAM, title: 'Official eSTAR' },
+      type: '510k',
+      variant: 'device',
+      data: { deviceTradeName: 'BX-204' },
+      ...extra,
+    });
+  }
+
+  it('retains the delivered bytes and reports where they went', async () => {
+    const req = officialReq();
+    const res = createMockResponse() as any;
+
+    await getHandler('/official')(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(200);
+    const payload = res.json.mock.calls[0][0];
+    expect(payload.retention).toMatchObject({
+      retained: true,
+      documentId: 'vault-doc-1',
+      documentCode: 'eSTAR-510k-device',
+      placementStatus: 'suggested',
+    });
+    /* The retained hash is the hash of the file the caller was handed. */
+    const delivered = Buffer.from(payload.downloadable_output_ref.data, 'base64');
+    expect(payload.retention.contentHash).toBe(createHash('sha256').update(delivered).digest('hex'));
+    expect(payload.retention.version).toBe(`sha256-${payload.retention.contentHash.slice(0, 16)}`);
+    /* Into THIS program's vault, as platform-generated bytes. */
+    expect(mockIngest.mock.calls[0][0]).toMatchObject({
+      organizationId: 2,
+      programId: PROGRAM,
+      mimeType: 'application/pdf',
+      origin: 'platform-generated',
+    });
+  });
+
+  it('withholds the file when the vault could not retain it', async () => {
+    mockIngest.mockResolvedValue({
+      ok: false,
+      status: 500,
+      code: 'STORAGE_WRITE_FAILED',
+      message: 'The document could not be stored.',
+    });
+    const req = officialReq();
+    const res = createMockResponse() as any;
+
+    await getHandler('/official')(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(500);
+    const body = res.json.mock.calls[0][0];
+    expect(body.error).toBe('ESTAR_NOT_RETAINED');
+    expect(body).not.toHaveProperty('downloadable_output_ref');
+    /* The reason is stated without leaking the vault's internals. */
+    expect(body.message).not.toContain('STORAGE_WRITE_FAILED');
+  });
+
+  it('says plainly when a legacy project has no vault, and still delivers', async () => {
+    fakeDbState.rows = priorRows;
+    const req = makeReq({
+      meta: { id: 'k123', projectId: 33, title: 'Official eSTAR' },
+      type: '510k',
+      variant: 'device',
+      data: { deviceTradeName: 'BX-204' },
+    });
+    const res = createMockResponse() as any;
+
+    await getHandler('/official')(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(200);
+    const payload = res.json.mock.calls[0][0];
+    expect(payload.retention.retained).toBe(false);
+    expect(payload.retention.reason).toMatch(/no program vault/);
+    expect(payload.downloadable_output_ref.data.length).toBeGreaterThan(0);
+    expect(mockIngest).not.toHaveBeenCalled();
   });
 });

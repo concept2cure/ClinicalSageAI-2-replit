@@ -219,8 +219,22 @@ export const UNPLACED_ARTIFACT_REGISTRY_NOTE =
  * Deliver an export that the artifact registry cannot place: write the
  * EXPORT_GENERATED audit row (with the delivered-bytes SHA-256 and the
  * `unplaced_pending_document_identity_contract` marker) and return the
- * response body the caller sends verbatim. The audit write is awaited and its
- * failure propagates — an export must never be delivered un-audited.
+ * response body the caller sends verbatim.
+ *
+ * An export must never be delivered un-audited — and awaiting the write was
+ * not enough to make that true. `auditService.logAction` NEVER rejects, by
+ * explicit policy: "A persistence failure is logged, never propagated: an
+ * audit-trail outage must not break the user action it records". It resolves
+ * with `{ persisted: false, error }` instead, so this function used to hand
+ * back a governed export — the official FDA eSTAR among them — with a 200 and
+ * no record of it anywhere.
+ *
+ * That policy is right for an ordinary user action and wrong for this one.
+ * This path exists precisely BECAUSE the artifact registry cannot place the
+ * file: the audit row is the only record the export ever gets. So the outcome
+ * is inspected, not merely awaited, and a delivery with no record is refused.
+ * Either log counts — `audit_logs` is the queryable chain, the tamper-proof
+ * log is the immutable one, and one of them is a record; neither is not.
  */
 export async function createAuditedUnplacedExport(
   input: AuditedUnplacedExportInput,
@@ -229,7 +243,7 @@ export async function createAuditedUnplacedExport(
     throw new Error('INVALID_GOVERNED_EXPORT_INPUT: buffer must be a non-empty Buffer');
   }
   const sha256 = crypto.createHash('sha256').update(input.buffer).digest('hex');
-  await auditService.logAction({
+  const audit = await auditService.logAction({
     organizationId: input.organizationId,
     userId: input.userId,
     action: 'EXPORT_GENERATED',
@@ -244,6 +258,12 @@ export async function createAuditedUnplacedExport(
       ...(input.metadata ?? {}),
     },
   });
+  if (!audit?.persisted) {
+    throw new Error(
+      'UNAUDITED_EXPORT_REFUSED: the export was not delivered because its audit row ' +
+        `did not persist${audit?.error ? ` (${audit.error})` : ''}`,
+    );
+  }
 
   return {
     governed: false,

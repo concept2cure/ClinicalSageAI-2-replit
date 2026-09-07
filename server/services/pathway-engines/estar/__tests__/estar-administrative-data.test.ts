@@ -526,12 +526,27 @@ describe('loadEstarAdministrativeInputs — the anchor row is chosen determinist
 // Skipped when the official template is absent (the drop-point may be pointed
 // out of tree — see assets/estar-templates/README.md), like estar-fill.test.ts.
 
-const NIVD_TEMPLATE = path.resolve(process.cwd(), 'assets/estar-templates', 'eSTAR-510k-non-ivd.pdf');
+const TEMPLATE_DIR = path.resolve(process.cwd(), 'assets/estar-templates');
 
-describe.skipIf(!fsSync.existsSync(NIVD_TEMPLATE))(
-  'governed values reach their SOM paths in the official nIVD eSTAR v7.0',
+/**
+ * Both vendored 510(k) templates, each measured on its own. `unmappedGoverned`
+ * names the governed facts the projection carries that this template has no
+ * box for: the IVD form does not ask for the Indications for Use citation, so
+ * a fully populated program's citation cannot be written there — and a fill
+ * that says "19 mapped, 19 filled, 0 blank" without a word about it has hidden
+ * a fact the operator entered.
+ */
+const FILL_TEMPLATES = [
+  { label: 'nIVD eSTAR v7.0', file: 'eSTAR-510k-non-ivd.pdf', variant: 'device' as const, descriptor: '510k-device' as const, mappedKeys: 20, unmappedGoverned: [] as string[] },
+  { label: 'IVD eSTAR v7.0', file: 'eSTAR-510k-ivd.pdf', variant: 'ivd' as const, descriptor: '510k-ivd' as const, mappedKeys: 19, unmappedGoverned: ['indicationsForUseCitation'] },
+];
+
+for (const t of FILL_TEMPLATES) {
+describe.skipIf(!fsSync.existsSync(path.resolve(TEMPLATE_DIR, t.file)))(
+  `governed values reach their SOM paths in the official ${t.label}`,
   () => {
-    const REAL_DIR = path.dirname(NIVD_TEMPLATE);
+    const MAP = ESTAR_FIELD_MAPS[t.descriptor];
+    const REAL_DIR = TEMPLATE_DIR;
     let dirBefore: string | undefined;
     beforeAll(() => {
       dirBefore = process.env.ESTAR_TEMPLATE_DIR;
@@ -542,35 +557,52 @@ describe.skipIf(!fsSync.existsSync(NIVD_TEMPLATE))(
       else process.env.ESTAR_TEMPLATE_DIR = dirBefore;
     });
 
-    it('writes every one of the 20 governed values at its mapped path — none is user-supplied-only any more', async () => {
+    it('writes every mapped governed value at its path, and names any governed fact this form has no box for', async () => {
       const governed = projectEstarAdministrativeData(fullInputs());
+      // The projection is per PROGRAM, not per template: it carries every fact on file.
+      for (const key of t.unmappedGoverned) expect(governed.values[key], `${key} is on file`).toBeTruthy();
       const resolved = resolveOfficialEstarFields({
-        fieldMap: DEVICE_MAP,
+        fieldMap: MAP,
         governed,
         requestData: { deviceCommonName: 'ignored', deviceTradeName: 'ignored' },
         honourRequestOverGoverned: false,
       });
-      const r = await fillEstarSubmission({ type: '510k', variant: 'device', data: resolved.data });
+      const r = await fillEstarSubmission({ type: '510k', variant: t.variant, data: resolved.data });
       expect(r.filled).toBe(true);
       expect(r.templateKind).toBe('dynamic-xfa');
       expect(r.blockers).toEqual([]);
 
-      const paths = Object.values(DEVICE_MAP).map((s) => s.xfaSomPath!);
+      const paths = Object.values(MAP).map((s) => s.xfaSomPath!);
       const back = await readXfaDatasetsValues(r.pdfBytes!, paths);
       for (const [key, [value]] of Object.entries(FULL_PROJECTION)) {
-        expect(back[DEVICE_MAP[key].xfaSomPath!], `${key} @ ${DEVICE_MAP[key].xfaSomPath}`).toBe(value);
+        if (!(key in MAP)) continue; // this form has no box for it — asserted below, not skipped silently
+        expect(back[MAP[key].xfaSomPath!], `${key} @ ${MAP[key].xfaSomPath}`).toBe(value);
       }
       // The governed values, not the colliding request values, are in the form.
-      expect(back[DEVICE_MAP.deviceTradeName.xfaSomPath!]).toBe('AcuSense CGM System');
-      expect(back[DEVICE_MAP.deviceCommonName.xfaSomPath!]).toBe('Continuous glucose monitor');
+      expect(back[MAP.deviceTradeName.xfaSomPath!]).toBe('AcuSense CGM System');
+      expect(back[MAP.deviceCommonName.xfaSomPath!]).toBe('Continuous glucose monitor');
 
       const { fieldReport } = reportOfficialEstarFill(resolved, r.filledFields);
-      expect(fieldReport.filledCount).toBe(20);
+      expect(fieldReport.mappedCount).toBe(t.mappedKeys);
+      expect(fieldReport.filledCount).toBe(t.mappedKeys);
       expect(fieldReport.blankCount).toBe(0);
       expect(fieldReport.ignoredRequestKeys).toEqual(['deviceCommonName', 'deviceTradeName']);
+
+      // A governed fact this template has no box for is REPORTED, never dropped:
+      // one advisory per such key, naming the key, its value and its home.
+      expect(fieldReport.advisories).toHaveLength(t.unmappedGoverned.length);
+      for (const key of t.unmappedGoverned) {
+        const [value, home] = FULL_PROJECTION[key];
+        const advisory = fieldReport.advisories.find((a) => a.includes(key));
+        expect(advisory, `an advisory names ${key}`).toBeTruthy();
+        expect(advisory).toContain(value);
+        expect(advisory).toContain(home);
+        expect(resolved.data, `${key} is not handed to the fill`).not.toHaveProperty(key);
+      }
     });
   },
 );
+}
 
 describe('predicate devices beyond the first', () => {
   it('writes the first predicate and SAYS the others were not written', () => {

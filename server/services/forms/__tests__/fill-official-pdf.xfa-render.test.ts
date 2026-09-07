@@ -10,7 +10,8 @@
  * the form out, and returns the rendered tree. We then read the CONTROL STATE out
  * of that tree.
  *
- * WHAT THIS PROVES (measured on the vendored nIVD eSTAR v7.0, pdfjs-dist 5.4.296):
+ * WHAT THIS PROVES (measured on BOTH vendored 510(k) templates, nIVD and IVD
+ * eSTAR v7.0, each rendered and asserted on its own; pdfjs-dist 5.4.296):
  *
  *  1. pdf.js parses our incremental update: the filled output loads as a pure-XFA
  *     document with the same page count and the same laid-out controls as the
@@ -30,7 +31,7 @@
  *
  * WHAT THIS DOES NOT PROVE — read this before quoting the file as a green gate:
  *
- *  a. NONE of the 20 `510k-device` administrative values appear in pdf.js's
+ *  a. NONE of the mapped administrative values (20 on nIVD, 19 on IVD) appear in pdf.js's
  *     rendered tree, and test 5 pins that. The cause is not the fill: every one
  *     of the 20 fields sits under a container subform the template declares
  *     `presence="hidden"` (`AdministrativeInformation`, `AdministrativeDocumentation`,
@@ -65,11 +66,30 @@ import { fillEstarSubmission, type FillEstarResult } from '../../pathway-engines
 import { ESTAR_FIELD_MAPS } from '../../pathway-engines/estar/estar-field-map';
 import { readXfaDatasetsValues, type OfficialPdfFieldMap } from '../fill-official-pdf';
 
-const NIVD_TEMPLATE = path.resolve(
-  process.env.ESTAR_TEMPLATE_DIR || path.resolve(process.cwd(), 'assets/estar-templates'),
-  'eSTAR-510k-non-ivd.pdf',
-);
-const hasTemplate = fsSync.existsSync(NIVD_TEMPLATE);
+const TEMPLATE_DIR =
+  process.env.ESTAR_TEMPLATE_DIR || path.resolve(process.cwd(), 'assets/estar-templates');
+
+interface RenderTemplate {
+  label: string;
+  path: string;
+  /** The `fillEstarSubmission` variant that selects this template. */
+  variant: 'device' | 'ivd';
+  descriptor: '510k-device' | '510k-ivd';
+  exists: boolean;
+}
+
+/** Both vendored 510(k) templates, each rendered and asserted on its own — an
+ *  IVD 510(k) is produced on the IVD form, so a binding proven on nIVD alone
+ *  says nothing about what that client's engine displays. */
+const RENDER_TEMPLATES: RenderTemplate[] = (
+  [
+    { label: 'nIVD eSTAR v7.0', file: 'eSTAR-510k-non-ivd.pdf', variant: 'device', descriptor: '510k-device' },
+    { label: 'IVD eSTAR v7.0', file: 'eSTAR-510k-ivd.pdf', variant: 'ivd', descriptor: '510k-ivd' },
+  ] as const
+).map((t) => {
+  const p = path.resolve(TEMPLATE_DIR, t.file);
+  return { label: t.label, path: p, variant: t.variant, descriptor: t.descriptor, exists: fsSync.existsSync(p) };
+});
 
 const PDFJS_ENTRY = 'pdfjs-dist/legacy/build/pdf.mjs';
 const hasPdfjs = (() => {
@@ -81,17 +101,8 @@ const hasPdfjs = (() => {
   }
 })();
 
-const K510_DEVICE = ESTAR_FIELD_MAPS['510k-device'];
-
-/** A value unique to this file for each of the 20 mapped canonical keys. */
-const VALUES: Record<string, string> = Object.fromEntries(
-  Object.keys(K510_DEVICE).map((key, i) => [key, `ZZTOP-${key.toUpperCase()}-${7391 + i}`]),
-);
 /** One MAPPED key deliberately left unfilled — the per-key negative control. */
 const UNFILLED_KEY = 'predicateDeviceTradeName';
-const DATA: Record<string, string> = Object.fromEntries(
-  Object.entries(VALUES).filter(([key]) => key !== UNFILLED_KEY),
-);
 /** A string this file never writes into any packet. */
 const NEVER_WRITTEN = 'ZZTOP-NEVER-WRITTEN-ANYWHERE-0000';
 
@@ -113,11 +124,32 @@ const RADIOS: Record<string, Record<string, string>> = {
 };
 /** FDA's own default in the shipped datasets skeleton: US FDA on jurisdiction. */
 const JURISDICTION_TEMPLATE_DEFAULT = '1';
-const PROBE_MAP: OfficialPdfFieldMap = {
-  ...K510_DEVICE,
-  probeJurisdiction: { xfaSomPath: JURISDICTION, type: 'radio' },
-  probeSubmissionType: { xfaSomPath: SUBMISSION_TYPE, type: 'radio' },
-};
+interface RenderInputs {
+  /** The production map for this template — the fields a client actually files. */
+  map: OfficialPdfFieldMap;
+  /** A value unique to this file for each mapped canonical key. */
+  values: Record<string, string>;
+  /** Every mapped key but UNFILLED_KEY. */
+  data: Record<string, string>;
+  /** The production map plus the two page-1 selectors this file probes. */
+  probeMap: OfficialPdfFieldMap;
+}
+
+function inputsFor(descriptor: RenderTemplate['descriptor']): RenderInputs {
+  const map = ESTAR_FIELD_MAPS[descriptor];
+  const values: Record<string, string> = Object.fromEntries(
+    Object.keys(map).map((key, i) => [key, `ZZTOP-${key.toUpperCase()}-${7391 + i}`]),
+  );
+  const data: Record<string, string> = Object.fromEntries(
+    Object.entries(values).filter(([key]) => key !== UNFILLED_KEY),
+  );
+  const probeMap: OfficialPdfFieldMap = {
+    ...map,
+    probeJurisdiction: { xfaSomPath: JURISDICTION, type: 'radio' },
+    probeSubmissionType: { xfaSomPath: SUBMISSION_TYPE, type: 'radio' },
+  };
+  return { map, values, data, probeMap };
+}
 
 /** Every container subform of a mapped SOM path that the template hides. */
 const SCRIPT_HIDDEN_SECTIONS = [
@@ -226,19 +258,23 @@ const somPathsOf = (map: OfficialPdfFieldMap): string[] =>
  * plus the two page-1 selectors. Built once, outside the suite arrow, so the
  * suite stays a list of assertions rather than a setup script.
  */
-async function buildRenderFixture(pdfjs: PdfjsModule): Promise<{
+async function buildRenderFixture(
+  pdfjs: PdfjsModule,
+  t: RenderTemplate,
+  fx: RenderInputs,
+): Promise<{
   filledBytes: Uint8Array;
   blank: Rendered;
   filled: Rendered;
   probed: Rendered;
 }> {
-  const blankBytes = new Uint8Array(await fs.readFile(NIVD_TEMPLATE));
+  const blankBytes = new Uint8Array(await fs.readFile(t.path));
 
-  const production = await fillOfficialEstar(undefined, DATA);
+  const production = await fillOfficialEstar(t.variant, undefined, fx.data);
   expect(production.skippedFields).toEqual([UNFILLED_KEY]);
 
-  const withProbes = await fillOfficialEstar(PROBE_MAP, {
-    ...DATA,
+  const withProbes = await fillOfficialEstar(t.variant, fx.probeMap, {
+    ...fx.data,
     probeJurisdiction: '2',
     probeSubmissionType: '2',
   });
@@ -257,10 +293,11 @@ async function buildRenderFixture(pdfjs: PdfjsModule): Promise<{
  * only mean the renderer, never a fill that quietly did nothing.
  */
 async function fillOfficialEstar(
+  variant: RenderTemplate['variant'],
   fieldMap: OfficialPdfFieldMap | undefined,
   data: Record<string, string>,
 ): Promise<FillEstarResult> {
-  const r = await fillEstarSubmission({ type: '510k', variant: 'device', fieldMap, data });
+  const r = await fillEstarSubmission({ type: '510k', variant, fieldMap, data });
   expect(r.filled, r.blockers.join(' ')).toBe(true);
   expect(r.templateKind).toBe('dynamic-xfa');
   expect(r.blockers).toEqual([]);
@@ -270,8 +307,10 @@ async function fillOfficialEstar(
 
 // ---------------------------------------------------------------------------
 
-describe.skipIf(!hasTemplate || !hasPdfjs)(
-  'pdf.js (an independent XFA engine) renders the filled official nIVD eSTAR v7.0',
+for (const t of RENDER_TEMPLATES) {
+const fx = inputsFor(t.descriptor);
+describe.skipIf(!t.exists || !hasPdfjs)(
+  `pdf.js (an independent XFA engine) renders the filled official ${t.label}`,
   () => {
     let pdfjs: PdfjsModule;
     let filledBytes: Uint8Array;
@@ -283,9 +322,9 @@ describe.skipIf(!hasTemplate || !hasPdfjs)(
     let probed: Rendered;
     beforeAll(async () => {
       dirBefore = process.env.ESTAR_TEMPLATE_DIR;
-      process.env.ESTAR_TEMPLATE_DIR = path.dirname(NIVD_TEMPLATE);
+      process.env.ESTAR_TEMPLATE_DIR = TEMPLATE_DIR;
       pdfjs = await import(PDFJS_ENTRY);
-      const fixture = await buildRenderFixture(pdfjs);
+      const fixture = await buildRenderFixture(pdfjs, t, fx);
       ({ filledBytes, blank, filled, probed } = fixture);
     }, 180_000);
 
@@ -358,12 +397,12 @@ describe.skipIf(!hasTemplate || !hasPdfjs)(
       // A string never written appears nowhere; the blank template carries none
       // of this file's values, so anything found in `filled` came from the fill.
       for (const tree of [blank, filled, probed]) {
-        for (const v of [NEVER_WRITTEN, VALUES[UNFILLED_KEY]]) expect(tree.text).not.toContain(v);
+        for (const v of [NEVER_WRITTEN, fx.values[UNFILLED_KEY]]) expect(tree.text).not.toContain(v);
       }
       expect(blank.text).not.toContain('ZZTOP');
     });
 
-    it('5. does NOT render the 20 administrative values — they sit under script-hidden subforms', async () => {
+    it('5. does NOT render the mapped administrative values — they sit under script-hidden subforms', async () => {
       // Pinned, not papered over. If pdf.js (or a new FDA revision) ever lays
       // these out, this fails and the positive assertions must be extended.
       for (const section of SCRIPT_HIDDEN_SECTIONS) {
@@ -372,21 +411,22 @@ describe.skipIf(!hasTemplate || !hasPdfjs)(
           .filter((l) => l.includes(`.${section}.`));
         expect(laidOut, `${section} controls laid out by pdf.js`).toEqual([]);
       }
-      for (const [key, value] of Object.entries(DATA)) {
+      for (const [key, value] of Object.entries(fx.data)) {
         expect(filled.text.includes(value), `${key} rendered by pdf.js`).toBe(false);
       }
 
       // The packet pdf.js parsed and bound does hold every written value, and
       // holds nothing for the one mapped key we left unfilled.
-      const back = await readXfaDatasetsValues(filledBytes, somPathsOf(K510_DEVICE));
-      for (const [key, value] of Object.entries(DATA)) {
-        expect(back[K510_DEVICE[key].xfaSomPath!], key).toBe(value);
+      const back = await readXfaDatasetsValues(filledBytes, somPathsOf(fx.map));
+      for (const [key, value] of Object.entries(fx.data)) {
+        expect(back[fx.map[key].xfaSomPath!], key).toBe(value);
       }
-      expect(back[K510_DEVICE[UNFILLED_KEY].xfaSomPath!], UNFILLED_KEY).toBe('');
+      expect(back[fx.map[UNFILLED_KEY].xfaSomPath!], UNFILLED_KEY).toBe('');
     });
 
   },
 );
+}
 
 /**
  * The two SOURCE fields, read straight off the production fill. No renderer is
@@ -398,8 +438,10 @@ describe.skipIf(!hasTemplate || !hasPdfjs)(
  * and the applicant's first click runs two of those scripts — which, before the
  * source fields were mapped, erased the value from a source we had left empty.
  */
-(hasTemplate ? describe : describe.skip)(
-  'the filled official eSTAR carries the sources FDA rebuilds its summary cells from',
+for (const t of RENDER_TEMPLATES) {
+const fx = inputsFor(t.descriptor);
+(t.exists ? describe : describe.skip)(
+  `the filled official ${t.label} carries the sources FDA rebuilds its summary cells from`,
   () => {
   let bytes: Uint8Array;
   let result: FillEstarResult;
@@ -407,8 +449,8 @@ describe.skipIf(!hasTemplate || !hasPdfjs)(
 
   beforeAll(async () => {
     dirBefore = process.env.ESTAR_TEMPLATE_DIR;
-    process.env.ESTAR_TEMPLATE_DIR = path.dirname(NIVD_TEMPLATE);
-    result = await fillOfficialEstar(undefined, DATA);
+    process.env.ESTAR_TEMPLATE_DIR = TEMPLATE_DIR;
+    result = await fillOfficialEstar(t.variant, undefined, fx.data);
     bytes = result.pdfBytes!;
   }, 120_000);
 
@@ -424,16 +466,17 @@ describe.skipIf(!hasTemplate || !hasPdfjs)(
     ];
     const back = await readXfaDatasetsValues(bytes, [
       ...PAIRS.map(([, source]) => source),
-      ...PAIRS.map(([key]) => K510_DEVICE[key].xfaSomPath!),
+      ...PAIRS.map(([key]) => fx.map[key].xfaSomPath!),
     ]);
     for (const [key, source] of PAIRS) {
-      expect(back[source], `${key} source`).toBe(VALUES[key]);
+      expect(back[source], `${key} source`).toBe(fx.values[key]);
       // The summary cell and its source can never disagree, or the rebuild
       // would visibly change the form.
-      expect(back[source]).toBe(back[K510_DEVICE[key].xfaSomPath!]);
+      expect(back[source]).toBe(back[fx.map[key].xfaSomPath!]);
       // Reported filled ONCE, not twice for owning two boxes.
       expect(result.filledFields.filter((k) => k === key)).toEqual([key]);
     }
   });
   },
 );
+}

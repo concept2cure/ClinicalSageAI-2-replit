@@ -544,15 +544,23 @@ describe('loadEstarAdministrativeInputs — the Phase 3 columns', () => {
 
 // ── The real vendored nIVD template ──────────────────────────────────────────
 
-const NIVD_TEMPLATE = path.resolve(process.cwd(), 'assets/estar-templates', 'eSTAR-510k-non-ivd.pdf');
+const TEMPLATE_DIR = path.resolve(process.cwd(), 'assets/estar-templates');
 
-describe.skipIf(!fsSync.existsSync(NIVD_TEMPLATE))(
-  'the Phase 3 homes reach their SOM paths in the official nIVD eSTAR v7.0',
+/** Both vendored 510(k) templates, each measured on its own. */
+const HOMES_TEMPLATES = [
+  { label: 'nIVD eSTAR v7.0', file: 'eSTAR-510k-non-ivd.pdf', variant: 'device' as const, descriptor: '510k-device' as const, mappedKeys: 20 },
+  { label: 'IVD eSTAR v7.0', file: 'eSTAR-510k-ivd.pdf', variant: 'ivd' as const, descriptor: '510k-ivd' as const, mappedKeys: 19 },
+];
+
+for (const t of HOMES_TEMPLATES) {
+describe.skipIf(!fsSync.existsSync(path.resolve(TEMPLATE_DIR, t.file)))(
+  `the Phase 3 homes reach their SOM paths in the official ${t.label}`,
   () => {
+    const MAP = ESTAR_FIELD_MAPS[t.descriptor];
     let dirBefore: string | undefined;
     beforeAll(() => {
       dirBefore = process.env.ESTAR_TEMPLATE_DIR;
-      process.env.ESTAR_TEMPLATE_DIR = path.dirname(NIVD_TEMPLATE);
+      process.env.ESTAR_TEMPLATE_DIR = TEMPLATE_DIR;
     });
     afterAll(() => {
       if (dirBefore === undefined) delete process.env.ESTAR_TEMPLATE_DIR;
@@ -573,34 +581,36 @@ describe.skipIf(!fsSync.existsSync(NIVD_TEMPLATE))(
         },
       };
       const resolved = resolveOfficialEstarFields({
-        fieldMap: DEVICE_MAP,
+        fieldMap: MAP,
         governed: projectEstarAdministrativeData(partial),
         requestData: { deviceCommonName: 'Continuous glucose monitor', deviceTradeName: 'ignored' },
         honourRequestOverGoverned: false,
       });
-      const r = await fillEstarSubmission({ type: '510k', variant: 'device', data: resolved.data });
+      const r = await fillEstarSubmission({ type: '510k', variant: t.variant, data: resolved.data });
       expect(r.filled).toBe(true);
       expect(r.blockers).toEqual([]);
 
-      const back = await readXfaDatasetsValues(r.pdfBytes!, Object.values(DEVICE_MAP).map((s) => s.xfaSomPath!));
+      const back = await readXfaDatasetsValues(r.pdfBytes!, Object.values(MAP).map((s) => s.xfaSomPath!));
       for (const f of resolved.fields) {
         const at = back[f.xfaSomPath!];
         if (f.value !== null) expect(at, `${f.key} @ ${f.xfaSomPath}`).toBe(f.value);
         else expect(at ?? '', `${f.key} should be blank`).toBe('');
       }
-      expect(back[DEVICE_MAP.regulationNumber.xfaSomPath!]).toBe('21 CFR 862.1355');
-      expect(back[DEVICE_MAP.correspondentTelephone.xfaSomPath!]).toBe('+1 555 0199');
-      expect(back[DEVICE_MAP.declarationCompanyName.xfaSomPath!]).toBe('Declaring Entity GmbH');
-      expect(back[DEVICE_MAP.declarationCompanyAddress.xfaSomPath!]).toBe('1 Device Way');
-      expect(back[DEVICE_MAP.correspondentCompanyName.xfaSomPath!] ?? '').toBe('');
+      expect(back[MAP.regulationNumber.xfaSomPath!]).toBe('21 CFR 862.1355');
+      expect(back[MAP.correspondentTelephone.xfaSomPath!]).toBe('+1 555 0199');
+      expect(back[MAP.declarationCompanyName.xfaSomPath!]).toBe('Declaring Entity GmbH');
+      expect(back[MAP.declarationCompanyAddress.xfaSomPath!]).toBe('1 Device Way');
+      expect(back[MAP.correspondentCompanyName.xfaSomPath!] ?? '').toBe('');
 
       // productName ×2, productCode, regulation number, the org name (applicant),
       // the DoC name + address off the registration, telephone + the request
       // common name.
       const { fieldReport } = reportOfficialEstarFill(resolved, r.filledFields);
       expect(fieldReport.filledCount).toBe(9);
-      expect(fieldReport.blankCount).toBe(11);
+      expect(fieldReport.blankCount).toBe(t.mappedKeys - 9);
       expect(fieldReport.ignoredRequestKeys).toEqual(['deviceTradeName']);
+      // These partial inputs carry no citation, so neither form has an unboxed governed fact.
+      expect(fieldReport.advisories).toEqual([]);
       for (const f of fieldReport.fields.filter((x) => !x.filled)) {
         expect(f.declaredSource, `${f.key} names its home`).toMatch(
           /^(regulatory_programs|estar_registrations|client_workspaces|fda_510k_projects)\./,
@@ -609,3 +619,4 @@ describe.skipIf(!fsSync.existsSync(NIVD_TEMPLATE))(
     });
   },
 );
+}
