@@ -410,11 +410,24 @@ in either file.
   node** for any of them — searched by leaf name, 0 hits each. It *does* carry
   `<field name="ATRadioButton101"><value><text>1</text></value></field>` for the
   jurisdiction group's member, and no node for `ATRadioButton110`.
-- **The IVD template** `eSTAR-510k-ivd.pdf` was not scanned for the `ApplicationType`
-  question; that its logic is identical remains an assumption there, and the test file
-  covers the nIVD template only. It WAS measured for §4a: the IVD template declares
-  `Device.TradeName` and `DDDropDownList517` at the identical paths, ships both in its
-  `datasets` skeleton, and carries a byte-identical `Devices Validation()`.
+- ~~**The IVD template** `eSTAR-510k-ivd.pdf` was not scanned for the `ApplicationType`
+  question.~~ **Closed 2026-09-07 — measured, not assumed.**
+  `estar-field-map.template-behaviour.test.ts` now runs every scan above against both
+  vendored templates, each on its own. On `eSTAR-510k-ivd.pdf` (1,696 script bodies,
+  576 `exData`, 90 `change` / 912 `click` / 542 `exit` events): exactly one `initialize`
+  event, on `root`, with zero `presence = "visible"` assignments and zero `execEvent`;
+  zero `ref="$form"` events; every one of the twelve containers revealed only from
+  `change` / `exit` / `click` (`PredicateReference` via a computed index, as on nIVD);
+  the jurisdiction handler nulls the same three pathway members behind the same
+  `ImportData` guard; `DDDropDownList517 [exit]` and `Devices <variables>` clear the same
+  four cells; and the scripts that assign each of the 19 shared mapped fields are
+  identical to nIVD's. The FDA-region reveal in `ATRadioButton110 [change]` (51,468
+  bytes on IVD, 42,145 on nIVD) is gated on the same unconditional
+  `xfa.host.getFocus().name.substr(0,15)` dereference. **The one textual difference in
+  the whole comparison is a single missing space before the escaped `&&` in that guard**
+  — which is exactly what a verbatim-string assertion written against nIVD would have
+  failed on, and did, before the IVD line was pinned on its own. Nothing else differs.
+  The Acrobat inference for IVD therefore rests on the same measured facts as for nIVD.
 - **What the two SOURCE writes of §4a look like in Acrobat.** That the values BIND is
   measured (pdf.js, an independent engine, renders both). That FDA's `Validation()` then
   concatenates the listing row into the Declaration of Conformity cell, and `substr(0,3)`s

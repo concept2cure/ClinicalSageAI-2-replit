@@ -30,6 +30,15 @@
  *     of the twenty mapped fields, the set of scripts that assign its
  *     `rawValue`, re-enumerated across all 1,435 script bodies.
  *
+ * BOTH vendored 510(k) templates are measured, each on its own — nothing about
+ * the IVD form is inferred from the nIVD one. Measured 2026-09-07: every fact
+ * above holds identically on `eSTAR-510k-ivd.pdf` (one `initialize` on `root`
+ * that reveals nothing, zero on-open reveals, the same reveal activity for every
+ * container, the same two clearing scripts, and identical writers for all 19
+ * shared keys). The one textual difference is a single space before the escaped
+ * `&&` in the reveal guard, which is why that guard is asserted with a
+ * whitespace-tolerant pattern plus each template's verbatim line.
+ *
  * WHAT IT DOES NOT PIN: Acrobat. Acrobat is not available in this environment.
  * These are assertions about what the template DECLARES; the inference from
  * "only a `change` handler reveals it" to "Acrobat will not reveal it on open"
@@ -49,11 +58,41 @@ import path from 'path';
 import { listXfaPackets } from '../../../forms/fill-official-pdf';
 import { ESTAR_FIELD_MAPS, ESTAR_TEMPLATE_RECOMPUTED_FIELDS } from '../estar-field-map';
 
-const NIVD_TEMPLATE = path.resolve(
-  process.env.ESTAR_TEMPLATE_DIR || path.resolve(process.cwd(), 'assets/estar-templates'),
-  'eSTAR-510k-non-ivd.pdf',
-);
-const hasTemplate = fsSync.existsSync(NIVD_TEMPLATE);
+const TEMPLATE_DIR =
+  process.env.ESTAR_TEMPLATE_DIR || path.resolve(process.cwd(), 'assets/estar-templates');
+
+interface TemplateUnderTest {
+  label: string;
+  file: string;
+  descriptor: '510k-device' | '510k-ivd';
+  exists: boolean;
+  /**
+   * The FDA-region reveal guard, verbatim from THIS template's pathway handler.
+   * The two templates differ here by one space before the escaped `&&`; the
+   * dereference they share is asserted separately with a whitespace-tolerant
+   * pattern, and the verbatim line pins each template's exact text.
+   */
+  guardLine: string;
+}
+
+/** Both vendored 510(k) templates. Each is measured on its own; nothing about
+ *  the IVD form is inferred from the nIVD one. Typed before the map so the
+ *  descriptor literals survive it. */
+const VENDORED: Omit<TemplateUnderTest, 'exists'>[] = [
+  {
+    label: 'nIVD eSTAR 7.0',
+    file: path.resolve(TEMPLATE_DIR, 'eSTAR-510k-non-ivd.pdf'),
+    descriptor: '510k-device',
+    guardLine: 'if (xfa.host.getFocus().name.substr(0,15) != "ATRadioButton10" &amp;&amp; ApplicationType.ATRadioButton100.rawValue == 1)',
+  },
+  {
+    label: 'IVD eSTAR 7.0',
+    file: path.resolve(TEMPLATE_DIR, 'eSTAR-510k-ivd.pdf'),
+    descriptor: '510k-ivd',
+    guardLine: 'if (xfa.host.getFocus().name.substr(0,15) != "ATRadioButton10"&amp;&amp; ApplicationType.ATRadioButton100.rawValue == 1)',
+  },
+];
+const TEMPLATES: TemplateUnderTest[] = VENDORED.map((t) => ({ ...t, exists: fsSync.existsSync(t.file) }));
 
 /** The container subforms and hidden fields that stand between our data and a page. */
 const HIDDEN_CONTAINERS = [
@@ -74,13 +113,15 @@ const HIDDEN_CONTAINERS = [
 /** Activities that fire without a user: if a reveal hung off one, a write would work. */
 const ON_OPEN_ACTIVITIES = ['initialize', 'docReady', 'ready'];
 
-/** Canonical key → the leaf field name of its mapped SOM path, for the 510(k) map. */
-const MAPPED_LEAF: Record<string, string> = Object.fromEntries(
-  Object.entries(ESTAR_FIELD_MAPS['510k-device']).map(([key, spec]) => [
-    key,
-    String(spec.xfaSomPath).split('.').pop()!,
-  ]),
-);
+/** Canonical key → the leaf field name of its mapped SOM path, for one descriptor's map. */
+function mappedLeaf(descriptor: string): Record<string, string> {
+  return Object.fromEntries(
+    Object.entries(ESTAR_FIELD_MAPS[descriptor]).map(([key, spec]) => [
+      key,
+      String(spec.xfaSomPath).split('.').pop()!,
+    ]),
+  );
+}
 
 // ---------------------------------------------------------------------------
 // Blank the script/exData bodies, then index the event graph
@@ -200,13 +241,14 @@ function indexTemplate(templateXml: string): TemplateIndex {
 
 // ---------------------------------------------------------------------------
 
-const d = hasTemplate ? describe : describe.skip;
+for (const t of TEMPLATES) {
+const d = t.exists ? describe : describe.skip;
 
-d('FDA eSTAR template — the script facts the field map depends on', () => {
+d(`${t.label} — the script facts the field map depends on`, () => {
   let idx: TemplateIndex;
 
   beforeAll(async () => {
-    const bytes = await fs.readFile(NIVD_TEMPLATE);
+    const bytes = await fs.readFile(t.file);
     const packets = await listXfaPackets(bytes);
     const template = packets.find((p) => p.name === 'template');
     expect(template, 'template packet must be present').toBeTruthy();
@@ -263,10 +305,15 @@ d('FDA eSTAR template — the script facts the field map depends on', () => {
     );
     expect(pathwayChange).toHaveLength(1);
     const body = pathwayChange[0].body;
-    // The template's own text, verbatim (its `&&` is XML-escaped in the packet).
-    expect(body).toContain(
-      'if (xfa.host.getFocus().name.substr(0,15) != "ATRadioButton10" &amp;&amp; ApplicationType.ATRadioButton100.rawValue == 1)',
+    // The dereference both templates share: `xfa.host.getFocus()` is read with
+    // no null check, ANDed with the FDA-region test, as the condition of the
+    // block that reveals everything. Whitespace-tolerant, because the two
+    // templates differ by one space before the escaped `&&`.
+    expect(body).toMatch(
+      /if \(xfa\.host\.getFocus\(\)\.name\.substr\(0,15\) != "ATRadioButton10"\s*&amp;&amp;\s*ApplicationType\.ATRadioButton100\.rawValue == 1\)\{/,
     );
+    // …and this template's exact line, so the text cannot drift unnoticed.
+    expect(body).toContain(t.guardLine);
     // …and it is that block, not another, that reveals the 510(k)-only sections.
     expect(body).toContain('Classification.presence = "visible";');
     expect(body).toContain('Classification.USAKnownClassification.presence = "visible";');
@@ -287,11 +334,11 @@ d('FDA eSTAR template — the script facts the field map depends on', () => {
 
 });
 
-d('FDA eSTAR template — the fields the form recomputes for itself', () => {
+d(`${t.label} — the fields the form recomputes for itself`, () => {
   let idx: TemplateIndex;
 
   beforeAll(async () => {
-    const bytes = await fs.readFile(NIVD_TEMPLATE);
+    const bytes = await fs.readFile(t.file);
     const packets = await listXfaPackets(bytes);
     const template = packets.find((p) => p.name === 'template');
     expect(template, 'template packet must be present').toBeTruthy();
@@ -303,17 +350,25 @@ d('FDA eSTAR template — the fields the form recomputes for itself', () => {
       s.parent === 'event' ? `${s.som} [${s.activity}]` : `${s.som} <${s.parent}>`;
 
     const measured: Record<string, string[]> = {};
-    for (const [key, leaf] of Object.entries(MAPPED_LEAF)) {
+    for (const [key, leaf] of Object.entries(mappedLeaf(t.descriptor))) {
       const assigns = new RegExp(`\\b${leaf}(?:\\[[^\\]]*\\])?\\s*\\.rawValue\\s*=(?!=)`);
       measured[key] = idx.scripts.filter((s) => assigns.test(s.body)).map(label);
     }
 
+    // One recompute declaration serves both maps; compare on the keys this
+    // descriptor actually maps (the IVD map has no indicationsForUseCitation).
     const declared = Object.fromEntries(
-      Object.entries(ESTAR_TEMPLATE_RECOMPUTED_FIELDS).map(([k, v]) => [k, [...v.writtenBy]]),
+      Object.entries(ESTAR_TEMPLATE_RECOMPUTED_FIELDS)
+        .filter(([k]) => k in measured)
+        .map(([k, v]) => [k, [...v.writtenBy]]),
     );
     expect(measured).toEqual(declared);
+  });
+});
+}
 
-    // The four the pathway click itself clears, and the six nothing ever touches.
+describe('eSTAR field maps — the recompute declaration, independent of any template', () => {
+  it('names the four the pathway click clears and the six nothing ever touches', () => {
     const clearedByClick = Object.entries(ESTAR_TEMPLATE_RECOMPUTED_FIELDS)
       .filter(([, v]) => v.clearedByPathwayClick)
       .map(([k]) => k)
@@ -337,6 +392,19 @@ d('FDA eSTAR template — the fields the form recomputes for itself', () => {
       'indicationsForUseCitation',
     ]);
   });
+});
+
+for (const t of TEMPLATES) {
+const d = t.exists ? describe : describe.skip;
+d(`${t.label} — the pathway click runs the clearers`, () => {
+  let idx: TemplateIndex;
+  beforeAll(async () => {
+    const bytes = await fs.readFile(t.file);
+    const packets = await listXfaPackets(bytes);
+    const template = packets.find((p) => p.name === 'template');
+    expect(template, 'template packet must be present').toBeTruthy();
+    idx = indexTemplate(Buffer.from(template!.bytes).toString('utf8'));
+  }, 120_000);
 
   it('proves the pathway click runs the two scripts that clear those four fields', () => {
     const pathwayChange = idx.scripts.find(
@@ -369,6 +437,7 @@ d('FDA eSTAR template — the fields the form recomputes for itself', () => {
     );
   });
 });
+}
 
 describe('eSTAR field maps — the pathway declaration stays the applicant’s', () => {
   it('maps no key onto the ApplicationType selectors', () => {
@@ -388,6 +457,13 @@ describe('eSTAR field maps — the pathway declaration stays the applicant’s',
     expect(Object.keys(ESTAR_TEMPLATE_RECOMPUTED_FIELDS).sort()).toEqual(
       Object.keys(ESTAR_FIELD_MAPS['510k-device']).sort(),
     );
+  });
+
+  it('covers every 510(k) IVD key too, lacking only the citation the IVD form does not ask', () => {
+    const ivdKeys = Object.keys(ESTAR_FIELD_MAPS['510k-ivd']);
+    for (const key of ivdKeys) expect(ESTAR_TEMPLATE_RECOMPUTED_FIELDS).toHaveProperty(key);
+    const missing = Object.keys(ESTAR_FIELD_MAPS['510k-device']).filter((k) => !ivdKeys.includes(k));
+    expect(missing).toEqual(['indicationsForUseCitation']);
   });
 });
 
