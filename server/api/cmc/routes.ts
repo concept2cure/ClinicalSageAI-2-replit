@@ -1704,7 +1704,17 @@ router.post('/compliance/check-rules', async (req, res) => {
 
       const orgId = getOrgId(req);
       const result = await pool.query(
-        `SELECT * FROM compliance_tracking WHERE organization_id = $1 OR organization_id IS NULL ORDER BY created_at DESC LIMIT 50`,
+        /* Strictly the caller's organization. `OR organization_id IS NULL` used
+           to sit here, and it was load-bearing: the CMC project routes bound a
+           drizzle model that mapped no organizationId, so every row the product
+           wrote was NULL-org and without the OR this endpoint returned nothing.
+           It bought that by serving every sponsor's compliance findings —
+           guideline, requirement, violation status, risk level — to every other
+           sponsor as their own. The write now stamps the owning org and
+           migrations/20260908_compliance_tracking_organization_backfill.sql
+           attributes the legacy rows through their project, so the strict
+           predicate returns MORE for a legitimate caller, not less. */
+        `SELECT * FROM compliance_tracking WHERE organization_id = $1 ORDER BY created_at DESC LIMIT 50`,
         [orgId]
       );
 

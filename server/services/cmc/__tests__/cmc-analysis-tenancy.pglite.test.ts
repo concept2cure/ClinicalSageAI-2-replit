@@ -55,6 +55,7 @@ vi.mock('../stability-source', () => ({
 // miscount.
 import { runIchComplianceCheck } from '../ich-compliance-checker';
 import { analyzeQbdFromSources } from '../qbd-analyzer';
+import { generateControlStrategy } from '../control-strategy-generator';
 
 const MINE = 1;
 const THEIRS = 2;
@@ -95,12 +96,16 @@ beforeAll(async () => {
       id uuid PRIMARY KEY DEFAULT gen_random_uuid(), organization_id int, project_id uuid,
       section_key text, approval_state text, stale boolean, narrative_text text);
 
-    INSERT INTO quality_specifications (tenant_id, project_id, material_type, material_name)
-      VALUES (${THEIRS}, '${THEIR_PROJECT}', 'drug-substance', 'THEIR SECRET API'),
-             (${MINE},   '${MY_PROJECT}',    'drug-substance', 'My API');
-    INSERT INTO analytical_methods (organization_id, project_id, method_name, method_type)
-      VALUES (${THEIRS}, '${THEIR_PROJECT}', 'THEIR HPLC METHOD', 'chromatographic'),
-             (${MINE},   '${MY_PROJECT}',    'My HPLC',           'chromatographic');
+    -- test_parameters gives the QbD analyzer a CQA to derive, and the method's
+    -- its "purpose" is what matchMethodForCqa keys on. Both are needed for a loaded
+    -- method to be CITED in the control strategy — a method that loads but
+    -- never matches would make the control below vacuous.
+    INSERT INTO quality_specifications (tenant_id, project_id, material_type, material_name, test_parameters)
+      VALUES (${THEIRS}, '${THEIR_PROJECT}', 'drug_substance', 'THEIR SECRET API', '["assay"]'::jsonb),
+             (${MINE},   '${MY_PROJECT}',    'drug_substance', 'My API',           '["assay"]'::jsonb);
+    INSERT INTO analytical_methods (organization_id, project_id, method_name, method_type, purpose, validation_status)
+      VALUES (${THEIRS}, '${THEIR_PROJECT}', 'THEIR HPLC METHOD', 'chromatographic', 'assay', 'validated'),
+             (${MINE},   '${MY_PROJECT}',    'My HPLC',           'chromatographic', 'assay', 'validated');
     INSERT INTO drug_substances (organization_id, project_id, substance_name)
       VALUES (${THEIRS}, '${THEIR_PROJECT}', 'THEIR SUBSTANCE'),
              (${MINE},   '${MY_PROJECT}',    'My substance');
@@ -173,5 +178,33 @@ describe('analyzeQbdFromSources — QbD analyzer', () => {
     expect(out.inputs.drugSubstanceCount).toBe(1);
     expect(out.inputs.processCount).toBe(1);
     expect(out.unevaluatedInputs).toEqual([]);
+  });
+});
+
+/**
+ * `loadMethods(orgId, projectId)` in control-strategy-generator ACCEPTED orgId
+ * and then filtered on project_id alone. A control strategy names the
+ * analytical method that controls each CQA, so another sponsor's method names,
+ * purposes and ICH Q2 validation status were matched to this project's CQAs and
+ * written into its 3.2.P.5 / control-strategy document — the one a reviewer
+ * reads as this product's testing plan.
+ */
+describe('generateControlStrategy — the methods it cites are the caller’s own', () => {
+  it("cites no method belonging to another organization", async () => {
+    const doc = await generateControlStrategy(MINE, THEIR_PROJECT);
+    expect(
+      blobOf(doc),
+      "another sponsor's analytical method was cited in this project's control strategy",
+    ).not.toContain('THEIR HPLC METHOD');
+  });
+
+  it("still cites the caller's own method — the fix is not 'scope everything to nothing'", async () => {
+    // A positive control: loadMethods must still find the project's real
+    // methods, or the negative assertion above would pass over an empty read.
+    const theirOwn = await generateControlStrategy(THEIRS, THEIR_PROJECT);
+    expect(
+      blobOf(theirOwn),
+      "the owning organization lost its own analytical method",
+    ).toContain('THEIR HPLC METHOD');
   });
 });
