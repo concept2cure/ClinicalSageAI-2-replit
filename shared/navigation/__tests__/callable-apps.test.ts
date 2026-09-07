@@ -69,7 +69,35 @@ describe('parseAppMentions', () => {
     expect(m.map((x) => x.app.id)).toEqual(['cmc']);
   });
 
-  it('stripAppMentions removes only the @ of recognised mentions', () => {
-    expect(stripAppMentions('Use @Labeling for this, not @Unknown')).toBe('Use Labeling for this, not @Unknown');
+  it('stripAppMentions removes recognised mention tokens and leaves unknown @text alone', () => {
+    expect(stripAppMentions('Use @Labeling for this, not @Unknown')).toBe('Use for this, not @Unknown');
+    expect(stripAppMentions('@biostats check the power')).toBe('check the power');
+    expect(stripAppMentions('@Nonexistent do it')).toBe('@Nonexistent do it');
+  });
+
+  it('answers to the navigation id and the short aliases the server has always honoured', () => {
+    // The handles context enrichment accepted before the composer offered a
+    // menu — a message that worked then must resolve to the same app now.
+    for (const [handle, id] of [
+      ['biostats', 'biostat-workbench'], ['510k', 'device-510k'], ['pma', 'device-pma'], ['cer', 'device-cer'],
+      ['ectd', 'ectd-coauthor'], ['vault', 'vault'], ['safety', 'safety'], ['precedent', 'precedent-intelligence'],
+      ['deep-research', 'deep-research'], ['biostat-workbench', 'biostat-workbench'],
+    ]) {
+      expect(findCallableApp(handle)?.id, handle).toBe(id);
+      const m = parseAppMentions(`@${handle} please`);
+      expect(m.map((x) => x.app.id), `@${handle}`).toEqual([id]);
+      expect(m[0].length).toBe(handle.length + 1);
+    }
+  });
+
+  it('a longer handle wins over a shorter one it starts with', () => {
+    expect(parseAppMentions('@biostatistics workbench now')[0].app.id).toBe('biostat-workbench');
+    expect(parseAppMentions('@biostatistics now')[0].app.id).toBe('biostatistics');
+    expect(parseAppMentions('@biostat now')[0].app.id).toBe('biostat-workbench');
+  });
+
+  it('every alias and id is unique across the vocabulary', () => {
+    const handles = CALLABLE_APPS.flatMap((a) => [a.id, ...a.aliases]);
+    expect(new Set(handles).size).toBe(handles.length);
   });
 });

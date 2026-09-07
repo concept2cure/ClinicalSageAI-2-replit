@@ -62,3 +62,24 @@ describe('the stability narrative states the trend assessment', () => {
     expect(p8).toMatch(/no out-of-trend points across 7 time points/);
   });
 });
+
+describe('review: a study placed at two conditions is refused, not fitted as one line', () => {
+  it('refuses through the composer when the mapper carried the condition array, and when only the legacy joined string is stored', async () => {
+    const { composeModule3FromCanonicalSources } = await import('../module3Composer');
+    const results = [
+      ...[0, 3, 6, 9, 12, 18, 24].map((t) => ({ timePoint: String(t), parameter: 'Assay', result: String(100 - 0.1 * t), specification: 'NLT 95.0%' })),
+      ...[0, 3, 6, 9, 12, 18, 24].map((t) => ({ timePoint: String(t), parameter: 'Assay', result: String(100 - 0.6 * t), specification: 'NLT 95.0%' })),
+    ];
+    for (const payload of [
+      { storageCondition: '25°C/60%RH, 40°C/75%RH', storageConditions: ['25°C/60%RH', '40°C/75%RH'], stabilityData: results, studyTitle: 'S1' },
+      { storageCondition: '25°C/60%RH, 40°C/75%RH', stabilityData: results, studyTitle: 'S1' },
+    ]) {
+      const composed = composeModule3FromCanonicalSources([
+        { id: 'st-1', sourceType: 'stability', sourcePayload: payload, sourceHash: 'h' } as never,
+      ]);
+      const s7 = composed.find((c) => c.sectionKey === '3.2.S.7')!;
+      expect(s7.narrativeDraft).toMatch(/Trend not assessed|not assessed: .*CONDITION_NOT_SEPARABLE|conditions its results do not separate/i);
+      expect(s7.narrativeDraft).not.toMatch(/projected at/);
+    }
+  });
+});

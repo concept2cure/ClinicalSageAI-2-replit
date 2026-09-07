@@ -35,6 +35,8 @@ const registerCreates = {
   createFormulationRecord: vi.fn<RegisterCreate>(),
   createMaterialSpec: vi.fn<RegisterCreate>(),
   createCharacterizationStudy: vi.fn<RegisterCreate>(),
+  /* The plan check the commit runs before its first write: every body accepted here. */
+  registerBodyRefusal: vi.fn((_register: string, _body: unknown): string | null => null),
 };
 vi.mock('../../cmc/register-writes', () => registerCreates);
 
@@ -58,7 +60,7 @@ function sessionRow(state: unknown, overrides: Record<string, unknown> = {}) {
   return {
     id: SESSION_ID,
     organization_id: ORG,
-    project_id: '91',
+    project_id: '6f1c2a7e-9c41-4b6a-8d3e-2f0a1b2c3d4e',
     user_id: 7,
     flow_id: 'cmc-specification-v1',
     flow_category: 'cmc_specification',
@@ -276,7 +278,7 @@ describe('resume_intelligence_flow', () => {
     expect(out.status).toBe('intelligence_question');
     expect(out.session_id).toBe(SESSION_ID);
     expect(out.session_status).toBe('active');
-    expect(out.project_id).toBe('91');
+    expect(out.project_id).toBe('6f1c2a7e-9c41-4b6a-8d3e-2f0a1b2c3d4e');
     expect(out.question.node.id).toBe('synthetic_route');
     expect(out.question.progress.completedNodes).toBe(3);
     expect(statements[0].params).toEqual([SESSION_ID, ORG]);
@@ -324,9 +326,10 @@ describe('commit_intelligence_flow', () => {
 
   it('commits every plan entry through the register creates under the session tenant and project, and marks the session committed', async () => {
     let nextId = 100;
-    for (const create of Object.values(registerCreates)) {
+    for (const [name, create] of Object.entries(registerCreates)) {
+      if (!name.startsWith('create')) continue;
       create.mockReset();
-      create.mockImplementation(async () => ({ row: { id: nextId++ }, module3Linked: true }));
+      (create as ReturnType<typeof vi.fn<RegisterCreate>>).mockImplementation(async () => ({ row: { id: nextId++ }, module3Linked: true }));
     }
     const statements = scriptPool((text) =>
       /SELECT[\s\S]*FROM cmc_interview_sessions/.test(text)
@@ -338,28 +341,35 @@ describe('commit_intelligence_flow', () => {
     const out = await call('commit_intelligence_flow', { session_id: SESSION_ID }, CTX);
     expect(out.error).toBeUndefined();
     expect(out.status).toBe('intelligence_flow_committed');
-    const calls = Object.values(registerCreates).flatMap(c => c.mock.calls);
+    const calls = Object.entries(registerCreates).filter(([name]) => name.startsWith('create')).flatMap(([, c]) => c.mock.calls);
     expect(calls.length).toBeGreaterThan(0);
     for (const [orgId, body, link] of calls) {
       expect(orgId).toBe(ORG);
-      // The SESSION's project (the stored row's '91'), not the caller's context.
-      expect(body).toMatchObject({ projectId: '91' });
-      expect(link).toEqual({ projectId: '91' });
+      // The SESSION's project (the stored row's program uuid), not the caller's context.
+      expect(body).toMatchObject({ projectId: '6f1c2a7e-9c41-4b6a-8d3e-2f0a1b2c3d4e' });
+      expect(link).toEqual({ projectId: '6f1c2a7e-9c41-4b6a-8d3e-2f0a1b2c3d4e' });
     }
     expect(statements.some(s => /status = 'committed'/.test(s.text))).toBe(true);
   });
 
   it('a refused entry stops the commit with the refusal, leaves the session complete, and reports what did land', async () => {
     let nextId = 200;
-    for (const create of Object.values(registerCreates)) {
+    for (const [name, create] of Object.entries(registerCreates)) {
+      if (!name.startsWith('create')) continue;
       create.mockReset();
-      create.mockImplementation(async () => ({ row: { id: nextId++ }, module3Linked: true }));
+      (create as ReturnType<typeof vi.fn<RegisterCreate>>).mockImplementation(async () => ({ row: { id: nextId++ }, module3Linked: true }));
     }
     registerCreates.createContainerClosure.mockRejectedValue(
       new Error('Qualification is a governed action and is recorded with a signature. POST /api/cmc/container-closures/:id/qualify with a reason and re-authentication.'),
     );
     const statements = scriptPool((text) =>
-      /SELECT[\s\S]*FROM cmc_interview_sessions/.test(text) ? [sessionRow(completeState, { status: 'complete' })] : null,
+      /SELECT[\s\S]*FROM cmc_interview_sessions/.test(text)
+        ? [sessionRow(completeState, { status: 'complete' })]
+        : /SET status = 'committing'/.test(text)
+          ? [sessionRow(completeState, { status: 'committing' })]
+          : /UPDATE cmc_interview_sessions/.test(text)
+            ? [sessionRow(completeState, { status: 'complete' })]
+            : null,
     );
     const out = await call('commit_intelligence_flow', { session_id: SESSION_ID }, CTX);
     expect(out.status).toBeUndefined();

@@ -14,32 +14,14 @@
  */
 
 import express from 'express';
+import { CMC_SOURCE_TYPES } from '../../services/module3Composer';
 import { z } from 'zod';
 import { autoDraftModule3 } from '../../services/cmc/auto-draft-composer';
 import { bridgeCompileToArtifact } from '../../services/module3-convergence-service';
 
 const router = express.Router();
 
-const CMC_SOURCE_TYPES = [
-  'drug_substance',
-  'drug_product',
-  'specification',
-  'method',
-  'stability',
-  'batch',
-  'change_control',
-  'comparability',
-  'manufacturing_process',
-  'characterization',
-  'reference_standard',
-  'container_closure',
-  'excipient',
-  'process_validation',
-  'raw_material_spec',
-  'impurity_profile',
-  'dissolution_profile',
-  'formulation_record',
-] as const;
+/* The composer's own list — a hand copy here lacked qc_result and drifted. */
 
 const extractedDocumentSchema = z.object({
   id: z.string().min(1),

@@ -370,6 +370,10 @@ export function mapStabilityPayload(record: Record<string, any>): Record<string,
     studyName: alias(record, 'studyName', 'study_name', 'studyTitle', 'study_title'),
     studyType: alias(record, 'studyType', 'study_type'),
     storageCondition: storageArr ? storageArr.join(', ') : '',
+    /* The conditions AS AN ARRAY as well: the trend assessment must refuse a
+       study placed at more than one condition whose results carry none, and it
+       can only tell two conditions apart when they are not one joined string. */
+    storageConditions: storageArr && storageArr.length > 0 ? storageArr : null,
     duration: record.duration || '',
     timePoints: alias(record, 'timePoints', 'time_points'),
     containerClosure: alias(record, 'containerClosure', 'container_closure'),
@@ -626,6 +630,10 @@ export function mapQcTestingPayload(record: Record<string, any>): Record<string,
   const hasResult = isBatchAnalysis && hasQuantitativeResult(results);
   return {
     sampleId: alias(record, 'sampleId', 'sample_id'),
+    /* The batch the sample represents, as recorded — never derived from the
+       sample id. Capability is computed across batches; a result with no
+       batch is reported under its sample id and excluded from the index. */
+    batchNumber: String(alias(record, 'batchNumber', 'batch_number')).trim() || null,
     sampleType: alias(record, 'sampleType', 'sample_type'),
     testMethod: alias(record, 'testMethod', 'test_method'),
     testResults: results,

@@ -1,7 +1,7 @@
 /**
  * eCTD vendored-artifact checksum-manifest verifier.
  *
- * The DTD and schema drop-points ship a `checksums.txt` (SHA-256, `sha256sum`
+ * The DTD/stylesheet and schema drop-points ship a `checksums.txt` (SHA-256, `sha256sum`
  * format: `<64-hex>  <filename>`). This is the verifier the drop-point READMEs
  * promised: it refuses to trust a vendored DTD/XSD whose bytes don't match its
  * recorded hash, and flags manifest entries with no file and files with no
@@ -59,7 +59,7 @@ export function parseManifest(text: string): ManifestEntry[] {
 export async function verifyChecksumManifest(
   dir: string,
   manifestName = 'checksums.txt',
-  extensions: string[] = ['.dtd', '.xsd'],
+  extensions: string[] = ['.dtd', '.xsd', '.xsl'],
 ): Promise<ChecksumVerifyResult> {
   const result: ChecksumVerifyResult = {
     verified: [],

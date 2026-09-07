@@ -28,6 +28,8 @@ import {
   markInterviewSessionCommitted,
   InterviewSessionError,
   type Queryable,
+  beginInterviewCommit,
+  projectBelongsToTenant,
 } from '../interview-sessions';
 import type { FlowState } from '../../../../shared/types/intelligence-questions';
 
@@ -257,22 +259,48 @@ describe('commit bookkeeping', () => {
     { key: 'container_closure:container_closure', register: 'container_closure', id: 12, module3Linked: true, committedAt: '2026-09-06T00:00:00.000Z' },
   ];
 
-  it('recordCommittedRecordRefs writes the refs of a PARTIAL commit without moving the status', async () => {
+  it('beginInterviewCommit holds a COMPLETE session for one commit (complete → committing) and binds a project only when none is set', async () => {
+    const { q, statements } = fakePool([{ match: /UPDATE/, rows: [sessionRow({ status: 'committing', project_id: 'prog-1' })] }]);
+    const session = await beginInterviewCommit({ organizationId: ORG, sessionId: SESSION_ID, projectId: 'prog-1' }, q);
+    expect(statements[0].text).toMatch(/SET status = 'committing'/);
+    expect(statements[0].text).toMatch(/project_id = COALESCE\(project_id, \$3\)/);
+    expect(statements[0].text).toMatch(/AND status = 'complete'/);
+    expect(statements[0].params).toEqual([SESSION_ID, ORG, 'prog-1']);
+    expect(session.status).toBe('committing');
+  });
+
+  it('beginInterviewCommit refuses a session that is not awaiting commit — a second concurrent commit finds it held', async () => {
+    const { q } = fakePool([{ match: /UPDATE/, rows: [] }]);
+    await expect(beginInterviewCommit({ organizationId: ORG, sessionId: SESSION_ID }, q))
+      .rejects.toMatchObject({ code: 'SESSION_NOT_COMMITTABLE' });
+  });
+
+  it('projectBelongsToTenant compares the id as text against the tenant\'s programs and projects, and answers false for a stranger', async () => {
+    const yes = fakePool([{ match: /SELECT 1 AS present/, rows: [{ present: 1 }] }]);
+    expect(await projectBelongsToTenant({ organizationId: ORG, projectId: 'prog-1' }, yes.q)).toBe(true);
+    expect(yes.statements[0].text).toMatch(/id::text = \$1 AND organization_id = \$2/);
+    expect(yes.statements[0].params).toEqual(['prog-1', ORG]);
+    const no = fakePool([{ match: /SELECT 1 AS present/, rows: [] }]);
+    expect(await projectBelongsToTenant({ organizationId: ORG, projectId: 'someone-elses' }, no.q)).toBe(false);
+    expect(await projectBelongsToTenant({ organizationId: ORG, projectId: '   ' }, no.q)).toBe(false);
+  });
+
+  it('recordCommittedRecordRefs writes the refs of a PARTIAL commit and releases the session (committing → complete)', async () => {
     const { q, statements } = fakePool([{ match: /UPDATE/, rows: [sessionRow({ status: 'complete', committed_record_refs: refs })] }]);
     const session = await recordCommittedRecordRefs({ organizationId: ORG, sessionId: SESSION_ID, refs }, q);
-    expect(statements[0].text).toMatch(/SET committed_record_refs = \$3::jsonb/);
+    expect(statements[0].text).toMatch(/SET committed_record_refs = \$3::jsonb, status = 'complete'/);
     expect(statements[0].text).not.toMatch(/status = 'committed'/);
-    expect(statements[0].text).toMatch(/AND status = 'complete'/);
+    expect(statements[0].text).toMatch(/AND status = 'committing'/);
     expect(JSON.parse(String(statements[0].params[2]))).toEqual(refs);
     expect(session.status).toBe('complete');
     expect(session.committedRecordRefs).toEqual(refs);
   });
 
-  it('markInterviewSessionCommitted moves complete → committed with the refs', async () => {
+  it('markInterviewSessionCommitted moves committing → committed with the refs', async () => {
     const { q, statements } = fakePool([{ match: /UPDATE/, rows: [sessionRow({ status: 'committed', committed_record_refs: refs })] }]);
     const session = await markInterviewSessionCommitted({ organizationId: ORG, sessionId: SESSION_ID, refs }, q);
     expect(statements[0].text).toMatch(/status = 'committed'/);
-    expect(statements[0].text).toMatch(/AND status = 'complete'/);
+    expect(statements[0].text).toMatch(/AND status = 'committing'/);
     expect(statements[0].params[1]).toBe(ORG);
     expect(session.status).toBe('committed');
   });

@@ -95,6 +95,31 @@ function vaultPayload() {
   };
 }
 
+/** GET /:id/search — the contract Vault.tsx reads (`VaultSearchShape`), answered
+ *  from the same two documents the tree carries so the assertion stays about
+ *  one state, not two fixtures. */
+function vaultSearchPayload(q: string) {
+  const docs = [
+    { id: 'd1', title: 'stability-summary-24m', ctdSection: '3.2.P.8', documentType: 'Test reports', preview: 'stability' },
+    { id: 'd2', title: 'specifications-drug-substance', ctdSection: '3.2.S.4', documentType: 'Spec', preview: 'specs' },
+  ];
+  const needle = q.toLowerCase();
+  const results = docs
+    .filter((d) => d.title.includes(needle) || d.preview.includes(needle))
+    .map((d) => ({
+      id: d.id,
+      title: d.title,
+      fileName: null,
+      documentType: d.documentType,
+      size: null,
+      folderId: 'cab-module-3',
+      ctdSection: d.ctdSection,
+      placementStatus: 'confirmed',
+      snippet: null,
+    }));
+  return { success: true, data: { query: q, total: results.length, limit: 100, offset: 0, results } };
+}
+
 const projectRows = [
   {
     id: 'p1',
@@ -135,6 +160,13 @@ beforeEach(() => {
   apiRequest.mockReset();
   apiRequest.mockImplementation(async (method: string, url: string) => {
     if (method === 'GET' && url === `/api/c2c/project-vault/${PID}`) return ok(vaultPayload());
+    // The find view is server-ranked (GET /:id/search), not a client filter over
+    // the tree: the surface renders whatever the search returns, so the search
+    // state AnA drives is only observable if the endpoint answers.
+    if (method === 'GET' && url.startsWith(`/api/c2c/project-vault/${PID}/search?`)) {
+      const q = new URL(url, 'http://x').searchParams.get('q') ?? '';
+      return ok(vaultSearchPayload(q));
+    }
     if (method === 'GET' && url === '/api/c2c/projects') return ok(projectRows);
     return ok({ success: true, data: {} });
   });

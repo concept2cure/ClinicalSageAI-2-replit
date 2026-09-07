@@ -13,12 +13,14 @@ import { randomUUID } from 'crypto';
 import { getPool } from '../db';
 import { createSourceHash } from './cmc-module3-compiler';
 import {
+  CMC_SOURCE_TYPES,
   composeModule3FromCanonicalSources,
   MODULE3_SECTION_RULES,
   tablesToMarkdown,
   CmcSourceType,
   type CanonicalSource,
 } from './module3Composer';
+import { appendixSectionsRequiringSourceType, composeAppendices, emittableAppendices } from './module3-extensions';
 import { enforceAuthorLineage } from './clinical-regulatory-evidence/lineage-gate';
 import { governedActor } from './part11/governed-actor';
 import {
@@ -47,6 +49,8 @@ export interface Module3SectionBuildStatus {
   sectionLabel: string;
   buildState: Module3BuildState;
   sourceObjectCount: number;
+  /** Uploaded source documents classified as feeding this section (governed artifact registry). */
+  uploadedSourceCount: number;
   sourceTypes: string[];
   completeness: number;
   missingInputs: string[];
@@ -55,6 +59,8 @@ export interface Module3SectionBuildStatus {
   isStale: boolean;
   staleReason: string | null;
   approvalState: string;
+  /** The compiled row carries narrative text. */
+  hasNarrative: boolean;
   artifactId: string | null;
   artifactStatus: string | null;
   lastCompiled: string | null;
@@ -90,6 +96,11 @@ const SECTION_LABELS: Record<string, string> = {
   '3.2.P.7': 'Container Closure System (Drug Product)',
   '3.2.P.8': 'Stability (Drug Product)',
   '3.3': 'Literature References',
+  /* The appendices compose, stale and approve like any other section; a
+     label table without them hid a stale 3.2.A.* from every reader of this map. */
+  '3.2.A.1': 'Facilities and Equipment',
+  '3.2.A.2': 'Adventitious Agents Safety Evaluation',
+  '3.2.A.3': 'Excipients',
 };
 
 // ── Public API ─────────────────────────────────────────────────
@@ -130,8 +141,9 @@ export async function getModule3BuildStatus(
 
   const spine = await resolveCmcArtifactProject(orgId, projectId);
 
-  // Parallel fetch of all four data sources
-  const [sourceRes, sectionRes, contradictionRes, artifactRes] = await Promise.all([
+  // Parallel fetch of all five data sources
+  const noArtifacts = Promise.resolve({ rows: [] as any[] });
+  const [sourceRes, sectionRes, contradictionRes, artifactRes, uploadedRes] = await Promise.all([
     pool.query(
       `SELECT id, source_type AS "sourceType", source_key AS "sourceKey",
               source_payload AS "sourcePayload", source_hash AS "sourceHash",
@@ -144,6 +156,7 @@ export async function getModule3BuildStatus(
       `SELECT section_key AS "sectionKey", stale, stale_reason AS "staleReason",
               approval_state AS "approvalState", compiled_hash AS "compiledHash",
               deterministic_json AS "deterministicJson",
+              (narrative_text IS NOT NULL AND narrative_text <> '') AS "hasNarrative",
               updated_at AS "updatedAt"
        FROM cmc_module3_sections
        WHERE organization_id = $1 AND project_id = $2`,
@@ -165,8 +178,29 @@ export async function getModule3BuildStatus(
              AND (ctd_section LIKE '3.2.%' OR ctd_section IN ('3.1', '3.3'))`,
           [orgId, spine.artifactProjectId],
         )
-      : Promise.resolve({ rows: [] as any[] }),
+      : noArtifacts,
+    // Uploaded source documents classified as feeding Module 3 — the build
+    // board's "N uploaded" beside a section with no composed source yet.
+    spine.state === 'linked'
+      ? pool.query(
+          `SELECT id, artifact_id as "artifactId", ctd_section as "ctdSection",
+                  metadata, title
+           FROM concept2cure_artifacts
+           WHERE organization_id = $1 AND project_id = $2
+                 AND category = 'source'
+                 AND (metadata->>'dossierClassification' IS NOT NULL)
+                 AND (metadata->'dossierClassification'->>'feedsModule3')::text = 'true'`,
+          [orgId, spine.artifactProjectId],
+        )
+      : noArtifacts,
   ]);
+
+  const uploadedCounts = new Map<string, number>();
+  for (const row of uploadedRes.rows) {
+    const cls = row.metadata?.dossierClassification;
+    const section = cls?.ctdSection || row.ctdSection;
+    if (section) uploadedCounts.set(section, (uploadedCounts.get(section) || 0) + 1);
+  }
 
   // Index helpers
   const sectionMap = new Map<string, any>();
@@ -224,9 +258,20 @@ export async function getModule3BuildStatus(
       projectId,
     };
   });
-  const composedBySection = new Map(
-    composeModule3FromCanonicalSources(canonicalSources).map((c) => [c.sectionKey, c] as const),
+  /* The appendices compose and go stale like any other section (an approved
+     3.2.A.* is marked stale when its sources change), so they are reported
+     here too — a board that walked only the seventeen core keys reported zero
+     stale sections while the export gate refused on a stale appendix. */
+  const composedAll = composeModule3FromCanonicalSources(canonicalSources).concat(
+    emittableAppendices(composeAppendices(canonicalSources)),
   );
+  const composedBySection = new Map(composedAll.map((c) => [c.sectionKey, c] as const));
+  const appendixRules = composedAll
+    .filter((c) => c.sectionKey.startsWith('3.2.A'))
+    .map((c) => ({
+      sectionKey: c.sectionKey,
+      requiredSourceTypes: CMC_SOURCE_TYPES.filter((st) => appendixSectionsRequiringSourceType(st).includes(c.sectionKey)),
+    }));
 
   // Group source objects by type — for the section's lastUpdated only. A
   // retired source no longer composes, but retiring it IS an edit to the
@@ -239,7 +284,7 @@ export async function getModule3BuildStatus(
   }
 
   // Build per-section status
-  const results: Module3SectionBuildStatus[] = MODULE3_SECTION_RULES.map((rule) => {
+  const results: Module3SectionBuildStatus[] = [...MODULE3_SECTION_RULES, ...appendixRules].map((rule) => {
     const sectionKey = rule.sectionKey;
     const sectionLabel = SECTION_LABELS[sectionKey] || sectionKey;
 
@@ -289,14 +334,18 @@ export async function getModule3BuildStatus(
         ? new Date(Math.max(...timestamps.map((d) => d.getTime()))).toISOString()
         : null;
 
-    // Determine build state
+    const uploadedSourceCount = uploadedCounts.get(sectionKey) || 0;
+    const hasNarrative = compiled?.hasNarrative === true;
+
+    // Determine build state — the ONE derivation, shared with the build-state route.
     const buildState = deriveBuildState({
       sourceObjectCount,
+      uploadedSourceCount,
       compiled: !!compiled,
-      hasArtifact: !!artifactId,
       isStale,
       hasContradictions,
       approvalState,
+      artifactStatus,
     });
 
     return {
@@ -304,6 +353,7 @@ export async function getModule3BuildStatus(
       sectionLabel,
       buildState,
       sourceObjectCount,
+      uploadedSourceCount,
       sourceTypes,
       completeness,
       missingInputs,
@@ -312,6 +362,7 @@ export async function getModule3BuildStatus(
       isStale,
       staleReason,
       approvalState,
+      hasNarrative,
       artifactId,
       artifactStatus,
       lastCompiled,
@@ -617,21 +668,32 @@ export async function bridgeCompileToArtifact(
 
 // ── Internal helpers ───────────────────────────────────────────
 
-function deriveBuildState(ctx: {
+/**
+ * The ONE build-state derivation, for this status and the build-state route.
+ *
+ * Priority-ordered. An approved section that went stale is 'stale', not
+ * 'approved': the export gate refuses it, and a board that called it approved
+ * was greener than the gate. The route used to carry its own copy with this
+ * order while this function put approval above staleness and contradictions
+ * above staleness — so AnA and the board disagreed on the same row.
+ */
+export function deriveBuildState(ctx: {
   sourceObjectCount: number;
+  uploadedSourceCount?: number;
   compiled: boolean;
-  hasArtifact: boolean;
   isStale: boolean;
   hasContradictions: boolean;
-  approvalState: string;
+  approvalState: string | null;
+  artifactStatus: string | null;
 }): Module3BuildState {
-  if (ctx.approvalState === 'locked') return 'locked';
-  if (ctx.approvalState === 'approved') return 'approved';
-  if (ctx.approvalState === 'review') return 'review';
-  if (ctx.hasContradictions) return 'contradiction_flagged';
+  if (ctx.artifactStatus === 'locked' || ctx.approvalState === 'locked') return 'locked';
+  if (ctx.approvalState === 'approved' && !ctx.isStale) return 'approved';
+  if (ctx.artifactStatus === 'review' || ctx.approvalState === 'review') return 'review';
   if (ctx.isStale) return 'stale';
-  if (ctx.hasArtifact) return 'draft_artifact_created';
+  if (ctx.hasContradictions) return 'contradiction_flagged';
+  if (ctx.artifactStatus === 'draft' && ctx.compiled) return 'draft_artifact_created';
   if (ctx.compiled) return 'compiled';
-  if (ctx.sourceObjectCount > 0) return 'sources_uploaded';
+  if (ctx.sourceObjectCount > 0) return 'extraction_complete';
+  if ((ctx.uploadedSourceCount ?? 0) > 0) return 'sources_uploaded';
   return 'no_sources';
 }

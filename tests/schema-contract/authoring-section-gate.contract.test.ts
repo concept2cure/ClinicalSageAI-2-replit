@@ -195,6 +195,7 @@ beforeAll(async () => {
       // append-only triggers. Same position the durable applier uses.
       'db/migrations/20260817_doc_revisions_immutable_ledger.sql',
       'db/migrations/20260803_document_span_lineage.sql',
+      'migrations/20260907_span_lineage_accepted_machine_draft.sql',
       'db/migrations/20260725_authoring_audit_trail.sql',
       // The gate's decision is decideAuthoringPermission's — one object-level
       // rule set shared with the canonical middleware — and that query reads

@@ -3745,6 +3745,13 @@ export const qcTesting = pgTable(
       .notNull()
       .references(() => organizations.id),
     sampleId: text('sample_id').notNull(),
+    /* The batch the sample represents — what §3.2.S.4.4 / §3.2.P.5.4 report
+       results BY, and what a capability index is computed across. Nullable:
+       an in-process or cleaning sample may have none. */
+    batchNumber: text('batch_number'),
+    /* The program the result files under. Stored, so the Module 3 link reads
+       the row's own project rather than whatever a later request names. */
+    projectId: text('project_id'),
     sampleType: text('sample_type').notNull(), // raw-material, in-process, finished-product
     testMethod: text('test_method').notNull(),
     testResults: json('test_results'),

@@ -16,6 +16,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { AppMentionMenu, insertMention, mentionTokenAt, useAppMentions } from '../appMentions';
+import { searchSlashCommands } from '@shared/ana/slash-commands';
 import { findCallableApp, searchCallableApps } from '@shared/navigation/callable-apps';
 
 function Host({ onSend }: { onSend: (t: string) => void }) {
@@ -45,20 +46,35 @@ const type = (el: HTMLTextAreaElement, value: string) => {
 afterEach(() => cleanup());
 
 describe('mentionTokenAt / insertMention', () => {
-  it('sees a token only when the caret is inside an @word at the start or after whitespace', () => {
-    expect(mentionTokenAt('@bio', 4)).toEqual({ start: 0, query: 'bio' });
-    expect(mentionTokenAt('size it with @Bios', 18)).toEqual({ start: 13, query: 'Bios' });
+  it('sees an app token only when the caret is inside an @word at the start or after whitespace', () => {
+    expect(mentionTokenAt('@bio', 4)).toEqual({ kind: 'app', start: 0, query: 'bio' });
+    expect(mentionTokenAt('size it with @Bios', 18)).toEqual({ kind: 'app', start: 13, query: 'Bios' });
     expect(mentionTokenAt('mail ana@concept', 16)).toBeNull();
     // Labels contain spaces ("Biostatistics workbench"), so the query may too;
     // a query no app matches simply offers nothing. A newline ends it.
-    expect(mentionTokenAt('@bio done', 9)).toEqual({ start: 0, query: 'bio done' });
+    expect(mentionTokenAt('@bio done', 9)).toEqual({ kind: 'app', start: 0, query: 'bio done' });
     expect(mentionTokenAt('@bio\ndone', 9)).toBeNull();
     expect(mentionTokenAt('no at sign', 10)).toBeNull();
+    // A completed mention (label + trailing space) is finished text — seen in
+    // the browser: the caret landing after an insertion reopened the menu.
+    const done = `@${findCallableApp('Labeling')!.label} `;
+    expect(mentionTokenAt(done, done.length)).toBeNull();
+    expect(mentionTokenAt(done + 'x', done.length + 1)).toEqual({ kind: 'app', start: 0, query: 'Labeling x' });
+  });
+
+  it('sees a command token only as the first word of the draft — where the server reads it', () => {
+    expect(mentionTokenAt('/', 1)).toEqual({ kind: 'slash', start: 0, query: '' });
+    expect(mentionTokenAt('/sa', 3)).toEqual({ kind: 'slash', start: 0, query: 'sa' });
+    expect(mentionTokenAt('/sap now', 8)).toBeNull();
+    expect(mentionTokenAt('run /sap', 8)).toBeNull();
+    expect(mentionTokenAt(' /sap', 5)).toBeNull();
   });
 
   it('inserts the label with a trailing space and reports the caret after it', () => {
     const app = findCallableApp('Labeling')!;
     expect(insertMention('check @lab please', 6, 10, app)).toEqual({ value: 'check @Labeling  please', caret: 6 + '@Labeling '.length });
+    const cmd = searchSlashCommands('sap')[0];
+    expect(insertMention('/sa', 0, 3, { kind: 'slash', key: cmd.name, cmd })).toEqual({ value: '/sap ', caret: 5 });
   });
 });
 
@@ -76,6 +92,11 @@ describe('useAppMentions in a composer', () => {
     const first = searchCallableApps('bio')[0];
     expect(ta.value).toBe(`@${first.label} `);
     expect(screen.queryByRole('listbox')).toBeNull();
+    // The caret then lands after the inserted text (a select event, as in the
+    // browser) — the menu must stay closed rather than reopen on the label.
+    ta.setSelectionRange(ta.value.length, ta.value.length);
+    fireEvent.select(ta);
+    expect(screen.queryByRole('listbox')).toBeNull();
   });
 
   it('arrow keys move the highlight and Escape closes without inserting', () => {
@@ -89,6 +110,24 @@ describe('useAppMentions in a composer', () => {
     fireEvent.keyDown(ta, { key: 'Escape' });
     expect(screen.queryByRole('listbox')).toBeNull();
     expect(ta.value).toBe('@');
+  });
+
+  it('typing / at the start lists the commands the server parses and Enter inserts one', () => {
+    const sent: string[] = [];
+    render(<Host onSend={(t) => sent.push(t)} />);
+    const ta = screen.getByLabelText('Message') as HTMLTextAreaElement;
+    type(ta, '/pow');
+    const list = screen.getByRole('listbox');
+    expect(list.getAttribute('aria-label')).toBe('Commands');
+    expect(screen.getAllByRole('option')[0].textContent).toContain('/power');
+    fireEvent.keyDown(ta, { key: 'Enter' });
+    expect(sent).toEqual([]);
+    expect(ta.value).toBe('/power ');
+    // Once the command has its space, the menu is gone and Enter sends.
+    type(ta, '/power ');
+    expect(screen.queryByRole('listbox')).toBeNull();
+    fireEvent.keyDown(ta, { key: 'Enter' });
+    expect(sent).toEqual(['/power ']);
   });
 
   it('an unknown query offers nothing and Enter sends as usual', () => {

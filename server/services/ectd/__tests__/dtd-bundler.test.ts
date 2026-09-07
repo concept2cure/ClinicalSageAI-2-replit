@@ -13,6 +13,9 @@ import {
   listVendoredDtds,
   assessDtdReadiness,
   dtdRequiredFromEnv,
+  ICH_BACKBONE_STYLESHEET,
+  requiredStylesheetsForRegion,
+  listVendoredStylesheets,
 } from '../dtd-bundler';
 
 describe('requiredDtdsForRegion', () => {
@@ -77,6 +80,7 @@ describe('assessDtdReadiness', () => {
     const r = assessDtdReadiness({
       region: 'ema',
       present: [ICH_BACKBONE_DTD, 'eu-regional.dtd'],
+      presentStylesheets: ['ectd-2-0.xsl'],
       environment: 'production',
       requireDtd: true,
     });
@@ -117,6 +121,7 @@ describe('assessDtdReadiness', () => {
     const r = assessDtdReadiness({
       region: 'fda',
       present: ['ICH-ECTD-3-2.DTD', 'US-REGIONAL-V3-3.DTD'],
+      presentStylesheets: ['ECTD-2-0.XSL', 'US-REGIONAL.XSL'],
       environment: 'production',
       requireDtd: true,
     });
@@ -129,5 +134,68 @@ describe('dtdRequiredFromEnv', () => {
     expect(dtdRequiredFromEnv({ ECTD_REQUIRE_DTD: 'true' } as NodeJS.ProcessEnv)).toBe(true);
     expect(dtdRequiredFromEnv({ ECTD_REQUIRE_DTD: 'false' } as NodeJS.ProcessEnv)).toBe(false);
     expect(dtdRequiredFromEnv({} as NodeJS.ProcessEnv)).toBe(false);
+  });
+});
+
+describe('stylesheet self-containment — the second hole the DTD gate did not cover', () => {
+  // The FDA backbone emits <?xml-stylesheet href="…/util/style/us-regional.xsl"?>
+  // and index.xml references util/style/ectd-2-0.xsl, yet nothing bundled *.xsl
+  // and the readiness gate only ever looked at *.dtd. A package could clear the
+  // gate while referencing a stylesheet it did not contain. Stylesheets are now
+  // part of the same self-containment verdict, under the same flag.
+  it('requires the ICH stylesheet everywhere and the FDA regional stylesheet only for fda', () => {
+    expect(requiredStylesheetsForRegion('fda')).toEqual([ICH_BACKBONE_STYLESHEET, 'us-regional.xsl']);
+    expect(requiredStylesheetsForRegion('ema')).toEqual([ICH_BACKBONE_STYLESHEET]);
+    expect(requiredStylesheetsForRegion('kr')).toEqual([ICH_BACKBONE_STYLESHEET]);
+  });
+
+  it('listVendoredStylesheets lists only *.xsl and returns [] for a missing directory', async () => {
+    expect(await listVendoredStylesheets(path.join(os.tmpdir(), 'no-such-' + Date.now()))).toEqual([]);
+    const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'xsl-test-'));
+    try {
+      await fs.writeFile(path.join(dir, 'ectd-2-0.xsl'), '<xsl:stylesheet/>');
+      await fs.writeFile(path.join(dir, 'ich-ectd-3-2.dtd'), '<!-- dtd -->');
+      await fs.writeFile(path.join(dir, 'notes.txt'), 'x');
+      const out = await listVendoredStylesheets(dir);
+      expect(out.map((f) => f.fileName)).toEqual(['ectd-2-0.xsl']);
+      expect(out[0].bytes.toString()).toBe('<xsl:stylesheet/>');
+    } finally {
+      await fs.rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('a production package with every DTD but no stylesheet is NOT self-contained when required', () => {
+    const r = assessDtdReadiness({
+      region: 'fda',
+      present: [ICH_BACKBONE_DTD, 'us-regional-v3-3.dtd'],
+      environment: 'production',
+      requireDtd: true,
+    });
+    expect(r.missing).toEqual([]); // the DTD side is complete —
+    expect(r.missingStylesheets).toEqual([ICH_BACKBONE_STYLESHEET, 'us-regional.xsl']); // — the stylesheet side is not
+    expect(r.selfContained).toBe(false);
+    expect(r.cleared).toBe(false);
+    expect(r.blockers[0]).toContain('ectd-2-0.xsl');
+  });
+
+  it('clears once the stylesheets are present too, matching names case-insensitively', () => {
+    const r = assessDtdReadiness({
+      region: 'fda',
+      present: [ICH_BACKBONE_DTD, 'us-regional-v3-3.dtd'],
+      presentStylesheets: ['ECTD-2-0.XSL', 'us-regional.xsl'],
+      environment: 'production',
+      requireDtd: true,
+    });
+    expect(r.missingStylesheets).toEqual([]);
+    expect(r.selfContained).toBe(true);
+    expect(r.cleared).toBe(true);
+  });
+
+  it('report-only when not required: names the missing stylesheets but does not block', () => {
+    const r = assessDtdReadiness({ region: 'ema', present: [], environment: 'production', requireDtd: false });
+    expect(r.cleared).toBe(true);
+    expect(r.selfContained).toBe(false);
+    expect(r.requiredStylesheets).toEqual([ICH_BACKBONE_STYLESHEET]);
+    expect(r.missingStylesheets).toEqual([ICH_BACKBONE_STYLESHEET]);
   });
 });

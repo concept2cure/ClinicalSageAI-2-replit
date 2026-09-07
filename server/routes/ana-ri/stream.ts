@@ -304,6 +304,7 @@ export function mountStreamRoute(router: Router): void {
             organizationId: orgId,
             userId: userId || null,
             projectId: streamProjectId ? Number(streamProjectId) || null : null,
+            projectRef: streamProjectId ? String(streamProjectId) : null,
           });
           const parsed = JSON.parse(resultStr);
           if (parsed?.status === 'intelligence_question' && parsed.question) {
@@ -312,6 +313,10 @@ export function mountStreamRoute(router: Router): void {
                 type: 'intelligence_question',
                 question: parsed.question,
                 flowState: parsed.flowState,
+                /* The durable interview session. A client that carries this
+                   back as session_id on each answer keeps the interview
+                   across a dropped conversation; flow_state alone does not. */
+                sessionId: parsed.session_id ?? null,
               })}\n\n`
             );
             res.write(
@@ -328,6 +333,7 @@ export function mountStreamRoute(router: Router): void {
                 type: 'intelligence_flow_complete',
                 completion: parsed.completion,
                 flowState: parsed.flowState,
+                sessionId: parsed.session_id ?? null,
               })}\n\n`
             );
             res.write(
@@ -1133,6 +1139,7 @@ export function mountStreamRoute(router: Router): void {
                     organizationId: orgId,
                     userId: userId || null,
                     projectId: streamProjectId ? Number(streamProjectId) || null : null,
+                    projectRef: streamProjectId ? String(streamProjectId) : null,
                     // Lets navigate_to tell the model the truth about what its
                     // directive does this turn (applied live vs offered chip).
                     liveDrive: driveState.enabled,
@@ -1284,6 +1291,7 @@ export function mountStreamRoute(router: Router): void {
                       type: 'intelligence_question',
                       question: parsed.question,
                       flowState: parsed.flowState,
+                      sessionId: parsed.session_id ?? null,
                     })}\n\n`
                   );
                 }
@@ -1293,6 +1301,7 @@ export function mountStreamRoute(router: Router): void {
                       type: 'intelligence_flow_complete',
                       completion: parsed.completion,
                       flowState: parsed.flowState,
+                      sessionId: parsed.session_id ?? null,
                     })}\n\n`
                   );
                 }

@@ -11,6 +11,7 @@
 import { describe, it, expect } from 'vitest';
 import path from 'node:path';
 import os from 'node:os';
+import fs from 'node:fs';
 import {
   getDocumentCoverage,
   buildCoverageReport,
@@ -182,6 +183,72 @@ describe('Registry coverage', () => {
       for (const r of report.byRegion) {
         expect(r.productionReady + r.buildable + r.catalogOnly).toBe(r.total);
       }
+    });
+  });
+});
+
+describe('human review is reported separately from integrity-backed fill', () => {
+  // officialAssetTrusted says the official edition is installed and its bytes
+  // verify. It does NOT say a named person has confirmed the field map lands
+  // values in the right boxes — for the XFA forms the map lives in code and the
+  // manifest's reviewedBy is still null. A client-facing readiness signal must
+  // keep those two facts apart, so `reviewer` and `formsHumanReviewed` carry
+  // the second one and never borrow the first.
+  function withManifests(manifests: Record<string, unknown>, run: () => void) {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'c2c-review-'));
+    const previous = process.env.IND_FORM_TEMPLATES_DIR;
+    process.env.IND_FORM_TEMPLATES_DIR = dir;
+    try {
+      for (const [formId, manifest] of Object.entries(manifests)) {
+        fs.writeFileSync(path.join(dir, `${formId}.pdf.manifest.json`), JSON.stringify(manifest));
+      }
+      run();
+    } finally {
+      if (previous === undefined) delete process.env.IND_FORM_TEMPLATES_DIR;
+      else process.env.IND_FORM_TEMPLATES_DIR = previous;
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
+  }
+  const byNumber = (cov: ReturnType<typeof getDocumentCoverage>, n: string) =>
+    cov!.requiredForms.find((f) => f.formNumber === n)!;
+
+  it('names the reviewer per form, treats an empty reviewer as none, and does not claim review across the filing', () => {
+    withManifests(
+      {
+        FDA_1572: { reviewedBy: 'reviewer@example.test' },
+        FDA_1571: { reviewedBy: null },
+        FDA_3674: { reviewedBy: '' },
+      },
+      () => {
+        const cov = getDocumentCoverage('US_IND')!;
+        expect(byNumber(cov, '1572').reviewer).toBe('reviewer@example.test');
+        expect(byNumber(cov, '1571').reviewer).toBeNull();
+        expect(byNumber(cov, '3674').reviewer).toBeNull();
+        expect(cov.formsHumanReviewed).toBe(false);
+      },
+    );
+  });
+
+  it('claims human review for the filing only when every required form names a reviewer', () => {
+    withManifests(
+      {
+        FDA_1572: { reviewedBy: 'a@example.test' },
+        FDA_1571: { reviewedBy: 'b@example.test' },
+        FDA_3674: { reviewedBy: 'c@example.test' },
+      },
+      () => {
+        const cov = getDocumentCoverage('US_IND')!;
+        expect(cov.requiredForms.every((f) => f.reviewer !== null)).toBe(true);
+        expect(cov.formsHumanReviewed).toBe(true);
+      },
+    );
+  });
+
+  it('a form with no manifest at all has no reviewer', () => {
+    withManifests({}, () => {
+      const cov = getDocumentCoverage('US_IND')!;
+      expect(cov.requiredForms.every((f) => f.reviewer === null)).toBe(true);
+      expect(cov.formsHumanReviewed).toBe(false);
     });
   });
 });

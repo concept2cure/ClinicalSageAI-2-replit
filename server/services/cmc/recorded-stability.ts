@@ -372,7 +372,7 @@ export async function assessRecordedPoolability(
        whole attribute failing with one opaque message. */
     const contributing: Array<{ batchId: string; data: Array<{ time: number; value: number }> }> = [];
     const excluded: Array<{ batchId: string; reason: string }> = [];
-    const criteria: Array<{ batchId: string; limit: number; direction: 'increasing' | 'decreasing' }> = [];
+    const criteria: Array<{ batchId: string } & ParsedAcceptanceCriterion> = [];
 
     for (const { study, byParameter } of perStudy) {
       const batchId = String(study.batchNumber);
@@ -413,7 +413,9 @@ export async function assessRecordedPoolability(
        one line is being fitted to two different acceptance criteria and any
        pooled shelf life would be against a limit that no batch was actually
        judged by. Report the conflict; do not pick one. */
-    const distinctCriteria = Array.from(new Set(criteria.map(c => `${c.direction}:${c.limit}`)));
+    /* Keyed on the WHOLE criterion: two batches recorded against "4.5 - 6.0"
+       and "4.5 - 6.5" share a lower bound and used to pool as if they agreed. */
+    const distinctCriteria = Array.from(new Set(criteria.map(c => `${c.direction}:${c.limit}:${c.upperLimit ?? ''}`)));
     if (distinctCriteria.length > 1) {
       assessments.push({
         parameter,
@@ -427,17 +429,35 @@ export async function assessRecordedPoolability(
       continue;
     }
 
-    const { limit, direction } = criteria[0];
+    const { limit, direction, upperLimit, twoSided } = criteria[0];
     try {
-      const result = assessBatchPoolability({ batches: contributing, specLimit: limit, direction, maxTime });
+      /* A two-sided criterion has two ways to fail. As in estimateRecordedShelfLife,
+         every bound it sets is evaluated and the shorter (limiting) pooled shelf
+         life is reported — this sibling used to discard the upper bound, so a
+         pH drifting upward pooled to the full Q1E allowance against 4.5. */
+      const bounds: Array<{ specLimit: number; direction: 'decreasing' | 'increasing' }> = [{ specLimit: limit, direction }];
+      if (twoSided && upperLimit !== null) bounds.push({ specLimit: upperLimit, direction: 'increasing' });
+      const runs = bounds.map((b) => ({ ...b, result: assessBatchPoolability({ batches: contributing, specLimit: b.specLimit, direction: b.direction, maxTime }) }));
+      const limiting = runs.reduce((a, b) => (b.result.shelfLife < a.result.shelfLife ? b : a));
       assessments.push({
         parameter,
         assessable: true,
-        specLimit: limit,
-        direction,
+        specLimit: limiting.specLimit,
+        direction: limiting.direction,
         contributingBatches: contributing.map(c => c.batchId),
         excludedBatches: excluded,
-        ...result,
+        ...(twoSided && upperLimit !== null
+          ? {
+              acceptanceCriterion: {
+                lowerLimit: limit,
+                upperLimit,
+                twoSided: true,
+                boundsEvaluated: runs.map((r) => ({ specLimit: r.specLimit, direction: r.direction, shelfLife: r.result.shelfLife })),
+                limitingBound: limiting.direction === 'increasing' ? 'upper' : 'lower',
+              },
+            }
+          : {}),
+        ...limiting.result,
       });
     } catch (e) {
       assessments.push({
@@ -700,9 +720,10 @@ export async function estimateRecordedShelfLife(
 /* ── Out-of-trend assessment over a RECORDED study ──────────────────────────
    The trend engine (stability-trending.ts) is pure and takes a parsed
    criterion. This is the one place the recorded results are read, grouped by
-   attribute and condition, and handed to it — the HTTP route, AnA and the
-   Module 3 composer all call this, so a series is judged the same way
-   wherever the question is asked. Synchronous, because the composer is. */
+   attribute and condition, and handed to it. The Module 3 composer calls it
+   for §3.2.S.7 / §3.2.P.8; an HTTP route or AnA tool that asks the same
+   question must call this, not the engine, so a series is judged the same
+   way wherever it is asked. Synchronous, because the composer is. */
 
 export interface RecordedTrendingStudy {
   id: number | string;

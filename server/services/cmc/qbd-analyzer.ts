@@ -118,6 +118,11 @@ export async function analyzeQbdFromSources(
   const unavailable: Partial<Record<QbdInputKey, string>> = {};
 
   // Run every read in parallel.
+      // Org-scoped as well as project-scoped. `cmc_projects.id` is a shared
+      // uuid space across tenants and the project id comes from the caller, so
+      // the project filter alone let any organization read another sponsor's
+      // register through this analysis. quality_specifications carries
+      // `tenant_id`; the other three carry `organization_id`.
   const [specs, methods, stabilityResult, processes, drugSubs, sourceObjects] = await Promise.all([
     safeQuery(pool, unavailable, 'specs', `
       SELECT material_type AS "materialType",
@@ -125,16 +130,16 @@ export async function analyzeQbdFromSources(
              test_parameters AS "testParameters",
              acceptance_criteria AS "acceptanceCriteria"
       FROM quality_specifications
-      WHERE project_id = $1::text::uuid
-    `, [projectIdParam]),
+      WHERE project_id = $1::text::uuid AND tenant_id::text = $2
+    `, [projectIdParam, String(orgId)]),
     safeQuery(pool, unavailable, 'methods', `
       SELECT method_name AS "methodName",
              method_type AS "methodType",
              purpose,
              validation_status AS "validationStatus"
       FROM analytical_methods
-      WHERE project_id = $1::text::uuid
-    `, [projectIdParam]),
+      WHERE project_id = $1::text::uuid AND organization_id = $2
+    `, [projectIdParam, orgId]),
     // Stability comes from the canonical project-scoped source-object store.
     // `public.stability_studies` has no `project_id` column (it is org-scoped)
     // and no `study_name` / `storage_condition` / `results` columns, so the
@@ -147,15 +152,15 @@ export async function analyzeQbdFromSources(
              critical_process_parameters AS "criticalProcessParameters",
              process_controls AS "processControls"
       FROM manufacturing_processes
-      WHERE project_id = $1::text::uuid
-    `, [projectIdParam]),
+      WHERE project_id = $1::text::uuid AND organization_id = $2
+    `, [projectIdParam, orgId]),
     safeQuery(pool, unavailable, 'drugSubs', `
       SELECT substance_name AS "substanceName",
              impurities,
              characterization_data AS "characterizationData"
       FROM drug_substances
-      WHERE project_id = $1::text::uuid
-    `, [projectIdParam]),
+      WHERE project_id = $1::text::uuid AND organization_id = $2
+    `, [projectIdParam, orgId]),
     safeQuery(pool, unavailable, 'sourceObjects', `
       SELECT source_type AS "sourceType",
              source_payload AS "sourcePayload"
