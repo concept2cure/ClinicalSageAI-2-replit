@@ -32,7 +32,7 @@
  * runs only when `onKeyDown` returns false.
  */
 import React, { useCallback, useMemo, useState } from 'react';
-import { searchCallableApps, type CallableApp } from '@shared/navigation/callable-apps';
+import { findCallableApp, searchCallableApps, type CallableApp } from '@shared/navigation/callable-apps';
 import { searchSlashCommands, type SlashCommand } from '@shared/ana/slash-commands';
 import { I } from './icons';
 
@@ -53,7 +53,13 @@ export type MentionItem =
 export function mentionTokenAt(value: string, caret: number): MentionToken | null {
   const before = value.slice(0, Math.max(0, caret));
   const at = /(?:^|[\s(])@([^@\n]{0,40})$/.exec(before);
-  if (at) return { kind: 'app', start: before.length - at[1].length - 1, query: at[1] };
+  if (at) {
+    // `@<label> ` — a completed mention with its trailing space — is finished
+    // text, not a query. Without this the caret landing after an insertion
+    // re-reads the label and reopens the menu on its own exact match.
+    if (/\s$/.test(at[1]) && findCallableApp(at[1])) return null;
+    return { kind: 'app', start: before.length - at[1].length - 1, query: at[1] };
+  }
   // A command only counts at the very start of the draft — where the server reads it.
   const slash = /^\/([a-z0-9-]{0,24})$/i.exec(before);
   if (slash) return { kind: 'slash', start: 0, query: slash[1] };

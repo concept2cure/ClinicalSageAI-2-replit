@@ -1195,6 +1195,34 @@ describe('AnA RI Context Enrichment', () => {
     expect(result.enrichmentMeta?.sourcesFailed).not.toContain('slash_unhandled:preflight');
   });
 
+  it('reads an @app mention with NO project — the front-door composer — into the block and the rewrite', async () => {
+    // Seen in the browser: the home composer offers the menu with no program
+    // open, and the project-less enrichment path returned before the mention
+    // was read, so the model was never told which app was invoked.
+    const result = await enrichContextForChat({ message: '@biostats size a two-arm superiority study' });
+    expect(result.enrichmentMeta?.triggerType).toBe('app_mention');
+    expect(result.enrichmentMeta?.detectedAppMention).toBe('biostat-workbench');
+    expect(result.sources).toContain('app:biostat-workbench');
+    expect(result.block).toContain('=== INVOKED APPS');
+    expect(result.block).toContain('Biostatistics workbench (id: biostat-workbench)');
+    expect(result.rewrittenMessage).toBe('size a two-arm superiority study');
+  });
+
+  it('with a project, an @app mention also attempts the app\'s data enrichment, by any handle, anywhere in the text', async () => {
+    const result = await enrichContextForChat({
+      message: 'please ask @Biostatistics workbench about the interim',
+      projectId: 123,
+      organizationId: 456,
+      submissionType: 'ind',
+    });
+    expect(result.enrichmentMeta?.triggerType).toBe('app_mention');
+    expect(result.enrichmentMeta?.detectedAppMention).toBe('biostat-workbench');
+    expect(result.block).toContain('=== INVOKED APPS');
+    const attempted = [...(result.sources ?? []), ...(result.enrichmentMeta?.sourcesFailed ?? [])];
+    expect(attempted.some((x) => x.startsWith('app:biostat-workbench/biostatistics'))).toBe(true);
+    expect(result.rewrittenMessage).toBe('please ask about the interim');
+  });
+
   it('supports deterministic draft slash enrichment', async () => {
     const result = await enrichContextForChat({
       message: '/draft clinical overview',
