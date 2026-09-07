@@ -315,29 +315,9 @@ export async function abandonInterviewSession(
   return mapRow(rows[0]);
 }
 
-/**
- * Does this project belong to the tenant? A program (regulatory_programs,
- * uuid) or a legacy project (projects, integer) — compared as text so a
- * numeric id never raises a uuid cast error. A session bound to a project at
- * commit time must be bound to one of the tenant's own.
- */
-export async function projectBelongsToTenant(
-  params: { organizationId: number | string | null | undefined; projectId: string },
-  q?: Queryable,
-): Promise<boolean> {
-  const organizationId = assertOrganizationId(params.organizationId);
-  const projectId = String(params.projectId ?? '').trim();
-  if (!projectId) return false;
-  const db = await resolveQueryable(q);
-  const { rows } = await db.query(
-    `SELECT 1 AS present FROM regulatory_programs WHERE id::text = $1 AND organization_id = $2
-     UNION ALL
-     SELECT 1 AS present FROM projects WHERE id::text = $1 AND organization_id = $2
-     LIMIT 1`,
-    [projectId, organizationId],
-  );
-  return rows.length > 0;
-}
+/* The tenant check lives with the other caller (the Module 3 link) in
+   project-membership.ts; re-exported so this module's callers keep one import. */
+export { projectBelongsToTenant } from './project-membership';
 
 /**
  * complete → committing: the session is held for ONE commit. A second commit
