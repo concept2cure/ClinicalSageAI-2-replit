@@ -598,3 +598,108 @@ Steps 2, 3 and 5 remain exactly as §2 describes.
 §10 reported a pre-existing failure in `module3-extensions`. The fix
 (`166224ac2`) was already in the tree when §10 was pushed; the orchestrator
 file was not re-run after the final merge. §10 has been amended in place.
+
+---
+
+## 12. Decisions taken under delegation — 2026-09-07
+
+JM delegated the open decisions with two criteria: best long-term client
+results, and limited resources. These are the choices, the reasons, and what
+was done. Every executable decision was implemented with its tests written
+first and seen failing against the unchanged code.
+
+### D1 — Option B stays for FDA 1571 and 3674; the reconstruction remains the fallback
+
+Chosen because the client outcome is strictly better: a sponsor receives the
+genuine FDA form, pre-populated from the program record, that opens in Acrobat
+for them to finish and sign — instead of a labeled drawing nobody can file.
+The work exists, its tests pass, the eSTAR path it shares a filler with is
+unregressed, and the encryption-layer hazard was measured closed (§11). The
+cost of keeping it is maintenance on template-edition changes, the same burden
+the AcroForm maps already carry.
+
+What it does not yet have is a named person who has opened a filled 1571 in
+Acrobat and confirmed the boxes. That is not fabricated here: both manifests
+keep `reviewedBy: null`, and the coverage report now says so (D3). The one
+residual risk — Acrobat's own XFA runtime — is closed by that same review, a
+few minutes' work for whoever has Acrobat, once per template edition.
+
+Section B's Option B rule asked for a fail-closed spike, and the implementation
+deliberately does not fail closed on an unplaced required field. Accepted, on
+its own reasoning: the output is the live, unflattened form, so an empty box is
+the sponsor's to complete, and `unmappedFields` names every one. The Click 2
+surface must show that list; that is Phase 2's job.
+
+### D2 — Stylesheet self-containment, built now; the files follow
+
+The US regional backbone referenced `../util/style/us-regional.xsl` — the same
+one-level-short path its DOCTYPE had already been corrected for — `index.xml`
+carried no stylesheet reference at all, and nothing bundled a stylesheet into
+any package. eValidator flags a reference a package cannot resolve, and Click
+4's acceptance criterion cannot be met without one. That is a
+submission-blocking defect, so it was fixed without waiting for the files:
+
+- `dtd-bundler.ts` — the self-containment gate requires `ectd-2-0.xsl` for
+  every region and `us-regional.xsl` for FDA, alongside the DTDs. One flag
+  (`ECTD_REQUIRE_DTD`), one drop-point (`assets/ectd-dtd/`), one verdict.
+  A caller that omits the stylesheet list cannot clear the gate by omission.
+- `regional-packager.ts` — bundles `*.xsl` into `util/style/` and checksums
+  them into `util/index-md5.txt`; the FDA PI now climbs two levels;
+  `index.xml` carries `<?xml-stylesheet href="util/style/ectd-2-0.xsl"?>`.
+- `ectd-structural-validator.ts` — warns on a stylesheet reference with
+  nothing under `util/style/`, as it already did for DTDs.
+- `checksum-manifest.ts` — `*.xsl` is in the default extension set, so an
+  unlisted or tampered stylesheet is reported exactly like a DTD.
+
+Only the FDA backbone emits a stylesheet PI, so only FDA requires the regional
+stylesheet. Requiring one for a backbone that never references it would
+over-block; the map is extended in the same change that adds a PI elsewhere.
+
+The two `.xsl` files still need a network-permitted machine (§2). Until they
+land, every package reports `selfContained: false` with the stylesheet names in
+the blocker — the honest state, and exactly how the DTD gate has behaved.
+
+### D3 — The coverage report tells clients two facts, not one
+
+`getDocumentCoverage(...).formsFullyBacked` required `officialAssetTrusted`
+for every form, and for the XFA forms that was earned by a code-reviewed map
+plus a byte check — with no human reviewer at all — while its doc comment read
+"installed and reviewed for filling". A client-facing readiness signal cannot
+conflate those.
+
+`formsFullyBacked` keeps its meaning: installed, integrity-verified, fillable.
+Each required form now also carries `reviewer` (the manifest's `reviewedBy`, or
+null), and the filing carries `formsHumanReviewed`. For US IND today that reads
+backed, not yet human-reviewed. JM's Acrobat check on 1571 and 3674 flips it by
+naming a reviewer on those two manifests, and nothing else does.
+
+### Not done, and why
+
+- **Vendoring the DTDs and stylesheets** — needs egress this environment does
+  not have. The runbook, README and `checksums.txt` are updated so it is a
+  checklist, not an investigation; two stale statements that the files are
+  "not committed" and kept out by `.gitignore` were corrected — they are
+  committed, per the README's own policy and the actual `.gitignore`.
+- **Legal clearance** — FDA/ICH redistribution and the decrypted form assets.
+  A conversation, not code. Flagged in §5 and §8; unchanged.
+- **eValidator Basic** — Windows and a LORENZ ID.
+- **Phase 2 clicks** — each one's definition of done is JM in a browser.
+  Starting one without him closes nothing.
+
+### Verified
+
+Fifteen tests written first; fourteen failed against the unchanged code (the
+fifteenth is a negative case that passes by construction until its positive
+twin exists), then:
+
+```
+five affected test files          147 / 147
+regression sweep                  197 files / 2213 tests   pass
+  (ectd, submission-gateways, ind-forms, forms, estar, regulatory,
+   orchestrator, HI-8 export hardening, ectd-compile spine)
+typecheck, scoped                 0 errors — the 11 changed files plus their
+                                  full transitive import closure, 9 GB heap
+                                  (tsconfig.check.json aborts at its 6 GB heap
+                                  on this 15 GB box; a memory limit, not a type
+                                  error)
+```

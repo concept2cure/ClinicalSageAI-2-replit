@@ -435,4 +435,74 @@ describe('module3OperatingSystemRoutes', () => {
     expect(res.body.data.incompleteApprovedSections).toEqual(['3.2.P.8']);
     expect(res.body.data.exportReady).toBe(false);
   });
+
+  describe('POST /sections/:projectId/:sectionKey/refresh — the record is the composer\'s, never the body\'s', () => {
+    /* One drug_substance source with only a name: §3.2.S.1 composes at well
+       under 100% with missing inputs. The request body claims 100% / none. */
+    const SOURCE = { id: 'so-1', sourceType: 'drug_substance', sourcePayload: { name: 'BX-701' }, sourceHash: 'h1' };
+    function scriptRefresh(statements: Array<{ text: string; params: unknown[] }>) {
+      mockQuery.mockImplementation(async (text: string, params: unknown[] = []) => {
+        statements.push({ text, params });
+        if (/SELECT id, deterministic_json, approval_state FROM cmc_module3_sections/.test(text)) {
+          return { rows: [{ id: 'sec-1', deterministic_json: { completeness: 40, missingInputs: ['manufacturer'] }, approval_state: 'approved' }] };
+        }
+        if (/FROM cmc_source_objects/.test(text)) return { rows: [SOURCE] };
+        if (/FROM regulatory_programs/.test(text)) return { rows: [] };
+        if (/INSERT INTO cmc_module3_sections/.test(text)) return { rows: [{ id: 'sec-1' }] };
+        return { rows: [], rowCount: 0 };
+      });
+    }
+
+    it('ignores a body that claims completeness, writes the composed record, rewrites lineage, records the refresh', async () => {
+      const statements: Array<{ text: string; params: unknown[] }> = [];
+      scriptRefresh(statements);
+
+      const res = await request(app)
+        .post('/api/cmc/module3-os/sections/proj-1/3.2.S.1/refresh')
+        .send({ deterministicJson: { completeness: 100, missingInputs: [] } });
+
+      expect(res.status).toBe(200);
+      expect(res.body.state).toBe('draft');
+      // The composer's verdict over one thin source, not the body's claim.
+      expect(res.body.completeness).toBeLessThan(100);
+      expect(res.body.missingInputs.length).toBeGreaterThan(0);
+
+      const upsert = statements.find(s => /INSERT INTO cmc_module3_sections/.test(s.text))!;
+      expect(upsert).toBeTruthy();
+      const written = JSON.parse(String(upsert.params[4]));
+      expect(written.completeness).toBe(res.body.completeness);
+      expect(written.missingInputs).toEqual(res.body.missingInputs);
+      expect(written.completeness).not.toBe(100);
+      // A refresh returns the section to draft under any approval it carried.
+      expect(upsert.text).toMatch(/approval_state = 'draft'/);
+      // Lineage is rewritten to the source actually read.
+      expect(statements.some(s => /DELETE FROM cmc_section_lineage/.test(s.text) && s.params[1] === 101)).toBe(true);
+      const lineage = statements.find(s => /INSERT INTO cmc_section_lineage/.test(s.text))!;
+      expect(lineage.params[2]).toBe('so-1');
+      // And the event says refreshed, with the prior approval state.
+      const event = statements.find(s => /INSERT INTO cmc_provenance_events/.test(s.text))!;
+      expect(event.params[3]).toBe('refreshed');
+      expect(JSON.parse(String(event.params[4])).priorApprovalState).toBe('approved');
+      expect(statements.some(s => s.text === 'COMMIT')).toBe(true);
+    });
+
+    it('refuses to refresh a project with no canonical sources rather than writing an empty section', async () => {
+      const statements: Array<{ text: string; params: unknown[] }> = [];
+      scriptRefresh(statements);
+      mockQuery.mockImplementation(async (text: string, params: unknown[] = []) => {
+        statements.push({ text, params });
+        if (/SELECT id, deterministic_json, approval_state FROM cmc_module3_sections/.test(text)) {
+          return { rows: [{ id: 'sec-1', deterministic_json: {}, approval_state: 'draft' }] };
+        }
+        return { rows: [], rowCount: 0 };
+      });
+
+      const res = await request(app).post('/api/cmc/module3-os/sections/proj-1/3.2.S.1/refresh').send({});
+
+      expect(res.status).toBe(409);
+      expect(res.body.error).toMatch(/No canonical source objects/);
+      expect(statements.some(s => /INSERT INTO cmc_module3_sections/.test(s.text))).toBe(false);
+      expect(statements.some(s => s.text === 'ROLLBACK')).toBe(true);
+    });
+  });
 });

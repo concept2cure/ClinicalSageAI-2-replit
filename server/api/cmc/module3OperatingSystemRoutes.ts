@@ -6,9 +6,8 @@ import {
   summarizeSectionDiff,
   createSourceHash,
 } from '../../services/cmc-module3-compiler';
-import { CMC_SOURCE_TYPES, composeModule3FromCanonicalSources, impactedSectionsForSourceType } from '../../services/module3Composer';
-import { composeAppendices, composeRegional, emittableAppendices } from '../../services/module3-extensions';
-import { regionCodeForPrimaryRegion, resolveSubmissionSpine } from '../../services/cmc/submission-spine';
+import { CMC_SOURCE_TYPES, impactedSectionsForSourceType } from '../../services/module3Composer';
+import { compiledRecordOf, composeProjectModule3, persistComposedSection } from '../../services/cmc/module3-compile';
 import { detectContradictions, deriveImpactTasks } from '../../services/cmc-impact-contradiction-engine';
 import { syncContradictionTasks } from '../../services/cmc/contradiction-tasks';
 import { buildCanonicalGovernedState } from '../../services/governed-ana-execution.js';
@@ -152,29 +151,20 @@ router.post('/compile/:projectId', async (req, res) => {
     const orgId = getOrgId(req);
     const projectIdRaw = req.params.projectId; const projectId = Array.isArray(projectIdRaw) ? projectIdRaw[0] : (projectIdRaw ?? "");
     await client.query('BEGIN');
-    const { rows } = await client.query(
-      `SELECT id, source_type as "sourceType", source_payload as "sourcePayload", source_hash as "sourceHash"
-       FROM cmc_source_objects
-       WHERE organization_id = $1 AND project_id = $2
-       ORDER BY updated_at DESC`,
-      [orgId, projectId]
-    );
 
-    // Refuse to compile from nothing.
-    //
-    // composeModule3FromCanonicalSources is MODULE3_SECTION_RULES.map(...) — it
-    // emits all 17 sections unconditionally, so zero sources still yields 17
-    // bodies reading "has no source data available", with completeness 0 and no
-    // lineage. The upsert below then writes `stale = false, stale_reason = NULL`
-    // and does not touch approval_state, so those empty bodies land marked
-    // not-stale over whatever approval state was already there — which is
-    // exactly what canFinalizeExport reads before releasing a Module 3.
-    //
-    // Compiling a project that has no canonical sources is never a legitimate
-    // request; it is either a mistake or a probe. 409 says so, instead of
-    // manufacturing seventeen empty-but-clean sections. The AnA command handler
-    // already guards this way (server/services/ana-ri/module3-command-handlers.ts).
-    if (rows.length === 0) {
+    /* One composition for the project — core sections, emittable 3.2.A
+       appendices and 3.2.R for the recorded region — and one persistence per
+       section (row, lineage, provenance), shared with /refresh and AnA's
+       refresh so no caller can write a section record the composer did not
+       produce. */
+    const { sources, sections: compiled } = await composeProjectModule3(client, orgId, projectId);
+
+    // Refuse to compile from nothing. Zero sources would still yield seventeen
+    // bodies reading "has no source data available" at completeness 0, landed
+    // not-stale over whatever approval state was already there — exactly what
+    // the export gate reads. Compiling a project with no canonical sources is
+    // never a legitimate request; 409 says so.
+    if (sources.length === 0) {
       await client.query('ROLLBACK');
       return res.status(409).json({
         success: false,
@@ -183,132 +173,9 @@ router.post('/compile/:projectId', async (req, res) => {
       });
     }
 
-    let compiled = composeModule3FromCanonicalSources(rows as any);
-
-    /* ── Appendices (3.2.A) ──
-       module3-extensions has carried generators for 3.2.A.1 Facilities,
-       3.2.A.2 Adventitious Agents and 3.2.A.3 Excipients since it was written,
-       and nothing in the product's own compile path ever called them: a product
-       using an animal-derived excipient could not produce the CTD section that
-       exists to declare it.
-
-       An OPTIONAL appendix with no matched source is not emitted at all.
-       composeAppendices scores an unmatched optional rule 100% complete, so
-       emitting it would put a fully-complete section into the dossier asserting
-       things about data nobody recorded — the precise hazard 3.2.A.3's own
-       fail-closed branch exists to avoid. A required appendix IS emitted, with
-       its honest incompleteness. */
-    try {
-      const appendices = emittableAppendices(composeAppendices(rows as any));
-      compiled = compiled.concat(appendices);
-    } catch (appendixErr) {
-      // Said, not swallowed — the same posture as the regional pass below.
-      console.warn(
-        '[module3-os] appendix (3.2.A) composition skipped:',
-        appendixErr instanceof Error ? appendixErr.message : String(appendixErr),
-      );
-    }
-
-    /* ── Regional Information (3.2.R) ──
-       The core composer deliberately owns only S/P/3.1/3.3 (defining R rules
-       there once produced duplicate appendix leaves and region leakage — see
-       the NOTE in MODULE3_SECTION_RULES); module3-extensions owns the
-       region-specific dispatch. Composed here for the REGION THE LINKED
-       SUBMISSION RECORDS, resolved through the same spine identity the eCTD
-       compile runs against — so the section the initial-sequence gate
-       requires ('3.2.R') is authorable, approvable and placeable through the
-       same lifecycle as every other Module 3 section. No spine, or a market
-       the composer has no generator for → nothing is composed: an honest gap
-       beats a guessed region's regional form in a filing. */
-    try {
-      const prog = await client.query(
-        `SELECT id, program_type AS "programType", product_name AS "productName", name, code
-           FROM regulatory_programs
-          WHERE id = $1 AND organization_id = $2`,
-        [projectId, orgId],
-      );
-      const p = prog.rows[0] as
-        | { id: string; programType: string | null; productName: string | null; name: string | null; code: string | null }
-        | undefined;
-      if (p) {
-        const spine = await resolveSubmissionSpine(
-          { programId: p.id, programType: p.programType, productName: p.productName, title: p.name, programCode: p.code },
-          orgId,
-        );
-        const region = regionCodeForPrimaryRegion(spine?.primaryRegion);
-        if (region) compiled = compiled.concat(composeRegional(rows as any, region));
-      }
-    } catch (regionalErr) {
-      // The core compose stands either way — but a skipped regional pass is
-      // SAID, not swallowed: the compile gate will name the missing 3.2.R.
-      console.warn(
-        '[module3-os] regional (3.2.R) composition skipped:',
-        regionalErr instanceof Error ? regionalErr.message : String(regionalErr),
-      );
-    }
-
+    const actorId = String((req as any).user?.id || 'system');
     for (const section of compiled) {
-      const upsert = await client.query(
-        `INSERT INTO cmc_module3_sections (organization_id, project_id, section_key, section_path, deterministic_json, narrative_text, compiled_hash, stale, stale_reason, approval_state)
-         VALUES ($1,$2,$3,$4,$5::jsonb,$6,$7,$8,$9,'draft')
-         ON CONFLICT (organization_id, project_id, section_key)
-         DO UPDATE SET deterministic_json = excluded.deterministic_json,
-                       compiled_hash = excluded.compiled_hash,
-                       stale = excluded.stale,
-                       stale_reason = excluded.stale_reason,
-                       narrative_text = excluded.narrative_text,
-                       updated_at = now()
-         RETURNING id`,
-        [
-          orgId,
-          projectId,
-          section.sectionKey,
-          section.sectionPath,
-          JSON.stringify({
-            ...section.structuredPayload,
-            completeness: section.completeness,
-            missingInputs: section.missingInputs,
-          }),
-          section.narrativeDraft,
-          createSourceHash(section.structuredPayload),
-          false,
-          null,
-        ]
-      );
-      const sectionId = upsert.rows[0]?.id;
-      if (!sectionId) continue;
-
-      // Scoped by org as well as section id. `sectionId` comes from the upsert's
-      // RETURNING, so before the arbiter carried organization_id this deleted the
-      // VICTIM's provenance rows — the traceability tying each Module 3 section
-      // back to the source objects it was compiled from.
-      await client.query(
-        `DELETE FROM cmc_section_lineage WHERE section_id = $1 AND organization_id = $2`,
-        [sectionId, orgId]
-      );
-      for (const lin of section.lineage) {
-        await client.query(
-          `INSERT INTO cmc_section_lineage (organization_id, section_id, source_object_id, source_hash_at_compile)
-           VALUES ($1, $2, $3, $4)`,
-          [orgId, sectionId, lin.sourceObjectId, lin.sourceHashAtCompile]
-        );
-      }
-      await client.query(
-        `INSERT INTO cmc_provenance_events (organization_id, project_id, artifact_type, artifact_id, event_type, event_payload, created_by)
-         VALUES ($1,$2,'section',$3,'compiled',$4::jsonb,$5)`,
-        [
-          orgId,
-          projectId,
-          sectionId,
-          JSON.stringify({
-            sectionKey: section.sectionKey,
-            completeness: section.completeness,
-            missingInputs: section.missingInputs,
-            narrativeMechanism: 'deterministic_with_ai_optional',
-          }),
-          (req as any).user?.id || 'system',
-        ]
-      );
+      await persistComposedSection(client, orgId, projectId, section, { actorId, event: 'compiled' });
     }
     await client.query('COMMIT');
 
@@ -896,44 +763,93 @@ router.post('/sections/:projectId/:sectionKey/approve', async (req, res) => {
   }
 });
 
+/**
+ * Refresh ONE section from the project's canonical sources.
+ *
+ * The body is not read. This route used to take `deterministicJson` from the
+ * request and write it verbatim — so a caller could write `completeness: 100,
+ * missingInputs: []` and the approve route and the export gate, which trust
+ * that record as the compiler's verdict, would let an empty section through
+ * to a §11 signature and a placed leaf without a compile. A refreshed record
+ * is only ever what the composer produced; the section returns to draft
+ * because its content changed under any approval it carried.
+ */
 router.post('/sections/:projectId/:sectionKey/refresh', async (req, res) => {
+  const pool = getPool();
+  const client = await pool.connect();
   try {
     const orgId = getOrgId(req);
     const { projectId, sectionKey } = req.params;
-    const pool = getPool();
-    const sectionRes = await pool.query(
+    await client.query('BEGIN');
+    const sectionRes = await client.query(
       `SELECT id, deterministic_json, approval_state FROM cmc_module3_sections
        WHERE organization_id = $1 AND project_id = $2 AND section_key = $3`,
       [orgId, projectId, sectionKey]
     );
     const section = sectionRes.rows[0];
-    if (!section) return res.status(404).json({ success: false, error: 'Section not found' });
+    if (!section) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({ success: false, error: 'Section not found' });
+    }
 
-    const payload = req.body?.deterministicJson || section.deterministic_json;
-    const diffSummary = summarizeSectionDiff(section.deterministic_json, payload);
-    await pool.query(
-      `UPDATE cmc_module3_sections
-       SET deterministic_json = $1::jsonb, approval_state = 'draft', stale = false, stale_reason = null, updated_at = NOW()
-       WHERE id = $2`,
-      [JSON.stringify(payload), section.id]
-    );
-    await pool.query(
-      `INSERT INTO cmc_provenance_events (organization_id, project_id, artifact_type, artifact_id, event_type, event_payload, created_by)
-       VALUES ($1,$2,'section',$3,'refreshed',$4::jsonb,$5)`,
-      [
-        orgId,
-        projectId,
-        section.id,
-        JSON.stringify({ sectionKey, diffSummary, priorApprovalState: section.approval_state }),
-        (req as any).user?.id || 'system',
-      ]
-    );
-    res.json({ success: true, sectionKey, state: 'draft', diffSummary });
+    const { sources, sections } = await composeProjectModule3(client, orgId, projectId);
+    if (sources.length === 0) {
+      await client.query('ROLLBACK');
+      return res.status(409).json({
+        success: false,
+        error: 'No canonical source objects for this project — there is nothing to refresh the section from.',
+      });
+    }
+    const composed = sections.find((s) => s.sectionKey === sectionKey);
+    if (!composed) {
+      await client.query('ROLLBACK');
+      return res.status(409).json({
+        success: false,
+        error: `Section ${sectionKey} is not composable from this project's sources (no rule, or no region), so it cannot be refreshed.`,
+      });
+    }
+
+    const diffSummary = summarizeSectionDiff(section.deterministic_json, compiledRecordOf(composed));
+    const actorId = String((req as any).user?.id || 'system');
+    await persistComposedSection(client, orgId, projectId, composed, {
+      actorId,
+      event: 'refreshed',
+      eventPayload: { diffSummary, priorApprovalState: section.approval_state },
+    });
+    await client.query('COMMIT');
+
+    /* The governed artifact follows the section, as it does after a compile. */
+    let bridged: { bridged: boolean; reason?: string; detail?: string } = { bridged: false, reason: 'not-attempted' };
+    try {
+      bridged = await bridgeCompileToArtifact(orgId, projectId, composed.sectionKey, {
+        narrativeDraft: composed.narrativeDraft,
+        tables: composed.tables,
+        completeness: composed.completeness,
+        missingInputs: composed.missingInputs,
+        lineage: composed.lineage,
+      }, { createdById: Number((req as any).user?.id) || null });
+    } catch (bridgeErr) {
+      bridged = { bridged: false, reason: 'error', detail: bridgeErr instanceof Error ? bridgeErr.message : String(bridgeErr) };
+    }
+
+    res.json({
+      success: true,
+      sectionKey,
+      state: 'draft',
+      completeness: composed.completeness,
+      missingInputs: composed.missingInputs,
+      diffSummary,
+      artifactBridged: bridged.bridged,
+      ...(bridged.bridged ? {} : { artifactBridgeSkipped: { reason: bridged.reason, detail: bridged.detail } }),
+    });
   } catch (error) {
+    await client.query('ROLLBACK');
     if ((error instanceof Error ? error.message : String(error)).includes('Organization context required')) {
       return res.status(401).json({ success: false, error: 'Organization context required' });
     }
     return serverError(res, logger, 'refreshing sections', error);
+  } finally {
+    client.release();
   }
 });
 

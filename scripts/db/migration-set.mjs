@@ -1384,6 +1384,18 @@ export const C2C_MIGRATION_FILES = [
   // so re-running is a no-op.
   'migrations/20260906c_draft_candidate_assertions.sql',
 
+  // ── Span lineage: accepted machine drafts are the machine's, not the author's ─
+  // Every governed write recorded each clause it could not tie to a Data Room
+  // source as the human actor's `author_assertion` — including the clauses AnA
+  // drafted and the human merely accepted — so the Data Origins panel and PDF
+  // read "Asserted by the author" over model prose. Adds the
+  // `accepted_machine_draft` kind (machine_author_id + the accepting human) by
+  // widening the two CHECKs with the DROP CONSTRAINT IF EXISTS / ADD CONSTRAINT
+  // idiom (RULE 1: a CHECK holds no data; re-running converges) and ADD COLUMN
+  // IF NOT EXISTS. Must run after db/migrations/20260803 (the table), which it
+  // does; guarded on the table existing.
+  'migrations/20260907_span_lineage_accepted_machine_draft.sql',
+
   // ── Apps catalog additions, GA ledger L40 (added 2026-08-14) ─────────────
   // Eight built, routed, API-backed surfaces that appeared in no catalog, so a
   // user could reach them only by knowing the URL. INSERT … ON CONFLICT DO

@@ -145,7 +145,7 @@ beforeAll(async () => {
   // organizations row for the FK, the evidence spine and the span-lineage store.
   await pglite.exec(`CREATE TABLE IF NOT EXISTS organizations (id SERIAL PRIMARY KEY, name TEXT);`);
   await pglite.exec(`INSERT INTO organizations (id, name) VALUES (1, 'org-1'), (9, 'org-9') ON CONFLICT DO NOTHING;`);
-  for (const rel of ['db/migrations/20260724_clinical_regulatory_evidence_spine.sql', 'db/migrations/20260803_document_span_lineage.sql']) {
+  for (const rel of ['db/migrations/20260724_clinical_regulatory_evidence_spine.sql', 'db/migrations/20260803_document_span_lineage.sql', 'migrations/20260907_span_lineage_accepted_machine_draft.sql']) {
     await pglite.exec(fs.readFileSync(path.join(REPO_ROOT, rel), 'utf8'));
   }
 });

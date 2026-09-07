@@ -465,6 +465,30 @@ export function CmOverview({ ask, nav }: { ask: (text: string) => void; nav?: (i
   const readyTone = readyPct >= 80 ? 'ok' : readyPct >= 50 ? 'warn' : 'err';
   const stTone = (s: string) => s === 'approved' ? 'ok' : s === 'review' ? 'warn' : 'dim';
 
+  /* Export readiness is READ from the gate's own evaluation, never derived
+     here. The card used to say "Export ready" at 80% approved — while the gate
+     requires every section approved, none stale, every approved one complete,
+     every one with lineage, and a governed-state verdict. On the live case
+     that motivated this work (21/21 approved, three at 0% complete) the card
+     was green while the gate refused. The percentage stays as what it is:
+     approvals. */
+  const readiness = useLiveData<{
+    totalSections: number; approvedSections: number; staleSections: number; openCriticalContradictions: number;
+    sectionsWithoutProvenance: number; incompleteApprovedSections: string[]; governedStateEvaluated: boolean; exportReady: boolean;
+  }>(ctxProjectId ? '/api/cmc/module3-os/readiness/' + encodeURIComponent(ctxProjectId) : null);
+  const readinessReasons = (() => {
+    const r = readiness.data;
+    if (!r || r.exportReady) return [];
+    const reasons: string[] = [];
+    if (r.totalSections > 0 && r.approvedSections < r.totalSections) reasons.push(`${r.totalSections - r.approvedSections} not approved`);
+    if (r.incompleteApprovedSections?.length) reasons.push(`${r.incompleteApprovedSections.length} approved but incomplete (§${r.incompleteApprovedSections.join(', §')})`);
+    if (r.staleSections > 0) reasons.push(`${r.staleSections} stale`);
+    if (r.sectionsWithoutProvenance > 0) reasons.push(`${r.sectionsWithoutProvenance} without source lineage`);
+    if (r.openCriticalContradictions > 0) reasons.push(`${r.openCriticalContradictions} critical contradiction(s) open`);
+    if (!r.governedStateEvaluated) reasons.push('governed state not evaluated');
+    return reasons;
+  })();
+
   // doSign — REAL, awaited section approval against the governed Module 3
   // operating-system endpoint (POST /api/cmc/module3-os/sections/:projectId/
   // :sectionKey/approve, server/api/cmc/module3OperatingSystemRoutes.ts). The
@@ -757,10 +781,26 @@ export function CmOverview({ ask, nav }: { ask: (text: string) => void; nav?: (i
               <div className="pj-card-b">
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
                   <div className="cm-projbar" style={{ flex: 1 }}><span className="fill" style={{ width: readyPct + '%', background: readyTone === 'ok' ? 'var(--success)' : readyTone === 'warn' ? 'var(--accent-100)' : 'var(--warning)' }} /></div>
-                  <b style={{ fontVariantNumeric: 'tabular-nums' }}>{readyPct}%</b>
-                  <span className={'rd-chip tone-' + (readyPct >= 80 ? 'ok' : 'warn')}>{readyPct >= 80 ? 'Export ready' : 'Not export ready'}</span>
+                  <b style={{ fontVariantNumeric: 'tabular-nums' }} title="Sections approved">{readyPct}% approved</b>
+                  {readiness.loading ? (
+                    <span className="rd-chip tone-dim" role="status">Evaluating export readiness…</span>
+                  ) : readiness.error || !readiness.data ? (
+                    <span className="rd-chip tone-err" role="alert" title={readiness.error || 'no readiness verdict was returned'}>Export readiness could not be read</span>
+                  ) : readiness.data.exportReady ? (
+                    <span className="rd-chip tone-ok">Export ready</span>
+                  ) : (
+                    <span className="rd-chip tone-warn" title={readinessReasons.join('; ')}>Not export ready</span>
+                  )}
                 </div>
-                <div className="cm-meta">{approved} of {secs.length} sections approved -- {drafts.length} draft</div>
+                <div className="cm-meta">
+                  {approved} of {secs.length} sections approved -- {drafts.length} draft
+                  {!readiness.loading && readiness.data && !readiness.data.exportReady && readinessReasons.length > 0
+                    ? <> -- export blocked: {readinessReasons.join('; ')}</>
+                    : null}
+                  {!readiness.loading && (readiness.error || !readiness.data)
+                    ? <> -- the export gate's verdict could not be read, so readiness is not established; this is a failed read, not a pass.</>
+                    : null}
+                </div>
               </div>
             </div>
           )}
