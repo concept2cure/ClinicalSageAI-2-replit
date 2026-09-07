@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-07T09:49:04.484Z",
+  "generatedAt": "2026-09-07T09:57:57.477Z",
   "git": {
-    "sha": "4b6e78d2aec9e6ca9fd3e39d6f49ac3d4b693189",
+    "sha": "847e7714450c6bcae5eb35729218e6dc9aae9e0b",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2040,12 +2040,12 @@
         "bytes": 145402
       },
       {
-        "file": "server/services/submission-package-orchestrator.ts",
-        "bytes": 139854
+        "file": "server/services/module3Composer.ts",
+        "bytes": 139913
       },
       {
-        "file": "server/services/module3Composer.ts",
-        "bytes": 139484
+        "file": "server/services/submission-package-orchestrator.ts",
+        "bytes": 139854
       },
       {
         "file": "server/services/labeling/labeling-intelligence-knowledge.ts",
@@ -2061,7 +2061,7 @@
       },
       {
         "file": "server/services/mutagenic-impurity/mutagenic-impurity-knowledge.ts",
-        "bytes": 133370
+        "bytes": 133645
       },
       {
         "file": "server/services/cmc-quality/cmc-quality-knowledge.ts",
@@ -2096,6 +2096,10 @@
         "bytes": 116241
       },
       {
+        "file": "server/services/__tests__/cmcWriteThroughMappers.test.ts",
+        "bytes": 115562
+      },
+      {
         "file": "server/services/intelligent-report-engine.ts",
         "bytes": 115224
       },
@@ -2104,16 +2108,12 @@
         "bytes": 114943
       },
       {
-        "file": "server/services/__tests__/cmcWriteThroughMappers.test.ts",
-        "bytes": 114898
-      },
-      {
         "file": ".claude/skills/gstack/scripts/gen-skill-docs.ts",
         "bytes": 114269
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/cmcRegisterForms.ts",
-        "bytes": 112627
+        "bytes": 112656
       },
       {
         "file": "server/routes/concept2cure.ts",
@@ -2239,7 +2239,7 @@
       },
       {
         "file": "server/services/module3Composer.ts",
-        "lines": 2779
+        "lines": 2786
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
@@ -2275,7 +2275,7 @@
       },
       {
         "file": "server/services/mutagenic-impurity/mutagenic-impurity-knowledge.ts",
-        "lines": 2345
+        "lines": 2348
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/bla-submission.ts",
@@ -2294,12 +2294,12 @@
         "lines": 2240
       },
       {
-        "file": "server/api/cmc/routes.ts",
-        "lines": 2191
+        "file": "server/services/__tests__/cmcWriteThroughMappers.test.ts",
+        "lines": 2196
       },
       {
-        "file": "server/services/__tests__/cmcWriteThroughMappers.test.ts",
-        "lines": 2186
+        "file": "server/api/cmc/routes.ts",
+        "lines": 2191
       },
       {
         "file": "server/services/trial-statistics/trial-statistics-knowledge.ts",
@@ -2363,7 +2363,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/cmcRegisterForms.ts",
-        "lines": 1953
+        "lines": 1954
       },
       {
         "file": "server/services/gcp-operations/gcp-operations-knowledge.ts",
@@ -2474,12 +2474,12 @@
         "lines": 1709
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/TaskBoard.tsx",
-        "lines": 1702
+        "file": "server/services/cmc-write-through.ts",
+        "lines": 1704
       },
       {
-        "file": "server/services/cmc-write-through.ts",
-        "lines": 1700
+        "file": "client/src/concept2cure/v2/surfaces/TaskBoard.tsx",
+        "lines": 1702
       },
       {
         "file": "server/services/ana/notifications-study-memory-tool-defs.ts",
