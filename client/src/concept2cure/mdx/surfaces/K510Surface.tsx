@@ -6,14 +6,21 @@
 import * as React from 'react';
 import { I } from '../icons';
 import { K510_ESTAR, K510_PREDICATES, K510_SE_ROWS, K510_STAGES } from '../data/k510';
+import type { Predicate } from '../data/k510';
 import type { Program } from '../data/programs';
 import {
   useK510EstarSections,
   useK510PredicateFallback,
   useK510Predicates,
   useK510SeMatrix,
+  type PredicateFallbackRow,
 } from '../hooks/useK510';
-import { useDeviceProfile } from '../hooks/useDeviceProfile';
+import {
+  predicateDevicesOnFile,
+  useDeviceProfile,
+  type PredicateDeviceInput,
+} from '../hooks/useDeviceProfile';
+import { describeSaveFailure } from '../hooks/useFetchJson';
 import { useEstarExport, exportStatusLine } from '../hooks/useEstarExport';
 import { AskAnaChip } from './AskAnaChip';
 import { AnaDraftBanner } from '../components/AnaDraftBanner';
@@ -21,10 +28,72 @@ import { PathwayPanes } from './pathway/PathwayPanes';
 import { DeviceProfilePanel } from './DeviceProfilePanel';
 import { EstarFilingPanel } from './EstarFilingPanel';
 import { OfficialEstarPanel, officialEstarTypeFor, officialEstarVariantFor } from './OfficialEstarPanel';
-import { useSampleRows } from '../lib/useSampleRows';
+import { useSampleRows, useShowingSample } from '../lib/useSampleRows';
 import { useSampleMode } from '../components/DataGate';
 import type { EditorSectionRef } from '../../v2/editorTarget';
 import { downloadCsv } from '../../v2/download';
+
+/**
+ * A candidate row → the claim it would make.
+ *
+ * Only facts the row actually carries travel: the adapters upstream default a
+ * missing holder or product code to '', and an empty string written into
+ * `predicate_devices` would reach the official eSTAR as an answer rather than
+ * as a blank. `id` is the K-number, which is what identifies a claim of
+ * substantial equivalence to FDA.
+ */
+function claimOf(fields: {
+  id: string;
+  name: string;
+  manufacturer?: string;
+  clearanceDate?: string;
+  productCode?: string;
+}): PredicateDeviceInput {
+  const claim: PredicateDeviceInput = { id: fields.id, name: fields.name, kNumber: fields.id };
+  const manufacturer = fields.manufacturer?.trim();
+  const clearanceDate = fields.clearanceDate?.trim();
+  const productCode = fields.productCode?.trim();
+  if (manufacturer) claim.manufacturer = manufacturer;
+  if (clearanceDate) claim.clearanceDate = clearanceDate;
+  if (productCode) claim.productCode = productCode;
+  return claim;
+}
+
+const claimFromCandidate = (p: Predicate): PredicateDeviceInput =>
+  claimOf({ id: p.k, name: p.name, manufacturer: p.holder, clearanceDate: p.cleared, productCode: p.code });
+
+/** openFDA returns a full timestamp; the clearance DATE is what FDA prints. */
+const claimFromClearance = (r: PredicateFallbackRow): PredicateDeviceInput =>
+  claimOf({
+    id: r.kNumber,
+    name: r.deviceName,
+    manufacturer: r.applicant,
+    clearanceDate: r.decisionDate.length > 10 ? r.decisionDate.slice(0, 10) : r.decisionDate,
+    productCode: r.productCode,
+  });
+
+/**
+ * Re-seed the SE-comparison selection for a new candidate list, keeping the
+ * K-numbers the new list still offers and falling back to the top candidate
+ * when none survive.
+ *
+ * Returns the SAME set when the selection is unchanged, and that identity is
+ * load-bearing rather than a micro-optimisation. `useK510Predicates` re-derives
+ * its rows array from the payload on every render, so the effect that calls
+ * this re-runs on every render; handing back a fresh Set each time set state
+ * on every render and re-rendered the 510(k) screen forever — for exactly as
+ * long as predicate intelligence stayed healthy.
+ */
+export function reseedSelection(
+  prev: Set<string>,
+  rows: readonly { k: string }[],
+): Set<string> {
+  if (rows.length === 0) return prev;
+  const survivors = new Set([...prev].filter((k) => rows.some((p) => p.k === k)));
+  if (survivors.size === 0) survivors.add(rows[0].k);
+  const unchanged = survivors.size === prev.size && [...survivors].every((k) => prev.has(k));
+  return unchanged ? prev : survivors;
+}
 
 export interface K510SurfaceProps {
   program: Program | null;
@@ -63,10 +132,16 @@ export function K510Surface({ program, onAskAna, onOpenEditor }: K510SurfaceProp
      otherwise). The saved device profile supplies the query terms, so the
      profile fetch is likewise gated on the fallback being active. */
   const predicateFallbackActive = predicates.rows === null && !!predicates.error;
-  const fallbackProfile = useDeviceProfile(predicateFallbackActive ? deviceIdent : null);
+  /* The device profile is read for the OPEN PROGRAM, not only when the shadow
+     service is down: it also carries the predicate of record, which has to be
+     visible beside the candidates whether or not predicate intelligence is
+     up. (DeviceProfilePanel below holds its own instance of this hook — the
+     two are separate reads of the same small row; useFetchJson does not
+     cache.) */
+  const deviceProfile = useDeviceProfile(deviceIdent);
   const predicateFallback = useK510PredicateFallback(
-    predicateFallbackActive ? fallbackProfile.profile?.productName ?? program?.title ?? null : null,
-    predicateFallbackActive ? fallbackProfile.profile?.productCode ?? null : null,
+    predicateFallbackActive ? deviceProfile.profile?.productName ?? program?.title ?? null : null,
+    predicateFallbackActive ? deviceProfile.profile?.productCode ?? null : null,
   );
 
   /* The draft package export — POST /api/510k/estar/build. The package
@@ -105,12 +180,7 @@ export function K510Surface({ program, onAskAna, onOpenEditor }: K510SurfaceProp
      program (or shadow coming online) should not leave a stale K-number
      selected from a different program. */
   React.useEffect(() => {
-    if (!sourcePredicates.length) return;
-    setSelected((prev) => {
-      const survivors = new Set([...prev].filter((k) => sourcePredicates.some((p) => p.k === k)));
-      if (survivors.size === 0) survivors.add(sourcePredicates[0].k);
-      return survivors;
-    });
+    setSelected((prev) => reseedSelection(prev, sourcePredicates));
   }, [sourcePredicates]);
 
   const toggle = (k: string) => {
@@ -124,6 +194,87 @@ export function K510Surface({ program, onAskAna, onOpenEditor }: K510SurfaceProp
   const selectedList = sourcePredicates.filter(p => selected.has(p.k));
   const multi = selectedList.length > 1;
   const subjectName = program?.title ?? 'Subject device';
+
+  /* ── The PREDICATE OF RECORD ──────────────────────────────────────────
+     The checkboxes above drive an SE-comparison selection that lives in this
+     component and nowhere else. The claim of substantial equivalence is a
+     different thing entirely: it is written to regulatory_programs.
+     predicate_devices through the governed profile route (role-gated,
+     audited), and element [0] of that column is what the official eSTAR's
+     predicate submission number and trade name are filled from. So it is
+     never inferred from a checkbox — a person claims it, deliberately, and
+     the panel says which device the form will carry. */
+  const predicateOnFile = predicateDevicesOnFile(deviceProfile.profile?.predicateDevices);
+  const predicateUnreadable = predicateOnFile.unreadable > 0;
+  const claimedPredicate = predicateUnreadable ? null : predicateOnFile.devices[0] ?? null;
+  /* Fixtures are for populating a demo screen, never for writing into a
+     submission — an example K-number claimed as a predicate would reach FDA
+     as this sponsor's own assertion. */
+  const predicatesAreSample = useShowingSample(predicates.rows);
+  const [claiming, setClaiming] = React.useState<string | null>(null);
+
+  const claimPredicate = React.useCallback(
+    async (device: PredicateDeviceInput | null) => {
+      setClaiming(device?.id ?? 'withdraw');
+      try {
+        await deviceProfile.save({ predicateDevices: device ? [device] : null });
+      } finally {
+        setClaiming(null);
+      }
+    },
+    [deviceProfile],
+  );
+
+  /** The claim control for one candidate row. */
+  const claimControl = (device: PredicateDeviceInput, fromSample: boolean) => {
+    if (claimedPredicate?.id === device.id) {
+      return (
+        <div style={{ marginTop: 3, fontSize: 10, color: 'var(--accent-100)' }}>
+          Predicate of record
+        </div>
+      );
+    }
+    const refusal = fromSample
+      ? 'Example rows cannot be claimed as the predicate of record'
+      : !deviceIdent
+        ? 'Open a device program to claim a predicate of record'
+        : null;
+    return (
+      <button
+        type="button"
+        className="tb-btn"
+        style={{ marginTop: 3, fontSize: 10, padding: '1px 6px' }}
+        disabled={refusal !== null || claiming !== null}
+        title={refusal ?? `Claim ${device.id} (${device.name}) as the predicate of record`}
+        onClick={e => {
+          e.stopPropagation();
+          void claimPredicate(device);
+        }}
+      >
+        Claim
+      </button>
+    );
+  };
+
+  /** One sentence on what the eSTAR's predicate fields will carry. An
+   *  unresolved profile is NOT "no predicate": until the row is read, what the
+   *  form will carry is unknown, and saying otherwise is the same failure as
+   *  rendering a fixture. */
+  const predicateOfRecordLine = () => {
+    if (!deviceProfile.profile) {
+      if (deviceProfile.error) return 'Predicate of record: the device profile could not be read.';
+      return 'Predicate of record: reading the device profile…';
+    }
+    if (predicateUnreadable) {
+      return (
+        `Predicate of record: ${predicateOnFile.unreadable} stored ` +
+        `${predicateOnFile.unreadable === 1 ? 'entry' : 'entries'} this screen cannot read — ` +
+        `the eSTAR fills from the first entry, whatever it holds.`
+      );
+    }
+    if (!claimedPredicate) return 'No predicate of record — the eSTAR predicate fields stay blank.';
+    return `Predicate of record: ${claimedPredicate.id} — ${claimedPredicate.name}`;
+  };
 
   const workspace = (
     <>
@@ -256,6 +407,31 @@ export function K510Surface({ program, onAskAna, onOpenEditor }: K510SurfaceProp
                     <span style={{ marginLeft: 6, color: 'var(--text-300)' }}>· loading…</span>
                   )}
                 </div>
+                {deviceIdent && (
+                  <div className="s" style={{ marginTop: 2 }}>
+                    {predicateOfRecordLine()}
+                    {/* A refused claim is shown BESIDE what is on file, not
+                        instead of it — the operator needs both the refusal and
+                        the state the form is still in. */}
+                    {deviceProfile.saveFailure && (
+                      <span style={{ marginLeft: 6, color: 'var(--danger-100, var(--text-200))' }}>
+                        {describeSaveFailure(deviceProfile.saveFailure)}
+                      </span>
+                    )}
+                    {claimedPredicate && (
+                      <button
+                        type="button"
+                        className="tb-btn"
+                        style={{ marginLeft: 6, fontSize: 10, padding: '1px 6px' }}
+                        disabled={claiming !== null}
+                        title="Withdraw the predicate of record"
+                        onClick={() => void claimPredicate(null)}
+                      >
+                        Withdraw
+                      </button>
+                    )}
+                  </div>
+                )}
               </div>
               <div className="actions">
                 <button
@@ -310,6 +486,7 @@ export function K510Surface({ program, onAskAna, onOpenEditor }: K510SurfaceProp
                       </td>
                       <td>
                         <span className="k-num">{p.k}</span>
+                        {claimControl(claimFromCandidate(p), predicatesAreSample)}
                       </td>
                       <td>
                         <div className="k-name">{p.name}</div>
@@ -371,6 +548,12 @@ export function K510Surface({ program, onAskAna, onOpenEditor }: K510SurfaceProp
                           <td className="cb"></td>
                           <td>
                             <span className="k-num">{r.kNumber}</span>
+                            {/* Not selectable into the SE matrix — there is no
+                                scoring behind these rows — but a real openFDA
+                                clearance IS claimable as the predicate of
+                                record, which is the one thing about it that
+                                does not depend on the shadow service. */}
+                            {claimControl(claimFromClearance(r), false)}
                           </td>
                           <td>
                             <div className="k-name">{r.deviceName}</div>

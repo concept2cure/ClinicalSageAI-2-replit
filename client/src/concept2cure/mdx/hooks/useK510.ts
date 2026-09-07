@@ -29,6 +29,8 @@
  *     nothing renders empty.
  */
 
+import { useMemo } from 'react';
+
 import type { EstarRow, EstarStatus, Predicate, PredicateStatus, SeRow } from '../data/k510';
 import type { OfficialEstarType, OfficialEstarVariant } from './useEstarOfficialFields';
 import { useFetchJson } from './useFetchJson';
@@ -262,10 +264,17 @@ export function useK510Predicates(programId: string | null): UseK510PredicatesRe
     ? `/api/predicate-intelligence/candidates?program_id=${encodeURIComponent(programId)}`
     : null;
   const { data, loading, error } = useFetchJson<CandidatesPayload>(url);
-  if (!data) return { rows: null, loading, error };
-  const list = data.candidates ?? data.rows ?? data.data ?? [];
-  const rows = list.map(adaptPredicate).filter((p): p is Predicate => p !== null);
-  return { rows: rows.length > 0 ? rows : null, loading, error };
+  /* Memoized on the payload. The adapter used to re-run on every render, so
+     `rows` came back with a new identity each time — and the surface re-seeds
+     its predicate selection from that array in an effect, which made a new
+     identity a render loop rather than merely wasted work. */
+  const rows = useMemo(() => {
+    if (!data) return null;
+    const list = data.candidates ?? data.rows ?? data.data ?? [];
+    const adapted = list.map(adaptPredicate).filter((p): p is Predicate => p !== null);
+    return adapted.length > 0 ? adapted : null;
+  }, [data]);
+  return { rows, loading, error };
 }
 
 /* ─── Reduced predicate fallback (openFDA clearances, LOCAL endpoint) ── */
