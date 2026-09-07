@@ -161,6 +161,11 @@ async function gatherInputs(orgId: number, projectId: string): Promise<ProjectIn
     }
   };
 
+      // Org-scoped as well as project-scoped. `cmc_projects.id` is a shared
+      // uuid space across tenants and the project id comes from the caller, so
+      // the project filter alone let any organization read another sponsor's
+      // register through this report. quality_specifications carries
+      // `tenant_id`; the other three carry `organization_id`.
   const [specs, methods, stabilityResult, drugSubs, processes, sourceObjects, sections] =
     await Promise.all([
       safe('specs',
@@ -168,8 +173,9 @@ async function gatherInputs(orgId: number, projectId: string): Promise<ProjectIn
                 test_parameters AS "testParameters",
                 acceptance_criteria AS "acceptanceCriteria",
                 justification
-         FROM quality_specifications WHERE project_id = $1::text::uuid`,
-        [projectIdParam]),
+         FROM quality_specifications
+          WHERE project_id = $1::text::uuid AND tenant_id::text = $2`,
+        [projectIdParam, String(orgId)]),
       safe('methods',
         `SELECT method_name AS "methodName", method_type AS "methodType",
                 purpose, validation_status AS "validationStatus",
@@ -178,8 +184,9 @@ async function gatherInputs(orgId: number, projectId: string): Promise<ProjectIn
                 accuracy_data AS "accuracyData",
                 precision_data AS "precisionData",
                 robustness_data AS "robustnessData"
-         FROM analytical_methods WHERE project_id = $1::text::uuid`,
-        [projectIdParam]),
+         FROM analytical_methods
+          WHERE project_id = $1::text::uuid AND organization_id = $2`,
+        [projectIdParam, orgId]),
       // Stability comes from the canonical project-scoped source-object store,
       // not from `public.stability_studies`. That table has no `project_id`
       // column at all (it is org-scoped) and no `study_name` /
@@ -189,16 +196,18 @@ async function gatherInputs(orgId: number, projectId: string): Promise<ProjectIn
       safe('drugSubs',
         `SELECT substance_name AS "substanceName", impurities,
                 characterization_data AS "characterizationData"
-         FROM drug_substances WHERE project_id = $1::text::uuid`,
-        [projectIdParam]),
+         FROM drug_substances
+          WHERE project_id = $1::text::uuid AND organization_id = $2`,
+        [projectIdParam, orgId]),
       safe('processes',
         `SELECT process_name AS "processName", process_type AS "processType",
                 process_steps AS "processSteps",
                 critical_process_parameters AS "criticalProcessParameters",
                 process_controls AS "processControls",
                 validation_status AS "validationStatus"
-         FROM manufacturing_processes WHERE project_id = $1::text::uuid`,
-        [projectIdParam]),
+         FROM manufacturing_processes
+          WHERE project_id = $1::text::uuid AND organization_id = $2`,
+        [projectIdParam, orgId]),
       safe('sourceObjects',
         `SELECT source_type AS "sourceType",
                 source_payload AS "sourcePayload",
