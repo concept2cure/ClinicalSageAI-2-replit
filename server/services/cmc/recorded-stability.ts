@@ -720,9 +720,10 @@ export async function estimateRecordedShelfLife(
 /* ── Out-of-trend assessment over a RECORDED study ──────────────────────────
    The trend engine (stability-trending.ts) is pure and takes a parsed
    criterion. This is the one place the recorded results are read, grouped by
-   attribute and condition, and handed to it — the HTTP route, AnA and the
-   Module 3 composer all call this, so a series is judged the same way
-   wherever the question is asked. Synchronous, because the composer is. */
+   attribute and condition, and handed to it. The Module 3 composer calls it
+   for §3.2.S.7 / §3.2.P.8; an HTTP route or AnA tool that asks the same
+   question must call this, not the engine, so a series is judged the same
+   way wherever it is asked. Synchronous, because the composer is. */
 
 export interface RecordedTrendingStudy {
   id: number | string;

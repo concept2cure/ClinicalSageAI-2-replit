@@ -50,7 +50,7 @@ vi.mock('../cmc/resolve-cmc-artifact-project', () => ({
   }),
 }));
 
-import { getModule3BuildStatus } from '../module3-convergence-service';
+import { deriveBuildState, getModule3BuildStatus } from '../module3-convergence-service';
 import {
   composeModule3FromCanonicalSources,
   MODULE3_SECTION_RULES,
@@ -131,7 +131,7 @@ describe('getModule3BuildStatus — a retired source feeds nothing', () => {
     expect(s.sourceObjectCount).toBe(1);
     expect(s.sourceTypes).toEqual(['drug_substance']);
     expect(s.completeness).toBe(100);
-    expect(s.buildState).toBe('sources_uploaded');
+    expect(s.buildState).toBe('extraction_complete'); // a composed live source: extraction_complete in the one vocabulary the board renders
   });
 });
 
@@ -192,5 +192,25 @@ describe('getModule3BuildStatus — equals the composer for the same sources', (
     expect(s.completeness).toBe(50);
     expect(s.missingInputs).toEqual(['manufacturer']);
     expect(s.isStale).toBe(true);
+  });
+});
+
+describe('deriveBuildState — the one derivation, in the order the gate implies', () => {
+  const base = { sourceObjectCount: 2, uploadedSourceCount: 0, compiled: true, isStale: false, hasContradictions: false, approvalState: 'draft', artifactStatus: null as string | null };
+  it('an approved section that went stale is stale, not approved — the gate refuses it', () => {
+    expect(deriveBuildState({ ...base, approvalState: 'approved', isStale: true })).toBe('stale');
+    expect(deriveBuildState({ ...base, approvalState: 'approved' })).toBe('approved');
+  });
+  it('staleness outranks an open contradiction; the artifact lifecycle supplies locked and review', () => {
+    expect(deriveBuildState({ ...base, isStale: true, hasContradictions: true })).toBe('stale');
+    expect(deriveBuildState({ ...base, hasContradictions: true })).toBe('contradiction_flagged');
+    expect(deriveBuildState({ ...base, artifactStatus: 'review' })).toBe('review');
+    expect(deriveBuildState({ ...base, artifactStatus: 'locked' })).toBe('locked');
+    expect(deriveBuildState({ ...base, artifactStatus: 'draft' })).toBe('draft_artifact_created');
+  });
+  it('an uncompiled section with only uploaded documents is sources_uploaded; with composed sources extraction_complete', () => {
+    expect(deriveBuildState({ ...base, compiled: false, sourceObjectCount: 0, uploadedSourceCount: 3 })).toBe('sources_uploaded');
+    expect(deriveBuildState({ ...base, compiled: false })).toBe('extraction_complete');
+    expect(deriveBuildState({ ...base, compiled: false, sourceObjectCount: 0 })).toBe('no_sources');
   });
 });
