@@ -17,7 +17,7 @@ import {
   type RecordedStabilityRead,
   type RecordedTrendSeries,
 } from './cmc/recorded-stability';
-import { assessProcessCapability } from './cmc/process-capability';
+import { assessRecordedCapability, capabilitySentence, isBatchAnalysisFor } from './cmc/recorded-capability';
 /* The dissolution purposes live in shared/, not in the write-through module:
    that module already imports FROM this composer, and importing back would make
    a cycle. One definition, reachable by both, and by the register surface. */
@@ -184,15 +184,11 @@ export const MODULE3_SECTION_RULES: SectionRule[] = [
   { sectionKey: '3.3', requiredSourceTypes: ['drug_substance', 'drug_product', 'reference_standard'], requiredFields: ['name', 'dosageFormDescription'] },
 ];
 
-/** The QC sample types that are NOT tests of the material: a cleaning swab
- *  belongs to GMP cleaning records, a reference-standard qualification to
- *  §3.2.S.5/§3.2.P.6. Neither is batch-analyses evidence. Shared with the
- *  write-through mapper so the completeness gate and the renderer apply ONE
- *  rule. */
-export const NON_BATCH_SAMPLE_TYPES = ['cleaning-verification', 'reference-standard'];
-
-/** The sample type that makes a QC result DRUG PRODUCT evidence (§3.2.P.5.4). */
-export const FINISHED_PRODUCT = 'finished-product';
+/* The QC sample-type vocabulary now lives in shared/cmc/qc-sample-types, so
+   the capability service can apply the same batch-analyses rule without a
+   cycle back through this file. Re-exported here: the write-through mapper and
+   every other importer read them from the composer. */
+export { NON_BATCH_SAMPLE_TYPES, FINISHED_PRODUCT } from '../../shared/cmc/qc-sample-types';
 
 /* Which material a CMC record is evidence for. ONE rule, in shared/, because
    the register surfaces display the section a row files under and must never
@@ -526,21 +522,9 @@ function qcResultRows(
   return sources
     .filter((s) => s.sourceType === 'qc_result')
     .map((s) => (s.sourcePayload || {}) as Record<string, any>)
-    .filter((p) => {
-      const type = String(p.sampleType || '').toLowerCase();
-      /* The SAME gate the QC mapper applied. Reading only the sample-type
-         side let a cleaning-verification swab and a reference-standard
-         qualification — records the mapper had already refused as batch
-         data — render as drug-substance batch analyses while the section
-         simultaneously reported batchAnalyses missing. `batchAnalysisSide`
-         is the mapper's decision; the sample-type fallback keeps payloads
-         written before it existed rendering correctly. */
-      if (p.isBatchAnalysis === false) return false;
-      if (NON_BATCH_SAMPLE_TYPES.includes(type)) return false;
-      const decided = typeof p.batchAnalysisSide === 'string' ? p.batchAnalysisSide : null;
-      if (decided) return decided === side;
-      return side === 'drug_product' ? type === FINISHED_PRODUCT : type !== FINISHED_PRODUCT;
-    });
+    /* The SAME gate the QC mapper applied, and the same one the capability
+       route and tool apply — one function, in services/cmc/recorded-capability. */
+    .filter((p) => isBatchAnalysisFor(p, side));
 }
 
 /** One batch-analyses table from recorded QC results, or null when there are none. */
@@ -624,53 +608,37 @@ function batchCapabilityRendering(
 ): { table: GeneratedTable | null; narrative: string } {
   const rows = qcResultRows(sources, side);
   if (rows.length === 0) return { table: null, narrative: '' };
-  const byTest = new Map<string, Array<Record<string, any>>>();
-  for (const p of rows) {
-    const test = String(p.testMethod || '').trim();
-    if (!test) continue;
-    const list = byTest.get(test) ?? [];
-    list.push(p);
-    byTest.set(test, list);
-  }
+  /* The series assembly lives in services/cmc/recorded-capability, where the
+     HTTP route and the AnA tool call it too: what a reviewer reads here and
+     what the product answers when asked are the same computation, not two. */
+  const series = assessRecordedCapability(rows);
+  const fmt = (v: number | null) => (v === null ? '—' : String(v));
   const tableRows: string[][] = [];
   const sentences: string[] = [];
-  for (const [test, results] of byTest) {
-    const criteria = [...new Set(results.map((p) => {
-      const spec = p.specifications;
-      return typeof spec === 'object' && spec !== null && typeof spec.acceptanceCriteria === 'string' ? spec.acceptanceCriteria.trim() : typeof spec === 'string' ? spec.trim() : '';
-    }).filter(Boolean))];
-    if (criteria.length > 1) {
-      sentences.push(`${test}: capability not assessed — the batches were recorded against different acceptance criteria (${criteria.join('; ')}), so there is no single specification to measure against.`);
-      tableRows.push([test, String(results.length), '—', '—', '—', '—', '—', 'not assessed', 'criteria disagree']);
+  for (const s of series) {
+    sentences.push(capabilitySentence(s));
+    if (!s.outcome.ok) {
+      const counted = s.outcome.code === 'CRITERION_NOT_RECORDED' && s.criterion === null
+        ? String(s.resultsOnFile)
+        : String(s.resultsOnFile - s.outcome.excludedBatches.length);
+      tableRows.push([
+        s.test, counted, '—', '—', '—', '—', '—', 'not assessed',
+        s.criterion === null && s.outcome.code === 'CRITERION_NOT_RECORDED' ? 'criteria disagree' : s.outcome.code,
+      ]);
       continue;
     }
-    const criterion = parseAcceptanceCriterion(criteria);
-    const points = results.map((p) => ({
-      batch: String(p.batchNumber || '').trim() || String(p.sampleId || '').trim() || '(no batch)',
-      value: Number(String(typeof p.testResults === 'object' && p.testResults !== null ? p.testResults.value : p.testResults ?? '').trim()),
-    }));
-    const assessed = assessProcessCapability(points, criterion);
-    if (!assessed.ok) {
-      sentences.push(`${test}: capability not assessed — ${assessed.message}`);
-      tableRows.push([test, String(points.filter((x) => Number.isFinite(x.value)).length), '—', '—', '—', '—', '—', 'not assessed', assessed.code]);
-      continue;
-    }
-    const fmt = (v: number | null) => (v === null ? '—' : String(v));
+    const a = s.outcome;
     tableRows.push([
-      test,
-      String(assessed.n),
-      String(assessed.mean),
-      String(assessed.sdOverall),
-      fmt(assessed.pp),
-      fmt(assessed.ppk),
-      fmt(assessed.cpk),
-      assessed.verdict + (assessed.preliminary ? ' (preliminary)' : ''),
-      assessed.batchesOutOfSpecification.length > 0 ? `OOS: ${assessed.batchesOutOfSpecification.join(', ')}` : '',
+      s.test,
+      String(a.n),
+      String(a.mean),
+      String(a.sdOverall),
+      fmt(a.pp),
+      fmt(a.ppk),
+      fmt(a.cpk),
+      a.verdict + (a.preliminary ? ' (preliminary)' : ''),
+      a.batchesOutOfSpecification.length > 0 ? `OOS: ${a.batchesOutOfSpecification.join(', ')}` : '',
     ]);
-    sentences.push(
-      `${test}: over ${assessed.n} batches the mean is ${assessed.mean} (sd ${assessed.sdOverall}); Ppk ${fmt(assessed.ppk)}, Cpk ${fmt(assessed.cpk)}${assessed.pp !== null ? `, Pp ${fmt(assessed.pp)}` : ''} — ${assessed.verdict}` +
-        (assessed.notes.length > 0 ? ` (${assessed.notes.join(' ')})` : '') + '.',
-    );
   }
   if (tableRows.length === 0) return { table: null, narrative: '' };
   return {

@@ -111,9 +111,25 @@ export async function composeProjectModule3(
   return { sources, sections };
 }
 
-/** The record the section row stores: the structured payload plus the compiler's own verdict on it. */
+/**
+ * The record the section row stores: the structured payload, the composed
+ * TABLES, and the compiler's own verdict on both.
+ *
+ * The tables are part of the deterministic content of a section — §3.2.S.4.4's
+ * capability indices and §3.2.P.1's composition are tables, not prose — and
+ * they were not written. Placement reads them back out of this record and
+ * refuses a section whose row has no `tables` key, because it cannot tell a
+ * section that composes none from one compiled before they were carried; with
+ * no writer, that refusal caught every section and nothing could be filed. One
+ * writer, and the legacy case now means what it says.
+ */
 export function compiledRecordOf(section: ComposedSection): Record<string, unknown> {
-  return { ...section.structuredPayload, completeness: section.completeness, missingInputs: section.missingInputs };
+  return {
+    ...section.structuredPayload,
+    tables: section.tables ?? [],
+    completeness: section.completeness,
+    missingInputs: section.missingInputs,
+  };
 }
 
 export interface PersistOptions {

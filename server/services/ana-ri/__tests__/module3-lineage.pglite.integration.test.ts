@@ -164,6 +164,33 @@ describe('CMC Module 3 derivation lineage (AnA build paths)', () => {
     expect(Number((written.rows[0] as any).n)).toBe(0);
   });
 
+  it('a compiled section stores its TABLES, so placement can tell "composes none" from "compiled before tables"', async () => {
+    /* Placement reads the tables back out of deterministic_json and refuses a
+       row that has no `tables` key — it cannot know whether such a section had
+       one. Nothing wrote the key, so every freshly compiled section was
+       refused and no Module 3 could be filed. */
+    await seedSource();
+    const res = await module3BuildAll({ organizationId: ORG } as any, { projectId: PROJECT });
+    expect(res.success).toBe(true);
+    const rows = await wrap(
+      `SELECT section_key, deterministic_json FROM cmc_module3_sections WHERE organization_id = $1 AND project_id = $2`,
+      [ORG, PROJECT],
+    );
+    expect(rows.rows.length).toBeGreaterThan(0);
+    for (const row of rows.rows as Array<{ section_key: string; deterministic_json: any }>) {
+      const record = typeof row.deterministic_json === 'string' ? JSON.parse(row.deterministic_json) : row.deterministic_json;
+      expect(Array.isArray(record.tables)).toBe(true);
+    }
+    // And the tables that were composed are the tables that were stored.
+    const s1 = (rows.rows as Array<{ section_key: string; deterministic_json: any }>).find((r) => r.section_key === '3.2.S.1')!;
+    const s1record = typeof s1.deterministic_json === 'string' ? JSON.parse(s1.deterministic_json) : s1.deterministic_json;
+    for (const table of s1record.tables) {
+      expect(typeof table.title).toBe('string');
+      expect(Array.isArray(table.headers)).toBe(true);
+      expect(Array.isArray(table.rows)).toBe(true);
+    }
+  });
+
   it('module3BuildSection persists lineage for the single compiled section', async () => {
     const sourceId = await seedSource();
     const res = await module3BuildSection({ organizationId: ORG } as any, {

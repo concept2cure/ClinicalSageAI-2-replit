@@ -85,6 +85,17 @@ CODE=$(req qcselfrev PUT "/api/cmc/qc-testing/$SELFID" '{"reviewedBy":1}')
 [ "$CODE" = 409 ] && ok "the analyst cannot review their own result (409)" \
   || bad "self-review was accepted ($CODE): $(head -c200 "$OUT/qcselfrev.json")"
 
+step "5c. Four more release results against the SAME criterion — a capability series needs batches"
+# Capability is a statement about a process across batches; ICH Q6A sets the
+# specification and six batches is the floor the engine will answer over.
+QCN=0
+for RESULT in "S-2026-003 B-2026-003 100.4 2026-07-03" "S-2026-004 B-2026-004 99.8 2026-07-04" "S-2026-005 B-2026-005 100.9 2026-07-05" "S-2026-006 B-2026-006 98.7 2026-07-06"; do
+  set -- $RESULT
+  CODE=$(req "qc$1" POST /api/cmc/qc-testing "{\"sampleId\":\"$1\",\"batchNumber\":\"$2\",\"sampleType\":\"drug substance\",\"testMethod\":\"AM-001\",\"testDate\":\"$4T00:00:00.000Z\",\"testResults\":{\"value\":\"$3\",\"unit\":\"%\"},\"specifications\":{\"acceptanceCriteria\":\"98.0-102.0%\"},\"passFailStatus\":\"pass\",\"projectId\":\"$PROGRAM\"}")
+  [ "$CODE" = 200 -o "$CODE" = 201 ] && QCN=$((QCN + 1))
+done
+[ "$QCN" = 4 ] && ok "four further release results recorded against the same criterion" || bad "only $QCN of 4 further QC results recorded"
+
 step "6. QA sets the specification (feeds 3.2.S.4.1)"
 CODE=$(req spec POST /api/cmc/specifications "{\"projectId\":\"$PROGRAM\",\"materialType\":\"drug_substance\",\"materialName\":\"BX-701\",\"acceptanceCriteria\":{\"release\":\"98.0-102.0%\",\"shelf\":\"95.0-105.0%\"},\"testMethods\":{\"method\":\"AM-001\"},\"regulatoryBasis\":{\"ich\":\"ICH Q6B\"},\"justification\":\"Batch history n=12 supports the limits\",\"approvalStatus\":\"draft\"}")
 [ "$CODE" = 200 -o "$CODE" = 201 ] && ok "specification created ($CODE)" || bad "spec failed ($CODE): $(head -c300 "$OUT/spec.json")"
@@ -292,6 +303,26 @@ NARR=$(echo "$S4" | jq -r '.narrativeDraft // ""' 2>/dev/null | grep -c "recorde
 [ "${BATAB:-0}" -ge 1 ] && [ "${HASSAMPLE:-0}" -ge 1 ] && [ "${NARR:-0}" -ge 1 ] \
   && ok "§3.2.S.4 renders the batch-analyses table with sample S-2026-001 and reports it in the narrative" \
   || bad "batch analyses missing from the composed §3.2.S.4: tables=$BATAB sampleRows=$HASSAMPLE narrative=$NARR"
+
+step "11b-cap. Process capability over the recorded batches — the same indices §3.2.S.4.4 carries, askable without compiling"
+# One assembly (services/cmc/recorded-capability) behind the composed section,
+# this route and the AnA tool. A test that cannot be assessed is RETURNED with
+# its reason: a test missing from a capability report reads as one that passed.
+CODE=$(req cap GET "/api/cmc/projects/$PROGRAM/process-capability")
+CAPOK=$(cat "$OUT/cap.json" | jq -r '[.data.sides.drug_substance.series[]? | select(.test=="AM-001" and .outcome.ok==true)][0]' 2>/dev/null)
+CAPN=$(echo "$CAPOK" | jq -r '.outcome.n // 0' 2>/dev/null)
+CAPPPK=$(echo "$CAPOK" | jq -r '.outcome.ppk // "null"' 2>/dev/null)
+CAPPRELIM=$(echo "$CAPOK" | jq -r '.outcome.preliminary // false' 2>/dev/null)
+# The drug-product side has ONE finished-product result, which is not a
+# capability series — and it is reported as not assessed, with the reason.
+CAPDP=$(cat "$OUT/cap.json" | jq -r '[.data.sides.drug_product.series[]? | select(.outcome.ok==false)][0].outcome.code // empty' 2>/dev/null)
+CAPSAY=$(cat "$OUT/cap.json" | jq -r '[.data.sides.drug_product.statements[]?] | join(" ")' 2>/dev/null | grep -c "capability not assessed")
+[ "$CODE" = 200 ] && [ "${CAPN:-0}" -ge 6 ] && [ "$CAPPPK" != "null" ] && [ "$CAPPRELIM" = "true" ] && [ "$CAPDP" = "INSUFFICIENT_BATCHES" ] && [ "${CAPSAY:-0}" -ge 1 ] \
+  && ok "capability assessed over $CAPN drug-substance batches (Ppk $CAPPPK, preliminary); the single drug-product result is reported as not assessed" \
+  || bad "process capability: code=$CODE n=$CAPN ppk=$CAPPPK preliminary=$CAPPRELIM dpCode=$CAPDP dpStated=$CAPSAY"
+# The compiled section carries the SAME numbers — not a second computation.
+CAPSEC=$(cat "$OUT/compile.json" | jq -r --arg n "$CAPN" '[.sections[]? | select(.sectionKey=="3.2.S.4") | .tables[]? | select(.title | test("Process Capability")) | .rows[]? | select(.[1]==$n)] | length' 2>/dev/null)
+[ "${CAPSEC:-0}" -ge 1 ] && ok "§3.2.S.4.4 renders the same batch count the route reports" || bad "§3.2.S.4.4 capability table disagrees with the route (rows matching n=$CAPN: $CAPSEC)"
 
 step "11c. The recorded shelf-life engine answers over the study on file (the AnA tools' engine)"
 # One implementation, two callers: this route and AnA's
