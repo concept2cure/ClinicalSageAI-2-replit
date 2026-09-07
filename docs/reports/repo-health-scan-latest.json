@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-07T09:25:08.759Z",
+  "generatedAt": "2026-09-07T09:28:56.050Z",
   "git": {
-    "sha": "b4de149501a0286c9f0b4f48336fff7cdb82d19f",
+    "sha": "a92b93d86846c5cd2e2bab9cb49fea5af717ae45",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2021,7 +2021,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
-        "bytes": 175238
+        "bytes": 178032
       },
       {
         "file": "server/routes/authoring-actions.ts",
@@ -2210,12 +2210,12 @@
         "lines": 3119
       },
       {
-        "file": "server/services/ind/ctd/lifecycle-document-types.ts",
-        "lines": 3116
+        "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
+        "lines": 3117
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
-        "lines": 3077
+        "file": "server/services/ind/ctd/lifecycle-document-types.ts",
+        "lines": 3116
       },
       {
         "file": "server/services/regulatory-strategy/regulatory-strategy-knowledge.ts",
