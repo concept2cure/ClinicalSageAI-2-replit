@@ -55,6 +55,11 @@ describe('mentionTokenAt / insertMention', () => {
     expect(mentionTokenAt('@bio done', 9)).toEqual({ kind: 'app', start: 0, query: 'bio done' });
     expect(mentionTokenAt('@bio\ndone', 9)).toBeNull();
     expect(mentionTokenAt('no at sign', 10)).toBeNull();
+    // A completed mention (label + trailing space) is finished text — seen in
+    // the browser: the caret landing after an insertion reopened the menu.
+    const done = `@${findCallableApp('Labeling')!.label} `;
+    expect(mentionTokenAt(done, done.length)).toBeNull();
+    expect(mentionTokenAt(done + 'x', done.length + 1)).toEqual({ kind: 'app', start: 0, query: 'Labeling x' });
   });
 
   it('sees a command token only as the first word of the draft — where the server reads it', () => {
@@ -86,6 +91,11 @@ describe('useAppMentions in a composer', () => {
     expect(sent).toEqual([]); // consumed by the menu, not the composer
     const first = searchCallableApps('bio')[0];
     expect(ta.value).toBe(`@${first.label} `);
+    expect(screen.queryByRole('listbox')).toBeNull();
+    // The caret then lands after the inserted text (a select event, as in the
+    // browser) — the menu must stay closed rather than reopen on the label.
+    ta.setSelectionRange(ta.value.length, ta.value.length);
+    fireEvent.select(ta);
     expect(screen.queryByRole('listbox')).toBeNull();
   });
 

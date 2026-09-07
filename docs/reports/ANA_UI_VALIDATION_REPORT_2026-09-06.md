@@ -150,3 +150,27 @@ The full run had five failing files, none caused by the first pass's diff and al
 Also fixed: `hostilePayloadProbe > biostatistics` (a first-pass defect — the bridge list crashed on rows without fields; it now uses the repo's `isRowsWith` guard).
 
 Full typecheck: clean. Jest half of `npm test`: 6 suites, 37 tests green.
+
+## Addendum 3 — 2026-09-07, the composer menus in a real browser
+
+The `@app` and `/command` menus had been proven only in jsdom, and the server's read-back of a mention only in unit tests. Both were checked against the running app (Vite dev server on the pushed tree, Chromium 1194, signed in through `dev-login`, nothing mocked). Script and measurements: `evidence/ana-ui-2026-09-06/composer-menus-walk-2026-09-07.mjs`, `composer-menus-2026-09-07.json`; screenshots `composer-landing-at-menu-2026-09-07.png`, `composer-rail-slash-menu-2026-09-07.png`, `composer-rail-plus-slash-2026-09-07.png`.
+
+| Step | Measured |
+|---|---|
+| Home composer, type `@bio` | `role="listbox"` "Apps", two options (Biostatistics designer, Biostatistics workbench), first active, inside the viewport |
+| ↓ then Enter | draft becomes `@Biostatistics workbench ` |
+| Rail composer, type `/pow` | `role="listbox"` "Commands", one option `/power` with its summary |
+| Tab | draft becomes `/power ` |
+| `run /pow` | no menu — a command counts only as the first word |
+| `+` → "Slash commands" | draft becomes `/`, the command list opens with the first eight commands |
+| Send `@biostats size a two-arm superiority study` | the stream request carries the text verbatim |
+| Page errors | none |
+
+### Two defects the browser found and jsdom had not
+
+1. **The app menu reopened after an insertion.** The caret landing after `@Biostatistics workbench ` fires a select event; the token reader saw the completed label as a query and offered its own exact match again. A completed mention (label plus trailing space) is now finished text (`appMentions.tsx`, `mentionTokenAt`); pinned in `appMentions.test.tsx`, shown failing on the old hook first. Re-run in the browser: no menu after Enter.
+2. **A mention with no project open was never read.** `enrichContextForChat` returns early on the project-less path — exactly the front-door composer's situation — before the mention section ran, so the model was never told which app was invoked and the token was never stripped. The project-less branch now emits the shared INVOKED APPS block, the `app:<id>` source, the rewritten message and `detectedAppMention` (data enrichment still needs a project). Pinned in `ana-ri.test.ts`, shown failing on the old code first; also run as a one-off against the real function outside vitest: sources `app:biostat-workbench`, rewrite `size a two-arm superiority study`, block names `Biostatistics workbench (id: biostat-workbench)`.
+
+### What this environment could not prove
+
+The stream route returned 503 `GATEWAY_UNAVAILABLE` in 18 ms — no AI provider is configured here — so the model was never called and the prompt block's arrival at the model is proven by the enrichment tests and the one-off run, not by a model turn.

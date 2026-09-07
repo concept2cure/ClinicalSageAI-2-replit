@@ -1105,16 +1105,29 @@ export async function enrichContextForChat(params: {
       if (lensBlock) { projectlessBlocks.push(lensBlock); projectlessSources.push('role-lens'); }
     }
 
+    /* `@app` needs no project: the front-door composer offers the menu with no
+       program open, and a mention there must still name the app to the model
+       and strip its token from the request. Data enrichment for the app (which
+       does need a project) is the branch below; the block and the rewrite are
+       the same ones. */
+    const mentionNoProj = detectAppMention(message);
+    if (mentionNoProj) {
+      projectlessBlocks.push(buildInvokedAppsBlock(message));
+      for (const app of invokedApps(message)) projectlessSources.push(`app:${app.id}`);
+    }
+
     const wisdomOrChallengeFamily = [...wisdomFamily, ...challengeFamily, 'decide', 'tradeoff', 'framework', 'meeting', 'agency', 'tactics', 'position', 'landscape', 'compete', 'align', 'capabilities', 'whatcanyoudo'];
     return {
       block: projectlessBlocks.join('\n'),
       sources: projectlessSources,
+      rewrittenMessage: mentionNoProj ? (mentionNoProj.remainingText || message) : undefined,
       enrichmentMeta: {
         sourcesAttempted: projectlessSources.length,
         sourcesSucceeded: [...projectlessSources],
         sourcesFailed: [],
-        triggerType: projectlessSources.length > 0 ? (slashNoProj ? 'slash_command' : 'natural_language') : 'none',
-        detectedCommand: slashNoProj && wisdomOrChallengeFamily.includes(slashNoProj.command) ? slashNoProj.command : undefined,
+        triggerType: projectlessSources.length > 0 ? (slashNoProj ? 'slash_command' : mentionNoProj ? 'app_mention' : 'natural_language') : 'none',
+        detectedCommand: slashNoProj && wisdomOrChallengeFamily.includes(slashNoProj.command) ? slashNoProj.command : (mentionNoProj ? `@${mentionNoProj.appId}` : undefined),
+        detectedAppMention: mentionNoProj?.appId,
         hasProjectContext: false,
       },
     };
