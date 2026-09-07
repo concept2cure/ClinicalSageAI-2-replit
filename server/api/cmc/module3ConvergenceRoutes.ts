@@ -16,8 +16,16 @@ import {
   classifyAndMapArtifactToSource,
   bridgeCompileToArtifact,
 } from '../../services/module3-convergence-service';
-import { composeModule3FromCanonicalSources, impactedSectionsForSourceType, CmcSourceType } from '../../services/module3Composer';
-import { createSourceHash } from '../../services/cmc-module3-compiler';
+import { impactedSectionsForSourceType, CmcSourceType } from '../../services/module3Composer';
+import {
+  composePassFailureMessage,
+  composeSingleSection,
+  failedPassForSectionKey,
+  loadCanonicalSources,
+  persistComposedSection,
+  NO_CANONICAL_SOURCES_ERROR,
+  NO_CANONICAL_SOURCES_HINT,
+} from '../../services/cmc/module3-section-recompose';
 import { resolveCmcArtifactProject } from '../../services/cmc/resolve-cmc-artifact-project';
 
 const router = express.Router();
@@ -99,84 +107,52 @@ router.post('/build-section/:projectId/:sectionKey', async (req, res) => {
 
     await client.query('BEGIN');
 
-    // 1. Fetch source objects
-    const { rows: sourceObjects } = await client.query(
-      `SELECT id, source_type as "sourceType", source_payload as "sourcePayload", source_hash as "sourceHash"
-       FROM cmc_source_objects
-       WHERE organization_id = $1 AND project_id = $2
-       ORDER BY updated_at DESC`,
-      [orgId, projectId]
-    );
+    /* Load, compose and persist through the ONE canonical implementation
+       (services/cmc/module3-section-recompose) that compile, refresh and the
+       AnA stale-refresh command also use — so this path cannot emit a different
+       Module 3 than they do, and its deterministic_json, narrative_text and
+       compiled_hash cannot drift apart from each other. */
+    const sourceObjects = await loadCanonicalSources(client, orgId, projectId);
 
-    // 2. Compose all sections but filter to the requested one
-    const allComposed = composeModule3FromCanonicalSources(sourceObjects as any);
-    const section = allComposed.find((s) => s.sectionKey === sectionKey);
+    // Same fail-closed rule the compile route carries: composing from zero
+    // sources produces a clean-but-empty section written with stale = false.
+    if (sourceObjects.length === 0) {
+      await client.query('ROLLBACK');
+      return res.status(409).json({
+        success: false,
+        error: NO_CANONICAL_SOURCES_ERROR,
+        hint: NO_CANONICAL_SOURCES_HINT,
+      });
+    }
 
+    /* Composition reads on the pool, not on `client`: the regulatory_programs
+       lookup behind the 3.2.R pass is best-effort, and a failed statement inside
+       this transaction would abort it — the persist below would then fail with
+       "current transaction is aborted" and bury the real cause. */
+    const { section, skipped } = await composeSingleSection(pool, orgId, projectId, sectionKey, sourceObjects);
     if (!section) {
       await client.query('ROLLBACK');
+      // A pass that could not RUN is our error, not a finding that the section
+      // does not apply to this dossier.
+      const failedPass = failedPassForSectionKey(sectionKey, skipped);
+      if (failedPass) {
+        return res.status(503).json({ success: false, error: composePassFailureMessage(sectionKey, failedPass) });
+      }
       return res.status(404).json({ success: false, error: `Section ${sectionKey} not found in composition rules` });
     }
 
-    // 3. Upsert compiled section
-    const upsert = await client.query(
-      `INSERT INTO cmc_module3_sections (organization_id, project_id, section_key, section_path, deterministic_json, narrative_text, compiled_hash, stale, stale_reason, approval_state)
-       VALUES ($1,$2,$3,$4,$5::jsonb,$6,$7,$8,$9,'draft')
-       ON CONFLICT (organization_id, project_id, section_key)
-       DO UPDATE SET deterministic_json = excluded.deterministic_json,
-                     compiled_hash = excluded.compiled_hash,
-                     stale = excluded.stale,
-                     stale_reason = excluded.stale_reason,
-                     narrative_text = excluded.narrative_text,
-                     updated_at = now()
-       RETURNING id`,
-      [
-        orgId, projectId, section.sectionKey, section.sectionPath,
-        JSON.stringify({
-          ...section.structuredPayload,
-          completeness: section.completeness,
-          missingInputs: section.missingInputs,
-        }),
-        section.narrativeDraft,
-        createSourceHash(section.structuredPayload),
-        false, null,
-      ]
-    );
-    const sectionId = upsert.rows[0]?.id;
-
-    if (sectionId) {
-      // 4. Refresh lineage
-      // Scoped by org as well as section id. `sectionId` comes from the upsert's
-      // RETURNING, so before the arbiter carried organization_id this deleted the
-      // VICTIM's provenance rows — the traceability tying each Module 3 section
-      // back to the source objects it was compiled from.
-      await client.query(
-        `DELETE FROM cmc_section_lineage WHERE section_id = $1 AND organization_id = $2`,
-        [sectionId, orgId]
-      );
-      for (const lin of section.lineage) {
-        await client.query(
-          `INSERT INTO cmc_section_lineage (organization_id, section_id, source_object_id, source_hash_at_compile)
-           VALUES ($1, $2, $3, $4)`,
-          [orgId, sectionId, lin.sourceObjectId, lin.sourceHashAtCompile]
-        );
-      }
-
-      // 5. Provenance
-      await client.query(
-        `INSERT INTO cmc_provenance_events (organization_id, project_id, artifact_type, artifact_id, event_type, event_payload, created_by)
-         VALUES ($1,$2,'section',$3,'compiled',$4::jsonb,$5)`,
-        [
-          orgId, projectId, sectionId,
-          JSON.stringify({
-            sectionKey: section.sectionKey,
-            completeness: section.completeness,
-            missingInputs: section.missingInputs,
-            trigger: 'build-section-api',
-          }),
-          (req as any).user?.id || 'system',
-        ]
-      );
-    }
+    /* Building a section does NOT reset approval_state — the behaviour this
+       endpoint has always had. Un-approving on new content is the refresh
+       path's job, and moving it here would change what /build-section means. */
+    await persistComposedSection(client, {
+      orgId,
+      projectId,
+      section,
+      actorId: (req as any).user?.id,
+      eventType: 'compiled',
+      resetApprovalToDraft: false,
+      eventPayloadExtra: { trigger: 'build-section-api' },
+    });
 
     await client.query('COMMIT');
 

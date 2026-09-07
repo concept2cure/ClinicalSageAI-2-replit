@@ -35,6 +35,10 @@ import {
   removeLeaf,
   SubmissionError,
 } from '../services/submission-service/submission-service';
+import {
+  isPlaceableDocumentTable,
+  unplaceableDocumentTableMessage,
+} from '../services/ectd/leaf-document-tables';
 import { assessPathwayReadiness, PATHWAYS, type Pathway } from '../services/pathway-engines';
 import {
   generateSubmissionPlan,
@@ -185,7 +189,11 @@ const upsertLeafSchema = z.object({
   title: z.string().min(1).max(500),
   granularity: z.string().max(128).optional(),
   lifecycleOp: z.enum(['new', 'replace', 'append', 'delete']).optional(),
-  documentTable: z.string().max(64).optional(),
+  documentTable: z
+    .string()
+    .max(64)
+    .refine(isPlaceableDocumentTable, (v) => ({ message: unplaceableDocumentTableMessage(v) }))
+    .optional(),
   documentId: z.coerce.number().int().positive().optional(),
   documentType: z.string().max(64).optional(),
   parentLeafId: z.coerce.number().int().positive().optional(),

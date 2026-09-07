@@ -12,7 +12,7 @@
 import { randomUUID } from 'crypto';
 import { getPool } from '../db';
 import { createSourceHash } from './cmc-module3-compiler';
-import { composeModule3FromCanonicalSources, MODULE3_SECTION_RULES, tablesToMarkdown, CmcSourceType } from './module3Composer';
+import { composeModule3FromCanonicalSources, MODULE3_SECTION_RULES, renderComposedSectionMarkdown, CmcSourceType } from './module3Composer';
 import {
   resolveCmcArtifactProject,
   type ArtifactProjectResolution,
@@ -449,11 +449,15 @@ export async function bridgeCompileToArtifact(
 
     const sectionLabel = SECTION_LABELS[sectionKey] || sectionKey;
 
-    // Build full document content: narrative prose + rendered tables
-    const tablesMarkdown = compiledSection.tables && compiledSection.tables.length > 0
-      ? '\n\n' + tablesToMarkdown(compiledSection.tables)
-      : '';
-    const fullContent = `## ${sectionLabel}\n\n${compiledSection.narrativeDraft}${tablesMarkdown}`;
+    /* Narrative prose + the tables the narrative cites, through the ONE
+       renderer the IND placement snapshot also uses — the inline concatenation
+       that used to live here is gone, so the governed artifact and the filed
+       leaf cannot render the same section differently. */
+    const fullContent = renderComposedSectionMarkdown(
+      sectionLabel,
+      compiledSection.narrativeDraft,
+      compiledSection.tables,
+    );
 
     const contentHash = createSourceHash({ narrative: fullContent, sectionKey });
     const sourceObjectIds = compiledSection.lineage.map((l) => l.sourceObjectId);

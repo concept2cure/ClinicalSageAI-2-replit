@@ -6,14 +6,27 @@ import {
   summarizeSectionDiff,
   createSourceHash,
 } from '../../services/cmc-module3-compiler';
-import { composeModule3FromCanonicalSources, impactedSectionsForSourceType } from '../../services/module3Composer';
-import { composeAppendices, composeRegional, emittableAppendices } from '../../services/module3-extensions';
-import { regionCodeForPrimaryRegion, resolveSubmissionSpine } from '../../services/cmc/submission-spine';
+import { impactedSectionsForSourceType } from '../../services/module3Composer';
+import {
+  composeAllSections,
+  composePassFailureMessage,
+  composeSingleSection,
+  deterministicJsonFor,
+  failedPassForSectionKey,
+  loadCanonicalSources,
+  persistComposedSection,
+  NO_CANONICAL_SOURCES_ERROR,
+  NO_CANONICAL_SOURCES_HINT,
+} from '../../services/cmc/module3-section-recompose';
 import { detectContradictions, deriveImpactTasks } from '../../services/cmc-impact-contradiction-engine';
+import { readContradictionRegisters } from '../../services/cmc/contradiction-registers';
 import { syncContradictionTasks } from '../../services/cmc/contradiction-tasks';
 import { buildCanonicalGovernedState } from '../../services/governed-ana-execution.js';
 import { evaluateFinalExportGate } from '../../services/cmc/final-export-gate';
-import { placeModule3IntoSubmission } from '../../services/cmc/place-module3-into-submission';
+import {
+  placeModule3IntoSubmission,
+  type PlaceModule3Result,
+} from '../../services/cmc/place-module3-into-submission';
 import { bridgeCompileToArtifact } from '../../services/module3-convergence-service';
 import { verifyReauth, recordGovernedAction } from '../../routes/c2c/actions';
 import {
@@ -139,13 +152,7 @@ router.post('/compile/:projectId', async (req, res) => {
     const orgId = getOrgId(req);
     const projectIdRaw = req.params.projectId; const projectId = Array.isArray(projectIdRaw) ? projectIdRaw[0] : (projectIdRaw ?? "");
     await client.query('BEGIN');
-    const { rows } = await client.query(
-      `SELECT id, source_type as "sourceType", source_payload as "sourcePayload", source_hash as "sourceHash"
-       FROM cmc_source_objects
-       WHERE organization_id = $1 AND project_id = $2
-       ORDER BY updated_at DESC`,
-      [orgId, projectId]
-    );
+    const sources = await loadCanonicalSources(client, orgId, projectId);
 
     // Refuse to compile from nothing.
     //
@@ -161,141 +168,41 @@ router.post('/compile/:projectId', async (req, res) => {
     // request; it is either a mistake or a probe. 409 says so, instead of
     // manufacturing seventeen empty-but-clean sections. The AnA command handler
     // already guards this way (server/services/ana-ri/module3-command-handlers.ts).
-    if (rows.length === 0) {
+    if (sources.length === 0) {
       await client.query('ROLLBACK');
       return res.status(409).json({
         success: false,
-        error: 'No canonical source objects for this project — nothing to compile.',
-        hint: 'Upsert source objects via POST /api/cmc/module3-os/source-objects/:projectId first.',
+        error: NO_CANONICAL_SOURCES_ERROR,
+        hint: NO_CANONICAL_SOURCES_HINT,
       });
     }
 
-    let compiled = composeModule3FromCanonicalSources(rows as any);
+    /* Core (S/P/3.1/3.3) + emittable 3.2.A appendices + 3.2.R for the region the
+       linked submission spine records. The rules for all three live in
+       services/cmc/module3-section-recompose — one composition, shared with
+       build-section, refresh and the AnA stale-refresh command, so those paths
+       cannot drift into emitting a different Module 3 than this one.
 
-    /* ── Appendices (3.2.A) ──
-       module3-extensions has carried generators for 3.2.A.1 Facilities,
-       3.2.A.2 Adventitious Agents and 3.2.A.3 Excipients since it was written,
-       and nothing in the product's own compile path ever called them: a product
-       using an animal-derived excipient could not produce the CTD section that
-       exists to declare it.
-
-       An OPTIONAL appendix with no matched source is not emitted at all.
-       composeAppendices scores an unmatched optional rule 100% complete, so
-       emitting it would put a fully-complete section into the dossier asserting
-       things about data nobody recorded — the precise hazard 3.2.A.3's own
-       fail-closed branch exists to avoid. A required appendix IS emitted, with
-       its honest incompleteness. */
-    try {
-      const appendices = emittableAppendices(composeAppendices(rows as any));
-      compiled = compiled.concat(appendices);
-    } catch (appendixErr) {
-      // Said, not swallowed — the same posture as the regional pass below.
-      console.warn(
-        '[module3-os] appendix (3.2.A) composition skipped:',
-        appendixErr instanceof Error ? appendixErr.message : String(appendixErr),
-      );
-    }
-
-    /* ── Regional Information (3.2.R) ──
-       The core composer deliberately owns only S/P/3.1/3.3 (defining R rules
-       there once produced duplicate appendix leaves and region leakage — see
-       the NOTE in MODULE3_SECTION_RULES); module3-extensions owns the
-       region-specific dispatch. Composed here for the REGION THE LINKED
-       SUBMISSION RECORDS, resolved through the same spine identity the eCTD
-       compile runs against — so the section the initial-sequence gate
-       requires ('3.2.R') is authorable, approvable and placeable through the
-       same lifecycle as every other Module 3 section. No spine, or a market
-       the composer has no generator for → nothing is composed: an honest gap
-       beats a guessed region's regional form in a filing. */
-    try {
-      const prog = await client.query(
-        `SELECT id, program_type AS "programType", product_name AS "productName", name, code
-           FROM regulatory_programs
-          WHERE id = $1 AND organization_id = $2`,
-        [projectId, orgId],
-      );
-      const p = prog.rows[0] as
-        | { id: string; programType: string | null; productName: string | null; name: string | null; code: string | null }
-        | undefined;
-      if (p) {
-        const spine = await resolveSubmissionSpine(
-          { programId: p.id, programType: p.programType, productName: p.productName, title: p.name, programCode: p.code },
-          orgId,
-        );
-        const region = regionCodeForPrimaryRegion(spine?.primaryRegion);
-        if (region) compiled = compiled.concat(composeRegional(rows as any, region));
-      }
-    } catch (regionalErr) {
-      // The core compose stands either way — but a skipped regional pass is
-      // SAID, not swallowed: the compile gate will name the missing 3.2.R.
-      console.warn(
-        '[module3-os] regional (3.2.R) composition skipped:',
-        regionalErr instanceof Error ? regionalErr.message : String(regionalErr),
-      );
-    }
+       Composition READS on the pool, not on `client`: the regulatory_programs
+       lookup behind the 3.2.R pass is best-effort, and a failed statement inside
+       this transaction would abort it — the upsert below would then fail with
+       "current transaction is aborted", hiding the real cause. A pass that could
+       not run comes back in `composeSkips` and is reported to the caller rather
+       than showing up as a silently shorter Module 3. */
+    const { sections: compiled, skipped: composeSkips } = await composeAllSections(pool, orgId, projectId, sources);
 
     for (const section of compiled) {
-      const upsert = await client.query(
-        `INSERT INTO cmc_module3_sections (organization_id, project_id, section_key, section_path, deterministic_json, narrative_text, compiled_hash, stale, stale_reason, approval_state)
-         VALUES ($1,$2,$3,$4,$5::jsonb,$6,$7,$8,$9,'draft')
-         ON CONFLICT (organization_id, project_id, section_key)
-         DO UPDATE SET deterministic_json = excluded.deterministic_json,
-                       compiled_hash = excluded.compiled_hash,
-                       stale = excluded.stale,
-                       stale_reason = excluded.stale_reason,
-                       narrative_text = excluded.narrative_text,
-                       updated_at = now()
-         RETURNING id`,
-        [
-          orgId,
-          projectId,
-          section.sectionKey,
-          section.sectionPath,
-          JSON.stringify({
-            ...section.structuredPayload,
-            completeness: section.completeness,
-            missingInputs: section.missingInputs,
-          }),
-          section.narrativeDraft,
-          createSourceHash(section.structuredPayload),
-          false,
-          null,
-        ]
-      );
-      const sectionId = upsert.rows[0]?.id;
-      if (!sectionId) continue;
-
-      // Scoped by org as well as section id. `sectionId` comes from the upsert's
-      // RETURNING, so before the arbiter carried organization_id this deleted the
-      // VICTIM's provenance rows — the traceability tying each Module 3 section
-      // back to the source objects it was compiled from.
-      await client.query(
-        `DELETE FROM cmc_section_lineage WHERE section_id = $1 AND organization_id = $2`,
-        [sectionId, orgId]
-      );
-      for (const lin of section.lineage) {
-        await client.query(
-          `INSERT INTO cmc_section_lineage (organization_id, section_id, source_object_id, source_hash_at_compile)
-           VALUES ($1, $2, $3, $4)`,
-          [orgId, sectionId, lin.sourceObjectId, lin.sourceHashAtCompile]
-        );
-      }
-      await client.query(
-        `INSERT INTO cmc_provenance_events (organization_id, project_id, artifact_type, artifact_id, event_type, event_payload, created_by)
-         VALUES ($1,$2,'section',$3,'compiled',$4::jsonb,$5)`,
-        [
-          orgId,
-          projectId,
-          sectionId,
-          JSON.stringify({
-            sectionKey: section.sectionKey,
-            completeness: section.completeness,
-            missingInputs: section.missingInputs,
-            narrativeMechanism: 'deterministic_with_ai_optional',
-          }),
-          (req as any).user?.id || 'system',
-        ]
-      );
+      /* Recompiling does NOT reset approval_state: a newly inserted row is
+         'draft' anyway, and an existing approval is left to the refresh path
+         (which un-approves deliberately) rather than silently dropped here. */
+      await persistComposedSection(client, {
+        orgId,
+        projectId,
+        section,
+        actorId: (req as any).user?.id,
+        eventType: 'compiled',
+        resetApprovalToDraft: false,
+      });
     }
     await client.query('COMMIT');
 
@@ -333,7 +240,7 @@ router.post('/compile/:projectId', async (req, res) => {
       }
     }
 
-    res.json({ success: true, compiledCount: compiled.length, sections: compiled, bridgedArtifacts, bridgeSkips });
+    res.json({ success: true, compiledCount: compiled.length, sections: compiled, composeSkips, bridgedArtifacts, bridgeSkips });
   } catch (error) {
     await client.query('ROLLBACK');
     if ((error instanceof Error ? error.message : String(error)).includes('Organization context required')) {
@@ -382,64 +289,14 @@ router.post('/contradictions/:projectId', async (req, res) => {
     const orgId = getOrgId(req);
     const projectIdRaw = req.params.projectId; const projectId = Array.isArray(projectIdRaw) ? projectIdRaw[0] : (projectIdRaw ?? "");
     const pool = getPool();
-    /* The sweep reads the REAL register shapes, tenant-scoped:
-       - quality_specifications / cmc_batch_records / cmc_comparability_
-         assessments carry a uuid project_id, so the project filter applies
-         only when the id IS a uuid (a legacy numeric id matches nothing —
-         honestly — instead of aborting the whole statement with 22P02);
-       - analytical_methods / stability_studies are the ORGANIZATION's
-         registers (no project column by design), read org-wide — and their
-         columns are `title` / `study_title`, which the previous SQL imagined
-         as method_name / study_name, so this endpoint had never returned
-         anything but 500 against a provisioned database. Every query also
-         carries the org — the old ones filtered by project alone, which on
-         the shared-uuid space was a cross-tenant read. */
-    const isUuidProject = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(projectId);
-    const noRows = Promise.resolve({ rows: [] as any[] });
-    const [specs, methods, stability, batch, comparability] = await Promise.all([
-      isUuidProject
-        ? pool.query(
-            `SELECT material_name as "materialName", acceptance_criteria as "acceptanceCriteria"
-             FROM quality_specifications
-             WHERE project_id = $1::uuid AND (tenant_id = $2 OR tenant_id IS NULL)`,
-            [projectId, orgId]
-          )
-        : noRows,
-      pool.query(
-        // The engine's contract reads `validationStatus` (ICH Q2 validated /
-        // verified / transferred); the table's column is `status`.
-        `SELECT title as "methodName", purpose, status as "validationStatus"
-         FROM analytical_methods WHERE organization_id = $1`,
-        [orgId]
-      ),
-      pool.query(
-        `SELECT study_title as "studyName", status FROM stability_studies WHERE organization_id = $1`,
-        [orgId]
-      ),
-      isUuidProject
-        ? pool.query(
-            `SELECT batch_number as "batchNumber", disposition FROM cmc_batch_records
-             WHERE project_id = $1::uuid AND (tenant_id = $2 OR organization_id = $2)`,
-            [projectId, orgId]
-          )
-        : noRows,
-      isUuidProject
-        ? pool.query(
-            `SELECT assessment_name as "assessmentName", regulatory_risk_level as "regulatoryRiskLevel"
-             FROM cmc_comparability_assessments
-             WHERE project_id = $1::uuid AND organization_id = $2`,
-            [projectId, orgId]
-          )
-        : noRows,
-    ]);
+    /* One tenant-scoped sweep, shared with the AnA command handler
+       (services/cmc/contradiction-registers). It carries the org on every read
+       and uses the columns the tables actually have; the second copy that lived
+       in the command handler filtered by project alone, which on the shared
+       uuid space was a cross-tenant read. */
+    const registers = await readContradictionRegisters(pool, { organizationId: orgId, projectId });
 
-    const contradictions = detectContradictions({
-      specifications: specs.rows,
-      methods: methods.rows,
-      stability: stability.rows,
-      batch: batch.rows,
-      comparability: comparability.rows,
-    });
+    const contradictions = detectContradictions(registers);
 
     // Wrap DELETE + INSERT in a transaction to prevent partial state
     const client = await pool.connect();
@@ -890,44 +747,165 @@ router.post('/sections/:projectId/:sectionKey/approve', async (req, res) => {
   }
 });
 
+/**
+ * POST /sections/:projectId/:sectionKey/refresh — RECOMPOSE one §3.2 section.
+ *
+ * "Refresh" means: read the project's canonical source objects, run the same
+ * composition the compile route runs, and write the result down — clearing the
+ * stale flag because the section now genuinely reflects its sources, and
+ * dropping approval back to 'draft' because the signature that was applied was
+ * applied to the previous content.
+ *
+ * It used to mean something else entirely. The handler took
+ * `req.body.deterministicJson` — no schema, no re-auth, no attribution — and
+ * wrote it verbatim into deterministic_json while clearing stale/stale_reason,
+ * never reading cmc_source_objects at all. Two things followed. Any org member
+ * could replace a composed section's payload with arbitrary JSON, which the
+ * build screen then reported as its completeness/missingInputs (the numbers the
+ * QA reviewer reads before applying the Part 11 signature) and which the
+ * approve route froze into cmc_module3_section_versions.snapshot_json under a
+ * §11.70 binding digest — a signed electronic record whose lineage still named
+ * source objects the content had never come from. And with NO body it still
+ * cleared stale/stale_reason and logged a 'refreshed' event over unchanged
+ * content: the "your source data changed" warning could be dismissed instead of
+ * acted on. Because it never touched narrative_text or compiled_hash, the leaf
+ * that ships into submission_leaves carried the old narrative while the signed
+ * snapshot carried the supplied JSON.
+ *
+ * A caller-supplied `deterministicJson` is now REFUSED with 400 rather than
+ * silently ignored, so any integration relying on the old behaviour learns
+ * about the change instead of believing its override landed. (Nothing in
+ * client/, server/ or tests/ ever sent one.)
+ */
 router.post('/sections/:projectId/:sectionKey/refresh', async (req, res) => {
+  const pool = getPool();
+  const client = await pool.connect();
   try {
     const orgId = getOrgId(req);
     const { projectId, sectionKey } = req.params;
-    const pool = getPool();
-    const sectionRes = await pool.query(
+
+    // Fail closed and LOUDLY on the old override shape — before any read or write.
+    if (req.body && Object.prototype.hasOwnProperty.call(req.body, 'deterministicJson')) {
+      return res.status(400).json({
+        success: false,
+        error:
+          'Refresh recomposes a section from its canonical source objects; it does not accept composed content. Remove `deterministicJson` from the request body.',
+        hint: 'To change what a section says, change the source objects it is composed from (POST /api/cmc/module3-os/source-objects/:projectId), then refresh.',
+      });
+    }
+
+    await client.query('BEGIN');
+
+    const sectionRes = await client.query(
       `SELECT id, deterministic_json, approval_state FROM cmc_module3_sections
        WHERE organization_id = $1 AND project_id = $2 AND section_key = $3`,
       [orgId, projectId, sectionKey]
     );
     const section = sectionRes.rows[0];
-    if (!section) return res.status(404).json({ success: false, error: 'Section not found' });
+    if (!section) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({ success: false, error: 'Section not found' });
+    }
 
-    const payload = req.body?.deterministicJson || section.deterministic_json;
-    const diffSummary = summarizeSectionDiff(section.deterministic_json, payload);
-    await pool.query(
-      `UPDATE cmc_module3_sections
-       SET deterministic_json = $1::jsonb, approval_state = 'draft', stale = false, stale_reason = null, updated_at = NOW()
-       WHERE id = $2`,
-      [JSON.stringify(payload), section.id]
-    );
-    await pool.query(
-      `INSERT INTO cmc_provenance_events (organization_id, project_id, artifact_type, artifact_id, event_type, event_payload, created_by)
-       VALUES ($1,$2,'section',$3,'refreshed',$4::jsonb,$5)`,
-      [
-        orgId,
-        projectId,
-        section.id,
-        JSON.stringify({ sectionKey, diffSummary, priorApprovalState: section.approval_state }),
-        (req as any).user?.id || 'system',
-      ]
-    );
-    res.json({ success: true, sectionKey, state: 'draft', diffSummary });
+    // Same fail-closed rule the compile route carries: composing from zero
+    // sources yields clean-but-empty bodies and would clear the stale flag over
+    // them. Refusing leaves `stale`/`stale_reason` exactly as they were.
+    const sources = await loadCanonicalSources(client, orgId, projectId);
+    if (sources.length === 0) {
+      await client.query('ROLLBACK');
+      return res.status(409).json({
+        success: false,
+        error: NO_CANONICAL_SOURCES_ERROR,
+        hint: NO_CANONICAL_SOURCES_HINT,
+      });
+    }
+
+    /* Composition reads on the pool, not on `client`: see the compile route —
+       a best-effort read that fails must not abort this transaction. */
+    const { section: composed, skipped } = await composeSingleSection(pool, orgId, projectId, sectionKey, sources);
+    if (!composed) {
+      await client.query('ROLLBACK');
+      /* "Not in the composition rules" is a verdict about the dossier; a pass
+         that could not RUN is our error. Reporting the second as the first
+         would tell an operator their 3.2.R section does not apply when in fact
+         we never looked. */
+      const failedPass = failedPassForSectionKey(sectionKey, skipped);
+      if (failedPass) {
+        return res.status(503).json({
+          success: false,
+          error: composePassFailureMessage(sectionKey, failedPass),
+        });
+      }
+      return res.status(409).json({
+        success: false,
+        error: `Section ${sectionKey} is not in the Module 3 composition rules — it cannot be recomposed.`,
+      });
+    }
+
+    /* The diff the caller is told about — and which is written into the
+       provenance event below — is between what was STORED and the bytes this
+       call actually PERSISTS. It has to be deterministicJsonFor(composed), the
+       same function persistComposedSection writes with: computing it against a
+       shorter payload made the audit record claim a refresh had removed keys
+       (`tables`) that it re-wrote unchanged. */
+    const diffSummary = summarizeSectionDiff(section.deterministic_json, deterministicJsonFor(composed));
+
+    await persistComposedSection(client, {
+      orgId,
+      projectId,
+      section: composed,
+      actorId: (req as any).user?.id,
+      eventType: 'refreshed',
+      // Replacing the content of an approved section un-approves it.
+      resetApprovalToDraft: true,
+      eventPayloadExtra: { diffSummary, priorApprovalState: section.approval_state },
+    });
+
+    await client.query('COMMIT');
+
+    // Bridge to the governed artifact, as build-section does. A bridge that
+    // could not run is reported, not swallowed.
+    let bridgedArtifact: { artifactId: string; isNew: boolean } | null = null;
+    let bridgeSkip: { reason: string; detail: string } | null = null;
+    try {
+      const bridged = await bridgeCompileToArtifact(orgId, projectId, composed.sectionKey, {
+        narrativeDraft: composed.narrativeDraft,
+        tables: composed.tables,
+        completeness: composed.completeness,
+        missingInputs: composed.missingInputs,
+        lineage: composed.lineage,
+      }, { createdById: Number((req as any).user?.id) || null });
+      if (bridged.bridged) {
+        bridgedArtifact = { artifactId: bridged.artifactId, isNew: bridged.isNew };
+      } else {
+        bridgeSkip = { reason: bridged.reason, detail: bridged.detail };
+      }
+    } catch (bridgeErr) {
+      bridgeSkip = {
+        reason: 'error',
+        detail: bridgeErr instanceof Error ? bridgeErr.message : String(bridgeErr),
+      };
+    }
+
+    res.json({
+      success: true,
+      sectionKey,
+      state: 'draft',
+      diffSummary,
+      completeness: composed.completeness,
+      missingInputs: composed.missingInputs,
+      sourceCount: composed.lineage.length,
+      bridgedArtifact,
+      bridgeSkip,
+    });
   } catch (error) {
+    try { await client.query('ROLLBACK'); } catch { /* rollback best-effort */ }
     if ((error instanceof Error ? error.message : String(error)).includes('Organization context required')) {
       return res.status(401).json({ success: false, error: 'Organization context required' });
     }
     return serverError(res, logger, 'refreshing sections', error);
+  } finally {
+    client.release();
   }
 });
 
@@ -959,6 +937,21 @@ router.post('/guard/final-export/:projectId', async (req, res) => {
 });
 
 /**
+ * The 409 body for a placement refusal. Two refusals share one status: the
+ * final-export gate's own verdict (surfaced verbatim, as the guard endpoint
+ * would have), or — when the gate passed but every approved section was
+ * unplaceable — the per-section skip reasons. The second case files NOTHING,
+ * so it must never answer 200/success: an automated caller reading only
+ * `success` would otherwise record "Module 3 filed" over a sequence with no
+ * Module 3 leaves in it.
+ */
+function placementRefusalBody(result: Extract<PlaceModule3Result, { placed: false }>) {
+  return result.refusedBy === 'nothing-placeable'
+    ? { success: false, error: result.error, skipped: result.skipped }
+    : { success: false, error: result.error, data: result.data };
+}
+
+/**
  * POST /place-into-submission/:projectId — the CMC → IND seam.
  *
  * Places every approved §3.2 section into a sequence of the canonical
@@ -966,6 +959,9 @@ router.post('/guard/final-export/:projectId', async (req, res) => {
  * canonical renderable leaf source) and a real submission_leaves row at the
  * m-prefixed section code. Refuses outright — before any write — unless the
  * final-export gate passes; the refusal body carries the gate's own verdict.
+ * It also refuses (409, with the per-section reasons) when the gate passed but
+ * every approved section was skipped: a placement that filed no leaf is a
+ * refusal, never a 200 an automated caller could read as "Module 3 filed".
  */
 router.post('/place-into-submission/:projectId', async (req, res) => {
   try {
@@ -996,9 +992,7 @@ router.post('/place-into-submission/:projectId', async (req, res) => {
     });
 
     if (!result.placed) {
-      // The gate's verdict is the useful answer — surface it verbatim, as the
-      // guard endpoint would have.
-      return res.status(409).json({ success: false, error: result.error, data: result.data });
+      return res.status(409).json(placementRefusalBody(result));
     }
     return res.json({ success: true, data: result });
   } catch (error) {

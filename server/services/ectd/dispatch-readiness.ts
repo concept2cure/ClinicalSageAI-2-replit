@@ -11,17 +11,40 @@
  * is as harmful as a missed one):
  *   - EMPTY_SEQUENCE      — nothing dispatchable
  *   - UNRESOLVED_DOCUMENT — a non-delete leaf with no document to assemble
+ *   - UNPLACEABLE_DOCUMENT_TABLE — a leaf pointing at a document table no
+ *     resolver can materialize (a typo or an invented table). The write path
+ *     now refuses these, but rows placed BEFORE that guard existed are still in
+ *     the database, and without this finding the gate keeps reporting their
+ *     sequence dispatch-clear for a package assembly can never build — the
+ *     write-side allowlist cannot repair rows that are already stored.
+ *   - EXTERNAL_DOCUMENT_NOT_MATERIALIZABLE — a leaf on a DOCUMENTED external
+ *     table (vault_documents) the write path legitimately accepts but the
+ *     assembler cannot build into the package. transmitSequence fails closed on
+ *     ANY unresolved leaf, external ones included, so a dispatch-clear verdict
+ *     here would promise an operator a transmit the system will refuse.
  *   - INVALID_LIFECYCLE_OP — an operation outside new|replace|append|delete
+ *
+ * The delete exemption is scoped to UNRESOLVED_DOCUMENT alone. A delete is
+ * backbone-only and correctly carries no document, but if a delete row DOES
+ * carry a pointer the table checks still apply — the assembler resolves every
+ * stored leaf without reading its operation.
  *
  * Required-section completeness is reported as a non-blocking WARNING (Module-1
  * numbering and leaf section codes don't align cleanly across regions, so it is
  * informative, not provable). Pathway/regional completeness is covered separately
  * by the pathway engines and the AI dispatch-qc advisory.
  *
- * PURE + DETERMINISTIC: no DB, no network, no LLM.
+ * PURE + DETERMINISTIC: no DB, no network, no LLM (leaf-document-tables holds
+ * the table vocabulary and has no imports of its own).
  *
  * @module server/services/ectd/dispatch-readiness
  */
+
+import {
+  externalDocumentTableReason,
+  isPlaceableDocumentTable,
+  PLACEABLE_DOCUMENT_TABLE_LIST,
+} from './leaf-document-tables';
 
 export interface ReadinessLeaf {
   sectionCode: string;
@@ -76,6 +99,78 @@ function normalizeCode(code: string): string {
 }
 
 /**
+ * The document-pointer errors for ONE leaf.
+ *
+ * A delete leaf is exempt from the COMPLETENESS check only. In eCTD a delete is
+ * a backbone-only operation: it ships no file, so carrying no document pointer
+ * is its correct shape, not a defect. That exemption does NOT extend to the
+ * table checks. A delete row can still carry a pointer — AnaToolExecutor takes
+ * `lifecycle_op` and `document_table` on the same call — and a pointer that
+ * exists must be one the assembler recognizes whatever the operation, because
+ * the assembler does not read the operation: buildPackagerInputFromCore calls
+ * resolveFile on EVERY stored leaf and counts each one it cannot resolve
+ * against submission completeness. Written as a blanket exemption, a typo table
+ * on a delete leaf read dispatch-clear.
+ *
+ * The completeness check and the table check are INDEPENDENT: a half-pointer
+ * (an unknown table AND a null document_id) is genuinely two defects and yields
+ * two findings, so `errors` can exceed the leaf count. The two table verdicts
+ * are mutually exclusive by construction — a table is either outside the closed
+ * set or inside it, and only a table inside it can be a documented external
+ * one. Each finding predicts the same outcome: the assembler cannot produce
+ * this leaf's file, and transmitSequence fails closed on any unresolved leaf.
+ */
+function documentPointerFindings(leaf: ReadinessLeaf): ReadinessFinding[] {
+  const out: ReadinessFinding[] = [];
+  const isDelete = leaf.lifecycleOp === 'delete';
+
+  // ERROR: an incomplete pointer — there is no document to assemble. Exempt for
+  // a delete, which is backbone-only and correctly carries none.
+  if (!isDelete && (!leaf.documentTable || !leaf.documentId)) {
+    out.push({
+      severity: 'error',
+      code: 'UNRESOLVED_DOCUMENT',
+      sectionCode: leaf.sectionCode,
+      message: `Leaf "${leaf.title}" (${leaf.sectionCode}) has no resolvable document — it cannot be assembled into the package.`,
+    });
+  }
+
+  const table = leaf.documentTable;
+  if (!table) return out;
+
+  // ERROR: a table outside the closed set — a typo or an invented table. The
+  // write path refuses these now; rows written before that guard existed are
+  // still in the database and must not read dispatch-clear.
+  if (!isPlaceableDocumentTable(table)) {
+    out.push({
+      severity: 'error',
+      code: 'UNPLACEABLE_DOCUMENT_TABLE',
+      sectionCode: leaf.sectionCode,
+      message:
+        `Leaf "${leaf.title}" (${leaf.sectionCode}) points at document table "${table}", which no resolver can materialize — assembly would report it unresolved and block transmit. Expected one of: ${PLACEABLE_DOCUMENT_TABLE_LIST.join(', ')}.`,
+    });
+    return out;
+  }
+
+  // ERROR: a PLACEABLE but external table. The pointer is legitimate and the
+  // write path accepts it; the assembler still cannot build the bytes, and
+  // transmit blocks on it. Reporting it here moves that refusal from the end of
+  // the filing window to the readiness report.
+  const externalReason = externalDocumentTableReason(table);
+  if (externalReason) {
+    out.push({
+      severity: 'error',
+      code: 'EXTERNAL_DOCUMENT_NOT_MATERIALIZABLE',
+      sectionCode: leaf.sectionCode,
+      message:
+        `Leaf "${leaf.title}" (${leaf.sectionCode}) points at "${table}", which the assembler cannot materialize into the package: ${externalReason}. Transmit fails closed on it, so this sequence is not dispatchable until the leaf is re-pointed at a document the assembler can build.`,
+    });
+  }
+
+  return out;
+}
+
+/**
  * Evaluate a sequence's canonical leaves for dispatch readiness. `errors` is the
  * authoritative count the dispatch gate must use; it is never inflated by the
  * informative warning/info findings.
@@ -119,15 +214,7 @@ export function computeDispatchReadiness(
       });
     }
 
-    // ERROR: a non-delete leaf with no document cannot be assembled.
-    if (leaf.lifecycleOp !== 'delete' && (!leaf.documentTable || !leaf.documentId)) {
-      findings.push({
-        severity: 'error',
-        code: 'UNRESOLVED_DOCUMENT',
-        sectionCode: leaf.sectionCode,
-        message: `Leaf "${leaf.title}" (${leaf.sectionCode}) has no resolvable document — it cannot be assembled into the package.`,
-      });
-    }
+    findings.push(...documentPointerFindings(leaf));
 
     // ERROR: replace/append/delete in an original sequence — nothing to act on.
     if (

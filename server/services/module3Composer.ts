@@ -2534,6 +2534,27 @@ export function tablesToMarkdown(tables: GeneratedTable[]): string {
   }).join('\n\n');
 }
 
+/**
+ * The ONE rendering of a composed §3.2 section into filed markdown.
+ *
+ * Every generator writes a narrative that CITES its tables — "see the change
+ * history table", "reported in the table above", "the specification is given
+ * below". A consumer that renders the narrative without the tables files a
+ * document whose prose points at data that is not in it. This function is what
+ * both consumers use: the governed-artifact bridge
+ * (module3-convergence-service.bridgeCompileToArtifact) and the IND placement
+ * snapshot (services/cmc/place-module3-into-submission). They must produce
+ * byte-identical section content, so there is one function, not two.
+ */
+export function renderComposedSectionMarkdown(
+  sectionLabel: string,
+  narrativeDraft: string,
+  tables: GeneratedTable[] | null | undefined,
+): string {
+  const tablesMarkdown = tables && tables.length > 0 ? '\n\n' + tablesToMarkdown(tables) : '';
+  return `## ${sectionLabel}\n\n${narrativeDraft}${tablesMarkdown}`;
+}
+
 // ── Main composition function ──────────────────────────────────────────────────
 
 export function composeModule3FromCanonicalSources(sourceObjects: CanonicalSource[]): ComposedSection[] {

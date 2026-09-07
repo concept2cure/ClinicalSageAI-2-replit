@@ -9,10 +9,20 @@
  */
 
 import { getPool } from '../../db';
-import { composeModule3FromCanonicalSources, impactedSectionsForSourceType } from '../module3Composer';
-import { createSourceHash } from '../cmc-module3-compiler';
+import {
+  composeAllSections,
+  composePassFailureMessage,
+  composeSingleSection,
+  failedPassForSectionKey,
+  loadCanonicalSources,
+  persistComposedSection,
+  type ComposePassSkip,
+  NO_CANONICAL_SOURCES_ERROR,
+  NO_CANONICAL_SOURCES_HINT,
+} from '../cmc/module3-section-recompose';
 import { bridgeCompileToArtifact, classifyAndMapArtifactToSource, getModule3BuildStatus } from '../module3-convergence-service';
 import { detectContradictions, deriveImpactTasks } from '../cmc-impact-contradiction-engine';
+import { readContradictionRegisters } from '../cmc/contradiction-registers';
 
 interface CommandContext {
   userId: number;
@@ -27,6 +37,16 @@ interface CommandResult {
   data?: unknown;
 }
 
+/**
+ * Composition passes that could not run are SAID, not hidden behind a shorter
+ * section list — the chat reply is the only place an AnA user would learn that
+ * the appendix or regional sections were not composed.
+ */
+function skippedPassNote(skipped: ComposePassSkip[]): string {
+  if (skipped.length === 0) return '';
+  return `\n\n_Not composed:_ ${skipped.map(s => `${s.pass} pass (${s.reason})`).join('; ')}`;
+}
+
 // ── module3_build_all ─────────────────────────────────────────────────────────
 
 export async function module3BuildAll(ctx: CommandContext, params: Record<string, unknown>): Promise<CommandResult> {
@@ -35,53 +55,49 @@ export async function module3BuildAll(ctx: CommandContext, params: Record<string
   const projectId = (params.projectId as string) || String(ctx.activeProjectId || '');
   if (!projectId) return { success: false, action: 'module3_build_all', message: 'Project ID required' };
 
+  /* Load and compose through the ONE canonical implementation the compile
+     route, /build-section and the refresh paths use
+     (services/cmc/module3-section-recompose). This handler carried its own copy
+     of the compose+persist body: it never wrote the 'compiled' provenance event
+     the API compile route writes (so an AnA build left no trace), and it never
+     composed the 3.2.A / 3.2.R sections the shared composition emits.
+
+     Reading and composing happen OUTSIDE the write transaction: composition's
+     regional pass is best-effort, and a failed statement inside a transaction
+     aborts it — the upserts would then fail with "current transaction is
+     aborted" and bury the real cause. */
+  const sourceObjects = await loadCanonicalSources(pool, orgId, projectId);
+
+  /* Fail closed rather than writing 17 clean-but-empty sections with
+     stale = false over whatever was there — the same refusal the compile route,
+     /build-section and refresh-stale make. This branch used to answer
+     `success: true`, which reported "nothing was built" as a completed build. */
+  if (sourceObjects.length === 0) {
+    return {
+      success: false,
+      action: 'module3_build_all',
+      message: `${NO_CANONICAL_SOURCES_ERROR} ${NO_CANONICAL_SOURCES_HINT}`,
+      data: { compiledCount: 0 },
+    };
+  }
+
+  const { sections: compiled, skipped } = await composeAllSections(pool, orgId, projectId, sourceObjects);
+
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
-
-    const { rows: sourceObjects } = await client.query(
-      `SELECT id, source_type as "sourceType", source_payload as "sourcePayload", source_hash as "sourceHash"
-       FROM cmc_source_objects WHERE organization_id = $1 AND project_id = $2 ORDER BY updated_at DESC`,
-      [orgId, projectId]
-    );
-
-    if (sourceObjects.length === 0) {
-      await client.query('ROLLBACK');
-      return { success: true, action: 'module3_build_all', message: 'No source objects found. Upload and classify source documents first.', data: { compiledCount: 0 } };
-    }
-
-    const compiled = composeModule3FromCanonicalSources(sourceObjects as any);
-
     for (const section of compiled) {
-      const secRes = await client.query(
-        `INSERT INTO cmc_module3_sections (organization_id, project_id, section_key, section_path, deterministic_json, narrative_text, compiled_hash, stale, stale_reason, approval_state)
-         VALUES ($1,$2,$3,$4,$5::jsonb,$6,$7,false,null,'draft')
-         ON CONFLICT (organization_id, project_id, section_key)
-         DO UPDATE SET deterministic_json = excluded.deterministic_json, compiled_hash = excluded.compiled_hash, stale = false, stale_reason = null, narrative_text = excluded.narrative_text, updated_at = now()
-         RETURNING id`,
-        [orgId, projectId, section.sectionKey, section.sectionPath,
-         JSON.stringify({ ...section.structuredPayload, completeness: section.completeness, missingInputs: section.missingInputs }),
-         section.narrativeDraft, createSourceHash(section.structuredPayload)]
-      );
-      // Persist derivation lineage: which source objects this section was
-      // compiled from, at what source hash. The convergence/OS compile routes
-      // record this; this AnA build-all path wrote the narrative but silently
-      // dropped the provenance, so a section built here traced back to nothing.
-      // Refreshed in the same transaction (delete-then-insert, org-scoped).
-      const sectionId = secRes.rows[0]?.id;
-      if (sectionId) {
-        await client.query(
-          `DELETE FROM cmc_section_lineage WHERE section_id = $1 AND organization_id = $2`,
-          [sectionId, orgId]
-        );
-        for (const lin of section.lineage) {
-          await client.query(
-            `INSERT INTO cmc_section_lineage (organization_id, section_id, source_object_id, source_hash_at_compile)
-             VALUES ($1, $2, $3, $4)`,
-            [orgId, sectionId, lin.sourceObjectId, lin.sourceHashAtCompile]
-          );
-        }
-      }
+      /* Building does NOT reset approval_state — un-approving on new content is
+         the refresh path's job, at parity with the API compile route. */
+      await persistComposedSection(client, {
+        orgId,
+        projectId,
+        section,
+        actorId: ctx.userId ?? null,
+        eventType: 'compiled',
+        resetApprovalToDraft: false,
+        eventPayloadExtra: { trigger: 'ana-build-all' },
+      });
     }
     await client.query('COMMIT');
 
@@ -115,13 +131,14 @@ export async function module3BuildAll(ctx: CommandContext, params: Record<string
     return {
       success: true,
       action: 'module3_build_all',
-      message: `Compiled ${compiled.length} Module 3 subsections. ${withData.length} have source data, ${empty.length} are empty. ${bridged.length} bridged to governed artifacts.${summaryBlock}${navHint}`,
+      message: `Compiled ${compiled.length} Module 3 subsections. ${withData.length} have source data, ${empty.length} are empty. ${bridged.length} bridged to governed artifacts.${skippedPassNote(skipped)}${summaryBlock}${navHint}`,
       data: {
         compiledCount: compiled.length,
         withDataCount: withData.length,
         emptyCount: empty.length,
         bridgedCount: bridged.length,
         bridgedArtifacts: bridged,
+        skippedPasses: skipped,
         sections: compiled.map(s => {
           const b = bridged.find(br => br.sectionKey === s.sectionKey);
           return {
@@ -151,48 +168,53 @@ export async function module3BuildSection(ctx: CommandContext, params: Record<st
   const sectionKey = params.sectionKey as string;
   if (!projectId || !sectionKey) return { success: false, action: 'module3_build_section', message: 'Project ID and sectionKey required (e.g. 3.2.S.4)' };
 
-  const { rows: sourceObjects } = await pool.query(
-    `SELECT id, source_type as "sourceType", source_payload as "sourcePayload", source_hash as "sourceHash"
-     FROM cmc_source_objects WHERE organization_id = $1 AND project_id = $2`,
-    [orgId, projectId]
-  );
+  /* Load, compose and persist through the ONE canonical implementation
+     (services/cmc/module3-section-recompose) that compile, /build-section,
+     refresh and refresh-stale use. This handler carried its own copy: it wrote
+     no provenance event, and it composed only the core sections, so the 3.2.A /
+     3.2.R keys the shared composition emits could never be built here.
 
-  const allComposed = composeModule3FromCanonicalSources(sourceObjects as any);
-  const section = allComposed.find(s => s.sectionKey === sectionKey);
-  if (!section) return { success: false, action: 'module3_build_section', message: `Section ${sectionKey} not found in composition rules` };
+     Reading and composing happen outside the write transaction — composition's
+     best-effort regional read must not be able to abort it. */
+  const sourceObjects = await loadCanonicalSources(pool, orgId, projectId);
 
-  // Upsert compiled section + its derivation lineage in one transaction: the
-  // narrative and the record of which source objects it was compiled from
-  // commit together, at parity with the convergence/OS routes and build-all.
-  // This path previously wrote the narrative on a bare pool.query with no
-  // lineage, so a single-section build traced back to nothing.
+  // Same fail-closed refusal as every other build path: composing from zero
+  // sources yields a clean-but-empty section written with stale = false.
+  if (sourceObjects.length === 0) {
+    return {
+      success: false,
+      action: 'module3_build_section',
+      message: `${NO_CANONICAL_SOURCES_ERROR} ${NO_CANONICAL_SOURCES_HINT}`,
+    };
+  }
+
+  const { section, skipped } = await composeSingleSection(pool, orgId, projectId, sectionKey, sourceObjects);
+  if (!section) {
+    // A pass that could not RUN is our error, not a finding that the section
+    // does not apply to this dossier.
+    const failedPass = failedPassForSectionKey(sectionKey, skipped);
+    return {
+      success: false,
+      action: 'module3_build_section',
+      message: failedPass
+        ? composePassFailureMessage(sectionKey, failedPass)
+        : `Section ${sectionKey} not found in composition rules`,
+    };
+  }
+
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
-    const secRes = await client.query(
-      `INSERT INTO cmc_module3_sections (organization_id, project_id, section_key, section_path, deterministic_json, narrative_text, compiled_hash, stale, approval_state)
-       VALUES ($1,$2,$3,$4,$5::jsonb,$6,$7,false,'draft')
-       ON CONFLICT (organization_id, project_id, section_key)
-       DO UPDATE SET deterministic_json = excluded.deterministic_json, compiled_hash = excluded.compiled_hash, stale = false, stale_reason = null, narrative_text = excluded.narrative_text, updated_at = now()
-       RETURNING id`,
-      [orgId, projectId, section.sectionKey, section.sectionPath,
-       JSON.stringify({ ...section.structuredPayload, completeness: section.completeness, missingInputs: section.missingInputs }),
-       section.narrativeDraft, createSourceHash(section.structuredPayload)]
-    );
-    const sectionId = secRes.rows[0]?.id;
-    if (sectionId) {
-      await client.query(
-        `DELETE FROM cmc_section_lineage WHERE section_id = $1 AND organization_id = $2`,
-        [sectionId, orgId]
-      );
-      for (const lin of section.lineage) {
-        await client.query(
-          `INSERT INTO cmc_section_lineage (organization_id, section_id, source_object_id, source_hash_at_compile)
-           VALUES ($1, $2, $3, $4)`,
-          [orgId, sectionId, lin.sourceObjectId, lin.sourceHashAtCompile]
-        );
-      }
-    }
+    /* Building does NOT reset approval_state, at parity with the API routes. */
+    await persistComposedSection(client, {
+      orgId,
+      projectId,
+      section,
+      actorId: ctx.userId ?? null,
+      eventType: 'compiled',
+      resetApprovalToDraft: false,
+      eventPayloadExtra: { trigger: 'ana-build-section' },
+    });
     await client.query('COMMIT');
   } catch (err) {
     await client.query('ROLLBACK').catch(() => undefined);
@@ -285,25 +307,67 @@ export async function module3RefreshStale(ctx: CommandContext, params: Record<st
     return { success: true, action: 'module3_refresh_stale', message: 'No stale sections to refresh.' };
   }
 
-  // Full recompile from current sources
-  const { rows: sourceObjects } = await pool.query(
-    `SELECT id, source_type as "sourceType", source_payload as "sourcePayload", source_hash as "sourceHash"
-     FROM cmc_source_objects WHERE organization_id = $1 AND project_id = $2`,
-    [orgId, projectId]
-  );
+  /* Full recompile from current sources, through the ONE canonical
+     implementation the compile route, /build-section and the refresh endpoint
+     also use (services/cmc/module3-section-recompose). This handler used to
+     carry its own copy of the compose+persist body: a bare UPDATE that wrote
+     deterministic_json/narrative_text/compiled_hash but left cmc_section_lineage
+     pointing at the sources of the PREVIOUS compile and recorded no provenance
+     event, so a section could be refreshed with no trace of it having happened.
+     Composition now also covers the 3.2.A and 3.2.R sections the compile route
+     can create, which this copy could never refresh. */
+  const sourceObjects = await loadCanonicalSources(pool, orgId, projectId);
 
-  const allComposed = composeModule3FromCanonicalSources(sourceObjects as any);
+  // Fail closed rather than composing clean-but-empty bodies over stale ones —
+  // the same refusal the compile route and the refresh endpoint make.
+  if (sourceObjects.length === 0) {
+    return {
+      success: false,
+      action: 'module3_refresh_stale',
+      message: `${NO_CANONICAL_SOURCES_ERROR} ${NO_CANONICAL_SOURCES_HINT}`,
+    };
+  }
+
+  const { sections: allComposed, skipped } = await composeAllSections(pool, orgId, projectId, sourceObjects);
   const staleKeys = new Set(stale.map(s => s.sectionKey));
-  const refreshed: string[] = [];
+  const toRefresh = allComposed.filter(section => staleKeys.has(section.sectionKey));
 
-  for (const section of allComposed) {
-    if (!staleKeys.has(section.sectionKey)) continue;
-    await pool.query(
-      `UPDATE cmc_module3_sections SET deterministic_json = $1::jsonb, narrative_text = $2, compiled_hash = $3, stale = false, stale_reason = null, approval_state = 'draft', updated_at = now()
-       WHERE organization_id = $4 AND project_id = $5 AND section_key = $6`,
-      [JSON.stringify({ ...section.structuredPayload, completeness: section.completeness, missingInputs: section.missingInputs }),
-       section.narrativeDraft, createSourceHash(section.structuredPayload), orgId, projectId, section.sectionKey]
-    );
+  /* One transaction for the whole refresh. persistComposedSection DELETEs the
+     section's cmc_section_lineage rows before re-inserting them; on a bare pool
+     those statements can land on different pooled connections and nothing rolls
+     back, so a failure after the DELETE would leave a section with no lineage at
+     all — the traceability this path exists to keep correct, silently dropped. */
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    for (const section of toRefresh) {
+      // Refreshing replaces content, so approval drops back to draft — the
+      // behaviour this handler already had, kept explicit as a parameter.
+      await persistComposedSection(client, {
+        orgId,
+        projectId,
+        section,
+        actorId: ctx.userId ?? null,
+        eventType: 'refreshed',
+        resetApprovalToDraft: true,
+        eventPayloadExtra: { trigger: 'ana-refresh-stale' },
+      });
+    }
+    await client.query('COMMIT');
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => undefined);
+    return {
+      success: false,
+      action: 'module3_refresh_stale',
+      message: `Refresh failed, nothing was written: ${(err as Error).message}`,
+    };
+  } finally {
+    client.release();
+  }
+
+  // Bridging is post-commit and non-fatal, as on every other build path.
+  const refreshed: string[] = [];
+  for (const section of toRefresh) {
     try {
       await bridgeCompileToArtifact(orgId, projectId, section.sectionKey, {
         narrativeDraft: section.narrativeDraft,
@@ -319,8 +383,8 @@ export async function module3RefreshStale(ctx: CommandContext, params: Record<st
   return {
     success: true,
     action: 'module3_refresh_stale',
-    message: `Refreshed ${refreshed.length} stale sections: ${refreshed.join(', ')}\n\nGoverned artifacts updated. Click any refreshed section in the dossier tree to review.`,
-    data: { refreshedSections: refreshed },
+    message: `Refreshed ${refreshed.length} stale sections: ${refreshed.join(', ')}${skippedPassNote(skipped)}\n\nGoverned artifacts updated. Click any refreshed section in the dossier tree to review.`,
+    data: { refreshedSections: refreshed, skippedPasses: skipped },
   };
 }
 
@@ -365,18 +429,15 @@ export async function module3Contradictions(ctx: CommandContext, params: Record<
   const projectId = (params.projectId as string) || String(ctx.activeProjectId || '');
   if (!projectId) return { success: false, action: 'module3_contradictions', message: 'Project ID required' };
 
-  const [specs, methods, stability, batch, comparability] = await Promise.all([
-    pool.query(`SELECT material_name as "materialName", acceptance_criteria as "acceptanceCriteria" FROM quality_specifications WHERE project_id = $1`, [projectId]),
-    pool.query(`SELECT method_name as "methodName", purpose FROM analytical_methods WHERE project_id = $1`, [projectId]),
-    pool.query(`SELECT study_name as "studyName", status FROM stability_studies WHERE project_id = $1`, [projectId]),
-    pool.query(`SELECT batch_number as "batchNumber", disposition FROM cmc_batch_records WHERE project_id = $1`, [projectId]),
-    pool.query(`SELECT assessment_name as "assessmentName", regulatory_risk_level as "regulatoryRiskLevel" FROM cmc_comparability_assessments WHERE project_id = $1`, [projectId]),
-  ]);
+  /* One tenant-scoped sweep, shared with the HTTP surface. These five reads
+     used to filter by project_id ALONE — and the project id is caller-supplied,
+     on a shared uuid space — so this handler returned another organization's
+     registers to whoever asked. The same SQL also selected columns the tables
+     do not have (method_name / study_name), so it raised against a provisioned
+     database. Both are fixed by there being one implementation. */
+  const registers = await readContradictionRegisters(pool, { organizationId: orgId, projectId });
 
-  const contradictions = detectContradictions({
-    specifications: specs.rows, methods: methods.rows, stability: stability.rows,
-    batch: batch.rows, comparability: comparability.rows,
-  });
+  const contradictions = detectContradictions(registers);
 
   if (contradictions.length === 0) {
     return { success: true, action: 'module3_contradictions', message: 'No contradictions detected in Module 3 data.', data: { contradictions: [] } };

@@ -179,6 +179,23 @@ describe('materializeLeafSources', () => {
     expect(res.unresolved[0].reason).toMatch(/external|S3|not stored locally/i);
   });
 
+  // A legacy row whose document_table collides with an Object.prototype key.
+  // The external-table lookup must be an OWN-key lookup: `table in
+  // EXTERNAL_DOCUMENT_TABLES` matches inherited keys, so such a leaf classified
+  // as an external-storage document and carried a Function as its reason.
+  it('treats a prototype-key document_table as unknown, not as an external store', async () => {
+    const stageDir = await stage();
+    const res = await materializeLeafSources({
+      leaves: [{ documentTable: 'toString', documentId: 5 }],
+      organizationId: ORG,
+      stageDir,
+    });
+    expect(res.materialized).toBe(0);
+    expect(res.unresolved).toHaveLength(1);
+    expect(typeof res.unresolved[0].reason).toBe('string');
+    expect(res.unresolved[0].reason).toMatch(/no resolver registered/i);
+  });
+
   it('materializes a PDF ctd_onboarding_documents upload AS the leaf (real bytes, real md5)', async () => {
     const stageDir = await stage();
     const res = await materializeLeafSources({

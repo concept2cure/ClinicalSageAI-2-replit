@@ -52,6 +52,7 @@ import { getStorageProvider } from '../storage';
 import { readLocalUploadBuffer } from '../anthropic-files';
 import { sectionPlainText, C2C_SECTION_COMPLETE_STATUSES } from '../c2c/section-content';
 import { renderLeafPdf } from './leaf-pdf-renderer';
+import { externalDocumentTableReason } from './leaf-document-tables';
 import type { ResolvedFile } from './core-to-packager';
 
 /**
@@ -63,27 +64,6 @@ import type { ResolvedFile } from './core-to-packager';
 function looksLikePdf(buf: Buffer): boolean {
   return buf.length >= 5 && buf.subarray(0, 5).toString('latin1') === '%PDF-';
 }
-
-/** Tables whose content is stored locally and can be rendered to a PDF leaf. */
-export const RENDERABLE_DOCUMENT_TABLES = new Set(['coauthor_documents', 'unified_documents', 'c2c_document_sections']);
-
-/**
- * Tables whose content lives in an EXTERNAL system / as a binary upload and is
- * not locally renderable through this deterministic-PDF path. A leaf backed by
- * one of these is surfaced as unresolved, never silently dropped.
- */
-export const EXTERNAL_DOCUMENT_TABLES: Record<string, string> = {
-  // vault_documents CANNOT be materialized from a leaf today and is intentionally
-  // left unresolved (a guard-stop, not a silent drop): submission_leaves.document_id
-  // is INTEGER but vault.documents.id is a UUID (an integer cannot address the row),
-  // and vault.documents has no organization_id (it is program-scoped), so there is
-  // no tenant-safe lookup. Materializing it would require a reference/schema change;
-  // forcing it would risk shipping wrong or cross-tenant bytes to the agency.
-  vault_documents:
-    'vault_documents is an external S3-backed binary in the separate `vault` schema ' +
-    '(UUID-keyed, program-scoped); it cannot be addressed from an integer leaf ' +
-    'document_id and has no org scope, so it is not materializable here',
-};
 
 /** A leaf whose source document could not be materialized into the package. */
 export interface UnresolvedLeaf {
@@ -467,8 +447,9 @@ export async function materializeLeafSources(
       continue;
     }
 
-    if (documentTable in EXTERNAL_DOCUMENT_TABLES) {
-      unresolved.push({ documentTable, documentId, reason: EXTERNAL_DOCUMENT_TABLES[documentTable] });
+    const externalReason = externalDocumentTableReason(documentTable);
+    if (externalReason) {
+      unresolved.push({ documentTable, documentId, reason: externalReason });
       continue;
     }
 
