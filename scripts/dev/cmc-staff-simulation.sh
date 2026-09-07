@@ -141,6 +141,12 @@ IMPID=$(cat "$OUT/imp1.json" | JQ '.data.id // empty')
 # and the unit the old table would have printed as a percentage.
 CODE=$(req imp2 POST /api/cmc/impurity-profiles "{\"projectId\":\"$PROGRAM\",\"scope\":\"drug_substance\",\"materialName\":\"BX-701 drug substance\",\"impurityName\":\"Methanol\",\"impurityType\":\"residual-solvent\",\"observedLevel\":\"300\",\"levelUnit\":\"ppm\",\"maximumDailyDose\":\"500 mg\",\"analyticalMethod\":\"GC headspace\"}")
 [ "$CODE" = 200 -o "$CODE" = 201 ] && ok "residual solvent recorded in ppm ($CODE)" || bad "residual solvent failed ($CODE)"
+# A nitrosamine — mutagenic, so ICH M7(R2) governs it, not Q3A. The class is
+# decided from the recorded Ames result and structural alert; the limit is the
+# cohort-of-concern intake for the recorded treatment duration. Nothing here is
+# defaulted: the same record with no Ames result is refused, not assessed.
+CODE=$(req imp3 POST /api/cmc/impurity-profiles "{\"projectId\":\"$PROGRAM\",\"scope\":\"drug_substance\",\"materialName\":\"BX-701 drug substance\",\"impurityName\":\"N-nitrosodimethylamine\",\"impurityType\":\"mutagenic\",\"observedLevel\":\"0.02\",\"levelUnit\":\"ppm\",\"maximumDailyDose\":\"500 mg\",\"routeOfAdministration\":\"oral\",\"amesResult\":\"positive\",\"structuralAlert\":\"yes\",\"carcinogenicityData\":\"not-tested\",\"treatmentDuration\":\"lifetime\",\"cohortOfConcern\":\"CoC_nitrosamine\",\"analyticalMethod\":\"LC-MS/MS\"}")
+[ "$CODE" = 200 -o "$CODE" = 201 ] && ok "mutagenic impurity recorded with its ICH M7 inputs ($CODE)" || bad "mutagenic impurity failed ($CODE): $(head -c250 "$OUT/imp3.json")"
 # Qualification is a signature over a RECORDED basis; with none, it refuses.
 CODE=$(req impq0 POST "/api/cmc/impurity-profiles/$IMPID/qualify" '{"reason":"Attempting to qualify with no basis on file.","meaning":"approval","reauth":{"password":"pass-word"}}')
 [ "$CODE" = 409 ] && ok "qualification refused over an empty qualification basis (409)" \
@@ -161,7 +167,7 @@ CODE=$(req dis2 POST /api/cmc/dissolution-profiles "{\"projectId\":\"$PROGRAM\",
 [ "$CODE" = 200 -o "$CODE" = 201 ] && ok "release-specification dissolution profile recorded ($CODE)" || bad "release profile failed ($CODE)"
 
 step "8g. Formulation development records the composition and the excipients (feeds 3.2.P.1 / 3.2.P.4 / 3.2.A.3)"
-CODE=$(req form1 POST /api/cmc/formulation-records "{\"projectId\":\"$PROGRAM\",\"formulationName\":\"BX-701 5 mg film-coated tablet\",\"version\":\"F-v2.0\",\"dosageForm\":\"Film-coated tablet\",\"strength\":\"5 mg\",\"batchSize\":\"250,000 tablets\",\"status\":\"current\",\"components\":[{\"component\":\"BX-701\",\"role\":\"Active\",\"amountPerUnit\":\"5\",\"unit\":\"mg\",\"percentWeight\":\"4.0\",\"origin\":\"synthetic\"},{\"component\":\"Microcrystalline cellulose\",\"role\":\"Diluent\",\"amountPerUnit\":\"80\",\"unit\":\"mg\",\"percentWeight\":\"64.0\",\"origin\":\"plant\"},{\"component\":\"Gelatin\",\"role\":\"Binder\",\"amountPerUnit\":\"3\",\"unit\":\"mg\",\"origin\":\"bovine\"}]}")
+CODE=$(req form1 POST /api/cmc/formulation-records "{\"projectId\":\"$PROGRAM\",\"formulationName\":\"BX-701 5 mg film-coated tablet\",\"version\":\"F-v2.0\",\"dosageForm\":\"Film-coated tablet\",\"strength\":\"5 mg\",\"batchSize\":\"250,000 tablets\",\"formulationDevelopment\":\"Immediate-release film-coated tablet selected against the QTPP; MCC:lactose ratio fixed at 2:1 after prototypes F1-F3 for content uniformity.\",\"status\":\"current\",\"components\":[{\"component\":\"BX-701\",\"role\":\"Active\",\"amountPerUnit\":\"5\",\"unit\":\"mg\",\"percentWeight\":\"4.0\",\"origin\":\"synthetic\"},{\"component\":\"Microcrystalline cellulose\",\"role\":\"Diluent\",\"amountPerUnit\":\"80\",\"unit\":\"mg\",\"percentWeight\":\"64.0\",\"origin\":\"plant\"},{\"component\":\"Gelatin\",\"role\":\"Binder\",\"amountPerUnit\":\"3\",\"unit\":\"mg\",\"origin\":\"bovine\"}]}")
 FORMLINK=$(cat "$OUT/form1.json" | JQ '.module3Linked // empty')
 [ "$CODE" = 200 -o "$CODE" = 201 ] && [ "$FORMLINK" = "true" ] \
   && ok "formulation recorded as the current version and linked ($CODE)" \
@@ -309,6 +315,15 @@ S3LIM=$(echo "$S3" | jq -r '[.tables[]? | .rows[]? | select(.[] | tostring | tes
 [ "${S3OUT:-0}" -ge 1 ] && [ "${S3CMP:-0}" -ge 1 ] && [ "${S3LIM:-0}" -ge 1 ] \
   && ok "§3.2.S.3.2 assesses the residual solvent against ICH Q3C and counts each population under its own guideline" \
   || bad "§3.2.S.3.2 Q3C routing: assessedClaim=$S3OUT q3aClaim=$S3CMP q3cLimitRows=$S3LIM"
+# The nitrosamine is assessed under ICH M7(R2) — classified, and compared to
+# the cohort-of-concern acceptable intake — instead of refused as out of Q3A
+# scope. It must never appear in the "cannot be compared" list.
+S3M7=$(echo "$S3" | jq -r '.narrativeDraft // ""' 2>/dev/null | grep -c "assessed against ICH M7(R2)")
+S3M7ROW=$(echo "$S3" | jq -r '[.tables[]? | .rows[]? | select(.[] | tostring | test("ICH M7 Class 2"))] | length' 2>/dev/null)
+S3M7REF=$(echo "$S3" | jq -r '.narrativeDraft // ""' 2>/dev/null | grep -c "N-nitrosodimethylamine — ")
+[ "${S3M7:-0}" -ge 1 ] && [ "${S3M7ROW:-0}" -ge 1 ] && [ "${S3M7REF:-0}" = "0" ] \
+  && ok "§3.2.S.3.2 assesses the nitrosamine under ICH M7(R2) as Class 2 against its cohort-of-concern intake" \
+  || bad "§3.2.S.3.2 M7 routing: assessedClaim=$S3M7 class2Rows=$S3M7ROW refusedMentions=$S3M7REF"
 
 P2=$(cat "$OUT/compile.json" | jq -r '[.sections[]? | select(.sectionKey=="3.2.P.2")][0]' 2>/dev/null)
 P2DEV=$(echo "$P2" | jq -r '[.tables[]? | .rows[]? | select(.[] | tostring | test("BX701-DP-2406"))] | length' 2>/dev/null)

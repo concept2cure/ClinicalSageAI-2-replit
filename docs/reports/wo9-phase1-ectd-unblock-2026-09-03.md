@@ -8,6 +8,10 @@ Phase 1 is data and verification. Two code changes landed: the DTD gate defect
 found by Step 4, and the form onboarding JM authorised after Gate 1. Nothing
 else was written.
 
+> **Updated 2026-09-07.** §11 records what changed at the tip of `concept2cure-v2`
+> after this report was pushed, and corrects two statements in §10. §§1–9 stand as
+> the Gate 2 record and are not rewritten.
+
 ---
 
 ## 1. Outcome
@@ -401,10 +405,15 @@ not create an agent branch, do not open a pull request, do not set
 The remote moves during long sessions — this one took 23 incoming commits across
 three merges. Fetch and merge before pushing; never rebase or force-push.
 
+This environment's clone is shallow. After a fetch, `git status` can report the
+branch thousands of commits behind; that is the shallow boundary deepening, not a
+fork. Confirm with `git merge-base` against your last push before reacting.
+
 ### State at handoff
 
-Phase 1 is closed out to the limit of what this environment allows. Three
-commits on `concept2cure-v2`: `f9e3ab8`, `f85ce14`, `74d0ff2`.
+Phase 1 is closed out to the limit of what this environment allows. Four
+commits on `concept2cure-v2`: `f9e3ab8`, `f85ce14`, `74d0ff2`, `63c1605e` — plus
+the addendum in §11, which supersedes parts of this section.
 
 Gate 1 answered and Gate 2 reached. **Phase 2 has not started.** No surfaces,
 routes or services were created.
@@ -425,6 +434,8 @@ curl -sS -o /dev/null -w '%{http_code}\n' --max-time 30 https://clinicaltrials.g
 `200` means Steps 2, 3 and 5 are unblocked and should be done next, in that
 order, per §8.
 
+Re-tested from this environment on 2026-09-07: all three hosts still refused.
+
 ### What is safe to touch, and what is not
 
 Out of scope for WO-9, all of it still in the repo, none of it finished this
@@ -435,11 +446,14 @@ restructuring.
 
 Two specific traps:
 
-**Do not "fix" the 1571 and 3674 reconstruction path.** Those two are genuine
-dynamic XFA — 0 AcroForm fields, `/NeedsRendering true`, and their official page
-is an Adobe placeholder with no content to overlay. The labeled reconstruction is
-the honest ceiling and it is correct behaviour. Their assets and manifests are
-deliberately untouched. Do not fabricate a `fieldMap` for either.
+**The 1571 and 3674 path changed after this section was written — read §11
+before touching it.** At Gate 2 both rendered labeled reconstructions and this
+section said not to "fix" that. Since then another session landed an XFA
+datasets fill for both — Option B of the execution package's Section B — and JM
+had chosen Option A. Whether that work stays is JM's decision, not the next
+agent's: do not revert it on the strength of this document, and do not extend
+it either. What holds unconditionally: never fabricate an AcroForm `fieldMap`
+for either form. Both manifests correctly keep `fieldMap: {}`.
 
 **Do not re-derive the form facts from the manifests.** That is exactly the loop
 this work broke: a `0` produced by reading an encrypted PDF without decrypting it
@@ -448,19 +462,20 @@ truth is §5, taken post-decrypt. If you need to re-verify, decrypt with pikepdf
 and count terminal `/FT` fields recursively — the top-level `/Fields` array is
 not the field count.
 
-### A failing test that is not yours
+### A correction: the "failing test that is not yours" was already fixed
 
-`module3-extensions > composeAppendices > marks 3.2.A.2 as not applicable for
-small molecules` fails on `concept2cure-v2` and did so before any of this work.
-Verified by running the base branch's own unmodified test file. An incoming
-commit changed the narrative to say "NOT ESTABLISHED" instead of "not
-applicable" — a fail-closed improvement — updated the new
-`tests/unit/module3-narrative-extension.test.ts`, and missed the older assertion
-at `server/__tests__/services/submission-orchestrator.test.ts:187`. CMC Module 3
-is out of WO-9 scope, so it was left alone. It is a one-line assertion update for
-whoever owns that area.
+An earlier revision of this section reported `module3-extensions >
+composeAppendices > marks 3.2.A.2 as not applicable for small molecules` as red
+on the base branch. That was true when it was checked, against an intermediate
+merge — and false by the time it was pushed. The fix (`166224ac2`, which renamed
+and re-pinned the assertion) arrived in the final 53-commit merge before the
+push, and only the eCTD and IND-forms suites were re-run after that merge, not
+the orchestrator file. The statement shipped stale. The error was in the
+verification, not the product. Do not go looking for that failure.
 
-Everything in WO-9 scope is green: 52 files, 435 tests, plus 7/7 on the DTD gate.
+At the tip on 2026-09-07: eCTD + IND-forms 65 files / 562 tests; orchestrator
+file 34/34 including the three DTD-gate fixture tests; eSTAR + shared filler
+16 files / 245 tests. All pass.
 
 ### Verifying this work still holds
 
@@ -480,3 +495,106 @@ exists to prevent, and it is more important than a green tick.
 JM names the click. Do not propose the next task. One click per session, and it
 ends when the click works in a browser or when the blocker is named precisely.
 A passing test is not done. A proof report is not done.
+
+---
+
+## 11. Addendum — 2026-09-07, state of the tip
+
+Written on returning to the environment after the handoff. Everything below was
+measured at `concept2cure-v2` tip `2f52f091a` after a fresh `npm ci` (the
+lockfile had changed upstream). §§1–9 are not rewritten; where the tip now
+differs from the Gate 2 record, this section says so.
+
+### What landed for 1571 and 3674
+
+Commit `6b2d2717b` — *FDA 1571 and 3674 fill the official form, not a drawing
+of it* — by another Claude session, authored after this report's push and merged
+into the canonical branch about four hours before this addendum. It implements
+**Option B** from the execution package's Section B: values are written into
+the XFA `datasets` packet through a PDF incremental update, reusing the eSTAR
+filler in `server/services/forms/fill-official-pdf.ts` (+338 lines since the
+push, chiefly a new `resolveDataSomPath` and an `alsoWriteSomPaths` mechanism)
+with a reviewed canonical→SOM-path map in `OFFICIAL_XFA_FIELD_MAPS`.
+
+**JM chose Option A for these two forms (§5) before that commit landed.** The
+two are in tension. This addendum records the state. The decision is JM's.
+
+### Measured at the tip
+
+| Form | `usedOfficialTemplate` at Gate 2 | at tip | output bytes | begins with the template verbatim |
+|---|---|---|---|---|
+| 1572 | true | true | 2 241 047 | no — the AcroForm path re-saves the document (expected) |
+| 356h | true | true | 4 807 389 | no — same |
+| 3454 | true | true | 1 541 295 | no — same |
+| **1571** | **false** (reconstruction) | **true** | 2 922 047 | **yes** — template 2 919 985 B + 2 062 B appended |
+| **3674** | **false** (reconstruction) | **true** | 3 528 197 | **yes** — template 3 526 775 B + 1 422 B appended |
+
+Section B's stated hazard for Option B was a silently malformed dataset — a
+form that "looks fine and is wrong". The sharpest form of that risk here is
+encryption: both originals are AES-encrypted, and an incremental update that
+appends an *unencrypted* stream to an encrypted document reads back as garbage
+in any conforming viewer. Measured through pikepdf, which decrypts the way
+Acrobat does:
+
+```
+FDA_1571  encrypted=true   plaintext in appended bytes: NO   decrypted datasets carries the value: YES
+FDA_3674  encrypted=true   plaintext in appended bytes: NO   decrypted datasets carries the value: YES
+```
+
+The appended datasets stream is encrypted with the document key, and a
+decrypting reader sees the filled values. That closes the encryption-layer
+hazard. What remains unproven is Acrobat's own XFA runtime — initialize and
+calculate scripts — which no engine in this environment runs. The commit says
+so itself.
+
+Fields the fill deliberately leaves for the sponsor, reported in
+`unmappedFields` rather than implied complete — 1571: `ind_type`,
+`phase_of_study`, `authorized_rep_name`, the sponsor-contact and US-agent
+fields; 3674: the four certification checkboxes. The output is not flattened,
+so it stays the live official form for the sponsor to finish and sign.
+
+Manifests: `fieldMap` is still `{}` on both — no AcroForm map was fabricated,
+so the WO-9 stop condition on that point is not breached. `fillSupported`
+flipped to `true`; `reviewedBy` is still `null` and `assetTrusted` still
+`false` on both. `getDocumentCoverage('US_IND').formsFullyBacked` now measures
+`true`.
+
+Where the implementation departs from Section B's stated Option B rule: it was
+not a timeboxed spike on customer demand, and it does not fail closed on an
+unplaced required field — the commit argues the unflattened output makes that
+the sponsor's box rather than a fill failure. It does fail closed when no value
+can be placed, when the template is absent, when the file is not dynamic XFA,
+and on an ambiguous path, which resolves to `null` rather than a guess.
+
+### The frozen MDX path
+
+The filler is shared with eSTAR, so WO-9's stop condition — "`estar-fill` or
+any MDX surface regressed" — was checked rather than assumed:
+
+```
+server/services/pathway-engines/estar + server/services/forms
+  16 files, 245 tests, all pass
+```
+
+### This report's own work at the tip
+
+```
+eCTD + IND-forms suites             65 files / 562 tests   pass
+orchestrator file                   34 / 34                pass  (DTD fixture tests 3/3)
+1572 round-trip on committed asset  4 / 4
+```
+
+The DTD gate still passes `index-valid.xml` with zero findings and still fails
+`index-invalid.xml` on all eight seeded codes.
+
+### Still blocked, unchanged
+
+Egress re-tested from this environment on 2026-09-07: `www.fda.gov`,
+`www.ich.org` and `clinicaltrials.gov` all refused. `DATABASE_URL` unset.
+Steps 2, 3 and 5 remain exactly as §2 describes.
+
+### Correction to §10
+
+§10 reported a pre-existing failure in `module3-extensions`. The fix
+(`166224ac2`) was already in the tree when §10 was pushed; the orchestrator
+file was not re-run after the final merge. §10 has been amended in place.

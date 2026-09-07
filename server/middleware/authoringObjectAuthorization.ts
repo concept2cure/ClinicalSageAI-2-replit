@@ -130,6 +130,38 @@ function targetForRequest(req: Request, tenantId: number, path: string): ObjectT
     };
   }
 
+  // The tracked-change-decision routes sit under /documents/:id, not /docs/:id
+  // — a naming split from the rest of this file, and the reason this gate
+  // never ran on them at all: `docMatch` below only matches /docs/. Matched
+  // narrowly and BEFORE docMatch, on purpose. actionFromPath's `review`
+  // alternatives look like they should classify this path (they list
+  // 'tracked-change' and 'decision'), but do not: each alternative requires a
+  // whole path segment, and the real segment here is `tracked-change-decisions`
+  // — `tracked-change` is followed by `-`, not `/` or end-of-string, so the
+  // regex does not match and actionFromPath falls through to its final `return
+  // 'edit'`. That fallthrough is the right action independently of the regex
+  // miss: the content an accepted/rejected suggestion changes is persisted by
+  // PATCH /sections/:sectionId, which this middleware already gates as 'edit'
+  // via sectionMatch above, so anyone who can persist the change can record
+  // the decision, and nobody who cannot persist it (REVIEWER/APPROVER, who
+  // pass 'review' but not 'edit') is newly denied anything they could
+  // complete today. A broader match on all of /documents/ was considered and
+  // rejected: it also covers /documents/:id/review and
+  // /documents/:id/request-review, whose reviewers are assigned via
+  // POST /documents/:id/request-review — a flow that writes only
+  // authoring_reviews and grants no doc_permissions row — so classifying
+  // those as 'review'/'edit' here would 403 every non-admin reviewer using
+  // the review workflow as designed.
+  const trackedChangeDecisionMatch =
+    /^\/documents\/([^/]+)\/tracked-change-decisions(?:\/bulk)?$/.exec(path);
+  if (trackedChangeDecisionMatch) {
+    const docId = trackedChangeDecisionMatch[1];
+    return {
+      action: 'edit',
+      resolve: () => resolveAuthoringDocumentScope(pool, tenantId, docId),
+    };
+  }
+
   const docMatch = /^\/docs\/([^/]+)(?:\/.*)?$/.exec(path);
   if (docMatch) {
     const docId = docMatch[1];

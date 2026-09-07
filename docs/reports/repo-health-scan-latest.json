@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-06T21:41:05.804Z",
+  "generatedAt": "2026-09-06T23:02:18.133Z",
   "git": {
-    "sha": "a6fd1038cc22417ee240051b73b59e245c3bd7b5",
+    "sha": "aabe5f07fd4c9455b13d2a403c8c02bef5dbc60f",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -15,7 +15,7 @@
     "duplicateBasenames": 209,
     "contentDuplicateGroups": 0,
     "contentDuplicateFiles": 0,
-    "largeFilesByBytes": 40,
+    "largeFilesByBytes": 39,
     "largeFilesByLines": 95
   },
   "findings": {
@@ -1981,11 +1981,11 @@
     "largeFilesByBytes": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 1006836
+        "bytes": 1016072
       },
       {
         "file": "shared/schema.ts",
-        "bytes": 856859
+        "bytes": 857152
       },
       {
         "file": "server/services/ind/ctd/authoring-guidance.ts",
@@ -1997,11 +1997,11 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "bytes": 324945
+        "bytes": 330131
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
-        "bytes": 233213
+        "bytes": 235674
       },
       {
         "file": "server/statistics-service.ts",
@@ -2044,6 +2044,10 @@
         "bytes": 139854
       },
       {
+        "file": "server/services/module3Composer.ts",
+        "bytes": 139484
+      },
+      {
         "file": "server/services/labeling/labeling-intelligence-knowledge.ts",
         "bytes": 138123
       },
@@ -2068,10 +2072,6 @@
         "bytes": 131820
       },
       {
-        "file": "server/services/module3Composer.ts",
-        "bytes": 131521
-      },
-      {
         "file": "server/routes/submission-ops.ts",
         "bytes": 131113
       },
@@ -2081,7 +2081,7 @@
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "bytes": 121863
+        "bytes": 125182
       },
       {
         "file": "server/services/__tests__/ana-ri.test.ts",
@@ -2104,20 +2104,16 @@
         "bytes": 114943
       },
       {
+        "file": "server/services/__tests__/cmcWriteThroughMappers.test.ts",
+        "bytes": 114898
+      },
+      {
         "file": ".claude/skills/gstack/scripts/gen-skill-docs.ts",
         "bytes": 114269
       },
       {
-        "file": "server/api/cmc/routes.ts",
-        "bytes": 112601
-      },
-      {
         "file": "client/src/concept2cure/v2/surfaces/cmcRegisterForms.ts",
-        "bytes": 112142
-      },
-      {
-        "file": "server/services/__tests__/cmcWriteThroughMappers.test.ts",
-        "bytes": 110971
+        "bytes": 112627
       },
       {
         "file": "server/routes/concept2cure.ts",
@@ -2143,15 +2139,15 @@
     "largeFilesByLines": [
       {
         "file": "shared/schema.ts",
-        "lines": 20166
+        "lines": 20170
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 19498
+        "lines": 19699
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "lines": 7468
+        "lines": 7547
       },
       {
         "file": "server/statistics-service.ts",
@@ -2171,7 +2167,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
-        "lines": 5095
+        "lines": 5135
       },
       {
         "file": "server/routes/c2c/artifacts.ts",
@@ -2230,16 +2226,16 @@
         "lines": 2832
       },
       {
-        "file": "server/services/__tests__/ana-ri.test.ts",
-        "lines": 2759
+        "file": "server/services/module3Composer.ts",
+        "lines": 2779
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "lines": 2701
+        "lines": 2769
       },
       {
-        "file": "server/services/module3Composer.ts",
-        "lines": 2637
+        "file": "server/services/__tests__/ana-ri.test.ts",
+        "lines": 2759
       },
       {
         "file": "server/services/biosimilar/biosimilar-knowledge.ts",
@@ -2252,10 +2248,6 @@
       {
         "file": "server/routes/knowledge-base.ts",
         "lines": 2588
-      },
-      {
-        "file": "server/api/cmc/routes.ts",
-        "lines": 2512
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/protocol-development.ts",
@@ -2294,6 +2286,14 @@
         "lines": 2240
       },
       {
+        "file": "server/api/cmc/routes.ts",
+        "lines": 2191
+      },
+      {
+        "file": "server/services/__tests__/cmcWriteThroughMappers.test.ts",
+        "lines": 2186
+      },
+      {
         "file": "server/services/trial-statistics/trial-statistics-knowledge.ts",
         "lines": 2177
       },
@@ -2308,10 +2308,6 @@
       {
         "file": "server/services/dose-optimization/dose-optimization-knowledge.ts",
         "lines": 2155
-      },
-      {
-        "file": "server/services/__tests__/cmcWriteThroughMappers.test.ts",
-        "lines": 2135
       },
       {
         "file": "server/services/biomarkers/biomarker-knowledge.ts",
@@ -2359,7 +2355,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/cmcRegisterForms.ts",
-        "lines": 1950
+        "lines": 1953
       },
       {
         "file": "server/services/gcp-operations/gcp-operations-knowledge.ts",
@@ -2470,6 +2466,10 @@
         "lines": 1702
       },
       {
+        "file": "server/services/cmc-write-through.ts",
+        "lines": 1700
+      },
+      {
         "file": "server/services/ana/notifications-study-memory-tool-defs.ts",
         "lines": 1696
       },
@@ -2498,10 +2498,6 @@
         "lines": 1623
       },
       {
-        "file": "server/services/cmc-write-through.ts",
-        "lines": 1609
-      },
-      {
         "file": "server/services/contradiction-engine-service.ts",
         "lines": 1608
       },
@@ -2528,7 +2524,7 @@
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
       "duplicateGroups": 403,
-      "largeByBytes": 30,
+      "largeByBytes": 29,
       "largeByLines": 78
     },
     {

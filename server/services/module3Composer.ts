@@ -157,7 +157,10 @@ export const MODULE3_SECTION_RULES: SectionRule[] = [
      development evidence. Without it, the register wrote such a study through to
      cmc_source_objects, the form and the register grid both told the staffer it
      filed under §3.2.P.2, and it reached no composed section at all. */
-  { sectionKey: '3.2.P.2', requiredSourceTypes: ['drug_product', 'drug_substance', 'comparability', 'formulation_record', 'dissolution_profile', 'container_closure', 'characterization'], requiredFields: ['formulationDevelopment', 'manufacturingProcessDev', 'containerClosureStudies'] },
+  /* manufacturing_process feeds §3.2.P.2.3: the register's process-development
+     narrative is the only producer of manufacturingProcessDev, and the section
+     could never complete while its own rule did not admit that source. */
+  { sectionKey: '3.2.P.2', requiredSourceTypes: ['drug_product', 'drug_substance', 'comparability', 'formulation_record', 'dissolution_profile', 'container_closure', 'characterization', 'manufacturing_process'], requiredFields: ['formulationDevelopment', 'manufacturingProcessDev', 'containerClosureStudies'] },
   { sectionKey: '3.2.P.3', requiredSourceTypes: ['drug_product', 'batch', 'change_control', 'process_validation', 'manufacturing_process'], requiredFields: ['formulation', 'batchNumber', 'drugProductProcessComplete'] },
   /* §3.2.P.4 is Control of EXCIPIENTS. `raw_material_spec` was listed here
      because this was the only rule that named it, so a drug-substance starting

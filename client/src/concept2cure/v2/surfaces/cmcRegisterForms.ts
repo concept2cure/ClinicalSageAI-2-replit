@@ -1682,6 +1682,7 @@ export interface FormulationRecordBody {
   components?: Array<Record<string, unknown>> | null;
   theoreticalYield?: string | null;
   overageJustification?: string | null;
+  formulationDevelopment?: string | null;
   supersedes?: string | null;
   status: string;
 }
@@ -1701,6 +1702,7 @@ export function formulationRecordForm(row?: Partial<FormulationRecordBody> | nul
       { key: 'theoreticalYield', label: 'Theoretical yield', type: 'text', half: true, default: row?.theoreticalYield ?? '' },
       { key: 'components', label: 'Components', type: 'textarea', rows: 6, default: rowLinesOf(row?.components, FORMULATION_COMPONENT_COLUMNS), placeholder: 'One per line: Component | Role | Amount per unit | Unit | % w/w | Amount per batch | Overage | Overage justification | Compendial reference | Origin' },
       { key: 'overageJustification', label: 'Overage justification', type: 'textarea', rows: 2, default: row?.overageJustification ?? '', placeholder: 'Applies to the formulation as a whole where a component does not carry its own' },
+      { key: 'formulationDevelopment', label: 'Formulation development (§3.2.P.2.2)', type: 'textarea', rows: 3, default: row?.formulationDevelopment ?? '', placeholder: 'Why these components and amounts — the QTPP, the prototypes compared, the overages chosen (ICH Q8). This is the only source of the section\'s formulation-development text.' },
       { key: 'supersedes', label: 'Supersedes', type: 'text', half: true, default: row?.supersedes ?? '', placeholder: 'The version this one replaces' },
       { key: 'status', label: 'Status', type: 'seg', options: FORMULATION_STATUSES, required: true, half: true, default: row?.status && FORMULATION_STATUSES.includes(row.status) ? row.status : 'draft', desc: 'Exactly one version may be current; §3.2.P.1 renders that one' },
     ],
@@ -1714,7 +1716,7 @@ export function formulationRecordBody(v: Record<string, string>, projectId?: str
   };
   const optionalText: Array<keyof FormulationRecordBody> = [
     'version', 'dosageForm', 'strength', 'batchSize', 'theoreticalYield',
-    'overageJustification', 'supersedes',
+    'overageJustification', 'formulationDevelopment', 'supersedes',
   ];
   for (const key of optionalText) {
     const value = opt(v[key as string]);
@@ -1738,6 +1740,7 @@ export function formulationRecordPatch(v: Record<string, string>): FormulationRe
     batchSize: opt(v.batchSize) ?? null,
     theoreticalYield: opt(v.theoreticalYield) ?? null,
     overageJustification: opt(v.overageJustification) ?? null,
+    formulationDevelopment: opt(v.formulationDevelopment) ?? null,
     supersedes: opt(v.supersedes) ?? null,
     components: components.length > 0 ? components : null,
   };
