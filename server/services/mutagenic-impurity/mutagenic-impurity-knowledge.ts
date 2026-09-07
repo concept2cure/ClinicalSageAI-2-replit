@@ -802,7 +802,7 @@ interface CalculationStepTTC {
  *   - Lifetime TTC: 1.5 μg/day (>10 years continuous)
  *   - LTL staged TTC: adjusted for shorter treatment durations
  *   - CoC limits: aflatoxin-like (0.15 μg/day), nitrosamines (compound-specific or 18 ng/day)
- *   - Concentration limit = AI / MDD × 1000 (ppm)
+ *   - Concentration limit (ppm) = AI (µg/day) / MDD (g/day)
  */
 export function calculateTTC(params: TTCInput): TTCResult {
   const {
@@ -924,14 +924,18 @@ export function calculateTTC(params: TTCInput): TTCResult {
   // Step 3: Concentration limit calculation
   let concentrationLimitPpm: number | null = null;
   if (maxDailyDoseG && maxDailyDoseG > 0) {
-    concentrationLimitPpm = (acceptableIntakeUgPerDay / maxDailyDoseG) * 1000;
+    /* ICH M7(R2) §7.3: concentration limit (ppm) = AI (µg/day) / MDD (g/day).
+       A µg per g IS a part per million; the earlier × 1000 stated every limit
+       a thousandfold too high (1.5 µg/day at 1 g/day came out as 1500 ppm,
+       against the guideline's own 1.5 ppm). */
+    concentrationLimitPpm = acceptableIntakeUgPerDay / maxDailyDoseG;
     // Round to appropriate precision
     concentrationLimitPpm = Math.round(concentrationLimitPpm * 100) / 100;
 
     calculationSteps.push({
       step: 3,
       description: 'Calculate concentration limit in drug substance (ppm)',
-      formula: 'Concentration limit (ppm) = [AI (μg/day) / MDD (g/day)] × 1000',
+      formula: 'Concentration limit (ppm) = AI (μg/day) / MDD (g/day)',
       values: {
         ai_ug_per_day: acceptableIntakeUgPerDay,
         max_daily_dose_g: maxDailyDoseG,
@@ -942,7 +946,7 @@ export function calculateTTC(params: TTCInput): TTCResult {
     calculationSteps.push({
       step: 3,
       description: 'Concentration limit calculation — MDD not provided',
-      formula: 'Concentration limit (ppm) = [AI (μg/day) / MDD (g/day)] × 1000',
+      formula: 'Concentration limit (ppm) = AI (μg/day) / MDD (g/day)',
       values: { note: 'Maximum daily dose not provided — ppm limit cannot be calculated' },
       result: 'N/A — provide maxDailyDoseG to calculate ppm limit',
     });
@@ -2098,7 +2102,8 @@ export function controlMutagenicImpurity(params: ControlStrategyInput): ControlS
     aiUgPerDay = LTL_TTC_TABLE[treatmentDuration].ai_ug_per_day;
   }
 
-  const concentrationLimitPpm = Math.round(((aiUgPerDay / maxDailyDoseG) * 1000) * 100) / 100;
+  /* ICH M7(R2) §7.3: µg/day over g/day is µg/g, which is ppm — no further factor. */
+  const concentrationLimitPpm = Math.round((aiUgPerDay / maxDailyDoseG) * 100) / 100;
 
   const specificationLimit = {
     ai_ug_per_day: aiUgPerDay,

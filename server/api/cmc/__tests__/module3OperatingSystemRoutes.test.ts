@@ -34,6 +34,10 @@ vi.mock('../../../services/governed-ana-execution.js', () => ({
 
 import router from '../module3OperatingSystemRoutes';
 
+// The compiler's record of a fully established section. Approved fixtures carry
+// it so each test below fails on the ONE defect it names, not on completeness.
+const COMPLETE = { completeness: 100, missingInputs: [] as string[] };
+
 describe('module3OperatingSystemRoutes', () => {
   const app = express();
   app.use(express.json());
@@ -59,7 +63,7 @@ describe('module3OperatingSystemRoutes', () => {
 
   it('returns readiness snapshot from canonical section/contradiction data', async () => {
     mockQuery
-      .mockResolvedValueOnce({ rows: [{ approval_state: 'approved', stale: false }, { approval_state: 'draft', stale: true }] })
+      .mockResolvedValueOnce({ rows: [{ approval_state: 'approved', stale: false, deterministic_json: COMPLETE }, { approval_state: 'draft', stale: true }] })
       .mockResolvedValueOnce({ rows: [{ severity: 'critical', status: 'open' }, { severity: 'high', status: 'resolved' }] })
       // Provenance coverage: sections with no cmc_section_lineage row.
       .mockResolvedValueOnce({ rows: [{ n: 0 }] });
@@ -129,7 +133,7 @@ describe('module3OperatingSystemRoutes', () => {
     mockQuery
       .mockResolvedValueOnce({ rows: [] }) // contradiction check: none critical
       .mockResolvedValueOnce({}) // BEGIN
-      .mockResolvedValueOnce({ rows: [{ id: 'sec-1', deterministic_json: {}, approval_state: 'draft' }] }) // section
+      .mockResolvedValueOnce({ rows: [{ id: 'sec-1', deterministic_json: COMPLETE, approval_state: 'draft' }] }) // section
       .mockResolvedValueOnce({ rows: [{ max_version: 2 }] }) // version max
       .mockResolvedValueOnce({ rows: [{ id: 'ver-3' }] }) // insert version
       .mockResolvedValueOnce({}) // update section
@@ -176,9 +180,138 @@ describe('module3OperatingSystemRoutes', () => {
     expect(executed).toContain('COMMIT');
   });
 
+  /** The SQL verbs the mock actually executed, in order. */
+  const executedVerbs = () =>
+    mockQuery.mock.calls.map((c) => String(c[0]).trim().split(/\s+/)[0].toUpperCase());
+
+  it('refuses to approve a section whose own compiled record is incomplete — 409, rolled back, nothing written', async () => {
+    // Re-auth passes and no critical contradiction is open: the ONLY defect is
+    // that §3.2.P.6 compiled at 0% with two required inputs missing. Found
+    // live: 21/21 sections approved, three of them at 0%, and the signer was
+    // never told. The gate refuses such a project at export; the approval
+    // must refuse it first, with the same rule.
+    mockVerifyReauth.mockResolvedValueOnce({ ok: true });
+    mockQuery
+      .mockResolvedValueOnce({ rows: [] }) // contradiction check: none critical
+      .mockResolvedValueOnce({}) // BEGIN
+      .mockResolvedValueOnce({
+        rows: [{
+          id: 'sec-6',
+          deterministic_json: { completeness: 0, missingInputs: ['containerClosureDescription', 'suitabilityJustification'] },
+          approval_state: 'draft',
+        }],
+      }) // section
+      .mockResolvedValueOnce({}); // ROLLBACK
+
+    const res = await request(app)
+      .post('/api/cmc/module3-os/sections/proj-1/3.2.P.6/approve')
+      .send({ reason: 'approve for filing', meaning: 'approval', reauth: { password: 'ok' } });
+
+    expect(res.status).toBe(409);
+    expect(res.body.success).toBe(false);
+    // The refusal names the section, its completeness and every missing input.
+    expect(res.body.error).toContain('3.2.P.6');
+    expect(res.body.error).toMatch(/0% complete/);
+    expect(res.body.error).toContain('containerClosureDescription');
+    expect(res.body.error).toContain('suitabilityJustification');
+    expect(res.body.data).toEqual({
+      completeness: 0,
+      missingInputs: ['containerClosureDescription', 'suitabilityJustification'],
+    });
+    // The transaction was opened, the section read, and then ROLLED BACK: no
+    // version row, no section flip, no provenance event, no COMMIT.
+    const verbs = executedVerbs();
+    expect(verbs).toContain('BEGIN');
+    expect(verbs).toContain('ROLLBACK');
+    expect(verbs).not.toContain('INSERT');
+    expect(verbs).not.toContain('UPDATE');
+    expect(verbs).not.toContain('COMMIT');
+    // And no governed action / signature was recorded.
+    expect(mockRecordGoverned).not.toHaveBeenCalled();
+  });
+
+  it('refuses to approve a section that was never scored by the compiler (no completeness at all)', async () => {
+    // `deterministic_json: {}` is what a row looks like when it never went
+    // through the composer. That is "nothing established", not "complete" —
+    // the same reading the export gate applies.
+    mockVerifyReauth.mockResolvedValueOnce({ ok: true });
+    mockQuery
+      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({})
+      .mockResolvedValueOnce({ rows: [{ id: 'sec-1', deterministic_json: '{}', approval_state: 'draft' }] })
+      .mockResolvedValueOnce({});
+
+    const res = await request(app)
+      .post('/api/cmc/module3-os/sections/proj-1/3.2.S.1/approve')
+      .send({ reason: 'approve', reauth: { password: 'ok' } });
+
+    expect(res.status).toBe(409);
+    expect(res.body.error).toContain('3.2.S.1');
+    expect(res.body.error).toMatch(/completeness/i);
+    expect(res.body.data).toEqual({ completeness: null, missingInputs: [] });
+    expect(executedVerbs()).toContain('ROLLBACK');
+    expect(executedVerbs()).not.toContain('INSERT');
+    expect(mockRecordGoverned).not.toHaveBeenCalled();
+  });
+
+  it('GET /sections reports each section\'s compiled completeness and missing inputs', async () => {
+    // deterministic_json arrives as a string from raw driver rows and as an
+    // object from pooled/mocked clients; both read the same, and an
+    // unreadable record reports null / [] — never a number it did not have.
+    mockQuery.mockResolvedValueOnce({
+      rows: [
+        {
+          sectionKey: '3.2.P.6', sectionPath: '3.2.P.6', stale: false, staleReason: null,
+          approvalState: 'approved', updatedAt: '2026-09-01T00:00:00.000Z',
+          deterministicJson: JSON.stringify({ completeness: 0, missingInputs: ['containerClosureDescription'] }),
+        },
+        {
+          sectionKey: '3.2.S.1', sectionPath: '3.2.S.1', stale: false, staleReason: null,
+          approvalState: 'draft', updatedAt: '2026-09-01T00:00:00.000Z',
+          deterministicJson: { completeness: 100, missingInputs: [], name: 'API-1' },
+        },
+        {
+          sectionKey: '3.2.P.1', sectionPath: '3.2.P.1', stale: true, staleReason: 'source changed',
+          approvalState: 'draft', updatedAt: '2026-09-01T00:00:00.000Z',
+          deterministicJson: 'not json',
+        },
+      ],
+    });
+
+    const res = await request(app).get('/api/cmc/module3-os/sections/proj-1');
+    expect(res.status).toBe(200);
+    expect(res.body.data).toHaveLength(3);
+    expect(res.body.data[0]).toMatchObject({
+      sectionKey: '3.2.P.6', approvalState: 'approved', completeness: 0, missingInputs: ['containerClosureDescription'],
+    });
+    expect(res.body.data[1]).toMatchObject({ sectionKey: '3.2.S.1', completeness: 100, missingInputs: [] });
+    expect(res.body.data[2]).toMatchObject({ sectionKey: '3.2.P.1', stale: true, completeness: null, missingInputs: [] });
+    // The listing carries the two figures, not the whole compiled blob.
+    for (const row of res.body.data) expect(row).not.toHaveProperty('deterministicJson');
+  });
+
+  it('source-object upsert accepts every canonical CmcSourceType, not a hand-copied subset', async () => {
+    // These five compose real sections (§3.2.S.2 needs process_validation and
+    // raw_material_spec; §3.2.S.3/S.4 impurity_profile; §3.2.P.2
+    // dissolution_profile; §3.2.P.1 / 3.2.A.3 formulation_record) and the
+    // route's own enum used to reject all of them with a 400.
+    const previouslyRefused = [
+      'process_validation', 'raw_material_spec', 'impurity_profile', 'dissolution_profile', 'formulation_record',
+    ];
+    for (const sourceType of previouslyRefused) {
+      mockQuery.mockReset();
+      mockQuery.mockResolvedValue({ rows: [{ id: 'so-1', sourceType, sourceKey: 'k', sourceHash: 'h', version: 1 }] });
+      const res = await request(app)
+        .post('/api/cmc/module3-os/source-objects/proj-1')
+        .send({ sourceType, sourceKey: 'k', sourcePayload: { any: 'thing' } });
+      expect(res.status, `sourceType ${sourceType}`).toBe(201);
+      expect(res.body.data.sourceType).toBe(sourceType);
+    }
+  });
+
   it('blocks final export when not all sections approved and critical contradictions open', async () => {
     mockQuery
-      .mockResolvedValueOnce({ rows: [{ approval_state: 'approved' }, { approval_state: 'draft' }] })
+      .mockResolvedValueOnce({ rows: [{ approval_state: 'approved', deterministic_json: COMPLETE }, { approval_state: 'draft' }] })
       .mockResolvedValueOnce({ rows: [{ severity: 'critical', status: 'open' }] })
       .mockResolvedValueOnce({ rows: [{ n: 0 }] });
 
@@ -193,7 +326,7 @@ describe('module3OperatingSystemRoutes', () => {
     // guard SELECTed no `stale` column and hardcoded isStale:false, so this exported
     // silently, shipping an approval that no longer matched its source.
     mockQuery
-      .mockResolvedValueOnce({ rows: [{ approval_state: 'approved', stale: false }, { approval_state: 'approved', stale: true }] })
+      .mockResolvedValueOnce({ rows: [{ approval_state: 'approved', stale: false, deterministic_json: COMPLETE }, { approval_state: 'approved', stale: true, deterministic_json: COMPLETE }] })
       .mockResolvedValueOnce({ rows: [] })
       .mockResolvedValueOnce({ rows: [{ n: 0 }] });
 
@@ -210,7 +343,7 @@ describe('module3OperatingSystemRoutes', () => {
     // to the governed fabric as the literal `true`, which disabled a REQUIRED
     // export check ("audit trail required for export").
     mockQuery
-      .mockResolvedValueOnce({ rows: [{ approval_state: 'approved', stale: false }, { approval_state: 'approved', stale: false }] })
+      .mockResolvedValueOnce({ rows: [{ approval_state: 'approved', stale: false, deterministic_json: COMPLETE }, { approval_state: 'approved', stale: false, deterministic_json: COMPLETE }] })
       .mockResolvedValueOnce({ rows: [] })
       .mockResolvedValueOnce({ rows: [{ n: 1 }] });
 
@@ -222,7 +355,7 @@ describe('module3OperatingSystemRoutes', () => {
 
   it('readiness is not export-ready when a section has no recorded source lineage', async () => {
     mockQuery
-      .mockResolvedValueOnce({ rows: [{ approval_state: 'approved', stale: false }] })
+      .mockResolvedValueOnce({ rows: [{ approval_state: 'approved', stale: false, deterministic_json: COMPLETE }] })
       .mockResolvedValueOnce({ rows: [] })
       .mockResolvedValueOnce({ rows: [{ n: 1 }] });
 
@@ -241,7 +374,7 @@ describe('module3OperatingSystemRoutes', () => {
     fabricThrows = true;
     try {
       mockQuery
-        .mockResolvedValueOnce({ rows: [{ approval_state: 'approved', stale: false }] })
+        .mockResolvedValueOnce({ rows: [{ approval_state: 'approved', stale: false, deterministic_json: COMPLETE }] })
         .mockResolvedValueOnce({ rows: [] })
         .mockResolvedValueOnce({ rows: [{ n: 0 }] });
 
@@ -252,5 +385,54 @@ describe('module3OperatingSystemRoutes', () => {
     } finally {
       fabricThrows = false;
     }
+  });
+
+  it('blocks final export when an approved section compiled incomplete, and names it', async () => {
+    // Every section approved, none stale, lineage intact, no contradictions.
+    // The only defect: §3.2.P.6 was approved while its own compiled record
+    // says 0% complete with required inputs missing. Verified live before
+    // this pin: such a project passed the gate and placed a leaf reading
+    // "No container closure system is recorded".
+    mockQuery
+      .mockResolvedValueOnce({
+        rows: [
+          { section_key: '3.2.S.1', approval_state: 'approved', stale: false, deterministic_json: COMPLETE },
+          {
+            section_key: '3.2.P.6',
+            approval_state: 'approved',
+            stale: false,
+            deterministic_json: { completeness: 0, missingInputs: ['containerClosureDescription'] },
+          },
+        ],
+      })
+      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({ rows: [{ n: 0 }] });
+
+    const res = await request(app).post('/api/cmc/module3-os/guard/final-export/proj-1').send({});
+    expect(res.status).toBe(409);
+    expect(res.body.error).toMatch(/not complete/i);
+    expect(res.body.error).toContain('3.2.P.6');
+    expect(res.body.data.incompleteApprovedSections).toEqual(['3.2.P.6']);
+  });
+
+  it('readiness is not export-ready when an approved section compiled incomplete', async () => {
+    mockQuery
+      .mockResolvedValueOnce({
+        rows: [
+          {
+            section_key: '3.2.P.8',
+            approval_state: 'approved',
+            stale: false,
+            deterministic_json: JSON.stringify({ completeness: 60, missingInputs: ['shelfLifeJustification'] }),
+          },
+        ],
+      })
+      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({ rows: [{ n: 0 }] });
+
+    const res = await request(app).get('/api/cmc/module3-os/readiness/proj-1');
+    expect(res.status).toBe(200);
+    expect(res.body.data.incompleteApprovedSections).toEqual(['3.2.P.8']);
+    expect(res.body.data.exportReady).toBe(false);
   });
 });

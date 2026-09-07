@@ -32,6 +32,7 @@ import { notifySurfaceActionReady, useSurfaceActionHandlers } from '../surfaceAc
 import { usePublishSurfaceContext } from '../surfaceContext';
 import '../styles/surfaces-v2.css';
 import { useChatUpload } from '../../hooks/useChatUpload';
+import { AppMentionMenu, useAppMentions } from '../appMentions';
 
 /* ════════════ Home — AnA-first landing (centered composer) ════════════ */
 
@@ -119,6 +120,9 @@ export function Home({
   const [mode, setMode] = React.useState('standard');
   const [plusOpen, setPlusOpen] = React.useState(false);
   const fileRef = React.useRef<HTMLInputElement>(null);
+  /* `@app` on the front door — the same hook the rail and the thread use. */
+  const draftRef = React.useRef<HTMLTextAreaElement>(null);
+  const mentions = useAppMentions(draft, setDraft, draftRef);
   const ctx = getSegmentContext(segment);
 
   /* ── "Attach file" opened a picker into nothing ────────────────────────────
@@ -225,18 +229,26 @@ export function Home({
         )}
         <div className="landing-composer">
           <textarea
+            ref={draftRef}
             className="landing-input"
             rows={3}
-            placeholder="How can I help you today?"
+            placeholder="How can I help you today? Type @ to name an app."
             value={draft}
-            onChange={(e) => setDraft(e.target.value)}
+            aria-autocomplete="list"
+            aria-controls={mentions.open ? 'landing-mentions' : undefined}
+            aria-expanded={mentions.open}
+            onChange={(e) => { setDraft(e.target.value); mentions.sync(e.currentTarget); }}
+            onSelect={(e) => mentions.sync(e.currentTarget)}
+            onBlur={() => mentions.close()}
             onKeyDown={(e) => {
+              if (mentions.onKeyDown(e)) return;
               if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
                 send();
               }
             }}
           />
+          <AppMentionMenu api={mentions} id="landing-mentions" />
           <input
             ref={fileRef}
             type="file"

@@ -15,7 +15,7 @@
 import express from 'express';
 import { getPool } from '../../db';
 import { resolveCmcArtifactProject } from '../../services/cmc/resolve-cmc-artifact-project';
-import { getSectionLabels } from '../../services/module3-convergence-service';
+import { getModule3BuildStatus, getSectionLabels } from '../../services/module3-convergence-service';
 import { MODULE3_SECTION_RULES } from '../../services/module3Composer';
 
 const router = express.Router();
@@ -107,20 +107,22 @@ router.get('/build-state/:projectId', async (req, res) => {
     const noArtifacts = Promise.resolve({ rows: [] as any[] });
 
     // Parallel queries for all data sources
-    const [sourceObjectsRes, compiledSectionsRes, contradictionsRes, artifactsRes, uploadedSourcesRes] =
+    const [canonicalStatus, compiledSectionsRes, contradictionsRes, artifactsRes, uploadedSourcesRes] =
       await Promise.all([
-        // 1. Source objects grouped by source type
-        pool.query(
-          `SELECT source_type as "sourceType", COUNT(*) as count
-           FROM cmc_source_objects
-           WHERE organization_id = $1 AND project_id = $2
-           GROUP BY source_type`,
-          [orgId, projectId]
-        ),
+        /* 1. Source count + completeness, from the ONE reader that composes the
+           project's sources the way compile does. This route used to run its
+           own `GROUP BY source_type` count (which included retired records the
+           composer excludes) and read completeness as
+           `deterministicJson?.completeness ?? (compiled ? 100 : 0)` — a figure
+           frozen at the last compile, or 0 for a never-compiled section with
+           fully populated sources, or a fabricated 100 for a compiled row that
+           happened to lack it. The final-export gate refuses on the composer's
+           figure; a build board that reports a different one is the
+           duplication Rule "zero duplication" exists to prevent. */
+        getModule3BuildStatus(orgId, projectId),
         // 2. Compiled sections
         pool.query(
           `SELECT section_key as "sectionKey",
-                  deterministic_json as "deterministicJson",
                   narrative_text as "narrativeText",
                   stale, stale_reason as "staleReason",
                   approval_state as "approvalState",
@@ -163,10 +165,9 @@ router.get('/build-state/:projectId', async (req, res) => {
       ]);
 
     // Build lookup maps
-    const sourceTypeCounts = new Map<string, number>();
-    for (const row of sourceObjectsRes.rows) {
-      sourceTypeCounts.set(row.sourceType, parseInt(row.count, 10));
-    }
+    const canonicalBySection = new Map(
+      canonicalStatus.sections.map((s) => [s.sectionKey, s] as const),
+    );
 
     const compiledMap = new Map<string, any>();
     for (const row of compiledSectionsRes.rows) {
@@ -206,19 +207,19 @@ router.get('/build-state/:projectId', async (req, res) => {
       const compiled = compiledMap.get(sectionKey);
       const artifact = artifactMap.get(sectionKey);
       const requiredSourceTypes = SECTION_SOURCE_TYPES[sectionKey] || [];
-      const sourceObjectCount = requiredSourceTypes.reduce(
-        (sum, st) => sum + (sourceTypeCounts.get(st) || 0),
-        0
-      );
+      const canonical = canonicalBySection.get(sectionKey);
+      if (!canonical) {
+        // The status reports one entry per composer rule, and the label map is
+        // those same keys. A gap is a broken invariant, never a 0%-complete row.
+        throw new Error(`Canonical Module 3 status has no entry for section ${sectionKey}`);
+      }
+      // Live sources that actually compose (retired ones do not), scored by the
+      // composer — the same figures compile stores and the export gate reads.
+      const { sourceObjectCount, completeness, missingInputs } = canonical;
       const uploadedSourceCount = uploadedSourceMap.get(sectionKey) || 0;
       const contradictionCount = contradictionCounts.get(sectionKey) || 0;
       const isStale = compiled?.stale === true;
       const approvalState = compiled?.approvalState || null;
-
-      // Completeness from compiled deterministic JSON
-      const deterministicJson = compiled?.deterministicJson;
-      const completeness = deterministicJson?.completeness ?? (compiled ? 100 : 0);
-      const missingInputs = deterministicJson?.missingInputs ?? [];
 
       const buildState = deriveBuildState({
         sourceObjectCount,

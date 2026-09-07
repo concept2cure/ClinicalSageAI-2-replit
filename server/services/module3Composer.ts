@@ -1,15 +1,21 @@
 import { createSourceHash } from './cmc-module3-compiler';
+/* Circular by design (module3-extensions imports this file's types and core
+   composer); only a function is taken from it, and only at call time. */
+import { appendixSectionsRequiringSourceType } from './module3-extensions';
 /* The ICH Q3A/Q3B comparison lives in services/cmc/impurity-assessment, which
    consumes the threshold tables in services/global-ri/impurities-thresholds.
    This composer renders the verdict; it does not restate the guideline. */
-import { assessRecordedImpurity, isThresholdAssessment, parseDoseMg, type ImpurityAssessmentResult } from './cmc/impurity-assessment'
+import { assessRecordedImpurity, isMutagenicAssessment, isThresholdAssessment, parseDoseMg, type ImpurityAssessmentResult } from './cmc/impurity-assessment'
 /* The recorded-stability readers and the acceptance-criterion parser: the
    stability verdict is a comparison of numbers to limits, and both live there
    already — one copy, used by the shelf-life engine and by this section. */
 import {
+  assessRecordedTrending,
   parseAcceptanceCriterion,
   parseNumeric,
   readRecordedStabilityResults,
+  type RecordedStabilityRead,
+  type RecordedTrendSeries,
 } from './cmc/recorded-stability';
 /* The dissolution purposes live in shared/, not in the write-through module:
    that module already imports FROM this composer, and importing back would make
@@ -29,30 +35,39 @@ import {
   normalizeCharacterizationType,
 } from '../../shared/cmc/characterization-type';
 
-export type CmcSourceType =
-  | 'drug_substance'
-  | 'drug_product'
-  | 'specification'
-  | 'method'
-  | 'stability'
-  | 'batch'
-  | 'change_control'
-  | 'comparability'
-  | 'manufacturing_process'
-  | 'characterization'
-  | 'reference_standard'
-  | 'container_closure'
-  | 'excipient'
-  | 'process_validation'
-  | 'raw_material_spec'
-  | 'impurity_profile'
-  | 'dissolution_profile'
-  | 'formulation_record'
+/**
+ * Every canonical CMC source type, as a value. The HTTP upsert schema derives
+ * its `z.enum` from this list, so a type added here is accepted at the API
+ * without a second, hand-copied list drifting behind (five of these were
+ * missing from that copy and were refused with a 400).
+ */
+export const CMC_SOURCE_TYPES = [
+  'drug_substance',
+  'drug_product',
+  'specification',
+  'method',
+  'stability',
+  'batch',
+  'change_control',
+  'comparability',
+  'manufacturing_process',
+  'characterization',
+  'reference_standard',
+  'container_closure',
+  'excipient',
+  'process_validation',
+  'raw_material_spec',
+  'impurity_profile',
+  'dissolution_profile',
+  'formulation_record',
   /* Batch-analyses evidence from the QC register. Distinct from 'batch', which
      is the executed manufacturing record (§3.2.P.3.4); this is the quantitative
      test result behind §3.2.S.4.4 / §3.2.P.5.4. Conflating them would file a
      manufacturing record where a results table belongs. */
-  | 'qc_result';
+  'qc_result',
+] as const;
+
+export type CmcSourceType = (typeof CMC_SOURCE_TYPES)[number];
 
 export interface CanonicalSource {
   id: string;
@@ -142,7 +157,10 @@ export const MODULE3_SECTION_RULES: SectionRule[] = [
      development evidence. Without it, the register wrote such a study through to
      cmc_source_objects, the form and the register grid both told the staffer it
      filed under §3.2.P.2, and it reached no composed section at all. */
-  { sectionKey: '3.2.P.2', requiredSourceTypes: ['drug_product', 'drug_substance', 'comparability', 'formulation_record', 'dissolution_profile', 'container_closure', 'characterization'], requiredFields: ['formulationDevelopment', 'manufacturingProcessDev', 'containerClosureStudies'] },
+  /* manufacturing_process feeds §3.2.P.2.3: the register's process-development
+     narrative is the only producer of manufacturingProcessDev, and the section
+     could never complete while its own rule did not admit that source. */
+  { sectionKey: '3.2.P.2', requiredSourceTypes: ['drug_product', 'drug_substance', 'comparability', 'formulation_record', 'dissolution_profile', 'container_closure', 'characterization', 'manufacturing_process'], requiredFields: ['formulationDevelopment', 'manufacturingProcessDev', 'containerClosureStudies'] },
   { sectionKey: '3.2.P.3', requiredSourceTypes: ['drug_product', 'batch', 'change_control', 'process_validation', 'manufacturing_process'], requiredFields: ['formulation', 'batchNumber', 'drugProductProcessComplete'] },
   /* §3.2.P.4 is Control of EXCIPIENTS. `raw_material_spec` was listed here
      because this was the only rule that named it, so a drug-substance starting
@@ -236,6 +254,19 @@ type StabilityOutcome = 'pass' | 'concern' | 'defer';
  * `conclusion` said "meets its specification at all time points" composed as
  * conforming while its 12-month assay sat at 88.1% against 95.0 - 105.0 %.
  */
+/**
+ * Every field a stability payload has carried its pull-point results in. The
+ * conformance verdict and the trend assessment read the same three, so the
+ * list lives once.
+ */
+function recordedStabilityReads(payload: Record<string, unknown>): RecordedStabilityRead[] {
+  return [
+    readRecordedStabilityResults(payload.results),
+    readRecordedStabilityResults(payload.stabilityData ?? payload.stability_data),
+    readRecordedStabilityResults(payload.stabilityParameters),
+  ];
+}
+
 function assessRecordedStability(stabilitySources: CanonicalSource[]): {
   compared: number;
   outOfSpec: Array<{ parameter: string; timePoint: string; result: number; criterion: string }>;
@@ -250,11 +281,7 @@ function assessRecordedStability(stabilitySources: CanonicalSource[]): {
 
   for (const s of stabilitySources) {
     const payload = (s.sourcePayload || {}) as Record<string, unknown>;
-    const reads = [
-      readRecordedStabilityResults(payload.results),
-      readRecordedStabilityResults(payload.stabilityData ?? payload.stability_data),
-      readRecordedStabilityResults(payload.stabilityParameters),
-    ];
+    const reads = recordedStabilityReads(payload);
     unreadable += reads.filter((r) => r.unreadable).length;
     const series = reads.flatMap((r) => r.points);
     for (const point of series) {
@@ -306,6 +333,14 @@ function stabilityConclusion(
   sources: CanonicalSource[],
   material: 'drug substance' | 'drug product',
 ): string {
+  return `${stabilityConformance(sources, material)} ${stabilityTrending(sources)}`;
+}
+
+/** The conformance half of the conclusion: recorded results against their recorded criteria. */
+function stabilityConformance(
+  sources: CanonicalSource[],
+  material: 'drug substance' | 'drug product',
+): string {
   const { compared, outOfSpec, uncomparable, unreadable } = assessRecordedStability(sources);
   // Said in every branch: a payload that could not be read is a gap in the
   // evidence this section rests on, whatever the readable points show.
@@ -340,6 +375,77 @@ function stabilityConclusion(
     );
   }
   return `The stability conclusion and proposed storage period are subject to review of the stability results summarized above and are not asserted in this section.` + unread;
+}
+
+/**
+ * The trend half of the conclusion — §3.2.S.7.3 / §3.2.P.8.3's "stability
+ * data" is a series, and a section that reports conformance point by point
+ * without saying whether the series is drifting, or has a result that does
+ * not sit on its own line, leaves the reviewer to trend it by eye.
+ *
+ * Every attribute gets a sentence: what the regression control chart found,
+ * the slope and whether it is established, and where it meets the recorded
+ * limit if it continues — or "trend not assessed" with the reason. A silent
+ * section cannot be told apart from a clean one.
+ */
+function stabilityTrending(sources: CanonicalSource[]): string {
+  const statements: string[] = [];
+  let unreadable = 0;
+  for (const s of sources) {
+    const payload = (s.sourcePayload || {}) as Record<string, unknown>;
+    const reads = recordedStabilityReads(payload);
+    unreadable += reads.filter((r) => r.unreadable).length;
+    const points = reads.flatMap((r) => r.points);
+    if (points.length === 0) continue;
+    const assessed = assessRecordedTrending({
+      id: s.id,
+      storageConditions: payload.storageConditions ?? payload.storageCondition,
+      stabilityData: points,
+    });
+    if (!assessed.ok) {
+      statements.push(`Trend not assessed: ${assessed.error}`);
+      continue;
+    }
+    for (const series of assessed.data.series) statements.push(describeTrendSeries(series, assessed.data.alpha));
+  }
+  if (statements.length === 0) {
+    return unreadable > 0
+      ? 'Trend not assessed: the recorded stability payload could not be read.'
+      : 'Trend not assessed: no recorded pull-point results.';
+  }
+  return (
+    'Out-of-trend assessment (PhRMA CMC Statistics regression control chart: each pull point against the two-sided 95% prediction interval of the line fitted to all prior points): ' +
+    statements.join(' ')
+  );
+}
+
+function describeTrendSeries(series: RecordedTrendSeries, alpha: number): string {
+  const label = series.condition ? `${series.parameter} (${series.condition})` : series.parameter;
+  const o = series.outcome;
+  if (!o.ok) return `${label}: trend not assessed: ${o.detail}.`;
+  const pct = Math.round((1 - alpha) * 100);
+  const oot =
+    o.outOfTrend.length === 0
+      ? `no out-of-trend points across ${o.distinctTimePoints} time points` +
+        (o.pointsUsed !== o.distinctTimePoints ? ` (${o.pointsUsed} results)` : '')
+      : `out-of-trend at ${o.outOfTrend
+          .map(
+            (p) =>
+              `${p.time} months (${p.value} against a ${pct}% prediction interval of ${p.interval.lower} to ${p.interval.upper} from ${p.priorPoints} prior points)`,
+          )
+          .join('; ')}`;
+  const slope = `slope ${o.slope.estimate} per month (${pct}% CI ${o.slope.ci[0]} to ${o.slope.ci[1]})`;
+  let trend: string;
+  if (!o.slope.significant) {
+    trend = `${slope} is not significantly different from zero, so no trend toward the limit is established`;
+  } else if (o.projection) {
+    trend =
+      `${slope} is significantly non-zero; trend toward the limit projected at ${o.projection.time} months ` +
+      `(${o.projection.bound} limit ${o.projection.limit}${o.projection.time <= o.observedPeriod ? ', within the observed period' : ''})`;
+  } else {
+    trend = `${slope} is significantly non-zero but heads away from the recorded limit, so no crossing is projected`;
+  }
+  return `${label}: ${oot}; ${trend}.`;
 }
 
 function readStabilitySignal(stabilitySources: CanonicalSource[]): StabilityOutcome {
@@ -1052,6 +1158,10 @@ function impurityRendering(
   const belowReporting = thresholdAssessed.filter((x) => isThresholdAssessment(x.a) && x.a.disposition === 'below-reporting');
   const solventAssessed = assessed.filter((x) => x.a.ok && x.a.basis === 'ICH Q3C(R8)');
   const elementalAssessed = assessed.filter((x) => x.a.ok && x.a.basis === 'ICH Q3D(R2)');
+  /* Mutagenic impurities, under ICH M7(R2): classified from the recorded Ames
+     result and structural-alert status, and — for Class 1-3 — compared to the
+     acceptable intake staged for the recorded treatment duration. */
+  const mutagenicAssessed = assessed.filter((x) => isMutagenicAssessment(x.a));
   /* Refusals are carried with their reason: an impurity the product cannot
      compare to a threshold is stated as such, never dropped and never reported
      as if it had cleared one. */
@@ -1085,6 +1195,14 @@ function impurityRendering(
             ? a.withinLimit
               ? `within the ICH Q3D ${a.elementClass} PDE (${a.pdeMicrogramsPerDay} µg/day, ${a.route})`
               : `above the ICH Q3D ${a.elementClass} PDE (${a.pdeMicrogramsPerDay} µg/day, ${a.route})`
+          : a.basis === 'ICH M7(R2)'
+            ? a.disposition === 'non-mutagenic-control'
+              ? `ICH M7 Class ${a.impurityClass} — controlled as a non-mutagenic impurity`
+              : a.disposition === 'compound-specific-limit-required'
+                ? `ICH M7 Class 1 — compound-specific limit required`
+                : a.withinLimit
+                  ? `within the ICH M7 Class ${a.impurityClass} acceptable intake (${a.acceptableIntakeUgPerDay} µg/day${a.concentrationLimitPpm !== null ? `, ${a.concentrationLimitPpm} ppm at the recorded dose` : ''})`
+                  : `above the ICH M7 Class ${a.impurityClass} acceptable intake (${a.acceptableIntakeUgPerDay} µg/day${a.concentrationLimitPpm !== null ? `, ${a.concentrationLimitPpm} ppm at the recorded dose` : ''})`
             : a.disposition === 'below-reporting'
               ? `not above the reporting threshold (${thresholdText(a.thresholds.reporting)})`
               : a.disposition === 'reportable'
@@ -1139,7 +1257,7 @@ function impurityRendering(
      truth: nothing had been compared to anything. It is made only over the
      assessed set, and only when there is one. */
   const assessedCount = reported.length + belowReporting.length;
-  const guidelineAssessedCount = assessedCount + solventAssessed.length + elementalAssessed.length;
+  const guidelineAssessedCount = assessedCount + solventAssessed.length + elementalAssessed.length + mutagenicAssessed.length;
   let narrative =
     `${rows.length} impurity/ies are recorded for the ${material}. ` +
     (guidelineAssessedCount === 0
@@ -1171,7 +1289,24 @@ function impurityRendering(
           const over = elementalAssessed.filter((x) => x.a.ok && x.a.basis === 'ICH Q3D(R2)' && !x.a.withinLimit).length;
           return over > 0 ? `: ${over} above the permitted daily exposure for the recorded route. ` : `, each within the permitted daily exposure for its recorded route. `;
         })()
+      : '') +
+    (mutagenicAssessed.length > 0
+      ? `${mutagenicAssessed.length} mutagenic impurity/ies are assessed against ICH M7(R2)` +
+        (() => {
+          const m7 = mutagenicAssessed.map((x) => x.a).filter(isMutagenicAssessment);
+          const limited = m7.filter((a) => a.disposition === 'within-limit' || a.disposition === 'above-limit');
+          const over = limited.filter((a) => !a.withinLimit).length;
+          const ordinary = m7.filter((a) => a.disposition === 'non-mutagenic-control').length;
+          const compoundSpecific = m7.filter((a) => a.disposition === 'compound-specific-limit-required').length;
+          const clauses: string[] = [];
+          if (limited.length > 0) clauses.push(over > 0 ? `${over} of ${limited.length} above the acceptable intake for the recorded treatment duration` : `${limited.length} within the acceptable intake for the recorded treatment duration`);
+          if (ordinary > 0) clauses.push(`${ordinary} of Class 4/5, controlled as non-mutagenic`);
+          if (compoundSpecific > 0) clauses.push(`${compoundSpecific} of Class 1, owed a compound-specific limit`);
+          return clauses.length > 0 ? `: ${clauses.join('; ')}. ` : `. `;
+        })()
       : '');
+  /* A concentration is only comparable to an M7 acceptable intake through the
+     daily dose, so a mutagenic impurity recorded in ppm needs the dose too. */
   const needsDose = rows.length > solventAssessed.length + elementalAssessed.length;
   if (doses.length === 0 && needsDose) {
     narrative +=
@@ -2630,7 +2765,14 @@ export function composeModule3FromCanonicalSources(sourceObjects: CanonicalSourc
 }
 
 export function impactedSectionsForSourceType(changedSourceType: CmcSourceType): string[] {
-  return MODULE3_SECTION_RULES
+  const core = MODULE3_SECTION_RULES
     .filter((rule) => rule.requiredSourceTypes.includes(changedSourceType))
     .map((rule) => rule.sectionKey);
+  /* The appendices (3.2.A.*) carry their own rule table in module3-extensions,
+     with their own requiredSourceTypes, and are stored and approved in
+     cmc_module3_sections like any other section — so they must go stale like
+     any other section. Resolved by a call at runtime, not a top-level read:
+     the two files import each other. */
+  const appendices = appendixSectionsRequiringSourceType(changedSourceType);
+  return [...new Set([...core, ...appendices])];
 }

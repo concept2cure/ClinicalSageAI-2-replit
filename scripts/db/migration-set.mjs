@@ -1841,6 +1841,15 @@ export const C2C_MIGRATION_FILES = [
   // creates the table.
   'db/migrations/20260903_cmc_impurity_route_of_administration.sql',
 
+  // ── Durable CMC interview sessions ───────────────────────────────────────
+  // The guided CMC interview's FlowState, persisted per step and committed to
+  // the registers on completion (CMC capture evaluation item 5). Leaf table:
+  // FKs only to organizations and users. public + integer organization_id, so
+  // the isolation sweep at the end of this list policies it.
+  'db/migrations/20260906_cmc_interview_sessions.sql',
+  'db/migrations/20260906_cmc_impurity_m7_inputs.sql',
+  'db/migrations/20260906_cmc_formulation_development.sql',
+
   // ── Drop the audit-shaped tables that survived a from-scratch liveness
   //    re-check (ledger L13; docs/AUDIT_STORE_INVENTORY_2026-08.md §5.1) ─────
   // MUST stay near the end, and specifically AFTER every entry above that

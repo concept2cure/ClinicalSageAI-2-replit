@@ -882,6 +882,20 @@ export function composeAppendices(sourceObjects: CanonicalSource[]): ComposedSec
 }
 
 /**
+ * The appendix keys whose rule REQUIRES `sourceType` — the 3.2.A.* half of the
+ * staleness sweep. The core composer's `impactedSectionsForSourceType` walked
+ * MODULE3_SECTION_RULES only, so an approved 3.2.A.1 never went stale when the
+ * container closure it was composed from changed. Exposed as a function rather
+ * than the table: the two files import each other, and a module-scope read of
+ * APPENDIX_RULES from the composer would run before this file has evaluated.
+ */
+export function appendixSectionsRequiringSourceType(sourceType: CmcSourceType): string[] {
+  return APPENDIX_RULES
+    .filter((rule) => rule.requiredSourceTypes.includes(sourceType))
+    .map((rule) => rule.sectionKey);
+}
+
+/**
  * Compose regional (3.2.R.*) subsections for a target region.
  */
 export function composeRegional(sourceObjects: CanonicalSource[], region: RegionCode): ComposedSection[] {

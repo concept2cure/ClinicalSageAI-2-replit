@@ -57,7 +57,7 @@ router.post('/workflow', authenticateToken, async (req: Request, res: Response) 
     const orgId = resolveOrganizationId(req);
     const userId = resolveUserId(req);
 
-    const { workflowType, input, generateDocument, documentType, autoAttachToDossier, reviewRequired } = req.body;
+    const { workflowType, input, generateDocument, documentType, autoAttachToDossier, reviewRequired, dossierSectionId } = req.body;
 
     if (!workflowType || !input) {
       return res.status(400).json({
@@ -74,6 +74,15 @@ router.post('/workflow', authenticateToken, async (req: Request, res: Response) 
       documentType: documentType ?? getDefaultDocType(workflowType),
       autoAttachToDossier,
       reviewRequired,
+      // The dossier section the attach step maps into. This was accepted by the
+      // integrator (workflow-integrator.ts::executeWorkflowActions) but never
+      // read from the request, so `autoAttachToDossier` could not attach
+      // anything over HTTP. A non-positive or non-integer value is dropped and
+      // the attach step reports it honestly rather than mapping into section 0.
+      dossierSectionId:
+        Number.isInteger(Number(dossierSectionId)) && Number(dossierSectionId) > 0
+          ? Number(dossierSectionId)
+          : undefined,
     });
 
     return res.json(result);

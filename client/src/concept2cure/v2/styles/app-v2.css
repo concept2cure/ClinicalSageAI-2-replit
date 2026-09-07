@@ -1270,6 +1270,41 @@
   }
   .c2c-v2.shell:not([data-collapsed="true"]) .rail-scrim { display: block; }
 }
+/* ── Tablet- and phone-width AnA rail (<=900px) ──
+     The AnA column had no breakpoint at all: with the rail open the grid was
+     `56px | 1fr | 380px` on a 390px screen — the centre column negative, the
+     conversation rail alone wider than the viewport, and its composer off the
+     right edge. Same treatment as the rail: the grid gives the column up
+     (`0`), and the open rail paints OVER the content as a fixed drawer from
+     the right, above `.ana-scrim`, which tap-closes it; Escape does the same
+     through the shell-level listener. The closed state keeps its 32px seam so
+     the way back in is still on screen. Measured before this rule: at 834px
+     and 768px the three-column grid left a 398px / 332px content column; at
+     430px the content column was 0px; at 390px the AnA composer was off the
+     right edge. Nothing here applies above 900px. */
+@media (max-width: 900px) {
+  .c2c-v2.shell[data-ana-open="true"] { grid-template-columns: var(--rail) 1fr 0; }
+  .c2c-v2.shell[data-ana-open="true"][data-collapsed="true"] { grid-template-columns: var(--rail-collapsed) 1fr 0; }
+  .c2c-v2.shell[data-ana-open="true"] .ana {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    right: 0;
+    width: min(380px, 92vw);
+    z-index: 61;
+    box-shadow: -8px 0 32px rgba(0, 0, 0, 0.25);
+  }
+  .c2c-v2.shell[data-ana-open="true"] .ana-scrim { display: block; }
+}
+.c2c-v2 .ana-scrim {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: rgba(0, 0, 0, 0.35);
+  animation: rail-scrim-in 200ms ease-out;
+}
+@media (prefers-reduced-motion: reduce) { .c2c-v2 .ana-scrim { animation: none; } }
 .c2c-v2 .rail-scrim {
   display: none;
   position: fixed;
@@ -1624,6 +1659,7 @@
 .c2c-v2 .ana-modepull-ic{color:var(--accent-100);font-size:14px;display:flex;}
 .c2c-v2 .ana-modepull>svg:last-child{font-size:13px;color:var(--text-400);}
 .c2c-v2 .ana-menu{position:absolute;bottom:calc(100% + 8px);left:0;right:0;background:var(--bg-000);border:1px solid var(--border);border-radius:var(--radius-xl);box-shadow:var(--v2-shadow-lg);padding:6px;z-index:20;max-height:360px;overflow-y:auto;}
+.c2c-v2 .ana-menu.ana-mention{max-height:280px;}
 .c2c-v2 .ana-menu-sec{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--text-400);font-weight:600;padding:8px 10px 4px;}
 .c2c-v2 .ana-menu-item{display:flex;align-items:center;gap:10px;width:100%;padding:8px 10px;border-radius:var(--radius-md);font-size:12.5px;color:var(--text-100);}
 .c2c-v2 .ana-menu-item:hover{background:var(--bg-100);}
@@ -2775,7 +2811,7 @@
    in-flight turn's own activity record is the waiting state. */
 
 .c2c-v2 .ct-composer-wrap{flex-shrink:0;border-top:1px solid var(--border);padding:14px 24px 16px;background:var(--bg-000);}
-.c2c-v2 .ct-composer{max-width:768px;margin:0 auto;display:flex;align-items:flex-end;gap:8px;border:1px solid var(--border);border-radius:14px;padding:8px 10px;background:var(--bg-000);box-shadow:var(--v2-shadow-sm);}
+.c2c-v2 .ct-composer{max-width:768px;margin:0 auto;display:flex;align-items:flex-end;gap:8px;border:1px solid var(--border);border-radius:14px;padding:8px 10px;background:var(--bg-000);box-shadow:var(--v2-shadow-sm);position:relative;}
 /* --accent-200, not --accent-100: the textarea inside drops its own outline, so
    this border IS the focus indicator and needs 3:1 (SC 1.4.11); accent-100
    measures 2.96:1 on --bg-000. */

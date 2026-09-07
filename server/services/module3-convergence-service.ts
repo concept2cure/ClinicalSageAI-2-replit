@@ -12,7 +12,13 @@
 import { randomUUID } from 'crypto';
 import { getPool } from '../db';
 import { createSourceHash } from './cmc-module3-compiler';
-import { composeModule3FromCanonicalSources, MODULE3_SECTION_RULES, tablesToMarkdown, CmcSourceType } from './module3Composer';
+import {
+  composeModule3FromCanonicalSources,
+  MODULE3_SECTION_RULES,
+  tablesToMarkdown,
+  CmcSourceType,
+  type CanonicalSource,
+} from './module3Composer';
 import { enforceAuthorLineage } from './clinical-regulatory-evidence/lineage-gate';
 import { governedActor } from './part11/governed-actor';
 import {
@@ -187,7 +193,44 @@ export async function getModule3BuildStatus(
     }
   }
 
-  // Group source objects by type for quick lookup
+  /* ── Completeness is the composer's, and only the composer's ──
+     This used to score each section by KEY PRESENCE over every source of a
+     matching type (`Object.keys(sourcePayload)`), so a key holding '' or null
+     counted as present and a retired source still fed the count — while the
+     compile path stored composeModule3FromCanonicalSources's figures in
+     cmc_module3_sections.deterministic_json and the final-export gate refused
+     on those. Three readers, two definitions, and this one was the greenest.
+
+     The rows are handed to the composer exactly as the compile route hands
+     them (every row for the project, no version dedup — `loadCmcSourcesForProject`
+     keeps only the latest version per key, which is NOT what compile composes,
+     so adopting it here would reopen the disagreement from the other side).
+     What comes back is the one answer: `completeness` / `missingInputs` as the
+     composer scored them (`isPresent` excludes null and ''), and `lineage` —
+     one entry per source that actually composed, which already excludes
+     retirement — is the count. A compiled row's stored figure is deliberately
+     NOT preferred: it is the composer's answer at compile time, and `stale`
+     exists because source edits after that make it wrong. */
+  const rowById = new Map<string, any>();
+  const canonicalSources: CanonicalSource[] = sourceRes.rows.map((row) => {
+    const id = String(row.id);
+    rowById.set(id, row);
+    return {
+      id,
+      sourceType: row.sourceType as CmcSourceType,
+      sourcePayload: (row.sourcePayload ?? {}) as Record<string, any>,
+      sourceHash: row.sourceHash ?? undefined,
+      organizationId: orgId,
+      projectId,
+    };
+  });
+  const composedBySection = new Map(
+    composeModule3FromCanonicalSources(canonicalSources).map((c) => [c.sectionKey, c] as const),
+  );
+
+  // Group source objects by type — for the section's lastUpdated only. A
+  // retired source no longer composes, but retiring it IS an edit to the
+  // section's inputs, so it still moves the timestamp.
   const sourcesByType = new Map<string, any[]>();
   for (const row of sourceRes.rows) {
     const list = sourcesByType.get(row.sourceType) || [];
@@ -200,24 +243,21 @@ export async function getModule3BuildStatus(
     const sectionKey = rule.sectionKey;
     const sectionLabel = SECTION_LABELS[sectionKey] || sectionKey;
 
-    // Matched source objects for this section
+    const composed = composedBySection.get(sectionKey);
+    if (!composed) {
+      // The composer emits one section per rule; a missing one is a broken
+      // invariant, not a section with nothing in it. Never score it 0 and move on.
+      throw new Error(`[module3-convergence] composer emitted no section for ${sectionKey}`);
+    }
+    const composingRows = composed.lineage.map((l) => rowById.get(l.sourceObjectId)).filter(Boolean);
+    const sourceObjectCount = composed.lineage.length;
+    const sourceTypes = [...new Set(composingRows.map((s) => s.sourceType as string))];
+    const { completeness, missingInputs } = composed;
+
+    // Every source of a matching type, retired or not — timestamps only.
     const matchedSources = rule.requiredSourceTypes.flatMap(
       (st) => sourcesByType.get(st) || [],
     );
-    const sourceObjectCount = matchedSources.length;
-    const sourceTypes = [...new Set(matchedSources.map((s) => s.sourceType as string))];
-
-    // Completeness via field availability
-    const availableFields = new Set(
-      matchedSources.flatMap((s) => Object.keys(s.sourcePayload || {})),
-    );
-    const missingInputs = rule.requiredFields.filter((f) => !availableFields.has(f));
-    const completeness =
-      rule.requiredFields.length === 0
-        ? 100
-        : Math.round(
-            ((rule.requiredFields.length - missingInputs.length) / rule.requiredFields.length) * 100,
-          );
 
     // Compiled section record
     const compiled = sectionMap.get(sectionKey);
