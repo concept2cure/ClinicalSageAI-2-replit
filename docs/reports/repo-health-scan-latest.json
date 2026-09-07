@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-07T09:13:39.631Z",
+  "generatedAt": "2026-09-07T09:25:08.759Z",
   "git": {
-    "sha": "be322123a0e85dc489bb01860404027fc2fd77ff",
+    "sha": "b4de149501a0286c9f0b4f48336fff7cdb82d19f",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -1997,11 +1997,11 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "bytes": 330131
+        "bytes": 331181
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
-        "bytes": 235674
+        "bytes": 236188
       },
       {
         "file": "server/statistics-service.ts",
@@ -2088,12 +2088,12 @@
         "bytes": 117471
       },
       {
-        "file": "server/services/ana/intelligence-questions/flows/protocol-development.ts",
-        "bytes": 116241
+        "file": "client/src/concept2cure/v2/editor/RichSectionEditor.tsx",
+        "bytes": 116913
       },
       {
-        "file": "client/src/concept2cure/v2/editor/RichSectionEditor.tsx",
-        "bytes": 116112
+        "file": "server/services/ana/intelligence-questions/flows/protocol-development.ts",
+        "bytes": 116241
       },
       {
         "file": "server/services/intelligent-report-engine.ts",
@@ -2151,7 +2151,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "lines": 7547
+        "lines": 7564
       },
       {
         "file": "server/statistics-service.ts",
@@ -2171,7 +2171,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
-        "lines": 5135
+        "lines": 5142
       },
       {
         "file": "server/routes/c2c/artifacts.ts",
@@ -2242,12 +2242,12 @@
         "lines": 2759
       },
       {
-        "file": "server/services/biosimilar/biosimilar-knowledge.ts",
-        "lines": 2609
+        "file": "client/src/concept2cure/v2/editor/RichSectionEditor.tsx",
+        "lines": 2613
       },
       {
-        "file": "client/src/concept2cure/v2/editor/RichSectionEditor.tsx",
-        "lines": 2596
+        "file": "server/services/biosimilar/biosimilar-knowledge.ts",
+        "lines": 2609
       },
       {
         "file": "server/routes/knowledge-base.ts",
