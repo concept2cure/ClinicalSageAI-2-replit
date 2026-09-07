@@ -52,7 +52,7 @@ Screenshots: `before-ana-390-tasks.png` (composer's send control cut off at the 
 | New project chat in one click | `ProjectHome.tsx:832-848` composer → `openThread()`; the project-home surface rendered at all widths (honest "No project selected" with no program in this database) |
 | Resume recent chat | `conversation-thread` rendered at all widths; thread history is the surface's own state |
 | File attach from composer | real `POST /api/chat/upload` on the rail, thread and home composers (`useChatUpload`); the file input is present in the walk's DOM at every width |
-| `@app` invocation | **not present** — the `+` menu sends a message; no mention parser. Escalated (work order E3). |
+| `@app` invocation | **not present** at the 2026-09-06 walk — escalated (E3). Built 2026-09-07; see the addendum. |
 | Project context visible | TopBar breadcrumb + `readShellProject()`; the walk's breadcrumb text carried the segment and surface on every page |
 | Communication Center routes into work | the surface renders (FDA loop, inbox, meetings, profiles); AnA can now `navigate_to` it. It is the agency loop, not the §10.4 inbox/tasks/reviews router — recorded in the work order. |
 
@@ -75,10 +75,43 @@ Created. 7 shell files, 5 nav files, 3 token files, 11 views, 2 hosted former ap
 
 ## Remaining gaps, honestly
 
-- **Product landing is not conversation-first** (§10.3): the lifecycle band and capability grid lead; the conversation panel is mid-column. A re-ordering is ~40 lines and is put to the product owner (E1), not done here.
-- **No inline `@app` / slash autocomplete** (§10.1). E3.
-- **Five composers, not one** (§10.1). E2.
+- ~~Product landing is not conversation-first~~ — done 2026-09-07 (addendum).
+- ~~No inline `@app` autocomplete~~ — done 2026-09-07 (addendum). Slash-command autocomplete is still not built.
+- **Five composers, not one** (§10.1). Measured 2026-09-07: the shared pieces are the `useChatUpload` and `useAppMentions` hooks; the chip markup is not duplicated (it exists only in the rail), so no extraction was made. Remaining scope recorded in the work order (E2).
 - **IA and typography** (§4, §12): sixteen rail destinations, serif on four chrome classes, terracotta accent on a warm-cream palette — all retained by the 2026-07-28 decision; re-opening is E4.
 - **Browser comparison against ChatGPT** was not performed: no reference instance is reachable from this environment. Validation is against the design specification.
 - **Database**: the walk ran against an auth-only local schema (Drizzle push fails on this tree's known FK issue; pgvector is not installable here). Every surface therefore rendered its honest empty or failed-read state for project data, which is what these checks needed; it is not a data-path validation.
 - **Widths above 640 with the rail expanded** were not walked (the shell defaults to a collapsed rail); the rail's own drawer rule is unchanged from before this pass.
+
+## Addendum 2026-09-07 — E1 and E3 delivered, E2 measured
+
+Verified with the unit and contract suites (25 files, 233 tests green), scoped `tsc` and `eslint` on the touched files. The browser walk was not repeated; the changes are behavioural and are pinned by tests that were written to fail first.
+
+### E1 — conversation-first project landing, with real resumable threads
+
+| Piece | What it does | Proof |
+|---|---|---|
+| `server/services/chat-thread-helpers.ts` | `getOrCreateThread` stores the shell's program UUID in `chat_threads.metadata.programId` (`project_id` is an integer column the UUID never fit, which is why nothing could list a project's threads). No migration. | `threads-program-list.test.ts` |
+| `server/routes/chat/threads.ts` | `GET /api/chat/threads?program_id=<uuid>&limit=` — org-scoped, first user message as the title, newest first; non-UUID → 400 `THREAD_PROGRAM_INVALID`; no org → `[]`; missing store → 503 (a failure, never an empty). | `threads-program-list.test.ts` (5) |
+| `server/routes/ana-ri/stream.ts` | passes the program key at mint time | read |
+| `surfaces/ProjectHome.tsx` | composer leads the main column; "Conversations" lists the program's threads and a click sets `window.C2C_CONVO = { id }` and opens `conversation-thread`; honest empty / failed-read states; readiness ring moved to the aside | `projectHomeConversations.test.tsx` (3) |
+
+### E3 — `@app` in the composer
+
+| Piece | What it does | Proof |
+|---|---|---|
+| `shared/navigation/callable-apps.ts` | the vocabulary: module-group `NAVIGATION_TARGETS` plus four global tools; `parseAppMentions` (skips e-mail-like `@`, each app once), `searchCallableApps` | `callable-apps.test.ts` |
+| `client/src/concept2cure/v2/appMentions.tsx` | `useAppMentions` + `AppMentionMenu`: `@` at start/after whitespace opens a `role="listbox"`; ↑/↓, Enter/Tab insert `@<label> `, Escape closes; while open, Enter chooses instead of sending | `appMentions.test.tsx` (hook via a host; wiring pinned by source for `Shell.tsx`, `ConversationThread.tsx`, `Surfaces.tsx`) |
+| `server/services/ana-ri/invoked-apps-block.ts` | server-side parse of the sent text: `=== INVOKED APPS` block (labels and ids only, the person's words are not echoed), tool-selection hints, self-drive pins (`list_app_screens`, `navigate_to`, `list_screen_actions`, `act_on_screen`); cap of six | `invoked-apps-block.test.ts` (4) |
+| `chat-context-builder.ts`, `stream.ts` | block appended to the system prompt; hints and pins fed to `selectToolsForTurn` | read |
+
+The client asserts nothing about "which app": it only inserts the label. A mention typed by hand in any composer, or sent by the API, resolves identically on the server.
+
+### E2 — measured, not extracted
+
+`grep` over `v2/` shows the attachment-chip markup (`.ana-files`, `.ana-file`) in `Shell.tsx` only. The thread, home and eCTD composers render their own chips and send controls over `useChatUpload`; the project-home composer seeds and navigates. With `useAppMentions` added, the shared behaviour is entirely in hooks and there is no identical markup to lift, so no `Composer` component was created. Remaining scope is stated in the work order (E2).
+
+### Not done
+
+- Slash-command (`/`) autocomplete: the `+` menu still sends a message asking AnA to list commands.
+- Browser re-walk of the project landing with a program present: this database has none.

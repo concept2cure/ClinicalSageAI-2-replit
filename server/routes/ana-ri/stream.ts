@@ -45,8 +45,7 @@ import {
   getOrCreateThread,
   getThreadMessages,
   ThreadAccessError,
-  saveChatMessage as saveMessage,
-} from '../../services/chat-thread-helpers.js';
+  saveChatMessage as saveMessage, programIdForThread } from '../../services/chat-thread-helpers.js';
 import { planKernelExecution } from '../../services/kernel-router.js';
 import { getKernelPolicyHint } from '../../services/kernel-adaptive-policy.js';
 import { buildMemoryContextForChat } from '../../services/memory-context-assembler.js';
@@ -115,6 +114,7 @@ import {
   prefetchRouteIntelligenceContext,
   resolveProjectIdFromBody,
 } from '../../services/ana-ri/chat-context-builder.js';
+import { invokedAppHints, invokedAppPins } from '../../services/ana-ri/invoked-apps-block.js';
 import {
   sendError,
   extractRequestContext,
@@ -536,7 +536,10 @@ export function mountStreamRoute(router: Router): void {
             thread_id || null,
             typeof userId === 'number' || typeof userId === 'string' ? userId : undefined,
             'ana-ri',
-            Number(orgId)
+            Number(orgId),
+            // The program the shell has open (its regulatory_programs UUID), so
+            // the thread can be listed under — and resumed from — that project.
+            programIdForThread(project_id || resolveProjectIdFromBody(req.body))
           );
           await saveMessage(threadId, 'user', message);
         } catch (e: any) {
@@ -957,6 +960,9 @@ export function mountStreamRoute(router: Router): void {
             ...(Array.isArray(selected_tools)
               ? selected_tools.filter((t: unknown): t is string => typeof t === 'string')
               : []),
+            // An @app mention names a capability; operating it needs the
+            // self-drive tools whatever the wording scores.
+            ...invokedAppPins(message),
             ...(driveState.enabled
               ? [
                   'list_app_screens',
@@ -972,6 +978,9 @@ export function mountStreamRoute(router: Router): void {
             projectType: asStr(submission_type),
             documentType: asStr(document_context),
             surface: asStr(intent_lens) ?? asStr(authoring_context),
+            // The invoked app's id, label and words, so its tools survive the
+            // relevance cap (shared/navigation/callable-apps).
+            hints: invokedAppHints(message),
           },
           // Reliability-aware: trim currently-unhealthy tools first when over the cap
           // (the always-on core + platform bridge are unaffected). Per-tenant when an
