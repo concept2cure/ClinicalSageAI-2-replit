@@ -183,6 +183,22 @@ export const ESTIMATE_RECORDED_SHELF_LIFE: AnaTool = {
   },
 };
 
+export const ASSESS_RECORDED_TRENDING: AnaTool = {
+  name: 'assess_recorded_stability_trend',
+  description:
+    'Out-of-trend assessment of a stability study ALREADY RECORDED in the register — the PhRMA CMC Statistics regression control chart: each pull point is judged against the two-sided 95% prediction interval of the line fitted to all prior points of the same attribute at the same storage condition, and the series reports its slope with a 95% CI, whether the slope is established, and the projected time to the recorded acceptance limit if the trend continues. Takes a study id and reads its own results; use it for "is anything trending toward a limit", "any out-of-trend results", "OOT". Refuses per series, with the reason, when the criterion is not recorded or unreadable, when fewer than five numeric points (four prior) exist, or when the study spans storage conditions its results do not separate — relay a refusal verbatim. Writes nothing; an OOT result is a signal to investigate, never a disposition. DETERMINISTIC. ' + NOTE,
+  input_schema: {
+    type: 'object',
+    properties: {
+      study_id: {
+        type: 'number',
+        description: 'The stability study id. Use list_cmc_registers to find it if the user named a product or batch.',
+      },
+    },
+    required: ['study_id'],
+  },
+};
+
 export const COMPARE_RECORDED_DISSOLUTION: AnaTool = {
   name: 'compare_recorded_dissolution',
   description:
@@ -221,4 +237,5 @@ export const DEEPENING_TOOLS: AnaTool[] = [
   COMPARE_RECORDED_DISSOLUTION,
   GET_SUBMISSION_READINESS_TWIN,
   ASSESS_BENEFIT_RISK,
+  ASSESS_RECORDED_TRENDING,
 ];

@@ -2142,6 +2142,34 @@ router.post('/stability-studies/:id/shelf-life', async (req, res) => {
 });
 
 /**
+ * POST /api/cmc/stability-studies/:id/trending — out-of-trend assessment of a
+ * recorded study. Same function the composed §3.2.S.7 / §3.2.P.8 and the AnA
+ * tool call (services/cmc/recorded-stability.assessRecordedTrending); the
+ * study-level refusal is a 409, per-series refusals travel in the data.
+ */
+router.post('/stability-studies/:id/trending', async (req, res) => {
+  try {
+    const id = parseInt(String(req.params.id), 10);
+    const orgId = getOrgId(req);
+    const [study] = await db
+      .select({
+        id: stabilityStudies.id,
+        storageConditions: stabilityStudies.storageConditions,
+        stabilityData: stabilityStudies.stabilityData,
+      })
+      .from(stabilityStudies)
+      .where(and(eq(stabilityStudies.id, id), eq(stabilityStudies.organizationId, orgId)));
+    if (!study) return res.status(404).json({ success: false, error: 'Stability study not found' });
+    const { assessRecordedTrending } = await import('../../services/cmc/recorded-stability');
+    const outcome = assessRecordedTrending(study);
+    if (!outcome.ok) return res.status(409).json({ success: false, error: outcome.error });
+    return res.json({ success: true, data: outcome.data });
+  } catch (error) {
+    return respondWriteError(res, error, 'Failed to assess the stability trend');
+  }
+});
+
+/**
  * POST /api/cmc/stability-studies/poolability
  * Can these batches be combined into ONE shelf-life claim? — ICH Q1E ANCOVA.
  *

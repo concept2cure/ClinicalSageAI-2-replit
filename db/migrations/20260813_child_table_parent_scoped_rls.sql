@@ -186,6 +186,27 @@ BEGIN
       CONTINUE;
     END IF;
 
+    -- AMENDED IN PLACE 2026-09-07 (CLAUDE.md Rule 1): the predicate below
+    -- compares the child's FK to the parent's key and the parent's tenant
+    -- column to an INT. Where a deployment's catalog carries a different type
+    -- (a uuid parent key against an integer FK, or a uuid tenant column),
+    -- CREATE POLICY fails with "operator does not exist: uuid = integer" and
+    -- the whole set halts at this file on every deploy. The type shape is
+    -- checked against the live catalog like the column shape above, and a
+    -- table that does not fit is skipped with a notice rather than aborting.
+    IF (SELECT data_type FROM information_schema.columns
+         WHERE table_schema='public' AND table_name=child AND column_name=fk_col)
+       IS DISTINCT FROM
+       (SELECT data_type FROM information_schema.columns
+         WHERE table_schema='public' AND table_name=parent AND column_name=parent_col)
+       OR (SELECT data_type FROM information_schema.columns
+            WHERE table_schema='public' AND table_name=parent AND column_name=parent_tenant)
+          NOT IN ('integer', 'bigint', 'smallint') THEN
+      RAISE NOTICE '[child-rls] % → %: key or tenant column type does not fit the integer-tenant predicate — skipping', child, parent;
+      skipped := skipped + 1;
+      CONTINUE;
+    END IF;
+
     -- ENABLE alone leaves the table OWNER unfiltered; FORCE is what subjects it.
     EXECUTE format('ALTER TABLE public.%I ENABLE ROW LEVEL SECURITY', child);
     EXECUTE format('ALTER TABLE public.%I FORCE ROW LEVEL SECURITY', child);

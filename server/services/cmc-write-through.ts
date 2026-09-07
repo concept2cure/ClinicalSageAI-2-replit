@@ -274,8 +274,17 @@ export function mapDrugProductPayload(record: Record<string, any>): Record<strin
           : '') || textOf(compositionRaw);
   const batchFormulaRaw =
     record.formulation ?? record.batchFormula ?? record.batch_formula ?? null;
+  /* Read the same way as composition: the register stores a json column whose
+     staffer-typed text lives under `description`, and textOf() would render it
+     as the literal "description: 20.0 kg microcrystalline cellulose…" into
+     §3.2.P.3's batch formula. The structured object still travels on
+     batchFormulaDetail for anything that wants the rows. */
   const batchFormulaText =
-    typeof batchFormulaRaw === 'string' ? batchFormulaRaw.trim() : textOf(batchFormulaRaw);
+    typeof batchFormulaRaw === 'string'
+      ? batchFormulaRaw.trim()
+      : (typeof (batchFormulaRaw as Record<string, any> | null)?.description === 'string'
+          ? String((batchFormulaRaw as Record<string, any>).description).trim()
+          : '') || textOf(batchFormulaRaw);
   const objOrNull = (v: unknown) =>
     v != null && typeof v === 'object' && Object.keys(v as object).length > 0 ? v : null;
   return {
