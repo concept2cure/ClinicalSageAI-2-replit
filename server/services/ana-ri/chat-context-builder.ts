@@ -626,15 +626,6 @@ export async function buildChatContext(req: Request): Promise<ChatContext> {
      and bounds the whole thing — see that module's header. */
   const surfaceContextBlock = buildSurfaceContextBlock(module_context);
 
-  /* ── Invoked apps (`@app`) ──
-     The composer inserts `@<label>`; the server reads it back against the
-     shared vocabulary (shared/navigation/callable-apps) and tells the model
-     which capability the person named. The same parse feeds tool selection
-     and the self-drive pins in the stream route, so an @-mention is one
-     signal read in three places, never a client claim. */
-  const { buildInvokedAppsBlock } = await import('./invoked-apps-block.js');
-  const invokedAppsBlock = buildInvokedAppsBlock(message);
-
   const fullSystemPrompt =
     intelligencePrefix +
     orchestration.systemPrompt +
@@ -643,8 +634,7 @@ export async function buildChatContext(req: Request): Promise<ChatContext> {
     memoryResult.memoryBlock +
     enrichment.block +
     mdxContextBlock +
-    surfaceContextBlock +
-    invokedAppsBlock;
+    surfaceContextBlock;
 
   // Build messages array
   const messages: GatewayMessage[] = [{ role: 'system', content: fullSystemPrompt }];

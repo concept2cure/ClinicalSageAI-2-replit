@@ -1356,11 +1356,20 @@ export function AnaRail({
                 type="button"
                 className="ana-menu-item"
                 onClick={() => {
-                  onSend('Show slash commands and skills');
+                  // Start a command in the composer: the menu of commands the
+                  // server parses opens from the leading `/`.
                   setPlusOpen(false);
+                  setDraft('/');
+                  requestAnimationFrame(() => {
+                    const el = draftRef.current;
+                    if (!el) return;
+                    el.focus();
+                    el.setSelectionRange(1, 1);
+                    mentions.sync(el);
+                  });
                 }}
               >
-                <span className="ico">{I.sparkles}</span>Slash commands &amp; skills
+                <span className="ico">{I.terminal}</span>Slash commands
               </button>
             </div>
           )}
