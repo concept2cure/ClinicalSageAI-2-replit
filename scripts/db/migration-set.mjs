@@ -1935,6 +1935,16 @@ export const C2C_MIGRATION_FILES = [
   // own program code. Additive, IF NOT EXISTS, nullable — never fabricated.
   'migrations/20260907_regulatory_programs_application_number.sql',
 
+  // ── compliance_tracking.organization_id backfill ──────────────────────────
+  // The rows the CMC project routes wrote carry no organization_id (the drizzle
+  // model they bind maps none), so the check-rules read widened to
+  // `OR organization_id IS NULL` to find them — and served every sponsor's
+  // compliance findings to every other sponsor. Unlike the quality_specifications
+  // case, these rows ARE attributable: project_id is NOT NULL with an FK to
+  // cmc_projects, whose organization_id is NOT NULL. Guarded on IS NULL, so a
+  // replay is a no-op.
+  'migrations/20260908_compliance_tracking_organization_backfill.sql',
+
   UUID_TENANT_ISOLATION_NONPUBLIC,
 
   // ── Tenant isolation for everything the set just created (ledger C-33) ───
