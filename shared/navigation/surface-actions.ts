@@ -1361,6 +1361,30 @@ export const SURFACE_ACTIONS: readonly SurfaceActionTarget[] = [
       { name: 'tab', required: true, description: 'The tab to open.', enum: ['usage', 'billing', 'limits'] },
     ],
   },
+
+  // ── Protocol development ──
+  {
+    id: 'protocol-dev.open-section',
+    surfaceId: 'protocol-dev',
+    label: 'Open a protocol section',
+    description:
+      'On the protocol authoring workspace, open a section by its number or title so it can be read or drafted — the same click a person makes. Drafting itself, and any governed register write, stay deliberate human/AnA-assisted acts elsewhere on the screen. Resolved against the real document with honest misses.',
+    params: [
+      { name: 'section', required: true, description: 'The section number (e.g. "4.2") or a distinctive phrase from its title, case-insensitive.' },
+    ],
+  },
+
+  // ── Regulatory workspace (CTD authoring substrate) ──
+  {
+    id: 'regulatory-workspace.open-section',
+    surfaceId: 'regulatory-workspace',
+    label: 'Open a CTD section',
+    description:
+      'On the regulatory workspace, open a tracked CTD section by its number or label so it becomes the active section in the three-pane authoring substrate — the same click a person makes. Resolved against the real section tree with honest misses; held while it loads.',
+    params: [
+      { name: 'section', required: true, description: 'The CTD section number (e.g. "3.2.P.8") or a distinctive phrase from its label, case-insensitive.' },
+    ],
+  },
 ] as const;
 
 const ACTIONS_BY_ID: ReadonlyMap<string, SurfaceActionTarget> = new Map(

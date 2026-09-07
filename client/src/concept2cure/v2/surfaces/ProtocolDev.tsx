@@ -13,6 +13,7 @@ import { downloadBlob, downloadText, safeFileName } from '../download';
 import { C2CForm } from '../C2CForm';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { usePublishSurfaceContext } from '../surfaceContext';
+import { useSurfaceActionHandlers } from '../surfaceActions';
 import { C2CToast, useToast } from '../toast';
 import { StudyDesignStatisticsTab } from './biostatBridge';
 
@@ -695,6 +696,27 @@ function ProtocolWorkspaceDoc({ doc, onAsk, onNav, onChanged }: { doc: PdevDoc; 
   const sections = doc.sections || [];
   const sec = sections.find((s: any) => s.id === activeSec) || sections[0];
   const onSec = (s: any) => { setActiveSec(s.id); setTab(s.tab || 'document'); };
+
+  /* AnA can open any protocol section by its number or title — the same click
+     a person makes. By the time this component is mounted, the parent's
+     honest-state reads (loading/error/empty) have already resolved to a real
+     document, so there is no not-ready state to gate here. */
+  useSurfaceActionHandlers('protocol-dev', {
+    'protocol-dev.open-section': (params) => {
+      const raw = String(params.section ?? '').trim();
+      if (!raw) return { ok: false, reason: 'Name a section by its number or title.' };
+      if (sections.length === 0) return { ok: false, reason: 'This protocol has no sections recorded yet.' };
+      const needle = raw.toLowerCase();
+      const byNum = sections.filter((s: any) => String(s.num).toLowerCase() === needle);
+      const hits = byNum.length ? byNum : sections.filter((s: any) => String(s.title).toLowerCase().includes(needle));
+      if (hits.length === 0) return { ok: false, reason: `No protocol section matching "${raw}".` };
+      if (hits.length > 1) return { ok: false, reason: `"${raw}" matches ${hits.length} sections — name one exactly.` };
+      const s = hits[0];
+      if (activeSec === s.id) return { ok: true, detail: `Already on section ${s.num} — ${s.title}` };
+      onSec(s);
+      return { ok: true, detail: `Opened section ${s.num} — ${s.title}` };
+    },
+  });
   const generate = (s: any) => onAsk('Draft ' + s.title + ' for ' + doc.shortTitle + ' from the linked evidence.');
   /* ── Export: the assembled protocol, rendered ─────────────────────────────
      The header's Export button opened the same dead dialog. The assembly has

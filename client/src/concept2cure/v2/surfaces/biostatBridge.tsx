@@ -24,7 +24,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { apiRequest, serverMessage } from '@/lib/queryClient';
 import { I } from '../icons';
-import { EmptyState, useLiveRows, type ListState } from '../dataConnect';
+import { EmptyState, isRowsWith, useLiveRows, type ListState } from '../dataConnect';
 import { C2CForm } from '../C2CForm';
 import { readShellProject } from '../shellProject';
 import { stashNavParamsForTarget } from '../navParams';
@@ -118,9 +118,16 @@ export function bridgeDesignsPath(): string {
   return p ? `/api/biostat-bridge/designs?program_id=${encodeURIComponent(String(p.id))}` : '/api/biostat-bridge/designs';
 }
 
+/**
+ * A 200 whose rows lack the bridge's own fields is reported as a shape error,
+ * not rendered: the panel reads `readiness.percent` and `studyId` from every
+ * row, and a row without them is a broken read, not a design.
+ */
+const isDesignRows = isRowsWith<BridgeDesignRow>('studyId', 'readiness');
+
 export function useBridgeDesigns(reloadKey = 0): ListState<BridgeDesignRow> {
   const path = bridgeDesignsPath();
-  return useLiveRows<BridgeDesignRow>(path, [path, reloadKey]);
+  return useLiveRows<BridgeDesignRow>(path, [path, reloadKey], isDesignRows);
 }
 
 export interface AssessmentState {

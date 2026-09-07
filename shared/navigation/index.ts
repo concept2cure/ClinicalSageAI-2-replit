@@ -118,6 +118,7 @@ export const NAVIGATION_TARGETS: readonly NavigationTarget[] = [
 
   // ── Module workstreams (project-scoped) ──
   { id: 'cmc', label: 'CMC / Quality (Module 3)', description: 'The CMC workstream (specifications, stability, batch, etc.).', scope: 'project', group: 'module' },
+  { id: 'protocol-dev', label: 'Protocol development', description: 'The clinical protocol authoring workspace — sections, objectives, risk/milestone/amendment/deviation registers, and completeness findings.', scope: 'global', group: 'module' },
   { id: 'labeling', label: 'Labeling', description: 'The labeling workstream (documents, symbols, translations).', scope: 'project', group: 'module' },
   { id: 'risk', label: 'Risk Management', description: 'The risk workstream (register, matrix, controls).', scope: 'project', group: 'module' },
   { id: 'tasking', label: 'Tasking', description: 'The task board / list / kanban.', scope: 'project', group: 'module' },

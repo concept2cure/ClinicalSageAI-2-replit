@@ -852,12 +852,17 @@ function ConversationComposer({ productName, onNav }: { productName: string; onN
 
 /* ════ Author workspace — real anchored slices + honest empties ════ */
 
+/** One persisted AnA thread of this program (GET /api/chat/threads?program_id=). */
+interface ThreadRow { id: string; title: string | null; created_at: string | null; updated_at: string | null; program_id?: string | null }
+
 function AuthorWorkspace({
-  seg, pid, onNav, onAsk, teamState, activityState, wsState, draftsState,
+  seg, pid, completion, onNav, onAsk, teamState, activityState, wsState, draftsState,
 }: {
   seg: string;
   /** regulatory_programs UUID — scopes the data room to this project. */
   pid: string | null;
+  /** Dossier readiness percent from the program row, or null when unknown. */
+  completion: number | null;
   onNav: (id: string) => void;
   onAsk: (q: string) => void;
   teamState: DataState<{ team: TeamRow[] }>;
@@ -865,6 +870,20 @@ function AuthorWorkspace({
   wsState: DataState<{ workstreams: WorkstreamRow[] }>;
   draftsState: DataState<{ drafts: DraftRow[] }>;
 }) {
+  /* The program's own AnA threads — REAL. Threads carry the program they were
+     started in (chat_threads.metadata.programId, written when the stream
+     mints the thread), so this lists exactly the conversations held on this
+     project, newest first, and opens one back into the thread surface. Until
+     that key existed this section was an honest empty with nothing behind it:
+     there was no way to resume a project chat from the project. */
+  const threadsState = useLiveData<{ threads: ThreadRow[] }>(
+    pid ? `/api/chat/threads?program_id=${encodeURIComponent(pid)}&limit=8` : null,
+    [pid],
+  );
+  const resumeThread = (id: string) => {
+    window.C2C_CONVO = { id };
+    onNav('conversation-thread');
+  };
   return (
     <div className="pj-grid">
       <div className="pj-main">
@@ -890,13 +909,27 @@ function AuthorWorkspace({
           ))}
         </section>
 
-        {/* Conversations — no reachable UUID-keyed backend on this surface */}
+        {/* Conversations — the program's persisted AnA threads, resumable */}
         <section className="pj-sec">
-          <div className="pj-sec-h"><h2>Conversations</h2></div>
-          <EmptyState
-            icon={I.messageSquare}
-            title="No project conversations yet"
-            hint="Governed AnA threads for this project will appear here once started. Use the co-author composer above to open the full conversation thread."
+          <div className="pj-sec-h"><h2>Conversations</h2><span className="sec-sub">resume a thread held on this project</span></div>
+          <Anchored
+            state={threadsState}
+            loadingText="Loading conversations…"
+            errorTitle="Couldn't load conversations"
+            errorHint="The conversation store didn't respond. Sign in and retry, or check that the service is reachable."
+            emptyTitle="No project conversations yet"
+            emptyHint="Start one in the composer above — threads started here are kept on this project and listed for resuming."
+            isEmpty={(d) => (d.threads ?? []).length === 0}
+            render={(d) => (
+              <div className="pj-files" data-testid="pj-threads">
+                {(d.threads ?? []).map((t) => (
+                  <button key={t.id} className="pj-file" style={{ width: '100%', textAlign: 'left' }} onClick={() => resumeThread(t.id)} title="Resume this conversation">
+                    <div className="pj-file-n">{(t.title || 'Untitled conversation').slice(0, 120)}</div>
+                    <div className="pj-file-m">{[fmtWhen(t.updated_at || t.created_at), 'Resume'].filter(Boolean).join(' · ')}</div>
+                  </button>
+                ))}
+              </div>
+            )}
           />
         </section>
 
@@ -995,6 +1028,17 @@ function AuthorWorkspace({
       </div>
 
       <aside className="pj-side">
+        {/* Dossier readiness — a status figure, so it lives with the other
+            status cards in the aside rather than between the conversation and
+            the work (the constitution's no-KPI-hero rule for project landing). */}
+        {completion != null && (
+          <section className="pj-card">
+            <div className="pj-card-h"><h3>Dossier readiness</h3><span className="sec-sub">{completion}% complete</span></div>
+            <div className="pj-map">
+              <div className="pj-map-ring"><Ring value={completion} size={104} stroke={9} /><div className="pj-map-ring-l">Dossier<br />readiness</div></div>
+            </div>
+          </section>
+        )}
         {/* Memory / instructions / intelligence — served only by the numeric
             project-home read-model (project_intelligence_profiles), not reachable
             from this UUID-scoped surface. Honest empty, never a fabricated body. */}
@@ -1370,18 +1414,10 @@ export function ProjectHome({ onNav, onAsk, segment }: SurfaceViewProps) {
           {stage === 'author' && (<>
             <ConversationComposer productName={productName} onNav={onNav} />
 
-            {completion != null && (
-              <section className="pj-sec">
-                <div className="pj-sec-h"><h2>Dossier readiness</h2><span className="sec-sub">{completion}% complete</span></div>
-                <div className="pj-map">
-                  <div className="pj-map-ring"><Ring value={completion} size={104} stroke={9} /><div className="pj-map-ring-l">Dossier<br />readiness</div></div>
-                </div>
-              </section>
-            )}
-
             <AuthorWorkspace
               seg={seg}
               pid={pid}
+              completion={completion}
               onNav={onNav}
               onAsk={ask}
               teamState={teamState}
