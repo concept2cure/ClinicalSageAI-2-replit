@@ -31,6 +31,10 @@ import {
   TASK_BLUEPRINTS,
   resolveTaskBlueprintKey,
 } from '../../../../shared/regulatory/project-bootstrap.js';
+/* The governed path's own mapping — the authority on whether a document class
+   can be resolved at all. Reading it here is what stops this report claiming a
+   readiness the product cannot deliver. */
+import { AGENCY_TO_CODE } from '../../c2c/document-class.js';
 import { DEDICATED_SECTION_BLUEPRINT_IDS } from '../sectionBlueprintCatalog.js';
 import { DEDICATED_TASK_BLUEPRINT_IDS } from '../taskBlueprintCatalog.js';
 import { FDAFormsRegistry, governedFormDefinition } from '../../../config/FDAFormsRegistry.js';
@@ -52,6 +56,24 @@ import type {
 
 export type BlueprintTier = 'dedicated' | 'specific' | 'generic';
 export type ReadinessTier = 'production_ready' | 'buildable' | 'catalog_only';
+
+/**
+ * Whether a GOVERNED document can be created for this type at all.
+ *
+ * This is a different question from the blueprint tiers below, and the report
+ * used to answer only the blueprint one. A governed document is created by
+ * services/c2c/scaffold-project-documents through `resolveDocumentClass`, which
+ * needs the program type in PROGRAM_TO_DOC_TYPE and the agency in
+ * AGENCY_TO_CODE. AGENCY_TO_CODE deliberately omits Swissmedic, ANVISA, CDSCO,
+ * HSA, Notified_Body, ISO, IEC and IMDRF because `c2c_documents_agency_check`
+ * rejects them at insert time — so for those entries there is nothing to build,
+ * however complete the blueprint.
+ *
+ *  - `supported`        — the governed path can resolve a document class.
+ *  - `unmapped_agency`  — the agency has no c2c_documents.agency value.
+ *  - `unmapped_program` — the application family maps to no doc_type.
+ */
+export type GovernedAuthoring = 'supported' | 'unmapped_agency' | 'unmapped_program';
 
 export interface RequiredFormCoverage {
   /** Raw required-artifact token from the registry, e.g. `form_1571`. */
@@ -99,6 +121,12 @@ export interface DocumentCoverage {
   /** A regional eCTD backbone reference exists for this region. */
   hasEctdBackbone: boolean;
   validationProfile: string;
+  /**
+   * Whether a governed document can be started for this type. Reported as its
+   * own fact so the blueprint measurement stays readable, and used to cap
+   * `readiness` — see readinessOf.
+   */
+  governedAuthoring: GovernedAuthoring;
   readiness: ReadinessTier;
 }
 
@@ -262,7 +290,56 @@ function requiredFormCoverage(entry: RegulatoryApplicationType): RequiredFormCov
     });
 }
 
-function readinessOf(section: BlueprintTier, task: BlueprintTier): ReadinessTier {
+/** The same normalisation `resolveDocumentClass` applies to the wizard's agency. */
+function agencyKey(agency: string): string {
+  return String(agency ?? '').toUpperCase().replace(/[\s-]/g, '_');
+}
+
+/**
+ * Can the governed path start a document for this entry? Static: both sides are
+ * plain maps, so this needs no database and stays usable in a CI gate.
+ *
+ * The program side is checked against the entry's `applicationFamily`, which is
+ * the value the wizard sends as the project's program type.
+ */
+function governedAuthoringOf(entry: RegulatoryApplicationType): GovernedAuthoring {
+  if (!AGENCY_TO_CODE[agencyKey(entry.agency)]) return 'unmapped_agency';
+  /* The program side is NOT decided here. resolveDocumentClass keys
+     PROGRAM_TO_DOC_TYPE on the project's `program_type`, which the wizard
+     supplies; the registry's nearest fields are `applicationFamily`
+     ('clinical_trial', 'marketing_authorization' — a category) and
+     `applicationType` ('IND', '510(k)' — a label). Neither IS the program type,
+     so deriving `unmapped_program` from them would be inventing a verdict from
+     a field that does not hold one. `unmapped_program` stays in the union for a
+     caller that has the real program type; nothing produces it from the
+     registry alone. The agency side needs no such guess: AGENCY_TO_CODE is
+     keyed on exactly the value this entry carries. */
+  return 'supported';
+}
+
+/**
+ * The readiness tier, CAPPED by whether the product can start the filing.
+ *
+ * The blueprint tiers below are honest about what they measure — a static
+ * section and task structure — but `production_ready` is read by a customer, a
+ * salesperson and a CI gate as "this filing type works". For 54 registry
+ * entries it did not: their agency has no `c2c_documents.agency` value, so the
+ * wizard returns NO_RULE_PACK and no row is ever written. Two of them
+ * (BR_DDCM, IN_CT04) carried the top tier. Every one of the 234 active entries
+ * read `buildable` or better and none read `catalog_only`, so the backlog view
+ * showed no gap at all.
+ *
+ * A type the governed path cannot begin is `catalog_only` by the tier's own
+ * definition — "a selectable catalog entry with no bespoke authoring structure
+ * yet" — whatever its blueprint. The blueprint tiers themselves are unchanged
+ * and still reported on their own fields.
+ */
+function readinessOf(
+  section: BlueprintTier,
+  task: BlueprintTier,
+  governed: GovernedAuthoring,
+): ReadinessTier {
+  if (governed !== 'supported') return 'catalog_only';
   if (section === 'dedicated' && task === 'dedicated') return 'production_ready';
   if (section === 'dedicated' || section === 'specific') return 'buildable';
   return 'catalog_only';
@@ -275,6 +352,7 @@ export function getDocumentCoverage(idOrEntry: string | RegulatoryApplicationTyp
 
   const section = sectionTier(entry);
   const task = taskTier(entry);
+  const governedAuthoring = governedAuthoringOf(entry);
   const requiredForms = requiredFormCoverage(entry);
   // A filing is form-backed only when every required form is registered,
   // has a full builder AND the official FDA edition is installed and reviewed
@@ -304,7 +382,8 @@ export function getDocumentCoverage(idOrEntry: string | RegulatoryApplicationTyp
     // (e.g. a US 510(k)) does NOT get an eCTD backbone, so don't claim one.
     hasEctdBackbone: REGIONS_WITH_ECTD_BACKBONE.has(entry.region) && entry.dossierStandard === 'eCTD',
     validationProfile: entry.validationProfile,
-    readiness: readinessOf(section, task),
+    governedAuthoring,
+    readiness: readinessOf(section, task, governedAuthoring),
   };
 }
 
@@ -313,6 +392,8 @@ export function getDocumentCoverage(idOrEntry: string | RegulatoryApplicationTyp
 export interface CoverageSummary {
   total: number;
   byReadiness: Record<ReadinessTier, number>;
+  /** How many types the governed path can actually start, and why not. */
+  byGovernedAuthoring: Record<GovernedAuthoring, number>;
   bySectionTier: Record<BlueprintTier, number>;
   byTaskTier: Record<BlueprintTier, number>;
 }
@@ -344,12 +425,16 @@ export function buildCoverageReport(): RegistryCoverageReport {
   const entries = computeCoverage();
 
   const byReadiness: Record<ReadinessTier, number> = { production_ready: 0, buildable: 0, catalog_only: 0 };
+  const byGovernedAuthoring: Record<GovernedAuthoring, number> = {
+    supported: 0, unmapped_agency: 0, unmapped_program: 0,
+  };
   const bySectionTier: Record<BlueprintTier, number> = { dedicated: 0, specific: 0, generic: 0 };
   const byTaskTier: Record<BlueprintTier, number> = { dedicated: 0, specific: 0, generic: 0 };
   const regionMap = new Map<Region, RegionCoverage>();
 
   for (const c of entries) {
     byReadiness[c.readiness]++;
+    byGovernedAuthoring[c.governedAuthoring]++;
     bySectionTier[c.sectionBlueprint]++;
     byTaskTier[c.taskBlueprint]++;
 
@@ -365,7 +450,7 @@ export function buildCoverageReport(): RegistryCoverageReport {
   }
 
   return {
-    summary: { total: entries.length, byReadiness, bySectionTier, byTaskTier },
+    summary: { total: entries.length, byReadiness, byGovernedAuthoring, bySectionTier, byTaskTier },
     byRegion: [...regionMap.values()].sort((a, b) => b.total - a.total),
     entries,
   };
