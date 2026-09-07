@@ -797,7 +797,7 @@ export function computeBoundPayloadDigest(params: {
  * runbook. For deterministically-rendered leaves the bytes can be reproduced;
  * for useAI leaves the rendered PDFs must be persisted before transmit lands.
  */
-interface SignedPackageSnapshot {
+export interface SignedPackageSnapshot {
   leaves: ECTDLeaf[];
   backboneXml: string;
   validatorOutcome: BoundDigestValidatorOutcome;
