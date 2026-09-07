@@ -1861,6 +1861,7 @@ export const C2C_MIGRATION_FILES = [
   'db/migrations/20260906_cmc_interview_sessions.sql',
   'db/migrations/20260906_cmc_impurity_m7_inputs.sql',
   'db/migrations/20260906_cmc_formulation_development.sql',
+  'db/migrations/20260907_qc_testing_batch_attribution.sql',
 
   // ── Drop the audit-shaped tables that survived a from-scratch liveness
   //    re-check (ledger L13; docs/AUDIT_STORE_INVENTORY_2026-08.md §5.1) ─────

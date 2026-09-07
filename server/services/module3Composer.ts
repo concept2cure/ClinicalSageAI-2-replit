@@ -17,6 +17,7 @@ import {
   type RecordedStabilityRead,
   type RecordedTrendSeries,
 } from './cmc/recorded-stability';
+import { assessProcessCapability } from './cmc/process-capability';
 /* The dissolution purposes live in shared/, not in the write-through module:
    that module already imports FROM this composer, and importing back would make
    a cycle. One definition, reachable by both, and by the register surface. */
@@ -601,6 +602,86 @@ function batchAnalysesTable(
       // evidence, and a reader must be able to tell which it is looking at.
       p.reviewed ? 'reviewed' : 'not reviewed',
     ]),
+  };
+}
+
+/**
+ * Process capability over the recorded batch results, per test.
+ *
+ * ICH Q6A sets the specification; whether the process meets it batch after
+ * batch is the capability question, and the QC register now records the
+ * batch each result represents. Results of one test are grouped across
+ * batches, the acceptance criterion they were recorded against is parsed
+ * once (a disagreement between rows is a refusal, not an average), and the
+ * one capability engine (services/cmc/process-capability) is asked. Every
+ * test gets a sentence — the indices, or why they were not assessed — so a
+ * section with no capability statement cannot be mistaken for one that was
+ * assessed and found capable.
+ */
+function batchCapabilityRendering(
+  sources: CanonicalSource[],
+  side: 'drug_substance' | 'drug_product',
+): { table: GeneratedTable | null; narrative: string } {
+  const rows = qcResultRows(sources, side);
+  if (rows.length === 0) return { table: null, narrative: '' };
+  const byTest = new Map<string, Array<Record<string, any>>>();
+  for (const p of rows) {
+    const test = String(p.testMethod || '').trim();
+    if (!test) continue;
+    const list = byTest.get(test) ?? [];
+    list.push(p);
+    byTest.set(test, list);
+  }
+  const tableRows: string[][] = [];
+  const sentences: string[] = [];
+  for (const [test, results] of byTest) {
+    const criteria = [...new Set(results.map((p) => {
+      const spec = p.specifications;
+      return typeof spec === 'object' && spec !== null && typeof spec.acceptanceCriteria === 'string' ? spec.acceptanceCriteria.trim() : typeof spec === 'string' ? spec.trim() : '';
+    }).filter(Boolean))];
+    if (criteria.length > 1) {
+      sentences.push(`${test}: capability not assessed — the batches were recorded against different acceptance criteria (${criteria.join('; ')}), so there is no single specification to measure against.`);
+      tableRows.push([test, String(results.length), '—', '—', '—', '—', '—', 'not assessed', 'criteria disagree']);
+      continue;
+    }
+    const criterion = parseAcceptanceCriterion(criteria);
+    const points = results.map((p) => ({
+      batch: String(p.batchNumber || '').trim() || String(p.sampleId || '').trim() || '(no batch)',
+      value: Number(String(typeof p.testResults === 'object' && p.testResults !== null ? p.testResults.value : p.testResults ?? '').trim()),
+    }));
+    const assessed = assessProcessCapability(points, criterion);
+    if (!assessed.ok) {
+      sentences.push(`${test}: capability not assessed — ${assessed.message}`);
+      tableRows.push([test, String(points.filter((x) => Number.isFinite(x.value)).length), '—', '—', '—', '—', '—', 'not assessed', assessed.code]);
+      continue;
+    }
+    const fmt = (v: number | null) => (v === null ? '—' : String(v));
+    tableRows.push([
+      test,
+      String(assessed.n),
+      String(assessed.mean),
+      String(assessed.sdOverall),
+      fmt(assessed.pp),
+      fmt(assessed.ppk),
+      fmt(assessed.cpk),
+      assessed.verdict + (assessed.preliminary ? ' (preliminary)' : ''),
+      assessed.batchesOutOfSpecification.length > 0 ? `OOS: ${assessed.batchesOutOfSpecification.join(', ')}` : '',
+    ]);
+    sentences.push(
+      `${test}: over ${assessed.n} batches the mean is ${assessed.mean} (sd ${assessed.sdOverall}); Ppk ${fmt(assessed.ppk)}, Cpk ${fmt(assessed.cpk)}${assessed.pp !== null ? `, Pp ${fmt(assessed.pp)}` : ''} — ${assessed.verdict}` +
+        (assessed.notes.length > 0 ? ` (${assessed.notes.join(' ')})` : '') + '.',
+    );
+  }
+  if (tableRows.length === 0) return { table: null, narrative: '' };
+  return {
+    table: {
+      title: side === 'drug_product' ? 'Process Capability — Drug Product (§3.2.P.5.4)' : 'Process Capability — Drug Substance (§3.2.S.4.4)',
+      headers: ['Test', 'Batches', 'Mean', 'SD', 'Pp', 'Ppk', 'Cpk', 'Verdict', 'Note'],
+      rows: tableRows,
+    },
+    narrative:
+      'Process capability (ICH Q6A specification; ISO 22514 indices over the recorded batch results, Ppk on the overall sd and Cpk on the moving-range sigma): ' +
+      sentences.join(' ') + ' ',
   };
 }
 
@@ -2124,6 +2205,8 @@ const SECTION_GENERATORS: Record<string, SectionGenerator> = {
     // §3.2.S.4.4 — the recorded results themselves, not just their count.
     const batchTable = batchAnalysesTable(m, 'drug_substance');
     if (batchTable) tables.push(batchTable);
+    const dsCapability = batchCapabilityRendering(m, 'drug_substance');
+    if (dsCapability.table) tables.push(dsCapability.table);
     // Impurity limits from structured object or impurity_profile source array
     if (impurityLimits) {
       tables.push({
@@ -2151,7 +2234,8 @@ const SECTION_GENERATORS: Record<string, SectionGenerator> = {
         (criteria ? `${Object.keys(criteria).length} test(s) are defined in the specification. ` : '') +
         batchAnalysesSentence(m, 'drug_substance') +
         (impurityLimits ? `Impurity limits are established for ${Object.keys(impurityLimits).length} identified impurity/ies per ICH Q3A. ` : '') +
-        dsImpurities.narrative,
+        dsImpurities.narrative +
+        dsCapability.narrative,
       tables,
     };
   },
@@ -2479,7 +2563,9 @@ const SECTION_GENERATORS: Record<string, SectionGenerator> = {
     }
     // §3.2.P.5.4 — the recorded finished-product results themselves.
     const dpBatchTable = batchAnalysesTable(m, 'drug_product');
+    const dpCapability = batchCapabilityRendering(m, 'drug_product');
     if (dpBatchTable) tables.push(dpBatchTable);
+    if (dpCapability.table) tables.push(dpCapability.table);
     /* A canonical caller may pass a `dissolutionSpecification` object. The
        product's own producer is the dissolution register, rendered here scoped
        to the RELEASE profiles: this section is the acceptance criterion, and
@@ -2523,7 +2609,8 @@ const SECTION_GENERATORS: Record<string, SectionGenerator> = {
         (dissolutionSpec ? `Dissolution specifications are established per ICH Q6A. ` : '') +
         releaseDissolution.narrative +
         dpImpurities.narrative +
-        (status ? `Validation status: ${status}.` : ''),
+        (status ? `Validation status: ${status}. ` : '') +
+        dpCapability.narrative,
       tables,
     };
   },

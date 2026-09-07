@@ -630,6 +630,10 @@ export function mapQcTestingPayload(record: Record<string, any>): Record<string,
   const hasResult = isBatchAnalysis && hasQuantitativeResult(results);
   return {
     sampleId: alias(record, 'sampleId', 'sample_id'),
+    /* The batch the sample represents, as recorded — never derived from the
+       sample id. Capability is computed across batches; a result with no
+       batch is reported under its sample id and excluded from the index. */
+    batchNumber: String(alias(record, 'batchNumber', 'batch_number')).trim() || null,
     sampleType: alias(record, 'sampleType', 'sample_type'),
     testMethod: alias(record, 'testMethod', 'test_method'),
     testResults: results,

@@ -49,7 +49,7 @@ CODE=$(req method POST /api/cmc/analytical-methods "{\"methodCode\":\"AM-001\",\
 [ "$CODE" = 200 -o "$CODE" = 201 ] && ok "method registered ($CODE)" || bad "method failed ($CODE): $(head -c300 "$OUT/method.json")"
 
 step "5. QC runs the test; a second person reviews (feeds 3.2.S.4)"
-CODE=$(req qc POST /api/cmc/qc-testing "{\"sampleId\":\"S-2026-001\",\"sampleType\":\"drug substance\",\"testMethod\":\"AM-001\",\"testDate\":\"2026-07-01T00:00:00.000Z\",\"testResults\":{\"value\":\"99.2\",\"unit\":\"%\"},\"specifications\":{\"acceptanceCriteria\":\"98.0-102.0%\"},\"passFailStatus\":\"pass\",\"projectId\":\"$PROGRAM\"}")
+CODE=$(req qc POST /api/cmc/qc-testing "{\"sampleId\":\"S-2026-001\",\"batchNumber\":\"B-2026-001\",\"sampleType\":\"drug substance\",\"testMethod\":\"AM-001\",\"testDate\":\"2026-07-01T00:00:00.000Z\",\"testResults\":{\"value\":\"99.2\",\"unit\":\"%\"},\"specifications\":{\"acceptanceCriteria\":\"98.0-102.0%\"},\"passFailStatus\":\"pass\",\"projectId\":\"$PROGRAM\"}")
 [ "$CODE" = 200 -o "$CODE" = 201 ] && ok "QC result recorded ($CODE)" || bad "QC failed ($CODE): $(head -c300 "$OUT/qc.json")"
 
 step "5b. The QC reviewer is the session, not the request body — and never the analyst"
@@ -62,7 +62,7 @@ REVBY=$(cat "$OUT/qcrev.json" | JQ '.data.reviewedBy // empty')
   && ok "review recorded against the signed-in user ($REVBY), not the body's 999999" \
   || bad "QC review attribution: code=$CODE reviewedBy=$REVBY"
 # Second-person review, enforced by the API and not only by the button.
-CODE=$(req qcself POST /api/cmc/qc-testing "{\"sampleId\":\"S-2026-002\",\"sampleType\":\"drug substance\",\"testMethod\":\"AM-001\",\"testDate\":\"2026-07-02T00:00:00.000Z\",\"testResults\":{\"value\":\"99.0\",\"unit\":\"%\"},\"passFailStatus\":\"pass\",\"analyst\":$REVBY,\"projectId\":\"$PROGRAM\"}")
+CODE=$(req qcself POST /api/cmc/qc-testing "{\"sampleId\":\"S-2026-002\",\"batchNumber\":\"B-2026-002\",\"sampleType\":\"drug substance\",\"testMethod\":\"AM-001\",\"testDate\":\"2026-07-02T00:00:00.000Z\",\"testResults\":{\"value\":\"99.0\",\"unit\":\"%\"},\"passFailStatus\":\"pass\",\"analyst\":$REVBY,\"projectId\":\"$PROGRAM\"}")
 SELFID=$(cat "$OUT/qcself.json" | JQ '.data.id // empty')
 CODE=$(req qcselfrev PUT "/api/cmc/qc-testing/$SELFID" '{"reviewedBy":1}')
 [ "$CODE" = 409 ] && ok "the analyst cannot review their own result (409)" \

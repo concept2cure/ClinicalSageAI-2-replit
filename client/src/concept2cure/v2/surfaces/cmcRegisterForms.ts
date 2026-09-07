@@ -181,6 +181,8 @@ export const QC_SAMPLE_TYPES = [
 
 export interface QcTestBody {
   sampleId: string;
+  /** The batch the sample represents; capability is assessed per batch. */
+  batchNumber?: string;
   sampleType: string;
   testMethod: string;
   testDate: string;
@@ -203,6 +205,7 @@ export function qcTestForm(): C2CFormConfig {
     submitLabel: 'Record result',
     fields: [
       { key: 'sampleId', label: 'Sample ID', type: 'text', required: true, half: true, placeholder: 'e.g. S-2407-118' },
+      { key: 'batchNumber', label: 'Batch', type: 'text', half: true, placeholder: 'e.g. B-24-007 — the batch this sample represents', desc: 'Batch analyses are reported by batch, and process capability is computed across batches' },
       { key: 'sampleType', label: 'Sample type', type: 'select', options: QC_SAMPLE_TYPES, required: true, half: true, default: 'finished-product' },
       { key: 'testMethod', label: 'Test method', type: 'text', required: true, default: '', placeholder: 'Method code or title, e.g. AM-014 icIEF' },
       { key: 'testDate', label: 'Test date', type: 'date', required: true, half: true },
@@ -241,6 +244,8 @@ export function qcTestBody(
   };
   const coa = opt(v.certificateOfAnalysis);
   if (coa) body.certificateOfAnalysis = coa;
+  const batch = opt(v.batchNumber);
+  if (batch) body.batchNumber = batch;
   if (analystUserId) body.analyst = analystUserId;
   if (projectId) body.projectId = projectId;
   return body;
