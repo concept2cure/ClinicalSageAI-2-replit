@@ -114,6 +114,7 @@ beforeAll(async () => {
       // transaction (source-attribution, landed via #1288), so document_span_lineage
       // is a hard prerequisite for exercising POST /sections and PATCH here.
       'db/migrations/20260803_document_span_lineage.sql',
+      'migrations/20260907_span_lineage_accepted_machine_draft.sql',
       // The save-gate writes the authoritative authoring_audit_trail row on the
       // caller's transaction, and createAuditTrail now re-throws (rather than
       // swallowing) a failure when enlisted in that transaction — so the table is

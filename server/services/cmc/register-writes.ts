@@ -346,3 +346,42 @@ export async function createCharacterizationStudy(
   const linkage = await linkToModule3('write_through_characterization_study', orgId, row, writeThroughCharacterizationStudy, link);
   return { row, ...linkage };
 }
+
+/* ─── Plan validation ─────────────────────────────────────────────────────── */
+
+export type RegisterName =
+  | 'drug_substance'
+  | 'drug_product'
+  | 'container_closure'
+  | 'manufacturing_process'
+  | 'formulation_record'
+  | 'material_spec'
+  | 'characterization_study';
+
+const REGISTER_BODIES: Record<RegisterName, z.ZodTypeAny> = {
+  drug_substance: drugSubstanceBody,
+  drug_product: drugProductBody,
+  container_closure: containerClosureBody,
+  manufacturing_process: manufacturingProcessBody,
+  formulation_record: formulationRecordBody,
+  material_spec: materialSpecBody,
+  characterization_study: characterizationStudyBody,
+};
+
+/**
+ * Would this body be accepted by the register's create? The reason it would
+ * not, or null. Used to check a whole commit plan BEFORE its first write, so a
+ * plan with one doomed entry refuses with nothing written rather than landing
+ * the entries before it and stopping.
+ */
+export function registerBodyRefusal(register: RegisterName, body: unknown): string | null {
+  const parsed = REGISTER_BODIES[register].safeParse(body);
+  if (parsed.success) return null;
+  const issues = parsed.error.issues.map((i) => `${i.path.join('.') || '(body)'}: ${i.message}`);
+  const projectIssue = parsed.error.issues.find((i) => i.path[0] === 'projectId');
+  const hint =
+    register === 'manufacturing_process' && projectIssue
+      ? ' The manufacturing register keys its program by uuid; a legacy numeric project id cannot file a process — run the interview under a program.'
+      : '';
+  return `${register}: ${issues.join('; ')}.${hint}`;
+}

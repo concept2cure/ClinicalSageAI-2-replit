@@ -953,13 +953,14 @@ describe('impurity register — the ICH M7 inputs are carried, never defaulted',
     expect(patch.cohortOfConcern).toBeNull();
   });
 
-  it('offers no default for any M7 input — blank is the first option', () => {
+  it('offers no default for any M7 input — the renderer\'s own "Select…" is the only blank', () => {
     const fields = impurityProfileForm(null).fields;
     for (const k of ['amesResult', 'structuralAlert', 'carcinogenicityData', 'treatmentDuration', 'cohortOfConcern']) {
       const f = fields.find((x) => x.key === k);
       expect(f, k).toBeTruthy();
       expect(f?.default, k).toBe('');
-      expect((f as { options?: string[] }).options?.[0], k).toBe('');
+      // C2CForm prepends its own empty "Select…" option; a second blank would be an unlabeled duplicate.
+      expect((f as { options?: string[] }).options, k).not.toContain('');
     }
   });
 });

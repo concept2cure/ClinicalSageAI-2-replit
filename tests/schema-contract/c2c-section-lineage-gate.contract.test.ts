@@ -39,6 +39,8 @@ import { sectionPlainText } from '../../server/routes/c2c/documents';
 
 const REPO = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const LINEAGE = path.join(REPO, 'db/migrations/20260803_document_span_lineage.sql');
+// accepted_machine_draft kind + machine_author_id: applied after the table, as the deploy set does.
+const MACHINE_KIND = path.join(REPO, 'migrations/20260907_span_lineage_accepted_machine_draft.sql');
 
 const ORG = 7;
 const REF = { documentTable: 'c2c_document_sections', documentId: '4242' };
@@ -56,6 +58,7 @@ beforeEach(async () => {
   // never returned a row.
   await pg.exec(`INSERT INTO organizations (id, name) VALUES (${ORG}, 'acme');`);
   await pg.exec(fs.readFileSync(LINEAGE, 'utf8'));
+  await pg.exec(fs.readFileSync(MACHINE_KIND, 'utf8'));
 });
 afterEach(async () => { await pg?.close(); });
 

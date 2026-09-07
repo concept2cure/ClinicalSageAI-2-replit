@@ -14,6 +14,11 @@ import type { Request } from 'express';
 const { inc, logError } = vi.hoisted(() => ({ inc: vi.fn(), logError: vi.fn() }));
 
 vi.mock('../../../metrics.js', () => ({ metrics: { concept2cureErrors: { inc } } }));
+/* The tenant check on a body-named project. Late-bound through globalThis:
+   the factory is hoisted above every const in this file. */
+vi.mock('../project-membership', () => ({
+  projectBelongsToTenant: (...args: unknown[]) => (globalThis as unknown as { __membership: (...a: unknown[]) => Promise<boolean> }).__membership(...args),
+}));
 vi.mock('../../../utils/logger', () => ({
   createScopedLogger: () => ({ error: logError, warn: vi.fn(), info: vi.fn(), debug: vi.fn() }),
 }));
@@ -36,6 +41,7 @@ const refused = vi.fn(async () => ({ ok: false as const, code: 'no_project' as c
 const throws = vi.fn(async () => { throw new Error('mapper exploded on the row'); });
 
 beforeEach(() => {
+  (globalThis as unknown as { __membership: unknown }).__membership = vi.fn(async () => true);
   inc.mockReset();
   logError.mockReset();
   ok.mockClear();
@@ -125,5 +131,36 @@ describe('writeThroughProjectId — an in-process caller names the project direc
     expect(writeThroughProjectId({ projectId: null }, { projectId: null })).toBeNull();
     // The stored row still wins over any source.
     expect(writeThroughProjectId({ projectId: 'stored' }, { projectId: 'prog-9' })).toBe('stored');
+  });
+});
+
+describe('linkToModule3 — a project named on the request must be the tenant\'s', () => {
+  const membership = () => (globalThis as unknown as { __membership: ReturnType<typeof vi.fn> }).__membership;
+
+  it('refuses to link a row under a body-named project the tenant does not hold, and does not write', async () => {
+    membership().mockResolvedValue(false);
+    const writeThrough = vi.fn(async () => ({ ok: true as const, sourceObjectId: 'so', sourceHash: 'h', staleSections: [], isNew: true }));
+    const linkage = await linkToModule3('write_through_drug_substance', 101, { id: 7 }, writeThrough, reqWith({ projectId: 'someone-elses-program' }));
+    expect(linkage.module3Linked).toBe(false);
+    expect(linkage.module3Warning).toMatch(/not one of this organization/);
+    expect(writeThrough).not.toHaveBeenCalled();
+    expect(membership()).toHaveBeenCalledWith({ organizationId: 101, projectId: 'someone-elses-program' });
+    expect(inc).not.toHaveBeenCalled();
+  });
+
+  it('links under a body-named project the tenant holds', async () => {
+    membership().mockResolvedValue(true);
+    const writeThrough = vi.fn(async () => ({ ok: true as const, sourceObjectId: 'so', sourceHash: 'h', staleSections: [], isNew: true }));
+    const linkage = await linkToModule3('write_through_drug_substance', 101, { id: 7 }, writeThrough, reqWith({ projectId: 'prog-1' }));
+    expect(linkage.module3Linked).toBe(true);
+    expect(writeThrough).toHaveBeenCalledWith(101, 'prog-1', '7', { id: 7 });
+  });
+
+  it('does not consult membership for a row that carries its own stored project', async () => {
+    membership().mockResolvedValue(false);
+    const writeThrough = vi.fn(async () => ({ ok: true as const, sourceObjectId: 'so', sourceHash: 'h', staleSections: [], isNew: true }));
+    const linkage = await linkToModule3('write_through_container_closure', 101, { id: 7, projectId: 'stored-prog' }, writeThrough, reqWith({ projectId: 'other' }));
+    expect(linkage.module3Linked).toBe(true);
+    expect(membership()).not.toHaveBeenCalled();
   });
 });

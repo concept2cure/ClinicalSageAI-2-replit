@@ -481,8 +481,11 @@ function levelAsPpm(record: Record<string, any>): number | null {
   if (!Number.isFinite(value)) return null;
   const unit = String(record.levelUnit ?? record.level_unit ?? '').trim().toLowerCase();
   if (unit === 'ppm') return value;
-  /* A percentage IS a ppm figure scaled by 10,000; anything else — a bare
-     number, mg, µg/day — states no concentration and is not converted. */
+  /* ppb — the register offers it, and it is the customary nitrosamine unit —
+     is a thousandth of a ppm. A percentage IS a ppm figure scaled by 10,000;
+     anything else — a bare number, mg, µg/day — states no concentration and
+     is not converted. */
+  if (unit === 'ppb') return value / 1000;
   if (unit === '%' || unit === 'percent' || unit === 'w/w' || unit === '% w/w') return value * 10_000;
   return null;
 }

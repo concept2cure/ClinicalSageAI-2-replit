@@ -182,6 +182,13 @@ export interface ToolContext {
   organizationId?: number | null;
   userId?: number | null;
   projectId?: number | null;
+  /**
+   * The active project/program id AS SENT by the client (a regulatory_programs
+   * uuid under the v2 shell, a legacy integer otherwise). `projectId` above is
+   * the integer form and is null for a uuid program — which left every
+   * interview session unbound to the program it was run for.
+   */
+  projectRef?: string | null;
   /** Tenant UUID — required to scope project_knowledge_search retrieval. */
   organizationUuid?: string | null;
   /** Active UI surface/screen (e.g. 'nonclinical', 'cmc', 'sponsored_programs') — situational context. */
@@ -18471,6 +18478,11 @@ function intelligenceEngineContext(ctx?: ToolContext) {
 
 /** The project a session binds to: the active project, else a caller-supplied text id. */
 function intelligenceProjectId(input: Record<string, unknown>, ctx?: ToolContext): string | null {
+  /* The program as the client sent it first: a uuid program id collapses to
+     null in the integer `projectId`, and a session created from that was
+     never bound to its program. */
+  const ref = typeof ctx?.projectRef === 'string' ? ctx.projectRef.trim() : '';
+  if (ref) return ref;
   if (ctx?.projectId) return String(ctx.projectId);
   const supplied = typeof input.project_id === 'string' ? input.project_id.trim() : '';
   return supplied || null;
@@ -18688,7 +18700,7 @@ registerToolHandler('commit_intelligence_flow', async (input, ctx) => {
 
   try {
     const { loadInterviewSession } = await import('../cmc/interview-sessions.js');
-    const { buildInterviewCommitPlan, commitInterviewSession, productionRegisterWriter, INTERVIEW_REGISTER_WRITE_PATHS } =
+    const { buildInterviewCommitPlan, commitInterviewSession, productionRegisterWriter, productionRegisterValidator, INTERVIEW_REGISTER_WRITE_PATHS } =
       await import('../cmc/interview-commit.js');
 
     if (input.dry_run === true) {
@@ -18712,7 +18724,7 @@ registerToolHandler('commit_intelligence_flow', async (input, ctx) => {
         userId: ctx?.userId ?? null,
         projectId: intelligenceProjectId(input, ctx),
       },
-      { writer: productionRegisterWriter },
+      { writer: productionRegisterWriter, validate: productionRegisterValidator },
     );
 
     try {

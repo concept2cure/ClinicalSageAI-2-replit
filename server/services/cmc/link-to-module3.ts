@@ -33,6 +33,7 @@ import { createScopedLogger } from '../../utils/logger';
    carries; the repo's check config resolves it without a declaration file. */
 import * as metricsModule from '../../metrics.js';
 import type { WriteThroughOutcome } from '../cmc-write-through';
+import { projectBelongsToTenant } from './project-membership';
 
 const logger = createScopedLogger('cmc-module3-link');
 
@@ -67,6 +68,9 @@ export const MODULE3_NO_PROJECT_WARNING =
 
 export const MODULE3_WRITE_FAILED_WARNING =
   'Saved to the register. The Module 3 canonical write did not complete, so this record is not composed into the dossier yet; saving it again re-attempts the link.';
+
+export const MODULE3_PROJECT_NOT_IN_TENANT_WARNING =
+  'Saved to the register only. The project named on the request is not one of this organization\'s programs or projects, so the record was not linked into any Module 3 dossier.';
 
 /**
  * Observe a failed canonical write-through to the Module 3 submission source
@@ -156,6 +160,23 @@ export async function linkToModule3(
   const projectId = writeThroughProjectId(row, source);
   if (!projectId) {
     return { module3Linked: false, module3Warning: MODULE3_NO_PROJECT_WARNING };
+  }
+  /* For the registers whose tables carry no project column, the program
+     comes from the request body — so it is checked against the tenant's own
+     programs and projects before anything is filed under it. A row's own
+     stored project was checked when the row was created. */
+  const rowProject = writeThroughProjectId(row);
+  if (!rowProject && source && isRequestSource(source)) {
+    let belongs = false;
+    try {
+      belongs = await projectBelongsToTenant({ organizationId: orgId, projectId });
+    } catch (err) {
+      observeWriteThroughFailure(propagation, row.id, err);
+      return { module3Linked: false, module3Warning: MODULE3_WRITE_FAILED_WARNING };
+    }
+    if (!belongs) {
+      return { module3Linked: false, module3Warning: MODULE3_PROJECT_NOT_IN_TENANT_WARNING };
+    }
   }
   let outcome: WriteThroughOutcome;
   try {

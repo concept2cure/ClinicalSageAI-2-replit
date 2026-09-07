@@ -9,8 +9,8 @@
  */
 
 import { getPool } from '../../db';
-import { composeModule3FromCanonicalSources, impactedSectionsForSourceType } from '../module3Composer';
-import { createSourceHash } from '../cmc-module3-compiler';
+import { impactedSectionsForSourceType, type ComposedSection } from '../module3Composer';
+import { composeProjectModule3, persistComposedSection } from '../cmc/module3-compile';
 import { bridgeCompileToArtifact, classifyAndMapArtifactToSource, getModule3BuildStatus } from '../module3-convergence-service';
 import { detectContradictions, deriveImpactTasks } from '../cmc-impact-contradiction-engine';
 
@@ -39,49 +39,20 @@ export async function module3BuildAll(ctx: CommandContext, params: Record<string
   try {
     await client.query('BEGIN');
 
-    const { rows: sourceObjects } = await client.query(
-      `SELECT id, source_type as "sourceType", source_payload as "sourcePayload", source_hash as "sourceHash"
-       FROM cmc_source_objects WHERE organization_id = $1 AND project_id = $2 ORDER BY updated_at DESC`,
-      [orgId, projectId]
-    );
+    /* The ONE composition and persistence the compile route uses
+       (services/cmc/module3-compile): core sections, emittable 3.2.A
+       appendices and 3.2.R; row, lineage and provenance per section. This
+       handler used to compose the core only and write its own upsert with no
+       provenance event. */
+    const { sources: sourceObjects, sections: compiled } = await composeProjectModule3(client, orgId, projectId);
 
     if (sourceObjects.length === 0) {
       await client.query('ROLLBACK');
       return { success: true, action: 'module3_build_all', message: 'No source objects found. Upload and classify source documents first.', data: { compiledCount: 0 } };
     }
 
-    const compiled = composeModule3FromCanonicalSources(sourceObjects as any);
-
     for (const section of compiled) {
-      const secRes = await client.query(
-        `INSERT INTO cmc_module3_sections (organization_id, project_id, section_key, section_path, deterministic_json, narrative_text, compiled_hash, stale, stale_reason, approval_state)
-         VALUES ($1,$2,$3,$4,$5::jsonb,$6,$7,false,null,'draft')
-         ON CONFLICT (organization_id, project_id, section_key)
-         DO UPDATE SET deterministic_json = excluded.deterministic_json, compiled_hash = excluded.compiled_hash, stale = false, stale_reason = null, narrative_text = excluded.narrative_text, updated_at = now()
-         RETURNING id`,
-        [orgId, projectId, section.sectionKey, section.sectionPath,
-         JSON.stringify({ ...section.structuredPayload, completeness: section.completeness, missingInputs: section.missingInputs }),
-         section.narrativeDraft, createSourceHash(section.structuredPayload)]
-      );
-      // Persist derivation lineage: which source objects this section was
-      // compiled from, at what source hash. The convergence/OS compile routes
-      // record this; this AnA build-all path wrote the narrative but silently
-      // dropped the provenance, so a section built here traced back to nothing.
-      // Refreshed in the same transaction (delete-then-insert, org-scoped).
-      const sectionId = secRes.rows[0]?.id;
-      if (sectionId) {
-        await client.query(
-          `DELETE FROM cmc_section_lineage WHERE section_id = $1 AND organization_id = $2`,
-          [sectionId, orgId]
-        );
-        for (const lin of section.lineage) {
-          await client.query(
-            `INSERT INTO cmc_section_lineage (organization_id, section_id, source_object_id, source_hash_at_compile)
-             VALUES ($1, $2, $3, $4)`,
-            [orgId, sectionId, lin.sourceObjectId, lin.sourceHashAtCompile]
-          );
-        }
-      }
+      await persistComposedSection(client, orgId, projectId, section, { actorId: String(ctx.userId ?? 'system'), event: 'compiled' });
     }
     await client.query('COMMIT');
 
@@ -151,48 +122,23 @@ export async function module3BuildSection(ctx: CommandContext, params: Record<st
   const sectionKey = params.sectionKey as string;
   if (!projectId || !sectionKey) return { success: false, action: 'module3_build_section', message: 'Project ID and sectionKey required (e.g. 3.2.S.4)' };
 
-  const { rows: sourceObjects } = await pool.query(
-    `SELECT id, source_type as "sourceType", source_payload as "sourcePayload", source_hash as "sourceHash"
-     FROM cmc_source_objects WHERE organization_id = $1 AND project_id = $2`,
-    [orgId, projectId]
-  );
-
-  const allComposed = composeModule3FromCanonicalSources(sourceObjects as any);
-  const section = allComposed.find(s => s.sectionKey === sectionKey);
-  if (!section) return { success: false, action: 'module3_build_section', message: `Section ${sectionKey} not found in composition rules` };
-
-  // Upsert compiled section + its derivation lineage in one transaction: the
-  // narrative and the record of which source objects it was compiled from
-  // commit together, at parity with the convergence/OS routes and build-all.
-  // This path previously wrote the narrative on a bare pool.query with no
-  // lineage, so a single-section build traced back to nothing.
+  /* Composed and persisted through the one service the compile route uses
+     — row, lineage and provenance in one transaction. */
   const client = await pool.connect();
+  let section: ComposedSection | undefined;
   try {
     await client.query('BEGIN');
-    const secRes = await client.query(
-      `INSERT INTO cmc_module3_sections (organization_id, project_id, section_key, section_path, deterministic_json, narrative_text, compiled_hash, stale, approval_state)
-       VALUES ($1,$2,$3,$4,$5::jsonb,$6,$7,false,'draft')
-       ON CONFLICT (organization_id, project_id, section_key)
-       DO UPDATE SET deterministic_json = excluded.deterministic_json, compiled_hash = excluded.compiled_hash, stale = false, stale_reason = null, narrative_text = excluded.narrative_text, updated_at = now()
-       RETURNING id`,
-      [orgId, projectId, section.sectionKey, section.sectionPath,
-       JSON.stringify({ ...section.structuredPayload, completeness: section.completeness, missingInputs: section.missingInputs }),
-       section.narrativeDraft, createSourceHash(section.structuredPayload)]
-    );
-    const sectionId = secRes.rows[0]?.id;
-    if (sectionId) {
-      await client.query(
-        `DELETE FROM cmc_section_lineage WHERE section_id = $1 AND organization_id = $2`,
-        [sectionId, orgId]
-      );
-      for (const lin of section.lineage) {
-        await client.query(
-          `INSERT INTO cmc_section_lineage (organization_id, section_id, source_object_id, source_hash_at_compile)
-           VALUES ($1, $2, $3, $4)`,
-          [orgId, sectionId, lin.sourceObjectId, lin.sourceHashAtCompile]
-        );
-      }
+    const { sources, sections: allComposed } = await composeProjectModule3(client, orgId, projectId);
+    if (sources.length === 0) {
+      await client.query('ROLLBACK');
+      return { success: false, action: 'module3_build_section', message: 'No canonical source objects for this project — nothing to build from. Upload and classify source documents first.' };
     }
+    section = allComposed.find(s => s.sectionKey === sectionKey);
+    if (!section) {
+      await client.query('ROLLBACK');
+      return { success: false, action: 'module3_build_section', message: `Section ${sectionKey} is not composable from this project's sources (no composition rule, or no recorded region for a regional section).` };
+    }
+    await persistComposedSection(client, orgId, projectId, section, { actorId: String(ctx.userId ?? 'system'), event: 'compiled' });
     await client.query('COMMIT');
   } catch (err) {
     await client.query('ROLLBACK').catch(() => undefined);
@@ -200,6 +146,7 @@ export async function module3BuildSection(ctx: CommandContext, params: Record<st
   } finally {
     client.release();
   }
+  if (!section) return { success: false, action: 'module3_build_section', message: `Section ${sectionKey} was not built.` };
 
   // Bridge to governed artifact
   let bridgedArtifact: { artifactId: string; isNew: boolean } | null = null;
@@ -285,25 +232,36 @@ export async function module3RefreshStale(ctx: CommandContext, params: Record<st
     return { success: true, action: 'module3_refresh_stale', message: 'No stale sections to refresh.' };
   }
 
-  // Full recompile from current sources
-  const { rows: sourceObjects } = await pool.query(
-    `SELECT id, source_type as "sourceType", source_payload as "sourcePayload", source_hash as "sourceHash"
-     FROM cmc_source_objects WHERE organization_id = $1 AND project_id = $2`,
-    [orgId, projectId]
-  );
-
-  const allComposed = composeModule3FromCanonicalSources(sourceObjects as any);
+  /* The ONE composition and persistence the compile and refresh routes use
+     (services/cmc/module3-compile): row, lineage rewritten to the sources
+     read, provenance event — this handler used to run its own UPDATE with
+     none of that, leaving lineage pointing at the previous compile. */
+  const client = await pool.connect();
   const staleKeys = new Set(stale.map(s => s.sectionKey));
   const refreshed: string[] = [];
-
-  for (const section of allComposed) {
-    if (!staleKeys.has(section.sectionKey)) continue;
-    await pool.query(
-      `UPDATE cmc_module3_sections SET deterministic_json = $1::jsonb, narrative_text = $2, compiled_hash = $3, stale = false, stale_reason = null, approval_state = 'draft', updated_at = now()
-       WHERE organization_id = $4 AND project_id = $5 AND section_key = $6`,
-      [JSON.stringify({ ...section.structuredPayload, completeness: section.completeness, missingInputs: section.missingInputs }),
-       section.narrativeDraft, createSourceHash(section.structuredPayload), orgId, projectId, section.sectionKey]
-    );
+  const toBridge: ComposedSection[] = [];
+  try {
+    await client.query('BEGIN');
+    const { sources, sections: allComposed } = await composeProjectModule3(client, orgId, projectId);
+    if (sources.length === 0) {
+      await client.query('ROLLBACK');
+      return { success: false, action: 'module3_refresh_stale', message: 'No canonical source objects for this project — there is nothing to refresh from.' };
+    }
+    for (const section of allComposed) {
+      if (!staleKeys.has(section.sectionKey)) continue;
+      await persistComposedSection(client, orgId, projectId, section, { actorId: String(ctx.userId ?? 'system'), event: 'refreshed' });
+      refreshed.push(section.sectionKey);
+      toBridge.push(section);
+    }
+    await client.query('COMMIT');
+  } catch (err) {
+    await client.query('ROLLBACK');
+    return { success: false, action: 'module3_refresh_stale', message: `Refresh failed and nothing was written: ${err instanceof Error ? err.message : String(err)}` };
+  } finally {
+    client.release();
+  }
+  const bridgeSkips: string[] = [];
+  for (const section of toBridge) {
     try {
       await bridgeCompileToArtifact(orgId, projectId, section.sectionKey, {
         narrativeDraft: section.narrativeDraft,
@@ -312,15 +270,20 @@ export async function module3RefreshStale(ctx: CommandContext, params: Record<st
         missingInputs: section.missingInputs,
         lineage: section.lineage,
       }, { createdById: ctx.userId ?? null });
-    } catch { /* non-fatal */ }
-    refreshed.push(section.sectionKey);
+    } catch (err) {
+      bridgeSkips.push(`${section.sectionKey}: ${err instanceof Error ? err.message : String(err)}`);
+    }
   }
 
   return {
     success: true,
     action: 'module3_refresh_stale',
-    message: `Refreshed ${refreshed.length} stale sections: ${refreshed.join(', ')}\n\nGoverned artifacts updated. Click any refreshed section in the dossier tree to review.`,
-    data: { refreshedSections: refreshed },
+    message:
+      `Refreshed ${refreshed.length} stale sections: ${refreshed.join(', ')}` +
+      (bridgeSkips.length > 0
+        ? `\n\n${bridgeSkips.length} governed artifact(s) could not be updated: ${bridgeSkips.join('; ')}.`
+        : '\n\nGoverned artifacts updated. Click any refreshed section in the dossier tree to review.'),
+    data: { refreshedSections: refreshed, artifactBridgeSkips: bridgeSkips },
   };
 }
 

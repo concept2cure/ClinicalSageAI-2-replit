@@ -76,7 +76,7 @@ Created. 7 shell files, 5 nav files, 3 token files, 11 views, 2 hosted former ap
 ## Remaining gaps, honestly
 
 - ~~Product landing is not conversation-first~~ — done 2026-09-07 (addendum).
-- ~~No inline `@app` autocomplete~~ — done 2026-09-07 (addendum). Slash-command autocomplete is still not built.
+- ~~No inline `@app` autocomplete~~ — done 2026-09-07 (addendum). ~~Slash-command autocomplete is still not built.~~ — done in the second pass (addendum 2).
 - **Five composers, not one** (§10.1). Measured 2026-09-07: the shared pieces are the `useChatUpload` and `useAppMentions` hooks; the chip markup is not duplicated (it exists only in the rail), so no extraction was made. Remaining scope recorded in the work order (E2).
 - **IA and typography** (§4, §12): sixteen rail destinations, serif on four chrome classes, terracotta accent on a warm-cream palette — all retained by the 2026-07-28 decision; re-opening is E4.
 - **Browser comparison against ChatGPT** was not performed: no reference instance is reachable from this environment. Validation is against the design specification.
@@ -111,7 +111,66 @@ The client asserts nothing about "which app": it only inserts the label. A menti
 
 `grep` over `v2/` shows the attachment-chip markup (`.ana-files`, `.ana-file`) in `Shell.tsx` only. The thread, home and eCTD composers render their own chips and send controls over `useChatUpload`; the project-home composer seeds and navigates. With `useAppMentions` added, the shared behaviour is entirely in hooks and there is no identical markup to lift, so no `Composer` component was created. Remaining scope is stated in the work order (E2).
 
-### Not done
+### Not done at the first pass
 
-- Slash-command (`/`) autocomplete: the `+` menu still sends a message asking AnA to list commands.
+- Slash-command (`/`) autocomplete — built in the second pass below.
 - Browser re-walk of the project landing with a program present: this database has none.
+
+## Addendum 2 — 2026-09-07, second pass: one vocabulary, slash autocomplete, and the suite made green
+
+### The duplicate `@app` path, removed
+
+The first pass added a label-based `@app` parser beside a server path that already existed and was not found in the audit: `message-intent.ts` recognised ten short ids (`@biostats`, `@vault`, `@510k` …) at the start of a message, pulled enrichment data for them, and injected its own "App Context" header. Two vocabularies for one feature is the thing the working agreement forbids, so they were merged:
+
+| Piece | Now |
+|---|---|
+| `shared/navigation/callable-apps.ts` | the one vocabulary; each app answers to its label, its navigation id and short aliases (the ten the server honoured, mapped onto real screens — `biostats` → `biostat-workbench`, `510k` → `device-510k`, `ectd` → `ectd-coauthor` …); parsing is longest-handle-first anywhere in the text; `stripAppMentions` removes the tokens |
+| `server/services/ana-ri/message-intent.ts` | `KNOWN_APPS` and `detectAppMention` derive from it; `APP_ENRICHMENT_MAP` is keyed by navigation id and pinned to real apps by test |
+| `server/services/ana-ri/context-enrichment.ts` | every invoked app contributes enrichment; the prompt block is the shared `buildInvokedAppsBlock`; a slash command and a mention can coexist |
+| `server/services/ana-ri/chat-context-builder.ts` | the first pass's separate block append removed (that builder has no route consumer; the enrichment path is the live one) |
+
+Pinned by `callable-apps.test.ts` (aliases, handle precedence, uniqueness across ids and aliases — the last one found a real collision, `quality`, which was dropped), `message-intent.test.ts`, and the existing `invoked-apps-block.test.ts`.
+
+### Slash autocomplete
+
+`SUPPORTED_SLASH_COMMANDS` (79 commands) moved verbatim to `shared/ana/slash-commands.ts`, with one line of copy per command typed as total over the tuple, and the parser imports it — `slash-commands.test.ts` asserts the server list *is* the shared tuple and every command parses. In the composer, `/` as the first character of the draft opens the same menu component listing those commands (`appMentions.test.tsx`: `/pow` → `/power `, Enter inserts rather than sends, a command followed by a space closes the menu). The `+` menu entry "Slash commands" now seeds `/` into the composer and focuses it.
+
+### Suites repaired
+
+The full run had five failing files, none caused by the first pass's diff and all left red by earlier commits:
+
+| Suite | Cause | Fix |
+|---|---|---|
+| `anaDrivesScreens` (Vault search) | Vault search became server-backed; the test's mock never answered `GET /:id/search` | the mock answers the search contract from the same two documents |
+| `schedule-of-activities` ("defensible design stays low risk") | the new missing-data (`MIS-001`) and safety-population (`POP-004`) gates fire on the fixture | the fixture now carries a missing-data strategy and a Safety analysis set — what a defensible design has |
+| `retention-cron` (5) | the sweep summary gained `heldByLegalHold` for the legal-hold fix; expectations not updated | expectations carry `heldByLegalHold: 0` |
+| `mdx-submission-gateway-transmit-bundle-guard` (25) | the transmit route gained `requireEditorAccess`; the harness user had no role | the harness acts as `admin`, as the sibling routes test does |
+| `routes/concept2cure` (signature) | the route now re-verifies the signer's password (§11.200); the test sent none | the deps are stubbed, the test signs with the right password, asserts the persisted method is derived, and a wrong password is a 401 |
+
+Also fixed: `hostilePayloadProbe > biostatistics` (a first-pass defect — the bridge list crashed on rows without fields; it now uses the repo's `isRowsWith` guard).
+
+Full typecheck: clean. Jest half of `npm test`: 6 suites, 37 tests green.
+
+## Addendum 3 — 2026-09-07, the composer menus in a real browser
+
+The `@app` and `/command` menus had been proven only in jsdom, and the server's read-back of a mention only in unit tests. Both were checked against the running app (Vite dev server on the pushed tree, Chromium 1194, signed in through `dev-login`, nothing mocked). Script and measurements: `evidence/ana-ui-2026-09-06/composer-menus-walk-2026-09-07.mjs`, `composer-menus-2026-09-07.json`; screenshots `composer-landing-at-menu-2026-09-07.png`, `composer-rail-slash-menu-2026-09-07.png`, `composer-rail-plus-slash-2026-09-07.png`.
+
+| Step | Measured |
+|---|---|
+| Home composer, type `@bio` | `role="listbox"` "Apps", two options (Biostatistics designer, Biostatistics workbench), first active, inside the viewport |
+| ↓ then Enter | draft becomes `@Biostatistics workbench ` |
+| Rail composer, type `/pow` | `role="listbox"` "Commands", one option `/power` with its summary |
+| Tab | draft becomes `/power ` |
+| `run /pow` | no menu — a command counts only as the first word |
+| `+` → "Slash commands" | draft becomes `/`, the command list opens with the first eight commands |
+| Send `@biostats size a two-arm superiority study` | the stream request carries the text verbatim |
+| Page errors | none |
+
+### Two defects the browser found and jsdom had not
+
+1. **The app menu reopened after an insertion.** The caret landing after `@Biostatistics workbench ` fires a select event; the token reader saw the completed label as a query and offered its own exact match again. A completed mention (label plus trailing space) is now finished text (`appMentions.tsx`, `mentionTokenAt`); pinned in `appMentions.test.tsx`, shown failing on the old hook first. Re-run in the browser: no menu after Enter.
+2. **A mention with no project open was never read.** `enrichContextForChat` returns early on the project-less path — exactly the front-door composer's situation — before the mention section ran, so the model was never told which app was invoked and the token was never stripped. The project-less branch now emits the shared INVOKED APPS block, the `app:<id>` source, the rewritten message and `detectedAppMention` (data enrichment still needs a project). Pinned in `ana-ri.test.ts`, shown failing on the old code first; also run as a one-off against the real function outside vitest: sources `app:biostat-workbench`, rewrite `size a two-arm superiority study`, block names `Biostatistics workbench (id: biostat-workbench)`.
+
+### What this environment could not prove
+
+The stream route returned 503 `GATEWAY_UNAVAILABLE` in 18 ms — no AI provider is configured here — so the model was never called and the prompt block's arrival at the model is proven by the enrichment tests and the one-off run, not by a model turn.

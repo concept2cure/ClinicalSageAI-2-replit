@@ -85,6 +85,8 @@ beforeEach(() => {
   canonicalClient.release.mockReset();
   insertedRow = {};
   registerQuery.mockImplementation(async (sql: string) => {
+    // The tenant check on a body-named project: the test program is the tenant's.
+    if (/SELECT 1 AS present/.test(sql)) return { rows: [{ present: 1 }], rowCount: 1 };
     if (/INSERT INTO cmc_batch_records/.test(sql)) {
       return { rows: [{ id: 5, project_id: PROJECT, batch_number: 'B-001', product_name: 'BX-701', status: 'in-progress' }] };
     }

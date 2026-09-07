@@ -99,8 +99,16 @@ function OriginCard({
   onNavigateToSource?: (sourceId: string) => void;
 }) {
   const isAuthor = row.provenanceKind === 'author_assertion';
+  /* Drafted by a machine author, accepted by a human. Neither a source (there
+     is nothing to navigate to) nor the author's own assertion — saying
+     "Asserted by the author" here is the falsehood this kind exists to remove. */
+  const isMachine = row.provenanceKind === 'accepted_machine_draft';
   const note = row.state ? STATE_NOTE[row.state] : undefined;
-  const canNavigate = !isAuthor && !!row.referenceId && !!onNavigateToSource;
+  const canNavigate = !isAuthor && !isMachine && !!row.referenceId && !!onNavigateToSource;
+  const usageText =
+    isMachine && row.usage === 'asserted'
+      ? 'Drafted by the AI, accepted by the author'
+      : (USAGE_LABEL[row.usage] ?? row.usage);
 
   return (
     <li
@@ -117,7 +125,7 @@ function OriginCard({
             width: 8,
             height: 8,
             borderRadius: 2,
-            background: isAuthor ? MUTED : OK,
+            background: isAuthor || isMachine ? MUTED : OK,
             flex: '0 0 auto',
           }}
         />
@@ -143,17 +151,19 @@ function OriginCard({
           <span style={{ fontWeight: 600, color: INK }}>
             {isAuthor
               ? 'Author assertion'
-              : row.sourceTitle || `Source #${row.referenceId ?? '—'}`}
+              : isMachine
+                ? (row.machineAuthorName ?? `AI draft (${row.machineAuthorId ?? 'machine author'})`)
+                : row.sourceTitle || `Source #${row.referenceId ?? '—'}`}
           </span>
         )}
       </div>
 
       <div style={{ marginTop: 4, fontSize: 12, color: MUTED }}>
-        {USAGE_LABEL[row.usage] ?? row.usage}
+        {usageText}
         {' · '}
         characters {row.charStart}–{row.charEnd}
         {row.sourceLocator ? ` · ${row.sourceLocator}` : ''}
-        {row.assertedBy ? ` · by ${row.assertedBy}` : ''}
+        {row.assertedBy ? ` · ${isMachine ? 'accepted by' : 'by'} ${row.assertedBy}` : ''}
         {row.confidence != null ? ` · confidence ${Math.round(row.confidence * 100)}%` : ''}
       </div>
 

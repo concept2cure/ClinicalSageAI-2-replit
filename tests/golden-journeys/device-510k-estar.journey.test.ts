@@ -219,6 +219,7 @@ beforeAll(async () => {
       // span lineage in the same transaction as its content; without this
       // store the route fails closed and the journey's authoring step 500s.
       'db/migrations/20260803_document_span_lineage.sql',
+      'migrations/20260907_span_lineage_accepted_machine_draft.sql',
       // The org's eSTAR registration row — the governed home of the official
       // form's correspondent / Declaration of Conformity facts (step 8c).
       'migrations/20260730_estar_registration.sql',

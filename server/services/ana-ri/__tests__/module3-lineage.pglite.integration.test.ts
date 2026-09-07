@@ -63,6 +63,19 @@ beforeAll(async () => {
       compiled_hash text, stale boolean DEFAULT false, stale_reason text,
       approval_state text DEFAULT 'draft', updated_at timestamptz DEFAULT now());
     CREATE UNIQUE INDEX uq_m3_sections ON cmc_module3_sections (organization_id, project_id, section_key);
+    -- The one write path now records a provenance event per section, as the
+    -- compile route always did; the fixture carries the table it writes.
+    CREATE TABLE cmc_provenance_events (
+      id serial PRIMARY KEY,
+      organization_id integer NOT NULL,
+      project_id text,
+      artifact_type text NOT NULL,
+      artifact_id text,
+      event_type text NOT NULL,
+      event_payload jsonb,
+      created_by text,
+      created_at timestamptz DEFAULT now()
+    );
     CREATE TABLE cmc_section_lineage (
       id uuid PRIMARY KEY DEFAULT gen_random_uuid(), organization_id int,
       section_id uuid, source_object_id uuid, source_hash_at_compile text);
