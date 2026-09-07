@@ -410,6 +410,12 @@ in either file.
   node** for any of them — searched by leaf name, 0 hits each. It *does* carry
   `<field name="ATRadioButton101"><value><text>1</text></value></field>` for the
   jurisdiction group's member, and no node for `ATRadioButton110`.
+  **Measured on the IVD template too, 2026-09-07:** its `form` packet (37,262 B, object 281,
+  `<form checksum="nMapxvpb…">`) declares no node for any of the 21 leaves the `510k-ivd`
+  map writes (19 keys plus the two SOURCE paths), stays byte-identical through a full
+  19-field production fill, and carries none of the written values afterwards. The pin in
+  `fill-official-pdf.test.ts` now runs on both templates, with each map's key count
+  pinned (20 / 19) — seen failing on the IVD count before it was pinned.
 - ~~**The IVD template** `eSTAR-510k-ivd.pdf` was not scanned for the `ApplicationType`
   question.~~ **Closed 2026-09-07 — measured, not assumed.**
   `estar-field-map.template-behaviour.test.ts` now runs every scan above against both
@@ -429,7 +435,12 @@ in either file.
   failed on, and did, before the IVD line was pinned on its own. Nothing else differs.
   The Acrobat inference for IVD therefore rests on the same measured facts as for nIVD.
 - **What the two SOURCE writes of §4a look like in Acrobat.** That the values BIND is
-  measured (pdf.js, an independent engine, renders both). That FDA's `Validation()` then
+  measured (pdf.js, an independent engine, renders both — and, as of 2026-09-07, the
+  render test runs on the IVD template as well: 3 pages, 10 laid-out controls, the same
+  page-1 selectors at the same paths with the same on-values and FDA's same default,
+  a written `2` moving the jurisdiction check to 102 and checking 112, no script-hidden
+  section laid out, no written value visible; the two SOURCE writes carry the same
+  governed string as their summary cells on both forms). That FDA's `Validation()` then
   concatenates the listing row into the Declaration of Conformity cell, and `substr(0,3)`s
   the selector into the 510(k) Summary, is read from the quoted script text — the same
   standing caveat as the rest of this report. What is new is that the inference now runs in
