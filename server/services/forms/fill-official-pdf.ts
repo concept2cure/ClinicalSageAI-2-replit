@@ -1052,15 +1052,52 @@ function setDatasetsValues(
   };
 }
 
+/** One object to write into an incremental update. */
+export interface PdfObjectWrite {
+  /** Its object number. An existing number REPLACES; a free one ALLOCATES. */
+  num: number;
+  gen: number;
+  /**
+   * The object body. With `data` this is the STREAM DICTIONARY (its `/Length`
+   * must match `data.length`); without it, the whole object — a `/Filespec`
+   * dictionary, a rewritten catalog, a name tree.
+   */
+  dict: string;
+  /** Stream bytes. Omit for a plain object. */
+  data?: Buffer;
+}
+
 /**
- * Append a PDF incremental update that replaces one object. The original bytes
- * are preserved verbatim and a new cross-reference stream points at the new
- * revision — the standard way to fill a form without re-rendering the document.
+ * The first object number nothing in the file occupies: the trailer's `/Size`.
+ *
+ * Exported because a caller building several linked objects has to know the
+ * numbers BEFORE it can write them — a `/Filespec` names its `/EmbeddedFile`
+ * by reference, so the reference has to exist in the dictionary text.
  */
-function appendIncrementalUpdate(
-  original: Buffer,
-  replaced: { num: number; gen: number; dict: string; data: Buffer },
-): Buffer {
+export function nextFreeObjectNumber(original: Buffer): number {
+  const sizeM = /\/Size\s+(\d+)/.exec(trailerDictText(original));
+  if (!sizeM) throw new Error('Malformed PDF trailer: missing /Size');
+  return parseInt(sizeM[1], 10);
+}
+
+/**
+ * Append a PDF incremental update carrying one or more objects. The original
+ * bytes are preserved verbatim and a new cross-reference stream points at the
+ * new revisions — the standard way to change a document without re-rendering it.
+ *
+ * It took exactly ONE replaced stream object, because filling the XFA `datasets`
+ * packet needs exactly that. Embedding an attachment does not: one attachment is
+ * an `/EmbeddedFile` stream, a `/Filespec` dictionary with no stream at all, and
+ * a rewritten catalog — three objects, two of them numbers the file has never
+ * used. Hence a list, mixed shapes, and a real multi-subsection `/Index`.
+ *
+ * ENCRYPTION IS THE CALLER'S. This writer emits the bytes it is handed. In an
+ * encrypted document every stream AND every string inside an object must
+ * already be enciphered under that object's key (see `encryptObjectData`);
+ * handing it plaintext produces a file that opens and shows nothing, which is
+ * worse than one that fails.
+ */
+export function appendIncrementalUpdate(original: Buffer, objects: PdfObjectWrite[]): Buffer {
   const trailer = trailerDictText(original);
   const prev = startxrefOffset(original);
   const rootM = /\/Root\s+(\d+)\s+(\d+)\s+R/.exec(trailer);
@@ -1069,23 +1106,55 @@ function appendIncrementalUpdate(
   const sizeM = /\/Size\s+(\d+)/.exec(trailer);
   if (!rootM || !sizeM) throw new Error('Malformed PDF trailer: missing /Root or /Size');
 
+  if (objects.length === 0) {
+    throw new Error('An incremental update must carry at least one object');
+  }
+  const seen = new Set<number>();
+  for (const o of objects) {
+    if (seen.has(o.num)) throw new Error(`Object ${o.num} appears twice in one revision`);
+    seen.add(o.num);
+    // A reader takes /Length bytes and stops. A dictionary that understates it
+    // yields a silently truncated stream — a file that opens, and is wrong —
+    // and one that overstates it runs into `endstream`. Neither is worth
+    // shipping to CDRH, and both are cheap to refuse here.
+    if (o.data) {
+      const lengthM = /\/Length\s+(\d+)/.exec(o.dict);
+      if (!lengthM) throw new Error(`Object ${o.num}: a stream dictionary must declare /Length`);
+      if (parseInt(lengthM[1], 10) !== o.data.length) {
+        throw new Error(
+          `Object ${o.num}: /Length ${lengthM[1]} does not match its ${o.data.length} bytes`,
+        );
+      }
+    }
+  }
+
   const oldSize = parseInt(sizeM[1], 10);
-  const xrefNum = oldSize; // next free object number
+  // The xref stream is itself an object, and it must not collide with anything
+  // the caller allocated ahead of /Size — which it may legitimately do when it
+  // reserved a block of numbers for a set of linked objects.
+  const xrefNum = Math.max(oldSize, ...objects.map((o) => o.num + 1));
   const newSize = xrefNum + 1;
 
   const chunks: Buffer[] = [];
   let offset = original.length;
   const push = (b: Buffer) => { chunks.push(b); offset += b.length; };
 
-  const lead = Buffer.from('\n', 'latin1');
-  push(lead);
+  push(Buffer.from('\n', 'latin1'));
 
-  const objOffset = offset;
-  push(Buffer.from(`${replaced.num} ${replaced.gen} obj\n${replaced.dict}\nstream\n`, 'latin1'));
-  push(replaced.data);
-  push(Buffer.from('\nendstream\nendobj\n', 'latin1'));
+  const placed: { num: number; gen: number; offset: number }[] = [];
+  for (const o of objects) {
+    placed.push({ num: o.num, gen: o.gen, offset });
+    if (o.data) {
+      push(Buffer.from(`${o.num} ${o.gen} obj\n${o.dict}\nstream\n`, 'latin1'));
+      push(o.data);
+      push(Buffer.from('\nendstream\nendobj\n', 'latin1'));
+    } else {
+      push(Buffer.from(`${o.num} ${o.gen} obj\n${o.dict}\nendobj\n`, 'latin1'));
+    }
+  }
 
-  // Cross-reference stream: W [1 4 2]; two one-entry subsections, ascending.
+  // Cross-reference stream: W [1 4 2], entries ascending by object number, in
+  // contiguous /Index subsections.
   const entry = (type: number, off: number, gen: number) => {
     const b = Buffer.alloc(7);
     b.writeUInt8(type, 0);
@@ -1094,17 +1163,31 @@ function appendIncrementalUpdate(
     return b;
   };
   const xrefOffset = offset;
-  const first = Math.min(replaced.num, xrefNum);
-  const second = Math.max(replaced.num, xrefNum);
-  const entries = first === replaced.num
-    ? [entry(1, objOffset, replaced.gen), entry(1, xrefOffset, 0)]
-    : [entry(1, xrefOffset, 0), entry(1, objOffset, replaced.gen)];
-  const xrefData = Buffer.concat(entries);
+  const rows = [...placed, { num: xrefNum, gen: 0, offset: xrefOffset }].sort(
+    (a, b) => a.num - b.num,
+  );
+
+  const index: number[] = [];
+  let runStart = rows[0].num;
+  let runLength = 0;
+  let previous: number | null = null;
+  for (const r of rows) {
+    if (previous !== null && r.num !== previous + 1) {
+      index.push(runStart, runLength);
+      runStart = r.num;
+      runLength = 0;
+    }
+    runLength += 1;
+    previous = r.num;
+  }
+  index.push(runStart, runLength);
+
+  const xrefData = Buffer.concat(rows.map((r) => entry(1, r.offset, r.gen)));
 
   const idPart = idM ? `/ID[<${idM[1]}><${idM[2]}>]` : '';
   const encPart = encM ? `/Encrypt ${encM[1]} ${encM[2]} R` : '';
   const xrefDict =
-    `<</Type/XRef/Size ${newSize}/Index[${first} 1 ${second} 1]/W[1 4 2]` +
+    `<</Type/XRef/Size ${newSize}/Index[${index.join(' ')}]/W[1 4 2]` +
     `/Root ${rootM[1]} ${rootM[2]} R${encPart}${idPart}/Prev ${prev}/Length ${xrefData.length}>>`;
   push(Buffer.from(`${xrefNum} 0 obj\n${xrefDict}\nstream\n`, 'latin1'));
   push(xrefData);
@@ -1294,12 +1377,14 @@ export async function fillXfaDatasets(
 
   const deflated = zlib.deflateSync(Buffer.from(result.xml, 'utf8'));
   const encrypted = encryptObjectData(sec, datasets.num, datasets.gen, deflated);
-  const bytes = appendIncrementalUpdate(buf, {
-    num: datasets.num,
-    gen: datasets.gen,
-    dict: `<</Length ${encrypted.length}/Filter/FlateDecode>>`,
-    data: encrypted,
-  });
+  const bytes = appendIncrementalUpdate(buf, [
+    {
+      num: datasets.num,
+      gen: datasets.gen,
+      dict: `<</Length ${encrypted.length}/Filter/FlateDecode>>`,
+      data: encrypted,
+    },
+  ]);
 
   return { bytes: new Uint8Array(bytes), filled, skipped, warnings };
 }
