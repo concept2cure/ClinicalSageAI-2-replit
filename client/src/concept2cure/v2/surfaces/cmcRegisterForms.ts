@@ -181,6 +181,8 @@ export const QC_SAMPLE_TYPES = [
 
 export interface QcTestBody {
   sampleId: string;
+  /** The batch the sample represents; capability is assessed per batch. */
+  batchNumber?: string;
   sampleType: string;
   testMethod: string;
   testDate: string;
@@ -203,6 +205,7 @@ export function qcTestForm(): C2CFormConfig {
     submitLabel: 'Record result',
     fields: [
       { key: 'sampleId', label: 'Sample ID', type: 'text', required: true, half: true, placeholder: 'e.g. S-2407-118' },
+      { key: 'batchNumber', label: 'Batch', type: 'text', half: true, placeholder: 'e.g. B-24-007 — the batch this sample represents', desc: 'Batch analyses are reported by batch, and process capability is computed across batches' },
       { key: 'sampleType', label: 'Sample type', type: 'select', options: QC_SAMPLE_TYPES, required: true, half: true, default: 'finished-product' },
       { key: 'testMethod', label: 'Test method', type: 'text', required: true, default: '', placeholder: 'Method code or title, e.g. AM-014 icIEF' },
       { key: 'testDate', label: 'Test date', type: 'date', required: true, half: true },
@@ -241,6 +244,8 @@ export function qcTestBody(
   };
   const coa = opt(v.certificateOfAnalysis);
   if (coa) body.certificateOfAnalysis = coa;
+  const batch = opt(v.batchNumber);
+  if (batch) body.batchNumber = batch;
   if (analystUserId) body.analyst = analystUserId;
   if (projectId) body.projectId = projectId;
   return body;
@@ -735,6 +740,9 @@ export interface DrugProductBody {
   strength: string;
   routeOfAdministration?: string;
   composition: { description?: string };
+  /* §3.2.P.3.2's batch formula — a per-batch quantity statement, not the
+     per-unit composition above; the composer keeps them apart deliberately. */
+  batchFormula: { description?: string };
   manufacturingProcess: { description?: string; site?: string };
   packagingMaterials: { containerClosure?: string };
   status: string;
@@ -754,6 +762,11 @@ export function drugProductForm(row?: Partial<DrugProductBody> | null): C2CFormC
       { key: 'routeOfAdministration', label: 'Route of administration', type: 'select', options: ROUTES, half: true, default: row?.routeOfAdministration ?? '' },
       { key: 'status', label: 'Status', type: 'select', options: MATERIAL_STATUSES, required: true, half: true, default: row?.status ?? 'development' },
       { key: 'composition', label: 'Composition', type: 'textarea', default: row?.composition?.description ?? '', placeholder: 'Active and each excipient with its function and quantity per unit — the §3.2.P.1 table' },
+      /* §3.2.P.3.2's batch formula, which had no field anywhere: the column and
+         the mapper both existed, so the section listed `formulation` as a
+         missing input that nothing in the product could supply, and §3.2.P.3
+         could not be completed or approved. */
+      { key: 'batchFormula', label: 'Batch formula', type: 'textarea', default: row?.batchFormula?.description ?? '', placeholder: 'Each component and its quantity per batch, with the batch size — the §3.2.P.3.2 table' },
       { key: 'process', label: 'Manufacturing process', type: 'textarea', default: row?.manufacturingProcess?.description ?? '', placeholder: 'The §3.2.P.3.3 process description' },
       { key: 'site', label: 'Manufacturing site', type: 'text', half: true, default: row?.manufacturingProcess?.site ?? '' },
       { key: 'containerClosure', label: 'Container closure system', type: 'text', half: true, default: row?.packagingMaterials?.containerClosure ?? '', placeholder: 'e.g. 2R Type I glass vial, bromobutyl stopper' },
@@ -767,6 +780,7 @@ export function drugProductBody(v: Record<string, string>, projectId?: string): 
     dosageForm: req(v.dosageForm),
     strength: req(v.strength),
     composition: { ...(opt(v.composition) ? { description: opt(v.composition) } : {}) },
+    batchFormula: { ...(opt(v.batchFormula) ? { description: opt(v.batchFormula) } : {}) },
     manufacturingProcess: {
       ...(opt(v.process) ? { description: opt(v.process) } : {}),
       ...(opt(v.site) ? { site: opt(v.site) } : {}),
@@ -1358,12 +1372,13 @@ export function impurityProfileForm(row?: Partial<ImpurityProfileBody> | null): 
       { key: 'batchesObserved', label: 'Batches observed in', type: 'text', default: (row?.batchesObserved ?? []).join(', '), placeholder: 'e.g. B-001, B-002, B-003' },
       /* Shown for every class rather than only 'mutagenic': a process impurity
          with a structural alert is exactly the record M7 wants assessed, and
-         the assessment refuses (does not default) when these are blank. */
-      { key: 'amesResult', label: 'Ames result (M7)', type: 'select', options: ['', ...AMES_RESULTS], half: true, default: row?.amesResult ?? '', desc: 'ICH M7(R2): the bacterial mutagenicity result decides Class 2 vs 4/5. Blank means not recorded, not negative' },
-      { key: 'structuralAlert', label: 'Structural alert (M7)', type: 'select', options: ['', ...STRUCTURAL_ALERTS], half: true, default: row?.structuralAlert ?? '', desc: 'From two complementary (Q)SAR assessments. An alert with no Ames data is Class 3' },
-      { key: 'carcinogenicityData', label: 'Carcinogenicity data', type: 'select', options: ['', ...CARCINOGENICITY_DATA], half: true, default: row?.carcinogenicityData ?? '', desc: 'A known mutagenic carcinogen (Class 1) takes a compound-specific limit, not the TTC' },
-      { key: 'treatmentDuration', label: 'Treatment duration', type: 'select', options: ['', ...TREATMENT_DURATIONS], half: true, default: row?.treatmentDuration ?? '', desc: 'The M7 acceptable intake is staged: 120 µg/day up to a month, 20 to a year, 10 to ten years, 1.5 for life' },
-      { key: 'cohortOfConcern', label: 'Cohort of concern', type: 'select', options: ['', ...COHORTS_OF_CONCERN], half: true, default: row?.cohortOfConcern ?? '', desc: 'N-nitroso, aflatoxin-like and alkyl-azoxy structures carry compound-specific limits far below the TTC' },
+         the assessment refuses (does not default) when these are blank. The
+         renderer's own "Select…" is the blank; none is added here. */
+      { key: 'amesResult', label: 'Ames result (M7)', type: 'select', options: AMES_RESULTS, half: true, default: row?.amesResult ?? '', desc: 'ICH M7(R2): the bacterial mutagenicity result decides Class 2 vs 4/5. Blank means not recorded, not negative' },
+      { key: 'structuralAlert', label: 'Structural alert (M7)', type: 'select', options: STRUCTURAL_ALERTS, half: true, default: row?.structuralAlert ?? '', desc: 'From two complementary (Q)SAR assessments. An alert with no Ames data is Class 3' },
+      { key: 'carcinogenicityData', label: 'Carcinogenicity data', type: 'select', options: CARCINOGENICITY_DATA, half: true, default: row?.carcinogenicityData ?? '', desc: 'A known mutagenic carcinogen (Class 1) takes a compound-specific limit, not the TTC' },
+      { key: 'treatmentDuration', label: 'Treatment duration', type: 'select', options: TREATMENT_DURATIONS, half: true, default: row?.treatmentDuration ?? '', desc: 'The M7 acceptable intake is staged: 120 µg/day up to a month, 20 to a year, 10 to ten years, 1.5 for life' },
+      { key: 'cohortOfConcern', label: 'Cohort of concern', type: 'select', options: COHORTS_OF_CONCERN, half: true, default: row?.cohortOfConcern ?? '', desc: 'N-nitroso, aflatoxin-like and alkyl-azoxy structures carry compound-specific limits far below the TTC' },
       { key: 'reportingThreshold', label: 'Reporting threshold (as recorded)', type: 'text', half: true, default: row?.reportingThreshold ?? '', placeholder: 'Leave blank to use the ICH threshold for the dose' },
       { key: 'identificationThreshold', label: 'Identification threshold (as recorded)', type: 'text', half: true, default: row?.identificationThreshold ?? '' },
       { key: 'qualificationThreshold', label: 'Qualification threshold (as recorded)', type: 'text', half: true, default: row?.qualificationThreshold ?? '' },

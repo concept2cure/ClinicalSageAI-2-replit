@@ -30,13 +30,14 @@ const routeChecks = [
     file: 'server/routes/510k-estar-routes.ts',
     mustContain: [
       'const consequence = await createGovernedExportConsequence({',
-      // The official-eSTAR route returns the consequence THROUGH withFieldReport,
-      // which spreads it and adds the fill report beside it — the consequence's
-      // own keys reach the client unchanged. Both halves are pinned: the return
-      // statement, and the wrapper's spread that makes it a superset rather
-      // than a replacement.
-      'return res.status(200).json(withFieldReport(consequence, fieldReport));',
-      'return fieldReport ? { ...body, fieldReport } : body;',
+      // The official-eSTAR route returns the consequence THROUGH
+      // withOfficialExtras, which spreads it and adds the fill report and the
+      // retention record beside it — the consequence's own keys reach the
+      // client unchanged. Both halves are pinned: the return statement, and
+      // the wrapper's spread that makes it a superset rather than a
+      // replacement.
+      'return res.status(200).json(withOfficialExtras(consequence, fieldReport, retention));',
+      'return { ...body, ...(fieldReport ? { fieldReport } : {}), retention };',
     ],
   },
   {

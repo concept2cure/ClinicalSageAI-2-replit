@@ -304,6 +304,7 @@ export function mountStreamRoute(router: Router): void {
             organizationId: orgId,
             userId: userId || null,
             projectId: streamProjectId ? Number(streamProjectId) || null : null,
+            projectRef: streamProjectId ? String(streamProjectId) : null,
           });
           const parsed = JSON.parse(resultStr);
           if (parsed?.status === 'intelligence_question' && parsed.question) {
@@ -1138,6 +1139,7 @@ export function mountStreamRoute(router: Router): void {
                     organizationId: orgId,
                     userId: userId || null,
                     projectId: streamProjectId ? Number(streamProjectId) || null : null,
+                    projectRef: streamProjectId ? String(streamProjectId) : null,
                     // Lets navigate_to tell the model the truth about what its
                     // directive does this turn (applied live vs offered chip).
                     liveDrive: driveState.enabled,

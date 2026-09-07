@@ -254,35 +254,67 @@ const APPENDIX_RULES: AppendixRule[] = [
          inferred from a name. `valArr` took the first matching array, so a
          project with several formulation versions was scanned for animal origin
          through one of them. */
+      const componentRows = (sourceType: 'formulation_record' | 'drug_product') =>
+        m
+          .filter((s) => s.sourceType === sourceType)
+          .flatMap((s) => {
+            const rows = (s.sourcePayload as Record<string, any> | undefined)?.components;
+            return Array.isArray(rows) ? rows.filter((c) => c && typeof c === 'object') : [];
+          });
+      const nameKey = (c: any) => String(c?.component || c?.name || c?.materialName || '').trim().toLowerCase();
+      const excipientRegisterRows = m
+        .filter((s) => s.sourceType === 'excipient')
+        .map((s) => (s.sourcePayload || {}) as Record<string, any>)
+        .filter((p) => String(p.materialName || '').trim() && String(p.status || '').toLowerCase() !== 'retired')
+        .map((p) => ({
+          component: p.materialName,
+          role: p.functionInFormulation,
+          origin: p.origin,
+          tseCertification: p.tseCertificate,
+        }));
+      const excipientByName = new Map<string, (typeof excipientRegisterRows)[number]>();
+      for (const row of excipientRegisterRows) {
+        const key = nameKey(row);
+        if (key && !excipientByName.has(key)) excipientByName.set(key, row);
+      }
+      /* 2026-09-07: a formulation (or drug product) component is joined to the
+         excipient register row of the same material name. The TSE/BSE
+         certificate lives on the REGISTER row — the formulation row records the
+         component's quantity and function, not its supplier's CEP — so a bovine
+         gelatin capsule shell whose certificate was on file in the material
+         register was still reported here as "NOT RECORDED", and the section
+         compiled at 0% with a certificate it had in hand. The join fills the
+         certificate, and the origin and role when the formulation row left them
+         blank, from the matching register row; a register row that matched is
+         not emitted a second time, so the component counts the section prints
+         are counts of materials, not of the rows that describe them. */
+      const matchedRegisterNames = new Set<string>();
+      const joinedComponents = [
+        /* Read from the DRUG PRODUCT source only, not through a first-match
+           `valArr` over every matched source: that re-read the formulation
+           record's own array — formulation_record is one of this section's
+           source types — and every excipient count the section printed was
+           doubled. */
+        ...componentRows('formulation_record'),
+        ...componentRows('drug_product'),
+      ].map((c: any) => {
+        const reg = excipientByName.get(nameKey(c));
+        if (!reg) return c;
+        matchedRegisterNames.add(nameKey(c));
+        const merged: Record<string, any> = { ...c };
+        if (!String(c.role || c.function || '').trim() && String(reg.role || '').trim()) merged.role = reg.role;
+        if (!String(c.origin || c.source || '').trim() && String(reg.origin || '').trim()) merged.origin = reg.origin;
+        if (
+          !String(c.tseCertification || c.certification || '').trim() &&
+          String(reg.tseCertification || '').trim()
+        ) {
+          merged.tseCertification = reg.tseCertification;
+        }
+        return merged;
+      });
       const components = [
-        ...m
-          .filter((s) => s.sourceType === 'formulation_record')
-          .flatMap((s) => {
-            const rows = (s.sourcePayload as Record<string, any> | undefined)?.components;
-            return Array.isArray(rows) ? rows.filter((c) => c && typeof c === 'object') : [];
-          }),
-        ...m
-          .filter((s) => s.sourceType === 'excipient')
-          .map((s) => (s.sourcePayload || {}) as Record<string, any>)
-          .filter((p) => String(p.materialName || '').trim() && String(p.status || '').toLowerCase() !== 'retired')
-          .map((p) => ({
-            component: p.materialName,
-            role: p.functionInFormulation,
-            origin: p.origin,
-            tseCertification: p.tseCertificate,
-          })),
-        /* The drug product register's own composition array, for a project that
-           captured components there before the formulation register existed.
-           Read from the DRUG PRODUCT source only: as a first-match `valArr` over
-           every matched source it re-read the formulation record's own array —
-           formulation_record is one of this section's source types — and every
-           excipient count the section printed was doubled. */
-        ...m
-          .filter((s) => s.sourceType === 'drug_product')
-          .flatMap((s) => {
-            const rows = (s.sourcePayload as Record<string, any> | undefined)?.components;
-            return Array.isArray(rows) ? rows.filter((c) => c && typeof c === 'object') : [];
-          }),
+        ...joinedComponents,
+        ...excipientRegisterRows.filter((row) => !matchedRegisterNames.has(nameKey(row))),
       ];
       /* Whether anything at all was recorded. "No excipients of human or animal
          origin are used" is a POSITIVE SAFETY CLAIM, and it was made whenever
@@ -829,6 +861,25 @@ export function emittableAppendices(sections: ComposedSection[]): ComposedSectio
   );
 }
 
+/**
+ * The sentences of an appendix narrative that say what is NOT ESTABLISHED —
+ * the section's own statement of its missing inputs, one entry per sentence.
+ */
+function notEstablishedStatements(narrative: string): string[] {
+  const sentences = narrative.split(/(?<=\.)\s+/).map((x) => x.trim()).filter((x) => NOT_ESTABLISHED_RE.test(x));
+  return sentences.length > 0 ? sentences : ['not established by the recorded sources'];
+}
+
+/**
+ * The generators' fail-closed marker: a capitalised NOT. The same generators
+ * scope what they establish in lower case — "the country-of-origin statement
+ * … [is] not established by this section" beside a certificate recorded for
+ * every animal-origin excipient — and a case-insensitive test read that
+ * scoping as establishing nothing, so §3.2.A.3 compiled at 0% with every
+ * certificate on file. Case-sensitive on the marker, either case on the word.
+ */
+const NOT_ESTABLISHED_RE = /\bNOT (?:ESTABLISHED|established)\b/;
+
 export function composeAppendices(sourceObjects: CanonicalSource[]): ComposedSection[] {
   return APPENDIX_RULES.map(rule => {
     /* A RETIRED source feeds nothing here either. The core composer was given
@@ -848,7 +899,7 @@ export function composeAppendices(sourceObjects: CanonicalSource[]): ComposedSec
        regardless of what it established — including the fail-closed branches
        that exist precisely to report that nothing is established. A section
        whose own narrative says NOT ESTABLISHED is not a complete section. */
-    const establishesNothing = /NOT ESTABLISHED/i.test(generated.narrative);
+    const establishesNothing = NOT_ESTABLISHED_RE.test(generated.narrative);
     const completeness = matched.length === 0
       ? (rule.optional ? 100 : 0)
       : establishesNothing
@@ -867,11 +918,15 @@ export function composeAppendices(sourceObjects: CanonicalSource[]): ComposedSec
       narrativeDraft: generated.narrative,
       tables: generated.tables,
       completeness,
+      /* What is missing is what the narrative says is NOT ESTABLISHED — the
+         certificate, the origin declaration — not the source types, which
+         matched. Listing the source types here sent a staffer to re-record a
+         formulation that was already on file. */
       missingInputs:
         matched.length === 0
           ? (rule.optional ? [] : rule.requiredSourceTypes)
           : establishesNothing
-            ? rule.requiredSourceTypes
+            ? notEstablishedStatements(generated.narrative)
             : [],
       lineage: matched.map(m => ({
         sourceObjectId: m.id,

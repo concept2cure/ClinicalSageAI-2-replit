@@ -63,6 +63,10 @@ interface ProgramRow {
   description: string | null;
   product_name: string | null;
   indication: string | null;
+  /** organizations.name — the sponsor of record in this data model. */
+  sponsor_name?: string | null;
+  /** Agency-assigned IND / NDA / BLA / MAA number; null until assigned, never invented. */
+  application_number?: string | null;
   intended_use: string | null;
   primary_agency: string | null;
   target_submission_date: string | null;
@@ -1152,6 +1156,15 @@ export function ProjectHome({ onNav, onAsk, segment }: SurfaceViewProps) {
   const submissionType = sel?.code || prog?.code || prog?.program_type || null;
   const region = prog?.primary_agency ?? null;
   const indication = prog?.indication ?? null;
+  // Program identity facts (WO-9 Click 1). Read from the row only — never from
+  // the navigation handoff, never derived from the title — so what the screen
+  // says is what the database holds. Absence is stated, never filled in.
+  const sponsorName = prog?.sponsor_name ?? null;
+  const applicationNumber = prog?.application_number ?? null;
+  const applicationNumberLabel = (() => {
+    const t = (prog?.program_type ?? '').toUpperCase();
+    return t === 'IND' ? 'IND number' : t === 'NDA' ? 'NDA number' : t === 'BLA' ? 'BLA number' : t === 'MAA' ? 'MAA number' : 'Application number';
+  })();
   const status = sel?.status || prog?.status || null;
   const priority = prog?.priority ?? null;
   const phase = prog?.phase ?? null;
@@ -1306,6 +1319,14 @@ export function ProjectHome({ onNav, onAsk, segment }: SurfaceViewProps) {
             {priority && <span className={`rd-chip ${PRIORITY_TONE[priority] ?? 'tone-idle'}`}>priority: {priority}</span>}
             {phase && <span className="rd-chip tone-idle">{phase}</span>}
           </div>
+          {prog && (
+            <section className="pj-facts" aria-label="Program identity">
+              <dl className="pj-fact"><dt>Sponsor</dt><dd>{sponsorName ?? <span className="pj-fact-none">not recorded</span>}</dd></dl>
+              <dl className="pj-fact"><dt>Product</dt><dd>{prog.product_name ?? <span className="pj-fact-none">not recorded</span>}</dd></dl>
+              <dl className="pj-fact"><dt>Indication</dt><dd>{indication ?? <span className="pj-fact-none">not recorded</span>}</dd></dl>
+              <dl className="pj-fact"><dt>{applicationNumberLabel}</dt><dd>{applicationNumber ?? <span className="pj-fact-none">not assigned</span>}</dd></dl>
+            </section>
+          )}
         </div>
         {/* ── The ⋯ button called "Project settings" is gone ─────────────────
             Its handler was `onNav('projects')`: it did not open settings, it

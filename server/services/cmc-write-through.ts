@@ -274,8 +274,17 @@ export function mapDrugProductPayload(record: Record<string, any>): Record<strin
           : '') || textOf(compositionRaw);
   const batchFormulaRaw =
     record.formulation ?? record.batchFormula ?? record.batch_formula ?? null;
+  /* Read the same way as composition: the register stores a json column whose
+     staffer-typed text lives under `description`, and textOf() would render it
+     as the literal "description: 20.0 kg microcrystalline cellulose…" into
+     §3.2.P.3's batch formula. The structured object still travels on
+     batchFormulaDetail for anything that wants the rows. */
   const batchFormulaText =
-    typeof batchFormulaRaw === 'string' ? batchFormulaRaw.trim() : textOf(batchFormulaRaw);
+    typeof batchFormulaRaw === 'string'
+      ? batchFormulaRaw.trim()
+      : (typeof (batchFormulaRaw as Record<string, any> | null)?.description === 'string'
+          ? String((batchFormulaRaw as Record<string, any>).description).trim()
+          : '') || textOf(batchFormulaRaw);
   const objOrNull = (v: unknown) =>
     v != null && typeof v === 'object' && Object.keys(v as object).length > 0 ? v : null;
   return {
@@ -370,6 +379,10 @@ export function mapStabilityPayload(record: Record<string, any>): Record<string,
     studyName: alias(record, 'studyName', 'study_name', 'studyTitle', 'study_title'),
     studyType: alias(record, 'studyType', 'study_type'),
     storageCondition: storageArr ? storageArr.join(', ') : '',
+    /* The conditions AS AN ARRAY as well: the trend assessment must refuse a
+       study placed at more than one condition whose results carry none, and it
+       can only tell two conditions apart when they are not one joined string. */
+    storageConditions: storageArr && storageArr.length > 0 ? storageArr : null,
     duration: record.duration || '',
     timePoints: alias(record, 'timePoints', 'time_points'),
     containerClosure: alias(record, 'containerClosure', 'container_closure'),
@@ -626,6 +639,10 @@ export function mapQcTestingPayload(record: Record<string, any>): Record<string,
   const hasResult = isBatchAnalysis && hasQuantitativeResult(results);
   return {
     sampleId: alias(record, 'sampleId', 'sample_id'),
+    /* The batch the sample represents, as recorded — never derived from the
+       sample id. Capability is computed across batches; a result with no
+       batch is reported under its sample id and excluded from the index. */
+    batchNumber: String(alias(record, 'batchNumber', 'batch_number')).trim() || null,
     sampleType: alias(record, 'sampleType', 'sample_type'),
     testMethod: alias(record, 'testMethod', 'test_method'),
     testResults: results,

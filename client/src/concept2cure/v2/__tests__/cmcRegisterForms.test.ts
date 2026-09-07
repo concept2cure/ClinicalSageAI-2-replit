@@ -493,10 +493,17 @@ describe('drug substance and drug product — §3.2.S / §3.2.P', () => {
       productName: 'BX-204 injection', dosageForm: 'Solution for injection',
       strength: '50 mg/mL', routeOfAdministration: 'Intravenous', status: 'development',
       composition: 'BX-204 50 mg/mL, histidine buffer, sucrose, polysorbate 80.',
+      batchFormula: 'Per 500 L batch: BX-204 25.0 kg; histidine 1.55 kg; sucrose 40.0 kg; polysorbate 80 0.10 kg.',
       process: 'Compounding, sterile filtration, aseptic fill.',
       site: 'Cork, Ireland', containerClosure: '2R Type I glass vial, bromobutyl stopper',
     });
     expect(body.composition).toEqual({ description: 'BX-204 50 mg/mL, histidine buffer, sucrose, polysorbate 80.' });
+    /* §3.2.P.3.2's batch formula — the section's `formulation` input, which had
+       no field in the product at all and so could never be recorded. It is a
+       per-BATCH statement and stays separate from the per-unit composition. */
+    expect(body.batchFormula).toEqual({
+      description: 'Per 500 L batch: BX-204 25.0 kg; histidine 1.55 kg; sucrose 40.0 kg; polysorbate 80 0.10 kg.',
+    });
     expect(body.packagingMaterials).toEqual({ containerClosure: '2R Type I glass vial, bromobutyl stopper' });
     expect(body.manufacturingProcess).toEqual({
       description: 'Compounding, sterile filtration, aseptic fill.',
@@ -953,13 +960,14 @@ describe('impurity register — the ICH M7 inputs are carried, never defaulted',
     expect(patch.cohortOfConcern).toBeNull();
   });
 
-  it('offers no default for any M7 input — blank is the first option', () => {
+  it('offers no default for any M7 input — the renderer\'s own "Select…" is the only blank', () => {
     const fields = impurityProfileForm(null).fields;
     for (const k of ['amesResult', 'structuralAlert', 'carcinogenicityData', 'treatmentDuration', 'cohortOfConcern']) {
       const f = fields.find((x) => x.key === k);
       expect(f, k).toBeTruthy();
       expect(f?.default, k).toBe('');
-      expect((f as { options?: string[] }).options?.[0], k).toBe('');
+      // C2CForm prepends its own empty "Select…" option; a second blank would be an unlabeled duplicate.
+      expect((f as { options?: string[] }).options, k).not.toContain('');
     }
   });
 });

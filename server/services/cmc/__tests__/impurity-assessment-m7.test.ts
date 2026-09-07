@@ -141,3 +141,30 @@ describe('assessRecordedImpurity — a mutagenic impurity is assessed under ICH 
     expect(r.ok).toBe(true);
   });
 });
+
+describe('review: the M7 limit keeps its precision, and ppb is a concentration', () => {
+  it('a nitrosamine limit in the ppb range is not rounded away before the comparison', () => {
+    // 0.018 µg/day over 2.55 g/day = 0.00706 ppm; 9 ppb is ABOVE it.
+    const r = assessRecordedImpurity(
+      { ...base, cohortOfConcern: 'CoC_nitrosamine', maximumDailyDose: '2550 mg', observedLevel: '0.009', levelUnit: 'ppm' },
+      'drug_substance',
+    );
+    if (!r.ok || r.basis !== 'ICH M7(R2)') throw new Error('expected an M7 assessment, got ' + JSON.stringify(r));
+    expect(r.concentrationLimitPpm).toBeCloseTo(0.00706, 4);
+    expect(r.withinLimit).toBe(false);
+    // And at 4 g/day the limit is 0.0045 ppm, never 0.
+    const r2 = assessRecordedImpurity(
+      { ...base, cohortOfConcern: 'CoC_nitrosamine', maximumDailyDose: '4000 mg', observedLevel: '0.001', levelUnit: 'ppm' },
+      'drug_substance',
+    );
+    if (!r2.ok || r2.basis !== 'ICH M7(R2)') throw new Error('expected an M7 assessment');
+    expect(r2.concentrationLimitPpm).toBeGreaterThan(0);
+    expect(r2.withinLimit).toBe(true);
+  });
+
+  it('reads a level recorded in ppb — the unit the register offers and nitrosamines are reported in', () => {
+    const r = assessRecordedImpurity({ ...base, cohortOfConcern: 'CoC_nitrosamine', observedLevel: '5', levelUnit: 'ppb' }, 'drug_substance');
+    if (!r.ok || r.basis !== 'ICH M7(R2)') throw new Error('expected an M7 assessment, got ' + JSON.stringify(r));
+    expect(r.observedPpm).toBeCloseTo(0.005, 9);
+  });
+});

@@ -17,6 +17,7 @@ import {
   type RecordedStabilityRead,
   type RecordedTrendSeries,
 } from './cmc/recorded-stability';
+import { assessRecordedCapability, capabilitySentence, isBatchAnalysisFor } from './cmc/recorded-capability';
 /* The dissolution purposes live in shared/, not in the write-through module:
    that module already imports FROM this composer, and importing back would make
    a cycle. One definition, reachable by both, and by the register surface. */
@@ -183,15 +184,11 @@ export const MODULE3_SECTION_RULES: SectionRule[] = [
   { sectionKey: '3.3', requiredSourceTypes: ['drug_substance', 'drug_product', 'reference_standard'], requiredFields: ['name', 'dosageFormDescription'] },
 ];
 
-/** The QC sample types that are NOT tests of the material: a cleaning swab
- *  belongs to GMP cleaning records, a reference-standard qualification to
- *  §3.2.S.5/§3.2.P.6. Neither is batch-analyses evidence. Shared with the
- *  write-through mapper so the completeness gate and the renderer apply ONE
- *  rule. */
-export const NON_BATCH_SAMPLE_TYPES = ['cleaning-verification', 'reference-standard'];
-
-/** The sample type that makes a QC result DRUG PRODUCT evidence (§3.2.P.5.4). */
-export const FINISHED_PRODUCT = 'finished-product';
+/* The QC sample-type vocabulary now lives in shared/cmc/qc-sample-types, so
+   the capability service can apply the same batch-analyses rule without a
+   cycle back through this file. Re-exported here: the write-through mapper and
+   every other importer read them from the composer. */
+export { NON_BATCH_SAMPLE_TYPES, FINISHED_PRODUCT } from '../../shared/cmc/qc-sample-types';
 
 /* Which material a CMC record is evidence for. ONE rule, in shared/, because
    the register surfaces display the section a row files under and must never
@@ -397,9 +394,16 @@ function stabilityTrending(sources: CanonicalSource[]): string {
     unreadable += reads.filter((r) => r.unreadable).length;
     const points = reads.flatMap((r) => r.points);
     if (points.length === 0) continue;
+    /* The mapper writes the condition array; a payload written before it did
+       carries only the joined string, which is split back on its separator
+       so a two-condition study is still refused rather than fitted as one. */
+    const conditionSource =
+      Array.isArray(payload.storageConditions) && payload.storageConditions.length > 0
+        ? payload.storageConditions
+        : String(payload.storageCondition ?? '').split(/\s*,\s*/).filter(Boolean);
     const assessed = assessRecordedTrending({
       id: s.id,
-      storageConditions: payload.storageConditions ?? payload.storageCondition,
+      storageConditions: conditionSource,
       stabilityData: points,
     });
     if (!assessed.ok) {
@@ -518,21 +522,9 @@ function qcResultRows(
   return sources
     .filter((s) => s.sourceType === 'qc_result')
     .map((s) => (s.sourcePayload || {}) as Record<string, any>)
-    .filter((p) => {
-      const type = String(p.sampleType || '').toLowerCase();
-      /* The SAME gate the QC mapper applied. Reading only the sample-type
-         side let a cleaning-verification swab and a reference-standard
-         qualification — records the mapper had already refused as batch
-         data — render as drug-substance batch analyses while the section
-         simultaneously reported batchAnalyses missing. `batchAnalysisSide`
-         is the mapper's decision; the sample-type fallback keeps payloads
-         written before it existed rendering correctly. */
-      if (p.isBatchAnalysis === false) return false;
-      if (NON_BATCH_SAMPLE_TYPES.includes(type)) return false;
-      const decided = typeof p.batchAnalysisSide === 'string' ? p.batchAnalysisSide : null;
-      if (decided) return decided === side;
-      return side === 'drug_product' ? type === FINISHED_PRODUCT : type !== FINISHED_PRODUCT;
-    });
+    /* The SAME gate the QC mapper applied, and the same one the capability
+       route and tool apply — one function, in services/cmc/recorded-capability. */
+    .filter((p) => isBatchAnalysisFor(p, side));
 }
 
 /** One batch-analyses table from recorded QC results, or null when there are none. */
@@ -594,6 +586,70 @@ function batchAnalysesTable(
       // evidence, and a reader must be able to tell which it is looking at.
       p.reviewed ? 'reviewed' : 'not reviewed',
     ]),
+  };
+}
+
+/**
+ * Process capability over the recorded batch results, per test.
+ *
+ * ICH Q6A sets the specification; whether the process meets it batch after
+ * batch is the capability question, and the QC register now records the
+ * batch each result represents. Results of one test are grouped across
+ * batches, the acceptance criterion they were recorded against is parsed
+ * once (a disagreement between rows is a refusal, not an average), and the
+ * one capability engine (services/cmc/process-capability) is asked. Every
+ * test gets a sentence — the indices, or why they were not assessed — so a
+ * section with no capability statement cannot be mistaken for one that was
+ * assessed and found capable.
+ */
+function batchCapabilityRendering(
+  sources: CanonicalSource[],
+  side: 'drug_substance' | 'drug_product',
+): { table: GeneratedTable | null; narrative: string } {
+  const rows = qcResultRows(sources, side);
+  if (rows.length === 0) return { table: null, narrative: '' };
+  /* The series assembly lives in services/cmc/recorded-capability, where the
+     HTTP route and the AnA tool call it too: what a reviewer reads here and
+     what the product answers when asked are the same computation, not two. */
+  const series = assessRecordedCapability(rows);
+  const fmt = (v: number | null) => (v === null ? '—' : String(v));
+  const tableRows: string[][] = [];
+  const sentences: string[] = [];
+  for (const s of series) {
+    sentences.push(capabilitySentence(s));
+    if (!s.outcome.ok) {
+      const counted = s.outcome.code === 'CRITERION_NOT_RECORDED' && s.criterion === null
+        ? String(s.resultsOnFile)
+        : String(s.resultsOnFile - s.outcome.excludedBatches.length);
+      tableRows.push([
+        s.test, counted, '—', '—', '—', '—', '—', 'not assessed',
+        s.criterion === null && s.outcome.code === 'CRITERION_NOT_RECORDED' ? 'criteria disagree' : s.outcome.code,
+      ]);
+      continue;
+    }
+    const a = s.outcome;
+    tableRows.push([
+      s.test,
+      String(a.n),
+      String(a.mean),
+      String(a.sdOverall),
+      fmt(a.pp),
+      fmt(a.ppk),
+      fmt(a.cpk),
+      a.verdict + (a.preliminary ? ' (preliminary)' : ''),
+      a.batchesOutOfSpecification.length > 0 ? `OOS: ${a.batchesOutOfSpecification.join(', ')}` : '',
+    ]);
+  }
+  if (tableRows.length === 0) return { table: null, narrative: '' };
+  return {
+    table: {
+      title: side === 'drug_product' ? 'Process Capability — Drug Product (§3.2.P.5.4)' : 'Process Capability — Drug Substance (§3.2.S.4.4)',
+      headers: ['Test', 'Batches', 'Mean', 'SD', 'Pp', 'Ppk', 'Cpk', 'Verdict', 'Note'],
+      rows: tableRows,
+    },
+    narrative:
+      'Process capability (ICH Q6A specification; ISO 22514 indices over the recorded batch results, Ppk on the overall sd and Cpk on the moving-range sigma): ' +
+      sentences.join(' ') + ' ',
   };
 }
 
@@ -2117,6 +2173,8 @@ const SECTION_GENERATORS: Record<string, SectionGenerator> = {
     // §3.2.S.4.4 — the recorded results themselves, not just their count.
     const batchTable = batchAnalysesTable(m, 'drug_substance');
     if (batchTable) tables.push(batchTable);
+    const dsCapability = batchCapabilityRendering(m, 'drug_substance');
+    if (dsCapability.table) tables.push(dsCapability.table);
     // Impurity limits from structured object or impurity_profile source array
     if (impurityLimits) {
       tables.push({
@@ -2144,7 +2202,8 @@ const SECTION_GENERATORS: Record<string, SectionGenerator> = {
         (criteria ? `${Object.keys(criteria).length} test(s) are defined in the specification. ` : '') +
         batchAnalysesSentence(m, 'drug_substance') +
         (impurityLimits ? `Impurity limits are established for ${Object.keys(impurityLimits).length} identified impurity/ies per ICH Q3A. ` : '') +
-        dsImpurities.narrative,
+        dsImpurities.narrative +
+        dsCapability.narrative,
       tables,
     };
   },
@@ -2472,7 +2531,9 @@ const SECTION_GENERATORS: Record<string, SectionGenerator> = {
     }
     // §3.2.P.5.4 — the recorded finished-product results themselves.
     const dpBatchTable = batchAnalysesTable(m, 'drug_product');
+    const dpCapability = batchCapabilityRendering(m, 'drug_product');
     if (dpBatchTable) tables.push(dpBatchTable);
+    if (dpCapability.table) tables.push(dpCapability.table);
     /* A canonical caller may pass a `dissolutionSpecification` object. The
        product's own producer is the dissolution register, rendered here scoped
        to the RELEASE profiles: this section is the acceptance criterion, and
@@ -2516,7 +2577,8 @@ const SECTION_GENERATORS: Record<string, SectionGenerator> = {
         (dissolutionSpec ? `Dissolution specifications are established per ICH Q6A. ` : '') +
         releaseDissolution.narrative +
         dpImpurities.narrative +
-        (status ? `Validation status: ${status}.` : ''),
+        (status ? `Validation status: ${status}. ` : '') +
+        dpCapability.narrative,
       tables,
     };
   },
@@ -2680,6 +2742,27 @@ export function tablesToMarkdown(tables: GeneratedTable[]): string {
     const rows = t.rows.map((r) => `| ${r.map(mdCell).join(' | ')} |`).join('\n');
     return `### ${mdCell(t.title)}\n\n${hdr}\n${sep}\n${rows}`;
   }).join('\n\n');
+}
+
+/**
+ * The ONE rendering of a composed §3.2 section into filed markdown.
+ *
+ * Every generator writes a narrative that CITES its tables — "see the change
+ * history table", "reported in the table above", "the specification is given
+ * below". A consumer that renders the narrative without the tables files a
+ * document whose prose points at data that is not in it. This function is what
+ * both consumers use: the governed-artifact bridge
+ * (module3-convergence-service.bridgeCompileToArtifact) and the IND placement
+ * snapshot (services/cmc/place-module3-into-submission). They must produce
+ * byte-identical section content, so there is one function, not two.
+ */
+export function renderComposedSectionMarkdown(
+  sectionLabel: string,
+  narrativeDraft: string,
+  tables: GeneratedTable[] | null | undefined,
+): string {
+  const tablesMarkdown = tables && tables.length > 0 ? '\n\n' + tablesToMarkdown(tables) : '';
+  return `## ${sectionLabel}\n\n${narrativeDraft}${tablesMarkdown}`;
 }
 
 // ── Main composition function ──────────────────────────────────────────────────

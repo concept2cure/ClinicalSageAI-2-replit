@@ -890,12 +890,22 @@ export interface SubmissionLeaf {
   title: string;
   granularity?: string | null;
   lifecycleOp: string; // new|replace|append|delete
-  documentTable?: string | null; // polymorphic — coauthor_documents|ctd_onboarding_documents|unified_documents|vault_documents
+  // Polymorphic. The closed set of accepted values lives in
+  // server/services/ectd/leaf-document-tables.ts — restating it here is how the
+  // list went stale, so it is deliberately not restated.
+  documentTable?: string | null;
   documentId?: number | null; // polymorphic id within documentTable
   documentType?: string | null; // classifier hint for pathway leaf→slot matching
   leafGuid?: string | null;
   parentLeafId?: number | null;
   checksum?: string | null;
+  // The source-content pin (migrations/20260814e_submission_leaf_source_pin.sql,
+  // written by submission-service.upsertLeaf). Absent from this interface, the
+  // `as SubmissionLeaf` casts in submission-service.ts erased both fields from
+  // every caller's view of a leaf it had just written — so nothing downstream
+  // could read the pin the write had just recorded.
+  documentContentSha256?: string | null;
+  documentPinnedAt?: Date | null;
   organizationId: number;
   createdBy: number;
   createdAt?: Date | null;

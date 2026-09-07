@@ -1,4 +1,13 @@
 -- =============================================================================
+--
+-- AMENDED IN PLACE 2026-09-07 (CLAUDE.md Rule 1 — the set re-runs every deploy,
+-- so the creating file is amended, never followed by an ALTER): the status
+-- CHECK gains 'committing'. A commit moves the session complete → committing
+-- before its first register write and back to complete (partial) or on to
+-- committed (all landed); two concurrent commits of one session used to both
+-- write every register row because nothing held the session while one ran.
+-- The constraint below is dropped and re-added under its name so a database
+-- that already carries the four-value CHECK picks up the fifth on replay.
 -- eCTD REGULATORY AUDIT CONTEXT
 -- System: Lumen Cortex — FDA Shadow Review + eCTD Integrity Layer
 -- Compliance: 21 CFR Part 11 (auditability, traceability), ALCOA+ principles
@@ -64,7 +73,7 @@ CREATE TABLE IF NOT EXISTS cmc_interview_sessions (
   created_at timestamp NOT NULL DEFAULT now(),
   updated_at timestamp NOT NULL DEFAULT now(),
   CONSTRAINT cmc_interview_sessions_status_chk
-    CHECK (status IN ('active', 'complete', 'committed', 'abandoned'))
+    CHECK (status IN ('active', 'complete', 'committing', 'committed', 'abandoned'))
 );
 
 -- Tenant-scoped access paths: every read is "this org's session by id", and
@@ -75,3 +84,9 @@ CREATE INDEX IF NOT EXISTS idx_cmc_interview_sessions_org_project
   ON cmc_interview_sessions (organization_id, project_id);
 CREATE INDEX IF NOT EXISTS idx_cmc_interview_sessions_org_status
   ON cmc_interview_sessions (organization_id, status);
+
+-- Replay: a database created by an earlier run of this file holds the
+-- four-value CHECK under the same constraint name; re-add it with 'committing'.
+ALTER TABLE cmc_interview_sessions DROP CONSTRAINT IF EXISTS cmc_interview_sessions_status_chk;
+ALTER TABLE cmc_interview_sessions ADD CONSTRAINT cmc_interview_sessions_status_chk
+  CHECK (status IN ('active', 'complete', 'committing', 'committed', 'abandoned'));

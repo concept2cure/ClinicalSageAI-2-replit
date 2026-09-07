@@ -14,6 +14,11 @@ import {
   createGovernedExportConsequence,
   createAuditedUnplacedExport,
 } from '../services/export/governedExportConsequence';
+import {
+  EstarRetentionError,
+  retainOfficialEstar,
+  type EstarRetentionReport,
+} from '../services/pathway-engines/estar/estar-artifact-retention';
 import { fillEstarSubmission } from '../services/pathway-engines/estar/estar-fill';
 import { getEstarFieldMap, isFieldMapPopulated } from '../services/pathway-engines/estar/estar-field-map';
 import {
@@ -934,8 +939,18 @@ function describeOfficialFill(
   return { fieldReport: report.fieldReport, metadata: { fieldSources: report.fieldSources } };
 }
 
-function withFieldReport<T extends object>(body: T, fieldReport: OfficialEstarFieldReport | null): T {
-  return fieldReport ? { ...body, fieldReport } : body;
+/**
+ * The consequence body plus what this route adds BESIDE it: the per-field fill
+ * report, and the retention record for the delivered artifact. Both are added,
+ * never substituted — every key the export-governance plane produced reaches
+ * the client unchanged (pinned by ci:governed-export-consequence-shape).
+ */
+function withOfficialExtras<T extends object>(
+  body: T,
+  fieldReport: OfficialEstarFieldReport | null,
+  retention: EstarRetentionReport,
+): T {
+  return { ...body, ...(fieldReport ? { fieldReport } : {}), retention };
 }
 
 /**
@@ -1014,6 +1029,28 @@ router.post('/official', authMiddleware, requireEditorAccess, requireAssemblyEnt
       ...fieldMetadata,
     };
 
+    /* RETAIN BEFORE DELIVERING. The bytes CDRH ingests used to be hashed,
+       base64'd into this response and forgotten — the export stored its INPUTS
+       and never its OUTPUT, so "what exactly did we file" had no artifact
+       behind it. Retention goes into the program's governed vault through the
+       one canonical ingest, content-addressed so identical bytes are
+       idempotent and different bytes never overwrite the record. A retention
+       that should have happened and did not THROWS: an unretained submission
+       artifact is not handed over. */
+    const retention = await retainOfficialEstar({
+      organizationId: getOrganizationId(req),
+      userId: getUserId(req),
+      programUuid: anchor.programUuid,
+      descriptorId: result.descriptorId ?? `${type}-${variant}`,
+      title: meta.title || meta.submissionName || `${meta.id} — official FDA eSTAR`,
+      filename,
+      pdfBytes: pdfBuffer,
+      ctdSection: meta.ctdSection || 'm1.5',
+    });
+    // The retention record travels into the artifact registry / audit row too,
+    // so the governed record names the vault document, not just its hash.
+    Object.assign(officialMetadata, { retention });
+
     if (anchor.anchorProjectId !== null) {
       const consequence = await createGovernedExportConsequence({
         organizationId: getOrganizationId(req),
@@ -1031,7 +1068,7 @@ router.post('/official', authMiddleware, requireEditorAccess, requireAssemblyEnt
         metadata: officialMetadata,
       });
 
-      return res.status(200).json(withFieldReport(consequence, fieldReport));
+      return res.status(200).json(withOfficialExtras(consequence, fieldReport, retention));
     }
 
     // Program-spine project without a registry anchor — same audited-delivery
@@ -1051,11 +1088,22 @@ router.post('/official', authMiddleware, requireEditorAccess, requireAssemblyEnt
       metadata: officialMetadata,
     });
 
-    return res.status(200).json(withFieldReport(unplaced, fieldReport));
+    return res.status(200).json(withOfficialExtras(unplaced, fieldReport, retention));
   } catch (error: any) {
     logger.error('official eSTAR export failure', {
       err: error instanceof Error ? error.message : String(error),
     });
+    // A retention failure is a distinct outcome and gets its own reason: the
+    // form was produced correctly, and it is being withheld precisely because
+    // the record of it could not be written.
+    if (error instanceof EstarRetentionError) {
+      return res.status(500).json({
+        error: 'ESTAR_NOT_RETAINED',
+        message:
+          'The official eSTAR was produced but could not be retained in the program vault, ' +
+          'so it was not delivered. The problem has been logged.',
+      });
+    }
     return res.status(500).json({
       error: 'GOVERNED_EXPORT_FAILED',
       message: 'Official eSTAR export failed before consequence persistence. The problem has been logged.',

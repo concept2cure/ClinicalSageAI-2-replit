@@ -439,25 +439,45 @@ export async function getWorkflowStatus(
   const workflow = WORKFLOW_REGISTRY[submissionType.toLowerCase()];
   if (!workflow) return null;
 
+  /* No organization, no progress. `organizationId` was ACCEPTED here and never
+     referenced: both reads below filtered on project_id alone, and
+     concept2cure_artifacts.project_id is not tenant-partitioned — the id
+     arrives from the request body. So this returned another sponsor's artifact
+     types and populated CTD sections, rendered into a MODEL'S PROMPT as this
+     project's submission progress. Context enrichment calls this on every turn
+     where a submission type is known, not only behind a slash command.
+
+     Failing closed degrades the PROGRESS, not the workflow: the registry entry
+     and its steps are still returned below, with nothing marked complete. That
+     is the honest answer for a caller whose tenant cannot be established —
+     "nothing known", never "nothing done" presented as someone else's work. */
+  const orgScoped = Number.isFinite(organizationId) && (organizationId as number) > 0;
+
   // Check which artifacts exist for this project
   let existingArtifacts: string[] = [];
-  try {
-    const res = await pool.query(
-      `SELECT DISTINCT type FROM concept2cure_artifacts WHERE project_id = $1 AND status != 'deleted'`,
-      [projectId]
-    );
-    existingArtifacts = res.rows.map((r: any) => r.type);
-  } catch { /* table might not exist */ }
-
   // Check which sections have content
   let populatedSections: string[] = [];
-  try {
-    const res = await pool.query(
-      `SELECT DISTINCT ctd_section FROM concept2cure_artifacts WHERE project_id = $1 AND content IS NOT NULL AND LENGTH(content) > 100`,
-      [projectId]
-    );
-    populatedSections = res.rows.map((r: any) => r.ctd_section).filter(Boolean);
-  } catch { /* non-critical */ }
+
+  if (orgScoped) {
+    try {
+      const res = await pool.query(
+        `SELECT DISTINCT type FROM concept2cure_artifacts
+          WHERE organization_id = $2 AND project_id = $1 AND status != 'deleted'`,
+        [projectId, organizationId]
+      );
+      existingArtifacts = res.rows.map((r: any) => r.type);
+    } catch { /* table might not exist */ }
+
+    try {
+      const res = await pool.query(
+        `SELECT DISTINCT ctd_section FROM concept2cure_artifacts
+          WHERE organization_id = $2 AND project_id = $1
+            AND content IS NOT NULL AND LENGTH(content) > 100`,
+        [projectId, organizationId]
+      );
+      populatedSections = res.rows.map((r: any) => r.ctd_section).filter(Boolean);
+    } catch { /* non-critical */ }
+  }
 
   const allSteps = workflow.phases.flatMap(p => p.steps);
   let completedCount = 0;

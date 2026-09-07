@@ -1696,7 +1696,15 @@ router.post('/compliance/check-rules', async (req, res) => {
 
     // Query complianceTracking table for real violations
     let rules: any[] = [];
-    let complianceScore = 100;
+    /* `null` until something is actually assessed, NOT 100. This started at 100
+       and stayed there for a project with no compliance_tracking records, under
+       a comment calling that a "clean state" — so the strongest claim this
+       endpoint can make was its answer for having looked at nothing, and it was
+       indistinguishable from a real 100. Zero records is also the DEFAULT: no
+       row is written until someone creates one, so every new project scored
+       100% compliant on the day it was created. */
+    let complianceScore: number | null = null;
+    let assessed = false;
     let recommendedActions: string[] = [];
 
     try {
@@ -1704,13 +1712,25 @@ router.post('/compliance/check-rules', async (req, res) => {
 
       const orgId = getOrgId(req);
       const result = await pool.query(
-        `SELECT * FROM compliance_tracking WHERE organization_id = $1 OR organization_id IS NULL ORDER BY created_at DESC LIMIT 50`,
+        /* Strictly the caller's organization. `OR organization_id IS NULL` used
+           to sit here, and it was load-bearing: the CMC project routes bound a
+           drizzle model that mapped no organizationId, so every row the product
+           wrote was NULL-org and without the OR this endpoint returned nothing.
+           It bought that by serving every sponsor's compliance findings —
+           guideline, requirement, violation status, risk level — to every other
+           sponsor as their own. The write now stamps the owning org and
+           migrations/20260908_compliance_tracking_organization_backfill.sql
+           attributes the legacy rows through their project, so the strict
+           predicate returns MORE for a legitimate caller, not less. */
+        `SELECT * FROM compliance_tracking WHERE organization_id = $1 ORDER BY created_at DESC LIMIT 50`,
         [orgId]
       );
 
       const trackingRows = result.rows;
 
       if (trackingRows.length > 0) {
+        assessed = true;
+        complianceScore = 100;
         for (const row of trackingRows) {
           const ruleStatus = row.status === 'compliant' ? 'compliant' : 'violation';
           rules.push({
@@ -1728,9 +1748,11 @@ router.post('/compliance/check-rules', async (req, res) => {
           }
         }
       } else {
-        // No compliance tracking records exist yet — return clean state
+        /* Nothing recorded is nothing assessed. Reported as such — no score —
+           rather than as a clean bill of health for a check that never ran. */
         rules = [];
-        complianceScore = 100;
+        complianceScore = null;
+        assessed = false;
         recommendedActions = [];
       }
     } catch (e) {
@@ -1738,16 +1760,23 @@ router.post('/compliance/check-rules', async (req, res) => {
       return res.status(500).json({ success: false, error: 'Failed to check compliance rules' });
     }
 
-    complianceScore = Math.max(complianceScore, 0);
+    if (complianceScore !== null) complianceScore = Math.max(complianceScore, 0);
     const violations = rules.filter((r: any) => r.status === 'violation').length;
 
     const complianceCheck = {
       insightId,
       violations,
       rules,
+      /* Explicit, so a caller can tell an assessed-and-clean project from an
+         unassessed one. A score of null with assessed:false is the honest
+         answer; the two together are what make it unambiguous. */
+      assessed,
       complianceScore,
       recommendedActions,
       checkedAt: new Date().toISOString(),
+      ...(assessed
+        ? {}
+        : { message: 'No compliance records exist for this organization — nothing has been assessed.' }),
     };
 
     res.status(200).json({
@@ -2109,6 +2138,87 @@ router.post('/stability-studies/:id/shelf-life', async (req, res) => {
     return res.json({ success: true, data: outcome.data });
   } catch (error) {
     return respondWriteError(res, error, 'Failed to estimate shelf life');
+  }
+});
+
+/**
+ * POST /api/cmc/stability-studies/:id/trending — out-of-trend assessment of a
+ * recorded study. Same function the composed §3.2.S.7 / §3.2.P.8 and the AnA
+ * tool call (services/cmc/recorded-stability.assessRecordedTrending); the
+ * study-level refusal is a 409, per-series refusals travel in the data.
+ */
+router.post('/stability-studies/:id/trending', async (req, res) => {
+  try {
+    const id = parseInt(String(req.params.id), 10);
+    const orgId = getOrgId(req);
+    const [study] = await db
+      .select({
+        id: stabilityStudies.id,
+        storageConditions: stabilityStudies.storageConditions,
+        stabilityData: stabilityStudies.stabilityData,
+      })
+      .from(stabilityStudies)
+      .where(and(eq(stabilityStudies.id, id), eq(stabilityStudies.organizationId, orgId)));
+    if (!study) return res.status(404).json({ success: false, error: 'Stability study not found' });
+    const { assessRecordedTrending } = await import('../../services/cmc/recorded-stability');
+    const outcome = assessRecordedTrending(study);
+    if (!outcome.ok) return res.status(409).json({ success: false, error: outcome.error });
+    return res.json({ success: true, data: outcome.data });
+  } catch (error) {
+    return respondWriteError(res, error, 'Failed to assess the stability trend');
+  }
+});
+
+/**
+ * GET /api/cmc/projects/:projectId/process-capability — the capability indices
+ * over the project's RECORDED batch results, per test, for each side.
+ *
+ * ── Why this route exists ────────────────────────────────────────────────────
+ * The Pp/Ppk/Cp/Cpk a reviewer reads in the compiled §3.2.S.4.4 and §3.2.P.5.4
+ * could only be seen by compiling the section. "Is this process capable against
+ * the specification we set" is a question a CMC lead asks before compiling, and
+ * during a deviation, and the answer existed nowhere it could be asked.
+ *
+ * It reads the project's canonical `qc_result` source objects — the same rows
+ * the section composes from — and runs the same assessment
+ * (services/cmc/recorded-capability), so this route and the document can never
+ * disagree.
+ *
+ * Nothing is written, and nothing is refused as a whole: a series that cannot
+ * be assessed is RETURNED with its reason (criteria that disagree, fewer than
+ * six batches, no variation), because a test silently missing from a capability
+ * report reads as a test that passed.
+ */
+router.get('/projects/:projectId/process-capability', async (req, res) => {
+  try {
+    const orgId = getOrgId(req);
+    const projectId = String(req.params.projectId);
+    const pool = getPool();
+    const { rows } = await pool.query(
+      `SELECT source_payload as "sourcePayload"
+       FROM cmc_source_objects
+       WHERE organization_id = $1 AND project_id = $2 AND source_type = 'qc_result'
+       ORDER BY updated_at DESC`,
+      [orgId, projectId],
+    );
+    const payloads = rows.map((r: { sourcePayload: Record<string, unknown> | null }) => r.sourcePayload || {});
+    const { assessRecordedCapability, capabilitySentence, isBatchAnalysisFor } = await import(
+      '../../services/cmc/recorded-capability'
+    );
+    const sides = ['drug_substance', 'drug_product'] as const;
+    const data = {
+      projectId,
+      resultsOnFile: payloads.length,
+      sides: Object.fromEntries(
+        sides.map((side) => {
+          const series = assessRecordedCapability(payloads.filter((p) => isBatchAnalysisFor(p, side)));
+          return [side, { series, statements: series.map(capabilitySentence) }];
+        }),
+      ),
+    };
+    return res.json({ success: true, data });
+  } catch (error) {
+    return respondWriteError(res, error, 'Failed to assess process capability');
   }
 });
 

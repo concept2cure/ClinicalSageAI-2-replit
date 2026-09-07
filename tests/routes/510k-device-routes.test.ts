@@ -1,8 +1,18 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { createMockRequest, createMockResponse } from '../setup';
 
-const { mockSelectRows, mockUpdateWhere, mockLogAction, mockClassification, mockClearances, mockStandards } = vi.hoisted(() => ({
+const {
+  mockSelectRows,
+  mockUpdateSet,
+  mockUpdateWhere,
+  mockLogAction,
+  mockClassification,
+  mockClearances,
+  mockStandards,
+} = vi.hoisted(() => ({
   mockSelectRows: vi.fn<[], unknown[]>(() => []),
+  /** The VALUES the handler passed to .set() — what actually reaches the row. */
+  mockUpdateSet: vi.fn<[Record<string, unknown>], void>(() => undefined),
   mockUpdateWhere: vi.fn(async () => undefined),
   mockLogAction: vi.fn(async () => ({ persisted: true, chained: true, tamperProof: true })),
   /* The recognized-standards service is mocked so these tests assert the
@@ -85,7 +95,12 @@ fakeDb.select = vi.fn(() => ({
     where: vi.fn(() => ({ limit: vi.fn(async () => mockSelectRows()) })),
   })),
 }));
-fakeDb.update = vi.fn(() => ({ set: vi.fn(() => ({ where: mockUpdateWhere })) }));
+fakeDb.update = vi.fn(() => ({
+  set: (values: Record<string, unknown>) => {
+    mockUpdateSet(values);
+    return { where: mockUpdateWhere };
+  },
+}));
 
 import deviceRoutes from '../../server/routes/510k-device-routes';
 
@@ -456,5 +471,131 @@ describe('GET /standards — recognized consensus standards for a product code',
     expect(payload.available).toBe(true);
     expect(payload.datasetLoaded).toBe(true);
     expect(payload.matched).toBe(0);
+  });
+});
+
+/**
+ * The PREDICATE OF RECORD — regulatory_programs.predicate_devices.
+ *
+ * This column is what the official eSTAR's predicate fields are filled from
+ * (estar-administrative-data.ts projects `predicate_devices[0].kNumber` and
+ * `[0].name`), which makes it a claim the sponsor makes TO FDA, not a UI
+ * selection. Until now nothing in the product could write it: the profile
+ * patch schema had no `predicateDevices` key, so a device program's predicate
+ * arrived only from a seed script, and the two predicate fields on a filed
+ * form traced back to no human action at all.
+ *
+ * So the write is held to the same standard as the rest of the governed
+ * profile: every entry carries an id and a real name, blank optional facts are
+ * DROPPED rather than stored as '' (the eSTAR reports a field blank; it never
+ * prints an empty string), the list can be CLEARED, and the audit entry names
+ * the predicates claimed — the field name alone would not tell an inspector
+ * WHICH device the sponsor asserted equivalence to.
+ */
+describe('PUT /profile — the predicate of record', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockSelectRows.mockReturnValue([PROGRAM]);
+  });
+
+  it('persists a claimed predicate and audits which one was claimed', async () => {
+    const req = makeReq({
+      query: { ident: 'BX-204' },
+      body: {
+        predicateDevices: [
+          {
+            id: 'K221847',
+            name: 'Dexcom G7 CGM System',
+            kNumber: 'K221847',
+            manufacturer: 'Dexcom, Inc.',
+            clearanceDate: '2022-12-08',
+            productCode: 'MDS',
+          },
+        ],
+      },
+    });
+    const res = createMockResponse() as any;
+
+    await getHandler('/profile', 'put')(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(mockUpdateSet).toHaveBeenCalledTimes(1);
+    expect(mockUpdateSet.mock.calls[0][0]).toMatchObject({
+      predicateDevices: [
+        {
+          id: 'K221847',
+          name: 'Dexcom G7 CGM System',
+          kNumber: 'K221847',
+          manufacturer: 'Dexcom, Inc.',
+          clearanceDate: '2022-12-08',
+          productCode: 'MDS',
+        },
+      ],
+    });
+    expect(mockLogAction).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: 'DEVICE_PROFILE_UPDATED',
+        details: expect.objectContaining({
+          fields: ['predicateDevices'],
+          predicateDevices: ['K221847'],
+        }),
+      }),
+    );
+  });
+
+  it('drops a blank optional fact instead of storing an empty string', async () => {
+    const req = makeReq({
+      query: { ident: 'BX-204' },
+      body: {
+        predicateDevices: [
+          { id: 'K221847', name: '  Dexcom G7 CGM System  ', kNumber: 'K221847', manufacturer: '   ' },
+        ],
+      },
+    });
+    const res = createMockResponse() as any;
+
+    await getHandler('/profile', 'put')(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(200);
+    const written = (mockUpdateSet.mock.calls[0][0] as any).predicateDevices[0];
+    expect(written.name).toBe('Dexcom G7 CGM System');
+    expect(written).not.toHaveProperty('manufacturer');
+  });
+
+  it('CLEARS the claim on null — no predicate is not a stale predicate', async () => {
+    const req = makeReq({ query: { ident: 'BX-204' }, body: { predicateDevices: null } });
+    const res = createMockResponse() as any;
+
+    await getHandler('/profile', 'put')(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(mockUpdateSet.mock.calls[0][0]).toMatchObject({ predicateDevices: [] });
+    expect(mockLogAction).toHaveBeenCalledWith(
+      expect.objectContaining({ details: expect.objectContaining({ predicateDevices: [] }) }),
+    );
+  });
+
+  it.each([
+    ['a nameless predicate', [{ id: 'K221847', name: '   ' }]],
+    ['an idless predicate', [{ name: 'Dexcom G7 CGM System' }]],
+    ['two entries claiming the same device', [
+      { id: 'K221847', name: 'Dexcom G7' },
+      { id: 'k221847', name: 'Dexcom G7 again' },
+    ]],
+    ['a bare string list', ['K221847']],
+  ])('refuses %s instead of writing it', async (_label, predicateDevices) => {
+    const req = makeReq({ query: { ident: 'BX-204' }, body: { predicateDevices } });
+    const res = createMockResponse() as any;
+
+    await getHandler('/profile', 'put')(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(400);
+    /* Refused ON THE PREDICATE, not as a side effect of the patch looking
+       empty once an unknown key was stripped — the operator has to be told
+       which value the server would not take. */
+    expect(JSON.stringify(res.json.mock.calls[0][0])).toContain('predicateDevices');
+    expect(mockUpdateSet).not.toHaveBeenCalled();
+    expect(mockUpdateWhere).not.toHaveBeenCalled();
+    expect(mockLogAction).not.toHaveBeenCalled();
   });
 });
