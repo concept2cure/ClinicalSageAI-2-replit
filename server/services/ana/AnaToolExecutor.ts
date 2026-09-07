@@ -16249,6 +16249,58 @@ registerToolHandler('estimate_recorded_shelf_life', async (input, ctx) => {
   }
 });
 
+registerToolHandler('assess_recorded_stability_trend', async (input, ctx) => {
+  const orgId = ctx?.organizationId;
+  if (!orgId) return 'An active organization context is required to read the stability register.';
+  const id = Number(input.study_id);
+  if (!Number.isInteger(id) || id <= 0) {
+    return JSON.stringify({
+      status: 'needs_parameters',
+      message: 'A numeric stability study id is required. Use list_cmc_registers to find it.',
+    });
+  }
+  try {
+    const [{ db }, { stabilityStudies }, { and, eq }, { assessRecordedTrending }] = await Promise.all([
+      import('../../db.js'),
+      import('../../../shared/schema.js'),
+      import('drizzle-orm'),
+      import('../cmc/recorded-stability.js'),
+    ]);
+    const [study] = await db
+      .select({
+        id: stabilityStudies.id,
+        storageConditions: stabilityStudies.storageConditions,
+        stabilityData: stabilityStudies.stabilityData,
+      })
+      .from(stabilityStudies)
+      .where(and(eq(stabilityStudies.id, id), eq(stabilityStudies.organizationId, orgId)));
+    if (!study) {
+      return JSON.stringify({
+        status: 'not_found',
+        message: `No stability study in this organization has id ${id}. List the register and use the ids it returns.`,
+      });
+    }
+    /* The SAME assessment the composed §3.2.S.7 / §3.2.P.8 carry. */
+    const outcome = assessRecordedTrending(study);
+    if (!outcome.ok) {
+      return JSON.stringify({
+        status: 'not_assessable',
+        message: outcome.error,
+        instruction: 'Relay this reason to the user verbatim; the refusal is a property of the recorded data, not of the tool.',
+      });
+    }
+    return JSON.stringify({
+      status: 'computed',
+      engine: 'deterministic',
+      result: outcome.data,
+      instruction:
+        'Report each series: its out-of-trend points (or none) with the prediction interval each fell outside, the slope with its CI and whether it is established, and the projected time to the limit where one is stated. Report every not-assessed series with its reason verbatim. An OOT point is a signal to investigate under the stability protocol, not a disposition; nothing was written.',
+    });
+  } catch (err: any) {
+    return JSON.stringify({ error: `assess_recorded_stability_trend failed: ${err?.message || 'unknown error'}` });
+  }
+});
+
 registerToolHandler('assess_recorded_batch_poolability', async (input, ctx) => {
   const orgId = ctx?.organizationId;
   if (!orgId) return 'An active organization context is required to read the stability register.';

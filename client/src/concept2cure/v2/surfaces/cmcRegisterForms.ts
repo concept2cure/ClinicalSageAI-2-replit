@@ -740,6 +740,9 @@ export interface DrugProductBody {
   strength: string;
   routeOfAdministration?: string;
   composition: { description?: string };
+  /* §3.2.P.3.2's batch formula — a per-batch quantity statement, not the
+     per-unit composition above; the composer keeps them apart deliberately. */
+  batchFormula: { description?: string };
   manufacturingProcess: { description?: string; site?: string };
   packagingMaterials: { containerClosure?: string };
   status: string;
@@ -759,6 +762,11 @@ export function drugProductForm(row?: Partial<DrugProductBody> | null): C2CFormC
       { key: 'routeOfAdministration', label: 'Route of administration', type: 'select', options: ROUTES, half: true, default: row?.routeOfAdministration ?? '' },
       { key: 'status', label: 'Status', type: 'select', options: MATERIAL_STATUSES, required: true, half: true, default: row?.status ?? 'development' },
       { key: 'composition', label: 'Composition', type: 'textarea', default: row?.composition?.description ?? '', placeholder: 'Active and each excipient with its function and quantity per unit — the §3.2.P.1 table' },
+      /* §3.2.P.3.2's batch formula, which had no field anywhere: the column and
+         the mapper both existed, so the section listed `formulation` as a
+         missing input that nothing in the product could supply, and §3.2.P.3
+         could not be completed or approved. */
+      { key: 'batchFormula', label: 'Batch formula', type: 'textarea', default: row?.batchFormula?.description ?? '', placeholder: 'Each component and its quantity per batch, with the batch size — the §3.2.P.3.2 table' },
       { key: 'process', label: 'Manufacturing process', type: 'textarea', default: row?.manufacturingProcess?.description ?? '', placeholder: 'The §3.2.P.3.3 process description' },
       { key: 'site', label: 'Manufacturing site', type: 'text', half: true, default: row?.manufacturingProcess?.site ?? '' },
       { key: 'containerClosure', label: 'Container closure system', type: 'text', half: true, default: row?.packagingMaterials?.containerClosure ?? '', placeholder: 'e.g. 2R Type I glass vial, bromobutyl stopper' },
@@ -772,6 +780,7 @@ export function drugProductBody(v: Record<string, string>, projectId?: string): 
     dosageForm: req(v.dosageForm),
     strength: req(v.strength),
     composition: { ...(opt(v.composition) ? { description: opt(v.composition) } : {}) },
+    batchFormula: { ...(opt(v.batchFormula) ? { description: opt(v.batchFormula) } : {}) },
     manufacturingProcess: {
       ...(opt(v.process) ? { description: opt(v.process) } : {}),
       ...(opt(v.site) ? { site: opt(v.site) } : {}),

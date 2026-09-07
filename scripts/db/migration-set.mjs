@@ -1922,6 +1922,13 @@ export const C2C_MIGRATION_FILES = [
   // pg_policies guard sees it and leaves it alone.
   'migrations/20260906_ivdr_history_tenant_isolation.sql',
 
+  // §3.2.P.8's only producer of `comparabilityStatus` had no creator on any
+  // applier (its DDL lives in migrations/0006_regulatory_atoms.sql, which is on
+  // none) and, where it did exist, an FK pinning project_id to the empty
+  // cmc_projects table — so every write from a real program answered 500 and
+  // the section could never complete. Creator + guarded constraint drop.
+  'migrations/20260907_cmc_comparability_register_reachable.sql',
+
   UUID_TENANT_ISOLATION_NONPUBLIC,
 
   // ── Tenant isolation for everything the set just created (ledger C-33) ───

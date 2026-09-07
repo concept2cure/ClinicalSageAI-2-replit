@@ -929,6 +929,7 @@ export interface DrugProductApiRow {
   strength: string;
   routeOfAdministration: string | null;
   composition?: { description?: string } | null;
+  batchFormula?: { description?: string } | null;
   manufacturingProcess?: { description?: string; site?: string } | null;
   packagingMaterials?: { containerClosure?: string } | null;
   status?: string | null;
@@ -942,6 +943,7 @@ function dpDefaults(r: DrugProductApiRow) {
     strength: r.strength ?? '',
     routeOfAdministration: r.routeOfAdministration ?? '',
     composition: { description: r.composition?.description },
+    batchFormula: { description: r.batchFormula?.description },
     manufacturingProcess: {
       description: r.manufacturingProcess?.description,
       site: r.manufacturingProcess?.site,
