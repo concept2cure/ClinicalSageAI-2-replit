@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-07T23:14:36.264Z",
+  "generatedAt": "2026-09-07T23:24:26.581Z",
   "git": {
-    "sha": "da184241dccfd12bbfbf9e756dcf17f1169d8d87",
+    "sha": "8edf92eb3cd41096de39122c321760b5fb42f3d4",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -15,7 +15,7 @@
     "duplicateBasenames": 209,
     "contentDuplicateGroups": 0,
     "contentDuplicateFiles": 0,
-    "largeFilesByBytes": 41,
+    "largeFilesByBytes": 42,
     "largeFilesByLines": 95
   },
   "findings": {
@@ -1981,7 +1981,7 @@
     "largeFilesByBytes": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 1017534
+        "bytes": 1019871
       },
       {
         "file": "shared/schema.ts",
@@ -2084,6 +2084,10 @@
         "bytes": 125182
       },
       {
+        "file": "server/services/__tests__/cmcWriteThroughMappers.test.ts",
+        "bytes": 122673
+      },
+      {
         "file": "server/services/__tests__/ana-ri.test.ts",
         "bytes": 119187
       },
@@ -2094,10 +2098,6 @@
       {
         "file": "server/services/ana/intelligence-questions/flows/protocol-development.ts",
         "bytes": 116241
-      },
-      {
-        "file": "server/services/__tests__/cmcWriteThroughMappers.test.ts",
-        "bytes": 115562
       },
       {
         "file": "server/services/intelligent-report-engine.ts",
@@ -2113,7 +2113,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/cmcRegisterForms.ts",
-        "bytes": 113067
+        "bytes": 113867
       },
       {
         "file": "server/routes/concept2cure.ts",
@@ -2140,6 +2140,10 @@
         "bytes": 104231
       },
       {
+        "file": "server/api/cmc/routes.ts",
+        "bytes": 101002
+      },
+      {
         "file": "server/services/ai-gateway/gateway.ts",
         "bytes": 100587
       }
@@ -2151,7 +2155,7 @@
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 19719
+        "lines": 19771
       },
       {
         "file": "server/routes/authoring.router.ts",
@@ -2282,6 +2286,10 @@
         "lines": 2327
       },
       {
+        "file": "server/services/__tests__/cmcWriteThroughMappers.test.ts",
+        "lines": 2323
+      },
+      {
         "file": "server/services/ana/intelligence-questions/flows/nda-submission.ts",
         "lines": 2278
       },
@@ -2290,16 +2298,12 @@
         "lines": 2276
       },
       {
+        "file": "server/api/cmc/routes.ts",
+        "lines": 2248
+      },
+      {
         "file": "server/routes/c2c/reviews.ts",
         "lines": 2240
-      },
-      {
-        "file": "server/api/cmc/routes.ts",
-        "lines": 2220
-      },
-      {
-        "file": "server/services/__tests__/cmcWriteThroughMappers.test.ts",
-        "lines": 2196
       },
       {
         "file": "server/services/trial-statistics/trial-statistics-knowledge.ts",
@@ -2363,7 +2367,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/cmcRegisterForms.ts",
-        "lines": 1959
+        "lines": 1968
       },
       {
         "file": "server/services/gcp-operations/gcp-operations-knowledge.ts",
@@ -2379,7 +2383,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/cmcRegisters.tsx",
-        "lines": 1910
+        "lines": 1912
       },
       {
         "file": "server/routes/regulatory-digital-twin.ts",
@@ -2475,7 +2479,7 @@
       },
       {
         "file": "server/services/cmc-write-through.ts",
-        "lines": 1708
+        "lines": 1717
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/TaskBoard.tsx",
@@ -2532,7 +2536,7 @@
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
       "duplicateGroups": 403,
-      "largeByBytes": 31,
+      "largeByBytes": 32,
       "largeByLines": 78
     },
     {
