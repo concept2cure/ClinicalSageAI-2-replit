@@ -73,11 +73,20 @@ const board = (overrides: Record<string, unknown> = {}) => ({
 
 const BOARD = /^\/api\/cmc\/module3-board(\?projectId=P-1)?$/;
 const APPROVE = /\/api\/cmc\/module3-os\/sections\/P-1\/[^/]+\/approve$/;
+const READINESS = /^\/api\/cmc\/module3-os\/readiness\/P-1$/;
 
-/** The board answers as given; the approve route answers with `approve`. */
-function wire(boardData: unknown, approve?: () => Response) {
+/** A readiness verdict as GET /readiness returns it. */
+const readinessOf = (overrides: Record<string, unknown> = {}) => ({
+  totalSections: 1, approvedSections: 1, staleSections: 0, openCriticalContradictions: 0,
+  sectionsWithoutProvenance: 0, incompleteApprovedSections: [] as string[], governedStateEvaluated: true, exportReady: true,
+  ...overrides,
+});
+
+/** The board answers as given; the approve route answers with `approve`; readiness with `readiness`. */
+function wire(boardData: unknown, approve?: () => Response, readiness?: () => Response) {
   apiRequest.mockImplementation(async (m: string, u: string) => {
     if (m === 'GET' && BOARD.test(u)) return res({ success: true, data: boardData });
+    if (m === 'GET' && READINESS.test(u)) return readiness ? readiness() : res({ success: true, data: readinessOf() });
     if (m === 'POST' && APPROVE.test(u)) return approve ? approve() : res({ success: true, versionNumber: 1 });
     return res({ success: true, data: [] });
   });
@@ -196,5 +205,35 @@ describe('CmOverview — a failed register read is an error, never an empty regi
     expect(failed!.textContent).toMatch(/failed read, not an empty register/i);
     expect(screen.queryByText(/No submissions yet/)).toBeNull();
     expect(screen.queryByText(/No CMC submissions are in scope yet/)).toBeNull();
+  });
+});
+
+describe('CmOverview — the build-state card reads the export gate, never a percentage', () => {
+  it('says Not export ready with the gate\'s reasons when every section is approved but one is incomplete', async () => {
+    wire(
+      board({ sections: [section('3.2.S.1', 'approved', 100), section('3.2.P.6', 'approved', 0, ['containerClosureDescription'])] }),
+      undefined,
+      () => res({ success: true, data: readinessOf({ totalSections: 2, approvedSections: 2, incompleteApprovedSections: ['3.2.P.6'], exportReady: false }) }),
+    );
+    render(<CmOverview ask={vi.fn()} />);
+    await screen.findByText('Not export ready');
+    expect(screen.queryByText('Export ready')).toBeNull();
+    expect(screen.getByText(/100% approved/)).toBeTruthy();
+    expect(screen.getByText(/export blocked: 1 approved but incomplete \(§3\.2\.P\.6\)/)).toBeTruthy();
+  });
+
+  it('says Export ready only when the gate does', async () => {
+    wire(board({ sections: [section('3.2.S.1', 'approved', 100)] }));
+    render(<CmOverview ask={vi.fn()} />);
+    await screen.findByText('Export ready');
+  });
+
+  it('renders a failed readiness read as a failed read, not as ready and not as not-ready', async () => {
+    wire(board({ sections: [section('3.2.S.1', 'approved', 100)] }), undefined, () => res({ success: false, error: 'readiness store unavailable' }, 500));
+    render(<CmOverview ask={vi.fn()} />);
+    await screen.findByText('Export readiness could not be read');
+    expect(screen.queryByText('Export ready')).toBeNull();
+    expect(screen.queryByText('Not export ready')).toBeNull();
+    expect(screen.getByText(/failed read, not a pass/)).toBeTruthy();
   });
 });
