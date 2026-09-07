@@ -1,14 +1,12 @@
-# Roadmap item 3 — the filed artifact, retained and bound (parts 1 and 3 of 3)
+# Roadmap item 3 — the filed artifact, retained and bound
 
 Date: 2026-09-07. Branch `concept2cure-v2`. Roadmap item 3 of
-`docs/handoff/HANDOFF_DEVICE.md` §6. Item 3 has three parts; this closes two of them.
-Part 2 — the **signed** draft→filed transition — is specified in §5 below and is the next
-slice, now that there is a retained artifact for it to bind to.
+`docs/handoff/HANDOFF_DEVICE.md` §6, all three parts.
 
 | part | state |
 |---|---|
 | 1. Store the delivered eSTAR bytes immutably with their sha256 | **done** — §2 |
-| 2. Make draft→filed a governed, signed transition bound to that hash, server-stamped | **open** — §5 |
+| 2. Make draft→filed a governed, signed transition bound to that hash, server-stamped | **done** — §5 |
 | 3. Make the unplaced-export audit actually propagate failure | **done** — §3 |
 
 ## 1. What was wrong
@@ -105,37 +103,69 @@ wiring specifically, the three new cases were run against a stashed `510k-estar-
 | `tests/services/governed-export-consequence.test.ts` | 11 passed (5 new, 3 failing first) |
 | `tests/routes/estar-official-pdf.test.ts` | 28 passed (3 new, proven failing on the stashed route) |
 | `tests/routes/estar-export-governance.test.ts` | 15 passed (1 new; the un-audited refusal at route level) |
-| vault + estar + middleware + `tests/routes` + `tests/services` + device golden journey | 163 files / 2031 passed |
+| `server/services/pathway-engines/estar/__tests__/estar-submission-service.test.ts` | 11 passed (4 new for the signed filing, failing first) |
+| `server/services/pathway-engines/estar/__tests__/estar-artifact-retention.test.ts` | 10 passed (2 more for the retained-artifact list) |
+| `tests/routes/estar-submission-filing.test.ts` | 8 passed (new); 7 of 8 proven failing against the stashed route + service, the 8th being the unchanged-behaviour control |
+| `client/.../__tests__/estarFilingSignature.test.tsx` | 4 passed (new); 4 of 4 proven failing against the stashed panel |
+| vault + estar + part11 + middleware + `tests/routes` + `tests/services` + device golden journey | 165 files / 2052 passed |
+| client suites (`mdx` + `v2`) | 276 files / 3334 passed |
 | `npx tsc --noEmit` | clean |
 | `ci:governed-export-consequence-shape`, `ci:fabricated-identity`, `ci:drizzle-tenant-scope`, `ci:session-scoped-rls-bypass`, `check:catalog-copy`, `ci:ectd-stubs`, ledger | all pass |
 
-## 5. Part 2, specified — the signed filing
+## 5. Filing is a signature
 
-`PATCH /api/510k/estar/submissions/:id` moves a filing to `filed` with a **client-supplied**
-`filedAt` (`advanceSubmissionSchema`: `z.coerce.date().optional()`), a free-text tracking
-number, and no link to any artifact. Now that a retained document exists, the fix is:
+`PATCH /api/510k/estar/submissions/:id` moved a filing to `filed` with a **client-supplied**
+`filedAt` (`z.coerce.date().optional()`), a free-text tracking number and no link to any
+artifact. Three defects at once: a Part 11 record whose date is supplied by the party being
+recorded is a backdating hole; "filed" pointed at nothing, so nobody could open what was
+filed; and the most consequential act in the workflow required no signature at all.
 
-1. **Server-stamp `filedAt`.** A filing tracked in the platform is stamped by the platform's
-   clock. Recording a historical filing made elsewhere is an import, not a lifecycle
-   transition, and should not share this door.
-2. **Bind the transition to the retained artifact** — the `vault.documents` id plus its
-   `content_hash` — verified org-scoped against the program, so the binding names bytes the
-   platform actually holds rather than a hash the client typed.
-3. **Sign it** through `persistGovernedActionSignature`
-   (`server/services/part11/signature-persistence.ts`), the single write path into
-   `electronic_signatures`, which exists for exactly this case: "domain endpoints that
-   already hold the content digest of what they persisted". The signature row commits on the
-   same transaction as the status change.
+**`filedAt` is server-stamped.** The field is gone from the request schema entirely, not
+merely ignored. Recording a filing made elsewhere on an earlier date is an *import*, and an
+import should not share a door with a lifecycle transition.
 
-Two additive columns on `estar_submissions` (`filed_artifact_document_id`,
-`filed_artifact_sha256`). Per RULE 1 the migration is additive and `IF NOT EXISTS`-guarded,
-and goes in before the final RLS sweep pair.
+**The filing binds to the retained artifact.** The caller names the `vault.documents` id;
+the server resolves it **org-scoped** and reads the `content_hash` **from that row**. The
+client never supplies a digest, so a filing cannot claim bytes nobody stored. Two additive
+columns hold it (`migrations/20260908b_estar_submissions_filed_artifact.sql`,
+IF NOT EXISTS, before the final RLS sweep pair, per RULE 1).
+
+**It is signed.** `applySignedFiling` runs the whole act on one transaction:
+
+1. resolve the artifact — refused before anything is written if this org does not hold it;
+2. `UPDATE … WHERE id AND organization_id AND status = <the status we validated from>` — a
+   row that moved underneath matches nothing, which is a `NOT_FOUND`, not a signature
+   attesting a transition that did not happen;
+3. `recordGovernedAction` (the sha256-chained ledger pair);
+4. `persistGovernedActionSignature` — the **single** write path into `electronic_signatures`
+   — bound with a new, explicit basis `filed-estar-artifact-sha256`, and an `extraManifest`
+   naming the document, so an auditor reading the manifest does not have to join a hash back
+   to a document to learn what was filed.
+
+Re-authentication runs **first** and only for this transition (§11.200, captured at signing
+time, never reused from the session). What is recorded is what was actually verified:
+`password+totp` and `secondFactorVerified: true` only when a token was presented — anything
+else would be a false attestation on the signature row.
+
+**On screen.** The one unlabelled "Filed" button is now "Sign and file…", which opens a form
+asking for the retained eSTAR, a reason (≥ 8 characters), the §11.50 meaning, and the
+credential. `GET /retained-artifacts` supplies the candidates, scoped by the same predicate
+the write re-checks, so the picker can never offer something the signature would refuse. With
+nothing retained the form says exactly that — you cannot knowingly sign a binding to nothing
+— and a refusal keeps the form open with the **server's own** reason, because a mistyped
+password should not cost the whole signing session. Every state goes through the shared
+`ErrorState` / `EmptyState` primitives; the repo's own `dataGateContract` test caught the
+first draft hand-rolling two alert panels.
 
 ## 6. What this does NOT do
 
 - Retention stores what the platform produced. It does not make the artifact **complete** —
   0 of 112/140 attachment slots are still populated (roadmap item 4).
-- Nothing here transmits anything (item 6, blocked on JM).
+- Nothing here transmits anything (item 6, blocked on JM). A signed filing records that a
+  sponsor filed; it does not send anything to FDA.
+- Filings recorded before this change carry no binding. They are shown as
+  "No eSTAR bound to this filing" rather than back-filled — a binding nobody made is not a
+  binding.
 - The unfaithful `logAction` fakes elsewhere in the suite are left alone; they pass because
   their paths do not read the outcome. A fake that cannot produce the real shape is a latent
   version of exactly this defect, and is flagged in HANDOFF §6 rather than fixed blind.

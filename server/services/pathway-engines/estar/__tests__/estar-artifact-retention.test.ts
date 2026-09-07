@@ -25,11 +25,16 @@ import { createHash } from 'node:crypto';
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-const { ingestVaultDocument } = vi.hoisted(() => ({ ingestVaultDocument: vi.fn() }));
+const { ingestVaultDocument, poolQuery } = vi.hoisted(() => ({
+  ingestVaultDocument: vi.fn(),
+  poolQuery: vi.fn(),
+}));
 vi.mock('../../../vault/vault-ingest.service', () => ({ ingestVaultDocument }));
+vi.mock('../../../../db', () => ({ pool: { query: poolQuery }, db: {} }));
 
 import {
   EstarRetentionError,
+  listRetainedEstarArtifacts,
   retainOfficialEstar,
 } from '../estar-artifact-retention';
 
@@ -140,5 +145,59 @@ describe('retainOfficialEstar', () => {
     await expect(retainOfficialEstar(input)).rejects.toMatchObject({
       code: 'RETAINED_HASH_MISMATCH',
     });
+  });
+});
+
+/**
+ * A filing is SIGNED against one retained eSTAR, so an operator has to be able
+ * to see which ones exist — you cannot knowingly sign a binding you cannot
+ * choose. The list is scoped by the same organization predicate the signed
+ * filing re-checks on write, so it can never offer an artifact the signature
+ * would then refuse.
+ */
+describe('listRetainedEstarArtifacts', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it('reads this org only, only retained eSTARs, and only live rows', async () => {
+    poolQuery.mockResolvedValue({ rows: [] });
+
+    await listRetainedEstarArtifacts(2);
+
+    const [sql, params] = poolQuery.mock.calls[0];
+    expect(params[0]).toBe(2);
+    expect(params[1]).toBe('eSTAR-%');
+    expect(sql).toMatch(/organization_id\s*=\s*\$1/);
+    expect(sql).toMatch(/deleted_at IS NULL/);
+    expect(sql).toMatch(/ORDER BY created_at DESC/);
+  });
+
+  it('maps the row to what a signer needs to tell two eSTARs apart', async () => {
+    poolQuery.mockResolvedValue({
+      rows: [
+        {
+          id: 'doc-1',
+          program_id: 'prog-1',
+          document_code: 'eSTAR-510k-device',
+          version: 'sha256-0123456789abcdef',
+          content_hash: 'f'.repeat(64),
+          file_name: 'BX-204_eSTAR.pdf',
+          file_size: '5280666',
+          created_at: '2026-09-07T10:00:00.000Z',
+        },
+      ],
+    });
+
+    expect(await listRetainedEstarArtifacts(2)).toEqual([
+      {
+        documentId: 'doc-1',
+        programId: 'prog-1',
+        documentCode: 'eSTAR-510k-device',
+        version: 'sha256-0123456789abcdef',
+        contentHash: 'f'.repeat(64),
+        fileName: 'BX-204_eSTAR.pdf',
+        fileSize: 5280666,
+        createdAt: '2026-09-07T10:00:00.000Z',
+      },
+    ]);
   });
 });
