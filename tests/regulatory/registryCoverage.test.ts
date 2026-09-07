@@ -134,11 +134,35 @@ describe('Registry coverage', () => {
       'ICH_CTD_M1', 'ICH_CTD_M2', 'ICH_CTD_M3', 'ICH_CTD_M4', 'ICH_CTD_M5',
     ] as const;
 
+    /* Two facts, deliberately separated.
+     *
+     * This case's subject is the SECTION BLUEPRINT, and that assertion still
+     * runs for every id. It also used to assert `readiness !== 'catalog_only'`,
+     * which was a different claim riding along: readiness is now capped by
+     * whether the governed path can start the filing at all, and for the
+     * Swissmedic, ANVISA, CDSCO and HSA ids in this list it cannot —
+     * AGENCY_TO_CODE has no value for those agencies, so
+     * c2c_documents_agency_check rejects the insert. Asserting both through one
+     * expectation is what let a type with a real blueprint read as ready when
+     * nothing could be built. Each fact is now asserted on its own terms, which
+     * is stricter than the single expectation it replaces.
+     */
     it.each(NOW_BUILDABLE)('%s has a real (non-generic) section blueprint', (id) => {
       const cov = getDocumentCoverage(id);
       expect(cov, `${id} missing from registry`).not.toBeNull();
       expect(cov!.sectionBlueprint, `${id} still on the generic fallback`).not.toBe('generic');
-      expect(cov!.readiness).not.toBe('catalog_only');
+    });
+
+    it.each(NOW_BUILDABLE)('%s reports a readiness its governed path can deliver', (id) => {
+      const cov = getDocumentCoverage(id)!;
+      if (cov.governedAuthoring === 'supported') {
+        expect(cov.readiness, `${id} is startable but reads catalog_only`).not.toBe('catalog_only');
+      } else {
+        expect(
+          cov.readiness,
+          `${id} cannot be started (${cov.governedAuthoring}) yet reports ${cov.readiness}`,
+        ).toBe('catalog_only');
+      }
     });
 
     it('the CSR blueprint follows the ICH E3 structure (efficacy + safety evaluation)', () => {
@@ -166,8 +190,33 @@ describe('Registry coverage', () => {
       // falls through to the generic CTD fallback. A new registry entry added
       // without a matching SECTION_BLUEPRINTS entry (project-bootstrap.ts) will
       // trip this; add the blueprint rather than relaxing the assertion.
-      const catalogOnly = report.entries.filter((e) => e.readiness === 'catalog_only');
-      expect(catalogOnly.map((e) => e.id)).toEqual([]);
+      //
+      // This asserts on the BLUEPRINT, which is what the paragraph above
+      // describes. It used to assert `readiness !== 'catalog_only'`, which is a
+      // different claim: readiness is now capped by whether the governed path
+      // can start the filing, so a type with a perfectly good blueprint and an
+      // agency c2c_documents cannot store reads catalog_only — correctly.
+      const generic = report.entries.filter((e) => e.sectionBlueprint === 'generic');
+      expect(generic.map((e) => e.id)).toEqual([]);
+    });
+
+    it('reports the startability gap rather than showing none', () => {
+      /* The report used to show 234 of 234 entries at `buildable` or better and
+         zero `catalog_only`, so the backlog view was empty and the portfolio
+         read fully covered. 54 of those entries name an agency AGENCY_TO_CODE
+         has no value for — Swissmedic, ANVISA, CDSCO, HSA, Notified_Body, ISO,
+         IEC, IMDRF — so `c2c_documents_agency_check` rejects the insert and the
+         wizard returns NO_RULE_PACK before a row is written. Nothing can be
+         built for them, and the report now says so. */
+      const s = report.summary;
+      expect(s.byGovernedAuthoring.supported + s.byGovernedAuthoring.unmapped_agency
+             + s.byGovernedAuthoring.unmapped_program).toBe(s.total);
+      expect(s.byGovernedAuthoring.unmapped_agency, 'the gap is reported as zero again').toBeGreaterThan(0);
+      // Every unstartable entry is in the backlog view, which is what
+      // getCatalogOnlyGaps exists to surface.
+      expect(s.byReadiness.catalog_only).toBeGreaterThanOrEqual(s.byGovernedAuthoring.unmapped_agency);
+      // And the product's own supported filings are still the majority.
+      expect(s.byGovernedAuthoring.supported).toBeGreaterThan(s.byGovernedAuthoring.unmapped_agency);
     });
 
     it('every active document type resolves to a real, family-appropriate task plan', () => {
