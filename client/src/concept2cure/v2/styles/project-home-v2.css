@@ -15,6 +15,37 @@
   padding:28px 32px 80px;
 }
 
+/* ── Projects directory — summary line, toolbar, two-column cards ──
+   Replaces the four `.metric` tiles and the `.launch-grid` that used to head
+   this surface. The figures survive (see `kv()` in Projects.tsx — every one is
+   an em dash while the read is in flight or failed); they are one quiet line
+   now instead of four large ones, so the directory starts with the projects. */
+.c2c-v2 .pj-summary{display:flex;flex-wrap:wrap;align-items:center;gap:6px 18px;margin:2px 0 18px;font-size:12px;color:var(--text-400);}
+.c2c-v2 .pj-summary-i strong{font-weight:600;color:var(--text-200);font-variant-numeric:tabular-nums;}
+.c2c-v2 .pj-summary-i[data-tone="err"] strong{color:var(--error);}
+.c2c-v2 .pj-summary-i[data-tone="warn"] strong{color:var(--warning);}
+
+.c2c-v2 .pj-toolbar{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+.c2c-v2 .pj-search{display:flex;align-items:center;gap:8px;min-width:0;flex:0 1 320px;padding:6px 11px;border:1px solid var(--bg-200);border-radius:9px;background:var(--bg-000);}
+.c2c-v2 .pj-search:focus-within{border-color:var(--accent-200);box-shadow:0 0 0 3px var(--accent-000);}
+.c2c-v2 .pj-search .ico{flex-shrink:0;color:var(--text-400);display:inline-flex;}
+.c2c-v2 .pj-search .ico svg{width:14px;height:14px;}
+.c2c-v2 .pj-search-i{flex:1;min-width:0;border:0;background:none;font-size:13px;color:var(--text-100);outline:none;}
+.c2c-v2 .pj-search-i::placeholder{color:var(--text-400);}
+
+.c2c-v2 .pj-cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;align-items:start;}
+.c2c-v2 .pj-card{display:flex;flex-direction:column;padding:16px 18px;border:1px solid var(--bg-200);border-radius:12px;background:var(--bg-000);text-align:left;transition:background var(--dur),border-color var(--dur);}
+.c2c-v2 .pj-card:hover{background:var(--bg-050);border-color:var(--bg-300);}
+.c2c-v2 .pj-card-t{font-size:14px;font-weight:600;color:var(--text-100);letter-spacing:-.01em;line-height:1.35;}
+.c2c-v2 .pj-card-m{margin-top:3px;font-size:11.5px;color:var(--text-400);}
+.c2c-v2 .pj-card-r{display:flex;justify-content:space-between;font-size:11px;color:var(--text-300);font-variant-numeric:tabular-nums;}
+.c2c-v2 .pj-card-f{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:12px;}
+.c2c-v2 .pj-card-blk,.c2c-v2 .pj-card-ok{display:inline-flex;align-items:center;gap:5px;font-size:11px;}
+.c2c-v2 .pj-card-blk{color:var(--warning);}
+.c2c-v2 .pj-card-ok{color:var(--success);}
+.c2c-v2 .pj-card-blk svg,.c2c-v2 .pj-card-ok svg{width:12px;height:12px;flex-shrink:0;}
+@media(max-width:900px){.c2c-v2 .pj-cards{grid-template-columns:1fr;}}
+
 /* ── New project wizard — full canvas ──
    Was an 880px `.esign-modal` over the portfolio, with a 440px scroll pane
    inside it for the global filing registry. It is now a view of the `projects`
