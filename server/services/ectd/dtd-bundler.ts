@@ -45,6 +45,18 @@ export interface VendoredDtd {
 /** The ICH backbone DTD every region's index.xml references. */
 export const ICH_BACKBONE_DTD = 'ich-ectd-3-2.dtd';
 
+/** The ICH stylesheet index.xml references via <?xml-stylesheet?> (util/style/). */
+export const ICH_BACKBONE_STYLESHEET = 'ectd-2-0.xsl';
+
+/** Region → the regional stylesheet its Module 1 backbone references. Only the
+ *  FDA backbone emits a stylesheet processing instruction today
+ *  (`../../util/style/us-regional.xsl`); the other regional builders emit none,
+ *  so requiring a stylesheet they never reference would over-block. Extend this
+ *  map in the same change that adds a PI to another backbone. */
+const REGIONAL_STYLESHEET: Partial<Record<DtdRegion, string>> = {
+  fda: 'us-regional.xsl',
+};
+
 /** Region → the regional backbone DTD its m1 references (plus the ICH backbone).
  *  FDA is `us-regional-v3-3.dtd` — the current FDA eCTD Backbone Files
  *  Specification for Module 1 (DTD version 3.3) referenced by buildFdaBackbone.
@@ -85,11 +97,18 @@ export function requiredDtdsForRegion(region: DtdRegion): string[] {
   return regional ? [ICH_BACKBONE_DTD, regional] : [ICH_BACKBONE_DTD];
 }
 
+/** The stylesheet filenames a region's package must contain under util/style/
+ *  for every <?xml-stylesheet?> its backbones emit to resolve. */
+export function requiredStylesheetsForRegion(region: DtdRegion): string[] {
+  const regional = REGIONAL_STYLESHEET[region];
+  return regional ? [ICH_BACKBONE_STYLESHEET, regional] : [ICH_BACKBONE_STYLESHEET];
+}
+
 /**
  * List the vendored `*.dtd` files in the drop-point directory. Returns [] when
  * the directory is absent or empty — never throws (graceful by design).
  */
-export async function listVendoredDtds(dir: string = resolveDtdDir()): Promise<VendoredDtd[]> {
+async function listVendored(dir: string, extension: string): Promise<VendoredDtd[]> {
   let names: string[];
   try {
     names = await fs.readdir(dir);
@@ -98,7 +117,7 @@ export async function listVendoredDtds(dir: string = resolveDtdDir()): Promise<V
   }
   const out: VendoredDtd[] = [];
   for (const name of names.sort()) {
-    if (!name.toLowerCase().endsWith('.dtd')) continue;
+    if (!name.toLowerCase().endsWith(extension)) continue;
     try {
       out.push({ fileName: name, bytes: await fs.readFile(path.join(dir, name)) });
     } catch {
@@ -108,10 +127,24 @@ export async function listVendoredDtds(dir: string = resolveDtdDir()): Promise<V
   return out;
 }
 
+export async function listVendoredDtds(dir: string = resolveDtdDir()): Promise<VendoredDtd[]> {
+  return listVendored(dir, '.dtd');
+}
+
+/** List the vendored `*.xsl` stylesheets in the same drop-point. Same contract:
+ *  [] when absent, never throws. */
+export async function listVendoredStylesheets(dir: string = resolveDtdDir()): Promise<VendoredDtd[]> {
+  return listVendored(dir, '.xsl');
+}
+
 export interface DtdReadinessInput {
   region: DtdRegion;
   /** Filenames actually present in the package's util/dtd/. */
   present: string[];
+  /** Filenames actually present in the package's util/style/. Optional so
+   *  existing callers keep compiling — but absent means NONE: a caller that
+   *  forgets it cannot clear the gate by omission. */
+  presentStylesheets?: string[];
   environment: 'staging' | 'production';
   /** Wire from `ECTD_REQUIRE_DTD`; false ⇒ report-only (never blocks). */
   requireDtd: boolean;
@@ -121,31 +154,45 @@ export interface DtdReadinessResult {
   required: string[];
   present: string[];
   missing: string[];
-  /** True when every required DTD for the region is present. */
+  /** Stylesheets the region's backbones reference (util/style/). */
+  requiredStylesheets: string[];
+  presentStylesheets: string[];
+  missingStylesheets: string[];
+  /** True when every required DTD AND stylesheet for the region is present. */
   selfContained: boolean;
   cleared: boolean;
   blockers: string[];
 }
 
 /**
- * Evaluate DTD self-containment for a region's package. Blocks only when DTDs
- * are required AND the package is for production AND a required DTD is missing —
- * the "do not ship a production eCTD that references DTDs it doesn't contain"
- * rule. Staging and `requireDtd:false` never block (they report for visibility).
+ * Evaluate self-containment of a region's package: every DTD its DOCTYPEs
+ * reference (util/dtd/) AND every stylesheet its <?xml-stylesheet?> PIs
+ * reference (util/style/) must ship inside the package. Blocks only when
+ * required AND production AND something is missing — the "do not ship a
+ * production eCTD that references files it doesn't contain" rule. Staging and
+ * `requireDtd:false` never block (they report for visibility). One flag,
+ * ECTD_REQUIRE_DTD, governs both kinds of supportive file.
  */
 export function assessDtdReadiness(input: DtdReadinessInput): DtdReadinessResult {
   const required = requiredDtdsForRegion(input.region);
   const presentSet = new Set(input.present.map((p) => p.toLowerCase()));
   const missing = required.filter((r) => !presentSet.has(r.toLowerCase()));
-  const selfContained = missing.length === 0;
+
+  const requiredStylesheets = requiredStylesheetsForRegion(input.region);
+  const presentStylesheets = input.presentStylesheets ?? [];
+  const presentStyleSet = new Set(presentStylesheets.map((p) => p.toLowerCase()));
+  const missingStylesheets = requiredStylesheets.filter((r) => !presentStyleSet.has(r.toLowerCase()));
+
+  const selfContained = missing.length === 0 && missingStylesheets.length === 0;
   const blockers: string[] = [];
 
   if (input.requireDtd && input.environment === 'production' && !selfContained) {
+    const absent = [...missing, ...missingStylesheets];
     blockers.push(
-      `${missing.length} required eCTD DTD(s) missing from the package (${missing.join(', ')}). ` +
-        `A production submission must be DTD self-contained. Place the licensed DTDs in ` +
-        `assets/ectd-dtd/ (or set ECTD_DTD_DIR), or clear ECTD_REQUIRE_DTD for non-submission builds. ` +
-        `See assets/ectd-dtd/README.md.`
+      `${absent.length} required eCTD supportive file(s) missing from the package (${absent.join(', ')}). ` +
+        `A production submission must be self-contained: its backbones reference util/dtd/*.dtd and ` +
+        `util/style/*.xsl, so the package must ship them. Place the agency files in assets/ectd-dtd/ ` +
+        `(or set ECTD_DTD_DIR), or clear ECTD_REQUIRE_DTD for non-submission builds. See assets/ectd-dtd/README.md.`
     );
   }
 
@@ -153,6 +200,9 @@ export function assessDtdReadiness(input: DtdReadinessInput): DtdReadinessResult
     required,
     present: input.present,
     missing,
+    requiredStylesheets,
+    presentStylesheets,
+    missingStylesheets,
     selfContained,
     cleared: blockers.length === 0,
     blockers,
@@ -166,9 +216,12 @@ export function dtdRequiredFromEnv(env: NodeJS.ProcessEnv = process.env): boolea
 
 export default {
   ICH_BACKBONE_DTD,
+  ICH_BACKBONE_STYLESHEET,
   resolveDtdDir,
   requiredDtdsForRegion,
+  requiredStylesheetsForRegion,
   listVendoredDtds,
+  listVendoredStylesheets,
   assessDtdReadiness,
   dtdRequiredFromEnv,
 };
