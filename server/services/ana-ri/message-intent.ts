@@ -19,87 +19,20 @@ interface SlashCommand {
   args: string;
 }
 
-export const SUPPORTED_SLASH_COMMANDS = [
-  'risk',
-  'readiness',
-  'precedent',
-  'draft',
-  'preflight',
-  'claims',
-  'recommend',
-  'next',
-  'simulate',
-  'signals',
-  'export',
-  'assess',
-  'twin',
-  'consistency',
-  'deficiencies',
-  'knowledge',
-  'decisions',
-  'help',
-  'sap',
-  'power',
-  'dose',
-  'defensibility',
-  'design',
-  'safety',
-  'cmc',
-  'csr',
-  'device',
-  'diagnostics',
-  'cms',
-  'ectd',
-  'audit',
-  'amend',
-  'review',
-  'memo',
-  'brief',
-  'strategy',
-  'freeze',
-  'sign',
-  'scan',
-  'checklist',
-  'submit',
-  'workflow',
-  'status',
-  'narrative',
-  'report',
-  'iss',
-  'ise',
-  'ib',
-  'smpc',
-  'rmp',
-  'uspi',
-  'haq',
-  'ask',
-  'wisdom',
-  'guide',
-  'playbook',
-  'orient',
-  'tour',
-  'challenge',
-  'redteam',
-  'devil',
-  'decide',
-  'tradeoff',
-  'framework',
-  'meeting',
-  'agency',
-  'tactics',
-  'position',
-  'landscape',
-  'compete',
-  'align',
-  'ich',
-  'guideline',
-  'guidelines',
-  'pathway',
-  'pathways',
-  'expedited',
-  'capabilities',
-  'whatcanyoudo',
-] as const;
+import { SUPPORTED_SLASH_COMMANDS } from '../../../shared/ana/slash-commands.js';
+import {
+  CALLABLE_APPS,
+  appHandles,
+  parseAppMentions,
+  stripAppMentions,
+} from '../../../shared/navigation/callable-apps.js';
+
+/**
+ * The command vocabulary lives in shared/ana/slash-commands.ts so the composer
+ * menu and this parser read one list. Re-exported here for the existing
+ * consumers of this module.
+ */
+export { SUPPORTED_SLASH_COMMANDS };
 
 /** Enrichment sources that emit guidance the role lens can frame for an audience. */
 export const ROLE_FRAMEABLE_SOURCES = new Set<string>([
@@ -129,43 +62,46 @@ interface AppMention {
   remainingText: string;
 }
 
-/** Known app IDs that can be @-mentioned in chat messages */
-export const KNOWN_APPS = new Set([
-  'deep-research', 'precedent', '510k', 'pma', 'cer',
-  'safety', 'biostats', 'vault', 'ectd', 'protocol',
-]);
+/**
+ * Every handle an `@app` mention can use — labels, navigation ids and short
+ * aliases — from the ONE vocabulary in shared/navigation/callable-apps.ts.
+ * Kept as a Set for the consumers that only ask "is this an app?".
+ */
+export const KNOWN_APPS: ReadonlySet<string> = new Set(CALLABLE_APPS.flatMap(appHandles));
 
 /**
- * Detect @app mentions in user messages.
- * Returns the app ID and remaining message text, or null if no known app is mentioned.
+ * Detect `@app` mentions in a user message, anywhere in the text.
+ *
+ * `appId` is the FIRST invoked app's navigation id (what `navigate_to` and
+ * `APP_ENRICHMENT_MAP` key on); `remainingText` is the message with every
+ * recognised mention token removed. Null when nothing recognised is mentioned.
  */
 export function detectAppMention(message: string): AppMention | null {
-  const trimmed = message.trim();
-  if (!trimmed.startsWith('@')) return null;
-
-  const match = trimmed.match(/^@([\w-]+)\s*(.*)/s);
-  if (!match) return null;
-
-  const appId = match[1].toLowerCase();
-  const remainingText = match[2].trim();
-
-  if (!KNOWN_APPS.has(appId)) return null;
-
-  return { appId, remainingText };
+  const mentions = parseAppMentions(message);
+  if (mentions.length === 0) return null;
+  return { appId: mentions[0].app.id, remainingText: stripAppMentions(message) };
 }
 
-/** Map from app ID to the enrichment sources it activates */
+/**
+ * Map from app id (navigation id) to the enrichment sources it activates.
+ * Keys are callable-app ids; the totality of this map over the vocabulary is
+ * not required (an app may need no data pull), but every key must be a
+ * callable app — pinned by message-intent.test.ts.
+ */
 export const APP_ENRICHMENT_MAP: Record<string, string[]> = {
   'deep-research': ['foresight', 'precedent', 'claims', 'readiness'],
-  'precedent': ['precedent'],
-  '510k': ['device', 'precedent'],
-  'pma': ['device', 'readiness'],
-  'cer': ['device', 'safety', 'claims'],
+  'precedent-intelligence': ['precedent'],
+  'crl-library': ['precedent'],
+  'device-510k': ['device', 'precedent'],
+  'device-pma': ['device', 'readiness'],
+  'device-cer': ['device', 'safety', 'claims'],
   'safety': ['safety'],
-  'biostats': ['biostatistics'],
+  'safety-narrative': ['safety'],
+  'biostat-workbench': ['biostatistics'],
+  'biostatistics': ['biostatistics', 'readiness'],
   'vault': ['ectd'],
-  'ectd': ['ectd'],
-  'protocol': ['biostatistics', 'readiness'],
+  'ectd-coauthor': ['ectd'],
+  'ectd-publishing': ['ectd'],
 };
 
 // ─── Trigger patterns ────────────────────────────────────────────────────────

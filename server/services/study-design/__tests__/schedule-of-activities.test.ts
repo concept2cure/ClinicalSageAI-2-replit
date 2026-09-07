@@ -83,7 +83,10 @@ function defensibleDesign(): StudyDesign {
     framework: { inferentialFrame: 'superiority', structuralDesign: 'parallel_group', controlType: 'placebo' },
     population: {
       targetDescription: 'adults with type 2 diabetes inadequately controlled on metformin',
-      analysisPopulations: [{ kind: 'ITT', definition: 'all randomized patients', isPrimaryAnalysisSet: true }],
+      analysisPopulations: [
+        { kind: 'ITT', definition: 'all randomized patients', isPrimaryAnalysisSet: true },
+        { kind: 'Safety', definition: 'all patients who received at least one dose', isPrimaryAnalysisSet: false },
+      ],
       eligibility: [{ type: 'inclusion', text: 'HbA1c 7.0–10.0% at screening' }],
     },
     arms: [
@@ -100,6 +103,7 @@ function defensibleDesign(): StudyDesign {
       plannedAnalyses: [{ endpointName: 'HbA1c change', method: 'MMRM' }],
       multiplicity: { method: 'none' },
       sensitivityAnalysesSpecified: true,
+      missingDataStrategy: 'MMRM under MAR for the treatment-policy estimand; tipping-point analysis as the sensitivity analysis',
       powerAssumptions: { effectSize: 0.4, priorPhaseObservedEffect: 0.5, historicalDropoutRate: 0.18, evidence: [{ kind: 'prior_data', source: 'Phase 2 NCT01234567' }] },
     },
     scheduleOfActivities: soa(),
