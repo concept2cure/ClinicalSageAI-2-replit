@@ -22,7 +22,17 @@ import { submissionLeaves, ectdSequences, submissions } from '../../../shared/sc
 import { shadowReviewFindings, shadowReviewRuns } from '../../../shared/schema/shadow-review';
 import { getSubmissionRegionProfile } from '../region-profiles/region-profile-service';
 import { computeDispatchReadiness, type DispatchReadinessReport } from './dispatch-readiness';
-import { evaluateDispatchGate, mergeDispatchGates, type DispatchGateResult } from './dispatch-gate';
+import {
+  evaluateDispatchGate,
+  mergeDispatchGates,
+  evaluateReleaseSignatureGate,
+  type DispatchGateResult,
+  type ReleaseSignatureVerdict,
+} from './dispatch-gate';
+import {
+  resolveReleaseSignatureStatus,
+  isReleaseSignatureRequired,
+} from './release-signature-status';
 import {
   resolveExternalValidator,
   evaluateExternalValidationGate,
@@ -65,7 +75,21 @@ export interface DispatchReadinessAssessment {
     cleared: boolean;
     blockers: string[];
   };
-  /** Hard gate verdict — structural + shadow + external, composed. */
+  /** Release-signature state (21 CFR Part 11 §11.70, §6c). */
+  releaseSignature: {
+    /** This submission type crosses the §11.70 boundary and must be signed. */
+    required: boolean;
+    /** Resolved signature state. `undetermined` ≠ `unsigned` — see the gate. */
+    verdict: ReleaseSignatureVerdict;
+    /** Orchestrator run the verdict came from, when one was found. */
+    runId?: string;
+    /** electronic_signatures.id when a verifying signature was found. */
+    signatureId?: number;
+    detail?: string;
+    /** This gate adds no blocker. */
+    cleared: boolean;
+  };
+  /** Hard gate verdict — structural + shadow + external + release-signature, composed. */
   gate: DispatchGateResult;
   /** Full structural breakdown (errors + non-blocking warnings/infos). */
   readiness: DispatchReadinessReport;
@@ -103,6 +127,31 @@ export function evaluateShadowPresenceGate(shadowReviewRunCount: number): Dispat
           'No completed Shadow Review has run for this sequence. A never-reviewed dossier is not cleared for dispatch — run Shadow Review before transmitting.',
         ],
       };
+}
+
+/**
+ * Compose every hard gate into the single dispatch verdict.
+ *
+ * Extracted as a PURE function so the SET of gates is testable without a
+ * database. That matters more than it looks: each gate is individually unit
+ * tested, but a gate that is never passed to `mergeDispatchGates` blocks
+ * nothing, and a purely-unit-tested gate cannot detect its own absence from
+ * the composition. This function is the one place the membership is asserted.
+ *
+ * Pure + exported for test, same idiom as evaluateShadowPresenceGate.
+ */
+export function composeDispatchGates(gates: {
+  structural: DispatchGateResult;
+  external: DispatchGateResult;
+  shadowPresence: DispatchGateResult;
+  releaseSignature: DispatchGateResult;
+}): DispatchGateResult {
+  return mergeDispatchGates(
+    gates.structural,
+    gates.external,
+    gates.shadowPresence,
+    gates.releaseSignature,
+  );
 }
 
 /**
@@ -288,11 +337,32 @@ export async function assessSequenceDispatchReadiness(
   //     least one completed Shadow Review run exists.
   const shadowPresenceGate = evaluateShadowPresenceGate(shadowReviewRunCount);
 
-  const gate = mergeDispatchGates(
-    structuralGate,
-    { cleared: externalGate.cleared, blockers: externalGate.blockers },
-    shadowPresenceGate,
-  );
+  // 6c. Release-signature gate (21 CFR Part 11 §11.70). Until this landed, the
+  //     entire dispatch path had no signature awareness at all: a sequence
+  //     could be transmitted to the agency having never been e-signed, or
+  //     having been signed over a DIFFERENT package than the one dispatching.
+  //     The orchestrator's package.sign step proves a signature existed at
+  //     BUILD time; dispatch is a separate, later act, so it re-checks — which
+  //     is exactly the re-check the e-sig design doc reserves for transmit.
+  //     Same shape as §6b: unsigned is not signature-clean, it is unsigned, and
+  //     an undetermined lookup is not an absent requirement.
+  const releaseSignature = await resolveReleaseSignatureStatus({
+    submissionId: sequence.submissionId,
+    organizationId,
+  });
+  const signatureRequired = isReleaseSignatureRequired(submissionApplicationType);
+  const releaseSignatureGate = evaluateReleaseSignatureGate({
+    required: signatureRequired,
+    verdict: releaseSignature.verdict,
+    detail: releaseSignature.detail,
+  });
+
+  const gate = composeDispatchGates({
+    structural: structuralGate,
+    external: { cleared: externalGate.cleared, blockers: externalGate.blockers },
+    shadowPresence: shadowPresenceGate,
+    releaseSignature: releaseSignatureGate,
+  });
 
   return {
     sequenceId,
@@ -312,6 +382,17 @@ export async function assessSequenceDispatchReadiness(
      *  also blocks the gate (§6b), so it is informational: it reports WHY the
      *  gate is blocked when that is the only blocker. */
     shadowReviewMissing: shadowReviewRunCount === 0,
+    /** Release-signature state (§6c). `required` reports whether this
+     *  submission type crosses the §11.70 boundary; `verdict` is the resolved
+     *  state. Informational on the response — the blocking happens in `gate`. */
+    releaseSignature: {
+      required: signatureRequired,
+      verdict: releaseSignature.verdict,
+      runId: releaseSignature.runId,
+      signatureId: releaseSignature.signatureId,
+      detail: releaseSignature.detail,
+      cleared: releaseSignatureGate.cleared,
+    },
     gate,
     readiness,
     leafCount: leaves.length,
