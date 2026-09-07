@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-07T12:02:19.486Z",
+  "generatedAt": "2026-09-07T20:48:25.915Z",
   "git": {
-    "sha": "00e4a5091327eaaeb21d584797dba56804309b65",
+    "sha": "8120fc4ad4a78985b411d492f09c70498c061252",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2045,7 +2045,7 @@
       },
       {
         "file": "server/services/submission-package-orchestrator.ts",
-        "bytes": 139854
+        "bytes": 139861
       },
       {
         "file": "server/services/labeling/labeling-intelligence-knowledge.ts",
