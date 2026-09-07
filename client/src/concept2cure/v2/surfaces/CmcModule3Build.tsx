@@ -110,6 +110,8 @@ export interface Module3Readiness {
   openCriticalContradictions: number;
   /** Sections with no recorded source lineage — the audit trail has a gap. */
   sectionsWithoutProvenance?: number;
+  /** Approved sections whose own compiled record says they are incomplete — the gate refuses on them. */
+  incompleteApprovedSections?: string[];
   /** False = the governed-decision fabric returned no verdict (not "it cleared"). */
   governedStateEvaluated?: boolean;
   exportReady: boolean;
@@ -418,7 +420,10 @@ export function CmModule3Build({ ask, nav }: { ask: (text: string) => void; nav?
                     {readiness.data.openCriticalContradictions
                       ? ` · ${readiness.data.openCriticalContradictions} critical contradiction${readiness.data.openCriticalContradictions === 1 ? '' : 's'} open`
                       : ''}
-                    {/* Two reasons the gate refuses that the counts above never showed. */}
+                    {/* Three reasons the gate refuses that the counts above never showed. */}
+                    {readiness.data.incompleteApprovedSections?.length
+                      ? ` · ${readiness.data.incompleteApprovedSections.length} approved but incomplete (§${readiness.data.incompleteApprovedSections.join(', §')})`
+                      : ''}
                     {readiness.data.sectionsWithoutProvenance
                       ? ` · ${readiness.data.sectionsWithoutProvenance} section${readiness.data.sectionsWithoutProvenance === 1 ? '' : 's'} with no recorded source lineage`
                       : ''}

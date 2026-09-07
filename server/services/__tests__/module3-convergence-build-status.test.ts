@@ -56,6 +56,7 @@ import {
   MODULE3_SECTION_RULES,
   type CanonicalSource,
 } from '../module3Composer';
+import { composeAppendices, emittableAppendices } from '../module3-extensions';
 
 const ORG = 7;
 const PROJECT = 'proj-cmc-status-1';
@@ -159,10 +160,12 @@ describe('getModule3BuildStatus — equals the composer for the same sources', (
       sourcePayload: r.sourcePayload ?? {},
       sourceHash: r.sourceHash ?? undefined,
     }));
-    const composed = composeModule3FromCanonicalSources(canonical);
+    // The core sections plus the appendices the compile path emits — an
+    // approved 3.2.A.* goes stale like any other section and must be reported.
+    const composed = composeModule3FromCanonicalSources(canonical).concat(emittableAppendices(composeAppendices(canonical)));
 
     const { sections } = await getModule3BuildStatus(ORG, PROJECT);
-    expect(sections.map((s) => s.sectionKey)).toEqual(MODULE3_SECTION_RULES.map((r) => r.sectionKey));
+    expect(sections.map((s) => s.sectionKey)).toEqual(composed.map((c) => c.sectionKey));
 
     for (const c of composed) {
       const s = sections.find((x) => x.sectionKey === c.sectionKey)!;

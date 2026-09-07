@@ -13,12 +13,14 @@ import { randomUUID } from 'crypto';
 import { getPool } from '../db';
 import { createSourceHash } from './cmc-module3-compiler';
 import {
+  CMC_SOURCE_TYPES,
   composeModule3FromCanonicalSources,
   MODULE3_SECTION_RULES,
   tablesToMarkdown,
   CmcSourceType,
   type CanonicalSource,
 } from './module3Composer';
+import { appendixSectionsRequiringSourceType, composeAppendices, emittableAppendices } from './module3-extensions';
 import { enforceAuthorLineage } from './clinical-regulatory-evidence/lineage-gate';
 import { governedActor } from './part11/governed-actor';
 import {
@@ -90,6 +92,11 @@ const SECTION_LABELS: Record<string, string> = {
   '3.2.P.7': 'Container Closure System (Drug Product)',
   '3.2.P.8': 'Stability (Drug Product)',
   '3.3': 'Literature References',
+  /* The appendices compose, stale and approve like any other section; a
+     label table without them hid a stale 3.2.A.* from every reader of this map. */
+  '3.2.A.1': 'Facilities and Equipment',
+  '3.2.A.2': 'Adventitious Agents Safety Evaluation',
+  '3.2.A.3': 'Excipients',
 };
 
 // ── Public API ─────────────────────────────────────────────────
@@ -224,9 +231,20 @@ export async function getModule3BuildStatus(
       projectId,
     };
   });
-  const composedBySection = new Map(
-    composeModule3FromCanonicalSources(canonicalSources).map((c) => [c.sectionKey, c] as const),
+  /* The appendices compose and go stale like any other section (an approved
+     3.2.A.* is marked stale when its sources change), so they are reported
+     here too — a board that walked only the seventeen core keys reported zero
+     stale sections while the export gate refused on a stale appendix. */
+  const composedAll = composeModule3FromCanonicalSources(canonicalSources).concat(
+    emittableAppendices(composeAppendices(canonicalSources)),
   );
+  const composedBySection = new Map(composedAll.map((c) => [c.sectionKey, c] as const));
+  const appendixRules = composedAll
+    .filter((c) => c.sectionKey.startsWith('3.2.A'))
+    .map((c) => ({
+      sectionKey: c.sectionKey,
+      requiredSourceTypes: CMC_SOURCE_TYPES.filter((st) => appendixSectionsRequiringSourceType(st).includes(c.sectionKey)),
+    }));
 
   // Group source objects by type — for the section's lastUpdated only. A
   // retired source no longer composes, but retiring it IS an edit to the
@@ -239,7 +257,7 @@ export async function getModule3BuildStatus(
   }
 
   // Build per-section status
-  const results: Module3SectionBuildStatus[] = MODULE3_SECTION_RULES.map((rule) => {
+  const results: Module3SectionBuildStatus[] = [...MODULE3_SECTION_RULES, ...appendixRules].map((rule) => {
     const sectionKey = rule.sectionKey;
     const sectionLabel = SECTION_LABELS[sectionKey] || sectionKey;
 
