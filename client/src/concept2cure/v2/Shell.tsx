@@ -25,6 +25,7 @@ import {
   SR_ONLY_STYLE,
 } from '../hooks/useChatUpload';
 import { I } from './icons';
+import { AppMentionMenu, useAppMentions } from './appMentions';
 import { TaskTray } from './TaskTray';
 import type { OnboardingWelcome } from './onboardingWelcome';
 import { AnaActivity, type AnaActivityProps } from './AnaActivity';
@@ -620,6 +621,11 @@ export function AnaRail({
   const agentActivity = useAgentActivity(workVisible, streaming);
   const fileRef = React.useRef<HTMLInputElement>(null);
   const imgRef = React.useRef<HTMLInputElement>(null);
+  /* `@app` — the inline way to name a capability (appMentions.tsx). The menu
+     opens on `@`, inserts `@<label>`, and the server reads the label back
+     against the same vocabulary; nothing else travels. */
+  const draftRef = React.useRef<HTMLTextAreaElement>(null);
+  const mentions = useAppMentions(draft, setDraft, draftRef);
 
   /* The attach button used to be a lie.
    *
@@ -1161,17 +1167,25 @@ export function AnaRail({
             {statusMessage}
           </span>
           <textarea
+            ref={draftRef}
             rows={1}
-            placeholder={agent ? 'Describe a task for AnA to carry out…' : 'Ask AnA, or describe a task…'}
+            placeholder={agent ? 'Describe a task for AnA to carry out…' : 'Ask AnA, type @ to name an app…'}
             value={draft}
-            onChange={(e) => setDraft(e.target.value)}
+            aria-autocomplete="list"
+            aria-controls={mentions.open ? 'ana-rail-mentions' : undefined}
+            aria-expanded={mentions.open}
+            onChange={(e) => { setDraft(e.target.value); mentions.sync(e.currentTarget); }}
+            onSelect={(e) => mentions.sync(e.currentTarget)}
+            onBlur={() => mentions.close()}
             onKeyDown={(e) => {
+              if (mentions.onKeyDown(e)) return;
               if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
                 send();
               }
             }}
           />
+          <AppMentionMenu api={mentions} id="ana-rail-mentions" />
           <input
             ref={fileRef}
             type="file"

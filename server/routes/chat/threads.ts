@@ -17,7 +17,7 @@
 
 import type { Request, Response } from 'express';
 import { pool } from '../../db.js';
-import { getThreadMessages } from '../../services/chat-thread-helpers.js';
+import { getThreadMessages, programIdForThread } from '../../services/chat-thread-helpers.js';
 
 /**
  * GET /api/chat/threads
@@ -27,11 +27,36 @@ import { getThreadMessages } from '../../services/chat-thread-helpers.js';
 export async function listThreads(req: Request, res: Response) {
   try {
     const projectId = req.query.project_id as string | undefined;
+    const programId = req.query.program_id as string | undefined;
     const limit = Math.min(parseInt((req.query.limit as string) || '10', 10), 50);
     const orgId = (req as any).tenantId || (req as any).tenantContext?.organizationId;
 
     let query: string;
     let params: unknown[];
+
+    if (programId !== undefined) {
+      // The shell's project key (regulatory_programs UUID). Threads carry it in
+      // metadata.programId from the moment they are minted (chat-thread-helpers
+      // programIdForThread), so this is what "resume a project chat" lists.
+      // Org scope is required — the same rule as the global recents.
+      if (!orgId) return res.json({ threads: [] });
+      const program = programIdForThread(programId);
+      if (!program) {
+        return res.status(400).json({ error: 'program_id must be a UUID', code: 'THREAD_PROGRAM_INVALID' });
+      }
+      const result = await pool.query(
+        `SELECT t.id, t.created_at, t.updated_at, t.metadata->>'programId' AS program_id,
+          (SELECT content FROM chat_messages
+            WHERE thread_id = t.id AND role = 'user'
+            ORDER BY created_at ASC LIMIT 1) AS title
+        FROM chat_threads t
+        WHERE t.organization_id = $1 AND t.metadata->>'programId' = $2
+        ORDER BY COALESCE(t.updated_at, t.created_at) DESC
+        LIMIT $3`,
+        [orgId, program, limit]
+      );
+      return res.json({ threads: result.rows });
+    }
 
     if (projectId) {
       // ai_threads is the project-scoped conversation store.
