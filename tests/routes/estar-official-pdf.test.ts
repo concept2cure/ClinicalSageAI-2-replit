@@ -410,7 +410,19 @@ describe('POST /api/510k/estar/official with useProgramData:true', () => {
         { key: 'deviceCommonName', caption: 'Common Name', filled: true, source: 'request', declaredSource: 'regulatory_programs.common_name' },
         { key: 'regulationNumber', caption: 'Regulation Number', filled: false, source: null, declaredSource: 'regulatory_programs.regulation_number' },
       ],
-      advisories: [],
+      /*
+       * The governed records project three facts this three-key stand-in map has
+       * no box for. Each is REPORTED, never dropped: a payload that said
+       * "2 of 3 filled" and nothing else would hide a value the operator holds.
+       * Measured through the route on 2026-09-07; the real-template case (the IVD
+       * form's missing Indications for Use citation) is pinned in
+       * server/services/pathway-engines/estar/__tests__/estar-administrative-data.test.ts.
+       */
+      advisories: [
+        'applicantCompanyName is on file (organizations.name) as "Acme Org", but this form has no field for it and it was not written.',
+        'declarationCompanyName is on file (organizations.name) as "Acme Org", but this form has no field for it and it was not written.',
+        'declarationDeviceTradeName is on file (regulatory_programs.product_name) as "Governed Monitor", but this form has no field for it and it was not written.',
+      ],
       ignoredRequestKeys: ['deviceTradeName', 'bogus'],
       /*
        * deviceCommonName WAS written — it is in filledCount — and the form's own

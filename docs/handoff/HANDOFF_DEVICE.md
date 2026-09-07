@@ -283,6 +283,14 @@ code (report §4a):
    the descriptor's map carries, and the map is server-side, so the intake panel would have
    to take a second fetch to learn a fact about one field. Worth doing when the panel needs
    that fetch for another reason; not worth a fetch of its own.
+   **2026-09-07 — the fill report now says it.** Measured on the vendored IVD template: a
+   fully populated program's citation was projected, then vanished from the fill — absent
+   from `data`, `fields`, the ignored list and `advisories`, while the report read
+   "19 mapped, 19 filled, 0 blank". `resolveOfficialEstarFields` now emits one advisory for
+   every governed fact the descriptor's map has no key for, naming the key, its home and its
+   value, and `useEstarExport` already prints advisories in the export status line, so an
+   IVD filer sees it at the moment of export. Seen failing first on the IVD template. The
+   word at the point of ENTRY is still deferred, for the reason above.
 4. **Name the click for every session.** The agent never chooses its own next task.
 
 ---
@@ -330,6 +338,7 @@ code (report §4a):
 | 2026-09-05 | D | Audit + resolve (JM: "continue and resolve", "go to work") | An eight-lens adversarial audit of the whole device + diagnostic stream, three refuters per finding. Fixed: the production image never shipped the FDA templates, so no client could produce anything; the governed-write role gate named three roles the platform cannot grant and locked out every SSO-provisioned user, now ONE implementation in `middleware/orgMembership.ts`; a device program opened on the Diagnostics tab was produced on the IVD template; the seven intake device answers were stored and never read back, so every conditional section stayed undetermined; two ESLint errors whose documented honesty rule had no test. Packaging, role-vocabulary and duplication checks added, each shown failing first | `docs/reports/estar-acrobat-behaviour-2026-09-04.md` + this file |
 | 2026-09-07 | E | Close the IVD assumption (JM chose it from the open list; Acrobat report §7 named it) | `estar-field-map.template-behaviour.test.ts` measures BOTH vendored templates, each on its own; every script fact the field map depends on holds identically on `eSTAR-510k-ivd.pdf`; the one textual difference is one space in the reveal guard, seen failing against the nIVD-verbatim string before the IVD line was pinned; 22/22 in the file, whole estar suite green; the IVD map's keys are pinned as a strict subset lacking only the citation the IVD form does not ask | `docs/reports/estar-acrobat-behaviour-2026-09-04.md` §7 |
 | 2026-09-07 | E | Close the remaining IVD assumptions in `server/services/forms` (JM: "you choose") | Two more template-derived claims measured on the IVD form instead of inferred from nIVD: the saved `form` packet declares no node for any of the 21 leaves the IVD map writes and is byte-identical after a 19-field fill (seen failing on the pinned key count, 20 vs 19, before the IVD count was pinned); pdf.js renders the filled IVD eSTAR with the same page-1 selector behaviour as nIVD, and the two SOURCE writes carry the same string as their summary cells on both forms. Every test that reads a vendored template in `server/services/forms` now reads both. 29/29 and 12/12 in the two files; forms + estar + device golden journey green | `docs/reports/estar-acrobat-behaviour-2026-09-04.md` §7 |
+| 2026-09-07 | E | The governed projection on the IVD form (JM: "continue", choice delegated) | Both governed-fill blocks (`estar-administrative-data` and `.governed-homes`) now run on both vendored templates; all 19 mapped governed values land on the IVD form. Found and fixed: a governed fact the descriptor's map has no key for (the IVD citation) was projected and then silently dropped from the fill report, which read 19/19/0 with no advisory; `resolveOfficialEstarFields` now reports it as an advisory (key, home, value), seen failing first on the IVD template; the client status line already prints advisories | `docs/handoff/HANDOFF_DEVICE.md` §7.3 |
 | | | | | |
 
 **Rule:** the last row with an empty "What was proven" cell is the open work. A session
