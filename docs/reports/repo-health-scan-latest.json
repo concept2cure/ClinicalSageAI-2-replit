@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-07T10:18:05.766Z",
+  "generatedAt": "2026-09-07T12:02:19.486Z",
   "git": {
-    "sha": "37cd580f40f01b3e364c163c9170c875ad7e8c89",
+    "sha": "00e4a5091327eaaeb21d584797dba56804309b65",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2036,12 +2036,12 @@
         "bytes": 150437
       },
       {
-        "file": "server/storage.ts",
-        "bytes": 145402
+        "file": "server/services/module3Composer.ts",
+        "bytes": 145439
       },
       {
-        "file": "server/services/module3Composer.ts",
-        "bytes": 144444
+        "file": "server/storage.ts",
+        "bytes": 145402
       },
       {
         "file": "server/services/submission-package-orchestrator.ts",
@@ -2231,7 +2231,7 @@
       },
       {
         "file": "server/services/module3Composer.ts",
-        "lines": 2873
+        "lines": 2894
       },
       {
         "file": "server/src/routes/stability.router.ts",
@@ -2490,12 +2490,12 @@
         "lines": 1678
       },
       {
-        "file": "server/services/clinical-outcome-assessment/coa-knowledge.ts",
-        "lines": 1650
+        "file": "server/routes/submissions.ts",
+        "lines": 1657
       },
       {
-        "file": "server/routes/submissions.ts",
-        "lines": 1649
+        "file": "server/services/clinical-outcome-assessment/coa-knowledge.ts",
+        "lines": 1650
       },
       {
         "file": "server/services/unifiedDocumentIngestion.js",
