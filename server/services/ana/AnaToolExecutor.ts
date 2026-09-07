@@ -14937,20 +14937,28 @@ registerToolHandler('batch_draft_sections', async (input, ctx) => {
 
   try {
     const { getAnaDraftingService } = await import('./AnaDocumentDraftingService.js');
+    const { isBatchDraftFailure } = await import('./batch-draft-result.js');
     const service = getAnaDraftingService();
     const results = await service.batchDraft({ requests, concurrency: 5 });
+    // A section that could not be drafted arrives as a failure result in its
+    // own slot (batch-draft-result.ts); the other sections' drafts are kept
+    // and reported. `count` is the number actually drafted.
+    const failed = results.filter((r) => isBatchDraftFailure(r)).length;
     return JSON.stringify({
-      status: 'drafted',
+      status: failed === 0 ? 'drafted' : failed === results.length ? 'failed' : 'partial',
       engine: 'framework-grade',
-      count: results.length,
-      sections: results.map((r, i) => ({
-        sectionType: requests[i].sectionType,
-        content: r.content,
-        model: r.model,
-        latencyMs: r.latencyMs,
-      })),
+      count: results.length - failed,
+      failed,
+      sections: results.map((r, i) =>
+        isBatchDraftFailure(r)
+          ? { sectionType: requests[i].sectionType, error: r.error, message: r.message }
+          : { sectionType: requests[i].sectionType, content: r.content, model: r.model, latencyMs: r.latencyMs },
+      ),
       instruction:
-        'These are parallel first drafts. The author promotes each through the governed authoring flow (accept into the section, which runs the Part-11 version trigger). State any completeness gaps honestly; do not present unknown values as established.',
+        'These are parallel first drafts. The author promotes each through the governed authoring flow (accept into the section, which runs the Part-11 version trigger). State any completeness gaps honestly; do not present unknown values as established.' +
+        (failed > 0
+          ? ` ${failed} section(s) were not drafted; each carries its reason. A section refused for size needs its existing content shortened or split before it is retried.`
+          : ''),
     });
   } catch (err: any) {
     return JSON.stringify({ error: `batch draft failed: ${err?.message || 'unknown error'}` });
