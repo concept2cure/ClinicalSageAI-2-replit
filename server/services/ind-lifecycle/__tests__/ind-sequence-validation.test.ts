@@ -33,7 +33,7 @@ const FIFTEEN_DAY: IndSafetyClassification = {
   obligation: 'FIFTEEN_DAY',
   reportingWindowDays: 15,
   deadline: null,
-  determinations: { serious: true, suspected: true, unexpected: true, fatalOrLifeThreatening: false },
+  determinations: { serious: true, suspected: true, unexpected: true, expectednessRecorded: true, fatalOrLifeThreatening: false },
   regulatoryBasis: '21 CFR 312.32(c)(1)(i)',
   rationale: 'serious, unexpected, suspected',
 };

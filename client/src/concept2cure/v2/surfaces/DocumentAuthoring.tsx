@@ -70,6 +70,10 @@ import { I } from '../icons';
 import type { OwnedSurfaceViewProps } from '../surfaceViews';
 import { EmptyState } from '../dataConnect';
 import { useAnaChat, type AnaChatMessage } from '../../components/ana/useAnaChat';
+import { AnaWorkPanel } from '../AnaWorkPanel';
+import { useAgentActivity } from '../useAgentActivity';
+import { useWorkDockVisible } from '../workDock';
+import { shellProgramName } from '../shellProject';
 import { SignoffList } from '../SignoffList';
 import type { PendingSignoff } from '../../components/ana/useGovernedAction';
 import type { AuthoringContextPack } from '@shared/types/authoring-context';
@@ -991,6 +995,18 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
   /** Decisions awaiting their coalesced flush, and whether one is scheduled. */
   const pendingDecisionsRef = useRef<SuggestionDecision[]>([]);
   const decisionFlushRef = useRef(false);
+  /**
+   * Accept/reject decisions recorded for the CURRENT section since it was last
+   * saved. Every decision POSTs and audits immediately — independent of
+   * whether the content that reflects it has been saved (accepting strips the
+   * mark from the live editor doc; only Save/⌘S/the guard's Save persists
+   * that). So a reviewer can accept N changes, then leave without saving, and
+   * the audit trail permanently records N acceptances while the saved section
+   * still shows them pending. This count exists only to make the unsaved-work
+   * guard say so — see UnsavedWorkGuard below — never to block or alter the
+   * decision itself. Reset in applyNav: it belongs to the section being left,
+   * not the one about to be entered. */
+  const pendingDecisionCountRef = useRef(0);
   useEffect(() => {
     activeSectionIdRef.current = activeSectionId ?? null;
   });
@@ -1121,6 +1137,10 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
     // The editor's dirty flag belongs to the mount that is going away; clear
     // it first so the guard cannot re-fire against the section just left.
     setEditorDirty(false);
+    // Same reason: the count of decisions-since-last-save belongs to the
+    // section being left, whether or not it was saved first. The next section
+    // starts its own count at zero.
+    pendingDecisionCountRef.current = 0;
     // The create/export module follows where the author actually IS, so it
     // moves with the navigation and not with the click that proposed one.
     if (target.module) setModule(target.module);
@@ -1231,6 +1251,10 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
     onDriveEvent: liveDrive?.onDriveEvent,
     onArtifactSaved: liveDrive?.onWorkSaved,
   });
+  /* The live work dock for this pane (AnaWorkPanel): one shared show/hide
+     memory with the rail, and the background queue read only while shown. */
+  const [workDockOpen, setWorkDockOpen] = useWorkDockVisible();
+  const anaWorkQueue = useAgentActivity(workDockOpen, ana.isStreaming);
   const anaComposerRef = useRef<HTMLTextAreaElement>(null);
   const anaReturnFocusRef = useRef<HTMLElement | null>(null);
   const anaWasOpenRef = useRef(false);
@@ -2007,6 +2031,13 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
             : 'Source re-resolved against its current content.'
         );
         setPicking(false);
+        if ((json as any)?.created) {
+          // Same staleness as the comment count: the section row is the only
+          // source of the rail button's number.
+          setSections(ss =>
+            ss.map(s => (s.id === activeSectionId ? { ...s, citation_count: num(s.citation_count) + 1 } : s))
+          );
+        }
         void loadSources(activeSectionId);
       } catch (e) {
         fireToast(
@@ -2187,6 +2218,12 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
            whoever pressed accept. Read-and-clear: an author counts once, for
            the save that carried their text in. */
         const acceptedAuthors = editorRef.current?.takeAcceptedAuthors?.() ?? [];
+        /* And the accepted text itself, per insertion. The author list says
+           WHO contributed to this save; this says WHICH words, so the lineage
+           gate can record the machine's clauses as the machine's. The server
+           keeps only machine authors it names — a colleague's accepted text is
+           simply the document. */
+        const acceptedMachineText = editorRef.current?.takeAcceptedInsertions?.() ?? [];
         /* The concurrency token. `updated_at` is the value THIS editor loaded;
            the server refuses with 409 SECTION_CHANGED if the row has moved
            since. Without it the PATCH is a blind last-write-wins, and two
@@ -2203,6 +2240,7 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
           content: serialized,
           ...(activeSection.updated_at ? { expectedUpdatedAt: activeSection.updated_at } : {}),
           ...(acceptedAuthors.length ? { acceptedAuthors } : {}),
+          ...(acceptedMachineText.length ? { acceptedMachineText } : {}),
           ...(reasonForChange ? { changeReason: reasonForChange } : {}),
         });
         const json = await res.json().catch(() => null);
@@ -2239,7 +2277,20 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
             s.id === activeSection.id ? { ...s, ...(adopted ?? {}), content: persisted } : s
           )
         );
-        fireToast('Section saved — a revision was recorded (' + activeSection.code + ').');
+        // This save just persisted whatever content reflects any decisions
+        // made since the section was last saved — the unsaved-work guard's
+        // count belongs to what is still unsaved, not to what this save
+        // just closed out.
+        pendingDecisionCountRef.current = 0;
+        /* "a revision was recorded" was asserted from the 2xx alone. The
+           server mints the revision in the same transaction and returns the
+           row's counter; the sentence now names what came back, and defers to
+           the History rail when nothing did. */
+        fireToast(
+          adopted && adopted.revision_count != null
+            ? `Section saved — revision ${num(adopted.revision_count)} recorded (${activeSection.code}).`
+            : `Section saved (${activeSection.code}) — open History to confirm the revision.`
+        );
         // Keep the history and audit rails fresh if open — a save writes both.
         if (rail === 'history') void loadHistory(activeSection.id);
         if (rail === 'audit' && activeDocId) void loadAudit(activeDocId);
@@ -2330,9 +2381,24 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
   const toggleTrackChanges = useCallback(
     async (on: boolean) => {
       if (!activeSection) throw new Error('No section open');
-      const res = await apiRequest('PATCH', `/api/authoring/sections/${activeSection.id}`, {
-        track_changes: on,
-      });
+      /* apiRequest THROWS the server's real refusal (a frozen document), and the
+         editor's toggleTrack swallows the rethrow to keep its state truthful —
+         so the author got no reason at all. The reason is said here, then the
+         throw still reverts the toggle. */
+      let res: Response;
+      try {
+        res = await apiRequest('PATCH', `/api/authoring/sections/${activeSection.id}`, {
+          track_changes: on,
+        });
+      } catch (e) {
+        fireToast(
+          'Couldn’t change track changes — ' +
+            redactInternals(e instanceof Error ? e.message : '', 'the server refused it') +
+            '. The mode is unchanged.',
+          'error'
+        );
+        throw new Error('track toggle refused', { cause: e });
+      }
       const json = await res.json().catch(() => null);
       if (!res.ok) {
         fireToast(
@@ -2438,11 +2504,22 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
         ...(pending ? { anchor: pending.anchor } : {}),
       });
       const json = await res.json().catch(() => null);
+      /* On every failure the editor's anchor request must be answered: it
+         used to be left pending forever, and the Comment button then silently
+         did nothing for the rest of the mount. */
+      const abandonAnchor = () => {
+        if (!pending) return;
+        pending.resolve(null);
+        pendingAnchorRef.current = null;
+        setPendingAnchor(null);
+      };
       if (res.status === 401) {
+        abandonAnchor();
         fireToast('Comment not posted — your session isn’t authenticated. Sign in and retry.', 'error');
         return;
       }
       if (!res.ok) {
+        abandonAnchor();
         fireToast(
           'Couldn’t post the comment — ' + (serverMessage(json) ?? 'the server refused it') + '.',
           'error'
@@ -2455,12 +2532,26 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
         pending.resolve(typeof created?.id === 'string' ? created.id : null);
         pendingAnchorRef.current = null;
         setPendingAnchor(null);
-        fireToast('Comment anchored to the selected text.');
+        /* "Comment anchored" was toasted here — before the save that carries
+           the anchor mark had been attempted. The thread exists; whether the
+           highlight is in the record is the editor's onAnchored report. */
+        fireToast('Comment created — anchoring it to the selected text…');
       } else {
         fireToast('Comment added.');
       }
+      /* The rail button's count comes from the section row, refreshed only by
+         loadSections — so it kept reading "Comments 3" when four existed.
+         Bumped here from the confirmed write. */
+      setSections(ss =>
+        ss.map(s => (s.id === activeSection.id ? { ...s, comment_count: num(s.comment_count) + 1 } : s))
+      );
       void loadComments(activeDocId);
     } catch (e) {
+      if (pending) {
+        pending.resolve(null);
+        pendingAnchorRef.current = null;
+        setPendingAnchor(null);
+      }
       fireToast(
         'Couldn’t post the comment — ' + redactInternals(e instanceof Error ? e.message : '', 'the server could not be reached') + '.',
         'error'
@@ -2872,6 +2963,7 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
          reviewer action becomes one write — the bulk endpoint exists for
          exactly this and records it as the single act it was. */
       pendingDecisionsRef.current.push(d);
+      pendingDecisionCountRef.current += 1;
       if (decisionFlushRef.current) return;
       decisionFlushRef.current = true;
       queueMicrotask(() => {
@@ -3059,7 +3151,7 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
 
         <div className="ed-tree-scroll">
           {docsState === 'loading' ? (
-            <div className="scaf-note" style={{ padding: 16 }}>
+            <div role="status" className="scaf-note" style={{ padding: 16 }}>
               Loading documents…
             </div>
           ) : docsState === 'error' ? (
@@ -3106,18 +3198,22 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
                     <span className="ed-num">{d.module ?? '—'}</span>
                     <span className="ed-lbl">{d.title}</span>
                     <span className="rd-chip tone-idle" style={{ marginLeft: 'auto' }}>
-                      {num(d.section_count)}
+                      {/* null is "not counted", not zero */}
+                      {d.section_count == null ? '—' : num(d.section_count)}
                     </span>
                   </button>
                   {open &&
-                    (sectionsState === 'loading' ? (
-                      <div className="scaf-note" style={{ padding: '6px 12px' }}>
+                    (sectionsState === 'loading' || sectionsState === 'idle' ? (
+                      /* 'idle' with a document open is the render before the
+                         read starts — not a document with no sections. Saying
+                         "No sections yet" there was a fact nobody had read. */
+                      <div role="status" className="scaf-note" style={{ padding: '6px 12px' }}>
                         Loading sections…
                       </div>
                     ) : sectionsState === 'error' ? (
                       <div
                         className="scaf-note"
-                        style={{ padding: '6px 12px', color: 'var(--c2c-err,#b42318)' }}
+                        style={{ padding: '6px 12px', color: 'var(--error)' }}
                       >
                         Couldn’t load sections.
                       </div>
@@ -3135,7 +3231,7 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
                         {structure?.duplicateCodes.length ? (
                           <div
                             className="scaf-note"
-                            style={{ padding: '6px 12px', color: 'var(--c2c-err,#b42318)' }}
+                            style={{ padding: '6px 12px', color: 'var(--error)' }}
                           >
                             {structure.duplicateCodes.length === 1
                               ? `Section code ${structure.duplicateCodes[0]} is used by more than one section.`
@@ -3198,6 +3294,7 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
             <AuthoringCreateExport
               docId={activeDoc?.id ?? null}
               docTitle={activeDoc?.title ?? null}
+              docStatus={activeDoc?.status ?? null}
               module={module}
               fireToast={fireToast}
               onDocCreated={d => {
@@ -3447,7 +3544,7 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
               alignItems: 'baseline',
               padding: '8px 16px',
               fontSize: 12,
-              borderBottom: '1px solid var(--c2c-line,#e4e7ec)',
+              borderBottom: '1px solid var(--border)',
             }}
           >
             <span style={{ flex: 1, minWidth: 0 }}>{targetNotice}</span>
@@ -3745,7 +3842,7 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
                                 textTransform: 'uppercase',
                                 fontSize: 10,
                                 paddingTop: 2,
-                                ...(d.severity === 'high' ? { color: 'var(--c2c-err,#b42318)' } : {}),
+                                ...(d.severity === 'high' ? { color: 'var(--error)' } : {}),
                               }}
                             >
                               {d.severity}
@@ -3792,7 +3889,7 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
                 <div
                   style={{
                     minHeight: 460,
-                    border: '1px solid var(--c2c-line,#e4e7ec)',
+                    border: '1px solid var(--border)',
                     borderRadius: 10,
                     overflow: 'hidden',
                     display: 'flex',
@@ -3876,6 +3973,13 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
                     commentsApi={{
                       onCreate: requestAnchoredComment,
                       onOpen: openCommentFromAnchor,
+                      onAnchored: (_id, saved) =>
+                        fireToast(
+                          saved
+                            ? 'Comment anchored to the selected text.'
+                            : 'Comment created, but its anchor could not be saved with the section — save the section to make the highlight visible to others.',
+                          saved ? undefined : 'error',
+                        ),
                     }}
                     imagesApi={{ upload: uploadSectionImage }}
                     /* The document's own sections, as they stand right now.
@@ -3959,16 +4063,52 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
                 ? ` · ${activeDoc.title}`
                 : ''}
             </span>
-            <button
-              type="button"
-              className="ed-comments-close"
-              aria-label="Close AnA panel"
-              title="Close AnA panel"
-              onClick={closeAna}
-            >
-              {I.close}
-            </button>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+              <button
+                type="button"
+                className="ana-work-toggle"
+                aria-pressed={workDockOpen}
+                aria-label={workDockOpen ? 'Hide AnA at work' : 'Show AnA at work'}
+                title={workDockOpen ? 'Hide AnA at work' : 'Show AnA at work'}
+                onClick={() => setWorkDockOpen(!workDockOpen)}
+              >
+                {I.activity} AnA at work
+              </button>
+              <button
+                type="button"
+                className="ed-comments-close"
+                aria-label="Close AnA panel"
+                title="Close AnA panel"
+                onClick={closeAna}
+              >
+                {I.close}
+              </button>
+            </span>
           </div>
+          {/* The live work dock — the same one the shell rail mounts. ABOVE
+              the log below, deliberately: that region is aria-live, and a
+              clock ticking inside a live region would be read out every
+              second. */}
+          {workDockOpen && (
+            <div className="ana-work-host">
+              <AnaWorkPanel
+                messages={ana.messages}
+                streaming={ana.isStreaming}
+                runStatus={ana.runStatus}
+                pendingSteers={ana.pendingSteers}
+                queue={anaWorkQueue}
+                context={{
+                  project: shellProgramName(),
+                  module: 'Document authoring',
+                  surface: activeSection
+                    ? `Section ${activeSection.code}`
+                    : activeDoc
+                      ? activeDoc.title
+                      : null,
+                }}
+              />
+            </div>
+          )}
           <div
             ref={anaScrollRef}
             role="log"
@@ -4068,7 +4208,7 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
               )
             )}
           </div>
-          <div style={{ padding: '10px 12px', borderTop: '1px solid var(--c2c-line,#e4e7ec)' }}>
+          <div style={{ padding: '10px 12px', borderTop: '1px solid var(--border)' }}>
             <textarea
               className="c2c-input"
               ref={anaComposerRef}
@@ -4144,7 +4284,7 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
                 {I.shieldCheck} {ledger === 'checking' ? 'Recomputing ledger…' : 'Verify ledger'}
               </button>
               {ledger === 'error' && (
-                <span style={{ color: 'var(--c2c-err,#b42318)' }}>
+                <span style={{ color: 'var(--error)' }}>
                   Couldn’t recompute the ledger — this is a failed check, not a verdict about the
                   record.
                 </span>
@@ -4159,7 +4299,7 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
                     {ledger.preLedgerCount > 0 ? `; ${ledger.preLedgerCount} pre-ledger` : ''}.
                   </span>
                 ) : (
-                  <span style={{ color: 'var(--c2c-err,#b42318)', fontWeight: 600 }}>
+                  <span style={{ color: 'var(--error)', fontWeight: 600 }}>
                     Ledger BROKEN at {ledger.breaks.length} point
                     {ledger.breaks.length === 1 ? '' : 's'} —{' '}
                     {ledger.breaks.map(b => b.reason).join(', ')}. The history has been altered or
@@ -4298,7 +4438,7 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
               hint="The read failed. This is a failure to READ the record — it does not mean no governed acts occurred. Retry, or check the service is reachable."
             />
           ) : auditState === 'loading' && auditEvents.length === 0 ? (
-            <div className="scaf-note" style={{ padding: 12 }}>
+            <div role="status" className="scaf-note" style={{ padding: 12 }}>
               Loading the audit trail…
             </div>
           ) : auditEvents.length === 0 ? (
@@ -4417,7 +4557,7 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
               className="scaf-note"
               role="alert"
               data-testid="refresh-skipped"
-              style={{ margin: 12, fontSize: 12, borderLeftColor: 'var(--c2c-err,#b42318)' }}
+              style={{ margin: 12, fontSize: 12, borderLeftColor: 'var(--error)' }}
             >
               <div style={{ display: 'flex', gap: 8, alignItems: 'baseline' }}>
                 <b>
@@ -4448,7 +4588,7 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
               hint="Select a section to see the sources it is drafted from."
             />
           ) : sourcesState === 'loading' ? (
-            <div className="scaf-note" style={{ padding: 12 }}>
+            <div role="status" className="scaf-note" style={{ padding: 12 }}>
               Loading this section’s sources…
             </div>
           ) : sourcesState === 'error' ? (
@@ -4460,7 +4600,7 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
           ) : (
             <>
               <div
-                style={{ padding: '10px 12px', borderBottom: '1px solid var(--c2c-line,#e4e7ec)' }}
+                style={{ padding: '10px 12px', borderBottom: '1px solid var(--border)' }}
               >
                 {!picking ? (
                   <button
@@ -4594,7 +4734,7 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
           <div className="ed-comments-h">Comments</div>
           {activeSection && (
             <div
-              style={{ padding: '10px 12px', borderBottom: '1px solid var(--c2c-line,#e4e7ec)' }}
+              style={{ padding: '10px 12px', borderBottom: '1px solid var(--border)' }}
             >
               {/* The range being commented on, handed over by the editor's
                   Comment button. Posting resolves the server id back to the
@@ -4902,6 +5042,7 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
               : sections.find(s => s.id === pendingLeave.id)?.code ?? 'another section'
           }
           saving={leaving}
+          pendingDecisionCount={pendingDecisionCountRef.current}
           onSave={() => void saveAndLeave()}
           onLeave={leaveUnsaved}
           onCancel={() => setPendingLeave(null)}
@@ -4923,6 +5064,7 @@ function UnsavedWorkGuard({
   sectionTitle,
   destination,
   saving,
+  pendingDecisionCount,
   onSave,
   onLeave,
   onCancel,
@@ -4931,6 +5073,10 @@ function UnsavedWorkGuard({
   sectionTitle: string;
   destination: string;
   saving: boolean;
+  /** Accept/reject decisions recorded for this section since it was last
+   *  saved — already permanent on the audit trail regardless of what the
+   *  author chooses here. Zero when nothing has been decided this session. */
+  pendingDecisionCount: number;
   onSave: () => void;
   onLeave: () => void;
   onCancel: () => void;
@@ -4961,6 +5107,18 @@ function UnsavedWorkGuard({
           Your edits to {sectionCode} {sectionTitle} are cached on this device and are not in the
           record. Opening {destination} closes this section.
         </p>
+        {pendingDecisionCount > 0 && (
+          <p className="ed-guard-d">
+            {pendingDecisionCount === 1
+              ? 'One tracked-change decision in this section was'
+              : `${pendingDecisionCount} tracked-change decisions in this section were`}{' '}
+            already recorded to the audit trail. Leaving without saving keeps{' '}
+            {pendingDecisionCount === 1 ? 'that decision' : 'those decisions'} on record while the
+            section's saved content still shows {pendingDecisionCount === 1 ? 'it' : 'them'} as
+            pending — deciding {pendingDecisionCount === 1 ? 'it' : 'them'} again later replaces
+            this record rather than conflicting with it.
+          </p>
+        )}
         <p className="ed-guard-d">
           Saving records an auditable revision attributed to you. Leaving keeps the edits on this
           device only — this browser, on this machine — and offers them back when you return to the

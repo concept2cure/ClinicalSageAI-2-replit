@@ -4,31 +4,31 @@
   "count": 10,
   "unconsidered": {
     "server/jobs/auditChainIntegritySweep.ts": {
-      "reason": "DELIBERATELY UNCONDITIONAL. Verifies the tamper-evident audit hash chain estate-wide (zero organization_id references; runs under a system scope). Audit integrity is precisely the thing that must NOT stop when a tenant is suspended, pending deletion or purged — 21 CFR Part 11 §11.10(e) expects the trail to outlive the records it describes. Gating this on entitlement would blind the platform to chain damage in exactly the tenants under scrutiny.",
+      "reason": "DELIBERATELY UNCONDITIONAL. Verifies the tamper-evident audit hash chain estate-wide (zero organization_id references; runs under a system scope). Audit integrity is precisely the thing that must NOT stop when a tenant is suspended, pending deletion or purged \u2014 21 CFR Part 11 \u00a711.10(e) expects the trail to outlive the records it describes. Gating this on entitlement would blind the platform to chain damage in exactly the tenants under scrutiny.",
       "digest": "bdf9715452a8b12b"
     },
     "server/jobs/corpusIngestionSweep.ts": {
-      "reason": "NO PER-TENANT FAN-OUT. Zero organization_id references; ingests into the shared regulatory corpus under a system scope. Nothing here is attributable to a tenant, so there is no tenant to be entitled. Revisit if it gains per-tenant fan-out — the content digest below will re-flag it.",
+      "reason": "NO PER-TENANT FAN-OUT. Zero organization_id references; ingests into the shared regulatory corpus under a system scope. Nothing here is attributable to a tenant, so there is no tenant to be entitled. Revisit if it gains per-tenant fan-out \u2014 the content digest below will re-flag it.",
       "digest": "dcbd16f54c0f1dc9"
     },
     "server/jobs/driftSentinelSweep.ts": {
-      "reason": "NO PER-TENANT FAN-OUT. Zero organization_id references; estate-wide drift detection under a system scope. Revisit if it gains per-tenant fan-out — the digest will re-flag it.",
+      "reason": "NO PER-TENANT FAN-OUT. Zero organization_id references; estate-wide drift detection under a system scope. Revisit if it gains per-tenant fan-out \u2014 the digest will re-flag it.",
       "digest": "b23cb89eb5f4d188"
     },
     "server/jobs/externalIntelligenceSweep.ts": {
-      "reason": "NO PER-TENANT FAN-OUT. Zero organization_id references; ingests shared external intelligence under a system scope. Revisit if it gains per-tenant fan-out — the digest will re-flag it.",
+      "reason": "NO PER-TENANT FAN-OUT. Zero organization_id references; ingests shared external intelligence under a system scope. Revisit if it gains per-tenant fan-out \u2014 the digest will re-flag it.",
       "digest": "b5ef8251c930545c"
     },
     "server/jobs/regulatoryHorizonScan.ts": {
-      "reason": "NO PER-TENANT FAN-OUT. Zero organization_id references; scans the shared regulatory horizon under a system scope. Revisit if it gains per-tenant fan-out — the digest will re-flag it.",
+      "reason": "NO PER-TENANT FAN-OUT. Zero organization_id references; scans the shared regulatory horizon under a system scope. Revisit if it gains per-tenant fan-out \u2014 the digest will re-flag it.",
       "digest": "4c3fadcd75fb5a11"
     },
     "server/jobs/retentionCron.ts": {
-      "reason": "DELIBERATELY UNCONDITIONAL. Retention deletion must run FOR non-entitled tenants — that is its purpose. A suspended or pending-deletion tenant is the primary case, and gating it on entitlement would mean data is never retained out of the tenants whose retention clock is actually running. Its only notification path (notifyAdmins) addresses PLATFORM admins with an estate summary, not tenant users.",
+      "reason": "DELIBERATELY UNCONDITIONAL. Retention deletion must run FOR non-entitled tenants \u2014 that is its purpose. A suspended or pending-deletion tenant is the primary case, and gating it on entitlement would mean data is never retained out of the tenants whose retention clock is actually running. Its only notification path (notifyAdmins) addresses PLATFORM admins with an estate summary, not tenant users.",
       "digest": "7dbd57942d60c53a"
     },
     "server/jobs/scheduleOfEventsSweep.ts": {
-      "reason": "NO PER-TENANT FAN-OUT at the sweep level: zero organization_id references, runs under a system scope. NOTE — the RLS burndown lists this as a writer, so if it ever selects per-organization it needs filterTenantsForBackgroundWork like taskDueSweep. The digest below is what forces that re-read.",
+      "reason": "NO PER-TENANT FAN-OUT at the sweep level: zero organization_id references, runs under a system scope. NOTE \u2014 the RLS burndown lists this as a writer, so if it ever selects per-organization it needs filterTenantsForBackgroundWork like taskDueSweep. The digest below is what forces that re-read.",
       "digest": "bfd4fd54a2a03e88"
     },
     "server/routes/api-keys.ts": {
@@ -38,10 +38,6 @@
     "server/routes/mdx-admin.ts": {
       "reason": "FALSE POSITIVE (matches on the word 'SCIM' in prose). Mounted at /api/mdx, behind the auth boundary, so the lifecycle guard already covers it.",
       "digest": "f89f9d81bb3be28b"
-    },
-    "server/workers/vectorization-worker.ts": {
-      "reason": "NO PER-TENANT FAN-OUT. Zero organization_id references; embeds the shared corpus under a system scope. Per-tenant vectorization would need the check — the digest will re-flag it if that changes.",
-      "digest": "961edac592399c06"
     }
   }
 }

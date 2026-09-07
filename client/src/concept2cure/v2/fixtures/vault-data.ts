@@ -92,37 +92,6 @@ function d(
   return { id, num, title, type, status, pct, owner, ver, updated, preview };
 }
 
-export function vaultCrossCuttingFolders(): VaultFolder[] {
-  return [
-    { id: 'cc-corr', code: 'Correspondence', label: 'Agency correspondence', children: [
-      d('cc-c1', '—', 'FDA Day-74 filing communication', 'Letter', 'final', 100, 'FDA - CDER', 'v1.0', '3d ago', 'Filing review communication acknowledging receipt of NDA 212345 and confirming the 74-day filing decision.'),
-      d('cc-c2', '—', 'Information Request — CMC stability (HAQ)', 'Letter', 'review', 60, 'FDA - CDER', 'v0.3', '2d ago', 'Agency requests justification for the 18-month stability trend and the 24-month shelf-life projection.'),
-      d('cc-c3', '—', 'Type B Pre-IND meeting minutes', 'Minutes', 'final', 100, 'J. Chen', 'v1.0', '2w ago', 'FDA aligned on the nonclinical toxicology package. No further action.'),
-    ]},
-    { id: 'cc-tpl', code: 'Templates', label: 'Formatting templates', children: [
-      d('cc-t1', '—', 'Concept2Cure House Style — CTD', 'Template', 'approved', 100, 'Reg Ops', 'v3.0', '1w ago', 'Corporate CTD/eCTD body template — extracted fonts, logo, margins and layout. Open in the Template library.'),
-      d('cc-t2', '—', 'CSR — ICH E3 House Format', 'Template', 'approved', 100, 'Reg Ops', 'v2.0', '2w ago', 'Clinical study report house format, ICH E3 structure.'),
-    ]},
-    { id: 'cc-work', code: 'Working', label: 'Working drafts', children: [
-      d('cc-w1', '—', 'ISS shell — pooled safety (WIP)', 'Working', 'draft', 35, 'Biostat', 'v0.3', '6h ago', 'Integrated summary of safety working draft; ADaM ADAE not yet locked.'),
-      d('cc-w2', '—', '2.5 Clinical Overview — redline', 'Working', 'draft', 82, 'A. Müller', 'v0.9', '2h ago', 'Working redline of the Clinical Overview ahead of promotion to review.'),
-    ]},
-    { id: 'cc-src', code: 'Sources', label: 'Sources & evidence', children: [
-      { id: 'cc-src-lit', code: 'literature', label: 'Literature', children: [
-        d('cc-l1', '—', 'RTK-X inhibition in biliary tract cancer — meta-analysis', 'Literature', 'reviewed', 100, 'Corpus', '—', '1w ago', 'Eur J Cancer 2023 - imported to corpus - cited in §2.5.'),
-      ]},
-      { id: 'cc-src-pred', code: 'precedents', label: 'Precedents', children: [
-        d('cc-p1', '—', 'Accelerated approval on ORR endpoint — SBA', 'Precedent', 'reviewed', 100, 'Corpus', '—', '1w ago', 'Drugs@FDA Summary Basis of Approval; ORR-based accelerated approval precedent.'),
-      ]},
-      { id: 'cc-src-data', code: 'datasets', label: 'Datasets', children: [
-        d('cc-d1', '—', 'ADaM ADRS — responder analysis', 'Dataset', 'approved', 100, 'Data Mgmt', 'locked', '1w ago', 'ADaM responder dataset, data cut 2026-05-01 - locked - linked to §2.5 ORR claim.'),
-      ]},
-    ]},
-    { id: 'cc-audit', code: 'Audit', label: 'Audit (read-only)', children: [
-      d('cc-a1', '—', 'Corpus access & mutation log', 'Audit', 'final', 100, 'System', '—', 'live', '21 CFR Part 11 tamper-evident log of every upload, view, version and evidence link across the vault.'),
-    ]},
-  ];
-}
 
 /* ── File-type icon selector (shared with VaultTree) ── */
 

@@ -110,6 +110,20 @@ export function moduleOfSectionKey(key: string): CtdModuleCode | null {
  * mandatory node with only optional children is itself the requirement.
  * Module containers ('M1') and keys that are not CTD codes are never required.
  */
+/**
+ * How many sections a pack actually marks mandatory, independent of whether
+ * their keys are CTD-numbered. `requiredSectionsFromPack` drops any key that is
+ * not `1.`-`5.` (moduleOfSectionKey returns null), which is correct for grouping
+ * by CTD module but means an empty grouped result CANNOT be read as "the pack
+ * marks nothing mandatory" — the medtech/EU packs (PMA, CTA, MDR, IVDR) are not
+ * CTD-numbered at all, so every one of their mandatory sections is dropped.
+ */
+export function countMandatorySections(sections: ReadonlyArray<PackSection>): number {
+  let n = 0;
+  for (const s of sections) if (s?.key && s.mandatory) n++;
+  return n;
+}
+
 export function requiredSectionsFromPack(sections: ReadonlyArray<PackSection>): RequiredModule[] {
   const byKey = new Map<string, PackSection>();
   for (const s of sections) if (s?.key) byKey.set(String(s.key), s);
@@ -199,7 +213,18 @@ export async function resolveRequiredSections(
       const sections = Array.isArray(pack.required_sections) ? (pack.required_sections as PackSection[]) : [];
       const modules = requiredSectionsFromPack(sections);
       if (modules.every((m) => m.requiredSections.length === 0)) {
-        return fallbackSet(`Rule pack ${klass.docType}:${agency} ${pack.version} marks no section mandatory; the ICH CTD marketing-application baseline is in force.`);
+        /* An empty grouped result has TWO causes and they are not the same fact.
+           requiredSectionsFromPack drops every key moduleOfSectionKey cannot map
+           to a CTD module (`^m?[1-5]\.`), and the medtech/EU packs are not
+           CTD-numbered, so their mandatory sections are all dropped. Reporting
+           "marks no section mandatory" for those states something the pack's own
+           required_sections refutes. Count first, then say the true thing. */
+        const mandatoryCount = countMandatorySections(sections);
+        return fallbackSet(
+          mandatoryCount === 0
+            ? `Rule pack ${klass.docType}:${agency} ${pack.version} marks no section mandatory; the ICH CTD marketing-application baseline is in force.`
+            : `Rule pack ${klass.docType}:${agency} ${pack.version} marks ${mandatoryCount} section(s) mandatory, but none carry an ICH CTD module number (1.-5.), so they could not be mapped to CTD modules. Those requirements are NOT reflected below — the ICH CTD marketing-application baseline is shown instead, and it is not this pack's requirement set.`,
+        );
       }
       return { modules, provenance: { source: 'rule_pack', docType: klass.docType, agency, packVersion: String(pack.version) } };
     }

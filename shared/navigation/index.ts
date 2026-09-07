@@ -118,6 +118,7 @@ export const NAVIGATION_TARGETS: readonly NavigationTarget[] = [
 
   // ── Module workstreams (project-scoped) ──
   { id: 'cmc', label: 'CMC / Quality (Module 3)', description: 'The CMC workstream (specifications, stability, batch, etc.).', scope: 'project', group: 'module' },
+  { id: 'protocol-dev', label: 'Protocol development', description: 'The clinical protocol authoring workspace — sections, objectives, risk/milestone/amendment/deviation registers, and completeness findings.', scope: 'global', group: 'module' },
   { id: 'labeling', label: 'Labeling', description: 'The labeling workstream (documents, symbols, translations).', scope: 'project', group: 'module' },
   { id: 'risk', label: 'Risk Management', description: 'The risk workstream (register, matrix, controls).', scope: 'project', group: 'module' },
   { id: 'tasking', label: 'Tasking', description: 'The task board / list / kanban.', scope: 'project', group: 'module' },
@@ -160,6 +161,10 @@ export const NAVIGATION_TARGETS: readonly NavigationTarget[] = [
   { id: 'nda-cockpit', label: 'NDA/BLA cockpit', description: 'The NDA/BLA marketing-application cockpit — CTD readiness, Module 1 admin, the PDUFA clock, Refuse-to-File risk, and biologics.', scope: 'project', group: 'module' },
   { id: 'maa-cockpit', label: 'MAA cockpit', description: 'The EU MAA marketing-application cockpit.', scope: 'project', group: 'module' },
   { id: 'haq-manager', label: 'Health-authority questions', description: 'The HAQ manager — agency questions grouped by round, with analysis, drafts and commitments.', scope: 'project', group: 'module' },
+  // The Communication Center is not a rail item (product decision, 2026-07-28);
+  // it is reached from the project home, ⌘K and deep link — and, from here,
+  // by AnA. It was the one project surface `navigate_to` could not reach.
+  { id: 'communication-center', label: 'Communication Center', description: 'The agency-communication hub for the project — the FDA loop, the agency inbox, meetings and commitments, and authority profiles.', scope: 'project', group: 'module' },
   { id: 'mission-control', label: 'Mission control', description: 'The portfolio mission-control board — every program and its cross-program status.', scope: 'global', group: 'global' },
   { id: 'biostat-workbench', label: 'Biostatistics workbench', description: 'The biostatistics workbench — reviewer-risk assessment plus the deterministic design engines (assurance, group-sequential, sample size, multiplicity, and more).', scope: 'global', group: 'module' },
   { id: 'filing-strategy', label: 'Filing strategy', description: 'The filing-strategy workspace — filing-sequence optimization, agency divergence, and prediction calibration.', scope: 'project', group: 'module' },
@@ -201,7 +206,14 @@ export const NAVIGATION_TARGETS: readonly NavigationTarget[] = [
 
   // ── Analysis & authoring tools ──
   { id: 'batch-draft', label: 'Batch draft', description: 'Parallel section drafting over the eCTD Co-Author document spine (running a batch stays a human click).', scope: 'global', group: 'module' },
-  { id: 'biostatistics', label: 'Biostatistics designer', description: 'The deterministic biostatistics design engine — sample size, power, and governed statistical documents.', scope: 'global', group: 'module' },
+  {
+    id: 'biostatistics', label: 'Biostatistics designer', description: 'The deterministic biostatistics design engine — sample size, power, and governed statistical documents.', scope: 'global', group: 'module',
+    // Consumed by the surface on mount: it loads THAT persisted study design
+    // (cdisc_prm_studies.study_id) through the biostatistics bridge and seeds
+    // the engine from it — how the protocol workspace and the task board hand a
+    // study to the designer without the person retyping it.
+    params: [{ name: 'studyId', required: false, description: 'A persisted study design id (as listed by the bridge) to load into the designer on arrival.' }],
+  },
   { id: 'change-assessment', label: 'Change assessment', description: 'The 510(k)-change / MDR significant-change worklist with FDA and EU determinations.', scope: 'global', group: 'module' },
   { id: 'doc-journey', label: 'Document journey', description: 'A document’s lifecycle rail — the read-only reconstruction of its real audit trail.', scope: 'global', group: 'module' },
   { id: 'ectd-publishing', label: 'eCTD publishing reference', description: 'Spec versions and controlled vocabularies — read-only; nothing here publishes, transmits, or freezes a sequence.', scope: 'global', group: 'module' },
@@ -213,6 +225,8 @@ export const NAVIGATION_TARGETS: readonly NavigationTarget[] = [
   { id: 'pyramid', label: 'Submission pyramid', description: 'The submission work-breakdown pyramid — phases, tasks and critical path per submission type.', scope: 'global', group: 'module' },
   { id: 'authoring-engine', label: 'Authoring engine', description: 'What the authoring engine is built to do per document type — capability reference, no program data.', scope: 'global', group: 'module' },
   { id: 'orchestration', label: 'Orchestration', description: 'Workflow runs, human-in-the-loop approval gates, and dispatch readiness.', scope: 'global', group: 'module' },
+  { id: 'usage', label: 'Usage', description: 'The org\'s real-time usage metering — API calls, storage, seats, against plan limits.', scope: 'global', group: 'module' },
+  { id: 'billing', label: 'Billing', description: 'The org\'s billing and invoices — plan, payment method, and invoice history.', scope: 'global', group: 'module' },
   { id: 'report-governance', label: 'Report governance', description: 'The sealed-report lifecycle — integrity verification, provenance, seal and revoke ceremonies.', scope: 'global', group: 'module' },
   { id: 'research-admin', label: 'Research administration', description: 'Research administration — the CITI training matrix (other sections connect later).', scope: 'global', group: 'module' },
 

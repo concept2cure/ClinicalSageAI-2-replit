@@ -37,12 +37,38 @@ const ROOT = process.cwd();
 // producer emits provenance; the guard fails on any new provenance-less writer.
 const BASELINE = new Set([]);
 
-// Writes artifact content (INSERT, content-setting UPDATE, or Drizzle insert).
+// Writes artifact content (INSERT, content-setting UPDATE, or a Drizzle insert /
+// content-setting update on any receiver — `db`, a transaction `tx`, a client).
 const WRITE_RE =
-  /INSERT\s+INTO\s+concept2cure_artifacts|UPDATE\s+concept2cure_artifacts[\s\S]{0,400}?\bcontent\b\s*=|\.insert\(\s*concept2cureArtifacts\b/;
+  /INSERT\s+INTO\s+concept2cure_artifacts|UPDATE\s+concept2cure_artifacts[\s\S]{0,400}?\bcontent\b\s*=|\.insert\(\s*concept2cureArtifacts\b|\.update\(\s*concept2cureArtifacts\s*\)[\s\S]{0,400}?\bcontent\s*:/;
 // Emits a provenance event (canonical primitive, legacy emitter, or raw insert).
 const PROV_RE =
   /recordArtifactProvenance|emitProvenanceEvent|concept2cure_provenance_events|cmc_provenance_events|concept2cureProvenanceEvents/;
+
+/** Drop block and line comments; string contents are left alone (a URL's `//`
+ *  inside a string is not a comment). Good enough for identifier matching. */
+function stripComments(src) {
+  let out = '';
+  let i = 0;
+  let quote = null;
+  while (i < src.length) {
+    const c = src[i];
+    const next = src[i + 1];
+    if (quote) {
+      out += c;
+      if (c === '\\') { out += next ?? ''; i += 2; continue; }
+      if (c === quote) quote = null;
+      i += 1;
+      continue;
+    }
+    if (c === '"' || c === "'" || c === '`') { quote = c; out += c; i += 1; continue; }
+    if (c === '/' && next === '*') { const end = src.indexOf('*/', i + 2); i = end === -1 ? src.length : end + 2; continue; }
+    if (c === '/' && next === '/') { const end = src.indexOf('\n', i); i = end === -1 ? src.length : end; continue; }
+    out += c;
+    i += 1;
+  }
+  return out;
+}
 
 function listServerTsFiles() {
   // Prefer git (fast, respects tracking); fall back to a recursive walk.
@@ -74,7 +100,11 @@ for (const rel of listServerTsFiles()) {
   } catch {
     continue;
   }
-  if (WRITE_RE.test(src)) producers.push({ rel, emitsProvenance: PROV_RE.test(src) });
+  // Match code, not prose: a comment that names the provenance table (or the
+  // primitive) must not make a writer read as compliant. Three instruments in
+  // this repo have been fooled that way; this one strips comments first.
+  const code = stripComments(src);
+  if (WRITE_RE.test(code)) producers.push({ rel, emitsProvenance: PROV_RE.test(code) });
 }
 
 const compliant = producers.filter((p) => p.emitsProvenance).map((p) => p.rel);

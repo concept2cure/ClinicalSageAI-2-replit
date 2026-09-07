@@ -236,7 +236,10 @@ describe('DocumentAuthoring — the editor answers its own asks', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Send' }));
 
     const pane = await screen.findByLabelText(/AnA — document authoring/);
-    expect(await within(pane).findByText('Checking dossier consistency')).toBeTruthy();
+    // Scoped to the conversation log: the pane also mounts the live work dock
+    // above it, which names the same step, so a pane-wide query finds two.
+    const log = within(pane).getByRole('log', { name: 'AnA conversation' });
+    expect(await within(log).findByText('Checking dossier consistency')).toBeTruthy();
     expect(await within(pane).findByText('Evidence grounded')).toBeTruthy();
     const followUp = await within(pane).findByRole('button', { name: /Review the citation chain/ });
     expect((followUp as HTMLButtonElement).disabled).toBe(false);

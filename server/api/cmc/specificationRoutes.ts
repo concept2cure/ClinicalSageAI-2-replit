@@ -2,35 +2,15 @@ import express from 'express';
 import { getPool } from '../../db';
 import { z } from 'zod';
 import { writeThroughSpecification } from '../../services/cmc-write-through';
+/* The one path from a register save to the Module 3 canonical layer: it awaits
+   the write, reports { module3Linked, module3Warning } in the response and
+   meters a failure. The program is the stored row's project_id, never the
+   request body's, so no request is handed to it here. */
+import { linkToModule3 } from '../../services/cmc/link-to-module3';
 import { recordGovernedAction, verifyReauth } from '../../routes/c2c/actions';
-import { createScopedLogger } from '../../utils/logger';
-import * as metricsModule from '../../metrics.js';
 import { governedSignatureSchema, resolveActorUserId } from './governance';
 
 const router = express.Router();
-const logger = createScopedLogger('cmc-specs');
-
-/**
- * Observe a failed canonical write-through to the Module 3 submission source
- * object. The primary response is intentionally NOT blocked on this — but the
- * failure MUST be observable (logged + metered) rather than silently swallowed.
- * TODO(GA): consider retry/queue for guaranteed write-through.
- */
-function observeWriteThroughFailure(recordId: string | number, err: unknown): void {
-  logger.error('Module 3 canonical write-through failed (specification)', {
-    recordId: String(recordId),
-    propagation: 'writeThroughSpecification',
-    error: err instanceof Error ? err.message : String(err),
-  });
-  try {
-    (metricsModule as any).metrics.concept2cureErrors.inc({
-      operation: 'cmc_write_through_specification',
-      error_type: 'propagation_failed',
-    });
-  } catch {
-    /* metric increment must never affect request flow */
-  }
-}
 
 // Validation schemas
 const createSpecSchema = z.object({
@@ -188,18 +168,14 @@ router.post('/', async (req, res) => {
     );
 
     console.log(`[CMC Specs] Created specification ${spec.id} for ${data.materialName}`);
-    // Write-through: upsert canonical source object for Module 3
-    if (spec.project_id) {
-      writeThroughSpecification(Number(tenantId), spec.project_id, String(spec.id), spec).catch(err =>
-        observeWriteThroughFailure(spec.id, err)
-      );
-    }
+    const linkage = await linkToModule3('write_through_specification', Number(tenantId), spec, writeThroughSpecification);
 
     res.status(201).json({
       success: true,
       data: spec,
       message: 'Specification created successfully',
       timestamp: new Date().toISOString(),
+      ...linkage,
     });
   } catch (error) {
     console.error('[CMC Specs] Error creating specification:', error);
@@ -291,18 +267,14 @@ router.put('/:id', async (req, res) => {
     );
 
     console.log(`[CMC Specs] Updated specification ${id}`);
-    // Write-through: upsert canonical source object for Module 3
-    if (updatedSpec?.project_id) {
-      writeThroughSpecification(Number(tenantId), updatedSpec.project_id, String(id), updatedSpec).catch(err =>
-        observeWriteThroughFailure(id, err)
-      );
-    }
+    const linkage = await linkToModule3('write_through_specification', Number(tenantId), updatedSpec, writeThroughSpecification);
 
     res.json({
       success: true,
       data: updatedSpec,
       message: 'Specification updated successfully',
       timestamp: new Date().toISOString(),
+      ...linkage,
     });
   } catch (error) {
     console.error('[CMC Specs] Error updating specification:', error);
@@ -405,18 +377,16 @@ router.post('/:id/approve', async (req, res) => {
 
     await client.query('COMMIT');
 
-    // Write-through canonical source object for Module 3.
-    if (updatedSpec?.project_id) {
-      writeThroughSpecification(orgId, updatedSpec.project_id, String(id), updatedSpec).catch(err =>
-        observeWriteThroughFailure(id, err)
-      );
-    }
+    /* The approval is committed under its signature above; whether it reached
+       the dossier layer is reported, never assumed. */
+    const linkage = await linkToModule3('write_through_specification', orgId, updatedSpec, writeThroughSpecification);
 
     return res.json({
       success: true,
       data: updatedSpec,
       governance: { actionId: governance.actionId, sha256Chain: governance.sha256Chain },
       timestamp: new Date().toISOString(),
+      ...linkage,
     });
   } catch (error) {
     try { await client.query('ROLLBACK'); } catch { /* noop */ }

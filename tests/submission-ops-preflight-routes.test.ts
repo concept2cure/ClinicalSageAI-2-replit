@@ -14,6 +14,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import express from 'express';
 import request from 'supertest';
+import { fingerprintPackageContent, sha256Hex, type PackageContentRow } from '../server/services/ectd/package-content-fingerprint';
 
 /* ─── Mock the governed-action ledger so it is a no-op. ──────────────── */
 vi.mock('../server/routes/c2c/actions', () => ({
@@ -24,8 +25,12 @@ vi.mock('../server/routes/c2c/actions', () => ({
 const { dbState } = vi.hoisted(() => ({
   dbState: {
     pkg: null as any,
-    updates: [] as any[],
+    // Every metadata write, tagged with the path it took: 'lock' (the package
+    // row lock's UPDATE) or 'drizzle' (an unlocked db.update — must be none).
+    updates: [] as Array<{ via: 'lock' | 'drizzle'; metadata: any }>,
     failUpdate: false,
+    // The package's CURRENT content as the fingerprint reads it (pool query).
+    contentRows: [] as PackageContentRow[],
   },
 }));
 
@@ -43,16 +48,53 @@ function makeDb() {
     update() { return chain; },
     set(payload: any) {
       if (dbState.failUpdate) throw new Error('simulated metadata write failure');
-      dbState.updates.push(payload);
+      dbState.updates.push({ via: 'drizzle', metadata: payload.metadata });
       return chain;
     },
   };
   return chain;
 }
 
+/** The pool client: serves the package row lock (SELECT … FOR UPDATE) from the
+ *  stubbed package AT LOCK TIME — so a test can change the row while a validator
+ *  runs — and captures the metadata the locked UPDATE writes. */
+const clientQuery = vi.fn(async (sql: string, params: unknown[] = []) => {
+  if (/FOR UPDATE/.test(sql)) return { rows: [{ metadata: dbState.pkg?.metadata ?? null }] };
+  if (/^UPDATE c2c_submission_packages/.test(sql)) {
+    if (dbState.failUpdate) throw new Error('simulated metadata write failure');
+    dbState.updates.push({ via: 'lock', metadata: JSON.parse(String(params[1])) });
+  }
+  return { rows: [] };
+});
+const connectFn = vi.fn(() => Promise.resolve({ query: clientQuery, release: vi.fn() }));
+/** pool.query serves the content-fingerprint read from dbState.contentRows. */
+const poolQuery = vi.fn(async (sql: string, _params: unknown[] = []) => {
+  if (/FROM c2c_package_sections/.test(sql)) {
+    return {
+      rows: dbState.contentRows.map((r) => ({
+        section_db_id: r.sectionDbId, section_key: r.sectionKey, section_label: r.sectionLabel, sort_order: r.sortOrder, artifact_db_id: r.artifactDbId,
+        title: r.title, version: r.version, ctd_section: r.ctdSection, content_sha256: r.contentSha256,
+      })),
+    };
+  }
+  return { rows: [] };
+});
 vi.mock('../server/db', () => ({
   get db() { return makeDb(); },
-  pool: { connect: vi.fn(), query: vi.fn() },
+  pool: { connect: (...a: unknown[]) => connectFn(...a), query: (...a: unknown[]) => poolQuery(...(a as [string, unknown[]])) },
+}));
+
+/* ─── A configurable agency validator: the real registry (its env gating is
+   what the unconfigured cases exercise) with the HTTP call replaced, so a test
+   can land a concurrent write while the validator "runs". ─────────────── */
+const runHttpValidatorFn = vi.fn();
+vi.mock('../server/services/submission-gateways/validator-registry', async (importOriginal) => ({
+  ...(await importOriginal<any>()),
+  runHttpValidator: (...a: unknown[]) => runHttpValidatorFn(...a),
+}));
+vi.mock('../server/services/submission-bundle-storage', async (importOriginal) => ({
+  ...(await importOriginal<any>()),
+  readBundleBytes: vi.fn().mockResolvedValue(Buffer.from('PK-ZIP', 'utf8')),
 }));
 
 // Avoid pulling heavy engine modules through the route's imports.
@@ -81,6 +123,11 @@ beforeEach(() => {
   dbState.pkg = null;
   dbState.updates = [];
   dbState.failUpdate = false;
+  dbState.contentRows = CONTENT;
+  connectFn.mockClear();
+  poolQuery.mockClear();
+  clientQuery.mockClear();
+  runHttpValidatorFn.mockReset();
   // Ensure no external validators are configured.
   delete process.env.FDA_VALIDATOR_URL;
   delete process.env.EMA_VALIDATOR_URL;
@@ -89,6 +136,23 @@ beforeEach(() => {
   fetchSpy.mockReset();
   vi.stubGlobal('fetch', fetchSpy);
 });
+
+/** What the stored bundles below were built from; the package still holds it
+ *  unless a test edits dbState.contentRows. */
+const CONTENT: PackageContentRow[] = [
+  { sectionDbId: 13, sectionKey: '2.5', sectionLabel: 'Clinical Overview', sortOrder: 0, artifactDbId: 1, title: 'Clinical overview', version: 1, ctdSection: null, contentSha256: sha256Hex('Clinical overview text') },
+];
+const CONTENT_FINGERPRINT = fingerprintPackageContent(CONTENT);
+const IDS = { applicationNumber: 'IND123456', applicantId: 'DUNS-123456789', applicantName: 'Acme Biologics Inc' };
+const BUNDLE = {
+  sha256: 'e'.repeat(64), sizeBytes: 9, format: 'ectd', path: '/bundles/pkg-locked.zip', storage: { provider: 'local' },
+  validation: { errorCount: 0, warningCount: 0, infoCount: 0, findings: [] },
+  contentFingerprint: CONTENT_FINGERPRINT,
+};
+const pkgWith = (metadata: Record<string, unknown>) => ({
+  id: 5, packageId: 'pkg_locked', orgId: 99, status: 'locked', packageFamily: 'ind', metadata,
+});
+const preflight = () => request(makeApp()).post('/api/submission-ops/packages/pkg_locked/preflight').send({});
 
 describe('POST /api/submission-ops/packages/:packageId/preflight', () => {
   it('404s when the package is not in the tenant', async () => {
@@ -115,6 +179,7 @@ describe('POST /api/submission-ops/packages/:packageId/preflight', () => {
         bundle: {
           sha256: 'a'.repeat(64),
           sizeBytes: 1234,
+          contentFingerprint: CONTENT_FINGERPRINT,
           format: 'ectd',
           path: '/tmp/does-not-matter.zip',
           storage: { provider: 'local' },
@@ -154,9 +219,12 @@ describe('POST /api/submission-ops/packages/:packageId/preflight', () => {
     expect(fetchSpy).not.toHaveBeenCalled();
 
     // The run summary is persisted under metadata.preflight; the assemble
-    // descriptor (metadata.bundle) is preserved by the spread.
+    // descriptor (metadata.bundle) is preserved by the spread. Written under
+    // the package row lock, never by an unlocked update.
+    expect(res.body.data.persisted).toBe(true);
     expect(dbState.updates.length).toBe(1);
     const persisted = dbState.updates[0];
+    expect(persisted.via).toBe('lock');
     expect(persisted.metadata.bundle).toBeDefined();
     expect(persisted.metadata.preflight).toMatchObject({
       errorCount: 0,
@@ -171,7 +239,86 @@ describe('POST /api/submission-ops/packages/:packageId/preflight', () => {
       'fda_evalidator',
       'ema_validator',
       'pmda_precheck',
+      'content_integrity',
     ]);
+    // The package still holds what the bundle was built from: assessed, clean.
+    expect(byId.content_integrity).toMatchObject({ configured: true, ran: true, errorCount: 0, warningCount: 0 });
+  });
+
+  it('reports CONTENT DRIFT as a blocking finding when an artifact was edited after assembly — the same assessment transmit refuses on', async () => {
+    dbState.pkg = pkgWith({ regulatory: IDS, bundle: BUNDLE });
+    dbState.contentRows = CONTENT.map((r) => ({ ...r, contentSha256: sha256Hex('Clinical overview text, edited after assembly') }));
+    const res = await preflight();
+    expect(res.status).toBe(200);
+    expect(res.body.data.blocking).toBe(true);
+    expect(res.body.data.errorCount).toBe(1);
+    const drift = res.body.data.findings.find((f: any) => f.ruleId === 'BUNDLE-CONTENT-DRIFT');
+    expect(drift).toMatchObject({ severity: 'error' });
+    expect(drift.message).toMatch(/content changed since this bundle was assembled/i);
+    const byId = Object.fromEntries(res.body.data.validators.map((v: any) => [v.id, v]));
+    expect(byId.content_integrity).toMatchObject({ configured: true, ran: true, errorCount: 1 });
+    // The blocking outcome reaches the persisted summary the portfolio reads.
+    expect(dbState.updates[0].metadata.preflight).toMatchObject({ blocking: true, errorCount: 1 });
+    expect(dbState.updates[0].metadata.preflight.validators.find((v: any) => v.id === 'content_integrity').errorCount).toBe(1);
+  });
+
+  it('a bundle with NO content fingerprint is UNPROVEN: a warning where descriptor trust is relaxed, a blocking error where transmit would refuse it', async () => {
+    const { contentFingerprint: _none, ...unfingerprinted } = BUNDLE;
+    // Relaxed (this suite runs under NODE_ENV=test): assessed as unknown, not blocking, nothing read.
+    dbState.pkg = pkgWith({ regulatory: IDS, bundle: unfingerprinted });
+    let res = await preflight();
+    expect(res.status).toBe(200);
+    expect(res.body.data.blocking).toBe(false);
+    let finding = res.body.data.findings.find((f: any) => f.ruleId === 'BUNDLE-CONTENT-UNPROVEN');
+    expect(finding).toMatchObject({ severity: 'warning' });
+    expect(finding.message).toMatch(/no content fingerprint/i);
+    let byId = Object.fromEntries(res.body.data.validators.map((v: any) => [v.id, v]));
+    // The assessment DID run — it read the descriptor and found nothing it can
+    // compare. `ran: false` would read as "not looked at".
+    expect(byId.content_integrity).toMatchObject({ ran: true, errorCount: 0, warningCount: 1 });
+    expect(poolQuery.mock.calls.some((c) => /FROM c2c_package_sections/.test(String(c[0])))).toBe(false);
+
+    // Enforced (production): the same bundle is a blocking error, as transmit refuses it.
+    const saved = process.env.NODE_ENV;
+    process.env.NODE_ENV = 'production';
+    try {
+      dbState.updates = [];
+      res = await preflight();
+    } finally {
+      if (saved === undefined) delete process.env.NODE_ENV; else process.env.NODE_ENV = saved;
+    }
+    expect(res.status).toBe(200);
+    expect(res.body.data.blocking).toBe(true);
+    finding = res.body.data.findings.find((f: any) => f.ruleId === 'BUNDLE-CONTENT-UNPROVEN');
+    expect(finding).toMatchObject({ severity: 'error' });
+    byId = Object.fromEntries(res.body.data.validators.map((v: any) => [v.id, v]));
+    expect(byId.content_integrity).toMatchObject({ ran: true, errorCount: 1 });
+  });
+
+  it('a bundle fingerprinted under an OLDER scheme says so, rather than claiming it records none', async () => {
+    // A version bump makes every stored descriptor unproven at once; telling
+    // the operator it "records no fingerprint" would be false for all of them.
+    dbState.pkg = pkgWith({ regulatory: IDS, bundle: { ...BUNDLE, contentFingerprint: 'v2:' + 'a'.repeat(64) } });
+    const res = await preflight();
+    expect(res.status).toBe(200);
+    const finding = res.body.data.findings.find((f: any) => f.ruleId === 'BUNDLE-CONTENT-UNPROVEN');
+    expect(finding.message).toMatch(/fingerprinted under an older scheme than v3/);
+    expect(finding.message).toMatch(/re-assemble/);
+    expect(finding.message).not.toMatch(/records no content fingerprint/);
+    // Nothing was read: an unproven descriptor is not compared against anything.
+    expect(poolQuery.mock.calls.some((c) => /FROM c2c_package_sections/.test(String(c[0])))).toBe(false);
+  });
+
+  it('a content read that fails is an error, never a pass', async () => {
+    dbState.pkg = pkgWith({ regulatory: IDS, bundle: BUNDLE });
+    poolQuery.mockRejectedValueOnce(new Error('db down'));
+    const res = await preflight();
+    expect(res.status).toBe(200);
+    expect(res.body.data.blocking).toBe(true);
+    const byId = Object.fromEntries(res.body.data.validators.map((v: any) => [v.id, v]));
+    expect(byId.content_integrity).toMatchObject({ ran: true, errorCount: 1 });
+    expect(byId.content_integrity.error).toMatch(/db down/);
+    expect(res.body.data.findings.some((f: any) => f.ruleId === 'VALIDATOR-ERROR' && /content integrity/i.test(f.message))).toBe(true);
   });
 
   it('marks blocking:true when the stored validation has an error', async () => {
@@ -184,6 +331,7 @@ describe('POST /api/submission-ops/packages/:packageId/preflight', () => {
       metadata: {
         bundle: {
           sha256: 'b'.repeat(64),
+          contentFingerprint: CONTENT_FINGERPRINT,
           sizeBytes: 10,
           format: 'ectd',
           path: '/tmp/x.zip',
@@ -224,6 +372,7 @@ describe('POST /api/submission-ops/packages/:packageId/preflight', () => {
       metadata: {
         bundle: {
           sha256: 'c'.repeat(64),
+          contentFingerprint: CONTENT_FINGERPRINT,
           sizeBytes: 10,
           format: 'ectd',
           path: '/tmp/x.zip',
@@ -235,9 +384,82 @@ describe('POST /api/submission-ops/packages/:packageId/preflight', () => {
     dbState.failUpdate = true;
 
     const res = await request(makeApp()).post('/api/submission-ops/packages/pkg_persistfail/preflight').send({});
-    // A failed derived-cache write must not lose the run's results.
+    // A failed derived-cache write must not lose the run's results — and the
+    // response says the summary was NOT persisted rather than implying it was.
     expect(res.status).toBe(200);
     expect(res.body.data.blocking).toBe(false);
+    expect(res.body.data.persisted).toBe(false);
     expect(dbState.updates.length).toBe(0);
+    expect(clientQuery).toHaveBeenCalledWith('ROLLBACK');
+  });
+
+  it('REFUSES to persist a run whose bundle was cleared or replaced meanwhile, and never writes its pre-run snapshot over the row', async () => {
+    // A configured agency validator: its HTTP call is where a colleague's
+    // PUT regulatory-identifiers lands — new application number, and the
+    // bundle assembled under the old one cleared.
+    process.env.FDA_VALIDATOR_URL = 'https://validator.example.invalid/run';
+    dbState.pkg = pkgWith({ regulatory: IDS, bundle: BUNDLE });
+    runHttpValidatorFn.mockImplementationOnce(async () => {
+      dbState.pkg = pkgWith({ regulatory: { ...IDS, applicationNumber: 'IND999999' } });
+      return [];
+    });
+    const res = await preflight();
+    // The findings describe a bundle the package no longer has.
+    expect(res.status).toBe(409);
+    expect(res.body.gate).toBe('bundle_superseded');
+    expect(res.body.evaluatedSha256).toBe(BUNDLE.sha256);
+    // Nothing was written: the newer identifiers stand and the cleared
+    // bundle is NOT put back as transmittable. The decision took the lock.
+    expect(dbState.updates).toEqual([]);
+    expect(clientQuery.mock.calls.some((c) => /FOR UPDATE/.test(String(c[0])))).toBe(true);
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it('cannot identify a bundle without a sha256: such a run is superseded, never stored against whatever is there now', async () => {
+    process.env.FDA_VALIDATOR_URL = 'https://validator.example.invalid/run';
+    const { sha256: _none, ...unidentified } = BUNDLE;
+    dbState.pkg = pkgWith({ regulatory: IDS, bundle: { ...unidentified, path: '/bundles/a.zip' } });
+    runHttpValidatorFn.mockImplementationOnce(async () => {
+      // Replaced meanwhile by another sha-less descriptor with a different outcome.
+      dbState.pkg = pkgWith({ regulatory: IDS, bundle: { ...unidentified, path: '/bundles/b.zip', validation: { errorCount: 4, warningCount: 0, infoCount: 0, findings: [] } } });
+      return [];
+    });
+    const res = await preflight();
+    expect(res.status).toBe(409);
+    expect(res.body.gate).toBe('bundle_superseded');
+    expect(dbState.updates).toEqual([]);
+  });
+
+  it('when the lock cannot be taken after the bundle was superseded, the findings are NOT returned as the package’s (409, not 200 persisted:false)', async () => {
+    process.env.FDA_VALIDATOR_URL = 'https://validator.example.invalid/run';
+    dbState.pkg = pkgWith({ regulatory: IDS, bundle: BUNDLE });
+    runHttpValidatorFn.mockImplementationOnce(async () => {
+      dbState.pkg = pkgWith({ regulatory: IDS }); // bundle cleared meanwhile
+      return [];
+    });
+    connectFn.mockRejectedValueOnce(new Error('pool exhausted'));
+    const res = await preflight();
+    expect(res.status).toBe(409);
+    expect(res.body.gate).toBe('bundle_superseded');
+    expect(dbState.updates).toEqual([]);
+  });
+
+  it('persists against the LOCKED row: a change that landed while the validator ran is kept, not reverted', async () => {
+    process.env.FDA_VALIDATOR_URL = 'https://validator.example.invalid/run';
+    dbState.pkg = pkgWith({ regulatory: IDS, bundle: BUNDLE });
+    runHttpValidatorFn.mockImplementationOnce(async () => {
+      // Same bundle; a colleague added something else to the row meanwhile.
+      dbState.pkg = pkgWith({ regulatory: IDS, bundle: BUNDLE, noteAddedMeanwhile: 'kept' });
+      return [{ severity: 'warning', ruleId: 'FDA-1234', message: 'Agency warning' }];
+    });
+    const res = await preflight();
+    expect(res.status).toBe(200);
+    expect(res.body.data.persisted).toBe(true);
+    expect(res.body.data.warningCount).toBe(1);
+    expect(dbState.updates).toHaveLength(1);
+    expect(dbState.updates[0].via).toBe('lock');
+    expect(dbState.updates[0].metadata.noteAddedMeanwhile).toBe('kept');
+    expect(dbState.updates[0].metadata.bundle).toEqual(BUNDLE);
+    expect(dbState.updates[0].metadata.preflight.bundleSha256).toBe(BUNDLE.sha256);
   });
 });

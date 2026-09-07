@@ -134,7 +134,14 @@ interface CmcCorrespondence {
   /** Served by the file's GET (the closed-history read); the board omits it. */
   updatedAt?: string | null;
 }
-interface CmcSection { key: string; path: string; st: string; _new?: boolean; }
+interface CmcSection {
+  key: string; path: string; st: string; _new?: boolean;
+  /** The compiler's own score for the section (null when it never scored it)
+      and the required inputs it found missing — read from the section's
+      compiled record by the same rule the approve route and the export gate
+      refuse on (server/services/cmc/compiled-record.ts). */
+  completeness?: number | null; missingInputs?: string[];
+}
 interface CmcChangeType { id: string; label: string; risk: string; }
 interface CmcChangeResult { type: CmcChangeType; markets: string[]; desc: string; paths: { m: string; label: string; path: string[] }[]; }
 
@@ -143,8 +150,15 @@ interface CmcChangeResult { type: CmcChangeType; markets: string[]; desc: string
    the display object directly (portfolio / sections / kpis / meta). rpi / ir /
    rpiAverage / section counts are number | null — honestly null when the
    backend cannot measure them; rendered as "—", never fabricated. */
-interface CmcBoardKpis { submissions: number; rpiAverage: number | null; irOverdue: number; sectionsApproved: number | null; sectionsTotal: number | null; readyPercent: number | null; }
-interface CmcBoardMeta { projectId: string | null; portfolioProvisioned: boolean; sectionsProvisioned: boolean | null; generatedAt: string; }
+interface CmcBoardKpis { submissions: number; rpiAverage: number | null; /** null when the question store could not be read — NOT zero. */ irOverdue: number | null; sectionsApproved: number | null; sectionsTotal: number | null; readyPercent: number | null; }
+interface CmcBoardMeta {
+  projectId: string | null; portfolioProvisioned: boolean; sectionsProvisioned: boolean | null; generatedAt: string;
+  /** true = that register's read FAILED — as opposed to unprovisioned, or
+      provisioned and empty. A failed read is rendered as an error, never as an
+      empty register: "no sections" over a store that did not answer is a claim
+      nothing established. */
+  sectionsUnreadable?: boolean | null; portfolioUnreadable?: boolean; correspondenceUnreadable?: boolean;
+}
 interface CmcBoardData {
   portfolio?: CmcPortfolio[];
   sections?: CmcSection[] | null;
@@ -278,6 +292,25 @@ const CMC_MARKETS: [string, string][] = [['fda', 'FDA'], ['ema', 'EMA'], ['pmda'
    which is exactly the misunderstanding §11.50 exists to prevent, and it invites
    someone to sign more casually than the record deserves. The copy now states
    what actually happens. */
+/* What the approve route and the export gate refuse on, read the same way
+   here: a compiled record under 100, a required input still named missing, or
+   no score at all — a section the composer never scored is "nothing
+   established", not "complete". A row without the figures (an older payload)
+   fails closed to incomplete: the server would refuse the signature anyway. */
+function sectionIncomplete(s: CmcSection): boolean {
+  return s.completeness !== 100 || (s.missingInputs ?? []).length > 0;
+}
+/** Why the control is withheld, in the signer's terms — the same shape the approve route's 409 uses. */
+function incompleteReason(s: CmcSection): string {
+  const missing = s.missingInputs ?? [];
+  return (
+    '§' + s.key + (s.completeness == null ? ' has no compiled completeness record' : ' is ' + s.completeness + '% complete') +
+    ' and cannot be approved.' +
+    (missing.length ? ' Missing required inputs: ' + missing.join(', ') + '.' : '') +
+    ' Record the inputs on the Module 3 build board and recompile.'
+  );
+}
+
 function signForm(target: string): C2CFormConfig {
   return {
     eyebrow: '21 CFR §11.50 — e-signature', title: 'Sign to approve', sub: target, submitLabel: 'Sign & approve',
@@ -390,6 +423,13 @@ export function CmOverview({ ask, nav }: { ask: (text: string) => void; nav?: (i
      project is in context but has no governed sections yet. */
   const liveSections: CmcSection[] | null = data && Array.isArray(data.sections) ? data.sections : null;
   const kpis = data?.kpis;
+  const meta = data?.meta;
+  /* true = that register's read FAILED. The board answers `sections: []` /
+     `portfolio: []` for a failed read exactly as for an empty one; only these
+     flags tell them apart, and the surface used to ignore them — so a store
+     that did not answer rendered as "no governed CMC sections authored". */
+  const sectionsUnreadable = meta?.sectionsUnreadable === true;
+  const portfolioUnreadable = meta?.portfolioUnreadable === true;
 
   /* Governed section-approval working set — seeded from the live governed store.
      useLiveData memoizes its result in state, so `liveSections` is a stable
@@ -408,7 +448,11 @@ export function CmOverview({ ask, nav }: { ask: (text: string) => void; nav?: (i
   const rpiNums = port.map((r) => r.rpi).filter((v): v is number => typeof v === 'number');
   const computedAvgRpi = rpiNums.length ? Math.round(rpiNums.reduce((a, b) => a + b, 0) / rpiNums.length) : null;
   const avgRpi: number | null = kpis ? kpis.rpiAverage : computedAvgRpi;
-  const irOverdue: number = kpis ? kpis.irOverdue : port.reduce((a, r) => a + (r.ir ?? 0), 0);
+  /* null means "the overdue count is not established" — the backend could not
+     read the agency-question store. It is NOT zero, and it must not silently
+     become the legacy per-row sum, which counts something else. */
+  const irOverdue: number | null = kpis ? kpis.irOverdue : port.reduce((a, r) => a + (r.ir ?? 0), 0);
+  const irUnknown = irOverdue == null || meta?.correspondenceUnreadable === true;
   /* The overdue ATTRIBUTION comes from the same read as the COUNT. The lead
      used to count from the correspondence KPI but name submissions from the
      legacy per-row store — two sources, and when the legacy store was empty
@@ -421,10 +465,35 @@ export function CmOverview({ ask, nav }: { ask: (text: string) => void; nav?: (i
   const readyTone = readyPct >= 80 ? 'ok' : readyPct >= 50 ? 'warn' : 'err';
   const stTone = (s: string) => s === 'approved' ? 'ok' : s === 'review' ? 'warn' : 'dim';
 
+  /* Export readiness is READ from the gate's own evaluation, never derived
+     here. The card used to say "Export ready" at 80% approved — while the gate
+     requires every section approved, none stale, every approved one complete,
+     every one with lineage, and a governed-state verdict. On the live case
+     that motivated this work (21/21 approved, three at 0% complete) the card
+     was green while the gate refused. The percentage stays as what it is:
+     approvals. */
+  const readiness = useLiveData<{
+    totalSections: number; approvedSections: number; staleSections: number; openCriticalContradictions: number;
+    sectionsWithoutProvenance: number; incompleteApprovedSections: string[]; governedStateEvaluated: boolean; exportReady: boolean;
+  }>(ctxProjectId ? '/api/cmc/module3-os/readiness/' + encodeURIComponent(ctxProjectId) : null);
+  const readinessReasons = (() => {
+    const r = readiness.data;
+    if (!r || r.exportReady) return [];
+    const reasons: string[] = [];
+    if (r.totalSections > 0 && r.approvedSections < r.totalSections) reasons.push(`${r.totalSections - r.approvedSections} not approved`);
+    if (r.incompleteApprovedSections?.length) reasons.push(`${r.incompleteApprovedSections.length} approved but incomplete (§${r.incompleteApprovedSections.join(', §')})`);
+    if (r.staleSections > 0) reasons.push(`${r.staleSections} stale`);
+    if (r.sectionsWithoutProvenance > 0) reasons.push(`${r.sectionsWithoutProvenance} without source lineage`);
+    if (r.openCriticalContradictions > 0) reasons.push(`${r.openCriticalContradictions} critical contradiction(s) open`);
+    if (!r.governedStateEvaluated) reasons.push('governed state not evaluated');
+    return reasons;
+  })();
+
   // doSign — REAL, awaited section approval against the governed Module 3
   // operating-system endpoint (POST /api/cmc/module3-os/sections/:projectId/
   // :sectionKey/approve, server/api/cmc/module3OperatingSystemRoutes.ts). The
-  // backend blocks on unresolved critical contradictions (409), snapshots a new
+  // backend refuses (409) on an unresolved critical contradiction or on a
+  // section whose own compiled record is incomplete, else snapshots a new
   // approved version, sets approval_state, and writes a cmc_provenance_events
   // audit entry keyed to the authenticated user. The reason + reauth captured by
   // the sign form are forwarded, and the server VERIFIES the re-auth before any
@@ -456,7 +525,15 @@ export function CmOverview({ ask, nav }: { ask: (text: string) => void; nav?: (i
       );
       const json = await res.json().catch(() => null);
       if (res.status === 409) {
-        fireToast('Cannot approve ' + target.key + ' — resolve the critical contradictions first.', 'error');
+        /* 409 is the server refusing the signature for a STATED reason — an
+           unresolved critical contradiction, or a section whose compiled record
+           is incomplete. Render the reason it gave: the hard-coded "resolve the
+           critical contradictions first" sent a signer looking for
+           contradictions that did not exist. */
+        fireToast(
+          'Cannot approve ' + target.key + ' — ' + (serverMessage(json) ?? 'the server refused the signature (HTTP 409).'),
+          'error',
+        );
         return;
       }
       if (!res.ok) {
@@ -494,11 +571,13 @@ export function CmOverview({ ask, nav }: { ask: (text: string) => void; nav?: (i
      someone moved it, so a non-empty section set is positive evidence that the
      package is genuinely being assessed. The gate is `secs.length`, not
      `approved === 0`. */
+  /* A failed register read is unreadable, not not-assessed: the narrative must
+     not count sections or reassure over a store that did not answer. */
   const cmcState = assessmentState({
     loading: board.loading,
-    unreadable: Boolean(board.error),
+    unreadable: Boolean(board.error) || sectionsUnreadable || portfolioUnreadable,
     scopeExists: port.length > 0,
-    findingCount: irOverdue,
+    findingCount: irOverdue ?? 0,
     assessmentRan: secs.length > 0,
   });
   const cmLead = (
@@ -508,12 +587,18 @@ export function CmOverview({ ask, nav }: { ask: (text: string) => void; nav?: (i
          NDA cockpit — same session, same assessmentState taxonomy — used it
          for the identical state. Two sibling surfaces rendering one state in
          two visual languages is the drift this work is meant to remove. */
-      tone={irOverdue ? 'urgent' : cmcState === 'assessed-clear' ? 'good' : 'calm'}
-      eyebrow={cmcState === 'not-assessed' && port.length === 0
+      tone={irUnknown ? 'calm' : irOverdue ? 'urgent' : cmcState === 'assessed-clear' ? 'good' : 'calm'}
+      eyebrow={(cmcState === 'not-assessed' || cmcState === 'unreadable') && port.length === 0
         ? 'Is your CMC package ready'
         : 'Is your CMC package ready across all ' + port.length + ' submissions'}
       headline={cmcState === 'unreadable'
-        ? <>The Module 3 board could not be read.</>
+        ? <>{board.error
+            ? 'The Module 3 board'
+            : sectionsUnreadable && portfolioUnreadable
+              ? 'The submission portfolio and the governed §3.2 section register'
+              : sectionsUnreadable
+                ? 'The governed §3.2 section register'
+                : 'The submission portfolio'} could not be read.</>
         : cmcState === 'loading'
           ? <>Reading your Module 3 portfolio&hellip;</>
           : port.length === 0
@@ -522,12 +607,14 @@ export function CmOverview({ ask, nav }: { ask: (text: string) => void; nav?: (i
               ? <>Your Module 3 averages <b>RPI {avgRpi}</b> -- the <b>{lowSub.sub}</b> at {lowSub.rpi} is what's holding the portfolio back.</>
               : <>Your Module 3 spans <b>{port.length}</b> {port.length === 1 ? 'submission' : 'submissions'}{avgRpi != null ? <> at an <b>RPI {avgRpi}</b> average</> : <>, with no preparedness index computed for {port.length === 1 ? 'it' : 'any of them'} yet</>}.</>}
       body={cmcState === 'unreadable'
-        ? <>This is a failed read, not an empty portfolio. Nothing shown here should be taken as the state of your CMC package. Sign in to your tenant and retry.</>
+        ? <>This is a failed read, not an empty register. Nothing shown or omitted here should be taken as the state of your CMC package. Sign in to your tenant and retry.</>
         : cmcState === 'loading'
           ? <>Nothing is being asserted about readiness until the read settles.</>
           : port.length === 0
             ? <>Module 3 readiness is measured across an organization's submissions, and there are none recorded. Nothing about this package has been assessed. Create a submission and add its CMC sections, and its specifications, batch analyses, stability data and change control appear here.</>
-            : irOverdue
+            : irUnknown
+              ? <>The agency-question store could not be read, so the number of overdue information requests is <b>not established</b> — treat it as unknown, not as none. {nextSec ? <>Of what did read: §{nextSec.key} ({nextSec.path}) is still in {nextSec.st}, one of {inReview.length + drafts.length} sections not yet approved.</> : null}</>
+              : irOverdue
               ? <>You have <b>{irOverdue} information {irOverdue === 1 ? 'request' : 'requests'} overdue</b>{overdueSecs.length ? <> (§{overdueSecs.join(', §')})</> : null}. {nextSec ? <>And §{nextSec.key} ({nextSec.path}) is still in {nextSec.st}, one of {inReview.length + drafts.length} sections not yet approved.</> : null}</>
               : secs.length === 0
                 ? <>No governed CMC sections have been authored for {port.length === 1 ? 'this submission' : 'these submissions'} yet, so section approval has nothing to report.</>
@@ -536,7 +623,9 @@ export function CmOverview({ ask, nav }: { ask: (text: string) => void; nav?: (i
          requires evidence that work is in progress. mayReassure gates it on the
          assessed-clear state and on a non-zero readiness percentage; every
          other state renders no reassurance rather than a softened one. */
-      reassure={irOverdue
+      reassure={irUnknown
+        ? undefined
+        : irOverdue
         ? "Answer the IRs first — they're time-boxed. I'll draft the responses and route the sign-offs with you."
         : mayReassure(cmcState, readyPct)
           ? "You're building steadily. I'll help you move the next section to approved."
@@ -579,12 +668,13 @@ export function CmOverview({ ask, nav }: { ask: (text: string) => void; nav?: (i
             <div className="cm-kpis" style={{ gridTemplateColumns: 'minmax(150px, 240px)' }}>
               <Kpi
                 l="IR overdue"
-                v={irOverdue}
-                tone={irOverdue ? 'err' : 'ok'}
-                onClick={irOverdue > 0
+                v={irUnknown ? '—' : irOverdue}
+                tone={irUnknown ? undefined : irOverdue ? 'err' : 'ok'}
+                s={irUnknown ? 'count not established, the question store could not be read' : undefined}
+                onClick={!irUnknown && irOverdue > 0
                   ? () => (window as unknown as { __cmSetTab?: (id: string) => void }).__cmSetTab?.('pathway')
                   : undefined}
-                title={irOverdue > 0 ? 'Open the agency correspondence — overdue first' : undefined}
+                title={!irUnknown && irOverdue > 0 ? 'Open the agency correspondence — overdue first' : undefined}
               />
             </div>
           )}
@@ -595,7 +685,17 @@ export function CmOverview({ ask, nav }: { ask: (text: string) => void; nav?: (i
           <div className="pj-card">
             <div className="pj-card-h"><span className="t">Section approvals</span><span className="s">governed — 21 CFR §11</span></div>
             <div className="pj-card-b" style={{ padding: 0 }}>
-              {liveSections === null ? (
+              {sectionsUnreadable ? (
+                <div style={{ padding: 12 }}>
+                  <EmptyState
+                    tone="error"
+                    icon={I.alertTriangle}
+                    title="The Module 3 sections could not be read"
+                    hint="This is a failed read, not an empty register: the governed §3.2 section store did not answer, so nothing here says whether this project has sections or what state they are in. Retry, or check the service is reachable."
+                    testId="cmc-sections-unreadable"
+                  />
+                </div>
+              ) : liveSections === null ? (
                 <div style={{ padding: 12 }}>
                   <EmptyState icon={I.fileText} title="Open a project to see its Module 3 sections" hint="The governed §3.2.S / §3.2.P section list is per-project. Select a project to load its approval state." />
                 </div>
@@ -604,12 +704,45 @@ export function CmOverview({ ask, nav }: { ask: (text: string) => void; nav?: (i
                   <EmptyState icon={I.fileText} title="No Module 3 sections yet" hint="This project has no governed §3.2 sections yet. They appear here with their approval state once created." />
                 </div>
               ) : (
-                <table className="reg-tbl"><thead><tr><th>Section</th><th>Path</th><th>State</th><th style={{ textAlign: 'right' }}>Action</th></tr></thead>
-                <tbody>{secs.map((s) => (
+                /* Completeness sits beside the state because the two are
+                   signed together: an approval is a claim about content that
+                   was reviewed, and the compiler's record says whether the
+                   content is there. Found live: 21/21 approved, three at 0%,
+                   and this table showed neither the figure nor the gap. An
+                   incomplete section gets no live control — the approve route
+                   refuses it (409) and the export gate refuses the project. */
+                <table className="reg-tbl"><thead><tr><th>Section</th><th>Path</th><th>Completeness</th><th>State</th><th style={{ textAlign: 'right' }}>Action</th></tr></thead>
+                <tbody>{secs.map((s) => {
+                  const incomplete = sectionIncomplete(s);
+                  const missing = s.missingInputs ?? [];
+                  return (
                   <tr key={s.key} className={s._new ? 'de-row-new' : undefined}><td className="mono" style={{ fontWeight: 600 }}>{s.key}</td><td>{s.path}</td>
-                    <td><span className={'rd-chip tone-' + stTone(s.st)}>{s.st}</span></td>
-                    <td style={{ textAlign: 'right' }}>{s.st === 'approved' ? <span className="cm-meta">{I.check} approved</span> : <button className="nda-open" onClick={() => setSign(s)}>{I.lock} Approve section</button>}</td>
-                  </tr>))}</tbody></table>
+                    <td>
+                      {s.completeness == null
+                        ? <span className="cm-meta">not established — never scored by the compiler</span>
+                        : <b className={incomplete ? 'sp-tone-warn' : undefined} style={{ fontVariantNumeric: 'tabular-nums' }}>{s.completeness}%</b>}
+                      {missing.length > 0 && <div className="cm-meta">missing: {missing.join(', ')}</div>}
+                    </td>
+                    <td>
+                      <span className={'rd-chip tone-' + stTone(s.st)}>{s.st}</span>
+                      {incomplete && <span className="rd-chip tone-err" style={{ marginLeft: 6 }} title={incompleteReason(s)}>incomplete</span>}
+                    </td>
+                    <td style={{ textAlign: 'right' }}>
+                      {s.st === 'approved'
+                        ? <span className="cm-meta">{I.check} approved</span>
+                        : incomplete
+                          ? <span style={{ display: 'inline-flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+                              <button className="nda-open" disabled title={incompleteReason(s)}>{I.lock} Approve section</button>
+                              <button
+                                className="cm-linkish"
+                                title="Record the missing inputs and recompile on the Module 3 build board"
+                                onClick={() => (window as unknown as { __cmSetTab?: (id: string) => void }).__cmSetTab?.('build')}
+                              >Open the build board</button>
+                            </span>
+                          : <button className="nda-open" onClick={() => setSign(s)}>{I.lock} Approve section</button>}
+                    </td>
+                  </tr>);
+                })}</tbody></table>
               )}
             </div>
             {secs.length > 0 && <div className="pj-card-b" style={{ paddingTop: 0 }}><CmPush label={'Approved Module 3 sections'} nav={nav} bar /></div>}
@@ -617,7 +750,17 @@ export function CmOverview({ ask, nav }: { ask: (text: string) => void; nav?: (i
           <div className="pj-card" style={{ marginBottom: 16 }}>
             <div className="pj-card-h"><span className="t">Portfolio</span><span className="s">{port.length} submissions</span></div>
             <div className="pj-card-b" style={{ padding: 0 }}>
-              {port.length === 0 ? (
+              {portfolioUnreadable ? (
+                <div style={{ padding: 12 }}>
+                  <EmptyState
+                    tone="error"
+                    icon={I.alertTriangle}
+                    title="The submission portfolio could not be read"
+                    hint="This is a failed read, not an empty register: the submission store did not answer, so no submission, preparedness index or overdue count shown or omitted here is established. Retry, or check the service is reachable."
+                    testId="cmc-portfolio-unreadable"
+                  />
+                </div>
+              ) : port.length === 0 ? (
                 <div style={{ padding: 12 }}>
                   <EmptyState icon={I.fileText} title="No submissions yet" hint="Your regulatory submissions (BLA / MAA / NDA / J-NDA) appear here with their preparedness index and overdue information requests." />
                 </div>
@@ -638,10 +781,26 @@ export function CmOverview({ ask, nav }: { ask: (text: string) => void; nav?: (i
               <div className="pj-card-b">
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
                   <div className="cm-projbar" style={{ flex: 1 }}><span className="fill" style={{ width: readyPct + '%', background: readyTone === 'ok' ? 'var(--success)' : readyTone === 'warn' ? 'var(--accent-100)' : 'var(--warning)' }} /></div>
-                  <b style={{ fontVariantNumeric: 'tabular-nums' }}>{readyPct}%</b>
-                  <span className={'rd-chip tone-' + (readyPct >= 80 ? 'ok' : 'warn')}>{readyPct >= 80 ? 'Export ready' : 'Not export ready'}</span>
+                  <b style={{ fontVariantNumeric: 'tabular-nums' }} title="Sections approved">{readyPct}% approved</b>
+                  {readiness.loading ? (
+                    <span className="rd-chip tone-dim" role="status">Evaluating export readiness…</span>
+                  ) : readiness.error || !readiness.data ? (
+                    <span className="rd-chip tone-err" role="alert" title={readiness.error || 'no readiness verdict was returned'}>Export readiness could not be read</span>
+                  ) : readiness.data.exportReady ? (
+                    <span className="rd-chip tone-ok">Export ready</span>
+                  ) : (
+                    <span className="rd-chip tone-warn" title={readinessReasons.join('; ')}>Not export ready</span>
+                  )}
                 </div>
-                <div className="cm-meta">{approved} of {secs.length} sections approved -- {drafts.length} draft</div>
+                <div className="cm-meta">
+                  {approved} of {secs.length} sections approved -- {drafts.length} draft
+                  {!readiness.loading && readiness.data && !readiness.data.exportReady && readinessReasons.length > 0
+                    ? <> -- export blocked: {readinessReasons.join('; ')}</>
+                    : null}
+                  {!readiness.loading && (readiness.error || !readiness.data)
+                    ? <> -- the export gate's verdict could not be read, so readiness is not established; this is a failed read, not a pass.</>
+                    : null}
+                </div>
               </div>
             </div>
           )}
@@ -2620,13 +2779,13 @@ export function CmPathway({ ask, nav }: { ask: (text: string) => void; nav?: (id
           {/* ── The closed file ──
               Rendered under BOTH branches above: a fresh screen with no open
               questions still has (or will have) an answered history. */}
-          <div style={{ borderTop: '1px solid var(--c2c-line,#eef0f3)', marginTop: 10, paddingTop: 8 }}>
+          <div style={{ borderTop: '1px solid var(--border)', marginTop: 10, paddingTop: 8 }}>
             <button className="nda-open" onClick={toggleClosed}>
               {closedOpen ? 'Hide the closed file' : 'Show the closed file'}
             </button>
             {closedOpen ? (
               closedState === 'loading' ? (
-                <div className="cm-meta" style={{ marginTop: 8 }}>Loading the closed file…</div>
+                <div role="status" className="cm-meta" style={{ marginTop: 8 }}>Loading the closed file…</div>
               ) : closedState === 'error' ? (
                 <div className="sp-tone-err" style={{ marginTop: 8, fontSize: 12.5 }}>
                   Couldn’t read the closed file — it didn’t load, and this list would be a lie if it rendered empty. Toggle to retry.

@@ -20,7 +20,7 @@
  * @module server/services/ana-advisory/types
  */
 
-import type { EstarType, EstarInputLeaf } from '../pathway-engines/estar/estar-mapper';
+import type { EstarType, EstarInputLeaf, DeviceFlags } from '../pathway-engines/estar/estar-mapper';
 import type { EstarTemplateVariant } from '../pathway-engines/estar/estar-template-registry';
 import type { MarketId, ReadinessBand } from '../global-markets/types';
 
@@ -63,6 +63,12 @@ export interface DeviceReadinessAdviceInput {
   variant: EstarTemplateVariant;
   /** Canonical content leaves available to project onto the eSTAR section tree. */
   leaves: EstarInputLeaf[];
+  /**
+   * The device's properties deciding conditional-section applicability
+   * (sterile, software, cyber, …). Unanswered ⇒ those sections are undetermined,
+   * which blocks a submittable-eSTAR claim; never read as not applicable.
+   */
+  deviceFlags?: DeviceFlags;
   /** Official eSTAR template filenames present in the drop-point (optional). */
   presentTemplates?: string[];
   /** Optional target market for a readiness overlay. */

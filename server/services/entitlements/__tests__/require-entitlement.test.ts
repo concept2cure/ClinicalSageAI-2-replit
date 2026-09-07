@@ -155,15 +155,35 @@ describe('on mode', () => {
     expect(res.body.error).toBe('NOT_ENTITLED');
     expect(res.body.requiredTier).toBe('standard');
     expect(res.body.message).toContain('could not be verified');
-    expect(res.body.message).toContain('platinum');
+    // The stored value is not one of the evaluator's fixed sentences, so it is
+    // logged, not echoed.
+    expect(res.body.message).not.toContain('platinum');
   });
 
-  it('blocks when the tier lookup itself fails, with the reason', async () => {
+  it('blocks when the tier lookup itself fails — the body carries NO driver text', async () => {
     primeDb({ orgFails: true });
     const res = await request(appWith(7)).post('/gated').send({});
     expect(res.status).toBe(403);
     expect(res.body.error).toBe('NOT_ENTITLED');
-    expect(res.body.message).toContain('tier lookup failed');
+    expect(res.body.capability).toBe('device_assembly_readiness');
+    expect(res.body.requiredTier).toBe('standard');
+    expect(res.body.message).toContain('could not be verified');
+    // The evaluator's reason is `tier lookup failed: <driver message>`; none of
+    // it may reach the client — the raw reason goes to the log only.
+    const body = JSON.stringify(res.body);
+    expect(body).not.toContain('tier lookup failed');
+    expect(body).not.toContain('relation');
+    expect(body).not.toContain('does not exist');
+    expect(body).not.toContain('organizations');
+  });
+
+  it('forwards only the evaluator\'s fixed sentences (org not found) into the 403 message', async () => {
+    primeDb({ orgRows: [] });
+    const res = await request(appWith(7)).post('/gated').send({});
+    expect(res.status).toBe(403);
+    expect(res.body.error).toBe('NOT_ENTITLED');
+    expect(res.body.message).toContain('could not be verified');
+    expect(res.body.message).toContain('organization not found');
   });
 
   it('blocks a missing org context (cannot verify an entitlement for nobody)', async () => {
@@ -202,7 +222,9 @@ describe('on mode', () => {
     expect(res.status).toBe(403);
     expect(res.body.error).toBe('NOT_ENTITLED');
     expect(res.body.requiredTier).toBeNull();
-    expect(res.body.message).toContain('unknown capability key');
+    expect(res.body.message).toContain('could not be verified');
+    // A wiring-bug reason is not customer copy; the key is already in `capability`.
+    expect(res.body.message).not.toContain('unknown capability key');
   });
 });
 

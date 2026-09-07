@@ -31,7 +31,7 @@ const exec = {
 };
 vi.mock('../../../db', () => ({ pool: { query: (s: string, p?: unknown[]) => exec.query(s, p) } }));
 
-import { enforceSourceAndAuthorLineage } from '../lineage-gate';
+import { enforceSourceAndAuthorLineage, enforceAuthorLineage } from '../lineage-gate';
 import * as lineage from '../span-lineage.service';
 
 const ORG_A = 711;
@@ -71,6 +71,7 @@ beforeAll(async () => {
   await pglite.exec(`INSERT INTO organizations (id, name) VALUES (${ORG_A},'a'), (${ORG_B},'b');`);
   await pglite.exec(migration('db/migrations/20260724_clinical_regulatory_evidence_spine.sql'));
   await pglite.exec(migration('db/migrations/20260803_document_span_lineage.sql'));
+  await pglite.exec(migration('migrations/20260907_span_lineage_accepted_machine_draft.sql'));
 }, 90_000);
 
 afterAll(async () => {
@@ -177,5 +178,139 @@ describe('enforceSourceAndAuthorLineage', () => {
     await expect(
       enforceSourceAndAuthorLineage(exec, ORG_A, ref, CONTENT, ACTOR, [{ sourceId: foreign, content: SOURCE_TEXT }]),
     ).rejects.toThrow();
+  });
+});
+
+describe('a later author-only save (ledger L157)', () => {
+  it('keeps a verified quote that is still exactly in place, and covers the rest as the author', async () => {
+    const sourceId = await makeSource(ORG_A, 'sha-l157-1');
+    const ref = { documentTable: 'authoring_sections', documentId: 'sec-l157-1' };
+    await enforceSourceAndAuthorLineage(exec, ORG_A, ref, CONTENT, ACTOR, [{ sourceId, content: SOURCE_TEXT }]);
+
+    // A human appends a clause AFTER the quote: its offsets are untouched.
+    const edited = `${CONTENT} A closing remark the editor added.`;
+    await enforceAuthorLineage(exec, ORG_A, ref, edited, ACTOR);
+
+    const spans = await spansOf(ref.documentId);
+    const source = spans.filter((s) => s.provenanceKind === 'cre_evidence_source');
+    expect(source).toHaveLength(1);
+    expect(source[0].referenceId).toBe(String(sourceId));
+    // Coverage over the new text holds with the surviving quote plus author spans.
+    await expect(lineage.assertLineageCoversContent(ORG_A, ref, edited, exec)).resolves.toBeUndefined();
+  });
+
+  it('retires a verified quote whose text moved, rather than leaving it to answer for the wrong words', async () => {
+    const sourceId = await makeSource(ORG_A, 'sha-l157-2');
+    const ref = { documentTable: 'authoring_sections', documentId: 'sec-l157-2' };
+    await enforceSourceAndAuthorLineage(exec, ORG_A, ref, CONTENT, ACTOR, [{ sourceId, content: SOURCE_TEXT }]);
+    const before = (await spansOf(ref.documentId)).filter((s) => s.provenanceKind === 'cre_evidence_source');
+    expect(before).toHaveLength(1);
+
+    // A human prepends a sentence: the quoted text is still present but its
+    // offsets no longer point at it — and nothing here can re-verify it.
+    const edited = `${ORIGINAL} ${QUOTED}`;
+    await enforceAuthorLineage(exec, ORG_A, ref, edited, ACTOR);
+
+    const spans = await spansOf(ref.documentId);
+    expect(spans.filter((s) => s.provenanceKind === 'cre_evidence_source')).toHaveLength(0);
+    expect(spans.filter((s) => s.provenanceKind === 'author_assertion').length).toBeGreaterThanOrEqual(2);
+    await expect(lineage.assertLineageCoversContent(ORG_A, ref, edited, exec)).resolves.toBeUndefined();
+  });
+});
+
+describe('enforceSourceAndAuthorLineage — model-asserted paraphrase (Phase 4)', () => {
+  it('records an asserted-but-not-quoted clause as usage=paraphrased', async () => {
+    const sourceId = await makeSource(ORG_A, 'sha-p4-1');
+    const ref = { documentTable: 'authoring_sections', documentId: 'sec-p4-1' };
+
+    // The source does NOT contain either clause verbatim, so nothing can be a
+    // verified quote. The model asserts ORIGINAL derives from the source.
+    const result = await enforceSourceAndAuthorLineage(
+      exec,
+      ORG_A,
+      ref,
+      CONTENT,
+      ACTOR,
+      [{ sourceId, content: 'An unrelated manufacturing-controls narrative.' }],
+      { assertions: [{ quote: ORIGINAL, sourceId }] },
+    );
+
+    expect(result.quotedSpans).toBe(0);
+    expect(result.paraphrasedSpans).toBe(1);
+    expect(result.coverage).toBe(0); // coverage counts verified quotes only
+
+    const spans = await spansOf(ref.documentId);
+    const source = spans.filter((s) => s.provenanceKind === 'cre_evidence_source');
+    expect(source).toHaveLength(1);
+    expect(source[0].usage).toBe('paraphrased');
+    expect(source[0].referenceId).toBe(String(sourceId));
+    // The non-asserted clause (QUOTED) falls to the author.
+    expect(spans.filter((s) => s.provenanceKind === 'author_assertion').length).toBeGreaterThanOrEqual(1);
+  });
+
+  it('records a clause that is BOTH quoted and asserted as quoted only (verified wins)', async () => {
+    const sourceId = await makeSource(ORG_A, 'sha-p4-2');
+    const ref = { documentTable: 'authoring_sections', documentId: 'sec-p4-2' };
+
+    // SOURCE_TEXT contains QUOTED verbatim; the model ALSO asserts QUOTED derives
+    // from it. The verified quote must win — one row, usage 'quoted', not 'paraphrased'.
+    const result = await enforceSourceAndAuthorLineage(
+      exec,
+      ORG_A,
+      ref,
+      CONTENT,
+      ACTOR,
+      [{ sourceId, content: SOURCE_TEXT }],
+      { assertions: [{ quote: QUOTED, sourceId }] },
+    );
+
+    expect(result.quotedSpans).toBe(1);
+    expect(result.paraphrasedSpans).toBe(0);
+    const source = (await spansOf(ref.documentId)).filter((s) => s.provenanceKind === 'cre_evidence_source');
+    expect(source).toHaveLength(1);
+    expect(source[0].usage).toBe('quoted');
+  });
+
+  it('mixes quoted + paraphrased + author and still closes coverage', async () => {
+    const sourceId = await makeSource(ORG_A, 'sha-p4-3');
+    const ref = { documentTable: 'authoring_sections', documentId: 'sec-p4-3' };
+    const mixed = `${QUOTED} ${ORIGINAL} The analyst added this closing synthesis themselves.`;
+
+    const result = await enforceSourceAndAuthorLineage(
+      exec,
+      ORG_A,
+      ref,
+      mixed,
+      ACTOR,
+      [{ sourceId, content: SOURCE_TEXT }], // contains QUOTED
+      { assertions: [{ quote: ORIGINAL, sourceId }] }, // asserts ORIGINAL
+    );
+
+    expect(result.quotedSpans).toBe(1);
+    expect(result.paraphrasedSpans).toBe(1);
+    expect(result.authorSpans).toBeGreaterThanOrEqual(1);
+    // The gate passed (no throw) — quoted ∪ paraphrased ∪ author covers the text.
+    await expect(lineage.assertLineageCoversContent(ORG_A, ref, mixed, exec)).resolves.toBeUndefined();
+
+    const spans = await spansOf(ref.documentId);
+    const usages = spans.filter((s) => s.provenanceKind === 'cre_evidence_source').map((s) => s.usage).sort();
+    expect(usages).toEqual(['paraphrased', 'quoted']);
+  });
+
+  it('re-accepting keeps BOTH the quoted and paraphrased rows (retire does not drop the other usage)', async () => {
+    const sourceId = await makeSource(ORG_A, 'sha-p4-4');
+    const ref = { documentTable: 'authoring_sections', documentId: 'sec-p4-4' };
+    const sources = [{ sourceId, content: SOURCE_TEXT }];
+    const opts = { assertions: [{ quote: ORIGINAL, sourceId }] };
+
+    await enforceSourceAndAuthorLineage(exec, ORG_A, ref, CONTENT, ACTOR, sources, opts);
+    const first = (await spansOf(ref.documentId)).filter((s) => s.provenanceKind === 'cre_evidence_source');
+    expect(first.map((s) => s.usage).sort()).toEqual(['paraphrased', 'quoted']);
+
+    // Re-accept identical content: the single combined replaceSourceSpans call must
+    // keep both usages, not treat one as stale and retire it.
+    await enforceSourceAndAuthorLineage(exec, ORG_A, ref, CONTENT, ACTOR, sources, opts);
+    const second = (await spansOf(ref.documentId)).filter((s) => s.provenanceKind === 'cre_evidence_source');
+    expect(second.map((s) => s.usage).sort()).toEqual(['paraphrased', 'quoted']);
   });
 });

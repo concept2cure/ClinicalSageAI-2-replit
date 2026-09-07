@@ -1,16 +1,23 @@
 import { createSourceHash } from './cmc-module3-compiler';
+/* Circular by design (module3-extensions imports this file's types and core
+   composer); only a function is taken from it, and only at call time. */
+import { appendixSectionsRequiringSourceType } from './module3-extensions';
 /* The ICH Q3A/Q3B comparison lives in services/cmc/impurity-assessment, which
    consumes the threshold tables in services/global-ri/impurities-thresholds.
    This composer renders the verdict; it does not restate the guideline. */
-import { assessRecordedImpurity, isThresholdAssessment, parseDoseMg, type ImpurityAssessmentResult } from './cmc/impurity-assessment'
+import { assessRecordedImpurity, isMutagenicAssessment, isThresholdAssessment, parseDoseMg, type ImpurityAssessmentResult } from './cmc/impurity-assessment'
 /* The recorded-stability readers and the acceptance-criterion parser: the
    stability verdict is a comparison of numbers to limits, and both live there
    already — one copy, used by the shelf-life engine and by this section. */
 import {
+  assessRecordedTrending,
   parseAcceptanceCriterion,
   parseNumeric,
   readRecordedStabilityResults,
+  type RecordedStabilityRead,
+  type RecordedTrendSeries,
 } from './cmc/recorded-stability';
+import { assessProcessCapability } from './cmc/process-capability';
 /* The dissolution purposes live in shared/, not in the write-through module:
    that module already imports FROM this composer, and importing back would make
    a cycle. One definition, reachable by both, and by the register surface. */
@@ -29,30 +36,39 @@ import {
   normalizeCharacterizationType,
 } from '../../shared/cmc/characterization-type';
 
-export type CmcSourceType =
-  | 'drug_substance'
-  | 'drug_product'
-  | 'specification'
-  | 'method'
-  | 'stability'
-  | 'batch'
-  | 'change_control'
-  | 'comparability'
-  | 'manufacturing_process'
-  | 'characterization'
-  | 'reference_standard'
-  | 'container_closure'
-  | 'excipient'
-  | 'process_validation'
-  | 'raw_material_spec'
-  | 'impurity_profile'
-  | 'dissolution_profile'
-  | 'formulation_record'
+/**
+ * Every canonical CMC source type, as a value. The HTTP upsert schema derives
+ * its `z.enum` from this list, so a type added here is accepted at the API
+ * without a second, hand-copied list drifting behind (five of these were
+ * missing from that copy and were refused with a 400).
+ */
+export const CMC_SOURCE_TYPES = [
+  'drug_substance',
+  'drug_product',
+  'specification',
+  'method',
+  'stability',
+  'batch',
+  'change_control',
+  'comparability',
+  'manufacturing_process',
+  'characterization',
+  'reference_standard',
+  'container_closure',
+  'excipient',
+  'process_validation',
+  'raw_material_spec',
+  'impurity_profile',
+  'dissolution_profile',
+  'formulation_record',
   /* Batch-analyses evidence from the QC register. Distinct from 'batch', which
      is the executed manufacturing record (§3.2.P.3.4); this is the quantitative
      test result behind §3.2.S.4.4 / §3.2.P.5.4. Conflating them would file a
      manufacturing record where a results table belongs. */
-  | 'qc_result';
+  'qc_result',
+] as const;
+
+export type CmcSourceType = (typeof CMC_SOURCE_TYPES)[number];
 
 export interface CanonicalSource {
   id: string;
@@ -142,7 +158,10 @@ export const MODULE3_SECTION_RULES: SectionRule[] = [
      development evidence. Without it, the register wrote such a study through to
      cmc_source_objects, the form and the register grid both told the staffer it
      filed under §3.2.P.2, and it reached no composed section at all. */
-  { sectionKey: '3.2.P.2', requiredSourceTypes: ['drug_product', 'drug_substance', 'comparability', 'formulation_record', 'dissolution_profile', 'container_closure', 'characterization'], requiredFields: ['formulationDevelopment', 'manufacturingProcessDev', 'containerClosureStudies'] },
+  /* manufacturing_process feeds §3.2.P.2.3: the register's process-development
+     narrative is the only producer of manufacturingProcessDev, and the section
+     could never complete while its own rule did not admit that source. */
+  { sectionKey: '3.2.P.2', requiredSourceTypes: ['drug_product', 'drug_substance', 'comparability', 'formulation_record', 'dissolution_profile', 'container_closure', 'characterization', 'manufacturing_process'], requiredFields: ['formulationDevelopment', 'manufacturingProcessDev', 'containerClosureStudies'] },
   { sectionKey: '3.2.P.3', requiredSourceTypes: ['drug_product', 'batch', 'change_control', 'process_validation', 'manufacturing_process'], requiredFields: ['formulation', 'batchNumber', 'drugProductProcessComplete'] },
   /* §3.2.P.4 is Control of EXCIPIENTS. `raw_material_spec` was listed here
      because this was the only rule that named it, so a drug-substance starting
@@ -236,22 +255,36 @@ type StabilityOutcome = 'pass' | 'concern' | 'defer';
  * `conclusion` said "meets its specification at all time points" composed as
  * conforming while its 12-month assay sat at 88.1% against 95.0 - 105.0 %.
  */
+/**
+ * Every field a stability payload has carried its pull-point results in. The
+ * conformance verdict and the trend assessment read the same three, so the
+ * list lives once.
+ */
+function recordedStabilityReads(payload: Record<string, unknown>): RecordedStabilityRead[] {
+  return [
+    readRecordedStabilityResults(payload.results),
+    readRecordedStabilityResults(payload.stabilityData ?? payload.stability_data),
+    readRecordedStabilityResults(payload.stabilityParameters),
+  ];
+}
+
 function assessRecordedStability(stabilitySources: CanonicalSource[]): {
   compared: number;
   outOfSpec: Array<{ parameter: string; timePoint: string; result: number; criterion: string }>;
   uncomparable: number;
+  /** Recorded stability payloads that could not be parsed — data, not absence. */
+  unreadable: number;
 } {
   const outOfSpec: Array<{ parameter: string; timePoint: string; result: number; criterion: string }> = [];
   let compared = 0;
   let uncomparable = 0;
+  let unreadable = 0;
 
   for (const s of stabilitySources) {
     const payload = (s.sourcePayload || {}) as Record<string, unknown>;
-    const series = [
-      ...readRecordedStabilityResults(payload.results),
-      ...readRecordedStabilityResults(payload.stabilityData ?? payload.stability_data),
-      ...readRecordedStabilityResults(payload.stabilityParameters),
-    ];
+    const reads = recordedStabilityReads(payload);
+    unreadable += reads.filter((r) => r.unreadable).length;
+    const series = reads.flatMap((r) => r.points);
     for (const point of series) {
       const value = parseNumeric(point.result);
       if (value === null) continue;
@@ -284,7 +317,7 @@ function assessRecordedStability(stabilitySources: CanonicalSource[]): {
       }
     }
   }
-  return { compared, outOfSpec, uncomparable };
+  return { compared, outOfSpec, uncomparable, unreadable };
 }
 
 /**
@@ -301,7 +334,20 @@ function stabilityConclusion(
   sources: CanonicalSource[],
   material: 'drug substance' | 'drug product',
 ): string {
-  const { compared, outOfSpec, uncomparable } = assessRecordedStability(sources);
+  return `${stabilityConformance(sources, material)} ${stabilityTrending(sources)}`;
+}
+
+/** The conformance half of the conclusion: recorded results against their recorded criteria. */
+function stabilityConformance(
+  sources: CanonicalSource[],
+  material: 'drug substance' | 'drug product',
+): string {
+  const { compared, outOfSpec, uncomparable, unreadable } = assessRecordedStability(sources);
+  // Said in every branch: a payload that could not be read is a gap in the
+  // evidence this section rests on, whatever the readable points show.
+  const unread = unreadable > 0
+    ? ` ${unreadable} recorded stability payload(s) could not be read, so any results they hold were not assessed here.`
+    : '';
 
   if (outOfSpec.length > 0) {
     const named = outOfSpec
@@ -311,7 +357,7 @@ function stabilityConclusion(
     return (
       `${outOfSpec.length} of the ${compared} recorded result(s) compared here fall outside its recorded acceptance criterion ` +
       `(${named}${outOfSpec.length > 4 ? `; and ${outOfSpec.length - 4} more` : ''}). ` +
-      `The stability conclusion and the proposed storage period are NOT established by this section.`
+      `The stability conclusion and the proposed storage period are NOT established by this section.` + unread
     );
   }
   if (compared > 0) {
@@ -320,16 +366,94 @@ function stabilityConclusion(
       `supporting stability of the ${material} under the proposed storage conditions` +
       (uncomparable > 0
         ? `. A further ${uncomparable} recorded result(s) carry no acceptance criterion and were not compared.`
-        : '.')
+        : '.') + unread
     );
   }
   if (uncomparable > 0) {
     return (
       `${uncomparable} recorded result(s) carry no recorded acceptance criterion, so whether they conform is NOT verified by this section. ` +
-      `Any conclusion stated on the study is the applicant's and was not checked against the data here.`
+      `Any conclusion stated on the study is the applicant's and was not checked against the data here.` + unread
     );
   }
-  return `The stability conclusion and proposed storage period are subject to review of the stability results summarized above and are not asserted in this section.`;
+  return `The stability conclusion and proposed storage period are subject to review of the stability results summarized above and are not asserted in this section.` + unread;
+}
+
+/**
+ * The trend half of the conclusion — §3.2.S.7.3 / §3.2.P.8.3's "stability
+ * data" is a series, and a section that reports conformance point by point
+ * without saying whether the series is drifting, or has a result that does
+ * not sit on its own line, leaves the reviewer to trend it by eye.
+ *
+ * Every attribute gets a sentence: what the regression control chart found,
+ * the slope and whether it is established, and where it meets the recorded
+ * limit if it continues — or "trend not assessed" with the reason. A silent
+ * section cannot be told apart from a clean one.
+ */
+function stabilityTrending(sources: CanonicalSource[]): string {
+  const statements: string[] = [];
+  let unreadable = 0;
+  for (const s of sources) {
+    const payload = (s.sourcePayload || {}) as Record<string, unknown>;
+    const reads = recordedStabilityReads(payload);
+    unreadable += reads.filter((r) => r.unreadable).length;
+    const points = reads.flatMap((r) => r.points);
+    if (points.length === 0) continue;
+    /* The mapper writes the condition array; a payload written before it did
+       carries only the joined string, which is split back on its separator
+       so a two-condition study is still refused rather than fitted as one. */
+    const conditionSource =
+      Array.isArray(payload.storageConditions) && payload.storageConditions.length > 0
+        ? payload.storageConditions
+        : String(payload.storageCondition ?? '').split(/\s*,\s*/).filter(Boolean);
+    const assessed = assessRecordedTrending({
+      id: s.id,
+      storageConditions: conditionSource,
+      stabilityData: points,
+    });
+    if (!assessed.ok) {
+      statements.push(`Trend not assessed: ${assessed.error}`);
+      continue;
+    }
+    for (const series of assessed.data.series) statements.push(describeTrendSeries(series, assessed.data.alpha));
+  }
+  if (statements.length === 0) {
+    return unreadable > 0
+      ? 'Trend not assessed: the recorded stability payload could not be read.'
+      : 'Trend not assessed: no recorded pull-point results.';
+  }
+  return (
+    'Out-of-trend assessment (PhRMA CMC Statistics regression control chart: each pull point against the two-sided 95% prediction interval of the line fitted to all prior points): ' +
+    statements.join(' ')
+  );
+}
+
+function describeTrendSeries(series: RecordedTrendSeries, alpha: number): string {
+  const label = series.condition ? `${series.parameter} (${series.condition})` : series.parameter;
+  const o = series.outcome;
+  if (!o.ok) return `${label}: trend not assessed: ${o.detail}.`;
+  const pct = Math.round((1 - alpha) * 100);
+  const oot =
+    o.outOfTrend.length === 0
+      ? `no out-of-trend points across ${o.distinctTimePoints} time points` +
+        (o.pointsUsed !== o.distinctTimePoints ? ` (${o.pointsUsed} results)` : '')
+      : `out-of-trend at ${o.outOfTrend
+          .map(
+            (p) =>
+              `${p.time} months (${p.value} against a ${pct}% prediction interval of ${p.interval.lower} to ${p.interval.upper} from ${p.priorPoints} prior points)`,
+          )
+          .join('; ')}`;
+  const slope = `slope ${o.slope.estimate} per month (${pct}% CI ${o.slope.ci[0]} to ${o.slope.ci[1]})`;
+  let trend: string;
+  if (!o.slope.significant) {
+    trend = `${slope} is not significantly different from zero, so no trend toward the limit is established`;
+  } else if (o.projection) {
+    trend =
+      `${slope} is significantly non-zero; trend toward the limit projected at ${o.projection.time} months ` +
+      `(${o.projection.bound} limit ${o.projection.limit}${o.projection.time <= o.observedPeriod ? ', within the observed period' : ''})`;
+  } else {
+    trend = `${slope} is significantly non-zero but heads away from the recorded limit, so no crossing is projected`;
+  }
+  return `${label}: ${oot}; ${trend}.`;
 }
 
 function readStabilitySignal(stabilitySources: CanonicalSource[]): StabilityOutcome {
@@ -338,7 +462,10 @@ function readStabilitySignal(stabilitySources: CanonicalSource[]): StabilityOutc
      when that is the basis. */
   const measured = assessRecordedStability(stabilitySources);
   if (measured.outOfSpec.length > 0) return 'concern';
-  if (measured.compared > 0) return 'pass';
+  // A payload that could not be read is not evidence of stability, so the
+  // readable points alone may not carry the section to 'pass'.
+  if (measured.compared > 0 && measured.unreadable === 0) return 'pass';
+  if (measured.unreadable > 0) return 'defer';
 
   const NEG = /\b(oos|out[\s-]?of[\s-]?spec(?:ification)?|fail(?:ed|ing|ure)?|degrad\w*|non[\s-]?conform\w*|does not (?:meet|conform)|not within|exceed\w*|reject\w*|unstable)\b/i;
   const POS = /\b(pass(?:ed|ing)?|meets?|within (?:the )?(?:spec(?:ification)?|acceptance|limits?|criteria)|conform\w*|compl(?:ies|iant|y)|no significant change|satisfactory|in[\s-]?spec(?:ification)?)\b/i;
@@ -475,6 +602,86 @@ function batchAnalysesTable(
       // evidence, and a reader must be able to tell which it is looking at.
       p.reviewed ? 'reviewed' : 'not reviewed',
     ]),
+  };
+}
+
+/**
+ * Process capability over the recorded batch results, per test.
+ *
+ * ICH Q6A sets the specification; whether the process meets it batch after
+ * batch is the capability question, and the QC register now records the
+ * batch each result represents. Results of one test are grouped across
+ * batches, the acceptance criterion they were recorded against is parsed
+ * once (a disagreement between rows is a refusal, not an average), and the
+ * one capability engine (services/cmc/process-capability) is asked. Every
+ * test gets a sentence — the indices, or why they were not assessed — so a
+ * section with no capability statement cannot be mistaken for one that was
+ * assessed and found capable.
+ */
+function batchCapabilityRendering(
+  sources: CanonicalSource[],
+  side: 'drug_substance' | 'drug_product',
+): { table: GeneratedTable | null; narrative: string } {
+  const rows = qcResultRows(sources, side);
+  if (rows.length === 0) return { table: null, narrative: '' };
+  const byTest = new Map<string, Array<Record<string, any>>>();
+  for (const p of rows) {
+    const test = String(p.testMethod || '').trim();
+    if (!test) continue;
+    const list = byTest.get(test) ?? [];
+    list.push(p);
+    byTest.set(test, list);
+  }
+  const tableRows: string[][] = [];
+  const sentences: string[] = [];
+  for (const [test, results] of byTest) {
+    const criteria = [...new Set(results.map((p) => {
+      const spec = p.specifications;
+      return typeof spec === 'object' && spec !== null && typeof spec.acceptanceCriteria === 'string' ? spec.acceptanceCriteria.trim() : typeof spec === 'string' ? spec.trim() : '';
+    }).filter(Boolean))];
+    if (criteria.length > 1) {
+      sentences.push(`${test}: capability not assessed — the batches were recorded against different acceptance criteria (${criteria.join('; ')}), so there is no single specification to measure against.`);
+      tableRows.push([test, String(results.length), '—', '—', '—', '—', '—', 'not assessed', 'criteria disagree']);
+      continue;
+    }
+    const criterion = parseAcceptanceCriterion(criteria);
+    const points = results.map((p) => ({
+      batch: String(p.batchNumber || '').trim() || String(p.sampleId || '').trim() || '(no batch)',
+      value: Number(String(typeof p.testResults === 'object' && p.testResults !== null ? p.testResults.value : p.testResults ?? '').trim()),
+    }));
+    const assessed = assessProcessCapability(points, criterion);
+    if (!assessed.ok) {
+      sentences.push(`${test}: capability not assessed — ${assessed.message}`);
+      tableRows.push([test, String(points.filter((x) => Number.isFinite(x.value)).length), '—', '—', '—', '—', '—', 'not assessed', assessed.code]);
+      continue;
+    }
+    const fmt = (v: number | null) => (v === null ? '—' : String(v));
+    tableRows.push([
+      test,
+      String(assessed.n),
+      String(assessed.mean),
+      String(assessed.sdOverall),
+      fmt(assessed.pp),
+      fmt(assessed.ppk),
+      fmt(assessed.cpk),
+      assessed.verdict + (assessed.preliminary ? ' (preliminary)' : ''),
+      assessed.batchesOutOfSpecification.length > 0 ? `OOS: ${assessed.batchesOutOfSpecification.join(', ')}` : '',
+    ]);
+    sentences.push(
+      `${test}: over ${assessed.n} batches the mean is ${assessed.mean} (sd ${assessed.sdOverall}); Ppk ${fmt(assessed.ppk)}, Cpk ${fmt(assessed.cpk)}${assessed.pp !== null ? `, Pp ${fmt(assessed.pp)}` : ''} — ${assessed.verdict}` +
+        (assessed.notes.length > 0 ? ` (${assessed.notes.join(' ')})` : '') + '.',
+    );
+  }
+  if (tableRows.length === 0) return { table: null, narrative: '' };
+  return {
+    table: {
+      title: side === 'drug_product' ? 'Process Capability — Drug Product (§3.2.P.5.4)' : 'Process Capability — Drug Substance (§3.2.S.4.4)',
+      headers: ['Test', 'Batches', 'Mean', 'SD', 'Pp', 'Ppk', 'Cpk', 'Verdict', 'Note'],
+      rows: tableRows,
+    },
+    narrative:
+      'Process capability (ICH Q6A specification; ISO 22514 indices over the recorded batch results, Ppk on the overall sd and Cpk on the moving-range sigma): ' +
+      sentences.join(' ') + ' ',
   };
 }
 
@@ -1039,6 +1246,10 @@ function impurityRendering(
   const belowReporting = thresholdAssessed.filter((x) => isThresholdAssessment(x.a) && x.a.disposition === 'below-reporting');
   const solventAssessed = assessed.filter((x) => x.a.ok && x.a.basis === 'ICH Q3C(R8)');
   const elementalAssessed = assessed.filter((x) => x.a.ok && x.a.basis === 'ICH Q3D(R2)');
+  /* Mutagenic impurities, under ICH M7(R2): classified from the recorded Ames
+     result and structural-alert status, and — for Class 1-3 — compared to the
+     acceptable intake staged for the recorded treatment duration. */
+  const mutagenicAssessed = assessed.filter((x) => isMutagenicAssessment(x.a));
   /* Refusals are carried with their reason: an impurity the product cannot
      compare to a threshold is stated as such, never dropped and never reported
      as if it had cleared one. */
@@ -1072,6 +1283,14 @@ function impurityRendering(
             ? a.withinLimit
               ? `within the ICH Q3D ${a.elementClass} PDE (${a.pdeMicrogramsPerDay} µg/day, ${a.route})`
               : `above the ICH Q3D ${a.elementClass} PDE (${a.pdeMicrogramsPerDay} µg/day, ${a.route})`
+          : a.basis === 'ICH M7(R2)'
+            ? a.disposition === 'non-mutagenic-control'
+              ? `ICH M7 Class ${a.impurityClass} — controlled as a non-mutagenic impurity`
+              : a.disposition === 'compound-specific-limit-required'
+                ? `ICH M7 Class 1 — compound-specific limit required`
+                : a.withinLimit
+                  ? `within the ICH M7 Class ${a.impurityClass} acceptable intake (${a.acceptableIntakeUgPerDay} µg/day${a.concentrationLimitPpm !== null ? `, ${a.concentrationLimitPpm} ppm at the recorded dose` : ''})`
+                  : `above the ICH M7 Class ${a.impurityClass} acceptable intake (${a.acceptableIntakeUgPerDay} µg/day${a.concentrationLimitPpm !== null ? `, ${a.concentrationLimitPpm} ppm at the recorded dose` : ''})`
             : a.disposition === 'below-reporting'
               ? `not above the reporting threshold (${thresholdText(a.thresholds.reporting)})`
               : a.disposition === 'reportable'
@@ -1126,7 +1345,7 @@ function impurityRendering(
      truth: nothing had been compared to anything. It is made only over the
      assessed set, and only when there is one. */
   const assessedCount = reported.length + belowReporting.length;
-  const guidelineAssessedCount = assessedCount + solventAssessed.length + elementalAssessed.length;
+  const guidelineAssessedCount = assessedCount + solventAssessed.length + elementalAssessed.length + mutagenicAssessed.length;
   let narrative =
     `${rows.length} impurity/ies are recorded for the ${material}. ` +
     (guidelineAssessedCount === 0
@@ -1158,7 +1377,24 @@ function impurityRendering(
           const over = elementalAssessed.filter((x) => x.a.ok && x.a.basis === 'ICH Q3D(R2)' && !x.a.withinLimit).length;
           return over > 0 ? `: ${over} above the permitted daily exposure for the recorded route. ` : `, each within the permitted daily exposure for its recorded route. `;
         })()
+      : '') +
+    (mutagenicAssessed.length > 0
+      ? `${mutagenicAssessed.length} mutagenic impurity/ies are assessed against ICH M7(R2)` +
+        (() => {
+          const m7 = mutagenicAssessed.map((x) => x.a).filter(isMutagenicAssessment);
+          const limited = m7.filter((a) => a.disposition === 'within-limit' || a.disposition === 'above-limit');
+          const over = limited.filter((a) => !a.withinLimit).length;
+          const ordinary = m7.filter((a) => a.disposition === 'non-mutagenic-control').length;
+          const compoundSpecific = m7.filter((a) => a.disposition === 'compound-specific-limit-required').length;
+          const clauses: string[] = [];
+          if (limited.length > 0) clauses.push(over > 0 ? `${over} of ${limited.length} above the acceptable intake for the recorded treatment duration` : `${limited.length} within the acceptable intake for the recorded treatment duration`);
+          if (ordinary > 0) clauses.push(`${ordinary} of Class 4/5, controlled as non-mutagenic`);
+          if (compoundSpecific > 0) clauses.push(`${compoundSpecific} of Class 1, owed a compound-specific limit`);
+          return clauses.length > 0 ? `: ${clauses.join('; ')}. ` : `. `;
+        })()
       : '');
+  /* A concentration is only comparable to an M7 acceptable intake through the
+     daily dose, so a mutagenic impurity recorded in ppm needs the dose too. */
   const needsDose = rows.length > solventAssessed.length + elementalAssessed.length;
   if (doses.length === 0 && needsDose) {
     narrative +=
@@ -1259,7 +1495,7 @@ function dissolutionRendering(
   for (const p of profiles) {
     for (const pt of profilePoints(p)) {
       pointRows.push([
-        String(p.batchNumber || p.productName || '—'),
+        String(p.batchNumber || '—'),
         String(pt.timepoint ?? pt.timepointMin ?? '—'),
         pt.meanPercent !== undefined && pt.meanPercent !== null && pt.meanPercent !== '' ? String(pt.meanPercent) : '—',
         pt.sd !== undefined && pt.sd !== null && pt.sd !== '' ? String(pt.sd) : '—',
@@ -1288,7 +1524,7 @@ function dissolutionRendering(
     if (!Array.isArray(ref) || ref.length === 0) continue;
     for (const pt of ref.filter((r) => r && typeof r === 'object') as Array<Record<string, any>>) {
       referenceRows.push([
-        String(p.batchNumber || p.productName || '—'),
+        String(p.batchNumber || '—'),
         String(p.comparisonBatch || 'reference batch not named'),
         String(pt.timepoint ?? pt.timepointMin ?? '—'),
         pt.meanPercent !== undefined && pt.meanPercent !== null && pt.meanPercent !== '' ? String(pt.meanPercent) : '—',
@@ -1969,6 +2205,8 @@ const SECTION_GENERATORS: Record<string, SectionGenerator> = {
     // §3.2.S.4.4 — the recorded results themselves, not just their count.
     const batchTable = batchAnalysesTable(m, 'drug_substance');
     if (batchTable) tables.push(batchTable);
+    const dsCapability = batchCapabilityRendering(m, 'drug_substance');
+    if (dsCapability.table) tables.push(dsCapability.table);
     // Impurity limits from structured object or impurity_profile source array
     if (impurityLimits) {
       tables.push({
@@ -1996,7 +2234,8 @@ const SECTION_GENERATORS: Record<string, SectionGenerator> = {
         (criteria ? `${Object.keys(criteria).length} test(s) are defined in the specification. ` : '') +
         batchAnalysesSentence(m, 'drug_substance') +
         (impurityLimits ? `Impurity limits are established for ${Object.keys(impurityLimits).length} identified impurity/ies per ICH Q3A. ` : '') +
-        dsImpurities.narrative,
+        dsImpurities.narrative +
+        dsCapability.narrative,
       tables,
     };
   },
@@ -2324,7 +2563,9 @@ const SECTION_GENERATORS: Record<string, SectionGenerator> = {
     }
     // §3.2.P.5.4 — the recorded finished-product results themselves.
     const dpBatchTable = batchAnalysesTable(m, 'drug_product');
+    const dpCapability = batchCapabilityRendering(m, 'drug_product');
     if (dpBatchTable) tables.push(dpBatchTable);
+    if (dpCapability.table) tables.push(dpCapability.table);
     /* A canonical caller may pass a `dissolutionSpecification` object. The
        product's own producer is the dissolution register, rendered here scoped
        to the RELEASE profiles: this section is the acceptance criterion, and
@@ -2368,7 +2609,8 @@ const SECTION_GENERATORS: Record<string, SectionGenerator> = {
         (dissolutionSpec ? `Dissolution specifications are established per ICH Q6A. ` : '') +
         releaseDissolution.narrative +
         dpImpurities.narrative +
-        (status ? `Validation status: ${status}.` : ''),
+        (status ? `Validation status: ${status}. ` : '') +
+        dpCapability.narrative,
       tables,
     };
   },
@@ -2638,7 +2880,14 @@ export function composeModule3FromCanonicalSources(sourceObjects: CanonicalSourc
 }
 
 export function impactedSectionsForSourceType(changedSourceType: CmcSourceType): string[] {
-  return MODULE3_SECTION_RULES
+  const core = MODULE3_SECTION_RULES
     .filter((rule) => rule.requiredSourceTypes.includes(changedSourceType))
     .map((rule) => rule.sectionKey);
+  /* The appendices (3.2.A.*) carry their own rule table in module3-extensions,
+     with their own requiredSourceTypes, and are stored and approved in
+     cmc_module3_sections like any other section — so they must go stale like
+     any other section. Resolved by a call at runtime, not a top-level read:
+     the two files import each other. */
+  const appendices = appendixSectionsRequiringSourceType(changedSourceType);
+  return [...new Set([...core, ...appendices])];
 }

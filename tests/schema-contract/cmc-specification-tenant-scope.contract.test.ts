@@ -99,7 +99,9 @@ vi.mock('../../server/db', () => ({
 // The canonical write-through and the governance gate are stubbed so that a 404
 // is attributable to tenant scope and nothing else.
 vi.mock('../../server/services/cmc-write-through', () => ({
-  writeThroughSpecification: async () => undefined,
+  // The real signature returns a WriteThroughOutcome; linkToModule3 reads
+  // `.ok` off it, so `undefined` here 500s the route under test.
+  writeThroughSpecification: async () => ({ ok: true }),
 }));
 const gov = vi.hoisted(() => ({ signatures: 0 }));
 vi.mock('../../server/routes/c2c/actions', () => ({

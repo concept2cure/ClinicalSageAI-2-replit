@@ -17,7 +17,7 @@ function section(sectionKey: string, narrative: string, tables: ComposedSection[
   };
 }
 
-const CTX = { region: 'US' as const, applicationNumber: 'IND-123', sequenceNumber: '0000', submissionType: 'original' };
+const CTX = { region: 'US' as const, applicationNumber: 'IND-123', sequenceNumber: '0000', submissionType: 'IND' };  // an APPLICATION type, which is what this ctx field holds
 
 describe('serializeTable / sectionToContent', () => {
   it('serializes a table to delimited plain text (not HTML)', () => {

@@ -31,6 +31,31 @@ import { computeAuditChainSealed, hashPayload } from '../audit/chain.js';
 
 const logger = createScopedLogger('pharmacovigilanceService');
 
+/**
+ * Raised by a safety READ when the database is unreachable — the pool was never
+ * initialised, or its constructor threw during boot, and the process keeps
+ * serving with `pool === null` (see server/db/runtime.ts). This is a LIVE fault,
+ * not "no adverse events on file."
+ *
+ * It is deliberately distinct from the Postgres `42P01` ("relation does not
+ * exist") case, which means the table has not been provisioned yet and which
+ * legitimately returns an empty list. Collapsing the two — as the reads used to,
+ * by returning `[]` for both — let a database outage render as a clean safety
+ * all-clear ("0 overdue, 0 pending signals, 100% compliant", or a "built" SAE
+ * line listing with zero serious cases feeding a DSUR/IND annual report). Per
+ * CLAUDE.md, "an error is never rendered as an empty result": the reads throw
+ * this instead, and every caller (the /overview, /board, and /compliance-matrix
+ * routes, and the build_sae_line_listing / compose_e2b_icsr tools) already fails
+ * closed on a thrown read.
+ */
+export class PvDatabaseUnavailableError extends Error {
+  readonly code = 'PV_DATABASE_UNAVAILABLE';
+  constructor() {
+    super('PV_DATABASE_UNAVAILABLE: pharmacovigilance database is not reachable');
+    this.name = 'PvDatabaseUnavailableError';
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Type Definitions
 // ---------------------------------------------------------------------------
@@ -464,8 +489,9 @@ export async function getAdverseEvents(
 ): Promise<AdverseEvent[]> {
   try {
     if (!pool) {
-      logger.warn('Database pool not available');
-      return [];
+      // A live DB outage is NOT "no data on file" — fail closed so the caller
+      // surfaces this read as unreadable rather than a fabricated all-clear.
+      throw new PvDatabaseUnavailableError();
     }
 
     const conditions: string[] = ['organization_id = $1'];
@@ -523,8 +549,9 @@ export async function getAdverseEvents(
 export async function getOverdueReports(organizationId: string): Promise<AdverseEvent[]> {
   try {
     if (!pool) {
-      logger.warn('Database pool not available');
-      return [];
+      // A live DB outage is NOT "no data on file" — fail closed so the caller
+      // surfaces this read as unreadable rather than a fabricated all-clear.
+      throw new PvDatabaseUnavailableError();
     }
 
     const result = await pool.query(
@@ -700,8 +727,9 @@ export async function createPeriodicReport(
 export async function getUpcomingReports(organizationId: string): Promise<PeriodicSafetyReport[]> {
   try {
     if (!pool) {
-      logger.warn('Database pool not available');
-      return [];
+      // A live DB outage is NOT "no data on file" — fail closed so the caller
+      // surfaces this read as unreadable rather than a fabricated all-clear.
+      throw new PvDatabaseUnavailableError();
     }
 
     const ninetyDaysFromNow = new Date();
@@ -796,8 +824,9 @@ export async function reportSignal(
 export async function getPendingSignals(organizationId: string): Promise<SafetySignal[]> {
   try {
     if (!pool) {
-      logger.warn('Database pool not available');
-      return [];
+      // A live DB outage is NOT "no data on file" — fail closed so the caller
+      // surfaces this read as unreadable rather than a fabricated all-clear.
+      throw new PvDatabaseUnavailableError();
     }
 
     const result = await pool.query(
@@ -887,8 +916,9 @@ export async function createRMP(
 export async function getRMPsForProject(projectId: string): Promise<RiskManagementPlan[]> {
   try {
     if (!pool) {
-      logger.warn('Database pool not available');
-      return [];
+      // A live DB outage is NOT "no data on file" — fail closed so the caller
+      // surfaces this read as unreadable rather than a fabricated all-clear.
+      throw new PvDatabaseUnavailableError();
     }
 
     const result = await pool.query(

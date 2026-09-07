@@ -165,6 +165,7 @@ import {
 import { registerAgenticWorkflowHandlers } from './agentic-workflow-tools.js';
 import { registerBiotechProgramHandlers } from './biotech-program.js';
 import { registerDocumentSpineHandlers } from './document-spine.js';
+import { registerDocumentCatalogHandlers } from './document-catalog-tools.js';
 import { assertWithinDocumentWorkspace } from './document-workspace.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -181,6 +182,13 @@ export interface ToolContext {
   organizationId?: number | null;
   userId?: number | null;
   projectId?: number | null;
+  /**
+   * The active project/program id AS SENT by the client (a regulatory_programs
+   * uuid under the v2 shell, a legacy integer otherwise). `projectId` above is
+   * the integer form and is null for a uuid program — which left every
+   * interview session unbound to the program it was run for.
+   */
+  projectRef?: string | null;
   /** Tenant UUID — required to scope project_knowledge_search retrieval. */
   organizationUuid?: string | null;
   /** Active UI surface/screen (e.g. 'nonclinical', 'cmc', 'sponsored_programs') — situational context. */
@@ -411,13 +419,35 @@ registerToolHandler('project_knowledge_search', async (input, ctx) => {
     }
     const locatorOf = (d: (typeof docs)[number]): string | null =>
       d.locator || d.sectionTitle || (typeof d.pageNumber === 'number' ? `p.${d.pageNumber}` : null);
+    // Which passages can be CITED, not just read: a passage cut from a Data
+    // Room artifact resolves to a canonical evidence source (the same resolver
+    // the human draft route uses); the ids travel back on the passage so the
+    // model can hand them to write_q_sub_section / write_kit_section as
+    // `sources` and the quoted clauses are recorded against the source
+    // (ledger L154). A passage with no resolvable source says so — null,
+    // never a guessed id.
+    let evidenceIds = new Map<string, number>();
+    if (ctx?.organizationId) {
+      try {
+        const { evidenceSourceIdsForRetrieval } = await import('./drafting-source-lineage.js');
+        evidenceIds = await evidenceSourceIdsForRetrieval(
+          ctx.organizationId,
+          docs.map((d) => d.sourceArtifactId ?? null),
+        );
+      } catch {
+        evidenceIds = new Map();
+      }
+    }
     const passages = docs.map((d, i) => ({
       rank: i + 1,
       title: d.title || 'Untitled',
       relevance: typeof d.finalScore === 'number' ? Number(d.finalScore.toFixed(3)) : null,
       locator: locatorOf(d),
       text: (d.compressedContent || d.content || '').slice(0, 800),
+      artifact_id: d.sourceArtifactId ?? null,
+      evidence_source_id: d.sourceArtifactId ? (evidenceIds.get(d.sourceArtifactId) ?? null) : null,
     }));
+    const citable = passages.filter((p) => p.evidence_source_id !== null).length;
     const provenance = docs.map(d => {
       const locator = locatorOf(d);
       return buildProvenance({
@@ -437,9 +467,13 @@ registerToolHandler('project_knowledge_search', async (input, ctx) => {
       resultCount: passages.length,
       passages,
       provenance,
+      citable,
       citation_hint:
         "Ground statements in these passages and cite each by its document title and locator (page/section); " +
-        "these are the organization's own project documents.",
+        "these are the organization's own project documents. " +
+        (citable > 0
+          ? `${citable} passage(s) carry an evidence_source_id: when you write a section with write_q_sub_section or write_kit_section, pass those passages as sources (evidence_source_id + the passage text as excerpt) so every clause you quote verbatim is recorded against its Data Room source.`
+          : 'None of these passages resolves to a Data Room source, so none can be recorded as a citation by the drafting tools; text drafted from them is recorded as your own assertion.'),
     });
   } catch (err: any) {
     return `Project knowledge search failed: ${err?.message ?? 'unknown error'}.`;
@@ -1112,6 +1146,13 @@ registerToolHandler('assemble_briefing_book', async (input, ctx) => {
 
     // 2. Assemble the markdown + required_strings.
     const assembled = briefing.assembleBriefingBook(meeting, context);
+    // The fixture's "Questions for the Agency" are a fictional sponsor's. With a
+    // real product name and no key_questions supplied, they read as this
+    // product's questions in the content the authoring tool promotes, while the
+    // fixture disclosure lived only on the sibling premortem/message fields.
+    if (dataSource === 'fixture' && (!overrideQuestions || overrideQuestions.length === 0)) {
+      assembled.content = `> SAMPLE DATA — the questions for the Agency below are a fixture; the sponsor has not supplied its own key questions. Replace them before this book is reviewed.\n\n${assembled.content}`;
+    }
 
     // 3. Pre-mortem — anticipated FDA pushback per sponsor question.
     const runPremortem = input.run_premortem !== false;
@@ -5082,7 +5123,9 @@ registerToolHandler('assess_nonclinical_safety', async (input: Record<string, un
       recommendedStartingDoseMg: a.fihDose?.recommendedStartingDoseMg ?? null,
       limitedBy: a.fihDose?.limitedBy ?? null,
       adverseFindings: a.toxProfile?.adverseFindings.map(f => `${f.finding} (${f.organ})`) ?? [],
-      programGaps: a.programGaps?.gaps ?? [],
+      // null, not [], when the study battery was never assessed.
+      programAssessed: a.programAssessed,
+      programGaps: a.programGaps ? a.programGaps.gaps : null,
       blockers: a.blockers,
       overviewCompleteness: a.overview?.completeness ?? null,
       summary: a.summary,
@@ -6278,26 +6321,18 @@ registerToolHandler('generate_document', async (input: Record<string, unknown>) 
     });
   }
 
-  // eCTD backbone XML
-  if (documentType === 'ectd_backbone') {
-    const xml = await builder.generateEctdXml({
-      submissionType: 'original',
-      applicantName: (input.applicant as string) || 'Applicant',
-      productName: (input.product as string) || 'Product',
-      modules: [],
+  // 'ectd_backbone' and 'icsr' used to be generated here from scratch: a
+  // backbone with sequence 0000 and operation=new hardcoded, no modules and
+  // a 'Product' placeholder; an ICSR with an invented report id and 'Unknown'
+  // drug and reaction. Neither was a regulatory artefact. The backbone comes
+  // from the submission packager and an ICSR from the safety-report register.
+  if (documentType === 'ectd_backbone' || documentType === 'icsr') {
+    return JSON.stringify({
+      success: false,
+      message: documentType === 'ectd_backbone'
+        ? 'An eCTD backbone is produced by assembling a submission sequence, not drafted as a document. Use the submission assembly tools.'
+        : 'An ICSR is composed from a recorded safety report, not drafted as a document. Use the IND safety-report tools.',
     });
-    return JSON.stringify({ success: true, format: 'xml', content: xml, message: 'eCTD backbone XML generated.' });
-  }
-
-  // ICSR XML
-  if (documentType === 'icsr') {
-    const xml = await builder.generateIcsrXml({
-      safetyReportId: (input.safety_report_id as string) || `ICSR-${Date.now()}`,
-      reaction: (input.reaction as string) || 'Unknown',
-      drug: (input.drug as string) || 'Unknown',
-      seriousness: (input.seriousness as 'serious' | 'non-serious') || 'non-serious',
-    });
-    return JSON.stringify({ success: true, format: 'xml', content: xml, message: 'ICSR E2B(R3) XML generated.' });
   }
 
   return JSON.stringify({
@@ -7362,6 +7397,16 @@ registerToolHandler('verify_docx_against_source', async (input, ctx) => {
     }
 
     const ok = missingRequiredStrings.length === 0 && additions === 0 && deletions === 0;
+    /* `expected_text` is optional — the guard above accepts required_strings
+       alone, and that is the DESIGNED path for the labeling / ODD / IND-module
+       planners, whose required_strings are section headers only. When no source
+       is supplied the diff never runs, so `additions`/`deletions` stay at their
+       initialized 0 and `ok` collapses to "no required header is missing". The
+       success message nevertheless asserted BOTH that the document "reproduces
+       the source" AND that there is "no content divergence" — two claims about a
+       comparison that never happened, relayed verbatim by the model as the
+       verdict on a USPI/SmPC .docx. Say only what was actually checked. */
+    const sourceDiffPerformed = Boolean(expectedText);
 
     return JSON.stringify({
       ok,
@@ -7370,15 +7415,25 @@ registerToolHandler('verify_docx_against_source', async (input, ctx) => {
       docCharCount: docText.length,
       requiredStringsChecked: requiredStrings.length,
       missingRequiredStrings,
+      // False when no expected_text was supplied: the document was NOT compared
+      // against any source, so `ok` speaks only to the required strings.
+      sourceDiffPerformed,
       // additions = lines in the document not in the source; deletions = source lines absent from the document.
-      divergence: expectedText ? { summary: divergenceSummary, additions, deletions } : undefined,
+      divergence: sourceDiffPerformed ? { summary: divergenceSummary, additions, deletions } : undefined,
       message: ok
-        ? `Verified — document reproduces the source${
-            requiredStrings.length ? ` and all ${requiredStrings.length} required string(s)` : ''
-          }; no content divergence.`
+        ? sourceDiffPerformed
+          ? `Verified — document reproduces the source${
+              requiredStrings.length ? ` and all ${requiredStrings.length} required string(s)` : ''
+            }; no content divergence.`
+          : `Verified — all ${requiredStrings.length} required string(s) are present. No source text was supplied, so the document was NOT compared against a source: this is not a finding of "no content divergence".`
         : `NOT verified — ${
-            missingRequiredStrings.length ? `${missingRequiredStrings.length} required string(s) missing; ` : ''
-          }${expectedText ? `${additions} added / ${deletions} dropped line(s) vs. source.` : ''}`.trim(),
+            missingRequiredStrings.length ? `${missingRequiredStrings.length} required string(s) missing` : ''
+          }${
+            missingRequiredStrings.length && sourceDiffPerformed ? '; ' : ''
+          }${sourceDiffPerformed ? `${additions} added / ${deletions} dropped line(s) vs. source` : ''}.`,
+      instruction: sourceDiffPerformed
+        ? 'Report the divergence counts as recorded.'
+        : 'Only the required strings were checked. Do NOT state that the document matches or reproduces a source, and do not claim there is no content divergence — no source was diffed.',
     });
   } catch (err) {
     return JSON.stringify({
@@ -7503,7 +7558,7 @@ registerToolHandler('create_q_sub', async (input, ctx) => {
   }
 
   try {
-    const { createQSubmission, TenantAccessError } = await import(
+    const { createQSubmission } = await import(
       '../q-sub/q-sub.service.js'
     );
     const row = await createQSubmission(ctx.organizationId, {
@@ -7556,7 +7611,7 @@ registerToolHandler('update_q_sub_commitment_rolled_in', async (input, ctx) => {
   }
 
   try {
-    const { setCommitmentRolledIn, TenantAccessError } = await import(
+    const { setCommitmentRolledIn } = await import(
       '../q-sub/q-sub.service.js'
     );
     const updated = await setCommitmentRolledIn(ctx.organizationId, {
@@ -7914,6 +7969,7 @@ registerToolHandler('write_q_sub_section', async (input, ctx) => {
   const sectionKey = typeof input.section_key === 'string' ? input.section_key : '';
   const content    = typeof input.content === 'string' ? input.content : '';
   const note       = typeof input.summary_note === 'string' ? input.summary_note : '';
+  const rawSources = input.sources;
   if (!UUID_RE.test(qSubId)) {
     return JSON.stringify({ error: 'q_sub_id must be a UUID.' });
   }
@@ -7944,10 +8000,16 @@ registerToolHandler('write_q_sub_section', async (input, ctx) => {
     if (own.rows.length === 0) {
       return JSON.stringify({ error: 'Q-Sub not found in this organization.' });
     }
-    // Authored regulatory prose: content and its author lineage commit together
-    // in one transaction (same gate as the human PUT route), so an AnA-drafted
-    // section body is never persisted without provenance.
-    const { enforceAuthorLineage } = await import('../clinical-regulatory-evidence/lineage-gate.js');
+    // Authored regulatory prose: content and its lineage commit together in one
+    // transaction (same gate as the human accept route), so an AnA-drafted
+    // section body is never persisted without provenance. With `sources`, the
+    // clauses the text quotes verbatim are recorded against those Data Room
+    // sources and the rest against the author (ledger L154); without, every
+    // clause is the author's assertion.
+    const { enforceAuthorLineage, enforceSourceAndAuthorLineage } = await import(
+      '../clinical-regulatory-evidence/lineage-gate.js'
+    );
+    const { resolveDraftSources, describeDraftLineage } = await import('./drafting-source-lineage.js');
     const client = await pool.connect();
     try {
       await client.query('BEGIN');
@@ -7967,16 +8029,18 @@ registerToolHandler('write_q_sub_section', async (input, ctx) => {
          RETURNING id, section_key, draft_source, drafted_at`,
         [qSubId, ctx.organizationId, sectionKey, content, note],
       );
-      await enforceAuthorLineage(
-        client,
-        ctx.organizationId,
-        { documentTable: 'q_sub_section_bodies', documentId: String(rows[0].id) },
-        content,
-        String(ctx.userId),
-      );
+      const ref = { documentTable: 'q_sub_section_bodies', documentId: String(rows[0].id) };
+      const { sources, dropped } = await resolveDraftSources(ctx.organizationId, rawSources, client);
+      let gate = null;
+      if (sources.length > 0) {
+        gate = await enforceSourceAndAuthorLineage(client, ctx.organizationId, ref, content, String(ctx.userId), sources);
+      } else {
+        await enforceAuthorLineage(client, ctx.organizationId, ref, content, String(ctx.userId));
+      }
       await client.query('COMMIT');
       return JSON.stringify({
         ok: true, ...rows[0],
+        lineage: describeDraftLineage(gate, sources, dropped),
         message: `Wrote ${sectionKey} into Q-Sub ${qSubId}. Awaiting human accept.`,
       });
     } catch (txErr) {
@@ -8369,6 +8433,13 @@ registerToolHandler('package_ectd_for_region', async (input, ctx) => {
       applicationId: String(input.application_id),
       sequence:      String(input.sequence),
       submissionType: String(input.submission_type),
+      /* `submission_type` on this tool means 'original | amendment | ...', so it
+         cannot also carry the filing identity. Without an application type the
+         packager used to default to `fdaat1` — NDA — for every package this
+         tool built. It now refuses, so the tool asks for it. */
+      ...(typeof input.application_type === 'string' && input.application_type.trim()
+        ? { fda: { applicationType: input.application_type.trim() } }
+        : {}),
       sponsorId:     String(input.sponsor_id),
       sponsorName:   String(input.sponsor_name),
       productName:   String(input.product_name),
@@ -10735,8 +10806,10 @@ registerToolHandler('update_consent_element', async (input, ctx) => {
   if (!Number.isInteger(elementId)) return JSON.stringify({ error: 'element_id is required.' });
   const { updateElementTx } = await import('../protocol-consent/protocol-consent-service.js');
   return governedPdev(ctx, 'update', `consent-element:${elementId}`, 'Consent element updated via AnA', input, async (client) => {
-    await updateElementTx(client, ctx.organizationId!, elementId, { content: typeof input.content === 'string' ? input.content : null, present: typeof input.present === 'boolean' ? input.present : undefined });
-    return { elementId };
+    const { resolveDraftSources, describeDraftLineage } = await import('./drafting-source-lineage.js');
+    const { sources, dropped } = await resolveDraftSources(ctx.organizationId!, input.sources, client);
+    const gate = await updateElementTx(client, ctx.organizationId!, elementId, { content: typeof input.content === 'string' ? input.content : null, present: typeof input.present === 'boolean' ? input.present : undefined, sources }, ctx.userId!);
+    return { elementId, lineage: describeDraftLineage(gate, sources, dropped) };
   });
 });
 
@@ -10778,8 +10851,10 @@ registerToolHandler('update_dms_plan_element', async (input, ctx) => {
   if (!Number.isInteger(elementId)) return JSON.stringify({ error: 'element_id is required.' });
   const { updateElementTx } = await import('../dmsp/dmsp-service.js');
   return governedPdev(ctx, 'update', `dms-plan-element:${elementId}`, 'DMS plan element updated via AnA', input, async (client) => {
-    await updateElementTx(client, ctx.organizationId!, elementId, { content: typeof input.content === 'string' ? input.content : null, addressed: typeof input.addressed === 'boolean' ? input.addressed : undefined });
-    return { elementId };
+    const { resolveDraftSources, describeDraftLineage } = await import('./drafting-source-lineage.js');
+    const { sources, dropped } = await resolveDraftSources(ctx.organizationId!, input.sources, client);
+    const gate = await updateElementTx(client, ctx.organizationId!, elementId, { content: typeof input.content === 'string' ? input.content : null, addressed: typeof input.addressed === 'boolean' ? input.addressed : undefined, sources }, ctx.userId!);
+    return { elementId, lineage: describeDraftLineage(gate, sources, dropped) };
   });
 });
 
@@ -10903,8 +10978,10 @@ registerToolHandler('update_biosketch_section', async (input, ctx) => {
   if (!Number.isInteger(sectionId)) return JSON.stringify({ error: 'section_id is required.' });
   const { updateSectionTx } = await import('../biosketch/biosketch-service.js');
   return governedPdev(ctx, 'update', `biosketch-section:${sectionId}`, 'Biosketch section updated via AnA', input, async (client) => {
-    await updateSectionTx(client, ctx.organizationId!, sectionId, { content: typeof input.content === 'string' ? input.content : null, addressed: typeof input.addressed === 'boolean' ? input.addressed : undefined }, ctx.userId!);
-    return { sectionId };
+    const { resolveDraftSources, describeDraftLineage } = await import('./drafting-source-lineage.js');
+    const { sources, dropped } = await resolveDraftSources(ctx.organizationId!, input.sources, client);
+    const gate = await updateSectionTx(client, ctx.organizationId!, sectionId, { content: typeof input.content === 'string' ? input.content : null, addressed: typeof input.addressed === 'boolean' ? input.addressed : undefined, sources }, ctx.userId!);
+    return { sectionId, lineage: describeDraftLineage(gate, sources, dropped) };
   });
 });
 
@@ -11249,10 +11326,13 @@ registerToolHandler('update_protocol_section', async (input, ctx) => {
   try {
     await client.query('BEGIN');
     await setTenantContextTx(client, ctx.organizationId);
-    await updateSectionTx(client, ctx.organizationId, sectionId, { content: typeof input.content === 'string' ? input.content : null, status: typeof input.status === 'string' ? input.status : undefined }, ctx.userId);
+    const { resolveDraftSources, describeDraftLineage } = await import('./drafting-source-lineage.js');
+    const { sources, dropped } = await resolveDraftSources(ctx.organizationId, input.sources, client);
+    const gate = await updateSectionTx(client, ctx.organizationId, sectionId, { content: typeof input.content === 'string' ? input.content : null, status: typeof input.status === 'string' ? input.status : undefined, sources }, ctx.userId);
+    const lineage = describeDraftLineage(gate, sources, dropped);
     await recordGovernedAction(client, { orgId: ctx.organizationId, userId: ctx.userId, command: 'update', target: `protocol-section:${sectionId}`, reason: fcoiReason(input, 'Protocol section edited via AnA'), payload: { status: input.status }, domain: 'protocol_development', surface: 'ana' });
     await client.query('COMMIT');
-    return JSON.stringify({ ok: true, sectionId, message: `Updated protocol section ${sectionId}.` });
+    return JSON.stringify({ ok: true, sectionId, lineage, message: `Updated protocol section ${sectionId}.` });
   } catch (err) {
     await client.query('ROLLBACK').catch(() => undefined);
     return JSON.stringify({ error: `update_protocol_section failed: ${err instanceof Error ? err.message : String(err)}` });
@@ -12950,7 +13030,12 @@ registerToolHandler('review_tmf_completeness', async (input, ctx) => {
     const r = evaluateCompleteness(artifacts);
     return JSON.stringify({
       ok: true, completenessPct: r.completenessPct, verdict: r.verdict, gapCount: r.gaps.length, gaps: r.gaps.slice(0, 20),
-      message: `TMF ${r.completenessPct}% complete — ${r.verdict.replace(/_/g, ' ')}${r.gaps.length ? `; ${r.gaps.length} gap(s)` : ''}.`,
+      /* A TMF with no expected artifacts indexed used to come back here as
+         "TMF 100% complete — inspection ready". Nothing had been checked. */
+      message:
+        r.verdict === 'not_assessed'
+          ? 'This TMF has no expected artifacts indexed, so its completeness has not been assessed. This is not a complete TMF and not an inspection-readiness verdict.'
+          : `TMF ${r.completenessPct}% complete — ${r.verdict.replace(/_/g, ' ')}${r.gaps.length ? `; ${r.gaps.length} gap(s)` : ''}.`,
     });
   } catch (err) {
     return JSON.stringify({ error: `review_tmf_completeness failed: ${err instanceof Error ? err.message : String(err)}` });
@@ -14391,6 +14476,14 @@ registerToolHandler('write_kit_section', async (input, ctx) => {
       error: 'write_kit_section requires tenant context (organizationId) — nothing was written.',
     });
   }
+  // Same rule as write_q_sub_section: kit sections become a 510(k)/PMA/CER, and
+  // prose bound for a regulator cannot be attributed to a placeholder.
+  if (!ctx.userId) {
+    return JSON.stringify({
+      error: 'write_kit_section requires user context — section prose cannot be attributed without an identified author (21 CFR Part 11).',
+    });
+  }
+  const rawSources = input.sources;
   const allowedStatus = new Set(['drafting', 'ready_for_review', 'in_review']);
   if (!allowedStatus.has(status)) {
     return JSON.stringify({
@@ -14431,71 +14524,42 @@ registerToolHandler('write_kit_section', async (input, ctx) => {
        nothing is unsafe there — but four writers of one table is three too
        many, and re-pointing untested route paths is its own change. Tracked as
        ledger L39. */
-    const { recordCerv2SectionVersion } = await import('../cerv2/section-version.js');
+    const { writeKitSectionTx, KitSectionNotFoundError } = await import('../cerv2/kit-section-write.js');
+    const { resolveDraftSources, describeDraftLineage } = await import('./drafting-source-lineage.js');
     const client = await pool.connect();
     let row: any;
+    let lineageReport: import('./drafting-source-lineage.js').DraftLineageReport | null = null;
     try {
       await client.query('BEGIN');
-
-      /* Read the prior state FOR UPDATE inside the transaction: it is both the
-         `previousValues` snapshot and the row lock that stops two concurrent
-         writers computing the same next version number. */
-      const prior = await client.query(
-        `SELECT id, content, status, completion_percentage
-           FROM cerv2_510k_sections
-          WHERE organization_id = $1 AND section_key = $2
-          FOR UPDATE`,
-        [ctx.organizationId, sectionKey],
-      );
-      if (prior.rows.length === 0) {
-        await client.query('ROLLBACK');
-        return JSON.stringify({
-          error: `No section found for organization with section_key='${sectionKey}'. The kit's section taxonomy must be seeded first (run \`npm run db:seed:mdx-content\`).`,
+      /* The ONE kit-section writer (services/cerv2/kit-section-write): FOR UPDATE
+         snapshot, content write, version row and lineage gate, on this
+         transaction — shared with the AnA-RI section.update command so a kit
+         section has exactly one way of being written by AnA (ledger L160). */
+      const { sources, dropped } = await resolveDraftSources(ctx.organizationId, rawSources, client);
+      let written;
+      try {
+        written = await writeKitSectionTx(client, ctx.organizationId, { sectionKey }, {
+          content,
+          status,
+          completionPercentage: completionPct,
+          note,
+          /* The tool's own note when the caller supplied one. Falling back to a
+             fixed string is deliberate and honest — it names the actor and the
+             mechanism rather than inventing a rationale nobody gave. */
+          changeSummary: (note && String(note).trim()) || 'Drafted by AnA (no summary supplied)',
+          sources,
+          actorUserId: ctx.userId,
         });
+      } catch (e) {
+        if (e instanceof KitSectionNotFoundError) {
+          await client.query('ROLLBACK');
+          return JSON.stringify({ error: e.message });
+        }
+        throw e;
       }
-      const before = prior.rows[0];
-
-      const updated = await client.query(
-        `UPDATE cerv2_510k_sections
-            SET content                = $3,
-                status                 = $4,
-                completion_percentage  = $5,
-                draft_source           = 'ana',
-                drafted_at             = NOW(),
-                drafted_summary        = NULLIF($6, ''),
-                accepted_at            = NULL,
-                accepted_by            = NULL,
-                updated_at             = NOW()
-          WHERE organization_id = $1 AND section_key = $2
-          RETURNING id, section_number, section_title, section_key, status,
-                    completion_percentage AS "completionPercentage",
-                    drafted_at AS "draftedAt"`,
-        [ctx.organizationId, sectionKey, content, status, completionPct, note],
-      );
-
-      await recordCerv2SectionVersion(client, {
-        sectionId: before.id,
-        organizationId: ctx.organizationId,
-        changeType: 'edited',
-        /* The tool's own note when the caller supplied one. Falling back to a
-           fixed string is deliberate and honest — it names the actor and the
-           mechanism rather than inventing a rationale nobody gave. */
-        changeSummary: (note && String(note).trim()) || 'Drafted by AnA (no summary supplied)',
-        content,
-        status,
-        completionPercentage: completionPct,
-        previousValues: {
-          content: before.content ?? '',
-          status: before.status ?? null,
-          completion_percentage: before.completion_percentage ?? null,
-        },
-        newValues: { content, status, completion_percentage: completionPct },
-        fieldsChanged: ['content', 'status', 'completion_percentage'],
-        changedBy: ctx.userId ?? null,
-      });
-
+      lineageReport = describeDraftLineage(written.gate, sources, dropped);
       await client.query('COMMIT');
-      row = updated.rows[0];
+      row = written.row;
     } catch (txErr) {
       await client.query('ROLLBACK').catch(() => {});
       throw txErr;
@@ -14530,6 +14594,7 @@ registerToolHandler('write_kit_section', async (input, ctx) => {
     return JSON.stringify({
       ok:                  true,
       id:                  row.id,
+      lineage:             lineageReport,
       sectionNumber:       row.section_number,
       sectionTitle:        row.section_title,
       sectionKey:          row.section_key,
@@ -14879,20 +14944,28 @@ registerToolHandler('batch_draft_sections', async (input, ctx) => {
 
   try {
     const { getAnaDraftingService } = await import('./AnaDocumentDraftingService.js');
+    const { isBatchDraftFailure } = await import('./batch-draft-result.js');
     const service = getAnaDraftingService();
     const results = await service.batchDraft({ requests, concurrency: 5 });
+    // A section that could not be drafted arrives as a failure result in its
+    // own slot (batch-draft-result.ts); the other sections' drafts are kept
+    // and reported. `count` is the number actually drafted.
+    const failed = results.filter((r) => isBatchDraftFailure(r)).length;
     return JSON.stringify({
-      status: 'drafted',
+      status: failed === 0 ? 'drafted' : failed === results.length ? 'failed' : 'partial',
       engine: 'framework-grade',
-      count: results.length,
-      sections: results.map((r, i) => ({
-        sectionType: requests[i].sectionType,
-        content: r.content,
-        model: r.model,
-        latencyMs: r.latencyMs,
-      })),
+      count: results.length - failed,
+      failed,
+      sections: results.map((r, i) =>
+        isBatchDraftFailure(r)
+          ? { sectionType: requests[i].sectionType, error: r.error, message: r.message }
+          : { sectionType: requests[i].sectionType, content: r.content, model: r.model, latencyMs: r.latencyMs },
+      ),
       instruction:
-        'These are parallel first drafts. The author promotes each through the governed authoring flow (accept into the section, which runs the Part-11 version trigger). State any completeness gaps honestly; do not present unknown values as established.',
+        'These are parallel first drafts. The author promotes each through the governed authoring flow (accept into the section, which runs the Part-11 version trigger). State any completeness gaps honestly; do not present unknown values as established.' +
+        (failed > 0
+          ? ` ${failed} section(s) were not drafted; each carries its reason. A section refused for size needs its existing content shortened or split before it is retried.`
+          : ''),
     });
   } catch (err: any) {
     return JSON.stringify({ error: `batch draft failed: ${err?.message || 'unknown error'}` });
@@ -14959,6 +15032,10 @@ registerBiotechProgramHandlers(registerToolHandler);
 // The canonical document revision spine (commit_document_revision) — the one
 // atomic flow every AnA-authored document mutation runs through — same pattern.
 registerDocumentSpineHandlers(registerToolHandler);
+
+// Project-folder document catalog (list/read/catalog over vault.documents,
+// with read-coverage enforcement) — same injected-register pattern.
+registerDocumentCatalogHandlers(registerToolHandler);
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Agentic Execution Loop
@@ -15601,6 +15678,7 @@ registerToolHandler('assemble_device_submission', async (input: Record<string, u
       variant,
       leaves,
       presentTemplates: Array.isArray(input.presentTemplates) ? (input.presentTemplates as unknown[]).map(String) : undefined,
+      deviceFlags: input.deviceFlags && typeof input.deviceFlags === 'object' ? (input.deviceFlags as Record<string, boolean>) : undefined,
       market: typeof input.market === 'string' ? (input.market as any) : undefined,
       availableArtifacts: Array.isArray(input.availableArtifacts) ? (input.availableArtifacts as unknown[]).map(String) : undefined,
       environment: input.environment === 'production' ? 'production' : input.environment === 'staging' ? 'staging' : undefined,
@@ -18370,7 +18448,50 @@ registerToolHandler('plan_lifecycle_management', async (input: Record<string, un
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Intelligence Questioning Engine
+//
+// The engine is stateless. Under an organization context every flow is
+// PERSISTED as a cmc_interview_sessions row (services/cmc/interview-sessions):
+// start creates the session and returns its id, answer loads the state from
+// the session and saves the step, resume reads it back, commit projects a
+// completed CMC interview onto the registers (services/cmc/interview-commit).
+// The model round-trips a uuid instead of the whole FlowState, and a dropped
+// turn no longer loses the interview.
+//
+// Without an organization context the flow still runs stateless on the
+// caller-supplied flow_state — the pre-persistence contract, kept so the
+// stream fast-path and any caller without a session keep working — and the
+// response says so instead of implying durability it does not have.
+//
+// Org scope comes from ToolContext and is applied in the session store's
+// WHERE clause, never from model input: a session id the model produced must
+// belong to the caller's tenant to be readable.
 // ─────────────────────────────────────────────────────────────────────────────
+
+function intelligenceEngineContext(ctx?: ToolContext) {
+  return {
+    organizationId: ctx?.organizationId ?? null,
+    userId: ctx?.userId ?? null,
+    projectId: ctx?.projectId ? String(ctx.projectId) : null,
+    clientType: (ctx?.projectType === 'medtech' ? 'medtech' : ctx?.projectType === 'biotech' ? 'biotech' : 'pharma') as 'pharma' | 'biotech' | 'medtech',
+  };
+}
+
+/** The project a session binds to: the active project, else a caller-supplied text id. */
+function intelligenceProjectId(input: Record<string, unknown>, ctx?: ToolContext): string | null {
+  /* The program as the client sent it first: a uuid program id collapses to
+     null in the integer `projectId`, and a session created from that was
+     never bound to its program. */
+  const ref = typeof ctx?.projectRef === 'string' ? ctx.projectRef.trim() : '';
+  if (ref) return ref;
+  if (ctx?.projectId) return String(ctx.projectId);
+  const supplied = typeof input.project_id === 'string' ? input.project_id.trim() : '';
+  return supplied || null;
+}
+
+function intelligenceSessionId(input: Record<string, unknown>): string | null {
+  const id = typeof input.session_id === 'string' ? input.session_id.trim() : '';
+  return id || null;
+}
 
 registerToolHandler('start_intelligence_flow', async (input, ctx) => {
   const { resolveFlowCategory } = await import('./intelligence-questions/flows/index.js');
@@ -18384,15 +18505,32 @@ registerToolHandler('start_intelligence_flow', async (input, ctx) => {
     });
   }
 
-  const engineCtx = {
-    organizationId: ctx?.organizationId ?? null,
-    userId: ctx?.userId ?? null,
-    projectId: ctx?.projectId ? String(ctx.projectId) : null,
-    clientType: (ctx?.projectType === 'medtech' ? 'medtech' : ctx?.projectType === 'biotech' ? 'biotech' : 'pharma') as 'pharma' | 'biotech' | 'medtech',
-  };
+  const engineCtx = intelligenceEngineContext(ctx);
 
   try {
     const result = startFlow(category, engineCtx);
+
+    /* Persist the session whenever there is a tenant to own it. A persistence
+       failure is returned, not swallowed: an interview the response implies is
+       durable and is not would lose every answer on the next dropped turn. */
+    let sessionId: string | null = null;
+    if (ctx?.organizationId) {
+      try {
+        const { createInterviewSession } = await import('../cmc/interview-sessions.js');
+        const session = await createInterviewSession({
+          organizationId: ctx.organizationId,
+          userId: ctx.userId ?? null,
+          projectId: intelligenceProjectId(input, ctx),
+          state: result.state,
+        });
+        sessionId = session.id;
+      } catch (err: any) {
+        return JSON.stringify({
+          error: `The interview could not be persisted, so it was not started: ${err?.message || 'session store unavailable'}`,
+        });
+      }
+    }
+
     /* Audit log — fire-and-forget, never block the response. Records who started
        which flow, when (21 CFR Part 11 §11.10(e) traceability for the questioning
        session that feeds document authoring). */
@@ -18403,12 +18541,16 @@ registerToolHandler('start_intelligence_flow', async (input, ctx) => {
         userId:     ctx?.userId ?? null,
         action:     'INTELLIGENCE_FLOW_STARTED',
         resource:   'intelligence_flow',
-        resourceId: String(result.state.flowId),
-        details: { flowCategory: category, documentType, projectId: engineCtx.projectId },
+        resourceId: sessionId ?? String(result.state.flowId),
+        details: { flowCategory: category, documentType, projectId: engineCtx.projectId, sessionId },
       });
     } catch { /* never block the tool response on audit failure */ }
     return JSON.stringify({
       status: 'intelligence_question',
+      session_id: sessionId,
+      persistence: sessionId
+        ? 'persisted — pass session_id to answer_intelligence_question; flow_state is not needed'
+        : 'not persisted (no organization context) — round-trip flow_state on every answer; a dropped conversation loses the interview',
       flowState: result.state,
       question: result.event,
     });
@@ -18420,23 +18562,57 @@ registerToolHandler('start_intelligence_flow', async (input, ctx) => {
 registerToolHandler('answer_intelligence_question', async (input, ctx) => {
   const { advanceFlow } = await import('./intelligence-questions/engine.js');
 
-  const flowState = input.flow_state as any;
+  const sessionId = intelligenceSessionId(input);
   const nodeId = String(input.node_id || '');
   const answers = (input.answers || {}) as Record<string, unknown>;
+  if (!nodeId) return JSON.stringify({ error: 'node_id is required' });
 
-  if (!flowState || !nodeId) {
-    return JSON.stringify({ error: 'flow_state and node_id are required' });
+  const engineCtx = intelligenceEngineContext(ctx);
+
+  /* The state comes from the session when there is one; the caller's
+     flow_state is the fallback for a flow started without a session. */
+  let flowState = input.flow_state as any;
+  let sessions: typeof import('../cmc/interview-sessions.js') | null = null;
+  if (sessionId) {
+    try {
+      sessions = await import('../cmc/interview-sessions.js');
+      const session = await sessions.loadInterviewSession({ organizationId: ctx?.organizationId, sessionId });
+      if (session.status !== 'active') {
+        return JSON.stringify({
+          error: `Interview session ${sessionId} is ${session.status}; it cannot take further answers.` +
+            (session.status === 'complete' ? ' Use commit_intelligence_flow to record it, or resume_intelligence_flow to see the summary.' : ''),
+          session_id: sessionId,
+          session_status: session.status,
+        });
+      }
+      flowState = session.state;
+    } catch (err: any) {
+      return JSON.stringify({ error: err?.message || 'Failed to load the interview session', session_id: sessionId });
+    }
+  } else if (!flowState) {
+    return JSON.stringify({ error: 'session_id (or, for a flow started without a session, flow_state) is required' });
   }
-
-  const engineCtx = {
-    organizationId: ctx?.organizationId ?? null,
-    userId: ctx?.userId ?? null,
-    projectId: ctx?.projectId ? String(ctx.projectId) : null,
-    clientType: (ctx?.projectType === 'medtech' ? 'medtech' : ctx?.projectType === 'biotech' ? 'biotech' : 'pharma') as 'pharma' | 'biotech' | 'medtech',
-  };
 
   try {
     const result = advanceFlow(flowState, nodeId, answers, engineCtx);
+
+    /* Record the step. A validation failure returns the SAME state object, so
+       there is nothing to save; anything else is saved before it is claimed. */
+    if (sessions && sessionId && result.state !== flowState) {
+      try {
+        if (result.completeEvent) {
+          await sessions.completeInterviewSession({ organizationId: ctx?.organizationId, sessionId, state: result.state });
+        } else {
+          await sessions.saveInterviewSessionState({ organizationId: ctx?.organizationId, sessionId, state: result.state });
+        }
+      } catch (err: any) {
+        return JSON.stringify({
+          error: `The answer was accepted but could not be recorded on the interview session, so it does not count: ${err?.message || 'session store unavailable'}. Submit it again.`,
+          session_id: sessionId,
+        });
+      }
+    }
+
     if (result.completeEvent) {
       /* Audit log on flow completion — captures the completed questioning
          session (who/what/when + issue posture) that will drive downstream
@@ -18449,43 +18625,151 @@ registerToolHandler('answer_intelligence_question', async (input, ctx) => {
           userId:     ctx?.userId ?? null,
           action:     'INTELLIGENCE_FLOW_COMPLETED',
           resource:   'intelligence_flow',
-          resourceId: String(result.state.flowId),
+          resourceId: sessionId ?? String(result.state.flowId),
           details: {
             flowCategory:   result.state.flowCategory,
             completedNodes: result.state.completedNodes.length,
             criticalIssues: issues.filter((i: any) => i.severity === 'critical').length,
             warnings:       issues.filter((i: any) => i.severity === 'warning').length,
             projectId:      engineCtx.projectId,
+            sessionId,
           },
         });
       } catch { /* never block the tool response on audit failure */ }
       return JSON.stringify({
         status: 'intelligence_flow_complete',
+        session_id: sessionId,
         flowState: result.state,
         completion: result.completeEvent,
       });
     }
     return JSON.stringify({
       status: 'intelligence_question',
+      session_id: sessionId,
       flowState: result.state,
       question: result.event,
     });
   } catch (err: any) {
-    return JSON.stringify({ error: err?.message || 'Failed to advance intelligence flow' });
+    return JSON.stringify({ error: err?.message || 'Failed to advance intelligence flow', session_id: sessionId });
+  }
+});
+
+registerToolHandler('resume_intelligence_flow', async (input, ctx) => {
+  const sessionId = intelligenceSessionId(input);
+  if (!sessionId) return JSON.stringify({ error: 'session_id is required' });
+
+  try {
+    const { loadInterviewSession } = await import('../cmc/interview-sessions.js');
+    const { resumeFlow } = await import('./intelligence-questions/engine.js');
+    const session = await loadInterviewSession({ organizationId: ctx?.organizationId, sessionId });
+    if (session.status === 'abandoned') {
+      return JSON.stringify({ error: `Interview session ${sessionId} was abandoned.`, session_id: sessionId, session_status: session.status });
+    }
+    const result = resumeFlow(session.state, intelligenceEngineContext(ctx));
+    if (result.completeEvent) {
+      return JSON.stringify({
+        status: 'intelligence_flow_complete',
+        session_id: sessionId,
+        session_status: session.status,
+        project_id: session.projectId,
+        committed_record_refs: session.committedRecordRefs,
+        flowState: result.state,
+        completion: result.completeEvent,
+      });
+    }
+    return JSON.stringify({
+      status: 'intelligence_question',
+      session_id: sessionId,
+      session_status: session.status,
+      project_id: session.projectId,
+      flowState: result.state,
+      question: result.event,
+    });
+  } catch (err: any) {
+    return JSON.stringify({ error: err?.message || 'Failed to resume the interview session', session_id: sessionId });
+  }
+});
+
+/* The commit projects a completed CMC interview onto the registers through
+   each register's ONE canonical create (services/cmc/register-writes.ts — the
+   same functions the HTTP routes call), under the session's tenant and
+   project. A partial commit is reported with what landed, never hidden. */
+registerToolHandler('commit_intelligence_flow', async (input, ctx) => {
+  const sessionId = intelligenceSessionId(input);
+  if (!sessionId) return JSON.stringify({ error: 'session_id is required' });
+
+  try {
+    const { loadInterviewSession } = await import('../cmc/interview-sessions.js');
+    const { buildInterviewCommitPlan, commitInterviewSession, productionRegisterWriter, productionRegisterValidator, INTERVIEW_REGISTER_WRITE_PATHS } =
+      await import('../cmc/interview-commit.js');
+
+    if (input.dry_run === true) {
+      const session = await loadInterviewSession({ organizationId: ctx?.organizationId, sessionId });
+      const plan = buildInterviewCommitPlan(session.flowCategory, session.state.answers);
+      return JSON.stringify({
+        status: 'commit_plan',
+        session_id: sessionId,
+        session_status: session.status,
+        project_id: session.projectId ?? intelligenceProjectId(input, ctx),
+        entries: plan.entries.map(e => ({ key: e.key, register: e.register, path: INTERVIEW_REGISTER_WRITE_PATHS[e.register].path, body: e.body, source: e.source })),
+        unprojected: plan.unprojected,
+        already_committed: session.committedRecordRefs ?? [],
+      });
+    }
+
+    const outcome = await commitInterviewSession(
+      {
+        organizationId: ctx?.organizationId,
+        sessionId,
+        userId: ctx?.userId ?? null,
+        projectId: intelligenceProjectId(input, ctx),
+      },
+      { writer: productionRegisterWriter, validate: productionRegisterValidator },
+    );
+
+    try {
+      const { auditLog } = await import('../auditService.js');
+      auditLog({
+        tenantId:   ctx?.organizationId ?? null,
+        userId:     ctx?.userId ?? null,
+        action:     outcome.ok ? 'INTELLIGENCE_FLOW_COMMITTED' : 'INTELLIGENCE_FLOW_COMMIT_REFUSED',
+        resource:   'intelligence_flow',
+        resourceId: sessionId,
+        details: outcome.ok
+          ? { refs: outcome.refs.length, skipped: outcome.skipped.length, alreadyCommitted: outcome.alreadyCommitted }
+          : { code: outcome.code, committed: outcome.committed.length, failed: outcome.failed?.key ?? null },
+      });
+    } catch { /* never block the tool response on audit failure */ }
+
+    if (!outcome.ok) {
+      return JSON.stringify({
+        error: outcome.error,
+        code: outcome.code,
+        session_id: sessionId,
+        session_status: outcome.status,
+        committed_record_refs: outcome.committed,
+        failed: outcome.failed ?? null,
+        remaining: outcome.remaining ?? [],
+        unprojected: outcome.unprojected,
+      });
+    }
+    return JSON.stringify({
+      status: 'intelligence_flow_committed',
+      session_id: sessionId,
+      session_status: outcome.status,
+      already_committed: outcome.alreadyCommitted,
+      committed_record_refs: outcome.refs,
+      skipped: outcome.skipped,
+      unprojected: outcome.unprojected,
+    });
+  } catch (err: any) {
+    return JSON.stringify({ error: err?.message || 'Failed to commit the interview session', session_id: sessionId });
   }
 });
 
 registerToolHandler('list_intelligence_flows', async (_input, ctx) => {
   const { getAvailableFlows } = await import('./intelligence-questions/flows/index.js');
-
-  const engineCtx = {
-    organizationId: ctx?.organizationId ?? null,
-    userId: ctx?.userId ?? null,
-    projectId: ctx?.projectId ? String(ctx.projectId) : null,
-    clientType: (ctx?.projectType === 'medtech' ? 'medtech' : ctx?.projectType === 'biotech' ? 'biotech' : 'pharma') as 'pharma' | 'biotech' | 'medtech',
-  };
-
-  const flows = getAvailableFlows(engineCtx);
+  const flows = getAvailableFlows(intelligenceEngineContext(ctx));
   return JSON.stringify({ flows });
 });
 
@@ -18843,6 +19127,22 @@ registerToolHandler('save_document_to_vault', async (input, ctx) => {
          VALUES ($1, $2, 1, $3, $4, $5, $6)`,
         [ins.rows[0].id, ctx.organizationId, content, hash, reason, ctx.userId],
       );
+      /* Span lineage in the same transaction as the artifact + immutable version
+         (ledger L160, mirroring update_vault_document): save_document_to_vault
+         receives its content directly and carries no parked Data Room sources, so
+         every clause is the acting user's assertion. Recording it here closes the
+         one vault write that persisted regulated prose with NO span lineage at
+         all — a gap invisible to check-lineage-save-gate because it writes by
+         INSERT, which that guard's content-write discovery does not match. A
+         lineage gap rolls the whole document back. */
+      const { enforceAuthorLineage } = await import('../clinical-regulatory-evidence/lineage-gate.js');
+      await enforceAuthorLineage(
+        client,
+        ctx.organizationId,
+        { documentTable: 'concept2cure_artifacts', documentId: String(ins.rows[0].id) },
+        content,
+        String(ctx.userId),
+      );
       // Uniform provenance: a vault document authored by AnA is a 'generation'
       // event, in the same transaction as the artifact + version.
       await recordArtifactProvenance(client, {
@@ -18927,6 +19227,17 @@ registerToolHandler('update_vault_document', async (input, ctx) => {
            (artifact_id, organization_id, version, content, content_hash, change_description, created_by_id)
          VALUES ($1, $2, $3, $4, $5, $6, $7)`,
         [doc.id, ctx.organizationId, nextVersion, content, hash, reason, ctx.userId],
+      );
+      /* Lineage in the same transaction as the new version (ledger L160): the
+         vault tool carries no parked sources, so every clause is the acting
+         user's assertion; a gap rolls the version back. */
+      const { enforceAuthorLineage } = await import('../clinical-regulatory-evidence/lineage-gate.js');
+      await enforceAuthorLineage(
+        client,
+        ctx.organizationId,
+        { documentTable: 'concept2cure_artifacts', documentId: String(doc.id) },
+        content,
+        String(ctx.userId),
       );
       // Uniform provenance: a new vault version is an 'edit' event, same txn.
       await recordArtifactProvenance(client, {

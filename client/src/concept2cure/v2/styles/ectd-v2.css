@@ -167,8 +167,8 @@
   .ec-doc-table th{ font-size:10px; font-weight:600; letter-spacing:.06em; text-transform:uppercase; color:var(--text-400); border-bottom:1px solid var(--border-strong); background:var(--bg-050); }
   .ec-doc-table td.num{ font-family:var(--font-mono); font-size:11px; }
   .ec-pill{ display:inline-block; padding:1px 6px; border-radius:4px; font-size:10px; font-family:var(--font-sans); font-weight:500; }
-  .ec-pill.ok{ background:var(--success-muted); color:#4f6040; }
-  .ec-pill.warn{ background:var(--warning-muted); color:#8a4b04; }
+  .ec-pill.ok{ background:var(--success-muted); color:var(--success); }
+  .ec-pill.warn{ background:var(--warning-muted); color:var(--warning); }
 
   /* Staggered reveal */
   .ec-stagger > *{ opacity:1; }

@@ -178,3 +178,61 @@ describe('Registrations — an expandable row expands', () => {
     expect(screen.queryByRole('alert')).toBeNull();
   });
 });
+
+/**
+ * The renewal schedule shows only the registrations that carry a renewal date.
+ * It said nothing about the rest, so a grid where one of three is dated read as
+ * a complete renewal plan — and the registration that lapses first may be one
+ * of the two the schedule cannot place.
+ */
+describe('Registrations — the renewal schedule names what it cannot place', () => {
+  const MIXED = [
+    { ...REGISTRATIONS[0], id: 10, country: 'US', renewal_due_date: '2027-01-15' },
+    { ...REGISTRATIONS[0], id: 11, country: 'DE', renewal_due_date: null },
+    { ...REGISTRATIONS[1], id: 12, country: 'JP', renewal_due_date: null },
+  ];
+
+  function mixedRoutes() {
+    apiRequest.mockImplementation(async (method: string, path: string) => {
+      if (method !== 'GET') throw new Error('unrouted ' + method + ' ' + path);
+      if (path === '/api/rim/registrations') {
+        return { ok: true, status: 200, json: async () => ({ registrations: MIXED }) };
+      }
+      if (path === '/api/registrations/data-standards') return okJson([]);
+      return okJson([]);
+    });
+  }
+
+  it('names the registrations with no renewal-due date on the renewals tab', async () => {
+    mixedRoutes();
+    render(<Surface onAsk={vi.fn()} onNav={vi.fn()} />);
+    await screen.findByText('Renewals & variations');
+    fireEvent.click(screen.getByText('Renewals & variations'));
+
+    await waitFor(() =>
+      expect(document.body.textContent).toMatch(/2 registration\(s\) carry no renewal-due date/),
+    );
+    // The one dated registration is still scheduled.
+    expect(document.body.textContent).toContain('2027-01-15');
+  });
+
+  it('does not add the note when every registration carries a renewal date', async () => {
+    apiRequest.mockImplementation(async (method: string, path: string) => {
+      if (method !== 'GET') throw new Error('unrouted ' + method + ' ' + path);
+      if (path === '/api/rim/registrations') {
+        return {
+          ok: true, status: 200,
+          json: async () => ({ registrations: [{ ...REGISTRATIONS[0], id: 20, renewal_due_date: '2027-01-15' }] }),
+        };
+      }
+      if (path === '/api/registrations/data-standards') return okJson([]);
+      return okJson([]);
+    });
+    render(<Surface onAsk={vi.fn()} onNav={vi.fn()} />);
+    await screen.findByText('Renewals & variations');
+    fireEvent.click(screen.getByText('Renewals & variations'));
+
+    await waitFor(() => expect(document.body.textContent).toContain('2027-01-15'));
+    expect(document.body.textContent).not.toMatch(/carry no renewal-due date/);
+  });
+});

@@ -323,8 +323,13 @@ describe('Stage 4: Backend beta contract smoke net', () => {
     expect(content).toContain('router.use(authMiddleware);');
     expect(content).toContain('router.use(tenantContextMiddleware);');
     expect(content).toContain('router.use(requireOrganizationContext);');
-    expect(content).toContain('const sendSuccess = <T>');
-    expect(content).toContain('const sendError = (');
+    // The response envelope lives in routes/c2c/shared.ts (L53 slice 2) and the
+    // main router imports it — one pair of helpers, not a second definition.
+    expect(content).toContain("} from './c2c/shared';");
+    expect(content).not.toContain('const sendSuccess = <T>');
+    const shared = fs.readFileSync(path.join(repoRoot, 'server/routes/c2c/shared.ts'), 'utf8');
+    expect(shared).toContain('export const sendSuccess = <T>');
+    expect(shared).toContain('export const sendError = (');
     expect(content).toContain("router.get('/projects/:id'");
     expect(content).toContain("router.post('/projects'");
   });

@@ -7,7 +7,7 @@
  * from their dedicated endpoints. Every mutation routes through
  * <GovernedConfirmDialog>.
  *
- * Port basis: design-system/ui_kits/pdev/ActivityDetail.jsx.
+ * Port basis: ui_kits/pdev/ActivityDetail.jsx.
  */
 
 import * as React from 'react';

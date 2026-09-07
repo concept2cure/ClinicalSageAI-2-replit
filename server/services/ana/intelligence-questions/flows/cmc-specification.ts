@@ -355,6 +355,18 @@ export function createCmcSpecificationFlow(): FlowDefinition {
         guidance:
           'Per ICH Q11, provide a description of the manufacturing process including the synthetic route, key intermediates, and critical steps. For biologics, describe the cell line, expression system, and purification process per ICH Q5A–Q5E.',
         fields: [
+          /* Recorded under this name in manufacturing_processes by the
+             interview commit (interview-commit.ts); asked, never defaulted. */
+          {
+            id: 'ds_process_name',
+            label: 'Drug Substance Process Name / Version',
+            type: 'text',
+            placeholder: 'e.g., Route B, Process v3',
+            helpText:
+              'The name this manufacturing process is recorded under in the register (§3.2.S.2.2). Distinguishes routes and process versions.',
+            required: true,
+            validation: { minLength: 2, maxLength: 200 },
+          },
           {
             id: 'synthesis_overview',
             label: 'Manufacturing Process Overview',
@@ -582,6 +594,18 @@ export function createCmcSpecificationFlow(): FlowDefinition {
         guidance:
           'Per ICH Q6A (Section 3.1) for small molecules and Q6B (Section 3) for biologics, provide evidence confirming the molecular structure. For small molecules this includes spectroscopic data (NMR, MS, IR, UV); for biologics it includes primary, secondary, tertiary, and quaternary structure characterization.',
         fields: [
+          /* Recorded under this title in cmc_characterization_studies by the
+             interview commit (interview-commit.ts); asked, never defaulted. */
+          {
+            id: 'characterization_study_title',
+            label: 'Characterization Study Title / Report Reference',
+            type: 'text',
+            placeholder: 'e.g., Structure elucidation package, Report R-2025-014',
+            helpText:
+              'The title this structural characterization study is recorded under in the characterisation register (§3.2.S.3.1).',
+            required: true,
+            validation: { minLength: 3, maxLength: 300 },
+          },
           {
             id: 'characterization_methods',
             label: 'Characterization Methods Used',
@@ -789,6 +813,30 @@ export function createCmcSpecificationFlow(): FlowDefinition {
         guidance:
           'Per ICH Q8(R2), describe the target product profile including dosage form, strength(s), and route of administration. Provide the quantitative composition per dosage unit, listing all active and inactive ingredients.',
         fields: [
+          /* The two names the interview commit records this node under: the
+             drug product (drug_products.product_name) and its formulation
+             version (cmc_formulation_records.formulation_name). Both are
+             asked so neither register column is ever filled with a
+             placeholder. */
+          {
+            id: 'product_name',
+            label: 'Drug Product Name',
+            type: 'text',
+            placeholder: 'e.g., Examplumab 50 mg film-coated tablets',
+            helpText: 'The name the drug product is recorded under in the drug product register (§3.2.P.1).',
+            required: true,
+            validation: { minLength: 2, maxLength: 200 },
+          },
+          {
+            id: 'formulation_name',
+            label: 'Formulation Name / Version',
+            type: 'text',
+            placeholder: 'e.g., F-07 (Phase 3 formulation)',
+            helpText:
+              'The name or version this composition is recorded under in the formulation register (§3.2.P.1 / §3.2.P.3.2). A new version is a new record.',
+            required: true,
+            validation: { minLength: 2, maxLength: 200 },
+          },
           {
             id: 'dosage_form',
             label: 'Dosage Form',
@@ -1001,6 +1049,18 @@ export function createCmcSpecificationFlow(): FlowDefinition {
         guidance:
           'Per ICH Q8(R2) and Q10, provide a description of the drug product manufacturing process including unit operations, in-process controls, and batch size. The process description should link to the CQAs identified during pharmaceutical development.',
         fields: [
+          /* Recorded under this name in manufacturing_processes by the
+             interview commit (interview-commit.ts); asked, never defaulted. */
+          {
+            id: 'dp_process_name',
+            label: 'Drug Product Process Name / Version',
+            type: 'text',
+            placeholder: 'e.g., Wet granulation process, v2',
+            helpText:
+              'The name this manufacturing process is recorded under in the register (§3.2.P.3.3). Distinguishes process versions and sites.',
+            required: true,
+            validation: { minLength: 2, maxLength: 200 },
+          },
           {
             id: 'dp_manufacturing_description',
             label: 'Manufacturing Process Description',

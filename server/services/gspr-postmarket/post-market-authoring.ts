@@ -31,8 +31,7 @@ import type {
   PostMarketDocumentType,
 } from '../../../shared/schema/gspr-postmarket';
 import { buildPmcfPlanContent } from './pmcf-plan-generator';
-
-const DRAFT = 'DRAFT —';
+import { DRAFT_SENTINEL as DRAFT } from './scaffold-sentinel';
 
 export interface DeviceAuthoringContext {
   deviceName: string;

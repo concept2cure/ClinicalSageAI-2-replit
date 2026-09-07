@@ -20,8 +20,8 @@
  * mode the whole path is built to avoid.
  */
 
-import { useCallback } from 'react';
-import { buildAuthHeaders, useFetchJson } from './useFetchJson';
+import { useCallback, useState } from 'react';
+import { buildAuthHeaders, saveFailureFor, useFetchJson, type SaveFailure } from './useFetchJson';
 
 /** Mutators need the same Bearer + x-organization-id headers as the read
  *  path — cookies alone 401 at the global /api gate (see buildAuthHeaders). */
@@ -47,10 +47,19 @@ export interface DeviceProfileView {
   intendedUse: string | null;
   indication: string | null;
   predicateDevices: unknown;
+  /* The device-level administrative facts the official eSTAR reads from the
+     program. Null = not held; the eSTAR field stays blank and is reported,
+     never guessed. */
+  commonName: string | null;
+  classificationName: string | null;
+  regulationNumber: string | null;
+  associatedProductCodes: string | null;
+  indicationsForUseCitation: string | null;
 }
 
 /** Fields PUT /profile accepts — send only what changed; the server rejects
- *  an empty patch. */
+ *  an empty patch. The five eSTAR facts accept '' to CLEAR the stored value
+ *  (the server stores null); any other string is stored trimmed. */
 export interface DeviceProfilePatch {
   productName?: string;
   deviceClass?: DeviceClass;
@@ -58,7 +67,22 @@ export interface DeviceProfilePatch {
   productCode?: string;
   intendedUse?: string;
   indication?: string;
+  commonName?: string;
+  classificationName?: string;
+  regulationNumber?: string;
+  associatedProductCodes?: string;
+  indicationsForUseCitation?: string;
 }
+
+/** The five eSTAR device facts, in the order the intake form shows them. */
+export const ESTAR_DEVICE_FIELDS = [
+  'commonName',
+  'classificationName',
+  'regulationNumber',
+  'associatedProductCodes',
+  'indicationsForUseCitation',
+] as const;
+export type EstarDeviceField = (typeof ESTAR_DEVICE_FIELDS)[number];
 
 /**
  * Build the /profile URL for a program ident (regulatoryPrograms UUID or
@@ -77,13 +101,22 @@ export interface UseDeviceProfileResult {
   /** PUT /profile — persist the changed intake fields; refreshes on success.
    *  Null when there is no ident or the server rejected the write. */
   save: (patch: DeviceProfilePatch) => Promise<DeviceProfileView | null>;
+  /** Why the last save did not land, or null when the last one did. A refused
+   *  save used to be indistinguishable from a rejected one: both returned null
+   *  and the surface said "the server rejected the update", which sent a
+   *  read-only operator hunting for a bad value in fields their role simply
+   *  cannot write. The classification is the server's, never guessed here. */
+  saveFailure: SaveFailure | null;
 }
 
 export function useDeviceProfile(ident: string | null): UseDeviceProfileResult {
   const url = deviceProfileUrl(ident);
   const { data, loading, error, refresh } = useFetchJson<{ profile: DeviceProfileView }>(url);
+  const [saveFailure, setSaveFailure] = useState<SaveFailure | null>(null);
   const save = useCallback(
     async (patch: DeviceProfilePatch) => {
+      /* No ident is not a failed save — there is nothing to save to, and the
+         surface must not report a refusal that never happened. */
       if (!url) return null;
       try {
         const res = await fetch(url, {
@@ -92,17 +125,24 @@ export function useDeviceProfile(ident: string | null): UseDeviceProfileResult {
           headers: jsonHeaders(),
           body: JSON.stringify(patch),
         });
-        if (!res.ok) return null;
+        if (!res.ok) {
+          setSaveFailure(saveFailureFor(res.status));
+          return null;
+        }
         const j = (await res.json()) as { profile: DeviceProfileView };
+        setSaveFailure(null);
         refresh();
         return j.profile ?? null;
       } catch {
+        /* The request never reached a verdict — a thrown fetch is a transport
+           failure, not the server declining the content. */
+        setSaveFailure('unavailable');
         return null;
       }
     },
     [url, refresh],
   );
-  return { profile: data?.profile ?? null, loading, error, refresh, save };
+  return { profile: data?.profile ?? null, loading, error, refresh, save, saveFailure };
 }
 
 /* ─── openFDA classification lookup (autofill offer, never authoritative) ── */

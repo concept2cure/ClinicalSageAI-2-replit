@@ -262,7 +262,7 @@ export function ReviewThreadsPane({
       </div>
 
       {queue.loading ? (
-        <div className="scaf-note" style={{ padding: '10px 4px' }}>Loading your review queue…</div>
+        <div role="status" className="scaf-note" style={{ padding: '10px 4px' }}>Loading your review queue…</div>
       ) : queue.error ? (
         <EmptyState tone="error" icon={I.alertTriangle} title="Couldn't load your review queue" hint={queue.error} />
       ) : !threads.length && !tasks.length ? (
@@ -322,7 +322,7 @@ export function ReviewThreadsPane({
                 </div>
 
                 {comments.loading ? (
-                  <div className="scaf-note" style={{ padding: '10px 4px' }}>Loading comments…</div>
+                  <div role="status" className="scaf-note" style={{ padding: '10px 4px' }}>Loading comments…</div>
                 ) : comments.error ? (
                   <EmptyState tone="error" icon={I.alertTriangle} title="Couldn't load the comments" hint={comments.error} />
                 ) : (

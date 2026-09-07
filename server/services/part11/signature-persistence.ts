@@ -57,7 +57,8 @@
  */
 
 import { createHash } from 'crypto';
-import { sql, type SQL } from 'drizzle-orm';
+import type { SQL } from 'drizzle-orm';
+import { queryableFromDrizzle } from '../../db/drizzle-queryable.js';
 import { resolveSignerIdentity } from './resolve-signer-identity.js';
 
 /** Minimal pg-compatible client: node-pg Pool, PoolClient, or a test shim. */
@@ -87,20 +88,8 @@ export interface DrizzleSignatureRunner {
  * array value into a `(a, b, c)` tuple of separate placeholders.
  */
 export function drizzleSignatureClient(runner: DrizzleSignatureRunner): SignatureDbClient {
-  return {
-    query: async (text: string, params: unknown[] = []) => {
-      const parts = text.split(/\$(\d+)/g);
-      const chunks: SQL[] = [];
-      for (let i = 0; i < parts.length; i += 1) {
-        chunks.push(
-          i % 2 === 0 ? sql.raw(parts[i]) : sql`${sql.param(params[Number(parts[i]) - 1])}`,
-        );
-      }
-      const result = (await runner.execute(sql.join(chunks))) as { rows?: unknown[] } | unknown[];
-      const rows = Array.isArray(result) ? result : (result?.rows ?? []);
-      return { rows: rows as any[] };
-    },
-  };
+  // One adapter for every shared writer — see server/db/drizzle-queryable.
+  return queryableFromDrizzle(runner);
 }
 
 // Postgres SQLSTATE for "undefined_table" (schema not yet migrated in this env).
@@ -119,6 +108,8 @@ export const BINDING_BASIS = {
   C2C_DOCUMENT_SECTIONS: 'c2c-document-sections-sha256',
   /** sha256 over a single c2c document section's content + version at signing time. */
   C2C_DOCUMENT_SECTION: 'c2c-document-section-sha256',
+  /** sha256 of the exact bundle bytes handed to the agency gateway (governed transmit). */
+  TRANSMITTED_BUNDLE_SHA256: 'transmitted-bundle-sha256',
   /** sha256 over the certified financial-disclosure snapshot (21 CFR 54 Form 3454/3455). */
   FINANCIAL_DISCLOSURE_CONTENT: 'financial-disclosure-content-sha256',
   /**

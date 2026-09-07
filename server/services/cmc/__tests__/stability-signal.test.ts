@@ -94,6 +94,37 @@ describe('the stability verdict is computed from the recorded results', () => {
     ]);
     const s7 = composed.find((c) => c.sectionKey === '3.2.S.7')!;
     expect(s7.narrativeDraft).not.toContain('remain within the acceptance criteria');
+    // Nothing recorded is not the same as recorded-and-unreadable, so this
+    // branch must NOT claim a payload could not be read.
+    expect(s7.narrativeDraft).not.toMatch(/could not be read/i);
+  });
+
+  it('a recorded stability payload that cannot be parsed is said, not read as no data', () => {
+    // `results` holds a string the column cannot parse. It used to return an
+    // empty list — indistinguishable from a study that recorded nothing — so a
+    // corrupt payload silently became "no stability data".
+    const composed = composeModule3FromCanonicalSources([
+      src('stability', { studyName: 'LT', storageCondition: '25C/60RH', results: '{ this is not json' }),
+    ]);
+    const s7 = composed.find((c) => c.sectionKey === '3.2.S.7')!;
+    expect(s7.narrativeDraft).toMatch(/could not be read/i);
+    expect(s7.narrativeDraft).not.toContain('remain within the acceptance criteria');
+  });
+
+  it('readable conforming points do not carry the section past an unreadable payload', () => {
+    const composed = composeModule3FromCanonicalSources([
+      src('stability', {
+        studyName: 'LT',
+        storageCondition: '25C/60RH',
+        results: [{ parameter: 'Assay', timePoint: '6M', result: '99.1%', specification: 'NLT 95.0%' }],
+        stabilityData: '{ corrupt',
+      }),
+    ]);
+    const s7 = composed.find((c) => c.sectionKey === '3.2.S.7')!;
+    // The conforming point is still reported…
+    expect(s7.narrativeDraft).toMatch(/within their recorded acceptance criteria/i);
+    // …but the unreadable payload is named alongside it.
+    expect(s7.narrativeDraft).toMatch(/could not be read/i);
   });
 });
 

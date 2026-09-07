@@ -1,5 +1,22 @@
 import type { Express } from 'express';
+import { createScopedLogger } from '../utils/logger';
 import concept2cureRoutes from '../routes/concept2cure';
+import reviewRoutes from '../routes/c2c/reviews';
+import notificationRoutes from '../routes/c2c/notifications';
+import communicationCenterRoutes from '../routes/c2c/communication-center';
+import taskRoutes from '../routes/c2c/tasks';
+import conversationRoutes from '../routes/c2c/conversations';
+import exportRoutes from '../routes/c2c/exports';
+import artifactRoutes from '../routes/c2c/artifacts';
+import aiEditingRoutes from '../routes/c2c/ai-editing';
+import haqSessionRoutes from '../routes/c2c/haq-sessions';
+import programTwinRoutes from '../routes/c2c/program-twin';
+import contextIntelligenceRoutes from '../routes/c2c/context-intelligence';
+import projectKnowledgeRoutes from '../routes/c2c/project-knowledge';
+import governanceOpsRoutes from '../routes/c2c/governance-ops';
+import knowledgeSourcesRoutes from '../routes/c2c/knowledge-sources';
+
+const logger = createScopedLogger('register-concept2cure-routes');
 import computeRoutes from '../routes/compute';
 import scheduleOfEventsRoutes from '../routes/project-schedule-of-events';
 import { authenticateToken } from '../middleware/auth.js';
@@ -8,10 +25,26 @@ import { authenticateToken } from '../middleware/auth.js';
 // Compute endpoints also pass through to upstream LLM providers and
 // must be JWT-gated to bound cost exposure.
 export function registerConcept2CureRoutes(app: Express) {
+  // Document review (threads, comments, tasks, queues) — the first domain split
+  // out of the main router (L53); its paths are disjoint from what remains.
+  app.use('/api/concept2cure', authenticateToken, reviewRoutes);
+  app.use('/api/concept2cure', authenticateToken, notificationRoutes);
+  app.use('/api/concept2cure', authenticateToken, communicationCenterRoutes);
+  app.use('/api/concept2cure', authenticateToken, taskRoutes);
+  app.use('/api/concept2cure', authenticateToken, conversationRoutes);
+  app.use('/api/concept2cure', authenticateToken, exportRoutes);
+  app.use('/api/concept2cure', authenticateToken, artifactRoutes);
+  app.use('/api/concept2cure', authenticateToken, aiEditingRoutes);
+  app.use('/api/concept2cure', authenticateToken, haqSessionRoutes);
+  app.use('/api/concept2cure', authenticateToken, programTwinRoutes);
+  app.use('/api/concept2cure', authenticateToken, contextIntelligenceRoutes);
+  app.use('/api/concept2cure', authenticateToken, projectKnowledgeRoutes);
+  app.use('/api/concept2cure', authenticateToken, governanceOpsRoutes);
+  app.use('/api/concept2cure', authenticateToken, knowledgeSourcesRoutes);
   app.use('/api/concept2cure', authenticateToken, concept2cureRoutes);
   app.use('/api/concept2cure/compute', authenticateToken, computeRoutes);
   // AnA Schedule of Events — shares the project URL space (/projects/:id/...);
   // mounted after the main router so distinct sub-paths resolve here.
   app.use('/api/concept2cure', authenticateToken, scheduleOfEventsRoutes);
-  console.log('✅ Concept2Cure routes mounted (auth-gated)');
+  logger.info('Concept2Cure routes mounted (auth-gated)');
 }

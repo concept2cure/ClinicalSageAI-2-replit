@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { I } from '../icons';
-import type { SurfaceViewProps, OwnedSurfaceViewProps } from '../surfaceViews';
+import type { OwnedSurfaceViewProps } from '../surfaceViews';
 import { useLiveData, useLiveRows, EmptyState } from '../dataConnect';
 import { RBM_NAV, RBM_LINKS } from '../fixtures/rbm-data';
 import type { RbmBoard, RbmProgram } from './rbmBoard';
@@ -180,8 +180,8 @@ export function Rbm({ onNav, liveDrive }: OwnedSurfaceViewProps) {
   const Body = SURFACES[tab];
 
   return (
-    <div className="rbm" data-screen-label={`RBM -- ${nav.label}`}>
-      <div className="reg-h">
+    <div data-screen-label={`RBM -- ${nav.label}`}>
+      <div className="reg-head">
         <div>
           <div className="ph-eyebrow">Clinical — risk-based quality management</div>
           <h1 className="reg-title">Risk-based monitoring</h1>
@@ -307,6 +307,14 @@ export function Rbm({ onNav, liveDrive }: OwnedSurfaceViewProps) {
             msgs={anaMsgs}
             onAsk={askAna}
             onClose={() => setAnaOpen(false)}
+            /* The live work dock reads the raw turns: phases, tool timings,
+               pending steers and outputs the pane's message shape does not carry. */
+            work={{
+              messages: anaChat.messages,
+              streaming: anaChat.isStreaming,
+              runStatus: anaChat.runStatus,
+              pendingSteers: anaChat.pendingSteers,
+            }}
           />
         ) : (
           <button

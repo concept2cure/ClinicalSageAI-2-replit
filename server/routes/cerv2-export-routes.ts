@@ -55,6 +55,7 @@ import {
 } from '../services/pathway-engines/estar/estar-content-leaves';
 
 import { createScopedLogger } from '../utils/logger.js';
+import { requireEditorAccess } from '../middleware/orgMembership';
 
 const logger = createScopedLogger('cerv2-export-routes');
 
@@ -81,25 +82,6 @@ router.use(['/pdf', '/docx', '/zip'], exportRateLimiter);
 // be dropped from any environment that still sets it.
 
 // ── Auth guard ─────────────────────────────────────────────────────────────────
-const allowedRoles = new Set(['admin', 'owner', 'editor', 'super_admin']);
-const requireEditorAccess = (req: any, res: any, next: () => void) => {
-  const role = String(req.userRole || req.user?.role || '').toLowerCase();
-  if (!role || !allowedRoles.has(role)) {
-    return res.status(403).json({ error: 'Insufficient permissions' });
-  }
-  // Verify organization context exists (prevents cross-org access).
-  // Trust only middleware-derived sources — never client-supplied headers.
-  const orgId = req.tenantId || req.tenantContext?.organizationId;
-  if (!orgId) {
-    return res.status(400).json({ error: 'Organization context required' });
-  }
-  const numericOrgId = Number(orgId);
-  if (!Number.isFinite(numericOrgId) || numericOrgId <= 0) {
-    return res.status(400).json({ error: 'Valid numeric organization context required' });
-  }
-  req.resolvedOrganizationId = numericOrgId;
-  return next();
-};
 
 // ── Validation schemas ─────────────────────────────────────────────────────────
 const validDocTypes = ['cerv2_510k', 'cerv2_pma', 'cerv2_cer'] as const;

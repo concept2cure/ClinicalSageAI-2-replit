@@ -658,3 +658,7 @@
   font-size: 12px;
 }
 .mdx-shell .drafter-empty-act:hover { background: var(--bg-100); }
+/* letter sender block, the deficiency list, the unstarted hero (ledger L139) */
+.mdx-shell .dl-from { display: flex; flex-direction: column; gap: 2px; }
+.mdx-shell .dr-defs { display: flex; flex-direction: column; gap: 14px; }
+.mdx-shell .du-hero { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 6px; padding: 8px 0 18px; }

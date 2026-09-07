@@ -101,17 +101,6 @@ export const FILING_WF_SURFACE: Record<string, string> = {
   intldevice: 'document-authoring', advice: 'document-authoring', ivdpostmarket: 'document-authoring',
 };
 
-/* wf code -> pathway ID in REG_PATHWAYS */
-export const FILING_WF_PATHWAY: Record<string, string> = {
-  IND: 'ind', NDA: 'ctd', BLA: 'bla', MAA: 'maa', CSR: 'csr',
-  '510k': 'estar', PMA: 'pma', denovo: 'denovo', CER: 'cer',
-  ANDA: 'anda', '505b2': '505b2', biosimilar: 'biosimilar', DMF: 'dmf',
-  IDE: 'ide', HDE: 'hde', IVDR: 'ivdr', MDR: 'mdr', STED: 'sted',
-  designation: 'designation', postmarket: 'postmarket', presub: 'presub',
-  samd: 'samd', qms: 'qms', pv: 'pv', clindoc: 'clindoc', eua: 'eua',
-  cdx: 'cdx', pmdevice: 'pmdevice', ivdpresub: 'ivdpresub', ldt: 'ldt',
-  intldevice: 'intldevice', advice: 'advice', ivdpostmarket: 'ivdpostmarket',
-};
 
 export const FILING_WF_LABEL: Record<string, string> = {
   IND: 'IND', NDA: 'NDA', BLA: 'BLA', MAA: 'MAA', CSR: 'CSR',

@@ -135,21 +135,28 @@ describe('recordCerv2SectionVersion', () => {
     expect(insertedColumn(calls, 'change_summary')).toBe('Reworked per FDA AI letter item 3');
   });
 
-  it('SOURCE: the AnA tool writes its version row inside a transaction', async () => {
+  it('SOURCE: the one kit-section writer records the version row beside the content, and the AnA tool runs it inside a transaction', async () => {
     const fs = await import('node:fs');
     const path = await import('node:path');
-    const src = fs.readFileSync(
-      path.resolve(__dirname, '..', '..', 'ana', 'AnaToolExecutor.ts'),
-      'utf8',
-    );
-    const i = src.indexOf('UPDATE cerv2_510k_sections');
-    expect(i).toBeGreaterThan(-1);
-    const block = src.slice(Math.max(0, i - 3000), i + 3000);
+    /* The UPDATE, the FOR UPDATE read and the version row moved out of
+       AnaToolExecutor into the ONE kit-section writer (kit-section-write.ts);
+       the transaction stays with the caller. This assertion used to look for
+       all four in AnaToolExecutor and went red the moment the writer was
+       shared — it now checks each half where it lives. */
+    const writer = fs.readFileSync(path.resolve(__dirname, '..', 'kit-section-write.ts'), 'utf8');
+    const u = writer.indexOf('UPDATE cerv2_510k_sections');
+    expect(u).toBeGreaterThan(-1);
+    const wblock = writer.slice(Math.max(0, u - 3000), u + 3000);
     // Content and history must be on the same client, or one can land without
     // the other — which is the whole point of the fix.
-    expect(block).toContain('recordCerv2SectionVersion');
-    expect(block).toContain("client.query('BEGIN')");
-    expect(block).toContain("client.query('COMMIT')");
-    expect(block).toContain('FOR UPDATE');
+    expect(wblock).toContain('recordCerv2SectionVersion');
+    expect(wblock).toContain('FOR UPDATE');
+
+    const ana = fs.readFileSync(path.resolve(__dirname, '..', '..', 'ana', 'AnaToolExecutor.ts'), 'utf8');
+    const c = ana.indexOf('writeKitSectionTx(');
+    expect(c).toBeGreaterThan(-1);
+    const ablock = ana.slice(Math.max(0, c - 3000), c + 3000);
+    expect(ablock).toContain("client.query('BEGIN')");
+    expect(ablock).toContain("client.query('COMMIT')");
   });
 });

@@ -107,7 +107,9 @@ vi.mock('../../server/db', () => ({
 // what proves no e-signature was recorded for a refused release.
 const gov = vi.hoisted(() => ({ signatures: 0 }));
 vi.mock('../../server/services/cmc-write-through', () => ({
-  writeThroughBatchRecord: async () => undefined,
+  // The real signature returns a WriteThroughOutcome; linkToModule3 reads
+  // `.ok` off it, so `undefined` here 500s the route under test.
+  writeThroughBatchRecord: async () => ({ ok: true }),
 }));
 vi.mock('../../server/routes/c2c/actions', () => ({
   verifyReauth: async () => ({ ok: true }),

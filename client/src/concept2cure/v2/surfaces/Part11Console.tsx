@@ -220,10 +220,10 @@ export function Part11Console(_props: SurfaceViewProps) {
             : (
               <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap', alignItems: 'center' }}>
                 <div><span className={'rd-chip tone-' + chainTone(chain.chainStatus)} style={{ fontSize: 14 }}>{chain.chainStatus}</span>
-                  <div style={{ fontSize: 12, color: 'var(--c2c-dim,#667085)', marginTop: 4 }}>{chain.integrityValid === true ? 'Integrity valid' : chain.integrityValid === false ? 'Integrity BROKEN' : 'Not verifiable'}</div></div>
-                <div><div style={{ fontSize: 22, fontWeight: 700 }}>{chain.totalEntries}</div><div style={{ fontSize: 12, color: 'var(--c2c-dim,#667085)' }}>Chained entries</div></div>
-                {chain.brokenLinks != null && <div><div style={{ fontSize: 22, fontWeight: 700, color: chain.brokenLinks > 0 ? 'var(--c2c-err,#b42318)' : undefined }}>{chain.brokenLinks}</div><div style={{ fontSize: 12, color: 'var(--c2c-dim,#667085)' }}>Broken links</div></div>}
-                <div style={{ fontSize: 12, color: 'var(--c2c-dim,#667085)' }}>{chain.hashAlgorithm ?? 'SHA-256'} · {chain.chainType ?? 'linear-hash-chain'}{chain.lastHash ? <div className="mono" style={{ wordBreak: 'break-all', marginTop: 2 }}>last: {String(chain.lastHash).slice(0, 24)}…</div> : null}</div>
+                  <div style={{ fontSize: 12, color: 'var(--text-400)', marginTop: 4 }}>{chain.integrityValid === true ? 'Integrity valid' : chain.integrityValid === false ? 'Integrity BROKEN' : 'Not verifiable'}</div></div>
+                <div><div style={{ fontSize: 22, fontWeight: 700 }}>{chain.totalEntries}</div><div style={{ fontSize: 12, color: 'var(--text-400)' }}>Chained entries</div></div>
+                {chain.brokenLinks != null && <div><div style={{ fontSize: 22, fontWeight: 700, color: chain.brokenLinks > 0 ? 'var(--error)' : undefined }}>{chain.brokenLinks}</div><div style={{ fontSize: 12, color: 'var(--text-400)' }}>Broken links</div></div>}
+                <div style={{ fontSize: 12, color: 'var(--text-400)' }}>{chain.hashAlgorithm ?? 'SHA-256'} · {chain.chainType ?? 'linear-hash-chain'}{chain.lastHash ? <div className="mono" style={{ wordBreak: 'break-all', marginTop: 2 }}>last: {String(chain.lastHash).slice(0, 24)}…</div> : null}</div>
               </div>
             )}
         </div>
@@ -243,7 +243,7 @@ export function Part11Console(_props: SurfaceViewProps) {
               <tbody>{sections.map(([code, sec]) => (
                 <tr key={code}>
                   <td className="mono">{code}</td><td>{sec?.title ?? '—'}</td>
-                  <td style={{ color: 'var(--c2c-dim,#667085)', fontSize: 13 }}>{sec?.platformControl ?? '—'}</td>
+                  <td style={{ color: 'var(--text-400)', fontSize: 13 }}>{sec?.platformControl ?? '—'}</td>
                   {/* `sec.status.replace` called a method on a field the row may
                       simply not carry — the same crash as the panel above, one
                       level down. Missing status shows as unknown, not as a throw. */}
@@ -271,7 +271,7 @@ export function Part11Console(_props: SurfaceViewProps) {
         </div>
       </div>
 
-      {status?.disclaimer && <div style={{ fontSize: 12, color: 'var(--c2c-dim,#667085)', padding: '0 4px 16px' }}>{status.disclaimer}</div>}
+      {status?.disclaimer && <div style={{ fontSize: 12, color: 'var(--text-400)', padding: '0 4px 16px' }}>{status.disclaimer}</div>}
     </div>
   );
 }

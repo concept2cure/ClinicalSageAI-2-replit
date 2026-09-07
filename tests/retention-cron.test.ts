@@ -173,7 +173,7 @@ describe('runRetentionSweep — per-policy processing', () => {
 
     const summary = await runRetentionSweep();
 
-    expect(summary).toEqual({ scanned: 1, archived: 1, softDeleted: 1, hardDeleted: 0, errors: 0 });
+    expect(summary).toEqual({ scanned: 1, archived: 1, softDeleted: 1, hardDeleted: 0, heldByLegalHold: 0, errors: 0 });
     expect(h.hardDeleteCount).toBe(0);
     expect(h.archiveInserts).toHaveLength(1);
     expect(h.archiveInserts[0]).toMatchObject({
@@ -202,7 +202,7 @@ describe('runRetentionSweep — per-policy processing', () => {
 
     const summary = await runRetentionSweep();
 
-    expect(summary).toEqual({ scanned: 1, archived: 1, softDeleted: 1, hardDeleted: 0, errors: 0 });
+    expect(summary).toEqual({ scanned: 1, archived: 1, softDeleted: 1, hardDeleted: 0, heldByLegalHold: 0, errors: 0 });
     expect(h.hardDeleteCount).toBe(0);
     expect(h.logAction.mock.calls[0][0].details).toMatchObject({
       retentionPolicy: 'no-such-policy',
@@ -224,7 +224,7 @@ describe('runRetentionSweep — per-policy processing', () => {
 
     const summary = await runRetentionSweep();
 
-    expect(summary).toEqual({ scanned: 3, archived: 2, softDeleted: 2, hardDeleted: 1, errors: 0 });
+    expect(summary).toEqual({ scanned: 3, archived: 2, softDeleted: 2, hardDeleted: 1, heldByLegalHold: 0, errors: 0 });
     // Only the archiveBeforeDelete policies snapshot the document.
     expect(h.archiveInserts.map(v => v.originalDocumentId)).toEqual(['doc-purge', 'doc-keep']);
     expect(h.hardDeleteCount).toBe(1);
@@ -254,7 +254,7 @@ describe('runRetentionSweep — failure semantics', () => {
 
     // doc-bad failed at the archive step (so it was neither archived nor
     // deleted, and no audit action was written for it); doc-good completed.
-    expect(summary).toEqual({ scanned: 2, archived: 1, softDeleted: 1, hardDeleted: 0, errors: 1 });
+    expect(summary).toEqual({ scanned: 2, archived: 1, softDeleted: 1, hardDeleted: 0, heldByLegalHold: 0, errors: 1 });
     expect(h.archiveInserts.map(v => v.originalDocumentId)).toEqual(['doc-good']);
     expect(h.softDeletePatches).toHaveLength(1);
     expect(h.logAction).toHaveBeenCalledTimes(1);
@@ -284,7 +284,7 @@ describe('runRetentionJob — orchestration', () => {
         event: 'retention_sweep_complete',
         component: 'retention_job',
         severity: 'info',
-        details: { scanned: 1, archived: 1, softDeleted: 1, hardDeleted: 0, errors: 0 },
+        details: { scanned: 1, archived: 1, softDeleted: 1, hardDeleted: 0, heldByLegalHold: 0, errors: 0 },
       })
     );
   });

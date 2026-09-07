@@ -168,19 +168,28 @@ export function SourceTracer({ onAsk }: SurfaceViewProps) {
      `changed` and `unresolved` travel because they are the answer to "can I
      trust this section" — a source whose content identity moved since it was
      cited is the thing a reviewer needs told, unprompted. */
-  const anaContext = useMemo(
-    () => ({
-      summary: st.loading
-        ? 'Source tracer, still loading recorded source lineage.'
-        : st.error
-          ? 'Source tracer could not load the citation store — lineage is unavailable, not absent.'
-          : sections.length === 0
-            ? 'Source tracer: no recorded source citations yet for this organization.'
-            : `Source tracer: ${sections.length} section(s) with recorded citations` +
-              (sec ? `, "${sec.sectionTitle ?? sec.sec ?? sec.id}" selected` : '') +
-              `; ${changed.length} source(s) changed since citation, ${unresolved.length} unresolved.`,
+  const anaContext = useMemo(() => {
+    // Publish NO counts while loading or on a failed read — a zeroed
+    // sectionCount/totalRecordedSources beside an 'error' flag reads as a false
+    // "0 sections have citations." Only the success branch carries facts.
+    if (st.loading) {
+      return { summary: 'Source tracer, still loading recorded source lineage.' };
+    }
+    if (st.error) {
+      return {
+        summary: 'Source tracer could not load the citation store — lineage is unavailable, not absent.',
+        availableActions: ['Retry the source-tracer read'],
+      };
+    }
+    return {
+      summary:
+        sections.length === 0
+          ? 'Source tracer: no recorded source citations yet for this organization.'
+          : `Source tracer: ${sections.length} section(s) with recorded citations` +
+            (sec ? `, "${sec.sectionTitle ?? sec.sec ?? sec.id}" selected` : '') +
+            `; ${changed.length} source(s) changed since citation, ${unresolved.length} unresolved.`,
       facts: {
-        lineageState: st.loading ? 'loading' : st.error ? 'error' : sections.length === 0 ? 'empty' : 'ready',
+        lineageState: sections.length === 0 ? 'empty' : 'ready',
         sectionCount: sections.length,
         ...(sec ? { selectedSectionId: sec.id, selectedSectionTitle: sec.sectionTitle, selectedSectionModule: sec.module, selectedSectionStatus: sec.status, selectedSectionSources: sec.sources?.length ?? 0 } : {}),
         totalRecordedSources: allSources.length,
@@ -195,9 +204,8 @@ export function SourceTracer({ onAsk }: SurfaceViewProps) {
         'Explain which sources changed after they were cited, and what that means',
         'Explain why a source is unresolved',
       ],
-    }),
-    [st.loading, st.error, sections.length, sec, allSources.length, changed.length, unresolved.length],
-  );
+    };
+  }, [st.loading, st.error, sections.length, sec, allSources.length, changed.length, unresolved.length]);
   usePublishSurfaceContext('source-tracer', anaContext);
 
   // Four-state on the real read-model — never a fabricated stand-in.

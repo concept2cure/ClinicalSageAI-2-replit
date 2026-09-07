@@ -25,9 +25,19 @@ import {
   assessResidualSolvent,
   resolveImpurityThresholds,
   type AdministrationRoute,
-  type ImpurityClass,
+  type ImpurityCategory,
   type ResolvedThreshold,
 } from '../global-ri/impurities-thresholds';
+import {
+  calculateTTC,
+  classifyMutagenicImpurity,
+  type AmesMutagenicity,
+  type CarcinogenicityData,
+  type CohortOfConcern,
+  type MutagenicImpurityClass,
+  type StructuralAlertPresence,
+  type TreatmentDuration,
+} from '../mutagenic-impurity/mutagenic-impurity-knowledge';
 
 /** The verdict for one impurity against the thresholds that govern it. */
 export type ImpurityDisposition =
@@ -83,7 +93,11 @@ export interface ImpurityAssessmentRefusal {
     | 'SOLVENT_NOT_IN_CATALOG'
     | 'ELEMENT_NOT_RECORDED'
     | 'ELEMENT_NOT_IN_CATALOG'
-    | 'ROUTE_NOT_RECORDED';
+    | 'ROUTE_NOT_RECORDED'
+    | 'AMES_NOT_RECORDED'
+    | 'STRUCTURAL_ALERT_NOT_RECORDED'
+    | 'TREATMENT_DURATION_NOT_RECORDED'
+    | 'COHORT_OF_CONCERN_NOT_RECORDED';
   message: string;
   routeTo?: string;
 }
@@ -131,10 +145,48 @@ export interface ElementalImpurityAssessed {
   outstanding: string[];
 }
 
+/**
+ * A mutagenic (or potentially mutagenic) impurity assessed under ICH M7(R2).
+ *
+ * The register's 'mutagenic' class used to be refused as out of Q3A/Q3B scope
+ * and rendered as "governed instead by ICH M7" — while the M7 engine that
+ * classifies an impurity into its five classes and derives the acceptable
+ * intake sat unused beside it. The class is decided from the recorded Ames
+ * result, structural-alert status and carcinogenicity data; a Class 1-3
+ * impurity is then compared to the TTC-derived limit for the recorded
+ * treatment duration; a Class 4/5 impurity carries no TTC limit and is
+ * controlled as an ordinary impurity.
+ */
+export interface MutagenicImpurityAssessed {
+  ok: true;
+  basis: 'ICH M7(R2)';
+  impurityName: string;
+  impurityClass: MutagenicImpurityClass;
+  className: string;
+  controlApproach: string;
+  /** True when the recorded structure is in an M7 cohort of concern. */
+  cohortOfConcern: boolean;
+  treatmentDuration: TreatmentDuration | null;
+  route: AdministrationRoute | null;
+  /** Null for Class 4/5 (no TTC limit) and Class 1 (compound-specific limit owed). */
+  acceptableIntakeUgPerDay: number | null;
+  /** Null when no daily dose is recorded to convert the intake into a concentration. */
+  concentrationLimitPpm: number | null;
+  observedPpm: number | null;
+  observedMicrogramsPerDay: number | null;
+  observedAsRecorded: string;
+  /** Null when no limit applies (Class 4/5) or none can be stated (Class 1). */
+  withinLimit: boolean | null;
+  disposition: 'within-limit' | 'above-limit' | 'non-mutagenic-control' | 'compound-specific-limit-required';
+  citation: string;
+  outstanding: string[];
+}
+
 export type ImpurityAssessmentResult =
   | ImpurityAssessment
   | ResidualSolventAssessed
   | ElementalImpurityAssessed
+  | MutagenicImpurityAssessed
   | ImpurityAssessmentRefusal;
 
 /**
@@ -254,7 +306,7 @@ export function normaliseLevelToPercent(
 }
 
 /** The register's impurity_type column, mapped onto the guideline's classes. */
-export function impurityClassOf(raw: unknown): ImpurityClass {
+export function impurityClassOf(raw: unknown): ImpurityCategory {
   const v = String(raw ?? '').trim().toLowerCase().replace(/[\s_]+/g, '-');
   if (!v) return 'unresolved';
   /* Exact matches first — these are the values the register's own control
@@ -262,7 +314,7 @@ export function impurityClassOf(raw: unknown): ImpurityClass {
      material" matched `residual` before anything else and was sent to Q3C as a
      solvent. Only an unrecognised string falls through to the substring
      vocabulary below, which exists for records written by an integration. */
-  const EXACT: Record<string, ImpurityClass> = {
+  const EXACT: Record<string, ImpurityCategory> = {
     'process-related': 'organic',
     organic: 'organic',
     degradation: 'degradation',
@@ -311,6 +363,7 @@ export function assessRecordedImpurity(
      Q3A/Q3B out-of-scope refusal, which is what used to catch them. */
   if (impurityClass === 'residual-solvent') return assessAsResidualSolvent(record, impurityName);
   if (impurityClass === 'elemental') return assessAsElementalImpurity(record, impurityName);
+  if (impurityClass === 'mutagenic') return assessAsMutagenicImpurity(record, impurityName, matrix);
 
   const scoped = resolveImpurityThresholds({ matrix, maxDailyDoseMg: 1, impurityClass });
   if (!scoped.ok && (scoped.code === 'CLASS_OUT_OF_SCOPE' || scoped.code === 'CLASS_UNRESOLVED')) {
@@ -428,9 +481,22 @@ function levelAsPpm(record: Record<string, any>): number | null {
   if (!Number.isFinite(value)) return null;
   const unit = String(record.levelUnit ?? record.level_unit ?? '').trim().toLowerCase();
   if (unit === 'ppm') return value;
-  /* A percentage IS a ppm figure scaled by 10,000; anything else — a bare
-     number, mg, µg/day — states no concentration and is not converted. */
+  /* ppb — the register offers it, and it is the customary nitrosamine unit —
+     is a thousandth of a ppm. A percentage IS a ppm figure scaled by 10,000;
+     anything else — a bare number, mg, µg/day — states no concentration and
+     is not converted. */
+  if (unit === 'ppb') return value / 1000;
   if (unit === '%' || unit === 'percent' || unit === 'w/w' || unit === '% w/w') return value * 10_000;
+  return null;
+}
+
+/** The level as a daily intake in µg/day, from a µg/day or mg/day record, or null. */
+function levelAsMicrogramsPerDay(record: Record<string, any>): number | null {
+  const raw = Number(String(record.observedLevel ?? record.observed_level ?? '').trim());
+  if (!Number.isFinite(raw)) return null;
+  const unit = String(record.levelUnit ?? record.level_unit ?? '').trim().toLowerCase();
+  if (unit === 'µg/day' || unit === 'ug/day' || unit === 'mcg/day') return raw;
+  if (unit === 'mg/day') return raw * 1000;
   return null;
 }
 
@@ -507,14 +573,10 @@ function assessAsElementalImpurity(
     record.elementName ?? record.element_name ?? record.impurityName ?? record.impurity_name ?? '',
   ).trim();
   const route = recordedRoute(record);
-  const raw = Number(String(record.observedLevel ?? record.observed_level ?? '').trim());
   const unit = String(record.levelUnit ?? record.level_unit ?? '').trim().toLowerCase();
   /* Q3D limits are a daily EXPOSURE, so a concentration cannot be compared to
      one without the daily dose; only a µg/day figure is taken. */
-  const perDay =
-    Number.isFinite(raw) && (unit === 'µg/day' || unit === 'ug/day' || unit === 'mcg/day') ? raw
-    : Number.isFinite(raw) && (unit === 'mg/day') ? raw * 1000
-    : null;
+  const perDay = levelAsMicrogramsPerDay(record);
   const observedAsRecorded = [String(record.observedLevel ?? record.observed_level ?? '').trim(), unit]
     .filter(Boolean).join(' ');
 
@@ -564,6 +626,216 @@ function assessAsElementalImpurity(
   };
 }
 
+
+
+/* ── ICH M7(R2) vocabulary, as the register records it ─────────────────────── */
+
+function recordedAmes(record: Record<string, any>): AmesMutagenicity | null {
+  const v = String(record.amesResult ?? record.ames_result ?? '').trim().toLowerCase().replace(/[\s-]+/g, '_');
+  if (v === 'positive' || v === 'ames_positive') return 'positive';
+  if (v === 'negative' || v === 'ames_negative') return 'negative';
+  if (v === 'not_tested' || v === 'untested' || v === 'no_data') return 'not_tested';
+  return null;
+}
+
+function recordedStructuralAlert(record: Record<string, any>): StructuralAlertPresence | null {
+  const v = String(record.structuralAlert ?? record.structural_alert ?? '').trim().toLowerCase();
+  if (v === 'yes' || v === 'present' || v === 'true') return 'yes';
+  if (v === 'no' || v === 'absent' || v === 'none' || v === 'false') return 'no';
+  if (v === 'unknown' || v === 'not_assessed' || v === 'not-assessed') return 'unknown';
+  return null;
+}
+
+/* Carcinogenicity data is the one M7 input for which "nothing recorded" and
+   "not tested" mean the same thing — there is no study — so an absent field is
+   read as not_tested rather than refused. Ames and structural-alert status are
+   NOT read that way: an unrecorded Ames result is not a negative one. */
+function recordedCarcinogenicity(record: Record<string, any>): CarcinogenicityData {
+  const v = String(record.carcinogenicityData ?? record.carcinogenicity_data ?? '').trim().toLowerCase();
+  if (v === 'positive') return 'positive';
+  if (v === 'negative') return 'negative';
+  return 'not_tested';
+}
+
+function recordedTreatmentDuration(record: Record<string, any>): TreatmentDuration | null {
+  const v = String(record.treatmentDuration ?? record.treatment_duration ?? '')
+    .trim().toLowerCase().replace(/[\s-]+/g, '_').replace(/^≤/, 'up_to_');
+  const DURATIONS: Record<string, TreatmentDuration> = {
+    single_dose: 'single_dose',
+    up_to_1_month: 'up_to_1_month',
+    '1_to_12_months': '1_to_12_months',
+    '1_to_10_years': '1_to_10_years',
+    lifetime: 'lifetime',
+    more_than_10_years: 'lifetime',
+  };
+  return DURATIONS[v] ?? null;
+}
+
+function recordedCohortOfConcern(record: Record<string, any>): CohortOfConcern | null {
+  const v = String(record.cohortOfConcern ?? record.cohort_of_concern ?? '').trim().toLowerCase().replace(/[\s-]+/g, '_');
+  if (!v) return null;
+  if (v === 'not_coc' || v === 'none' || v === 'no' || v === 'not_in_cohort') return 'not_coc';
+  if (v.includes('aflatoxin')) return 'CoC_aflatoxin_like';
+  if (v.includes('nitros')) return 'CoC_nitrosamine';
+  if (v.includes('azoxy')) return 'CoC_alkyl_azoxy';
+  return null;
+}
+
+const M7_CITATION = 'ICH M7(R2) — Assessment and control of DNA reactive (mutagenic) impurities in pharmaceuticals to limit potential carcinogenic risk';
+
+/** ICH M7(R2) over a recorded mutagenic-impurity row. */
+function assessAsMutagenicImpurity(
+  record: Record<string, any>,
+  impurityName: string,
+  matrix: 'drug_substance' | 'drug_product',
+): ImpurityAssessmentResult {
+  const refuse = (code: ImpurityAssessmentRefusal['code'], message: string): ImpurityAssessmentRefusal =>
+    ({ ok: false, impurityName, code, message, routeTo: 'ICH M7(R2)' });
+
+  const ames = recordedAmes(record);
+  if (!ames) {
+    return refuse('AMES_NOT_RECORDED', `No bacterial mutagenicity (Ames) result is recorded for ${impurityName}. ICH M7(R2) classifies an impurity from its Ames result and structural-alert status; record the result as positive, negative or not tested.`);
+  }
+  const alerts = recordedStructuralAlert(record);
+  if (!alerts) {
+    return refuse('STRUCTURAL_ALERT_NOT_RECORDED', `No structural-alert assessment is recorded for ${impurityName}. ICH M7(R2) requires two complementary (Q)SAR assessments; record whether an alert is present, absent, or unknown.`);
+  }
+
+  const classification = classifyMutagenicImpurity({
+    amesMutagenicity: ames,
+    structuralAlertsPresent: alerts,
+    carcinogenicityData: recordedCarcinogenicity(record),
+    impurityRelationship: matrix === 'drug_product' ? 'degradation' : 'process_related',
+    cohortOfConcernStructure: recordedCohortOfConcern(record) !== null && recordedCohortOfConcern(record) !== 'not_coc',
+  });
+  const unit = String(record.levelUnit ?? record.level_unit ?? '').trim();
+  const observedAsRecorded = [String(record.observedLevel ?? record.observed_level ?? '').trim(), unit]
+    .filter(Boolean).join(' ');
+  const common = {
+    ok: true as const,
+    basis: 'ICH M7(R2)' as const,
+    impurityName,
+    impurityClass: classification.impurityClass,
+    className: classification.className,
+    controlApproach: classification.controlApproach,
+    cohortOfConcern: classification.cohortOfConcernAssessment.isCohortOfConcern,
+    observedAsRecorded,
+    citation: M7_CITATION,
+  };
+
+  /* Class 4 (alert, Ames-negative) and Class 5 (no alert) carry no TTC limit:
+     M7 §5 controls them as non-mutagenic impurities under Q3A/Q3B. The fields
+     the limit would need are therefore not owed for them. */
+  if (classification.impurityClass >= 4) {
+    return {
+      ...common,
+      treatmentDuration: recordedTreatmentDuration(record),
+      route: recordedRoute(record),
+      acceptableIntakeUgPerDay: null,
+      concentrationLimitPpm: null,
+      observedPpm: levelAsPpm(record),
+      observedMicrogramsPerDay: levelAsMicrogramsPerDay(record),
+      withinLimit: null,
+      disposition: 'non-mutagenic-control',
+      outstanding: [
+        `${classification.className} — controlled as a non-mutagenic impurity; the ICH Q3A/Q3B threshold assessment applies and no TTC-based limit is set.`,
+      ],
+    };
+  }
+
+  const duration = recordedTreatmentDuration(record);
+  if (!duration) {
+    return refuse('TREATMENT_DURATION_NOT_RECORDED', `No treatment duration is recorded for ${impurityName}. The ICH M7(R2) acceptable intake is staged by duration (single dose, ≤1 month, 1-12 months, 1-10 years, lifetime) and cannot be chosen without it.`);
+  }
+  const cohort = recordedCohortOfConcern(record);
+  if (!cohort) {
+    return refuse('COHORT_OF_CONCERN_NOT_RECORDED', `Whether ${impurityName} is in an ICH M7(R2) cohort of concern (aflatoxin-like, N-nitroso, alkyl-azoxy) is not recorded. The cohort sets a compound-specific limit far below the 1.5 µg/day TTC, so it may not be assumed.`);
+  }
+  const route = recordedRoute(record);
+  if (!route) {
+    return refuse('ROUTE_NOT_RECORDED', `No route of administration is recorded for ${impurityName}; the M7 acceptable intake is stated for the route the product is given by.`);
+  }
+
+  const rawLevel = String(record.observedLevel ?? record.observed_level ?? '').trim();
+  if (!rawLevel) return refuse('LEVEL_MISSING', `No observed level is recorded for ${impurityName}.`);
+  if (!unit) return refuse('LEVEL_UNIT_UNRECORDED', `The level recorded for ${impurityName} has no unit and cannot be compared to an acceptable intake.`);
+  const intake = levelAsMicrogramsPerDay(record);
+  const ppm = levelAsPpm(record);
+  if (intake === null && ppm === null) {
+    return refuse('LEVEL_UNIT_NOT_CONVERTIBLE', `The level recorded for ${impurityName} in "${unit}" is neither a daily intake (µg/day, mg/day) nor a concentration (ppm, %) and cannot be compared to the M7 limit.`);
+  }
+
+  /* A concentration is only comparable through the daily dose; an intake is
+     compared to the acceptable intake directly, and the dose — when recorded —
+     is used only to STATE the equivalent concentration limit. */
+  const dose = parseDoseMg(record.maximumDailyDose ?? record.maximum_daily_dose);
+  if (intake === null && !dose.ok) return refuse(dose.code, `${dose.message} A level recorded as a concentration (${unit}) can only be compared to the M7 acceptable intake through the maximum daily dose.`);
+
+  const ttc = calculateTTC({
+    treatmentDuration: duration,
+    route,
+    compoundClass: cohort,
+    maxDailyDoseG: dose.ok ? dose.mg / 1000 : undefined,
+    nitrosamineIdentity: cohort === 'CoC_nitrosamine' ? impurityName : undefined,
+  });
+
+  if (classification.impurityClass === 1) {
+    /* A known mutagenic carcinogen is limited from its own potency (TD50), not
+       from the TTC; no figure is stated until that limit is recorded. */
+    return {
+      ...common,
+      treatmentDuration: duration,
+      route,
+      acceptableIntakeUgPerDay: null,
+      concentrationLimitPpm: null,
+      observedPpm: ppm,
+      observedMicrogramsPerDay: intake,
+      withinLimit: null,
+      disposition: 'compound-specific-limit-required',
+      outstanding: [
+        `${classification.className} — the acceptable intake is compound-specific (derived from carcinogenicity potency data, TD50/50,000 for lifetime exposure), not the ${ttc.acceptableIntakeUgPerDay} µg/day TTC. Record the compound-specific limit and its derivation.`,
+      ],
+    };
+  }
+
+  const withinLimit =
+    intake !== null
+      ? intake <= ttc.acceptableIntakeUgPerDay
+      : ttc.concentrationLimitPpm !== null && (ppm as number) <= ttc.concentrationLimitPpm;
+  const outstanding: string[] = [];
+  if (!withinLimit) {
+    outstanding.push(
+      intake !== null
+        ? `${impurityName} is recorded at ${intake} µg/day, above the ICH M7(R2) acceptable intake of ${ttc.acceptableIntakeUgPerDay} µg/day for ${ttc.durationCategory}. Either the level is reduced, the control strategy purges it, or a compound-specific limit is justified.`
+        : `${impurityName} is recorded at ${ppm} ppm, above the ${ttc.concentrationLimitPpm} ppm limit that the ICH M7(R2) acceptable intake of ${ttc.acceptableIntakeUgPerDay} µg/day gives at the recorded daily dose. Either the level is reduced, the control strategy purges it, or a compound-specific limit is justified.`,
+    );
+  }
+  if (classification.impurityClass === 3) {
+    outstanding.push(
+      `${classification.className} — an Ames test would reclassify it: negative to Class 5 (no TTC limit), positive to Class 2.`,
+    );
+  }
+
+  return {
+    ...common,
+    treatmentDuration: duration,
+    route,
+    acceptableIntakeUgPerDay: ttc.acceptableIntakeUgPerDay,
+    concentrationLimitPpm: ttc.concentrationLimitPpm,
+    observedPpm: ppm,
+    observedMicrogramsPerDay: intake,
+    withinLimit,
+    disposition: withinLimit ? 'within-limit' : 'above-limit',
+    outstanding,
+  };
+}
+
+/** Is this an ICH M7(R2) mutagenic-impurity assessment? */
+export function isMutagenicAssessment(
+  result: ImpurityAssessmentResult,
+): result is MutagenicImpurityAssessed {
+  return result.ok === true && result.basis === 'ICH M7(R2)';
+}
 
 /**
  * Is this a Q3A/Q3B threshold assessment — the kind that carries reporting,

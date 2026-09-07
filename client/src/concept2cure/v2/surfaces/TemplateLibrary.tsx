@@ -577,7 +577,7 @@ export function TemplateLibrary({ onAsk }: SurfaceViewProps) {
       {live.loading && rows.length === 0 ? (
         <div className="pj-card">
           <div className="pj-card-b" style={{ padding: 8 }}>
-            <div className="scaf-note" style={{ padding: '18px 10px' }}>Loading templates…</div>
+            <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>Loading templates…</div>
           </div>
         </div>
       ) : live.error && rows.length === 0 ? (
@@ -706,7 +706,7 @@ export function TemplateLibrary({ onAsk }: SurfaceViewProps) {
                 onChange={(e) => setEdit(e.target.value)}
                 onKeyDown={(e) => { if (e.key === 'Enter') applyEdit(); }}
               />
-              <button className="tl-edit-go" onClick={applyEdit} disabled={!edit.trim()}>
+              <button className="tl-edit-go" aria-label="Apply edit" onClick={applyEdit} disabled={!edit.trim()}>
                 {I.arrowUp || I.right}
               </button>
             </div>

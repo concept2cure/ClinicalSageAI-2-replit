@@ -24,7 +24,7 @@ import { NEW_DOCUMENT_EVENT } from '../newDocumentAction';
 import { I } from '../icons';
 import { C2CForm } from '../C2CForm';
 import type { C2CFormConfig } from '../C2CForm';
-import { apiRequest } from '@/lib/queryClient';
+import { apiRequest, serverMessage, redactInternals, type ApiRequestError } from '@/lib/queryClient';
 import { unboundNotice } from '../governanceNotice';
 import { downloadBlob, safeFileName } from '../download';
 
@@ -34,6 +34,10 @@ export interface AuthoringCreateExportProps {
   /** Currently open document (null when none). */
   docId: string | null;
   docTitle: string | null;
+  /** The document's lifecycle status. Export of a filing artifact is refused
+   *  server-side (409) unless it is FROZEN or APPROVED; the buttons say so
+   *  instead of offering an act that can only fail. */
+  docStatus?: string | null;
   /** Module filter currently active in the tree (used as the create default). */
   module: string;
   /** BP-W0-6: a failure must not arrive wearing the success tick. */
@@ -49,7 +53,8 @@ export interface AuthoringCreateExportProps {
 
 const NONE = '(blank document)';
 
-export function AuthoringCreateExport({ docId, docTitle, module, fireToast, onDocCreated, onSectionCreated, onExported }: AuthoringCreateExportProps) {
+export function AuthoringCreateExport({ docId, docTitle, docStatus, module, fireToast, onDocCreated, onSectionCreated, onExported }: AuthoringCreateExportProps) {
+  const exportable = docStatus == null || docStatus === 'FROZEN' || docStatus === 'APPROVED';
   const [dialog, setDialog] = useState<'doc' | 'section' | null>(null);
 
   /* The dialog is owned here, and the panels that most need it — the empty
@@ -66,7 +71,10 @@ export function AuthoringCreateExport({ docId, docTitle, module, fireToast, onDo
   // 'unavailable' = the server said the shared reference catalog failed to
   // read (its fail-soft still lists the org's own templates). A SHORT list
   // and a FAILED half are different facts; the dialog states which.
-  const [globalCatalog, setGlobalCatalog] = useState<'ok' | 'unavailable'>('ok');
+  // 'failed' = the whole read failed (401, throw). It used to collapse into
+  // the ok/short-list case, so an author started a filing document blank
+  // believing the org had no templates.
+  const [globalCatalog, setGlobalCatalog] = useState<'ok' | 'unavailable' | 'failed'>('ok');
 
   // Template roster for create-from-template; an unavailable list simply means
   // the picker offers only a blank document — never a fabricated template.
@@ -80,8 +88,10 @@ export function AuthoringCreateExport({ docId, docTitle, module, fireToast, onDo
           if ((body as { globalCatalog?: string })?.globalCatalog === 'unavailable') {
             setGlobalCatalog('unavailable');
           }
+        } else {
+          setGlobalCatalog('failed');
         }
-      } catch { /* picker stays blank-only */ }
+      } catch { setGlobalCatalog('failed'); }
     })();
   }, []);
 
@@ -94,7 +104,9 @@ export function AuthoringCreateExport({ docId, docTitle, module, fireToast, onDo
       'Creates a governed document in the authoring store. Choosing a template seeds its sections server-side.' +
       (globalCatalog === 'unavailable'
         ? ' The shared template catalog didn’t load — Start from lists only your organization’s templates right now.'
-        : ''),
+        : globalCatalog === 'failed'
+          ? ' The template list didn’t load — only a blank document can be started right now. This is a failed read, not an empty catalog.'
+          : ''),
     submitLabel: 'Create document',
     fields: [
       { key: 'title', label: 'Document title', type: 'text', required: true, placeholder: 'e.g. 2.6.6 Toxicology Written Summary' },
@@ -129,7 +141,7 @@ export function AuthoringCreateExport({ docId, docTitle, module, fireToast, onDo
       });
       const json = await res.json().catch(() => null);
       if (res.status === 401) { fireToast('Not created — your session isn’t authenticated.', 'error'); return; }
-      if (!res.ok || !json?.document?.id) { fireToast('Couldn’t create the document — ' + ((json as any)?.error ?? `HTTP ${res.status}`) + '. Nothing was persisted.', 'error'); return; }
+      if (!res.ok || !json?.document?.id) { fireToast('Couldn’t create the document — ' + (serverMessage(json) ?? 'the server refused it') + '. Nothing was persisted.', 'error'); return; }
       setDialog(null);
       // The server reports on every create whether the document attached to the
       // project's governed filing. Unbound is legitimate; unbound and unsaid is
@@ -147,7 +159,7 @@ export function AuthoringCreateExport({ docId, docTitle, module, fireToast, onDo
       );
       onDocCreated({ id: String(json.document.id), title: String(json.document.title) });
     } catch (e) {
-      fireToast('Couldn’t create the document — ' + (e instanceof Error ? e.message : String(e)) + '.', 'error');
+      fireToast('Couldn’t create the document — ' + redactInternals(e instanceof Error ? e.message : '', 'the server could not be reached') + '.', 'error');
     }
   };
 
@@ -159,12 +171,12 @@ export function AuthoringCreateExport({ docId, docTitle, module, fireToast, onDo
       });
       const json = await res.json().catch(() => null);
       if (res.status === 401) { fireToast('Not created — your session isn’t authenticated.', 'error'); return; }
-      if (!res.ok || !json?.section?.id) { fireToast('Couldn’t create the section — ' + ((json as any)?.error ?? `HTTP ${res.status}`) + '. Nothing was persisted.', 'error'); return; }
+      if (!res.ok || !json?.section?.id) { fireToast('Couldn’t create the section — ' + (serverMessage(json) ?? 'the server refused it') + '. Nothing was persisted.', 'error'); return; }
       setDialog(null);
       fireToast('Section created · ' + json.section.code + ' (initial revision recorded)');
       onSectionCreated({ id: String(json.section.id), code: String(json.section.code) });
     } catch (e) {
-      fireToast('Couldn’t create the section — ' + (e instanceof Error ? e.message : String(e)) + '.', 'error');
+      fireToast('Couldn’t create the section — ' + redactInternals(e instanceof Error ? e.message : '', 'the server could not be reached') + '.', 'error');
     }
   };
 
@@ -179,17 +191,40 @@ export function AuthoringCreateExport({ docId, docTitle, module, fireToast, onDo
            written on a failed export — the assembler streams or it does not —
            so saying so is accurate and is the thing the author needs to know
            before retrying. */
-        fireToast('Export failed — ' + ((json as any)?.error ?? `HTTP ${res.status}`) + '. No file was produced; the document is unchanged. Try again, or export a single section to narrow it down.', 'error');
+        /* apiRequest returns only a 401 here; every other refusal throws. */
+        fireToast(
+          res.status === 401
+            ? 'Export not run — your session isn’t authenticated. Sign in and retry; no file was produced and the document is unchanged.'
+            : 'Export failed — ' + (serverMessage(json) ?? 'the server refused it') + '. No file was produced; the document is unchanged.',
+          'error',
+        );
         return;
       }
-      downloadBlob(safeFileName(docTitle ?? 'document') + '.' + format, await res.blob());
-      fireToast('Published ' + format.toUpperCase() + ' — assembled from the governed sections and recorded in the export history.');
-      /* Only after the stream succeeded. Announcing a new baseline for an
-         export that failed would tell the Exports rail this document is
-         current when no file was produced. */
+      const delivered = downloadBlob(safeFileName(docTitle ?? 'document') + '.' + format, await res.blob());
+      /* The server assembled the file and recorded the export — that much a
+         2xx proves (the history row is written before the stream). Whether the
+         BROWSER wrote it to disk is downloadBlob's answer, and it used to be
+         discarded: "Published DOCX" over a blocked save, and the Exports rail
+         re-baselined to a file the author never received. */
+      if (delivered) {
+        fireToast('Exported ' + format.toUpperCase() + ' — assembled from the governed sections and recorded in the export history.');
+      } else {
+        fireToast('The ' + format.toUpperCase() + ' was assembled and recorded in the export history, but your browser blocked the download — nothing was saved to your device. Retry the download.', 'error');
+      }
+      // The row is real either way; the rail's baseline follows the record.
       onExported?.(format);
     } catch (e) {
-      fireToast('Export failed — ' + (e instanceof Error ? e.message : String(e)) + '. No file was produced; the document is unchanged. Check your connection and try again.', 'error');
+      /* Every non-401 refusal lands here — including the 409 for a document
+         that is not FROZEN/APPROVED. That is a Part 11 state refusal, not a
+         transport problem, so the retry advice follows the status. */
+      const err = e as Partial<ApiRequestError> & { message?: string };
+      const why = redactInternals(err?.message, 'the server refused it');
+      const transport = typeof err?.status !== 'number';
+      fireToast(
+        'Export failed — ' + why + '. No file was produced; the document is unchanged.' +
+          (transport ? ' Check your connection and try again.' : ''),
+        'error',
+      );
     }
   };
 
@@ -203,13 +238,17 @@ export function AuthoringCreateExport({ docId, docTitle, module, fireToast, onDo
           <button className="btn ghost" style={{ height: 30 }} onClick={() => setDialog('section')}>
             {I.plus} New section
           </button>
-          <button className="btn ghost" style={{ height: 30 }} onClick={() => exportDoc('docx')} title="Publish the assembled document as Word">
+          {/* "Publish" was the wrong verb — nothing is transmitted; this is a
+              local download of the assembled artifact. And the server refuses
+              it (409) unless the document is frozen or approved, which the
+              buttons now say instead of offering an act that can only fail. */}
+          <button className="btn ghost" style={{ height: 30 }} onClick={() => exportDoc('docx')} disabled={!exportable} title={exportable ? 'Export the assembled document as Word' : 'Freeze or approve this document before exporting a filing artifact'}>
             {I.download} Word
           </button>
-          <button className="btn ghost" style={{ height: 30 }} onClick={() => exportDoc('pdf')} title="Publish the assembled document as PDF (rendered server-side)">
+          <button className="btn ghost" style={{ height: 30 }} onClick={() => exportDoc('pdf')} disabled={!exportable} title={exportable ? 'Export the assembled document as PDF (rendered server-side)' : 'Freeze or approve this document before exporting a filing artifact'}>
             {I.download} PDF
           </button>
-          <button className="btn ghost" style={{ height: 30 }} onClick={() => exportDoc('xml')} title="Publish the assembled document as XML">
+          <button className="btn ghost" style={{ height: 30 }} onClick={() => exportDoc('xml')} disabled={!exportable} title={exportable ? 'Export the assembled document as XML' : 'Freeze or approve this document before exporting a filing artifact'}>
             {I.download} XML
           </button>
         </>

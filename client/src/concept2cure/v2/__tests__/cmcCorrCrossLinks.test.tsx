@@ -57,13 +57,17 @@ const question = (sectionRef: string) => ({
   assignedTo: null,
 });
 
-/** A live board with one submission, the given IR count, and the given questions. */
-const board = (irOverdue: number, correspondence: unknown[] = []) => ({
+/**
+ * A live board with one submission, the given IR count, and the given questions.
+ * `irOverdue: null` is the server saying the question store could not be read —
+ * not that nothing is overdue.
+ */
+const board = (irOverdue: number | null, correspondence: unknown[] = []) => ({
   portfolio: [{ sub: 'BLA 761234', product: 'Compound A', region: 'FDA', type: 'BLA', rpi: 82, ir: irOverdue, source: 'rpi' }],
   sections: null,
   kpis: { submissions: 1, rpiAverage: 82, irOverdue, sectionsApproved: null, sectionsTotal: null, readyPercent: null },
   correspondence,
-  meta: { projectId: null, portfolioProvisioned: true, sectionsProvisioned: null, generatedAt: '2026-08-24T00:00:00.000Z' },
+  meta: { projectId: null, portfolioProvisioned: true, sectionsProvisioned: null, correspondenceUnreadable: irOverdue == null, generatedAt: '2026-08-24T00:00:00.000Z' },
 });
 
 /** The board answers as given; every other register read is honestly empty. */
@@ -112,6 +116,30 @@ describe('CmOverview — the IR-overdue KPI deep-links to the correspondence', (
     // …but not as a control, and not merely a button with no handler.
     expect(screen.queryByRole('button', { name: /IR overdue/ })).toBeNull();
     expect(label.closest('button')).toBeNull();
+  });
+
+  /* The third state. `provisioned:false` used to mean both "no such store" and
+     "that read failed", and on either the KPI fell back to the legacy
+     per-submission sum — so a failed read rendered as a confident "0 overdue".
+     A count the server could not establish is shown as unknown, and the lead
+     says so in words. */
+  it('an unestablished count is shown as unknown, never as zero', async () => {
+    wire(board(null));
+    render(<CmOverview ask={vi.fn()} />);
+    await screen.findAllByText('BLA 761234');
+
+    // The label carries the qualification, so the figure is never read alone.
+    const label = screen.getByText(/^IR overdue/, { selector: '.reg-kpi-l' });
+    expect(label.textContent).toMatch(/not established/i);
+    const tile = label.closest('.reg-kpi') as HTMLElement;
+    expect(within(tile).getByText('—')).toBeTruthy();
+    expect(within(tile).queryByText('0')).toBeNull();
+    expect(screen.queryByRole('button', { name: /IR overdue/ })).toBeNull();
+
+    // And the narrative says it too — the lead does not assert clearance it
+    // has no basis for. (Both the tile and the sentence carry the words.)
+    expect(screen.getAllByText(/not established/i).length).toBeGreaterThan(1);
+    expect(screen.queryByText(/information requests overdue/)).toBeNull();
   });
 });
 

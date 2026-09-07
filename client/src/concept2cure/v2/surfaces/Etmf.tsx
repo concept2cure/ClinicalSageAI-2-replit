@@ -38,6 +38,11 @@ import { AnswerLead } from '../AnswerLead';
 import { assessmentStateFor, mayReassure } from '../assessmentState';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { usePublishSurfaceContext } from '../surfaceContext';
+import { readShellProject } from '../shellProject';
+import {
+  VAULT_INGEST_DOCUMENT_TYPES,
+  type VaultIngestDocumentType,
+} from '@shared/constants/domain/vault-taxonomy';
 // tmfArtifactName maps a reference-model code → its human name. It reads the
 // DIA TMF Reference Model catalog (ICH E6(R2) §8) — canonical reference config,
 // not fixture DATA — so a `missing` code the backend returns can be labelled.
@@ -267,6 +272,19 @@ export function Etmf({ onAsk, onNav }: SurfaceViewProps) {
   const [pendingCode, setPendingCode] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  /* A TMF artifact code is what the USER declared by choosing which row to file
+     against, so mapping it to an ingest type is not guessing from a filename —
+     which is the thing useVaultUpload.ts deliberately refuses to do. Only codes
+     that ARE an accepted type are mapped; everything else records OTHER rather
+     than asserting a regulatory document type nobody stated. */
+  const tmfCodeToIngestType = (code: string): VaultIngestDocumentType => {
+    const upper = code.trim().toUpperCase();
+    const exact = VAULT_INGEST_DOCUMENT_TYPES.find(t => t === upper);
+    if (exact) return exact;
+    if (upper === 'INVESTIGATORS_BROCHURE') return 'IB';
+    return 'OTHER';
+  };
+
   const beginFiling = (code: string) => {
     if (!tid) return;
     setPendingCode(code);
@@ -277,13 +295,33 @@ export function Etmf({ onAsk, onNav }: SurfaceViewProps) {
     const code = pendingCode;
     setPendingCode(null);
     if (!tid || !code || !file) return;
+
+    /* THE FILE BUTTON COULD NOT SUCCEED.
+       This posted documentType 'tmf_essential' — a value that appears nowhere
+       else in the codebase and that the ingest schema's enum rejects — and no
+       programId, which that schema requires as a uuid. Every attempt was a 400,
+       reported to the user as "the vault refused the upload (HTTP 400)".
+       The program comes from the shell channel that already carries the open
+       regulatory_programs uuid to every project-scoped surface, and the type
+       comes from the one vocabulary the server accepts. */
+    const programId = String(readShellProject()?.id ?? '').trim();
+    if (!programId) {
+      fireToast(
+        'Not filed — no program is open, and a vault document must belong to one. ' +
+          'Open the program from Projects, then file ' + tmfArtifactName(code) + ' again.',
+        'error',
+      );
+      return;
+    }
+
     setBusy(true);
     try {
       const form = new FormData();
       form.append('file', file);
+      form.append('programId', programId);
       form.append('documentCode', code);
       form.append('documentTitle', tmfArtifactName(code));
-      form.append('documentType', 'tmf_essential');
+      form.append('documentType', tmfCodeToIngestType(code));
       const up = await fetch('/api/vault/ingest', {
         method: 'POST',
         body: form,
@@ -373,7 +411,6 @@ export function Etmf({ onAsk, onNav }: SurfaceViewProps) {
             placeholder="Trial identifier"
             aria-label="Trial identifier"
             spellCheck={false}
-            style={{ padding: '7px 10px', borderRadius: 8, border: '1px solid var(--c2c-border, rgba(120,130,150,0.35))', background: 'var(--c2c-surface-2, rgba(140,150,170,0.08))', color: 'inherit', font: 'inherit', minWidth: 200 }}
           />
           <div className="etmf-scope" role="tablist" aria-label="Completeness scope">
             <button role="tab" className={scope === 'essential' ? 'on' : ''} onClick={() => setScope('essential')}>Essential (ICH E6 §8)</button>

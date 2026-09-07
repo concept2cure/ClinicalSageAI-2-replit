@@ -488,6 +488,23 @@ export const C2C_MIGRATION_FILES = [
   'migrations/20260730_estar_registration.sql',
   'migrations/20260730_estar_submission.sql',
   'migrations/20260730_estar_submission_project_link.sql',
+  // WO-8 Phase 3: every administrative field of the official eSTAR has a
+  // governed home. Device-level facts (common name, classification name,
+  // regulation number, associated product codes, IFU citation) are columns on
+  // regulatory_programs — created at index 1 of this set by
+  // 20260524_program_workbench_schema. Org-level correspondent / Declaration
+  // of Conformity facts are columns on estar_registrations, so that ALTER
+  // MUST stay after 20260730_estar_registration above. Both are ADD COLUMN IF
+  // NOT EXISTS on existing tenant tables — no new table, so no RLS sweep entry.
+  'migrations/20260903_regulatory_programs_estar_device_fields.sql',
+  'migrations/20260903_estar_registration_correspondent.sql',
+  // The Declaration of Conformity's company NAME, beside the address the file
+  // above added. The DoC is signed by one legal entity, so its name and
+  // address must come from one row; the name used to be read from the
+  // applicant's workspace, which holds no address. Same table, so this MUST
+  // stay after 20260730_estar_registration; ADD COLUMN IF NOT EXISTS on an
+  // existing tenant table — no new table, so no RLS sweep entry.
+  'migrations/20260904_estar_registration_declaration_company_name.sql',
 
   // Work items: source_ref for string/UUID-keyed sources (correspondence
   // issues), so those rows stop sharing the (source_type, source_id=0) key.
@@ -1357,6 +1374,28 @@ export const C2C_MIGRATION_FILES = [
   // the unrecorded window closes on its own.
   'migrations/20260814i_draft_candidate_generator.sql',
 
+  // ── Draft candidates carry the model's paraphrase assertions (Phase 4) ──────
+  // Adds `assertions` JSONB alongside the parked chunks + generator: the model's
+  // self-reported [{quote, sourceId}] claims about which source it DERIVED a
+  // passage from. The accept path records each still-present, still-resolvable
+  // claim as a usage='paraphrased' span — an assertion, never a verified quote,
+  // and only for a source that was actually retrieved. Nullable, no backfill; the
+  // 2-hour TTL closes the unrecorded window on its own. ADD COLUMN IF NOT EXISTS,
+  // so re-running is a no-op.
+  'migrations/20260906c_draft_candidate_assertions.sql',
+
+  // ── Span lineage: accepted machine drafts are the machine's, not the author's ─
+  // Every governed write recorded each clause it could not tie to a Data Room
+  // source as the human actor's `author_assertion` — including the clauses AnA
+  // drafted and the human merely accepted — so the Data Origins panel and PDF
+  // read "Asserted by the author" over model prose. Adds the
+  // `accepted_machine_draft` kind (machine_author_id + the accepting human) by
+  // widening the two CHECKs with the DROP CONSTRAINT IF EXISTS / ADD CONSTRAINT
+  // idiom (RULE 1: a CHECK holds no data; re-running converges) and ADD COLUMN
+  // IF NOT EXISTS. Must run after db/migrations/20260803 (the table), which it
+  // does; guarded on the table existing.
+  'migrations/20260907_span_lineage_accepted_machine_draft.sql',
+
   // ── Apps catalog additions, GA ledger L40 (added 2026-08-14) ─────────────
   // Eight built, routed, API-backed surfaces that appeared in no catalog, so a
   // user could reach them only by knowing the URL. INSERT … ON CONFLICT DO
@@ -1571,6 +1610,29 @@ export const C2C_MIGRATION_FILES = [
   // visibly 'unfiled'. Additive, guarded on to_regclass('vault.documents');
   // must run AFTER the canonical-shape reconciliation above.
   'migrations/20260823_vault_document_placement.sql',
+
+  // ── Document catalog: comprehension + read-coverage on vault.documents ────
+  // Two tables. vault.document_catalog records per document HOW its text was
+  // extracted (or the recorded reason extraction failed — a failure is a row
+  // that says so, never an absent row) and, once AnA has read the whole file,
+  // WHAT it is: kind, purpose, summary, key_data, embedding.
+  // vault.document_read_receipts records every character span AnA was served,
+  // keyed to content_hash; the catalog write refuses below full coverage, so a
+  // sampled page can never be recorded as "reviewed". Additive, guarded on
+  // to_regclass('vault.documents'); must run AFTER the canonical-shape
+  // reconciliation and placement entries above (same table, same discipline).
+  'migrations/20260905_document_catalog.sql',
+
+  // ── Vault passage retrieval: the chunk store the RAG reader queries ───────
+  // advancedRAGPipeline's 'vault' corpus reads vault.document_chunks, which
+  // existed only in the drizzle install-fresh baseline — on every deploy-
+  // migrated database the platform's default retrieval corpus had no table at
+  // all. Creates it durably with the reader's exact shape + indexes, carries
+  // its own RLS policy set (070_gcc only runs on fresh installs), and adds the
+  // chunk_status/chunk_count/chunk_error ledger to vault.document_catalog so
+  // a document whose passages could not be indexed says so. Must follow the
+  // catalog entry above (it ALTERs that table); additive and guarded like it.
+  'migrations/20260905b_vault_document_chunks.sql',
 
   // ── Time-limited module grants ─────────────────────────────────────────────
   // Adds a nullable `expires_at` (+ who set it, when) to module_subscriptions,
@@ -1799,6 +1861,16 @@ export const C2C_MIGRATION_FILES = [
   // creates the table.
   'db/migrations/20260903_cmc_impurity_route_of_administration.sql',
 
+  // ── Durable CMC interview sessions ───────────────────────────────────────
+  // The guided CMC interview's FlowState, persisted per step and committed to
+  // the registers on completion (CMC capture evaluation item 5). Leaf table:
+  // FKs only to organizations and users. public + integer organization_id, so
+  // the isolation sweep at the end of this list policies it.
+  'db/migrations/20260906_cmc_interview_sessions.sql',
+  'db/migrations/20260906_cmc_impurity_m7_inputs.sql',
+  'db/migrations/20260906_cmc_formulation_development.sql',
+  'db/migrations/20260907_qc_testing_batch_attribution.sql',
+
   // ── Drop the audit-shaped tables that survived a from-scratch liveness
   //    re-check (ledger L13; docs/AUDIT_STORE_INVENTORY_2026-08.md §5.1) ─────
   // MUST stay near the end, and specifically AFTER every entry above that
@@ -1813,6 +1885,55 @@ export const C2C_MIGRATION_FILES = [
   // obligation regardless of whether anything still writes it. Re-running after
   // the records are dispositioned picks it up with no edit.
   'db/migrations/20260901_drop_dead_audit_tables.sql',
+
+  // vault.documents gains a tenant key, backfilled from the owning program, with
+  // unattributable rows left NULL and indexed rather than guessed. Ordered here
+  // because it must run after every file that shapes vault.documents (044c
+  // creates it; 20260821 reconciles its columns; 20260823 adds the placement
+  // columns) and after regulatory_programs exists to backfill from.
+  //
+  // Purely additive: no policy, no FORCE, no NOT NULL. Neither isolation sweep
+  // will pick it up — the integer sweep is public-only and the non-public one is
+  // an explicit uuid-keyed list — which is stated in the migration's own header
+  // so nobody reads the column as isolation it does not provide.
+  'migrations/20260905_vault_documents_organization_id.sql',
+
+  // Full-text index over vault.documents, plus the one named definition of "the
+  // searchable text of a vault document" that the search route must match
+  // character-for-character to use it. Ordered after the organization_id file
+  // only for readability — it depends on nothing that file adds.
+  'migrations/20260906_vault_documents_fulltext.sql',
+  // c2c_artifact_section_map: de-duplicate (artifact, section) rows and add the
+  // unique index shared/schema.ts declares. Was in no applier, so the schema's
+  // "the database no longer permits" a duplicate mapping was not true anywhere.
+  'migrations/20260906_artifact_section_map_unique.sql',
+
+  // Legal holds. Lands while the retention sweep is still inert (nothing writes
+  // retention_until), which is the point: the guard has to exist before the
+  // clock starts, not after the first record is destroyed.
+  'migrations/20260906b_vault_legal_holds.sql',
+
+  // The three IVDR append-only history tables carry no tenant column of their
+  // own — their tenant is their parent's, reached by foreign key — so BOTH
+  // sweeps below are blind to them: the integer sweep matches on
+  // organization_id/org_id/tenant_id, and the non-public one is an explicit
+  // uuid-keyed list. They sat with relrowsecurity = false and zero policies.
+  //
+  // Measured on the dev database as the app role `c2c` with rls_enforce='on'
+  // and current_tenant_id='9002': the policied PARENT returned 1 of 2 rows and
+  // the history table returned 2 of 2, the second reading "org 9001 secret LoD".
+  // One IVD manufacturer could read another's limit-of-detection history.
+  //
+  // It installs a parent-scoped policy, which the sweep's own header names as a
+  // shape it will not clobber (C-30's doc-scoped policies key on a parent's
+  // tenant the same way). It therefore runs BEFORE the sweeps, so their
+  // pg_policies guard sees it and leaves it alone.
+  'migrations/20260906_ivdr_history_tenant_isolation.sql',
+
+  // ── regulatory_programs.application_number (WO-9 Click 1) ──────────────────
+  // The agency-assigned IND / NDA / BLA / MAA number, distinct from the sponsor's
+  // own program code. Additive, IF NOT EXISTS, nullable — never fabricated.
+  'migrations/20260907_regulatory_programs_application_number.sql',
 
   UUID_TENANT_ISOLATION_NONPUBLIC,
 

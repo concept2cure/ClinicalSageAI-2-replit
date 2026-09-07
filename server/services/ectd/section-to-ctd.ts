@@ -57,7 +57,12 @@ export function normalizeCtdCode(value: string | null | undefined): string | nul
   const stripped = String(value).trim().replace(/^m/i, '');
   const m = CTD_CODE.exec(stripped);
   if (!m) return null;
-  return `${m[1]}${m[2]}`;
+  // Canonical ICH spelling: alpha segments are uppercase (3.2.S.1, 3.2.P.1,
+  // 2.3.S). ctd_section is free text on the write paths, and '3.2.s.1' and
+  // '3.2.S.1' used to reach the packager as two distinct codes — one heading,
+  // two leaf folders (m3/3-2-s-1 and m3/3-2-S-1). This is the one
+  // normalisation point on the transmit path, so it canonicalises.
+  return `${m[1]}${m[2].toUpperCase()}`;
 }
 
 /**
@@ -206,9 +211,10 @@ export function resolveArtifactPlacement(
     const norm = normalizeCtdCode(cand.raw);
     if (!norm) continue;
     if (!isPlaceableCtdCode(norm, region)) {
-      // Remember the first rejected code so the finding names it; keep looking
-      // for a placeable one from a lower-precedence source.
-      unplaceableCode = unplaceableCode ?? norm;
+      // Remember the first rejected code AS DECLARED (not canonicalised) so the
+      // finding names the value the author will recognise; keep looking for a
+      // placeable one from a lower-precedence source.
+      unplaceableCode = unplaceableCode ?? String(cand.raw).trim();
       continue;
     }
     // A rejected higher-precedence code is still surfaced on a successful

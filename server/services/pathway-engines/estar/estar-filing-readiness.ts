@@ -76,6 +76,13 @@ interface NormalizedContent {
   ready: boolean;
   missingSections: string[];
   completeness: number;
+  /**
+   * Sections whose applicability nobody has established yet — reported inside
+   * `missingSections`, and counted here so the sentence can say which of the
+   * two problems it is. A section that is missing is a document to write; a
+   * section that is undetermined is a question to answer.
+   */
+  undeterminedCount: number;
 }
 
 /** Normalize any mapper's section list into a uniform readiness shape. */
@@ -83,11 +90,20 @@ function normalize(
   sections: Array<{ required: boolean; present: boolean }>,
   missingRequired: string[],
   ready: boolean,
+  undeterminedCount = 0,
 ): NormalizedContent {
   const required = sections.filter((s) => s.required);
   const presentRequired = required.filter((s) => s.present).length;
-  const completeness = required.length === 0 ? 0 : Math.round((presentRequired / required.length) * 100);
-  return { ready, missingSections: missingRequired, completeness };
+  // Undetermined sections are REPORTED in missingSections but were excluded
+  // from this denominator, so a submission with every known-required section
+  // present and three unanswered applicability questions rendered
+  // "Content incomplete (100%): missing required sections sterilization,
+  // software, cybersecurity." A number that contradicts the list beside it
+  // tells the reader nothing. They are counted here as not-present, which is
+  // what they are: nobody has established that the section is not owed.
+  const total = required.length + undeterminedCount;
+  const completeness = total === 0 ? 0 : Math.round((presentRequired / total) * 100);
+  return { ready, missingSections: missingRequired, completeness, undeterminedCount };
 }
 
 /** Dispatch to the correct readiness mapper for a catalog key. */
@@ -109,6 +125,7 @@ function assessContent(
         r.sections,
         [...r.summary.missingRequired, ...r.summary.undetermined],
         r.summary.ready,
+        r.summary.undetermined.length,
       );
     }
     case 'pma': {
@@ -117,7 +134,11 @@ function assessContent(
       return normalize(r.sections, r.summary.missingRequired, r.summary.ready);
     }
     case 'q_sub': {
-      const qSubType = qSubTypeOverride ?? QSUB_KEY_TO_TYPE[catalogKey] ?? 'pre_submission';
+      // Every Q-Sub catalog key maps to a sub-type; a key that does not is a
+      // registry bug, and scoring it against the Pre-Submission set would hide
+      // that behind a plausible verdict.
+      const qSubType = qSubTypeOverride ?? QSUB_KEY_TO_TYPE[catalogKey];
+      if (!qSubType) throw new Error(`Q-Sub catalog key "${catalogKey}" has no sub-type mapping.`);
       const r = mapToPreStar({ leaves, submissionType: 'q_sub', qSubType });
       return normalize(r.sections, r.summary.missingRequired, r.summary.ready);
     }
@@ -231,9 +252,16 @@ export function assessEstarFilingReadiness(
     );
   }
   if (!content.ready) {
-    blockers.push(
-      `Content incomplete (${content.completeness}%): missing required sections ${content.missingSections.join(', ') || '(none reported)'}.`,
-    );
+    // Naming every entry a "missing required section" misstates the
+    // undetermined ones: those sections are not absent documents, they are
+    // unanswered applicability questions, and the reader acts on them
+    // differently.
+    const detail =
+      content.undeterminedCount > 0
+        ? `${content.missingSections.join(', ') || '(none reported)'} ` +
+          `(${content.undeterminedCount} of these await an applicability answer, not a document)`
+        : content.missingSections.join(', ') || '(none reported)';
+    blockers.push(`Content incomplete (${content.completeness}%): missing required sections ${detail}.`);
   }
   if (!officialTemplateProducible) {
     const what = !templateAvailable && !fieldMapPopulated

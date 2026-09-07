@@ -49,6 +49,7 @@ import { detectDocumentType, buildDocumentGenerationContext } from './document-r
 import { getFeedbackSummary } from '../intelligence/learning-loop-service.js';
 import type { CanonicalGovernedState } from '../../../shared/types/governed-document-fabric.js';
 import { createScopedLogger } from '../../utils/logger.js';
+import { buildInvokedAppsBlock, invokedApps } from './invoked-apps-block.js';
 import {
   detectSlashCommand,
   detectAppMention,
@@ -191,19 +192,29 @@ async function readProjectMemory(
   limit = 5,
   orgId?: number,
 ): Promise<string | null> {
+  /* No organization, no memory.
+     This read carried `($2::int IS NULL OR organization_id = $2)` — a tenant
+     guard the caller could switch off, described as preserving "prior behavior
+     exactly" for "legacy paths without org context". What it preserved was a
+     read of project_memory_entries across every tenant, and what this function
+     returns goes into a MODEL'S PROMPT: another sponsor's notes and decisions
+     would have been summarised back to the user as their own context.
+     `enrichWithClientJourney` and `enrichWithAgentActivity` in this same file
+     already return '' without an org; these memory reads now agree with them.
+     Contributing nothing is a smaller loss than contributing someone else's. */
+  if (!Number.isFinite(orgId) || (orgId as number) <= 0) return '';
+
   try {
     const catPlaceholders = categories.map((_, i) => `$${i + 3}`).join(', ');
     const limitParam = `$${categories.length + 3}`;
-    // Tenant guard: when the caller has org context we enforce it; a NULL $2
-    // (legacy paths without org context) preserves prior behavior exactly.
     const result = await pool.query(
       `SELECT content, title, confidence, importance, category
        FROM project_memory_entries
-       WHERE project_id = $1 AND ($2::int IS NULL OR organization_id = $2)
+       WHERE project_id = $1 AND organization_id = $2
          AND category IN (${catPlaceholders})
        ORDER BY importance DESC, created_at DESC
        LIMIT ${limitParam}`,
-      [projectId, orgId ?? null, ...categories, limit]
+      [projectId, orgId, ...categories, limit]
     );
 
     if (result.rows.length === 0) return '';
@@ -289,16 +300,19 @@ async function enrichWithPrecedents(projectId: string | number, orgId?: number):
     predicate_device: 'Predicate Device Comparators',
   };
 
+  // Same rule as readProjectMemory: no organization, no memory.
+  if (!Number.isFinite(orgId) || (orgId as number) <= 0) return '';
+
   try {
     const catPlaceholders = categories.map((_, i) => `$${i + 3}`).join(', ');
     const result = await pool.query(
       `SELECT content, title, confidence, importance, category
        FROM project_memory_entries
-       WHERE project_id = $1 AND ($2::int IS NULL OR organization_id = $2)
+       WHERE project_id = $1 AND organization_id = $2
          AND category IN (${catPlaceholders})
        ORDER BY importance DESC, created_at DESC
        LIMIT $${categories.length + 3}`,
-      [projectId, orgId ?? null, ...categories, 12]
+      [projectId, orgId, ...categories, 12]
     );
 
     if (result.rows.length === 0) return '';
@@ -471,16 +485,19 @@ async function enrichWithRecommendations(projectId: string | number, orgId?: num
 }
 
 async function enrichWithClaims(projectId: string | number, orgId?: number): Promise<string> {
+  // Same rule as readProjectMemory: no organization, no memory.
+  if (!Number.isFinite(orgId) || (orgId as number) <= 0) return '';
+
   // Try to build evidence chains from stored memory
   try {
     const result = await pool.query(
       `SELECT content, title, confidence, category
        FROM project_memory_entries
-       WHERE project_id = $1 AND ($2::int IS NULL OR organization_id = $2)
+       WHERE project_id = $1 AND organization_id = $2
          AND category IN ('evidence_assessment', 'claim_evidence_map', 'evidence_gap')
        ORDER BY importance DESC, created_at DESC
        LIMIT $3`,
-      [projectId, orgId ?? null, 8]
+      [projectId, orgId, 8]
     );
 
     if (result.rows.length > 0) {
@@ -591,15 +608,18 @@ async function enrichWithDeficiencies(submissionType?: string): Promise<string> 
 }
 
 async function enrichWithKnowledgeSearch(query: string, projectId: string | number, orgId?: number): Promise<string> {
+  // Same rule as readProjectMemory: no organization, no memory.
+  if (!Number.isFinite(orgId) || (orgId as number) <= 0) return '';
+
   try {
     // Search project memory entries semantically
     const result = await pool.query(
       `SELECT title, content, category, confidence, importance
        FROM project_memory_entries
-       WHERE project_id = $1 AND ($2::int IS NULL OR organization_id = $2)
+       WHERE project_id = $1 AND organization_id = $2
        ORDER BY importance DESC, created_at DESC
        LIMIT $3`,
-      [projectId, orgId ?? null, 10]
+      [projectId, orgId, 10]
     );
 
     if (result.rows.length === 0) return '';
@@ -1085,16 +1105,29 @@ export async function enrichContextForChat(params: {
       if (lensBlock) { projectlessBlocks.push(lensBlock); projectlessSources.push('role-lens'); }
     }
 
+    /* `@app` needs no project: the front-door composer offers the menu with no
+       program open, and a mention there must still name the app to the model
+       and strip its token from the request. Data enrichment for the app (which
+       does need a project) is the branch below; the block and the rewrite are
+       the same ones. */
+    const mentionNoProj = detectAppMention(message);
+    if (mentionNoProj) {
+      projectlessBlocks.push(buildInvokedAppsBlock(message));
+      for (const app of invokedApps(message)) projectlessSources.push(`app:${app.id}`);
+    }
+
     const wisdomOrChallengeFamily = [...wisdomFamily, ...challengeFamily, 'decide', 'tradeoff', 'framework', 'meeting', 'agency', 'tactics', 'position', 'landscape', 'compete', 'align', 'capabilities', 'whatcanyoudo'];
     return {
       block: projectlessBlocks.join('\n'),
       sources: projectlessSources,
+      rewrittenMessage: mentionNoProj ? (mentionNoProj.remainingText || message) : undefined,
       enrichmentMeta: {
         sourcesAttempted: projectlessSources.length,
         sourcesSucceeded: [...projectlessSources],
         sourcesFailed: [],
-        triggerType: projectlessSources.length > 0 ? (slashNoProj ? 'slash_command' : 'natural_language') : 'none',
-        detectedCommand: slashNoProj && wisdomOrChallengeFamily.includes(slashNoProj.command) ? slashNoProj.command : undefined,
+        triggerType: projectlessSources.length > 0 ? (slashNoProj ? 'slash_command' : mentionNoProj ? 'app_mention' : 'natural_language') : 'none',
+        detectedCommand: slashNoProj && wisdomOrChallengeFamily.includes(slashNoProj.command) ? slashNoProj.command : (mentionNoProj ? `@${mentionNoProj.appId}` : undefined),
+        detectedAppMention: mentionNoProj?.appId,
         hasProjectContext: false,
       },
     };
@@ -1370,14 +1403,20 @@ export async function enrichContextForChat(params: {
       (slash.args ? `${slash.command.slice(1)} ${slash.args}` : message);
   }
 
-  // ── @app mention detection (runs if no slash command) ──
-  const appMention = !slash ? detectAppMention(message) : null;
+  // ── @app mention detection ──
+  // Mentions are parsed against the ONE vocabulary (shared/navigation/
+  // callable-apps) — by label, id or alias, anywhere in the message — and every
+  // invoked app contributes its enrichment sources. The prompt block that names
+  // the apps to the model is the shared one (invoked-apps-block), the same text
+  // regardless of which composer, or which handle, the person used. A slash
+  // command and a mention can coexist; the slash command keeps the trigger type.
+  const appMention = detectAppMention(message);
   if (appMention) {
-    triggerType = 'app_mention';
-    detectedCommand = `@${appMention.appId}`;
+    if (!slash) triggerType = 'app_mention';
+    detectedCommand = detectedCommand ?? `@${appMention.appId}`;
     detectedAppMentionId = appMention.appId;
 
-    // Resolve enrichment sources for this app
+    // Resolve enrichment sources for the invoked apps
     const appEnrichFnMap: Record<string, () => Promise<string>> = {
       'foresight': () => enrichWithForesight(projectId, organizationId),
       'precedent': () => enrichWithPrecedents(projectId, organizationId),
@@ -1389,9 +1428,15 @@ export async function enrichContextForChat(params: {
       'ectd': () => enrichWithECTD(projectId),
     };
 
-    const enrichSources = APP_ENRICHMENT_MAP[appMention.appId] || [];
+    const apps = invokedApps(message);
+    const enrichSources = new Map<string, string>(); // source → first app that asked for it
+    for (const app of apps) {
+      for (const src of APP_ENRICHMENT_MAP[app.id] || []) {
+        if (!enrichSources.has(src)) enrichSources.set(src, app.id);
+      }
+    }
     await Promise.allSettled(
-      enrichSources.map(async sourceName => {
+      [...enrichSources.entries()].map(async ([sourceName, appId]) => {
         sourcesAttempted++;
         const fn = appEnrichFnMap[sourceName];
         if (!fn) { sourcesFailed.push(`app-${sourceName}`); return; }
@@ -1399,26 +1444,22 @@ export async function enrichContextForChat(params: {
           const block = await fn();
           if (block) {
             blocks.push(block);
-            sources.push(`app:${appMention.appId}/${sourceName}`);
+            sources.push(`app:${appId}/${sourceName}`);
           } else {
-            sourcesFailed.push(`app:${appMention.appId}/${sourceName}`);
+            sourcesFailed.push(`app:${appId}/${sourceName}`);
           }
         } catch {
-          sourcesFailed.push(`app:${appMention.appId}/${sourceName}`);
+          sourcesFailed.push(`app:${appId}/${sourceName}`);
         }
       })
     );
 
-    // Inject app-specific system context header
-    blocks.push(
-      `\n\n## @${appMention.appId} App Context\nThe user invoked the **${appMention.appId}** specialist app. ` +
-      `Focus your response on ${appMention.appId} domain expertise. ` +
-      `User request: ${appMention.remainingText || '(no specific request — ask what they need)'}`
-    );
-    sources.push(`app:${appMention.appId}`);
+    // Name the invoked apps to the model — the shared block, contract labels only.
+    blocks.push(buildInvokedAppsBlock(message));
+    for (const app of apps) sources.push(`app:${app.id}`);
 
-    // Rewrite message to strip the @mention prefix
-    rewrittenMessage = appMention.remainingText || message;
+    // Rewrite the message without the mention tokens; the block carries the apps.
+    if (!rewrittenMessage) rewrittenMessage = appMention.remainingText || message;
   }
 
   // ── Natural language trigger detection (runs if no slash command and no app mention) ──

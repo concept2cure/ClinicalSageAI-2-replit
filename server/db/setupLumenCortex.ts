@@ -4,7 +4,6 @@
  * Initializes the tables required for AnA RI intelligence harvesting.
  */
 
-import { Pool } from 'pg';
 import fs from 'fs';
 import { getPool } from '../db';
 

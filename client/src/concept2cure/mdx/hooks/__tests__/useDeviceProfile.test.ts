@@ -41,6 +41,11 @@ const PROFILE: DeviceProfileView = {
   intendedUse: null,
   indication: null,
   predicateDevices: null,
+  commonName: 'Continuous glucose monitor',
+  classificationName: 'Glucose Monitor, Continuous',
+  regulationNumber: '862.1355',
+  associatedProductCodes: 'DQA; NBW',
+  indicationsForUseCitation: 'Attachment 4, page 1',
 };
 
 const jsonResponse = (body: unknown, ok = true, status = 200) => ({
@@ -110,6 +115,48 @@ describe('useDeviceProfile', () => {
     await waitFor(() => expect(getCalls().length).toBe(readsBefore + 1));
   });
 
+});
+
+describe('useDeviceProfile — the five eSTAR device fields', () => {
+  it('exposes the five eSTAR device fields the profile carries (view mapping)', async () => {
+    fetchMock.mockResolvedValue(jsonResponse({ profile: PROFILE }));
+    const { result } = renderHook(() => useDeviceProfile(PROFILE.id));
+    await waitFor(() => expect(result.current.profile).not.toBeNull());
+    const p = result.current.profile as DeviceProfileView;
+    expect(p.commonName).toBe('Continuous glucose monitor');
+    expect(p.classificationName).toBe('Glucose Monitor, Continuous');
+    expect(p.regulationNumber).toBe('862.1355');
+    expect(p.associatedProductCodes).toBe('DQA; NBW');
+    expect(p.indicationsForUseCitation).toBe('Attachment 4, page 1');
+  });
+
+  it('save sends the eSTAR device fields verbatim — an empty string is the clear signal', async () => {
+    fetchMock.mockResolvedValue(jsonResponse({ profile: PROFILE }));
+    const { result } = renderHook(() => useDeviceProfile(PROFILE.id));
+    await waitFor(() => expect(result.current.profile).not.toBeNull());
+    await act(async () => {
+      await result.current.save({
+        commonName: 'CGM',
+        classificationName: 'Glucose Monitor, Continuous',
+        regulationNumber: '862.1355',
+        associatedProductCodes: 'DQA',
+        indicationsForUseCitation: '',
+      });
+    });
+    const putCall = fetchMock.mock.calls.find(
+      ([, init]) => (init as { method?: string } | undefined)?.method === 'PUT',
+    ) as [string, { body: string }];
+    expect(JSON.parse(putCall[1].body)).toEqual({
+      commonName: 'CGM',
+      classificationName: 'Glucose Monitor, Continuous',
+      regulationNumber: '862.1355',
+      associatedProductCodes: 'DQA',
+      indicationsForUseCitation: '',
+    });
+  });
+});
+
+describe('useDeviceProfile — rejected and failed writes', () => {
   it('save is a no-op returning null without an ident — nothing is sent', async () => {
     const { result } = renderHook(() => useDeviceProfile(null));
     let saved: DeviceProfileView | null = PROFILE;

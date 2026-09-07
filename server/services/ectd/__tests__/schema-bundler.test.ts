@@ -112,3 +112,36 @@ describe('checksum-manifest verifier', () => {
     } finally { await fs.rm(dir, { recursive: true, force: true }); }
   });
 });
+
+describe('checksum-manifest verifier covers vendored stylesheets by default', () => {
+  // The drop-point now holds *.xsl alongside *.dtd. With the default extension
+  // set a stylesheet with no manifest line must be reported as unlisted — the
+  // same tamper/omission guard the DTDs get — not silently ignored.
+  it('reports a *.xsl with no manifest entry as unlisted (default extensions)', async () => {
+    const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'xsl-manifest-'));
+    try {
+      await fs.writeFile(path.join(dir, 'ectd-2-0.xsl'), '<xsl:stylesheet version="1.0"/>');
+      await fs.writeFile(path.join(dir, 'checksums.txt'), '# no entries\n');
+      const r = await verifyChecksumManifest(dir);
+      expect(r.unlistedFiles).toEqual(['ectd-2-0.xsl']);
+      expect(r.ok).toBe(false);
+    } finally {
+      await fs.rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('verifies a listed *.xsl against its digest (default extensions)', async () => {
+    const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'xsl-manifest-ok-'));
+    try {
+      const bytes = Buffer.from('<xsl:stylesheet version="1.0"/>');
+      const digest = createHash('sha256').update(bytes).digest('hex');
+      await fs.writeFile(path.join(dir, 'us-regional.xsl'), bytes);
+      await fs.writeFile(path.join(dir, 'checksums.txt'), `${digest}  us-regional.xsl\n`);
+      const r = await verifyChecksumManifest(dir);
+      expect(r.verified).toEqual(['us-regional.xsl']);
+      expect(r.ok).toBe(true);
+    } finally {
+      await fs.rm(dir, { recursive: true, force: true });
+    }
+  });
+});

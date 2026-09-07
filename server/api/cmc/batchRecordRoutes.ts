@@ -2,36 +2,15 @@ import express from 'express';
 import { getPool } from '../../db';
 import { z } from 'zod';
 import { writeThroughBatchRecord } from '../../services/cmc-write-through';
+/* The one path from a register save to the Module 3 canonical layer: it awaits
+   the write, reports { module3Linked, module3Warning } in the response and
+   meters a failure. The program is the stored row's project_id, never the
+   request body's, so no request is handed to it here. */
+import { linkToModule3 } from '../../services/cmc/link-to-module3';
 import { recordGovernedAction, verifyReauth } from '../../routes/c2c/actions';
-import { createScopedLogger } from '../../utils/logger';
-import * as metricsModule from '../../metrics.js';
 import { resolveActorUserId } from './governance';
 
 const router = express.Router();
-const logger = createScopedLogger('cmc-batch');
-
-/**
- * Observe a failed canonical write-through to the Module 3 submission source
- * object. The 201/200 primary response is intentionally NOT blocked on this —
- * but the failure MUST be observable (logged + metered) rather than silently
- * swallowed.
- * TODO(GA): consider retry/queue for guaranteed write-through.
- */
-function observeWriteThroughFailure(recordId: string | number, err: unknown): void {
-  logger.error('Module 3 canonical write-through failed (batch record)', {
-    recordId: String(recordId),
-    propagation: 'writeThroughBatchRecord',
-    error: err instanceof Error ? err.message : String(err),
-  });
-  try {
-    (metricsModule as any).metrics.concept2cureErrors.inc({
-      operation: 'cmc_write_through_batch',
-      error_type: 'propagation_failed',
-    });
-  } catch {
-    /* metric increment must never affect request flow */
-  }
-}
 
 
 
@@ -118,13 +97,15 @@ router.get('/:projectId', async (req, res) => {
     }
     const pool = getPool();
 
-    // tenant_id OR organization_id — never `OR tenant_id IS NULL`, which made
-    // every pre-20260401 row readable by every organization. Those rows are not
-    // unattributed; organization_id names their real owner. See resolveOrgId.
+
     const result = await pool.query(
       `SELECT * FROM cmc_batch_records
        WHERE project_id = $1 AND (tenant_id = $2 OR organization_id = $3)
        ORDER BY created_at DESC`,
+      // tenant_id OR organization_id — never `OR tenant_id IS NULL`, which made
+      // every pre-20260401 row readable by every organization. Those rows are
+      // not unattributed; organization_id names their real owner. See
+      // resolveOrgId for why the identity is bound twice.
       [projectId, ...tenantParams(orgId)]
     );
 
@@ -196,18 +177,14 @@ router.post('/', async (req, res) => {
 
     const batch = result.rows[0];
     console.log(`[CMC Batch] Created batch record ${batch.id}: ${data.batchNumber}`);
-    // Write-through: upsert canonical source object for Module 3
-    if (batch.project_id) {
-      writeThroughBatchRecord(Number(tenantId), batch.project_id, String(batch.id), batch).catch(err =>
-        observeWriteThroughFailure(batch.id, err)
-      );
-    }
+    const linkage = await linkToModule3('write_through_batch', Number(tenantId), batch, writeThroughBatchRecord);
 
     res.status(201).json({
       success: true,
       data: batch,
       message: 'Batch record created successfully',
       timestamp: new Date().toISOString(),
+      ...linkage,
     });
   } catch (error) {
     console.error('[CMC Batch] Error creating batch record:', error);
@@ -300,6 +277,7 @@ router.put('/:id', async (req, res) => {
 
     const updateResult = await pool.query(updateQuery, values);
 
+    console.log(`[CMC Batch] Updated batch record ${id}`);
     // Fail closed on an UPDATE that matched nothing: the row was re-tenanted or
     // deleted between the existence SELECT and here. Reporting 200 over it
     // would tell the caller a change landed that did not.
@@ -307,20 +285,14 @@ router.put('/:id', async (req, res) => {
     if (!updatedBatch) {
       return res.status(404).json({ success: false, error: 'Batch record not found' });
     }
-
-    logger.info('Updated batch record', { recordId: String(id) });
-    // Write-through: upsert canonical source object for Module 3
-    if (updatedBatch?.project_id) {
-      writeThroughBatchRecord(orgId, updatedBatch.project_id, String(id), updatedBatch).catch(err =>
-        observeWriteThroughFailure(id, err)
-      );
-    }
+    const linkage = await linkToModule3('write_through_batch', orgId, updatedBatch, writeThroughBatchRecord);
 
     res.json({
       success: true,
       data: updatedBatch,
       message: 'Batch record updated successfully',
       timestamp: new Date().toISOString(),
+      ...linkage,
     });
   } catch (error) {
     console.error('[CMC Batch] Error updating batch record:', error);
@@ -452,8 +424,7 @@ router.post('/:id/release', async (req, res) => {
     // a release signature over a record this transaction did not write is a
     // falsified one, and the 200 tells a QA head a batch was dispositioned when
     // no such disposition exists.
-    const releasedBatch = updateResult.rows[0];
-    if (!releasedBatch) {
+    if (!updateResult.rows[0]) {
       await client.query('ROLLBACK');
       return res.status(404).json({ success: false, error: 'Batch record not found' });
     }
@@ -472,13 +443,11 @@ router.post('/:id/release', async (req, res) => {
 
     await client.query('COMMIT');
 
-    logger.info('Batch release recorded', { recordId: String(id), releaseStatus });
-    // Write-through: upsert canonical source object for Module 3
-    if (releasedBatch.project_id) {
-      writeThroughBatchRecord(orgId, releasedBatch.project_id, String(id), releasedBatch).catch(err =>
-        observeWriteThroughFailure(id, err)
-      );
-    }
+    console.log(`[CMC Batch] Release testing for batch ${id}: ${releaseStatus}`);
+    /* The release decision is committed under its signature above; whether it
+       reached the dossier layer is reported, never assumed. */
+    const releasedBatch = updateResult.rows[0];
+    const linkage = await linkToModule3('write_through_batch', orgId, releasedBatch, writeThroughBatchRecord);
 
     return res.json({
       success: true,
@@ -489,6 +458,7 @@ router.post('/:id/release', async (req, res) => {
       governance: { actionId: governance.actionId, sha256Chain: governance.sha256Chain },
       message: `Batch ${releaseStatus === 'released' ? 'released' : 'release decision recorded'} successfully`,
       timestamp: new Date().toISOString(),
+      ...linkage,
     });
   } catch (error) {
     try { await client.query('ROLLBACK'); } catch { /* noop */ }

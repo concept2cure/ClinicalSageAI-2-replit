@@ -14,7 +14,12 @@
  * QC-able — not the full HL7 V3 ICSR transport envelope (batch wrapper / OIDs),
  * which the dispatch gateway adds. The H.1 narrative is composed by the shared
  * deterministic safety-narrative writer (never invents clinical detail), and a
- * completeness report surfaces any missing mandatory element before transmit.
+ * completeness report surfaces a missing mandatory element before transmit.
+ *
+ * The tracked mandatory set is a minimum data set, not the full E2B(R3)
+ * mandatory-element list: C.1.1, C.1.3, C.1.8.1, C.2.r.4, D.1, E.i.1.1a,
+ * G.k.2.2, H.1, C.5.1.r.1 for a study report, and C.1.11.2 for a
+ * nullification. `completeness` and `transmitReady` speak to that set only.
  *
  * Pure / deterministic — no DB, no side effects.
  *
@@ -123,6 +128,20 @@ function isoDateTime(d: Date | string | undefined | null): string {
   return Number.isNaN(date.getTime()) ? '' : date.toISOString();
 }
 
+/** C.1.3 Type of report — ICH E2B(R3) codes. Unknown or absent stays empty and is a gap. */
+const REPORT_TYPE_CODE: Record<string, string> = {
+  spontaneous: '1 (spontaneous report)',
+  '1': '1 (spontaneous report)',
+  study: '2 (report from study)',
+  '2': '2 (report from study)',
+  other: '3 (other)',
+  '3': '3 (other)',
+  literature: '4 (not available to sender (unknown))',
+  unknown: '4 (not available to sender (unknown))',
+  '4': '4 (not available to sender (unknown))',
+};
+
+
 /**
  * Compose the E2B(R3) ICSR data elements from an intake adverse event and the
  * optional ICSR transport metadata.
@@ -145,7 +164,12 @@ function isoDateTime(d: Date | string | undefined | null): string {
 export function composeE2bR3Icsr(
   event: AdverseEvent,
   options: {
-    icsr?: ICSR | null;
+    /**
+     * ICSR envelope metadata. `reporterCountry` (C.2.r.3) and
+     * `studyRegistrationNumber` (C.5.1.r.1) are carried here because the
+     * intake AdverseEvent has no field for either.
+     */
+    icsr?: (Partial<ICSR> & { reporterCountry?: string | null; studyRegistrationNumber?: string | null }) | null;
     expedited?: boolean;
     nullificationReason?: string;
     mostRecentInfoDate?: Date | string;
@@ -162,16 +186,23 @@ export function composeE2bR3Icsr(
   // Report lifecycle stage (C.1.* admin). Defaults to an initial report.
   const lifecycle = icsr?.icsrType ?? 'initial';
   const isNullification = lifecycle === 'nullification';
+  const reportTypeCode = REPORT_TYPE_CODE[String(icsr?.reportType ?? '').trim().toLowerCase()] ?? '';
+  const isStudyReport = reportTypeCode.startsWith('2');
+  const studyRegistration = icsr?.studyRegistrationNumber?.trim() ?? '';
 
   const caseAdmin: E2bElement[] = [
     { id: 'C.1.1', label: "Sender's safety report unique identifier", value: event.id },
     { id: 'C.1.2', label: 'Date of creation', value: isoDateTime(now) },
-    { id: 'C.1.3', label: 'Type of report', value: '2 (report from study)' },
+    // C.1.3 from the case. This was the constant '2 (report from study)' for
+    // every ICSR, spontaneous and literature reports included.
+    { id: 'C.1.3', label: 'Type of report', value: reportTypeCode },
     { id: 'C.1.4', label: 'Date report was first received from source', value: isoDate(event.reportDate) },
     { id: 'C.1.5', label: 'Date of most recent information', value: isoDate(mostRecentInfoDate ?? event.reportDate) },
     { id: 'C.1.7', label: 'Fulfils local criteria for an expedited report', value: isExpedited ? '1 (Yes)' : '2 (No)' },
     { id: 'C.1.8.1', label: 'Worldwide unique case identification number', value: icsr?.worldwideUniqueId ?? '' },
     { id: 'C.1.8.2', label: 'First sender of this case', value: icsr?.senderType === 'regulatory_authority' ? '1 (Regulator)' : '2 (Other)' },
+    // C.5.1.r.1 — the study a study report arose from; mandatory when C.1.3 is a study report.
+    ...(isStudyReport ? [{ id: 'C.5.1.r.1', label: 'Study registration number', value: studyRegistration }] : []),
     // C.1.11 — report nullification/amendment (only emitted for a nullification).
     ...(isNullification
       ? [
@@ -183,7 +214,9 @@ export function composeE2bR3Icsr(
 
   const primarySource: E2bElement[] = [
     { id: 'C.2.r.1.1', label: 'Reporter name', value: event.reporterName ?? '' },
-    { id: 'C.2.r.3', label: "Reporter's country code", value: event.countryOfOccurrence ?? '' },
+    // The reporter's country, not the country the event occurred in: that is
+    // E.i.9 below. countryOfOccurrence used to be emitted under this label.
+    { id: 'C.2.r.3', label: "Reporter's country code", value: icsr?.reporterCountry?.trim() ?? '' },
     { id: 'C.2.r.4', label: 'Qualification', value: reporterQual ? `${reporterQual.code} (${reporterQual.meaning})` : '' },
     { id: 'C.2.r.5', label: 'Primary source for regulatory purposes', value: '1 (Yes)' },
   ];
@@ -198,6 +231,7 @@ export function composeE2bR3Icsr(
     { id: 'E.i.4', label: 'Date of start of reaction/event', value: isoDate(event.onsetDate) },
     { id: seriousness.id, label: seriousness.label, value: '1 (Yes)' },
     { id: 'E.i.7', label: 'Outcome of reaction/event at last observation', value: `${outcome.code} (${outcome.meaning})` },
+    { id: 'E.i.9', label: 'Identification of the country where the reaction/event occurred', value: event.countryOfOccurrence ?? '' },
   ];
 
   const drug: E2bElement[] = [
@@ -234,8 +268,10 @@ export function composeE2bR3Icsr(
   // Mandatory E2B(R3) minimum-data-set elements we track for completeness.
   const mandatory: Array<{ id: string; label: string; value: string }> = [
     { id: 'C.1.1', label: "Sender's safety report unique identifier", value: event.id },
+    { id: 'C.1.3', label: 'Type of report', value: reportTypeCode },
     { id: 'C.1.8.1', label: 'Worldwide unique case identification number', value: icsr?.worldwideUniqueId ?? '' },
     { id: 'C.2.r.4', label: 'Reporter qualification', value: reporterQual ? reporterQual.code : '' },
+    ...(isStudyReport ? [{ id: 'C.5.1.r.1', label: 'Study registration number', value: studyRegistration }] : []),
     { id: 'D.1', label: 'Patient (identifier)', value: event.patientId },
     { id: 'E.i.1.1a', label: 'Reaction/event term', value: event.reactionPt ?? event.eventDescription },
     { id: 'G.k.2.2', label: 'Suspect medicinal product name', value: event.suspectProduct ?? '' },

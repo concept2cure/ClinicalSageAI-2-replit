@@ -118,6 +118,40 @@ describe('computeExpeditedReportingClock — category determination', () => {
     );
     expect(r.category).toBe('none');
     expect(r.basis).toMatch(/not serious/);
+    // Recorded and empty IS an assessment: nothing is reported as unassessed.
+    expect(r.unassessedInputs).toEqual([]);
+    expect(r.basis).not.toMatch(/not been assessed/);
+  });
+
+  it('an UNASSESSED case is not reported as "not serious" — same determination, honest reason', () => {
+    // seriousnessCriteria absent (null), not an empty recorded list. This used
+    // to read "No expedited reporting clock — not serious, …": the sentence
+    // that takes a case off the 21 CFR 312.32 expedited path, said over a case
+    // nobody had assessed.
+    const r = computeExpeditedReportingClock(
+      { awarenessDate: '2026-07-01', seriousnessCriteria: null },
+      utc('2026-07-05'),
+    );
+    // The determination is unchanged.
+    expect(r.category).toBe('none');
+    expect(r.dueDate).toBeNull();
+    // The reason is not.
+    expect(r.unassessedInputs).toEqual(['seriousness', 'expectedness', 'causality']);
+    expect(r.basis).toMatch(/seriousness not assessed/);
+    expect(r.basis).toMatch(/NOT a determination that the case is non-reportable/);
+    expect(r.basis).not.toMatch(/— not serious/);
+  });
+
+  it('names only the inputs that are actually missing', () => {
+    const r = computeExpeditedReportingClock(
+      { awarenessDate: '2026-07-01', seriousnessCriteria: ['hospitalization'], causality: 'not related' },
+      utc('2026-07-05'),
+    );
+    expect(r.category).toBe('none');
+    expect(r.unassessedInputs).toEqual(['expectedness']);
+    // Causality WAS assessed and is not suspected — stated as the finding it is.
+    expect(r.basis).toMatch(/no suspected causality/);
+    expect(r.basis).toMatch(/expectedness not assessed/);
   });
 
   it("suspected includes possibly related; 'possibly related' maps to a clock", () => {

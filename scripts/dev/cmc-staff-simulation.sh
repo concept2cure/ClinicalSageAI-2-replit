@@ -49,7 +49,7 @@ CODE=$(req method POST /api/cmc/analytical-methods "{\"methodCode\":\"AM-001\",\
 [ "$CODE" = 200 -o "$CODE" = 201 ] && ok "method registered ($CODE)" || bad "method failed ($CODE): $(head -c300 "$OUT/method.json")"
 
 step "5. QC runs the test; a second person reviews (feeds 3.2.S.4)"
-CODE=$(req qc POST /api/cmc/qc-testing "{\"sampleId\":\"S-2026-001\",\"sampleType\":\"drug substance\",\"testMethod\":\"AM-001\",\"testDate\":\"2026-07-01T00:00:00.000Z\",\"testResults\":{\"value\":\"99.2\",\"unit\":\"%\"},\"specifications\":{\"acceptanceCriteria\":\"98.0-102.0%\"},\"passFailStatus\":\"pass\",\"projectId\":\"$PROGRAM\"}")
+CODE=$(req qc POST /api/cmc/qc-testing "{\"sampleId\":\"S-2026-001\",\"batchNumber\":\"B-2026-001\",\"sampleType\":\"drug substance\",\"testMethod\":\"AM-001\",\"testDate\":\"2026-07-01T00:00:00.000Z\",\"testResults\":{\"value\":\"99.2\",\"unit\":\"%\"},\"specifications\":{\"acceptanceCriteria\":\"98.0-102.0%\"},\"passFailStatus\":\"pass\",\"projectId\":\"$PROGRAM\"}")
 [ "$CODE" = 200 -o "$CODE" = 201 ] && ok "QC result recorded ($CODE)" || bad "QC failed ($CODE): $(head -c300 "$OUT/qc.json")"
 
 step "5b. The QC reviewer is the session, not the request body — and never the analyst"
@@ -62,7 +62,7 @@ REVBY=$(cat "$OUT/qcrev.json" | JQ '.data.reviewedBy // empty')
   && ok "review recorded against the signed-in user ($REVBY), not the body's 999999" \
   || bad "QC review attribution: code=$CODE reviewedBy=$REVBY"
 # Second-person review, enforced by the API and not only by the button.
-CODE=$(req qcself POST /api/cmc/qc-testing "{\"sampleId\":\"S-2026-002\",\"sampleType\":\"drug substance\",\"testMethod\":\"AM-001\",\"testDate\":\"2026-07-02T00:00:00.000Z\",\"testResults\":{\"value\":\"99.0\",\"unit\":\"%\"},\"passFailStatus\":\"pass\",\"analyst\":$REVBY,\"projectId\":\"$PROGRAM\"}")
+CODE=$(req qcself POST /api/cmc/qc-testing "{\"sampleId\":\"S-2026-002\",\"batchNumber\":\"B-2026-002\",\"sampleType\":\"drug substance\",\"testMethod\":\"AM-001\",\"testDate\":\"2026-07-02T00:00:00.000Z\",\"testResults\":{\"value\":\"99.0\",\"unit\":\"%\"},\"passFailStatus\":\"pass\",\"analyst\":$REVBY,\"projectId\":\"$PROGRAM\"}")
 SELFID=$(cat "$OUT/qcself.json" | JQ '.data.id // empty')
 CODE=$(req qcselfrev PUT "/api/cmc/qc-testing/$SELFID" '{"reviewedBy":1}')
 [ "$CODE" = 409 ] && ok "the analyst cannot review their own result (409)" \
@@ -141,6 +141,12 @@ IMPID=$(cat "$OUT/imp1.json" | JQ '.data.id // empty')
 # and the unit the old table would have printed as a percentage.
 CODE=$(req imp2 POST /api/cmc/impurity-profiles "{\"projectId\":\"$PROGRAM\",\"scope\":\"drug_substance\",\"materialName\":\"BX-701 drug substance\",\"impurityName\":\"Methanol\",\"impurityType\":\"residual-solvent\",\"observedLevel\":\"300\",\"levelUnit\":\"ppm\",\"maximumDailyDose\":\"500 mg\",\"analyticalMethod\":\"GC headspace\"}")
 [ "$CODE" = 200 -o "$CODE" = 201 ] && ok "residual solvent recorded in ppm ($CODE)" || bad "residual solvent failed ($CODE)"
+# A nitrosamine — mutagenic, so ICH M7(R2) governs it, not Q3A. The class is
+# decided from the recorded Ames result and structural alert; the limit is the
+# cohort-of-concern intake for the recorded treatment duration. Nothing here is
+# defaulted: the same record with no Ames result is refused, not assessed.
+CODE=$(req imp3 POST /api/cmc/impurity-profiles "{\"projectId\":\"$PROGRAM\",\"scope\":\"drug_substance\",\"materialName\":\"BX-701 drug substance\",\"impurityName\":\"N-nitrosodimethylamine\",\"impurityType\":\"mutagenic\",\"observedLevel\":\"0.02\",\"levelUnit\":\"ppm\",\"maximumDailyDose\":\"500 mg\",\"routeOfAdministration\":\"oral\",\"amesResult\":\"positive\",\"structuralAlert\":\"yes\",\"carcinogenicityData\":\"not-tested\",\"treatmentDuration\":\"lifetime\",\"cohortOfConcern\":\"CoC_nitrosamine\",\"analyticalMethod\":\"LC-MS/MS\"}")
+[ "$CODE" = 200 -o "$CODE" = 201 ] && ok "mutagenic impurity recorded with its ICH M7 inputs ($CODE)" || bad "mutagenic impurity failed ($CODE): $(head -c250 "$OUT/imp3.json")"
 # Qualification is a signature over a RECORDED basis; with none, it refuses.
 CODE=$(req impq0 POST "/api/cmc/impurity-profiles/$IMPID/qualify" '{"reason":"Attempting to qualify with no basis on file.","meaning":"approval","reauth":{"password":"pass-word"}}')
 [ "$CODE" = 409 ] && ok "qualification refused over an empty qualification basis (409)" \
@@ -161,7 +167,7 @@ CODE=$(req dis2 POST /api/cmc/dissolution-profiles "{\"projectId\":\"$PROGRAM\",
 [ "$CODE" = 200 -o "$CODE" = 201 ] && ok "release-specification dissolution profile recorded ($CODE)" || bad "release profile failed ($CODE)"
 
 step "8g. Formulation development records the composition and the excipients (feeds 3.2.P.1 / 3.2.P.4 / 3.2.A.3)"
-CODE=$(req form1 POST /api/cmc/formulation-records "{\"projectId\":\"$PROGRAM\",\"formulationName\":\"BX-701 5 mg film-coated tablet\",\"version\":\"F-v2.0\",\"dosageForm\":\"Film-coated tablet\",\"strength\":\"5 mg\",\"batchSize\":\"250,000 tablets\",\"status\":\"current\",\"components\":[{\"component\":\"BX-701\",\"role\":\"Active\",\"amountPerUnit\":\"5\",\"unit\":\"mg\",\"percentWeight\":\"4.0\",\"origin\":\"synthetic\"},{\"component\":\"Microcrystalline cellulose\",\"role\":\"Diluent\",\"amountPerUnit\":\"80\",\"unit\":\"mg\",\"percentWeight\":\"64.0\",\"origin\":\"plant\"},{\"component\":\"Gelatin\",\"role\":\"Binder\",\"amountPerUnit\":\"3\",\"unit\":\"mg\",\"origin\":\"bovine\"}]}")
+CODE=$(req form1 POST /api/cmc/formulation-records "{\"projectId\":\"$PROGRAM\",\"formulationName\":\"BX-701 5 mg film-coated tablet\",\"version\":\"F-v2.0\",\"dosageForm\":\"Film-coated tablet\",\"strength\":\"5 mg\",\"batchSize\":\"250,000 tablets\",\"formulationDevelopment\":\"Immediate-release film-coated tablet selected against the QTPP; MCC:lactose ratio fixed at 2:1 after prototypes F1-F3 for content uniformity.\",\"status\":\"current\",\"components\":[{\"component\":\"BX-701\",\"role\":\"Active\",\"amountPerUnit\":\"5\",\"unit\":\"mg\",\"percentWeight\":\"4.0\",\"origin\":\"synthetic\"},{\"component\":\"Microcrystalline cellulose\",\"role\":\"Diluent\",\"amountPerUnit\":\"80\",\"unit\":\"mg\",\"percentWeight\":\"64.0\",\"origin\":\"plant\"},{\"component\":\"Gelatin\",\"role\":\"Binder\",\"amountPerUnit\":\"3\",\"unit\":\"mg\",\"origin\":\"bovine\"}]}")
 FORMLINK=$(cat "$OUT/form1.json" | JQ '.module3Linked // empty')
 [ "$CODE" = 200 -o "$CODE" = 201 ] && [ "$FORMLINK" = "true" ] \
   && ok "formulation recorded as the current version and linked ($CODE)" \
@@ -309,6 +315,15 @@ S3LIM=$(echo "$S3" | jq -r '[.tables[]? | .rows[]? | select(.[] | tostring | tes
 [ "${S3OUT:-0}" -ge 1 ] && [ "${S3CMP:-0}" -ge 1 ] && [ "${S3LIM:-0}" -ge 1 ] \
   && ok "§3.2.S.3.2 assesses the residual solvent against ICH Q3C and counts each population under its own guideline" \
   || bad "§3.2.S.3.2 Q3C routing: assessedClaim=$S3OUT q3aClaim=$S3CMP q3cLimitRows=$S3LIM"
+# The nitrosamine is assessed under ICH M7(R2) — classified, and compared to
+# the cohort-of-concern acceptable intake — instead of refused as out of Q3A
+# scope. It must never appear in the "cannot be compared" list.
+S3M7=$(echo "$S3" | jq -r '.narrativeDraft // ""' 2>/dev/null | grep -c "assessed against ICH M7(R2)")
+S3M7ROW=$(echo "$S3" | jq -r '[.tables[]? | .rows[]? | select(.[] | tostring | test("ICH M7 Class 2"))] | length' 2>/dev/null)
+S3M7REF=$(echo "$S3" | jq -r '.narrativeDraft // ""' 2>/dev/null | grep -c "N-nitrosodimethylamine — ")
+[ "${S3M7:-0}" -ge 1 ] && [ "${S3M7ROW:-0}" -ge 1 ] && [ "${S3M7REF:-0}" = "0" ] \
+  && ok "§3.2.S.3.2 assesses the nitrosamine under ICH M7(R2) as Class 2 against its cohort-of-concern intake" \
+  || bad "§3.2.S.3.2 M7 routing: assessedClaim=$S3M7 class2Rows=$S3M7ROW refusedMentions=$S3M7REF"
 
 P2=$(cat "$OUT/compile.json" | jq -r '[.sections[]? | select(.sectionKey=="3.2.P.2")][0]' 2>/dev/null)
 P2DEV=$(echo "$P2" | jq -r '[.tables[]? | .rows[]? | select(.[] | tostring | test("BX701-DP-2406"))] | length' 2>/dev/null)
@@ -402,19 +417,64 @@ CODE=$(req place1 POST "/api/cmc/module3-os/place-into-submission/$PROGRAM" '{"s
 LEAVES_AFTER=$(PGPASSWORD=c2c_local psql -h 127.0.0.1 -U c2c -d clinicalsage -tAc "SELECT count(*) FROM submission_leaves")
 [ "$CODE" = 409 ] && [ "$LEAVES_BEFORE" = "$LEAVES_AFTER" ] && ok "placement refused (409), zero leaves written" || bad "placement did not refuse cleanly ($CODE; leaves $LEAVES_BEFORE→$LEAVES_AFTER)"
 
-step "15. QA approves every compiled section (Part 11 re-auth each time)"
-SECTIONS=$(cat "$OUT/compile.json" | jq -r '.sections[].sectionKey' 2>/dev/null)
+step "15. QA approves every COMPLETE compiled section (Part 11 re-auth each time); an incomplete one is refused"
+# An approval is a claim about content that was reviewed. The approve route
+# reads the section's own compiled record and refuses when the compiler says
+# the content is not there — the same rule the export gate applies — so QA
+# signs only what the compiler established, and the refusal names the gap.
+approve_section() { # approve_section SECTION_KEY -> writes approve-KEY.json, echoes HTTP code
+  req "approve-$1" POST "/api/cmc/module3-os/sections/$PROGRAM/$(python3 -c "import urllib.parse,sys;print(urllib.parse.quote(sys.argv[1]))" "$1")/approve" \
+    '{"reason":"Section content verified against source data","meaning":"TECHNICAL_APPROVAL","reauth":{"password":"pass-word"}}'
+}
+complete_sections()   { jq -r '.sections[]? | select((.completeness == 100) and (((.missingInputs // []) | length) == 0)) | .sectionKey' "$1" 2>/dev/null; }
+incomplete_sections() { jq -r '.sections[]? | select((.completeness != 100) or (((.missingInputs // []) | length) > 0)) | .sectionKey' "$1" 2>/dev/null; }
 APPROVED=0; APPROVE_FAIL=0
-for SK in $SECTIONS; do
-  CODE=$(req "approve-$SK" POST "/api/cmc/module3-os/sections/$PROGRAM/$(python3 -c "import urllib.parse,sys;print(urllib.parse.quote(sys.argv[1]))" "$SK")/approve" \
-    '{"reason":"Section content verified against source data","meaning":"TECHNICAL_APPROVAL","reauth":{"password":"pass-word"}}')
+for SK in $(complete_sections "$OUT/compile.json"); do
+  CODE=$(approve_section "$SK")
   if [ "$CODE" = 200 ]; then APPROVED=$((APPROVED+1)); else APPROVE_FAIL=$((APPROVE_FAIL+1)); echo "     approve $SK -> $CODE $(head -c200 "$OUT/approve-$SK.json")"; fi
 done
-[ "$APPROVE_FAIL" = 0 ] && ok "approved $APPROVED sections" || bad "$APPROVE_FAIL section approvals failed"
+[ "$APPROVE_FAIL" = 0 ] && ok "approved $APPROVED complete sections" || bad "$APPROVE_FAIL approvals of complete sections failed"
+# §3.2.S.6 compiled at 0% (11d proved the drug-substance system is not recorded).
+CODE=$(approve_section "3.2.S.6")
+S6REFUSAL=$(cat "$OUT/approve-3.2.S.6.json" | JQ '.error // empty')
+if [ "$CODE" = 409 ] && echo "$S6REFUSAL" | grep -qi "complete"; then
+  ok "approval of the empty §3.2.S.6 refused (409): $(echo "$S6REFUSAL" | head -c140)"
+else
+  bad "an approval landed on §3.2.S.6 with nothing established ($CODE): $(head -c200 "$OUT/approve-3.2.S.6.json")"
+fi
 
-step "16. Export gate now"
+step "15b. The staffer records what §3.2.S.6 was missing — the drug-substance container closure — and recompiles"
+CODE=$(req ccds POST /api/cmc/container-closures "{\"projectId\":\"$PROGRAM\",\"scope\":\"drug_substance\",\"systemName\":\"Double LDPE bag in HDPE drum\",\"componentType\":\"primary\",\"containerDescription\":\"Two low-density polyethylene liners, heat-sealed, in a 25 L high-density polyethylene drum\",\"closureDescription\":\"Cable-tie closed liners; tamper-evident drum lid\",\"supplier\":\"Greif\",\"compendialStandards\":[\"USP <661.1>\"],\"suitabilityJustification\":\"Protection from moisture and light demonstrated over 24 months at 25C/60%RH; LDPE compatibility with the drug substance shown in the 12-month primary studies.\",\"materialsOfConstruction\":[{\"component\":\"Liner\",\"material\":\"LDPE\",\"supplier\":\"Greif\",\"specification\":\"SPEC-LINER-02\",\"compendialReference\":\"USP <661.1>\"}]}")
+CCDSLINK=$(cat "$OUT/ccds.json" | JQ '.module3Linked // empty')
+[ "$CODE" = 200 -o "$CODE" = 201 ] && [ "$CCDSLINK" = "true" ] && ok "drug-substance container closure recorded and linked ($CODE)" || bad "DS container closure failed ($CODE, module3Linked=$CCDSLINK): $(head -c200 "$OUT/ccds.json")"
+CODE=$(req compile2 POST "/api/cmc/module3-os/compile/$PROGRAM" '{}')
+S6C2=$(jq -r '[.sections[]? | select(.sectionKey=="3.2.S.6")][0].completeness // 0' "$OUT/compile2.json" 2>/dev/null)
+[ "$CODE" = 200 ] && [ "${S6C2:-0}" = "100" ] && ok "recompiled: §3.2.S.6 now 100% from the drug-substance record" || bad "recompile: code=$CODE §3.2.S.6 completeness=$S6C2"
+# Approve what the recompile completed and 15 had not signed.
+NEWLY=0
+for SK in $(complete_sections "$OUT/compile2.json"); do
+  if [ ! -f "$OUT/approve-$SK.json" ] || [ "$(jq -r '.success // false' "$OUT/approve-$SK.json" 2>/dev/null)" != "true" ]; then
+    CODE=$(approve_section "$SK")
+    [ "$CODE" = 200 ] && NEWLY=$((NEWLY+1)) || echo "     approve $SK -> $CODE $(head -c160 "$OUT/approve-$SK.json")"
+  fi
+done
+STILL=$(incomplete_sections "$OUT/compile2.json" | tr '\n' ' ')
+ok "approved $NEWLY newly complete section(s); still incomplete after recompile: ${STILL:-none}"
+
+step "16. Export gate now — passes only when every section is approved AND complete"
 CODE=$(req gate2 POST "/api/cmc/module3-os/guard/final-export/$PROGRAM" '{}')
-if [ "$CODE" = 200 ]; then ok "gate passed"; else bad "gate still refuses ($CODE): $(cat "$OUT/gate2.json" | JQ '.error')"; fi
+if [ -z "$STILL" ]; then
+  if [ "$CODE" = 200 ]; then ok "gate passed"; else bad "gate still refuses ($CODE): $(cat "$OUT/gate2.json" | JQ '.error')"; fi
+else
+  # Honest gap: the simulation's data does not complete every section, so the
+  # gate MUST refuse and name them — and the placement steps below cannot pass
+  # until that data is recorded. This is reported, never papered over.
+  if [ "$CODE" = 409 ]; then
+    bad "gate refuses (409) because these sections are still incomplete: $STILL — record their inputs to exercise placement: $(cat "$OUT/gate2.json" | JQ '.error' | head -c160)"
+  else
+    bad "gate returned $CODE while sections are incomplete ($STILL)"
+  fi
+fi
 
 step "17. Find the submission spine the program intake created"
 CODE=$(req subs GET /api/submissions)

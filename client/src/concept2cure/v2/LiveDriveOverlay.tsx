@@ -9,7 +9,7 @@
  *
  * Honest by construction: it renders only while a real `drive_state
  * {enabled:true}` turn is live, and the step it shows is the last move that
- * actually happened — a navigation (→) or a performed screen operation (⚡) —
+ * actually happened — a navigation or a performed screen operation —
  * there is no simulated progress and no idle placeholder. When AnA is not
  * driving there is nothing here at all.
  *
@@ -20,6 +20,7 @@
  */
 import React from 'react';
 import type { LiveDriveState } from './liveDrive';
+import { I } from './icons';
 
 export function LiveDriveOverlay({
   state,
@@ -97,7 +98,10 @@ export function LiveDriveOverlay({
         )}
         {last && (
           <span className="ana-drive-step" title={last.label}>
-            {last.kind === 'act' ? '⚡' : '→'} {last.label}
+            <span className="ana-drive-step-ic" aria-hidden="true">
+              {last.kind === 'act' ? I.zap : I.arrowRight}
+            </span>
+            {last.label}
           </span>
         )}
         {onSteer && (

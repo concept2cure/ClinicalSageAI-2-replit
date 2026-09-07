@@ -47,6 +47,10 @@
   .rbm-ana-starters{display:flex;flex-direction:column;gap:6px;}
   .rbm-ana-starters-l{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text-400);}
   .rbm-ana-user{align-self:flex-end;max-width:88%;background:var(--accent-000);border:1px solid var(--accent-muted);color:var(--text-100);font-size:12px;line-height:1.5;padding:8px 11px;border-radius:12px 12px 3px 12px;}
+  .rbm-ana-text{font-size:12.5px;line-height:1.55;color:var(--text-100);white-space:pre-wrap;}
+  .rbm-ana-signoffs{display:flex;flex-direction:column;gap:6px;margin-top:6px;}
+  .rbm-ana-signoff-done{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--success);}
+  .rbm-ana-signoff-done[data-tone="error"]{color:var(--error);}
   .rbm-ana-ai{display:flex;flex-direction:column;gap:7px;}
   .rbm-ana-who{display:flex;align-items:center;gap:6px;font-size:10.5px;font-weight:600;color:var(--text-300);}
   .rbm-ana-who .mk{color:var(--ai);}

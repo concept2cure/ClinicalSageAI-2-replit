@@ -24,6 +24,7 @@ const { dbState } = vi.hoisted(() => ({
     // table is absent in a partial deployment); otherwise {ran, critical}.
     preflight: { ran: 0, critical: 0 } as { ran: number; critical: number } | null,
     preflightParams: [] as unknown[][],
+    preflightSql: [] as string[],
   },
 }));
 
@@ -36,6 +37,7 @@ vi.mock('../server/db', () => ({
     if (sql.includes('from reg_m3_sections')) return { rows: [{ missing: 4, cov: 12 }] };
     if (sql.includes('from c2c_submission_packages')) {
       dbState.preflightParams.push(params ?? []);
+      dbState.preflightSql.push(sql);
       if (dbState.preflight == null) throw new Error('relation does not exist');
       return { rows: [{ ran: dbState.preflight.ran, critical: dbState.preflight.critical }] };
     }
@@ -68,6 +70,7 @@ beforeEach(() => {
   dbState.subs = [SUB, SUB2];
   dbState.preflight = { ran: 0, critical: 0 };
   dbState.preflightParams = [];
+  dbState.preflightSql = [];
 });
 
 describe('GET /portfolio/overview', () => {
@@ -98,6 +101,10 @@ describe('GET /portfolio/overview', () => {
     // The aggregate is org-scoped (tenant id 42 parameterized) and computed
     // once per request, not per row.
     expect(dbState.preflightParams).toEqual([[42]]);
+    // …and counts only a summary that describes the package's CURRENT bundle:
+    // a summary whose bundle was cleared or replaced is not that package's
+    // current outcome.
+    expect(dbState.preflightSql[0]).toMatch(/metadata->'preflight'->>'bundleSha256' = metadata->'bundle'->>'sha256'/);
   });
 
   it('reports a real zero when packages HAVE run preflight with no errors', async () => {

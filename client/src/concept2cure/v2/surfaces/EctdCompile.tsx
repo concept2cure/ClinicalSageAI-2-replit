@@ -366,11 +366,11 @@ export function EctdCompile({ onAsk }: SurfaceViewProps) {
           </span>
         </div>
         <div className="pj-card-b" style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
-          <label style={{ fontSize: 12, color: 'var(--c2c-dim,#667085)' }}>Region</label>
+          <label style={{ fontSize: 12, color: 'var(--text-400)' }}>Region</label>
           <select className="c2c-input" style={{ height: 30 }} value={region} onChange={(e) => setRegion(e.target.value as any)}>
             {REGIONS.map((r) => <option key={r} value={r}>{r === 'FDA' ? 'US · FDA' : 'EU · EMA'}</option>)}
           </select>
-          <label style={{ fontSize: 12, color: 'var(--c2c-dim,#667085)' }}>Submission</label>
+          <label style={{ fontSize: 12, color: 'var(--text-400)' }}>Submission</label>
           <select className="c2c-input" style={{ height: 30 }} value={submissionType} onChange={(e) => setSubmissionType(e.target.value as any)}>
             {SUB_TYPES.map((s) => <option key={s} value={s}>{s}</option>)}
           </select>
@@ -412,7 +412,7 @@ export function EctdCompile({ onAsk }: SurfaceViewProps) {
             {/* Which required set the numbers below are measured against. A
                 generic baseline must never pass for the program's own outline. */}
             {status.requiredSectionSource && (
-              <div style={{ padding: '8px 12px', fontSize: 12, color: 'var(--c2c-dim,#667085)', borderBottom: '1px solid var(--c2c-line,#eef0f3)' }}>
+              <div style={{ padding: '8px 12px', fontSize: 12, color: 'var(--text-400)', borderBottom: '1px solid var(--border)' }}>
                 {status.requiredSectionSource.source === 'rule_pack'
                   ? `Required sections from rule pack ${status.requiredSectionSource.docType ?? ''}:${status.requiredSectionSource.agency ?? ''} ${status.requiredSectionSource.packVersion ?? ''}`.replace(/\s+/g, ' ').trim()
                   : `Required sections are the generic ICH baseline, not this program's outline. ${status.requiredSectionSource.reason ?? ''}`.trim()}
@@ -425,10 +425,10 @@ export function EctdCompile({ onAsk }: SurfaceViewProps) {
                   <td>{m.completedRequired}/{m.requiredSections}</td>
                   <td>{m.totalSections}</td>
                   <td style={{ minWidth: 120 }}>
-                    <div style={{ background: 'var(--c2c-line,#eef0f3)', borderRadius: 6, height: 8, overflow: 'hidden' }}>
-                      <div style={{ width: m.completionPct + '%', height: '100%', background: m.ready ? 'var(--c2c-ok,#12b76a)' : 'var(--c2c-warn,#f79009)' }} />
+                    <div style={{ background: 'var(--border)', borderRadius: 6, height: 8, overflow: 'hidden' }}>
+                      <div style={{ width: m.completionPct + '%', height: '100%', background: m.ready ? 'var(--success)' : 'var(--warning)' }} />
                     </div>
-                    <span style={{ fontSize: 11, color: 'var(--c2c-dim,#667085)' }}>{m.completionPct}%</span>
+                    <span style={{ fontSize: 11, color: 'var(--text-400)' }}>{m.completionPct}%</span>
                   </td>
                   <td style={{ textAlign: 'right' }}><span className={'rd-chip tone-' + (m.ready ? 'ok' : 'warn')}>{m.ready ? 'ready' : 'partial'}</span></td>
                 </tr>))}</tbody></table>
@@ -461,7 +461,7 @@ export function EctdCompile({ onAsk }: SurfaceViewProps) {
                 behaviour — reporting READY over a package with no leaf files —
                 was worse than either. */}
             {(compileResult.submissionBlockers?.length ?? 0) > 0 && (
-              <div className="sp-tone-warn" style={{ border: '1px solid var(--c2c-line,#e4e7ec)', borderRadius: 8, padding: '8px 10px', marginBottom: 10, fontSize: 12.5 }}>
+              <div className="sp-tone-warn" style={{ border: '1px solid var(--border)', borderRadius: 8, padding: '8px 10px', marginBottom: 10, fontSize: 12.5 }}>
                 <b>Not yet submittable:</b>
                 <ul style={{ margin: '4px 0 0', paddingLeft: 18 }}>
                   {compileResult.submissionBlockers!.map((b, i) => <li key={i}>{b}</li>)}
@@ -491,7 +491,7 @@ export function EctdCompile({ onAsk }: SurfaceViewProps) {
                     this caveat would be false there; the blockers panel above
                     already says what still stands between it and transmission. */}
                 {!compileResult.submissionReady && (compileResult.leafFilesRendered ?? 0) === 0 && (
-                  <div style={{ fontSize: 11.5, marginTop: 6, color: 'var(--c2c-dim,#667085)' }}>
+                  <div style={{ fontSize: 11.5, marginTop: 6, color: 'var(--text-400)' }}>
                     The backbone describes the authored section content and marks every leaf
                     <span className="mono"> rendered=&quot;false&quot;</span>. It is a working document,
                     not a sequence to transmit.
@@ -519,7 +519,7 @@ export function EctdCompile({ onAsk }: SurfaceViewProps) {
                     <td><span className={'rd-chip tone-' + sevTone(f.severity)}>{f.severity}</span></td>
                     <td className="mono">{f.sectionCode ?? '—'}</td>
                     <td>{f.message}</td>
-                    <td style={{ color: 'var(--c2c-dim,#667085)' }}>{f.fix ?? ''}</td>
+                    <td style={{ color: 'var(--text-400)' }}>{f.fix ?? ''}</td>
                   </tr>))}</tbody></table>
             )}
           </div>

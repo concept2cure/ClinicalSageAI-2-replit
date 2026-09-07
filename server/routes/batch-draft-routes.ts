@@ -60,6 +60,8 @@ import { Router, Request, Response } from 'express';
 import { asc, eq, sql } from 'drizzle-orm';
 
 import { requestDb } from '../db/requestDb';
+import { queryableFromDrizzle } from '../db/drizzle-queryable';
+import { enforceAuthorLineage } from '../services/clinical-regulatory-evidence/lineage-gate';
 import { coauthorDocuments } from '../../shared/schema';
 import { createScopedLogger } from '../utils/logger.js';
 
@@ -384,6 +386,15 @@ export default function createBatchDraftRoutes(): Router {
     const model = typeof body.model === 'string' ? body.model.slice(0, 120) : null;
 
     const actor = getActor(req);
+    /* The accepted text becomes this person's to answer for; the lineage gate
+       below records every clause as their assertion, and a placeholder is not
+       a person (ledger L160). */
+    if (actor.userId == null) {
+      return res.status(401).json({
+        success: false,
+        error: 'An identified user is required to accept a draft into a document (21 CFR Part 11).',
+      });
+    }
     const rdb = requestDb(req);
     let inTransaction = false;
 
@@ -447,6 +458,18 @@ export default function createBatchDraftRoutes(): Router {
                updated_at = NOW()
          WHERE id = ${documentId} AND organization_id = ${organizationId}
       `);
+
+      /* Lineage in the same transaction as the content (ledger L160): the
+         batch drafts carry no parked sources, so every clause is recorded as
+         the accepting person's assertion, and a gap rolls the accept back. */
+      const client = queryableFromDrizzle(rdb);
+      await enforceAuthorLineage(
+        client,
+        organizationId,
+        { documentTable: 'coauthor_documents', documentId: String(documentId) },
+        content,
+        String(actor.userId),
+      );
 
       // 21 CFR Part 11 §11.10(e) — same transaction as the change it describes,
       // so an acceptance can never exist without its audit record.

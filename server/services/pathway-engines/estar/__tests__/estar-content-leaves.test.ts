@@ -23,6 +23,23 @@ describe('sectionsToLeaves (authored content → readiness leaves)', () => {
     expect(leaf.substantive).toBe(false);
   });
 
+  it.each(['drafting', 'ready_for_review', 'ready-for-review', 'in-review'])(
+    'an AI-drafted section with status %s is not substantive',
+    (status) => {
+      // write_kit_section defaults to 'drafting' and accepts only
+      // drafting | ready_for_review | in_review, and rejects bodies under 40
+      // characters — the same floor as MIN_SUBSTANTIVE_CONTENT_LENGTH. Only
+      // 'in_review' was in DRAFT_STATUSES, so every AI draft fell through to
+      // the length branch and passed it by construction: machine-written,
+      // unreviewed content marked its eSTAR sections present and drove
+      // contentReady / canFileNow true.
+      const [leaf] = sectionsToLeaves([
+        { sectionNumber: '4', sectionTitle: 'Performance Testing', category: 'performance_testing', status, content: REAL_CONTENT },
+      ]);
+      expect(leaf.substantive).toBe(false);
+    },
+  );
+
   it('honesty fix: a bare placeholder body ("TBD") is built with substantive:false even when status is approved', () => {
     const [leaf] = sectionsToLeaves([
       { sectionNumber: '5', sectionTitle: 'Performance Testing', category: 'performance_testing', status: 'approved', content: 'TBD' },
@@ -208,6 +225,76 @@ describe('loadDeviceContentLeaves / loadAuthoredDeviceSections with a programId'
 
     const none = await resolveDeviceContentScope(ORG, { programId: PROGRAM, documentId: 4, client: governedClient({ document: null }) });
     expect(none).toMatchObject({ source: 'legacy_document', scope: { documentId: 4 } });
+  });
+
+  /*
+   * THE TWO LOADERS' OWN HONESTY RULE, WHICH NOTHING PINNED.
+   *
+   * `loadDeviceContentLeaves` and `loadAuthoredDeviceSections` each document
+   * that a failed read surfaces rather than reading as "the tenant authored
+   * nothing" — the whole reason /build stopped answering 422 NO_AUTHORED_CONTENT
+   * ("author section content before exporting") over a read that had failed, and
+   * /filing-readiness stopped reporting 0% with every section missing.
+   *
+   * That rule lived in a comment inside a try/catch that only rethrew, and the
+   * one test named for it covers `resolveDeviceContentScope`, a different
+   * function. Swallowing the error in either loader — the exact regression the
+   * comment warned about — broke nothing. Now it does.
+   */
+  it('loadDeviceContentLeaves: a failed governed read throws — it is never an empty content set', async () => {
+    const failing = {
+      async query() {
+        throw new Error('connection reset while reading c2c_documents');
+      },
+    } as unknown as DeviceContentClient;
+    await expect(
+      loadDeviceContentLeaves(ORG, { programId: PROGRAM, client: failing }),
+    ).rejects.toThrow(/connection reset/);
+  });
+
+  it('loadAuthoredDeviceSections: a failed governed read throws — it is never an empty section set', async () => {
+    const failing = {
+      async query() {
+        throw new Error('connection reset while reading c2c_document_sections');
+      },
+    } as unknown as DeviceContentClient;
+    await expect(
+      loadAuthoredDeviceSections(ORG, { programId: PROGRAM, client: failing }),
+    ).rejects.toThrow(/connection reset/);
+  });
+
+  it('the section read failing after the document resolved still surfaces', async () => {
+    // The two-query shape means the failure can land on either call. A document
+    // that resolves and a section read that then dies is the case a single
+    // top-level try/catch would have flattened into "no content".
+    const halfFailing = {
+      async query(sql: string) {
+        if (/FROM c2c_documents/.test(sql)) return { rows: [{ id: 'doc_1' }] } as never;
+        throw new Error('statement timeout reading sections');
+      },
+    } as unknown as DeviceContentClient;
+    await expect(
+      loadDeviceContentLeaves(ORG, { programId: PROGRAM, client: halfFailing }),
+    ).rejects.toThrow(/statement timeout/);
+    await expect(
+      loadAuthoredDeviceSections(ORG, { programId: PROGRAM, client: halfFailing }),
+    ).rejects.toThrow(/statement timeout/);
+  });
+
+  it('a FAILED governed read is not an empty one: it surfaces, never falls back org-wide', async () => {
+    // The catch here set authored=false, and the fallback then returned the
+    // LEGACY scope with documentId undefined — every cerv2_510k_sections row in
+    // the organization. A timeout while assembling program A's package
+    // assembled it from every device in the org instead, and /build's success
+    // response does not echo deviceContentSource, so nothing showed it.
+    const failing = {
+      async query() {
+        throw new Error('connection reset while reading c2c_documents');
+      },
+    } as unknown as DeviceContentClient;
+    await expect(
+      resolveDeviceContentScope(ORG, { programId: PROGRAM, documentId: 4, client: failing }),
+    ).rejects.toThrow(/connection reset/);
   });
 
   it('names the store that answered', () => {

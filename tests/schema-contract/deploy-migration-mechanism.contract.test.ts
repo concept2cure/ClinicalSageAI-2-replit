@@ -45,6 +45,98 @@ describe('deploy migration mechanism', () => {
       expect(dockerfile).toMatch(pattern);
     });
 
+    /*
+     * THE SAME OMISSION, ONE DIRECTORY OVER, AND IT KILLED THE PRODUCT'S
+     * HEADLINE CAPABILITY.
+     *
+     * The preamble above says a deleted COPY line "breaks the deploy path
+     * without breaking any test that exercises application behaviour". That is
+     * exactly what had happened to `assets/`. The production stage copied six
+     * paths and none of them was it, so in every containerized deploy —
+     * deploy-aws.yml builds this file, and both compose files build it for the
+     * self-hosted SKU — the official FDA eSTAR templates were simply not on
+     * disk. `listVendoredTemplates()` returned [], every produce answered 422,
+     * and the blocker the client read was:
+     *
+     *   "Cannot produce a submittable eSTAR: the official template
+     *    eSTAR-510k-non-ivd.pdf is not vendored. Place it in
+     *    assets/estar-templates/ (or set ESTAR_TEMPLATE_DIR)."
+     *
+     * — an instruction naming a path inside a container the filer does not
+     * have. Reproduced by resolving the drop-point against a container-shaped
+     * tree: `filled: false`. The whole official-eSTAR path worked only from a
+     * repo checkout, and no deployment surface set the ESTAR_TEMPLATE_DIR
+     * escape hatch that would have covered for it.
+     *
+     * This assertion is DERIVED, not a hardcoded list: it finds every
+     * cwd-relative runtime drop-point in the server source and requires the
+     * image to ship its root. A new drop-point added later is covered the day
+     * it is written, without anyone remembering to come back here.
+     */
+    it('ships every vendored-artifact drop-point the server reads from disk', () => {
+      // Derived, not a hardcoded list: every `process.cwd(), 'assets/…'` in the
+      // server source must have its root in the image. A drop-point added later
+      // is covered the day it is written. Scoped to `assets/` because that is
+      // the vendored, read-only, committed tree — runtime WRITE directories
+      // (uploads, output, tmp, logs) are created on demand and must not be
+      // copied, and conflating the two would make this assertion wrong.
+      const dropPoints = new Set<string>();
+      const walk = (dir: string) => {
+        for (const entry of fs.readdirSync(path.join(REPO_ROOT, dir), { withFileTypes: true })) {
+          const rel = path.join(dir, entry.name);
+          if (entry.isDirectory()) {
+            if (entry.name === 'node_modules' || entry.name === '__tests__') continue;
+            walk(rel);
+          } else if (/\.(ts|js|mjs)$/.test(entry.name) && !/\.test\.[tj]s$/.test(entry.name)) {
+            for (const m of read(rel).matchAll(/process\.cwd\(\),\s*'(assets\/[^']+)'/g)) {
+              dropPoints.add(m[1]);
+            }
+          }
+        }
+      };
+      walk('server');
+
+      // The scan must find something, or this passes by finding nothing to
+      // check — the shape of a gate that has only ever been seen to pass.
+      expect(
+        [...dropPoints].sort(),
+        'no assets/ drop-points found in server source — the scan is broken',
+      ).toEqual(expect.arrayContaining(['assets/estar-templates', 'assets/ectd-dtd', 'assets/ectd-schema']));
+
+      expect(
+        dockerfile,
+        'the server reads vendored agency artifacts out of assets/ at runtime, so the production image must COPY it',
+      ).toMatch(/COPY --from=builder \/app\/assets \.\/assets/);
+
+      // Shipping the directory is no use if the artifacts are not in it. Only
+      // the REQUIRED drop-points are asserted present: `assets/tessdata` is one
+      // of three candidates the OCR service probes with existsSync and handles
+      // being absent, so requiring it would be wrong.
+      for (const dp of ['assets/estar-templates', 'assets/ectd-dtd', 'assets/ectd-schema']) {
+        const dir = path.join(REPO_ROOT, dp);
+        expect(fs.existsSync(dir), `${dp} is read at runtime but not in the repo`).toBe(true);
+        expect(fs.readdirSync(dir).length, `${dp} is shipped but empty`).toBeGreaterThan(0);
+      }
+    });
+
+    it('the vendored eSTAR templates and their checksums survive .dockerignore', () => {
+      // .dockerignore excludes *.md, which is only the README in this tree. If
+      // it ever excluded the PDFs or checksums.txt, the COPY above would ship an
+      // empty directory and template integrity would fail closed on every
+      // produce — the honest failure, but still a dead capability.
+      const ignore = read('.dockerignore')
+        .split('\n')
+        .map((l) => l.trim())
+        .filter((l) => l && !l.startsWith('#'));
+      for (const pattern of ['*.pdf', 'assets', 'assets/', '*.txt', 'checksums.txt']) {
+        expect(ignore, `.dockerignore must not exclude ${pattern}`).not.toContain(pattern);
+      }
+      // And the files are actually committed, not gitignored build output.
+      for (const f of ['eSTAR-510k-non-ivd.pdf', 'eSTAR-510k-ivd.pdf', 'checksums.txt']) {
+        expect(fs.existsSync(path.join(REPO_ROOT, 'assets/estar-templates', f)), f).toBe(true);
+      }
+    });
+
     it('exposes the migration entrypoint as an npm script', () => {
       const pkg = JSON.parse(read('package.json'));
       expect(pkg.scripts['db:migrate:deploy']).toBe('node scripts/db/deploy-migrate.mjs');

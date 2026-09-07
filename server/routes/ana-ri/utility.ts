@@ -17,7 +17,7 @@ import {
 } from '../../services/ana-ri/enforcement.js';
 import { decisionLifecycleService } from '../../services/decision-lifecycle-service.js';
 import { getSinceLastVisit } from '../../services/ana/since-last-visit.js';
-import { getAgentActivity } from '../../services/ana/agent-activity.js';
+import { loadAgentActivity } from '../../services/ana/agent-activity.js';
 import { resolveDriveState } from '../../services/ana-ri/live-drive.js';
 import { executeCommands, type CommandContext } from '../../services/ana-ri/command-executor.js';
 import {
@@ -236,8 +236,9 @@ export function mountUtilityRoutes(router: Router): void {
   // ─────────────────────────────────────────────────────────────────────────
   // GET /api/ana-ri/agent-activity — the live agent surface: the tenant's
   // active / stalled / recently-finished background deep investigations, for a
-  // live dashboard panel to poll. Org-scoped; fail-soft (empty summary, not an
-  // error, when nothing is running or the table is absent).
+  // live dashboard panel to poll. Org-scoped. Fails CLOSED: a read that throws
+  // (table absent, database down) is a 500 the panel renders as a failed
+  // read, never an empty queue presented as "nothing is running".
   // ─────────────────────────────────────────────────────────────────────────
   router.get('/agent-activity', async (req: Request, res: Response) => {
     const { numericOrgId } = extractRequestContext(req);
@@ -245,7 +246,7 @@ export function mountUtilityRoutes(router: Router): void {
       return sendError(res, 401, 'Organization context required', null, 'NO_ORG_CONTEXT');
     }
     try {
-      const summary = await getAgentActivity(numericOrgId);
+      const summary = await loadAgentActivity(numericOrgId);
       return sendSuccess(res, summary);
     } catch (error: any) {
       return sendError(res, 500, error?.message || 'Failed to load agent activity', null, 'AGENT_ACTIVITY_FAILED');

@@ -73,6 +73,7 @@ export interface AssessPathwayInput {
   /** PMA only: application/supplement type (defaults to 'original'). */
   pmaSubmissionType?: PmaSubmissionType;
   /** PreSTAR Q-Sub only: sub-type (defaults to 'pre_submission'). */
+  /** Required for prestar_q_sub; the mapper refuses to assess a Q-Sub without it. */
   qSubType?: QSubType;
   /**
    * eSTAR only: the device's answers to the seven intake flags. Sections

@@ -211,8 +211,21 @@ const FIVE13G_SLOTS: SlotDef[] = [
 
 function registryFor(type: PreStarSubmissionType, qSubType?: QSubType): SlotDef[] {
   switch (type) {
-    case 'q_sub':
-      return Q_SUB_SLOTS[qSubType ?? 'pre_submission'];
+    case 'q_sub': {
+      // The sub-types carry genuinely different mandatory sections: a
+      // Submission Issue Request requires a deficiency reference, an
+      // Informational Meeting requires an information package and no
+      // questions. Defaulting an unstated sub-type to Pre-Submission scored an
+      // SIR complete while missing the reference to FDA's own deficiencies.
+      if (!qSubType) {
+        throw new Error(
+          'A Q-Submission cannot be assessed without its sub-type (pre_submission, submission_issue_request, ' +
+            'informational_meeting, study_risk_determination, pma_day_100_meeting, accessory_classification_request); ' +
+            'each carries different mandatory sections.',
+        );
+      }
+      return Q_SUB_SLOTS[qSubType];
+    }
     case 'ide':
       return IDE_SLOTS;
     case '513g':
@@ -238,14 +251,14 @@ function evalSlot(slot: SlotDef, leaves: PreStarInputLeaf[]): PreStarSlotStatus 
 export interface MapToPreStarInput {
   leaves: PreStarInputLeaf[];
   submissionType: PreStarSubmissionType;
-  /** Required when submissionType is 'q_sub'; defaults to 'pre_submission'. */
+  /** Required when submissionType is 'q_sub' — refused when absent, never defaulted. */
   qSubType?: QSubType;
 }
 
 /** Map canonical leaves onto the PreSTAR section structure + completeness report. */
 export function mapToPreStar(input: MapToPreStarInput): PreStarResult {
   const leaves = Array.isArray(input.leaves) ? input.leaves : [];
-  const qSubType = input.submissionType === 'q_sub' ? input.qSubType ?? 'pre_submission' : undefined;
+  const qSubType = input.submissionType === 'q_sub' ? input.qSubType : undefined;
   const registry = registryFor(input.submissionType, qSubType);
   const sections = registry.map((s) => evalSlot(s, leaves));
   const requiredSections = sections.filter((s) => s.required);

@@ -179,6 +179,14 @@ jobs:
         if: "!cancelled() && steps.install.conclusion == 'success'"
         run: npm run ci:writerless-stores
 
+      - name: Guardrails — the document alias map holds no attributes
+        if: "!cancelled() && steps.install.conclusion == 'success'"
+        # c2c_document_aliases is identity only (Document Identity Contract
+        # slice C2, ledger L10). The registry that also owned title, status and
+        # placement was built once and reverted; the way it comes back is one
+        # reasonable-looking column at a time, and this says no to each.
+        run: npm run ci:document-alias-attribute-free
+
       - name: Guardrails — every artifact producer emits a provenance event
         if: "!cancelled() && steps.install.conclusion == 'success'"
         # A write to concept2cure_artifacts is a document the platform builds;
@@ -238,6 +246,35 @@ jobs:
         if: "!cancelled() && steps.install.conclusion == 'success'"
         run: node scripts/ci/check-i18n-integrity.mjs
 
+      # ── Honest-state gates ──────────────────────────────────────────────────
+      # These five lived only in pr-checks.yml, which runs on pull_request — and
+      # under CLAUDE.md Rule 0 there are no pull requests, so they had never
+      # once run in CI on the trunk. Every catch they made was someone running
+      # them by hand. They run here, on every push, like the rest.
+      - name: Guardrails — surfaces are discoverable, or declared not to be
+        if: "!cancelled() && steps.install.conclusion == 'success'"
+        run: npm run ci:surface-discoverability
+
+      - name: Guardrails — no API route or table name in user-visible copy
+        if: "!cancelled() && steps.install.conclusion == 'success'"
+        run: npm run ci:internals-in-copy
+
+      - name: Guardrails — no clearance copy chosen by an empty collection
+        if: "!cancelled() && steps.install.conclusion == 'success'"
+        run: npm run ci:empty-state-honesty
+
+      - name: Guardrails — no control promising an action it only asks about
+        if: "!cancelled() && steps.install.conclusion == 'success'"
+        run: npm run ci:action-overclaim
+
+      - name: Guardrails — no success message before the response is checked
+        if: "!cancelled() && steps.install.conclusion == 'success'"
+        run: npm run ci:success-before-ok
+
+      - name: Guardrails — no invented signer or applicant identity
+        if: "!cancelled() && steps.install.conclusion == 'success'"
+        run: npm run ci:fabricated-identity
+
       - name: Guardrails — audit_logs fixtures accept the audit writer's columns
         if: "!cancelled() && steps.install.conclusion == 'success'"
         # The chained audit write is fail-closed: the §11.10(e) row and the
@@ -287,6 +324,15 @@ jobs:
         # 3:1 non-text floor.
         run: npm run ci:token-contrast
 
+      - name: Guardrails — theme aliases frozen to their light values
+        if: "!cancelled() && steps.install.conclusion == 'success'"
+        # A custom property is substituted where it is DECLARED, and :root is
+        # never .dark — so `--ink: var(--text-100)` at :root keeps the LIGHT
+        # value for the whole dark theme while every call site still reads
+        # var(--ink) and looks theme-aware. Found five times in one session,
+        # including once in the fix for another instance of itself.
+        run: npm run ci:frozen-theme-aliases
+
       - name: Guardrails — tenant-isolation in raw SQL (no regressions)
         if: "!cancelled() && steps.install.conclusion == 'success'"
         run: npm run ci:tenant-isolation:no-regression
@@ -313,6 +359,22 @@ jobs:
       - name: Guardrails — workflows must not invoke files that do not exist
         if: "!cancelled() && steps.install.conclusion == 'success'"
         run: npm run ci:workflow-targets
+
+      # A required security scan that gets cancelled by the next push produces
+      # no release evidence for the commit it was meant to certify — 74 of the
+      # last 100 canonical-branch CodeQL runs, before codeql.yml and
+      # semgrep.yml were keyed per-SHA. The guard renders each policy-required
+      # workflow's concurrency group for two commits on the canonical branch
+      # and refuses if they collide while cancel-in-progress is on.
+      - name: Guardrails — required workflows keep a per-commit run on the canonical branch
+        if: "!cancelled() && steps.install.conclusion == 'success'"
+        run: npm run ci:required-workflow-concurrency
+
+      # The guard's own detection logic is code that can regress; the self-test
+      # feeds it the exact shape that shipped and requires a refusal.
+      - name: Guardrails — concurrency guard rejects simulated drift
+        if: "!cancelled() && steps.install.conclusion == 'success'"
+        run: npm run ci:required-workflow-concurrency:self-test
 
       - name: Guardrails — ECS deploy uses pinned task-def revisions (rollback safety)
         if: "!cancelled() && steps.install.conclusion == 'success'"
@@ -725,15 +787,25 @@ jobs:
           TEST_DATABASE_URL: postgresql://postgres@localhost:5432/concept2cure-ri_test
 
   coverage:
-    name: Coverage (advisory)
+    name: Coverage (ratchet)
     runs-on: ubuntu-latest
     needs: lint
-    # Closes the GA testing finding "never measures coverage". Runs the vitest
-    # suite with the v8 coverage provider against a real Postgres so the
-    # DB-backed paths are counted, and reports the numbers every run. Advisory
-    # for now (thresholds overridden to 0 in test:coverage so it never blocks) —
-    # the 70/60/70/70 target in vitest.config.ts is the goal; once the suite
-    # reaches it, drop the threshold overrides in test:coverage to enforce.
+    # Runs the vitest suite with the v8 coverage provider against a real
+    # Postgres so the DB-backed paths are counted, then ENFORCES that coverage
+    # has not gone down.
+    #
+    # It used to only measure. The run passed --coverage.thresholds.*=0 AND
+    # carried continue-on-error, so the job could not fail twice over; the GA
+    # readiness report listed it as outstanding with the note that it
+    # "measures, it never blocks". That is a gate that has only ever been seen
+    # to pass.
+    #
+    # Enforcing the 70/60/70/70 target in vitest.config.ts today would fail
+    # every build until thousands of tests exist, so it would be reverted and
+    # the job would go back to blocking nothing. Instead the ratchet pins what
+    # the suite actually achieves and refuses a DROP — enforceable immediately,
+    # and coverage can only rise toward the target. Same measure-freeze-improve
+    # pattern as the eslint, tenant-resolver and typecheck baselines.
     services:
       postgres:
         image: pgvector/pgvector:pg15
@@ -779,18 +851,24 @@ jobs:
         run: npm install --no-save @vitest/coverage-v8@4.1.7
 
       - name: Measure coverage
-        # Inlined (not a package.json script) so package.json stays unchanged —
-        # this is an advisory CI-only measurement. Thresholds overridden to 0 so
-        # it reports actual coverage every run without ever blocking; the
-        # 70/60/70/70 target in vitest.config.ts is the goal to enforce later.
-        # continue-on-error: this job MEASURES coverage; it must never fail the
-        # PR (test pass/fail is owned by the Test job, not this one).
+        # continue-on-error STAYS on this step, deliberately: test pass/fail is
+        # owned by the Test job, and a flaky test must not be reported as a
+        # failure twice. vitest's own thresholds stay at 0 for the same reason —
+        # the enforcement lives in the ratchet step below, which is the thing
+        # this job is allowed to fail on. json-summary is what the ratchet reads.
         continue-on-error: true
-        run: NODE_OPTIONS="--max-old-space-size=4096" npx vitest run --config vitest.config.ts --coverage --coverage.thresholds.lines=0 --coverage.thresholds.functions=0 --coverage.thresholds.branches=0 --coverage.thresholds.statements=0
+        run: NODE_OPTIONS="--max-old-space-size=4096" npx vitest run --config vitest.config.ts --coverage --coverage.reporter=json-summary --coverage.reporter=text-summary --coverage.thresholds.lines=0 --coverage.thresholds.functions=0 --coverage.thresholds.branches=0 --coverage.thresholds.statements=0
         env:
           CI: true
           DATABASE_URL: postgresql://postgres@localhost:5432/concept2cure-ri_test
           TEST_DATABASE_URL: postgresql://postgres@localhost:5432/concept2cure-ri_test
+
+      - name: Coverage may not go down
+        # NO continue-on-error — this is the gate. Fails when any metric falls
+        # more than the ratchet's tolerance below scripts/ci/coverage-baseline.json,
+        # and fails when no summary was produced at all (coverage unverified is
+        # not coverage passed).
+        run: npm run ci:coverage-ratchet
 
       - name: Upload coverage report
         if: always()
@@ -1123,6 +1201,24 @@ jobs:
             exit 1
           fi
           echo "RLS coverage OK: every non-allowlisted org-keyed base table carries tenant_isolation_policy."
+
+      - name: RLS parent-scope delegates exist (the coverage gate depends on them)
+        # The coverage gate above accepts core.can_access_program /
+        # core.can_write_program as isolation for 22 tables across six schemas.
+        # Those functions resolve their delegate from pg_proc AT CALL TIME and
+        # `RETURN TRUE` when none exists — so a database that never provisioned
+        # identity.* fails OPEN silently, with the coverage gate still reporting
+        # full coverage. This asserts the branch cannot fire. Without it the
+        # parent-scope clause would bless a predicate that may decide nothing.
+        run: |
+          set -euo pipefail
+          UNSOUND=$(psql "$DATABASE_URL" -tA -f scripts/db/rls-parent-scope-delegates-check.sql)
+          if [[ -n "$UNSOUND" ]]; then
+            echo "::error::parent-scoped RLS helper(s) fall through to RETURN TRUE on this database:"
+            echo "$UNSOUND"
+            exit 1
+          fi
+          echo "RLS parent-scope delegates OK: every core.* helper a live policy depends on resolves to identity.* or auth.*."
 
       - name: Verify the readiness contract independently
         # deploy-migrate.mjs checks this itself; asserting it again from psql

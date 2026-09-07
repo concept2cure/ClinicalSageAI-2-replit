@@ -18,8 +18,13 @@ vi.mock('../../utils/feature-persistence', () => ({
 
 import haqRouter from '../haq-manager';
 
-function app() {
+/** The router refuses without org context, so the harness supplies it. */
+function app(org: number | null = 7) {
   const a = express();
+  a.use((req, _res, next) => {
+    if (org !== null) (req as any).tenantContext = { organizationId: org };
+    next();
+  });
   a.use('/api/haq-manager', haqRouter);
   return a;
 }
@@ -94,5 +99,78 @@ describe('GET /api/haq-manager/rounds', () => {
     expect(res.status).toBe(200);
     expect(res.body.data).toBeNull();
     expect(res.body.meta.pendingStore).toBe(true);
+  });
+});
+
+/**
+ * The response clock was a memory, not a measurement.
+ *
+ * `clockDays` is a stored field and nothing refreshes it — no endpoint writes a
+ * letter, so whatever was recorded when the letter was logged is what the
+ * HaqManager surface renders, forever, as "**6d** of 14d left". A missed
+ * FDA IR / EMA Day-120 response is precisely what this screen exists to
+ * prevent, and the styling compounded it: `clockDays <= 7` drives the urgency
+ * colour, so a stale 12 stayed calm indefinitely.
+ */
+describe('GET /api/haq-manager/rounds — the response clock is measured, not recalled', () => {
+  const isoDaysFromNow = (n: number) =>
+    new Date(Date.now() + n * 86_400_000).toISOString().slice(0, 10);
+
+  it('counts down from the recorded due date, not the recorded day count', async () => {
+    stub([{ letterId: 'l1', due: isoDaysFromNow(10), clockDays: 6, clockTotal: 14 }], []);
+    const res = await request(app()).get('/api/haq-manager/rounds');
+    const r = res.body.data.rounds[0];
+
+    expect(r.clockDays).toBe(10);
+    expect(r.clockBasis).toBe('days-until-recorded-due-date');
+    // The recorded figure survives as reference, never as "remaining".
+    expect(r.clockDaysRecorded).toBe(6);
+  });
+
+  it('reports a passed deadline as overdue rather than as days remaining', async () => {
+    stub([{ letterId: 'l1', due: isoDaysFromNow(-12), clockDays: 6, clockTotal: 14 }], []);
+    const res = await request(app()).get('/api/haq-manager/rounds');
+
+    expect(res.body.data.rounds[0].clockDays).toBe(-12);
+  });
+
+  it('publishes no countdown when the letter records no due date', async () => {
+    stub([{ letterId: 'l1', clockDays: 6, clockTotal: 14 }], []);
+    const res = await request(app()).get('/api/haq-manager/rounds');
+    const r = res.body.data.rounds[0];
+
+    // Not 6, and not 0 — there is no due date to count towards.
+    expect(r.clockDays).toBeNull();
+    expect(r.clockBasis).toBe('no-due-date-recorded');
+  });
+
+  it('publishes no countdown when the due date does not parse', async () => {
+    stub([{ letterId: 'l1', due: 'within 30 days of receipt', clockDays: 6, clockTotal: 14 }], []);
+    const res = await request(app()).get('/api/haq-manager/rounds');
+
+    expect(res.body.data.rounds[0].clockDays).toBeNull();
+  });
+});
+
+/**
+ * The org resolver ended `|| 1`.
+ *
+ * Every other governed route in this repository refuses without org context.
+ * This one read and wrote ORGANIZATION 1's health-authority questions — a
+ * request with no tenant on it did not fail, it landed in a real store. The
+ * `/api` auth boundary establishes tenant context ahead of the mount, so the
+ * fallback was reachable only in warn mode or for a principal carrying no
+ * organizationId; neither is a reason to keep a default that writes agency
+ * correspondence into a tenant nobody named.
+ */
+describe('the HAQ router refuses without organization context', () => {
+  it('403s rather than defaulting to organization 1', async () => {
+    stub([{ letterId: 'l1' }], []);
+    const res = await request(app(null)).get('/api/haq-manager/rounds');
+
+    expect(res.status).toBe(403);
+    expect(res.body.error.code).toBe('ORG_REQUIRED');
+    // Nothing was read on somebody else's behalf.
+    expect(queryMock).not.toHaveBeenCalled();
   });
 });

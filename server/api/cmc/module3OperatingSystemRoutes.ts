@@ -6,27 +6,15 @@ import {
   summarizeSectionDiff,
   createSourceHash,
 } from '../../services/cmc-module3-compiler';
-import { impactedSectionsForSourceType } from '../../services/module3Composer';
-import {
-  composeAllSections,
-  composePassFailureMessage,
-  composeSingleSection,
-  deterministicJsonFor,
-  failedPassForSectionKey,
-  loadCanonicalSources,
-  persistComposedSection,
-  NO_CANONICAL_SOURCES_ERROR,
-  NO_CANONICAL_SOURCES_HINT,
-} from '../../services/cmc/module3-section-recompose';
+import { CMC_SOURCE_TYPES, impactedSectionsForSourceType } from '../../services/module3Composer';
+import { compiledRecordOf, composeProjectModule3, persistComposedSection } from '../../services/cmc/module3-compile';
 import { detectContradictions, deriveImpactTasks } from '../../services/cmc-impact-contradiction-engine';
-import { readContradictionRegisters } from '../../services/cmc/contradiction-registers';
 import { syncContradictionTasks } from '../../services/cmc/contradiction-tasks';
+import { readContradictionRegisters } from '../../services/cmc/contradiction-registers';
 import { buildCanonicalGovernedState } from '../../services/governed-ana-execution.js';
-import { evaluateFinalExportGate } from '../../services/cmc/final-export-gate';
-import {
-  placeModule3IntoSubmission,
-  type PlaceModule3Result,
-} from '../../services/cmc/place-module3-into-submission';
+import { evaluateFinalExportGate, evaluateModule3GovernedState } from '../../services/cmc/final-export-gate';
+import { readCompiledRecord, type CompiledRecordStatus } from '../../services/cmc/compiled-record';
+import { placeModule3IntoSubmission } from '../../services/cmc/place-module3-into-submission';
 import { bridgeCompileToArtifact } from '../../services/module3-convergence-service';
 import { verifyReauth, recordGovernedAction } from '../../routes/c2c/actions';
 import {
@@ -46,22 +34,9 @@ const router = express.Router();
 const logger = createScopedLogger('cmc-module3-os');
 
 const upsertSourceObjectSchema = z.object({
-  sourceType: z.enum([
-    'drug_substance',
-    'drug_product',
-    'specification',
-    'method',
-    'stability',
-    'batch',
-    'change_control',
-    'comparability',
-    'manufacturing_process',
-    'characterization',
-    'reference_standard',
-    'container_closure',
-    'excipient',
-    'qc_result',
-  ]),
+  /* Derived from the composer's own list — the enum here used to be a
+     hand-copied subset that refused five types the composer requires. */
+  sourceType: z.enum(CMC_SOURCE_TYPES),
   sourceKey: z.string().min(1),
   sourcePayload: z.record(z.any()),
   version: z.number().int().positive().optional(),
@@ -70,6 +45,23 @@ const upsertSourceObjectSchema = z.object({
 const resolveContradictionSchema = z.object({
   resolutionNote: z.string().min(3),
 });
+
+/**
+ * Why an approval is refused on an incomplete compiled record, in the signer's
+ * own terms: which section, how complete, which inputs are still missing, and
+ * what to do about it. Rendered verbatim by the surface.
+ */
+function incompleteSectionRefusal(sectionKey: string, record: CompiledRecordStatus): string {
+  const verdict =
+    record.completeness == null
+      ? `§${sectionKey} has no compiled completeness record and cannot be approved.`
+      : `§${sectionKey} is ${record.completeness}% complete and cannot be approved.`;
+  const remedy =
+    record.missingInputs.length > 0
+      ? ` Missing required inputs: ${record.missingInputs.join(', ')}. Record them and recompile.`
+      : ' Recompile the section so the compiler records what it establishes.';
+  return verdict + remedy;
+}
 
 function getOrgId(req: express.Request): number {
   const orgId = parseInt(
@@ -130,13 +122,21 @@ router.get('/sections/:projectId', async (req, res) => {
     const pool = getPool();
     const { rows } = await pool.query(
       `SELECT section_key as "sectionKey", section_path as "sectionPath", stale, stale_reason as "staleReason",
-              approval_state as "approvalState", updated_at as "updatedAt"
+              approval_state as "approvalState", updated_at as "updatedAt", deterministic_json as "deterministicJson"
        FROM cmc_module3_sections
        WHERE organization_id = $1 AND project_id = $2
        ORDER BY section_key`,
       [orgId, projectId]
     );
-    return res.json({ success: true, data: rows });
+    /* The compiler's completeness and missing inputs travel with every row,
+       read by the one rule the approve route and the export gate apply — so a
+       surface can show the signer what those two will refuse before they sign.
+       The compiled blob itself stays behind: this is a register, not the dossier. */
+    const data = rows.map(({ deterministicJson, ...row }: Record<string, unknown>) => {
+      const record = readCompiledRecord({ deterministicJson });
+      return { ...row, completeness: record.completeness, missingInputs: record.missingInputs };
+    });
+    return res.json({ success: true, data });
   } catch (error) {
     if ((error instanceof Error ? error.message : String(error)).includes('Organization context required')) {
       return res.status(401).json({ success: false, error: 'Organization context required' });
@@ -152,57 +152,31 @@ router.post('/compile/:projectId', async (req, res) => {
     const orgId = getOrgId(req);
     const projectIdRaw = req.params.projectId; const projectId = Array.isArray(projectIdRaw) ? projectIdRaw[0] : (projectIdRaw ?? "");
     await client.query('BEGIN');
-    const sources = await loadCanonicalSources(client, orgId, projectId);
 
-    // Refuse to compile from nothing.
-    //
-    // composeModule3FromCanonicalSources is MODULE3_SECTION_RULES.map(...) — it
-    // emits all 17 sections unconditionally, so zero sources still yields 17
-    // bodies reading "has no source data available", with completeness 0 and no
-    // lineage. The upsert below then writes `stale = false, stale_reason = NULL`
-    // and does not touch approval_state, so those empty bodies land marked
-    // not-stale over whatever approval state was already there — which is
-    // exactly what canFinalizeExport reads before releasing a Module 3.
-    //
-    // Compiling a project that has no canonical sources is never a legitimate
-    // request; it is either a mistake or a probe. 409 says so, instead of
-    // manufacturing seventeen empty-but-clean sections. The AnA command handler
-    // already guards this way (server/services/ana-ri/module3-command-handlers.ts).
+    /* One composition for the project — core sections, emittable 3.2.A
+       appendices and 3.2.R for the recorded region — and one persistence per
+       section (row, lineage, provenance), shared with /refresh and AnA's
+       refresh so no caller can write a section record the composer did not
+       produce. */
+    const { sources, sections: compiled } = await composeProjectModule3(client, orgId, projectId);
+
+    // Refuse to compile from nothing. Zero sources would still yield seventeen
+    // bodies reading "has no source data available" at completeness 0, landed
+    // not-stale over whatever approval state was already there — exactly what
+    // the export gate reads. Compiling a project with no canonical sources is
+    // never a legitimate request; 409 says so.
     if (sources.length === 0) {
       await client.query('ROLLBACK');
       return res.status(409).json({
         success: false,
-        error: NO_CANONICAL_SOURCES_ERROR,
-        hint: NO_CANONICAL_SOURCES_HINT,
+        error: 'No canonical source objects for this project — nothing to compile.',
+        hint: 'Upsert source objects via POST /api/cmc/module3-os/source-objects/:projectId first.',
       });
     }
 
-    /* Core (S/P/3.1/3.3) + emittable 3.2.A appendices + 3.2.R for the region the
-       linked submission spine records. The rules for all three live in
-       services/cmc/module3-section-recompose — one composition, shared with
-       build-section, refresh and the AnA stale-refresh command, so those paths
-       cannot drift into emitting a different Module 3 than this one.
-
-       Composition READS on the pool, not on `client`: the regulatory_programs
-       lookup behind the 3.2.R pass is best-effort, and a failed statement inside
-       this transaction would abort it — the upsert below would then fail with
-       "current transaction is aborted", hiding the real cause. A pass that could
-       not run comes back in `composeSkips` and is reported to the caller rather
-       than showing up as a silently shorter Module 3. */
-    const { sections: compiled, skipped: composeSkips } = await composeAllSections(pool, orgId, projectId, sources);
-
+    const actorId = String((req as any).user?.id || 'system');
     for (const section of compiled) {
-      /* Recompiling does NOT reset approval_state: a newly inserted row is
-         'draft' anyway, and an existing approval is left to the refresh path
-         (which un-approves deliberately) rather than silently dropped here. */
-      await persistComposedSection(client, {
-        orgId,
-        projectId,
-        section,
-        actorId: (req as any).user?.id,
-        eventType: 'compiled',
-        resetApprovalToDraft: false,
-      });
+      await persistComposedSection(client, orgId, projectId, section, { actorId, event: 'compiled' });
     }
     await client.query('COMMIT');
 
@@ -240,7 +214,7 @@ router.post('/compile/:projectId', async (req, res) => {
       }
     }
 
-    res.json({ success: true, compiledCount: compiled.length, sections: compiled, composeSkips, bridgedArtifacts, bridgeSkips });
+    res.json({ success: true, compiledCount: compiled.length, sections: compiled, bridgedArtifacts, bridgeSkips });
   } catch (error) {
     await client.query('ROLLBACK');
     if ((error instanceof Error ? error.message : String(error)).includes('Organization context required')) {
@@ -289,11 +263,14 @@ router.post('/contradictions/:projectId', async (req, res) => {
     const orgId = getOrgId(req);
     const projectIdRaw = req.params.projectId; const projectId = Array.isArray(projectIdRaw) ? projectIdRaw[0] : (projectIdRaw ?? "");
     const pool = getPool();
-    /* One tenant-scoped sweep, shared with the AnA command handler
-       (services/cmc/contradiction-registers). It carries the org on every read
-       and uses the columns the tables actually have; the second copy that lived
-       in the command handler filtered by project alone, which on the shared
-       uuid space was a cross-tenant read. */
+    /* The ONE tenant-scoped register sweep
+       (services/cmc/contradiction-registers). This body used to live here and
+       in services/ana-ri/module3-command-handlers.ts, and the two copies had
+       already drifted: this one still carried `OR tenant_id IS NULL` on
+       quality_specifications — which made every legacy row readable by every
+       organization — and bound ONE parameter against cmc_batch_records'
+       `tenant_id TEXT` and `organization_id INTEGER`, which Postgres rejects
+       with `operator does not exist: integer = text`. */
     const registers = await readContradictionRegisters(pool, { organizationId: orgId, projectId });
 
     const contradictions = detectContradictions(registers);
@@ -427,70 +404,45 @@ router.get('/readiness/:projectId', async (req, res) => {
   try {
     const orgId = getOrgId(req);
     const projectIdRaw = req.params.projectId; const projectId = Array.isArray(projectIdRaw) ? projectIdRaw[0] : (projectIdRaw ?? "");
-    const pool = getPool();
-    const [sections, contradictions] = await Promise.all([
-      pool.query(
-        `SELECT approval_state, stale
-         FROM cmc_module3_sections
-         WHERE organization_id = $1 AND project_id = $2`,
-        [orgId, projectId]
-      ),
-      pool.query(
-        `SELECT severity, status
-         FROM cmc_contradictions
-         WHERE organization_id = $1 AND project_id = $2`,
-        [orgId, projectId]
-      ),
-    ]);
 
-    const totalSections = sections.rows.length;
-    const approvedSections = sections.rows.filter((r: any) => r.approval_state === 'approved').length;
-    const staleSections = sections.rows.filter((r: any) => Boolean(r.stale)).length;
-    const openCriticalContradictions = contradictions.rows.filter(
-      (r: any) => r.severity === 'critical' && r.status !== 'resolved'
-    ).length;
+    // The same evaluation the final-export gate runs, so this read cannot be
+    // more optimistic than the gate it previews. It used to compute
+    // `exportReady` from approvals alone and stamp a degraded governed state
+    // beside it — reporting "export ready" in the exact state where the gate
+    // fails closed and refuses.
+    const { state } = await evaluateModule3GovernedState({
+      orgId,
+      projectId,
+      actorId: (req as any).user?.id || 'system',
+    });
 
-    const exportReady = totalSections > 0 && approvedSections === totalSections && staleSections === 0 && openCriticalContradictions === 0;
-
-    let canonicalGovernedState: Record<string, any> | null = null;
-    try {
-      const unresolvedContradictions = contradictions.rows.filter((r: any) => r.status !== 'resolved').length;
-      canonicalGovernedState = await buildCanonicalGovernedState({
-        context: {
-          organizationId: String(orgId),
-          projectId: String(projectId),
-          actorId: (req as any).user?.id || 'system',
-          intendedAction: 'export',
-          documentType: 'cmc_module3',
-          ctdSection: '3',
-        },
-        documentState: {
-          hasContent: totalSections > 0,
-          hasEvidence: totalSections > 0,
-          hasBeenReviewed: approvedSections > 0,
-          hasApproval: exportReady,
-          hasPlacement: true,
-          placementValid: true,
-          hasProvenance: true,
-          unresolvedContradictionCount: unresolvedContradictions,
-          criticalContradictionCount: openCriticalContradictions,
-          isStale: staleSections > 0,
-          completenessScore: totalSections > 0 ? approvedSections / totalSections : 0,
-        },
-      });
-    } catch {
-      canonicalGovernedState = { error: 'Canonical governed-state evaluation failed', degraded: true };
-    }
+    const exportReady =
+      state.totalSections > 0 &&
+      state.approvedSections === state.totalSections &&
+      state.staleSections === 0 &&
+      state.openCriticalContradictions === 0 &&
+      state.sectionsWithoutProvenance === 0 &&
+      state.incompleteApprovedSections.length === 0 &&
+      state.governedStateEvaluated &&
+      !state.fabricBlocks &&
+      !state.governedDecisionsBlock;
 
     return res.json({
       success: true,
       data: {
-        totalSections,
-        approvedSections,
-        staleSections,
-        openCriticalContradictions,
+        totalSections: state.totalSections,
+        approvedSections: state.approvedSections,
+        staleSections: state.staleSections,
+        openCriticalContradictions: state.openCriticalContradictions,
+        sectionsWithoutProvenance: state.sectionsWithoutProvenance,
+        // Approved sections whose own compiled record says they are not
+        // complete. An approval is not evidence the content exists.
+        incompleteApprovedSections: state.incompleteApprovedSections,
+        // False means the governed-decision fabric did not return a verdict —
+        // NOT that it looked and cleared the project.
+        governedStateEvaluated: state.governedStateEvaluated,
         exportReady,
-        canonicalGovernedState,
+        canonicalGovernedState: state.canonicalGovernedState,
       },
     });
   } catch (error) {
@@ -612,6 +564,24 @@ router.post('/sections/:projectId/:sectionKey/approve', async (req, res) => {
       if (!section) {
         await client.query('ROLLBACK');
         return res.status(404).json({ success: false, error: 'Section not found' });
+      }
+
+      /* The export gate's rule, applied at the signature. An approval is a
+         claim about content that was reviewed; this section's own compiled
+         record says the content is not there. Found live: 21/21 approved,
+         three at 0% completeness, and the gate refusing the whole export
+         after every signature was already on the ledger. Refuse here, with
+         the same reading the gate uses, so the signer is told NOW — and
+         nothing is written: no version row, no state flip, no governed
+         action, no signature. */
+      const compiledRecord = readCompiledRecord(section);
+      if (!compiledRecord.complete) {
+        await client.query('ROLLBACK');
+        return res.status(409).json({
+          success: false,
+          error: incompleteSectionRefusal(sectionKey, compiledRecord),
+          data: { completeness: compiledRecord.completeness, missingInputs: compiledRecord.missingInputs },
+        });
       }
 
       const verRes = await client.query(
@@ -748,34 +718,15 @@ router.post('/sections/:projectId/:sectionKey/approve', async (req, res) => {
 });
 
 /**
- * POST /sections/:projectId/:sectionKey/refresh — RECOMPOSE one §3.2 section.
+ * Refresh ONE section from the project's canonical sources.
  *
- * "Refresh" means: read the project's canonical source objects, run the same
- * composition the compile route runs, and write the result down — clearing the
- * stale flag because the section now genuinely reflects its sources, and
- * dropping approval back to 'draft' because the signature that was applied was
- * applied to the previous content.
- *
- * It used to mean something else entirely. The handler took
- * `req.body.deterministicJson` — no schema, no re-auth, no attribution — and
- * wrote it verbatim into deterministic_json while clearing stale/stale_reason,
- * never reading cmc_source_objects at all. Two things followed. Any org member
- * could replace a composed section's payload with arbitrary JSON, which the
- * build screen then reported as its completeness/missingInputs (the numbers the
- * QA reviewer reads before applying the Part 11 signature) and which the
- * approve route froze into cmc_module3_section_versions.snapshot_json under a
- * §11.70 binding digest — a signed electronic record whose lineage still named
- * source objects the content had never come from. And with NO body it still
- * cleared stale/stale_reason and logged a 'refreshed' event over unchanged
- * content: the "your source data changed" warning could be dismissed instead of
- * acted on. Because it never touched narrative_text or compiled_hash, the leaf
- * that ships into submission_leaves carried the old narrative while the signed
- * snapshot carried the supplied JSON.
- *
- * A caller-supplied `deterministicJson` is now REFUSED with 400 rather than
- * silently ignored, so any integration relying on the old behaviour learns
- * about the change instead of believing its override landed. (Nothing in
- * client/, server/ or tests/ ever sent one.)
+ * The body is not read. This route used to take `deterministicJson` from the
+ * request and write it verbatim — so a caller could write `completeness: 100,
+ * missingInputs: []` and the approve route and the export gate, which trust
+ * that record as the compiler's verdict, would let an empty section through
+ * to a §11 signature and a placed leaf without a compile. A refreshed record
+ * is only ever what the composer produced; the section returns to draft
+ * because its content changed under any approval it carried.
  */
 router.post('/sections/:projectId/:sectionKey/refresh', async (req, res) => {
   const pool = getPool();
@@ -783,19 +734,7 @@ router.post('/sections/:projectId/:sectionKey/refresh', async (req, res) => {
   try {
     const orgId = getOrgId(req);
     const { projectId, sectionKey } = req.params;
-
-    // Fail closed and LOUDLY on the old override shape — before any read or write.
-    if (req.body && Object.prototype.hasOwnProperty.call(req.body, 'deterministicJson')) {
-      return res.status(400).json({
-        success: false,
-        error:
-          'Refresh recomposes a section from its canonical source objects; it does not accept composed content. Remove `deterministicJson` from the request body.',
-        hint: 'To change what a section says, change the source objects it is composed from (POST /api/cmc/module3-os/source-objects/:projectId), then refresh.',
-      });
-    }
-
     await client.query('BEGIN');
-
     const sectionRes = await client.query(
       `SELECT id, deterministic_json, approval_state FROM cmc_module3_sections
        WHERE organization_id = $1 AND project_id = $2 AND section_key = $3`,
@@ -807,99 +746,58 @@ router.post('/sections/:projectId/:sectionKey/refresh', async (req, res) => {
       return res.status(404).json({ success: false, error: 'Section not found' });
     }
 
-    // Same fail-closed rule the compile route carries: composing from zero
-    // sources yields clean-but-empty bodies and would clear the stale flag over
-    // them. Refusing leaves `stale`/`stale_reason` exactly as they were.
-    const sources = await loadCanonicalSources(client, orgId, projectId);
+    const { sources, sections } = await composeProjectModule3(client, orgId, projectId);
     if (sources.length === 0) {
       await client.query('ROLLBACK');
       return res.status(409).json({
         success: false,
-        error: NO_CANONICAL_SOURCES_ERROR,
-        hint: NO_CANONICAL_SOURCES_HINT,
+        error: 'No canonical source objects for this project — there is nothing to refresh the section from.',
       });
     }
-
-    /* Composition reads on the pool, not on `client`: see the compile route —
-       a best-effort read that fails must not abort this transaction. */
-    const { section: composed, skipped } = await composeSingleSection(pool, orgId, projectId, sectionKey, sources);
+    const composed = sections.find((s) => s.sectionKey === sectionKey);
     if (!composed) {
       await client.query('ROLLBACK');
-      /* "Not in the composition rules" is a verdict about the dossier; a pass
-         that could not RUN is our error. Reporting the second as the first
-         would tell an operator their 3.2.R section does not apply when in fact
-         we never looked. */
-      const failedPass = failedPassForSectionKey(sectionKey, skipped);
-      if (failedPass) {
-        return res.status(503).json({
-          success: false,
-          error: composePassFailureMessage(sectionKey, failedPass),
-        });
-      }
       return res.status(409).json({
         success: false,
-        error: `Section ${sectionKey} is not in the Module 3 composition rules — it cannot be recomposed.`,
+        error: `Section ${sectionKey} is not composable from this project's sources (no rule, or no region), so it cannot be refreshed.`,
       });
     }
 
-    /* The diff the caller is told about — and which is written into the
-       provenance event below — is between what was STORED and the bytes this
-       call actually PERSISTS. It has to be deterministicJsonFor(composed), the
-       same function persistComposedSection writes with: computing it against a
-       shorter payload made the audit record claim a refresh had removed keys
-       (`tables`) that it re-wrote unchanged. */
-    const diffSummary = summarizeSectionDiff(section.deterministic_json, deterministicJsonFor(composed));
-
-    await persistComposedSection(client, {
-      orgId,
-      projectId,
-      section: composed,
-      actorId: (req as any).user?.id,
-      eventType: 'refreshed',
-      // Replacing the content of an approved section un-approves it.
-      resetApprovalToDraft: true,
-      eventPayloadExtra: { diffSummary, priorApprovalState: section.approval_state },
+    const diffSummary = summarizeSectionDiff(section.deterministic_json, compiledRecordOf(composed));
+    const actorId = String((req as any).user?.id || 'system');
+    await persistComposedSection(client, orgId, projectId, composed, {
+      actorId,
+      event: 'refreshed',
+      eventPayload: { diffSummary, priorApprovalState: section.approval_state },
     });
-
     await client.query('COMMIT');
 
-    // Bridge to the governed artifact, as build-section does. A bridge that
-    // could not run is reported, not swallowed.
-    let bridgedArtifact: { artifactId: string; isNew: boolean } | null = null;
-    let bridgeSkip: { reason: string; detail: string } | null = null;
+    /* The governed artifact follows the section, as it does after a compile. */
+    let bridged: { bridged: boolean; reason?: string; detail?: string } = { bridged: false, reason: 'not-attempted' };
     try {
-      const bridged = await bridgeCompileToArtifact(orgId, projectId, composed.sectionKey, {
+      bridged = await bridgeCompileToArtifact(orgId, projectId, composed.sectionKey, {
         narrativeDraft: composed.narrativeDraft,
         tables: composed.tables,
         completeness: composed.completeness,
         missingInputs: composed.missingInputs,
         lineage: composed.lineage,
       }, { createdById: Number((req as any).user?.id) || null });
-      if (bridged.bridged) {
-        bridgedArtifact = { artifactId: bridged.artifactId, isNew: bridged.isNew };
-      } else {
-        bridgeSkip = { reason: bridged.reason, detail: bridged.detail };
-      }
     } catch (bridgeErr) {
-      bridgeSkip = {
-        reason: 'error',
-        detail: bridgeErr instanceof Error ? bridgeErr.message : String(bridgeErr),
-      };
+      bridged = { bridged: false, reason: 'error', detail: bridgeErr instanceof Error ? bridgeErr.message : String(bridgeErr) };
     }
 
     res.json({
       success: true,
       sectionKey,
       state: 'draft',
-      diffSummary,
       completeness: composed.completeness,
       missingInputs: composed.missingInputs,
-      sourceCount: composed.lineage.length,
-      bridgedArtifact,
-      bridgeSkip,
+      diffSummary,
+      artifactBridged: bridged.bridged,
+      ...(bridged.bridged ? {} : { artifactBridgeSkipped: { reason: bridged.reason, detail: bridged.detail } }),
     });
   } catch (error) {
-    try { await client.query('ROLLBACK'); } catch { /* rollback best-effort */ }
+    await client.query('ROLLBACK');
     if ((error instanceof Error ? error.message : String(error)).includes('Organization context required')) {
       return res.status(401).json({ success: false, error: 'Organization context required' });
     }
@@ -937,21 +835,6 @@ router.post('/guard/final-export/:projectId', async (req, res) => {
 });
 
 /**
- * The 409 body for a placement refusal. Two refusals share one status: the
- * final-export gate's own verdict (surfaced verbatim, as the guard endpoint
- * would have), or — when the gate passed but every approved section was
- * unplaceable — the per-section skip reasons. The second case files NOTHING,
- * so it must never answer 200/success: an automated caller reading only
- * `success` would otherwise record "Module 3 filed" over a sequence with no
- * Module 3 leaves in it.
- */
-function placementRefusalBody(result: Extract<PlaceModule3Result, { placed: false }>) {
-  return result.refusedBy === 'nothing-placeable'
-    ? { success: false, error: result.error, skipped: result.skipped }
-    : { success: false, error: result.error, data: result.data };
-}
-
-/**
  * POST /place-into-submission/:projectId — the CMC → IND seam.
  *
  * Places every approved §3.2 section into a sequence of the canonical
@@ -959,9 +842,6 @@ function placementRefusalBody(result: Extract<PlaceModule3Result, { placed: fals
  * canonical renderable leaf source) and a real submission_leaves row at the
  * m-prefixed section code. Refuses outright — before any write — unless the
  * final-export gate passes; the refusal body carries the gate's own verdict.
- * It also refuses (409, with the per-section reasons) when the gate passed but
- * every approved section was skipped: a placement that filed no leaf is a
- * refusal, never a 200 an automated caller could read as "Module 3 filed".
  */
 router.post('/place-into-submission/:projectId', async (req, res) => {
   try {
@@ -992,7 +872,16 @@ router.post('/place-into-submission/:projectId', async (req, res) => {
     });
 
     if (!result.placed) {
-      return res.status(409).json(placementRefusalBody(result));
+      // Each refusal carries a DIFFERENT useful answer, so discriminate rather
+      // than reaching for one shape: the gate refusal carries the governed
+      // state it refused on, and 'nothing-placeable' carries the per-section
+      // reasons nothing could be filed. Dropping the latter would leave the
+      // caller a bare "placed nothing" with no remedy.
+      return res.status(409).json(
+        result.refusedBy === 'final-export-gate'
+          ? { success: false, error: result.error, data: result.data }
+          : { success: false, error: result.error, skipped: result.skipped },
+      );
     }
     return res.json({ success: true, data: result });
   } catch (error) {

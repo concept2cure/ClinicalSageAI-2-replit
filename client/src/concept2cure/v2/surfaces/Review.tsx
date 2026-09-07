@@ -18,6 +18,7 @@ import { notifySurfaceActionReady, useSurfaceActionHandlers } from '../surfaceAc
 import { apiRequest, serverMessage } from '@/lib/queryClient';
 import { AnswerLead } from '../AnswerLead';
 import type { SurfaceViewProps } from '../surfaceViews';
+import { useDialog } from '../useDialog';
 import type { ReviewItem, ReviewComment, ReviewWorkflow, WorkflowStep } from '../fixtures/review-data';
 import { STATUS_TONE, ESIGN_MEANINGS } from '../fixtures/review-data';
 import { assessmentStateFor, hasAnswer } from '../assessmentState';
@@ -140,9 +141,22 @@ function ESignModal({ onClose, item, onSigned }: {
     }
   };
 
+  /* Escape, focus-on-open and focus-return. This is the dialog that records a
+     review decision under an electronic signature, and it shipped with no way
+     out for a keyboard user and no announcement that a dialog had opened. */
+  const dialogRef = useDialog(onClose);
+
   return (
     <div className="esign-bd" onClick={onClose}>
-      <div className="esign-modal" onClick={(e) => e.stopPropagation()}>
+      <div
+        className="esign-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Record review decision"
+        tabIndex={-1}
+        ref={dialogRef}
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="esign-h">
           <span className="ico">{I.lock}</span>
           <span className="t">Record review decision</span>

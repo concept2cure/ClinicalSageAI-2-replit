@@ -91,7 +91,8 @@ export interface CSRSummaryInput {
   studyDesign: string;
   primaryEndpoint: string;
   primaryResult: string;
-  sampleSize: number;
+  /** Enrolled subjects; null when the study record does not carry it (never 0 for "unknown"). */
+  sampleSize: number | null;
   /** ITT analysis population */
   ittPopulation?: number;
   treatmentArms?: string[];
@@ -281,7 +282,13 @@ export function buildM24NonclinicalOverview(ctx: M24BuildContext): M2Summary {
       : ``,
     ``,
     `2.4.5 INTEGRATED OVERVIEW AND CONCLUSIONS`,
-    `Based on the nonclinical program, the safety profile of ${ds} supports the proposed clinical investigational plan. ${gaps.length > 0 ? `Open items: ${gaps.join('; ')}.` : 'No nonclinical issues preclude clinical development.'}`,
+    // The "supports the plan" sentence used to print whenever any nonclinical
+    // study existed, immediately followed by the list of study categories that
+    // did not — the assertion and the gap list contradicted each other in one
+    // paragraph. It is only drawn when nothing is open.
+    gaps.length > 0
+      ? `The nonclinical assessment of ${ds} is incomplete; no conclusion on the proposed clinical investigational plan is drawn pending: ${gaps.join('; ')}.`
+      : `Based on the nonclinical program, the safety profile of ${ds} supports the proposed clinical investigational plan. No nonclinical issues preclude clinical development.`,
   ].filter(Boolean).join('\n');
 
   const tables: GeneratedTable[] = [];
@@ -331,6 +338,40 @@ export function buildM24NonclinicalOverview(ctx: M24BuildContext): M2Summary {
 
 // ── 2.5 Clinical Overview ───────────────────────────────────────────────────
 
+
+/**
+ * SAE and death totals across the study reports, distinguishing "extracted
+ * and zero" from "never extracted". `saeCount`/`deathCount` are optional on
+ * CSRSummaryInput and the canonical project reader does not populate them, so
+ * `c.saeCount || 0` folded every unextracted study into "0 serious adverse
+ * event(s) reported" — the sentence a reviewer reads as "none occurred".
+ */
+function safetyCounts(csrs: CSRSummaryInput[]): {
+  totalSAEs: number;
+  totalDeaths: number;
+  unextracted: number;
+  /** The sentence the summaries print for the safety database. */
+  statement: string;
+  /** The open item to record when any study's counts were never extracted. */
+  gap: string | null;
+} {
+  const unextracted = csrs.filter((c) => typeof c.saeCount !== 'number' || typeof c.deathCount !== 'number').length;
+  const totalSAEs = csrs.reduce((sum, c) => sum + (typeof c.saeCount === 'number' ? c.saeCount : 0), 0);
+  const totalDeaths = csrs.reduce((sum, c) => sum + (typeof c.deathCount === 'number' ? c.deathCount : 0), 0);
+  if (csrs.length > 0 && unextracted > 0) {
+    return {
+      totalSAEs, totalDeaths, unextracted,
+      statement: `SAE and death counts have not been extracted for ${unextracted} of ${csrs.length} study/ies; no integrated SAE or death count is stated until they are.`,
+      gap: `SAE and death counts not extracted for ${unextracted} of ${csrs.length} study/ies`,
+    };
+  }
+  return {
+    totalSAEs, totalDeaths, unextracted,
+    statement: `${totalSAEs} serious adverse event(s) and ${totalDeaths} death(s) reported.`,
+    gap: null,
+  };
+}
+
 /**
  * Build M2.5 Clinical Overview from CSR data.
  * Per ICH M4E(R2), this is the *critical assessment* of the clinical data —
@@ -343,27 +384,51 @@ export function buildM24NonclinicalOverview(ctx: M24BuildContext): M2Summary {
  *   2.5.5 Overview of Safety
  *   2.5.6 Benefits and Risks Conclusions
  */
+/** "n=…" for a study: the recorded size, or an explicit statement that none was recorded. */
+function sampleSizeText(c: Pick<CSRSummaryInput, 'sampleSize'>): string {
+  return typeof c.sampleSize === 'number' ? String(c.sampleSize) : '[sample size not recorded]';
+}
+
+/** Analysis population cell: ITT if recorded, else enrolled, else said to be missing. */
+function populationText(c: Pick<CSRSummaryInput, 'sampleSize' | 'ittPopulation'>): string {
+  const n = c.ittPopulation ?? c.sampleSize;
+  return typeof n === 'number' ? String(n) : '[not recorded]';
+}
+
+/** Studies whose exposure cannot be counted because no size was recorded. */
+function unsizedStudies(csrs: ReadonlyArray<Pick<CSRSummaryInput, 'sampleSize' | 'ittPopulation'>>): number {
+  return csrs.filter(c => typeof (c.ittPopulation ?? c.sampleSize) !== 'number').length;
+}
+
 export function buildM25ClinicalOverview(ctx: M25BuildContext): M2Summary {
   const csrs = ctx.csrs;
   const pivotal = csrs.filter(c => c.phase.startsWith('3'));
   const clinPharm = csrs.filter(c => c.phase.startsWith('1'));
   const controlled = csrs.filter(c => /^[2-3]/.test(c.phase));
   const totalSubjects = csrs.reduce((s, c) => s + (c.ittPopulation || c.sampleSize || 0), 0);
-  const totalSAEs = csrs.reduce((s, c) => s + (c.saeCount || 0), 0);
-  const totalDeaths = csrs.reduce((s, c) => s + (c.deathCount || 0), 0);
+  const safety = safetyCounts(csrs);
 
   const gaps: string[] = [];
   if (csrs.length === 0) gaps.push('no clinical studies available');
+  const unsized = unsizedStudies(csrs);
+  if (unsized > 0) gaps.push(`sample size not recorded for ${unsized} study/ies — the exposure total excludes them`);
   if (clinPharm.length === 0) gaps.push('clinical pharmacology (Phase 1) characterization');
   if (pivotal.length === 0) gaps.push('pivotal (Phase 3) efficacy evidence');
   if (totalSubjects === 0) gaps.push('safety database (no exposure data)');
+  if (safety.gap) gaps.push(safety.gap);
 
   const efficacyShown = pivotal.length > 0;
+  // The benefit-risk conclusion is the sponsor's medical and regulatory
+  // judgment. This used to print "the benefit-risk balance is favorable"
+  // whenever one pivotal study existed, reciting the SAE and death counts in
+  // the same sentence without either gating the word. The counts are stated;
+  // the conclusion is left for a reviewer and recorded as an open item.
+  if (csrs.length > 0 && efficacyShown) gaps.push('benefit-risk conclusion (sponsor medical/regulatory judgment; not drawn automatically)');
   const benefitRisk =
     csrs.length === 0
       ? '[Benefit-risk cannot be concluded — no clinical data]'
       : efficacyShown
-        ? `Efficacy is supported by ${pivotal.length} pivotal study/ies; against a safety database of ${totalSubjects} subjects with ${totalSAEs} serious adverse event(s) and ${totalDeaths} death(s), the benefit-risk balance is favorable for ${ctx.indication}${gaps.length > 0 ? ', pending the open items below' : ''}.`
+        ? `Efficacy evidence: ${pivotal.length} pivotal study/ies. Safety database: ${totalSubjects} subjects. ${safety.statement} [Benefit-risk conclusion for ${ctx.indication} requires the sponsor's medical and regulatory judgment of these data; it is not drawn automatically.]`
         : `Efficacy is not yet established (no pivotal study); the benefit-risk balance cannot be concluded for ${ctx.indication} until controlled efficacy data are available.`;
 
   const narrative = [
@@ -389,12 +454,12 @@ export function buildM25ClinicalOverview(ctx: M25BuildContext): M2Summary {
       ? `Efficacy was demonstrated in ${pivotal.length} pivotal study/ies across ${controlled.length} controlled study/ies:`
       : `[No pivotal efficacy study available — efficacy is not yet established.]`,
     ...pivotal.map(
-      c => `  • ${c.protocolNumber} (Phase ${c.phase}, n=${c.sampleSize}): ${c.primaryEndpoint} — ${c.primaryResult}.`,
+      c => `  • ${c.protocolNumber} (Phase ${c.phase}, n=${sampleSizeText(c)}): ${c.primaryEndpoint} — ${c.primaryResult}.`,
     ),
     ``,
     `2.5.5 OVERVIEW OF SAFETY`,
     csrs.length > 0
-      ? `The safety database comprises ${totalSubjects} subjects exposed to ${ctx.investigationalProduct} across ${csrs.length} study/ies, with ${totalSAEs} serious adverse event(s) and ${totalDeaths} death(s). The detailed safety analysis is in Module 2.7.4.`
+      ? `The safety database comprises ${totalSubjects} subjects exposed to ${ctx.investigationalProduct} across ${csrs.length} study/ies. ${safety.statement} The detailed safety analysis is in Module 2.7.4.`
       : `[No safety database — clinical exposure data missing.]`,
     ``,
     `2.5.6 BENEFITS AND RISKS CONCLUSIONS`,
@@ -415,7 +480,7 @@ export function buildM25ClinicalOverview(ctx: M25BuildContext): M2Summary {
         c.protocolNumber,
         c.phase,
         c.studyDesign,
-        String(c.ittPopulation || c.sampleSize),
+        populationText(c),
         c.primaryEndpoint,
         c.primaryResult,
       ]),
@@ -428,8 +493,8 @@ export function buildM25ClinicalOverview(ctx: M25BuildContext): M2Summary {
       rows: [
         ['Total subjects exposed', String(totalSubjects)],
         ['Studies', String(csrs.length)],
-        ['Serious adverse events', String(totalSAEs)],
-        ['Deaths', String(totalDeaths)],
+        ['Serious adverse events', String(safety.totalSAEs)],
+        ['Deaths', String(safety.totalDeaths)],
       ],
     });
   }
@@ -475,13 +540,16 @@ export function buildM27ClinicalSummary(ctx: M27BuildContext): M2Summary {
     return acc;
   }, {});
   const totalSubjects = csrs.reduce((sum, c) => sum + (c.ittPopulation || c.sampleSize || 0), 0);
-  const totalSAEs = csrs.reduce((sum, c) => sum + (c.saeCount || 0), 0);
-  const totalDeaths = csrs.reduce((sum, c) => sum + (c.deathCount || 0), 0);
+  const safety = safetyCounts(csrs);
+  const controlledCount = csrs.filter(c => c.phase.match(/^[2-3]/)).length;
 
   const gaps: string[] = [];
   if (csrs.length === 0) gaps.push('no CSRs available');
+  const unsized27 = unsizedStudies(csrs);
+  if (unsized27 > 0) gaps.push(`sample size not recorded for ${unsized27} study/ies — the exposure total excludes them`);
   if (!csrs.some(c => c.phase.startsWith('1'))) gaps.push('no Phase 1 (clinical pharmacology) studies');
   if (!csrs.some(c => c.phase.startsWith('3'))) gaps.push('no Phase 3 (pivotal efficacy) studies');
+  if (safety.gap) gaps.push(safety.gap);
 
   const narrative = [
     `MODULE 2.7 — CLINICAL SUMMARY`,
@@ -498,15 +566,17 @@ export function buildM27ClinicalSummary(ctx: M27BuildContext): M2Summary {
       : `[Phase 1 clinical pharmacology data missing — required for NDA/BLA per ICH M4E]`,
     ``,
     `2.7.3 SUMMARY OF CLINICAL EFFICACY`,
-    `Efficacy was evaluated in ${csrs.filter(c => c.phase.match(/^[2-3]/)).length} controlled study/ies. Pivotal trial(s):`,
+    controlledCount > 0
+      ? `Efficacy was evaluated in ${controlledCount} controlled study/ies. Pivotal trial(s):`
+      : `[No controlled efficacy study available — efficacy has not been evaluated]`,
     ...csrs.filter(c => c.phase.startsWith('3')).map(c =>
-      `  • ${c.protocolNumber} (Phase ${c.phase}): ${c.studyDesign}, n=${c.sampleSize}. Primary endpoint (${c.primaryEndpoint}): ${c.primaryResult}.`
+      `  • ${c.protocolNumber} (Phase ${c.phase}): ${c.studyDesign}, n=${sampleSizeText(c)}. Primary endpoint (${c.primaryEndpoint}): ${c.primaryResult}.`
     ),
     ``,
     `Phase distribution: ${Object.entries(phaseCounts).map(([p, n]) => `Phase ${p}: ${n}`).join(', ')}.`,
     ``,
     `2.7.4 SUMMARY OF CLINICAL SAFETY`,
-    `Safety database: ${totalSubjects} subjects exposed across ${csrs.length} study/ies. ${totalSAEs} serious adverse event(s) and ${totalDeaths} death(s) reported.`,
+    `Safety database: ${totalSubjects} subjects exposed across ${csrs.length} study/ies. ${safety.statement}`,
     ``,
     `2.7.4.1 Exposure to the Investigational Drug`,
     `Total exposure: ${totalSubjects} subjects received ${ctx.investigationalProduct}. Exposure-response analysis is provided in Module 5.3.5.`,
@@ -517,10 +587,15 @@ export function buildM27ClinicalSummary(ctx: M27BuildContext): M2Summary {
       : `[AE data not yet integrated]`,
     ``,
     `2.7.4.3 Serious Adverse Events and Deaths`,
-    `${totalSAEs} SAE(s) reported. ${totalDeaths} death(s) — narratives provided in Module 5.3.5.${totalDeaths > 0 ? ' Causality assessments and impact on benefit-risk are discussed in Module 2.5.' : ''}`,
+    safety.gap
+      ? safety.statement
+      : `${safety.totalSAEs} SAE(s) reported. ${safety.totalDeaths} death(s) — narratives provided in Module 5.3.5.${safety.totalDeaths > 0 ? ' Causality assessments and impact on benefit-risk are discussed in Module 2.5.' : ''}`,
     ``,
     `2.7.5 LITERATURE REFERENCES`,
     `See Module 5.4 for the integrated reference list.`,
+    // The open items used to live only on the sibling `gaps` field, which a
+    // consumer of the narrative alone (the authoring tool) never renders.
+    ...(gaps.length > 0 ? [``, `Open items: ${gaps.join('; ')}.`] : []),
   ].join('\n');
 
   const tables: GeneratedTable[] = [{
@@ -530,7 +605,7 @@ export function buildM27ClinicalSummary(ctx: M27BuildContext): M2Summary {
       c.protocolNumber,
       c.phase,
       c.studyDesign,
-      String(c.ittPopulation || c.sampleSize),
+      populationText(c),
       c.primaryEndpoint,
       c.primaryResult,
     ]),
@@ -557,15 +632,15 @@ export function buildM27ClinicalSummary(ctx: M27BuildContext): M2Summary {
     });
   }
 
-  if (totalSAEs > 0 || totalDeaths > 0) {
+  if (safety.totalSAEs > 0 || safety.totalDeaths > 0 || safety.unextracted > 0) {
     tables.push({
       title: 'Serious Adverse Events and Deaths Summary',
       headers: ['Study', 'N (ITT)', 'SAEs', 'Deaths'],
       rows: csrs.map(c => [
         c.protocolNumber,
-        String(c.ittPopulation || c.sampleSize),
-        String(c.saeCount || 0),
-        String(c.deathCount || 0),
+        populationText(c),
+        typeof c.saeCount === 'number' ? String(c.saeCount) : 'not extracted',
+        typeof c.deathCount === 'number' ? String(c.deathCount) : 'not extracted',
       ]),
     });
   }

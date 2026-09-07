@@ -27,6 +27,42 @@ describe('module3Composer', () => {
     expect(impacted).toContain('3.2.S.7');
     expect(impacted).toContain('3.2.P.8');
   });
+
+  it('marks the appendices (3.2.A.*) that require a changed source type impacted too', () => {
+    /* The appendix rules live in module3-extensions with their own
+       requiredSourceTypes; this walked MODULE3_SECTION_RULES only, so an
+       approved 3.2.A.1 never went stale when the container closure it was
+       composed from changed. One rule table per file, one answer here. */
+    expect(impactedSectionsForSourceType('container_closure')).toContain('3.2.A.1');
+    expect(impactedSectionsForSourceType('characterization')).toContain('3.2.A.2');
+    expect(impactedSectionsForSourceType('formulation_record')).toContain('3.2.A.3');
+    const forDrugProduct = impactedSectionsForSourceType('drug_product');
+    expect(forDrugProduct).toContain('3.2.A.1');
+    expect(forDrugProduct).toContain('3.2.A.3');
+    // The core sections are still there, and no key is listed twice.
+    expect(forDrugProduct).toContain('3.2.P.1');
+    expect(new Set(forDrugProduct).size).toBe(forDrugProduct.length);
+    // A source no appendix requires impacts no appendix.
+    expect(impactedSectionsForSourceType('qc_result').filter((k) => k.startsWith('3.2.A.'))).toEqual([]);
+  });
+});
+
+describe('3.2.P.2 dissolution tables — the Batch column is a batch number or nothing', () => {
+  it('never prints the product name under "Batch" when no batch number was recorded', () => {
+    const sections = composeModule3FromCanonicalSources([
+      { id: 'd1', sourceType: 'dissolution_profile', sourceHash: 'h', sourcePayload: {
+        purpose: 'development', productName: 'BX-115', apparatus: 'USP 2', medium: 'pH 6.8 phosphate',
+        dissolutionResults: [{ timepoint: 15, meanPercentDissolved: 42, sd: 2.1, n: 12 }],
+      } as any },
+    ] as any);
+    const p2 = sections.find((s) => s.sectionKey === '3.2.P.2');
+    expect(p2).toBeDefined();
+    const batchTables = (p2!.tables ?? []).filter((t: any) => t.headers?.[0] === 'Batch');
+    expect(batchTables.length).toBeGreaterThan(0);
+    for (const t of batchTables) {
+      for (const row of t.rows) expect(row[0]).not.toBe('BX-115');
+    }
+  });
 });
 
 /**

@@ -998,7 +998,7 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
     try {
       publishShellProject({ id: pr.id, title: pr.title, code: pr.code, ws: pr.ws, status: pr.status });
       if (window.C2C?.setSurface) window.C2C.setSurface('project-home', pr.title);
-    } catch (_) { /* noop */ }
+    } catch { /* noop */ }
     onNav('project-home');
   };
 
@@ -1123,7 +1123,7 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
       </div>
 
       {live.loading ? (
-        <div className="scaf-note" style={{ padding: '18px 10px' }}>Loading programs…</div>
+        <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>Loading programs…</div>
       ) : live.error ? (
         // The hint used to read "…(projected from regulatory_programs)…",
         // naming a governed store's table on screen: an information-disclosure

@@ -132,3 +132,18 @@ describe('selectToolsForTurn — reliability-aware deprioritization', () => {
     expect(n.has('list_platform_commands')).toBe(true);
   });
 });
+
+describe('generate_document — no from-scratch regulatory artefacts', () => {
+  it('no longer offers ectd_backbone or icsr as document types', () => {
+    // Both were generated from scratch: a backbone with sequence 0000 and
+    // operation="new" hardcoded, an ICSR around an invented report id and
+    // 'Unknown' drug/reaction. The real artefacts come from the submission
+    // packager and the safety-report register.
+    const tool = getAllEnabledTools().find((t: any) => t.name === 'generate_document') as any;
+    expect(tool).toBeDefined();
+    const types: string[] = tool.input_schema?.properties?.document_type?.enum ?? tool.parameters?.properties?.document_type?.enum ?? [];
+    expect(types.length).toBeGreaterThan(0);
+    expect(types).not.toContain('ectd_backbone');
+    expect(types).not.toContain('icsr');
+  });
+});

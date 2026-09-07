@@ -144,3 +144,46 @@ describe('qc_result reaches the batch-analyses sections', () => {
     expect(p5.completeness).toBeLessThan(100);
   });
 });
+
+describe('review closure: batch attribution and process capability over recorded QC results', () => {
+  it('the mapper carries the batch the sample represents, and null when none is recorded', () => {
+    expect(mapQcTestingPayload(qcRow({ batchNumber: 'B-24-007' })).batchNumber).toBe('B-24-007');
+    expect(mapQcTestingPayload(qcRow({ batch_number: 'B-24-008' })).batchNumber).toBe('B-24-008');
+    expect(mapQcTestingPayload(qcRow({})).batchNumber).toBeNull();
+  });
+
+  it('§3.2.S.4 states Ppk/Cpk per test across six or more batches, and says why it did not below that', async () => {
+    const { composeModule3FromCanonicalSources } = await import('../module3Composer');
+    const result = (batch: string, value: string) =>
+      ({ id: `qc-${batch}`, sourceType: 'qc_result', sourceHash: 'h', sourcePayload: mapQcTestingPayload(qcRow({
+        sampleId: `S-${batch}`, batchNumber: batch, sampleType: 'drug substance', testMethod: 'Assay (AM-001)',
+        testResults: { value, unit: '%' }, specifications: { acceptanceCriteria: '98.0-102.0%' }, passFailStatus: 'pass',
+      })) }) as never;
+    const six = ['B-001', 'B-002', 'B-003', 'B-004', 'B-005', 'B-006'].map((b, i) => result(b, String(99.5 + (i % 3) * 0.3)));
+    const s4 = composeModule3FromCanonicalSources(six).find((c) => c.sectionKey === '3.2.S.4')!;
+    const cap = s4.tables.find((t) => /Process Capability/.test(t.title))!;
+    expect(cap).toBeTruthy();
+    expect(cap.rows[0][0]).toBe('Assay (AM-001)');
+    expect(cap.rows[0][1]).toBe('6');
+    expect(Number(cap.rows[0][5])).toBeGreaterThan(0); // Ppk
+    expect(s4.narrativeDraft).toMatch(/Process capability .*Assay \(AM-001\): over 6 batches/);
+    expect(s4.narrativeDraft).toMatch(/preliminary/i);
+
+    const three = six.slice(0, 3);
+    const s4three = composeModule3FromCanonicalSources(three).find((c) => c.sectionKey === '3.2.S.4')!;
+    expect(s4three.narrativeDraft).toMatch(/capability not assessed — 3 numeric batch result/);
+    expect(s4three.narrativeDraft).not.toMatch(/Ppk \d/);
+  });
+
+  it('refuses to compute capability across batches recorded against different criteria', async () => {
+    const { composeModule3FromCanonicalSources } = await import('../module3Composer');
+    const result = (batch: string, value: string, spec: string) =>
+      ({ id: `qc-${batch}`, sourceType: 'qc_result', sourceHash: 'h', sourcePayload: mapQcTestingPayload(qcRow({
+        sampleId: `S-${batch}`, batchNumber: batch, sampleType: 'drug substance', testMethod: 'Assay',
+        testResults: { value, unit: '%' }, specifications: { acceptanceCriteria: spec }, passFailStatus: 'pass',
+      })) }) as never;
+    const mixed = [1, 2, 3, 4, 5, 6].map((i) => result(`B-00${i}`, '99.8', i < 4 ? '98.0-102.0%' : '95.0-105.0%'));
+    const s4 = composeModule3FromCanonicalSources(mixed).find((c) => c.sectionKey === '3.2.S.4')!;
+    expect(s4.narrativeDraft).toMatch(/capability not assessed — the batches were recorded against different acceptance criteria/);
+  });
+});

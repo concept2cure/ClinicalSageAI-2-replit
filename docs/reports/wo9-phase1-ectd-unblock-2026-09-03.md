@@ -8,6 +8,10 @@ Phase 1 is data and verification. Two code changes landed: the DTD gate defect
 found by Step 4, and the form onboarding JM authorised after Gate 1. Nothing
 else was written.
 
+> **Updated 2026-09-07.** §11 records what changed at the tip of `concept2cure-v2`
+> after this report was pushed, and corrects two statements in §10. §§1–9 stand as
+> the Gate 2 record and are not rewritten.
+
 ---
 
 ## 1. Outcome
@@ -401,13 +405,18 @@ not create an agent branch, do not open a pull request, do not set
 The remote moves during long sessions — this one took 23 incoming commits across
 three merges. Fetch and merge before pushing; never rebase or force-push.
 
+This environment's clone is shallow. After a fetch, `git status` can report the
+branch thousands of commits behind; that is the shallow boundary deepening, not a
+fork. Confirm with `git merge-base` against your last push before reacting.
+
 ### State at handoff
 
-Phase 1 is closed out to the limit of what this environment allows. Three
-commits on `concept2cure-v2`: `f9e3ab8`, `f85ce14`, `74d0ff2`.
+Phase 1 is closed out to the limit of what this environment allows. Four
+commits on `concept2cure-v2`: `f9e3ab8`, `f85ce14`, `74d0ff2`, `63c1605e` — plus
+the addendum in §11, which supersedes parts of this section.
 
-Gate 1 answered and Gate 2 reached. **Phase 2 has not started.** No surfaces,
-routes or services were created.
+Gate 1 answered and Gate 2 reached. Phase 2 began on 2026-09-07 with Click 1 —
+see §13. No surfaces, routes or services were created.
 
 ### Do this first: re-test egress
 
@@ -425,6 +434,8 @@ curl -sS -o /dev/null -w '%{http_code}\n' --max-time 30 https://clinicaltrials.g
 `200` means Steps 2, 3 and 5 are unblocked and should be done next, in that
 order, per §8.
 
+Re-tested from this environment on 2026-09-07: all three hosts still refused.
+
 ### What is safe to touch, and what is not
 
 Out of scope for WO-9, all of it still in the repo, none of it finished this
@@ -435,11 +446,14 @@ restructuring.
 
 Two specific traps:
 
-**Do not "fix" the 1571 and 3674 reconstruction path.** Those two are genuine
-dynamic XFA — 0 AcroForm fields, `/NeedsRendering true`, and their official page
-is an Adobe placeholder with no content to overlay. The labeled reconstruction is
-the honest ceiling and it is correct behaviour. Their assets and manifests are
-deliberately untouched. Do not fabricate a `fieldMap` for either.
+**The 1571 and 3674 path changed after this section was written — read §11
+before touching it.** At Gate 2 both rendered labeled reconstructions and this
+section said not to "fix" that. Since then another session landed an XFA
+datasets fill for both — Option B of the execution package's Section B — and JM
+had chosen Option A. Whether that work stays is JM's decision, not the next
+agent's: do not revert it on the strength of this document, and do not extend
+it either. What holds unconditionally: never fabricate an AcroForm `fieldMap`
+for either form. Both manifests correctly keep `fieldMap: {}`.
 
 **Do not re-derive the form facts from the manifests.** That is exactly the loop
 this work broke: a `0` produced by reading an encrypted PDF without decrypting it
@@ -448,19 +462,20 @@ truth is §5, taken post-decrypt. If you need to re-verify, decrypt with pikepdf
 and count terminal `/FT` fields recursively — the top-level `/Fields` array is
 not the field count.
 
-### A failing test that is not yours
+### A correction: the "failing test that is not yours" was already fixed
 
-`module3-extensions > composeAppendices > marks 3.2.A.2 as not applicable for
-small molecules` fails on `concept2cure-v2` and did so before any of this work.
-Verified by running the base branch's own unmodified test file. An incoming
-commit changed the narrative to say "NOT ESTABLISHED" instead of "not
-applicable" — a fail-closed improvement — updated the new
-`tests/unit/module3-narrative-extension.test.ts`, and missed the older assertion
-at `server/__tests__/services/submission-orchestrator.test.ts:187`. CMC Module 3
-is out of WO-9 scope, so it was left alone. It is a one-line assertion update for
-whoever owns that area.
+An earlier revision of this section reported `module3-extensions >
+composeAppendices > marks 3.2.A.2 as not applicable for small molecules` as red
+on the base branch. That was true when it was checked, against an intermediate
+merge — and false by the time it was pushed. The fix (`166224ac2`, which renamed
+and re-pinned the assertion) arrived in the final 53-commit merge before the
+push, and only the eCTD and IND-forms suites were re-run after that merge, not
+the orchestrator file. The statement shipped stale. The error was in the
+verification, not the product. Do not go looking for that failure.
 
-Everything in WO-9 scope is green: 52 files, 435 tests, plus 7/7 on the DTD gate.
+At the tip on 2026-09-07: eCTD + IND-forms 65 files / 562 tests; orchestrator
+file 34/34 including the three DTD-gate fixture tests; eSTAR + shared filler
+16 files / 245 tests. All pass.
 
 ### Verifying this work still holds
 
@@ -480,3 +495,334 @@ exists to prevent, and it is more important than a green tick.
 JM names the click. Do not propose the next task. One click per session, and it
 ends when the click works in a browser or when the blocker is named precisely.
 A passing test is not done. A proof report is not done.
+
+---
+
+## 11. Addendum — 2026-09-07, state of the tip
+
+Written on returning to the environment after the handoff. Everything below was
+measured at `concept2cure-v2` tip `2f52f091a` after a fresh `npm ci` (the
+lockfile had changed upstream). §§1–9 are not rewritten; where the tip now
+differs from the Gate 2 record, this section says so.
+
+### What landed for 1571 and 3674
+
+Commit `6b2d2717b` — *FDA 1571 and 3674 fill the official form, not a drawing
+of it* — by another Claude session, authored after this report's push and merged
+into the canonical branch about four hours before this addendum. It implements
+**Option B** from the execution package's Section B: values are written into
+the XFA `datasets` packet through a PDF incremental update, reusing the eSTAR
+filler in `server/services/forms/fill-official-pdf.ts` (+338 lines since the
+push, chiefly a new `resolveDataSomPath` and an `alsoWriteSomPaths` mechanism)
+with a reviewed canonical→SOM-path map in `OFFICIAL_XFA_FIELD_MAPS`.
+
+**JM chose Option A for these two forms (§5) before that commit landed.** The
+two are in tension. This addendum records the state. The decision is JM's.
+
+### Measured at the tip
+
+| Form | `usedOfficialTemplate` at Gate 2 | at tip | output bytes | begins with the template verbatim |
+|---|---|---|---|---|
+| 1572 | true | true | 2 241 047 | no — the AcroForm path re-saves the document (expected) |
+| 356h | true | true | 4 807 389 | no — same |
+| 3454 | true | true | 1 541 295 | no — same |
+| **1571** | **false** (reconstruction) | **true** | 2 922 047 | **yes** — template 2 919 985 B + 2 062 B appended |
+| **3674** | **false** (reconstruction) | **true** | 3 528 197 | **yes** — template 3 526 775 B + 1 422 B appended |
+
+Section B's stated hazard for Option B was a silently malformed dataset — a
+form that "looks fine and is wrong". The sharpest form of that risk here is
+encryption: both originals are AES-encrypted, and an incremental update that
+appends an *unencrypted* stream to an encrypted document reads back as garbage
+in any conforming viewer. Measured through pikepdf, which decrypts the way
+Acrobat does:
+
+```
+FDA_1571  encrypted=true   plaintext in appended bytes: NO   decrypted datasets carries the value: YES
+FDA_3674  encrypted=true   plaintext in appended bytes: NO   decrypted datasets carries the value: YES
+```
+
+The appended datasets stream is encrypted with the document key, and a
+decrypting reader sees the filled values. That closes the encryption-layer
+hazard. What remains unproven is Acrobat's own XFA runtime — initialize and
+calculate scripts — which no engine in this environment runs. The commit says
+so itself.
+
+Fields the fill deliberately leaves for the sponsor, reported in
+`unmappedFields` rather than implied complete — 1571: `ind_type`,
+`phase_of_study`, `authorized_rep_name`, the sponsor-contact and US-agent
+fields; 3674: the four certification checkboxes. The output is not flattened,
+so it stays the live official form for the sponsor to finish and sign.
+
+Manifests: `fieldMap` is still `{}` on both — no AcroForm map was fabricated,
+so the WO-9 stop condition on that point is not breached. `fillSupported`
+flipped to `true`; `reviewedBy` is still `null` and `assetTrusted` still
+`false` on both. `getDocumentCoverage('US_IND').formsFullyBacked` now measures
+`true`.
+
+Where the implementation departs from Section B's stated Option B rule: it was
+not a timeboxed spike on customer demand, and it does not fail closed on an
+unplaced required field — the commit argues the unflattened output makes that
+the sponsor's box rather than a fill failure. It does fail closed when no value
+can be placed, when the template is absent, when the file is not dynamic XFA,
+and on an ambiguous path, which resolves to `null` rather than a guess.
+
+### The frozen MDX path
+
+The filler is shared with eSTAR, so WO-9's stop condition — "`estar-fill` or
+any MDX surface regressed" — was checked rather than assumed:
+
+```
+server/services/pathway-engines/estar + server/services/forms
+  16 files, 245 tests, all pass
+```
+
+### This report's own work at the tip
+
+```
+eCTD + IND-forms suites             65 files / 562 tests   pass
+orchestrator file                   34 / 34                pass  (DTD fixture tests 3/3)
+1572 round-trip on committed asset  4 / 4
+```
+
+The DTD gate still passes `index-valid.xml` with zero findings and still fails
+`index-invalid.xml` on all eight seeded codes.
+
+### Still blocked, unchanged
+
+Egress re-tested from this environment on 2026-09-07: `www.fda.gov`,
+`www.ich.org` and `clinicaltrials.gov` all refused. `DATABASE_URL` unset.
+Steps 2, 3 and 5 remain exactly as §2 describes.
+
+### Correction to §10
+
+§10 reported a pre-existing failure in `module3-extensions`. The fix
+(`166224ac2`) was already in the tree when §10 was pushed; the orchestrator
+file was not re-run after the final merge. §10 has been amended in place.
+
+---
+
+## 12. Decisions taken under delegation — 2026-09-07
+
+JM delegated the open decisions with two criteria: best long-term client
+results, and limited resources. These are the choices, the reasons, and what
+was done. Every executable decision was implemented with its tests written
+first and seen failing against the unchanged code.
+
+### D1 — Option B stays for FDA 1571 and 3674; the reconstruction remains the fallback
+
+Chosen because the client outcome is strictly better: a sponsor receives the
+genuine FDA form, pre-populated from the program record, that opens in Acrobat
+for them to finish and sign — instead of a labeled drawing nobody can file.
+The work exists, its tests pass, the eSTAR path it shares a filler with is
+unregressed, and the encryption-layer hazard was measured closed (§11). The
+cost of keeping it is maintenance on template-edition changes, the same burden
+the AcroForm maps already carry.
+
+What it does not yet have is a named person who has opened a filled 1571 in
+Acrobat and confirmed the boxes. That is not fabricated here: both manifests
+keep `reviewedBy: null`, and the coverage report now says so (D3). The one
+residual risk — Acrobat's own XFA runtime — is closed by that same review, a
+few minutes' work for whoever has Acrobat, once per template edition.
+
+Section B's Option B rule asked for a fail-closed spike, and the implementation
+deliberately does not fail closed on an unplaced required field. Accepted, on
+its own reasoning: the output is the live, unflattened form, so an empty box is
+the sponsor's to complete, and `unmappedFields` names every one. The Click 2
+surface must show that list; that is Phase 2's job.
+
+### D2 — Stylesheet self-containment, built now; the files follow
+
+The US regional backbone referenced `../util/style/us-regional.xsl` — the same
+one-level-short path its DOCTYPE had already been corrected for — `index.xml`
+carried no stylesheet reference at all, and nothing bundled a stylesheet into
+any package. eValidator flags a reference a package cannot resolve, and Click
+4's acceptance criterion cannot be met without one. That is a
+submission-blocking defect, so it was fixed without waiting for the files:
+
+- `dtd-bundler.ts` — the self-containment gate requires `ectd-2-0.xsl` for
+  every region and `us-regional.xsl` for FDA, alongside the DTDs. One flag
+  (`ECTD_REQUIRE_DTD`), one drop-point (`assets/ectd-dtd/`), one verdict.
+  A caller that omits the stylesheet list cannot clear the gate by omission.
+- `regional-packager.ts` — bundles `*.xsl` into `util/style/` and checksums
+  them into `util/index-md5.txt`; the FDA PI now climbs two levels;
+  `index.xml` carries `<?xml-stylesheet href="util/style/ectd-2-0.xsl"?>`.
+- `ectd-structural-validator.ts` — warns on a stylesheet reference with
+  nothing under `util/style/`, as it already did for DTDs.
+- `checksum-manifest.ts` — `*.xsl` is in the default extension set, so an
+  unlisted or tampered stylesheet is reported exactly like a DTD.
+
+Only the FDA backbone emits a stylesheet PI, so only FDA requires the regional
+stylesheet. Requiring one for a backbone that never references it would
+over-block; the map is extended in the same change that adds a PI elsewhere.
+
+The two `.xsl` files still need a network-permitted machine (§2). Until they
+land, every package reports `selfContained: false` with the stylesheet names in
+the blocker — the honest state, and exactly how the DTD gate has behaved.
+
+### D3 — The coverage report tells clients two facts, not one
+
+`getDocumentCoverage(...).formsFullyBacked` required `officialAssetTrusted`
+for every form, and for the XFA forms that was earned by a code-reviewed map
+plus a byte check — with no human reviewer at all — while its doc comment read
+"installed and reviewed for filling". A client-facing readiness signal cannot
+conflate those.
+
+`formsFullyBacked` keeps its meaning: installed, integrity-verified, fillable.
+Each required form now also carries `reviewer` (the manifest's `reviewedBy`, or
+null), and the filing carries `formsHumanReviewed`. For US IND today that reads
+backed, not yet human-reviewed. JM's Acrobat check on 1571 and 3674 flips it by
+naming a reviewer on those two manifests, and nothing else does.
+
+### Not done, and why
+
+- **Vendoring the DTDs and stylesheets** — needs egress this environment does
+  not have. The runbook, README and `checksums.txt` are updated so it is a
+  checklist, not an investigation; two stale statements that the files are
+  "not committed" and kept out by `.gitignore` were corrected — they are
+  committed, per the README's own policy and the actual `.gitignore`.
+- **Legal clearance** — FDA/ICH redistribution and the decrypted form assets.
+  A conversation, not code. Flagged in §5 and §8; unchanged.
+- **eValidator Basic** — Windows and a LORENZ ID.
+- **Phase 2 clicks** — each one's definition of done is JM in a browser.
+  Starting one without him closes nothing.
+
+### Verified
+
+Fifteen tests written first; fourteen failed against the unchanged code (the
+fifteenth is a negative case that passes by construction until its positive
+twin exists), then:
+
+```
+five affected test files          147 / 147
+regression sweep                  197 files / 2213 tests   pass
+  (ectd, submission-gateways, ind-forms, forms, estar, regulatory,
+   orchestrator, HI-8 export hardening, ectd-compile spine)
+typecheck, scoped                 0 errors — the 11 changed files plus their
+                                  full transitive import closure, 9 GB heap
+                                  (tsconfig.check.json aborts at its 6 GB heap
+                                  on this 15 GB box; a memory limit, not a type
+                                  error)
+```
+
+---
+
+## 13. Phase 2, Click 1 — land in a drug program (2026-09-07)
+
+**Session prompt:** open a seeded IND program; sponsor, product, indication and
+IND number visible, every value read from the database; no fixtures, no
+constants; report which surface owns it and what changed; stop when JM can
+click it.
+
+**Status: JM can click it.** Driven end to end in headless Chromium against a
+real local PostgreSQL 16 built from the repo's own `install-fresh` and GA demo
+seed. Screenshots in `docs/reports/wo9-click1/`.
+
+### Which surface owns it
+
+Registry id `project-home` → `client/src/concept2cure/v2/surfaces/ProjectHome.tsx`,
+reached from the Projects portfolio (`/concept2cure/projects`, `Projects.tsx`,
+`GET /api/c2c/projects`) by opening a program row, which publishes the
+selection and navigates to `/concept2cure/project-home`. The landing reads
+`GET /api/c2c/projects/:id` in `server/routes/c2c/projects.ts` — not the
+biopharma router the registry's `apiPrefixes` might suggest, and not the
+`/api/projects` legacy table.
+
+### What was true before
+
+Product and indication were already live from `regulatory_programs`. Sponsor
+was not rendered. **The IND number could not be rendered because nothing in
+the data model held one:** `regulatory_programs` had no such column,
+`submissions` carries no application number and no program link, the eCTD
+compile route stamps the program *code* into `us-regional.xml` as the
+application number, and Form 1571's IND number is whatever the forms panel
+user types. "IND number from the database" was therefore a schema change, not
+a wiring change.
+
+### What changed
+
+1. **`regulatory_programs.application_number`** — nullable text, the
+   agency-assigned IND / NDA / BLA / MAA number, distinct from the sponsor's
+   own `code`. `migrations/20260907_regulatory_programs_application_number.sql`
+   (additive, `IF NOT EXISTS`, replay-safe per RULE 1), registered in
+   `C2C_MIGRATION_FILES` before the tenant sweep (`ci:migration-set-order`
+   passes), Drizzle column in `shared/schema/programs.ts`, the contract
+   fixture in `biopharma-programs-router-columns.contract.test.ts` (seen
+   failing on the column-set mismatch before the fixture caught up), and the
+   three golden journeys that create programs now replay the migration.
+2. **Read model** — `GET /api/c2c/projects/:id` selects
+   `p.application_number` and `o.name AS sponsor_name` through the
+   organisations join (the sponsor of record in this data model). The create
+   handler accepts an optional `applicationNumber`.
+3. **Landing** — a "Program identity" row under the chips: Sponsor, Product,
+   Indication, and the number labelled by program type (IND number / NDA
+   number / BLA number / MAA number / Application number). Every value comes
+   from the row; none from the navigation handoff, none derived from the
+   title. Absence is stated — "not recorded", "not assigned" — never filled.
+   Five tests, written first and seen failing against the reverted file.
+4. **Seed** — `scripts/seed/ga-demo.d/111-ind-program.mjs` numbers the GA
+   demo's two genuine IND programs, BX-256 (000256) and BX-512 Vorelinib
+   (000512): six-digit agency format, deliberately low, echoing the code so
+   they read as seeded. It numbers only `program_type = IND` rows whose number
+   is null, never inserts, and leaves everything else alone.
+5. **Console** — the dev report-only CSP inherited helmet's default
+   `upgrade-insecure-requests`, which browsers ignore in report-only mode and
+   log as a console error on every page. Dropped from the development policy
+   only; the enforcing production policy keeps it. Tests pin both branches by
+   re-importing the module under each `NODE_ENV`; the dev assertion was seen
+   failing with the default restored.
+6. **Tests adjusted to the new truth** — `projects-list.test.ts` pinned the
+   string `sponsor_name` as a phantom column; the hazard was `p.sponsor_name`,
+   so it now pins the alias-qualified forms and asserts the join and the new
+   column.
+
+### Verified
+
+Authenticated API, BX-512:
+
+```
+code=BX-512  program_type=IND  product_name="Vorelinib · BX-512"
+indication="KIT-mutant gastrointestinal stromal tumor · 4L+"
+sponsor_name="Concept2Cure Therapeutics"  application_number="000512"
+```
+
+Browser (login → Projects → open Vorelinib → Project home), read from the DOM:
+
+```
+Sponsor      = Concept2Cure Therapeutics
+Product      = Vorelinib · BX-512
+Indication   = KIT-mutant gastrointestinal stromal tumor · 4L+
+IND number   = 000512
+```
+
+The same row in `psql`. Console: no application errors. One failed request,
+`fonts.googleapis.com`, reset by this sandbox's egress policy — it loads in a
+normal environment, and it is a runtime dependency worth removing for
+air-gapped deployments (noted, not changed).
+
+What remains imported from `fixtures/project-home-data.tsx` is the lifecycle
+stage catalogue — stage labels, blurbs and tool ids — not data about any
+program. Every program fact on the landing is the database row.
+
+### Found on the way, not changed
+
+- **BX-301 is two different products.** The GA seed's BX-301 is a BLA for
+  paroxysmal nocturnal hemoglobinuria; the IND-checklist seed describes BX-301
+  as an anti-BCMA mAb IND in multiple myeloma. This module leaves BX-301 alone.
+  The demo's IND program is Vorelinib.
+- **The compile route still uses the program code as the application id**
+  (`ectd-compile.ts`, `anchor.programCode`). Click 4 should prefer
+  `application_number` so `us-regional.xml` carries the IND number the landing
+  shows; the forms path (Click 2) should read the same column for Form 1571.
+- **`anaDrivesScreens.test.tsx` (Vault) fails on the base branch** —
+  verified identical with every client change of this click stashed.
+- **This sandbox's PostgreSQL has no pgvector**, so `coauthor_documents` was
+  never created here and the IND-checklist seed skips; the Part 11 audit files
+  also did not apply, so some routes log `audit.tamper_proof_log does not
+  exist`. Neither is on the Click 1 path. Both resolve on a database with
+  pgvector.
+
+### For JM
+
+`npm run up`, then `npm run db:seed` (idempotent — it only adds the two IND
+numbers to an existing demo database). Sign in, open Projects, open
+**Vorelinib · KIT-mutant GIST (IND)**. The identity row is the click.

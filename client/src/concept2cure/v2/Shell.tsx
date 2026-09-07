@@ -25,11 +25,13 @@ import {
   SR_ONLY_STYLE,
 } from '../hooks/useChatUpload';
 import { I } from './icons';
+import { AppMentionMenu, useAppMentions } from './appMentions';
 import { TaskTray } from './TaskTray';
 import type { OnboardingWelcome } from './onboardingWelcome';
 import { AnaActivity, type AnaActivityProps } from './AnaActivity';
 import { AnaWorkPanel } from './AnaWorkPanel';
 import { useAgentActivity } from './useAgentActivity';
+import { useWorkDockVisible } from './workDock';
 import { shellProgramName } from './shellProject';
 import { stashNavParamsForTarget } from './navParams';
 import { listDemoScripts } from '@shared/navigation/demo-scripts';
@@ -509,8 +511,6 @@ function RailSignoffs({ signoffs }: { signoffs: PendingSignoff[] }) {
 }
 
 /* ── Persistent AnA rail ──────────────────────────────────────────────── */
-/** Per-browser memory of whether the work dock is shown. */
-const WORK_DOCK_KEY = 'c2c-v2-ana-work-dock';
 /** The open programme as the dock names it — the shell's one reader, or null. */
 function projectLabel(): string | null {
   try {
@@ -612,30 +612,20 @@ export function AnaRail({
   const [agent, setAgent] = React.useState(false);
   const [plusOpen, setPlusOpen] = React.useState(false);
   const [modeOpen, setModeOpen] = React.useState(false);
-  /* The work dock is open by default — a client who asked AnA to do something
-     should see her doing it without hunting for a switch — and the choice to
-     hide it is remembered per browser, never per turn. */
-  const [workOpen, setWorkOpen] = React.useState<boolean>(() => {
-    try {
-      return localStorage.getItem(WORK_DOCK_KEY) !== 'hidden';
-    } catch {
-      return true;
-    }
-  });
-  const setWorkDock = (v: boolean) => {
-    setWorkOpen(v);
-    try {
-      localStorage.setItem(WORK_DOCK_KEY, v ? 'shown' : 'hidden');
-    } catch {
-      /* session-only */
-    }
-  };
+  /* The work dock: shown by default, hidden by one shared per-browser choice
+     (workDock.ts) that every host of the dock honours. */
+  const [workOpen, setWorkDock] = useWorkDockVisible();
   const workVisible = Boolean(work) && workOpen;
   /* Background investigations: read only while the dock shows them, and
      re-read the moment a turn ends (a turn can start or finish one). */
   const agentActivity = useAgentActivity(workVisible, streaming);
   const fileRef = React.useRef<HTMLInputElement>(null);
   const imgRef = React.useRef<HTMLInputElement>(null);
+  /* `@app` — the inline way to name a capability (appMentions.tsx). The menu
+     opens on `@`, inserts `@<label>`, and the server reads the label back
+     against the same vocabulary; nothing else travels. */
+  const draftRef = React.useRef<HTMLTextAreaElement>(null);
+  const mentions = useAppMentions(draft, setDraft, draftRef);
 
   /* The attach button used to be a lie.
    *
@@ -777,7 +767,6 @@ export function AnaRail({
               surface: surface.label,
               engine: model,
             }}
-            onClose={() => setWorkDock(false)}
           />
         )}
         {welcome && (
@@ -1178,17 +1167,25 @@ export function AnaRail({
             {statusMessage}
           </span>
           <textarea
+            ref={draftRef}
             rows={1}
-            placeholder={agent ? 'Describe a task for AnA to carry out…' : 'Ask AnA, or describe a task…'}
+            placeholder={agent ? 'Describe a task for AnA to carry out…' : 'Ask AnA, type @ to name an app…'}
             value={draft}
-            onChange={(e) => setDraft(e.target.value)}
+            aria-autocomplete="list"
+            aria-controls={mentions.open ? 'ana-rail-mentions' : undefined}
+            aria-expanded={mentions.open}
+            onChange={(e) => { setDraft(e.target.value); mentions.sync(e.currentTarget); }}
+            onSelect={(e) => mentions.sync(e.currentTarget)}
+            onBlur={() => mentions.close()}
             onKeyDown={(e) => {
+              if (mentions.onKeyDown(e)) return;
               if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
                 send();
               }
             }}
           />
+          <AppMentionMenu api={mentions} id="ana-rail-mentions" />
           <input
             ref={fileRef}
             type="file"
@@ -1359,11 +1356,20 @@ export function AnaRail({
                 type="button"
                 className="ana-menu-item"
                 onClick={() => {
-                  onSend('Show slash commands and skills');
+                  // Start a command in the composer: the menu of commands the
+                  // server parses opens from the leading `/`.
                   setPlusOpen(false);
+                  setDraft('/');
+                  requestAnimationFrame(() => {
+                    const el = draftRef.current;
+                    if (!el) return;
+                    el.focus();
+                    el.setSelectionRange(1, 1);
+                    mentions.sync(el);
+                  });
                 }}
               >
-                <span className="ico">{I.sparkles}</span>Slash commands &amp; skills
+                <span className="ico">{I.terminal}</span>Slash commands
               </button>
             </div>
           )}

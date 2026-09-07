@@ -9,6 +9,9 @@
  */
 
 import { describe, it, expect } from 'vitest';
+import path from 'node:path';
+import os from 'node:os';
+import fs from 'node:fs';
 import {
   getDocumentCoverage,
   buildCoverageReport,
@@ -58,18 +61,30 @@ describe('Registry coverage', () => {
       expect(cov.requiredForms.every((f) => f.registered && f.implemented)).toBe(true);
     });
 
-    it('US IND is NOT reported form-backed while the official FDA editions are unreviewed dynamic XFA', () => {
-      // templates/forms/acroforms/*.manifest.json all carry assetTrusted:false,
-      // fillSupported:false and an empty fieldMap: the builders render a
-      // reconstruction or a watermarked draft, never the official form. Reporting
-      // formsFullyBacked=true on the builder flag alone told a product owner the
-      // package would carry the official 1571/1572/3674 when it would not.
-      // This flips to true only when a reviewed, fillable official edition is
-      // installed — the manifest is the single source both this report and the
-      // fill service read.
+    it('US IND is reported form-backed: all three required editions now fill officially', () => {
+      // This asserted the opposite for as long as 1571 and 3674 were believed
+      // unfillable. 1572 fills its reviewed AcroForm map; 1571 and 3674 fill
+      // through their XFA datasets packet, which is where their fields actually
+      // live. The manifest remains the single source both this report and the
+      // fill service read, so the two cannot disagree.
       const cov = getDocumentCoverage('US_IND')!;
-      expect(cov.requiredForms.every((f) => f.officialAssetTrusted)).toBe(false);
-      expect(cov.formsFullyBacked).toBe(false);
+      expect(cov.requiredForms.every((f) => f.officialAssetTrusted)).toBe(true);
+      expect(cov.formsFullyBacked).toBe(true);
+    });
+
+    it('and stops being form-backed the moment the official editions are not installed', () => {
+      // The gate still bites: it is the installed, integrity-checked asset that
+      // earns the claim, never the builder flag.
+      const previous = process.env.IND_FORM_TEMPLATES_DIR;
+      process.env.IND_FORM_TEMPLATES_DIR = path.join(os.tmpdir(), 'c2c-no-forms-installed');
+      try {
+        const cov = getDocumentCoverage('US_IND')!;
+        expect(cov.requiredForms.some((f) => f.officialAssetTrusted)).toBe(false);
+        expect(cov.formsFullyBacked).toBe(false);
+      } finally {
+        if (previous === undefined) delete process.env.IND_FORM_TEMPLATES_DIR;
+        else process.env.IND_FORM_TEMPLATES_DIR = previous;
+      }
     });
 
     it('the named regions have an eCTD backbone reference', () => {
@@ -168,6 +183,72 @@ describe('Registry coverage', () => {
       for (const r of report.byRegion) {
         expect(r.productionReady + r.buildable + r.catalogOnly).toBe(r.total);
       }
+    });
+  });
+});
+
+describe('human review is reported separately from integrity-backed fill', () => {
+  // officialAssetTrusted says the official edition is installed and its bytes
+  // verify. It does NOT say a named person has confirmed the field map lands
+  // values in the right boxes — for the XFA forms the map lives in code and the
+  // manifest's reviewedBy is still null. A client-facing readiness signal must
+  // keep those two facts apart, so `reviewer` and `formsHumanReviewed` carry
+  // the second one and never borrow the first.
+  function withManifests(manifests: Record<string, unknown>, run: () => void) {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'c2c-review-'));
+    const previous = process.env.IND_FORM_TEMPLATES_DIR;
+    process.env.IND_FORM_TEMPLATES_DIR = dir;
+    try {
+      for (const [formId, manifest] of Object.entries(manifests)) {
+        fs.writeFileSync(path.join(dir, `${formId}.pdf.manifest.json`), JSON.stringify(manifest));
+      }
+      run();
+    } finally {
+      if (previous === undefined) delete process.env.IND_FORM_TEMPLATES_DIR;
+      else process.env.IND_FORM_TEMPLATES_DIR = previous;
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
+  }
+  const byNumber = (cov: ReturnType<typeof getDocumentCoverage>, n: string) =>
+    cov!.requiredForms.find((f) => f.formNumber === n)!;
+
+  it('names the reviewer per form, treats an empty reviewer as none, and does not claim review across the filing', () => {
+    withManifests(
+      {
+        FDA_1572: { reviewedBy: 'reviewer@example.test' },
+        FDA_1571: { reviewedBy: null },
+        FDA_3674: { reviewedBy: '' },
+      },
+      () => {
+        const cov = getDocumentCoverage('US_IND')!;
+        expect(byNumber(cov, '1572').reviewer).toBe('reviewer@example.test');
+        expect(byNumber(cov, '1571').reviewer).toBeNull();
+        expect(byNumber(cov, '3674').reviewer).toBeNull();
+        expect(cov.formsHumanReviewed).toBe(false);
+      },
+    );
+  });
+
+  it('claims human review for the filing only when every required form names a reviewer', () => {
+    withManifests(
+      {
+        FDA_1572: { reviewedBy: 'a@example.test' },
+        FDA_1571: { reviewedBy: 'b@example.test' },
+        FDA_3674: { reviewedBy: 'c@example.test' },
+      },
+      () => {
+        const cov = getDocumentCoverage('US_IND')!;
+        expect(cov.requiredForms.every((f) => f.reviewer !== null)).toBe(true);
+        expect(cov.formsHumanReviewed).toBe(true);
+      },
+    );
+  });
+
+  it('a form with no manifest at all has no reviewer', () => {
+    withManifests({}, () => {
+      const cov = getDocumentCoverage('US_IND')!;
+      expect(cov.requiredForms.every((f) => f.reviewer === null)).toBe(true);
+      expect(cov.formsHumanReviewed).toBe(false);
     });
   });
 });

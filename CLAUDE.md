@@ -60,6 +60,64 @@ always allowed; that is how forbidden branches get cleaned up.
 
 ---
 
+## RULE 1 — every migration re-runs on every deploy. Removing schema is not a DROP.
+
+`applyMigrationFiles` (`scripts/db/migration-set.mjs:1899`) reads and **executes
+every entry of `C2C_MIGRATION_FILES` on every run**, unconditionally. There is no
+"already applied, skip" branch. `recordApplied` computes a content hash and
+returns `'new' | 'unchanged' | 'drift'`, and **the caller discards it** — drift is
+written to `c2c_migration_journal` and nothing reads it.
+
+The set is replayable only because nearly every file in it is additive and
+`IF NOT EXISTS`-guarded. A DROP is not additive, so appending one gives you a
+bug in one of two directions, and the deploy is **green either way**:
+
+| Order | What happens |
+|---|---|
+| DROP **before** the file that re-creates the object | The drop reverts on the next deploy. Nothing reports it. |
+| DROP **after** it | Every deploy re-creates and re-drops. Any data written into that column between deploys is destroyed, silently, forever. |
+
+**So: to remove a column, constraint or table that any file in the set creates,
+amend the creating migration in place. Do not append a DROP.**
+
+In-place amendment works here — precisely *because* of unconditional
+re-execution — where it would not in a normal migration system. It registers as
+`drift` in the journal, which today nothing acts on, so **the amendment must
+document itself in the file**: a dated header note saying what was removed, why,
+and which change removed it. `C2C_MIGRATION_JOURNAL_STRICT=1` makes journal
+*errors* fatal; it does not make drift fatal.
+
+A DROP is only correct when nothing on any applier re-creates the object. That
+is already the repo's practice — see the set's own comment on
+`migrations/20260823_drop_dead_c2c_cmc_changes.sql`: *"Its creator … is on no
+applier, so there is no create-then-drop ordering hazard."* This rule writes that
+down and enforces it.
+
+**Enforced by** `npm run ci:migration-drop-safety`, in `.husky/pre-push`. Its
+failure branch is exercised by `npm run ci:migration-drop-safety:selftest`, which
+constructs the real case — a DROP of `vault.documents.folder_id` against the
+`20260823` file that re-adds it — in both orders. Genuine exceptions go in
+`scripts/ci/migration-drop-safety-baseline.json` **with a written reason**; an
+entry without one is the thing that file exists to prevent.
+
+Two corollaries, same cause:
+
+- **Reference/seed data reaches a deployed database only through a file in
+  `C2C_MIGRATION_FILES`.** `deploy-migrate` has five steps and none is a seed; a
+  `scripts/seed-*.ts` runs on laptops only. The pattern that deploys is
+  `INSERT … ON CONFLICT (key) DO NOTHING` inside a migration — which means **a
+  transcription error can never be corrected in place**, only by minting a new
+  version row. Put a row-count assertion inside the seed so a truncated one fails
+  at apply time instead of producing a partial tree something then reports a
+  percentage against.
+- **New tables go in `public` with `organization_id INTEGER NOT NULL`.** Both
+  tenant sweeps are public+integer or a hand-maintained non-public list; a new
+  schema, or a uuid-keyed org column, ships with **no RLS policy** and is
+  cross-tenant readable. Insert before the final pair — `ci:migration-set-order`
+  enforces that the sweep runs last.
+
+---
+
 ## Working agreement
 
 - **Zero duplication.** One canonical implementation per capability. A parallel

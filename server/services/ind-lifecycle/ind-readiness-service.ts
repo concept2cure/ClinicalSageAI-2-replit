@@ -20,7 +20,7 @@
  */
 
 import {
-  getRequiredSections,
+  getAllINDSections,
   getModuleProgress,
   type SectionStatus,
   type CTDModule,
@@ -67,7 +67,7 @@ export interface ReadinessGap {
 }
 
 export interface ReadinessBlocker {
-  kind: 'required_section' | 'required_form' | 'overdue_safety_report';
+  kind: 'required_section' | 'required_form' | 'overdue_safety_report' | 'nothing_assessed';
   code: string;
   message: string;
 }
@@ -76,8 +76,12 @@ export interface IndReadinessReport {
   filingType: IndFilingType;
   /** True only when there are zero blockers. */
   ready: boolean;
-  /** 0–100 weighted across required-section completion and required forms. */
-  overallPercentage: number;
+  /**
+   * 0–100 weighted across required-section completion and required forms.
+   * NULL when nothing is required for this filing type — there is then no
+   * ratio and no assessment, and a `nothing_assessed` blocker says so.
+   */
+  overallPercentage: number | null;
   moduleProgress: ModuleProgress[];
   requiredSections: {
     total: number;
@@ -106,8 +110,25 @@ export function evaluateIndReadiness(input: IndReadinessInput): IndReadinessRepo
   const sectionStatus = input.sectionStatus ?? {};
   const isAmendment = input.filingType === 'amendment';
 
-  // 1. Required sections for this filing type.
-  const required = getRequiredSections().filter((s) =>
+  /* 1. Required sections for this filing type.
+     ── The amendment set was two sections short ─────────────────────────────
+     This read `getRequiredSections().filter(...)`, and getRequiredSections()
+     ALREADY narrows to `s.required === true`. Filtering that by
+     `requiredForAmendment` can therefore only ever return the intersection, so
+     any section marked required-for-an-amendment but not for an initial IND was
+     dropped before the predicate saw it.
+
+     Two sections are exactly that, and deliberately so: m5.3.5.1 and m5.3.5.2,
+     the ICH E3 clinical study reports for controlled and uncontrolled studies.
+     An initial IND has no study results to file; an information amendment under
+     21 CFR 312.31(a)(2) that reports new clinical data does. The readiness
+     report never asked for either, so an amendment came back with two required
+     sections silently unassessed and two blockers it should have raised.
+
+     Sourcing from getAllINDSections() applies the intended predicate to the
+     whole set. The initial-IND set is unchanged: filtering all sections by
+     `required` is what getRequiredSections() returns. */
+  const required = getAllINDSections().filter((s) =>
     isAmendment ? s.requiredForAmendment : s.required,
   );
 
@@ -162,12 +183,37 @@ export function evaluateIndReadiness(input: IndReadinessInput): IndReadinessRepo
     });
   }
 
-  // 5. Weighted overall percentage: required sections + required forms, each
-  //    item weighted equally. With no required items the package is vacuously
-  //    100% (e.g. an amendment that requires no fixed sections).
+  /* 5. Weighted overall percentage: required sections + required forms, each
+        item weighted equally.
+
+     This ended `totalItems === 0 ? 100`, described in its own comment as
+     "vacuously 100%". A filing whose required-artifact set came back empty was
+     reported as 100% complete with an empty blocker list — and since
+     `ready === blockers.length === 0`, as READY TO FILE. Nothing had been
+     checked. The comment's example (an amendment requiring no fixed sections)
+     was also wrong: an amendment requires sixteen.
+
+     An empty required set is the absence of an assessment. The percentage is
+     null and a blocker says so, which makes `ready` false through the same
+     rule every other blocker uses.
+
+     Defence in depth, and said plainly: no filing type produces an empty set
+     today (initial requires 30, amendment 16), so this branch is not reachable
+     through the public API and is NOT covered by a test that has been seen to
+     fail. It exists so that a future filing type, or an artifact matrix that
+     comes back empty, cannot be reported as a complete and ready package. */
   const totalItems = required.length + requiredForms.length;
   const doneItems = completed + completedForms.length;
-  const overallPercentage = totalItems === 0 ? 100 : Math.round((doneItems / totalItems) * 100);
+  const overallPercentage: number | null =
+    totalItems === 0 ? null : Math.round((doneItems / totalItems) * 100);
+  if (totalItems === 0) {
+    blockers.push({
+      kind: 'nothing_assessed',
+      code: 'required_set_empty',
+      message:
+        'No required sections or forms are defined for this filing type, so filing readiness has not been assessed. This is not a complete package.',
+    });
+  }
 
   const warnings: string[] = [];
   if (Object.keys(sectionStatus).length === 0) {

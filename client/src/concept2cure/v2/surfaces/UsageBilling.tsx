@@ -6,6 +6,7 @@ import { C2CToast, useToast } from '../toast';
 import { GovernedConfirmDialog } from '../../_shared/components/GovernedConfirmDialog';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { usePublishSurfaceContext } from '../surfaceContext';
+import { useSurfaceActionHandlers, type SurfaceActionHandler } from '../surfaceActions';
 import '../styles/project-home-v2.css';
 
 /* ── Per-tier rate limits — canonical rate card, verbatim from the server's
@@ -231,7 +232,7 @@ function Panel<T>({
   children: (data: T) => React.ReactNode;
 }) {
   if (state.loading) {
-    return <div className="scaf-note" style={{ padding: '18px 10px' }}>Loading…</div>;
+    return <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>Loading…</div>;
   }
   if (state.error) {
     return <EmptyState tone="error" icon={I.alertTriangle} title={errorTitle} hint={errorHint} />;
@@ -357,6 +358,24 @@ export function UsageBilling({ onAsk, surface, onNav }: SurfaceViewProps) {
      state: a balance or an invoice list invented from a failed read would be a
      financial claim about the customer's account. */
   const activeId = surface && surface.id === 'billing' ? 'billing' : 'usage';
+
+  /* AnA can open any of the three on-screen tabs — the same click a person
+     makes. `tab` is local display state independent of which registry id
+     (`usage`/`billing`) is mounted, so the SAME handler body is registered
+     under whichever id currently owns the bus slot, mirroring the publish
+     gating just above/below. View-state only — nothing governed here. */
+  const openTab: SurfaceActionHandler = (params) => {
+    const target = params.tab;
+    if (target !== 'usage' && target !== 'billing' && target !== 'limits') {
+      return { ok: false, reason: `"${target}" is not a usage/billing tab.` };
+    }
+    if (tab === target) return { ok: true, detail: `Already on the ${target} tab` };
+    setTab(target);
+    return { ok: true, detail: `Opened the ${target} tab` };
+  };
+  useSurfaceActionHandlers(activeId === 'usage' ? 'usage' : null, { 'usage.open-tab': openTab });
+  useSurfaceActionHandlers(activeId === 'billing' ? 'billing' : null, { 'billing.open-tab': openTab });
+
   const anaContext = useMemo(() => {
     const inv = invoicesState.data;
     const cr = creditsState.data;

@@ -32,6 +32,7 @@ async function pkg(work: string, opts: {
   try {
     return await packageEctdSubmission({
       region: 'fda', applicationId: '1', sequence: '0000', submissionType: 'original',
+      fda: { applicationType: 'nda' }, // a package must declare what it is; this used to default to NDA silently
       sponsorId: 'D', sponsorName: 'S', productName: 'P', outputDir: path.join(work, 'out'),
       environment: 'production', leaves, crossReferences: opts.crossReferences,
     });

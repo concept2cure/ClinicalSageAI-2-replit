@@ -12,7 +12,17 @@
 import { randomUUID } from 'crypto';
 import { getPool } from '../db';
 import { createSourceHash } from './cmc-module3-compiler';
-import { composeModule3FromCanonicalSources, MODULE3_SECTION_RULES, renderComposedSectionMarkdown, CmcSourceType } from './module3Composer';
+import {
+  CMC_SOURCE_TYPES,
+  composeModule3FromCanonicalSources,
+  MODULE3_SECTION_RULES,
+  tablesToMarkdown,
+  CmcSourceType,
+  type CanonicalSource,
+} from './module3Composer';
+import { appendixSectionsRequiringSourceType, composeAppendices, emittableAppendices } from './module3-extensions';
+import { enforceAuthorLineage } from './clinical-regulatory-evidence/lineage-gate';
+import { governedActor } from './part11/governed-actor';
 import {
   resolveCmcArtifactProject,
   type ArtifactProjectResolution,
@@ -39,6 +49,8 @@ export interface Module3SectionBuildStatus {
   sectionLabel: string;
   buildState: Module3BuildState;
   sourceObjectCount: number;
+  /** Uploaded source documents classified as feeding this section (governed artifact registry). */
+  uploadedSourceCount: number;
   sourceTypes: string[];
   completeness: number;
   missingInputs: string[];
@@ -47,6 +59,8 @@ export interface Module3SectionBuildStatus {
   isStale: boolean;
   staleReason: string | null;
   approvalState: string;
+  /** The compiled row carries narrative text. */
+  hasNarrative: boolean;
   artifactId: string | null;
   artifactStatus: string | null;
   lastCompiled: string | null;
@@ -82,6 +96,11 @@ const SECTION_LABELS: Record<string, string> = {
   '3.2.P.7': 'Container Closure System (Drug Product)',
   '3.2.P.8': 'Stability (Drug Product)',
   '3.3': 'Literature References',
+  /* The appendices compose, stale and approve like any other section; a
+     label table without them hid a stale 3.2.A.* from every reader of this map. */
+  '3.2.A.1': 'Facilities and Equipment',
+  '3.2.A.2': 'Adventitious Agents Safety Evaluation',
+  '3.2.A.3': 'Excipients',
 };
 
 // ── Public API ─────────────────────────────────────────────────
@@ -122,8 +141,9 @@ export async function getModule3BuildStatus(
 
   const spine = await resolveCmcArtifactProject(orgId, projectId);
 
-  // Parallel fetch of all four data sources
-  const [sourceRes, sectionRes, contradictionRes, artifactRes] = await Promise.all([
+  // Parallel fetch of all five data sources
+  const noArtifacts = Promise.resolve({ rows: [] as any[] });
+  const [sourceRes, sectionRes, contradictionRes, artifactRes, uploadedRes] = await Promise.all([
     pool.query(
       `SELECT id, source_type AS "sourceType", source_key AS "sourceKey",
               source_payload AS "sourcePayload", source_hash AS "sourceHash",
@@ -136,6 +156,7 @@ export async function getModule3BuildStatus(
       `SELECT section_key AS "sectionKey", stale, stale_reason AS "staleReason",
               approval_state AS "approvalState", compiled_hash AS "compiledHash",
               deterministic_json AS "deterministicJson",
+              (narrative_text IS NOT NULL AND narrative_text <> '') AS "hasNarrative",
               updated_at AS "updatedAt"
        FROM cmc_module3_sections
        WHERE organization_id = $1 AND project_id = $2`,
@@ -157,8 +178,29 @@ export async function getModule3BuildStatus(
              AND (ctd_section LIKE '3.2.%' OR ctd_section IN ('3.1', '3.3'))`,
           [orgId, spine.artifactProjectId],
         )
-      : Promise.resolve({ rows: [] as any[] }),
+      : noArtifacts,
+    // Uploaded source documents classified as feeding Module 3 — the build
+    // board's "N uploaded" beside a section with no composed source yet.
+    spine.state === 'linked'
+      ? pool.query(
+          `SELECT id, artifact_id as "artifactId", ctd_section as "ctdSection",
+                  metadata, title
+           FROM concept2cure_artifacts
+           WHERE organization_id = $1 AND project_id = $2
+                 AND category = 'source'
+                 AND (metadata->>'dossierClassification' IS NOT NULL)
+                 AND (metadata->'dossierClassification'->>'feedsModule3')::text = 'true'`,
+          [orgId, spine.artifactProjectId],
+        )
+      : noArtifacts,
   ]);
+
+  const uploadedCounts = new Map<string, number>();
+  for (const row of uploadedRes.rows) {
+    const cls = row.metadata?.dossierClassification;
+    const section = cls?.ctdSection || row.ctdSection;
+    if (section) uploadedCounts.set(section, (uploadedCounts.get(section) || 0) + 1);
+  }
 
   // Index helpers
   const sectionMap = new Map<string, any>();
@@ -185,7 +227,55 @@ export async function getModule3BuildStatus(
     }
   }
 
-  // Group source objects by type for quick lookup
+  /* ── Completeness is the composer's, and only the composer's ──
+     This used to score each section by KEY PRESENCE over every source of a
+     matching type (`Object.keys(sourcePayload)`), so a key holding '' or null
+     counted as present and a retired source still fed the count — while the
+     compile path stored composeModule3FromCanonicalSources's figures in
+     cmc_module3_sections.deterministic_json and the final-export gate refused
+     on those. Three readers, two definitions, and this one was the greenest.
+
+     The rows are handed to the composer exactly as the compile route hands
+     them (every row for the project, no version dedup — `loadCmcSourcesForProject`
+     keeps only the latest version per key, which is NOT what compile composes,
+     so adopting it here would reopen the disagreement from the other side).
+     What comes back is the one answer: `completeness` / `missingInputs` as the
+     composer scored them (`isPresent` excludes null and ''), and `lineage` —
+     one entry per source that actually composed, which already excludes
+     retirement — is the count. A compiled row's stored figure is deliberately
+     NOT preferred: it is the composer's answer at compile time, and `stale`
+     exists because source edits after that make it wrong. */
+  const rowById = new Map<string, any>();
+  const canonicalSources: CanonicalSource[] = sourceRes.rows.map((row) => {
+    const id = String(row.id);
+    rowById.set(id, row);
+    return {
+      id,
+      sourceType: row.sourceType as CmcSourceType,
+      sourcePayload: (row.sourcePayload ?? {}) as Record<string, any>,
+      sourceHash: row.sourceHash ?? undefined,
+      organizationId: orgId,
+      projectId,
+    };
+  });
+  /* The appendices compose and go stale like any other section (an approved
+     3.2.A.* is marked stale when its sources change), so they are reported
+     here too — a board that walked only the seventeen core keys reported zero
+     stale sections while the export gate refused on a stale appendix. */
+  const composedAll = composeModule3FromCanonicalSources(canonicalSources).concat(
+    emittableAppendices(composeAppendices(canonicalSources)),
+  );
+  const composedBySection = new Map(composedAll.map((c) => [c.sectionKey, c] as const));
+  const appendixRules = composedAll
+    .filter((c) => c.sectionKey.startsWith('3.2.A'))
+    .map((c) => ({
+      sectionKey: c.sectionKey,
+      requiredSourceTypes: CMC_SOURCE_TYPES.filter((st) => appendixSectionsRequiringSourceType(st).includes(c.sectionKey)),
+    }));
+
+  // Group source objects by type — for the section's lastUpdated only. A
+  // retired source no longer composes, but retiring it IS an edit to the
+  // section's inputs, so it still moves the timestamp.
   const sourcesByType = new Map<string, any[]>();
   for (const row of sourceRes.rows) {
     const list = sourcesByType.get(row.sourceType) || [];
@@ -194,28 +284,25 @@ export async function getModule3BuildStatus(
   }
 
   // Build per-section status
-  const results: Module3SectionBuildStatus[] = MODULE3_SECTION_RULES.map((rule) => {
+  const results: Module3SectionBuildStatus[] = [...MODULE3_SECTION_RULES, ...appendixRules].map((rule) => {
     const sectionKey = rule.sectionKey;
     const sectionLabel = SECTION_LABELS[sectionKey] || sectionKey;
 
-    // Matched source objects for this section
+    const composed = composedBySection.get(sectionKey);
+    if (!composed) {
+      // The composer emits one section per rule; a missing one is a broken
+      // invariant, not a section with nothing in it. Never score it 0 and move on.
+      throw new Error(`[module3-convergence] composer emitted no section for ${sectionKey}`);
+    }
+    const composingRows = composed.lineage.map((l) => rowById.get(l.sourceObjectId)).filter(Boolean);
+    const sourceObjectCount = composed.lineage.length;
+    const sourceTypes = [...new Set(composingRows.map((s) => s.sourceType as string))];
+    const { completeness, missingInputs } = composed;
+
+    // Every source of a matching type, retired or not — timestamps only.
     const matchedSources = rule.requiredSourceTypes.flatMap(
       (st) => sourcesByType.get(st) || [],
     );
-    const sourceObjectCount = matchedSources.length;
-    const sourceTypes = [...new Set(matchedSources.map((s) => s.sourceType as string))];
-
-    // Completeness via field availability
-    const availableFields = new Set(
-      matchedSources.flatMap((s) => Object.keys(s.sourcePayload || {})),
-    );
-    const missingInputs = rule.requiredFields.filter((f) => !availableFields.has(f));
-    const completeness =
-      rule.requiredFields.length === 0
-        ? 100
-        : Math.round(
-            ((rule.requiredFields.length - missingInputs.length) / rule.requiredFields.length) * 100,
-          );
 
     // Compiled section record
     const compiled = sectionMap.get(sectionKey);
@@ -247,14 +334,18 @@ export async function getModule3BuildStatus(
         ? new Date(Math.max(...timestamps.map((d) => d.getTime()))).toISOString()
         : null;
 
-    // Determine build state
+    const uploadedSourceCount = uploadedCounts.get(sectionKey) || 0;
+    const hasNarrative = compiled?.hasNarrative === true;
+
+    // Determine build state — the ONE derivation, shared with the build-state route.
     const buildState = deriveBuildState({
       sourceObjectCount,
+      uploadedSourceCount,
       compiled: !!compiled,
-      hasArtifact: !!artifactId,
       isStale,
       hasContradictions,
       approvalState,
+      artifactStatus,
     });
 
     return {
@@ -262,6 +353,7 @@ export async function getModule3BuildStatus(
       sectionLabel,
       buildState,
       sourceObjectCount,
+      uploadedSourceCount,
       sourceTypes,
       completeness,
       missingInputs,
@@ -270,6 +362,7 @@ export async function getModule3BuildStatus(
       isStale,
       staleReason,
       approvalState,
+      hasNarrative,
       artifactId,
       artifactStatus,
       lastCompiled,
@@ -449,15 +542,11 @@ export async function bridgeCompileToArtifact(
 
     const sectionLabel = SECTION_LABELS[sectionKey] || sectionKey;
 
-    /* Narrative prose + the tables the narrative cites, through the ONE
-       renderer the IND placement snapshot also uses — the inline concatenation
-       that used to live here is gone, so the governed artifact and the filed
-       leaf cannot render the same section differently. */
-    const fullContent = renderComposedSectionMarkdown(
-      sectionLabel,
-      compiledSection.narrativeDraft,
-      compiledSection.tables,
-    );
+    // Build full document content: narrative prose + rendered tables
+    const tablesMarkdown = compiledSection.tables && compiledSection.tables.length > 0
+      ? '\n\n' + tablesToMarkdown(compiledSection.tables)
+      : '';
+    const fullContent = `## ${sectionLabel}\n\n${compiledSection.narrativeDraft}${tablesMarkdown}`;
 
     const contentHash = createSourceHash({ narrative: fullContent, sectionKey });
     const sourceObjectIds = compiledSection.lineage.map((l) => l.sourceObjectId);
@@ -484,6 +573,7 @@ export async function bridgeCompileToArtifact(
 
     let artifactId: string;
     let isNew: boolean;
+    let artifactPk: number;
 
     if (existing.rows.length > 0) {
       // Update existing artifact
@@ -502,17 +592,19 @@ export async function bridgeCompileToArtifact(
          WHERE organization_id = $4 AND id = $5`,
         [fullContent, contentHash, JSON.stringify(metadata), orgId, row.id],
       );
+      artifactPk = Number(row.id);
     } else {
       // Create new governed artifact
       artifactId = `m3-${sectionKey}-${randomUUID().slice(0, 8)}`;
       isNew = true;
 
-      await client.query(
+      const inserted = await client.query<{ id: number }>(
         `INSERT INTO concept2cure_artifacts
            (organization_id, project_id, artifact_id, type, category, title,
             content, content_hash, version, ctd_section, status, metadata, created_by_id)
          VALUES ($1, $2, $3, 'markdown', 'document', $4,
-                 $5, $6, 1, $7, 'draft', $8::jsonb, $9)`,
+                 $5, $6, 1, $7, 'draft', $8::jsonb, $9)
+         RETURNING id`,
         [
           orgId,
           artifactProjectId,
@@ -525,7 +617,24 @@ export async function bridgeCompileToArtifact(
           opts.createdById ?? null,
         ],
       );
+      artifactPk = Number(inserted.rows[0].id);
     }
+
+    /* Lineage in the same transaction as the composed text (ledger L160).
+       A composed Module 3 section is prose assembled from recorded facts by a
+       deterministic composer; the actor is the identified user when the
+       bridge ran for one, otherwise the NAMED machine actor — never a
+       placeholder. The per-source `cmc_section_lineage` rows above say which
+       records the section was built from; these spans say who stands behind
+       the sentences. */
+    const actor = governedActor(opts.createdById ?? null, 'module3-convergence');
+    await enforceAuthorLineage(
+      client,
+      orgId,
+      { documentTable: 'concept2cure_artifacts', documentId: String(artifactPk) },
+      fullContent,
+      actor.userId > 0 ? String(actor.userId) : String(actor.userEmail),
+    );
 
     // Record provenance event
     await client.query(
@@ -559,21 +668,32 @@ export async function bridgeCompileToArtifact(
 
 // ── Internal helpers ───────────────────────────────────────────
 
-function deriveBuildState(ctx: {
+/**
+ * The ONE build-state derivation, for this status and the build-state route.
+ *
+ * Priority-ordered. An approved section that went stale is 'stale', not
+ * 'approved': the export gate refuses it, and a board that called it approved
+ * was greener than the gate. The route used to carry its own copy with this
+ * order while this function put approval above staleness and contradictions
+ * above staleness — so AnA and the board disagreed on the same row.
+ */
+export function deriveBuildState(ctx: {
   sourceObjectCount: number;
+  uploadedSourceCount?: number;
   compiled: boolean;
-  hasArtifact: boolean;
   isStale: boolean;
   hasContradictions: boolean;
-  approvalState: string;
+  approvalState: string | null;
+  artifactStatus: string | null;
 }): Module3BuildState {
-  if (ctx.approvalState === 'locked') return 'locked';
-  if (ctx.approvalState === 'approved') return 'approved';
-  if (ctx.approvalState === 'review') return 'review';
-  if (ctx.hasContradictions) return 'contradiction_flagged';
+  if (ctx.artifactStatus === 'locked' || ctx.approvalState === 'locked') return 'locked';
+  if (ctx.approvalState === 'approved' && !ctx.isStale) return 'approved';
+  if (ctx.artifactStatus === 'review' || ctx.approvalState === 'review') return 'review';
   if (ctx.isStale) return 'stale';
-  if (ctx.hasArtifact) return 'draft_artifact_created';
+  if (ctx.hasContradictions) return 'contradiction_flagged';
+  if (ctx.artifactStatus === 'draft' && ctx.compiled) return 'draft_artifact_created';
   if (ctx.compiled) return 'compiled';
-  if (ctx.sourceObjectCount > 0) return 'sources_uploaded';
+  if (ctx.sourceObjectCount > 0) return 'extraction_complete';
+  if ((ctx.uploadedSourceCount ?? 0) > 0) return 'sources_uploaded';
   return 'no_sources';
 }

@@ -20,9 +20,56 @@ const logger = createScopedLogger('ind-routes');
 
 // ── helpers ─────────────────────────────────────────────────────────────────
 
+/**
+ * The caller's organization, or nothing.
+ *
+ * ── What `|| null` meant here ───────────────────────────────────────────────
+ * This returned null for a request with no tenant on it, and every query in
+ * this router appended its tenant clause only `if (organizationId)`. Without a
+ * tenant, therefore:
+ *
+ *   GET    /applications      listed EVERY sponsor's IND applications
+ *                             (the predicate was left as `WHERE 1=1`)
+ *   GET    /applications/:id  read any IND by id — drug name, indication,
+ *                             sponsor
+ *   PUT    /applications/:id  updated any sponsor's IND
+ *   DELETE /applications/:id  deleted any sponsor's draft IND
+ *
+ * The delete path is the sharpest illustration: its removal is written into the
+ * hash-chained audit_events table in the same transaction, fail-closed, citing
+ * 21 CFR 11.10(e) — meticulously audited, and not scoped to a tenant. A
+ * conditional tenant predicate is not a predicate; it is a default.
+ *
+ * The gate below refuses without an organization, so this always returns one
+ * and every clause below is unconditional.
+ */
+function resolveOrgId(req: Request): number | null {
+  const raw =
+    (req as any).tenantId ??
+    (req as any).tenantContext?.organizationId ??
+    (req as any).organizationId ??
+    (req as any).user?.organizationId;
+  if (raw === undefined || raw === null || raw === '') return null;
+  const n = typeof raw === 'string' ? parseInt(raw, 10) : Number(raw);
+  return Number.isFinite(n) && n > 0 ? n : null;
+}
+
+/** Where the resolved org is parked for the handlers, once, per request. */
+const IND_ORG = Symbol.for('indRoutes.orgId');
+
+/* One gate for all ten endpoints, so a new one cannot be added without it. */
+router.use((req: Request, res: Response, next) => {
+  const orgId = resolveOrgId(req);
+  if (orgId === null) {
+    return res.status(403).json({ success: false, error: 'Organization context required.' });
+  }
+  (req as any)[IND_ORG] = orgId;
+  next();
+});
+
 function tenantHeaders(req: Request) {
   return {
-    organizationId: (req as any).tenantId || (req as any).tenantContext?.organizationId || (req as any).user?.organizationId || null,
+    organizationId: (req as any)[IND_ORG] as number,
     projectId: (req.headers['x-project-id'] as string) || null,
   };
 }
@@ -43,13 +90,8 @@ router.get('/applications', async (req: Request, res: Response) => {
     const { organizationId } = tenantHeaders(req);
     const { status, limit = '50', offset = '0' } = req.query as Record<string, string>;
 
-    const params: unknown[] = [];
-    let where = 'WHERE 1=1';
-
-    if (organizationId) {
-      params.push(organizationId);
-      where += ` AND organization_id = $${params.length}`;
-    }
+    const params: unknown[] = [organizationId];
+    let where = 'WHERE organization_id = $1';
     if (status) {
       params.push(status);
       where += ` AND status = $${params.length}`;
@@ -110,8 +152,8 @@ router.get('/applications/:id', async (req: Request, res: Response) => {
     const { id } = req.params;
 
     const appResult = await query(
-      `SELECT id, project_id, organization_id, drug_name, indication, sponsor, submission_type, status, progress_pct, created_at, updated_at FROM ind_applications WHERE id = $1${organizationId ? ' AND organization_id = $2' : ''}`,
-      organizationId ? [id, organizationId] : [id]
+      `SELECT id, project_id, organization_id, drug_name, indication, sponsor, submission_type, status, progress_pct, created_at, updated_at FROM ind_applications WHERE id = $1 AND organization_id = $2`,
+      [id, organizationId]
     );
 
     if (!appResult.rows.length) {
@@ -215,12 +257,10 @@ router.put('/applications/:id', async (req: Request, res: Response) => {
     params.push(id);
     const idParam = `$${params.length}`;
 
-    let sql = `UPDATE ind_applications SET ${updates.join(', ')} WHERE id = ${idParam}`;
-    if (organizationId) {
-      params.push(organizationId);
-      sql += ` AND organization_id = $${params.length}`;
-    }
-    sql += ' RETURNING *';
+    params.push(organizationId);
+    const sql =
+      `UPDATE ind_applications SET ${updates.join(', ')} ` +
+      `WHERE id = ${idParam} AND organization_id = $${params.length} RETURNING *`;
 
     const result = await query(sql, params);
 
@@ -242,12 +282,9 @@ router.delete('/applications/:id', async (req: Request, res: Response) => {
     const { id } = req.params;
 
     // SAFETY: Only allow deletion of draft applications
-    const checkParams: unknown[] = [id];
-    let checkSql = 'SELECT id, status, organization_id FROM ind_applications WHERE id = $1';
-    if (organizationId) {
-      checkParams.push(organizationId);
-      checkSql += ` AND organization_id = $${checkParams.length}`;
-    }
+    const checkParams: unknown[] = [id, organizationId];
+    const checkSql =
+      'SELECT id, status, organization_id FROM ind_applications WHERE id = $1 AND organization_id = $2';
 
     const existing = await query(checkSql, checkParams);
     if (!existing.rows.length) {
@@ -270,13 +307,9 @@ router.delete('/applications/:id', async (req: Request, res: Response) => {
     // table IN THE SAME TRANSACTION — atomic and fail-closed (an audit failure
     // rolls the delete back, so a regulated record is never removed unaudited).
     const deletedId = await transaction(async (client: any) => {
-      const delParams: unknown[] = [id];
-      let delSql = 'DELETE FROM ind_applications WHERE id = $1';
-      if (organizationId) {
-        delParams.push(organizationId);
-        delSql += ` AND organization_id = $${delParams.length}`;
-      }
-      delSql += ' RETURNING id';
+      const delParams: unknown[] = [id, organizationId];
+      const delSql =
+        'DELETE FROM ind_applications WHERE id = $1 AND organization_id = $2 RETURNING id';
 
       const del = await client.query(delSql, delParams);
       if (!del.rows.length) {

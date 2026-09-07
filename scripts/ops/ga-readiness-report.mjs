@@ -102,10 +102,15 @@ const REQUIRED_DTDS = [
 const ESTAR_DESCRIPTORS = [
   { id: '510k-device', file: 'eSTAR-510k-non-ivd.pdf' },
   { id: '510k-ivd', file: 'eSTAR-510k-ivd.pdf' },
-  { id: 'de_novo-device', file: 'eSTAR-denovo-non-ivd.pdf' },
-  { id: 'de_novo-ivd', file: 'eSTAR-denovo-ivd.pdf' },
-  { id: 'pma-device', file: 'eSTAR-pma-non-ivd.pdf' },
-  { id: 'pma-ivd', file: 'eSTAR-pma-ivd.pdf' },
+  // De Novo and PMA are filed on the SAME two FDA PDFs as the 510(k): FDA ships
+  // one nIVD and one IVD eSTAR, each carrying all three marketing pathways.
+  // These four named eSTAR-denovo-*/eSTAR-pma-* until 2026-09-04, which asked
+  // procurement for files FDA does not publish and reported the two pathways
+  // blocked while they were producing.
+  { id: 'de_novo-device', file: 'eSTAR-510k-non-ivd.pdf' },
+  { id: 'de_novo-ivd', file: 'eSTAR-510k-ivd.pdf' },
+  { id: 'pma-device', file: 'eSTAR-510k-non-ivd.pdf' },
+  { id: 'pma-ivd', file: 'eSTAR-510k-ivd.pdf' },
   { id: 'q_sub-prestar', file: 'PreSTAR-q-sub.pdf' },
   { id: 'ide-prestar', file: 'PreSTAR-ide.pdf' },
   { id: '513g-prestar', file: 'PreSTAR-513g.pdf' },
@@ -624,19 +629,44 @@ record({
       owner: 'Engineering',
     });
   } else {
+    // The question is not "are vitest's thresholds set" — it is CAN THIS JOB
+    // FAIL ON COVERAGE. Those differ now: the thresholds stay at 0 on the
+    // measuring step on purpose (test pass/fail belongs to the Test job), and
+    // the enforcement is a separate ratchet step that has no continue-on-error.
+    // Reading the override alone would report a gate that CAN fail as if it
+    // could not.
+    const hasRatchet = /ci:coverage-ratchet/.test(ci);
     const forcedZero = /--coverage\.thresholds\.lines=0/.test(ci);
+
+    let baselineNote = '';
+    try {
+      const b = JSON.parse(fs.readFileSync(path.join(repoRoot, 'scripts/ci/coverage-baseline.json'), 'utf8'));
+      const m = b.metrics ?? {};
+      baselineNote =
+        ` — pinned at lines ${m.lines}%, statements ${m.statements}%, ` +
+        `functions ${m.functions}%, branches ${m.branches}%`;
+    } catch {
+      baselineNote = ' — but scripts/ci/coverage-baseline.json is missing, so the ratchet cannot run';
+    }
+
     record({
       id: 'ci-coverage-gate',
       group: 'CI posture',
-      label: 'Coverage thresholds enforced in CI',
-      status: forcedZero ? 'blocked' : 'ready',
+      label: 'Coverage enforced in CI (ratchet; 70/60/70/70 still the target)',
+      status: hasRatchet && baselineNote.startsWith(' —') && !baselineNote.includes('missing')
+        ? 'ready'
+        : 'blocked',
       severity: 'advisory',
-      observed: forcedZero
-        ? 'the coverage job overrides all four thresholds to 0 and runs continue-on-error — it measures, it never blocks'
-        : 'no threshold override found in the coverage job',
-      gate: '.github/workflows/ci.yml `coverage` job vs. the 70/60/70/70 target in vitest.config.ts',
+      observed: hasRatchet
+        ? `the coverage job runs ci:coverage-ratchet with no continue-on-error, so a DROP fails the build${baselineNote}`
+        : forcedZero
+          ? 'the coverage job overrides all four thresholds to 0 and runs continue-on-error — it measures, it never blocks'
+          : 'no coverage enforcement found in the coverage job',
+      gate: '.github/workflows/ci.yml `coverage` job → scripts/ci/check-coverage-ratchet.mjs',
       owner: 'Engineering',
-      unblock: 'Raise real coverage to the vitest.config.ts target, then drop the --coverage.thresholds.*=0 overrides and continue-on-error.',
+      unblock: hasRatchet
+        ? 'Enforced against regression. To close the remaining gap, raise real coverage toward the 70/60/70/70 target in vitest.config.ts, re-pinning the baseline as it climbs.'
+        : 'Add the ci:coverage-ratchet step to the coverage job so a coverage drop fails the build.',
     });
   }
 }

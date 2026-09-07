@@ -7,7 +7,7 @@
  *   - blocks_promotion contradictions surface "Execute consequence" action
  *     with 30-char reason floor
  *
- * Port basis: design-system/ui_kits/pdev/Surfaces.jsx > PdevContradictions.
+ * Port basis: ui_kits/pdev/Surfaces.jsx > PdevContradictions.
  */
 
 import * as React from 'react';

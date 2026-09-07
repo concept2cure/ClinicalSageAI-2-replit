@@ -169,6 +169,8 @@ function rowToKit(row: ServerProgramRow): Program | null {
     title:        row.productName || row.name,
     code:         deriveCode(row),
     pathway,
+    productType:  row.productType,
+    regulatoryPath: row.regulatoryPath ?? undefined,
     stage,
     stageIdx,
     readiness:    row.progressPercent ?? 0,

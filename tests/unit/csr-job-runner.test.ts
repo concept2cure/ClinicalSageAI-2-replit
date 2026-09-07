@@ -70,7 +70,10 @@ const state = vi.hoisted(() => {
 
 const draftMock = vi.hoisted(() => vi.fn());
 
-vi.mock('../../server/services/csr-builder', () => {
+vi.mock('../../server/services/csr-builder', async (importOriginal) => {
+  // The runner's placeholder gate (fail closed on bracketed template prose)
+  // reads the real detector; only the drafting seam and the tree are faked.
+  const actual = await importOriginal<typeof import('../../server/services/csr-builder')>();
   // Two top-level sections, one with two children → 4 total after flatten.
   const ICH_E3_STRUCTURE = [
     { number: '1', title: 'Title Page', required: true, status: 'empty', description: 'd1' },
@@ -98,6 +101,7 @@ vi.mock('../../server/services/csr-builder', () => {
     ICH_E3_STRUCTURE,
     flattenICHE3Sections,
     draftCSRSectionWithProvenance: (...args: unknown[]) => draftMock(...args),
+    hasUnresolvedPlaceholders: actual.hasUnresolvedPlaceholders,
   };
 });
 

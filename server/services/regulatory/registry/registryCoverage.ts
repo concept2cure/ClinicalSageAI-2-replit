@@ -35,7 +35,9 @@ import { DEDICATED_SECTION_BLUEPRINT_IDS } from '../sectionBlueprintCatalog.js';
 import { DEDICATED_TASK_BLUEPRINT_IDS } from '../taskBlueprintCatalog.js';
 import { FDAFormsRegistry, governedFormDefinition } from '../../../config/FDAFormsRegistry.js';
 import { readFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import { join as joinPath } from 'node:path';
+import { getOfficialXfaFieldMap } from '../../ind-forms/official-field-maps.js';
 import type {
   RegulatoryApplicationType,
   Region,
@@ -67,6 +69,14 @@ export interface RequiredFormCoverage {
    * form FDA ingests — so a filing is not form-backed however 'full' the code.
    */
   officialAssetTrusted: boolean;
+  /**
+   * The named person recorded on the installed asset's manifest (`reviewedBy`),
+   * or null. Kept apart from `officialAssetTrusted` on purpose: the XFA forms
+   * fill from a code-reviewed map and verify their bytes, which earns "backed",
+   * but only someone who has opened the filled form in Acrobat can vouch that
+   * the map lands values in the right boxes. A client must see both facts.
+   */
+  reviewer: string | null;
 }
 
 export interface DocumentCoverage {
@@ -83,6 +93,9 @@ export interface DocumentCoverage {
   requiredForms: RequiredFormCoverage[];
   /** Every required *form* artifact is registered (and implemented when a builder is expected). */
   formsFullyBacked: boolean;
+  /** Every required form's installed asset names a human reviewer. Independent of
+   *  `formsFullyBacked`; see RequiredFormCoverage.reviewer. */
+  formsHumanReviewed: boolean;
   /** A regional eCTD backbone reference exists for this region. */
   hasEctdBackbone: boolean;
   validationProfile: string;
@@ -144,25 +157,83 @@ function taskTier(entry: RegulatoryApplicationType): BlueprintTier {
  *
  * ── Why the coverage report has to read it ───────────────────────────────────
  * `implementationStatus: 'full'` describes the BUILDER (field builders, QC,
- * rendering). Every bundled official PDF today is a dynamic XFA edition with
- * `fillSupported: false` and an empty `fieldMap`, so a 'full' form renders a
- * watermarked draft or a labeled reconstruction. Reporting US NDA/BLA/IND as
- * "forms fully backed" on the builder flag alone told a product owner the
- * package would carry the official 356h/1571 when it would not.
+ * rendering), not whether an official FDA edition is installed and fillable.
+ * Reporting US NDA/BLA/IND as "forms fully backed" on the builder flag alone
+ * told a product owner the package would carry the official 356h/1571 when it
+ * would not.
+ *
+ * TWO CONTRACTS, because there are two kinds of official form and the renderer
+ * fills both:
+ *   - AcroForm (1572, 356h, 3454, 3455): the field map lives in the manifest, so
+ *     a named reviewer must vouch for it — `assetTrusted` + `fillSupported` +
+ *     a non-empty `fieldMap` + `reviewedBy`.
+ *   - dynamic XFA (1571, 3674): no AcroForm widgets exist to name, so the map is
+ *     the code-reviewed OFFICIAL_XFA_FIELD_MAPS and the evidence is integrity —
+ *     `xfaDynamic` + `fillSupported`, an fda.gov `sourceUrl`, and a `sha256` that
+ *     matches the bytes on disk. These are exactly the checks readXfaTemplate
+ *     makes, so the report and the renderer still cannot disagree.
  */
-function officialFormAssetTrusted(formId: string): boolean {
+type FormManifest = {
+  assetTrusted?: unknown;
+  fillSupported?: unknown;
+  fieldMap?: unknown;
+  reviewedBy?: unknown;
+  xfaDynamic?: unknown;
+  sourceUrl?: unknown;
+  sha256?: unknown;
+};
+
+/** Read a form's installed-asset manifest, or null when none is installed. */
+function readFormManifest(formId: string): { dir: string; manifest: FormManifest } | null {
   const dir = process.env.IND_FORM_TEMPLATES_DIR || joinPath(process.cwd(), 'templates', 'forms', 'acroforms');
   try {
     const raw = readFileSync(joinPath(dir, `${formId}.pdf.manifest.json`), 'utf8');
-    const m = JSON.parse(raw) as {
-      assetTrusted?: unknown;
-      fillSupported?: unknown;
-      fieldMap?: unknown;
-      reviewedBy?: unknown;
-    };
-    const fieldMapPopulated =
-      m.fieldMap !== null && typeof m.fieldMap === 'object' && Object.keys(m.fieldMap as object).length > 0;
-    return m.assetTrusted === true && m.fillSupported === true && fieldMapPopulated && Boolean(m.reviewedBy);
+    return { dir, manifest: JSON.parse(raw) as FormManifest };
+  } catch {
+    return null;
+  }
+}
+
+function officialFormAssetTrusted(formId: string): boolean {
+  const read = readFormManifest(formId);
+  if (!read) return false;
+  const { dir, manifest: m } = read;
+  const fieldMapPopulated =
+    m.fieldMap !== null && typeof m.fieldMap === 'object' && Object.keys(m.fieldMap as object).length > 0;
+  if (m.assetTrusted === true && m.fillSupported === true && fieldMapPopulated && Boolean(m.reviewedBy)) {
+    return true;
+  }
+  return xfaFillable(dir, formId, m);
+}
+
+/** The named human reviewer on the installed asset's manifest, or null. An
+ *  empty string is no reviewer. See RequiredFormCoverage.reviewer for why this
+ *  is reported separately from officialFormAssetTrusted. */
+function officialFormReviewer(formId: string): string | null {
+  const reviewer = readFormManifest(formId)?.manifest.reviewedBy;
+  return typeof reviewer === 'string' && reviewer.trim().length > 0 ? reviewer : null;
+}
+
+/**
+ * The dynamic-XFA half of the contract above: mirrors readXfaTemplate's checks
+ * so this report cannot claim a form the renderer would refuse, nor deny one it
+ * would fill.
+ */
+function xfaFillable(
+  dir: string,
+  formId: string,
+  m: { xfaDynamic?: unknown; fillSupported?: unknown; sourceUrl?: unknown; sha256?: unknown },
+): boolean {
+  if (m.xfaDynamic !== true || m.fillSupported !== true) return false;
+  const map = getOfficialXfaFieldMap(formId);
+  if (!map || Object.keys(map).length === 0) return false;
+  try {
+    const url = new URL(String(m.sourceUrl ?? ''));
+    const sourceIsFda =
+      url.protocol === 'https:' && (url.hostname === 'fda.gov' || url.hostname.endsWith('.fda.gov'));
+    if (!sourceIsFda) return false;
+    const bytes = readFileSync(joinPath(dir, `${formId}.pdf`));
+    return createHash('sha256').update(bytes).digest('hex') === m.sha256;
   } catch {
     return false;
   }
@@ -179,12 +250,14 @@ function requiredFormCoverage(entry: RegulatoryApplicationType): RequiredFormCov
         ? governedFormDefinition(form!).implementationStatus === 'full'
         : false;
       const officialAssetTrusted = registered ? officialFormAssetTrusted(form!.formId) : false;
+      const reviewer = registered ? officialFormReviewer(form!.formId) : null;
       return {
         artifact,
         formNumber: registered ? form!.formNumber : undefined,
         registered,
         implemented,
         officialAssetTrusted,
+        reviewer,
       };
     });
 }
@@ -209,6 +282,8 @@ export function getDocumentCoverage(idOrEntry: string | RegulatoryApplicationTyp
   const formsFullyBacked = requiredForms.every(
     (f) => f.registered && f.implemented && f.officialAssetTrusted,
   );
+  // Human review is a separate fact from integrity-backed fill (see officialFormReviewer).
+  const formsHumanReviewed = requiredForms.every((f) => f.reviewer !== null);
 
   return {
     id: entry.id,
@@ -223,6 +298,7 @@ export function getDocumentCoverage(idOrEntry: string | RegulatoryApplicationTyp
     taskBlueprint: task,
     requiredForms,
     formsFullyBacked,
+    formsHumanReviewed,
     // Honest only when the region has an eCTD backbone AND this entry actually
     // files as eCTD. A device eSTAR/eCopy or ACTD entry in a backbone region
     // (e.g. a US 510(k)) does NOT get an eCTD backbone, so don't claim one.
@@ -250,7 +326,7 @@ export interface RegionCoverage {
   catalogOnly: number;
 }
 
-export interface CoverageReport {
+export interface RegistryCoverageReport {
   summary: CoverageSummary;
   byRegion: RegionCoverage[];
   entries: DocumentCoverage[];
@@ -264,7 +340,7 @@ export function computeCoverage(): DocumentCoverage[] {
 }
 
 /** Build the full portfolio coverage report. */
-export function buildCoverageReport(): CoverageReport {
+export function buildCoverageReport(): RegistryCoverageReport {
   const entries = computeCoverage();
 
   const byReadiness: Record<ReadinessTier, number> = { production_ready: 0, buildable: 0, catalog_only: 0 };
