@@ -69,6 +69,14 @@ export interface RequiredFormCoverage {
    * form FDA ingests — so a filing is not form-backed however 'full' the code.
    */
   officialAssetTrusted: boolean;
+  /**
+   * The named person recorded on the installed asset's manifest (`reviewedBy`),
+   * or null. Kept apart from `officialAssetTrusted` on purpose: the XFA forms
+   * fill from a code-reviewed map and verify their bytes, which earns "backed",
+   * but only someone who has opened the filled form in Acrobat can vouch that
+   * the map lands values in the right boxes. A client must see both facts.
+   */
+  reviewer: string | null;
 }
 
 export interface DocumentCoverage {
@@ -85,6 +93,9 @@ export interface DocumentCoverage {
   requiredForms: RequiredFormCoverage[];
   /** Every required *form* artifact is registered (and implemented when a builder is expected). */
   formsFullyBacked: boolean;
+  /** Every required form's installed asset names a human reviewer. Independent of
+   *  `formsFullyBacked`; see RequiredFormCoverage.reviewer. */
+  formsHumanReviewed: boolean;
   /** A regional eCTD backbone reference exists for this region. */
   hasEctdBackbone: boolean;
   validationProfile: string;
@@ -162,28 +173,45 @@ function taskTier(entry: RegulatoryApplicationType): BlueprintTier {
  *     matches the bytes on disk. These are exactly the checks readXfaTemplate
  *     makes, so the report and the renderer still cannot disagree.
  */
-function officialFormAssetTrusted(formId: string): boolean {
+type FormManifest = {
+  assetTrusted?: unknown;
+  fillSupported?: unknown;
+  fieldMap?: unknown;
+  reviewedBy?: unknown;
+  xfaDynamic?: unknown;
+  sourceUrl?: unknown;
+  sha256?: unknown;
+};
+
+/** Read a form's installed-asset manifest, or null when none is installed. */
+function readFormManifest(formId: string): { dir: string; manifest: FormManifest } | null {
   const dir = process.env.IND_FORM_TEMPLATES_DIR || joinPath(process.cwd(), 'templates', 'forms', 'acroforms');
   try {
     const raw = readFileSync(joinPath(dir, `${formId}.pdf.manifest.json`), 'utf8');
-    const m = JSON.parse(raw) as {
-      assetTrusted?: unknown;
-      fillSupported?: unknown;
-      fieldMap?: unknown;
-      reviewedBy?: unknown;
-      xfaDynamic?: unknown;
-      sourceUrl?: unknown;
-      sha256?: unknown;
-    };
-    const fieldMapPopulated =
-      m.fieldMap !== null && typeof m.fieldMap === 'object' && Object.keys(m.fieldMap as object).length > 0;
-    if (m.assetTrusted === true && m.fillSupported === true && fieldMapPopulated && Boolean(m.reviewedBy)) {
-      return true;
-    }
-    return xfaFillable(dir, formId, m);
+    return { dir, manifest: JSON.parse(raw) as FormManifest };
   } catch {
-    return false;
+    return null;
   }
+}
+
+function officialFormAssetTrusted(formId: string): boolean {
+  const read = readFormManifest(formId);
+  if (!read) return false;
+  const { dir, manifest: m } = read;
+  const fieldMapPopulated =
+    m.fieldMap !== null && typeof m.fieldMap === 'object' && Object.keys(m.fieldMap as object).length > 0;
+  if (m.assetTrusted === true && m.fillSupported === true && fieldMapPopulated && Boolean(m.reviewedBy)) {
+    return true;
+  }
+  return xfaFillable(dir, formId, m);
+}
+
+/** The named human reviewer on the installed asset's manifest, or null. An
+ *  empty string is no reviewer. See RequiredFormCoverage.reviewer for why this
+ *  is reported separately from officialFormAssetTrusted. */
+function officialFormReviewer(formId: string): string | null {
+  const reviewer = readFormManifest(formId)?.manifest.reviewedBy;
+  return typeof reviewer === 'string' && reviewer.trim().length > 0 ? reviewer : null;
 }
 
 /**
@@ -222,12 +250,14 @@ function requiredFormCoverage(entry: RegulatoryApplicationType): RequiredFormCov
         ? governedFormDefinition(form!).implementationStatus === 'full'
         : false;
       const officialAssetTrusted = registered ? officialFormAssetTrusted(form!.formId) : false;
+      const reviewer = registered ? officialFormReviewer(form!.formId) : null;
       return {
         artifact,
         formNumber: registered ? form!.formNumber : undefined,
         registered,
         implemented,
         officialAssetTrusted,
+        reviewer,
       };
     });
 }
@@ -252,6 +282,8 @@ export function getDocumentCoverage(idOrEntry: string | RegulatoryApplicationTyp
   const formsFullyBacked = requiredForms.every(
     (f) => f.registered && f.implemented && f.officialAssetTrusted,
   );
+  // Human review is a separate fact from integrity-backed fill (see officialFormReviewer).
+  const formsHumanReviewed = requiredForms.every((f) => f.reviewer !== null);
 
   return {
     id: entry.id,
@@ -266,6 +298,7 @@ export function getDocumentCoverage(idOrEntry: string | RegulatoryApplicationTyp
     taskBlueprint: task,
     requiredForms,
     formsFullyBacked,
+    formsHumanReviewed,
     // Honest only when the region has an eCTD backbone AND this entry actually
     // files as eCTD. A device eSTAR/eCopy or ACTD entry in a backbone region
     // (e.g. a US 510(k)) does NOT get an eCTD backbone, so don't claim one.
