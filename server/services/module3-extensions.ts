@@ -233,7 +233,7 @@ const APPENDIX_RULES: AppendixRule[] = [
           narrative: `Per ICH M4Q, Section 3.2.A.2 (Adventitious Agents Safety Evaluation) addresses viral, ` +
             `bacterial, fungal, mycoplasma, and TSE/BSE safety for biologically-derived materials. ` +
             `\n\nNo biological origin, source organism, cell line or fermentation step is recorded against ` +
-            (name ? `${name}` : 'the drug substance') + `, whose recorded manufacturing route is: ${route || processDesc}. ` +
+            (name ? `${name}` : 'the drug substance') + `, ${recordedBasis(route || processDesc, explicitSmallMolecule)}. ` +
             `On that record this section does not apply to the drug substance itself. ` +
             `\n\nThis is a statement about the SUBSTANCE, not about every material used to make it: the origin of ` +
             `the raw and starting materials is recorded in §3.2.S.2.3 and that of the excipients in §3.2.P.4 and ` +
@@ -242,7 +242,7 @@ const APPENDIX_RULES: AppendixRule[] = [
           tables: [kvTable('Adventitious Agents Safety Evaluation', {
             'Applicability': 'Does not apply to the drug substance — no biological origin is recorded',
             'Drug Substance': name || '—',
-            'Manufacturing Route': route || '—',
+            'Manufacturing Route': route || 'not recorded',
             'Biological Origin': 'None recorded',
             'Raw Material Origin': 'Recorded in §3.2.S.2.3 — not assessed by this section',
             'Excipient Origin': 'Recorded in §3.2.A.3 — not assessed by this section',
@@ -1042,6 +1042,27 @@ function notEstablishedStatements(narrative: string): string[] {
  * certificate on file. Case-sensitive on the marker, either case on the word.
  */
 const NOT_ESTABLISHED_RE = /\bNOT (?:ESTABLISHED|established)\b/;
+
+/**
+ * How this section came to conclude the substance is not biologically derived,
+ * in the record's own terms.
+ *
+ * The sentence used to read `whose recorded manufacturing route is: ${route ||
+ * processDesc}` — and the branch above is reached with NEITHER recorded
+ * whenever `modality` is the explicit signal, which is the ordinary case for a
+ * small molecule. It then rendered "whose recorded manufacturing route is: ."
+ * — a sentence asserting a recorded route, with nothing in it. In the one
+ * appendix whose subject is adventitious agents, a claim to have read a field
+ * that is empty is the same failure the surrounding branch was written to
+ * remove; it must say which fact it actually has.
+ */
+function recordedBasis(route: string, explicitSmallMolecule: boolean): string {
+  const stated = String(route ?? '').trim();
+  if (stated) return `whose recorded manufacturing route is: ${stated}`;
+  return explicitSmallMolecule
+    ? 'whose modality is recorded as a chemical synthesis, with no manufacturing route recorded'
+    : 'with no manufacturing route recorded';
+}
 
 export function composeAppendices(sourceObjects: CanonicalSource[]): ComposedSection[] {
   return APPENDIX_RULES.map(rule => {

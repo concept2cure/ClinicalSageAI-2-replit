@@ -188,7 +188,31 @@ describe('module3-extensions', () => {
       };
       const sections = composeAppendices([chemical]);
       const a2 = sections.find(s => s.sectionKey === '3.2.A.2');
-      expect(a2?.narrativeDraft).toContain('not applicable');
+      expect(a2?.narrativeDraft).toContain('does not apply to the drug substance');
+
+      /* AND IT SAYS WHICH FACT IT READ. This row records a modality and NO
+         manufacturing route, which is the ordinary shape for a small molecule
+         — and the narrative interpolated the empty route regardless, producing
+         "whose recorded manufacturing route is: ." A sentence asserting a
+         recorded route with nothing in it, in the one appendix whose subject is
+         adventitious agents, is the same claim-over-unread-data the branch
+         around it was written to remove. */
+      expect(a2?.narrativeDraft).not.toMatch(/manufacturing route is:\s*\./);
+      expect(a2?.narrativeDraft).toContain('modality is recorded as a chemical synthesis');
+      expect(a2?.narrativeDraft).toContain('no manufacturing route recorded');
+    });
+
+    it('names the route itself when one IS recorded', () => {
+      const chemical: CanonicalSource = {
+        ...drugSubstanceSource,
+        sourcePayload: {
+          ...drugSubstanceSource.sourcePayload,
+          manufacturingRoute: 'Multi-step chemical synthesis from 4-aminophenol',
+        },
+      };
+      const a2 = composeAppendices([chemical]).find(s => s.sectionKey === '3.2.A.2');
+      expect(a2?.narrativeDraft).toContain('Multi-step chemical synthesis from 4-aminophenol');
+      expect(a2?.narrativeDraft).toContain('does not apply to the drug substance');
     });
 
     it('does NOT declare 3.2.A.2 not applicable from a row that records no origin either way', () => {
