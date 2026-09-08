@@ -27,7 +27,7 @@ Nine end-to-end workstreams — IND/NDA/BLA, 510(k)/De Novo, EU MDR and IVDR cli
 
 Two layers above the kernel matter most. Client- and project-scoped memory carries locked facts, decisions, and open questions across users and sessions, with entries superseded through successor pointers rather than deleted. The Submission Twin maps every claim to its evidence and catches drift between the CMC and clinical sections before the regulator does. The twin is trustworthy only because the kernel governs every write into it, and useful only because memory carries what the team decided last quarter.
 
-Underneath: 1,072 server TypeScript files, 596 client React files, 554 versioned migrations, roughly 694 table declarations, fail-closed row-level tenancy on every governed table — `organizationId` appears 735 times in the schema monolith alone — and 2,312 automated test files.
+Underneath: 4,180 server TypeScript files, 439 client React files, 554 versioned migrations, roughly 694 table declarations, fail-closed row-level tenancy on every governed table — `organizationId` appears 736 times in the schema monolith alone — and 2,348 automated test files.
 
 ## What we are not claiming
 
