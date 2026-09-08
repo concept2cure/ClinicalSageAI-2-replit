@@ -75,13 +75,35 @@ describe('GET /api/chat/threads', () => {
 
 describe('GET /api/chat/threads/:threadId/messages', () => {
   it('500s when the transcript read fails — an unreadable thread is not an empty one', async () => {
-    // Ownership check passes, then the message load fails.
-    query.mockResolvedValueOnce({ rows: [{ id: 't1' }] });
+    /* The ownership check resolves which STORE holds the thread and reads a
+       `store` column (resolveThreadStore's UNION over chat_threads/ai_threads).
+       This mock used to answer `{ id: 't1' }` — a shape from before that
+       resolution existed — so `rows[0].store` was undefined, the handler
+       answered 404 "Thread not found", and the transcript read this test exists
+       to fail was never reached. A read failure reported as "no such thread" is
+       the same fabrication as one reported as an empty transcript: an
+       infrastructure error stated as a fact about the user's data. */
+    query.mockResolvedValueOnce({ rows: [{ store: 'chat' }] });
     getThreadMessages.mockRejectedValueOnce(new Error('connection reset'));
     const res = await request(appWith(7)).get('/api/chat/threads/t1/messages');
     expect(res.status).toBe(500);
     expect(res.body.code).toBe('THREAD_MESSAGES_ERROR');
     expect(res.body.messages).toBeUndefined();
+    // The 500 must come from the TRANSCRIPT read, not from an earlier step
+    // failing for its own reasons — which is exactly how this test went blind.
+    expect(getThreadMessages).toHaveBeenCalledWith('t1');
+  });
+
+  it('404s only when the thread genuinely resolves to no store', async () => {
+    // The negative twin of the case above: with the resolution returning no
+    // row, 404 is the honest answer — and it carries no `messages` list, so a
+    // caller cannot read it as "this thread is empty".
+    query.mockResolvedValueOnce({ rows: [] });
+    const res = await request(appWith(7)).get('/api/chat/threads/t1/messages');
+    expect(res.status).toBe(404);
+    expect(res.body.code).toBe('THREAD_NOT_FOUND');
+    expect(res.body.messages).toBeUndefined();
+    expect(getThreadMessages).not.toHaveBeenCalled();
   });
 
   it('503s when the message store is not provisioned', async () => {

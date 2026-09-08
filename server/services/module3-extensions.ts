@@ -264,21 +264,49 @@ const APPENDIX_RULES: AppendixRule[] = [
           'Reference': 'ICH Q5A(R2) — Viral Safety Evaluation of Biotechnology Products',
         }));
       }
+      /* THE BIOLOGIC BRANCH, FAIL-CLOSED (2026-09-08).
+         Its two sibling branches were each given a "NOT ESTABLISHED" marker,
+         with long comments explaining why; this one was not, and
+         composeAppendices scores a section 100 unless that marker appears. So a
+         drug substance row holding nothing but the name "Trastuzumab" — which
+         fires the INN-stem heuristic — produced a 100%-complete section
+         asserting a three-part control strategy, in-process adventitious-agent
+         testing, viral clearance steps, cell-bank characterisation and
+         EMEA/410/01 control of animal-origin raw materials. None of it read
+         from any field, in the appendix whose entire subject is adventitious
+         agents, approvable and exportable as a filed leaf.
+         What the section may state is what the register holds. The control
+         strategy is now conditioned on a recorded viral safety evaluation, the
+         TSE risk on a recorded status, and whatever is absent is named as not
+         established rather than asserted. */
+      const establishedFacts = [
+        biologicalOrigin ? null : 'the biological origin',
+        sourceOrganism || cellLine ? null : 'the source organism or cell line',
+        viralSafety ? null : 'the viral safety evaluation (ICH Q5A(R2))',
+        tseStatus ? null : 'the TSE/BSE risk assessment',
+      ].filter(Boolean) as string[];
+
       return {
         narrative: `Per ICH M4Q and ICH Q5A(R2), Section 3.2.A.2 (Adventitious Agents Safety Evaluation) summarizes ` +
           `the controls implemented to assure freedom from adventitious viral, bacterial, fungal, mycoplasma, and ` +
           `TSE/BSE agents in the drug substance and drug product. ` +
           (name ? `The drug substance ${name} ` : 'The drug substance ') +
-          (biologicalOrigin ? `is derived from ${biologicalOrigin}. ` : 'is biologically derived. ') +
+          (biologicalOrigin ? `is derived from ${biologicalOrigin}. ` : 'is recorded, or read by its name, as biologically derived. ') +
           (sourceOrganism || cellLine ? `Source material: ${sourceOrganism || cellLine}. ` : '') +
-          `\n\nThe control strategy combines (i) qualification and testing of source materials, ` +
-          `(ii) in-process testing for adventitious agents, and (iii) viral clearance / inactivation steps ` +
-          `incorporated into the manufacturing process. ` +
-          (viralSafety ? `Viral safety evaluation: ${viralSafety}. ` : '') +
-          (tseStatus ? `TSE/BSE risk assessment: ${tseStatus}. ` : '') +
-          `\n\nCell bank characterization, end-of-production cell testing, and downstream clearance data ` +
-          `are referenced in 3.2.S.2.3. Raw materials of animal or human origin (where applicable) are ` +
-          `controlled per EMA EMEA/410/01 and 9 CFR.`,
+          (viralSafety
+            ? `\n\nThe recorded control strategy is: ${viralSafety}. ` +
+              `Cell bank characterization, end-of-production cell testing and downstream clearance data are ` +
+              `referenced in 3.2.S.2.3.`
+            : '') +
+          (tseStatus ? `\n\nTSE/BSE risk assessment: ${tseStatus}. ` : '') +
+          (establishedFacts.length > 0
+            ? `\n\nThis register records ${establishedFacts.length === 4 ? 'none of' : 'neither'} ` +
+              `${establishedFacts.join(', ')}${establishedFacts.length === 4 ? '' : ''}, so the adventitious-agents ` +
+              `safety of this substance is NOT ESTABLISHED by this section. This is not a statement that the ` +
+              `substance is unsafe or that no controls exist: it is a statement that this section has not been ` +
+              `given them. Record them, per ICH Q5A(R2) and EMA EMEA/410/01, before this section is relied upon.`
+            : `\n\nRaw materials of animal or human origin, where used, are controlled per EMA EMEA/410/01 and 9 CFR; ` +
+              `their origin is recorded in §3.2.S.2.3 and §3.2.A.3 and is not assessed here.`),
         tables,
       };
     },

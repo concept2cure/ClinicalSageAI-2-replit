@@ -51,6 +51,8 @@
     "check:ledger": "node scripts/ops/ledger-check.mjs",
     "verify:ana": "node scripts/ops/verify-ana-answers.mjs",
     "pack:whitepaper": "node scripts/build-investor-whitepaper.mjs",
+    "pack:investor-brief": "node scripts/build-investor-brief.mjs",
+    "pack:investor-brief:pdf": "node scripts/build-investor-brief.mjs --pdf --fetch-fonts",
     "pack:iq-oq": "node scripts/ops/generate-iq-oq-pack.mjs",
     "pack:iq-oq:run": "node scripts/ops/generate-iq-oq-pack.mjs --run",
     "ocr:vendor": "node scripts/vendor-tesseract-langdata.mjs",

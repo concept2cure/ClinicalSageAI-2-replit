@@ -35,6 +35,43 @@ const WIDENER = 'db/migrations/20260730_c2c_ana_actions_command_vocab.sql';
 
 const read = (p: string) => fs.readFileSync(path.resolve(process.cwd(), p), 'utf8');
 
+/**
+ * The same failure shape, found by the same audit on 2026-09-08: a fix written,
+ * merged, and left off every applier, so the schema never gained what the code
+ * reads. Each was proven against a database built by scripts/db/install-fresh.mjs
+ * plus the whole migration set — the closest thing to a deployed schema this
+ * repository can build.
+ */
+describe.each([
+  {
+    file: 'db/migrations/20260617_audit_events_hmac_seal.sql',
+    what: 'audit_events.hmac_seal',
+    // SELECT … hmac_seal FROM audit_events (21 CFR Part 11 §11.70 seal verification)
+    reader: ['server/services/audit/chain.ts', /hmac_seal\s*\n?\s*FROM audit_events/],
+  },
+  {
+    file: 'db/migrations/20260905_gdpr_dsar_execution_evidence.sql',
+    what: 'gdpr_data_subject_requests.execution_evidence',
+    // UPDATE gdpr_data_subject_requests SET … execution_evidence = $2
+    reader: ['server/services/compliance/gdprComplianceService.ts', /execution_evidence = \$\d/],
+  },
+])('$what is on the applier', ({ file, reader }) => {
+  it('the migration that adds it is in C2C_MIGRATION_FILES', () => {
+    expect(C2C_MIGRATION_FILES, `${file} runs on no database unless it is in the set`).toContain(file);
+  });
+
+  it('the server reads the column, so an absent one is a live failure, not a latent one', () => {
+    const [path, pattern] = reader as [string, RegExp];
+    expect(read(path)).toMatch(pattern);
+  });
+
+  it('is guarded and idempotent, because the set replays every entry on every deploy', () => {
+    const sql = read(file);
+    expect(sql).toMatch(/to_regclass|information_schema/);
+    expect(sql).toMatch(/IF NOT EXISTS|IF EXISTS/);
+  });
+});
+
 describe('c2c_ana_actions command vocabulary', () => {
   it('the widening migration is on the applier', () => {
     expect(C2C_MIGRATION_FILES, `${WIDENER} runs on no database unless it is in the set`).toContain(WIDENER);

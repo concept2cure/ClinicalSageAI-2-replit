@@ -675,8 +675,22 @@ export interface DrugSubstanceBody {
   manufacturingProcess: { manufacturer?: string; route?: string; site?: string };
   status: string;
   developmentPhase?: string;
+  /* §3.2.A.2's inputs — see the fields in drugSubstanceForm. */
+  modality?: string;
+  biologicalOrigin?: string;
+  sourceOrganism?: string;
+  cellLine?: string;
+  viralSafetyEvaluation?: string;
+  tseStatus?: string;
   projectId?: string;
 }
+
+/** What §3.2.A.2 branches on when the staffer states it rather than leaving it
+    to be read from the manufacturing route. */
+const SUBSTANCE_MODALITIES = [
+  { value: 'small_molecule', label: 'Small molecule (chemically synthesised)' },
+  { value: 'biologic', label: 'Biologic (biologically derived)' },
+];
 
 export function drugSubstanceForm(row?: Partial<DrugSubstanceBody> | null): C2CFormConfig {
   return {
@@ -695,6 +709,17 @@ export function drugSubstanceForm(row?: Partial<DrugSubstanceBody> | null): C2CF
       { key: 'site', label: 'Manufacturing site', type: 'text', half: true, default: row?.manufacturingProcess?.site ?? '', placeholder: 'Site name and address' },
       { key: 'route', label: 'Manufacturing route', type: 'textarea', default: row?.manufacturingProcess?.route ?? '', placeholder: 'Synthetic route or cell-culture / purification train — the §3.2.S.2.2 description' },
       { key: 'structuralFormula', label: 'Structure', type: 'textarea', default: row?.structuralFormula ?? '', placeholder: 'SMILES, sequence, or a reference to the structural drawing' },
+      /* §3.2.A.2 (ICH Q5A(R2)). The section asks whether an adventitious-agents
+         safety evaluation applies and what controls exist, and nothing could
+         record the answer — so for a biologic it was written from the
+         substance's name. Left blank for a small molecule, where the section
+         takes its chemical branch. */
+      { key: 'modality', label: 'Modality', type: 'select', options: SUBSTANCE_MODALITIES, half: true, default: row?.modality ?? '', desc: 'Decides whether §3.2.A.2 applies. Left unset, it is read from the recorded route.' },
+      { key: 'biologicalOrigin', label: 'Biological origin', type: 'text', half: true, default: row?.biologicalOrigin ?? '', placeholder: 'e.g. CHO cell culture, E. coli fermentation' },
+      { key: 'cellLine', label: 'Cell line / cell bank', type: 'text', half: true, default: row?.cellLine ?? '', placeholder: 'e.g. CHO-K1, MCB lot MCB-01' },
+      { key: 'sourceOrganism', label: 'Source organism', type: 'text', half: true, default: row?.sourceOrganism ?? '' },
+      { key: 'viralSafetyEvaluation', label: 'Viral safety evaluation', type: 'textarea', default: row?.viralSafetyEvaluation ?? '', placeholder: 'The ICH Q5A(R2) clearance record — steps, validated log reduction, testing regime' },
+      { key: 'tseStatus', label: 'TSE/BSE risk assessment', type: 'textarea', default: row?.tseStatus ?? '', placeholder: 'EMA EMEA/410/01 — animal-derived materials in the process and media, or their absence' },
       { key: 'status', label: 'Status', type: 'select', options: MATERIAL_STATUSES, required: true, half: true, default: row?.status ?? 'development' },
     ],
   };
@@ -718,6 +743,13 @@ export function drugSubstanceBody(v: Record<string, string>, projectId?: string)
   const weight = opt(v.molecularWeight); if (weight) body.molecularWeight = weight;
   const structure = opt(v.structuralFormula); if (structure) body.structuralFormula = structure;
   const phase = opt(v.developmentPhase); if (phase) body.developmentPhase = phase;
+  /* Each recorded only when the staffer entered it: §3.2.A.2 may state what the
+     register holds and nothing else, so an empty field must not become an empty
+     string the section reads as an answer. */
+  for (const key of ['modality', 'biologicalOrigin', 'sourceOrganism', 'cellLine', 'viralSafetyEvaluation', 'tseStatus'] as const) {
+    const value = opt(v[key]);
+    if (value) body[key] = value;
+  }
   if (projectId) body.projectId = projectId;
   return body;
 }

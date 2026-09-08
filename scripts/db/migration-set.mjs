@@ -1487,6 +1487,15 @@ export const C2C_MIGRATION_FILES = [
   'db/migrations/20260222_audit_events_immutability.sql',
   'db/migrations/20260617_audit_logs_immutability.sql',
 
+  /* The SAME §11.70 seal column on audit_events, the SIEM/export-facing audit
+     table. 20260609 added it to audit_logs and is on the applier; this one was
+     not, so server/services/audit/chain.ts's verifyAuditEventsChainSeals —
+     SELECT … hmac_seal FROM audit_events — raises 42703 on every deployed
+     database, and no audit_events row can ever carry a seal. Measured
+     2026-09-08 against a database built by install-fresh plus the whole set.
+     Fully guarded (table and column existence checked) and idempotent. */
+  'db/migrations/20260617_audit_events_hmac_seal.sql',
+
   // ── AnA's own memory: the tables her selfhood writes to (added 2026-08-20) ──
   // All three sat in the root migrations/ tree on NO durable apply path: not
   // journaled, not `_gcc_`, not in this set — so install-fresh's overlay was the
@@ -1675,6 +1684,13 @@ export const C2C_MIGRATION_FILES = [
   // a document whose passages could not be indexed says so. Must follow the
   // catalog entry above (it ALTERs that table); additive and guarded like it.
   'migrations/20260905b_vault_document_chunks.sql',
+
+  /* execution_evidence on the GDPR data-subject-request table. Written
+     2026-09-05 and left off the applier, so gdprComplianceService's
+     `UPDATE gdpr_data_subject_requests SET … execution_evidence = $2` raises
+     42703 — every DSAR completion fails on a deployed database. Additive,
+     to_regclass-guarded, idempotent. */
+  'db/migrations/20260905_gdpr_dsar_execution_evidence.sql',
 
   // ── Time-limited module grants ─────────────────────────────────────────────
   // Adds a nullable `expires_at` (+ who set it, when) to module_subscriptions,
@@ -1980,6 +1996,13 @@ export const C2C_MIGRATION_FILES = [
   // Creator + a drop of that constraint; 0006 was amended in place to stop
   // declaring it, so the drop cannot be undone by a replay.
   'migrations/20260907_cmc_comparability_register_reachable.sql',
+
+  // §3.2.A.2's six inputs. The section reads modality, biological origin,
+  // source organism, cell line, the ICH Q5A(R2) viral safety evaluation and the
+  // TSE/BSE status, and no table held any of them — so for a biologic it was
+  // composed from the substance's NAME. Additive and nullable; a small-molecule
+  // programme records none of them.
+  'migrations/20260908_drug_substance_biologic_origin.sql',
   // ── regulatory_programs.application_number (WO-9 Click 1) ──────────────────
   // The agency-assigned IND / NDA / BLA / MAA number, distinct from the sponsor's
   // own program code. Additive, IF NOT EXISTS, nullable — never fabricated.

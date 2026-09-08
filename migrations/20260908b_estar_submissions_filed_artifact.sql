@@ -26,14 +26,36 @@
 -- no-op. Existing rows keep NULL — a filing recorded before this change was
 -- bound to nothing, and the product says so rather than inventing a binding.
 
-ALTER TABLE estar_submissions
-  ADD COLUMN IF NOT EXISTS filed_artifact_document_id UUID;
+-- to_regclass-guarded, like every other file the set applies. The table is
+-- created by migrations/20260730_estar_submission.sql, which sits EARLIER in
+-- C2C_MIGRATION_FILES than the slice tests/schema-contract/
+-- tenant-isolation-sweep.contract.test.ts replays — so on that lineage this
+-- file ran against a schema with no estar_submissions and raised 42P01,
+-- leaving the repository's deepest schema gate red. A bare ALTER also breaks
+-- any lineage that legitimately lacks the eSTAR spine. Guarding is the
+-- convention here (see db/migrations/20260730_c2c_ana_actions_command_vocab.sql);
+-- COMMENT ON has no IF EXISTS form, so the whole file is guarded rather than
+-- each statement.
+DO $$
+BEGIN
+  IF to_regclass('public.estar_submissions') IS NULL THEN
+    RAISE NOTICE 'estar_submissions not present in this schema; skipping the filed-artifact binding.';
+    RETURN;
+  END IF;
 
-ALTER TABLE estar_submissions
-  ADD COLUMN IF NOT EXISTS filed_artifact_sha256 VARCHAR(64);
+  ALTER TABLE estar_submissions
+    ADD COLUMN IF NOT EXISTS filed_artifact_document_id UUID;
 
-COMMENT ON COLUMN estar_submissions.filed_artifact_document_id IS
-  'vault.documents id of the retained eSTAR this filing was made with. NULL for filings recorded before the binding existed; never fabricated.';
+  ALTER TABLE estar_submissions
+    ADD COLUMN IF NOT EXISTS filed_artifact_sha256 VARCHAR(64);
 
-COMMENT ON COLUMN estar_submissions.filed_artifact_sha256 IS
-  'SHA-256 of the retained bytes, read from the vault row at filing time — never accepted from the client.';
+  EXECUTE $c$
+    COMMENT ON COLUMN estar_submissions.filed_artifact_document_id IS
+      'vault.documents id of the retained eSTAR this filing was made with. NULL for filings recorded before the binding existed; never fabricated.'
+  $c$;
+
+  EXECUTE $c$
+    COMMENT ON COLUMN estar_submissions.filed_artifact_sha256 IS
+      'SHA-256 of the retained bytes, read from the vault row at filing time — never accepted from the client.'
+  $c$;
+END $$;

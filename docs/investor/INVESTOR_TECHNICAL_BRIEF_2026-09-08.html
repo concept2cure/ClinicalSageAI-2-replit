@@ -5,6 +5,17 @@
 <title>Concept2Cure.RI — Investor Technical Brief</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
+/* Fonts resolve from docs/investor/fonts/, sibling to the rendered HTML. They are
+   gitignored; run with --fetch-fonts to populate them. Absent, every face falls
+   back to the system serif/sans declared in the stacks below. */
+@font-face { font-family: 'Lora'; font-weight: 400; font-style: normal; src: url('fonts/Lora-400.ttf') format('truetype'); }
+@font-face { font-family: 'Lora'; font-weight: 500; font-style: normal; src: url('fonts/Lora-500.ttf') format('truetype'); }
+@font-face { font-family: 'Lora'; font-weight: 600; font-style: normal; src: url('fonts/Lora-600.ttf') format('truetype'); }
+@font-face { font-family: 'Lora'; font-weight: 400; font-style: italic; src: url('fonts/Lora-400i.ttf') format('truetype'); }
+@font-face { font-family: 'Inter'; font-weight: 400; font-style: normal; src: url('fonts/Inter-400.ttf') format('truetype'); }
+@font-face { font-family: 'Inter'; font-weight: 500; font-style: normal; src: url('fonts/Inter-500.ttf') format('truetype'); }
+@font-face { font-family: 'Inter'; font-weight: 600; font-style: normal; src: url('fonts/Inter-600.ttf') format('truetype'); }
+
 :root {
   --canvas:          #faf9f5;
   --canvas-muted:    #f4f3ee;
@@ -226,11 +237,20 @@ td code {
 }
 
 @media print {
-  body { background: white; }
-  main { max-width: none; padding: 12mm 15mm; }
-  h1 { page-break-before: always; break-before: page; }
-  .cover h1 { page-break-before: auto; break-before: auto; }
+  @page { size: letter; margin: 14mm 16mm; }
+  body { background: white; font-size: 10.3pt; line-height: 1.5; }
+  main { max-width: none; padding: 0; }
+  /* Sections flow rather than each claiming a fresh sheet: at 20 sections a
+     forced break per h1 padded the document by roughly half again its length. */
   .cover { page-break-after: always; break-after: page; }
+  h1 { font-size: 15pt; margin: 20px 0 9px; }
+  h2 { font-size: 11.5pt; margin: 15px 0 7px; }
+  h3 { font-size: 10pt; margin: 12px 0 5px; }
+  p { margin: 0 0 7px; }
+  hr { margin: 16px 0; }
+  table { font-size: 8.2pt; margin: 8px 0 14px; }
+  th, td { padding: 4px 8px; }
+  ul, ol { margin-bottom: 9px; }
   table, tr, td, th { page-break-inside: avoid; break-inside: avoid; }
   h1, h2, h3 { page-break-after: avoid; break-after: avoid-page; }
 }
