@@ -30,9 +30,10 @@
       "shell-metrics": { "path": "client/src/concept2cure/v2/styles/app-v2.css", "status": "active", "role": "shell layout metrics (--rail, --ana) + chrome CSS + responsive rules" }
     },
     "views": {
-      "home": { "path": "client/src/concept2cure/v2/surfaces/Surfaces.tsx", "status": "active", "role": "Home landing: greeting + composer seeding conversation-thread (chat-first front door)" },
+      "home": { "path": "client/src/concept2cure/v2/surfaces/Surfaces.tsx", "status": "active", "role": "Home landing: greeting + composer seeding conversation-thread (chat-first front door); the segment module grid moved to capability-browser 2026-09-07" },
+      "capability-browser": { "path": "client/src/concept2cure/v2/surfaces/CapabilityBrowser.tsx", "status": "active", "role": "the segment module catalogue, in an overlay off Home; reads getSegmentModules + getSurfaceMeta and adds a search. Not a destination — it has no surface id and is opened only by Home" },
       "chats": { "path": "client/src/concept2cure/v2/surfaces/ConversationThread.tsx", "status": "active", "role": "full-page general/project chat (ownsConversation)" },
-      "projects": { "path": "client/src/concept2cure/v2/surfaces/Projects.tsx", "status": "active", "role": "portfolio + new-project wizard" },
+      "projects": { "path": "client/src/concept2cure/v2/surfaces/Projects.tsx", "status": "active", "role": "portfolio directory (summary line, search, two-column cards) + new-project wizard" },
       "project-landing": { "path": "client/src/concept2cure/v2/surfaces/ProjectHome.tsx", "status": "active", "role": "project home; conversation panel + capability grid + readiness (shape escalated, see work order)" },
       "communication-center": { "path": "client/src/concept2cure/v2/surfaces/CommunicationCenter.tsx", "status": "active", "role": "agency-communication loop: FDA loop, agency inbox, meetings & commitments, authority profiles; not a rail item (deep link, ⌘K, project home, AnA navigate_to)" },
       "apps": { "path": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx", "status": "active", "role": "Apps catalog (module subscriptions) + admin console, licensing, usage, billing" },

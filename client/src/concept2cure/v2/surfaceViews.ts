@@ -329,6 +329,7 @@ const Part11Console = lazySurface(() => import('./surfaces/Part11Console').then(
 const IdentityConsole = lazySurface(() => import('./surfaces/IdentityConsole').then((m) => ({ default: m.IdentityConsole })));
 const ReportGovernance = lazySurface(() => import('./surfaces/ReportGovernance').then((m) => ({ default: m.ReportGovernance })));
 const SubmissionTwin = lazySurface(() => import('./surfaces/SubmissionTwin').then((m) => ({ default: m.SubmissionTwin })));
+const SubmissionOrchestrator = lazySurface(() => import('./surfaces/SubmissionOrchestrator').then((m) => ({ default: m.SubmissionOrchestrator })));
 const GatewayTransmittals = lazySurface(() => import('./surfaces/GatewayTransmittals').then((m) => ({ default: m.GatewayTransmittals })));
 const TaskBoard = lazySurface(() => import('./surfaces/TaskBoard').then((m) => ({ default: m.TaskBoard })));
 const TemplateLibrary = lazySurface(() => import('./surfaces/TemplateLibrary').then((m) => ({ default: m.TemplateLibrary })));
@@ -552,6 +553,7 @@ export const SURFACE_VIEWS: Record<string, SurfaceView> = {
   'report-governance': { component: ReportGovernance },
   'submission-center': { component: SubmissionCenter },
   'submission-twin': { component: SubmissionTwin },
+  'submission-orchestrator': { component: SubmissionOrchestrator },
   'gateway-transmittals': { component: GatewayTransmittals },
   'task-board': { component: TaskBoard },
   tasks: { component: TaskBoard },

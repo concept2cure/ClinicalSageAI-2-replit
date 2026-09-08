@@ -75,6 +75,16 @@ export const estarSubmissions = pgTable(
     reviewGoalDays: integer('review_goal_days'),
     decisionDueAt: timestamp('decision_due_at', { withTimezone: true }),
 
+    /* What the filing was FILED WITH — the retained official eSTAR in the
+       program vault, and the SHA-256 of its bytes read from that row at filing
+       time (never accepted from the client). Before these, `filed` was a
+       status, a client-supplied date and a free-text tracking number pointing
+       at nothing. NULL on rows recorded before the binding existed; a filing
+       with no binding says so rather than implying one.
+       migrations/20260908b_estar_submissions_filed_artifact.sql */
+    filedArtifactDocumentId: uuid('filed_artifact_document_id'),
+    filedArtifactSha256: varchar('filed_artifact_sha256', { length: 64 }),
+
     // Optional link to the rich Q-Sub interaction record (Q-Sub types only).
     qSubmissionId: uuid('q_submission_id'),
 

@@ -40,6 +40,7 @@
 
 import { createHash } from 'node:crypto';
 
+import { pool } from '../../../db';
 import { ingestVaultDocument } from '../../vault/vault-ingest.service';
 
 /** Thrown when the delivered eSTAR could not be retained. The route turns this
@@ -79,6 +80,54 @@ export type EstarRetentionReport =
       placementStatus: string;
     }
   | { retained: false; reason: string };
+
+/** The document_code prefix every retained eSTAR carries (see retainOfficialEstar). */
+export const RETAINED_ESTAR_CODE_PREFIX = 'eSTAR-';
+
+export interface RetainedEstarArtifact {
+  documentId: string;
+  programId: string;
+  documentCode: string;
+  version: string;
+  contentHash: string;
+  fileName: string;
+  fileSize: number;
+  createdAt: string;
+}
+
+/**
+ * The org's retained official eSTARs, newest first.
+ *
+ * A filing is signed against ONE of these, so the operator has to be able to
+ * see which ones exist — you cannot knowingly sign a binding you cannot choose.
+ * Org-scoped by the same predicate the filing write re-checks, so this list can
+ * never offer an artifact the signature would then refuse.
+ */
+export async function listRetainedEstarArtifacts(
+  organizationId: number,
+  limit = 50,
+): Promise<RetainedEstarArtifact[]> {
+  const { rows } = await pool.query(
+    `SELECT id, program_id, document_code, version, content_hash, file_name, file_size, created_at
+       FROM vault.documents
+      WHERE organization_id = $1
+        AND document_code LIKE $2
+        AND deleted_at IS NULL
+      ORDER BY created_at DESC
+      LIMIT $3`,
+    [organizationId, `${RETAINED_ESTAR_CODE_PREFIX}%`, limit],
+  );
+  return rows.map((r: Record<string, unknown>) => ({
+    documentId: String(r.id),
+    programId: String(r.program_id),
+    documentCode: String(r.document_code),
+    version: String(r.version),
+    contentHash: String(r.content_hash),
+    fileName: String(r.file_name),
+    fileSize: Number(r.file_size),
+    createdAt: new Date(r.created_at as string).toISOString(),
+  }));
+}
 
 export const NO_PROGRAM_VAULT_REASON =
   'This export is anchored to a legacy 510(k) project, which has no program vault. ' +

@@ -199,6 +199,22 @@ export const ASSESS_RECORDED_TRENDING: AnaTool = {
   },
 };
 
+export const ASSESS_RECORDED_CAPABILITY: AnaTool = {
+  name: 'assess_recorded_process_capability',
+  description:
+    'Process capability over the batch results ALREADY RECORDED in the CMC QC register for a project — the same Pp/Ppk/Cp/Cpk the compiled §3.2.S.4.4 and §3.2.P.5.4 carry. Groups the results of each test across batches, reads the acceptance criterion they were recorded against, and reports, per test and per side (drug substance / drug product): the batch count, mean, overall sd, Pp/Ppk from that sd, Cp/Cpk from the moving-range sigma (MR-bar / 1.128, the individuals-chart convention for a batch result), the capable / marginal / not-capable grade, and any batch outside the specification. Use it for "is the process capable", "what is our Cpk", "can we meet the spec batch after batch". REFUSES per test, with the reason, when the rows disagree on the acceptance criterion, when fewer than six batches are on file, when the criterion cannot be read, or when the series has no variation — and marks an estimate from fewer than 25 batches preliminary. Relay a refusal verbatim: it is a property of the recorded data. Writes nothing. DETERMINISTIC. ' + NOTE,
+  input_schema: {
+    type: 'object',
+    properties: {
+      project_id: {
+        type: 'string',
+        description: 'The program/project id whose QC register is assessed. Defaults to the active project when omitted.',
+      },
+    },
+    required: [],
+  },
+};
+
 export const COMPARE_RECORDED_DISSOLUTION: AnaTool = {
   name: 'compare_recorded_dissolution',
   description:
@@ -238,4 +254,5 @@ export const DEEPENING_TOOLS: AnaTool[] = [
   GET_SUBMISSION_READINESS_TWIN,
   ASSESS_BENEFIT_RISK,
   ASSESS_RECORDED_TRENDING,
+  ASSESS_RECORDED_CAPABILITY,
 ];

@@ -122,6 +122,41 @@ export async function listThreads(req: Request, res: Response) {
   }
 }
 
+/* ── Which store owns a thread ────────────────────────────────────────────────
+   Two thread stores exist and both are live: `chat_threads`/`chat_messages`
+   (AnA RI — everything the rail, the thread surface and the project landing
+   mint) and `ai_threads`/`ai_messages` (submission chat, evidence-ask). The
+   handlers below used to name a store literally, and one of them named the
+   WRONG one: GET /threads/:id/messages verified the thread against `ai_threads`
+   and then read `chat_messages`, so every conversation the project landing
+   lists — all of them minted in `chat_threads` — answered "Thread not found"
+   and resumed as an empty transcript. Measured in a browser on 2026-09-07;
+   the jsdom test mocked the fetch and could not have seen it.
+
+   So the store is RESOLVED, once, org-scoped, and each handler then acts on the
+   store that actually owns the thread. */
+type ThreadStore = 'chat' | 'ai';
+
+async function resolveThreadStore(threadId: string, orgId: unknown): Promise<ThreadStore | null> {
+  const { rows } = await pool.query(
+    `SELECT 'chat'::text AS store FROM chat_threads WHERE id = $1 AND organization_id = $2
+     UNION ALL
+     SELECT 'ai'::text AS store FROM ai_threads WHERE id = $1 AND organization_id = $2
+     LIMIT 1`,
+    [threadId, orgId],
+  );
+  return (rows[0]?.store as ThreadStore | undefined) ?? null;
+}
+
+/** The `ai_threads` transcript. `chat_messages` is read by getThreadMessages. */
+async function getAiThreadMessages(threadId: string): Promise<Array<{ role: string; content: string }>> {
+  const { rows } = await pool.query(
+    'SELECT role, content FROM ai_messages WHERE thread_id = $1 ORDER BY created_at ASC',
+    [threadId],
+  );
+  return rows;
+}
+
 /**
  * GET /api/chat/threads/:threadId/messages
  * Retrieve messages for a specific thread.
@@ -136,18 +171,18 @@ export async function listThreadMessages(req: Request, res: Response) {
       return res.status(401).json({ error: 'Organization context required' });
     }
 
-    // Verify thread belongs to org before returning messages
-    const threadCheck = await pool.query(
-      `SELECT id FROM ai_threads WHERE id = $1 AND organization_id = $2`,
-      [threadId, orgId]
-    );
+    const store = await resolveThreadStore(threadId, orgId);
 
-    if (threadCheck.rows.length === 0) {
-      return res.status(404).json({ messages: [], error: 'Thread not found' });
+    if (!store) {
+      /* No `messages: []` in this body. A thread that cannot be read is not a
+         thread with nothing in it, and a 404 carrying an empty list is exactly
+         the shape a caller reads as "no messages" — the same rule the catch
+         below states for a failed read. */
+      return res.status(404).json({ error: 'Thread not found', code: 'THREAD_NOT_FOUND' });
     }
 
     const limit = Math.min(parseInt((req.query.limit as string) || '30', 10), 100);
-    const messages = await getThreadMessages(threadId);
+    const messages = store === 'chat' ? await getThreadMessages(threadId) : await getAiThreadMessages(threadId);
     res.json({ messages: messages.slice(-limit) });
   } catch (error: any) {
     // Same rule as listThreads: an unreadable transcript is NOT an empty
@@ -228,14 +263,27 @@ export async function patchThread(req: Request, res: Response) {
       return res.status(401).json({ ok: false, error: 'Organization context required' });
     }
 
-    // Verify thread exists and belongs to org
-    const threadCheck = await pool.query(
-      `SELECT id FROM ai_threads WHERE id = $1 AND organization_id = $2`,
-      [threadId, orgId]
-    );
+    const store = await resolveThreadStore(threadId, orgId);
 
-    if (threadCheck.rows.length === 0) {
+    if (!store) {
       return res.status(404).json({ ok: false, error: 'Thread not found' });
+    }
+
+    /* `chat_threads.project_id` is INTEGER and `ai_threads.project_id` is TEXT.
+       Passing the shell's program UUID at the integer column threw 22P02 and
+       surfaced as a 500; the program key belongs in `metadata.programId`, which
+       is where getOrCreateThread writes it. Refuse it plainly instead. */
+    if (store === 'chat' && project_id !== undefined && project_id !== null && project_id !== '') {
+      /* Number(), not parseInt(): parseInt('0f3c1a2b-…') is 0, so a UUID would
+         pass the guard and then be written as project 0. */
+      const numericProject = typeof project_id === 'number' ? project_id : Number(String(project_id).trim());
+      if (!Number.isInteger(numericProject) || numericProject <= 0) {
+        return res.status(400).json({
+          ok: false,
+          error: 'project_id must be a numeric project for this conversation; the program key is set when the thread is created.',
+          code: 'THREAD_PROJECT_INVALID',
+        });
+      }
     }
 
     // Build dynamic SET clause
@@ -255,8 +303,10 @@ export async function patchThread(req: Request, res: Response) {
 
     values.push(threadId);
 
+    // A closed set of two, chosen by the resolver — never a value from the request.
+    const table = store === 'chat' ? 'chat_threads' : 'ai_threads';
     await pool.query(
-      `UPDATE ai_threads SET ${updates.join(', ')} WHERE id = $${paramIdx}`,
+      `UPDATE ${table} SET ${updates.join(', ')} WHERE id = $${paramIdx}`,
       values
     );
 

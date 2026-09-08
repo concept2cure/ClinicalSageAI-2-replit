@@ -415,8 +415,10 @@ Phase 1 is closed out to the limit of what this environment allows. Four
 commits on `concept2cure-v2`: `f9e3ab8`, `f85ce14`, `74d0ff2`, `63c1605e` — plus
 the addendum in §11, which supersedes parts of this section.
 
-Gate 1 answered and Gate 2 reached. Phase 2 began on 2026-09-07 with Click 1 —
-see §13. No surfaces, routes or services were created.
+Gate 1 answered and Gate 2 reached. Phase 2 began on 2026-09-07 with Click 1
+(§13); Click 2 — the IND forms panel — followed on 2026-09-08 (§14). No
+surfaces, route files, service modules or markdown files have been created for
+either: both clicks extended what was already there.
 
 ### Do this first: re-test egress
 
@@ -826,3 +828,222 @@ program. Every program fact on the landing is the database row.
 `npm run up`, then `npm run db:seed` (idempotent — it only adds the two IND
 numbers to an existing demo database). Sign in, open Projects, open
 **Vorelinib · KIT-mutant GIST (IND)**. The identity row is the click.
+
+---
+
+## 14. Phase 2, Click 2 — the IND forms panel (2026-09-08)
+
+**Session prompt:** wire `IndFormsPanel.tsx` to `/api/ind-forms`; generate all
+five forms; each renders with an on-screen statement of what it is and what the
+sponsor must complete in Adobe; add the sponsor-upload path so a completed
+official form can be attached and placed as a Module 1 leaf; do not attempt to
+fill any XFA form; do not modify a form manifest; stop when JM can click it.
+
+**Status: JM can click it.** Driven end to end in headless Chromium against the
+same local PostgreSQL 16 Click 1 used. Screenshots in `docs/reports/wo9-click2/`.
+
+### Which surface owns it
+
+Registry ids `ind-checklist` / `ind-lifecycle` →
+`client/src/concept2cure/v2/surfaces/IndLifecycle.tsx`, which embeds
+`surfaces/IndFormsPanel.tsx` under heading "2a — Build & render the FDA form
+PDFs". The panel drives `server/routes/ind-forms.routes.ts` (mounted
+`/api/ind-forms`, JWT + `regulatory-author`).
+
+### Two things were not true before
+
+1. **Every value on the forms was typed into the panel.** Sponsor, drug,
+   indication and IND number were six text inputs. Nothing connected them to
+   the program record Click 1 had just made authoritative, so the sponsor name
+   on a filed 1571 depended on who typed it into which panel.
+2. **Nothing could file a signed form.** Three of the five Module 1 forms end in
+   a signature and no server can produce one. The platform emitted the genuine
+   FDA file with the program's data in it, the sponsor completed and signed it
+   in Acrobat — and then it lived in a downloads folder. The sequence carried an
+   m1.1 leaf with nothing behind it.
+
+Section B of the execution package also asked for "an on-screen statement that
+the official dynamic XFA form must be completed in Adobe". Since Option B landed
+(§11, D1) that sentence would be false for 1571/3674: the output IS the official
+form. The panel now says what is actually true per form, read from the engine.
+
+### What changed
+
+1. **The program record fills the forms.** `programToFormMetadata`
+   (`form-context-assembler.ts`) maps a `regulatory_programs` row + its
+   organisation onto the builders' metadata, routing the agency number by
+   program type — an IND's number to the 1571's IND box, an NDA/ANDA/BLA's to
+   356h's application number, and a type the FDA drug forms have no box for
+   (MAA, 510K) contributes none. `/build`, `/pdf`, `/1572/pdf-all`,
+   `/3455/pdf-all` and `/:formId/artifact` all merge it under what the caller
+   stated; a blank input is dropped rather than written over a recorded value,
+   and a request that NAMES an unresolvable program is refused 404 rather than
+   answered from typed fields.
+2. **The render plan, before the render.** `describeRenderPlan`
+   (`ind-form-fill-service.ts`) reports, from the SAME gates `renderBuiltForm`
+   applies, whether a form returns the official AcroForm, the official form
+   through its XFA datasets, a reconstruction or a draft — with the template
+   edition, the named reviewer (or null), the fields the platform writes, and
+   the boxes left for the sponsor. A test renders each form and asserts the plan
+   agreed. `GET /` carries the plans, memoised per templates directory (seven
+   vendored forms are ~20 MB of digesting per call).
+3. **The sponsor-upload path.** `POST /:formId/official-upload` (multipart)
+   stores the completed PDF through `storeRenderedLeafFile`
+   (`rendered_from: 'ind_form_sponsor_upload'`) and places it with `upsertLeaf`
+   at the section the FDA Module 1 catalogue gives — forms at m1.1, the
+   financial pair at m1.3.4, taken from `module1HeadingForSectionKey`, the same
+   function the transmit path uses, never a second table. Re-attaching replaces
+   that form's leaf rather than filing it twice. It refuses: a file that is not
+   a PDF **by its bytes**; a file byte-identical to the blank vendored template
+   (attaching the blank form is attaching nothing); a program with no submission
+   spine, or a spine with no sequence — which sequence a document is filed into
+   is a regulatory decision and is never created as a side effect of an upload.
+4. **The checklist reads the filed form.** `ind-checklist-view-assembler` marks
+   1571/1572/3674 complete when a leaf typed `form_<n>` is backed by a
+   `rendered_leaf_files` row **in this organisation** — read through that row,
+   not the leaf, because `document_table` is a polymorphic reference with no FK.
+5. **The panel.** The four recorded facts are shown read-only under "Read from
+   the program record"; only what the record has no column for (phase, serial
+   number) is typed. Each row states what the form will produce, how many boxes
+   are left for the sponsor, and whether the asset has a named reviewer — D3's
+   distinction, now on screen. An attach control files the signed form and the
+   placement (section, sequence, size, SHA-256) survives reload because it is
+   re-read from the server.
+6. **Seed.** `111-ind-program.mjs` now also gives BX-256 and BX-512 the canonical
+   `submissions` row and original sequence 0000 that self-serve intake creates,
+   by the same identity convention (`ensureSubmissionSpine`). The GA demo seeded
+   those programs before intake did that, so they had a program and no
+   submission — nothing could be filed into them. Idempotent: verified by
+   running the seed twice, second run created nothing.
+
+### Fixed on the way — defects this work uncovered
+
+- **A derived gate sat in the official-fill placeability gate.** Form 3674's
+  `certification_selected` is computed from the three certification checkboxes
+  and is `required`, but was not marked `qcOnly` — so it was in
+  `requiredFields`, which `fillOfficialTemplate` uses to refuse a template that
+  cannot place a required field. No template can ever carry a derived verdict,
+  so any AcroForm edition of the 3674 would have been refused as unqualified.
+  3455's `interest_type_selected` was already flagged for exactly this reason.
+  Latent today (3674 fills through XFA), fixed with `BuiltForm.qcOnlyFields`
+  exposing the distinction; seen failing first.
+- **A missing authoring store erased real INDs.** The checklist assembler read
+  `coauthor_documents` unguarded inside its bulk `Promise.all`. On a database
+  where that store is not provisioned the whole assembly threw 42P01, the route
+  degraded the ENTIRE response to `[]`, and an organisation holding real IND
+  submissions was shown "No IND checklist yet". Identity comes from
+  `submissions`; the authoring store only supplies section status. Now fails
+  closed to "no section status", like the target-date read beside it. This is
+  what the sandbox was hitting (no pgvector → no `coauthor_documents`), and it
+  would hit any tenant whose authoring store lags the submission core.
+- **An ambient `declare module '@/lib/queryClient'` shadowed the real module.**
+  `client/src/types/api.d.ts` declared the module's types by hand — its own
+  comment called itself "the authoritative type … so it must expose every member
+  consumers import" — and had drifted: it typed `apiRequest` as
+  `Promise<any>` where the implementation returns `Promise<Response>`, and it
+  made a newly exported member invisible to the compiler. Removed; the real
+  module types itself and **both** typecheck configurations now pass with zero
+  errors (§13 recorded 7 pre-existing errors; they are gone).
+- **Every toast named the form twice** — "FDA FDA_1571", because the engine's
+  ids are canonical (`FDA_1571`) and were pasted after another "FDA". Pinned by
+  a test that fails on any `FDA_` reaching the note line.
+- **The migration manifest was out of sync**, from an upstream migration
+  (`20260907_qc_testing_batch_attribution.sql`) added without running the sync.
+  Verified pre-existing by re-running the gate with all of this work stashed.
+  Synced; `db:sync-manifest:check` passes.
+- **`storage/vault/` was not ignored.** The dev object store now holds sponsors'
+  completed, signed FDA forms; it was untracked and therefore committable by
+  accident. Ignored (`storage/ir-packs/` is tracked on purpose and unaffected).
+
+### Verified
+
+The official FDA 1571 the panel produces, read back through pikepdf — the
+program's values are inside the genuine FDA file's XFA datasets:
+
+```
+Concept2Cure Therapeutics  present in datasets: True
+Vorelinib                  present in datasets: True
+000512                     present in datasets: True
+gastrointestinal           present in datasets: True
+```
+
+Browser (login → Projects → Vorelinib → IND lifecycle), read from the DOM:
+
+```
+Sponsor     = Concept2Cure Therapeutics
+Drug        = Vorelinib · BX-512
+Indication  = KIT-mutant gastrointestinal stromal tumor · 4L+
+IND number  = 000512
+
+FDA 1571  Returns the official FDA form (edition 2025-03-28) with the program's
+          values written into it. Complete the remaining boxes and sign it in
+          Adobe Acrobat. | 8 box(es) left for you to complete on the form.
+          | This asset has no named reviewer yet.
+FDA 1572  Returns the official FDA form (edition 2025-04-13) with the program's
+          values filled in and flattened. | 2 box(es) left …
+          | Asset reviewed by jonmichaelpsmith@gmail.com.
+
+Build & check 1571 → "Form 1571 built — 2 required field(s) missing."
+                     (sponsor_address, ind_type — the record holds neither)
+Attach       1571 → "Completed FDA 1571 filed at m1.1 in sequence 0000."
+After reload      → m1.1 · sequence 0000 · 2.8 MB · SHA-256 d6965e4d2ba8…
+                    and the checklist chip above reads COMPLETE
+```
+
+The same placement in `psql`, with the retained bytes behind it:
+
+```
+leaf 2 · m1.1 · Form FDA 1571 (sponsor-completed) · rendered_leaf_files
+        document_type form_1571 · sequence 0000 · Vorelinib · KIT-mutant GIST (IND)
+file    form-fda-1571.pdf · ind_form_sponsor_upload · 2 921 999 B
+        sha256 d6965e4d2ba84401… = the source pin on the leaf = the bytes uploaded
+audit   ind_form.official_upload → submission_leaf 2, carrying both digests
+disk    storage/vault/1/rendered-leaves/versions/…/form-fda-1571.pdf, digest identical
+```
+
+```
+regression sweep              147 files / 1288 tests   pass
+  (ind-forms, ind-lifecycle, ectd, submission-service, submission-gateways,
+   the ind-forms route contract, the c2c project routes, the two client suites)
+client suite, whole           296 files / 3540 tests   pass
+typecheck (tsconfig.json)     0 errors
+typecheck (tsconfig.check)    0 errors
+ci:migration-set-order        OK — 252 migrations
+ci:migration-drop-safety      OK — 24 DROPs, none re-created
+db:sync-manifest:check        in sync
+```
+
+Console: no application errors. One failed request, `fonts.googleapis.com`,
+reset by this sandbox's egress policy — the same runtime dependency §13 noted,
+still worth removing for air-gapped deployments.
+
+Fail-first, as the working agreement requires: `programToFormMetadata` (6),
+`describeRenderPlan` (7), the sponsor-completed checklist case, the derived-gate
+fix (3), the absent-authoring-store case, the panel's record/plan/attach
+behaviour (4) and the form-naming fix were each seen failing against the
+unchanged code before the change that makes them pass.
+
+### Found on the way, not changed
+
+- **Form 3455 and 1574 have no vendored template**, so their plan honestly reads
+  `draft`. Only 1571, 1572, 3454, 356h and 3674 are installed. The five the work
+  order names are all official.
+- **`sponsor_address` is missing on every 1571** the record fills: the program
+  record has no sponsor-address column, and the organisation's address is not
+  read. The IND master-data sponsor registry holds one and `/pdf-from-records`
+  already uses it — connecting the two is a follow-on, not this click.
+- **Click 4 still stamps `anchor.programCode`** as the application id in
+  `us-regional.xml` (§13). Now that a placed sequence exists for the demo
+  programs, that is the next thing the compile will get wrong.
+- **The upload replaces within a sequence, but has no lifecycle op across
+  sequences.** Filing a corrected form into 0001 as a `replace` against 0000 is
+  Click 6's subject and is deliberately not attempted here.
+
+### For JM
+
+`npm run up`, then `npm run db:seed` (idempotent — it adds the two IND numbers,
+their submission rows and sequence 0000). Sign in, open Projects, open
+**Vorelinib · KIT-mutant GIST (IND)**, then the IND lifecycle surface. The
+Module 1 forms panel is the click: the four facts above the table come from the
+database, each row says what it will produce, and "Attach completed form" files
+a signed PDF into sequence 0000 at m1.1.

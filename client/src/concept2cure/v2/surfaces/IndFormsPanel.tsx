@@ -1,27 +1,74 @@
 /**
- * IND Module-1 Forms panel — build, QC, and download the real FDA form PDFs.
+ * IND Module-1 Forms panel — build, render, and file the real FDA form PDFs.
  *
  * Wired to server/routes/ind-forms.routes.ts (mounted /api/ind-forms, JWT +
  * regulatory-author role). The engine is stateless/deterministic:
- *   • GET  /                — the supported form ids ({ forms: ['1571',…] })
- *   • POST /:formId/build   — builds the field map from the metadata provided;
- *                             returns { formId, fields, missingRequired } so the
- *                             gaps are the SERVER's verdict, not a guess
- *   • POST /:formId/pdf     — streams the filled FDA form as application/pdf
+ *   • GET  /?projectIdent      — the supported forms, what the engine WILL
+ *                                produce for each (renderPlans), the open
+ *                                program's recorded facts, and the sponsor-
+ *                                completed forms already filed
+ *   • POST /:formId/build      — builds the field map; returns
+ *                                { formId, fields, missingRequired } so the gaps
+ *                                are the SERVER's verdict, not a guess
+ *   • POST /:formId/pdf        — streams the filled FDA form as application/pdf
+ *   • POST /:formId/official-upload — files the sponsor's COMPLETED, SIGNED form
+ *                                as a Module 1 leaf in the program's sequence
  *
- * The metadata the forms are filled from is entered here (sponsor, drug, IND
- * number, phase, indication, serial). Nothing is fabricated: an unfilled field
- * arrives at the server as absent and comes back in missingRequired; a 403
- * (role) or 401 is surfaced honestly.
+ * ── Where the values come from ──────────────────────────────────────────────
+ * Sponsor, product, indication and the agency application number are read from
+ * the open program's record (regulatory_programs + its organisation) by the
+ * SERVER, on every request. They are shown here read-only, exactly as the forms
+ * will carry them, because a regulated filing's sponsor name must not depend on
+ * who typed it into which panel. Only what the record has no column for — the
+ * study phase, the submission's serial number — is entered here, and an unfilled
+ * field arrives at the server as absent so `missingRequired` stays truthful.
+ *
+ * With no program open the panel still works standalone: every field is entered
+ * here and nothing is claimed to come from a record.
  */
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { I } from '../icons';
 import { EmptyState } from '../dataConnect';
-import { apiRequest, serverMessage } from '@/lib/queryClient';
+import { apiRequest, apiUpload, serverMessage } from '@/lib/queryClient';
 import type { FireToast } from '../toast';
 import { downloadBlob } from '../download';
 
 interface BuildResult { formId?: string; missingRequired?: string[]; fields?: Record<string, unknown> | Array<unknown>; }
+
+/** What the engine will produce for a form — the server's own plan. */
+interface RenderPlan {
+  formId: string;
+  method: 'official-acroform' | 'official-xfa-datasets' | 'reconstruction' | 'draft';
+  officialTemplate: boolean;
+  edition: string | null;
+  reviewedBy: string | null;
+  platformWrites: string[];
+  sponsorCompletes: Array<{ id: string; label: string }>;
+}
+
+/** The open program's recorded facts, as the forms will carry them. */
+interface ProgramFacts {
+  id: string;
+  code: string | null;
+  name: string | null;
+  programType: string | null;
+  sponsorName: string | null;
+  productName: string | null;
+  indication: string | null;
+  applicationNumber: string | null;
+  formMetadata: Record<string, unknown>;
+}
+
+/** A sponsor-completed official form already filed into the sequence. */
+interface Placement {
+  formId: string;
+  leafId: number;
+  sectionCode: string;
+  sequenceNumber: string;
+  fileName: string;
+  sha256: string;
+  byteSize: number;
+}
 
 const FORM_LABELS: Record<string, string> = {
   'FDA_1571': 'FDA 1571 — IND application',
@@ -45,31 +92,82 @@ function readProjectIdent(): string | null {
   return raw !== '' ? raw : null;
 }
 
+/** A legacy numeric project id addresses the artifact registry and carries no
+ *  program facts — only a program ident does, which is what the server reads. */
+function programIdentOf(ident: string | null): string | null {
+  return ident != null && !/^\d+$/.test(ident) ? ident : null;
+}
+
+/** The label an agency number carries on this program's forms. */
+function applicationNumberLabel(programType: string | null): string {
+  const t = (programType ?? '').toUpperCase();
+  return t === 'IND' ? 'IND number'
+    : t === 'NDA' ? 'NDA number'
+      : t === 'BLA' ? 'BLA number'
+        : t === 'MAA' ? 'MAA number'
+          : 'Application number';
+}
+
+/** What the engine will produce, said plainly and without adjectives. */
+function renderStatement(plan: RenderPlan | undefined): string {
+  if (!plan) return '';
+  const edition = plan.edition ? ` (edition ${plan.edition})` : '';
+  switch (plan.method) {
+    case 'official-acroform':
+      return `Returns the official FDA form${edition} with the program's values filled in and flattened.`;
+    case 'official-xfa-datasets':
+      return `Returns the official FDA form${edition} with the program's values written into it. Complete the remaining boxes and sign it in Adobe Acrobat.`;
+    case 'reconstruction':
+      return 'No official template is installed, so this returns a labeled reconstruction — not the official FDA form.';
+    default:
+      return 'No official template is installed, so this returns a labeled draft — not the official FDA form.';
+  }
+}
+
+/** `FDA_1571` → `1571`. Notes read "FDA 1571", not "FDA FDA_1571": the engine's
+ *  ids are canonical (`FDA_1571`) and were being pasted after another "FDA". */
+const shortFormId = (formId: string): string => formId.replace(/^FDA[_-]?/i, '');
+
+const bytesLabel = (n: number): string => (n < 1024 ? `${n} B` : n < 1024 * 1024 ? `${Math.round(n / 1024)} KB` : `${(n / (1024 * 1024)).toFixed(1)} MB`);
+
 export function IndFormsPanel({ note }: { note: FireToast }) {
   const [forms, setForms] = useState<string[]>([]);
+  const [plans, setPlans] = useState<Record<string, RenderPlan>>({});
+  const [program, setProgram] = useState<ProgramFacts | null>(null);
+  const [placements, setPlacements] = useState<Record<string, Placement>>({});
   const [state, setState] = useState<'loading' | 'ready' | 'forbidden' | 'error'>('loading');
   const [meta, setMeta] = useState({ sponsorName: '', drugName: '', indNumber: '', studyPhase: 'Phase 1', indication: '', serialNumber: '' });
   const [checks, setChecks] = useState<Record<string, BuildResult>>({});
   const [busy, setBusy] = useState<string | null>(null);
 
-  useEffect(() => {
-    void (async () => {
-      try {
-        const res = await apiRequest('GET', '/api/ind-forms/');
-        const json = await res.json().catch(() => null);
-        if (res.status === 401 || res.status === 403) { setState('forbidden'); return; }
-        if (!res.ok || !Array.isArray(json?.forms)) { setState('error'); return; }
-        setForms(json.forms.map(String));
-        setState('ready');
-      } catch { setState('error'); }
-    })();
-  }, []);
+  const programIdent = programIdentOf(readProjectIdent());
+
+  const load = useCallback(async () => {
+    const url = programIdent ? `/api/ind-forms/?projectIdent=${encodeURIComponent(programIdent)}` : '/api/ind-forms/';
+    try {
+      const res = await apiRequest('GET', url);
+      const json = await res.json().catch(() => null);
+      if (res.status === 401 || res.status === 403) { setState('forbidden'); return; }
+      if (!res.ok || !Array.isArray(json?.forms)) { setState('error'); return; }
+      setForms(json.forms.map(String));
+      setPlans(Object.fromEntries(((json.renderPlans ?? []) as RenderPlan[]).map((p) => [p.formId, p])));
+      setProgram((json.program ?? null) as ProgramFacts | null);
+      setPlacements(Object.fromEntries(((json.placements ?? []) as Placement[]).map((p) => [p.formId, p])));
+      setState('ready');
+    } catch { setState('error'); }
+  }, [programIdent]);
+
+  useEffect(() => { void load(); }, [load]);
 
   const metadataBody = useCallback(() => {
-    // Only send what the user actually entered — absent fields must reach the
-    // server as absent so missingRequired is truthful.
-    return Object.fromEntries(Object.entries(meta).filter(([, v]) => v !== ''));
-  }, [meta]);
+    // Only send what the user actually entered, plus the program the server
+    // reads the recorded facts from. Absent fields must reach the server as
+    // absent so missingRequired is truthful; the record-backed fields are NOT
+    // echoed back from here — the server reads them itself, so there is one
+    // source for them rather than a copy this panel could hold stale.
+    const entered = Object.fromEntries(Object.entries(meta).filter(([, v]) => v !== ''));
+    return programIdent ? { ...entered, projectIdent: programIdent } : entered;
+  }, [meta, programIdent]);
 
   const check = useCallback(async (formId: string) => {
     setBusy('check-' + formId);
@@ -81,14 +179,14 @@ export function IndFormsPanel({ note }: { note: FireToast }) {
       // driver message degrades to the panel's own copy rather than reaching the
       // note line.
       if (!res.ok || !json) {
-        note(serverMessage(json) ?? `Couldn’t build form ${formId} (HTTP ${res.status}).`, 'error');
+        note(serverMessage(json) ?? `Couldn’t build form ${shortFormId(formId)} (HTTP ${res.status}).`, 'error');
         return;
       }
       // 1572 returns one build per investigator; summarize the first.
       const result = Array.isArray(json) ? (json[0] ?? {}) : json;
       setChecks((c) => ({ ...c, [formId]: result }));
       const missing = Array.isArray(result.missingRequired) ? result.missingRequired.length : 0;
-      note(`Form ${formId} built — ${missing === 0 ? 'no required fields missing' : missing + ' required field(s) missing'}.`);
+      note(`Form ${shortFormId(formId)} built — ${missing === 0 ? 'no required fields missing' : missing + ' required field(s) missing'}.`);
     } finally { setBusy(null); }
   }, [metadataBody, note]);
 
@@ -103,14 +201,14 @@ export function IndFormsPanel({ note }: { note: FireToast }) {
         // object-shaped error printed as "[object Object]". serverMessage takes
         // the sentence beside the code, and nothing at all when there is none.
         const detail = serverMessage(json) ?? `the render was refused (HTTP ${res.status})`;
-        note(`Couldn’t render form ${formId} — ` + detail + '.', 'error');
+        note(`Couldn’t render form ${shortFormId(formId)} — ` + detail + '.', 'error');
         return;
       }
       // downloadBlob reports whether the anchor click actually reached the
       // browser. It was called for its side effect and the note below claimed
       // the PDF had arrived either way — so a blocked download read as a
       // successful render.
-      const delivered = downloadBlob(`FDA-${formId}.pdf`, await res.blob());
+      const delivered = downloadBlob(`FDA-${shortFormId(formId)}.pdf`, await res.blob());
       // Say honestly WHAT was rendered: the official FDA template (filled
       // through its AcroForm layer, or through the XFA datasets packet for
       // 1571/3674), a faithful reconstruction, or the labeled draft when no
@@ -135,10 +233,10 @@ export function IndFormsPanel({ note }: { note: FireToast }) {
         + `${missingCount ? ' · ' + missingCount + ' required field(s) still missing' : ''}`
         + `${unmappedCount ? ' · ' + unmappedCount + ' box(es) left for you to complete on the form' : ''}`;
       if (!delivered) {
-        note(`FDA ${formId} rendered (${kind})${detail}, but the browser blocked the download.`, 'error');
+        note(`FDA ${shortFormId(formId)} rendered (${kind})${detail}, but the browser blocked the download.`, 'error');
         return;
       }
-      note(`FDA ${formId} PDF: ${kind}${detail}.`);
+      note(`FDA ${shortFormId(formId)} PDF: ${kind}${detail}.`);
     } finally { setBusy(null); }
   }, [metadataBody, note]);
 
@@ -164,23 +262,65 @@ export function IndFormsPanel({ note }: { note: FireToast }) {
       const missing = Array.isArray(json?.missingRequired) ? json.missingRequired.length : 0;
       const readiness = json?.ready ? ' (ready)' : missing ? ` (draft · ${missing} required field(s) missing)` : ' (draft)';
       if (res.ok && json?.artifactId) {
-        note(`FDA ${formId} saved to the dossier as a governed artifact${readiness}.`);
+        note(`FDA ${shortFormId(formId)} saved to the dossier as a governed artifact${readiness}.`);
         return;
       }
       if (res.ok && json?.audited === true && json?.governed === false) {
         // Honest degradation, in the server's terms: the form was built and
         // audit-logged with its content hash, but NOT placed in the dossier
         // registry — this program has no legacy project row for it yet.
-        note(`FDA ${formId} built and audit-logged (content hash recorded)${readiness} — not placed in the dossier registry: this program has no legacy project row for the registry yet.`);
+        note(`FDA ${shortFormId(formId)} built and audit-logged (content hash recorded)${readiness} — not placed in the dossier registry: this program has no legacy project row for the registry yet.`);
         return;
       }
       // This read only `error.message`, so a server that put its sentence in
       // `message` or `detail` degraded to a bare status. serverMessage reads all
       // three in order and rejects codes and infrastructure text.
       const detail = serverMessage(json) ?? `the save was refused (HTTP ${res.status})`;
-      note(`Couldn’t save form ${formId} — ` + detail + '.', 'error');
+      note(`Couldn’t save form ${shortFormId(formId)} — ` + detail + '.', 'error');
     } finally { setBusy(null); }
   }, [metadataBody, note]);
+
+  /* File the sponsor's COMPLETED, SIGNED official form into the program's eCTD
+     sequence. The platform cannot sign a form; this is how the signed one gets
+     into the filing. Every refusal is reported in the server's own words — a
+     blank template, a file that is not a PDF, a program with no sequence to
+     file into — because each names something the user has to do differently. */
+  const attach = useCallback(async (formId: string, file: File | null | undefined) => {
+    if (!file) return;
+    if (!programIdent) {
+      note('Open a program first — a completed form is filed into that program’s sequence.', 'error');
+      return;
+    }
+    setBusy('attach-' + formId);
+    try {
+      const form = new FormData();
+      form.append('file', file);
+      form.append('projectIdent', programIdent);
+      const res = await apiUpload('POST', `/api/ind-forms/${formId}/official-upload`, form);
+      const json = await res.json().catch(() => null);
+      if (res.status === 401 || res.status === 403) { note('Filing a completed form requires the regulatory-author role.', 'error'); return; }
+      if (!res.ok || !json?.leafId) {
+        const detail = serverMessage(json) ?? `the file was refused (HTTP ${res.status})`;
+        note(`Couldn’t file the completed FDA ${shortFormId(formId)} — ` + detail, 'error');
+        return;
+      }
+      setPlacements((p) => ({ ...p, [formId]: json as Placement }));
+      note(`Completed FDA ${shortFormId(formId)} filed at ${json.sectionCode} in sequence ${json.sequenceNumber}${json.replaced ? ', replacing the form previously attached' : ''}.`);
+      // Re-read rather than trusting the local merge: the listing is what the
+      // next visitor sees, and it is the server's record of the placement.
+      void load();
+    } finally { setBusy(null); }
+  }, [programIdent, note, load]);
+
+  const recordFacts = useMemo(() => {
+    if (!program) return null;
+    return [
+      { label: 'Sponsor', value: program.sponsorName, missing: 'not recorded' },
+      { label: 'Drug', value: program.productName, missing: 'not recorded' },
+      { label: 'Indication', value: program.indication, missing: 'not recorded' },
+      { label: applicationNumberLabel(program.programType), value: program.applicationNumber, missing: 'not assigned' },
+    ];
+  }, [program]);
 
   if (state === 'forbidden') {
     return <EmptyState icon={I.lock} title="Regulatory-author role required"
@@ -196,12 +336,35 @@ export function IndFormsPanel({ note }: { note: FireToast }) {
 
   return (
     <div>
+      {recordFacts && (
+        <section className="indf-record" aria-label="Values read from the program record"
+          style={{ border: '1px solid var(--text-400)', borderRadius: 6, padding: '10px 12px', marginBottom: 12 }}>
+          <div style={{ fontSize: 12, color: 'var(--text-400)', marginBottom: 6 }}>
+            Read from the program record — every form below is filled with these values.
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(160px,max-content))', gap: '6px 24px' }}>
+            {recordFacts.map((f) => (
+              <dl key={f.label} className="indf-fact" style={{ margin: 0 }}>
+                <dt style={{ fontSize: 11, color: 'var(--text-400)', textTransform: 'uppercase', letterSpacing: '.04em' }}>{f.label}</dt>
+                <dd style={{ margin: 0, fontSize: 13, fontWeight: 600 }}>
+                  {f.value ?? <span style={{ fontWeight: 400, color: 'var(--text-400)' }}>{f.missing}</span>}
+                </dd>
+              </dl>
+            ))}
+          </div>
+        </section>
+      )}
+
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(180px,1fr))', gap: 8, marginBottom: 12 }}>
-        <label style={{ fontSize: 12 }}>Sponsor name<input className="c2c-input" style={{ height: 30 }} value={meta.sponsorName} onChange={(e) => setMeta({ ...meta, sponsorName: e.target.value })} /></label>
-        <label style={{ fontSize: 12 }}>Drug name<input className="c2c-input" style={{ height: 30 }} value={meta.drugName} onChange={(e) => setMeta({ ...meta, drugName: e.target.value })} /></label>
-        <label style={{ fontSize: 12 }}>IND number<input className="c2c-input" style={{ height: 30 }} value={meta.indNumber} onChange={(e) => setMeta({ ...meta, indNumber: e.target.value })} placeholder="blank if original" /></label>
+        {!program && (
+          <>
+            <label style={{ fontSize: 12 }}>Sponsor name<input className="c2c-input" style={{ height: 30 }} value={meta.sponsorName} onChange={(e) => setMeta({ ...meta, sponsorName: e.target.value })} /></label>
+            <label style={{ fontSize: 12 }}>Drug name<input className="c2c-input" style={{ height: 30 }} value={meta.drugName} onChange={(e) => setMeta({ ...meta, drugName: e.target.value })} /></label>
+            <label style={{ fontSize: 12 }}>IND number<input className="c2c-input" style={{ height: 30 }} value={meta.indNumber} onChange={(e) => setMeta({ ...meta, indNumber: e.target.value })} placeholder="blank if original" /></label>
+            <label style={{ fontSize: 12 }}>Indication<input className="c2c-input" style={{ height: 30 }} value={meta.indication} onChange={(e) => setMeta({ ...meta, indication: e.target.value })} /></label>
+          </>
+        )}
         <label style={{ fontSize: 12 }}>Phase<select className="c2c-input" style={{ height: 30 }} value={meta.studyPhase} onChange={(e) => setMeta({ ...meta, studyPhase: e.target.value })}>{PHASES.map((p) => <option key={p}>{p}</option>)}</select></label>
-        <label style={{ fontSize: 12 }}>Indication<input className="c2c-input" style={{ height: 30 }} value={meta.indication} onChange={(e) => setMeta({ ...meta, indication: e.target.value })} /></label>
         <label style={{ fontSize: 12 }}>Serial number<input className="c2c-input" style={{ height: 30 }} value={meta.serialNumber} onChange={(e) => setMeta({ ...meta, serialNumber: e.target.value })} placeholder="e.g. 0000" /></label>
       </div>
 
@@ -209,10 +372,32 @@ export function IndFormsPanel({ note }: { note: FireToast }) {
         <tbody>{forms.map((f) => {
           const chk = checks[f];
           const missing = Array.isArray(chk?.missingRequired) ? chk!.missingRequired! : null;
+          const plan = plans[f];
+          const placed = placements[f];
+          const sponsorBoxes = plan?.sponsorCompletes ?? [];
           return (
             <tr key={f}>
-              <td style={{ fontWeight: 600 }}>{FORM_LABELS[f] ?? 'FDA ' + f}</td>
-              <td>
+              <td style={{ fontWeight: 600, verticalAlign: 'top' }}>
+                {FORM_LABELS[f] ?? 'FDA ' + f}
+                {plan && (
+                  <div style={{ fontWeight: 400, fontSize: 12, color: 'var(--text-400)', marginTop: 3, maxWidth: 420 }}>
+                    {renderStatement(plan)}
+                    {plan.officialTemplate && sponsorBoxes.length > 0 && (
+                      <div style={{ marginTop: 2 }} title={sponsorBoxes.map((b) => b.label).join(', ')}>
+                        {sponsorBoxes.length} box(es) left for you to complete on the form.
+                      </div>
+                    )}
+                    {plan.officialTemplate && (
+                      <div style={{ marginTop: 2 }}>
+                        {plan.reviewedBy
+                          ? `Asset reviewed by ${plan.reviewedBy}.`
+                          : 'This asset has no named reviewer yet.'}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </td>
+              <td style={{ verticalAlign: 'top' }}>
                 {!chk ? <span style={{ color: 'var(--text-400)', fontSize: 13 }}>Not checked yet</span>
                   : missing && missing.length > 0
                     ? <span className="rd-chip tone-warn" title={missing.join(', ')}>{missing.length} required missing</span>
@@ -220,11 +405,30 @@ export function IndFormsPanel({ note }: { note: FireToast }) {
                 {missing && missing.length > 0 && (
                   <div style={{ fontSize: 12, color: 'var(--text-400)', marginTop: 2 }}>{missing.slice(0, 4).join(', ')}{missing.length > 4 ? '…' : ''}</div>
                 )}
+                {placed && (
+                  <div style={{ fontSize: 12, marginTop: 6 }}>
+                    <span className="rd-chip tone-ok">completed form filed</span>
+                    <div style={{ color: 'var(--text-400)', marginTop: 2 }}>
+                      {placed.sectionCode} · sequence {placed.sequenceNumber} · {bytesLabel(placed.byteSize)} · SHA-256 {placed.sha256.slice(0, 12)}…
+                    </div>
+                  </div>
+                )}
               </td>
-              <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
+              <td style={{ textAlign: 'right', whiteSpace: 'nowrap', verticalAlign: 'top' }}>
                 <button className="nda-open" onClick={() => check(f)} disabled={busy != null}>{I.checkCircle} {busy === 'check-' + f ? 'Building…' : 'Build & check'}</button>
                 <button className="nda-open" style={{ marginLeft: 6 }} onClick={() => download(f)} disabled={busy != null}>{I.download} {busy === 'pdf-' + f ? 'Rendering…' : 'PDF'}</button>
                 <button className="nda-open" style={{ marginLeft: 6 }} onClick={() => save(f)} disabled={busy != null} title="Persist as a governed artifact in the project dossier">{I.database} {busy === 'save-' + f ? 'Saving…' : 'Save to dossier'}</button>
+                {programIdent && (
+                  <label className="nda-open" style={{ marginLeft: 6, display: 'inline-flex', alignItems: 'center', gap: 4, cursor: busy != null ? 'default' : 'pointer' }}
+                    title="File the completed, signed form into this program's eCTD sequence">
+                    {I.paperclip}
+                    {busy === 'attach-' + f ? 'Filing…' : placed ? 'Replace completed form' : 'Attach completed form'}
+                    <input type="file" accept="application/pdf,.pdf" disabled={busy != null}
+                      aria-label={`Attach the completed ${FORM_LABELS[f] ?? f}`}
+                      style={{ display: 'none' }}
+                      onChange={(e) => { const file = e.target.files?.[0]; e.target.value = ''; void attach(f, file); }} />
+                  </label>
+                )}
               </td>
             </tr>
           );

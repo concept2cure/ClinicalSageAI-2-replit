@@ -1951,6 +1951,14 @@ export const C2C_MIGRATION_FILES = [
   // replay is a no-op.
   'migrations/20260908_compliance_tracking_organization_backfill.sql',
 
+  // ── estar_submissions: what the filing was filed WITH (roadmap item 3) ────
+  // Two additive columns binding a `filed` transition to the retained eSTAR in
+  // the program vault: the vault.documents id and the SHA-256 of its bytes,
+  // both written by the server. Before them, "filed" was a status, a
+  // client-supplied date and a free-text tracking number pointing at nothing.
+  // Additive, IF NOT EXISTS; a replay is a no-op.
+  'migrations/20260908b_estar_submissions_filed_artifact.sql',
+
   UUID_TENANT_ISOLATION_NONPUBLIC,
 
   // ── Tenant isolation for everything the set just created (ledger C-33) ───

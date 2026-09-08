@@ -2170,6 +2170,59 @@ router.post('/stability-studies/:id/trending', async (req, res) => {
 });
 
 /**
+ * GET /api/cmc/projects/:projectId/process-capability — the capability indices
+ * over the project's RECORDED batch results, per test, for each side.
+ *
+ * ── Why this route exists ────────────────────────────────────────────────────
+ * The Pp/Ppk/Cp/Cpk a reviewer reads in the compiled §3.2.S.4.4 and §3.2.P.5.4
+ * could only be seen by compiling the section. "Is this process capable against
+ * the specification we set" is a question a CMC lead asks before compiling, and
+ * during a deviation, and the answer existed nowhere it could be asked.
+ *
+ * It reads the project's canonical `qc_result` source objects — the same rows
+ * the section composes from — and runs the same assessment
+ * (services/cmc/recorded-capability), so this route and the document can never
+ * disagree.
+ *
+ * Nothing is written, and nothing is refused as a whole: a series that cannot
+ * be assessed is RETURNED with its reason (criteria that disagree, fewer than
+ * six batches, no variation), because a test silently missing from a capability
+ * report reads as a test that passed.
+ */
+router.get('/projects/:projectId/process-capability', async (req, res) => {
+  try {
+    const orgId = getOrgId(req);
+    const projectId = String(req.params.projectId);
+    const pool = getPool();
+    const { rows } = await pool.query(
+      `SELECT source_payload as "sourcePayload"
+       FROM cmc_source_objects
+       WHERE organization_id = $1 AND project_id = $2 AND source_type = 'qc_result'
+       ORDER BY updated_at DESC`,
+      [orgId, projectId],
+    );
+    const payloads = rows.map((r: { sourcePayload: Record<string, unknown> | null }) => r.sourcePayload || {});
+    const { assessRecordedCapability, capabilitySentence, isBatchAnalysisFor } = await import(
+      '../../services/cmc/recorded-capability'
+    );
+    const sides = ['drug_substance', 'drug_product'] as const;
+    const data = {
+      projectId,
+      resultsOnFile: payloads.length,
+      sides: Object.fromEntries(
+        sides.map((side) => {
+          const series = assessRecordedCapability(payloads.filter((p) => isBatchAnalysisFor(p, side)));
+          return [side, { series, statements: series.map(capabilitySentence) }];
+        }),
+      ),
+    };
+    return res.json({ success: true, data });
+  } catch (error) {
+    return respondWriteError(res, error, 'Failed to assess process capability');
+  }
+});
+
+/**
  * POST /api/cmc/stability-studies/poolability
  * Can these batches be combined into ONE shelf-life claim? — ICH Q1E ANCOVA.
  *

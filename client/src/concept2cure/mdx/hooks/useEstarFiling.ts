@@ -315,6 +315,11 @@ export interface EstarSubmissionView {
   filedAt: string | null;
   reviewGoalDays: number | null;
   decisionDueAt: string | null;
+  /* What the filing was filed WITH: the retained eSTAR in the program vault and
+     the SHA-256 of its bytes. Null on rows recorded before the binding existed
+     — a filing with no binding says so rather than implying one. */
+  filedArtifactDocumentId: string | null;
+  filedArtifactSha256: string | null;
 }
 
 export interface UseEstarSubmissionsResult {
@@ -330,12 +335,107 @@ export interface UseEstarSubmissionsResult {
     /** Attach the filing to a project (joins the PM spine). */
     projectId?: number;
   }) => Promise<EstarSubmissionView | null>;
-  /** PATCH /submissions/:id — advance the lifecycle. */
+  /** PATCH /submissions/:id — advance the lifecycle. NOT for `filed`, which is
+   *  a signature: use `file()`. */
   advance: (
     id: string,
     status: string,
     extra?: { fdaTrackingNumber?: string; decision?: string },
   ) => Promise<EstarSubmissionView | null>;
+  /** PATCH /submissions/:id with the governed signature — the filed transition. */
+  file: (id: string, input: EstarFilingSignatureInput) => Promise<EstarFilingOutcome>;
+}
+
+/**
+ * What a signer supplies to file. The filing DATE is not here: the server
+ * stamps it, because a Part 11 filing date supplied by the party being recorded
+ * is a backdating hole. Neither is the artifact's hash — the server reads it
+ * from the vault row the document id names, so a filing cannot claim a digest
+ * nobody stored.
+ */
+export interface EstarFilingSignatureInput {
+  /** vault.documents id of the retained official eSTAR being filed. */
+  filedArtifactDocumentId: string;
+  /** Reason for signing; the server requires at least 8 characters. */
+  reason: string;
+  /** The §11.50 meaning declared. */
+  meaning: EstarSignatureMeaning;
+  password: string;
+  /** Authenticator code, when the account has MFA enabled. */
+  totp?: string;
+  fdaTrackingNumber?: string;
+}
+
+export type EstarFilingOutcome =
+  | { ok: true; submission: EstarSubmissionView }
+  | { ok: false; reason: string };
+
+/** The §11.50 meanings the server accepts (server/api/cmc/governance.ts). */
+export const ESTAR_SIGNATURE_MEANINGS = [
+  'approval',
+  'review',
+  'responsibility',
+  'authorship',
+] as const;
+export type EstarSignatureMeaning = (typeof ESTAR_SIGNATURE_MEANINGS)[number];
+
+/**
+ * One sentence for why a filing did not happen, from the SERVER's own answer.
+ *
+ * Never guessed: a wrong password and a role refusal are different problems and
+ * an operator sent to check the wrong one loses the signing session for nothing.
+ */
+export function describeFilingRefusal(status: number, code: string | null): string {
+  if (code === 'REAUTH_PASSWORD_INVALID' || code === 'REAUTH_PASSWORD_REQUIRED') {
+    return 'That password was not accepted. Nothing was filed and nothing was signed.';
+  }
+  if (code === 'REAUTH_TOTP_INVALID') {
+    return 'That authenticator code was not accepted. Nothing was filed and nothing was signed.';
+  }
+  if (code === 'REAUTH_USER_NOT_FOUND') {
+    return 'Your account could not be re-verified. Nothing was filed and nothing was signed.';
+  }
+  if (status === 403) return 'Your role cannot file a submission.';
+  if (status === 404) return 'This filing is no longer in your organization.';
+  if (status >= 400 && status < 500) {
+    return 'The filing was refused. Check the eSTAR you selected and your reason, then try again.';
+  }
+  return 'Not filed — the server did not answer. Nothing was changed.';
+}
+
+/* ─── Retained eSTAR artifacts (what a filing can be signed against) ─────── */
+
+export interface RetainedEstarArtifactView {
+  documentId: string;
+  programId: string;
+  documentCode: string;
+  version: string;
+  contentHash: string;
+  fileName: string;
+  fileSize: number;
+  createdAt: string;
+}
+
+export interface UseRetainedEstarArtifactsResult {
+  artifacts: RetainedEstarArtifactView[] | null;
+  loading: boolean;
+  error: string | null;
+  refresh: () => void;
+}
+
+/**
+ * GET /retained-artifacts — the org's retained official eSTARs, newest first.
+ *
+ * `artifacts: null` means unresolved (loading, or the read failed) and is kept
+ * distinct from `[]`, which is a real answer: no official eSTAR has been
+ * produced yet. A signing form must not offer "nothing to file against" when
+ * the truth is that it could not look.
+ */
+export function useRetainedEstarArtifacts(): UseRetainedEstarArtifactsResult {
+  const { data, loading, error, refresh } = useFetchJson<{ artifacts: RetainedEstarArtifactView[] }>(
+    '/api/510k/estar/retained-artifacts',
+  );
+  return { artifacts: data?.artifacts ?? null, loading, error, refresh };
 }
 
 /**
@@ -399,5 +499,41 @@ export function useEstarSubmissions(
     [refresh],
   );
 
-  return { submissions: data?.submissions ?? null, loading, error, refresh, startTracking, advance };
+  const file = useCallback(
+    async (id: string, input: EstarFilingSignatureInput): Promise<EstarFilingOutcome> => {
+      try {
+        const res = await fetch(`/api/510k/estar/submissions/${encodeURIComponent(id)}`, {
+          method: 'PATCH',
+          credentials: 'include',
+          headers: jsonHeaders(),
+          body: JSON.stringify({
+            status: 'filed',
+            filedArtifactDocumentId: input.filedArtifactDocumentId,
+            reason: input.reason,
+            meaning: input.meaning,
+            reauth: { password: input.password, ...(input.totp ? { totp: input.totp } : {}) },
+            ...(input.fdaTrackingNumber ? { fdaTrackingNumber: input.fdaTrackingNumber } : {}),
+          }),
+        });
+        if (!res.ok) {
+          /* The server's own code, when it gave one — never a guess. */
+          let code: string | null = null;
+          try {
+            code = ((await res.json()) as { error?: string }).error ?? null;
+          } catch {
+            /* no JSON body; the status alone decides */
+          }
+          return { ok: false, reason: describeFilingRefusal(res.status, code) };
+        }
+        const submission = (await res.json()) as EstarSubmissionView;
+        refresh();
+        return { ok: true, submission };
+      } catch {
+        return { ok: false, reason: describeFilingRefusal(0, null) };
+      }
+    },
+    [refresh],
+  );
+
+  return { submissions: data?.submissions ?? null, loading, error, refresh, startTracking, advance, file };
 }
