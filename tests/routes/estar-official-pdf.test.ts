@@ -1144,6 +1144,43 @@ describe.skipIf(!fsSync.existsSync(REAL_NIVD))(
       expect(mockResolverFactory).not.toHaveBeenCalled();
     });
 
+    it('does not inflate the administrative field report by one', async () => {
+      /* The user-facing count. `fieldReportClause` renders "N of M
+         administrative fields filled", and a filer reads it to decide whether
+         the form is done. The attachment manifest IS a field the fill writes,
+         so counting it would make that line read 2 of 20 when one
+         administrative value was written — or, with every governed record
+         present, 21 of 20.
+
+         It does not, and the reason is structural rather than a subtraction
+         somewhere: ESTAR_ATTACHMENT_MANIFEST_KEY is deliberately not a member
+         of any map in ESTAR_FIELD_MAPS, and reportOfficialEstarFill only walks
+         the resolved map's own fields. That was asserted in a docblock and by
+         nothing else. */
+      const req = makeReq({
+        meta: { id: 'k123', ident: PROGRAM, title: 'Official eSTAR' },
+        type: '510k',
+        variant: 'device',
+        useProgramData: true,
+        data: { deviceTradeName: 'BX-204' },
+        attachments: [
+          { slot: COVER_LETTER_SLOT, source: { kind: 'authored_section', sectionCode: 'A.1' } },
+        ],
+      });
+      const res = createMockResponse() as any;
+
+      await getHandler('/official')(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(200);
+      const report = res.json.mock.calls[0][0].fieldReport;
+      expect(report.mappedCount).toBe(Object.keys(ESTAR_FIELD_MAPS['510k-device']).length);
+      expect(report.blankKeys).not.toContain('attachmentManifest');
+      expect(report.fields.map((f: any) => f.key)).not.toContain('attachmentManifest');
+      expect(report.filledCount + report.blankCount).toBe(report.mappedCount);
+      // And the attachment really was filed — the report is not empty by accident.
+      expect(res.json.mock.calls[0][0].attachmentReport.attached).toHaveLength(1);
+    });
+
     it('never builds a resolver when no attachment was asked for', async () => {
       const req = makeReq({
         meta: { id: 'k123', ident: PROGRAM, title: 'Official eSTAR' },

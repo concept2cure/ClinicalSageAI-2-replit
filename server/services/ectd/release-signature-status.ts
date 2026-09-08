@@ -95,6 +95,36 @@ function refusalToVerdict(refusal: SignedExportRefusal): ReleaseSignatureVerdict
 }
 
 /**
+ * How many orchestrator runs carry this submission's id as TEXT but have no
+ * joinable FK. Used ONLY to tell "no signature" apart from "a signature the
+ * join cannot see" — never to resolve a signature, which still requires the FK.
+ *
+ * Best-effort: a probe that cannot answer returns 0, so it can only ever
+ * UPGRADE a verdict on positive evidence and never invent one.
+ */
+async function countUnlinkedRunsByText(submissionId: number, organizationId: number): Promise<number> {
+  try {
+    const rows = await db.execute(sql`
+      SELECT count(*)::int AS n
+        FROM submission_orchestrator_runs
+       WHERE submission_id = ${String(submissionId)}
+         AND submission_id_fk IS NULL
+         AND organization_id = ${organizationId}
+    `);
+    const list = (rows as unknown as { rows?: Array<Record<string, unknown>> }).rows ?? (rows as unknown as Array<Record<string, unknown>>);
+    const n = Number((Array.isArray(list) ? list : [])[0]?.n ?? 0);
+    return Number.isFinite(n) && n > 0 ? n : 0;
+  } catch (err) {
+    log.warn('unlinked-run probe failed; reporting none', {
+      err: err instanceof Error ? err.message : String(err),
+      submissionId,
+      organizationId,
+    });
+    return 0;
+  }
+}
+
+/**
  * Resolve the release-signature state for a submission's SEQUENCE.
  *
  * Returns `undetermined` (never `unsigned`) on any lookup failure — a DB error
@@ -174,6 +204,31 @@ export async function resolveReleaseSignatureStatus(params: {
   }
 
   if (runIds.length === 0) {
+    /* Nothing JOINED — which is not the same as nothing SIGNED.
+       submission_orchestrator_runs.submission_id_fk is optional by design (see
+       OrchestratorInputs.submissionFk): the orchestrator writes it only when a
+       caller supplies one, and a caller that does not leaves the column NULL
+       "until a per-tenant backfill resolves it". The lookup above joins on
+       exactly that column, so an unlinked run is invisible to it — and
+       reporting 'unsigned' then tells a customer who HAS orchestrated and
+       signed a release that they have not signed one. Worse, 'unsigned' reads
+       as a fixable state whose fix is to sign, and signing again produces
+       another unlinked run.
+       So before concluding absence, ask whether runs exist that simply cannot
+       be joined. The TEXT probe uses the same identity rule
+       loadSubmissionFkBySubmissionIdText applies — the numeric id as text, and
+       nothing else — so it is the same claim about identity that the FK
+       resolution would have made, not a looser guess. */
+    const unlinked = await countUnlinkedRunsByText(submissionId, organizationId);
+    if (unlinked > 0) {
+      return {
+        verdict: 'undetermined',
+        detail:
+          `${unlinked} orchestrator run(s) carry this submission's id but are not linked to it ` +
+          `(submission_id_fk is NULL), so whether a release was signed cannot be determined. ` +
+          `Resolve the FK for those runs; signing again would only add another unlinked run.`,
+      };
+    }
     return {
       verdict: 'unsigned',
       detail: 'no orchestrator run is linked to this submission',
