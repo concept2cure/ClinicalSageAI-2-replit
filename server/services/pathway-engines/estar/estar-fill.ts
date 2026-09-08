@@ -43,6 +43,7 @@ import {
   assessEstarTemplateRebuild,
   isEstarSubstitution,
   estarCellText,
+  unmeasuredMappedKeys,
   type EstarRebuildFinding,
 } from './estar-field-map';
 import {
@@ -295,6 +296,37 @@ async function resolveProducibleInputs(
     );
   }
 
+  /* EVERY KEY OF THE REGISTERED MAP MUST BE MEASURED, OR THE ERASURE REPORT
+     LIES BY OMISSION.
+
+     `assessOneKey` returns null for a key with no entry in
+     `ESTAR_TEMPLATE_RECOMPUTED_FIELDS`, so that key contributes nothing to
+     `erasedFields` — and `erasedFields: []` is documented below as "assessed,
+     none", never "not assessed". The substitution refusal reads the same
+     findings, so an unmeasured key means the filing is delivered with BOTH
+     claims made falsely about it: nothing is erased, and nothing is filed under
+     the wrong entity. Neither was checked.
+
+     Scoped to the map this module OWNS. `input.fieldMap` is a test/injection
+     seam whose keys are the caller's own vocabulary (no production caller
+     supplies one), and measuring those against a table enumerated from the FDA
+     template would be a category error.
+
+     `estar-field-map.template-behaviour.test.ts` pins the unmeasured set empty
+     across every populated map, so this is the backstop for a key that reaches
+     a deployed build anyway — not a state anyone should be able to ship. */
+  if (fieldMap && mapPopulated && !input.fieldMap) {
+    const unmeasured = unmeasuredMappedKeys(fieldMap);
+    if (unmeasured.length > 0) {
+      base.blockers.push(
+        `Cannot produce a submittable eSTAR: ${unmeasured.length} key(s) of the "${descriptor.id}" field map have no ` +
+          `measured template-rebuild outcome (${unmeasured.join(', ')}), so this fill cannot say whether the form ` +
+          `keeps what it writes into them. An unmeasured key is reported as "nothing erased" and clears the ` +
+          `wrong-entity refusal without either having been checked. Measure them against the vendored template and ` +
+          `add them to ESTAR_TEMPLATE_RECOMPUTED_FIELDS.`,
+      );
+    }
+  }
 
   if (base.blockers.length > 0) return null;
   return { templateBytes: templateBytes!, fieldMap: fieldMap! };

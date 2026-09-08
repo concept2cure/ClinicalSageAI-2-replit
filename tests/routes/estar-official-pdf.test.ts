@@ -126,7 +126,7 @@ import estarRoutes from '../../server/routes/510k-estar-routes';
 // The field map is a mutable singleton; tests populate then restore it to
 // exercise the "template + verified map present → real official PDF" path
 // without committing a real FDA asset.
-import { ESTAR_FIELD_MAPS } from '../../server/services/pathway-engines/estar/estar-field-map';
+import { ESTAR_FIELD_MAPS, ESTAR_TEMPLATE_RECOMPUTED_FIELDS } from '../../server/services/pathway-engines/estar/estar-field-map';
 
 function getHandler(routePath: string) {
   const layer = estarRoutes.stack.find(
@@ -172,6 +172,17 @@ function useTemplateFixture(opts: { prefix: string; template?: () => Promise<Uin
   let dir: string;
   let priorEnv: string | undefined;
   let priorMap: unknown;
+  /* Records this fixture ADDED, to take back out in afterAll. A substituted map
+     stands in for a REGISTERED one, and `fillEstarSubmission` now refuses a
+     registered map with a key it has no measured rebuild outcome for — an
+     unmeasured key is reported as "nothing erased" and clears the wrong-entity
+     refusal without either having been checked. So a fixture that installs a
+     map must install its measurements too, or it is standing in for a state the
+     engine correctly rejects. `reproduces` ("the form keeps this cell") is the
+     neutral outcome and is only filled in for keys that have no real record —
+     `deviceCommonName`, whose measured 'blanks' outcome the erasure suites
+     depend on, keeps its own. */
+  const addedRecords: string[] = [];
   beforeAll(async () => {
     dir = await fs.mkdtemp(path.join(os.tmpdir(), opts.prefix));
     priorEnv = process.env.ESTAR_TEMPLATE_DIR;
@@ -180,12 +191,23 @@ function useTemplateFixture(opts: { prefix: string; template?: () => Promise<Uin
       await fs.writeFile(path.join(dir, 'eSTAR-510k-non-ivd.pdf'), Buffer.from(await opts.template()));
     }
     priorMap = ESTAR_FIELD_MAPS['510k-device'];
-    if (opts.map) ESTAR_FIELD_MAPS['510k-device'] = { ...opts.map } as any;
+    if (opts.map) {
+      ESTAR_FIELD_MAPS['510k-device'] = { ...opts.map } as any;
+      for (const key of Object.keys(opts.map)) {
+        if (key in ESTAR_TEMPLATE_RECOMPUTED_FIELDS) continue;
+        (ESTAR_TEMPLATE_RECOMPUTED_FIELDS as Record<string, unknown>)[key] = {
+          writtenBy: [], rebuiltFrom: null, clearedByPathwayClick: false, rebuildOutcome: 'reproduces',
+        };
+        addedRecords.push(key);
+      }
+    }
   });
   afterAll(async () => {
     if (priorEnv === undefined) delete process.env.ESTAR_TEMPLATE_DIR;
     else process.env.ESTAR_TEMPLATE_DIR = priorEnv;
     ESTAR_FIELD_MAPS['510k-device'] = priorMap as any;
+    for (const key of addedRecords) delete (ESTAR_TEMPLATE_RECOMPUTED_FIELDS as Record<string, unknown>)[key];
+    addedRecords.length = 0;
     await fs.rm(dir, { recursive: true, force: true });
   });
 }

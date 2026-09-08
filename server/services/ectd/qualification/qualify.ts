@@ -367,7 +367,12 @@ export async function qualifyV3(region: Region, workDir: string): Promise<Qualif
    *  own DOCTYPE names is not in the package. Stated in the notes below — a
    *  skipped check must never read as a passed one. */
   const dtdSkips = [indexBackbone.dtdSkipped, regionalBackbone.dtdSkipped]
-    .filter((sk): sk is NonNullable<typeof sk> => sk !== null);
+    .filter((sk): sk is NonNullable<typeof sk> => sk !== null)
+    // Prefixed with the sequence, because the lifecycle amendment below
+    // validates a backbone of the SAME relPath in its OWN package directory and
+    // its skip is folded into this same note. Unlabelled, three entries would
+    // read as one file listed twice.
+    .map((sk) => ({ ...sk, relPath: `0000/${sk.relPath}` }));
   if (fdaCriteriaFallbackEnabled() && (region === 'fda' || region === 'ema' || region === 'pmda')) {
     const rep = await validateFdaCriteria({ packageDir: pkgDir, region });
     validators.push(tally(`fda-criteria-subset`, rep.ran, rep.findings));
@@ -390,12 +395,23 @@ export async function qualifyV3(region: Region, workDir: string): Promise<Qualif
   //     index.xml renders through util/style/ectd-2-0.xsl and the FDA backbone
   //     through us-regional.xsl. When nothing is vendored this is a
   //     trivially-ok no-op (nothing to verify).
+  //     THREE FAULT CLASSES, NOT TWO. `verifyChecksumManifest` reports
+  //     `mismatched` (tampered/stale), `unlistedFiles` (present, unrecorded) and
+  //     `missingFiles` (recorded, gone from disk) — and its own `ok` counts all
+  //     three. This row mapped the first two, so a drop point whose
+  //     checksums.txt still records a DTD after the file was deleted returned
+  //     `ok: false` from the verifier and `dtd-checksum-manifest: passed` in the
+  //     report a filer reads. That is the worst of the three to drop: a DTD
+  //     named in the manifest and absent from disk is exactly the
+  //     not-self-contained package the ECTD_REQUIRE_DTD gate exists to stop.
   const dtdManifest = await verifyChecksumManifest(resolveDtdDir(), 'checksums.txt', ['.dtd', '.xsl']);
   validators.push(tally('dtd-checksum-manifest', true, [
     ...dtdManifest.mismatched.map((m) => ({ severity: 'error', message: `Vendored ${m.fileName} hash mismatch (tampered/stale).` })),
     ...dtdManifest.unlistedFiles.map((f) => ({ severity: 'error', message: `Vendored file ${f} is not recorded in checksums.txt.` })),
+    ...dtdManifest.missingFiles.map((f) => ({ severity: 'error', message: `checksums.txt records ${f} but no such file is in the drop point.` })),
   ]));
-  if (dtdSkips.length) notes.push(await dtdSkipNote(dtdSkips));
+  // The note itself is pushed AFTER the lifecycle package below, so the
+  // amendment's own skip can be in it — see there.
 
   // 2c. STF cross-linking + intra-package cross-reference resolution evidence
   //     (surfaced by the packager on the bundle).
@@ -419,6 +435,21 @@ export async function qualifyV3(region: Region, workDir: string): Promise<Qualif
   const lcRegional = await validateBackboneFile(lcDir, regionalRel);
   const lcChecksum = await verifyZipChecksums(lcBundle.path);
   const lcPassed = lcRegional.reports.every((v) => v.passed) && lcChecksum.ok;
+  /* THE AMENDMENT'S SKIP IS ITS OWN FACT. `lcRegional.dtdSkipped` was computed
+     here and discarded, and a skip emits NO row — so `lcPassed`, which is
+     `reports.every(v => v.passed)`, stayed true and the report carried
+     `lifecycle.nextPackagePassed: true` with nothing said about the amendment's
+     backbone never having been DTD-validated. That is the silence `dtdSkipNote`
+     exists to prevent: a skipped check must never read as a passed one.
+
+     It is NOT a duplicate of the 0000 skip above. Each package bundles its own
+     DTDs and this reads `lcDir`, not `pkgDir`, so a lifecycle packager that
+     stops copying them into 0001 produces exactly this divergence — and
+     produced a clean report. */
+  if (lcRegional.dtdSkipped) {
+    dtdSkips.push({ ...lcRegional.dtdSkipped, relPath: `0001/${lcRegional.dtdSkipped.relPath}` });
+  }
+  if (dtdSkips.length) notes.push(await dtdSkipNote(dtdSkips));
 
   // Read the operation attributes ACTUALLY emitted into the amendment's
   // backbones (index.xml for m2–5, the regional backbone for m1), so the report
@@ -487,11 +518,16 @@ export async function qualifyV4(workDir: string): Promise<QualificationReport> {
   } else {
     notes.push('RPS XSD validation skipped — vendor the ICH RPS message schema into assets/ectd-schema/ (rps-message.xsd) to enable it.');
   }
-  // Vendored-schema integrity (drop-point manifest).
+  // Vendored-schema integrity (drop-point manifest). All THREE of the verifier's
+  // fault classes, for the same reason as `dtd-checksum-manifest` above: an XSD
+  // recorded in checksums.txt and absent from the drop point is a schema
+  // submissionUnit.xml cannot be validated against, and mapping only the first
+  // two reported it as a passed integrity check.
   const schemaManifest = await verifyChecksumManifest(resolveSchemaDir(), 'checksums.txt', ['.xsd']);
   validators.push(tally('schema-checksum-manifest', true, [
     ...schemaManifest.mismatched.map((m) => ({ severity: 'error', message: `Schema ${m.fileName} hash mismatch.` })),
     ...schemaManifest.unlistedFiles.map((f) => ({ severity: 'error', message: `Vendored schema ${f} is not recorded in checksums.txt.` })),
+    ...schemaManifest.missingFiles.map((f) => ({ severity: 'error', message: `checksums.txt records schema ${f} but no such file is in the drop point.` })),
   ]));
 
   // External agency-grade validator (LORENZ) — runs for v4.0 too when configured.

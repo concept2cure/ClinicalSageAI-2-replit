@@ -153,7 +153,14 @@ function standIn(name: string): string {
     : `<!-- stand-in ${name} -->\n<!ELEMENT placeholder EMPTY>\n`;
 }
 
-/** Write a partial drop-point and record `recorded` in its checksums.txt. */
+/**
+ * Write a partial drop-point and record `recorded` in its checksums.txt.
+ *
+ * A name in `recorded` that is NOT in `files` is recorded WITHOUT being written
+ * — the third fault class (`missingFiles`): the manifest says the agency
+ * artifact is there and it is not. That is the shape of a drop-point that lost
+ * a DTD, and it is exactly the case a self-containment gate must see.
+ */
 async function dropPoint(dir: string, files: string[], recorded: string[] = files): Promise<void> {
   await fs.mkdir(dir, { recursive: true });
   const lines: string[] = [];
@@ -163,6 +170,9 @@ async function dropPoint(dir: string, files: string[], recorded: string[] = file
     if (recorded.includes(f)) {
       lines.push(`${createHash('sha256').update(body).digest('hex')}  ${f}`);
     }
+  }
+  for (const r of recorded.filter((r) => !files.includes(r))) {
+    lines.push(`${createHash('sha256').update(standIn(r)).digest('hex')}  ${r}`);
   }
   await fs.writeFile(path.join(dir, 'checksums.txt'), `# fixture manifest\n${lines.join('\n')}\n`);
 }
@@ -191,6 +201,60 @@ describe('vendored-artifact integrity covers the stylesheets too', () => {
       expect(manifest!.passed).toBe(false);
       expect(manifest!.sample.join(' ')).toContain('ectd-2-0.xsl');
     } finally {
+      await fs.rm(work, { recursive: true, force: true });
+    }
+  }, 30000);
+
+  it('refuses a manifest entry whose agency artifact is GONE from the drop point', async () => {
+    /* The verifier has THREE fault classes and its own `ok` counts all three:
+       `mismatched` (tampered), `unlistedFiles` (unrecorded) and `missingFiles`
+       (recorded, not on disk). The qualification row mapped the first two, so a
+       drop point whose checksums.txt still records `ich-ectd-3-2.dtd` after the
+       file was deleted produced `ok: false` from the verifier and
+       `dtd-checksum-manifest: passed` in the report a filer reads.
+
+       That is the worst of the three to lose: a DTD named in the manifest and
+       absent from disk is precisely the not-self-contained package the
+       ECTD_REQUIRE_DTD gate exists to stop, reported as clean. */
+    const work = await tmp();
+    try {
+      await dropPoint(path.join(work, 'drop'), ['ectd-2-0.xsl'], ['ectd-2-0.xsl', 'ich-ectd-3-2.dtd']);
+      const r = await withDropPoint(path.join(work, 'drop'), () => qualifyV3('fda', work));
+      const manifest = r.validators.find((v) => v.name === 'dtd-checksum-manifest');
+      expect(manifest, 'the harness must run the drop-point integrity check').toBeTruthy();
+      expect(manifest!.passed).toBe(false);
+      expect(manifest!.sample.join(' ')).toContain('ich-ectd-3-2.dtd');
+    } finally {
+      await fs.rm(work, { recursive: true, force: true });
+    }
+  }, 30000);
+
+  it('the v4.0 schema drop point has the same three fault classes', async () => {
+    /* `schema-checksum-manifest` is the RPS twin of the row above and dropped
+       `missingFiles` the same way. An XSD recorded in checksums.txt and absent
+       from the drop point is a schema the submissionUnit.xml cannot validate
+       against, reported as a passed integrity check. */
+    const work = await tmp();
+    const drop = path.join(work, 'schema-drop');
+    await fs.mkdir(drop, { recursive: true });
+    const body = '<?xml version="1.0"?><xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"/>';
+    await fs.writeFile(path.join(drop, 'present.xsd'), body);
+    await fs.writeFile(
+      path.join(drop, 'checksums.txt'),
+      `# fixture manifest\n${createHash('sha256').update(body).digest('hex')}  present.xsd\n` +
+        `${createHash('sha256').update(body).digest('hex')}  rps-message.xsd\n`,
+    );
+    const previous = process.env.ECTD_SCHEMA_DIR;
+    process.env.ECTD_SCHEMA_DIR = drop;
+    try {
+      const r = await qualifyV4(work);
+      const manifest = r.validators.find((v) => v.name === 'schema-checksum-manifest');
+      expect(manifest, 'the v4.0 harness must run the schema integrity check').toBeTruthy();
+      expect(manifest!.passed).toBe(false);
+      expect(manifest!.sample.join(' ')).toContain('rps-message.xsd');
+    } finally {
+      if (previous === undefined) delete process.env.ECTD_SCHEMA_DIR;
+      else process.env.ECTD_SCHEMA_DIR = previous;
       await fs.rm(work, { recursive: true, force: true });
     }
   }, 30000);
@@ -234,6 +298,35 @@ describe('DTD validity activates per region, not all-or-nothing', () => {
       // read as "assessed and clear".
       expect(r.notes.join(' ')).toContain('eu-regional.dtd');
       expect(r.notes.join(' ')).toMatch(/skipped/i);
+    } finally {
+      await fs.rm(work, { recursive: true, force: true });
+    }
+  }, 30000);
+
+  it('states the AMENDMENT package\'s skip too, not only the original sequence\'s', async () => {
+    /* `qualifyV3` builds two packages — the original 0000 and the lifecycle
+       amendment 0001 — and validates a backbone in each. `dtdSkips` collected
+       only the 0000 pair; `validateBackboneFile(lcDir, regionalRel)`'s
+       `dtdSkipped` was computed at :429 and thrown away, and `lcPassed` is
+       `reports.every(v => v.passed)` where a SKIP emits no row at all. So the
+       report carried `lifecycle.nextPackagePassed: true` with nothing said
+       about the amendment's backbone never having been DTD-validated — the
+       exact silence `dtdSkipNote` exists to prevent ("a skipped check must
+       never read as a passed one").
+
+       Each package bundles its own DTDs, so the two are not the same fact: a
+       lifecycle packager that stops copying the DTDs into 0001 produces
+       precisely this divergence, and produced a clean report. */
+    const work = await tmp();
+    try {
+      await fs.mkdir(path.join(work, 'empty'), { recursive: true });
+      const r = await withDropPoint(path.join(work, 'empty'), () => qualifyV3('ema', work));
+      const note = r.notes.find((n) => /DTD \*validity\* is skipped/.test(n)) ?? '';
+      // Both sequences are named, so a reader can tell which package was left
+      // unvalidated rather than assuming the one sentence covered both.
+      expect(note, 'the skip note must name the original sequence').toContain('0000/');
+      expect(note, 'the skip note must name the amendment sequence').toContain('0001/');
+      expect(note).toContain('eu-regional.xml');
     } finally {
       await fs.rm(work, { recursive: true, force: true });
     }

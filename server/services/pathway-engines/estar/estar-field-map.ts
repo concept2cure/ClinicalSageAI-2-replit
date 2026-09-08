@@ -701,6 +701,26 @@ export function assessEstarTemplateRebuild(
   return findings;
 }
 
+/**
+ * The mapped keys this module cannot answer for: no entry in
+ * {@link ESTAR_TEMPLATE_RECOMPUTED_FIELDS}, so `assessOneKey` returns null and
+ * the key contributes nothing to `erasedFields`.
+ *
+ * That silence is indistinguishable from "measured, and the form keeps it".
+ * `fillEstarSubmission` documents `erasedFields` as "assessed, none — never
+ * 'not assessed'", and the substitution refusal reads the same findings, so an
+ * unmeasured key means a filing is delivered with BOTH claims made falsely
+ * about it. The fill refuses on a non-empty answer here rather than shipping
+ * that; `estar-field-map.template-behaviour.test.ts` pins it empty across every
+ * populated map so the refusal is a backstop, not a workflow.
+ *
+ * The check is on the MAP, not on the values, so it is the same answer for
+ * every filing and cannot depend on what a caller happened to send.
+ */
+export function unmeasuredMappedKeys(fieldMap: OfficialPdfFieldMap): string[] {
+  return Object.keys(fieldMap).filter((key) => !(key in ESTAR_TEMPLATE_RECOMPUTED_FIELDS));
+}
+
 /** What the rebuild leaves in ONE mapped cell, or null when nothing is lost. */
 function assessOneKey(
   fieldMap: OfficialPdfFieldMap,
@@ -818,4 +838,5 @@ export default {
   getEstarFieldMap,
   isFieldMapPopulated,
   assessEstarTemplateRebuild,
+  unmeasuredMappedKeys,
 };

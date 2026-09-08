@@ -5,7 +5,7 @@ import path from 'path';
 import os from 'os';
 import { PDFDocument } from 'pdf-lib';
 import { fillEstarSubmission } from '../estar-fill';
-import { ESTAR_FIELD_MAPS } from '../estar-field-map';
+import { ESTAR_FIELD_MAPS, ESTAR_TEMPLATE_RECOMPUTED_FIELDS } from '../estar-field-map';
 import { createHash } from 'node:crypto';
 import {
   decryptObjectData,
@@ -109,6 +109,45 @@ describe('fillEstarSubmission', () => {
     const out = await PDFDocument.load(r.pdfBytes!);
     expect(out.getForm().getTextField('DeviceName').getText()).toBe('Acme Monitor');
     expect(out.getForm().getCheckBox('IsIvd').isChecked()).toBe(true);
+  });
+
+  it('REFUSES when a key of the registered map has no measured rebuild outcome', async () => {
+    /* `assessOneKey` returns null for a key absent from
+       ESTAR_TEMPLATE_RECOMPUTED_FIELDS, so it contributes nothing to
+       `erasedFields` — which this module documents as "assessed, none", never
+       "not assessed" — and the wrong-entity refusal reads the same findings.
+       An unmeasured key therefore ships a filing with both claims made falsely
+       about it. Simulated by deleting a record from the live table, because
+       every key of every populated map has one today (pinned in
+       estar-field-map.template-behaviour.test.ts); the point is what happens if
+       that ever stops being true in a deployed build. */
+    const templateBytes = await makeSyntheticEstar();
+    const record = ESTAR_TEMPLATE_RECOMPUTED_FIELDS.deviceTradeName;
+    delete (ESTAR_TEMPLATE_RECOMPUTED_FIELDS as Record<string, unknown>).deviceTradeName;
+    try {
+      const r = await fillEstarSubmission({
+        type: '510k',
+        variant: 'device',
+        data: DATA,
+        templateBytes, // registered map (no `fieldMap` override) — the owned one
+      });
+      expect(r.filled).toBe(false);
+      expect(r.pdfBytes).toBeUndefined();
+      expect(r.blockers.join(' ')).toContain('deviceTradeName');
+      expect(r.blockers.join(' ')).toMatch(/no measured template-rebuild outcome/);
+    } finally {
+      (ESTAR_TEMPLATE_RECOMPUTED_FIELDS as Record<string, unknown>).deviceTradeName = record;
+    }
+  });
+
+  it('a CALLER-SUPPLIED map is the caller\'s vocabulary and is not measured against the table', () => {
+    /* The refusal above is scoped to the map this module owns. `input.fieldMap`
+       is a test/injection seam — no production caller supplies one — and its
+       keys (`deviceName`, `isIvd` here) are not canonical eSTAR keys at all, so
+       measuring them against a table enumerated from the FDA template would be
+       a category error that refuses every such fill. This pins the scope, which
+       is the only thing keeping the refusal from being over-broad. */
+    expect(Object.keys(fieldMap).some((k) => k in ESTAR_TEMPLATE_RECOMPUTED_FIELDS)).toBe(false);
   });
 
   it('fails closed (no fabricated PDF) when the official template is not vendored', async () => {
