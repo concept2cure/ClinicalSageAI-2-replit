@@ -158,3 +158,56 @@ the same evidence directory.
 Both governed actions open a reason form before anything is written — nothing
 fires on the click itself — and the surface's own state is refreshed from the
 server after each write rather than being assumed.
+
+---
+
+## The audit this opened — 2026-09-08
+
+The command-vocabulary defect above was found by accident. It was then looked
+for deliberately, which needed a schema worth comparing against: pgvector was
+installed, `scripts/db/install-fresh.mjs` provisioned a database from scratch
+(794 tables, 806 RLS policies, every required-object capability complete), and
+the whole migration set applied on top — **259 of 259, zero failures**. Every
+earlier failure in this container came from a hand-built fixture, not the set.
+
+Against that reference schema, every `.sql` under `migrations/` and
+`db/migrations/` that is on **no applier** — not `C2C_MIGRATION_FILES`, not the
+Drizzle journal, not `install-fresh` — was checked for whether the objects it
+describes are actually present. Raw output:
+`docs/reports/evidence/ana-ui-2026-09-06/migration-orphan-audit-2026-09-08.txt`.
+
+| | Count |
+|---|---|
+| `.sql` files under the two migration trees | 552 |
+| on no applier | 254 |
+| …creating a table the provisioned schema does not have | 44 |
+| …**adding a column to a table that exists but lacks it** | **8** |
+
+The last row is the dangerous one: the table is there, so nothing looks broken,
+but the column the server reads is not. Two were confirmed against the schema
+and their consumers, and are now on the applier:
+
+| Column | Consumer | Was |
+|---|---|---|
+| `audit_events.hmac_seal` | `audit/chain.ts` — `verifyAuditEventsChainSeals`, the 21 CFR Part 11 §11.70 seal check over the SIEM/export audit table | `SELECT … hmac_seal FROM audit_events` → 42703. `audit_logs` got the same column from a migration that IS on the applier; this one was not, so no `audit_events` row could ever carry a seal |
+| `gdpr_data_subject_requests.execution_evidence` | `compliance/gdprComplianceService.ts` | `UPDATE … SET execution_evidence = $2` → 42703 on **every** DSAR completion |
+
+Both were verified failing against the reference schema and passing after the
+fix, are additive, `to_regclass`-guarded and idempotent, and are pinned in
+`tests/schema-contract/governed-command-vocabulary.contract.test.ts` (shown
+failing with the entries removed).
+
+**Not fixed, ranked for follow-up.** Six of the eight remain, each needing the
+same per-file verification before being wired: `ivdr_packs` artifact hashes and
+warnings (ten columns, three consumers), `ivdr_binder_evidence` source types,
+`ai_claims.verifier_flags`, `ana_kernel_decision_log.prev_hash`,
+`document_audit_trail`/`document_chunks` tenant keys, and
+`organizations.template_count` (no server reference — likely dead). The 44
+absent tables were not triaged.
+
+**The gap in the guards.** `ci:migration-reachability` asks whether a *table* the
+server queries is created by something an applier runs. None of these creates a
+table — they add columns and replace constraints — so all three defects were
+invisible to it, and to every other gate. A guard for "column the server reads,
+added only by a file on no applier" is the missing one; it is not built here
+because it needs the reference schema this session had to construct by hand.
