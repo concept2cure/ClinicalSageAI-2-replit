@@ -40,7 +40,11 @@ import { AnaGrounding, type AnaGroundingEvidence } from './AnaGrounding';
 import { CrlPremortemPanel, type CrlPremortemArtifact } from '../components/ana/CrlPremortemPanel';
 import { SignoffList } from './SignoffList';
 import type { PendingSignoff } from '../components/ana/useGovernedAction';
-import type { AnaChatAction, AnaChatMessage, MessageAttachment } from '../components/ana/useAnaChat';
+import type {
+  AnaChatAction,
+  AnaChatMessage,
+  MessageAttachment,
+} from '../components/ana/useAnaChat';
 import {
   AI_ACTIONS,
   ANA_MODES,
@@ -135,8 +139,10 @@ export interface AnaMessage {
  * JWT claim, and a numeric or null entry there must not throw inside the shell.
  */
 function isOrgAdminRole(roles: readonly string[] | undefined): boolean {
-  return (roles ?? []).some((r) =>
-    ['admin', 'owner', 'super_admin', 'platform_admin', 'business_admin'].includes(String(r).toLowerCase()),
+  return (roles ?? []).some(r =>
+    ['admin', 'owner', 'super_admin', 'platform_admin', 'business_admin'].includes(
+      String(r).toLowerCase()
+    )
   );
 }
 
@@ -166,7 +172,8 @@ export function Rail({
   const { verdictFor } = useNavEntitlements();
   /** The locked destination the human just activated, if any. */
   const [lockedFor, setLockedFor] = React.useState<NavSurfaceEntitlement | null>(null);
-  const name = user?.displayName || [user?.firstName, user?.lastName].filter(Boolean).join(' ') || 'Signed in';
+  const name =
+    user?.displayName || [user?.firstName, user?.lastName].filter(Boolean).join(' ') || 'Signed in';
   const initials =
     (user?.firstName?.[0] ?? '') + (user?.lastName?.[0] ?? '') || name.slice(0, 2).toUpperCase();
   const role = user?.roles?.[0] ?? '';
@@ -193,7 +200,9 @@ export function Rail({
        the request is recorded, and the person who can approve it has no way to
        find it. The queue is org-scoped server-side; this only decides whether
        the entry is offered. */
-    ...(isOrgAdmin ? [{ label: 'Access requests', ic: 'clipboardList', to: 'access-requests' }] : []),
+    ...(isOrgAdmin
+      ? [{ label: 'Access requests', ic: 'clipboardList', to: 'access-requests' }]
+      : []),
     { label: 'Usage & limits', ic: 'barChart', to: 'usage' },
     { label: 'Billing', ic: 'creditCard', to: 'billing' },
     { sep: true },
@@ -432,9 +441,13 @@ export function TopBar({
     <header className="topbar">
       <div className="crumbs">
         <span>Concept2Cure.RI</span>
-        <span className="sep" aria-hidden="true">›</span>
+        <span className="sep" aria-hidden="true">
+          ›
+        </span>
         <span>{tier ? tier.label : ''}</span>
-        <span className="sep" aria-hidden="true">›</span>
+        <span className="sep" aria-hidden="true">
+          ›
+        </span>
         <span className="here">{surface.label}</span>
       </div>
       <div className="tb-spacer" />
@@ -490,7 +503,13 @@ export function TopBar({
         type="button"
         className="tb-task"
         title="New task — assign & track from this screen"
-        onClick={() => { try { (window as any).C2C?.open?.('task'); } catch { /* launcher not mounted */ } }}
+        onClick={() => {
+          try {
+            (window as any).C2C?.open?.('task');
+          } catch {
+            /* launcher not mounted */
+          }
+        }}
       >
         <span className="ico">{I.checkSquare ?? I.plus}</span>
         <span className="tb-task-lbl">Task</span>
@@ -500,7 +519,13 @@ export function TopBar({
         className="tb-btn"
         title="Collaborate — message a colleague about this screen"
         aria-label="Collaborate"
-        onClick={() => { try { (window as any).C2C?.open?.('collab'); } catch { /* launcher not mounted */ } }}
+        onClick={() => {
+          try {
+            (window as any).C2C?.open?.('collab');
+          } catch {
+            /* launcher not mounted */
+          }
+        }}
       >
         {I.messageSquare}
       </button>
@@ -1059,45 +1084,45 @@ export function AnaRail({
                          what already happened and stays inert. Guarded on
                          `targetId` as well as the type, because a chip that
                          cannot say where it goes must not look like it can. */
-                      a.actionType === 'navigate' && a.targetId && onNav ? (
-                        <button
-                          key={i}
-                          type="button"
-                          className="ana-exec-chip is-nav"
-                          onClick={() => {
-                            /* The directive's registry-validated params ride
+                    a.actionType === 'navigate' && a.targetId && onNav ? (
+                      <button
+                        key={i}
+                        type="button"
+                        className="ana-exec-chip is-nav"
+                        onClick={() => {
+                          /* The directive's registry-validated params ride
                                the navParams channel so the destination opens
                                on the named tab/section; a param-less chip
                                clears any stale entry instead of inheriting. */
-                            stashNavParamsForTarget(a.targetId as string, a.params);
-                            onNav(a.targetId as string);
-                          }}
-                        >
-                          {I.arrowRight} {a.label}
-                        </button>
-                      ) : a.actionType === 'surface_action' && a.actionId && onNav ? (
-                        <button
-                          key={i}
-                          type="button"
-                          className="ana-exec-chip is-nav"
-                          onClick={() => {
-                            /* Performed through the ONE surface-action bus,
+                          stashNavParamsForTarget(a.targetId as string, a.params);
+                          onNav(a.targetId as string);
+                        }}
+                      >
+                        {I.arrowRight} {a.label}
+                      </button>
+                    ) : a.actionType === 'surface_action' && a.actionId && onNav ? (
+                      <button
+                        key={i}
+                        type="button"
+                        className="ana-exec-chip is-nav"
+                        onClick={() => {
+                          /* Performed through the ONE surface-action bus,
                                re-validated against the shared registry first —
                                the chip's payload never executes as-is. If the
                                action's screen is not mounted the bus stashes
                                one-shot and navigates there (the tap is the
                                consent), performing on the surface's mount. */
-                            const d = validateDriveAction({
-                              actionType: 'surface_action',
-                              actionId: a.actionId,
-                              params: a.params,
-                            });
-                            if (d) applySurfaceAction(d, onNav);
-                          }}
-                        >
-                          {I.zap} {a.label}
-                        </button>
-                      ) : (
+                          const d = validateDriveAction({
+                            actionType: 'surface_action',
+                            actionId: a.actionId,
+                            params: a.params,
+                          });
+                          if (d) applySurfaceAction(d, onNav);
+                        }}
+                      >
+                        {I.zap} {a.label}
+                      </button>
+                    ) : (
                       <span
                         key={i}
                         className={`ana-exec-chip${a.executed ? ' is-done' : ''}${
@@ -1178,7 +1203,7 @@ export function AnaRail({
                   setSteerBusy(true);
                   setSteerRefused(false);
                   void Promise.resolve(onSteer(v))
-                    .then((accepted) => {
+                    .then(accepted => {
                       // `undefined` means the handler reports nothing either way;
                       // treating that as accepted keeps the old behaviour for any
                       // caller that has not been widened, rather than telling the
@@ -1198,7 +1223,7 @@ export function AnaRail({
                   className="ana-runctl-input"
                   value={steer}
                   maxLength={2000}
-                  onChange={(e) => {
+                  onChange={e => {
                     setSteer(e.target.value);
                     if (steerRefused) setSteerRefused(false);
                   }}
@@ -1282,15 +1307,20 @@ export function AnaRail({
           <textarea
             ref={draftRef}
             rows={1}
-            placeholder={agent ? 'Describe a task for AnA to carry out…' : 'Ask AnA, type @ to name an app…'}
+            placeholder={
+              agent ? 'Describe a task for AnA to carry out…' : 'Ask AnA, type @ to name an app…'
+            }
             value={draft}
             aria-autocomplete="list"
             aria-controls={mentions.open ? 'ana-rail-mentions' : undefined}
             aria-expanded={mentions.open}
-            onChange={(e) => { setDraft(e.target.value); mentions.sync(e.currentTarget); }}
-            onSelect={(e) => mentions.sync(e.currentTarget)}
+            onChange={e => {
+              setDraft(e.target.value);
+              mentions.sync(e.currentTarget);
+            }}
+            onSelect={e => mentions.sync(e.currentTarget)}
             onBlur={() => mentions.close()}
-            onKeyDown={(e) => {
+            onKeyDown={e => {
               if (mentions.onKeyDown(e)) return;
               if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
@@ -1558,7 +1588,7 @@ export function AnaRail({
               {liveDrive && !liveDrive.locked && liveDrive.onStartDemo && (
                 <>
                   <div className="ana-menu-sec">Demonstrations</div>
-                  {listDemoScripts().map((d) => (
+                  {listDemoScripts().map(d => (
                     <button
                       key={d.id}
                       type="button"
@@ -1709,7 +1739,7 @@ export function CmdK({
            or one outside the workspace's industry mode (no plan fixes it). */
         hint: lock
           ? lockShortReason(lock)
-          : NAV_TIERS_V2.find((t) => t.id === (NAV_GROUP_OF[s.id] ?? 'biopharma'))?.label,
+          : NAV_TIERS_V2.find(t => t.id === (NAV_GROUP_OF[s.id] ?? 'biopharma'))?.label,
         icon: s.icon,
         lock,
       };
@@ -1767,7 +1797,7 @@ export function CmdK({
     }).slice(0, 25);
     if (navs.length) {
       results.push({ id: '_hd_surfaces', kind: 'header', label: 'Surfaces' });
-      navs.forEach((s) => results.push(navResult(s)));
+      navs.forEach(s => results.push(navResult(s)));
     }
     const acts = AI_ACTIONS.filter(a => a.label.toLowerCase().includes(term)).slice(0, 3);
     if (acts.length) {
@@ -1862,95 +1892,95 @@ export function CmdK({
   let selIdx = -1;
   return (
     <>
-    <div className="cmdk-bd" onClick={onClose}>
-      <div
-        className="cmdk"
-        role="dialog"
-        aria-modal="true"
-        aria-label="Command palette"
-        onClick={e => e.stopPropagation()}
-      >
-        <div className="cmdk-in">
-          <span className="ico">{I.search}</span>
-          <input
-            ref={inputRef}
-            value={q}
-            onChange={e => {
-              setQ(e.target.value);
-              setSel(0);
-            }}
-            placeholder='Search surfaces, or ">" for actions…'
-          />
-          {q && (
-            <button
-              type="button"
-              className="tbtn"
-              onClick={() => {
-                setQ('');
+      <div className="cmdk-bd" onClick={onClose}>
+        <div
+          className="cmdk"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Command palette"
+          onClick={e => e.stopPropagation()}
+        >
+          <div className="cmdk-in">
+            <span className="ico">{I.search}</span>
+            <input
+              ref={inputRef}
+              value={q}
+              onChange={e => {
+                setQ(e.target.value);
                 setSel(0);
               }}
-              aria-label="Clear"
-            >
-              {I.close}
-            </button>
-          )}
-        </div>
-        <div className="cmdk-list">
-          {items.map(it => {
-            if (it.kind === 'header') {
-              return (
-                <div key={it.id} className="cmdk-hdr">
-                  {it.label}
-                </div>
-              );
-            }
-            selIdx += 1;
-            const si = selIdx;
-            return (
+              placeholder='Search surfaces, or ">" for actions…'
+            />
+            {q && (
               <button
-                key={it.id}
                 type="button"
-                className={`cmdk-item${sel === si ? ' on' : ''}`}
-                /* Locked is a data attribute, never `disabled` — the same
+                className="tbtn"
+                onClick={() => {
+                  setQ('');
+                  setSel(0);
+                }}
+                aria-label="Clear"
+              >
+                {I.close}
+              </button>
+            )}
+          </div>
+          <div className="cmdk-list">
+            {items.map(it => {
+              if (it.kind === 'header') {
+                return (
+                  <div key={it.id} className="cmdk-hdr">
+                    {it.label}
+                  </div>
+                );
+              }
+              selIdx += 1;
+              const si = selIdx;
+              return (
+                <button
+                  key={it.id}
+                  type="button"
+                  className={`cmdk-item${sel === si ? ' on' : ''}`}
+                  /* Locked is a data attribute, never `disabled` — the same
                    decision the rail made, for the same reason. A disabled row
                    drops out of the arrow-key cursor and out of `selectable`
                    here, so the one result a customer most needs an answer about
                    would be the one result they could not reach or interrogate.
                    It stays an ordinary row that Enter activates; only its
                    destination changes. */
-                data-locked={it.lock ? true : undefined}
-                onMouseEnter={() => setSel(si)}
-                onClick={() => run(it)}
-                /* The reason reaches assistive tech through the accessible
+                  data-locked={it.lock ? true : undefined}
+                  onMouseEnter={() => setSel(si)}
+                  onClick={() => run(it)}
+                  /* The reason reaches assistive tech through the accessible
                    NAME, exactly as in the rail: the lock glyph is decorative
                    and the muted row is never the only channel. Title carries
                    the same sentence so a hover and a screen reader are never
                    told two different things about one row. */
-                aria-label={it.lock ? `${it.label} — ${lockShortReason(it.lock)}` : undefined}
-                title={it.lock ? `${it.label} — ${lockShortReason(it.lock)}` : undefined}
-              >
-                <span className="ico">{(it.icon && I[it.icon]) || I.arrowRight}</span>
-                <span className="lbl">{it.label}</span>
-                {it.lock && (
-                  <span className="nav-lic" data-lic="off" aria-hidden="true">
-                    {I.lock}
-                  </span>
-                )}
-                <span className="hint">{it.hint ?? ''}</span>
-              </button>
-            );
-          })}
-          {items.length === 0 && <div className="cmdk-empty">No results for &quot;{q}&quot;</div>}
-        </div>
-        <div className="cmdk-foot">
-          <span>↑↓ navigate</span>
-          <span>↵ select</span>
-          <span>esc close</span>
-          <span className="cmdk-foot-hint">/ jump · &gt; action</span>
+                  aria-label={it.lock ? `${it.label} — ${lockShortReason(it.lock)}` : undefined}
+                  title={it.lock ? `${it.label} — ${lockShortReason(it.lock)}` : undefined}
+                >
+                  <span className="ico">{(it.icon && I[it.icon]) || I.arrowRight}</span>
+                  <span className="lbl">{it.label}</span>
+                  {it.lock && (
+                    <span className="nav-lic" data-lic="off" aria-hidden="true">
+                      {I.lock}
+                    </span>
+                  )}
+                  <span className="hint">{it.hint ?? ''}</span>
+                </button>
+              );
+            })}
+            {items.length === 0 && <div className="cmdk-empty">No results for &quot;{q}&quot;</div>}
+          </div>
+          <div className="cmdk-foot">
+            <span>↑↓ navigate</span>
+            <span>↵ select</span>
+            <span>esc close</span>
+            <span className="cmdk-foot-hint">/ jump · &gt; action</span>
+          </div>
         </div>
       </div>
-    </div>
-    {unlock}
+      {unlock}
     </>
   );
 }

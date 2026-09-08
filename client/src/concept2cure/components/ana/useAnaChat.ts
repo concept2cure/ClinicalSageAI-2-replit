@@ -50,7 +50,12 @@ export type {
   AnaProgressPhase,
 } from './useAnaChat.types';
 
-import { advanceProgress, closeProgress, settleRunningCalls, CLIENT_PHASE_LABELS } from './anaProgress';
+import {
+  advanceProgress,
+  closeProgress,
+  settleRunningCalls,
+  CLIENT_PHASE_LABELS,
+} from './anaProgress';
 
 import type {
   AnaChatAction,
@@ -257,7 +262,9 @@ function toolLabel(name: string): string {
  * same whether it was watched live or reopened later.
  */
 export function hydrateToolTrace(
-  trace: Array<{ tool?: string; label?: string; status?: string; resultSummary?: string }> | undefined,
+  trace:
+    | Array<{ tool?: string; label?: string; status?: string; resultSummary?: string }>
+    | undefined
 ): AnaToolCall[] {
   if (!Array.isArray(trace)) return [];
   const calls: AnaToolCall[] = [];
@@ -349,7 +356,7 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
       if (ok) setPendingSteers(prev => [...prev, message]);
       return ok;
     },
-    [control],
+    [control]
   );
 
   const stop = useCallback(() => {
@@ -406,7 +413,12 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
           content?: string;
           metadata?: {
             reasoning?: string;
-            toolTrace?: Array<{ tool?: string; label?: string; status?: string; resultSummary?: string }>;
+            toolTrace?: Array<{
+              tool?: string;
+              label?: string;
+              status?: string;
+              resultSummary?: string;
+            }>;
             humanControls?: Array<{ action?: string; message?: string }>;
           } | null;
         }>;
@@ -437,7 +449,9 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
           const interjections =
             m.role === 'assistant'
               ? (m.metadata?.humanControls ?? [])
-                  .filter(c => c?.action === 'interject' && typeof c.message === 'string' && c.message)
+                  .filter(
+                    c => c?.action === 'interject' && typeof c.message === 'string' && c.message
+                  )
                   .map(c => c.message as string)
               : [];
           return {
@@ -463,7 +477,7 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
     async (
       rawText: string,
       attachments?: MessageAttachment[],
-        sendOpts?: { toolsOverride?: string[]; agentMode?: boolean }
+      sendOpts?: { toolsOverride?: string[]; agentMode?: boolean }
     ) => {
       const text = rawText.trim();
       if (!text || isStreamingRef.current) return;
@@ -669,8 +683,7 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
         live_drive: options.liveDrive === true ? true : undefined,
         // Demonstration mode rides only on opted-in turns (the server ignores
         // it otherwise), so a stale mode can never outlive the toggle.
-        drive_mode:
-          options.liveDrive === true && options.driveMode === 'demo' ? 'demo' : undefined,
+        drive_mode: options.liveDrive === true && options.driveMode === 'demo' ? 'demo' : undefined,
       });
 
       let streamedText = '';
@@ -745,7 +758,8 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
               // have arrived yet (statusPhase is cleared on first text chunk).
               const phase: string = event.message || event.phase || '';
               if (phase) {
-                const phaseId: string = typeof event.phase === 'string' && event.phase ? event.phase : phase;
+                const phaseId: string =
+                  typeof event.phase === 'string' && event.phase ? event.phase : phase;
                 const at = Date.now();
                 setMessages(prev =>
                   prev.map(m =>
@@ -774,7 +788,12 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
                         ...m,
                         text: next,
                         statusPhase: undefined,
-                        progress: advanceProgress(m.progress, 'composing', CLIENT_PHASE_LABELS.composing, at),
+                        progress: advanceProgress(
+                          m.progress,
+                          'composing',
+                          CLIENT_PHASE_LABELS.composing,
+                          at
+                        ),
                       }
                     : m
                 )
@@ -794,7 +813,12 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
                         ...m,
                         thinking: thinkingNow,
                         statusPhase: undefined,
-                        progress: advanceProgress(m.progress, 'reasoning', CLIENT_PHASE_LABELS.reasoning, at),
+                        progress: advanceProgress(
+                          m.progress,
+                          'reasoning',
+                          CLIENT_PHASE_LABELS.reasoning,
+                          at
+                        ),
                       }
                     : m
                 )
@@ -842,7 +866,12 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
                   m.id === assistantId
                     ? {
                         ...m,
-                        progress: advanceProgress(m.progress, 'finalizing', CLIENT_PHASE_LABELS.finalizing, at),
+                        progress: advanceProgress(
+                          m.progress,
+                          'finalizing',
+                          CLIENT_PHASE_LABELS.finalizing,
+                          at
+                        ),
                       }
                     : m
                 )
@@ -1127,7 +1156,12 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
                 setMessages(prev =>
                   prev.map(m =>
                     m.id === assistantId
-                      ? { ...m, intelligenceQuestion: question, intelligenceFlowState: flowState, intelligenceSessionId: sessionId }
+                      ? {
+                          ...m,
+                          intelligenceQuestion: question,
+                          intelligenceFlowState: flowState,
+                          intelligenceSessionId: sessionId,
+                        }
                       : m
                   )
                 );
@@ -1140,7 +1174,13 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
                 setMessages(prev =>
                   prev.map(m =>
                     m.id === assistantId
-                      ? { ...m, intelligenceFlowComplete: completion, intelligenceFlowState: flowState, intelligenceSessionId: sessionId, intelligenceQuestion: undefined }
+                      ? {
+                          ...m,
+                          intelligenceFlowComplete: completion,
+                          intelligenceFlowState: flowState,
+                          intelligenceSessionId: sessionId,
+                          intelligenceQuestion: undefined,
+                        }
                       : m
                   )
                 );
@@ -1188,7 +1228,11 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
                 statusPhase: undefined,
                 completedAt: Date.now(),
                 progress: closeProgress(m.progress, 'stopped', Date.now()),
-                toolCalls: settleRunningCalls(m.toolCalls, 'Not finished — AnA stopped responding.', Date.now()),
+                toolCalls: settleRunningCalls(
+                  m.toolCalls,
+                  'Not finished — AnA stopped responding.',
+                  Date.now()
+                ),
                 warnings: [...(m.warnings || []), 'Response timed out'],
               };
             })
@@ -1205,7 +1249,11 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
                     stopped: true,
                     completedAt: Date.now(),
                     progress: closeProgress(m.progress, 'stopped', Date.now()),
-                    toolCalls: settleRunningCalls(m.toolCalls, 'Not finished — the run was stopped.', Date.now()),
+                    toolCalls: settleRunningCalls(
+                      m.toolCalls,
+                      'Not finished — the run was stopped.',
+                      Date.now()
+                    ),
                   }
                 : m
             )
@@ -1225,7 +1273,11 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
                 statusPhase: undefined,
                 completedAt: Date.now(),
                 progress: closeProgress(m.progress, 'stopped', Date.now()),
-                toolCalls: settleRunningCalls(m.toolCalls, 'Not finished — the connection was lost.', Date.now()),
+                toolCalls: settleRunningCalls(
+                  m.toolCalls,
+                  'Not finished — the connection was lost.',
+                  Date.now()
+                ),
               };
             })
           );

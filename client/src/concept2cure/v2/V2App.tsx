@@ -36,11 +36,7 @@ import {
   type DriveAction,
   type DriveLock,
 } from './liveDrive';
-import {
-  advertisedScreenActions,
-  applySurfaceAction,
-  validateDriveAction,
-} from './surfaceActions';
+import { advertisedScreenActions, applySurfaceAction, validateDriveAction } from './surfaceActions';
 import { LiveDriveOverlay } from './LiveDriveOverlay';
 import { stashNavParamsForTarget } from './navParams';
 import { getAuthHeaders, getJwtOrgId } from '@/utils/authToken';
@@ -476,7 +472,7 @@ export function V2App() {
     if (!prefs.liveDrive) set('liveDrive', true);
     /* The epoch guarantees the sending effect runs after THIS click commits,
        even when toggle and mode were already in the requested state. */
-    setDriveAskEpoch((n) => n + 1);
+    setDriveAskEpoch(n => n + 1);
   };
   const startTour = () => queueDriveAsk(TOUR_ASK, 'assist');
   /* Start a curated demonstration (training or sales — the Control menu lists
@@ -504,8 +500,8 @@ export function V2App() {
      stream genuinely reported (the running tool's label, else the phase). */
   const driveActivity =
     lastMsg?.role === 'assistant' && lastMsg.streaming
-      ? (lastMsg.toolCalls?.filter((t) => t.status === 'running').slice(-1)[0]?.label ??
-        lastMsg.statusPhase)
+      ? lastMsg.toolCalls?.filter(t => t.status === 'running').slice(-1)[0]?.label ??
+        lastMsg.statusPhase
       : undefined;
   /* The narration tail for the drive strip — the REAL streamed text, bounded.
      Shown only on surfaces that own the conversation (the rail is hidden
@@ -748,9 +744,9 @@ export function V2App() {
        panel that explains a locked destination read the same answer. The
        provider renders no DOM of its own, so the shell's grid is untouched. */
     <NavEntitlementsProvider>
-    <div
-      className={`c2c-v2 shell${prefs.dark ? ' dark' : ''}`}
-      /* Both dark selectors, because the app's own stylesheets key off both and
+      <div
+        className={`c2c-v2 shell${prefs.dark ? ' dark' : ''}`}
+        /* Both dark selectors, because the app's own stylesheets key off both and
          this element used to carry only the class. colors_and_type.css declares
          its dark block as `.dark, [data-theme="dark"]`, so the class alone was
          enough for the canonical tokens — but the GENERATED surface-text-ramp
@@ -762,126 +758,130 @@ export function V2App() {
          attribute here fixes it at the source, rather than teaching every
          generated sheet a second selector (which would also make `.dark` a
          cross-shell class collision — ci:check-shell-css-collisions). */
-      data-theme={prefs.dark ? 'dark' : undefined}
-      data-collapsed={prefs.railCollapsed}
-      data-ana-open={ownsConversation ? false : prefs.anaOpen}
-      /* The DOM attribute keeps its name: `.shell[data-editor="true"]` is what
+        data-theme={prefs.dark ? 'dark' : undefined}
+        data-collapsed={prefs.railCollapsed}
+        data-ana-open={ownsConversation ? false : prefs.anaOpen}
+        /* The DOM attribute keeps its name: `.shell[data-editor="true"]` is what
          app-v2.css:846 and authoring-v2.css:13 key the zero-width rail column
          off, and those stylesheets are outside this change. */
-      data-editor={ownsConversation || undefined}
-    >
-      <Rail
-        activeId={activeId}
-        onNav={nav}
-        collapsed={prefs.railCollapsed}
-        setCollapsed={v => set('railCollapsed', v)}
-        segment={prefs.segment}
-        setSegment={selectSegment}
-      />
-      {/* Phone-width scrim: at <=640px the EXPANDED rail paints over the
+        data-editor={ownsConversation || undefined}
+      >
+        <Rail
+          activeId={activeId}
+          onNav={nav}
+          collapsed={prefs.railCollapsed}
+          setCollapsed={v => set('railCollapsed', v)}
+          segment={prefs.segment}
+          setSegment={selectSegment}
+        />
+        {/* Phone-width scrim: at <=640px the EXPANDED rail paints over the
           content (app-v2.css keeps the grid at the collapsed strip), and this
           scrim sits between them — tap collapses the rail; Escape is handled
           by the shell-level listener below, which is also gated to phone
           width. Display is entirely CSS-gated (.rail-scrim), so wider
           viewports render nothing and desktop behavior is untouched. */}
-      {!prefs.railCollapsed && (
-        <div aria-hidden="true" className="rail-scrim" onClick={() => set('railCollapsed', true)} />
-      )}
-      {/* The AnA drawer's scrim (≤900px only — display is CSS-gated on
+        {!prefs.railCollapsed && (
+          <div
+            aria-hidden="true"
+            className="rail-scrim"
+            onClick={() => set('railCollapsed', true)}
+          />
+        )}
+        {/* The AnA drawer's scrim (≤900px only — display is CSS-gated on
           data-ana-open inside the 900px query, exactly like .rail-scrim). */}
-      {!ownsConversation && prefs.anaOpen && (
-        <div aria-hidden="true" className="ana-scrim" onClick={() => set('anaOpen', false)} />
-      )}
-      <main className="main">
-        <TopBar
-          surface={
-            activeId === 'home' ? { id: 'home', label: 'Home', navTier: 'global' } : ctxSurface
-          }
-          onPalette={() => setCmdkOpen(true)}
-          segment={prefs.segment}
-          onSegment={id => {
-            set('segment', id);
-            const s = getSegment(id);
-            if (s?.defaultSurface) nav(s.defaultSurface);
-          }}
-          onNav={nav}
-          onAsk={ask}
-        />
-        <div className={isFull ? 'page page-full' : 'page'}>
-          <SurfaceBoundary resetKey={bodyKey}>{body}</SurfaceBoundary>
-        </div>
-      </main>
-      {!ownsConversation && (
-        <AnaRail
-          open={prefs.anaOpen}
-          setOpen={v => set('anaOpen', v)}
-          surface={ctxSurface}
-          segment={prefs.segment}
-          mode={prefs.anaMode}
-          setMode={m => set('anaMode', m)}
-          messages={railMessages}
-          onSend={(text, attachments, options) => ask(text, attachments, options)}
-          onAct={onAct}
-          welcome={welcome}
-          onDismissWelcome={() => set('welcomeDismissed', true)}
-          onNav={nav}
-          // Scopes composer uploads to the active project, so extracted text
-          // lands in that project's memory — the same id useAnaChat uses.
-          projectId={readShellProjectId()}
-          /* Mid-run control, finally reachable. The hook has exposed these
+        {!ownsConversation && prefs.anaOpen && (
+          <div aria-hidden="true" className="ana-scrim" onClick={() => set('anaOpen', false)} />
+        )}
+        <main className="main">
+          <TopBar
+            surface={
+              activeId === 'home' ? { id: 'home', label: 'Home', navTier: 'global' } : ctxSurface
+            }
+            onPalette={() => setCmdkOpen(true)}
+            segment={prefs.segment}
+            onSegment={id => {
+              set('segment', id);
+              const s = getSegment(id);
+              if (s?.defaultSurface) nav(s.defaultSurface);
+            }}
+            onNav={nav}
+            onAsk={ask}
+          />
+          <div className={isFull ? 'page page-full' : 'page'}>
+            <SurfaceBoundary resetKey={bodyKey}>{body}</SurfaceBoundary>
+          </div>
+        </main>
+        {!ownsConversation && (
+          <AnaRail
+            open={prefs.anaOpen}
+            setOpen={v => set('anaOpen', v)}
+            surface={ctxSurface}
+            segment={prefs.segment}
+            mode={prefs.anaMode}
+            setMode={m => set('anaMode', m)}
+            messages={railMessages}
+            onSend={(text, attachments, options) => ask(text, attachments, options)}
+            onAct={onAct}
+            welcome={welcome}
+            onDismissWelcome={() => set('welcomeDismissed', true)}
+            onNav={nav}
+            // Scopes composer uploads to the active project, so extracted text
+            // lands in that project's memory — the same id useAnaChat uses.
+            projectId={readShellProjectId()}
+            /* Mid-run control, finally reachable. The hook has exposed these
              since run control shipped and the rail wired none of them, so a
              human could watch AnA work a question the wrong way and had no way
              to say so until she finished. */
-          streaming={anaChat.isStreaming}
-          runStatus={anaChat.runStatus}
-          onPause={() => void anaChat.pause()}
-          onResume={() => void anaChat.resume()}
-          onStop={() => anaChat.stop()}
-          onSteer={(m) => anaChat.interject(m)}
-          /* The live work dock reads the raw turns: progress phases, tool
+            streaming={anaChat.isStreaming}
+            runStatus={anaChat.runStatus}
+            onPause={() => void anaChat.pause()}
+            onResume={() => void anaChat.resume()}
+            onStop={() => anaChat.stop()}
+            onSteer={m => anaChat.interject(m)}
+            /* The live work dock reads the raw turns: progress phases, tool
              timings, pending steers and outputs that the adapted rail message
              shape does not carry. */
-          work={{ messages: anaChat.messages, pendingSteers: anaChat.pendingSteers }}
-          liveDrive={{
-            on: prefs.liveDrive,
-            locked: drive.lock,
-            setOn: (v) => {
-              set('liveDrive', v);
-              if (!v) {
-                dispatchDrive({ kind: 'take_over' });
-                setDriveMode('assist');
-              }
-            },
-            onStartTour: startTour,
-            onStartDemo: startDemo,
+            work={{ messages: anaChat.messages, pendingSteers: anaChat.pendingSteers }}
+            liveDrive={{
+              on: prefs.liveDrive,
+              locked: drive.lock,
+              setOn: v => {
+                set('liveDrive', v);
+                if (!v) {
+                  dispatchDrive({ kind: 'take_over' });
+                  setDriveMode('assist');
+                }
+              },
+              onStartTour: startTour,
+              onStartDemo: startDemo,
+            }}
+          />
+        )}
+        <CmdK
+          open={cmdkOpen}
+          onClose={() => setCmdkOpen(false)}
+          onNav={nav}
+          onAsk={ask}
+          onAct={id => {
+            onAct(id);
+            setCmdkOpen(false);
           }}
         />
-      )}
-      <CmdK
-        open={cmdkOpen}
-        onClose={() => setCmdkOpen(false)}
-        onNav={nav}
-        onAsk={ask}
-        onAct={id => {
-          onAct(id);
-          setCmdkOpen(false);
-        }}
-      />
-      <CollabLayer onNav={nav} />
-      {/* Fixed strip, above every surface, while AnA is actually driving —
+        <CollabLayer onNav={nav} />
+        {/* Fixed strip, above every surface, while AnA is actually driving —
           who is driving, where she just went, take-over one keypress away. */}
-      <LiveDriveOverlay
-        state={drive}
-        activity={driveActivity}
-        narration={ownsConversation ? driveNarration : undefined}
-        onTakeOver={takeOverDrive}
-        onStop={() => anaChat.stop()}
-        /* Interactivity without surrender: a question or steer typed into the
+        <LiveDriveOverlay
+          state={drive}
+          activity={driveActivity}
+          narration={ownsConversation ? driveNarration : undefined}
+          onTakeOver={takeOverDrive}
+          onStop={() => anaChat.stop()}
+          /* Interactivity without surrender: a question or steer typed into the
            strip lands mid-run (the run-control interject) — AnA answers and
            continues driving; the person never has to take over just to speak. */
-        onSteer={(m) => anaChat.interject(m)}
-      />
-    </div>
+          onSteer={m => anaChat.interject(m)}
+        />
+      </div>
     </NavEntitlementsProvider>
   );
 }

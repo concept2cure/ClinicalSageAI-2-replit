@@ -43,7 +43,6 @@ import { byRound, formatElapsed, LENS_PHRASE } from '../components/ana/anaProgre
 import { statusGlyph } from './AnaWorkSections';
 import { useNow } from './useNow';
 
-
 export interface AnaActivityProps {
   /** True while the turn is still in flight. */
   streaming?: boolean;
@@ -70,8 +69,6 @@ export interface AnaActivityProps {
   startedAt?: number;
   completedAt?: number;
 }
-
-
 
 /**
  * How much of a still-streaming thought to show. Long enough to be a real
@@ -105,7 +102,6 @@ function latestThought(thinking: string): string {
   const space = cut.indexOf(' ');
   return `…${space > 0 ? cut.slice(space + 1) : cut}`;
 }
-
 
 export function AnaActivity({
   streaming,
@@ -214,7 +210,7 @@ export function AnaActivity({
       {/* Mounted while collapsed and hidden with the attribute, so the
           toggle's aria-controls always resolves (SC 4.1.2) — the same rule as
           the dock's sections. */}
-      {(
+      {
         <div className="ana-activity-body" id={bodyId} hidden={!expanded}>
           {/* The live phase. `polite` so a screen-reader user hears progress
               without it interrupting the answer as it arrives. */}
@@ -278,11 +274,10 @@ export function AnaActivity({
                 </div>
               )}
               {cs.map((c, i) => (
-                <div
-                  key={`${round}-${i}-${c.name}`}
-                  className={`ana-activity-step is-${c.status}`}
-                >
-                  <span className="ana-activity-glyph" aria-hidden="true">{statusGlyph(c.status)}</span>
+                <div key={`${round}-${i}-${c.name}`} className={`ana-activity-step is-${c.status}`}>
+                  <span className="ana-activity-glyph" aria-hidden="true">
+                    {statusGlyph(c.status)}
+                  </span>
                   <span className="ana-activity-label">{c.label || c.name}</span>
                   {c.status === 'error' && (
                     /* The server writes a sentence for this — "AnA couldn't
@@ -308,7 +303,7 @@ export function AnaActivity({
             </div>
           )}
         </div>
-      )}
+      }
     </div>
   );
 }
