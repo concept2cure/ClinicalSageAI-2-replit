@@ -175,11 +175,28 @@ async function readJsonKeepingError<T = any>(
 // /api/submission-orchestrator (the 11-step pipeline: M2/M3 composition, CSR
 // tabulation, assembly, hardened validation, the Part 11 release signature) and
 // /api/ectd/export/by-run/:runId/signed — while the panels above read
-// /api/ectd-compile. That split is real and is NOT resolved by putting both on
-// one screen: the compile path assembles from the submissions spine, the
-// orchestrator composes and signs on its own, and nothing reconciles them. It
-// is surfaced here rather than hidden, so a publisher can see both, and it is
-// the next thing to fix on the server.
+// /api/ectd-compile.
+//
+// CORRECTION (prose only — no code below changed). An earlier version of this
+// note called that split an unreconciled duplication and "the next thing to fix
+// on the server". That was wrong, and checking it is what showed so. The two
+// assemblies are different JOBS and both say so in their own headers:
+//
+//   • orchestrator-real-package.ts is VALIDATION-scoped. It renders the current
+//     composition so the hardened validator has a real backbone and real bytes
+//     to check, every leaf is `new`, and it deliberately skips PDF/A
+//     normalization so the sign-path digest stays deterministic. Its header
+//     states that cross-sequence lifecycle (replace/append/delete) "is the
+//     canonical core's job ... produced there, not here".
+//
+//   • assemble-from-core over the submissions spine is DELIVERABLE-scoped: it
+//     carries per-leaf lifecycle_op and normalizes to PDF/A.
+//
+// Both drive the same canonical packager, and composed Module 3 does reach the
+// spine — placeModule3IntoSubmission, wired at
+// server/api/cmc/module3OperatingSystemRoutes.ts. So this is a deliberate
+// separation, not drift, and showing both on one screen is showing two real
+// stages of one pipeline rather than papering over a duplicate.
 
 type OrchStepStatus =
   | 'pending' | 'running' | 'awaiting-async' | 'awaiting-signature'
