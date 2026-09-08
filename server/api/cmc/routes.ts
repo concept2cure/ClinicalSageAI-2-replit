@@ -644,6 +644,13 @@ router.get('/drug-products', async (req, res) => {
         strength: drugProducts.strength,
         routeOfAdministration: drugProducts.routeOfAdministration,
         composition: drugProducts.composition,
+        /* §3.2.P.3.2's batch formula. Left out of this projection, the register
+           card never received it, the edit form defaulted it to blank, and the
+           PUT wrote {} back over the column — so recording a batch formula and
+           then editing anything else about the product silently erased the only
+           producer §3.2.P.3 has. A field the product can capture and cannot
+           read back is a field it loses. */
+        batchFormula: drugProducts.batchFormula,
         manufacturingProcess: drugProducts.manufacturingProcess,
         packagingMaterials: drugProducts.packagingMaterials,
         status: drugProducts.status,
@@ -2150,6 +2157,13 @@ router.post('/stability-studies/:id/shelf-life', async (req, res) => {
 router.post('/stability-studies/:id/trending', async (req, res) => {
   try {
     const id = parseInt(String(req.params.id), 10);
+    /* stability_studies.id is a serial: a non-numeric segment reaches Postgres
+       as the literal 'NaN', which answers 22P02 and reached the client as a 500
+       logged as a CMC write failure. A client-side typo is a bad request, and
+       this route writes nothing. */
+    if (!Number.isInteger(id) || id <= 0) {
+      return res.status(400).json({ success: false, error: 'A numeric stability study id is required.' });
+    }
     const orgId = getOrgId(req);
     const [study] = await db
       .select({
@@ -2193,6 +2207,18 @@ router.get('/projects/:projectId/process-capability', async (req, res) => {
   try {
     const orgId = getOrgId(req);
     const projectId = String(req.params.projectId);
+    /* A project this tenant does not hold is a 404, not a capability report
+       with no findings. Without this, a mistyped uuid and another org's program
+       both answered 200 with two empty series — a completed assessment over a
+       register that was never read, which is the one reading this route's own
+       docstring forbids. */
+    const { projectBelongsToTenant } = await import('../../services/cmc/project-membership');
+    if (!(await projectBelongsToTenant({ organizationId: orgId, projectId }))) {
+      return res.status(404).json({
+        success: false,
+        error: 'No such project in this organization — no capability was assessed.',
+      });
+    }
     const pool = getPool();
     const { rows } = await pool.query(
       `SELECT source_payload as "sourcePayload"
@@ -2206,15 +2232,34 @@ router.get('/projects/:projectId/process-capability', async (req, res) => {
       '../../services/cmc/recorded-capability'
     );
     const sides = ['drug_substance', 'drug_product'] as const;
+    const bySide = Object.fromEntries(
+      sides.map((side) => {
+        const series = assessRecordedCapability(payloads.filter((p) => isBatchAnalysisFor(p, side)));
+        return [side, { series, statements: series.map(capabilitySentence) }];
+      }),
+    ) as Record<(typeof sides)[number], { series: unknown[]; statements: string[] }>;
+    /* "Assessed" means a SERIES was produced, not that rows exist. Keying it on
+       the row count reported a successful, empty capability report for a
+       project whose every QC row is a cleaning swab or a reference-standard
+       qualification (not batch evidence) or carries no test method — N results
+       on file, no test named, and nothing said. A report that names no test
+       reads as a set of tests that passed, which is the one thing this endpoint
+       must never produce. */
+    const seriesCount = sides.reduce((n, side) => n + bySide[side].series.length, 0);
     const data = {
       projectId,
       resultsOnFile: payloads.length,
-      sides: Object.fromEntries(
-        sides.map((side) => {
-          const series = assessRecordedCapability(payloads.filter((p) => isBatchAnalysisFor(p, side)));
-          return [side, { series, statements: series.map(capabilitySentence) }];
-        }),
-      ),
+      assessed: seriesCount > 0,
+      statement:
+        seriesCount > 0
+          ? null
+          : payloads.length === 0
+            ? 'No batch results are recorded for this project, so process capability is NOT assessed. ' +
+              'Record the QC results, each with its batch number and the acceptance criterion it was judged against.'
+            : `${payloads.length} QC result(s) are on file for this project and none of them is batch-analysis ` +
+              'evidence with a named test method — cleaning-verification and reference-standard results are not ' +
+              'batch data, and a result with no test method opens no series. Process capability is NOT assessed.',
+      sides: bySide,
     };
     return res.json({ success: true, data });
   } catch (error) {

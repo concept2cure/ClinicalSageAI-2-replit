@@ -74,6 +74,29 @@ const board = (overrides: Record<string, unknown> = {}) => ({
 const BOARD = /^\/api\/cmc\/module3-board(\?projectId=P-1)?$/;
 const APPROVE = /\/api\/cmc\/module3-os\/sections\/P-1\/[^/]+\/approve$/;
 const READINESS = /^\/api\/cmc\/module3-os\/readiness\/P-1$/;
+/* The section a signer READS before signing it. §11.50 is a signature over
+   content, so "Approve section" opens this and the signature form opens from
+   inside it — the flow every approval test below now walks. */
+const SECTION_READ = /^\/api\/cmc\/module3-os\/sections\/P-1\/([^/]+)$/;
+
+const sectionRead = (key: string, overrides: Record<string, unknown> = {}) => ({
+  sectionKey: key, sectionPath: PATHS[key] ?? key, title: PATHS[key] ?? key,
+  approvalState: 'compiled', stale: false, staleReason: null,
+  completeness: 100, missingInputs: [] as string[],
+  narrative: `The composed body of section ${key}.`,
+  tables: [{ title: 'Acceptance Criteria', headers: ['Test', 'Limit'], rows: [['Assay', '98.0-102.0%']] }],
+  tablesUnknown: false,
+  markdown: `## ${PATHS[key] ?? key}\n\nThe composed body of section ${key}.\n\n| Test | Limit |\n| --- | --- |\n| Assay | 98.0-102.0% |`,
+  compiledHash: 'abc123def4567890', updatedAt: '2026-09-08T00:00:00.000Z',
+  lineage: [{ sourceType: 'specification', sourceKey: 'specification:7', changedSinceCompile: false }],
+  ...overrides,
+});
+
+/** Walk the read step: open a section's reader, then its signature form. */
+async function openSignatureFor(name: RegExp = /Approve section/) {
+  fireEvent.click(await screen.findByRole('button', { name }));
+  fireEvent.click(await screen.findByRole('button', { name: /Sign & approve/ }));
+}
 
 /** A readiness verdict as GET /readiness returns it. */
 const readinessOf = (overrides: Record<string, unknown> = {}) => ({
@@ -83,11 +106,16 @@ const readinessOf = (overrides: Record<string, unknown> = {}) => ({
 });
 
 /** The board answers as given; the approve route answers with `approve`; readiness with `readiness`. */
-function wire(boardData: unknown, approve?: () => Response, readiness?: () => Response) {
+function wire(boardData: unknown, approve?: () => Response, readiness?: () => Response, read?: () => Response) {
   apiRequest.mockImplementation(async (m: string, u: string) => {
     if (m === 'GET' && BOARD.test(u)) return res({ success: true, data: boardData });
     if (m === 'GET' && READINESS.test(u)) return readiness ? readiness() : res({ success: true, data: readinessOf() });
     if (m === 'POST' && APPROVE.test(u)) return approve ? approve() : res({ success: true, versionNumber: 1 });
+    if (m === 'GET' && SECTION_READ.test(u)) {
+      if (read) return read();
+      const key = u.match(SECTION_READ)![1];
+      return res({ success: true, data: sectionRead(decodeURIComponent(key)) });
+    }
     return res({ success: true, data: [] });
   });
 }
@@ -161,7 +189,7 @@ describe('CmOverview — completeness on the section-approval table', () => {
     wire(board({ sections: [section('3.2.P.5', 'draft', 100)] }), () => res({ success: false, error: reason }, 409));
     render(<CmOverview ask={vi.fn()} />);
 
-    fireEvent.click(await screen.findByRole('button', { name: /Approve section/ }));
+    await openSignatureFor();
     fireEvent.change(screen.getByPlaceholderText('Reason for this approval...'), { target: { value: 'Reviewed against the CoA.' } });
     fireEvent.change(screen.getByPlaceholderText('Re-enter your password'), { target: { value: 'pw' } });
     fireEvent.click(screen.getByRole('button', { name: /Sign & approve/ }));
@@ -172,6 +200,67 @@ describe('CmOverview — completeness on the section-approval table', () => {
     // The refusal was the server's: one POST went out, and nothing flipped locally.
     expect(approvePosts()).toHaveLength(1);
     expect(within(row('3.2.P.5')).getByText('draft', { selector: '.rd-chip' })).toBeTruthy();
+  });
+});
+
+describe('CmOverview — a signature is over content, not a section number', () => {
+  /* The Overview showed the signer a key, a percentage and the missing inputs.
+     The narrative and tables the approve route hashes and snapshots were served
+     by no route and rendered on no screen, so the signature covered a section
+     NUMBER. "Approve section" now opens the section first. */
+  it('shows the composed narrative and tables BEFORE the signature form appears', async () => {
+    wire(board({ sections: [section('3.2.P.5', 'draft', 100)] }));
+    render(<CmOverview ask={vi.fn()} />);
+
+    fireEvent.click(await screen.findByRole('button', { name: /Approve section/ }));
+
+    // The content, and the hash the signature is bound to.
+    expect(await screen.findByText(/The composed body of section 3.2.P.5/)).toBeTruthy();
+    expect(screen.getByText(/98.0-102.0%/)).toBeTruthy();
+    expect(screen.getByText(/abc123def456/)).toBeTruthy();
+    expect(screen.getByText(/Composed from 1 source record/)).toBeTruthy();
+    // …and no signature form yet: the reason and password fields are not there.
+    expect(screen.queryByPlaceholderText('Reason for this approval...')).toBeNull();
+
+    // Only after Sign & approve does the signature form open.
+    fireEvent.click(screen.getByRole('button', { name: /Sign & approve/ }));
+    expect(await screen.findByPlaceholderText('Reason for this approval...')).toBeTruthy();
+  });
+
+  it('offers NO signature when the section could not be read', async () => {
+    /* A failed read is not an empty section, and it is certainly not something
+       to sign: the control is withheld and the failure is named. */
+    wire(
+      board({ sections: [section('3.2.P.5', 'draft', 100)] }),
+      undefined,
+      undefined,
+      () => res({ success: false, error: 'boom' }, 500),
+    );
+    render(<CmOverview ask={vi.fn()} />);
+
+    fireEvent.click(await screen.findByRole('button', { name: /Approve section/ }));
+    expect(await screen.findByText(/could not be read/i)).toBeTruthy();
+    const sign = screen.getByRole('button', { name: /Sign & approve/ }) as HTMLButtonElement;
+    expect(sign.disabled).toBe(true);
+  });
+
+  it('warns when the section is stale or its tables are unknown', async () => {
+    wire(
+      board({ sections: [section('3.2.P.5', 'draft', 100)] }),
+      undefined,
+      undefined,
+      () => res({ success: true, data: sectionRead('3.2.P.5', {
+        stale: true, staleReason: 'A source changed after this was built.',
+        tables: null, tablesUnknown: true,
+        lineage: [{ sourceType: 'specification', sourceKey: 'specification:7', changedSinceCompile: true }],
+      }) }),
+    );
+    render(<CmOverview ask={vi.fn()} />);
+
+    fireEvent.click(await screen.findByRole('button', { name: /Approve section/ }));
+    expect(await screen.findByText(/This section is stale/)).toBeTruthy();
+    expect(screen.getByText(/Its tables are not known/)).toBeTruthy();
+    expect(screen.getByText(/1 source record\(s\) changed since this was compiled/)).toBeTruthy();
   });
 });
 

@@ -15,6 +15,17 @@
  */
 
 import { getGateway } from '../ai-gateway/gateway';
+// Region + gateway taxonomy — shared with the tool schemas in
+// AnaToolDefinitions so an accepted value and an advertised one are the same
+// list. This module has no runtime deps, so importing it here does not pull in
+// the twelve gateway implementations. See region-constants.ts.
+import {
+  gatewayList,
+  isGatewayName,
+  isRegion,
+  regionList,
+} from '../submission-gateways/region-constants.js';
+import { ANA_MACHINE_AUTHOR_ID } from '../authoring/revision-ledger.js';
 // Type-only: the prior-sequence auto-load path assigns loadPriorSequenceManifest's
 // PriorLeaf[] into the same local as the hand-mapped input leaves. Without this
 // annotation the local is inferred from `p: any`, which makes every field
@@ -8032,10 +8043,20 @@ registerToolHandler('write_q_sub_section', async (input, ctx) => {
       const ref = { documentTable: 'q_sub_section_bodies', documentId: String(rows[0].id) };
       const { sources, dropped } = await resolveDraftSources(ctx.organizationId, rawSources, client);
       let gate = null;
+      /* AnA wrote this prose and no human has accepted it — the row three
+         statements up says so itself (draft_source 'ana', accepted_at NULL)
+         and the message below says "Awaiting human accept". Recording the
+         REQUESTING user as having asserted every clause, in this same
+         transaction, made the two records of one act contradict each other.
+         `machineDraft` records what is true: AnA drafted it, ctx.userId asked
+         for it, and nobody has yet stood behind it. */
+      const machineDraft = { authorId: ANA_MACHINE_AUTHOR_ID };
       if (sources.length > 0) {
-        gate = await enforceSourceAndAuthorLineage(client, ctx.organizationId, ref, content, String(ctx.userId), sources);
+        gate = await enforceSourceAndAuthorLineage(
+          client, ctx.organizationId, ref, content, String(ctx.userId), sources, { machineDraft },
+        );
       } else {
-        await enforceAuthorLineage(client, ctx.organizationId, ref, content, String(ctx.userId));
+        await enforceAuthorLineage(client, ctx.organizationId, ref, content, String(ctx.userId), { machineDraft });
       }
       await client.query('COMMIT');
       return JSON.stringify({
@@ -8413,9 +8434,8 @@ registerToolHandler('package_ectd_for_region', async (input, ctx) => {
     return JSON.stringify({ error: 'package_ectd_for_region requires tenant context.' });
   }
   const region = typeof input.region === 'string' ? input.region.toLowerCase() : '';
-  const VALID_REGIONS = ['fda', 'ema', 'pmda', 'ca', 'uk', 'cn', 'au', 'ch', 'br', 'in', 'kr', 'sg'];
-  if (!VALID_REGIONS.includes(region)) {
-    return JSON.stringify({ error: `region must be one of: ${VALID_REGIONS.join(' / ')}.` });
+  if (!isRegion(region)) {
+    return JSON.stringify({ error: `region must be one of: ${regionList()}.` });
   }
   const leaves = Array.isArray(input.leaves) ? (input.leaves as Array<Record<string, unknown>>) : [];
   if (leaves.length === 0) {
@@ -8474,15 +8494,11 @@ registerToolHandler('transmit_submission', async (input, ctx) => {
   }
   const region  = typeof input.region === 'string' ? input.region.toLowerCase() : '';
   const gateway = typeof input.gateway === 'string' ? input.gateway.toLowerCase() : '';
-  const VALID_REGIONS_TX = ['fda', 'ema', 'pmda', 'ca', 'uk', 'cn', 'au', 'ch', 'br', 'in', 'kr', 'sg'];
-  const VALID_GATEWAYS   = ['esg', 'cesp', 'eudamed', 'pmda_gateway', 'hc_cesg',
-                             'mhra_gateway', 'nmpa_gateway', 'tga_ebs', 'swissmedic_egateway',
-                             'anvisa_gateway', 'cdsco_sugam', 'mfds_dbio', 'hsa_prism'];
-  if (!VALID_REGIONS_TX.includes(region)) {
-    return JSON.stringify({ error: `region must be one of: ${VALID_REGIONS_TX.join(' / ')}.` });
+  if (!isRegion(region)) {
+    return JSON.stringify({ error: `region must be one of: ${regionList()}.` });
   }
-  if (!VALID_GATEWAYS.includes(gateway)) {
-    return JSON.stringify({ error: `gateway must be one of: ${VALID_GATEWAYS.join(' / ')}.` });
+  if (!isGatewayName(gateway)) {
+    return JSON.stringify({ error: `gateway must be one of: ${gatewayList()}.` });
   }
   // ── This tool no longer transmits. ──────────────────────────────────────────
   //
@@ -16304,11 +16320,15 @@ registerToolHandler('assess_recorded_stability_trend', async (input, ctx) => {
 registerToolHandler('assess_recorded_process_capability', async (input, ctx) => {
   const orgId = ctx?.organizationId;
   if (!orgId) return 'An active organization context is required to read the QC register.';
-  /* An explicitly named project wins over the session's, so "what is the Cpk on
-     BX-702" is answered about BX-702; otherwise the active program is used. */
-  const supplied = typeof input.project_id === 'string' ? input.project_id.trim() : '';
+  /* The OPEN program wins, exactly as intelligenceProjectId resolves it: a
+     model-produced project_id must not redirect the read. It had priority here,
+     so a product code named earlier in the conversation ("BX-701") could be
+     passed instead of the program uuid, and the tool then reported "no batch
+     results are recorded" about a register it never read while the open
+     program's six batches sat unexamined. */
   const ref = typeof ctx?.projectRef === 'string' ? ctx.projectRef.trim() : '';
-  const projectId = supplied || ref || (ctx?.projectId ? String(ctx.projectId) : '');
+  const supplied = typeof input.project_id === 'string' ? input.project_id.trim() : '';
+  const projectId = ref || (ctx?.projectId ? String(ctx.projectId) : '') || supplied;
   if (!projectId) {
     return JSON.stringify({
       status: 'needs_parameters',
@@ -16316,10 +16336,25 @@ registerToolHandler('assess_recorded_process_capability', async (input, ctx) => 
     });
   }
   try {
-    const [{ getPool }, capability] = await Promise.all([
+    const [{ getPool }, capability, { projectBelongsToTenant }] = await Promise.all([
       import('../../db.js'),
       import('../cmc/recorded-capability.js'),
+      import('../cmc/project-membership.js'),
     ]);
+    /* "No batch results are recorded" is a statement about a register that was
+       READ. Said over a project id this tenant does not hold — a hallucinated
+       string, a product code, another org's program — it is a fabrication, and
+       the instruction told the model to relay it as fact. */
+    if (!(await projectBelongsToTenant({ organizationId: orgId, projectId }))) {
+      return JSON.stringify({
+        status: 'not_found',
+        message:
+          `No project ${projectId} exists in this organization, so no QC register was read and no capability was assessed.`,
+        instruction:
+          'Say that the project could not be found and ask which program is meant. Never report a capability result, ' +
+          'or the absence of one, for a project that was not read.',
+      });
+    }
     const { rows } = await getPool().query(
       `SELECT source_payload as "sourcePayload"
        FROM cmc_source_objects
@@ -16346,7 +16381,26 @@ registerToolHandler('assess_recorded_process_capability', async (input, ctx) => 
         );
         return [side, { series, statements: series.map(capability.capabilitySentence) }];
       }),
-    );
+    ) as Record<string, { series: unknown[]; statements: string[] }>;
+    /* Rows on file are not an assessment. Every row being a cleaning swab, a
+       reference-standard qualification, or a result with no test method yields
+       no series at all — and this answered 'assessed' with an instruction to
+       "report every not-assessed test with its reason" over a report naming no
+       tests. */
+    const seriesCount = sides.reduce((n, side) => n + (result[side]?.series.length ?? 0), 0);
+    if (seriesCount === 0) {
+      return JSON.stringify({
+        status: 'not_assessable',
+        resultsOnFile: payloads.length,
+        message:
+          `${payloads.length} QC result(s) are on file for this project and none opens a capability series: ` +
+          'cleaning-verification and reference-standard results are not batch-analysis evidence, and a result ' +
+          'recorded without a test method belongs to no series. Process capability is NOT assessed.',
+        instruction:
+          'Say that nothing was assessed and why. Do not report a capable process, or an absence of findings, ' +
+          'over results that were never eligible.',
+      });
+    }
     return JSON.stringify({
       status: 'assessed',
       projectId,
@@ -19251,12 +19305,16 @@ registerToolHandler('save_document_to_vault', async (input, ctx) => {
          INSERT, which that guard's content-write discovery does not match. A
          lineage gap rolls the whole document back. */
       const { enforceAuthorLineage } = await import('../clinical-regulatory-evidence/lineage-gate.js');
+      /* AnA generated this content — the provenance row written just below
+         records eventAction 'ai_generate' — and no human has accepted it. It
+         is the machine's draft, requested by ctx.userId, asserted by nobody. */
       await enforceAuthorLineage(
         client,
         ctx.organizationId,
         { documentTable: 'concept2cure_artifacts', documentId: String(ins.rows[0].id) },
         content,
         String(ctx.userId),
+        { machineDraft: { authorId: ANA_MACHINE_AUTHOR_ID } },
       );
       // Uniform provenance: a vault document authored by AnA is a 'generation'
       // event, in the same transaction as the artifact + version.
@@ -19347,12 +19405,15 @@ registerToolHandler('update_vault_document', async (input, ctx) => {
          vault tool carries no parked sources, so every clause is the acting
          user's assertion; a gap rolls the version back. */
       const { enforceAuthorLineage } = await import('../clinical-regulatory-evidence/lineage-gate.js');
+      /* Same as save_document_to_vault: AnA wrote the new version, nobody has
+         accepted it. The provenance row below records 'ai_generate'. */
       await enforceAuthorLineage(
         client,
         ctx.organizationId,
         { documentTable: 'concept2cure_artifacts', documentId: String(doc.id) },
         content,
         String(ctx.userId),
+        { machineDraft: { authorId: ANA_MACHINE_AUTHOR_ID } },
       );
       // Uniform provenance: a new vault version is an 'edit' event, same txn.
       await recordArtifactProvenance(client, {

@@ -558,6 +558,10 @@ router.post('/:formId/artifact', limiter, requireRole(AUTHOR), async (req, res) 
   // filled from the C1 anchor below when one exists; the audited-unplaced
   // degradation is taken only when it does not.
   let effectiveProjectId = projectId;
+  // Resolved once, below, and reused: the governed path used to re-resolve the
+  // same ident a second time to fill the form from the record — a duplicate
+  // query for a row already in hand.
+  let resolvedProgram: ResolvedProgram | null = null;
 
   try {
     /*
@@ -583,6 +587,7 @@ router.post('/:formId/artifact', limiter, requireRole(AUTHOR), async (req, res) 
       if (!program) {
         return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Project not found for this organization.' } });
       }
+      resolvedProgram = program;
 
       // Document Identity Contract slice C1 gave the program spine the numeric
       // anchor this registry needs (`projects.regulatory_program_id`, written by
@@ -675,9 +680,8 @@ router.post('/:formId/artifact', limiter, requireRole(AUTHOR), async (req, res) 
     // The program's recorded facts under anything the caller stated — the same
     // merge /build and /pdf use, so a governed artifact records the fields the
     // rendered form actually carries rather than only what was typed here.
-    const artifactProgram = isProgramIdent ? await resolveProgramIdent(rawIdent, ctx.organizationId) : null;
     const built = buildFormById(formId, {
-      ...(artifactProgram ? programToFormMetadata(artifactProgram) : {}),
+      ...(resolvedProgram ? programToFormMetadata(resolvedProgram) : {}),
       ...statedFields(body),
     });
     const content = JSON.stringify({ formId: built.formId, fields: built.fields, missingRequired: built.missingRequired });

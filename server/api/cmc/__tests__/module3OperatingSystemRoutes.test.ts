@@ -36,7 +36,12 @@ import router from '../module3OperatingSystemRoutes';
 
 // The compiler's record of a fully established section. Approved fixtures carry
 // it so each test below fails on the ONE defect it names, not on completeness.
-const COMPLETE = { completeness: 100, missingInputs: [] as string[] };
+/* A compiled section as the compiler now stores it: its completeness, its
+   missing inputs and its TABLES. The `tables` key is what placement reads back
+   (an absent key means "compiled before tables were carried", which placement
+   and now the export gate both refuse), so a fixture standing for a complete,
+   filable section must carry it. */
+const COMPLETE = { completeness: 100, missingInputs: [] as string[], tables: [] as unknown[] };
 
 describe('module3OperatingSystemRoutes', () => {
   const app = express();
@@ -434,6 +439,111 @@ describe('module3OperatingSystemRoutes', () => {
     expect(res.status).toBe(200);
     expect(res.body.data.incompleteApprovedSections).toEqual(['3.2.P.8']);
     expect(res.body.data.exportReady).toBe(false);
+  });
+
+  describe('GET /sections/:projectId/:sectionKey — what a signature is actually over', () => {
+    /* A §11.50 signature is over CONTENT. The listing route strips the compiled
+       blob by design and nothing else served it, so the only thing the product
+       could show a signer at the moment of approving §3.2.S.4 was its key, its
+       percentage and its missing inputs — a signature over a section NUMBER. */
+    it('serves the narrative, the tables and the markdown that will be filed', async () => {
+      mockQuery.mockImplementation(async (sql: string) => {
+        if (sql.includes('FROM cmc_module3_sections')) {
+          return {
+            rows: [{
+              id: 'sec-1',
+              sectionKey: '3.2.S.4',
+              sectionPath: '3.2.S.4',
+              narrativeText: 'The drug substance specification defines acceptance criteria.  ',
+              deterministicJson: {
+                completeness: 100,
+                missingInputs: [],
+                tables: [{ title: 'Acceptance Criteria', headers: ['Test', 'Limit'], rows: [['Assay', '98.0-102.0%']] }],
+              },
+              stale: false,
+              staleReason: null,
+              approvalState: 'compiled',
+              approvedVersionId: null,
+              compiledHash: 'abc123def456789',
+              updatedAt: '2026-09-08T00:00:00.000Z',
+            }],
+          };
+        }
+        if (sql.includes('cmc_section_lineage')) {
+          return { rows: [{ sourceType: 'specification', sourceKey: 'specification:7', sourceHashAtCompile: 'h1', changedSinceCompile: false }] };
+        }
+        return { rows: [] };
+      });
+
+      const res = await request(app).get('/api/cmc/module3-os/sections/p1/3.2.S.4');
+      expect(res.status).toBe(200);
+      expect(res.body.data.narrative).toContain('acceptance criteria');
+      expect(res.body.data.tables).toHaveLength(1);
+      expect(res.body.data.tablesUnknown).toBe(false);
+      expect(res.body.data.markdown).toContain('## ');
+      expect(res.body.data.markdown).toContain('Acceptance Criteria');
+      expect(res.body.data.markdown).toContain('98.0-102.0%');
+      // Rendered through the one renderer, so the narrative's trailing spaces
+      // are trimmed exactly as they are for the leaf and the governed artifact.
+      expect(res.body.data.markdown).toContain('criteria.\n\n');
+      expect(res.body.data.markdown).not.toContain('criteria.  \n');
+      expect(res.body.data.completeness).toBe(100);
+      expect(res.body.data.lineage).toHaveLength(1);
+    });
+
+    it('says the tables are UNKNOWN for a row compiled before they were stored', async () => {
+      mockQuery.mockImplementation(async (sql: string) => {
+        if (sql.includes('FROM cmc_module3_sections')) {
+          return {
+            rows: [{
+              id: 'sec-1', sectionKey: '3.2.S.4', sectionPath: '3.2.S.4', narrativeText: 'Body.',
+              deterministicJson: { completeness: 100, missingInputs: [] },
+              stale: false, staleReason: null, approvalState: 'approved',
+              approvedVersionId: 'v1', compiledHash: 'h', updatedAt: null,
+            }],
+          };
+        }
+        return { rows: [] };
+      });
+      const res = await request(app).get('/api/cmc/module3-os/sections/p1/3.2.S.4');
+      expect(res.status).toBe(200);
+      // Not "no tables" — unknown. The reader is told, rather than shown none.
+      expect(res.body.data.tablesUnknown).toBe(true);
+      expect(res.body.data.tables).toBeNull();
+    });
+
+    it('flags a source that changed since the section was compiled', async () => {
+      mockQuery.mockImplementation(async (sql: string) => {
+        if (sql.includes('FROM cmc_module3_sections')) {
+          return {
+            rows: [{
+              id: 'sec-1', sectionKey: '3.2.S.4', sectionPath: '3.2.S.4', narrativeText: 'Body.',
+              deterministicJson: { completeness: 100, missingInputs: [], tables: [] },
+              stale: false, staleReason: null, approvalState: 'compiled',
+              approvedVersionId: null, compiledHash: 'h', updatedAt: null,
+            }],
+          };
+        }
+        if (sql.includes('cmc_section_lineage')) {
+          return {
+            rows: [
+              { sourceType: 'specification', sourceKey: 'specification:7', sourceHashAtCompile: 'old', changedSinceCompile: true },
+              { sourceType: 'method', sourceKey: 'method:2', sourceHashAtCompile: 'same', changedSinceCompile: false },
+            ],
+          };
+        }
+        return { rows: [] };
+      });
+      const res = await request(app).get('/api/cmc/module3-os/sections/p1/3.2.S.4');
+      expect(res.body.data.lineage.filter((l: { changedSinceCompile: boolean }) => l.changedSinceCompile)).toHaveLength(1);
+    });
+
+    it('404s a section that was never compiled instead of serving an empty document', async () => {
+      mockQuery.mockResolvedValue({ rows: [] });
+      const res = await request(app).get('/api/cmc/module3-os/sections/p1/3.2.S.4');
+      expect(res.status).toBe(404);
+      expect(res.body.error).toMatch(/has not been compiled/);
+    });
   });
 
   describe('POST /sections/:projectId/:sectionKey/refresh — the record is the composer\'s, never the body\'s', () => {

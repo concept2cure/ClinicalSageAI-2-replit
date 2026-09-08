@@ -127,6 +127,7 @@ import {
   governedSectionsToDeviceSections,
   loadDeviceContentLeaves,
   loadAuthoredDeviceSections,
+  legacySectionsToAuthored,
   deviceContentSource,
   resolveDeviceContentScope,
   type DeviceContentClient,
@@ -201,6 +202,49 @@ describe('loadDeviceContentLeaves / loadAuthoredDeviceSections with a programId'
 
     const authored = await loadAuthoredDeviceSections(ORG, { programId: PROGRAM, client });
     expect(authored.map((a) => a.title)).toEqual(['Device Description', 'Performance Testing', 'Labeling']);
+  });
+
+  /**
+   * An authored section is not necessarily a FILEABLE one.
+   *
+   * `loadAuthoredDeviceSections` returns everything with a non-empty body, and
+   * that is right for the draft package `/build` produces — a draft package
+   * containing drafts is what it says on the label. It is not right for a
+   * document going into a named CDRH attachment slot, where a section still
+   * marked `drafted` is an unreviewed machine draft filed as a submission.
+   *
+   * `sectionsToLeaves` already draws that line for the readiness path
+   * (`substantive`), and this loader silently did not carry it. So it carries
+   * it now, and the caller decides: the draft ZIP ignores it, the attachment
+   * path requires it. Changing what this returns instead would have quietly
+   * emptied the draft package.
+   */
+  it('reports substantive per section, without changing WHICH sections it returns', async () => {
+    const client = governedClient({ document: 'doc_1', sections: GOVERNED_ROWS });
+    const authored = await loadAuthoredDeviceSections(ORG, { programId: PROGRAM, client });
+
+    /* Unchanged: every authored section is still returned. */
+    expect(authored).toHaveLength(3);
+
+    const bySection = new Map(authored.map((a) => [a.sectionCode, a.substantive]));
+    expect(bySection.get('3')).toBe(true); // approved
+    expect(bySection.get('8')).toBe(true); // locked
+    /* `drafted` is a draft however long its body — the same rule the readiness
+       path applies, not a second opinion about it. */
+    expect(bySection.get('5')).toBe(false);
+  });
+
+  it('the legacy store reports substantive too, rather than reporting nothing', async () => {
+    /* It cannot be honest about a status it never reads. The loader selects the
+       column now; a legacy row with no status falls to the length rule, exactly
+       as sectionsToLeaves does. */
+    const rows = [
+      { sectionTitle: 'Approved one', sectionKey: 'a', status: 'validated', content: REAL_CONTENT },
+      { sectionTitle: 'Draft one', sectionKey: 'b', status: 'drafting', content: REAL_CONTENT },
+      { sectionTitle: 'Stub', sectionKey: 'c', status: null, content: 'TBD' },
+    ];
+    const authored = legacySectionsToAuthored(rows);
+    expect(authored.map((a) => a.substantive)).toEqual([true, false, false]);
   });
 
   it('a program with no governed device document yields no leaves — honest, not the org-wide set', async () => {

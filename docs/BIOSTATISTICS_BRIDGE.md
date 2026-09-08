@@ -80,3 +80,134 @@ Critical and major findings become proposed tasks keyed `finding:<code>`, so the
 - The designer's in-browser engine (`BiostatEngine`, a verbatim port of `ana-biostats/computation-engine`) is still the source of the on-screen document; the bridge shows the server's sizing beside it. Collapsing the two onto the server is a separate change with its own UX decision (live-as-you-type recompute vs. a round trip).
 - `biostatistics-judgment/StudyDesignInput` and `power-sample-size-service.ts` remain unconnected duplicates; the adapter targets `ana-biostats` because that is what the surface and the workflow route consume.
 - No new tables or migrations. The bridge stamps the design's own `powerAssumptions.evidence` and uses `unified_tasks.metadata`.
+
+---
+
+## Exercised against a real migrated schema — 2026-09-08
+
+Until this date the bridge had unit tests over its pure modules and mocked-DB
+route tests; the route had never run against a migrated database. It was run
+here against a local database built by the repo's own applier (all
+`C2C_MIGRATION_FILES`, 226 of them applying; the 27 failures are downstream of
+pgvector, which cannot be installed in this container, and none touch this
+path), with a study design persisted through `persistStudyDesignTx` — the same
+write the product uses.
+
+| Call | Result |
+|---|---|
+| `GET /designs?program_id=` | the program's designs with live statistical readiness (60% and 90% on the two seeded designs) |
+| `GET /designs/:id/assessment` | adapter gaps, filing context (program type `ind`), six filing placements, eight proposed tasks including the estamand and missing-data gates, and the statistical review |
+| `POST /designs/:id/apply-sample-size` (no reason) | 400 `REASON_REQUIRED` |
+| `POST /designs/:id/apply-sample-size` (design with blocking gaps) | 422 `CANNOT_SIZE`, naming the exact field and design path |
+| `POST /designs/:id/apply-sample-size` (sizeable design) | 200 — 302 subjects written back, with an action id and a sealed `sha256` audit-chain row |
+| `POST /designs/:id/tasks` (no keys / unknown keys) | 400 `INVALID_BODY` / 409 `NO_TASKS` |
+| `POST /designs/:id/tasks` (real keys) | three `unified_tasks` rows, each carrying its blueprint key and trigger |
+| the same call again | 0 created, 3 skipped — idempotent |
+
+Measurements: `docs/reports/evidence/ana-ui-2026-09-06/biostat-bridge-live-2026-09-08.json`.
+
+### What this found
+
+`POST /designs/:id/apply-sample-size` answered **500** on every call, and always
+would have. `recordGovernedAction` writes `command: 'apply-sample-size'` to
+`c2c_ana_actions`, whose CHECK constraint — created by
+`migrations/20260527_mutation_primitives.sql` — enumerates only twelve universal
+mutations. The INSERT raised 23514 and rolled back the whole governed
+transaction, so the sample size was never written and no audit row was created.
+`command: 'task.create'` had the same exposure.
+
+The fix already existed and had never run.
+`db/migrations/20260730_c2c_ana_actions_command_vocab.sql` replaces that
+allow-list with a length bound, documents the same defect across roughly fifty
+endpoints (`create`, `update`, `review`, `approve`, `reaffirm`,
+`transmittal_rollback`, …), and was **left out of `C2C_MIGRATION_FILES`** — so it
+ran on no database. No gate caught it: `ci:migration-reachability` asks whether a
+**table** the server queries is created by something an applier runs, and this
+migration creates no table, it replaces a constraint.
+
+It is now in the set, positioned after the migration that creates the constraint
+so the replay order is create-then-widen (CLAUDE.md RULE 1). Re-applied: the
+constraint is now `c2c_ana_actions_command_bounds`, and the write-back returns
+200 with the design updated to 302 subjects and its audit chain sealed.
+Pinned by `tests/schema-contract/governed-command-vocabulary.contract.test.ts`,
+shown failing on the un-wired set first.
+
+**Observation, not fixed here:** 254 of the 551 `.sql` files under `migrations/`
+and `db/migrations/` are on no applier. Most are legacy and correctly dead, so a
+blanket "every file must be applied" gate would need a 254-entry baseline and
+would be noise rather than enforcement. The narrower lesson stands: a migration
+that alters a constraint rather than creating a table is invisible to every
+current reachability guard.
+
+### The surface, against the same live data
+
+The API section above exercised the route. The Biostatistics surface itself was
+then rendered in a browser against the same database — its first run on real
+rows. Walks: `biostat-surface-walk-2026-09-08.mjs`,
+`biostat-surface-writes-walk-2026-09-08.mjs`; measurements and screenshots in
+the same evidence directory.
+
+| Step | Measured |
+|---|---|
+| Open `/concept2cure/biostatistics` with a program open | the program's three designs listed with live readiness chips (100% / 90% / 60%) and the engine's verdict chip; the list read is program-scoped |
+| Select a design | the assessment loads (200), the statistical-review table renders, and the two governed actions appear: "Apply sample size to design" and "Raise tasks (6)" |
+| "Raise tasks (6)" → reason → confirm | `POST /tasks` 200; six tasks created; toast: *"6 tasks raised on the board — each carries the design as its source."*; the button relabels to "Raise tasks", because the panel reloaded and none is open any more |
+| "Apply sample size to design" → reason → confirm | `POST /apply-sample-size` 200; toast names the number and the audit record: *"Sample size 302 written to … — the write and its audit record committed to…"* |
+| Page errors | none across both walks |
+
+Both governed actions open a reason form before anything is written — nothing
+fires on the click itself — and the surface's own state is refreshed from the
+server after each write rather than being assumed.
+
+---
+
+## The audit this opened — 2026-09-08
+
+The command-vocabulary defect above was found by accident. It was then looked
+for deliberately, which needed a schema worth comparing against: pgvector was
+installed, `scripts/db/install-fresh.mjs` provisioned a database from scratch
+(794 tables, 806 RLS policies, every required-object capability complete), and
+the whole migration set applied on top — **259 of 259, zero failures**. Every
+earlier failure in this container came from a hand-built fixture, not the set.
+
+Against that reference schema, every `.sql` under `migrations/` and
+`db/migrations/` that is on **no applier** — not `C2C_MIGRATION_FILES`, not the
+Drizzle journal, not `install-fresh` — was checked for whether the objects it
+describes are actually present. Raw output:
+`docs/reports/evidence/ana-ui-2026-09-06/migration-orphan-audit-2026-09-08.txt`.
+
+| | Count |
+|---|---|
+| `.sql` files under the two migration trees | 552 |
+| on no applier | 254 |
+| …creating a table the provisioned schema does not have | 44 |
+| …**adding a column to a table that exists but lacks it** | **8** |
+
+The last row is the dangerous one: the table is there, so nothing looks broken,
+but the column the server reads is not. Two were confirmed against the schema
+and their consumers, and are now on the applier:
+
+| Column | Consumer | Was |
+|---|---|---|
+| `audit_events.hmac_seal` | `audit/chain.ts` — `verifyAuditEventsChainSeals`, the 21 CFR Part 11 §11.70 seal check over the SIEM/export audit table | `SELECT … hmac_seal FROM audit_events` → 42703. `audit_logs` got the same column from a migration that IS on the applier; this one was not, so no `audit_events` row could ever carry a seal |
+| `gdpr_data_subject_requests.execution_evidence` | `compliance/gdprComplianceService.ts` | `UPDATE … SET execution_evidence = $2` → 42703 on **every** DSAR completion |
+
+Both were verified failing against the reference schema and passing after the
+fix, are additive, `to_regclass`-guarded and idempotent, and are pinned in
+`tests/schema-contract/governed-command-vocabulary.contract.test.ts` (shown
+failing with the entries removed).
+
+**Not fixed, ranked for follow-up.** Six of the eight remain, each needing the
+same per-file verification before being wired: `ivdr_packs` artifact hashes and
+warnings (ten columns, three consumers), `ivdr_binder_evidence` source types,
+`ai_claims.verifier_flags`, `ana_kernel_decision_log.prev_hash`,
+`document_audit_trail`/`document_chunks` tenant keys, and
+`organizations.template_count` (no server reference — likely dead). The 44
+absent tables were not triaged.
+
+**The gap in the guards.** `ci:migration-reachability` asks whether a *table* the
+server queries is created by something an applier runs. None of these creates a
+table — they add columns and replace constraints — so all three defects were
+invisible to it, and to every other gate. A guard for "column the server reads,
+added only by a file on no applier" is the missing one; it is not built here
+because it needs the reference schema this session had to construct by hand.

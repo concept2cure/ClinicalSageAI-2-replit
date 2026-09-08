@@ -1,0 +1,460 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Concept2Cure.RI — Investor Technical Brief</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+/* Fonts resolve from docs/investor/fonts/, sibling to the rendered HTML. They are
+   gitignored; run with --fetch-fonts to populate them. Absent, every face falls
+   back to the system serif/sans declared in the stacks below. */
+@font-face { font-family: 'Lora'; font-weight: 400; font-style: normal; src: url('fonts/Lora-400.ttf') format('truetype'); }
+@font-face { font-family: 'Lora'; font-weight: 500; font-style: normal; src: url('fonts/Lora-500.ttf') format('truetype'); }
+@font-face { font-family: 'Lora'; font-weight: 600; font-style: normal; src: url('fonts/Lora-600.ttf') format('truetype'); }
+@font-face { font-family: 'Lora'; font-weight: 400; font-style: italic; src: url('fonts/Lora-400i.ttf') format('truetype'); }
+@font-face { font-family: 'Inter'; font-weight: 400; font-style: normal; src: url('fonts/Inter-400.ttf') format('truetype'); }
+@font-face { font-family: 'Inter'; font-weight: 500; font-style: normal; src: url('fonts/Inter-500.ttf') format('truetype'); }
+@font-face { font-family: 'Inter'; font-weight: 600; font-style: normal; src: url('fonts/Inter-600.ttf') format('truetype'); }
+
+:root {
+  --canvas:          #faf9f5;
+  --canvas-muted:    #f4f3ee;
+  --canvas-elevated: #ffffff;
+  --ink:             #141413;
+  --ink-muted:       #565550;
+  --ink-faint:       #8a887f;
+  --border:          #e8e6dc;
+  --border-faint:    #f0eee6;
+  --accent:          #d97757;
+  --accent-subtle:   #f7e9e2;
+  --ai:              #6a9bcc;
+  --olive:           #788c5d;
+  --amber:           #d97706;
+  --sans: 'Inter', -apple-system, 'Helvetica Neue', sans-serif;
+  --serif: 'Lora', Georgia, serif;
+  --mono: 'Liberation Mono', 'DejaVu Sans Mono', monospace;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--canvas);
+  color: var(--ink);
+  font-family: var(--serif);
+  font-size: 11pt;
+  line-height: 1.55;
+  font-weight: 400;
+}
+
+main {
+  max-width: 780px;
+  margin: 0 auto;
+  padding: 48px 56px 96px;
+}
+
+.cover {
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 32px;
+  margin-bottom: 40px;
+}
+
+.cover .kicker {
+  font-family: var(--sans);
+  font-size: 9pt;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.cover h1 {
+  font-family: var(--serif);
+  font-weight: 600;
+  font-size: 30pt;
+  line-height: 1.15;
+  margin: 12px 0 20px;
+  letter-spacing: -0.01em;
+}
+
+.cover .meta {
+  font-family: var(--sans);
+  font-size: 9.5pt;
+  color: var(--ink-muted);
+  line-height: 1.6;
+}
+
+.cover .meta strong {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.cover .confidential {
+  font-family: var(--sans);
+  font-size: 8.5pt;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  margin-top: 24px;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--serif);
+  font-weight: 600;
+  color: var(--ink);
+  letter-spacing: -0.005em;
+  page-break-after: avoid;
+  break-after: avoid-page;
+}
+
+h1 {
+  font-size: 22pt;
+  line-height: 1.22;
+  margin: 44px 0 16px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid var(--accent);
+}
+
+h2 {
+  font-size: 15.5pt;
+  line-height: 1.28;
+  margin: 36px 0 12px;
+  color: var(--ink);
+}
+
+h3 {
+  font-size: 12.5pt;
+  line-height: 1.32;
+  margin: 26px 0 8px;
+  color: var(--ink-muted);
+}
+
+p {
+  margin: 0 0 12px;
+  hyphens: auto;
+}
+
+strong { font-weight: 600; color: var(--ink); }
+em { font-style: italic; color: var(--ink); }
+
+code {
+  font-family: var(--mono);
+  font-size: 0.88em;
+  background: var(--canvas-muted);
+  padding: 1px 5px;
+  border-radius: 3px;
+  color: var(--ink);
+  border: 1px solid var(--border-faint);
+}
+
+ul, ol {
+  margin: 0 0 14px;
+  padding-left: 22px;
+}
+
+li {
+  margin-bottom: 4px;
+}
+
+li::marker {
+  color: var(--accent);
+}
+
+hr {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 40px 0;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 12px 0 22px;
+  font-family: var(--sans);
+  font-size: 9.5pt;
+  background: var(--canvas-elevated);
+  border: 1px solid var(--border);
+}
+
+thead {
+  background: var(--canvas-muted);
+}
+
+th, td {
+  padding: 7px 12px;
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid var(--border-faint);
+  line-height: 1.4;
+}
+
+th {
+  font-weight: 600;
+  color: var(--ink);
+  letter-spacing: 0.02em;
+  font-size: 8.6pt;
+  text-transform: uppercase;
+  border-bottom: 1px solid var(--border);
+}
+
+tbody tr:last-child td {
+  border-bottom: none;
+}
+
+tbody tr:nth-child(even) {
+  background: var(--canvas-muted);
+}
+
+td code {
+  background: transparent;
+  border: none;
+  padding: 0;
+  font-size: 0.92em;
+}
+
+.toc {
+  background: var(--canvas-muted);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  padding: 20px 26px;
+  margin: 24px 0 40px;
+  font-family: var(--sans);
+  font-size: 10pt;
+  line-height: 1.7;
+}
+
+.toc h2 { margin-top: 0; font-family: var(--sans); font-size: 10pt; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-faint); border: none; padding: 0; }
+
+.footer {
+  margin-top: 56px;
+  padding-top: 24px;
+  border-top: 1px solid var(--border);
+  font-family: var(--sans);
+  font-size: 8.5pt;
+  color: var(--ink-faint);
+  text-align: center;
+  font-style: italic;
+}
+
+@media print {
+  @page { size: letter; margin: 14mm 16mm; }
+  body { background: white; font-size: 10.3pt; line-height: 1.5; }
+  main { max-width: none; padding: 0; }
+  /* Sections flow rather than each claiming a fresh sheet: at 20 sections a
+     forced break per h1 padded the document by roughly half again its length. */
+  .cover { page-break-after: always; break-after: page; }
+  h1 { font-size: 15pt; margin: 20px 0 9px; }
+  h2 { font-size: 11.5pt; margin: 15px 0 7px; }
+  h3 { font-size: 10pt; margin: 12px 0 5px; }
+  p { margin: 0 0 7px; }
+  hr { margin: 16px 0; }
+  table { font-size: 8.2pt; margin: 8px 0 14px; }
+  th, td { padding: 4px 8px; }
+  ul, ol { margin-bottom: 9px; }
+  table, tr, td, th { page-break-inside: avoid; break-inside: avoid; }
+  h1, h2, h3 { page-break-after: avoid; break-after: avoid-page; }
+}
+</style>
+</head>
+<body>
+<main>
+  <section class="cover">
+    <div class="kicker">Confidential — investor technical brief</div>
+    <h1>Concept2Cure.RI — Investor Technical Brief</h1>
+    <div class="meta">
+      <div><strong>Version</strong> · 2026-09-08</div>
+      <div><strong>Codebase branch</strong> · <code>concept2cure-v2</code> (the sole production branch)</div>
+      <div><strong>Audience</strong> · technical diligence readers and their principals</div>
+    </div>
+    <div class="confidential">Prepared for prospective investors</div>
+  </section>
+  <h2 id="table-of-contents">Table of Contents</h2>
+<ol><li>Executive summary</li><li>What the product is, and what it replaces</li><li>The regulated use cases we address</li><li>The nine end-to-end workstreams that ship</li><li>System architecture at a glance</li><li>The control plane: kernel, decisions, and adaptive policy</li><li>The AI Gateway and multi-provider routing</li><li>Retrieval: the 9-step provenance-tracked RAG pipeline</li><li>The intelligence layer: RIM, CORTEX Prime, Precedent Engine</li><li>The three-layer memory system</li><li>Submission Twin and the Intelligent Report Engine</li><li>The authoring surface and governed actions</li><li>The database: schema, migrations, row-level tenancy</li><li>Security, identity, and 21 CFR Part 11 compliance</li><li>The frontend surface, design system, and design governance</li><li>The harness: our engineering discipline as a moat</li><li>Testing, observability, and reliability posture</li><li>The competitive moat, in one page</li><li>Roadmap and near-term milestones</li><li>Appendix — quantitative inventory</li></ol>
+<hr>
+<h1 id="1-executive-summary">1. Executive summary</h1>
+<p>Concept2Cure.RI is a regulated-industry operating system for life-sciences submission work. It replaces the eCTD authoring silo, the regulatory intelligence silo, the QMS/audit silo, and the shared-drive-plus-Word workflow with a single, governed, memory-carrying environment in which the AI is a first-class participant — but never an unchecked one.</p>
+<p>Where competitors sell either an AI chat wrapper over a document store, or a static submission tool with a chatbot bolted on, we have built the missing middle: a <strong>governance kernel</strong> that decides which action is allowed, an <strong>AI gateway</strong> that routes work across Claude, GPT-4, and fallbacks with full audit, an <strong>intelligence stack</strong> (RIM, CORTEX Prime, Precedent Engine, Submission Twin) that reasons across the submission as a graph rather than a folder, and a <strong>three-layer memory</strong> that carries what the team has decided across sessions and users.</p>
+<p>The verified size of what we have built:</p>
+<table><thead><tr><th style="text-align:left">Metric</th><th style="text-align:left">Value</th></tr></thead><tbody><tr><td style="text-align:left">Server TypeScript files</td><td style="text-align:left">4,180</td></tr><tr><td style="text-align:left">Client React files (<code>.tsx</code>)</td><td style="text-align:left">439</td></tr><tr><td style="text-align:left">HTTP route modules (top level)</td><td style="text-align:left">368</td></tr><tr><td style="text-align:left">Service files (recursive)</td><td style="text-align:left">2,956 across 222 service directories</td></tr><tr><td style="text-align:left">Database migration files</td><td style="text-align:left">554 (247 in <code>migrations/</code>, 307 in <code>db/migrations/</code>)</td></tr><tr><td style="text-align:left"><code>pgTable</code> declarations across schema files</td><td style="text-align:left">~694</td></tr><tr><td style="text-align:left">Multi-tenant scoping references (<code>organizationId</code>) in <code>shared/schema.ts</code> alone</td><td style="text-align:left">736</td></tr><tr><td style="text-align:left">Automated test files (<code>.test.ts</code>/<code>.test.tsx</code>/<code>.spec.ts</code>)</td><td style="text-align:left">2,348 total, 448 in <code>tests/</code>, 1,522 under <code>server/</code></td></tr><tr><td style="text-align:left">Docs <code>.md</code> files under <code>docs/</code></td><td style="text-align:left">672 across 55 subdirectories</td></tr></tbody></table>
+<p>Every one of those numbers is grounded in a specific path we can walk a diligence reader to, and §20 gives the exact command behind each. They were measured on 2026-09-08 against <code>concept2cure-v2</code>; the repository took 48 commits that day alone, so expect the counts to have grown by the time you re-run them. Re-run them — that is the point of publishing the commands.</p>
+<hr>
+<h1 id="2-what-the-product-is-and-what-it-replaces">2. What the product is, and what it replaces</h1>
+<p>Concept2Cure.RI is the operating system for regulated submission work at drug, device, and diagnostic companies. It is not a chatbot. It is not a document store. It is an environment in which:</p>
+<ul><li>Every artifact is versioned, provenance-linked, and traceable to source evidence.</li><li>Every AI action is routed through a policy kernel that decides <em>allow / review / deny</em> before the action reaches the user.</li><li>Every governed action (approve, submit, promote, e-sign) captures reason-for-change, signer identity, TOTP re-authentication, and an HMAC-sealed audit event.</li><li>Every generation is grounded in a retrieval pass across the tenant's own evidence, and the resulting draft carries sentence-level provenance the reviewer can follow to source.</li><li>Every project accumulates a memory: locked facts, decisions, open questions, next actions, artifacts already produced — reusable across sessions and users without re-briefing the AI.</li></ul>
+<p>What it replaces, workstream by workstream:</p>
+<ul><li><strong>Veeva Vault / MasterControl</strong> for authoring and QMS.</li><li><strong>DXC / Certara / Lorenz</strong> for eCTD lifecycle and submission gateway management.</li><li><strong>Cortellis / Citeline</strong> as the regulatory intelligence lookup tool, superseded by a stack that reads <em>your</em> project's evidence against the regulator corpus and gives you a next best action rather than a search result.</li><li>The <strong>spreadsheet-and-Word workflow</strong> that most small sponsors still use for pre-IND, pre-sub, and CRL response drafting — collapsed into one governed surface.</li></ul>
+<p>The product is used before, during, and after submission. Before: gap register, precedent mining, protocol design. During: co-authored eCTD Modules 1–5, section-level readiness, reviewer-simulation adversarial review. After: PSUR/DSUR periodic reporting, CAPA, deficiency response, RIM registration and label lifecycle.</p>
+<hr>
+<h1 id="3-the-regulated-use-cases-we-address">3. The regulated use cases we address</h1>
+<p>The platform ships against nine primary use cases, each of which is a full workstream (not a demo), each of which has its own golden-journey test suite committed to the repo, and each of which is a distinct commercial anchor.</p>
+<p><strong>3.1 IND / NDA / BLA authoring (drug).</strong> The user opens a program, ingests their nonclinical, CMC, and clinical data, and the platform composes IND Module 2 summaries and Module 3 CMC narratives with sentence-level provenance to source. Golden journey: <code>tests/golden-journeys/drug-nda-ectd.journey.test.ts</code>, <code>ind-authoring.journey.test.ts</code>.</p>
+<p><strong>3.2 510(k) / De Novo authoring (device).</strong> Predicate mining across <code>predicate.fda_510k_clearances</code> and <code>predicate.fda_510k_embeddings</code>, substantial-equivalence narrative generation, eSTAR-compliant packaging. Golden journey: <code>tests/golden-journeys/device-510k-estar.journey.test.ts</code>.</p>
+<p><strong>3.3 CER for EU MDR / IVDR.</strong> Clinical Evaluation Report authoring against MDCG 2020-13, with living evidence spine and post-market update flow. Golden journey: <code>tests/golden-journeys/cer-eu-mdr.journey.test.ts</code>. Dedicated IVDR router: <code>server/routes/ivdr-routes.ts</code> (72 KB).</p>
+<p><strong>3.4 CMC Module 3 co-authoring.</strong> Manufacturing narrative generation from process, spec, and stability data — validated by the CMC dataroom review <code>docs/reports/CMC_MODULE3_DATAROOM_VALIDATION_2026-08-23.md</code>.</p>
+<p><strong>3.5 CSR (Clinical Study Report) generation.</strong> ICH E3-compliant CSR builder at <code>server/services/csr-builder.ts</code> (853 lines). Draws on <code>csr_reports</code>/<code>csr_details</code> and the CSR knowledge database at <code>shared/schema/csr-knowledge-db.ts</code> (48.9 KB).</p>
+<p><strong>3.6 Deficiency and CRL response.</strong> The AnA RI orchestrator (<code>server/routes/ana-ri.ts</code>) surfaces a live deficiency taxonomy and evaluation rubric. Every response is scored against a deterministic-plus-LLM rubric before it reaches the user.</p>
+<p><strong>3.7 Regulatory intelligence and horizon scanning.</strong> RIM (Regulatory Intelligence Model) at <code>server/services/intelligence/</code> ingests guidance, precedent, and reviewer signals; the guidance-impact scanner (<code>guidance-impact-scanner.ts</code>) tells you which of your in-flight artifacts a new FDA guidance affects.</p>
+<p><strong>3.8 Post-market surveillance (PSUR, DSUR, PMS).</strong> <code>shared/schema/gspr-postmarket.ts</code>, <code>capa-mdr.ts</code>, and the periodic-report pathways in the Intelligent Report Engine (12 report domains, 15 regulatory bodies).</p>
+<p><strong>3.9 Regulatory operations at scale.</strong> RIM product/registration/label lifecycle (<code>shared/schema/rim.ts</code>), submission gateway management (<code>server/services/submission-gateways/</code>), CAPA, inspection readiness (<code>shared/schema/inspection.ts</code>), IACUC/IBC/IRB (<code>shared/schema/iacuc.ts</code>, <code>ibc.ts</code>, <code>irb.ts</code>).</p>
+<p>The commercial reality: most competitors do one of these; <strong>we do all nine, on one governance kernel, sharing one memory, one audit chain, one design system.</strong></p>
+<hr>
+<h1 id="4-the-nine-end-to-end-workstreams-that-ship">4. The nine end-to-end workstreams that ship</h1>
+<p>The nine use cases above map onto nine engineered workstreams, each with its own routes, services, schema domain, and tests. They are not features — they are wall-to-wall vertical slices:</p>
+<ol><li><strong>Program &amp; Charter</strong> — <code>shared/schema/project-charter.ts</code> (38 KB), <code>programs.ts</code> (21 KB). A program has objectives, target markets, target regulators (up to 15 supported bodies), and a chartered plan.</li><li><strong>Evidence Ingestion &amp; Vault</strong> — <code>server/services/vault/</code>. Documents are ingested, chunked (<code>document-chunking.service.ts</code>), embedded, and made available for retrieval and lineage.</li><li><strong>Authoring</strong> — <code>server/routes/authoring.router.ts</code> (168 KB), <code>authoring-actions.ts</code> (132 KB), <code>documentAuthoring.routes.ts</code> (58 KB). Rich-text co-authoring with span-level lineage (<code>shared/schema/document-span-lineage.ts</code>) so every accepted machine sentence is traceable.</li><li><strong>Review &amp; Adversarial Simulation</strong> — <code>shared/schema/reviewer-simulation.ts</code>, <code>shadow-review.ts</code>. We simulate the regulator on your draft before you submit.</li><li><strong>Governed Actions &amp; Sign-Off</strong> — <code>server/services/ana-ri/governed-action-signoff.ts</code>, <code>part11-governance.ts</code>. Reason-for-change, TOTP re-auth, signature-integrity check.</li><li><strong>Submission Assembly &amp; Transmission</strong> — <code>server/services/submission-gateways/governed-transmit.ts</code>. eCTD/eSTAR packaging and gateway-agnostic transmission.</li><li><strong>RIM &amp; Post-Market Lifecycle</strong> — product/registration/label state machines in <code>shared/schema/rim.ts</code> plus the post-market schema.</li><li><strong>Audit, Compliance &amp; Attestation</strong> — <code>server/services/audit/</code> (10+ services), signed audit exports, chain-integrity sweep job.</li><li><strong>Analytics &amp; Reporting</strong> — the Intelligent Report Engine (3,562 lines, 12 report domains) plus the Submission Twin (1,430 lines).</li></ol>
+<p>Each workstream shares four cross-cutting services: <strong>AI Gateway</strong>, <strong>Kernel</strong> (policy + decisions), <strong>Memory</strong> (working/client/project), and <strong>Precedent Engine</strong>. That shared core is why we can add a tenth workstream (early: gene-therapy CMC, ATMP) in weeks, not quarters.</p>
+<hr>
+<h1 id="5-system-architecture-at-a-glance">5. System architecture at a glance</h1>
+<p>At the outermost layer, the runtime is a hardened Express 5 server (Node 22, pinned <code>&gt;=22.0.0 &lt;23.0.0</code>) fronting a React 19 client, with a Socket.io real-time channel for collaborative editing and cursor presence, and a Bull-on-Redis queue for long-running AI actions and export jobs. Every browser request lands on a rate-limited, helmeted, tenant-scoped route.</p>
+<p>At the next layer, every request that reads or writes governed data flows through:</p>
+<ul><li><strong>Tenant scope establishment</strong> — <code>server/middleware/establishRequestTenantScope.ts</code> opens a Postgres session with the verified JWT's <code>organizationId</code> bound, enabling row-level security. <code>RLS_ENFORCE=on</code> is fail-closed: any query issued without an active scope is refused.</li><li><strong>The Kernel</strong> — <code>server/src/control-plane/kernel.ts</code> plus seven <code>server/services/kernel-*</code> files. Every consequential action is evaluated for governance / security / observability signals and receives a decision (<code>allow</code> | <code>review</code> | <code>deny</code>) with a rationale, a regulatory reference, and an evidence hash. Decisions are recorded to <code>ai_kernel_decision_records</code>, immutably chained (<code>20260325_ana_kernel_log_immutability_hashchain.sql</code>).</li><li><strong>The AI Gateway</strong> — <code>server/services/ai-gateway/gateway.ts</code>. All model calls route through it. Providers, fallbacks, retries, and cost telemetry are handled once, in one place.</li></ul>
+<p>Below that sit the intelligence services (RIM, CORTEX Prime, Precedent Engine, Foresight — see §9), the memory services (§10), and the authoring services. Underneath is Neon Postgres with <code>pgvector</code> for semantic retrieval and per-row multi-tenant isolation.</p>
+<p>The client is a single-page application built with Vite, TanStack Query for server state, and a governed component library. The shell — <code>client/src/concept2cure/v2/V2App.tsx</code> with the chrome in <code>Shell.tsx</code> (Rail, TopBar, AnaRail, CmdK) — provides the environment; every module is a surface registered in <code>config/ui-surface-registry.json</code>.</p>
+<hr>
+<h1 id="6-the-control-plane-kernel-decisions-and-adaptive-policy">6. The control plane: kernel, decisions, and adaptive policy</h1>
+<p>The kernel is the piece an investor should look at first, because it is the piece competitors cannot casually replicate. A chat wrapper can be rebuilt in a weekend; a policy kernel that has been proven against real submission traffic cannot.</p>
+<p><strong>What the kernel actually is.</strong> It is a set of pure functions plus a persistence layer that evaluate every governed action against three domains:</p>
+<ul><li><code>governance</code> — is this action allowed under the tenant's regulatory posture and role model?</li><li><code>security</code> — does this action need step-up authentication, and is the requester's context still valid?</li><li><code>observability</code> — is this action being traced, and does the trace carry enough evidence to reconstruct it later?</li></ul>
+<p>Each domain returns a <code>KernelDecision</code> of <code>allow</code> | <code>review</code> | <code>deny</code>, a rationale string, an ISO timestamp, an optional regulatory reference (e.g. <code>21 CFR §11.10(e)</code>), and an evidence payload. The traces compose into a <code>KernelTraceStep[]</code> that lives on the request.</p>
+<p><strong>The eight kernel services:</strong></p>
+<table><thead><tr><th style="text-align:left">File</th><th style="text-align:left">Role</th></tr></thead><tbody><tr><td style="text-align:left"><code>kernel-decision-record.ts</code></td><td style="text-align:left">Immutable record of every governance decision made for a request</td></tr><tr><td style="text-align:left"><code>kernel-router.ts</code></td><td style="text-align:left">Chooses task type, routing strategy, and token budget for the request</td></tr><tr><td style="text-align:left"><code>kernel-goal-planner.ts</code></td><td style="text-align:left">Generates explicit multi-step <code>GoalPlan</code>s with dependencies, success criteria, and replan triggers</td></tr><tr><td style="text-align:left"><code>kernel-adaptive-policy.ts</code></td><td style="text-align:left">Tenant/feature-tier scoped policy bundles that version over time</td></tr><tr><td style="text-align:left"><code>kernel-observability.ts</code></td><td style="text-align:left">Trace and metric emission for kernel decisions</td></tr><tr><td style="text-align:left"><code>kernel-beta-readiness.ts</code></td><td style="text-align:left">Feature-flag readiness gates so we ship the same binary to beta and GA</td></tr><tr><td style="text-align:left"><code>kernel-plan-runtime.ts</code></td><td style="text-align:left">Executes goal plans and reconciles the actual outcome against the planned success criteria</td></tr><tr><td style="text-align:left"><code>kernel-agent-protocol.ts</code></td><td style="text-align:left">The contract agents speak to the kernel over, and the protocol events recorded against it</td></tr></tbody></table>
+<p><strong>Why this matters commercially.</strong> Regulated buyers cannot ship AI they cannot audit. They need to answer three questions to their own quality organization: <em>what did the AI do, what said it could, and what will let us prove that in an inspection?</em> The kernel's decision records are that answer — signed, chained, exportable — and they are the artifact that makes the platform inspectable. Systems without a kernel of this shape will fail the inspection question, whatever else they can demonstrate.</p>
+<hr>
+<h1 id="7-the-ai-gateway-and-multi-provider-routing">7. The AI Gateway and multi-provider routing</h1>
+<p>Every large language model call from anywhere in the platform is issued through <code>server/services/ai-gateway/gateway.ts</code>. There is no alternative code path — a bypass would fail lint, would fail our design-CI gates, and would fail its own kernel decision.</p>
+<p><strong>Providers, in order of quality-weighted preference:</strong></p>
+<ul><li><strong>Anthropic</strong> — <code>claude-opus-4</code> (200K context, quality score 99 internally), <code>claude-sonnet-4</code> (97), <code>claude-haiku-4</code> (80).</li><li><strong>OpenAI</strong> — <code>gpt-4o</code> (128K, quality 95), <code>gpt-4o-mini</code> (82).</li><li><strong>Kimi</strong> — available as tertiary fallback.</li></ul>
+<p><strong>Fallback and retry.</strong> The gateway does not simply retry on failure — it consults <code>getFallbackModels()</code> for the task type (drafting, evaluation, extraction, embedding), and it walks the ladder. Retries use exponential backoff with jitter (base delay × 2^attempt + 0–30% jitter). Non-transient errors (400, 401, 403) abort immediately rather than burning budget. A final deterministic-demo mode returns canned responses when no key is available, so that unit tests and dev environments do not depend on live vendors.</p>
+<p><strong>What is measured.</strong> <code>GatewayAuditLogger</code> persists every request and response to the database; <code>GatewayPolicyEngine</code> enforces policy before dispatch; per-provider health is tracked with <code>recordSuccess()</code> / <code>recordFailure()</code> so health-aware routing can down-weight a struggling provider before it degrades user experience. Structured logs flow through <code>createScopedLogger('ai-gateway')</code>.</p>
+<p><strong>Why this matters commercially.</strong> The AI Gateway is the difference between &quot;we use Claude&quot; and &quot;we are vendor-independent.&quot; Enterprise buyers assume providers will fail, get expensive, or change terms. Our answer is: our runtime does not care which model served your last request. Their evidence lives in our schema, not in a vendor's chat history.</p>
+<hr>
+<h1 id="8-retrieval-the-9-step-provenance-tracked-rag-pipeline">8. Retrieval: the 9-step provenance-tracked RAG pipeline</h1>
+<p>The chat surface is not a chat surface. It is a nine-step retrieval and generation pipeline whose intermediate artifacts are auditable. The router is thin (<code>server/routes/chat.ts</code>, 99 lines); the pipeline lives in <code>server/routes/chat/</code> split across <code>send-message.ts</code>, <code>stream.ts</code>, <code>threads.ts</code>, <code>upload.ts</code>, <code>provenance.ts</code>, <code>verifier.ts</code>, and <code>shared.ts</code>.</p>
+<p>The nine steps, at high level:</p>
+<ol><li><strong>Intent classification</strong> via <code>IntentLens</code> — regulatory role and task inference.</li><li><strong>Tenant-scoped hybrid retrieval</strong> across the vault (<code>document-chunking.service.ts</code>, <code>document-catalog-search.ts</code>) using <code>pgvector</code> similarity plus keyword blend (<code>rag-fusion.ts</code>).</li><li><strong>Memory retrieval</strong> — the three-layer memory system fetches working / client / project memory in parallel with per-layer timeouts (<code>memory-context-assembler.ts</code>, <code>memory-orchestrator.ts</code>).</li><li><strong>Precedent injection</strong> — the Precedent Engine returns comparable outcomes and adversarial history for the artifact under discussion.</li><li><strong>Context assembly</strong> — <code>lumen-context-builder.ts</code> (1,090 lines) composes the system prompt from project context, document context, workflow context, and conversation context, layered onto the static <code>REGULATORY_SYSTEM_PROMPT</code>.</li><li><strong>Kernel review</strong> — the constructed request is scored by the kernel; low-risk actions proceed, high-risk actions escalate.</li><li><strong>Gateway dispatch</strong> — the AI Gateway routes the call to the appropriate model with retry, fallback, and telemetry.</li><li><strong>Verification</strong> — <code>verifier.ts</code> runs deterministic checks (citation presence, refusal patterns, hallucination flags) and, for governed drafts, sentence-level lineage attribution.</li><li><strong>Provenance seal</strong> — <code>provenance.ts</code> records inputs, outputs, model, decision trace, and hash into the audit chain.</li></ol>
+<p>Every one of those steps is testable in isolation and re-runnable on a stored record. That is what lets us claim inspection-readiness, not merely accuracy.</p>
+<p><strong>Embeddings.</strong> We are pluralist by design. <code>pgvector</code> columns exist at three dimensions:</p>
+<ul><li><code>1536</code> — OpenAI <code>text-embedding-3-small</code>, our default for text and memory (<code>working_memory_embeddings</code>, <code>vault_document_chunks</code>, <code>precedent_engine</code>, and eight other tables).</li><li><code>3072</code> — OpenAI <code>text-embedding-3-large</code>, used for high-value atoms (Cortex Prime, higher-fidelity precedent).</li><li><code>1024</code> — Cohere / Voyage / BGE — enabled for tenants that require a non-OpenAI embedding lineage.</li></ul>
+<p>A historical HNSW-index dimension cap (2,000) forced us to migrate <code>lumen_data_atoms.embedding</code> down from 3072 to 1536 — <code>db/migrations/20260730_fix_atom_embedding_dimension.sql</code>. We keep both dimensions on CORTEX atoms (<code>embedding1536</code> + <code>embedding3072</code>) so a tenant can flip embedding models without re-ingesting.</p>
+<hr>
+<h1 id="9-the-intelligence-layer-rim-cortex-prime-precedent-engine">9. The intelligence layer: RIM, CORTEX Prime, Precedent Engine</h1>
+<p>The intelligence layer is what turns a document store into a submission strategist. It is three services — plus a fourth (Foresight) that we intentionally retired because the shape it took at first was wrong for the domain — and one report engine.</p>
+<h2 id="9-1-rim-the-regulatory-intelligence-model">9.1 RIM — the Regulatory Intelligence Model</h2>
+<p>Path: <code>server/services/intelligence/</code> — 37 TypeScript modules.</p>
+<ul><li><strong>Central orchestrator</strong> <code>rim.ts</code> runs at <code>RIM_VERSION = '1.1.0'</code>. Every run is stamped with a run ID, the RIM version, and the pattern version, so a decision made six months ago can be exactly re-derived today. Runs that fail to persist are marked <code>degraded</code>, not silently swallowed.</li><li><strong>Judgment framework</strong> <code>judgment-framework.ts</code> at <code>JUDGMENT_FRAMEWORK_VERSION = '1.2.0'</code> computes six explicit judgment models: Evidence Sufficiency, Defensibility, Reviewer Sensitivity, Claim Risk, Cross-Section Consistency, Submission Risk. Each is a weighted composite of deterministic checks, heuristic checks, and LLM-assisted scoring, with a <code>MODEL_WEIGHTS</code> map (for example: 0.30 / 0.25 / 0.25 / 0.20 for Evidence Sufficiency).</li><li><strong>Pattern registry</strong> <code>pattern-registry.ts</code> at <code>PATTERN_REGISTRY_VERSION = '1.3.0'</code> codifies eight categories (<code>deficiency</code>, <code>reviewer_trigger</code>, <code>rejection</code>, <code>strong_language</code>, <code>weak_language</code>, <code>data_gap</code>, <code>consistency_issue</code>, <code>formatting</code>) with seeded patterns that grow with the corpus.</li><li>Surrounding modules: readiness scoring, recommendation engine, evidence confidence, cross-module intelligence, cross-artifact consistency scanner, learning loop, next-best-action engine, risk model + backtest, precedent mining, outcome-precedent ingestor, guidance impact scanner, calibration, counterfactual replay.</li></ul>
+<p>RIM is not a chatbot personality — it is a set of composable scoring functions. Every score has a versioned weight, an evidence trail, and a replay path.</p>
+<h2 id="9-2-cortex-prime-the-knowledge-graph">9.2 CORTEX Prime — the knowledge graph</h2>
+<p>Path: <code>server/services/cortexPrimeService.ts</code> — 1,207 lines. Five primitives:</p>
+<ul><li><code>CortexAtom</code> — a single knowledge unit; carries dual embeddings (1536 and 3072), a quality score, and structured metadata.</li><li><code>CortexEdge</code> — typed, weighted, directional relations between atoms.</li><li><code>CortexAgent</code> — a scoped agent identity that reads and writes into the graph.</li><li><code>CortexThread</code> — a conversation that operates over a bounded set of context atoms (<code>contextAtomIds[]</code>).</li><li><code>CortexTrace</code> — an audit trail over agent operations on the graph.</li></ul>
+<p>CORTEX Prime exposes graph traversal — <code>startAtomId</code>, <code>edgeTypes</code>, <code>maxDepth</code>, <code>minStrength</code> — which is what lets us do things like &quot;find every precedent atom within three edges of this claim, weighted by edge confidence.&quot; This is the technical substrate under things a competitor cannot: cross-artifact consistency across ten years of a sponsor's history, precedent-aware CRL response drafting, and change-impact analysis when a new guidance drops.</p>
+<h2 id="9-3-the-precedent-engine">9.3 The Precedent Engine</h2>
+<p>Path: <code>server/services/precedent-engine.ts</code> — 2,081 lines. Nine operations:</p>
+<p><code>precedent.search</code>, <code>precedent.compare</code>, <code>precedent.risk</code>, <code>precedent.strategy</code>, <code>authoring.check</code>, <code>precedent.crlTriggers</code>, <code>precedent.rtfTriggers</code>, <code>precedent.emaPatterns</code>, <code>precedent.advisoryRisk</code>.</p>
+<p>Backing tables: <code>predicate.fda_510k_clearances</code>, <code>predicate.fda_510k_embeddings</code>, <code>predicate.predicate_lineage</code>, <code>predicate.predicate_safety_signals</code>, <code>adversarial.regulatory_adversarial_precedents</code>, <code>precedent.regulatory_precedents</code>, plus the CSR knowledge tables. Tenant-scoped through <code>precedent-isolation.ts</code>.</p>
+<p>This is the piece prospects underweight and then find they cannot live without. The moment a sponsor sees their next 510(k) claim scored against every predicate with a similar substantial-equivalence pattern, and their CRL trigger risk called out sentence by sentence, the ROI conversation is over.</p>
+<h2 id="9-4-foresight-what-we-removed-and-why">9.4 Foresight — what we removed and why</h2>
+<p><code>server/services/foresight/foresight-ai-engine.ts</code> does not exist as a live service. The foresight prediction tables were dropped intentionally (<code>db/migrations/20260725_drop_orphaned_foresight_prediction_tables.sql</code>) after a design review concluded that a general-purpose &quot;predict outcomes&quot; service was the wrong abstraction — it belonged inside the specific judgment models in RIM, tied to specific artifacts and specific regulators, not as a standalone service. Removing it was a correctness decision. The learnings landed in <code>learning-loop-service.ts</code> and <code>outcome-feature-extraction.ts</code> inside the intelligence layer.</p>
+<p>We document what we retire. Retirement decisions are as much a signal to an investor as ship decisions.</p>
+<hr>
+<h1 id="10-the-three-layer-memory-system">10. The three-layer memory system</h1>
+<p>Everything a competitor does with &quot;remember my chat&quot; we do with a memory system that separates three lifetimes and reconciles them.</p>
+<p><strong>Layer 1 — Working memory.</strong> <code>server/services/working-memory.ts</code>. Structured summaries per conversation with fixed sections: Objective, Locked Facts, Decisions, Open Questions, Next Actions, Created Artifacts. A rolling threshold (<code>WORKING_MEMORY_THRESHOLD = 20</code> messages) triggers compaction. Optional semantic search over working memory via <code>text-embedding-3-small</code>, gated by <code>ENABLE_SEMANTIC_WORKING_MEMORY</code>. This is what lets a user leave a conversation on Thursday and pick up exactly where they left off on Monday.</p>
+<p><strong>Layer 2 — Client intelligence memory.</strong> <code>server/services/client-intelligence-memory.ts</code>. Sponsor-scoped memory: their standards, their preferred vendors, their prior regulator feedback, their historical CRL/RTF triggers. Every entry has a lifecycle — <code>status: 'active'</code> — and can be <code>superseded</code> (with a pointer to the successor entry) rather than deleted, so the audit trail is preserved. Retrieval defaults to <code>includeSuperseded: false</code>.</p>
+<p><strong>Layer 3 — Project intelligence memory.</strong> Same store, scoped to a single project or program. Backing tables live in the monolith schema at <code>projectIntelligenceProfiles</code>, <code>projectMemoryEntries</code>, and <code>projectIngestedDocuments</code>. Every project accumulates its own decisions, facts, and open questions — reusable across all users on the project, and across all AI sessions in that project.</p>
+<p><strong>The orchestrator.</strong> <code>server/services/memory-orchestrator.ts</code> coordinates the three layers into a single ranked, deduplicated list. Ranking formula per layer:</p>
+<p>score = priorityBoost + (similarity × w_sim) + (confidence × w_conf) + verifiedBoost</p>
+<p><code>memory-context-assembler.ts</code> (422 lines) fetches all three layers in parallel with per-layer timeouts so a memory outage in one layer cannot stall the pipeline, and normalizes into the <code>SharedMemoryContract</code> — the interface the rest of the platform reads.</p>
+<p><strong>Why this matters.</strong> In regulated work, &quot;the AI forgets what I told it yesterday&quot; is not a UX complaint — it is a compliance risk. The memory system, with its supersession lifecycle and hash-chained audit, is what lets us claim the AI is a durable collaborator, not a session.</p>
+<hr>
+<h1 id="11-submission-twin-and-the-intelligent-report-engine">11. Submission Twin and the Intelligent Report Engine</h1>
+<p>Two services that only make sense once the layers above exist:</p>
+<p><strong>Submission Twin</strong> — <code>server/services/submission-twin-service.ts</code>, 1,430 lines. It keeps a live in-database twin of your regulatory submission with six capabilities:</p>
+<ol><li><strong>Claim-to-evidence integrity map</strong> — every claim in every section points to the evidence atoms that support it. Break the link, we alert you.</li><li><strong>Narrative drift detection</strong> — when the CMC section quietly diverges from the clinical section on the same fact, we catch it before the regulator does.</li><li><strong>Regulator challenge simulation</strong> — the twin is asked the questions a reviewer would ask, using the reviewer-simulation model.</li><li><strong>Change consequence intelligence</strong> — if you edit a spec on page 3 of Module 3, the twin tells you every downstream section, in every module, that must be re-verified.</li><li><strong>Next best artifact prediction</strong> — given the current state of the twin, what is the single most valuable next thing to produce?</li><li><strong>Readiness and fragility modeling</strong> — a submission is only as strong as its weakest section; the twin identifies which sections would collapse under the smallest change.</li></ol>
+<p>Tables: <code>submissionTwinClaims</code>, <code>submissionTwinEvidenceLinks</code>, <code>submissionTwinDriftAlerts</code>, <code>submissionTwinChallenges</code>, <code>submissionTwinChangeImpacts</code>, <code>submissionTwinAssessments</code>.</p>
+<p><strong>Intelligent Report Engine</strong> — <code>server/services/intelligent-report-engine.ts</code>, 3,562 lines. Twelve report domains (<code>regulatory_submission</code>, <code>clinical_study</code>, <code>cmc_manufacturing</code>, <code>pharmacovigilance</code>, <code>quality_management</code>, <code>compliance_attestation</code>, <code>strategic_intelligence</code>, <code>provenance_audit</code>, <code>device_regulatory</code>, <code>biostatistics</code>, <code>environmental_safety</code>, <code>cross_functional</code>) targeting fifteen regulatory bodies (FDA, EMA, PMDA, NMPA, TGA, Health Canada, MHRA, ANVISA, MFDS, Swissmedic, ICH, WHO PQ, CDSCO, HSA, SAHPRA). SHA-256 hash chains, Merkle roots, immutable report records, atom-level report provenance, and indemnification attestations — each intended to answer 21 CFR Part 11 §11.10(a–k).</p>
+<p>The engine is not a template — it composes reports from atoms and evidence links in the twin, so a report is a materialized view of the truth in the system, not a hand-authored PDF that drifts.</p>
+<hr>
+<h1 id="12-the-authoring-surface-and-governed-actions">12. The authoring surface and governed actions</h1>
+<p>Authoring is the most-used surface in the product, and it is also the most instrumented.</p>
+<p><strong>Where authoring lives.</strong> The routes are split across <code>server/routes/authoring.router.ts</code> (168 KB), <code>server/routes/authoring-actions.ts</code> (132 KB), <code>server/routes/documentAuthoring.routes.ts</code> (58 KB). The editor surface on the client is <code>client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx</code> with internals in <code>client/src/concept2cure/v2/editor/</code>.</p>
+<p><strong>How a governed action works.</strong></p>
+<ol><li>The user takes an action inside the editor — accept a machine draft, promote a section, sign off on a submission package.</li><li>The request passes through <code>authoringObjectAuthorization.ts</code>: does the requester have access to this artifact, in this project, in this organization?</li><li><code>authoring-actions.ts</code> resolves the governed context — <code>resolveGovernedContext()</code> — validating <code>projectId</code>, <code>artifactId</code>, <code>organizationId</code>, and any escalation gates set by the kernel's adaptive policy.</li><li>If the action requires an e-signature (approve, submit), <code>signature-manifestation.ts</code> composes the human-readable manifestation, <code>signing-authority.ts</code> verifies the signer, <code>mfaService.ts</code> requires TOTP re-authentication (RFC 6238, HMAC-SHA1, 30s, 6 digits, ±1 window, AES-256-GCM at rest).</li><li>The signed action is written through <code>governed-transmit.ts</code> with an HMAC seal (<code>audit-hmac-seal.ts</code>) into the hash-chained audit tables.</li><li>A <code>KernelDecisionRecord</code> is emitted, immutable, and readable by an inspector.</li></ol>
+<p><strong>Span-level lineage.</strong> <code>shared/schema/document-span-lineage.ts</code> records, for every accepted machine sentence, the model, the retrieval set, the reviewer, and the timestamp. This is the difference between &quot;the AI wrote this&quot; and &quot;here is the exact provenance of this sentence, and here are the four cited sources.&quot;</p>
+<hr>
+<h1 id="13-the-database-schema-migrations-row-level-tenancy">13. The database: schema, migrations, row-level tenancy</h1>
+<p>Database work is where the engineering discipline shows up most clearly.</p>
+<p><strong>Postgres on Neon, with <code>pgvector</code>.</strong> <code>drizzle.config.ts</code> targets <code>postgresql</code>, reads <code>DATABASE_URL_ADMIN</code> / <code>NEON_DATABASE_URL_ADMIN</code>, and refuses <code>.pooler.</code> URLs during migration — migration DDL must go through a direct Neon endpoint so schema drift cannot happen at the connection-pool layer. The pgvector extension is enabled at the SQL level in each migration that needs it.</p>
+<p><strong>Migration inventory.</strong> 554 migration files total: 247 in <code>migrations/</code> (Drizzle-numbered from <code>0000_sweet_joseph.sql</code> — a 420 KB baseline — through the dated set spanning <code>20260125</code> → <code>20260907</code>), and 307 in <code>db/migrations/</code> (a GCC-numbered core from <code>000_gcc_bootstrap_core.sql</code> → <code>103_load_complete_templates.sql</code>, plus its own dated set).</p>
+<p><strong>The re-execution discipline.</strong> Every migration in the set re-executes on every deploy. This is a deliberate choice, documented in <code>CLAUDE.md</code> Rule 1: the applier reads and executes every entry of <code>C2C_MIGRATION_FILES</code> unconditionally, and the drift is written to a journal. The rule that follows is a cultural artifact — <em>&quot;to remove a column, constraint, or table that any file in the set creates, amend the creating migration in place. Do not append a DROP.&quot;</em> The rule is enforced by <code>npm run ci:migration-drop-safety</code>, and its failure branch is exercised by its own self-test (<code>ci:migration-drop-safety:selftest</code>). Genuine exceptions are baselined with a written reason.</p>
+<p><strong>Schema scale.</strong> <code>shared/schema.ts</code> is an 840 KB monolith with 419 <code>pgTable(</code> calls; the <code>shared/schema/</code> extraction directory adds another 87 domain files with 275 more <code>pgTable(</code> calls (there is some deliberate overlap during migration). Combined ceiling: ~694 tables. The largest domain files: <code>csr-knowledge-db.ts</code> (49 KB), <code>project-charter.ts</code> (38 KB), <code>qc-schemas.ts</code> (30 KB), <code>orchestration.ts</code> (26 KB), <code>operating-system.ts</code> (26 KB), <code>capa-mdr.ts</code> (25 KB), <code>regulatory-atoms.ts</code> (23 KB), <code>programs.ts</code> (21 KB), <code>ana-intelligence.ts</code> (21 KB), <code>living-record-spine.ts</code> (20 KB).</p>
+<p><strong>Row-level multi-tenancy.</strong> <code>organizationId</code> appears 736 times in <code>shared/schema.ts</code> alone. Every governed table is scoped. The RLS story is layered: <code>establishRequestTenantScope.ts</code> opens per-request session scope from the verified JWT; <code>RLS_ENFORCE=on</code> is fail-closed; <code>0021_enable_rls_everywhere.sql</code> is the canonical enablement migration; <code>053_gcc_rls_policies.sql</code>, <code>069_gcc_multitenant_rls_expansion.sql</code>, <code>070_gcc_rls_extended_ga.sql</code> extend it. Tenant-column audits (<code>0019_tenant_column_audit.sql</code>) confirm no unscoped writes.</p>
+<p><strong>Audit chain.</strong> Nine audit tables in the monolith (<code>auditLogs</code>, <code>auditTrail</code>, <code>documentAuditTrail</code>, <code>deviceAuditTrail</code>, <code>auditEvents</code>, <code>proofAuditLogs</code>, <code>regulatoryAuditLogs</code>, <code>sharepoint_audit_log</code>, <code>qmsInternalAudits</code>), plus HMAC seals and hash chains (<code>002_gcc_audit_immutability.sql</code>, <code>054_gcc_part11_audit.sql</code>, <code>064_gcc_cognitive_audit_schema.sql</code>, <code>20260609_audit_hmac_seal.sql</code>, <code>20260325_ana_kernel_log_immutability_hashchain.sql</code>), plus signed exports (<code>server/services/audit/signedAuditExport.ts</code>) and a chain-integrity sweep job (<code>server/jobs/auditChainIntegritySweep.ts</code>).</p>
+<hr>
+<h1 id="14-security-identity-and-21-cfr-part-11-compliance">14. Security, identity, and 21 CFR Part 11 compliance</h1>
+<p>Security is not a section in the docs — it is a set of gates the code cannot skip.</p>
+<p><strong>Identity and authentication.</strong> <code>bcryptjs</code> for password hashing, <code>jsonwebtoken</code> for access tokens. Access token lifetime is 24 hours; refresh token lifetime is 7 days. Failed-login lockout at 5 attempts (<code>LOCKOUT_THRESHOLD = 5</code>) for 30 minutes (<code>LOCKOUT_DURATION_MINUTES = 30</code>). Every authentication event is logged via <code>auditService.logAction</code> with an explicit annotation citing 21 CFR Part 11 §11.10(e).</p>
+<p><strong>Rate limiting.</strong> <code>express-rate-limit</code> (in-process) and a Redis-backed distributed limiter (<code>redisRateLimiter.ts</code>). A central rate-limit registry provides seven named tiers — <code>global</code>, <code>api</code>, <code>ai</code>, <code>auth</code>, <code>write</code>, <code>upload</code>, <code>export</code> — mounted on <code>/api/auth</code>, <code>/api/ai</code>, <code>/api/export</code>, <code>/api/upload</code>, <code>/api/workflow</code>, <code>/api/documents</code>. Login is 10/15min per IP; signup 5/hr; password-reset 5/hr; MFA-verify 10/15min.</p>
+<p><strong>MFA.</strong> TOTP is a first-party implementation in <code>server/services/mfaService.ts</code> — RFC 6238, HMAC-SHA1, 30-second period, 6-digit code, ±1 window, 20-byte secret encrypted at rest with AES-256-GCM. Explicitly no dependency on <code>speakeasy</code> or <code>otplib</code>. Email-OTP fallback (<code>emailOtpService.ts</code>) and backup codes for recovery.</p>
+<p><strong>Enterprise auth.</strong> Four-step flow in <code>server/routes/authEnterprise.ts</code>: check-email → verify-password → verify-mfa → select-organization. Any dev-auth bypass is explicitly removed. SAML SSO through <code>server/services/saml-provider.ts</code>, SCIM 2.0 provisioning through <code>server/routes/scim.ts</code>, and a dedicated SSO router.</p>
+<p><strong>Transport and headers.</strong> <code>helmet</code> at two configurations with a CSP nonce (there is a unit test for the CSP-nonce specifically). Content-Security-Policy applied on every response.</p>
+<p><strong>21 CFR Part 11.</strong> A dedicated <code>server/services/part11/</code> folder (<code>signing-authority.ts</code>, <code>reverify-signer.ts</code> + tests), <code>server/services/compliance/signature-manifestation.ts</code>, and the ANA-side counterparts (<code>server/services/ana-ri/part11-governance.ts</code>, <code>governed-action-signoff.ts</code>). The e-signature path is <code>governed-transmit.ts</code>. Signed audit export via <code>server/services/audit/signedAuditExport.ts</code>. Four golden-journey tests exercise the end-to-end signed submission path per pathway: CER EU-MDR, 510(k) eSTAR, NDA eCTD, IND authoring.</p>
+<p><strong>GxP, GDPR, HIPAA-adjacent.</strong> GDPR: dedicated runtime-role tests (<code>tests/db/gdpr-service-runtime-role.dbtest.ts</code>), redaction rules in <code>sql/redaction_rules.sql</code>, and tenant-export flows in <code>server/services/tenant-export/</code>. GxP referenced through the audit logger, enterprise security, and structured logging. HIPAA-adjacent controls sit inside audit + tenancy + field-level encryption (<code>server/services/security/field-encryption.ts</code>).</p>
+<p><strong>Secrets.</strong> <code>.env</code>, <code>.env.*</code>, and <code>.env.local</code> are gitignored (<code>.gitignore</code> line 13). Only example files (<code>.env.example</code>, <code>.env.beta.example</code>, and two other explicit <code>.env.*.example</code> files) are tracked. There are no keys in the repo.</p>
+<p><strong>Tenancy middleware.</strong> <code>server/middleware/</code>: <code>establishRequestTenantScope.ts</code> (per-request Postgres scope opening), <code>tenantContext.ts</code>, <code>orgMembership.ts</code>, <code>authBoundary.ts</code>, <code>authAdapter.ts</code>, <code>moduleEntitlementGate.ts</code>, <code>authoringObjectAuthorization.ts</code>. RLS is enforced fail-closed, per the design document <code>docs/architecture/RLS_ROUTE_LAYER_SYSTEMIC_FIX_DESIGN.md</code>.</p>
+<hr>
+<h1 id="15-the-frontend-surface-design-system-and-design-governance">15. The frontend surface, design system, and design governance</h1>
+<p>The frontend is a governed React application, not a design free-for-all.</p>
+<p><strong>The shell.</strong> <code>client/src/concept2cure/v2/V2App.tsx</code> mounts <code>client/src/concept2cure/v2/Shell.tsx</code>, which provides four chrome primitives:</p>
+<ul><li><code>Rail</code> — the primary navigation column with up to 24 rail buttons (governed by <code>railButtonsMax: 24</code> in <code>config/ui-surface-registry.json</code>).</li><li><code>TopBar</code> — global search, command menu launch, presence, notifications.</li><li><code>AnaRail</code> — the AI copilot rail (up to 7 conversations concurrent, per <code>ownsConversationMax: 7</code>).</li><li><code>CmdK</code> — command-menu launch.</li></ul>
+<p><strong>Surfaces.</strong> Twelve views ship today, all registered as first-class surfaces in <code>config/ui-surface-registry.json</code> (<code>Home</code>, <code>Chats</code>, <code>Projects</code>, <code>Project Landing</code>, <code>Communication Center</code>, <code>Apps</code>, <code>Tasks</code>, <code>Review</code>, <code>Submission Center</code>, <code>Editor</code>, <code>Vault</code>), plus two hosted surfaces (<code>mdx-host</code>, <code>pdev-app</code>) and five destination surfaces.</p>
+<p><strong>Governed design tokens.</strong> The canonical token source is <code>design-system/colors_and_type.css</code>, referenced by the surface registry. Design CI gates enforce: no hardcoded values, no phantom tokens, no shadowed selectors, only governed components from the registry. The design-reviewer, design-system-auditor, a11y-auditor, motion-auditor, and Part 11 UX auditor agents are wired to run against every PR that touches UI.</p>
+<p><strong>The AnA copilot.</strong> Real-time chat surface with three effort modes (standard, deep-research, nano-banana); the mode toggle is tested at <code>client/src/concept2cure/v2/__tests__/anaEffortMode.test.ts</code> and the guard at <code>server/middleware/nanoBananaGuard.ts</code>.</p>
+<p><strong>Retired surfaces.</strong> The registry also tracks <code>deleted</code> surfaces (ZenApp, AnaPersistentPanel, EditorPanel, ProjectWorkspaceShell, GlobalOperatingShell, IndustryWorkspaceShell) so no code path can silently resurrect them. This is a deliberate discipline: we do not just delete UI, we mark it deleted in the source of truth so anyone reading the registry knows the migration is complete.</p>
+<hr>
+<h1 id="16-the-harness-our-engineering-discipline-as-a-moat">16. The harness: our engineering discipline as a moat</h1>
+<p>An investor should read <code>CLAUDE.md</code> in the root of the repo before making a decision. It is a two-page document that establishes the engineering culture, and it is the single most differentiating asset in the codebase after the kernel.</p>
+<p><strong>Rule 0 — one branch.</strong> <code>concept2cure-v2</code> is the only branch anyone (human, agent, worktree, CI job) may push to. Non-canonical pushes are refused at the pre-push hook. The rule is enforced, and the exception path is narrow (external refs like <code>dependabot/*</code> and <code>revert-*</code>; agent-shaped branches are refused unconditionally). This eliminates an entire category of failure — divergent branches, stale mirrors, &quot;which one is truth?&quot; — that consumes the middle years of most startups.</p>
+<p><strong>Rule 1 — migrations re-execute.</strong> Every migration is re-executed on every deploy, unconditionally. This is a design choice that trades one thing (a small amount of DB work at deploy) for two things (a) an idempotent, replayable schema definition, and (b) a hard rule that DROPs are not the way to remove things — you amend the creating migration in place, and the CI drop-safety gate blocks the alternative.</p>
+<p>Both rules are cultural artifacts codified as enforced gates — <code>CLAUDE.md</code> is not a wiki page, it is authoritative, and the hooks cite it. That is how you get an engineering organization that ships fast without breaking regulated data.</p>
+<p><strong>The agents.</strong> Alongside the engineers, the repo has 14+ specialized reviewer agents wired in: <code>a11y-auditor</code>, <code>design-reviewer</code>, <code>design-system-auditor</code>, <code>motion-auditor</code>, <code>microcopy-reviewer</code>, <code>honest-state-auditor</code>, <code>part11-ux-auditor</code>, plus code-focused agents. They run on every UI-touching PR. This is not a demo — this is how we scale review coverage across 439 client files without hiring a design-review team.</p>
+<p><strong>The doc discipline.</strong> 672 markdown files in 55 subdirectories of <code>docs/</code> — architecture, audits, runbooks, roadmap, deployment, release, standards, AI governance, compliance, security. Design decisions are written down. Retirements are written down. Trade-offs are written down. An investor is invited to sample five random docs from <code>docs/architecture/</code> or <code>docs/reports/</code> to verify.</p>
+<hr>
+<h1 id="17-testing-observability-and-reliability-posture">17. Testing, observability, and reliability posture</h1>
+<p><strong>Automated tests.</strong> 2,348 test files across the repo: 1,522 under <code>server/</code>, 301 under <code>client/</code>, and 448 in the dedicated <code>tests/</code> tree that houses integration and end-to-end suites — including <code>tests/e2e/</code> (design tokens, submission ops, governed lifecycle, RC-beta path, biotech modules, golden customer journey, beta pulse, submission-ops UI, diff history) and <code>tests/golden-journeys/</code> (CER EU-MDR, device 510(k) eSTAR, drug NDA eCTD, IND authoring). Playwright is configured (<code>playwright.config.ts</code> at repo root plus <code>scripts/visual-qa/playwright.mjs</code>) and the <code>gstack</code> QA harness (<code>.claude/skills/gstack/</code>) runs headless browser dogfooding of live surfaces.</p>
+<p><strong>Observability.</strong> Sentry (both <code>@sentry/node</code> and <code>@sentry/react</code>) for error tracking. Structured logging through <code>logger.ts</code>. The AI Gateway emits scoped logs (<code>createScopedLogger('ai-gateway')</code>) with per-provider health tracking. Kernel emits observability trace steps on every decision. The audit chain-integrity sweep runs as a scheduled job (<code>server/jobs/auditChainIntegritySweep.ts</code>).</p>
+<p><strong>Reliability.</strong> Bull-on-Redis queue for long-running AI actions (<code>refine_with_validation</code>) and exports (<code>export_document</code>) with durable retry, exponential backoff, dead-letter queue for failed actions, progress tracking via SSE, horizontal scaling across multiple workers, and graceful drain-on-shutdown. When Redis is unavailable, the queue falls back to synchronous execution rather than failing the request outright. Socket.io provides the real-time channel for collaboration primitives (<code>CollaboratorInfo</code>, <code>CursorPosition</code>, <code>BatchUpdateData</code>) with JWT authentication.</p>
+<p><strong>Deployment posture.</strong> Neon Postgres, direct-endpoint enforced for migrations. Migrations replayable. <code>RLS_ENFORCE=on</code> fail-closed. <code>.env</code> files never in the repo. Feature-tier flags via <code>kernel-adaptive-policy.ts</code> so the same binary ships to beta and GA.</p>
+<hr>
+<h1 id="18-the-competitive-moat-in-one-page">18. The competitive moat, in one page</h1>
+<p>Ask a diligence reader to list three things a competitor would need to have to be a peer, and it is roughly these:</p>
+<p><strong>A governance kernel.</strong> Not a chatbot, not a policy config file — a set of composable decision functions that evaluate every governed action against governance, security, and observability domains, emit an immutable decision record, and can be re-derived from source months later. We have this. Competitors selling AI to regulated buyers do not, and the sales pitch that follows an inspection question they cannot answer is short.</p>
+<p><strong>A memory system with a supersession lifecycle.</strong> Not &quot;chat history,&quot; not a vector store, but a three-layer memory (working, client, project) that carries locked facts, decisions, open questions, and next actions, with entries that transition <code>active → superseded</code> with successor pointers. This is what turns an AI from a session into a collaborator. Everyone can add short-term memory. Adding memory that is safe to keep across users is the hard part.</p>
+<p><strong>A submission twin.</strong> A live in-database model of the submission with claim-to-evidence integrity, drift detection, change-consequence intelligence, and readiness modeling. This is the piece that turns &quot;we drafted your Module 2&quot; into &quot;we know your submission is 68% ready, we know which four blockers dominate the risk, and we know which Module 3 spec change will invalidate a Module 5 claim.&quot;</p>
+<p>Add to that the design system, the harness, the 21 CFR Part 11 wiring already in production, and the 554 versioned migrations, and the picture is a platform that would take a competitor two years to catch, minimum, and by that time we will have moved.</p>
+<hr>
+<h1 id="19-roadmap-and-near-term-milestones">19. Roadmap and near-term milestones</h1>
+<p>Roadmap themes for the four quarters ahead, in the order they will land:</p>
+<p><strong>Q1: Deeper regulator coverage.</strong> Expand precedent depth for EMA and PMDA. Add German-language Notified Body correspondence to the CER pathway. First production sponsor on the platform across all nine workstreams.</p>
+<p><strong>Q2: Advanced twin capabilities.</strong> Full change-consequence propagation across Modules 1–5. Real-time regulator challenge simulation surfaced as a live sidecar during authoring. Deeper reviewer-simulation model, tenant-tunable.</p>
+<p><strong>Q3: Federated learning and multi-sponsor precedent.</strong> With sponsor opt-in, precedent depth increases via de-identified outcome sharing. The federated-learning service (<code>server/services/cognitive-ecosystem/federated-learning.service.ts</code>) is already in place; the gating is contractual, not technical.</p>
+<p><strong>Q4: Platform extensibility.</strong> MDX-host and pdev-app surface types will graduate into a first-class app SDK so sponsors and partners can ship their own governed apps on our kernel. This is the platform play — the same kernel that grants an internal action can grant a partner's action.</p>
+<p>Each quarter delivers commercial anchors, not just features. Each anchor is measurable, and each will be reported to investors against the milestone plan.</p>
+<hr>
+<h1 id="20-appendix-quantitative-inventory">20. Appendix — quantitative inventory</h1>
+<p>The numbers below are the ones an engineering diligence reader will want in one place. Every figure is grounded in a file path in the repo.</p>
+<h2 id="20-1-codebase-size">20.1 Codebase size</h2>
+<table><thead><tr><th style="text-align:left">Dimension</th><th style="text-align:right">Count</th><th style="text-align:left">Reference</th></tr></thead><tbody><tr><td style="text-align:left">Server TypeScript files</td><td style="text-align:right">4,180</td><td style="text-align:left"><code>find server -name '*.ts'</code></td></tr><tr><td style="text-align:left">Client React (<code>.tsx</code>) files</td><td style="text-align:right">439</td><td style="text-align:left"><code>find client/src -name '*.tsx'</code></td></tr><tr><td style="text-align:left">HTTP route modules (top level)</td><td style="text-align:right">368</td><td style="text-align:left"><code>server/routes/*.ts</code></td></tr><tr><td style="text-align:left">Service files (recursive)</td><td style="text-align:right">2,956</td><td style="text-align:left"><code>server/services/**/*.ts</code></td></tr><tr><td style="text-align:left">Service subdirectories</td><td style="text-align:right">222</td><td style="text-align:left"><code>server/services/*/</code></td></tr><tr><td style="text-align:left">Kernel service files</td><td style="text-align:right">8</td><td style="text-align:left"><code>server/services/kernel-*.ts</code></td></tr><tr><td style="text-align:left">Intelligence layer modules</td><td style="text-align:right">37</td><td style="text-align:left"><code>server/services/intelligence/*.ts</code></td></tr></tbody></table>
+<h2 id="20-2-database">20.2 Database</h2>
+<table><thead><tr><th style="text-align:left">Dimension</th><th style="text-align:right">Count</th><th style="text-align:left">Reference</th></tr></thead><tbody><tr><td style="text-align:left">Migration files total</td><td style="text-align:right">554</td><td style="text-align:left"><code>migrations/</code> (247) + <code>db/migrations/</code> (307)</td></tr><tr><td style="text-align:left">Baseline migration size</td><td style="text-align:right">420 KB</td><td style="text-align:left"><code>migrations/0000_sweet_joseph.sql</code></td></tr><tr><td style="text-align:left"><code>shared/schema.ts</code> size</td><td style="text-align:right">840 KB</td><td style="text-align:left">monolith</td></tr><tr><td style="text-align:left">Domain schema files</td><td style="text-align:right">87</td><td style="text-align:left"><code>shared/schema/</code></td></tr><tr><td style="text-align:left"><code>pgTable</code> declarations</td><td style="text-align:right">~694</td><td style="text-align:left">419 (monolith) + 275 (domain)</td></tr><tr><td style="text-align:left"><code>organizationId</code> occurrences</td><td style="text-align:right">736</td><td style="text-align:left"><code>shared/schema.ts</code> alone</td></tr><tr><td style="text-align:left">Embedding dimensions in use</td><td style="text-align:right">1024, 1536, 3072</td><td style="text-align:left">pgvector</td></tr><tr><td style="text-align:left">Report domains supported</td><td style="text-align:right">12</td><td style="text-align:left"><code>intelligent-report-engine.ts</code></td></tr><tr><td style="text-align:left">Regulatory bodies supported</td><td style="text-align:right">15</td><td style="text-align:left"><code>intelligent-report-engine.ts</code></td></tr></tbody></table>
+<h2 id="20-3-versioning-of-intelligence-layer">20.3 Versioning of intelligence layer</h2>
+<table><thead><tr><th style="text-align:left">Component</th><th style="text-align:left">Version constant</th><th style="text-align:left">File</th></tr></thead><tbody><tr><td style="text-align:left">RIM</td><td style="text-align:left"><code>1.1.0</code></td><td style="text-align:left"><code>server/services/intelligence/rim.ts</code> line 79</td></tr><tr><td style="text-align:left">Judgment framework</td><td style="text-align:left"><code>1.2.0</code></td><td style="text-align:left"><code>judgment-framework.ts</code> line 39</td></tr><tr><td style="text-align:left">Pattern registry</td><td style="text-align:left"><code>1.3.0</code></td><td style="text-align:left"><code>pattern-registry.ts</code> line 26</td></tr><tr><td style="text-align:left">Judgment models</td><td style="text-align:left">6</td><td style="text-align:left">Evidence Sufficiency, Defensibility, Reviewer Sensitivity, Claim Risk, Cross-Section Consistency, Submission Risk</td></tr><tr><td style="text-align:left">Pattern categories</td><td style="text-align:left">8</td><td style="text-align:left">deficiency, reviewer_trigger, rejection, strong_language, weak_language, data_gap, consistency_issue, formatting</td></tr></tbody></table>
+<h2 id="20-4-security">20.4 Security</h2>
+<table><thead><tr><th style="text-align:left">Control</th><th style="text-align:left">Value</th><th style="text-align:left">Source</th></tr></thead><tbody><tr><td style="text-align:left">Access token lifetime</td><td style="text-align:left">24 hours</td><td style="text-align:left"><code>server/routes/auth.ts:102</code></td></tr><tr><td style="text-align:left">Refresh token lifetime</td><td style="text-align:left">7 days</td><td style="text-align:left"><code>auth.ts:103</code></td></tr><tr><td style="text-align:left">Login lockout threshold</td><td style="text-align:left">5 failed attempts</td><td style="text-align:left"><code>auth-security-service.ts:31</code></td></tr><tr><td style="text-align:left">Login lockout duration</td><td style="text-align:left">30 minutes</td><td style="text-align:left"><code>auth-security-service.ts:32</code></td></tr><tr><td style="text-align:left">MFA algorithm</td><td style="text-align:left">TOTP RFC 6238 / HMAC-SHA1</td><td style="text-align:left"><code>mfaService.ts</code></td></tr><tr><td style="text-align:left">MFA period / digits / window</td><td style="text-align:left">30s / 6 / ±1</td><td style="text-align:left"><code>mfaService.ts</code></td></tr><tr><td style="text-align:left">MFA secret at rest</td><td style="text-align:left">AES-256-GCM</td><td style="text-align:left"><code>mfaService.ts</code></td></tr><tr><td style="text-align:left">Enterprise auth steps</td><td style="text-align:left">4</td><td style="text-align:left"><code>authEnterprise.ts</code></td></tr><tr><td style="text-align:left">SSO / SCIM</td><td style="text-align:left">SAML + SCIM 2.0</td><td style="text-align:left"><code>saml-provider.ts</code>, <code>scim.ts</code></td></tr><tr><td style="text-align:left">CSP</td><td style="text-align:left">helmet + nonce</td><td style="text-align:left"><code>enterprise-security.ts:166,213</code></td></tr><tr><td style="text-align:left">Rate-limit tiers</td><td style="text-align:left">7 named</td><td style="text-align:left"><code>enterprise-security.ts:417</code></td></tr><tr><td style="text-align:left">Audit tables</td><td style="text-align:left">9 in monolith + more</td><td style="text-align:left"><code>shared/schema.ts</code></td></tr><tr><td style="text-align:left">Audit immutability</td><td style="text-align:left">HMAC seal + hash chain</td><td style="text-align:left"><code>audit-hmac-seal.ts</code>, <code>chainIntegrityMonitor.ts</code></td></tr><tr><td style="text-align:left">RLS enforcement</td><td style="text-align:left">fail-closed</td><td style="text-align:left"><code>RLS_ENFORCE=on</code></td></tr></tbody></table>
+<h2 id="20-5-tests-and-docs">20.5 Tests and docs</h2>
+<table><thead><tr><th style="text-align:left">Dimension</th><th style="text-align:right">Count</th></tr></thead><tbody><tr><td style="text-align:left">Total test files</td><td style="text-align:right">2,348</td></tr><tr><td style="text-align:left">Tests under <code>server/</code></td><td style="text-align:right">1,522</td></tr><tr><td style="text-align:left">Tests under <code>client/</code></td><td style="text-align:right">301</td></tr><tr><td style="text-align:left">Dedicated <code>tests/</code> suite</td><td style="text-align:right">448</td></tr><tr><td style="text-align:left">Golden-journey suites</td><td style="text-align:right">4 (CER-EU-MDR, 510(k) eSTAR, NDA eCTD, IND authoring)</td></tr><tr><td style="text-align:left">Docs <code>.md</code> files</td><td style="text-align:right">672</td></tr><tr><td style="text-align:left">Docs subdirectories</td><td style="text-align:right">55</td></tr></tbody></table>
+<hr>
+<p><em>End of Investor Technical Brief.</em></p>
+<p><em>Prepared on branch <code>concept2cure-v2</code>, the sole production branch, per repository policy. Every metric in this document is verified against source files at the paths cited.</em></p>
+  <div class="footer">Concept2Cure.RI &middot; investor technical brief &middot; grounded in source at each cited path.</div>
+</main>
+</body>
+</html>

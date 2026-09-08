@@ -2,6 +2,7 @@ import { createHash } from 'node:crypto';
 
 import { describe, it, expect, vi, beforeEach, afterEach, beforeAll, afterAll } from 'vitest';
 import { promises as fs } from 'fs';
+import fsSync from 'fs';
 import path from 'path';
 import os from 'os';
 import { PDFDocument } from 'pdf-lib';
@@ -47,10 +48,24 @@ vi.mock('../../server/services/export/governedExportConsequence', async (importO
 // stand for an ident that resolves to nothing in this organization. When
 // `fakeDbState.error` is set every select REJECTS with it instead — the read
 // failed, which is a different fact from "no row" and must be answered as one.
-const { fakeDb, fakeDbState } = vi.hoisted(() => {
+// `fakeSqlClient` is the OTHER request-scoped surface and is deliberately a
+// different object: `requestPgClient(req)` returns the raw `query(text, params)`
+// client, while `requestDb(req)` returns Drizzle, whose `.query` is the
+// relational-query BUILDER — an object, not a function. Mocking both as one
+// Drizzle-shaped fake is how the route came to hand a Drizzle instance to the
+// attachment resolver's `DeviceContentClient`: nothing in the mock had a
+// callable `.query`, so nothing could notice. See the client-contract test at
+// the end of the attachment describe.
+const { fakeDb, fakeSqlClient, fakeDbState } = vi.hoisted(() => {
   const fakeDbState = { rows: [{ id: 33, deviceName: 'Test Device' }] as unknown[], error: null as unknown };
   return {
     fakeDbState,
+    fakeSqlClient: {
+      query: async () => {
+        if (fakeDbState.error) throw fakeDbState.error;
+        return { rows: fakeDbState.rows };
+      },
+    } as any,
     fakeDb: {
       select: () => ({
         from: () => ({
@@ -66,7 +81,10 @@ const { fakeDb, fakeDbState } = vi.hoisted(() => {
   };
 });
 vi.mock('../../server/db', () => ({ db: fakeDb }));
-vi.mock('../../server/db/requestDb', () => ({ requestDb: () => fakeDb }));
+vi.mock('../../server/db/requestDb', () => ({
+  requestDb: () => fakeDb,
+  requestPgClient: () => fakeSqlClient,
+}));
 
 // The governed-records loader is the ONLY DB read the program-data path adds;
 // its projection/resolution stay real. Stubbed per test with the records an
@@ -100,6 +118,27 @@ vi.mock('../../server/services/vault/vault-ingest.service', () => ({
   ingestVaultDocument: mockIngest,
 }));
 
+/* Only the RESOLVER is stubbed — the seam where an attachment's bytes come out
+   of the governed section store or the vault. The planner behind it stays real,
+   so the route's attachment tests exercise the actual slot lookup, chapter
+   resolution and acceptance rules against the actual template, and only the two
+   database reads are replaced. Stubbing the planner would leave the route's
+   wiring pinned to nothing. */
+const { mockResolverFactory, resolverStub } = vi.hoisted(() => {
+  const resolverStub = vi.fn(async () => ({
+    ok: true as const,
+    bytes: Buffer.from('%PDF-1.7 attachment bytes'),
+    fileName: 'Cover Letter.pdf',
+    mimeType: 'application/pdf',
+  }));
+  return { resolverStub, mockResolverFactory: vi.fn(() => resolverStub) };
+});
+vi.mock('../../server/services/pathway-engines/estar/estar-attachment-plan', async (importOriginal) => ({
+  ...(await importOriginal<Record<string, unknown>>()),
+  createDeviceAttachmentResolver: mockResolverFactory,
+}));
+
+import auditService from '../../server/services/auditService';
 import estarRoutes from '../../server/routes/510k-estar-routes';
 // The field map is a mutable singleton; tests populate then restore it to
 // exercise the "template + verified map present → real official PDF" path
@@ -807,7 +846,7 @@ describe('POST /api/510k/estar/official — retention of the delivered artifact'
 describe('POST /api/510k/estar/official — erased values reach the caller (verbatim path)', () => {
   // The REAL vendored template and the REAL field map — no fixture. This is the
   // artifact CDRH ingests, filled by the code that ships.
-  const haveTemplate = require('fs').existsSync(
+  const haveTemplate = fsSync.existsSync(
     path.resolve(process.cwd(), 'assets/estar-templates/eSTAR-510k-non-ivd.pdf'),
   );
 
@@ -922,3 +961,208 @@ describe('POST /api/510k/estar/official — erased values reach the caller (gove
     ]);
   });
 });
+
+// ---------------------------------------------------------------------------
+// POST /official with attachments — roadmap item 4, slice 5
+// ---------------------------------------------------------------------------
+//
+// The eSTAR this route produced populated 0 of the template's 113 attachment
+// slots. These are the route half of the join: what it accepts, what reaches
+// the governed record, and — the larger half — what it refuses rather than
+// omitting quietly from a 200.
+
+const REAL_TEMPLATE_DIR = path.resolve(process.cwd(), 'assets/estar-templates');
+const REAL_NIVD = path.join(REAL_TEMPLATE_DIR, 'eSTAR-510k-non-ivd.pdf');
+const COVER_LETTER_SLOT = 'root.CoverLetter.CLAddAttachment110';
+
+describe.skipIf(!fsSync.existsSync(REAL_NIVD))(
+  'POST /api/510k/estar/official with attachments — the real vendored eSTAR',
+  () => {
+    const PROGRAM = '2b6d4a80-6a35-4b1e-9f6e-3a9d2c1e5f70';
+    const priorRows = [{ id: 33, deviceName: 'Test Device' }];
+    let priorEnv: string | undefined;
+
+    beforeAll(() => {
+      priorEnv = process.env.ESTAR_TEMPLATE_DIR;
+      process.env.ESTAR_TEMPLATE_DIR = REAL_TEMPLATE_DIR;
+    });
+    afterAll(() => {
+      if (priorEnv === undefined) delete process.env.ESTAR_TEMPLATE_DIR;
+      else process.env.ESTAR_TEMPLATE_DIR = priorEnv;
+      fakeDbState.rows = priorRows;
+    });
+
+    beforeEach(() => {
+      vi.clearAllMocks();
+      mockResolverFactory.mockReturnValue(resolverStub);
+      resolverStub.mockResolvedValue({
+        ok: true,
+        bytes: Buffer.from('%PDF-1.7 attachment bytes'),
+        fileName: 'Cover Letter.pdf',
+        mimeType: 'application/pdf',
+      });
+      fakeDbState.rows = [{ id: PROGRAM, name: 'BX-204 CGM' }];
+      mockIngest.mockImplementation(async (args: any) => ({
+        ok: true,
+        document: {
+          id: 'vault-doc-1',
+          contentHash: createHash('sha256').update(args.fileBuffer).digest('hex'),
+        },
+        filing: { folderId: 'k510/administrative', placementStatus: 'suggested' },
+      }));
+    });
+
+    function attachReq(attachments: unknown[]) {
+      return makeReq({
+        meta: { id: 'k123', ident: PROGRAM, title: 'Official eSTAR' },
+        type: '510k',
+        variant: 'device',
+        data: { deviceTradeName: 'BX-204' },
+        attachments,
+      });
+    }
+
+    it('files the document and says where it went', async () => {
+      const req = attachReq([
+        { slot: COVER_LETTER_SLOT, source: { kind: 'authored_section', sectionCode: 'A.1' } },
+      ]);
+      const res = createMockResponse() as any;
+
+      await getHandler('/official')(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(200);
+      const payload = res.json.mock.calls[0][0];
+      expect(payload.attachmentReport.requested).toBe(1);
+      expect(payload.attachmentReport.refused).toEqual([]);
+      expect(payload.attachmentReport.manifest).toBe(
+        '***Start***<<Cover Letter.pdf|/CHAPTER 1/CH1.01/>>',
+      );
+      expect(payload.attachmentReport.attached[0]).toMatchObject({
+        slot: COVER_LETTER_SLOT,
+        chapter: '/CHAPTER 1/CH1.01/',
+        fileName: 'Cover Letter.pdf',
+        description: 'Administrative Documentation | Cover Letter',
+      });
+    });
+
+    it('the governed record names what was filed, not only the form', async () => {
+      /* The delivered-bytes hash proves the FORM was not altered and says
+         nothing about which documents it routes. "What did we file into
+         section 5" has to be answerable from the record, not from a response
+         body nobody keeps.
+
+         A program-uuid anchor has no PM-spine `projects` row, so this export
+         goes down the audited-unplaced path and its record IS the audit row —
+         which is exactly why the check reads the row rather than the response. */
+      const req = attachReq([
+        { slot: COVER_LETTER_SLOT, source: { kind: 'authored_section', sectionCode: 'A.1' } },
+      ]);
+      await getHandler('/official')(req, createMockResponse() as any);
+
+      const details = (auditService.logAction as any).mock.calls.at(-1)[0].details;
+      expect(details.attachments).toHaveLength(1);
+      expect(details.attachments[0]).toMatchObject({
+        slot: COVER_LETTER_SLOT,
+        chapter: '/CHAPTER 1/CH1.01/',
+        fileName: 'Cover Letter.pdf',
+        sha256: createHash('sha256').update(Buffer.from('%PDF-1.7 attachment bytes')).digest('hex'),
+      });
+      // The bytes themselves are deliberately NOT in the record.
+      expect(details.attachments[0]).not.toHaveProperty('bytes');
+    });
+
+    it('reads the tenant and the program from the REQUEST, never from the body', async () => {
+      const req = attachReq([
+        { slot: COVER_LETTER_SLOT, source: { kind: 'vault_document', documentId: PROGRAM } },
+      ]);
+      await getHandler('/official')(req, createMockResponse() as any);
+
+      expect(mockResolverFactory).toHaveBeenCalledTimes(1);
+      expect(mockResolverFactory.mock.calls[0][0]).toMatchObject({
+        organizationId: 2,
+        programUuid: PROGRAM,
+      });
+    });
+
+    it('hands the resolver a client it can actually query with', () => {
+      /* `DeviceContentClient` is the raw `query(text, params)` surface, and
+         `loadAuthoredDeviceSections` calls `client.query(...)` on it directly.
+         The route passed `requestDb(req)` — a Drizzle instance, whose `.query`
+         is the relational-query builder OBJECT — which satisfied the structural
+         type and would have thrown "client.query is not a function" on the first
+         `authored_section` attachment. Every other test in this describe mocks
+         the resolver factory away, so this is the only place the contract is
+         checked. Asserting the shape, not the identity, so the route may change
+         which request-scoped helper it uses as long as it stays queryable. */
+      const req = attachReq([
+        { slot: COVER_LETTER_SLOT, source: { kind: 'authored_section', sectionCode: 'A.1' } },
+      ]);
+      return getHandler('/official')(req, createMockResponse() as any).then(() => {
+        const client = (mockResolverFactory.mock.calls[0][0] as any).client;
+        expect(typeof client?.query).toBe('function');
+      });
+    });
+
+    it('refuses the export, with the reason, when a section is not fileable', async () => {
+      resolverStub.mockResolvedValue({
+        ok: false,
+        reason: 'Section "A.1" (Cover Letter) is authored but not finalized.',
+      });
+      const req = attachReq([
+        { slot: COVER_LETTER_SLOT, source: { kind: 'authored_section', sectionCode: 'A.1' } },
+      ]);
+      const res = createMockResponse() as any;
+
+      await getHandler('/official')(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(422);
+      const payload = res.json.mock.calls[0][0];
+      expect(payload.error).toBe('ESTAR_NOT_PRODUCIBLE');
+      expect(payload.blockers.join(' ')).toContain('authored but not finalized');
+      // The report travels on the refusal, so the operator sees WHICH one.
+      expect(payload.attachmentReport.refused[0].slot).toBe(COVER_LETTER_SLOT);
+      // And nothing was delivered, registered, audited or retained.
+      expect(mockGovernedConsequence).not.toHaveBeenCalled();
+      expect(auditService.logAction).not.toHaveBeenCalled();
+      expect(mockIngest).not.toHaveBeenCalled();
+    });
+
+    it('refuses a slot the template does not declare', async () => {
+      const req = attachReq([
+        { slot: 'root.Invented.XXAddAttachment999', source: { kind: 'authored_section', sectionCode: 'A.1' } },
+      ]);
+      const res = createMockResponse() as any;
+
+      await getHandler('/official')(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(422);
+      expect(res.json.mock.calls[0][0].blockers.join(' ')).toMatch(/declares no attachment slot/);
+    });
+
+    it('rejects a malformed attachment request at the schema, before any work', async () => {
+      const req = attachReq([{ slot: COVER_LETTER_SLOT, source: { kind: 'nonsense' } }]);
+      const res = createMockResponse() as any;
+
+      await getHandler('/official')(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(mockResolverFactory).not.toHaveBeenCalled();
+    });
+
+    it('never builds a resolver when no attachment was asked for', async () => {
+      const req = makeReq({
+        meta: { id: 'k123', ident: PROGRAM, title: 'Official eSTAR' },
+        type: '510k',
+        variant: 'device',
+        data: { deviceTradeName: 'BX-204' },
+      });
+      const res = createMockResponse() as any;
+
+      await getHandler('/official')(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(mockResolverFactory).not.toHaveBeenCalled();
+      expect(res.json.mock.calls[0][0]).not.toHaveProperty('attachmentReport');
+    });
+  },
+);

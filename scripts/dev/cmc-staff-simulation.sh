@@ -58,8 +58,14 @@ PROGRAM=$(cat "$OUT/program.json" | JQ '.data.id // .id // empty')
 echo "   meta: $(cat "$OUT/program.json" | JQ '.meta // .data.meta // empty' | head -c 400)"
 
 step "3. Process development registers the drug substance (feeds 3.2.S.1/S.2)"
-CODE=$(req ds POST /api/cmc/drug-substances "{\"substanceName\":\"BX-701\",\"inn\":\"belantezumab\",\"casNumber\":\"1234-56-7\",\"molecularFormula\":\"C6H8O6\",\"manufacturingProcess\":{\"manufacturer\":\"Acme Biologics\",\"route\":\"CHO cell culture\",\"site\":\"Basel\"},\"status\":\"development\",\"developmentPhase\":\"phase1\",\"projectId\":\"$PROGRAM\"}")
+CODE=$(req ds POST /api/cmc/drug-substances "{\"substanceName\":\"BX-701\",\"inn\":\"belantezumab\",\"casNumber\":\"1234-56-7\",\"molecularFormula\":\"C6H8O6\",\"manufacturingProcess\":{\"manufacturer\":\"Acme Biologics\",\"route\":\"CHO cell culture\",\"site\":\"Basel\"},\"status\":\"development\",\"developmentPhase\":\"phase1\",\"projectId\":\"$PROGRAM\",\"modality\":\"biologic\",\"biologicalOrigin\":\"CHO cell culture, fed-batch\",\"cellLine\":\"CHO-K1; MCB lot MCB-2401, WCB lot WCB-2403\",\"sourceOrganism\":\"Cricetulus griseus (Chinese hamster ovary)\",\"viralSafetyEvaluation\":\"Two orthogonal clearance steps validated per ICH Q5A(R2): low-pH hold (>= 4.8 log10 X-MuLV) and 20 nm nanofiltration (>= 5.2 log10 MVM). In-process bioburden, mycoplasma and adventitious-agent testing at harvest.\",\"tseStatus\":\"Chemically defined, animal-component-free media throughout; no animal-derived raw material enters the process. EMA EMEA/410/01 rev. 3 risk assessment on file.\"}")
 [ "$CODE" = 200 -o "$CODE" = 201 ] && ok "drug substance registered ($CODE)" || bad "drug substance failed ($CODE): $(head -c300 "$OUT/ds.json")"
+
+# §3.2.A.2 must now be composed from what the register holds, not from the
+# substance's name: the section's biologic branch used to assert a control
+# strategy, viral clearance and cell-bank characterisation over nothing.
+A2CHECK=$(cat "$OUT/ds.json" | jq -r '.data.viralSafetyEvaluation // empty' 2>/dev/null)
+[ -n "$A2CHECK" ] && ok "the drug substance carries its ICH Q5A(R2) record" || bad "the substance's viral safety evaluation did not persist"
 
 step "4. Analytical development registers the assay method (feeds 3.2.S.4)"
 CODE=$(req method POST /api/cmc/analytical-methods "{\"methodCode\":\"AM-001\",\"title\":\"RP-HPLC Assay\",\"purpose\":\"assay\",\"analyte\":\"BX-701\",\"matrix\":\"drug substance\",\"technique\":\"HPLC\",\"status\":\"validated\",\"validationDate\":\"2026-06-01T00:00:00.000Z\",\"ichQ2Parameters\":{\"characteristics\":[\"accuracy\",\"precision\",\"specificity\"]},\"projectId\":\"$PROGRAM\"}")
@@ -79,7 +85,7 @@ REVBY=$(cat "$OUT/qcrev.json" | JQ '.data.reviewedBy // empty')
   && ok "review recorded against the signed-in user ($REVBY), not the body's 999999" \
   || bad "QC review attribution: code=$CODE reviewedBy=$REVBY"
 # Second-person review, enforced by the API and not only by the button.
-CODE=$(req qcself POST /api/cmc/qc-testing "{\"sampleId\":\"S-2026-002\",\"batchNumber\":\"B-2026-002\",\"sampleType\":\"drug substance\",\"testMethod\":\"AM-001\",\"testDate\":\"2026-07-02T00:00:00.000Z\",\"testResults\":{\"value\":\"99.0\",\"unit\":\"%\"},\"passFailStatus\":\"pass\",\"analyst\":$REVBY,\"projectId\":\"$PROGRAM\"}")
+CODE=$(req qcself POST /api/cmc/qc-testing "{\"sampleId\":\"S-2026-002\",\"batchNumber\":\"B-2026-002\",\"sampleType\":\"drug substance\",\"testMethod\":\"AM-001\",\"testDate\":\"2026-07-02T00:00:00.000Z\",\"testResults\":{\"value\":\"99.0\",\"unit\":\"%\"},\"specifications\":{\"acceptanceCriteria\":\"98.0-102.0%\"},\"passFailStatus\":\"pass\",\"analyst\":$REVBY,\"projectId\":\"$PROGRAM\"}")
 SELFID=$(cat "$OUT/qcself.json" | JQ '.data.id // empty')
 CODE=$(req qcselfrev PUT "/api/cmc/qc-testing/$SELFID" '{"reviewedBy":1}')
 [ "$CODE" = 409 ] && ok "the analyst cannot review their own result (409)" \
@@ -258,6 +264,21 @@ CODE=$(req dp POST /api/cmc/drug-products "{\"projectId\":\"$PROGRAM\",\"product
 DPID=$(cat "$OUT/dp.json" | JQ '.data.id // empty')
 DPLINK=$(cat "$OUT/dp.json" | JQ '.module3Linked // empty')
 [ "$CODE" = 200 -o "$CODE" = 201 ] && [ "$DPLINK" = "true" ] && ok "drug product registered and linked ($CODE)" || bad "drug product failed ($CODE, module3Linked=$DPLINK): $(head -c200 "$OUT/dp.json")"
+# The register must READ BACK what it just stored, or the edit screen writes a
+# blank over it: the drug-product list projection is what the card renders and
+# the edit form defaults from, and a field missing there is a field the next
+# save erases. §3.2.P.3's batch formula has no other producer.
+DPLIST=$(req dplist GET /api/cmc/drug-products)
+DPBF=$(cat "$OUT/dplist.json" | jq -r --argjson id "${DPID:-0}" '[.data[]? | select(.id == $id)][0].batchFormula.description // empty' 2>/dev/null)
+[ "$DPLIST" = 200 ] && [ -n "$DPBF" ] \
+  && ok "the drug-product list returns the recorded batch formula" \
+  || bad "batch formula not readable from the register list (code=$DPLIST, value='$DPBF')"
+# And an edit that touches something else does not erase it.
+CODE=$(req dpedit PUT "/api/cmc/drug-products/$DPID" "{\"productName\":\"BX-701 5 mg film-coated tablet\",\"dosageForm\":\"Film-coated tablet\",\"strength\":\"5 mg\",\"batchFormula\":{\"description\":\"$DPBF\"},\"status\":\"development\"}")
+DPBF2=$(cat "$OUT/dpedit.json" | jq -r '.data.batchFormula.description // empty' 2>/dev/null)
+[ "$CODE" = 200 ] && [ "$DPBF2" = "$DPBF" ] \
+  && ok "editing the product leaves the batch formula intact" \
+  || bad "edit round-trip lost the batch formula (code=$CODE, after='$DPBF2')"
 # The placeholder tablet process gets its steps and its development history —
 # the only producer §3.2.P.2.3 has.
 CODE=$(req proc2b PUT "/api/cmc/manufacturing-processes/$EMPTYPROC" "{\"processDescription\":\"Wet granulation of BX-701 with MCC and gelatin binder, drying, blending with lubricant, compression to 125 mg cores, aqueous film coating.\",\"processSteps\":[{\"step\":1,\"name\":\"Wet granulation\",\"parameters\":\"Impeller 250 rpm, binder addition 8 min\"},{\"step\":2,\"name\":\"Fluid-bed drying\",\"parameters\":\"Inlet 60C to LOD <= 2.0%\"},{\"step\":3,\"name\":\"Compression\",\"parameters\":\"Main compression 8-12 kN, hardness 60-100 N\"},{\"step\":4,\"name\":\"Film coating\",\"parameters\":\"Weight gain 3%\"}],\"processControls\":[{\"step\":\"Drying\",\"control\":\"LOD\",\"limit\":\"<= 2.0%\"},{\"step\":\"Compression\",\"control\":\"Tablet weight\",\"limit\":\"125 mg +/- 5%\"}],\"processDevelopment\":\"Direct compression was evaluated on F1-F2 and rejected for content uniformity (RSD 6.8%); wet granulation (F3) gave RSD 1.9% and was carried forward. Granulation end-point set from torque profiles across three 20 kg batches; compression force range from a DoE on hardness and disintegration.\",\"batchSize\":\"250,000 tablets\"}")
@@ -273,7 +294,14 @@ CODE=$(req dprstd POST /api/cmc/reference-standards "{\"projectId\":\"$PROGRAM\"
 CODE=$(req dpstab POST /api/cmc/stability-studies "{\"productName\":\"BX-701 5 mg film-coated tablet\",\"batchNumber\":\"DP-B-001\",\"dosageForm\":\"tablet\",\"scope\":\"DP\",\"climaticZone\":\"II\",\"studyType\":\"long_term\",\"storageConditions\":[\"25C/60%RH\"],\"duration\":24,\"testParameters\":[\"assay\",\"degradant D1\"],\"timePoints\":[\"0\",\"3\",\"6\",\"12\",\"24\"],\"shelfLife\":\"24 months at 25C/60%RH (proposed)\",\"status\":\"ACTIVE\",\"startDate\":\"2026-02-01T00:00:00.000Z\",\"projectId\":\"$PROGRAM\"}")
 [ "$CODE" = 200 -o "$CODE" = 201 ] && ok "drug-product stability study registered with its proposed claim ($CODE)" || bad "DP stability failed ($CODE): $(head -c200 "$OUT/dpstab.json")"
 CODE=$(req comp POST /api/cmc/comparability-studies "{\"projectId\":\"$PROGRAM\",\"title\":\"Pre-/post-granulation-scale comparability of BX-701 tablets\",\"type\":\"process\",\"product\":\"BX-701 5 mg film-coated tablet\",\"methods\":[\"AM-001\",\"dissolution\"],\"outcome\":\"Comparable on assay, degradation and dissolution across three batches per scale\",\"status\":\"comparable\"}")
-[ "$CODE" = 200 -o "$CODE" = 201 ] && ok "comparability assessment recorded ($CODE)" || bad "comparability failed ($CODE): $(head -c200 "$OUT/comp.json")"
+COMPLINK=$(cat "$OUT/comp.json" | JQ '.module3Linked // empty')
+# The register write is only half of it: linkToModule3 never throws and never
+# changes the status code, so a row that reached the table and NOT the canonical
+# layer still answers 200 — which is exactly the state this step exists to
+# disprove, since §3.2.P.8 has no other producer of comparabilityStatus.
+[ "$CODE" = 200 -o "$CODE" = 201 ] && [ "$COMPLINK" = "true" ] \
+  && ok "comparability assessment recorded and linked to Module 3 ($CODE)" \
+  || bad "comparability failed ($CODE, module3Linked=$COMPLINK): $(head -c250 "$OUT/comp.json")"
 
 step "9. Change manager proposes a governed change WITH project (marks 3.2 stale)"
 CODE=$(req change POST /api/cmc-changes "{\"title\":\"Bioreactor scale-up 500L→2000L\",\"dosageFormFamily\":\"biologic\",\"changeCategory\":\"scale_up\",\"scaleChangeFactor\":\"within_10x\",\"touchesCriticalStep\":true,\"affects\":\"drug_substance\",\"cmcProjectId\":\"$PROGRAM\"}")
@@ -339,17 +367,47 @@ elif [ "$CODE" = 200 ]; then
 else
   bad "shelf-life engine: code=$CODE err=$(echo "$SHELFERR" | head -c 160)"
 fi
-# Out-of-trend over the same study: five recorded points give the last one
-# four prior points, so the series is assessable and reports its slope.
+# Out-of-trend over the SAME study — first with nothing recorded, so the
+# refusal is exercised on data that genuinely cannot be fitted…
+CODE=$(req trend0 POST "/api/cmc/stability-studies/$STABID/trending" '{}')
+TREND0ERR=$(cat "$OUT/trend0.json" | JQ '.error // empty')
+[ "$CODE" = 409 ] && echo "$TREND0ERR" | grep -q "no recorded pull-point results" \
+  && ok "trending refuses a study with no recorded results, with the reason" \
+  || bad "trending over an empty study: code=$CODE err=$(echo "$TREND0ERR" | head -c 140)"
+# …then the stability manager records the pull points, and the SAME route
+# fits them. Both branches are exercised on real data: accepting either one
+# for the same call, as this step first did, is a step that cannot fail.
+CODE=$(req stabdata PUT "/api/cmc/stability-studies/$STABID" '{"stabilityData":[
+  {"timePoint":"0","parameter":"assay","result":"99.8","specification":"NLT 95.0%","condition":"25C/60%RH"},
+  {"timePoint":"3","parameter":"assay","result":"99.4","specification":"NLT 95.0%","condition":"25C/60%RH"},
+  {"timePoint":"6","parameter":"assay","result":"99.1","specification":"NLT 95.0%","condition":"25C/60%RH"},
+  {"timePoint":"9","parameter":"assay","result":"98.6","specification":"NLT 95.0%","condition":"25C/60%RH"},
+  {"timePoint":"12","parameter":"assay","result":"98.2","specification":"NLT 95.0%","condition":"25C/60%RH"},
+  {"timePoint":"18","parameter":"assay","result":"97.6","specification":"NLT 95.0%","condition":"25C/60%RH"}
+]}')
+[ "$CODE" = 200 ] && ok "six pull points recorded on the study" || bad "recording pull points failed ($CODE): $(head -c200 "$OUT/stabdata.json")"
 CODE=$(req trend POST "/api/cmc/stability-studies/$STABID/trending" '{}')
-TRENDN=$(cat "$OUT/trend.json" | JQ '.data.series | length')
-if [ "$CODE" = 200 ] && [ "${TRENDN:-0}" -ge 1 ]; then
-  ok "trend assessed over the recorded study ($TRENDN series): $(cat "$OUT/trend.json" | jq -r '.data.series[0] | "\(.parameter) ootPoints=\((.outOfTrend // []) | length) slopeEstablished=\(.slope.significant // .slope.established // "n/a")"' 2>/dev/null)"
-elif [ "$CODE" = 409 ]; then
-  ok "trend refused with its reason (409): $(cat "$OUT/trend.json" | JQ '.error' | head -c120)"
-else
-  bad "trending route: code=$CODE $(head -c200 "$OUT/trend.json")"
-fi
+TRENDN=$(cat "$OUT/trend.json" | jq -r '[.data.series[]?] | length' 2>/dev/null)
+TRENDASSAY=$(cat "$OUT/trend.json" | jq -r '[.data.series[]? | select((.parameter // .attribute // "") | test("assay"; "i"))][0]' 2>/dev/null)
+TRENDSLOPE=$(echo "$TRENDASSAY" | jq -r '.outcome.slope.estimate // empty' 2>/dev/null)
+TRENDSIG=$(echo "$TRENDASSAY" | jq -r '.outcome.slope.significant // empty' 2>/dev/null)
+TRENDOOT=$(echo "$TRENDASSAY" | jq -r '[.outcome.outOfTrend[]?] | length' 2>/dev/null)
+TRENDPROJ=$(echo "$TRENDASSAY" | jq -r '.outcome.projection.time // empty' 2>/dev/null)
+TRENDUSED=$(echo "$TRENDASSAY" | jq -r '.pointsUsable // 0' 2>/dev/null)
+# A falling assay must be reported as falling: the slope is negative, it is
+# established, and the projection to the recorded limit is a real number.
+[ "$CODE" = 200 ] && [ "${TRENDN:-0}" -ge 1 ] && [ -n "$TRENDSLOPE" ] && [ "$TRENDSIG" = "true" ] \
+  && [ "${TRENDUSED:-0}" -ge 5 ] && [ -n "$TRENDPROJ" ] \
+  && awk -v s="$TRENDSLOPE" 'BEGIN{exit !(s < 0)}' \
+  && ok "trend fitted over the recorded assay series: slope $TRENDSLOPE/month (established), ${TRENDOOT:-0} out-of-trend point(s), reaches the limit at ${TRENDPROJ} months" \
+  || bad "trending over recorded results: code=$CODE series=$TRENDN used=$TRENDUSED slope='$TRENDSLOPE' significant=$TRENDSIG projection='$TRENDPROJ'"
+# The shelf-life engine now has the same data to fit — the refusal above was
+# about the DATA, not the engine.
+CODE=$(req shelf2 POST "/api/cmc/stability-studies/$STABID/shelf-life" '{}')
+SHELF2=$(cat "$OUT/shelf2.json" | jq -r '.data.limitingParameter // .data.shelfLifeMonths // empty' 2>/dev/null)
+[ "$CODE" = 200 ] && [ -n "$SHELF2" ] \
+  && ok "shelf life estimated once the pull points exist (limiting: $SHELF2)" \
+  || bad "shelf life over recorded results: code=$CODE $(head -c200 "$OUT/shelf2.json")"
 
 step "11d. §3.2.P.7 and §3.2.S.5 compose from the two new registers — and the unrecorded side stays honestly empty"
 # Four sections that could never leave zero completeness because no table
@@ -447,9 +505,28 @@ P4XRAW=$(echo "$P4" | jq -r '[.tables[]? | .rows[]? | select(.[] | tostring | te
 A3=$(cat "$OUT/compile.json" | jq -r '[.sections[]? | select(.sectionKey=="3.2.A.3")][0]' 2>/dev/null)
 A3GEL=$(echo "$A3" | jq -r '[.tables[]? | .rows[]? | select(.[] | tostring | test("Gelatin"))] | length' 2>/dev/null)
 A3FREE=$(echo "$A3" | jq -r '.narrativeDraft // ""' 2>/dev/null | grep -c "No excipients of human or animal origin are used")
-[ "${A3GEL:-0}" -ge 1 ] && [ "${A3FREE:-0}" = "0" ] \
-  && ok "§3.2.A.3 names the animal-origin excipient and never calls the product animal-free" \
-  || bad "§3.2.A.3: gelatinRows=$A3GEL animalFreeClaim=$A3FREE"
+# Gelatin is ONE material: the formulation names it and the excipient register
+# holds its CEP. Before the join it appeared twice — once uncertified from the
+# formulation, once certified from the register — and both of the assertions
+# above were already green on that, so this step could not fail on the defect it
+# was written beside. What it must show now: one row, the CEP in the certificate
+# column, and a section that is actually complete.
+A3CERT=$(echo "$A3" | jq -r '[.tables[]? | .rows[]? | select(.[0] | tostring | test("gelatin"; "i"))][0][3] // empty' 2>/dev/null)
+A3COMPLETE=$(echo "$A3" | jq -r '.completeness // 0' 2>/dev/null)
+[ "${A3GEL:-0}" = "1" ] && [ "${A3FREE:-0}" = "0" ] && echo "$A3CERT" | grep -q "CEP" && [ "${A3COMPLETE:-0}" = "100" ] \
+  && ok "§3.2.A.3 lists the animal-origin excipient once, with the certificate the register holds ($A3CERT)" \
+  || bad "§3.2.A.3: gelatinRows=$A3GEL animalFreeClaim=$A3FREE cert='$A3CERT' completeness=$A3COMPLETE"
+# §3.2.A.2 is the appendix next door and the product is a CHO cell-culture mAb:
+# it must not file the chemical-substance branch, and it must never claim raw
+# materials it does not read.
+A2=$(cat "$OUT/compile.json" | jq -r '[.sections[]? | select(.sectionKey=="3.2.A.2")][0]' 2>/dev/null)
+A2NARR=$(echo "$A2" | jq -r '.narrativeDraft // ""' 2>/dev/null)
+A2CHEM=$(echo "$A2NARR" | grep -c "does not apply to the drug substance")
+A2RAW=$(echo "$A2NARR" | grep -c "no animal- or human-derived raw materials")
+[ "${A2CHEM:-1}" = "0" ] && [ "${A2RAW:-1}" = "0" ] \
+  && ok "§3.2.A.2 does not file a chemical-substance all-clear for a cell-culture product" \
+  || bad "§3.2.A.2: notApplicableClaim=$A2CHEM rawMaterialClaim=$A2RAW"
+
 
 step "11g. §3.2.S.2 and §3.2.S.3 compose from the process and characterisation registers"
 S2=$(cat "$OUT/compile.json" | jq -r '[.sections[]? | select(.sectionKey=="3.2.S.2")][0]' 2>/dev/null)
@@ -506,6 +583,31 @@ CODE=$(req place1 POST "/api/cmc/module3-os/place-into-submission/$PROGRAM" '{"s
 LEAVES_AFTER=$(PGPASSWORD=c2c_local psql -h 127.0.0.1 -U c2c -d clinicalsage -tAc "SELECT count(*) FROM submission_leaves")
 [ "$CODE" = 409 ] && [ "$LEAVES_BEFORE" = "$LEAVES_AFTER" ] && ok "placement refused (409), zero leaves written" || bad "placement did not refuse cleanly ($CODE; leaves $LEAVES_BEFORE→$LEAVES_AFTER)"
 
+step "14b. The signer can READ what the signature covers — §11.50 is over content, not a section number"
+# Until this route existed, the only thing the product could show a signer at the
+# moment of approval was the section key, its percentage and its missing inputs:
+# the narrative and tables the approve route hashes and snapshots were served by
+# nothing. A signature over a section NUMBER is not a signature over a record.
+CODE=$(req read4 GET "/api/cmc/module3-os/sections/$PROGRAM/3.2.S.4")
+RNARR=$(cat "$OUT/read4.json" | jq -r '.data.narrative // ""' 2>/dev/null | wc -c)
+RTAB=$(cat "$OUT/read4.json" | jq -r '[.data.tables[]?] | length' 2>/dev/null)
+RMD=$(cat "$OUT/read4.json" | jq -r '.data.markdown // ""' 2>/dev/null | wc -c)
+RLIN=$(cat "$OUT/read4.json" | jq -r '[.data.lineage[]?] | length' 2>/dev/null)
+RUNK=$(cat "$OUT/read4.json" | jq -r '.data.tablesUnknown' 2>/dev/null)
+RHASH=$(cat "$OUT/read4.json" | jq -r '.data.compiledHash // empty' 2>/dev/null)
+[ "$CODE" = 200 ] && [ "${RNARR:-0}" -gt 100 ] && [ "${RTAB:-0}" -ge 1 ] && [ "${RMD:-0}" -gt "${RNARR:-0}" ] \
+  && [ "${RLIN:-0}" -ge 1 ] && [ "$RUNK" = "false" ] && [ -n "$RHASH" ] \
+  && ok "§3.2.S.4 reads back in full: $RNARR chars of narrative, $RTAB tables, $RLIN source records, content hash on the record" \
+  || bad "section read: code=$CODE narrativeChars=$RNARR tables=$RTAB markdownChars=$RMD lineage=$RLIN tablesUnknown=$RUNK hash='$RHASH'"
+# The markdown a signer reads is the markdown that gets FILED — one renderer.
+RMDTXT=$(cat "$OUT/read4.json" | jq -r '.data.markdown // ""' 2>/dev/null)
+echo "$RMDTXT" | head -1 | grep -q '^## ' \
+  && ok "what the signer reads is the filed document, heading and all" \
+  || bad "the section markdown is not the filed shape: $(echo "$RMDTXT" | head -c 80)"
+# A section that was never compiled is a 404, never an empty document to sign.
+CODE=$(req read404 GET "/api/cmc/module3-os/sections/$PROGRAM/3.2.Z.9")
+[ "$CODE" = 404 ] && ok "an uncompiled section refuses to be read (404), rather than serving an empty one to sign" || bad "uncompiled section read: $CODE"
+
 step "15. QA approves every COMPLETE compiled section (Part 11 re-auth each time); an incomplete one is refused"
 # An approval is a claim about content that was reviewed. The approve route
 # reads the section's own compiled record and refuses when the compiler says
@@ -538,17 +640,32 @@ CCDSLINK=$(cat "$OUT/ccds.json" | JQ '.module3Linked // empty')
 [ "$CODE" = 200 -o "$CODE" = 201 ] && [ "$CCDSLINK" = "true" ] && ok "drug-substance container closure recorded and linked ($CODE)" || bad "DS container closure failed ($CODE, module3Linked=$CCDSLINK): $(head -c200 "$OUT/ccds.json")"
 CODE=$(req compile2 POST "/api/cmc/module3-os/compile/$PROGRAM" '{}')
 S6C2=$(jq -r '[.sections[]? | select(.sectionKey=="3.2.S.6")][0].completeness // 0' "$OUT/compile2.json" 2>/dev/null)
+# What the recompile did to each section's approval — read from the store, not
+# assumed: a compile that CHANGES a section returns it to draft.
+req sections2 GET "/api/cmc/module3-os/sections/$PROGRAM" >/dev/null
+RETURNED=$(cat "$OUT/sections2.json" | jq -r '[.data[]? | select(.approvalState=="draft")] | length' 2>/dev/null)
 [ "$CODE" = 200 ] && [ "${S6C2:-0}" = "100" ] && ok "recompiled: §3.2.S.6 now 100% from the drug-substance record" || bad "recompile: code=$CODE §3.2.S.6 completeness=$S6C2"
-# Approve what the recompile completed and 15 had not signed.
+# Approve everything the recompile left complete — including sections signed in
+# step 15 whose CONTENT the recompile changed, which the compile returns to
+# draft. An approval is a signature over content: a section rebuilt from a
+# source that changed is not the section that was signed, and re-approving it
+# is the staffer's job, not the compiler's.
 NEWLY=0
+RESIGNED=0
 for SK in $(complete_sections "$OUT/compile2.json"); do
-  if [ ! -f "$OUT/approve-$SK.json" ] || [ "$(jq -r '.success // false' "$OUT/approve-$SK.json" 2>/dev/null)" != "true" ]; then
+  PRIOR=$([ -f "$OUT/approve-$SK.json" ] && jq -r '.success // false' "$OUT/approve-$SK.json" 2>/dev/null || echo false)
+  STATE=$(cat "$OUT/sections2.json" 2>/dev/null | jq -r --arg k "$SK" '[.data[]? | select(.sectionKey==$k)][0].approvalState // empty' 2>/dev/null)
+  if [ "$PRIOR" != "true" ] || [ "$STATE" = "draft" ]; then
     CODE=$(approve_section "$SK")
-    [ "$CODE" = 200 ] && NEWLY=$((NEWLY+1)) || echo "     approve $SK -> $CODE $(head -c160 "$OUT/approve-$SK.json")"
+    if [ "$CODE" = 200 ]; then
+      if [ "$PRIOR" = "true" ]; then RESIGNED=$((RESIGNED+1)); else NEWLY=$((NEWLY+1)); fi
+    else
+      echo "     approve $SK -> $CODE $(head -c160 "$OUT/approve-$SK.json")"
+    fi
   fi
 done
 STILL=$(incomplete_sections "$OUT/compile2.json" | tr '\n' ' ')
-ok "approved $NEWLY newly complete section(s); still incomplete after recompile: ${STILL:-none}"
+ok "approved $NEWLY newly complete section(s), re-signed $RESIGNED the recompile returned to draft; still incomplete: ${STILL:-none}"
 
 step "16. Export gate now — passes only when every section is approved AND complete"
 CODE=$(req gate2 POST "/api/cmc/module3-os/guard/final-export/$PROGRAM" '{}')

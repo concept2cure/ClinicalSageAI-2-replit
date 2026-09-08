@@ -50,43 +50,18 @@ import { renderComposedSectionMarkdown, type GeneratedTable } from '../module3Co
  * caller (and its tests) can name the condition instead of matching prose.
  */
 export const LEGACY_NO_TABLES_SKIP_REASON =
-  'Compiled before section tables were carried; recompile the section before placing.';
+  /* The remedy is TWO steps, and naming only the first sent a staffer round a
+     loop: a recompile that changes the section returns it to draft (an approval
+     is a signature over content), so recompiling alone leaves it unplaceable
+     for the second reason — not approved. */
+  'Compiled before section tables were carried; recompile the section AND re-approve it before placing.';
 
-/**
- * Read the composed tables back out of a section's stored deterministic_json.
- *
- * Three outcomes, deliberately distinguished:
- *   - `undefined` — the row has NO `tables` key: compiled before the composer's
- *     tables were persisted. We cannot know whether this section had tables, so
- *     it is NOT placed (see the skip below). Never file a narrative that says
- *     "see the table" over a document that may be missing it.
- *   - `[]` — a real "this section composes no tables". Places normally.
- *   - a populated array — the tables get rendered into the snapshot.
- *
- * Rows that carry a `tables` key of the wrong shape are treated as the legacy
- * case (unknown), not silently as "no tables": a malformed payload is a reason
- * to refuse, not to file a thinner document.
- */
-export function readSectionTables(deterministicJson: unknown): GeneratedTable[] | undefined {
-  if (!deterministicJson || typeof deterministicJson !== 'object') return undefined;
-  const raw = (deterministicJson as Record<string, unknown>).tables;
-  if (raw === undefined || raw === null) return undefined;
-  if (!Array.isArray(raw)) return undefined;
-  const tables: GeneratedTable[] = [];
-  for (const entry of raw) {
-    if (!entry || typeof entry !== 'object') return undefined;
-    const t = entry as Record<string, unknown>;
-    if (typeof t.title !== 'string') return undefined;
-    if (!Array.isArray(t.headers) || !t.headers.every((h) => typeof h === 'string')) return undefined;
-    if (!Array.isArray(t.rows) || !t.rows.every((r) => Array.isArray(r))) return undefined;
-    tables.push({
-      title: t.title,
-      headers: t.headers as string[],
-      rows: (t.rows as unknown[][]).map((r) => r.map((c) => String(c ?? ''))),
-    });
-  }
-  return tables;
-}
+/* The tables reader moved to ./compiled-record: the export gate applies the
+   same refusal (an approved section with no `tables` key is unplaceable), and
+   this module imports the gate, so keeping it here would have made a cycle.
+   Re-exported so this module's own name for it still resolves. */
+import { readSectionTables } from './compiled-record';
+export { readSectionTables };
 
 export interface PlaceModule3Input {
   orgId: number;

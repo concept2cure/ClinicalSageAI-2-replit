@@ -108,6 +108,21 @@ interface SectionRule {
   sectionKey: string;
   requiredSourceTypes: CmcSourceType[];
   requiredFields: string[];
+  /**
+   * Fields required only WHEN a source of the named type is present.
+   *
+   * §3.2.P.8 required `comparabilityStatus` unconditionally, and its only
+   * producer is the comparability register — which a first-in-human programme
+   * has nothing to put in, because ICH Q5E comparability compares a change
+   * against a prior process and there is no prior process. So the section
+   * capped at 50%, the approve route refused the signature and the export gate
+   * refused the filing: the product declined to file a correct dossier and told
+   * the staffer to record something the guideline does not ask of them.
+   *
+   * Conditional, it says the right thing instead: if you HAVE a comparability
+   * assessment, this section must state its status.
+   */
+  conditionalFields?: Array<{ field: string; whenSourceType: CmcSourceType }>;
 }
 
 export const MODULE3_SECTION_RULES: SectionRule[] = [
@@ -150,7 +165,10 @@ export const MODULE3_SECTION_RULES: SectionRule[] = [
      for; the mapper emits the matching key; these rules read it. */
   { sectionKey: '3.2.S.5', requiredSourceTypes: ['drug_substance', 'reference_standard'], requiredFields: ['drugSubstanceReferenceStandard', 'drugSubstanceReferenceStandardCoA', 'drugSubstanceReferenceStandardComplete'] },
   { sectionKey: '3.2.S.6', requiredSourceTypes: ['container_closure'], requiredFields: ['drugSubstanceContainerDescription', 'drugSubstanceClosureDescription', 'drugSubstanceSuitabilityJustification', 'drugSubstanceContainerClosureComplete'] },
-  { sectionKey: '3.2.S.7', requiredSourceTypes: ['stability'], requiredFields: ['timePoints', 'storageCondition'] },
+  /* Side-scoped: the mapper emits drugSubstance* only for a study the register
+     records as drug-substance evidence, so a drug-product study can no longer
+     complete the drug substance's stability section. */
+  { sectionKey: '3.2.S.7', requiredSourceTypes: ['stability'], requiredFields: ['drugSubstanceTimePoints', 'drugSubstanceStorageCondition'] },
   // --- Drug Product (P) subsections ---
   { sectionKey: '3.2.P.1', requiredSourceTypes: ['drug_product', 'formulation_record'], requiredFields: ['dosageFormDescription', 'composition', 'strength', 'formulationCompositionComplete'] },
   /* `characterization` is here because a drug-product characterisation study —
@@ -172,7 +190,16 @@ export const MODULE3_SECTION_RULES: SectionRule[] = [
   { sectionKey: '3.2.P.5', requiredSourceTypes: ['specification', 'method', 'dissolution_profile', 'impurity_profile', 'qc_result'], requiredFields: ['releaseCriteria', 'methodName', 'drugProductBatchAnalyses', 'drugProductImpurityProfileComplete'] },
   { sectionKey: '3.2.P.6', requiredSourceTypes: ['drug_product', 'reference_standard'], requiredFields: ['drugProductReferenceStandard', 'drugProductReferenceStandardCoA', 'drugProductReferenceStandardComplete'] },
   { sectionKey: '3.2.P.7', requiredSourceTypes: ['container_closure'], requiredFields: ['drugProductContainerDescription', 'drugProductClosureDescription', 'drugProductSuitabilityJustification', 'drugProductContainerClosureComplete'] },
-  { sectionKey: '3.2.P.8', requiredSourceTypes: ['stability', 'comparability'], requiredFields: ['shelfLifeClaim', 'comparabilityStatus'] },
+  {
+    sectionKey: '3.2.P.8',
+    requiredSourceTypes: ['stability', 'comparability'],
+    requiredFields: ['drugProductShelfLifeClaim'],
+    /* A first IND has no comparability assessment and ICH Q5E does not ask it
+       for one; requiring the status unconditionally capped this section at 50%
+       and made the whole dossier unfilable. Required only when an assessment
+       exists. */
+    conditionalFields: [{ field: 'comparabilityStatus', whenSourceType: 'comparability' }],
+  },
   // NOTE: Appendices (3.2.A.*) and Regional Information (3.2.R.*) are intentionally
   // NOT composed here. They are owned by module3-extensions.ts, which performs the
   // region-specific dispatch (US/EU/JP/CA). composeFullModule3() concatenates this
@@ -527,6 +554,32 @@ function qcResultRows(
     .filter((p) => isBatchAnalysisFor(p, side));
 }
 
+/**
+ * Is this stability study evidence for `side`?
+ *
+ * An UNRECORDED scope covers BOTH sides. The register control that records it
+ * is required, so every study written since it existed carries one — but a
+ * payload written before does not, and defaulting those to the drug product
+ * would delete the drug substance's own stability data out of §3.2.S.7 without
+ * a word. A study whose side was never recorded is ambiguous, not
+ * drug-product: it renders in both sections, exactly as it did before, and the
+ * section says its side is unrecorded rather than pretending to know.
+ */
+function stabilityCovers(source: CanonicalSource, side: 'drug_substance' | 'drug_product'): boolean {
+  const recorded = String((source.sourcePayload as Record<string, unknown> | undefined)?.stabilityScope ?? '').trim();
+  if (!recorded) return true;
+  return scopeCovers(normalizeMaterialScope(recorded, 'both'), side);
+}
+
+/** The studies in a set whose side was never recorded — named, not assumed. */
+function stabilityScopeUnrecorded(sources: CanonicalSource[]): string[] {
+  return sources
+    .filter((s) => s.sourceType === 'stability')
+    .filter((s) => !String((s.sourcePayload as Record<string, unknown> | undefined)?.stabilityScope ?? '').trim())
+    .map((s) => String((s.sourcePayload as Record<string, unknown> | undefined)?.studyName ?? '').trim())
+    .filter(Boolean);
+}
+
 /** One batch-analyses table from recorded QC results, or null when there are none. */
 function batchAnalysesTable(
   sources: CanonicalSource[],
@@ -618,12 +671,22 @@ function batchCapabilityRendering(
   for (const s of series) {
     sentences.push(capabilitySentence(s));
     if (!s.outcome.ok) {
-      const counted = s.outcome.code === 'CRITERION_NOT_RECORDED' && s.criterion === null
-        ? String(s.resultsOnFile)
-        : String(s.resultsOnFile - s.outcome.excludedBatches.length);
+      /* The Note names WHICH refusal — "criteria disagree" was printed over a
+         series that recorded no criterion at all, sending a staffer to
+         reconcile two specifications that do not exist. And the Batches column
+         counts the rows the assessment could actually have used: the ones with
+         a usable result, never the raw row count. */
+      const NOTE = {
+        CRITERIA_DISAGREE: 'criteria disagree',
+        CRITERION_NOT_RECORDED: 'no acceptance criterion recorded',
+        INSUFFICIENT_BATCHES: 'too few batches',
+        NO_VARIATION: 'no variation between batches',
+      } as const;
       tableRows.push([
-        s.test, counted, '—', '—', '—', '—', '—', 'not assessed',
-        s.criterion === null && s.outcome.code === 'CRITERION_NOT_RECORDED' ? 'criteria disagree' : s.outcome.code,
+        s.test,
+        String(Math.max(0, s.resultsOnFile - s.outcome.excludedBatches.length)),
+        '—', '—', '—', '—', '—', 'not assessed',
+        NOTE[s.outcome.code] ?? s.outcome.code,
       ]);
       continue;
     }
@@ -2213,11 +2276,16 @@ const SECTION_GENERATORS: Record<string, SectionGenerator> = {
   '3.2.S.6': (m) => containerClosureSection(m, 'drug_substance'),
 
   '3.2.S.7': (m) => {
-    const timePoints = valArr(m, 'timePoints');
-    const condition = val(m, 'storageCondition');
-    const stabilityParameters = valArr(m, 'stabilityParameters');
-    const batchesStudied = valArr(m, 'batchesStudied');
-    const packagingConfig = val(m, 'packagingConfiguration');
+    /* Only the studies the register records as DRUG SUBSTANCE evidence. The
+       generator read every stability source, so a drug-product study set the
+       substance's storage condition and its pull points, and a product OOS
+       result could report the substance's stability as not established. */
+    const dsOnly = m.filter((s) => s.sourceType !== 'stability' || stabilityCovers(s, 'drug_substance'));
+    const timePoints = valArr(dsOnly, 'timePoints');
+    const condition = val(dsOnly, 'storageCondition');
+    const stabilityParameters = valArr(dsOnly, 'stabilityParameters');
+    const batchesStudied = valArr(dsOnly, 'batchesStudied');
+    const packagingConfig = val(dsOnly, 'packagingConfiguration');
     const tables: GeneratedTable[] = [];
     // Study design table
     tables.push({
@@ -2256,7 +2324,7 @@ const SECTION_GENERATORS: Record<string, SectionGenerator> = {
     // Read a deterministic pass/concern signal from the matched stability
     // source(s); assert stability only on a clear positive signal, flag a clear
     // negative one, and otherwise defer to review of the summarized data.
-    const conclusion = stabilityConclusion(m, 'drug substance');
+    const conclusion = stabilityConclusion(dsOnly, 'drug substance');
     return {
       narrative: `Stability studies for the drug substance were conducted under ${condition || '[condition not specified]'} ` +
         (timePoints.length > 0 ? `at time points: ${timePoints.join(', ')} months. ` : '. ') +
@@ -2596,7 +2664,10 @@ const SECTION_GENERATORS: Record<string, SectionGenerator> = {
     // section fires when ONLY a comparability source is present (no stability
     // study). Claim stability studies / a shelf life only when a stability
     // source is actually present; otherwise report comparability alone.
-    const stabilitySources = m.filter((s) => s.sourceType === 'stability');
+    /* Only the studies the register records as DRUG PRODUCT evidence — the
+       mirror of §3.2.S.7's filter. Reading every stability source pooled the
+       substance's pull points into the product's storage-period conclusion. */
+    const stabilitySources = m.filter((s) => s.sourceType === 'stability' && stabilityCovers(s, 'drug_product'));
     const hasStability = stabilitySources.length > 0;
     const hasComparability = m.some((s) => s.sourceType === 'comparability');
     const tables: GeneratedTable[] = [];
@@ -2762,7 +2833,14 @@ export function renderComposedSectionMarkdown(
   tables: GeneratedTable[] | null | undefined,
 ): string {
   const tablesMarkdown = tables && tables.length > 0 ? '\n\n' + tablesToMarkdown(tables) : '';
-  return `## ${sectionLabel}\n\n${narrativeDraft}${tablesMarkdown}`;
+  /* The narrative is trimmed HERE, so both consumers trim it identically.
+     Placement trimmed before calling; the governed-artifact bridge did not
+     call this at all — it re-implemented these two lines — and several
+     generators emit a trailing space, so the filed leaf and the governed
+     artifact for the same compile of the same section hashed differently. Two
+     copies of "the same content" that are not the same content is the exact
+     thing this function's existence is supposed to prevent. */
+  return `## ${sectionLabel}\n\n${(narrativeDraft ?? '').trim()}${tablesMarkdown}`;
 }
 
 // ── Main composition function ──────────────────────────────────────────────────
@@ -2799,10 +2877,19 @@ export function composeModule3FromCanonicalSources(sourceObjects: CanonicalSourc
         if (isPresent(v)) availableFields.add(k);
       }
     }
-    const missingInputs = rule.requiredFields.filter((field) => !availableFields.has(field));
-    const completeness = rule.requiredFields.length === 0
+    /* A conditional field joins the required set only when a live source of its
+       type is actually present — see the note on SectionRule.conditionalFields. */
+    const matchedTypes = new Set(matched.map((m) => m.sourceType));
+    const applicableFields = [
+      ...rule.requiredFields,
+      ...(rule.conditionalFields ?? [])
+        .filter((c) => matchedTypes.has(c.whenSourceType))
+        .map((c) => c.field),
+    ];
+    const missingInputs = applicableFields.filter((field) => !availableFields.has(field));
+    const completeness = applicableFields.length === 0
       ? 100
-      : Math.round(((rule.requiredFields.length - missingInputs.length) / rule.requiredFields.length) * 100);
+      : Math.round(((applicableFields.length - missingInputs.length) / applicableFields.length) * 100);
 
     const lineage = matched.map((m) => ({
       sourceObjectId: m.id,

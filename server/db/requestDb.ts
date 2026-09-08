@@ -71,7 +71,14 @@ export class MissingRequestDbContextError extends Error {
  * error, never falls back to the shared pool.
  */
 export interface RequestSqlClient {
-  query(text: string, params?: unknown[]): Promise<{ rows: Array<Record<string, unknown>> }>;
+  /* Generic in the row type, with the previous shape as the default, so this
+     is assignable to the raw-query surfaces the services declare (e.g.
+     `DeviceContentClient`). A non-generic `Record<string, unknown>` return is
+     NOT assignable to a generic `<T>` one, which pushed callers toward passing
+     a Drizzle instance instead — whose `.query` is the relational-query builder
+     object, not a function. Every existing call site is unchanged: omitting the
+     parameter still yields `Record<string, unknown>`. */
+  query<T = Record<string, unknown>>(text: string, params?: unknown[]): Promise<{ rows: T[] }>;
 }
 
 export function requestPgClient(req: Request): RequestSqlClient {

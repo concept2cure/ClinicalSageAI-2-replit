@@ -63,7 +63,8 @@ beforeAll(async () => {
       id uuid PRIMARY KEY DEFAULT gen_random_uuid(), organization_id int, project_id text,
       section_key text, section_path text, deterministic_json jsonb, narrative_text text,
       compiled_hash text, stale boolean DEFAULT false, stale_reason text,
-      approval_state text DEFAULT 'draft', updated_at timestamptz DEFAULT now());
+      approval_state text DEFAULT 'draft', approved_version_id uuid,
+      updated_at timestamptz DEFAULT now());
     CREATE UNIQUE INDEX uq_m3_sections ON cmc_module3_sections (organization_id, project_id, section_key);
     CREATE TABLE cmc_section_lineage (
       id uuid PRIMARY KEY DEFAULT gen_random_uuid(), organization_id int,
@@ -164,6 +165,46 @@ describe('CMC Module 3 derivation lineage (AnA build paths)', () => {
     expect(Number((written.rows[0] as any).n)).toBe(0);
   });
 
+  it('a re-compile that CHANGES an approved section returns it to draft; one that changes nothing does not', async () => {
+    /* An approval is a signature over content: the approve route binds a §11
+       signature to a sha256 of deterministic_json at the moment it is signed.
+       The compile upsert replaced that content while keeping
+       approval_state = 'approved' and forcing stale = false, so re-running a
+       build over an approved Module 3 produced a section that read as
+       approved-and-current, passed the export gate, and would have been FILED
+       as signed content nobody signed. */
+    const sourceId = await seedSource();
+    expect((await module3BuildAll({ organizationId: ORG } as any, { projectId: PROJECT })).success).toBe(true);
+    await wrap(
+      `UPDATE cmc_module3_sections SET approval_state = 'approved' WHERE organization_id = $1 AND project_id = $2`,
+      [ORG, PROJECT],
+    );
+
+    // Re-compiling identical sources changes nothing, so the approval stands.
+    expect((await module3BuildAll({ organizationId: ORG } as any, { projectId: PROJECT })).success).toBe(true);
+    const unchanged = await wrap(
+      `SELECT COUNT(*)::int AS n FROM cmc_module3_sections WHERE organization_id = $1 AND approval_state = 'approved'`,
+      [ORG],
+    );
+    expect(Number((unchanged.rows[0] as any).n)).toBeGreaterThan(0);
+
+    // The source changes; the section it feeds is composed differently.
+    await wrap(
+      `UPDATE cmc_source_objects SET source_payload = $1::jsonb, source_hash = $2 WHERE id = $3`,
+      [JSON.stringify({ name: 'API-1', manufacturer: 'A DIFFERENT SITE' }), 'hash-2', sourceId],
+    );
+    expect((await module3BuildAll({ organizationId: ORG } as any, { projectId: PROJECT })).success).toBe(true);
+    const after = await wrap(
+      `SELECT approval_state, approved_version_id, narrative_text FROM cmc_module3_sections
+        WHERE organization_id = $1 AND project_id = $2 AND section_key = '3.2.S.1'`,
+      [ORG, PROJECT],
+    );
+    const row = after.rows[0] as any;
+    expect(row.narrative_text).toContain('A DIFFERENT SITE');
+    expect(row.approval_state).toBe('draft');
+    expect(row.approved_version_id).toBeNull();
+  });
+
   it('a compiled section stores its TABLES, so placement can tell "composes none" from "compiled before tables"', async () => {
     /* Placement reads the tables back out of deterministic_json and refuses a
        row that has no `tables` key — it cannot know whether such a section had
@@ -189,6 +230,53 @@ describe('CMC Module 3 derivation lineage (AnA build paths)', () => {
       expect(Array.isArray(table.headers)).toBe(true);
       expect(Array.isArray(table.rows)).toBe(true);
     }
+  });
+
+  it('a legacy section with no tables key becomes placeable only after a recompile AND a re-approval', async () => {
+    /* The path every deployed project takes through this change, which nothing
+       exercised: a section approved before tables were carried is refused by
+       placement AND by the gate; recompiling gives it tables and, because the
+       content changed, returns it to draft — so the remedy is two steps, not
+       one. The placement skip reason used to name only the first. */
+    const { readSectionTables } = await import('../../cmc/compiled-record');
+    await seedSource();
+    expect((await module3BuildAll({ organizationId: ORG } as any, { projectId: PROJECT })).success).toBe(true);
+
+    // Age the row back to the legacy shape: approved, and no `tables` key.
+    await wrap(
+      `UPDATE cmc_module3_sections
+          SET approval_state = 'approved',
+              deterministic_json = (deterministic_json - 'tables')
+        WHERE organization_id = $1 AND project_id = $2 AND section_key = '3.2.S.1'`,
+      [ORG, PROJECT],
+    );
+    const legacy = await wrap(
+      `SELECT deterministic_json, approval_state FROM cmc_module3_sections
+        WHERE organization_id = $1 AND project_id = $2 AND section_key = '3.2.S.1'`,
+      [ORG, PROJECT],
+    );
+    const legacyRow = legacy.rows[0] as any;
+    const legacyRecord = typeof legacyRow.deterministic_json === 'string'
+      ? JSON.parse(legacyRow.deterministic_json)
+      : legacyRow.deterministic_json;
+    // Unplaceable: the reader cannot tell "composes none" from "compiled before".
+    expect(readSectionTables(legacyRecord)).toBeUndefined();
+    expect(legacyRow.approval_state).toBe('approved');
+
+    // Step one: recompile. It gains tables — and loses the approval, because
+    // the stored record changed.
+    expect((await module3BuildAll({ organizationId: ORG } as any, { projectId: PROJECT })).success).toBe(true);
+    const after = await wrap(
+      `SELECT deterministic_json, approval_state FROM cmc_module3_sections
+        WHERE organization_id = $1 AND project_id = $2 AND section_key = '3.2.S.1'`,
+      [ORG, PROJECT],
+    );
+    const afterRow = after.rows[0] as any;
+    const afterRecord = typeof afterRow.deterministic_json === 'string'
+      ? JSON.parse(afterRow.deterministic_json)
+      : afterRow.deterministic_json;
+    expect(Array.isArray(readSectionTables(afterRecord))).toBe(true);
+    expect(afterRow.approval_state).toBe('draft');
   });
 
   it('module3BuildSection persists lineage for the single compiled section', async () => {

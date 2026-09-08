@@ -30,8 +30,13 @@
  *      the human who accepted it, then. The later saver did not accept it and
  *      is not named as if they had.
  *
- *   A clause that matches neither is not the machine's: the human who saved
- *   it asserts it, exactly as before. The moment a human edits a machine
+ *   3. A WHOLE-CONTENT DRAFT. AnA's own tool writes produce content no human
+ *      has seen, let alone accepted. Every clause left is that machine's
+ *      `machine_draft` — no asserter at all, because there is none. Who asked
+ *      is recorded separately, as createdBy.
+ *
+ *   A clause that matches none of these is not the machine's: the human who
+ *   saved it asserts it, exactly as before. The moment a human edits a machine
  *   clause's words its hash changes, no accepted text contains the new words,
  *   and it becomes theirs — which is the true statement about an edited clause.
  *
@@ -64,11 +69,14 @@ export interface MachineAttributedSpan {
   charEnd: number;
   spanText: string;
   machineAuthorId: string;
-  /** The human who accepted the words. */
-  assertedBy: string;
+  /** The human who accepted the words, when one has. Null means nobody has. */
+  assertedBy?: string | null;
   /** When they did. Absent means "now" (a fresh acceptance). */
   assertedAt?: Date;
   signatureId?: string | null;
+  /** Who asked for the draft, carried forward so a later saver does not
+   *  displace the original requester on a span they did not create. */
+  createdBy?: string | null;
 }
 
 /**
@@ -113,14 +121,19 @@ export function attributeMachineSpans(
   opts: {
     accepted: AcceptedMachineText[];
     live: LiveMachineSpan[];
-    /** This save's actor: the acceptor of any NEWLY matched clause. */
+    /** This save's actor: the acceptor of any NEWLY accepted clause. */
     actor: string;
+    /**
+     * Set when the WHOLE content of this save is a machine author's draft that
+     * nobody has accepted (AnA's own tool writes). Every clause not already
+     * claimed above becomes a `machine_draft` by this author, with no asserter.
+     */
+    machineDraft?: { authorId: string } | null;
   },
 ): MachineAttributedSpan[] {
   const out: MachineAttributedSpan[] = [];
   const claimed = new Set<number>();
 
-  // 1. Carry-forward, one live span to at most one clause, nearest first.
   const byHash = new Map<string, number[]>();
   candidates.forEach((c, i) => {
     const h = hashSpanText(c.text);
@@ -128,9 +141,11 @@ export function attributeMachineSpans(
     if (list) list.push(i);
     else byHash.set(h, [i]);
   });
-  for (const live of [...opts.live].sort((a, b) => a.charStart - b.charStart)) {
+
+  /** Match one live span to the nearest unclaimed clause with the same text. */
+  const carryForward = (live: LiveMachineSpan): boolean => {
     const open = (byHash.get(live.spanTextSha256) ?? []).filter((i) => !claimed.has(i));
-    if (open.length === 0) continue;
+    if (open.length === 0) return false;
     const best = open.reduce((a, b) =>
       Math.abs(candidates[b].charStart - live.charStart) < Math.abs(candidates[a].charStart - live.charStart)
         ? b
@@ -144,12 +159,27 @@ export function attributeMachineSpans(
       spanText: c.text,
       machineAuthorId: live.machineAuthorId,
       assertedBy: live.assertedBy,
-      assertedAt: live.assertedAt,
+      assertedAt: live.assertedAt ?? undefined,
       signatureId: live.signatureId,
+      createdBy: live.createdBy,
     });
+    return true;
+  };
+
+  const inOffsetOrder = [...opts.live].sort((a, b) => a.charStart - b.charStart);
+
+  // 1. Already ACCEPTED spans carry forward first, so a fresh acceptance in
+  //    this same save can never displace the person who accepted them
+  //    originally. Acceptance is theirs; it does not transfer on a later save.
+  for (const live of inOffsetOrder) {
+    if (live.provenanceKind === 'accepted_machine_draft') carryForward(live);
   }
 
-  // 2. Newly accepted text, occurrence-bounded per (author, clause text).
+  // 2. Newly accepted text, occurrence-bounded per (author, clause text). This
+  //    runs BEFORE unaccepted carry-forward on purpose: accepting a clause that
+  //    was an unaccepted machine_draft is exactly the transition that turns it
+  //    into an accepted one, and it would be missed if the draft had already
+  //    claimed the clause.
   const haystacks = opts.accepted
     .filter((a) => typeof a?.authorId === 'string' && a.authorId.length > 0 && typeof a?.text === 'string')
     .map((a) => ({ authorId: a.authorId, norm: comparable(a.text) }))
@@ -179,6 +209,31 @@ export function attributeMachineSpans(
         });
         break;
       }
+    });
+  }
+
+  // 3. Still-UNACCEPTED spans carry forward as unaccepted. A human saving the
+  //    document is not a human accepting each clause of it, so nothing here
+  //    gains an asserter.
+  for (const live of inOffsetOrder) {
+    if (live.provenanceKind === 'machine_draft') carryForward(live);
+  }
+
+  // 4. A whole-content machine draft claims everything left. No asserter: the
+  //    actor ASKED for this draft, which is recorded as createdBy, and is not
+  //    the same claim as having stood behind its words.
+  if (opts.machineDraft?.authorId) {
+    candidates.forEach((c, i) => {
+      if (claimed.has(i)) return;
+      claimed.add(i);
+      out.push({
+        charStart: c.charStart,
+        charEnd: c.charEnd,
+        spanText: c.text,
+        machineAuthorId: opts.machineDraft!.authorId,
+        assertedBy: null,
+        createdBy: opts.actor,
+      });
     });
   }
 

@@ -27,7 +27,7 @@ import { buildCanonicalGovernedState } from '../governed-ana-execution.js';
 /* One definition of "complete" — shared with the section-approve route, the
    section listing and the board, so an approval can never accept what this
    gate will refuse. */
-import { compiledRecordIsComplete, parsedDeterministicJson } from './compiled-record';
+import { compiledRecordIsComplete, parsedDeterministicJson, readSectionTables } from './compiled-record';
 
 export interface Module3GovernedState {
   totalSections: number;
@@ -42,6 +42,17 @@ export interface Module3GovernedState {
    * `missingInputs`, both read from the section's own compiled record.
    */
   incompleteApprovedSections: string[];
+  /**
+   * Approved sections whose stored record carries no `tables` key at all —
+   * compiled before the composer's tables were persisted. Placement refuses
+   * these (it cannot tell a section that composes none from one compiled
+   * before they were carried, and will not file a narrative that says "see the
+   * table" over a document that may be missing it), and that refusal used to
+   * live ONLY in placement: readiness answered exportReady:true and the gate
+   * answered 200 for a project whose placement then filed nothing at all. One
+   * gate, so the preview and the operation agree.
+   */
+  unplaceableApprovedSections: string[];
   canonicalGovernedState: Record<string, unknown> | null;
   /**
    * Did the governed-decision fabric actually produce a verdict? False when the
@@ -129,6 +140,14 @@ export async function evaluateModule3GovernedState(params: {
     .filter((s: any) => s.approval_state === 'approved')
     .filter((s: any) => !compiledRecordIsComplete(parsedDeterministicJson(s)))
     .map((s: any) => String(s.section_key ?? s.sectionKey ?? 'unknown section'));
+  /* The same read placement makes, made here so the gate refuses what
+     placement would refuse. Deliberately NOT `tables.length === 0`: an empty
+     array is a real "this section composes no tables" and places normally; the
+     absent key is the legacy record. */
+  const unplaceableApprovedSections = sections
+    .filter((s: any) => s.approval_state === 'approved')
+    .filter((s: any) => readSectionTables(parsedDeterministicJson(s)) === undefined)
+    .map((s: any) => String(s.section_key ?? s.sectionKey ?? 'unknown section'));
   // Derived, never asserted: with no sections there is no provenance chain to
   // be complete, and a section with no lineage row breaks it.
   const provenanceComplete = totalSections > 0 && sectionsWithoutProvenance === 0;
@@ -192,6 +211,7 @@ export async function evaluateModule3GovernedState(params: {
       openCriticalContradictions: openCritical,
       sectionsWithoutProvenance,
       incompleteApprovedSections,
+      unplaceableApprovedSections,
       canonicalGovernedState,
       governedStateEvaluated,
       fabricBlocks,
@@ -226,7 +246,8 @@ export async function evaluateFinalExportGate(params: {
     data.governedDecisionsBlock ||
     data.staleSections > 0 ||
     data.sectionsWithoutProvenance > 0 ||
-    data.incompleteApprovedSections.length > 0
+    data.incompleteApprovedSections.length > 0 ||
+    data.unplaceableApprovedSections.length > 0
   ) {
     const state = data.canonicalGovernedState as any;
     const incomplete = data.incompleteApprovedSections;
@@ -235,6 +256,9 @@ export async function evaluateFinalExportGate(params: {
         ? `${incomplete.length} approved section(s) are not complete and cannot be exported: ` +
           `${incomplete.join(', ')}. An approval is a claim about content that was reviewed; ` +
           `the compiler records these as missing required inputs. Record the inputs, recompile and re-approve.`
+        : data.unplaceableApprovedSections.length > 0
+        ? `${data.unplaceableApprovedSections.length} approved section(s) were compiled before section tables were carried ` +
+          `and cannot be filed: ${data.unplaceableApprovedSections.join(', ')}. Recompile them, then re-approve.`
         : data.staleSections > 0
         ? `${data.staleSections} section(s) went stale after approval and must be re-approved before final export`
         : data.sectionsWithoutProvenance > 0

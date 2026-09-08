@@ -53,13 +53,20 @@ vi.mock('../../server/services/provenance/artifact-provenance', () => ({
 
 /*
  * A self-referential chain, so every drizzle builder shape this router uses
- * lands on the same `limit`. The previous literal offered only
- * `.from().where().limit()`; `resolveProgramIdent` joins the sponsor
- * organization — `.from().leftJoin().where().limit()` — so `.leftJoin` was
- * undefined, the TypeError was swallowed by that function's own `catch`, and
- * EVERY program-ident case below resolved to null and 404'd. Five assertions,
+ * lands on the same `limit`.
+ *
+ * The program lookup reads the sponsor from the program's ORGANISATION, so the
+ * chain carries a leftJoin between from() and where(). The previous literal
+ * offered only `.from().where().limit()`, so `.leftJoin` was undefined, the
+ * TypeError was swallowed by `resolveProgramIdent`'s own `catch`, and EVERY
+ * program-ident case below resolved to null and 404'd — five assertions,
  * including the fail-closed audit one, were failing against a mock defect
- * rather than the route.
+ * rather than against the route.
+ *
+ * Self-referential rather than a shape-by-shape literal (the other half of this
+ * merge) because the failure being repaired is a mock that did not offer a link
+ * the builder uses. Enumerating the shapes reproduces that risk every time the
+ * query grows a clause; returning the same chain from every link cannot.
  */
 fakeDb.select = vi.fn(() => {
   const chain: any = {
