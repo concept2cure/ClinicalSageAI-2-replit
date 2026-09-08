@@ -700,13 +700,52 @@ export function templateIds(): string[] {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 /**
+ * What a section nobody wrote says.
+ *
+ * `defaultText` used to be emitted as ordinary unmarked body prose, while a
+ * section WITHOUT one was bracketed as an instruction — so the sections that
+ * read as authored fact were exactly the ones nobody authored. Several of those
+ * defaults are positive regulatory declarations:
+ *
+ *   fda-510k   5.3  "Not applicable — device does not contain software."
+ *              5.4  "Not applicable — device is not electrically powered."
+ *              5.5  "Not applicable — device is supplied non-sterile."
+ *              7    "Clinical data is not required for this submission…"
+ *   cer-eu-mdr 3.3  "No clinical investigations were conducted for this device."
+ *              6    "The clinical evaluation was performed by qualified personnel…"
+ *   csr-ich-e3 8.3  "No deaths occurred during the study."
+ *
+ * Nothing in this product ever asked whether the device contains software, is
+ * mains-powered or ships sterile, whether clinical data are required, or who
+ * the evaluators were. The absence of an answer became the answer, addressed to
+ * FDA or a Notified Body — and for a software-driven, mains-powered, sterile
+ * device the same document asserted all three of the opposite.
+ *
+ * The wording is still offered, because a sensible default saves an author
+ * work; it is offered as a PROPOSAL they have to accept. Everything unwritten
+ * now starts with '[' so a reader scanning the DOCX can find every section
+ * still owed, and nothing unwritten can be mistaken for prose someone stands
+ * behind. This is the rule the rest of the repo already keeps: estar-mapper
+ * treats an unanswered device flag as a gap ("a question nobody answered is not
+ * a section nobody needs"), and gspr-postmarket's checkContentField treats
+ * scaffold text as ABSENT so it cannot pass a gate.
+ */
+function unwrittenSection(bp: TemplateSectionBlueprint): string {
+  if (bp.defaultText) {
+    return `[NOT YET AUTHORED — suggested wording, confirm before filing: ${bp.defaultText}]`;
+  }
+  return bp.required ? `[${bp.instruction}]` : `[Optional — ${bp.instruction}]`;
+}
+
+/**
  * Merge LLM-generated content with a template blueprint.
  *
  * The LLM provides partial sections (by sectionCode or title).
  * This function:
  *   1. Walks the template blueprint (including subsections)
  *   2. Matches LLM sections by sectionCode or title
- *   3. Falls back to instruction text / defaultText for missing required sections
+ *   3. Marks every section the caller did not supply as unwritten — see
+ *      {@link unwrittenSection}; a default is offered as a proposal, never as prose
  *   4. Returns a fully populated DocxInput ready for generateRegulatory()
  */
 export function mergeWithTemplate(
@@ -740,13 +779,7 @@ export function mergeWithTemplate(
     const section: DocxSection = {
       title: bp.title,
       sectionCode: bp.sectionCode,
-      paragraphs: llm?.paragraphs?.length
-        ? llm.paragraphs
-        : bp.defaultText
-          ? [bp.defaultText]
-          : bp.required
-            ? [`[${bp.instruction}]`]
-            : [`[Optional — ${bp.instruction}]`],
+      paragraphs: llm?.paragraphs?.length ? llm.paragraphs : [unwrittenSection(bp)],
       tables: llm?.tables,
       pageBreak,
     };

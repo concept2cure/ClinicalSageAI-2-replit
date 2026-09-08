@@ -25,7 +25,8 @@ import '../styles/project-home-v2.css';
 
 /* ── Display types -- mirror the /completeness read-model shape. The backend
    never fabricates a per-item evidence `flag`, an owner, a version or a
-   free-text note, and `summary.flags` is always 0 (no such field is stored);
+   free-text note, and `summary.flags` counts the items that carry one (it was
+   the literal 0 until 2026-09-08, a tile whose number no check produced);
    `program` is null until a device is recorded. All rendered null-safe. ── */
 
 type IvdItemStatus = 'complete' | 'review' | 'draft' | 'not_started';
@@ -99,14 +100,23 @@ export function IvdCompleteness({ onAsk, segment }: SurfaceViewProps) {
   const families = data?.families ?? [];
   const allItems = families.reduce<IvdItem[]>((a, f) => a.concat(f.items ?? []), []);
   const overall = data?.overall ?? 0;
-  const missing = allItems.filter(i => (i.pct || 0) === 0);
-  const inflight = allItems.filter(i => (i.pct || 0) > 0 && (i.pct || 0) < 100);
-  const done = allItems.filter(i => (i.pct || 0) >= 100);
+  /* COUNTED OVER FAMILIES, THE SAME UNIT AS `overall`. These were counted over
+     allItems — the evidence that happens to EXIST — so a file holding one Annex
+     VIII classification and nothing else showed "1/1 Requirements evidenced --
+     0 not started". The percentage is now a mean over the seven IVDR families,
+     and a tile counting a different population beside it would restate the same
+     falsehood the percentage no longer makes. A family holding nothing is a
+     requirement not started, which is the fact a reader needs. */
+  const missingFamilies = families.filter(f => (f.pct || 0) === 0);
+  const inflightFamilies = families.filter(f => (f.pct || 0) > 0 && (f.pct || 0) < 100);
+  const doneFamilies = families.filter(f => (f.pct || 0) >= 100);
+  /* Item-level still, and correctly: a flag is raised against a piece of
+     evidence, not against a family. */
   const flags = allItems.filter(i => i.flag);
 
-  const blocker = missing.length
-    ? 'The gate to a CE certificate is the ' + (missing.find(m => /PER|performance evaluation/i.test(m.title)) ? 'Performance Evaluation Report' : missing[0].title) + ' -- ' + missing.length + ' requirement' + (missing.length === 1 ? '' : 's') + ' not yet started.'
-    : inflight.length ? inflight.length + ' requirements are still in progress before the technical file is Notified-Body ready.' : 'Every IVDR requirement is evidenced.';
+  const blocker = missingFamilies.length
+    ? 'The gate to a CE certificate is the ' + (missingFamilies.find(m => /PER|performance evaluation/i.test(m.label)) ? 'Performance Evaluation Report' : missingFamilies[0].label) + ' -- ' + missingFamilies.length + ' requirement' + (missingFamilies.length === 1 ? '' : 's') + ' not yet started.'
+    : inflightFamilies.length ? inflightFamilies.length + ' requirements are still in progress before the technical file is Notified-Body ready.' : 'Every IVDR requirement is evidenced.';
 
   /* What AnA can see of this screen. Published BEFORE the wrong-segment early
      return below — that return is a legitimate screen state ("this board is
@@ -141,8 +151,8 @@ export function IvdCompleteness({ onAsk, segment }: SurfaceViewProps) {
     return {
       summary:
         `IVDR technical file for ${data.program || 'this IVD program'} (${data.spine}): ` +
-        `${overall}% complete over ${allItems.length} requirement(s) — ${done.length} evidenced, ` +
-        `${inflight.length} in progress, ${missing.length} not started, ${flags.length} flagged. ${blocker}`,
+        `${overall}% complete over ${families.length} IVDR requirement(s) — ${doneFamilies.length} evidenced, ` +
+        `${inflightFamilies.length} in progress, ${missingFamilies.length} not started, ${flags.length} flagged. ${blocker}`,
       facts: {
         program: data.program,
         spine: data.spine,
@@ -150,8 +160,11 @@ export function IvdCompleteness({ onAsk, segment }: SurfaceViewProps) {
         overallPercent: overall,
         summary: data.summary,
         families: families.map((f) => ({ id: f.id, label: f.label, ref: f.ref, percent: f.pct, requirements: (f.items ?? []).length })),
-        notStarted: missing.slice(0, 12).map((i) => ({ code: i.code, title: i.title, ref: i.ref })),
-        inProgress: inflight.slice(0, 12).map((i) => ({ code: i.code, title: i.title, ref: i.ref, percent: i.pct })),
+        /* Families, matching the tiles and the headline. A family with no
+           records has no ITEMS to list, so an item-level list here reported
+           nothing not-started for exactly the families that hold nothing. */
+        notStarted: missingFamilies.slice(0, 12).map((f) => ({ code: f.id, title: f.label, ref: f.ref })),
+        inProgress: inflightFamilies.slice(0, 12).map((f) => ({ code: f.id, title: f.label, ref: f.ref, percent: f.pct })),
         expandedFamilies: open,
       },
       availableActions: [
@@ -159,7 +172,7 @@ export function IvdCompleteness({ onAsk, segment }: SurfaceViewProps) {
         'Read which requirements are not started, in progress or evidenced',
       ],
     };
-  }, [seg, loading, error, data, overall, allItems.length, done.length, inflight, missing, flags.length, blocker, families, open]);
+  }, [seg, loading, error, data, overall, doneFamilies.length, inflightFamilies.length, missingFamilies.length, flags.length, blocker, families, open]);
   usePublishSurfaceContext('ivd-completeness', anaContext);
 
   /* wrong-segment guard: this view is IVD-only */
@@ -208,14 +221,14 @@ export function IvdCompleteness({ onAsk, segment }: SurfaceViewProps) {
             <div className="ivd-lead-ic">{I.sparkles}</div>
             <div>
               <p className="ivd-lead-h">Your IVDR technical file is {overall}% complete. {blocker}</p>
-              <p className="ivd-lead-b">These are IVDR requirements — General Safety &amp; Performance (Annex I), the Performance Evaluation Report (Annex XIII), analytical and clinical performance, scientific validity and post-market follow-up — not the 510(k)/device checklist. {done.length} of {allItems.length} evidenced — {inflight.length} in progress — {missing.length} not started{flags.length ? ' — ' + flags.length + ' open flag' + (flags.length === 1 ? '' : 's') : ''}.</p>
+              <p className="ivd-lead-b">These are IVDR requirements — General Safety &amp; Performance (Annex I), the Performance Evaluation Report (Annex XIII), analytical and clinical performance, scientific validity and post-market follow-up — not the 510(k)/device checklist. {doneFamilies.length} of {families.length} evidenced — {inflightFamilies.length} in progress — {missingFamilies.length} not started{flags.length ? ' — ' + flags.length + ' open flag' + (flags.length === 1 ? '' : 's') : ''}.</p>
             </div>
           </div>
 
           <div className="ivd-stats">
             <div className="ivd-stat"><span className="ivd-stat-n">{overall}%</span><span className="ivd-stat-l">Technical file complete</span></div>
-            <div className="ivd-stat"><span className="ivd-stat-n">{done.length}<span className="ivd-stat-d">/{allItems.length}</span></span><span className="ivd-stat-l">Requirements evidenced</span></div>
-            <div className="ivd-stat"><span className="ivd-stat-n ivd-warn">{missing.length}</span><span className="ivd-stat-l">Not yet started</span></div>
+            <div className="ivd-stat"><span className="ivd-stat-n">{doneFamilies.length}<span className="ivd-stat-d">/{families.length}</span></span><span className="ivd-stat-l">Requirements evidenced</span></div>
+            <div className="ivd-stat"><span className="ivd-stat-n ivd-warn">{missingFamilies.length}</span><span className="ivd-stat-l">Not yet started</span></div>
             <div className="ivd-stat"><span className="ivd-stat-n">{flags.length}</span><span className="ivd-stat-l">Open evidence flags</span></div>
           </div>
 
