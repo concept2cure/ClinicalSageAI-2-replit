@@ -71,16 +71,63 @@ export function attachmentManifestToken(attachmentPath: string, chapter: string)
 
 export type ResolvedAttachmentSlot =
   | { ok: true; chapter: string; description: string | null }
-  | { ok: false; reason: 'no_chapter' | 'ambiguous_chapter'; message: string };
+  | { ok: false; reason: 'no_chapter' | 'ambiguous_chapter' | 'undecided_condition'; message: string };
+
+/**
+ * A slot whose chapter the template chooses from a value IN THE DOCUMENT.
+ *
+ * Exactly one control per template, measured on both: the User Fee Form. Its
+ * handler, verbatim (comments stripped, XML escapes as they appear):
+ *
+ *     d[AttachmentIndex].description = "Administrative Documentation | User Fee Form";
+ *     if (ApplicationType.ATRadioButton100.rawValue == 2) {
+ *       Verification.AttachmentManifest.rawValue = … + "|/CHAPTER 1/CH1.04/" + "&gt;&gt;";
+ *     }
+ *     else {
+ *       Verification.AttachmentManifest.rawValue = … + "|/CHAPTER 1/CH1.09/" + "&gt;&gt;";
+ *     }
+ *
+ * so `2` is Health Canada and anything else is FDA. Both templates ship
+ * `root.ApplicationType.ATRadioButton100 = "1"`, which means the chapter is not
+ * a guess at all — it is the same computation FDA's own script performs on the
+ * same input, and reading it is how you get the answer the applicant's Acrobat
+ * would.
+ *
+ * TRANSCRIBED, AND ASSERTED against the templates: a test requires that every
+ * slot with more than one chapter has an entry here and that the entry's
+ * chapters are exactly the slot's. A future template that makes another control
+ * conditional therefore fails the test rather than silently resolving to
+ * whichever branch happens to appear first — which is precisely the defect this
+ * replaces.
+ */
+export const CONDITIONAL_ATTACHMENT_SLOTS: Record<
+  string,
+  { decidedBy: string; chapterWhen: Record<string, string>; otherwise: string; note: string }
+> = {
+  'root.AdministrativeDocumentation.ADAddAttachment910': {
+    decidedBy: 'root.ApplicationType.ATRadioButton100',
+    chapterWhen: { '2': '/CHAPTER 1/CH1.04/' },
+    otherwise: '/CHAPTER 1/CH1.09/',
+    note:
+      'if (ApplicationType.ATRadioButton100.rawValue == 2) → /CHAPTER 1/CH1.04/ (Health Canada), ' +
+      'else → /CHAPTER 1/CH1.09/ (FDA). Both templates ship the value "1".',
+  },
+};
 
 /**
  * The one chapter a slot routes to, or a refusal that says why there isn't one.
  *
- * A caller must never pick from `chapters` itself: the whole point of carrying
- * more than one is that choosing between them needs a fact this platform does
- * not hold.
+ * A caller must never pick from `chapters` itself. When a slot has more than
+ * one, the template decides between them from a value in the document, and
+ * `values` is how that value is supplied — read it with `readXfaDatasetsValues`
+ * from the same bytes being filled. Without it, the answer is refused rather
+ * than assumed: writing the wrong branch files a US MDUFA cover sheet under
+ * Health Canada's chapter, which is worse than not filing it.
  */
-export function resolveAttachmentSlot(slot: EstarAttachmentSlot): ResolvedAttachmentSlot {
+export function resolveAttachmentSlot(
+  slot: EstarAttachmentSlot,
+  values?: Record<string, string | null>,
+): ResolvedAttachmentSlot {
   if (slot.chapters.length === 1) {
     return { ok: true, chapter: slot.chapters[0], description: slot.description };
   }
@@ -91,14 +138,30 @@ export function resolveAttachmentSlot(slot: EstarAttachmentSlot): ResolvedAttach
       message: `${slot.somPath} writes no chapter, so nothing attached there would be routed.`,
     };
   }
-  return {
-    ok: false,
-    reason: 'ambiguous_chapter',
-    message:
-      `${slot.somPath} writes ${slot.chapters.join(' or ')} depending on ` +
-      'ApplicationType.ATRadioButton100 (2 = Health Canada, otherwise FDA), which this ' +
-      'platform does not write. Choosing one would file the document under the wrong agency.',
-  };
+
+  const conditional = CONDITIONAL_ATTACHMENT_SLOTS[slot.somPath];
+  if (!conditional) {
+    return {
+      ok: false,
+      reason: 'ambiguous_chapter',
+      message:
+        `${slot.somPath} writes ${slot.chapters.join(' or ')} and nothing here records what ` +
+        'chooses between them. Read the template and add it rather than picking a branch.',
+    };
+  }
+
+  const decided = values ? values[conditional.decidedBy] : undefined;
+  if (decided === undefined || decided === null || decided === '') {
+    return {
+      ok: false,
+      reason: 'undecided_condition',
+      message:
+        `${slot.somPath} routes by ${conditional.decidedBy}, which was not supplied. ` +
+        conditional.note,
+    };
+  }
+  const chapter = conditional.chapterWhen[decided] ?? conditional.otherwise;
+  return { ok: true, chapter, description: slot.description };
 }
 
 /**
