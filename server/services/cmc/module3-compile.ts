@@ -156,6 +156,19 @@ export async function persistComposedSection(
   opts: PersistOptions,
 ): Promise<string> {
   const resetApproval = opts.event === 'refreshed';
+  /* An approval is a signature over CONTENT. The approve route binds a §11
+     signature to a sha256 of the section's deterministic_json at the moment it
+     was signed; a compile that replaces that content leaves the signature
+     bound to a record that no longer exists, and this upsert kept
+     approval_state = 'approved' and forced stale = false while doing it — so
+     re-running a build over an approved Module 3 produced a section that read
+     as approved-and-current, passed the export gate, and would have been FILED
+     as signed content nobody signed.
+     So: a compile that CHANGES the section returns it to draft, exactly as a
+     refresh does, and one that changes nothing leaves the approval alone. The
+     comparison is on the stored record and narrative rather than
+     compiled_hash, which is a hash of the structured payload only and would
+     miss a narrative that changed under it. */
   const upsert = await client.query(
     `INSERT INTO cmc_module3_sections (organization_id, project_id, section_key, section_path, deterministic_json, narrative_text, compiled_hash, stale, stale_reason, approval_state)
      VALUES ($1,$2,$3,$4,$5::jsonb,$6,$7,false,null,'draft')
@@ -165,7 +178,16 @@ export async function persistComposedSection(
                    stale = false,
                    stale_reason = null,
                    narrative_text = excluded.narrative_text,
-                   ${resetApproval ? "approval_state = 'draft', approved_version_id = null," : ''}
+                   ${resetApproval
+                     ? "approval_state = 'draft', approved_version_id = null,"
+                     : `approval_state = CASE
+                            WHEN cmc_module3_sections.deterministic_json IS DISTINCT FROM excluded.deterministic_json
+                              OR cmc_module3_sections.narrative_text IS DISTINCT FROM excluded.narrative_text
+                            THEN 'draft' ELSE cmc_module3_sections.approval_state END,
+                        approved_version_id = CASE
+                            WHEN cmc_module3_sections.deterministic_json IS DISTINCT FROM excluded.deterministic_json
+                              OR cmc_module3_sections.narrative_text IS DISTINCT FROM excluded.narrative_text
+                            THEN NULL ELSE cmc_module3_sections.approved_version_id END,`}
                    updated_at = now()
      RETURNING id`,
     [

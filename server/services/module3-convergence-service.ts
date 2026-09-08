@@ -16,6 +16,7 @@ import {
   CMC_SOURCE_TYPES,
   composeModule3FromCanonicalSources,
   MODULE3_SECTION_RULES,
+  renderComposedSectionMarkdown,
   tablesToMarkdown,
   CmcSourceType,
   type CanonicalSource,
@@ -542,11 +543,16 @@ export async function bridgeCompileToArtifact(
 
     const sectionLabel = SECTION_LABELS[sectionKey] || sectionKey;
 
-    // Build full document content: narrative prose + rendered tables
-    const tablesMarkdown = compiledSection.tables && compiledSection.tables.length > 0
-      ? '\n\n' + tablesToMarkdown(compiledSection.tables)
-      : '';
-    const fullContent = `## ${sectionLabel}\n\n${compiledSection.narrativeDraft}${tablesMarkdown}`;
+    /* The ONE renderer, which this function's own contract names: the governed
+       artifact and the leaf placement file the same section, and a second copy
+       of these two lines is how they came to differ — placement trimmed the
+       narrative and this did not, so the same compile produced two different
+       sha256s for the same section. */
+    const fullContent = renderComposedSectionMarkdown(
+      sectionLabel,
+      compiledSection.narrativeDraft,
+      compiledSection.tables,
+    );
 
     const contentHash = createSourceHash({ narrative: fullContent, sectionKey });
     const sourceObjectIds = compiledSection.lineage.map((l) => l.sourceObjectId);

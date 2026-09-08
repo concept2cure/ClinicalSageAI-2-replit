@@ -25,7 +25,7 @@ import {
   type GeneratedTable,
   type CmcSourceType,
 } from './module3Composer.js';
-import { HUMAN_OR_ANIMAL_ORIGINS, isReviewRequiredOrigin } from '../../shared/cmc/material-scope';
+import { HUMAN_OR_ANIMAL_ORIGINS, isHumanOrAnimalOrigin, isReviewRequiredOrigin } from '../../shared/cmc/material-scope';
 
 export type RegionCode = 'US' | 'EU' | 'JP' | 'CA';
 
@@ -120,9 +120,26 @@ const APPENDIX_RULES: AppendixRule[] = [
           `\n\nPrimary container closure equipment and packaging components used during manufacture and storage are ` +
           (container ? `${container}` + (closure ? ` with ${closure}` : '') + `. ` : `not yet specified. `) +
           (justification ? `Suitability of the equipment and packaging is supported by: ${justification}. ` : '') +
-          `\n\nFacility cleaning, equipment qualification, and changeover procedures follow site SOPs and current GMP requirements. ` +
-          `Cross-contamination controls, environmental monitoring, and utilities (HVAC, water, compressed gases) ` +
-          `meet the standards applicable to the dosage form.`,
+          /* This paragraph used to ASSERT, unconditionally and over nothing:
+             that cleaning, equipment qualification and changeover procedures
+             follow site SOPs and current GMP, and that cross-contamination
+             controls, environmental monitoring and utilities meet the
+             applicable standards. None of it is read from any field — the
+             registers hold no cleaning record, no qualification protocol and
+             no EM data — and the section carried no completeness marker, so a
+             REQUIRED appendix scored 100% while its own summary said the
+             manufacturing site was not yet recorded. A filed §3.2.A.1 is a
+             representation to an agency about a facility. It now states what is
+             recorded, and says plainly that the rest is not established here. */
+          `\n\nFacility cleaning, equipment qualification, changeover, cross-contamination controls, environmental ` +
+          `monitoring and utilities (HVAC, water, compressed gases) are governed by the site's own quality system ` +
+          `and are evidenced by its GMP documentation, which this register does not hold; this section therefore ` +
+          `makes no statement about their content or their compliance status. ` +
+          (mfgSite || container || processDesc || route
+            ? ''
+            : `\n\nNo manufacturing site, process or container closure is recorded for this product, so the ` +
+              `facilities and equipment used in its manufacture are NOT ESTABLISHED by this section. This is not a ` +
+              `statement that none is used: it is a statement that the question has not been answered.`),
         tables,
       };
     },
@@ -262,6 +279,7 @@ const APPENDIX_RULES: AppendixRule[] = [
             return Array.isArray(rows) ? rows.filter((c) => c && typeof c === 'object') : [];
           });
       const nameKey = (c: any) => String(c?.component || c?.name || c?.materialName || '').trim().toLowerCase();
+      const textOfField = (...vals: unknown[]) => vals.map((v) => String(v ?? '').trim()).find(Boolean) || '';
       const excipientRegisterRows = m
         .filter((s) => s.sourceType === 'excipient')
         .map((s) => (s.sourcePayload || {}) as Record<string, any>)
@@ -272,50 +290,109 @@ const APPENDIX_RULES: AppendixRule[] = [
           origin: p.origin,
           tseCertification: p.tseCertificate,
         }));
-      const excipientByName = new Map<string, (typeof excipientRegisterRows)[number]>();
+      /* EVERY register row for a material name, not the first: two supplier
+         rows for one excipient are two certificates to hold, and keeping only
+         the first let the certified one speak for the uncertified one. */
+      const registerRowsByName = new Map<string, typeof excipientRegisterRows>();
       for (const row of excipientRegisterRows) {
         const key = nameKey(row);
-        if (key && !excipientByName.has(key)) excipientByName.set(key, row);
+        if (!key) continue;
+        const list = registerRowsByName.get(key) ?? [];
+        list.push(row);
+        registerRowsByName.set(key, list);
       }
-      /* 2026-09-07: a formulation (or drug product) component is joined to the
-         excipient register row of the same material name. The TSE/BSE
-         certificate lives on the REGISTER row — the formulation row records the
-         component's quantity and function, not its supplier's CEP — so a bovine
-         gelatin capsule shell whose certificate was on file in the material
-         register was still reported here as "NOT RECORDED", and the section
-         compiled at 0% with a certificate it had in hand. The join fills the
-         certificate, and the origin and role when the formulation row left them
-         blank, from the matching register row; a register row that matched is
-         not emitted a second time, so the component counts the section prints
-         are counts of materials, not of the rows that describe them. */
-      const matchedRegisterNames = new Set<string>();
-      const joinedComponents = [
-        /* Read from the DRUG PRODUCT source only, not through a first-match
-           `valArr` over every matched source: that re-read the formulation
-           record's own array — formulation_record is one of this section's
-           source types — and every excipient count the section printed was
-           doubled. */
-        ...componentRows('formulation_record'),
-        ...componentRows('drug_product'),
-      ].map((c: any) => {
-        const reg = excipientByName.get(nameKey(c));
-        if (!reg) return c;
-        matchedRegisterNames.add(nameKey(c));
-        const merged: Record<string, any> = { ...c };
-        if (!String(c.role || c.function || '').trim() && String(reg.role || '').trim()) merged.role = reg.role;
-        if (!String(c.origin || c.source || '').trim() && String(reg.origin || '').trim()) merged.origin = reg.origin;
-        if (
-          !String(c.tseCertification || c.certification || '').trim() &&
-          String(reg.tseCertification || '').trim()
-        ) {
-          merged.tseCertification = reg.tseCertification;
+
+      /**
+       * 2026-09-07: ONE ROW PER MATERIAL, and every fact about it read the
+       * fail-closed way.
+       *
+       * The formulation (or drug product) records a component's quantity and
+       * function; the excipient register records its origin and its supplier's
+       * TSE/BSE certificate. Read separately, a bovine gelatin capsule shell
+       * whose CEP was on file was reported "NOT RECORDED" and the section
+       * compiled at 0% with a certificate in hand. Joining them by material
+       * name fixes that, but only if each fact is taken the safe way round:
+       *
+       *  - ORIGIN. The register's origin does NOT merely fill a blank. A
+       *    formulation row typed "plant" over a material the register records
+       *    as bovine used to mask it completely — the classification read the
+       *    component's own field and nothing else — and the section issued the
+       *    animal-free all-clear with "bovine" sitting unread two rows away.
+       *    Both origins travel; ANY recorded human/animal origin puts the
+       *    material in this section, and a disagreement is printed, not
+       *    resolved.
+       *  - CERTIFICATE. Inherited only when EVERY register row for the name
+       *    carries one. One uncertified supplier row is one uncertified
+       *    material.
+       *  - IDENTITY. A material named by several formulation versions, or by
+         both the formulation and the drug product's own composition array, is
+       *    ONE excipient. It was counted once per row, so "a certificate is
+       *    recorded for 2 of 2" could be one material counted twice.
+       */
+      const byMaterial = new Map<string, Record<string, any>>();
+      const addComponent = (c: any) => {
+        const key = nameKey(c);
+        if (!key) return;
+        const existing = byMaterial.get(key);
+        if (!existing) {
+          byMaterial.set(key, { ...c });
+          return;
         }
-        return merged;
-      });
-      const components = [
-        ...joinedComponents,
-        ...excipientRegisterRows.filter((row) => !matchedRegisterNames.has(nameKey(row))),
-      ];
+        /* A second row for the same material adds what it knows and never
+           overwrites what is already recorded — except that a human/animal
+           origin always wins over one that is not. */
+        for (const [field, aliases] of [['component', ['component', 'name', 'materialName']], ['role', ['role', 'function']], ['tseCertification', ['tseCertification', 'certification']]] as const) {
+          if (!textOfField(...aliases.map((a) => existing[a])) ) {
+            const v = textOfField(...aliases.map((a) => c[a]));
+            if (v) existing[field] = v;
+          }
+        }
+        const existingOrigin = textOfField(existing.origin, existing.source);
+        const incomingOrigin = textOfField(c.origin, c.source);
+        if (incomingOrigin && (!existingOrigin || (isHumanOrAnimalOrigin(incomingOrigin) && !isHumanOrAnimalOrigin(existingOrigin)))) {
+          existing.origin = incomingOrigin;
+        }
+      };
+      /* Read the drug product's composition array from the DRUG PRODUCT source
+         only, not through a first-match `valArr` over every matched source:
+         that re-read the formulation record's own array — formulation_record is
+         one of this section's source types — and every excipient count the
+         section printed was doubled. */
+      for (const c of [...componentRows('formulation_record'), ...componentRows('drug_product')]) addComponent(c);
+
+      for (const [key, entry] of byMaterial) {
+        const rows = registerRowsByName.get(key);
+        if (!rows || rows.length === 0) continue;
+        if (!textOfField(entry.role, entry.function)) {
+          const role = textOfField(...rows.map((r) => r.role));
+          if (role) entry.role = role;
+        }
+        /* The register's own origin, kept BESIDE the component's rather than
+           behind it — see the note above. */
+        const registerOrigin = rows.map((r) => textOfField(r.origin)).find((o) => o && isHumanOrAnimalOrigin(o))
+          || textOfField(...rows.map((r) => r.origin));
+        if (registerOrigin) entry.registerOrigin = registerOrigin;
+        const certificates = rows.map((r) => textOfField(r.tseCertification));
+        entry.uncertifiedRegisterRows = certificates.filter((c) => !c).length;
+        if (!textOfField(entry.tseCertification, entry.certification) && entry.uncertifiedRegisterRows === 0) {
+          entry.tseCertification = certificates[0];
+        }
+      }
+      /* A register excipient no formulation names is still an excipient of this
+         product's record, and is reported on its own — under the same rules. */
+      for (const [key, rows] of registerRowsByName) {
+        if (byMaterial.has(key)) continue;
+        const certificates = rows.map((r) => textOfField(r.tseCertification));
+        byMaterial.set(key, {
+          component: textOfField(...rows.map((r) => r.component)),
+          role: textOfField(...rows.map((r) => r.role)),
+          origin: rows.map((r) => textOfField(r.origin)).find((o) => o && isHumanOrAnimalOrigin(o))
+            || textOfField(...rows.map((r) => r.origin)),
+          uncertifiedRegisterRows: certificates.filter((c) => !c).length,
+          tseCertification: certificates.filter((c) => !c).length === 0 ? certificates[0] : '',
+        });
+      }
+      const components = [...byMaterial.values()];
       /* Whether anything at all was recorded. "No excipients of human or animal
          origin are used" is a POSITIVE SAFETY CLAIM, and it was made whenever
          the scan found nothing — including when there was nothing to scan. A
@@ -332,7 +409,7 @@ const APPENDIX_RULES: AppendixRule[] = [
          sides zero, issued the animal-free all-clear over no data at all. What
          the claim needs is at least one component to have been examined. */
       const hasComponentsToScan = components.length > 0;
-      const originRecorded = components.filter((c: any) => String(c?.origin || c?.source || '').trim()).length;
+      const originRecorded = components.filter((c: any) => String(c?.origin || c?.source || c?.registerOrigin || '').trim()).length;
       const excipientSources = m.filter((s) => s.sourceType === 'excipient');
       const novelExcipients = excipientSources.filter((e) => e.sourcePayload?.novel === true);
 
@@ -391,14 +468,29 @@ const APPENDIX_RULES: AppendixRule[] = [
          mineral or synthetic — a category the register never recorded. */
 
 
+      /* Both recorded origins are read — the component's own and the excipient
+         register's. Reading only the component's let a formulation row typed
+         "plant" over a material the register records as bovine produce the
+         animal-free all-clear. Whichever field carries an animal origin, the
+         material is in this section. */
       function classifyComponent(c: any): 'explicit' | 'name-fallback' | 'review' | 'none' {
         if (typeof c !== 'object' || c === null) return 'none';
-        const originField = String(c.origin || c.source || '').trim();
-        if (originField && explicitAnimalOriginRe.test(originField)) return 'explicit';
-        if (originField && isReviewRequiredOrigin(originField)) return 'review';
+        const originFields = [String(c.origin || c.source || '').trim(), String(c.registerOrigin || '').trim()].filter(Boolean);
+        if (originFields.some((o) => explicitAnimalOriginRe.test(o))) return 'explicit';
+        if (originFields.some((o) => isReviewRequiredOrigin(o))) return 'review';
         const text = `${c.component || ''} ${c.name || ''}`;
         if (animalNameRe.test(text) || humanNameRe.test(text)) return 'name-fallback';
         return 'none';
+      }
+
+      /** What the Origin cell says — both origins when the records disagree. */
+      function originCell(c: any): string {
+        const own = String(c?.origin || c?.source || '').trim();
+        const reg = String(c?.registerOrigin || '').trim();
+        if (own && reg && own.toLowerCase() !== reg.toLowerCase()) {
+          return `${reg} (excipient register) — the formulation records "${own}": CONFLICT, resolved to the animal-origin record pending correction`;
+        }
+        return own || reg;
       }
 
       const explicitOriginComponents = components.filter((c) => classifyComponent(c) === 'explicit');
@@ -512,7 +604,7 @@ const APPENDIX_RULES: AppendixRule[] = [
           ? humanAnimalComponents.map((c: any) => [
               c.component || c.name || 'Unknown',
               c.role || c.function || '—',
-              c.origin || c.source || (confidence === 'potential'
+              originCell(c) || (confidence === 'potential'
                 ? 'Potential animal/human origin (name-based fallback — review required)'
                 : 'Animal/human origin (per composition)'),
               /* The recorded certificate, or the fact that none is recorded.
@@ -523,7 +615,9 @@ const APPENDIX_RULES: AppendixRule[] = [
                  certified, in the one CTD section whose purpose is to declare
                  animal-origin risk. */
               String(c.tseCertification || c.certification || '').trim() ||
-                'NOT RECORDED — no TSE/BSE certificate is on file for this excipient',
+                (Number(c.uncertifiedRegisterRows || 0) > 0
+                  ? `NOT RECORDED — ${c.uncertifiedRegisterRows} register row(s) for this material carry no TSE/BSE certificate`
+                  : 'NOT RECORDED — no TSE/BSE certificate is on file for this excipient'),
             ])
           : [['(Per composition statement)', '—',
               confidence === 'potential'
@@ -560,6 +654,14 @@ const APPENDIX_RULES: AppendixRule[] = [
           `confirmation. Where confirmed, each component must be qualified through (i) a documented origin / ` +
           `country-of-origin statement, (ii) TSE/BSE compliance per EMA EMEA/410/01 rev. 3 (Certificate of ` +
           `Suitability — CEP), and (iii) viral safety evaluation where applicable. ` +
+          /* A NAME is not an origin determination, and this branch is reached
+             precisely because no origin was recorded for the flagged material.
+             It carried no marker, so a section that had identified a possible
+             gelatin and qualified nothing scored 100% complete with no missing
+             inputs — the reviewer's dashboard called the TSE/BSE appendix
+             finished on the strength of a regex. */
+          `Whether these components are of human or animal origin is NOT established by this section: the flag ` +
+          `rests on their names, and no origin is recorded for them. ` +
           `Components identified as plant, mineral, or synthetic in origin should be re-tagged via the structured ` +
           `origin field to suppress this flag.`;
 
@@ -866,7 +968,15 @@ export function emittableAppendices(sections: ComposedSection[]): ComposedSectio
  * the section's own statement of its missing inputs, one entry per sentence.
  */
 function notEstablishedStatements(narrative: string): string[] {
-  const sentences = narrative.split(/(?<=\.)\s+/).map((x) => x.trim()).filter((x) => NOT_ESTABLISHED_RE.test(x));
+  /* A sentence ends at a period followed by whitespace AND something that
+     starts a sentence. Splitting on the period alone cut "EMA EMEA/410/01
+     rev. 3 is NOT established by this section." in two, and the staffer's list
+     of what to record read, in full: "3 is NOT established by this section."
+     A fragment is not an instruction. */
+  const sentences = narrative
+    .split(/(?<=\.)\s+(?=[A-Z(\u2022])/)
+    .map((x) => x.replace(/\s+/g, ' ').trim())
+    .filter((x) => NOT_ESTABLISHED_RE.test(x) && x.split(' ').length > 3);
   return sentences.length > 0 ? sentences : ['not established by the recorded sources'];
 }
 

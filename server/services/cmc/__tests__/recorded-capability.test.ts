@@ -141,3 +141,62 @@ describe('isBatchAnalysisFor — one gate, shared with the mapper and the compos
     expect(ds.outcome.batchesOutOfSpecification).toEqual([]);
   });
 });
+
+describe('what a series may NOT quietly absorb', () => {
+  it('does not read an unrecorded result as a measured 0.0', () => {
+    /* Number(String(undefined ?? '').trim()) is 0, and 0 is finite — so a QC
+       row saved before its result came back entered the series as a batch that
+       assayed zero percent. It moved the mean, inflated the sd, and was
+       reported as a batch out of specification: a fabricated measurement in a
+       capability index. An unrecorded result is excluded and NAMED. */
+    const rows = [
+      ...series([99, 101, 100, 100, 99, 101]),
+      qc({ batchNumber: 'B-007', testResults: { value: '', unit: '%' } }),
+      qc({ batchNumber: 'B-008', testResults: null }),
+      qc({ batchNumber: 'B-009' , testResults: { unit: '%' } }),
+    ]
+    const [s] = assessRecordedCapability(rows)
+    expect(s.outcome.ok).toBe(true)
+    if (!s.outcome.ok) return
+    expect(s.outcome.n).toBe(6)
+    expect(s.outcome.excludedBatches).toEqual(['B-007', 'B-008', 'B-009'])
+    expect(s.outcome.batchesOutOfSpecification).toEqual([])
+    expect(s.outcome.mean).toBeGreaterThan(95)
+  })
+
+  it('does not judge a result against a criterion recorded on a DIFFERENT batch', () => {
+    /* The criteria set took the unique NON-EMPTY strings, so a row that
+       recorded no acceptance criterion at all was silently pooled into the
+       series and judged against its neighbours' limits — a disposition over a
+       specification that batch was never tested against. */
+    const rows = [
+      ...series([99, 101, 100, 100, 99, 101]),
+      qc({ batchNumber: 'B-010', specifications: null }),
+    ]
+    const [s] = assessRecordedCapability(rows)
+    expect(s.outcome.ok).toBe(false)
+    if (s.outcome.ok) return
+    expect(s.outcome.message).toMatch(/no acceptance criterion/i)
+    expect(s.outcome.message).toContain('B-010')
+    expect(capabilitySentence(s)).toContain('capability not assessed')
+  })
+
+  it('distinguishes "criteria disagree" from "no criterion was recorded"', () => {
+    const noneAtAll = assessRecordedCapability(
+      series([99, 101, 100, 100, 99, 101]).map((r) => ({ ...r, specifications: null })),
+    )[0]
+    expect(noneAtAll.outcome.ok).toBe(false)
+    if (noneAtAll.outcome.ok) return
+    expect(noneAtAll.outcome.code).toBe('CRITERION_NOT_RECORDED')
+    expect(noneAtAll.outcome.message).not.toMatch(/different acceptance criteria/)
+
+    const disagree = assessRecordedCapability([
+      ...series([99, 101, 100, 100, 99, 101]),
+      qc({ batchNumber: 'B-011', specifications: { acceptanceCriteria: '90.0 - 110.0%' } }),
+    ])[0]
+    expect(disagree.outcome.ok).toBe(false)
+    if (disagree.outcome.ok) return
+    expect(disagree.outcome.code).toBe('CRITERIA_DISAGREE')
+    expect(disagree.outcome.message).toMatch(/different acceptance criteria/)
+  })
+})

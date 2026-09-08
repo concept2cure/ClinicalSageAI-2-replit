@@ -414,3 +414,29 @@ describe('toLeafSectionCode', () => {
     expect(toLeafSectionCode('3.3')).toBe('m3.3');
   });
 });
+
+describe('the governed artifact and the filed leaf are the same bytes', () => {
+  it('renders a narrative with a trailing space identically for both consumers', async () => {
+    /* renderComposedSectionMarkdown documents itself as the one renderer both
+       consumers use "so there is one function, not two". The bridge did not
+       call it — it re-implemented the same two lines — and placement trimmed
+       the narrative while the bridge did not. Several generators end a
+       narrative with a trailing space, so the coauthor_documents snapshot
+       pinned by upsertLeaf and the governed artifact for the SAME compile of
+       the same section hashed differently. */
+    const { renderComposedSectionMarkdown } = await import('../../module3Composer');
+    const label = 'Drug Substance — Characterisation';
+    const tables = [{ title: 'T', headers: ['A'], rows: [['1']] }];
+
+    const trailing = renderComposedSectionMarkdown(label, 'Structure confirmed. ', tables);
+    const trimmed = renderComposedSectionMarkdown(label, 'Structure confirmed.', tables);
+    expect(trailing).toBe(trimmed);
+    expect(trailing).not.toContain('. \n\n|');
+
+    // Leading whitespace too, and a null narrative is empty, not "null".
+    expect(renderComposedSectionMarkdown(label, '\n  Structure confirmed.\n', null)).toBe(
+      renderComposedSectionMarkdown(label, 'Structure confirmed.', null),
+    );
+    expect(renderComposedSectionMarkdown(label, undefined as unknown as string, null)).toBe(`## ${label}\n\n`);
+  });
+});

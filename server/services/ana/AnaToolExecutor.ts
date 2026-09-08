@@ -16304,11 +16304,15 @@ registerToolHandler('assess_recorded_stability_trend', async (input, ctx) => {
 registerToolHandler('assess_recorded_process_capability', async (input, ctx) => {
   const orgId = ctx?.organizationId;
   if (!orgId) return 'An active organization context is required to read the QC register.';
-  /* An explicitly named project wins over the session's, so "what is the Cpk on
-     BX-702" is answered about BX-702; otherwise the active program is used. */
-  const supplied = typeof input.project_id === 'string' ? input.project_id.trim() : '';
+  /* The OPEN program wins, exactly as intelligenceProjectId resolves it: a
+     model-produced project_id must not redirect the read. It had priority here,
+     so a product code named earlier in the conversation ("BX-701") could be
+     passed instead of the program uuid, and the tool then reported "no batch
+     results are recorded" about a register it never read while the open
+     program's six batches sat unexamined. */
   const ref = typeof ctx?.projectRef === 'string' ? ctx.projectRef.trim() : '';
-  const projectId = supplied || ref || (ctx?.projectId ? String(ctx.projectId) : '');
+  const supplied = typeof input.project_id === 'string' ? input.project_id.trim() : '';
+  const projectId = ref || (ctx?.projectId ? String(ctx.projectId) : '') || supplied;
   if (!projectId) {
     return JSON.stringify({
       status: 'needs_parameters',
@@ -16316,10 +16320,25 @@ registerToolHandler('assess_recorded_process_capability', async (input, ctx) => 
     });
   }
   try {
-    const [{ getPool }, capability] = await Promise.all([
+    const [{ getPool }, capability, { projectBelongsToTenant }] = await Promise.all([
       import('../../db.js'),
       import('../cmc/recorded-capability.js'),
+      import('../cmc/project-membership.js'),
     ]);
+    /* "No batch results are recorded" is a statement about a register that was
+       READ. Said over a project id this tenant does not hold — a hallucinated
+       string, a product code, another org's program — it is a fabrication, and
+       the instruction told the model to relay it as fact. */
+    if (!(await projectBelongsToTenant({ organizationId: orgId, projectId }))) {
+      return JSON.stringify({
+        status: 'not_found',
+        message:
+          `No project ${projectId} exists in this organization, so no QC register was read and no capability was assessed.`,
+        instruction:
+          'Say that the project could not be found and ask which program is meant. Never report a capability result, ' +
+          'or the absence of one, for a project that was not read.',
+      });
+    }
     const { rows } = await getPool().query(
       `SELECT source_payload as "sourcePayload"
        FROM cmc_source_objects

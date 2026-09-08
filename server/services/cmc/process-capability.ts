@@ -36,6 +36,12 @@ export interface BatchResultPoint {
 
 export type ProcessCapabilityRefusalCode =
   | 'CRITERION_NOT_RECORDED'
+  /* Rows of one test recorded against DIFFERENT criteria. Distinct from
+     CRITERION_NOT_RECORDED: "we hold two specifications for this test" and "we
+     hold none" send a staffer to different records, and both were reported as
+     the same code with the Note column reading "criteria disagree" over a
+     series that recorded no criterion at all. */
+  | 'CRITERIA_DISAGREE'
   | 'INSUFFICIENT_BATCHES'
   | 'NO_VARIATION';
 
