@@ -33,12 +33,72 @@
 import { listXfaPackets } from '../../forms/fill-official-pdf';
 
 export interface EstarAttachmentSlot {
-  /** The `AddAttachment` control, e.g. 'CLAddAttachment110'. */
+  /**
+   * The control's FULL SOM path — the slot's identity.
+   *
+   * Not the short name, which is not unique: nIVD declares `AddAttachment`
+   * twice (under `ReprocSterDocs` and under `BiocompatibilityDocs`) and IVD
+   * declares five names twice. Keying on the name dropped one real slot per
+   * template, and the one it dropped in nIVD was Biocompatibility — the single
+   * slot for outline node E1, which is mandatory in the shipped 510(k) pack.
+   */
+  somPath: string;
+  /** The control's own name, e.g. 'CLAddAttachment110'. NOT unique. */
   field: string;
-  /** The manifest chapter token it writes, e.g. '/CHAPTER 1/CH1.01/'. */
-  chapter: string;
+  /**
+   * Every LIVE chapter this control writes, in template order.
+   *
+   * Normally one. Exactly one control per template writes two — the User Fee
+   * Form, `/CHAPTER 1/CH1.04/` when `ApplicationType.ATRadioButton100 == 2`
+   * (Health Canada) and `/CHAPTER 1/CH1.09/` otherwise (FDA) — and this
+   * platform deliberately does not write that radio. Reporting both and
+   * refusing at resolve time is the honest answer; taking whichever appears
+   * first in the file, which is what this did, files a US MDUFA cover sheet
+   * into the Health Canada chapter.
+   */
+  chapters: string[];
   /** FDA's own description of what belongs here, or null when it sets none. */
   description: string | null;
+}
+
+/** `<<path|/CHAPTER n/CHn.nn/>>` — byte-for-byte what the template builds. */
+export function attachmentManifestToken(attachmentPath: string, chapter: string): string {
+  if (!ESTAR_CHAPTER_PATH.test(chapter)) {
+    throw new Error(`Not an eSTAR CHAPTER path: ${JSON.stringify(chapter)}`);
+  }
+  return `<<${attachmentPath}|${chapter}>>`;
+}
+
+export type ResolvedAttachmentSlot =
+  | { ok: true; chapter: string; description: string | null }
+  | { ok: false; reason: 'no_chapter' | 'ambiguous_chapter'; message: string };
+
+/**
+ * The one chapter a slot routes to, or a refusal that says why there isn't one.
+ *
+ * A caller must never pick from `chapters` itself: the whole point of carrying
+ * more than one is that choosing between them needs a fact this platform does
+ * not hold.
+ */
+export function resolveAttachmentSlot(slot: EstarAttachmentSlot): ResolvedAttachmentSlot {
+  if (slot.chapters.length === 1) {
+    return { ok: true, chapter: slot.chapters[0], description: slot.description };
+  }
+  if (slot.chapters.length === 0) {
+    return {
+      ok: false,
+      reason: 'no_chapter',
+      message: `${slot.somPath} writes no chapter, so nothing attached there would be routed.`,
+    };
+  }
+  return {
+    ok: false,
+    reason: 'ambiguous_chapter',
+    message:
+      `${slot.somPath} writes ${slot.chapters.join(' or ')} depending on ` +
+      'ApplicationType.ATRadioButton100 (2 = Health Canada, otherwise FDA), which this ' +
+      'platform does not write. Choosing one would file the document under the wrong agency.',
+  };
 }
 
 /**
@@ -50,16 +110,11 @@ export interface EstarAttachmentSlot {
  */
 export const ESTAR_CHAPTER_PATH = /^\/CHAPTER \d+[A-Z]?\/(CH[0-9A-Z.]+\/)+$/;
 
-/** `<<path|/CHAPTER n/CHn.nn/>>` — byte-for-byte what the template builds. */
-export function attachmentManifestToken(attachmentPath: string, chapter: string): string {
-  if (!ESTAR_CHAPTER_PATH.test(chapter)) {
-    throw new Error(`Not an eSTAR CHAPTER path: ${JSON.stringify(chapter)}`);
-  }
-  return `<<${attachmentPath}|${chapter}>>`;
-}
-
-/** Every `<field|subform|exclGroup name="…">` open tag, by position. */
-const NAMED_TAG = /<(?:field|subform|exclGroup)\b[^>]*\bname="([^"]+)"/g;
+/** Every open/close/self-closing tag, for the nesting scan. */
+const XML_TAG = /<(\/?)([A-Za-z][\w:.-]*)([^>]*?)(\/?)>/g;
+const TAG_NAME_ATTR = /\bname="([^"]*)"/;
+/** The elements that contribute a segment to a SOM path. */
+const NAMED_ELEMENTS = new Set(['subform', 'field', 'exclGroup']);
 
 /**
  * The manifest APPEND, which is the add path. The template also has a
@@ -70,16 +125,70 @@ const NAMED_TAG = /<(?:field|subform|exclGroup)\b[^>]*\bname="([^"]+)"/g;
 const MANIFEST_APPEND =
   /AttachmentManifest\.rawValue\s*=\s*Verification\.AttachmentManifest\.rawValue\s*\+\s*"&lt;&lt;"\s*\+\s*[^+]+?\+\s*"\|(\/CHAPTER[^"]*)"/g;
 
-/** The nearest `description = "…"` set before the append, within one handler. */
+/** `d[…].description = "Administrative Documentation | Cover Letter"` */
 const DESCRIPTION = /\.description\s*=\s*"([^"]*)"/g;
-const DESCRIPTION_WINDOW = 1200;
+
+/**
+ * Remove JavaScript comments before reading a handler.
+ *
+ * 19 of the 165 nIVD appends are commented out — 6 inside `/* … *\/` blocks and
+ * 13 behind `//` — and reading them as live routing is reading FDA's discarded
+ * drafts. Measured safe on both templates: every one of the 113/145 slots still
+ * resolves a chapter and a description afterwards, and no chapter path contains
+ * `//`.
+ */
+function stripScriptComments(source: string): string {
+  return source.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/[^\n]*/g, '');
+}
+
+interface FieldRegion {
+  somPath: string;
+  field: string;
+  start: number;
+  end: number;
+}
+
+/**
+ * Every `*AddAttachment*` field element, with its full SOM path and its own
+ * byte range.
+ *
+ * The range is what removes the guesswork. The previous reader attributed an
+ * append to the nearest PRECEDING named tag and hunted a description in a
+ * 1200-character window behind it — so a description could come from one
+ * handler and a chapter from another, and three slots FDA does name reported
+ * null. A control's script is inside the control's own element; scanning that
+ * element cannot cross into a neighbour's.
+ */
+function attachmentFieldRegions(xml: string): FieldRegion[] {
+  const stack: { tag: string; name: string | null; start: number }[] = [];
+  const out: FieldRegion[] = [];
+  XML_TAG.lastIndex = 0;
+  for (let m = XML_TAG.exec(xml); m !== null; m = XML_TAG.exec(xml)) {
+    const [, closing, tag, attrs, selfClosing] = m;
+    if (closing) {
+      // Tolerate a tag the scan never pushed (an unmatched close) by unwinding
+      // to the matching open rather than corrupting the whole stack.
+      while (stack.length > 0 && stack[stack.length - 1].tag !== tag) stack.pop();
+      const open = stack.pop();
+      if (open && open.tag === 'field' && open.name && open.name.includes('AddAttachment')) {
+        const path = [...stack.map((e) => e.name), open.name].filter(Boolean).join('.');
+        out.push({ somPath: path, field: open.name, start: open.start, end: m.index + m[0].length });
+      }
+    } else if (!selfClosing) {
+      const named = NAMED_ELEMENTS.has(tag) ? TAG_NAME_ATTR.exec(attrs) : null;
+      stack.push({ tag, name: named ? named[1] : null, start: m.index });
+    }
+  }
+  return out;
+}
 
 /**
  * Read every attachment slot the template declares, in template order.
  *
- * A control that writes the manifest more than once (a branch per submission
- * type) appears ONCE, at its first token — the field is the slot, and a slot
- * with two identities would be an invitation to route an attachment twice.
+ * One entry per DECLARATION, identified by SOM path. A control that writes the
+ * manifest more than once inside its own handler contributes each distinct
+ * chapter it writes, which is how the User Fee Form's two branches survive to
+ * be refused rather than silently resolved to whichever came first.
  */
 export async function listEstarAttachmentSlots(
   templateBytes: Uint8Array | Buffer,
@@ -89,55 +198,24 @@ export async function listEstarAttachmentSlots(
   if (!template) return [];
   const xml = Buffer.from(template.bytes).toString('utf8');
 
-  // Positions of every named tag, so the control enclosing an append can be
-  // found by binary search rather than by re-scanning 10 MB per match.
-  const tagAt: number[] = [];
-  const tagName: string[] = [];
-  NAMED_TAG.lastIndex = 0;
-  for (let m = NAMED_TAG.exec(xml); m !== null; m = NAMED_TAG.exec(xml)) {
-    tagAt.push(m.index);
-    tagName.push(m[1]);
-  }
-
-  const enclosing = (position: number): string | null => {
-    let lo = 0;
-    let hi = tagAt.length - 1;
-    let found = -1;
-    while (lo <= hi) {
-      const mid = (lo + hi) >> 1;
-      if (tagAt[mid] <= position) {
-        found = mid;
-        lo = mid + 1;
-      } else {
-        hi = mid - 1;
-      }
-    }
-    return found >= 0 ? tagName[found] : null;
-  };
-
   const slots: EstarAttachmentSlot[] = [];
-  const seen = new Set<string>();
-  MANIFEST_APPEND.lastIndex = 0;
-  for (let m = MANIFEST_APPEND.exec(xml); m !== null; m = MANIFEST_APPEND.exec(xml)) {
-    const field = enclosing(m.index);
-    /* The control has to be an AddAttachment. One append site per template is
-       enclosed by a field called `Type` — the labeling-type dropdown inside
-       `LBAttachment360`, which RE-ROUTES an already-attached file between
-       /CHAPTER 5/CH5.04, CH5.08, CH5.09 and CH5.10 as the applicant changes
-       the labeling kind. It is not a slot anyone can attach to, and its real
-       slot (`LBAddAttachment360`) is already in this list from its own append.
-       Counting it would offer an attachment target that does not exist. */
-    if (!field || !field.includes('AddAttachment') || seen.has(field)) continue;
-    seen.add(field);
+  for (const region of attachmentFieldRegions(xml)) {
+    const body = stripScriptComments(xml.slice(region.start, region.end));
 
-    const window = xml.slice(Math.max(0, m.index - DESCRIPTION_WINDOW), m.index);
+    const chapters: string[] = [];
+    MANIFEST_APPEND.lastIndex = 0;
+    for (let m = MANIFEST_APPEND.exec(body); m !== null; m = MANIFEST_APPEND.exec(body)) {
+      if (!chapters.includes(m[1])) chapters.push(m[1]);
+    }
+    if (chapters.length === 0) continue;
+
     let description: string | null = null;
     DESCRIPTION.lastIndex = 0;
-    for (let d = DESCRIPTION.exec(window); d !== null; d = DESCRIPTION.exec(window)) {
+    for (let d = DESCRIPTION.exec(body); d !== null; d = DESCRIPTION.exec(body)) {
       description = d[1] || null;
     }
 
-    slots.push({ field, chapter: m[1], description });
+    slots.push({ somPath: region.somPath, field: region.field, chapters, description });
   }
   return slots;
 }
