@@ -1,12 +1,13 @@
-# Roadmap item 4 — attachments in the official eSTAR (slices 1–2 of 5)
+# Roadmap item 4 — attachments in the official eSTAR (slices 1–3 of 5)
 
 Date: 2026-09-07. Branch `concept2cure-v2`. Roadmap item 4 of
 `docs/handoff/HANDOFF_DEVICE.md` §6 — the keystone: without it, nothing the platform
 authors reaches the filed form (0 of 112 nIVD / 140 IVD attachment slots populated).
 
-This closes the first two of five slices — the multi-object writer (§1–2) and the encrypted
-object construction (§3a). The other three are specified in §4 so the next session starts
-from a plan rather than a diagnosis.
+This closes the first three of five slices — the multi-object writer (§1–2), the encrypted
+object construction (§3a) and the catalog name tree (§3b). **A file is now genuinely
+attached to the real FDA eSTAR, with the form and its scripts intact** (§3c). The remaining
+two are specified in §4.
 
 ## 1. Why the writer had to change first
 
@@ -65,7 +66,10 @@ That is stated in the docstring, and §3 is what happens when it is not honoured
 |---|---|
 | `server/services/forms/__tests__/incremental-update.test.ts` | 9 passed (new), all 9 seen failing first |
 | `server/services/forms/__tests__/pdf-embedded-files.test.ts` | 9 passed (new), against the REAL encrypted template, seen failing first |
-| `server/services/forms` (the datasets fill, against the REAL vendored templates) | 3 files / 48 passed — unchanged through the generalised writer |
+| `server/services/forms/__tests__/pdf-object-store.test.ts` | 11 passed (new), both templates, including the chained-update regression |
+| `server/services/forms/__tests__/pdf-attach.test.ts` | 12 passed (new), both templates, 6 seen failing on the older-startxref bug |
+| `server/services/forms` (the datasets fill, against the REAL vendored templates) | unchanged through the generalised writer and the startxref fix |
+| forms + estar engine + official-eSTAR route + the nine export contracts | 30 files / 357 passed |
 | `npx tsc --noEmit` | clean |
 
 The new tests verify through **pdf-lib** — an independent parser, not this module's own
@@ -127,12 +131,69 @@ pypdf: stream bytes 44
 No padding warnings this time — the complaint slice 1 recorded was the plaintext stream, and
 it is gone.
 
-## 4. The remaining three slices
+## 3b. Slice 3 — joining the file to the document, without deleting the form
 
-3. **The catalog name tree.** Read the catalog (it lives in an object stream, under AESV2),
-   merge `/Names /EmbeddedFiles /Names [ (name) <ref> … ]` without disturbing anything else,
-   and write it as a replacement object. Preserving what is already there is the whole
-   difficulty — the catalog carries `/AcroForm`, `/NeedsRendering` and the XFA reference.
+An `/EmbeddedFile` nothing references is a stream sitting in a file: Acrobat will not list
+it and CDRH's ingestion will not find it. The reference that makes it an attachment is an
+entry in the catalog's `/Names /EmbeddedFiles` tree.
+
+**Why this had to be a merge.** In both templates the catalog's `/Names` dictionary holds
+exactly one key: `/JavaScript`. That is the form — the reveal guards, the 510(k)-summary
+rebuilds, everything `docs/reports/estar-acrobat-behaviour-2026-09-04.md` measured. Writing a
+fresh names dictionary carrying `/EmbeddedFiles` would attach the file and hand the applicant
+an eSTAR that opens and does nothing.
+
+And that dictionary is **not** a top-level object. Measured 2026-09-07: nIVD catalog 212 →
+`/Names 221 0 R`, which is entry 1 of `ObjStm` 272 — deflated, and enciphered under the
+object stream's key. `pdf-lib` cannot traverse those, and the fill engine never needed to
+(PDF forbids streams inside object streams, so every XFA packet is necessarily top-level).
+
+So `pdf-object-store.ts` reads indirect objects wherever they live: it parses the
+cross-reference **stream** (undoing the PNG predictor — the templates use Up on 5-byte rows,
+without which every offset is a difference rather than a value and still parses), follows
+`/Prev`, and refuses a classic `xref` table by name rather than approximating it. A
+compressed object is decrypted under its **containing** stream's key — the object's own
+number keys nothing, which is the detail that makes this unlike every other read in the fill
+engine.
+
+`pdf-attach.ts` then rewrites **only** the names dictionary, carrying every existing key
+across verbatim and adding one. Name-tree keys are PDF strings, so they are enciphered under
+the names dictionary's own object number — not under the `/Filespec` they point at — and the
+array is sorted by the plaintext key, which is what a reader binary-searches. Attaching to a
+document that already has an `/EmbeddedFiles` tree is **refused**: merging an arbitrary
+multi-level `/Kids` tree is not something to approximate, neither template has one, and an
+untested merge of a submission's attachment index is worse than a refusal that names the
+problem.
+
+### A latent bug this surfaced
+
+`startxrefOffset` scanned the last 4 KB and took the **first** `startxref` it matched. After
+an incremental update the tail holds two — the original document's and the update's — so it
+returned the **older** section, and every object the update replaced read back at its
+previous revision. Nothing fails; the file simply reports its old contents. It could only
+bite once two updates were chained, which is exactly what attaching to a filled form does.
+It now takes the last match, there is one implementation rather than the three this work
+would have created, and the regression is pinned on both templates.
+
+## 3c. What a real eSTAR now carries
+
+Filled through `fillXfaDatasets`, then attached — two chained revisions on
+`eSTAR-510k-non-ivd.pdf`. pypdf, reading the result cold:
+
+```
+attachments: ['Section-5-Software.pdf']
+  Section-5-Software.pdf: 905 bytes
+  sha256 61c354d4…90225d               ← identical to what the builder reported
+catalog /Names keys: ['/JavaScript', '/EmbeddedFiles']
+JavaScript entries: 3                  ← the template's own scripts, intact
+XFA packets: 20                        ← the form is whole
+datasets has trade name: True          ← and still filled
+```
+
+This is the first attachment this platform has ever embedded in the official form.
+
+## 4. The remaining two slices
+
 4. **The slot map.** Section → one of the 112/140 `*AddAttachment*` controls → its
    `/CHAPTER n/CHn.nn/` `AttachmentManifest` token → its completeness indicator. This is
    read off the template's own `form` packet, the way `estar-field-map.ts` was: measured,
@@ -146,8 +207,13 @@ follows slice 5.
 
 ## 5. What this does NOT do
 
-Nothing is attached to anything yet. An `/EmbeddedFile` that no name tree references and no
-form field names is a stream sitting in a file — CDRH's ingestion will not see it, and
-neither will the applicant's Acrobat. The eSTAR the platform produces today still populates
-0 attachment slots. These two slices remove the reasons it could not: the writer could not
-express the objects, and nothing could encipher them.
+The file is attached to the DOCUMENT. It is not yet attached to a **section** of the eSTAR,
+and that is what CDRH's ingestion reads. A submitted eSTAR routes each attachment by an
+`AttachmentManifest` token of the form `<<path|/CHAPTER n/CHn.nn/>>` against a `form`-packet
+occurrence carrying its `AttachmentName`; without those, an attachment is a file in the
+document rather than "the software documentation for section 5". Slices 4 and 5.
+
+Nothing in the product calls any of this yet — no route accepts attachments, and the eSTAR
+the export produces today still populates 0 of 112/140 slots. What has changed is that every
+reason it could not has now been removed: the writer can express the objects, they can be
+enciphered, and they can be joined to the document without destroying the form.

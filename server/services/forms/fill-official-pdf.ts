@@ -530,12 +530,24 @@ export interface PdfSecurity {
   aes: boolean;
 }
 
-/** Byte offset of the last cross-reference section, from the trailing `startxref`. */
-function startxrefOffset(buf: Buffer): number {
-  const tail = buf.subarray(Math.max(0, buf.length - 4096)).toString('latin1');
-  const m = /startxref\s+(\d+)/.exec(tail);
-  if (!m) throw new Error('Malformed PDF: no startxref');
-  return parseInt(m[1], 10);
+/**
+ * Byte offset of the NEWEST cross-reference section, from the trailing
+ * `startxref`.
+ *
+ * The last one in the file, not the first one in the window. After an
+ * incremental update the tail holds two `startxref` lines — the original
+ * document's and the update's — and taking the first match returns the OLDER
+ * one, so every object the update replaced reads back at its previous
+ * revision. Nothing fails; the file simply reports its old contents. It
+ * surfaced the first time two updates were chained (attaching a file to a form
+ * that had already been filled).
+ */
+export function startxrefOffset(buf: Buffer): number {
+  const window = Math.max(0, buf.length - 4096);
+  const tail = buf.subarray(window).toString('latin1');
+  const matches = [...tail.matchAll(/startxref\s+(\d+)/g)];
+  if (matches.length === 0) throw new Error('Malformed PDF: no startxref');
+  return parseInt(matches[matches.length - 1][1], 10);
 }
 
 /** The trailer (or cross-reference stream) dictionary text. */
