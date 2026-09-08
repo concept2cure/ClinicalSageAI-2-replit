@@ -59,7 +59,7 @@ function stubPool() {
   const pool: PoolLike = {
     async query(sql: string) {
       seen.sql = sql;
-      const desc = /order\s+by\s+sequence_number\s+desc/i.test(sql);
+      const desc = /order\s+by\s+(?:\w+\.)?sequence_number\s+desc/i.test(sql);
       let rows = [...all].sort((a, b) =>
         desc
           ? b.sequence_number.localeCompare(a.sequence_number)
@@ -118,7 +118,9 @@ describe('loadLatestPriorManifestBySubmission — cumulative prior state', () =>
     const { seen } = await loadPrior();
     // The pre-fix query ended in `LIMIT 1`, which is the defect itself.
     expect(seen.sql).not.toMatch(/limit\s+1/i);
-    expect(seen.sql).toMatch(/order\s+by\s+sequence_number\s+asc/i);
+    // Alias-tolerant: the query joins ectd_sequences to establish which prior
+    // sequences were actually transmitted, so its columns are qualified.
+    expect(seen.sql).toMatch(/order\s+by\s+(?:\w+\.)?sequence_number\s+asc/i);
   });
 });
 

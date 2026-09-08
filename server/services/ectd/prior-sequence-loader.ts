@@ -132,14 +132,49 @@ export async function loadLatestPriorManifestBySubmission(
   if (!organizationId || !submissionId || !currentSequence) {
     return { priorSequenceNumber: '', leaves: [] };
   }
+  /* ONLY WHAT THE AGENCY ACTUALLY HOLDS.
+     This read was organization + submission + sequence_number < current +
+     leaf_manifest IS NOT NULL, with no join to `ectd_sequences` and no look at
+     dispatch state. But `ectd_compilations` rows are written by an ordinary
+     PREVIEW compile (POST /api/ectd/:projectIdent/compile), which stores a full
+     leaf_manifest for a sequence still in `status='draft'`, possibly reporting
+     submissionReady:false with blockers, and transmitted to nobody.
+
+     The consumer treats what this returns as the complete state on file — "a
+     prior leaf this sequence does not mention is still on file, unchanged"
+     (package-from-core.ts). So a local draft compile of 0001 made sequence 0002
+     believe the agency already held those documents: every leaf came back
+     `unchanged` and the package shipped with NO FILES, audited as a success
+     with leafCount 0. Where a leaf did differ, its `modified-file` pointed into
+     ../0001/, a folder the agency never received.
+
+     The rule is already stated in the sibling package model: "A bundle that was
+     assembled and never transmitted is not on file at the agency and must not
+     appear in the prior state, so the history is appended at successful
+     transmit, never at assembly" (package-sequence-lifecycle.ts). This is the
+     core path held to it.
+
+     'sent' and 'acknowledged' are the two dispatch states that mean the agency
+     has it. 'pending' does NOT: `status='dispatched'` sets dispatch_status
+     'pending', which is queued for transmit, not filed. A compilation with no
+     matching sequence row is dropped for the same reason — we cannot establish
+     that it was filed, and assuming it was is the direction that ships an empty
+     package. Assuming it was not merely re-files a document the agency already
+     holds, which a reviewer can see; the other way round, nobody can. */
   const res = await pool.query(
-    `SELECT sequence_number, leaf_manifest
-       FROM ectd_compilations
-      WHERE organization_id = $1
-        AND submission_id = $2
-        AND sequence_number < $3
-        AND leaf_manifest IS NOT NULL
-      ORDER BY sequence_number ASC, compiled_at ASC NULLS FIRST, id ASC`,
+    `SELECT c.sequence_number, c.leaf_manifest
+       FROM ectd_compilations c
+       JOIN ectd_sequences s
+         ON s.submission_id = c.submission_id
+        AND s.sequence_number = c.sequence_number
+        AND s.organization_id = c.organization_id
+        AND s.deleted_at IS NULL
+      WHERE c.organization_id = $1
+        AND c.submission_id = $2
+        AND c.sequence_number < $3
+        AND c.leaf_manifest IS NOT NULL
+        AND s.dispatch_status IN ('sent', 'acknowledged')
+      ORDER BY c.sequence_number ASC, c.compiled_at ASC NULLS FIRST, c.id ASC`,
     [organizationId, submissionId, currentSequence],
   );
   const rows = res?.rows ?? [];
