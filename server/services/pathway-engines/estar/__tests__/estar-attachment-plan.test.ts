@@ -23,7 +23,11 @@ import {
   planEstarAttachments,
   type EstarAttachmentResolver,
 } from '../estar-attachment-plan';
-import { listEstarAttachmentSlots } from '../estar-attachment-slots';
+import {
+  CONDITIONAL_ATTACHMENT_SLOTS,
+  listEstarAttachmentSlots,
+} from '../estar-attachment-slots';
+import { ESTAR_FIELD_MAPS } from '../estar-field-map';
 
 const DIR = process.env.ESTAR_TEMPLATE_DIR ?? 'assets/estar-templates';
 const TEMPLATES = [
@@ -91,6 +95,46 @@ describe('attachmentFileName', () => {
 
   it('keeps a non-pdf extension from a vault file name', () => {
     expect(attachmentFileName('Bench data', '.xlsx')).toBe('Bench data.xlsx');
+  });
+});
+
+describe('the plan reads the jurisdiction radio from the template, and may', () => {
+  /*
+   * `planEstarAttachments` resolves a conditional slot's chapter from values it
+   * reads out of the TEMPLATE bytes. That is only correct while nothing the
+   * fill writes can change those values — and exactly one slot per template is
+   * conditional: the User Fee Form, routed by
+   * `root.ApplicationType.ATRadioButton100`, `/CHAPTER 1/CH1.04/` when it reads
+   * "2" (Health Canada) and `/CHAPTER 1/CH1.09/` otherwise (FDA).
+   *
+   * Both templates ship "1", and no field map writes that path today. The day
+   * one does, the plan would resolve the chapter from a stale "1" while the
+   * filled form carries "2", and a US MDUFA cover sheet would be filed under
+   * Health Canada's chapter — the precise failure `estar-attachment-slots.ts`
+   * spends a docblock on.
+   *
+   * Nothing held that assumption, so this does. When it fails, the fix is not to
+   * delete it: it is to feed the plan the value the fill will WRITE rather than
+   * the one the template ships.
+   */
+  it('is safe only because no field map writes a path a conditional slot routes by', () => {
+    const decidedBy = new Set(
+      Object.values(CONDITIONAL_ATTACHMENT_SLOTS).map((c) => c.decidedBy),
+    );
+    expect(decidedBy.size).toBeGreaterThan(0);
+
+    const collisions: string[] = [];
+    for (const [descriptorId, map] of Object.entries(ESTAR_FIELD_MAPS)) {
+      for (const [key, spec] of Object.entries(map)) {
+        const written = [spec.xfaSomPath, ...(spec.alsoWriteSomPaths ?? [])].filter(
+          (p): p is string => typeof p === 'string',
+        );
+        for (const somPath of written) {
+          if (decidedBy.has(somPath)) collisions.push(`${descriptorId}.${key} writes ${somPath}`);
+        }
+      }
+    }
+    expect(collisions).toEqual([]);
   });
 });
 
