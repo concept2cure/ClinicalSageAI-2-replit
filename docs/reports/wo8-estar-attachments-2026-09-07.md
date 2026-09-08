@@ -238,14 +238,43 @@ constant is a transcription error waiting for a deploy.
   (`LBAddAttachment360`) is in the map on its own. Counting it would offer an attachment
   target that does not exist.
 
-## 4. The last slice
+## 4. The last slice, and a measurement that changes its shape
 
-5. **The `form`-packet occurrence.** `instanceManager.addInstance` plus `AttachmentName`, so
-   the applicant's Acrobat shows the attachment against the right section rather than an
-   embedded file nothing references.
+Slice 5 was specified as *"`instanceManager.addInstance` plus `AttachmentName`, so the
+applicant's Acrobat shows the attachment against the right section"* — writing into the
+`form` packet. That packet carries a `checksum="Mblo39MqJv5vXQAURANwJ3C/hnA="` attribute, and
+what Acrobat writes into it when a user attaches a file has never been observed here, so
+building it would have been guesswork of exactly the kind this stream refuses.
 
-Bytes come from authored sections (rendered) and vault evidence; the route and surface work
-follows slice 5.
+**It is very probably not necessary.** Measured 2026-09-07 on both templates:
+
+| fact | measurement |
+|---|---|
+| the manifest field | `root.Verification.AttachmentManifest`, type `text`, **`inDatasets: true`** |
+| its data node | `root.AttachmentManifest`, seeded **`***Start***`** |
+| what FDA's script appends | `"<<" + d[AttachmentIndex].path + "\|/CHAPTER 1/CH1.01/" + ">>"` |
+
+The manifest — the thing CDRH actually routes by — lives in the **`datasets` packet**, which
+is the packet `fillXfaDatasets` already writes, and the token is built from the attachment's
+**path in the document's file list**, which slices 1–3 now put there. The template/data SOM
+mismatch (`root.Verification.AttachmentManifest` vs `root.AttachmentManifest`) is the case
+`resolveDataSomPath` was written for and the field map already handles.
+
+So slice 5 is:
+
+- append `<<{name}|{chapter}>>` to `root.AttachmentManifest` for each embedded file, after
+  the `***Start***` seed, through the existing fill engine — no `form`-packet surgery;
+- decide the completeness indicators, which ARE form-level and cosmetic to the applicant;
+- source the bytes from authored sections (rendered) and vault evidence, and choose the slot
+  per section — the first place a human decision belongs;
+- the route and the surface.
+
+**What still needs JM.** Whether an eSTAR assembled this way is accepted by CDRH's validator
+cannot be settled from the templates. One reference artifact would settle it: an eSTAR with a
+single attachment added in Acrobat and saved. Its `datasets`, `form` and `/EmbeddedFiles`
+diff against the blank template is the specification — the same way the Acrobat walk-through
+in HANDOFF §5 settled the summary-rebuild questions. Until then slice 5 can be built against
+the manifest as FDA's own script writes it, which is the best available evidence.
 
 ## 5. What this does NOT do
 
