@@ -1417,6 +1417,17 @@ export const C2C_MIGRATION_FILES = [
   // does; guarded on the table existing.
   'migrations/20260907_span_lineage_accepted_machine_draft.sql',
 
+  // ── Span lineage: a machine draft nobody has accepted is not an assertion ──
+  // 20260907 covered the human-accepted case. AnA's own tool writes were the
+  // worse one: write_q_sub_section inserts draft_source='ana', accepted_at=NULL
+  // and answers "Awaiting human accept", then recorded every clause as the
+  // REQUESTING user's author_assertion in the same transaction — two records of
+  // one act contradicting each other. Adds the `machine_draft` kind, whose
+  // CHECK requires asserted_by/asserted_at to be NULL: nobody has stood behind
+  // it, and no later caller can quietly fill that in. Supersedes 20260907's two
+  // CHECK definitions, so it must run after it — it does.
+  'migrations/20260908_span_lineage_machine_draft.sql',
+
   // ── Apps catalog additions, GA ledger L40 (added 2026-08-14) ─────────────
   // Eight built, routed, API-backed surfaces that appeared in no catalog, so a
   // user could reach them only by knowing the URL. INSERT … ON CONFLICT DO
@@ -1985,6 +1996,13 @@ export const C2C_MIGRATION_FILES = [
   // Creator + a drop of that constraint; 0006 was amended in place to stop
   // declaring it, so the drop cannot be undone by a replay.
   'migrations/20260907_cmc_comparability_register_reachable.sql',
+
+  // §3.2.A.2's six inputs. The section reads modality, biological origin,
+  // source organism, cell line, the ICH Q5A(R2) viral safety evaluation and the
+  // TSE/BSE status, and no table held any of them — so for a biologic it was
+  // composed from the substance's NAME. Additive and nullable; a small-molecule
+  // programme records none of them.
+  'migrations/20260908_drug_substance_biologic_origin.sql',
   // ── regulatory_programs.application_number (WO-9 Click 1) ──────────────────
   // The agency-assigned IND / NDA / BLA / MAA number, distinct from the sponsor's
   // own program code. Additive, IF NOT EXISTS, nullable — never fabricated.

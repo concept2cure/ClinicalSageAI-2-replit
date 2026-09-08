@@ -458,13 +458,20 @@ async function applyGovernedSequenceTransition(
     );
   }
 
-  // Gate 2 — deterministic dispatch gate (server-computed inputs; tamper-proof).
+  // Gate 2 — deterministic dispatch gate (server-computed inputs; tamper-proof),
+  // composed for THIS step. Freeze takes every gate except the REQUIREMENT for a
+  // §11.70 release signature: that control is the transmit re-check, a release
+  // signature comes from a signed package orchestrator run, and requiring one to
+  // freeze inverted the order the product works in — freeze, then build and sign
+  // the release. A tampered signature still blocks a freeze, and dispatch is
+  // unchanged. See assess-dispatch-readiness → composeDispatchGatesForStep.
   const { assessSequenceDispatchReadiness } = await import('../ectd/assess-dispatch-readiness');
   const assessment = await assessSequenceDispatchReadiness({ sequenceId: id, organizationId: ctx.organizationId });
-  if (!assessment.gate.cleared) {
+  const stepGate = toStatus === 'frozen' ? assessment.freezeGate : assessment.gate;
+  if (!stepGate.cleared) {
     throw new SubmissionError(
       'DISPATCH_BLOCKED',
-      `Dispatch gate blocks ${toStatus}: ${assessment.gate.blockers.join(' ')}`
+      `Dispatch gate blocks ${toStatus}: ${stepGate.blockers.join(' ')}`
     );
   }
 

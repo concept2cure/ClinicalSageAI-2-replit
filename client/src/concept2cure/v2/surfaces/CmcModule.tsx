@@ -311,6 +311,107 @@ function incompleteReason(s: CmcSection): string {
   );
 }
 
+/* ── What a signature is over ────────────────────────────────────────────────
+   A §11.50 signature is a signature over CONTENT. Until this panel existed the
+   only thing the product showed a signer at the moment of approving §3.2.S.4
+   was its key, its percentage and its missing inputs: the narrative and tables
+   the approve route hashes and snapshots were served by no route and rendered
+   on no screen, so the signature was over a section NUMBER.
+
+   This is the read step, and it is not skippable — "Approve section" opens it,
+   and the signature form opens from inside it. It shows the section exactly as
+   it will be filed (the markdown comes from the one renderer the eCTD leaf and
+   the governed artifact are both built from), the compiler's own verdict, and
+   the source records the words rest on. A section whose content could not be
+   read offers no signature at all: signing what you could not see is the thing
+   this panel exists to prevent. */
+interface CmcSectionRead {
+  sectionKey: string; title: string; approvalState: string; stale: boolean; staleReason: string | null;
+  completeness: number | null; missingInputs: string[]; narrative: string;
+  tables: Array<{ title: string; headers: string[]; rows: string[][] }> | null;
+  tablesUnknown: boolean; markdown: string; compiledHash: string | null; updatedAt: string | null;
+  lineage: Array<{ sourceType: string | null; sourceKey: string | null; changedSinceCompile: boolean }>;
+}
+
+function CmcSectionReview({
+  projectId, section, onCancel, onSign,
+}: {
+  projectId: string; section: CmcSection; onCancel: () => void; onSign: () => void;
+}) {
+  const read = useLiveData<CmcSectionRead>(
+    projectId ? `/api/cmc/module3-os/sections/${encodeURIComponent(projectId)}/${encodeURIComponent(section.key)}` : null,
+  );
+  const d = read.data;
+  const changed = (d?.lineage ?? []).filter((l) => l.changedSinceCompile);
+  return (
+    <div className="de-bd" onMouseDown={(e) => { if (e.target === e.currentTarget) onCancel(); }}>
+      <div className="de" role="dialog" aria-modal="true" aria-label={`Read section ${section.key} before signing`}>
+        <div className="de-h">
+          <div>
+            <div className="de-h-eye">Read before you sign — 21 CFR §11.50</div>
+            <div className="de-h-t">§{section.key}{d?.title ? ` — ${d.title}` : ''}</div>
+            <div className="de-h-s">This is the content your signature covers, as it will be filed.</div>
+          </div>
+          <button className="de-x" onClick={onCancel} aria-label="Close">{I.close}</button>
+        </div>
+        <div className="de-body">
+          {read.loading && <div className="pj-dim">Loading the compiled section…</div>}
+          {!read.loading && (read.error || !d) && (
+            <EmptyState
+              title="This section could not be read"
+              hint={read.error || 'The compiled section did not load. It cannot be signed until it can be read — this is a failed read, not an empty section.'}
+            />
+          )}
+          {d && (
+            <>
+              <div className="pj-dim" style={{ marginBottom: 10 }}>
+                {d.completeness == null ? 'No compiled completeness record' : `${d.completeness}% complete`}
+                {d.missingInputs.length > 0 ? ` · missing: ${d.missingInputs.join('; ')}` : ''}
+                {d.compiledHash ? ` · content hash ${d.compiledHash.slice(0, 12)}…` : ''}
+              </div>
+              {d.stale && (
+                <div className="pj-con" style={{ marginBottom: 10 }}>
+                  <div className="pj-con-t">This section is stale</div>
+                  <div className="pj-con-d">{d.staleReason || 'A source changed after it was built. Recompile before approving.'}</div>
+                </div>
+              )}
+              {d.tablesUnknown && (
+                <div className="pj-con" style={{ marginBottom: 10 }}>
+                  <div className="pj-con-t">Its tables are not known</div>
+                  <div className="pj-con-d">
+                    This section was compiled before its tables were stored, so what is shown below may be missing them.
+                    Recompile and re-approve it before it can be filed.
+                  </div>
+                </div>
+              )}
+              {changed.length > 0 && (
+                <div className="pj-con" style={{ marginBottom: 10 }}>
+                  <div className="pj-con-t">{changed.length} source record(s) changed since this was compiled</div>
+                  <div className="pj-con-d">{changed.map((c) => c.sourceKey || c.sourceType).join(', ')}</div>
+                </div>
+              )}
+              <div dangerouslySetInnerHTML={{ __html: renderSafeMarkdown(d.markdown) }} />
+              <div className="pj-dim" style={{ marginTop: 14 }}>
+                Composed from {d.lineage.length} source record(s):{' '}
+                {d.lineage.map((l) => l.sourceKey || l.sourceType).filter(Boolean).join(', ') || '—'}
+              </div>
+            </>
+          )}
+        </div>
+        <div className="de-f">
+          <button className="de-btn ghost" onClick={onCancel}>Cancel</button>
+          <button
+            className="de-btn primary"
+            disabled={!d}
+            title={d ? 'Open the signature form for this section' : 'The section must be readable before it can be signed'}
+            onClick={onSign}
+          >{I.lock} Sign & approve</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function signForm(target: string): C2CFormConfig {
   return {
     eyebrow: '21 CFR §11.50 — e-signature', title: 'Sign to approve', sub: target, submitLabel: 'Sign & approve',
@@ -440,6 +541,9 @@ export function CmOverview({ ask, nav }: { ask: (text: string) => void; nav?: (i
     setSecs((liveSections ?? []).map((s) => ({ ...s })));
   }, [liveSections]);
   const [sign, setSign] = useState<CmcSection | null>(null);
+  /* The section being READ before it is signed. "Approve section" opens this;
+     the signature form opens from inside it, never directly. */
+  const [review, setReview] = useState<CmcSection | null>(null);
   const [toast, fireToast] = useToast();
 
   /* rpi / ir are number | null -- honestly null when the backend cannot measure a
@@ -739,7 +843,7 @@ export function CmOverview({ ask, nav }: { ask: (text: string) => void; nav?: (i
                                 onClick={() => (window as unknown as { __cmSetTab?: (id: string) => void }).__cmSetTab?.('build')}
                               >Open the build board</button>
                             </span>
-                          : <button className="nda-open" onClick={() => setSign(s)}>{I.lock} Approve section</button>}
+                          : <button className="nda-open" onClick={() => setReview(s)}>{I.lock} Approve section</button>}
                     </td>
                   </tr>);
                 })}</tbody></table>
@@ -805,6 +909,14 @@ export function CmOverview({ ask, nav }: { ask: (text: string) => void; nav?: (i
             </div>
           )}
         </>
+      )}
+      {review && (
+        <CmcSectionReview
+          projectId={ctxProjectId || ''}
+          section={review}
+          onCancel={() => setReview(null)}
+          onSign={() => { setSign(review); setReview(null); }}
+        />
       )}
       {sign && <C2CForm config={signForm('Section ' + sign.key + ' -- ' + sign.path)} onCancel={() => setSign(null)} onSubmit={doSign} />}
       <C2CToast msg={toast} />

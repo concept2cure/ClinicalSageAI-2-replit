@@ -57,6 +57,10 @@ export const SPAN_PROVENANCE_KINDS = [
   // Drafted by a machine author (machineAuthorId) and accepted by a human
   // (assertedBy / assertedAt) — both named. migrations/20260907.
   'accepted_machine_draft',
+  // Drafted by a machine author and accepted by NOBODY: assertedBy and
+  // assertedAt are NULL and the CHECK requires them to be. Who asked for the
+  // draft is in createdBy, a different claim. migrations/20260908.
+  'machine_draft',
 ] as const;
 export type SpanProvenanceKind = (typeof SPAN_PROVENANCE_KINDS)[number];
 

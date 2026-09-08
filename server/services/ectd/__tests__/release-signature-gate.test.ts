@@ -22,7 +22,7 @@ import {
   isReleaseSignatureRequired,
   transmitSignatureRequiredTypes,
 } from '../release-signature-status';
-import { composeDispatchGates } from '../assess-dispatch-readiness';
+import { composeDispatchGates, composeDispatchGatesForStep } from '../assess-dispatch-readiness';
 
 const BLOCKING_WHEN_REQUIRED: ReleaseSignatureVerdict[] = [
   'unsigned',
@@ -172,6 +172,86 @@ describe('composeDispatchGates — the release-signature gate is actually in the
     expect(merged.cleared).toBe(false);
     // 2 structural + 1 external + 1 shadow + 1 signature
     expect(merged.blockers).toHaveLength(5);
+  });
+});
+
+/* ── Which gates govern which governed step ─────────────────────────────────
+   `transitionSequenceGoverned` applies the composed gate to BOTH governed
+   transitions. Composing the release-signature gate into it therefore made a
+   TRANSMIT control block the FREEZE — and a release signature comes from a
+   package orchestrator run, so freezing any IND/NDA/BLA/MAA sequence required
+   signing a release first. That inverts the order the product works in, for a
+   control whose own module calls itself "the transmit-time re-check" and "the
+   provable pre-transmit rule".
+
+   Freeze is not transmit and nothing leaves the building at freeze; it carries
+   its own Part 11 signature already (transitionSequenceGoverned Gate 1: bound
+   to this sequence, this step, this actor, this leaf manifest). So the
+   release-signature gate governs `dispatch` only. Every OTHER gate governs
+   both — which is what these tests pin, so a gate added later cannot be
+   dropped from the freeze verdict by omission. */
+describe('composeDispatchGatesForStep — the release-signature gate is a transmit control', () => {
+  const CLEAR = { cleared: true, blockers: [] };
+  const parts = (releaseSignature: { required: boolean; verdict: ReleaseSignatureVerdict }, over = {}) => ({
+    structural: CLEAR, external: CLEAR, shadowPresence: CLEAR, releaseSignature, ...over,
+  });
+
+  it('does not block a FREEZE for a missing release signature', () => {
+    const merged = composeDispatchGatesForStep(parts({ required: true, verdict: 'unsigned' }), 'freeze');
+    expect(merged.cleared).toBe(true);
+    expect(merged.blockers).toHaveLength(0);
+  });
+
+  it('still blocks a DISPATCH for the same missing signature', () => {
+    const merged = composeDispatchGatesForStep(parts({ required: true, verdict: 'unsigned' }), 'dispatch');
+    expect(merged.cleared).toBe(false);
+    expect(merged.blockers.some(b => b.includes('release'))).toBe(true);
+  });
+
+  it('an undetermined lookup does not block a freeze either — it is the transmit re-check that needs certainty', () => {
+    expect(composeDispatchGatesForStep(parts({ required: true, verdict: 'undetermined' }), 'freeze').cleared).toBe(true);
+    expect(composeDispatchGatesForStep(parts({ required: true, verdict: 'undetermined' }), 'dispatch').cleared).toBe(false);
+  });
+
+  it('a TAMPERED signature blocks both steps — integrity is not a transmit-only concern', () => {
+    for (const step of ['freeze', 'dispatch'] as const) {
+      // Requiredness governs whether a signature must be PRESENT, never whether
+      // a broken one may be ignored (dispatch-gate rule 2). Scoping the
+      // requirement to dispatch must not weaken that.
+      const merged = composeDispatchGatesForStep(parts({ required: false, verdict: 'invalid' }), step);
+      expect(merged.cleared, step).toBe(false);
+      expect(merged.blockers.join(' '), step).toMatch(/does not verify/);
+    }
+  });
+
+  it.each(['structural', 'external', 'shadowPresence'] as const)(
+    'the %s gate governs a freeze exactly as it governs a dispatch',
+    key => {
+      const blocking = { cleared: false, blockers: [`${key} objected`] };
+      for (const step of ['freeze', 'dispatch'] as const) {
+        const merged = composeDispatchGatesForStep(
+          parts({ required: true, verdict: 'signed' }, { [key]: blocking }),
+          step,
+        );
+        expect(merged.cleared, step).toBe(false);
+        expect(merged.blockers, step).toContain(`${key} objected`);
+      }
+    },
+  );
+
+  it('the dispatch composition is exactly what composeDispatchGates already produced', () => {
+    const structural = evaluateDispatchGate({ validationErrors: 1, unacknowledgedShadowCriticals: 1 });
+    const external = { cleared: false, blockers: ['external validation did not run'] };
+    const shadowPresence = { cleared: false, blockers: ['no completed Shadow Review'] };
+    const signature = { required: true, verdict: 'unsigned' as ReleaseSignatureVerdict };
+    expect(
+      composeDispatchGatesForStep({ structural, external, shadowPresence, releaseSignature: signature }, 'dispatch'),
+    ).toEqual(
+      composeDispatchGates({
+        structural, external, shadowPresence,
+        releaseSignature: evaluateReleaseSignatureGate(signature),
+      }),
+    );
   });
 });
 

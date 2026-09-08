@@ -27,6 +27,7 @@ import {
   mergeDispatchGates,
   evaluateReleaseSignatureGate,
   type DispatchGateResult,
+  type ReleaseSignatureGateInput,
   type ReleaseSignatureVerdict,
 } from './dispatch-gate';
 import {
@@ -89,8 +90,15 @@ export interface DispatchReadinessAssessment {
     /** This gate adds no blocker. */
     cleared: boolean;
   };
-  /** Hard gate verdict — structural + shadow + external + release-signature, composed. */
+  /** Hard gate verdict for DISPATCH — structural + shadow + external +
+   *  release-signature, composed. This is the transmit verdict and the one the
+   *  readiness surface reports. */
   gate: DispatchGateResult;
+  /** Hard gate verdict for FREEZE — the same gates, except that a release
+   *  signature is not REQUIRED to freeze (a tampered one still blocks). Freeze
+   *  is not transmit and carries its own Part 11 signature; see
+   *  composeDispatchGatesForStep. */
+  freezeGate: DispatchGateResult;
   /** Full structural breakdown (errors + non-blocking warnings/infos). */
   readiness: DispatchReadinessReport;
   leafCount: number;
@@ -152,6 +160,56 @@ export function composeDispatchGates(gates: {
     gates.shadowPresence,
     gates.releaseSignature,
   );
+}
+
+/** The two governed sequence transitions this composition can be asked about. */
+export type GovernedDispatchStep = 'freeze' | 'dispatch';
+
+/**
+ * The gate verdict for a specific governed step.
+ *
+ * ── Why the step matters ─────────────────────────────────────────────────────
+ * `transitionSequenceGoverned` applies a composed gate to BOTH governed
+ * transitions. Composing the release-signature gate into that one verdict
+ * therefore made a TRANSMIT control block the FREEZE — and a release signature
+ * comes from a signed package orchestrator run, so freezing any IND / NDA / BLA
+ * / MAA sequence required signing a release first. That inverts the order the
+ * product works in, for a control whose own module calls itself "the
+ * transmit-time re-check" and "the provable pre-transmit rule".
+ *
+ * Freeze is not transmit: nothing leaves the building, and the step already
+ * carries its own Part 11 signature — bound to this sequence, this step, this
+ * actor and this leaf manifest (transitionSequenceGoverned Gate 1). So the
+ * REQUIREMENT for a release signature governs `dispatch` only.
+ *
+ * What does NOT change is integrity. `evaluateReleaseSignatureGate` blocks an
+ * `invalid` verdict unconditionally, including when a signature is not
+ * required, because requiredness governs whether a signature must be PRESENT
+ * and never whether a broken one may be ignored. Expressing the freeze case as
+ * "not required" rather than "gate omitted" is what keeps that rule intact: a
+ * tampered signature still blocks a freeze.
+ *
+ * Every other gate governs both steps, and the membership is pinned by test —
+ * a gate added later cannot be dropped from the freeze verdict by omission.
+ */
+export function composeDispatchGatesForStep(
+  parts: {
+    structural: DispatchGateResult;
+    external: DispatchGateResult;
+    shadowPresence: DispatchGateResult;
+    releaseSignature: ReleaseSignatureGateInput;
+  },
+  step: GovernedDispatchStep,
+): DispatchGateResult {
+  return composeDispatchGates({
+    structural: parts.structural,
+    external: parts.external,
+    shadowPresence: parts.shadowPresence,
+    releaseSignature: evaluateReleaseSignatureGate({
+      ...parts.releaseSignature,
+      required: step === 'dispatch' && parts.releaseSignature.required,
+    }),
+  });
 }
 
 /**
@@ -351,18 +409,26 @@ export async function assessSequenceDispatchReadiness(
     organizationId,
   });
   const signatureRequired = isReleaseSignatureRequired(submissionApplicationType);
-  const releaseSignatureGate = evaluateReleaseSignatureGate({
+  const signatureInput = {
     required: signatureRequired,
     verdict: releaseSignature.verdict,
     detail: releaseSignature.detail,
-  });
+  };
+  const releaseSignatureGate = evaluateReleaseSignatureGate(signatureInput);
 
-  const gate = composeDispatchGates({
+  // One set of parts, composed for each governed step. Dispatch is the transmit
+  // verdict (every gate). Freeze drops only the REQUIREMENT for a release
+  // signature — a control the §11.70 design reserves for transmit — and keeps
+  // every other gate, including an integrity failure on a signature that does
+  // exist. See composeDispatchGatesForStep.
+  const gateParts = {
     structural: structuralGate,
     external: { cleared: externalGate.cleared, blockers: externalGate.blockers },
     shadowPresence: shadowPresenceGate,
-    releaseSignature: releaseSignatureGate,
-  });
+    releaseSignature: signatureInput,
+  };
+  const gate = composeDispatchGatesForStep(gateParts, 'dispatch');
+  const freezeGate = composeDispatchGatesForStep(gateParts, 'freeze');
 
   return {
     sequenceId,
@@ -394,6 +460,7 @@ export async function assessSequenceDispatchReadiness(
       cleared: releaseSignatureGate.cleared,
     },
     gate,
+    freezeGate,
     readiness,
     leafCount: leaves.length,
   };
