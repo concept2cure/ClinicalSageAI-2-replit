@@ -36,7 +36,13 @@ const {
   })),
   /** Rows the project-anchor resolution query returns (one query per request). */
   mockResolveRows: vi.fn<[], unknown[]>(() => []),
-  mockLogAction: vi.fn(async () => undefined),
+  /* The REAL auditService.logAction resolves an AuditWriteResult and never
+     rejects; this fake used to resolve `undefined`, which is not a shape the
+     service can produce. That lie is why "an export is never delivered
+     un-audited" could be written in a docstring, awaited in code, and be false
+     — nothing downstream could tell a written row from an unwritten one.
+     Tests override it per case below. */
+  mockLogAction: vi.fn(async () => ({ persisted: true, chained: true, tamperProof: true })),
   mockLoadAuthoredSections: vi.fn(async () => [] as Array<{ title: string; content: string }>),
   mockLoadContentLeaves: vi.fn(
     async () => [] as Array<{ sectionCode: string; title: string; documentType?: string }>,
@@ -508,5 +514,45 @@ describe('POST /api/510k/estar/assemble — the device-assembly contract over HT
     expect(payload.artifactKind).toBe('content-package-draft');
     expect(payload.canProduceOfficialEstar).toBe(false);
     expect(payload.validationReport.sectionSummary).toBeDefined();
+  });
+});
+
+/**
+ * The unplaced delivery path is the one where the audit row IS the record:
+ * the artifact registry has nowhere to place the file, so with no audit row a
+ * delivered official eSTAR exists nowhere in the system that produced it.
+ * `createAuditedUnplacedExport` refuses that delivery; the route must turn the
+ * refusal into a 500 and hand back no bytes.
+ */
+describe('an unplaced export whose audit row does not persist', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockLogAction.mockResolvedValue({ persisted: true, chained: true, tamperProof: true });
+  });
+
+  it('is refused with a 500 and no downloadable bytes', async () => {
+    mockLogAction.mockResolvedValue({
+      persisted: false,
+      chained: false,
+      tamperProof: false,
+      error: 'no database pool: the chained audit_logs row was not attempted',
+    });
+    /* Same call as the delivering unplaced case above: a program-spine UUID
+       project, which the artifact registry cannot place. */
+    mockResolveRows.mockReturnValue([{ id: PROGRAM_UUID, name: 'BX-204 CGM' }]);
+    const req = makeReq({
+      body: {
+        meta: { id: 'BX-204', ident: PROGRAM_UUID, title: 'BX-204 draft package' },
+        content: { sections: [] },
+      },
+    });
+    const res = createMockResponse() as any;
+
+    await getHandler('/build')(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(500);
+    const body = res.json.mock.calls[0][0];
+    expect(body).not.toHaveProperty('downloadable_output_ref');
+    expect(JSON.stringify(body)).not.toContain('base64');
   });
 });

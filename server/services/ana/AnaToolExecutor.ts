@@ -16249,6 +16249,121 @@ registerToolHandler('estimate_recorded_shelf_life', async (input, ctx) => {
   }
 });
 
+registerToolHandler('assess_recorded_stability_trend', async (input, ctx) => {
+  const orgId = ctx?.organizationId;
+  if (!orgId) return 'An active organization context is required to read the stability register.';
+  const id = Number(input.study_id);
+  if (!Number.isInteger(id) || id <= 0) {
+    return JSON.stringify({
+      status: 'needs_parameters',
+      message: 'A numeric stability study id is required. Use list_cmc_registers to find it.',
+    });
+  }
+  try {
+    const [{ db }, { stabilityStudies }, { and, eq }, { assessRecordedTrending }] = await Promise.all([
+      import('../../db.js'),
+      import('../../../shared/schema.js'),
+      import('drizzle-orm'),
+      import('../cmc/recorded-stability.js'),
+    ]);
+    const [study] = await db
+      .select({
+        id: stabilityStudies.id,
+        storageConditions: stabilityStudies.storageConditions,
+        stabilityData: stabilityStudies.stabilityData,
+      })
+      .from(stabilityStudies)
+      .where(and(eq(stabilityStudies.id, id), eq(stabilityStudies.organizationId, orgId)));
+    if (!study) {
+      return JSON.stringify({
+        status: 'not_found',
+        message: `No stability study in this organization has id ${id}. List the register and use the ids it returns.`,
+      });
+    }
+    /* The SAME assessment the composed §3.2.S.7 / §3.2.P.8 carry. */
+    const outcome = assessRecordedTrending(study);
+    if (!outcome.ok) {
+      return JSON.stringify({
+        status: 'not_assessable',
+        message: outcome.error,
+        instruction: 'Relay this reason to the user verbatim; the refusal is a property of the recorded data, not of the tool.',
+      });
+    }
+    return JSON.stringify({
+      status: 'computed',
+      engine: 'deterministic',
+      result: outcome.data,
+      instruction:
+        'Report each series: its out-of-trend points (or none) with the prediction interval each fell outside, the slope with its CI and whether it is established, and the projected time to the limit where one is stated. Report every not-assessed series with its reason verbatim. An OOT point is a signal to investigate under the stability protocol, not a disposition; nothing was written.',
+    });
+  } catch (err: any) {
+    return JSON.stringify({ error: `assess_recorded_stability_trend failed: ${err?.message || 'unknown error'}` });
+  }
+});
+
+registerToolHandler('assess_recorded_process_capability', async (input, ctx) => {
+  const orgId = ctx?.organizationId;
+  if (!orgId) return 'An active organization context is required to read the QC register.';
+  /* An explicitly named project wins over the session's, so "what is the Cpk on
+     BX-702" is answered about BX-702; otherwise the active program is used. */
+  const supplied = typeof input.project_id === 'string' ? input.project_id.trim() : '';
+  const ref = typeof ctx?.projectRef === 'string' ? ctx.projectRef.trim() : '';
+  const projectId = supplied || ref || (ctx?.projectId ? String(ctx.projectId) : '');
+  if (!projectId) {
+    return JSON.stringify({
+      status: 'needs_parameters',
+      message: 'A project id is required, or open the program first — capability is assessed over one project\u2019s QC register.',
+    });
+  }
+  try {
+    const [{ getPool }, capability] = await Promise.all([
+      import('../../db.js'),
+      import('../cmc/recorded-capability.js'),
+    ]);
+    const { rows } = await getPool().query(
+      `SELECT source_payload as "sourcePayload"
+       FROM cmc_source_objects
+       WHERE organization_id = $1 AND project_id = $2 AND source_type = 'qc_result'
+       ORDER BY updated_at DESC`,
+      [orgId, projectId],
+    );
+    if (rows.length === 0) {
+      return JSON.stringify({
+        status: 'no_data',
+        message:
+          'No batch results are recorded for this project, so process capability is not assessed. ' +
+          'Record the QC results, each with its batch number and the acceptance criterion it was judged against.',
+        instruction: 'Say that nothing was assessed and why. Do not report a capable process over an empty register.',
+      });
+    }
+    const payloads = rows.map((r: { sourcePayload: Record<string, unknown> | null }) => r.sourcePayload || {});
+    /* The SAME assessment the composed §3.2.S.4.4 / §3.2.P.5.4 carry. */
+    const sides = ['drug_substance', 'drug_product'] as const;
+    const result = Object.fromEntries(
+      sides.map((side) => {
+        const series = capability.assessRecordedCapability(
+          payloads.filter((p) => capability.isBatchAnalysisFor(p, side)),
+        );
+        return [side, { series, statements: series.map(capability.capabilitySentence) }];
+      }),
+    );
+    return JSON.stringify({
+      status: 'assessed',
+      projectId,
+      resultsOnFile: payloads.length,
+      result,
+      instruction:
+        'Report each test on each side with its batch count, mean, Ppk and Cpk and the capable/marginal/not-capable grade, ' +
+        'naming any batch outside the specification. Report every not-assessed test with its reason verbatim — criteria that ' +
+        'disagree, too few batches, an unreadable criterion or a series with no variation are findings, not omissions. Say when ' +
+        'an estimate is preliminary (fewer than 25 batches). The 1.33/1.00 grades are conventional; ICH sets no capability ' +
+        'requirement. Nothing was written.',
+    });
+  } catch (err: any) {
+    return JSON.stringify({ error: `assess_recorded_process_capability failed: ${err?.message || 'unknown error'}` });
+  }
+});
+
 registerToolHandler('assess_recorded_batch_poolability', async (input, ctx) => {
   const orgId = ctx?.organizationId;
   if (!orgId) return 'An active organization context is required to read the stability register.';

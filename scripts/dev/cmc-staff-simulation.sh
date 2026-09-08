@@ -14,13 +14,30 @@ JQ() { jq -r "$1" 2>/dev/null; }
 
 req() { # req NAME METHOD PATH [JSON_BODY]
   local name="$1" method="$2" path="$3" body="${4:-}"
-  if [ -n "$body" ]; then
-    curl -sS -X "$method" "$BASE$path" -H "Authorization: Bearer $TOKEN" \
-      -H 'Content-Type: application/json' -d "$body" -o "$OUT/$name.json" -w '%{http_code}'
-  else
-    curl -sS -X "$method" "$BASE$path" -H "Authorization: Bearer $TOKEN" \
-      -o "$OUT/$name.json" -w '%{http_code}'
-  fi
+  local code wait attempt=0
+  # The platform's own backpressure is honoured, not bypassed: this script
+  # fires a working day of register writes in under a minute and trips the
+  # 100-request/minute API bucket, and a 429 body parses as an empty result —
+  # which read as "the closed question is off the list" and PASSED. Wait the
+  # Retry-After the limiter states, then repeat the request.
+  while : ; do
+    if [ -n "$body" ]; then
+      code=$(curl -sS -X "$method" "$BASE$path" -H "Authorization: Bearer $TOKEN" \
+        -H 'Content-Type: application/json' -d "$body" -o "$OUT/$name.json" -w '%{http_code}')
+    else
+      code=$(curl -sS -X "$method" "$BASE$path" -H "Authorization: Bearer $TOKEN" \
+        -o "$OUT/$name.json" -w '%{http_code}')
+    fi
+    [ "$code" = 429 ] || break
+    attempt=$((attempt + 1))
+    [ "$attempt" -gt 3 ] && break
+    wait=$(jq -r '.retryAfter // 60' "$OUT/$name.json" 2>/dev/null)
+    case "$wait" in ''|*[!0-9]*) wait=60 ;; esac
+    [ "$wait" -gt 90 ] && wait=90
+    echo "   … rate limited on $path; waiting ${wait}s (attempt $attempt)" >&2
+    sleep $((wait + 1))
+  done
+  printf '%s' "$code"
 }
 
 step "0. Sign in (dev-login, seeded admin)"
@@ -67,6 +84,17 @@ SELFID=$(cat "$OUT/qcself.json" | JQ '.data.id // empty')
 CODE=$(req qcselfrev PUT "/api/cmc/qc-testing/$SELFID" '{"reviewedBy":1}')
 [ "$CODE" = 409 ] && ok "the analyst cannot review their own result (409)" \
   || bad "self-review was accepted ($CODE): $(head -c200 "$OUT/qcselfrev.json")"
+
+step "5c. Four more release results against the SAME criterion — a capability series needs batches"
+# Capability is a statement about a process across batches; ICH Q6A sets the
+# specification and six batches is the floor the engine will answer over.
+QCN=0
+for RESULT in "S-2026-003 B-2026-003 100.4 2026-07-03" "S-2026-004 B-2026-004 99.8 2026-07-04" "S-2026-005 B-2026-005 100.9 2026-07-05" "S-2026-006 B-2026-006 98.7 2026-07-06"; do
+  set -- $RESULT
+  CODE=$(req "qc$1" POST /api/cmc/qc-testing "{\"sampleId\":\"$1\",\"batchNumber\":\"$2\",\"sampleType\":\"drug substance\",\"testMethod\":\"AM-001\",\"testDate\":\"$4T00:00:00.000Z\",\"testResults\":{\"value\":\"$3\",\"unit\":\"%\"},\"specifications\":{\"acceptanceCriteria\":\"98.0-102.0%\"},\"passFailStatus\":\"pass\",\"projectId\":\"$PROGRAM\"}")
+  [ "$CODE" = 200 -o "$CODE" = 201 ] && QCN=$((QCN + 1))
+done
+[ "$QCN" = 4 ] && ok "four further release results recorded against the same criterion" || bad "only $QCN of 4 further QC results recorded"
 
 step "6. QA sets the specification (feeds 3.2.S.4.1)"
 CODE=$(req spec POST /api/cmc/specifications "{\"projectId\":\"$PROGRAM\",\"materialType\":\"drug_substance\",\"materialName\":\"BX-701\",\"acceptanceCriteria\":{\"release\":\"98.0-102.0%\",\"shelf\":\"95.0-105.0%\"},\"testMethods\":{\"method\":\"AM-001\"},\"regulatoryBasis\":{\"ich\":\"ICH Q6B\"},\"justification\":\"Batch history n=12 supports the limits\",\"approvalStatus\":\"draft\"}")
@@ -218,8 +246,34 @@ EMPTYCHAR=$(cat "$OUT/char3.json" | JQ '.data.id // empty')
 [ "$CODE" = 200 -o "$CODE" = 201 ] && ok "a study still in flight may be recorded without a result ($CODE)" || bad "in-flight study failed ($CODE)"
 CODE=$(req charq0 POST "/api/cmc/characterization-studies/$EMPTYCHAR/qualify" '{"reason":"Attempting to sign a study with no recorded result.","meaning":"approval","reauth":{"password":"pass-word"}}')
 [ "$CODE" = 409 ] && ok "signing a study with no result is refused (409)" || bad "signed a study establishing nothing ($CODE)"
+# The study reads out: the result and conclusion the section needs, recorded
+# once they exist — §3.2.S.3's biological-activity input has no other producer.
+CODE=$(req char3b PUT "/api/cmc/characterization-studies/$EMPTYCHAR" '{"result":"IC50 = 3.2 nM (n=3)","conclusion":"BX-701 is a potent inhibitor of the target enzyme"}')
+[ "$CODE" = 200 ] && ok "biological-activity study result recorded" || bad "char3 result PUT failed ($CODE): $(head -c200 "$OUT/char3b.json")"
 CODE=$(req charq1 POST "/api/cmc/characterization-studies/$CHARID/qualify" '{"reason":"Spectra reviewed against the proposed structure; assignment complete.","meaning":"approval","reauth":{"password":"pass-word"}}')
 [ "$CODE" = 200 ] && ok "characterisation study qualified under signature" || bad "characterisation qualify failed ($CODE)"
+
+step "8i. The drug-product side — every register §3.2.P reads (product, process, specification, release result, impurity, standard, stability, comparability)"
+CODE=$(req dp POST /api/cmc/drug-products "{\"projectId\":\"$PROGRAM\",\"productName\":\"BX-701 5 mg film-coated tablet\",\"dosageForm\":\"Film-coated tablet\",\"strength\":\"5 mg\",\"routeOfAdministration\":\"oral\",\"composition\":\"BX-701 5 mg; microcrystalline cellulose PH-102 80 mg; gelatin 3 mg; film coat (Opadry II) 3 mg\",\"batchFormula\":{\"description\":\"Per 250,000-tablet batch: BX-701 1.25 kg; microcrystalline cellulose PH-102 20.0 kg; gelatin 0.75 kg; magnesium stearate 0.25 kg; Opadry II 0.75 kg\"},\"status\":\"development\"}")
+DPID=$(cat "$OUT/dp.json" | JQ '.data.id // empty')
+DPLINK=$(cat "$OUT/dp.json" | JQ '.module3Linked // empty')
+[ "$CODE" = 200 -o "$CODE" = 201 ] && [ "$DPLINK" = "true" ] && ok "drug product registered and linked ($CODE)" || bad "drug product failed ($CODE, module3Linked=$DPLINK): $(head -c200 "$OUT/dp.json")"
+# The placeholder tablet process gets its steps and its development history —
+# the only producer §3.2.P.2.3 has.
+CODE=$(req proc2b PUT "/api/cmc/manufacturing-processes/$EMPTYPROC" "{\"processDescription\":\"Wet granulation of BX-701 with MCC and gelatin binder, drying, blending with lubricant, compression to 125 mg cores, aqueous film coating.\",\"processSteps\":[{\"step\":1,\"name\":\"Wet granulation\",\"parameters\":\"Impeller 250 rpm, binder addition 8 min\"},{\"step\":2,\"name\":\"Fluid-bed drying\",\"parameters\":\"Inlet 60C to LOD <= 2.0%\"},{\"step\":3,\"name\":\"Compression\",\"parameters\":\"Main compression 8-12 kN, hardness 60-100 N\"},{\"step\":4,\"name\":\"Film coating\",\"parameters\":\"Weight gain 3%\"}],\"processControls\":[{\"step\":\"Drying\",\"control\":\"LOD\",\"limit\":\"<= 2.0%\"},{\"step\":\"Compression\",\"control\":\"Tablet weight\",\"limit\":\"125 mg +/- 5%\"}],\"processDevelopment\":\"Direct compression was evaluated on F1-F2 and rejected for content uniformity (RSD 6.8%); wet granulation (F3) gave RSD 1.9% and was carried forward. Granulation end-point set from torque profiles across three 20 kg batches; compression force range from a DoE on hardness and disintegration.\",\"batchSize\":\"250,000 tablets\"}")
+[ "$CODE" = 200 ] && ok "tablet process described, with its development history" || bad "tablet process PUT failed ($CODE): $(head -c200 "$OUT/proc2b.json")"
+CODE=$(req dpspec POST /api/cmc/specifications "{\"projectId\":\"$PROGRAM\",\"materialType\":\"drug_product\",\"materialName\":\"BX-701 5 mg film-coated tablet\",\"acceptanceCriteria\":{\"release\":\"95.0-105.0% of label claim (assay)\",\"shelf\":\"93.0-105.0% of label claim\"},\"testMethods\":{\"method\":\"AM-001\"},\"regulatoryBasis\":{\"ich\":\"ICH Q6A\"},\"justification\":\"Three development batches and the registration stability batches support the limits\",\"approvalStatus\":\"draft\"}")
+[ "$CODE" = 200 -o "$CODE" = 201 ] && ok "drug-product specification recorded ($CODE)" || bad "DP specification failed ($CODE): $(head -c200 "$OUT/dpspec.json")"
+CODE=$(req dpqc POST /api/cmc/qc-testing "{\"sampleId\":\"S-DP-001\",\"batchNumber\":\"DP-B-001\",\"sampleType\":\"finished-product\",\"testMethod\":\"AM-001\",\"testDate\":\"2026-07-10T00:00:00.000Z\",\"testResults\":{\"value\":\"99.1\",\"unit\":\"%\"},\"specifications\":{\"acceptanceCriteria\":\"95.0-105.0%\"},\"passFailStatus\":\"pass\",\"projectId\":\"$PROGRAM\"}")
+[ "$CODE" = 200 -o "$CODE" = 201 ] && ok "finished-product release result recorded ($CODE)" || bad "DP QC result failed ($CODE): $(head -c200 "$OUT/dpqc.json")"
+CODE=$(req dpimp POST /api/cmc/impurity-profiles "{\"projectId\":\"$PROGRAM\",\"scope\":\"drug_product\",\"materialName\":\"BX-701 5 mg film-coated tablet\",\"impurityName\":\"Degradant D1 (N-oxide)\",\"impurityType\":\"degradation\",\"origin\":\"Oxidative degradation on storage\",\"observedLevel\":\"0.12\",\"levelUnit\":\"%\",\"maximumDailyDose\":\"5 mg\",\"specificationLimit\":\"NMT 0.5%\",\"analyticalMethod\":\"AM-001\",\"structure\":\"CC1=CC(=O)[N+]([O-])\",\"controlStrategy\":\"Controlled by the film coat and the shelf-life specification\"}")
+[ "$CODE" = 200 -o "$CODE" = 201 ] && ok "drug-product degradant recorded ($CODE)" || bad "DP impurity failed ($CODE): $(head -c200 "$OUT/dpimp.json")"
+CODE=$(req dprstd POST /api/cmc/reference-standards "{\"projectId\":\"$PROGRAM\",\"scope\":\"drug_product\",\"standardCode\":\"RS-DP-001\",\"standardName\":\"BX-701 tablet working standard\",\"standardType\":\"working\",\"materialSource\":\"DP lot DP-B-001\",\"lotNumber\":\"RS-DP-LOT-2406\",\"assignedValue\":\"99.1% of label claim\",\"characterization\":[{\"attribute\":\"Assay\",\"method\":\"RP-HPLC\",\"result\":\"99.1% of label claim against RS-DS-001\"}],\"certificateOfAnalysis\":\"CoA-RS-DP-001-2406\",\"storageConditions\":\"25C/60%RH\"}")
+[ "$CODE" = 200 -o "$CODE" = 201 ] && ok "drug-product working standard recorded with its CoA ($CODE)" || bad "DP reference standard failed ($CODE): $(head -c200 "$OUT/dprstd.json")"
+CODE=$(req dpstab POST /api/cmc/stability-studies "{\"productName\":\"BX-701 5 mg film-coated tablet\",\"batchNumber\":\"DP-B-001\",\"dosageForm\":\"tablet\",\"scope\":\"DP\",\"climaticZone\":\"II\",\"studyType\":\"long_term\",\"storageConditions\":[\"25C/60%RH\"],\"duration\":24,\"testParameters\":[\"assay\",\"degradant D1\"],\"timePoints\":[\"0\",\"3\",\"6\",\"12\",\"24\"],\"shelfLife\":\"24 months at 25C/60%RH (proposed)\",\"status\":\"ACTIVE\",\"startDate\":\"2026-02-01T00:00:00.000Z\",\"projectId\":\"$PROGRAM\"}")
+[ "$CODE" = 200 -o "$CODE" = 201 ] && ok "drug-product stability study registered with its proposed claim ($CODE)" || bad "DP stability failed ($CODE): $(head -c200 "$OUT/dpstab.json")"
+CODE=$(req comp POST /api/cmc/comparability-studies "{\"projectId\":\"$PROGRAM\",\"title\":\"Pre-/post-granulation-scale comparability of BX-701 tablets\",\"type\":\"process\",\"product\":\"BX-701 5 mg film-coated tablet\",\"methods\":[\"AM-001\",\"dissolution\"],\"outcome\":\"Comparable on assay, degradation and dissolution across three batches per scale\",\"status\":\"comparable\"}")
+[ "$CODE" = 200 -o "$CODE" = 201 ] && ok "comparability assessment recorded ($CODE)" || bad "comparability failed ($CODE): $(head -c200 "$OUT/comp.json")"
 
 step "9. Change manager proposes a governed change WITH project (marks 3.2 stale)"
 CODE=$(req change POST /api/cmc-changes "{\"title\":\"Bioreactor scale-up 500L→2000L\",\"dosageFormFamily\":\"biologic\",\"changeCategory\":\"scale_up\",\"scaleChangeFactor\":\"within_10x\",\"touchesCriticalStep\":true,\"affects\":\"drug_substance\",\"cmcProjectId\":\"$PROGRAM\"}")
@@ -250,6 +304,26 @@ NARR=$(echo "$S4" | jq -r '.narrativeDraft // ""' 2>/dev/null | grep -c "recorde
   && ok "§3.2.S.4 renders the batch-analyses table with sample S-2026-001 and reports it in the narrative" \
   || bad "batch analyses missing from the composed §3.2.S.4: tables=$BATAB sampleRows=$HASSAMPLE narrative=$NARR"
 
+step "11b-cap. Process capability over the recorded batches — the same indices §3.2.S.4.4 carries, askable without compiling"
+# One assembly (services/cmc/recorded-capability) behind the composed section,
+# this route and the AnA tool. A test that cannot be assessed is RETURNED with
+# its reason: a test missing from a capability report reads as one that passed.
+CODE=$(req cap GET "/api/cmc/projects/$PROGRAM/process-capability")
+CAPOK=$(cat "$OUT/cap.json" | jq -r '[.data.sides.drug_substance.series[]? | select(.test=="AM-001" and .outcome.ok==true)][0]' 2>/dev/null)
+CAPN=$(echo "$CAPOK" | jq -r '.outcome.n // 0' 2>/dev/null)
+CAPPPK=$(echo "$CAPOK" | jq -r '.outcome.ppk // "null"' 2>/dev/null)
+CAPPRELIM=$(echo "$CAPOK" | jq -r '.outcome.preliminary // false' 2>/dev/null)
+# The drug-product side has ONE finished-product result, which is not a
+# capability series — and it is reported as not assessed, with the reason.
+CAPDP=$(cat "$OUT/cap.json" | jq -r '[.data.sides.drug_product.series[]? | select(.outcome.ok==false)][0].outcome.code // empty' 2>/dev/null)
+CAPSAY=$(cat "$OUT/cap.json" | jq -r '[.data.sides.drug_product.statements[]?] | join(" ")' 2>/dev/null | grep -c "capability not assessed")
+[ "$CODE" = 200 ] && [ "${CAPN:-0}" -ge 6 ] && [ "$CAPPPK" != "null" ] && [ "$CAPPRELIM" = "true" ] && [ "$CAPDP" = "INSUFFICIENT_BATCHES" ] && [ "${CAPSAY:-0}" -ge 1 ] \
+  && ok "capability assessed over $CAPN drug-substance batches (Ppk $CAPPPK, preliminary); the single drug-product result is reported as not assessed" \
+  || bad "process capability: code=$CODE n=$CAPN ppk=$CAPPPK preliminary=$CAPPRELIM dpCode=$CAPDP dpStated=$CAPSAY"
+# The compiled section carries the SAME numbers — not a second computation.
+CAPSEC=$(cat "$OUT/compile.json" | jq -r --arg n "$CAPN" '[.sections[]? | select(.sectionKey=="3.2.S.4") | .tables[]? | select(.title | test("Process Capability")) | .rows[]? | select(.[1]==$n)] | length' 2>/dev/null)
+[ "${CAPSEC:-0}" -ge 1 ] && ok "§3.2.S.4.4 renders the same batch count the route reports" || bad "§3.2.S.4.4 capability table disagrees with the route (rows matching n=$CAPN: $CAPSEC)"
+
 step "11c. The recorded shelf-life engine answers over the study on file (the AnA tools' engine)"
 # One implementation, two callers: this route and AnA's
 # estimate_recorded_shelf_life. A study with no recorded pull points must
@@ -264,6 +338,17 @@ elif [ "$CODE" = 200 ]; then
   ok "shelf-life estimated from recorded results (limiting attribute: $LIMIT)"
 else
   bad "shelf-life engine: code=$CODE err=$(echo "$SHELFERR" | head -c 160)"
+fi
+# Out-of-trend over the same study: five recorded points give the last one
+# four prior points, so the series is assessable and reports its slope.
+CODE=$(req trend POST "/api/cmc/stability-studies/$STABID/trending" '{}')
+TRENDN=$(cat "$OUT/trend.json" | JQ '.data.series | length')
+if [ "$CODE" = 200 ] && [ "${TRENDN:-0}" -ge 1 ]; then
+  ok "trend assessed over the recorded study ($TRENDN series): $(cat "$OUT/trend.json" | jq -r '.data.series[0] | "\(.parameter) ootPoints=\((.outOfTrend // []) | length) slopeEstablished=\(.slope.significant // .slope.established // "n/a")"' 2>/dev/null)"
+elif [ "$CODE" = 409 ]; then
+  ok "trend refused with its reason (409): $(cat "$OUT/trend.json" | JQ '.error' | head -c120)"
+else
+  bad "trending route: code=$CODE $(head -c200 "$OUT/trend.json")"
 fi
 
 step "11d. §3.2.P.7 and §3.2.S.5 compose from the two new registers — and the unrecorded side stays honestly empty"
@@ -384,14 +469,18 @@ S2LEAK=$(echo "$S2" | jq -r '[.tables[]? | .rows[]? | select(.[] | tostring | te
 S3=$(cat "$OUT/compile.json" | jq -r '[.sections[]? | select(.sectionKey=="3.2.S.3")][0]' 2>/dev/null)
 S3STUDY=$(echo "$S3" | jq -r '[.tables[]? | select(.title | test("Characterisation Studies")) | .rows[]? | select(.[] | tostring | test("Structure confirmation"))] | length' 2>/dev/null)
 S3DETAIL=$(echo "$S3" | jq -r '[.tables[]? | .rows[]? | select(.[] | tostring | test("Aromatic H-3/H-5"))] | length' 2>/dev/null)
-# Two of the three questions are answered; the biological study has no result,
-# so the section must say bioactivity is NOT established rather than counting it.
+# All three questions are answered — the biological study was signed off as
+# unqualifiable while it had no result (step 8h), then read out. The section
+# counts it only now: the study row renders, the narrative names the biological
+# activity, no study is reported as recorded-but-empty, and nothing about
+# bioactivity is missing.
 S3BIO=$(echo "$S3" | jq -r '.narrativeDraft // ""' 2>/dev/null | grep -c "biological activity")
 S3EMPTY=$(echo "$S3" | jq -r '.narrativeDraft // ""' 2>/dev/null | grep -c "neither a result nor a conclusion")
+S3IC50=$(echo "$S3" | jq -r '[.tables[]? | .rows[]? | select(.[] | tostring | test("IC50 = 3.2 nM"))] | length' 2>/dev/null)
 S3MISS=$(echo "$S3" | jq -r '[.missingInputs[]? | select(. == "biologicalActivity")] | length' 2>/dev/null)
-[ "${S3STUDY:-0}" -ge 1 ] && [ "${S3DETAIL:-0}" -ge 1 ] && [ "${S3BIO:-0}" -ge 1 ] && [ "${S3EMPTY:-0}" -ge 1 ] && [ "${S3MISS:-0}" -ge 1 ] \
-  && ok "§3.2.S.3 renders the studies and refuses to count the one with no result" \
-  || bad "§3.2.S.3: studyRows=$S3STUDY detailRows=$S3DETAIL bioClause=$S3BIO emptyClause=$S3EMPTY missing=$S3MISS"
+[ "${S3STUDY:-0}" -ge 1 ] && [ "${S3DETAIL:-0}" -ge 1 ] && [ "${S3BIO:-0}" -ge 1 ] && [ "${S3IC50:-0}" -ge 1 ] && [ "${S3EMPTY:-0}" = 0 ] && [ "${S3MISS:-0}" = 0 ] \
+  && ok "§3.2.S.3 renders every study and counts the biological one once it reads out" \
+  || bad "§3.2.S.3: studyRows=$S3STUDY detailRows=$S3DETAIL bioClause=$S3BIO ic50Rows=$S3IC50 emptyClause=$S3EMPTY missing=$S3MISS"
 
 step "12. Contradiction sweep"
 CODE=$(req sweep POST "/api/cmc/module3-os/contradictions/$PROGRAM" '{}')
@@ -582,7 +671,12 @@ CODE=$(req qclose PATCH "/api/cmc/agency-questions/$QID" '{"status":"CLOSED"}')
 ST=$(cat "$OUT/qclose.json" | JQ '.data.status // empty')
 CODE2=$(req board3 GET /api/cmc/module3-board)
 GONE=$(cat "$OUT/board3.json" | jq --argjson id "${QID:-0}" '[.data.correspondence[]? | select(.id == $id)] | length' 2>/dev/null)
-[ "$CODE" = 200 ] && [ "$ST" = "CLOSED" ] && [ "${GONE:-1}" = 0 ] && ok "closed: off the open list ($GONE), kept in the store" || bad "close: code=$CODE st=$ST stillListed=$GONE"
+# The board READ has to have succeeded: an error body carries no correspondence
+# array, and jq counts zero — which is indistinguishable from "the closed row is
+# gone" unless the code is checked. It was not, and a 429 passed this step.
+[ "$CODE" = 200 ] && [ "$CODE2" = 200 ] && [ "$ST" = "CLOSED" ] && [ "${GONE:-1}" = 0 ] \
+  && ok "closed: off the open list ($GONE), kept in the store" \
+  || bad "close: code=$CODE boardCode=$CODE2 st=$ST stillListed=$GONE"
 # "Stays in the record" is now READABLE: the closed file serves the row…
 CODE=$(req qclosedlist GET "/api/cmc/agency-questions?status=CLOSED")
 INFILE=$(cat "$OUT/qclosedlist.json" | jq --argjson id "${QID:-0}" '[.data[]? | select(.id == $id)] | length' 2>/dev/null)

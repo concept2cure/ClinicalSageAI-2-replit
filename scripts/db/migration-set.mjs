@@ -1930,10 +1930,34 @@ export const C2C_MIGRATION_FILES = [
   // pg_policies guard sees it and leaves it alone.
   'migrations/20260906_ivdr_history_tenant_isolation.sql',
 
+  // §3.2.P.8's only producer of `comparabilityStatus` had no creator on any
+  // applier (its DDL lives in migrations/0006_regulatory_atoms.sql, which is on
+  // none) and, where it did exist, an FK pinning project_id to the empty
+  // cmc_projects table — so every write from a real program answered 500 and
+  // the section could never complete. Creator + guarded constraint drop.
+  'migrations/20260907_cmc_comparability_register_reachable.sql',
   // ── regulatory_programs.application_number (WO-9 Click 1) ──────────────────
   // The agency-assigned IND / NDA / BLA / MAA number, distinct from the sponsor's
   // own program code. Additive, IF NOT EXISTS, nullable — never fabricated.
   'migrations/20260907_regulatory_programs_application_number.sql',
+
+  // ── compliance_tracking.organization_id backfill ──────────────────────────
+  // The rows the CMC project routes wrote carry no organization_id (the drizzle
+  // model they bind maps none), so the check-rules read widened to
+  // `OR organization_id IS NULL` to find them — and served every sponsor's
+  // compliance findings to every other sponsor. Unlike the quality_specifications
+  // case, these rows ARE attributable: project_id is NOT NULL with an FK to
+  // cmc_projects, whose organization_id is NOT NULL. Guarded on IS NULL, so a
+  // replay is a no-op.
+  'migrations/20260908_compliance_tracking_organization_backfill.sql',
+
+  // ── estar_submissions: what the filing was filed WITH (roadmap item 3) ────
+  // Two additive columns binding a `filed` transition to the retained eSTAR in
+  // the program vault: the vault.documents id and the SHA-256 of its bytes,
+  // both written by the server. Before them, "filed" was a status, a
+  // client-supplied date and a free-text tracking number pointing at nothing.
+  // Additive, IF NOT EXISTS; a replay is a no-op.
+  'migrations/20260908b_estar_submissions_filed_artifact.sql',
 
   UUID_TENANT_ISOLATION_NONPUBLIC,
 
