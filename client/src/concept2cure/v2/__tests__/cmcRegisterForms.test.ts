@@ -488,6 +488,33 @@ describe('drug substance and drug product — §3.2.S / §3.2.P', () => {
     expect(body).toEqual({ substanceName: 'BX-204', manufacturingProcess: {}, status: 'development' });
   });
 
+  it('an EDIT round-trip keeps the batch formula the API row carries', () => {
+    /* The register card reads a row, the edit form defaults from it, and the
+       PUT sends the form back. Any field the row does not carry comes back
+       blank and OVERWRITES what was stored — which is how recording a batch
+       formula and then editing the strength erased §3.2.P.3's only producer.
+       The API row must carry it, and the body must send it back unchanged. */
+    const apiRow = {
+      productName: 'BX-204 injection',
+      dosageForm: 'Solution for injection',
+      strength: '50 mg/mL',
+      routeOfAdministration: 'Intravenous',
+      composition: { description: 'BX-204 50 mg/mL, histidine buffer' },
+      batchFormula: { description: 'Per 500 L batch: BX-204 25.0 kg; histidine 1.55 kg' },
+      manufacturingProcess: { description: 'Compounding', site: 'Cork, Ireland' },
+      packagingMaterials: { containerClosure: '2R Type I glass vial' },
+      status: 'development',
+    };
+    // The edit form's defaults, exactly as the register builds them.
+    const fields = drugProductForm(apiRow).fields;
+    const values = Object.fromEntries(fields.map((f) => [f.key, String(f.default ?? '')]));
+    expect(values.batchFormula).toBe('Per 500 L batch: BX-204 25.0 kg; histidine 1.55 kg');
+    // …and the body the PUT sends carries it back, not an empty object.
+    const body = drugProductBody({ ...values, strength: '100 mg/mL' });
+    expect(body.batchFormula).toEqual({ description: 'Per 500 L batch: BX-204 25.0 kg; histidine 1.55 kg' });
+    expect(body.strength).toBe('100 mg/mL');
+  });
+
   it('collects the composition and container closure for §3.2.P', () => {
     const body = drugProductBody({
       productName: 'BX-204 injection', dosageForm: 'Solution for injection',

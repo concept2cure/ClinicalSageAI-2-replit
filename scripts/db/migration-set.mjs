@@ -1930,11 +1930,13 @@ export const C2C_MIGRATION_FILES = [
   // pg_policies guard sees it and leaves it alone.
   'migrations/20260906_ivdr_history_tenant_isolation.sql',
 
-  // §3.2.P.8's only producer of `comparabilityStatus` had no creator on any
-  // applier (its DDL lives in migrations/0006_regulatory_atoms.sql, which is on
-  // none) and, where it did exist, an FK pinning project_id to the empty
-  // cmc_projects table — so every write from a real program answered 500 and
-  // the section could never complete. Creator + guarded constraint drop.
+  // §3.2.P.8's only producer of `comparabilityStatus` had no creator on THIS
+  // applier (its DDL lives in migrations/0006_regulatory_atoms.sql, which
+  // install-fresh applies and deploy-migrate does not) and, where it did exist,
+  // an FK pinning project_id to the empty cmc_projects table — so every write
+  // from a real program answered 500 and the section could never complete.
+  // Creator + a drop of that constraint; 0006 was amended in place to stop
+  // declaring it, so the drop cannot be undone by a replay.
   'migrations/20260907_cmc_comparability_register_reachable.sql',
   // ── regulatory_programs.application_number (WO-9 Click 1) ──────────────────
   // The agency-assigned IND / NDA / BLA / MAA number, distinct from the sponsor's

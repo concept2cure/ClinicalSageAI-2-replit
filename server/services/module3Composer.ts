@@ -618,12 +618,22 @@ function batchCapabilityRendering(
   for (const s of series) {
     sentences.push(capabilitySentence(s));
     if (!s.outcome.ok) {
-      const counted = s.outcome.code === 'CRITERION_NOT_RECORDED' && s.criterion === null
-        ? String(s.resultsOnFile)
-        : String(s.resultsOnFile - s.outcome.excludedBatches.length);
+      /* The Note names WHICH refusal — "criteria disagree" was printed over a
+         series that recorded no criterion at all, sending a staffer to
+         reconcile two specifications that do not exist. And the Batches column
+         counts the rows the assessment could actually have used: the ones with
+         a usable result, never the raw row count. */
+      const NOTE = {
+        CRITERIA_DISAGREE: 'criteria disagree',
+        CRITERION_NOT_RECORDED: 'no acceptance criterion recorded',
+        INSUFFICIENT_BATCHES: 'too few batches',
+        NO_VARIATION: 'no variation between batches',
+      } as const;
       tableRows.push([
-        s.test, counted, '—', '—', '—', '—', '—', 'not assessed',
-        s.criterion === null && s.outcome.code === 'CRITERION_NOT_RECORDED' ? 'criteria disagree' : s.outcome.code,
+        s.test,
+        String(Math.max(0, s.resultsOnFile - s.outcome.excludedBatches.length)),
+        '—', '—', '—', '—', '—', 'not assessed',
+        NOTE[s.outcome.code] ?? s.outcome.code,
       ]);
       continue;
     }

@@ -36,7 +36,12 @@ import router from '../module3OperatingSystemRoutes';
 
 // The compiler's record of a fully established section. Approved fixtures carry
 // it so each test below fails on the ONE defect it names, not on completeness.
-const COMPLETE = { completeness: 100, missingInputs: [] as string[] };
+/* A compiled section as the compiler now stores it: its completeness, its
+   missing inputs and its TABLES. The `tables` key is what placement reads back
+   (an absent key means "compiled before tables were carried", which placement
+   and now the export gate both refuse), so a fixture standing for a complete,
+   filable section must carry it. */
+const COMPLETE = { completeness: 100, missingInputs: [] as string[], tables: [] as unknown[] };
 
 describe('module3OperatingSystemRoutes', () => {
   const app = express();

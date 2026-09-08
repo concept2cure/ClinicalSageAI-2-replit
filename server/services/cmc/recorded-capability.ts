@@ -56,6 +56,11 @@ export interface CapabilitySeries {
   outcome: ProcessCapabilityOutcome;
 }
 
+/** How a batch is named in a report: its batch number, else its sample id. */
+function batchOf(p: RecordedQcResult): string {
+  return String(p?.batchNumber ?? '').trim() || String(p?.sampleId ?? '').trim() || '(no batch)';
+}
+
 /** The acceptance criterion a QC row was recorded against, '' when none was. */
 function criterionOf(p: RecordedQcResult): string {
   const spec = p.specifications;
@@ -67,11 +72,20 @@ function criterionOf(p: RecordedQcResult): string {
   return '';
 }
 
-/** The numeric result of a QC row — `testResults.value`, or the scalar itself. */
+/**
+ * The numeric result of a QC row — `testResults.value`, or the scalar itself.
+ *
+ * An UNRECORDED result is NaN, never 0. `Number('')` is 0 and 0 is finite, so a
+ * row saved before its result came back entered the series as a batch that
+ * assayed zero: it moved the mean, inflated the standard deviation, and was
+ * reported as a batch out of specification. The engine excludes a non-finite
+ * value and names the batch, which is the honest treatment.
+ */
 function valueOf(p: RecordedQcResult): number {
   const r = p.testResults;
   const raw = r && typeof r === 'object' ? (r as Record<string, unknown>).value : r;
-  return Number(String(raw ?? '').trim());
+  const text = String(raw ?? '').trim();
+  return text === '' ? Number.NaN : Number(text);
 }
 
 /**
@@ -99,7 +113,7 @@ export function assessRecordedCapability(results: RecordedQcResult[]): Capabilit
         criterion: null,
         outcome: {
           ok: false,
-          code: 'CRITERION_NOT_RECORDED',
+          code: 'CRITERIA_DISAGREE',
           message:
             `the batches were recorded against different acceptance criteria (${criteria.join('; ')}), ` +
             'so there is no single specification to measure against',
@@ -108,10 +122,30 @@ export function assessRecordedCapability(results: RecordedQcResult[]): Capabilit
       });
       continue;
     }
-    const points = rows.map((p) => ({
-      batch: String(p?.batchNumber ?? '').trim() || String(p?.sampleId ?? '').trim() || '(no batch)',
-      value: valueOf(p),
-    }));
+    /* A row that recorded NO criterion is not judged against its neighbours'.
+       The unique-non-empty set silently absorbed it, so a batch tested to no
+       stated specification was counted toward a capability index against
+       limits it was never measured to — and, in the simulation's own data, was
+       one of the six batches that got the series over the assessment floor. */
+    const withoutCriterion = rows.filter((r) => !criterionOf(r));
+    if (criteria.length === 1 && withoutCriterion.length > 0) {
+      series.push({
+        test,
+        resultsOnFile: rows.length,
+        criterion: criteria[0],
+        outcome: {
+          ok: false,
+          code: 'CRITERION_NOT_RECORDED',
+          message:
+            `no acceptance criterion is recorded for ${withoutCriterion.length} of the ${rows.length} batches ` +
+            `(${withoutCriterion.map(batchOf).join(', ')}), so they cannot be judged against the ` +
+            `${criteria[0]} recorded for the others`,
+          excludedBatches: withoutCriterion.map(batchOf),
+        },
+      });
+      continue;
+    }
+    const points = rows.map((p) => ({ batch: batchOf(p), value: valueOf(p) }));
     series.push({
       test,
       resultsOnFile: rows.length,
