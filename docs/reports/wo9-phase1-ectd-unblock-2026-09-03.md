@@ -1306,6 +1306,21 @@ Two are regulatory decisions, not code ones, so this session did not guess:
   would reach FDA labelled as a request for advice. Worth confirming against
   FDA's current M1 table before anything is filed.
 
+One more, arriving from upstream while this click was being verified and left
+for its author: **the device 510(k) eSTAR golden journey is red.** A new control
+refuses to produce an eSTAR when `declarationCompanyName` differs from
+`applicantCompanyName`, because the FDA form derives the declaration cell from
+the applicant and clears it — so the signed Declaration of Conformity would
+attest in the applicant's name, not the declaring entity's. The reasoning is
+sound. The journey deliberately sets a different declaring entity and asserts
+the produced PDF carries it, so it now asserts a capability the product has
+correctly decided it does not have. The refusal names both valid remedies (file
+with the declaring entity as the applicant, or clear the declaring entity), and
+choosing between them decides what the journey proves about a signed
+declaration — a regulatory call, and the same shape as §15's. Verified not to
+be from this session: the journey passed with every change here in place, and
+broke only on the merges that followed.
+
 Environment, not a defect: the snapshot step of the dialog (`POST
 /api/coauthor/documents`) fails on this sandbox because `coauthor_documents`
 carries an `embedding` column and there is no pgvector here — the same gap §13
