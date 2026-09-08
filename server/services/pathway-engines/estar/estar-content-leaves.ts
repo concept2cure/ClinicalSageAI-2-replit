@@ -377,6 +377,20 @@ export interface AuthoredDeviceSection {
    * can name its files by outline key. Absent for the legacy store.
    */
   sectionCode?: string;
+  /**
+   * Whether the section is finalized content rather than a draft or a stub —
+   * the same rule `sectionsToLeaves` applies to the readiness path
+   * (`isSubstantive`), not a second opinion about it.
+   *
+   * This loader returns every AUTHORED section, and that is right for the draft
+   * package `/build` produces: a draft package containing drafts is what it
+   * says on the label. It is not right for a document going into a named CDRH
+   * attachment slot, where a section still marked `drafted` is an unreviewed
+   * machine draft filed as a submission. So the signal travels and the caller
+   * decides — narrowing what this RETURNS would have quietly emptied the draft
+   * package instead.
+   */
+  substantive: boolean;
 }
 
 /**
@@ -421,7 +435,12 @@ export async function loadAuthoredDeviceSections(
     const rows = await loadGovernedDeviceSections(organizationId, opts.programId, opts.client);
     return governedSectionsToDeviceSections(rows)
       .filter(isAuthored)
-      .map((r) => ({ title: String(r.sectionTitle), content: String(r.content), sectionCode: String(r.sectionKey ?? '') || undefined }));
+      .map((r) => ({
+        title: String(r.sectionTitle),
+        content: String(r.content),
+        sectionCode: String(r.sectionKey ?? '') || undefined,
+        substantive: isSubstantive(r),
+      }));
   }
   const where =
     opts.documentId !== undefined
@@ -435,22 +454,40 @@ export async function loadAuthoredDeviceSections(
     .select({
       sectionTitle: cerv2510kSections.sectionTitle,
       sectionKey: cerv2510kSections.sectionKey,
+      // Selected so substantiveness can be ANSWERED rather than assumed. It was
+      // not read here, so every legacy section had to be treated as unknown —
+      // and an unknown that a caller reads as "fileable" is the failure this
+      // column prevents.
+      status: cerv2510kSections.status,
       content: cerv2510kSections.content,
     })
     .from(cerv2510kSections)
     .where(where)
     .orderBy(asc(cerv2510kSections.displayOrder));
 
+  return legacySectionsToAuthored(rows);
+}
+
+/**
+ * Legacy rows → authored sections. Split out so the substantive rule is
+ * testable without a database, and so it is visibly the SAME rule
+ * (`isSubstantive`) the governed branch and the readiness path apply.
+ */
+export function legacySectionsToAuthored(
+  rows: { sectionTitle?: string | null; sectionKey?: string | null; status?: string | null; content?: string | null }[],
+): AuthoredDeviceSection[] {
   return rows
     .filter((r) => (r.content ?? '').trim().length > 0)
     .map((r) => ({
       title: String(r.sectionTitle || r.sectionKey || 'Untitled section'),
       content: String(r.content),
+      substantive: isSubstantive({ status: r.status ?? null, content: r.content ?? null }),
     }));
 }
 
 export default {
   sectionsToLeaves,
+  legacySectionsToAuthored,
   loadDeviceContentLeaves,
   sectionsToEditorJson,
   loadAuthoredDeviceSections,

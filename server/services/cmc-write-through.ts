@@ -34,6 +34,7 @@ import {
   isHumanOrAnimalOrigin,
   normalizeMaterialRole,
   normalizeMaterialScope,
+  scopeCovers,
 } from '../../shared/cmc/material-scope';
 import {
   DISSOLUTION_DEVELOPMENT_PURPOSES,
@@ -243,6 +244,16 @@ export function mapDrugSubstancePayload(record: Record<string, any>): Record<str
     qualificationBasis: record.qualificationBasis || record.qualification_basis || null,
     developmentPhase: alias(record, 'developmentPhase', 'development_phase'),
     status: record.status || '',
+    /* §3.2.A.2's inputs (ICH Q5A(R2)). Emitted as recorded and never inferred:
+       the section asks whether an adventitious-agents evaluation applies and
+       what controls exist, and it may only say what one of these fields
+       actually holds. */
+    modality: record.modality || '',
+    biologicalOrigin: alias(record, 'biologicalOrigin', 'biological_origin'),
+    sourceOrganism: alias(record, 'sourceOrganism', 'source_organism'),
+    cellLine: alias(record, 'cellLine', 'cell_line'),
+    viralSafetyEvaluation: alias(record, 'viralSafetyEvaluation', 'viral_safety_evaluation'),
+    tseStatus: alias(record, 'tseStatus', 'tse_status'),
   };
 }
 
@@ -375,7 +386,33 @@ export function mapStabilityPayload(record: Record<string, any>): Record<string,
   const storageArr =
     asArr(record.storageCondition ?? record.storage_condition) ??
     asArr(record.storageConditions ?? record.storage_conditions);
+  /* WHICH SIDE THE STUDY IS EVIDENCE FOR.
+     stability_studies.scope exists, the register form makes it a required
+     control labelled "Drug substance (§3.2.S.7)" / "Drug product (§3.2.P.8)",
+     and the list route projects it — and this mapper emitted sixteen keys
+     without it. So the composer, which filters by source TYPE, fed every
+     stability study to both sections: a drug-substance study composed into
+     §3.2.P.8 and set the drug product's storage period, a drug-product study
+     did the same to §3.2.S.7, and a DS out-of-spec result could report the
+     product's stability as not established. Five sibling registers (container
+     closure, reference standard, impurity, characterisation, manufacturing
+     process) already resolve their side through normalizeMaterialScope for
+     exactly this reason; this is the sixth. The register tells the staffer
+     which section their study files under, and now that is where it goes. */
+  const scope = normalizeMaterialScope(record.scope, 'drug_product');
+  const forDs = scopeCovers(scope, 'drug_substance');
+  const forDp = scopeCovers(scope, 'drug_product');
+  const shelfLifeClaim =
+    record.shelfLifeClaim || record.shelf_life_claim || record.shelfLife || record.shelf_life || null;
   return {
+    stabilityScope: scope,
+    /* The side-scoped keys the two section rules require. §3.2.S.7 asks for the
+       drug substance's time points and condition, §3.2.P.8 for the product's
+       shelf-life claim — each satisfied only by a study recorded for that
+       side. */
+    drugSubstanceTimePoints: forDs ? (alias(record, 'timePoints', 'time_points') || null) : null,
+    drugSubstanceStorageCondition: forDs && storageArr ? storageArr.join(', ') : null,
+    drugProductShelfLifeClaim: forDp ? shelfLifeClaim : null,
     studyName: alias(record, 'studyName', 'study_name', 'studyTitle', 'study_title'),
     studyType: alias(record, 'studyType', 'study_type'),
     storageCondition: storageArr ? storageArr.join(', ') : '',
@@ -399,8 +436,7 @@ export function mapStabilityPayload(record: Record<string, any>): Record<string,
       asArr(record.batchesStudied ?? record.batches_studied) ??
       asArr(record.batchNumber ?? record.batch_number),
     packagingConfiguration: record.packagingConfiguration || record.packaging_configuration || null,
-    shelfLifeClaim:
-      record.shelfLifeClaim || record.shelf_life_claim || record.shelfLife || record.shelf_life || null,
+    shelfLifeClaim,
   };
 }
 

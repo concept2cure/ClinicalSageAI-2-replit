@@ -36,7 +36,7 @@ const MIGRATION_PATH = 'db/migrations/20260803_document_span_lineage.sql';
  * after the CREATE TABLE, so the columns a real database has are the union —
  * and the parity below measures that union, not the CREATE TABLE alone.
  */
-const WIDENING_PATHS = ['migrations/20260907_span_lineage_accepted_machine_draft.sql'];
+const WIDENING_PATHS = ['migrations/20260907_span_lineage_accepted_machine_draft.sql', 'migrations/20260908_span_lineage_machine_draft.sql'];
 // Imported rather than re-typed — see the note in tenant-isolation-sweep.contract.test.ts.
 const SWEEP_PATH = TENANT_ISOLATION_SWEEP;
 

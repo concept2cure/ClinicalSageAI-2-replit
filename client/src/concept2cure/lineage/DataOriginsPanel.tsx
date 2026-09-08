@@ -103,12 +103,25 @@ function OriginCard({
      is nothing to navigate to) nor the author's own assertion — saying
      "Asserted by the author" here is the falsehood this kind exists to remove. */
   const isMachine = row.provenanceKind === 'accepted_machine_draft';
-  const note = row.state ? STATE_NOTE[row.state] : undefined;
-  const canNavigate = !isAuthor && !isMachine && !!row.referenceId && !!onNavigateToSource;
+  /* Drafted by a machine author and accepted by NOBODY. The most important
+     thing this panel can say about a passage, so it is said on the row: in the
+     heading, in the byline, in the dot colour, and in a note of its own. */
+  const isUnaccepted = row.provenanceKind === 'machine_draft';
+  const note = isUnaccepted
+    ? { text: 'No person has accepted this text', color: WARN }
+    : row.state
+      ? STATE_NOTE[row.state]
+      : undefined;
+  const canNavigate =
+    !isAuthor && !isMachine && !isUnaccepted && !!row.referenceId && !!onNavigateToSource;
   const usageText =
-    isMachine && row.usage === 'asserted'
-      ? 'Drafted by the AI, accepted by the author'
-      : (USAGE_LABEL[row.usage] ?? row.usage);
+    row.usage !== 'asserted'
+      ? (USAGE_LABEL[row.usage] ?? row.usage)
+      : isMachine
+        ? 'Drafted by the AI, accepted by the author'
+        : isUnaccepted
+          ? 'Drafted by the AI — no person has accepted it'
+          : (USAGE_LABEL[row.usage] ?? row.usage);
 
   return (
     <li
@@ -125,7 +138,7 @@ function OriginCard({
             width: 8,
             height: 8,
             borderRadius: 2,
-            background: isAuthor || isMachine ? MUTED : OK,
+            background: isUnaccepted ? WARN : isAuthor || isMachine ? MUTED : OK,
             flex: '0 0 auto',
           }}
         />
@@ -153,6 +166,8 @@ function OriginCard({
               ? 'Author assertion'
               : isMachine
                 ? (row.machineAuthorName ?? `AI draft (${row.machineAuthorId ?? 'machine author'})`)
+                : isUnaccepted
+                ? `${row.machineAuthorName ?? row.machineAuthorId ?? 'AI draft'} — not yet accepted`
                 : row.sourceTitle || `Source #${row.referenceId ?? '—'}`}
           </span>
         )}
@@ -163,7 +178,11 @@ function OriginCard({
         {' · '}
         characters {row.charStart}–{row.charEnd}
         {row.sourceLocator ? ` · ${row.sourceLocator}` : ''}
-        {row.assertedBy ? ` · ${isMachine ? 'accepted by' : 'by'} ${row.assertedBy}` : ''}
+        {row.assertedBy
+          ? ` · ${isMachine ? 'accepted by' : 'by'} ${row.assertedBy}`
+          : isUnaccepted
+            ? ' · accepted by nobody'
+            : ''}
         {row.confidence != null ? ` · confidence ${Math.round(row.confidence * 100)}%` : ''}
       </div>
 

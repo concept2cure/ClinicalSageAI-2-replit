@@ -1,0 +1,75 @@
+{
+  "errors": [],
+  "posts": {
+    "afterTasks": [
+      {
+        "url": "/api/biostat-bridge/designs/sd_87f2f9511d634a57b85c044c14e3d405/tasks",
+        "status": 200,
+        "body": "{\"data\":{\"created\":[{\"taskId\":\"e8918f94-f537-451e-8349-b9906f2237bf\",\"key\":\"design-gap:confirm-defaults\",\"title\":\"Confirm 1 assumed design value\",\"priority\":\"medium\"},{\"taskId\":\"f955047c-c28c-461e-b2b7-66d1c0fba4bc\",\"key\":\"deliverable:sample_size_rationale\",\"t"
+      }
+    ],
+    "all": [
+      {
+        "url": "/api/biostat-bridge/designs/sd_87f2f9511d634a57b85c044c14e3d405/tasks",
+        "status": 200,
+        "body": "{\"data\":{\"created\":[{\"taskId\":\"e8918f94-f537-451e-8349-b9906f2237bf\",\"key\":\"design-gap:confirm-defaults\",\"title\":\"Confirm 1 assumed design value\",\"priority\":\"medium\"},{\"taskId\":\"f955047c-c28c-461e-b2b7-66d1c0fba4bc\",\"key\":\"deliverable:sample_size_rationale\",\"t"
+      },
+      {
+        "url": "/api/biostat-bridge/designs/sd_87f2f9511d634a57b85c044c14e3d405/apply-sample-size",
+        "status": 200,
+        "body": "{\"data\":{\"studyId\":\"sd_87f2f9511d634a57b85c044c14e3d405\",\"plannedSampleSize\":302,\"power\":0.9,\"actionId\":\"act_05355ca270eb439d8c00497bbd2c817a\",\"auditId\":\"878e854b-f332-416b-8494-ae3f01d434d9\",\"sha256Chain\":\"fa8391779391816c44533baa3ee793fa6f09b40ab0090281e83de"
+      }
+    ]
+  },
+  "designPicked": true,
+  "panelOpen": [
+    "Apply sample size to design",
+    "Raise tasks (6)"
+  ],
+  "before": {
+    "plannedSubjects": null,
+    "readinessChips": [
+      "100%",
+      "90%",
+      "60%",
+      "marginal"
+    ],
+    "raiseTasksLabel": "Raise tasks (6)"
+  },
+  "raiseTasks": {
+    "found": true,
+    "disabled": false,
+    "formFields": [],
+    "toast": [
+      "6 tasks raised on the board — each carries the design as its source."
+    ],
+    "panelNumbers": {
+      "plannedSubjects": null,
+      "readinessChips": [
+        "100%",
+        "90%",
+        "60%",
+        "marginal"
+      ],
+      "raiseTasksLabel": "Raise tasks"
+    }
+  },
+  "applySampleSize": {
+    "found": true,
+    "disabled": false,
+    "formFields": [],
+    "toast": [
+      "Sample size 302 written to \"A phase 3 study of BX-301 in relapsed/refractory multiple myeloma\" — the write and its audit record committed to"
+    ],
+    "panelNumbers": {
+      "plannedSubjects": null,
+      "readinessChips": [
+        "100%",
+        "90%",
+        "60%",
+        "marginal"
+      ],
+      "raiseTasksLabel": "Raise tasks"
+    }
+  }
+}

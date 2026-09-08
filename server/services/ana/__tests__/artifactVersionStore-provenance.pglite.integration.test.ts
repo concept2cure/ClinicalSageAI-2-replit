@@ -73,7 +73,7 @@ beforeAll(async () => {
   const { resolve, dirname } = await import('node:path');
   const { fileURLToPath } = await import('node:url');
   const here = dirname(fileURLToPath(import.meta.url));
-  for (const rel of ['db/migrations/20260724_clinical_regulatory_evidence_spine.sql', 'db/migrations/20260803_document_span_lineage.sql', 'migrations/20260907_span_lineage_accepted_machine_draft.sql']) {
+  for (const rel of ['db/migrations/20260724_clinical_regulatory_evidence_spine.sql', 'db/migrations/20260803_document_span_lineage.sql', 'migrations/20260907_span_lineage_accepted_machine_draft.sql', 'migrations/20260908_span_lineage_machine_draft.sql']) {
     await pglite.exec(readFileSync(resolve(here, '../../../../', rel), 'utf8'));
   }
 }, 90_000);
@@ -130,26 +130,45 @@ describe('artifactVersionStore provenance uniformity', () => {
 // ── Ledger L160: every version carries span lineage, in the same transaction ──
 async function spanRows(artifactPk: number) {
   const r = await wrap(
-    `SELECT provenance_kind, reference_id FROM document_span_lineage
+    `SELECT provenance_kind, reference_id, machine_author_id, asserted_by, created_by
+       FROM document_span_lineage
       WHERE document_table = 'concept2cure_artifacts' AND document_id = $1 AND deleted_at IS NULL`,
     [String(artifactPk)],
   );
-  return r.rows as Array<{ provenance_kind: string; reference_id: string | null }>;
+  return r.rows as Array<{
+    provenance_kind: string;
+    reference_id: string | null;
+    machine_author_id: string | null;
+    asserted_by: string | null;
+    created_by: string | null;
+  }>;
 }
 const QUOTED = 'The primary endpoint was met at week twelve in the intent-to-treat population.';
 const ORIGINAL = 'These findings were consistent across every prespecified subgroup we examined.';
 
 describe('artifactVersionStore lineage (ledger L160)', () => {
-  it('the first draft records every clause as the author\'s assertion', async () => {
+  /* This store persists the drafts AnA produced in a conversation, written
+     back as the stream ends. The user has not read them — so every clause is
+     AnA's UNACCEPTED draft. It used to record them as the user's own
+     assertions, which claimed they had stood behind text they had not seen. */
+  it('the first draft records every clause as AnA\'s, accepted by nobody', async () => {
     const r = await upsertDocumentArtifactVersion({
       organizationId: ORG, projectId: 1, userId: USER, anaThreadId: 't-l160-1', title: 'Clinical Overview',
       content: `${QUOTED} ${ORIGINAL}`,
     });
     expect(r.created).toBe(true);
-    expect(r.lineage?.authorSpans).toBeGreaterThanOrEqual(2);
+    expect(r.lineage?.machineDraftSpans).toBeGreaterThanOrEqual(2);
+    expect(r.lineage?.authorSpans ?? 0).toBe(0);
     const rows = await spanRows(r.artifactPk);
     expect(rows.length).toBeGreaterThanOrEqual(2);
-    expect(rows.every((x) => x.provenance_kind === 'author_assertion')).toBe(true);
+    expect(rows.every((x) => x.provenance_kind === 'machine_draft')).toBe(true);
+    expect(rows.every((x) => x.machine_author_id === 'ana')).toBe(true);
+    expect(
+      rows.every((x) => x.asserted_by === null),
+      'a draft nobody has accepted must not name an asserter',
+    ).toBe(true);
+    // Who ASKED is still recorded — a different claim, and a true one.
+    expect(rows.every((x) => x.created_by === String(USER))).toBe(true);
   });
 
   it('a new version re-records lineage for the new text; a de-dupe re-emit records nothing new', async () => {
@@ -160,7 +179,7 @@ describe('artifactVersionStore lineage (ledger L160)', () => {
       organizationId: ORG, projectId: 1, userId: USER, anaThreadId: 't-l160-2', title: 'Clinical Overview', content: `${QUOTED} ${ORIGINAL}`,
     });
     expect(second.version).toBe(first.version + 1);
-    expect(second.lineage?.authorSpans).toBeGreaterThanOrEqual(2);
+    expect(second.lineage?.machineDraftSpans).toBeGreaterThanOrEqual(2);
     const again = await upsertDocumentArtifactVersion({
       organizationId: ORG, projectId: 1, userId: USER, anaThreadId: 't-l160-2', title: 'Clinical Overview', content: `${QUOTED} ${ORIGINAL}`,
     });

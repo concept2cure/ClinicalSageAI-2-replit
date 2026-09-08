@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-08T01:35:04.113Z",
+  "generatedAt": "2026-09-08T03:03:41.436Z",
   "git": {
-    "sha": "fd2bd524a992bac7d7327d766f122d34f2242fd5",
+    "sha": "2af69366b6254ca9e5e331fe148feb56eb263b01",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -1981,11 +1981,11 @@
     "largeFilesByBytes": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 1025368
+        "bytes": 1026443
       },
       {
         "file": "shared/schema.ts",
-        "bytes": 857596
+        "bytes": 858583
       },
       {
         "file": "server/services/ind/ctd/authoring-guidance.ts",
@@ -2012,16 +2012,16 @@
         "bytes": 202559
       },
       {
+        "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
+        "bytes": 184067
+      },
+      {
         "file": "server/routes/ana-features.ts",
         "bytes": 179440
       },
       {
         "file": "server/routes/c2c/artifacts.ts",
         "bytes": 178549
-      },
-      {
-        "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
-        "bytes": 178032
       },
       {
         "file": "server/routes/authoring-actions.ts",
@@ -2036,12 +2036,12 @@
         "bytes": 150437
       },
       {
-        "file": "server/storage.ts",
-        "bytes": 145402
+        "file": "server/services/module3Composer.ts",
+        "bytes": 148269
       },
       {
-        "file": "server/services/module3Composer.ts",
-        "bytes": 144310
+        "file": "server/storage.ts",
+        "bytes": 145402
       },
       {
         "file": "server/services/submission-package-orchestrator.ts",
@@ -2080,12 +2080,12 @@
         "bytes": 127662
       },
       {
-        "file": "server/services/ana/AnaToolDefinitions.ts",
-        "bytes": 125182
+        "file": "server/services/__tests__/cmcWriteThroughMappers.test.ts",
+        "bytes": 126270
       },
       {
-        "file": "server/services/__tests__/cmcWriteThroughMappers.test.ts",
-        "bytes": 122673
+        "file": "server/services/ana/AnaToolDefinitions.ts",
+        "bytes": 126017
       },
       {
         "file": "server/services/__tests__/ana-ri.test.ts",
@@ -2094,6 +2094,10 @@
       {
         "file": "client/src/concept2cure/v2/editor/RichSectionEditor.tsx",
         "bytes": 116913
+      },
+      {
+        "file": "client/src/concept2cure/v2/surfaces/cmcRegisterForms.ts",
+        "bytes": 116307
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/protocol-development.ts",
@@ -2110,10 +2114,6 @@
       {
         "file": ".claude/skills/gstack/scripts/gen-skill-docs.ts",
         "bytes": 114269
-      },
-      {
-        "file": "client/src/concept2cure/v2/surfaces/cmcRegisterForms.ts",
-        "bytes": 113867
       },
       {
         "file": "server/routes/concept2cure.ts",
@@ -2151,11 +2151,11 @@
     "largeFilesByLines": [
       {
         "file": "shared/schema.ts",
-        "lines": 20177
+        "lines": 20190
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 19872
+        "lines": 19895
       },
       {
         "file": "server/routes/authoring.router.ts",
@@ -2206,6 +2206,10 @@
         "lines": 3326
       },
       {
+        "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
+        "lines": 3229
+      },
+      {
         "file": "server/routes/submission-ops.ts",
         "lines": 3184
       },
@@ -2216,10 +2220,6 @@
       {
         "file": "server/services/cmc-quality/cmc-quality-knowledge.ts",
         "lines": 3119
-      },
-      {
-        "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
-        "lines": 3117
       },
       {
         "file": "server/services/ind/ctd/lifecycle-document-types.ts",
@@ -2235,7 +2235,7 @@
       },
       {
         "file": "server/services/module3Composer.ts",
-        "lines": 2879
+        "lines": 2949
       },
       {
         "file": "server/src/routes/stability.router.ts",
@@ -2247,7 +2247,7 @@
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "lines": 2769
+        "lines": 2777
       },
       {
         "file": "client/src/concept2cure/v2/editor/RichSectionEditor.tsx",
@@ -2274,6 +2274,10 @@
         "lines": 2419
       },
       {
+        "file": "server/services/__tests__/cmcWriteThroughMappers.test.ts",
+        "lines": 2386
+      },
+      {
         "file": ".claude/skills/gstack/scripts/gen-skill-docs.ts",
         "lines": 2379
       },
@@ -2288,10 +2292,6 @@
       {
         "file": "server/services/ana/intelligence-questions/flows/bla-submission.ts",
         "lines": 2327
-      },
-      {
-        "file": "server/services/__tests__/cmcWriteThroughMappers.test.ts",
-        "lines": 2323
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/nda-submission.ts",
@@ -2367,7 +2367,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/cmcRegisterForms.ts",
-        "lines": 1968
+        "lines": 2000
       },
       {
         "file": "server/services/gcp-operations/gcp-operations-knowledge.ts",
@@ -2474,12 +2474,12 @@
         "lines": 1755
       },
       {
-        "file": "server/services/combination-products/combination-products-knowledge.ts",
-        "lines": 1726
+        "file": "server/services/cmc-write-through.ts",
+        "lines": 1753
       },
       {
-        "file": "server/services/cmc-write-through.ts",
-        "lines": 1717
+        "file": "server/services/combination-products/combination-products-knowledge.ts",
+        "lines": 1726
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/TaskBoard.tsx",
