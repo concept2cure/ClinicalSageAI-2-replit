@@ -12,6 +12,8 @@ describe('deepening tools — registration', () => {
     'estimate_recorded_shelf_life',
     'get_submission_readiness_twin',
     'assess_benefit_risk',
+    'assess_recorded_stability_trend',
+    'assess_recorded_process_capability',
   ])('%s is defined and registered', (name) => {
     expect(names).toContain(name);
     expect(typeof getToolHandler(name)).toBe('function');
@@ -313,5 +315,73 @@ describe('compare_recorded_dissolution', () => {
     const tool = ALL_ANA_TOOLS.find((t) => t.name === 'compare_recorded_dissolution')!;
     expect(tool.description).toMatch(/Relay a refusal verbatim/);
     expect(tool.description).toMatch(/never assumed to be 12/);
+  });
+});
+
+/**
+ * The two register-reading tools added with the trending and capability work.
+ * Their arithmetic lives in services/cmc/recorded-stability and
+ * services/cmc/recorded-capability and is covered there; what matters HERE is
+ * the boundary each tool owns — tenant scope, a stated refusal instead of an
+ * invented answer, and which project the read is actually about.
+ */
+describe('assess_recorded_stability_trend', () => {
+  const call = (input: Record<string, unknown>, ctx?: Record<string, unknown>) =>
+    getToolHandler('assess_recorded_stability_trend')!(input, ctx as never);
+
+  it('refuses without an organization rather than reading across tenants', async () => {
+    const out = await call({ study_id: 1 }, {});
+    expect(String(out)).toMatch(/active organization context is required/i);
+  });
+
+  it('asks for the study id instead of guessing one', async () => {
+    const out = JSON.parse(String(await call({}, { organizationId: 1 })));
+    expect(out.status).toBe('needs_parameters');
+    expect(out.message).toMatch(/numeric stability study id/i);
+    for (const bad of ['abc', -1, 0, null]) {
+      const r = JSON.parse(String(await call({ study_id: bad }, { organizationId: 1 })));
+      expect(r.status).toBe('needs_parameters');
+    }
+  });
+});
+
+describe('assess_recorded_process_capability', () => {
+  const call = (input: Record<string, unknown>, ctx?: Record<string, unknown>) =>
+    getToolHandler('assess_recorded_process_capability')!(input, ctx as never);
+
+  it('refuses without an organization', async () => {
+    const out = await call({ project_id: 'p1' }, {});
+    expect(String(out)).toMatch(/active organization context is required/i);
+  });
+
+  it('asks which project when neither the session nor the caller names one', async () => {
+    const out = JSON.parse(String(await call({}, { organizationId: 1 })));
+    expect(out.status).toBe('needs_parameters');
+    expect(out.message).toMatch(/project id is required/i);
+  });
+
+  it('the OPEN program outranks a project id the model supplied', async () => {
+    /* Inverted, a product code or a hallucinated string named in the prompt
+       redirected the read — and the tool then reported "no batch results are
+       recorded" about a register it never opened while the open program's
+       batches sat unexamined. The refusal below names the project it actually
+       tried to read, which is how this is observable at all. */
+    const out = JSON.parse(String(await call(
+      { project_id: 'BX-701' },
+      { organizationId: 999999, projectRef: 'the-open-program' },
+    )));
+    expect(out.status).toBe('not_found');
+    expect(out.message).toContain('the-open-program');
+    expect(out.message).not.toContain('BX-701');
+  });
+
+  it('says a project it could not find was not read, and never reports an absence of findings for it', async () => {
+    const out = JSON.parse(String(await call(
+      { project_id: 'no-such-project' },
+      { organizationId: 999999 },
+    )));
+    expect(out.status).toBe('not_found');
+    expect(out.message).toMatch(/no QC register was read and no capability was assessed/i);
+    expect(out.instruction).toMatch(/Never report a capability result, or the absence of one/i);
   });
 });

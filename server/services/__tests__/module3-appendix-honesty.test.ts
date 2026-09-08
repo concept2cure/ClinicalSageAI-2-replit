@@ -21,6 +21,9 @@ const a3 = (sources: unknown[]) =>
 const a1 = (sources: unknown[]) =>
   composeAppendices(sources as never).find((s) => s.sectionKey === '3.2.A.1')!;
 
+const a1Sibling = (sources: unknown[]) =>
+  composeAppendices(sources as never).find((s) => s.sectionKey === '3.2.A.2')!;
+
 const originTable = (section: { tables: Array<{ title: string; headers: string[]; rows: string[][] }> }) =>
   section.tables.find((t) => t.title.startsWith('Excipients of Human or Animal Origin'));
 
@@ -190,5 +193,49 @@ describe('the missing-input list is made of whole sentences', () => {
       expect(input).not.toMatch(/^\d/);
       expect(input.split(' ').length).toBeGreaterThan(3);
     }
+  });
+});
+
+describe('§3.2.A.2 — adventitious agents are not cleared over unexamined data', () => {
+  it('does not declare a CHO cell-culture substance a chemical one', () => {
+    /* The biologic heuristic asked for "cell LINE" and the register records
+       "CHO cell culture", so a monoclonal antibody fell through to the
+       chemical branch — in the one appendix whose subject is adventitious
+       agents. A false positive here costs a section that asks for viral-safety
+       data; a false negative files an all-clear for a cell-culture product. */
+    const section = a1Sibling([
+      src('drug_substance', { name: 'BX-701', manufacturingRoute: 'CHO cell culture, fed-batch, protein A capture' }),
+    ]);
+    expect(section.narrativeDraft).not.toMatch(/does not apply to the drug substance/);
+    expect(section.narrativeDraft).not.toMatch(/no animal- or human-derived raw materials/);
+  });
+
+  it('reads a monoclonal antibody INN as a biologic', () => {
+    const section = a1Sibling([src('drug_substance', { name: 'belantezumab', manufacturingRoute: 'Upstream and downstream processing' })]);
+    expect(section.narrativeDraft).not.toMatch(/does not apply to the drug substance/);
+  });
+
+  it('a genuinely chemical route claims nothing about the raw materials it never read', () => {
+    /* The branch asserted "no animal- or human-derived raw materials, no
+       cell-line propagation and no fermentation step recorded against it" —
+       three claims read from no field, in a section that receives neither the
+       excipient nor the material register. */
+    const section = a1Sibling([
+      src('drug_substance', {
+        name: 'BX-204',
+        manufacturingRoute: 'Four-step convergent synthesis from intermediate INT-2',
+      }),
+    ]);
+    expect(section.narrativeDraft).not.toMatch(/no animal- or human-derived raw materials/);
+    expect(section.narrativeDraft).toMatch(/does not apply to the drug substance itself/);
+    expect(section.narrativeDraft).toMatch(/neither reads nor certifies them/);
+    // It is still a COMPLETE section: what it states, the record supports.
+    expect(section.completeness).toBe(100);
+  });
+
+  it('says the question is unanswered when nothing at all is recorded', () => {
+    const section = a1Sibling([src('drug_substance', { name: 'BX-204' })]);
+    expect(section.narrativeDraft).toMatch(/NOT ESTABLISHED/);
+    expect(section.completeness).toBe(0);
   });
 });

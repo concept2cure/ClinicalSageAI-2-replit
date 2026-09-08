@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-08T00:50:23.225Z",
+  "generatedAt": "2026-09-08T01:35:04.113Z",
   "git": {
-    "sha": "ecdb4f457eef865c1272355486529763a46f220f",
+    "sha": "fd2bd524a992bac7d7327d766f122d34f2242fd5",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -1981,7 +1981,7 @@
     "largeFilesByBytes": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 1024195
+        "bytes": 1025368
       },
       {
         "file": "shared/schema.ts",
@@ -2137,7 +2137,7 @@
       },
       {
         "file": "server/api/cmc/routes.ts",
-        "bytes": 105650
+        "bytes": 106485
       },
       {
         "file": "server/services/ana-ri/context-enrichment.ts",
@@ -2155,7 +2155,7 @@
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 19853
+        "lines": 19872
       },
       {
         "file": "server/routes/authoring.router.ts",
@@ -2283,7 +2283,7 @@
       },
       {
         "file": "server/api/cmc/routes.ts",
-        "lines": 2336
+        "lines": 2346
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/bla-submission.ts",
@@ -2398,6 +2398,10 @@
         "lines": 1888
       },
       {
+        "file": "client/src/concept2cure/v2/Shell.tsx",
+        "lines": 1871
+      },
+      {
         "file": "server/services/post-approval/post-approval-knowledge.ts",
         "lines": 1869
       },
@@ -2432,10 +2436,6 @@
       {
         "file": "server/services/compliance/globalComplianceEngine.ts",
         "lines": 1824
-      },
-      {
-        "file": "client/src/concept2cure/v2/Shell.tsx",
-        "lines": 1822
       },
       {
         "file": "server/services/safety-pharmacology/safety-pharmacology-knowledge.ts",

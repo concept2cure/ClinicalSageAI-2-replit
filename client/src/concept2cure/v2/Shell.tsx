@@ -568,7 +568,11 @@ export function AnaRail({
   onResume?: () => void;
   onStop?: () => void;
   /** Splices a steer into the next round. Capped server-side at 2000 chars. */
-  onSteer?: (message: string) => void;
+  /* Returns whether the server ACCEPTED the steer, so the composer can keep
+     the text on a refusal instead of silently eating it. `void` is still
+     allowed: a caller that reports nothing is treated as accepted, which is
+     the pre-existing behaviour rather than a fabricated failure. */
+  onSteer?: (message: string) => void | boolean | Promise<boolean | void>;
   /** Lets a welcome starter open a real surface (e.g. the upload flow). */
   onNav?: (id: string) => void;
   /** Scopes chat uploads so extracted text lands in that project's memory.
@@ -609,6 +613,11 @@ export function AnaRail({
      RUNNING turn, a draft starts the next one, and sharing one buffer would
      make it ambiguous which a half-typed sentence was about to do. */
   const [steer, setSteer] = React.useState('');
+  /* Steer submit state. `steerRefused` exists because the only
+     acknowledgement this control has is the box emptying, so a refusal has to
+     say something rather than look like a send. */
+  const [steerBusy, setSteerBusy] = React.useState(false);
+  const [steerRefused, setSteerRefused] = React.useState(false);
   const [agent, setAgent] = React.useState(false);
   const [plusOpen, setPlusOpen] = React.useState(false);
   const [modeOpen, setModeOpen] = React.useState(false);
@@ -1079,15 +1088,41 @@ export function AnaRail({
               {runStatus === 'paused' ? 'Paused after this step' : 'Working'}
             </span>
 
+            {/* ── The box used to empty whether or not the steer was accepted ──
+                `onSteer(v); setSteer('')` cleared the input synchronously, before
+                anything knew the server's answer — and `interject` answers with a
+                boolean that every call site discarded. A 404 (run already gone), a
+                409, a validation refusal and a dropped connection all looked
+                identical to success: the sentence vanished from the box, which is
+                the only acknowledgement this control has, and nothing anywhere
+                recorded it. The person had typed an instruction into nothing.
+
+                Now the text is only cleared once the server has accepted it, and a
+                refusal says so and leaves the sentence where it is, so it can be
+                sent again without retyping. */}
             {onSteer && (
               <form
                 className="ana-runctl-steer"
                 onSubmit={(e) => {
                   e.preventDefault();
                   const v = steer.trim();
-                  if (!v) return;
-                  onSteer(v);
-                  setSteer('');
+                  if (!v || steerBusy) return;
+                  setSteerBusy(true);
+                  setSteerRefused(false);
+                  void Promise.resolve(onSteer(v))
+                    .then((accepted) => {
+                      // `undefined` means the handler reports nothing either way;
+                      // treating that as accepted keeps the old behaviour for any
+                      // caller that has not been widened, rather than telling the
+                      // person their steer failed on no evidence.
+                      if (accepted === false) {
+                        setSteerRefused(true);
+                        return;
+                      }
+                      setSteer('');
+                    })
+                    .catch(() => setSteerRefused(true))
+                    .finally(() => setSteerBusy(false));
                 }}
               >
                 <input
@@ -1095,14 +1130,28 @@ export function AnaRail({
                   className="ana-runctl-input"
                   value={steer}
                   maxLength={2000}
-                  onChange={(e) => setSteer(e.target.value)}
+                  onChange={(e) => {
+                    setSteer(e.target.value);
+                    if (steerRefused) setSteerRefused(false);
+                  }}
                   placeholder="Steer this run…"
                   aria-label="Steer this run"
+                  aria-invalid={steerRefused || undefined}
+                  aria-describedby={steerRefused ? 'ana-runctl-steer-err' : undefined}
                 />
-                <button type="submit" className="ana-runctl-go" disabled={!steer.trim()}>
-                  Steer
+                <button
+                  type="submit"
+                  className="ana-runctl-go"
+                  disabled={!steer.trim() || steerBusy}
+                >
+                  {steerBusy ? 'Sending…' : 'Steer'}
                 </button>
               </form>
+            )}
+            {steerRefused && (
+              <span id="ana-runctl-steer-err" className="ana-runctl-err" role="status">
+                Not sent — AnA did not accept this steer. The text is still here.
+              </span>
             )}
 
             <div className="ana-runctl-actions">

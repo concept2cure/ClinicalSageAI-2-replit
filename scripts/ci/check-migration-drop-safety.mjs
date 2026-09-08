@@ -189,13 +189,54 @@ for (const file of C2C_MIGRATION_FILES) {
   parsed.set(file, { drops: dropsIn(sql), creates: createsIn(sql) });
 }
 
-// Index creators by object.
-const creatorsOf = new Map();
-for (const [file, { creates }] of parsed) {
-  for (const obj of creates) {
-    if (!creatorsOf.has(obj)) creatorsOf.set(obj, []);
-    creatorsOf.get(obj).push(file);
+/**
+ * THE OTHER APPLIER.
+ *
+ * Rule 1 says a DROP is safe when nothing on ANY applier re-creates the object,
+ * and this gate knew only one of the two: it built its creator index from
+ * C2C_MIGRATION_FILES alone. `scripts/db/install-fresh.mjs` applies every
+ * `migrations/*.sql` except six named RLS files — among them
+ * migrations/0006_regulatory_atoms.sql, which declared the very constraint that
+ * migrations/20260907_cmc_comparability_register_reachable.sql drops. The
+ * pairing was invisible, the DROP passed clean, and the claim that nothing
+ * re-creates it went unchecked until a reviewer read install-fresh by hand.
+ *
+ * So the creator index now also reads the install-fresh set. Those files are
+ * creators only: a DROP in one of them is out of this gate's scope (they are
+ * not replayed by deploy-migrate), and flagging them would be noise.
+ */
+const RLS_MIGRATIONS_EXCLUDED_BY_INSTALL_FRESH = new Set([
+  '0005_csr_knowledge_database.sql',
+  '0019_tenant_column_audit.sql',
+  '0020_coerce_text_tenant_columns.sql',
+  '0021_enable_rls_everywhere.sql',
+  '20260608_ai_placement_policies.sql',
+  '20260612_rls_research_admin.sql',
+]);
+const installFreshCreators = new Map();
+const rootMigrationsDir = path.join(repoRoot, 'migrations');
+if (fs.existsSync(rootMigrationsDir)) {
+  for (const name of fs.readdirSync(rootMigrationsDir).sort()) {
+    if (!name.endsWith('.sql')) continue;
+    if (RLS_MIGRATIONS_EXCLUDED_BY_INSTALL_FRESH.has(name)) continue;
+    const rel = path.join('migrations', name);
+    if (parsed.has(rel)) continue; // already read as part of the set
+    const sql = stripNoise(fs.readFileSync(path.join(rootMigrationsDir, name), 'utf8'));
+    installFreshCreators.set(rel, createsIn(sql));
   }
+}
+
+// Index creators by object — from BOTH appliers.
+const creatorsOf = new Map();
+const addCreator = (obj, file) => {
+  if (!creatorsOf.has(obj)) creatorsOf.set(obj, []);
+  creatorsOf.get(obj).push(file);
+};
+for (const [file, { creates }] of parsed) {
+  for (const obj of creates) addCreator(obj, file);
+}
+for (const [file, creates] of installFreshCreators) {
+  for (const obj of creates) addCreator(obj, file);
 }
 
 const violations = [];
