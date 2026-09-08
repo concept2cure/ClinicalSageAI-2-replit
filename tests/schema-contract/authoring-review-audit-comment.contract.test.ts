@@ -145,6 +145,7 @@ beforeAll(async () => {
       // transaction and refuses to commit one without the other, so this table
       // is a prerequisite for the authoring spine rather than an optional extra.
       'db/migrations/20260803_document_span_lineage.sql',
+      'migrations/20260907_span_lineage_accepted_machine_draft.sql',
       // The subject of this file. Applied from the SAME path production uses,
       // so a column that exists here exists there.
       'migrations/20260728_authoring_reviews.sql',

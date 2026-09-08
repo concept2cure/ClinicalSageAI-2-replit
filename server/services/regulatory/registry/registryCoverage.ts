@@ -31,6 +31,10 @@ import {
   TASK_BLUEPRINTS,
   resolveTaskBlueprintKey,
 } from '../../../../shared/regulatory/project-bootstrap.js';
+/* The governed path's own mapping — the authority on whether a document class
+   can be resolved at all. Reading it here is what stops this report claiming a
+   readiness the product cannot deliver. */
+import { AGENCY_TO_CODE } from '../../c2c/document-class.js';
 import { DEDICATED_SECTION_BLUEPRINT_IDS } from '../sectionBlueprintCatalog.js';
 import { DEDICATED_TASK_BLUEPRINT_IDS } from '../taskBlueprintCatalog.js';
 import { FDAFormsRegistry, governedFormDefinition } from '../../../config/FDAFormsRegistry.js';
@@ -53,6 +57,24 @@ import type {
 export type BlueprintTier = 'dedicated' | 'specific' | 'generic';
 export type ReadinessTier = 'production_ready' | 'buildable' | 'catalog_only';
 
+/**
+ * Whether a GOVERNED document can be created for this type at all.
+ *
+ * This is a different question from the blueprint tiers below, and the report
+ * used to answer only the blueprint one. A governed document is created by
+ * services/c2c/scaffold-project-documents through `resolveDocumentClass`, which
+ * needs the program type in PROGRAM_TO_DOC_TYPE and the agency in
+ * AGENCY_TO_CODE. AGENCY_TO_CODE deliberately omits Swissmedic, ANVISA, CDSCO,
+ * HSA, Notified_Body, ISO, IEC and IMDRF because `c2c_documents_agency_check`
+ * rejects them at insert time — so for those entries there is nothing to build,
+ * however complete the blueprint.
+ *
+ *  - `supported`        — the governed path can resolve a document class.
+ *  - `unmapped_agency`  — the agency has no c2c_documents.agency value.
+ *  - `unmapped_program` — the application family maps to no doc_type.
+ */
+export type GovernedAuthoring = 'supported' | 'unmapped_agency' | 'unmapped_program';
+
 export interface RequiredFormCoverage {
   /** Raw required-artifact token from the registry, e.g. `form_1571`. */
   artifact: string;
@@ -69,6 +91,14 @@ export interface RequiredFormCoverage {
    * form FDA ingests — so a filing is not form-backed however 'full' the code.
    */
   officialAssetTrusted: boolean;
+  /**
+   * The named person recorded on the installed asset's manifest (`reviewedBy`),
+   * or null. Kept apart from `officialAssetTrusted` on purpose: the XFA forms
+   * fill from a code-reviewed map and verify their bytes, which earns "backed",
+   * but only someone who has opened the filled form in Acrobat can vouch that
+   * the map lands values in the right boxes. A client must see both facts.
+   */
+  reviewer: string | null;
 }
 
 export interface DocumentCoverage {
@@ -85,9 +115,18 @@ export interface DocumentCoverage {
   requiredForms: RequiredFormCoverage[];
   /** Every required *form* artifact is registered (and implemented when a builder is expected). */
   formsFullyBacked: boolean;
+  /** Every required form's installed asset names a human reviewer. Independent of
+   *  `formsFullyBacked`; see RequiredFormCoverage.reviewer. */
+  formsHumanReviewed: boolean;
   /** A regional eCTD backbone reference exists for this region. */
   hasEctdBackbone: boolean;
   validationProfile: string;
+  /**
+   * Whether a governed document can be started for this type. Reported as its
+   * own fact so the blueprint measurement stays readable, and used to cap
+   * `readiness` — see readinessOf.
+   */
+  governedAuthoring: GovernedAuthoring;
   readiness: ReadinessTier;
 }
 
@@ -162,28 +201,120 @@ function taskTier(entry: RegulatoryApplicationType): BlueprintTier {
  *     matches the bytes on disk. These are exactly the checks readXfaTemplate
  *     makes, so the report and the renderer still cannot disagree.
  */
-function officialFormAssetTrusted(formId: string): boolean {
+type FormManifest = {
+  assetTrusted?: unknown;
+  fillSupported?: unknown;
+  fieldMap?: unknown;
+  reviewedBy?: unknown;
+  xfaDynamic?: unknown;
+  sourceUrl?: unknown;
+  sha256?: unknown;
+};
+
+/** Read a form's installed-asset manifest, or null when none is installed. */
+function readFormManifest(formId: string): { dir: string; manifest: FormManifest } | null {
   const dir = process.env.IND_FORM_TEMPLATES_DIR || joinPath(process.cwd(), 'templates', 'forms', 'acroforms');
   try {
     const raw = readFileSync(joinPath(dir, `${formId}.pdf.manifest.json`), 'utf8');
-    const m = JSON.parse(raw) as {
-      assetTrusted?: unknown;
-      fillSupported?: unknown;
-      fieldMap?: unknown;
-      reviewedBy?: unknown;
-      xfaDynamic?: unknown;
-      sourceUrl?: unknown;
-      sha256?: unknown;
-    };
-    const fieldMapPopulated =
-      m.fieldMap !== null && typeof m.fieldMap === 'object' && Object.keys(m.fieldMap as object).length > 0;
-    if (m.assetTrusted === true && m.fillSupported === true && fieldMapPopulated && Boolean(m.reviewedBy)) {
-      return true;
-    }
-    return xfaFillable(dir, formId, m);
+    return { dir, manifest: JSON.parse(raw) as FormManifest };
+  } catch {
+    return null;
+  }
+}
+
+function officialFormAssetTrusted(formId: string): boolean {
+  const read = readFormManifest(formId);
+  if (!read) return false;
+  const { dir, manifest: m } = read;
+  if (m.assetTrusted === true && m.fillSupported === true && acroFormFillable(dir, formId, m)) {
+    return true;
+  }
+  return xfaFillable(dir, formId, m);
+}
+
+/**
+ * The static-AcroForm half of the contract, mirroring the renderer's
+ * `readTemplate` (server/services/ind-forms/ind-form-fill-service.ts:176-202)
+ * the way `xfaFillable` below mirrors the XFA reader.
+ *
+ * This branch used to check four manifest ASSERTIONS and verify nothing:
+ * `assetTrusted && fillSupported && fieldMap-non-empty && reviewedBy`. The
+ * renderer requires seven things, and re-hashes the bytes. So a manifest that
+ * merely claimed trust — with a stale hash, a swapped PDF, a non-FDA source, a
+ * missing edition, or a field path left blank — made `formsFullyBacked` report
+ * true for US_IND, US_NDA and US_BLA while every one of those forms rendered as
+ * a labeled DRAFT. The report asserted the package carries the official FDA
+ * form; the package carried a reconstruction.
+ *
+ * `assetTrusted` and `fillSupported` are kept in the caller ON TOP of these
+ * checks rather than replaced by them. The renderer does not read those two, so
+ * mirroring alone would have WIDENED the claim to assets no human has blessed.
+ * The result is the intersection: this report can no longer call a form backed
+ * that the renderer would refuse, and where it is stricter than the renderer it
+ * errs toward reporting less backing than exists, which is the safe direction
+ * for a number that gates a filing.
+ */
+function acroFormFillable(
+  dir: string,
+  formId: string,
+  m: {
+    formId?: unknown;
+    version?: unknown;
+    reviewedBy?: unknown;
+    reviewedAt?: unknown;
+    sourceUrl?: unknown;
+    sha256?: unknown;
+    fieldMap?: unknown;
+  },
+): boolean {
+  if (m.formId !== formId) return false;
+  if (typeof m.version !== 'string' || m.version.length === 0) return false;
+  if (typeof m.reviewedBy !== 'string' || m.reviewedBy.length === 0) return false;
+  if (!Number.isFinite(Date.parse(String(m.reviewedAt ?? '')))) return false;
+
+  const fieldMap =
+    m.fieldMap && typeof m.fieldMap === 'object' && !Array.isArray(m.fieldMap)
+      ? (m.fieldMap as Record<string, unknown>)
+      : {};
+  const entries = Object.values(fieldMap);
+  // A map entry pointing at no field places nothing, so an empty target is not
+  // a populated map however many keys it has.
+  if (entries.length === 0) return false;
+  if (!entries.every((v) => typeof v === 'string' && v.length > 0)) return false;
+
+  return sourceIsFdaAndBytesMatch(dir, formId, m.sourceUrl, m.sha256);
+}
+
+/**
+ * The integrity pair both branches need: the asset came from FDA over https, and
+ * the bytes on disk still hash to what the manifest pinned. Shared so the two
+ * branches cannot drift apart again — the AcroForm branch missing exactly this
+ * is what let a tampered manifest read as backed.
+ */
+function sourceIsFdaAndBytesMatch(
+  dir: string,
+  formId: string,
+  sourceUrl: unknown,
+  sha256: unknown,
+): boolean {
+  try {
+    const url = new URL(String(sourceUrl ?? ''));
+    const sourceIsFda =
+      url.protocol === 'https:' && (url.hostname === 'fda.gov' || url.hostname.endsWith('.fda.gov'));
+    if (!sourceIsFda) return false;
+    const bytes = readFileSync(joinPath(dir, `${formId}.pdf`));
+    return createHash('sha256').update(bytes).digest('hex') === sha256;
   } catch {
     return false;
   }
+}
+
+/** The named human reviewer on the installed asset's manifest, or null. An
+ *  empty string is no reviewer. See RequiredFormCoverage.reviewer for why this
+ *  is reported separately from officialFormAssetTrusted. */
+function officialFormReviewer(formId: string): string | null {
+  const reviewer = readFormManifest(formId)?.manifest.reviewedBy;
+  return typeof reviewer === 'string' && reviewer.trim().length > 0 ? reviewer : null;
 }
 
 /**
@@ -199,16 +330,7 @@ function xfaFillable(
   if (m.xfaDynamic !== true || m.fillSupported !== true) return false;
   const map = getOfficialXfaFieldMap(formId);
   if (!map || Object.keys(map).length === 0) return false;
-  try {
-    const url = new URL(String(m.sourceUrl ?? ''));
-    const sourceIsFda =
-      url.protocol === 'https:' && (url.hostname === 'fda.gov' || url.hostname.endsWith('.fda.gov'));
-    if (!sourceIsFda) return false;
-    const bytes = readFileSync(joinPath(dir, `${formId}.pdf`));
-    return createHash('sha256').update(bytes).digest('hex') === m.sha256;
-  } catch {
-    return false;
-  }
+  return sourceIsFdaAndBytesMatch(dir, formId, m.sourceUrl, m.sha256);
 }
 
 function requiredFormCoverage(entry: RegulatoryApplicationType): RequiredFormCoverage[] {
@@ -222,17 +344,68 @@ function requiredFormCoverage(entry: RegulatoryApplicationType): RequiredFormCov
         ? governedFormDefinition(form!).implementationStatus === 'full'
         : false;
       const officialAssetTrusted = registered ? officialFormAssetTrusted(form!.formId) : false;
+      const reviewer = registered ? officialFormReviewer(form!.formId) : null;
       return {
         artifact,
         formNumber: registered ? form!.formNumber : undefined,
         registered,
         implemented,
         officialAssetTrusted,
+        reviewer,
       };
     });
 }
 
-function readinessOf(section: BlueprintTier, task: BlueprintTier): ReadinessTier {
+/** The same normalisation `resolveDocumentClass` applies to the wizard's agency. */
+function agencyKey(agency: string): string {
+  return String(agency ?? '').toUpperCase().replace(/[\s-]/g, '_');
+}
+
+/**
+ * Can the governed path start a document for this entry? Static: both sides are
+ * plain maps, so this needs no database and stays usable in a CI gate.
+ *
+ * The program side is checked against the entry's `applicationFamily`, which is
+ * the value the wizard sends as the project's program type.
+ */
+function governedAuthoringOf(entry: RegulatoryApplicationType): GovernedAuthoring {
+  if (!AGENCY_TO_CODE[agencyKey(entry.agency)]) return 'unmapped_agency';
+  /* The program side is NOT decided here. resolveDocumentClass keys
+     PROGRAM_TO_DOC_TYPE on the project's `program_type`, which the wizard
+     supplies; the registry's nearest fields are `applicationFamily`
+     ('clinical_trial', 'marketing_authorization' — a category) and
+     `applicationType` ('IND', '510(k)' — a label). Neither IS the program type,
+     so deriving `unmapped_program` from them would be inventing a verdict from
+     a field that does not hold one. `unmapped_program` stays in the union for a
+     caller that has the real program type; nothing produces it from the
+     registry alone. The agency side needs no such guess: AGENCY_TO_CODE is
+     keyed on exactly the value this entry carries. */
+  return 'supported';
+}
+
+/**
+ * The readiness tier, CAPPED by whether the product can start the filing.
+ *
+ * The blueprint tiers below are honest about what they measure — a static
+ * section and task structure — but `production_ready` is read by a customer, a
+ * salesperson and a CI gate as "this filing type works". For 54 registry
+ * entries it did not: their agency has no `c2c_documents.agency` value, so the
+ * wizard returns NO_RULE_PACK and no row is ever written. Two of them
+ * (BR_DDCM, IN_CT04) carried the top tier. Every one of the 234 active entries
+ * read `buildable` or better and none read `catalog_only`, so the backlog view
+ * showed no gap at all.
+ *
+ * A type the governed path cannot begin is `catalog_only` by the tier's own
+ * definition — "a selectable catalog entry with no bespoke authoring structure
+ * yet" — whatever its blueprint. The blueprint tiers themselves are unchanged
+ * and still reported on their own fields.
+ */
+function readinessOf(
+  section: BlueprintTier,
+  task: BlueprintTier,
+  governed: GovernedAuthoring,
+): ReadinessTier {
+  if (governed !== 'supported') return 'catalog_only';
   if (section === 'dedicated' && task === 'dedicated') return 'production_ready';
   if (section === 'dedicated' || section === 'specific') return 'buildable';
   return 'catalog_only';
@@ -245,6 +418,7 @@ export function getDocumentCoverage(idOrEntry: string | RegulatoryApplicationTyp
 
   const section = sectionTier(entry);
   const task = taskTier(entry);
+  const governedAuthoring = governedAuthoringOf(entry);
   const requiredForms = requiredFormCoverage(entry);
   // A filing is form-backed only when every required form is registered,
   // has a full builder AND the official FDA edition is installed and reviewed
@@ -252,6 +426,8 @@ export function getDocumentCoverage(idOrEntry: string | RegulatoryApplicationTyp
   const formsFullyBacked = requiredForms.every(
     (f) => f.registered && f.implemented && f.officialAssetTrusted,
   );
+  // Human review is a separate fact from integrity-backed fill (see officialFormReviewer).
+  const formsHumanReviewed = requiredForms.every((f) => f.reviewer !== null);
 
   return {
     id: entry.id,
@@ -266,12 +442,14 @@ export function getDocumentCoverage(idOrEntry: string | RegulatoryApplicationTyp
     taskBlueprint: task,
     requiredForms,
     formsFullyBacked,
+    formsHumanReviewed,
     // Honest only when the region has an eCTD backbone AND this entry actually
     // files as eCTD. A device eSTAR/eCopy or ACTD entry in a backbone region
     // (e.g. a US 510(k)) does NOT get an eCTD backbone, so don't claim one.
     hasEctdBackbone: REGIONS_WITH_ECTD_BACKBONE.has(entry.region) && entry.dossierStandard === 'eCTD',
     validationProfile: entry.validationProfile,
-    readiness: readinessOf(section, task),
+    governedAuthoring,
+    readiness: readinessOf(section, task, governedAuthoring),
   };
 }
 
@@ -280,6 +458,8 @@ export function getDocumentCoverage(idOrEntry: string | RegulatoryApplicationTyp
 export interface CoverageSummary {
   total: number;
   byReadiness: Record<ReadinessTier, number>;
+  /** How many types the governed path can actually start, and why not. */
+  byGovernedAuthoring: Record<GovernedAuthoring, number>;
   bySectionTier: Record<BlueprintTier, number>;
   byTaskTier: Record<BlueprintTier, number>;
 }
@@ -311,12 +491,16 @@ export function buildCoverageReport(): RegistryCoverageReport {
   const entries = computeCoverage();
 
   const byReadiness: Record<ReadinessTier, number> = { production_ready: 0, buildable: 0, catalog_only: 0 };
+  const byGovernedAuthoring: Record<GovernedAuthoring, number> = {
+    supported: 0, unmapped_agency: 0, unmapped_program: 0,
+  };
   const bySectionTier: Record<BlueprintTier, number> = { dedicated: 0, specific: 0, generic: 0 };
   const byTaskTier: Record<BlueprintTier, number> = { dedicated: 0, specific: 0, generic: 0 };
   const regionMap = new Map<Region, RegionCoverage>();
 
   for (const c of entries) {
     byReadiness[c.readiness]++;
+    byGovernedAuthoring[c.governedAuthoring]++;
     bySectionTier[c.sectionBlueprint]++;
     byTaskTier[c.taskBlueprint]++;
 
@@ -332,7 +516,7 @@ export function buildCoverageReport(): RegistryCoverageReport {
   }
 
   return {
-    summary: { total: entries.length, byReadiness, bySectionTier, byTaskTier },
+    summary: { total: entries.length, byReadiness, byGovernedAuthoring, bySectionTier, byTaskTier },
     byRegion: [...regionMap.values()].sort((a, b) => b.total - a.total),
     entries,
   };

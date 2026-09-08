@@ -107,3 +107,69 @@ describe('assembleFormMetadata', () => {
     expect(meta.investigators).toBeUndefined();
   });
 });
+
+/* ── The program record → form metadata (WO-9 Click 2) ──────────────────────
+   The forms panel used to have every value typed by hand. The program record
+   (regulatory_programs + its organisation) is the source of record for the
+   sponsor, the product, the indication and the agency number, so the forms
+   read it. Pure mapping: what the record holds is passed through, what it does
+   not hold is omitted — never an empty string that a builder would count as
+   "present". */
+import { programToFormMetadata } from '../form-context-assembler';
+
+describe('programToFormMetadata — the program record is the source of the form facts', () => {
+  const vorelinib = {
+    sponsorName: 'Concept2Cure Therapeutics',
+    productName: 'Vorelinib · BX-512',
+    indication: 'KIT-mutant gastrointestinal stromal tumor · 4L+',
+    applicationNumber: '000512',
+    programType: 'IND',
+  };
+
+  it('maps an IND program: sponsor from the organisation, drug from product_name, IND number from application_number', () => {
+    expect(programToFormMetadata(vorelinib)).toEqual({
+      sponsorName: 'Concept2Cure Therapeutics',
+      drugName: 'Vorelinib · BX-512',
+      indication: 'KIT-mutant gastrointestinal stromal tumor · 4L+',
+      indNumber: '000512',
+    });
+  });
+
+  it('an NDA / BLA / ANDA program carries its number as the application number — never as an IND number', () => {
+    const nda = programToFormMetadata({ ...vorelinib, applicationNumber: '212345', programType: 'NDA' });
+    expect(nda.applicationNumber).toBe('212345');
+    expect(nda.applicationType).toBe('NDA');
+    expect(nda).not.toHaveProperty('indNumber');
+
+    const bla = programToFormMetadata({ ...vorelinib, applicationNumber: '125001', programType: 'bla' });
+    expect(bla.applicationType).toBe('BLA');
+    expect(bla.applicationNumber).toBe('125001');
+    expect(bla).not.toHaveProperty('indNumber');
+  });
+
+  it('a program type the forms have no box for (MAA, 510K, CER) contributes no number and no application type', () => {
+    const maa = programToFormMetadata({ ...vorelinib, applicationNumber: 'EMEA/H/C/006', programType: 'MAA' });
+    expect(maa).not.toHaveProperty('indNumber');
+    expect(maa).not.toHaveProperty('applicationNumber');
+    expect(maa).not.toHaveProperty('applicationType');
+    expect(maa.drugName).toBe('Vorelinib · BX-512');
+  });
+
+  it('omits what the record does not hold — no empty strings that would read as present', () => {
+    expect(programToFormMetadata({
+      sponsorName: null, productName: '   ', indication: null, applicationNumber: null, programType: 'IND',
+    })).toEqual({});
+  });
+
+  it('an unnumbered IND program yields no IND number — an original submission has none yet', () => {
+    const meta = programToFormMetadata({ ...vorelinib, applicationNumber: null });
+    expect(meta).not.toHaveProperty('indNumber');
+    expect(meta.sponsorName).toBe('Concept2Cure Therapeutics');
+  });
+
+  it('layers under caller overrides through assembleFormMetadata — a typed serial number wins, a typed blank does not erase the record', () => {
+    const merged = assembleFormMetadata({ overrides: { ...programToFormMetadata(vorelinib), serialNumber: '0000' } });
+    expect(merged.serialNumber).toBe('0000');
+    expect(merged.drugName).toBe('Vorelinib · BX-512');
+  });
+});

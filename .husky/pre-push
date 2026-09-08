@@ -155,6 +155,24 @@ if ! npm run --silent ci:migration-drop-safety 2>&1; then
 fi
 echo "   ✅ Replay-safe DROPs passed."
 
+# The third migration invariant, and the only one nothing was enforcing: every
+# .sql file in db/migrations must appear in migrations_manifest.json, which is
+# what orders them for the appliers that read it. `db:sync-manifest:check`
+# existed and passed on demand, but ran nowhere automatic — so a migration added
+# without running the sync simply drifted, and the drift was found by whoever
+# next ran the check by hand. It had accumulated twice in one day by the time it
+# was noticed. Cheap: it reads a directory listing and a JSON file, no database.
+echo "   Validating the migration manifest tracks db/migrations..."
+if ! npm run --silent db:sync-manifest:check 2>&1; then
+  echo ""
+  echo "🚫 ERROR: Migration manifest is out of sync with db/migrations/."
+  echo "   Run:  npm run db:sync-manifest"
+  echo "   then commit db/migrations/migrations_manifest.json with your migration."
+  echo ""
+  exit 1
+fi
+echo "   ✅ Migration manifest in sync."
+
 # The Drizzle blind spot. check-security-patterns and the raw-SQL tenant scanner
 # read string literals; a query built with the Drizzle query builder is invisible
 # to both, which is how five of seven handlers in routes/c2c/tasks.ts shipped

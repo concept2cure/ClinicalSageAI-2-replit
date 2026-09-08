@@ -480,6 +480,27 @@ export const C2C_MIGRATION_FILES = [
   'db/migrations/20260730_manufacturing_processes_reconstruction.sql',
   'db/migrations/20260730_fk_delete_policies_port.sql',
 
+  /* The governed-action ledger's `command` vocabulary. 20260527_mutation_primitives
+     created c2c_ana_actions with a CHECK enumerating only the twelve original
+     universal mutations, and recordGovernedAction has since been adopted platform-
+     wide with a free `command: string` — 'create', 'update', 'review', 'approve',
+     'reaffirm', 'transmittal_rollback', 'apply-sample-size', 'task.create' and more.
+     Every one of those INSERTs raises 23514 and rolls back the WHOLE governed
+     transaction, so the domain mutation fails and no audit row is written.
+
+     The fix was written on 2026-07-30 and never reached a database: the file was
+     left out of this list, so it ran on no applier. ci:migration-reachability does
+     not catch it because that guard asks whether a TABLE the server queries is
+     created by something an applier runs — this migration creates no table, it
+     replaces a constraint, so it was invisible to every gate.
+
+     Measured 2026-09-08 against a database with all 253 entries of this set
+     applied: the narrow CHECK was still in force and
+     POST /api/biostat-bridge/designs/:id/apply-sample-size answered 500 (23514).
+     Positioned AFTER 20260527 so the replay order is create-then-widen, per the
+     ordering rule in CLAUDE.md RULE 1; both files are idempotent. */
+  'db/migrations/20260730_c2c_ana_actions_command_vocab.sql',
+
   // eSTAR filing journey — client registration (the four FDA prerequisites),
   // the program-agnostic filing tracker (status + review clock), and the
   // project link that joins tracking to the PM spine. Order matters: the
@@ -1384,6 +1405,18 @@ export const C2C_MIGRATION_FILES = [
   // so re-running is a no-op.
   'migrations/20260906c_draft_candidate_assertions.sql',
 
+  // ── Span lineage: accepted machine drafts are the machine's, not the author's ─
+  // Every governed write recorded each clause it could not tie to a Data Room
+  // source as the human actor's `author_assertion` — including the clauses AnA
+  // drafted and the human merely accepted — so the Data Origins panel and PDF
+  // read "Asserted by the author" over model prose. Adds the
+  // `accepted_machine_draft` kind (machine_author_id + the accepting human) by
+  // widening the two CHECKs with the DROP CONSTRAINT IF EXISTS / ADD CONSTRAINT
+  // idiom (RULE 1: a CHECK holds no data; re-running converges) and ADD COLUMN
+  // IF NOT EXISTS. Must run after db/migrations/20260803 (the table), which it
+  // does; guarded on the table existing.
+  'migrations/20260907_span_lineage_accepted_machine_draft.sql',
+
   // ── Apps catalog additions, GA ledger L40 (added 2026-08-14) ─────────────
   // Eight built, routed, API-backed surfaces that appeared in no catalog, so a
   // user could reach them only by knowing the URL. INSERT … ON CONFLICT DO
@@ -1575,6 +1608,17 @@ export const C2C_MIGRATION_FILES = [
   // Name + description only (adds Swissmedic to the modeled-agency list); no
   // entitlement change. Idempotent UPDATE keyed on module_id.
   'migrations/20260820c_catalog_maa_module1_regional.sql',
+
+  // ── The submission orchestrator gets a catalog row (2026-09-07) ───────────
+  // The surface shipped registered, routed and rendering, but reachable from
+  // no nav menu and absent from NAVIGATION_TARGETS. Making it reachable also
+  // makes it a shell app, and the shell must never present an app the catalog
+  // cannot express an entitlement for — without a row it is ungatable
+  // (module_subscriptions FKs into available_modules) and silently free (an
+  // unknown id is treated as not-licensable by design). Tiered 'standard' to
+  // match its Submit & file siblings; no earlier file classifies this id, so
+  // this file owns its tier.
+  'db/migrations/20260907_module_catalog_submission_orchestrator.sql',
 
   // Moved here from AFTER the sweep, where it was appended upstream. C-33 and
   // three contract tests require the two isolation steps to be the final pair;
@@ -1783,15 +1827,23 @@ export const C2C_MIGRATION_FILES = [
   // store (the store that superseded c2c_cmc_changes), after 20260401_cmc_
   // convergence_os (adds tenant_id to the batch table where it exists), and
   // above the isolation pair below so quality_specifications.tenant_id INTEGER
-  // gets a policy. Note the spec routes filter `tenant_id = $n OR tenant_id IS
-  // NULL`; under RLS_ENFORCE=on NULL-tenant rows are invisible — pre-existing
-  // route semantics, not introduced by the policy.
+  // gets a policy. The spec routes now filter strictly `tenant_id = $n` (the
+  // old `OR tenant_id IS NULL` disjunct made an unattributed row readable and
+  // writable by every org, which was looser than the policy behind it); the
+  // required-tenant constraint below closes the store half.
   // cmc_batch_records is created ONLY by root migrations/0006 (fresh installs),
   // so the parity file's ALTER block is IF EXISTS-guarded: a database without
   // the table gets a NOTICE and quality_specifications, not a halted deploy.
   // Follow-up, out of scope here: 0006's batch table still has no durable
   // creator, so the batch register stays honestly 42P01 on such a database.
   'migrations/20260823_cmc_register_store_parity.sql',
+  // quality_specifications.tenant_id is required from here on: a tenant-less
+  // row belongs to nobody, not to everybody. CHECK ... NOT VALID, so legacy
+  // NULL rows (20260401 added the column to an already-populated table with no
+  // backfill) stay in place and stay invisible rather than aborting the deploy.
+  // Must follow the parity file, which creates the table on databases that
+  // never had it.
+  'migrations/20260907_quality_specifications_tenant_required.sql',
   // DROP TABLE IF EXISTS c2c_cmc_changes (seed-only demo content, zero live
   // references). Its creator db/migrations/20260718_cmc_changes_store.sql is on
   // no applier, so there is no create-then-drop ordering hazard; same shape as
@@ -1841,6 +1893,16 @@ export const C2C_MIGRATION_FILES = [
   // creates the table.
   'db/migrations/20260903_cmc_impurity_route_of_administration.sql',
 
+  // ── Durable CMC interview sessions ───────────────────────────────────────
+  // The guided CMC interview's FlowState, persisted per step and committed to
+  // the registers on completion (CMC capture evaluation item 5). Leaf table:
+  // FKs only to organizations and users. public + integer organization_id, so
+  // the isolation sweep at the end of this list policies it.
+  'db/migrations/20260906_cmc_interview_sessions.sql',
+  'db/migrations/20260906_cmc_impurity_m7_inputs.sql',
+  'db/migrations/20260906_cmc_formulation_development.sql',
+  'db/migrations/20260907_qc_testing_batch_attribution.sql',
+
   // ── Drop the audit-shaped tables that survived a from-scratch liveness
   //    re-check (ledger L13; docs/AUDIT_STORE_INVENTORY_2026-08.md §5.1) ─────
   // MUST stay near the end, and specifically AFTER every entry above that
@@ -1873,6 +1935,10 @@ export const C2C_MIGRATION_FILES = [
   // character-for-character to use it. Ordered after the organization_id file
   // only for readability — it depends on nothing that file adds.
   'migrations/20260906_vault_documents_fulltext.sql',
+  // c2c_artifact_section_map: de-duplicate (artifact, section) rows and add the
+  // unique index shared/schema.ts declares. Was in no applier, so the schema's
+  // "the database no longer permits" a duplicate mapping was not true anywhere.
+  'migrations/20260906_artifact_section_map_unique.sql',
 
   // Legal holds. Lands while the retention sweep is still inert (nothing writes
   // retention_until), which is the point: the guard has to exist before the
@@ -1895,6 +1961,37 @@ export const C2C_MIGRATION_FILES = [
   // tenant the same way). It therefore runs BEFORE the sweeps, so their
   // pg_policies guard sees it and leaves it alone.
   'migrations/20260906_ivdr_history_tenant_isolation.sql',
+
+  // §3.2.P.8's only producer of `comparabilityStatus` had no creator on THIS
+  // applier (its DDL lives in migrations/0006_regulatory_atoms.sql, which
+  // install-fresh applies and deploy-migrate does not) and, where it did exist,
+  // an FK pinning project_id to the empty cmc_projects table — so every write
+  // from a real program answered 500 and the section could never complete.
+  // Creator + a drop of that constraint; 0006 was amended in place to stop
+  // declaring it, so the drop cannot be undone by a replay.
+  'migrations/20260907_cmc_comparability_register_reachable.sql',
+  // ── regulatory_programs.application_number (WO-9 Click 1) ──────────────────
+  // The agency-assigned IND / NDA / BLA / MAA number, distinct from the sponsor's
+  // own program code. Additive, IF NOT EXISTS, nullable — never fabricated.
+  'migrations/20260907_regulatory_programs_application_number.sql',
+
+  // ── compliance_tracking.organization_id backfill ──────────────────────────
+  // The rows the CMC project routes wrote carry no organization_id (the drizzle
+  // model they bind maps none), so the check-rules read widened to
+  // `OR organization_id IS NULL` to find them — and served every sponsor's
+  // compliance findings to every other sponsor. Unlike the quality_specifications
+  // case, these rows ARE attributable: project_id is NOT NULL with an FK to
+  // cmc_projects, whose organization_id is NOT NULL. Guarded on IS NULL, so a
+  // replay is a no-op.
+  'migrations/20260908_compliance_tracking_organization_backfill.sql',
+
+  // ── estar_submissions: what the filing was filed WITH (roadmap item 3) ────
+  // Two additive columns binding a `filed` transition to the retained eSTAR in
+  // the program vault: the vault.documents id and the SHA-256 of its bytes,
+  // both written by the server. Before them, "filed" was a status, a
+  // client-supplied date and a free-text tracking number pointing at nothing.
+  // Additive, IF NOT EXISTS; a replay is a no-op.
+  'migrations/20260908b_estar_submissions_filed_artifact.sql',
 
   UUID_TENANT_ISOLATION_NONPUBLIC,
 
@@ -1934,6 +2031,32 @@ export async function applyMigrationFiles(
 ) {
   const applied = [];
   const failures = [];
+  /* Every NOTICE and WARNING the migrations raise, SURFACED.
+     node-postgres delivers server notices only to a 'notice' listener, and no
+     applier registered one — so a migration whose DO block skipped a table
+     (the child-table RLS sweep leaving a pair unpolicied, the tenant sweep's
+     drift branch, the atom-identity reconciliation's WARNING about a table it
+     will not touch) printed nothing but "✓ applied". A deploy that policied
+     forty tables and one that policied one were the same clean green run.
+     The messages are the only signal these files produce; they belong in the
+     deploy log next to the file that raised them. */
+  const noticeListener = (msg) => {
+    const text = String(msg?.message ?? '').trim();
+    if (!text) return;
+    const severity = String(msg?.severity ?? 'NOTICE').toUpperCase();
+    /* A NOTICE saying an object already exists is the IF NOT EXISTS guard
+       working as designed, on every replay of every idempotent file — noise
+       that would bury the ones that matter. */
+    if (severity === 'NOTICE' && /already exists, skipping|will create implicit/i.test(text)) return;
+    (severity === 'WARNING' || severity === 'ERROR' ? error : log)(`    [${severity}] ${text}`);
+  };
+  /* Attached to whatever the caller passed: deploy-migrate hands in a CLIENT
+     (which is what emits 'notice'), apply-c2c-migrations hands in a POOL, whose
+     clients emit it — so a pool is covered through 'connect'. A fresh pool
+     opens its first connection on the first query below, after this line. */
+  const attachNotices = (target) => target?.on?.('notice', noticeListener);
+  attachNotices(pool);
+  pool.on?.('connect', attachNotices);
 
   // Provision the ledger table once per run. Best-effort for the same reason the
   // per-file record is: a journal that cannot be created must not stop migrations
@@ -1946,6 +2069,7 @@ export async function applyMigrationFiles(
     error(`  (migration journal unavailable: ${journalErr.message})`);
   }
 
+  try {
   for (const file of files) {
     const full = path.join(repoRoot, file);
     if (!fs.existsSync(full)) {
@@ -1990,4 +2114,11 @@ export async function applyMigrationFiles(
   }
 
   return { applied, failures };
+  } finally {
+    /* Removed on every path, including the early returns above: the pool
+       outlives this call, and a listener left behind would double-print the
+       next caller's notices. */
+    pool.removeListener?.('notice', noticeListener);
+    pool.removeListener?.('connect', attachNotices);
+  }
 }

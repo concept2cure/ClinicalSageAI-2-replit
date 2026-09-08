@@ -22,8 +22,32 @@ vi.mock('../../../services/cmc/resolve-cmc-artifact-project', () => ({
 }));
 
 const queries: Array<{ sql: string; params: unknown[] }> = [];
-/** Rows the grouped cmc_source_objects read returns ({sourceType, count}). */
-const sourceObjectRows: Array<{ sourceType: string; count: string }> = [];
+/**
+ * cmc_source_objects rows, as the canonical status reader selects them. The
+ * route no longer counts sources itself — it takes count and completeness
+ * from getModule3BuildStatus, which composes these rows the way compile does.
+ */
+type SourceObjectRow = {
+  id: string;
+  sourceType: string;
+  sourceKey: string;
+  sourcePayload: Record<string, unknown>;
+  sourceHash: string;
+  updatedAt: Date;
+};
+const sourceObjectRows: SourceObjectRow[] = [];
+let sourceSeq = 0;
+function sourceRow(sourceType: string, sourcePayload: Record<string, unknown>): SourceObjectRow {
+  sourceSeq += 1;
+  return {
+    id: `src-${sourceSeq}`,
+    sourceType,
+    sourceKey: `${sourceType}:${sourceSeq}`,
+    sourcePayload,
+    sourceHash: `hash-${sourceSeq}`,
+    updatedAt: new Date('2026-03-01T00:00:00Z'),
+  };
+}
 vi.mock('../../../db', () => ({
   getPool: () => ({
     query: async (sql: string, params: unknown[] = []) => {
@@ -143,7 +167,8 @@ describe('build-state derives its source rules from the composer (anti-drift)', 
       artifactProjectId: null,
       detail: 'This program has no PM-spine anchor.',
     });
-    sourceObjectRows.push({ sourceType: 'qc_result', count: '2' });
+    sourceObjectRows.push(sourceRow('qc_result', { batchNumber: 'B-1', test: 'assay' }));
+    sourceObjectRows.push(sourceRow('qc_result', { batchNumber: 'B-2', test: 'assay' }));
 
     const res = await request(makeApp()).get(`/api/cmc/module3-os/build-state/${PROGRAM_UUID}`);
 
@@ -154,5 +179,43 @@ describe('build-state derives its source rules from the composer (anti-drift)', 
     const p5 = res.body.data.sections.find((s: any) => s.sectionKey === '3.2.P.5');
     expect(p5.sourceTypes).toContain('qc_result');
     expect(p5.sourceObjectCount).toBeGreaterThanOrEqual(2);
+  });
+});
+
+describe('build-state reads completeness from the canonical status, not from a stored or fabricated figure', () => {
+  beforeEach(() => {
+    resolveCmcArtifactProject.mockReset();
+    queries.length = 0;
+    sourceObjectRows.length = 0;
+    sourceSeq = 0;
+    resolveCmcArtifactProject.mockResolvedValue({
+      state: 'unanchored',
+      artifactProjectId: null,
+      detail: 'This program has no PM-spine anchor.',
+    });
+  });
+
+  it("scores an uncompiled section from its live sources — '' is not present, retired does not count", async () => {
+    // The route used to read `deterministicJson?.completeness ?? (compiled ? 100 : 0)`:
+    // a section never compiled was 0% no matter what its sources held, a
+    // compiled one whose row lacked the figure was a fabricated 100%, and the
+    // source count included retired records. getModule3BuildStatus composes
+    // the rows exactly as compile does; this pins that the route reports it.
+    sourceObjectRows.push(sourceRow('drug_substance', { name: 'API-1', manufacturer: '' }));
+    sourceObjectRows.push(
+      sourceRow('drug_substance', { name: 'API-0', manufacturer: 'Old Co', status: 'retired' }),
+    );
+
+    const res = await request(makeApp()).get(`/api/cmc/module3-os/build-state/${PROGRAM_UUID}`);
+
+    expect(res.status).toBe(200);
+    const s1 = res.body.data.sections.find((s: any) => s.sectionKey === '3.2.S.1');
+    expect(s1.sourceObjectCount).toBe(1);
+    expect(s1.completeness).toBe(50);
+    expect(s1.missingInputs).toEqual(['manufacturer']);
+    // The route no longer runs its own source count — one reader, one answer.
+    const sourceReads = queries.filter((q) => q.sql.includes('FROM cmc_source_objects'));
+    expect(sourceReads).toHaveLength(1);
+    expect(sourceReads[0].sql).not.toMatch(/GROUP BY/i);
   });
 });

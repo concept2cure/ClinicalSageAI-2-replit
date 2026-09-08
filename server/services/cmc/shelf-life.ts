@@ -66,6 +66,14 @@ export interface ShelfLifeResult {
   cappedByExtrapolationLimit: boolean;
   /** True when the confidence limit stays within spec across the whole search range. */
   exceedsEvaluatedRange: boolean;
+  /**
+   * Where the fitted MEAN line itself meets the specification (t ≥ 0) — the
+   * point estimate the confidence-limit crossing is pulled in from. Null when
+   * the line is flat or heads away from the limit, so it never meets it. Zero
+   * when the line is already past the limit at t = 0. Computed from the
+   * unrounded fit, so a caller that reports it does not re-fit the data.
+   */
+  nominalCrossing: number | null;
   regression: { slope: number; intercept: number; r2: number; residualSd: number; n: number; df: number };
   confidence: { alpha: number; tQuantile: number; bound: 'lower' | 'upper' };
   notes: string[];
@@ -155,6 +163,15 @@ export function estimateShelfLife(input: ShelfLifeInput): ShelfLifeResult {
   const observedPeriod = Math.max(...x);
   const extrapolationLimit = q1eExtrapolationLimit(observedPeriod);
 
+  /* The mean line meets the limit only if it is heading toward it. A line
+     heading away (an assay rising, an impurity falling) never crosses at any
+     t ≥ 0, and reporting the negative root of a line that has already crossed
+     would state a time before the study began. */
+  const headingToLimit = input.direction === 'decreasing' ? slope < 0 : slope > 0;
+  const nominalCrossing = headingToLimit
+    ? round(Math.max(0, (input.specLimit - intercept) / slope), 2)
+    : null;
+
   const notes: string[] = [
     'ICH Q1E single-batch/attribute estimate using the 95% one-sided mean confidence limit. No multi-batch poolability (ANCOVA) performed.',
   ];
@@ -175,6 +192,7 @@ export function estimateShelfLife(input: ShelfLifeInput): ShelfLifeResult {
       extrapolationLimit: round(extrapolationLimit, 2),
       cappedByExtrapolationLimit: wasCapped,
       exceedsEvaluatedRange: exceeds,
+      nominalCrossing,
       regression: { slope: round(slope), intercept: round(intercept), r2: round(r2), residualSd: round(residualSd), n, df },
       confidence: { alpha, tQuantile: round(tq), bound },
       notes: wasCapped
@@ -196,6 +214,7 @@ export function estimateShelfLife(input: ShelfLifeInput): ShelfLifeResult {
       extrapolationLimit: round(extrapolationLimit, 2),
       cappedByExtrapolationLimit: false,
       exceedsEvaluatedRange: false,
+      nominalCrossing,
       regression: { slope: round(slope), intercept: round(intercept), r2: round(r2), residualSd: round(residualSd), n, df },
       confidence: { alpha, tQuantile: round(tq), bound },
       notes: [...notes, 'The confidence limit is already at/over the specification at t=0 — no shelf life can be supported from these data.'],

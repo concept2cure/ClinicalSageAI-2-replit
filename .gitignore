@@ -140,3 +140,9 @@ scripts/visual-qa/probe-*.spec.tsx
 # symlink of that name slipped into history.
 eslint-report.json
 .scratch/
+
+# The LocalStorageProvider's dev object store (server/services/storage/local-provider.ts).
+# Every file a developer or a demo uploads lands here — including a sponsor's
+# completed, signed FDA forms — so it must never be committable by accident.
+# `storage/ir-packs/` is tracked on purpose and is unaffected.
+storage/vault/

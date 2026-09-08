@@ -222,6 +222,7 @@ beforeAll(async () => {
   await pg.exec(`INSERT INTO organizations (id, name) VALUES (${ORG}, 'kit-org');`);
   await pg.exec(migration('db/migrations/20260724_clinical_regulatory_evidence_spine.sql'));
   await pg.exec(migration('db/migrations/20260803_document_span_lineage.sql'));
+  await pg.exec(migration('migrations/20260907_span_lineage_accepted_machine_draft.sql'));
   holder.pool = lineageExec;
   holder.db = drizzle(pg);
 

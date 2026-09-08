@@ -69,6 +69,7 @@ import {
   TrackChanges,
   collectSuggestions,
   type SuggestionAuthor,
+  type AcceptedInsertion,
   type SuggestionDecision,
   type SuggestionRange,
 } from './suggestions';
@@ -134,6 +135,14 @@ export interface RichSectionEditorHandle {
    * accept.
    */
   takeAcceptedAuthors: () => SuggestionAuthor[];
+  /**
+   * The text of every insertion accepted since the last call, with its
+   * author, then cleared — the clause-grain companion of takeAcceptedAuthors.
+   * The save carries it so the lineage gate can record exactly which clauses
+   * were a machine author's, instead of attributing them to whoever pressed
+   * accept.
+   */
+  takeAcceptedInsertions: () => AcceptedInsertion[];
   /** Select + scroll to a comment's anchored range. False when the annotated
    *  text no longer exists in the current draft. */
   selectCommentAnchor: (commentId: string) => boolean;
@@ -1343,6 +1352,14 @@ export const RichSectionEditor = forwardRef<RichSectionEditorHandle, RichSection
             | undefined)?.c2cTrackChanges;
           const taken = store?.acceptedAuthors ?? [];
           if (store?.acceptedAuthors) store.acceptedAuthors = [];
+          return taken;
+        },
+        takeAcceptedInsertions: () => {
+          const store = (editor?.storage as unknown as
+            | Record<string, { acceptedInsertions?: AcceptedInsertion[] } | undefined>
+            | undefined)?.c2cTrackChanges;
+          const taken = store?.acceptedInsertions ?? [];
+          if (store?.acceptedInsertions) store.acceptedInsertions = [];
           return taken;
         },
         selectCommentAnchor: (commentId: string) => {

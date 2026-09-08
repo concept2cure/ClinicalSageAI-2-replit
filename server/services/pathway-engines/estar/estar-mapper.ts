@@ -119,6 +119,8 @@ type Matcher = (l: EstarInputLeaf) => boolean;
 const dt = (...t: string[]): Matcher => (l) => !!l.documentType && t.includes(l.documentType);
 const ti = (...n: string[]): Matcher => (l) => n.some((x) => l.title.toLowerCase().includes(x));
 const any = (...m: Matcher[]): Matcher => (l) => m.some((f) => f(l));
+const all = (...m: Matcher[]): Matcher => (l) => m.every((f) => f(l));
+const not = (m: Matcher): Matcher => (l) => !m(l);
 
 /* ── The section model ───────────────────────────────────────────────────────
  *
@@ -199,7 +201,25 @@ const baseSlots: SlotDef[] = [
   always('performance-testing', 'Performance testing (bench / animal / clinical)',
     'FDA eSTAR performance section',
     any(dt('performance_testing', 'bench_testing', 'clinical_testing'),
-        ti('performance testing', 'bench test', 'clinical data'))),
+        ti('performance testing', 'bench test'),
+        /* "Clinical data" names a performance section — but BOTH shipped
+           outlines title their financial-disclosure node "Financial
+           certification or disclosure (21 CFR Part 54), where clinical data are
+           relied on", and a bare substring match on that conditional clause
+           marked performance testing PRESENT for a sponsor who had authored
+           nothing of the kind. It also dropped out of missingRequired, so the
+           readiness verdict claimed a required section was satisfied when
+           nothing addressed it.
+           The direction matters, not just the case: see the biocompatibility
+           note below — over-asking costs a reader a moment, under-asking costs
+           a refusal to accept. A false "present" is the one way this mapper may
+           not be wrong. The exclusion is narrow and stated rather than clever:
+           a title that is about financial disclosure is not a performance
+           section, whatever else it mentions.
+           Pinned by tests/schema-contract/estar-mapper-matches-shipped-outlines
+           .contract.test.ts, which also carries the whole node-to-slot map so a
+           future matcher edit shows its blast radius. */
+        all(ti('clinical data'), not(ti('financial', '21 cfr part 54'))))),
 
   /* Biocompatibility turns on patient contact, which is not one of the seven
      flags the intake collects, so it cannot be resolved conditionally here. It

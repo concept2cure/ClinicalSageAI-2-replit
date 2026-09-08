@@ -3409,7 +3409,7 @@ export function AdminConsole({ onAsk, onNav }: SurfaceViewProps) {
                           type="button"
                           onClick={() => toggleKeyScope(s)}
                           aria-pressed={on}
-                          style={{ fontFamily: 'var(--font-mono)', fontSize: 11, padding: '4px 8px', borderRadius: 6, cursor: 'pointer', border: '1px solid ' + (on ? 'var(--accent-100, #d97757)' : 'var(--border)'), background: on ? 'var(--accent-100, #d97757)' : 'transparent', color: on ? '#fff' : 'inherit' }}
+                          style={{ fontFamily: 'var(--font-mono)', fontSize: 11, padding: '4px 8px', borderRadius: 6, cursor: 'pointer', border: '1px solid ' + (on ? 'var(--accent-100)' : 'var(--border)'), background: on ? 'var(--accent-100)' : 'transparent', color: on ? '#fff' : 'inherit' }}
                         >
                           {s}
                         </button>

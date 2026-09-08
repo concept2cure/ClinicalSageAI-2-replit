@@ -26,10 +26,40 @@ import {
 } from '../services/ai-gateway/effort';
 import { serverError } from '../lib/api-response';
 import { createScopedLogger } from '../utils/logger';
+import {
+  classifyGatewayError,
+  isGatewayError,
+  GATEWAY_ERROR_HTTP_STATUS,
+} from '../services/ai-gateway/gateway-error-map';
+import { isBatchDraftFailure } from '../services/ana/batch-draft-result';
+import type { DocumentDraftResponse } from '../services/ana/AnaDocumentDraftingService';
 
 const router = Router();
 
 const logger = createScopedLogger('ana-intelligence');
+
+/**
+ * Answer a failed AI request as what it is.
+ *
+ * Every handler here used to end in `serverError(...)`: HTTP 500, code
+ * INTERNAL_ERROR, "Something went wrong while saving batch." A request the
+ * gateway refused because no model can hold it, a provider rate limit and a
+ * genuine fault were indistinguishable to the client — and the author of a
+ * section too large to revise was handed a support reference for a server
+ * problem that did not exist. A gateway refusal is answered with its stable
+ * code, its HTTP status (413 / 429 / 503) and the gateway's own sentence —
+ * which for a size refusal names how big the request is, the largest window
+ * available to it, and how much to cut. A fault of ours still goes through
+ * serverError, internals withheld.
+ */
+function failRequest(res: Response, where: string, error: unknown): Response {
+  if (isGatewayError(error)) {
+    const { code, message } = classifyGatewayError(error);
+    logger.warn(`${where}: the AI gateway declined the request`, { code });
+    return res.status(GATEWAY_ERROR_HTTP_STATUS[code]).json({ success: false, error: code, message });
+  }
+  return serverError(res, logger, where, error);
+}
 
 /**
  * Model-governance provenance (decision register #727 item 8): every
@@ -129,7 +159,7 @@ router.post('/draft', async (req: Request, res: Response) => {
     });
   } catch (error: any) {
     console.error('[Claude Intelligence] Draft error:', error.message);
-    return serverError(res, logger, 'drafting', error);
+    return failRequest(res, 'drafting', error);
   }
 });
 
@@ -211,10 +241,21 @@ router.post('/draft/stream', async (req: Request, res: Response) => {
     console.error('[Claude Intelligence] Stream error:', error.message);
     // If headers already sent, send error event
     if (res.headersSent) {
-      res.write(`data: ${JSON.stringify({ type: 'error', error: error.message })}\n\n`);
+      // The stream is already open, so the failure travels as an event. `error`
+      // stays the sentence the stream client renders; `code` is added for a
+      // client that branches on it. A gateway refusal carries the gateway's
+      // own sentence; anything else is withheld — a driver message is no more
+      // stream copy than it is response copy.
+      const failure = isGatewayError(error)
+        ? classifyGatewayError(error)
+        : { code: 'INTERNAL_ERROR', message: 'Drafting failed. The problem has been logged.' };
+      if (failure.code === 'INTERNAL_ERROR') {
+        logger.error('streaming the draft failed', { err: error?.message });
+      }
+      res.write(`data: ${JSON.stringify({ type: 'error', code: failure.code, error: failure.message })}\n\n`);
       res.end();
     } else {
-      return serverError(res, logger, 'saving stream', error);
+      return failRequest(res, 'streaming the draft', error);
     }
   }
 });
@@ -255,7 +296,7 @@ router.post('/review', async (req: Request, res: Response) => {
     res.json({ success: true, data: result });
   } catch (error: any) {
     console.error('[Claude Intelligence] Review error:', error.message);
-    return serverError(res, logger, 'saving review', error);
+    return failRequest(res, 'running the compliance review', error);
   }
 });
 
@@ -300,7 +341,7 @@ router.post('/gap-analysis', async (req: Request, res: Response) => {
     res.json({ success: true, data: result });
   } catch (error: any) {
     console.error('[Claude Intelligence] Gap analysis error:', error.message);
-    return serverError(res, logger, 'saving gap analysis', error);
+    return failRequest(res, 'running the gap analysis', error);
   }
 });
 
@@ -344,7 +385,7 @@ router.post('/vision', async (req: Request, res: Response) => {
     res.json({ success: true, data: result });
   } catch (error: any) {
     console.error('[Claude Intelligence] Vision error:', error.message);
-    return serverError(res, logger, 'saving vision', error);
+    return failRequest(res, 'analyzing the image', error);
   }
 });
 
@@ -386,20 +427,33 @@ router.post('/batch', async (req: Request, res: Response) => {
       concurrency: Math.min(concurrency || 3, 5),
     });
 
+    // A section that could not be drafted is a failure RESULT in its own slot
+    // (batch-draft-result.ts), never a rejection of the batch: the client reads
+    // `results[i].error` per card. The summary is computed over the drafts
+    // that exist and COUNTS the ones that do not — an average taken over the
+    // failures too would divide by the wrong number and report a latency
+    // nobody paid for.
+    const drafted = results.filter((r): r is DocumentDraftResponse => !isBatchDraftFailure(r));
+    const failed = results.length - drafted.length;
     res.json({
       success: true,
       data: {
         results,
         summary: {
           total: results.length,
-          totalInputTokens: results.reduce((s, r) => s + r.usage.inputTokens, 0),
-          totalOutputTokens: results.reduce((s, r) => s + r.usage.outputTokens, 0),
-          totalCostUsd: results.reduce((s, r) => s + r.usage.estimatedCostUsd, 0),
-          avgLatencyMs: results.reduce((s, r) => s + r.latencyMs, 0) / results.length,
+          drafted: drafted.length,
+          failed,
+          totalInputTokens: drafted.reduce((s, r) => s + r.usage.inputTokens, 0),
+          totalOutputTokens: drafted.reduce((s, r) => s + r.usage.outputTokens, 0),
+          totalCostUsd: drafted.reduce((s, r) => s + r.usage.estimatedCostUsd, 0),
+          avgLatencyMs: drafted.length > 0
+            ? drafted.reduce((s, r) => s + r.latencyMs, 0) / drafted.length
+            : 0,
         },
       },
     });
-    for (const r of results) {
+    // Provenance is recorded for content that exists; a failure produced none.
+    for (const r of drafted) {
       recordModelProvenance({
         req,
         surface: 'batch',
@@ -410,7 +464,7 @@ router.post('/batch', async (req: Request, res: Response) => {
     }
   } catch (error: any) {
     console.error('[Claude Intelligence] Batch error:', error.message);
-    return serverError(res, logger, 'saving batch', error);
+    return failRequest(res, 'drafting the batch', error);
   }
 });
 
@@ -450,7 +504,7 @@ router.post('/quick', async (req: Request, res: Response) => {
     res.json({ success: true, data: { content: result } });
   } catch (error: any) {
     console.error('[Claude Intelligence] Quick error:', error.message);
-    return serverError(res, logger, 'saving quick', error);
+    return failRequest(res, 'completing the prompt', error);
   }
 });
 
@@ -531,7 +585,7 @@ router.post('/agent', async (req: Request, res: Response) => {
     });
   } catch (error: any) {
     console.error('[Claude Intelligence] Agent error:', error.message);
-    return serverError(res, logger, 'saving agent', error);
+    return failRequest(res, 'running the agent', error);
   }
 });
 

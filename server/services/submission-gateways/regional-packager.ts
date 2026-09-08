@@ -46,6 +46,7 @@ import {
 } from '../ectd/pdfa-readiness';
 import {
   listVendoredDtds,
+  listVendoredStylesheets,
   assessDtdReadiness,
   dtdRequiredFromEnv,
   type DtdRegion,
@@ -256,6 +257,9 @@ ${leafElement(f.leaf, assignId(f.leaf), resolve(f.leaf)).split('\n').map((l) => 
  * us-regional.xml uses. A single `../` resolved to m1/util/dtd/, which no package
  * contains, so every regional backbone was un-validatable the moment a DTD was
  * dropped in. Pinned by __tests__/regional-backbone-dtd-path.test.ts.
+ *
+ * The <?xml-stylesheet?> PI on the line after the DOCTYPE had the same one-level
+ * bug (`../util/style/`). It climbs two levels now, and the same test pins it.
  */
 function buildFdaBackbone(input: PackagerInput, resolve: (l: EctdLeaf) => LeafRef): string {
   const fda = input.fda ?? {};
@@ -357,7 +361,7 @@ function buildFdaBackbone(input: PackagerInput, resolve: (l: EctdLeaf) => LeafRe
 
   return `<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE fda-regional:fda-regional SYSTEM "../../util/dtd/us-regional-v3-3.dtd">
-<?xml-stylesheet type="text/xsl" href="../util/style/us-regional.xsl"?>
+<?xml-stylesheet type="text/xsl" href="../../util/style/us-regional.xsl"?>
 <fda-regional:fda-regional dtd-version="3.3" xml:lang="en"
     xmlns:fda-regional="http://www.ich.org/fda"
     xmlns:xlink="http://www.w3.org/1999/xlink">
@@ -521,6 +525,7 @@ function buildIndexXml(input: PackagerInput, m2to5: EctdLeaf[], resolve: (l: Ect
   }));
   const moduleBlocks = buildIchModuleTree(rendered, 2);
   return `<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="util/style/ectd-2-0.xsl"?>
 <!DOCTYPE ectd:ectd SYSTEM "util/dtd/ich-ectd-3-2.dtd">
 <ectd:ectd xmlns:ectd="http://www.ich.org/ectd"
            xmlns:xlink="http://www.w3.org/1999/xlink"
@@ -802,18 +807,29 @@ export async function packageEctdSubmission(input: PackagerInput): Promise<Submi
     checksums.push({ relPath, md5: createHash('md5').update(dtd.bytes).digest('hex') });
   }
 
+  /* Bundle vendored stylesheets into util/style/ for the same reason: index.xml
+     references util/style/ectd-2-0.xsl and the FDA backbone references
+     ../../util/style/us-regional.xsl. Same drop-point, same MD5 treatment. */
+  const vendoredStylesheets = await listVendoredStylesheets();
+  for (const xsl of vendoredStylesheets) {
+    const relPath = `util/style/${xsl.fileName}`;
+    zip.file(relPath, xsl.bytes);
+    checksums.push({ relPath, md5: createHash('md5').update(xsl.bytes).digest('hex') });
+  }
+
   /* DTD self-containment gate (audit gap P0-1): when ECTD_REQUIRE_DTD=true and
      this is a production package, refuse to ship a package that references DTDs
      it does not contain. Default (flag unset) is report-only. */
   const dtdGate = assessDtdReadiness({
     region: region as DtdRegion,
     present: vendoredDtds.map((d) => d.fileName),
+    presentStylesheets: vendoredStylesheets.map((s) => s.fileName),
     environment: input.environment ?? 'production',
     requireDtd: dtdRequiredFromEnv(),
   });
   if (!dtdGate.cleared) {
     throw new ValidationError(
-      `eCTD package is not DTD self-contained: ${dtdGate.blockers.join(' ')}`,
+      `eCTD package is not DTD self-contained (DTDs and stylesheets): ${dtdGate.blockers.join(' ')}`,
       dtdGate.blockers,
     );
   }
@@ -896,6 +912,9 @@ export async function packageEctdSubmission(input: PackagerInput): Promise<Submi
     format,
     displayName: `${input.productName} · ${region.toUpperCase()} ${submissionTypeLabel} #${input.sequence}`,
     submissionGrade,
+    // `required`/`missing` list DTDs; `selfContained` also accounts for the
+    // stylesheets the backbones reference (dtdGate.missingStylesheets), so it
+    // can be false while `missing` is empty — that is the stylesheet gap.
     dtdStatus: {
       required: dtdGate.required,
       present: dtdGate.present,

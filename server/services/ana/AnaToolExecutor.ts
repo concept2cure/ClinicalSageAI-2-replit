@@ -192,6 +192,13 @@ export interface ToolContext {
   organizationId?: number | null;
   userId?: number | null;
   projectId?: number | null;
+  /**
+   * The active project/program id AS SENT by the client (a regulatory_programs
+   * uuid under the v2 shell, a legacy integer otherwise). `projectId` above is
+   * the integer form and is null for a uuid program — which left every
+   * interview session unbound to the program it was run for.
+   */
+  projectRef?: string | null;
   /** Tenant UUID — required to scope project_knowledge_search retrieval. */
   organizationUuid?: string | null;
   /** Active UI surface/screen (e.g. 'nonclinical', 'cmc', 'sponsored_programs') — situational context. */
@@ -14942,20 +14949,28 @@ registerToolHandler('batch_draft_sections', async (input, ctx) => {
 
   try {
     const { getAnaDraftingService } = await import('./AnaDocumentDraftingService.js');
+    const { isBatchDraftFailure } = await import('./batch-draft-result.js');
     const service = getAnaDraftingService();
     const results = await service.batchDraft({ requests, concurrency: 5 });
+    // A section that could not be drafted arrives as a failure result in its
+    // own slot (batch-draft-result.ts); the other sections' drafts are kept
+    // and reported. `count` is the number actually drafted.
+    const failed = results.filter((r) => isBatchDraftFailure(r)).length;
     return JSON.stringify({
-      status: 'drafted',
+      status: failed === 0 ? 'drafted' : failed === results.length ? 'failed' : 'partial',
       engine: 'framework-grade',
-      count: results.length,
-      sections: results.map((r, i) => ({
-        sectionType: requests[i].sectionType,
-        content: r.content,
-        model: r.model,
-        latencyMs: r.latencyMs,
-      })),
+      count: results.length - failed,
+      failed,
+      sections: results.map((r, i) =>
+        isBatchDraftFailure(r)
+          ? { sectionType: requests[i].sectionType, error: r.error, message: r.message }
+          : { sectionType: requests[i].sectionType, content: r.content, model: r.model, latencyMs: r.latencyMs },
+      ),
       instruction:
-        'These are parallel first drafts. The author promotes each through the governed authoring flow (accept into the section, which runs the Part-11 version trigger). State any completeness gaps honestly; do not present unknown values as established.',
+        'These are parallel first drafts. The author promotes each through the governed authoring flow (accept into the section, which runs the Part-11 version trigger). State any completeness gaps honestly; do not present unknown values as established.' +
+        (failed > 0
+          ? ` ${failed} section(s) were not drafted; each carries its reason. A section refused for size needs its existing content shortened or split before it is retried.`
+          : ''),
     });
   } catch (err: any) {
     return JSON.stringify({ error: `batch draft failed: ${err?.message || 'unknown error'}` });
@@ -16236,6 +16251,159 @@ registerToolHandler('estimate_recorded_shelf_life', async (input, ctx) => {
     });
   } catch (err: any) {
     return JSON.stringify({ error: `estimate_recorded_shelf_life failed: ${err?.message || 'unknown error'}` });
+  }
+});
+
+registerToolHandler('assess_recorded_stability_trend', async (input, ctx) => {
+  const orgId = ctx?.organizationId;
+  if (!orgId) return 'An active organization context is required to read the stability register.';
+  const id = Number(input.study_id);
+  if (!Number.isInteger(id) || id <= 0) {
+    return JSON.stringify({
+      status: 'needs_parameters',
+      message: 'A numeric stability study id is required. Use list_cmc_registers to find it.',
+    });
+  }
+  try {
+    const [{ db }, { stabilityStudies }, { and, eq }, { assessRecordedTrending }] = await Promise.all([
+      import('../../db.js'),
+      import('../../../shared/schema.js'),
+      import('drizzle-orm'),
+      import('../cmc/recorded-stability.js'),
+    ]);
+    const [study] = await db
+      .select({
+        id: stabilityStudies.id,
+        storageConditions: stabilityStudies.storageConditions,
+        stabilityData: stabilityStudies.stabilityData,
+      })
+      .from(stabilityStudies)
+      .where(and(eq(stabilityStudies.id, id), eq(stabilityStudies.organizationId, orgId)));
+    if (!study) {
+      return JSON.stringify({
+        status: 'not_found',
+        message: `No stability study in this organization has id ${id}. List the register and use the ids it returns.`,
+      });
+    }
+    /* The SAME assessment the composed §3.2.S.7 / §3.2.P.8 carry. */
+    const outcome = assessRecordedTrending(study);
+    if (!outcome.ok) {
+      return JSON.stringify({
+        status: 'not_assessable',
+        message: outcome.error,
+        instruction: 'Relay this reason to the user verbatim; the refusal is a property of the recorded data, not of the tool.',
+      });
+    }
+    return JSON.stringify({
+      status: 'computed',
+      engine: 'deterministic',
+      result: outcome.data,
+      instruction:
+        'Report each series: its out-of-trend points (or none) with the prediction interval each fell outside, the slope with its CI and whether it is established, and the projected time to the limit where one is stated. Report every not-assessed series with its reason verbatim. An OOT point is a signal to investigate under the stability protocol, not a disposition; nothing was written.',
+    });
+  } catch (err: any) {
+    return JSON.stringify({ error: `assess_recorded_stability_trend failed: ${err?.message || 'unknown error'}` });
+  }
+});
+
+registerToolHandler('assess_recorded_process_capability', async (input, ctx) => {
+  const orgId = ctx?.organizationId;
+  if (!orgId) return 'An active organization context is required to read the QC register.';
+  /* The OPEN program wins, exactly as intelligenceProjectId resolves it: a
+     model-produced project_id must not redirect the read. It had priority here,
+     so a product code named earlier in the conversation ("BX-701") could be
+     passed instead of the program uuid, and the tool then reported "no batch
+     results are recorded" about a register it never read while the open
+     program's six batches sat unexamined. */
+  const ref = typeof ctx?.projectRef === 'string' ? ctx.projectRef.trim() : '';
+  const supplied = typeof input.project_id === 'string' ? input.project_id.trim() : '';
+  const projectId = ref || (ctx?.projectId ? String(ctx.projectId) : '') || supplied;
+  if (!projectId) {
+    return JSON.stringify({
+      status: 'needs_parameters',
+      message: 'A project id is required, or open the program first — capability is assessed over one project\u2019s QC register.',
+    });
+  }
+  try {
+    const [{ getPool }, capability, { projectBelongsToTenant }] = await Promise.all([
+      import('../../db.js'),
+      import('../cmc/recorded-capability.js'),
+      import('../cmc/project-membership.js'),
+    ]);
+    /* "No batch results are recorded" is a statement about a register that was
+       READ. Said over a project id this tenant does not hold — a hallucinated
+       string, a product code, another org's program — it is a fabrication, and
+       the instruction told the model to relay it as fact. */
+    if (!(await projectBelongsToTenant({ organizationId: orgId, projectId }))) {
+      return JSON.stringify({
+        status: 'not_found',
+        message:
+          `No project ${projectId} exists in this organization, so no QC register was read and no capability was assessed.`,
+        instruction:
+          'Say that the project could not be found and ask which program is meant. Never report a capability result, ' +
+          'or the absence of one, for a project that was not read.',
+      });
+    }
+    const { rows } = await getPool().query(
+      `SELECT source_payload as "sourcePayload"
+       FROM cmc_source_objects
+       WHERE organization_id = $1 AND project_id = $2 AND source_type = 'qc_result'
+       ORDER BY updated_at DESC`,
+      [orgId, projectId],
+    );
+    if (rows.length === 0) {
+      return JSON.stringify({
+        status: 'no_data',
+        message:
+          'No batch results are recorded for this project, so process capability is not assessed. ' +
+          'Record the QC results, each with its batch number and the acceptance criterion it was judged against.',
+        instruction: 'Say that nothing was assessed and why. Do not report a capable process over an empty register.',
+      });
+    }
+    const payloads = rows.map((r: { sourcePayload: Record<string, unknown> | null }) => r.sourcePayload || {});
+    /* The SAME assessment the composed §3.2.S.4.4 / §3.2.P.5.4 carry. */
+    const sides = ['drug_substance', 'drug_product'] as const;
+    const result = Object.fromEntries(
+      sides.map((side) => {
+        const series = capability.assessRecordedCapability(
+          payloads.filter((p) => capability.isBatchAnalysisFor(p, side)),
+        );
+        return [side, { series, statements: series.map(capability.capabilitySentence) }];
+      }),
+    ) as Record<string, { series: unknown[]; statements: string[] }>;
+    /* Rows on file are not an assessment. Every row being a cleaning swab, a
+       reference-standard qualification, or a result with no test method yields
+       no series at all — and this answered 'assessed' with an instruction to
+       "report every not-assessed test with its reason" over a report naming no
+       tests. */
+    const seriesCount = sides.reduce((n, side) => n + (result[side]?.series.length ?? 0), 0);
+    if (seriesCount === 0) {
+      return JSON.stringify({
+        status: 'not_assessable',
+        resultsOnFile: payloads.length,
+        message:
+          `${payloads.length} QC result(s) are on file for this project and none opens a capability series: ` +
+          'cleaning-verification and reference-standard results are not batch-analysis evidence, and a result ' +
+          'recorded without a test method belongs to no series. Process capability is NOT assessed.',
+        instruction:
+          'Say that nothing was assessed and why. Do not report a capable process, or an absence of findings, ' +
+          'over results that were never eligible.',
+      });
+    }
+    return JSON.stringify({
+      status: 'assessed',
+      projectId,
+      resultsOnFile: payloads.length,
+      result,
+      instruction:
+        'Report each test on each side with its batch count, mean, Ppk and Cpk and the capable/marginal/not-capable grade, ' +
+        'naming any batch outside the specification. Report every not-assessed test with its reason verbatim — criteria that ' +
+        'disagree, too few batches, an unreadable criterion or a series with no variation are findings, not omissions. Say when ' +
+        'an estimate is preliminary (fewer than 25 batches). The 1.33/1.00 grades are conventional; ICH sets no capability ' +
+        'requirement. Nothing was written.',
+    });
+  } catch (err: any) {
+    return JSON.stringify({ error: `assess_recorded_process_capability failed: ${err?.message || 'unknown error'}` });
   }
 });
 
@@ -18438,7 +18606,50 @@ registerToolHandler('plan_lifecycle_management', async (input: Record<string, un
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Intelligence Questioning Engine
+//
+// The engine is stateless. Under an organization context every flow is
+// PERSISTED as a cmc_interview_sessions row (services/cmc/interview-sessions):
+// start creates the session and returns its id, answer loads the state from
+// the session and saves the step, resume reads it back, commit projects a
+// completed CMC interview onto the registers (services/cmc/interview-commit).
+// The model round-trips a uuid instead of the whole FlowState, and a dropped
+// turn no longer loses the interview.
+//
+// Without an organization context the flow still runs stateless on the
+// caller-supplied flow_state — the pre-persistence contract, kept so the
+// stream fast-path and any caller without a session keep working — and the
+// response says so instead of implying durability it does not have.
+//
+// Org scope comes from ToolContext and is applied in the session store's
+// WHERE clause, never from model input: a session id the model produced must
+// belong to the caller's tenant to be readable.
 // ─────────────────────────────────────────────────────────────────────────────
+
+function intelligenceEngineContext(ctx?: ToolContext) {
+  return {
+    organizationId: ctx?.organizationId ?? null,
+    userId: ctx?.userId ?? null,
+    projectId: ctx?.projectId ? String(ctx.projectId) : null,
+    clientType: (ctx?.projectType === 'medtech' ? 'medtech' : ctx?.projectType === 'biotech' ? 'biotech' : 'pharma') as 'pharma' | 'biotech' | 'medtech',
+  };
+}
+
+/** The project a session binds to: the active project, else a caller-supplied text id. */
+function intelligenceProjectId(input: Record<string, unknown>, ctx?: ToolContext): string | null {
+  /* The program as the client sent it first: a uuid program id collapses to
+     null in the integer `projectId`, and a session created from that was
+     never bound to its program. */
+  const ref = typeof ctx?.projectRef === 'string' ? ctx.projectRef.trim() : '';
+  if (ref) return ref;
+  if (ctx?.projectId) return String(ctx.projectId);
+  const supplied = typeof input.project_id === 'string' ? input.project_id.trim() : '';
+  return supplied || null;
+}
+
+function intelligenceSessionId(input: Record<string, unknown>): string | null {
+  const id = typeof input.session_id === 'string' ? input.session_id.trim() : '';
+  return id || null;
+}
 
 registerToolHandler('start_intelligence_flow', async (input, ctx) => {
   const { resolveFlowCategory } = await import('./intelligence-questions/flows/index.js');
@@ -18452,15 +18663,32 @@ registerToolHandler('start_intelligence_flow', async (input, ctx) => {
     });
   }
 
-  const engineCtx = {
-    organizationId: ctx?.organizationId ?? null,
-    userId: ctx?.userId ?? null,
-    projectId: ctx?.projectId ? String(ctx.projectId) : null,
-    clientType: (ctx?.projectType === 'medtech' ? 'medtech' : ctx?.projectType === 'biotech' ? 'biotech' : 'pharma') as 'pharma' | 'biotech' | 'medtech',
-  };
+  const engineCtx = intelligenceEngineContext(ctx);
 
   try {
     const result = startFlow(category, engineCtx);
+
+    /* Persist the session whenever there is a tenant to own it. A persistence
+       failure is returned, not swallowed: an interview the response implies is
+       durable and is not would lose every answer on the next dropped turn. */
+    let sessionId: string | null = null;
+    if (ctx?.organizationId) {
+      try {
+        const { createInterviewSession } = await import('../cmc/interview-sessions.js');
+        const session = await createInterviewSession({
+          organizationId: ctx.organizationId,
+          userId: ctx.userId ?? null,
+          projectId: intelligenceProjectId(input, ctx),
+          state: result.state,
+        });
+        sessionId = session.id;
+      } catch (err: any) {
+        return JSON.stringify({
+          error: `The interview could not be persisted, so it was not started: ${err?.message || 'session store unavailable'}`,
+        });
+      }
+    }
+
     /* Audit log — fire-and-forget, never block the response. Records who started
        which flow, when (21 CFR Part 11 §11.10(e) traceability for the questioning
        session that feeds document authoring). */
@@ -18471,12 +18699,16 @@ registerToolHandler('start_intelligence_flow', async (input, ctx) => {
         userId:     ctx?.userId ?? null,
         action:     'INTELLIGENCE_FLOW_STARTED',
         resource:   'intelligence_flow',
-        resourceId: String(result.state.flowId),
-        details: { flowCategory: category, documentType, projectId: engineCtx.projectId },
+        resourceId: sessionId ?? String(result.state.flowId),
+        details: { flowCategory: category, documentType, projectId: engineCtx.projectId, sessionId },
       });
     } catch { /* never block the tool response on audit failure */ }
     return JSON.stringify({
       status: 'intelligence_question',
+      session_id: sessionId,
+      persistence: sessionId
+        ? 'persisted — pass session_id to answer_intelligence_question; flow_state is not needed'
+        : 'not persisted (no organization context) — round-trip flow_state on every answer; a dropped conversation loses the interview',
       flowState: result.state,
       question: result.event,
     });
@@ -18488,23 +18720,57 @@ registerToolHandler('start_intelligence_flow', async (input, ctx) => {
 registerToolHandler('answer_intelligence_question', async (input, ctx) => {
   const { advanceFlow } = await import('./intelligence-questions/engine.js');
 
-  const flowState = input.flow_state as any;
+  const sessionId = intelligenceSessionId(input);
   const nodeId = String(input.node_id || '');
   const answers = (input.answers || {}) as Record<string, unknown>;
+  if (!nodeId) return JSON.stringify({ error: 'node_id is required' });
 
-  if (!flowState || !nodeId) {
-    return JSON.stringify({ error: 'flow_state and node_id are required' });
+  const engineCtx = intelligenceEngineContext(ctx);
+
+  /* The state comes from the session when there is one; the caller's
+     flow_state is the fallback for a flow started without a session. */
+  let flowState = input.flow_state as any;
+  let sessions: typeof import('../cmc/interview-sessions.js') | null = null;
+  if (sessionId) {
+    try {
+      sessions = await import('../cmc/interview-sessions.js');
+      const session = await sessions.loadInterviewSession({ organizationId: ctx?.organizationId, sessionId });
+      if (session.status !== 'active') {
+        return JSON.stringify({
+          error: `Interview session ${sessionId} is ${session.status}; it cannot take further answers.` +
+            (session.status === 'complete' ? ' Use commit_intelligence_flow to record it, or resume_intelligence_flow to see the summary.' : ''),
+          session_id: sessionId,
+          session_status: session.status,
+        });
+      }
+      flowState = session.state;
+    } catch (err: any) {
+      return JSON.stringify({ error: err?.message || 'Failed to load the interview session', session_id: sessionId });
+    }
+  } else if (!flowState) {
+    return JSON.stringify({ error: 'session_id (or, for a flow started without a session, flow_state) is required' });
   }
-
-  const engineCtx = {
-    organizationId: ctx?.organizationId ?? null,
-    userId: ctx?.userId ?? null,
-    projectId: ctx?.projectId ? String(ctx.projectId) : null,
-    clientType: (ctx?.projectType === 'medtech' ? 'medtech' : ctx?.projectType === 'biotech' ? 'biotech' : 'pharma') as 'pharma' | 'biotech' | 'medtech',
-  };
 
   try {
     const result = advanceFlow(flowState, nodeId, answers, engineCtx);
+
+    /* Record the step. A validation failure returns the SAME state object, so
+       there is nothing to save; anything else is saved before it is claimed. */
+    if (sessions && sessionId && result.state !== flowState) {
+      try {
+        if (result.completeEvent) {
+          await sessions.completeInterviewSession({ organizationId: ctx?.organizationId, sessionId, state: result.state });
+        } else {
+          await sessions.saveInterviewSessionState({ organizationId: ctx?.organizationId, sessionId, state: result.state });
+        }
+      } catch (err: any) {
+        return JSON.stringify({
+          error: `The answer was accepted but could not be recorded on the interview session, so it does not count: ${err?.message || 'session store unavailable'}. Submit it again.`,
+          session_id: sessionId,
+        });
+      }
+    }
+
     if (result.completeEvent) {
       /* Audit log on flow completion — captures the completed questioning
          session (who/what/when + issue posture) that will drive downstream
@@ -18517,43 +18783,151 @@ registerToolHandler('answer_intelligence_question', async (input, ctx) => {
           userId:     ctx?.userId ?? null,
           action:     'INTELLIGENCE_FLOW_COMPLETED',
           resource:   'intelligence_flow',
-          resourceId: String(result.state.flowId),
+          resourceId: sessionId ?? String(result.state.flowId),
           details: {
             flowCategory:   result.state.flowCategory,
             completedNodes: result.state.completedNodes.length,
             criticalIssues: issues.filter((i: any) => i.severity === 'critical').length,
             warnings:       issues.filter((i: any) => i.severity === 'warning').length,
             projectId:      engineCtx.projectId,
+            sessionId,
           },
         });
       } catch { /* never block the tool response on audit failure */ }
       return JSON.stringify({
         status: 'intelligence_flow_complete',
+        session_id: sessionId,
         flowState: result.state,
         completion: result.completeEvent,
       });
     }
     return JSON.stringify({
       status: 'intelligence_question',
+      session_id: sessionId,
       flowState: result.state,
       question: result.event,
     });
   } catch (err: any) {
-    return JSON.stringify({ error: err?.message || 'Failed to advance intelligence flow' });
+    return JSON.stringify({ error: err?.message || 'Failed to advance intelligence flow', session_id: sessionId });
+  }
+});
+
+registerToolHandler('resume_intelligence_flow', async (input, ctx) => {
+  const sessionId = intelligenceSessionId(input);
+  if (!sessionId) return JSON.stringify({ error: 'session_id is required' });
+
+  try {
+    const { loadInterviewSession } = await import('../cmc/interview-sessions.js');
+    const { resumeFlow } = await import('./intelligence-questions/engine.js');
+    const session = await loadInterviewSession({ organizationId: ctx?.organizationId, sessionId });
+    if (session.status === 'abandoned') {
+      return JSON.stringify({ error: `Interview session ${sessionId} was abandoned.`, session_id: sessionId, session_status: session.status });
+    }
+    const result = resumeFlow(session.state, intelligenceEngineContext(ctx));
+    if (result.completeEvent) {
+      return JSON.stringify({
+        status: 'intelligence_flow_complete',
+        session_id: sessionId,
+        session_status: session.status,
+        project_id: session.projectId,
+        committed_record_refs: session.committedRecordRefs,
+        flowState: result.state,
+        completion: result.completeEvent,
+      });
+    }
+    return JSON.stringify({
+      status: 'intelligence_question',
+      session_id: sessionId,
+      session_status: session.status,
+      project_id: session.projectId,
+      flowState: result.state,
+      question: result.event,
+    });
+  } catch (err: any) {
+    return JSON.stringify({ error: err?.message || 'Failed to resume the interview session', session_id: sessionId });
+  }
+});
+
+/* The commit projects a completed CMC interview onto the registers through
+   each register's ONE canonical create (services/cmc/register-writes.ts — the
+   same functions the HTTP routes call), under the session's tenant and
+   project. A partial commit is reported with what landed, never hidden. */
+registerToolHandler('commit_intelligence_flow', async (input, ctx) => {
+  const sessionId = intelligenceSessionId(input);
+  if (!sessionId) return JSON.stringify({ error: 'session_id is required' });
+
+  try {
+    const { loadInterviewSession } = await import('../cmc/interview-sessions.js');
+    const { buildInterviewCommitPlan, commitInterviewSession, productionRegisterWriter, productionRegisterValidator, INTERVIEW_REGISTER_WRITE_PATHS } =
+      await import('../cmc/interview-commit.js');
+
+    if (input.dry_run === true) {
+      const session = await loadInterviewSession({ organizationId: ctx?.organizationId, sessionId });
+      const plan = buildInterviewCommitPlan(session.flowCategory, session.state.answers);
+      return JSON.stringify({
+        status: 'commit_plan',
+        session_id: sessionId,
+        session_status: session.status,
+        project_id: session.projectId ?? intelligenceProjectId(input, ctx),
+        entries: plan.entries.map(e => ({ key: e.key, register: e.register, path: INTERVIEW_REGISTER_WRITE_PATHS[e.register].path, body: e.body, source: e.source })),
+        unprojected: plan.unprojected,
+        already_committed: session.committedRecordRefs ?? [],
+      });
+    }
+
+    const outcome = await commitInterviewSession(
+      {
+        organizationId: ctx?.organizationId,
+        sessionId,
+        userId: ctx?.userId ?? null,
+        projectId: intelligenceProjectId(input, ctx),
+      },
+      { writer: productionRegisterWriter, validate: productionRegisterValidator },
+    );
+
+    try {
+      const { auditLog } = await import('../auditService.js');
+      auditLog({
+        tenantId:   ctx?.organizationId ?? null,
+        userId:     ctx?.userId ?? null,
+        action:     outcome.ok ? 'INTELLIGENCE_FLOW_COMMITTED' : 'INTELLIGENCE_FLOW_COMMIT_REFUSED',
+        resource:   'intelligence_flow',
+        resourceId: sessionId,
+        details: outcome.ok
+          ? { refs: outcome.refs.length, skipped: outcome.skipped.length, alreadyCommitted: outcome.alreadyCommitted }
+          : { code: outcome.code, committed: outcome.committed.length, failed: outcome.failed?.key ?? null },
+      });
+    } catch { /* never block the tool response on audit failure */ }
+
+    if (!outcome.ok) {
+      return JSON.stringify({
+        error: outcome.error,
+        code: outcome.code,
+        session_id: sessionId,
+        session_status: outcome.status,
+        committed_record_refs: outcome.committed,
+        failed: outcome.failed ?? null,
+        remaining: outcome.remaining ?? [],
+        unprojected: outcome.unprojected,
+      });
+    }
+    return JSON.stringify({
+      status: 'intelligence_flow_committed',
+      session_id: sessionId,
+      session_status: outcome.status,
+      already_committed: outcome.alreadyCommitted,
+      committed_record_refs: outcome.refs,
+      skipped: outcome.skipped,
+      unprojected: outcome.unprojected,
+    });
+  } catch (err: any) {
+    return JSON.stringify({ error: err?.message || 'Failed to commit the interview session', session_id: sessionId });
   }
 });
 
 registerToolHandler('list_intelligence_flows', async (_input, ctx) => {
   const { getAvailableFlows } = await import('./intelligence-questions/flows/index.js');
-
-  const engineCtx = {
-    organizationId: ctx?.organizationId ?? null,
-    userId: ctx?.userId ?? null,
-    projectId: ctx?.projectId ? String(ctx.projectId) : null,
-    clientType: (ctx?.projectType === 'medtech' ? 'medtech' : ctx?.projectType === 'biotech' ? 'biotech' : 'pharma') as 'pharma' | 'biotech' | 'medtech',
-  };
-
-  const flows = getAvailableFlows(engineCtx);
+  const flows = getAvailableFlows(intelligenceEngineContext(ctx));
   return JSON.stringify({ flows });
 });
 

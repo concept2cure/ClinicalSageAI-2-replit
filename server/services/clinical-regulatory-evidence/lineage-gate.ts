@@ -26,10 +26,13 @@ import { detectSpans } from '../sentenceTraceabilityService';
 import {
   replaceAuthorSpans,
   replaceSourceSpans,
+  replaceMachineSpans,
+  listLiveMachineSpans,
   assertLineageCoversContent,
   type Queryable,
   retireStaleSourceSpans,
 } from './span-lineage.service';
+import { attributeMachineSpans, type AcceptedMachineText } from './machine-attribution';
 import {
   attributeQuotedSpans,
   attributeAssertedParaphraseSpans,
@@ -43,6 +46,52 @@ export interface AuthorLineageRef {
   documentId: string;
 }
 
+export interface AuthorLineageOptions {
+  /**
+   * Text the reviewer accepted from a machine author in the editing session
+   * this save closes (validated at the request boundary by
+   * acceptedMachineText in revision-ledger.ts). A clause verbatim inside it is
+   * recorded as the machine's, accepted by `actor` — never as the actor's own
+   * assertion. Absent means nothing was accepted in this save; machine spans
+   * recorded by earlier saves still carry forward by their text.
+   */
+  acceptedMachineText?: AcceptedMachineText[];
+}
+
+/**
+ * The clause split every gate shares, with the machine's clauses taken out
+ * and written first. Returns the clauses that remain the actor's to assert.
+ *
+ * Order matters: a clause the machine drafted must be recorded as such BEFORE
+ * the author pass, or the author pass claims it. Both writers replace their own
+ * kind only, so the two sets never overlap and together they partition the
+ * candidates exactly.
+ */
+async function attributeMachineThenAuthor(
+  exec: Queryable,
+  orgId: number,
+  ref: AuthorLineageRef,
+  candidates: Array<{ charStart: number; charEnd: number; text: string }>,
+  actor: string,
+  accepted: AcceptedMachineText[],
+): Promise<{ machineSpans: number; authorSpans: number }> {
+  const live = await listLiveMachineSpans(orgId, ref, exec);
+  const machine = attributeMachineSpans(candidates as Parameters<typeof attributeMachineSpans>[0], {
+    accepted,
+    live,
+    actor,
+  });
+  await replaceMachineSpans(orgId, ref, machine, { createdBy: actor }, exec);
+
+  const machineRanges = new Set(machine.map((m) => `${m.charStart}:${m.charEnd}`));
+  const authorSpans = candidates
+    .filter((c) => !machineRanges.has(`${c.charStart}:${c.charEnd}`))
+    .map((c) => ({ charStart: c.charStart, charEnd: c.charEnd, spanText: c.text }));
+  await replaceAuthorSpans(orgId, ref, authorSpans, { assertedBy: actor, createdBy: actor }, exec);
+
+  return { machineSpans: machine.length, authorSpans: authorSpans.length };
+}
+
 /**
  * Enforce author lineage for one content write, within the caller's
  * transaction.
@@ -52,6 +101,7 @@ export interface AuthorLineageRef {
  * @param ref     the document row the content belongs to
  * @param content the content being written (empty/null ⇒ no-op)
  * @param actor   the author id recorded as `assertedBy`/`createdBy`
+ * @param opts    what this save accepted from a machine author, if anything
  * @throws when the recorded spans do not cover the content (SpanLineageError)
  */
 export async function enforceAuthorLineage(
@@ -60,6 +110,7 @@ export async function enforceAuthorLineage(
   ref: AuthorLineageRef,
   content: string | null | undefined,
   actor: string,
+  opts: AuthorLineageOptions = {},
 ): Promise<void> {
   if (content == null || typeof content !== 'string' || content.length === 0) {
     // Nothing authored → nothing to attribute. Matches the empty-scaffold seed
@@ -74,15 +125,13 @@ export async function enforceAuthorLineage(
   // human edit, not just across an accept.
   const { kept } = await retireStaleSourceSpans(orgId, ref, content, exec);
   const keptRanges = new Set(kept.map((k) => `${k.charStart}:${k.charEnd}`));
-  const spans = detectSpans(content, 'clause')
-    .filter((s) => !keptRanges.has(`${s.charStart}:${s.charEnd}`))
-    .map((s) => ({
-      charStart: s.charStart,
-      charEnd: s.charEnd,
-      spanText: s.text,
-    }));
+  const candidates = detectSpans(content, 'clause').filter(
+    (s) => !keptRanges.has(`${s.charStart}:${s.charEnd}`),
+  );
 
-  await replaceAuthorSpans(orgId, ref, spans, { assertedBy: actor, createdBy: actor }, exec);
+  // The machine's clauses first — accepted in this save, or carried forward
+  // from an earlier one by their text — then everything else as the actor's.
+  await attributeMachineThenAuthor(exec, orgId, ref, candidates, actor, opts.acceptedMachineText ?? []);
 
   // Ask the database what it is about to commit, rather than trusting that the
   // writer not throwing means the rows say what they should.
@@ -97,7 +146,11 @@ export interface SourceAndAuthorLineageResult {
   quotedSpans: number;
   /** Model-asserted paraphrase source spans (an assertion, not a verified fact). */
   paraphrasedSpans: number;
-  /** Author spans recorded for the remainder (neither quoted nor paraphrased). */
+  /** Accepted-machine-draft spans: drafted by a machine author, accepted by
+   *  the actor (this save, or an earlier one carried forward). */
+  machineSpans: number;
+  /** Author spans recorded for the remainder (neither quoted, paraphrased, nor
+   *  the machine's). */
   authorSpans: number;
   /** Distinct cre_evidence_sources cited (across both quoted and paraphrased). */
   distinctSources: number;
@@ -119,7 +172,11 @@ export interface SourceAndAuthorLineageResult {
  *      the model's claim, never as a verified quote, and only for a source that was
  *      actually retrieved — a verified quote always wins over a claim about the
  *      same characters;
- *   3. everything else → an author assertion.
+ *   3. otherwise, a clause verbatim in text accepted from a machine author (via
+ *      `opts.acceptedMachineText`), or already the machine's from an earlier
+ *      save → an `accepted_machine_draft` span naming the machine and the
+ *      accepting human;
+ *   4. everything else → an author assertion.
  * The union covers the content, so assertLineageCoversContent passes exactly as it
  * does for pure author lineage. The source half stays honest by construction:
  * quotes are checkable, paraphrase is marked as an assertion, and nothing is
@@ -149,17 +206,23 @@ export async function enforceSourceAndAuthorLineage(
   content: string | null | undefined,
   actor: string,
   sources: RetrievedSource[],
-  opts: { minQuoteChars?: number; assertions?: ParaphraseAssertion[] } = {},
+  opts: {
+    minQuoteChars?: number;
+    assertions?: ParaphraseAssertion[];
+    acceptedMachineText?: AcceptedMachineText[];
+  } = {},
 ): Promise<SourceAndAuthorLineageResult> {
   if (content == null || typeof content !== 'string' || content.length === 0) {
     // Nothing authored → retire whatever was previously attributed so the reads
     // stop answering for content that is gone, then no-op the gate.
     await replaceSourceSpans(orgId, ref, [], { createdBy: actor }, exec);
+    await replaceMachineSpans(orgId, ref, [], { createdBy: actor }, exec);
     await replaceAuthorSpans(orgId, ref, [], { assertedBy: actor, createdBy: actor }, exec);
     return {
       sourceSpans: 0,
       quotedSpans: 0,
       paraphrasedSpans: 0,
+      machineSpans: 0,
       authorSpans: 0,
       distinctSources: 0,
       coverage: 0,
@@ -204,15 +267,19 @@ export async function enforceSourceAndAuthorLineage(
     exec,
   );
 
-  // 4. Author spans for the true remainder: every clause attributed to neither a
-  //    verified quote nor a paraphrase assertion. Clause offsets are exact, so
-  //    range membership is exact.
+  // 4. The remainder: every clause attributed to neither a verified quote nor
+  //    a paraphrase assertion. Clause offsets are exact, so range membership is
+  //    exact. The machine's clauses are taken out of it first — an accepted AI
+  //    draft is, by definition, machine text wherever the author left it
+  //    unedited — and what is left is the author's.
   const attributedRanges = new Set<string>(quotedRanges);
   for (const s of paraphrased) attributedRanges.add(`${s.charStart}:${s.charEnd}`);
-  const authorSpans = detectSpans(content, 'clause')
-    .filter((s) => !attributedRanges.has(`${s.charStart}:${s.charEnd}`))
-    .map((s) => ({ charStart: s.charStart, charEnd: s.charEnd, spanText: s.text }));
-  await replaceAuthorSpans(orgId, ref, authorSpans, { assertedBy: actor, createdBy: actor }, exec);
+  const remainder = detectSpans(content, 'clause').filter(
+    (s) => !attributedRanges.has(`${s.charStart}:${s.charEnd}`),
+  );
+  const { machineSpans, authorSpans } = await attributeMachineThenAuthor(
+    exec, orgId, ref, remainder, actor, opts.acceptedMachineText ?? [],
+  );
 
   // 5. Ask the database what it is about to commit. A gap throws and rolls the
   //    content write back with it.
@@ -222,7 +289,8 @@ export async function enforceSourceAndAuthorLineage(
     sourceSpans: sourceSpans.length,
     quotedSpans: quoted.length,
     paraphrasedSpans: paraphrased.length,
-    authorSpans: authorSpans.length,
+    machineSpans,
+    authorSpans,
     distinctSources: new Set(sourceSpans.map((s) => s.sourceId)).size,
     coverage: quotedCoverage(content, quoted),
   };
