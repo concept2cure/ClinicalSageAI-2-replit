@@ -524,18 +524,30 @@ function readPdfStringAfter(dict: string, key: string): Buffer | null {
   return Buffer.from(out);
 }
 
-interface PdfSecurity {
+export interface PdfSecurity {
   encrypted: boolean;
   key: Buffer;
   aes: boolean;
 }
 
-/** Byte offset of the last cross-reference section, from the trailing `startxref`. */
-function startxrefOffset(buf: Buffer): number {
-  const tail = buf.subarray(Math.max(0, buf.length - 4096)).toString('latin1');
-  const m = /startxref\s+(\d+)/.exec(tail);
-  if (!m) throw new Error('Malformed PDF: no startxref');
-  return parseInt(m[1], 10);
+/**
+ * Byte offset of the NEWEST cross-reference section, from the trailing
+ * `startxref`.
+ *
+ * The last one in the file, not the first one in the window. After an
+ * incremental update the tail holds two `startxref` lines — the original
+ * document's and the update's — and taking the first match returns the OLDER
+ * one, so every object the update replaced reads back at its previous
+ * revision. Nothing fails; the file simply reports its old contents. It
+ * surfaced the first time two updates were chained (attaching a file to a form
+ * that had already been filled).
+ */
+export function startxrefOffset(buf: Buffer): number {
+  const window = Math.max(0, buf.length - 4096);
+  const tail = buf.subarray(window).toString('latin1');
+  const matches = [...tail.matchAll(/startxref\s+(\d+)/g)];
+  if (matches.length === 0) throw new Error('Malformed PDF: no startxref');
+  return parseInt(matches[matches.length - 1][1], 10);
 }
 
 /** The trailer (or cross-reference stream) dictionary text. */
@@ -554,7 +566,7 @@ function matchInt(text: string, re: RegExp, fallback: number): number {
  * Algorithm 2). Supports V1/V2/V4 with RC4 or AESV2. AESV3 (V5/R5/R6) is reported
  * as unsupported rather than silently mis-decrypted.
  */
-function readSecurity(buf: Buffer, raw: string): PdfSecurity {
+export function readSecurity(buf: Buffer, raw: string): PdfSecurity {
   const trailer = trailerDictText(buf);
   const encM = /\/Encrypt\s+(\d+)\s+(\d+)\s+R/.exec(trailer);
   if (!encM) return { encrypted: false, key: Buffer.alloc(0), aes: false };
@@ -596,7 +608,7 @@ function readSecurity(buf: Buffer, raw: string): PdfSecurity {
 }
 
 /** Algorithm 1: the per-object key (AES adds the `sAlT` suffix). */
-function objectKey(sec: PdfSecurity, num: number, gen: number): Buffer {
+export function objectKey(sec: PdfSecurity, num: number, gen: number): Buffer {
   const ext = Buffer.from([num & 0xff, (num >> 8) & 0xff, (num >> 16) & 0xff, gen & 0xff, (gen >> 8) & 0xff]);
   const parts = [sec.key, ext];
   if (sec.aes) parts.push(Buffer.from([0x73, 0x41, 0x6c, 0x54]));
@@ -607,7 +619,7 @@ function objectKey(sec: PdfSecurity, num: number, gen: number): Buffer {
     .subarray(0, Math.min(sec.key.length + 5, 16));
 }
 
-function decryptObjectData(sec: PdfSecurity, num: number, gen: number, data: Buffer): Buffer {
+export function decryptObjectData(sec: PdfSecurity, num: number, gen: number, data: Buffer): Buffer {
   if (!sec.encrypted) return data;
   const k = objectKey(sec, num, gen);
   if (!sec.aes) return rc4(k, data);
@@ -650,13 +662,25 @@ function decryptObjectData(sec: PdfSecurity, num: number, gen: number, data: Buf
  * different datasets packets never share an IV, which is the property that
  * actually matters for CBC.
  */
-function encryptObjectData(sec: PdfSecurity, num: number, gen: number, data: Buffer): Buffer {
+export function encryptObjectData(sec: PdfSecurity, num: number, gen: number, data: Buffer): Buffer {
   if (!sec.encrypted) return data;
   const k = objectKey(sec, num, gen);
   if (!sec.aes) return rc4(k, data);
   const iv = crypto.createHmac('sha256', k).update(data).digest().subarray(0, 16);
   const c = crypto.createCipheriv('aes-128-cbc', k, iv);
   return Buffer.concat([iv, c.update(data), c.final()]);
+}
+
+/**
+ * The document's standard-security state, read straight from the bytes.
+ *
+ * `readSecurity` takes the buffer AND its latin1 text because every caller
+ * inside this module already holds both. A caller that holds only the bytes —
+ * the attachment builder, and its tests — should not have to know that.
+ */
+export function readPdfSecurity(bytes: Uint8Array | Buffer): PdfSecurity {
+  const buf = Buffer.isBuffer(bytes) ? bytes : Buffer.from(bytes);
+  return readSecurity(buf, buf.toString('latin1'));
 }
 
 interface TopLevelObject { num: number; gen: number; headerStart: number; }

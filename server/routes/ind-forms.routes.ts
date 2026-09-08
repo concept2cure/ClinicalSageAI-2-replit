@@ -19,13 +19,17 @@
  */
 
 import { Router, Request, Response } from 'express';
+import multer from 'multer';
 import { requireRole } from '../middleware/auth';
 import { createRateLimiter } from '../middleware/rateLimiter';
+import { makeUploadFileFilter } from '../middleware/uploadAllowlist';
 import {
   generateIndForm,
   generateAllForm1572,
   generateAllForm3455,
   buildFormById,
+  blankTemplateDigests,
+  describeAllRenderPlans,
   SUPPORTED_FORM_IDS,
   type SupportedFormId,
   type IndFormPdfResult,
@@ -48,7 +52,11 @@ import {
   FORM_1574,
   type IndProjectMetadata,
 } from '../services/ind-forms/ind-form-data-builders';
-import { assembleFormMetadata } from '../services/ind-forms/form-context-assembler';
+import { assembleFormMetadata, programToFormMetadata } from '../services/ind-forms/form-context-assembler';
+import { resolveSubmissionSpine } from '../services/cmc/submission-spine';
+import { module1HeadingForSectionKey } from '../services/ectd/section-to-ctd';
+import { storeRenderedLeafFile } from '../services/ectd/rendered-leaf-files';
+import { upsertLeaf, SubmissionError } from '../services/submission-service/submission-service';
 import { runM1FormsQc } from '../services/ind-forms/ind-form-qc';
 import {
   getSponsor,
@@ -58,9 +66,15 @@ import {
 import { createScopedLogger } from '../utils/logger.js';
 import { FDAFormsRegistryClass, FDA_FORMS_RELEASE_READINESS } from '../config/FDAFormsRegistry';
 import crypto from 'node:crypto';
-import { and, eq } from 'drizzle-orm';
+import { and, desc, eq, isNull, like } from 'drizzle-orm';
 import { db } from '../db';
-import { projects, concept2cureArtifacts } from '@shared/schema';
+import {
+  projects,
+  concept2cureArtifacts,
+  organizations,
+  submissionLeaves,
+  renderedLeafFiles,
+} from '@shared/schema';
 import { regulatoryPrograms } from '../../shared/schema/programs';
 import { resolveProgramProjectAnchor } from '../services/c2c/program-project-anchor';
 import auditService from '../services/auditService';
@@ -94,20 +108,52 @@ function isSupported(formId: string): formId is SupportedFormId {
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /**
+ * The open program as the Module 1 forms need it: its identity, the facts that
+ * belong on the forms, and its organisation's name — the sponsor of record in
+ * this data model.
+ */
+interface ResolvedProgram {
+  id: string;
+  code: string | null;
+  name: string | null;
+  productName: string | null;
+  indication: string | null;
+  applicationNumber: string | null;
+  programType: string | null;
+  sponsorName: string | null;
+}
+
+/**
  * Resolve a program-spine ident (regulatory_programs UUID or program code),
  * org-scoped — the same 3-way ident contract as the eSTAR export routes
  * (510k-estar-routes.ts resolveProjectAnchor). Null when nothing in the caller's
  * org matches; a failed lookup is a non-match, never a guessed program.
+ *
+ * Selects the FORM FACTS as well as the identity: sponsor (the organisation),
+ * product, indication and the agency-assigned application number. Those four are
+ * held once, on the program record, and every Module 1 form takes them from
+ * there — which is what stops a filing's sponsor name depending on who typed it
+ * into which panel.
  */
 async function resolveProgramIdent(
   ident: string,
   organizationId: number,
-): Promise<{ id: string; code: string | null; name: string | null } | null> {
+): Promise<ResolvedProgram | null> {
   const byUuid = UUID_RE.test(ident);
   try {
     const [row] = await db
-      .select({ id: regulatoryPrograms.id, code: regulatoryPrograms.code, name: regulatoryPrograms.name })
+      .select({
+        id: regulatoryPrograms.id,
+        code: regulatoryPrograms.code,
+        name: regulatoryPrograms.name,
+        productName: regulatoryPrograms.productName,
+        indication: regulatoryPrograms.indication,
+        applicationNumber: regulatoryPrograms.applicationNumber,
+        programType: regulatoryPrograms.programType,
+        sponsorName: organizations.name,
+      })
       .from(regulatoryPrograms)
+      .leftJoin(organizations, eq(organizations.id, regulatoryPrograms.organizationId))
       .where(
         and(
           byUuid ? eq(regulatoryPrograms.id, ident) : eq(regulatoryPrograms.code, ident),
@@ -121,11 +167,141 @@ async function resolveProgramIdent(
   }
 }
 
-function metaOf(req: Request): IndProjectMetadata {
-  // The form content is project data the caller supplies; the builders treat
-  // every field as optional and report missingRequired, so a partial body is
-  // always safe to render.
-  return (req.body && typeof req.body === 'object' ? req.body : {}) as IndProjectMetadata;
+/** The CTD section a completed Module 1 form files at, or null when the FDA
+ *  Module 1 table catalogues none for it.
+ *
+ *  Derived from the ONE placement catalogue the transmit path already uses
+ *  (`module1HeadingForSectionKey`), never a second table of form → section that
+ *  could disagree with the packager: forms file at 1.1, the financial
+ *  certification/disclosure pair at 1.3.4. */
+function sectionCodeForForm(formId: string): string | null {
+  const heading = module1HeadingForSectionKey(`form-${formId.replace(/^FDA_/, '')}`);
+  return heading ? `m${heading}` : null;
+}
+
+/** `FDA_1571` → `form_1571` — the leaf document_type the IND checklist reads. */
+function documentTypeForForm(formId: string): string {
+  return `form_${formId.replace(/^FDA_/, '').toLowerCase()}`;
+}
+
+/**
+ * Metadata for a form request: the open program's recorded facts, with anything
+ * the caller actually stated layered on top.
+ *
+ * A blank input is NOT a value: an empty string is dropped rather than written
+ * over a program fact, and never reaches a builder — `missingRequired` is the
+ * server's verdict on what a form still needs, and `''` would silently satisfy
+ * it. `projectIdent`/`projectId` are addressing, not form content, so they are
+ * stripped before the merge.
+ */
+function statedFields(body: object): Record<string, unknown> {
+  const out: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(body as Record<string, unknown>)) {
+    if (key === 'projectIdent' || key === 'projectId') continue;
+    if (value === null || value === undefined) continue;
+    if (typeof value === 'string' && value.trim() === '') continue;
+    out[key] = value;
+  }
+  return out;
+}
+
+/**
+ * Resolve the metadata a form request builds from, responding itself and
+ * returning null when the named program cannot be resolved.
+ *
+ * Fail closed on an unresolvable ident: a request that NAMES a program and is
+ * then answered from typed fields alone would return a form the caller believes
+ * is backed by the record. A 404 says which it is.
+ */
+async function metaForRequest(
+  req: Request,
+  res: Response,
+  ctx: Ctx | null,
+): Promise<{ meta: IndProjectMetadata; program: ResolvedProgram | null } | null> {
+  const body = (req.body && typeof req.body === 'object' ? req.body : {}) as Record<string, unknown>;
+  const ident = typeof body.projectIdent === 'string' ? body.projectIdent.trim() : '';
+  const stated = statedFields(body) as IndProjectMetadata;
+  if (ident === '' || /^\d+$/.test(ident)) {
+    // No program named (or a legacy numeric project id, which addresses the
+    // artifact registry and carries no program facts).
+    return { meta: stated, program: null };
+  }
+  if (!ctx) {
+    res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+    return null;
+  }
+  const program = await resolveProgramIdent(ident, ctx.organizationId);
+  if (!program) {
+    res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Project not found for this organization.' } });
+    return null;
+  }
+  return { meta: { ...programToFormMetadata(program), ...stated }, program };
+}
+
+/**
+ * The official Module 1 forms this program has a sponsor-completed document
+ * placed for, in its current eCTD sequence.
+ *
+ * Read through the retained bytes (`rendered_leaf_files`), org-scoped on that
+ * row rather than on the leaf: `submission_leaves.document_table` is a
+ * polymorphic reference with no foreign key, so a leaf alone is not evidence
+ * that this tenant holds the document it names.
+ */
+async function listFormPlacements(
+  program: ResolvedProgram,
+  organizationId: number,
+): Promise<Array<Record<string, unknown>>> {
+  const spine = await resolveSubmissionSpine(
+    {
+      programId: program.id,
+      programType: program.programType,
+      productName: program.productName,
+      title: program.name,
+      programCode: program.code,
+    },
+    organizationId,
+  );
+  if (!spine?.sequence) return [];
+  try {
+    const rows = await db
+      .select({
+        leafId: submissionLeaves.id,
+        sectionCode: submissionLeaves.sectionCode,
+        documentType: submissionLeaves.documentType,
+        title: submissionLeaves.title,
+        fileName: renderedLeafFiles.fileName,
+        sha256: renderedLeafFiles.sha256,
+        byteSize: renderedLeafFiles.byteSize,
+        placedAt: submissionLeaves.updatedAt,
+      })
+      .from(submissionLeaves)
+      .innerJoin(
+        renderedLeafFiles,
+        and(
+          eq(renderedLeafFiles.id, submissionLeaves.documentId),
+          eq(renderedLeafFiles.organizationId, organizationId),
+        ),
+      )
+      .where(
+        and(
+          eq(submissionLeaves.sequenceId, spine.sequence.id),
+          eq(submissionLeaves.organizationId, organizationId),
+          eq(submissionLeaves.documentTable, 'rendered_leaf_files'),
+          like(submissionLeaves.documentType, 'form\\_%'),
+          isNull(submissionLeaves.deletedAt),
+        ),
+      )
+      .orderBy(desc(submissionLeaves.updatedAt));
+    return rows.map((r) => ({
+      ...r,
+      formId: `FDA_${String(r.documentType ?? '').replace(/^form_/, '').toUpperCase()}`,
+      sequenceNumber: spine.sequence!.sequenceNumber,
+    }));
+  } catch {
+    // An unprovisioned store means nothing is known to be placed — never a
+    // failed listing, and never a claim that something is.
+    return [];
+  }
 }
 
 function sendPdf(res: Response, result: IndFormPdfResult): void {
@@ -156,21 +332,73 @@ function fail(res: Response, err: unknown): void {
   res.status(500).json({ error: { code: 'INTERNAL', message: 'Form generation failed.' } });
 }
 
-/** List the supported form ids. */
-router.get('/', limiter, requireRole(AUTHOR), (_req, res) => {
+/**
+ * List the supported forms, what the engine will produce for each, and — when
+ * `?projectIdent` names an open program — the program facts every form will be
+ * filled from and the sponsor-completed forms already placed in its sequence.
+ *
+ * The render plans travel with the listing because the statement a user needs
+ * ("this returns the genuine FDA form; these boxes are left for you to complete
+ * and sign in Acrobat") has to be on screen BEFORE the click, not inferred from
+ * the headers of a download that already happened.
+ */
+router.get('/', limiter, requireRole(AUTHOR), async (req, res) => {
   // Return the canonical registry objects rather than maintaining a second,
   // route-local metadata model that can drift from validation and rendering.
   const formDefinitions = SUPPORTED_FORM_IDS.map((formId) => formsRegistry.getForm(formId));
-  res.json({ forms: SUPPORTED_FORM_IDS, formDefinitions, releaseReadiness: FDA_FORMS_RELEASE_READINESS });
+  const ident = String((req.query?.projectIdent ?? '') as string).trim();
+  try {
+    const renderPlans = await describeAllRenderPlans();
+    if (ident === '' || /^\d+$/.test(ident)) {
+      return res.json({
+        forms: SUPPORTED_FORM_IDS,
+        formDefinitions,
+        releaseReadiness: FDA_FORMS_RELEASE_READINESS,
+        renderPlans,
+        program: null,
+        placements: [],
+      });
+    }
+    const ctx = ctxOf(req);
+    if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+    const program = await resolveProgramIdent(ident, ctx.organizationId);
+    if (!program) {
+      return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Project not found for this organization.' } });
+    }
+    return res.json({
+      forms: SUPPORTED_FORM_IDS,
+      formDefinitions,
+      releaseReadiness: FDA_FORMS_RELEASE_READINESS,
+      renderPlans,
+      program: {
+        id: program.id,
+        code: program.code,
+        name: program.name,
+        programType: program.programType,
+        sponsorName: program.sponsorName,
+        productName: program.productName,
+        indication: program.indication,
+        applicationNumber: program.applicationNumber,
+        // Exactly what the builders will receive from the record, so the panel
+        // shows the values the forms are filled from rather than a paraphrase.
+        formMetadata: programToFormMetadata(program),
+      },
+      placements: await listFormPlacements(program, ctx.organizationId),
+    });
+  } catch (err) {
+    fail(res, err);
+  }
 });
 
 /**
  * Build the field map for a form WITHOUT rendering a PDF — useful for previews
  * and completeness checks (returns { formId, fields, missingRequired }).
  */
-router.post('/:formId/build', limiter, requireRole(AUTHOR), (req, res) => {
+router.post('/:formId/build', limiter, requireRole(AUTHOR), async (req, res) => {
   const formId = String(req.params.formId);
-  const meta = metaOf(req);
+  const resolved = await metaForRequest(req, res, ctxOf(req));
+  if (!resolved) return;
+  const meta = resolved.meta;
   try {
     switch (formId) {
       case FORM_1571:
@@ -223,8 +451,10 @@ router.post('/:formId/pdf', limiter, requireRole(AUTHOR), async (req, res) => {
   if (!isSupported(formId)) {
     return res.status(400).json({ error: { code: 'VALIDATION', message: `Unsupported form id: ${formId}` } });
   }
+  const resolved = await metaForRequest(req, res, ctxOf(req));
+  if (!resolved) return;
   try {
-    sendPdf(res, await generateIndForm(formId, metaOf(req)));
+    sendPdf(res, await generateIndForm(formId, resolved.meta));
   } catch (err) {
     fail(res, err);
   }
@@ -343,7 +573,7 @@ router.post('/:formId/artifact', limiter, requireRole(AUTHOR), async (req, res) 
         context: 'ind-forms.artifact',
       });
       if (anchoredProjectId === null) {
-        const builtForProgram = buildFormById(formId, body);
+        const builtForProgram = buildFormById(formId, { ...programToFormMetadata(program), ...statedFields(body) });
         const programContent = JSON.stringify({
           formId: builtForProgram.formId,
           fields: builtForProgram.fields,
@@ -412,7 +642,14 @@ router.post('/:formId/artifact', limiter, requireRole(AUTHOR), async (req, res) 
       return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Project not found for this organization.' } });
     }
 
-    const built = buildFormById(formId, body);
+    // The program's recorded facts under anything the caller stated — the same
+    // merge /build and /pdf use, so a governed artifact records the fields the
+    // rendered form actually carries rather than only what was typed here.
+    const artifactProgram = isProgramIdent ? await resolveProgramIdent(rawIdent, ctx.organizationId) : null;
+    const built = buildFormById(formId, {
+      ...(artifactProgram ? programToFormMetadata(artifactProgram) : {}),
+      ...statedFields(body),
+    });
     const content = JSON.stringify({ formId: built.formId, fields: built.fields, missingRequired: built.missingRequired });
     const contentHash = crypto.createHash('sha256').update(content).digest('hex');
     const artifactId = `artifact_indform_${formId.replace(/^FDA_/, '').toLowerCase()}_${crypto.randomUUID()}`;
@@ -643,8 +880,10 @@ router.post('/:formId/artifact-all', limiter, requireRole(AUTHOR), async (req, r
 
 /** Render one 1572 PDF per investigator; returns base64-encoded PDFs as JSON. */
 router.post('/1572/pdf-all', limiter, requireRole(AUTHOR), async (req, res) => {
+  const resolved = await metaForRequest(req, res, ctxOf(req));
+  if (!resolved) return;
   try {
-    const results = await generateAllForm1572(metaOf(req));
+    const results = await generateAllForm1572(resolved.meta);
     res.json({
       formId: FORM_1572,
       documents: results.map((r) => ({
@@ -667,8 +906,10 @@ router.post('/1572/pdf-all', limiter, requireRole(AUTHOR), async (req, res) => {
  * sponsor certifies "none" on Form 3454 instead (see POST /FDA_3454/pdf).
  */
 router.post('/3455/pdf-all', limiter, requireRole(AUTHOR), async (req, res) => {
+  const resolved = await metaForRequest(req, res, ctxOf(req));
+  if (!resolved) return;
   try {
-    const results = await generateAllForm3455(metaOf(req));
+    const results = await generateAllForm3455(resolved.meta);
     res.json({
       formId: FORM_3455,
       documents: results.map((r) => ({
@@ -682,6 +923,237 @@ router.post('/3455/pdf-all', limiter, requireRole(AUTHOR), async (req, res) => {
   } catch (err) {
     fail(res, err);
   }
+});
+
+/**
+ * A sponsor's completed, signed official FDA form, attached and placed as a
+ * Module 1 leaf.
+ *
+ * ── Why this endpoint exists ─────────────────────────────────────────────────
+ * Everything else here RENDERS a form. Three of the five Module 1 forms end in a
+ * signature — 1571, 1572, 3674 — and no server can produce one. The platform's
+ * output is the genuine FDA file with the program's data already in it; the
+ * sponsor opens it in Adobe Acrobat, completes the boxes the render plan named,
+ * signs it, and the filing needs THAT file. Without this path the signed form
+ * lived in somebody's downloads folder and the sequence carried a leaf with
+ * nothing behind it.
+ *
+ * ── What it refuses, and why each refusal is fail-closed ─────────────────────
+ *  - not a PDF (by its BYTES, not its declared type) — an eCTD leaf is a PDF;
+ *  - byte-identical to the blank vendored template — attaching the blank form is
+ *    attaching nothing, and it would file as though it were signed;
+ *  - a program with no submission spine, or whose spine has no sequence yet —
+ *    the eCTD sequence a document is filed into is a regulatory decision, so it
+ *    is never created as a side effect of an upload;
+ *  - a form the FDA Module 1 table catalogues no section for — the placement
+ *    section is taken from the same catalogue the packager builds the backbone
+ *    from, never guessed.
+ *
+ * Re-attaching REPLACES this form's leaf in the sequence rather than adding a
+ * second one: two leaves for one form is a filing defect, and a sponsor
+ * correcting a signature is the normal case.
+ *
+ * Multipart body: `file` (the completed PDF) + `projectIdent` (program UUID or
+ * code). Returns 201 { formId, sectionCode, leafId, sequenceNumber, sha256, … }.
+ */
+const officialFormUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 25 * 1024 * 1024, files: 1 },
+  fileFilter: makeUploadFileFilter({ extensions: ['pdf'], mimeTypes: ['application/pdf'], allowMimePrefixes: [] }),
+}).single('file');
+
+/** Map a submission-service refusal onto its HTTP status, in its own words. */
+function submissionRefusal(res: Response, err: SubmissionError): void {
+  const status =
+    err.code === 'FORBIDDEN' ? 403
+      : err.code === 'NOT_FOUND' ? 404
+        : err.code === 'INVALID_STATE' ? 409
+          : 400;
+  res.status(status).json({ error: { code: err.code, message: err.message } });
+}
+
+router.post('/:formId/official-upload', limiter, requireRole(AUTHOR), (req, res) => {
+  officialFormUpload(req, res, (uploadErr: unknown) => {
+    void (async () => {
+      if (uploadErr) {
+        // multer's own refusals (type, size) are the user's to fix, not a 500.
+        const message = uploadErr instanceof Error ? uploadErr.message : 'The file could not be read.';
+        return res.status(400).json({ error: { code: 'UPLOAD_REJECTED', message } });
+      }
+      const ctx = ctxOf(req);
+      if (!ctx) return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required.' } });
+
+      const formId = String(req.params.formId);
+      if (!isSupported(formId)) {
+        return res.status(400).json({ error: { code: 'VALIDATION', message: `Unsupported form id: ${formId}` } });
+      }
+      const file = (req as Request & { file?: { buffer?: Buffer; originalname?: string } }).file;
+      const bytes = file?.buffer;
+      if (!bytes || bytes.length === 0) {
+        return res.status(400).json({ error: { code: 'VALIDATION', message: 'Attach the completed form as `file`.' } });
+      }
+      // The declared content type is the client's claim; the bytes are the fact.
+      if (bytes.subarray(0, 5).toString('latin1') !== '%PDF-') {
+        return res.status(400).json({ error: { code: 'VALIDATION', message: 'The attached file is not a PDF.' } });
+      }
+
+      const body = (req.body && typeof req.body === 'object' ? req.body : {}) as Record<string, unknown>;
+      const ident = typeof body.projectIdent === 'string' ? body.projectIdent.trim() : '';
+      if (ident === '') {
+        return res.status(400).json({
+          error: { code: 'VALIDATION', message: 'projectIdent (the open program) is required to file a completed form.' },
+        });
+      }
+
+      const program = await resolveProgramIdent(ident, ctx.organizationId);
+      if (!program) {
+        return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Project not found for this organization.' } });
+      }
+
+      const sectionCode = sectionCodeForForm(formId);
+      if (!sectionCode) {
+        return res.status(409).json({
+          error: {
+            code: 'NO_CATALOGUED_SECTION',
+            message: `The FDA Module 1 table catalogues no section for form ${formId.replace(/^FDA_/, '')}, so it cannot be placed. File it through the section it belongs to instead.`,
+          },
+        });
+      }
+
+      const sha256 = crypto.createHash('sha256').update(bytes).digest('hex');
+      if ((await blankTemplateDigests(formId)).includes(sha256)) {
+        return res.status(409).json({
+          error: {
+            code: 'BLANK_TEMPLATE',
+            message: 'This is the blank official form, byte for byte. Complete and sign it in Adobe Acrobat, then attach the signed file.',
+          },
+        });
+      }
+
+      const spine = await resolveSubmissionSpine(
+        {
+          programId: program.id,
+          programType: program.programType,
+          productName: program.productName,
+          title: program.name,
+          programCode: program.code,
+        },
+        ctx.organizationId,
+      );
+      if (!spine) {
+        return res.status(409).json({
+          error: {
+            code: 'NO_SUBMISSION_SPINE',
+            message: 'This program has no submission record yet, so there is nothing to file the form into.',
+          },
+        });
+      }
+      if (!spine.sequence) {
+        return res.status(409).json({
+          error: {
+            code: 'NO_SEQUENCE',
+            message: 'This submission has no eCTD sequence yet. Which sequence a document is filed into is a regulatory decision, so create the sequence first.',
+          },
+        });
+      }
+
+      const documentType = documentTypeForForm(formId);
+      const shortId = formId.replace(/^FDA_/, '').toLowerCase();
+      try {
+        // One leaf per form: a re-attached signature corrects the placement it
+        // already has rather than filing the same form twice.
+        const [existing] = await db
+          .select({ id: submissionLeaves.id })
+          .from(submissionLeaves)
+          .where(
+            and(
+              eq(submissionLeaves.sequenceId, spine.sequence.id),
+              eq(submissionLeaves.organizationId, ctx.organizationId),
+              eq(submissionLeaves.documentType, documentType),
+              isNull(submissionLeaves.deletedAt),
+            ),
+          )
+          .limit(1);
+
+        const stored = await storeRenderedLeafFile({
+          organizationId: ctx.organizationId,
+          userId: ctx.userId,
+          bytes,
+          mime: 'application/pdf',
+          fileName: `form-fda-${shortId}.pdf`,
+          renderedFrom: 'ind_form_sponsor_upload',
+          sectionCode,
+        });
+
+        const leaf = await upsertLeaf(
+          {
+            sequenceId: spine.sequence.id,
+            ...(existing ? { leafId: existing.id } : {}),
+            sectionCode,
+            title: `Form FDA ${formId.replace(/^FDA_/, '')} (sponsor-completed)`,
+            granularity: 'leaf',
+            lifecycleOp: 'new',
+            documentTable: 'rendered_leaf_files',
+            documentId: stored.id,
+            documentType,
+            checksum: stored.md5,
+          },
+          ctx,
+        );
+
+        // Part 11 record of a SIGNED regulatory form entering the filing. The
+        // leaf write is itself audited by submission-service; this row records
+        // the digest of the bytes the sponsor approved, which is the fact that
+        // ties the filed leaf to the file they signed. Best-effort, like the
+        // governed-artifact path: the leaf and the retained bytes are the
+        // persisted trace, and an audit hiccup must not undo a filed placement.
+        const uploadAudit = await auditService.logAction({
+          action: 'ind_form.official_upload',
+          userId: ctx.userId,
+          organizationId: ctx.organizationId,
+          resourceType: 'submission_leaf',
+          resourceId: leaf.id,
+          metadata: {
+            formId,
+            programId: program.id,
+            sectionCode,
+            sequenceId: spine.sequence.id,
+            sequenceNumber: spine.sequence.sequenceNumber,
+            sha256,
+            md5: stored.md5,
+            byteSize: bytes.length,
+            originalFileName: typeof file?.originalname === 'string' ? file.originalname : null,
+            replaced: Boolean(existing),
+          },
+        });
+        if (!uploadAudit?.persisted) {
+          logger.warn('ind-form official upload audit row was not persisted', {
+            err: uploadAudit?.error ?? 'no durable store accepted the row',
+          });
+        }
+
+        return res.status(201).json({
+          formId,
+          programId: program.id,
+          submissionId: spine.submissionId,
+          sequenceId: spine.sequence.id,
+          sequenceNumber: spine.sequence.sequenceNumber,
+          leafId: leaf.id,
+          sectionCode,
+          documentType,
+          fileName: `form-fda-${shortId}.pdf`,
+          originalFileName: typeof file?.originalname === 'string' ? file.originalname : null,
+          sha256,
+          md5: stored.md5,
+          byteSize: bytes.length,
+          replaced: Boolean(existing),
+        });
+      } catch (err) {
+        if (err instanceof SubmissionError) return submissionRefusal(res, err);
+        throw err;
+      }
+    })().catch((err) => fail(res, err));
+  });
 });
 
 export default router;

@@ -618,12 +618,22 @@ function batchCapabilityRendering(
   for (const s of series) {
     sentences.push(capabilitySentence(s));
     if (!s.outcome.ok) {
-      const counted = s.outcome.code === 'CRITERION_NOT_RECORDED' && s.criterion === null
-        ? String(s.resultsOnFile)
-        : String(s.resultsOnFile - s.outcome.excludedBatches.length);
+      /* The Note names WHICH refusal — "criteria disagree" was printed over a
+         series that recorded no criterion at all, sending a staffer to
+         reconcile two specifications that do not exist. And the Batches column
+         counts the rows the assessment could actually have used: the ones with
+         a usable result, never the raw row count. */
+      const NOTE = {
+        CRITERIA_DISAGREE: 'criteria disagree',
+        CRITERION_NOT_RECORDED: 'no acceptance criterion recorded',
+        INSUFFICIENT_BATCHES: 'too few batches',
+        NO_VARIATION: 'no variation between batches',
+      } as const;
       tableRows.push([
-        s.test, counted, '—', '—', '—', '—', '—', 'not assessed',
-        s.criterion === null && s.outcome.code === 'CRITERION_NOT_RECORDED' ? 'criteria disagree' : s.outcome.code,
+        s.test,
+        String(Math.max(0, s.resultsOnFile - s.outcome.excludedBatches.length)),
+        '—', '—', '—', '—', '—', 'not assessed',
+        NOTE[s.outcome.code] ?? s.outcome.code,
       ]);
       continue;
     }
@@ -2762,7 +2772,14 @@ export function renderComposedSectionMarkdown(
   tables: GeneratedTable[] | null | undefined,
 ): string {
   const tablesMarkdown = tables && tables.length > 0 ? '\n\n' + tablesToMarkdown(tables) : '';
-  return `## ${sectionLabel}\n\n${narrativeDraft}${tablesMarkdown}`;
+  /* The narrative is trimmed HERE, so both consumers trim it identically.
+     Placement trimmed before calling; the governed-artifact bridge did not
+     call this at all — it re-implemented these two lines — and several
+     generators emit a trailing space, so the filed leaf and the governed
+     artifact for the same compile of the same section hashed differently. Two
+     copies of "the same content" that are not the same content is the exact
+     thing this function's existence is supposed to prevent. */
+  return `## ${sectionLabel}\n\n${(narrativeDraft ?? '').trim()}${tablesMarkdown}`;
 }
 
 // ── Main composition function ──────────────────────────────────────────────────

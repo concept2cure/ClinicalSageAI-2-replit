@@ -63,7 +63,8 @@ beforeAll(async () => {
       id uuid PRIMARY KEY DEFAULT gen_random_uuid(), organization_id int, project_id text,
       section_key text, section_path text, deterministic_json jsonb, narrative_text text,
       compiled_hash text, stale boolean DEFAULT false, stale_reason text,
-      approval_state text DEFAULT 'draft', updated_at timestamptz DEFAULT now());
+      approval_state text DEFAULT 'draft', approved_version_id uuid,
+      updated_at timestamptz DEFAULT now());
     CREATE UNIQUE INDEX uq_m3_sections ON cmc_module3_sections (organization_id, project_id, section_key);
     CREATE TABLE cmc_section_lineage (
       id uuid PRIMARY KEY DEFAULT gen_random_uuid(), organization_id int,
@@ -162,6 +163,46 @@ describe('CMC Module 3 derivation lineage (AnA build paths)', () => {
 
     const written = await wrap(`SELECT COUNT(*)::int AS n FROM cmc_module3_sections`, []);
     expect(Number((written.rows[0] as any).n)).toBe(0);
+  });
+
+  it('a re-compile that CHANGES an approved section returns it to draft; one that changes nothing does not', async () => {
+    /* An approval is a signature over content: the approve route binds a §11
+       signature to a sha256 of deterministic_json at the moment it is signed.
+       The compile upsert replaced that content while keeping
+       approval_state = 'approved' and forcing stale = false, so re-running a
+       build over an approved Module 3 produced a section that read as
+       approved-and-current, passed the export gate, and would have been FILED
+       as signed content nobody signed. */
+    const sourceId = await seedSource();
+    expect((await module3BuildAll({ organizationId: ORG } as any, { projectId: PROJECT })).success).toBe(true);
+    await wrap(
+      `UPDATE cmc_module3_sections SET approval_state = 'approved' WHERE organization_id = $1 AND project_id = $2`,
+      [ORG, PROJECT],
+    );
+
+    // Re-compiling identical sources changes nothing, so the approval stands.
+    expect((await module3BuildAll({ organizationId: ORG } as any, { projectId: PROJECT })).success).toBe(true);
+    const unchanged = await wrap(
+      `SELECT COUNT(*)::int AS n FROM cmc_module3_sections WHERE organization_id = $1 AND approval_state = 'approved'`,
+      [ORG],
+    );
+    expect(Number((unchanged.rows[0] as any).n)).toBeGreaterThan(0);
+
+    // The source changes; the section it feeds is composed differently.
+    await wrap(
+      `UPDATE cmc_source_objects SET source_payload = $1::jsonb, source_hash = $2 WHERE id = $3`,
+      [JSON.stringify({ name: 'API-1', manufacturer: 'A DIFFERENT SITE' }), 'hash-2', sourceId],
+    );
+    expect((await module3BuildAll({ organizationId: ORG } as any, { projectId: PROJECT })).success).toBe(true);
+    const after = await wrap(
+      `SELECT approval_state, approved_version_id, narrative_text FROM cmc_module3_sections
+        WHERE organization_id = $1 AND project_id = $2 AND section_key = '3.2.S.1'`,
+      [ORG, PROJECT],
+    );
+    const row = after.rows[0] as any;
+    expect(row.narrative_text).toContain('A DIFFERENT SITE');
+    expect(row.approval_state).toBe('draft');
+    expect(row.approved_version_id).toBeNull();
   });
 
   it('a compiled section stores its TABLES, so placement can tell "composes none" from "compiled before tables"', async () => {

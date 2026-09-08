@@ -5,12 +5,14 @@
 --
 -- Two faults, both found by running the staff simulation end to end:
 --
---  1. NO CREATOR ON ANY APPLIER. The table's only DDL is
---     migrations/0006_regulatory_atoms.sql, which is in no applier's file list;
+--  1. NO CREATOR ON THE MIGRATION SET. The table's only DDL is
+--     migrations/0006_regulatory_atoms.sql, which is NOT in C2C_MIGRATION_FILES
+--     (install-fresh does apply it — see the note on the drop below — but
+--     deploy-migrate, the path a provisioned database is updated by, does not);
 --     db/migrations/20260401_cmc_convergence_os.sql only ALTERs it behind a
---     to_regclass guard. On a database provisioned by the migration set the
---     table does not exist at all, so POST /api/cmc/comparability-studies
---     answers 500 and §3.2.P.8 can never reach 100%.
+--     to_regclass guard. On a database the set provisioned, the table does not
+--     exist at all, so POST /api/cmc/comparability-studies answers 500 and
+--     §3.2.P.8 can never reach 100%.
 --
 --  2. A FOREIGN KEY TO A TABLE NOTHING ELSE USES. 0006 declares
 --     project_id UUID NOT NULL REFERENCES cmc_projects(id). Every other CMC
@@ -26,10 +28,17 @@
 --
 -- This file is the creator on the applier, in the shape the rest of the CMC
 -- surface uses: public schema, organization_id INTEGER NOT NULL, project_id a
--- plain uuid. It also drops the misdirected constraint where 0006 already
--- created it, so an existing database converges to the same shape. The drop is
--- replay-safe: no file on any applier re-creates that constraint (0006 is on
--- none), so there is no create-then-drop ordering hazard.
+-- plain uuid. It also drops the misdirected constraint where an older 0006
+-- already created it, so an existing database converges to the same shape.
+--
+-- CORRECTED 2026-09-08: the first version of this header claimed the drop was
+-- replay-safe because 0006 is on no applier. That was WRONG — scripts/db/
+-- install-fresh.mjs applies every *.sql in migrations/ except six named RLS
+-- files, so 0006 runs there, and the drop's safety rested on nothing but the
+-- filenames sorting 0006 before 20260907. Rule 1's actual remedy has now been
+-- applied: 0006 is AMENDED IN PLACE and no longer declares the foreign key, so
+-- nothing on any applier re-creates it and a replay cannot undo this drop. The
+-- drop stays for databases where the old 0006 already ran.
 
 CREATE TABLE IF NOT EXISTS cmc_comparability_assessments (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -61,7 +70,9 @@ CREATE TABLE IF NOT EXISTS cmc_comparability_assessments (
 -- Present on databases where 0006 ran; the route writes it as the org id.
 ALTER TABLE cmc_comparability_assessments ADD COLUMN IF NOT EXISTS tenant_id TEXT;
 
--- 2026-09-07: the FK described above, removed wherever 0006 installed it.
+-- 2026-09-07: the FK described above, removed wherever an older 0006 installed
+-- it. Its creator no longer declares it, so this converges an existing database
+-- and is a no-op everywhere else.
 ALTER TABLE cmc_comparability_assessments
   DROP CONSTRAINT IF EXISTS cmc_comparability_assessments_project_id_fkey;
 

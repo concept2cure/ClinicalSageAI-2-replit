@@ -1609,6 +1609,17 @@ export const C2C_MIGRATION_FILES = [
   // entitlement change. Idempotent UPDATE keyed on module_id.
   'migrations/20260820c_catalog_maa_module1_regional.sql',
 
+  // ── The submission orchestrator gets a catalog row (2026-09-07) ───────────
+  // The surface shipped registered, routed and rendering, but reachable from
+  // no nav menu and absent from NAVIGATION_TARGETS. Making it reachable also
+  // makes it a shell app, and the shell must never present an app the catalog
+  // cannot express an entitlement for — without a row it is ungatable
+  // (module_subscriptions FKs into available_modules) and silently free (an
+  // unknown id is treated as not-licensable by design). Tiered 'standard' to
+  // match its Submit & file siblings; no earlier file classifies this id, so
+  // this file owns its tier.
+  'db/migrations/20260907_module_catalog_submission_orchestrator.sql',
+
   // Moved here from AFTER the sweep, where it was appended upstream. C-33 and
   // three contract tests require the two isolation steps to be the final pair;
   // a file that ALTERs tables after the sweep has run is never swept. This one
@@ -1951,11 +1962,13 @@ export const C2C_MIGRATION_FILES = [
   // pg_policies guard sees it and leaves it alone.
   'migrations/20260906_ivdr_history_tenant_isolation.sql',
 
-  // §3.2.P.8's only producer of `comparabilityStatus` had no creator on any
-  // applier (its DDL lives in migrations/0006_regulatory_atoms.sql, which is on
-  // none) and, where it did exist, an FK pinning project_id to the empty
-  // cmc_projects table — so every write from a real program answered 500 and
-  // the section could never complete. Creator + guarded constraint drop.
+  // §3.2.P.8's only producer of `comparabilityStatus` had no creator on THIS
+  // applier (its DDL lives in migrations/0006_regulatory_atoms.sql, which
+  // install-fresh applies and deploy-migrate does not) and, where it did exist,
+  // an FK pinning project_id to the empty cmc_projects table — so every write
+  // from a real program answered 500 and the section could never complete.
+  // Creator + a drop of that constraint; 0006 was amended in place to stop
+  // declaring it, so the drop cannot be undone by a replay.
   'migrations/20260907_cmc_comparability_register_reachable.sql',
   // ── regulatory_programs.application_number (WO-9 Click 1) ──────────────────
   // The agency-assigned IND / NDA / BLA / MAA number, distinct from the sponsor's
@@ -2018,6 +2031,32 @@ export async function applyMigrationFiles(
 ) {
   const applied = [];
   const failures = [];
+  /* Every NOTICE and WARNING the migrations raise, SURFACED.
+     node-postgres delivers server notices only to a 'notice' listener, and no
+     applier registered one — so a migration whose DO block skipped a table
+     (the child-table RLS sweep leaving a pair unpolicied, the tenant sweep's
+     drift branch, the atom-identity reconciliation's WARNING about a table it
+     will not touch) printed nothing but "✓ applied". A deploy that policied
+     forty tables and one that policied one were the same clean green run.
+     The messages are the only signal these files produce; they belong in the
+     deploy log next to the file that raised them. */
+  const noticeListener = (msg) => {
+    const text = String(msg?.message ?? '').trim();
+    if (!text) return;
+    const severity = String(msg?.severity ?? 'NOTICE').toUpperCase();
+    /* A NOTICE saying an object already exists is the IF NOT EXISTS guard
+       working as designed, on every replay of every idempotent file — noise
+       that would bury the ones that matter. */
+    if (severity === 'NOTICE' && /already exists, skipping|will create implicit/i.test(text)) return;
+    (severity === 'WARNING' || severity === 'ERROR' ? error : log)(`    [${severity}] ${text}`);
+  };
+  /* Attached to whatever the caller passed: deploy-migrate hands in a CLIENT
+     (which is what emits 'notice'), apply-c2c-migrations hands in a POOL, whose
+     clients emit it — so a pool is covered through 'connect'. A fresh pool
+     opens its first connection on the first query below, after this line. */
+  const attachNotices = (target) => target?.on?.('notice', noticeListener);
+  attachNotices(pool);
+  pool.on?.('connect', attachNotices);
 
   // Provision the ledger table once per run. Best-effort for the same reason the
   // per-file record is: a journal that cannot be created must not stop migrations
@@ -2030,6 +2069,7 @@ export async function applyMigrationFiles(
     error(`  (migration journal unavailable: ${journalErr.message})`);
   }
 
+  try {
   for (const file of files) {
     const full = path.join(repoRoot, file);
     if (!fs.existsSync(full)) {
@@ -2074,4 +2114,11 @@ export async function applyMigrationFiles(
   }
 
   return { applied, failures };
+  } finally {
+    /* Removed on every path, including the early returns above: the pool
+       outlives this call, and a listener left behind would double-print the
+       next caller's notices. */
+    pool.removeListener?.('notice', noticeListener);
+    pool.removeListener?.('connect', attachNotices);
+  }
 }
