@@ -51,9 +51,16 @@ vi.mock('../../server/services/provenance/artifact-provenance', () => ({
   recordArtifactProvenanceDrizzle: vi.fn(async () => {}),
 }));
 
+/* The program lookup reads the sponsor from the program's ORGANISATION, so the
+   chain now carries a leftJoin between from() and where(). The fake mirrors the
+   drizzle builder, so it has to offer the same links — with or without the join,
+   the same terminal rows come back. */
+const whereLink = () => ({ where: vi.fn(() => ({ limit: vi.fn(async () => mockSelectRows()) })) });
 fakeDb.select = vi.fn(() => ({
   from: vi.fn(() => ({
-    where: vi.fn(() => ({ limit: vi.fn(async () => mockSelectRows()) })),
+    ...whereLink(),
+    leftJoin: vi.fn(() => whereLink()),
+    innerJoin: vi.fn(() => ({ ...whereLink(), orderBy: vi.fn(async () => mockSelectRows()) })),
   })),
 }));
 fakeDb.insert = vi.fn(() => ({
