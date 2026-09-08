@@ -70,6 +70,7 @@ That is stated in the docstring, and §3 is what happens when it is not honoured
 | `server/services/forms/__tests__/pdf-object-store.test.ts` | 11 passed (new), both templates, including the chained-update regression |
 | `server/services/forms/__tests__/pdf-attach.test.ts` | 12 passed (new), both templates, 6 seen failing on the older-startxref bug |
 | `server/.../estar/__tests__/estar-attachment-slots.test.ts` | 15 passed (new), both templates, counts and chapter shapes pinned |
+| `server/.../estar/__tests__/estar-attachment-acceptance.test.ts` | 27 passed (new), the six delete-guards, seen failing first |
 | `server/services/forms` (the datasets fill, against the REAL vendored templates) | unchanged through the generalised writer and the startxref fix |
 | forms + estar engine + official-eSTAR route + the nine export contracts | 30 files / 357 passed |
 | `npx tsc --noEmit` | clean |
@@ -193,6 +194,52 @@ datasets has trade name: True          ← and still filled
 ```
 
 This is the first attachment this platform has ever embedded in the official form.
+
+### And it would have been deleted on the applicant's first save
+
+That probe used `Section-5-Software.pdf` as the `/EmbeddedFiles` **name-tree key**, and the
+template will not keep it. Measured 2026-09-08, quoted from the nIVD template's own script:
+
+```js
+function removeOrphanAttachments() {//checks for attachments in attachment pane that weren't
+                                    //added with Add Attachment buttons
+  …
+  var strBadAttachments = "The following attachments were not added with the \"Add Attachment\"
+    buttons. These attachments will be deleted, since they are not associated with any section
+    of eSTAR.\n\n";
+  …
+      if (!isDate(d[i].name.substring(0,10))) {//not date
+        … event.target.removeDataObject(d[i].name);
+```
+
+It runs at **`preSave` and `preSign`**. So the document opens, the manifest still holds the
+token, the sponsor still sees the attachment — until anyone saves, and then the bytes are gone.
+Silent, and delayed past the point anyone would connect it to the export.
+
+The cause is that an attachment carries **two different strings**, and nothing made them look
+different:
+
+| Acrobat | PDF | what it must be |
+|---|---|---|
+| `dataObject.name` | the `/EmbeddedFiles` name-tree key | `yyyy-mm-ddTHH:MM:ss`, or the form deletes it |
+| `dataObject.path` | the `/Filespec`'s `/F` and `/UF` | the file name — and what the **manifest token** references |
+
+Nothing in the shipped code was wrong: the two were always independently settable, in separate
+calls. Nothing in it stopped the mistake either — both fields were called `name`. So the
+distinction is structural now: `EmbeddedFileEntry.nameTreeKey`, and
+`attachmentDataObjectName(at, ordinal)` mints the shape the template mints for itself. A test
+attaches with a date-shaped key and a different file name and asserts the two strings stay apart.
+
+`AttachmentValidation()` refuses five more things, each now checked before anything is built —
+a duplicate path, one of 25 forbidden extensions, a non-ASCII path, a path over 124 characters,
+a file over 1,000,000,000 bytes. `checkAttachmentAcceptance` reports **every** reason rather
+than the first, because a caller fixing one refusal per round trip is a bad loop.
+
+The extension list is transcribed into the code AND asserted against the template, which caught
+something worth knowing: the two templates carry the **same 25 extensions in a different order**
+— `.exe` is first in nIVD and second-to-last in IVD. The template's own lookup is a substring
+search, so order carries no meaning; an order-sensitive check would have read as a discrepancy
+that is not one.
 
 ## 3d. Slice 4 — the slot map, read from the template rather than transcribed
 

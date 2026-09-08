@@ -25,6 +25,10 @@ import {
   readPdfSecurity,
 } from '../fill-official-pdf';
 import { readIndirectObjectText } from '../pdf-object-store';
+import {
+  attachmentDataObjectName,
+  isTemplateAcceptableDataObjectName,
+} from '../../pathway-engines/estar/estar-attachment-slots';
 
 const DIR = process.env.ESTAR_TEMPLATE_DIR ?? 'assets/estar-templates';
 const TEMPLATES = [
@@ -56,7 +60,9 @@ for (const t of TEMPLATES) {
         bytes: Buffer.from('%PDF-1.4\n% attachment\n'),
         mimeType: 'application/pdf',
       });
-      const join = attachEmbeddedFiles(bytes, sec, [{ name, filespecNum: built.filespecNum }]);
+      const join = attachEmbeddedFiles(bytes, sec, [
+        { nameTreeKey: name, filespecNum: built.filespecNum },
+      ]);
       return {
         out: appendIncrementalUpdate(bytes, [...built.objects, ...join.objects]),
         built,
@@ -91,8 +97,8 @@ for (const t of TEMPLATES) {
     it('sorts the name tree by key, as a reader expects to find it', () => {
       const first = nextFreeObjectNumber(bytes);
       const join = attachEmbeddedFiles(bytes, sec, [
-        { name: 'zulu.pdf', filespecNum: first },
-        { name: 'alpha.pdf', filespecNum: first + 1 },
+        { nameTreeKey: 'zulu.pdf', filespecNum: first },
+        { nameTreeKey: 'alpha.pdf', filespecNum: first + 1 },
       ]);
       const tree = join.objects[0].dict;
       const keys = [...tree.matchAll(/<([0-9A-Fa-f]+)>\s*(\d+) 0 R/g)].map(([, hex]) =>
@@ -107,12 +113,51 @@ for (const t of TEMPLATES) {
          into an arbitrary existing name tree — which may be a multi-level
          /Kids structure — is not something to approximate. */
       expect(() =>
-        attachEmbeddedFiles(out, sec, [{ name: 'another.pdf', filespecNum: 9999 }]),
+        attachEmbeddedFiles(out, sec, [{ nameTreeKey: 'another.pdf', filespecNum: 9999 }]),
       ).toThrow(/already carries/i);
     });
 
     it('refuses an empty attachment list', () => {
       expect(() => attachEmbeddedFiles(bytes, sec, [])).toThrow(/at least one/i);
+    });
+
+    it('keeps the name-tree KEY and the file NAME as separate strings', () => {
+      /* The eSTAR requires a date-shaped key (removeOrphanAttachments deletes
+         anything else on the applicant's first save) while the manifest and the
+         visible name come from the file name. A builder that used one string
+         for both would embed a file the form then deletes. */
+      const first = nextFreeObjectNumber(bytes);
+      const key = attachmentDataObjectName(new Date(Date.UTC(2026, 8, 8, 11, 22, 33)));
+      const built = buildEmbeddedFileObjects(sec, first, {
+        name: 'Section-5-Software.pdf',
+        bytes: Buffer.from('%PDF-1.4\n% attachment\n'),
+        mimeType: 'application/pdf',
+      });
+      const out = appendIncrementalUpdate(bytes, [
+        ...built.objects,
+        ...attachEmbeddedFiles(bytes, sec, [{ nameTreeKey: key, filespecNum: built.filespecNum }])
+          .objects,
+      ]);
+
+      const names = readIndirectObjectText(out, sec, t.names)!;
+      const treeKey = decryptObjectData(
+        sec,
+        t.names,
+        0,
+        hexString(names, names.indexOf('/EmbeddedFiles')),
+      ).toString('latin1');
+      expect(treeKey).toBe('2026-09-08T11:22:33');
+      expect(isTemplateAcceptableDataObjectName(treeKey)).toBe(true);
+
+      const spec = readIndirectObjectText(out, sec, built.filespecNum)!;
+      const fileName = decryptObjectData(
+        sec,
+        built.filespecNum,
+        0,
+        hexString(spec, spec.indexOf('/F ')),
+      ).toString('latin1');
+      expect(fileName).toBe('Section-5-Software.pdf');
+      expect(fileName).not.toBe(treeKey);
     });
   });
 }

@@ -34,7 +34,13 @@ import {
 export const EMBEDDED_FILE_OBJECT_COUNT = 2;
 
 export interface EmbeddedFileSpec {
-  /** The name the attachment carries in the document's file list. */
+  /**
+   * The FILE NAME — what `/F` and `/UF` carry, and Acrobat's
+   * `dataObject.path`. Distinct from the `/EmbeddedFiles` name-tree key, which
+   * `pdf-attach.EmbeddedFileEntry.nameTreeKey` supplies and which the eSTAR
+   * requires to be date-shaped. The eSTAR's attachment manifest references
+   * THIS string, not the key.
+   */
   name: string;
   bytes: Buffer;
   /** The file's media type, e.g. 'application/pdf'. Omitted ⇒ no /Subtype. */
