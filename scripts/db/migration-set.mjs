@@ -1588,6 +1588,17 @@ export const C2C_MIGRATION_FILES = [
   // entitlement change. Idempotent UPDATE keyed on module_id.
   'migrations/20260820c_catalog_maa_module1_regional.sql',
 
+  // ── The submission orchestrator gets a catalog row (2026-09-07) ───────────
+  // The surface shipped registered, routed and rendering, but reachable from
+  // no nav menu and absent from NAVIGATION_TARGETS. Making it reachable also
+  // makes it a shell app, and the shell must never present an app the catalog
+  // cannot express an entitlement for — without a row it is ungatable
+  // (module_subscriptions FKs into available_modules) and silently free (an
+  // unknown id is treated as not-licensable by design). Tiered 'standard' to
+  // match its Submit & file siblings; no earlier file classifies this id, so
+  // this file owns its tier.
+  'db/migrations/20260907_module_catalog_submission_orchestrator.sql',
+
   // Moved here from AFTER the sweep, where it was appended upstream. C-33 and
   // three contract tests require the two isolation steps to be the final pair;
   // a file that ALTERs tables after the sweep has run is never swept. This one

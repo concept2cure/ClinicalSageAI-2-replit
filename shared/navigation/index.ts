@@ -123,6 +123,7 @@ export const NAVIGATION_TARGETS: readonly NavigationTarget[] = [
   { id: 'risk', label: 'Risk Management', description: 'The risk workstream (register, matrix, controls).', scope: 'project', group: 'module' },
   { id: 'tasking', label: 'Tasking', description: 'The task board / list / kanban.', scope: 'project', group: 'module' },
   { id: 'submission-gateway', label: 'Submission Gateway', description: 'The submission gateway (transmittals, validation).', scope: 'project', group: 'module' },
+  { id: 'submission-orchestrator', label: 'Submission Orchestrator', description: 'The eCTD build pipeline — run launcher, per-step status, audit trail, and the verified release signature.', scope: 'project', group: 'module' },
   {
     id: 'intelligence', label: 'Intelligence', description: 'The intelligence surface (protocol, CMC, biostat, reports tabs).', scope: 'project', group: 'module',
     params: [{
