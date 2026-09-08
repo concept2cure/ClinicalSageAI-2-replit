@@ -727,6 +727,30 @@ describe.skipIf(!fsSync.existsSync(NIVD_TEMPLATE))(
       expect(Buffer.from(none.pdfBytes!).equals(Buffer.from(under.pdfBytes!))).toBe(true);
     });
 
+    it('still says how many were requested when the template itself refuses', async () => {
+      /* The refusals that happen BEFORE a plan exists — a static AcroForm, or a
+         template whose AttachmentManifest node is missing or already carries
+         tokens — used to produce a 422 with a blocker and no report at all. An
+         operator with thirty placements was told only "Cannot attach documents
+         to this eSTAR". `requested` is a fact from the request and is true on
+         every path. */
+      const already = await fillEstarSubmission({
+        ...oneAttachment,
+        // A template whose manifest is not the pristine seed: feed the OUTPUT of
+        // a successful attached fill back in as the template.
+        templateBytes: (await fillEstarSubmission(oneAttachment)).pdfBytes!,
+      });
+
+      expect(already.filled).toBe(false);
+      expect(already.blockers.join(' ')).toMatch(/not the "\*\*\*Start\*\*\*"/);
+      expect(already.attachmentReport).toEqual({
+        requested: 1,
+        attached: [],
+        refused: [],
+        manifest: null,
+      });
+    });
+
     it('is a caller bug, not a regulatory refusal, to ask for attachments with no resolver', async () => {
       await expect(
         fillEstarSubmission({

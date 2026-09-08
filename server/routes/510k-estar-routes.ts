@@ -708,6 +708,29 @@ router.post('/build', authMiddleware, requireEditorAccess, requireAssemblyEntitl
 // and exposed via GET /catalog; the official-fill/scaffold endpoints here cover
 // the nIVD/IVD marketing family.
 const ESTAR_TYPES = ['510k', 'de_novo', 'pma', 'q_sub', 'ide', '513g'] as const;
+
+/**
+ * The governed document class an eSTAR of each type files its sections FROM.
+ *
+ * `loadAuthoredDeviceSections` otherwise takes the most recently created
+ * document of ANY device class — k510, denovo, pma AND cer — and the rule-pack
+ * keys an attachment is filed by are per-pathway and collide. `D5` is "Shelf
+ * life and packaging" in the k510 pack and "Cybersecurity" in the denovo pack;
+ * `E1` is "Biocompatibility" in one and "Proposed labeling and instructions for
+ * use" in the other (migrations/20260901b_estar_510k_denovo_outlines.sql). So a
+ * program that has a 510(k) document and then gets a CER, or a De Novo
+ * scaffold, would file a DIFFERENT document's section into a named CDRH slot,
+ * with a clean 200.
+ *
+ * The three PreSTAR types have no vendored template and no device rule pack, so
+ * they have no class here; the fill refuses them before a resolver is ever
+ * called, and an unmapped type reads nothing rather than reading anything.
+ */
+const ESTAR_TYPE_DOC_CLASS: Partial<Record<(typeof ESTAR_TYPES)[number], string>> = {
+  '510k': 'k510',
+  de_novo: 'denovo',
+  pma: 'pma',
+};
 const ESTAR_VARIANTS = ['device', 'ivd'] as const;
 
 // PreSTAR (Q-Sub/IDE/513(g)) share one template family regardless of device/ivd;
@@ -1073,6 +1096,9 @@ router.post('/official', authMiddleware, requireEditorAccess, requireAssemblyEnt
             attachmentResolver: createDeviceAttachmentResolver({
               organizationId: getOrganizationId(req),
               programUuid: anchor.programUuid,
+              /* THIS export's own document class, never "the newest device
+                 document" — see ESTAR_TYPE_DOC_CLASS. */
+              docTypes: ESTAR_TYPE_DOC_CLASS[type] ? [ESTAR_TYPE_DOC_CLASS[type]!] : [],
             }),
           }
         : {}),
