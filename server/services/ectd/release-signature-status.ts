@@ -33,6 +33,7 @@ import {
   type SignedExportRefusal,
 } from './signed-package-export.js';
 import type { ReleaseSignatureVerdict } from './dispatch-gate.js';
+import { resolveSequenceReleaseSignature } from './sequence-release-signature.js';
 import { createScopedLogger } from '../../utils/logger.js';
 
 const log = createScopedLogger('release-signature-status');
@@ -154,7 +155,7 @@ async function countUnlinkedRunsByText(submissionId: number, organizationId: num
  * submission-wide behaviour applies and the detail string says so, rather than
  * silently implying a sequence was checked.
  */
-export async function resolveReleaseSignatureStatus(params: {
+async function resolveOrchestratorReleaseSignature(params: {
   submissionId: number;
   organizationId: number;
   /** The eCTD sequence being assessed, e.g. '0001'. */
@@ -299,6 +300,84 @@ export async function resolveReleaseSignatureStatus(params: {
   return {
     verdict: 'unsigned',
     detail: `no run among ${runIds.length} carries a completed release signature`,
+  };
+}
+
+/**
+ * Resolve the release-signature state for a submission's SEQUENCE, across BOTH
+ * spines a release can be signed on.
+ *
+ * ── Why two ──────────────────────────────────────────────────────────────────
+ * The orchestrator spine (`package.sign` on a run) was the only one this
+ * resolver could see. But a sequence can be authored and released entirely
+ * through the SUBMISSIONS spine, whose governed sign on `ectd-sequence:<id>`
+ * persists an `electronic_signatures` row bound by sha256 to that sequence's
+ * row and its ordered leaf manifest — the very artifact the dispatch would
+ * transmit. Such a submission has no orchestrator run at all, so it was
+ * reported `unsigned`, and since the gate REQUIRES a release signature for
+ * IND / NDA / BLA / MAA — every type it applies to — `dispatchSequence` and
+ * `transmitSequence` were unreachable for it no matter how correctly the
+ * operator signed. The gate was not protecting anything there; it was denying a
+ * signature that existed.
+ *
+ * ── The composition, and why it is this way round ────────────────────────────
+ * The orchestrator spine answers first and its answer stands whenever it is
+ * DEFINITE — `signed`, `invalid`, `awaiting` or `revoked`. In particular a
+ * tampered orchestrator signature reports `invalid` and can never be rescued by
+ * a valid signature on the other spine.
+ *
+ * The second spine is consulted for exactly one verdict: `unsigned`, a
+ * determinate "the orchestrator spine holds no signature for this sequence".
+ * Deliberately NOT for `undetermined`: an outage there means an `invalid` we
+ * cannot see, so clearing on the other spine could let a tampered signature
+ * through. Undetermined blocks, and an undetermined lookup is not an absent
+ * requirement.
+ *
+ * From there the second spine's own answer governs, including its integrity
+ * failures — a drifted or revoked sequence signature blocks even though the
+ * orchestrator spine had nothing to say. Only its `unsigned` falls back, and
+ * then the detail names both spines rather than implying only one was checked.
+ *
+ * `sequenceId` is optional so a caller that has only the submission keeps
+ * compiling; without it the second spine cannot be addressed at all (it is
+ * keyed on the sequence, not the submission) and the orchestrator answer is
+ * returned unchanged.
+ */
+export async function resolveReleaseSignatureStatus(params: {
+  submissionId: number;
+  organizationId: number;
+  /** The eCTD sequence being assessed, e.g. '0001'. */
+  sequenceNumber?: string | null;
+  /** `ectd_sequences.id` — the key the submissions spine's signature is on. */
+  sequenceId?: number | null;
+}): Promise<ReleaseSignatureStatus> {
+  const orchestrator = await resolveOrchestratorReleaseSignature(params);
+  if (orchestrator.verdict !== 'unsigned') return orchestrator;
+
+  const sequenceId =
+    typeof params.sequenceId === 'number' && Number.isFinite(params.sequenceId) && params.sequenceId > 0
+      ? params.sequenceId
+      : null;
+  if (sequenceId === null) return orchestrator;
+
+  const sequenceSpine = await resolveSequenceReleaseSignature({
+    sequenceId,
+    organizationId: params.organizationId,
+  });
+
+  if (sequenceSpine.verdict === 'unsigned') {
+    return {
+      verdict: 'unsigned',
+      detail:
+        `${orchestrator.detail ?? 'no orchestrator release signature'}; ` +
+        `and ${sequenceSpine.detail ?? 'no signature on the sequence itself'}`,
+    };
+  }
+
+  return {
+    verdict: sequenceSpine.verdict,
+    detail: sequenceSpine.detail,
+    signatureId: sequenceSpine.signatureId,
   };
 }
 
