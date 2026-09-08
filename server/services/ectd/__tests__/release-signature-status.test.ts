@@ -72,9 +72,16 @@ const THIS_SEQUENCE = '0001';
 /** Another sequence under the SAME submission — signed, but not this one. */
 const OTHER_SEQUENCE = '0000';
 
-/** The runs the submission-grained query returns, newest first. */
+/** The runs the submission-grained query returns, newest first.
+ *  A second, defaulted result covers the unlinked-run probe below. */
 function runsAre(...runIds: string[]) {
-  mockDbExecute.mockResolvedValue({ rows: runIds.map(run_id => ({ run_id })) });
+  mockDbExecute.mockResolvedValue({ rows: [] });
+  mockDbExecute.mockResolvedValueOnce({ rows: runIds.map(run_id => ({ run_id })) });
+}
+
+/** How many runs carry this submission's id as TEXT but no joinable FK. */
+function unlinkedRunsAre(n: number) {
+  mockDbExecute.mockResolvedValueOnce({ rows: [{ n }] });
 }
 
 /** A signed descriptor for `sequenceNumber`, as resolveSignedPackageForExport returns. */
@@ -185,11 +192,55 @@ describe('resolveReleaseSignatureStatus — the verdict is about THIS sequence',
 
   it('is unsigned when the submission has no runs at all', async () => {
     runsAre();
+    unlinkedRunsAre(0);
     const status = await resolveReleaseSignatureStatus({
       submissionId: SUBMISSION,
       organizationId: ORG,
       sequenceNumber: THIS_SEQUENCE,
     });
+    expect(status.verdict).toBe('unsigned');
+  });
+
+  /* ── Runs exist, but nothing can join them ─────────────────────────────────
+     submission_orchestrator_runs.submission_id_fk is OPTIONAL by design: the
+     orchestrator writes it only when a caller supplies it, and the route never
+     did, so every run the product created carried NULL. The lookup above joins
+     on exactly that column, so it found nothing — and the gate then reported
+     'unsigned', i.e. "you have not signed a release", to a customer who had
+     orchestrated and signed one. 'unsigned' is a fixable state an operator is
+     told to resolve by signing; signing again produces another unlinked run and
+     changes nothing.
+     Absence of a JOIN is not absence of a SIGNATURE. When runs carry this
+     submission's id as TEXT but no FK, the honest verdict is that it cannot be
+     determined — which blocks just the same, but says something true and names
+     the thing to repair. */
+  it('reports undetermined, not unsigned, when runs exist under this submission but carry no FK', async () => {
+    runsAre();
+    unlinkedRunsAre(3);
+
+    const status = await resolveReleaseSignatureStatus({
+      submissionId: SUBMISSION,
+      organizationId: ORG,
+      sequenceNumber: THIS_SEQUENCE,
+    });
+
+    expect(status.verdict, 'an unlinked run read as "no signature"').toBe('undetermined');
+    expect(String(status.detail)).toMatch(/not linked|unlinked/i);
+  });
+
+  it('still says unsigned when the probe itself fails — no positive evidence of a run', async () => {
+    // The probe is the only thing that can upgrade the verdict, so a probe that
+    // cannot answer must not invent an upgrade. The primary lookup succeeded
+    // and found nothing, which is what gets reported.
+    mockDbExecute.mockResolvedValueOnce({ rows: [] });
+    mockDbExecute.mockRejectedValueOnce(new Error('probe failed'));
+
+    const status = await resolveReleaseSignatureStatus({
+      submissionId: SUBMISSION,
+      organizationId: ORG,
+      sequenceNumber: THIS_SEQUENCE,
+    });
+
     expect(status.verdict).toBe('unsigned');
   });
 });
