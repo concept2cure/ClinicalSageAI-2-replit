@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-08T00:43:19.515Z",
+  "generatedAt": "2026-09-08T00:50:23.225Z",
   "git": {
-    "sha": "f20e793a7564e4c54298c5d612b032e28e04608b",
+    "sha": "ecdb4f457eef865c1272355486529763a46f220f",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2041,7 +2041,7 @@
       },
       {
         "file": "server/services/module3Composer.ts",
-        "bytes": 143774
+        "bytes": 144310
       },
       {
         "file": "server/services/submission-package-orchestrator.ts",
@@ -2235,7 +2235,7 @@
       },
       {
         "file": "server/services/module3Composer.ts",
-        "lines": 2872
+        "lines": 2879
       },
       {
         "file": "server/src/routes/stability.router.ts",
