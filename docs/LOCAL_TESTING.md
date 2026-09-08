@@ -109,6 +109,64 @@ The work on this branch, in the order it is easiest to see.
 
 ---
 
+### The IND eCTD path (WO-9 Clicks 1-3)
+
+This path uses the **GA demo seed**, not `seed-local-testing.ts` — a different,
+larger workspace with the biotech IND programs the eCTD work is built on. It is
+idempotent and safe to run alongside the seed above.
+
+```bash
+npm run db:seed          # org "Concept2Cure Therapeutics"; sign in as
+                         # jm.smith@concept2cure.pro / pass-word
+```
+
+It provisions two IND programs (BX-256, and BX-512 **Vorelinib**), their
+agency-assigned IND numbers, the canonical `submissions` row and eCTD sequence
+`0000` for each, and one authored Module 3 document on BX-512.
+
+Sign in, open **Projects**, open **Vorelinib · KIT-mutant GIST (IND)**, and all
+three steps run on that one program.
+
+**1 — the landing.** A "Program identity" row: Sponsor, Product, Indication and
+**IND number 000512**. Every value is read from `regulatory_programs` and its
+organisation. Nothing on it is a constant; a value the record does not hold
+reads "not recorded" or "not assigned" rather than being filled in.
+
+**2 — Module 1 forms.** Go to the **IND lifecycle** surface. Above the forms
+table, the same four facts, marked as read from the program record — they are no
+longer typed in. Each row states what the engine will produce *before* you click:
+for 1571, "the official FDA form (edition 2025-03-28) with the program's values
+written into it", the count of boxes left for you to complete in Acrobat, and
+whether a named person has reviewed the asset. **Build & check** returns the
+server's verdict (1571 reports 2 required fields missing — the record holds
+neither a sponsor address nor an IND type; that is correct). **PDF** returns the
+genuine FDA form with the program's values inside its XFA datasets.
+**Attach completed form** files a signed PDF into sequence 0000 as a Module 1
+leaf, and refuses a non-PDF, a blank template, or a program with no sequence.
+
+**3 — CTD placement.** Go to **Document authoring**; the seeded document
+(*Control of Drug Substance, CTD 3.2.S.4*) opens. Click **Place into filing**,
+choose the Vorelinib submission and sequence 0000. The line under the section
+box is the point of the step — it tells you the canonical code and the exact
+folder the document will ship in, before anything is written:
+
+| you type | it says |
+|---|---|
+| `3.2.S.4.2` | Files as 3.2.S.4.2 at `m3/3-2-s-4-2/` |
+| `3.2.s.4.2` | the same — one CTD section, one folder |
+| `m1.2` | Files as 1.2 in the regional Module 1 folder |
+| `m1/us/1.2` | not a CTD section code — Place is disabled |
+| `3` | a container, not a section — Place is disabled |
+
+**On this sandbox only:** the placement's snapshot step needs
+`coauthor_documents`, which carries an `embedding` column and so requires
+pgvector. Without it the dialog reports "The filing snapshot could not be
+created … Nothing was placed" and places nothing — which is the correct
+refusal, not a failure of the step. With pgvector present (§1 above) the chain
+completes.
+
+---
+
 ## What will not work without a key
 
 **AnA will not answer.** `POST /api/ana-ri/stream` returns 503
