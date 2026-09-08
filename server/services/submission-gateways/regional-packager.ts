@@ -976,12 +976,15 @@ export async function packageEctdSubmission(input: PackagerInput): Promise<Submi
     displayName: `${input.productName} · ${region.toUpperCase()} ${submissionTypeLabel} #${input.sequence}`,
     submissionGrade,
     // `required`/`missing` list DTDs; `selfContained` also accounts for the
-    // stylesheets the backbones reference (dtdGate.missingStylesheets), so it
-    // can be false while `missing` is empty — that is the stylesheet gap.
+    // stylesheets the backbones reference, so it can be false while `missing`
+    // is empty — that is the stylesheet gap. That gap is now CARRIED rather
+    // than only counted: without missingStylesheets the pre-transmit gate could
+    // refuse a transmit for a stylesheet-only gap while naming no file at all.
     dtdStatus: {
       required: dtdGate.required,
       present: dtdGate.present,
       missing: dtdGate.missing,
+      missingStylesheets: dtdGate.missingStylesheets,
       selfContained: dtdGate.selfContained,
     },
     // Honest regional-M1 status: only fda/ema/pmda/ca have their own backbone

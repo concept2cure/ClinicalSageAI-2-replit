@@ -985,20 +985,35 @@ function describeOfficialFill(
 
 /**
  * The consequence body plus what this route adds BESIDE it: the per-field fill
- * report, the attachment report, and the retention record for the delivered
- * artifact. All are added, never substituted — every key the export-governance
- * plane produced reaches the client unchanged (pinned by
- * ci:governed-export-consequence-shape).
+ * report, the values the template's own scripts erase, the attachment report,
+ * and the retention record for the delivered artifact. All are added, never
+ * substituted — every key the export-governance plane produced reaches the
+ * client unchanged (pinned by ci:governed-export-consequence-shape).
+ *
+ * WHY `erasedFields` IS HERE AND NOT ONLY IN THE FIELD REPORT. The report exists
+ * only when a governed resolution ran; on the verbatim `data` path
+ * `resolveRequestedOfficialFields` returns `resolved: null`,
+ * `describeOfficialFill` returns `fieldReport: null`, and the 200 body said
+ * NOTHING about erasure — the fill had named the keys on `result.erasedFields`
+ * since 2026-09-07 and no production caller read it. It is emitted on both paths
+ * and ALWAYS present: an empty array is "assessed, nothing erased", and an
+ * absent key would be indistinguishable from "not assessed".
+ *
+ * `attachmentReport` stays OPTIONAL, unlike erasedFields: it describes a step
+ * that genuinely does not run on every path, so its absence is meaningful
+ * rather than ambiguous.
  */
 function withOfficialExtras<T extends object>(
   body: T,
   fieldReport: OfficialEstarFieldReport | null,
   retention: EstarRetentionReport,
+  erasedFields: ReadonlyArray<string>,
   attachmentReport?: EstarAttachmentReport,
 ): T {
   return {
     ...body,
     ...(fieldReport ? { fieldReport } : {}),
+    erasedFields: [...erasedFields],
     ...(attachmentReport ? { attachmentReport } : {}),
     retention,
   };
@@ -1019,6 +1034,14 @@ function withOfficialExtras<T extends object>(
  * (governed wins; `data` fills the gaps) and the 200 body carries a
  * `fieldReport` saying which mapped fields were written, from where, and which
  * were left blank — the user is never handed a blank official form unannounced.
+ *
+ * On EITHER path the 200 body carries `erasedFields`: the values that were
+ * written and that the template's own scripts will erase. And the 422 covers
+ * three more refusals the fill makes on the values themselves — a Declaration of
+ * Conformity the form would rebuild under a different legal entity (now or on
+ * the applicant's first entry of their company name), and a fill whose every
+ * written value the form erases, which would deliver a blank form registered as
+ * submittable.
  */
 router.post('/official', authMiddleware, requireEditorAccess, requireAssemblyEntitlement, async (req, res) => {
   const validation = officialSchema.safeParse(req.body);
@@ -1105,6 +1128,11 @@ router.post('/official', authMiddleware, requireEditorAccess, requireAssemblyEnt
       descriptorId: result.descriptorId,
       filledFields: result.filledFields,
       skippedFields: result.skippedFields,
+      /* Written, and gone as soon as the applicant works that section: the
+         template clears these cells and rebuilds them from a field the map does
+         not write. The registry row carried filledFields alone, so the governed
+         record of what was filed over-stated it by exactly these keys. */
+      erasedFields: result.erasedFields,
       programId: anchor.programUuid ?? undefined,
       // Governed provenance (fieldSources) travels into the artifact registry / audit row.
       ...fieldMetadata,
@@ -1156,7 +1184,7 @@ router.post('/official', authMiddleware, requireEditorAccess, requireAssemblyEnt
       });
 
       return res.status(200).json(
-        withOfficialExtras(consequence, fieldReport, retention, result.attachmentReport),
+        withOfficialExtras(consequence, fieldReport, retention, result.erasedFields, result.attachmentReport),
       );
     }
 
@@ -1178,7 +1206,7 @@ router.post('/official', authMiddleware, requireEditorAccess, requireAssemblyEnt
     });
 
     return res.status(200).json(
-      withOfficialExtras(unplaced, fieldReport, retention, result.attachmentReport),
+      withOfficialExtras(unplaced, fieldReport, retention, result.erasedFields, result.attachmentReport),
     );
   } catch (error: any) {
     logger.error('official eSTAR export failure', {

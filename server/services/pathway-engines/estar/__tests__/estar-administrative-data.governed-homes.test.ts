@@ -567,19 +567,44 @@ describe.skipIf(!fsSync.existsSync(path.resolve(TEMPLATE_DIR, t.file)))(
       else process.env.ESTAR_TEMPLATE_DIR = dirBefore;
     });
 
+    /* SPLIT FROM THE ORIGINAL SINGLE CASE, which asserted two claims at once:
+       (1) governed + request values reach their SOM paths and blank keys stay
+       unwritten, and (2) this fixture produces a form. Its registration named
+       'Declaring Entity GmbH' while the applicant resolved to the organization
+       name, and claim (2) is now false for that pair — the FDA form derives the
+       DoC company from the applicant block, so declaring a second entity cannot
+       be filed honestly and the fill refuses it (the case below). Claim (1) is
+       unchanged: the DoC name still comes off the REGISTRATION row, now asserted
+       on its provenance rather than on a string that differed from the
+       applicant's. */
+    const partialInputs = (declarationCompanyName: string): EstarAdministrativeInputs => ({
+      program: { productName: 'AcuSense CGM System', productCode: 'NBW', regulationNumber: '21 CFR 862.1355' },
+      organization: { name: 'Concept2Cure, Inc.' },
+      // Both halves of the Declaration of Conformity come off this row: the
+      // address is used only when the NAME did too, so a registration that
+      // carried the address alone would put nothing in either field.
+      registration: {
+        correspondentTelephone: '+1 555 0199',
+        declarationCompanyName,
+        declarationCompanyAddress: '1 Device Way',
+      },
+    });
+
+    it('refuses the fill when the registration declares an entity that is not the applicant', async () => {
+      const resolved = resolveOfficialEstarFields({
+        fieldMap: MAP,
+        governed: projectEstarAdministrativeData(partialInputs('Declaring Entity GmbH')),
+        honourRequestOverGoverned: false,
+      });
+      const r = await fillEstarSubmission({ type: '510k', variant: t.variant, data: resolved.data });
+      expect(r.filled).toBe(false);
+      expect(r.pdfBytes).toBeUndefined();
+      expect(r.blockers.join(' ')).toContain('Declaring Entity GmbH');
+      expect(r.blockers.join(' ')).toContain('Concept2Cure, Inc.');
+    });
+
     it('writes governed + request values at their paths and leaves blank keys unwritten, each naming its home', async () => {
-      const partial: EstarAdministrativeInputs = {
-        program: { productName: 'AcuSense CGM System', productCode: 'NBW', regulationNumber: '21 CFR 862.1355' },
-        organization: { name: 'Concept2Cure, Inc.' },
-        // Both halves of the Declaration of Conformity come off this row: the
-        // address is used only when the NAME did too, so a registration that
-        // carried the address alone would put nothing in either field.
-        registration: {
-          correspondentTelephone: '+1 555 0199',
-          declarationCompanyName: 'Declaring Entity GmbH',
-          declarationCompanyAddress: '1 Device Way',
-        },
-      };
+      const partial = partialInputs('Concept2Cure, Inc.');
       const resolved = resolveOfficialEstarFields({
         fieldMap: MAP,
         governed: projectEstarAdministrativeData(partial),
@@ -598,7 +623,12 @@ describe.skipIf(!fsSync.existsSync(path.resolve(TEMPLATE_DIR, t.file)))(
       }
       expect(back[MAP.regulationNumber.xfaSomPath!]).toBe('21 CFR 862.1355');
       expect(back[MAP.correspondentTelephone.xfaSomPath!]).toBe('+1 555 0199');
-      expect(back[MAP.declarationCompanyName.xfaSomPath!]).toBe('Declaring Entity GmbH');
+      expect(back[MAP.declarationCompanyName.xfaSomPath!]).toBe('Concept2Cure, Inc.');
+      // Off the REGISTRATION column, not the organization fallback — the claim
+      // the differing string used to carry, now asserted on its own terms.
+      expect(resolved.fields.find((f) => f.key === 'declarationCompanyName')!.source).toBe(
+        'estar_registrations.declaration_company_name',
+      );
       expect(back[MAP.declarationCompanyAddress.xfaSomPath!]).toBe('1 Device Way');
       expect(back[MAP.correspondentCompanyName.xfaSomPath!] ?? '').toBe('');
 

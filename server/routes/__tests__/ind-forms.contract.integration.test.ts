@@ -196,6 +196,47 @@ describe('PDF rendering', () => {
     expect(res.body.subarray(0, 5).toString('latin1')).toBe('%PDF-');
   });
 
+  /**
+   * WHICH REQUIRED BOXES ARE BLANK ON THE PDF THE SPONSOR JUST DOWNLOADED.
+   *
+   * The renderer computes it on every path; until this header existed the
+   * answer never left the service — `grep requiredFieldsLeftBlank` matched only
+   * the service that writes it and its unit test. A sponsor downloading a form
+   * learned the coverage fraction and which builder fields were unmapped, and
+   * had to intersect that by hand against a required-field list the response
+   * does not carry.
+   */
+  it('POST /FDA_356H/pdf → X-Form-Required-Blank names the required boxes still empty', async () => {
+    const res = await request(app)
+      .post('/api/ind-forms/FDA_356H/pdf')
+      .send({ sponsorName: 'Acme Therapeutics', drugName: 'C2C-001' });
+    expect(res.status).toBe(200);
+    expect(res.headers['x-form-used-official-template']).toBe('true');
+    const named = String(res.headers['x-form-required-blank'] ?? '').split(',').filter(Boolean);
+    expect(named).toEqual(
+      expect.arrayContaining([
+        'applicant_address',
+        'application_type',
+        'dosage_form',
+        'route_of_administration',
+        'indication',
+      ]),
+    );
+    expect(named).not.toContain('applicant_name');
+  });
+
+  it('POST /FDA_3674/pdf → the header is present and EMPTY when none is blank', async () => {
+    // "Assessed, none" and "this server does not assess" must not be the same
+    // response. The header is set unconditionally, unlike its neighbours, for
+    // exactly that reason.
+    const res = await request(app)
+      .post('/api/ind-forms/FDA_3674/pdf')
+      .send({ sponsorName: 'Acme Therapeutics', drugName: 'C2C-001' });
+    expect(res.status).toBe(200);
+    expect(res.headers).toHaveProperty('x-form-required-blank');
+    expect(res.headers['x-form-required-blank']).toBe('');
+  });
+
   it('POST /nope/pdf → 400 for an unsupported form', async () => {
     const res = await request(app).post('/api/ind-forms/nope/pdf').send({});
     expect(res.status).toBe(400);
@@ -210,6 +251,10 @@ describe('PDF rendering', () => {
     expect(Array.isArray(res.body.documents)).toBe(true);
     expect(res.body.documents.length).toBeGreaterThanOrEqual(1);
     expect(typeof res.body.documents[0].pdfBase64).toBe('string');
+    // Per document, not per request: each investigator's 1572 leaves its own
+    // boxes blank. This one supplies only a name.
+    expect(res.body.documents[0].requiredFieldsLeftBlank)
+      .toEqual(expect.arrayContaining(['facility_name', 'irb_name']));
   });
 
   it('POST /3455/pdf-all → 200 returns one disclosure PDF per disclosing investigator', async () => {
@@ -315,10 +360,18 @@ describe('governed artifact (DB-backed)', () => {
     expect(typeof res.body.artifactId).toBe('string');
     expect(typeof res.body.contentHash).toBe('string');
     expect(Array.isArray(res.body.missingRequired)).toBe(true);
+    // `ready` stays a statement about the DATA — that is what this artifact
+    // stores. What it did NOT say is that the official 1571 render leaves two
+    // required boxes for the sponsor whatever the data, because their tokens
+    // are set by the form's own XFA script. A caller reading `ready` alone was
+    // told a complete field map meant a complete form.
+    expect(res.body.sponsorMustComplete).toEqual(
+      expect.arrayContaining(['ind_type', 'phase_of_study']),
+    );
 
     // A governed row now exists — org-/project-scoped, typed 'form'.
     const { rows } = await harness.pglite.query(
-      'SELECT type, category, organization_id, project_id, content, content_hash FROM concept2cure_artifacts WHERE artifact_id = $1',
+      'SELECT type, category, organization_id, project_id, content, content_hash, metadata FROM concept2cure_artifacts WHERE artifact_id = $1',
       [res.body.artifactId],
     );
     expect(rows.length).toBe(1);
@@ -328,6 +381,14 @@ describe('governed artifact (DB-backed)', () => {
     expect(stored.formId).toBe('FDA_1571');
     expect(stored).toHaveProperty('fields');
     expect((rows[0] as any).content_hash).toBe(res.body.contentHash);
+    // The PERSISTED row carries both facts. `ready` travels alone into audit
+    // queries and dashboards; on its own, `ready: true` on a 1571 asserts a
+    // signable form whose IND-type and phase boxes are blank on every render.
+    const meta = (rows[0] as any).metadata;
+    const stored_meta = typeof meta === 'string' ? JSON.parse(meta) : meta;
+    expect(stored_meta.sponsorMustComplete).toEqual(
+      expect.arrayContaining(['ind_type', 'phase_of_study']),
+    );
   });
 });
 
