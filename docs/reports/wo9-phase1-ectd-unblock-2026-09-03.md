@@ -1047,3 +1047,83 @@ their submission rows and sequence 0000). Sign in, open Projects, open
 Module 1 forms panel is the click: the four facts above the table come from the
 database, each row says what it will produce, and "Attach completed form" files
 a signed PDF into sequence 0000 at m1.1.
+
+---
+
+## 15. After Click 2 — the application number, and a gate that now blocks the freeze
+
+Two follow-ups from §14's "found on the way", one fixed and one that is JM's
+call. Neither is a new click.
+
+### Fixed — the agency's number now reaches the agency's field
+
+`applicationId` becomes `<application-number>` in the FDA us-regional backbone,
+and `applicationRef` becomes `<ectd:application-number>` in the eCTD 4.0 draft
+backbone. Both were stamped from the SPONSOR's internal program code
+(`BX-512`), because when that code was written nothing in the data model held
+an agency-assigned number. `regulatory_programs.application_number` does now
+(Click 1), so a filing whose IND number is recorded carries it.
+
+The chain is the one the existing comment already described, with "recorded
+identity" now able to mean what it should: **the recorded agency number, else
+the program's own code, else a handle that says plainly it is unassigned.** A
+blank or whitespace column is not a recorded number. One function
+(`applicationIdFor`) decides it for the assembled package, the compilation
+record and the draft backbone, so the three cannot disagree about what was
+filed.
+
+The legacy numeric path was stamping `IND-<projectId>` — a string shaped
+exactly like an agency IND number, synthesised from a row id, for an
+application the agency has never seen, under a comment claiming "recorded
+identity we actually hold". Such a project has no program record and therefore
+nothing recorded, so it now says so.
+
+Seven tests, seen failing first on the two cases that mattered (a recorded
+number ignored; `IND-7` invented) and passing by construction on the three that
+pin the unchanged fallbacks.
+
+### Also fixed — a regression this work introduced
+
+`resolveProgramIdent` now reads the sponsor through a join on `organizations`,
+and `tests/routes/ind-forms-artifact-ident.test.ts` fakes the drizzle builder
+chain, which had no `leftJoin` link — five tests fell to a 500. Found by
+running `tests/routes/` as well as `server/routes/__tests__/`; §14's sweep ran
+only the latter. The fake now mirrors the real chain. The same pass removed a
+duplicate query: the governed artifact path re-resolved an ident it had already
+resolved in the same handler.
+
+### For JM — a decision, not a defect
+
+**The drug-NDA golden journey is red on `concept2cure-v2`, and it is not from
+this work.** Commit `19a0747eb` ("block dispatch on a missing or broken release
+signature") added a §11.70 transmit control to the composed dispatch gate and
+did not update the journey. Verified upstream: none of this session's commits
+touch dispatch, the release-signature gate or the journey, and no later commit
+addresses it.
+
+What it means in the product, which is the part worth JM's attention:
+`transitionSequenceGoverned` applies the **whole** composed gate to `frozen` as
+well as `dispatched`. So freezing an IND / NDA / BLA / MAA sequence now
+requires a verified release signature first. That is not circular — the package
+orchestrator never reads the sequence's status, so it can run and be signed
+while the sequence is still draft — but it **reverses the order the product
+previously worked in**: it is now sign the release, then freeze, where the
+journey (and any existing operator habit) does freeze, then sign.
+
+Two ways to resolve it, and the choice is a regulatory one:
+
+1. **Keep the new order.** The gate is right and the journey is out of date: it
+   must run the package orchestrator and sign the release before it freezes.
+   Real work in a journey that drives real services, and it belongs with the
+   commit that changed the order.
+2. **Scope the gate to dispatch.** Its own module calls itself "the
+   transmit-time re-check" and "the provable pre-transmit rule"; applying it at
+   freeze may be wider than intended. One change in
+   `transitionSequenceGoverned` composing the freeze verdict without the
+   release-signature gate.
+
+This report does not pick one. Altering the reach of a Part 11 control, or
+hand-rolling a signed orchestrator run inside a golden journey — the only other
+way to make it green — are both decisions to take deliberately rather than to
+make a red test pass. The journey is left exactly as upstream left it, failing
+and telling the truth, which is what it is for.
