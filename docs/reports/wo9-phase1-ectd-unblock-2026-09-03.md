@@ -1336,3 +1336,52 @@ Open a document in **Document authoring**, click **Place into filing**, choose
 code. The line under the box is the click: it tells you the canonical code and
 the exact folder the document will ship in, before you commit — and refuses
 anything that has no home.
+
+---
+
+## 17. Made ready for human testing — 2026-09-08
+
+Nothing outstanding was found outside `concept2cure-v2`. Every remote branch
+was compared against it: nine agent branches are fully contained, and the tenth
+(`claude/ui-design-kit-review-tpsb71`) carries one accessibility commit whose
+13 `aria-label`s are already present in the tree — a cherry-pick found nothing
+to apply. The stale local `claude/new-session-tovmao` was fully contained and
+has been deleted, per RULE 0.
+
+One gap did block testing, and it was in the demo data rather than the code.
+The document editor scopes its list to the OPEN program
+(`authoring_documents.client_program_id`), and the GA demo's only authored
+document belongs to BX-204, the BLA. So with the IND program open the editor
+had nothing to show, and "Place into filing" — which lives on an open document
+— was unreachable for the very program Clicks 1 and 2 use. Landing on an IND,
+opening its Module 1 forms, and placing a document into its sequence were three
+journeys across two programs.
+
+`scripts/seed/ga-demo.d/112-ind-authoring-doc.mjs` gives BX-512 (Vorelinib) a
+real authored document in the store the editor writes: CTD 3.2.S.4, Control of
+Drug Substance, with its published subsections. 3.2.S.4.2 is deliberately among
+them — the precision case the placement path has to carry — so the demo
+exercises it without anyone typing a code from memory. Idempotent, verified by
+running the seed twice.
+
+Two migrations this sandbox's `--allow-incomplete` install had skipped were
+applied locally (`20260813_audit_tamper_proof_log.sql`,
+`20260813_ai_gateway_audit_log.sql`), so the server now boots with no error
+lines. Both are ordinary parts of a full `npm run up`.
+
+Verified at the tip, in one browser session on one program:
+
+```
+Click 1  landing        Sponsor / Product / Indication / IND number, all from the row
+Click 2  forms panel    the same four facts; 1571 states its plan and its 8 open boxes;
+                        Build & check → "Form 1571 built — 2 required field(s) missing."
+Click 3  placement      opens 3.2.S.4.1, prefilled; 3.2.S.4.2 → m3/3-2-s-4-2/;
+                        m1.2 → the regional Module 1 folder; m1/us/1.2 and 3 refused
+```
+
+Console: no application errors — only `fonts.googleapis.com`, reset by this
+sandbox's egress policy, the runtime dependency §13 and §14 both note.
+
+Gates at the tip: typecheck clean on both configurations,
+`ci:migration-set-order` OK (261 migrations), `ci:migration-drop-safety` OK,
+`db:sync-manifest:check` in sync.
