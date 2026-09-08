@@ -232,6 +232,53 @@ describe('CMC Module 3 derivation lineage (AnA build paths)', () => {
     }
   });
 
+  it('a legacy section with no tables key becomes placeable only after a recompile AND a re-approval', async () => {
+    /* The path every deployed project takes through this change, which nothing
+       exercised: a section approved before tables were carried is refused by
+       placement AND by the gate; recompiling gives it tables and, because the
+       content changed, returns it to draft — so the remedy is two steps, not
+       one. The placement skip reason used to name only the first. */
+    const { readSectionTables } = await import('../../cmc/compiled-record');
+    await seedSource();
+    expect((await module3BuildAll({ organizationId: ORG } as any, { projectId: PROJECT })).success).toBe(true);
+
+    // Age the row back to the legacy shape: approved, and no `tables` key.
+    await wrap(
+      `UPDATE cmc_module3_sections
+          SET approval_state = 'approved',
+              deterministic_json = (deterministic_json - 'tables')
+        WHERE organization_id = $1 AND project_id = $2 AND section_key = '3.2.S.1'`,
+      [ORG, PROJECT],
+    );
+    const legacy = await wrap(
+      `SELECT deterministic_json, approval_state FROM cmc_module3_sections
+        WHERE organization_id = $1 AND project_id = $2 AND section_key = '3.2.S.1'`,
+      [ORG, PROJECT],
+    );
+    const legacyRow = legacy.rows[0] as any;
+    const legacyRecord = typeof legacyRow.deterministic_json === 'string'
+      ? JSON.parse(legacyRow.deterministic_json)
+      : legacyRow.deterministic_json;
+    // Unplaceable: the reader cannot tell "composes none" from "compiled before".
+    expect(readSectionTables(legacyRecord)).toBeUndefined();
+    expect(legacyRow.approval_state).toBe('approved');
+
+    // Step one: recompile. It gains tables — and loses the approval, because
+    // the stored record changed.
+    expect((await module3BuildAll({ organizationId: ORG } as any, { projectId: PROJECT })).success).toBe(true);
+    const after = await wrap(
+      `SELECT deterministic_json, approval_state FROM cmc_module3_sections
+        WHERE organization_id = $1 AND project_id = $2 AND section_key = '3.2.S.1'`,
+      [ORG, PROJECT],
+    );
+    const afterRow = after.rows[0] as any;
+    const afterRecord = typeof afterRow.deterministic_json === 'string'
+      ? JSON.parse(afterRow.deterministic_json)
+      : afterRow.deterministic_json;
+    expect(Array.isArray(readSectionTables(afterRecord))).toBe(true);
+    expect(afterRow.approval_state).toBe('draft');
+  });
+
   it('module3BuildSection persists lineage for the single compiled section', async () => {
     const sourceId = await seedSource();
     const res = await module3BuildSection({ organizationId: ORG } as any, {

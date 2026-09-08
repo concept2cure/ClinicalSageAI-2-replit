@@ -200,3 +200,20 @@ describe('what a series may NOT quietly absorb', () => {
     expect(disagree.outcome.message).toMatch(/different acceptance criteria/)
   })
 })
+
+describe('the route, the tool and the section read the same set', () => {
+  it('excludes a RETIRED result, as every composed section does', () => {
+    /* The composer drops a retired source before any section reads it, while
+       the route and the tool read the project's qc_result rows directly — so a
+       retired result would have entered a capability index the filed §3.2.S.4.4
+       excludes. One computation over two different input sets is still two
+       answers. */
+    const live = series([99, 101, 100, 100, 99, 101])
+    const withRetired = [...live, qc({ batchNumber: 'B-OLD', status: 'retired', testResults: { value: '80.0', unit: '%' } })]
+    const [s] = assessRecordedCapability(withRetired.filter((r) => isBatchAnalysisFor(r, 'drug_substance')))
+    expect(s.outcome.ok).toBe(true)
+    if (!s.outcome.ok) return
+    expect(s.outcome.n).toBe(6)
+    expect(s.outcome.batchesOutOfSpecification).toEqual([])
+  })
+})
