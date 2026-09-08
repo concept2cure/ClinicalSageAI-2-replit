@@ -93,6 +93,18 @@ beforeEach(() => {
   hoisted.poolQuery.mockResolvedValue(seqRows([]));
 });
 
+/* The tenant every call below reads history for.
+   `detectSequenceGaps` takes a REQUIRED organizationId since the history read
+   was tenant-scoped: an absent or non-positive one blocks with
+   SEQ_TENANT_SCOPE_MISSING and issues NO query at all. This file is outside
+   tsconfig's `include` (client/src, server, shared, agents), so the compiler
+   could not name these call sites the way it named the four under server/ —
+   which is why every assertion here was answering SEQ_TENANT_SCOPE_MISSING
+   instead of the branch it names. Tenancy itself is covered in
+   server/services/ectd/__tests__/sequence-gap-tenant-scope.test.ts; this suite
+   supplies a valid tenant so it can go on testing the sequence branches. */
+const ORG = 7;
+
 // ── Mock-interception safety check ──────────────────────────────────────────
 // If a future refactor moves ectd-validator-hardening.ts or changes the import
 // to a different specifier shape, the vi.mock entries above could silently
@@ -104,7 +116,7 @@ describe('mock interception sanity', () => {
   it('detectSequenceGaps routes pool.query through the hoisted mock (not real Postgres)', async () => {
     expect(hoisted.poolQuery).not.toHaveBeenCalled();
     hoisted.poolQuery.mockResolvedValueOnce(seqRows([]));
-    await detectSequenceGaps('IND000000', '0000');
+    await detectSequenceGaps('IND000000', '0000', ORG);
     // Two sources now (C-31): primary ectd_compilations + optional ectd_submissions.
     expect(hoisted.poolQuery).toHaveBeenCalledTimes(2);
   });
@@ -118,7 +130,7 @@ describe('detectSequenceGaps (DB-backed)', () => {
   it('emits SEQ_FIRST_NOT_0000 when history is empty and the new sequence is not 0000', async () => {
     hoisted.poolQuery.mockResolvedValueOnce(seqRows([]));
 
-    const findings = await detectSequenceGaps('IND123456', '0003');
+    const findings = await detectSequenceGaps('IND123456', '0003', ORG);
 
     expect(findings).toHaveLength(1);
     const [f] = findings;
@@ -134,7 +146,7 @@ describe('detectSequenceGaps (DB-backed)', () => {
   it('is silent when history is empty and the new sequence IS 0000', async () => {
     hoisted.poolQuery.mockResolvedValueOnce(seqRows([]));
 
-    const findings = await detectSequenceGaps('IND123456', '0000');
+    const findings = await detectSequenceGaps('IND123456', '0000', ORG);
 
     expect(findings).toEqual([]);
   });
@@ -142,7 +154,7 @@ describe('detectSequenceGaps (DB-backed)', () => {
   it('emits SEQ_DUPLICATE when the new sequence already exists in history', async () => {
     hoisted.poolQuery.mockResolvedValueOnce(seqRows(['0000', '0001', '0002']));
 
-    const findings = await detectSequenceGaps('NDA215789', '0001');
+    const findings = await detectSequenceGaps('NDA215789', '0001', ORG);
 
     // Duplicate short-circuits — only the duplicate finding should land.
     expect(findings).toHaveLength(1);
@@ -156,7 +168,7 @@ describe('detectSequenceGaps (DB-backed)', () => {
   it('emits SEQ_GAP when the new sequence skips forward (0000, 0001 → 0003)', async () => {
     hoisted.poolQuery.mockResolvedValueOnce(seqRows(['0000', '0001']));
 
-    const findings = await detectSequenceGaps('NDA215789', '0003');
+    const findings = await detectSequenceGaps('NDA215789', '0003', ORG);
 
     // Only SEQ_GAP — history itself is contiguous so no SEQ_HISTORICAL_GAP.
     const codes = findings.map(f => f.code);
@@ -176,7 +188,7 @@ describe('detectSequenceGaps (DB-backed)', () => {
     // (uses a non-duplicate value below the high-water mark).
     hoisted.poolQuery.mockResolvedValueOnce(seqRows(['0000', '0001', '0002', '0003']));
 
-    const findings = await detectSequenceGaps('BLA125742', '0002');
+    const findings = await detectSequenceGaps('BLA125742', '0002', ORG);
 
     expect(findings[0].code).toBe('SEQ_DUPLICATE');
     // No regression finding should land — duplicate short-circuits.
@@ -188,7 +200,7 @@ describe('detectSequenceGaps (DB-backed)', () => {
     // duplicated, so it should regress (not gap).
     hoisted.poolQuery.mockResolvedValueOnce(seqRows(['0000', '0001', '0003']));
 
-    const findings = await detectSequenceGaps('BLA125742', '0002');
+    const findings = await detectSequenceGaps('BLA125742', '0002', ORG);
 
     // We expect BOTH a regression for the new seq AND a historical-gap
     // warning for the 0002 hole the loop discovers.
@@ -207,7 +219,7 @@ describe('detectSequenceGaps (DB-backed)', () => {
     // value. The loop should still surface the historical hole as a warning.
     hoisted.poolQuery.mockResolvedValueOnce(seqRows(['0000', '0001', '0003']));
 
-    const findings = await detectSequenceGaps('IND999999', '0004');
+    const findings = await detectSequenceGaps('IND999999', '0004', ORG);
 
     const hist = findings.find(f => f.code === 'SEQ_HISTORICAL_GAP');
     expect(hist).toBeDefined();
@@ -235,7 +247,7 @@ describe('detectSequenceGaps (DB-backed)', () => {
     // ─────────────────────────────────────────────────────────────────────
     hoisted.poolQuery.mockRejectedValueOnce(new Error('connection terminated'));
 
-    const findings = await detectSequenceGaps('IND111222', '0000');
+    const findings = await detectSequenceGaps('IND111222', '0000', ORG);
 
     expect(findings).toHaveLength(1);
     const [f] = findings;
@@ -265,7 +277,7 @@ describe('detectSequenceGaps (DB-backed)', () => {
     // circuits before the empty-history branch runs.
     hoisted.poolQuery.mockRejectedValueOnce(new Error('FATAL: terminating connection due to administrator command'));
 
-    const findings = await detectSequenceGaps('NDA987654', '0042');
+    const findings = await detectSequenceGaps('NDA987654', '0042', ORG);
 
     // Only SEQ_QUERY_FAILED, never the misleading first-submission code.
     expect(findings).toHaveLength(1);
@@ -295,6 +307,7 @@ describe('detectSequenceGaps (DB-backed)', () => {
         applicationNumber: 'IND111222',
         sequenceNumber: '0000',
         submissionType: 'IND',
+        organizationId: ORG,
       },
       undefined,
     );
@@ -312,19 +325,24 @@ describe('detectSequenceGaps (DB-backed)', () => {
     // + 4-digit filter now applied in-process.
     hoisted.poolQuery.mockResolvedValueOnce(seqRows([]));
 
-    await detectSequenceGaps('IND123456', '0000');
+    await detectSequenceGaps('IND123456', '0000', ORG);
 
     expect(hoisted.poolQuery).toHaveBeenCalledTimes(2);
     const [primarySql, primaryParams] = hoisted.poolQuery.mock.calls[0];
     expect(primarySql).toMatch(/sequence_number/i);
     expect(primarySql).toMatch(/ectd_compilations/i);
     expect(primarySql).toMatch(/application_number\s*=\s*\$1/i);
-    expect(primaryParams).toEqual(['IND123456']);
+    // The tenant travels as $2 on BOTH sources. Asserting the parameter array,
+    // not just the SQL text, is what stops a scoped-looking query from being
+    // issued with the wrong value bound.
+    expect(primarySql).toMatch(/organization_id\s*=\s*\$2/i);
+    expect(primaryParams).toEqual(['IND123456', ORG]);
 
     const [secondarySql, secondaryParams] = hoisted.poolQuery.mock.calls[1];
     expect(secondarySql).toMatch(/ectd_submissions/i);
     expect(secondarySql).toMatch(/application_number\s*=\s*\$1/i);
-    expect(secondaryParams).toEqual(['IND123456']);
+    expect(secondarySql).toMatch(/organization_id\s*=\s*\$2/i);
+    expect(secondaryParams).toEqual(['IND123456', ORG]);
   });
 });
 
@@ -360,6 +378,7 @@ describe('validateEctdPackageHardened (composite)', () => {
     applicationNumber: 'IND123456',
     sequenceNumber: '0000',
     submissionType: 'IND',
+    organizationId: ORG,
     ...over,
   });
 

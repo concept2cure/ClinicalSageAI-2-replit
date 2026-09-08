@@ -1050,6 +1050,52 @@ describe('golden journey — device 510(k) eSTAR path', () => {
       expect(previewByKey.deviceCommonName).toMatchObject({ value: null, source: null, declaredSource: 'regulatory_programs.common_name' });
       expect(preview.body.sourcedCount).toBe(8);
 
+      /* A DECLARING ENTITY THAT IS NOT THE APPLICANT OF RECORD IS REFUSED.
+         The preview above is honest — the value IS sourced, from the
+         registration row. What it cannot see is what the FDA template does with
+         it: the Declaration of Conformity cell is derived from the APPLICANT
+         and cleared unconditionally the first time the applicant leaves any
+         field in that block, so the submitted form would attest in the
+         applicant's name, not the declaring entity's. The form has no field
+         that can hold a declaring entity different from the applicant.
+
+         This journey used to take the 200 here and then assert the delivered
+         PDF read back "Journey Declaring Entity, Inc." — pinning, as correct
+         behaviour, a Declaration of Conformity the form was about to rewrite.
+         The refusal is now recorded as its own step, because a golden journey
+         that only ever walks the happy path never shows the guard working. */
+      const wrongEntity = await asPrincipal(ORG, USER)(request(app).post('/api/510k/estar/official')).send({
+        meta: { id: 'K-JOURNEY-001', projectId: deviceProjectId, title: 'GlucoTrack CGM — official eSTAR (Phase 3)' },
+        type: '510k',
+        variant: 'device',
+        useProgramData: true,
+        data: {},
+      });
+      expect(wrongEntity.status, JSON.stringify(wrongEntity.body)).toBe(422);
+      expect(wrongEntity.body.error).toBe('ESTAR_NOT_PRODUCIBLE');
+      const refusal = (wrongEntity.body.blockers as string[]).join(' ');
+      expect(refusal).toContain('wrong legal entity');
+      expect(refusal).toContain('Journey Declaring Entity, Inc.');
+      // It names the applicant the form would substitute, and the remedy.
+      expect(refusal).toContain('Journey Workspace');
+      expect(wrongEntity.body.officialEstarPdf).toBe(false);
+      // Nothing was delivered or registered on a refusal.
+      expect(wrongEntity.body.downloadable_output_ref).toBeUndefined();
+
+      /* Corrected the way the refusal says to: the declaration follows the
+         applicant of record. The registration row still SOURCES the name — the
+         provenance assertions below prove it comes from
+         estar_registrations.declaration_company_name and not from the client
+         workspace fallback — it now just names the same legal entity the form
+         will attest in. */
+      const corrected = await asPrincipal(ORG, USER)(request(app).put('/api/510k/estar/registration')).send({
+        correspondentCompanyName: 'Journey Regulatory Partners',
+        declarationCompanyName: 'Journey Workspace',
+        declarationCompanyAddress: '1 Journey Way, Boston, MA 02110',
+      });
+      expect(corrected.status, JSON.stringify(corrected.body)).toBe(200);
+      expect(corrected.body.registration.declarationCompanyName).toBe('Journey Workspace');
+
       // The official form, from governed records only.
       const res = await asPrincipal(ORG, USER)(request(app).post('/api/510k/estar/official')).send({
         meta: { id: 'K-JOURNEY-001', projectId: deviceProjectId, title: 'GlucoTrack CGM — official eSTAR (Phase 3)' },
@@ -1083,7 +1129,7 @@ describe('golden journey — device 510(k) eSTAR path', () => {
       expect(back[map.deviceClassificationName.xfaSomPath!]).toBe('Continuous glucose monitor system');
       expect(back[map.regulationNumber.xfaSomPath!]).toBe('21 CFR 862.1355');
       expect(back[map.correspondentCompanyName.xfaSomPath!]).toBe('Journey Regulatory Partners');
-      expect(back[map.declarationCompanyName.xfaSomPath!]).toBe('Journey Declaring Entity, Inc.');
+      expect(back[map.declarationCompanyName.xfaSomPath!]).toBe('Journey Workspace');
       expect(back[map.declarationCompanyAddress.xfaSomPath!]).toBe('1 Journey Way, Boston, MA 02110');
       expect(back[map.deviceCommonName.xfaSomPath!] ?? '').toBe('');
 
