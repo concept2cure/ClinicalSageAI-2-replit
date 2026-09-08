@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-08T05:06:16.978Z",
+  "generatedAt": "2026-09-08T05:34:36.265Z",
   "git": {
-    "sha": "00b18ab01f99b46034556af2fa674b28828b8815",
+    "sha": "df661212bef56c08615cc5c8e5db9993a5a3cd04",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2339,7 +2339,7 @@
       },
       {
         "file": "server/routes/510k-estar-routes.ts",
-        "lines": 2037
+        "lines": 2063
       },
       {
         "file": "server/services/bioequivalence/bioequivalence-knowledge.ts",
