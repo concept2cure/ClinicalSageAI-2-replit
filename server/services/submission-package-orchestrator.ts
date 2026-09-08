@@ -1733,6 +1733,8 @@ export async function runOrchestrator(
       await runStep('package.validate', hashOutput(assembly), async () => {
         const context: HardenedValidationContext = {
           submissionId: inputs.submissionId,
+          // Tenant scope for the sequence-history read — required, never inferred.
+          organizationId: inputs.organizationId,
           // RegionCode ⊂ RegulatoryRegion (US/EU/JP/CA are members of both).
           // Cast is safe because OrchestratorInputs.region is the narrower
           // union; the validator accepts the wider union.
@@ -2399,6 +2401,8 @@ async function resumeOrchestratorRun(
       await runStep('package.validate', hashOutput(assembly), async () => {
         const context: HardenedValidationContext = {
           submissionId: inputs.submissionId,
+          // Tenant scope for the sequence-history read — required, never inferred.
+          organizationId: inputs.organizationId,
           region: assembly.region as HardenedValidationContext['region'],
           applicationNumber: assembly.applicationNumber,
           sequenceNumber: assembly.sequenceNumber,
@@ -2691,6 +2695,8 @@ async function resumeAwaitingSignature(
     if (!inputs.skipValidation) {
       const context: HardenedValidationContext = {
         submissionId: inputs.submissionId,
+        // Tenant scope for the sequence-history read — required, never inferred.
+        organizationId: inputs.organizationId,
         region: outputs.assembly.region as HardenedValidationContext['region'],
         applicationNumber: outputs.assembly.applicationNumber,
         sequenceNumber: outputs.assembly.sequenceNumber,

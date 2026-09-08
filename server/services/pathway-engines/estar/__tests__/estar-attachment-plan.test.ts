@@ -29,6 +29,7 @@ import {
   listEstarAttachmentSlots,
 } from '../estar-attachment-slots';
 import { ESTAR_FIELD_MAPS } from '../estar-field-map';
+import type { DeviceContentClient } from '../estar-content-leaves';
 
 const DIR = process.env.ESTAR_TEMPLATE_DIR ?? 'assets/estar-templates';
 const TEMPLATES = [
@@ -350,22 +351,22 @@ for (const t of TEMPLATES) {
 describe('createDeviceAttachmentResolver', () => {
   const PROGRAM = '2b6d4a80-6a35-4b1e-9f6e-3a9d2c1e5f70';
 
-  /* A c2c_documents row plus its sections, answered like the real pg client.
-     `query` is declared generic to match `DeviceContentClient` exactly: a
-     non-generic `Record<string, unknown>` return is NOT assignable to a generic
-     `<T>` one, so the un-parameterized version did not typecheck at any of the
-     four call sites below (TS2322) even though every test passed. */
-  function fakeClient(sections: Array<Record<string, unknown>>) {
+  /** A c2c_documents row plus its sections, answered like the real pg client. */
+  function fakeClient(sections: Array<Record<string, unknown>>): DeviceContentClient & { calls: string[] } {
     const calls: string[] = [];
     return {
       calls,
-      query: async <T = Record<string, unknown>>(text: string): Promise<{ rows: T[] }> => {
+      // Generic to match DeviceContentClient's own query<T>: a fixed
+      // Record<string, unknown> return type does not satisfy a generic method
+      // signature for arbitrary T, so a non-generic mock silently fails
+      // typecheck against the interface it stands in for.
+      query: async <T = Record<string, unknown>>(text: string) => {
         calls.push(text.replace(/\s+/g, ' ').trim().slice(0, 40));
         if (/FROM c2c_documents/.test(text)) {
-          return { rows: [{ id: 'doc-1', doc_type: 'k510' }] as unknown as T[] };
+          return { rows: [{ id: 'doc-1', doc_type: 'k510' }] as T[] };
         }
-        if (/FROM c2c_document_sections/.test(text)) return { rows: sections as unknown as T[] };
-        return { rows: [] };
+        if (/FROM c2c_document_sections/.test(text)) return { rows: sections as T[] };
+        return { rows: [] as T[] };
       },
     };
   }

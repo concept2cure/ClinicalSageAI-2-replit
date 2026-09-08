@@ -800,7 +800,14 @@ router.post('/validate/hardened', async (req: Request, res: Response) => {
   if (!parsed.success) {
     return res.status(400).json({ error: 'invalid_request', details: parsed.error.flatten() });
   }
-  const { leaves, backboneXml, ...context } = parsed.data;
+  const { leaves, backboneXml, ...body } = parsed.data;
+  /* Tenant scope comes from the JWT, never from the request body. The spread
+     above carries whatever the caller sent, so the authenticated org is applied
+     LAST and overwrites any `organizationId` a client tried to supply —
+     otherwise this endpoint would let a caller name the tenant whose sequence
+     history it reads. The request schema does not accept the field either; this
+     is the belt to that braces, because the two are edited independently. */
+  const context = { ...body, organizationId };
   try {
     const result = await validateEctdPackageHardened(leaves, context, backboneXml);
     await auditOrchestratorAccess(req, organizationId, 'orchestrator_validated_hardened', {
