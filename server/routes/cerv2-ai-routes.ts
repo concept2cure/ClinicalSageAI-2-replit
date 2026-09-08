@@ -21,6 +21,7 @@ import { emitTraceEvent, createTraceId } from '../services/generation-guard.js';
 // AI generation is routed through the unified AI client (gateway-backed).
 import { serverError } from '../lib/api-response';
 import { createScopedLogger } from '../utils/logger';
+import { requireEditorAccess } from '../middleware/orgMembership';
 
 const router = Router();
 
@@ -45,23 +46,6 @@ const aiRateLimiter = rateLimit({
 router.use(['/suggest', '/equivalence', '/benefit-risk', '/analyze-section'], aiRateLimiter);
 
 // ── Auth guard ─────────────────────────────────────────────────────────────────
-const allowedRoles = new Set(['admin', 'owner', 'editor', 'super_admin']);
-const requireEditorAccess = (req: any, res: any, next: () => void) => {
-  const role = String(req.userRole || req.user?.role || '').toLowerCase();
-  if (!role || !allowedRoles.has(role)) {
-    return res.status(403).json({ error: 'Insufficient permissions' });
-  }
-  // Verify organization context exists (prevents cross-org access)
-  const tenantOrg = req.tenantContext?.organizationId;
-  const userOrg = req.user?.organizationId || req.tenantId;
-  const orgId = tenantOrg || userOrg;
-  if (!orgId) {
-    return res.status(400).json({ error: 'Organization context required' });
-  }
-  // Attach resolved org for downstream use
-  req.resolvedOrganizationId = Number(orgId);
-  return next();
-};
 
 // ── Validation ─────────────────────────────────────────────────────────────────
 const validDocTypes = ['cerv2_510k', 'cerv2_pma', 'cerv2_cer'] as const;

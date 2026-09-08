@@ -55,8 +55,11 @@ export interface RegistrationRecord {
   completeness: {
     requiredRendered: number;
     requiredTotal: number;
-    /** required-rendered / required-total, as a percent. */
-    percent: number;
+    /**
+     * required-rendered / required-total, as a percent. NULL when no required
+     * fields exist — there is then no ratio and no assessment.
+     */
+    percent: number | null;
   };
   /** True only when every required field is rendered — the record is ready to submit. */
   registrable: boolean;
@@ -223,9 +226,19 @@ function assemble(registry: RegistrationRegistry, standard: string, modules: Reg
     completeness: {
       requiredRendered,
       requiredTotal,
-      percent: requiredTotal === 0 ? 100 : Math.round((requiredRendered / requiredTotal) * 100),
+      /* `requiredTotal === 0 ? 100` scored an empty field set as fully
+         rendered, and `requiredRendered === requiredTotal` is 0 === 0, so the
+         record also came back registrable — ready to submit to
+         ClinicalTrials.gov or CTIS with nothing in it.
+
+         Defence in depth, and said plainly: both projectors build fixed module
+         lists with required fields, so this is not reachable through
+         projectRegistration today and is NOT covered by a test that has been
+         seen to fail. It is here so a future registry, or a projector that
+         returns no modules, cannot be reported as a submittable record. */
+      percent: requiredTotal === 0 ? null : Math.round((requiredRendered / requiredTotal) * 100),
     },
-    registrable: requiredRendered === requiredTotal,
+    registrable: requiredTotal > 0 && requiredRendered === requiredTotal,
     projectedFromObject: true,
   };
 }

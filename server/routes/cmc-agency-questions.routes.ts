@@ -34,17 +34,24 @@ import { Router, type Request, type Response } from 'express';
 import { z } from 'zod';
 
 import { query as q } from '../db.js';
-import { getSecureOrgId } from '../utils/tenantContext.js';
+import { resolveOrgId } from '../types/auth-request.js';
 import { createScopedLogger } from '../utils/logger.js';
 
 const logger = createScopedLogger('cmc-agency-questions');
 
-/** Resolve the JWT-derived org id as the integer organization_id, or null. */
-function resolveTenantId(req: Request): number | null {
-  const orgId = getSecureOrgId(req);
-  const tenantId = orgId == null ? NaN : Number(orgId);
-  return Number.isFinite(tenantId) ? tenantId : null;
-}
+// The tenant is resolved by the canonical resolveOrgId (server/types/auth-request),
+// called directly at each handler. This file previously wrapped getSecureOrgId in a
+// local `resolveTenantId`, which ci:tenant-resolvers flags — a second named answer to
+// "which organization is this" is an isolation decision, not a helper, and the next
+// one will be spelled differently again. resolveOrgId already returns number | null,
+// so the wrapper was only doing a String -> Number round trip.
+//
+// Both read exclusively from JWT-derived request fields and neither trusts
+// x-organization-id; getSecureOrgId additionally consulted req.tenant (set by
+// middleware/tenantIsolation) and logged a header/JWT mismatch. These routes are
+// mounted through bootstrap/register-core-routes behind the /api auth gate, which
+// populates req.user.organizationId — the first source resolveOrgId reads — so the
+// resolved value is unchanged here.
 
 /** The lifecycle the board's open filter reads (OPEN/DRAFTED/IN_REVIEW = open). */
 const STATUSES = ['OPEN', 'DRAFTED', 'IN_REVIEW', 'CLOSED'] as const;
@@ -142,7 +149,7 @@ export default function createCmcAgencyQuestionRoutes(): Router {
   const router = Router();
 
   router.get('/', async (req: Request, res: Response) => {
-    const tenantId = resolveTenantId(req);
+    const tenantId = resolveOrgId(req);
     if (tenantId == null) {
       return res.status(401).json({ success: false, error: 'Organization context required' });
     }
@@ -185,7 +192,7 @@ export default function createCmcAgencyQuestionRoutes(): Router {
   });
 
   router.post('/', async (req: Request, res: Response) => {
-    const tenantId = resolveTenantId(req);
+    const tenantId = resolveOrgId(req);
     if (tenantId == null) {
       return res.status(401).json({ success: false, error: 'Organization context required' });
     }
@@ -231,7 +238,7 @@ export default function createCmcAgencyQuestionRoutes(): Router {
   });
 
   router.patch('/:id', async (req: Request, res: Response) => {
-    const tenantId = resolveTenantId(req);
+    const tenantId = resolveOrgId(req);
     if (tenantId == null) {
       return res.status(401).json({ success: false, error: 'Organization context required' });
     }

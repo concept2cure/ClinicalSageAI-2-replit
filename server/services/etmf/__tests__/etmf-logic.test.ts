@@ -66,8 +66,37 @@ describe('evaluateCompleteness', () => {
     expect(r.verdict).toBe('minor_gaps');
     expect(r.gaps).toHaveLength(1);
   });
-  it('returns 100 when nothing is required', () => {
-    expect(evaluateCompleteness([]).completenessPct).toBe(100);
+  /* This test used to read "returns 100 when nothing is required", and it was
+     the defect written down. `present === totalRequired` is 0 === 0, so an
+     empty required set also produced the verdict `inspection_ready` — a trial
+     whose TMF index holds no expected artifacts was reported to the sponsor,
+     and by AnA in conversation, as "TMF 100% complete — inspection ready".
+     Nothing had been indexed, so nothing had been checked. */
+  it('an empty required set is not-assessed — never 100% and never inspection_ready', () => {
+    const r = evaluateCompleteness([]);
+    expect(r.completenessPct).toBeNull();
+    expect(r.verdict).toBe('not_assessed');
+    expect(r.totalRequired).toBe(0);
+  });
+
+  it('is also not-assessed when every artifact is unexpected or not applicable', () => {
+    const r = evaluateCompleteness([
+      { zone: 1, artifactName: 'Trial Master File Plan', expected: false, completenessRequired: true, status: 'missing' },
+      { zone: 2, artifactName: 'IB', expected: true, completenessRequired: false, status: 'final' },
+      { zone: 3, artifactName: 'Site agreement', expected: true, completenessRequired: true, status: 'not_applicable' },
+    ]);
+    expect(r.verdict).toBe('not_assessed');
+    expect(r.completenessPct).toBeNull();
+  });
+
+  /* One required artifact, and it is final: that IS an assessment, and it
+     reads clear. The not-assessed state must not swallow a real result. */
+  it('a single required artifact that is final does read inspection_ready', () => {
+    const r = evaluateCompleteness([
+      { zone: 1, artifactName: 'Signed protocol', expected: true, completenessRequired: true, status: 'final' },
+    ]);
+    expect(r.completenessPct).toBe(100);
+    expect(r.verdict).toBe('inspection_ready');
   });
 
   it('never reports inspection_ready while a required artifact is missing, even when the percentage rounds to 100', () => {

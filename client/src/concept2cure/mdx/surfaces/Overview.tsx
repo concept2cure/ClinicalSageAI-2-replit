@@ -8,6 +8,7 @@ import { I } from '../icons';
 import { MDX_HEALTH, type Program, type DueTone } from '../data/programs';
 import { AskAnaChip } from './AskAnaChip';
 import { ClientReviewZone } from '../components/ClientReviewZone';
+import { useSampleMode } from '../components/DataGate';
 
 // Must cover every ProgramPathway member (k510 | pma | cer | ivdr); `ivdr` was
 // added to the union but not here, so indexing failed (TS7053). Ledger C-22.
@@ -25,8 +26,8 @@ export interface OverviewProps {
 /**
  * Live aggregate health KPIs derived from the same source-of-truth program
  * list, so what the user sees in the strip matches what lands in the cards
- * below. Falls back to the kit's MDX_HEALTH constants when the live list
- * is null (loading state — keeps the KPI strip from flashing empty).
+ * below. An empty list derives an empty-tenant strip; the kit's MDX_HEALTH
+ * constants render only in sample mode.
  */
 function deriveLiveHealth(programs: Program[]): typeof MDX_HEALTH {
   const total = programs.length;
@@ -56,9 +57,13 @@ function deriveLiveHealth(programs: Program[]): typeof MDX_HEALTH {
 
 export function Overview({ programs: sourcePrograms, onOpenProgram, onAskAna }: OverviewProps) {
   /* Health KPI strip is derived from the SAME source as the cards so the
-     two never disagree. When the parent passes the kit fixture during the
-     initial fetch, MDX_HEALTH renders so the strip doesn't flash empty. */
-  const sourceHealth = sourcePrograms.length > 0
+     two never disagree — including for an empty tenant, whose honest strip
+     is "0 programs". MDX_HEALTH ("Active programs 14 · Down 3 pts vs last
+     week") appears only when the user has switched sample mode on; it used
+     to stand in for every empty list, which is the fallback the gate exists
+     to forbid. */
+  const sampleOn = useSampleMode();
+  const sourceHealth = sourcePrograms.length > 0 || !sampleOn
     ? deriveLiveHealth(sourcePrograms)
     : MDX_HEALTH;
 
@@ -231,19 +236,11 @@ export function Overview({ programs: sourcePrograms, onOpenProgram, onAskAna }: 
       {sourcePrograms.length === 0 && programs.length === 0 ? (
         <div
           className="empty-state"
-          style={{
-            padding: '40px 24px',
-            textAlign: 'center',
-            background: 'var(--bg-050)',
-            border: '1px dashed var(--border-100)',
-            borderRadius: 8,
-            color: 'var(--text-200)',
-          }}
         >
-          <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-100)', marginBottom: 6 }}>
+          <div className="empty-state-t">
             No programs yet
           </div>
-          <div style={{ fontSize: 12, marginBottom: 14 }}>
+          <div className="empty-state-s">
             Programs you create appear here. Start a 510(k), PMA, or CER program from the workflow above.
           </div>
           <button

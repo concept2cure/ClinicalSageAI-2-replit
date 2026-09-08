@@ -26,6 +26,7 @@ import {
 } from '../services/cmc/cmc-change-control-service';
 import auditService from '../services/auditService';
 import { writeThroughChangeControl } from '../services/cmc-write-through';
+import { observeWriteThroughFailure } from '../services/cmc/link-to-module3';
 
 const router = Router();
 
@@ -107,9 +108,11 @@ router.post('/', async (req: Request, res: Response) => {
        governed store never did, so a change proposed HERE never marked
        3.2.P.3 / impacted sections stale — the same conceptual event with two
        different downstream truths. When the caller states which CMC project
-       the change belongs to, the write-through fires and its outcome is
-       REPORTED (writeThrough* swallows failures into null by design — the
-       meta field is what keeps that from being silent here). */
+       the change belongs to, the write-through is awaited and its outcome
+       REPORTED: the meta field says whether it recorded, and a failed write
+       is metered like every other register's (link-to-module3). The change
+       itself is never rolled back — it is real recorded data whether or not
+       the dossier layer accepted it this second. */
     let module3WriteThrough: 'recorded' | 'failed' | 'skipped_no_project' = 'skipped_no_project';
     const cmcProjectId = b.cmcProjectId != null ? String(b.cmcProjectId).trim() : '';
     if (cmcProjectId) {
@@ -126,7 +129,12 @@ router.post('/', async (req: Request, res: Response) => {
         },
         userId != null ? String(userId) : undefined,
       );
-      module3WriteThrough = wt ? 'recorded' : 'failed';
+      if (wt.ok) {
+        module3WriteThrough = 'recorded';
+      } else {
+        module3WriteThrough = 'failed';
+        observeWriteThroughFailure('write_through_change_control', change.id, wt.reason);
+      }
     }
 
     // Return the projected (classified) view so the caller sees the computed verdict.

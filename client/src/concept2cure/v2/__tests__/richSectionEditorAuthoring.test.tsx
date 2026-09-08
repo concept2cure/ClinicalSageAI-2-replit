@@ -91,4 +91,25 @@ describe('RichSectionEditor — authoring affordances (BP-W1-1)', () => {
     expect(ta.value).toBe(stored);
     expect(onSave).not.toHaveBeenCalled();
   });
+  it('plain-text content the parse would rewrite (a space-aligned column) opens in source mode', async () => {
+    /* format: 'text' used to skip the fidelity gate on the premise that plain
+       text is always representable. The parse collapses runs of spaces, so a
+       space-aligned table was silently rewritten on the first save. */
+    const stored = 'Dose      Subjects\n10 mg     12\n20 mg     11';
+    const onSave = vi.fn();
+    render(<RichSectionEditor value={stored} format="text" onSave={onSave} storageKey={null} />);
+    await waitFor(() => {
+      expect(document.querySelector('textarea.rse-source')).toBeTruthy();
+    });
+    expect((document.querySelector('textarea.rse-source') as HTMLTextAreaElement).value).toBe(stored);
+    expect(onSave).not.toHaveBeenCalled();
+  });
+
+  it('ordinary plain text still opens rich', async () => {
+    render(<RichSectionEditor value={'First paragraph.\n\nSecond paragraph.'} format="text" onSave={vi.fn()} storageKey={null} />);
+    await waitFor(() => {
+      expect(document.querySelector('.ProseMirror')).toBeTruthy();
+    });
+    expect(document.querySelector('textarea.rse-source')).toBeNull();
+  });
 });

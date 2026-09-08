@@ -67,7 +67,7 @@ const AE_SYSTEMS: AeSystem[] = [
     checks: ['Study → tabulated-summary value check', 'SEND domain conformance reference', 'Required 2.6.x subsection map', 'Units → controlled terminology mapping'] },
   { id: 'csr', loc: 'ICH E3', mod: 'Module 5', t: 'Clinical Study Report', tmpl: true, multi: ['tables', 'figures'],
     sub: 'Full ICH E3 CSR from the SAP, TLF shells and the locked database.',
-    guarantees: ['14-section ICH E3 structure enforced', 'TLFs generated from ADaM and placed in-text', '§11 efficacy narrated from the pre-specified analyses', 'Protocol-deviation and disposition tables auto-built'],
+    guarantees: ['16-section ICH E3 structure enforced', 'TLFs generated from ADaM and placed in-text', '§11 efficacy narrated from the pre-specified analyses', 'Protocol-deviation and disposition tables auto-built'],
     checks: ['TLF ↔ dataset reconciliation', 'Section-14 required-table presence', 'Analysis population consistency', 'Cross-reference integrity (in-text ↔ appendix)'] },
   { id: 'proto', loc: 'ICH M11', mod: 'Module 5', t: 'Clinical Protocol', tmpl: true, multi: ['tables'],
     sub: 'ICH M11 protocol — objectives, eligibility, SoA, statistics, risk.',
@@ -214,7 +214,7 @@ export function AuthoringEngine({ onAsk, onNav }: SurfaceViewProps) {
       <div className="reg-head" style={{ marginBottom: 6 }}>
         <div>
           <div className="reg-eyebrow">Biotech & Pharma {I.dot} authoring</div>
-          <h1 className="reg-title">AnA Authoring Engine</h1>
+          <h1 className="reg-title">AnA authoring engine</h1>
           <p className="reg-sub">One route from raw data to a final draft across the CTD. Each document type has its own drafting system that works from evidence you have locked, cites each claim to its source, and surfaces anything it could not ground — across text, tables, figures and graphs.</p>
         </div>
         <button className="reg-ask" onClick={() => ask('Draft my next CTD document with the right document-type system, grounded on the locked evidence')}>{I.sparkles} Draft with AnA</button>
@@ -336,7 +336,7 @@ export function AuthoringEngine({ onAsk, onNav }: SurfaceViewProps) {
               the three states it can actually be in: still loading, failed to
               read, and genuinely none. */}
           {tpl.loading ? (
-            <div className="scaf-note" style={{ padding: '18px 10px' }}>Loading your templates…</div>
+            <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>Loading your templates…</div>
           ) : tpl.error ? (
             <ErrorState
               title="Couldn't load your templates"

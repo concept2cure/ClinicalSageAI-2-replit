@@ -16,7 +16,7 @@
  * contains one is not well-formed and a regional validator rejects the whole
  * submission. Written as escape sequences; the source carries no raw bytes.
  */
-const XML_ILLEGAL_CHARS = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F-\u009F\uFFFE\uFFFF]/g;
+export const XML_ILLEGAL_CHARS = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F-\u009F\uFFFE\uFFFF]/g;
 
 /** Escape the five XML predefined entities in attribute/text content, after
  *  stripping characters XML cannot carry at all (XML_ILLEGAL_CHARS). */

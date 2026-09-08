@@ -93,13 +93,36 @@ export async function loadLatestPriorManifest(
 }
 
 /**
- * Load the manifest of the MOST RECENT sequence strictly before `currentSequence`
- * for this SUBMISSION — keyed on the stable `submission_id` (submissions.id)
- * rather than the fragile `application_number`, which some compile paths set to a
- * sequence-specific fallback that could never align across sequences. This is the
- * canonical lifecycle lookup: given the submission being compiled and the sequence
- * number about to ship, it returns the exact leaves the predecessor published.
- * Organization-scoped; empty when there is no prior sequence.
+ * Load the EFFECTIVE prior state of this SUBMISSION as of `currentSequence` —
+ * keyed on the stable `submission_id` (submissions.id) rather than the fragile
+ * `application_number`, which some compile paths set to a sequence-specific
+ * fallback that could never align across sequences. This is the canonical
+ * lifecycle lookup. Organization-scoped; empty when there is no prior sequence.
+ *
+ * Each stored `leaf_manifest` is a PER-SEQUENCE DELTA: the packager snapshots
+ * only the leaves that sequence actually shipped, and `computeLifecycleOperations`
+ * deliberately omits unchanged leaves. But its consumer treats what this function
+ * returns as the COMPLETE state of the application on file at the agency ("a
+ * prior leaf the new sequence does not mention is still on file, unchanged").
+ *
+ * Reading only the single most recent prior manifest broke that invariant from
+ * sequence 0002 onward: a leaf filed in 0000 and not re-filed in 0001 was absent
+ * from the prior state, so the diff saw no predecessor and emitted
+ * `operation="new"` with no `modified-file` — telling the agency the document had
+ * never been filed under this application, while the version it was meant to
+ * supersede stayed current. So fold EVERY preceding sequence, oldest to newest:
+ * a later filing of the same leaf supersedes an earlier one, and a leaf whose
+ * last operation was `delete` is off file and drops out. Each surviving leaf
+ * carries the sequence it was actually last published in, so its `modified-file`
+ * pointer traverses to the folder that really holds it.
+ *
+ * Folding at READ time (rather than persisting a cumulative snapshot at write
+ * time) also repairs manifests already stored as deltas, needs no backfill, and
+ * avoids a read-modify-write race between concurrent compiles.
+ *
+ * Sequence numbers are zero-padded fixed-width strings, so the SQL `<` filter and
+ * the ascending sort are both lexical — the same assumption the sibling loaders
+ * document and rely on.
  */
 export async function loadLatestPriorManifestBySubmission(
   pool: PoolLike,
@@ -116,13 +139,27 @@ export async function loadLatestPriorManifestBySubmission(
         AND submission_id = $2
         AND sequence_number < $3
         AND leaf_manifest IS NOT NULL
-      ORDER BY sequence_number DESC, compiled_at DESC NULLS LAST, id DESC
-      LIMIT 1`,
+      ORDER BY sequence_number ASC, compiled_at ASC NULLS FIRST, id ASC`,
     [organizationId, submissionId, currentSequence],
   );
-  if (!res?.rows?.length) return { priorSequenceNumber: '', leaves: [] };
-  return {
-    priorSequenceNumber: String(res.rows[0].sequence_number ?? ''),
-    leaves: manifestToPriorLeaves(res.rows[0].leaf_manifest),
-  };
+  const rows = res?.rows ?? [];
+  if (!rows.length) return { priorSequenceNumber: '', leaves: [] };
+
+  const effective = new Map<string, PriorLeaf>();
+  let priorSequenceNumber = '';
+  for (const row of rows) {
+    const seq = String(row.sequence_number ?? '');
+    if (seq) priorSequenceNumber = seq; // rows are ascending: the last is the newest
+    for (const leaf of manifestToPriorLeaves(row.leaf_manifest)) {
+      // Same identity the lifecycle diff uses (leafKey, else section + filename).
+      const key = leaf.leafKey ?? `${leaf.ctdSection}/${leaf.fileName}`;
+      if ((leaf.operation ?? '').trim().toLowerCase() === 'delete') {
+        effective.delete(key); // withdrawn at the agency — no longer on file
+        continue;
+      }
+      effective.set(key, { ...leaf, sequenceNumber: seq });
+    }
+  }
+
+  return { priorSequenceNumber, leaves: [...effective.values()] };
 }

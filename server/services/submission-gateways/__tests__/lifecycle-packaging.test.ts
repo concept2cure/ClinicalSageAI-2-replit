@@ -47,7 +47,9 @@ describe('lifecycle packaging — manifest → operator → canonical packager',
       ]);
       const prior = manifestToPriorLeaves(priorManifest);
 
-      // --- Desired leaves for 0001 (real files; general changed, old-manufacture dropped).
+      // --- Desired leaves for 0001 (real files; general changed, old-manufacture
+      // WITHDRAWN by declaration). A leaf merely absent from a follow-up sequence
+      // is unchanged and still on file; only a declared withdrawal is a delete.
       const desired = [
         {
           ctdSection: '3.2.S.1', fileName: 'general.pdf', md5: md5(generalBytes),
@@ -56,6 +58,10 @@ describe('lifecycle packaging — manifest → operator → canonical packager',
         {
           ctdSection: '3.2.S.3', fileName: 'stability.pdf', md5: md5(newDocBytes),
           title: 'Drug Substance — Stability', sourcePath: newDocPath,
+        },
+        {
+          ctdSection: '3.2.S.2', fileName: 'old-manufacture.pdf', md5: '',
+          title: 'Drug Substance — Manufacture (withdrawn)', sourcePath: '', withdraw: true,
         },
       ];
 
@@ -68,6 +74,7 @@ describe('lifecycle packaging — manifest → operator → canonical packager',
       // --- Package the computed leaves through the canonical publisher.
       const bundle = await packageEctdSubmission({
         region: 'fda', applicationId: '123456', sequence: '0001', submissionType: 'original',
+        fda: { applicationType: 'nda' }, // a package must declare what it is; this used to default to NDA silently
         sponsorId: 'D', sponsorName: 'S', productName: 'P', outputDir: path.join(work, 'out'),
         environment: 'staging', leaves: life.leaves as EctdLeaf[],
       });
@@ -117,6 +124,85 @@ describe('lifecycle packaging — manifest → operator → canonical packager',
       await fs.rm(work, { recursive: true, force: true });
     }
   });
+
+  it('every modified-file RESOLVES to a file the prior sequence actually shipped — Module 1 included', async () => {
+    /* The pointer and the xlink:href sit on the same element and resolve against
+       the same base: the document they are written into. index.xml is at the
+       sequence root, so a root-relative pointer is right there — which is why
+       every Module 2-5 case passed. The FDA regional backbone is two directories
+       down at m1/us/us-regional.xml, and the same pointer resolved from THERE
+       landed at 0001/m1/0000/m1/us/1-2/cover.pdf: a path in no layout, on the
+       cover letter, the forms and everything else in Module 1.
+
+       So this does not assert a string. It builds 0000 for real, builds 0001
+       against it, and resolves every pointer in every backbone against the
+       entries 0000 actually contains. */
+    const work = await fs.mkdtemp(path.join(os.tmpdir(), 'ectd-modfile-'));
+    try {
+      const write = async (name: string, body: string) => {
+        const p = path.join(work, name);
+        await fs.writeFile(p, pdf(body));
+        return { p, bytes: pdf(body) };
+      };
+      const coverV1 = await write('cover-v1.pdf', 'cover v1');
+      const overviewV1 = await write('overview-v1.pdf', 'overview v1');
+      const base = {
+        region: 'fda' as const, applicationId: '123456', submissionType: 'original',
+        fda: { applicationType: 'nda' }, sponsorId: 'D', sponsorName: 'S', productName: 'P',
+        environment: 'staging' as const,
+      };
+      const seq0 = await packageEctdSubmission({
+        ...base, sequence: '0000', outputDir: path.join(work, 'out0'),
+        leaves: [
+          { operation: 'new', ctdSection: '1.2', fileName: 'cover.pdf', md5: md5(coverV1.bytes), title: 'Cover Letter', sourcePath: coverV1.p },
+          { operation: 'new', ctdSection: '2.5', fileName: 'overview.pdf', md5: md5(overviewV1.bytes), title: 'Clinical Overview', sourcePath: overviewV1.p },
+        ],
+      });
+      const zip0 = await JSZip.loadAsync(await fs.readFile(seq0.path));
+      const filesIn0000 = new Set(Object.keys(zip0.files).filter((n) => !zip0.files[n].dir));
+
+      // 0001 replaces both, so both carry a modified-file — one in Module 1,
+      // one in Module 2.
+      const coverV2 = await write('cover-v2.pdf', 'cover v2');
+      const overviewV2 = await write('overview-v2.pdf', 'overview v2');
+      const prior = manifestToPriorLeaves(buildLeafManifest(seq0.leafManifest!.map((m) => ({
+        ctdSection: m.ctdSection, href: m.href, md5: m.md5, fileName: m.fileName, title: m.title,
+      }))));
+      const life = computeLifecycleOperations(prior, [
+        { ctdSection: '1.2', fileName: 'cover.pdf', md5: md5(coverV2.bytes), title: 'Cover Letter', sourcePath: coverV2.p },
+        { ctdSection: '2.5', fileName: 'overview.pdf', md5: md5(overviewV2.bytes), title: 'Clinical Overview', sourcePath: overviewV2.p },
+      ], { priorSequencePrefix: computeSequencePrefix('0000') });
+      expect(life.summary).toMatchObject({ replace: 2, new: 0 });
+
+      const seq1 = await packageEctdSubmission({
+        ...base, sequence: '0001', fda: { applicationType: 'nda', submissionType: 'Efficacy Supplement' },
+        outputDir: path.join(work, 'out1'), leaves: life.leaves as EctdLeaf[],
+      });
+      const zip1 = await JSZip.loadAsync(await fs.readFile(seq1.path));
+
+      // Walk every backbone and resolve every pointer it carries, from the
+      // directory that backbone lives in.
+      const backbones = Object.keys(zip1.files).filter((n) => n === 'index.xml' || n.endsWith('us-regional.xml'));
+      expect(backbones).toContain('index.xml');
+      expect(backbones.some((b) => b.endsWith('us-regional.xml'))).toBe(true);
+      let checked = 0;
+      for (const backbone of backbones) {
+        const xml = await zip1.file(backbone)!.async('string');
+        for (const m of xml.matchAll(/modified-file="([^"]+)"/g)) {
+          // The sequences are sibling folders, so resolve inside a notional
+          // parent: 0001/<backbone dir>/<pointer> must land in 0000/.
+          const from = path.posix.join('0001', path.posix.dirname(backbone));
+          const landed = path.posix.normalize(path.posix.join(from, m[1]));
+          expect(landed.startsWith('0000/'), `${backbone} → ${m[1]} resolved to ${landed}`).toBe(true);
+          expect(filesIn0000.has(landed.slice('0000/'.length)), `${backbone} → ${m[1]} resolved to ${landed}, which sequence 0000 does not contain`).toBe(true);
+          checked += 1;
+        }
+      }
+      expect(checked, 'both replaced leaves carry a pointer').toBe(2);
+    } finally {
+      await fs.rm(work, { recursive: true, force: true });
+    }
+  }, 60_000);
 
   it('exposes a per-sequence leafManifest that round-trips into prior leaves for lifecycle diffing', async () => {
     const { manifestToPriorLeaves, buildLeafManifest } = await import('../../ectd/sequence-manifest');
@@ -226,6 +312,7 @@ describe('lifecycle packaging — manifest → operator → canonical packager',
       ];
       const bundle = await packageEctdSubmission({
         region: 'fda', applicationId: '123456', sequence: '0001', submissionType: 'original',
+        fda: { applicationType: 'nda' }, // a package must declare what it is; this used to default to NDA silently
         sponsorId: 'D', sponsorName: 'S', productName: 'P', outputDir: path.join(work, 'out'),
         environment: 'staging', leaves,
       });

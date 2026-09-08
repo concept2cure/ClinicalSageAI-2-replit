@@ -27,6 +27,16 @@ import { GET_BIOTECH_PROGRAM_STATUS } from './biotech-program.js';
 // audit → review → placement → provenance → readiness) over concept2cure_artifacts.
 // Handler registered from document-spine.ts via the inject-and-sibling pattern.
 import { COMMIT_DOCUMENT_REVISION } from './document-spine.js';
+// Project-folder discovery + whole-document read + comprehension record +
+// semantic catalog search. Handlers registered from document-catalog-tools.ts
+// (inject-and-sibling).
+import {
+  FILE_CHAT_UPLOAD_TO_VAULT,
+  LIST_PROJECT_DOCUMENTS,
+  READ_PROJECT_DOCUMENT,
+  CATALOG_PROJECT_DOCUMENT,
+  SEARCH_PROJECT_DOCUMENTS,
+} from './document-catalog-tool-defs.js';
 // BLA biologics + CTD nonclinical/clinical tool definitions extracted to their
 // own module (decomposition tranche 2). Imported so the enabled-tools array can
 // reference them exactly as before.
@@ -510,6 +520,14 @@ import { DIGITAL_HEALTH_TOOLS } from './digitalHealthTools';
 import { VACCINE_TOOLS } from './vaccineTools';
 import { BENEFIT_RISK_TOOLS } from './benefitRiskTools';
 import { POST_APPROVAL_TOOLS } from './postApprovalTools';
+// Region + gateway taxonomy — the ONE source of truth these two tool schemas
+// advertise, shared with the handlers in AnaToolExecutor so the advertised
+// enum and the accepted value cannot drift. See region-constants.ts for why.
+import {
+  ALL_GATEWAY_NAMES,
+  ALL_REGIONS,
+  agencyList,
+} from '../submission-gateways/region-constants.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Evidence & literature tool definitions moved to
@@ -846,7 +864,7 @@ export const GENERATE_DOCUMENT: AnaTool = {
       document_type: {
         type: 'string',
         description: 'Type of document to generate',
-        enum: ['csr', 'ctd_module1', 'ctd_module2', 'ctd_module3', 'ctd_module4', 'ctd_module5', 'cer', '510k', 'pma', 'protocol', 'sap', 'ib', 'icsr', 'ectd_backbone'],
+        enum: ['csr', 'ctd_module1', 'ctd_module2', 'ctd_module3', 'ctd_module4', 'ctd_module5', 'cer', '510k', 'pma', 'protocol', 'sap', 'ib'],
       },
       title: {
         type: 'string',
@@ -1263,14 +1281,15 @@ export const FETCH_TEMPLATE_AND_FILL: AnaTool = {
 export const PACKAGE_ECTD_FOR_REGION: AnaTool = {
   name: 'package_ectd_for_region',
   description:
-    "Assemble a regional eCTD zip (FDA us-regional.xml / EMA eu-regional.xml / PMDA jp-regional.xml / Health Canada ca-regional.xml) from a set of CTD leaves. Produces the correct Module 1 folder structure per region, computes SHA-256, and returns the bundle metadata for downstream transmit. Use after AnA has gathered the leaf manifest for a submission.",
+    `Assemble a regional eCTD zip from a set of CTD leaves, for any of the twelve regions the gateway layer supports: ${agencyList()}. Produces that region's Module 1 folder structure and regional backbone (us-regional.xml / eu-regional.xml / jp-regional.xml / ca-regional.xml / …), computes SHA-256, and returns the bundle metadata for downstream transmit. The bundle carries a regionalBackbone status recording whether the backbone is built to the agency's own Module 1 structure or reuses another region's as a placeholder — read it before telling a user a package is agency-conformant. Use after AnA has gathered the leaf manifest for a submission.`,
   input_schema: {
     type: 'object',
     properties: {
-      region:          { type: 'string', enum: ['fda', 'ema', 'pmda', 'ca'] },
+      region:          { type: 'string', enum: [...ALL_REGIONS] },
       application_id:  { type: 'string', description: 'IND/NDA number (FDA), procedure number (EMA), application number (PMDA), dossier id (Health Canada).' },
       sequence:        { type: 'string', description: '4-digit submission sequence, e.g. 0001.' },
       submission_type: { type: 'string', description: 'original | amendment | response | annual_report | safety.' },
+      application_type: { type: 'string', description: 'REQUIRED for region "fda": what is being filed — nda | snda | anda | bla | ind | dmf. The us-regional backbone carries this as the application-type attribute, and it is a statement about the filing, so the packager refuses to guess it. Device pathways (510k, de_novo, pma) have no eCTD Module 1 code and are not filed on this backbone.' },
       sponsor_id:      { type: 'string', description: 'DUNS / EMA org id / PMDA applicant id.' },
       sponsor_name:    { type: 'string' },
       product_name:    { type: 'string' },
@@ -1302,12 +1321,12 @@ export const TRANSMIT_SUBMISSION: AnaTool = {
   // reported to the user as a failure. It does not transmit — see the handler
   // in AnaToolExecutor.ts and the gateway guard in submission-gateways/index.ts.
   description:
-    'Explains how to transmit an already-packaged bundle to a regulatory gateway (FDA ESG, EMA CESP, EMA EUDAMED, PMDA Gateway, Health Canada CESG). This tool does NOT transmit: agency transmission is irreversible and requires a person to re-authenticate, give a reason, pass the eCTD structural gate and apply a Part 11 signature on the Gateway transmittals surface. Call it to hand the user the exact next step and the bundle identifiers they will need. Everything before the wire — packaging, digest verification, status checks, acknowledgements — is available as separate tools.',
+    `Explains how to transmit an already-packaged bundle to any of the thirteen regulatory gateways the registry binds: FDA ESG, EMA CESP, EMA EUDAMED, PMDA Gateway, Health Canada CESG, MHRA Product Submissions (UK), NMPA / CDE (China), TGA eBusiness Services (Australia), Swissmedic eGateway, ANVISA SOLICITA (Brazil), CDSCO SUGAM (India), MFDS dBio (South Korea) and HSA PRISM (Singapore). This tool does NOT transmit: agency transmission is irreversible and requires a person to re-authenticate, give a reason, pass the eCTD structural gate and apply a Part 11 signature on the Gateway transmittals surface. Call it to hand the user the exact next step and the bundle identifiers they will need. Everything before the wire — packaging, digest verification, status checks, acknowledgements — is available as separate tools.`,
   input_schema: {
     type: 'object',
     properties: {
-      region:      { type: 'string', enum: ['fda', 'ema', 'pmda', 'ca'] },
-      gateway:     { type: 'string', enum: ['esg', 'cesp', 'eudamed', 'pmda_gateway', 'hc_cesg'] },
+      region:      { type: 'string', enum: [...ALL_REGIONS] },
+      gateway:     { type: 'string', enum: [...ALL_GATEWAY_NAMES] },
       environment: { type: 'string', enum: ['staging', 'production'], description: "Default 'production'." },
       bundle_path: { type: 'string', description: 'Absolute path to the package on disk.' },
       bundle_sha256: { type: 'string', description: '64-char hex SHA-256.' },
@@ -1437,17 +1456,27 @@ const START_INTELLIGENCE_FLOW: AnaTool = {
   name: 'start_intelligence_flow',
   description:
     'Start an intelligence questioning flow for a regulatory document type. ' +
-    'When a user wants to build a protocol, CSR, IND, SOP, 510(k), CER, or other regulatory document, ' +
+    'When a user wants to build a protocol, CSR, IND, SOP, 510(k), CER, CMC specification, or other regulatory document, ' +
     'invoke this tool to launch the guided questioning flow. The engine will return structured questions ' +
-    'that the user answers step by step, with branching logic, validation, and regulatory issue detection.',
+    'that the user answers step by step, with branching logic, validation, and regulatory issue detection. ' +
+    'Under an organization context the interview is PERSISTED: the response carries a `session_id`, and every ' +
+    'later answer_intelligence_question / resume_intelligence_flow / commit_intelligence_flow call needs only ' +
+    'that id — not the flow_state. Keep the session_id; it is how a dropped conversation is resumed.',
   input_schema: {
     type: 'object',
     properties: {
       document_type: {
         type: 'string',
         description:
-          'The type of regulatory document to build. Examples: "protocol", "csr", "ind", "sop", "510k", "cer", ' +
+          'The type of regulatory document to build. Examples: "protocol", "csr", "ind", "sop", "510k", "cer", "cmc", ' +
           '"clinical protocol", "clinical study report", "IND submission", "standard operating procedure".',
+      },
+      project_id: {
+        type: 'string',
+        description:
+          'The program / project id (text) to bind the session to when the conversation has no active project. ' +
+          'Ignored when the active project is known. A CMC interview can only be committed to the registers ' +
+          'of a bound project.',
       },
     },
     required: ['document_type'],
@@ -1459,17 +1488,24 @@ const ANSWER_INTELLIGENCE_QUESTION: AnaTool = {
   description:
     'Submit an answer to the current intelligence question in an active flow. ' +
     'The engine validates the answer, runs issue checks, and advances to the next question ' +
-    'or completes the flow with a structured output. The engine is stateless: pass back the ' +
-    'entire `flow_state` object returned by the previous start_intelligence_flow / ' +
-    'answer_intelligence_question call (not just an id) so it can resume.',
+    'or completes the flow with a structured output. Pass the `session_id` from start_intelligence_flow: ' +
+    'the engine loads the interview state from the session, records the step, and returns the session_id ' +
+    'again — flow_state is then not needed and is ignored. Only when there is NO session (the flow was started ' +
+    'without an organization context) pass back the entire `flow_state` object returned by the previous call.',
   input_schema: {
     type: 'object',
     properties: {
+      session_id: {
+        type: 'string',
+        description:
+          'The persisted interview session id returned by start_intelligence_flow. When given, the state is ' +
+          'loaded from and saved to the session; flow_state is ignored.',
+      },
       flow_state: {
         type: 'object',
         description:
-          'The full flow state object returned by the previous call (start_intelligence_flow or the ' +
-          'prior answer_intelligence_question). Round-trip it verbatim — the engine holds no state of its own.',
+          'Only when no session_id exists: the full flow state object returned by the previous call ' +
+          '(start_intelligence_flow or the prior answer_intelligence_question), round-tripped verbatim.',
       },
       node_id: {
         type: 'string',
@@ -1482,7 +1518,56 @@ const ANSWER_INTELLIGENCE_QUESTION: AnaTool = {
           'values are the user\'s answers (strings, numbers, booleans, or arrays for multi-select).',
       },
     },
-    required: ['flow_state', 'node_id', 'answers'],
+    required: ['node_id', 'answers'],
+  },
+};
+
+const RESUME_INTELLIGENCE_FLOW: AnaTool = {
+  name: 'resume_intelligence_flow',
+  description:
+    'Resume a persisted intelligence questioning flow by its session_id — after a dropped conversation, a new ' +
+    'thread, or when the user asks to continue an interview. Returns the current question (or the completion ' +
+    'summary if the interview already finished, with the register records it was committed to, if any).',
+  input_schema: {
+    type: 'object',
+    properties: {
+      session_id: {
+        type: 'string',
+        description: 'The interview session id returned by start_intelligence_flow.',
+      },
+    },
+    required: ['session_id'],
+  },
+};
+
+const COMMIT_INTELLIGENCE_FLOW: AnaTool = {
+  name: 'commit_intelligence_flow',
+  description:
+    'Commit a COMPLETED CMC interview to the CMC registers that feed Module 3: the answers are projected onto ' +
+    'register records (drug substance, drug product, container closure system, drug substance and drug product ' +
+    'manufacturing processes, formulation record, novel excipient material spec, structural characterisation study) ' +
+    'and written through the registers\' own write paths. Refuses when the session is not complete or is not bound ' +
+    'to a project. A failure mid-way is reported with exactly which records were written and which were not; ' +
+    'a retry writes only the remainder. Answers no register can take are listed with the reason — say so to the user. ' +
+    'Use dry_run to show the user what would be recorded before writing.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      session_id: {
+        type: 'string',
+        description: 'The interview session id returned by start_intelligence_flow.',
+      },
+      project_id: {
+        type: 'string',
+        description:
+          'Binds a session that was started without a project. Never overrides the project the session already has.',
+      },
+      dry_run: {
+        type: 'boolean',
+        description: 'When true, return the commit plan (register + body per record) without writing anything.',
+      },
+    },
+    required: ['session_id'],
   },
 };
 
@@ -2116,6 +2201,11 @@ export const ALL_ANA_TOOLS_RAW: AnaTool[] = [
   OCR_DOCUMENT_PAGES,
   READ_SPREADSHEET,
   EDIT_SPREADSHEET,
+  FILE_CHAT_UPLOAD_TO_VAULT,
+  LIST_PROJECT_DOCUMENTS,
+  READ_PROJECT_DOCUMENT,
+  CATALOG_PROJECT_DOCUMENT,
+  SEARCH_PROJECT_DOCUMENTS,
   CHECK_DOSSIER_CONSISTENCY,
   CHECK_NUMERICAL_INTEGRITY,
   COMPUTE_SAMPLE_SIZE,
@@ -2580,6 +2670,8 @@ export const ALL_ANA_TOOLS_RAW: AnaTool[] = [
   // Intelligence Questioning Engine — guided flows for document generation
   START_INTELLIGENCE_FLOW,
   ANSWER_INTELLIGENCE_QUESTION,
+  RESUME_INTELLIGENCE_FLOW,
+  COMMIT_INTELLIGENCE_FLOW,
   LIST_INTELLIGENCE_FLOWS,
   // War Game Simulation — FDA auditor pressure-testing of intelligence flow output
   START_WAR_GAME,

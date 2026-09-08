@@ -35,7 +35,17 @@ export type RenderedLeafSourceKind =
   | 'ind_safety_report'
   | 'e2b_r3_icsr'
   | 'ind_annual_report'
-  | 'ind_letter_of_authorization';
+  | 'ind_letter_of_authorization'
+  /** Form FDA 1571, the Module 1 transmittal every IND sequence carries at m1.1. */
+  | 'ind_form_1571'
+  /**
+   * An official FDA Module 1 form COMPLETED AND SIGNED BY THE SPONSOR in Adobe
+   * Acrobat and attached back. Distinct from `ind_form_1571`, which this server
+   * rendered: these bytes were authored outside the platform, so the digest
+   * recorded here is the only thing that ties the filed leaf to the file the
+   * sponsor actually approved.
+   */
+  | 'ind_form_sponsor_upload';
 
 export interface StoreRenderedLeafFileInput {
   organizationId: number;

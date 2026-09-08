@@ -85,6 +85,21 @@ describe('analytical endpoints', () => {
     expect(res.body.result.nominalCrossing).toBeCloseTo(7.5, 4);
   });
 
+  it('stability reports the ICH Q1E-capped shelf life, with the crossing alongside', async () => {
+    /* 12 months of data whose line meets the limit at 60: Q1E allows 24. */
+    const res = await post('/analytical/stability', {
+      points: [0, 3, 6, 9, 12].map(t => ({ time: t, value: 100 - 0.25 * t })),
+      specLimit: 85,
+      direction: 'lower',
+    });
+    expect(res.status).toBe(200);
+    expect(res.body.result.shelfLife).toBe(24);
+    expect(res.body.result.statisticalCrossing).toBeCloseTo(60, 1);
+    expect(res.body.result.extrapolationLimit).toBe(24);
+    expect(res.body.result.cappedByExtrapolationLimit).toBe(true);
+    expect(res.body.result.nominalCrossing).toBeCloseTo(60, 4);
+  });
+
   it('qualitative-dose-response returns the C5–C95 interval', async () => {
     const L = Math.log(0.25 / 0.75);
     const res = await post('/analytical/qualitative-dose-response', {

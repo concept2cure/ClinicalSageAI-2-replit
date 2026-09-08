@@ -263,7 +263,7 @@ export function IdentityConsole(_props: SurfaceViewProps) {
       <div className="pj-card">
         <div className="pj-card-h"><span className="t">SSO — SAML endpoints</span></div>
         <div className="pj-card-b">
-          <div style={{ fontSize: 13, color: 'var(--c2c-dim,#667085)', marginBottom: 10 }}>
+          <div style={{ fontSize: 13, color: 'var(--text-400)', marginBottom: 10 }}>
             These are the platform’s live SAML endpoints. Configure your identity provider against them; provider
             certificates and issuer settings are configured server-side by your deployment administrator.
           </div>

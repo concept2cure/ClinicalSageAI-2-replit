@@ -193,9 +193,39 @@ function renderBody(input: K510SummaryInput, sections: PulledSection[]): string 
   // ─── Closing ────────────────────────────────────────────────────────
   lines.push('---');
   lines.push('');
-  lines.push(
-    `Based on the comparison of intended use, technological characteristics, and performance data, ${input.sponsorName} concludes that ${input.deviceTradeName} is substantially equivalent to the predicate device(s) cited above.`,
-  );
+  /* The substantial-equivalence conclusion is the operative legal assertion of a
+     510(k) Summary, and it used to be appended UNCONDITIONALLY — outside every
+     branch, and renderBody was not even given the `missingSections` it would
+     need to gate on. So a draft whose Substantial Equivalence and Performance
+     sections both render as "not yet populated" still closed by concluding
+     equivalence "based on the comparison of intended use, technological
+     characteristics, and performance data" — a comparison that had not been
+     made, asserted three lines under the placeholders that say so. The sibling
+     engine se-discussion-builder.ts already gates the identical sentence on
+     whether the comparison supports it. Assert it only over the sections it
+     actually cites. */
+  const CONCLUSION_BASIS: Array<[string, string]> = [
+    ['3', 'Indications for Use'],
+    ['6', 'Substantial Equivalence'],
+    ['11', 'Performance Testing'],
+  ];
+  const unsupported = CONCLUSION_BASIS.filter(([num]) => {
+    const sec = sectionByNumber.get(num);
+    return !sec || sec.status !== 'present' || !sec.content;
+  }).map(([, title]) => title);
+
+  if (unsupported.length === 0) {
+    lines.push(
+      `Based on the comparison of intended use, technological characteristics, and performance data, ${input.sponsorName} concludes that ${input.deviceTradeName} is substantially equivalent to the predicate device(s) cited above.`,
+    );
+  } else {
+    lines.push(
+      `_Substantial equivalence is NOT asserted in this draft: ${unsupported.join(', ')} ` +
+        `${unsupported.length === 1 ? 'is' : 'are'} not yet populated, so the comparison this ` +
+        `conclusion rests on has not been made. Populate ${unsupported.length === 1 ? 'it' : 'them'} ` +
+        `and re-compose before publishing._`,
+    );
+  }
 
   return lines.join('\n');
 }

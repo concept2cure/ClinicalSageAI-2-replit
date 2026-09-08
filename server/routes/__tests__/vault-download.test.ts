@@ -178,3 +178,67 @@ describe('path safety', () => {
     expect(readFile).not.toHaveBeenCalled();
   });
 });
+
+/**
+ * AUDIT — 21 CFR 11.10(e).
+ *
+ * This handler served a governed document with no audit row of any kind, so
+ * nothing recorded who read what, or when. The sibling filing route in the same
+ * file already writes a hash-chained row for a MOVE — placement changes were
+ * attributable and disclosures were not.
+ *
+ * The refusal case is the one worth pinning: an audit trail that drops writes
+ * under load is not an audit trail, so a read that cannot be recorded is refused
+ * rather than served unrecorded.
+ */
+describe('audit', () => {
+  /** The audit INSERT the chained writer issues, if any. */
+  const auditInsert = () =>
+    query.mock.calls.find(c => /INSERT INTO audit_logs/i.test(String(c[0])));
+
+  it('records the download before any byte is sent', async () => {
+    store(DOC());
+    readFile.mockResolvedValue(BYTES);
+    const res = await request(app()).get(url());
+
+    expect(res.status).toBe(200);
+    expect(auditInsert()).toBeDefined();
+  });
+
+  it('records the served content hash, so the trail names which edition left', async () => {
+    store(DOC());
+    readFile.mockResolvedValue(BYTES);
+    await request(app()).get(url());
+
+    // The hash travels in the row's details payload.
+    expect(JSON.stringify(auditInsert())).toContain(HASH);
+  });
+
+  it('REFUSES the download when the audit write fails, and sends nothing', async () => {
+    store(DOC());
+    readFile.mockResolvedValue(BYTES);
+    const base = query.getMockImplementation()!;
+    query.mockImplementation(async (sql: string, params?: unknown[]) => {
+      if (/INSERT INTO audit_logs/i.test(String(sql))) throw new Error('audit store unavailable');
+      return base(sql, params);
+    });
+
+    const res = await request(app()).get(url());
+
+    expect(res.status).toBe(500);
+    expect(res.body.error).toBe('AUDIT_WRITE_FAILED');
+    // Not a truncated body or a partial send — the bytes never entered the response.
+    expect(res.body.message).toMatch(/Nothing was sent/);
+    expect(res.text).not.toContain('%PDF');
+  });
+
+  it('does not audit a refused read', async () => {
+    // A 404 discloses nothing, so there is nothing to record. Auditing refusals
+    // as disclosures would make the trail unreadable for the question it exists
+    // to answer: who has actually had this document.
+    store(null);
+    const res = await request(app()).get(url());
+    expect(res.status).toBe(404);
+    expect(auditInsert()).toBeUndefined();
+  });
+});

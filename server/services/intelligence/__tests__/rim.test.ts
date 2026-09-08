@@ -14,15 +14,11 @@
  * @module server/services/intelligence/__tests__/rim.test.ts
  */
 
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect } from 'vitest';
 
 import {
   evaluateEvidenceSufficiency,
   evaluateDefensibility,
-  evaluateReviewerSensitivity,
-  evaluateClaimRisk,
-  evaluateCrossSectionConsistency,
-  evaluateSubmissionRisk,
   generateJudgmentReport,
   JUDGMENT_FRAMEWORK_VERSION,
 } from '../judgment-framework.js';
@@ -34,7 +30,6 @@ import {
 
 import {
   captureSignal,
-  captureJudgmentSignals,
   capturePatternSignals,
   querySignals,
   getSignalSummary,

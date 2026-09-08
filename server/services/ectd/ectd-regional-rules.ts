@@ -322,7 +322,11 @@ const PMDA_APPLICATION_PREFIX = /^\d{8}$/;
 // followed by garbage does not slip through as a conformant identifier.
 const HC_APPLICATION_PREFIX = /^(SNDS|NDS|ANDS|DIN)-?\d+$/i;
 const SEQUENCE_PATTERN = /^\d{4}$/;
-const FILENAME_PATTERN = /^[a-z0-9][a-z0-9.-]{0,63}$/;
+/** eCTD leaf file name: lowercase, [a-z0-9.-], at most 64 characters including
+ *  the extension (ICH eCTD v3.2.2 Appendix; EMA-CESP-005). Exported so the
+ *  assemble path composes names to it and the structural validator refuses
+ *  names that break it — one rule, not three spellings of it. */
+export const FILENAME_PATTERN = /^[a-z0-9][a-z0-9.-]{0,63}$/;
 
 const FDA_GATEWAY_LIMIT_BYTES = 4 * 1024 * 1024 * 1024;
 const EMA_CESP_LIMIT_BYTES = 600 * 1024 * 1024;

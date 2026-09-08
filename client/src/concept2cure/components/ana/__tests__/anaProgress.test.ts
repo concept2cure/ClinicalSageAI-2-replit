@@ -10,8 +10,10 @@ import { describe, expect, it } from 'vitest';
 
 import {
   advanceProgress,
+  byRound,
   closeProgress,
   currentStep,
+  settleRunningCalls,
   formatElapsed,
   formatStepDuration,
   summarizeToolWork,
@@ -126,5 +128,35 @@ describe('tool tallies and the summary line', () => {
   it('finds the step in flight, latest first', () => {
     expect(currentStep([call(), call({ name: 'x', label: 'X', status: 'running' })])?.name).toBe('x');
     expect(currentStep([call()])).toBeNull();
+  });
+});
+
+describe('settleRunningCalls — a step the turn never heard back from did not complete', () => {
+  it('closes running steps with the given reason and leaves settled ones alone', () => {
+    const calls: AnaToolCall[] = [
+      call(),
+      call({ name: 'x', label: 'X', status: 'running', startedAt: 5 }),
+      call({ name: 'y', label: 'Y', status: 'error', message: 'already failed' }),
+    ];
+    const out = settleRunningCalls(calls, 'Not finished — the run was stopped.', 99)!;
+    expect(out[0]).toBe(calls[0]);
+    expect(out[1]).toMatchObject({ status: 'error', endedAt: 99, message: 'Not finished — the run was stopped.' });
+    expect(out[2].message).toBe('already failed');
+  });
+
+  it('returns the same array when nothing is running (no needless re-render)', () => {
+    const calls = [call()];
+    expect(settleRunningCalls(calls, 'n/a', 1)).toBe(calls);
+    expect(settleRunningCalls(undefined, 'n/a', 1)).toBeUndefined();
+  });
+});
+
+describe('byRound — one grouping for the record and the dock', () => {
+  it('groups by round in order and defaults an unrounded call to the first pass', () => {
+    const g = byRound([call({ round: 2, name: 'b' }), call({ name: 'a' }), call({ round: 2, name: 'c' })]);
+    expect(g.map((r) => [r.round, r.calls.map((c) => c.name)])).toEqual([
+      [1, ['a']],
+      [2, ['b', 'c']],
+    ]);
   });
 });

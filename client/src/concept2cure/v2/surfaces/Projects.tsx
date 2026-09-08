@@ -887,6 +887,7 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
   const [ws, setWs] = useState('all');
   const [status, setStatus] = useState('all');
   const [view, setView] = useState('grid');
+  const [q, setQ] = useState('');
   const [wizardOpen, setWizardOpen] = useState(() => {
     if (window.__C2C_NEW_PROJECT) { window.__C2C_NEW_PROJECT = false; return true; }
     return false;
@@ -902,7 +903,20 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
   const live = useLiveRows<ProjPortfolioEntry>('/api/c2c/projects', [reloadNonce]);
   const projects = live.rows;
 
-  const list = projects.filter(p => (ws === 'all' || p.ws === ws) && (status === 'all' || p.status === status));
+  /* Search matches the two things a person actually knows a programme by — its
+     title and its code. Deliberately NOT `lead`: the server projects that as
+     COALESCE(u.name, u.email, '—'), so searching it would let a typed fragment
+     confirm a colleague's email address one character at a time. Same reason
+     the AnA publisher below drops the field. */
+  const needle = q.trim().toLowerCase();
+  const list = projects.filter(
+    p =>
+      (ws === 'all' || p.ws === ws) &&
+      (status === 'all' || p.status === status) &&
+      (!needle ||
+        p.title.toLowerCase().includes(needle) ||
+        p.code.toLowerCase().includes(needle)),
+  );
   /* Gated on the read, not just on the row count.
      `projects` is empty while the portfolio read is in flight AND when it has
      failed, so every figure here resolved to a settled 0 — and the `|| 1`
@@ -959,17 +973,28 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
       };
     }
     const blocked = projects.filter(p => p.status === 'blocked');
-    const filtered = ws !== 'all' || status !== 'all';
+    /* The search narrows the list exactly as the two dropdowns do, so it has to
+       be named here for the same reason they are: a summary that said "filtered
+       by workstream and status" while a search term was also hiding rows would
+       describe a screen the user is not looking at, and AnA would answer "which
+       programs are at risk?" over a set it had been told was complete. */
+    const filtered = ws !== 'all' || status !== 'all' || needle !== '';
+    const by = [
+      ws !== 'all' ? `workstream "${ws}"` : null,
+      status !== 'all' ? `status "${status}"` : null,
+      needle ? `a search for "${q.trim()}"` : null,
+    ].filter(Boolean);
     return {
       summary:
         `Projects portfolio: ${projects.length} regulatory program(s)` +
-        (filtered ? `, filtered to ${list.length} by workstream "${ws}" and status "${status}"` : '') +
+        (filtered ? `, filtered to ${list.length} by ${by.join(' and ')}` : '') +
         `. ${blocked.length} blocked, average readiness ${health[1].n}. Shown as a ${view}.`,
       facts: {
         totalPrograms: projects.length,
         shownInList: list.length,
         workstreamFilter: ws,
         statusFilter: status,
+        searchQuery: q.trim() || null,
         blockedCount: blocked.length,
         averageReadiness: health[1].n,
         // Enough to name a programme back to the user, not the whole row set.
@@ -987,18 +1012,19 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
       availableActions: [
         'Open a program to enter its project home',
         'Filter the portfolio by workstream (MDX, Biotech, Pharma) or by status',
+        'Search the portfolio by program title or code',
         'Switch between the grid and list views',
         'Create a new project through the new-project wizard',
       ],
     };
-  }, [wizardOpen, live.loading, live.error, projects, list, ws, status, view, health]);
+  }, [wizardOpen, live.loading, live.error, projects, list, ws, status, q, needle, view, health]);
   usePublishSurfaceContext('projects', anaContext);
 
   const openProj = (pr: ProjPortfolioEntry) => {
     try {
       publishShellProject({ id: pr.id, title: pr.title, code: pr.code, ws: pr.ws, status: pr.status });
       if (window.C2C?.setSurface) window.C2C.setSurface('project-home', pr.title);
-    } catch (_) { /* noop */ }
+    } catch { /* noop */ }
     onNav('project-home');
   };
 
@@ -1095,23 +1121,43 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
         </div>
       </div>
 
-      <div className="metrics">
+      {/* ── The four metric tiles are one line now (2026-09-07) ──
+          "Active programs / Average readiness / Blocked / Filing < 60 days" was
+          a dashboard bolted to the top of a directory: four large figures a
+          person had to read past to reach the thing they came for, which is
+          their project. The figures themselves are unchanged and still honest —
+          `kv()` still resolves every one of them to an em dash while the read is
+          in flight or has failed, so a failed portfolio read cannot render as a
+          real "0%" portfolio mean. They are simply quiet now. */}
+      <div className="pj-summary">
         {health.map((h, i) => (
-          <div key={i} className="metric" data-tone={h.t || undefined}>
-            <div className="metric-l">{h.l}</div>
-            <div className="metric-n">{h.n}</div>
-            <div className="dmod-chip" style={{ marginTop: 6, background: 'transparent', padding: 0, color: 'var(--text-300)' }}>{h.m}</div>
-          </div>
+          <span key={i} className="pj-summary-i" data-tone={h.t || undefined}>
+            <strong>{h.n}</strong> {h.l.toLowerCase()}
+          </span>
         ))}
       </div>
 
-      <div className="ws-switch" style={{ marginBottom: 8 }}>
-        {wss.map(w => <button key={w} className={`ws-btn${ws === w ? ' on' : ''}`} onClick={() => setWs(w)}>{w === 'all' ? 'All workstreams' : w}</button>)}
+      <div className="pj-toolbar">
+        <div className="pj-search">
+          <span className="ico">{I.search}</span>
+          <input
+            type="search"
+            className="pj-search-i"
+            placeholder="Search projects"
+            value={q}
+            onChange={e => setQ(e.target.value)}
+            aria-label="Search projects by title or code"
+          />
+        </div>
         <span style={{ flex: 1 }} />
         <div className="seg">
           <button className={`seg-b${view === 'grid' ? ' on' : ''}`} onClick={() => setView('grid')}>Grid</button>
           <button className={`seg-b${view === 'list' ? ' on' : ''}`} onClick={() => setView('list')}>List</button>
         </div>
+      </div>
+
+      <div className="ws-switch" style={{ marginBottom: 8 }}>
+        {wss.map(w => <button key={w} className={`ws-btn${ws === w ? ' on' : ''}`} onClick={() => setWs(w)}>{w === 'all' ? 'All workstreams' : w}</button>)}
       </div>
 
       <div className="seg" style={{ marginBottom: 18 }}>
@@ -1123,7 +1169,7 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
       </div>
 
       {live.loading ? (
-        <div className="scaf-note" style={{ padding: '18px 10px' }}>Loading programs…</div>
+        <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>Loading programs…</div>
       ) : live.error ? (
         // The hint used to read "…(projected from regulatory_programs)…",
         // naming a governed store's table on screen: an information-disclosure
@@ -1146,28 +1192,36 @@ export function Projects({ onAsk, onNav, segment }: SurfaceViewProps) {
       ) : list.length === 0 ? (
         <EmptyState
           icon={I.filter}
-          title="No programs match these filters"
-          hint="Adjust the workstream or status filter to see more."
+          title={needle ? `No programs match “${q.trim()}”` : 'No programs match these filters'}
+          hint={
+            needle
+              ? 'Search matches a program’s title or code. Clear the search, or adjust the workstream or status filter.'
+              : 'Adjust the workstream or status filter to see more.'
+          }
         />
       ) : view === 'grid' ? (
-        <div className="launch-grid">
+        <div className="pj-cards">
           {list.map(p => (
-            <button key={p.id} className="launch" onClick={() => openProj(p)}>
-              <div className="launch-top">
-                <span className={`rd-chip tone-${WS_TONE[p.ws]}`}>{p.ws}</span>
-                <span className={`rd-chip tone-${p.status === 'blocked' ? 'err' : p.status === 'complete' ? 'ok' : 'ai'}`}>{p.status}</span>
-              </div>
-              <div className="launch-title">{p.title}</div>
-              <div className="launch-desc">{p.code} · {p.stage} · Lead {p.lead}</div>
+            <button key={p.id} className="pj-card" onClick={() => openProj(p)}>
+              <div className="pj-card-t">{p.title}</div>
+              <div className="pj-card-m">{p.code} · {p.stage} · Lead {p.lead}</div>
               <div className="ph-bar-track" style={{ margin: '12px 0 6px' }}>
                 <div className="ph-bar-fill" data-tone={p.status === 'blocked' ? 'warn' : 'ok'} style={{ width: p.readiness + '%' }} />
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: 'var(--text-300)' }}>
+              <div className="pj-card-r">
                 <span>{p.readiness}% ready</span><span>{p.due}</span>
               </div>
-              {p.blocker
-                ? <div className="ed-flag" data-sev="warn" style={{ marginTop: 10 }}><span className="ico">{I.alertTriangle}</span><span>{p.blocker}</span></div>
-                : <div style={{ marginTop: 10, fontSize: 11, color: 'var(--success)', display: 'flex', gap: 6, alignItems: 'center' }}>{I.check} No open blockers</div>}
+              <div className="pj-card-f">
+                <span className={`rd-chip tone-${WS_TONE[p.ws]}`}>{p.ws}</span>
+                <span className={`rd-chip tone-${p.status === 'blocked' ? 'err' : p.status === 'complete' ? 'ok' : 'ai'}`}>{p.status}</span>
+                {/* The blocker keeps its own line and its warning tone: it is
+                    the one thing on this card that changes what you do next,
+                    and colour is not carrying it alone — the icon and the text
+                    both say so. */}
+                {p.blocker
+                  ? <span className="pj-card-blk">{I.alertTriangle} {p.blocker}</span>
+                  : <span className="pj-card-ok">{I.check} No open blockers</span>}
+              </div>
             </button>
           ))}
         </div>

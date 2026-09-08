@@ -11,12 +11,11 @@
  *   Commitments   → GET /api/ha-interactions/commitments     REAL (listCommitments).
  *   Authority     → GET /api/concept2cure/projects/:pid/authority-profiles
  *   profiles        REAL (server routes/concept2cure.ts → concept2cure_authority_profiles).
- *   FDA loop      → submission-center items + CRL round-trip + deficiency gap
- *                   analysis have NO mounted read handler on this surface's API
- *                   (the /submission-center/items route is defined only in the
- *                   un-mounted concept2cure-communication-center module, and no
- *                   endpoint returns CRL deficiencies). MISSING → honest empty,
- *                   no lifecycle/CRL/deficiency data is fabricated.
+ *   FDA loop      → GET /api/concept2cure/projects/:pid/submission-center/items
+ *                   REAL (server routes/c2c/communication-center.ts →
+ *                   concept2cure_submission_center_items). The CRL round-trip
+ *                   and deficiency gap analysis still have no endpoint —
+ *                   MISSING → honest empty, nothing fabricated.
  *
  * NOTE on the API base: the legacy binding called `/api/communication-center/...`,
  * which is not mounted anywhere in the server (it always fell through to the
@@ -120,6 +119,18 @@ interface AuthProfileRow {
   acknowledgmentModel: string;
 }
 
+/** One submission-center item as the router returns it (SubmissionCenterItemRecord). */
+type SubmissionItemRow = {
+  id: string;
+  title: string;
+  authority: string;
+  submissionType: string;
+  sequenceNumber?: string;
+  status: string;
+  dispatchReady: boolean;
+  updatedAt: string;
+};
+
 /* Stable empty seed for the optimistic-row store while the live inbox is
    loading / errored / project-less. useLiveRows synthesizes a fresh [] every
    render in those states, which would otherwise thrash the re-seed effect. */
@@ -134,7 +145,7 @@ function currentProjectId(): string | null {
     const p = (window as unknown as { C2C_PROJECT?: { id?: string | number } }).C2C_PROJECT;
     const id = p && p.id != null ? String(p.id).trim() : '';
     return id || null;
-  } catch (_e) {
+  } catch {
     return null;
   }
 }
@@ -168,7 +179,7 @@ function StateGuard({
   children: React.ReactNode;
 }) {
   if (loading) {
-    return <div className="scaf-note" style={{ padding: '18px 10px' }}>Loading…</div>;
+    return <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>Loading…</div>;
   }
   if (error) {
     return <EmptyState tone="error" icon={I.alertTriangle} title={errorTitle} hint={errorHint} />;
@@ -233,6 +244,12 @@ export function CommunicationCenter({ onAsk, onNav }: SurfaceViewProps) {
     ? '/api/concept2cure/projects/' + encodeURIComponent(projectId) + '/authority-profiles'
     : null;
   const profState = useLiveRows<AuthProfileRow>(profPath);
+
+  // ── Submission-center items — REAL, project-scoped (the FDA-loop tab) ──
+  const itemsPath = projectId
+    ? '/api/concept2cure/projects/' + encodeURIComponent(projectId) + '/submission-center/items'
+    : null;
+  const itemState = useLiveRows<SubmissionItemRow>(itemsPath);
 
   /* What AnA can see of this screen.
      Four independent reads, two of them project-scoped. NO PROJECT is its own
@@ -317,6 +334,12 @@ export function CommunicationCenter({ onAsk, onNav }: SurfaceViewProps) {
               channel: pr.channelType, transport: pr.submissionTransport,
               acceptedFormats: pr.acceptedFormats ?? [],
             })),
+        submissionItems: !itemsPath || itemState.loading || itemState.error
+          ? null
+          : itemState.rows.map((it) => ({
+              id: it.id, title: it.title, authority: it.authority, type: it.submissionType,
+              sequence: it.sequenceNumber ?? null, status: it.status, dispatchReady: it.dispatchReady,
+            })),
       },
       availableActions: [
         'Log an agency communication (a governed write — persists the event, auto-creates a response task when one is required, and writes the audit entry)',
@@ -325,7 +348,7 @@ export function CommunicationCenter({ onAsk, onNav }: SurfaceViewProps) {
         'Read a communication\u2019s extracted issues, urgency and response due date',
       ],
     };
-  }, [commsPath, liveComms.loading, liveComms.error, comms, open.length, responseDue.length, critical.length, soonest, tab, owner, projectId, interState.loading, interState.error, interState.rows, commitState.loading, commitState.error, commitments, profState.loading, profState.error, profState.rows]);
+  }, [commsPath, liveComms.loading, liveComms.error, comms, open.length, responseDue.length, critical.length, soonest, tab, owner, projectId, interState.loading, interState.error, interState.rows, commitState.loading, commitState.error, commitments, profState.loading, profState.error, profState.rows, itemsPath, itemState.loading, itemState.error, itemState.rows]);
   usePublishSurfaceContext('communication-center', anaContext);
 
   // logComm — REAL, audited write. POSTs to
@@ -453,7 +476,7 @@ export function CommunicationCenter({ onAsk, onNav }: SurfaceViewProps) {
       <div className="sp-head">
         <div>
           <div className="sp-eyebrow">Submission · Communication Center</div>
-          <h1 className="sp-title">Communication Center</h1>
+          <h1 className="sp-title">Communication center</h1>
           <p className="sp-state">
             The regulated FDA↔client loop — every agency letter, IR, gateway ack and meeting, traced
             to its filing and turned into governed action.
@@ -549,16 +572,58 @@ export function CommunicationCenter({ onAsk, onNav }: SurfaceViewProps) {
         ))}
       </div>
 
-      {/* ════ TAB: FDA loop — MISSING backend, honest empty ════ */}
+      {/* ════ TAB: FDA loop — submission items REAL; CRL/deficiency reads MISSING, honest ════ */}
       {tab === 'loop' && (
         <>
           <div className="pj-seclbl">
             Submission lifecycle <span className="s">· FDA round-trip</span>
           </div>
+          {!projectId ? (
+            <EmptyState
+              icon={I.fileText}
+              title="Open a project to see its submission items"
+              hint="Submission-center items are tracked per project. Open one from Projects to load them."
+            />
+          ) : (
+            <StateGuard
+              loading={itemState.loading}
+              error={itemState.error}
+              empty={itemState.empty}
+              emptyTitle="No submission items yet"
+              emptyHint="Create a submission-center item for this project — authority, submission type, sequence — and its lifecycle appears here."
+              errorTitle="Couldn't load submission items"
+              errorHint="The submission-center register didn't respond. Sign in and retry, or check the service is reachable."
+            >
+              <div className="cc-prof-grid">
+                {itemState.rows.map((it) => (
+                  <div key={it.id} className="cc-prof">
+                    <div className="cc-prof-h">
+                      <span className="cc-prof-a">{it.title}</span>
+                      <span className="cc-prof-c">
+                        {[it.authority, it.submissionType].filter(Boolean).join(' · ')}
+                      </span>
+                    </div>
+                    <div className="cc-prof-row">
+                      <span className="k">Status</span>
+                      <span className="v">{it.status.replace(/_/g, ' ')}</span>
+                    </div>
+                    <div className="cc-prof-row">
+                      <span className="k">Sequence</span>
+                      <span className="v">{it.sequenceNumber || '—'}</span>
+                    </div>
+                    <div className="cc-prof-row">
+                      <span className="k">Dispatch</span>
+                      <span className="v">{it.dispatchReady ? 'ready' : 'not ready'}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </StateGuard>
+          )}
           <EmptyState
             icon={I.fileText}
-            title="Submission-loop tracking isn't available yet"
-            hint="The submission lifecycle, the CRL response countdown and the deficiency gap analysis are computed from a governed submission record. That read (submission-center items and CRL deficiencies) isn't wired to this surface yet — no lifecycle, CRL or deficiency data is shown rather than fabricated."
+            title="CRL response countdown and deficiency gap analysis aren't available yet"
+            hint="No endpoint returns CRL deficiencies for a submission, so nothing is computed or shown for them here rather than fabricated."
           />
           <div className="cc-linkrow">
             <button className="cc-linkcard" onClick={() => nav('submission-center')}>
@@ -622,7 +687,7 @@ export function CommunicationCenter({ onAsk, onNav }: SurfaceViewProps) {
               hint="Agency letters, IRs and gateway acks are scoped to a project. Open one from Projects to load its inbox."
             />
           ) : liveComms.loading && comms.length === 0 ? (
-            <div className="scaf-note" style={{ padding: '18px 10px' }}>
+            <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>
               Loading agency communications…
             </div>
           ) : liveComms.error && comms.length === 0 ? (
@@ -779,6 +844,7 @@ export function CommunicationCenter({ onAsk, onNav }: SurfaceViewProps) {
                   </span>
                   <button
                     className="cc-btn sm"
+                    aria-label="Ask AnA about this interaction"
                     onClick={() =>
                       onAsk(
                         'Summarize the ' +
@@ -835,6 +901,7 @@ export function CommunicationCenter({ onAsk, onNav }: SurfaceViewProps) {
                   </span>
                   <button
                     className="cc-btn sm"
+                    aria-label="Ask AnA about this commitment"
                     onClick={() =>
                       onAsk(
                         'What is needed to fulfill this ' +

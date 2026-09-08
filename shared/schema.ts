@@ -3745,6 +3745,13 @@ export const qcTesting = pgTable(
       .notNull()
       .references(() => organizations.id),
     sampleId: text('sample_id').notNull(),
+    /* The batch the sample represents — what §3.2.S.4.4 / §3.2.P.5.4 report
+       results BY, and what a capability index is computed across. Nullable:
+       an in-process or cleaning sample may have none. */
+    batchNumber: text('batch_number'),
+    /* The program the result files under. Stored, so the Module 3 link reads
+       the row's own project rather than whatever a later request names. */
+    projectId: text('project_id'),
     sampleType: text('sample_type').notNull(), // raw-material, in-process, finished-product
     testMethod: text('test_method').notNull(),
     testResults: json('test_results'),
@@ -3809,6 +3816,19 @@ export const drugSubstances = pgTable(
     impuritiesProfile: json('impurities_profile'),
     stability: json('stability'),
     controlOfMaterials: json('control_of_materials'),
+    /* §3.2.A.2's inputs (ICH Q5A(R2)). The section asks whether an adventitious
+       agents safety evaluation applies and what controls exist, and no register
+       could record any of it — so for a biologic the section had nothing to
+       read and, once it stopped asserting a control strategy it had not been
+       given, nothing it could ever establish. A biologics programme could not
+       file its Module 3. `modality` also settles the small-molecule/biologic
+       question the composer otherwise has to infer from a name. */
+    modality: text('modality'), // small_molecule | biologic
+    biologicalOrigin: text('biological_origin'), // e.g. 'CHO cell culture', 'E. coli fermentation'
+    sourceOrganism: text('source_organism'),
+    cellLine: text('cell_line'), // e.g. 'CHO-K1, MCB lot MCB-01'
+    viralSafetyEvaluation: text('viral_safety_evaluation'), // the ICH Q5A(R2) clearance record
+    tseStatus: text('tse_status'), // the EMA EMEA/410/01 risk assessment
     status: text('status').default('development').notNull(),
     developmentPhase: text('development_phase'), // preclinical, phase1, phase2, phase3, commercial
     createdAt: timestamp('created_at').defaultNow().notNull(),
@@ -3999,6 +4019,17 @@ export const cmcImpurityProfiles = pgTable(
        the assessment refuses honestly when it is absent rather than defaulting
        to oral, which is the most permissive route for most elements. */
     routeOfAdministration: text('route_of_administration'),
+    /* ICH M7(R2) inputs. The mutagenic class is decided from the Ames result
+       and the structural-alert status (two complementary (Q)SAR assessments);
+       the acceptable intake is staged by treatment duration and cut far lower
+       for a cohort-of-concern structure. All nullable and NONE defaulted: an
+       unrecorded Ames result is not a negative one, and the assessment refuses
+       rather than assuming. */
+    amesResult: text('ames_result'), // positive | negative | not-tested
+    structuralAlert: text('structural_alert'), // yes | no | unknown
+    carcinogenicityData: text('carcinogenicity_data'), // positive | negative | not-tested
+    treatmentDuration: text('treatment_duration'), // single-dose | up-to-1-month | 1-to-12-months | 1-to-10-years | lifetime
+    cohortOfConcern: text('cohort_of_concern'), // not_coc | CoC_nitrosamine | CoC_aflatoxin_like | CoC_alkyl_azoxy
     specificationLimit: text('specification_limit'),
     /* The thresholds AS RECORDED. The Q3A/Q3B engine derives them from the
        maximum daily dose; where an applicant has recorded its own, the record
@@ -4172,6 +4203,10 @@ export const cmcFormulationRecords = pgTable(
     /* An overage is a regulatory question in its own right (ICH Q8): it must be
        justified, and the section states when one is recorded without a reason. */
     overageJustification: text('overage_justification'),
+    /* §3.2.P.2.2 — the development of the formulation (ICH Q8): why these
+       components, these amounts, these overages. The only producer of the
+       section's `formulationDevelopment` input; nullable, never defaulted. */
+    formulationDevelopment: text('formulation_development'),
     /* Which formulation this one supersedes, so a version history is readable. */
     supersedes: text('supersedes'),
     status: text('status').default('draft').notNull(), // draft | current | superseded
@@ -6762,6 +6797,11 @@ export const c2cArtifactSectionMap = pgTable(
     orgIdx: index('c2c_artsec_org_idx').on(table.orgId),
     ownerIdx: index('c2c_artsec_owner_idx').on(table.ownerUserId),
     docFamilyIdx: index('c2c_artsec_docfamily_idx').on(table.documentFamily),
+    // One mapping per (artifact, section). A duplicate row used to ship the
+    // same document twice into an agency package; the assemble gate now
+    // tolerates it, the database no longer permits it
+    // (migrations/20260906_artifact_section_map_unique.sql).
+    artifactSectionUq: uniqueIndex('c2c_artsec_artifact_section_uq').on(table.artifactId, table.sectionDbId),
   })
 );
 export type C2cArtifactSectionMap = InferSelectModel<typeof c2cArtifactSectionMap>;

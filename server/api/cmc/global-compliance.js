@@ -7,8 +7,7 @@
 
 import express from 'express';
 import { checkForOpenAIKey } from '../../utils/api-security.js';
-import { validateRequestBody } from '../../utils/validation.js';
-import { complianceDocumentSchema, regulatoryMarketSchema } from './types.js';
+import { complianceDocumentSchema } from './types.js';
 import { rateLimit } from 'express-rate-limit';
 import fs from 'fs';
 import path from 'path';

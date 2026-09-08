@@ -645,7 +645,7 @@ export function ClinicalOps({ onAsk }: SurfaceViewProps) {
           }
         >
           {liveSites.loading && sites.length === 0 ? (
-            <div className="scaf-note" style={{ padding: '18px 10px' }}>Loading site-risk roster…</div>
+            <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>Loading site-risk roster…</div>
           ) : liveSites.error && sites.length === 0 ? (
             <EmptyState
               tone="error"
@@ -686,7 +686,7 @@ export function ClinicalOps({ onAsk }: SurfaceViewProps) {
         <SpCard title="Studies & enrollment" meta="Phase 1 -> 3">
           <div className="sp-list">
             {liveStudies.loading ? (
-              <div className="scaf-note" style={{ padding: '18px 10px' }}>Loading studies…</div>
+              <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>Loading studies…</div>
             ) : liveStudies.error ? (
               <EmptyState
                 tone="error"
@@ -725,7 +725,7 @@ export function ClinicalOps({ onAsk }: SurfaceViewProps) {
         >
           <div className="sp-list">
             {liveSites.loading && sites.length === 0 ? (
-              <div className="scaf-note" style={{ padding: '18px 10px' }}>Loading study sites…</div>
+              <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>Loading study sites…</div>
             ) : liveSites.error && sites.length === 0 ? (
               <EmptyState
                 tone="error"

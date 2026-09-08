@@ -12,6 +12,8 @@
  * builder's QC state (missingRequired) is carried through faithfully.
  */
 import { describe, it, expect } from 'vitest';
+import path from 'node:path';
+import os from 'node:os';
 import { PDFDocument } from 'pdf-lib';
 import { generateIndForm } from '../ind-form-fill-service';
 import { reconstructForm, hasReconstruction } from '../ind-form-reconstruct';
@@ -75,8 +77,10 @@ describe('FDA form reconstruction (pure dynamic XFA → sectioned reconstruction
   it('carries the builder QC state: an empty 1571 lists its missing required fields', async () => {
     const result = await reconstructForm(FORM_1571, buildForm1571({}));
     expect(result.reconstructed).toBe(true);
-    // sponsor_name, sponsor_address, drug_name, indication, ind_type,
-    // phase_of_study, authorized_rep_name are all required and blank.
+    // sponsor_name, sponsor_address, drug_name, indication, ind_type and
+    // phase_of_study are all required and blank. authorized_rep_name is NOT
+    // among them: the 1571 signature block is a signature, so the builder
+    // carries it non-required, as buildForm356h already did for the same id.
     expect(result.missingRequired).toEqual(
       expect.arrayContaining([
         'sponsor_name',
@@ -85,9 +89,9 @@ describe('FDA form reconstruction (pure dynamic XFA → sectioned reconstruction
         'indication',
         'ind_type',
         'phase_of_study',
-        'authorized_rep_name',
       ]),
     );
+    expect(result.missingRequired).not.toContain('authorized_rep_name');
   });
 
   it('renders the 3674 certification and reflects the selected basis', async () => {
@@ -118,15 +122,23 @@ describe('FDA form reconstruction (pure dynamic XFA → sectioned reconstruction
     expect(Buffer.from(first.pdfBytes).equals(Buffer.from(second.pdfBytes))).toBe(true);
   });
 
-  it('generateIndForm routes 1571/3674 to the reconstruction (dynamic XFA never promotes)', async () => {
-    // The bundled official 1571/3674 assets are pure dynamic XFA with an empty
-    // fieldMap, so the readTemplate gate never promotes them and reconstruction
-    // is the effective path — regardless of whether a template dir is installed.
-    const r1571 = await generateIndForm(FORM_1571, COMPLETE_1571);
-    const r3674 = await generateIndForm(FORM_3674, COMPLETE_3674);
-    expect(r1571.reconstructed).toBe(true);
-    expect(r3674.reconstructed).toBe(true);
-    expect(r1571.usedOfficialTemplate).toBe(false);
-    expect(r3674.usedOfficialTemplate).toBe(false);
+  it('reconstruction is the FALLBACK: with no template installed, 1571/3674 still render', async () => {
+    // This used to assert the reconstruction was the only possible path for
+    // these two forms. It is not — see the XFA suite — so what is pinned here
+    // is the fallback: point the service at a directory holding no templates
+    // and the reconstruction still produces a labelled, data-carrying PDF.
+    const previous = process.env.IND_FORM_TEMPLATES_DIR;
+    process.env.IND_FORM_TEMPLATES_DIR = path.join(os.tmpdir(), 'c2c-no-ind-templates');
+    try {
+      const r1571 = await generateIndForm(FORM_1571, COMPLETE_1571);
+      const r3674 = await generateIndForm(FORM_3674, COMPLETE_3674);
+      expect(r1571.reconstructed).toBe(true);
+      expect(r3674.reconstructed).toBe(true);
+      expect(r1571.usedOfficialTemplate).toBe(false);
+      expect(r3674.usedOfficialTemplate).toBe(false);
+    } finally {
+      if (previous === undefined) delete process.env.IND_FORM_TEMPLATES_DIR;
+      else process.env.IND_FORM_TEMPLATES_DIR = previous;
+    }
   });
 });

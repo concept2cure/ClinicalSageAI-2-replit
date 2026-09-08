@@ -1,7 +1,7 @@
 /**
  * PDEV Workstream drill-down surface — PHASE_7_INSTALL.md §0 row 2.
  *
- * Port of design-system/ui_kits/pdev/Surfaces.jsx > PdevWorkstream with
+ * Port of ui_kits/pdev/Surfaces.jsx > PdevWorkstream with
  * fixture rows replaced by live data from usePdevWorkstream.
  *
  * Brief §9 Q2 defaults: grid for ≤ 12 activities, list otherwise; user

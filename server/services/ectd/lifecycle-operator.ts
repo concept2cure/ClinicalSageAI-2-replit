@@ -44,6 +44,21 @@ export interface PriorLeaf {
    * carries its operation, but a downstream step must supply modified-file).
    */
   href?: string;
+  /**
+   * The lifecycle operation this leaf carried in its OWN sequence, when known.
+   * Used when folding several prior sequences into one effective prior state: a
+   * leaf whose last operation was `delete` is no longer on file and must drop
+   * out of that fold. Not used by the diff itself.
+   */
+  operation?: string;
+  /**
+   * The sequence this leaf was actually last published in (e.g. '0000'), when
+   * known. The prior state of an application is the fold of every preceding
+   * sequence, so different prior leaves can live in different sequence folders;
+   * the `modified-file` pointer must traverse to the one that actually holds
+   * this leaf. When absent, the caller's single-sequence prefix is used.
+   */
+  sequenceNumber?: string;
 }
 
 /**
@@ -62,6 +77,13 @@ export type DesiredLeaf = Omit<EctdLeaf, 'operation'> & {
    * is an explicit, opt-in declaration — defaults to `replace`.
    */
   appendOnChange?: boolean;
+  /**
+   * Caller intent: withdraw this leaf. Emits a backbone-only `delete` whose
+   * modified-file points at the prior leaf; the desired entry needs no source
+   * file or checksum of its own. A withdrawal is ALWAYS declared, never
+   * inferred from absence — see computeLifecycleOperations.
+   */
+  withdraw?: boolean;
 };
 
 export interface LifecycleSummary {
@@ -99,8 +121,18 @@ function keyOf(leaf: { leafKey?: string; ctdSection: string; fileName: string })
 function modifiedFileFor(prev: PriorLeaf, prefix: string): string | undefined {
   if (!prev.href) return undefined;
   const href = prev.href.replace(/^\//, '');
-  if (!prefix) return href;
-  return `${prefix.replace(/\/+$/, '')}/${href}`;
+  // The prior state of an application is the FOLD of every preceding sequence,
+  // so prior leaves do not all live in the same sequence folder: a leaf filed in
+  // 0000 and not re-filed in 0001 is still on file, in ../0000/. When the leaf
+  // names the sequence it was actually last published in, traverse to THAT
+  // sequence — pointing a supersede at the most recent predecessor would name a
+  // path that does not contain the file. Falls back to the caller's
+  // single-sequence prefix when the leaf does not carry its own sequence.
+  const seq = (prev.sequenceNumber ?? '').trim();
+  const effectivePrefix =
+    seq && /^[0-9A-Za-z._-]+$/.test(seq) ? `../${seq}/` : prefix;
+  if (!effectivePrefix) return href;
+  return `${effectivePrefix.replace(/\/+$/, '')}/${href}`;
 }
 
 /**
@@ -111,7 +143,20 @@ function modifiedFileFor(prev: PriorLeaf, prefix: string): string | undefined {
  *  - in desired, not in prior            → `new`      (no modified-file)
  *  - in both, checksum equal             → unchanged (omitted; stays in prior seq)
  *  - in both, checksum differs           → `replace` (or `append` if appendOnChange)
- *  - in prior, not in desired            → `delete` (a delete leaf referencing prior)
+ *  - in desired with `withdraw`, in prior → `delete` (a delete leaf referencing prior)
+ *  - in prior, not in desired            → unchanged (still on file; nothing emitted)
+ *
+ * The last rule used to read "→ delete". That treated `desired` as the complete
+ * intended state of the application, and nothing in this product supplies that:
+ * a new sequence is created empty, leaves are added one at a time, and the
+ * amendment planner plans leaves only for the documents that changed. So a
+ * two-document protocol amendment as sequence 0001 emitted operation="delete"
+ * for every one of sequence 0000's other leaves — withdrawing the protocol, the
+ * IB, the CMC sections and the forms at the agency, with a modified-file pointer
+ * into ../0000/ on each, and nothing warned, because the deletes were
+ * synthesized after completeness was computed. A leaf that merely failed to
+ * materialize this run (a storage timeout, a checksum mismatch) was withdrawn
+ * the same way. A withdrawal is a filing act; it is declared, never inferred.
  *
  * Every superseding op (replace / append / delete) carries a `modified-file`
  * pointer at the prior leaf it acts on — required by ICH so the receiving review
@@ -143,7 +188,28 @@ export function computeLifecycleOperations(
     seenDesired.add(key);
 
     const prev = priorByKey.get(key);
-    const { leafKey: _lk, md5, appendOnChange: _aoc, ...base } = d;
+    const { leafKey: _lk, md5, appendOnChange: _aoc, withdraw, ...base } = d;
+
+    if (withdraw) {
+      if (!prev) {
+        throw new Error(
+          `Cannot withdraw leaf "${key}": it is not in the prior sequence, so there is nothing on file to delete.`,
+        );
+      }
+      summary.delete++;
+      const modifiedFile = modifiedFileFor(prev, prefix);
+      leaves.push({
+        ...base,
+        ctdSection: prev.ctdSection,
+        fileName: prev.fileName,
+        title: base.title || prev.title || prev.fileName,
+        sourcePath: base.sourcePath || prev.sourcePath || '',
+        md5: prev.md5,
+        operation: 'delete',
+        ...(modifiedFile ? { modifiedFile } : {}),
+      });
+      continue;
+    }
 
     if (!prev) {
       summary.new++;
@@ -167,21 +233,11 @@ export function computeLifecycleOperations(
     }
   }
 
-  // Anything in prior that the new sequence dropped is a delete — pointing its
-  // modified-file at the prior leaf being withdrawn.
+  // A prior leaf the new sequence does not mention is still on file at the
+  // agency, unchanged. It is counted, not emitted, and never withdrawn.
   for (const p of prior) {
     if (seenDesired.has(keyOf(p))) continue;
-    summary.delete++;
-    const modifiedFile = modifiedFileFor(p, prefix);
-    leaves.push({
-      ctdSection: p.ctdSection,
-      fileName: p.fileName,
-      title: p.title ?? p.fileName,
-      sourcePath: p.sourcePath ?? '',
-      md5: p.md5,
-      operation: 'delete',
-      ...(modifiedFile ? { modifiedFile } : {}),
-    });
+    summary.unchanged++;
   }
 
   return { leaves, summary };

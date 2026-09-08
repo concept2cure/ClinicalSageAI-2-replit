@@ -18,6 +18,13 @@ import crypto from 'node:crypto';
 import type { PoolClient } from 'pg';
 import { getPool } from '../../db';
 import { recordArtifactProvenance } from '../provenance/artifact-provenance';
+import {
+  enforceAuthorLineage,
+  enforceSourceAndAuthorLineage,
+  type SourceAndAuthorLineageResult,
+} from '../clinical-regulatory-evidence/lineage-gate';
+import { ANA_MACHINE_AUTHOR_ID } from '../authoring/revision-ledger';
+import type { RetrievedSource } from '../clinical-regulatory-evidence/source-attribution';
 
 /**
  * Normalize a document title into a stable lookup slug: lowercase, trimmed, and
@@ -44,6 +51,12 @@ export function resolveChangeDescription(reason: string | undefined | null, fall
 }
 
 export interface UpsertDocumentArtifactVersionInput {
+  /**
+   * The Data Room passages the text quoted, when the caller has them (ledger
+   * L154/L160): verbatim clauses are recorded against these sources and the
+   * rest against the author. Without them every clause is the author's.
+   */
+  sources?: RetrievedSource[];
   organizationId: number;
   projectId: number;
   userId?: number | null;
@@ -69,6 +82,50 @@ export interface UpsertDocumentArtifactVersionResult {
   artifactPk: number;
   version: number;
   contentHash: string;
+  /** What the lineage gate recorded for this version; null on a de-dupe no-op. */
+  lineage: SourceAndAuthorLineageResult | { sourceSpans: 0; machineDraftSpans: number; authorSpans: 0 } | null;
+}
+
+/**
+ * Record the version's span lineage in the caller's transaction (ledger L160).
+ * An artifact version is prose a person will be asked to stand behind, so it
+ * is attributed or refused: a null actor is not a placeholder to fill in.
+ */
+async function recordVersionLineage(
+  client: PoolClient,
+  input: UpsertDocumentArtifactVersionInput,
+  artifactPk: number,
+  userId: number | null,
+): Promise<UpsertDocumentArtifactVersionResult['lineage']> {
+  if (userId == null) {
+    throw new Error(
+      'An artifact version cannot be recorded without an identified author (21 CFR Part 11): pass the acting userId.',
+    );
+  }
+  const ref = { documentTable: 'concept2cure_artifacts', documentId: String(artifactPk) };
+  /* This store exists to persist the drafts AnA produced in a conversation
+     (routes/ana-ri/post-processing.ts writes them back as the stream ends).
+     The user has not read them, let alone accepted them — the surface even
+     warns when one "was drafted but could not be saved". So every clause is
+     AnA's unaccepted draft, requested by this user; recording it as their own
+     assertion claimed they had stood behind text they had not yet seen. */
+  const machineDraft = { authorId: ANA_MACHINE_AUTHOR_ID };
+  if (input.sources && input.sources.length > 0) {
+    return enforceSourceAndAuthorLineage(
+      client, input.organizationId, ref, input.content, String(userId), input.sources, { machineDraft },
+    );
+  }
+  await enforceAuthorLineage(client, input.organizationId, ref, input.content, String(userId), { machineDraft });
+  // Counts the MACHINE-DRAFT rows now, not the author assertions: with the
+  // machineDraft claim above there are none of the latter, and reporting zero
+  // recorded spans for a save that recorded a full set would be a new silence.
+  const counted = await client.query(
+    `SELECT count(*)::int AS n FROM document_span_lineage
+      WHERE organization_id = $1 AND document_table = $2 AND document_id = $3
+        AND provenance_kind = 'machine_draft' AND deleted_at IS NULL`,
+    [input.organizationId, ref.documentTable, ref.documentId],
+  );
+  return { sourceSpans: 0, machineDraftSpans: Number(counted.rows[0]?.n ?? 0), authorSpans: 0 };
 }
 
 /**
@@ -124,6 +181,7 @@ async function insertNewArtifact(
       ctx.now,
     ]
   );
+  const lineage = await recordVersionLineage(client, input, artifactPk, ctx.userId);
   // Uniform provenance: the birth of this document is a 'generation' event,
   // recorded in the same transaction as the artifact + version so content and
   // provenance commit together.
@@ -148,6 +206,7 @@ async function insertNewArtifact(
     artifactPk,
     version: 1,
     contentHash: ctx.contentHash,
+    lineage,
   };
 }
 
@@ -238,6 +297,7 @@ export async function upsertDocumentArtifactVersionTx(
       artifactPk,
       version: currentVersion,
       contentHash,
+      lineage: null,
     };
   }
 
@@ -275,6 +335,8 @@ export async function upsertDocumentArtifactVersionTx(
     [nextVersion, input.content, contentHash, now, artifactPk]
   );
 
+  const lineage = await recordVersionLineage(client, input, artifactPk, userId);
+
   // Uniform provenance: a new version is an 'edit' event, in the same
   // transaction as the version append.
   await recordArtifactProvenance(client, {
@@ -299,6 +361,7 @@ export async function upsertDocumentArtifactVersionTx(
     artifactPk,
     version: nextVersion,
     contentHash,
+    lineage,
   };
 }
 

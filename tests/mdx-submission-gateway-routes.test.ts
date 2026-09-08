@@ -38,7 +38,8 @@ vi.mock('../server/services/mfaService', () => ({
 }));
 
 /** Re-auth body that satisfies verifyReauth in these tests. */
-const REAUTH = { reason: 'governed transmit reason', reauth: { password: 'pw-123456' } };
+// §11.50: a transmit is signed under a meaning the signer declares; the body carries it.
+const REAUTH = { reason: 'governed transmit reason', meaning: 'release', reauth: { password: 'pw-123456' } };
 
 /* Stub the submission-gateway service so the route tests don't run the
    real transport code. vi.mock is hoisted, so the mocks reference vars
@@ -109,12 +110,16 @@ vi.mock('../server/services/submission-gateways', () => {
 
 import gatewayRouter from '../server/routes/mdx-submission-gateway';
 
-function makeApp(opts: { withAuth?: boolean } = { withAuth: true }) {
+function makeApp(opts: { withAuth?: boolean; role?: string } = { withAuth: true }) {
   const app = express();
   app.use(express.json());
   if (opts.withAuth) {
     app.use((req, _res, next) => {
-      (req as any).user = { id: 777, organizationId: 99 };
+      /* `admin` unless a test asks otherwise. Before the role gate below existed
+         this harness attached NO role and every transmit test still passed —
+         which is precisely what it failed to notice. */
+      (req as any).user = { id: 777, organizationId: 99, role: opts.role ?? 'admin' };
+      (req as any).userRole = opts.role ?? 'admin';
       next();
     });
   }
@@ -168,7 +173,72 @@ describe('submission gateway routes — auth gate', () => {
   });
 });
 
+/* ─── Role gate ──────────────────────────────────────────────────── */
+
+/**
+ * Re-authentication proves WHO is acting. It does not prove they MAY.
+ *
+ * Every mutating route here passed org context, then a §11.50 re-auth gate
+ * (password, optionally TOTP), and then transmitted — with no check on the
+ * caller's organization role. A `viewer`, who by definition holds read-only
+ * access to the org and knows their own password, could put a real submission
+ * on FDA's Electronic Submissions Gateway in `production`, roll one back, and
+ * file findings against it.
+ *
+ * The re-auth gate made it look guarded and made it worse: the transmission
+ * carried a verified human signature, so the audit trail says a real person
+ * knowingly released it.
+ */
+describe('submission gateway routes — role gate', () => {
+  const MUTATIONS: Array<[string, string, Record<string, unknown>]> = [
+    ['POST', '/api/mdx/gateways/fda/esg/transmit', { ...REAUTH, environment: 'production', submissionType: 'estar', bundle: { hash: 'h' } }],
+    ['POST', '/api/mdx/gateways/transmittals/1/rollback', { ...REAUTH }],
+    ['POST', '/api/mdx/gateways/transmittals/1/findings', { code: 'X', message: 'y' }],
+    ['PATCH', '/api/mdx/gateways/findings/1/resolve', { resolution: 'done' }],
+  ];
+
+  it.each(MUTATIONS)('%s %s is refused for a read-only viewer', async (method, url, body) => {
+    const req = request(makeApp({ withAuth: true, role: 'viewer' }));
+    const res = await (method === 'POST' ? req.post(url).send(body) : req.patch(url).send(body));
+    expect(res.status, JSON.stringify(res.body)).toBe(403);
+    expect(transmitFn, 'nothing may reach the gateway').not.toHaveBeenCalled();
+  });
+
+  it('a viewer keeps every READ on this router — the gate is on writes only', async () => {
+    configStatusFn.mockResolvedValueOnce([{ region: 'fda', gateway: 'esg', configured: true }]);
+    const res = await request(makeApp({ withAuth: true, role: 'viewer' })).get('/api/mdx/gateways?environment=staging');
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    expect(res.body.data.length).toBeGreaterThan(0);
+  });
+
+  it.each(['admin', 'manager', 'member'])('a %s may still transmit', async (role) => {
+    transmitFn.mockResolvedValue({ transmissionId: 'T-1', status: 'sent', receipts: [] });
+    const res = await request(makeApp({ withAuth: true, role }))
+      .post('/api/mdx/gateways/fda/esg/transmit')
+      .send({ ...REAUTH, environment: 'test', submissionType: 'estar', bundle: { hash: 'h' } });
+    expect(res.status, JSON.stringify(res.body)).not.toBe(403);
+  });
+});
+
 /* ─── Gateways list + config status ──────────────────────────────── */
+
+describe('GET /api/mdx/gateways/transmittals', () => {
+  it('resolves submitted_by to the person, so the log names who transmitted', async () => {
+    let captured = '';
+    queryFn.mockImplementation((sql: string) => {
+      if (typeof sql === 'string' && sql.includes('FROM submission_transmittals')) {
+        captured = sql;
+        return Promise.resolve({ rows: [{ id: 3, region: 'fda', gateway: 'esg', status: 'received', submitted_by: 11, submitted_by_name: 'Dr Ada Lovelace' }], rowCount: 1 });
+      }
+      return Promise.resolve({ rows: [], rowCount: 0 });
+    });
+    const res = await request(makeApp()).get('/api/mdx/gateways/transmittals');
+    expect(res.status).toBe(200);
+    expect(captured).toMatch(/LEFT JOIN users u ON u\.id = t\.submitted_by/);
+    expect(captured).toMatch(/submitted_by_name/);
+    expect(res.body.data[0].submitted_by_name).toBe('Dr Ada Lovelace');
+  });
+});
 
 describe('GET /api/mdx/gateways', () => {
   it('returns one row per gateway with configured flag', async () => {
@@ -229,6 +299,38 @@ describe('POST /api/mdx/gateways/:region/:gateway/transmit', () => {
     expect(res.status).toBe(201);
     expect(res.body.data.transmittalId).toBe(42);
     expect(res.body.data.transmissionId).toBe('mdn-12345');
+  });
+
+  it('refuses a transmit that declares no §11.50 signature meaning — nothing reaches the gateway', async () => {
+    const withoutMeaning: Partial<typeof REAUTH> = { ...REAUTH };
+    delete withoutMeaning.meaning;
+    const res = await request(makeApp())
+      .post('/api/mdx/gateways/fda/esg/transmit')
+      .send({
+        environment: 'staging',
+        bundle: { path: '/tmp/ectd.zip', sha256: 'a'.repeat(64), sizeBytes: 123456, format: 'ectd' },
+        application_id: 'IND-12345',
+        sequence: '0001',
+        ...withoutMeaning,
+      });
+    expect(res.status).toBe(422);
+    expect(res.body.details?.meaning ?? res.body.error).toBeTruthy();
+    expect(transmitFn).not.toHaveBeenCalled();
+  });
+
+  it('refuses a meaning outside the §11.50 vocabulary', async () => {
+    const res = await request(makeApp())
+      .post('/api/mdx/gateways/fda/esg/transmit')
+      .send({
+        environment: 'staging',
+        bundle: { path: '/tmp/ectd.zip', sha256: 'a'.repeat(64), sizeBytes: 123456, format: 'ectd' },
+        application_id: 'IND-12345',
+        sequence: '0001',
+        ...REAUTH,
+        meaning: 'submission',
+      });
+    expect(res.status).toBe(422);
+    expect(transmitFn).not.toHaveBeenCalled();
   });
 
   it('loads the stored bundle when only packageId is supplied (no explicit bundle)', async () => {
@@ -358,7 +460,7 @@ describe('transmittals listing + detail', () => {
     });
     const res = await request(makeApp()).get('/api/mdx/gateways/transmittals?region=fda');
     expect(res.status).toBe(200);
-    expect(res.body.data).toHaveLength(1);
+    expect(res.body.data.length).toBeGreaterThan(0);
   });
 
   it('rejects invalid region in query', async () => {

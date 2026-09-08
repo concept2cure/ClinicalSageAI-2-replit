@@ -1520,8 +1520,17 @@ export function assessBiowaiver(params: AssessBiowaiverParams): BiowaiverResult 
         '900 mL, 37 +/- 0.5 C, >= 12 units',
       );
 
-      if (veryRapidlyDissolving) {
-        rationale.push('Test product is very rapidly dissolving (>= 85% in 15 min): f2 comparison not required.');
+      // ICH M9 (2019) 5.1 and the FDA 2017 BCS guidance waive the f2 profile
+      // comparison only when BOTH the test AND the reference product are very
+      // rapidly dissolving. This branch consulted the TEST product alone, so a
+      // caller who stated the RLD is NOT very rapidly dissolving — or who never
+      // characterised it at all — still received BIOWAIVER_GRANTED with an empty
+      // outstandingRequirements. (The Class III branch below already states the
+      // both-products rule verbatim in its required dissolution conditions.)
+      if (veryRapidlyDissolving && referenceVeryRapidlyDissolving) {
+        rationale.push(
+          'Both test and reference products are very rapidly dissolving (>= 85% in 15 min): f2 comparison not required.',
+        );
         return {
           eligible: true,
           decision: 'BIOWAIVER_GRANTED',
@@ -1532,6 +1541,50 @@ export function assessBiowaiver(params: AssessBiowaiverParams): BiowaiverResult 
           citations: [
             'FDA Guidance: Waiver of In Vivo BA/BE Studies for IR SODF Based on BCS (2017)',
             'ICH M9 Step 4 (2019) — BCS Class I very rapidly dissolving: biowaiver granted',
+          ],
+        };
+      }
+
+      if (veryRapidlyDissolving) {
+        // Test is very rapidly dissolving but the reference is not established as
+        // such. An f2 >= 50 against the RLD independently supports the waiver
+        // (that comparison IS against the reference), so honour it; otherwise the
+        // shortcut is unavailable and the gap must be named.
+        if (f2 !== undefined && f2 >= 50) {
+          rationale.push(
+            'Test product is very rapidly dissolving (>= 85% in 15 min); the reference is not established as very rapidly dissolving, but f2 = ' +
+              f2 +
+              ' (>= 50) confirms dissolution profile similarity to the RLD.',
+          );
+          return {
+            eligible: true,
+            decision: 'BIOWAIVER_GRANTED',
+            rationale,
+            requiredDissolutionConditions,
+            outstandingRequirements: [],
+            regulatoryFramework: framework.toUpperCase(),
+            citations: [
+              'FDA Guidance: Waiver of In Vivo BA/BE Studies for IR SODF Based on BCS (2017)',
+              'ICH M9 Step 4 (2019) — BCS Class I with f2 >= 50: biowaiver granted',
+            ],
+          };
+        }
+        rationale.push(
+          'Test product is very rapidly dissolving (>= 85% in 15 min), but the REFERENCE product is not established as very rapidly dissolving, so the f2 comparison cannot be waived.',
+        );
+        outstandingRequirements.push(
+          'Establish that the REFERENCE product is also very rapidly dissolving (>= 85% in 15 min), or demonstrate f2 >= 50 vs. the RLD',
+        );
+        return {
+          eligible: false,
+          decision: 'BIOWAIVER_CONDITIONAL',
+          rationale,
+          requiredDissolutionConditions,
+          outstandingRequirements,
+          regulatoryFramework: framework.toUpperCase(),
+          citations: [
+            'FDA Guidance: Waiver of In Vivo BA/BE Studies for IR SODF Based on BCS (2017)',
+            'ICH M9 Step 4 (2019) — BCS Class I requires both products to be very rapidly dissolving to waive f2',
           ],
         };
       }
@@ -1655,18 +1708,32 @@ export function assessBiowaiver(params: AssessBiowaiverParams): BiowaiverResult 
         'Both test AND reference must be very rapidly dissolving (>= 85% in 15 min)',
       );
 
-      // Excipient check
+      // Excipient check. Excipient sameness is THE criterion that separates a
+      // Class III biowaiver from a Class I one, so it must be AFFIRMATIVELY
+      // established. The test was `!== false`, which reads `undefined` — the
+      // caller never assessed excipients — identically to an affirmative `true`
+      // (both flags are optional, and neither is in the tool schema's `required`
+      // list). That granted the biowaiver and printed 'Excipient similarity
+      // criteria met.' over a comparison nobody performed.
       const excipientOK =
-        excipientsQualitativelySame !== false && excipientsQuantitativelySimilar !== false;
+        excipientsQualitativelySame === true && excipientsQuantitativelySimilar === true;
       if (!excipientOK) {
         rationale.push(
           'BCS Class III requires excipients to be qualitatively the same and quantitatively similar (+/- 10%) to the RLD.',
         );
         if (excipientsQualitativelySame === false) {
           outstandingRequirements.push('Excipients must be qualitatively the same as the RLD');
+        } else if (excipientsQualitativelySame === undefined) {
+          outstandingRequirements.push(
+            'Qualitative excipient comparison against the RLD was not provided — it must be established, not assumed',
+          );
         }
         if (excipientsQuantitativelySimilar === false) {
           outstandingRequirements.push('Excipient quantities must be within +/- 10% of the RLD');
+        } else if (excipientsQuantitativelySimilar === undefined) {
+          outstandingRequirements.push(
+            'Quantitative excipient comparison (+/- 10% of the RLD) was not provided — it must be established, not assumed',
+          );
         }
       }
 

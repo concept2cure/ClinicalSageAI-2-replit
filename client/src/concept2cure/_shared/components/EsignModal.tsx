@@ -260,6 +260,8 @@ export function EsignModal({
       const pw = await esig.verifyPassword(password);
       if (!pw.valid) {
         setError('Password could not be verified. Re-enter it and try again.');
+        setPassword('');
+        setTotp('');
         setPhase('form');
         return;
       }
@@ -267,6 +269,7 @@ export function EsignModal({
         const mfa = await esig.verifyMfa(totp);
         if (!mfa.valid) {
           setError('Authenticator code could not be verified. Enter a current code.');
+          setTotp('');
           setPhase('form');
           return;
         }
@@ -284,6 +287,9 @@ export function EsignModal({
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'The signed action could not be completed.';
       setError(msg);
+      // The credentials were spent on this attempt; a retry re-enters them.
+      setPassword('');
+      setTotp('');
       setPhase('form');
     }
   };

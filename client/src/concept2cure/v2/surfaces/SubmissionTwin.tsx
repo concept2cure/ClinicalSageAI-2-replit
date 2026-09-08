@@ -42,7 +42,7 @@ async function readData<T = any>(method: 'GET' | 'POST', path: string, body?: un
     const res = await apiRequest(method, path, body);
     const parsed = (await res.json().catch(() => null)) as any;
     return { ok: res.ok, status: res.status, data: (parsed?.data ?? null) as T | null, raw: parsed };
-  } catch (e) {
+  } catch {
     return { ok: false, status: 0, data: null, raw: null };
   }
 }
@@ -233,9 +233,9 @@ export function SubmissionTwin(_props: SurfaceViewProps) {
   return (
     <div className="cm-body">
       <div className="pj-card">
-        <div className="pj-card-h"><span className="t">Submission Twin</span><span className="s">Living readiness · drift · reviewer challenges · change impact</span></div>
+        <div className="pj-card-h"><span className="t">Submission twin</span><span className="s">Living readiness · drift · reviewer challenges · change impact</span></div>
         <div className="pj-card-b" style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
-          <label style={{ fontSize: 12, color: 'var(--c2c-dim,#667085)' }}>Submission package id</label>
+          <label style={{ fontSize: 12, color: 'var(--text-400)' }}>Submission package id</label>
           <input className="c2c-input" style={{ height: 30, width: 120 }} inputMode="numeric" value={pkgInput}
             onChange={(e) => setPkgInput(e.target.value.replace(/\D/g, ''))} onKeyDown={(e) => { if (e.key === 'Enter') applyPkg(); }} aria-label="Package size" placeholder="e.g. 1024" />
           <button className="nda-open" onClick={applyPkg} disabled={!pkgInput}>{I.search} Load</button>
@@ -265,8 +265,8 @@ export function SubmissionTwin(_props: SurfaceViewProps) {
                 : (
                   <div>
                     <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap', marginBottom: 12 }}>
-                      <div><div style={{ fontSize: 30, fontWeight: 700 }}>{readiness.readinessScore}</div><div style={{ fontSize: 12, color: 'var(--c2c-dim,#667085)' }}>Readiness</div></div>
-                      <div><div style={{ fontSize: 30, fontWeight: 700, color: readiness.fragilityScore >= 50 ? 'var(--c2c-err,#b42318)' : undefined }}>{readiness.fragilityScore}</div><div style={{ fontSize: 12, color: 'var(--c2c-dim,#667085)' }}>Fragility</div></div>
+                      <div><div style={{ fontSize: 30, fontWeight: 700 }}>{readiness.readinessScore}</div><div style={{ fontSize: 12, color: 'var(--text-400)' }}>Readiness</div></div>
+                      <div><div style={{ fontSize: 30, fontWeight: 700, color: readiness.fragilityScore >= 50 ? 'var(--error)' : undefined }}>{readiness.fragilityScore}</div><div style={{ fontSize: 12, color: 'var(--text-400)' }}>Fragility</div></div>
                     </div>
                     {readiness.weakZones.length > 0 && (
                       <div>
@@ -302,7 +302,7 @@ export function SubmissionTwin(_props: SurfaceViewProps) {
                   <tbody>{challenges.map((c) => (
                     <tr key={String(c.id)}>
                       <td style={{ fontWeight: 600 }}>{c.reviewerLens ?? '—'}</td>
-                      <td>{c.challengeText}{c.suggestedResponse ? <div style={{ fontSize: 12, color: 'var(--c2c-dim,#667085)', marginTop: 2 }}>Response: {c.suggestedResponse}</div> : null}</td>
+                      <td>{c.challengeText}{c.suggestedResponse ? <div style={{ fontSize: 12, color: 'var(--text-400)', marginTop: 2 }}>Response: {c.suggestedResponse}</div> : null}</td>
                       <td className="mono">{c.targetSection ?? '—'}</td>
                       <td>{c.deficiencyLikelihood != null ? String(c.deficiencyLikelihood) : '—'}</td>
                       <td style={{ textAlign: 'right' }}><span className={'rd-chip tone-' + sevTone(c.severity)}>{c.severity ?? '—'}</span></td>
@@ -321,7 +321,7 @@ export function SubmissionTwin(_props: SurfaceViewProps) {
                     <tr key={String(d.id)}>
                       <td><span className={'rd-chip tone-' + sevTone(d.severity)}>{d.driftType ?? d.severity ?? 'drift'}</span></td>
                       <td>{d.description ?? '—'}</td>
-                      <td style={{ color: 'var(--c2c-dim,#667085)' }}>{d.suggestedFix ?? ''}</td>
+                      <td style={{ color: 'var(--text-400)' }}>{d.suggestedFix ?? ''}</td>
                       <td style={{ textAlign: 'right' }}><button className="nda-open" onClick={() => resolveDrift(d.id)}>{I.check} Resolve</button></td>
                     </tr>))}</tbody></table>}
             </div>
@@ -338,7 +338,7 @@ export function SubmissionTwin(_props: SurfaceViewProps) {
                     <tr key={String(im.id)}>
                       <td><span className={'rd-chip tone-' + sevTone(im.impactSeverity)}>{im.changeType ?? 'change'}</span></td>
                       <td>{im.impactDescription ?? '—'}</td>
-                      <td style={{ color: 'var(--c2c-dim,#667085)' }}>{im.remediation ?? ''}</td>
+                      <td style={{ color: 'var(--text-400)' }}>{im.remediation ?? ''}</td>
                       <td style={{ textAlign: 'right' }}><button className="nda-open" onClick={() => resolveImpact(im.id)}>{I.check} Resolve</button></td>
                     </tr>))}</tbody></table>}
             </div>

@@ -17,7 +17,7 @@ import { createHash } from 'crypto';
 import { eq, and, isNull, desc, sql } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import type { PoolClient } from 'pg';
-import { db } from '../../db';
+import { db, pool } from '../../db';
 import {
   submissions,
   ectdSequences,
@@ -25,12 +25,22 @@ import {
   coauthorDocuments,
 } from '../../../shared/schema';
 import { renderedLeafFiles } from '../../../shared/schema/submissions';
+import { unifiedDocuments, workflowDocumentVersions } from '../../../shared/schema/unified_workflow';
+import { ctdOnboardingDocuments } from '../../../shared/schema/ctd-projects';
+import { readLocalUploadBuffer } from '../anthropic-files';
+import { sectionPlainText } from '../c2c/section-content';
+import {
+  externalDocumentTableReason,
+  isPlaceableDocumentTable,
+  unplaceableDocumentTableMessage,
+} from '../ectd/leaf-document-tables';
 import type {
   Submission,
   EctdSequence,
   SubmissionLeaf,
 } from '../../../shared/types/database';
-import auditService from '../auditService';
+import auditService, { writeChainedAuditRow } from '../auditService';
+import { deriveGovernedTargetBinding, BINDING_BASIS } from '../part11/signature-persistence';
 import { createScopedLogger } from '../../utils/logger';
 
 const logger = createScopedLogger('submission-service');
@@ -301,14 +311,36 @@ export async function transitionSequence(
 // The actual transmission to the agency gateway stays separate, behind the
 // governed transmit_submission tool.
 
-/** Confirm a recorded governed `sign` action authorizes this target for this actor. */
-async function verifyGovernedSignature(
+/** The governed transitions a sequence signature can authorize — one act each. */
+export type GovernedSequenceStep = 'freeze' | 'dispatch' | 'transmit';
+
+const STEP_AUDIT_ACTION: Record<GovernedSequenceStep, string> = {
+  freeze: 'SEQUENCE_FROZEN',
+  dispatch: 'SEQUENCE_DISPATCHED',
+  transmit: 'ECTD_TRANSMITTED',
+};
+
+/**
+ * Why a recorded governed `sign` action does not authorize `step` on `target`
+ * for this actor, or null when it does. Four things are checked, and each used
+ * to be missing:
+ *   - the action exists, on this exact target, by this actor, executed;
+ *   - its declared intent is this step (11.50: the meaning of the signature).
+ *     One `sign` used to authorize freeze, dispatch and transmit alike;
+ *   - it has not already been spent on a governed transition (a replay of the
+ *     freeze-time actionId used to dispatch and transmit too);
+ *   - the sequence's leaf manifest still hashes to the digest bound at signing
+ *     (11.70). The digest was persisted and never consulted, so a leaf edited
+ *     after signing was frozen under a signature applied to different bytes.
+ */
+async function governedSignatureRefusal(
   signatureActionId: string,
   target: string,
-  ctx: { organizationId: number; userId: number }
-): Promise<boolean> {
-  const result = await db.execute(sql`
-    SELECT id FROM c2c_ana_actions
+  ctx: { organizationId: number; userId: number },
+  step: GovernedSequenceStep,
+): Promise<string | null> {
+  const action = await db.execute(sql`
+    SELECT id, payload FROM c2c_ana_actions
     WHERE id = ${signatureActionId}
       AND org_id = ${ctx.organizationId}
       AND command = 'sign'
@@ -317,7 +349,90 @@ async function verifyGovernedSignature(
       AND proposed_by = ${ctx.userId}
     LIMIT 1
   `);
-  return ((result as { rows?: unknown[] }).rows?.length ?? 0) > 0;
+  const row = ((action as { rows?: Array<{ payload?: unknown }> }).rows ?? [])[0];
+  if (!row) return 'no executed sign action on this sequence by this actor';
+
+  const payload = typeof row.payload === 'string' ? safeJson(row.payload) : (row.payload as Record<string, unknown> | null);
+  const intent = typeof payload?.intent === 'string' ? payload.intent : null;
+  if (intent !== step) {
+    return `the sign action declares intent '${intent ?? 'none'}', not '${step}'; sign this step with its own meaning`;
+  }
+
+  const sequenceId = target.slice(target.indexOf(':') + 1);
+  const spent = await db.execute(sql`
+    SELECT 1 FROM audit_logs
+    WHERE tenant_id = ${ctx.organizationId}
+      AND table_name = 'ectd_sequence'
+      AND record_id = ${sequenceId}
+      AND action IN ('SEQUENCE_FROZEN', 'SEQUENCE_DISPATCHED', 'ECTD_TRANSMITTED')
+      AND (new_values::jsonb ->> 'signatureActionId') = ${signatureActionId}
+    LIMIT 1
+  `);
+  if (((spent as { rows?: unknown[] }).rows?.length ?? 0) > 0) {
+    return 'this sign action already authorized a governed transition; each step needs its own signature';
+  }
+
+  const esig = await db.execute(sql`
+    SELECT bound_payload_digest, binding_basis FROM electronic_signatures
+    WHERE organization_id = ${ctx.organizationId}
+      AND signed_target = ${target}
+      AND (signature_manifest::jsonb ->> 'actionId') = ${signatureActionId}
+    LIMIT 1
+  `);
+  const sig = ((esig as unknown as { rows?: Array<{ bound_payload_digest: string | null; binding_basis: string | null }> }).rows ?? [])[0];
+  if (!sig) return 'no electronic signature record is bound to this sign action';
+  if (sig.binding_basis !== BINDING_BASIS.ECTD_SEQUENCE_LEAF_MANIFEST || !sig.bound_payload_digest) {
+    return 'the signature is not bound to this sequence\'s leaf manifest; re-sign the sequence';
+  }
+  const current = await deriveGovernedTargetBinding(
+    { query: (text: string, params?: unknown[]) => pool.query(text, params) as Promise<{ rows: any[] }> },
+    target,
+    ctx.organizationId,
+  );
+  if (current.digest !== sig.bound_payload_digest) {
+    return 'the sequence changed after it was signed (leaf manifest digest differs); re-sign the current content';
+  }
+  return null;
+}
+
+function safeJson(text: string): Record<string, unknown> | null {
+  try { return JSON.parse(text) as Record<string, unknown>; } catch { return null; }
+}
+
+
+/**
+ * Apply a sequence state change and its hash-chained audit row in ONE
+ * transaction. auditService.logAction swallows a persistence failure by policy
+ * (an audit outage must not break a general user action); for a Part 11
+ * governed transition the claim is the opposite — no freeze, dispatch or
+ * transmission without its audit row — so the row is written with
+ * writeChainedAuditRow on the same client and a failure rolls the state
+ * change back.
+ */
+async function applySequenceChangeWithAudit(
+  update: { text: string; params: unknown[] },
+  audit: { organizationId: number; userId: number; action: string; resourceId: number; details: Record<string, unknown> },
+): Promise<void> {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const res = (await client.query(update.text, update.params)) as { rowCount?: number | null };
+    if (!res.rowCount) throw new SubmissionError('NOT_FOUND', 'Sequence not found for this organization.');
+    await writeChainedAuditRow(client, {
+      organizationId: audit.organizationId,
+      userId: audit.userId,
+      action: audit.action,
+      resourceType: 'ectd_sequence',
+      resourceId: audit.resourceId,
+      details: audit.details,
+    });
+    await client.query('COMMIT');
+  } catch (err) {
+    try { await client.query('ROLLBACK'); } catch { /* the failure below is the one to report */ }
+    throw err;
+  } finally {
+    client.release();
+  }
 }
 
 async function applyGovernedSequenceTransition(
@@ -331,52 +446,61 @@ async function applyGovernedSequenceTransition(
     throw new SubmissionError('INVALID_STATE', `Cannot transition sequence from ${seq.status} to ${toStatus}.`);
   }
 
-  // Gate 1 — Part 11 e-signature must govern THIS sequence, signed by THIS actor.
+  // Gate 1 — Part 11 e-signature must govern THIS sequence, for THIS step,
+  // signed by THIS actor, unspent, and bound to the current leaf manifest.
   const target = `ectd-sequence:${id}`;
-  if (!(await verifyGovernedSignature(signatureActionId, target, ctx))) {
+  const step: GovernedSequenceStep = toStatus === 'frozen' ? 'freeze' : 'dispatch';
+  const refusal = await governedSignatureRefusal(signatureActionId, target, ctx, step);
+  if (refusal !== null) {
     throw new SubmissionError(
       'GOVERNED_REQUIRED',
-      `A valid e-signature is required: sign ${target} via POST /api/c2c/actions/sign, then pass its actionId.`
+      `A valid e-signature is required: sign ${target} via POST /api/c2c/actions/sign with intent '${step}', then pass its actionId. Refused: ${refusal}.`
     );
   }
 
-  // Gate 2 — deterministic dispatch gate (server-computed inputs; tamper-proof).
+  // Gate 2 — deterministic dispatch gate (server-computed inputs; tamper-proof),
+  // composed for THIS step. Freeze takes every gate except the REQUIREMENT for a
+  // §11.70 release signature: that control is the transmit re-check, a release
+  // signature comes from a signed package orchestrator run, and requiring one to
+  // freeze inverted the order the product works in — freeze, then build and sign
+  // the release. A tampered signature still blocks a freeze, and dispatch is
+  // unchanged. See assess-dispatch-readiness → composeDispatchGatesForStep.
   const { assessSequenceDispatchReadiness } = await import('../ectd/assess-dispatch-readiness');
   const assessment = await assessSequenceDispatchReadiness({ sequenceId: id, organizationId: ctx.organizationId });
-  if (!assessment.gate.cleared) {
+  const stepGate = toStatus === 'frozen' ? assessment.freezeGate : assessment.gate;
+  if (!stepGate.cleared) {
     throw new SubmissionError(
       'DISPATCH_BLOCKED',
-      `Dispatch gate blocks ${toStatus}: ${assessment.gate.blockers.join(' ')}`
+      `Dispatch gate blocks ${toStatus}: ${stepGate.blockers.join(' ')}`
     );
   }
 
-  const now = new Date();
-  const patch: Record<string, unknown> = { status: toStatus, updatedAt: now };
-  if (toStatus === 'frozen') patch.frozenAt = now;
-  if (toStatus === 'dispatched') patch.dispatchStatus = 'pending'; // queued for transmit; not yet sent
-
-  const [row] = await db
-    .update(ectdSequences)
-    .set(patch)
-    .where(and(eq(ectdSequences.id, id), eq(ectdSequences.organizationId, ctx.organizationId)))
-    .returning();
-
-  await auditService.logAction({
-    organizationId: ctx.organizationId,
-    userId: ctx.userId,
-    action: toStatus === 'frozen' ? 'SEQUENCE_FROZEN' : 'SEQUENCE_DISPATCHED',
-    resourceType: 'ectd_sequence',
-    resourceId: id,
-    details: {
-      from: seq.status,
-      to: toStatus,
-      signatureActionId,
-      validationErrors: assessment.validationErrors,
-      unacknowledgedShadowCriticals: assessment.unacknowledgedShadowCriticals,
+  // The state change and its chained audit row commit together, or neither.
+  // 'dispatched' queues the sequence for transmit (dispatch_status pending);
+  // it is not yet sent.
+  await applySequenceChangeWithAudit(
+    {
+      text: toStatus === 'frozen'
+        ? `UPDATE ectd_sequences SET status = $1, updated_at = NOW(), frozen_at = NOW() WHERE id = $2 AND organization_id = $3 AND deleted_at IS NULL`
+        : `UPDATE ectd_sequences SET status = $1, updated_at = NOW(), dispatch_status = 'pending' WHERE id = $2 AND organization_id = $3 AND deleted_at IS NULL`,
+      params: [toStatus, id, ctx.organizationId],
     },
-  });
+    {
+      organizationId: ctx.organizationId,
+      userId: ctx.userId,
+      action: STEP_AUDIT_ACTION[step],
+      resourceId: id,
+      details: {
+        from: seq.status,
+        to: toStatus,
+        signatureActionId,
+        validationErrors: assessment.validationErrors,
+        unacknowledgedShadowCriticals: assessment.unacknowledgedShadowCriticals,
+      },
+    },
+  );
   logger.info('Governed sequence transition applied', { id, toStatus, organizationId: ctx.organizationId });
-  return row as EctdSequence;
+  return getSequence(id, ctx);
 }
 
 /** Freeze a validated sequence. Governed: requires e-signature + a clear dispatch gate. */
@@ -453,6 +577,19 @@ export function selectGateway(
 }
 
 /** Project a gateway transmit status onto the sequence's coarse dispatch_status. */
+/**
+ * Why a dispatched sequence must not be transmitted again, or null. The only
+ * guard was status === 'dispatched', which transmit never changes, so a second
+ * call — same signature — produced a second real transmittal at the agency.
+ * A rejected transmission may be retried; a sent or acknowledged one may not.
+ */
+export function resendRefusal(dispatchStatus: string | null | undefined): string | null {
+  if (dispatchStatus === 'sent' || dispatchStatus === 'acknowledged') {
+    return `Sequence was already transmitted (dispatch status '${dispatchStatus}'); it is not sent again. A correction is a new sequence.`;
+  }
+  return null;
+}
+
 function toDispatchStatus(status: string): 'sent' | 'acknowledged' | 'rejected' {
   if (status === 'rejected' || status === 'validation_failed') return 'rejected';
   if (status === 'ack3_received' || status === 'validation_passed' || status === 'completed') return 'acknowledged';
@@ -463,7 +600,19 @@ export interface TransmitSequenceParams {
   sequenceId: number;
   ctx: { organizationId: number; userId: number };
   signatureActionId: string;
+  /**
+   * Required. This defaulted to 'production' — the exact defect
+   * submission-gateways/types.ts records as the reason TransmitAuthorization
+   * exists — so an omitted environment sent the package to the live agency
+   * endpoint.
+   */
   environment?: 'staging' | 'production';
+  /**
+   * The agency application number (IND/NDA/BLA). Required to transmit — an
+   * absent one used to be spelled UNASSIGNED-SEQ-<id> in the backbone and on
+   * the SFTP path and sent anyway. Both stay optional in the TYPE so the HTTP
+   * route's optional fields still compile; transmitSequence refuses at runtime.
+   */
   applicationId?: string;
   sponsorId?: string;
   sponsorName?: string;
@@ -488,19 +637,32 @@ export interface TransmitSequenceResult {
  */
 export async function transmitSequence(params: TransmitSequenceParams): Promise<TransmitSequenceResult> {
   const { sequenceId, ctx, signatureActionId } = params;
-  const environment = params.environment ?? 'production';
+  if (params.environment !== 'staging' && params.environment !== 'production') {
+    throw new SubmissionError('VALIDATION', 'Transmit requires an explicit environment: staging or production.');
+  }
+  const environment = params.environment;
+  const applicationId = typeof params.applicationId === 'string' ? params.applicationId.trim() : '';
+  if (!applicationId || /^UNASSIGNED/i.test(applicationId)) {
+    throw new SubmissionError(
+      'VALIDATION',
+      'Transmit requires the agency application number; a sequence with none recorded is assembled for inspection only, never sent.',
+    );
+  }
 
   const seq = await getSequence(sequenceId, ctx);
   if (seq.status !== 'dispatched') {
     throw new SubmissionError('INVALID_STATE', `Sequence must be dispatched before transmit (current: ${seq.status}).`);
   }
+  const resend = resendRefusal(seq.dispatchStatus);
+  if (resend) throw new SubmissionError('INVALID_STATE', resend);
 
-  // Gate 1 — Part 11 e-signature on this sequence, by this actor.
+  // Gate 1 — Part 11 e-signature on this sequence, for transmit, by this actor.
   const target = `ectd-sequence:${sequenceId}`;
-  if (!(await verifyGovernedSignature(signatureActionId, target, ctx))) {
+  const refusal = await governedSignatureRefusal(signatureActionId, target, ctx, 'transmit');
+  if (refusal !== null) {
     throw new SubmissionError(
       'GOVERNED_REQUIRED',
-      `A valid e-signature is required: sign ${target} via POST /api/c2c/actions/sign, then pass its actionId.`
+      `A valid e-signature is required: sign ${target} via POST /api/c2c/actions/sign with intent 'transmit', then pass its actionId. Refused: ${refusal}.`
     );
   }
 
@@ -548,9 +710,14 @@ export async function transmitSequence(params: TransmitSequenceParams): Promise<
     sequenceId,
     organizationId: ctx.organizationId,
     userId: ctx.userId,
-    applicationId: params.applicationId ?? `SEQ-${sequenceId}`,
-    sponsorId: params.sponsorId ?? `ORG-${ctx.organizationId}`,
-    sponsorName: params.sponsorName ?? `Organization ${ctx.organizationId}`,
+    // Never fabricate an agency identifier (regulatory-identifiers.ts): these
+    // become <application-number>/<procedure-number>, <id>/<company-id> and
+    // <name>/<company-name> in the regional backbone, and the application id is
+    // also a package filename component. An unassigned value SAYS it is
+    // unassigned, in the wording the transmit path already uses.
+    applicationId,
+    sponsorId: params.sponsorId ?? `UNASSIGNED-ORG-${ctx.organizationId}`,
+    sponsorName: params.sponsorName ?? `UNASSIGNED (organization ${ctx.organizationId})`,
   });
 
   // A dossier transmitted to an agency must physically contain every leaf's
@@ -564,12 +731,11 @@ export async function transmitSequence(params: TransmitSequenceParams): Promise<
   // backbone — a leaf resolves to a file inside the sequence. So fail closed on
   // ANY unresolved leaf (release the staged bundle and block), classifying the
   // cause only for the operator message.
-  const { EXTERNAL_DOCUMENT_TABLES } = await import('../ectd/leaf-source-resolver');
   const unresolved = assembled.unresolvedLeaves;
   if (unresolved.length > 0) {
     await assembled.cleanup();
     const isExternal = (l: { documentTable: string | null }) =>
-      l.documentTable != null && l.documentTable in EXTERNAL_DOCUMENT_TABLES;
+      externalDocumentTableReason(l.documentTable) !== null;
     const defects = unresolved.filter((l) => !isExternal(l));
     const external = unresolved.filter(isExternal);
     const parts: string[] = [];
@@ -602,7 +768,7 @@ export async function transmitSequence(params: TransmitSequenceParams): Promise<
       bundle: assembled.bundle,
       environment,
       submissionType: seq.type ?? undefined,
-      metadata: { applicationId: params.applicationId ?? `SEQ-${sequenceId}`, sequence: seq.sequenceNumber, environment },
+      metadata: { applicationId, sequence: seq.sequenceNumber, environment },
       // Gate 1 above already verified this signature governs THIS sequence and
       // was made by THIS actor; the gateway layer now requires that proof to be
       // named rather than merely to have happened somewhere up the stack.
@@ -619,25 +785,27 @@ export async function transmitSequence(params: TransmitSequenceParams): Promise<
   }
 
   const dispatchStatus = toDispatchStatus(result.status);
-  await db
-    .update(ectdSequences)
-    .set({ dispatchStatus, updatedAt: new Date() })
-    .where(and(eq(ectdSequences.id, sequenceId), eq(ectdSequences.organizationId, ctx.organizationId)));
-
-  await auditService.logAction({
-    organizationId: ctx.organizationId,
-    userId: ctx.userId,
-    action: 'ECTD_TRANSMITTED',
-    resourceType: 'ectd_sequence',
-    resourceId: sequenceId,
-    details: {
-      region: seq.region,
-      gateway: route.gwName,
-      transmittalId: result.transmittalId,
-      status: result.status,
-      environment,
+  await applySequenceChangeWithAudit(
+    {
+      text: `UPDATE ectd_sequences SET dispatch_status = $1, updated_at = NOW() WHERE id = $2 AND organization_id = $3`,
+      params: [dispatchStatus, sequenceId, ctx.organizationId],
     },
-  });
+    {
+      organizationId: ctx.organizationId,
+      userId: ctx.userId,
+      action: 'ECTD_TRANSMITTED',
+      resourceId: sequenceId,
+      details: {
+        region: seq.region,
+        gateway: route.gwName,
+        transmittalId: result.transmittalId,
+        transmissionId: result.transmissionId ?? null,
+        status: result.status,
+        environment,
+        signatureActionId,
+      },
+    },
+  );
   logger.info('Transmitted sequence to agency gateway', { sequenceId, region: seq.region, gateway: route.gwName, status: result.status });
 
   return {
@@ -687,6 +855,177 @@ export interface UpsertLeafInput {
   checksum?: string | null;
 }
 
+/**
+ * Tenancy + source pin for a leaf's document pointer, one entry per document
+ * table the READ side (server/services/ectd/leaf-source-resolver.ts) can
+ * materialize.
+ *
+ * ── Why a table-keyed dispatch and not another `if` ──────────────────────────
+ * This block used to be two hand-written `if (input.documentTable === …)`
+ * branches — coauthor_documents and rendered_leaf_files — under a comment
+ * promising "no dangling cross-tenant document pointers". The resolver could
+ * materialize five tables. The other three (unified_documents,
+ * ctd_onboarding_documents, c2c_document_sections) were written straight
+ * through: any id, from any organization or from nothing at all, was stored
+ * verbatim and left unpinned. The read side fails closed per table, so no
+ * foreign bytes ever reached a package — but dispatch readiness only checks
+ * that a pointer is PRESENT, so such a sequence reads as READY and only falls
+ * over at assembly as an `unresolved` leaf.
+ *
+ * Each verifier proves the document resolves IN THE CALLER'S ORGANIZATION
+ * (throwing FORBIDDEN otherwise) and returns the digest to pin, taken from the
+ * SAME org-scoped read — a second query could race a concurrent edit and pin
+ * content the tenancy check never saw. Its predicate mirrors the resolver's for
+ * that table exactly; when a new source is added there, the drift guard in
+ * __tests__/leaf-source-tenancy.pglite.test.ts fails until it is added here.
+ *
+ * NULL, never sha256(''), is the pin for every "nothing to pin" case: sha256('')
+ * is a real constant that would look exactly like a pin that had been taken and
+ * would then "match" any other empty document forever.
+ */
+type LeafSourceVerifier = (documentId: number, organizationId: number) => Promise<string | null>;
+
+const forbidRef = () =>
+  new SubmissionError('FORBIDDEN', 'Referenced document not found for this organization.');
+
+const sha256Hex = (value: string | Buffer): string =>
+  createHash('sha256')
+    .update(typeof value === 'string' ? Buffer.from(value, 'utf8') : value)
+    .digest('hex');
+
+const LEAF_SOURCE_VERIFIERS: Record<string, LeafSourceVerifier> = {
+  /** Authoring store. Pin = sha256 of the stored body text. */
+  coauthor_documents: async (documentId, organizationId) => {
+    const [doc] = await db
+      .select({ id: coauthorDocuments.id, content: coauthorDocuments.content })
+      .from(coauthorDocuments)
+      .where(and(eq(coauthorDocuments.id, documentId), eq(coauthorDocuments.organizationId, organizationId)))
+      .limit(1);
+    if (!doc) throw forbidRef();
+    return typeof doc.content === 'string' && doc.content.length > 0 ? sha256Hex(doc.content) : null;
+  },
+
+  /* Bytes this server rendered for a filing. The pin is the sha256 recorded
+     when the bytes were rendered, which is exactly what the resolver
+     re-verifies before staging them. */
+  rendered_leaf_files: async (documentId, organizationId) => {
+    const [rendered] = await db
+      .select({ sha256: renderedLeafFiles.sha256 })
+      .from(renderedLeafFiles)
+      .where(and(eq(renderedLeafFiles.id, documentId), eq(renderedLeafFiles.organizationId, organizationId)))
+      .limit(1);
+    if (!rendered) throw forbidRef();
+    return rendered.sha256;
+  },
+
+  /* Unified workflow document: the row is the tenant boundary, the body lives
+     in the latest workflow_document_versions row (read org-scoped directly, as
+     the resolver does, not only transitively through the parent).
+
+     The pin is over JSON.stringify(version.content). That is a CHANGE
+     DETECTOR, not a canonical serialization: it depends on the driver
+     preserving stored key order, so a pin that stops matching after a driver or
+     column-type change is not by itself tamper evidence. It is pinned this way
+     because an inspector can re-derive it from that single column; digesting
+     rendered text instead would drift with the renderer. */
+  unified_documents: async (documentId, organizationId) => {
+    const [doc] = await db
+      .select({ id: unifiedDocuments.id })
+      .from(unifiedDocuments)
+      .where(and(eq(unifiedDocuments.id, documentId), eq(unifiedDocuments.organizationId, organizationId)))
+      .limit(1);
+    if (!doc) throw forbidRef();
+    const [version] = await db
+      .select({ content: workflowDocumentVersions.content })
+      .from(workflowDocumentVersions)
+      .where(
+        and(
+          eq(workflowDocumentVersions.documentId, documentId),
+          eq(workflowDocumentVersions.organizationId, organizationId),
+        ),
+      )
+      .orderBy(desc(workflowDocumentVersions.version))
+      .limit(1);
+    return version && version.content != null ? sha256Hex(JSON.stringify(version.content)) : null;
+  },
+
+  /* Uploaded CTD binary. Tenancy is the row's organization_id; the pin is the
+     sha256 of the upload's bytes.
+
+     The byte read fails SOFT (pin NULL when the file is missing/rotated): the
+     placement is a metadata write, and making it depend on disk availability
+     would refuse a leaf the assembler can still legitimately report as
+     unresolved. Tenancy itself never fails soft — the row lookup above already
+     decided that. */
+  ctd_onboarding_documents: async (documentId, organizationId) => {
+    const [doc] = await db
+      .select({ storagePath: ctdOnboardingDocuments.storagePath })
+      .from(ctdOnboardingDocuments)
+      .where(and(eq(ctdOnboardingDocuments.id, documentId), eq(ctdOnboardingDocuments.organizationId, organizationId)))
+      .limit(1);
+    if (!doc) throw forbidRef();
+    let buf: Buffer | null;
+    try {
+      buf = await readLocalUploadBuffer(doc.storagePath);
+    } catch {
+      buf = null;
+    }
+    return buf && buf.length > 0 ? sha256Hex(buf) : null;
+  },
+
+  /* Governed authoring store (MDR/IVDR). c2c_document_sections carries NO
+     organization column: its tenant scope is the parent c2c_documents.org_id,
+     so the JOIN below IS the tenant gate — exactly the predicate the resolver
+     uses. Issued through drizzle's `db.execute` so the same PGlite harness the
+     sibling branches use covers it. Pin = sha256 of the canonical section text
+     (sectionPlainText), the same reading of the body the packager renders. */
+  c2c_document_sections: async (documentId, organizationId) => {
+    const res = await db.execute(sql`
+      SELECT s.content
+        FROM c2c_document_sections s
+        JOIN c2c_documents d ON d.id = s.document_id
+       WHERE s.id = ${documentId} AND d.org_id = ${organizationId}
+       LIMIT 1`);
+    const rows = ((res as unknown as { rows?: unknown[] }).rows ?? res) as Array<{ content: unknown }>;
+    if (!rows[0]) throw forbidRef();
+    // jsonb arrives parsed from node-postgres and PGlite; tolerate a driver
+    // that hands back the serialized string.
+    let content: unknown = rows[0].content;
+    if (typeof content === 'string') {
+      try { content = JSON.parse(content); } catch { /* keep as text */ }
+    }
+    const text = sectionPlainText(content).trim();
+    return text ? sha256Hex(text) : null;
+  },
+};
+
+/**
+ * The document tables upsertLeaf verifies tenancy for. Exported so the drift
+ * guard can assert this set still covers everything the read-side resolver
+ * branches on — a new resolver source with no verifier here would be storable
+ * unchecked and unpinned, which is the defect this dispatch closes.
+ */
+export const LEAF_SOURCE_TENANCY_TABLES: ReadonlySet<string> = new Set(Object.keys(LEAF_SOURCE_VERIFIERS));
+
+/**
+ * Prove the referenced document belongs to `organizationId` and return the
+ * digest to pin on the leaf (null when there is nothing to pin).
+ *
+ * A table with no registered verifier (vault_documents — UUID-keyed and
+ * program-scoped, so an integer leaf id cannot address it tenant-safely — or an
+ * unknown string) keeps today's behaviour: stored unverified and unpinned, and
+ * surfaced as an unresolved leaf at assembly. Widening that is a separate
+ * decision; the drift guard exists so it is a decision rather than an omission.
+ */
+async function verifyLeafSource(
+  documentTable: string,
+  documentId: number,
+  organizationId: number,
+): Promise<string | null> {
+  const verify = LEAF_SOURCE_VERIFIERS[documentTable];
+  return verify ? verify(documentId, organizationId) : null;
+}
+
 /** Create or update a leaf placement. Refuses if the parent sequence is locked. */
 export async function upsertLeaf(
   input: UpsertLeafInput,
@@ -697,54 +1036,32 @@ export async function upsertLeaf(
     throw new SubmissionError('INVALID_STATE', `Sequence is ${seq.status}; its leaves are immutable.`);
   }
 
-  // When a leaf points at the canonical document table, the target must belong
-  // to the caller's org — no dangling cross-tenant document pointers.
-  /* Source pin (GA ledger L23). The leaf records where the document lives and
+  /* The leaf's document pointer is POLYMORPHIC — `document_table` is a plain
+     string. Nothing constrained it here, so a misspelled or invented table was
+     stored verbatim, audited as a placement, and reported dispatch-CLEAR by the
+     readiness validator (which only checks that a pointer is PRESENT); the
+     mistake only surfaced at assembly, as an unresolvable leaf, typically at the
+     end of a filing window. Refuse it at the write boundary instead — this is
+     the single choke point every caller funnels through (the REST route, AnA's
+     place_into_sequence, ind-lifecycle persistence and CMC placement). */
+  if (input.documentTable != null && !isPlaceableDocumentTable(input.documentTable)) {
+    throw new SubmissionError('VALIDATION', unplaceableDocumentTableMessage(input.documentTable));
+  }
+
+  /* Tenancy + source pin for the document this leaf points at. One table-keyed
+     step (LEAF_SOURCE_VERIFIERS above) covers every source the resolver can
+     materialize: it proves the target belongs to the caller's org — no dangling
+     cross-tenant document pointers — and returns the digest to pin.
+
+     Source pin (GA ledger L23). The leaf records where the document lives and
      the MD5 of its RENDERED bytes; neither says what the SOURCE contained when
      it was filed. So "this went to the agency — is the document behind it still
      what went?" had no answer: `document_id` resolves to the document as it is
-     now, and editing it after filing changes nothing on the leaf.
-
-     The digest is taken from the SAME org-scoped read that already proves the
-     document belongs to the caller, so the bytes pinned are the bytes the
-     tenancy check passed on — a second query could race a concurrent edit and
-     pin content the check never saw. */
-  let documentContentSha256: string | null = null;
-  if (input.documentTable === 'coauthor_documents' && input.documentId) {
-    const [doc] = await db
-      .select({ id: coauthorDocuments.id, content: coauthorDocuments.content })
-      .from(coauthorDocuments)
-      .where(and(eq(coauthorDocuments.id, input.documentId), eq(coauthorDocuments.organizationId, ctx.organizationId)))
-      .limit(1);
-    if (!doc) {
-      throw new SubmissionError('FORBIDDEN', 'Referenced document not found for this organization.');
-    }
-    /* An empty or absent body pins NOTHING rather than the digest of an empty
-       string. sha256('') is a real, constant hex value that would look exactly
-       like a pin that had been taken, and would then "match" any other empty
-       document forever. NULL is the honest record of "no content to pin". */
-    documentContentSha256 =
-      typeof doc.content === 'string' && doc.content.length > 0
-        ? createHash('sha256').update(doc.content, 'utf8').digest('hex')
-        : null;
-  }
-
-  /* A rendered filing document (rendered_leaf_files) is the other pointer the
-     resolver can materialize. Same tenancy rule as above — an id that does not
-     resolve in this organization is refused, not silently stored — and the pin
-     is the sha256 recorded when the bytes were rendered, which is exactly what
-     the resolver re-verifies before staging them. */
-  if (input.documentTable === 'rendered_leaf_files' && input.documentId) {
-    const [rendered] = await db
-      .select({ sha256: renderedLeafFiles.sha256 })
-      .from(renderedLeafFiles)
-      .where(and(eq(renderedLeafFiles.id, input.documentId), eq(renderedLeafFiles.organizationId, ctx.organizationId)))
-      .limit(1);
-    if (!rendered) {
-      throw new SubmissionError('FORBIDDEN', 'Referenced document not found for this organization.');
-    }
-    documentContentSha256 = rendered.sha256;
-  }
+     now, and editing it after filing changes nothing on the leaf. */
+  const documentContentSha256: string | null =
+    input.documentTable && input.documentId
+      ? await verifyLeafSource(input.documentTable, input.documentId, ctx.organizationId)
+      : null;
 
   // A lifecycle op that supersedes a prior leaf (replace|append|delete) carries a
   // parentLeafId — the GUID of the leaf it acts on. That parent MUST belong to the

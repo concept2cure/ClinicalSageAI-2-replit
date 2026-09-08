@@ -5,7 +5,7 @@
  *   - 6 interaction kinds with correct chip colors
  *   - Feedback rollup shows match confidence; Apply opens governed confirmation
  *
- * Port basis: design-system/ui_kits/pdev/Surfaces.jsx > PdevFdaStream.
+ * Port basis: ui_kits/pdev/Surfaces.jsx > PdevFdaStream.
  */
 
 import * as React from 'react';

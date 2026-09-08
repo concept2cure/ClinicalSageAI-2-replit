@@ -1068,6 +1068,14 @@ export const useAuth = (): AuthContextValue => {
   return context;
 };
 
+/**
+ * The authenticated user when an AuthProvider is mounted, else null. For
+ * surfaces that only *display* identity (e.g. the printed signer name on an
+ * e-signature dialog) and must still render standalone. Authorization never
+ * reads this — the server resolves the actor from the session.
+ */
+export const useAuthUser = (): AuthUser | null => useContext(AuthContext)?.user ?? null;
+
 // ─────────────────────────────────────────────────────────────────────────────
 // EXPORTS
 // ─────────────────────────────────────────────────────────────────────────────

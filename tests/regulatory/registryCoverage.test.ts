@@ -9,6 +9,9 @@
  */
 
 import { describe, it, expect } from 'vitest';
+import path from 'node:path';
+import os from 'node:os';
+import fs from 'node:fs';
 import {
   getDocumentCoverage,
   buildCoverageReport,
@@ -58,18 +61,30 @@ describe('Registry coverage', () => {
       expect(cov.requiredForms.every((f) => f.registered && f.implemented)).toBe(true);
     });
 
-    it('US IND is NOT reported form-backed while the official FDA editions are unreviewed dynamic XFA', () => {
-      // templates/forms/acroforms/*.manifest.json all carry assetTrusted:false,
-      // fillSupported:false and an empty fieldMap: the builders render a
-      // reconstruction or a watermarked draft, never the official form. Reporting
-      // formsFullyBacked=true on the builder flag alone told a product owner the
-      // package would carry the official 1571/1572/3674 when it would not.
-      // This flips to true only when a reviewed, fillable official edition is
-      // installed — the manifest is the single source both this report and the
-      // fill service read.
+    it('US IND is reported form-backed: all three required editions now fill officially', () => {
+      // This asserted the opposite for as long as 1571 and 3674 were believed
+      // unfillable. 1572 fills its reviewed AcroForm map; 1571 and 3674 fill
+      // through their XFA datasets packet, which is where their fields actually
+      // live. The manifest remains the single source both this report and the
+      // fill service read, so the two cannot disagree.
       const cov = getDocumentCoverage('US_IND')!;
-      expect(cov.requiredForms.every((f) => f.officialAssetTrusted)).toBe(false);
-      expect(cov.formsFullyBacked).toBe(false);
+      expect(cov.requiredForms.every((f) => f.officialAssetTrusted)).toBe(true);
+      expect(cov.formsFullyBacked).toBe(true);
+    });
+
+    it('and stops being form-backed the moment the official editions are not installed', () => {
+      // The gate still bites: it is the installed, integrity-checked asset that
+      // earns the claim, never the builder flag.
+      const previous = process.env.IND_FORM_TEMPLATES_DIR;
+      process.env.IND_FORM_TEMPLATES_DIR = path.join(os.tmpdir(), 'c2c-no-forms-installed');
+      try {
+        const cov = getDocumentCoverage('US_IND')!;
+        expect(cov.requiredForms.some((f) => f.officialAssetTrusted)).toBe(false);
+        expect(cov.formsFullyBacked).toBe(false);
+      } finally {
+        if (previous === undefined) delete process.env.IND_FORM_TEMPLATES_DIR;
+        else process.env.IND_FORM_TEMPLATES_DIR = previous;
+      }
     });
 
     it('the named regions have an eCTD backbone reference', () => {
@@ -119,11 +134,35 @@ describe('Registry coverage', () => {
       'ICH_CTD_M1', 'ICH_CTD_M2', 'ICH_CTD_M3', 'ICH_CTD_M4', 'ICH_CTD_M5',
     ] as const;
 
+    /* Two facts, deliberately separated.
+     *
+     * This case's subject is the SECTION BLUEPRINT, and that assertion still
+     * runs for every id. It also used to assert `readiness !== 'catalog_only'`,
+     * which was a different claim riding along: readiness is now capped by
+     * whether the governed path can start the filing at all, and for the
+     * Swissmedic, ANVISA, CDSCO and HSA ids in this list it cannot —
+     * AGENCY_TO_CODE has no value for those agencies, so
+     * c2c_documents_agency_check rejects the insert. Asserting both through one
+     * expectation is what let a type with a real blueprint read as ready when
+     * nothing could be built. Each fact is now asserted on its own terms, which
+     * is stricter than the single expectation it replaces.
+     */
     it.each(NOW_BUILDABLE)('%s has a real (non-generic) section blueprint', (id) => {
       const cov = getDocumentCoverage(id);
       expect(cov, `${id} missing from registry`).not.toBeNull();
       expect(cov!.sectionBlueprint, `${id} still on the generic fallback`).not.toBe('generic');
-      expect(cov!.readiness).not.toBe('catalog_only');
+    });
+
+    it.each(NOW_BUILDABLE)('%s reports a readiness its governed path can deliver', (id) => {
+      const cov = getDocumentCoverage(id)!;
+      if (cov.governedAuthoring === 'supported') {
+        expect(cov.readiness, `${id} is startable but reads catalog_only`).not.toBe('catalog_only');
+      } else {
+        expect(
+          cov.readiness,
+          `${id} cannot be started (${cov.governedAuthoring}) yet reports ${cov.readiness}`,
+        ).toBe('catalog_only');
+      }
     });
 
     it('the CSR blueprint follows the ICH E3 structure (efficacy + safety evaluation)', () => {
@@ -151,8 +190,33 @@ describe('Registry coverage', () => {
       // falls through to the generic CTD fallback. A new registry entry added
       // without a matching SECTION_BLUEPRINTS entry (project-bootstrap.ts) will
       // trip this; add the blueprint rather than relaxing the assertion.
-      const catalogOnly = report.entries.filter((e) => e.readiness === 'catalog_only');
-      expect(catalogOnly.map((e) => e.id)).toEqual([]);
+      //
+      // This asserts on the BLUEPRINT, which is what the paragraph above
+      // describes. It used to assert `readiness !== 'catalog_only'`, which is a
+      // different claim: readiness is now capped by whether the governed path
+      // can start the filing, so a type with a perfectly good blueprint and an
+      // agency c2c_documents cannot store reads catalog_only — correctly.
+      const generic = report.entries.filter((e) => e.sectionBlueprint === 'generic');
+      expect(generic.map((e) => e.id)).toEqual([]);
+    });
+
+    it('reports the startability gap rather than showing none', () => {
+      /* The report used to show 234 of 234 entries at `buildable` or better and
+         zero `catalog_only`, so the backlog view was empty and the portfolio
+         read fully covered. 54 of those entries name an agency AGENCY_TO_CODE
+         has no value for — Swissmedic, ANVISA, CDSCO, HSA, Notified_Body, ISO,
+         IEC, IMDRF — so `c2c_documents_agency_check` rejects the insert and the
+         wizard returns NO_RULE_PACK before a row is written. Nothing can be
+         built for them, and the report now says so. */
+      const s = report.summary;
+      expect(s.byGovernedAuthoring.supported + s.byGovernedAuthoring.unmapped_agency
+             + s.byGovernedAuthoring.unmapped_program).toBe(s.total);
+      expect(s.byGovernedAuthoring.unmapped_agency, 'the gap is reported as zero again').toBeGreaterThan(0);
+      // Every unstartable entry is in the backlog view, which is what
+      // getCatalogOnlyGaps exists to surface.
+      expect(s.byReadiness.catalog_only).toBeGreaterThanOrEqual(s.byGovernedAuthoring.unmapped_agency);
+      // And the product's own supported filings are still the majority.
+      expect(s.byGovernedAuthoring.supported).toBeGreaterThan(s.byGovernedAuthoring.unmapped_agency);
     });
 
     it('every active document type resolves to a real, family-appropriate task plan', () => {
@@ -168,6 +232,72 @@ describe('Registry coverage', () => {
       for (const r of report.byRegion) {
         expect(r.productionReady + r.buildable + r.catalogOnly).toBe(r.total);
       }
+    });
+  });
+});
+
+describe('human review is reported separately from integrity-backed fill', () => {
+  // officialAssetTrusted says the official edition is installed and its bytes
+  // verify. It does NOT say a named person has confirmed the field map lands
+  // values in the right boxes — for the XFA forms the map lives in code and the
+  // manifest's reviewedBy is still null. A client-facing readiness signal must
+  // keep those two facts apart, so `reviewer` and `formsHumanReviewed` carry
+  // the second one and never borrow the first.
+  function withManifests(manifests: Record<string, unknown>, run: () => void) {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'c2c-review-'));
+    const previous = process.env.IND_FORM_TEMPLATES_DIR;
+    process.env.IND_FORM_TEMPLATES_DIR = dir;
+    try {
+      for (const [formId, manifest] of Object.entries(manifests)) {
+        fs.writeFileSync(path.join(dir, `${formId}.pdf.manifest.json`), JSON.stringify(manifest));
+      }
+      run();
+    } finally {
+      if (previous === undefined) delete process.env.IND_FORM_TEMPLATES_DIR;
+      else process.env.IND_FORM_TEMPLATES_DIR = previous;
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
+  }
+  const byNumber = (cov: ReturnType<typeof getDocumentCoverage>, n: string) =>
+    cov!.requiredForms.find((f) => f.formNumber === n)!;
+
+  it('names the reviewer per form, treats an empty reviewer as none, and does not claim review across the filing', () => {
+    withManifests(
+      {
+        FDA_1572: { reviewedBy: 'reviewer@example.test' },
+        FDA_1571: { reviewedBy: null },
+        FDA_3674: { reviewedBy: '' },
+      },
+      () => {
+        const cov = getDocumentCoverage('US_IND')!;
+        expect(byNumber(cov, '1572').reviewer).toBe('reviewer@example.test');
+        expect(byNumber(cov, '1571').reviewer).toBeNull();
+        expect(byNumber(cov, '3674').reviewer).toBeNull();
+        expect(cov.formsHumanReviewed).toBe(false);
+      },
+    );
+  });
+
+  it('claims human review for the filing only when every required form names a reviewer', () => {
+    withManifests(
+      {
+        FDA_1572: { reviewedBy: 'a@example.test' },
+        FDA_1571: { reviewedBy: 'b@example.test' },
+        FDA_3674: { reviewedBy: 'c@example.test' },
+      },
+      () => {
+        const cov = getDocumentCoverage('US_IND')!;
+        expect(cov.requiredForms.every((f) => f.reviewer !== null)).toBe(true);
+        expect(cov.formsHumanReviewed).toBe(true);
+      },
+    );
+  });
+
+  it('a form with no manifest at all has no reviewer', () => {
+    withManifests({}, () => {
+      const cov = getDocumentCoverage('US_IND')!;
+      expect(cov.requiredForms.every((f) => f.reviewer === null)).toBe(true);
+      expect(cov.formsHumanReviewed).toBe(false);
     });
   });
 });

@@ -20,22 +20,57 @@ const router = Router();
 const logger = createScopedLogger('haq-manager');
 const store = createFeatureStore('haq_question');
 
+/**
+ * Resolve the organization, or nothing.
+ *
+ * This ended `|| 1`. Every other governed route in this repository refuses
+ * without org context; this one silently read and wrote ORGANIZATION 1's
+ * health-authority questions — a request with no tenant on it did not fail, it
+ * landed in somebody's real store. The `/api` auth boundary establishes tenant
+ * context ahead of this mount, so the fallback was reachable only when that
+ * boundary is in warn mode or an authenticated principal carries no
+ * organizationId; "only in those cases" is not a reason to keep a default that
+ * writes agency correspondence into a tenant nobody named.
+ */
+function resolveOrgId(req: Request): number | null {
+  const raw =
+    (req as any).tenantContext?.organizationId ??
+    (req as any).tenantId ??
+    (req as any).organizationId ??
+    (req as any).user?.organizationId;
+  if (raw === undefined || raw === null) return null;
+  const n = typeof raw === 'string' ? parseInt(raw, 10) : Number(raw);
+  return Number.isFinite(n) ? n : null;
+}
+
+/** Where the resolved org is parked for the handlers, once, per request. */
+const HAQ_ORG = Symbol.for('haq.orgId');
+
+/* One gate for all eleven endpoints: no org, no read and no write. Applied
+   here rather than in each handler so a new endpoint cannot be added without
+   it. */
+router.use((req: Request, res: Response, next) => {
+  const orgId = resolveOrgId(req);
+  if (orgId === null) {
+    return res.status(403).json({
+      error: { code: 'ORG_REQUIRED', message: 'Organization context required.' },
+    });
+  }
+  (req as any)[HAQ_ORG] = orgId;
+  next();
+});
+
 function getOrgId(req: Request): number {
-  return (
-    (req as any).tenantContext?.organizationId ||
-    (req as any).tenantId ||
-    (req as any).organizationId ||
-    (req as any).user?.organizationId ||
-    1
-  );
+  return (req as any)[HAQ_ORG] as number;
 }
 
 /**
  * GET /rounds — the v2 HaqManager display contract: authority letters as
  * "rounds" plus their questions grouped by round, shaped to exactly the keys
  * the surface renders (id/disc/tone/status/q/draft/cites/commitments). The
- * surface adopts this via liveGet and falls back to its codebase fixture when
- * the store is empty, so it never renders a blank workbench.
+ * surface adopts this via useLiveData and renders an honest empty state when
+ * the store has no letters. (It once fell back to a codebase fixture and no
+ * longer does — nothing here should be read as licence to reintroduce one.)
  *
  * An unprovisioned store (42P01) still degrades to `{ data: null,
  * pendingStore: true }` — that is a deployment state, not a fault. Every OTHER
@@ -44,6 +79,32 @@ function getOrgId(req: Request): number {
  * from "this org has no open HAQs" — the reading that lets a response deadline
  * pass unnoticed.
  */
+const MS_PER_DAY = 86_400_000;
+
+/**
+ * Days remaining on a response clock — measured against today, not recalled.
+ *
+ * `clockDays` is a stored number. Nothing refreshes it: no endpoint writes a
+ * letter, so whatever was recorded when the letter was logged is what the
+ * surface renders, forever, as "**6d** of 14d left". A response deadline that
+ * shows days remaining after it has passed is the failure mode this whole
+ * screen exists to prevent, and the styling made it worse — `clockDays <= 7`
+ * drives the urgency colour, so a stale 12 stayed calm indefinitely.
+ *
+ * The due date is the fact; the countdown is arithmetic on it. Negative means
+ * overdue and is returned as such. An unparseable or missing due date returns
+ * null — no countdown at all — because a number would have to be invented.
+ */
+function daysUntil(due: unknown, now: Date): number | null {
+  if (typeof due !== 'string') return null;
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(due.trim());
+  if (!m) return null;
+  const dueMs = Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+  if (!Number.isFinite(dueMs)) return null;
+  const today = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
+  return Math.round((dueMs - today) / MS_PER_DAY);
+}
+
 router.get('/rounds', async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
@@ -53,19 +114,31 @@ router.get('/rounds', async (req: Request, res: Response) => {
     }
     const questions = await store.query(orgId, 'question');
 
-    const rounds = letters.map((l: any) => ({
-      id: l.letterId,
-      agency: l.agency,
-      flag: l.flag,
-      authority: l.authority,
-      submission: l.submission,
-      type: l.type,
-      received: l.received,
-      due: l.due,
-      clockDays: l.clockDays,
-      clockTotal: l.clockTotal,
-      note: l.note,
-    }));
+    const now = new Date();
+    const rounds = letters.map((l: any) => {
+      const derived = daysUntil(l.due, now);
+      return {
+        id: l.letterId,
+        agency: l.agency,
+        flag: l.flag,
+        authority: l.authority,
+        submission: l.submission,
+        type: l.type,
+        received: l.received,
+        due: l.due,
+        /* Derived from `due` against today. null when the letter records no
+           parseable due date — the surface then shows no countdown rather than
+           the number that was true on the day the letter was logged. */
+        clockDays: derived,
+        /* How the number above was arrived at, so a surface (and AnA) can say
+           which, and never present a recalled figure as a live one. */
+        clockBasis: derived === null ? 'no-due-date-recorded' : 'days-until-recorded-due-date',
+        /* The recorded value, kept for reference — never rendered as remaining. */
+        clockDaysRecorded: typeof l.clockDays === 'number' ? l.clockDays : null,
+        clockTotal: l.clockTotal,
+        note: l.note,
+      };
+    });
 
     const byRound: Record<string, any[]> = {};
     for (const r of rounds) byRound[r.id] = [];

@@ -228,6 +228,17 @@ interface MethodRecord {
   validationStatus: string;
 }
 
+/**
+ * The project's analytical methods, scoped to the caller's organization.
+ *
+ * `orgId` was accepted and then not used: the read filtered on project_id
+ * alone. cmc_projects.id is a uuid space shared across every tenant and the
+ * project id reaches here from the caller, so another sponsor's methods —
+ * names, purposes and ICH Q2 validation status — were matched to this
+ * project's CQAs and written into its control strategy.
+ * analytical_methods.organization_id is NOT NULL (migrations/0000_sweet_joseph
+ * .sql:120), so the predicate drops nothing legitimate.
+ */
 async function loadMethods(orgId: number, projectId: string): Promise<MethodRecord[]> {
   const pool = getPool();
   try {
@@ -240,8 +251,8 @@ async function loadMethods(orgId: number, projectId: string): Promise<MethodReco
              purpose,
              validation_status AS "validationStatus"
       FROM analytical_methods
-      WHERE project_id = $1::text::uuid
-    `, [projectId]);
+      WHERE project_id = $1::text::uuid AND organization_id = $2
+    `, [projectId, orgId]);
     return rows;
   } catch (err) {
     log.warn('Failed to load analytical methods', {

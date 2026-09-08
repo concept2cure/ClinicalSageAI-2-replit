@@ -171,7 +171,7 @@ export function SmpcLabeling({ onAsk }: SurfaceViewProps) {
       </div>
 
       {loading ? (
-        <div className="scaf-note" style={{ padding: '18px 10px' }}>Loading…</div>
+        <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>Loading…</div>
       ) : error ? (
         <EmptyState
           tone="error"

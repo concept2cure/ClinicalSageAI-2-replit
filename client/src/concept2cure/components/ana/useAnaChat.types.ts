@@ -343,6 +343,8 @@ export interface AnaChatMessage {
   intelligenceQuestion?: import('../../../../../shared/types/intelligence-questions.js').IntelligenceQuestionEvent;
   /** Flow state to send back with the next answer. */
   intelligenceFlowState?: import('../../../../../shared/types/intelligence-questions.js').FlowState;
+  /** The durable interview session (cmc_interview_sessions) behind the question, when one was persisted. Sent back as session_id with each answer. */
+  intelligenceSessionId?: string | null;
   /** Intelligence flow completion — summary + suggested actions. */
   intelligenceFlowComplete?: import('../../../../../shared/types/intelligence-questions.js').IntelligenceFlowCompleteEvent;
   /**

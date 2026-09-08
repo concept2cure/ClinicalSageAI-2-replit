@@ -10,7 +10,7 @@ import {
   regulatoryDocuments,
   insertRegulatoryDocumentSchema,
 } from '../../../shared/cmc-schema';
-import { eq, desc, and, inArray } from 'drizzle-orm';
+import { eq, desc, and } from 'drizzle-orm';
 import { authenticateToken } from '../../middleware/auth.js';
 import { z } from 'zod';
 
@@ -428,7 +428,16 @@ router.post('/projects/:projectId/compliance', async (req, res) => {
     }
 
     const { projectId } = req.params;
-    const complianceData = { ...req.body, projectId };
+    // The organization comes from the VERIFIED project, never from the body.
+    // router.param('projectId') above has already confirmed this project belongs
+    // to the caller's org and attached it, so this is the authenticated owner —
+    // and stamping it is what lets the read be strict instead of widening to
+    // every unattributed row.
+    const ownerOrgId = (req as any).cmcProject?.organizationId;
+    if (ownerOrgId == null) {
+      return res.status(401).json({ error: 'Organization context required' });
+    }
+    const complianceData = { ...req.body, projectId, organizationId: Number(ownerOrgId) };
 
     // Fix date conversion issue
     if (complianceData.dueDate && typeof complianceData.dueDate === 'string') {
@@ -616,26 +625,10 @@ router.get('/projects/:projectId/drug-substances', async (req, res) => {
   }
 });
 
-router.get('/projects/:projectId/analytical-methods', async (req, res) => {
-  try {
-    if (!db) {
-      return res.status(500).json({ error: 'Database not available' });
-    }
+/* The byte-identical second copy of GET /projects/:projectId/analytical-methods
+   that stood here is deleted: Express serves the first declaration, so it never
+   ran. Found by the route-uniqueness contract test in __tests__. */
 
-    const { projectId } = req.params;
-
-    const methods = await db
-      .select()
-      .from(analyticalMethods)
-      .where(eq(analyticalMethods.projectId, projectId))
-      .orderBy(desc(analyticalMethods.createdAt));
-
-    res.json({ success: true, data: methods });
-  } catch (error) {
-    console.error('Error fetching analytical methods:', error);
-    res.status(500).json({ error: 'Failed to fetch analytical methods' });
-  }
-});
 
 // Drug Products endpoints
 router.get('/projects/:projectId/drug-products', async (req, res) => {
@@ -723,57 +716,18 @@ router.delete('/projects/:projectId/drug-products/:productId', async (req, res) 
   }
 });
 
-// ── Top-level convenience routes for drug substances and products ──
-// These return all substances/products for projects owned by the user's org
-router.get('/drug-substances', async (req, res) => {
-  try {
-    if (!db) {
-      return res.status(500).json({ error: 'Database not available' });
-    }
-    const orgId = getOrgId(req);
-    if (!orgId) return res.status(401).json({ error: 'Organization context required' });
-
-    const orgProjects = await db
-      .select({ id: cmcProjects.id })
-      .from(cmcProjects)
-      .where(eq(cmcProjects.organizationId, Number(orgId)));
-    const projectIds = orgProjects.map(p => p.id);
-    const substances =
-      projectIds.length > 0
-        ? await db
-            .select()
-            .from(drugSubstances)
-            .where(inArray(drugSubstances.projectId, projectIds))
-        : [];
-    res.json({ success: true, data: substances });
-  } catch (error) {
-    console.error('Error fetching all drug substances:', error);
-    res.status(500).json({ error: 'Failed to fetch drug substances' });
-  }
-});
-
-router.get('/drug-products', async (req, res) => {
-  try {
-    if (!db) {
-      return res.status(500).json({ error: 'Database not available' });
-    }
-    const orgId = getOrgId(req);
-    if (!orgId) return res.status(401).json({ error: 'Organization context required' });
-
-    const orgProjects = await db
-      .select({ id: cmcProjects.id })
-      .from(cmcProjects)
-      .where(eq(cmcProjects.organizationId, Number(orgId)));
-    const projectIds = orgProjects.map(p => p.id);
-    const products =
-      projectIds.length > 0
-        ? await db.select().from(drugProducts).where(inArray(drugProducts.projectId, projectIds))
-        : [];
-    res.json({ success: true, data: products });
-  } catch (error) {
-    console.error('Error fetching all drug products:', error);
-    res.status(500).json({ error: 'Failed to fetch drug products' });
-  }
-});
+/* ── The two top-level convenience routes that used to live here are gone ──
+ *
+ * `GET /drug-substances` and `GET /drug-products` were defined here AND in
+ * server/api/cmc/routes.ts, which register-core-routes.ts mounts FIRST — so
+ * these two never ran. That is the only reason they were harmless: both
+ * resolved the caller's projects through `cmc_projects`, a table the product
+ * never populates (its sole creator is a reconstruction of a table with no DDL
+ * anywhere), so both would have answered every organization with an empty list
+ * — a failed read rendered as "you have no drug substances", which is the one
+ * thing this codebase does not do. One canonical implementation per capability:
+ * the org-scoped handlers in routes.ts are it, and these are deleted rather
+ * than left as a trap for the next person who reorders a mount.
+ */
 
 export default router;

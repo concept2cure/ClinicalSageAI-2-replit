@@ -49,6 +49,8 @@ beforeAll(async () => {
   // The generator column (GA ledger L33) — applied here so the store is tested
   // against the schema it actually writes to, rather than an earlier one.
   await pglite.exec(migration('migrations/20260814i_draft_candidate_generator.sql'));
+  // The assertions column (source-attribution Phase 4).
+  await pglite.exec(migration('migrations/20260906c_draft_candidate_assertions.sql'));
 }, 90_000);
 
 afterAll(async () => {
@@ -152,5 +154,38 @@ describe('draft-candidate store', () => {
       model: 'm', provider: null, promptSha256: null, promptVersion: null,
       generatedAt: '2026-08-14T10:00:00.000Z',
     });
+  });
+
+  /* ── Paraphrase assertions (source-attribution Phase 4) ───────────────────
+     The model's [{quote, sourceId}] derivation claims are parked with the
+     chunks for the same reason those are — a claim round-tripped through the
+     client is forgeable — and fed to the accept gate as usage='paraphrased'. */
+  it('round-trips paraphrase assertions from park to accept', async () => {
+    const assertions = [
+      { quote: 'The primary endpoint was met.', sourceId: 42 },
+      { quote: 'Adverse events were mild.', sourceId: 43 },
+    ];
+    const { id } = await createDraftCandidate(
+      ORG_A, SECTION, 'body', [], 'user-1', undefined, null, assertions,
+    );
+    const claimed = await consumeDraftCandidate(ORG_A, SECTION, id);
+    expect(claimed?.assertions).toEqual(assertions);
+  });
+
+  it('defaults assertions to [] when none are parked, and drops malformed claims', async () => {
+    const none = await createDraftCandidate(ORG_A, SECTION, 'body', [], 'user-1');
+    expect((await consumeDraftCandidate(ORG_A, SECTION, none.id))?.assertions).toEqual([]);
+
+    const messy = await createDraftCandidate(
+      ORG_A, SECTION, 'body', [], 'user-1', undefined, null,
+      [
+        { quote: 'keep me', sourceId: 7 },
+        { quote: '', sourceId: 8 } as any, // empty quote — dropped
+        { quote: 'no id', sourceId: 0 } as any, // non-positive id — dropped
+        { quote: 'bad id', sourceId: 'x' } as any, // non-integer id — dropped
+      ],
+    );
+    const claimed = await consumeDraftCandidate(ORG_A, SECTION, messy.id);
+    expect(claimed?.assertions).toEqual([{ quote: 'keep me', sourceId: 7 }]);
   });
 });

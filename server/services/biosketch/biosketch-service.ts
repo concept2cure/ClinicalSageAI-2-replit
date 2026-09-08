@@ -17,7 +17,12 @@ import {
   evaluateBiosketchCompleteness,
   type BiosketchCompletenessResult,
 } from './biosketch-logic';
-import { enforceAuthorLineage } from '../clinical-regulatory-evidence/lineage-gate';
+import {
+  enforceAuthorLineage,
+  enforceSourceAndAuthorLineage,
+  type SourceAndAuthorLineageResult,
+} from '../clinical-regulatory-evidence/lineage-gate';
+import type { RetrievedSource } from '../clinical-regulatory-evidence/source-attribution';
 
 interface Queryable {
   query: (sql: string, params?: unknown[]) => Promise<{ rows: any[] }>;
@@ -75,7 +80,7 @@ function assertEditable(status: string): void {
 
 // ─── Sections ────────────────────────────────────────────────────────────────
 
-export async function updateSectionTx(client: Queryable, orgId: number, sectionId: number, input: { content?: string | null; addressed?: boolean }, actorUserId: number): Promise<void> {
+export async function updateSectionTx(client: Queryable, orgId: number, sectionId: number, input: { content?: string | null; addressed?: boolean; sources?: RetrievedSource[] }, actorUserId: number): Promise<SourceAndAuthorLineageResult | null> {
   const s = await client.query(
     `SELECT s.id, b.status AS bio_status, b.id AS bio_id FROM biosketch_sections s JOIN biosketches b ON b.id = s.biosketch_id
       WHERE s.id = $1 AND s.organization_id = $2 LIMIT 1`,
@@ -90,8 +95,18 @@ export async function updateSectionTx(client: Queryable, orgId: number, sectionI
   // Prose gate: when this edit sets section content, record its author lineage
   // and assert coverage in the caller's transaction. An addressed-only edit
   // (content undefined/null) no-ops the gate, matching the COALESCE.
-  await enforceAuthorLineage(client, orgId, { documentTable: 'biosketch_sections', documentId: String(sectionId) }, input.content ?? null, String(actorUserId));
+  // With `sources` (an AnA draft naming the Data Room passages it quoted —
+  // ledger L154), the clauses that quote them verbatim are recorded against
+  // those sources and the rest against the author; without, every clause is
+  // the author's assertion. Same gate, same transaction, either way.
+  let lineage: SourceAndAuthorLineageResult | null = null;
+  if (input.sources && input.sources.length > 0 && typeof input.content === 'string') {
+    lineage = await enforceSourceAndAuthorLineage(client, orgId, { documentTable: 'biosketch_sections', documentId: String(sectionId) }, input.content, String(actorUserId), input.sources);
+  } else {
+    await enforceAuthorLineage(client, orgId, { documentTable: 'biosketch_sections', documentId: String(sectionId) }, input.content ?? null, String(actorUserId));
+  }
   await client.query(`UPDATE biosketches SET status = CASE WHEN status = 'draft' THEN 'in_development' ELSE status END, updated_at = now() WHERE id = $1 AND organization_id = $2`, [s.rows[0].bio_id, orgId]);
+  return lineage;
 }
 
 // ─── Completeness + finalize ─────────────────────────────────────────────────

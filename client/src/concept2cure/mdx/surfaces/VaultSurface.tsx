@@ -2,7 +2,7 @@
  * VaultSurface — the document management surface (Document vault).
  *
  * Port of the kit's Phase 5 full vault surface
- * (design-system/ui_kits/mdx/surfaces/Vault.jsx, mapped to this file by
+ * (ui_kits/mdx/surfaces/Vault.jsx, mapped to this file by
  * PHASE_5_INSTALL.md): folder rail on the left, DocumentsPanel as the
  * center pane (framework filter pills included), version + audit drawer
  * on the right — replacing the old workbench-tab body this surface

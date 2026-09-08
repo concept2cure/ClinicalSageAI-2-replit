@@ -386,8 +386,6 @@ export const INTEL_CATALOG = [
   },
 ];
 
-export const INTEL_STATS = { waves: 4, domains: 24, tools: 142 };
-
 export const INTEL_DEMOS_RAW = {
   ttc: {
     tool: 'calculate_ttc',
@@ -557,8 +555,6 @@ export const INTEL_VALIDATION_RAW = {
   },
 };
 export const INTEL_DEMOS: Record<string, DetResult> = INTEL_DEMOS_RAW;
-export const INTEL_VALIDATION: Record<string, ValidationSummary> = INTEL_VALIDATION_RAW;
-
 /** tool name → domain/wave index across the whole catalog. */
 export const INTEL_TOOL_INDEX: Record<string, { domain: string; wave: string }> = (() => {
   const idx: Record<string, { domain: string; wave: string }> = {};
@@ -574,40 +570,4 @@ const INTEL_DEMO_OF: Record<string, string> = {
   assess_pv_causality: 'naranjo',
 };
 
-/** Find a tool name referenced in free text (chip clicks send "Run <tool> …"). */
-export function intelMatchTool(text: string | null | undefined): string | null {
-  if (!text) return null;
-  const s = text.toLowerCase();
-  let best: string | null = null;
-  for (const n of Object.keys(INTEL_TOOL_INDEX)) {
-    if (s.includes(n) && (!best || n.length > best.length)) best = n;
-  }
-  return best;
-}
 
-/** DetResultCard record for a tool — worked sample, or the honest
- * "inputs required" scaffold. No result is ever fabricated. */
-export function intelResultFor(tool: string): DetResult {
-  const demoKey = INTEL_DEMO_OF[tool];
-  if (demoKey && INTEL_DEMOS[demoKey]) return INTEL_DEMOS[demoKey];
-  const meta = INTEL_TOOL_INDEX[tool] ?? { domain: 'Regulatory intelligence' };
-  return {
-    tool,
-    domain: meta.domain,
-    pedigree: 'deterministic_registry',
-    verdict: { value: 'Inputs required', label: `${tool} is ready to run once its typed inputs are provided`, tone: 'warn' },
-    findings: [
-      { sev: 'ok', text: `${tool} is a deterministic registry function — pure rule/registry logic, no model and no network. Identical input yields identical, citation-backed output.` },
-      { sev: 'warning', text: 'This program does not yet carry the typed inputs this tool needs. Provide them in the composer and the result will render here with its governing citations.' },
-    ],
-    rationale: [
-      `Domain: ${meta.domain}. The tool's input schema is the authoritative contract for what it needs; the returned regulatory reference is the authoritative citation.`,
-    ],
-    recommendations: [
-      'Provide the required inputs, or attach the source records this tool reads from.',
-      'Re-run once inputs are complete to receive the deterministic verdict and citations.',
-    ],
-    citations: [],
-    warnings: ['No result is fabricated. The verdict above is a readiness state, not a computed value.'],
-  };
-}

@@ -178,3 +178,194 @@ describe('POST /documents/:id/tracked-change-decisions/bulk', () => {
     expect(md.changesOmittedFromSummary).toBeUndefined();
   });
 });
+
+describe('the FROZEN/APPROVED document lock — accept/reject must not write past it', () => {
+  /**
+   * Neither handler resolved the parent document at all: no existence check,
+   * no status check. `checkSectionWritable` already refuses a FROZEN/APPROVED
+   * document on every other authoring write (manual save, history revert, AI
+   * draft accept) via the /sections/:sectionId prefix guard — these two routes
+   * sit under /documents/:id instead, outside that guard, and reached the
+   * INSERT unconditionally. The sibling helper `checkDocumentWritable` already
+   * exists in services/authoring/document-lock.ts for exactly this document-id
+   * shape.
+   */
+  function dispatchByStatus(status: string | null) {
+    mockQuery.mockImplementation(async (sql: string) => {
+      if (/FROM authoring_documents/.test(sql)) {
+        return { rows: status ? [{ status, locked_at: null }] : [] };
+      }
+      return { rowCount: 1, rows: [{ id: 'row-1' }] };
+    });
+  }
+
+  it('refuses a single accept/reject against a FROZEN document — no row written', async () => {
+    dispatchByStatus('FROZEN');
+    const res = await request(makeApp())
+      .post('/api/authoring/documents/D-frozen/tracked-change-decisions')
+      .set('Authorization', await bearer())
+      .send({ changeId: 'insertion:x', decision: 'accept' });
+
+    expect(res.status).toBe(403);
+    expect(res.body.error).toBe('DOCUMENT_FROZEN');
+    expect(
+      mockQuery.mock.calls.some(c => /INSERT INTO authoring_tracked_change_decisions/.test(String(c[0]))),
+    ).toBe(false);
+    expect(
+      mockQuery.mock.calls.some(c => /INSERT INTO authoring_audit_trail/.test(String(c[0]))),
+    ).toBe(false);
+  });
+
+  it('refuses a single accept/reject against an APPROVED document', async () => {
+    dispatchByStatus('APPROVED');
+    const res = await request(makeApp())
+      .post('/api/authoring/documents/D-approved/tracked-change-decisions')
+      .set('Authorization', await bearer())
+      .send({ changeId: 'insertion:x', decision: 'reject' });
+    expect(res.status).toBe(403);
+    expect(res.body.error).toBe('DOCUMENT_FROZEN');
+  });
+
+  it('still accepts against an ordinary DRAFT document — the fix is not a blanket deny', async () => {
+    dispatchByStatus('DRAFT');
+    const res = await request(makeApp())
+      .post('/api/authoring/documents/D-draft/tracked-change-decisions')
+      .set('Authorization', await bearer())
+      .send({ changeId: 'insertion:x', decision: 'accept' });
+    expect(res.status).toBe(200);
+  });
+
+  it('refuses a bulk accept against a FROZEN document — no rows written', async () => {
+    dispatchByStatus('FROZEN');
+    const res = await request(makeApp())
+      .post('/api/authoring/documents/D-frozen/tracked-change-decisions/bulk')
+      .set('Authorization', await bearer())
+      .send({ decision: 'accept', changeIds: ['a', 'b'] });
+
+    expect(res.status).toBe(403);
+    expect(res.body.error).toBe('DOCUMENT_FROZEN');
+    expect(
+      mockQuery.mock.calls.some(c => /INSERT INTO authoring_tracked_change_decisions/.test(String(c[0]))),
+    ).toBe(false);
+  });
+
+  it('still accepts a bulk decision against an ordinary DRAFT document', async () => {
+    dispatchByStatus('DRAFT');
+    const res = await request(makeApp())
+      .post('/api/authoring/documents/D-draft/tracked-change-decisions/bulk')
+      .set('Authorization', await bearer())
+      .send({ decision: 'accept', changeIds: ['a', 'b'] });
+    expect(res.status).toBe(200);
+  });
+});
+
+describe('bulk audit metadata carries what the single route already carries', () => {
+  it('records sectionId and each change\'s proposedAt, mirroring the single route', async () => {
+    const res = await request(makeApp())
+      .post('/api/authoring/documents/D1/tracked-change-decisions/bulk')
+      .set('Authorization', await bearer())
+      .send({
+        decision: 'accept',
+        changeIds: ['a', 'b'],
+        sectionId: 'S9',
+        changes: [
+          { changeId: 'a', changeType: 'insertion', text: 'first', at: '2026-08-24T16:30:00Z' },
+          { changeId: 'b', changeType: 'insertion', text: 'second', at: '2026-08-24T16:31:00Z' },
+        ],
+      });
+
+    expect(res.status).toBe(200);
+    const md = auditMetadata();
+    // The single route records this at the top level of its metadata.
+    expect(md.sectionId).toBe('S9');
+    expect(md.changes[0].proposedAt).toBe('2026-08-24T16:30:00Z');
+    expect(md.changes[1].proposedAt).toBe('2026-08-24T16:31:00Z');
+  });
+
+  it('omits sectionId when the caller sends none, same as the single route', async () => {
+    const res = await request(makeApp())
+      .post('/api/authoring/documents/D1/tracked-change-decisions/bulk')
+      .set('Authorization', await bearer())
+      .send({ decision: 'accept', changeIds: ['a'] });
+    expect(res.status).toBe(200);
+    expect(auditMetadata().sectionId).toBeUndefined();
+  });
+});
+
+describe('proposedBy — a machine author is canonicalised, everything else is caller-asserted text', () => {
+  /**
+   * There is no roster this can validate a HUMAN proposer against: the human
+   * authorId a mark carries is the editing client's own email, not a numeric
+   * user id, and a legitimate proposer can be a co-author, a since-revoked
+   * grantee, or simply someone other than the decider. What IS checkable is
+   * whether the caller claims to be this server's own AI system, because that
+   * is a closed, server-owned vocabulary (MACHINE_AUTHOR_IDS) — the same list
+   * machineContributors validates against for the revision ledger.
+   */
+  it('an authorId of "ana" is canonicalised — the caller-supplied authorName is IGNORED', async () => {
+    await request(makeApp())
+      .post('/api/authoring/documents/D1/tracked-change-decisions')
+      .set('Authorization', await bearer())
+      .send({
+        changeId: 'insertion:x',
+        decision: 'accept',
+        authorId: 'ana',
+        authorName: 'Someone Else Entirely',
+      });
+
+    const md = auditMetadata();
+    expect(md.proposedBy).toBe('AnA (AI draft)');
+    expect(md.proposedByVerified).toBe(true);
+    expect(md.proposedBy).not.toBe('Someone Else Entirely');
+  });
+
+  it('an ordinary human proposer is recorded as unverified, caller-asserted text', async () => {
+    await request(makeApp())
+      .post('/api/authoring/documents/D1/tracked-change-decisions')
+      .set('Authorization', await bearer())
+      .send({ changeId: 'insertion:x', decision: 'accept', authorName: 'R. Author' });
+
+    const md = auditMetadata();
+    expect(md.proposedBy).toBe('R. Author');
+    expect(md.proposedByVerified).toBe(false);
+  });
+
+  it('an unrecognised authorId (not "ana") is NOT treated as a machine — recorded as its own text', async () => {
+    await request(makeApp())
+      .post('/api/authoring/documents/D1/tracked-change-decisions')
+      .set('Authorization', await bearer())
+      .send({ changeId: 'insertion:x', decision: 'accept', authorId: 'gpt-5' });
+
+    const md = auditMetadata();
+    expect(md.proposedBy).toBe('gpt-5');
+    expect(md.proposedByVerified).toBe(false);
+  });
+
+  it('bounds an unverified proposer name — an audit row is not a place for arbitrary text', async () => {
+    await request(makeApp())
+      .post('/api/authoring/documents/D1/tracked-change-decisions')
+      .set('Authorization', await bearer())
+      .send({ changeId: 'insertion:x', decision: 'accept', authorName: 'x'.repeat(5000) });
+
+    expect(auditMetadata().proposedBy.length).toBe(200);
+  });
+
+  it('bulk: a machine author is canonicalised per change, mirroring the single route', async () => {
+    const res = await request(makeApp())
+      .post('/api/authoring/documents/D1/tracked-change-decisions/bulk')
+      .set('Authorization', await bearer())
+      .send({
+        decision: 'accept',
+        changeIds: ['a', 'b'],
+        changes: [
+          { changeId: 'a', authorId: 'ana', authorName: 'spoofed display name' },
+          { changeId: 'b', authorName: 'R. Human' },
+        ],
+      });
+
+    expect(res.status).toBe(200);
+    const md = auditMetadata();
+    expect(md.changes[0]).toMatchObject({ proposedBy: 'AnA (AI draft)', proposedByVerified: true });
+    expect(md.changes[1]).toMatchObject({ proposedBy: 'R. Human', proposedByVerified: false });
+  });
+});

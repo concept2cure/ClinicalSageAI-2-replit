@@ -30,7 +30,18 @@ export interface GovernedExportInput {
 
 const DEFAULT_MAX_GOVERNED_EXPORT_BYTES = 25 * 1024 * 1024; // 25 MiB
 
-function getMaxGovernedExportBytes(): number {
+/**
+ * The largest file either delivery path will hand back.
+ *
+ * Exported because a producer that can EXCEED it needs to know the number
+ * before it does the work. The official eSTAR was ~5.3 MB and fixed until
+ * attachments landed; now it carries whatever documents a filer maps into its
+ * 113/145 slots, and discovering the ceiling by throwing at delivery — after
+ * the renders, the vault reads, the encryption and the retention write — turns
+ * a stateable limit into a 500. One function, so the producer's refusal and the
+ * deliverer's refusal cannot drift apart.
+ */
+export function getMaxGovernedExportBytes(): number {
   const raw = process.env.GOVERNED_EXPORT_MAX_BYTES;
   if (!raw) return DEFAULT_MAX_GOVERNED_EXPORT_BYTES;
   const parsed = Number(raw);
@@ -219,8 +230,22 @@ export const UNPLACED_ARTIFACT_REGISTRY_NOTE =
  * Deliver an export that the artifact registry cannot place: write the
  * EXPORT_GENERATED audit row (with the delivered-bytes SHA-256 and the
  * `unplaced_pending_document_identity_contract` marker) and return the
- * response body the caller sends verbatim. The audit write is awaited and its
- * failure propagates — an export must never be delivered un-audited.
+ * response body the caller sends verbatim.
+ *
+ * An export must never be delivered un-audited — and awaiting the write was
+ * not enough to make that true. `auditService.logAction` NEVER rejects, by
+ * explicit policy: "A persistence failure is logged, never propagated: an
+ * audit-trail outage must not break the user action it records". It resolves
+ * with `{ persisted: false, error }` instead, so this function used to hand
+ * back a governed export — the official FDA eSTAR among them — with a 200 and
+ * no record of it anywhere.
+ *
+ * That policy is right for an ordinary user action and wrong for this one.
+ * This path exists precisely BECAUSE the artifact registry cannot place the
+ * file: the audit row is the only record the export ever gets. So the outcome
+ * is inspected, not merely awaited, and a delivery with no record is refused.
+ * Either log counts — `audit_logs` is the queryable chain, the tamper-proof
+ * log is the immutable one, and one of them is a record; neither is not.
  */
 export async function createAuditedUnplacedExport(
   input: AuditedUnplacedExportInput,
@@ -228,8 +253,21 @@ export async function createAuditedUnplacedExport(
   if (!Buffer.isBuffer(input.buffer) || input.buffer.length === 0) {
     throw new Error('INVALID_GOVERNED_EXPORT_INPUT: buffer must be a non-empty Buffer');
   }
+  /* THE SAME CEILING AS THE REGISTRY PATH. This one had none — only a
+     non-empty check — while its sibling refused at 25 MiB, and the difference
+     was invisible for as long as every export through here was a fixed ~5.3 MB
+     eSTAR or a small ZIP. Attachments removed that: a 60 MiB export becomes
+     ~80 MiB of base64 in a single JSON response body, on a route any editor can
+     call. Two delivery paths, one contract; a program without a registry anchor
+     is not a program without limits. */
+  const maxBytes = getMaxGovernedExportBytes();
+  if (input.buffer.length > maxBytes) {
+    throw new Error(
+      `INVALID_GOVERNED_EXPORT_INPUT: buffer exceeds max size (${maxBytes} bytes)`,
+    );
+  }
   const sha256 = crypto.createHash('sha256').update(input.buffer).digest('hex');
-  await auditService.logAction({
+  const audit = await auditService.logAction({
     organizationId: input.organizationId,
     userId: input.userId,
     action: 'EXPORT_GENERATED',
@@ -244,6 +282,12 @@ export async function createAuditedUnplacedExport(
       ...(input.metadata ?? {}),
     },
   });
+  if (!audit?.persisted) {
+    throw new Error(
+      'UNAUDITED_EXPORT_REFUSED: the export was not delivered because its audit row ' +
+        `did not persist${audit?.error ? ` (${audit.error})` : ''}`,
+    );
+  }
 
   return {
     governed: false,

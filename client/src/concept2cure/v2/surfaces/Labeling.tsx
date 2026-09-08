@@ -391,7 +391,7 @@ export function Labeling({ onAsk }: SurfaceViewProps) {
       </div>
 
       {docsLive.loading ? (
-        <div className="scaf-note" style={{ padding: '18px 10px' }}>Loading the labeling document…</div>
+        <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>Loading the labeling document…</div>
       ) : docsLive.error ? (
         <EmptyState
           tone="error"
@@ -449,7 +449,7 @@ export function Labeling({ onAsk }: SurfaceViewProps) {
                 <div className="sec-sub">symbol glossary</div>
               </div>
               {symbolsLive.loading ? (
-                <div className="scaf-note" style={{ padding: '18px 10px' }}>Loading symbols…</div>
+                <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>Loading symbols…</div>
               ) : symbolsLive.error ? (
                 <EmptyState
                   tone="error"
@@ -548,7 +548,7 @@ export function Labeling({ onAsk }: SurfaceViewProps) {
             <div className="lbl-cov-bar"><div className="lbl-cov-fill" style={{ width: (transState.loading || transState.error ? 0 : cov.pct) + '%' }} /></div>
             <div className="ctable" style={{ marginTop: 10 }}>
               {transState.loading && trans.length === 0 ? (
-                <div className="scaf-note" style={{ padding: '18px 10px' }}>Loading translations…</div>
+                <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>Loading translations…</div>
               ) : transState.error && trans.length === 0 ? (
                 <EmptyState
                   tone="error"

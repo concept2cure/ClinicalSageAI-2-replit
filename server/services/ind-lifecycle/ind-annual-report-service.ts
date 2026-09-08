@@ -293,11 +293,21 @@ export function assembleIndAnnualReport(input: IndAnnualReportInput): IndAnnualR
  * @param asOf reference date used to pick the relevant anniversary year
  */
 export function computeAnnualReportDue(indEffectiveDate: Date, asOf: Date = new Date()): Date {
-  // Find the next anniversary on/after `asOf`'s year, based on the effective date.
+  // The obligation that is OPEN at `asOf` is the one for the most recent
+  // anniversary already passed: 312.33 gives 60 days from that anniversary.
+  // This used to pick the NEXT anniversary instead, so a draft opened ten days
+  // after the anniversary — the normal case — was due some 415 days out, and
+  // listOverdueAnnualReports reported nothing overdue while the real 60-day
+  // window ran out. Before the first anniversary, the first one is the target.
   const anniversary = new Date(indEffectiveDate);
   anniversary.setFullYear(asOf.getFullYear());
-  if (anniversary.getTime() < asOf.getTime()) {
-    anniversary.setFullYear(asOf.getFullYear() + 1);
+  if (anniversary.getTime() > asOf.getTime()) {
+    anniversary.setFullYear(asOf.getFullYear() - 1);
+  }
+  if (anniversary.getTime() <= indEffectiveDate.getTime()) {
+    // asOf precedes the first anniversary: the first report is the one due.
+    anniversary.setTime(indEffectiveDate.getTime());
+    anniversary.setFullYear(indEffectiveDate.getFullYear() + 1);
   }
   const due = new Date(anniversary);
   due.setDate(due.getDate() + 60);

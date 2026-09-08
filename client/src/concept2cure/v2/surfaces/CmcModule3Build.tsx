@@ -108,6 +108,12 @@ export interface Module3Readiness {
   approvedSections: number;
   staleSections: number;
   openCriticalContradictions: number;
+  /** Sections with no recorded source lineage — the audit trail has a gap. */
+  sectionsWithoutProvenance?: number;
+  /** Approved sections whose own compiled record says they are incomplete — the gate refuses on them. */
+  incompleteApprovedSections?: string[];
+  /** False = the governed-decision fabric returned no verdict (not "it cleared"). */
+  governedStateEvaluated?: boolean;
   exportReady: boolean;
 }
 
@@ -414,13 +420,23 @@ export function CmModule3Build({ ask, nav }: { ask: (text: string) => void; nav?
                     {readiness.data.openCriticalContradictions
                       ? ` · ${readiness.data.openCriticalContradictions} critical contradiction${readiness.data.openCriticalContradictions === 1 ? '' : 's'} open`
                       : ''}
+                    {/* Three reasons the gate refuses that the counts above never showed. */}
+                    {readiness.data.incompleteApprovedSections?.length
+                      ? ` · ${readiness.data.incompleteApprovedSections.length} approved but incomplete (§${readiness.data.incompleteApprovedSections.join(', §')})`
+                      : ''}
+                    {readiness.data.sectionsWithoutProvenance
+                      ? ` · ${readiness.data.sectionsWithoutProvenance} section${readiness.data.sectionsWithoutProvenance === 1 ? '' : 's'} with no recorded source lineage`
+                      : ''}
+                    {readiness.data.governedStateEvaluated === false
+                      ? ' · the governed-decision state could not be evaluated, so nothing here is cleared'
+                      : ''}
                   </span>
                 </div>
               ) : (
                 <div className="cm-meta">No compiled sections yet — compile Module 3 to establish a readiness baseline.</div>
               )}
               {gate && (
-                <div className={'pj-con cm-gate-verdict' + (gate.ok ? ' is-ok' : '')} style={{ marginTop: 10 }}>
+                <div className={'pj-con cm-gate-verdict' + (gate.ok ? ' is-ok' : '')}>
                   <span className="ico">{gate.ok ? I.shieldCheck : I.alertTriangle}</span>
                   <div>
                     <div className="pj-con-t">{gate.ok ? 'Final export gate passed' : 'Final export refused'}</div>
@@ -688,7 +704,7 @@ function PlaceIntoSubmission({ projectId, onPlaced }: { projectId: string; onPla
         checklist, package manifest and eCTD assembly read.
       </div>
       {submissions.loading ? (
-        <div className="cm-meta">Loading submissions…</div>
+        <div role="status" className="cm-meta">Loading submissions…</div>
       ) : submissions.error ? (
         <div className="cm-meta">Submissions could not be loaded — {submissions.error}</div>
       ) : submissions.rows.length === 0 ? (
@@ -715,7 +731,7 @@ function PlaceIntoSubmission({ projectId, onPlaced }: { projectId: string; onPla
           </select>
           {submissionId != null &&
             (sequences.loading ? (
-              <span className="cm-meta">Loading sequences…</span>
+              <span role="status" className="cm-meta">Loading sequences…</span>
             ) : sequences.error ? (
               <span className="cm-meta">Sequences could not be loaded — {sequences.error}</span>
             ) : sequences.rows.length === 0 ? (
@@ -813,7 +829,7 @@ function SectionProvenance({
         </div>
         <div className="de-body">
           {events.loading ? (
-            <div className="cm-meta">Loading the provenance chain…</div>
+            <div role="status" className="cm-meta">Loading the provenance chain…</div>
           ) : events.error ? (
             <EmptyState tone="error" icon={I.alertTriangle} title="Couldn’t load the provenance chain" hint={events.error} />
           ) : events.rows.length === 0 ? (

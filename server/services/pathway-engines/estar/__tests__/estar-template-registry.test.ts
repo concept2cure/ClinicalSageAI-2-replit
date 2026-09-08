@@ -102,3 +102,63 @@ describe('eSTAR template registry', () => {
     expect(estarTemplateRequiredFromEnv({} as any)).toBe(false);
   });
 });
+
+// WO-8 Phase 3: De Novo and PMA are produced on the vendored 510(k)-named files.
+describe('eSTAR template registry — De Novo and PMA on the vendored files', () => {
+  it('files De Novo and PMA on the same vendored v7.0 PDFs as 510(k) — FDA ships one file per family', () => {
+    // nIVD family: one physical file for all three marketing pathways.
+    for (const type of ['510k', 'de_novo', 'pma'] as const) {
+      expect(descriptorFor(type, 'device')).toMatchObject({
+        family: 'nivd',
+        expectedFileName: 'eSTAR-510k-non-ivd.pdf',
+        version: '7.0',
+      });
+      expect(descriptorFor(type, 'ivd')).toMatchObject({
+        family: 'ivd',
+        expectedFileName: 'eSTAR-510k-ivd.pdf',
+        version: '7.0',
+      });
+    }
+    // The descriptor ids stay distinct (each pathway carries its own field map).
+    expect(descriptorFor('de_novo', 'device')?.id).toBe('de_novo-device');
+    expect(descriptorFor('pma', 'ivd')?.id).toBe('pma-ivd');
+    // PreSTAR2 is not vendored: those three stay unpinned.
+    for (const type of ['q_sub', 'ide', '513g'] as const) {
+      expect(descriptorFor(type, 'prestar')?.version).toBe('unset');
+    }
+  });
+
+  it('reports De Novo and PMA available in production once the two vendored files are present', () => {
+    const present = ['eSTAR-510k-non-ivd.pdf', 'eSTAR-510k-ivd.pdf'];
+    const cases = [
+      { type: 'de_novo', variant: 'device', file: 'eSTAR-510k-non-ivd.pdf' },
+      { type: 'pma', variant: 'device', file: 'eSTAR-510k-non-ivd.pdf' },
+      { type: 'de_novo', variant: 'ivd', file: 'eSTAR-510k-ivd.pdf' },
+      { type: 'pma', variant: 'ivd', file: 'eSTAR-510k-ivd.pdf' },
+    ] as const;
+    for (const c of cases) {
+      const r = assessEstarTemplateReadiness({
+        type: c.type,
+        variant: c.variant,
+        present,
+        environment: 'production',
+        requireTemplate: true,
+      });
+      expect(r.requiredFileName).toBe(c.file);
+      expect(r.available).toBe(true);
+      expect(r.cleared).toBe(true);
+      expect(r.blockers).toEqual([]);
+      expect(r.programVersion).toBe('7.0');
+    }
+    // The PreSTAR template is still absent, so a Q-Sub still fails closed.
+    const qsub = assessEstarTemplateReadiness({
+      type: 'q_sub',
+      variant: 'prestar',
+      present,
+      environment: 'production',
+      requireTemplate: true,
+    });
+    expect(qsub.available).toBe(false);
+    expect(qsub.cleared).toBe(false);
+  });
+});

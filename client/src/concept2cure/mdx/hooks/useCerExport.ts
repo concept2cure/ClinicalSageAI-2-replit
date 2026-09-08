@@ -39,6 +39,11 @@ export type CerExportFormat = 'pdf' | 'docx' | 'zip';
 
 export interface CerExportOutcome {
   ok: boolean;
+  /**
+   * The browser actually took the file. `downloadBase64` reports this and it was
+   * discarded, so a blocked download still read as "Exported …".
+   */
+  delivered: boolean;
   /** Registered in the artifact registry (governed consequence). */
   governed: boolean;
   /** Delivered + audit-logged without registry placement (program-spine anchor). */
@@ -64,8 +69,15 @@ export interface CerExportGovernance {
    sibling export hook — and both revoked the object URL synchronously right
    after click(), which races the download and can produce a zero-byte file.
    `downloadBase64` owns the decode and the timing. */
-function triggerDownload(ref: DownloadRef): void {
-  downloadBase64(ref.filename, ref.data, ref.mime_type);
+function triggerDownload(ref: DownloadRef): boolean {
+  // atob throws on a malformed payload; that is a failure to deliver, not an
+  // export failure, so it is reported as one rather than thrown into the
+  // request's own catch where it would read as a network error.
+  try {
+    return downloadBase64(ref.filename, ref.data, ref.mime_type);
+  } catch {
+    return false;
+  }
 }
 
 async function postExport(url: string, body: unknown): Promise<CerExportOutcome> {
@@ -85,14 +97,15 @@ async function postExport(url: string, body: unknown): Promise<CerExportOutcome>
       // refuses an enum-shaped `error` token and infrastructure text. The bare
       // `HTTP <status>` fallback is gone: on its own it was not a sentence.
       const message = serverMessage(json) ?? `the server gave no reason (HTTP ${res.status})`;
-      return { ok: false, governed: false, audited: false, filename: null, error: message };
+      return { ok: false, delivered: false, governed: false, audited: false, filename: null, error: message };
     }
 
     const ref = json?.downloadable_output_ref as DownloadRef | undefined;
-    if (ref?.data) triggerDownload(ref);
+    const delivered = ref?.data ? triggerDownload(ref) : false;
 
     return {
       ok: true,
+      delivered,
       governed: json?.governed === true,
       audited: json?.audited === true,
       filename: ref?.filename ?? null,
@@ -104,6 +117,7 @@ async function postExport(url: string, body: unknown): Promise<CerExportOutcome>
     // wording is the only thing worth showing.
     return {
       ok: false,
+      delivered: false,
       governed: false,
       audited: false,
       filename: null,

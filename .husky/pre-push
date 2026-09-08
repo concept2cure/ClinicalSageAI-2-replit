@@ -137,6 +137,58 @@ if ! npm run --silent ci:migration-set-order 2>&1; then
 fi
 echo "   ✅ Migration apply-order passed."
 
+# The sibling hazard to apply-order, and the same shape of invisible: the
+# applier re-executes EVERY file on every deploy (scripts/db/migration-set.mjs
+# applyMigrationFiles — no skip branch; the journal records a drift status the
+# caller discards). So a DROP of something another file in the set re-creates
+# either reverts on the next deploy or re-runs forever, and the deploy is green
+# both ways. Cheap: it reads the files, no database.
+echo "   Validating DROPs are replay-safe..."
+if ! npm run --silent ci:migration-drop-safety 2>&1; then
+  echo ""
+  echo "🚫 ERROR: Replay-safe DROP check FAILED."
+  echo "   Every migration re-runs on every deploy, so a DROP cannot remove what"
+  echo "   another file in the set re-creates. Amend the creating migration in"
+  echo "   place (CLAUDE.md RULE 1) instead of appending a DROP."
+  echo ""
+  exit 1
+fi
+echo "   ✅ Replay-safe DROPs passed."
+
+# The third migration invariant, and the only one nothing was enforcing: every
+# .sql file in db/migrations must appear in migrations_manifest.json, which is
+# what orders them for the appliers that read it. `db:sync-manifest:check`
+# existed and passed on demand, but ran nowhere automatic — so a migration added
+# without running the sync simply drifted, and the drift was found by whoever
+# next ran the check by hand. It had accumulated twice in one day by the time it
+# was noticed. Cheap: it reads a directory listing and a JSON file, no database.
+echo "   Validating the migration manifest tracks db/migrations..."
+if ! npm run --silent db:sync-manifest:check 2>&1; then
+  echo ""
+  echo "🚫 ERROR: Migration manifest is out of sync with db/migrations/."
+  echo "   Run:  npm run db:sync-manifest"
+  echo "   then commit db/migrations/migrations_manifest.json with your migration."
+  echo ""
+  exit 1
+fi
+echo "   ✅ Migration manifest in sync."
+
+# The Drizzle blind spot. check-security-patterns and the raw-SQL tenant scanner
+# read string literals; a query built with the Drizzle query builder is invisible
+# to both, which is how five of seven handlers in routes/c2c/tasks.ts shipped
+# filtering on a serial projectId alone. Ratcheted against a baseline of 151
+# pre-existing sites: this fails only on a NEW one.
+echo "   Validating no new unscoped Drizzle query on tenant data..."
+if ! npm run --silent ci:drizzle-tenant-scope 2>&1; then
+  echo ""
+  echo "🚫 ERROR: Drizzle tenant-scope check FAILED."
+  echo "   A route handler takes its ids from the URL and a serial id is enumerable"
+  echo "   across the estate. Constrain the organization in the statement."
+  echo ""
+  exit 1
+fi
+echo "   ✅ Drizzle tenant scope passed."
+
 # Cheap, no database, and guards a privilege-escalation footgun: `SET
 # app.bypass_rls` is SESSION-scoped, so it survives client.release() and the
 # next checkout — a different tenant — inherits a full RLS bypass across 142

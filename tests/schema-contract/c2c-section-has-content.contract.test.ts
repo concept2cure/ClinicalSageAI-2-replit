@@ -55,6 +55,9 @@ const SCHEMA = path.join(REPO_ROOT, 'migrations/20260528_phase9_document_schema.
 // sectionPlainText was widened to serialise the shape the editor actually
 // sends — before that the route skipped the lineage block for every real save.
 const LINEAGE = path.join(REPO_ROOT, 'db/migrations/20260803_document_span_lineage.sql');
+// accepted_machine_draft kind + machine_author_id: applied after the table, as the deploy set does.
+const MACHINE_KIND = path.join(REPO_ROOT, 'migrations/20260907_span_lineage_accepted_machine_draft.sql');
+const MACHINE_DRAFT_KIND = path.join(REPO_ROOT, 'migrations/20260908_span_lineage_machine_draft.sql');
 const SAVE_HOOK = path.join(REPO_ROOT, 'client/src/concept2cure/mdx/hooks/useSectionSave.ts');
 
 const ORG = 7;
@@ -110,6 +113,8 @@ beforeEach(async () => {
   await pg.exec(fs.readFileSync(PREREQ, 'utf8'));
   await pg.exec(fs.readFileSync(SCHEMA, 'utf8'));
   await pg.exec(fs.readFileSync(LINEAGE, 'utf8'));
+  await pg.exec(fs.readFileSync(MACHINE_KIND, 'utf8'));
+  await pg.exec(fs.readFileSync(MACHINE_DRAFT_KIND, 'utf8'));
 
   await pg.query(`INSERT INTO regulatory_programs (id) VALUES ($1)`, [PROJECT]);
   const pack = await pg.query<{ version: string }>(

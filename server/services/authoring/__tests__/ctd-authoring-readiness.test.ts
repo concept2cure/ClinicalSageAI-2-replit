@@ -63,6 +63,17 @@ describe('aggregateCtdAuthoringReadiness', () => {
     expect(res.modules.find((m) => m.module === 'M4')?.present).toBe(false);
     expect(res.findings.some((f) => f.code === 'MODULE_ABSENT' && f.area === 'M4')).toBe(true);
     expect(res.ready).toBe(true); // absence is a warning, not an error
+    expect(res.assessed).toBe(true);
+  });
+
+  it('is not ready when no module QC verdict was supplied at all', () => {
+    // Absence is a warning, and only errors gated readiness, so an empty input
+    // read "READY — no blocking findings" on a filing-readiness report.
+    const res = aggregateCtdAuthoringReadiness({});
+    expect(res.assessed).toBe(false);
+    expect(res.ready).toBe(false);
+    expect(res.counts.errors).toBe(0);
+    expect(res.findings.filter((f) => f.code === 'MODULE_ABSENT')).toHaveLength(4);
   });
 
   describe('M2.4 ← M4 feed-forward', () => {

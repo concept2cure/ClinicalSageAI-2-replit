@@ -717,16 +717,22 @@ export function V2App() {
      the overlay css uses, so a desktop Escape never collapses the persistent
      rail — the overlay is the only rail state Escape should dismiss. */
   React.useEffect(() => {
-    if (prefs.railCollapsed) return undefined;
+    // The two narrow-width overlays — the rail drawer (≤640px) and the AnA
+    // drawer (≤900px) — are the only states Escape should dismiss. The AnA drawer only exists when the
+    // surface does not own the conversation (otherwise there is no rail).
+    const anaDrawer = prefs.anaOpen && !ownsConversation;
+    if (prefs.railCollapsed && !anaDrawer) return undefined;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && window.matchMedia('(max-width: 640px)').matches) {
-        set('railCollapsed', true);
-      }
+      if (e.key !== 'Escape') return;
+      const phone = window.matchMedia('(max-width: 640px)').matches;
+      const tablet = window.matchMedia('(max-width: 900px)').matches;
+      if (phone && !prefs.railCollapsed) set('railCollapsed', true);
+      else if (tablet && anaDrawer) set('anaOpen', false);
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [prefs.railCollapsed]);
+  }, [prefs.railCollapsed, prefs.anaOpen, ownsConversation]);
 
   return (
     /* Licence verdicts are fetched once, above the rail, so the rail and the
@@ -735,6 +741,19 @@ export function V2App() {
     <NavEntitlementsProvider>
     <div
       className={`c2c-v2 shell${prefs.dark ? ' dark' : ''}`}
+      /* Both dark selectors, because the app's own stylesheets key off both and
+         this element used to carry only the class. colors_and_type.css declares
+         its dark block as `.dark, [data-theme="dark"]`, so the class alone was
+         enough for the canonical tokens — but the GENERATED surface-text-ramp
+         sheets emit their dark re-base as `[data-theme="dark"] :is(…)` only, and
+         nothing in client/ ever set that attribute. The ramp's light re-base
+         therefore stayed applied in dark mode, leaving light-mode grey text on
+         dark tinted surfaces: measured in Chromium at 1.90:1 and 1.66:1 against
+         the 4.5:1 floor, where the dark values give 4.57 and 5.24. Setting the
+         attribute here fixes it at the source, rather than teaching every
+         generated sheet a second selector (which would also make `.dark` a
+         cross-shell class collision — ci:check-shell-css-collisions). */
+      data-theme={prefs.dark ? 'dark' : undefined}
       data-collapsed={prefs.railCollapsed}
       data-ana-open={ownsConversation ? false : prefs.anaOpen}
       /* The DOM attribute keeps its name: `.shell[data-editor="true"]` is what
@@ -758,6 +777,11 @@ export function V2App() {
           viewports render nothing and desktop behavior is untouched. */}
       {!prefs.railCollapsed && (
         <div aria-hidden="true" className="rail-scrim" onClick={() => set('railCollapsed', true)} />
+      )}
+      {/* The AnA drawer's scrim (≤900px only — display is CSS-gated on
+          data-ana-open inside the 900px query, exactly like .rail-scrim). */}
+      {!ownsConversation && prefs.anaOpen && (
+        <div aria-hidden="true" className="ana-scrim" onClick={() => set('anaOpen', false)} />
       )}
       <main className="main">
         <TopBar
@@ -802,7 +826,7 @@ export function V2App() {
           onPause={() => void anaChat.pause()}
           onResume={() => void anaChat.resume()}
           onStop={() => anaChat.stop()}
-          onSteer={(m) => void anaChat.interject(m)}
+          onSteer={(m) => anaChat.interject(m)}
           /* The live work dock reads the raw turns: progress phases, tool
              timings, pending steers and outputs that the adapted rail message
              shape does not carry. */
@@ -844,7 +868,7 @@ export function V2App() {
         /* Interactivity without surrender: a question or steer typed into the
            strip lands mid-run (the run-control interject) — AnA answers and
            continues driving; the person never has to take over just to speak. */
-        onSteer={(m) => void anaChat.interject(m)}
+        onSteer={(m) => anaChat.interject(m)}
       />
     </div>
     </NavEntitlementsProvider>

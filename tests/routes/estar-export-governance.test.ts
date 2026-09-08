@@ -36,7 +36,13 @@ const {
   })),
   /** Rows the project-anchor resolution query returns (one query per request). */
   mockResolveRows: vi.fn<[], unknown[]>(() => []),
-  mockLogAction: vi.fn(async () => undefined),
+  /* The REAL auditService.logAction resolves an AuditWriteResult and never
+     rejects; this fake used to resolve `undefined`, which is not a shape the
+     service can produce. That lie is why "an export is never delivered
+     un-audited" could be written in a docstring, awaited in code, and be false
+     — nothing downstream could tell a written row from an unwritten one.
+     Tests override it per case below. */
+  mockLogAction: vi.fn(async () => ({ persisted: true, chained: true, tamperProof: true })),
   mockLoadAuthoredSections: vi.fn(async () => [] as Array<{ title: string; content: string }>),
   mockLoadContentLeaves: vi.fn(
     async () => [] as Array<{ sectionCode: string; title: string; documentType?: string }>,
@@ -45,6 +51,15 @@ const {
 
 vi.mock('../../server/export/renderers', () => ({
   renderPdfBuffersFor510k: mockRender510k,
+  // Governed content now renders per section plus the combined document;
+  // without these the governed path threw into the route's 500 branch.
+  renderPdfBuffersPerSection: vi.fn(async (content: { content?: Array<Record<string, any>> }) =>
+    (content?.content ?? [])
+      .filter((n) => n.type === 'heading' && n.attrs?.level === 1)
+      .map((n) => ({ title: String(n.content?.[0]?.text ?? ''), buffer: Buffer.from('%PDF-section') })),
+  ),
+  renderCombinedPdf: vi.fn(async () => Buffer.from('%PDF-combined')),
+  renderCombinedDocx: vi.fn(async () => Buffer.from('PK-docx')),
 }));
 
 vi.mock('../../server/export/stylePacks/config', () => ({
@@ -200,6 +215,49 @@ describe('510(k) eSTAR governed export', () => {
     await getHandler('/build')(req, res);
 
     expect(res.status).toHaveBeenCalledWith(404);
+    expect(mockRender510k).not.toHaveBeenCalled();
+    expect(mockGovernedConsequence).not.toHaveBeenCalled();
+  });
+
+  it('answers 500 PROJECT_RESOLUTION_FAILED — never 404 — when the anchor READ fails', async () => {
+    // query_canceled: a real database failure. "The lookup broke" and "no such
+    // project in your organization" are different facts; the first used to be
+    // swallowed into the second.
+    mockResolveRows.mockImplementationOnce(() => {
+      throw Object.assign(new Error('boom: canceling statement due to statement timeout'), { code: '57014' });
+    });
+
+    const req = makeReq();
+    const res = createMockResponse() as any;
+
+    await getHandler('/build')(req, res);
+
+    expect(res.status).not.toHaveBeenCalledWith(404);
+    expect(res.status).toHaveBeenCalledWith(500);
+    const payload = res.json.mock.calls[0][0];
+    expect(payload).toEqual({
+      error: 'PROJECT_RESOLUTION_FAILED',
+      message: 'Could not resolve the project for this export. The problem has been logged.',
+    });
+    // The failure text never reaches the body.
+    expect(JSON.stringify(payload)).not.toMatch(/boom|statement timeout|57014/);
+    expect(mockRender510k).not.toHaveBeenCalled();
+    expect(mockGovernedConsequence).not.toHaveBeenCalled();
+    expect(mockLogAction).not.toHaveBeenCalled();
+  });
+
+  it('still 404s on schema absence (42P01): a database without the table has no row to find', async () => {
+    mockResolveRows.mockImplementationOnce(() => {
+      throw Object.assign(new Error('relation "fda_510k_projects" does not exist'), { code: '42P01' });
+    });
+
+    const req = makeReq();
+    const res = createMockResponse() as any;
+
+    await getHandler('/build')(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(404);
+    expect(res.json).toHaveBeenCalledWith({ error: 'Project not found in your organization' });
     expect(mockRender510k).not.toHaveBeenCalled();
     expect(mockGovernedConsequence).not.toHaveBeenCalled();
   });
@@ -456,5 +514,45 @@ describe('POST /api/510k/estar/assemble — the device-assembly contract over HT
     expect(payload.artifactKind).toBe('content-package-draft');
     expect(payload.canProduceOfficialEstar).toBe(false);
     expect(payload.validationReport.sectionSummary).toBeDefined();
+  });
+});
+
+/**
+ * The unplaced delivery path is the one where the audit row IS the record:
+ * the artifact registry has nowhere to place the file, so with no audit row a
+ * delivered official eSTAR exists nowhere in the system that produced it.
+ * `createAuditedUnplacedExport` refuses that delivery; the route must turn the
+ * refusal into a 500 and hand back no bytes.
+ */
+describe('an unplaced export whose audit row does not persist', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockLogAction.mockResolvedValue({ persisted: true, chained: true, tamperProof: true });
+  });
+
+  it('is refused with a 500 and no downloadable bytes', async () => {
+    mockLogAction.mockResolvedValue({
+      persisted: false,
+      chained: false,
+      tamperProof: false,
+      error: 'no database pool: the chained audit_logs row was not attempted',
+    });
+    /* Same call as the delivering unplaced case above: a program-spine UUID
+       project, which the artifact registry cannot place. */
+    mockResolveRows.mockReturnValue([{ id: PROGRAM_UUID, name: 'BX-204 CGM' }]);
+    const req = makeReq({
+      body: {
+        meta: { id: 'BX-204', ident: PROGRAM_UUID, title: 'BX-204 draft package' },
+        content: { sections: [] },
+      },
+    });
+    const res = createMockResponse() as any;
+
+    await getHandler('/build')(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(500);
+    const body = res.json.mock.calls[0][0];
+    expect(body).not.toHaveProperty('downloadable_output_ref');
+    expect(JSON.stringify(body)).not.toContain('base64');
   });
 });

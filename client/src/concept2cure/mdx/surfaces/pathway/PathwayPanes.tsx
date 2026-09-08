@@ -1,7 +1,7 @@
 /**
  * PathwayPanes — the pathway sub-tab bar shared by every pathway surface
  * (510k / PMA / CER), plus the DossierDrawer that routes any pane to the live
- * document section. Ported from `design-system/ui_kits/mdx/PathwayPanes.jsx`.
+ * document section. Ported from `ui_kits/mdx/PathwayPanes.jsx`.
  *
  * Tabs: Workspace · Audit trail · Correspondence · Approvals · Files.
  * The host surface passes its existing content as `workspace`; the other tabs
@@ -520,7 +520,7 @@ function ApprovalsPane({ approvals, onOpenSection, currentUser = 'You' }: { appr
               </div>
               <span className="audit-signed" title="Signed · Part 11">{I.lock}</span>
               {a.target_id && (
-                <button className="ap-link" onClick={() => onOpenSection({ id: a.target_id!, label: a.target })}>
+                <button className="ap-link" aria-label={`Open ${a.target}`} onClick={() => onOpenSection({ id: a.target_id!, label: a.target })}>
                   {I.arrowRight}
                 </button>
               )}

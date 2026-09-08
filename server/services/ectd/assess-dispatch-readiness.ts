@@ -22,7 +22,18 @@ import { submissionLeaves, ectdSequences, submissions } from '../../../shared/sc
 import { shadowReviewFindings, shadowReviewRuns } from '../../../shared/schema/shadow-review';
 import { getSubmissionRegionProfile } from '../region-profiles/region-profile-service';
 import { computeDispatchReadiness, type DispatchReadinessReport } from './dispatch-readiness';
-import { evaluateDispatchGate, mergeDispatchGates, type DispatchGateResult } from './dispatch-gate';
+import {
+  evaluateDispatchGate,
+  mergeDispatchGates,
+  evaluateReleaseSignatureGate,
+  type DispatchGateResult,
+  type ReleaseSignatureGateInput,
+  type ReleaseSignatureVerdict,
+} from './dispatch-gate';
+import {
+  resolveReleaseSignatureStatus,
+  isReleaseSignatureRequired,
+} from './release-signature-status';
 import {
   resolveExternalValidator,
   evaluateExternalValidationGate,
@@ -65,8 +76,29 @@ export interface DispatchReadinessAssessment {
     cleared: boolean;
     blockers: string[];
   };
-  /** Hard gate verdict — structural + shadow + external, composed. */
+  /** Release-signature state (21 CFR Part 11 §11.70, §6c). */
+  releaseSignature: {
+    /** This submission type crosses the §11.70 boundary and must be signed. */
+    required: boolean;
+    /** Resolved signature state. `undetermined` ≠ `unsigned` — see the gate. */
+    verdict: ReleaseSignatureVerdict;
+    /** Orchestrator run the verdict came from, when one was found. */
+    runId?: string;
+    /** electronic_signatures.id when a verifying signature was found. */
+    signatureId?: number;
+    detail?: string;
+    /** This gate adds no blocker. */
+    cleared: boolean;
+  };
+  /** Hard gate verdict for DISPATCH — structural + shadow + external +
+   *  release-signature, composed. This is the transmit verdict and the one the
+   *  readiness surface reports. */
   gate: DispatchGateResult;
+  /** Hard gate verdict for FREEZE — the same gates, except that a release
+   *  signature is not REQUIRED to freeze (a tampered one still blocks). Freeze
+   *  is not transmit and carries its own Part 11 signature; see
+   *  composeDispatchGatesForStep. */
+  freezeGate: DispatchGateResult;
   /** Full structural breakdown (errors + non-blocking warnings/infos). */
   readiness: DispatchReadinessReport;
   leafCount: number;
@@ -103,6 +135,81 @@ export function evaluateShadowPresenceGate(shadowReviewRunCount: number): Dispat
           'No completed Shadow Review has run for this sequence. A never-reviewed dossier is not cleared for dispatch — run Shadow Review before transmitting.',
         ],
       };
+}
+
+/**
+ * Compose every hard gate into the single dispatch verdict.
+ *
+ * Extracted as a PURE function so the SET of gates is testable without a
+ * database. That matters more than it looks: each gate is individually unit
+ * tested, but a gate that is never passed to `mergeDispatchGates` blocks
+ * nothing, and a purely-unit-tested gate cannot detect its own absence from
+ * the composition. This function is the one place the membership is asserted.
+ *
+ * Pure + exported for test, same idiom as evaluateShadowPresenceGate.
+ */
+export function composeDispatchGates(gates: {
+  structural: DispatchGateResult;
+  external: DispatchGateResult;
+  shadowPresence: DispatchGateResult;
+  releaseSignature: DispatchGateResult;
+}): DispatchGateResult {
+  return mergeDispatchGates(
+    gates.structural,
+    gates.external,
+    gates.shadowPresence,
+    gates.releaseSignature,
+  );
+}
+
+/** The two governed sequence transitions this composition can be asked about. */
+export type GovernedDispatchStep = 'freeze' | 'dispatch';
+
+/**
+ * The gate verdict for a specific governed step.
+ *
+ * ── Why the step matters ─────────────────────────────────────────────────────
+ * `transitionSequenceGoverned` applies a composed gate to BOTH governed
+ * transitions. Composing the release-signature gate into that one verdict
+ * therefore made a TRANSMIT control block the FREEZE — and a release signature
+ * comes from a signed package orchestrator run, so freezing any IND / NDA / BLA
+ * / MAA sequence required signing a release first. That inverts the order the
+ * product works in, for a control whose own module calls itself "the
+ * transmit-time re-check" and "the provable pre-transmit rule".
+ *
+ * Freeze is not transmit: nothing leaves the building, and the step already
+ * carries its own Part 11 signature — bound to this sequence, this step, this
+ * actor and this leaf manifest (transitionSequenceGoverned Gate 1). So the
+ * REQUIREMENT for a release signature governs `dispatch` only.
+ *
+ * What does NOT change is integrity. `evaluateReleaseSignatureGate` blocks an
+ * `invalid` verdict unconditionally, including when a signature is not
+ * required, because requiredness governs whether a signature must be PRESENT
+ * and never whether a broken one may be ignored. Expressing the freeze case as
+ * "not required" rather than "gate omitted" is what keeps that rule intact: a
+ * tampered signature still blocks a freeze.
+ *
+ * Every other gate governs both steps, and the membership is pinned by test —
+ * a gate added later cannot be dropped from the freeze verdict by omission.
+ */
+export function composeDispatchGatesForStep(
+  parts: {
+    structural: DispatchGateResult;
+    external: DispatchGateResult;
+    shadowPresence: DispatchGateResult;
+    releaseSignature: ReleaseSignatureGateInput;
+  },
+  step: GovernedDispatchStep,
+): DispatchGateResult {
+  return composeDispatchGates({
+    structural: parts.structural,
+    external: parts.external,
+    shadowPresence: parts.shadowPresence,
+    releaseSignature: evaluateReleaseSignatureGate({
+      ...parts.releaseSignature,
+      required: step === 'dispatch' && parts.releaseSignature.required,
+    }),
+  });
 }
 
 /**
@@ -288,11 +395,45 @@ export async function assessSequenceDispatchReadiness(
   //     least one completed Shadow Review run exists.
   const shadowPresenceGate = evaluateShadowPresenceGate(shadowReviewRunCount);
 
-  const gate = mergeDispatchGates(
-    structuralGate,
-    { cleared: externalGate.cleared, blockers: externalGate.blockers },
-    shadowPresenceGate,
-  );
+  // 6c. Release-signature gate (21 CFR Part 11 §11.70). Until this landed, the
+  //     entire dispatch path had no signature awareness at all: a sequence
+  //     could be transmitted to the agency having never been e-signed, or
+  //     having been signed over a DIFFERENT package than the one dispatching.
+  //     The orchestrator's package.sign step proves a signature existed at
+  //     BUILD time; dispatch is a separate, later act, so it re-checks — which
+  //     is exactly the re-check the e-sig design doc reserves for transmit.
+  //     Same shape as §6b: unsigned is not signature-clean, it is unsigned, and
+  //     an undetermined lookup is not an absent requirement.
+  const releaseSignature = await resolveReleaseSignatureStatus({
+    submissionId: sequence.submissionId,
+    organizationId,
+    // Sequence-grained, like every other input this assessor composes. Without
+    // it a release signed over sequence 0000's package cleared this gate for
+    // 0001 and every later sequence under the same submission — see the header
+    // of resolveReleaseSignatureStatus.
+    sequenceNumber: sequence.sequenceNumber,
+  });
+  const signatureRequired = isReleaseSignatureRequired(submissionApplicationType);
+  const signatureInput = {
+    required: signatureRequired,
+    verdict: releaseSignature.verdict,
+    detail: releaseSignature.detail,
+  };
+  const releaseSignatureGate = evaluateReleaseSignatureGate(signatureInput);
+
+  // One set of parts, composed for each governed step. Dispatch is the transmit
+  // verdict (every gate). Freeze drops only the REQUIREMENT for a release
+  // signature — a control the §11.70 design reserves for transmit — and keeps
+  // every other gate, including an integrity failure on a signature that does
+  // exist. See composeDispatchGatesForStep.
+  const gateParts = {
+    structural: structuralGate,
+    external: { cleared: externalGate.cleared, blockers: externalGate.blockers },
+    shadowPresence: shadowPresenceGate,
+    releaseSignature: signatureInput,
+  };
+  const gate = composeDispatchGatesForStep(gateParts, 'dispatch');
+  const freezeGate = composeDispatchGatesForStep(gateParts, 'freeze');
 
   return {
     sequenceId,
@@ -312,7 +453,19 @@ export async function assessSequenceDispatchReadiness(
      *  also blocks the gate (§6b), so it is informational: it reports WHY the
      *  gate is blocked when that is the only blocker. */
     shadowReviewMissing: shadowReviewRunCount === 0,
+    /** Release-signature state (§6c). `required` reports whether this
+     *  submission type crosses the §11.70 boundary; `verdict` is the resolved
+     *  state. Informational on the response — the blocking happens in `gate`. */
+    releaseSignature: {
+      required: signatureRequired,
+      verdict: releaseSignature.verdict,
+      runId: releaseSignature.runId,
+      signatureId: releaseSignature.signatureId,
+      detail: releaseSignature.detail,
+      cleared: releaseSignatureGate.cleared,
+    },
     gate,
+    freezeGate,
     readiness,
     leafCount: leaves.length,
   };

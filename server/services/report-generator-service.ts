@@ -5,12 +5,10 @@
  * clinical trial data, protocols, and user preferences.
  */
 
-import fs from 'fs';
-import path from 'path';
-import { db } from '../db';
-import { csrReports, csrDetails } from '../../shared/schema';
+import '../db';
+import '../../shared/schema';
 import { statisticsService } from '../statistics-service';
-import { researchCompanionService } from '../research-companion-service';
+import '../research-companion-service';
 
 interface ReportGenerationParams {
   protocolData?: any;

@@ -30,6 +30,7 @@
  * real regulatory reference config, not sample data.
  */
 import React from 'react';
+import { useAuthUser } from '@/services/portal/authService';
 import { SUBMISSION_WORKSPACES } from '@shared/types/submission-ui';
 import { I } from '../icons';
 import { usePublishSurfaceContext } from '../surfaceContext';
@@ -193,6 +194,10 @@ export function SubmissionCenter({
 }) {
   const [ws, setWs] = React.useState('portfolio');
   const [selSub, setSelSub] = React.useState<number | null>(null);
+  // The signer sees their own identity in the e-signature dialog (§11.50): the
+  // name the platform will print on the signature, not a generic "You".
+  const authUser = useAuthUser();
+  const signerLabel = authUser?.displayName || authUser?.email || 'the authenticated user';
 
   // GET /api/submissions — real DB rows, honest empty, honest error (no fixture).
   const [subsBump, setSubsBump] = React.useState(0);
@@ -460,7 +465,7 @@ export function SubmissionCenter({
       tone: 'ok',
       text: `Sequence ${f.seq.sequenceNumber} is now ${
         SC_SEQ_STATUS[done.data.status]?.l ?? done.data.status
-      } — server-confirmed under signature ${sign.data.actionId}.`,
+      } — signed by ${signerLabel} (${input.meaning}), server-confirmed under signature ${sign.data.actionId}.`,
     });
     return {
       meaning: input.meaning,
@@ -677,7 +682,7 @@ export function SubmissionCenter({
       <div className="sp-head">
         <div>
           <div className="sp-eyebrow">Submission</div>
-          <h1 className="sp-title">Submission Center</h1>
+          <h1 className="sp-title">Submission center</h1>
           <p className="sp-state">
             Plan, assemble, validate and dispatch regulatory submissions across regions — eCTD v3.2.2
             / v4.0, eSTAR, MDR/IVDR. Eight workspaces scaffolded from the submission contract.
@@ -840,7 +845,7 @@ export function SubmissionCenter({
           </div>
           <div className="pj-card-b pj-card-b-flush">
             {subs.loading ? (
-              <div className="scaf-note" style={{ padding: '18px 10px' }}>
+              <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>
                 Loading submissions…
               </div>
             ) : subs.error ? (
@@ -911,7 +916,7 @@ export function SubmissionCenter({
           </div>
           <div className="pj-card-b pj-card-b-flush">
             {deviceRes.loading ? (
-              <div className="scaf-note" style={{ padding: '18px 10px' }}>
+              <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>
                 Loading device filings…
               </div>
             ) : deviceRes.error ? (
@@ -1095,7 +1100,7 @@ export function SubmissionCenter({
           </div>
           <div className="pj-card-b">
             {seqs.loading ? (
-              <div className="scaf-note" style={{ padding: '18px 10px' }}>
+              <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>
                 Loading sequences…
               </div>
             ) : seqs.error ? (
@@ -1215,7 +1220,8 @@ export function SubmissionCenter({
               ? 'irreversible content lock'
               : 'records dispatch; wire transmission stays behind the governed transmit path'
           }`}
-          defaultMeaning="release"
+          defaultMeaning={flow.kind === 'freeze' ? 'approval' : 'release'}
+          signer={authUser ? { name: authUser.displayName || `${authUser.firstName} ${authUser.lastName ?? ''}`.trim() || authUser.email, email: authUser.email } : undefined}
           onClose={() => setFlow(null)}
           onSign={(input) => runGoverned(flow, input)}
         />

@@ -5,7 +5,6 @@
  * including the enhanced literature discovery functionality.
  */
 
-import { Pool } from 'pg';
 import setupLiterature from './setupLiterature';
 import setupLumenCortex from './setupLumenCortex';
 import { getPool } from '../db';

@@ -168,7 +168,7 @@ describe('the placement chain — snapshot then leaf, verdict verbatim', () => {
   it('places via GET saved sections → POST snapshot → PUT leaves with the snapshot id', async () => {
     const calls: Array<{ method: string; url: string; body?: unknown }> = [];
     mockApi((method, url, body) => {
-      if (method === 'POST' && url === '/api/coauthor/documents') {
+      if (method === 'POST' && String(url).split('?')[0] === '/api/coauthor/documents') {
         calls.push({ method, url, body });
         return { ok: true, status: 201, json: async () => ({ success: true, document: { id: 501 } }) };
       }
@@ -222,7 +222,7 @@ describe('the placement chain — snapshot then leaf, verdict verbatim', () => {
   it('a refused PUT surfaces the server verdict verbatim and never claims a placement', async () => {
     let putCalls = 0;
     mockApi((method, url) => {
-      if (method === 'POST' && url === '/api/coauthor/documents') {
+      if (method === 'POST' && String(url).split('?')[0] === '/api/coauthor/documents') {
         return { ok: true, status: 201, json: async () => ({ success: true, document: { id: 502 } }) };
       }
       if (method === 'PUT' && url === '/api/submissions/sequences/31/leaves') {
@@ -256,7 +256,7 @@ describe('the placement chain — snapshot then leaf, verdict verbatim', () => {
   it('a failed snapshot POST stops the chain — the leaves endpoint is never called', async () => {
     let putCalls = 0;
     mockApi((method, url) => {
-      if (method === 'POST' && url === '/api/coauthor/documents') {
+      if (method === 'POST' && String(url).split('?')[0] === '/api/coauthor/documents') {
         return { ok: false, status: 500, json: async () => ({ error: 'Failed to create document' }) };
       }
       if (method === 'PUT' && url === '/api/submissions/sequences/31/leaves') {

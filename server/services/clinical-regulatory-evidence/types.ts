@@ -26,7 +26,7 @@
  *    inferred, and never collapses to a percentage. "18 of 31" survives to the
  *    UI intact.
  *
- * 3. NOT EVERY FINDING BELONGS TO A STUDY (§6.2). {@link Applicability} exists
+ * 3. NOT EVERY FINDING BELONGS TO A STUDY (§6.2). {@link EvidenceApplicability} exists
  *    because many CRL findings are application-, facility-, CMC- or
  *    labeling-level. Forcing them onto a clinical study would be a fabrication.
  *
@@ -64,7 +64,7 @@ export type VerificationState =
  * What a finding actually applies to (§6.2). `study` is the *narrowest* case,
  * not the default — defaulting to it is the specific error this type prevents.
  */
-export type Applicability =
+export type EvidenceApplicability =
   | 'study'
   | 'application'
   | 'facility'
@@ -199,7 +199,7 @@ export interface ResolvedRegulatoryFinding {
   category: string;
   finding: string;
   requestedAction: string | null;
-  applicability: Applicability;
+  applicability: EvidenceApplicability;
   epistemicStatus: EpistemicStatus;
   verification: VerificationState;
   reviewedAt: string | null;

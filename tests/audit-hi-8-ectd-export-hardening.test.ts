@@ -77,6 +77,32 @@ describe('HI-8 · ZIP validator surfaces missing bundled DTDs', () => {
     expect(result.warnings.join(' ')).not.toMatch(/not self-contained/);
   });
 
+  const BACKBONE_WITH_STYLESHEET =
+    '<?xml version="1.0" encoding="UTF-8"?>\n' +
+    '<?xml-stylesheet type="text/xsl" href="util/style/ectd-2-0.xsl"?>\n' +
+    '<!DOCTYPE ectd:ectd SYSTEM "util/dtd/ich-ectd-3-2.dtd">\n' +
+    '<ectd:ectd xmlns:ectd="http://www.ich.org/ectd" dtd-version="3.2"></ectd:ectd>';
+
+  it('warns when index.xml references a stylesheet that is not bundled under util/style/', async () => {
+    // The DTD is bundled so the only self-containment gap is the stylesheet.
+    const buf = await zipWith({
+      'index.xml': BACKBONE_WITH_STYLESHEET,
+      'util/dtd/ich-ectd-3-2.dtd': '<!ELEMENT ectd:ectd ANY>',
+    });
+    const result = await validateEctdPackage(buf);
+    expect(result.warnings.join(' ')).toMatch(/references stylesheet .*not self-contained/);
+  });
+
+  it('does not warn about the stylesheet when it IS bundled under util/style/', async () => {
+    const buf = await zipWith({
+      'index.xml': BACKBONE_WITH_STYLESHEET,
+      'util/dtd/ich-ectd-3-2.dtd': '<!ELEMENT ectd:ectd ANY>',
+      'util/style/ectd-2-0.xsl': '<xsl:stylesheet version="1.0"/>',
+    });
+    const result = await validateEctdPackage(buf);
+    expect(result.warnings.join(' ')).not.toMatch(/not self-contained/);
+  });
+
   it('re-verifies util/index-md5.txt against the shipped bytes (mismatch = error)', async () => {
     const buf = await zipWith({
       'index.xml': BACKBONE_WITH_DTD,

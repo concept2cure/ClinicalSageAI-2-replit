@@ -61,6 +61,48 @@ const PATTERNS = [
     re: /\b(?:signer|user|owner|actor|changedBy|approver)_?(?:Name|Email|name|email)\s*:\s*[^,;\n]*(?:\?\?|\|\|)\s*['"`]{2}/,
     what: 'empty string as a fallback identity',
   },
+  // ── The same defect one level up: the APPLICANT, not the signer ────────────
+  // The regional eCTD Module 1 backbone carries the applicant's identity —
+  // <name>/<company-name> and <id>/<company-id>/<pmda-applicant-id> — and the
+  // agency reads it as the legal entity making the submission. Four assemble
+  // paths filled it from the tenant's row id: `Organization 7` as the applicant
+  // name, `ORG-7` as the applicant id, and one filled the applicant id with the
+  // application NUMBER. `Sponsor` and `Product` were the orchestrator's
+  // defaults. None of those say "unassigned"; every one reads as real.
+  //
+  // regulatory-identifiers.ts states the rule this enforces: never fabricate,
+  // and when an identifier is missing build with a value that SAYS it is
+  // unassigned. So a fallback here is accepted only when it says so —
+  // UNASSIGNED, Unknown, Unspecified or Not Specified. `Sponsor`, `Applicant`
+  // and `Organization 7` do not: they read as the entity's actual name.
+  {
+    re: /\b(?:sponsor|applicant|company)_?(?:Name|Id|name|id)\s*:\s*[^,;\n]*(?:\?\?|\|\|)\s*(?:`(?!UNASSIGNED|Unknown|Unspecified|Not Specified)[^`]+`|'(?!UNASSIGNED|Unknown|Unspecified|Not Specified)[^']+'|"(?!UNASSIGNED|Unknown|Unspecified|Not Specified)[^"]+")/,
+    what: 'applicant identity invented as a fallback (must say UNASSIGNED)',
+  },
+  {
+    re: /\b(?:sponsor|applicant|company)_?(?:Name|Id|name|id)\s*:\s*`(?!UNASSIGNED)[^`]*\$\{[^}]*\}[^`]*`/,
+    what: 'applicant identity manufactured from an id',
+  },
+  // ── The simplest form, which walked straight through ──────────────────────
+  // Every pattern above catches an identity that is INTERPOLATED or used as a
+  // FALLBACK. None caught a literal: `createdBy: 'Current User'`, sitting three
+  // times in server/routes/inline-annotations.ts — a route whose own header
+  // claims "@compliance FDA 21 CFR Part 11 — all annotations immutably
+  // audit-logged", recording who approved or rejected text in a regulated
+  // document as the words "Current User". client-branding.ts carried a fourth.
+  //
+  // The line this draws is between a name that reads as a PERSON and one that
+  // names a PROCESS. Accepted: an explicit unassigned marker (UNASSIGNED,
+  // Unknown, Unspecified, Not Specified), and a machine identifier — all
+  // lowercase, slug-shaped, like `system` or `span-lineage-backfill`. An action
+  // genuinely taken by the platform has no person to name, and saying so is a
+  // true statement rather than a stand-in for one. Anything else — "Current
+  // User", "Admin User", a display name with capitals and spaces — is an
+  // identity nobody owns, written where an inspector reads who acted.
+  {
+    re: /\b(?:created|resolved|approved|rejected|reviewed|signed|changed|updated|closed|assigned|owned|acted)_?[Bb]y\s*:\s*(['"`])(?!(?:UNASSIGNED|Unknown|Unspecified|Not Specified)\1)(?![a-z][a-z0-9._-]*\1)[^'"`$]*\1/,
+    what: 'identity written as a literal constant (a name nobody is)',
+  },
 ];
 
 function sourceFiles() {
@@ -115,13 +157,32 @@ const known = new Set(baseline);
 const fresh = hits.filter((h) => !known.has(h.key));
 
 if (fresh.length > 0) {
-  console.error('\n❌ Person-identity manufactured for a governed column.\n');
+  console.error('\n❌ Identity manufactured for a governed column.\n');
   for (const h of fresh) console.error(`   ${h.file}:${h.line}  [${h.what}]\n     ${h.text}`);
-  console.error(`
-   21 CFR 11.50(a)(1) requires the PRINTED NAME OF THE SIGNER, and §11.10(e) an
-   audit trail of who acted. \`user-41\` is not a person's name and \`''\` is not
-   an email; both are indistinguishable from a real value once written, which is
-   what makes them worse than a refusal.
+
+  // Two different defects with two different remedies; print the one that applies.
+  if (fresh.some((h) => /applicant identity/.test(h.what))) {
+    console.error(`
+   APPLICANT IDENTITY — the regional eCTD Module 1 backbone carries the
+   applicant's legal identity in <name>/<company-name> and
+   <id>/<company-id>/<pmda-applicant-id>, and the agency reads it as the entity
+   making the submission. \`Organization 7\`, \`ORG-7\`, \`Sponsor\` and
+   \`Applicant\` are indistinguishable from real values once written, which is
+   what makes them worse than a gap.
+
+   server/services/ectd/regulatory-identifiers.ts states the rule: never
+   fabricate, and when an identifier is missing build with a value that SAYS it
+   is unassigned. Pass the recorded identifier through, or fall back to
+   \`UNASSIGNED-…\` / \`UNASSIGNED (…)\` — the wording the transmit path in
+   submission-ops already uses. Unknown, Unspecified and Not Specified pass too.
+`);
+  }
+  if (fresh.some((h) => !/applicant identity/.test(h.what))) {
+    console.error(`
+   PERSON IDENTITY — 21 CFR 11.50(a)(1) requires the PRINTED NAME OF THE SIGNER,
+   and §11.10(e) an audit trail of who acted. \`user-41\` is not a person's name
+   and \`''\` is not an email; both are indistinguishable from a real value once
+   written, which is what makes them worse than a refusal.
 
    A NOT NULL column is not a reason to invent a value. Resolve the identity:
 
@@ -131,6 +192,7 @@ if (fresh.length > 0) {
    It reads the membership record on YOUR transaction and throws
    SignerNotAttributableError when the signer cannot be attributed — let it throw.
 `);
+  }
   process.exit(1);
 }
 console.log(`[ci:fabricated-identity] OK — ${hits.length} baselined occurrence(s), 0 new.`);

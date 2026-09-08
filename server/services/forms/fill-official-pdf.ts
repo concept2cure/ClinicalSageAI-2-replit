@@ -50,6 +50,22 @@ export interface OfficialPdfFieldSpec {
    * whose real fields live in the `/XFA` packets. Required by `fillXfaDatasets`.
    */
   xfaSomPath?: string;
+  /**
+   * FURTHER XFA nodes that carry this same governed value, written with exactly
+   * the string `xfaSomPath` gets. Not a second mapping and not a second fact:
+   * one canonical key, one value, every box the form keeps it in.
+   *
+   * The official eSTAR templates need this because several cells an applicant
+   * reads are SUMMARIES the form's own JavaScript recomputes from a source field
+   * elsewhere. Writing only the summary cell means the applicant's first click
+   * blanks it — FDA's script clears the cell and rebuilds it from a source we
+   * left empty. Writing the source as well hands the value to the form's own
+   * machinery, which then puts it back into the summary itself.
+   *
+   * Each path is resolved and reported exactly like `xfaSomPath`: a path the
+   * template does not declare is skipped and warned, never invented.
+   */
+  alsoWriteSomPaths?: string[];
   /** The template's OWN caption for this field, carried for provenance. */
   caption?: string;
   type: OfficialPdfFieldType;
@@ -346,6 +362,63 @@ function classifyFieldType(ctorName: string | undefined): string {
 // with a fresh cross-reference stream. Nothing else in the document is disturbed,
 // which is what keeps the output the real FDA form rather than a re-rendered
 // lookalike.
+//
+// THE SAVED `form` PACKET, AND WHY IT DOES NOT SHADOW THE DATASETS WRITE.
+// Measured 2026-09-04 against both vendored eSTAR v7.0 templates.
+//
+// These templates carry TEN XFA packets, and one of them is a `form` packet — a
+// SAVED SNAPSHOT of merged form state. That is the one thing that could make a
+// datasets-only fill open BLANK in Acrobat while every read-back here passes, so
+// it was measured rather than assumed. pdf.js cannot settle it: its XFA packet
+// whitelist has no `form` entry, so it never even fetches the object.
+//
+//   /XFA array (nIVD; it lives in AcroForm object 220, whose /Fields is empty) —
+//   packet name, PDF object, decoded bytes:
+//     xdp:xdp 269 · 162       config 4 · 3,163        template 5 · 9,877,094
+//     localeSet 6 · 2,860     datasets 244 · 17,408   PDFSecurity 8 · 200
+//     xmpmeta 9 · 1,524       xfdf 10 · 80            form 270 · 30,983
+//     </xdp:xdp> 271 · 10
+//
+//   The `form` packet is a SPARSE DELTA, not a copy of the merged form DOM: 77
+//   named nodes against the template's 3,549 named containers (1,318 fields and
+//   exclGroups), 30,983 bytes against 9.88 MB. (IVD: 37,262 bytes, 74 nodes.)
+//
+//   It declares NO node for ANY mapped field — 0 of the 20 `510k-device` SOM
+//   paths and 0 of the 19 `510k-ivd` paths appear in it — so it holds neither a
+//   stale value nor an empty one for a fill to lose to. The nodes it does give a
+//   <value> are 8 (IVD 9), and every one of them is a field the template declares
+//   `<bind match="none"/>` that the `datasets` skeleton does not contain at all:
+//   `GeneralIntroduction.GITextField130`, `ApplicationType.ATRadioButton100.
+//   ATRadioButton101` = "1", `ATRadioButton050.English`, `PMNSummary.SavedDate`,
+//   `Verification.attachMsg`, `CurrentPage`, `PageCount`. The two layers are
+//   COMPLEMENTARY: `datasets` carries the data-bound values, the `form` packet
+//   carries what cannot round-trip through data — occurrence (`instanceManager`),
+//   `presence`/`access`/`locale` overrides, and the values of non-bound fields.
+//   Every mapped field is on the datasets side of that split: 20/20 have no
+//   `<bind>` child (default binding), 20/20 are in the datasets skeleton, 0/20
+//   are in the `form` packet.
+//
+//   `config` declares NO `<restoreState>`, no `<preserve>` and no `<exclude>` (0
+//   occurrences of each, both templates). Its only state-adjacent settings are
+//   `<acrobat><acrobat7><dynamicRender>required</dynamicRender>`,
+//   `<versionControl sourceBelow="maintain"/>`, an empty `<autoSave/>`,
+//   `<validate>preSubmit</validate>` and `<xdp><packets>*</packets></xdp>`.
+//
+//   The fill also leaves the packet exactly as FDA shipped it: the appended
+//   update re-emits ONLY the `datasets` object, so object 270 is never rewritten
+//   and stays resolvable through the /Prev chain at its original offset
+//   (5,271,703), byte-identical — and its `<form checksum="...">` therefore still
+//   matches the template it was saved against, exactly as in FDA's own file.
+//
+//   STILL UNPROVEN: Acrobat itself, which is not available in this environment.
+//   The conclusion does not depend on WHICH restore rule Acrobat applies — a
+//   packet that declares no node for a field cannot supply a value for it — but
+//   it says nothing about the form's own initialize/calculate scripts, which no
+//   engine here runs (see fill-official-pdf.xfa-render.test).
+//
+// `listXfaPackets` exposes this inventory, and the invariants above are pinned by
+// tests, so an FDA revision that starts saving mapped fields into the `form`
+// packet fails the suite instead of shipping a blank form to a client.
 
 import * as zlib from 'zlib';
 import * as crypto from 'node:crypto';
@@ -358,8 +431,31 @@ export interface XfaFieldInfo {
   type: string;
   /** The template's own caption text for the field ('' when it has none). */
   caption: string;
-  /** True when the path also exists in the `datasets` skeleton, i.e. it is fillable. */
+  /** True when the field resolves to a node in the `datasets` skeleton, i.e. it is fillable. */
   inDatasets: boolean;
+  /**
+   * The path of the field's node in the `datasets` data DOM, which is NOT always
+   * the template SOM path — see {@link resolveDataSomPath}. Null when the field
+   * does not resolve to a data node (then it is not fillable).
+   */
+  dataSomPath: string | null;
+}
+
+/** One XFA packet of a dynamic template, as the PDF carries it. */
+export interface XfaPacketInfo {
+  /**
+   * Packet name, identified from the DECODED CONTENT rather than from the `/XFA`
+   * name array (which lives in an encrypted object stream this reader does not
+   * traverse): `xdp:xdp`, `config`, `template`, `localeSet`, `datasets`, `form`.
+   * The eSTARs' `/XFA` array also lists `PDFSecurity`, `xmpmeta`, `xfdf` and the
+   * closing `</xdp:xdp>` fragment, which are not XFA DOM packets and are not
+   * sniffed here.
+   */
+  name: string;
+  /** The PDF object carrying the packet — the object an update would replace. */
+  objectNumber: number;
+  /** Decoded bytes: decrypted and inflated, as an XFA processor would see them. */
+  bytes: Uint8Array;
 }
 
 const PDF_PAD = Buffer.from([
@@ -428,18 +524,30 @@ function readPdfStringAfter(dict: string, key: string): Buffer | null {
   return Buffer.from(out);
 }
 
-interface PdfSecurity {
+export interface PdfSecurity {
   encrypted: boolean;
   key: Buffer;
   aes: boolean;
 }
 
-/** Byte offset of the last cross-reference section, from the trailing `startxref`. */
-function startxrefOffset(buf: Buffer): number {
-  const tail = buf.subarray(Math.max(0, buf.length - 4096)).toString('latin1');
-  const m = /startxref\s+(\d+)/.exec(tail);
-  if (!m) throw new Error('Malformed PDF: no startxref');
-  return parseInt(m[1], 10);
+/**
+ * Byte offset of the NEWEST cross-reference section, from the trailing
+ * `startxref`.
+ *
+ * The last one in the file, not the first one in the window. After an
+ * incremental update the tail holds two `startxref` lines — the original
+ * document's and the update's — and taking the first match returns the OLDER
+ * one, so every object the update replaced reads back at its previous
+ * revision. Nothing fails; the file simply reports its old contents. It
+ * surfaced the first time two updates were chained (attaching a file to a form
+ * that had already been filled).
+ */
+export function startxrefOffset(buf: Buffer): number {
+  const window = Math.max(0, buf.length - 4096);
+  const tail = buf.subarray(window).toString('latin1');
+  const matches = [...tail.matchAll(/startxref\s+(\d+)/g)];
+  if (matches.length === 0) throw new Error('Malformed PDF: no startxref');
+  return parseInt(matches[matches.length - 1][1], 10);
 }
 
 /** The trailer (or cross-reference stream) dictionary text. */
@@ -458,7 +566,7 @@ function matchInt(text: string, re: RegExp, fallback: number): number {
  * Algorithm 2). Supports V1/V2/V4 with RC4 or AESV2. AESV3 (V5/R5/R6) is reported
  * as unsupported rather than silently mis-decrypted.
  */
-function readSecurity(buf: Buffer, raw: string): PdfSecurity {
+export function readSecurity(buf: Buffer, raw: string): PdfSecurity {
   const trailer = trailerDictText(buf);
   const encM = /\/Encrypt\s+(\d+)\s+(\d+)\s+R/.exec(trailer);
   if (!encM) return { encrypted: false, key: Buffer.alloc(0), aes: false };
@@ -500,7 +608,7 @@ function readSecurity(buf: Buffer, raw: string): PdfSecurity {
 }
 
 /** Algorithm 1: the per-object key (AES adds the `sAlT` suffix). */
-function objectKey(sec: PdfSecurity, num: number, gen: number): Buffer {
+export function objectKey(sec: PdfSecurity, num: number, gen: number): Buffer {
   const ext = Buffer.from([num & 0xff, (num >> 8) & 0xff, (num >> 16) & 0xff, gen & 0xff, (gen >> 8) & 0xff]);
   const parts = [sec.key, ext];
   if (sec.aes) parts.push(Buffer.from([0x73, 0x41, 0x6c, 0x54]));
@@ -511,7 +619,7 @@ function objectKey(sec: PdfSecurity, num: number, gen: number): Buffer {
     .subarray(0, Math.min(sec.key.length + 5, 16));
 }
 
-function decryptObjectData(sec: PdfSecurity, num: number, gen: number, data: Buffer): Buffer {
+export function decryptObjectData(sec: PdfSecurity, num: number, gen: number, data: Buffer): Buffer {
   if (!sec.encrypted) return data;
   const k = objectKey(sec, num, gen);
   if (!sec.aes) return rc4(k, data);
@@ -523,13 +631,56 @@ function decryptObjectData(sec: PdfSecurity, num: number, gen: number, data: Buf
   return pad >= 1 && pad <= 16 && pad <= out.length ? out.subarray(0, out.length - pad) : out;
 }
 
-function encryptObjectData(sec: PdfSecurity, num: number, gen: number, data: Buffer): Buffer {
+/**
+ * The IV is SYNTHETIC — derived from the plaintext under the object key — and
+ * not `crypto.randomBytes(16)`, which is what it was.
+ *
+ * WHY. A random IV made the filled eSTAR non-deterministic: the same submission
+ * exported twice produced two different files. Measured on the vendored nIVD
+ * template — three fills from identical inputs gave three different SHA-256
+ * digests at an identical 5,284,860 bytes. That matters because
+ * server/services/export/governedExportConsequence.ts hashes the delivered PDF
+ * and persists `deliveredArtifactSha256` into the artifact, the provenance event
+ * and the audit row as the integrity hash of a governed export. Nothing stores
+ * the bytes, so the only way to check that hash is to regenerate the file — and
+ * regeneration could never reproduce it. A 21 CFR Part 11 audit trail was
+ * recording an integrity hash over bytes that could not be re-derived, and a
+ * filer comparing two exports of the same submission could not tell "identical"
+ * from "changed".
+ *
+ * WHY THIS IS SAFE HERE. A deterministic IV leaks plaintext equality: the same
+ * content under the same key encrypts to the same ciphertext. The plaintext here
+ * is the form's own `datasets` packet inside a PDF whose standard-security
+ * handler has an EMPTY user password — the key derives from /O, /P and /ID,
+ * all of which are in the file, so anyone holding the document can already
+ * decrypt it. (This module's own reader does exactly that, and so did the
+ * independent verifier used to confirm the fill.) The encryption is a
+ * permissions marker, not confidentiality, so equality-leakage discloses
+ * nothing that was not already readable.
+ *
+ * It is a synthetic IV, not a fixed one: HMAC over the plaintext means two
+ * different datasets packets never share an IV, which is the property that
+ * actually matters for CBC.
+ */
+export function encryptObjectData(sec: PdfSecurity, num: number, gen: number, data: Buffer): Buffer {
   if (!sec.encrypted) return data;
   const k = objectKey(sec, num, gen);
   if (!sec.aes) return rc4(k, data);
-  const iv = crypto.randomBytes(16);
+  const iv = crypto.createHmac('sha256', k).update(data).digest().subarray(0, 16);
   const c = crypto.createCipheriv('aes-128-cbc', k, iv);
   return Buffer.concat([iv, c.update(data), c.final()]);
+}
+
+/**
+ * The document's standard-security state, read straight from the bytes.
+ *
+ * `readSecurity` takes the buffer AND its latin1 text because every caller
+ * inside this module already holds both. A caller that holds only the bytes —
+ * the attachment builder, and its tests — should not have to know that.
+ */
+export function readPdfSecurity(bytes: Uint8Array | Buffer): PdfSecurity {
+  const buf = Buffer.isBuffer(bytes) ? bytes : Buffer.from(bytes);
+  return readSecurity(buf, buf.toString('latin1'));
 }
 
 interface TopLevelObject { num: number; gen: number; headerStart: number; }
@@ -641,6 +792,30 @@ export function isDynamicXfaPdf(templateBytes: Uint8Array | Buffer): boolean {
   return /\/XFA\s*[[\d]/.test(raw);
 }
 
+/**
+ * Inventory the XFA packets of a dynamic template (or of a filled output), with
+ * the object that carries each one and its decoded bytes.
+ *
+ * This is what makes the saved `form` packet inspectable — see the section
+ * header: it is the packet that could, in principle, shadow a `datasets` write,
+ * and the only way to know that it does not is to read it. On a filled document
+ * the CURRENT revision of each object is reported, so the `datasets` packet comes
+ * back with the written values and every other packet comes back unchanged.
+ *
+ * Reading the template packet costs ~10 MB of inflate per call; callers that only
+ * need field names should use {@link listXfaFields}.
+ */
+export async function listXfaPackets(
+  pdfBytes: Uint8Array | Buffer,
+): Promise<XfaPacketInfo[]> {
+  const { packets } = extractXfaPackets(Buffer.from(pdfBytes));
+  return packets.map((p) => ({
+    name: p.name,
+    objectNumber: p.num,
+    bytes: new Uint8Array(p.xml),
+  }));
+}
+
 // --- minimal XML scanning -------------------------------------------------
 // The XFA packets are machine-generated, well-formed XML. A tiny event scanner
 // keeps this module dependency-free (the project ships no typed SAX parser) and
@@ -727,6 +902,47 @@ function datasetsPathSet(datasetsXml: Buffer | undefined): Set<string> {
 }
 
 /**
+ * Resolve a template SOM path onto the path its node actually has in the
+ * `datasets` data DOM.
+ *
+ * These are not always the same string. XFA binds a field to a data node by
+ * NAME, and a subform that does not itself bind a data group is transparent to
+ * that walk — its name appears in the template SOM path but not in the data
+ * path. The two vendored form families in this repo show both shapes:
+ *
+ *   FDA eSTAR      template `root.AdministrativeDocumentation.PMNSummary.SSTextField220`
+ *                  data     `root.AdministrativeDocumentation.PMNSummary.SSTextField220`  (identical)
+ *   FDA Form 1571  template `topmostSubform.Page1.db_sponsor_name`
+ *                  data     `topmostSubform.db_sponsor_name`                              (Page1 is transparent)
+ *
+ * Comparing the template path against the data DOM directly therefore reported
+ * every field of FDA 1571 and 3674 as absent, and the platform concluded those
+ * forms were unfillable and fell back to a drawn reconstruction. They are not:
+ * 1571 has 246 fillable nodes and 3674 has 156.
+ *
+ * The match stays deliberately narrow, because a wrong locator writes a value
+ * into the wrong box of a form a sponsor signs: the exact path wins, and
+ * otherwise a candidate must share BOTH the root data group and the leaf field
+ * name. If more than one candidate does, the field is reported unresolved
+ * rather than guessed.
+ */
+export function resolveDataSomPath(templateSom: string, dataPaths: Set<string>): string | null {
+  if (dataPaths.has(templateSom)) return templateSom;
+  const segs = templateSom.split('.');
+  if (segs.length < 3) return null;
+  const root = segs[0];
+  const leaf = segs[segs.length - 1];
+  let hit: string | null = null;
+  for (const candidate of dataPaths) {
+    const c = candidate.split('.');
+    if (c.length < 2 || c[0] !== root || c[c.length - 1] !== leaf) continue;
+    if (hit) return null; // ambiguous — never guess which box to write
+    hit = candidate;
+  }
+  return hit;
+}
+
+/**
  * Enumerate the fields a dynamic XFA template declares — the XFA counterpart to
  * {@link listAcroFields}, which returns nothing for these templates. Each field
  * carries its SOM path, widget type, the template's OWN caption, and whether the
@@ -782,11 +998,13 @@ export async function listXfaFields(templateBytes: Uint8Array | Buffer): Promise
       if (!frame) return;
       if (frame.tag === 'caption' && captionDepth > 0) captionDepth--;
       if (frame.field) {
+        const dataSomPath = resolveDataSomPath(frame.field.som, datasetPaths);
         out.push({
           somPath: frame.field.som,
           type: frame.field.type,
           caption: frame.field.caption.replace(/\s+/g, ' ').trim(),
-          inDatasets: datasetPaths.has(frame.field.som),
+          inDatasets: dataSomPath !== null,
+          dataSomPath,
         });
       }
       if (frame.pushedName) path.pop();
@@ -858,15 +1076,52 @@ function setDatasetsValues(
   };
 }
 
+/** One object to write into an incremental update. */
+export interface PdfObjectWrite {
+  /** Its object number. An existing number REPLACES; a free one ALLOCATES. */
+  num: number;
+  gen: number;
+  /**
+   * The object body. With `data` this is the STREAM DICTIONARY (its `/Length`
+   * must match `data.length`); without it, the whole object — a `/Filespec`
+   * dictionary, a rewritten catalog, a name tree.
+   */
+  dict: string;
+  /** Stream bytes. Omit for a plain object. */
+  data?: Buffer;
+}
+
 /**
- * Append a PDF incremental update that replaces one object. The original bytes
- * are preserved verbatim and a new cross-reference stream points at the new
- * revision — the standard way to fill a form without re-rendering the document.
+ * The first object number nothing in the file occupies: the trailer's `/Size`.
+ *
+ * Exported because a caller building several linked objects has to know the
+ * numbers BEFORE it can write them — a `/Filespec` names its `/EmbeddedFile`
+ * by reference, so the reference has to exist in the dictionary text.
  */
-function appendIncrementalUpdate(
-  original: Buffer,
-  replaced: { num: number; gen: number; dict: string; data: Buffer },
-): Buffer {
+export function nextFreeObjectNumber(original: Buffer): number {
+  const sizeM = /\/Size\s+(\d+)/.exec(trailerDictText(original));
+  if (!sizeM) throw new Error('Malformed PDF trailer: missing /Size');
+  return parseInt(sizeM[1], 10);
+}
+
+/**
+ * Append a PDF incremental update carrying one or more objects. The original
+ * bytes are preserved verbatim and a new cross-reference stream points at the
+ * new revisions — the standard way to change a document without re-rendering it.
+ *
+ * It took exactly ONE replaced stream object, because filling the XFA `datasets`
+ * packet needs exactly that. Embedding an attachment does not: one attachment is
+ * an `/EmbeddedFile` stream, a `/Filespec` dictionary with no stream at all, and
+ * a rewritten catalog — three objects, two of them numbers the file has never
+ * used. Hence a list, mixed shapes, and a real multi-subsection `/Index`.
+ *
+ * ENCRYPTION IS THE CALLER'S. This writer emits the bytes it is handed. In an
+ * encrypted document every stream AND every string inside an object must
+ * already be enciphered under that object's key (see `encryptObjectData`);
+ * handing it plaintext produces a file that opens and shows nothing, which is
+ * worse than one that fails.
+ */
+export function appendIncrementalUpdate(original: Buffer, objects: PdfObjectWrite[]): Buffer {
   const trailer = trailerDictText(original);
   const prev = startxrefOffset(original);
   const rootM = /\/Root\s+(\d+)\s+(\d+)\s+R/.exec(trailer);
@@ -875,23 +1130,55 @@ function appendIncrementalUpdate(
   const sizeM = /\/Size\s+(\d+)/.exec(trailer);
   if (!rootM || !sizeM) throw new Error('Malformed PDF trailer: missing /Root or /Size');
 
+  if (objects.length === 0) {
+    throw new Error('An incremental update must carry at least one object');
+  }
+  const seen = new Set<number>();
+  for (const o of objects) {
+    if (seen.has(o.num)) throw new Error(`Object ${o.num} appears twice in one revision`);
+    seen.add(o.num);
+    // A reader takes /Length bytes and stops. A dictionary that understates it
+    // yields a silently truncated stream — a file that opens, and is wrong —
+    // and one that overstates it runs into `endstream`. Neither is worth
+    // shipping to CDRH, and both are cheap to refuse here.
+    if (o.data) {
+      const lengthM = /\/Length\s+(\d+)/.exec(o.dict);
+      if (!lengthM) throw new Error(`Object ${o.num}: a stream dictionary must declare /Length`);
+      if (parseInt(lengthM[1], 10) !== o.data.length) {
+        throw new Error(
+          `Object ${o.num}: /Length ${lengthM[1]} does not match its ${o.data.length} bytes`,
+        );
+      }
+    }
+  }
+
   const oldSize = parseInt(sizeM[1], 10);
-  const xrefNum = oldSize; // next free object number
+  // The xref stream is itself an object, and it must not collide with anything
+  // the caller allocated ahead of /Size — which it may legitimately do when it
+  // reserved a block of numbers for a set of linked objects.
+  const xrefNum = Math.max(oldSize, ...objects.map((o) => o.num + 1));
   const newSize = xrefNum + 1;
 
   const chunks: Buffer[] = [];
   let offset = original.length;
   const push = (b: Buffer) => { chunks.push(b); offset += b.length; };
 
-  const lead = Buffer.from('\n', 'latin1');
-  push(lead);
+  push(Buffer.from('\n', 'latin1'));
 
-  const objOffset = offset;
-  push(Buffer.from(`${replaced.num} ${replaced.gen} obj\n${replaced.dict}\nstream\n`, 'latin1'));
-  push(replaced.data);
-  push(Buffer.from('\nendstream\nendobj\n', 'latin1'));
+  const placed: { num: number; gen: number; offset: number }[] = [];
+  for (const o of objects) {
+    placed.push({ num: o.num, gen: o.gen, offset });
+    if (o.data) {
+      push(Buffer.from(`${o.num} ${o.gen} obj\n${o.dict}\nstream\n`, 'latin1'));
+      push(o.data);
+      push(Buffer.from('\nendstream\nendobj\n', 'latin1'));
+    } else {
+      push(Buffer.from(`${o.num} ${o.gen} obj\n${o.dict}\nendobj\n`, 'latin1'));
+    }
+  }
 
-  // Cross-reference stream: W [1 4 2]; two one-entry subsections, ascending.
+  // Cross-reference stream: W [1 4 2], entries ascending by object number, in
+  // contiguous /Index subsections.
   const entry = (type: number, off: number, gen: number) => {
     const b = Buffer.alloc(7);
     b.writeUInt8(type, 0);
@@ -900,17 +1187,31 @@ function appendIncrementalUpdate(
     return b;
   };
   const xrefOffset = offset;
-  const first = Math.min(replaced.num, xrefNum);
-  const second = Math.max(replaced.num, xrefNum);
-  const entries = first === replaced.num
-    ? [entry(1, objOffset, replaced.gen), entry(1, xrefOffset, 0)]
-    : [entry(1, xrefOffset, 0), entry(1, objOffset, replaced.gen)];
-  const xrefData = Buffer.concat(entries);
+  const rows = [...placed, { num: xrefNum, gen: 0, offset: xrefOffset }].sort(
+    (a, b) => a.num - b.num,
+  );
+
+  const index: number[] = [];
+  let runStart = rows[0].num;
+  let runLength = 0;
+  let previous: number | null = null;
+  for (const r of rows) {
+    if (previous !== null && r.num !== previous + 1) {
+      index.push(runStart, runLength);
+      runStart = r.num;
+      runLength = 0;
+    }
+    runLength += 1;
+    previous = r.num;
+  }
+  index.push(runStart, runLength);
+
+  const xrefData = Buffer.concat(rows.map((r) => entry(1, r.offset, r.gen)));
 
   const idPart = idM ? `/ID[<${idM[1]}><${idM[2]}>]` : '';
   const encPart = encM ? `/Encrypt ${encM[1]} ${encM[2]} R` : '';
   const xrefDict =
-    `<</Type/XRef/Size ${newSize}/Index[${first} 1 ${second} 1]/W[1 4 2]` +
+    `<</Type/XRef/Size ${newSize}/Index[${index.join(' ')}]/W[1 4 2]` +
     `/Root ${rootM[1]} ${rootM[2]} R${encPart}${idPart}/Prev ${prev}/Length ${xrefData.length}>>`;
   push(Buffer.from(`${xrefNum} 0 obj\n${xrefDict}\nstream\n`, 'latin1'));
   push(xrefData);
@@ -918,6 +1219,113 @@ function appendIncrementalUpdate(
   push(Buffer.from(`startxref\n${xrefOffset}\n%%EOF\n`, 'latin1'));
 
   return Buffer.concat([original, ...chunks]);
+}
+
+/** One data node, the keys that claimed it, and the text they agreed on. */
+interface NodeClaim {
+  keys: string[];
+  text: string;
+  conflicted: boolean;
+}
+
+interface XfaEditPlan {
+  edits: DatasetsEdit[];
+  claims: Map<string, NodeClaim>;
+  keyBySom: Map<string, string>;
+  skipped: string[];
+  warnings: string[];
+}
+
+/**
+ * Resolve every mapped key onto the data nodes it writes, and decide what
+ * happens when two keys land on one node.
+ *
+ * Split out of {@link fillXfaDatasets} so the rules live somewhere they can be
+ * read in one screen: a key with no data is skipped, a key with no XFA path is
+ * skipped, a path the skeleton does not declare is skipped and named, and a node
+ * two keys claim is written only when they agree on the text.
+ */
+function planXfaEdits(
+  fieldMap: OfficialPdfFieldMap,
+  data: Record<string, unknown>,
+  dataPaths: Set<string>,
+  missingFieldPolicy: 'skip' | 'error',
+): XfaEditPlan {
+  const edits: DatasetsEdit[] = [];
+  const keyBySom = new Map<string, string>();
+  const claims = new Map<string, NodeClaim>();
+  const skipped: string[] = [];
+  const warnings: string[] = [];
+
+  /**
+   * Claim one node for one key. Returns false when the node is already claimed
+   * by another key with DIFFERENT text — neither is written then, because one
+   * would have to win and there is no honest basis for choosing.
+   */
+  const claim = (som: string, key: string, text: string): boolean => {
+    const held = claims.get(som);
+    if (!held) {
+      claims.set(som, { keys: [key], text, conflicted: false });
+      edits.push({ somPath: som, value: text });
+      keyBySom.set(som, key);
+      return true;
+    }
+    if (held.text === text) {
+      held.keys.push(key);
+      return true;
+    }
+    const msg =
+      `XFA path "${som}" is claimed by more than one key with different values ` +
+      `("${held.keys.join('", "')}" and "${key}"); neither was written.`;
+    if (missingFieldPolicy === 'error') throw new Error(msg);
+    held.conflicted = true;
+    warnings.push(msg);
+    return false;
+  };
+
+  for (const [canonicalKey, spec] of Object.entries(fieldMap)) {
+    const value = data[canonicalKey];
+    if (!hasData(value)) {
+      skipped.push(canonicalKey);
+      warnings.push(`No data supplied for "${canonicalKey}" (XFA "${spec.xfaSomPath ?? '?'}"); skipped.`);
+      continue;
+    }
+    if (!spec.xfaSomPath) {
+      skipped.push(canonicalKey);
+      const msg = `"${canonicalKey}" has no xfaSomPath; a dynamic XFA template cannot be filled by AcroForm name.`;
+      if (missingFieldPolicy === 'error') throw new Error(msg);
+      warnings.push(msg);
+      continue;
+    }
+    const dataSom = resolveDataSomPath(spec.xfaSomPath, dataPaths);
+    if (!dataSom) {
+      const msg = `XFA path "${spec.xfaSomPath}" (key "${canonicalKey}") does not resolve to a node in the template's datasets skeleton; skipped.`;
+      if (missingFieldPolicy === 'error') throw new Error(msg);
+      skipped.push(canonicalKey);
+      warnings.push(msg);
+      continue;
+    }
+    const text = spec.type === 'checkbox' ? (toBoolean(value) ? '1' : '0') : toText(value);
+    if (!claim(dataSom, canonicalKey, text)) {
+      skipped.push(canonicalKey);
+      continue;
+    }
+    /* Every further box this key's value belongs in. An unresolvable one is
+       reported on its own — it does not cost the key its primary write, because
+       the summary cell and the source field fail independently. */
+    for (const extra of spec.alsoWriteSomPaths ?? []) {
+      const extraSom = resolveDataSomPath(extra, dataPaths);
+      if (!extraSom) {
+        const msg = `XFA path "${extra}" (key "${canonicalKey}", a further node for the same value) does not resolve to a node in the template's datasets skeleton; skipped.`;
+        if (missingFieldPolicy === 'error') throw new Error(msg);
+        warnings.push(msg);
+        continue;
+      }
+      claim(extraSom, canonicalKey, text);
+    }
+  }
+
+  return { edits, claims, keyBySom, skipped, warnings };
 }
 
 /**
@@ -952,45 +1360,55 @@ export async function fillXfaDatasets(
     warnings.push('flatten is not supported for dynamic XFA templates (it would discard the XFA layer); ignored.');
   }
 
-  const edits: DatasetsEdit[] = [];
-  const keyBySom = new Map<string, string>();
-  for (const [canonicalKey, spec] of Object.entries(fieldMap)) {
-    const value = data[canonicalKey];
-    if (!hasData(value)) {
-      skipped.push(canonicalKey);
-      warnings.push(`No data supplied for "${canonicalKey}" (XFA "${spec.xfaSomPath ?? '?'}"); skipped.`);
-      continue;
-    }
-    if (!spec.xfaSomPath) {
-      skipped.push(canonicalKey);
-      const msg = `"${canonicalKey}" has no xfaSomPath; a dynamic XFA template cannot be filled by AcroForm name.`;
-      if (missingFieldPolicy === 'error') throw new Error(msg);
-      warnings.push(msg);
-      continue;
-    }
-    const text = spec.type === 'checkbox' ? (toBoolean(value) ? '1' : '0') : toText(value);
-    edits.push({ somPath: spec.xfaSomPath, value: text });
-    keyBySom.set(spec.xfaSomPath, canonicalKey);
-  }
+  // The data DOM does not always mirror the template's SOM paths — a subform
+  // that binds no data group is transparent to the binding walk (FDA 1571's
+  // `Page1` is), so each mapped path is resolved onto the node it actually has.
+  const dataPaths = datasetsPathSet(datasets.xml);
+  const plan = planXfaEdits(fieldMap, data, dataPaths, missingFieldPolicy);
+  const { edits, claims: collisions, keyBySom } = plan;
+  skipped.push(...plan.skipped);
+  warnings.push(...plan.warnings);
 
-  const result = setDatasetsValues(datasets.xml.toString('utf8'), edits);
-  for (const som of result.written) filled.push(keyBySom.get(som)!);
+  /* A conflicted node is not written at all — the edit queued by whichever key
+     reached it first is withdrawn, and that key joins the others in `skipped`. */
+  const conflicted = new Set(
+    [...collisions.entries()].filter(([, c]) => c.conflicted).map(([som]) => som),
+  );
+  const liveEdits = edits.filter((e) => !conflicted.has(e.somPath));
+
+  const result = setDatasetsValues(datasets.xml.toString('utf8'), liveEdits);
   for (const som of result.missing) {
-    const key = keyBySom.get(som)!;
-    const msg = `XFA path "${som}" (key "${key}") is not declared in the template's datasets skeleton; skipped.`;
+    /* Every key that named this node is reported, not just the first: an
+       undeclared path is undeclared for all of them. */
+    const keys = collisions.get(som)?.keys ?? [keyBySom.get(som)!];
+    const msg = `XFA path "${som}" (key "${keys.join('", "')}") is not declared in the template's datasets skeleton; skipped.`;
     if (missingFieldPolicy === 'error') throw new Error(msg);
-    skipped.push(key);
     warnings.push(msg);
   }
 
+  /*
+   * `filled` and `skipped` are per KEY, not per node. A key may own several
+   * nodes (a summary cell and the source field the form rebuilds it from), and
+   * it counts as filled when its value reached the form ANYWHERE — a value that
+   * is on the form is on the form. It is skipped only when no node of it was
+   * written at all, so the two lists stay disjoint and neither double-counts.
+   */
+  const wroteFor = new Set<string>();
+  for (const som of result.written) for (const key of collisions.get(som)!.keys) wroteFor.add(key);
+  const attempted = new Set<string>();
+  for (const [, c] of collisions) for (const key of c.keys) attempted.add(key);
+  for (const key of attempted) (wroteFor.has(key) ? filled : skipped).push(key);
+
   const deflated = zlib.deflateSync(Buffer.from(result.xml, 'utf8'));
   const encrypted = encryptObjectData(sec, datasets.num, datasets.gen, deflated);
-  const bytes = appendIncrementalUpdate(buf, {
-    num: datasets.num,
-    gen: datasets.gen,
-    dict: `<</Length ${encrypted.length}/Filter/FlateDecode>>`,
-    data: encrypted,
-  });
+  const bytes = appendIncrementalUpdate(buf, [
+    {
+      num: datasets.num,
+      gen: datasets.gen,
+      dict: `<</Length ${encrypted.length}/Filter/FlateDecode>>`,
+      data: encrypted,
+    },
+  ]);
 
   return { bytes: new Uint8Array(bytes), filled, skipped, warnings };
 }

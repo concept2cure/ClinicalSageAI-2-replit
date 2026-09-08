@@ -29,7 +29,10 @@
  *     nothing renders empty.
  */
 
+import { useMemo } from 'react';
+
 import type { EstarRow, EstarStatus, Predicate, PredicateStatus, SeRow } from '../data/k510';
+import type { OfficialEstarType, OfficialEstarVariant } from './useEstarOfficialFields';
 import { useFetchJson } from './useFetchJson';
 import {
   ESTAR_STATUS_MAP,
@@ -141,6 +144,19 @@ export function useK510EstarSections(projectIdent: string | null): UseK510EstarR
     : null;
   const { data, loading, error, refresh } = useFetchJson<DocumentPreviewPayload>(url);
   if (!data) return { rows: null, blockerCount: 0, loading, error, refresh };
+  /* A 200 whose body is not `{ sections: [...] }` used to throw here — inside
+     render — and take the whole 510(k) surface down with it. That is the same
+     class of failure useMdxPrograms closed for the portfolio: an unreadable
+     body is a load failure to report, never a crash and never an empty list. */
+  if (!Array.isArray(data.sections)) {
+    return {
+      rows: null,
+      blockerCount: 0,
+      loading,
+      error: error ?? 'The eSTAR section list returned a response this screen could not read.',
+      refresh,
+    };
+  }
   const rows = data.sections.map(adaptSection).sort((a, b) => a.id - b.id);
   return {
     rows,
@@ -175,8 +191,8 @@ export interface UseEstarReadinessResult {
  * the official template is vendored AND its field map is populated.
  */
 export function useEstarReadiness(
-  type: '510k' | 'de_novo' = '510k',
-  variant: 'device' | 'ivd' = 'device',
+  type: OfficialEstarType = '510k',
+  variant: OfficialEstarVariant = 'device',
 ): UseEstarReadinessResult {
   const url = `/api/510k/estar/readiness?type=${encodeURIComponent(type)}&variant=${encodeURIComponent(variant)}`;
   const { data, loading, error } = useFetchJson<EstarReadiness>(url);
@@ -248,10 +264,17 @@ export function useK510Predicates(programId: string | null): UseK510PredicatesRe
     ? `/api/predicate-intelligence/candidates?program_id=${encodeURIComponent(programId)}`
     : null;
   const { data, loading, error } = useFetchJson<CandidatesPayload>(url);
-  if (!data) return { rows: null, loading, error };
-  const list = data.candidates ?? data.rows ?? data.data ?? [];
-  const rows = list.map(adaptPredicate).filter((p): p is Predicate => p !== null);
-  return { rows: rows.length > 0 ? rows : null, loading, error };
+  /* Memoized on the payload. The adapter used to re-run on every render, so
+     `rows` came back with a new identity each time — and the surface re-seeds
+     its predicate selection from that array in an effect, which made a new
+     identity a render loop rather than merely wasted work. */
+  const rows = useMemo(() => {
+    if (!data) return null;
+    const list = data.candidates ?? data.rows ?? data.data ?? [];
+    const adapted = list.map(adaptPredicate).filter((p): p is Predicate => p !== null);
+    return adapted.length > 0 ? adapted : null;
+  }, [data]);
+  return { rows, loading, error };
 }
 
 /* ─── Reduced predicate fallback (openFDA clearances, LOCAL endpoint) ── */

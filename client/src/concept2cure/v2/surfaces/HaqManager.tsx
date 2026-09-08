@@ -32,7 +32,12 @@ interface HaqRound {
   type: string;
   received: string;
   due: string;
-  clockDays: number;
+  /* Days until the recorded due date, measured against today by the server.
+     Negative is overdue. NULL means the letter records no parseable due date,
+     and there is then no countdown to show — the number this used to render
+     was the one stored when the letter was logged and never refreshed. */
+  clockDays: number | null;
+  clockBasis?: string;
   clockTotal: number;
   note: string;
 }
@@ -237,7 +242,7 @@ export function HaqManager({ onAsk }: SurfaceViewProps) {
             ((q && q.id) || 'question'),
         });
       }
-    } catch (_e) {
+    } catch {
       /* noop */
     }
   }, [effActiveId, effRoundId]);
@@ -372,7 +377,11 @@ export function HaqManager({ onAsk }: SurfaceViewProps) {
               roundType: round.type,
               receivedOn: round.received,
               responseDue: round.due,
+              /* null = no due date recorded, negative = past due. Never a
+                 recalled figure: the basis says how it was arrived at. */
               clockDaysRemaining: round.clockDays,
+              clockBasis: round.clockBasis ?? 'unknown',
+              responseOverdue: typeof round.clockDays === 'number' ? round.clockDays < 0 : null,
             }
           : {}),
         questionCount: qs.length,
@@ -401,7 +410,7 @@ export function HaqManager({ onAsk }: SurfaceViewProps) {
       <div className="haq">
         <div className="haq-head">
           <div>
-            <div className="sec-kicker">PLATFORM — POST-SUBMISSION</div>
+            <div className="reg-eyebrow">PLATFORM — POST-SUBMISSION</div>
             <h1 className="haq-title">Health authority questions</h1>
             <p className="haq-sub">
               Agency information requests and lists of questions — decomposed,
@@ -421,7 +430,7 @@ export function HaqManager({ onAsk }: SurfaceViewProps) {
         </div>
 
         {roundsState.loading ? (
-          <div className="scaf-note" style={{ padding: '18px 10px' }}>
+          <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>
             Loading agency questions…
           </div>
         ) : roundsState.error ? (
@@ -442,10 +451,17 @@ export function HaqManager({ onAsk }: SurfaceViewProps) {
             {/* round selector */}
             <div className="haq-rounds">
               {rounds.map((r) => {
-                const cp = r.clockTotal
-                  ? (r.clockDays / r.clockTotal) * 100
-                  : 0;
-                const urgent = r.clockDays <= 7;
+                /* The bar shows time REMAINING, so it empties as the clock
+                   runs down and reads empty once the date has passed. With no
+                   due date there is no proportion to draw. */
+                const known = typeof r.clockDays === 'number';
+                const left = known ? (r.clockDays as number) : null;
+                const overdue = left !== null && left < 0;
+                const cp =
+                  left === null || !r.clockTotal
+                    ? 0
+                    : Math.max(0, Math.min(100, (left / r.clockTotal) * 100));
+                const urgent = left !== null && left <= 7;
                 return (
                   <button
                     key={r.id}
@@ -468,8 +484,17 @@ export function HaqManager({ onAsk }: SurfaceViewProps) {
                     >
                       <span className="ico">{I.clock}</span>
                       <span>
-                        <b>{r.clockDays}d</b> of {r.clockTotal}d left — due{' '}
-                        {r.due}
+                        {left === null ? (
+                          <>No response due date recorded</>
+                        ) : overdue ? (
+                          <>
+                            <b>{Math.abs(left)}d overdue</b> — was due {r.due}
+                          </>
+                        ) : (
+                          <>
+                            <b>{left}d</b> of {r.clockTotal}d left — due {r.due}
+                          </>
+                        )}
                       </span>
                     </div>
                     <div className="haq-round-bar">
