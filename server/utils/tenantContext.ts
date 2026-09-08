@@ -1,4 +1,5 @@
 import { reportSecurityAlert } from '../services/security-alerts';
+import { isUuid } from '../middleware/uuidParam';
 
 type TenantContext =
   | { organizationId: number; clientWorkspaceId: number | null }
@@ -82,6 +83,60 @@ export const getSecureOrgId = (req: any): string | null => {
   }
 
   return orgId;
+};
+
+/**
+ * Get the organization UUID for the current request, from verified identity only.
+ *
+ * This platform carries TWO keys for the same tenant, and they are not
+ * interchangeable:
+ *
+ *   organizations.id    serial (integer) — every public-schema table keys on this
+ *   organizations.uuid  uuid             — every NON-public schema keys on this
+ *
+ * `getSecureOrgId` above returns the integer. Handing that integer to a `uuid`
+ * column does not filter and does not return nothing — Postgres raises
+ * `invalid input syntax for type uuid`, which surfaces as a 500 and reads as an
+ * outage rather than as a refusal. So `cortex.*`, `innovation.*`, `ai.*`,
+ * `compliance.*` and `identity.*` need this accessor, not that one.
+ *
+ * Only `req.user.organizationUuid` is trusted, because it is the only source the
+ * auth layer derives from a membership row (see middleware/orgMembership.ts).
+ * `req.tenantContext.organizationUuid` is deliberately NOT consulted: it is
+ * published by other middleware and this module must not depend on the order they
+ * ran in to know whether the value was verified.
+ *
+ * Fails closed. A request with no verified UUID gets null, never a client-supplied
+ * value and never a non-UUID that would reach a query and raise.
+ *
+ * @returns The organization UUID, or null when none was verified.
+ */
+export const getSecureOrgUuid = (req: any): string | null => {
+  const claimed = req?.user?.organizationUuid;
+  const orgUuid = isUuid(claimed) ? (claimed as string) : null;
+
+  // SECURITY: the client may send x-org-uuid. It is observed for telemetry and
+  // never used. Reported when it disagrees with the verified value — including
+  // the case where there is no verified value for it to disagree with, which is
+  // the one where a naive fallback would hand it straight to a WHERE clause.
+  // security-allow: impersonation-detection
+  const headerUuid = req?.headers?.['x-org-uuid'];
+  if (headerUuid && String(headerUuid) !== (orgUuid ?? '')) {
+    reportSecurityAlert({
+      kind: 'tenant_header_mismatch',
+      message:
+        `getSecureOrgUuid: header org UUID (${String(headerUuid)}) differs from ` +
+        `verified org UUID (${orgUuid ?? 'none'}). Header ignored.`,
+      detail: {
+        headerOrgUuid: String(headerUuid),
+        verifiedOrgUuid: orgUuid,
+        userId: req?.user?.id || 'unknown',
+        path: req?.path,
+      },
+    });
+  }
+
+  return orgUuid;
 };
 
 export const getRequestActor = (req: any): RequestActor => ({
