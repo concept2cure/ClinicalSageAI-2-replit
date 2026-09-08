@@ -201,7 +201,39 @@ for (const t of TEMPLATES) {
         field: 'CLAddAttachment110',
         chapters: ['/CHAPTER 1/CH1.01/'],
         description: 'Administrative Documentation | Cover Letter',
+        singleAttachment: 'Only a single cover letter is needed.',
       });
+    });
+
+    /*
+     * FIVE controls per template, identically on both, open their handler with
+     *
+     *     if (this.resolveNode(<the attachment row>).presence == "visible") {
+     *       xfa.host.messageBox("Only a single cover letter is needed.","",2,0);
+     *     } else { … the add path … }
+     *
+     * so the second file is simply never attached. The list is asserted whole
+     * rather than counted, because a reader that started matching the
+     * signed-PDF message box every handler opens with would report 113 and a
+     * count of "more than zero" would call that correct.
+     *
+     * `docs/reports/wo8-estar-attachments-2026-09-07.md` §4 recorded this as
+     * "exactly two controls per template (CLAddAttachment110 and
+     * ADAddAttachment803)". That is wrong; it is these five. Corrected
+     * 2026-09-08 when the planner needed the rule and read it rather than
+     * copying the sentence.
+     */
+    it('names every control that refuses a second attachment, in FDA\'s words', () => {
+      const single = slots.filter((s) => s.singleAttachment !== null);
+      expect(single.map((s) => s.somPath)).toEqual([
+        'root.CoverLetter.CLAddAttachment110',
+        'root.AdministrativeInformation.RelatedSubmissions.NSE510k.ADAddAttachment660',
+        'root.RiskManagement.RiskMitigationTable.RMAddAttachment100',
+        'root.RiskManagement.BenefitRisk.BRAddAttachment110',
+        'root.AdministrativeDocumentation.ADAddAttachment803',
+      ]);
+      // Never the signed-PDF guard, which every one of the 113/145 carries.
+      for (const s of single) expect(s.singleAttachment).not.toMatch(/once this PDF is signed/);
     });
 
     it('describes most slots — the description is FDA\'s, or null, never invented', () => {

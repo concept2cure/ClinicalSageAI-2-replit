@@ -35,13 +35,31 @@ import {
   type EstarTemplateType,
   type EstarTemplateIntegrity,
 } from './estar-template-registry';
-import { getEstarFieldMap, isFieldMapPopulated } from './estar-field-map';
 import {
+  ESTAR_ATTACHMENT_MANIFEST_FIELD,
+  ESTAR_ATTACHMENT_MANIFEST_KEY,
+  getEstarFieldMap,
+  isFieldMapPopulated,
+} from './estar-field-map';
+import {
+  appendIncrementalUpdate,
   fillOfficialPdf,
   fillXfaDatasets,
   isDynamicXfaPdf,
+  nextFreeObjectNumber,
+  readPdfSecurity,
   type OfficialPdfFieldMap,
+  type PdfObjectWrite,
 } from '../../forms/fill-official-pdf';
+import { attachEmbeddedFiles } from '../../forms/pdf-attach';
+import { EMBEDDED_FILE_OBJECT_COUNT, buildEmbeddedFileObjects } from '../../forms/pdf-embedded-files';
+import {
+  planEstarAttachments,
+  type EstarAttachmentPlan,
+  type EstarAttachmentRequest,
+  type EstarAttachmentResolver,
+  type PlannedAttachment,
+} from './estar-attachment-plan';
 
 export interface FillEstarInput {
   /** Any eSTAR program submission type (510(k)/De Novo/PMA, or Q-Sub/IDE/513(g)). */
@@ -55,6 +73,22 @@ export interface FillEstarInput {
   fieldMap?: OfficialPdfFieldMap;
   /** Flatten the filled form to read-only output. Default false. */
   flatten?: boolean;
+  /**
+   * Documents to file into named eSTAR attachment slots.
+   *
+   * Planned against the SAME integrity-verified template bytes this fill uses,
+   * which is why the requests come in here rather than a plan built outside: a
+   * plan made against a different copy of the template would resolve chapters
+   * from one file and write them into another.
+   */
+  attachments?: readonly EstarAttachmentRequest[];
+  /** Where an attachment's bytes come from. Required when `attachments` is non-empty. */
+  attachmentResolver?: EstarAttachmentResolver;
+  /**
+   * The instant the `/EmbeddedFiles` name-tree keys are stamped from. Passed in
+   * so identical inputs produce identical bytes; defaults to now.
+   */
+  attachmentClock?: Date;
 }
 
 export interface FillEstarResult {
@@ -78,6 +112,84 @@ export interface FillEstarResult {
    * into the XFA `datasets` packet via a PDF incremental update.
    */
   templateKind?: 'acroform' | 'dynamic-xfa';
+  /** What was filed into which slot, and what was refused. Absent when none was requested. */
+  attachmentReport?: EstarAttachmentReport;
+}
+
+/** One attachment as it reached the form — the bytes are deliberately not here. */
+export interface EstarAttachmentRecord {
+  slot: string;
+  field: string;
+  chapter: string;
+  fileName: string;
+  dataObjectName: string;
+  description: string | null;
+  mimeType: string;
+  byteLength: number;
+  sha256: string;
+  token: string;
+}
+
+export interface EstarAttachmentReport {
+  requested: number;
+  attached: EstarAttachmentRecord[];
+  refused: EstarAttachmentPlan['refused'];
+  /** The manifest value written into the form, for a reviewer to read back. */
+  manifest: string | null;
+}
+
+function toRecord(a: PlannedAttachment): EstarAttachmentRecord {
+  return {
+    slot: a.slot,
+    field: a.field,
+    chapter: a.chapter,
+    fileName: a.fileName,
+    dataObjectName: a.dataObjectName,
+    description: a.description,
+    mimeType: a.mimeType,
+    byteLength: a.byteLength,
+    sha256: a.sha256,
+    token: a.token,
+  };
+}
+
+/**
+ * Join planned attachments to a filled eSTAR: two objects per file, plus the
+ * catalog's `/EmbeddedFiles` name tree, in ONE incremental update.
+ *
+ * One update and not one per file, because each update's cross-reference stream
+ * describes the revision it closes: writing them separately would make every
+ * attachment after the first a revision over a revision, for no gain but a
+ * larger file and a longer chain for a reader to walk.
+ */
+export function attachPlannedFiles(
+  filledBytes: Uint8Array | Buffer,
+  attachments: readonly PlannedAttachment[],
+): Uint8Array {
+  const buf = Buffer.from(filledBytes);
+  if (attachments.length === 0) return buf;
+
+  const sec = readPdfSecurity(buf);
+  const objects: PdfObjectWrite[] = [];
+  const entries: { nameTreeKey: string; filespecNum: number }[] = [];
+  let next = nextFreeObjectNumber(buf);
+
+  for (const attachment of attachments) {
+    const built = buildEmbeddedFileObjects(sec, next, {
+      name: attachment.fileName,
+      bytes: attachment.bytes,
+      mimeType: attachment.mimeType,
+      // FDA's own text for the slot — what the template writes into
+      // `dataObject.description` on every one of the 113/145 controls.
+      ...(attachment.description ? { description: attachment.description } : {}),
+    });
+    objects.push(...built.objects);
+    entries.push({ nameTreeKey: attachment.dataObjectName, filespecNum: built.filespecNum });
+    next += EMBEDDED_FILE_OBJECT_COUNT;
+  }
+
+  objects.push(...attachEmbeddedFiles(buf, sec, entries).objects);
+  return appendIncrementalUpdate(buf, objects);
 }
 
 async function resolveTemplateBytes(
@@ -193,12 +305,28 @@ export async function fillEstarSubmission(input: FillEstarInput): Promise<FillEs
   // wasn't populated.
   const dynamicXfa = isDynamicXfaPdf(templateBytes);
   base.templateKind = dynamicXfa ? 'dynamic-xfa' : 'acroform';
+
+  /* THE ATTACHMENT PLAN IS MADE BEFORE THE FILL, against these same
+     integrity-verified bytes, because the manifest is one of the values the
+     fill writes. Planning after would mean a second incremental update to
+     carry the manifest, and planning outside would mean resolving chapters
+     from a different copy of the template than the one being filled. */
+  const plan = await planAttachments(input, templateBytes, dynamicXfa, base);
+  if (plan === REFUSED) return base;
+
+  const fillMap = plan?.manifest
+    ? { ...fieldMap, [ESTAR_ATTACHMENT_MANIFEST_KEY]: ESTAR_ATTACHMENT_MANIFEST_FIELD }
+    : fieldMap;
+  const fillData = plan?.manifest
+    ? { ...input.data, [ESTAR_ATTACHMENT_MANIFEST_KEY]: plan.manifest }
+    : input.data;
+
   const result = dynamicXfa
-    ? await fillXfaDatasets(templateBytes, fieldMap, input.data, {
+    ? await fillXfaDatasets(templateBytes, fillMap, fillData, {
         flatten: input.flatten ?? false,
         missingFieldPolicy: 'skip',
       })
-    : await fillOfficialPdf(templateBytes, fieldMap, input.data, {
+    : await fillOfficialPdf(templateBytes, fillMap, fillData, {
         flatten: input.flatten ?? false,
         missingFieldPolicy: 'skip',
       });
@@ -218,7 +346,12 @@ export async function fillEstarSubmission(input: FillEstarInput): Promise<FillEs
   //
   // A fill that wrote nothing produced no filled form. Fail closed and say why,
   // rather than hand back the blank template dressed as a submission.
-  if (result.filled.length === 0) {
+  /* The manifest is EXCLUDED from this count on purpose. It is not a value the
+     platform holds — it is computed from the attachment plan — so counting it
+     would let a fill that wrote nothing else clear the very check that exists
+     to refuse a blank official form, and deliver one with files stapled to it. */
+  const administrativeFields = result.filled.filter((k) => k !== ESTAR_ATTACHMENT_MANIFEST_KEY);
+  if (administrativeFields.length === 0) {
     base.blockers.push(
       `Cannot produce a submittable eSTAR: the fill wrote no values into "${descriptor.id}". ` +
         `The platform held no value for any of the ${Object.keys(fieldMap!).length} mapped administrative fields, ` +
@@ -227,9 +360,98 @@ export async function fillEstarSubmission(input: FillEstarInput): Promise<FillEs
     return base;
   }
 
+  /* An attachment reaches CDRH as a manifest token, not as an embedded file
+     (estar-attachment-slots' header). A manifest that was planned and then not
+     written would embed every file and route none of them — a submission that
+     looks complete and carries nothing. */
+  if (plan?.manifest && !result.filled.includes(ESTAR_ATTACHMENT_MANIFEST_KEY)) {
+    base.blockers.push(
+      `Cannot produce a submittable eSTAR: ${plan.attachments.length} attachment(s) were planned but ` +
+        `the attachment manifest was not written into "${descriptor.id}", so nothing would be routed ` +
+        'to a chapter. The files were not embedded.',
+    );
+    return base;
+  }
+
   base.filled = true;
-  base.pdfBytes = result.bytes;
+  base.pdfBytes = plan ? attachPlannedFiles(result.bytes, plan.attachments) : result.bytes;
   return base;
 }
 
-export default { fillEstarSubmission };
+/** Sentinel: the plan recorded a blocker on `base` and the fill must not proceed. */
+const REFUSED = Symbol('estar-attachment-plan-refused');
+
+/**
+ * Build the attachment plan, or record on `base` exactly why there isn't one.
+ *
+ * Returns `null` when no attachments were requested — the fill then behaves
+ * byte-for-byte as it did before this existed.
+ *
+ * EVERY refusal is a blocker. A submission missing a document the operator
+ * asked to file, handed back with a 200 and a note, is the failure mode this
+ * codebase refuses everywhere else; the caller sees the reasons and fixes the
+ * plan, rather than discovering at CDRH that a section did not travel.
+ */
+async function planAttachments(
+  input: FillEstarInput,
+  templateBytes: Uint8Array | Buffer,
+  dynamicXfa: boolean,
+  base: FillEstarResult,
+): Promise<EstarAttachmentPlan | null | typeof REFUSED> {
+  const requests = input.attachments ?? [];
+  if (requests.length === 0) return null;
+
+  if (!input.attachmentResolver) {
+    // Not a blocker: a caller that asks for attachments and supplies no way to
+    // read them has a bug, and reporting it as a regulatory refusal would hide it.
+    throw new Error(
+      'fillEstarSubmission: `attachments` was given without an `attachmentResolver`, so there is ' +
+        'no way to produce the bytes for any of them.',
+    );
+  }
+
+  if (!dynamicXfa) {
+    base.blockers.push(
+      'Cannot attach documents to this template: it is a static AcroForm, and the eSTAR attachment ' +
+        'contract (the AttachmentManifest field, the date-shaped name-tree keys, the chapter tokens) ' +
+        'is a property of the dynamic XFA eSTAR. Nothing was attached.',
+    );
+    return REFUSED;
+  }
+
+  let plan: EstarAttachmentPlan;
+  try {
+    plan = await planEstarAttachments({
+      templateBytes,
+      requests,
+      resolve: input.attachmentResolver,
+      at: input.attachmentClock ?? new Date(),
+    });
+  } catch (err) {
+    base.blockers.push(
+      `Cannot attach documents to this eSTAR: ${err instanceof Error ? err.message : String(err)}`,
+    );
+    return REFUSED;
+  }
+
+  base.attachmentReport = {
+    requested: requests.length,
+    attached: plan.attachments.map(toRecord),
+    refused: plan.refused,
+    manifest: plan.manifest,
+  };
+
+  if (plan.refused.length > 0) {
+    for (const r of plan.refused) {
+      base.blockers.push(
+        `Cannot file ${r.fileName ? `"${r.fileName}"` : 'a document'} into ${r.slot}: ` +
+          r.reasons.join(' '),
+      );
+    }
+    return REFUSED;
+  }
+
+  return plan;
+}
+
+export default { fillEstarSubmission, attachPlannedFiles };

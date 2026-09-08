@@ -505,6 +505,45 @@ export const ESTAR_TEMPLATE_RECOMPUTED_FIELDS: Readonly<Record<string, EstarReco
   indicationsForUseCitation: { writtenBy: [], rebuiltFrom: null, clearedByPathwayClick: false, rebuildOutcome: 'reproduces' },
 };
 
+/**
+ * The canonical key the attachment manifest is written under.
+ *
+ * Deliberately NOT a member of any map in `ESTAR_FIELD_MAPS`, for one reason:
+ * `fillEstarSubmission` refuses to call a fill "filled" when it wrote nothing,
+ * because the alternative is handing back the blank official template dressed
+ * as a submission. The manifest is not a value the platform HOLDS — it is
+ * computed from the attachment plan — so a fill that wrote only the manifest
+ * would clear that check while producing exactly the artifact it exists to
+ * refuse: a blank FDA form with files stapled to it. Keeping the key outside
+ * the maps is what lets the check count administrative fields only.
+ *
+ * `isFieldMapPopulated`, `resolveOfficialEstarFields` and the per-field report
+ * are all keyed on the same maps, so the separation also keeps the manifest out
+ * of the governed-provenance surfaces, where it would be a field with no
+ * governed source and no meaning to a reviewer.
+ */
+export const ESTAR_ATTACHMENT_MANIFEST_KEY = 'attachmentManifest';
+
+/**
+ * The manifest's locator, enumerated from both vendored templates on
+ * 2026-09-08 exactly as every entry in `ESTAR_FIELD_MAPS` was:
+ *
+ *     listXfaFields → { somPath: 'root.Verification.AttachmentManifest',
+ *                       type: 'text', inDatasets: true,
+ *                       dataSomPath: 'root.AttachmentManifest' }
+ *
+ * — identical on nIVD and IVD, which is why one constant serves both. The
+ * template SOM path is the `Verification.` one; the data node is one level
+ * shallower because the `Verification` subform binds no data group, and
+ * `fillXfaDatasets` resolves that itself (a fill through this spec reads back
+ * on `root.AttachmentManifest`, verified on both templates).
+ */
+export const ESTAR_ATTACHMENT_MANIFEST_FIELD: OfficialPdfFieldSpec = {
+  xfaSomPath: 'root.Verification.AttachmentManifest',
+  type: 'text',
+  caption: 'Attachment manifest (built by the form; written here from the attachment plan)',
+};
+
 /** The field map for a descriptor id, or undefined if the descriptor is unknown. */
 export function getEstarFieldMap(descriptorId: string): OfficialPdfFieldMap | undefined {
   return ESTAR_FIELD_MAPS[descriptorId];
@@ -516,4 +555,10 @@ export function isFieldMapPopulated(descriptorId: string): boolean {
   return !!m && Object.keys(m).length > 0;
 }
 
-export default { ESTAR_FIELD_MAPS, getEstarFieldMap, isFieldMapPopulated };
+export default {
+  ESTAR_FIELD_MAPS,
+  ESTAR_ATTACHMENT_MANIFEST_KEY,
+  ESTAR_ATTACHMENT_MANIFEST_FIELD,
+  getEstarFieldMap,
+  isFieldMapPopulated,
+};

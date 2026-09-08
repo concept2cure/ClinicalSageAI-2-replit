@@ -22,7 +22,11 @@ import {
 } from '../services/pathway-engines/estar/estar-artifact-retention';
 import { governedSignatureSchema } from '../api/cmc/governance';
 import { verifyReauth } from './c2c/actions';
-import { fillEstarSubmission } from '../services/pathway-engines/estar/estar-fill';
+import {
+  fillEstarSubmission,
+  type EstarAttachmentReport,
+} from '../services/pathway-engines/estar/estar-fill';
+import { createDeviceAttachmentResolver } from '../services/pathway-engines/estar/estar-attachment-plan';
 import { getEstarFieldMap, isFieldMapPopulated } from '../services/pathway-engines/estar/estar-field-map';
 import {
   loadEstarAdministrativeInputs,
@@ -865,6 +869,14 @@ router.post('/scaffold-field-map', authMiddleware, requireEditorAccess, async (r
   }
 });
 
+/**
+ * A ceiling on one request, not on the form: the nIVD template declares 113
+ * slots and the IVD 145, so 150 admits every slot either template has while
+ * refusing a request that is not a submission but a load test. Each attachment
+ * costs a render or a vault read plus an encrypt pass over its bytes.
+ */
+const ESTAR_MAX_ATTACHMENTS_PER_EXPORT = 150;
+
 const officialSchema = z.object({
   meta: exportMetaSchema,
   type: z.enum(ESTAR_TYPES),
@@ -878,6 +890,33 @@ const officialSchema = z.object({
    * carries a per-field report. Absent/false ⇒ `data` is written verbatim.
    */
   useProgramData: z.boolean().optional(),
+  /**
+   * Documents to file into named eSTAR attachment slots.
+   *
+   * WHICH document belongs in WHICH slot is a regulatory judgement, so it is an
+   * input here rather than something the server derives. What the server DOES
+   * own is every mechanical way that judgement can be executed wrongly — a slot
+   * this template does not declare, a chapter that cannot be resolved, a second
+   * file into a slot the form holds one row for, a name the form would delete,
+   * a section still marked draft — and each of those refuses the whole export
+   * (422 with the reasons), never a quiet omission from a 200.
+   *
+   * `slot` is the control's FULL SOM path (`root.CoverLetter.CLAddAttachment110`)
+   * because the short name is not unique across a template.
+   */
+  attachments: z
+    .array(
+      z.object({
+        slot: z.string().min(1),
+        fileName: z.string().min(1).max(200).optional(),
+        source: z.discriminatedUnion('kind', [
+          z.object({ kind: z.literal('authored_section'), sectionCode: z.string().min(1) }),
+          z.object({ kind: z.literal('vault_document'), documentId: z.string().uuid() }),
+        ]),
+      }),
+    )
+    .max(ESTAR_MAX_ATTACHMENTS_PER_EXPORT)
+    .optional(),
 });
 
 /**
@@ -945,16 +984,23 @@ function describeOfficialFill(
 
 /**
  * The consequence body plus what this route adds BESIDE it: the per-field fill
- * report, and the retention record for the delivered artifact. Both are added,
- * never substituted — every key the export-governance plane produced reaches
- * the client unchanged (pinned by ci:governed-export-consequence-shape).
+ * report, the attachment report, and the retention record for the delivered
+ * artifact. All are added, never substituted — every key the export-governance
+ * plane produced reaches the client unchanged (pinned by
+ * ci:governed-export-consequence-shape).
  */
 function withOfficialExtras<T extends object>(
   body: T,
   fieldReport: OfficialEstarFieldReport | null,
   retention: EstarRetentionReport,
+  attachmentReport?: EstarAttachmentReport,
 ): T {
-  return { ...body, ...(fieldReport ? { fieldReport } : {}), retention };
+  return {
+    ...body,
+    ...(fieldReport ? { fieldReport } : {}),
+    ...(attachmentReport ? { attachmentReport } : {}),
+    retention,
+  };
 }
 
 /**
@@ -982,7 +1028,7 @@ router.post('/official', authMiddleware, requireEditorAccess, requireAssemblyEnt
     });
   }
 
-  const { meta, type, variant, data, flatten, useProgramData } = validation.data;
+  const { meta, type, variant, data, flatten, useProgramData, attachments } = validation.data;
 
   try {
     const anchor = await resolveProjectAnchor(req, getOrganizationId(req), meta);
@@ -1002,10 +1048,25 @@ router.post('/official', authMiddleware, requireEditorAccess, requireAssemblyEnt
       variant: templateVariant,
       data: fillData,
       flatten,
+      ...(attachments?.length
+        ? {
+            attachments,
+            /* The resolver is built per request and used once. It carries the
+               organization and the program, and both branches re-assert them in
+               their own query — a document is never reached by id alone. */
+            attachmentResolver: createDeviceAttachmentResolver({
+              organizationId: getOrganizationId(req),
+              programUuid: anchor.programUuid,
+              client: requestDb(req),
+            }),
+          }
+        : {}),
     });
 
     if (!result.filled || !result.pdfBytes) {
-      // Honest fail-closed: we cannot produce a submittable eSTAR yet.
+      // Honest fail-closed: we cannot produce a submittable eSTAR yet. The
+      // attachment report travels on the REFUSAL too — an operator whose export
+      // was refused because a section is still a draft needs to see which one.
       return res.status(422).json({
         error: 'ESTAR_NOT_PRODUCIBLE',
         officialEstarPdf: false,
@@ -1013,6 +1074,7 @@ router.post('/official', authMiddleware, requireEditorAccess, requireAssemblyEnt
         templateAvailable: result.templateAvailable,
         fieldMapPopulated: result.fieldMapPopulated,
         blockers: result.blockers,
+        ...(result.attachmentReport ? { attachmentReport: result.attachmentReport } : {}),
       });
     }
 
@@ -1031,6 +1093,12 @@ router.post('/official', authMiddleware, requireEditorAccess, requireAssemblyEnt
       programId: anchor.programUuid ?? undefined,
       // Governed provenance (fieldSources) travels into the artifact registry / audit row.
       ...fieldMetadata,
+      /* WHAT WENT WITH IT. The delivered-bytes hash proves the FORM was not
+         altered; it says nothing about which documents the form routes. A
+         reviewer asking "what did we file into section 5" needs the slot, the
+         chapter and the per-file hash in the governed record, not only in a
+         response body nobody keeps. Bytes are deliberately not here. */
+      ...(result.attachmentReport ? { attachments: result.attachmentReport.attached } : {}),
     };
 
     /* RETAIN BEFORE DELIVERING. The bytes CDRH ingests used to be hashed,
@@ -1072,7 +1140,9 @@ router.post('/official', authMiddleware, requireEditorAccess, requireAssemblyEnt
         metadata: officialMetadata,
       });
 
-      return res.status(200).json(withOfficialExtras(consequence, fieldReport, retention));
+      return res.status(200).json(
+        withOfficialExtras(consequence, fieldReport, retention, result.attachmentReport),
+      );
     }
 
     // Program-spine project without a registry anchor — same audited-delivery
@@ -1092,7 +1162,9 @@ router.post('/official', authMiddleware, requireEditorAccess, requireAssemblyEnt
       metadata: officialMetadata,
     });
 
-    return res.status(200).json(withOfficialExtras(unplaced, fieldReport, retention));
+    return res.status(200).json(
+      withOfficialExtras(unplaced, fieldReport, retention, result.attachmentReport),
+    );
   } catch (error: any) {
     logger.error('official eSTAR export failure', {
       err: error instanceof Error ? error.message : String(error),

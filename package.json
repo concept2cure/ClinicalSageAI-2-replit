@@ -154,6 +154,7 @@
     "ci:typecheck:write-baseline": "node scripts/ci/typecheck-no-regression.mjs --write-baseline",
     "ci:governed-export-routes": "node scripts/ci/check-governed-export-routes.mjs",
     "ci:governed-export-consequence-shape": "node scripts/ci/check-governed-export-consequence-shape.mjs",
+    "ci:governed-export-consequence-shape:selftest": "node scripts/ci/check-governed-export-consequence-shape.selftest.mjs",
     "ci:check-docx-runtime": "node scripts/ci/check-docx-runtime-canonicality.mjs",
     "ci:check-pdf-runtime": "node scripts/ci/check-pdf-runtime-canonicality.mjs",
     "ci:check-shell-css-collisions": "node scripts/ci/check-shell-css-collisions.mjs",
