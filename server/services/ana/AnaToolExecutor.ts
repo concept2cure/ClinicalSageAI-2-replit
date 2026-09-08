@@ -16365,7 +16365,26 @@ registerToolHandler('assess_recorded_process_capability', async (input, ctx) => 
         );
         return [side, { series, statements: series.map(capability.capabilitySentence) }];
       }),
-    );
+    ) as Record<string, { series: unknown[]; statements: string[] }>;
+    /* Rows on file are not an assessment. Every row being a cleaning swab, a
+       reference-standard qualification, or a result with no test method yields
+       no series at all — and this answered 'assessed' with an instruction to
+       "report every not-assessed test with its reason" over a report naming no
+       tests. */
+    const seriesCount = sides.reduce((n, side) => n + (result[side]?.series.length ?? 0), 0);
+    if (seriesCount === 0) {
+      return JSON.stringify({
+        status: 'not_assessable',
+        resultsOnFile: payloads.length,
+        message:
+          `${payloads.length} QC result(s) are on file for this project and none opens a capability series: ` +
+          'cleaning-verification and reference-standard results are not batch-analysis evidence, and a result ' +
+          'recorded without a test method belongs to no series. Process capability is NOT assessed.',
+        instruction:
+          'Say that nothing was assessed and why. Do not report a capable process, or an absence of findings, ' +
+          'over results that were never eligible.',
+      });
+    }
     return JSON.stringify({
       status: 'assessed',
       projectId,
