@@ -7,10 +7,30 @@
 -- ============================================================
 -- 1. CMC_COMPARABILITY_ATOM
 -- ============================================================
+-- AMENDED IN PLACE 2026-09-08 (CLAUDE.md Rule 1). project_id no longer
+-- REFERENCES cmc_projects(id).
+--
+-- What was removed: the foreign key
+-- cmc_comparability_assessments_project_id_fkey.
+-- Why: cmc_projects is empty in the product — its only creator is a
+-- reconstruction of a table with no DDL anywhere — while every other CMC
+-- register (drug substance, drug product, stability, specification, impurity,
+-- formulation, characterisation, manufacturing process) stores the PROGRAM
+-- uuid in project_id with no foreign key. So this one register constrained
+-- project_id to a spine the product does not populate, and every write from a
+-- real program failed with "violates foreign key constraint". That made
+-- §3.2.P.8's only producer of comparabilityStatus unwritable: the section
+-- could never be completed.
+-- Which change removed it: migrations/20260907_cmc_comparability_register_reachable.sql,
+-- which is the creator on the migration-set applier and drops this constraint
+-- where an older run of THIS file installed it. Amended here rather than left
+-- to that drop because install-fresh applies every file in migrations/ — this
+-- one included — so a file that re-creates the constraint would undo the drop
+-- on the next run, which is exactly the replay hazard Rule 1 exists to stop.
 CREATE TABLE IF NOT EXISTS cmc_comparability_assessments (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   organization_id INTEGER NOT NULL REFERENCES organizations(id),
-  project_id UUID NOT NULL REFERENCES cmc_projects(id) ON DELETE CASCADE,
+  project_id UUID NOT NULL,
   assessment_name TEXT NOT NULL,
   change_type TEXT,
   pre_change_state JSONB,

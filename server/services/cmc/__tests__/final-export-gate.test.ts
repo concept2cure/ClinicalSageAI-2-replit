@@ -35,13 +35,26 @@ vi.mock('../governed-ana-execution.js', () => ({
 
 import { evaluateFinalExportGate } from '../final-export-gate';
 
-function section(overrides: Partial<{ approval_state: string; stale: boolean; completeness: number; missingInputs: string[] }>) {
+function section(
+  overrides: Partial<{
+    approval_state: string;
+    stale: boolean;
+    completeness: number;
+    missingInputs: string[];
+    /** Omit entirely to model a row compiled BEFORE tables were carried. */
+    tables: unknown[] | null;
+  }>,
+) {
   return {
     approval_state: overrides.approval_state ?? 'approved',
     stale: overrides.stale ?? false,
     deterministic_json: {
       completeness: overrides.completeness ?? 100,
       missingInputs: overrides.missingInputs ?? [],
+      /* A compiled section carries its tables. An empty array is a real
+         "this section composes none" and places normally; the ABSENT key is
+         the legacy record placement refuses, exercised by passing null. */
+      ...(overrides.tables === null ? {} : { tables: overrides.tables ?? [] }),
     },
   };
 }
@@ -89,6 +102,34 @@ describe('evaluateFinalExportGate — completeness is checked, not just approval
     const verdict = await evaluateFinalExportGate({ orgId: 1, projectId: 'p1', actorId: 'u1' });
 
     expect(verdict.allowed).toBe(true);
+  });
+
+  it('REFUSES export when an approved section was compiled before its tables were carried', async () => {
+    /* Placement reads the tables back out of the stored record and skips a row
+       that has no `tables` key — it cannot tell a section that composes none
+       from one compiled before they were carried. That refusal lived only in
+       placement: readiness answered exportReady:true and the gate answered 200
+       for a project whose placement then filed nothing at all, so the preview
+       and the operation disagreed on the same project. */
+    queryImpl.mockImplementation(async (sql: string) => {
+      if (sql.includes('FROM cmc_module3_sections')) {
+        return {
+          rows: [
+            { ...section({ completeness: 100 }), section_key: '3.2.S.1' },
+            { ...section({ completeness: 100, tables: null }), section_key: '3.2.S.4' },
+          ],
+        };
+      }
+      if (sql.includes('cmc_contradictions')) return { rows: [] };
+      return { rows: [{ n: 0 }] };
+    });
+    const verdict = await evaluateFinalExportGate({ orgId: 1, projectId: 'p1', actorId: 'u1' });
+    expect(verdict.allowed).toBe(false);
+    expect(verdict.error).toContain('3.2.S.4');
+    expect(verdict.error).toMatch(/compiled before section tables were carried/i);
+    expect(verdict.data.unplaceableApprovedSections).toEqual(['3.2.S.4']);
+    // A section that composes NO tables is not the legacy case and does not block.
+    expect(verdict.data.unplaceableApprovedSections).not.toContain('3.2.S.1');
   });
 
   it('REFUSES when an approved section still lists missing inputs, even at high completeness', async () => {

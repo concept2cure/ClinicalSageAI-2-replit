@@ -826,7 +826,7 @@ export function V2App() {
           onPause={() => void anaChat.pause()}
           onResume={() => void anaChat.resume()}
           onStop={() => anaChat.stop()}
-          onSteer={(m) => void anaChat.interject(m)}
+          onSteer={(m) => anaChat.interject(m)}
           /* The live work dock reads the raw turns: progress phases, tool
              timings, pending steers and outputs that the adapted rail message
              shape does not carry. */
@@ -868,7 +868,7 @@ export function V2App() {
         /* Interactivity without surrender: a question or steer typed into the
            strip lands mid-run (the run-control interject) — AnA answers and
            continues driving; the person never has to take over just to speak. */
-        onSteer={(m) => void anaChat.interject(m)}
+        onSteer={(m) => anaChat.interject(m)}
       />
     </div>
     </NavEntitlementsProvider>

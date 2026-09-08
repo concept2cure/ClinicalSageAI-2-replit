@@ -585,25 +585,46 @@ export async function estimateRecordedShelfLife(
   const placedAt = (Array.isArray(study.storageConditions) ? study.storageConditions : [])
     .map((c) => String(c ?? '').trim())
     .filter(Boolean);
-  if (placedAt.length > 1) {
+  /* The refusal is about the RESULTS, not the study. It was decided on the
+     study's condition count alone, so a study registered at long-term and
+     accelerated whose every pull point names the condition it was pulled at
+     was refused — while the out-of-trend assessment, reading the same rows
+     through groupByParameterAndCondition, separated them correctly and fitted
+     each series. Two readers of one recorded fact disagreeing is how a
+     staffer learns which engine to believe. The condition recorded on the
+     result is read here too; only when the results carry none, and the study
+     spans more than one, are the points genuinely inseparable. */
+  const conditionSeries = groupByParameterAndCondition(series, study.storageConditions);
+  const inseparable = placedAt.length > 1 && conditionSeries.some((c) => c.conditionInheritedFromStudy);
+  if (inseparable) {
     return {
       ok: false,
-      error: `This study is placed at ${placedAt.length} storage conditions (${placedAt.join(', ')}) and its results are not recorded against a condition, so the points for one condition cannot be separated from the others. Register one study per condition to fit a shelf life.`,
+      error: `This study is placed at ${placedAt.length} storage conditions (${placedAt.join(', ')}) and its results are not recorded against a condition, so the points for one condition cannot be separated from the others. Record the condition on each pull point, or register one study per condition, to fit a shelf life.`,
     };
   }
 
-  const byParameter = groupByParameter(series);
+  /* One estimate per attribute AND condition: a shelf life is a claim at a
+     storage condition, and fitting long-term and accelerated points through
+     one line fits two degradation regimes as though they were one. The
+     attribute keeps its own name — the condition travels beside it, so a
+     reader of `limitingParameter` still gets "pH", not a label. */
+  const byParameter: Array<[string, string, StabilityPointRecord[]]> = conditionSeries.map((c) => [
+    c.parameter,
+    c.condition,
+    c.points,
+  ]);
   const duration = Number(study.duration);
   const maxTime = Number.isFinite(duration) && duration > 0 ? Math.max(120, duration * 2) : 120;
 
   const estimates: Array<Record<string, unknown>> = [];
-  for (const [parameter, points] of byParameter) {
+  for (const [parameter, condition, points] of byParameter) {
     const usable = numericSeries(points);
     const criterion = parseAcceptanceCriterion(points.map((p) => p.specification));
 
     if (usable.length < 3) {
       estimates.push({
         parameter,
+        condition: condition || null,
         estimable: false,
         reason: `ICH Q1E regression needs at least 3 numeric timepoints; ${usable.length} of ${points.length} recorded ${points.length === 1 ? 'result is' : 'results are'} numeric.`,
         pointsRecorded: points.length,
@@ -614,6 +635,7 @@ export async function estimateRecordedShelfLife(
     if (!criterion) {
       estimates.push({
         parameter,
+        condition: condition || null,
         estimable: false,
         reason:
           'No numeric specification limit was recorded against these results, so there is no limit for the confidence bound to intersect. Record the acceptance criterion (e.g. "<= 2.0%" or ">= 95.0%") on the pull-point results.',
@@ -657,6 +679,7 @@ export async function estimateRecordedShelfLife(
 
       estimates.push({
         parameter,
+        condition: condition || null,
         estimable: true,
         specLimit: limitingRun.specLimit,
         direction: limitingRun.direction,
@@ -681,6 +704,7 @@ export async function estimateRecordedShelfLife(
     } catch (e) {
       estimates.push({
         parameter,
+        condition: condition || null,
         estimable: false,
         reason: e instanceof Error ? e.message : String(e),
         pointsRecorded: points.length,

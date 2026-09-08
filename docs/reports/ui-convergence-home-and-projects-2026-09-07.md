@@ -48,7 +48,7 @@ a biopharma tenant. The work was to take things away.
 | Greeting (time-aware, `user.firstName`) | unchanged |
 | Segment card: label · **tagline** · lead programme · **pathway chips** · new-project CTA | label · lead programme · new-project CTA |
 | Composer (`@app`, upload, mode picker, `C2C_CONVO` seed) | unchanged |
-| 5-button quick-action row | unchanged |
+| Quick-action row (4 for biopharma; 5 only in the no-segment fallback) | unchanged |
 | **Inline module grid — every `SEGMENT_MODULES` group** | **"Browse all capabilities" → overlay, with search** |
 
 The tagline and pathway chips are static segment copy describing the category
@@ -153,11 +153,50 @@ Sabotage: `const kv = (v: string) => v`. Result: **2 tests red**, `expected
 missing type libraries without checking any source. Dependencies were installed
 (`npm ci`) before any of the above was treated as a result.
 
-### Not verified
+### Real-browser QA — done 2026-09-08
 
-**No browser QA.** Everything above is typecheck and jsdom. The visual result of
-the two-column card grid, the overlay's proportions, and behaviour at narrow
-widths have not been seen rendered.
+An earlier revision of this report said browser QA was unavailable here. That
+was wrong, and the claim is withdrawn: Chromium ships at `/opt/pw-browsers`,
+`/api/auth/dev-login` exists, and the repo already had a pattern for this
+(`project-threads-walk-2026-09-07.mjs`). Getting there needed a local Postgres
+provision (`install-fresh.mjs`, partial — pgvector is unavailable on this
+server, which is irrelevant to these two surfaces) and an ad-hoc
+`npm install --no-save playwright-core`. Nothing was added to `package.json`.
+
+Script and screenshots: `docs/reports/evidence/ui-convergence-2026-09-07/`.
+
+| Observed in Chromium 1440×1000 | Result |
+|---|---|
+| Greeting renders the real first name | "Good morning, JM" |
+| Quick-action row | 4 chips (segment-specific; the 5-item list is the fallback) |
+| "Browse all capabilities" trigger | visible |
+| Pathway chips / tagline | gone |
+| Inline `.landing-modules` grid | gone |
+| Overlay opens | 7 groups, **57 cards** — matches the biopharma parity count exactly |
+| Search narrows | 57 → 1 |
+| No-match copy | "Nothing matches …" |
+| Escape closes | yes |
+| Card click navigates and closes | "Program journey" → `/concept2cure/program-journey` |
+| Overlay at 420px | single column |
+| Projects: metric tiles gone, summary line present | "4 active programs · 70% average readiness · 1 blocked · 1 filing < 60 days" |
+| Projects card grid | **2 columns** at 1440, **1 column** at 720 |
+| Projects search "KP-2" | 1 card, "Companion assay KP-2" |
+| Projects search "Dana" (a `lead` value) | **0 cards** — search does not reach the field |
+| **Failed read** (route forced to 500) | summary reads "— … — … — … —", **no `%` anywhere on the surface**, error panel with a working "Try again" |
+
+Console errors: the only failures were `fonts.googleapis.com` requests reset by
+this sandbox's network policy, reproduced on a plain home load with nothing
+touched, plus the two 500s this walk forced itself. None attributable to these
+changes.
+
+### Still not verified
+
+**Ragged whitespace in the overlay.** The groups are grid cells with
+`align-items:start`, and they differ greatly in length — "Author & assemble" has
+14 items, "Program journey" has 1 — so the first row leaves a tall empty gap
+beside the short groups. It is legible and nothing overlaps, but it is not tidy.
+A CSS-columns (masonry) treatment would pack it. Left alone rather than changed
+without someone looking at it.
 
 **Focus is not trapped in the overlay.** `useDialog` gives focus-on-open, Escape
 and focus-restore, and its own docstring says it is not a full trap — Tab can

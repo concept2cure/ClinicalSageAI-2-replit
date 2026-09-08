@@ -11,6 +11,8 @@
  * export gate will decline.
  */
 
+import type { GeneratedTable } from '../module3Composer';
+
 /**
  * `deterministic_json` may arrive as a string (raw driver rows) or already
  * parsed (pooled/mocked clients), under either column spelling; both are read
@@ -60,4 +62,40 @@ export function readCompiledRecord(row: unknown): CompiledRecordStatus {
     ? json.missingInputs.filter((m): m is string => typeof m === 'string')
     : [];
   return { completeness, missingInputs, complete: compiledRecordIsComplete(json) };
+}
+
+/**
+ * Read the composed tables back out of a section's stored deterministic_json.
+ *
+ * Three outcomes, deliberately distinguished:
+ *   - `undefined` — the row has NO `tables` key: compiled before the composer's
+ *     tables were persisted. We cannot know whether this section had tables, so
+ *     it is NOT placed (see the skip below). Never file a narrative that says
+ *     "see the table" over a document that may be missing it.
+ *   - `[]` — a real "this section composes no tables". Places normally.
+ *   - a populated array — the tables get rendered into the snapshot.
+ *
+ * Rows that carry a `tables` key of the wrong shape are treated as the legacy
+ * case (unknown), not silently as "no tables": a malformed payload is a reason
+ * to refuse, not to file a thinner document.
+ */
+export function readSectionTables(deterministicJson: unknown): GeneratedTable[] | undefined {
+  if (!deterministicJson || typeof deterministicJson !== 'object') return undefined;
+  const raw = (deterministicJson as Record<string, unknown>).tables;
+  if (raw === undefined || raw === null) return undefined;
+  if (!Array.isArray(raw)) return undefined;
+  const tables: GeneratedTable[] = [];
+  for (const entry of raw) {
+    if (!entry || typeof entry !== 'object') return undefined;
+    const t = entry as Record<string, unknown>;
+    if (typeof t.title !== 'string') return undefined;
+    if (!Array.isArray(t.headers) || !t.headers.every((h) => typeof h === 'string')) return undefined;
+    if (!Array.isArray(t.rows) || !t.rows.every((r) => Array.isArray(r))) return undefined;
+    tables.push({
+      title: t.title,
+      headers: t.headers as string[],
+      rows: (t.rows as unknown[][]).map((r) => r.map((c) => String(c ?? ''))),
+    });
+  }
+  return tables;
 }
