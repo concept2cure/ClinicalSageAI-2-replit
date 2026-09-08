@@ -42,6 +42,7 @@ import type {
 import auditService, { writeChainedAuditRow } from '../auditService';
 import { deriveGovernedTargetBinding, BINDING_BASIS } from '../part11/signature-persistence';
 import { createScopedLogger } from '../../utils/logger';
+import { normalizeCtdCode } from '../ectd/section-to-ctd';
 
 const logger = createScopedLogger('submission-service');
 
@@ -1034,6 +1035,38 @@ export async function upsertLeaf(
   const seq = await getSequence(input.sequenceId, ctx);
   if (isSequenceLocked(seq.status)) {
     throw new SubmissionError('INVALID_STATE', `Sequence is ${seq.status}; its leaves are immutable.`);
+  }
+
+  /* The leaf's SECTION CODE decides where the document lands in the package:
+     the packager derives the leaf's module, its folder and which backbone
+     carries it from this string (regional-packager `leafPackagePath`). Nothing
+     on the write path constrained it — the route schema takes any 64-character
+     string and the placement dialog is a free text input whose own placeholder
+     suggested `m1/us/1.2` — so a value that is not a CTD code became a FOLDER
+     NAME, and a package shipped with a top-level `mm/m1-us-1-2/` directory and
+     a backbone pointing into it.
+
+     The gate is deliberately code-SHAPE, not published-heading membership: four
+     of the codes this product itself writes (m1.5, m1.7, m1.9, m1.13 — the IND
+     annual report among them) are absent from FDA's published Module 1 table,
+     so a placeability gate here would refuse the product's own filings. That
+     mismatch is real and reported separately; it is not a reason to reject a
+     well-formed code.
+
+     The value is stored EXACTLY as given. Readers match on the spelling that
+     was written (the IND checklist looks for `m1.1.1`), so canonicalising here
+     would silently detach them from their own rows; the packager canonicalises
+     when it derives the layout. */
+  const canonicalSection = normalizeCtdCode(input.sectionCode);
+  if (canonicalSection === null || !canonicalSection.includes('.')) {
+    // A bare module ('3') is a CONTAINER — m3-quality holds sub-headings, never
+    // leaves — so it is code-shaped and still not a place a document can go.
+    throw new SubmissionError(
+      'VALIDATION',
+      `Section code "${input.sectionCode}" does not name a CTD section a document can be filed at. ` +
+        `Use a CTD section code — for example 1.2, 2.7.3 or 3.2.S.4.2 — since it decides where the ` +
+        `document is filed in the package. A bare module number is a container, not a section.`,
+    );
   }
 
   /* The leaf's document pointer is POLYMORPHIC — `document_table` is a plain
