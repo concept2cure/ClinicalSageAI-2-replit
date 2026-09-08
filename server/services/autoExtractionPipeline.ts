@@ -26,6 +26,7 @@ import { recordArtifactProvenance } from './provenance/artifact-provenance';
 import crypto from 'crypto';
 import { ai } from '../lib/unified-ai-client';
 import { resolveGovernedContext } from './concept2cure/governedDocumentContractService.js';
+import { usableOrgId } from '../utils/authedOrgId.js';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -213,19 +214,54 @@ export async function queueExtraction(
   return job;
 }
 
-/**
- * Get extraction job status.
+/*
+ * `extractionQueue` is a process-global Map shared by every tenant, with no
+ * database underneath it: the two readers below ARE the tenant boundary for
+ * everything in it. A job carries far more than a status —
+ * `job.result.textContent` is up to 50,000 characters of the extracted source
+ * document, alongside every parsed table, section and entity — so a read on
+ * behalf of an unusable organization returns nothing rather than everything.
+ * `usableOrgId` is the canonical positive-integer rule (utils/authedOrgId).
  */
-export function getExtractionStatus(jobId: string): ExtractionJob | undefined {
-  return extractionQueue.get(jobId);
+
+/**
+ * Get extraction job status, for one organization.
+ *
+ * A job belonging to another organization is reported exactly as a job that
+ * does not exist — both `undefined` — so the reader cannot be used to prove a
+ * job id exists.
+ *
+ * @param jobId Job ID
+ * @param organizationId The caller's organization ID (required)
+ */
+export function getExtractionStatus(
+  jobId: string,
+  organizationId: unknown
+): ExtractionJob | undefined {
+  const orgId = usableOrgId(organizationId);
+  if (orgId === null) return undefined;
+  const job = extractionQueue.get(jobId);
+  return job && job.organizationId === orgId ? job : undefined;
 }
 
 /**
- * Get all jobs for a project.
+ * Get all jobs for a project, within one organization.
+ *
+ * The tenant term is evaluated before the project term: projectId is an
+ * integer and therefore enumerable, so it is never the only predicate standing
+ * between a caller and another tenant's extracted documents.
+ *
+ * @param projectId Project ID
+ * @param organizationId The caller's organization ID (required)
  */
-export function getProjectExtractionJobs(projectId: number): ExtractionJob[] {
+export function getProjectExtractionJobs(
+  projectId: number,
+  organizationId: unknown
+): ExtractionJob[] {
+  const orgId = usableOrgId(organizationId);
+  if (orgId === null) return [];
   return Array.from(extractionQueue.values())
-    .filter(j => j.projectId === projectId)
+    .filter(j => j.organizationId === orgId && j.projectId === projectId)
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 }
 
