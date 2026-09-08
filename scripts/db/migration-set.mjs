@@ -1588,6 +1588,17 @@ export const C2C_MIGRATION_FILES = [
   // entitlement change. Idempotent UPDATE keyed on module_id.
   'migrations/20260820c_catalog_maa_module1_regional.sql',
 
+  // ── The submission orchestrator gets a catalog row (2026-09-07) ───────────
+  // The surface shipped registered, routed and rendering, but reachable from
+  // no nav menu and absent from NAVIGATION_TARGETS. Making it reachable also
+  // makes it a shell app, and the shell must never present an app the catalog
+  // cannot express an entitlement for — without a row it is ungatable
+  // (module_subscriptions FKs into available_modules) and silently free (an
+  // unknown id is treated as not-licensable by design). Tiered 'standard' to
+  // match its Submit & file siblings; no earlier file classifies this id, so
+  // this file owns its tier.
+  'db/migrations/20260907_module_catalog_submission_orchestrator.sql',
+
   // Moved here from AFTER the sweep, where it was appended upstream. C-33 and
   // three contract tests require the two isolation steps to be the final pair;
   // a file that ALTERs tables after the sweep has run is never swept. This one
@@ -1952,6 +1963,14 @@ export const C2C_MIGRATION_FILES = [
   // cmc_projects, whose organization_id is NOT NULL. Guarded on IS NULL, so a
   // replay is a no-op.
   'migrations/20260908_compliance_tracking_organization_backfill.sql',
+
+  // ── estar_submissions: what the filing was filed WITH (roadmap item 3) ────
+  // Two additive columns binding a `filed` transition to the retained eSTAR in
+  // the program vault: the vault.documents id and the SHA-256 of its bytes,
+  // both written by the server. Before them, "filed" was a status, a
+  // client-supplied date and a free-text tracking number pointing at nothing.
+  // Additive, IF NOT EXISTS; a replay is a no-op.
+  'migrations/20260908b_estar_submissions_filed_artifact.sql',
 
   UUID_TENANT_ISOLATION_NONPUBLIC,
 

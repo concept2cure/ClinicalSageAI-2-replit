@@ -1,0 +1,30 @@
+{
+  "programId": "ab75896b-d316-49f9-b6a9-229ee3359e0e",
+  "errors": [],
+  "sends": {
+    "new": [
+      {
+        "message": "Start a new conversation about the IND timeline",
+        "project_id": "ab75896b-d316-49f9-b6a9-229ee3359e0e",
+        "thread_id": null,
+        "screen": "conversation-thread"
+      }
+    ],
+    "resumed": [
+      {
+        "message": "And what about the CMC section?",
+        "project_id": "ab75896b-d316-49f9-b6a9-229ee3359e0e",
+        "thread_id": "ana-ri_seed_1",
+        "screen": "conversation-thread"
+      }
+    ]
+  },
+  "projectComposerFound": true,
+  "afterProjectSend": {
+    "url": "/concept2cure/conversation-thread",
+    "convo": {
+      "id": "new",
+      "seed": null
+    }
+  }
+}

@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-07T23:24:26.581Z",
+  "generatedAt": "2026-09-07T23:50:56.707Z",
   "git": {
-    "sha": "8edf92eb3cd41096de39122c321760b5fb42f3d4",
+    "sha": "1a2040ff6cb58c78743947ec9074790430dc8155",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -1981,7 +1981,7 @@
     "largeFilesByBytes": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 1019871
+        "bytes": 1023037
       },
       {
         "file": "shared/schema.ts",
@@ -2036,12 +2036,12 @@
         "bytes": 150437
       },
       {
-        "file": "server/services/module3Composer.ts",
-        "bytes": 145439
-      },
-      {
         "file": "server/storage.ts",
         "bytes": 145402
+      },
+      {
+        "file": "server/services/module3Composer.ts",
+        "bytes": 143331
       },
       {
         "file": "server/services/submission-package-orchestrator.ts",
@@ -2141,7 +2141,7 @@
       },
       {
         "file": "server/api/cmc/routes.ts",
-        "bytes": 101002
+        "bytes": 103488
       },
       {
         "file": "server/services/ai-gateway/gateway.ts",
@@ -2155,7 +2155,7 @@
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 19771
+        "lines": 19834
       },
       {
         "file": "server/routes/authoring.router.ts",
@@ -2235,7 +2235,7 @@
       },
       {
         "file": "server/services/module3Composer.ts",
-        "lines": 2894
+        "lines": 2862
       },
       {
         "file": "server/src/routes/stability.router.ts",
@@ -2290,16 +2290,16 @@
         "lines": 2323
       },
       {
+        "file": "server/api/cmc/routes.ts",
+        "lines": 2301
+      },
+      {
         "file": "server/services/ana/intelligence-questions/flows/nda-submission.ts",
         "lines": 2278
       },
       {
         "file": "services/regulatory/ind-ectd-sections.ts",
         "lines": 2276
-      },
-      {
-        "file": "server/api/cmc/routes.ts",
-        "lines": 2248
       },
       {
         "file": "server/routes/c2c/reviews.ts",
@@ -2378,6 +2378,10 @@
         "lines": 1924
       },
       {
+        "file": "server/routes/510k-estar-routes.ts",
+        "lines": 1919
+      },
+      {
         "file": "server/services/ana-ri/orchestrator.ts",
         "lines": 1917
       },
@@ -2416,10 +2420,6 @@
       {
         "file": "server/services/vaccine/vaccine-knowledge.ts",
         "lines": 1836
-      },
-      {
-        "file": "server/routes/510k-estar-routes.ts",
-        "lines": 1834
       },
       {
         "file": "server/services/ana/citation-engine.ts",

@@ -10,18 +10,24 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, render, screen, fireEvent, waitFor } from '@testing-library/react';
 
 const apiRequest = vi.hoisted(() => vi.fn());
+const apiUpload = vi.hoisted(() => vi.fn());
 vi.mock('@/lib/queryClient', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/lib/queryClient')>()),
   apiRequest,
+  apiUpload,
 }));
+
+/** The listing endpoint, with or without the open program's ident. */
+const isListing = (url: string) => url.startsWith('/api/ind-forms/?') || url === '/api/ind-forms/';
 
 import { IndFormsPanel } from '../surfaces/IndFormsPanel';
 
 afterEach(() => cleanup());
 beforeEach(() => {
   apiRequest.mockReset();
+  apiUpload.mockReset();
   apiRequest.mockImplementation(async (method: string, url: string, body?: any) => {
-    if (method === 'GET' && url === '/api/ind-forms/') return { ok: true, status: 200, json: async () => ({ forms: ['1571', '1572', '3674'] }) } as Response;
+    if (method === 'GET' && isListing(url)) return { ok: true, status: 200, json: async () => ({ forms: ['1571', '1572', '3674'] }) } as Response;
     if (method === 'POST' && url === '/api/ind-forms/1571/build') {
       return { ok: true, status: 200, json: async () => ({ formId: '1571', fields: { sponsorName: body.sponsorName }, missingRequired: ['drugName', 'indication'] }) } as Response;
     }
@@ -113,7 +119,7 @@ describe('IndFormsPanel — real FDA forms engine', () => {
     const uuid = '2b6d4a80-6a35-4b1e-9f6e-3a9d2c1e5f70';
     (window as any).C2C_PROJECT = { id: uuid };
     apiRequest.mockImplementation(async (method: string, url: string) => {
-      if (method === 'GET' && url === '/api/ind-forms/') return { ok: true, status: 200, json: async () => ({ forms: ['1571'] }) } as Response;
+      if (method === 'GET' && isListing(url)) return { ok: true, status: 200, json: async () => ({ forms: ['1571'] }) } as Response;
       if (method === 'POST' && url === '/api/ind-forms/1571/artifact') {
         // The server's audited-unplaced degradation contract (no legacy project
         // row → no registry placement; the audit row IS the record).
@@ -162,7 +168,7 @@ describe('IndFormsPanel — real FDA forms engine', () => {
     // FDA form — with boxes the platform deliberately did not write. Reporting
     // only "official template" would imply a finished form.
     apiRequest.mockImplementation(async (method: string, url: string) => {
-      if (method === 'GET' && url === '/api/ind-forms/') return { ok: true, status: 200, json: async () => ({ forms: ['1571'] }) } as Response;
+      if (method === 'GET' && isListing(url)) return { ok: true, status: 200, json: async () => ({ forms: ['1571'] }) } as Response;
       if (method === 'POST' && url === '/api/ind-forms/1571/pdf') {
         const h: Record<string, string> = {
           'X-Form-Field-Coverage': '0.500',
@@ -196,5 +202,191 @@ describe('IndFormsPanel — real FDA forms engine', () => {
       expect(note).toHaveBeenCalledWith(expect.stringMatching(/browser blocked the download/), 'error'),
     );
     expect(note).not.toHaveBeenCalledWith(expect.stringMatching(/^FDA 1571 PDF:/));
+  });
+});
+
+/* ── WO-9 Click 2: the program record fills the forms, and the sponsor's
+      completed form gets filed ─────────────────────────────────────────────
+   The panel used to have every value typed into it, and it learned how a form
+   had rendered only from the headers of a download that had already happened.
+   Both are now read from the server: the program's recorded facts, and the plan
+   for what each form will produce. */
+const PROGRAM_UUID = '709edd20-9af6-41e7-a206-c00ecb4671b9';
+
+const LISTING = {
+  forms: ['FDA_1571', 'FDA_1572'],
+  renderPlans: [
+    {
+      formId: 'FDA_1571', method: 'official-xfa-datasets', officialTemplate: true,
+      edition: '2025-03-28', reviewedBy: null,
+      platformWrites: ['sponsor_name', 'drug_name', 'ind_number'],
+      sponsorCompletes: [
+        { id: 'ind_type', label: 'IND Type' },
+        { id: 'phase_of_study', label: 'Phase of Clinical Investigation' },
+      ],
+    },
+    {
+      formId: 'FDA_1572', method: 'official-acroform', officialTemplate: true,
+      edition: '2025-04-13', reviewedBy: 'reviewer@example.com',
+      platformWrites: ['investigator_name'], sponsorCompletes: [],
+    },
+  ],
+  program: {
+    id: PROGRAM_UUID, code: 'BX-512', name: 'Vorelinib · KIT-mutant GIST (IND)', programType: 'IND',
+    sponsorName: 'Concept2Cure Therapeutics', productName: 'Vorelinib · BX-512',
+    indication: 'KIT-mutant gastrointestinal stromal tumor · 4L+', applicationNumber: '000512',
+    formMetadata: { sponsorName: 'Concept2Cure Therapeutics', drugName: 'Vorelinib · BX-512', indNumber: '000512' },
+  },
+  placements: [],
+};
+
+function mockProgramListing(overrides: Partial<typeof LISTING> = {}) {
+  (window as any).C2C_PROJECT = { id: PROGRAM_UUID };
+  apiRequest.mockImplementation(async (method: string, url: string) => {
+    if (method === 'GET' && isListing(url)) {
+      return { ok: true, status: 200, json: async () => ({ ...LISTING, ...overrides }) } as Response;
+    }
+    if (method === 'POST' && url.endsWith('/build')) {
+      return { ok: true, status: 200, json: async () => ({ formId: 'FDA_1571', fields: {}, missingRequired: [] }) } as Response;
+    }
+    return { ok: true, status: 200, json: async () => ({}) } as Response;
+  });
+}
+
+describe('IndFormsPanel — the program record fills the forms', () => {
+  it('asks the engine for the open program and shows the recorded facts, not input boxes', async () => {
+    mockProgramListing();
+    render(<IndFormsPanel note={vi.fn()} />);
+    expect(await screen.findByText('Concept2Cure Therapeutics')).toBeTruthy();
+    expect(screen.getByText('Vorelinib · BX-512')).toBeTruthy();
+    expect(screen.getByText('000512')).toBeTruthy();
+    expect(screen.getByText('IND number')).toBeTruthy();
+    // The listing was scoped to the open program.
+    const call = apiRequest.mock.calls.find((c) => c[0] === 'GET');
+    expect(call![1]).toBe(`/api/ind-forms/?projectIdent=${PROGRAM_UUID}`);
+    // The record-backed fields are no longer typed here — that is what stops a
+    // filing's sponsor name depending on who typed it into which panel.
+    expect(screen.queryByText('Sponsor name')).toBeNull();
+    expect(screen.queryByText('Drug name')).toBeNull();
+    // What the record has no column for is still entered here.
+    expect(screen.getByText('Serial number')).toBeTruthy();
+  });
+
+  it('states what each form will produce BEFORE anything is rendered, and who reviewed the asset', async () => {
+    mockProgramListing();
+    render(<IndFormsPanel note={vi.fn()} />);
+    expect(await screen.findByText(/official FDA form \(edition 2025-03-28\)/)).toBeTruthy();
+    expect(screen.getByText(/sign it in Adobe Acrobat/)).toBeTruthy();
+    expect(screen.getByText('2 box(es) left for you to complete on the form.')).toBeTruthy();
+    // D3: backed is not the same as human-reviewed, and the panel says which.
+    expect(screen.getByText('This asset has no named reviewer yet.')).toBeTruthy();
+    expect(screen.getByText('Asset reviewed by reviewer@example.com.')).toBeTruthy();
+  });
+
+  it('a reconstruction is never described as the official form', async () => {
+    mockProgramListing({
+      forms: ['FDA_1574'],
+      renderPlans: [{ formId: 'FDA_1574', method: 'reconstruction', officialTemplate: false, edition: null, reviewedBy: null, platformWrites: [], sponsorCompletes: [] }],
+    } as never);
+    render(<IndFormsPanel note={vi.fn()} />);
+    expect(await screen.findByText(/labeled reconstruction — not the official FDA form/)).toBeTruthy();
+    expect(screen.queryByText(/no named reviewer/)).toBeNull();
+  });
+
+  it('names the program on every build so the server fills from the record, and never echoes the record back', async () => {
+    mockProgramListing();
+    render(<IndFormsPanel note={vi.fn()} />);
+    await screen.findByText(/FDA 1571/);
+    fireEvent.click(screen.getAllByRole('button', { name: /Build & check/ })[0]);
+    await waitFor(() => {
+      const call = apiRequest.mock.calls.find((c) => String(c[1]).endsWith('/build'));
+      expect(call![2]).toMatchObject({ projectIdent: PROGRAM_UUID, studyPhase: 'Phase 1' });
+      // The sponsor/drug/IND number are the server's to read; a copy held here
+      // could go stale against the record and would be filed as though current.
+      expect(call![2]).not.toHaveProperty('sponsorName');
+      expect(call![2]).not.toHaveProperty('drugName');
+      expect(call![2]).not.toHaveProperty('indNumber');
+    });
+  });
+
+  it('with no program open it still works standalone and claims no record', async () => {
+    delete (window as any).C2C_PROJECT;
+    apiRequest.mockImplementation(async (method: string, url: string) =>
+      (method === 'GET' && isListing(url)
+        ? { ok: true, status: 200, json: async () => ({ forms: ['FDA_1571'], renderPlans: [], program: null, placements: [] }) }
+        : { ok: true, status: 200, json: async () => ({}) }) as Response);
+    render(<IndFormsPanel note={vi.fn()} />);
+    await screen.findByText(/FDA 1571/);
+    expect(apiRequest.mock.calls.find((c) => c[0] === 'GET')![1]).toBe('/api/ind-forms/');
+    expect(screen.queryByText(/Read from the program record/)).toBeNull();
+    expect(screen.getByText('Sponsor name')).toBeTruthy();
+    // Nothing to file into without a program, so no attach control is offered.
+    expect(screen.queryByRole('button', { name: /Attach completed form/ })).toBeNull();
+  });
+});
+
+describe('IndFormsPanel — filing the sponsor’s completed form', () => {
+  const pdf = () => new File([new Uint8Array([0x25, 0x50, 0x44, 0x46])], 'signed-1571.pdf', { type: 'application/pdf' });
+
+  it('files the completed form and reports where it landed', async () => {
+    mockProgramListing();
+    apiUpload.mockResolvedValue({
+      ok: true, status: 201,
+      json: async () => ({ formId: 'FDA_1571', leafId: 12, sectionCode: 'm1.1', sequenceNumber: '0000', sha256: 'a'.repeat(64), byteSize: 4, replaced: false }),
+    } as Response);
+    const note = vi.fn();
+    const { container } = render(<IndFormsPanel note={note} />);
+    await screen.findByText(/FDA 1571/);
+    const input = container.querySelector('input[type="file"]') as HTMLInputElement;
+    fireEvent.change(input, { target: { files: [pdf()] } });
+
+    await waitFor(() => expect(apiUpload).toHaveBeenCalled());
+    const [method, url, form] = apiUpload.mock.calls[0];
+    expect(method).toBe('POST');
+    expect(url).toBe('/api/ind-forms/FDA_1571/official-upload');
+    expect((form as FormData).get('projectIdent')).toBe(PROGRAM_UUID);
+    expect((form as FormData).get('file')).toBeTruthy();
+    await waitFor(() =>
+      expect(note).toHaveBeenCalledWith(expect.stringMatching(/filed at m1\.1 in sequence 0000/)),
+    );
+  });
+
+  it('reports a refusal in the server’s own words and claims nothing was filed', async () => {
+    mockProgramListing();
+    apiUpload.mockResolvedValue({
+      ok: false, status: 409,
+      json: async () => ({ error: { code: 'BLANK_TEMPLATE', message: 'This is the blank official form, byte for byte. Complete and sign it in Adobe Acrobat, then attach the signed file.' } }),
+    } as Response);
+    const note = vi.fn();
+    const { container } = render(<IndFormsPanel note={note} />);
+    await screen.findByText(/FDA 1571/);
+    fireEvent.change(container.querySelector('input[type="file"]') as HTMLInputElement, { target: { files: [pdf()] } });
+    await waitFor(() =>
+      expect(note).toHaveBeenCalledWith(expect.stringMatching(/blank official form, byte for byte/), 'error'),
+    );
+    expect(note).not.toHaveBeenCalledWith(expect.stringMatching(/filed at/));
+  });
+
+  it('shows a form already filed, with the digest of the bytes the sponsor signed', async () => {
+    mockProgramListing({
+      placements: [{ formId: 'FDA_1571', leafId: 12, sectionCode: 'm1.1', sequenceNumber: '0000', fileName: 'form-fda-1571.pdf', sha256: 'abcdef0123456789'.repeat(4), byteSize: 2048 }],
+    } as never);
+    render(<IndFormsPanel note={vi.fn()} />);
+    expect(await screen.findByText('completed form filed')).toBeTruthy();
+    expect(screen.getByText(/m1\.1 · sequence 0000 · 2 KB · SHA-256 abcdef012345…/)).toBeTruthy();
+    // A form already filed offers replacement, not a second filing.
+    expect(screen.getAllByText(/Replace completed form/).length).toBeGreaterThan(0);
+  });
+});
+
+describe('IndFormsPanel — the form is named once', () => {
+  it('reads "FDA 1571", not "FDA FDA_1571" — the engine ids are canonical and were pasted after another "FDA"', async () => {
+    mockProgramListing();
+    const note = vi.fn();
+    render(<IndFormsPanel note={note} />);
+    await screen.findByText(/FDA 1571/);
+    fireEvent.click(screen.getAllByRole('button', { name: /Build & check/ })[0]);
+    await waitFor(() => expect(note).toHaveBeenCalledWith(expect.stringMatching(/^Form 1571 built/)));
+    for (const [text] of note.mock.calls) expect(String(text)).not.toMatch(/FDA_/);
   });
 });

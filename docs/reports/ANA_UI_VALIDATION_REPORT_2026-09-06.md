@@ -114,7 +114,7 @@ The client asserts nothing about "which app": it only inserts the label. A menti
 ### Not done at the first pass
 
 - Slash-command (`/`) autocomplete — built in the second pass below.
-- Browser re-walk of the project landing with a program present: this database has none.
+- ~~Browser re-walk of the project landing with a program present: this database has none.~~ — done in the third pass (addendum 4), against a seeded program.
 
 ## Addendum 2 — 2026-09-07, second pass: one vocabulary, slash autocomplete, and the suite made green
 
@@ -174,3 +174,48 @@ The `@app` and `/command` menus had been proven only in jsdom, and the server's 
 ### What this environment could not prove
 
 The stream route returned 503 `GATEWAY_UNAVAILABLE` in 18 ms — no AI provider is configured here — so the model was never called and the prompt block's arrival at the model is proven by the enrichment tests and the one-off run, not by a model turn.
+
+## Addendum 4 — 2026-09-07, E1 walked with a real program, and resume was broken
+
+The report had said a browser walk of the project landing was impossible because the local database held no program. That was a gap, not a fact about the feature: a program and three conversations were seeded into the local dev database (two on the program, one on a different program, so scoping is exercised) and the landing was walked against the running app. Script, measurements and screenshots: `evidence/ana-ui-2026-09-06/project-threads-walk-2026-09-07.mjs`, `project-threads-2026-09-07.json`, `project-threads-landing-2026-09-07.png`, `project-threads-resumed-2026-09-07.png`.
+
+| Step | Measured |
+|---|---|
+| `GET /api/chat/threads?program_id=<uuid>&limit=8` | the program's two conversations, newest first, each titled by its first user message; the third conversation (different program) absent |
+| `program_id=42` | 400 `THREAD_PROGRAM_INVALID` |
+| Landing | both rows under `pj-threads`, "Sep 7 · Resume" / "Sep 2 · Resume"; no empty state, no error state |
+| Layout | readiness ring in the aside, not the main column; composer precedes the capability grid |
+| Click a row | `window.C2C_CONVO = { id: 'ana-ri_seed_1' }`, navigates to `/concept2cure/conversation-thread`, which reads `/api/chat/threads/ana-ri_seed_1/messages?limit=100` |
+| Resumed thread | **both turns render** — the user question and the assistant reply |
+| Page errors | none |
+
+### The defect this found: resume restored nothing
+
+The first walk listed and navigated correctly and then showed an empty conversation. The messages endpoint answered `{"messages": [], "error": "Thread not found"}`.
+
+Two thread stores are live in this codebase: `chat_threads`/`chat_messages` (AnA RI — every thread the rail, the thread surface and the project landing mint) and `ai_threads`/`ai_messages` (submission chat, evidence-ask). `GET /threads/:id/messages` verified the thread against **`ai_threads`** and then read the transcript from **`chat_messages`**. So it was wrong in both directions: every AnA thread was "not found", and an `ai_threads` thread passed the gate only to have its real transcript (in `ai_messages`) rendered as an empty conversation. `PATCH /thread/:id` had the same mismatch, which is why "move a conversation to a project" could never reach an AnA thread.
+
+The store is now **resolved** once, org-scoped, and each handler acts on the store that actually owns the thread (`resolveThreadStore` in `server/routes/chat/threads.ts`). Two further corrections came with it:
+
+- The 404 body no longer carries `messages: []`. A thread that cannot be read is not a thread with nothing in it, and a 404 carrying an empty list is exactly the shape a caller reads as "no messages" — the rule the same file's catch block already stated for a failed read.
+- `PATCH` refuses a program UUID at `chat_threads.project_id` (an INTEGER column) with a 400 instead of a 22P02 surfacing as a 500. The check uses `Number()`, not `parseInt()`, which returns `0` for `'0f3c1a2b-…'` and would have written the thread to project 0.
+
+Pinned by `server/routes/chat/__tests__/thread-messages-store.test.ts` (6 tests). Shown failing on the old gate first: five of the six fail, including the 404 that carried an empty transcript.
+
+### Note on the walk
+
+The seeded rows live only in this container's local database; nothing was seeded into any deployed environment, and no seed file was added to the migration set.
+
+## Addendum 5 — 2026-09-07, the other half of the loop: minting and continuing
+
+Addendum 4 proved a project's conversations can be listed and resumed. The write half was still unproven: a conversation STARTED with a project open must be minted carrying that program, or the project's list can never find it again, and a RESUMED conversation must continue its own thread rather than mint a second one. Walk: `evidence/ana-ui-2026-09-06/project-send-walk-2026-09-07.mjs`, measurements `project-send-2026-09-07.json`.
+
+| Send | Captured request body |
+|---|---|
+| New conversation from the project landing composer | `project_id` = the open program's UUID, `thread_id` absent → the server mints a thread carrying the program |
+| Continuing a resumed conversation | `thread_id` = `ana-ri_seed_1`, `project_id` carried → the same thread continues; no second thread |
+| Page errors | none |
+
+The mint itself cannot be observed in this environment — the stream route resolves the thread well after its AI-provider check, which fails closed at 503 with no provider configured — so the server half is pinned by test instead, where it previously had none at all: `server/services/__tests__/chat-thread-program-key.test.ts` (5) covers that `getOrCreateThread` writes `metadata.programId` lower-cased when a program is open, writes no metadata for a numeric or absent project (the integer `project_id` column is a different channel), never re-homes an existing thread, and that the stream route passes the request's project id through `programIdForThread`. Shown failing first by removing the metadata write: the mint test fails on it.
+
+With addendum 4 this closes the loop end to end — mint → list → resume → continue — with the client half measured in a browser and the server half pinned by tests.

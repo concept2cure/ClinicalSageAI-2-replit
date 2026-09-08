@@ -16,9 +16,12 @@ import {
 } from '../services/export/governedExportConsequence';
 import {
   EstarRetentionError,
+  listRetainedEstarArtifacts,
   retainOfficialEstar,
   type EstarRetentionReport,
 } from '../services/pathway-engines/estar/estar-artifact-retention';
+import { governedSignatureSchema } from '../api/cmc/governance';
+import { verifyReauth } from './c2c/actions';
 import { fillEstarSubmission } from '../services/pathway-engines/estar/estar-fill';
 import { getEstarFieldMap, isFieldMapPopulated } from '../services/pathway-engines/estar/estar-field-map';
 import {
@@ -82,6 +85,7 @@ import {
   getEstarSubmission,
   advanceEstarSubmission,
   EstarSubmissionError,
+  type EstarFilingSignature,
 } from '../services/pathway-engines/estar/estar-submission-service';
 import {
   ESTAR_SUBMISSION_STATUSES,
@@ -1743,12 +1747,44 @@ const createSubmissionSchema = z.object({
   projectId: z.coerce.number().int().positive().nullish(),
 });
 
-const advanceSubmissionSchema = z.object({
-  status: z.enum(ESTAR_SUBMISSION_STATUSES),
-  filedAt: z.coerce.date().optional(),
-  fdaTrackingNumber: z.string().max(64).nullish(),
-  decision: z.string().max(40).nullish(),
-});
+/**
+ * `filedAt` is deliberately NOT here any more.
+ *
+ * It was `z.coerce.date().optional()` — the date a Part 11 filing record
+ * carries, supplied by the party being recorded. The server stamps it now.
+ * Recording a filing made elsewhere on an earlier date is an import, and an
+ * import should not share a door with a lifecycle transition.
+ *
+ * Reaching `filed` additionally requires the governed signature body: a reason,
+ * a §11.50 meaning, re-authentication, and the vault document id of the
+ * retained eSTAR the filing was made with. The signature's digest is read from
+ * that vault row, never from here.
+ */
+const advanceSubmissionSchema = z
+  .object({
+    status: z.enum(ESTAR_SUBMISSION_STATUSES),
+    fdaTrackingNumber: z.string().max(64).nullish(),
+    decision: z.string().max(40).nullish(),
+    filedArtifactDocumentId: z.string().uuid().optional(),
+  })
+  .and(governedSignatureSchema.partial())
+  .superRefine((v, ctx) => {
+    if (v.status !== 'filed') return;
+    if (!v.filedArtifactDocumentId) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['filedArtifactDocumentId'],
+        message: 'Filing requires the vault document id of the retained eSTAR it was filed with.',
+      });
+    }
+    if (!v.reason || v.reason.trim().length < 8) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['reason'],
+        message: 'A reason of at least 8 characters is required.',
+      });
+    }
+  });
 
 /**
  * POST /api/510k/estar/submissions
@@ -1795,6 +1831,28 @@ router.get('/submissions', authMiddleware, async (req, res) => {
   }
 });
 
+/**
+ * GET /api/510k/estar/retained-artifacts
+ * The org's retained official eSTARs — what a filing can be signed against.
+ * Read-only; the same org predicate the signed filing re-checks on write, so
+ * this can never offer an artifact the signature would refuse.
+ */
+router.get('/retained-artifacts', authMiddleware, async (req, res) => {
+  const organizationId = resolveOrgId(req);
+  if (!organizationId) return res.status(400).json({ error: 'Organization context required' });
+  try {
+    return res.status(200).json({ artifacts: await listRetainedEstarArtifacts(organizationId) });
+  } catch (error: any) {
+    logger.error('retained eSTAR artifact list failure', {
+      err: error instanceof Error ? error.message : String(error),
+    });
+    return res.status(500).json({
+      error: 'ESTAR_RETAINED_ARTIFACTS_FAILED',
+      message: 'The retained eSTAR list could not be read. The problem has been logged.',
+    });
+  }
+});
+
 /** GET /api/510k/estar/submissions/:id — one tracked filing. */
 router.get('/submissions/:id', authMiddleware, async (req, res) => {
   const organizationId = resolveOrgId(req);
@@ -1817,12 +1875,39 @@ router.patch('/submissions/:id', authMiddleware, requireEditorAccess, async (req
   if (!validation.success) {
     return res.status(400).json({ error: 'Invalid request payload', details: validation.error.flatten() });
   }
+  const { status, fdaTrackingNumber, decision, filedArtifactDocumentId, reason, meaning, reauth } =
+    validation.data;
   try {
-    const { status, ...rest } = validation.data;
+    const userId = getUserId(req);
+
+    /* Re-auth gate FIRST for the one transition that is a signature. Captured
+       at signing time, never reused from the session (§11.200). */
+    let signature: EstarFilingSignature | undefined;
+    if (status === 'filed') {
+      const reauthResult = await verifyReauth(userId, reauth);
+      if (!reauthResult.ok) {
+        res.setHeader('WWW-Authenticate', 'ReAuth required');
+        return res.status(401).json({ error: reauthResult.error ?? 'REAUTH_REQUIRED' });
+      }
+      /* What was actually verified, not what was offered: verifyReauth returns
+         ok only after bcrypt matched the password, and it checks the TOTP when
+         one is present. Recording 'password+totp' without a token — or a
+         second factor nobody presented — would be a false attestation on the
+         signature row. */
+      signature = {
+        artifactDocumentId: filedArtifactDocumentId!,
+        reason: reason!,
+        meaning: meaning ?? 'approval',
+        authenticationMethod: reauth?.totp ? 'password+totp' : 'password',
+        secondFactorVerified: Boolean(reauth?.totp),
+        ipAddress: req.ip ?? null,
+      };
+    }
+
     const row = await advanceEstarSubmission(
       String(req.params.id),
-      { toStatus: status, ...rest },
-      { organizationId: getOrganizationId(req), userId: getUserId(req) },
+      { toStatus: status, fdaTrackingNumber, decision, signature },
+      { organizationId: getOrganizationId(req), userId },
     );
     return res.status(200).json(row);
   } catch (error: any) {
