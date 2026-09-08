@@ -80,6 +80,64 @@ export interface PreTransmitResult {
   warnings: string[];
 }
 
+/**
+ * Self-containment of the package's supportive files. The gate judges BOTH
+ * kinds — util/dtd/*.dtd and util/style/*.xsl — because assessDtdReadiness
+ * clears `selfContained` only when both are complete. This printed
+ * `dtd.missing` alone, so a package with every DTD bundled and neither
+ * stylesheet was refused with "…(missing )": a blocker that named nothing for
+ * the operator to act on. The set printed must be the set that was judged.
+ *
+ * Extracted from evaluatePreTransmit (same shape as evaluateRegionalBackboneGate)
+ * so the two-source absent set is one readable unit.
+ */
+function evaluateDtdSelfContainment(
+  dtd: SubmissionBundle['dtdStatus'],
+  isProd: boolean,
+  dtdRequired: boolean,
+): { check: PreTransmitCheck | null; blockers: string[]; warnings: string[] } {
+  if (!dtd) {
+    return {
+      check: null,
+      blockers: [],
+      warnings: isProd && dtdRequired
+        ? ['ECTD_REQUIRE_DTD is set but the bundle carries no DTD status — cannot prove self-containment at transmit time.']
+        : [],
+    };
+  }
+  // `dtdStatus` reaches this gate off a persisted bundle record, so its fields
+  // are whatever was stored — not whatever the TypeScript type promises. Both
+  // reads below are therefore explicit rather than truthy:
+  //
+  //   • selfContained must be EXACTLY `true` to clear. The string "false" (a
+  //     JSON round-trip through a text column) is truthy, and a truthiness test
+  //     read it as "self-contained: passed" with no blocker raised — the gate
+  //     clearing a package on evidence that says the opposite.
+  //   • a non-array `missing` is not "nothing missing"; spreading it threw, so
+  //     the gate crashed instead of refusing. It is an un-itemised gap.
+  const asList = (v: unknown): string[] => (Array.isArray(v) ? (v as string[]) : []);
+  const absent = [...asList(dtd.missing), ...asList(dtd.missingStylesheets)];
+  const itemised = Array.isArray(dtd.missing) && absent.length > 0;
+  // Fail closed on an un-itemised gap: a bundle assembled before the stylesheet
+  // half was carried can be not-self-contained with nothing listed at all. That
+  // must read as "not itemised", never as an empty (clean) list.
+  const absentText = itemised
+    ? absent.join(', ')
+    : 'the absent file(s) were not itemised by the packager that built this bundle — re-assemble it to identify them';
+  const selfContained = dtd.selfContained === true;
+  return {
+    check: {
+      name: 'dtd-self-contained',
+      passed: selfContained,
+      detail: selfContained ? 'all required DTDs and stylesheets bundled' : `missing: ${absentText}`,
+    },
+    blockers: isProd && dtdRequired && !selfContained
+      ? [`Package is not DTD self-contained (missing ${absentText}); ECTD_REQUIRE_DTD blocks this production transmit.`]
+      : [],
+    warnings: [],
+  };
+}
+
 /** Evaluate the pre-transmit preconditions for a package. Pure + deterministic. */
 export function evaluatePreTransmit(input: PreTransmitInput): PreTransmitResult {
   const env = input.env ?? process.env;
@@ -120,17 +178,11 @@ export function evaluatePreTransmit(input: PreTransmitInput): PreTransmitResult 
     warnings.push('ECTD_REQUIRE_PDFA is set but the bundle carries no PDF/A grade — cannot prove PDF/A compliance at transmit time.');
   }
 
-  // 3. DTD self-containment.
-  const dtd = input.bundle.dtdStatus;
-  const dtdRequired = dtdRequiredFromEnv(env);
-  if (dtd) {
-    checks.push({ name: 'dtd-self-contained', passed: dtd.selfContained, detail: dtd.selfContained ? 'all required DTDs bundled' : `missing: ${dtd.missing.join(', ')}` });
-    if (isProd && dtdRequired && !dtd.selfContained) {
-      blockers.push(`Package is not DTD self-contained (missing ${dtd.missing.join(', ')}); ECTD_REQUIRE_DTD blocks this production transmit.`);
-    }
-  } else if (isProd && dtdRequired) {
-    warnings.push('ECTD_REQUIRE_DTD is set but the bundle carries no DTD status — cannot prove self-containment at transmit time.');
-  }
+  // 3. DTD + stylesheet self-containment.
+  const dtdGate = evaluateDtdSelfContainment(input.bundle.dtdStatus, isProd, dtdRequiredFromEnv(env));
+  if (dtdGate.check) checks.push(dtdGate.check);
+  blockers.push(...dtdGate.blockers);
+  warnings.push(...dtdGate.warnings);
 
   // 3a. Region identity — HARD, always. A bundle carries the region it was
   // BUILT for (the regional backbone it contains, and its format tag). Sending

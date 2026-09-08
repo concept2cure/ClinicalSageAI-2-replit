@@ -22,6 +22,8 @@ import {
 import { addMonths, format } from 'date-fns';
 import { insertAllDayEvent, calendarEnabled } from '../services/calendar';
 import { authedActorName } from '../../utils/authedActor';
+import { serverError } from '../../lib/api-response';
+import { createScopedLogger } from '../../utils/logger';
 
 /**
  * The VERIFIED acting principal, for GxP attribution columns
@@ -43,6 +45,8 @@ function requireActor(req: any): string {
 const BWIPJS = {
   toBuffer: (options: any) => Promise.resolve(Buffer.from('mock-barcode-data')),
 };
+
+const logger = createScopedLogger('stability-router');
 
 const router = Router();
 const upload = multer({ storage: multer.memoryStorage() });
@@ -324,9 +328,7 @@ router.get('/studies', async (req, res) => {
     res.json(out);
   } catch (error: any) {
     console.error('Error fetching stability studies:', error);
-    res
-      .status(500)
-      .json({ error: `Error fetching stability studies: ${error?.message ?? String(error)}` });
+    return serverError(res, logger, 'loading studies', error);
   } finally {
     // Always release the connection back to the pool
     client.release();
@@ -542,7 +544,7 @@ router.post('/studies', async (req, res) => {
     // Rollback transaction on error
     await client.query('ROLLBACK');
     console.error('Error creating study:', error);
-    res.status(500).json({ error: `Failed to create study: ${error?.message ?? String(error)}` });
+    return serverError(res, logger, 'saving studies', error);
   } finally {
     // Always release the connection
     client.release();
@@ -674,9 +676,7 @@ router.get('/studies/:id', async (req, res) => {
     });
   } catch (error: any) {
     console.error('Error fetching study details:', error);
-    res
-      .status(500)
-      .json({ error: `Failed to fetch study details: ${error?.message ?? String(error)}` });
+    return serverError(res, logger, 'loading studies', error);
   } finally {
     client.release();
   }
@@ -712,7 +712,7 @@ router.post('/studies/:id/conditions', async (req, res) => {
     res.json(result.rows[0]);
   } catch (error: any) {
     console.error('Error adding condition:', error);
-    res.status(500).json({ error: `Failed to add condition: ${error?.message ?? String(error)}` });
+    return serverError(res, logger, 'saving conditions', error);
   } finally {
     client.release();
   }
@@ -740,9 +740,7 @@ router.delete('/conditions/:condId', async (req, res) => {
     res.json({ success: true });
   } catch (error: any) {
     console.error('Error deleting condition:', error);
-    res
-      .status(500)
-      .json({ error: `Failed to delete condition: ${error?.message ?? String(error)}` });
+    return serverError(res, logger, 'deleting conditions', error);
   } finally {
     client.release();
   }

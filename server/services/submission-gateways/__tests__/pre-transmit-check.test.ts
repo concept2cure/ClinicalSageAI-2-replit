@@ -4,9 +4,17 @@
  */
 
 import { describe, it, expect } from 'vitest';
+import { promises as fsp } from 'fs';
+import * as os from 'os';
+import * as path from 'path';
 import { evaluatePreTransmit } from '../pre-transmit-check';
+import { packageEctdSubmission } from '../regional-packager';
 import { getGateway } from '../index';
 import type { SubmissionBundle } from '../types';
+import {
+  writeGoldenLeaves,
+  v3GoldenInput,
+} from '../../ectd/qualification/golden-fixtures';
 
 const GB = 1024 ** 3;
 
@@ -53,6 +61,87 @@ describe('evaluatePreTransmit', () => {
     expect(prod.blockers.join(' ')).toMatch(/not DTD self-contained/);
     const noflag = evaluatePreTransmit({ region: 'fda', bundle: b, environment: 'production', enforceExternal: false, env: {} });
     expect(noflag.cleared).toBe(true);
+  });
+
+  // ── Stylesheet-only gap ────────────────────────────────────────────────────
+  // The DTD gate covers BOTH kinds of supportive file: util/dtd/*.dtd and
+  // util/style/*.xsl (assessDtdReadiness sets selfContained from both). The
+  // blocker printed `dtd.missing` only, so a package whose five DTDs were all
+  // bundled but whose two stylesheets were not refused the transmit with
+  // "…(missing )" — a refusal that named no file, leaving the operator nothing
+  // to act on. The absent set the gate prints must be the same set it judged.
+  it('names the absent STYLESHEETS when the self-containment gap is stylesheet-only', () => {
+    const b = bundle({
+      dtdStatus: {
+        required: ['ich-ectd-3-2.dtd', 'us-regional-v3-3.dtd'],
+        present: ['ich-ectd-3-2.dtd', 'us-regional-v3-3.dtd'],
+        missing: [],
+        missingStylesheets: ['ectd-2-0.xsl', 'us-regional.xsl'],
+        selfContained: false,
+      },
+    });
+    const prod = evaluatePreTransmit({ region: 'fda', bundle: b, environment: 'production', enforceExternal: false, env: { ECTD_REQUIRE_DTD: 'true' } });
+    expect(prod.cleared).toBe(false);
+    const blocker = prod.blockers.join(' ');
+    expect(blocker).toContain('ectd-2-0.xsl');
+    expect(blocker).toContain('us-regional.xsl');
+    // The empty-list rendering the defect produced.
+    expect(blocker).not.toMatch(/missing \)/);
+    // The surfaced check must itemise the same gap, not report "missing: ".
+    const check = prod.checks.find((c) => c.name === 'dtd-self-contained');
+    expect(check?.passed).toBe(false);
+    expect(check?.detail).toContain('ectd-2-0.xsl');
+  });
+
+  // Fail closed: a bundle assembled before the stylesheet gap was itemised can
+  // carry selfContained:false with nothing listed at all. That must read as
+  // "not itemised", never as a clean empty list.
+  it('never renders a non-self-contained package as a blocker that names nothing', () => {
+    const b = bundle({
+      dtdStatus: { required: ['ich-ectd-3-2.dtd'], present: ['ich-ectd-3-2.dtd'], missing: [], selfContained: false },
+    });
+    const prod = evaluatePreTransmit({ region: 'fda', bundle: b, environment: 'production', enforceExternal: false, env: { ECTD_REQUIRE_DTD: 'true' } });
+    expect(prod.cleared).toBe(false);
+    expect(prod.blockers.join(' ')).toMatch(/not itemised|not recorded/i);
+    expect(prod.checks.find((c) => c.name === 'dtd-self-contained')?.detail).toMatch(/not itemised|not recorded/i);
+  });
+
+  // ── Unexpected input on the self-containment evidence ─────────────────────
+  // `dtdStatus` reaches this gate off a persisted bundle record, so its fields
+  // arrive as whatever was stored, not as whatever the TypeScript type says.
+  // `passed: dtd.selfContained` and `!dtd.selfContained` are truthiness tests:
+  // the string "false" — a JSON round-trip through a text column, a form value —
+  // is truthy, so a NOT-self-contained package reported "dtd-self-contained:
+  // passed" and raised no blocker. Anything that is not exactly `true` must read
+  // as unproven.
+  it('treats a non-boolean selfContained as UNPROVEN, never as cleared', () => {
+    for (const bogus of ['false', 'true', 1, 0, null, undefined, {}]) {
+      const b = bundle({
+        dtdStatus: {
+          required: ['ich-ectd-3-2.dtd'],
+          present: ['ich-ectd-3-2.dtd'],
+          missing: [],
+          selfContained: bogus as unknown as boolean,
+        },
+      });
+      const prod = evaluatePreTransmit({ region: 'fda', bundle: b, environment: 'production', enforceExternal: false, env: { ECTD_REQUIRE_DTD: 'true' } });
+      expect(prod.checks.find((c) => c.name === 'dtd-self-contained')?.passed, `selfContained=${JSON.stringify(bogus)}`).toBe(false);
+      expect(prod.cleared, `selfContained=${JSON.stringify(bogus)}`).toBe(false);
+    }
+  });
+
+  it('treats a non-array missing list as un-itemised, not as "nothing missing"', () => {
+    const b = bundle({
+      dtdStatus: {
+        required: ['ich-ectd-3-2.dtd'],
+        present: [],
+        missing: null as unknown as string[],
+        selfContained: false,
+      },
+    });
+    const prod = evaluatePreTransmit({ region: 'fda', bundle: b, environment: 'production', enforceExternal: false, env: { ECTD_REQUIRE_DTD: 'true' } });
+    expect(prod.cleared).toBe(false);
+    expect(prod.blockers.join(' ')).toMatch(/not itemised/);
   });
 
   it('warns (does not block) when a required flag is set but the bundle has no evidence', () => {
@@ -155,4 +244,95 @@ describe('guarded transmit', () => {
       }),
     ).rejects.toThrow(/no human authorization/);
   });
+});
+
+/**
+ * ── The producer → consumer path, end to end ─────────────────────────────────
+ *
+ * `dtdStatus.missingStylesheets` has exactly ONE producer in the repo
+ * (regional-packager.ts, from `dtdGate.missingStylesheets`) and ONE consumer
+ * (evaluatePreTransmit). The tests above hand-construct the field, so deleting
+ * the producer line left every one of them green while the shipping path went
+ * back to refusing a stylesheet-only gap with an empty file list.
+ *
+ * This builds a REAL package with the packager against a drop-point that holds
+ * every DTD and neither stylesheet, then feeds the bundle the packager actually
+ * returns into the gate. Nothing is hand-constructed: remove the field from the
+ * packager and this fails.
+ */
+describe('packager → pre-transmit: the stylesheet gap survives the bundle', () => {
+  const DTDS = ['ich-ectd-3-2.dtd', 'us-regional-v3-3.dtd'];
+  const STYLESHEETS = ['ectd-2-0.xsl', 'us-regional.xsl'];
+
+  async function buildFdaBundle(dropFiles: string[]): Promise<SubmissionBundle> {
+    const work = await fsp.mkdtemp(path.join(os.tmpdir(), 'pre-transmit-wiring-'));
+    const drop = path.join(work, 'drop');
+    await fsp.mkdir(drop, { recursive: true });
+    for (const f of dropFiles) {
+      await fsp.writeFile(
+        path.join(drop, f),
+        f.endsWith('.xsl')
+          ? '<?xml version="1.0"?><xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform"/>'
+          : `<!-- stand-in ${f} -->\n<!ELEMENT placeholder EMPTY>\n`,
+        'utf8',
+      );
+    }
+    const previous = process.env.ECTD_DTD_DIR;
+    process.env.ECTD_DTD_DIR = drop;
+    try {
+      const paths = await writeGoldenLeaves(path.join(work, 'leaves'));
+      return await packageEctdSubmission(
+        v3GoldenInput({
+          region: 'fda',
+          sequence: '0000',
+          applicationId: '123456',
+          outputDir: path.join(work, 'out'),
+          paths,
+        }),
+      );
+    } finally {
+      if (previous === undefined) delete process.env.ECTD_DTD_DIR;
+      else process.env.ECTD_DTD_DIR = previous;
+      // The bundle's ZIP is read by nothing below; only its dtdStatus matters.
+      await fsp.rm(work, { recursive: true, force: true });
+    }
+  }
+
+  it('carries the absent stylesheets from the packager into the transmit blocker', async () => {
+    const built = await buildFdaBundle(DTDS); // every DTD, neither stylesheet
+    // Producer side: the gap is stylesheet-only, and it is ITEMISED on the bundle.
+    expect(built.dtdStatus?.selfContained).toBe(false);
+    expect(built.dtdStatus?.missing).toEqual([]);
+    expect(built.dtdStatus?.missingStylesheets).toEqual(STYLESHEETS);
+
+    // Consumer side: the same set the packager judged is the set the gate prints.
+    const r = evaluatePreTransmit({
+      region: 'fda',
+      bundle: built,
+      environment: 'production',
+      enforceExternal: false,
+      env: { ECTD_REQUIRE_DTD: 'true' },
+    });
+    expect(r.cleared).toBe(false);
+    const blocker = r.blockers.join(' ');
+    for (const xsl of STYLESHEETS) expect(blocker).toContain(xsl);
+    // The un-itemised fallback is the honest reading of a bundle that carries
+    // NO stylesheet list — it must not be what a correctly-wired bundle gets.
+    expect(blocker).not.toMatch(/not itemised/);
+  }, 30000);
+
+  it('POSITIVE CONTROL: a complete drop-point clears the same gate', async () => {
+    const built = await buildFdaBundle([...DTDS, ...STYLESHEETS]);
+    expect(built.dtdStatus?.selfContained).toBe(true);
+    expect(built.dtdStatus?.missingStylesheets).toEqual([]);
+    const r = evaluatePreTransmit({
+      region: 'fda',
+      bundle: built,
+      environment: 'production',
+      enforceExternal: false,
+      env: { ECTD_REQUIRE_DTD: 'true' },
+    });
+    expect(r.checks.find((c) => c.name === 'dtd-self-contained')?.passed).toBe(true);
+    expect(r.blockers.join(' ')).not.toMatch(/self-contained/);
+  }, 30000);
 });

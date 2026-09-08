@@ -28,8 +28,8 @@ import {
   CONDITIONAL_ATTACHMENT_SLOTS,
   listEstarAttachmentSlots,
 } from '../estar-attachment-slots';
-import { ESTAR_FIELD_MAPS } from '../estar-field-map';
 import type { DeviceContentClient } from '../estar-content-leaves';
+import { ESTAR_FIELD_MAPS } from '../estar-field-map';
 
 const DIR = process.env.ESTAR_TEMPLATE_DIR ?? 'assets/estar-templates';
 const TEMPLATES = [
