@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-08T00:43:19.515Z",
+  "generatedAt": "2026-09-08T01:29:44.087Z",
   "git": {
-    "sha": "f20e793a7564e4c54298c5d612b032e28e04608b",
+    "sha": "280211e62588cba7a4823754a5a4461024a1ef9e",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2041,7 +2041,7 @@
       },
       {
         "file": "server/services/module3Composer.ts",
-        "bytes": 143774
+        "bytes": 144310
       },
       {
         "file": "server/services/submission-package-orchestrator.ts",
@@ -2235,7 +2235,7 @@
       },
       {
         "file": "server/services/module3Composer.ts",
-        "lines": 2872
+        "lines": 2879
       },
       {
         "file": "server/src/routes/stability.router.ts",
@@ -2398,6 +2398,10 @@
         "lines": 1888
       },
       {
+        "file": "client/src/concept2cure/v2/Shell.tsx",
+        "lines": 1871
+      },
+      {
         "file": "server/services/post-approval/post-approval-knowledge.ts",
         "lines": 1869
       },
@@ -2432,10 +2436,6 @@
       {
         "file": "server/services/compliance/globalComplianceEngine.ts",
         "lines": 1824
-      },
-      {
-        "file": "client/src/concept2cure/v2/Shell.tsx",
-        "lines": 1822
       },
       {
         "file": "server/services/safety-pharmacology/safety-pharmacology-knowledge.ts",

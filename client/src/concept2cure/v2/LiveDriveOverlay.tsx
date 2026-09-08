@@ -48,7 +48,9 @@ export function LiveDriveOverlay({
   /** Cancel the run entirely (the rail's Stop, reachable from the strip). */
   onStop: () => void;
   /** Interject a question/steer into the running turn (AnA keeps driving). */
-  onSteer?: (message: string) => void;
+  /* Returns whether the server accepted the steer — the drive strip keeps the
+     text on a refusal rather than emptying the box as if it had been sent. */
+  onSteer?: (message: string) => void | boolean | Promise<boolean | void>;
 }) {
   const { active, mode, steps, turnApplied, turnActionsApplied } = state;
   const [steer, setSteer] = React.useState('');
@@ -76,11 +78,20 @@ export function LiveDriveOverlay({
      position the client cannot verify. */
   const moves = turnApplied + turnActionsApplied;
 
+  /* Cleared only once the server has accepted it. Previously this emptied the
+     box unconditionally, so a refused steer was indistinguishable from a sent
+     one — see the note on the same seam in Shell.tsx's run-control bar. */
+  const [steerRefused, setSteerRefused] = React.useState(false);
   const submitSteer = () => {
     const text = steer.trim();
     if (!text || !onSteer) return;
-    onSteer(text);
-    setSteer('');
+    setSteerRefused(false);
+    void Promise.resolve(onSteer(text))
+      .then((accepted) => {
+        if (accepted === false) { setSteerRefused(true); return; }
+        setSteer('');
+      })
+      .catch(() => setSteerRefused(true));
   };
 
   return (
@@ -118,7 +129,12 @@ export function LiveDriveOverlay({
               placeholder={demo ? 'Ask AnA anything mid-demo…' : 'Ask or steer AnA…'}
               aria-label="Ask or steer AnA while she drives"
               value={steer}
-              onChange={(e) => setSteer(e.target.value)}
+              aria-invalid={steerRefused || undefined}
+              aria-describedby={steerRefused ? 'ana-drive-steer-err' : undefined}
+              onChange={(e) => {
+                setSteer(e.target.value);
+                if (steerRefused) setSteerRefused(false);
+              }}
               /* The strip's own Escape must still take over — but not while
                  the person is typing here; let them abandon the field first. */
               onKeyDown={(e) => {
@@ -129,6 +145,11 @@ export function LiveDriveOverlay({
               }}
             />
           </form>
+        )}
+        {steerRefused && (
+          <span id="ana-drive-steer-err" className="ana-drive-steer-err" role="status">
+            Not sent — AnA did not accept this. The text is still here.
+          </span>
         )}
         <div className="ana-drive-actions">
           <button type="button" className="ana-drive-btn" onClick={onTakeOver}>

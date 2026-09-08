@@ -480,6 +480,27 @@ export const C2C_MIGRATION_FILES = [
   'db/migrations/20260730_manufacturing_processes_reconstruction.sql',
   'db/migrations/20260730_fk_delete_policies_port.sql',
 
+  /* The governed-action ledger's `command` vocabulary. 20260527_mutation_primitives
+     created c2c_ana_actions with a CHECK enumerating only the twelve original
+     universal mutations, and recordGovernedAction has since been adopted platform-
+     wide with a free `command: string` — 'create', 'update', 'review', 'approve',
+     'reaffirm', 'transmittal_rollback', 'apply-sample-size', 'task.create' and more.
+     Every one of those INSERTs raises 23514 and rolls back the WHOLE governed
+     transaction, so the domain mutation fails and no audit row is written.
+
+     The fix was written on 2026-07-30 and never reached a database: the file was
+     left out of this list, so it ran on no applier. ci:migration-reachability does
+     not catch it because that guard asks whether a TABLE the server queries is
+     created by something an applier runs — this migration creates no table, it
+     replaces a constraint, so it was invisible to every gate.
+
+     Measured 2026-09-08 against a database with all 253 entries of this set
+     applied: the narrow CHECK was still in force and
+     POST /api/biostat-bridge/designs/:id/apply-sample-size answered 500 (23514).
+     Positioned AFTER 20260527 so the replay order is create-then-widen, per the
+     ordering rule in CLAUDE.md RULE 1; both files are idempotent. */
+  'db/migrations/20260730_c2c_ana_actions_command_vocab.sql',
+
   // eSTAR filing journey — client registration (the four FDA prerequisites),
   // the program-agnostic filing tracker (status + review clock), and the
   // project link that joins tracking to the PM spine. Order matters: the

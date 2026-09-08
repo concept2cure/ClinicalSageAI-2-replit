@@ -35,8 +35,19 @@ import {
 import { readIndirectObjectText, readXrefTable } from './pdf-object-store';
 
 export interface EmbeddedFileEntry {
-  /** The name the attachment is listed under. Also the name-tree key. */
-  name: string;
+  /**
+   * The `/EmbeddedFiles` NAME-TREE KEY — Acrobat's `dataObject.name`.
+   *
+   * NOT the file name. The file name lives on the `/Filespec` as `/F` and
+   * `/UF` (`EmbeddedFileSpec.name` in pdf-embedded-files), and is Acrobat's
+   * `dataObject.path`. Two strings, two purposes, and the eSTAR constrains
+   * them differently: its `removeOrphanAttachments()` DELETES any attachment
+   * whose key is not `yyyy-mm-dd`-shaped, while the manifest and the visible
+   * name are built from the path. Naming this field `name` is how the two got
+   * conflated in the first place; see
+   * `estar-attachment-slots.attachmentDataObjectName`.
+   */
+  nameTreeKey: string;
   /** Object number of its `/Filespec` (from `buildEmbeddedFileObjects`). */
   filespecNum: number;
 }
@@ -95,10 +106,12 @@ export function attachEmbeddedFiles(
     );
   }
 
-  const sorted = [...entries].sort((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0));
+  const sorted = [...entries].sort((a, b) =>
+    a.nameTreeKey < b.nameTreeKey ? -1 : a.nameTreeKey > b.nameTreeKey ? 1 : 0,
+  );
   const pairs = sorted
     .map((e) => {
-      const key = encryptObjectData(sec, namesNum, 0, Buffer.from(e.name, 'latin1'));
+      const key = encryptObjectData(sec, namesNum, 0, Buffer.from(e.nameTreeKey, 'latin1'));
       return `<${key.toString('hex')}> ${e.filespecNum} 0 R`;
     })
     .join(' ');
