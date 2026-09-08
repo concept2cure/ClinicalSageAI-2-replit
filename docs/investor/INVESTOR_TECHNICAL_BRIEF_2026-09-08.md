@@ -42,17 +42,17 @@ The verified size of what we have built:
 
 | Metric | Value |
 |---|---|
-| Server TypeScript files | 1,072 |
-| Client React files (`.tsx`) | 596 |
-| HTTP route files | 237 |
-| Service files (recursive) | 568 across 21+ service domains |
-| Database migration files | 554 (244 in `migrations/`, 310 in `db/migrations/`) |
+| Server TypeScript files | 4,180 |
+| Client React files (`.tsx`) | 439 |
+| HTTP route modules (top level) | 368 |
+| Service files (recursive) | 2,956 across 222 service directories |
+| Database migration files | 554 (247 in `migrations/`, 307 in `db/migrations/`) |
 | `pgTable` declarations across schema files | ~694 |
-| Multi-tenant scoping references (`organizationId`) in `shared/schema.ts` alone | 735 |
-| Automated test files (`.test.ts`/`.test.tsx`/`.spec.ts`) | 2,312 total, 543 in `tests/`, 1,495 under `server/` |
-| Docs `.md` files under `docs/` | 663 across 56 subdirectories |
+| Multi-tenant scoping references (`organizationId`) in `shared/schema.ts` alone | 736 |
+| Automated test files (`.test.ts`/`.test.tsx`/`.spec.ts`) | 2,348 total, 448 in `tests/`, 1,522 under `server/` |
+| Docs `.md` files under `docs/` | 672 across 55 subdirectories |
 
-Every one of those numbers is grounded in a specific path we can walk a diligence reader to. The rest of this brief explains what they add up to.
+Every one of those numbers is grounded in a specific path we can walk a diligence reader to, and §20 gives the exact command behind each. They were measured on 2026-09-08 against `concept2cure-v2`; the repository took 48 commits that day alone, so expect the counts to have grown by the time you re-run them. Re-run them — that is the point of publishing the commands.
 
 ---
 
@@ -123,7 +123,7 @@ Each workstream shares four cross-cutting services: **AI Gateway**, **Kernel** (
 
 # 5. System architecture at a glance
 
-At the outermost layer, the runtime is a hardened Express 5 server (Node ≥ 20) fronting a React 18 client, with a Socket.io real-time channel for collaborative editing and cursor presence, and a Bull-on-Redis queue for long-running AI actions and export jobs. Every browser request lands on a rate-limited, helmeted, tenant-scoped route.
+At the outermost layer, the runtime is a hardened Express 5 server (Node 22, pinned `>=22.0.0 <23.0.0`) fronting a React 19 client, with a Socket.io real-time channel for collaborative editing and cursor presence, and a Bull-on-Redis queue for long-running AI actions and export jobs. Every browser request lands on a rate-limited, helmeted, tenant-scoped route.
 
 At the next layer, every request that reads or writes governed data flows through:
 
@@ -149,7 +149,7 @@ The kernel is the piece an investor should look at first, because it is the piec
 
 Each domain returns a `KernelDecision` of `allow` | `review` | `deny`, a rationale string, an ISO timestamp, an optional regulatory reference (e.g. `21 CFR §11.10(e)`), and an evidence payload. The traces compose into a `KernelTraceStep[]` that lives on the request.
 
-**The seven kernel services:**
+**The eight kernel services:**
 
 | File | Role |
 |---|---|
@@ -160,6 +160,7 @@ Each domain returns a `KernelDecision` of `allow` | `review` | `deny`, a rationa
 | `kernel-observability.ts` | Trace and metric emission for kernel decisions |
 | `kernel-beta-readiness.ts` | Feature-flag readiness gates so we ship the same binary to beta and GA |
 | `kernel-plan-runtime.ts` | Executes goal plans and reconciles the actual outcome against the planned success criteria |
+| `kernel-agent-protocol.ts` | The contract agents speak to the kernel over, and the protocol events recorded against it |
 
 **Why this matters commercially.** Regulated buyers cannot ship AI they cannot audit. They need to answer three questions to their own quality organization: *what did the AI do, what said it could, and what will let us prove that in an inspection?* The kernel's decision records are that answer — signed, chained, exportable — and they are the artifact that makes the platform inspectable. Systems without a kernel of this shape will fail the inspection question, whatever else they can demonstrate.
 
@@ -217,7 +218,7 @@ The intelligence layer is what turns a document store into a submission strategi
 
 ## 9.1 RIM — the Regulatory Intelligence Model
 
-Path: `server/services/intelligence/` — 36 TypeScript files.
+Path: `server/services/intelligence/` — 37 TypeScript modules.
 
 - **Central orchestrator** `rim.ts` runs at `RIM_VERSION = '1.1.0'`. Every run is stamped with a run ID, the RIM version, and the pattern version, so a decision made six months ago can be exactly re-derived today. Runs that fail to persist are marked `degraded`, not silently swallowed.
 - **Judgment framework** `judgment-framework.ts` at `JUDGMENT_FRAMEWORK_VERSION = '1.2.0'` computes six explicit judgment models: Evidence Sufficiency, Defensibility, Reviewer Sensitivity, Claim Risk, Cross-Section Consistency, Submission Risk. Each is a weighted composite of deterministic checks, heuristic checks, and LLM-assisted scoring, with a `MODEL_WEIGHTS` map (for example: 0.30 / 0.25 / 0.25 / 0.20 for Evidence Sufficiency).
@@ -322,13 +323,13 @@ Database work is where the engineering discipline shows up most clearly.
 
 **Postgres on Neon, with `pgvector`.** `drizzle.config.ts` targets `postgresql`, reads `DATABASE_URL_ADMIN` / `NEON_DATABASE_URL_ADMIN`, and refuses `.pooler.` URLs during migration — migration DDL must go through a direct Neon endpoint so schema drift cannot happen at the connection-pool layer. The pgvector extension is enabled at the SQL level in each migration that needs it.
 
-**Migration inventory.** 554 migration files total: 244 in `migrations/` (Drizzle-numbered from `0000_sweet_joseph.sql` — a 420 KB baseline — through the dated set spanning `20260125` → `20260907`), and 310 in `db/migrations/` (a GCC-numbered core from `000_gcc_bootstrap_core.sql` → `103_load_complete_templates.sql`, plus its own dated set).
+**Migration inventory.** 554 migration files total: 247 in `migrations/` (Drizzle-numbered from `0000_sweet_joseph.sql` — a 420 KB baseline — through the dated set spanning `20260125` → `20260907`), and 307 in `db/migrations/` (a GCC-numbered core from `000_gcc_bootstrap_core.sql` → `103_load_complete_templates.sql`, plus its own dated set).
 
 **The re-execution discipline.** Every migration in the set re-executes on every deploy. This is a deliberate choice, documented in `CLAUDE.md` Rule 1: the applier reads and executes every entry of `C2C_MIGRATION_FILES` unconditionally, and the drift is written to a journal. The rule that follows is a cultural artifact — *"to remove a column, constraint, or table that any file in the set creates, amend the creating migration in place. Do not append a DROP."* The rule is enforced by `npm run ci:migration-drop-safety`, and its failure branch is exercised by its own self-test (`ci:migration-drop-safety:selftest`). Genuine exceptions are baselined with a written reason.
 
-**Schema scale.** `shared/schema.ts` is an 857 KB monolith with 419 `pgTable(` calls; the `shared/schema/` extraction directory adds another 89 domain files with 275 more `pgTable(` calls (there is some deliberate overlap during migration). Combined ceiling: ~694 tables. The largest domain files: `csr-knowledge-db.ts` (49 KB), `project-charter.ts` (38 KB), `qc-schemas.ts` (30 KB), `orchestration.ts` (26 KB), `operating-system.ts` (26 KB), `capa-mdr.ts` (25 KB), `regulatory-atoms.ts` (23 KB), `programs.ts` (21 KB), `ana-intelligence.ts` (21 KB), `living-record-spine.ts` (20 KB).
+**Schema scale.** `shared/schema.ts` is an 840 KB monolith with 419 `pgTable(` calls; the `shared/schema/` extraction directory adds another 87 domain files with 275 more `pgTable(` calls (there is some deliberate overlap during migration). Combined ceiling: ~694 tables. The largest domain files: `csr-knowledge-db.ts` (49 KB), `project-charter.ts` (38 KB), `qc-schemas.ts` (30 KB), `orchestration.ts` (26 KB), `operating-system.ts` (26 KB), `capa-mdr.ts` (25 KB), `regulatory-atoms.ts` (23 KB), `programs.ts` (21 KB), `ana-intelligence.ts` (21 KB), `living-record-spine.ts` (20 KB).
 
-**Row-level multi-tenancy.** `organizationId` appears 735 times in `shared/schema.ts` alone. Every governed table is scoped. The RLS story is layered: `establishRequestTenantScope.ts` opens per-request session scope from the verified JWT; `RLS_ENFORCE=on` is fail-closed; `0021_enable_rls_everywhere.sql` is the canonical enablement migration; `053_gcc_rls_policies.sql`, `069_gcc_multitenant_rls_expansion.sql`, `070_gcc_rls_extended_ga.sql` extend it. Tenant-column audits (`0019_tenant_column_audit.sql`) confirm no unscoped writes.
+**Row-level multi-tenancy.** `organizationId` appears 736 times in `shared/schema.ts` alone. Every governed table is scoped. The RLS story is layered: `establishRequestTenantScope.ts` opens per-request session scope from the verified JWT; `RLS_ENFORCE=on` is fail-closed; `0021_enable_rls_everywhere.sql` is the canonical enablement migration; `053_gcc_rls_policies.sql`, `069_gcc_multitenant_rls_expansion.sql`, `070_gcc_rls_extended_ga.sql` extend it. Tenant-column audits (`0019_tenant_column_audit.sql`) confirm no unscoped writes.
 
 **Audit chain.** Nine audit tables in the monolith (`auditLogs`, `auditTrail`, `documentAuditTrail`, `deviceAuditTrail`, `auditEvents`, `proofAuditLogs`, `regulatoryAuditLogs`, `sharepoint_audit_log`, `qmsInternalAudits`), plus HMAC seals and hash chains (`002_gcc_audit_immutability.sql`, `054_gcc_part11_audit.sql`, `064_gcc_cognitive_audit_schema.sql`, `20260609_audit_hmac_seal.sql`, `20260325_ana_kernel_log_immutability_hashchain.sql`), plus signed exports (`server/services/audit/signedAuditExport.ts`) and a chain-integrity sweep job (`server/jobs/auditChainIntegritySweep.ts`).
 
@@ -389,15 +390,15 @@ An investor should read `CLAUDE.md` in the root of the repo before making a deci
 
 Both rules are cultural artifacts codified as enforced gates — `CLAUDE.md` is not a wiki page, it is authoritative, and the hooks cite it. That is how you get an engineering organization that ships fast without breaking regulated data.
 
-**The agents.** Alongside the engineers, the repo has 14+ specialized reviewer agents wired in: `a11y-auditor`, `design-reviewer`, `design-system-auditor`, `motion-auditor`, `microcopy-reviewer`, `honest-state-auditor`, `part11-ux-auditor`, plus code-focused agents. They run on every UI-touching PR. This is not a demo — this is how we scale review coverage across 596 client files without hiring a design-review team.
+**The agents.** Alongside the engineers, the repo has 14+ specialized reviewer agents wired in: `a11y-auditor`, `design-reviewer`, `design-system-auditor`, `motion-auditor`, `microcopy-reviewer`, `honest-state-auditor`, `part11-ux-auditor`, plus code-focused agents. They run on every UI-touching PR. This is not a demo — this is how we scale review coverage across 439 client files without hiring a design-review team.
 
-**The doc discipline.** 663 markdown files in 56 subdirectories of `docs/` — architecture, audits, runbooks, roadmap, deployment, release, standards, AI governance, compliance, security. Design decisions are written down. Retirements are written down. Trade-offs are written down. An investor is invited to sample five random docs from `docs/architecture/` or `docs/reports/` to verify.
+**The doc discipline.** 672 markdown files in 55 subdirectories of `docs/` — architecture, audits, runbooks, roadmap, deployment, release, standards, AI governance, compliance, security. Design decisions are written down. Retirements are written down. Trade-offs are written down. An investor is invited to sample five random docs from `docs/architecture/` or `docs/reports/` to verify.
 
 ---
 
 # 17. Testing, observability, and reliability posture
 
-**Automated tests.** 2,312 test files across the repo: 1,495 under `server/`, 295 under `client/`, and 543 in the dedicated `tests/` tree that houses integration and end-to-end suites — including `tests/e2e/` (design tokens, submission ops, governed lifecycle, RC-beta path, biotech modules, golden customer journey, beta pulse, submission-ops UI, diff history) and `tests/golden-journeys/` (CER EU-MDR, device 510(k) eSTAR, drug NDA eCTD, IND authoring). Playwright is configured (`playwright.config.ts` at repo root plus `scripts/visual-qa/playwright.mjs`) and the `gstack` QA harness (`.claude/skills/gstack/`) runs headless browser dogfooding of live surfaces.
+**Automated tests.** 2,348 test files across the repo: 1,522 under `server/`, 301 under `client/`, and 448 in the dedicated `tests/` tree that houses integration and end-to-end suites — including `tests/e2e/` (design tokens, submission ops, governed lifecycle, RC-beta path, biotech modules, golden customer journey, beta pulse, submission-ops UI, diff history) and `tests/golden-journeys/` (CER EU-MDR, device 510(k) eSTAR, drug NDA eCTD, IND authoring). Playwright is configured (`playwright.config.ts` at repo root plus `scripts/visual-qa/playwright.mjs`) and the `gstack` QA harness (`.claude/skills/gstack/`) runs headless browser dogfooding of live surfaces.
 
 **Observability.** Sentry (both `@sentry/node` and `@sentry/react`) for error tracking. Structured logging through `logger.ts`. The AI Gateway emits scoped logs (`createScopedLogger('ai-gateway')`) with per-provider health tracking. Kernel emits observability trace steps on every decision. The audit chain-integrity sweep runs as a scheduled job (`server/jobs/auditChainIntegritySweep.ts`).
 
@@ -445,24 +446,24 @@ The numbers below are the ones an engineering diligence reader will want in one 
 
 | Dimension | Count | Reference |
 |---|---:|---|
-| Server TypeScript files | 1,072 | `find server -name '*.ts'` |
-| Client React (`.tsx`) files | 596 | `find client/src -name '*.tsx'` |
-| HTTP route files | 237 | `server/routes/` |
-| Service files (recursive) | 568 | `server/services/**` |
-| Service subdirectories | 21+ | `server/services/*/` |
-| Kernel service files | 7 | `server/services/kernel-*.ts` |
-| Intelligence layer files | 36 | `server/services/intelligence/` |
+| Server TypeScript files | 4,180 | `find server -name '*.ts'` |
+| Client React (`.tsx`) files | 439 | `find client/src -name '*.tsx'` |
+| HTTP route modules (top level) | 368 | `server/routes/*.ts` |
+| Service files (recursive) | 2,956 | `server/services/**/*.ts` |
+| Service subdirectories | 222 | `server/services/*/` |
+| Kernel service files | 8 | `server/services/kernel-*.ts` |
+| Intelligence layer modules | 37 | `server/services/intelligence/*.ts` |
 
 ## 20.2 Database
 
 | Dimension | Count | Reference |
 |---|---:|---|
-| Migration files total | 554 | `migrations/` + `db/migrations/` |
+| Migration files total | 554 | `migrations/` (247) + `db/migrations/` (307) |
 | Baseline migration size | 420 KB | `migrations/0000_sweet_joseph.sql` |
-| `shared/schema.ts` size | 857 KB | monolith |
-| Domain schema files | 89 | `shared/schema/` |
+| `shared/schema.ts` size | 840 KB | monolith |
+| Domain schema files | 87 | `shared/schema/` |
 | `pgTable` declarations | ~694 | 419 (monolith) + 275 (domain) |
-| `organizationId` occurrences | 735 | `shared/schema.ts` alone |
+| `organizationId` occurrences | 736 | `shared/schema.ts` alone |
 | Embedding dimensions in use | 1024, 1536, 3072 | pgvector |
 | Report domains supported | 12 | `intelligent-report-engine.ts` |
 | Regulatory bodies supported | 15 | `intelligent-report-engine.ts` |
@@ -500,13 +501,13 @@ The numbers below are the ones an engineering diligence reader will want in one 
 
 | Dimension | Count |
 |---|---:|
-| Total test files | 2,312 |
-| Tests under `server/` | 1,495 |
-| Tests under `client/` | 295 |
-| Dedicated `tests/` suite | 543 |
+| Total test files | 2,348 |
+| Tests under `server/` | 1,522 |
+| Tests under `client/` | 301 |
+| Dedicated `tests/` suite | 448 |
 | Golden-journey suites | 4 (CER-EU-MDR, 510(k) eSTAR, NDA eCTD, IND authoring) |
-| Docs `.md` files | 663 |
-| Docs subdirectories | 56 |
+| Docs `.md` files | 672 |
+| Docs subdirectories | 55 |
 
 ---
 

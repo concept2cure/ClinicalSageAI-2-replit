@@ -86,12 +86,12 @@ describe('GET /api/chat/threads/:threadId/messages', () => {
     query.mockResolvedValueOnce({ rows: [{ store: 'chat' }] });
     getThreadMessages.mockRejectedValueOnce(new Error('connection reset'));
     const res = await request(appWith(7)).get('/api/chat/threads/t1/messages');
+    // The 500 must come from the TRANSCRIPT read, not from an earlier step
+    // failing for its own reasons — which is exactly how this test went blind.
+    expect(getThreadMessages, 'the route never reached the transcript read').toHaveBeenCalledWith('t1');
     expect(res.status).toBe(500);
     expect(res.body.code).toBe('THREAD_MESSAGES_ERROR');
     expect(res.body.messages).toBeUndefined();
-    // The 500 must come from the TRANSCRIPT read, not from an earlier step
-    // failing for its own reasons — which is exactly how this test went blind.
-    expect(getThreadMessages).toHaveBeenCalledWith('t1');
   });
 
   it('404s only when the thread genuinely resolves to no store', async () => {

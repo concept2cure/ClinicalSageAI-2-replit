@@ -85,8 +85,16 @@ export function warnOnMissingFonts(fontDir, fonts = INVESTOR_FONTS) {
  *
  * `--no-pdf-header-footer` keeps Chromium's default date/URL chrome off the page;
  * the documents supply their own pagination.
+ *
+ * `source` and `output` are resolved to absolute paths first. A relative source
+ * would build `file://docs/investor/x.html`, in which "docs" parses as the URL
+ * host rather than a path segment; Chromium then resolves the stylesheet's
+ * relative `fonts/*.ttf` against the wrong base and silently renders every face
+ * as a system fallback — a correct-looking PDF set in the wrong type.
  */
 export async function renderHtmlToPdf({ source, output, virtualTimeBudget = 10000 }) {
+  source = path.resolve(source);
+  output = path.resolve(output);
   if (!existsSync(source)) throw new Error(`Missing source document: ${source}`);
 
   const chrome = resolveChrome();
