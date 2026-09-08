@@ -53,6 +53,8 @@
     "pack:whitepaper": "node scripts/build-investor-whitepaper.mjs",
     "pack:investor-brief": "node scripts/build-investor-brief.mjs",
     "pack:investor-brief:pdf": "node scripts/build-investor-brief.mjs --pdf --fetch-fonts",
+    "pack:investor-one-pager": "node scripts/build-investor-brief.mjs --in docs/investor/INVESTOR_ONE_PAGER_2026-09-08.md --out docs/investor/INVESTOR_ONE_PAGER_2026-09-08.html --no-cover",
+    "pack:investor-one-pager:pdf": "node scripts/build-investor-brief.mjs --in docs/investor/INVESTOR_ONE_PAGER_2026-09-08.md --out docs/investor/INVESTOR_ONE_PAGER_2026-09-08.html --no-cover --pdf --fetch-fonts",
     "pack:iq-oq": "node scripts/ops/generate-iq-oq-pack.mjs",
     "pack:iq-oq:run": "node scripts/ops/generate-iq-oq-pack.mjs --run",
     "ocr:vendor": "node scripts/vendor-tesseract-langdata.mjs",
