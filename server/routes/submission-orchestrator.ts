@@ -18,6 +18,7 @@
 import { Router, type Request, type Response } from 'express';
 import { z } from 'zod';
 import {
+  loadSubmissionFkBySubmissionIdText,
   runOrchestrator,
   getRun,
   getRunAudit,
@@ -131,6 +132,38 @@ function requireTenant(req: Request, res: Response): number | null {
     return null;
   }
   return orgId;
+}
+
+/**
+ * The canonical `public.submissions(id)` this run belongs to, or undefined.
+ *
+ * `submission_orchestrator_runs` carries the submission twice: `submission_id`
+ * (TEXT, legacy, free-form) and `submission_id_fk` (INTEGER, joinable). The
+ * orchestrator writes the FK only when a caller supplies one, leaving the
+ * column NULL otherwise — and `submissionFk` is optional on this route, which
+ * no client populates, so every run the product created stored NULL.
+ *
+ * That column is load-bearing. The §11.70 release-signature gate
+ * (services/ectd/release-signature-status.ts) locates a submission's signed
+ * packages with `WHERE submission_id_fk = <id>`, so an unlinked run is
+ * invisible to it: a customer could orchestrate a package AND sign its release
+ * and still be told no release signature existed — a state whose implied
+ * remedy, signing, only adds one more unlinked run.
+ *
+ * `loadSubmissionFkBySubmissionIdText` is the resolver OrchestratorInputs'
+ * own documentation points callers at for exactly this. It is tenant-scoped
+ * against the JWT organization, resolves only an integer-coercible TEXT id,
+ * and returns null rather than guessing — so a business-domain id like
+ * 'SUB-2026-001' still stores NULL, and the gate reports that submission as
+ * undetermined rather than unsigned. Best-effort throughout: the resolver
+ * swallows its own errors and the run never blocks on this.
+ */
+async function resolveSubmissionFk(
+  inputs: Omit<OrchestratorInputs, 'organizationId'>,
+  organizationId: number,
+): Promise<number | undefined> {
+  if (typeof inputs.submissionFk === 'number') return inputs.submissionFk;
+  return (await loadSubmissionFkBySubmissionIdText(inputs.submissionId, organizationId)) ?? undefined;
 }
 
 /**
@@ -445,6 +478,7 @@ router.post('/runs', async (req: Request, res: Response) => {
   try {
     const result = await runOrchestrator({
       ...orchestratorInputs,
+      submissionFk: await resolveSubmissionFk(orchestratorInputs, organizationId),
       organizationId,
     });
     return res.json({
