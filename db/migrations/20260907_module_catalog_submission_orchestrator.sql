@@ -2,104 +2,83 @@
 -- eCTD REGULATORY AUDIT CONTEXT
 -- System: Lumen Cortex — FDA Shadow Review + eCTD Integrity Layer
 -- Compliance: 21 CFR Part 11 (auditability, traceability), ALCOA+ principles
--- Purpose: Seed the submission-orchestrator surface into available_modules so
---          it can be licensed, provisioned and administered like every other
---          app now that the shell presents it in the "Submit & file" group.
+-- Purpose: Retire the `submission-orchestrator` catalog row. The surface it
+--          entitled was a DUPLICATE and has been deleted; a catalog row for a
+--          screen nobody can open is a capability claim with nothing behind it.
 --
 -- eCTD/CTD Context:
---   - Module(s): the whole eCTD build pipeline — Module 2 summaries, Module 3
---     composition, CSR tabulation, package assembly, hardened validation, and
---     the 21 CFR Part 11 release signature.
---   - Integrity Risk Addressed: a surface the shell offers but the catalog does
---     not know is UNGATABLE (module_subscriptions.module_id is a foreign key
---     into this table, so no admin decision about it can be written down or
---     audited) and SILENTLY FREE (the client entitlement layer holds,
---     correctly, that an unknown id is not licensable — so catalog silence
---     reads as "included" for every organization on every tier). For a surface
---     that can e-sign and release a regulatory submission, an entitlement
---     nobody can record or revoke is the wrong default.
+--   - Module(s): none. This file now only stands a catalog row back down.
+--   - Integrity Risk Addressed: a catalog row states a capability is available
+--     and is what `provision_org_modules()` iterates when granting. Leaving one
+--     for a deleted surface means an organization can be granted — and billed
+--     for — an entitlement that resolves to no screen.
 --
 -- Determinism Contract:
 --   - Data-only. No DDL, no canonical schema change, no evidence pointer moves.
 --
--- Notes:
---   - available_modules is the GLOBAL catalog, not tenant-keyed; the per-org
---     grant lives in module_subscriptions, which already carries tenant policy.
---   - Idempotent: ON CONFLICT (module_id) DO UPDATE, re-runnable without drift.
+-- AMENDED IN PLACE 2026-09-07 (was: seed the row).
+--
+--   WHAT CHANGED AND WHY. This file originally seeded `submission-orchestrator`
+--   into available_modules, because a new surface of that name had been added
+--   to the shell's "Submit & file" groups and the shell must never present an
+--   app the catalog cannot express an entitlement for.
+--
+--   That surface should never have existed. `ectd-compile` is already "the
+--   cross-document assemble the submission surface" — status, validate,
+--   compile, history, real rendered leaves and a real ICH backbone — so a
+--   second screen for assembling a submission was precisely the parallel path
+--   CLAUDE.md's zero-duplication rule forbids. The three panels that were
+--   genuinely new (orchestrator pipeline steps, the append-only audit trail,
+--   the Part 11 release-signature record) have been folded into EctdCompile.tsx
+--   and the duplicate surface, its registry entry, its view-map entry and its
+--   navigation entries were all deleted in the same change, as that rule
+--   requires.
+--
+--   WHY AMENDED RATHER THAN A NEW DROP FILE. CLAUDE.md RULE 1: the applier
+--   re-executes every entry of C2C_MIGRATION_FILES on every deploy, so a
+--   follow-up file that removed what this one adds would either revert (placed
+--   before) or re-create-then-remove on every deploy (placed after). Amending
+--   the creating migration is the correct move for a set that replays, and this
+--   header is the self-documentation that amendment requires.
+--
+--   WHY DEPRECATE RATHER THAN DELETE. `module_subscriptions.module_id` is a
+--   foreign key into this table. A DELETE would fail for any organization that
+--   had already been granted the module, and would destroy the record that the
+--   grant ever existed. Deprecation is the established retirement in this
+--   catalog: `provision_org_modules()` skips a deprecated row, so nothing new
+--   is granted, and the audit history stays intact.
+--
+--   Idempotent and safe whether or not the row was ever applied: the UPDATE is
+--   a no-op when no such row exists.
 -- =============================================================================
 
 BEGIN;
 
--- WHY THIS FILE EXISTS.
---
--- `submission-orchestrator` shipped as a registered, routed surface with a
--- working component and passing tests, and was still unreachable: it appeared
--- in none of the four segment "Submit & file" groups and was absent from the
--- shared/navigation NAVIGATION_TARGETS list AnA navigates by. Adding it to
--- both — which is what makes it reachable — also makes it a SHELL APP, and
--- moduleCatalogReconciliation.test.ts holds the invariant that the shell must
--- never present an app the catalog cannot express an entitlement for.
---
--- That test is the reason this migration exists, and it caught a real gap
--- rather than an incidental one: without this row an operator could not grant,
--- disable, or audit access to the surface that performs package release.
---
--- TIERING. 'standard' matches its siblings in the Submit & file group
--- (submission-center, submission-twin, gateway-transmittals are all reachable
--- on standard). No earlier file classifies this id, so THIS file owns its tier;
--- a later re-tiering must be ordered after this file or made in it.
---
--- CATEGORY. 'Submit & file' mirrors the nav group the shell renders it in, so
--- the catalog reads the way the product does.
+-- Stand the row down. Guarded so a re-apply does not churn `updated_at` — the
+-- out-of-band applier re-runs this file on every deploy.
+UPDATE available_modules
+   SET metadata   = jsonb_set(
+                      COALESCE(metadata::jsonb, '{}'::jsonb),
+                      '{deprecated}',
+                      'true'::jsonb,
+                      true
+                    )::json,
+       updated_at = now()
+ WHERE module_id = 'submission-orchestrator'
+   AND COALESCE((metadata::jsonb ->> 'deprecated')::boolean, false) = false;
 
--- One row per line: moduleCatalogReconciliation.test.ts parses these files
--- structurally with /^\s*\('([a-z0-9-]+)'/ , so a row whose opening paren and
--- module_id sit on different lines is invisible to the guard — the catalog
--- would read as missing this row while the database held it.
-INSERT INTO available_modules (module_id, name, description, category, path, icon, sort_order, metadata) VALUES
-  ('submission-orchestrator', 'Submission orchestrator', 'The eCTD build pipeline — composes Module 3 (drug substance, drug product, appendices, regional), tabulates the CSR under ICH E3 §10-§12, builds the Module 2 summaries, assembles and validates the package against the target gateway, and takes the 21 CFR Part 11 release signature. Reports per-step status, an append-only audit trail, and the verified record that signature binds.', 'Submit & file', '/concept2cure/submission-orchestrator', 'workflow', 150, '{"tiers": ["standard"], "industries": []}'::json)
-ON CONFLICT (module_id) DO UPDATE SET
-  name        = EXCLUDED.name,
-  description = EXCLUDED.description,
-  category    = EXCLUDED.category,
-  path        = EXCLUDED.path,
-  icon        = EXCLUDED.icon,
-  sort_order  = EXCLUDED.sort_order,
-  -- Seed-only, as everywhere else in this catalog: the admin toggle writes
-  -- module_subscriptions.enabled and nothing UPDATEs available_modules.metadata,
-  -- so there is no operator-authored tier to preserve here.
-  metadata    = EXCLUDED.metadata,
-  updated_at  = now()
--- Only write when something actually differs. The out-of-band applier re-applies
--- every file on every deploy (see CLAUDE.md RULE 1), so an unguarded DO UPDATE
--- bumps updated_at on every deploy and destroys the column's meaning.
-WHERE available_modules.name        IS DISTINCT FROM EXCLUDED.name
-   OR available_modules.description IS DISTINCT FROM EXCLUDED.description
-   OR available_modules.category    IS DISTINCT FROM EXCLUDED.category
-   OR available_modules.path        IS DISTINCT FROM EXCLUDED.path
-   OR available_modules.icon        IS DISTINCT FROM EXCLUDED.icon
-   OR available_modules.sort_order  IS DISTINCT FROM EXCLUDED.sort_order
-   OR available_modules.metadata::jsonb IS DISTINCT FROM EXCLUDED.metadata::jsonb;
-
--- Assert the end state rather than assuming the upsert did what it reads like.
--- A row that landed deprecated, or carrying a tier other than the one decided
--- above, is worse than a failed migration: the catalog would look complete
--- while the entitlement it expresses is not the one anyone agreed to. For a
--- surface that releases regulatory submissions, fail closed instead.
+-- Assert the end state rather than assuming the UPDATE did what it reads like.
+-- A row that is still live would keep the deleted surface sellable and
+-- grantable; that is worse than a failed migration, so fail closed.
 DO $$
-DECLARE v_bad TEXT;
 BEGIN
-  SELECT string_agg(want.module_id, ', ' ORDER BY want.module_id) INTO v_bad
-  FROM (VALUES ('submission-orchestrator'::text)) AS want(module_id)
-  WHERE NOT EXISTS (
-    SELECT 1 FROM available_modules m
-     WHERE m.module_id = want.module_id
-       AND m.metadata::jsonb -> 'tiers' = '["standard"]'::jsonb
-       AND COALESCE((m.metadata::jsonb->>'deprecated')::boolean, false) = false
-  );
-
-  IF v_bad IS NOT NULL THEN
-    RAISE EXCEPTION 'submission-orchestrator catalog row is missing or not packaged at standard: %', v_bad;
+  IF EXISTS (
+    SELECT 1 FROM available_modules
+     WHERE module_id = 'submission-orchestrator'
+       AND COALESCE((metadata::jsonb ->> 'deprecated')::boolean, false) = false
+  ) THEN
+    RAISE EXCEPTION
+      'submission-orchestrator catalog row is still live; the surface it entitles was deleted';
   END IF;
 END $$;
 
