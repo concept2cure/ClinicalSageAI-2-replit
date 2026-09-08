@@ -178,7 +178,12 @@ export async function buildNonclinicalStudyReport(
     id: Date.now(),
     status: 'complete',
     progress: 100,
-    reportSection: ctdSection(study.studyType),
+    /* Empty, not a guess, when the study type is not one this map carries.
+       `runM4NonclinicalQc` reads an empty placement as an error that names the
+       unrecognised type and asks for the section to be recorded explicitly —
+       which is the honest outcome. It used to receive the module root '4.2'
+       here, an assertion nobody established, and enforce it. */
+    reportSection: ctdSection(study.studyType) ?? '',
     discipline,
     sections,
     tables: buildTables(study),
@@ -316,12 +321,35 @@ export function disciplineFor(studyType: string): NonclinicalDiscipline {
   }
 }
 
-/** CTD Module 4.2.x section number for a given study type. */
-export function ctdSection(studyType: string): string {
+/**
+ * CTD Module 4.2.x section for a study type, or null when this map does not
+ * know it.
+ *
+ * It used to end `?? '4.2'` — the module root — for anything unlisted, and the
+ * list stopped at 4.2.3.6. ICH M4S does not: secondary pharmacodynamics is
+ * 4.2.1.2, pharmacodynamic drug interactions 4.2.1.4, and Other Toxicity
+ * Studies runs 4.2.3.7.1 through .7 (antigenicity, immunotoxicity, mechanistic,
+ * dependence, metabolites, impurities, other). Those are ordinary studies in a
+ * real program, and every one of them fell through.
+ *
+ * The default did damage in both directions. `runM4NonclinicalQc` compares the
+ * filed section against this value, so an immunotoxicity report correctly filed
+ * at 4.2.3.7.2 was told "ICH M4 expects 4.2" and pushed to the module root; and
+ * once '4.2' was in the section set, the M2.4←M4 feed-forward trace matched
+ * every 4.2.x citation against it, so no orphan reference in the whole of
+ * Module 4 was ever reported (see ctd-authoring-readiness).
+ *
+ * `null` now means "not recognised, so placement cannot be verified" — which is
+ * a different fact from "belongs at 4.2", and the only one this map can support.
+ */
+export function ctdSection(studyType: string): string | null {
   const map: Record<string, string> = {
     pharmacology: '4.2.1.1',
+    primary_pharmacodynamics: '4.2.1.1',
+    secondary_pharmacodynamics: '4.2.1.2',
     safety_pharm: '4.2.1.3',
     safety_pharmacology: '4.2.1.3',
+    pd_drug_interactions: '4.2.1.4',
     pk: '4.2.2',
     tk: '4.2.2',
     adme: '4.2.2',
@@ -335,8 +363,16 @@ export function ctdSection(studyType: string): string {
     dart: '4.2.3.5',
     reproductive_tox: '4.2.3.5',
     local_tolerance: '4.2.3.6',
+    // 4.2.3.7 Other Toxicity Studies.
+    antigenicity: '4.2.3.7.1',
+    immunotoxicity: '4.2.3.7.2',
+    mechanistic_tox: '4.2.3.7.3',
+    dependence: '4.2.3.7.4',
+    metabolites: '4.2.3.7.5',
+    impurities: '4.2.3.7.6',
+    other_toxicity: '4.2.3.7.7',
   };
-  return map[studyType] ?? '4.2';
+  return map[studyType] ?? null;
 }
 
 /** Required extracted-data fields a section needs but the study lacks. */
@@ -485,7 +521,7 @@ function draftSectionTemplate(
 
   switch (section.number) {
     case '1':
-      return `NONCLINICAL STUDY REPORT\n\n${study.studyTitle}\n\nTest Article: ${ds}\nStudy Type: ${study.studyType}\nReport Number: ${study.studyReportNumber || '[Report No.]'}\nTesting Facility: ${study.testingFacility || '[Testing Facility]'}\nCTD Section: ${ctdSection(study.studyType)}\n${glp}`;
+      return `NONCLINICAL STUDY REPORT\n\n${study.studyTitle}\n\nTest Article: ${ds}\nStudy Type: ${study.studyType}\nReport Number: ${study.studyReportNumber || '[Report No.]'}\nTesting Facility: ${study.testingFacility || '[Testing Facility]'}\nCTD Section: ${ctdSection(study.studyType) ?? '[not derivable from study type — record explicitly]'}\n${glp}`;
     case '2':
       return `SUMMARY\n\nThis ${discipline} study (${study.studyType}) evaluated ${ds}${study.species ? ` in ${study.species}` : ''}${study.durationWeeks != null ? ` over ${study.durationWeeks} weeks` : ''}. ${study.keyFindings || '[Key findings to be inserted.]'}${study.noael ? ` The NOAEL was ${study.noael}.` : ''}${study.loael ? ` The LOAEL was ${study.loael}.` : ''}`;
     case '3':

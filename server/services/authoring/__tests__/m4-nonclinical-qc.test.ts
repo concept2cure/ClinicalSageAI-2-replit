@@ -145,3 +145,66 @@ describe('runM4NonclinicalQc — placement, GLP, structure', () => {
     expect(res.ready).toBe(false);
   });
 });
+
+/**
+ * CTD PLACEMENT for the study types the map did not carry.
+ *
+ * `ctdSection()` covered 4.2.1.1, 4.2.1.3, 4.2.2 and 4.2.3.1–4.2.3.6, and
+ * returned the bare '4.2' for everything else. ICH M4S has more than that:
+ * secondary pharmacodynamics (4.2.1.2), PD drug interactions (4.2.1.4) and the
+ * whole of Other Toxicity Studies (4.2.3.7.1–.7) — antigenicity,
+ * immunotoxicity, mechanistic, dependence, metabolites, impurities, other.
+ * Those are ordinary studies in a real program, not exotica.
+ *
+ * The consequence was two-sided. An immunotoxicity report correctly filed at
+ * 4.2.3.7.2 was told "ICH M4 expects 4.2" and pushed to the module root; and
+ * once '4.2' was in the section set, the M2.4←M4 feed-forward trace matched
+ * every 4.2.x citation against it (fixed separately in
+ * ctd-authoring-readiness). A default that asserts a placement nobody
+ * established is the same failure as a check that passes without running.
+ */
+describe('runM4NonclinicalQc — placement beyond the first-tier sections', () => {
+  const at = (studyType: string, reportSection: string) =>
+    runM4NonclinicalQc({
+      reports: [report({ studyId: 'X-1', studyType, reportSection, glpStatus: 'GLP' })],
+    }).findings.filter((f) => f.code === 'PLACEMENT');
+
+  it.each([
+    ['secondary_pharmacodynamics', '4.2.1.2'],
+    ['pd_drug_interactions', '4.2.1.4'],
+    ['antigenicity', '4.2.3.7.1'],
+    ['immunotoxicity', '4.2.3.7.2'],
+    ['mechanistic_tox', '4.2.3.7.3'],
+    ['dependence', '4.2.3.7.4'],
+    ['metabolites', '4.2.3.7.5'],
+    ['impurities', '4.2.3.7.6'],
+  ])('accepts %s filed at %s', (studyType, section) => {
+    expect(at(studyType, section)).toEqual([]);
+  });
+
+  it('does not claim a study type it cannot place belongs at the module root', () => {
+    /* A type outside ICH M4S's own list — the honest answer is that this QC
+       cannot verify the placement, not that the study belongs at '4.2'. It must
+       not be reported as an error against a section nobody established. */
+    const findings = at('bespoke_ex_vivo_assay', '4.2.3.7.7');
+    expect(findings.filter((f) => f.severity === 'error')).toEqual([]);
+    const msg = findings.map((f) => f.message).join(' ');
+    expect(msg, 'an unverifiable placement must be said, not silently accepted').toMatch(
+      /not recognised|could not be verified/i,
+    );
+    expect(msg, 'and it must not assert the module root').not.toMatch(/expects 4\.2\b(?!\.)/);
+  });
+
+  it('still refuses a study with no placement at all', () => {
+    const findings = runM4NonclinicalQc({
+      reports: [report({ studyId: 'X-2', studyType: 'immunotoxicity', reportSection: '' })],
+    }).findings.filter((f) => f.code === 'PLACEMENT');
+    expect(findings.some((f) => f.severity === 'error')).toBe(true);
+  });
+
+  it('still catches a genuinely misplaced study', () => {
+    const findings = at('immunotoxicity', '4.2.3.2');
+    expect(findings.some((f) => f.severity === 'error')).toBe(true);
+    expect(findings.map((f) => f.message).join(' ')).toContain('4.2.3.7.2');
+  });
+});
