@@ -2010,6 +2010,32 @@ export async function applyMigrationFiles(
 ) {
   const applied = [];
   const failures = [];
+  /* Every NOTICE and WARNING the migrations raise, SURFACED.
+     node-postgres delivers server notices only to a 'notice' listener, and no
+     applier registered one — so a migration whose DO block skipped a table
+     (the child-table RLS sweep leaving a pair unpolicied, the tenant sweep's
+     drift branch, the atom-identity reconciliation's WARNING about a table it
+     will not touch) printed nothing but "✓ applied". A deploy that policied
+     forty tables and one that policied one were the same clean green run.
+     The messages are the only signal these files produce; they belong in the
+     deploy log next to the file that raised them. */
+  const noticeListener = (msg) => {
+    const text = String(msg?.message ?? '').trim();
+    if (!text) return;
+    const severity = String(msg?.severity ?? 'NOTICE').toUpperCase();
+    /* A NOTICE saying an object already exists is the IF NOT EXISTS guard
+       working as designed, on every replay of every idempotent file — noise
+       that would bury the ones that matter. */
+    if (severity === 'NOTICE' && /already exists, skipping|will create implicit/i.test(text)) return;
+    (severity === 'WARNING' || severity === 'ERROR' ? error : log)(`    [${severity}] ${text}`);
+  };
+  /* Attached to whatever the caller passed: deploy-migrate hands in a CLIENT
+     (which is what emits 'notice'), apply-c2c-migrations hands in a POOL, whose
+     clients emit it — so a pool is covered through 'connect'. A fresh pool
+     opens its first connection on the first query below, after this line. */
+  const attachNotices = (target) => target?.on?.('notice', noticeListener);
+  attachNotices(pool);
+  pool.on?.('connect', attachNotices);
 
   // Provision the ledger table once per run. Best-effort for the same reason the
   // per-file record is: a journal that cannot be created must not stop migrations
@@ -2022,6 +2048,7 @@ export async function applyMigrationFiles(
     error(`  (migration journal unavailable: ${journalErr.message})`);
   }
 
+  try {
   for (const file of files) {
     const full = path.join(repoRoot, file);
     if (!fs.existsSync(full)) {
@@ -2066,4 +2093,11 @@ export async function applyMigrationFiles(
   }
 
   return { applied, failures };
+  } finally {
+    /* Removed on every path, including the early returns above: the pool
+       outlives this call, and a listener left behind would double-print the
+       next caller's notices. */
+    pool.removeListener?.('notice', noticeListener);
+    pool.removeListener?.('connect', attachNotices);
+  }
 }

@@ -2772,7 +2772,14 @@ export function renderComposedSectionMarkdown(
   tables: GeneratedTable[] | null | undefined,
 ): string {
   const tablesMarkdown = tables && tables.length > 0 ? '\n\n' + tablesToMarkdown(tables) : '';
-  return `## ${sectionLabel}\n\n${narrativeDraft}${tablesMarkdown}`;
+  /* The narrative is trimmed HERE, so both consumers trim it identically.
+     Placement trimmed before calling; the governed-artifact bridge did not
+     call this at all — it re-implemented these two lines — and several
+     generators emit a trailing space, so the filed leaf and the governed
+     artifact for the same compile of the same section hashed differently. Two
+     copies of "the same content" that are not the same content is the exact
+     thing this function's existence is supposed to prevent. */
+  return `## ${sectionLabel}\n\n${(narrativeDraft ?? '').trim()}${tablesMarkdown}`;
 }
 
 // ── Main composition function ──────────────────────────────────────────────────
