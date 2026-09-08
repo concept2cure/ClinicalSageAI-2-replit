@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-08T00:50:23.225Z",
+  "generatedAt": "2026-09-08T01:29:44.087Z",
   "git": {
-    "sha": "ecdb4f457eef865c1272355486529763a46f220f",
+    "sha": "280211e62588cba7a4823754a5a4461024a1ef9e",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2398,6 +2398,10 @@
         "lines": 1888
       },
       {
+        "file": "client/src/concept2cure/v2/Shell.tsx",
+        "lines": 1871
+      },
+      {
         "file": "server/services/post-approval/post-approval-knowledge.ts",
         "lines": 1869
       },
@@ -2432,10 +2436,6 @@
       {
         "file": "server/services/compliance/globalComplianceEngine.ts",
         "lines": 1824
-      },
-      {
-        "file": "client/src/concept2cure/v2/Shell.tsx",
-        "lines": 1822
       },
       {
         "file": "server/services/safety-pharmacology/safety-pharmacology-knowledge.ts",
