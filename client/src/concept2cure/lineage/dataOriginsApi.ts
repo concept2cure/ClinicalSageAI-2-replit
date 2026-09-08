@@ -8,7 +8,12 @@ import { serverMessage } from '@/lib/queryClient';
 import { getAuthHeaders } from '../../utils/authToken';
 import { downloadBlob } from '../v2/download';
 
-export type SpanProvenanceKind = 'cre_evidence_source' | 'author_assertion' | 'accepted_machine_draft';
+export type SpanProvenanceKind =
+  | 'cre_evidence_source'
+  | 'author_assertion'
+  | 'accepted_machine_draft'
+  /** Drafted by a machine author; no person has accepted it. assertedBy is null. */
+  | 'machine_draft';
 export type SpanState = 'current' | 'changed' | 'unverified' | 'unresolved';
 
 export interface OriginRow {
@@ -42,7 +47,14 @@ export interface DataOriginsReport {
   origins: OriginRow[];
   uncovered: Array<{ charStart: number; charEnd: number }>;
   coveragePercent: number;
-  counts: { total: number; fromSources: number; authorAsserted: number; machineDrafted?: number; stale: number };
+  counts: {
+    total: number;
+    fromSources: number;
+    authorAsserted: number;
+    machineDrafted?: number;
+    machineDraftedUnaccepted?: number;
+    stale: number;
+  };
   generatedAt: string;
 }
 

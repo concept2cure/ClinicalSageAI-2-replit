@@ -25,6 +25,7 @@ import {
   isRegion,
   regionList,
 } from '../submission-gateways/region-constants.js';
+import { ANA_MACHINE_AUTHOR_ID } from '../authoring/revision-ledger.js';
 // Type-only: the prior-sequence auto-load path assigns loadPriorSequenceManifest's
 // PriorLeaf[] into the same local as the hand-mapped input leaves. Without this
 // annotation the local is inferred from `p: any`, which makes every field
@@ -8042,10 +8043,20 @@ registerToolHandler('write_q_sub_section', async (input, ctx) => {
       const ref = { documentTable: 'q_sub_section_bodies', documentId: String(rows[0].id) };
       const { sources, dropped } = await resolveDraftSources(ctx.organizationId, rawSources, client);
       let gate = null;
+      /* AnA wrote this prose and no human has accepted it — the row three
+         statements up says so itself (draft_source 'ana', accepted_at NULL)
+         and the message below says "Awaiting human accept". Recording the
+         REQUESTING user as having asserted every clause, in this same
+         transaction, made the two records of one act contradict each other.
+         `machineDraft` records what is true: AnA drafted it, ctx.userId asked
+         for it, and nobody has yet stood behind it. */
+      const machineDraft = { authorId: ANA_MACHINE_AUTHOR_ID };
       if (sources.length > 0) {
-        gate = await enforceSourceAndAuthorLineage(client, ctx.organizationId, ref, content, String(ctx.userId), sources);
+        gate = await enforceSourceAndAuthorLineage(
+          client, ctx.organizationId, ref, content, String(ctx.userId), sources, { machineDraft },
+        );
       } else {
-        await enforceAuthorLineage(client, ctx.organizationId, ref, content, String(ctx.userId));
+        await enforceAuthorLineage(client, ctx.organizationId, ref, content, String(ctx.userId), { machineDraft });
       }
       await client.query('COMMIT');
       return JSON.stringify({
@@ -19294,12 +19305,16 @@ registerToolHandler('save_document_to_vault', async (input, ctx) => {
          INSERT, which that guard's content-write discovery does not match. A
          lineage gap rolls the whole document back. */
       const { enforceAuthorLineage } = await import('../clinical-regulatory-evidence/lineage-gate.js');
+      /* AnA generated this content — the provenance row written just below
+         records eventAction 'ai_generate' — and no human has accepted it. It
+         is the machine's draft, requested by ctx.userId, asserted by nobody. */
       await enforceAuthorLineage(
         client,
         ctx.organizationId,
         { documentTable: 'concept2cure_artifacts', documentId: String(ins.rows[0].id) },
         content,
         String(ctx.userId),
+        { machineDraft: { authorId: ANA_MACHINE_AUTHOR_ID } },
       );
       // Uniform provenance: a vault document authored by AnA is a 'generation'
       // event, in the same transaction as the artifact + version.
@@ -19390,12 +19405,15 @@ registerToolHandler('update_vault_document', async (input, ctx) => {
          vault tool carries no parked sources, so every clause is the acting
          user's assertion; a gap rolls the version back. */
       const { enforceAuthorLineage } = await import('../clinical-regulatory-evidence/lineage-gate.js');
+      /* Same as save_document_to_vault: AnA wrote the new version, nobody has
+         accepted it. The provenance row below records 'ai_generate'. */
       await enforceAuthorLineage(
         client,
         ctx.organizationId,
         { documentTable: 'concept2cure_artifacts', documentId: String(doc.id) },
         content,
         String(ctx.userId),
+        { machineDraft: { authorId: ANA_MACHINE_AUTHOR_ID } },
       );
       // Uniform provenance: a new vault version is an 'edit' event, same txn.
       await recordArtifactProvenance(client, {

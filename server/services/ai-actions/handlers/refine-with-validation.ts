@@ -13,6 +13,7 @@
 import { governedActor } from '../../part11/governed-actor';
 import { queryableFromDrizzle } from '../../../db/drizzle-queryable';
 import { enforceAuthorLineage } from '../../clinical-regulatory-evidence/lineage-gate';
+import { ANA_MACHINE_AUTHOR_ID } from '../../authoring/revision-ledger';
 import { recordArtifactProvenance } from '../../provenance/artifact-provenance';
 import { concept2cureArtifacts, concept2cureArtifactVersions } from '../../../../shared/schema';
 import { registerActionHandler } from '../action-registry';
@@ -233,9 +234,11 @@ const handler: AIActionHandler = {
           createdById: ctx.user.userId,
         });
         /* Lineage in the same transaction as the refined content (ledger
-           L160): every clause of the refined text is recorded as the acting
-           user's assertion — the refinement has no parked sources to quote —
-           and a gap rolls the refinement back. */
+           L160); a gap rolls the refinement back.
+           The refined text is the model's — the version row one statement up
+           calls it "AI refinement via validation findings" — and no human has
+           accepted it. Recorded as AnA's unaccepted draft, requested by this
+           user, rather than as their own assertion. */
         const client = queryableFromDrizzle(tx);
         await enforceAuthorLineage(
           client,
@@ -243,6 +246,7 @@ const handler: AIActionHandler = {
           { documentTable: 'concept2cure_artifacts', documentId: String(artifact.id) },
           refinedContent,
           String(ctx.user.userId),
+          { machineDraft: { authorId: ANA_MACHINE_AUTHOR_ID } },
         );
         // The refinement's provenance event, in the same transaction as the
         // content it describes (the artifact-provenance guard): an AI edit the

@@ -957,7 +957,7 @@ export type NewConsistencyFinding = Omit<ConsistencyFinding, 'id' | 'createdAt' 
 // section-grained authoring_citations, sharing its canonical-source convention
 // (source / referenceId / payloadSha256 -> cre_evidence_sources).
 // Migration: db/migrations/20260803_document_span_lineage.sql.
-export type SpanProvenanceKind = 'cre_evidence_source' | 'author_assertion' | 'accepted_machine_draft';
+export type SpanProvenanceKind = 'cre_evidence_source' | 'author_assertion' | 'accepted_machine_draft' | 'machine_draft';
 export type SpanUsageKind =
   | 'quoted'
   | 'paraphrased'
@@ -984,6 +984,7 @@ export interface DocumentSpanLineage {
   sourceLocator?: string | null;
   // Set when provenanceKind === 'author_assertion' — and for
   // 'accepted_machine_draft', where they name the human who accepted the words.
+  // NULL for 'machine_draft': nobody has accepted it, and the CHECK enforces it.
   assertedBy?: string | null;
   assertedAt?: Date | null;
   signatureId?: string | null;

@@ -76,6 +76,17 @@ interface LeafSection {
 interface CardState {
   state: 'queued' | 'drafting' | 'done' | 'error';
   html: string;
+  /**
+   * The draft exactly as AnA returned it, never touched by the textarea.
+   *
+   * `html` is what gets accepted, and the card lets it be edited first — so by
+   * the time Accept runs, the two differ wherever the author changed something.
+   * The write needs BOTH: the server attributes a clause to AnA only when the
+   * clause is verbatim in this text, so an edited clause is recorded as the
+   * accepting author's own and an untouched one as AnA's. Without it the server
+   * cannot tell them apart and every clause is attributed to whoever accepted.
+   */
+  machineHtml: string;
   model: string | null;
   latencyMs: number | null;
   /** Acceptance is CONFIRMED, not requested. Set only after the write this card
@@ -97,6 +108,7 @@ interface CardState {
 function bdCard(partial: Partial<CardState> & Pick<CardState, 'state'>): CardState {
   return {
     html: '',
+    machineHtml: '',
     model: null,
     latencyMs: null,
     accepted: false,
@@ -376,7 +388,7 @@ export function BatchDraft({ onAsk, onNav, segment }: SurfaceViewProps) {
         selList.forEach((s, i) => {
           const r = results[i];
           next[s.id] = r && r.content
-            ? { ...next[s.id], state: 'done', html: r.content, model: r.model || 'AnA', latencyMs: r.latencyMs ?? (Date.now() - started) }
+            ? { ...next[s.id], state: 'done', html: r.content, machineHtml: r.content, model: r.model || 'AnA', latencyMs: r.latencyMs ?? (Date.now() - started) }
             // The per-result `error` is server text too, so it goes through the
             // same filter: a provider code or a driver message is not card copy.
             : { ...next[s.id], state: 'error', error: serverMessage(r) ?? 'No draft returned for this section.' };
@@ -454,6 +466,13 @@ export function BatchDraft({ onAsk, onNav, segment }: SurfaceViewProps) {
         content: card.html,
         framework: framework || undefined,
         model: card.model || undefined,
+        /* What AnA drafted, alongside what is being accepted. The server
+           attributes a clause to AnA only where the two agree verbatim, so a
+           clause the author rewrote in the textarea is recorded as theirs and
+           an untouched one as AnA's, accepted by them. */
+        ...(card.machineHtml
+          ? { acceptedMachineText: [{ authorId: 'ana', text: card.machineHtml }] }
+          : {}),
       });
       const body = await res.json().catch(() => null);
       const payload = body as { success?: boolean; error?: string; data?: { supersededVersion?: number | null } } | null;
