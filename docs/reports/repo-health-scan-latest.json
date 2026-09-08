@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-08T04:58:09.777Z",
+  "generatedAt": "2026-09-08T05:06:16.978Z",
   "git": {
-    "sha": "75d2efdc0ae8bebe63a06d4f074af089fd736969",
+    "sha": "00b18ab01f99b46034556af2fa674b28828b8815",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2137,7 +2137,7 @@
       },
       {
         "file": "server/api/cmc/routes.ts",
-        "bytes": 106485
+        "bytes": 106260
       },
       {
         "file": "server/services/ana-ri/context-enrichment.ts",
@@ -2239,7 +2239,7 @@
       },
       {
         "file": "server/src/routes/stability.router.ts",
-        "lines": 2832
+        "lines": 2830
       },
       {
         "file": "server/services/__tests__/ana-ri.test.ts",
@@ -2287,7 +2287,7 @@
       },
       {
         "file": "server/api/cmc/routes.ts",
-        "lines": 2346
+        "lines": 2336
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/bla-submission.ts",
@@ -2338,6 +2338,10 @@
         "lines": 2068
       },
       {
+        "file": "server/routes/510k-estar-routes.ts",
+        "lines": 2037
+      },
+      {
         "file": "server/services/bioequivalence/bioequivalence-knowledge.ts",
         "lines": 2029
       },
@@ -2352,10 +2356,6 @@
       {
         "file": "server/services/medical-device/medical-device-knowledge.ts",
         "lines": 2018
-      },
-      {
-        "file": "server/routes/510k-estar-routes.ts",
-        "lines": 2009
       },
       {
         "file": "server/routes/report-os.ts",

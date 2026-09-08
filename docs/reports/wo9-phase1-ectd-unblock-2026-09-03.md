@@ -1156,3 +1156,168 @@ same fabrication the file was written against — an infrastructure error stated
 as a fact about the user's data. The mock now matches the resolver, and the test
 asserts the transcript read was actually called, which is the assertion that
 would have caught the rot.
+
+---
+
+## 16. Phase 2, Click 3 — document selection and CTD section placement (2026-09-08)
+
+**Session prompt:** wire document selection and CTD section placement; placement
+persists to the database at precise section granularity — 3.2.S.4.2 must survive
+as 3.2.S.4.2, not collapse to the heading level; report which surface owns this;
+stop when JM can click it.
+
+**Status: JM can click it.** Screenshots in `docs/reports/wo9-click3/`.
+
+### Which surface owns it
+
+`client/src/concept2cure/v2/surfaces/AuthoringPlaceIntoFiling.tsx`, the
+"Place into filing" dialog inside the document editor
+(`DocumentAuthoring.tsx`). It writes through `PUT /api/submissions/sequences/
+:seqId/leaves` → `upsertLeaf` — the same write the Submission Center Builder
+makes, and the choke point every other placement path funnels through (AnA's
+`place_into_sequence`, the IND lifecycle filing routes, CMC placement, the
+Module 1 forms panel).
+
+### The precision question, answered
+
+Precise codes DO survive the database: `section_code` is stored verbatim, and a
+leaf placed at `3.2.S.4.2` reads back as `3.2.S.4.2`. The collapse to
+`m3-2-s-drug-substance` at the backbone ELEMENT is correct and required — the
+eCTD DTD defines no `m3-2-s-4` element, so subsections attach as leaves under
+their nearest defined heading, which `ich-headings.ts` already documents.
+
+What was not true is everything around it.
+
+### The defect this uncovered
+
+The packager derived a leaf's MODULE and FOLDER from the raw `section_code`
+string:
+
+```ts
+if (leaf.ctdSection.startsWith('1')) { …Module 1 regional folder… }
+else relPath = `m${leaf.ctdSection.charAt(0)}/${sectionDashed}/…`;
+```
+
+`section_code` carries two spellings in this codebase. Module 2–5 callers write
+`3.2.S.4.2`. **Every Module 1 filing path writes the `m`-prefixed form** —
+`withTransmittalPair` emits `m1.1` and `m1.2` for the transmittal pair on every
+lifecycle sequence, the IND filing routes write `m1.12.4` and `m1.13`, and the
+forms panel (§14) places a sponsor's signed FDA form at `m1.1`.
+
+`'m1.1'.startsWith('1')` is **false**. So each of those took the Module 2–5
+branch and landed at `mm/m1-1/…` — a top-level folder no eCTD layout defines —
+with the backbone href pointing there. Six more sites made the same
+determination the same way, including the two filters that decide which leaves
+are written into the regional backbone and which into `index.xml`: an `m1.1`
+leaf was **left out of the regional backbone and swept into `index.xml`** as
+though it were a Module 2–5 document.
+
+The most-filed documents in the product — the Module 1 transmittal form and
+cover letter of every IND sequence — were the ones going to the wrong place.
+
+### What changed
+
+1. **One rule, `leafPackagePath`.** A pure exported function returning
+   `{ relPath, href, backboneDir }`, canonicalising the section first, used by
+   both the normal and the lifecycle-delete branch (which had its own copy of
+   the same broken logic). `isModule1Section` replaces the six raw
+   `startsWith('1')` checks.
+2. **`normalizeCtdCode` moved to `shared/regulatory/section-code.ts`,** with a
+   new `ctdFolderSlug`. Its docstring already called it "the one normalisation
+   point on the transmit path" — nothing on that path had ever called it. Now
+   the packager's layout, the write boundary and the placement dialog's preview
+   all apply the same rule, because three copies is how they disagree.
+   `section-to-ctd.ts` re-exports it, so every existing importer is untouched.
+3. **The write boundary refuses a section code that cannot be filed at.**
+   `upsertLeaf` already refused an unplaceable `document_table`; the section
+   code — which decides where the document lands — was `z.string().min(1).max(64)`
+   and stored verbatim. Now a value that is not code-shaped, or is a bare module
+   (`3` is a container, never a leaf home), is refused with a sentence naming it.
+   The value is still stored EXACTLY as given: readers match on the spelling
+   that was written (the IND checklist looks for `m1.1.1`), so canonicalising
+   the stored value would silently detach them from their own rows.
+4. **The dialog says where a document will file, before anything is written.**
+   The section code was a free text input with no feedback and a placeholder
+   suggesting `m1/us/1.2` — a value that used to become a folder name. It now
+   shows "Files as 3.2.S.4.2 at m3/3-2-s-4-2/", canonicalises what was typed,
+   and refuses an unusable code with the Place button disabled — so no filing
+   snapshot is created for a code the server will reject.
+
+### Deliberately NOT done — the gate is narrow, and here is why
+
+`isPlaceableCtdCode` would have been the stricter gate. It refuses four codes
+**this product itself writes**: `m1.5`, `m1.7`, `m1.9` and `m1.13` — the last
+being where `persistAnnualReport` files the 312.33 IND annual report. Adding
+that gate would refuse the product's own filings, so the write boundary checks
+code SHAPE only. The mismatch is real and is reported below.
+
+### Verified
+
+```
+leafPackagePath / isModule1Section     14 unit cases, seen failing first
+package layout, real ZIP              m1/us/1-1/form-fda-1571.pdf present,
+                                      no mm/ anywhere, m3/3-2-s-4-2/ at full
+                                      depth, the form in us-regional.xml and
+                                      NOT in index.xml — failed before the fix
+upsertLeaf section gate               refuses 6 shapes, accepts all 15 codes
+                                      the product writes, stores them verbatim
+placement dialog                      6 cases, all seen failing against the
+                                      previous dialog
+whole server + routes + journeys      1372 files / 14051 tests   pass
+typecheck (both configs)              0 errors
+```
+
+Browser, against the real database (`/concept2cure/document-authoring` → Place
+into filing):
+
+```
+3.2.S.4.2   → Files as 3.2.S.4.2 at m3/3-2-s-4-2/.
+3.2.s.4.2   → Files as 3.2.S.4.2 at m3/3-2-s-4-2/.      (one section, one folder)
+m1.2        → Files as 1.2 in the regional Module 1 folder (1-2/).
+m1/us/1.2   → "m1/us/1.2" is not a CTD section code…     Place disabled
+3           → Module 3 on its own is a container…        Place disabled
+```
+
+And through the real API, against the real database:
+
+```
+PUT …/sequences/3/leaves {"sectionCode":"3.2.S.4.2"} → leaf 3, section_code = '3.2.S.4.2'
+PUT … "m1/us/1.2" | "3" | "cover letter"             → 400, each naming the value
+
+submission_leaves for the demo IND sequence 0000:
+  2 | m1.1      | Form FDA 1571 (sponsor-completed)   ← Click 2
+  3 | 3.2.S.4.2 | Impurities specification            ← this click
+```
+
+Both spellings, side by side, and both now package correctly.
+
+### Found on the way, not changed — for JM
+
+Two are regulatory decisions, not code ones, so this session did not guess:
+
+- **The IND annual report files at `m1.13`, which is a CONTAINER in FDA's
+  published Module 1 table.** The published leaves are `1.13.1`…`1.13.8`
+  ("summary for nonclinical studies", "summary of safety information", …). A
+  leaf at bare `1.13` has no published home. Which of those an annual report
+  belongs at is JM's call. Same shape for `m1.5`, `m1.7`, `m1.9`.
+- **`IND_SAFETY_REPORT_SECTION = 'm1.12.4'`** (`ind-sequence-validation.ts:58`),
+  but the vendored FDA context-of-use list says `us_1.12.4` is **"request for
+  comments and advice"**. A 21 CFR 312.32 fifteen-day safety report filed there
+  would reach FDA labelled as a request for advice. Worth confirming against
+  FDA's current M1 table before anything is filed.
+
+Environment, not a defect: the snapshot step of the dialog (`POST
+/api/coauthor/documents`) fails on this sandbox because `coauthor_documents`
+carries an `embedding` column and there is no pgvector here — the same gap §13
+recorded. The dialog reported it exactly right: "The filing snapshot could not
+be created … Nothing was placed." No placement was claimed. On a database with
+pgvector the chain completes; the leaf write itself is proven above through the
+same route the dialog calls.
+
+### For JM
+
+Open a document in **Document authoring**, click **Place into filing**, choose
+**Vorelinib · KIT-mutant GIST (IND)** and sequence **0000**, and type a section
+code. The line under the box is the click: it tells you the canonical code and
+the exact folder the document will ship in, before you commit — and refuses
+anything that has no home.

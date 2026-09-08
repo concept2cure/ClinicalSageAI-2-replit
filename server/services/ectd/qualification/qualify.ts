@@ -39,7 +39,7 @@ import { validateFdaCriteria, fdaCriteriaFallbackEnabled } from '../external-val
 import { resolveExternalValidator, runExternalValidation } from '../external-validator';
 import type { EctdRegion } from '../external-validator/types';
 import { verifyChecksumManifest } from '../checksum-manifest';
-import { resolveDtdDir } from '../dtd-bundler';
+import { resolveDtdDir, listVendoredDtds } from '../dtd-bundler';
 import { resolveSchemaDir, RPS_MESSAGE_XSD } from '../schema-bundler';
 import {
   writeGoldenLeaves,
@@ -157,21 +157,135 @@ function tally(name: string, ran: boolean, findings: Array<{ severity: string; m
   };
 }
 
-/** Run xmllint well-formedness (and DTD validity when a DTD is present) on a
- *  backbone file inside the unzipped tree. */
-async function validateBackboneFile(packageDir: string, relPath: string): Promise<ValidatorRunReport[]> {
-  const filePath = path.join(packageDir, relPath);
-  const out: ValidatorRunReport[] = [];
-  const wf = await checkWellFormed(filePath, true);
-  out.push(tally(`xmllint well-formed (${relPath})`, wf.ran, wf.errors.map((m) => ({ severity: wf.valid ? 'info' : 'error', message: m }))));
-  // DTD validation only meaningful when the DTDs are vendored into util/dtd/.
-  const dtdDir = path.join(packageDir, 'util', 'dtd');
-  const hasDtds = await fs.readdir(dtdDir).then((f) => f.some((n) => n.endsWith('.dtd'))).catch(() => false);
-  if (hasDtds) {
-    const dtd = await validateAgainstDtd(filePath);
-    out.push(tally(`xmllint DTD (${relPath})`, dtd.ran, dtd.valid ? [] : dtd.errors.map((m) => ({ severity: 'error', message: m }))));
+/**
+ * What a backbone's own DOCTYPE declares, as a discriminated result.
+ *
+ * The system id is relative to the backbone (index.xml → `util/dtd/…`;
+ * m1/us/us-regional.xml → `../../util/dtd/…`), so it is resolved from the
+ * backbone's own directory, exactly as xmllint resolves it.
+ *
+ * EVERY non-`declared` outcome is a DEFECT, not an absence: an eCTD backbone
+ * must reference the grammar it is written to, and that reference must resolve
+ * to a file the package itself ships. Collapsing them to `null` (as the first
+ * cut of the per-backbone activation did) makes a packager regression — a
+ * dropped DOCTYPE line — indistinguishable from a clean run.
+ */
+type BackboneDoctype =
+  | { kind: 'declared'; absPath: string; fileName: string; systemId: string }
+  /** The file was read but carries no `<!DOCTYPE …>` at all. */
+  | { kind: 'no-doctype' }
+  /** A DOCTYPE is present but declares no parseable `SYSTEM "…"` identifier. */
+  | { kind: 'no-system-id' }
+  /** The system id is an absolute URI (http:, file:, …): the grammar is fetched
+   *  from outside the package, so the package is not self-contained. */
+  | { kind: 'external-uri'; systemId: string }
+  /** The system id resolves outside the package directory. */
+  | { kind: 'outside-package'; systemId: string }
+  /** The backbone itself could not be read. */
+  | { kind: 'unreadable'; reason: string };
+
+async function referencedDtd(packageDir: string, relPath: string): Promise<BackboneDoctype> {
+  let xml: string;
+  try {
+    xml = await fs.readFile(path.join(packageDir, relPath), 'utf8');
+  } catch (err) {
+    return { kind: 'unreadable', reason: err instanceof Error ? err.message : String(err) };
   }
-  return out;
+  if (!/<!DOCTYPE\s/i.test(xml)) return { kind: 'no-doctype' };
+  // Stop the scan at `[` so an internal subset cannot be mistaken for a system
+  // id, and accept either quote style (the packager emits double quotes; a
+  // single-quoted DOCTYPE is still a valid declaration and must not read as
+  // "no DTD declared").
+  const m = /<!DOCTYPE[^>[]*\sSYSTEM\s+(?:"([^"]+)"|'([^']+)')/i.exec(xml);
+  const systemId = m?.[1] ?? m?.[2];
+  if (!systemId) return { kind: 'no-system-id' };
+  if (/^[a-z][a-z0-9+.-]*:/i.test(systemId)) return { kind: 'external-uri', systemId };
+  const absPath = path.resolve(path.dirname(path.join(packageDir, relPath)), systemId);
+  // Containment: a system id that climbs out of the package would validate
+  // against a DTD the shipped ZIP does not carry — certifying a package that is
+  // not self-contained, on a build machine that happens to have the file.
+  const rel = path.relative(path.resolve(packageDir), absPath);
+  if (rel === '' || rel.startsWith('..') || path.isAbsolute(rel)) {
+    return { kind: 'outside-package', systemId };
+  }
+  return { kind: 'declared', absPath, fileName: path.basename(systemId), systemId };
+}
+
+/** The error message for each non-`declared` DOCTYPE outcome. One sentence of
+ *  fact, then what it means for the package. */
+function doctypeDefect(relPath: string, d: Exclude<BackboneDoctype, { kind: 'declared' }>): string {
+  switch (d.kind) {
+    case 'no-doctype':
+      return `${relPath} declares no DOCTYPE. An eCTD backbone must reference the DTD it is written to (<!DOCTYPE … SYSTEM "util/dtd/…">); DTD validity cannot be attempted without it.`;
+    case 'no-system-id':
+      return `${relPath} has a DOCTYPE with no parseable SYSTEM identifier, so no DTD can be resolved for it.`;
+    case 'external-uri':
+      return `${relPath} declares an EXTERNAL DTD (SYSTEM "${d.systemId}"): the package does not ship the grammar it references and is not self-contained.`;
+    case 'outside-package':
+      return `${relPath} declares SYSTEM "${d.systemId}", which resolves outside the package directory — the shipped package does not contain that DTD.`;
+    case 'unreadable':
+      return `${relPath} could not be read (${d.reason}), so its DOCTYPE could not be examined.`;
+  }
+}
+
+export interface BackboneValidation {
+  reports: ValidatorRunReport[];
+  /** Set when DTD validity could NOT be attempted because the DTD this
+   *  backbone's DOCTYPE names is not in the package. Reported, never silent. */
+  dtdSkipped: { relPath: string; dtd: string } | null;
+}
+
+/**
+ * Run xmllint well-formedness on a backbone, plus DTD validity when — and only
+ * when — the DTD that backbone's OWN DOCTYPE names is present in the package.
+ *
+ * Activation used to be "does util/dtd/ hold any *.dtd at all?". That is
+ * all-or-nothing across regions, and vendoring is not: the acquisition runbook
+ * works agency by agency, so the ICH + FDA pair lands before EMA/PMDA/HC. Under
+ * the old test a partial drop switched DTD validation ON for every region, and
+ * xmllint --valid then reported "Validation failed: no DTD found !" against
+ * each backbone whose DTD was legitimately not vendored yet — rendering an
+ * un-acquired artifact as a validation FAILURE and failing the whole
+ * qualification. Deciding per backbone lets each region light up exactly when
+ * its own DTD arrives, and says so when it has not.
+ *
+ * Three outcomes, three different rows — never silence:
+ *   • DOCTYPE resolves to a DTD IN the package  → `xmllint DTD (…)` runs;
+ *   • DOCTYPE resolves to a DTD NOT vendored yet → `dtdSkipped`, stated in the
+ *     run notes (an un-acquired artifact, not a failure);
+ *   • no usable DOCTYPE at all (absent, unparseable, external, or escaping the
+ *     package) → a FAILING `backbone DOCTYPE (…)` row. That case is a packager
+ *     regression and must fail the qualification, exactly as it did under the
+ *     old all-or-nothing activation.
+ *
+ * Exported for the negative tests: the DOCTYPE is written by the packager, so a
+ * backbone without one cannot be produced through `qualifyV3`'s inputs.
+ */
+export async function validateBackboneFile(packageDir: string, relPath: string): Promise<BackboneValidation> {
+  const filePath = path.join(packageDir, relPath);
+  const reports: ValidatorRunReport[] = [];
+  const wf = await checkWellFormed(filePath, true);
+  reports.push(tally(`xmllint well-formed (${relPath})`, wf.ran, wf.errors.map((m) => ({ severity: wf.valid ? 'info' : 'error', message: m }))));
+
+  // The DOCTYPE row is ALWAYS emitted, pass or fail. A backbone that declares no
+  // usable DTD is a defect and must be reported as one — never an early return
+  // that leaves the report byte-identical to a clean run (which is what a
+  // dropped DOCTYPE line used to look like once activation became per-backbone).
+  const referenced = await referencedDtd(packageDir, relPath);
+  if (referenced.kind !== 'declared') {
+    reports.push(tally(`backbone DOCTYPE (${relPath})`, true, [
+      { severity: 'error', message: doctypeDefect(relPath, referenced) },
+    ]));
+    return { reports, dtdSkipped: null };
+  }
+  reports.push(tally(`backbone DOCTYPE (${relPath})`, true, []));
+
+  const dtdPresent = await fs.access(referenced.absPath).then(() => true).catch(() => false);
+  if (!dtdPresent) return { reports, dtdSkipped: { relPath, dtd: referenced.fileName } };
+
+  const dtd = await validateAgainstDtd(filePath);
+  reports.push(tally(`xmllint DTD (${relPath})`, dtd.ran, dtd.valid ? [] : dtd.errors.map((m) => ({ severity: 'error', message: m }))));
+  return { reports, dtdSkipped: null };
 }
 
 /**
@@ -208,6 +322,25 @@ async function readEmittedLeafOps(
   return leaves;
 }
 
+/**
+ * The note that states exactly which backbone was NOT DTD-validated and which
+ * DTD it is waiting on. A skipped check must never read as a passed one, and
+ * "no DTDs at all" and "some regions' DTDs not acquired yet" are different
+ * facts about the run — so they read differently.
+ */
+async function dtdSkipNote(skips: Array<{ relPath: string; dtd: string }>): Promise<string> {
+  const vendored = await listVendoredDtds();
+  const lead = vendored.length === 0
+    ? 'No DTDs vendored (assets/ectd-dtd/*.dtd); '
+    : `Partial DTD acquisition (${vendored.length} vendored); `;
+  return (
+    lead +
+    `DTD *validity* is skipped for ${skips.map((sk) => `${sk.relPath} (needs ${sk.dtd})`).join(', ')} — ` +
+    'that DTD is not in the package. Those backbones remain well-formed-validated. ' +
+    'Drop the licensed DTD(s) into assets/ectd-dtd/ (or $ECTD_DTD_DIR) to enable it.'
+  );
+}
+
 /** Qualify one region for eCTD v3.2.2. */
 export async function qualifyV3(region: Region, workDir: string): Promise<QualificationReport> {
   const notes: string[] = [];
@@ -222,12 +355,19 @@ export async function qualifyV3(region: Region, workDir: string): Promise<Qualif
 
   // 2. Validators.
   const validators: ValidatorRunReport[] = [];
-  validators.push(...(await validateBackboneFile(pkgDir, 'index.xml')));
+  const indexBackbone = await validateBackboneFile(pkgDir, 'index.xml');
+  validators.push(...indexBackbone.reports);
   // Regional Module-1 subfolder + backbone filename per region (fda→us/eu/jp/ca).
   const m1Sub: Partial<Record<Region, string>> = { fda: 'us', ema: 'eu', pmda: 'jp', ca: 'ca' };
   const sub = m1Sub[region] ?? region;
   const regionalRel = `m1/${sub}/${sub}-regional.xml`;
-  validators.push(...(await validateBackboneFile(pkgDir, regionalRel)));
+  const regionalBackbone = await validateBackboneFile(pkgDir, regionalRel);
+  validators.push(...regionalBackbone.reports);
+  /** Backbones whose DTD validity could NOT be attempted because the DTD their
+   *  own DOCTYPE names is not in the package. Stated in the notes below — a
+   *  skipped check must never read as a passed one. */
+  const dtdSkips = [indexBackbone.dtdSkipped, regionalBackbone.dtdSkipped]
+    .filter((sk): sk is NonNullable<typeof sk> => sk !== null);
   if (fdaCriteriaFallbackEnabled() && (region === 'fda' || region === 'ema' || region === 'pmda')) {
     const rep = await validateFdaCriteria({ packageDir: pkgDir, region });
     validators.push(tally(`fda-criteria-subset`, rep.ran, rep.findings));
@@ -242,17 +382,20 @@ export async function qualifyV3(region: Region, workDir: string): Promise<Qualif
     notes.push('No external eValidator configured; xmllint + FDA-criteria subset are the accepted validators for this run.');
   }
 
-  // 2b. Vendored-DTD integrity: verify the drop-point checksum manifest so a
-  //     tampered/stale DTD is refused. When no DTDs are vendored, this is a
-  //     trivially-ok no-op (nothing to verify) and DTD *validity* above is skipped.
-  const dtdManifest = await verifyChecksumManifest(resolveDtdDir(), 'checksums.txt', ['.dtd']);
+  // 2b. Vendored-artifact integrity: verify the drop-point checksum manifest so
+  //     a tampered, stale or unrecorded file is refused. The drop-point holds
+  //     BOTH the DTDs and the agency stylesheets, and checksums.txt records all
+  //     seven (see its header) — so verifying '.dtd' alone left the *.xsl
+  //     unexamined while this row still reported "passed", even though every
+  //     index.xml renders through util/style/ectd-2-0.xsl and the FDA backbone
+  //     through us-regional.xsl. When nothing is vendored this is a
+  //     trivially-ok no-op (nothing to verify).
+  const dtdManifest = await verifyChecksumManifest(resolveDtdDir(), 'checksums.txt', ['.dtd', '.xsl']);
   validators.push(tally('dtd-checksum-manifest', true, [
-    ...dtdManifest.mismatched.map((m) => ({ severity: 'error', message: `DTD ${m.fileName} hash mismatch (tampered/stale).` })),
-    ...dtdManifest.unlistedFiles.map((f) => ({ severity: 'error', message: `Vendored DTD ${f} is not recorded in checksums.txt.` })),
+    ...dtdManifest.mismatched.map((m) => ({ severity: 'error', message: `Vendored ${m.fileName} hash mismatch (tampered/stale).` })),
+    ...dtdManifest.unlistedFiles.map((f) => ({ severity: 'error', message: `Vendored file ${f} is not recorded in checksums.txt.` })),
   ]));
-  if (dtdManifest.verified.length === 0) {
-    notes.push('No DTDs vendored (assets/ectd-dtd/*.dtd); DTD *validity* is skipped — drop the licensed DTDs in to enable it. Backbones remain well-formed-validated.');
-  }
+  if (dtdSkips.length) notes.push(await dtdSkipNote(dtdSkips));
 
   // 2c. STF cross-linking + intra-package cross-reference resolution evidence
   //     (surfaced by the packager on the bundle).
@@ -275,7 +418,7 @@ export async function qualifyV3(region: Region, workDir: string): Promise<Qualif
   const lcDir = path.join(outDir, `${app}-0001-${region}`);
   const lcRegional = await validateBackboneFile(lcDir, regionalRel);
   const lcChecksum = await verifyZipChecksums(lcBundle.path);
-  const lcPassed = lcRegional.every((v) => v.passed) && lcChecksum.ok;
+  const lcPassed = lcRegional.reports.every((v) => v.passed) && lcChecksum.ok;
 
   // Read the operation attributes ACTUALLY emitted into the amendment's
   // backbones (index.xml for m2–5, the regional backbone for m1), so the report
