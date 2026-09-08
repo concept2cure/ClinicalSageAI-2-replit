@@ -15,6 +15,7 @@ import { analyzeText } from '../openai-service';
 import { createScopedLogger } from '../utils/logger.js';
 import { powerTwoSampleMeans } from '../services/stats/assurance';
 import { csvRow } from '../utils/csv';
+import { serverError } from '../lib/api-response';
 
 const log = createScopedLogger('analytics-routes');
 
@@ -144,11 +145,7 @@ router.post('/upload-protocol', upload.single('file'), async (req, res) => {
         }
       } catch (error) {
         log.error('PDF extraction error:', error);
-        return res.status(500).json({
-          success: false,
-          message: 'Failed to extract text from PDF',
-          error: (error as Error).message,
-        });
+        return serverError(res, log, 'uploading protocol', error);
       }
     } else if (
       [
@@ -186,11 +183,7 @@ For best results, please use PDF format.`;
       analysisOutput = result.stdout;
     } catch (error) {
       log.error('Analysis execution error:', error);
-      return res.status(500).json({
-        success: false,
-        message: 'Failed to analyze protocol content',
-        error: (error as Error).message,
-      });
+      return serverError(res, log, 'uploading protocol', error);
     }
 
     // Score the protocol confidence
@@ -285,11 +278,7 @@ For best results, please use PDF format.`;
     res.json(result);
   } catch (error) {
     log.error('Error processing protocol:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Error processing protocol',
-      error: (error as Error).message,
-    });
+    return serverError(res, log, 'uploading protocol', error);
   }
 });
 
@@ -334,11 +323,7 @@ router.post('/analyze-protocol-text', async (req, res) => {
       fs.writeFileSync(tempFilePath, text);
     } catch (error) {
       log.error('Error saving temporary file:', error);
-      return res.status(500).json({
-        success: false,
-        message: 'Error processing protocol text',
-        error: (error as Error).message,
-      });
+      return serverError(res, log, 'analysing protocol text', error);
     }
 
     // Call the deep CSR analyzer
@@ -363,11 +348,7 @@ router.post('/analyze-protocol-text', async (req, res) => {
       }
 
       log.error('Analysis execution error:', error);
-      return res.status(500).json({
-        success: false,
-        message: 'Failed to analyze protocol text',
-        error: (error as Error).message,
-      });
+      return serverError(res, log, 'analysing protocol text', error);
     }
 
     // Score the protocol confidence
@@ -454,11 +435,7 @@ router.post('/analyze-protocol-text', async (req, res) => {
     res.json(result);
   } catch (error) {
     log.error('Error analyzing protocol text:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Error analyzing protocol text',
-      error: (error as Error).message,
-    });
+    return serverError(res, log, 'analysing protocol text', error);
   }
 });
 
@@ -989,10 +966,7 @@ For each recommendation, include specific citations to relevant regulatory guide
     res.json(response);
   } catch (error) {
     log.error('Error in demo analysis:', error);
-    res.status(500).json({
-      error: 'Failed to analyze protocol',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    });
+    return serverError(res, log, 'saving demo analysis', error);
   }
 });
 
@@ -1163,10 +1137,7 @@ router.get('/dashboard', async (req, res) => {
     });
   } catch (error) {
     log.error('Error generating analytics dashboard:', error);
-    res.status(500).json({
-      error: 'Failed to generate analytics dashboard',
-      message: (error as Error).message,
-    });
+    return serverError(res, log, 'loading dashboard', error);
   }
 });
 
@@ -1442,10 +1413,7 @@ router.get('/export', async (req, res) => {
     }
   } catch (error) {
     log.error('Error exporting analytics report:', error);
-    res.status(500).json({
-      error: 'Failed to export analytics report',
-      message: (error as Error).message,
-    });
+    return serverError(res, log, 'exporting', error);
   }
 });
 export default router;
