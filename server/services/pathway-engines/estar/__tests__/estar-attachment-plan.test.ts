@@ -355,13 +355,15 @@ describe('createDeviceAttachmentResolver', () => {
     const calls: string[] = [];
     return {
       calls,
-      query: async (text: string) => {
+      // Generic, like DeviceContentClient.query<T> — a non-generic fake cannot
+      // satisfy the interface, so the resolver could not be typed against it.
+      query: async <T = Record<string, unknown>>(text: string): Promise<{ rows: T[] }> => {
         calls.push(text.replace(/\s+/g, ' ').trim().slice(0, 40));
         if (/FROM c2c_documents/.test(text)) {
-          return { rows: [{ id: 'doc-1', doc_type: 'k510' }] };
+          return { rows: [{ id: 'doc-1', doc_type: 'k510' }] as unknown as T[] };
         }
-        if (/FROM c2c_document_sections/.test(text)) return { rows: sections };
-        return { rows: [] };
+        if (/FROM c2c_document_sections/.test(text)) return { rows: sections as unknown as T[] };
+        return { rows: [] as T[] };
       },
     };
   }
