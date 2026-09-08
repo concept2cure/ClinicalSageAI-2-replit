@@ -11,7 +11,7 @@ import { createIndPgliteDb, type IndPgliteDb } from '../../db/pglite-harness';
 
 const holder = vi.hoisted(() => ({ db: null as any }));
 vi.mock('../../db', () => ({ get db() { return holder.db; } }));
-vi.mock('../../services/auditService', () => ({ default: { logAction: vi.fn(async () => {}) } }));
+vi.mock('../../services/auditService', () => ({ default: { logAction: vi.fn(async (..._a: any[]) => ({ persisted: true, chained: true, tamperProof: true })) } }));
 
 import masterDataRouter from '../ind-master-data.routes';
 

@@ -1,0 +1,56 @@
+{
+  "errors": [],
+  "steps": {
+    "landingAt": {
+      "role": "listbox",
+      "label": "Apps",
+      "header": "Apps — choose one to name it in your message",
+      "options": [
+        "@Biostatistics designer",
+        "@Biostatistics workbench"
+      ],
+      "active": 0,
+      "inViewport": true
+    },
+    "landingAtValue": "@Biostatistics workbench ",
+    "landingMenuAfterEnter": null,
+    "railSlash": {
+      "role": "listbox",
+      "label": "Commands",
+      "header": "Commands — choose one to start your message with",
+      "options": [
+        "/powerSample size and power from the deterministic engine"
+      ],
+      "active": 0,
+      "inViewport": true
+    },
+    "railSlashValue": "/power ",
+    "railSlashMidSentence": null,
+    "plusSlash": {
+      "value": "/",
+      "menu": {
+        "role": "listbox",
+        "label": "Commands",
+        "header": "Commands — choose one to start your message with",
+        "options": [
+          "/riskRisk profile and submission risk for this project",
+          "/readinessHow ready this project is for submission",
+          "/precedentRelevant regulatory precedents",
+          "/draftDraft a section or artifact — name it after the comman",
+          "/preflightPreflight check on the current section or module",
+          "/claimsEvidence chain and unsupported claims",
+          "/recommendTop priority actions to take next",
+          "/nextWhat to work on next, by impact"
+        ],
+        "active": 5,
+        "inViewport": true
+      }
+    },
+    "sentBodies": [
+      {
+        "url": "http://localhost:5000/api/ana-ri/stream",
+        "body": "{\"message\":\"@biostats size a two-arm superiority study\",\"language\":\"en\",\"context\":{\"screen\":\"home\",\"screenName\":\"home\"},\"conversation_history\":[],\"effort_level\":\"balanced\"}"
+      }
+    ]
+  }
+}

@@ -58,6 +58,16 @@ declare global {
         role?: string;
         roles?: string[];
         organizationId?: number | string;
+        /**
+         * organizations.uuid for the caller's org — the tenant key every
+         * NON-public schema (cortex.*, innovation.*, ai.*, compliance.*,
+         * identity.*) is stored against. Set from a verified membership row by
+         * middleware/orgMembership.ts. Declared here because it was previously
+         * typed only on `tenantContext` below — where the client's x-org-uuid
+         * header wrote it — and not on the verified identity, which is how a
+         * tenant key came to be treated as supplemental context.
+         */
+        organizationUuid?: string | null;
         permissions?: string[];
         tenantId?: number | string;
         industryMode?: string | null;
@@ -112,8 +122,38 @@ export function tenantContextMiddleware(req: Request, res: Response, next: NextF
     });
   }
 
-  // Non-sensitive supplemental context may come from headers
-  const organizationUuid = (req.headers['x-org-uuid'] as string) || existing.organizationUuid || null;
+  // SECURITY: the organization UUID is a TENANT KEY, not supplemental context.
+  // Every non-public schema — cortex.*, innovation.*, ai.*, compliance.*,
+  // identity.* — keys its rows on organizations.uuid rather than on the integer
+  // organizations.id that public-schema tables use. This line used to read
+  //
+  //     const organizationUuid = (req.headers['x-org-uuid'] as string) || ...
+  //
+  // under the heading "non-sensitive supplemental context", so the client chose
+  // the tenant key for half the database — while the docblock above this function
+  // stated that org identity comes from the JWT and never from headers. The rule
+  // was kept for organizationId and broken for organizationUuid.
+  //
+  // It follows the same rule as organizationId now: verified identity, or nothing.
+  // `existing` is preserved because requireTenantContext derives it from the JWT
+  // too; no middleware writes a header-derived UUID onto it any more.
+  const jwtOrganizationUuid =
+    typeof req.user?.organizationUuid === 'string' && req.user.organizationUuid
+      ? req.user.organizationUuid
+      : null;
+
+  // security-allow: impersonation-detection
+  const headerOrgUuid = (req.headers['x-org-uuid'] as string) || null;
+  if (headerOrgUuid && headerOrgUuid !== jwtOrganizationUuid) {
+    logger.warn('Tenant impersonation attempt blocked (organization UUID)', {
+      jwtOrgUuid: jwtOrganizationUuid,
+      headerOrgUuid,
+      userId: req.user?.id ?? 'unknown',
+      path: req.path,
+    });
+  }
+
+  const organizationUuid = jwtOrganizationUuid || existing.organizationUuid || null;
   const clientWorkspaceId = (req.headers['x-client-id'] as string) || existing.clientWorkspaceId || null;
   const module = (req.headers['x-module'] as string) || existing.module || null;
 

@@ -385,6 +385,9 @@ export async function listProgramApplicability(programId: string): Promise<Appli
  *   - missing: standards the recommender says 'applies' but no row exists
  *   - non_conformant / needs_evidence: rows in those states
  *   - missing_evidence: applies-rows whose primary_evidence_id is null
+ *
+ * The last two are counts of rows ON FILE, so they are null — not 0 — until the
+ * program has at least one applicability row; see `assessed`.
  */
 export async function applicabilityGapReport(programId: string, profile: ProgramProfile) {
   const [recommendations, current] = await Promise.all([
@@ -408,15 +411,30 @@ export async function applicabilityGapReport(programId: string, profile: Program
       !c.applicability.primaryEvidenceId
   );
 
+  // `nonConformant` and `missingEvidence` are filtered from the rows ON FILE.
+  // When a program has no applicability row, both are empty for the same reason
+  // everything else is unknown: the program has never been assessed against the
+  // standards. Reporting 0 for them reads as "nothing is non-conformant and
+  // nothing lacks evidence" — a conformance clearance over a store that has not
+  // been written, on the pillar a 510(k) reviewer reads first. They are null
+  // until something has been assessed, and `assessed` says which state this is.
+  //
+  // `missing` needs no such guard: with nothing on file, every standard the
+  // recommender says applies IS missing, which is exactly true.
+  const assessed = current.length > 0;
+
   return {
     programId,
+    assessed,
     missing,
     nonConformant,
     missingEvidence,
     summary: {
+      assessed,
+      examinedCount: current.length,
       missingCount: missing.length,
-      nonConformantCount: nonConformant.length,
-      missingEvidenceCount: missingEvidence.length,
+      nonConformantCount: assessed ? nonConformant.length : null,
+      missingEvidenceCount: assessed ? missingEvidence.length : null,
     },
   };
 }

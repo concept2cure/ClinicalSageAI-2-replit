@@ -1,7 +1,8 @@
 # Automated Span-Level Source Attribution — Design
 
-**Status:** Phases 1–3 implemented (the authoring draft-accept path is a live,
-tested span-grain source writer); Phases 4–6 designed and pending.
+**Status:** Phases 1–4 implemented (the authoring draft-accept path is a live,
+tested span-grain source writer, recording both verified quotes and model-asserted
+paraphrase); Phases 5–6 designed and pending.
 **Author:** platform GA / traceability workstream
 **Scope:** make "which uploaded document backs this generated text" a recorded,
 character-level fact across every document the platform builds, for every client
@@ -238,11 +239,28 @@ The rejected option (b), an opt-in `persist:true` on `ai/draft`, would have turn
 a pure generator into a writer; keeping generation and persistence separate is what
 lets accept re-verify verbatim against the exact chunks the draft came from.
 
-**Phase 4 — layer model-asserted paraphrase (optional, marked as assertion).**
-Structured-output generation that tags spans with the source id they derived
-from; recorded with `usage='paraphrased'` so the panel shows "derived from" vs
-"quoted from" honestly. Gated behind the verified-quote path always running
-first.
+**Phase 4 — layer model-asserted paraphrase (IMPLEMENTED).** Two parts:
+
+- **4a (foundation).** `attributeAssertedParaphraseSpans` (source-attribution.ts)
+  mirrors `attributeQuotedSpans`, but the haystacks are the model's asserted
+  quotes rather than source content: a clause is recorded `usage='paraphrased'`
+  only if it appears inside a claim AND the claimed source was actually retrieved.
+  `enforceSourceAndAuthorLineage` gained an optional `assertions` param and now
+  layers quote → paraphrase → author (verified quotes always win; a clause already
+  quoted is never re-recorded as an assertion), persisting quoted ∪ paraphrased in
+  one `replaceSourceSpans` call so the retire step keeps both usages. Coverage
+  still counts verified quotes only; paraphrase is a claim, not coverage.
+- **4b (generation).** `POST /sections/:id/ai/draft` now asks the model for a JSON
+  envelope `{ content, attributions: [{ quote, src }] }` (`jsonMode`, tolerant
+  parse that degrades to plain prose so a malformed reply never breaks drafting).
+  Each `src` (the 1-based [SRC-n] position) is resolved to a canonical
+  `cre_evidence_sources.id` at the generation boundary and parked with the draft
+  (new `assertions` JSONB column, migration `20260906c`). At accept, the parked
+  claims flow to the gate, which records the still-present, still-retrieved ones as
+  `paraphrased` spans — so the Data Origins panel shows "derived from" vs "quoted
+  from" honestly. Proven by unit tests (the pure primitive), PGlite integration
+  tests (the gate + the store), and route tests (SRC-mapping + the plain-prose
+  fallback).
 
 **Phase 5 — propagate to every generation surface.**
 Roll the Phase-3 pattern to the other content producers (AnA tool executor,

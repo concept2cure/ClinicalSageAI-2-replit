@@ -144,7 +144,7 @@ describe('ClientPortal — live overview (fixture-free)', () => {
   it('offline/500 → honest couldn\'t-load state, never a fixture or sample pill', async () => {
     apiRequest.mockRejectedValue(new Error('network down'));
     mount();
-    expect(await screen.findByText(/couldn't load your workspace/i)).toBeTruthy();
+    expect(await screen.findByText(/workspace could not be loaded/i)).toBeTruthy();
     expect(document.querySelector('.c2c-sample-tag')).toBeNull();
     expect(screen.queryByText(/Sample data/i)).toBeNull();
     expect(document.body.textContent).not.toMatch(/Meridian|Vertex|MER-\d/);

@@ -136,24 +136,59 @@ describe('war-game engine (synthetic auditor)', () => {
       });
       // overall = round((50 + 85 + 95 + 100*4) / 7) = round(630/7) = 90
       expect(r.overallScore).toBe(90);
-      expect(r.overallAssessment).toBe('audit_ready');
+      // Score is 90, but there are 2 CRITICAL findings — the severity cap forbids
+      // an audit-ready badge over an open critical (the fail-open this fixes).
+      expect(r.overallAssessment).toBe('significant_gaps');
+      expect(r.regulatoryRiskLevel).toBe('high');
     });
 
-    it('maps score bands to assessment + risk level consistently', () => {
-      // Verify the band boundaries by asserting the derived fields agree with score.
-      const cases = [
-        { fire: [] as string[] }, // 100
-        { fire: ['c1', 'c2', 'w1', 'i1'] }, // 90
+    it('derives assessment + risk from the score, then caps by finding severity', () => {
+      // The score band is the starting point; an open critical/warning then caps
+      // the verdict so the headline never outruns the findings.
+      const cases: Array<{
+        fire: string[];
+        score: number;
+        assessment: string;
+        risk: string;
+      }> = [
+        // No findings: pure score band, no cap.
+        { fire: [], score: 100, assessment: 'audit_ready', risk: 'low' },
+        // Score 90 but 2 criticals → capped to significant_gaps / high.
+        { fire: ['c1', 'c2', 'w1', 'i1'], score: 90, assessment: 'significant_gaps', risk: 'high' },
       ];
       for (const c of cases) {
         const r = runWarGame('protocol', 'flow-1', { node1: { __fire__: c.fire } });
-        const s = r.overallScore;
-        const expectedAssessment =
-          s >= 85 ? 'audit_ready' : s >= 70 ? 'needs_work' : s >= 50 ? 'significant_gaps' : 'not_ready';
-        const expectedRisk = s >= 85 ? 'low' : s >= 70 ? 'moderate' : s >= 50 ? 'high' : 'critical';
-        expect(r.overallAssessment).toBe(expectedAssessment);
-        expect(r.regulatoryRiskLevel).toBe(expectedRisk);
+        expect(r.overallScore).toBe(c.score);
+        expect(r.overallAssessment).toBe(c.assessment);
+        expect(r.regulatoryRiskLevel).toBe(c.risk);
       }
+    });
+
+    it('a SINGLE critical finding caps a 96-score filing off "audit_ready / low"', () => {
+      // One critical: completeness 100-25=75, other six dimensions 100 →
+      // mean = round(675/7) = 96. The pre-fix verdict read audit_ready/low over
+      // an open critical blocker; the cap now forbids it.
+      const r = runWarGame('protocol', 'flow-1', { node1: { __fire__: ['c1'] } });
+      expect(r.overallScore).toBe(96);
+      expect(r.findings.filter((f) => f.severity === 'critical')).toHaveLength(1);
+      expect(r.overallAssessment).not.toBe('audit_ready');
+      expect(r.overallAssessment).toBe('significant_gaps');
+      expect(r.regulatoryRiskLevel).not.toBe('low');
+      expect(r.regulatoryRiskLevel).toBe('high');
+    });
+
+    it('an unresolved WARNING (no critical) caps off "audit_ready", down to needs_work / moderate', () => {
+      // One warning: consistency 100-15=85, others 100 → mean = round(685/7) = 98.
+      const r = runWarGame('protocol', 'flow-1', { node1: { __fire__: ['w1'] } });
+      expect(r.overallScore).toBeGreaterThanOrEqual(85);
+      expect(r.overallAssessment).toBe('needs_work');
+      expect(r.regulatoryRiskLevel).toBe('moderate');
+    });
+
+    it('info-only findings do NOT cap the verdict (still audit_ready / low)', () => {
+      const r = runWarGame('protocol', 'flow-1', { node1: { __fire__: ['i1'] } });
+      expect(r.overallAssessment).toBe('audit_ready');
+      expect(r.regulatoryRiskLevel).toBe('low');
     });
   });
 

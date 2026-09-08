@@ -22,7 +22,7 @@ Neither is ever rendered as a pass.
 
 | Item | Observed | Note |
 |---|---|---|
-| Node runtime | `v22.22.2` | declared `>=20.0.0` |
+| Node runtime | `v22.22.2` | declared `>=22.0.0 <23.0.0` |
 | Migration files present | 472 | count on disk; whether they are *applied* needs a database and is not claimed here |
 | CI gates declared | 89 | `ci:*` / `check:*` scripts |
 | ghostscript | **absent** | PDF/A + XML toolchain (runbook B15) |

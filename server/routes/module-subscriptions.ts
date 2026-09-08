@@ -10,6 +10,7 @@
  * Endpoints:
  * GET  /catalog          — Full module catalog with availability status
  * GET  /enabled          — Only enabled modules for the org
+ * GET  /navigation       — Per-destination entitlement verdicts for the nav rail
  * GET  /license          — Org license info (tier, quotas)
  * POST /provision        — Auto-provision modules based on tier (admin only)
  * PUT  /:moduleId/toggle — Enable/disable a module (admin only)
@@ -34,6 +35,10 @@ import {
   generateWorkRecommendations,
   addToWorkQueue,
 } from '../services/user-intelligence.js';
+import { resolveNavEntitlements } from '../services/entitlements/navigation-entitlements.js';
+import { resolveMasterAdmin } from '../services/entitlements/master-admin.js';
+import { writeModuleGrant } from '../services/entitlements/module-grants.js';
+import { authenticateToken } from '../middleware/auth.js';
 import { pool } from '../db.js';
 
 import { createScopedLogger } from '../utils/logger.js';
@@ -85,6 +90,38 @@ router.get('/enabled', async (req: Request, res: Response) => {
   } catch (error) {
     logger.error('enabled error', { err: error instanceof Error ? error.message : String(error) });
     return res.status(500).json({ error: 'Failed to load enabled modules' });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// GET /navigation — Per-destination entitlement verdicts for the nav rail
+//
+// The rail asks one question on load ("which of these may this organization
+// open, and if not, why not") and gets one answer, resolved from persisted
+// state rather than a client-side constant. `authenticateToken` is explicit
+// here — unlike /catalog and /license, this handler reads the identity (email
+// and roles) to decide the platform-owner grant, so the request must have been
+// through real authentication rather than merely carrying a tenant context.
+// ─────────────────────────────────────────────────────────────────────────────
+router.get('/navigation', authenticateToken, async (req: Request, res: Response) => {
+  try {
+    const orgId = (req as any).tenantContext?.organizationId || (req as any).user?.organizationId;
+    if (!orgId) {
+      return res.status(401).json({ error: 'Organization context required' });
+    }
+    return res.json(
+      await resolveNavEntitlements(Number(orgId), {
+        // resolveMasterAdmin, not isMasterAdmin: the sync check cannot see a
+        // designation made in the Access Management console, and answering "no"
+        // here would grey the rail for somebody the owner has designated.
+        masterAdmin: await resolveMasterAdmin(req),
+      }),
+    );
+  } catch (error) {
+    logger.error('navigation error', {
+      err: error instanceof Error ? error.message : String(error),
+    });
+    return res.status(500).json({ error: 'Failed to resolve navigation entitlements' });
   }
 });
 
@@ -180,17 +217,26 @@ router.put('/:moduleId/toggle', async (req: Request, res: Response) => {
       });
     }
 
-    // Upsert subscription
+    /* One canonical grant writer — services/entitlements/module-grants.ts.
+       This was a second inline upsert of the same row, and it did not touch
+       `expires_at`. On an organization whose trial of this module had lapsed,
+       the row already holds a past date: writing `enabled = true` beside it
+       produces a grant that is instantly expired, so entitlement resolution
+       ignores the override, the rail stays locked, and the response below still
+       says the module was enabled successfully.
+
+       `expiresAt: null` is stated rather than defaulted. An administrator
+       turning a module on means a perpetual grant, and saying so is what clears
+       the stale date. Opening a time-limited grant is a different, deliberate
+       act with its own endpoint. */
     const userId = (req as any).user?.id || (req as any).userId;
-    await pool.query(
-      `INSERT INTO module_subscriptions (organization_id, module_id, enabled, enabled_at, enabled_by)
-       VALUES ($1, $2, $3, NOW(), $4)
-       ON CONFLICT (organization_id, module_id) DO UPDATE SET
-         enabled = $3,
-         ${enabled ? 'enabled_at = NOW(), enabled_by = $4' : 'disabled_at = NOW(), disabled_by = $4'},
-         updated_at = NOW()`,
-      [Number(orgId), moduleId, enabled !== false, String(userId)]
-    );
+    await writeModuleGrant({
+      organizationId: Number(orgId),
+      moduleId,
+      enabled: enabled !== false,
+      actorEmail: userId == null ? null : String(userId),
+      expiresAt: null,
+    });
 
     return res.json({
       moduleId,

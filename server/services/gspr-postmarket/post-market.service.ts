@@ -25,6 +25,7 @@ import {
   type InsertPostMarketDocument,
 } from '../../../shared/schema/gspr-postmarket';
 import { publishRegulatoryChange } from '../living-file/publish';
+import { DRAFT_SENTINEL } from './scaffold-sentinel';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Validator
@@ -57,7 +58,18 @@ function checkContentField(
 ): boolean {
   if (!content || typeof content !== 'object') return false;
   const v = (content as Record<string, unknown>)[key];
-  return typeof v === 'string' && v.trim().length > 0;
+  if (typeof v !== 'string' || v.trim().length === 0) return false;
+  // Presence is not sufficiency. The generators fill every required field with
+  // non-empty guidance prose that embeds the scaffold sentinel (e.g. "… DRAFT —
+  // state the evidence-based conclusion." or "DRAFT — FACTUAL FIELD — insert the
+  // actual volume of sales …"). A field still carrying that marker is
+  // unspecialised boilerplate, not real regulatory content — treat it as ABSENT
+  // so passesGate stays false and the document cannot be approved / Part-11
+  // locked until the sponsor replaces it with the real figure/conclusion. This
+  // is self-clearing: once the sponsor overwrites the field, the marker is gone
+  // and the field counts.
+  if (v.includes(DRAFT_SENTINEL)) return false;
+  return true;
 }
 
 const F = (

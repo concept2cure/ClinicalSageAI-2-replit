@@ -153,9 +153,24 @@ export default [
         HTMLImageElement: 'readonly',
         HTMLAnchorElement: 'readonly',
         HTMLSpanElement: 'readonly',
+        HTMLOptionElement: 'readonly',
+        HTMLHeadingElement: 'readonly',
         Element: 'readonly',
         Node: 'readonly',
         NodeList: 'readonly',
+        // Standard DOM interfaces the config omitted — genuine browser globals
+        // used in type positions across client + jsdom tests (a config gap, not
+        // undefined variables). Declaring them removes false-positive no-undef.
+        DOMRect: 'readonly',
+        DOMRectList: 'readonly',
+        Range: 'readonly',
+        Text: 'readonly',
+        FileList: 'readonly',
+        ReadableStream: 'readonly',
+        Storage: 'readonly',
+        Window: 'readonly',
+        ErrorEvent: 'readonly',
+        BeforeUnloadEvent: 'readonly',
         // Web Worker globals
         worker: 'readonly',
         self: 'readonly',
@@ -349,6 +364,14 @@ export default [
     rules: {
       'no-var': 'off',
       'no-undef': 'off',
+      // A kit screen is deliberately one file: the whole surface, readable top
+      // to bottom, is the artefact a designer hands over. Function length and
+      // branch count are product-code concerns and say nothing about a
+      // prototype; the rules that catch real defects (hooks order, unused
+      // names, redeclared globals) stay on.
+      'max-lines': 'off',
+      'max-lines-per-function': 'off',
+      complexity: 'off',
     },
   },
 ];

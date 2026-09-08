@@ -72,7 +72,7 @@ vi.mock('../../services/evidence-sufficiency/evidence-sufficiency.service', () =
 }));
 
 vi.mock('../../services/auditService', () => ({
-  default: { logAction: vi.fn().mockResolvedValue(undefined) },
+  default: { logAction: vi.fn().mockResolvedValue({ persisted: true, chained: true, tamperProof: true }) },
 }));
 
 let app: express.Express;

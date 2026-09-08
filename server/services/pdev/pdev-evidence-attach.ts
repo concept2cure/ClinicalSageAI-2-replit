@@ -46,6 +46,17 @@ export interface PdevEvidenceAttachInput {
   /** Default 'moderate'. */
   strength?: 'strong' | 'moderate' | 'weak';
   rationale?: string;
+  /**
+   * §11.10(e) reason-for-change, typed by the operator in the governed confirm
+   * dialog under the words "Captured verbatim in the audit log".
+   *
+   * It was not captured. `EvidencePicker` passed `onConfirm={() => onAttach()}`
+   * — silently assignable to a one-argument prop — so the `ConfirmResult.reason`
+   * never left the component, and this service had no field to receive it. The
+   * audit row recorded who, what and when, with no why, while the operator
+   * believed their justification had been recorded.
+   */
+  reasonForChange?: string;
 }
 
 export interface PdevEvidenceDetachInput {
@@ -183,6 +194,7 @@ export class PdevEvidenceAttachService {
         evidenceObjectId: input.evidenceObjectId,
         evidenceLinkId: linkId,
         linkType: input.linkType ?? 'supports',
+        reasonForChange: input.reasonForChange ?? null,
       },
     });
 

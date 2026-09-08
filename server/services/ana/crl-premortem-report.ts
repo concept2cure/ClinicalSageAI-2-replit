@@ -219,6 +219,13 @@ export function estimateApprovalProbability(
  * top, highest-severity risks draw the strongest available citations. When the
  * corpus is empty, every risk grounds on its own regulatory basis (marked
  * `fromCorpus: false`) so no risk is ever uncited.
+ *
+ * IMPORTANT: the pairing is POSITIONAL, not topical — PrecedentCitation carries
+ * no category/pattern to match a finding on, so precedent i is not verified as
+ * evidentially specific to finding i. The renderer therefore discloses this on
+ * every corpus-grounded citation ("drawn from the available precedent pool; not
+ * verified as topically specific"), so a reviewer never mistakes list order for
+ * an established evidentiary link.
  */
 export function bindRisksToGrounding(
   findings: PremortemFinding[],
@@ -382,7 +389,9 @@ export function renderArtifactMarkdown(artifact: CrlPremortemArtifact): string {
       lines.push(`- Regulatory basis: ${r.regulatoryBasis}`);
       lines.push(
         `- Grounding precedent: ${r.grounding.citationLabel}` +
-          (r.grounding.fromCorpus ? '' : ' (regulatory basis — no matched precedent; see DATA-OP note)'),
+          (r.grounding.fromCorpus
+            ? ' (drawn from the available precedent pool; not verified as topically specific to this finding)'
+            : ' (regulatory basis — no matched precedent; see DATA-OP note)'),
       );
       lines.push('');
     }

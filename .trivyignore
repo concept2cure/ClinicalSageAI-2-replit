@@ -27,10 +27,12 @@ CVE-2026-45829
 # 400 response). Range >=7.12.0 <8.3.0; the only fix is the react-router 8.x
 # major. This app routes with wouter and uses react-router-dom only on a couple
 # of auth screens — no RSC / data-router server actions — so the RSC CSRF path
-# is not reachable. Trivy scans package-lock.json separately from npm audit, so
-# this must be listed here in ADDITION to ACCEPTED_GHSA_IDS in
-# scripts/ci/audit-with-allowlist.mjs. The other react-router advisory (route-
-# matching DoS) is genuinely fixed by the react-router-dom 7.18.1 bump.
+# is not reachable. Trivy scans package-lock.json separately from npm audit;
+# npm-audit-side High/Critical governance lives in the reviewed risk ledger
+# (docs/security/dependency-risk-ledger.json, enforced by
+# scripts/ci/check-dependency-risk.mjs), so this suppression is Trivy's mirror
+# of that decision record, not a second authority. The other react-router
+# advisory (route-matching DoS) is genuinely fixed by react-router-dom 7.18.1.
 # TODO(security): adopt react-router 8.x in a dedicated upgrade PR, then drop this.
 GHSA-qwww-vcr4-c8h2
 
@@ -39,12 +41,15 @@ GHSA-qwww-vcr4-c8h2
 # solely by pptxgenjs@4.0.1 (which pins "image-size": "^1.2.1"). NO fixed version
 # exists — the latest published image-size is 2.0.2, still in-range, and 2.x is
 # outside pptxgenjs's range — so this cannot be remediated by a bump/override
-# (Trivy reports no fixed version). Accepted as a low, non-request-path DoS:
-# image-size reads dimensions of images embedded into generated PPTX decks
-# (first-party export content), not an endpoint parsing attacker-supplied
-# ICNS/JXL/HEIF. Trivy scans package-lock.json separately from npm audit, so
-# these must be listed here IN ADDITION to the GHSA ids in ACCEPTED_GHSA_IDS
-# (scripts/ci/audit-with-allowlist.mjs).
+# (Trivy reports no fixed version). Disposition: UNREACHABLE, per the reviewed
+# risk ledger (docs/security/dependency-risk-ledger.json, rows
+# GHSA-w3rx-r6r6-pgpr / GHSA-5p2g-fcmc-qvqq): the production PPTX generator
+# uses no image-capable pptxgenjs API and the shipped pptxgenjs Node bundle
+# never imports image-size, proven on every push by
+# scripts/ci/check-pptx-image-reachability.mjs and the require.cache runtime
+# test. Trivy scans package-lock.json separately from npm audit, so this
+# suppression mirrors the ledger decision for Trivy's scanner; the ledger is
+# the single decision record and both expire/are re-reviewed together.
 # TODO(security): drop when image-size ships a fix >2.0.2 and pptxgenjs widens
 # its range (or pptxgenjs is replaced). Re-check with `npm ls image-size --all`.
 CVE-2025-71329

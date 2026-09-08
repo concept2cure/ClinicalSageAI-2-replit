@@ -1,8 +1,9 @@
 /**
- * PMCF Plan Generator — the authored DRAFT content must satisfy the EXISTING
- * validatePmcfPlan completeness checker (the generator integrates with the
- * post-market model rather than duplicating it), be device-parameterised,
- * deterministic, and honestly marked DRAFT.
+ * PMCF Plan Generator — the authored DRAFT content is unspecialised scaffold, so
+ * it must NOT pass the validatePmcfPlan gate on presence alone; it passes only
+ * once the sponsor replaces every field with real content. The generator
+ * integrates with the post-market model rather than duplicating it, is
+ * device-parameterised, deterministic, and honestly marked DRAFT.
  */
 
 import { describe, it, expect } from 'vitest';
@@ -29,9 +30,20 @@ describe('buildPmcfPlanContent', () => {
     }
   });
 
-  it('the generated content PASSES the existing validatePmcfPlan checker', () => {
+  it('raw generated DRAFT scaffold does NOT pass the gate (fail closed)', () => {
     const result = validateDocument(asPmcfDoc(buildPmcfPlanContent(base)));
-    // No PMCFP-001 (missing content) findings; gate passes on completeness.
+    // Every field is present but still DRAFT scaffold — presence is not
+    // sufficiency, so the gate must refuse it.
+    expect(result.findings.filter(f => f.code === 'PMCFP-001').length).toBeGreaterThan(0);
+    expect(result.passesGate).toBe(false);
+  });
+
+  it('passes the gate once the sponsor specialises every field (no DRAFT sentinel)', () => {
+    const scaffold = buildPmcfPlanContent(base);
+    const specialised = Object.fromEntries(
+      Object.keys(scaffold).map(k => [k, `Sponsor-specialised final content for ${k}.`])
+    );
+    const result = validateDocument(asPmcfDoc(specialised));
     expect(result.findings.filter(f => f.code === 'PMCFP-001')).toHaveLength(0);
     expect(result.passesGate).toBe(true);
   });

@@ -13,11 +13,7 @@ import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 // The rail's co-author context read — keep it offline/empty so the rail renders
 // without a backend (the messages under test are passed as props).
 vi.mock('../dataConnect', () => ({
-  useLive: () => ({ data: null, sample: true, loading: false }),
   connected: () => false,
-  SampleTag: ({ sample }: { sample: boolean }) => (
-    <span data-testid="sample-tag">{sample ? 'Sample data' : 'Live'}</span>
-  ),
 }));
 
 import { AnaRail, type AnaMessage } from '../Shell';

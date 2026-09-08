@@ -360,6 +360,40 @@
   --accent-subtle:           rgba(217, 119, 87, 0.12);
   --accent-muted:            #4a2e24;
 
+  /* ── The semantic alias layer, re-resolved for dark ─────────────────────────
+     These are declared at :root as `var()` indirections, and a custom property
+     is substituted where it is DECLARED, not where it is used. The dark block
+     you are reading matches `.dark` / `[data-theme="dark"]` — which the app
+     puts on the SHELL element, never on <html> — so the :root copies kept the
+     light values for the entire dark theme. They are the aliases the comment
+     above them calls "what C2C product code uses", so the effect was not
+     subtle: the global heading rule, which paints h1 and h2 with var(--ink),
+     put #141413 on the #262624 page. Measured in Chromium across the
+     captured surfaces, that alone was 30 of the 45 remaining dark-mode
+     contrast failures.
+
+     Re-declaring here re-runs each substitution in a scope where the dark
+     values are the ones in view. The right-hand sides are deliberately
+     IDENTICAL to the :root ones — this is not a second palette to keep in
+     step, it is the same indirection evaluated in the correct context. */
+  --canvas:                  var(--background);
+  --canvas-muted:            var(--sidebar);
+  --canvas-sunken:           var(--bg-200);
+  --canvas-inverse:          var(--bg-inverse);
+
+  --ink:                     var(--text-100);
+  --ink-body:                var(--text-200);
+  --ink-muted:               var(--text-300);
+  --ink-subtle:              var(--text-400);
+  --ink-disabled:            var(--text-500);
+  --ink-inverse:             var(--text-000);
+
+  --border-focus:            var(--accent-main-100);
+  --accent-hover:            var(--accent-main-200);
+
+  --info:                    var(--ai);
+  --info-muted:              var(--ai-muted);
+
   --shadow-xs:               0 1px 2px 0 rgb(0 0 0 / 0.30);
   --shadow-sm:               0 1px 3px 0 rgb(0 0 0 / 0.35), 0 1px 2px -1px rgb(0 0 0 / 0.35);
   --shadow-md:               0 4px 6px -1px rgb(0 0 0 / 0.40), 0 2px 4px -2px rgb(0 0 0 / 0.40);

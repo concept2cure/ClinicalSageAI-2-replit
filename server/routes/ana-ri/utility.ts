@@ -17,7 +17,8 @@ import {
 } from '../../services/ana-ri/enforcement.js';
 import { decisionLifecycleService } from '../../services/decision-lifecycle-service.js';
 import { getSinceLastVisit } from '../../services/ana/since-last-visit.js';
-import { getAgentActivity } from '../../services/ana/agent-activity.js';
+import { loadAgentActivity } from '../../services/ana/agent-activity.js';
+import { resolveDriveState } from '../../services/ana-ri/live-drive.js';
 import { executeCommands, type CommandContext } from '../../services/ana-ri/command-executor.js';
 import {
   requiresPart11Signoff,
@@ -30,6 +31,7 @@ import {
 } from '../../services/ana-ri/governed-action-signoff.js';
 import { handleSealVerifiedVersion } from './seal-verified.js';
 import auditService from '../../services/auditService.js';
+import { createScopedLogger } from '../../utils/logger.js';
 import {
   sendSuccess,
   sendError,
@@ -37,6 +39,8 @@ import {
   isDatabaseAvailable,
   extractRequestContext,
 } from './shared.js';
+
+const log = createScopedLogger('ana-ri/utility');
 
 /** Register utility endpoints on the given router. */
 export function mountUtilityRoutes(router: Router): void {
@@ -138,6 +142,21 @@ export function mountUtilityRoutes(router: Router): void {
     try {
       const { project_id, section_code, module_code, limit } = req.query;
 
+      // project_id arrives from the query string, so it names a project the
+      // caller may not own. Decision records live in an in-memory Map, not a
+      // FORCE'd RLS table, so nothing behind this handler will scope the read
+      // — authenticateToken proves who is asking, not what they may see.
+      const { numericOrgId } = extractRequestContext(req);
+      if (!numericOrgId) {
+        return sendError(
+          res,
+          403,
+          'An organization context is required to read a decision trail.',
+          null,
+          'TENANT_CONTEXT_REQUIRED'
+        );
+      }
+
       if (!project_id || typeof project_id !== 'string') {
         return sendError(
           res,
@@ -158,12 +177,14 @@ export function mountUtilityRoutes(router: Router): void {
         sectionCode: typeof section_code === 'string' ? section_code : undefined,
         moduleCode: typeof module_code === 'string' ? module_code : undefined,
         limit: safeLimit,
+        organizationId: numericOrgId,
       });
 
       const decisionAwareStatus = decisionLifecycleService.computeDecisionAwareStatus(
         project_id,
         {
           moduleCode: typeof module_code === 'string' ? module_code : undefined,
+          organizationId: numericOrgId,
         }
       );
 
@@ -215,8 +236,9 @@ export function mountUtilityRoutes(router: Router): void {
   // ─────────────────────────────────────────────────────────────────────────
   // GET /api/ana-ri/agent-activity — the live agent surface: the tenant's
   // active / stalled / recently-finished background deep investigations, for a
-  // live dashboard panel to poll. Org-scoped; fail-soft (empty summary, not an
-  // error, when nothing is running or the table is absent).
+  // live dashboard panel to poll. Org-scoped. Fails CLOSED: a read that throws
+  // (table absent, database down) is a 500 the panel renders as a failed
+  // read, never an empty queue presented as "nothing is running".
   // ─────────────────────────────────────────────────────────────────────────
   router.get('/agent-activity', async (req: Request, res: Response) => {
     const { numericOrgId } = extractRequestContext(req);
@@ -224,10 +246,41 @@ export function mountUtilityRoutes(router: Router): void {
       return sendError(res, 401, 'Organization context required', null, 'NO_ORG_CONTEXT');
     }
     try {
-      const summary = await getAgentActivity(numericOrgId);
+      const summary = await loadAgentActivity(numericOrgId);
       return sendSuccess(res, summary);
     } catch (error: any) {
       return sendError(res, 500, error?.message || 'Failed to load agent activity', null, 'AGENT_ACTIVITY_FAILED');
+    }
+  });
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // GET /api/ana-ri/live-drive/state — the pre-emptive Live Drive verdict, so
+  // the toggle can show an honest lock (with the real required tier) BEFORE
+  // the person burns a turn discovering it. Runs the exact per-turn decision
+  // (resolveDriveState — entitlement + ENTITLEMENTS_ENFORCE mode), so the
+  // toggle and the stream can never disagree. Advisory only: every drive turn
+  // still resolves its own drive_state; this endpoint grants nothing.
+  // ─────────────────────────────────────────────────────────────────────────
+  router.get('/live-drive/state', async (req: Request, res: Response) => {
+    const { numericOrgId } = extractRequestContext(req);
+    if (!numericOrgId) {
+      return sendError(res, 401, 'Organization context required', null, 'NO_ORG_CONTEXT');
+    }
+    try {
+      const state = await resolveDriveState(true, numericOrgId);
+      return sendSuccess(res, {
+        enabled: state.enabled,
+        ...(state.reason ? { reason: state.reason } : {}),
+        ...(state.requiredTier !== undefined ? { requiredTier: state.requiredTier } : {}),
+      });
+    } catch (error: any) {
+      return sendError(
+        res,
+        500,
+        error?.message || 'Failed to resolve Live Drive state',
+        null,
+        'LIVE_DRIVE_STATE_FAILED'
+      );
     }
   });
 
@@ -287,19 +340,36 @@ export function mountUtilityRoutes(router: Router): void {
     }
 
     // §11.10(e): record the sign-off to the audit trail before executing.
-    try {
-      await auditService.logAction({
-        tenantId: numericOrgId,
+    // No governed mutation without a durable audit record.
+    //
+    // This was a try/catch whose catch returned SIGNOFF_AUDIT_FAILED — and it
+    // had never once run. `auditService.logAction` swallows both of its
+    // persistence sections internally and RESOLVES NORMALLY on failure; it is
+    // documented never to reject. So the abort below was unreachable, and a
+    // governed Part 11 action whose audit row was lost proceeded to execute
+    // while the code read as though it refused to. The strictest-looking guard
+    // on the e-signature path was the one doing nothing.
+    //
+    // logAction returns AuditWriteResult, so the refusal can be real: read
+    // `persisted` and abort on it.
+    const signoffAudit = await auditService.logAction({
+      tenantId: numericOrgId,
+      userId,
+      action: eSignRequired ? 'ana.governed_action.esign' : 'ana.governed_action.reason',
+      resourceType: 'ana_command',
+      resourceId: command,
+      ipAddress: (req.headers['x-forwarded-for'] as string | undefined)?.split(',')[0]?.trim() || req.socket?.remoteAddress || undefined,
+      userAgent: req.headers['user-agent'] as string | undefined,
+      details: { command, reasonForChange, eSignRequired, secondFactorVerified },
+    });
+    if (!signoffAudit.persisted) {
+      log.error('Governed action aborted: sign-off audit row was not persisted', {
+        command,
+        organizationId: numericOrgId,
         userId,
-        action: eSignRequired ? 'ana.governed_action.esign' : 'ana.governed_action.reason',
-        resourceType: 'ana_command',
-        resourceId: command,
-        ipAddress: (req.headers['x-forwarded-for'] as string | undefined)?.split(',')[0]?.trim() || req.socket?.remoteAddress || undefined,
-        userAgent: req.headers['user-agent'] as string | undefined,
-        details: { command, reasonForChange, eSignRequired, secondFactorVerified },
+        eSignRequired,
+        reason: signoffAudit.error ?? 'no durable store accepted the row',
       });
-    } catch (auditErr: any) {
-      // No governed mutation without a durable audit record.
       return sendError(res, 500, 'Could not record the sign-off in the audit trail; action aborted', null, 'SIGNOFF_AUDIT_FAILED');
     }
 

@@ -902,7 +902,7 @@ export function initializeSocketServer(server: Server) {
 
       // Process field update through SmartFieldLinking
       try {
-        await smartFieldLinking.updateField({
+        const outcome = await smartFieldLinking.updateField({
           organizationId,
           projectId,
           source,
@@ -913,6 +913,26 @@ export function initializeSocketServer(server: Server) {
           timestamp: new Date(),
           metadata: { projectId, organizationId }
         });
+
+        // Broadcast ONLY what was actually stored. Both propagation paths end
+        // in `if (rows.length > 0) { …update… }`, so a value with no
+        // destination row is dropped silently — and broadcasting it anyway put
+        // that value on every other client in the room while the database held
+        // something else, until the next reload silently reverted it.
+        if (outcome.status !== 'applied') {
+          socket.emit('field-update-not-stored', {
+            field,
+            value: data.value,
+            reason: outcome.status,
+            targets: outcome.targets,
+            message: outcome.status === 'not-linked'
+              ? 'This field has no linked destination configured, so nothing was synchronized.'
+              : outcome.status === 'failed'
+                ? outcome.reason
+                : 'No record exists yet to hold this value, so it was not stored.',
+          });
+          return;
+        }
 
         // Broadcast field update to subscribers of this project in THIS org
         io?.to(roomName).emit('field-updated', {
@@ -927,7 +947,11 @@ export function initializeSocketServer(server: Server) {
         });
 
         // Send confirmation to the sender
-        socket.emit('field-update-success', { field, value: data.value });
+        socket.emit('field-update-success', {
+          field,
+          value: data.value,
+          written: outcome.written,
+        });
       } catch (error) {
         log.error('Field update error:', error);
         socket.emit('field-update-error', {

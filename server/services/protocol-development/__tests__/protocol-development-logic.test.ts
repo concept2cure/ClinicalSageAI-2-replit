@@ -74,3 +74,43 @@ describe('nextVersion', () => {
     expect(nextVersion('garbage', true)).toBe('1.0');
   });
 });
+
+/**
+ * `requiredTotal === 0 ? 100`, feeding `readyToFinalize` — the gate the service
+ * enforces on finalize. A protocol whose section list is empty produced no
+ * per-section critical findings, so for any kind whose other checks pass (an
+ * objective recorded, and no eligibility or visit-schedule requirement) an
+ * unsectioned protocol scored 100% and finalized. Nothing had been checked.
+ */
+describe('evaluateCompleteness — an unsectioned protocol is not a finished one', () => {
+  it('publishes no percentage and does not finalize', () => {
+    const r = evaluateCompleteness({
+      sections: [],
+      objectiveCount: 1,
+      inclusionCount: 1,
+      exclusionCount: 1,
+      scheduleVisitCount: 1,
+      kind: 'iacuc',
+    });
+
+    expect(r.requiredCompletionPct).toBeNull();
+    expect(r.readyToFinalize).toBe(false);
+    expect(r.findings.some((f) => f.severity === 'critical' && /no required sections recorded/i.test(f.message))).toBe(true);
+  });
+
+  /* A protocol that HAS its required sections complete still finalizes — the
+     new state must not swallow a real assessment. */
+  it('a fully complete protocol still finalizes', () => {
+    const r = evaluateCompleteness({
+      sections: sectionsAllComplete('iacuc'),
+      objectiveCount: 1,
+      inclusionCount: 1,
+      exclusionCount: 1,
+      scheduleVisitCount: 1,
+      kind: 'iacuc',
+    });
+
+    expect(r.readyToFinalize).toBe(true);
+    expect(r.requiredCompletionPct).toBe(100);
+  });
+});

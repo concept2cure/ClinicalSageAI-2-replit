@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-08-22T22:22:10.771Z",
+  "generatedAt": "2026-09-08T05:34:36.265Z",
   "git": {
-    "sha": "7dbcd9dd5604d01faa0fb150f8666731b51da91c",
+    "sha": "df661212bef56c08615cc5c8e5db9993a5a3cd04",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -10,15 +10,13 @@
     "ceilingLargeBytes": null,
     "ceilingLargeLines": null
   },
-  "managedMirrors": [
-    "design-system/"
-  ],
+  "managedMirrors": [],
   "summary": {
-    "duplicateBasenames": 221,
+    "duplicateBasenames": 209,
     "contentDuplicateGroups": 0,
     "contentDuplicateFiles": 0,
-    "largeFilesByBytes": 38,
-    "largeFilesByLines": 87
+    "largeFilesByBytes": 42,
+    "largeFilesByLines": 95
   },
   "findings": {
     "duplicateBasenames": [
@@ -180,17 +178,11 @@
       },
       {
         "basename": "app",
-        "count": 27,
+        "count": 22,
         "paths": [
           "client/src/App.jsx",
           "client/src/concept2cure/pdev/App.tsx",
           "client/src/concept2cure/quality/App.tsx",
-          "design-system/ui_kits/ana_ri/App.jsx",
-          "design-system/ui_kits/ectd_coauthor/App.jsx",
-          "design-system/ui_kits/home/App.jsx",
-          "design-system/ui_kits/mdx/app.jsx",
-          "design-system/ui_kits/mdx_phase2/App.jsx",
-          "design-system/ui_kits/pdev/App.jsx",
           "server/frontend/app.js",
           "ui_kits/ana_ri/App.jsx",
           "ui_kits/authoring/App.jsx",
@@ -202,6 +194,7 @@
           "ui_kits/intelligence/App.jsx",
           "ui_kits/labeling/app.jsx",
           "ui_kits/mdx/app.jsx",
+          "ui_kits/mdx_phase2/App.jsx",
           "ui_kits/pathway-tabs/app.jsx",
           "ui_kits/pdev/App.jsx",
           "ui_kits/projects/App.jsx",
@@ -209,50 +202,6 @@
           "ui_kits/submission/app.jsx",
           "ui_kits/task-tray/app.jsx",
           "ui_kits/tasking/app.jsx"
-        ]
-      },
-      {
-        "basename": "icons",
-        "count": 17,
-        "paths": [
-          "client/src/concept2cure/components/ana/icons.tsx",
-          "client/src/concept2cure/mdx/icons.tsx",
-          "client/src/concept2cure/pdev/icons.tsx",
-          "client/src/concept2cure/quality/icons.tsx",
-          "client/src/concept2cure/v2/icons.tsx",
-          "design-system/ui_kits/ana_ri/Icons.jsx",
-          "design-system/ui_kits/ectd_coauthor/Icons.jsx",
-          "design-system/ui_kits/home/Icons.jsx",
-          "design-system/ui_kits/mdx/icons.jsx",
-          "design-system/ui_kits/mdx_phase2/Icons.jsx",
-          "design-system/ui_kits/pdev/Icons.jsx",
-          "ui_kits/ana_ri/Icons.jsx",
-          "ui_kits/authoring/Icons.jsx",
-          "ui_kits/ectd_coauthor/Icons.jsx",
-          "ui_kits/home/Icons.jsx",
-          "ui_kits/mdx/icons.jsx",
-          "ui_kits/pdev/Icons.jsx"
-        ]
-      },
-      {
-        "basename": "data",
-        "count": 15,
-        "paths": [
-          "client/src/concept2cure/quality/data.ts",
-          "design-system/ui_kits/home/data.jsx",
-          "design-system/ui_kits/mdx_phase2/data.jsx",
-          "design-system/ui_kits/pdev/data.jsx",
-          "ui_kits/authoring/data.jsx",
-          "ui_kits/biopharma/data.jsx",
-          "ui_kits/cmc/data.jsx",
-          "ui_kits/home/data.jsx",
-          "ui_kits/intelligence/data.jsx",
-          "ui_kits/labeling/data.jsx",
-          "ui_kits/pathway-tabs/data.jsx",
-          "ui_kits/pdev/data.jsx",
-          "ui_kits/risk/data.jsx",
-          "ui_kits/submission/data.jsx",
-          "ui_kits/tasking/data.jsx"
         ]
       },
       {
@@ -296,39 +245,82 @@
         ]
       },
       {
-        "basename": "shell",
-        "count": 8,
+        "basename": "data",
+        "count": 13,
         "paths": [
-          "client/src/concept2cure/v2/Shell.tsx",
-          "design-system/ui_kits/mdx/shell.jsx",
-          "design-system/ui_kits/mdx_phase2/Shell.jsx",
-          "design-system/ui_kits/pdev/Shell.jsx",
-          "ui_kits/authoring/Shell.jsx",
-          "ui_kits/biopharma/shell.jsx",
-          "ui_kits/mdx/shell.jsx",
-          "ui_kits/pdev/Shell.jsx"
+          "client/src/concept2cure/quality/data.ts",
+          "ui_kits/authoring/data.jsx",
+          "ui_kits/biopharma/data.jsx",
+          "ui_kits/cmc/data.jsx",
+          "ui_kits/home/data.jsx",
+          "ui_kits/intelligence/data.jsx",
+          "ui_kits/labeling/data.jsx",
+          "ui_kits/mdx_phase2/data.jsx",
+          "ui_kits/pathway-tabs/data.jsx",
+          "ui_kits/pdev/data.jsx",
+          "ui_kits/risk/data.jsx",
+          "ui_kits/submission/data.jsx",
+          "ui_kits/tasking/data.jsx"
+        ]
+      },
+      {
+        "basename": "icons",
+        "count": 12,
+        "paths": [
+          "client/src/concept2cure/components/ana/icons.tsx",
+          "client/src/concept2cure/mdx/icons.tsx",
+          "client/src/concept2cure/pdev/icons.tsx",
+          "client/src/concept2cure/quality/icons.tsx",
+          "client/src/concept2cure/v2/icons.tsx",
+          "ui_kits/ana_ri/Icons.jsx",
+          "ui_kits/authoring/Icons.jsx",
+          "ui_kits/ectd_coauthor/Icons.jsx",
+          "ui_kits/home/Icons.jsx",
+          "ui_kits/mdx/icons.jsx",
+          "ui_kits/mdx_phase2/Icons.jsx",
+          "ui_kits/pdev/Icons.jsx"
         ]
       },
       {
         "basename": "surfaces",
-        "count": 8,
+        "count": 7,
         "paths": [
           "client/src/concept2cure/v2/surfaces/Surfaces.tsx",
-          "design-system/ui_kits/mdx_phase2/Surfaces.jsx",
-          "design-system/ui_kits/pdev/Surfaces.jsx",
           "ui_kits/biopharma/surfaces.jsx",
           "ui_kits/intelligence/surfaces.jsx",
+          "ui_kits/mdx_phase2/Surfaces.jsx",
           "ui_kits/pdev/Surfaces.jsx",
           "ui_kits/risk/surfaces.jsx",
           "ui_kits/submission/surfaces.jsx"
         ]
       },
       {
-        "basename": "templates",
-        "count": 7,
+        "basename": "shell",
+        "count": 6,
         "paths": [
-          "design-system/ui_kits/mdx/data/templates.js",
-          "design-system/ui_kits/mdx/surfaces/Templates.jsx",
+          "client/src/concept2cure/v2/Shell.tsx",
+          "ui_kits/authoring/Shell.jsx",
+          "ui_kits/biopharma/shell.jsx",
+          "ui_kits/mdx/shell.jsx",
+          "ui_kits/mdx_phase2/Shell.jsx",
+          "ui_kits/pdev/Shell.jsx"
+        ]
+      },
+      {
+        "basename": "evidence",
+        "count": 5,
+        "paths": [
+          "client/src/concept2cure/v2/surfaces/Evidence.tsx",
+          "server/routes/evidence.ts",
+          "server/src/services/reg/evidence.ts",
+          "shared/schema/evidence.ts",
+          "ui_kits/pdev/Evidence.jsx"
+        ]
+      },
+      {
+        "basename": "templates",
+        "count": 5,
+        "paths": [
           "server/routes/c2c/templates.ts",
           "server/routes/templates.ts",
           "server/services/projects/schedule-of-events/templates.ts",
@@ -338,12 +330,10 @@
       },
       {
         "basename": "vault",
-        "count": 7,
+        "count": 5,
         "paths": [
           "client/src/concept2cure/mdx/data/vault.ts",
           "client/src/concept2cure/v2/surfaces/Vault.tsx",
-          "design-system/ui_kits/mdx/data/vault.js",
-          "design-system/ui_kits/mdx/surfaces/Vault.jsx",
           "shared/schema/vault.ts",
           "ui_kits/mdx/data/vault.js",
           "ui_kits/mdx/surfaces/Vault.jsx"
@@ -351,124 +341,12 @@
       },
       {
         "basename": "analytics",
-        "count": 6,
+        "count": 4,
         "paths": [
           ".claude/skills/gstack/scripts/analytics.ts",
           "client/src/concept2cure/mdx/data/analytics.ts",
-          "design-system/ui_kits/mdx/data/analytics.js",
-          "design-system/ui_kits/mdx/surfaces/Analytics.jsx",
           "ui_kits/mdx/data/analytics.js",
           "ui_kits/mdx/surfaces/Analytics.jsx"
-        ]
-      },
-      {
-        "basename": "evidence",
-        "count": 6,
-        "paths": [
-          "client/src/concept2cure/v2/surfaces/Evidence.tsx",
-          "design-system/ui_kits/pdev/Evidence.jsx",
-          "server/routes/evidence.ts",
-          "server/src/services/reg/evidence.ts",
-          "shared/schema/evidence.ts",
-          "ui_kits/pdev/Evidence.jsx"
-        ]
-      },
-      {
-        "basename": "audit",
-        "count": 5,
-        "paths": [
-          "design-system/ui_kits/mdx/data/audit.js",
-          "design-system/ui_kits/mdx/surfaces/Audit.jsx",
-          "server/services/ai-gateway/audit.ts",
-          "ui_kits/mdx/data/audit.js",
-          "ui_kits/mdx/surfaces/Audit.jsx"
-        ]
-      },
-      {
-        "basename": "engineering",
-        "count": 5,
-        "paths": [
-          "client/src/concept2cure/mdx/data/engineering.ts",
-          "design-system/ui_kits/mdx/data/engineering.js",
-          "design-system/ui_kits/mdx/surfaces/Engineering.jsx",
-          "ui_kits/mdx/data/engineering.js",
-          "ui_kits/mdx/surfaces/Engineering.jsx"
-        ]
-      },
-      {
-        "basename": "ivd",
-        "count": 5,
-        "paths": [
-          "client/src/concept2cure/mdx/data/ivd.ts",
-          "design-system/ui_kits/mdx/data/ivd.js",
-          "design-system/ui_kits/mdx/surfaces/Ivd.jsx",
-          "ui_kits/mdx/data/ivd.js",
-          "ui_kits/mdx/surfaces/Ivd.jsx"
-        ]
-      },
-      {
-        "basename": "onboarding",
-        "count": 5,
-        "paths": [
-          "client/src/concept2cure/v2/surfaces/Onboarding.tsx",
-          "design-system/ui_kits/mdx/data/onboarding.js",
-          "design-system/ui_kits/mdx/surfaces/Onboarding.jsx",
-          "ui_kits/mdx/data/onboarding.js",
-          "ui_kits/mdx/surfaces/Onboarding.jsx"
-        ]
-      },
-      {
-        "basename": "postmarket",
-        "count": 5,
-        "paths": [
-          "client/src/concept2cure/mdx/data/postmarket.ts",
-          "design-system/ui_kits/mdx/data/postmarket.js",
-          "design-system/ui_kits/mdx/surfaces/Postmarket.jsx",
-          "ui_kits/mdx/data/postmarket.js",
-          "ui_kits/mdx/surfaces/Postmarket.jsx"
-        ]
-      },
-      {
-        "basename": "programs",
-        "count": 5,
-        "paths": [
-          "client/src/concept2cure/mdx/data/programs.ts",
-          "design-system/ui_kits/mdx/data/programs.js",
-          "server/routes/biopharma/programs.ts",
-          "shared/schema/programs.ts",
-          "ui_kits/mdx/data/programs.js"
-        ]
-      },
-      {
-        "basename": "search",
-        "count": 5,
-        "paths": [
-          "design-system/ui_kits/mdx/data/search.js",
-          "design-system/ui_kits/mdx/surfaces/Search.jsx",
-          "server/integrations/firecrawl/search.ts",
-          "ui_kits/mdx/data/search.js",
-          "ui_kits/mdx/surfaces/Search.jsx"
-        ]
-      },
-      {
-        "basename": "udi",
-        "count": 5,
-        "paths": [
-          "client/src/concept2cure/mdx/data/udi.ts",
-          "design-system/ui_kits/mdx/data/udi.js",
-          "design-system/ui_kits/mdx/surfaces/Udi.jsx",
-          "ui_kits/mdx/data/udi.js",
-          "ui_kits/mdx/surfaces/Udi.jsx"
-        ]
-      },
-      {
-        "basename": "admin",
-        "count": 4,
-        "paths": [
-          "design-system/ui_kits/mdx/data/admin.js",
-          "design-system/ui_kits/mdx/surfaces/Admin.jsx",
-          "ui_kits/mdx/data/admin.js",
-          "ui_kits/mdx/surfaces/Admin.jsx"
         ]
       },
       {
@@ -482,36 +360,6 @@
         ]
       },
       {
-        "basename": "cdx",
-        "count": 4,
-        "paths": [
-          "design-system/ui_kits/mdx/data/cdx.js",
-          "design-system/ui_kits/mdx/surfaces/Cdx.jsx",
-          "ui_kits/mdx/data/cdx.js",
-          "ui_kits/mdx/surfaces/Cdx.jsx"
-        ]
-      },
-      {
-        "basename": "clinical",
-        "count": 4,
-        "paths": [
-          "design-system/ui_kits/mdx/data/clinical.js",
-          "design-system/ui_kits/mdx/surfaces/Clinical.jsx",
-          "ui_kits/mdx/data/clinical.js",
-          "ui_kits/mdx/surfaces/Clinical.jsx"
-        ]
-      },
-      {
-        "basename": "conversations",
-        "count": 4,
-        "paths": [
-          "design-system/ui_kits/mdx/data/conversations.js",
-          "design-system/ui_kits/mdx/surfaces/Conversations.jsx",
-          "ui_kits/mdx/data/conversations.js",
-          "ui_kits/mdx/surfaces/Conversations.jsx"
-        ]
-      },
-      {
         "basename": "db",
         "count": 4,
         "paths": [
@@ -519,6 +367,26 @@
           "server/db.ts",
           "server/lib/db.js",
           "shared/db.ts"
+        ]
+      },
+      {
+        "basename": "device-classification",
+        "count": 4,
+        "paths": [
+          "server/routes/device-classification.ts",
+          "server/services/global-ri/device-classification.ts",
+          "server/services/market-specs/device-classification.ts",
+          "shared/constants/domain/device-classification.ts"
+        ]
+      },
+      {
+        "basename": "device-classification.test",
+        "count": 4,
+        "paths": [
+          "server/routes/__tests__/device-classification.test.ts",
+          "server/services/global-ri/__tests__/device-classification.test.ts",
+          "server/services/market-specs/__tests__/device-classification.test.ts",
+          "shared/constants/domain/__tests__/device-classification.test.ts"
         ]
       },
       {
@@ -552,56 +420,6 @@
         ]
       },
       {
-        "basename": "ivdr",
-        "count": 4,
-        "paths": [
-          "design-system/ui_kits/mdx/data/ivdr.js",
-          "design-system/ui_kits/mdx/surfaces/Ivdr.jsx",
-          "ui_kits/mdx/data/ivdr.js",
-          "ui_kits/mdx/surfaces/Ivdr.jsx"
-        ]
-      },
-      {
-        "basename": "ldt",
-        "count": 4,
-        "paths": [
-          "design-system/ui_kits/mdx/data/ldt.js",
-          "design-system/ui_kits/mdx/surfaces/Ldt.jsx",
-          "ui_kits/mdx/data/ldt.js",
-          "ui_kits/mdx/surfaces/Ldt.jsx"
-        ]
-      },
-      {
-        "basename": "memory",
-        "count": 4,
-        "paths": [
-          "design-system/ui_kits/mdx/data/memory.js",
-          "design-system/ui_kits/mdx/surfaces/Memory.jsx",
-          "ui_kits/mdx/data/memory.js",
-          "ui_kits/mdx/surfaces/Memory.jsx"
-        ]
-      },
-      {
-        "basename": "nav",
-        "count": 4,
-        "paths": [
-          "client/src/concept2cure/mdx/data/nav.ts",
-          "client/src/concept2cure/pdev/data/nav.ts",
-          "design-system/ui_kits/mdx/data/nav.js",
-          "ui_kits/mdx/data/nav.js"
-        ]
-      },
-      {
-        "basename": "notifications",
-        "count": 4,
-        "paths": [
-          "design-system/ui_kits/mdx/data/notifications.js",
-          "design-system/ui_kits/mdx/surfaces/Notifications.jsx",
-          "ui_kits/mdx/data/notifications.js",
-          "ui_kits/mdx/surfaces/Notifications.jsx"
-        ]
-      },
-      {
         "basename": "orchestration",
         "count": 4,
         "paths": [
@@ -612,43 +430,33 @@
         ]
       },
       {
+        "basename": "programs",
+        "count": 4,
+        "paths": [
+          "client/src/concept2cure/mdx/data/programs.ts",
+          "server/routes/biopharma/programs.ts",
+          "shared/schema/programs.ts",
+          "ui_kits/mdx/data/programs.js"
+        ]
+      },
+      {
         "basename": "projects",
         "count": 4,
         "paths": [
           "client/src/concept2cure/v2/surfaces/Projects.tsx",
           "database/schema/projects.ts",
-          "design-system/ui_kits/home/Projects.jsx",
-          "server/routes/c2c/projects.ts"
+          "server/routes/c2c/projects.ts",
+          "ui_kits/home/Projects.jsx"
         ]
       },
       {
-        "basename": "qsub",
+        "basename": "shared",
         "count": 4,
         "paths": [
-          "design-system/ui_kits/mdx/data/qsub.js",
-          "design-system/ui_kits/mdx/surfaces/QSub.jsx",
-          "ui_kits/mdx/data/qsub.js",
-          "ui_kits/mdx/surfaces/QSub.jsx"
-        ]
-      },
-      {
-        "basename": "quality",
-        "count": 4,
-        "paths": [
-          "design-system/ui_kits/mdx/data/quality.js",
-          "design-system/ui_kits/mdx/surfaces/Quality.jsx",
-          "ui_kits/mdx/data/quality.js",
-          "ui_kits/mdx/surfaces/Quality.jsx"
-        ]
-      },
-      {
-        "basename": "samd",
-        "count": 4,
-        "paths": [
-          "design-system/ui_kits/mdx/data/samd.js",
-          "design-system/ui_kits/mdx/surfaces/Samd.jsx",
-          "ui_kits/mdx/data/samd.js",
-          "ui_kits/mdx/surfaces/Samd.jsx"
+          "server/routes/ana-ri/shared.ts",
+          "server/routes/c2c/shared.ts",
+          "server/routes/chat/shared.ts",
+          "server/routes/ind-lifecycle/shared.ts"
         ]
       },
       {
@@ -657,17 +465,8 @@
         "paths": [
           "client/src/concept2cure/mdx/data/workbench.ts",
           "client/src/concept2cure/mdx/workbench/Workbench.tsx",
-          "design-system/ui_kits/mdx_phase2/Workbench.jsx",
-          "ui_kits/authoring/Workbench.jsx"
-        ]
-      },
-      {
-        "basename": "activitydetail",
-        "count": 3,
-        "paths": [
-          "client/src/concept2cure/pdev/surfaces/ActivityDetail.tsx",
-          "design-system/ui_kits/pdev/ActivityDetail.jsx",
-          "ui_kits/pdev/ActivityDetail.jsx"
+          "ui_kits/authoring/Workbench.jsx",
+          "ui_kits/mdx_phase2/Workbench.jsx"
         ]
       },
       {
@@ -676,16 +475,16 @@
         "paths": [
           "client/src/concept2cure/mdx/components/AnaDrafter.tsx",
           "design-system/_sync/reconciliation-2026-06-02/files/AnaDrafter.jsx",
-          "design-system/ui_kits/mdx/AnaDrafter.jsx"
+          "ui_kits/mdx/AnaDrafter.jsx"
         ]
       },
       {
-        "basename": "analytics-docs",
+        "basename": "audit",
         "count": 3,
         "paths": [
-          "client/src/concept2cure/mdx/data/analytics-docs.ts",
-          "design-system/ui_kits/mdx/data/analytics-docs.js",
-          "ui_kits/mdx/data/analytics-docs.js"
+          "server/services/ai-gateway/audit.ts",
+          "ui_kits/mdx/data/audit.js",
+          "ui_kits/mdx/surfaces/Audit.jsx"
         ]
       },
       {
@@ -734,66 +533,21 @@
         ]
       },
       {
-        "basename": "data-correspondence-detail",
+        "basename": "conversations",
         "count": 3,
         "paths": [
-          "design-system/_sync/reconciliation-2026-06-02/files/data-correspondence-detail.jsx",
-          "design-system/ui_kits/mdx/data-correspondence-detail.jsx",
-          "design-system/ui_kits/mdx_phase2/data-correspondence-detail.jsx"
+          "server/routes/c2c/conversations.ts",
+          "ui_kits/mdx/data/conversations.js",
+          "ui_kits/mdx/surfaces/Conversations.jsx"
         ]
       },
       {
-        "basename": "data-pathway-tabs",
+        "basename": "engineering",
         "count": 3,
         "paths": [
-          "design-system/_sync/reconciliation-2026-06-02/files/data-pathway-tabs.jsx",
-          "design-system/ui_kits/mdx/data-pathway-tabs.jsx",
-          "design-system/ui_kits/mdx_phase2/data-pathway-tabs.jsx"
-        ]
-      },
-      {
-        "basename": "data-submissions",
-        "count": 3,
-        "paths": [
-          "design-system/_sync/reconciliation-2026-06-02/files/data-submissions.jsx",
-          "design-system/ui_kits/mdx/data-submissions.jsx",
-          "design-system/ui_kits/mdx_phase2/data-submissions.jsx"
-        ]
-      },
-      {
-        "basename": "device-classification",
-        "count": 3,
-        "paths": [
-          "server/routes/device-classification.ts",
-          "server/services/global-ri/device-classification.ts",
-          "server/services/market-specs/device-classification.ts"
-        ]
-      },
-      {
-        "basename": "device-classification.test",
-        "count": 3,
-        "paths": [
-          "server/routes/__tests__/device-classification.test.ts",
-          "server/services/global-ri/__tests__/device-classification.test.ts",
-          "server/services/market-specs/__tests__/device-classification.test.ts"
-        ]
-      },
-      {
-        "basename": "dossier-store",
-        "count": 3,
-        "paths": [
-          "design-system/_sync/reconciliation-2026-06-02/files/dossier-store.jsx",
-          "design-system/ui_kits/mdx/dossier-store.jsx",
-          "design-system/ui_kits/mdx_phase2/dossier-store.jsx"
-        ]
-      },
-      {
-        "basename": "engineering-docs",
-        "count": 3,
-        "paths": [
-          "client/src/concept2cure/mdx/data/engineering-docs.ts",
-          "design-system/ui_kits/mdx/data/engineering-docs.js",
-          "ui_kits/mdx/data/engineering-docs.js"
+          "client/src/concept2cure/mdx/data/engineering.ts",
+          "ui_kits/mdx/data/engineering.js",
+          "ui_kits/mdx/surfaces/Engineering.jsx"
         ]
       },
       {
@@ -802,7 +556,16 @@
         "paths": [
           "client/src/concept2cure/mdx/surfaces/pathway/FilesTreePane.tsx",
           "design-system/_sync/reconciliation-2026-06-02/files/FilesTreePane.jsx",
-          "design-system/ui_kits/mdx/FilesTreePane.jsx"
+          "ui_kits/mdx/FilesTreePane.jsx"
+        ]
+      },
+      {
+        "basename": "governance",
+        "count": 3,
+        "paths": [
+          "server/api/cmc/governance.ts",
+          "server/routes/c2c/governance.ts",
+          "server/services/clinical-regulatory-evidence/governance.ts"
         ]
       },
       {
@@ -833,6 +596,15 @@
         ]
       },
       {
+        "basename": "ivd",
+        "count": 3,
+        "paths": [
+          "client/src/concept2cure/mdx/data/ivd.ts",
+          "ui_kits/mdx/data/ivd.js",
+          "ui_kits/mdx/surfaces/Ivd.jsx"
+        ]
+      },
+      {
         "basename": "jest.config",
         "count": 3,
         "paths": [
@@ -851,6 +623,15 @@
         ]
       },
       {
+        "basename": "nav",
+        "count": 3,
+        "paths": [
+          "client/src/concept2cure/mdx/data/nav.ts",
+          "client/src/concept2cure/pdev/data/nav.ts",
+          "ui_kits/mdx/data/nav.js"
+        ]
+      },
+      {
         "basename": "nonclinical",
         "count": 3,
         "paths": [
@@ -860,12 +641,21 @@
         ]
       },
       {
-        "basename": "openai-service",
+        "basename": "notifications",
         "count": 3,
         "paths": [
-          "server/openai-service.ts",
-          "server/services/openai-service.ts",
-          "server/test/services/openai-service.ts"
+          "server/routes/c2c/notifications.ts",
+          "ui_kits/mdx/data/notifications.js",
+          "ui_kits/mdx/surfaces/Notifications.jsx"
+        ]
+      },
+      {
+        "basename": "onboarding",
+        "count": 3,
+        "paths": [
+          "client/src/concept2cure/v2/surfaces/Onboarding.tsx",
+          "ui_kits/mdx/data/onboarding.js",
+          "ui_kits/mdx/surfaces/Onboarding.jsx"
         ]
       },
       {
@@ -883,16 +673,16 @@
         "paths": [
           "client/src/concept2cure/mdx/surfaces/pathway/PathwayPanes.tsx",
           "design-system/_sync/reconciliation-2026-06-02/files/PathwayPanes.jsx",
-          "design-system/ui_kits/mdx/PathwayPanes.jsx"
+          "ui_kits/mdx/PathwayPanes.jsx"
         ]
       },
       {
-        "basename": "postmarket-docs",
+        "basename": "postmarket",
         "count": 3,
         "paths": [
-          "client/src/concept2cure/mdx/data/postmarket-docs.ts",
-          "design-system/ui_kits/mdx/data/postmarket-docs.js",
-          "ui_kits/mdx/data/postmarket-docs.js"
+          "client/src/concept2cure/mdx/data/postmarket.ts",
+          "ui_kits/mdx/data/postmarket.js",
+          "ui_kits/mdx/surfaces/Postmarket.jsx"
         ]
       },
       {
@@ -932,21 +722,21 @@
         ]
       },
       {
+        "basename": "search",
+        "count": 3,
+        "paths": [
+          "server/integrations/firecrawl/search.ts",
+          "ui_kits/mdx/data/search.js",
+          "ui_kits/mdx/surfaces/Search.jsx"
+        ]
+      },
+      {
         "basename": "setup",
         "count": 3,
         "paths": [
           "client/src/__tests__/setup.js",
           "server/routes/setup.ts",
           "tests/setup.ts"
-        ]
-      },
-      {
-        "basename": "shared",
-        "count": 3,
-        "paths": [
-          "server/routes/ana-ri/shared.ts",
-          "server/routes/chat/shared.ts",
-          "server/routes/ind-lifecycle/shared.ts"
         ]
       },
       {
@@ -986,21 +776,12 @@
         ]
       },
       {
-        "basename": "udi-docs",
+        "basename": "udi",
         "count": 3,
         "paths": [
-          "client/src/concept2cure/mdx/data/udi-docs.ts",
-          "design-system/ui_kits/mdx/data/udi-docs.js",
-          "ui_kits/mdx/data/udi-docs.js"
-        ]
-      },
-      {
-        "basename": "validation",
-        "count": 3,
-        "paths": [
-          "server/middleware/validation.ts",
-          "server/utils/validation.js",
-          "services/proof/validation.ts"
+          "client/src/concept2cure/mdx/data/udi.ts",
+          "ui_kits/mdx/data/udi.js",
+          "ui_kits/mdx/surfaces/Udi.jsx"
         ]
       },
       {
@@ -1012,11 +793,19 @@
         ]
       },
       {
-        "basename": "admin-docs",
+        "basename": "activitydetail",
         "count": 2,
         "paths": [
-          "design-system/ui_kits/mdx/data/admin-docs.js",
-          "ui_kits/mdx/data/admin-docs.js"
+          "client/src/concept2cure/pdev/surfaces/ActivityDetail.tsx",
+          "ui_kits/pdev/ActivityDetail.jsx"
+        ]
+      },
+      {
+        "basename": "admin",
+        "count": 2,
+        "paths": [
+          "ui_kits/mdx/data/admin.js",
+          "ui_kits/mdx/surfaces/Admin.jsx"
         ]
       },
       {
@@ -1028,27 +817,11 @@
         ]
       },
       {
-        "basename": "aidraft",
-        "count": 2,
-        "paths": [
-          "design-system/ui_kits/pdev/AiDraft.jsx",
-          "ui_kits/pdev/AiDraft.jsx"
-        ]
-      },
-      {
         "basename": "ana-intelligence",
         "count": 2,
         "paths": [
           "server/routes/ana-intelligence.ts",
           "shared/schema/ana-intelligence.ts"
-        ]
-      },
-      {
-        "basename": "ana-review",
-        "count": 2,
-        "paths": [
-          "design-system/ui_kits/mdx/data/ana-review.js",
-          "ui_kits/mdx/data/ana-review.js"
         ]
       },
       {
@@ -1068,11 +841,11 @@
         ]
       },
       {
-        "basename": "anareview",
+        "basename": "analytics-docs",
         "count": 2,
         "paths": [
-          "design-system/ui_kits/mdx/surfaces/AnaReview.jsx",
-          "ui_kits/mdx/surfaces/AnaReview.jsx"
+          "client/src/concept2cure/mdx/data/analytics-docs.ts",
+          "ui_kits/mdx/data/analytics-docs.js"
         ]
       },
       {
@@ -1084,27 +857,11 @@
         ]
       },
       {
-        "basename": "artifactdoc",
-        "count": 2,
-        "paths": [
-          "design-system/ui_kits/ectd_coauthor/ArtifactDoc.jsx",
-          "ui_kits/ectd_coauthor/ArtifactDoc.jsx"
-        ]
-      },
-      {
         "basename": "artifacts",
         "count": 2,
         "paths": [
-          "design-system/ui_kits/ectd_coauthor/artifacts.js",
+          "server/routes/c2c/artifacts.ts",
           "ui_kits/ectd_coauthor/artifacts.js"
-        ]
-      },
-      {
-        "basename": "ask-ana-chip",
-        "count": 2,
-        "paths": [
-          "design-system/ui_kits/mdx/ask-ana-chip.jsx",
-          "ui_kits/mdx/ask-ana-chip.jsx"
         ]
       },
       {
@@ -1196,11 +953,19 @@
         ]
       },
       {
-        "basename": "chat",
+        "basename": "cdx",
         "count": 2,
         "paths": [
-          "server/routes/ana-ri/chat.ts",
-          "server/routes/chat.ts"
+          "ui_kits/mdx/data/cdx.js",
+          "ui_kits/mdx/surfaces/Cdx.jsx"
+        ]
+      },
+      {
+        "basename": "citations",
+        "count": 2,
+        "paths": [
+          "server/routes/citations.ts",
+          "shared/authoring/citations.ts"
         ]
       },
       {
@@ -1212,6 +977,14 @@
         ]
       },
       {
+        "basename": "clinical",
+        "count": 2,
+        "paths": [
+          "ui_kits/mdx/data/clinical.js",
+          "ui_kits/mdx/surfaces/Clinical.jsx"
+        ]
+      },
+      {
         "basename": "clinical-performance",
         "count": 2,
         "paths": [
@@ -1220,19 +993,19 @@
         ]
       },
       {
+        "basename": "communication-center",
+        "count": 2,
+        "paths": [
+          "server/routes/c2c/communication-center.ts",
+          "shared/types/communication-center.ts"
+        ]
+      },
+      {
         "basename": "computeredirect.test",
         "count": 2,
         "paths": [
           "client/src/concept2cure/auth/__tests__/computeRedirect.test.ts",
           "tests/computeRedirect.test.ts"
-        ]
-      },
-      {
-        "basename": "confirm",
-        "count": 2,
-        "paths": [
-          "design-system/ui_kits/pdev/Confirm.jsx",
-          "ui_kits/pdev/Confirm.jsx"
         ]
       },
       {
@@ -1292,6 +1065,14 @@
         ]
       },
       {
+        "basename": "data-submissions",
+        "count": 2,
+        "paths": [
+          "design-system/_sync/reconciliation-2026-06-02/files/data-submissions.jsx",
+          "ui_kits/mdx_phase2/data-submissions.jsx"
+        ]
+      },
+      {
         "basename": "database",
         "count": 2,
         "paths": [
@@ -1348,19 +1129,11 @@
         ]
       },
       {
-        "basename": "documents-panel",
+        "basename": "dossier-store",
         "count": 2,
         "paths": [
-          "design-system/ui_kits/mdx/documents-panel.jsx",
-          "ui_kits/mdx/documents-panel.jsx"
-        ]
-      },
-      {
-        "basename": "docushareconfig",
-        "count": 2,
-        "paths": [
-          "server/config/docushareConfig.js",
-          "server/config/docushareConfig.ts"
+          "design-system/_sync/reconciliation-2026-06-02/files/dossier-store.jsx",
+          "ui_kits/mdx_phase2/dossier-store.jsx"
         ]
       },
       {
@@ -1369,6 +1142,14 @@
         "paths": [
           "server/routes/effort-certification.ts",
           "shared/schema/effort-certification.ts"
+        ]
+      },
+      {
+        "basename": "engineering-docs",
+        "count": 2,
+        "paths": [
+          "client/src/concept2cure/mdx/data/engineering-docs.ts",
+          "ui_kits/mdx/data/engineering-docs.js"
         ]
       },
       {
@@ -1388,11 +1169,11 @@
         ]
       },
       {
-        "basename": "esign-modal",
+        "basename": "errors",
         "count": 2,
         "paths": [
-          "design-system/ui_kits/mdx/esign-modal.jsx",
-          "ui_kits/mdx/esign-modal.jsx"
+          "server/integrations/firecrawl/errors.ts",
+          "server/services/module-integration/errors.ts"
         ]
       },
       {
@@ -1417,14 +1198,6 @@
         "paths": [
           "server/routes/export-control.ts",
           "shared/schema/export-control.ts"
-        ]
-      },
-      {
-        "basename": "extras",
-        "count": 2,
-        "paths": [
-          "design-system/ui_kits/home/Extras.jsx",
-          "ui_kits/home/Extras.jsx"
         ]
       },
       {
@@ -1457,14 +1230,6 @@
         "paths": [
           "client/src/types/global.d.ts",
           "server/types/global.d.ts"
-        ]
-      },
-      {
-        "basename": "governance",
-        "count": 2,
-        "paths": [
-          "server/routes/c2c/governance.ts",
-          "server/services/clinical-regulatory-evidence/governance.ts"
         ]
       },
       {
@@ -1556,6 +1321,14 @@
         ]
       },
       {
+        "basename": "ivdr",
+        "count": 2,
+        "paths": [
+          "ui_kits/mdx/data/ivdr.js",
+          "ui_kits/mdx/surfaces/Ivdr.jsx"
+        ]
+      },
+      {
         "basename": "jest.setup",
         "count": 2,
         "paths": [
@@ -1585,6 +1358,14 @@
         "paths": [
           "client/src/concept2cure/v2/surfaces/Labeling.tsx",
           "server/services/ana/intelligence-questions/flows/labeling.ts"
+        ]
+      },
+      {
+        "basename": "ldt",
+        "count": 2,
+        "paths": [
+          "ui_kits/mdx/data/ldt.js",
+          "ui_kits/mdx/surfaces/Ldt.jsx"
         ]
       },
       {
@@ -1628,11 +1409,35 @@
         ]
       },
       {
+        "basename": "master-admin",
+        "count": 2,
+        "paths": [
+          "server/routes/admin/master-admin.ts",
+          "server/services/entitlements/master-admin.ts"
+        ]
+      },
+      {
+        "basename": "master-admin.test",
+        "count": 2,
+        "paths": [
+          "server/routes/admin/__tests__/master-admin.test.ts",
+          "server/services/entitlements/__tests__/master-admin.test.ts"
+        ]
+      },
+      {
         "basename": "mdx",
         "count": 2,
         "paths": [
           "server/routes/mdx.ts",
           "shared/constants/mdx.ts"
+        ]
+      },
+      {
+        "basename": "memory",
+        "count": 2,
+        "paths": [
+          "ui_kits/mdx/data/memory.js",
+          "ui_kits/mdx/surfaces/Memory.jsx"
         ]
       },
       {
@@ -1684,6 +1489,14 @@
         ]
       },
       {
+        "basename": "postmarket-docs",
+        "count": 2,
+        "paths": [
+          "client/src/concept2cure/mdx/data/postmarket-docs.ts",
+          "ui_kits/mdx/data/postmarket-docs.js"
+        ]
+      },
+      {
         "basename": "precedent-engine",
         "count": 2,
         "paths": [
@@ -1712,7 +1525,7 @@
         "count": 2,
         "paths": [
           "client/src/concept2cure/mdx/data/presub.ts",
-          "design-system/ui_kits/mdx_phase2/PreSub.jsx"
+          "ui_kits/mdx_phase2/PreSub.jsx"
         ]
       },
       {
@@ -1744,7 +1557,7 @@
         "count": 2,
         "paths": [
           "client/src/concept2cure/v2/surfaces/ProjectHome.tsx",
-          "design-system/ui_kits/mdx_phase2/ProjectHome.jsx"
+          "ui_kits/mdx_phase2/ProjectHome.jsx"
         ]
       },
       {
@@ -1833,6 +1646,22 @@
         "paths": [
           "server/routes/q-sub.ts",
           "shared/schema/q-sub.ts"
+        ]
+      },
+      {
+        "basename": "qsub",
+        "count": 2,
+        "paths": [
+          "ui_kits/mdx/data/qsub.js",
+          "ui_kits/mdx/surfaces/QSub.jsx"
+        ]
+      },
+      {
+        "basename": "quality",
+        "count": 2,
+        "paths": [
+          "ui_kits/mdx/data/quality.js",
+          "ui_kits/mdx/surfaces/Quality.jsx"
         ]
       },
       {
@@ -1956,6 +1785,14 @@
         ]
       },
       {
+        "basename": "samd",
+        "count": 2,
+        "paths": [
+          "ui_kits/mdx/data/samd.js",
+          "ui_kits/mdx/surfaces/Samd.jsx"
+        ]
+      },
+      {
         "basename": "schema",
         "count": 2,
         "paths": [
@@ -2060,14 +1897,6 @@
         ]
       },
       {
-        "basename": "templateservice",
-        "count": 2,
-        "paths": [
-          "server/api/cmc/templateService.ts",
-          "server/services/templateService.ts"
-        ]
-      },
-      {
         "basename": "test-assembly.routes.test",
         "count": 2,
         "paths": [
@@ -2100,11 +1929,11 @@
         ]
       },
       {
-        "basename": "tree",
+        "basename": "udi-docs",
         "count": 2,
         "paths": [
-          "design-system/ui_kits/ectd_coauthor/Tree.jsx",
-          "ui_kits/ectd_coauthor/Tree.jsx"
+          "client/src/concept2cure/mdx/data/udi-docs.ts",
+          "ui_kits/mdx/data/udi-docs.js"
         ]
       },
       {
@@ -2121,6 +1950,14 @@
         "paths": [
           ".claude/skills/gstack/scripts/resolvers/utility.ts",
           "server/routes/ana-ri/utility.ts"
+        ]
+      },
+      {
+        "basename": "validation",
+        "count": 2,
+        "paths": [
+          "server/middleware/validation.ts",
+          "services/proof/validation.ts"
         ]
       },
       {
@@ -2144,67 +1981,79 @@
     "largeFilesByBytes": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 969063
+        "bytes": 1026443
       },
       {
         "file": "shared/schema.ts",
-        "bytes": 841652
-      },
-      {
-        "file": "server/routes/concept2cure.ts",
-        "bytes": 684599
+        "bytes": 858583
       },
       {
         "file": "server/services/ind/ctd/authoring-guidance.ts",
-        "bytes": 472815
+        "bytes": 474008
       },
       {
         "file": "server/services/ind/ctd/lifecycle-document-types.ts",
-        "bytes": 341859
+        "bytes": 341900
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "bytes": 253129
+        "bytes": 331181
+      },
+      {
+        "file": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
+        "bytes": 236188
       },
       {
         "file": "server/statistics-service.ts",
-        "bytes": 220035
+        "bytes": 221721
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
         "bytes": 202559
       },
       {
+        "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
+        "bytes": 184067
+      },
+      {
         "file": "server/routes/ana-features.ts",
-        "bytes": 179637
+        "bytes": 179440
+      },
+      {
+        "file": "server/routes/c2c/artifacts.ts",
+        "bytes": 178549
+      },
+      {
+        "file": "server/routes/authoring-actions.ts",
+        "bytes": 154942
+      },
+      {
+        "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
+        "bytes": 153155
       },
       {
         "file": "server/services/regulatory-strategy/regulatory-strategy-knowledge.ts",
         "bytes": 150437
       },
       {
+        "file": "server/services/module3Composer.ts",
+        "bytes": 148269
+      },
+      {
         "file": "server/storage.ts",
         "bytes": 145402
       },
       {
-        "file": "server/services/cmc-quality/cmc-quality-knowledge.ts",
-        "bytes": 139064
+        "file": "server/services/submission-package-orchestrator.ts",
+        "bytes": 141216
       },
       {
         "file": "server/services/labeling/labeling-intelligence-knowledge.ts",
         "bytes": 138123
       },
       {
-        "file": "server/routes/authoring-actions.ts",
-        "bytes": 136607
-      },
-      {
         "file": "server/services/biosimilar/biosimilar-knowledge.ts",
         "bytes": 136488
-      },
-      {
-        "file": "server/services/submission-package-orchestrator.ts",
-        "bytes": 135234
       },
       {
         "file": ".claude/skills/gstack/test/skill-e2e.test.ts",
@@ -2212,51 +2061,71 @@
       },
       {
         "file": "server/services/mutagenic-impurity/mutagenic-impurity-knowledge.ts",
-        "bytes": 132966
+        "bytes": 133645
+      },
+      {
+        "file": "server/services/cmc-quality/cmc-quality-knowledge.ts",
+        "bytes": 132755
       },
       {
         "file": "shared/regulatory/global-document-registry.ts",
-        "bytes": 129044
+        "bytes": 131820
+      },
+      {
+        "file": "server/routes/submission-ops.ts",
+        "bytes": 131113
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/nda-submission.ts",
         "bytes": 127662
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
-        "bytes": 126752
+        "file": "server/services/__tests__/cmcWriteThroughMappers.test.ts",
+        "bytes": 126270
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "bytes": 120988
+        "bytes": 126017
       },
       {
         "file": "server/services/__tests__/ana-ri.test.ts",
-        "bytes": 117471
+        "bytes": 119187
+      },
+      {
+        "file": "client/src/concept2cure/v2/editor/RichSectionEditor.tsx",
+        "bytes": 116913
+      },
+      {
+        "file": "client/src/concept2cure/v2/surfaces/cmcRegisterForms.ts",
+        "bytes": 116307
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/protocol-development.ts",
         "bytes": 116241
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
-        "bytes": 115207
+        "file": "server/services/intelligent-report-engine.ts",
+        "bytes": 115224
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/bla-submission.ts",
         "bytes": 114943
       },
       {
-        "file": "server/services/intelligent-report-engine.ts",
-        "bytes": 114705
-      },
-      {
         "file": ".claude/skills/gstack/scripts/gen-skill-docs.ts",
         "bytes": 114269
       },
       {
+        "file": "server/routes/concept2cure.ts",
+        "bytes": 109695
+      },
+      {
         "file": "server/services/rwe/rwe-methodology-knowledge.ts",
         "bytes": 109447
+      },
+      {
+        "file": "shared/regulatory/project-bootstrap.ts",
+        "bytes": 109047
       },
       {
         "file": "server/services/advanced-therapy/atmp-knowledge.ts",
@@ -2267,114 +2136,122 @@
         "bytes": 108007
       },
       {
-        "file": "server/services/medical-device/medical-device-knowledge.ts",
-        "bytes": 106347
-      },
-      {
-        "file": "server/services/gmp-quality-systems/gmp-quality-systems-knowledge.ts",
-        "bytes": 105877
-      },
-      {
-        "file": "server/services/ana/notifications-study-memory-tool-defs.ts",
-        "bytes": 105154
-      },
-      {
-        "file": "server/services/ana/intelligence-questions/flows/cer-report.ts",
-        "bytes": 104369
-      },
-      {
-        "file": "shared/regulatory/project-bootstrap.ts",
-        "bytes": 104306
+        "file": "server/api/cmc/routes.ts",
+        "bytes": 106260
       },
       {
         "file": "server/services/ana-ri/context-enrichment.ts",
-        "bytes": 104021
+        "bytes": 104231
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
-        "bytes": 100546
+        "file": "server/services/ai-gateway/gateway.ts",
+        "bytes": 100587
       }
     ],
     "largeFilesByLines": [
       {
         "file": "shared/schema.ts",
-        "lines": 19963
+        "lines": 20190
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 18865
-      },
-      {
-        "file": "server/routes/concept2cure.ts",
-        "lines": 18412
-      },
-      {
-        "file": "server/statistics-service.ts",
-        "lines": 6893
+        "lines": 19895
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "lines": 6380
+        "lines": 7564
+      },
+      {
+        "file": "server/statistics-service.ts",
+        "lines": 6920
       },
       {
         "file": "server/services/ind/ctd/authoring-guidance.ts",
-        "lines": 5560
+        "lines": 5558
       },
       {
         "file": "server/routes/ana-features.ts",
-        "lines": 5431
+        "lines": 5415
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
         "lines": 5211
       },
       {
+        "file": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
+        "lines": 5142
+      },
+      {
+        "file": "server/routes/c2c/artifacts.ts",
+        "lines": 4644
+      },
+      {
         "file": "server/storage.ts",
         "lines": 4444
       },
       {
-        "file": "server/services/intelligent-report-engine.ts",
-        "lines": 3555
+        "file": "server/routes/authoring-actions.ts",
+        "lines": 3610
       },
       {
-        "file": "server/services/cmc-quality/cmc-quality-knowledge.ts",
-        "lines": 3472
+        "file": "server/services/intelligent-report-engine.ts",
+        "lines": 3563
+      },
+      {
+        "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
+        "lines": 3466
       },
       {
         "file": ".claude/skills/gstack/test/skill-e2e.test.ts",
         "lines": 3326
       },
       {
-        "file": "server/routes/authoring-actions.ts",
-        "lines": 3275
+        "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
+        "lines": 3229
+      },
+      {
+        "file": "server/routes/submission-ops.ts",
+        "lines": 3184
+      },
+      {
+        "file": "server/services/submission-package-orchestrator.ts",
+        "lines": 3177
+      },
+      {
+        "file": "server/services/cmc-quality/cmc-quality-knowledge.ts",
+        "lines": 3119
       },
       {
         "file": "server/services/ind/ctd/lifecycle-document-types.ts",
-        "lines": 3113
+        "lines": 3116
       },
       {
         "file": "server/services/regulatory-strategy/regulatory-strategy-knowledge.ts",
         "lines": 3067
       },
       {
-        "file": "server/services/submission-package-orchestrator.ts",
-        "lines": 3060
+        "file": "server/routes/concept2cure.ts",
+        "lines": 3007
+      },
+      {
+        "file": "server/services/module3Composer.ts",
+        "lines": 2949
       },
       {
         "file": "server/src/routes/stability.router.ts",
-        "lines": 2832
-      },
-      {
-        "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
-        "lines": 2768
+        "lines": 2830
       },
       {
         "file": "server/services/__tests__/ana-ri.test.ts",
-        "lines": 2759
+        "lines": 2787
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
-        "lines": 2685
+        "lines": 2777
+      },
+      {
+        "file": "client/src/concept2cure/v2/editor/RichSectionEditor.tsx",
+        "lines": 2613
       },
       {
         "file": "server/services/biosimilar/biosimilar-knowledge.ts",
@@ -2382,11 +2259,11 @@
       },
       {
         "file": "server/routes/knowledge-base.ts",
-        "lines": 2582
+        "lines": 2588
       },
       {
-        "file": "server/services/gmp-quality-systems/gmp-quality-systems-knowledge.ts",
-        "lines": 2559
+        "file": "server/services/ai-gateway/gateway.ts",
+        "lines": 2509
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/protocol-development.ts",
@@ -2397,12 +2274,8 @@
         "lines": 2419
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
-        "lines": 2418
-      },
-      {
-        "file": "server/services/ai-gateway/gateway.ts",
-        "lines": 2391
+        "file": "server/services/__tests__/cmcWriteThroughMappers.test.ts",
+        "lines": 2386
       },
       {
         "file": ".claude/skills/gstack/scripts/gen-skill-docs.ts",
@@ -2410,7 +2283,11 @@
       },
       {
         "file": "server/services/mutagenic-impurity/mutagenic-impurity-knowledge.ts",
-        "lines": 2340
+        "lines": 2348
+      },
+      {
+        "file": "server/api/cmc/routes.ts",
+        "lines": 2336
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/bla-submission.ts",
@@ -2422,35 +2299,35 @@
       },
       {
         "file": "services/regulatory/ind-ectd-sections.ts",
-        "lines": 2254
+        "lines": 2276
       },
       {
-        "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
-        "lines": 2188
+        "file": "server/routes/c2c/reviews.ts",
+        "lines": 2240
       },
       {
         "file": "server/services/trial-statistics/trial-statistics-knowledge.ts",
         "lines": 2177
       },
       {
-        "file": "server/services/medical-device/medical-device-knowledge.ts",
-        "lines": 2166
+        "file": "server/services/benefit-risk/benefit-risk-knowledge.ts",
+        "lines": 2175
+      },
+      {
+        "file": "server/routes/auth.ts",
+        "lines": 2155
       },
       {
         "file": "server/services/dose-optimization/dose-optimization-knowledge.ts",
         "lines": 2155
       },
       {
-        "file": "server/services/benefit-risk/benefit-risk-knowledge.ts",
-        "lines": 2151
-      },
-      {
         "file": "server/services/biomarkers/biomarker-knowledge.ts",
         "lines": 2093
       },
       {
-        "file": "server/routes/auth.ts",
-        "lines": 2084
+        "file": "server/services/precedent-engine.ts",
+        "lines": 2082
       },
       {
         "file": ".claude/skills/gstack/browse/test/commands.test.ts",
@@ -2461,20 +2338,28 @@
         "lines": 2068
       },
       {
-        "file": "server/services/ana/intelligence-questions/flows/cer-report.ts",
-        "lines": 2059
+        "file": "server/routes/510k-estar-routes.ts",
+        "lines": 2063
       },
       {
-        "file": "server/routes/submission-ops.ts",
-        "lines": 2050
+        "file": "server/services/bioequivalence/bioequivalence-knowledge.ts",
+        "lines": 2029
+      },
+      {
+        "file": "server/services/gmp-quality-systems/gmp-quality-systems-knowledge.ts",
+        "lines": 2024
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/csr-report.ts",
         "lines": 2020
       },
       {
+        "file": "server/services/medical-device/medical-device-knowledge.ts",
+        "lines": 2018
+      },
+      {
         "file": "server/routes/report-os.ts",
-        "lines": 2005
+        "lines": 2006
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/ind-submission.ts",
@@ -2485,12 +2370,8 @@
         "lines": 2002
       },
       {
-        "file": "server/services/bioequivalence/bioequivalence-knowledge.ts",
-        "lines": 1981
-      },
-      {
-        "file": "server/services/precedent-engine.ts",
-        "lines": 1979
+        "file": "client/src/concept2cure/v2/surfaces/cmcRegisterForms.ts",
+        "lines": 2000
       },
       {
         "file": "server/services/gcp-operations/gcp-operations-knowledge.ts",
@@ -2505,20 +2386,28 @@
         "lines": 1917
       },
       {
+        "file": "client/src/concept2cure/v2/surfaces/cmcRegisters.tsx",
+        "lines": 1912
+      },
+      {
         "file": "server/routes/regulatory-digital-twin.ts",
-        "lines": 1894
+        "lines": 1898
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/device-510k.ts",
         "lines": 1888
       },
       {
-        "file": "server/services/ana/notifications-study-memory-tool-defs.ts",
-        "lines": 1881
+        "file": "client/src/concept2cure/v2/Shell.tsx",
+        "lines": 1871
       },
       {
         "file": "server/services/post-approval/post-approval-knowledge.ts",
         "lines": 1869
+      },
+      {
+        "file": "server/routes/ivdr-routes.ts",
+        "lines": 1866
       },
       {
         "file": "server/services/rare-disease/rare-disease-knowledge.ts",
@@ -2527,10 +2416,6 @@
       {
         "file": "server/services/digital-health/digital-health-knowledge.ts",
         "lines": 1864
-      },
-      {
-        "file": "server/services/ana-ri/context-enrichment.ts",
-        "lines": 1855
       },
       {
         "file": ".claude/skills/gstack/test/gen-skill-docs.test.ts",
@@ -2561,8 +2446,12 @@
         "lines": 1813
       },
       {
-        "file": "design-system/ui_kits/home/Projects.jsx",
-        "lines": 1796
+        "file": "server/routes/c2c/ai-editing.ts",
+        "lines": 1809
+      },
+      {
+        "file": "ui_kits/home/Projects.jsx",
+        "lines": 1795
       },
       {
         "file": "server/services/rwe/rwe-methodology-knowledge.ts",
@@ -2573,20 +2462,40 @@
         "lines": 1785
       },
       {
+        "file": "server/services/ana-ri/context-enrichment.ts",
+        "lines": 1762
+      },
+      {
         "file": "server/services/ana/submission-chat-handler.ts",
         "lines": 1756
+      },
+      {
+        "file": "server/routes/ana-ri/stream.ts",
+        "lines": 1755
+      },
+      {
+        "file": "server/services/cmc-write-through.ts",
+        "lines": 1753
       },
       {
         "file": "server/services/combination-products/combination-products-knowledge.ts",
         "lines": 1726
       },
       {
-        "file": "server/routes/ivdr-routes.ts",
-        "lines": 1704
+        "file": "client/src/concept2cure/v2/surfaces/TaskBoard.tsx",
+        "lines": 1702
+      },
+      {
+        "file": "server/services/ana/notifications-study-memory-tool-defs.ts",
+        "lines": 1696
       },
       {
         "file": "server/services/nonclinical-adme/nonclinical-adme-knowledge.ts",
         "lines": 1678
+      },
+      {
+        "file": "server/routes/submissions.ts",
+        "lines": 1657
       },
       {
         "file": "server/services/clinical-outcome-assessment/coa-knowledge.ts",
@@ -2601,6 +2510,10 @@
         "lines": 1623
       },
       {
+        "file": "server/services/contradiction-engine-service.ts",
+        "lines": 1608
+      },
+      {
         "file": "server/services/pediatric/pediatric-knowledge.ts",
         "lines": 1606
       },
@@ -2609,40 +2522,12 @@
         "lines": 1602
       },
       {
-        "file": "server/services/contradiction-engine-service.ts",
-        "lines": 1601
+        "file": "server/services/advancedRAGPipeline.ts",
+        "lines": 1569
       },
       {
-        "file": "shared/schema/csr-knowledge-db.ts",
-        "lines": 1600
-      },
-      {
-        "file": "server/services/ana/intelligence-questions/flows/cmc-specification.ts",
-        "lines": 1582
-      },
-      {
-        "file": "server/routes/ana-ri/stream.ts",
-        "lines": 1578
-      },
-      {
-        "file": ".claude/skills/gstack/test/skill-validation.test.ts",
-        "lines": 1550
-      },
-      {
-        "file": "server/services/ana/intelligence-questions/flows/sop-development.ts",
-        "lines": 1549
-      },
-      {
-        "file": "server/services/submission-twin-service.ts",
-        "lines": 1534
-      },
-      {
-        "file": "server/routes/cortex-unified.ts",
-        "lines": 1533
-      },
-      {
-        "file": "client/src/concept2cure/v2/surfaces/TaskBoard.tsx",
-        "lines": 1516
+        "file": "client/src/concept2cure/v2/surfaces/IndLifecycle.tsx",
+        "lines": 1532
       }
     ]
   },
@@ -2650,27 +2535,27 @@
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
-      "duplicateGroups": 400,
-      "largeByBytes": 30,
-      "largeByLines": 73
+      "duplicateGroups": 403,
+      "largeByBytes": 32,
+      "largeByLines": 78
     },
     {
       "owner": "Unassigned (TBD)",
-      "duplicateGroups": 251,
+      "duplicateGroups": 155,
       "largeByBytes": 2,
-      "largeByLines": 8
+      "largeByLines": 7
     },
     {
       "owner": "Shared Contracts (shared/schema + shared/types owners)",
-      "duplicateGroups": 70,
+      "duplicateGroups": 74,
       "largeByBytes": 3,
-      "largeByLines": 2
+      "largeByLines": 1
     },
     {
       "owner": "Concept2Cure Frontend (client/src/concept2cure maintainers)",
       "duplicateGroups": 56,
-      "largeByBytes": 3,
-      "largeByLines": 4
+      "largeByBytes": 5,
+      "largeByLines": 9
     },
     {
       "owner": "Frontend Platform (client/src maintainers)",

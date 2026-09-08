@@ -256,3 +256,11 @@
   .dd-act-file { color: var(--text-300); }
   .dd-act-sub { font-size: 10.5px; color: var(--text-400); margin-top: 2px; }
 }
+
+/* Reduced-motion policy for this stylesheet — the dossier drawer slid in from
+   100% off-screen with no coverage. Suppressing lands on the base rule, which
+   is the drawer already in place. */
+@media (prefers-reduced-motion: reduce) {
+  .c2c-v2 .dd-scrim,
+  .c2c-v2 .dd-drawer { animation: none; }
+}

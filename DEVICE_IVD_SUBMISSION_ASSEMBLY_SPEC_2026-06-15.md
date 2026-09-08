@@ -24,7 +24,7 @@ The single most important, easily-missed fact: **the platform already fills offi
 - **Severity:** High for a device/IVD GTM. This is the literal deliverable CDRH ingests.
 
 ### 1.2 PMA — content generator, not an assembled/validated package
-- **What exists:** `pmaDocumentGenerator.js` (generic PDF/DOCX of the 10 PMA modules), `routes/pma-workflow-routes.ts` (a 2-endpoint workflow), `services/regulatory/pyramids/pma-pyramid.ts`.
+- **What exists:** `routes/pma-workflow-routes.ts` (a 2-endpoint workflow), `services/regulatory/pyramids/pma-pyramid.ts`. (`pmaDocumentGenerator.js` — a generic PDF/DOCX of the 10 PMA modules over hard-coded fixture prose, reachable from no route — was deleted; PMA drafting is `/api/510k/estar/*` over the governed store.)
 - **What's missing:** PMA at FDA is increasingly eCTD/eSTAR-structured; we have neither a PMA eCTD assembly path nor a PMA eSTAR fill, and no validation/dispatch gate equivalent to the pharma eCTD pipeline. It's a document *drafter*, not a submission *assembler*.
 
 ### 1.3 EU MDR/IVDR technical file — assembled but unproven
@@ -122,7 +122,7 @@ A **canonical Device & IVD submission-assembly path** that, for a given project 
 ## Appendix — Evidence files
 - eSTAR: `server/services/pathway-engines/estar/estar-mapper.ts`, `server/services/eSTARValidator.ts`, `server/routes/510k-estar-routes.ts`, `server/routes/fda510k-unified.ts`
 - Proven AcroForm fill to reuse: `server/services/ind-forms/ind-form-fill-service.ts`, `ind-form-data-builders.ts`, `server/routes/ind-forms.routes.ts`
-- PMA: `server/services/pmaDocumentGenerator.js`, `server/routes/pma-workflow-routes.ts`, `services/regulatory/pyramids/pma-pyramid.ts`
+- PMA: `server/routes/510k-estar-routes.ts` (`/build`, `/assemble`, `/filing-readiness` with pathway/catalog `pma`), `server/services/pathway-engines/pma/pma-mapper.ts`, `server/routes/pma-workflow-routes.ts`, `services/regulatory/pyramids/pma-pyramid.ts`
 - MDR/IVDR: `server/services/pathway-engines/mdr-ivdr/{assemble-technical-file-from-core,tech-doc-assembler,technical-file-packager}.ts`
 - Pharma spine to mirror: `server/services/ectd/{assemble-from-core,dispatch-gate,dispatch-readiness}.ts`, `server/services/submission-gateways/regional-packager.ts`
 - Global advisory (out of scope for assembly): `server/services/ivd-knowledge/**`, `server/services/regulatory/global-pathways.ts`

@@ -157,7 +157,7 @@ export function createCache(sourceName) {
               await fs.promises.unlink(filePath);
               removedCount++;
             }
-          } catch (error) {
+          } catch {
             // Ignore invalid JSON files
             console.error(`Invalid cache file: ${filePath}`);
           }

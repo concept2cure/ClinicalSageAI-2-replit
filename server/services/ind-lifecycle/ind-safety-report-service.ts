@@ -61,6 +61,7 @@ import {
   type SeriousnessCriteria,
   type RegulatoryRegion,
 } from '../compliance/pharmacovigilanceService';
+import { IND_SAFETY_REPORT_SECTION } from './ind-sequence-validation';
 
 // ---------------------------------------------------------------------------
 // Classification types
@@ -87,6 +88,12 @@ export interface IndSafetyClassification {
     serious: boolean;
     suspected: boolean;
     unexpected: boolean;
+    /**
+     * Whether an expectedness determination was recorded at all. `unexpected`
+     * is false both when the reviewer marked the event expected and when no
+     * one has assessed it; only the first is a finding.
+     */
+    expectednessRecorded: boolean;
     fatalOrLifeThreatening: boolean;
   };
   /** The 21 CFR citation that governs this outcome. */
@@ -166,12 +173,14 @@ export function classifyIndSafetyReport(
   const serious = isSerious(event);
   const suspected = isSuspected(event.causality);
   const unexpected = isUnexpected(event.expectedness);
+  const expectednessRecorded = typeof event.expectedness === 'string' && event.expectedness.trim().length > 0;
   const fatalOrLT = isFatalOrLifeThreatening(event.seriousnessCriteria);
 
   const determinations = {
     serious,
     suspected,
     unexpected,
+    expectednessRecorded,
     fatalOrLifeThreatening: fatalOrLT,
   };
 
@@ -179,9 +188,13 @@ export function classifyIndSafetyReport(
   // UNEXPECTED adverse reaction. Anything else is not an individual expedited
   // report.
   if (!suspected || !unexpected) {
+    // An event nobody has assessed against the IB/RSI is not "expected"; it is
+    // unassessed. The rationale used to assert expectedness in that case.
     const reason = !suspected
       ? 'no reasonable possibility the drug caused the event (not a suspected adverse reaction)'
-      : 'event is expected (listed in the IB / consistent with the RSI)';
+      : expectednessRecorded
+        ? 'event is expected (listed in the IB / consistent with the RSI)'
+        : 'expectedness has not been recorded — no determination against the IB / RSI has been made; a reviewer must mark the event unexpected before it can be an expedited report';
     return {
       obligation: 'NOT_REPORTABLE',
       reportingWindowDays: null,
@@ -463,7 +476,8 @@ export function buildAmendmentIntent(
 
   const leaves: AmendmentLeafIntent[] = [
     {
-      sectionCode: 'm1.12.4',
+      // The sequence validator requires the report at this same placement.
+      sectionCode: IND_SAFETY_REPORT_SECTION,
       title: `IND Safety Report — ${labelForObligation(classification.obligation)}`,
       granularity: 'leaf',
       lifecycleOp: 'new',

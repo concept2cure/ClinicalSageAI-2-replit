@@ -128,8 +128,8 @@ export const FDAFormsRegistry: Record<string, FDAFormDefinition> = {
   FDA_3654: {
     formId: 'FDA_3654',
     formNumber: '3654',
-    title: 'Certification/Disclosure Statement',
-    description: 'Certification and financial disclosure statement',
+    title: 'Standards Data Report for 510(k)s',
+    description: 'Declaration of conformity to FDA-recognized consensus standards cited in a 510(k) (Form FDA 3654). Not a financial-disclosure form: investigator financial certification/disclosure is Form FDA 3454/3455.',
     category: 'Common',
     version: '2024.1',
     lastUpdated: '2024-01-01',
@@ -203,8 +203,8 @@ export const FDAFormsRegistry: Record<string, FDAFormDefinition> = {
   FDA_2891: {
     formId: 'FDA_2891',
     formNumber: '2891',
-    title: 'Truthful and Accurate Statement',
-    description: 'Statement certifying truthfulness and accuracy of submission',
+    title: 'Truthful and Accuracy Statement (21 CFR 807.87(k))',
+    description: 'The signed statement that all data and information in a 510(k) are truthful and accurate. It is NOT a numbered FDA form: Form FDA 2891 is the Registration of Device Establishment; this entry keeps the legacy id so existing artifacts resolve, and its formNumber must not be reconciled against the FDA catalog as form 2891.',
     category: 'Common',
     version: '2024.1',
     lastUpdated: '2024-01-01',
@@ -701,10 +701,14 @@ export function getApplicableForms(criteria: {
 // Helper function to get forms required for a specific submission type
 export function getRequiredForms(submissionType: '510k' | 'PMA' | 'DeNovo'): string[] {
   switch (submissionType) {
+    // Form FDA 3514 (CDRH premarket review submission cover sheet) was retired
+    // for 510(k) and De Novo when eSTAR became mandatory: the eSTAR captures the
+    // cover-sheet data itself. Forms 1571/1572 are IND forms and never belong
+    // to a PMA.
     case '510k':
-      return ['FDA_3514', 'FDA_3601', 'FDA_3881', 'FDA_3654', 'FDA_3872', 'FDA_2891'];
+      return ['FDA_3601', 'FDA_3881', 'FDA_3654', 'FDA_3872', 'FDA_2891'];
     case 'PMA':
-      return ['FDA_3663', 'FDA_3601', 'FDA_3654', 'FDA_2891', 'FDA_1571', 'FDA_1572'];
+      return ['FDA_3663', 'FDA_3601', 'FDA_3654', 'FDA_2891'];
     case 'DeNovo':
       return ['FDA_3898', 'FDA_3601', 'FDA_3654', 'FDA_2891'];
     default:

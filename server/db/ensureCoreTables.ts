@@ -486,16 +486,34 @@ export async function ensureCoreTables(connectionString?: string): Promise<Ensur
         created_at TIMESTAMPTZ DEFAULT NOW(),
         updated_at TIMESTAMPTZ DEFAULT NOW()
       )`,
+      // Every column recordCerv2SectionVersion writes, because it is the only
+      // writer of this table and a boot-created table narrower than the writer
+      // 500s on every section edit. This fallback carried ten columns while the
+      // writer inserted seventeen; the transaction rolls the content write back
+      // with it, so the failure is safe rather than silent, but the surface is
+      // dead in any environment where this DDL — not drizzle push — created the
+      // table. Keep it in step with shared/schema.ts cerv2SectionVersions.
       cerv2_section_versions: `CREATE TABLE IF NOT EXISTS cerv2_section_versions (
         id SERIAL PRIMARY KEY,
         section_id INTEGER NOT NULL,
         organization_id INTEGER NOT NULL,
-        version_number INTEGER DEFAULT 1,
-        change_type TEXT DEFAULT 'edit',
+        version_number INTEGER NOT NULL DEFAULT 1,
+        version_label TEXT,
+        change_type TEXT NOT NULL DEFAULT 'edit',
+        change_summary TEXT,
         content TEXT,
         field_data JSONB,
+        status TEXT,
+        completion_percentage INTEGER,
+        fields_changed TEXT[],
+        previous_values JSONB,
+        new_values JSONB,
         changed_by INTEGER,
+        changed_by_name TEXT,
+        changed_by_email TEXT,
         changed_at TIMESTAMPTZ DEFAULT NOW(),
+        ip_address TEXT,
+        user_agent TEXT,
         created_at TIMESTAMPTZ DEFAULT NOW()
       )`,
       // cerv2_document_sessions autocreate removed (reachability audit,

@@ -6,17 +6,17 @@
 
 ## Authority
 
-**This project owns the Concept2Cure.RI UI.** Every Concept2Cure.RI surface — home, projects, artifacts, auth, editor, admin — is designed here first, shipped as a hi-fi prototype under `ui_kits/`, and then implemented in the `concept2cure-v2` codebase by Claude Code.
+**This project owns the Concept2Cure.RI UI.** Every Concept2Cure.RI surface — home, projects, artifacts, auth, editor, admin — is designed here first, shipped as a hi-fi prototype under `../ui_kits/`, and then implemented in the `concept2cure-v2` codebase by Claude Code.
 
 The legacy UI that lives in the repo today (`client/src/concept2cure/ZenApp.tsx`, `IndustryAwareApp.tsx`, `AppsPage.tsx`, the industry-specific dashboards under `components/biologics|medtech|pharma|cro|biotech/`, etc.) is **in the process of being deleted**. Do not extend it, restyle it, or refactor it in place. Replace it surface-by-surface as this design system releases each phase.
 
 ## Claude Code's role
 
 1. **Read `HANDOFF.md` first**, every session. It lists which surfaces are ready for implementation, which are in design, and which are still legacy.
-2. **Implement exactly what ships here.** Mirror the JSX structure, class names, CSS tokens, copy, and interaction from the matching `ui_kits/*` directory into the codebase. Layout, spacing, density, motion — all 1:1. Do not improvise.
+2. **Implement exactly what ships here.** Mirror the JSX structure, class names, CSS tokens, copy, and interaction from the matching `../ui_kits/*` directory into the codebase. Layout, spacing, density, motion — all 1:1. Do not improvise.
 3. **Copy the token surface wholesale.** `colors_and_type.css` is the single source for color, type, spacing, radius, shadow and motion. Any hex, font-family, or magic number in the codebase that isn't reading from these tokens is a bug — fix it as you pass through.
 4. **Delete as you replace.** When a new surface ships, remove the legacy route/page/component it supersedes (along with any feature flags that used to gate it). Do not leave dead code paths.
-5. **Do not invent.** If the surface you need isn't in `ui_kits/` yet, stop and ask. That surface has not been designed.
+5. **Do not invent.** If the surface you need isn't in `../ui_kits/` yet, stop and ask. That surface has not been designed.
 
 ## Read order, every session
 
@@ -25,20 +25,20 @@ The legacy UI that lives in the repo today (`client/src/concept2cure/ZenApp.tsx`
 2. SKILL.md                   ← full skill framing + non-negotiables
 3. README.md                  ← voice, visual foundations, iconography
 4. colors_and_type.css        ← the token surface (canonical)
-5. ui_kits/<surface>/         ← the hi-fi reference for the surface you're building
+5. ../ui_kits/<surface>/      ← the hi-fi reference for the surface you're building (repo root)
 6. preview/                   ← specimen cards for verifying tokens in isolation
 ```
 
 ## Phase status (summary — full list in HANDOFF.md)
 
-- **Phase 1 · Home screen** — READY FOR IMPLEMENTATION. Lives in `ui_kits/home/`.
-- **Phase 2 · MDX workstream** — READY FOR IMPLEMENTATION. Lives in `ui_kits/mdx/`. Includes the 510(k) module editor (3-pane Cursor-style workbench) reachable from the eSTAR checklist.
-- **Phase 3 · Projects detail** — In design (scaffolded in HANDOFF.md, pending RIM framing). Do not pre-build. Reference patterns: `ui_kits/ana_ri/` (chat-first shell) and `ui_kits/ectd_coauthor/` (3-pane artifact workbench).
+- **Phase 1 · Home screen** — READY FOR IMPLEMENTATION. Lives in `../ui_kits/home/`.
+- **Phase 2 · MDX workstream** — READY FOR IMPLEMENTATION. Lives in `../ui_kits/mdx/`. Includes the 510(k) module editor (3-pane Cursor-style workbench) reachable from the eSTAR checklist.
+- **Phase 3 · Projects detail** — In design (scaffolded in HANDOFF.md, pending RIM framing). Do not pre-build. Reference patterns: `../ui_kits/ana_ri/` (chat-first shell) and `../ui_kits/ectd_coauthor/` (3-pane artifact workbench).
 - **Phases 4–6 · Artifact workbench, Auth, Admin** — In design. Do not pre-build.
 
 ## Token import — read before writing one line of CSS
 
-`colors_and_type.css` is canonical, but **the `ui_kits/*` prototypes also re-declare a subset of the same tokens inline at `:root` in their own stylesheet** so they render standalone in this design tool. When you port a kit, those inline `:root` blocks are the *escape hatch* — not the contract.
+`colors_and_type.css` is canonical, but **the `../ui_kits/*` prototypes also re-declare a subset of the same tokens inline at `:root` in their own stylesheet** so they render standalone in this design tool. When you port a kit, those inline `:root` blocks are the *escape hatch* — not the contract.
 
 The contract is: **the global stylesheet of the React app must import `colors_and_type.css` once, at the root, before any component CSS.** Then drop the kit's inline `:root` token block during the port — the canonical file supplies every variable it referenced.
 
@@ -65,7 +65,7 @@ These come from `README.md`. Every PR that violates them is a bug.
 
 ## Escalation
 
-If an implementation decision requires trading off against what ships here — performance, framework constraints, a11y edge cases, anything — **raise it to the designer (this project) before coding around it**. Do not resolve UI trade-offs unilaterally. The designer will update `ui_kits/` and `HANDOFF.md` if the design needs to change.
+If an implementation decision requires trading off against what ships here — performance, framework constraints, a11y edge cases, anything — **raise it to the designer (this project) before coding around it**. Do not resolve UI trade-offs unilaterally. The designer will update `../ui_kits/` and `HANDOFF.md` if the design needs to change.
 
 ## What lives where
 
@@ -78,9 +78,9 @@ If an implementation decision requires trading off against what ships here — p
 | `README.md`                 | Voice, tone, visual foundations, content rules, iconography. |
 | `colors_and_type.css`       | Canonical token surface. |
 | `preview/*.html`            | Per-token specimen cards. |
-| `ui_kits/home/`             | **Phase 1 · Home screen** (ready). |
-| `ui_kits/ana_ri/`           | Reference — chat-first shell. |
-| `ui_kits/ectd_coauthor/`    | Reference — artifact workbench. |
+| `../ui_kits/home/`             | **Phase 1 · Home screen** (ready). |
+| `../ui_kits/ana_ri/`           | Reference — chat-first shell. |
+| `../ui_kits/ectd_coauthor/`    | Reference — artifact workbench. |
 | `assets/`                   | Brand mark, agency + compliance logos. |
 
 ---

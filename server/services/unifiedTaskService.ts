@@ -55,6 +55,15 @@ export const MODULE_CONFIG = {
     icon: 'ShieldCheck',
     category: 'compliance',
   },
+  // Raised by the biostatistics bridge (server/services/biostatistics-bridge)
+  // from a design assessment: sample-size revisions, escalations, filing
+  // deliverables. Source entity is the study design (cdisc_prm_studies).
+  Biostatistics: {
+    name: 'Biostatistics',
+    color: '#5a6f9c', // matches TB_MOD.Biostatistics on the task board
+    icon: 'Sigma',
+    category: 'clinical',
+  },
 };
 
 export interface UnifiedTaskInput {

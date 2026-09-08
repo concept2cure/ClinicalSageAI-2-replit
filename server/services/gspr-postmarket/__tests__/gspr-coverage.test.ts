@@ -114,6 +114,22 @@ describe('computeCoverage', () => {
     expect(r.coveragePercent).toBe(100);
   });
 
+  test('empty in-scope catalog fails closed — 0% coverage, gate blocked (assessed nothing)', async () => {
+    // Unseeded gspr_requirements catalog, or a regulation/product-type with no
+    // catalog rows: nothing is in scope. Reporting 100% + a passing conformity
+    // gate here would put an unsubstantiated Annex I / GSPR claim into a CER.
+    setRows(gsprRequirements, []);
+    setRows(gsprProgramMappings, []);
+    const r = await computeCoverage(ORG, PROGRAM, {
+      regulation: 'IVDR',
+      productType: 'ivd',
+      deviceClass: 'B',
+    });
+    expect(r.totalApplicable).toBe(0);
+    expect(r.coveragePercent).toBe(0); // was 100 before the fix
+    expect(r.passesGate).toBe(false); // was true before the fix
+  });
+
   test('unmapped in-scope requirement raises GSPR-001 critical', async () => {
     setRows(gsprRequirements, [req({ id: 'req-1', clause: '1' }), req({ id: 'req-2', clause: '2' })]);
     setRows(gsprProgramMappings, [mapping({ id: 'm1', requirementId: 'req-1' })]);

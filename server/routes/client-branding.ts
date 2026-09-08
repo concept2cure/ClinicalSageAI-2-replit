@@ -12,6 +12,7 @@ import auditService from '../services/auditService';
 import { createScopedLogger } from '../utils/logger';
 import { createFeatureStore } from '../utils/feature-persistence';
 import { requireAuthedOrgId } from '../utils/authedOrgId';
+import { serverError } from '../lib/api-response';
 
 const logger = createScopedLogger('client-branding');
 const router = Router();
@@ -23,6 +24,25 @@ const store = createFeatureStore('client_branding');
 // any authenticated user read or overwrite another tenant's branding
 // (logo, colors, custom templates). The orgId now comes from the JWT
 // only, via requireAuthedOrgId; the query/body field is ignored.
+
+/**
+ * Who created this — from the request, never invented.
+ *
+ * `createdBy` was the literal string 'Current User', so every document template
+ * in the store records its author as words nobody is. requireAuthedOrgId has
+ * already established an authenticated principal by the time this runs, so a
+ * missing identity is an anomaly and the write is refused rather than attributed
+ * to a placeholder.
+ */
+function authorLabel(req: Request): string | null {
+  const u = (req as any).user as { id?: unknown; name?: unknown; email?: unknown } | undefined;
+  if (!u) return null;
+  const name = typeof u.name === 'string' && u.name.trim() !== '' ? u.name.trim() : null;
+  const email = typeof u.email === 'string' && u.email.trim() !== '' ? u.email.trim() : null;
+  if (name) return name;
+  if (email) return email;
+  return u.id == null ? null : `user #${String(u.id)}`;
+}
 
 router.get('/settings', async (req: Request, res: Response) => {
   try {
@@ -52,7 +72,7 @@ router.get('/settings', async (req: Request, res: Response) => {
       updatedAt: new Date().toISOString(),
     });
   } catch (err: any) {
-    res.status(500).json({ error: err.message || 'Failed to fetch settings' });
+    return serverError(res, logger, 'loading settings', err);
   }
 });
 
@@ -89,7 +109,7 @@ router.patch('/settings', async (req: Request, res: Response) => {
 
     res.json(updated);
   } catch (err: any) {
-    res.status(500).json({ error: err.message || 'Failed to update settings' });
+    return serverError(res, logger, 'updating settings', err);
   }
 });
 
@@ -130,7 +150,7 @@ router.post('/upload-logo', async (req: Request, res: Response) => {
     logger.info(`Logo uploaded for org ${orgId}`);
     res.json({ logoUrl, updated: true });
   } catch (err: any) {
-    res.status(500).json({ error: err.message || 'Failed to upload logo' });
+    return serverError(res, logger, 'saving upload logo', err);
   }
 });
 
@@ -163,7 +183,7 @@ router.get('/logo/:orgId', async (req: Request, res: Response) => {
       res.status(400).json({ error: 'Invalid logo format' });
     }
   } catch (err: any) {
-    res.status(500).json({ error: err.message || 'Failed to serve logo' });
+    return serverError(res, logger, 'loading logo', err);
   }
 });
 
@@ -204,7 +224,7 @@ router.post('/upload-letterhead', async (req: Request, res: Response) => {
     logger.info(`Letterhead uploaded for org ${orgId}`);
     res.json({ letterheadUrl: letterheadUrl, updated: true });
   } catch (err: any) {
-    res.status(500).json({ error: err.message || 'Failed to upload letterhead' });
+    return serverError(res, logger, 'saving upload letterhead', err);
   }
 });
 
@@ -221,7 +241,7 @@ router.get('/templates', async (req: Request, res: Response) => {
 
     res.json(templates);
   } catch (err: any) {
-    res.status(500).json({ error: err.message || 'Failed to fetch templates' });
+    return serverError(res, logger, 'loading templates', err);
   }
 });
 
@@ -237,7 +257,7 @@ router.get('/templates/:id', async (req: Request, res: Response) => {
 
     res.json(template);
   } catch (err: any) {
-    res.status(500).json({ error: err.message || 'Failed to fetch template' });
+    return serverError(res, logger, 'loading templates', err);
   }
 });
 
@@ -253,6 +273,13 @@ router.post('/templates', async (req: Request, res: Response) => {
     if (!name || !category)
       return res.status(400).json({ error: 'name and category are required' });
 
+    const author = authorLabel(req);
+    if (!author) {
+      return res.status(403).json({
+        error: 'The signed-in user could not be identified, so the template was not created.',
+      });
+    }
+
     const templateData = {
       organizationId: orgId,
       name,
@@ -264,7 +291,7 @@ router.post('/templates', async (req: Request, res: Response) => {
       placeholders: placeholders || {},
       isActive: true,
       usageCount: 0,
-      createdBy: 'Current User',
+      createdBy: author,
     };
 
     const template = await store.insert(orgId, 'template', name, templateData);
@@ -280,7 +307,7 @@ router.post('/templates', async (req: Request, res: Response) => {
     logger.info(`Template ${template.id} created: ${name} [${category}]`);
     res.status(201).json(template);
   } catch (err: any) {
-    res.status(500).json({ error: err.message || 'Failed to create template' });
+    return serverError(res, logger, 'saving templates', err);
   }
 });
 
@@ -314,7 +341,7 @@ router.patch('/templates/:id', async (req: Request, res: Response) => {
 
     res.json(result);
   } catch (err: any) {
-    res.status(500).json({ error: err.message || 'Failed to update template' });
+    return serverError(res, logger, 'updating templates', err);
   }
 });
 
@@ -340,7 +367,7 @@ router.delete('/templates/:id', async (req: Request, res: Response) => {
 
     res.json({ deleted: true });
   } catch (err: any) {
-    res.status(500).json({ error: err.message || 'Failed to delete template' });
+    return serverError(res, logger, 'deleting templates', err);
   }
 });
 
@@ -396,7 +423,7 @@ router.post('/render-template/:id', async (req: Request, res: Response) => {
       usedPlaceholders: Object.keys(allValues),
     });
   } catch (err: any) {
-    res.status(500).json({ error: err.message || 'Failed to render template' });
+    return serverError(res, logger, 'saving render template', err);
   }
 });
 

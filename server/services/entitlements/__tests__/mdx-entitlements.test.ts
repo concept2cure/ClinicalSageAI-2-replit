@@ -60,6 +60,7 @@ describe('featureTier', () => {
       prediction_forecast_report: 'professional',
       crl_rtf_premortem: 'professional',
       scheduled_reports: 'professional',
+      ana_live_drive: 'professional',
       portfolio_rollup: 'enterprise',
     };
     for (const [feature, tier] of Object.entries(expected)) {
@@ -139,6 +140,7 @@ describe('entitlementsForTier', () => {
         'prediction_forecast_report',
         'crl_rtf_premortem',
         'scheduled_reports',
+        'ana_live_drive',
       ]),
     );
 

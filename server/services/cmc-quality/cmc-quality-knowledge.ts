@@ -15,6 +15,30 @@
  * @module server/services/cmc-quality/cmc-quality-knowledge
  */
 
+/* The ICH Q3A/Q3B threshold tables are NOT restated in this module: they live
+   in services/global-ri/impurities-thresholds, which owns them. */
+import {
+  ELEMENTAL_IMPURITIES,
+  getResidualSolvent,
+  resolveImpurityThresholds,
+  type AdministrationRoute,
+  type ElementalImpurity,
+} from '../global-ri/impurities-thresholds';
+
+/**
+ * Q3D element lookup by symbol or name. The catalog is an array so it can be
+ * enumerated; this is the by-key read the classifier needs.
+ */
+function findElementalImpurity(key: string): ElementalImpurity | null {
+  const k = key.trim().toLowerCase();
+  if (!k) return null;
+  return (
+    ELEMENTAL_IMPURITIES.find(
+      (e) => e.symbol.toLowerCase() === k || e.name.toLowerCase() === k,
+    ) ?? null
+  );
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Section 0 — Common Utility Types
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1214,477 +1238,30 @@ export interface ImpurityClassificationResult {
   citations: string[];
 }
 
-// ── 3.2 Reference Data — ICH Q3A Drug Substance Thresholds ──
+/* ── ICH Q3A / Q3B thresholds ─────────────────────────────────────────────────
+   Deliberately NOT restated here. services/global-ri/impurities-thresholds owns
+   the tables; this module reads them through resolveImpurityThresholds. The
+   copy that used to live here disagreed with the guideline in the Q3B rows and
+   fell open through a band gap in the Q3A rows. */
 
-interface Q3AThresholdRow {
-  maxDailyDoseLow: number;
-  maxDailyDoseHigh: number;
-  reporting: string;
-  identification: string;
-  qualification: string;
-}
-
-const Q3A_THRESHOLDS: Q3AThresholdRow[] = [
-  {
-    maxDailyDoseLow: 0,
-    maxDailyDoseHigh: 2000,
-    reporting: '>= 0.05%',
-    identification: '>= 0.10% or 1.0 mg/day intake (whichever is lower)',
-    qualification: '>= 0.15% or 1.0 mg/day intake (whichever is lower)',
-  },
-  {
-    maxDailyDoseLow: 2000.01,
-    maxDailyDoseHigh: Infinity,
-    reporting: '>= 0.03%',
-    identification: '>= 0.05%',
-    qualification: '>= 0.05%',
-  },
-];
-
-// ── 3.3 Reference Data — ICH Q3B Drug Product Thresholds ──
-
-interface Q3BThresholdRow {
-  maxDailyDoseLow: number;
-  maxDailyDoseHigh: number;
-  reporting: string;
-  identification: string;
-  qualification: string;
-}
-
-const Q3B_THRESHOLDS: Q3BThresholdRow[] = [
-  {
-    maxDailyDoseLow: 0,
-    maxDailyDoseHigh: 1,
-    reporting: '1.0% or 5 ug TDI (whichever is lower)',
-    identification: '1.0% or 5 ug TDI (whichever is lower)',
-    qualification: '1.0% or 5 ug TDI (whichever is lower)',
-  },
-  {
-    maxDailyDoseLow: 1.01,
-    maxDailyDoseHigh: 10,
-    reporting: '0.5%',
-    identification: '0.2% or 2 mg TDI (whichever is lower)',
-    qualification: '0.2% or 2 mg TDI (whichever is lower)',
-  },
-  {
-    maxDailyDoseLow: 10.01,
-    maxDailyDoseHigh: 100,
-    reporting: '0.2%',
-    identification: '0.2% or 2 mg TDI (whichever is lower)',
-    qualification: '0.2% or 3 mg TDI (whichever is lower)',
-  },
-  {
-    maxDailyDoseLow: 100.01,
-    maxDailyDoseHigh: 2000,
-    reporting: '0.1%',
-    identification: '0.2% or 2 mg TDI (whichever is lower)',
-    qualification: '0.2% or 3 mg TDI (whichever is lower)',
-  },
-  {
-    maxDailyDoseLow: 2000.01,
-    maxDailyDoseHigh: Infinity,
-    reporting: '0.05%',
-    identification: '0.2% or 2 mg TDI (whichever is lower)',
-    qualification: '0.05% or 1.5 mg TDI (whichever is lower)',
-  },
-];
-
-// ── 3.4 Reference Data — ICH Q3C Residual Solvents ──
-
-interface SolventData {
-  class: number;
-  pde_mg_per_day: number;
-  concentrationLimit_ppm: number;
-  rationale: string;
-}
-
-const RESIDUAL_SOLVENTS: Record<string, SolventData> = {
-  // Class 1 — Solvents to be avoided
-  benzene: {
-    class: 1,
-    pde_mg_per_day: 0.02,
-    concentrationLimit_ppm: 2,
-    rationale: 'Human carcinogen (IARC Group 1). Should not be employed unless absolutely unavoidable.',
-  },
-  carbon_tetrachloride: {
-    class: 1,
-    pde_mg_per_day: 0.04,
-    concentrationLimit_ppm: 4,
-    rationale: 'Toxic and environmental hazard. Hepatotoxic and nephrotoxic.',
-  },
-  '1,2-dichloroethane': {
-    class: 1,
-    pde_mg_per_day: 0.05,
-    concentrationLimit_ppm: 5,
-    rationale: 'Probable human carcinogen (IARC Group 2B). Toxic.',
-  },
-  '1,1-dichloroethene': {
-    class: 1,
-    pde_mg_per_day: 0.08,
-    concentrationLimit_ppm: 8,
-    rationale: 'Toxic. Potential carcinogen.',
-  },
-  '1,1,1-trichloroethane': {
-    class: 1,
-    pde_mg_per_day: 15.0,
-    concentrationLimit_ppm: 1500,
-    rationale: 'Environmental hazard (ozone-depleting substance). Montreal Protocol restricted.',
-  },
-
-  // Class 2 — Solvents to be limited
-  acetonitrile: {
-    class: 2,
-    pde_mg_per_day: 4.1,
-    concentrationLimit_ppm: 410,
-    rationale: 'CNS toxicity. Metabolized to cyanide. Limit based on subchronic toxicity data.',
-  },
-  chloroform: {
-    class: 2,
-    pde_mg_per_day: 0.6,
-    concentrationLimit_ppm: 60,
-    rationale: 'Possible human carcinogen (IARC Group 2B). Hepatotoxic.',
-  },
-  cyclohexane: {
-    class: 2,
-    pde_mg_per_day: 38.8,
-    concentrationLimit_ppm: 3880,
-    rationale: 'CNS depressant. Limit based on neurotoxicity data from chronic inhalation studies.',
-  },
-  dichloromethane: {
-    class: 2,
-    pde_mg_per_day: 6.0,
-    concentrationLimit_ppm: 600,
-    rationale: 'Possible human carcinogen. Metabolized to CO; concern for carboxyhemoglobin formation.',
-  },
-  DMF: {
-    class: 2,
-    pde_mg_per_day: 8.8,
-    concentrationLimit_ppm: 880,
-    rationale: 'Reproductive toxicity. Developmental toxicant in animal studies.',
-  },
-  DMSO: {
-    class: 2,
-    pde_mg_per_day: 50.0,
-    concentrationLimit_ppm: 5000,
-    rationale: 'Relatively low toxicity but can enhance absorption of other chemicals through skin.',
-  },
-  ethylene_glycol: {
-    class: 2,
-    pde_mg_per_day: 6.2,
-    concentrationLimit_ppm: 620,
-    rationale: 'Nephrotoxicity. Metabolized to oxalic acid causing renal tubular damage.',
-  },
-  hexane: {
-    class: 2,
-    pde_mg_per_day: 2.9,
-    concentrationLimit_ppm: 290,
-    rationale: 'Neurotoxicity. Metabolite 2,5-hexanedione causes peripheral neuropathy.',
-  },
-  methanol: {
-    class: 2,
-    pde_mg_per_day: 30.0,
-    concentrationLimit_ppm: 3000,
-    rationale: 'Toxic. Metabolized to formaldehyde and formic acid; causes visual impairment.',
-  },
-  NMP: {
-    class: 2,
-    pde_mg_per_day: 5.3,
-    concentrationLimit_ppm: 530,
-    rationale: 'Reproductive and developmental toxicant. Teratogenic in animal studies.',
-  },
-  pyridine: {
-    class: 2,
-    pde_mg_per_day: 2.0,
-    concentrationLimit_ppm: 200,
-    rationale: 'Hepatotoxicity and CNS effects. Limit based on chronic toxicity studies.',
-  },
-  THF: {
-    class: 2,
-    pde_mg_per_day: 7.2,
-    concentrationLimit_ppm: 720,
-    rationale: 'CNS depressant. Possible carcinogen (peroxide formation). Limit from subchronic studies.',
-  },
-  toluene: {
-    class: 2,
-    pde_mg_per_day: 8.9,
-    concentrationLimit_ppm: 890,
-    rationale: 'Neurotoxicity and reproductive toxicity. Well-characterized exposure limits.',
-  },
-  formamide: {
-    class: 2,
-    pde_mg_per_day: 2.2,
-    concentrationLimit_ppm: 220,
-    rationale: 'Teratogenic. Developmental toxicant.',
-  },
-  sulfolane: {
-    class: 2,
-    pde_mg_per_day: 1.6,
-    concentrationLimit_ppm: 160,
-    rationale: 'Neurotoxicity in animal studies. Limited human data.',
-  },
-
-  // Class 3 — Low toxic potential (limit <= 5000 ppm or <= 50 mg/day)
-  acetic_acid: {
-    class: 3,
-    pde_mg_per_day: 50.0,
-    concentrationLimit_ppm: 5000,
-    rationale: 'Low toxicity. GHS classification: corrosive at high concentrations but acceptable as residual.',
-  },
-  acetone: {
-    class: 3,
-    pde_mg_per_day: 50.0,
-    concentrationLimit_ppm: 5000,
-    rationale: 'Low toxicity. Endogenous metabolite (ketone body). Rapidly metabolized.',
-  },
-  anisole: {
-    class: 3,
-    pde_mg_per_day: 50.0,
-    concentrationLimit_ppm: 5000,
-    rationale: 'Low toxicity. Rapidly metabolized to methoxyphenol.',
-  },
-  butanol: {
-    class: 3,
-    pde_mg_per_day: 50.0,
-    concentrationLimit_ppm: 5000,
-    rationale: 'Low toxicity. Common food component.',
-  },
-  ethanol: {
-    class: 3,
-    pde_mg_per_day: 50.0,
-    concentrationLimit_ppm: 5000,
-    rationale: 'Low toxicity at residual levels. Widely consumed beverage component.',
-  },
-  ethyl_acetate: {
-    class: 3,
-    pde_mg_per_day: 50.0,
-    concentrationLimit_ppm: 5000,
-    rationale: 'Low toxicity. Rapidly hydrolyzed to ethanol and acetic acid.',
-  },
-  heptane: {
-    class: 3,
-    pde_mg_per_day: 50.0,
-    concentrationLimit_ppm: 5000,
-    rationale: 'Low toxicity. Does not share the neurotoxicity concerns of n-hexane.',
-  },
-  isopropanol: {
-    class: 3,
-    pde_mg_per_day: 50.0,
-    concentrationLimit_ppm: 5000,
-    rationale: 'Low toxicity. Rapidly metabolized to acetone.',
-  },
-  MTBE: {
-    class: 3,
-    pde_mg_per_day: 50.0,
-    concentrationLimit_ppm: 5000,
-    rationale: 'Low toxicity. No significant mutagenicity or carcinogenicity.',
-  },
-  propanol: {
-    class: 3,
-    pde_mg_per_day: 50.0,
-    concentrationLimit_ppm: 5000,
-    rationale: 'Low toxicity. Rapidly metabolized.',
-  },
-  DMAC: {
-    class: 2,
-    pde_mg_per_day: 10.9,
-    concentrationLimit_ppm: 1090,
-    rationale: 'Reproductive toxicant. Teratogenic in animal models.',
-  },
-  MEK: {
-    class: 3,
-    pde_mg_per_day: 50.0,
-    concentrationLimit_ppm: 5000,
-    rationale: 'Low toxicity. Commonly used industrial solvent with well-understood profile.',
-  },
-};
-
-// ── 3.5 Reference Data — ICH Q3D Elemental Impurities ──
-
-interface ElementalData {
-  class: string;
-  oralPDE_ug_per_day: number;
-  parenteralPDE_ug_per_day: number;
-  inhalationPDE_ug_per_day: number;
-  rationale: string;
-}
-
-const ELEMENTAL_IMPURITIES: Record<string, ElementalData> = {
-  // Class 1 — Human toxicants with limited or no use in pharmaceuticals
-  Cd: {
-    class: '1',
-    oralPDE_ug_per_day: 5,
-    parenteralPDE_ug_per_day: 2,
-    inhalationPDE_ug_per_day: 2,
-    rationale: 'Human carcinogen (IARC Group 1). Nephrotoxic. Accumulates in kidney and liver.',
-  },
-  Pb: {
-    class: '1',
-    oralPDE_ug_per_day: 5,
-    parenteralPDE_ug_per_day: 5,
-    inhalationPDE_ug_per_day: 5,
-    rationale: 'Neurotoxic, nephrotoxic, reproductive toxicant. No safe threshold established for children.',
-  },
-  As: {
-    class: '1',
-    oralPDE_ug_per_day: 15,
-    parenteralPDE_ug_per_day: 15,
-    inhalationPDE_ug_per_day: 2,
-    rationale: 'Human carcinogen (IARC Group 1). Multi-organ toxicity. Inorganic arsenic most toxic.',
-  },
-  Hg: {
-    class: '1',
-    oralPDE_ug_per_day: 30,
-    parenteralPDE_ug_per_day: 3,
-    inhalationPDE_ug_per_day: 1,
-    rationale: 'Neurotoxic (organic mercury crosses blood-brain barrier). Nephrotoxic (inorganic forms).',
-  },
-
-  // Class 2A — Higher probability of occurrence in drug products
-  Co: {
-    class: '2A',
-    oralPDE_ug_per_day: 50,
-    parenteralPDE_ug_per_day: 5,
-    inhalationPDE_ug_per_day: 3,
-    rationale: 'Cardiomyopathy, thyroid effects. Used in catalysts for pharmaceutical synthesis.',
-  },
-  Ni: {
-    class: '2A',
-    oralPDE_ug_per_day: 200,
-    parenteralPDE_ug_per_day: 20,
-    inhalationPDE_ug_per_day: 5,
-    rationale: 'Dermal sensitizer. Possible carcinogen (inhalation). Used in hydrogenation catalysts.',
-  },
-  V: {
-    class: '2A',
-    oralPDE_ug_per_day: 100,
-    parenteralPDE_ug_per_day: 10,
-    inhalationPDE_ug_per_day: 1,
-    rationale: 'Reproductive toxicant. GI irritation. May be introduced from stainless steel equipment.',
-  },
-
-  // Class 2B — Lower probability of occurrence but with significant toxicity
-  Ag: {
-    class: '2B',
-    oralPDE_ug_per_day: 150,
-    parenteralPDE_ug_per_day: 10,
-    inhalationPDE_ug_per_day: 7,
-    rationale: 'Argyria (irreversible skin discoloration). Low systemic toxicity at low doses.',
-  },
-  Au: {
-    class: '2B',
-    oralPDE_ug_per_day: 100,
-    parenteralPDE_ug_per_day: 100,
-    inhalationPDE_ug_per_day: 1,
-    rationale: 'Nephrotoxicity and dermatitis at high doses. Used in some catalytic processes.',
-  },
-  Ir: {
-    class: '2B',
-    oralPDE_ug_per_day: 100,
-    parenteralPDE_ug_per_day: 10,
-    inhalationPDE_ug_per_day: 1,
-    rationale: 'Limited toxicity data. Included due to use as catalyst in pharmaceutical synthesis.',
-  },
-  Os: {
-    class: '2B',
-    oralPDE_ug_per_day: 100,
-    parenteralPDE_ug_per_day: 10,
-    inhalationPDE_ug_per_day: 1,
-    rationale: 'OsO4 is highly toxic (lung and eye irritant). Metal form less concerning.',
-  },
-  Pd: {
-    class: '2B',
-    oralPDE_ug_per_day: 100,
-    parenteralPDE_ug_per_day: 10,
-    inhalationPDE_ug_per_day: 1,
-    rationale: 'Sensitizer. Very common catalyst (Pd/C, Pd(OAc)2) in pharmaceutical synthesis.',
-  },
-  Pt: {
-    class: '2B',
-    oralPDE_ug_per_day: 100,
-    parenteralPDE_ug_per_day: 10,
-    inhalationPDE_ug_per_day: 1,
-    rationale: 'Sensitizer and potential nephrotoxicant. Used in catalytic hydrogenation.',
-  },
-  Rh: {
-    class: '2B',
-    oralPDE_ug_per_day: 100,
-    parenteralPDE_ug_per_day: 10,
-    inhalationPDE_ug_per_day: 1,
-    rationale: 'Limited data. Used as catalyst in asymmetric synthesis.',
-  },
-  Ru: {
-    class: '2B',
-    oralPDE_ug_per_day: 100,
-    parenteralPDE_ug_per_day: 10,
-    inhalationPDE_ug_per_day: 1,
-    rationale: 'Limited data. RuO4 is volatile and toxic. Used in metathesis catalysis.',
-  },
-  Se: {
-    class: '2B',
-    oralPDE_ug_per_day: 150,
-    parenteralPDE_ug_per_day: 80,
-    inhalationPDE_ug_per_day: 130,
-    rationale: 'Essential trace element at low doses but toxic at higher exposures. Selenosis risk.',
-  },
-  Tl: {
-    class: '2B',
-    oralPDE_ug_per_day: 8,
-    parenteralPDE_ug_per_day: 8,
-    inhalationPDE_ug_per_day: 8,
-    rationale: 'Highly toxic (formerly used as rodenticide). Neurotoxicity, alopecia.',
-  },
-
-  // Class 3 — Relatively low toxicity by oral route; assessed based on route
-  Ba: {
-    class: '3',
-    oralPDE_ug_per_day: 1400,
-    parenteralPDE_ug_per_day: 700,
-    inhalationPDE_ug_per_day: 300,
-    rationale: 'Soluble barium salts are toxic (GI, cardiac). Insoluble BaSO4 is non-toxic.',
-  },
-  Cr: {
-    class: '3',
-    oralPDE_ug_per_day: 11000,
-    parenteralPDE_ug_per_day: 1100,
-    inhalationPDE_ug_per_day: 3,
-    rationale: 'Cr(III) is essential; Cr(VI) is a human carcinogen. PDE based on Cr(VI) for inhalation.',
-  },
-  Cu: {
-    class: '3',
-    oralPDE_ug_per_day: 3000,
-    parenteralPDE_ug_per_day: 300,
-    inhalationPDE_ug_per_day: 30,
-    rationale: 'Essential trace element. Hepatotoxicity at high doses (Wilson disease model).',
-  },
-  Li: {
-    class: '3',
-    oralPDE_ug_per_day: 550,
-    parenteralPDE_ug_per_day: 250,
-    inhalationPDE_ug_per_day: 25,
-    rationale: 'Narrow therapeutic index drug itself. Nephrotoxicity and thyroid effects.',
-  },
-  Mo: {
-    class: '3',
-    oralPDE_ug_per_day: 3000,
-    parenteralPDE_ug_per_day: 1500,
-    inhalationPDE_ug_per_day: 10,
-    rationale: 'Essential trace element. Reproductive effects at high doses in animals.',
-  },
-  Sb: {
-    class: '3',
-    oralPDE_ug_per_day: 1200,
-    parenteralPDE_ug_per_day: 90,
-    inhalationPDE_ug_per_day: 20,
-    rationale: 'GI irritation, cardiotoxicity at high doses. Used in some catalytic processes.',
-  },
-  Sn: {
-    class: '3',
-    oralPDE_ug_per_day: 6000,
-    parenteralPDE_ug_per_day: 600,
-    inhalationPDE_ug_per_day: 60,
-    rationale: 'Low toxicity for inorganic tin. Organotin compounds more toxic.',
-  },
-};
+// ── 3.4 / 3.5 Reference Data — ICH Q3C and Q3D ──
+//
+// DELETED. These two sections held private copies of the ICH Q3C(R8)
+// residual-solvent and Q3D(R2) elemental-impurity tables. They disagreed in
+// membership with the catalog in server/services/global-ri/impurities-thresholds.ts,
+// both were partial, and the partiality was not the worst of it:
+//
+//   - A solvent this table did not recognise was answered "5000 ppm (Class 3
+//     default)" with an ICH Q3C(R8) citation attached. Benzene is Class 1 at
+//     2 ppm, so any misspelling — or any real solvent outside a partial list —
+//     produced a limit 2500x too permissive, presented as the guideline's own
+//     answer, in a governed path.
+//   - The Q3D branch read `route || 'oral'`, so a record with no route of
+//     administration was assessed against the oral PDE, which is the most
+//     permissive of the three for most elements.
+//
+// The catalog now lives in ONE place, is materially complete, and REFUSES the
+// cases these defaults covered. classifyImpurity below reads it.
 
 // ── 3.6 Exported Function ──
 
@@ -1707,20 +1284,30 @@ export function classifyImpurity(params: ImpurityClassificationParams): Impurity
 
   // ── Organic impurities (Q3A / Q3B) ──
   if (impurityType === 'organic') {
-    const thresholds = context === 'drug_substance' ? Q3A_THRESHOLDS : Q3B_THRESHOLDS;
-    const row = thresholds.find(
-      (r) => maximumDailyDose_mg >= r.maxDailyDoseLow && maximumDailyDose_mg <= r.maxDailyDoseHigh,
-    );
-
-    if (row) {
-      reportingThreshold = { value: row.reporting, unit: '% (w/w) or TDI', basis: context === 'drug_substance' ? 'ICH Q3A(R2)' : 'ICH Q3B(R2)' };
-      identificationThreshold = { value: row.identification, unit: '% (w/w) or TDI', basis: context === 'drug_substance' ? 'ICH Q3A(R2)' : 'ICH Q3B(R2)' };
-      qualificationThreshold = { value: row.qualification, unit: '% (w/w) or TDI', basis: context === 'drug_substance' ? 'ICH Q3A(R2)' : 'ICH Q3B(R2)' };
+    /* The ICH tables live in services/global-ri/impurities-thresholds, which is
+       their single source. The copy that used to sit in this file had a band
+       gap (its second Q3A row started at 2000.01, so a dose of exactly 2000.5
+       matched nothing and FELL THROUGH to a hardcoded "default" — a fabricated
+       threshold under this repo's fail-closed rule) and a Q3B table that
+       invented five reporting bands where Q3B has two and returned the wrong
+       qualification threshold above 2 g. Both are deleted; this reads the
+       canonical table, and a dose it cannot key a threshold to is now a
+       refusal rather than a default. */
+    const resolved = resolveImpurityThresholds({
+      matrix: context === 'drug_substance' ? 'drug_substance' : 'drug_product',
+      maxDailyDoseMg: maximumDailyDose_mg,
+      impurityClass: 'organic',
+    });
+    const basis = context === 'drug_substance' ? 'ICH Q3A(R2)' : 'ICH Q3B(R2)';
+    if (resolved.ok) {
+      reportingThreshold = { value: resolved.reporting.expression, unit: '% (w/w) or TDI', basis };
+      identificationThreshold = { value: resolved.identification.expression, unit: '% (w/w) or TDI', basis };
+      qualificationThreshold = { value: resolved.qualification.expression, unit: '% (w/w) or TDI', basis };
     } else {
-      // Fallback for edge case
-      reportingThreshold = { value: '>= 0.05%', unit: '% (w/w)', basis: 'ICH Q3A(R2) default' };
-      identificationThreshold = { value: '>= 0.10%', unit: '% (w/w)', basis: 'ICH Q3A(R2) default' };
-      qualificationThreshold = { value: '>= 0.15%', unit: '% (w/w)', basis: 'ICH Q3A(R2) default' };
+      const refusal = `Not established — ${resolved.message}`;
+      reportingThreshold = { value: refusal, unit: 'not established', basis };
+      identificationThreshold = { value: refusal, unit: 'not established', basis };
+      qualificationThreshold = { value: refusal, unit: 'not established', basis };
     }
 
     qualificationStrategy = [
@@ -1734,35 +1321,50 @@ export function classifyImpurity(params: ImpurityClassificationParams): Impurity
   }
   // ── Residual solvents (Q3C) ──
   else if (impurityType === 'residual_solvent') {
-    const normalizedName = (solventName || '').toLowerCase().replace(/[\s-]/g, '_');
-    const solvent = RESIDUAL_SOLVENTS[normalizedName];
+    const solvent = getResidualSolvent(String(solventName ?? ''));
 
     if (solvent) {
       solventClassification = {
         class: solvent.class,
-        pde_mg_per_day: solvent.pde_mg_per_day,
-        concentrationLimit_ppm: solvent.concentrationLimit_ppm,
-        rationale: solvent.rationale,
+        pde_mg_per_day: solvent.pdeMgPerDay ?? 0,
+        concentrationLimit_ppm: solvent.concentrationLimitPpm,
+        rationale:
+          solvent.class === 1
+            ? 'ICH Q3C(R8) Class 1 — to be avoided; presence requires justification even below the concentration limit.'
+            : solvent.class === 2
+              ? 'ICH Q3C(R8) Class 2 — limited by permitted daily exposure; the ppm figure is the Option 1 concentration limit.'
+              : 'ICH Q3C(R8) Class 3 — low toxic potential; 50 mg/day (5000 ppm) unless a higher level is justified.',
       };
       reportingThreshold = {
-        value: `${solvent.concentrationLimit_ppm} ppm`,
+        value: `${solvent.concentrationLimitPpm} ppm`,
         unit: 'ppm',
         basis: `ICH Q3C(R8) Class ${solvent.class}`,
       };
       identificationThreshold = {
-        value: solvent.class === 1 ? 'Must be identified and quantified' : `${solvent.concentrationLimit_ppm} ppm`,
+        value: solvent.class === 1 ? 'Must be identified and quantified' : `${solvent.concentrationLimitPpm} ppm`,
         unit: 'ppm',
         basis: `ICH Q3C(R8) Class ${solvent.class}`,
       };
       qualificationThreshold = {
-        value: `PDE: ${solvent.pde_mg_per_day} mg/day`,
-        unit: 'mg/day',
+        value: solvent.pdeMgPerDay === null
+          ? 'Class 1 — no PDE; the solvent is to be avoided'
+          : `PDE: ${solvent.pdeMgPerDay} mg/day`,
+        unit: solvent.pdeMgPerDay === null ? 'not applicable' : 'mg/day',
         basis: `ICH Q3C(R8) Class ${solvent.class}`,
       };
     } else {
-      reportingThreshold = { value: '5000 ppm (Class 3 default)', unit: 'ppm', basis: 'ICH Q3C(R8) Class 3 default' };
-      identificationThreshold = { value: '5000 ppm', unit: 'ppm', basis: 'ICH Q3C(R8) — unclassified treated as Class 3' };
-      qualificationThreshold = { value: '50 mg/day', unit: 'mg/day', basis: 'ICH Q3C(R8) Class 3 default' };
+      /* REFUSAL, not a default. This branch used to answer "5000 ppm (Class 3
+         default)" — the most permissive band in the guideline — for anything the
+         table did not recognise, so a misspelt Class 1 solvent came back as one
+         of the safest, with an ICH citation on it. */
+      const named = String(solventName ?? '').trim();
+      const refusal = named
+        ? `"${named}" is not in the ICH Q3C(R8) catalog, so its class and limit are not established. Q3C requires a solvent outside its tables to be justified on its own toxicological data.`
+        : 'No solvent is named, so no ICH Q3C class or limit is established for this record.';
+      const basis = 'ICH Q3C(R8) — not established';
+      reportingThreshold = { value: refusal, unit: 'not established', basis };
+      identificationThreshold = { value: refusal, unit: 'not established', basis };
+      qualificationThreshold = { value: refusal, unit: 'not established', basis };
     }
 
     qualificationStrategy = [
@@ -1774,46 +1376,86 @@ export function classifyImpurity(params: ImpurityClassificationParams): Impurity
   }
   // ── Elemental impurities (Q3D) ──
   else if (impurityType === 'elemental') {
-    const normalizedElement = (elementName || '').trim();
-    const element = ELEMENTAL_IMPURITIES[normalizedElement];
-    const usedRoute = route || 'oral';
+    const element = findElementalImpurity(String(elementName ?? ''));
 
-    if (element) {
-      const pde =
-        usedRoute === 'oral'
-          ? element.oralPDE_ug_per_day
-          : usedRoute === 'parenteral'
-            ? element.parenteralPDE_ug_per_day
-            : usedRoute === 'inhalation'
-              ? element.inhalationPDE_ug_per_day
-              : element.oralPDE_ug_per_day;
-
+    if (!element) {
+      const named = String(elementName ?? '').trim();
+      const refusal = named
+        ? `"${named}" is not in the ICH Q3D(R2) catalog, so its permitted daily exposure is not established — derive and justify a PDE on its own data.`
+        : 'No element is named, so no ICH Q3D permitted daily exposure is established for this record.';
+      const basis = 'ICH Q3D(R2) — not established';
+      reportingThreshold = { value: refusal, unit: 'not established', basis };
+      identificationThreshold = { value: refusal, unit: 'not established', basis };
+      qualificationThreshold = { value: refusal, unit: 'not established', basis };
+    } else if (!route) {
+      /* REFUSAL, not `route || 'oral'`. Q3D sets a different PDE per route and
+         the spread is large — cadmium is 5 ug/day oral against 2 parenteral,
+         vanadium 100 oral against 1 by inhalation — so defaulting to oral takes
+         the most permissive of the three for most elements. */
+      const refusal =
+        `The route of administration is not recorded, so no ICH Q3D permitted daily exposure can be selected for ${element.name}: ` +
+        `${element.pdeMicrogramsPerDay.oral} ug/day oral, ${element.pdeMicrogramsPerDay.parenteral} parenteral, ` +
+        `${element.pdeMicrogramsPerDay.inhalation} by inhalation.`;
+      const basis = 'ICH Q3D(R2) — route not recorded';
       elementalClassification = {
         class: element.class,
-        oralPDE_ug_per_day: element.oralPDE_ug_per_day,
-        parenteralPDE_ug_per_day: element.parenteralPDE_ug_per_day,
-        inhalationPDE_ug_per_day: element.inhalationPDE_ug_per_day,
-        rationale: element.rationale,
+        oralPDE_ug_per_day: element.pdeMicrogramsPerDay.oral,
+        parenteralPDE_ug_per_day: element.pdeMicrogramsPerDay.parenteral,
+        inhalationPDE_ug_per_day: element.pdeMicrogramsPerDay.inhalation,
+        rationale: `ICH Q3D(R2) ${element.class}. The permitted daily exposure depends on the route, which is not recorded.`,
+      };
+      reportingThreshold = { value: refusal, unit: 'not established', basis };
+      identificationThreshold = { value: refusal, unit: 'not established', basis };
+      qualificationThreshold = { value: refusal, unit: 'not established', basis };
+    } else if (element.pdeMicrogramsPerDay[route as AdministrationRoute] === undefined) {
+      /* REFUSAL for a route Q3D does not tabulate. `route` is a declared enum
+         value (e.g. 'topical'), so it passes the `!route` guard above — but ICH
+         Q3D(R2) tabulates a permitted daily exposure only for oral, parenteral
+         and inhalation. Reading pdeMicrogramsPerDay[route] then gives `undefined`
+         (the `as AdministrationRoute` cast is what let the unsupported key past
+         the type system), and rendering it would ship "undefined ug/day" and a
+         30%-of-undefined "NaN ug/day" cited to Q3D(R2). A topical/other-route PDE
+         must be derived and justified on its own data, not fabricated as null. */
+      const refusal =
+        `ICH Q3D(R2) does not tabulate a permitted daily exposure for the ${route} route, so none is established for ${element.name}: ` +
+        `a route-specific PDE must be derived and justified. Q3D tabulates ` +
+        `${element.pdeMicrogramsPerDay.oral} ug/day oral, ${element.pdeMicrogramsPerDay.parenteral} parenteral, ` +
+        `${element.pdeMicrogramsPerDay.inhalation} by inhalation.`;
+      const basis = 'ICH Q3D(R2) — PDE not tabulated for this route';
+      elementalClassification = {
+        class: element.class,
+        oralPDE_ug_per_day: element.pdeMicrogramsPerDay.oral,
+        parenteralPDE_ug_per_day: element.pdeMicrogramsPerDay.parenteral,
+        inhalationPDE_ug_per_day: element.pdeMicrogramsPerDay.inhalation,
+        rationale: `ICH Q3D(R2) ${element.class}. No PDE is tabulated for the ${route} route; one must be derived and justified.`,
+      };
+      reportingThreshold = { value: refusal, unit: 'not established', basis };
+      identificationThreshold = { value: refusal, unit: 'not established', basis };
+      qualificationThreshold = { value: refusal, unit: 'not established', basis };
+    } else {
+      const pde = element.pdeMicrogramsPerDay[route as AdministrationRoute];
+      elementalClassification = {
+        class: element.class,
+        oralPDE_ug_per_day: element.pdeMicrogramsPerDay.oral,
+        parenteralPDE_ug_per_day: element.pdeMicrogramsPerDay.parenteral,
+        inhalationPDE_ug_per_day: element.pdeMicrogramsPerDay.inhalation,
+        rationale: `ICH Q3D(R2) ${element.class}; permitted daily exposure taken for the recorded ${route} route.`,
       };
       reportingThreshold = {
-        value: `${pde} ug/day (${usedRoute} PDE)`,
+        value: `${pde} ug/day (${route} PDE)`,
         unit: 'ug/day',
-        basis: `ICH Q3D(R2) Class ${element.class}`,
+        basis: `ICH Q3D(R2) ${element.class}`,
       };
       identificationThreshold = {
-        value: `Control threshold at 30% of PDE = ${(pde * 0.3).toFixed(1)} ug/day (${usedRoute})`,
+        value: `Control threshold at 30% of PDE = ${(pde * 0.3).toFixed(1)} ug/day (${route})`,
         unit: 'ug/day',
-        basis: `ICH Q3D(R2) — control threshold`,
+        basis: 'ICH Q3D(R2) — control threshold',
       };
       qualificationThreshold = {
-        value: `PDE: ${pde} ug/day (${usedRoute})`,
+        value: `PDE: ${pde} ug/day (${route})`,
         unit: 'ug/day',
-        basis: `ICH Q3D(R2) Class ${element.class}`,
+        basis: `ICH Q3D(R2) ${element.class}`,
       };
-    } else {
-      reportingThreshold = { value: 'Element not in ICH Q3D — perform risk assessment', unit: 'N/A', basis: 'ICH Q3D(R2)' };
-      identificationThreshold = { value: 'N/A', unit: 'N/A', basis: 'ICH Q3D(R2)' };
-      qualificationThreshold = { value: 'N/A', unit: 'N/A', basis: 'ICH Q3D(R2)' };
     }
 
     qualificationStrategy = [
@@ -1829,7 +1471,12 @@ export function classifyImpurity(params: ImpurityClassificationParams): Impurity
   }
   // ── Inorganic impurities ──
   else {
-    reportingThreshold = { value: 'Per pharmacopeial specification or 0.1%', unit: '% (w/w)', basis: 'ICH Q3A(R2) / Pharmacopeial monograph' };
+    // Basis is the pharmacopeial monograph, NOT ICH Q3A(R2): Q3A/Q3B set
+    // reporting/ID/qualification thresholds for ORGANIC impurities and do not
+    // govern inorganic ones (the canonical threshold engine routes 'inorganic'
+    // out of Q3A/Q3B scope). The 0.1% is the residue-on-ignition monograph
+    // convention, so it stays — attributed correctly, not to Q3A.
+    reportingThreshold = { value: 'Per pharmacopeial specification (e.g. residue on ignition NMT 0.1%)', unit: '% (w/w)', basis: 'Pharmacopeial monograph' };
     identificationThreshold = { value: 'Per pharmacopeial specification', unit: '% (w/w)', basis: 'Pharmacopeial monograph' };
     qualificationThreshold = { value: 'Per pharmacopeial specification', unit: '% (w/w)', basis: 'Pharmacopeial monograph' };
     qualificationStrategy = [

@@ -7,7 +7,7 @@
  *   - blocks_promotion contradictions surface "Execute consequence" action
  *     with 30-char reason floor
  *
- * Port basis: design-system/ui_kits/pdev/Surfaces.jsx > PdevContradictions.
+ * Port basis: ui_kits/pdev/Surfaces.jsx > PdevContradictions.
  */
 
 import * as React from 'react';
@@ -16,6 +16,7 @@ import type {
   PdevContradiction,
   PdevContradictionsPayload,
 } from '../data/types';
+import { useSurfaceActionHandlers } from '../../v2/surfaceActions';
 
 interface ContradictionsProps {
   programCode: string;
@@ -40,6 +41,39 @@ export function PdevContradictionsSurface({
       setSelectedId(payload.contradictions[0]?.id ?? null);
     }
   }, [payload.contradictions, selectedId]);
+
+  /* Selection only. Review-state changes on a contradiction are governed
+     (they carry promotion-blocking authority), so they stay in conversation.
+     The payload is already resolved when this leaf renders — the host gates
+     it — so there is no not-ready state to hold for. */
+  useSurfaceActionHandlers('pdev-contradictions', {
+    'pdev-contradictions.select-contradiction': (params) => {
+      const raw = String(params.contradiction ?? '').trim();
+      if (!raw) return { ok: false, reason: 'Name a contradiction to open.' };
+      const rows = payload.contradictions;
+      if (rows.length === 0) {
+        return { ok: false, reason: 'No contradictions are recorded for this program, so there is nothing to select.' };
+      }
+      const needle = raw.toLowerCase();
+      const exact = rows.filter((c) => c.id.toLowerCase() === needle);
+      const hits = exact.length
+        ? exact
+        : rows.filter(
+            (c) =>
+              c.objectA.toLowerCase().includes(needle) || c.objectB.toLowerCase().includes(needle),
+          );
+      if (hits.length === 0) return { ok: false, reason: `No contradiction named "${raw}".` };
+      if (hits.length > 1) {
+        return { ok: false, reason: `"${raw}" matches ${hits.length} contradictions — name one exactly.` };
+      }
+      const c = hits[0];
+      setSelectedId(c.id);
+      return {
+        ok: true,
+        detail: `Selected ${c.id} — ${c.objectA.split(' · ')[0]} vs ${c.objectB.split(' · ')[0]}`,
+      };
+    },
+  });
 
   const selected: PdevContradiction | undefined = payload.contradictions.find(
     (c) => c.id === selectedId,
@@ -74,7 +108,21 @@ export function PdevContradictionsSurface({
 
       {payload.contradictions.length === 0 ? (
         <div className="pdev-section">
-          <div className="pdev-empty">No contradictions detected.</div>
+          {/* "No contradictions detected." asserted that a detection RAN and came
+              back clean. Nothing here establishes that. The registry is a read
+              over contradictionEngineService.searchFindings, which returns
+              contradictions the engine has already DETECTED and persisted — so an
+              empty list is equally the shape of a program nothing has ever scanned.
+              (The loading and failed reads are handled by the caller in App.tsx and
+              never reach this branch, so this is specifically the read-succeeded,
+              nothing-returned case.) Same rule as the submission gate on the v2
+              Inconsistency surface: an empty findings set is not a finding of
+              "none". */}
+          <div className="pdev-empty">
+            The registry is empty for this program. It lists contradictions the
+            engine has detected, so an empty registry does not confirm a scan
+            has run.
+          </div>
         </div>
       ) : (
         <div className="pdev-contradiction-layout">

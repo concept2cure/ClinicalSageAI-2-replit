@@ -1,7 +1,7 @@
 /**
  * dossierStore — in-memory file system backing every dossier surface.
  *
- * Ported from `design-system/ui_kits/mdx/dossier-store.jsx`. The kit shipped
+ * Ported from `ui_kits/mdx/dossier-store.jsx`. The kit shipped
  * this as an IIFE that published `DossierStore` / `useFileNode` / `useSection`
  * on `window`; here it is a real ES module with the same public surface.
  *

@@ -6,8 +6,12 @@
  */
 import { Router, Request, Response } from 'express';
 import { getPool } from '../../db';
+import { serverError } from '../../lib/api-response';
+import { createScopedLogger } from '../../utils/logger';
 
 const router = Router();
+
+const logger = createScopedLogger('ectd-routes');
 const pool = getPool();
 
 /**
@@ -53,7 +57,7 @@ router.get('/module-structure', async (req: Request, res: Response) => {
     });
   } catch (error: any) {
     console.error('Error fetching module structure:', error);
-    res.status(500).json({ success: false, error: error.message });
+    return serverError(res, logger, 'loading module structure', error);
   }
 });
 
@@ -117,7 +121,7 @@ router.get('/module-structure/tree', async (req: Request, res: Response) => {
     });
   } catch (error: any) {
     console.error('Error building module tree:', error);
-    res.status(500).json({ success: false, error: error.message });
+    return serverError(res, logger, 'loading tree', error);
   }
 });
 
@@ -158,7 +162,7 @@ router.post('/projects/:projectId/seed', async (req: Request, res: Response) => 
     });
   } catch (error: any) {
     console.error('Error seeding project:', error);
-    res.status(500).json({ success: false, error: error.message });
+    return serverError(res, logger, 'seeding projects', error);
   }
 });
 
@@ -215,7 +219,7 @@ router.get('/projects/:projectId/folders', async (req: Request, res: Response) =
     });
   } catch (error: any) {
     console.error('Error fetching project folders:', error);
-    res.status(500).json({ success: false, error: error.message });
+    return serverError(res, logger, 'loading folders', error);
   }
 });
 
@@ -276,7 +280,7 @@ router.patch('/projects/:projectId/folders/:folderId', async (req: Request, res:
     });
   } catch (error: any) {
     console.error('Error updating folder:', error);
-    res.status(500).json({ success: false, error: error.message });
+    return serverError(res, logger, 'updating folders', error);
   }
 });
 
@@ -303,7 +307,7 @@ router.get('/stats', async (req: Request, res: Response) => {
     });
   } catch (error: any) {
     console.error('Error fetching eCTD stats:', error);
-    res.status(500).json({ success: false, error: error.message });
+    return serverError(res, logger, 'loading stats', error);
   }
 });
 

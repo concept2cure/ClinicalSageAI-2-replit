@@ -8,8 +8,9 @@ This module consolidates authentication and authorization functionality from mul
 
 | Source File | Status | Notes |
 |-------------|--------|-------|
-| `middleware/auth.js` | ✅ Primary | JWT verification, production |
-| `auth.ts` | ✅ Secondary | Dev mode, tenant context |
+| `middleware/auth.ts` | ✅ Primary | Canonical JWT verification + org-membership re-check + tenant scope |
+| `middleware/auth.js` | ✅ Shim | Pure re-export of `middleware/auth.ts` (M-5 consolidation) |
+| `auth.ts` | ✅ Secondary | `authMiddleware` session gate, tenant context |
 | `auth.js` | 🔴 Archived | Duplicate |
 | `services/roleBasedAccess.js` | ✅ Integrated | RBAC service |
 | `middleware/authAdapter.ts` | 🔴 Remove after | Bridge code |

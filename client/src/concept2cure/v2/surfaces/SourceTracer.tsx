@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { I } from '../icons';
 import { useLiveData, EmptyState, hasKeys } from '../dataConnect';
+import { useSurfaceActionHandlers, notifySurfaceActionReady } from '../surfaceActions';
 import { usePublishSurfaceContext } from '../surfaceContext';
 import { AnswerLead } from '../AnswerLead';
 import type { SurfaceViewProps } from '../surfaceViews';
@@ -25,7 +26,7 @@ import '../styles/project-home-v2.css';
 
 interface StCitedSource {
   citationId: string;
-  state: 'current' | 'changed' | 'unverified' | 'unresolved';
+  state: 'current' | 'changed' | 'superseded' | 'unverified' | 'unresolved';
   citedAt: string | null;
   citationText: string | null;
   citedChecksum: string | null;
@@ -51,9 +52,25 @@ function stateLabel(s: StCitedSource): { text: string; tone: string; hint: strin
   switch (s.state) {
     case 'current':
       return {
-        text: 'content unchanged since cited',
+        // NOT "content unchanged since cited". Nothing in the product ever
+        // revises cre_evidence_sources.checksum — a revised document is ingested
+        // as a NEW source row — so `changed` is unreachable and this branch is
+        // what every citation shows, always. Claiming the content is unchanged
+        // was therefore a verification the system has no mechanism to perform,
+        // shown to a regulatory lead as a settled fact.
+        text: 'matches the source record as stored',
         tone: 'ok',
-        hint: 'The checksum recorded when this section cited the source still matches the source today.',
+        hint: 'The checksum recorded at cite time still matches this source record. That is a statement about the RECORD, not the document: a revised document is ingested as a NEW source, which this citation does not point at, so a revision upstream is not detected here.',
+      };
+    case 'superseded':
+      return {
+        text: 'source has been replaced since cited',
+        tone: 'warn',
+        hint:
+          'A newer version of this document was ingested after this section cited it. The ' +
+          'checksum still matches, because a source keeps its bytes and its hash forever — ' +
+          'the revision was recorded as a successor, and that is what says this citation ' +
+          'points at a superseded version.',
       };
     case 'changed':
       return {
@@ -106,6 +123,35 @@ export function SourceTracer({ onAsk }: SurfaceViewProps) {
   }, [sections, selId]);
 
   const sec = sections.find(s => s.id === selId) || sections[0] || null;
+
+  /* AnA can open any traced section by its id or a phrase from its title/document
+     — the same row click a person makes — so a drive can land on a section's
+     source trail. Resolved against the REAL sections with honest misses; held
+     (retry) while they load, re-attempted on the ready signal below. */
+  useSurfaceActionHandlers('source-tracer', {
+    'source-tracer.select-section': (params) => {
+      const raw = String(params.section ?? '').trim();
+      if (!raw) return { ok: false, reason: 'Name a section by its id or a phrase from its title.' };
+      if (st.loading) return { ok: false, reason: 'The traced sections are still loading.', retry: true };
+      if (st.error) return { ok: false, reason: 'The sections did not load, so there are none to open.' };
+      if (sections.length === 0) return { ok: false, reason: 'No traced sections are recorded yet.' };
+      const needle = raw.toLowerCase();
+      const byId = sections.filter((s) => s.id.toLowerCase() === needle);
+      const hits = byId.length
+        ? byId
+        : sections.filter((s) => `${s.sectionTitle ?? ''} ${s.doc} ${s.sec}`.toLowerCase().includes(needle));
+      if (hits.length === 0) return { ok: false, reason: `No section matching "${raw}".` };
+      if (hits.length > 1) return { ok: false, reason: `"${raw}" matches ${hits.length} sections — name one exactly.` };
+      const s = hits[0];
+      if (selId === s.id) return { ok: true, detail: `Already on ${s.sectionTitle ?? s.sec}` };
+      setSel(s.id);
+      return { ok: true, detail: `Opened ${s.sectionTitle ?? s.sec}` };
+    },
+  });
+  useEffect(() => {
+    if (!st.loading && !st.error) notifySurfaceActionReady('source-tracer');
+  }, [st.loading, st.error]);
+
   const stTone = (s: string) => (s === 'approved' ? 'ok' : s === 'in_review' || s === 'review' ? 'warn' : 'idle');
 
   const allSources = sections.flatMap(s => s.sources);
@@ -122,19 +168,28 @@ export function SourceTracer({ onAsk }: SurfaceViewProps) {
      `changed` and `unresolved` travel because they are the answer to "can I
      trust this section" — a source whose content identity moved since it was
      cited is the thing a reviewer needs told, unprompted. */
-  const anaContext = useMemo(
-    () => ({
-      summary: st.loading
-        ? 'Source tracer, still loading recorded source lineage.'
-        : st.error
-          ? 'Source tracer could not load the citation store — lineage is unavailable, not absent.'
-          : sections.length === 0
-            ? 'Source tracer: no recorded source citations yet for this organization.'
-            : `Source tracer: ${sections.length} section(s) with recorded citations` +
-              (sec ? `, "${sec.sectionTitle ?? sec.sec ?? sec.id}" selected` : '') +
-              `; ${changed.length} source(s) changed since citation, ${unresolved.length} unresolved.`,
+  const anaContext = useMemo(() => {
+    // Publish NO counts while loading or on a failed read — a zeroed
+    // sectionCount/totalRecordedSources beside an 'error' flag reads as a false
+    // "0 sections have citations." Only the success branch carries facts.
+    if (st.loading) {
+      return { summary: 'Source tracer, still loading recorded source lineage.' };
+    }
+    if (st.error) {
+      return {
+        summary: 'Source tracer could not load the citation store — lineage is unavailable, not absent.',
+        availableActions: ['Retry the source-tracer read'],
+      };
+    }
+    return {
+      summary:
+        sections.length === 0
+          ? 'Source tracer: no recorded source citations yet for this organization.'
+          : `Source tracer: ${sections.length} section(s) with recorded citations` +
+            (sec ? `, "${sec.sectionTitle ?? sec.sec ?? sec.id}" selected` : '') +
+            `; ${changed.length} source(s) changed since citation, ${unresolved.length} unresolved.`,
       facts: {
-        lineageState: st.loading ? 'loading' : st.error ? 'error' : sections.length === 0 ? 'empty' : 'ready',
+        lineageState: sections.length === 0 ? 'empty' : 'ready',
         sectionCount: sections.length,
         ...(sec ? { selectedSectionId: sec.id, selectedSectionTitle: sec.sectionTitle, selectedSectionModule: sec.module, selectedSectionStatus: sec.status, selectedSectionSources: sec.sources?.length ?? 0 } : {}),
         totalRecordedSources: allSources.length,
@@ -149,9 +204,8 @@ export function SourceTracer({ onAsk }: SurfaceViewProps) {
         'Explain which sources changed after they were cited, and what that means',
         'Explain why a source is unresolved',
       ],
-    }),
-    [st.loading, st.error, sections.length, sec, allSources.length, changed.length, unresolved.length],
-  );
+    };
+  }, [st.loading, st.error, sections.length, sec, allSources.length, changed.length, unresolved.length]);
   usePublishSurfaceContext('source-tracer', anaContext);
 
   // Four-state on the real read-model — never a fabricated stand-in.
@@ -205,7 +259,7 @@ export function SourceTracer({ onAsk }: SurfaceViewProps) {
         headline={<><b>{sections.length}</b> section{sections.length === 1 ? '' : 's'} carr{sections.length === 1 ? 'ies' : 'y'} <b>{allSources.length}</b> recorded source citation{allSources.length === 1 ? '' : 's'} — each with the source&rsquo;s content identity at cite time. Sections that recorded nothing do not appear.</>}
         body={changed.length
           ? <><b>{changed.length}</b> citation{changed.length === 1 ? ' is' : 's are'} against content the source no longer has — those sections were written from an earlier version.</>
-          : <>Every recorded citation still matches its source&rsquo;s current content, or says plainly that it was never checked.</>}
+          : <>Every recorded citation still matches the source record it points at, or says plainly that it was never checked. A revised document is ingested as a new source, so this does not establish that the underlying document is unchanged.</>}
         reassure={unresolved.length
           ? <><b>{unresolved.length}</b> citation{unresolved.length === 1 ? '' : 's'} point{unresolved.length === 1 ? 's' : ''} at a source that no longer resolves — kept visible rather than dropped, because &ldquo;cites something unavailable&rdquo; is worth seeing.</>
           : <>Recorded lineage only — nothing here is a similarity guess.</>}

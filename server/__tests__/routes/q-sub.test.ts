@@ -221,3 +221,40 @@ describe('PATCH /api/q-sub/commitments/:id/rolled-in', () => {
     });
   });
 });
+
+describe('PUT /api/q-sub/:id/sections/:sectionKey — authorship is never invented', () => {
+  const VALID_ID = '11111111-1111-4111-8111-111111111111';
+
+  it('refuses to author a section body with no identified actor', async () => {
+    // The prose is regulatory text bound for FDA and its clause-level author
+    // lineage is written to document_span_lineage.asserted_by, whose CHECK
+    // requires that column for an author_assertion. This used to satisfy that
+    // constraint with the literal 'system' — a placeholder standing in for the
+    // very attribution the constraint exists to guarantee. It now refuses,
+    // matching create_qms_document / approve_qms_document.
+    authState.user = { organizationId: '7' }; // org context, no user id
+    svc.getQSubDetail.mockResolvedValue({ id: VALID_ID });
+
+    const res = await request(app)
+      .put(`/api/q-sub/${VALID_ID}/sections/device_description`)
+      .send({ content: 'The device is a single-use catheter.' });
+
+    expect(res.status).toBe(401);
+    // Refused BEFORE any write is attempted — no prose, no lineage, no row.
+    expect(JSON.stringify(res.body)).toMatch(/sign-in required/i);
+  });
+
+  it('still authors normally when the actor is identified', async () => {
+    // Guards the refusal above against over-reach: a real signed-in author must
+    // not be turned away. This gets past the 401 and fails later, at the DB,
+    // which is enough to prove the actor check is not what stopped it.
+    authState.user = { id: 'u-1', organizationId: '7' };
+    svc.getQSubDetail.mockResolvedValue({ id: VALID_ID });
+
+    const res = await request(app)
+      .put(`/api/q-sub/${VALID_ID}/sections/device_description`)
+      .send({ content: 'The device is a single-use catheter.' });
+
+    expect(res.status).not.toBe(401);
+  });
+});

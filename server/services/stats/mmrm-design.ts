@@ -87,8 +87,40 @@ export interface MmrmDesignResult {
 const METHOD = 'mmrm-design';
 const METHOD_VERSION = '1.0.0';
 
+/** The structures this module implements. Exported so a caller can validate. */
+export const MMRM_COVARIANCES: ReadonlyArray<MmrmCovariance> = ['compound_symmetry', 'ar1'];
+
+/**
+ * Refuse a covariance structure this module does not implement.
+ *
+ * The matrix builder below reads `covariance === 'ar1' ? … : compound
+ * symmetry`, so EVERY value that is not exactly 'ar1' produced a
+ * compound-symmetry matrix — 'AR1' included. Nothing in `MmrmDesignResult`
+ * records which structure was used, so a caller that asked for AR(1) and got
+ * compound symmetry received a sample size for a model it did not request,
+ * indistinguishable from the right answer. At rho = 0, or with a single visit,
+ * the two coincide and even a careful test passes either way.
+ *
+ * `POST /api/biostat/mmrm` already rejects anything but the two literals, so
+ * there is no live exposure through that route. The check belongs here as well
+ * because this function is exported and that route is not its only possible
+ * caller: a routine that silently answers a DIFFERENT question than the one
+ * asked is the failure mode this codebase refuses everywhere else, and a
+ * powering calculation is not the place to make an exception.
+ */
+function assertCovariance(covariance: MmrmCovariance): void {
+  if (!MMRM_COVARIANCES.includes(covariance)) {
+    throw new Error(
+      `Unsupported covariance structure ${JSON.stringify(covariance)}. ` +
+        `This module implements ${MMRM_COVARIANCES.join(' and ')}; it will not substitute one for another, ` +
+        `because the sample size it returned would be for a model you did not ask for.`,
+    );
+  }
+}
+
 /** Build a T×T correlation matrix for the chosen structure. */
 export function correlationMatrix(t: number, covariance: MmrmCovariance, rho: number): number[][] {
+  assertCovariance(covariance);
   const R: number[][] = Array.from({ length: t }, () => new Array(t).fill(0));
   for (let i = 0; i < t; i++) {
     for (let j = 0; j < t; j++) {
@@ -202,6 +234,9 @@ export function mmrmSampleSize(input: MmrmDesignInput): MmrmDesignResult {
   const alpha = input.alpha ?? 0.05;
   const power = input.power ?? 0.9;
   const allocationRatio = input.allocationRatio ?? 1;
+  // Before anything is computed: an unimplemented structure must not reach the
+  // matrix builder, which would quietly answer with compound symmetry.
+  assertCovariance(input.covariance);
   if (!(alpha > 0 && alpha < 1)) throw new Error('alpha must be in (0, 1).');
   if (!(power > 0 && power < 1)) throw new Error('power must be in (0, 1).');
   if (!(allocationRatio > 0)) throw new Error('allocationRatio must be > 0.');

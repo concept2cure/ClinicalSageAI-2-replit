@@ -25,6 +25,7 @@ import {
   type GeneratedTable,
   type CmcSourceType,
 } from './module3Composer.js';
+import { HUMAN_OR_ANIMAL_ORIGINS, isHumanOrAnimalOrigin, isReviewRequiredOrigin } from '../../shared/cmc/material-scope';
 
 export type RegionCode = 'US' | 'EU' | 'JP' | 'CA';
 
@@ -84,7 +85,8 @@ const APPENDIX_RULES: AppendixRule[] = [
       tables.push(kvTable('Facilities Summary', {
         'Manufacturing Site': mfgSite,
         'Synthetic/Manufacturing Route': route,
-        'Process Description': processDesc,
+        // One recorded process text must not fill two rows.
+        'Process Description': processDesc !== route ? processDesc : '',
       }));
       tables.push(kvTable('Primary Equipment / Container Closure', {
         'Primary Container': container,
@@ -112,13 +114,32 @@ const APPENDIX_RULES: AppendixRule[] = [
           `related controls used in the manufacture of the drug substance and drug product. ` +
           (mfgSite ? `Manufacturing operations are performed at ${mfgSite}. ` : 'Manufacturing site not yet recorded. ') +
           (route ? `The manufacturing route is: ${route}. ` : '') +
-          (processDesc ? `Process overview: ${processDesc}. ` : '') +
+          // The register records ONE process text, so route and description
+          // are often the same sentence — never printed twice.
+          (processDesc && processDesc !== route ? `Process overview: ${processDesc}. ` : '') +
           `\n\nPrimary container closure equipment and packaging components used during manufacture and storage are ` +
           (container ? `${container}` + (closure ? ` with ${closure}` : '') + `. ` : `not yet specified. `) +
           (justification ? `Suitability of the equipment and packaging is supported by: ${justification}. ` : '') +
-          `\n\nFacility cleaning, equipment qualification, and changeover procedures follow site SOPs and current GMP requirements. ` +
-          `Cross-contamination controls, environmental monitoring, and utilities (HVAC, water, compressed gases) ` +
-          `meet the standards applicable to the dosage form.`,
+          /* This paragraph used to ASSERT, unconditionally and over nothing:
+             that cleaning, equipment qualification and changeover procedures
+             follow site SOPs and current GMP, and that cross-contamination
+             controls, environmental monitoring and utilities meet the
+             applicable standards. None of it is read from any field — the
+             registers hold no cleaning record, no qualification protocol and
+             no EM data — and the section carried no completeness marker, so a
+             REQUIRED appendix scored 100% while its own summary said the
+             manufacturing site was not yet recorded. A filed §3.2.A.1 is a
+             representation to an agency about a facility. It now states what is
+             recorded, and says plainly that the rest is not established here. */
+          `\n\nFacility cleaning, equipment qualification, changeover, cross-contamination controls, environmental ` +
+          `monitoring and utilities (HVAC, water, compressed gases) are governed by the site's own quality system ` +
+          `and are evidenced by its GMP documentation, which this register does not hold; this section therefore ` +
+          `makes no statement about their content or their compliance status. ` +
+          (mfgSite || container || processDesc || route
+            ? ''
+            : `\n\nNo manufacturing site, process or container closure is recorded for this product, so the ` +
+              `facilities and equipment used in its manufacture are NOT ESTABLISHED by this section. This is not a ` +
+              `statement that none is used: it is a statement that the question has not been answered.`),
         tables,
       };
     },
@@ -149,29 +170,82 @@ const APPENDIX_RULES: AppendixRule[] = [
       const explicitSmallMolecule = /^(small[-_ ]?molecule|synthetic|chemical)$/i.test(modality);
       const explicitBiologic =
         /^biologic(al)?$/i.test(modality) || /^biologic(al)?$/i.test(molecularType);
+      /* Widened 2026-09-08 in the FAIL-CLOSED direction. The list missed the
+         way an expression system is usually written down: a substance whose
+         recorded route is "CHO cell culture" matched nothing (the pattern asks
+         for cell LINE, not cell culture) and fell through to the branch below,
+         which declared the section not applicable. A false positive here costs
+         a section that asks for viral-safety data it may not need; a false
+         negative files an adventitious-agents all-clear for a cell-culture
+         product. The INN stems are added for the same reason — a substance
+         named "belantezumab" is a monoclonal antibody by its name alone. */
       const biologicHeuristic =
-        /\b(biologic|recombinant|monoclonal|vaccine|fermentation|mammalian)\b|\bmAb\b|\bcell[\s-]*line\b|\b(human|animal)\s*tissue\b|\bplasma[-\s]derived\b/i
-          .test(`${route} ${processDesc} ${name}`);
+        /\b(biologic|recombinant|monoclonal|vaccine|fermentation|mammalian|hybridoma|bioreactor|transgenic|plasmid|viral\s*vector)\b/i.test(`${route} ${processDesc} ${name}`) ||
+        /\bmAb\b|\bcell[\s-]*(line|culture|bank)\b|\b(human|animal)\s*tissue\b|\bplasma[-\s]derived\b/i.test(`${route} ${processDesc} ${name}`) ||
+        /\b(cho|hek\s*293|sf9|vero|per\.?c6|e\.?\s?coli|pichia|saccharomyces|baculovirus)\b/i.test(`${route} ${processDesc}`) ||
+        /(mab|cept|kinra|ase|tide|parin)\b/i.test(String(name).trim().split(/\s+/).pop() || '');
       const isBiologic =
         explicitBiologic ||
         (!explicitSmallMolecule &&
           !!(biologicalOrigin || cellLine || sourceOrganism || viralSafety || tseStatus || biologicHeuristic));
 
       if (!isBiologic) {
+        /* "Not applicable — no animal- or human-derived raw materials, no
+           cell-line propagation, no fermentation step" is a POSITIVE SAFETY
+           CLAIM, and `isBiologic` is false whenever NOTHING was recorded: every
+           field it consults is absent and the name/route heuristic finds no
+           word to fire on. So a drug substance row carrying only a name
+           produced a full adventitious-agents all-clear. 3.2.A.3 was given a
+           fail-closed branch for exactly this hazard; this section needs the
+           same one, and the distinction is between "recorded as a chemical
+           synthesis" and "nothing recorded either way". */
+        const statedChemical = explicitSmallMolecule || Boolean(String(route || processDesc || '').trim());
+        if (!statedChemical) {
+          return {
+            narrative: `Per ICH M4Q, Section 3.2.A.2 (Adventitious Agents Safety Evaluation) addresses viral, ` +
+              `bacterial, fungal, mycoplasma, and TSE/BSE safety for biologically-derived materials. ` +
+              `\n\nThe record states neither a manufacturing route nor a biological origin for ` +
+              (name ? `${name}` : 'the drug substance') + `, so whether this section applies is NOT ESTABLISHED. ` +
+              `This is not a statement that the substance is chemically synthesised: it is a statement that the ` +
+              `question has not been answered. Record the manufacturing route, and the source organism or cell ` +
+              `line where one is used, before this section is relied upon.`,
+            tables: [kvTable('Adventitious Agents Safety Evaluation', {
+              'Applicability': 'Not established — no manufacturing route or biological origin is recorded',
+              'Drug Substance': name || '—',
+              'Manufacturing Route': route || 'not recorded',
+              'Biological Origin': 'not recorded',
+            })],
+          };
+        }
         return {
+          /* This paragraph used to assert that the substance is "synthesized
+             via ${route} with no animal- or human-derived raw materials, no
+             cell-line propagation, and no fermentation step recorded against
+             it" — three claims, none of them read from any field. The register
+             holds no raw-material origin here at all, so "no animal- or
+             human-derived raw materials" was a positive safety claim over data
+             this section never examined, in the one appendix whose subject is
+             adventitious agents; and with the route printed verbatim it could
+             read "synthesized via CHO cell culture with no cell-line
+             propagation". What the record actually supports is narrower: no
+             biological origin is RECORDED, and the origin of the raw materials
+             is stated where it is captured, not here. */
           narrative: `Per ICH M4Q, Section 3.2.A.2 (Adventitious Agents Safety Evaluation) addresses viral, ` +
             `bacterial, fungal, mycoplasma, and TSE/BSE safety for biologically-derived materials. ` +
-            `\n\nNot applicable for chemical drug substances. ` +
-            (name ? `The drug substance ${name} is synthesized via ${route || 'a chemical route'} ` : 'The drug substance is produced via a chemical synthetic route ') +
-            `with no animal- or human-derived raw materials, no cell-line propagation, and no fermentation step. ` +
-            `This section is therefore not applicable, and an adventitious agents safety evaluation is not required. ` +
-            `\n\nRaw materials are controlled per 3.2.S.2.3 and excipients per 3.2.P.4. ` +
+            `\n\nNo biological origin, source organism, cell line or fermentation step is recorded against ` +
+            (name ? `${name}` : 'the drug substance') + `, ${recordedBasis(route || processDesc, explicitSmallMolecule)}. ` +
+            `On that record this section does not apply to the drug substance itself. ` +
+            `\n\nThis is a statement about the SUBSTANCE, not about every material used to make it: the origin of ` +
+            `the raw and starting materials is recorded in §3.2.S.2.3 and that of the excipients in §3.2.P.4 and ` +
+            `§3.2.A.3, and this section neither reads nor certifies them. ` +
             `Any future change to a biologically-derived starting material would trigger re-assessment of this section.`,
           tables: [kvTable('Adventitious Agents Safety Evaluation', {
-            'Applicability': 'Not applicable — chemical drug substance',
+            'Applicability': 'Does not apply to the drug substance — no biological origin is recorded',
             'Drug Substance': name || '—',
-            'Manufacturing Route': route || '—',
-            'Biological Origin': 'None',
+            'Manufacturing Route': route || 'not recorded',
+            'Biological Origin': 'None recorded',
+            'Raw Material Origin': 'Recorded in §3.2.S.2.3 — not assessed by this section',
+            'Excipient Origin': 'Recorded in §3.2.A.3 — not assessed by this section',
           })],
         };
       }
@@ -190,21 +264,49 @@ const APPENDIX_RULES: AppendixRule[] = [
           'Reference': 'ICH Q5A(R2) — Viral Safety Evaluation of Biotechnology Products',
         }));
       }
+      /* THE BIOLOGIC BRANCH, FAIL-CLOSED (2026-09-08).
+         Its two sibling branches were each given a "NOT ESTABLISHED" marker,
+         with long comments explaining why; this one was not, and
+         composeAppendices scores a section 100 unless that marker appears. So a
+         drug substance row holding nothing but the name "Trastuzumab" — which
+         fires the INN-stem heuristic — produced a 100%-complete section
+         asserting a three-part control strategy, in-process adventitious-agent
+         testing, viral clearance steps, cell-bank characterisation and
+         EMEA/410/01 control of animal-origin raw materials. None of it read
+         from any field, in the appendix whose entire subject is adventitious
+         agents, approvable and exportable as a filed leaf.
+         What the section may state is what the register holds. The control
+         strategy is now conditioned on a recorded viral safety evaluation, the
+         TSE risk on a recorded status, and whatever is absent is named as not
+         established rather than asserted. */
+      const establishedFacts = [
+        biologicalOrigin ? null : 'the biological origin',
+        sourceOrganism || cellLine ? null : 'the source organism or cell line',
+        viralSafety ? null : 'the viral safety evaluation (ICH Q5A(R2))',
+        tseStatus ? null : 'the TSE/BSE risk assessment',
+      ].filter(Boolean) as string[];
+
       return {
         narrative: `Per ICH M4Q and ICH Q5A(R2), Section 3.2.A.2 (Adventitious Agents Safety Evaluation) summarizes ` +
           `the controls implemented to assure freedom from adventitious viral, bacterial, fungal, mycoplasma, and ` +
           `TSE/BSE agents in the drug substance and drug product. ` +
           (name ? `The drug substance ${name} ` : 'The drug substance ') +
-          (biologicalOrigin ? `is derived from ${biologicalOrigin}. ` : 'is biologically derived. ') +
+          (biologicalOrigin ? `is derived from ${biologicalOrigin}. ` : 'is recorded, or read by its name, as biologically derived. ') +
           (sourceOrganism || cellLine ? `Source material: ${sourceOrganism || cellLine}. ` : '') +
-          `\n\nThe control strategy combines (i) qualification and testing of source materials, ` +
-          `(ii) in-process testing for adventitious agents, and (iii) viral clearance / inactivation steps ` +
-          `incorporated into the manufacturing process. ` +
-          (viralSafety ? `Viral safety evaluation: ${viralSafety}. ` : '') +
-          (tseStatus ? `TSE/BSE risk assessment: ${tseStatus}. ` : '') +
-          `\n\nCell bank characterization, end-of-production cell testing, and downstream clearance data ` +
-          `are referenced in 3.2.S.2.3. Raw materials of animal or human origin (where applicable) are ` +
-          `controlled per EMA EMEA/410/01 and 9 CFR.`,
+          (viralSafety
+            ? `\n\nThe recorded control strategy is: ${viralSafety}. ` +
+              `Cell bank characterization, end-of-production cell testing and downstream clearance data are ` +
+              `referenced in 3.2.S.2.3.`
+            : '') +
+          (tseStatus ? `\n\nTSE/BSE risk assessment: ${tseStatus}. ` : '') +
+          (establishedFacts.length > 0
+            ? `\n\nThis register records ${establishedFacts.length === 4 ? 'none of' : 'neither'} ` +
+              `${establishedFacts.join(', ')}${establishedFacts.length === 4 ? '' : ''}, so the adventitious-agents ` +
+              `safety of this substance is NOT ESTABLISHED by this section. This is not a statement that the ` +
+              `substance is unsafe or that no controls exist: it is a statement that this section has not been ` +
+              `given them. Record them, per ICH Q5A(R2) and EMA EMEA/410/01, before this section is relied upon.`
+            : `\n\nRaw materials of animal or human origin, where used, are controlled per EMA EMEA/410/01 and 9 CFR; ` +
+              `their origin is recorded in §3.2.S.2.3 and §3.2.A.3 and is not assessed here.`),
         tables,
       };
     },
@@ -217,7 +319,150 @@ const APPENDIX_RULES: AppendixRule[] = [
     generator: (m) => {
       const comp = val(m, 'composition');
       const formulationName = val(m, 'formulationName');
-      const components = valArr(m, 'components');
+      /* Every recorded formulation's components, plus the excipient register
+         itself — which records `origin` as a field rather than leaving it to be
+         inferred from a name. `valArr` took the first matching array, so a
+         project with several formulation versions was scanned for animal origin
+         through one of them. */
+      const componentRows = (sourceType: 'formulation_record' | 'drug_product') =>
+        m
+          .filter((s) => s.sourceType === sourceType)
+          .flatMap((s) => {
+            const rows = (s.sourcePayload as Record<string, any> | undefined)?.components;
+            return Array.isArray(rows) ? rows.filter((c) => c && typeof c === 'object') : [];
+          });
+      const nameKey = (c: any) => String(c?.component || c?.name || c?.materialName || '').trim().toLowerCase();
+      const textOfField = (...vals: unknown[]) => vals.map((v) => String(v ?? '').trim()).find(Boolean) || '';
+      const excipientRegisterRows = m
+        .filter((s) => s.sourceType === 'excipient')
+        .map((s) => (s.sourcePayload || {}) as Record<string, any>)
+        .filter((p) => String(p.materialName || '').trim() && String(p.status || '').toLowerCase() !== 'retired')
+        .map((p) => ({
+          component: p.materialName,
+          role: p.functionInFormulation,
+          origin: p.origin,
+          tseCertification: p.tseCertificate,
+        }));
+      /* EVERY register row for a material name, not the first: two supplier
+         rows for one excipient are two certificates to hold, and keeping only
+         the first let the certified one speak for the uncertified one. */
+      const registerRowsByName = new Map<string, typeof excipientRegisterRows>();
+      for (const row of excipientRegisterRows) {
+        const key = nameKey(row);
+        if (!key) continue;
+        const list = registerRowsByName.get(key) ?? [];
+        list.push(row);
+        registerRowsByName.set(key, list);
+      }
+
+      /**
+       * 2026-09-07: ONE ROW PER MATERIAL, and every fact about it read the
+       * fail-closed way.
+       *
+       * The formulation (or drug product) records a component's quantity and
+       * function; the excipient register records its origin and its supplier's
+       * TSE/BSE certificate. Read separately, a bovine gelatin capsule shell
+       * whose CEP was on file was reported "NOT RECORDED" and the section
+       * compiled at 0% with a certificate in hand. Joining them by material
+       * name fixes that, but only if each fact is taken the safe way round:
+       *
+       *  - ORIGIN. The register's origin does NOT merely fill a blank. A
+       *    formulation row typed "plant" over a material the register records
+       *    as bovine used to mask it completely — the classification read the
+       *    component's own field and nothing else — and the section issued the
+       *    animal-free all-clear with "bovine" sitting unread two rows away.
+       *    Both origins travel; ANY recorded human/animal origin puts the
+       *    material in this section, and a disagreement is printed, not
+       *    resolved.
+       *  - CERTIFICATE. Inherited only when EVERY register row for the name
+       *    carries one. One uncertified supplier row is one uncertified
+       *    material.
+       *  - IDENTITY. A material named by several formulation versions, or by
+         both the formulation and the drug product's own composition array, is
+       *    ONE excipient. It was counted once per row, so "a certificate is
+       *    recorded for 2 of 2" could be one material counted twice.
+       */
+      const byMaterial = new Map<string, Record<string, any>>();
+      const addComponent = (c: any) => {
+        const key = nameKey(c);
+        if (!key) return;
+        const existing = byMaterial.get(key);
+        if (!existing) {
+          byMaterial.set(key, { ...c });
+          return;
+        }
+        /* A second row for the same material adds what it knows and never
+           overwrites what is already recorded — except that a human/animal
+           origin always wins over one that is not. */
+        for (const [field, aliases] of [['component', ['component', 'name', 'materialName']], ['role', ['role', 'function']], ['tseCertification', ['tseCertification', 'certification']]] as const) {
+          if (!textOfField(...aliases.map((a) => existing[a])) ) {
+            const v = textOfField(...aliases.map((a) => c[a]));
+            if (v) existing[field] = v;
+          }
+        }
+        const existingOrigin = textOfField(existing.origin, existing.source);
+        const incomingOrigin = textOfField(c.origin, c.source);
+        if (incomingOrigin && (!existingOrigin || (isHumanOrAnimalOrigin(incomingOrigin) && !isHumanOrAnimalOrigin(existingOrigin)))) {
+          existing.origin = incomingOrigin;
+        }
+      };
+      /* Read the drug product's composition array from the DRUG PRODUCT source
+         only, not through a first-match `valArr` over every matched source:
+         that re-read the formulation record's own array — formulation_record is
+         one of this section's source types — and every excipient count the
+         section printed was doubled. */
+      for (const c of [...componentRows('formulation_record'), ...componentRows('drug_product')]) addComponent(c);
+
+      for (const [key, entry] of byMaterial) {
+        const rows = registerRowsByName.get(key);
+        if (!rows || rows.length === 0) continue;
+        if (!textOfField(entry.role, entry.function)) {
+          const role = textOfField(...rows.map((r) => r.role));
+          if (role) entry.role = role;
+        }
+        /* The register's own origin, kept BESIDE the component's rather than
+           behind it — see the note above. */
+        const registerOrigin = rows.map((r) => textOfField(r.origin)).find((o) => o && isHumanOrAnimalOrigin(o))
+          || textOfField(...rows.map((r) => r.origin));
+        if (registerOrigin) entry.registerOrigin = registerOrigin;
+        const certificates = rows.map((r) => textOfField(r.tseCertification));
+        entry.uncertifiedRegisterRows = certificates.filter((c) => !c).length;
+        if (!textOfField(entry.tseCertification, entry.certification) && entry.uncertifiedRegisterRows === 0) {
+          entry.tseCertification = certificates[0];
+        }
+      }
+      /* A register excipient no formulation names is still an excipient of this
+         product's record, and is reported on its own — under the same rules. */
+      for (const [key, rows] of registerRowsByName) {
+        if (byMaterial.has(key)) continue;
+        const certificates = rows.map((r) => textOfField(r.tseCertification));
+        byMaterial.set(key, {
+          component: textOfField(...rows.map((r) => r.component)),
+          role: textOfField(...rows.map((r) => r.role)),
+          origin: rows.map((r) => textOfField(r.origin)).find((o) => o && isHumanOrAnimalOrigin(o))
+            || textOfField(...rows.map((r) => r.origin)),
+          uncertifiedRegisterRows: certificates.filter((c) => !c).length,
+          tseCertification: certificates.filter((c) => !c).length === 0 ? certificates[0] : '',
+        });
+      }
+      const components = [...byMaterial.values()];
+      /* Whether anything at all was recorded. "No excipients of human or animal
+         origin are used" is a POSITIVE SAFETY CLAIM, and it was made whenever
+         the scan found nothing — including when there was nothing to scan. A
+         project with no formulation and no excipient register got a TSE/BSE
+         all-clear over zero data. */
+      const excipientRecordCount = m.filter(
+        (s) => s.sourceType === 'excipient' || s.sourceType === 'formulation_record',
+      ).length;
+      /* The guard above counts SOURCES, and the claim rests on COMPONENTS. A
+         project whose only excipient row is retired, or whose formulation
+         version was saved with an empty components array, has a source count
+         above zero and nothing to scan — so the fail-closed branch missed it and
+         the section, testing `originRecorded === components.length` with both
+         sides zero, issued the animal-free all-clear over no data at all. What
+         the claim needs is at least one component to have been examined. */
+      const hasComponentsToScan = components.length > 0;
+      const originRecorded = components.filter((c: any) => String(c?.origin || c?.source || c?.registerOrigin || '').trim()).length;
       const excipientSources = m.filter((s) => s.sourceType === 'excipient');
       const novelExcipients = excipientSources.filter((e) => e.sourcePayload?.novel === true);
 
@@ -262,21 +507,48 @@ const APPENDIX_RULES: AppendixRule[] = [
       //  (3) When the only signal is the regex fallback (not an explicit
       //      origin field), the section is rendered as POTENTIAL / review-required
       //      rather than asserting human/animal origin.
-      const explicitAnimalOriginRe = /^(animal|human|bovine|porcine|ovine|equine|murine|hamster|fish|egg|milk)$/i;
+      /* The same list the mapper and the register surface use — three copies of
+         a twelve-token regex is three places for it to drift. */
+      const explicitAnimalOriginRe = new RegExp(`^(${HUMAN_OR_ANIMAL_ORIGINS.join('|')})$`, 'i');
       const animalNameRe = /\b(gelatin|tallow|albumin|serum|collagen|chondroitin|heparin|insulin|bovine|porcine|ovine|equine|murine|hamster|lanolin|shellac)\b/i;
       const humanNameRe = /\bhuman[\s-]*(serum|albumin|plasma|tissue|cell|derived)\b/i;
 
-      function classifyComponent(c: any): 'explicit' | 'name-fallback' | 'none' {
+      /* The material register offers `fermentation` as an origin, and it is
+         neither an animal origin nor an exclusion: a fermentation-derived
+         excipient is precisely the EMEA/410/01 and ICH Q5A question, because the
+         culture media can carry animal-derived components. Classifying it as
+         'none' let the section state that every recorded origin was plant,
+         mineral or synthetic — a category the register never recorded. */
+
+
+      /* Both recorded origins are read — the component's own and the excipient
+         register's. Reading only the component's let a formulation row typed
+         "plant" over a material the register records as bovine produce the
+         animal-free all-clear. Whichever field carries an animal origin, the
+         material is in this section. */
+      function classifyComponent(c: any): 'explicit' | 'name-fallback' | 'review' | 'none' {
         if (typeof c !== 'object' || c === null) return 'none';
-        const originField = String(c.origin || c.source || '').trim();
-        if (originField && explicitAnimalOriginRe.test(originField)) return 'explicit';
+        const originFields = [String(c.origin || c.source || '').trim(), String(c.registerOrigin || '').trim()].filter(Boolean);
+        if (originFields.some((o) => explicitAnimalOriginRe.test(o))) return 'explicit';
+        if (originFields.some((o) => isReviewRequiredOrigin(o))) return 'review';
         const text = `${c.component || ''} ${c.name || ''}`;
         if (animalNameRe.test(text) || humanNameRe.test(text)) return 'name-fallback';
         return 'none';
       }
 
+      /** What the Origin cell says — both origins when the records disagree. */
+      function originCell(c: any): string {
+        const own = String(c?.origin || c?.source || '').trim();
+        const reg = String(c?.registerOrigin || '').trim();
+        if (own && reg && own.toLowerCase() !== reg.toLowerCase()) {
+          return `${reg} (excipient register) — the formulation records "${own}": CONFLICT, resolved to the animal-origin record pending correction`;
+        }
+        return own || reg;
+      }
+
       const explicitOriginComponents = components.filter((c) => classifyComponent(c) === 'explicit');
       const nameFallbackComponents = components.filter((c) => classifyComponent(c) === 'name-fallback');
+      const reviewOriginComponents = components.filter((c) => classifyComponent(c) === 'review');
       const humanAnimalComponents = [...explicitOriginComponents, ...nameFallbackComponents];
 
       const compPotentiallyAnimal = !!comp && (animalNameRe.test(comp) || humanNameRe.test(comp));
@@ -290,22 +562,88 @@ const APPENDIX_RULES: AppendixRule[] = [
 
       const tables: GeneratedTable[] = [];
 
+      /* Nothing recorded is not the same as nothing found. Fail closed: the
+         section reports that the question is unanswered rather than clearing
+         the product of animal-origin excipients over an empty register. */
+      /* Gated on having a COMPONENT to scan, not on having a source row. A
+         retired excipient, or a formulation version saved with an empty
+         components array, is a source that contributes nothing — and the
+         source-count test let that case through to a narrative whose
+         `originRecorded === components.length` was 0 === 0, i.e. an animal-free
+         all-clear over nothing at all. */
+      if (!hasComponentsToScan && !comp) {
+        const rowsButNothingToScan = excipientRecordCount > 0;
+        tables.push(kvTable('Excipients of Human or Animal Origin', {
+          Applicability: rowsButNothingToScan
+            ? 'Not established — the records on file name no components'
+            : 'Not established — no excipient or formulation record is on file',
+          'Drug Product Formulation': formulationName || '—',
+        }));
+        return {
+          narrative: `Per ICH M4Q, Section 3.2.A.3 (Excipients of Human or Animal Origin) addresses TSE/BSE, ` +
+            `viral, and other adventitious-agent risks associated with excipients of human or animal origin. ` +
+            (rowsButNothingToScan
+              ? `\n\n${excipientRecordCount} excipient or formulation record(s) are on file and none of them names a ` +
+                `component this section can examine — every one is retired, or records no composition. Whether any ` +
+                `excipient is of human or animal origin is therefore NOT ESTABLISHED by this section. `
+              : `\n\nNo excipient or formulation record is on file for this product, so whether any excipient is of ` +
+                `human or animal origin is NOT ESTABLISHED by this section. `) +
+            `This is not a statement that none is used: ` +
+            `it is a statement that the question has not been answered. Record the formulation and the excipient ` +
+            `specifications, each with its origin, before this section is relied upon.`,
+          tables,
+        };
+      }
+
       if (confidence === 'none') {
         tables.push(kvTable('Excipients of Human or Animal Origin', {
-          'Applicability': 'Not applicable — no excipients of human or animal origin',
+          'Applicability':
+            reviewOriginComponents.length > 0
+              ? `Review required — ${reviewOriginComponents.length} excipient(s) of fermentation or cell-culture origin`
+              : originRecorded === components.length && components.length > 0
+                ? 'Not applicable — no excipients of human or animal origin'
+                : 'No human or animal origin found among the recorded excipients; origin is not recorded for all of them',
+          'Excipients Recorded': String(components.length),
+          'Origin Recorded For': `${originRecorded} of ${components.length}`,
           'Drug Product Formulation': formulationName || '—',
           'Composition': comp || '—',
         }));
         return {
           narrative: `Per ICH M4Q, Section 3.2.A.3 (Excipients of Human or Animal Origin) addresses TSE/BSE, ` +
             `viral, and other adventitious-agent risks associated with excipients of human or animal origin. ` +
-            `\n\nNo excipients of human or animal origin are used in the drug product formulation` +
-            (formulationName ? ` (${formulationName})` : '') + `. ` +
-            `All excipients are of plant, mineral, or synthetic origin and comply with the relevant compendial ` +
-            `monographs (USP/NF, Ph. Eur., JP) as detailed in 3.2.P.4. ` +
-            `\n\nAccordingly, no additional TSE/BSE or viral safety documentation is required for this section. ` +
-            `Any future formulation change introducing a human- or animal-derived excipient would trigger ` +
-            `re-evaluation and supplementary safety documentation per EMA EMEA/410/01 rev. 3.`,
+            (reviewOriginComponents.length > 0
+              ? `\n\n${reviewOriginComponents.length} excipient(s) are recorded with a fermentation or cell-culture origin. ` +
+                `That is not an exclusion: EMA EMEA/410/01 rev. 3 and ICH Q5A(R2) reach a fermentation-derived ` +
+                `excipient through the animal-derived components its culture media may carry, so whether these are ` +
+                `free of human or animal material is NOT ESTABLISHED by this section. ` +
+                `Record the media components, or a supplier statement that none is of animal origin. `
+              : '') +
+            (originRecorded === components.length && components.length > 0 && reviewOriginComponents.length === 0
+              ? `\n\nNo excipients of human or animal origin are used in the drug product formulation` +
+                (formulationName ? ` (${formulationName})` : '') + `. ` +
+                `All ${components.length} recorded excipients declare an origin that is plant, mineral or synthetic, and comply with the relevant compendial ` +
+                `monographs (USP/NF, Ph. Eur., JP) as detailed in 3.2.P.4. `
+              : /* Origin is recorded for only some of them. The claim is scoped
+                   to what was actually declared, and the gap is named. */
+                `\n\nNo excipient of human or animal origin is identified among the ${components.length} recorded for the drug product formulation` +
+                (formulationName ? ` (${formulationName})` : '') + `. ` +
+                `Origin is recorded for ${originRecorded} of them; for the remaining ${components.length - originRecorded} it is not recorded, and their origin is NOT established by this section. `) +
+            /* The safety CONCLUSION may only be drawn where the origins it rests
+               on were actually recorded. It sat outside this conditional and was
+               emitted by both arms, so the section stated that no TSE/BSE
+               documentation was required in the same paragraph as it stated that
+               the origin of some excipients was not established — a positive
+               safety claim over the absence of a signal in unscanned data. A
+               gelatin capsule shell recorded without its origin field produced a
+               written all-clear. */
+            (originRecorded === components.length && components.length > 0 && reviewOriginComponents.length === 0
+              ? `\n\nAccordingly, no additional TSE/BSE or viral safety documentation is required for this section. ` +
+                `Any future formulation change introducing a human- or animal-derived excipient would trigger ` +
+                `re-evaluation and supplementary safety documentation per EMA EMEA/410/01 rev. 3.`
+              : `\n\nWhether additional TSE/BSE or viral safety documentation is required is therefore NOT established ` +
+                `by this section: that conclusion rests on the origin of every excipient, and ${components.length - originRecorded} ` +
+                `of ${components.length} have none recorded. Record the origin of each, per EMA EMEA/410/01 rev. 3, ` +
+                `before this section is relied on.`),
           tables,
         };
       }
@@ -319,11 +657,20 @@ const APPENDIX_RULES: AppendixRule[] = [
           ? humanAnimalComponents.map((c: any) => [
               c.component || c.name || 'Unknown',
               c.role || c.function || '—',
-              c.origin || c.source || (confidence === 'potential'
+              originCell(c) || (confidence === 'potential'
                 ? 'Potential animal/human origin (name-based fallback — review required)'
                 : 'Animal/human origin (per composition)'),
-              c.tseCertification || c.certification ||
-                (confidence === 'potential' ? 'CEP/TSE certification — confirm via supplier' : 'Certificate on file (CEP/TSE-compliant)'),
+              /* The recorded certificate, or the fact that none is recorded.
+                 This fell back to the literal 'Certificate on file
+                 (CEP/TSE-compliant)' whenever the field was empty — and the
+                 excipient register emits '' for a blank one — so a gelatin
+                 capsule shell whose CEP has not been obtained was declared
+                 certified, in the one CTD section whose purpose is to declare
+                 animal-origin risk. */
+              String(c.tseCertification || c.certification || '').trim() ||
+                (Number(c.uncertifiedRegisterRows || 0) > 0
+                  ? `NOT RECORDED — ${c.uncertifiedRegisterRows} register row(s) for this material carry no TSE/BSE certificate`
+                  : 'NOT RECORDED — no TSE/BSE certificate is on file for this excipient'),
             ])
           : [['(Per composition statement)', '—',
               confidence === 'potential'
@@ -332,15 +679,42 @@ const APPENDIX_RULES: AppendixRule[] = [
               confidence === 'potential' ? 'Confirm CEP/TSE certification with supplier' : 'CEP/TSE certification required']],
       });
 
+      /* How many of the identified excipients actually carry a certificate.
+         The paragraph below used to assert that EACH was qualified through a
+         country-of-origin statement, a CEP and a viral safety evaluation —
+         none of which was read from any field. */
+      const certified = humanAnimalComponents.filter(
+        (c: any) => String(c.tseCertification || c.certification || '').trim(),
+      );
+      const uncertified = humanAnimalComponents.length - certified.length;
+
       const leadParagraph = confidence === 'explicit'
         ? `${explicitOriginComponents.length > 0 ? explicitOriginComponents.length : 'One or more'} excipient(s) ` +
-          `of human or animal origin have been identified. Each is qualified through (i) a documented origin / ` +
-          `country-of-origin statement, (ii) TSE/BSE compliance per EMA EMEA/410/01 rev. 3 (Certificate of ` +
-          `Suitability — CEP), and (iii) viral safety evaluation where applicable.`
+          `of human or animal origin have been identified. ` +
+          (humanAnimalComponents.length === 0
+            ? `Their qualification is not established by this section. `
+            : uncertified === 0
+              ? `A TSE/BSE certificate is recorded for each, reported above; the country-of-origin statement and the ` +
+                `viral safety evaluation required by EMA EMEA/410/01 rev. 3 are not held by this register and are ` +
+                `not established by this section. `
+              : certified.length === 0
+                ? `NO TSE/BSE certificate is recorded for any of them, so their qualification under EMA EMEA/410/01 ` +
+                  `rev. 3 is NOT established by this section. `
+                : `A TSE/BSE certificate is recorded for ${certified.length} of ${humanAnimalComponents.length}; for the ` +
+                  `remaining ${uncertified} no certificate is on file and their qualification under EMA EMEA/410/01 ` +
+                  `rev. 3 is NOT established by this section. `)
         : `Potential human- or animal-origin excipient(s) have been flagged by a name-based heuristic and require ` +
           `confirmation. Where confirmed, each component must be qualified through (i) a documented origin / ` +
           `country-of-origin statement, (ii) TSE/BSE compliance per EMA EMEA/410/01 rev. 3 (Certificate of ` +
           `Suitability — CEP), and (iii) viral safety evaluation where applicable. ` +
+          /* A NAME is not an origin determination, and this branch is reached
+             precisely because no origin was recorded for the flagged material.
+             It carried no marker, so a section that had identified a possible
+             gelatin and qualified nothing scored 100% complete with no missing
+             inputs — the reviewer's dashboard called the TSE/BSE appendix
+             finished on the strength of a regex. */
+          `Whether these components are of human or animal origin is NOT established by this section: the flag ` +
+          `rests on their names, and no origin is recorded for them. ` +
           `Components identified as plant, mineral, or synthetic in origin should be re-tagged via the structured ` +
           `origin field to suppress this flag.`;
 
@@ -363,6 +737,13 @@ interface RegionalSubsection {
   sectionKey: string;
   title: string;
   region: RegionCode;
+  /**
+   * The source-payload fields this subsection's generator reads. Completeness is
+   * the fraction of these actually present, so a pointer section with nothing
+   * recorded cannot present itself as finished. Keep in step with the generator:
+   * a field read but not declared would be invisible to the score.
+   */
+  requiredFields: string[];
   generator: (matched: CanonicalSource[]) => { narrative: string; tables: GeneratedTable[] };
 }
 
@@ -371,6 +752,7 @@ const REGIONAL_SUBSECTIONS: RegionalSubsection[] = [
     sectionKey: '3.2.R.1.US',
     title: 'Regional Information — United States (FDA)',
     region: 'US',
+    requiredFields: ['dosageFormDescription', 'strength', 'composition', 'manufacturingSite', 'batchNumber', 'batchSize'],
     generator: (m) => {
       const form = val(m, 'dosageFormDescription');
       const strength = val(m, 'strength');
@@ -425,6 +807,7 @@ const REGIONAL_SUBSECTIONS: RegionalSubsection[] = [
   },
   {
     sectionKey: '3.2.R.1.EU',
+    requiredFields: ['dosageFormDescription', 'strength', 'composition'],
     title: 'Regional Information — European Union (EMA)',
     region: 'EU',
     generator: (m) => {
@@ -469,6 +852,7 @@ const REGIONAL_SUBSECTIONS: RegionalSubsection[] = [
   },
   {
     sectionKey: '3.2.R.1.JP',
+    requiredFields: ['dosageFormDescription', 'strength', 'composition'],
     title: 'Regional Information — Japan (PMDA / MHLW)',
     region: 'JP',
     generator: (m) => {
@@ -514,6 +898,7 @@ const REGIONAL_SUBSECTIONS: RegionalSubsection[] = [
   },
   {
     sectionKey: '3.2.R.1.CA',
+    requiredFields: ['dosageFormDescription', 'strength'],
     title: 'Regional Information — Canada (Health Canada)',
     region: 'CA',
     generator: (m) => {
@@ -609,13 +994,101 @@ export function injectAllCrossReferences(sections: ComposedSection[]): ComposedS
 /**
  * Compose appendix (3.2.A.*) sections from canonical sources.
  */
+/**
+ * Which composed appendices actually enter a dossier.
+ *
+ * An OPTIONAL appendix with no matched source is not emitted at all: an
+ * unmatched optional rule scores 100% complete, so emitting it would put a
+ * fully-complete section into the dossier asserting things about data nobody
+ * recorded. A REQUIRED appendix is emitted with its honest incompleteness.
+ *
+ * This lived in the compile route's own `.filter()`, so composeFullModule3 —
+ * which the submission-package orchestrator calls twice — emitted appendices
+ * the compile route suppressed. Two paths producing the same three CTD sections
+ * under different rules is the duplication the working agreement forbids,
+ * at the point where the two copies decide what enters a package.
+ */
+export function emittableAppendices(sections: ComposedSection[]): ComposedSection[] {
+  return sections.filter(
+    (section) =>
+      section.lineage.length > 0 ||
+      (section.structuredPayload as { optional?: boolean } | undefined)?.optional === false,
+  );
+}
+
+/**
+ * The sentences of an appendix narrative that say what is NOT ESTABLISHED —
+ * the section's own statement of its missing inputs, one entry per sentence.
+ */
+function notEstablishedStatements(narrative: string): string[] {
+  /* A sentence ends at a period followed by whitespace AND something that
+     starts a sentence. Splitting on the period alone cut "EMA EMEA/410/01
+     rev. 3 is NOT established by this section." in two, and the staffer's list
+     of what to record read, in full: "3 is NOT established by this section."
+     A fragment is not an instruction. */
+  const sentences = narrative
+    .split(/(?<=\.)\s+(?=[A-Z(\u2022])/)
+    .map((x) => x.replace(/\s+/g, ' ').trim())
+    .filter((x) => NOT_ESTABLISHED_RE.test(x) && x.split(' ').length > 3);
+  return sentences.length > 0 ? sentences : ['not established by the recorded sources'];
+}
+
+/**
+ * The generators' fail-closed marker: a capitalised NOT. The same generators
+ * scope what they establish in lower case — "the country-of-origin statement
+ * … [is] not established by this section" beside a certificate recorded for
+ * every animal-origin excipient — and a case-insensitive test read that
+ * scoping as establishing nothing, so §3.2.A.3 compiled at 0% with every
+ * certificate on file. Case-sensitive on the marker, either case on the word.
+ */
+const NOT_ESTABLISHED_RE = /\bNOT (?:ESTABLISHED|established)\b/;
+
+/**
+ * How this section came to conclude the substance is not biologically derived,
+ * in the record's own terms.
+ *
+ * The sentence used to read `whose recorded manufacturing route is: ${route ||
+ * processDesc}` — and the branch above is reached with NEITHER recorded
+ * whenever `modality` is the explicit signal, which is the ordinary case for a
+ * small molecule. It then rendered "whose recorded manufacturing route is: ."
+ * — a sentence asserting a recorded route, with nothing in it. In the one
+ * appendix whose subject is adventitious agents, a claim to have read a field
+ * that is empty is the same failure the surrounding branch was written to
+ * remove; it must say which fact it actually has.
+ */
+function recordedBasis(route: string, explicitSmallMolecule: boolean): string {
+  const stated = String(route ?? '').trim();
+  if (stated) return `whose recorded manufacturing route is: ${stated}`;
+  return explicitSmallMolecule
+    ? 'whose modality is recorded as a chemical synthesis, with no manufacturing route recorded'
+    : 'with no manufacturing route recorded';
+}
+
 export function composeAppendices(sourceObjects: CanonicalSource[]): ComposedSection[] {
   return APPENDIX_RULES.map(rule => {
-    const matched = sourceObjects.filter(s => rule.requiredSourceTypes.includes(s.sourceType));
+    /* A RETIRED source feeds nothing here either. The core composer was given
+       this rule and the note said retirement is honoured "for every source
+       type"; composeAppendices filtered on sourceType alone, so a retired
+       excipient still populated appendix lineage, still scored the section 100%,
+       and still fed the val()/valArr() reads in the 3.2.A.1 and 3.2.A.2
+       generators. One rule, both composers. */
+    const inScope = sourceObjects.filter(s => rule.requiredSourceTypes.includes(s.sourceType));
+    const matched = inScope.filter(
+      (s) => String((s.sourcePayload as Record<string, unknown> | undefined)?.status ?? '').trim().toLowerCase() !== 'retired',
+    );
+    const generated = rule.generator(matched);
+    /* Completeness is what the generator could actually SAY, not whether a row
+       of the right type exists. `matched.length > 0 ? 100 : ...` scored a
+       section 100% with no missing inputs on the strength of one matched source
+       regardless of what it established — including the fail-closed branches
+       that exist precisely to report that nothing is established. A section
+       whose own narrative says NOT ESTABLISHED is not a complete section. */
+    const establishesNothing = NOT_ESTABLISHED_RE.test(generated.narrative);
     const completeness = matched.length === 0
       ? (rule.optional ? 100 : 0)
-      : 100;
-    const generated = rule.generator(matched);
+      : establishesNothing
+        ? 0
+        : 100;
     return {
       sectionKey: rule.sectionKey,
       sectionPath: rule.sectionKey,
@@ -629,7 +1102,16 @@ export function composeAppendices(sourceObjects: CanonicalSource[]): ComposedSec
       narrativeDraft: generated.narrative,
       tables: generated.tables,
       completeness,
-      missingInputs: matched.length === 0 && !rule.optional ? rule.requiredSourceTypes : [],
+      /* What is missing is what the narrative says is NOT ESTABLISHED — the
+         certificate, the origin declaration — not the source types, which
+         matched. Listing the source types here sent a staffer to re-record a
+         formulation that was already on file. */
+      missingInputs:
+        matched.length === 0
+          ? (rule.optional ? [] : rule.requiredSourceTypes)
+          : establishesNothing
+            ? notEstablishedStatements(generated.narrative)
+            : [],
       lineage: matched.map(m => ({
         sourceObjectId: m.id,
         sourceHashAtCompile: m.sourceHash || '',
@@ -639,12 +1121,27 @@ export function composeAppendices(sourceObjects: CanonicalSource[]): ComposedSec
 }
 
 /**
+ * The appendix keys whose rule REQUIRES `sourceType` — the 3.2.A.* half of the
+ * staleness sweep. The core composer's `impactedSectionsForSourceType` walked
+ * MODULE3_SECTION_RULES only, so an approved 3.2.A.1 never went stale when the
+ * container closure it was composed from changed. Exposed as a function rather
+ * than the table: the two files import each other, and a module-scope read of
+ * APPENDIX_RULES from the composer would run before this file has evaluated.
+ */
+export function appendixSectionsRequiringSourceType(sourceType: CmcSourceType): string[] {
+  return APPENDIX_RULES
+    .filter((rule) => rule.requiredSourceTypes.includes(sourceType))
+    .map((rule) => rule.sectionKey);
+}
+
+/**
  * Compose regional (3.2.R.*) subsections for a target region.
  */
 export function composeRegional(sourceObjects: CanonicalSource[], region: RegionCode): ComposedSection[] {
   const applicable = REGIONAL_SUBSECTIONS.filter(rs => rs.region === region);
   return applicable.map(rs => {
     const generated = rs.generator(sourceObjects);
+    const present = rs.requiredFields.filter(f => val(sourceObjects, f));
     return {
       sectionKey: rs.sectionKey,
       sectionPath: rs.sectionKey,
@@ -655,12 +1152,25 @@ export function composeRegional(sourceObjects: CanonicalSource[], region: Region
       },
       narrativeDraft: generated.narrative,
       tables: generated.tables,
-      completeness: 100,
-      missingInputs: [],
-      lineage: sourceObjects.map(s => ({
-        sourceObjectId: s.id,
-        sourceHashAtCompile: s.sourceHash || '',
-      })),
+      // Scored from the inputs actually present, not asserted. This was a flat
+      // `100` with no missing inputs, so a regional pointer section rendering
+      // "[site]" still read as complete — and a section that reads complete is
+      // the one that gets signed and placed without a second look.
+      completeness: present.length === 0 && rs.requiredFields.length > 0
+        ? 0
+        : Math.round((present.length / Math.max(rs.requiredFields.length, 1)) * 100),
+      missingInputs: rs.requiredFields.filter(f => !val(sourceObjects, f)),
+      // Only the sources that supplied one of those fields. Citing every object
+      // in the project claimed a provenance the compile did not have.
+      lineage: sourceObjects
+        .filter(s => rs.requiredFields.some(f => {
+          const v = s.sourcePayload?.[f];
+          return v !== undefined && v !== null && v !== '';
+        }))
+        .map(s => ({
+          sourceObjectId: s.id,
+          sourceHashAtCompile: s.sourceHash || '',
+        })),
     };
   });
 }
@@ -673,7 +1183,8 @@ export function composeFullModule3(
   region: RegionCode
 ): ComposedSection[] {
   const core = composeModule3FromCanonicalSources(sourceObjects);
-  const appendices = composeAppendices(sourceObjects);
+  /* The same emission rule the compile route applies — one policy, both paths. */
+  const appendices = emittableAppendices(composeAppendices(sourceObjects));
   const regional = composeRegional(sourceObjects, region);
   return injectAllCrossReferences([...core, ...appendices, ...regional]);
 }

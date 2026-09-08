@@ -451,10 +451,35 @@ ALTER TABLE cortex.soft_signals ENABLE ROW LEVEL SECURITY;
 ALTER TABLE cortex.timeline_predictions ENABLE ROW LEVEL SECURITY;
 
 -- Regulatory signals: org-scoped + global readable
+-- ── Tenant policies here FAIL CLOSED (revised 2026-08-28) ──────────────────
+-- These policies were written as `org_id = COALESCE(identity.current_org_id(),
+-- org_id)`. identity.current_org_id() returns NULL when app.current_org_id is
+-- unset, empty or not a uuid, and COALESCE then substitutes the row's OWN
+-- org_id — so the predicate becomes `org_id = org_id`, TRUE for every row in
+-- the table. A scope that could not be resolved granted EVERYTHING.
+--
+-- Measured before the change, as the non-superuser app_service role with
+-- app.rls_enforce=on, on two rows under different org_ids: an unset GUC
+-- returned BOTH tenants' rows, and so did a GUC of '42' — which is exactly
+-- what an INTEGER org id looks like arriving at a uuid-keyed schema. Both
+-- inputs are reachable; establishRequestTenantScope writes the GUC as
+-- `orgUuid ?? ''`.
+--
+-- The fallback was there to keep unscoped raw-pool readers working. That is
+-- now carried by the app.rls_enforce shadow clause instead — the same switch
+-- the 793 public-schema policies use — so enforcement OFF does not filter and
+-- enforcement ON filters strictly. Under enforcement an unscoped connection
+-- never reaches SQL anyway: poolInstrumentation fails closed on one.
+--
+-- `OR org_id IS NULL` is deliberately kept where it appears: those are
+-- unattributed rows treated as shared reference data, which is a separate
+-- product decision.
+
 DROP POLICY IF EXISTS regulatory_signals_org_isolation ON cortex.regulatory_signals;
 CREATE POLICY regulatory_signals_org_isolation ON cortex.regulatory_signals
     FOR ALL USING (
-        org_id = COALESCE(identity.current_org_id(), org_id)
+        (NULLIF(current_setting('app.rls_enforce', TRUE), '') IS DISTINCT FROM 'on')
+        OR org_id = identity.current_org_id()
         OR org_id IS NULL -- Global signals readable by all
     );
 
@@ -462,7 +487,8 @@ CREATE POLICY regulatory_signals_org_isolation ON cortex.regulatory_signals
 DROP POLICY IF EXISTS rejection_patterns_org_isolation ON cortex.rejection_patterns;
 CREATE POLICY rejection_patterns_org_isolation ON cortex.rejection_patterns
     FOR ALL USING (
-        org_id = COALESCE(identity.current_org_id(), org_id)
+        (NULLIF(current_setting('app.rls_enforce', TRUE), '') IS DISTINCT FROM 'on')
+        OR org_id = identity.current_org_id()
         OR org_id IS NULL -- Global patterns readable by all
     );
 
@@ -470,14 +496,16 @@ CREATE POLICY rejection_patterns_org_isolation ON cortex.rejection_patterns
 DROP POLICY IF EXISTS intuition_predictions_org_isolation ON cortex.intuition_predictions;
 CREATE POLICY intuition_predictions_org_isolation ON cortex.intuition_predictions
     FOR ALL USING (
-        org_id = COALESCE(identity.current_org_id(), org_id)
+        (NULLIF(current_setting('app.rls_enforce', TRUE), '') IS DISTINCT FROM 'on')
+        OR org_id = identity.current_org_id()
     );
 
 -- Soft signals: org-scoped + global readable
 DROP POLICY IF EXISTS soft_signals_org_isolation ON cortex.soft_signals;
 CREATE POLICY soft_signals_org_isolation ON cortex.soft_signals
     FOR ALL USING (
-        org_id = COALESCE(identity.current_org_id(), org_id)
+        (NULLIF(current_setting('app.rls_enforce', TRUE), '') IS DISTINCT FROM 'on')
+        OR org_id = identity.current_org_id()
         OR org_id IS NULL -- Global signals readable by all
     );
 
@@ -485,7 +513,8 @@ CREATE POLICY soft_signals_org_isolation ON cortex.soft_signals
 DROP POLICY IF EXISTS timeline_predictions_org_isolation ON cortex.timeline_predictions;
 CREATE POLICY timeline_predictions_org_isolation ON cortex.timeline_predictions
     FOR ALL USING (
-        org_id = COALESCE(identity.current_org_id(), org_id)
+        (NULLIF(current_setting('app.rls_enforce', TRUE), '') IS DISTINCT FROM 'on')
+        OR org_id = identity.current_org_id()
     );
 
 -- ============================================================================

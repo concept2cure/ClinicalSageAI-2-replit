@@ -110,7 +110,7 @@ const CASES: Array<{ name: string; run: () => unknown }> = [
   {
     name: 'mmrmSampleSize — degenerate single visit',
     run: () =>
-      mmrmSampleSize({ visits: 1, covariance: 'CS', rho: 0, sigma: 1, delta: 0.5 }),
+      mmrmSampleSize({ visits: 1, covariance: 'compound_symmetry', rho: 0, sigma: 1, delta: 0.5 }),
   },
   {
     name: 'assuranceTwoSampleMeans — a near-point prior',

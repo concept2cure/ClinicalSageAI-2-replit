@@ -29,9 +29,7 @@ import { cleanup, render, screen } from '@testing-library/react';
 // Same stubs the other AnaRail suites use: the rail pulls live data and auth
 // headers on mount, neither of which this file is about.
 vi.mock('../dataConnect', () => ({
-  useLive: () => ({ data: null, sample: true, loading: false }),
   connected: () => false,
-  SampleTag: ({ sample }: { sample: boolean }) => <span>{sample ? 'Sample data' : 'Live'}</span>,
 }));
 vi.mock('../../../utils/authToken', () => ({
   getAuthHeaders: () => ({ Authorization: 'Bearer test' }),

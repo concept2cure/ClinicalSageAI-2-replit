@@ -55,7 +55,11 @@ export interface DmspFinding {
 
 export interface DmspCompletenessResult {
   /** Percent of REQUIRED elements both addressed and with content (0–100). */
-  addressedPct: number;
+  /**
+   * Percentage of required elements satisfied. NULL when none are recorded —
+   * there is then no ratio and no assessment.
+   */
+  addressedPct: number | null;
   requiredTotal: number;
   requiredAddressed: number;
   /** Element keys of required elements not yet satisfied. */
@@ -75,7 +79,12 @@ export function evaluateDmspCompleteness(elements: DmspElementView[]): DmspCompl
   const satisfied = (e: DmspElementView): boolean => e.addressed && typeof e.content === 'string' && e.content.trim().length > 0;
   const requiredAddressed = required.filter(satisfied).length;
   const requiredTotal = required.length;
-  const addressedPct = requiredTotal === 0 ? 100 : Math.round((requiredAddressed / requiredTotal) * 100);
+  /* This ended `requiredTotal === 0 ? 100`. readyToFinalize is the gate the
+     service enforces on finalize, and with no required elements recorded the
+     `missing` list is empty too — so an empty plan scored 100% and finalized.
+     Nothing had been checked, so there is no percentage. */
+  const addressedPct: number | null =
+    requiredTotal === 0 ? null : Math.round((requiredAddressed / requiredTotal) * 100);
 
   const missing = required.filter((e) => !satisfied(e)).map((e) => e.elementKey);
 
@@ -88,6 +97,12 @@ export function evaluateDmspCompleteness(elements: DmspElementView[]): DmspCompl
     findings.push({ severity: 'warning', message: `Optional element "${e.elementKey}" is marked addressed but has no content.` });
   }
 
-  const readyToFinalize = missing.length === 0;
+  /* The refusal the service throws is built by joining the CRITICAL findings,
+     so the empty case has to produce one or the message would be truncated. */
+  if (requiredTotal === 0) {
+    findings.push({ severity: 'critical', message: 'This DMS plan has no required elements recorded, so its completeness has not been assessed (NIH NOT-OD-21-013). An empty plan is not a complete one.' });
+  }
+
+  const readyToFinalize = requiredTotal > 0 && missing.length === 0;
   return { addressedPct, requiredTotal, requiredAddressed, missing, findings, readyToFinalize };
 }

@@ -150,7 +150,7 @@
   width: 34px; height: 34px; border-radius: 8px;
   color: var(--ink-muted, var(--text-300));
   display: inline-flex; align-items: center; justify-content: center;
-  transition: all 200ms var(--ease, cubic-bezier(0.4, 0, 0.2, 1));
+  transition: background 200ms var(--ease, cubic-bezier(0.4, 0, 0.2, 1)), color 200ms var(--ease, cubic-bezier(0.4, 0, 0.2, 1));
   background: transparent; border: 0; cursor: pointer;
 }
 .iconBtn:hover { background: var(--bg-200); color: var(--ink, var(--text-100)); }
@@ -837,7 +837,7 @@
   background: var(--canvas-elevated, #fff);
   border: 1px solid var(--border-subtle, var(--border));
   border-radius: 12px; padding: 16px; cursor: pointer;
-  transition: all 200ms var(--ease, cubic-bezier(0.4, 0, 0.2, 1));
+  transition: border-color 200ms var(--ease, cubic-bezier(0.4, 0, 0.2, 1)), box-shadow 200ms var(--ease, cubic-bezier(0.4, 0, 0.2, 1)), transform 200ms var(--ease, cubic-bezier(0.4, 0, 0.2, 1));
   display: flex; flex-direction: column; gap: 8px; text-align: left;
   min-height: 140px;
 }

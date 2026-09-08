@@ -47,8 +47,12 @@ import {
   traceFactToSource,
 } from '../services/living-record/source-tracer';
 import type { ProposedFactValue } from '../services/living-record/fact-change';
+import { serverError } from '../lib/api-response';
+import { createScopedLogger } from '../utils/logger';
 
 const router = Router();
+
+const logger = createScopedLogger('change-propagation');
 router.use(authenticateToken);
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -160,7 +164,7 @@ router.post(
       if (!result.ok) return sendFailure(res, result);
       res.status(201).json(result);
     } catch (err: any) {
-      res.status(500).json({ error: 'Establish failed', detail: err?.message });
+      return serverError(res, logger, 'saving facts', err);
     }
   }
 );
@@ -181,7 +185,7 @@ router.post('/facts/:factId/impact-preview', async (req: Request, res: Response)
     if (!result.ok) return sendFailure(res, result);
     res.json(result);
   } catch (err: any) {
-    res.status(500).json({ error: 'Impact preview failed', detail: err?.message });
+    return serverError(res, logger, 'saving impact preview', err);
   }
 });
 
@@ -203,7 +207,7 @@ router.post('/facts/:factId/change', async (req: Request, res: Response) => {
     if (!result.ok) return sendFailure(res, result);
     res.json(result);
   } catch (err: any) {
-    res.status(500).json({ error: 'Fact change failed', detail: err?.message });
+    return serverError(res, logger, 'saving change', err);
   }
 });
 
@@ -228,7 +232,7 @@ router.post('/facts/:factId/propagate', async (req: Request, res: Response) => {
     if (!result.ok) return sendFailure(res, result);
     res.json(result);
   } catch (err: any) {
-    res.status(500).json({ error: 'Propagation failed', detail: err?.message });
+    return serverError(res, logger, 'saving propagate', err);
   }
 });
 
@@ -253,7 +257,7 @@ router.post('/facts/:factId/bind-section', async (req: Request, res: Response) =
     if (!result.ok) return sendFailure(res, result);
     res.status(201).json(result);
   } catch (err: any) {
-    res.status(500).json({ error: 'Bind failed', detail: err?.message });
+    return serverError(res, logger, 'saving bind section', err);
   }
 });
 
@@ -278,7 +282,7 @@ router.post(
       if (!result.ok) return sendFailure(res, result);
       res.json(result);
     } catch (err: any) {
-      res.status(500).json({ error: 'Citation scan failed', detail: err?.message });
+      return serverError(res, logger, 'saving scan citations', err);
     }
   }
 );
@@ -312,7 +316,7 @@ router.post(
       if (!result.ok) return res.status(404).json({ error: result.message, code: result.code });
       res.json(result);
     } catch (err: any) {
-      res.status(500).json({ error: 'Device reconciliation failed', detail: err?.message });
+      return serverError(res, logger, 'saving reconcile device documents', err);
     }
   }
 );
@@ -337,7 +341,7 @@ router.post(
       if (!result.ok) return sendFailure(res, result);
       res.json(result);
     } catch (err: any) {
-      res.status(500).json({ error: 'Post-market citation scan failed', detail: err?.message });
+      return serverError(res, logger, 'saving scan citations', err);
     }
   }
 );
@@ -352,7 +356,7 @@ router.get('/facts/:factId/trace', async (req: Request, res: Response) => {
     if (!result.ok) return sendFailure(res, result);
     res.json(result);
   } catch (err: any) {
-    res.status(500).json({ error: 'Trace failed', detail: err?.message });
+    return serverError(res, logger, 'loading trace', err);
   }
 });
 
@@ -365,7 +369,7 @@ router.get('/bindings/:bindingId/trace', async (req: Request, res: Response) => 
     if (!result.ok) return sendFailure(res, result);
     res.json(result);
   } catch (err: any) {
-    res.status(500).json({ error: 'Trace failed', detail: err?.message });
+    return serverError(res, logger, 'loading trace', err);
   }
 });
 
@@ -378,7 +382,7 @@ router.get('/facts/:factId/history', async (req: Request, res: Response) => {
     if (!result.ok) return sendFailure(res, result);
     res.json({ factId: String(req.params.factId), ...result, count: result.history.length });
   } catch (err: any) {
-    res.status(500).json({ error: 'History query failed', detail: err?.message });
+    return serverError(res, logger, 'loading history', err);
   }
 });
 

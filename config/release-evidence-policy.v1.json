@@ -1,0 +1,29 @@
+{
+  "policyVersion": "1.0.0",
+  "requiredJobs": [
+    { "workflow": "CI", "job": "Test" },
+    { "workflow": "CI", "job": "Security Contract Tests" },
+    { "workflow": "CI", "job": "Blank DB Provisioning + Deploy Migration" },
+    { "workflow": "CI", "job": "Production Boot Smoke (RLS on, non-superuser role)" },
+    { "workflow": "CI", "job": "Build" },
+    { "workflow": "CodeQL", "job": "Analyze (CodeQL javascript-typescript)" },
+    { "workflow": "CodeQL", "job": "Analyze (CodeQL python)" },
+    { "workflow": "Semgrep", "job": "Analyze (Semgrep)" },
+    { "workflow": "Tier 5 Browser Smoke", "job": "Authenticated app smoke (real browser + DB)" }
+  ],
+  "requiredAutomatedEvidence": [
+    { "key": "tests", "artifactKind": "test-results" },
+    { "key": "securityScan", "artifactKind": "security-scan" },
+    { "key": "blankDatabase", "artifactKind": "blank-database" },
+    { "key": "upgrade", "artifactKind": "upgrade" },
+    { "key": "productionBoot", "artifactKind": "production-boot" },
+    { "key": "browserSmoke", "artifactKind": "browser-smoke" }
+  ],
+  "humanApprovalRoles": [
+    "engineering",
+    "security",
+    "regulatoryQA",
+    "operations",
+    "legal"
+  ]
+}

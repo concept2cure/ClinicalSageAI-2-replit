@@ -12,26 +12,65 @@
 
 import { Router, Request, Response } from 'express';
 import { createFeatureStore } from '../utils/feature-persistence';
+import { serverError } from '../lib/api-response';
+import { createScopedLogger } from '../utils/logger';
 
 const router = Router();
+
+const logger = createScopedLogger('haq-manager');
 const store = createFeatureStore('haq_question');
 
+/**
+ * Resolve the organization, or nothing.
+ *
+ * This ended `|| 1`. Every other governed route in this repository refuses
+ * without org context; this one silently read and wrote ORGANIZATION 1's
+ * health-authority questions — a request with no tenant on it did not fail, it
+ * landed in somebody's real store. The `/api` auth boundary establishes tenant
+ * context ahead of this mount, so the fallback was reachable only when that
+ * boundary is in warn mode or an authenticated principal carries no
+ * organizationId; "only in those cases" is not a reason to keep a default that
+ * writes agency correspondence into a tenant nobody named.
+ */
+function resolveOrgId(req: Request): number | null {
+  const raw =
+    (req as any).tenantContext?.organizationId ??
+    (req as any).tenantId ??
+    (req as any).organizationId ??
+    (req as any).user?.organizationId;
+  if (raw === undefined || raw === null) return null;
+  const n = typeof raw === 'string' ? parseInt(raw, 10) : Number(raw);
+  return Number.isFinite(n) ? n : null;
+}
+
+/** Where the resolved org is parked for the handlers, once, per request. */
+const HAQ_ORG = Symbol.for('haq.orgId');
+
+/* One gate for all eleven endpoints: no org, no read and no write. Applied
+   here rather than in each handler so a new endpoint cannot be added without
+   it. */
+router.use((req: Request, res: Response, next) => {
+  const orgId = resolveOrgId(req);
+  if (orgId === null) {
+    return res.status(403).json({
+      error: { code: 'ORG_REQUIRED', message: 'Organization context required.' },
+    });
+  }
+  (req as any)[HAQ_ORG] = orgId;
+  next();
+});
+
 function getOrgId(req: Request): number {
-  return (
-    (req as any).tenantContext?.organizationId ||
-    (req as any).tenantId ||
-    (req as any).organizationId ||
-    (req as any).user?.organizationId ||
-    1
-  );
+  return (req as any)[HAQ_ORG] as number;
 }
 
 /**
  * GET /rounds — the v2 HaqManager display contract: authority letters as
  * "rounds" plus their questions grouped by round, shaped to exactly the keys
  * the surface renders (id/disc/tone/status/q/draft/cites/commitments). The
- * surface adopts this via liveGet and falls back to its codebase fixture when
- * the store is empty, so it never renders a blank workbench.
+ * surface adopts this via useLiveData and renders an honest empty state when
+ * the store has no letters. (It once fell back to a codebase fixture and no
+ * longer does — nothing here should be read as licence to reintroduce one.)
  *
  * An unprovisioned store (42P01) still degrades to `{ data: null,
  * pendingStore: true }` — that is a deployment state, not a fault. Every OTHER
@@ -40,6 +79,32 @@ function getOrgId(req: Request): number {
  * from "this org has no open HAQs" — the reading that lets a response deadline
  * pass unnoticed.
  */
+const MS_PER_DAY = 86_400_000;
+
+/**
+ * Days remaining on a response clock — measured against today, not recalled.
+ *
+ * `clockDays` is a stored number. Nothing refreshes it: no endpoint writes a
+ * letter, so whatever was recorded when the letter was logged is what the
+ * surface renders, forever, as "**6d** of 14d left". A response deadline that
+ * shows days remaining after it has passed is the failure mode this whole
+ * screen exists to prevent, and the styling made it worse — `clockDays <= 7`
+ * drives the urgency colour, so a stale 12 stayed calm indefinitely.
+ *
+ * The due date is the fact; the countdown is arithmetic on it. Negative means
+ * overdue and is returned as such. An unparseable or missing due date returns
+ * null — no countdown at all — because a number would have to be invented.
+ */
+function daysUntil(due: unknown, now: Date): number | null {
+  if (typeof due !== 'string') return null;
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(due.trim());
+  if (!m) return null;
+  const dueMs = Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+  if (!Number.isFinite(dueMs)) return null;
+  const today = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
+  return Math.round((dueMs - today) / MS_PER_DAY);
+}
+
 router.get('/rounds', async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
@@ -49,19 +114,31 @@ router.get('/rounds', async (req: Request, res: Response) => {
     }
     const questions = await store.query(orgId, 'question');
 
-    const rounds = letters.map((l: any) => ({
-      id: l.letterId,
-      agency: l.agency,
-      flag: l.flag,
-      authority: l.authority,
-      submission: l.submission,
-      type: l.type,
-      received: l.received,
-      due: l.due,
-      clockDays: l.clockDays,
-      clockTotal: l.clockTotal,
-      note: l.note,
-    }));
+    const now = new Date();
+    const rounds = letters.map((l: any) => {
+      const derived = daysUntil(l.due, now);
+      return {
+        id: l.letterId,
+        agency: l.agency,
+        flag: l.flag,
+        authority: l.authority,
+        submission: l.submission,
+        type: l.type,
+        received: l.received,
+        due: l.due,
+        /* Derived from `due` against today. null when the letter records no
+           parseable due date — the surface then shows no countdown rather than
+           the number that was true on the day the letter was logged. */
+        clockDays: derived,
+        /* How the number above was arrived at, so a surface (and AnA) can say
+           which, and never present a recalled figure as a live one. */
+        clockBasis: derived === null ? 'no-due-date-recorded' : 'days-until-recorded-due-date',
+        /* The recorded value, kept for reference — never rendered as remaining. */
+        clockDaysRecorded: typeof l.clockDays === 'number' ? l.clockDays : null,
+        clockTotal: l.clockTotal,
+        note: l.note,
+      };
+    });
 
     const byRound: Record<string, any[]> = {};
     for (const r of rounds) byRound[r.id] = [];
@@ -165,9 +242,7 @@ router.post('/questions', async (req: Request, res: Response) => {
 
     return res.status(201).json({ data, meta: { created: true } });
   } catch (err: any) {
-    return res
-      .status(500)
-      .json({ error: err?.message || 'Failed to log question' });
+    return serverError(res, logger, 'saving questions', err);
   }
 });
 
@@ -197,7 +272,7 @@ router.get('/letters', async (_req: Request, res: Response) => {
 
     res.json({ success: true, data: enriched });
   } catch (err: any) {
-    res.status(500).json({ success: false, error: err.message || 'Failed to fetch letters' });
+    return serverError(res, logger, 'loading letters', err);
   }
 });
 
@@ -219,7 +294,7 @@ router.get('/letters/:id', async (req: Request, res: Response) => {
     const letter = letters[0];
     res.json({ success: true, data: { ...letter, questions } });
   } catch (err: any) {
-    res.status(500).json({ success: false, error: err.message || 'Failed to fetch letter' });
+    return serverError(res, logger, 'loading letters', err);
   }
 });
 
@@ -240,9 +315,7 @@ router.get('/letters/:id/questions', async (req: Request, res: Response) => {
 
     res.json({ success: true, data: questions });
   } catch (err: any) {
-    res
-      .status(500)
-      .json({ success: false, error: err.message || 'Failed to fetch questions' });
+    return serverError(res, logger, 'loading questions', err);
   }
 });
 
@@ -266,7 +339,7 @@ router.post('/letters/:id/questions/:qid/assign', async (req: Request, res: Resp
     const result = await store.update(questionDbId, orgId, updated);
     res.json({ success: true, data: result });
   } catch (err: any) {
-    res.status(500).json({ success: false, error: err.message || 'Failed to assign question' });
+    return serverError(res, logger, 'assigning questions', err);
   }
 });
 
@@ -292,7 +365,7 @@ router.post('/letters/:id/questions/:qid/ai-draft', async (req: Request, res: Re
     const result = await store.update(questionDbId, orgId, updated);
     res.json({ success: true, data: result });
   } catch (err: any) {
-    res.status(500).json({ success: false, error: err.message || 'Failed to generate draft' });
+    return serverError(res, logger, 'saving AI draft', err);
   }
 });
 
@@ -319,9 +392,7 @@ router.post('/letters/:id/questions/:qid/review', async (req: Request, res: Resp
     const result = await store.update(questionDbId, orgId, updated);
     res.json({ success: true, data: result });
   } catch (err: any) {
-    res
-      .status(500)
-      .json({ success: false, error: err.message || 'Failed to submit for review' });
+    return serverError(res, logger, 'saving review', err);
   }
 });
 
@@ -340,7 +411,128 @@ router.post('/letters/:id/questions/:qid/approve', async (req: Request, res: Res
 
     res.json({ success: true, data: result });
   } catch (err: any) {
-    res.status(500).json({ success: false, error: err.message || 'Failed to approve' });
+    return serverError(res, logger, 'approving questions', err);
+  }
+});
+
+/**
+ * POST /letters/:id/assemble — the response package the whole workbench builds
+ * toward.
+ *
+ * The surface's "Assemble response package" button had NO onClick at all: a
+ * user approved every question in a round, clicked the primary action, and
+ * nothing happened. This is the thing it names.
+ *
+ * The package is assembled from the round's OWN approved responses — the
+ * question text, the approved response, its citations and its commitments, in
+ * question order. Nothing is drafted here and nothing is inferred: a question
+ * whose response is empty is reported as empty rather than filled in.
+ *
+ * Fails closed. If any question in the round is not approved the package is
+ * refused with the list of what is outstanding — an agency response package
+ * that silently omits an unapproved answer, or ships a draft as if it were
+ * approved, is the failure mode this exists to prevent.
+ */
+router.post('/letters/:id/assemble', async (req: Request, res: Response) => {
+  try {
+    const orgId = getOrgId(req);
+    const letterId = String(req.params.id);
+
+    const letters = await store.query(orgId, 'letter');
+    const letter = letters.find((l: any) => String(l.letterId) === letterId);
+    if (!letter) {
+      return res.status(404).json({ success: false, error: 'Round not found in this organization.' });
+    }
+
+    const all = await store.query(orgId, 'question');
+    const qs = all.filter((q: any) => String(q.letterId) === letterId);
+    if (qs.length === 0) {
+      return res.status(409).json({
+        success: false,
+        error: 'This round has no questions recorded, so there is no response package to assemble.',
+      });
+    }
+
+    const outstanding = qs
+      .filter((q: any) => String(q.status) !== 'approved')
+      .map((q: any) => ({ id: q.qid, status: q.status ?? 'unknown' }));
+    if (outstanding.length > 0) {
+      return res.status(409).json({
+        success: false,
+        error:
+          `${outstanding.length} of ${qs.length} responses are not approved, so the package was not assembled: ` +
+          outstanding.map((o) => `${o.id} (${o.status})`).join(', ') + '.',
+        outstanding,
+      });
+    }
+
+    // Deterministic question order — the display id, numerically where it ends
+    // in a number so Q10 follows Q9 rather than Q1.
+    const ordered = [...qs].sort((a: any, b: any) => {
+      const na = parseInt(String(a.qid).replace(/\D+/g, ''), 10);
+      const nb = parseInt(String(b.qid).replace(/\D+/g, ''), 10);
+      if (Number.isFinite(na) && Number.isFinite(nb) && na !== nb) return na - nb;
+      return String(a.qid).localeCompare(String(b.qid));
+    });
+
+    const missingResponses: string[] = [];
+    const sections = ordered.map((q: any) => {
+      const draft = typeof q.draft === 'string' ? q.draft.trim() : '';
+      if (!draft) missingResponses.push(String(q.qid));
+      const cites = Array.isArray(q.cites) ? q.cites : [];
+      const commitments = Array.isArray(q.commitments) ? q.commitments : [];
+      const parts = [
+        `## ${q.qid}${q.disc ? ' — ' + q.disc : ''}`,
+        '',
+        '**Question**',
+        '',
+        String(q.q ?? '').trim() || '_(no question text recorded)_',
+        '',
+        '**Response**',
+        '',
+        draft || '_(no approved response text is recorded for this question)_',
+      ];
+      if (cites.length) {
+        parts.push('', '**Supporting references**', '', ...cites.map((c: unknown) => `- ${String(c)}`));
+      }
+      if (commitments.length) {
+        parts.push('', '**Commitments**', '', ...commitments.map((c: unknown) => `- ${String(c)}`));
+      }
+      return parts.join('\n');
+    });
+
+    const header = [
+      `# Response to ${letter.authority ?? letter.agency ?? 'health authority'} ${letter.type ?? 'questions'}`,
+      '',
+      ...[
+        letter.submission ? `**Submission:** ${letter.submission}` : null,
+        letter.agency ? `**Agency:** ${letter.agency}` : null,
+        letter.received ? `**Letter received:** ${letter.received}` : null,
+        letter.due ? `**Response due:** ${letter.due}` : null,
+        `**Questions in this round:** ${ordered.length}`,
+      ].filter(Boolean) as string[],
+      '',
+      '---',
+    ].join('\n');
+
+    return res.json({
+      success: true,
+      data: {
+        letterId,
+        questionCount: ordered.length,
+        markdown: [header, ...sections].join('\n\n'),
+        // Named honestly rather than silently: an approved question that
+        // carries no response text still assembles, but the caller is told.
+        questionsWithNoResponseText: missingResponses,
+        title: `Response package — ${letter.submission ?? letter.authority ?? letterId}`,
+      },
+    });
+  } catch (err: any) {
+    if (err?.code === '42P01') {
+      return res.status(503).json({ success: false, error: 'The HAQ store is not provisioned in this deployment.' });
+    }
+    console.error('[haq-manager] assemble failed:', err instanceof Error ? err.message : String(err));
+    return res.status(500).json({ success: false, error: 'Failed to assemble the response package.' });
   }
 });
 
@@ -384,9 +576,7 @@ router.get('/dashboard', async (_req: Request, res: Response) => {
       },
     });
   } catch (err: any) {
-    res
-      .status(500)
-      .json({ success: false, error: err.message || 'Failed to compute dashboard' });
+    return serverError(res, logger, 'loading dashboard', err);
   }
 });
 

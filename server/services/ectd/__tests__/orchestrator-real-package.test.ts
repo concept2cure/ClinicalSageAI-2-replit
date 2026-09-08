@@ -17,7 +17,7 @@ function section(sectionKey: string, narrative: string, tables: ComposedSection[
   };
 }
 
-const CTX = { region: 'US' as const, applicationNumber: 'IND-123', sequenceNumber: '0000', submissionType: 'original' };
+const CTX = { region: 'US' as const, applicationNumber: 'IND-123', sequenceNumber: '0000', submissionType: 'IND' };  // an APPLICATION type, which is what this ctx field holds
 
 describe('serializeTable / sectionToContent', () => {
   it('serializes a table to delimited plain text (not HTML)', () => {
@@ -74,6 +74,7 @@ describe('assembleRealPackage', () => {
       {
         submissionId: 'sub-1',
         region: 'US',
+        organizationId: 7,
         applicationNumber: CTX.applicationNumber,
         sequenceNumber: CTX.sequenceNumber,
         submissionType: CTX.submissionType,
@@ -90,5 +91,27 @@ describe('assembleRealPackage', () => {
     expect(dtdCodes).not.toContain('DTD_UNKNOWN_ELEMENT');
     // Real MD5 verification ran and matched (buffers keyed by filePath).
     expect(result.findings.some((f) => f.code === 'MD5_MISMATCH')).toBe(false);
+  });
+
+  it('fails closed with no backbone: DTD_NO_BACKBONE is an error and the package is not gateway-ready', async () => {
+    const res = await assembleRealPackage([section('3.2.S.1', 'Content A')], CTX);
+    const result = await validateEctdPackageHardened(
+      res.leaves,
+      {
+        submissionId: 'sub-1',
+        region: 'US',
+        organizationId: 7,
+        applicationNumber: CTX.applicationNumber,
+        sequenceNumber: CTX.sequenceNumber,
+        submissionType: CTX.submissionType,
+        totalSizeBytes: res.totalSizeBytes,
+        leafBuffers: res.leafBuffers,
+      },
+      // no backboneXml → DTD conformance could not run
+    );
+    const dtd = result.dtd.find((f) => f.code === 'DTD_NO_BACKBONE');
+    expect(dtd).toBeDefined();
+    expect(dtd!.severity).toBe('error'); // was 'warning' — left gatewayReady true
+    expect(result.gatewayReady).toBe(false);
   });
 });

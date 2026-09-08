@@ -42,7 +42,15 @@ export function mountKernelRoutes(router: Router): void {
   // ─────────────────────────────────────────────────────────────────────────
   router.get('/kernel/decisions', async (req: Request, res: Response) => {
     try {
-      const orgId = (req as any).tenantId || (req as any).tenantContext?.organizationId;
+      /* This read the org off the request and then appended the tenant clause
+         only `if (orgId)`, so a request carrying no tenant listed the kernel
+         DECISION RECORDS — the audit trail — for every organization at once.
+         A conditional tenant predicate is not a predicate; it is a default. */
+      const rawOrg = (req as any).tenantId ?? (req as any).tenantContext?.organizationId;
+      const orgId = Number(rawOrg);
+      if (!Number.isFinite(orgId) || orgId <= 0) {
+        return res.status(403).json({ error: { code: 'ORG_REQUIRED', message: 'Organization context required.' } });
+      }
       const projectId = req.query.projectId ? Number(req.query.projectId) : null;
       const limit = Math.min(Math.max(Number(req.query.limit) || 20, 1), 100);
       const offset = Math.max(Number(req.query.offset) || 0, 0);
@@ -54,10 +62,8 @@ export function mountKernelRoutes(router: Router): void {
       const params: (number | null)[] = [];
       let paramIdx = 1;
 
-      if (orgId) {
-        conditions.push(`organization_id = $${paramIdx++}`);
-        params.push(Number(orgId));
-      }
+      conditions.push(`organization_id = $${paramIdx++}`);
+      params.push(orgId);
       if (projectId && Number.isFinite(projectId)) {
         conditions.push(`project_id = $${paramIdx++}`);
         params.push(projectId);

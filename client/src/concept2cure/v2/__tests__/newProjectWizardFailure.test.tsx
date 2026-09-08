@@ -9,7 +9,7 @@
  * product's user-facing copy, on the first screen an evaluating customer
  * reaches. The banner was a bare `div`: no `role="alert"`, so a screen-reader
  * user was told nothing at all, and no recovery control, so the only way
- * forward was to close the modal and start the wizard again from step one.
+ * forward was to leave the wizard and start it again from step one.
  *
  * The same `error` state also carried the opposite outcome — "project created,
  * but no dossier was scaffolded" — so a SUCCESS was rendered in the failure
@@ -90,33 +90,70 @@ afterEach(() => {
   apiRequest.mockReset();
 });
 
-describe('New Project wizard — dialog semantics', () => {
+describe('New Project wizard — full-canvas view semantics', () => {
   /**
-   * The wizard shipped as a plain pair of divs: no role, no keyboard exit, no
-   * focus hand-off — while `useDialog` sat unused in the same directory. That
-   * matters more now than it did, because a failed create has to announce into
-   * this container.
+   * The wizard was an 880px `.esign-modal` floating over the portfolio; it is
+   * now a view of the `projects` surface, which owns the whole canvas
+   * (`full: true` in surfaceViews.ts). Two things follow, and both are asserted
+   * here because either one regressing silently would put the letterbox back.
+   *
+   * 1. It must NOT claim to be a modal dialog. Nothing sits behind it to be
+   *    made inert, so `role="dialog" aria-modal="true"` would announce a
+   *    containment boundary that does not exist — AT would tell a screen-reader
+   *    user there is a surface behind this one to return to when there is not.
+   *    It is a labelled region headed by an <h1> instead.
+   * 2. The keyboard contract from the modal must survive the layout change:
+   *    focus lands in the view on open, Escape backs out, and the way out is
+   *    reachable by name.
    */
-  it('is a labelled modal dialog that closes on Escape', () => {
+  it('is a labelled region, not a modal dialog', () => {
+    render(<NewProjectWizard onClose={() => {}} onNav={() => {}} />);
+
+    // The assertion that fails against the modal build.
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(document.querySelector('[aria-modal]')).toBeNull();
+
+    // Named the same way, by an element that is now a real page heading rather
+    // than a span inside a modal header.
+    const heading = screen.getByRole('heading', { level: 1, name: 'New project' });
+    const region = document.querySelector('[aria-labelledby]');
+    expect(region?.getAttribute('aria-labelledby')).toBe(heading.id);
+  });
+
+  it('closes on Escape and hands focus into the view on open', () => {
     const onClose = vi.fn();
     render(<NewProjectWizard onClose={onClose} onNav={() => {}} />);
 
-    const dialog = screen.getByRole('dialog');
-    expect(dialog.getAttribute('aria-modal')).toBe('true');
-    // Named, so AT announces what opened rather than a bare "dialog".
-    const labelledBy = dialog.getAttribute('aria-labelledby');
-    expect(labelledBy).toBeTruthy();
-    expect(document.getElementById(labelledBy as string)?.textContent).toBe('New project');
+    // useDialog focuses its container on mount — the behaviour is kept even
+    // though the dialog ARIA is not.
+    expect(document.activeElement?.className).toContain('npw');
 
     fireEvent.keyDown(document, { key: 'Escape' });
     expect(onClose).toHaveBeenCalled();
   });
 
-  it('gives every icon-only control an accessible name', () => {
+  it('offers a named way back to the portfolio', () => {
+    const onClose = vi.fn();
+    render(<NewProjectWizard onClose={onClose} onNav={() => {}} />);
+
+    // The modal's exit was an icon-only X. A full-canvas view has room to say
+    // where the exit goes, so it says so twice: a crumb back to Projects and an
+    // explicit Cancel beside the primary action.
+    fireEvent.click(screen.getByRole('button', { name: /projects/i }));
+    expect(onClose).toHaveBeenCalledTimes(1);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+    expect(onClose).toHaveBeenCalledTimes(2);
+  });
+
+  it('states the current step in text, not only in colour', () => {
     render(<NewProjectWizard onClose={() => {}} onNav={() => {}} />);
-    // The header close button rendered an aria-hidden icon and nothing else,
-    // so it had no accessible name at all.
-    expect(screen.getByRole('button', { name: 'Close' })).toBeTruthy();
+
+    // The modal carried the whole of the step state in the fill colour of three
+    // unlabelled 3px strips.
+    const current = document.querySelector('[aria-current="step"]');
+    expect(current?.textContent).toMatch(/Step 1/);
+    expect(current?.textContent).toMatch(/Choose filing type/);
   });
 });
 

@@ -91,6 +91,26 @@ describe('validateEctdLeafs', () => {
     expect(res.errorCount).toBe(1);
   });
 
+  it('errors LEAF-FILENAME for a name that breaks the eCTD file-name rule — only when the caller enforces it', () => {
+    const tooLong = 'm3/' + 'a'.repeat(61) + '.pdf'; // 65-character basename
+    const upper = 'm3/Drug-Substance.pdf';
+    const leafs = [
+      { path: 'm1/us/cover.pdf', mediaType: 'application/pdf', content: pdf() },
+      { path: tooLong, mediaType: 'application/pdf', content: pdf() },
+      { path: upper, mediaType: 'application/pdf', content: pdf() },
+    ];
+    const enforced = validateEctdLeafs(leafs, { region: 'FDA', enforceFileNames: true });
+    const names = enforced.findings.filter((f) => f.ruleId === 'LEAF-FILENAME');
+    expect(names).toHaveLength(2);
+    expect(names.every((f) => f.severity === 'error')).toBe(true);
+    expect(names.map((f) => f.filePath)).toEqual([tooLong, upper]);
+    expect(enforced.errorCount).toBe(2);
+    // A device bundle (eSTAR / EUDAMED) is not made of eCTD leaves; the rule is not applied.
+    const device = validateEctdLeafs(leafs, { region: 'FDA' });
+    expect(device.findings.some((f) => f.ruleId === 'LEAF-FILENAME')).toBe(false);
+    expect(device.errorCount).toBe(0);
+  });
+
   it('warns MODULE-M1-MISSING when no m1 leaf is present', () => {
     const res = validateEctdLeafs(
       [{ path: 'm3/cmc.pdf', mediaType: 'application/pdf', content: pdf() }],

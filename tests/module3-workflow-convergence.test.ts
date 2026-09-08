@@ -42,13 +42,33 @@ function makeSources(): CanonicalSource[] {
     { id: 'cm-1', sourceType: 'comparability', sourcePayload: { assessmentName: 'Pre/post scale-up', regulatoryRiskLevel: 'low', formulationDevelopment: 'v3', manufacturingProcessDev: 'wet granulation', containerClosureStudies: 'done', comparabilityStatus: 'comparable' } },
     { id: 'mp-1', sourceType: 'manufacturing_process', sourcePayload: { processDescription: 'Wet granulation → compression → coating', processControls: 'In-process blend uniformity', manufacturingRoute: 'Chemical synthesis' } },
     { id: 'ch-1', sourceType: 'characterization', sourcePayload: { structuralElucidation: 'NMR, MS confirmed', physicochemicalProperties: 'White crystalline powder, mp 201°C', biologicalActivity: 'CCB agonist IC50 2nM' } },
-    { id: 'rs-1', sourceType: 'reference_standard', sourcePayload: { referenceStandardDescription: 'USP Amlodipine Besylate RS', certificateOfAnalysis: 'Lot RS-2026-01' } },
-    { id: 'cl-1', sourceType: 'container_closure', sourcePayload: { containerDescription: 'HDPE bottle', closureDescription: 'Child-resistant cap', suitabilityJustification: 'Moisture barrier demonstrated' } },
-    { id: 'ex-1', sourceType: 'excipient', sourcePayload: { excipientSpecifications: 'Microcrystalline cellulose NF', excipientAnalyticalProcedures: 'Per USP monograph' } },
+    /* Both registers store `scope`, and the payloads below carry the side-scoped
+       keys mapReferenceStandardPayload / mapContainerClosurePayload emit from
+       it. §3.2.S.5 and §3.2.P.6 (and §3.2.S.6 / §3.2.P.7) match EVERY source of
+       their type, so a record that declares one side must not complete — or
+       render into — the other. This fixture describes a fully populated
+       project, so both records declare `both`. */
+    { id: 'rs-1', sourceType: 'reference_standard', sourcePayload: { scope: 'both', standardCode: 'RS-2026-01', standardName: 'USP Amlodipine Besylate RS', standardType: 'compendial', certificateOfAnalysis: 'Lot RS-2026-01', status: 'qualified', referenceStandardDescription: 'USP Amlodipine Besylate RS (RS-2026-01) — compendial standard', drugSubstanceReferenceStandard: 'USP Amlodipine Besylate RS (RS-2026-01) — compendial standard', drugSubstanceReferenceStandardCoA: 'Lot RS-2026-01', drugProductReferenceStandard: 'USP Amlodipine Besylate RS (RS-2026-01) — compendial standard', drugProductReferenceStandardCoA: 'Lot RS-2026-01' } },
+    { id: 'cl-1', sourceType: 'container_closure', sourcePayload: { scope: 'both', systemName: 'HDPE bottle / child-resistant cap', containerDescription: 'HDPE bottle', closureDescription: 'Child-resistant cap', suitabilityJustification: 'Moisture barrier demonstrated', status: 'qualified', drugSubstanceContainerDescription: 'HDPE bottle', drugSubstanceClosureDescription: 'Child-resistant cap', drugSubstanceSuitabilityJustification: 'Moisture barrier demonstrated', drugProductContainerDescription: 'HDPE bottle', drugProductClosureDescription: 'Child-resistant cap', drugProductSuitabilityJustification: 'Moisture barrier demonstrated' } },
+    /* The shape mapMaterialSpecPayload actually emits: the register stores a
+       named material with its specification rows, and the two derived keys are
+       computed FROM those. A payload carrying only the derived keys is a shape
+       the product never writes, and §3.2.P.4's excipient table — which renders
+       per material — had nothing to render from it. */
+    { id: 'ex-1', sourceType: 'excipient', sourcePayload: { materialRole: 'excipient', materialName: 'Microcrystalline cellulose', functionInFormulation: 'Diluent', grade: 'PH-102', compendialMonograph: 'USP-NF', analyticalProcedures: 'Per USP monograph', testParameters: [{ test: 'Identification', method: 'IR', acceptanceCriteria: 'Conforms' }], status: 'specified', excipientSpecifications: 'Microcrystalline cellulose NF', excipientAnalyticalProcedures: 'Per USP monograph', excipientControlComplete: 'Microcrystalline cellulose' } },
     { id: 'pv-1', sourceType: 'process_validation', sourcePayload: { processStep: 'Wet granulation', validationStatus: 'validated', consecutiveBatches: 3 } },
-    { id: 'rm-1', sourceType: 'raw_material_spec', sourcePayload: { materialName: 'Amlodipine Besylate (starting material)', grade: 'Pharmaceutical grade', testParameters: ['Identity', 'Purity ≥ 99.0%'] } },
-    { id: 'ip-1', sourceType: 'impurity_profile', sourcePayload: { materialName: 'Amlodipine Besylate', impurities: [{ impurityName: 'Impurity A', observedLevel: 0.05, specLimit: 0.15 }], qualificationBasis: 'ICH Q3A' } },
-    { id: 'dp-1b', sourceType: 'dissolution_profile', sourcePayload: { condition: 'USP Apparatus II, 50 rpm, 900 mL', specification: 'Q ≥ 80% in 30 min', passFail: 'pass' } },
+    /* testParameters is an array of OBJECTS — what cmc_material_specs stores and
+       what the form writes. A flat string array renders no specification. */
+    { id: 'rm-1', sourceType: 'raw_material_spec', sourcePayload: { materialRole: 'starting-material', materialName: 'Amlodipine Besylate (starting material)', grade: 'Pharmaceutical grade', testParameters: [{ test: 'Identity', method: 'IR', acceptanceCriteria: 'Conforms' }, { test: 'Purity', method: 'HPLC', acceptanceCriteria: '≥ 99.0%' }], status: 'specified' } },
+    /* The impurity register holds ONE ROW PER IMPURITY, with the level in the
+       unit it was recorded in and the maximum daily dose the ICH threshold is
+       keyed to — the shape mapImpurityProfilePayload emits. The legacy blob
+       this replaced (an `impurities` array with a bare number) could not be
+       compared to a threshold at all. */
+    { id: 'ip-1', sourceType: 'impurity_profile', sourcePayload: { scope: 'drug_substance', materialName: 'Amlodipine Besylate', impurityName: 'Impurity A', impurityType: 'process-related', observedLevel: '0.05', levelUnit: '%', specificationLimit: 'NMT 0.15%', maximumDailyDose: '10 mg', qualificationBasis: 'Qualified per ICH Q3A against the toxicology batch', status: 'specified', drugSubstanceImpurityProfile: 'Impurity A', drugSubstanceImpurityProfileComplete: 'Impurity A' } },
+    /* Dissolution is purpose-scoped: this is the release-specification profile,
+       so it serves §3.2.P.5 and not §3.2.P.2. */
+    { id: 'dp-1b', sourceType: 'dissolution_profile', sourcePayload: { purpose: 'release-specification', productName: 'Amlodipine 5 mg tablet', batchNumber: 'B-2026-001', apparatus: 'USP II (paddle)', rotationSpeed: '50 rpm', medium: 'pH 6.8 phosphate buffer', mediumVolume: '900 mL', unitsTested: 12, dissolutionSpecification: 'Q = 80% at 30 min', dissolutionResults: [{ timepoint: '15', meanPercent: '72', rsd: '4.1', n: '12' }, { timepoint: '30', meanPercent: '94', rsd: '2.2', n: '12' }], status: 'reported', releaseDissolutionProfile: 'Amlodipine 5 mg tablet', releaseDissolutionProfileComplete: 'B-2026-001' } },
     { id: 'fr-1', sourceType: 'formulation_record', sourcePayload: { formulationName: 'Amlodipine 5mg tablet v2', version: 'F-v2.0', components: [{ component: 'Amlodipine Besylate', amount: '6.93 mg', role: 'Active' }] } },
   ];
 }
@@ -213,7 +233,18 @@ describe('Module 3 Composer — Missing Inputs', () => {
     // `batchAnalyses` joined this list when the QC register gained a
     // write-through: §3.2.S.4.4 is Batch Analyses, and a §3.2.S.4 with no
     // quantitative batch results is missing an input, not complete.
-    expect(s4.missingInputs).toEqual(['acceptanceCriteria', 'validationStatus', 'batchAnalyses']);
+    // Side-scoped: §3.2.S.4 requires DRUG SUBSTANCE batch analyses, so a
+    // finished-product result can no longer complete it from the other side.
+    // And §3.2.S.4.1 sets the impurity limits, so it requires an impurity the
+    // product can actually compare to its ICH threshold — the section used to
+    // report itself complete while rendering "the disposition is not
+    // established" for every impurity on file.
+    expect(s4.missingInputs).toEqual([
+      'acceptanceCriteria',
+      'validationStatus',
+      'drugSubstanceBatchAnalyses',
+      'drugSubstanceImpurityProfileComplete',
+    ]);
   });
 });
 
@@ -538,7 +569,15 @@ describe('Module 3 Composer — Narrative Generation', () => {
     const composed = composeModule3FromCanonicalSources(makeSources());
     const s7 = composed.find((s) => s.sectionKey === '3.2.S.7')!;
     expect(s7.narrativeDraft).toContain('25°C/60%RH');
-    expect(s7.narrativeDraft).toContain('stable');
+    // NOT 'stable'. The composer used to append "the drug substance is stable
+    // under the proposed storage conditions" unconditionally — a stability
+    // CONCLUSION the recorded data does not establish, written into a CMC
+    // Module 3 filing where a failing or absent study would have read as a
+    // passing one. It now reports the study conditions and what was recorded;
+    // the conclusion is the reviewer's to draw. See
+    // module3Composer.stability-honesty.test.ts.
+    expect(s7.narrativeDraft).not.toMatch(/is stable under the proposed storage conditions/i);
+    expect(s7.narrativeDraft).toMatch(/stability/i);
   });
 
   it('generates drug product description for 3.2.P.1', () => {

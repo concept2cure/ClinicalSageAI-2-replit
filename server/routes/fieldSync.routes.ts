@@ -1,9 +1,10 @@
-import express from 'express';
+import express, { type Response } from 'express';
 import { verifyJwtWithRotation } from '../utils/jwtVerify.js';
 import { nonAccessTokenReason } from '../middleware/tokenType';
 import { authenticateToken } from '../middleware/auth';
 import { requireAuthedOrgId } from '../utils/authedOrgId';
 import { smartFieldLinking } from '../services/SmartFieldLinking.js';
+import type { FieldUpdateOutcome } from '../services/SmartFieldLinking.types';
 import { db } from '../db';
 import { fda510kProjects } from '@shared/schema';
 import { and, eq } from 'drizzle-orm';
@@ -121,6 +122,70 @@ function resolveSseOrigin(req: express.Request): string | null {
 /**
  * Update a field value and synchronize across documents
  */
+/**
+ * Turn a field-update outcome into the response.
+ *
+ * Lives outside the handler so the route reads as what it does (validate,
+ * authorize, update, answer) and so the four outcome branches do not push the
+ * handler over the complexity limit. `success` tracks whether the VALUE WAS
+ * STORED, never merely whether the request was processed — the whole point of
+ * ledger L173 is that those two had been conflated.
+ */
+function respondToFieldOutcome(
+  res: Response,
+  outcome: FieldUpdateOutcome,
+  field: string,
+  value: unknown
+) {
+  switch (outcome.status) {
+    case 'applied':
+      return res.json({
+        success: true,
+        applied: true,
+        message: `Field updated and synchronized to ${outcome.written} linked destination(s).`,
+        field,
+        value,
+        targets: outcome.targets,
+        written: outcome.written,
+      });
+
+    case 'not-linked':
+      return res.json({
+        success: true,
+        applied: false,
+        message: 'Field accepted, but it has no linked destination configured, so nothing was synchronized.',
+        field,
+        value,
+        targets: 0,
+        written: 0,
+      });
+
+    case 'failed':
+      return res.status(500).json({
+        success: false,
+        applied: false,
+        error: 'Failed to update field',
+        message: outcome.reason,
+        field,
+      });
+
+    default:
+      // no-destination: linked destinations exist, but no row holds them yet, so
+      // the value was NOT stored. 409 rather than 200: the caller asked for a
+      // write that did not happen, and must not read this as a saved field.
+      return res.status(409).json({
+        success: false,
+        applied: false,
+        code: 'NO_DESTINATION_ROW',
+        message: `Field not stored: ${outcome.targets} linked destination(s) are configured for this field, but no record exists yet to hold the value.`,
+        field,
+        value,
+        targets: outcome.targets,
+        written: 0,
+      });
+  }
+}
+
 router.post('/update-field', async (req, res) => {
   try {
     // `userId` is deliberately NOT read from the body — attribution comes from
@@ -141,8 +206,11 @@ router.post('/update-field', async (req, res) => {
     const orgId = await requireOwnedProject(req, res, Number(projectId));
     if (orgId === null) return;
 
-    // Update field and propagate changes
-    await smartFieldLinking.updateField({
+    // Update field and propagate changes. The outcome is READ, not assumed:
+    // both propagation paths end in `if (rows.length > 0) { …update… }`, so a
+    // value with no destination row is dropped silently, and this route used to
+    // answer "Field updated and synchronized" either way.
+    const outcome = await smartFieldLinking.updateField({
       source: source as 'workflow' | 'document',
       field,
       value,
@@ -156,12 +224,8 @@ router.post('/update-field', async (req, res) => {
       }
     });
     
-    res.json({
-      success: true,
-      message: 'Field updated and synchronized',
-      field,
-      value
-    });
+    return respondToFieldOutcome(res, outcome, field, value);
+
   } catch (error) {
     console.error('Error updating field:', error);
     res.status(500).json({

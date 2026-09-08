@@ -184,7 +184,8 @@ const HONEST_DISCLAIMER =
  * A nested ternary condition naming positive evidence that an assessment ran.
  * When the clearance copy sits behind one of these, the branch is honest.
  */
-const EVIDENCE_GUARD = /(?:mayReassure\s*\(|assessmentState\s*\(|===\s*'assessed-clear'|\b(?:assessed|assessmentRan|hasRun|wasRun|evaluated|screened)\b\s*(?:\)|&&|\|\||\?))/;
+const EVIDENCE_GUARD =
+  /(?:mayReassure\s*\(|assessmentState\s*\(|hasAnswer\s*\(|===\s*'assessed-clear'|!==?\s*'not-assessed'|\b(?:assessed|assessmentRan|hasRun|wasRun|evaluated|screened)\b\s*(?:\)|&&|\|\||\?))/;
 
 /** Split `A : B` at the `:` that belongs to THIS ternary. */
 function splitBranches(src, qIndex) {
@@ -203,12 +204,43 @@ function splitBranches(src, qIndex) {
         // Not a ternary colon if it is `::` or a TS type annotation in an arg list.
         return {
           consequent: src.slice(qIndex + 1, i),
-          alternate: src.slice(i + 1, Math.min(src.length, i + 1200)),
+          alternate: boundedExpression(src, i + 1),
         };
       }
     }
   }
   return null;
+}
+
+/**
+ * The alternate of a ternary is ONE expression. Read it as one: walk forward
+ * with depth tracking and stop at the first depth-0 `;` (a statement boundary —
+ * we have left the expression) or when a closer takes depth below zero (the
+ * enclosing `{…}` / `(…)` container has ended, so the branch has too).
+ *
+ * The previous form took a blind 1200-character raw window after the colon. It
+ * ran straight past the branch into whatever followed — following statements,
+ * sibling JSX rows — and produced two false positives from text that was never
+ * in the branch at all: a refusal reason (`return { ok: false, reason: 'No
+ * contradiction named …' }`) two statements later, and "Nothing to pay." from
+ * an unrelated row. A gate that flags copy the branch never contained is one
+ * people learn to ignore. Still capped at 1200 so a pathological file cannot
+ * hang the scan.
+ */
+function boundedExpression(src, start) {
+  let depth = 0;
+  const end = Math.min(src.length, start + 1200);
+  for (let i = start; i < end; i++) {
+    const c = src[i];
+    if (c === '(' || c === '{' || c === '[') depth++;
+    else if (c === ')' || c === '}' || c === ']') {
+      depth--;
+      if (depth < 0) return src.slice(start, i);
+    } else if (c === ';' && depth === 0) {
+      return src.slice(start, i);
+    }
+  }
+  return src.slice(start, end);
 }
 
 /** Human-readable copy inside a JSX branch: drop expressions and tags. */
@@ -270,6 +302,9 @@ function scanSource(code, label) {
 
     const text = prose(emptyBranch);
     if (text.length < 8) continue;
+    // Code, not copy: an arrow, a return, a statement terminator, or a call
+    // shape survived the strip. Clearance a user reads contains none of these.
+    if (/=>|\breturn\b|;|\bconst\b|\bif\s*\(|\.filter\(|\.map\(/.test(text)) continue;
 
     const matched = CLEARANCE.find((c) => c.test(text));
     if (!matched) continue;
@@ -284,8 +319,131 @@ function scanSource(code, label) {
   return hits;
 }
 
+/** The string and template literals a statement body renders, as prose. */
+function literalProse(body) {
+  const out = [];
+  const re = /`([^`\\]*(?:\\.[^`\\]*)*)`|'([^'\\]*(?:\\.[^'\\]*)*)'|"([^"\\]*(?:\\.[^"\\]*)*)"/g;
+  let m;
+  while ((m = re.exec(body)) !== null) out.push(m[1] ?? m[2] ?? m[3] ?? '');
+  return prose(out.join(' ').replace(/\$\{[^{}]*\}/g, ' '));
+}
+
+/** Read `(...)` starting at `open`, returning its text and the index after it. */
+function readParen(src, open) {
+  let depth = 0;
+  for (let i = open; i < src.length; i++) {
+    if (src[i] === '(') depth++;
+    else if (src[i] === ')') {
+      depth--;
+      if (depth === 0) return { text: src.slice(open + 1, i), end: i + 1 };
+    }
+  }
+  return null;
+}
+
+/** Read the statement after a condition: a `{…}` block, or up to the `;`. */
+function readBody(src, from) {
+  let i = from;
+  while (i < src.length && /\s/.test(src[i])) i++;
+  if (src[i] === '{') {
+    let depth = 0;
+    for (let j = i; j < src.length; j++) {
+      if (src[j] === '{') depth++;
+      else if (src[j] === '}') {
+        depth--;
+        if (depth === 0) return { text: src.slice(i + 1, j), end: j + 1 };
+      }
+    }
+    return null;
+  }
+  const semi = src.indexOf(';', i);
+  return semi === -1 ? null : { text: src.slice(i, semi), end: semi + 1 };
+}
+
+/**
+ * The same rule for `if (…) {…} else if (…) {…} else {…}`.
+ *
+ * The ternary walk above was the whole gate, so rewriting a flagged ternary as
+ * an if/else chain silenced it with the defect still in place. Proven by
+ * falsification on the dispatch surface's reload-findings copy: with the
+ * evidence branch deleted from an if/else chain, the gate stayed green.
+ *
+ * A chain's clearance branch is honest when an EARLIER condition in the SAME
+ * chain tested positive evidence that the assessment ran — reaching the later
+ * branch means that test already passed. That is the statement-level twin of
+ * EVIDENCE_GUARD, which reads a nested ternary's condition instead.
+ */
+function scanIfChains(code, label) {
+  const hits = [];
+  const lineOf = (i) => code.slice(0, i).split('\n').length;
+
+  for (let m = /\bif\s*\(/g, r = m.exec(code); r !== null; r = m.exec(code)) {
+    // `else if` is read as part of its chain, never as a fresh head.
+    if (/\belse\s*$/.test(code.slice(Math.max(0, r.index - 8), r.index))) continue;
+
+    const chain = [];
+    let cursor = r.index + r[0].length - 1;
+    let head = r.index;
+    for (let guard = 0; guard < 12; guard++) {
+      const cond = readParen(code, cursor);
+      if (!cond) break;
+      const body = readBody(code, cond.end);
+      if (!body) break;
+      chain.push({ at: head, cond: cond.text, body: body.text });
+      const after = code.slice(body.end, body.end + 40);
+      const elseIf = after.match(/^\s*else\s*if\s*\(/);
+      if (elseIf) {
+        head = body.end + elseIf[0].length - elseIf[0].trimStart().length;
+        cursor = body.end + elseIf[0].length - 1;
+        continue;
+      }
+      const elseOnly = after.match(/^\s*else\b/);
+      if (elseOnly) {
+        const tail = readBody(code, body.end + elseOnly[0].length);
+        if (tail) chain.push({ at: body.end, cond: null, body: tail.text });
+      }
+      break;
+    }
+    if (chain.length < 2) continue;
+
+    for (let i = 0; i < chain.length; i++) {
+      const { cond } = chain[i];
+      if (!cond) continue;
+      const rule = EMPTINESS.find((x) => x.re.test(cond.replace(/\s+$/, '')));
+      if (!rule) continue;
+
+      // Which branch an empty collection reaches: this one, or the rest of the
+      // chain it falls through to.
+      const selected =
+        rule.whenEmpty === 'consequent'
+          ? chain[i].body
+          : chain.slice(i + 1).map((c) => (c.cond ?? '') + ' ' + c.body).join(' ');
+      if (!selected.trim()) continue;
+
+      // Evidence anywhere on the path to this branch — inside it, or in a
+      // condition the chain already passed to reach it.
+      const earlier = chain.slice(0, i).map((c) => c.cond ?? '').join(' ');
+      if (EVIDENCE_GUARD.test(selected) || EVIDENCE_GUARD.test(earlier)) continue;
+
+      const text = literalProse(selected);
+      if (text.length < 8) continue;
+      if (HONEST_DISCLAIMER.test(text)) continue;
+      if (!CLEARANCE.some((c) => c.test(text))) continue;
+
+      hits.push({
+        file: label,
+        line: lineOf(chain[i].at),
+        collection: (cond.match(rule.re) || [])[1] || '(collection)',
+        claim: text.slice(0, 150),
+      });
+    }
+  }
+  return hits;
+}
+
 function scanFile(rel) {
-  return scanSource(stripComments(readFileSync(path.join(ROOT, rel), 'utf8')), rel);
+  const code = stripComments(readFileSync(path.join(ROOT, rel), 'utf8'));
+  return [...scanSource(code, rel), ...scanIfChains(code, rel)];
 }
 
 function sourceFiles() {

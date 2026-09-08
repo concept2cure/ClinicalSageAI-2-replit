@@ -1,5 +1,0 @@
-synced_at: 2026-06-02T00:00:00Z
-source: _sync/reconciliation-2026-06-02 (rev-3 packet)
-ref: concept2cure-v2
-subdir: .
-note: MDX June bundle (pathway panes, FilesTreePane, dossier-store, AnaDrafter + CSS) landed into ui_kits/mdx/; corrected Approvals/Audit field shapes. Supersedes the 2026-04-29 main snapshot.

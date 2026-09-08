@@ -8,9 +8,14 @@
  *     server-side from the device profile; it never approves or asserts
  *     sufficiency, and the button says what it produces.
  *
- * No live complaint-queue or PMCF-enrollment feed exists yet; the kit's KPI /
- * complaints / study fixtures render ONLY under the explicit sample-mode
- * guard, clearly bannered.
+ *   · Complaint queue and PMCF enrolment — the program's own rows from
+ *     /api/capa-mdr/complaints and …/pmcf-enrollment (useCerPmsFeeds). Every
+ *     figure is computed from those rows or taken from the server's summary
+ *     over them; a figure the rows cannot support is shown as absent.
+ *
+ * The kit's KPI / complaints / study / calendar fixtures render ONLY under the
+ * explicit sample-mode guard, clearly bannered. The reporting calendar has no
+ * backend and is therefore sample-only.
  */
 
 import * as React from 'react';
@@ -32,6 +37,16 @@ import { SampleDataBanner } from '../../components/SampleDataBanner';
 import { EmptyState, ErrorState } from '../../../v2/dataConnect';
 import { redactInternals } from '@/lib/queryClient';
 import { useSampleMode } from '../../components/DataGate';
+import {
+  isOpenComplaint,
+  isSeriousComplaint,
+  useCerComplaints,
+  useCerPmcfEnrollment,
+  type CerComplaint,
+  type CerPmcfActivity,
+  type CerPmcfSummary,
+  type ComplaintFigures,
+} from '../../hooks/useCerPmsFeeds';
 
 export interface PmsPmcfTabProps {
   programId: string | null;
@@ -225,13 +240,278 @@ export function PmsPmcfTab({ programId, profile, onAskAna }: PmsPmcfTabProps) {
       )}
 
       <SampleDataBanner show={sampleOn} label="PMS metrics and complaint queue" />
-      {sampleOn && <SamplePmsPanels />}
-      {!sampleOn && (
-        <div className="section-sub" role="note" style={{ marginTop: 12 }}>
-          Complaint-queue metrics and PMCF enrollment tracking have no live backend feed yet —
-          they appear here once a complaints source is connected.
+      {sampleOn ? <SamplePmsPanels /> : <LivePmsPanels programId={programId} />}
+    </>
+  );
+}
+
+/* ─── Live feeds ─────────────────────────────────────────────────────────── */
+
+const COMPLAINT_STATE_PILL: Record<CerComplaint['triageState'], string> = {
+  new: 'review',
+  triaged: 'review',
+  investigation: 'review',
+  escalated_capa: 'review',
+  escalated_mdr: 'review',
+  resolved: 'complete',
+  closed: 'complete',
+};
+
+const PMCF_STATUS_PILL: Record<CerPmcfActivity['status'], string> = {
+  planned: 'draft',
+  enrolling: 'review',
+  follow_up: 'review',
+  completed: 'complete',
+  terminated: 'na',
+};
+
+const shortDate = (iso: string | null): string =>
+  iso ? new Date(iso).toLocaleDateString([], { month: 'short', day: 'numeric' }) : '—';
+
+/** One KPI card. `value` null means the rows cannot support the figure. */
+function Kpi({
+  label,
+  value,
+  unit,
+  foot,
+  tone,
+}: {
+  label: string;
+  value: string | null;
+  unit?: string;
+  foot: string;
+  tone?: 'ok' | 'warn' | 'err';
+}) {
+  return (
+    <div className="metric-card" data-tone={value === null ? undefined : tone}>
+      <div className="metric-label">{label}</div>
+      <div className="metric-val">
+        {value ?? '—'}
+        {value !== null && unit && <span className="unit">{unit}</span>}
+      </div>
+      <div className="metric-meta">{foot}</div>
+    </div>
+  );
+}
+
+function LiveKpis({ figures, summary }: { figures: ComplaintFigures | null; summary: CerPmcfSummary | null }) {
+  const enrolled = summary?.enrolledInReporting ?? null;
+  const target = summary?.targetInReporting ?? null;
+  const pct = enrolled !== null && target !== null && target > 0 ? Math.round((enrolled / target) * 100) : null;
+  return (
+    <div className="metrics-row" data-testid="pms-live-kpis">
+      <Kpi
+        label="Open complaints"
+        value={figures ? String(figures.open) : null}
+        unit={figures ? ` / ${figures.total}${figures.capped ? '+' : ''}` : undefined}
+        foot={
+          figures
+            ? `${figures.total}${figures.capped ? ' or more' : ''} received · ${figures.open} still open`
+            : 'Complaint rows not loaded'
+        }
+        tone={figures ? (figures.open > 0 ? 'warn' : 'ok') : undefined}
+      />
+      <Kpi
+        label="Serious, open"
+        value={figures ? String(figures.seriousOpen) : null}
+        foot="Severity assessed serious or critical, not yet closed"
+        tone={figures ? (figures.seriousOpen > 0 ? 'err' : 'ok') : undefined}
+      />
+      <Kpi
+        label="Mean time to triage"
+        value={figures && figures.meanTriageDays !== null ? figures.meanTriageDays.toFixed(1) : null}
+        unit=" d"
+        foot={
+          figures && figures.meanTriageDays !== null
+            ? `Over ${figures.triagedCount} triaged complaint${figures.triagedCount === 1 ? '' : 's'}`
+            : 'No complaint has been triaged yet'
+        }
+        tone={figures && figures.meanTriageDays !== null ? (figures.meanTriageDays > 1 ? 'warn' : 'ok') : undefined}
+      />
+      <Kpi
+        label="PMCF enrolment"
+        value={pct !== null ? String(pct) : null}
+        unit="%"
+        foot={
+          pct !== null && summary
+            ? `${(enrolled as number).toLocaleString()} of ${(target as number).toLocaleString()} across ${summary.ratioBasisActivityCount} reporting activit${summary.ratioBasisActivityCount === 1 ? 'y' : 'ies'}`
+            : summary && summary.activityCount > 0
+              ? 'No activity has reported enrolment against a planned sample size'
+              : 'No PMCF activity recorded'
+        }
+        tone={pct !== null ? (pct >= 80 ? 'ok' : 'warn') : undefined}
+      />
+    </div>
+  );
+}
+
+function LivePmsPanels({ programId }: { programId: string | null }) {
+  const complaints = useCerComplaints(programId);
+  const pmcf = useCerPmcfEnrollment(programId);
+
+  if (!programId) {
+    return (
+      <div className="section-sub" role="note" style={{ marginTop: 12 }}>
+        Complaint and PMCF feeds are held per program.
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <LiveKpis figures={complaints.figures} summary={pmcf.summary} />
+
+      <div className="col2">
+        <div>
+          <div className="panel">
+            <div className="panel-hdr">
+              <div>
+                <div className="t">Complaint queue</div>
+                <div className="s">
+                  {complaints.state.status === 'ready'
+                    ? `${complaints.figures?.open ?? 0} open of ${complaints.figures?.total ?? 0} received, newest first`
+                    : 'The program’s complaints, newest first'}
+                </div>
+              </div>
+            </div>
+            {complaints.state.status === 'loading' && (
+              <div className="section-sub" role="status" style={{ padding: '12px 16px' }}>
+                Loading complaints…
+              </div>
+            )}
+            {complaints.state.status === 'error' && (
+              <ErrorState
+                variant="panel"
+                title="Couldn’t load the complaint queue"
+                message={complaints.state.message}
+                retry={complaints.refresh}
+                testId="pms-complaints-error"
+              />
+            )}
+            {complaints.state.status === 'empty' && (
+              <EmptyState
+                icon={I.folder}
+                title="No complaints recorded for this program"
+                hint="Complaints logged through the vigilance triage appear here as they are received."
+                action={{ label: 'Check again', onAct: complaints.refresh }}
+                regulation="Serves MDR Article 83 post-market surveillance"
+                testId="pms-complaints-empty"
+              />
+            )}
+            {complaints.state.status === 'ready' && (
+              <div className="tbl-scroll">
+                <table className="tbl" data-testid="pms-complaints-table">
+                  <thead>
+                    <tr>
+                      <th>Code</th>
+                      <th>Event</th>
+                      <th>Severity</th>
+                      <th>State</th>
+                      <th>Harm</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {complaints.state.data.map((c) => (
+                      <tr key={c.id} data-open={isOpenComplaint(c) || undefined}>
+                        <td>
+                          <span className="k-num">{c.complaintCode}</span>
+                          <div className="k-holder">
+                            {shortDate(c.receivedAt)} · {c.source.replace(/_/g, ' ')}
+                          </div>
+                        </td>
+                        <td>
+                          <div className="k-name" style={{ fontWeight: 400, fontSize: 12 }}>
+                            {c.eventNarrative.length > 90 ? `${c.eventNarrative.slice(0, 90)}…` : c.eventNarrative}
+                          </div>
+                        </td>
+                        <td>
+                          <span className={`status-pill ${isSeriousComplaint(c) ? 'review' : 'draft'}`}>
+                            {c.severityAssessment}
+                          </span>
+                        </td>
+                        <td>
+                          <span className={`status-pill ${COMPLAINT_STATE_PILL[c.triageState] ?? 'draft'}`}>
+                            {c.triageState.replace(/_/g, ' ')}
+                          </span>
+                        </td>
+                        <td style={{ fontSize: 11, color: 'var(--text-300)' }}>{c.patientHarm.replace(/_/g, ' ')}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
         </div>
-      )}
+
+        <div>
+          <div className="panel">
+            <div className="panel-hdr">
+              <div>
+                <div className="t">PMCF activities</div>
+                <div className="s">
+                  {pmcf.summary
+                    ? `${pmcf.summary.activityCount} recorded · ${pmcf.summary.reportingActivityCount} reporting enrolment` +
+                      (pmcf.summary.unlinkedToPlanCount > 0
+                        ? ` · ${pmcf.summary.unlinkedToPlanCount} not linked to a PMCF plan`
+                        : '')
+                    : 'Annex XIV Part B activities and their reported enrolment'}
+                </div>
+              </div>
+            </div>
+            {pmcf.state.status === 'loading' && (
+              <div className="section-sub" role="status" style={{ padding: '12px 16px' }}>
+                Loading PMCF activities…
+              </div>
+            )}
+            {pmcf.state.status === 'error' && (
+              <ErrorState
+                variant="panel"
+                title="Couldn’t load the PMCF activities"
+                message={pmcf.state.message}
+                retry={pmcf.refresh}
+                testId="pms-pmcf-error"
+              />
+            )}
+            {pmcf.state.status === 'empty' && (
+              <EmptyState
+                icon={I.folder}
+                title="No PMCF activity recorded for this program"
+                hint="Record each PMCF study, registry or survey with its planned sample size; enrolment reports accrue against it."
+                action={{ label: 'Check again', onAct: pmcf.refresh }}
+                regulation="Serves MDR Annex XIV Part B"
+                testId="pms-pmcf-empty"
+              />
+            )}
+            {pmcf.state.status === 'ready' && (
+              <div className="estar" data-testid="pms-pmcf-list">
+                {pmcf.state.data.map((a, i) => (
+                  <div key={a.id} className="estar-row">
+                    <div className="estar-num">{String(i + 1).padStart(2, '0')}</div>
+                    <div className="estar-label">
+                      <div>
+                        {a.activityCode} · {a.title}
+                      </div>
+                      <div style={{ fontSize: 11, color: 'var(--text-400)', marginTop: 2 }}>
+                        {a.activityKind.replace(/_/g, ' ')}
+                        {a.primaryEndpoint ? ` · ${a.primaryEndpoint}` : ''}
+                        {' · '}
+                        {a.enrolledCount === null
+                          ? 'enrolment not reported'
+                          : `${a.enrolledCount.toLocaleString()}${a.targetEnrollment !== null ? ` / ${a.targetEnrollment.toLocaleString()}` : ''} as of ${shortDate(a.enrollmentAsOf)}`}
+                        {a.dataCollectionThrough ? ` · through ${shortDate(a.dataCollectionThrough)}` : ''}
+                      </div>
+                    </div>
+                    <span className={`status-pill ${PMCF_STATUS_PILL[a.status] ?? 'draft'}`}>
+                      {a.status.replace(/_/g, ' ')}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
     </>
   );
 }

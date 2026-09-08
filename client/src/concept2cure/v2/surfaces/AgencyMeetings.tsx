@@ -1,12 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { I } from '../icons';
 import { liveGetOrNull, EmptyState } from '../dataConnect';
 import { apiRequest } from '@/lib/queryClient';
 import type { SurfaceViewProps } from '../surfaceViews';
+import { usePublishSurfaceContext } from '../surfaceContext';
 import { C2CForm } from '../C2CForm';
 import type { C2CFormConfig } from '../C2CForm';
 import '../styles/project-home-v2.css';
 import { C2CToast, useToast } from '../toast';
+import { downloadBlob } from '../download';
+import { shellProgramName } from '../shellProject';
+import { useLiveRows } from '../dataConnect';
+import { useSurfaceActionHandlers, notifySurfaceActionReady } from '../surfaceActions';
 
 /* ════ AgencyMeetings — regulator-interaction worklist ════
 
@@ -16,6 +21,15 @@ import { C2CToast, useToast } from '../toast';
    JSONB columns — or an honest loading / empty / error state. New requests are
    persisted via POST /api/agency-meetings and the surface adopts the row the
    server actually wrote. No fixture, no "Sample data" pill, no local stand-in. */
+
+/** The fields this surface reads off GET /api/c2c/projects to name a programme
+ *  in the meeting-request select. The portfolio row carries more; these are the
+ *  only three a label is built from. */
+interface AmProgramOption {
+  id: string;
+  code: string;
+  title: string;
+}
 
 /* -- Render-contract types (shape of GET /api/agency-meetings rows) -- */
 
@@ -106,6 +120,30 @@ function meetShort(s: string | null): string | null {
 /* ════ AgencyMeetings -- agency meetings & briefing books surface ════ */
 
 export function AgencyMeetings({ onAsk, onNav }: SurfaceViewProps) {
+  /* The open programme, named as a person would say it — never a hardcoded
+     product. `null` when no programme is open, and every caller below phrases
+     its request without one rather than substituting a placeholder: an
+     assistant that has to ask which programme beats one confidently answering
+     about the wrong one. */
+  const program = shellProgramName();
+
+  /* ── The Programme select offered five invented programmes ─────────────────
+     `['BX-204 · IND', 'BX-204 · NDA', 'BX-204 · MAA', 'AltexaTab · NDA',
+     'Aurora CGM · 510(k)']` — a required field, so every customer requesting an
+     agency meeting had to file it against a demo product. The real portfolio is
+     one read away (GET /api/c2c/projects, the same list the Projects surface
+     renders) and was never asked for.
+
+     An org with no programmes gets no options and the field says so, rather
+     than a list of somebody's fictional pipeline. */
+  const portfolio = useLiveRows<AmProgramOption>('/api/c2c/projects');
+  const programOptions = portfolio.rows
+    .map((p) => {
+      const label = [p.code, p.title].filter((v) => String(v ?? '').trim()).join(' · ');
+      return label || String(p.id ?? '');
+    })
+    .filter(Boolean);
+
   const [meetings, setMeetings] = useState<Meeting[]>([]);
   const [bbMap, setBbMap] = useState<Record<string, BriefingBook>>({});
   const [minMap, setMinMap] = useState<Record<string, Minutes>>({});
@@ -115,6 +153,36 @@ export function AgencyMeetings({ onAsk, onNav }: SurfaceViewProps) {
   const [form, setForm] = useState(false);
   const [toast, fireToast] = useToast();
   const m = meetings.find((x) => x.id === sel) || meetings[0];
+
+  /* AnA can open a meeting by id or a distinctive phrase (agency / type /
+     program) — the same row click a person makes — so a drive can land on a
+     specific meeting's briefing book and minutes. Resolved against the REAL
+     meetings with honest misses; held (retry) while the list loads, re-attempted
+     on the ready signal below. Requesting or scheduling a meeting stays governed;
+     this only opens one. */
+  useSurfaceActionHandlers('agency-meetings', {
+    'agency-meetings.select-meeting': (params) => {
+      const raw = String(params.meeting ?? '').trim();
+      if (!raw) return { ok: false, reason: 'Name a meeting by its id or a distinctive phrase.' };
+      if (loading) return { ok: false, reason: 'The agency meetings are still loading.', retry: true };
+      if (error) return { ok: false, reason: 'The agency meetings did not load, so there are none to open.' };
+      if (meetings.length === 0) return { ok: false, reason: 'No agency meetings are recorded in this organization yet.' };
+      const needle = raw.toLowerCase();
+      const exact = meetings.filter((x) => x.id.toLowerCase() === needle);
+      const hits = exact.length
+        ? exact
+        : meetings.filter((x) => `${x.agency} ${x.type} ${x.program} ${x.cat}`.toLowerCase().includes(needle));
+      if (hits.length === 0) return { ok: false, reason: `No agency meeting matching "${raw}".` };
+      if (hits.length > 1) return { ok: false, reason: `"${raw}" matches ${hits.length} meetings — use the exact id.` };
+      const x = hits[0];
+      if (sel === x.id) return { ok: true, detail: `Already on ${x.agency} ${x.type}` };
+      setSel(x.id);
+      return { ok: true, detail: `Opened ${x.agency} ${x.type} — ${x.program}` };
+    },
+  });
+  useEffect(() => {
+    if (!loading && !error) notifySurfaceActionReady('agency-meetings');
+  }, [loading, error]);
 
   const addMeeting = (r: Meeting) => {
     const row = { ...r, _new: true };
@@ -159,11 +227,111 @@ export function AgencyMeetings({ onAsk, onNav }: SurfaceViewProps) {
     };
   }, []);
 
+  /* ── The briefing-book PDF button was decoration ──────────────────────────
+     `<button className="reg-mini">{I.download} PDF</button>` — a download icon,
+     the word PDF, and no onClick. The renderer has existed the whole time:
+     POST /api/ind-lifecycle/briefing-book/pdf streams a navigable PDF from
+     renderBriefingBookPdf(assembleBriefingBook(b)).
+
+     Two real gaps had to be closed rather than papered over.
+
+     MEETING TYPE. The renderer accepts four FDA types (pre_ind, type_a, type_b,
+     type_c). This surface offers ten, including EMA Scientific Advice and a
+     device Q-Sub, which that renderer does not model. The four that correspond
+     are mapped; the rest are REFUSED by name. Rendering an EMA briefing package
+     through an FDA template would produce a document that looks filed and is
+     wrong, which on this surface is the expensive kind of wrong.
+
+     INDICATION. The renderer requires it and `c2c_agency_meetings` has no such
+     column (server/routes/agency-meetings.routes.ts), so there is nothing to
+     read. It is asked for at download time instead of being guessed from the
+     meeting's free-text `goal` — a briefing book states the indication to the
+     agency, and inferring it from an objective line is exactly the fabrication
+     the house rule forbids. Not persisted, because there is no column to
+     persist it to; adding one is a migration, not this fix. */
+  const FDA_MEETING_TYPES: Record<string, string> = {
+    'pre-ind': 'pre_ind',
+    'type a': 'type_a',
+    'type b': 'type_b',
+    'type c': 'type_c',
+  };
+
+  const [pdfFor, setPdfFor] = useState<{ m: Meeting; bb: BriefingBook } | null>(null);
+
+  const PDF_FORM: C2CFormConfig = {
+    eyebrow: 'Briefing book · render',
+    title: 'Render the briefing book',
+    governed:
+      'The indication is stated to the agency on the briefing book cover. It is not stored on the meeting record, so it is asked for here rather than inferred.',
+    submitLabel: 'Download PDF',
+    fields: [
+      {
+        key: 'indication',
+        label: 'Indication',
+        type: 'text',
+        placeholder: 'The indication as it should read to the agency',
+        required: true,
+      },
+    ],
+  };
+
+  const renderBriefingBookPdf = async (v: Record<string, string>) => {
+    const ctx = pdfFor;
+    setPdfFor(null);
+    if (!ctx) return;
+    const indication = (v.indication || '').trim();
+    if (!indication) return;
+    try {
+      const res = await apiRequest('POST', '/api/ind-lifecycle/briefing-book/pdf', {
+        productName: ctx.m.program,
+        indication,
+        meetingType: FDA_MEETING_TYPES[ctx.m.type.trim().toLowerCase()],
+        // The renderer numbers these itself; it needs the text and its area.
+        questions: ctx.bb.questions.map((q, i) => ({
+          number: i + 1,
+          question: q.q,
+          area: q.area,
+          sponsorPosition: q.pos,
+        })),
+      });
+      if (!res.ok) {
+        fireToast('Could not render the briefing book PDF — the server refused the request.', 'error');
+        return;
+      }
+      downloadBlob('fda-briefing-book.pdf', await res.blob());
+    } catch (e) {
+      fireToast(
+        'Could not render the briefing book PDF — ' + (e instanceof Error ? e.message : String(e)) + '.',
+        'error',
+      );
+    }
+  };
+
+  /** Open the render dialog, or say plainly why this meeting cannot use it. */
+  const startBriefingBookPdf = (m: Meeting, bb: BriefingBook) => {
+    if (!FDA_MEETING_TYPES[m.type.trim().toLowerCase()]) {
+      fireToast(
+        `The briefing-book renderer covers FDA Pre-IND and Type A/B/C meetings. "${m.type}" is not one of them, so no PDF is produced rather than an FDA-shaped document for the wrong agency.`,
+        'error',
+      );
+      return;
+    }
+    if (!bb.questions.length) {
+      fireToast('This briefing book has no questions yet — a briefing book without questions has nothing to render.', 'error');
+      return;
+    }
+    setPdfFor({ m, bb });
+  };
+
   const MTG_FORM: C2CFormConfig = {
     eyebrow: 'Agency interaction · new request',
     title: 'Request an agency meeting',
+    /* This line promised an audit entry that POST /api/agency-meetings did not
+       write, and named a "briefing-book plan" this form does not collect. The
+       route now writes the chained entry in the same transaction as the row, so
+       the claim is true; the copy names only what is actually recorded. */
     governed:
-      'A meeting request is a governed interaction — the request and its briefing-book plan are recorded with an audit entry.',
+      'A meeting request is a governed interaction — the request is recorded with an audit entry. The briefing book is built afterwards, on the meeting.',
     submitLabel: 'Create request',
     fields: [
       {
@@ -179,8 +347,18 @@ export function AgencyMeetings({ onAsk, onNav }: SurfaceViewProps) {
       { key: 'cat', label: 'Category', type: 'text', placeholder: 'e.g. Type B', half: true },
       {
         key: 'program', label: 'Program', type: 'select',
-        options: ['BX-204 · IND', 'BX-204 · NDA', 'BX-204 · MAA', 'AltexaTab · NDA', 'Aurora CGM · 510(k)'],
+        options: programOptions,
+        // Prefer the programme the user already has open — it is almost always
+        // the one they are requesting the meeting for.
+        default: programOptions.find((o) => program && o.includes(program)) ?? programOptions[0],
         required: true,
+        desc: portfolio.loading
+          ? 'Loading your programmes…'
+          : portfolio.error
+            ? 'Your programmes could not be read, so none are listed here. Retry, or create the meeting once the list loads.'
+            : programOptions.length === 0
+              ? 'No programmes are recorded for your organization yet. Create one in Projects and it appears here.'
+              : undefined,
       },
       {
         key: 'format', label: 'Format', type: 'select',
@@ -260,6 +438,82 @@ export function AgencyMeetings({ onAsk, onNav }: SurfaceViewProps) {
   const ready = !loading && !error;
   const kv = (n: number | string) => (ready ? String(n) : '--');
 
+  /* What AnA can see of this screen. "Prepare with AnA" sits in this header and
+     asks her to draft a Pre-IND request — until now with no knowledge of which
+     meetings exist, which are granted, or what the open commitments are.
+
+     A FAILED read publishes the failure: `meetings` is [] on error as well as
+     when the org tracks none, and telling a sponsor they have no regulator
+     interactions because a fetch failed is a claim about their agency record. */
+  const anaContext = useMemo(() => {
+    if (loading) {
+      return { summary: 'Agency meetings are still loading; nothing on screen is final yet.' };
+    }
+    if (error) {
+      return {
+        summary:
+          'The agency-meetings store could not be read, so this screen is showing no regulator ' +
+          'interactions because of a failure, not because none are tracked.',
+        availableActions: ['Retry the agency-meetings read'],
+      };
+    }
+    return {
+      summary:
+        `Agency meetings and briefing books: ${meetings.length} regulator interaction(s), ` +
+        `${openQuestions} question(s) to agencies across the briefing books, ${openCommitments} open ` +
+        `commitment(s)` +
+        (nextMtg ? `. Next up is the ${nextMtg.x.type} with ${nextMtg.x.agency} on ${nextVal}` : '') +
+        (m ? `. "${m.type} — ${m.agency}" (${m.program}) is selected.` : '.'),
+      facts: {
+        meetingCount: meetings.length,
+        openQuestions,
+        openCommitments,
+        nextMeeting: nextMtg
+          ? { id: nextMtg.x.id, type: nextMtg.x.type, agency: nextMtg.x.agency, program: nextMtg.x.program, meets: nextMtg.x.meets }
+          : null,
+        meetings: meetings.slice(0, 12).map((x) => ({
+          id: x.id, type: x.type, agency: x.agency, category: x.cat, program: x.program,
+          status: x.status, requested: x.requested, granted: x.granted, meets: x.meets,
+          clock: x.clock, format: x.format,
+        })),
+        selected: m
+          ? {
+              id: m.id, type: m.type, agency: m.agency, program: m.program, status: m.status,
+              clock: m.clock, format: m.format,
+              // The meeting `goal`, the verbatim agency `questions` and sponsor
+              // `positions`, and the minute `agreements` / commitment text are
+              // substantial user-authored free-text prose — a prompt-injection
+              // surface the sibling HaqManager already withholds for exactly
+              // this reason. Section states, question areas/counts, and
+              // commitment references/dates/states carry the grounding; the
+              // prose stays on screen.
+              briefingBook: bb
+                ? {
+                    title: bb.title, state: bb.state, version: bb.ver, owner: bb.owner,
+                    sections: (bb.sections ?? []).map((sn) => ({ number: sn.n, label: sn.label, state: sn.st })),
+                    questionCount: (bb.questions ?? []).length,
+                    questionAreas: (bb.questions ?? []).map((qq) => qq.area),
+                  }
+                : null,
+              minutes: min
+                ? {
+                    received: min.received,
+                    agreementCount: (min.agree ?? []).length,
+                    commitments: (min.commitments ?? []).map((c) => ({ document: c.doc, due: c.due, state: c.st })),
+                  }
+                : null,
+            }
+          : null,
+      },
+      availableActions: [
+        'Select a meeting to read its briefing book, minutes and commitments',
+        'Request a new agency meeting (a governed interaction — the request is audit-logged)',
+        'Read the open questions to agencies and the open post-meeting commitments',
+      ],
+    };
+  }, [loading, error, meetings, openQuestions, openCommitments, nextMtg, nextVal, m, bb, min]);
+  usePublishSurfaceContext('agency-meetings', anaContext);
+
   return (
     <div className="page-inner reg">
       <div className="reg-head">
@@ -282,7 +536,9 @@ export function AgencyMeetings({ onAsk, onNav }: SurfaceViewProps) {
               className="reg-cta sm"
               onClick={() =>
                 onAsk(
-                  'Draft a Pre-IND meeting request and briefing book for BX-204',
+                  program
+                    ? `Draft a Pre-IND meeting request and briefing book for ${program}`
+                    : 'Draft a Pre-IND meeting request and briefing book for my programme',
                 )
               }
             >
@@ -318,7 +574,7 @@ export function AgencyMeetings({ onAsk, onNav }: SurfaceViewProps) {
       </div>
 
       {loading ? (
-        <div className="reg-sub2" style={{ padding: '18px 14px' }}>
+        <div role="status" className="reg-sub2" style={{ padding: '18px 14px' }}>
           Loading agency meetings…
         </div>
       ) : error ? (
@@ -407,7 +663,14 @@ export function AgencyMeetings({ onAsk, onNav }: SurfaceViewProps) {
                   >
                     {I.fileText} Open document
                   </button>
-                  <button className="reg-mini">{I.download} PDF</button>
+                  <button
+                    className="reg-mini"
+                    onClick={() => startBriefingBookPdf(m, bb)}
+                    title="Render this briefing book to a navigable PDF"
+                    data-testid="mtg-bb-pdf"
+                  >
+                    {I.download} PDF
+                  </button>
                 </div>
               </div>
               <div className="mtg-bb-secs">
@@ -497,6 +760,13 @@ export function AgencyMeetings({ onAsk, onNav }: SurfaceViewProps) {
           config={MTG_FORM}
           onCancel={() => setForm(false)}
           onSubmit={submitMtg}
+        />
+      )}
+      {pdfFor && (
+        <C2CForm
+          config={PDF_FORM}
+          onCancel={() => setPdfFor(null)}
+          onSubmit={renderBriefingBookPdf}
         />
       )}
       <C2CToast msg={toast} />

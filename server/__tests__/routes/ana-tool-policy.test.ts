@@ -10,7 +10,7 @@ import request from 'supertest';
 
 const { authState, audit, dbState } = vi.hoisted(() => ({
   authState: { user: null as Record<string, any> | null },
-  audit: { logAction: vi.fn().mockResolvedValue(undefined) },
+  audit: { logAction: vi.fn().mockResolvedValue({ persisted: true, chained: true, tamperProof: true }) },
   dbState: { settings: null as Record<string, unknown> | null },
 }));
 

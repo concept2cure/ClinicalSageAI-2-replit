@@ -61,16 +61,20 @@ export interface NSRSection {
   content?: string;
   status: 'empty' | 'drafting' | 'drafted' | 'reviewed' | 'approved';
   /** Which extracted-data fields this section needs (for the gap engine). */
-  requires: Array<keyof PreclinicalStudy>;
+  // Fields the section needs, checked against the normalized study by the gap
+  // engine. Typed against NormalizedNSRStudy (what detectSectionGaps actually
+  // reads) so completeness-critical fields it holds — e.g. doseGroups — can gate
+  // a section even when the raw PreclinicalStudy input type has no such key.
+  requires: Array<keyof NormalizedNSRStudy>;
 }
 
 export const NONCLINICAL_STUDY_REPORT_STRUCTURE: NSRSection[] = [
   { number: '1', title: 'Title Page', required: true, status: 'empty', requires: ['studyTitle'], description: 'Study title, report number, study type, testing facility, GLP statement, dates' },
   { number: '2', title: 'Summary', required: true, status: 'empty', requires: ['keyFindings'], description: 'Concise summary of the study design, key results, and conclusion (NOAEL/LOAEL where applicable)' },
   { number: '3', title: 'Objective', required: true, status: 'empty', requires: ['studyType'], description: 'Purpose of the study and the question it was designed to answer' },
-  { number: '4', title: 'Materials and Methods', required: true, status: 'empty', requires: ['species', 'routeOfAdministration'], description: 'Test article, species/strain, group design and dose levels, route, duration, endpoints, and analytical/statistical methods' },
+  { number: '4', title: 'Materials and Methods', required: true, status: 'empty', requires: ['species', 'routeOfAdministration', 'doseGroups'], description: 'Test article, species/strain, group design and dose levels, route, duration, endpoints, and analytical/statistical methods' },
   { number: '5', title: 'Results', required: true, status: 'empty', requires: ['keyFindings'], description: 'Observed findings: mortality, clinical signs, body weight, clinical pathology, organ weights, macroscopic/microscopic pathology, toxicokinetics' },
-  { number: '6', title: 'Discussion and Conclusion', required: true, status: 'empty', requires: ['keyFindings'], description: 'Interpretation of findings, dose-response, adversity, NOAEL/LOAEL determination, and overall conclusion' },
+  { number: '6', title: 'Discussion and Conclusion', required: true, status: 'empty', requires: ['keyFindings', 'noael'], description: 'Interpretation of findings, dose-response, adversity, NOAEL/LOAEL determination, and overall conclusion' },
   { number: '7', title: 'Tabulated Data', required: true, status: 'empty', requires: ['targetOrganToxicity'], description: 'Summary tables of group means, target-organ findings, NOAEL/LOAEL, and safety margins' },
 ];
 
@@ -174,7 +178,12 @@ export async function buildNonclinicalStudyReport(
     id: Date.now(),
     status: 'complete',
     progress: 100,
-    reportSection: ctdSection(study.studyType),
+    /* Empty, not a guess, when the study type is not one this map carries.
+       `runM4NonclinicalQc` reads an empty placement as an error that names the
+       unrecognised type and asks for the section to be recorded explicitly —
+       which is the honest outcome. It used to receive the module root '4.2'
+       here, an assertion nobody established, and enforce it. */
+    reportSection: ctdSection(study.studyType) ?? '',
     discipline,
     sections,
     tables: buildTables(study),
@@ -196,6 +205,11 @@ export interface NormalizedNSRStudy {
   routeOfAdministration: string | null;
   durationWeeks: number | null;
   glpCompliant: boolean | null;
+  // Dose-group design (arm label + dose level). Empty until captured — a
+  // repeat-dose tox report cannot be complete without it, so Materials &
+  // Methods (§4) requires it and stays 'partial' while it is absent rather than
+  // reading 'rendered' over a "[group design/dose levels to be inserted]" body.
+  doseGroups: Array<{ group: string; doseLevel: string }>;
   noael: string | null;
   loael: string | null;
   mtd: string | null;
@@ -215,6 +229,22 @@ function isPreclinicalStudy(s: PreclinicalStudy | NonclinicalStudyInput): s is P
 }
 
 /** Map either supported input type into the internal study shape. */
+/**
+ * `doseGroups` is present on some study shapes and absent from the declared
+ * types of others, so it is read structurally rather than asserted onto them.
+ *
+ * This was written inline twice as a pair of casts, and the second one —
+ * `input as { doseGroups: Array<{ group, doseLevel }> }` — does not typecheck:
+ * neither declared input type overlaps that shape, so tsc rejects the
+ * conversion (TS2352). Going through `unknown` once, in one place, is both
+ * legal and the only honest description of what is happening: we do not know
+ * that this field exists, we look.
+ */
+function readDoseGroups(v: unknown): Array<{ group: string; doseLevel: string }> {
+  const dg = (v as { doseGroups?: unknown } | null | undefined)?.doseGroups;
+  return Array.isArray(dg) ? (dg as Array<{ group: string; doseLevel: string }>) : [];
+}
+
 export function normalizeStudy(input: PreclinicalStudy | NonclinicalStudyInput): NormalizedNSRStudy {
   if (isPreclinicalStudy(input)) {
     return {
@@ -225,6 +255,7 @@ export function normalizeStudy(input: PreclinicalStudy | NonclinicalStudyInput):
       routeOfAdministration: input.routeOfAdministration,
       durationWeeks: input.durationWeeks,
       glpCompliant: input.glpCompliant,
+      doseGroups: readDoseGroups(input),
       noael: input.noael,
       loael: input.loael,
       mtd: input.mtd,
@@ -248,6 +279,7 @@ export function normalizeStudy(input: PreclinicalStudy | NonclinicalStudyInput):
     routeOfAdministration: null,
     durationWeeks: loose.durationWeeks ?? null,
     glpCompliant: loose.glpCompliant ?? (loose.glpStatus ? loose.glpStatus === 'GLP' : null),
+    doseGroups: readDoseGroups(loose),
     noael: loose.noael ?? loose.noel ?? null,
     loael: null,
     mtd: null,
@@ -289,12 +321,35 @@ export function disciplineFor(studyType: string): NonclinicalDiscipline {
   }
 }
 
-/** CTD Module 4.2.x section number for a given study type. */
-export function ctdSection(studyType: string): string {
+/**
+ * CTD Module 4.2.x section for a study type, or null when this map does not
+ * know it.
+ *
+ * It used to end `?? '4.2'` — the module root — for anything unlisted, and the
+ * list stopped at 4.2.3.6. ICH M4S does not: secondary pharmacodynamics is
+ * 4.2.1.2, pharmacodynamic drug interactions 4.2.1.4, and Other Toxicity
+ * Studies runs 4.2.3.7.1 through .7 (antigenicity, immunotoxicity, mechanistic,
+ * dependence, metabolites, impurities, other). Those are ordinary studies in a
+ * real program, and every one of them fell through.
+ *
+ * The default did damage in both directions. `runM4NonclinicalQc` compares the
+ * filed section against this value, so an immunotoxicity report correctly filed
+ * at 4.2.3.7.2 was told "ICH M4 expects 4.2" and pushed to the module root; and
+ * once '4.2' was in the section set, the M2.4←M4 feed-forward trace matched
+ * every 4.2.x citation against it, so no orphan reference in the whole of
+ * Module 4 was ever reported (see ctd-authoring-readiness).
+ *
+ * `null` now means "not recognised, so placement cannot be verified" — which is
+ * a different fact from "belongs at 4.2", and the only one this map can support.
+ */
+export function ctdSection(studyType: string): string | null {
   const map: Record<string, string> = {
     pharmacology: '4.2.1.1',
+    primary_pharmacodynamics: '4.2.1.1',
+    secondary_pharmacodynamics: '4.2.1.2',
     safety_pharm: '4.2.1.3',
     safety_pharmacology: '4.2.1.3',
+    pd_drug_interactions: '4.2.1.4',
     pk: '4.2.2',
     tk: '4.2.2',
     adme: '4.2.2',
@@ -308,8 +363,16 @@ export function ctdSection(studyType: string): string {
     dart: '4.2.3.5',
     reproductive_tox: '4.2.3.5',
     local_tolerance: '4.2.3.6',
+    // 4.2.3.7 Other Toxicity Studies.
+    antigenicity: '4.2.3.7.1',
+    immunotoxicity: '4.2.3.7.2',
+    mechanistic_tox: '4.2.3.7.3',
+    dependence: '4.2.3.7.4',
+    metabolites: '4.2.3.7.5',
+    impurities: '4.2.3.7.6',
+    other_toxicity: '4.2.3.7.7',
   };
-  return map[studyType] ?? '4.2';
+  return map[studyType] ?? null;
 }
 
 /** Required extracted-data fields a section needs but the study lacks. */
@@ -344,14 +407,16 @@ function isFieldEmpty(value: unknown): boolean {
   return false;
 }
 
-function fieldLabel(field: keyof PreclinicalStudy): string {
-  const labels: Partial<Record<keyof PreclinicalStudy, string>> = {
+function fieldLabel(field: keyof NormalizedNSRStudy): string {
+  const labels: Partial<Record<keyof NormalizedNSRStudy, string>> = {
     studyTitle: 'study title',
     keyFindings: 'key findings',
     studyType: 'study type',
     species: 'test species',
     routeOfAdministration: 'route of administration',
     targetOrganToxicity: 'target-organ findings',
+    doseGroups: 'dose-group design',
+    noael: 'NOAEL',
   };
   return labels[field] ?? String(field);
 }
@@ -456,13 +521,17 @@ function draftSectionTemplate(
 
   switch (section.number) {
     case '1':
-      return `NONCLINICAL STUDY REPORT\n\n${study.studyTitle}\n\nTest Article: ${ds}\nStudy Type: ${study.studyType}\nReport Number: ${study.studyReportNumber || '[Report No.]'}\nTesting Facility: ${study.testingFacility || '[Testing Facility]'}\nCTD Section: ${ctdSection(study.studyType)}\n${glp}`;
+      return `NONCLINICAL STUDY REPORT\n\n${study.studyTitle}\n\nTest Article: ${ds}\nStudy Type: ${study.studyType}\nReport Number: ${study.studyReportNumber || '[Report No.]'}\nTesting Facility: ${study.testingFacility || '[Testing Facility]'}\nCTD Section: ${ctdSection(study.studyType) ?? '[not derivable from study type — record explicitly]'}\n${glp}`;
     case '2':
       return `SUMMARY\n\nThis ${discipline} study (${study.studyType}) evaluated ${ds}${study.species ? ` in ${study.species}` : ''}${study.durationWeeks != null ? ` over ${study.durationWeeks} weeks` : ''}. ${study.keyFindings || '[Key findings to be inserted.]'}${study.noael ? ` The NOAEL was ${study.noael}.` : ''}${study.loael ? ` The LOAEL was ${study.loael}.` : ''}`;
     case '3':
       return `OBJECTIVE\n\nThe objective of this study was to characterize the ${discipline === 'toxicology' ? 'toxicological profile' : discipline === 'pharmacokinetics' ? 'pharmacokinetic / ADME profile' : 'pharmacological activity'} of ${ds}${study.species ? ` in ${study.species}` : ''} following ${study.routeOfAdministration || '[route]'} administration.`;
-    case '4':
-      return `MATERIALS AND METHODS\n\nTest Article: ${ds}\nSpecies/Strain: ${study.species || '[species]'}${study.strain ? ` / ${study.strain}` : ''}\nRoute of Administration: ${study.routeOfAdministration || '[route]'}\nDuration: ${study.durationWeeks != null ? `${study.durationWeeks} weeks` : '[duration]'}\n${glp}\n\n[Group design, dose levels, and endpoint/analytical methods to be inserted.]`;
+    case '4': {
+      const doseGroupsText = study.doseGroups.length
+        ? `Dose groups: ${study.doseGroups.map(g => `${g.group} (${g.doseLevel})`).join('; ')}.`
+        : '[Group design and dose levels to be inserted.]';
+      return `MATERIALS AND METHODS\n\nTest Article: ${ds}\nSpecies/Strain: ${study.species || '[species]'}${study.strain ? ` / ${study.strain}` : ''}\nRoute of Administration: ${study.routeOfAdministration || '[route]'}\nDuration: ${study.durationWeeks != null ? `${study.durationWeeks} weeks` : '[duration]'}\n${glp}\n\n${doseGroupsText}\n\n[Endpoint and analytical/statistical methods to be inserted.]`;
+    }
     case '5':
       return `RESULTS\n\n${study.keyFindings || '[Observed findings — mortality, clinical signs, body weight, clinical pathology, organ weights, and pathology — to be inserted.]'}${study.targetOrganToxicity.length ? `\n\nTarget-organ findings: ${study.targetOrganToxicity.map(t => `${t.organ} (${t.severity}${t.doseLevel ? ` at ${t.doseLevel}` : ''})`).join('; ')}.` : ''}${study.genotoxicityResults ? `\n\nGenotoxicity: ${study.genotoxicityResults}.` : ''}`;
     case '6':

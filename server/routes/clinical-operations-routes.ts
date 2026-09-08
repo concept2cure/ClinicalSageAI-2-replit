@@ -87,18 +87,61 @@ const milestoneSchema = z.object({
 export default function createClinicalOperationsRoutes(pool: Pool): Router {
   const router = Router();
 
-  // Module-level initialization guard to avoid DDL on every request
-  let tablesInitialized = false;
+  /**
+   * The caller's organization, as the INTEGER clinical_ops.studies.org_id is.
+   *
+   * ── What "no tenant filter" meant ──────────────────────────────────────────
+   * This resolver returned null for a request with no tenant on it, and every
+   * query in this router spelled its predicate as an OR against a null check
+   * on the tenant parameter — which is TRUE when that parameter is null.
+   * So a context-less request did not read the wrong organization's
+   * clinical operations. It read EVERY organization's: studies, sites,
+   * enrollment, monitoring visits, protocol deviations and milestones, across
+   * the whole database. The write endpoints carried the same escape, so it
+   * could modify another sponsor's study too.
+   *
+   * A conditional tenant predicate is not a predicate; it is a default. The
+   * gate below resolves the org once and refuses without it, so `getOrgId`
+   * always returns a positive integer and the `IS NULL` branch is dead — which
+   * is why every query now states `org_id = $N` unconditionally.
+   */
+  function resolveOrgId(req: Request): number | null {
+    const raw = (req as any).tenantId ?? (req as any).tenantContext?.organizationId
+      ?? (req as any).organizationId ?? (req as any).user?.organizationId;
+    const n = Number(raw);
+    return Number.isInteger(n) && n > 0 ? n : null;
+  }
 
-  function getOrgId(req: Request): string | null {
-    return (
-      (req as any).tenantId ||
-      (req as any).tenantContext?.organizationId ||
-      null
-    );
+  /** Where the resolved org is parked for the handlers, once, per request. */
+  const CLINOPS_ORG = Symbol.for('clinicalOps.orgId');
+
+  /* One gate for every endpoint in this router, so a new one cannot be added
+     without it — and so the tenant predicate below can be unconditional. */
+  router.use((req: Request, res: Response, next) => {
+    const orgId = resolveOrgId(req);
+    if (orgId === null) {
+      return res.status(403).json({
+        error: 'Organization context required.',
+        code: 'CLINOPS_ORG_REQUIRED',
+      });
+    }
+    (req as any)[CLINOPS_ORG] = orgId;
+    next();
+  });
+
+  function getOrgId(req: Request): number {
+    return (req as any)[CLINOPS_ORG] as number;
   }
 
   function safeError(res: Response, error: any, code: string, label: string): Response {
+    // The schema is provisioned by db/migrations/20260902_clinical_ops_schema.sql
+    // now, not by this router at request time. That DDL ran as the request's
+    // own role and failed 42501 ("permission denied for database") wherever the
+    // application is not a schema owner — which is every deployment that uses
+    // the non-superuser runtime role — so the whole surface 500'd on every
+    // call. This branch still answers honestly for a database that has not had
+    // the migration applied yet: the tables are missing, which is a
+    // provisioning state, not a request the caller got wrong.
     if (error?.code === '42P01' || error?.code === '3F000') {
       console.warn(`[ClinicalOps] ${label}: table/schema not found`);
       return res.status(503).json({
@@ -110,109 +153,6 @@ export default function createClinicalOperationsRoutes(pool: Pool): Router {
     return res.status(500).json({ error: `${label} failed`, code });
   }
 
-  // Auto-create schema + tables when first accessed (guarded to run once)
-  async function ensureTables(): Promise<void> {
-    if (tablesInitialized) return;
-    await pool.query(`CREATE SCHEMA IF NOT EXISTS clinical_ops`);
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS clinical_ops.studies (
-        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-        org_id TEXT,
-        name TEXT NOT NULL,
-        protocol TEXT NOT NULL,
-        phase TEXT NOT NULL,
-        status TEXT NOT NULL DEFAULT 'planning',
-        indication TEXT NOT NULL,
-        target_enrollment INT NOT NULL,
-        enrolled INT DEFAULT 0,
-        sites INT DEFAULT 0,
-        active_sites INT DEFAULT 0,
-        sponsor_name TEXT,
-        therapeutic_area TEXT,
-        design TEXT,
-        note TEXT,
-        start_date DATE,
-        estimated_end_date DATE,
-        created_at TIMESTAMPTZ DEFAULT NOW(),
-        updated_at TIMESTAMPTZ DEFAULT NOW()
-      )
-    `);
-    // Backfill display columns on schemas created before they were added.
-    await pool.query(`ALTER TABLE clinical_ops.studies ADD COLUMN IF NOT EXISTS design TEXT`);
-    await pool.query(`ALTER TABLE clinical_ops.studies ADD COLUMN IF NOT EXISTS note TEXT`);
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS clinical_ops.sites (
-        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-        study_id UUID NOT NULL,
-        org_id TEXT,
-        name TEXT NOT NULL,
-        location TEXT NOT NULL,
-        principal_investigator TEXT NOT NULL,
-        target_enrollment INT NOT NULL,
-        enrolled INT DEFAULT 0,
-        status TEXT NOT NULL DEFAULT 'selected',
-        contact_email TEXT,
-        irb_approval_date DATE,
-        last_activity TIMESTAMPTZ DEFAULT NOW(),
-        created_at TIMESTAMPTZ DEFAULT NOW()
-      )
-    `);
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS clinical_ops.enrollment_records (
-        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-        study_id UUID NOT NULL,
-        site_id UUID,
-        period TEXT NOT NULL,
-        target_count INT NOT NULL,
-        actual_count INT NOT NULL,
-        screen_failures INT DEFAULT 0,
-        created_at TIMESTAMPTZ DEFAULT NOW()
-      )
-    `);
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS clinical_ops.monitoring_visits (
-        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-        study_id UUID NOT NULL,
-        site_id UUID NOT NULL,
-        visit_type TEXT NOT NULL,
-        scheduled_date DATE NOT NULL,
-        completed_date DATE,
-        monitor_name TEXT NOT NULL,
-        status TEXT NOT NULL DEFAULT 'scheduled',
-        findings_count INT DEFAULT 0,
-        notes TEXT,
-        created_at TIMESTAMPTZ DEFAULT NOW()
-      )
-    `);
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS clinical_ops.deviations (
-        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-        study_id UUID NOT NULL,
-        site_id UUID,
-        subject_id TEXT,
-        category TEXT NOT NULL,
-        description TEXT NOT NULL,
-        detected_date DATE NOT NULL,
-        resolution_date DATE,
-        corrective_action TEXT,
-        status TEXT NOT NULL DEFAULT 'open',
-        created_at TIMESTAMPTZ DEFAULT NOW()
-      )
-    `);
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS clinical_ops.milestones (
-        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-        study_id UUID NOT NULL,
-        name TEXT NOT NULL,
-        target_date DATE NOT NULL,
-        actual_date DATE,
-        category TEXT NOT NULL DEFAULT 'operational',
-        status TEXT NOT NULL DEFAULT 'pending',
-        created_at TIMESTAMPTZ DEFAULT NOW()
-      )
-    `);
-    tablesInitialized = true;
-  }
 
   // ═══════════════════════════════════════════════════════════════════════════
   // OVERVIEW / DASHBOARD
@@ -224,12 +164,11 @@ export default function createClinicalOperationsRoutes(pool: Pool): Router {
    */
   router.get('/overview', async (_req: Request, res: Response) => {
     try {
-      await ensureTables();
       const orgId = getOrgId(_req);
 
       const studiesResult = await pool.query(
         `SELECT status, COUNT(*) as count, SUM(enrolled) as enrolled, SUM(target_enrollment) as target
-         FROM clinical_ops.studies WHERE ($1::TEXT IS NULL OR org_id = $1)
+         FROM clinical_ops.studies WHERE org_id = $1
          GROUP BY status`,
         [orgId],
       );
@@ -237,7 +176,7 @@ export default function createClinicalOperationsRoutes(pool: Pool): Router {
       const deviationsResult = await pool.query(
         `SELECT category, COUNT(*) as count FROM clinical_ops.deviations
          WHERE status = 'open' AND study_id IN (
-           SELECT id FROM clinical_ops.studies WHERE ($1::TEXT IS NULL OR org_id = $1)
+           SELECT id FROM clinical_ops.studies WHERE org_id = $1
          ) GROUP BY category`,
         [orgId],
       );
@@ -246,7 +185,7 @@ export default function createClinicalOperationsRoutes(pool: Pool): Router {
         `SELECT COUNT(*) as count FROM clinical_ops.monitoring_visits
          WHERE status = 'scheduled' AND scheduled_date <= (CURRENT_DATE + INTERVAL '30 days')
          AND study_id IN (
-           SELECT id FROM clinical_ops.studies WHERE ($1::TEXT IS NULL OR org_id = $1)
+           SELECT id FROM clinical_ops.studies WHERE org_id = $1
          )`,
         [orgId],
       );
@@ -303,21 +242,29 @@ export default function createClinicalOperationsRoutes(pool: Pool): Router {
    */
   router.get('/studies', async (req: Request, res: Response) => {
     try {
-      await ensureTables();
       const orgId = getOrgId(req);
       const { status, phase } = req.query;
 
       // Projected to the v2 studies-and-enrollment display contract
-      // ({ id, phase, design, n, target, status, note }). `id` is the human
-      // protocol code; n/target come from enrolled/target_enrollment.
-      let sql = `SELECT protocol           AS id,
+      // ({ studyId, id, phase, design, n, target, status, note }). `id` is the
+      // human protocol code; n/target come from enrolled/target_enrollment.
+      //
+      // `studyId` is the row's real primary key, and it is here because without
+      // it the org-wide clinical-ops board could address no study at all: every
+      // other endpoint in this router that records something — deviations,
+      // sites, monitoring visits, milestones — is study-scoped and takes this
+      // uuid. A board that can only see the protocol CODE can display a study
+      // and never write against it, which is exactly how "Log deviation" came to
+      // mean "add a row to React state".
+      let sql = `SELECT id                  AS "studyId",
+                        protocol            AS id,
                         phase,
                         design,
                         enrolled            AS n,
                         target_enrollment   AS target,
                         status,
                         note
-                   FROM clinical_ops.studies WHERE ($1::TEXT IS NULL OR org_id = $1)`;
+                   FROM clinical_ops.studies WHERE org_id = $1`;
       const params: any[] = [orgId];
 
       if (status) {
@@ -343,7 +290,6 @@ export default function createClinicalOperationsRoutes(pool: Pool): Router {
    */
   router.post('/studies', async (req: Request, res: Response) => {
     try {
-      await ensureTables();
       const parsed = studySchema.safeParse(req.body);
       if (!parsed.success) {
         return res.status(400).json({ success: false, error: 'Validation failed', details: parsed.error.issues });
@@ -372,11 +318,10 @@ export default function createClinicalOperationsRoutes(pool: Pool): Router {
    */
   router.get('/studies/:id', async (req: Request, res: Response) => {
     try {
-      await ensureTables();
       const { id } = req.params;
       const orgId = getOrgId(req);
       const result = await pool.query(
-        `SELECT * FROM clinical_ops.studies WHERE id = $1 AND ($2::TEXT IS NULL OR org_id = $2)`,
+        `SELECT * FROM clinical_ops.studies WHERE id = $1 AND org_id = $2`,
         [id, orgId],
       );
       if (result.rows.length === 0) {
@@ -393,7 +338,6 @@ export default function createClinicalOperationsRoutes(pool: Pool): Router {
    */
   router.put('/studies/:id', async (req: Request, res: Response) => {
     try {
-      await ensureTables();
       const { id } = req.params;
       const parsed = studySchema.partial().safeParse(req.body);
       if (!parsed.success) {
@@ -416,13 +360,14 @@ export default function createClinicalOperationsRoutes(pool: Pool): Router {
       }
 
       setClauses.push(`updated_at = NOW()`);
-      // Add org_id guard
+      /* The tenant guard on this UPDATE was appended only `if (orgId)`, and
+         orgId was null for a request with no tenant on it — so the statement
+         ran as `WHERE id = $1` alone and could modify ANY sponsor's study by
+         id. The gate above makes orgId a positive integer for every request
+         that reaches here, so the clause is unconditional. */
       const orgId = getOrgId(req);
-      let whereClause = 'WHERE id = $1';
-      if (orgId) {
-        params.push(orgId);
-        whereClause += ` AND org_id = $${params.length}`;
-      }
+      params.push(orgId);
+      const whereClause = `WHERE id = $1 AND org_id = $${params.length}`;
       const result = await pool.query(
         `UPDATE clinical_ops.studies SET ${setClauses.join(', ')} ${whereClause} RETURNING *`,
         params,
@@ -446,14 +391,13 @@ export default function createClinicalOperationsRoutes(pool: Pool): Router {
    */
   router.get('/studies/:studyId/sites', async (req: Request, res: Response) => {
     try {
-      await ensureTables();
       const { studyId } = req.params;
       const orgId = getOrgId(req);
       // Verify studyId belongs to the user's org before returning sites
       const result = await pool.query(
         `SELECT s.* FROM clinical_ops.sites s
          INNER JOIN clinical_ops.studies st ON s.study_id = st.id
-         WHERE s.study_id = $1 AND ($2::TEXT IS NULL OR st.org_id = $2)
+         WHERE s.study_id = $1 AND st.org_id = $2
          ORDER BY s.name`,
         [studyId, orgId],
       );
@@ -468,7 +412,6 @@ export default function createClinicalOperationsRoutes(pool: Pool): Router {
    */
   router.post('/sites', async (req: Request, res: Response) => {
     try {
-      await ensureTables();
       const parsed = siteSchema.safeParse(req.body);
       if (!parsed.success) {
         return res.status(400).json({ success: false, error: 'Validation failed', details: parsed.error.issues });
@@ -502,7 +445,6 @@ export default function createClinicalOperationsRoutes(pool: Pool): Router {
    */
   router.put('/sites/:id/status', async (req: Request, res: Response) => {
     try {
-      await ensureTables();
       const { id } = req.params;
       const { status } = req.body;
 
@@ -511,13 +453,12 @@ export default function createClinicalOperationsRoutes(pool: Pool): Router {
         return res.status(400).json({ success: false, error: `status must be one of: ${validStatuses.join(', ')}` });
       }
 
+      /* Same shape as the study UPDATE above: guarded only `if (orgId)`, so a
+         request with no tenant could set any sponsor's site status. */
       const orgId = getOrgId(req);
       const siteParams: any[] = [id, status];
-      let siteWhere = 'WHERE id = $1';
-      if (orgId) {
-        siteParams.push(orgId);
-        siteWhere += ` AND org_id = $${siteParams.length}`;
-      }
+      siteParams.push(orgId);
+      const siteWhere = `WHERE id = $1 AND org_id = $${siteParams.length}`;
       const result = await pool.query(
         `UPDATE clinical_ops.sites SET status = $2, last_activity = NOW() ${siteWhere} RETURNING *`,
         siteParams,
@@ -541,12 +482,11 @@ export default function createClinicalOperationsRoutes(pool: Pool): Router {
    */
   router.get('/studies/:studyId/enrollment', async (req: Request, res: Response) => {
     try {
-      await ensureTables();
       const { studyId } = req.params;
       const result = await pool.query(
         `SELECT * FROM clinical_ops.enrollment_records
          WHERE study_id = $1
-           AND study_id IN (SELECT s.id FROM clinical_ops.studies s WHERE ($2::TEXT IS NULL OR s.org_id = $2))
+           AND study_id IN (SELECT s.id FROM clinical_ops.studies s WHERE s.org_id = $2)
          ORDER BY period`,
         [studyId, getOrgId(req)],
       );
@@ -578,7 +518,6 @@ export default function createClinicalOperationsRoutes(pool: Pool): Router {
    */
   router.post('/enrollment', async (req: Request, res: Response) => {
     try {
-      await ensureTables();
       const parsed = enrollmentSchema.safeParse(req.body);
       if (!parsed.success) {
         return res.status(400).json({ success: false, error: 'Validation failed', details: parsed.error.issues });
@@ -612,13 +551,12 @@ export default function createClinicalOperationsRoutes(pool: Pool): Router {
    */
   router.get('/studies/:studyId/monitoring-visits', async (req: Request, res: Response) => {
     try {
-      await ensureTables();
       const { studyId } = req.params;
       const { status } = req.query;
 
       let sql = `SELECT * FROM clinical_ops.monitoring_visits
         WHERE study_id = $1
-          AND study_id IN (SELECT s.id FROM clinical_ops.studies s WHERE ($2::TEXT IS NULL OR s.org_id = $2))`;
+          AND study_id IN (SELECT s.id FROM clinical_ops.studies s WHERE s.org_id = $2)`;
       const params: any[] = [studyId, getOrgId(req)];
 
       if (status) {
@@ -639,7 +577,6 @@ export default function createClinicalOperationsRoutes(pool: Pool): Router {
    */
   router.post('/monitoring-visits', async (req: Request, res: Response) => {
     try {
-      await ensureTables();
       const parsed = monitoringVisitSchema.safeParse(req.body);
       if (!parsed.success) {
         return res.status(400).json({ success: false, error: 'Validation failed', details: parsed.error.issues });
@@ -663,7 +600,6 @@ export default function createClinicalOperationsRoutes(pool: Pool): Router {
    */
   router.put('/monitoring-visits/:id/complete', async (req: Request, res: Response) => {
     try {
-      await ensureTables();
       const { id } = req.params;
       const { findingsCount, notes } = req.body;
 
@@ -674,7 +610,7 @@ export default function createClinicalOperationsRoutes(pool: Pool): Router {
              findings_count = COALESCE($2, mv.findings_count),
              notes = COALESCE($3, mv.notes)
          WHERE mv.id = $1
-           AND mv.study_id IN (SELECT s.id FROM clinical_ops.studies s WHERE ($4::TEXT IS NULL OR s.org_id = $4))
+           AND mv.study_id IN (SELECT s.id FROM clinical_ops.studies s WHERE s.org_id = $4)
          RETURNING *`,
         [id, findingsCount ?? null, notes ?? null, getOrgId(req)],
       );
@@ -697,13 +633,12 @@ export default function createClinicalOperationsRoutes(pool: Pool): Router {
    */
   router.get('/studies/:studyId/deviations', async (req: Request, res: Response) => {
     try {
-      await ensureTables();
       const { studyId } = req.params;
       const { category, status: devStatus } = req.query;
 
       let sql = `SELECT * FROM clinical_ops.deviations
         WHERE study_id = $1
-          AND study_id IN (SELECT s.id FROM clinical_ops.studies s WHERE ($2::TEXT IS NULL OR s.org_id = $2))`;
+          AND study_id IN (SELECT s.id FROM clinical_ops.studies s WHERE s.org_id = $2)`;
       const params: any[] = [studyId, getOrgId(req)];
 
       if (category) {
@@ -728,7 +663,6 @@ export default function createClinicalOperationsRoutes(pool: Pool): Router {
    */
   router.post('/deviations', async (req: Request, res: Response) => {
     try {
-      await ensureTables();
       const parsed = deviationSchema.safeParse(req.body);
       if (!parsed.success) {
         return res.status(400).json({ success: false, error: 'Validation failed', details: parsed.error.issues });
@@ -752,7 +686,6 @@ export default function createClinicalOperationsRoutes(pool: Pool): Router {
    */
   router.put('/deviations/:id/resolve', async (req: Request, res: Response) => {
     try {
-      await ensureTables();
       const { id } = req.params;
       const { correctiveAction } = req.body;
 
@@ -761,7 +694,7 @@ export default function createClinicalOperationsRoutes(pool: Pool): Router {
          SET status = 'resolved', resolution_date = CURRENT_DATE,
              corrective_action = COALESCE($2, d.corrective_action)
          WHERE d.id = $1
-           AND d.study_id IN (SELECT s.id FROM clinical_ops.studies s WHERE ($3::TEXT IS NULL OR s.org_id = $3))
+           AND d.study_id IN (SELECT s.id FROM clinical_ops.studies s WHERE s.org_id = $3)
          RETURNING *`,
         [id, correctiveAction ?? null, getOrgId(req)],
       );
@@ -784,12 +717,11 @@ export default function createClinicalOperationsRoutes(pool: Pool): Router {
    */
   router.get('/studies/:studyId/milestones', async (req: Request, res: Response) => {
     try {
-      await ensureTables();
       const { studyId } = req.params;
       const result = await pool.query(
         `SELECT * FROM clinical_ops.milestones
          WHERE study_id = $1
-           AND study_id IN (SELECT s.id FROM clinical_ops.studies s WHERE ($2::TEXT IS NULL OR s.org_id = $2))
+           AND study_id IN (SELECT s.id FROM clinical_ops.studies s WHERE s.org_id = $2)
          ORDER BY target_date`,
         [studyId, getOrgId(req)],
       );
@@ -804,7 +736,6 @@ export default function createClinicalOperationsRoutes(pool: Pool): Router {
    */
   router.post('/milestones', async (req: Request, res: Response) => {
     try {
-      await ensureTables();
       const parsed = milestoneSchema.safeParse(req.body);
       if (!parsed.success) {
         return res.status(400).json({ success: false, error: 'Validation failed', details: parsed.error.issues });
@@ -828,14 +759,13 @@ export default function createClinicalOperationsRoutes(pool: Pool): Router {
    */
   router.put('/milestones/:id/complete', async (req: Request, res: Response) => {
     try {
-      await ensureTables();
       const { id } = req.params;
 
       const result = await pool.query(
         `UPDATE clinical_ops.milestones m
          SET status = 'completed', actual_date = CURRENT_DATE
          WHERE m.id = $1
-           AND m.study_id IN (SELECT s.id FROM clinical_ops.studies s WHERE ($2::TEXT IS NULL OR s.org_id = $2))
+           AND m.study_id IN (SELECT s.id FROM clinical_ops.studies s WHERE s.org_id = $2)
          RETURNING *`,
         [id, getOrgId(req)],
       );
@@ -859,20 +789,19 @@ export default function createClinicalOperationsRoutes(pool: Pool): Router {
    */
   router.get('/studies/:studyId/enrollment-forecast', async (req: Request, res: Response) => {
     try {
-      await ensureTables();
       const { studyId } = req.params;
 
       const orgId = getOrgId(req);
       const [studyResult, enrollmentResult] = await Promise.all([
         pool.query(
           `SELECT target_enrollment, enrolled, start_date FROM clinical_ops.studies
-           WHERE id = $1 AND ($2::TEXT IS NULL OR org_id = $2)`,
+           WHERE id = $1 AND org_id = $2`,
           [studyId, orgId],
         ),
         pool.query(
           `SELECT period, actual_count FROM clinical_ops.enrollment_records
            WHERE study_id = $1
-             AND study_id IN (SELECT s.id FROM clinical_ops.studies s WHERE ($2::TEXT IS NULL OR s.org_id = $2))
+             AND study_id IN (SELECT s.id FROM clinical_ops.studies s WHERE s.org_id = $2)
            ORDER BY period`,
           [studyId, orgId],
         ),

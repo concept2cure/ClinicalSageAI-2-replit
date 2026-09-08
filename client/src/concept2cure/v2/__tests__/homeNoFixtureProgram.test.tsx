@@ -12,9 +12,16 @@
  * These tests pin the four honest states of that line — loading, the REAL lead
  * programme, "No programs yet", a failed read said plainly — and assert that no
  * retired sample programme string can render on Home in ANY of them, for any
- * segment. They also pin the surrounding pathway chips as reference config that
- * legitimately stays: '510(k)' and 'BLA' are what a client category files under,
- * for every customer.
+ * segment. They also pin the pathway list as reference config that legitimately
+ * stays: '510(k)' and 'BLA' are what a client category files under, for every
+ * customer, so keeping them was never the fabrication problem.
+ *
+ * Home stopped RENDERING those pathways as chips on 2026-09-07 (they described
+ * the category the user had already chosen, above a lead programme that reads
+ * the real portfolio). That is a density decision, not a reversal of the above:
+ * the config is still correct, still exported, and still rendered by the segment
+ * picker. The assertion below is on SEGMENT_CONTEXT, not on the DOM, and holds
+ * either way.
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';

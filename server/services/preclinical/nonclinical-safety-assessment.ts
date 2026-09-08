@@ -51,6 +51,8 @@ export interface NonclinicalSafetyInput {
 export type NonclinicalReadiness = 'ready_for_fih' | 'gaps_block_fih' | 'insufficient_input';
 
 export interface NonclinicalSafetyAssessment {
+  /** Whether the study battery (program context) was checked at all. */
+  programAssessed: boolean;
   fihDose: FihDoseResult | null;
   toxProfile: ToxFindingsSummary | null;
   programGaps: ProgramAssessment | null;
@@ -91,11 +93,15 @@ export function assessNonclinicalSafety(input: NonclinicalSafetyInput): Nonclini
         }).summary
       : null;
 
-  // Readiness: program gaps gate FIH; otherwise a computed dose signals readiness.
+  // Readiness: program gaps gate FIH; a computed dose signals readiness only
+  // when the study battery was actually assessed and found complete. A dose
+  // alone used to read 'ready_for_fih' with the ICH M3(R2)/S-series battery
+  // never checked.
   let readiness: NonclinicalReadiness;
+  const programAssessed = programGaps !== null;
   if (programGaps && programGaps.gaps.length > 0) {
     readiness = 'gaps_block_fih';
-  } else if (fihDose) {
+  } else if (fihDose && programAssessed) {
     readiness = 'ready_for_fih';
   } else {
     readiness = 'insufficient_input';
@@ -122,6 +128,9 @@ export function assessNonclinicalSafety(input: NonclinicalSafetyInput): Nonclini
         : `${programGaps.gaps.length} nonclinical study gap(s) remain for the target phase.`,
     );
   }
+  if (fihDose && !programAssessed) {
+    parts.push('The nonclinical study battery was not assessed (no program context supplied); FIH readiness is not concluded from the dose alone.');
+  }
   if (parts.length === 0) {
     parts.push('Insufficient input to assess nonclinical safety; supply FIH NOAELs, findings, program context, or studies.');
   }
@@ -132,6 +141,7 @@ export function assessNonclinicalSafety(input: NonclinicalSafetyInput): Nonclini
     programGaps,
     overview,
     readiness,
+    programAssessed,
     blockers,
     summary: parts.join(' '),
   };

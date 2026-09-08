@@ -26,7 +26,7 @@ import queryClient from './lib/queryClient';
 // resolve everywhere. See design-system/CLAUDE.md "Token import" section.
 import '../../design-system/colors_and_type.css';
 // Phase 3 Projects surface stylesheet — lifted verbatim from
-// design-system/ui_kits/home/styles.css. Loads after tokens, before any
+// ui_kits/home/styles.css. Loads after tokens, before any
 // component CSS, so its var() references resolve and downstream styles
 // (CSS modules etc.) can still override on element-level basis if ever
 // needed. See client/src/styles/projects-prototype.css header.

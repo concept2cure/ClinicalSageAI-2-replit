@@ -35,7 +35,7 @@ vi.mock('../../../db', () => ({
 // Keep the Part 11 audit write out of the DB in this focused test
 // (server/services/auditService = ../../auditService from here). Still used by
 // the qms_change_* handlers.
-vi.mock('../../auditService', () => ({ default: { logAction: vi.fn() } }));
+vi.mock('../../auditService', () => ({ default: { logAction: vi.fn(async (..._a: any[]) => ({ persisted: true, chained: true, tamperProof: true })) } }));
 // revise/retire_qms_document now write their audit via recordGovernedAction on
 // the mutation's own client instead of a fire-and-forget auditService call.
 // Atomicity is proved end-to-end against real audit DDL in

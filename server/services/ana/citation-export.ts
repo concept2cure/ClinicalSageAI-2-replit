@@ -20,6 +20,7 @@
  * @module server/services/ana/citation-export
  */
 import { getPool } from '../../db/runtime.js';
+import { csvEscape } from '../../utils/csv';
 import {
   getCitationsForArtifact,
   type PersistedCitations,
@@ -297,15 +298,8 @@ const CSV_HEADERS: Array<keyof CitationExportRow> = [
   'flagsCount',
 ];
 
-function csvEscape(value: unknown): string {
-  if (value === null || value === undefined) return '';
-  const s = typeof value === 'string' ? value : String(value);
-  // RFC 4180: wrap in quotes when value contains comma / quote / newline.
-  if (s.includes(',') || s.includes('"') || s.includes('\n') || s.includes('\r')) {
-    return `"${s.replace(/"/g, '""')}"`;
-  }
-  return s;
-}
+/* Moved to server/utils/csv.ts so the other two CSV writers can reach it —
+   a correct escaper only one of three call sites could import is not shared. */
 
 /**
  * Pure: flatten one artifact's citations into export rows. The

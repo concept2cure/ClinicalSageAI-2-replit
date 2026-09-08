@@ -58,6 +58,8 @@ import {
   type PmcfActivityStatus,
 } from '../../shared/schema/gspr-postmarket';
 import auditService from '../services/auditService';
+import { serverError } from '../lib/api-response';
+import { createScopedLogger } from '../utils/logger';
 
 function userIdFromReq(req: Request): string | null {
   const raw = (req as any).user?.id;
@@ -66,6 +68,8 @@ function userIdFromReq(req: Request): string | null {
 }
 
 const router = Router();
+
+const logger = createScopedLogger('gspr-postmarket');
 const postMarketRouter = Router();
 router.use(authenticateToken);
 postMarketRouter.use(authenticateToken);
@@ -110,7 +114,7 @@ router.get('/catalog', async (req: Request, res: Response) => {
     const catalog = await listCatalog(reg);
     res.json({ regulation: reg ?? 'ALL', requirements: catalog, count: catalog.length });
   } catch (err: any) {
-    res.status(500).json({ error: 'Catalog fetch failed', detail: err?.message });
+    return serverError(res, logger, 'loading catalog', err);
   }
 });
 
@@ -123,7 +127,7 @@ router.get(
       const rows = await listProgramMappings(orgId, String(req.params.programId));
       res.json({ programId: req.params.programId, mappings: rows, count: rows.length });
     } catch (err: any) {
-      res.status(500).json({ error: 'Mappings fetch failed', detail: err?.message });
+      return serverError(res, logger, 'loading mappings', err);
     }
   }
 );
@@ -170,7 +174,7 @@ router.post(
 
       res.json(row);
     } catch (err: any) {
-      res.status(500).json({ error: 'Upsert failed', detail: err?.message });
+      return serverError(res, logger, 'saving mappings', err);
     }
   }
 );
@@ -199,7 +203,7 @@ router.get(
       const report = await computeCoverage(orgId, String(req.params.programId), built);
       res.json(report);
     } catch (err: any) {
-      res.status(500).json({ error: 'Coverage failed', detail: err?.message });
+      return serverError(res, logger, 'loading coverage', err);
     }
   }
 );
@@ -230,7 +234,7 @@ postMarketRouter.get(
       const rows = await listProgramDocuments(orgId, String(req.params.programId), t as any);
       res.json({ programId: req.params.programId, documents: rows, count: rows.length });
     } catch (err: any) {
-      res.status(500).json({ error: 'List failed', detail: err?.message });
+      return serverError(res, logger, 'loading coverage', err);
     }
   }
 );
@@ -281,7 +285,7 @@ postMarketRouter.post(
 
       res.status(201).json(doc);
     } catch (err: any) {
-      res.status(500).json({ error: 'Create failed', detail: err?.message });
+      return serverError(res, logger, 'loading coverage', err);
     }
   }
 );
@@ -342,7 +346,7 @@ postMarketRouter.post(
       if (err?.code === 'PMCF_NO_DEVICE') {
         return res.status(422).json({ error: err.message });
       }
-      res.status(500).json({ error: 'PMCF plan generation failed', detail: err?.message });
+      return serverError(res, logger, 'loading coverage', err);
     }
   }
 );
@@ -417,7 +421,7 @@ postMarketRouter.post(
       if (err?.code === 'PM_NO_DEVICE' || err?.code === 'PM_BAD_TYPE') {
         return res.status(422).json({ error: err.message });
       }
-      res.status(500).json({ error: 'Post-market document generation failed', detail: err?.message });
+      return serverError(res, logger, 'loading coverage', err);
     }
   }
 );
@@ -441,7 +445,7 @@ postMarketRouter.get(
       );
       res.json(report);
     } catch (err: any) {
-      res.status(500).json({ error: 'Documentation status failed', detail: err?.message });
+      return serverError(res, logger, 'loading coverage', err);
     }
   }
 );
@@ -498,7 +502,7 @@ postMarketRouter.patch('/documents/:documentId', async (req: Request, res: Respo
     res.json(updated);
   } catch (err: any) {
     if (err?.code === 'PM_LOCKED') return res.status(409).json({ error: 'Document is locked' });
-    res.status(500).json({ error: 'Update failed', detail: err?.message });
+    return serverError(res, logger, 'loading coverage', err);
   }
 });
 
@@ -574,7 +578,7 @@ postMarketRouter.post('/documents/:documentId/approve', async (req: Request, res
     }
     res.json(result);
   } catch (err: any) {
-    res.status(500).json({ error: 'Approve failed', detail: err?.message });
+    return serverError(res, logger, 'loading coverage', err);
   }
 });
 
@@ -609,7 +613,7 @@ postMarketRouter.post(
 
       res.status(201).json(newDoc);
     } catch (err: any) {
-      res.status(500).json({ error: 'Supersede failed', detail: err?.message });
+      return serverError(res, logger, 'loading coverage', err);
     }
   }
 );
@@ -655,7 +659,7 @@ postMarketRouter.get(
       if (isPmcfEnrollmentStoreAbsent(err) || err?.message === STORE_ABSENT) {
         return res.status(503).json({ error: 'PMCF enrolment unavailable', detail: STORE_ABSENT });
       }
-      res.status(500).json({ error: 'List failed', detail: err?.message });
+      return serverError(res, logger, 'loading coverage', err);
     }
   }
 );

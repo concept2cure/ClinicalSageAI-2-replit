@@ -176,7 +176,14 @@ export const ASSESS_DISSOLUTION_SIMILARITY: AnaTool = {
     'where f2 comparison is not required. Returns f2, f1, pass/fail for each, regulatory ' +
     'interpretation, warnings about methodology, and citations (FDA Dissolution Guidance ' +
     '1997, SUPAC-IR 1995, Moore & Flanner 1996, ICH M9). Use when the user has dissolution ' +
-    'data and needs to determine if test and reference profiles are similar. ' + DETERMINISTIC_NOTE,
+    'data and needs to determine if test and reference profiles are similar. ' +
+    'REFUSES rather than computing a void number when the eligibility conditions are not met: ' +
+    'profiles sampled at different times, fewer than three comparable timepoints after ' +
+    'excluding t=0 and truncating above 85%, no recorded unit count (it is NEVER assumed to be ' +
+    '12), no recorded SD or %RSD (without which the 20%/10% variability limits cannot be ' +
+    'evaluated), or variability above those limits. Relay a refusal verbatim rather than ' +
+    'restating the inputs as a conclusion. When the profiles are already ON FILE in the CMC ' +
+    'dissolution register, use compare_recorded_dissolution instead, which reads them. ' + DETERMINISTIC_NOTE,
   input_schema: {
     type: 'object',
     properties: {
@@ -195,8 +202,19 @@ export const ASSESS_DISSOLUTION_SIMILARITY: AnaTool = {
             type: 'array',
             items: { type: 'number' },
             description:
-              'Mean percent dissolved at each time point (0-100). Must be the same length as timePoints_min. ' +
-              'Values represent the mean of >= 12 individual dissolution units.',
+              'Mean percent dissolved at each time point (0-100). Must be the same length as timePoints_min.',
+          },
+          rsdPercent: {
+            type: 'array',
+            items: { type: 'number' },
+            description:
+              'Coefficient of variation (%RSD) at each time point. Without it (or sdPercent) the ' +
+              '20% early / 10% later variability limits cannot be evaluated and f2 is REFUSED.',
+          },
+          sdPercent: {
+            type: 'array',
+            items: { type: 'number' },
+            description: 'Absolute standard deviation at each time point, as an alternative to rsdPercent.',
           },
         },
         required: ['timePoints_min', 'meanDissolved'],
@@ -217,14 +235,27 @@ export const ASSESS_DISSOLUTION_SIMILARITY: AnaTool = {
             description:
               'Mean percent dissolved at each time point (0-100). Must be the same length as timePoints_min.',
           },
+          rsdPercent: {
+            type: 'array',
+            items: { type: 'number' },
+            description:
+              'Coefficient of variation (%RSD) at each time point. Without it (or sdPercent) the ' +
+              '20% early / 10% later variability limits cannot be evaluated and f2 is REFUSED.',
+          },
+          sdPercent: {
+            type: 'array',
+            items: { type: 'number' },
+            description: 'Absolute standard deviation at each time point, as an alternative to rsdPercent.',
+          },
         },
         required: ['timePoints_min', 'meanDissolved'],
       },
       unitsPerProduct: {
         type: 'number',
         description:
-          'Number of individual dosage units tested per product (default 12). ' +
-          'FDA recommends >= 12 units per product for f2 comparison.',
+          'Number of individual dosage units tested per product. REQUIRED unless each ' +
+          'timepoint carries its own count: it is never assumed to be 12, and f2 is refused ' +
+          'without it. FDA recommends >= 12 units per product.',
       },
     },
     required: ['reference', 'test'],

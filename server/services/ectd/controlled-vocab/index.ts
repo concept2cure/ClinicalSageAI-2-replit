@@ -145,6 +145,29 @@ export function resolveApplicationTypeCode(value: string): string | null {
 export function resolveSubmissionTypeCode(value: string): string | null {
   return resolveV3('submissionType', value);
 }
+/**
+ * The submission-type terms a region's backbone can actually carry, or `null`
+ * when its element takes the value as free text on this path.
+ *
+ * Only the FDA backbone maps this field onto a controlled vocabulary; the EMA,
+ * PMDA and Health Canada builders escape it straight into `<procedure-type>`,
+ * `<submission-unit>` and `<regulatory-activity-type>`, so there is nothing
+ * here to check them against and inventing a list would be worse than saying
+ * so. Callers use `null` to mean "accept what the operator typed", never
+ * "anything goes for FDA too".
+ *
+ * This exists because a free-text submission type reached the FDA builder and
+ * threw: 'amendment' is an ordinary English word for a follow-up filing and is
+ * NOT an fdast term (the near ones are 'Efficacy Supplement', 'Chemistry
+ * Manufacturing Controls Supplement' and 'Labeling Supplement'), so an operator
+ * who typed the obvious thing got an unexplained failure deep in the packager.
+ * A caller can now say which terms are filable before building anything.
+ */
+export function submissionTypeTerms(region: string): readonly string[] | null {
+  if (region.toLowerCase() !== 'fda') return null;
+  return V3_CODE_LISTS.submissionType.map((c) => c.description);
+}
+
 /** Resolve a submission-sub-type value to its us-regional `fdasstN` code. */
 export function resolveSubmissionSubTypeCode(value: string): string | null {
   return resolveV3('submissionSubType', value);

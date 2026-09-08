@@ -45,14 +45,16 @@ import request from 'supertest';
 import { SignJWT } from 'jose';
 import fs from 'node:fs';
 import path from 'node:path';
+import { randomBytes } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { createJourneyDb, type JourneyDb } from '../golden-journeys/harness';
+import { AUDIT_LOGS_PGLITE_DDL } from '../../server/db/pglite-harness';
 import { stripComments } from '../ui/_strip-comments';
 
 const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const ROUTER_SRC = path.join(REPO_ROOT, 'server/routes/authoring.router.ts');
 
-const JWT_SECRET = 'review-audit-comment-contract-secret';
+const JWT_SECRET = randomBytes(32).toString('hex');
 process.env.JWT_SECRET = JWT_SECRET;
 process.env.JWT_SECRET_DEV = JWT_SECRET;
 
@@ -76,6 +78,13 @@ const OUTSIDER = {
 };
 
 const PREREQ = `
+  /* Governed authoring writes land a hash-chained, HMAC-sealed §11.10(e) row,
+     and that write is fail-closed — the audit row and the mutation it records
+     commit together or neither does. Without this table the handler under test
+     500s on a save that is otherwise correct. Imported rather than restated so
+     it cannot drift from what writeChainedAuditRow writes; the CI gate
+     scripts/ci/check-audit-logs-fixture.mjs enforces that agreement. */
+  ${AUDIT_LOGS_PGLITE_DDL}
   CREATE TABLE organizations (id SERIAL PRIMARY KEY, name TEXT);
   CREATE TABLE users (id UUID PRIMARY KEY, name TEXT, email TEXT);
   INSERT INTO organizations (id, name) VALUES (1, 'contract-org'), (2, 'other-org');
@@ -136,6 +145,8 @@ beforeAll(async () => {
       // transaction and refuses to commit one without the other, so this table
       // is a prerequisite for the authoring spine rather than an optional extra.
       'db/migrations/20260803_document_span_lineage.sql',
+      'migrations/20260907_span_lineage_accepted_machine_draft.sql',
+      'migrations/20260908_span_lineage_machine_draft.sql',
       // The subject of this file. Applied from the SAME path production uses,
       // so a column that exists here exists there.
       'migrations/20260728_authoring_reviews.sql',
@@ -299,7 +310,7 @@ describe('comments: one write path, attributed, and in the one ledger', () => {
     const list = await as(AUTHOR)(request(app).get(`/api/authoring/documents/${docId}/comments`));
     const target = list.body.comments[0];
 
-    const res = await as(AUTHOR)(request(app).put(`/api/authoring/comments/${target.id}`))
+    const res = await as(AUTHOR)(request(app).patch(`/api/authoring/comments/${target.id}`))
       .send({ status: 'resolved', resolution_note: 'Citation added.' });
     // The comment UPDATE committed and the activity INSERT then threw 42P01, so
     // the caller was told the resolve failed while it had in fact happened.

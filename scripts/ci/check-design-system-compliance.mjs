@@ -54,6 +54,15 @@ const RULES = [
     re: /\btype:\s*['"]spring['"]|\bbounce:\s*(?:true|[0-9])/,
     exts: ['.tsx', '.jsx'],
   },
+  {
+    id: 'inline-style-element',
+    description:
+      'Styles live in stylesheets — no <style> element rendered from a component. ' +
+      'An inline block is invisible to the class-coverage, token-cascade and contrast gates ' +
+      '(three components carried 90 rules that way, every value with a hex fallback beside its token — ledger L139)',
+    re: /<style(?:\s[^>]*)?>\s*\{/,
+    exts: ['.tsx', '.jsx'],
+  },
 ];
 
 /** Recursively collect files under dir with the given extensions, honoring exclusions. */
@@ -93,7 +102,7 @@ for (const rule of RULES) {
 if (jsonOut) {
   console.log(JSON.stringify({ ok: violations.length === 0, violations }, null, 2));
 } else if (violations.length === 0) {
-  console.log('[design-system] OK — no icon-library or spring/bounce violations on live concept2cure surfaces.');
+  console.log('[design-system] OK — no icon-library, spring/bounce or inline <style> violations on live concept2cure surfaces.');
 } else {
   console.error(`[design-system] FAIL — ${violations.length} violation(s):\n`);
   for (const v of violations) {

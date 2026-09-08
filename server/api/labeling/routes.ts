@@ -5,8 +5,12 @@
  */
 import { Router, Request, Response } from 'express';
 import { getPool } from '../../db';
+import { serverError } from '../../lib/api-response';
+import { createScopedLogger } from '../../utils/logger';
 
 const router = Router();
+
+const logger = createScopedLogger('labeling');
 const pool = getPool();
 
 /**
@@ -58,7 +62,7 @@ router.get('/documents', async (req: Request, res: Response) => {
     });
   } catch (error: any) {
     console.error('Error fetching SPL documents:', error);
-    res.status(500).json({ success: false, error: error.message });
+    return serverError(res, logger, 'loading documents', error);
   }
 });
 
@@ -114,7 +118,7 @@ router.post('/documents', async (req: Request, res: Response) => {
     });
   } catch (error: any) {
     console.error('Error creating SPL document:', error);
-    res.status(500).json({ success: false, error: error.message });
+    return serverError(res, logger, 'saving documents', error);
   }
 });
 
@@ -155,7 +159,7 @@ router.get('/documents/:id', async (req: Request, res: Response) => {
     res.json({ success: true, document });
   } catch (error: any) {
     console.error('Error fetching document:', error);
-    res.status(500).json({ success: false, error: error.message });
+    return serverError(res, logger, 'loading documents', error);
   }
 });
 
@@ -214,7 +218,7 @@ router.post('/documents/:id/sections', async (req: Request, res: Response) => {
     }
   } catch (error: any) {
     console.error('Error adding sections:', error);
-    res.status(500).json({ success: false, error: error.message });
+    return serverError(res, logger, 'saving sections', error);
   }
 });
 
@@ -273,7 +277,7 @@ router.post('/changes', async (req: Request, res: Response) => {
     });
   } catch (error: any) {
     console.error('Error recording change:', error);
-    res.status(500).json({ success: false, error: error.message });
+    return serverError(res, logger, 'saving changes', error);
   }
 });
 
@@ -327,7 +331,7 @@ router.get('/changes', async (req: Request, res: Response) => {
     });
   } catch (error: any) {
     console.error('Error fetching changes:', error);
-    res.status(500).json({ success: false, error: error.message });
+    return serverError(res, logger, 'loading changes', error);
   }
 });
 
@@ -373,7 +377,7 @@ router.post('/simulations', async (req: Request, res: Response) => {
     });
   } catch (error: any) {
     console.error('Error running simulation:', error);
-    res.status(500).json({ success: false, error: error.message });
+    return serverError(res, logger, 'saving simulations', error);
   }
 });
 
@@ -407,7 +411,7 @@ router.get('/simulations/:id', async (req: Request, res: Response) => {
     });
   } catch (error: any) {
     console.error('Error fetching simulation:', error);
-    res.status(500).json({ success: false, error: error.message });
+    return serverError(res, logger, 'loading simulations', error);
   }
 });
 
@@ -439,7 +443,7 @@ router.post('/documents/compare', async (req: Request, res: Response) => {
     });
   } catch (error: any) {
     console.error('Error comparing documents:', error);
-    res.status(500).json({ success: false, error: error.message });
+    return serverError(res, logger, 'saving compare', error);
   }
 });
 
@@ -478,7 +482,7 @@ router.get('/stats', async (req: Request, res: Response) => {
     });
   } catch (error: any) {
     console.error('Error fetching stats:', error);
-    res.status(500).json({ success: false, error: error.message });
+    return serverError(res, logger, 'loading stats', error);
   }
 });
 

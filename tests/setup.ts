@@ -23,6 +23,17 @@ process.env.DATABASE_URL_DEV = process.env.DATABASE_URL_DEV || process.env.DATAB
 
 import { vi, beforeAll, afterAll, afterEach } from 'vitest';
 
+// Testing-library's findBy*/waitFor budget is 1 s by default. The largest
+// surfaces (DocumentAuthoring is ~5,000 lines) take longer than that to
+// mount under a loaded CI runner, and a test then fails on a control that
+// simply had not rendered yet. 5 s is still well inside the 10 s per-test
+// limit; a test that passes in 200 ms is unaffected. Only jsdom files have a
+// document, so node-environment tests never load the DOM library.
+if (typeof document !== 'undefined') {
+  const { configure } = await import('@testing-library/dom');
+  configure({ asyncUtilTimeout: 5000 });
+}
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // MOCK DATABASE
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -44,14 +55,47 @@ export const mockPool = {
   waitingCount: 0,
 };
 
-vi.mock('pg', () => ({
+/**
+ * The global `pg` mock — and the one switch that turns it off.
+ *
+ * This factory is installed for ALL ~1,595 test files. That is what makes the
+ * "DB-backed, safety-critical" CI jobs run against a stub: `new Pool().query()`
+ * returns `{rows:[],rowCount:0}` for every caller, so a test can assert on SQL
+ * that never touched a database, and a route whose query is broken still looks
+ * green. It is the reason schema-level defects ship past a full green suite.
+ *
+ * Rewriting 1,595 files to opt in individually is not the move. Instead the
+ * factory is CONDITIONAL: with TEST_REAL_DB=1 it returns the real `pg` module,
+ * so a suite can be run against a genuinely provisioned schema without any
+ * per-file change. `vi.mock` is hoisted, so the branch lives INSIDE the factory
+ * — a conditional `vi.mock` call would not be hoisted and would silently fail
+ * to intercept modules that were already imported.
+ *
+ * Default behaviour is unchanged: no flag, same stub as before. This adds the
+ * capability; pointing the DB-backed jobs at it (with RLS_ENFORCE=on) is the
+ * follow-up that makes those jobs mean what their names claim.
+ */
+export const usingRealDatabase = () => process.env.TEST_REAL_DB === '1';
+
+vi.mock('pg', async importOriginal => {
+  // Read through process.env here, not a captured const: the factory runs after
+  // hoisting, and reading late keeps it honest if the flag is set in a config.
+  if (process.env.TEST_REAL_DB === '1') {
+    return await importOriginal<typeof import('pg')>();
+  }
   // Regular function (not arrow) so `new Pool()` in db/runtime.ts works as a
   // constructor. An arrow function throws "is not a constructor", leaving the
   // pool null and polluting other tests in the shared singleFork process.
-  Pool: vi.fn(function () {
+  const PoolStub = vi.fn(function () {
     return mockPool;
-  }),
-}));
+  });
+  // `default` mirrors the real module's shape. Without it, any module written
+  // as `import pg from 'pg'; const { Pool } = pg;` — server/scripts/run-sql.js
+  // among them — destructures undefined the moment it is imported by a test.
+  // A stub that cannot be imported the way the real package can is a stub that
+  // decides which of your files are testable.
+  return { Pool: PoolStub, default: { Pool: PoolStub } };
+});
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // SECURITY TESTING UTILITIES
@@ -348,7 +392,13 @@ export function expectError(res: MockResponse, status: number, messageContains?:
 beforeAll(() => {
   // Set test environment variables
   process.env.NODE_ENV = 'test';
-  process.env.DATABASE_URL = 'postgresql://test:test@localhost:5432/test';
+  // The sentinel URL is for the stubbed pool only. Overwriting it under
+  // TEST_REAL_DB=1 would point a real pg client at a database that does not
+  // exist — the flag would appear to work and every query would fail to
+  // connect, which is a worse lie than the stub it replaced.
+  if (!usingRealDatabase()) {
+    process.env.DATABASE_URL = 'postgresql://test:test@localhost:5432/test';
+  }
 });
 
 afterEach(() => {

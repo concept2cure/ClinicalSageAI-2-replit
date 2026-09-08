@@ -362,5 +362,23 @@ export async function assembleOrgDocJourney(orgId: number): Promise<Record<strin
     head.active = true;
   }
 
-  return stages;
+  /* ── The document's own identity, carried on every stage row ────────────────
+     The surface prints a masthead above the rendered page. It was three string
+     literals — "Concept2Cure Biosciences, Inc.", "2.5 Clinical Overview",
+     "BX-204 (rezatinib) · BLA 761xyz" — so every tenant, opening any stage of
+     their OWN document, read an invented sponsor, product and application
+     number as the header of it, with real content underneath.
+
+     The identity was in this query the whole time (d.title, d.module,
+     d.product_code, d.version) and was never sent. It travels on each row
+     rather than in a separate envelope key because the surface renders one
+     stage at a time and already has the row in hand. Absent fields stay absent;
+     the masthead renders what exists and nothing else. */
+  const identity = {
+    title: str(doc.title).trim() || null,
+    module: str(doc.module).trim() || null,
+    productCode: str(doc.product_code).trim() || null,
+    version: version || null,
+  };
+  return stages.map((s) => ({ ...s, doc: identity }));
 }

@@ -22,6 +22,25 @@ describe('getJwtSecret', () => {
   beforeEach(() => {
     originalEnv = { ...process.env };
     vi.resetModules();
+    // A valid PRODUCTION posture now also requires the AI sensitive-data
+    // placement policy to be enforcing. That check fires on config import, so
+    // without it every production test here throws
+    // "[ai-sensitive-placement] production requires AI_SENSITIVE_DATA_POLICY_MODE=enforce"
+    // BEFORE reaching the secret/MFA/RLS/audit assertion it exists to make.
+    // Set here so each test exercises its own subject; the placement gate has
+    // its own tests.
+    process.env.AI_SENSITIVE_DATA_POLICY_MODE = 'enforce';
+    // Production requires at least ONE approval entry, not merely a parseable
+    // value — an empty map is exactly the "nobody decided" state the gate
+    // exists to refuse. One minimal, well-formed entry is enough here.
+    process.env.AI_PROVIDER_PLACEMENT_APPROVALS = JSON.stringify({
+      anthropic: {
+        region: 'us',
+        zeroRetentionApproved: true,
+        approvedDataClasses: ['pii'],
+        approvedIntendedUses: ['drafting'],
+      },
+    });
     delete process.env.JWT_SECRET;
     delete process.env.JWT_SECRET_DEV;
     delete process.env.JWT_SECRET_STAGING;
@@ -92,6 +111,25 @@ describe('getRefreshTokenSecret', () => {
   beforeEach(() => {
     originalEnv = { ...process.env };
     vi.resetModules();
+    // A valid PRODUCTION posture now also requires the AI sensitive-data
+    // placement policy to be enforcing. That check fires on config import, so
+    // without it every production test here throws
+    // "[ai-sensitive-placement] production requires AI_SENSITIVE_DATA_POLICY_MODE=enforce"
+    // BEFORE reaching the secret/MFA/RLS/audit assertion it exists to make.
+    // Set here so each test exercises its own subject; the placement gate has
+    // its own tests.
+    process.env.AI_SENSITIVE_DATA_POLICY_MODE = 'enforce';
+    // Production requires at least ONE approval entry, not merely a parseable
+    // value — an empty map is exactly the "nobody decided" state the gate
+    // exists to refuse. One minimal, well-formed entry is enough here.
+    process.env.AI_PROVIDER_PLACEMENT_APPROVALS = JSON.stringify({
+      anthropic: {
+        region: 'us',
+        zeroRetentionApproved: true,
+        approvedDataClasses: ['pii'],
+        approvedIntendedUses: ['drafting'],
+      },
+    });
     delete process.env.JWT_SECRET;
     delete process.env.JWT_SECRET_DEV;
     delete process.env.JWT_SECRET_STAGING;
@@ -180,6 +218,25 @@ describe('assertMfaKeyPosture', () => {
   beforeEach(() => {
     originalEnv = { ...process.env };
     vi.resetModules();
+    // A valid PRODUCTION posture now also requires the AI sensitive-data
+    // placement policy to be enforcing. That check fires on config import, so
+    // without it every production test here throws
+    // "[ai-sensitive-placement] production requires AI_SENSITIVE_DATA_POLICY_MODE=enforce"
+    // BEFORE reaching the secret/MFA/RLS/audit assertion it exists to make.
+    // Set here so each test exercises its own subject; the placement gate has
+    // its own tests.
+    process.env.AI_SENSITIVE_DATA_POLICY_MODE = 'enforce';
+    // Production requires at least ONE approval entry, not merely a parseable
+    // value — an empty map is exactly the "nobody decided" state the gate
+    // exists to refuse. One minimal, well-formed entry is enough here.
+    process.env.AI_PROVIDER_PLACEMENT_APPROVALS = JSON.stringify({
+      anthropic: {
+        region: 'us',
+        zeroRetentionApproved: true,
+        approvedDataClasses: ['pii'],
+        approvedIntendedUses: ['drafting'],
+      },
+    });
     delete process.env.MFA_ENCRYPTION_KEY;
     process.env.JWT_SECRET = VALID_SECRET;
     process.env.JWT_SECRET_PROD = VALID_SECRET;
@@ -240,6 +297,25 @@ describe('getCurrentEnvironment', () => {
   beforeEach(() => {
     originalEnv = { ...process.env };
     vi.resetModules();
+    // A valid PRODUCTION posture now also requires the AI sensitive-data
+    // placement policy to be enforcing. That check fires on config import, so
+    // without it every production test here throws
+    // "[ai-sensitive-placement] production requires AI_SENSITIVE_DATA_POLICY_MODE=enforce"
+    // BEFORE reaching the secret/MFA/RLS/audit assertion it exists to make.
+    // Set here so each test exercises its own subject; the placement gate has
+    // its own tests.
+    process.env.AI_SENSITIVE_DATA_POLICY_MODE = 'enforce';
+    // Production requires at least ONE approval entry, not merely a parseable
+    // value — an empty map is exactly the "nobody decided" state the gate
+    // exists to refuse. One minimal, well-formed entry is enough here.
+    process.env.AI_PROVIDER_PLACEMENT_APPROVALS = JSON.stringify({
+      anthropic: {
+        region: 'us',
+        zeroRetentionApproved: true,
+        approvedDataClasses: ['pii'],
+        approvedIntendedUses: ['drafting'],
+      },
+    });
     process.env.JWT_SECRET = VALID_SECRET;
     process.env.DATABASE_URL = 'postgres://test';
     process.env.DATABASE_URL_DEV = 'postgres://test';
@@ -300,6 +376,25 @@ describe('production RLS enforcement posture (fires on config import)', () => {
   beforeEach(() => {
     originalEnv = { ...process.env };
     vi.resetModules();
+    // A valid PRODUCTION posture now also requires the AI sensitive-data
+    // placement policy to be enforcing. That check fires on config import, so
+    // without it every production test here throws
+    // "[ai-sensitive-placement] production requires AI_SENSITIVE_DATA_POLICY_MODE=enforce"
+    // BEFORE reaching the secret/MFA/RLS/audit assertion it exists to make.
+    // Set here so each test exercises its own subject; the placement gate has
+    // its own tests.
+    process.env.AI_SENSITIVE_DATA_POLICY_MODE = 'enforce';
+    // Production requires at least ONE approval entry, not merely a parseable
+    // value — an empty map is exactly the "nobody decided" state the gate
+    // exists to refuse. One minimal, well-formed entry is enough here.
+    process.env.AI_PROVIDER_PLACEMENT_APPROVALS = JSON.stringify({
+      anthropic: {
+        region: 'us',
+        zeroRetentionApproved: true,
+        approvedDataClasses: ['pii'],
+        approvedIntendedUses: ['drafting'],
+      },
+    });
     delete process.env.RLS_ENFORCE;
     delete process.env.RLS_REQUIRE_ENFORCE;
     // Satisfy every other production gate so these tests isolate the RLS one.
@@ -368,6 +463,25 @@ describe('production audit-seal posture (fires on config import)', () => {
   beforeEach(() => {
     originalEnv = { ...process.env };
     vi.resetModules();
+    // A valid PRODUCTION posture now also requires the AI sensitive-data
+    // placement policy to be enforcing. That check fires on config import, so
+    // without it every production test here throws
+    // "[ai-sensitive-placement] production requires AI_SENSITIVE_DATA_POLICY_MODE=enforce"
+    // BEFORE reaching the secret/MFA/RLS/audit assertion it exists to make.
+    // Set here so each test exercises its own subject; the placement gate has
+    // its own tests.
+    process.env.AI_SENSITIVE_DATA_POLICY_MODE = 'enforce';
+    // Production requires at least ONE approval entry, not merely a parseable
+    // value — an empty map is exactly the "nobody decided" state the gate
+    // exists to refuse. One minimal, well-formed entry is enough here.
+    process.env.AI_PROVIDER_PLACEMENT_APPROVALS = JSON.stringify({
+      anthropic: {
+        region: 'us',
+        zeroRetentionApproved: true,
+        approvedDataClasses: ['pii'],
+        approvedIntendedUses: ['drafting'],
+      },
+    });
     delete process.env.AUDIT_HMAC_KEY;
     delete process.env.AUDIT_SEAL_ACCEPT_UNSEALED;
     // Satisfy every other production gate so these tests isolate the audit one.

@@ -15,14 +15,20 @@ function getHandler(path: string) {
   return layer.route.stack[layer.route.stack.length - 1].handle;
 }
 
+// Every leaf is `substantive: true`, which is what makes this fixture live up to
+// its name. Readiness now counts only leaves carrying real, finalized content: a
+// section that merely EXISTS — still in draft, or holding a "TBD" placeholder —
+// is built substantive:false and does not count toward completeness. Without the
+// flag these seven read as seven missing sections and the cockpit correctly
+// declined to recommend any pathway at all.
 const k510Complete = [
-  { sectionCode: '1', title: 'Cover letter' },
-  { sectionCode: '2', title: 'Indications for use' },
-  { sectionCode: '3', title: 'Device description' },
-  { sectionCode: '4', title: 'Proposed labeling and instructions for use' },
-  { sectionCode: '5', title: 'Biocompatibility evaluation' },
-  { sectionCode: '6', title: 'Performance testing — bench' },
-  { sectionCode: '7', title: 'Substantial equivalence comparison to predicate' },
+  { sectionCode: '1', title: 'Cover letter', substantive: true },
+  { sectionCode: '2', title: 'Indications for use', substantive: true },
+  { sectionCode: '3', title: 'Device description', substantive: true },
+  { sectionCode: '4', title: 'Proposed labeling and instructions for use', substantive: true },
+  { sectionCode: '5', title: 'Biocompatibility evaluation', substantive: true },
+  { sectionCode: '6', title: 'Performance testing — bench', substantive: true },
+  { sectionCode: '7', title: 'Substantial equivalence comparison to predicate', substantive: true },
 ];
 
 describe('POST /api/device-cockpit/assess', () => {

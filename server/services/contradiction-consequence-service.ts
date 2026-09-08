@@ -14,6 +14,7 @@
  * @module server/services/contradiction-consequence-service
  */
 
+import { governedActor } from './part11/governed-actor';
 import { pool } from '../db.js';
 import { createScopedLogger } from '../utils/logger';
 import { recordArtifactProvenanceDrizzle } from './provenance/artifact-provenance';
@@ -333,8 +334,7 @@ class ContradictionConsequenceService {
           workspaceTarget: 'project',
           regulatorIntent: 'qa_review',
         },
-        userId: Number.isFinite(createdByNumeric) ? createdByNumeric : 0,
-        userEmail: 'system@concept2cure.local',
+        ...governedActor(Number.isFinite(createdByNumeric) ? createdByNumeric : 0, 'contradiction-consequence'),
         userRole: 'regulatory',
       } as any;
       const governedResolution = resolveGovernedContext({
@@ -523,6 +523,7 @@ class ContradictionConsequenceService {
       // Find the decision linked to this contradiction
       const decisions = decisionLifecycleService.getProjectDecisions(String(projectId), {
         kind: 'contradiction-resolution-decision',
+        organizationId,
       });
       const linkedDecision = decisions.find(d =>
         d.linkedContradictionIds?.includes(finding.id)

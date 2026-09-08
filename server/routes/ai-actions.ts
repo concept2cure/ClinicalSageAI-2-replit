@@ -157,8 +157,26 @@ function getUserId(req: Request): number {
   throw new Error('Authentication required');
 }
 
+/**
+ * The actor's name for the audit row — never manufactured from their id.
+ *
+ * This used to end `|| \`user-${getUserId(req)}\``, which lands in
+ * `regulatory_audit_logs.user_name`: a §11.10(e) column an inspector reads as
+ * who acted. `user-41` is not a name anyone has, and once written it cannot be
+ * told apart from one that is (ledger L142).
+ *
+ * 'unknown' is the honest value and is already the vocabulary here — the
+ * governed-context resolver falls back to it, and the sibling orchestration
+ * route uses 'system' for the unauthenticated case. The user id travels in its
+ * own column alongside, so naming the gap loses nothing a reader needs.
+ */
 function getUserName(req: Request): string {
-  return (req.user as { name?: string } | undefined)?.name || req.user?.email || `user-${getUserId(req)}`;
+  const name = (req.user as { name?: string } | undefined)?.name || req.user?.email;
+  if (name) return name;
+  // An authenticated identity with neither a name nor an email cannot be
+  // attributed. Refusing is the honest answer; `user-${id}` was a person-shaped
+  // guess an inspector could not tell from a real one (ledger L142).
+  throw new Error('Authentication required');
 }
 
 function getUserRole(req: Request): string {

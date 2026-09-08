@@ -19,6 +19,7 @@ on it.
 | # | Path prefix | Owner module | Family function |
 | --- | --- | --- | --- |
 | 1 | `/api/auth`, `/api/v1/auth`, `/api/users`, `/api/user`, `/api` auth gate, SSO, health probes | `bootstrap/register-platform-routes.ts` | `registerPlatformRoutes` |
+| 1a | All `/api/*` — module entitlement enforcement middleware (inert unless `MODULE_ENFORCEMENT` is `report`/`enforce`) | `bootstrap/register-entitlement-gate.ts` | `registerEntitlementGate` |
 | 2 | `/api/device-projects` | `bootstrap/register-inline-routes.ts` | `registerInlineEarlyRoutes` |
 | 3 | Core templates, AI assistance, CMC, intelligent docs, PM settings, control plane | `bootstrap/register-core-routes.ts` | `registerCoreRoutes` |
 | 4 | Foresight deprecation routes | `bootstrap/register-integrations-routes.ts` | `registerIntegrationRoutes` |

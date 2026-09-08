@@ -79,7 +79,7 @@ describe('round-trip fidelity gate', () => {
     expect(looksLikeHtml(stored)).toBe(false);
     const html = plainTextToHtml(stored);
     const json = generateJSON(html, EXTENSIONS);
-    const verdict = assessFidelity(stored, jsonDocText(json));
+    const verdict = assessFidelity(stored, json);
     expect(verdict.lossy).toBe(false);
     expect(verdict.parsedText).toContain('PFS & ORR');
   });
@@ -93,7 +93,7 @@ describe('round-trip fidelity gate', () => {
       '<div class="dc-prov"><span class="dc-prov-src">CSR 2.7.3</span><span class="dc-prov-conf" data-c="hi">HI</span><span class="dc-prov-audit">a1b2c3</span></div>' +
       '<ul><li>Sensitivity 98.2%</li><li>Specificity 97.1%</li></ul>';
     const json = generateJSON(stored, EXTENSIONS);
-    const verdict = assessFidelity(stored, jsonDocText(json));
+    const verdict = assessFidelity(stored, json);
     expect(verdict.lossy).toBe(false);
     for (const phrase of ['BX-204', 'rezatinib', 'CSR 2.7.3', 'Sensitivity 98.2%', 'Specificity 97.1%']) {
       expect(verdict.parsedText).toContain(phrase);
@@ -125,7 +125,7 @@ describe('round-trip fidelity gate', () => {
     expect(parsedText).not.toContain('.x{color:red}');
 
     // 2) The gate catches it and the editor must refuse rich mode.
-    const verdict = assessFidelity(stored, jsonDocText(json));
+    const verdict = assessFidelity(stored, json);
     expect(verdict.lossy).toBe(true);
   });
 

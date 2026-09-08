@@ -42,6 +42,7 @@ import { createHash } from 'node:crypto';
 import { pool } from '../../db';
 import { visibleOrgClause } from './evidence-spine.service';
 import { CRE_SOURCE_CITATION } from './source-usage.service';
+import { MACHINE_AUTHOR_IDS } from '../authoring/revision-ledger';
 
 export class SpanLineageError extends Error {}
 
@@ -61,8 +62,17 @@ export interface Queryable {
   ) => Promise<{ rows: R[]; rowCount?: number | null }>;
 }
 
-/** Default executor — the pool, i.e. its own transaction per statement. */
-const defaultExec: Queryable = pool as unknown as Queryable;
+/** Default executor — the pool, i.e. its own transaction per statement.
+ *
+ *  Resolved at CALL time, not at import. `pool as Queryable` dereferenced the
+ *  db module's `pool` export while this file loaded, and this file is loaded
+ *  by the lineage gate, which is loaded by every governed writer — so any test
+ *  that mocks `../db` without a `pool` export (the CMC route suites mock only
+ *  `getPool`) died at import with "No pool export is defined on the mock".
+ *  Four suites were red on the trunk for exactly that. */
+const defaultExec: Queryable = {
+  query: (sql, params) => (pool as unknown as Queryable).query(sql, params),
+};
 
 /** How a source was used to produce a span. Mirrors the SQL CHECK constraint. */
 export type SpanUsage =
@@ -82,7 +92,28 @@ export const SPAN_USAGES: readonly SpanUsage[] = [
   'asserted',
 ];
 
-export type SpanProvenanceKind = 'cre_evidence_source' | 'author_assertion';
+/**
+ * Where a span came from.
+ *   cre_evidence_source     a Data Room source (reference_id + payload_sha256)
+ *   author_assertion        the author's own analysis (asserted_by + asserted_at)
+ *   accepted_machine_draft  drafted by a machine author (machine_author_id) and
+ *                           accepted by a human (asserted_by + asserted_at) —
+ *                           both named, so neither is credited with the other's
+ *                           part. migrations/20260907 adds it.
+ *   machine_draft           drafted by a machine author and accepted by NOBODY:
+ *                           asserted_by and asserted_at are NULL, and the CHECK
+ *                           requires them to be. Who ASKED for the draft is
+ *                           recorded in created_by, which is a different claim.
+ *                           migrations/20260908 adds it.
+ */
+export type SpanProvenanceKind =
+  | 'cre_evidence_source'
+  | 'author_assertion'
+  | 'accepted_machine_draft'
+  | 'machine_draft';
+
+/** The two machine-authored kinds, discriminated by whether anyone accepted. */
+export type MachineSpanKind = 'accepted_machine_draft' | 'machine_draft';
 
 /**
  * Whether a span still stands against its source's current content. Same
@@ -124,6 +155,41 @@ export interface AuthorSpanInput extends DocumentRef {
   createdBy?: string | null;
 }
 
+export interface MachineSpanInput extends DocumentRef {
+  charStart: number;
+  charEnd: number;
+  spanText: string;
+  /** The machine author that drafted the words — a MACHINE_AUTHOR_IDS key. */
+  machineAuthorId: string;
+  /**
+   * The human who accepted them, when one has. ABSENT means nobody has — the
+   * row is written as `machine_draft` with asserted_by/asserted_at NULL, which
+   * the CHECK requires. The kind is DERIVED from this rather than passed
+   * separately so a caller cannot state one and supply the other.
+   */
+  assertedBy?: string | null;
+  assertedAt?: Date;
+  signatureId?: string | null;
+  usage?: SpanUsage;
+  confidence?: number | null;
+  /** Who asked for the draft. A different claim from asserting it. */
+  createdBy?: string | null;
+}
+
+/** A live machine-authored span, as the carry-forward step reads it. */
+export interface LiveMachineSpan {
+  charStart: number;
+  charEnd: number;
+  spanTextSha256: string;
+  provenanceKind: MachineSpanKind;
+  machineAuthorId: string;
+  /** Null exactly when provenanceKind is 'machine_draft'. */
+  assertedBy: string | null;
+  assertedAt: Date | null;
+  signatureId: string | null;
+  createdBy: string | null;
+}
+
 export interface SpanLineageRow {
   id: string;
   documentTable: string;
@@ -136,6 +202,10 @@ export interface SpanLineageRow {
   sourceLocator: string | null;
   assertedBy: string | null;
   assertedAt: Date | null;
+  /** Set for accepted_machine_draft: the machine author that drafted the span. */
+  machineAuthorId: string | null;
+  /** Its display name, from the server's own vocabulary — never a stored string. */
+  machineAuthorName: string | null;
   usage: SpanUsage;
   confidence: number | null;
   /** Present on forward/propagation reads, which join the source. */
@@ -480,6 +550,288 @@ export async function replaceAuthorSpans(
  * and the content write commit together; a partial write here reintroduces the
  * best-effort-lineage failure the save gate exists to close.
  */
+/**
+ * Record one machine-authored span.
+ *
+ * The KIND IS DERIVED, never passed: an `assertedBy` makes it an
+ * `accepted_machine_draft` (a human stood behind the machine's words); its
+ * absence makes it a `machine_draft` (nobody has). A caller therefore cannot
+ * state one kind and supply the evidence for the other, and the database's
+ * kind_shape CHECK holds the same line from below — a machine_draft row with
+ * an asserter is refused outright.
+ *
+ * Idempotent per (document, range, kind, acceptor): re-recording refreshes the
+ * hash and never duplicates.
+ */
+export async function recordMachineSpan(
+  orgId: number,
+  p: MachineSpanInput,
+  exec: Queryable = defaultExec,
+): Promise<{ id: string; created: boolean; kind: MachineSpanKind }> {
+  assertSpan(p.charStart, p.charEnd);
+  const usage = p.usage ?? 'asserted';
+  assertUsage(usage);
+  if (!p.documentTable || !p.documentId) {
+    throw new SpanLineageError('documentTable and documentId are required');
+  }
+  if (!p.machineAuthorId) {
+    throw new SpanLineageError('machineAuthorId is required for a machine-authored span');
+  }
+
+  const accepted = typeof p.assertedBy === 'string' && p.assertedBy.length > 0;
+  const kind: MachineSpanKind = accepted ? 'accepted_machine_draft' : 'machine_draft';
+  const assertedBy = accepted ? p.assertedBy! : null;
+  const assertedAt = accepted ? (p.assertedAt ?? new Date()) : null;
+
+  const existing = await exec.query<{ id: string }>(
+    `SELECT id FROM document_span_lineage
+      WHERE organization_id = $1 AND document_table = $2 AND document_id = $3
+        AND char_start = $4 AND char_end = $5
+        AND provenance_kind = $6
+        AND COALESCE(asserted_by, '') = COALESCE($7::text, '')
+        AND deleted_at IS NULL
+      LIMIT 1`,
+    [orgId, p.documentTable, p.documentId, p.charStart, p.charEnd, kind, assertedBy],
+  );
+
+  if (existing.rows.length > 0) {
+    await exec.query(
+      `UPDATE document_span_lineage
+          SET span_text_sha256 = $1,
+              machine_author_id = $2,
+              usage = $3,
+              signature_id = COALESCE($4, signature_id),
+              confidence = COALESCE($5, confidence),
+              updated_at = NOW()
+        WHERE id = $6 AND organization_id = $7`,
+      [
+        hashSpanText(p.spanText),
+        p.machineAuthorId,
+        usage,
+        p.signatureId ?? null,
+        p.confidence ?? null,
+        existing.rows[0].id,
+        orgId,
+      ],
+    );
+    return { id: existing.rows[0].id, created: false, kind };
+  }
+
+  const inserted = await exec.query<{ id: string }>(
+    `INSERT INTO document_span_lineage (
+       document_table, document_id, document_version,
+       char_start, char_end, span_text_sha256,
+       provenance_kind, machine_author_id, asserted_by, asserted_at, signature_id,
+       usage, confidence, organization_id, created_by
+     ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)
+     RETURNING id`,
+    [
+      p.documentTable,
+      p.documentId,
+      p.documentVersion ?? null,
+      p.charStart,
+      p.charEnd,
+      hashSpanText(p.spanText),
+      kind,
+      p.machineAuthorId,
+      assertedBy,
+      assertedAt,
+      p.signatureId ?? null,
+      usage,
+      p.confidence ?? null,
+      orgId,
+      // Who asked, when nobody has accepted. Never a stand-in for an asserter:
+      // the asserted_by column above is NULL and the CHECK requires it to be.
+      p.createdBy ?? assertedBy,
+    ],
+  );
+
+  return { id: inserted.rows[0].id, created: true, kind };
+}
+
+/**
+ * The document's live machine-authored spans, BOTH kinds — what the
+ * carry-forward step in machine-attribution.ts matches the new content's
+ * clauses against.
+ *
+ * Both are returned because both survive an unrelated edit: an accepted draft
+ * stays accepted, and an unaccepted one stays unaccepted. A human saving the
+ * document is not a human accepting each clause of it, so carrying a
+ * machine_draft forward as anything else would manufacture the acceptance this
+ * kind exists to withhold.
+ */
+export async function listLiveMachineSpans(
+  orgId: number,
+  ref: Pick<DocumentRef, 'documentTable' | 'documentId'>,
+  exec: Queryable = defaultExec,
+): Promise<LiveMachineSpan[]> {
+  const { rows } = await exec.query<{
+    char_start: number;
+    char_end: number;
+    span_text_sha256: string;
+    provenance_kind: MachineSpanKind;
+    machine_author_id: string;
+    asserted_by: string | null;
+    asserted_at: Date | string | null;
+    signature_id: string | null;
+    created_by: string | null;
+  }>(
+    `SELECT char_start, char_end, span_text_sha256, provenance_kind, machine_author_id,
+            asserted_by, asserted_at, signature_id, created_by
+       FROM document_span_lineage
+      WHERE organization_id = $1 AND document_table = $2 AND document_id = $3
+        AND provenance_kind IN ('accepted_machine_draft', 'machine_draft')
+        AND deleted_at IS NULL
+      ORDER BY char_start ASC`,
+    [orgId, ref.documentTable, ref.documentId],
+  );
+  return rows.map((r) => ({
+    charStart: Number(r.char_start),
+    charEnd: Number(r.char_end),
+    spanTextSha256: String(r.span_text_sha256),
+    provenanceKind: r.provenance_kind,
+    machineAuthorId: String(r.machine_author_id),
+    assertedBy: r.asserted_by ?? null,
+    assertedAt: r.asserted_at
+      ? (r.asserted_at instanceof Date ? r.asserted_at : new Date(String(r.asserted_at)))
+      : null,
+    signatureId: r.signature_id ?? null,
+    createdBy: r.created_by ?? null,
+  }));
+}
+
+/**
+ * Replace this document's accepted-machine-draft spans with exactly the spans
+ * given — the machine-grain sibling of {@link replaceAuthorSpans}, for the
+ * same reason: offsets are positions in one version of the text, so each save
+ * states the whole set and retires (soft-deletes) what the new text no longer
+ * carries. A span that is re-stated keeps its original acceptor and time —
+ * the carry-forward step passes them through — so a later saver is never
+ * recorded as having accepted what someone else did.
+ *
+ * Author assertions and source citations are untouched; the gate manages the
+ * three kinds side by side.
+ */
+export async function replaceMachineSpans(
+  orgId: number,
+  ref: DocumentRef,
+  spans: Array<{
+    charStart: number;
+    charEnd: number;
+    spanText: string;
+    machineAuthorId: string;
+    /** Present only when a human accepted; absent means nobody has. */
+    assertedBy?: string | null;
+    assertedAt?: Date;
+    signatureId?: string | null;
+    usage?: SpanUsage;
+    createdBy?: string | null;
+  }>,
+  p: { createdBy: string },
+  exec: Queryable = defaultExec,
+): Promise<{ written: number; retired: number }> {
+  let written = 0;
+  const keep: string[] = [];
+  for (const s of spans) {
+    const { kind } = await recordMachineSpan(
+      orgId,
+      {
+        ...ref,
+        charStart: s.charStart,
+        charEnd: s.charEnd,
+        spanText: s.spanText,
+        machineAuthorId: s.machineAuthorId,
+        assertedBy: s.assertedBy ?? null,
+        assertedAt: s.assertedAt,
+        signatureId: s.signatureId ?? null,
+        usage: s.usage,
+        // The original requester survives a carry-forward; only a save that
+        // introduces the span falls back to this save's actor.
+        createdBy: s.createdBy ?? p.createdBy,
+      },
+      exec,
+    );
+    written++;
+    // Keyed by KIND as well as range: a clause that has just been accepted is
+    // written as accepted_machine_draft, and the machine_draft row at the same
+    // range must then be retired rather than left answering alongside it.
+    keep.push(`${kind}:${s.charStart}:${s.charEnd}`);
+  }
+
+  const { rowCount } = await exec.query(
+    `UPDATE document_span_lineage
+        SET deleted_at = NOW(), updated_at = NOW()
+      WHERE organization_id = $1
+        AND document_table = $2
+        AND document_id = $3
+        AND provenance_kind IN ('accepted_machine_draft', 'machine_draft')
+        AND deleted_at IS NULL
+        AND (provenance_kind || ':' || char_start || ':' || char_end) <> ALL($4::text[])`,
+    [orgId, ref.documentTable, ref.documentId, keep.length > 0 ? keep : ['']],
+  );
+
+  return { written, retired: rowCount ?? 0 };
+}
+
+/**
+ * Retire every current source span whose recorded quote is no longer the text
+ * at its own offsets, and return the ranges that still verify.
+ *
+ * A source span is a claim that characters [charStart, charEnd) are a verbatim
+ * quote of a source, sealed by `span_text_sha256` at record time. An edit that
+ * moves or changes that text — a human refining an accepted AI draft — leaves
+ * the row pointing at characters it no longer describes. Re-hashing the slice
+ * is a check the row itself makes possible; a quote that stayed in place keeps
+ * its citation, one that moved is retired rather than left to answer for the
+ * wrong words. Nothing here can RE-verify a moved quote (the source text is not
+ * stored), so a moved quote is a retired quote, and the author gate then
+ * covers it as the author's assertion.
+ */
+export async function retireStaleSourceSpans(
+  orgId: number,
+  ref: { documentTable: string; documentId: string },
+  content: string,
+  exec: Queryable = pool as unknown as Queryable,
+): Promise<{ kept: Array<{ charStart: number; charEnd: number }>; retired: number }> {
+  const { rows } = await exec.query<{
+    id: string;
+    char_start: number;
+    char_end: number;
+    span_text_sha256: string | null;
+  }>(
+    `SELECT id, char_start, char_end, span_text_sha256
+       FROM document_span_lineage
+      WHERE organization_id = $1
+        AND document_table = $2
+        AND document_id = $3
+        AND provenance_kind = 'cre_evidence_source'
+        AND deleted_at IS NULL`,
+    [orgId, ref.documentTable, ref.documentId],
+  );
+  const kept: Array<{ charStart: number; charEnd: number }> = [];
+  const stale: string[] = [];
+  for (const r of rows) {
+    const start = Number(r.char_start);
+    const end = Number(r.char_end);
+    const inPlace =
+      start >= 0 &&
+      end <= content.length &&
+      r.span_text_sha256 != null &&
+      hashSpanText(content.slice(start, end)) === r.span_text_sha256;
+    if (inPlace) kept.push({ charStart: start, charEnd: end });
+    else stale.push(String(r.id));
+  }
+  if (stale.length > 0) {
+    await exec.query(
+      `UPDATE document_span_lineage
+          SET deleted_at = NOW(), updated_at = NOW()
+        WHERE id = ANY($1::uuid[])`,
+      [stale],
+    );
+  }
+  return { kept, retired: stale.length };
+}
+
 export async function replaceSourceSpans(
   orgId: number,
   ref: DocumentRef,
@@ -617,6 +969,8 @@ function mapRow(r: any): SpanLineageRow {
     sourceLocator: r.source_locator ?? null,
     assertedBy: r.asserted_by ?? null,
     assertedAt: r.asserted_at ?? null,
+    machineAuthorId: r.machine_author_id ?? null,
+    machineAuthorName: r.machine_author_id ? (MACHINE_AUTHOR_IDS[r.machine_author_id] ?? null) : null,
     usage: r.usage,
     confidence: r.confidence === null || r.confidence === undefined ? null : Number(r.confidence),
   };
@@ -654,8 +1008,8 @@ export async function listDocumentSpans(
       row.state = spanState(r.payload_sha256 ?? null, r.current_checksum ?? null, r.current_checksum !== null);
       row.sourceTitle = r.source_title ?? null;
     } else {
-      // An author assertion is not against external content, so it cannot go
-      // stale the way a citation can.
+      // An author assertion or an accepted machine draft is not against
+      // external content, so it cannot go stale the way a citation can.
       row.state = 'current';
     }
     return row;
@@ -739,6 +1093,10 @@ export interface SelectionOrigins {
     total: number;
     fromSources: number;
     authorAsserted: number;
+    /** Drafted by a machine author and accepted by a human. */
+    machineDrafted: number;
+    /** Drafted by a machine author and accepted by NOBODY yet. */
+    machineDraftedUnaccepted: number;
     stale: number;
   };
   generatedAt: string;
@@ -829,6 +1187,8 @@ export async function getSelectionOrigins(
       total: origins.length,
       fromSources: origins.filter((o) => o.provenanceKind === 'cre_evidence_source').length,
       authorAsserted: origins.filter((o) => o.provenanceKind === 'author_assertion').length,
+      machineDrafted: origins.filter((o) => o.provenanceKind === 'accepted_machine_draft').length,
+      machineDraftedUnaccepted: origins.filter((o) => o.provenanceKind === 'machine_draft').length,
       stale: origins.filter((o) => o.state === 'changed').length,
     },
     generatedAt: new Date().toISOString(),

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { usePublishSurfaceContext } from '../surfaceContext';
+import { useSurfaceActionHandlers } from '../surfaceActions';
 import { I } from '../icons';
 import { useLiveData, useLiveRows, EmptyState } from '../dataConnect';
 import { apiRequest } from '@/lib/queryClient';
@@ -284,6 +285,20 @@ export function NdaCockpit({ onAsk, onNav }: SurfaceViewProps) {
 
   const tabs: [string, string][] = [['ctd', 'CTD readiness'], ['m1', 'Module 1 admin'], ['clock', 'PDUFA review clock'], ['rtf', 'Refuse-to-File risk'], ['bla', 'BLA biologics']];
 
+  /* AnA can open any cockpit tab — the same view-state switch a person makes.
+     The registry enum has validated `tab`; the defensive lookup keeps the
+     handler honest if the registry drifts. */
+  useSurfaceActionHandlers('nda-cockpit', {
+    'nda-cockpit.open-tab': (params) => {
+      const target = params.tab;
+      const hit = tabs.find((t) => t[0] === target);
+      if (!hit) return { ok: false, reason: `"${target}" is not an NDA/BLA cockpit tab.` };
+      if (tab === target) return { ok: true, detail: `Already on the ${hit[1]} tab` };
+      setTab(target);
+      return { ok: true, detail: `Opened the ${hit[1]} tab` };
+    },
+  });
+
   /* Context-aware human lead */
   const highs = rtf.filter(r => r.sev === 'high');
   const topHigh = highs[0] || rtf.find(r => r.sev === 'med');
@@ -349,15 +364,22 @@ export function NdaCockpit({ onAsk, onNav }: SurfaceViewProps) {
       filingState === 'assessed-with-findings'
         ? `${rtf.length} logged Refuse-to-File risk(s), ${highs.length} high`
         : 'Refuse-to-File risk is NOT ASSESSED — no completed shadow review is recorded, so an empty risk log is not clearance';
+    /* Module 1 is a SEPARATE read (m1Live) deliberately excluded from filingState,
+       so it carries its own gate here: a failed or in-flight m1Live makes m1open
+       0, which must not read as "Module 1 is clear." null = not-yet-known. */
+    const m1Loaded = !m1Live.loading && !m1Live.error;
+    const m1Clause = m1Loaded
+      ? `${m1open} Module 1 admin item(s) open`
+      : 'Module 1 admin status could not be read';
     return {
       summary:
         `NDA cockpit${progName ? ` for ${progName}` : ''}: CTD readiness ${overall}% across ` +
-        `${modules.length} module(s), ${m1open} Module 1 admin item(s) open. ${rtfClause}.`,
+        `${modules.length} module(s), ${m1Clause}. ${rtfClause}.`,
       facts: {
         program: progName,
         ctdReadinessPct: overall,
         moduleCount: modules.length,
-        module1AdminOpen: m1open,
+        module1AdminOpen: m1Loaded ? m1open : null,
         /* The surface's own verdict, not a re-derivation. */
         refuseToFileState: filingState,
         loggedRtfRisks: rtf.length,
@@ -372,7 +394,7 @@ export function NdaCockpit({ onAsk, onNav }: SurfaceViewProps) {
         'Review the BLA assessment set',
       ],
     };
-  }, [filingState, progName, overall, modules.length, m1open, rtf.length, highs.length, reassuring, tab]);
+  }, [filingState, progName, overall, modules.length, m1open, m1Live.loading, m1Live.error, rtf.length, highs.length, reassuring, tab]);
   usePublishSurfaceContext('nda-cockpit', anaContext);
 
   /* The KPI strip speaks from the SAME state the lead does, derived here rather
@@ -496,7 +518,7 @@ export function NdaCockpit({ onAsk, onNav }: SurfaceViewProps) {
   );
 
   return (
-    <div className="cv-body"><div className="reg-wrap nda">
+    <div className="cv-body"><div className="reg-wrap">
       <div className="reg-head">
         <div>
           <div className="reg-eyebrow">
@@ -553,7 +575,7 @@ export function NdaCockpit({ onAsk, onNav }: SurfaceViewProps) {
             ))}
           </div>
         ) : modulesLive.loading ? (
-          <div className="scaf-note" style={{ padding: '18px 10px' }}>Loading CTD module readiness…</div>
+          <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>Loading CTD module readiness…</div>
         ) : modulesLive.error ? (
           <EmptyState
             tone="error"
@@ -587,7 +609,7 @@ export function NdaCockpit({ onAsk, onNav }: SurfaceViewProps) {
               </tbody>
             </table>
           ) : m1Live.loading ? (
-            <div className="scaf-note" style={{ padding: '18px 10px' }}>Loading Module 1 documents…</div>
+            <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>Loading Module 1 documents…</div>
           ) : m1Live.error ? (
             <EmptyState
               tone="error"
@@ -633,7 +655,7 @@ export function NdaCockpit({ onAsk, onNav }: SurfaceViewProps) {
               ))}
             </div>
           ) : rtfLive.loading ? (
-            <div className="scaf-note" style={{ padding: '18px 10px' }}>Loading Refuse-to-File risks…</div>
+            <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>Loading Refuse-to-File risks…</div>
           ) : rtfLive.error ? (
             <EmptyState
               tone="error"
@@ -688,7 +710,7 @@ export function NdaCockpit({ onAsk, onNav }: SurfaceViewProps) {
               </p>
             </>
           ) : blaLive.loading ? (
-            <div className="scaf-note" style={{ padding: '18px 10px' }}>Loading BLA biologics assessments…</div>
+            <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>Loading BLA biologics assessments…</div>
           ) : blaLive.error ? (
             <EmptyState
               tone="error"

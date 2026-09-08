@@ -24,14 +24,21 @@ vi.mock('../../server/services/concept2cure/governedDocumentContractService.js',
 
 import { queueExtraction, getExtractionStatus } from '../../server/services/autoExtractionPipeline';
 
-async function waitForStatus(jobId: string, expected: string, timeoutMs = 2000) {
+// getExtractionStatus is tenant-scoped: reads are made on behalf of the
+// organization the job was queued under.
+async function waitForStatus(
+  jobId: string,
+  expected: string,
+  organizationId: number,
+  timeoutMs = 2000,
+) {
   const start = Date.now();
   while (Date.now() - start < timeoutMs) {
-    const job = getExtractionStatus(jobId);
+    const job = getExtractionStatus(jobId, organizationId);
     if (job?.status === expected) return job;
     await new Promise(resolve => setTimeout(resolve, 25));
   }
-  return getExtractionStatus(jobId);
+  return getExtractionStatus(jobId, organizationId);
 }
 
 describe('autoExtractionPipeline governed artifact enforcement', () => {
@@ -119,7 +126,7 @@ describe('autoExtractionPipeline governed artifact enforcement', () => {
     const queued = await queueExtraction('file-1', 'sample.txt', 1200, 101, 22, 7, {
       immediate: true,
     });
-    const failedJob = await waitForStatus(queued.id, 'failed');
+    const failedJob = await waitForStatus(queued.id, 'failed', queued.organizationId);
     expect(failedJob).toBeTruthy();
     expect(failedJob?.status).toBe('failed');
     expect(failedJob?.error).toContain('governed extraction');

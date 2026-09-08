@@ -14,6 +14,8 @@ import {
 import {
   createHfFile,
   listHfFiles,
+  setHfFileElements,
+  HF_ELEMENT_KEYS,
   HfFileValidationError,
 } from '../services/human-factors/hf-files-service';
 import auditService from '../services/auditService';
@@ -66,8 +68,11 @@ router.get('/', async (req: Request, res: Response) => {
     if (!file) {
       return res.json({ data: null, meta: { count: 0, source: 'hf_engineering_files' } });
     }
+    // `id` travels with every scenario: a mitigation is a governed write against
+    // ONE row, and a client that cannot name the row it is mitigating can only
+    // mitigate in its own head — which is precisely the defect this read closes.
     const scenarios = await pool.query(
-      `SELECT task, use_error AS "useError",
+      `SELECT id, task, use_error AS "useError",
               potential_harm_severity AS "potentialHarmSeverity", mitigated
          FROM c2c_hf_scenarios
         WHERE organization_id = $1 AND file_id = $2 ORDER BY id`,
@@ -233,12 +238,13 @@ router.post('/scenarios', async (req: Request, res: Response) => {
       `INSERT INTO c2c_hf_scenarios
          (id, organization_id, file_id, task, use_error, potential_harm_severity, mitigated)
        VALUES ($1, $2, $3, $4, $5, $6, $7)
-       RETURNING task, use_error AS "useError",
+       RETURNING id, task, use_error AS "useError",
                  potential_harm_severity AS "potentialHarmSeverity", mitigated`,
       [id, orgId, fileId, task, useError, potentialHarmSeverity, mitigated],
     );
     const r = rows[0];
     const data = {
+      id: r.id,
       task: r.task,
       useError: r.useError ?? '',
       potentialHarmSeverity: r.potentialHarmSeverity,
@@ -253,6 +259,176 @@ router.post('/scenarios', async (req: Request, res: Response) => {
     }
     logger.error('hf-scenario create failed', { err: err instanceof Error ? err.message : String(err) });
     return res.status(500).json({ error: { code: 'INTERNAL', message: 'Failed to create the use scenario.' } });
+  }
+});
+
+/**
+ * PATCH /scenarios/:id/mitigate — record a risk control against ONE
+ * hazard-related use scenario.
+ *
+ * This is the write behind the surface's "Mitigate" button, and it is the most
+ * consequential write in this router: mitigating the last unmitigated critical
+ * task is what moves the IEC 62366-1 §5.9 summative-evaluation gate from BLOCKED
+ * to CLEAR. Before it existed, the button only called setState — a device
+ * human-factors reviewer could watch a blocking safety gate clear on screen while
+ * the record still said blocked, and the screen reverted on reload with no warning.
+ *
+ * So it is governed the way the labeling router governs adopting agency text: a
+ * 21 CFR 11.10(e) reason for change is REQUIRED. An audit entry that records that
+ * a critical use-related risk was declared controlled, without recording why, is
+ * not an audit trail.
+ *
+ * 400 without a usable reason; 404 when the scenario is not this org's; 409 when
+ * the scenario is already mitigated (fails closed rather than re-signing a
+ * control that is already recorded); 503 PENDING_STORE on 42P01.
+ * Audited HF_USE_SCENARIO_MITIGATED, with the severity so the entry says on its
+ * own face whether a critical task was cleared.
+ */
+router.patch('/scenarios/:id/mitigate', async (req: Request, res: Response) => {
+  const orgId = getOrgId(req);
+  if (orgId === null) {
+    return res.status(403).json({ error: { code: 'ORG_REQUIRED', message: 'Organization context required.' } });
+  }
+  const userId = getUserId(req);
+  const b = (req.body ?? {}) as Record<string, unknown>;
+  const reason = typeof b.reasonForChange === 'string' ? b.reasonForChange.trim() : '';
+  if (reason.length < 8) {
+    return res.status(400).json({
+      error: {
+        code: 'REASON_REQUIRED',
+        message:
+          'A reason for change of at least 8 characters is required to record a mitigation against a use-related risk.',
+      },
+    });
+  }
+  if (reason.length > 2000) {
+    return res.status(400).json({ error: { code: 'REASON_TOO_LONG', message: 'The reason for change exceeds 2000 characters.' } });
+  }
+
+  const id = String(req.params.id ?? '');
+  try {
+    const { rows } = await pool.query(
+      `UPDATE c2c_hf_scenarios
+          SET mitigated = true
+        WHERE organization_id = $1 AND id = $2 AND mitigated = false
+        RETURNING id, task, use_error AS "useError",
+                  potential_harm_severity AS "potentialHarmSeverity", mitigated`,
+      [orgId, id],
+    );
+    if (rows.length === 0) {
+      // Distinguish "not yours / not there" from "already recorded" — the second
+      // is not an error the user needs to fix, and conflating them would tell a
+      // reviewer a mitigation failed when it is already on the record.
+      const existing = await pool.query(
+        `SELECT mitigated FROM c2c_hf_scenarios WHERE organization_id = $1 AND id = $2`,
+        [orgId, id],
+      );
+      if (existing.rows.length === 0) {
+        return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'No such use scenario for this organization.' } });
+      }
+      return res.status(409).json({
+        error: { code: 'ALREADY_MITIGATED', message: 'This use scenario is already recorded as mitigated.' },
+      });
+    }
+    const r = rows[0];
+    await auditService.logAction({
+      organizationId: orgId,
+      userId: userId ?? undefined,
+      action: 'HF_USE_SCENARIO_MITIGATED',
+      resourceType: 'hf_use_scenario',
+      resourceId: r.id,
+      details: {
+        task: r.task,
+        useError: r.useError ?? '',
+        potentialHarmSeverity: r.potentialHarmSeverity,
+        // Both sides of the change, so the entry answers "what did it say before".
+        previousMitigated: false,
+        mitigated: true,
+        reasonForChange: reason,
+      },
+    });
+    return res.json({
+      data: {
+        id: r.id,
+        task: r.task,
+        useError: r.useError ?? '',
+        potentialHarmSeverity: r.potentialHarmSeverity,
+        mitigated: r.mitigated === true,
+      },
+    });
+  } catch (err) {
+    if ((err as { code?: string })?.code === '42P01') {
+      return res.status(503).json({
+        error: { code: 'PENDING_STORE', message: 'Human-factors store is not provisioned yet.' },
+      });
+    }
+    logger.error('hf-scenario mitigate failed', { err: err instanceof Error ? err.message : String(err) });
+    return res.status(500).json({ error: { code: 'INTERNAL', message: 'Failed to record the mitigation.' } });
+  }
+});
+
+/**
+ * PATCH /elements — set one IEC 62366-1 HFE/UE element present or absent on the
+ * org's file.
+ *
+ * The surface's element tiles drive a file-completeness percentage. They used to
+ * move it in React state alone, so the percentage a reviewer read was not the
+ * percentage the record held, and every tick was lost on reload. Completeness is
+ * still DERIVED from `present` on read and never stored, so the two cannot drift.
+ *
+ * Org scoped; 400 on an unknown element key or a non-boolean value; 409 NO_FILE
+ * when the org has no HFE/UE file; 503 PENDING_STORE on 42P01.
+ * Audited HF_FILE_ELEMENT_SET with both sides of the change.
+ */
+router.patch('/elements', async (req: Request, res: Response) => {
+  const orgId = getOrgId(req);
+  if (orgId === null) {
+    return res.status(403).json({ error: { code: 'ORG_REQUIRED', message: 'Organization context required.' } });
+  }
+  const userId = getUserId(req);
+  const b = (req.body ?? {}) as Record<string, unknown>;
+  const element = typeof b.element === 'string' ? b.element : '';
+  if (!(HF_ELEMENT_KEYS as readonly string[]).includes(element)) {
+    return res.status(400).json({
+      error: { code: 'UNKNOWN_ELEMENT', message: 'element must be one of the IEC 62366-1 HFE/UE file elements.' },
+    });
+  }
+  if (typeof b.present !== 'boolean') {
+    return res.status(400).json({ error: { code: 'INVALID_BODY', message: 'present must be a boolean.' } });
+  }
+  const nextValue = b.present;
+
+  try {
+    const files = await listHfFiles(orgId);
+    const file = files[0];
+    if (!file) {
+      return res.status(409).json({
+        error: { code: 'NO_FILE', message: 'No HFE/UE file exists for this organization to record an element against.' },
+      });
+    }
+    const before = (file.present ?? {}) as Record<string, boolean>;
+    const previous = before[element] === true;
+    const updated = await setHfFileElements(orgId, file.id, { ...before, [element]: nextValue });
+    if (!updated) {
+      return res.status(409).json({ error: { code: 'NO_FILE', message: 'The HFE/UE file could not be updated.' } });
+    }
+    await auditService.logAction({
+      organizationId: orgId,
+      userId: userId ?? undefined,
+      action: 'HF_FILE_ELEMENT_SET',
+      resourceType: 'hf_engineering_file',
+      resourceId: updated.id,
+      details: { element, previousPresent: previous, present: nextValue, device: updated.device },
+    });
+    return res.json({ data: { device: updated.device, framework: updated.framework, present: updated.present } });
+  } catch (err) {
+    if ((err as { code?: string })?.code === '42P01') {
+      return res.status(503).json({
+        error: { code: 'PENDING_STORE', message: 'Human-factors store is not provisioned yet.' },
+      });
+    }
+    logger.error('hf-file element write failed', { err: err instanceof Error ? err.message : String(err) });
+    return res.status(500).json({ error: { code: 'INTERNAL', message: 'Failed to record the element.' } });
   }
 });
 

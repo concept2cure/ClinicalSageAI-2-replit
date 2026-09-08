@@ -20,6 +20,7 @@ import React from 'react';
 import { I } from '../icons';
 import { useLiveRows, EmptyState } from '../dataConnect';
 import type { SurfaceViewProps } from '../surfaceViews';
+import { usePublishSurfaceContext } from '../surfaceContext';
 import '../styles/project-home-v2.css';
 
 /** The per-section display contract GET /api/investigator-brochure returns
@@ -84,6 +85,51 @@ export function InvestigatorBrochure({ onAsk }: SurfaceViewProps) {
     : 0;
   const openCount = rows.filter((s) => s.status !== 'rendered').length;
 
+  /* What AnA can see of this screen. The Ask button hands her "draft the OPEN
+     sections" — which requires knowing which ones are open and what each is
+     missing. Every gap the backend recorded travels with the section, because
+     "why is 4.2 partial?" is answerable only from those strings.
+
+     A FAILED read publishes the failure: a 0% completeness figure derived from
+     an unreachable store is a filing-readiness claim nobody computed. */
+  const anaContext = React.useMemo(() => {
+    if (loading) {
+      return { summary: 'The Investigator\u2019s Brochure section structure is still loading; nothing on screen is final yet.' };
+    }
+    if (error) {
+      return {
+        summary:
+          'The Investigator\u2019s Brochure structure could not be read, so this screen is showing no ' +
+          'sections because of a failure, not because none exist.',
+        availableActions: ['Retry the IB structure read'],
+      };
+    }
+    return {
+      summary:
+        `Investigator's Brochure (ICH E6(R2) \u00a77): ${rows.length} section(s), ` +
+        `${required.length} required — ${readyRequired} rendered, so required-section completeness is ` +
+        `${completeness}%. ${openCount} section(s) are not yet rendered.` +
+        (empty ? ' No program is provisioned, so this is the deterministic ICH skeleton with every data-bearing section marked missing.' : ''),
+      facts: {
+        totalSections: rows.length,
+        requiredSections: required.length,
+        renderedRequired: readyRequired,
+        completenessPercent: completeness,
+        openSections: openCount,
+        isDeterministicSkeleton: empty,
+        sections: rows.slice(0, 24).map((sec) => ({
+          number: sec.number, title: sec.title, required: sec.required,
+          status: sec.status, gaps: sec.gaps ?? [], depth: sec.depth,
+        })),
+      },
+      availableActions: [
+        'Draft an open IB section from the linked M2.4 / M2.5 / M2.7 summaries and integrated safety',
+        'Read a section\u2019s recorded gaps and what it still needs',
+      ],
+    };
+  }, [loading, error, empty, rows, required.length, readyRequired, completeness, openCount]);
+  usePublishSurfaceContext('investigator-brochure', anaContext);
+
   return (
     <div className="page-inner">
       <PageHead
@@ -98,7 +144,7 @@ export function InvestigatorBrochure({ onAsk }: SurfaceViewProps) {
       />
 
       {loading ? (
-        <div className="scaf-note" style={{ padding: '18px 10px' }}>Loading IB section structure…</div>
+        <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>Loading IB section structure…</div>
       ) : error ? (
         <EmptyState
           tone="error"
@@ -119,8 +165,8 @@ export function InvestigatorBrochure({ onAsk }: SurfaceViewProps) {
             style={{
               display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap',
               margin: '4px 0 18px', padding: '12px 16px',
-              border: '1px solid var(--c2c-border, #e3e6ea)', borderRadius: 10,
-              background: 'var(--c2c-surface, #fff)',
+              border: '1px solid var(--border)', borderRadius: 10,
+              background: 'var(--bg-000)',
             }}
           >
             <div>
@@ -128,8 +174,8 @@ export function InvestigatorBrochure({ onAsk }: SurfaceViewProps) {
               <div style={{ fontSize: 12, opacity: 0.7 }}>required sections ready</div>
             </div>
             <div style={{ flex: 1, minWidth: 160 }}>
-              <div style={{ height: 8, borderRadius: 6, background: 'var(--c2c-track, #eceff2)', overflow: 'hidden' }}>
-                <div style={{ height: '100%', width: `${completeness}%`, background: 'var(--c2c-ok, #2f9e6f)' }} />
+              <div style={{ height: 8, borderRadius: 6, background: 'var(--bg-200)', overflow: 'hidden' }}>
+                <div style={{ height: '100%', width: `${completeness}%`, background: 'var(--success)' }} />
               </div>
             </div>
             <div style={{ fontSize: 12, opacity: 0.8 }}>
@@ -144,8 +190,8 @@ export function InvestigatorBrochure({ onAsk }: SurfaceViewProps) {
                 style={{
                   display: 'flex', alignItems: 'flex-start', gap: 12,
                   padding: '10px 14px', borderRadius: 8,
-                  border: '1px solid var(--c2c-border, #e3e6ea)',
-                  background: 'var(--c2c-surface, #fff)',
+                  border: '1px solid var(--border)',
+                  background: 'var(--bg-000)',
                   marginLeft: s.depth * 22,
                 }}
               >
@@ -173,7 +219,7 @@ export function InvestigatorBrochure({ onAsk }: SurfaceViewProps) {
                     <div style={{ fontSize: 12, opacity: 0.7, marginTop: 3 }}>{s.description}</div>
                   )}
                   {Array.isArray(s.gaps) && s.gaps.length > 0 && (
-                    <div style={{ fontSize: 12, marginTop: 6, color: 'var(--c2c-warn-ink, #8a5a00)' }}>
+                    <div style={{ fontSize: 12, marginTop: 6, color: 'var(--warning)' }}>
                       Needs: {s.gaps.join(' · ')}
                     </div>
                   )}

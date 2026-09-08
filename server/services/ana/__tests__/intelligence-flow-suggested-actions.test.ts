@@ -3,15 +3,22 @@
  *
  * The cer_report completion used to suggest actionTypes generate_cer /
  * generate_lit_search, which no handler anywhere implemented — a suggestion
- * the model could only fail to act on. The suggested actions relayed to the
- * model now name REAL registered AnA tools (generate_document handles
- * document_type 'cer'; search_literature + record_literature run and persist
- * the systematic search), which this test pins by resolving each suggested
- * actionType against the live handler registry.
+ * the model could only fail to act on. That was one category of sixteen; the
+ * other fifteen carried the same defect (generate_csr, assemble_ectd,
+ * generate_cmc_module3, launch_dashboard, …: 30 actionTypes, none wired).
+ *
+ * Every suggested action of EVERY flow is now resolved against the live
+ * handler registry, by calling the engine's own `buildSuggestedActions` over
+ * each registered flow definition — no flow has to be driven to completion to
+ * check what it will suggest at the end. The cer_report drive-through is kept
+ * as the end-to-end sample so the wiring from completion event to suggestion
+ * is exercised too.
  */
 import { describe, it, expect } from 'vitest';
 
-import { startFlow, advanceFlow } from '../intelligence-questions/engine.js';
+import { startFlow, advanceFlow, buildSuggestedActions } from '../intelligence-questions/engine.js';
+import { getFlowDefinition } from '../intelligence-questions/flows/index.js';
+import type { FlowCategory } from '../intelligence-questions/types.js';
 import { getToolHandler } from '../AnaToolExecutor';
 
 const CTX = {
@@ -20,6 +27,26 @@ const CTX = {
   projectId: null,
   clientType: 'medtech' as const,
 };
+
+/** Every category the shared FlowCategory union names. */
+const ALL_CATEGORIES: FlowCategory[] = [
+  'protocol_development',
+  'csr_report',
+  'ind_submission',
+  'nda_submission',
+  'bla_submission',
+  'sop_development',
+  'device_510k',
+  'device_pma',
+  'cer_report',
+  'briefing_book',
+  'safety_narrative',
+  'labeling',
+  'risk_management',
+  'cmc_specification',
+  'stability_study',
+  'project_setup',
+];
 
 /** Synthesize a validation-passing answer for one field. */
 function answerFor(field: any): unknown {
@@ -92,5 +119,38 @@ describe('cer_report post-flow suggested actions', () => {
     const types = completion.suggestedActions.map((a: { actionType: string }) => a.actionType);
     expect(types).not.toContain('generate_cer');
     expect(types).not.toContain('generate_lit_search');
+  });
+});
+
+describe('every flow’s suggested actions resolve to registered tool handlers', () => {
+  // clientType null: the registry applies no client-type filter, so every
+  // category resolves regardless of which client types it is written for.
+  const lookupCtx = { organizationId: 1, userId: 1, projectId: null, clientType: null };
+
+  it.each(ALL_CATEGORIES)('%s', (category) => {
+    const definition = getFlowDefinition(category, lookupCtx);
+    expect(definition, `no flow definition registered for ${category}`).toBeTruthy();
+
+    const actions = buildSuggestedActions(definition!);
+    expect(actions.length, `${category} suggests nothing`).toBeGreaterThan(0);
+
+    const dead = actions
+      .map(a => a.actionType)
+      .filter(t => typeof getToolHandler(t) !== 'function');
+    expect(dead, `${category} suggests actionTypes with no registered handler: ${dead.join(', ')}`).toEqual([]);
+  });
+
+  it('the CMC interview’s first suggestion is the register commit (commit_intelligence_flow)', () => {
+    const definition = getFlowDefinition('cmc_specification', lookupCtx)!;
+    const types = buildSuggestedActions(definition).map(a => a.actionType);
+    expect(types[0]).toBe('commit_intelligence_flow');
+    expect(typeof getToolHandler('commit_intelligence_flow')).toBe('function');
+  });
+
+  it('every flow still offers the War Game', () => {
+    for (const category of ALL_CATEGORIES) {
+      const definition = getFlowDefinition(category, lookupCtx)!;
+      expect(buildSuggestedActions(definition).map(a => a.actionType)).toContain('start_war_game');
+    }
   });
 });

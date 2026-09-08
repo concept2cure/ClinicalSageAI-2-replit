@@ -134,9 +134,19 @@ export function serverError(
   const detail = err instanceof Error ? err.message : 'Operation failed';
   /* Set by the requestId middleware (server/middleware/enterprise-security.ts)
      before any route runs, so reading it back off the response needs no change
-     at the 272 call sites. Absent only in a unit test that never mounted the
-     middleware, where a null id is honest rather than a fabricated one. */
-  const header = res.getHeader('X-Request-Id');
+     at the call sites. Absent only in a unit test that never mounted the
+     middleware, where a null id is honest rather than a fabricated one.
+
+     `getHeader` itself is probed rather than called outright: this already
+     intended to tolerate a response with no request id, but it assumed the
+     METHOD was there, so a route test with a minimal `res` double threw
+     "res.getHeader is not a function" from inside the error path — the one
+     path a fail-closed test is usually driving. Absent method and absent
+     header mean the same thing here, and neither is worth a crash. */
+  const header =
+    typeof (res as { getHeader?: unknown }).getHeader === 'function'
+      ? res.getHeader('X-Request-Id')
+      : undefined;
   const correlationId = typeof header === 'string' && header ? header : null;
 
   log.error(`${where} failed`, {

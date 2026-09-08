@@ -8,7 +8,12 @@ import { Request, Response } from 'express';
 import { createRateLimiter } from '../../middleware/rateLimiter';
 import { createScopedLogger } from '../../utils/logger.js';
 import { evaluateIndReadiness } from '../../services/ind-lifecycle/ind-readiness-service';
-import { validateSequenceLeaves } from '../../services/ind-lifecycle/ind-sequence-validation';
+import {
+  validateSequenceLeaves,
+  isSequenceFilingType,
+  SEQUENCE_FILING_TYPES,
+  type SequenceFilingType,
+} from '../../services/ind-lifecycle/ind-sequence-validation';
 
 const logger = createScopedLogger('ind-lifecycle-routes');
 
@@ -78,19 +83,35 @@ export function sendPdf(res: Response, filename: string, buf: Buffer): void {
 }
 
 /** Build a readiness report from a `readinessInput` body fragment, or null. */
-export function readinessFrom(input: any) {
+export function readinessFrom(input: any, overdueSafetyReports?: number) {
   if (!input || (input.filingType !== 'initial' && input.filingType !== 'amendment')) return null;
   return evaluateIndReadiness({
     filingType: input.filingType,
     sectionStatus: input.sectionStatus ?? {},
     completedForms: input.completedForms,
-    overdueSafetyReports: input.overdueSafetyReports,
+    // The submission-scoped routes pass the register's count; a caller-supplied
+    // number is only used where no submission is in scope.
+    overdueSafetyReports: overdueSafetyReports ?? input.overdueSafetyReports,
   });
+}
+
+/** The accepted sequence-validation filingType values, for 400 messages. */
+export const FILING_TYPE_VALUES = SEQUENCE_FILING_TYPES.map((t) => `'${t}'`).join('|');
+
+/**
+ * Parse an optional sequence-validation `filingType` from a body / query value:
+ * undefined when absent (the caller derives it from the stored sequence via
+ * filingTypeForSequence), the type when valid, null when present but not a
+ * known type (the caller answers 400 rather than silently coercing).
+ */
+export function filingTypeParam(raw: unknown): SequenceFilingType | null | undefined {
+  if (raw === undefined || raw === null || raw === '') return undefined;
+  return isSequenceFilingType(raw) ? raw : null;
 }
 
 /** Validate a `sequenceValidationInput` body fragment, or null. */
 export function validationFrom(input: any) {
-  if (!input || (input.filingType !== 'initial' && input.filingType !== 'amendment') || !Array.isArray(input.leaves)) {
+  if (!input || !isSequenceFilingType(input.filingType) || !Array.isArray(input.leaves)) {
     return null;
   }
   return validateSequenceLeaves({ filingType: input.filingType, leaves: input.leaves });

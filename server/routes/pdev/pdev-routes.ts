@@ -721,6 +721,9 @@ const evidenceAttachBodySchema = z.object({
   linkType: z.enum(['supports', 'contradicts', 'references', 'supersedes']).optional(),
   strength: z.enum(['strong', 'moderate', 'weak']).optional(),
   rationale: z.string().max(4000).optional(),
+  /* §11.10(e) reason-for-change from the governed confirm dialog. The dialog
+     enforces its own minimum length client-side; bounded here. */
+  reasonForChange: z.string().max(4000).optional(),
 });
 
 router.post(
@@ -750,6 +753,7 @@ router.post(
         linkType: parsed.data.linkType,
         strength: parsed.data.strength,
         rationale: parsed.data.rationale,
+        reasonForChange: parsed.data.reasonForChange,
       });
       return created(res, result);
     } catch (err) {

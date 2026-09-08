@@ -8,8 +8,10 @@ import { I } from '../icons';
 import { PMA_MODULES, PMA_PHASES, PMA_TRIAL_METRICS, type PmaPhase } from '../data/pma';
 import type { Program } from '../data/programs';
 import { useProgramExtras } from '../hooks/useProgramExtras';
+import { useEstarExport, exportStatusLine } from '../hooks/useEstarExport';
 import { PathwayPanes } from './pathway/PathwayPanes';
 import { EstarFilingPanel } from './EstarFilingPanel';
+import { OfficialEstarPanel, officialEstarTypeFor, officialEstarVariantFor } from './OfficialEstarPanel';
 import type { EditorSectionRef } from '../../v2/editorTarget';
 
 export interface PmaSurfaceProps {
@@ -73,6 +75,21 @@ export function PmaSurface({ program, onAskAna, onOpenEditor }: PmaSurfaceProps)
     : PMA_TRIAL_METRICS;
   const totalDocs = sourceModules.reduce((s, m) => s + m.docs, 0);
 
+  /* Real export action — POST /api/510k/estar/build with the program's ident
+     and useProjectContent. The server reads THIS program's governed PMA
+     document (the 21 CFR 814.20 sections authored in the editor) and renders
+     one PDF per authored section plus the combined PDF/DOCX, labelled as a
+     draft content package — NOT the official FDA eSTAR. Same hook, same
+     entitlement contract (locked-never-dead) as the 510(k) surface. */
+  const estarExport = useEstarExport();
+  const exportStatus = exportStatusLine(estarExport.busy, estarExport.outcome);
+  const entitlementLocked = estarExport.outcome?.blockedByEntitlement === true;
+  const lockedTitle = entitlementLocked
+    ? estarExport.outcome?.requiredTier
+      ? `Locked — requires the ${estarExport.outcome.requiredTier} plan (device assembly readiness)`
+      : 'Locked — requires a higher plan (device assembly readiness)'
+    : null;
+
   const workspace = (
     <>
       <div className="section-hdr">
@@ -90,8 +107,35 @@ export function PmaSurface({ program, onAskAna, onOpenEditor }: PmaSurfaceProps)
               the handler bare would hand the MouseEvent to the editor channel
               as though it were a section ref. */}
           <button className="section-more" onClick={() => onOpenEditor?.()}>Open module editor {I.right}</button>
+          <button
+            className="section-more"
+            disabled={estarExport.busy || !program || entitlementLocked}
+            title={
+              lockedTitle ??
+              (program
+                ? 'Assemble a draft ZIP of your authored 21 CFR 814.20 sections (one PDF per section plus the combined PDF/DOCX) — NOT the official FDA eSTAR that CDRH ingests'
+                : 'Select a PMA program first')
+            }
+            onClick={() => {
+              if (!program) return;
+              void estarExport.exportDraftPackage({ id: program.id, code: program.code, title: program.title });
+            }}
+          >
+            Export PMA package (draft) {I.download}
+          </button>
         </div>
       </div>
+
+      {exportStatus && (
+        <div className="section-sub" role="status" style={{ marginTop: 4 }}>
+          {entitlementLocked ? (
+            <span className="status-pill review" style={{ marginRight: 6 }}>
+              Locked
+            </span>
+          ) : null}
+          {exportStatus}
+        </div>
+      )}
 
       <div className="phases">
         {phases.map((p, i) => (
@@ -167,6 +211,16 @@ export function PmaSurface({ program, onAskAna, onOpenEditor }: PmaSurfaceProps)
           </button>
         ))}
       </div>
+
+      {/* The official FDA eSTAR PDF — readiness gate, the governed field
+          preview and the one Generate control, produced on the same vendored
+          nIVD / IVD template FDA ships for 510(k), De Novo and PMA. Both the
+          family and the pathway follow the PROGRAM, never this surface: a
+          literal type="pma" here mapped a De Novo or 510(k) program opened on
+          the PMA surface onto the PMA field map. The draft package button in
+          the header stays: it is the authored-content ZIP, not the official
+          eSTAR. */}
+      <OfficialEstarPanel program={program} type={officialEstarTypeFor(program)} variant={officialEstarVariantFor(program)} />
 
       {/* eSTAR filing journey — live registration prerequisites + tracked
           submissions (register → produce → track), org-scoped from the session. */}

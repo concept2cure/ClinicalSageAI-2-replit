@@ -11,6 +11,7 @@
 import { assertRlsEnforcementForProduction } from '../db/rlsEnforcement';
 import { assertAuditSealPostureForProduction } from '../services/audit/auditSealPosture';
 import { assertAiGovernancePostureForProduction } from '../startup/ai-governance-posture';
+import { assertSensitivePlacementConfiguration } from '../services/ai-gateway/sensitive-placement-policy';
 
 type Environment = 'development' | 'staging' | 'production' | 'test';
 
@@ -297,6 +298,7 @@ assertAuditSealPostureForProduction();
 // runtime behaviour. No-op outside production. See
 // server/startup/ai-governance-posture.ts.
 assertAiGovernancePostureForProduction();
+assertSensitivePlacementConfiguration();
 
 // Export configuration for the current environment
 export const config = {

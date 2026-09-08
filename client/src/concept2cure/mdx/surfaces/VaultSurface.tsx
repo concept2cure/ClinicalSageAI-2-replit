@@ -2,7 +2,7 @@
  * VaultSurface — the document management surface (Document vault).
  *
  * Port of the kit's Phase 5 full vault surface
- * (design-system/ui_kits/mdx/surfaces/Vault.jsx, mapped to this file by
+ * (ui_kits/mdx/surfaces/Vault.jsx, mapped to this file by
  * PHASE_5_INSTALL.md): folder rail on the left, DocumentsPanel as the
  * center pane (framework filter pills included), version + audit drawer
  * on the right — replacing the old workbench-tab body this surface
@@ -188,6 +188,12 @@ export function VaultSurface({ program, onAskAna, onOpenEditor }: VaultSurfacePr
                  actually stored, hash and all. */
               if (outcome.succeeded.length) live.refresh();
             }}
+            /* Same reason as the v2 Vault's picker: WCAG 3.3.2 applies to the
+               control, not to whether it is painted, and a script can focus a
+               display:none file input. This copy was missed when that one was
+               labelled, which is why the a11y sweep still reported one 3.3.2
+               finding with the defect recorded as fixed. */
+            aria-label="Choose documents to upload to the vault"
           />
           <button
             className="btn primary small"

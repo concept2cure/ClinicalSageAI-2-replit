@@ -20,9 +20,15 @@ function findingsBlock(findings: CtdReadinessFinding[]): string {
     .join('\n');
 }
 
+/** The report's overall verdict. Nothing assessed is not "no blocking findings". */
+export function readinessVerdict(result: CtdAuthoringReadinessResult): string {
+  if (!result.assessed) return 'NOT ASSESSED — no module QC verdict was supplied; nothing here says the filing is ready';
+  return result.ready ? 'READY — no blocking findings' : 'NOT READY — blocking findings present';
+}
+
 /** Render a CTD authoring-readiness rollup to a PDF report. Deterministic. */
 export async function renderCtdReadinessPdf(result: CtdAuthoringReadinessResult): Promise<Buffer> {
-  const verdict = result.ready ? 'READY — no blocking findings' : 'NOT READY — blocking findings present';
+  const verdict = readinessVerdict(result);
 
   const moduleLines = result.modules
     .map((m) => {

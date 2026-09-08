@@ -1,0 +1,75 @@
+/* Master Licensing — the enforcement mode control.
+ *
+ * Only the rules the shared `.ml-*` block in misc-surfaces-v2.css does not
+ * already provide. The segmented control, the state cards, the sub-text and
+ * the icons are all reused from there; what is added here is the card that
+ * holds the control, the per-option explanations under it, and the
+ * before-you-confirm warning that carries the impact count.
+ */
+
+.c2c-v2 .ml-enf-mode {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--bg-050);
+}
+
+.c2c-v2 .ml-enf-mode-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px;
+}
+
+/* The per-option explanations. Each option changes what happens to a real
+   customer's request, so every one carries its consequence in words rather
+   than relying on the label alone. */
+.c2c-v2 .ml-enf-mode-opts {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.c2c-v2 .ml-enf-mode-opt {
+  font-size: 11.5px;
+  line-height: 1.55;
+  color: var(--text-300);
+}
+
+.c2c-v2 .ml-enf-mode-opt b {
+  color: var(--text-100);
+  font-weight: 600;
+}
+
+.c2c-v2 .ml-enf-mode-opt[data-current='true'] {
+  color: var(--text-200);
+}
+
+/* The dangerous-transition notice. Informs, never obstructs — the operator may
+   well have decided those denials are correct. */
+.c2c-v2 .ml-enf-mode-warn {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  padding: 10px 12px;
+  border: 1px solid color-mix(in srgb, var(--warning) 34%, transparent);
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--warning) 8%, transparent);
+}
+
+.c2c-v2 .ml-enf-mode-warn p {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--text-200);
+  max-width: 78ch;
+}
+
+.c2c-v2 .ml-enf-mode-warn .ml-enf-ic {
+  color: var(--warning);
+}

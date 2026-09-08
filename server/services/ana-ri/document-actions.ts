@@ -29,12 +29,17 @@ export interface DocumentAction {
   description: string;
   icon: string;
   /** Template structure for the artifact */
-  template: DocumentTemplate;
+  template: ActionArtifactOutline;
   /** When this action is most relevant */
   relevantLenses: IntentLens[];
 }
 
-export interface DocumentTemplate {
+/* Was `DocumentTemplate` — the fourth export of that name in server/services,
+   each a different shape. This one is neither a registry nor a catalog: it is
+   the heading outline an AnA quick-action scaffolds its artifact from, local to
+   this file. Named for what it is so a reader who greps the noun lands on the
+   module that owns it (intelligence/template-registry.ts). */
+export interface ActionArtifactOutline {
   title: string;
   sections: Array<{
     heading: string;

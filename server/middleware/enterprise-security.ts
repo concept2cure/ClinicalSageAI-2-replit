@@ -181,6 +181,12 @@ export const securityHeaders = config.isDevelopment
           styleSrcElem: ["'self'", scriptSrcDirective, "'unsafe-inline'"],
           styleSrcAttr: ["'unsafe-inline'"],
           connectSrc: ["'self'", 'ws:', 'wss:', 'http://localhost:*'],
+          // helmet adds upgrade-insecure-requests by default. In this report-only
+          // policy the browser ignores it and logs a console error on every page,
+          // and dev serves plain http://localhost where upgrading would break the
+          // app if it were enforced. null is helmet's way to drop a default; the
+          // enforcing production policy below keeps it.
+          upgradeInsecureRequests: null,
           imgSrc: ["'self'", 'data:', 'https:', 'blob:'],
           frameSrc: ["'self'"],
           // Hardening directives (defense-in-depth, report-only in dev):

@@ -18,6 +18,7 @@
 import { Router, type Request, type Response } from 'express';
 import { z } from 'zod';
 import {
+  loadSubmissionFkBySubmissionIdText,
   runOrchestrator,
   getRun,
   getRunAudit,
@@ -39,6 +40,7 @@ import { loadNonclinicalStudiesForProject } from '../services/preclinical/load-n
 import { pool } from '../db.js';
 import auditService from '../services/auditService.js';
 import { createScopedLogger } from '../utils/logger.js';
+import { serverError } from '../lib/api-response';
 
 const log = createScopedLogger('submission-orchestrator');
 
@@ -64,24 +66,24 @@ async function auditOrchestratorAccess(
     | 'orchestrator_validated_hardened',
   details: Record<string, unknown> = {},
 ): Promise<void> {
-  try {
-    const user = (req as any).user;
-    await auditService.logAction({
-      tenantId: organizationId,
-      userId: user?.id ?? user?.userId,
-      action,
-      resourceType: 'submission_orchestrator',
-      // Standalone routes are not bound to a numeric orchestrator runId; a
-      // 'standalone' sentinel keeps these rows distinct from per-run rows
-      // when grouping by (resourceType, resourceId).
-      resourceId: 'standalone',
-      ipAddress: req.ip,
-      userAgent: req.headers['user-agent'] as string | undefined,
-      details,
-    });
-  } catch (err) {
+  const user = (req as any).user;
+
+  const orchestratorAudit = await auditService.logAction({
+    tenantId: organizationId,
+    userId: user?.id ?? user?.userId,
+    action,
+    resourceType: 'submission_orchestrator',
+    // Standalone routes are not bound to a numeric orchestrator runId; a
+    // 'standalone' sentinel keeps these rows distinct from per-run rows
+    // when grouping by (resourceType, resourceId).
+    resourceId: 'standalone',
+    ipAddress: req.ip,
+    userAgent: req.headers['user-agent'] as string | undefined,
+    details,
+  });
+  if (!orchestratorAudit.persisted) {
     log.warn('orchestrator audit write failed (non-fatal)', {
-      err: err instanceof Error ? err.message : String(err),
+      err: orchestratorAudit.error ?? 'no durable store accepted the row',
       action,
       organizationId,
     });
@@ -130,6 +132,38 @@ function requireTenant(req: Request, res: Response): number | null {
     return null;
   }
   return orgId;
+}
+
+/**
+ * The canonical `public.submissions(id)` this run belongs to, or undefined.
+ *
+ * `submission_orchestrator_runs` carries the submission twice: `submission_id`
+ * (TEXT, legacy, free-form) and `submission_id_fk` (INTEGER, joinable). The
+ * orchestrator writes the FK only when a caller supplies one, leaving the
+ * column NULL otherwise — and `submissionFk` is optional on this route, which
+ * no client populates, so every run the product created stored NULL.
+ *
+ * That column is load-bearing. The §11.70 release-signature gate
+ * (services/ectd/release-signature-status.ts) locates a submission's signed
+ * packages with `WHERE submission_id_fk = <id>`, so an unlinked run is
+ * invisible to it: a customer could orchestrate a package AND sign its release
+ * and still be told no release signature existed — a state whose implied
+ * remedy, signing, only adds one more unlinked run.
+ *
+ * `loadSubmissionFkBySubmissionIdText` is the resolver OrchestratorInputs'
+ * own documentation points callers at for exactly this. It is tenant-scoped
+ * against the JWT organization, resolves only an integer-coercible TEXT id,
+ * and returns null rather than guessing — so a business-domain id like
+ * 'SUB-2026-001' still stores NULL, and the gate reports that submission as
+ * undetermined rather than unsigned. Best-effort throughout: the resolver
+ * swallows its own errors and the run never blocks on this.
+ */
+async function resolveSubmissionFk(
+  inputs: Omit<OrchestratorInputs, 'organizationId'>,
+  organizationId: number,
+): Promise<number | undefined> {
+  if (typeof inputs.submissionFk === 'number') return inputs.submissionFk;
+  return (await loadSubmissionFkBySubmissionIdText(inputs.submissionId, organizationId)) ?? undefined;
 }
 
 /**
@@ -208,7 +242,8 @@ const CSRInputSchema = z.object({
   studyDesign: z.string(),
   primaryEndpoint: z.string(),
   primaryResult: z.string(),
-  sampleSize: z.number(),
+  /** null = not recorded; never 0, which reads as "no subjects enrolled". */
+  sampleSize: z.number().nullable(),
   ittPopulation: z.number().optional(),
   treatmentArms: z.array(z.string()).optional(),
   topAEs: z.array(z.object({ pt: z.string(), rate: z.string(), severity: z.string().optional() })).optional(),
@@ -437,12 +472,13 @@ router.post('/runs', async (req: Request, res: Response) => {
     }
   } catch (err) {
     log.error('Input assembly failed', { err: err instanceof Error ? err.message : String(err), organizationId });
-    return res.status(500).json({ error: 'input_assembly_failed', message: err instanceof Error ? err.message : 'unknown' });
+    return serverError(res, log, 'saving runs', err);
   }
 
   try {
     const result = await runOrchestrator({
       ...orchestratorInputs,
+      submissionFk: await resolveSubmissionFk(orchestratorInputs, organizationId),
       organizationId,
     });
     return res.json({
@@ -480,10 +516,7 @@ router.post('/runs', async (req: Request, res: Response) => {
       },
     });
   } catch (err) {
-    return res.status(500).json({
-      error: 'orchestrator_failed',
-      message: err instanceof Error ? err.message : String(err),
-    });
+    return serverError(res, log, 'saving runs', err);
   }
 });
 
@@ -498,10 +531,15 @@ router.get('/runs/:runId', async (req: Request, res: Response) => {
   const organizationId = requireTenant(req, res);
   if (organizationId == null) return;
 
-  const run = await getRun(String(req.params.runId), organizationId);
-  if (!run) return res.status(404).json({ error: 'run_not_found' });
-  // Redact the sign step's snapshot from the response (see redactStepOutputRef).
-  return res.json({ ...run, steps: run.steps.map(redactStepOutputRef) });
+  try {
+    const run = await getRun(String(req.params.runId), organizationId);
+    if (!run) return res.status(404).json({ error: 'run_not_found' });
+    // Redact the sign step's snapshot from the response (see redactStepOutputRef).
+    return res.json({ ...run, steps: run.steps.map(redactStepOutputRef) });
+  } catch (err) {
+    // A read that failed is not a run that does not exist.
+    return serverError(res, log, 'reading the run', err);
+  }
 });
 
 /**
@@ -517,11 +555,17 @@ router.get('/runs/:runId/audit', async (req: Request, res: Response) => {
   if (organizationId == null) return;
 
   const runId = String(req.params.runId);
-  const run = await getRun(runId, organizationId);
-  if (!run) return res.status(404).json({ error: 'run_not_found' });
+  try {
+    const run = await getRun(runId, organizationId);
+    if (!run) return res.status(404).json({ error: 'run_not_found' });
 
-  const events = await getRunAudit(runId, organizationId);
-  return res.json({ runId, events });
+    const events = await getRunAudit(runId, organizationId);
+    return res.json({ runId, events });
+  } catch (err) {
+    // The audit trail is the compliance record: a failed read must not render
+    // as "no recorded actions".
+    return serverError(res, log, 'reading the run audit', err);
+  }
 });
 
 /**
@@ -539,7 +583,12 @@ router.post('/runs/:runId/regenerate', async (req: Request, res: Response) => {
   const organizationId = requireTenant(req, res);
   if (organizationId == null) return;
 
-  const previousRun = await getRun(String(req.params.runId), organizationId);
+  let previousRun;
+  try {
+    previousRun = await getRun(String(req.params.runId), organizationId);
+  } catch (err) {
+    return serverError(res, log, 'reading the run', err);
+  }
   if (!previousRun) return res.status(404).json({ error: 'run_not_found' });
 
   const RegenSchema = buildRunSchema({
@@ -560,17 +609,17 @@ router.post('/runs/:runId/regenerate', async (req: Request, res: Response) => {
       },
       changedStep as StepKey | undefined
     );
+    // Every step re-ran on a NEW run; `regenerated` is the list of steps that
+    // were stale on the superseded run, not a subset that was recomputed.
     return res.json({
       runId: result.run.runId,
+      supersededRunId: result.supersededRunId,
       status: result.run.status,
       regenerated: result.regenerated,
       steps: result.run.steps.map(s => ({ key: s.key, status: s.status })),
     });
   } catch (err) {
-    return res.status(500).json({
-      error: 'regenerate_failed',
-      message: err instanceof Error ? err.message : String(err),
-    });
+    return serverError(res, log, 'regenerating the run', err);
   }
 });
 
@@ -603,7 +652,7 @@ router.post('/m2/qos', async (req: Request, res: Response) => {
     });
     return res.json(summary);
   } catch (err) {
-    return res.status(500).json({ error: 'm23_failed', message: err instanceof Error ? err.message : String(err) });
+    return serverError(res, log, 'saving qos', err);
   }
 });
 
@@ -628,7 +677,7 @@ router.post('/m2/nonclinical', async (req: Request, res: Response) => {
     });
     return res.json(summary);
   } catch (err) {
-    return res.status(500).json({ error: 'm24_failed', message: err instanceof Error ? err.message : String(err) });
+    return serverError(res, log, 'saving nonclinical', err);
   }
 });
 
@@ -653,7 +702,7 @@ router.post('/m2/clinical', async (req: Request, res: Response) => {
     });
     return res.json(summary);
   } catch (err) {
-    return res.status(500).json({ error: 'm27_failed', message: err instanceof Error ? err.message : String(err) });
+    return serverError(res, log, 'saving clinical', err);
   }
 });
 
@@ -683,7 +732,7 @@ router.post('/m2/clinical-overview', async (req: Request, res: Response) => {
     });
     return res.json(summary);
   } catch (err) {
-    return res.status(500).json({ error: 'm25_failed', message: err instanceof Error ? err.message : String(err) });
+    return serverError(res, log, 'saving clinical overview', err);
   }
 });
 
@@ -707,7 +756,7 @@ router.post('/csr/tabulate', async (req: Request, res: Response) => {
     });
     return res.json(tables);
   } catch (err) {
-    return res.status(500).json({ error: 'csr_tabulate_failed', message: err instanceof Error ? err.message : String(err) });
+    return serverError(res, log, 'tabulating the CSR', err);
   }
 });
 
@@ -751,7 +800,14 @@ router.post('/validate/hardened', async (req: Request, res: Response) => {
   if (!parsed.success) {
     return res.status(400).json({ error: 'invalid_request', details: parsed.error.flatten() });
   }
-  const { leaves, backboneXml, ...context } = parsed.data;
+  const { leaves, backboneXml, ...body } = parsed.data;
+  /* Tenant scope comes from the JWT, never from the request body. The spread
+     above carries whatever the caller sent, so the authenticated org is applied
+     LAST and overwrites any `organizationId` a client tried to supply —
+     otherwise this endpoint would let a caller name the tenant whose sequence
+     history it reads. The request schema does not accept the field either; this
+     is the belt to that braces, because the two are edited independently. */
+  const context = { ...body, organizationId };
   try {
     const result = await validateEctdPackageHardened(leaves, context, backboneXml);
     await auditOrchestratorAccess(req, organizationId, 'orchestrator_validated_hardened', {
@@ -769,7 +825,7 @@ router.post('/validate/hardened', async (req: Request, res: Response) => {
       findings: flattenFindings(result),
     });
   } catch (err) {
-    return res.status(500).json({ error: 'validation_failed', message: err instanceof Error ? err.message : String(err) });
+    return serverError(res, log, 'saving hardened', err);
   }
 });
 

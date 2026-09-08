@@ -55,15 +55,6 @@ export function kriStatusOf(
   return worse(kri.red) ? 'red' : worse(kri.amber) ? 'amber' : 'green';
 }
 
-/** Mirrors rbm-engine.ts qtlStatus(). No value or no limit → `not_evaluated`. */
-export function qtlStatusOf(
-  q: { current: number | null; secondary: number | null; threshold: number | null },
-): string {
-  if (q.current == null || q.threshold == null) return 'not_evaluated';
-  const v = Number(q.current);
-  if (!Number.isFinite(v)) return 'not_evaluated';
-  return v >= q.threshold ? 'breached' : (q.secondary != null && v >= q.secondary) ? 'approaching' : 'within';
-}
 
 /* -- Status vocabularies -- */
 

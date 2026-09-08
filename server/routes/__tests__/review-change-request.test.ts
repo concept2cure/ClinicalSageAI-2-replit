@@ -45,9 +45,29 @@ function executableOnly(source: string): string {
   return source.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
 }
 
-const ROUTE = executableOnly(
-  ROUTE_SOURCE.slice(ROUTE_SOURCE.indexOf("router.post('/workflows/:workflowId/change-request'")),
-);
+/**
+ * The change-request HANDLER, and nothing after it.
+ *
+ * This used to slice from the route's opening line to the END OF FILE, which
+ * was only ever correct because change-request happened to be the last route in
+ * the module. When the decision / delegate / comment / resolve writes landed
+ * after it — and those DO legitimately update workflow_approvals and
+ * document_workflows — the "never writes to workflow_approvals" assertions
+ * below started reading THEIR bodies and failing on code they were never about.
+ *
+ * A guard that depends on being last in the file is not a guard. The slice now
+ * ends at the next route registration, so what it inspects is the handler it
+ * names.
+ */
+function handlerSource(startMarker: string): string {
+  const from = ROUTE_SOURCE.indexOf(startMarker);
+  if (from < 0) return '';
+  const rest = ROUTE_SOURCE.slice(from + startMarker.length);
+  const next = rest.search(/\n\s*router\.(get|post|put|patch|delete)\(/);
+  return startMarker + (next < 0 ? rest : rest.slice(0, next));
+}
+
+const ROUTE = executableOnly(handlerSource("router.post('/workflows/:workflowId/change-request'"));
 const MODULE = executableOnly(ROUTE_SOURCE);
 
 describe('the change request is recorded where the board will actually read it', () => {

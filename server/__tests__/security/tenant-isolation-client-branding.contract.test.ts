@@ -36,7 +36,7 @@ vi.mock('../../utils/feature-persistence', () => ({
   createFeatureStore: () => store,
 }));
 vi.mock('../../services/auditService', () => ({
-  default: { logAction: vi.fn(async () => undefined) },
+  default: { logAction: vi.fn(async (..._a: any[]) => ({ persisted: true, chained: true, tamperProof: true })) },
 }));
 
 let app: express.Express;

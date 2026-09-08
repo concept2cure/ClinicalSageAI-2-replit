@@ -108,7 +108,6 @@ interface PlatformCapability {
 // ─── Platform Controller ────────────────────────────────────
 
 class AnaPlatformController {
-
   // ── Authorization ───────────────────────────────────────
 
   /**
@@ -599,20 +598,20 @@ class AnaPlatformController {
    * (§11.10(e), §11.70).
    */
   private async auditLog(orgId: number, action: string, details: Record<string, unknown>) {
-    try {
-      const actorId = Number(details.actor);
-      await auditService.logAction({
-        organizationId: orgId,
-        // `actor` is free-text on this path (often a subsystem name, not a
-        // user id); only a real numeric id is passed as the actor, otherwise
-        // it stays in details rather than being coerced into a fake user.
-        userId: Number.isFinite(actorId) && actorId > 0 ? actorId : undefined,
-        action: `ana:${action}`,
-        resourceType: 'organizations',
-        resourceId: String(orgId),
-        details,
-      });
-    } catch {
+    const actorId = Number(details.actor);
+
+    const anaPlatformAudit = await auditService.logAction({
+      organizationId: orgId,
+      // `actor` is free-text on this path (often a subsystem name, not a
+      // user id); only a real numeric id is passed as the actor, otherwise
+      // it stays in details rather than being coerced into a fake user.
+      userId: Number.isFinite(actorId) && actorId > 0 ? actorId : undefined,
+      action: `ana:${action}`,
+      resourceType: 'organizations',
+      resourceId: String(orgId),
+      details,
+    });
+    if (!anaPlatformAudit.persisted) {
       // Audit logging should never block the primary action
       console.error(`[Ana Platform Controller] Audit log failed for ${action} on org ${orgId}`);
     }

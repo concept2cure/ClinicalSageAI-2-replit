@@ -275,3 +275,121 @@ describe('mandatory authoring object authorization middleware', () => {
     expect(h.query).not.toHaveBeenCalled();
   });
 });
+
+describe('the tracked-change-decision routes — the regex miss that let them run unchecked', () => {
+  /**
+   * These sit under /documents/:id, not /docs/:id, and docMatch above only
+   * matches /docs/ — so they reached the handler with no authorization check
+   * at all: targetForRequest returned null and the middleware called next()
+   * unconditionally. actionFromPath's own `review` alternatives list
+   * 'tracked-change' and 'decision', which looks like it should have caught
+   * this, but the real path segment is `tracked-change-decisions` and every
+   * alternative in that regex requires a whole segment — `tracked-change` is
+   * followed by `-`, not `/` or end-of-string — so it falls through to 'edit'.
+   * That is also the CORRECT action: the content change lands via
+   * PATCH /sections/:sectionId, already gated as 'edit'.
+   */
+  it('denies a same-tenant member with no doc_permissions grant — this is the case the fix exists for', async () => {
+    installQueryBehavior({ roles: [] });
+    const req = request({
+      method: 'POST',
+      path: `/authoring/documents/${DOC_ID}/tracked-change-decisions`,
+      user: { ...author, id: 'user-outsider', userId: 'user-outsider' },
+    });
+    const res = response();
+    const next = vi.fn();
+
+    await authoringObjectAuthorization(req, res, next);
+
+    expect(next).not.toHaveBeenCalled();
+    expect(res.status).toHaveBeenCalledWith(403);
+    expect((res.body as any).error.code).toBe('AUTHORING_OBJECT_FORBIDDEN');
+  });
+
+  it('denies the same caller on the bulk route identically', async () => {
+    installQueryBehavior({ roles: [] });
+    const req = request({
+      method: 'POST',
+      path: `/authoring/documents/${DOC_ID}/tracked-change-decisions/bulk`,
+      user: { ...author, id: 'user-outsider', userId: 'user-outsider' },
+    });
+    const res = response();
+    const next = vi.fn();
+
+    await authoringObjectAuthorization(req, res, next);
+
+    expect(next).not.toHaveBeenCalled();
+    expect(res.status).toHaveBeenCalledWith(403);
+  });
+
+  it('still allows the document author — an AUTHOR grant is enough to record a decision', async () => {
+    installQueryBehavior({ roles: ['AUTHOR'] });
+    const req = request({
+      method: 'POST',
+      path: `/authoring/documents/${DOC_ID}/tracked-change-decisions`,
+      user: author,
+    });
+    const res = response();
+    const next = vi.fn();
+
+    await authoringObjectAuthorization(req, res, next);
+
+    expect(next).toHaveBeenCalledOnce();
+    expect(res.status).not.toHaveBeenCalled();
+    expect((res.locals as any).authoringAuthorization).toMatchObject({ action: 'edit', docId: DOC_ID });
+  });
+
+  it('a REVIEWER who can review but not edit is still refused here — the same person can accept via /sections/:id, so this is not a workflow lockout', async () => {
+    installQueryBehavior({ roles: ['REVIEWER'] });
+    const req = request({
+      method: 'POST',
+      path: `/authoring/documents/${DOC_ID}/tracked-change-decisions`,
+      user: { ...author, id: 'user-reviewer', userId: 'user-reviewer' },
+    });
+    const res = response();
+    const next = vi.fn();
+
+    await authoringObjectAuthorization(req, res, next);
+
+    expect(next).not.toHaveBeenCalled();
+    expect(res.status).toHaveBeenCalledWith(403);
+  });
+
+  it('refuses a FROZEN document with 409, not a silent pass-through', async () => {
+    installQueryBehavior({ status: 'FROZEN', roles: ['AUTHOR'] });
+    const req = request({
+      method: 'POST',
+      path: `/authoring/documents/${DOC_ID}/tracked-change-decisions`,
+      user: author,
+    });
+    const res = response();
+    const next = vi.fn();
+
+    await authoringObjectAuthorization(req, res, next);
+
+    expect(next).not.toHaveBeenCalled();
+    expect(res.status).toHaveBeenCalledWith(409);
+    expect((res.body as any).error.code).toBe('AUTHORING_DOCUMENT_IMMUTABLE');
+  });
+
+  it('does not match a document id that merely starts with "docs" or an unrelated /documents/ route', async () => {
+    // Sanity check on the regex's boundaries: it must not swallow neighbouring
+    // routes this fix deliberately leaves alone (see the production comment —
+    // /documents/:id/review and /request-review have different, incompatible
+    // role requirements and must keep going through their own route RBAC).
+    installQueryBehavior({ roles: [] });
+    const req = request({
+      method: 'POST',
+      path: `/authoring/documents/${DOC_ID}/review`,
+      user: { ...author, id: 'user-outsider', userId: 'user-outsider' },
+    });
+    const res = response();
+    const next = vi.fn();
+
+    await authoringObjectAuthorization(req, res, next);
+
+    // Falls through to `return null` — untouched by this fix, exactly as before.
+    expect(next).toHaveBeenCalledOnce();
+    expect(h.query).not.toHaveBeenCalled();
+  });
+});

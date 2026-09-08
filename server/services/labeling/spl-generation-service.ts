@@ -1,16 +1,33 @@
 /**
  * SPL (Structured Product Labeling) XML generation service.
  *
- * Generates a valid FDA SPL XML skeleton from structured product information
- * and validates SPL XML documents for structural completeness. This is a
- * higher-level convenience layer that accepts common product attributes
- * (name, NDC, ingredients, labeling text) and produces a conformant SPL XML
- * document ready for FDA submission tooling.
+ * A higher-level convenience layer over the canonical generator: it accepts
+ * common product attributes (name, NDC, ingredients, labeling text), maps them
+ * onto an `SplSpec`, and hands assembly to `spl-generator`.
+ *
+ * ── Why it delegates rather than building XML itself ─────────────────────────
+ * It used to assemble its own document, and the two implementations disagreed
+ * in ways that mattered:
+ *
+ *   • Sections were emitted as direct children of <document>. SPL nests them
+ *     document/component/structuredBody/component/section, so every file this
+ *     produced was schema-invalid — while the surface reported "It passes the
+ *     structural check", because the check only looked for a <component> tag
+ *     and the section wrappers are <component>.
+ *   • Ids came from a 32-bit string hash smeared into UUID shape. setId is the
+ *     identity FDA uses to decide that two submissions are versions of the same
+ *     labeling; a 32-bit space shared across every tenant is a collision
+ *     waiting to be someone else's label.
+ *   • The NDC and route were accepted and then dropped: the surface collects an
+ *     NDC, the route passes it here, and it appeared nowhere in the download.
+ *
+ * One assembly, one id derivation, one place a defect gets fixed.
  *
  * Pure: no DB, no network, no LLM. Identical input → identical output.
  *
  * @module server/services/labeling/spl-generation-service
  */
+import { generateSpl, splDeterministicGuid, type SplSpec } from './spl-generator';
 
 // ── SPL LOINC Section Codes (NLM standard) ──────────────────────────────────
 const SECTION_CODES = {
@@ -27,7 +44,15 @@ const HUMAN_PRESCRIPTION_DRUG_LABEL = '34391-3';
 
 export interface SplGenerationInput {
   productName: string;
+  /** NDC product or package code as recorded. Carried into the document. */
   ndc?: string;
+  /**
+   * Version of THIS labeling under its setId. FDA requires it to advance with
+   * each new version of the same label; the document id is derived from
+   * setId+version, so a version that never moves is a document id that never
+   * moves. Defaults to 1 for callers that do not track one yet.
+   */
+  version?: number;
   activeIngredients: Array<{ name: string; strength?: string }>;
   indications: string;
   contraindications: string;
@@ -54,45 +79,19 @@ export interface SplValidationResult {
   findings: SplValidationFinding[];
 }
 
-// ── Helpers ──────────────────────────────────────────────────────────────────
-
-function escapeXml(text: string): string {
-  return text
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&apos;');
-}
-
-/** Deterministic pseudo-GUID from a seed string (not cryptographic). */
-function deterministicGuid(seed: string): string {
-  let hash = 0;
-  for (let i = 0; i < seed.length; i++) {
-    hash = ((hash << 5) - hash + seed.charCodeAt(i)) | 0;
-  }
-  const hex = Math.abs(hash).toString(16).padStart(8, '0');
-  return `${hex.slice(0, 8)}-${hex.slice(0, 4)}-4${hex.slice(1, 4)}-8${hex.slice(1, 4)}-${hex.padEnd(12, '0').slice(0, 12)}`;
-}
-
-function buildSection(code: string, title: string, text: string, seed: string): string {
-  const sectionId = deterministicGuid(`section-${code}-${seed}`);
-  return `    <component>
-      <section>
-        <id root="${sectionId}"/>
-        <code code="${code}" codeSystem="2.16.840.1.113883.6.1" displayName="${escapeXml(title)}"/>
-        <title>${escapeXml(title)}</title>
-        <text>${escapeXml(text)}</text>
-      </section>
-    </component>`;
-}
-
 // ── Public API ────────────────────────────────────────────────────────────────
 
-/**
- * Generate an FDA SPL XML skeleton from structured product info.
- */
-export function generateSplXml(input: SplGenerationInput): SplGenerationResult {
+/** Section order and titles this layer emits, in document order. */
+const LAYER_SECTIONS: Array<{ code: string; title: string; field: keyof SplGenerationInput | 'description' }> = [
+  { code: SECTION_CODES.DESCRIPTION, title: 'DESCRIPTION', field: 'description' },
+  { code: SECTION_CODES.INDICATIONS, title: 'INDICATIONS AND USAGE', field: 'indications' },
+  { code: SECTION_CODES.CONTRAINDICATIONS, title: 'CONTRAINDICATIONS', field: 'contraindications' },
+  { code: SECTION_CODES.WARNINGS, title: 'WARNINGS', field: 'warnings' },
+  { code: SECTION_CODES.DOSAGE, title: 'DOSAGE AND ADMINISTRATION', field: 'dosage' },
+];
+
+/** Every field this layer requires before it will build anything. */
+function requireInput(input: SplGenerationInput): void {
   if (!input.productName) throw new Error('productName is required');
   if (!input.manufacturer) throw new Error('manufacturer is required');
   if (!input.activeIngredients || input.activeIngredients.length === 0) {
@@ -102,53 +101,71 @@ export function generateSplXml(input: SplGenerationInput): SplGenerationResult {
   if (!input.contraindications) throw new Error('contraindications is required');
   if (!input.warnings) throw new Error('warnings is required');
   if (!input.dosage) throw new Error('dosage is required');
+}
+
+/**
+ * Generate an FDA SPL XML document from structured product info.
+ */
+export function generateSplXml(input: SplGenerationInput): SplGenerationResult {
+  requireInput(input);
 
   const seed = `${input.productName}-${input.manufacturer}`;
-  const documentId = deterministicGuid(`doc-${seed}`);
-  const setId = deterministicGuid(`set-${seed}`);
-  const effectiveDate = new Date().toISOString().slice(0, 10).replace(/-/g, '');
-
-  // Build description from active ingredients
+  const version = Number.isInteger(input.version) && (input.version as number) >= 1 ? (input.version as number) : 1;
   const ingredientList = input.activeIngredients
     .map((ai) => (ai.strength ? `${ai.name} ${ai.strength}` : ai.name))
     .join(', ');
   const descriptionText = `${input.productName} contains ${ingredientList}.${input.route ? ` Route of administration: ${input.route}.` : ''}`;
-
-  const sections: string[] = [
-    buildSection(SECTION_CODES.DESCRIPTION, 'DESCRIPTION', descriptionText, seed),
-    buildSection(SECTION_CODES.INDICATIONS, 'INDICATIONS AND USAGE', input.indications, seed),
-    buildSection(SECTION_CODES.CONTRAINDICATIONS, 'CONTRAINDICATIONS', input.contraindications, seed),
-    buildSection(SECTION_CODES.WARNINGS, 'WARNINGS', input.warnings, seed),
-    buildSection(SECTION_CODES.DOSAGE, 'DOSAGE AND ADMINISTRATION', input.dosage, seed),
-  ];
-
-  const xml = `<?xml version="1.0" encoding="UTF-8"?>
-<document xmlns="urn:hl7-org:v3" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-  <id root="${documentId}"/>
-  <code code="${HUMAN_PRESCRIPTION_DRUG_LABEL}" codeSystem="2.16.840.1.113883.6.1" displayName="HUMAN PRESCRIPTION DRUG LABEL"/>
-  <title>${escapeXml(input.productName)}</title>
-  <effectiveTime value="${effectiveDate}"/>
-  <setId root="${setId}"/>
-  <versionNumber value="1"/>
-  <author>
-    <assignedEntity>
-      <representedOrganization>
-        <name>${escapeXml(input.manufacturer)}</name>
-      </representedOrganization>
-    </assignedEntity>
-  </author>
-${sections.join('\n')}
-</document>`;
-
-  return {
-    xml,
-    sectionCount: sections.length,
-    status: 'generated',
+  const text: Record<string, string> = {
+    description: descriptionText,
+    indications: input.indications,
+    contraindications: input.contraindications,
+    warnings: input.warnings,
+    dosage: input.dosage,
   };
+
+  const spec: SplSpec = {
+    documentTypeCode: HUMAN_PRESCRIPTION_DRUG_LABEL,
+    documentTypeDisplayName: 'HUMAN PRESCRIPTION DRUG LABEL',
+    title: input.productName,
+    setId: splDeterministicGuid(`set:${seed}`),
+    versionNumber: version,
+    effectiveDate: new Date().toISOString().slice(0, 10).replace(/-/g, ''),
+    organizationName: input.manufacturer,
+    product: {
+      name: input.productName,
+      ndcCode: input.ndc,
+      ingredients: input.activeIngredients,
+      route: input.route,
+    },
+    sections: LAYER_SECTIONS.map((sec) => ({
+      code: sec.code,
+      title: sec.title,
+      displayName: sec.title,
+      text: text[sec.field as string],
+    })),
+  };
+
+  const built = generateSpl(spec);
+  return { xml: built.xml, sectionCount: spec.sections.length, status: 'generated' };
 }
 
 /**
  * Validate an SPL XML string for structural completeness.
+ *
+ * Two rules changed shape here, both because the surface renders `valid` as
+ * "It passes the structural check":
+ *
+ *   • A section this function itself calls REQUIRED was reported as a warning,
+ *     so a document with no Indications and no Dosage passed. Either they are
+ *     required or they are not; the message said required, so the severity now
+ *     agrees with it.
+ *   • Nothing checked that sections sit inside component/structuredBody, which
+ *     is where SPL puts them — and the `<component>` probe matches the section
+ *     wrappers, so a flat document satisfied it. A file that will not load into
+ *     FDA's tooling cannot be reported as passing.
+ *
+ * Still not FDA's schematron: this is structural, and a clean result here is
+ * not an acceptance prediction.
  */
 export function validateSplStructure(xml: string): SplValidationResult {
   if (!xml || typeof xml !== 'string') {
@@ -184,6 +201,16 @@ export function validateSplStructure(xml: string): SplValidationResult {
     });
   }
 
+  // …and that they are where SPL puts them.
+  if (/<section[\s>]/i.test(xml) && !/<structuredBody>/i.test(xml)) {
+    findings.push({
+      rule: 'structured-body',
+      severity: 'error',
+      message:
+        'Sections are not inside <component><structuredBody> — SPL nests them document/component/structuredBody/component/section',
+    });
+  }
+
   // Check required section codes
   const requiredSections: Array<{ code: string; name: string }> = [
     { code: SECTION_CODES.INDICATIONS, name: 'Indications and Usage' },
@@ -198,7 +225,7 @@ export function validateSplStructure(xml: string): SplValidationResult {
     if (!pattern.test(xml)) {
       findings.push({
         rule: `section-${section.code}`,
-        severity: 'warning',
+        severity: 'error',
         message: `Missing required section: ${section.name} (${section.code})`,
       });
     }

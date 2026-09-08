@@ -267,12 +267,12 @@ export function RbmPatients({ board, onReload }: SubProps) {
       )}
       <RbmWriteNote note={mut.note} />
       <div className="rbm-bar">
-        <span className="rbm-bar-info">scorePatientCohort — robust modified z-score — MIN_COHORT 5 -- {board.summary.patients.scored} subjects -- {scannedAt ? `scored ${scannedAt}` : 'never scored'}</span>
+        <span className="rbm-bar-info">scorePatientCohort — robust modified z-score — MIN_COHORT 5 — {board.summary.patients.scored} subjects — {scannedAt ? `scored ${scannedAt}` : 'never scored'}</span>
         <button className="rbm-btn pri" disabled={mut.busy} onClick={scanCohort}>{I.zap}{mut.busy ? 'Scanning…' : 'Scan cohort'}</button>
       </div>
       <div className="rbm-pt-cols">
         <div className="rbm-card">
-          <div className="rbm-card-h">Cohort — ranked by anomaly score<span className="rbm-card-sub">{flagged} flagged -- {review} in review</span></div>
+          <div className="rbm-card-h">Cohort — ranked by anomaly score<span className="rbm-card-sub">{flagged} flagged — {review} in review</span></div>
           <table className="rbm-tbl"><thead><tr><th>Subject</th><th>Site</th><th>Anomaly</th><th>Top dimension</th><th>Status</th></tr></thead>
             <tbody>{P.map(p => (
               <tr key={p.sid} data-on={open === p.sid || undefined} className="rowbtn" onClick={() => setOpen(p.sid)}>
@@ -334,7 +334,7 @@ export function RbmSites({ board, onReload }: SubProps) {
       )}
       <RbmWriteNote note={mut.note} />
       <div className="rbm-bar">
-        <span className="rbm-bar-info">site-risk-engine — composite from Site Intelligence -- {at ? `scored ${at}` : 'never scored'}</span>
+        <span className="rbm-bar-info">site-risk-engine — composite from Site Intelligence — {at ? `scored ${at}` : 'never scored'}</span>
         <button className="rbm-btn pri" disabled={mut.busy} onClick={recompute}>{I.zap}{mut.busy ? 'Recomputing…' : 'Recompute site risk'}</button>
       </div>
       <div className="rbm-card">
@@ -415,7 +415,7 @@ export function RbmOversight({ board, onTab, onReload }: SubProps) {
                 <td><RbmChip vocab="tier" value={s.tier} /></td>
                 <td>{c.open > 0 ? <button className="rbm-linknum" onClick={() => onTab?.('signals')}>{c.open} open {I.chevRight}</button> : <span className="mut">0</span>}</td>
                 <td>{c.high > 0 ? <button className="rbm-linknum hi" onClick={() => onTab?.('signals')}>{c.high} high {I.chevRight}</button> : <span className="mut">0</span>}</td>
-                <td>{v ? <span className="rbm-visit-set">{I.check}Scheduled — due {v.due} -- {v.owner}</span>
+                <td>{v ? <span className="rbm-visit-set">{I.check}Scheduled — due {v.due} — {v.owner}</span>
                   : <button className="rbm-linkbtn" disabled={mut.busy || planId == null}
                       title={planId == null ? 'This study has no monitoring plan for the visit to attach to' : undefined}
                       onClick={() => setSchedFor(s)}>{I.clock}Schedule visit</button>}</td>
@@ -497,7 +497,7 @@ export function RbmPlan({ board, onReload }: SubProps) {
         <div className="rbm-asmt">
           <div className="rbm-asmt-l">
             <b>{plan.title}</b>
-            <span>strategy <RbmChip vocab="strategy" value={plan.strategy} /> -- {plan.status === 'active' ? 'active' : 'draft — approval pending'} -- updated {plan.updated ?? '—'}</span>
+            <span>strategy <RbmChip vocab="strategy" value={plan.strategy} /> — {plan.status === 'active' ? 'active' : 'draft — approval pending'} — updated {plan.updated ?? '—'}</span>
             {plan.approval ? <span className="rbm-audit">{I.check}Approved by {plan.approval.by} -- {plan.approval.when} -- &quot;{plan.approval.reason}&quot;</span> : null}
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 7, alignItems: 'flex-end' }}>
@@ -514,7 +514,7 @@ export function RbmPlan({ board, onReload }: SubProps) {
         </div>
       )}
       <div className="rbm-bar" style={{ marginBottom: 11 }}>
-        <span className="rbm-bar-info">{acts.length} actions -- {acts.filter(a => a.overdue).length} overdue — escalations, investigations and scheduled visits land here</span>
+        <span className="rbm-bar-info">{acts.length} actions — {acts.filter(a => a.overdue).length} overdue — escalations, investigations and scheduled visits land here</span>
         <button className="rbm-btn" disabled={mut.busy || !plan} title={!plan ? 'Generate a monitoring plan first' : undefined} onClick={() => setAdding(true)}>{I.zap}Add action</button>
       </div>
       <div className="rbm-board">{cols.map(([st, label]) => (

@@ -4,7 +4,7 @@ import request from 'supertest';
 
 const query = vi.fn();
 vi.mock('../../db', () => ({ pool: { query: (...args: unknown[]) => query(...args) } }));
-vi.mock('../../services/auditService', () => ({ default: { logAction: vi.fn() } }));
+vi.mock('../../services/auditService', () => ({ default: { logAction: vi.fn(async (..._a: any[]) => ({ persisted: true, chained: true, tamperProof: true })) } }));
 
 import router from '../mdx-ivdr';
 

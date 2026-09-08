@@ -138,14 +138,19 @@ const SECTION_FOR_CATEGORY: Record<ContentCategory, CategoryMapping> = {
     documentType: 'protocol',
     cfrRef: '312.30(b)',
   },
+  // Placement follows the FDA eCTD Module 1 vocabulary (controlled-vocab/cv-v4-data):
+  // m1.12.1 is PRE-IND CORRESPONDENCE and m1.12.2 is REQUEST TO CHARGE — a 312.30
+  // amendment summary and a new investigator's Form 1572 were filed under both. The
+  // summary of a protocol amendment is cover-letter content (m1.2); a Form 1572 is
+  // a form (m1.1).
   protocol_amendment_summary: {
-    sectionCode: 'm1.12.1',
+    sectionCode: 'm1.2',
     amendmentClass: 'protocol',
     documentType: 'protocol_amendment_summary',
     cfrRef: '312.30(b)',
   },
   new_investigator: {
-    sectionCode: 'm1.12.2',
+    sectionCode: 'm1.1',
     amendmentClass: 'protocol',
     documentType: 'form_1572',
     cfrRef: '312.30(a)',
@@ -168,8 +173,10 @@ const SECTION_FOR_CATEGORY: Record<ContentCategory, CategoryMapping> = {
     documentType: 'clinical_summary',
     cfrRef: '312.31(a)(1)',
   },
+  // m1.14.4.1 is the INVESTIGATOR BROCHURE; m1.14.4.2 is investigational drug
+  // LABELING. An IB revision was filed under labeling.
   investigators_brochure: {
-    sectionCode: 'm1.14.4.2',
+    sectionCode: 'm1.14.4.1',
     amendmentClass: 'information',
     documentType: 'investigators_brochure',
     cfrRef: '312.31(a)(1)',
@@ -252,8 +259,10 @@ export function planIndAmendment(input: IndAmendmentInput): IndAmendmentPlan {
   });
 
   // Every IND amendment carries a cover letter in Module 1 (m1.2). Add one if the
-  // caller did not already include cover content.
-  const hasCover = leaves.some((l) => l.sectionCode === 'm1.2');
+  // caller did not already include one. This keyed on the section, so any other
+  // m1.2 content (an `other` document, a protocol amendment summary) silently
+  // stood in for the cover letter and the amendment shipped without one.
+  const hasCover = leaves.some((l) => l.documentType === 'cover_letter');
   if (!hasCover) {
     leaves.unshift({
       documentId: `cover:${input.indNumber}`,

@@ -80,20 +80,28 @@ router.get('/security-health', async (req: Request, res: Response) => {
 
     // Audit who looked. The check itself can reveal posture (e.g.
     // ClamAV reachable / unreachable) which is useful for SOC.
-    try {
-      const user = (req as any).user;
-      await auditService.logAction({
-        tenantId: user?.organizationId,
-        userId: user?.id ?? user?.userId,
-        action: 'admin_security_health_check',
-        resourceType: 'security_event',
-        resourceId: 'security-health',
-        ipAddress: req.ip,
-        userAgent: req.headers['user-agent'] as string | undefined,
-        details: { overall: report.overall },
+
+    const user = (req as any).user;
+
+    const healthCheckAudit = await auditService.logAction({
+      tenantId: user?.organizationId,
+      userId: user?.id ?? user?.userId,
+      action: 'admin_security_health_check',
+      resourceType: 'security_event',
+      resourceId: 'security-health',
+      ipAddress: req.ip,
+      userAgent: req.headers['user-agent'] as string | undefined,
+      details: { overall: report.overall },
+    });
+    if (!healthCheckAudit.persisted) {
+      // Non-fatal for the response — the health report is still returned — but
+      // it is NOT nothing, so it says so. The catch this replaced could never
+      // run (logAction resolves normally on a persistence failure), so an
+      // admin security-health check that went unrecorded produced no line
+      // anywhere. Now it produces one.
+      log.warn('Security-health audit row was not persisted', {
+        reason: healthCheckAudit.error ?? 'no durable store accepted the row',
       });
-    } catch {
-      /* audit failure is non-fatal */
     }
 
     res.status(httpStatus).json(report);

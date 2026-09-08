@@ -21,6 +21,7 @@
 import React, { useEffect, useState } from 'react';
 import { I } from '../icons';
 import type { SurfaceViewProps } from '../surfaceViews';
+import { usePublishSurfaceContext } from '../surfaceContext';
 import { EmptyState, hasKeys, isRowsWith, type ShapeGuard } from '../dataConnect';
 import { apiRequest } from '@/lib/queryClient';
 import '../styles/project-home-v2.css';
@@ -137,6 +138,76 @@ export function Part11Console(_props: SurfaceViewProps) {
       ? Object.entries(rawSections)
       : [];
 
+  /* What AnA can see of this screen.
+     Three independent reads, each with its own three states, published
+     independently — and on this surface the loading/error distinction is the
+     whole point. "The audit hash chain is intact" is a tamper-evidence claim
+     under 21 CFR Part 11 §11.10; an assistant that made it because a
+     verification request had not returned would be asserting compliance nobody
+     verified. So `integrityValid` is published only when the read resolved, and
+     a failed read publishes the failure by name. */
+  const anaContext = React.useMemo(() => {
+    const chainLine =
+      chainState === 'loading'
+        ? 'the audit hash chain is still being verified'
+        : chainState === 'error' || !chain
+          ? 'the audit hash-chain verification could not be read, so its integrity is UNKNOWN — not verified, and not intact'
+          : `the audit hash chain is ${chain.integrityValid === true ? 'verified intact' : chain.integrityValid === false ? 'BROKEN' : 'reported without an integrity verdict'} over ${chain.totalEntries} entry(ies)`;
+    const statusLine =
+      statusState === 'loading'
+        ? 'the compliance status is still loading'
+        : statusState === 'error' || !status
+          ? 'the compliance status could not be read'
+          : `Part 11 overall status "${status.part11.overallStatus}" across ${sections.length} section(s)`;
+    const soc2Line =
+      soc2State === 'loading'
+        ? 'the SOC 2 control set is still loading'
+        : soc2State === 'error'
+          ? 'the SOC 2 control set could not be read'
+          : soc2
+            ? `${soc2.summary.totalControls} SOC 2 control(s), ${soc2.summary.part11MappedControls} mapped to Part 11`
+            : 'no SOC 2 controls are recorded';
+    return {
+      summary: `Part 11 console: ${chainLine}; ${statusLine}; ${soc2Line}.`,
+      facts: {
+        hashChain: chainState === 'ready' && chain
+          ? {
+              status: chain.chainStatus, integrityValid: chain.integrityValid,
+              totalEntries: chain.totalEntries, brokenLinks: chain.brokenLinks ?? null,
+              algorithm: chain.hashAlgorithm ?? null, verifiedAt: chain.verifiedAt ?? null,
+            }
+          : null,
+        hashChainUnavailable: chainState === 'error' ? 'the chain-integrity read failed — integrity is unknown, not intact' : null,
+        part11: statusState === 'ready' && status
+          ? {
+              overallStatus: status.part11.overallStatus,
+              sections: sections.map(([k, v]) => ({ key: k, title: v.title, status: v.status, platformControl: v.platformControl ?? null })),
+              disclaimer: status.disclaimer ?? null,
+              gamp5: status.gamp5,
+            }
+          : null,
+        part11Unavailable: statusState === 'error' ? 'the compliance-status read failed' : null,
+        soc2: soc2State === 'ready' && soc2
+          ? {
+              summary: soc2.summary,
+              controls: (soc2.controls ?? []).slice(0, 12).map((c) => ({
+                controlId: c.controlId, category: c.category, title: c.title,
+                part11Mapping: c.part11Mapping ?? null,
+                evidenceStatus: c.evidenceStatus, evidenceCount: c.evidenceCount,
+              })),
+            }
+          : null,
+        soc2Unavailable: soc2State === 'error' ? 'the SOC 2 control read failed' : null,
+      },
+      availableActions: [
+        'Read the audit hash-chain integrity verdict and its entry count',
+        'Read the per-section Part 11 status and the platform control behind each',
+        'Read the SOC 2 control set and its Part 11 mappings',
+      ],
+    };
+  }, [chainState, chain, statusState, status, sections, soc2State, soc2]);
+  usePublishSurfaceContext('part11-console', anaContext);
+
   return (
     <div className="cm-body">
       {/* Hash-chain integrity — the headline */}
@@ -149,10 +220,10 @@ export function Part11Console(_props: SurfaceViewProps) {
             : (
               <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap', alignItems: 'center' }}>
                 <div><span className={'rd-chip tone-' + chainTone(chain.chainStatus)} style={{ fontSize: 14 }}>{chain.chainStatus}</span>
-                  <div style={{ fontSize: 12, color: 'var(--c2c-dim,#667085)', marginTop: 4 }}>{chain.integrityValid === true ? 'Integrity valid' : chain.integrityValid === false ? 'Integrity BROKEN' : 'Not verifiable'}</div></div>
-                <div><div style={{ fontSize: 22, fontWeight: 700 }}>{chain.totalEntries}</div><div style={{ fontSize: 12, color: 'var(--c2c-dim,#667085)' }}>Chained entries</div></div>
-                {chain.brokenLinks != null && <div><div style={{ fontSize: 22, fontWeight: 700, color: chain.brokenLinks > 0 ? 'var(--c2c-err,#b42318)' : undefined }}>{chain.brokenLinks}</div><div style={{ fontSize: 12, color: 'var(--c2c-dim,#667085)' }}>Broken links</div></div>}
-                <div style={{ fontSize: 12, color: 'var(--c2c-dim,#667085)' }}>{chain.hashAlgorithm ?? 'SHA-256'} · {chain.chainType ?? 'linear-hash-chain'}{chain.lastHash ? <div className="mono" style={{ wordBreak: 'break-all', marginTop: 2 }}>last: {String(chain.lastHash).slice(0, 24)}…</div> : null}</div>
+                  <div style={{ fontSize: 12, color: 'var(--text-400)', marginTop: 4 }}>{chain.integrityValid === true ? 'Integrity valid' : chain.integrityValid === false ? 'Integrity BROKEN' : 'Not verifiable'}</div></div>
+                <div><div style={{ fontSize: 22, fontWeight: 700 }}>{chain.totalEntries}</div><div style={{ fontSize: 12, color: 'var(--text-400)' }}>Chained entries</div></div>
+                {chain.brokenLinks != null && <div><div style={{ fontSize: 22, fontWeight: 700, color: chain.brokenLinks > 0 ? 'var(--error)' : undefined }}>{chain.brokenLinks}</div><div style={{ fontSize: 12, color: 'var(--text-400)' }}>Broken links</div></div>}
+                <div style={{ fontSize: 12, color: 'var(--text-400)' }}>{chain.hashAlgorithm ?? 'SHA-256'} · {chain.chainType ?? 'linear-hash-chain'}{chain.lastHash ? <div className="mono" style={{ wordBreak: 'break-all', marginTop: 2 }}>last: {String(chain.lastHash).slice(0, 24)}…</div> : null}</div>
               </div>
             )}
         </div>
@@ -172,7 +243,7 @@ export function Part11Console(_props: SurfaceViewProps) {
               <tbody>{sections.map(([code, sec]) => (
                 <tr key={code}>
                   <td className="mono">{code}</td><td>{sec?.title ?? '—'}</td>
-                  <td style={{ color: 'var(--c2c-dim,#667085)', fontSize: 13 }}>{sec?.platformControl ?? '—'}</td>
+                  <td style={{ color: 'var(--text-400)', fontSize: 13 }}>{sec?.platformControl ?? '—'}</td>
                   {/* `sec.status.replace` called a method on a field the row may
                       simply not carry — the same crash as the panel above, one
                       level down. Missing status shows as unknown, not as a throw. */}
@@ -200,7 +271,7 @@ export function Part11Console(_props: SurfaceViewProps) {
         </div>
       </div>
 
-      {status?.disclaimer && <div style={{ fontSize: 12, color: 'var(--c2c-dim,#667085)', padding: '0 4px 16px' }}>{status.disclaimer}</div>}
+      {status?.disclaimer && <div style={{ fontSize: 12, color: 'var(--text-400)', padding: '0 4px 16px' }}>{status.disclaimer}</div>}
     </div>
   );
 }

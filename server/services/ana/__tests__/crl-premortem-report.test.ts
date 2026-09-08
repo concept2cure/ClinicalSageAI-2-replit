@@ -187,6 +187,10 @@ describe('renderArtifactMarkdown — export rendering + honesty guards', () => {
     expect(md).toMatch(/ESTIMATE/);
     expect(md).toMatch(/Top risks/);
     expect(md).toMatch(/Grounding precedent/);
+    // The precedent→risk pairing is positional, not topical, so every
+    // corpus-grounded citation must disclose that it is not verified as
+    // topically specific — a reviewer must not read list order as evidence.
+    expect(md).toMatch(/not verified as topically specific/i);
     expect(md).toMatch(/Prioritized fix-list/);
     expect(md).toMatch(/Precedent citations/);
   });

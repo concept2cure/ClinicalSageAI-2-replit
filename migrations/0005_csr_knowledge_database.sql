@@ -967,6 +967,27 @@ BEGIN
 END $$;
 
 -- Create RLS policies for tables with organization_id
+--
+-- ── The cast is EXTRACTED, not applied blindly ───────────────────────────────
+-- These nine policies read `app.current_org_id` and cast it to int. That GUC
+-- holds the org UUID — server/middleware/establishRequestTenantScope.ts puts the
+-- integer org id in app.current_tenant_id and the uuid in app.current_org_id —
+-- so the cast raised
+--     ERROR: invalid input syntax for type integer: "31e457ff-…"
+-- on every read of csr_studies and its eight siblings, for any connection
+-- carrying a real request scope. Being PERMISSIVE alongside the canonical
+-- tenant_isolation_policy does NOT save it: PostgreSQL evaluates both sides of
+-- the OR, so the raise happens before the other policy can admit the row.
+--
+-- This is the same defect fixed in migrations/0021_enable_rls_everywhere.sql,
+-- and it survived that fix because the tenant sweep only ever rebuilds a policy
+-- named `tenant_isolation_policy` — these are named `rls_org_*`, so nothing
+-- touched them. db/migrations/20260821_uuid_org_guc_cast_heal.sql now repairs
+-- unguarded casts under ANY policy name, which is how existing databases get it.
+--
+-- `substring(… from '^[0-9]+$')` yields NULL for a uuid rather than raising, so
+-- the disjunct is simply not satisfied and the canonical policy decides the row.
+-- An actual integer in the GUC still resolves, so nothing that worked stops.
 DO $$
 DECLARE
   t TEXT;
@@ -978,7 +999,7 @@ BEGIN
   ])
   LOOP
     EXECUTE format(
-      'CREATE POLICY %I ON %I FOR ALL USING (organization_id = current_setting(''app.current_org_id'', true)::int)',
+      'CREATE POLICY %I ON %I FOR ALL USING (organization_id = substring(current_setting(''app.current_org_id'', true) from ''^[0-9]+$'')::int)',
       'rls_org_' || t, t
     );
   END LOOP;

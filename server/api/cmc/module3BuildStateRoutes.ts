@@ -14,69 +14,36 @@
 
 import express from 'express';
 import { getPool } from '../../db';
+import { resolveCmcArtifactProject } from '../../services/cmc/resolve-cmc-artifact-project';
+import { deriveBuildState, getModule3BuildStatus, getSectionLabels } from '../../services/module3-convergence-service';
+import { MODULE3_SECTION_RULES } from '../../services/module3Composer';
 
 const router = express.Router();
 
-// ── Section Labels ────────────────────────────────────────────────────────────
+// ── Canonical section constants — imported, never copied ──────────────────────
+//
+// This file used to carry its OWN copies of the section-label map and the
+// section→source-type rules, and the copies drifted: '3.2.S.4' and '3.2.P.5'
+// here lacked `qc_result`, which the composer counts — so the build screen
+// undercounted a section's sources relative to the compile that consumes them.
+// A build board that disagrees with its own compiler about what feeds a
+// section is the duplication Rule "zero duplication" exists to prevent. The
+// labels come from the convergence service and the rules from the composer;
+// there is nothing left here to drift.
 
-const SECTION_LABELS: Record<string, string> = {
-  '3.1': 'Quality — Table of Contents',
-  '3.2.S.1': 'General Information',
-  '3.2.S.2': 'Manufacture (Drug Substance)',
-  '3.2.S.3': 'Characterisation',
-  '3.2.S.4': 'Control of Drug Substance',
-  '3.2.S.5': 'Reference Standards (Drug Substance)',
-  '3.2.S.6': 'Container Closure System (Drug Substance)',
-  '3.2.S.7': 'Stability (Drug Substance)',
-  '3.2.P.1': 'Description & Composition',
-  '3.2.P.2': 'Pharmaceutical Development',
-  '3.2.P.3': 'Manufacture (Drug Product)',
-  '3.2.P.4': 'Control of Excipients',
-  '3.2.P.5': 'Control of Drug Product',
-  '3.2.P.6': 'Reference Standards (Drug Product)',
-  '3.2.P.7': 'Container Closure System (Drug Product)',
-  '3.2.P.8': 'Stability (Drug Product)',
-  '3.3': 'Literature References',
-};
-
+const SECTION_LABELS = getSectionLabels();
 const ALL_SECTION_KEYS = Object.keys(SECTION_LABELS);
+
+/** section → the source types that feed it, straight from the composer. */
+const SECTION_SOURCE_TYPES: Record<string, string[]> = Object.fromEntries(
+  MODULE3_SECTION_RULES.map((r) => [r.sectionKey, [...r.requiredSourceTypes]]),
+);
 
 // ── Build state derivation ────────────────────────────────────────────────────
 
-export type Module3BuildState =
-  | 'no_sources'
-  | 'sources_uploaded'
-  | 'extraction_pending'
-  | 'extraction_complete'
-  | 'compiled'
-  | 'draft_artifact_created'
-  | 'stale'
-  | 'contradiction_flagged'
-  | 'review'
-  | 'approved'
-  | 'locked';
-
-function deriveBuildState(opts: {
-  sourceObjectCount: number;
-  uploadedSourceCount: number;
-  hasCompiledSection: boolean;
-  isStale: boolean;
-  hasContradictions: boolean;
-  approvalState: string | null;
-  artifactStatus: string | null;
-}): Module3BuildState {
-  // Priority-ordered state derivation
-  if (opts.artifactStatus === 'locked') return 'locked';
-  if (opts.approvalState === 'approved' && !opts.isStale) return 'approved';
-  if (opts.artifactStatus === 'review') return 'review';
-  if (opts.isStale) return 'stale';
-  if (opts.hasContradictions) return 'contradiction_flagged';
-  if (opts.artifactStatus === 'draft' && opts.hasCompiledSection) return 'draft_artifact_created';
-  if (opts.hasCompiledSection) return 'compiled';
-  if (opts.sourceObjectCount > 0) return 'extraction_complete';
-  if (opts.uploadedSourceCount > 0) return 'sources_uploaded';
-  return 'no_sources';
-}
+/* The build-state vocabulary and its ONE derivation live in the convergence
+   service (deriveBuildState); this route re-exports them for its callers. */
+export type { Module3BuildState } from '../../services/module3-convergence-service';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -97,167 +64,39 @@ router.get('/build-state/:projectId', async (req, res) => {
   try {
     const orgId = getOrgId(req);
     const { projectId } = req.params;
-    const pool = getPool();
 
-    // Parallel queries for all data sources
-    const [sourceObjectsRes, compiledSectionsRes, contradictionsRes, artifactsRes, uploadedSourcesRes] =
-      await Promise.all([
-        // 1. Source objects grouped by source type
-        pool.query(
-          `SELECT source_type as "sourceType", COUNT(*) as count
-           FROM cmc_source_objects
-           WHERE organization_id = $1 AND project_id = $2
-           GROUP BY source_type`,
-          [orgId, projectId]
-        ),
-        // 2. Compiled sections
-        pool.query(
-          `SELECT section_key as "sectionKey",
-                  deterministic_json as "deterministicJson",
-                  narrative_text as "narrativeText",
-                  stale, stale_reason as "staleReason",
-                  approval_state as "approvalState",
-                  updated_at as "updatedAt"
-           FROM cmc_module3_sections
-           WHERE organization_id = $1 AND project_id = $2`,
-          [orgId, projectId]
-        ),
-        // 3. Open contradictions
-        pool.query(
-          `SELECT impacted_sections as "impactedSections", severity, status
-           FROM cmc_contradictions
-           WHERE organization_id = $1 AND project_id = $2 AND status <> 'resolved'`,
-          [orgId, projectId]
-        ),
-        // 4. Governed artifacts placed in Module 3 sections
-        pool.query(
-          `SELECT id, artifact_id as "artifactId", ctd_section as "ctdSection",
-                  status, title, updated_at as "updatedAt"
-           FROM concept2cure_artifacts
-           WHERE organization_id = $1 AND project_id = $2
-                 AND (ctd_section LIKE '3.2.%' OR ctd_section IN ('3.1', '3.3'))`,
-          [orgId, projectId]
-        ),
-        // 5. Uploaded source documents classified for Module 3
-        pool.query(
-          `SELECT id, artifact_id as "artifactId", ctd_section as "ctdSection",
-                  metadata, title
-           FROM concept2cure_artifacts
-           WHERE organization_id = $1 AND project_id = $2
-                 AND category = 'source'
-                 AND (metadata->>'dossierClassification' IS NOT NULL)
-                 AND (metadata->'dossierClassification'->>'feedsModule3')::text = 'true'`,
-          [orgId, projectId]
-        ),
-      ]);
+    /* ONE reader. getModule3BuildStatus resolves the artifact spine, reads the
+       sources, compiled sections, contradictions, governed artifacts and the
+       uploaded source documents, composes the sources the way compile does,
+       and derives each section's build state — the same figures AnA reads and
+       the export gate refuses on. This route used to run its own copies of
+       four of those reads and a second, disagreeing state derivation. */
+    const canonicalStatus = await getModule3BuildStatus(orgId, projectId);
 
-    // Build lookup maps
-    const sourceTypeCounts = new Map<string, number>();
-    for (const row of sourceObjectsRes.rows) {
-      sourceTypeCounts.set(row.sourceType, parseInt(row.count, 10));
-    }
-
-    const compiledMap = new Map<string, any>();
-    for (const row of compiledSectionsRes.rows) {
-      compiledMap.set(row.sectionKey, row);
-    }
-
-    // Count contradictions per section
-    const contradictionCounts = new Map<string, number>();
-    for (const row of contradictionsRes.rows) {
-      const sections = Array.isArray(row.impactedSections) ? row.impactedSections : [];
-      for (const s of sections) {
-        contradictionCounts.set(s, (contradictionCounts.get(s) || 0) + 1);
-      }
-    }
-
-    // Governed artifacts per section
-    const artifactMap = new Map<string, any>();
-    for (const row of artifactsRes.rows) {
-      if (row.ctdSection) {
-        artifactMap.set(row.ctdSection, row);
-      }
-    }
-
-    // Uploaded sources per section
-    const uploadedSourceMap = new Map<string, number>();
-    for (const row of uploadedSourcesRes.rows) {
-      const cls = row.metadata?.dossierClassification;
-      const section = cls?.ctdSection || row.ctdSection;
-      if (section) {
-        uploadedSourceMap.set(section, (uploadedSourceMap.get(section) || 0) + 1);
-      }
-    }
-
-    // Section-to-source-type mapping (must match the composer's rules)
-    const SECTION_SOURCE_TYPES: Record<string, string[]> = {
-      '3.2.S.1': ['drug_substance'],
-      '3.2.S.2': ['drug_substance', 'manufacturing_process', 'process_validation'],
-      '3.2.S.3': ['drug_substance', 'characterization', 'impurity_profile'],
-      '3.2.S.4': ['specification', 'method', 'impurity_profile'],
-      '3.2.S.5': ['drug_substance', 'reference_standard'],
-      '3.2.S.6': ['container_closure'],
-      '3.2.S.7': ['stability'],
-      '3.2.P.1': ['drug_product', 'formulation_record'],
-      '3.2.P.2': ['drug_product', 'drug_substance', 'comparability', 'formulation_record', 'dissolution_profile'],
-      '3.2.P.3': ['drug_product', 'batch', 'change_control', 'process_validation'],
-      '3.2.P.4': ['excipient', 'raw_material_spec'],
-      '3.2.P.5': ['specification', 'method', 'dissolution_profile', 'impurity_profile'],
-      '3.2.P.6': ['drug_product', 'reference_standard'],
-      '3.2.P.7': ['container_closure'],
-      '3.2.P.8': ['stability', 'comparability'],
-    };
-
-    // Assemble build status for every section
-    const sections = ALL_SECTION_KEYS.map((sectionKey) => {
-      const compiled = compiledMap.get(sectionKey);
-      const artifact = artifactMap.get(sectionKey);
-      const requiredSourceTypes = SECTION_SOURCE_TYPES[sectionKey] || [];
-      const sourceObjectCount = requiredSourceTypes.reduce(
-        (sum, st) => sum + (sourceTypeCounts.get(st) || 0),
-        0
-      );
-      const uploadedSourceCount = uploadedSourceMap.get(sectionKey) || 0;
-      const contradictionCount = contradictionCounts.get(sectionKey) || 0;
-      const isStale = compiled?.stale === true;
-      const approvalState = compiled?.approvalState || null;
-
-      // Completeness from compiled deterministic JSON
-      const deterministicJson = compiled?.deterministicJson;
-      const completeness = deterministicJson?.completeness ?? (compiled ? 100 : 0);
-      const missingInputs = deterministicJson?.missingInputs ?? [];
-
-      const buildState = deriveBuildState({
-        sourceObjectCount,
-        uploadedSourceCount,
-        hasCompiledSection: !!compiled,
-        isStale,
-        hasContradictions: contradictionCount > 0,
-        approvalState,
-        artifactStatus: artifact?.status || null,
-      });
-
-      return {
-        sectionKey,
-        sectionLabel: SECTION_LABELS[sectionKey],
-        buildState,
-        sourceObjectCount,
-        uploadedSourceCount,
-        sourceTypes: requiredSourceTypes,
-        completeness,
-        missingInputs,
-        hasContradictions: contradictionCount > 0,
-        contradictionCount,
-        isStale,
-        staleReason: compiled?.staleReason || null,
-        approvalState: approvalState || 'not_started',
-        hasNarrative: !!compiled?.narrativeText,
-        artifactId: artifact?.artifactId || null,
-        artifactStatus: artifact?.status || null,
-        lastCompiled: compiled?.updatedAt || null,
-        lastUpdated: artifact?.updatedAt || compiled?.updatedAt || null,
-      };
-    });
+    const sections = canonicalStatus.sections.map((canonical) => ({
+      sectionKey: canonical.sectionKey,
+      sectionLabel: SECTION_LABELS[canonical.sectionKey] ?? canonical.sectionLabel,
+      buildState: canonical.buildState,
+      sourceObjectCount: canonical.sourceObjectCount,
+      uploadedSourceCount: canonical.uploadedSourceCount,
+      /* The source types the section's rule takes — what the board lists as
+         feeding it — rather than the types that happened to compose. */
+      sourceTypes: SECTION_SOURCE_TYPES[canonical.sectionKey] || canonical.sourceTypes || [],
+      completeness: canonical.completeness,
+      missingInputs: canonical.missingInputs,
+      hasContradictions: canonical.hasContradictions,
+      contradictionCount: canonical.contradictionCount,
+      isStale: canonical.isStale,
+      staleReason: canonical.staleReason,
+      /* The board's vocabulary for "never compiled". */
+      approvalState: canonical.approvalState === 'none' ? 'not_started' : canonical.approvalState,
+      hasNarrative: canonical.hasNarrative,
+      artifactId: canonical.artifactId,
+      artifactStatus: canonical.artifactStatus,
+      lastCompiled: canonical.lastCompiled,
+      lastUpdated: canonical.lastUpdated,
+    }));
+    const spine = canonicalStatus.artifactRegistry;
 
     /* ── Summary stats ──
        "Ready" is counted from the UNDERLYING FACTS, not from the display state.
@@ -294,6 +133,10 @@ router.get('/build-state/:projectId', async (req, res) => {
       success: true,
       data: {
         sections,
+        /* Honest-state contract: when the registry could not be addressed,
+           every artifactId above is null BECAUSE of that — not because the
+           project has no artifacts. The client must render the distinction. */
+        artifactRegistry: spine,
         summary: {
           totalSections,
           readySections,
@@ -332,6 +175,17 @@ router.get('/uploaded-sources/:projectId', async (req, res) => {
     const { projectId } = req.params;
     const pool = getPool();
 
+    // Same spine translation as build-state: the registry keys integer
+    // projects.id; the raw TEXT id aborts the query for uuid programs.
+    const spine = await resolveCmcArtifactProject(orgId, projectId);
+    if (spine.state !== 'linked') {
+      return res.json({
+        success: true,
+        data: [],
+        artifactRegistry: { state: spine.state, detail: spine.detail },
+      });
+    }
+
     const { rows } = await pool.query(
       `SELECT id, artifact_id as "artifactId", title, ctd_section as "ctdSection",
               status, metadata, created_at as "createdAt"
@@ -340,11 +194,12 @@ router.get('/uploaded-sources/:projectId', async (req, res) => {
              AND category = 'source'
              AND (metadata->'dossierClassification'->>'feedsModule3')::text = 'true'
        ORDER BY created_at DESC`,
-      [orgId, projectId]
+      [orgId, spine.artifactProjectId]
     );
 
     return res.json({
       success: true,
+      artifactRegistry: { state: 'linked' },
       data: rows.map((r: any) => ({
         id: r.id,
         artifactId: r.artifactId,

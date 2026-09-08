@@ -17,7 +17,7 @@ import type { DispatchGateVerdict } from '../ind-dispatch-gate';
 // Holder is hoisted so the db mock can read it lazily (set in beforeAll).
 const holder = vi.hoisted(() => ({ db: null as any }));
 vi.mock('../../../db', () => ({ get db() { return holder.db; } }));
-vi.mock('../../auditService', () => ({ default: { logAction: vi.fn(async () => {}) } }));
+vi.mock('../../auditService', () => ({ default: { logAction: vi.fn(async (..._a: any[]) => ({ persisted: true, chained: true, tamperProof: true })) } }));
 
 import {
   createDispatchSnapshot,

@@ -39,10 +39,11 @@ export const REGIONAL_MODULE1_REQUIREMENTS: Record<RegulatoryMarket, Module1Comp
   FDA: [
     { code: 'us_356h', label: 'FDA Form 356h (Application to Market a New or Abbreviated New Drug or Biologic)', section: 'm1.1' },
     { code: 'us_cover_letter', label: 'Cover letter', section: 'm1.2' },
-    { code: 'us_admin', label: 'Administrative information (applicant, US agent, debarment certification)', section: 'm1.3' },
+    { code: 'us_admin', label: 'Administrative information (applicant, US agent, contact)', section: 'm1.3.1' },
+    { code: 'us_debarment', label: 'Debarment certification (FD&C Act 306(k)(1))', section: 'm1.3.3' },
     { code: 'us_labeling', label: 'Labeling — draft Prescribing Information + container/carton labels', section: 'm1.14' },
     { code: 'us_financial_disclosure', label: 'Financial disclosure (FDA 3454/3455)', section: 'm1.3.4' },
-    { code: 'us_3674', label: 'Certification of compliance with ClinicalTrials.gov (FDA 3674)', section: 'm1.15.2' },
+    { code: 'us_3674', label: 'Certification of compliance with ClinicalTrials.gov (FDA 3674)', section: 'm1.1' },
     { code: 'us_user_fee', label: 'User fee cover sheet (FDA 3397, PDUFA)', section: 'm1.1' },
   ],
   EMA: [

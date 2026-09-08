@@ -108,7 +108,13 @@ function discover() {
   for (const shape of ENTRY_POINT_SHAPES) {
     for (const rel of walk(shape.dir)) {
       if (shape.fileMatches && !shape.fileMatches(rel)) continue;
-      const src = fs.readFileSync(path.join(REPO_ROOT, rel), 'utf8');
+      // Git checks out LF on CI while Windows worktrees commonly expose CRLF.
+      // Hash the repository text, not the host's newline convention, so a
+      // reviewed justification can be refreshed locally without making every
+      // unchanged file look modified on the Linux runner (and vice versa).
+      const src = fs
+        .readFileSync(path.join(REPO_ROOT, rel), 'utf8')
+        .replace(/\r\n/g, '\n');
       if (!shape.matches(src)) continue;
       const considered = LIFECYCLE_VOCABULARY.some(token => src.includes(token));
       const digest = crypto.createHash('sha256').update(src).digest('hex').slice(0, 16);

@@ -28,7 +28,33 @@
     min-width: 0;
   }
   .ed[data-comments='true'] {
-    grid-template-columns: 220px minmax(420px, 1fr) 300px;
+    grid-template-columns: 220px minmax(420px, 1fr) clamp(300px, 24vw, 460px);
+  }
+  /* Those three tracks have a hard floor: 220 + 420 + 300 = 940px. The editor
+     pane is the window minus the rail (`.shell[data-editor='true']` is
+     `var(--rail) 1fr 0`, and --rail is 264px expanded), so the pane drops under
+     940 as soon as the window is narrower than 1204 — and the page then
+     scrolled SIDEWAYS rather than anything scrolling inside itself, because
+     .ed is `overflow: visible`. visual-qa:overflow measured it at 940 > 796.
+     Below that width the comments pane floats over the document column instead
+     of claiming a track of its own. It stays open, keeps its own close button,
+     and the document keeps the 420px measure it needs to be edited in — the
+     alternative, letting the middle column shrink, leaves 276px for the
+     document, which is not an editor. */
+  @media (max-width: 1204px) {
+    .ed[data-comments='true'] {
+      position: relative;
+      grid-template-columns: 220px minmax(0, 1fr);
+    }
+    .ed[data-comments='true'] > .ed-comments {
+      position: absolute;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      width: min(360px, 100%);
+      z-index: 5;
+      box-shadow: -8px 0 24px color-mix(in oklab, var(--black) 10%, transparent);
+    }
   }
   .ed[data-no-comments] {
     grid-template-columns: 260px 1fr;
@@ -224,7 +250,7 @@
     flex-shrink: 0;
   }
   .ed-crumbs .sep {
-    color: var(--text-500);
+    color: var(--text-400);
     flex-shrink: 0;
   }
   .ed-doc-actions {
@@ -241,10 +267,135 @@
     overflow-y: auto;
   }
   .ed-doc-inner {
-    max-width: 760px;
+    max-width: min(1440px, 100%);
     margin: 0 auto;
     padding: 36px 44px 80px;
   }
+  /* ── Whole-document view ─────────────────────────────────────────────
+     Section view edits one section in a box; this is the document that box
+     is part of. Prose keeps the same measure as the editor so the read does
+     not change shape between the two views, while tables stay free to use
+     the column. */
+  .ed-viewtoggle {
+    display: inline-flex;
+    gap: 2px;
+    padding: 2px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg, 10px);
+    background: var(--bg-050);
+  }
+  .ed-viewtoggle .btn {
+    border-color: transparent;
+    background: transparent;
+  }
+  .ed-viewtoggle .btn[data-active] {
+    background: var(--bg-000);
+    border-color: var(--border);
+  }
+  .ed-full { min-width: 0; }
+  .ed-full-mast {
+    padding-bottom: 20px;
+    margin-bottom: 28px;
+    border-bottom: 1px solid var(--border);
+  }
+  .ed-full-sec {
+    padding: 0 0 30px;
+    margin-bottom: 30px;
+    border-bottom: 1px solid var(--bg-200, #eaecf0);
+    scroll-margin-top: 24px;
+  }
+  .ed-full-sec:last-child { border-bottom: none; }
+  .ed-full-sec[data-active] {
+    box-shadow: -14px 0 0 -12px var(--accent-100, #2563eb);
+  }
+  .ed-full-sec-h {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+  .ed-full-sec-num {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    color: var(--text-400);
+    font-variant-numeric: tabular-nums;
+  }
+  .ed-full-sec-t {
+    font-family: var(--font-serif);
+    font-size: 19px;
+    font-weight: 600;
+    margin: 0;
+    flex: 1;
+    min-width: 0;
+  }
+  .ed-full-edit { opacity: 0; transition: opacity 120ms ease-out; }
+  .ed-full-sec:hover .ed-full-edit,
+  .ed-full-edit:focus-visible { opacity: 1; }
+  @media (prefers-reduced-motion: reduce) {
+    .ed-full-edit { transition: none; }
+  }
+  .ed-full-sec-body {
+    font-family: var(--font-serif);
+    font-size: 14px;
+    line-height: 1.75;
+    color: var(--text-100);
+  }
+  .ed-full-sec-body > p,
+  .ed-full-sec-body > h1,
+  .ed-full-sec-body > h2,
+  .ed-full-sec-body > h3,
+  .ed-full-sec-body > ul,
+  .ed-full-sec-body > ol { max-width: 78ch; }
+  .ed-full-sec-body p { margin: 0 0 12px; }
+  .ed-full-sec-body table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 16px 0;
+    font-size: 13px;
+  }
+  .ed-full-sec-body th {
+    padding: 8px 12px;
+    background: var(--bg-050);
+    border: 1px solid var(--border);
+    font-weight: 600;
+    text-align: left;
+  }
+  .ed-full-sec-body td { padding: 7px 12px; border: 1px solid var(--border); }
+  /* Figures in the assembled read. A still-resolving governed reference is a
+     quiet placeholder box, never a broken glyph; a failed one is replaced by
+     the stated .ed-figure-missing line (AuthoredHtml). */
+  .ed-full-sec-body img,
+  .bd-card-body img {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    margin: 16px 0;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+  }
+  .ed-full-sec-body img[data-authsrc]:not([src]),
+  .bd-card-body img[data-authsrc]:not([src]) {
+    min-height: 120px;
+    min-width: 240px;
+    background: var(--bg-050);
+  }
+  .ed-figure-missing {
+    font-size: 13px;
+    color: var(--text-400);
+    font-style: italic;
+    border: 1px dashed var(--border);
+    border-radius: 4px;
+    padding: 10px 12px;
+    margin: 16px 0;
+  }
+  .ed-full-sec-empty {
+    font-size: 13px;
+    color: var(--text-400);
+    font-style: italic;
+    margin: 0;
+  }
+
   .ed-mast {
     padding-bottom: 20px;
     margin-bottom: 22px;
@@ -334,11 +485,11 @@
   }
   .ed-flag[data-sev='warn'] {
     background: var(--warning-muted);
-    color: #7a4a0f;
+    color: var(--warning);
   }
   .ed-flag[data-sev='err'] {
     background: var(--error-muted);
-    color: #7a1f1f;
+    color: var(--error);
   }
   .ed-flag .ico {
     font-size: 14px;
@@ -363,7 +514,7 @@
     font-family: var(--font-sans);
     opacity: 0;
     transform: translateY(4px);
-    transition: all 180ms var(--ease);
+    transition: opacity 180ms var(--ease), transform 180ms var(--ease);
     pointer-events: none;
     box-shadow: var(--shadow-lg);
     z-index: 5;
@@ -1158,6 +1309,157 @@
     height: 7px;
     border-radius: 2px;
     background: var(--accent-100);
+  }
+
+  /* ── The unsaved-work guard ──
+     A decision, not a drawer: centred, small, and sized to its three buttons.
+     The `.de` family beside it slides in from the right and is 520px of form —
+     the wrong shape for "what happens to this paragraph". */
+  .ed-guard-bd {
+    position: fixed;
+    inset: 0;
+    background: rgb(20 20 19 / 0.38);
+    backdrop-filter: blur(3px);
+    z-index: 140;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+  .ed-guard {
+    width: min(460px, 100%);
+    background: var(--bg-000);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg, 12px);
+    box-shadow: var(--v2-shadow-lg);
+    padding: 20px 22px 18px;
+    outline: none;
+  }
+  .ed-guard:focus-visible {
+    box-shadow:
+      var(--v2-shadow-lg),
+      0 0 0 2px var(--accent-100);
+  }
+  .ed-guard-t {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-100);
+    margin: 0 0 8px;
+  }
+  .ed-guard-d {
+    font-size: 12.5px;
+    line-height: 1.55;
+    color: var(--text-300);
+    margin: 0 0 10px;
+  }
+  .ed-guard-acts {
+    display: flex;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 14px;
+  }
+
+  /* ── AnA's answer, rendered as prose ──
+     The rail is 300-460px, so the measure is already narrow; what this needs to
+     do is give headings, lists and tables enough separation to be read as
+     structure without turning a chat rail into a document. Tables scroll inside
+     their own box rather than widening the rail. */
+  .ana-md > *:first-child {
+    margin-top: 0;
+  }
+  .ana-md > *:last-child {
+    margin-bottom: 0;
+  }
+  .ana-md p {
+    margin: 0 0 8px;
+  }
+  .ana-md h3,
+  .ana-md h4,
+  .ana-md h5,
+  .ana-md h6 {
+    font-family: var(--font-serif);
+    font-weight: 600;
+    color: var(--text-100);
+    line-height: 1.3;
+    margin: 14px 0 6px;
+  }
+  .ana-md h3 {
+    font-size: 14px;
+  }
+  .ana-md h4 {
+    font-size: 13px;
+  }
+  .ana-md h5,
+  .ana-md h6 {
+    font-size: 12.5px;
+  }
+  .ana-md ul,
+  .ana-md ol {
+    margin: 0 0 8px;
+    padding-left: 20px;
+  }
+  .ana-md li {
+    margin-bottom: 4px;
+  }
+  .ana-md li > p {
+    margin: 0;
+  }
+  .ana-md code {
+    font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+    font-size: 11.5px;
+    background: var(--bg-100);
+    border-radius: 3px;
+    padding: 1px 4px;
+  }
+  .ana-md pre {
+    background: var(--bg-100);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md, 6px);
+    padding: 9px 11px;
+    margin: 0 0 8px;
+    overflow-x: auto;
+  }
+  .ana-md pre code {
+    background: none;
+    padding: 0;
+    font-size: 11.5px;
+    line-height: 1.5;
+  }
+  .ana-md blockquote {
+    margin: 0 0 8px;
+    padding-left: 10px;
+    border-left: 2px solid var(--border);
+    color: var(--text-400);
+  }
+  .ana-md hr {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 12px 0;
+  }
+  .ana-md a {
+    color: var(--accent-100);
+    text-decoration: underline;
+  }
+  .ana-md table {
+    display: block;
+    width: 100%;
+    overflow-x: auto;
+    border-collapse: collapse;
+    margin: 0 0 8px;
+    font-size: 11.5px;
+  }
+  .ana-md th,
+  .ana-md td {
+    border: 1px solid var(--border);
+    padding: 5px 8px;
+    text-align: left;
+    vertical-align: top;
+  }
+  .ana-md th {
+    background: var(--bg-50);
+    font-weight: 600;
+    color: var(--text-200);
   }
 }
 

@@ -19,6 +19,7 @@ import type {
 } from './types.js';
 import { CTD_AUTHORING_GUIDANCE } from './authoring-guidance.js';
 import { LIFECYCLE_DOCUMENT_TYPES } from './lifecycle-document-types.js';
+import { compareSectionCode } from '../../../../shared/regulatory/section-code';
 
 export type {
   CtdSection,
@@ -68,7 +69,7 @@ export function getCtdAuthoringGuidance(code: string): CtdSection | undefined {
   // requested is a parent of registered leaves → the first (lowest) descendant
   const descendants = codes
     .filter((c) => c.startsWith(`${canonical}.`))
-    .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+    .sort(compareSectionCode);
   if (descendants[0]) return CTD_AUTHORING_GUIDANCE[descendants[0]];
 
   return undefined;
@@ -78,14 +79,14 @@ export function getCtdAuthoringGuidance(code: string): CtdSection | undefined {
 export function getCtdGuidanceForModule(module: 1 | 2 | 3 | 4 | 5): CtdSection[] {
   return Object.values(CTD_AUTHORING_GUIDANCE)
     .filter((s) => s.module === module)
-    .sort((a, b) => a.code.localeCompare(b.code, undefined, { numeric: true }));
+    .sort((a, b) => compareSectionCode(a.code, b.code));
 }
 
 /** CTD guidance entries required for a given submission family. */
 export function getCtdGuidanceForFamily(family: SubmissionFamily): CtdSection[] {
   return Object.values(CTD_AUTHORING_GUIDANCE)
     .filter((s) => s.requiredFor.includes(family))
-    .sort((a, b) => a.module - b.module || a.code.localeCompare(b.code, undefined, { numeric: true }));
+    .sort((a, b) => a.module - b.module || compareSectionCode(a.code, b.code));
 }
 
 // ── Lifecycle document types ──────────────────────────────────────────────────
@@ -133,7 +134,7 @@ export function resolveCtdSectionsForDocType(dt: LifecycleDocumentType): CtdSect
       out.push(s);
     }
   }
-  return out.sort((a, b) => a.module - b.module || a.code.localeCompare(b.code, undefined, { numeric: true }));
+  return out.sort((a, b) => a.module - b.module || compareSectionCode(a.code, b.code));
 }
 
 /**

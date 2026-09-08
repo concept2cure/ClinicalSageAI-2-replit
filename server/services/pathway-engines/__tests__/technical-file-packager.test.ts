@@ -123,3 +123,35 @@ describe('materializeTechnicalFile', () => {
     expect(checks).toMatch(/gspr\.pdf/);
   });
 });
+
+describe('buildTechnicalFilePlan — unmapped leaves are reported, never dropped', () => {
+  it('reports a resolvable leaf that no manifest entry lists as a source under sectionId "unmapped"', () => {
+    // An authored section whose key matches no Annex II/III slot (e.g. the
+    // conformity/registration group IV.*) must surface in `skipped`, not vanish.
+    const manifest = buildTechnicalFileManifest(assembleTechDoc({ regulation: 'mdr', leaves: [] }));
+    const leaf: CoreLeaf = { sectionCode: 'IV.1', title: 'EU declaration of conformity — Annex IV', lifecycleOp: 'new' };
+    const plan = buildTechnicalFilePlan({
+      manifest,
+      leaves: [leaf],
+      resolveFile: () => ({ fileName: 'doc.pdf', sourcePath: '/x/doc.pdf' }),
+    });
+    expect(plan.files).toHaveLength(0);
+    const unmapped = plan.skipped.filter((s) => s.sectionId === 'unmapped');
+    expect(unmapped).toHaveLength(1);
+    expect(unmapped[0].source).toBe('IV.1');
+    expect(unmapped[0].reason).toMatch(/no technical-file section matched/i);
+  });
+
+  it('does not double-report a leaf that a section lists but whose file cannot be resolved', () => {
+    const manifest = buildTechnicalFileManifest(
+      assembleTechDoc({ regulation: 'mdr', leaves: [{ sectionCode: 'gspr.checklist', title: 'GSPR Checklist', documentType: 'gspr' }] })
+    );
+    const plan = buildTechnicalFilePlan({
+      manifest,
+      leaves: [{ sectionCode: 'gspr.checklist', title: 'GSPR Checklist', lifecycleOp: 'new' }],
+      resolveFile: () => null,
+    });
+    expect(plan.skipped.filter((s) => s.sectionId === 'unmapped')).toHaveLength(0);
+    expect(plan.skipped.filter((s) => s.sectionId === 'gspr')).toHaveLength(1);
+  });
+});

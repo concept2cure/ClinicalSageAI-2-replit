@@ -157,7 +157,12 @@ describe('remediation migrations apply and back the real queries', () => {
       `INSERT INTO licenses (id, client_id, client_name, company_name, contact_email, license_type, license_key, access_token, max_users, max_submissions, max_storage_gb, max_projects, features, valid_from, valid_until, ip_restrictions, notes, status, organization_id)
        VALUES ('L1','5','Acme','Acme Co','e@x.co','enterprise','KEY','TOK',50,20,500,40,$1, now(), now(), $2,'note','active', 3)`,
       [JSON.stringify({ ai: true }), JSON.stringify([])]);
-    // quotaEnforcementService.js:21
+    // No server code reads `licenses` any more: the organization-keyed quota
+    // lookup this line mirrors was removed (the ceilings are organizations.*),
+    // and the client-workspace licence router was removed with it. The table
+    // and its migration stay for installs that already carry rows, so the
+    // stored shape is still pinned here — but as a record of what is on disk,
+    // not as the contract behind a live query.
     expect((await pg.query(`SELECT * FROM licenses WHERE organization_id = $1 AND status = 'active'`, [3])).rows.length).toBe(1);
 
     await pg.query(`INSERT INTO patent_portfolio (organization_id, title, patent_number, jurisdiction, status, filing_date, expiration_date, inventors, category, fto_status, related_compounds) VALUES (3,'T','US1','US','granted','2020-01-01','2040-01-01','[]','small-molecule','clear','[]')`);

@@ -26,6 +26,11 @@
 import { normalQuantile } from './normal';
 import { betaQuantile } from './special';
 import { buildProvenance, type StatsProvenance } from './computation-provenance';
+import {
+  estimateShelfLife as estimateShelfLifeQ1E,
+  type ShelfLifeResult,
+  type SpecDirection,
+} from '../cmc/shelf-life';
 
 /**
  * Student's t quantile, derived from the inverse regularized incomplete beta:
@@ -632,88 +637,86 @@ export function assessLinearity(levels: LinearityLevel[]): LinearityResult {
 
 // ── EP25 · Stability / shelf-life (ICH Q1E regression) ───────────────────────
 
+/*
+ * There is ONE shelf-life estimator in this product: server/services/cmc/
+ * shelf-life.ts, the ICH Q1E engine the stability register, the batch-
+ * poolability assessment and AnA all run. This file used to hold a second,
+ * scan-based copy of the same regression — the same fit, the same one-sided
+ * bound — minus the one rule that decides what may be FILED: the Q1E
+ * extrapolation limit. On a 12-month study whose confidence limit crossed the
+ * specification at 60 months the copy reported 60 while the engine reported 24,
+ * and the diagnostics API served the number that cannot be proposed. Two
+ * answers to the question a registered shelf life is set from is the
+ * duplication CLAUDE.md forbids, so the copy is gone; what remains below is the
+ * CLSI EP25 face of the canonical engine — its argument names, plus the
+ * provenance every result on this API carries.
+ */
+
 export interface StabilityArgs {
-  /** Stability time points (e.g. months) and the measured attribute value. */
+  /**
+   * Stability time points and the measured attribute value. Time is in MONTHS:
+   * the ICH Q1E extrapolation allowance (up to twice, and not more than twelve
+   * months beyond, the observed period) is a rule about months, and a series
+   * recorded in days would have that ceiling applied to it as if it were months.
+   */
   points: { time: number; value: number }[];
   /** Acceptance limit the attribute must not cross. */
   specLimit: number;
   /** Which side of the limit matters: 'lower' (degradation) or 'upper'. */
   direction: 'lower' | 'upper';
-  /** One-sided confidence for the regression bound. Default 0.95. */
+  /**
+   * One-sided confidence for the regression bound. Default 0.95. Must exceed
+   * 0.5 — the engine takes alpha = 1 − confidence and refuses alpha ≥ 0.5.
+   */
   confidence?: number;
 }
 
-export interface StabilityResult {
+/**
+ * Everything the ICH Q1E engine reports — `shelfLife` is the figure that may
+ * be PROPOSED, `statisticalCrossing` where the bound actually meets the limit,
+ * and `cappedByExtrapolationLimit` says which one decided — plus the flat
+ * fields this API's contract has always exposed.
+ */
+export interface StabilityResult extends ShelfLifeResult {
   slope: number;
   intercept: number;
-  /** Time where the fitted line itself meets the spec (null if it never does). */
-  nominalCrossing: number | null;
-  /** Shelf-life: time where the one-sided confidence bound meets the spec. */
-  shelfLife: number | null;
+  /** Number of time points fitted. */
   n: number;
   provenance: StatsProvenance;
 }
 
+/** Direction as this API names it → as the engine names it. */
+const Q1E_DIRECTION: Record<StabilityArgs['direction'], SpecDirection> = {
+  lower: 'decreasing',
+  upper: 'increasing',
+};
+
 /**
- * CLSI/ICH Q1E shelf-life: regress value on time and find where the one-sided
- * confidence bound on the mean response crosses the acceptance limit. The bound
- * is ŷ(t) ∓ t₍conf,n−2₎·s·√(1/n + (t−t̄)²/Sxx); shelf-life is the largest t for
- * which the attribute is still within spec.
+ * CLSI EP25 / ICH Q1E shelf-life. A thin adapter over the canonical estimator:
+ * no arithmetic happens here.
  */
 export function estimateShelfLife(args: StabilityArgs): StabilityResult {
-  const pts = args.points;
-  const n = pts.length;
-  if (n < 3) throw new Error('EP25 stability requires at least 3 time points.');
-  const conf = args.confidence ?? 0.95;
-  const t = pts.map(p => p.time);
-  const y = pts.map(p => p.value);
-  const fit = linearRegression(t, y);
-  const meanT = t.reduce((s, v) => s + v, 0) / n;
-  const sxx = t.reduce((s, v) => s + (v - meanT) ** 2, 0);
-  const tCrit = studentTQuantile(conf, n - 2);
-
-  // Nominal crossing: where intercept + slope·t = specLimit.
-  const nominalCrossing =
-    fit.slope !== 0 ? (args.specLimit - fit.intercept) / fit.slope : null;
-
-  // One-sided bound that approaches the spec from the in-spec side.
-  const bound = (tt: number): number => {
-    const se = fit.residualSd * Math.sqrt(1 / n + (tt - meanT) ** 2 / sxx);
-    const pred = fit.intercept + fit.slope * tt;
-    return args.direction === 'lower' ? pred - tCrit * se : pred + tCrit * se;
-  };
-  const inSpec = (tt: number) =>
-    args.direction === 'lower' ? bound(tt) >= args.specLimit : bound(tt) <= args.specLimit;
-
-  // Scan forward from t=0 to find where the bound first leaves spec.
-  let shelfLife: number | null = null;
-  if (inSpec(0)) {
-    const horizon = nominalCrossing && nominalCrossing > 0 ? nominalCrossing * 1.5 : Math.max(...t) * 3 || 1;
-    const step = horizon / 10000;
-    let prev = 0;
-    for (let tt = step; tt <= horizon; tt += step) {
-      if (!inSpec(tt)) {
-        shelfLife = prev;
-        break;
-      }
-      prev = tt;
-    }
-    if (shelfLife === null) shelfLife = horizon; // still in spec across the horizon
-  } else {
-    shelfLife = 0;
-  }
-
+  const observed = args.points.reduce((mx, p) => Math.max(mx, p.time), 0);
+  const result = estimateShelfLifeQ1E({
+    data: args.points,
+    specLimit: args.specLimit,
+    direction: Q1E_DIRECTION[args.direction],
+    alpha: args.confidence === undefined ? undefined : 1 - args.confidence,
+    /* The search horizon is numerical, not regulatory (the engine caps the
+       proposable figure regardless); it only needs to reach past the allowance
+       so the crossing is found rather than reported as beyond range. */
+    maxTime: Math.max(120, 2 * observed),
+  });
   return {
-    slope: fit.slope,
-    intercept: fit.intercept,
-    nominalCrossing,
-    shelfLife,
-    n,
+    ...result,
+    slope: result.regression.slope,
+    intercept: result.regression.intercept,
+    n: result.regression.n,
     provenance: buildProvenance({
       method: 'ICH Q1E / CLSI EP25 shelf-life',
       seed: 0,
       inputs: args,
-      note: 'Regression with one-sided confidence-bound crossing of the spec limit.',
+      note: 'Canonical ICH Q1E engine (services/cmc/shelf-life): one-sided mean confidence limit vs the specification limit, proposable period capped at the Q1E extrapolation allowance.',
     }),
   };
 }

@@ -30,7 +30,7 @@
 }
 .mdx-shell .ftp-crumb { color: var(--text-300); }
 .mdx-shell .ftp-crumb.last { color: var(--text-100); font-weight: 500; }
-.mdx-shell .ftp-sep { color: var(--text-500); padding: 0 2px; }
+.mdx-shell .ftp-sep { color: var(--text-400); padding: 0 2px; }
 
 .mdx-shell .ftp-bar-r { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
 .mdx-shell .ftp-bar-sub {
@@ -304,3 +304,5 @@
   max-width: 360px;
   line-height: 1.5;
 }
+.mdx-shell .ftp-attach-body { flex: 1; min-width: 0; }
+.mdx-shell .ftp-row-file .ftp-name { color: var(--text-200); }

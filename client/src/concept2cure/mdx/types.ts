@@ -145,7 +145,7 @@ export interface AuditKindMeta {
 
 /* ─── Pathway sub-tab data contract (consumed by surfaces/pathway/*) ────────
  *
- * Ported from `design-system/ui_kits/mdx/data-pathway-tabs.jsx`. These back the
+ * Ported from `ui_kits/mdx/data-pathway-tabs.jsx`. These back the
  * Audit / Correspondence / Approvals / Files sub-tabs and the DossierDrawer.
  * Shapes are intentionally permissive — the kit treats these rows loosely and
  * the in-memory dossier store synthesises live rows of the same shape. */

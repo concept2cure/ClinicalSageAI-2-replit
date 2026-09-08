@@ -57,14 +57,30 @@ decryption**, so a decrypt step at asset-onboarding is mandatory before any fill
 | **356h** | AES-256 | **AcroForm** | **1348** (`db_aplcnt_name`…) | real (4pg) | **AcroForm fill** (after decrypt) |
 | **3454** | AES-256 | static XFA **+ AcroForm** | **14** (`appFirm`, `check1`, `invName1..6`) | **real** (1pg) | **AcroForm fill** — pdf-lib strips the XFA and fills the layer (round-trips); **done** |
 | **3455** | AES-256 | static XFA **+ AcroForm** | **12** (`invesname`, `nameofstudy`, `check1..4`, `appFirm`) | **real** (1pg) | **AcroForm fill** — **done** (21 CFR 54.4 interest checkboxes, verified mapping) |
-| **1571** | AES-128 | **dynamic XFA** | 0 | **SHELL** ("Please wait… open in Adobe") | **reconstruction — done** (`ind-form-reconstruct.ts`); no official page exists outside Adobe |
-| **3674** | AES-128 | **dynamic XFA** | 0 | **SHELL** | **reconstruction — done** |
+| **1571** | AES-128 | **dynamic XFA** | **246 fillable** (283 declared: `db_sponsor_name`, `db_drug_names`, `db_ind_id`, `db_indication`…) | **SHELL** ("Please wait… open in Adobe") | **XFA datasets fill — done** (`fillXfaDatasets`); reconstruction is now only the fallback |
+| **3674** | AES-128 | **dynamic XFA** | **178 fillable** (190 declared) | **SHELL** | **XFA datasets fill — done** |
 
-The dynamic-XFA shell is the key constraint: 1571 and 3674's "official PDF" pages
-contain only the Adobe placeholder — the visible form is generated at render
-time by Adobe's XFA engine. There is no official page to overlay on, so
-pixel-official output for those two is not achievable with open tooling; a
-faithful **reconstruction** is the honest ceiling.
+**Corrected 2026-09-04.** The two rows above previously read "0 fillable fields"
+and concluded that a faithful **reconstruction** was "the honest ceiling" for
+1571 and 3674. That was measured on the wrong layer. `pdf-lib getFields()` reads
+the AcroForm layer, which on these editions is genuinely empty — but the fields
+live in the XFA packets, and there are hundreds of them. Enumerated with
+`listXfaFields`, FDA 1571 declares 283 fields of which 246 resolve to a fillable
+data node, and FDA 3674 declares 190 of which 178 do.
+
+Overlaying a page was never the right technique. Filling a dynamic XFA form means
+writing its `datasets` packet — which is exactly what Adobe does when a user types
+into the form and saves — and appending a PDF incremental update, so every
+original byte survives and Acrobat renders the genuine FDA form with the data in
+it. The repo already had that filler: it ships the device eSTAR. What blocked
+1571/3674 was one detail of path resolution — a subform that binds no data group
+(`Page1`) appears in the template SOM path but not in the data path, so
+`topmostSubform.Page1.db_sponsor_name` was compared against
+`topmostSubform.db_sponsor_name` and every field looked absent. See
+`resolveDataSomPath`.
+
+The reconstruction remains, as the fallback when no official edition is installed
+or when the platform holds no value to place.
 
 ---
 
@@ -76,14 +92,22 @@ faithful **reconstruction** is the honest ceiling.
 | 356h | ✅ `buildForm356h` (aligned to official form) | AcroForm fill — reviewed map + application-type checkboxes | `IMPLEMENTED_UNVERIFIED` — unit-tested against real `db_*` names incl. the NDA/ANDA/BLA type checkboxes (`ind-form-356h-official.test.ts`); needs decrypted asset installed |
 | 3454 | ✅ `buildForm3454` | AcroForm fill (static XFA → AcroForm layer) | `IMPLEMENTED_UNVERIFIED` — reviewed field map, unit-tested (`ind-form-3454-official.test.ts`): certify-none checkbox + applicant firm/name/title + first investigator; `drug_name` (no field) non-required |
 | 3455 | ✅ `buildForm3455` (interest-type model) | AcroForm fill — 21 CFR 54.4 interest checkboxes | `IMPLEMENTED_UNVERIFIED` — reviewed field map + `check1..4` mapping **verified from the form's field tooltips**; per-investigator `invesname`; `interest_type_selected` is a `qcOnly` gate (QC-only, never blocks the fill). Unit-tested (`ind-form-3455-official.test.ts`). Follow-on: a `/3455/pdf-all` per-investigator route (builder `buildAllForm3455` exists) |
-| 1571 | ✅ `buildForm1571` | reconstructed layout | `IMPLEMENTED` — faithful sectioned reconstruction (`ind-form-reconstruct.ts`): FDA header + OMB, numbered boxes, blank Part-11 signature block, clearly labeled NOT the official form. Deterministic + data-sensitive, unit-tested (`ind-form-reconstruct.test.ts`). Pure **dynamic** XFA — no official page exists to fill/overlay |
-| 3674 | ✅ `buildForm3674` | reconstructed layout | `IMPLEMENTED` — faithful reconstruction with the three 42 U.S.C. § 282(j) certification checkboxes rendered ☒/☐; unit-tested. Pure dynamic XFA |
+| 1571 | ✅ `buildForm1571` | **XFA `datasets` fill** — reviewed SOM-path map | `IMPLEMENTED_UNVERIFIED` — 8 boxes fill on the official template (sponsor name, address, telephone, IND number, serial number, drug names, indication, representative title) and read back out of the produced PDF (`ind-form-xfa-official.test.ts`). `ind_type`, `phase_of_study` and the signature block are deliberately left for the sponsor — see the map's own note. Reconstruction is the fallback |
+| 3674 | ✅ `buildForm3674` | **XFA `datasets` fill** — reviewed SOM-path map | `IMPLEMENTED_UNVERIFIED` — sponsor name, product name and NCT number fill on the official template. The three 42 U.S.C. § 282(j) certification checkboxes stay unmapped: their on/off values are not verified against the template's items, and the certification is a sponsor attestation |
 
-All six produce deterministic output today (`usedOfficialTemplate=false`): the
-four AcroForm forms fill their reviewed field map once the decrypted asset is
-installed (labeled draft until then); 1571/3674 render a faithful **reconstruction**
-(`reconstructed=true`) — a drawn full-page layout, never the official Adobe PDF.
-None yet produce governed *official* output.
+1571, 1572 and 3674 — the three forms a US IND requires — now produce
+`usedOfficialTemplate=true` against the vendored FDA editions, so
+`getDocumentCoverage('US_IND').formsFullyBacked` is true. The remaining AcroForm
+forms fill their reviewed field map once the decrypted asset is installed
+(labeled draft until then).
+
+**One human step is left and is deliberately not automated:** the 1571 and 3674
+manifests still carry `assetTrusted: false` and `reviewedBy: null`. Those fields
+gate the *manifest-carried* AcroForm field map, which does not apply to these two
+forms — their map is code-reviewed in `official-field-maps.ts` and re-verified
+against the template at fill time — so nothing depends on them today. A named
+reviewer should still confirm the eight 1571 box assignments against the printed
+form before a real filing.
 
 ---
 

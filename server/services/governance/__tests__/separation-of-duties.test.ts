@@ -18,6 +18,16 @@ describe('resolveTargetOwnerId', () => {
     expect(query.mock.calls[0][0]).toContain('FROM c2c_documents');
   });
 
+  it('resolves an eCTD sequence owner from ectd_sequences.created_by, org-scoped', async () => {
+    // The target the Part 11 freeze/dispatch/transmit chain signs had no case,
+    // so no owner resolved and the preparer could sign their own sequence.
+    query.mockResolvedValue({ rows: [{ created_by: 11 }] });
+    expect(await resolveTargetOwnerId('ectd-sequence:42', 7)).toBe(11);
+    expect(query.mock.calls[0][0]).toContain('FROM ectd_sequences');
+    expect(query.mock.calls[0][0]).toContain('organization_id = $2');
+    expect(query.mock.calls[0][1]).toEqual(['42', 7]);
+  });
+
   it('resolves a section owner via the owning document', async () => {
     query.mockResolvedValue({ rows: [{ owner_id: 7 }] });
     expect(await resolveTargetOwnerId('section:doc-1:3.2.S', 2)).toBe(7);

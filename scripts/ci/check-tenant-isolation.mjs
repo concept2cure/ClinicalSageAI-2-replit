@@ -154,6 +154,35 @@ const TENANT_FILTER_RE = new RegExp(
   'i'
 );
 
+/**
+ * A tenant predicate that switches itself off.
+ *
+ * `TENANT_FILTER_RE` above asks only whether the SQL MENTIONS a tenant column,
+ * so it accepts
+ *
+ *     WHERE ($1::INT IS NULL OR org_id = $1)
+ *
+ * which is TRUE whenever the parameter is null — the predicate is optional, and
+ * the caller decides. That is how server/routes/clinical-operations-routes.ts
+ * came to read every organization's studies, sites, enrollment, monitoring
+ * visits and protocol deviations for a request with no tenant on it, across
+ * fifteen query sites, while this gate reported no findings.
+ *
+ * Matching is deliberately narrow: the parameter tested for NULL must be the
+ * SAME parameter compared against the tenant column, which is the escape and
+ * nothing else. A genuine `col IS NULL OR col = $1` on a nullable business
+ * column does not match, and neither does an unrelated optional filter.
+ *
+ * The legitimate case — a platform-admin view that deliberately spans tenants —
+ * is exactly what `// tenant-isolation-safe: <reason>` is for, and the reason
+ * is mandatory, so a cross-tenant read has to be argued for in writing.
+ */
+const OPTIONAL_TENANT_PREDICATE_RE = new RegExp(
+  '\\(\\s*\\$(\\d+)(?:::[A-Za-z]+)?\\s+IS\\s+NULL\\s+OR\\s+' +
+    '(?:[A-Za-z_]\\w*\\.)?(' + TENANT_FILTER_KEYWORDS.join('|') + ')\\b\\s*=\\s*\\$\\1\\s*\\)',
+  'i'
+);
+
 // ─── Allowlist ──────────────────────────────────────────────────────────────
 
 const ALLOWLIST_FILES = new Set([
@@ -322,10 +351,19 @@ for (const file of walk(path.join(repoRoot, 'server'))) {
     while ((tm = TABLE_PATTERN.exec(sql)) !== null) {
       tableHits.add(tm[1].toLowerCase());
     }
-    if (tableHits.size === 0) continue;
+    /* A predicate the caller can switch off is not a filter.
+       Tested BEFORE the table-set filter below, deliberately. TENANT_SCOPED_TABLES
+       is a hand-maintained list, and the tables this shape actually hid behind —
+       clinical_ops.studies, ind_applications — were not on it, so a
+       table-gated rule would have inspected neither. An optional TENANT
+       predicate is suspicious wherever it appears, and the pattern is narrow
+       enough to say so: same parameter on both sides, tenant-named column. */
+    const optionalTenant = OPTIONAL_TENANT_PREDICATE_RE.test(sql);
+
+    if (tableHits.size === 0 && !optionalTenant) continue;
 
     // If the SQL itself includes a tenant filter, accept.
-    if (TENANT_FILTER_RE.test(sql)) continue;
+    if (!optionalTenant && TENANT_FILTER_RE.test(sql)) continue;
 
     // Otherwise: report. We attach a content hash of the normalized SQL so
     // the baseline fingerprint survives line-number drift caused by edits in

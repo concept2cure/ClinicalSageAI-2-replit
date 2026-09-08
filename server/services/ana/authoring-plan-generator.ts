@@ -149,8 +149,19 @@ export interface AuthoringPlan {
   outline: AuthoringPlanOutlineSection[];
   therapeuticArea: string | null;
   generatorVersion: string;
-  /** 0..100 — how complete the plan is (more sources / fewer risks → higher). */
-  score: number;
+  /**
+   * 0..100 — how complete the plan is (more sources / fewer risks →
+   * higher). `null` when the readiness and/or consistency assessment
+   * failed to fetch — the risk/contradiction picture is unknown, NOT
+   * clean, and this must never be rendered as a passing numeric score.
+   */
+  score: number | null;
+  /** True when the readiness aggregate and/or consistency-alert fetch
+   * threw during generation — riskFactors/contradictions below are
+   * therefore incomplete, not a verified "nothing found" result. */
+  incompleteAssessment: boolean;
+  /** Which underlying checks failed, when incompleteAssessment is true. */
+  assessmentFailures: Array<'readiness' | 'consistency'>;
   createdAt?: string;
   approvedAt?: string | null;
   approvedBy?: number | null;
@@ -239,6 +250,16 @@ export function deriveAuthoringPlan(input: {
   }>;
   graph: Awaited<ReturnType<typeof getProjectCitationGraph>> | null;
   therapeutic: Awaited<ReturnType<typeof getProjectTherapeuticContext>>;
+  /**
+   * Which upstream risk signals failed to fetch (threw) rather than
+   * genuinely resolving to "nothing found". When set, the corresponding
+   * input (`readiness` / an empty `contradictions`) must NOT be treated
+   * as a clean assessment — see AuthoringPlan.incompleteAssessment.
+   */
+  assessmentFailures?: {
+    readiness?: boolean;
+    consistency?: boolean;
+  };
 }): AuthoringPlan {
   const {
     organizationId,
@@ -252,7 +273,12 @@ export function deriveAuthoringPlan(input: {
     contradictions,
     graph,
     therapeutic,
+    assessmentFailures,
   } = input;
+
+  const readinessFailed = !!assessmentFailures?.readiness;
+  const consistencyFailed = !!assessmentFailures?.consistency;
+  const incompleteAssessment = readinessFailed || consistencyFailed;
 
   // 1. Sources — top-K retrieval results, deduped by artifactId, ranked by
   // relevance.
@@ -371,6 +397,29 @@ export function deriveAuthoringPlan(input: {
 
   // 3. Risk factors — readiness next-actions touching this section + therapeutic risks.
   const riskFactors: AuthoringPlanRiskFactor[] = [];
+  // 3a. Surface a FAILED assessment honestly — never silently as "nothing
+  // found". A caught fetch error must not be indistinguishable from a
+  // clean project (CLAUDE.md: fail closed, never fabricate).
+  if (readinessFailed) {
+    riskFactors.push({
+      id: 'incomplete-readiness-assessment',
+      source: 'shadow_review',
+      severity: 'critical',
+      message:
+        'Readiness / risk assessment could not be completed — the shadow-review fetch failed. ' +
+        'This plan does NOT reflect a verified risk status: treat section readiness as UNKNOWN, not clean.',
+    });
+  }
+  if (consistencyFailed) {
+    riskFactors.push({
+      id: 'incomplete-consistency-assessment',
+      source: 'consistency',
+      severity: 'critical',
+      message:
+        'Consistency / contradiction check could not be completed — the alerts fetch failed. ' +
+        'The contradictions list below is NOT complete: treat this section as unscanned, not contradiction-free.',
+    });
+  }
   if (readiness?.nextActions?.length) {
     for (const action of readiness.nextActions) {
       const actionSection = action.references?.ctdSection ?? null;
@@ -509,15 +558,33 @@ export function deriveAuthoringPlan(input: {
   if (therapeutic.profile) {
     summaryParts.push(`${therapeutic.profile.displayName} reviewer expectations applied`);
   }
+  if (incompleteAssessment) {
+    const failedChecks: string[] = [];
+    if (readinessFailed) failedChecks.push('readiness/risk check FAILED');
+    if (consistencyFailed) failedChecks.push('consistency check FAILED');
+    // Prepend so this is the first thing a reader/exporter sees — never
+    // buried after a reassuring-looking source count.
+    summaryParts.unshift(
+      `INCOMPLETE ASSESSMENT — ${failedChecks.join(' and ')}; not assessed, do not treat as clean`
+    );
+  }
   const summary = summaryParts.join(' · ') || 'Plan ready — no risks detected.';
 
-  // 9. Score.
-  const score = computePlanScore({
-    sources,
-    riskFactors,
-    contradictions: sectionContradictions,
-    hasTherapeuticContext: !!therapeutic.profile,
-  });
+  // 9. Score. When the risk assessment is incomplete we must not emit a
+  // normal numeric score — that would present an unverified plan as if
+  // it had been scored against a real (clean) risk check.
+  const score = incompleteAssessment
+    ? null
+    : computePlanScore({
+        sources,
+        riskFactors,
+        contradictions: sectionContradictions,
+        hasTherapeuticContext: !!therapeutic.profile,
+      });
+
+  const assessmentFailuresList: Array<'readiness' | 'consistency'> = [];
+  if (readinessFailed) assessmentFailuresList.push('readiness');
+  if (consistencyFailed) assessmentFailuresList.push('consistency');
 
   return {
     id: null,
@@ -539,6 +606,8 @@ export function deriveAuthoringPlan(input: {
     therapeuticArea: therapeutic.therapeuticArea,
     generatorVersion: GENERATOR_VERSION,
     score,
+    incompleteAssessment,
+    assessmentFailures: assessmentFailuresList,
   };
 }
 
@@ -768,18 +837,44 @@ export async function generateAuthoringPlan(
   // 4. Readiness aggregator (parallel-safe — pulls 5 signals internally).
   // 5. Consistency alerts for the project.
   // 6. Citation graph.
+  //
+  // IMPORTANT: a failed readiness/consistency fetch must NOT collapse to
+  // the same shape as "assessed, found nothing" (null / {rows:[]}) — that
+  // is indistinguishable from a genuinely clean project and would let a
+  // DB hiccup silently produce a confident, filing-ready-looking plan.
+  // We still catch (a transient risk-check outage must not block plan
+  // generation entirely) but we capture a distinguishable failure flag
+  // that deriveAuthoringPlan turns into an explicit risk factor + a null
+  // score instead of a fabricated pass. Citation graph is advisory-only
+  // (cross-refs), not part of the score, so it keeps its prior fallback.
+  let readinessFailed = false;
+  let consistencyFailed = false;
   const [readinessResult, consistencyResult, graphResult] = await Promise.all([
-    getProjectReadinessAggregate(projectId, organizationId, { submissionType }).catch(() => null),
+    getProjectReadinessAggregate(projectId, organizationId, { submissionType }).catch(err => {
+      readinessFailed = true;
+      console.warn(
+        '[authoring-plan-generator] readiness aggregate fetch failed — marking plan assessment incomplete:',
+        err?.message || err
+      );
+      return null;
+    }),
     listConsistencyAlerts({
       organizationId,
       projectId,
       status: ['open', 'acknowledged'],
       limit: 100,
-    }).catch(() => ({ rows: [], total: 0 })),
+    }).catch(err => {
+      consistencyFailed = true;
+      console.warn(
+        '[authoring-plan-generator] consistency alerts fetch failed — marking plan assessment incomplete:',
+        err?.message || err
+      );
+      return null;
+    }),
     getProjectCitationGraph(projectId, organizationId).catch(() => null),
   ]);
 
-  const contradictions = (consistencyResult.rows ?? []).map(c => ({
+  const contradictions = (consistencyResult?.rows ?? []).map(c => ({
     id: c.id,
     artifactAId: c.artifactAId,
     artifactAPk: c.artifactAPk,
@@ -805,6 +900,7 @@ export async function generateAuthoringPlan(
     contradictions,
     graph: graphResult,
     therapeutic,
+    assessmentFailures: { readiness: readinessFailed, consistency: consistencyFailed },
   });
 
   if (!persist) return plan;
@@ -877,7 +973,11 @@ async function upsertActivePlan(
       plan.therapeuticArea,
       plan.generatorVersion,
       plan.score,
-      JSON.stringify({ generatorVersion: plan.generatorVersion }),
+      JSON.stringify({
+        generatorVersion: plan.generatorVersion,
+        incompleteAssessment: plan.incompleteAssessment,
+        assessmentFailures: plan.assessmentFailures,
+      }),
       createdBy,
     ]);
     const row = rows[0];
@@ -912,6 +1012,10 @@ function rowToPlan(r: any): AuthoringPlan {
     }
     return v as T;
   };
+  const metadata = parse<{
+    incompleteAssessment?: boolean;
+    assessmentFailures?: Array<'readiness' | 'consistency'>;
+  }>(r.metadata, {});
   return {
     id: r.id,
     organizationId: r.organization_id,
@@ -934,7 +1038,19 @@ function rowToPlan(r: any): AuthoringPlan {
     outline: parse<AuthoringPlanOutlineSection[]>(r.outline, []),
     therapeuticArea: r.therapeutic_area ?? null,
     generatorVersion: r.generator_version ?? GENERATOR_VERSION,
-    score: typeof r.score === 'number' ? r.score : Number(r.score) || 0,
+    // A null score means "not assessed" (incomplete readiness/consistency
+    // fetch) — coercing it to 0 would fabricate a real (worst-case) score
+    // where none was actually computed, so it is preserved as null.
+    score:
+      r.score === null || r.score === undefined
+        ? null
+        : typeof r.score === 'number'
+          ? r.score
+          : Number.isFinite(Number(r.score))
+            ? Number(r.score)
+            : null,
+    incompleteAssessment: metadata.incompleteAssessment ?? false,
+    assessmentFailures: metadata.assessmentFailures ?? [],
     createdAt: r.created_at ? new Date(r.created_at).toISOString() : undefined,
     approvedAt: r.approved_at ? new Date(r.approved_at).toISOString() : null,
     approvedBy: r.approved_by ?? null,

@@ -6,10 +6,20 @@
  * Each form collects the domain fields its endpoint requires plus the mandatory
  * governed reason-for-change (≥ 8 chars — the server rejects less), and POSTs to
  * the real org-scoped router (mounted in register-inline-routes.ts):
- *   • risk      → POST /api/protocol-risks/documents/:id/risks
- *   • milestone → POST /api/protocol-milestones/documents/:id/milestones
- *   • amendment → POST /api/protocol-amendments/amendments   {protocolDocumentId,…}
- *   • deviation → POST /api/protocol-deviations/deviations   {protocolDocumentId,…}
+ *   • risk        → POST /api/protocol-risks/documents/:id/risks
+ *   • milestone   → POST /api/protocol-milestones/documents/:id/milestones
+ *   • amendment   → POST /api/protocol-amendments/amendments   {protocolDocumentId,…}
+ *   • deviation   → POST /api/protocol-deviations/deviations   {protocolDocumentId,…}
+ *   • objective   → POST /api/protocol-development/documents/:id/objectives
+ *   • eligibility → POST /api/protocol-development/documents/:id/eligibility
+ *   • finalize    → POST /api/protocol-development/documents/:id/finalize
+ *
+ * The last three were reached through a governed dialog whose `onConfirm` was
+ * `() => {}` — a user completed the reason-for-change ceremony, the dialog
+ * closed, and nothing was written. Every endpoint they needed already existed
+ * and had no caller. They are the same shape as the four registers (governed
+ * form → POST → 201 with the hash-chained governance fields), so they belong to
+ * the same module rather than to a fifth spelling of it.
  *
  * Every route records a hash-chained governed action server-side and returns
  * 201 with the created ids + governance fields. On success the caller refetches
@@ -21,7 +31,9 @@ import { C2CForm } from '../C2CForm';
 import type { C2CFormConfig } from '../C2CForm';
 import { apiRequest } from '@/lib/queryClient';
 
-export type RegisterKind = 'risk' | 'milestone' | 'amendment' | 'deviation';
+export type RegisterKind =
+  | 'risk' | 'milestone' | 'amendment' | 'deviation'
+  | 'objective' | 'eligibility' | 'finalize';
 
 const REASON_FIELD = {
   key: 'reason', label: 'Reason for change (governed)', type: 'textarea' as const, required: true,
@@ -78,6 +90,34 @@ const FORMS: Record<RegisterKind, C2CFormConfig> = {
       REASON_FIELD,
     ],
   },
+  objective: {
+    eyebrow: 'Protocol · objectives & endpoints', title: 'Add objective',
+    sub: 'ICH M11 — Objectives & Endpoints. Recorded as a governed action.',
+    governed: true, submitLabel: 'Add objective',
+    fields: [
+      { key: 'objective', label: 'Objective', type: 'textarea', required: true, placeholder: 'e.g. To evaluate the efficacy of X versus placebo' },
+      { key: 'objectiveType', label: 'Type', type: 'seg', options: ['primary', 'secondary', 'exploratory'], default: 'primary', half: true },
+      { key: 'timepoint', label: 'Timepoint', type: 'text', half: true, placeholder: 'e.g. Week 24' },
+      { key: 'endpoint', label: 'Endpoint', type: 'textarea', placeholder: 'The endpoint that measures this objective' },
+      REASON_FIELD,
+    ],
+  },
+  eligibility: {
+    eyebrow: 'Protocol · study population', title: 'Add eligibility criterion',
+    sub: 'ICH M11 — Study Population. Recorded as a governed action.',
+    governed: true, submitLabel: 'Add criterion',
+    fields: [
+      { key: 'criterion', label: 'Criterion', type: 'textarea', required: true, placeholder: 'e.g. Age ≥ 18 years at the time of consent' },
+      { key: 'kind', label: 'Arm', type: 'seg', options: ['inclusion', 'exclusion'], default: 'inclusion' },
+      REASON_FIELD,
+    ],
+  },
+  finalize: {
+    eyebrow: 'Protocol · finalization', title: 'Finalize protocol',
+    sub: 'The server re-runs the deterministic completeness gate and refuses if a required section is incomplete. Bumps the version and is recorded as a governed action.',
+    governed: true, submitLabel: 'Finalize protocol',
+    fields: [REASON_FIELD],
+  },
 };
 
 /** Strips empty-string optionals so the Zod schemas see absent, not ''. */
@@ -115,13 +155,27 @@ export async function submitProtocolRegister(
       path = '/api/protocol-deviations/deviations';
       body = { ...compact({ description: v.description, category: v.category, severity: v.severity, rootCause: v.rootCause, reason }), protocolDocumentId };
       break;
+    case 'objective':
+      path = `/api/protocol-development/documents/${protocolDocumentId}/objectives`;
+      body = compact({ objective: v.objective, objectiveType: v.objectiveType, endpoint: v.endpoint, timepoint: v.timepoint, reason });
+      break;
+    case 'eligibility':
+      path = `/api/protocol-development/documents/${protocolDocumentId}/eligibility`;
+      body = compact({ criterion: v.criterion, kind: v.kind, reason });
+      break;
+    case 'finalize':
+      path = `/api/protocol-development/documents/${protocolDocumentId}/finalize`;
+      body = { reason };
+      break;
   }
   const res = await apiRequest('POST', path, body);
   const json = (await res.json().catch(() => null)) as Record<string, unknown> | null;
   if (res.status === 401) throw new Error('Not recorded — your session isn’t authenticated.');
   if (!res.ok) {
-    const detail = (json as any)?.error?.code ?? (json as any)?.error ?? `HTTP ${res.status}`;
-    throw new Error(`Couldn’t record the ${kind} — ${typeof detail === 'string' ? detail : JSON.stringify(detail)}. Nothing was persisted.`);
+    const detail =
+      (json as any)?.error?.message ?? (json as any)?.error?.code ?? (json as any)?.error ?? `HTTP ${res.status}`;
+    const what = kind === 'finalize' ? 'finalize the protocol' : `record the ${kind}`;
+    throw new Error(`Couldn’t ${what} — ${typeof detail === 'string' ? detail : JSON.stringify(detail)}. Nothing was persisted.`);
   }
   return json ?? {};
 }

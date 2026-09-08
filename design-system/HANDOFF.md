@@ -1,5 +1,7 @@
 # HANDOFF.md — Implementation contract for Claude Code
 
+> Kit paths in this document (`ui_kits/<surface>/`) resolve from the repository root: the kits live at `ui_kits/`, one tree, since the read-only mirror under `design-system/ui_kits/` was folded into it (ledger L141).
+
 This file is the **executable brief** for wiring the Concept2Cure Design System into the `concept2cure-v2` codebase. Read `CLAUDE.md` and `SKILL.md` before this file; read this file before touching a single line of product code.
 
 ---

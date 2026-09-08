@@ -22,6 +22,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { I } from '../icons';
 import type { SurfaceViewProps } from '../surfaceViews';
+import { usePublishSurfaceContext } from '../surfaceContext';
 import { EmptyState } from '../dataConnect';
 import { C2CForm } from '../C2CForm';
 import type { C2CFormConfig } from '../C2CForm';
@@ -106,6 +107,60 @@ export function ReportGovernance(_props: SurfaceViewProps) {
     Object.entries(v)
       .filter(([, val]) => ['string', 'number', 'boolean'].includes(typeof val))
       .map(([k, val]) => [k, String(val)]);
+
+  /* What AnA can see of this screen. A failed register read is published as a
+     failure, never as an org with no governed reports. The verification
+     verdict body is NOT published — it carries content hashes and chain
+     values that have no reader benefit in model context; AnA gets the fact
+     that verification ran for a report id, and the person reads the table. */
+  const anaContext = React.useMemo(() => {
+    if (state === 'loading') {
+      return { summary: 'Report governance — the governed report register is still loading.' };
+    }
+    if (state === 'error') {
+      return {
+        summary:
+          'Report governance — the governed report register could not be read, so no reports are ' +
+          'listed. That is a failed read, not an organization with no governed reports.',
+        availableActions: ['Retry the governed-report read'],
+      };
+    }
+    if (reports.length === 0) {
+      return {
+        summary:
+          'Report governance — no governed reports yet. Reports generated through the ' +
+          'intelligent-reports engine appear here with seal status, integrity verification, and provenance.',
+        facts: { reportCount: 0 },
+      };
+    }
+    const sealOf = (r: GovReport) => String(r.sealStatus ?? r.seal_status ?? 'draft').toLowerCase();
+    const sealed = reports.filter((r) => sealOf(r) === 'sealed').length;
+    const revoked = reports.filter((r) => sealOf(r) === 'revoked').length;
+    return {
+      summary:
+        `Report governance: ${reports.length} governed report(s) — ${sealed} sealed, ${revoked} revoked, ` +
+        `${reports.length - sealed - revoked} draft.` +
+        (verifyRes ? ` Integrity verification is shown for report ${verifyRes.id}.` : '') +
+        (detail
+          ? ` Report ${detail.id} shows ${detail.provenance} provenance atom(s) and ${detail.attestations} attestation(s).`
+          : '') +
+        (dialog ? ` A governed ${dialog.kind} justification form is open — a human ceremony in progress.` : ''),
+      facts: {
+        reportCount: reports.length,
+        sealed,
+        revoked,
+        draft: reports.length - sealed - revoked,
+        verificationShownFor: verifyRes?.id ?? null,
+        provenanceShownFor: detail?.id ?? null,
+        justificationFormOpen: dialog?.kind ?? null,
+      },
+      availableActions: [
+        'Verify a report’s integrity and read its provenance/attestation counts — read-only checks',
+        'Sealing and revoking a report each require a recorded justification — governed acts AnA proposes in conversation, never through screen controls',
+      ],
+    };
+  }, [state, reports, verifyRes, detail, dialog]);
+  usePublishSurfaceContext('report-governance', anaContext);
 
   return (
     <div className="cm-body">

@@ -1,8 +1,9 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { I } from '../icons';
 import { liveGetOrNull, liveMutateOrNull, EmptyState } from '../dataConnect';
 import { PedigreeBadge } from '../intelligence/Intelligence';
 import type { SurfaceViewProps } from '../surfaceViews';
+import { usePublishSurfaceContext } from '../surfaceContext';
 import '../styles/project-home-v2.css';
 
 /* ════ Evidence — live corpus search surface ════
@@ -106,6 +107,63 @@ export function Evidence(_props: SurfaceViewProps) {
   );
 
   const ran = loading || answer !== null || error !== null;
+
+  /* What AnA can see of this screen.
+     This surface runs its own retrieval against the corpus and renders the
+     answer with its sources, so the rail conversation and the page were two
+     assistants that could not see each other: a follow-up in the rail ("which
+     of those sources is strongest?") had no idea an ask had been run at all.
+
+     The answer's pedigree travels with it. It is `model_assisted`, not source
+     verified, and an assistant quoting it onward without that qualifier turns a
+     retrieval draft into an assertion about the regulatory record. */
+  const anaContext = useMemo(() => {
+    if (loading) {
+      return {
+        summary: `Evidence search: the corpus is still being searched for "${asked}"; no answer is final yet.`,
+        facts: { question: asked },
+      };
+    }
+    if (error) {
+      return {
+        summary:
+          `Evidence search for "${asked}" did not complete — the retrieval service returned no result, so ` +
+          'this screen is showing no answer because of a failure, not because the corpus has nothing.',
+        facts: { question: asked, failure: error },
+        availableActions: ['Retry the search, or narrow the query'],
+      };
+    }
+    if (!answer) {
+      return {
+        summary:
+          'Evidence search: no question has been asked yet, so there is no answer or source list on screen.',
+        facts: { recentQuestions: recent.slice(0, 6) },
+        availableActions: ['Ask a question of the evidence corpus'],
+      };
+    }
+    return {
+      summary:
+        `Evidence search: answered "${asked}" from ${chunks.length} retrieved source(s), ` +
+        `${answer.cites.length} of them cited. The answer's pedigree is "${answer.pedigree}" — ` +
+        'model-assisted retrieval, not source-verified fact.',
+      facts: {
+        question: asked,
+        answerPedigree: answer.pedigree,
+        answerText: answer.text,
+        citedSourceNumbers: answer.cites,
+        sources: chunks.slice(0, 10).map((c) => ({
+          n: c.n, document: c.doc, similarity: c.sim, excerpt: c.snip,
+        })),
+        recentQuestions: recent.slice(0, 6),
+      },
+      availableActions: [
+        'Ask another question of the evidence corpus',
+        'Open a retrieved source to read the passage it was drawn from',
+        'Re-run one of the organisation\u2019s recent questions',
+      ],
+    };
+  }, [loading, error, answer, chunks, asked, recent]);
+  usePublishSurfaceContext('evidence-search', anaContext);
 
   return (
     <div className="page-inner">

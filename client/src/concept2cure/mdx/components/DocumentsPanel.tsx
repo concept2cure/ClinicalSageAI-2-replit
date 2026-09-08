@@ -6,7 +6,7 @@
  * across Engineering / UDI / Postmarket / Analytics / Admin (each pass
  * their own document list).
  *
- * Port of design-system/ui_kits/mdx/documents-panel.jsx. CSS lives in
+ * Port of ui_kits/mdx/documents-panel.jsx. CSS lives in
  * client/src/concept2cure/mdx/app.css (DOCUMENTS PANEL section) — which, until
  * that section was written, it did not: this line named a destination the port
  * never reached, and every class below matched nothing in any bundle.
@@ -17,7 +17,7 @@ import { I } from '../icons';
 
 // ─── Shared kit document shape ────────────────────────────────────────
 //
-// Mirrors design-system/ui_kits/mdx/data/engineering-docs.js (and the
+// Mirrors ui_kits/mdx/data/engineering-docs.js (and the
 // other *-docs.js files). Optional fields are surface-specific and most
 // surfaces omit them entirely — DocumentsPanel renders only when present.
 
@@ -172,7 +172,7 @@ export function DocumentsPanel({
                 <div className="docs-title">{d.title}</div>
                 <div className="docs-meta">
                   <span className="mono small docs-ver">{d.ver}</span>
-                  <span className="dot-sep">·</span>
+                  <span className="dot-sep" aria-hidden="true">·</span>
                   <span>
                     {d.sectionsComplete}/{d.sections} sections
                   </span>
@@ -183,7 +183,7 @@ export function DocumentsPanel({
                     />
                   </span>
                   <span className="mono small docs-pct">{d.completion}%</span>
-                  <span className="dot-sep">·</span>
+                  <span className="dot-sep" aria-hidden="true">·</span>
                   <span className="docs-owner">{d.owner}</span>
                   {d.reviewers && d.reviewers.length > 0 && (
                     <>

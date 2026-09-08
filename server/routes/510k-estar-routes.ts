@@ -1,20 +1,52 @@
 import { Router, type Request } from 'express';
 import archiver from 'archiver';
-import { createHash } from 'crypto';
 import { PassThrough } from 'stream';
 import { z } from 'zod';
 import { stylePacks } from '../export/stylePacks/config';
-import { renderPdfBuffersFor510k } from '../export/renderers';
+import {
+  renderPdfBuffersFor510k,
+  renderPdfBuffersPerSection,
+  renderCombinedPdf,
+  renderCombinedDocx,
+} from '../export/renderers';
 import { authMiddleware } from '../auth';
-import { createGovernedExportConsequence } from '../services/export/governedExportConsequence';
-import { fillEstarSubmission } from '../services/pathway-engines/estar/estar-fill';
+import {
+  createGovernedExportConsequence,
+  createAuditedUnplacedExport,
+  getMaxGovernedExportBytes,
+} from '../services/export/governedExportConsequence';
+import {
+  EstarRetentionError,
+  listRetainedEstarArtifacts,
+  retainOfficialEstar,
+  type EstarRetentionReport,
+} from '../services/pathway-engines/estar/estar-artifact-retention';
+import { governedSignatureSchema } from '../api/cmc/governance';
+import { verifyReauth } from './c2c/actions';
+import {
+  fillEstarSubmission,
+  type EstarAttachmentReport,
+} from '../services/pathway-engines/estar/estar-fill';
+import { createDeviceAttachmentResolver } from '../services/pathway-engines/estar/estar-attachment-plan';
+import { getEstarFieldMap, isFieldMapPopulated } from '../services/pathway-engines/estar/estar-field-map';
+import {
+  loadEstarAdministrativeInputs,
+  projectEstarAdministrativeData,
+  resolveOfficialEstarFields,
+  reportOfficialEstarFill,
+  type GovernedAdministrativeData,
+  type OfficialEstarFieldReport,
+  type ResolvedOfficialEstarFields,
+} from '../services/pathway-engines/estar/estar-administrative-data';
+import type { OfficialPdfFieldMap } from '../services/forms/fill-official-pdf';
 import { assembleDeviceSubmission } from '../services/pathway-engines/device-assembly/assemble-device-submission';
 import {
   descriptorFor,
+  isUsableEstarTemplate,
   listVendoredTemplates,
   type EstarTemplateVariant,
 } from '../services/pathway-engines/estar/estar-template-registry';
-import { listAcroFields } from '../services/forms/fill-official-pdf';
+import { listAcroFields, listXfaFields, isDynamicXfaPdf } from '../services/forms/fill-official-pdf';
 import {
   ESTAR_VERSIONS,
   ESTAR_FAMILY_LABELS,
@@ -33,14 +65,18 @@ import {
 import {
   loadDeviceContentLeaves,
   loadAuthoredDeviceSections,
+  resolveDeviceContentScope,
   sectionsToEditorJson,
+  type AuthoredDeviceSection,
 } from '../services/pathway-engines/estar/estar-content-leaves';
+import { PMA_SUBMISSION_TYPES } from '../services/pathway-engines/pma/pma-mapper';
 import { and, eq } from 'drizzle-orm';
 import { requestDb } from '../db/requestDb';
 import { fda510kProjects } from '../../shared/schema';
 import { regulatoryPrograms } from '../../shared/schema/programs';
-import { resolveProgramProjectAnchor } from '../services/c2c/program-project-anchor';
-import auditService from '../services/auditService';
+import { loadProgramDeviceFlags } from '../services/pathway-engines/estar/program-device-flags';
+import { requireEditorAccess } from '../middleware/orgMembership';
+import { isMissingAnchorColumn, resolveProgramProjectAnchor } from '../services/c2c/program-project-anchor';
 import {
   getEstarRegistration,
   upsertEstarRegistration,
@@ -54,6 +90,7 @@ import {
   getEstarSubmission,
   advanceEstarSubmission,
   EstarSubmissionError,
+  type EstarFilingSignature,
 } from '../services/pathway-engines/estar/estar-submission-service';
 import {
   ESTAR_SUBMISSION_STATUSES,
@@ -61,33 +98,18 @@ import {
 } from '../../shared/schema/estar-submission';
 
 import { createScopedLogger } from '../utils/logger.js';
-import { requireEntitlement } from '../services/entitlements/require-entitlement';
+import {
+  requireEntitlement,
+  resolveEntitlementsEnforceMode,
+  evaluateOrgEntitlement,
+  type EntitlementEvaluation,
+} from '../services/entitlements/require-entitlement';
 import { getMarketSpec } from '../services/market-specs/market-submission-specs';
 import { validateLeavesAgainstMarketSpec, type LeafFileDescriptor } from '../services/market-specs/market-formatting-validator';
 
 const logger = createScopedLogger('510k-estar-routes');
 
 const router = Router();
-
-const allowedRoles = new Set(['admin', 'owner', 'editor', 'super_admin']);
-const requireEditorAccess = (req: any, res: any, next: () => void) => {
-  const role = String(req.userRole || req.user?.role || '').toLowerCase();
-  if (!role || !allowedRoles.has(role)) {
-    return res.status(403).json({ error: 'Insufficient permissions' });
-  }
-  const tenantOrg = req.tenantContext?.organizationId;
-  const userOrg = req.user?.organizationId || req.tenantId;
-  const orgId = tenantOrg || userOrg;
-  if (!orgId) {
-    return res.status(400).json({ error: 'Organization context required' });
-  }
-  const numericOrgId = Number(orgId);
-  if (!Number.isFinite(numericOrgId) || numericOrgId <= 0) {
-    return res.status(400).json({ error: 'Valid numeric organization context required' });
-  }
-  req.resolvedOrganizationId = numericOrgId;
-  return next();
-};
 
 const attachmentSchema = z.object({
   filename: z.string().min(1),
@@ -138,7 +160,24 @@ interface ProjectAnchor {
   anchorProjectId: number | null;
   /** The resolved regulatoryPrograms UUID when the ident named a program. */
   programUuid: string | null;
+  /** fda510kProjects.id when the ident was the numeric GA project id; null otherwise. */
+  fda510kProjectId: number | null;
   title: string | null;
+}
+
+/** Postgres `undefined_table`: the relation this lookup reads is not in this database. */
+const UNDEFINED_TABLE = '42P01';
+
+/**
+ * The ONLY failures resolveProjectAnchor may answer with "no row": the schema
+ * the lookup needs is absent — undefined column (42703) or undefined table
+ * (42P01), a database without the migration, which is what the fall-through
+ * always existed for. Anything else (a connection reset, a statement timeout,
+ * a permission refusal) is a FAILED READ, and a failed read is never rendered
+ * as "not found": it propagates, and every caller answers 500.
+ */
+function isSchemaAbsence(err: unknown): boolean {
+  return isMissingAnchorColumn(err) || (err as { code?: unknown } | null)?.code === UNDEFINED_TABLE;
 }
 
 /**
@@ -146,7 +185,9 @@ interface ProjectAnchor {
  * document-preview ident contract: numeric → fda510kProjects.id (GA path,
  * carries the numeric anchor the artifact registry needs), UUID → programs.id,
  * else → programs.code. Returns null when nothing in this org matches — the
- * caller must 404, never export against an unresolved project.
+ * caller must 404, never export against an unresolved project. THROWS when
+ * the read itself failed (see isSchemaAbsence) — the caller must answer 500,
+ * never the 404 that would tell the user their project does not exist.
  *
  * A UUID/code program resolves its numeric anchor through
  * `projects.regulatory_program_id` (Document Identity Contract slice C1), which
@@ -176,21 +217,24 @@ async function resolveProjectAnchor(
 
   if (/^\d+$/.test(ident)) {
     try {
-      const [row] = await requestDb(req)
+      const [row] = await db
         .select({ id: fda510kProjects.id, deviceName: fda510kProjects.deviceName })
         .from(fda510kProjects)
         .where(and(eq(fda510kProjects.id, Number(ident)), eq(fda510kProjects.organizationId, orgId)))
         .limit(1);
-      if (row) return { anchorProjectId: row.id, programUuid: null, title: row.deviceName ?? null };
-    } catch {
-      /* fall through */
+      if (row) {
+        return { anchorProjectId: row.id, programUuid: null, fda510kProjectId: row.id, title: row.deviceName ?? null };
+      }
+    } catch (err) {
+      // Schema absence is "no row"; every other failure is a failed read.
+      if (!isSchemaAbsence(err)) throw err;
     }
     return null;
   }
 
   const byUuid = UUID_RE.test(ident);
   try {
-    const [row] = await requestDb(req)
+    const [row] = await db
       .select({ id: regulatoryPrograms.id, name: regulatoryPrograms.name })
       .from(regulatoryPrograms)
       .where(
@@ -212,15 +256,16 @@ async function resolveProjectAnchor(
       // the migration is not applied here. The unplaced path stays exactly as
       // it was for that case; this only stops it being taken when a real
       // anchor exists.
-      const anchorProjectId = await resolveProgramProjectAnchor(requestDb(req), {
+      const anchorProjectId = await resolveProgramProjectAnchor(db, {
         programId: row.id,
         orgId,
         context: '510k-estar.export',
       });
-      return { anchorProjectId, programUuid: row.id, title: row.name ?? null };
+      return { anchorProjectId, programUuid: row.id, fda510kProjectId: null, title: row.name ?? null };
     }
-  } catch {
-    /* fall through */
+  } catch (err) {
+    // Schema absence is "no row"; every other failure is a failed read.
+    if (!isSchemaAbsence(err)) throw err;
   }
   return null;
 }
@@ -259,8 +304,134 @@ function resolveOrgId(req: any): number | null {
   return Number.isInteger(n) && n > 0 ? n : null;
 }
 
+/** One file in the draft package ZIP. */
+interface DraftPackageEntry {
+  name: string;
+  buffer: Buffer;
+}
+
+/**
+ * The draft-package families /build can produce, derived from the class of the
+ * governed document that answered the content load (PMA_ASSEMBLY):
+ *   - '510k'   — a governed 510(k), or the legacy store / a client payload;
+ *   - 'pma'    — a governed PMA (21 CFR 814.20 outline);
+ *   - 'denovo' — a governed De Novo request;
+ *   - 'cer'    — a governed clinical evaluation report.
+ *
+ * How the files are cut depends on WHERE the content came from, not only on
+ * the family. Governed content renders one PDF per authored section, in
+ * outline order and named by rule-pack key, plus the combined PDF/DOCX. Only
+ * the legacy store keeps the six fixed 510(k) slots those slots were built for.
+ *
+ * It was not so. Every family but PMA went through the six-slot renderer, which
+ * picks one heading per named bucket and stamps "content not found" for the
+ * rest. The FDA 510(k) rule pack scaffolds 18 sections — Form 3514,
+ * indications for use, technological comparison, predicate devices,
+ * biocompatibility, sterilization, software, cybersecurity among them — and
+ * the delivered ZIP, registered as a governed artifact and audit-logged,
+ * carried six files. Twelve authored sections were absent, and nothing said
+ * so. A De Novo or a CER was cut the same way and ledgered as a 510(k)
+ * package. The route's own comment described this defect as fixed, for PMA.
+ * None is an eSTAR; the labels below say so.
+ */
+type DraftPackageFamily = '510k' | 'pma' | 'denovo' | 'cer';
+
+const DRAFT_PACKAGE_LABELS: Record<
+  DraftPackageFamily,
+  { filenameSuffix: string; package: string; title: string; ctdSection: string; suggestedPlacement: string }
+> = {
+  '510k': {
+    filenameSuffix: 'content-package-draft',
+    package: 'content package draft (not an eSTAR)',
+    title: '510(k) content package (draft)',
+    ctdSection: 'm1.5',
+    suggestedPlacement: 'Module 1 / 510(k) content package (draft)',
+  },
+  pma: {
+    filenameSuffix: 'pma-content-package-draft',
+    package: 'PMA content package draft (not an eSTAR)',
+    title: 'PMA content package (draft)',
+    ctdSection: 'm2.5',
+    suggestedPlacement: 'Module 2 / PMA content package (draft)',
+  },
+  denovo: {
+    filenameSuffix: 'denovo-content-package-draft',
+    package: 'De Novo content package draft (not an eSTAR)',
+    title: 'De Novo content package (draft)',
+    ctdSection: 'm1.5',
+    suggestedPlacement: 'Module 1 / De Novo content package (draft)',
+  },
+  cer: {
+    filenameSuffix: 'cer-content-package-draft',
+    package: 'Clinical evaluation report package draft (not an eSTAR)',
+    title: 'Clinical evaluation report package (draft)',
+    ctdSection: 'm2.5',
+    suggestedPlacement: 'Module 2 / Clinical evaluation report package (draft)',
+  },
+};
+
+/** The style pack and combined-document class each family renders with. */
+const DRAFT_PACKAGE_RENDERING: Record<DraftPackageFamily, { pack: string; docType: string }> = {
+  '510k': { pack: '510k_v1', docType: 'cerv2_510k' },
+  pma: { pack: 'pma_v1', docType: 'cerv2_pma' },
+  // De Novo content is 510(k)-shaped; the combined document is titled
+  // generically rather than as a 510(k), which it is not.
+  denovo: { pack: '510k_v1', docType: 'cerv2_denovo' },
+  cer: { pack: 'cer_mdr_v1', docType: 'cerv2_cer' },
+};
+
+function draftPackageFamilyFor(source: string, docType: string | undefined): DraftPackageFamily {
+  if (source !== 'governed_program') return '510k';
+  return docType === 'pma' || docType === 'denovo' || docType === 'cer' ? docType : '510k';
+}
+
+/**
+ * Render the package's files. Governed content is every authored section (the
+ * editor JSON holds one H1 per authored governed section, in path_order) named
+ * by its rule-pack key, plus the combined document, whatever the family. Only
+ * legacy-store content keeps the six fixed 510(k) slots.
+ */
+async function renderDraftPackageEntries(
+  family: DraftPackageFamily,
+  content: unknown,
+  packageId: string,
+  sections: ReadonlyArray<AuthoredDeviceSection>,
+  governed: boolean,
+): Promise<DraftPackageEntry[]> {
+  if (governed) {
+    const rendering = DRAFT_PACKAGE_RENDERING[family];
+    const [perSection, combinedPdf, combinedDocx] = await Promise.all([
+      renderPdfBuffersPerSection(content, stylePacks[rendering.pack] ?? stylePacks['510k_v1']),
+      renderCombinedPdf(rendering.docType, content),
+      renderCombinedDocx(rendering.docType, content),
+    ]);
+    // The per-section PDFs come back in document order, which is the loader's
+    // outline order; the rule-pack key rides along only when the two line up.
+    const aligned = perSection.length === sections.length;
+    const entries: DraftPackageEntry[] = perSection.map((s, i) => {
+      const code = aligned ? sections[i]?.sectionCode : undefined;
+      const stem = sanitizeFilename(`${code ?? ''} ${s.title}`.trim()).replace(/^_+|_+$/g, '').slice(0, 80);
+      return { name: `${String(i + 1).padStart(2, '0')}_${stem}.pdf`, buffer: s.buffer };
+    });
+    const id = sanitizeFilename(packageId);
+    entries.push({ name: `${id}_Combined.pdf`, buffer: combinedPdf });
+    entries.push({ name: `${id}_Combined.docx`, buffer: combinedDocx });
+    return entries;
+  }
+  const pdf = await renderPdfBuffersFor510k(content, stylePacks['510k_v1']);
+  return [
+    { name: '01_CoverLetter.pdf', buffer: pdf.coverLetter },
+    { name: '02_510kSummary.pdf', buffer: pdf.summary },
+    { name: '03_DeviceDescription.pdf', buffer: pdf.deviceDescription },
+    { name: '04_SE_Discussion.pdf', buffer: pdf.seDiscussion },
+    { name: '05_PerformanceTesting.pdf', buffer: pdf.performanceTesting },
+    { name: '06_Labeling.pdf', buffer: pdf.labeling },
+  ];
+}
+
+/** The ONE zip builder for every draft-package family. */
 async function buildZipBuffer(
-  pdf: Awaited<ReturnType<typeof renderPdfBuffersFor510k>>,
+  entries: ReadonlyArray<DraftPackageEntry>,
   attachments: Array<{ filename: string; buffer: string }>
 ) {
   const archive = archiver('zip', { zlib: { level: 9 } });
@@ -275,12 +446,9 @@ async function buildZipBuffer(
   });
 
   archive.pipe(pass);
-  archive.append(pdf.coverLetter, { name: '01_CoverLetter.pdf' });
-  archive.append(pdf.summary, { name: '02_510kSummary.pdf' });
-  archive.append(pdf.deviceDescription, { name: '03_DeviceDescription.pdf' });
-  archive.append(pdf.seDiscussion, { name: '04_SE_Discussion.pdf' });
-  archive.append(pdf.performanceTesting, { name: '05_PerformanceTesting.pdf' });
-  archive.append(pdf.labeling, { name: '06_Labeling.pdf' });
+  for (const entry of entries) {
+    archive.append(entry.buffer, { name: entry.name });
+  }
 
   for (const attachment of attachments) {
     const buffer = Buffer.from(attachment.buffer, 'base64');
@@ -310,8 +478,11 @@ async function buildZipBuffer(
  */
 // The three producing/assembling actions of the device_assembly_readiness
 // capability are entitlement-gated (ENTITLEMENTS_ENFORCE: off|warn|on — see
-// services/entitlements/require-entitlement). Read paths below stay open.
-const requireAssemblyEntitlement = requireEntitlement('device_assembly_readiness');
+// services/entitlements/require-entitlement). Read paths below stay open;
+// GET /entitlement reports this same gate's verdict so a surface can learn
+// it on mount instead of after the first click.
+const ASSEMBLY_CAPABILITY = 'device_assembly_readiness' as const;
+const requireAssemblyEntitlement = requireEntitlement(ASSEMBLY_CAPABILITY);
 
 router.post('/build', authMiddleware, requireEditorAccess, requireAssemblyEntitlement, async (req, res) => {
   const validation = requestSchema.safeParse(req.body);
@@ -325,22 +496,53 @@ router.post('/build', authMiddleware, requireEditorAccess, requireAssemblyEntitl
   const { meta, useProjectContent, documentId, attachments = [] } = validation.data;
   let { content } = validation.data;
 
-  const anchor = await resolveProjectAnchor(req, getOrganizationId(req), meta);
+  // A failed anchor READ is a 500, never the 404 a genuinely unresolved project
+  // gets: "the lookup broke" and "no such project in your organization" are
+  // different facts, and the caller must be able to tell them apart.
+  let anchor: ProjectAnchor | null;
+  try {
+    anchor = await resolveProjectAnchor(req, getOrganizationId(req), meta);
+  } catch (error) {
+    logger.error('project resolution failure', { err: error instanceof Error ? error.message : String(error) });
+    return res.status(500).json({
+      error: 'PROJECT_RESOLUTION_FAILED',
+      message: 'Could not resolve the project for this export. The problem has been logged.',
+    });
+  }
   if (!anchor) {
     return res.status(404).json({ error: 'Project not found in your organization' });
   }
 
+  // The package family follows the governed document's class; a client-supplied
+  // payload and the legacy store are 510(k)-shaped exactly as before.
+  let family: DraftPackageFamily = '510k';
+  let authoredSections: AuthoredDeviceSection[] = [];
+  /** Which store answered the content load; 'client_payload' when none was read. */
+  let deviceContentSource = 'client_payload';
+
   if (content === undefined && useProjectContent) {
-    const sections = await loadAuthoredDeviceSections(getOrganizationId(req), { documentId });
+    // A program anchor reads ITS governed document (the rows the editor saves
+    // into) when that document holds authored content; otherwise the legacy
+    // store answers as before, and the response says which (ESTAR-01/02).
+    const orgId = getOrganizationId(req);
+    const { scope, source, docType } = await resolveDeviceContentScope(orgId, {
+      programId: documentId === undefined ? (anchor.programUuid ?? undefined) : undefined,
+      documentId,
+    });
+    deviceContentSource = source;
+    const sections = await loadAuthoredDeviceSections(orgId, scope);
     if (sections.length === 0) {
       return res.status(422).json({
         error: 'NO_AUTHORED_CONTENT',
+        deviceContentSource: source,
         message:
-          'No authored 510(k) sections found for this organization' +
+          'No authored device sections found for this organization' +
           (documentId ? ` (document ${documentId})` : '') +
           ' — author section content before exporting a draft package.',
       });
     }
+    family = draftPackageFamilyFor(source, docType);
+    authoredSections = sections;
     content = sectionsToEditorJson(sections);
   }
 
@@ -368,9 +570,17 @@ router.post('/build', authMiddleware, requireEditorAccess, requireAssemblyEntitl
   }
 
   try {
-    const pdf = await renderPdfBuffersFor510k(content, stylePacks['510k_v1']);
-    const zipBuffer = await buildZipBuffer(pdf, attachments);
-    const filename = `${sanitizeFilename(meta.id)}_eSTAR.zip`;
+    const labels = DRAFT_PACKAGE_LABELS[family];
+    const entries = await renderDraftPackageEntries(
+      family,
+      content,
+      meta.id,
+      authoredSections,
+      deviceContentSource === 'governed_program',
+    );
+    const sectionsRendered = entries.filter((e) => /\.pdf$/i.test(e.name) && !/_Combined\.pdf$/.test(e.name)).length;
+    const zipBuffer = await buildZipBuffer(entries, attachments);
+    const filename = `${sanitizeFilename(meta.id)}_${labels.filenameSuffix}.zip`;
 
     // E1 — ADVISORY market-formatting check. The FDA eSTAR spec (us-estar) already
     // encodes CDRH's file-naming / format / size / no-encryption rules; run the
@@ -384,12 +594,11 @@ router.post('/build', authMiddleware, requireEditorAccess, requireAssemblyEntitl
       const spec = getMarketSpec('us-estar');
       if (spec) {
         const leaves: LeafFileDescriptor[] = [
-          { fileName: '01_CoverLetter.pdf', fileFormat: 'PDF', fileSizeBytes: pdf.coverLetter.length },
-          { fileName: '02_510kSummary.pdf', fileFormat: 'PDF', fileSizeBytes: pdf.summary.length },
-          { fileName: '03_DeviceDescription.pdf', fileFormat: 'PDF', fileSizeBytes: pdf.deviceDescription.length },
-          { fileName: '04_SE_Discussion.pdf', fileFormat: 'PDF', fileSizeBytes: pdf.seDiscussion.length },
-          { fileName: '05_PerformanceTesting.pdf', fileFormat: 'PDF', fileSizeBytes: pdf.performanceTesting.length },
-          { fileName: '06_Labeling.pdf', fileFormat: 'PDF', fileSizeBytes: pdf.labeling.length },
+          ...entries.map((e) => ({
+            fileName: e.name,
+            fileFormat: e.name.toLowerCase().endsWith('.docx') ? 'DOCX' : 'PDF',
+            fileSizeBytes: e.buffer.length,
+          })),
           ...attachments.map((a) => ({
             fileName: sanitizeFilename(a.filename),
             fileSizeBytes: Buffer.from(a.buffer, 'base64').length,
@@ -405,11 +614,21 @@ router.post('/build', authMiddleware, requireEditorAccess, requireAssemblyEntitl
 
     // This route produces a ZIP of rendered section PDFs, NOT the official FDA
     // eSTAR interactive PDF that CDRH ingests. `officialEstarPdf: false` keeps
-    // that honest so no downstream surface presents this as a submittable eSTAR.
+    // that honest so no downstream surface presents this as a submittable eSTAR,
+    // and the package label and file name say what it is rather than borrowing
+    // the name of the FDA-issued dynamic PDF this is not (ESTAR-06).
     const exportMetadata = {
       format: 'zip',
       attachmentCount: attachments.length,
-      package: 'eSTAR',
+      package: labels.package,
+      packageFamily: family,
+      // Which store answered, and how much of it reached the ZIP. The success
+      // response never said; only the 422 branch echoed the source, so a
+      // package cut from the wrong store or missing most of its sections was
+      // indistinguishable from a complete one.
+      deviceContentSource,
+      sectionsAuthored: authoredSections.length,
+      sectionsRendered,
       officialEstarPdf: false,
       programId: anchor.programUuid ?? undefined,
       formattingErrors: (formattingReport as { errors?: number } | undefined)?.errors ?? 0,
@@ -421,11 +640,11 @@ router.post('/build', authMiddleware, requireEditorAccess, requireAssemblyEntitl
         organizationId: getOrganizationId(req),
         projectId: anchor.anchorProjectId,
         userId: getUserId(req),
-        title: meta.title || meta.submissionName || `${meta.id} — 510(k) content package (draft)`,
+        title: meta.title || meta.submissionName || `${meta.id} — ${labels.title}`,
         contentForArtifact: typeof content === 'string' ? content : JSON.stringify(content),
         sourceType: 'export_estar_zip',
-        ctdSection: meta.ctdSection || 'm1.5',
-        suggestedPlacement: 'Module 1 / 510(k) content package (draft)',
+        ctdSection: meta.ctdSection || labels.ctdSection,
+        suggestedPlacement: labels.suggestedPlacement,
         backendRoute: 'POST /api/510k/estar/build',
         binaryOutput: zipBuffer,
         mimeType: 'application/zip',
@@ -436,7 +655,14 @@ router.post('/build', authMiddleware, requireEditorAccess, requireAssemblyEntitl
       // The advisory formatting report rides alongside the governed consequence so
       // the UI can surface "N formatting issues to fix before submitting" without
       // blocking the draft export.
-      return res.status(200).json({ ...consequence, formattingReport: formattingReport ?? null });
+      return res.status(200).json({
+        ...consequence,
+        formattingReport: formattingReport ?? null,
+        deviceContentSource,
+        packageFamily: family,
+        sectionsAuthored: authoredSections.length,
+        sectionsRendered,
+      });
     }
 
     // Program-spine (UUID) project: the artifact registry cannot place this
@@ -444,47 +670,35 @@ router.post('/build', authMiddleware, requireEditorAccess, requireAssemblyEntitl
     // the program spine; the document-identity contract — RECONCILE.md §6 —
     // owns the mapping). Deliver the ZIP and audit-log the export with its
     // SHA-256 so provenance is preserved; say plainly that registry placement
-    // is pending rather than pretending it happened.
-    const zipSha256 = createHash('sha256').update(zipBuffer).digest('hex');
-    await auditService.logAction({
+    // is pending rather than pretending it happened. ONE implementation:
+    // createAuditedUnplacedExport (shared with cerv2 + technical-file routes).
+    const unplaced = await createAuditedUnplacedExport({
       organizationId: getOrganizationId(req),
       userId: getUserId(req),
-      action: 'EXPORT_GENERATED',
+      sourceType: 'export_estar_zip',
+      backendRoute: 'POST /api/510k/estar/build',
       resourceType: 'estar_content_package',
       resourceId: anchor.programUuid ?? meta.id,
-      details: {
-        backendRoute: 'POST /api/510k/estar/build',
-        sourceType: 'export_estar_zip',
-        filename,
-        sha256: zipSha256,
-        artifactRegistry: 'unplaced_pending_document_identity_contract',
-        ...exportMetadata,
-      },
+      programUuid: anchor.programUuid,
+      filename,
+      mimeType: 'application/zip',
+      buffer: zipBuffer,
+      metadata: exportMetadata,
     });
 
     return res.status(200).json({
-      governed: false,
-      audited: true,
-      source_type: 'export_estar_zip',
-      artifact_id: null,
-      artifact_registry:
-        'unplaced — artifact registry requires a PM-spine project row; ' +
-        'export is audit-logged with its SHA-256 (pending document-identity contract)',
-      program_id: anchor.programUuid,
-      sha256: zipSha256,
-      downloadable_output_ref: {
-        encoding: 'base64',
-        mime_type: 'application/zip',
-        filename,
-        data: zipBuffer.toString('base64'),
-      },
+      ...unplaced,
       formattingReport: formattingReport ?? null,
+      deviceContentSource,
+      packageFamily: family,
+      sectionsAuthored: authoredSections.length,
+      sectionsRendered,
     });
   } catch (error: any) {
     logger.error('governed export failure', { err: error instanceof Error ? error.message : String(error) });
     return res.status(500).json({
       error: 'GOVERNED_EXPORT_FAILED',
-      message: error.message || 'Governed eSTAR export failed before consequence persistence',
+      message: 'Governed content package draft (not an eSTAR) export failed before consequence persistence. The problem has been logged.',
     });
   }
 });
@@ -494,6 +708,29 @@ router.post('/build', authMiddleware, requireEditorAccess, requireAssemblyEntitl
 // and exposed via GET /catalog; the official-fill/scaffold endpoints here cover
 // the nIVD/IVD marketing family.
 const ESTAR_TYPES = ['510k', 'de_novo', 'pma', 'q_sub', 'ide', '513g'] as const;
+
+/**
+ * The governed document class an eSTAR of each type files its sections FROM.
+ *
+ * `loadAuthoredDeviceSections` otherwise takes the most recently created
+ * document of ANY device class — k510, denovo, pma AND cer — and the rule-pack
+ * keys an attachment is filed by are per-pathway and collide. `D5` is "Shelf
+ * life and packaging" in the k510 pack and "Cybersecurity" in the denovo pack;
+ * `E1` is "Biocompatibility" in one and "Proposed labeling and instructions for
+ * use" in the other (migrations/20260901b_estar_510k_denovo_outlines.sql). So a
+ * program that has a 510(k) document and then gets a CER, or a De Novo
+ * scaffold, would file a DIFFERENT document's section into a named CDRH slot,
+ * with a clean 200.
+ *
+ * The three PreSTAR types have no vendored template and no device rule pack, so
+ * they have no class here; the fill refuses them before a resolver is ever
+ * called, and an unmapped type reads nothing rather than reading anything.
+ */
+const ESTAR_TYPE_DOC_CLASS: Partial<Record<(typeof ESTAR_TYPES)[number], string>> = {
+  '510k': 'k510',
+  de_novo: 'denovo',
+  pma: 'pma',
+};
 const ESTAR_VARIANTS = ['device', 'ivd'] as const;
 
 // PreSTAR (Q-Sub/IDE/513(g)) share one template family regardless of device/ivd;
@@ -508,7 +745,14 @@ function templateVariantFor(
 
 /** Turn an AcroForm field name into a stable, readable canonical-key placeholder. */
 function slugifyAcroFieldName(name: string): string {
-  const tail = name.split(/[.\\/[\]]/).filter(Boolean).pop() ?? name;
+  const segments = name.split(/[.\\/[\]]/).filter(Boolean);
+  // Adobe-authored (XFA/LiveCycle) field names carry a trailing occurrence index —
+  // `form1[0].#subform[0].DeviceTradeName[0]` — so the LAST segment is usually the
+  // number `0`, not the field name. Taking it collapsed every such field to the
+  // key "0" (then 02, 03 … on collision), which made the scaffold unusable against
+  // any real FDA form. Take the last segment that is not a bare index.
+  const tail =
+    [...segments].reverse().find((s) => !/^\d+$/.test(s)) ?? segments[segments.length - 1] ?? name;
   const camel = tail
     // Split camelCase / number boundaries so "DeviceName" → "Device Name".
     .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
@@ -557,8 +801,13 @@ router.post('/scaffold-field-map', authMiddleware, requireEditorAccess, async (r
       templateBytes = Buffer.from(templateBase64, 'base64');
     } else {
       const vendored = await listVendoredTemplates();
+      /* Scaffolding a field map from a file whose bytes are not the pinned ones
+         produces a map of THAT file's SOM paths, which is how a wrong locator
+         gets into the canonical map in the first place. */
       const hit = vendored.find(
-        (t) => t.fileName.toLowerCase() === descriptor.expectedFileName.toLowerCase(),
+        (t) =>
+          t.fileName.toLowerCase() === descriptor.expectedFileName.toLowerCase() &&
+          isUsableEstarTemplate(t),
       );
       templateBytes = hit ? hit.bytes : null;
     }
@@ -574,34 +823,64 @@ router.post('/scaffold-field-map', authMiddleware, requireEditorAccess, async (r
       });
     }
 
-    const fields = await listAcroFields(templateBytes);
+    // The official FDA eSTAR templates are Adobe LiveCycle DYNAMIC XFA forms: their
+    // AcroForm `/Fields` array is empty, so listAcroFields returns nothing and a
+    // skeleton built from it would be silently blank. Enumerate whichever layer the
+    // template actually carries.
+    const dynamicXfa = isDynamicXfaPdf(templateBytes);
     const fillableTypes = new Set(['text', 'checkbox', 'dropdown', 'radio']);
-    const skeleton: Record<string, { acroField: string; type: string }> = {};
+    const skeleton: Record<string, { acroField?: string; xfaSomPath?: string; type: string; caption?: string }> = {};
     const nonFillable: { name: string; type: string }[] = [];
     const usedKeys = new Set<string>();
-    for (const f of fields) {
-      if (!fillableTypes.has(f.type)) {
-        nonFillable.push(f);
-        continue;
-      }
-      let key = slugifyAcroFieldName(f.name);
+    let fieldCount = 0;
+    const takeKey = (raw: string) => {
+      let key = slugifyAcroFieldName(raw);
       let suffix = 2;
-      while (usedKeys.has(key)) key = `${slugifyAcroFieldName(f.name)}${suffix++}`;
+      while (usedKeys.has(key)) key = `${slugifyAcroFieldName(raw)}${suffix++}`;
       usedKeys.add(key);
-      skeleton[key] = { acroField: f.name, type: f.type };
+      return key;
+    };
+
+    if (dynamicXfa) {
+      const fields = await listXfaFields(templateBytes);
+      fieldCount = fields.length;
+      for (const f of fields) {
+        // Only a path present in the datasets skeleton can actually be filled.
+        if (!fillableTypes.has(f.type) || !f.inDatasets) {
+          nonFillable.push({ name: f.somPath, type: f.inDatasets ? f.type : `${f.type} (not in datasets)` });
+          continue;
+        }
+        skeleton[takeKey(f.somPath)] = { xfaSomPath: f.somPath, type: f.type, caption: f.caption };
+      }
+    } else {
+      const fields = await listAcroFields(templateBytes);
+      fieldCount = fields.length;
+      for (const f of fields) {
+        if (!fillableTypes.has(f.type)) {
+          nonFillable.push(f);
+          continue;
+        }
+        skeleton[takeKey(f.name)] = { acroField: f.name, type: f.type };
+      }
     }
 
     return res.status(200).json({
       descriptorId: descriptor.id,
       expectedFileName: descriptor.expectedFileName,
-      fieldCount: fields.length,
+      templateKind: dynamicXfa ? 'dynamic-xfa' : 'acroform',
+      fieldCount,
       fillableCount: Object.keys(skeleton).length,
       // Paste into ESTAR_FIELD_MAPS[descriptorId] after renaming/verifying keys.
       skeleton,
-      nonFillable,
-      note:
-        'Canonical keys are slugified placeholders from the real AcroField names — rename them to ' +
-        'your canonical keys and verify each acroField before committing to estar-field-map.ts.',
+      nonFillable: nonFillable.slice(0, 500),
+      nonFillableCount: nonFillable.length,
+      note: dynamicXfa
+        ? 'Dynamic XFA template: fields are addressed by xfaSomPath, not by AcroForm name, and only ' +
+          'paths present in the datasets skeleton are fillable. Canonical keys are slugified ' +
+          'placeholders — rename them and confirm each against the caption before committing to ' +
+          'estar-field-map.ts.'
+        : 'Canonical keys are slugified placeholders from the real AcroField names — rename them to ' +
+          'your canonical keys and verify each acroField before committing to estar-field-map.ts.',
     });
   } catch (error: any) {
     logger.error('scaffold-field-map failure', {
@@ -609,10 +888,18 @@ router.post('/scaffold-field-map', authMiddleware, requireEditorAccess, async (r
     });
     return res.status(500).json({
       error: 'ESTAR_SCAFFOLD_FAILED',
-      message: error.message || 'Failed to enumerate eSTAR template fields',
+      message: 'Failed to enumerate eSTAR template fields. The problem has been logged.',
     });
   }
 });
+
+/**
+ * A ceiling on one request, not on the form: the nIVD template declares 113
+ * slots and the IVD 145, so 150 admits every slot either template has while
+ * refusing a request that is not a submission but a load test. Each attachment
+ * costs a render or a vault read plus an encrypt pass over its bytes.
+ */
+const ESTAR_MAX_ATTACHMENTS_PER_EXPORT = 150;
 
 const officialSchema = z.object({
   meta: exportMetaSchema,
@@ -621,7 +908,139 @@ const officialSchema = z.object({
   /** Canonical field values to write into the official eSTAR AcroForm. */
   data: z.record(z.unknown()).default({}),
   flatten: z.boolean().optional(),
+  /**
+   * Fill from the org's governed records (estar-administrative-data): governed
+   * values win, `data` fills only the keys they do not hold, and the response
+   * carries a per-field report. Absent/false ⇒ `data` is written verbatim.
+   */
+  useProgramData: z.boolean().optional(),
+  /**
+   * Documents to file into named eSTAR attachment slots.
+   *
+   * WHICH document belongs in WHICH slot is a regulatory judgement, so it is an
+   * input here rather than something the server derives. What the server DOES
+   * own is every mechanical way that judgement can be executed wrongly — a slot
+   * this template does not declare, a chapter that cannot be resolved, a second
+   * file into a slot the form holds one row for, a name the form would delete,
+   * a section still marked draft — and each of those refuses the whole export
+   * (422 with the reasons), never a quiet omission from a 200.
+   *
+   * `slot` is the control's FULL SOM path (`root.CoverLetter.CLAddAttachment110`)
+   * because the short name is not unique across a template.
+   */
+  attachments: z
+    .array(
+      z.object({
+        slot: z.string().min(1),
+        fileName: z.string().min(1).max(200).optional(),
+        source: z.discriminatedUnion('kind', [
+          z.object({ kind: z.literal('authored_section'), sectionCode: z.string().min(1) }),
+          z.object({ kind: z.literal('vault_document'), documentId: z.string().uuid() }),
+        ]),
+      }),
+    )
+    .max(ESTAR_MAX_ATTACHMENTS_PER_EXPORT)
+    .optional(),
 });
+
+/**
+ * The descriptor's verified field map plus the governed administrative values
+ * for an anchor, loaded through the request-scoped client. Null when the map
+ * is not populated — there is then nothing to resolve against, and the fill
+ * reports that blocker itself, exactly as it does without program data.
+ */
+async function loadGovernedOfficialFields(
+  req: Request,
+  orgId: number,
+  anchor: ProjectAnchor,
+  descriptorId: string,
+): Promise<{ fieldMap: OfficialPdfFieldMap; governed: GovernedAdministrativeData } | null> {
+  const fieldMap = getEstarFieldMap(descriptorId);
+  if (!fieldMap || !isFieldMapPopulated(descriptorId)) return null;
+  const inputs = await loadEstarAdministrativeInputs(requestDb(req), {
+    organizationId: orgId,
+    programUuid: anchor.programUuid,
+    fda510kProjectId: anchor.fda510kProjectId,
+  });
+  return { fieldMap, governed: projectEstarAdministrativeData(inputs) };
+}
+
+/**
+ * The values POST /official writes. With `useProgramData` and a populated map:
+ * governed ∪ request gaps, with the resolution kept for the field report.
+ * Otherwise `data` verbatim and no resolution — today's contract, unchanged.
+ */
+async function resolveRequestedOfficialFields(
+  req: Request,
+  orgId: number,
+  anchor: ProjectAnchor,
+  opts: {
+    descriptorId: string | undefined;
+    data: Record<string, unknown>;
+    useProgramData: boolean | undefined;
+  },
+): Promise<{ resolved: ResolvedOfficialEstarFields | null; fillData: Record<string, unknown> }> {
+  const verbatim = { resolved: null, fillData: opts.data };
+  if (opts.useProgramData !== true || !opts.descriptorId) return verbatim;
+  const governed = await loadGovernedOfficialFields(req, orgId, anchor, opts.descriptorId);
+  if (!governed) return verbatim;
+  const resolved = resolveOfficialEstarFields({
+    ...governed,
+    requestData: opts.data,
+    honourRequestOverGoverned: false,
+  });
+  return { resolved, fillData: resolved.data };
+}
+
+/**
+ * What the fill wrote, for the response (`fieldReport`) and the artifact
+ * metadata (`fieldSources`). Both absent when no governed resolution ran, so
+ * the verbatim path's response and metadata are byte-for-byte what they were.
+ */
+function describeOfficialFill(
+  resolved: ResolvedOfficialEstarFields | null,
+  filledFields: ReadonlyArray<string>,
+): { fieldReport: OfficialEstarFieldReport | null; metadata: { fieldSources?: Record<string, string> } } {
+  if (!resolved) return { fieldReport: null, metadata: {} };
+  const report = reportOfficialEstarFill(resolved, filledFields);
+  return { fieldReport: report.fieldReport, metadata: { fieldSources: report.fieldSources } };
+}
+
+/**
+ * The consequence body plus what this route adds BESIDE it: the per-field fill
+ * report, the values the template's own scripts erase, the attachment report,
+ * and the retention record for the delivered artifact. All are added, never
+ * substituted — every key the export-governance plane produced reaches the
+ * client unchanged (pinned by ci:governed-export-consequence-shape).
+ *
+ * WHY `erasedFields` IS HERE AND NOT ONLY IN THE FIELD REPORT. The report exists
+ * only when a governed resolution ran; on the verbatim `data` path
+ * `resolveRequestedOfficialFields` returns `resolved: null`,
+ * `describeOfficialFill` returns `fieldReport: null`, and the 200 body said
+ * NOTHING about erasure — the fill had named the keys on `result.erasedFields`
+ * since 2026-09-07 and no production caller read it. It is emitted on both paths
+ * and ALWAYS present: an empty array is "assessed, nothing erased", and an
+ * absent key would be indistinguishable from "not assessed".
+ *
+ * `attachmentReport` stays OPTIONAL, unlike erasedFields: it describes a step
+ * that genuinely does not run on every path, so its absence is meaningful
+ * rather than ambiguous.
+ */
+function withOfficialExtras<T extends object>(
+  body: T,
+  fieldReport: OfficialEstarFieldReport | null,
+  retention: EstarRetentionReport,
+  erasedFields: ReadonlyArray<string>,
+  attachmentReport?: EstarAttachmentReport,
+): T {
+  return {
+    ...body,
+    ...(fieldReport ? { fieldReport } : {}),
+    erasedFields: [...erasedFields],
+    ...(attachmentReport ? { attachmentReport } : {}),
+    retention,
+  };
+}
 
 /**
  * POST /api/510k/estar/official
@@ -633,6 +1052,19 @@ const officialSchema = z.object({
  * `filled:false` with blockers and this responds 422 — never a fabricated PDF.
  * The `officialEstarPdf` flag is wired to `result.filled`, so it flips true on
  * its own the moment the template + verified field map land (no code change).
+ *
+ * With `useProgramData: true` the values come from the org's governed records
+ * (governed wins; `data` fills the gaps) and the 200 body carries a
+ * `fieldReport` saying which mapped fields were written, from where, and which
+ * were left blank — the user is never handed a blank official form unannounced.
+ *
+ * On EITHER path the 200 body carries `erasedFields`: the values that were
+ * written and that the template's own scripts will erase. And the 422 covers
+ * three more refusals the fill makes on the values themselves — a Declaration of
+ * Conformity the form would rebuild under a different legal entity (now or on
+ * the applicant's first entry of their company name), and a fill whose every
+ * written value the form erases, which would deliver a blank form registered as
+ * submittable.
  */
 router.post('/official', authMiddleware, requireEditorAccess, requireAssemblyEntitlement, async (req, res) => {
   const validation = officialSchema.safeParse(req.body);
@@ -643,7 +1075,7 @@ router.post('/official', authMiddleware, requireEditorAccess, requireAssemblyEnt
     });
   }
 
-  const { meta, type, variant, data, flatten } = validation.data;
+  const { meta, type, variant, data, flatten, useProgramData, attachments } = validation.data;
 
   try {
     const anchor = await resolveProjectAnchor(req, getOrganizationId(req), meta);
@@ -651,15 +1083,54 @@ router.post('/official', authMiddleware, requireEditorAccess, requireAssemblyEnt
       return res.status(404).json({ error: 'Project not found in your organization' });
     }
 
+    const templateVariant = templateVariantFor(type, variant);
+    const { resolved, fillData } = await resolveRequestedOfficialFields(req, getOrganizationId(req), anchor, {
+      descriptorId: descriptorFor(type, templateVariant)?.id,
+      data,
+      useProgramData,
+    });
+
     const result = await fillEstarSubmission({
       type,
-      variant: templateVariantFor(type, variant),
-      data,
+      variant: templateVariant,
+      data: fillData,
       flatten,
+      /* The producer is told the ceiling the deliverer enforces, so an
+         oversized submission is a sentence naming the documents rather than a
+         500 after the work is done. One function answers for both. */
+      maxOutputBytes: getMaxGovernedExportBytes(),
+      ...(attachments?.length
+        ? {
+            attachments,
+            /* The resolver is built per request and used once. It carries the
+               organization and the program, and both branches re-assert them in
+               their own query — a document is never reached by id alone. */
+            /* No `client`: the resolver's governed-section reads default to
+               the shared pool, which is what every other caller of
+               loadAuthoredDeviceSections in this file does (/build at :533,
+               /assemble, /filing-readiness). `requestDb(req)` is a DRIZZLE
+               instance for `.select().from(...)` — its `.query` is the
+               relational-query namespace, not the `(text, params)` function
+               DeviceContentClient wants — so passing it here threw at runtime
+               and typechecked only until the next tsc run. If the shared pool
+               becomes wrong under RLS enforcement it becomes wrong for all four
+               callers at once, and the fix belongs to all four rather than to a
+               fifth, divergent path here. */
+            attachmentResolver: createDeviceAttachmentResolver({
+              organizationId: getOrganizationId(req),
+              programUuid: anchor.programUuid,
+              /* THIS export's own document class, never "the newest device
+                 document" — see ESTAR_TYPE_DOC_CLASS. */
+              docTypes: ESTAR_TYPE_DOC_CLASS[type] ? [ESTAR_TYPE_DOC_CLASS[type]!] : [],
+            }),
+          }
+        : {}),
     });
 
     if (!result.filled || !result.pdfBytes) {
-      // Honest fail-closed: we cannot produce a submittable eSTAR yet.
+      // Honest fail-closed: we cannot produce a submittable eSTAR yet. The
+      // attachment report travels on the REFUSAL too — an operator whose export
+      // was refused because a section is still a draft needs to see which one.
       return res.status(422).json({
         error: 'ESTAR_NOT_PRODUCIBLE',
         officialEstarPdf: false,
@@ -667,11 +1138,14 @@ router.post('/official', authMiddleware, requireEditorAccess, requireAssemblyEnt
         templateAvailable: result.templateAvailable,
         fieldMapPopulated: result.fieldMapPopulated,
         blockers: result.blockers,
+        ...(result.attachmentReport ? { attachmentReport: result.attachmentReport } : {}),
       });
     }
 
     const filename = `${sanitizeFilename(meta.id)}_eSTAR.pdf`;
     const pdfBuffer = Buffer.from(result.pdfBytes);
+    // What was actually written, per field, read off the fill result itself.
+    const { fieldReport, metadata: fieldMetadata } = describeOfficialFill(resolved, result.filledFields);
     // The real submittable artifact was produced — assert it truthfully.
     const officialMetadata = {
       format: 'pdf',
@@ -680,8 +1154,43 @@ router.post('/official', authMiddleware, requireEditorAccess, requireAssemblyEnt
       descriptorId: result.descriptorId,
       filledFields: result.filledFields,
       skippedFields: result.skippedFields,
+      /* Written, and gone as soon as the applicant works that section: the
+         template clears these cells and rebuilds them from a field the map does
+         not write. The registry row carried filledFields alone, so the governed
+         record of what was filed over-stated it by exactly these keys. */
+      erasedFields: result.erasedFields,
       programId: anchor.programUuid ?? undefined,
+      // Governed provenance (fieldSources) travels into the artifact registry / audit row.
+      ...fieldMetadata,
+      /* WHAT WENT WITH IT. The delivered-bytes hash proves the FORM was not
+         altered; it says nothing about which documents the form routes. A
+         reviewer asking "what did we file into section 5" needs the slot, the
+         chapter and the per-file hash in the governed record, not only in a
+         response body nobody keeps. Bytes are deliberately not here. */
+      ...(result.attachmentReport ? { attachments: result.attachmentReport.attached } : {}),
     };
+
+    /* RETAIN BEFORE DELIVERING. The bytes CDRH ingests used to be hashed,
+       base64'd into this response and forgotten — the export stored its INPUTS
+       and never its OUTPUT, so "what exactly did we file" had no artifact
+       behind it. Retention goes into the program's governed vault through the
+       one canonical ingest, content-addressed so identical bytes are
+       idempotent and different bytes never overwrite the record. A retention
+       that should have happened and did not THROWS: an unretained submission
+       artifact is not handed over. */
+    const retention = await retainOfficialEstar({
+      organizationId: getOrganizationId(req),
+      userId: getUserId(req),
+      programUuid: anchor.programUuid,
+      descriptorId: result.descriptorId ?? `${type}-${variant}`,
+      title: meta.title || meta.submissionName || `${meta.id} — official FDA eSTAR`,
+      filename,
+      pdfBytes: pdfBuffer,
+      ctdSection: meta.ctdSection || 'm1.5',
+    });
+    // The retention record travels into the artifact registry / audit row too,
+    // so the governed record names the vault document, not just its hash.
+    Object.assign(officialMetadata, { retention });
 
     if (anchor.anchorProjectId !== null) {
       const consequence = await createGovernedExportConsequence({
@@ -689,7 +1198,7 @@ router.post('/official', authMiddleware, requireEditorAccess, requireAssemblyEnt
         projectId: anchor.anchorProjectId,
         userId: getUserId(req),
         title: meta.title || meta.submissionName || `${meta.id} — official FDA eSTAR`,
-        contentForArtifact: JSON.stringify({ type, variant, descriptorId: result.descriptorId, data }),
+        contentForArtifact: JSON.stringify({ type, variant, descriptorId: result.descriptorId, data: fillData }),
         sourceType: 'export_estar_pdf',
         ctdSection: meta.ctdSection || 'm1.5',
         suggestedPlacement: 'Module 1 / official FDA eSTAR (submittable)',
@@ -700,72 +1209,103 @@ router.post('/official', authMiddleware, requireEditorAccess, requireAssemblyEnt
         metadata: officialMetadata,
       });
 
-      return res.status(200).json(consequence);
+      return res.status(200).json(
+        withOfficialExtras(consequence, fieldReport, retention, result.erasedFields, result.attachmentReport),
+      );
     }
 
     // Program-spine project without a registry anchor — same audited-delivery
-    // contract as /build (see that handler's comment; RECONCILE.md §6).
-    const pdfSha256 = createHash('sha256').update(pdfBuffer).digest('hex');
-    await auditService.logAction({
+    // contract as /build (see that handler's comment; RECONCILE.md §6), through
+    // the ONE shared implementation.
+    const unplaced = await createAuditedUnplacedExport({
       organizationId: getOrganizationId(req),
       userId: getUserId(req),
-      action: 'EXPORT_GENERATED',
+      sourceType: 'export_estar_pdf',
+      backendRoute: 'POST /api/510k/estar/official',
       resourceType: 'estar_official_pdf',
       resourceId: anchor.programUuid ?? meta.id,
-      details: {
-        backendRoute: 'POST /api/510k/estar/official',
-        sourceType: 'export_estar_pdf',
-        filename,
-        sha256: pdfSha256,
-        artifactRegistry: 'unplaced_pending_document_identity_contract',
-        ...officialMetadata,
-      },
+      programUuid: anchor.programUuid,
+      filename,
+      mimeType: 'application/pdf',
+      buffer: pdfBuffer,
+      metadata: officialMetadata,
     });
 
-    return res.status(200).json({
-      governed: false,
-      audited: true,
-      source_type: 'export_estar_pdf',
-      artifact_id: null,
-      artifact_registry:
-        'unplaced — artifact registry requires a PM-spine project row; ' +
-        'export is audit-logged with its SHA-256 (pending document-identity contract)',
-      program_id: anchor.programUuid,
-      sha256: pdfSha256,
-      downloadable_output_ref: {
-        encoding: 'base64',
-        mime_type: 'application/pdf',
-        filename,
-        data: pdfBuffer.toString('base64'),
-      },
-    });
+    return res.status(200).json(
+      withOfficialExtras(unplaced, fieldReport, retention, result.erasedFields, result.attachmentReport),
+    );
   } catch (error: any) {
     logger.error('official eSTAR export failure', {
       err: error instanceof Error ? error.message : String(error),
     });
+    // A retention failure is a distinct outcome and gets its own reason: the
+    // form was produced correctly, and it is being withheld precisely because
+    // the record of it could not be written.
+    if (error instanceof EstarRetentionError) {
+      return res.status(500).json({
+        error: 'ESTAR_NOT_RETAINED',
+        message:
+          'The official eSTAR was produced but could not be retained in the program vault, ' +
+          'so it was not delivered. The problem has been logged.',
+      });
+    }
+    /* NOT "before consequence persistence" unconditionally — that sentence was
+       written when the only failures here happened before retention, and it is
+       false for anything thrown after it. Say what is actually known. */
     return res.status(500).json({
       error: 'GOVERNED_EXPORT_FAILED',
-      message: error.message || 'Official eSTAR export failed before consequence persistence',
+      message: 'Official eSTAR export failed and was not delivered. The problem has been logged.',
     });
   }
 });
 
+const PMA_SUBMISSION_TYPE_VALUES = PMA_SUBMISSION_TYPES.map((t) => t.value) as [string, ...string[]];
+
+/**
+ * The seven device properties that decide whether a conditional eSTAR section
+ * is owed (estar-mapper DeviceFlagId). Unanswered ⇒ the section is
+ * UNDETERMINED, which blocks a claim of a submittable eSTAR; it is never read
+ * as "not applicable". No route accepted these before, so every conditional
+ * section was undetermined on every call and the assembler — which then
+ * ignored undetermined — reported official eSTARs it could not vouch for.
+ */
+const deviceFlagsSchema = z
+  .object({
+    combinationProduct: z.boolean().optional(),
+    softwareAiMl: z.boolean().optional(),
+    cyberDevice: z.boolean().optional(),
+    sterile: z.boolean().optional(),
+    implantable: z.boolean().optional(),
+    cliaWaived: z.boolean().optional(),
+    clinicalData: z.boolean().optional(),
+  })
+  .strict()
+  .optional();
+
 const assembleSchema = z.object({
-  pathway: z.enum(['510k', 'de_novo']).default('510k'),
+  pathway: z.enum(['510k', 'de_novo', 'pma']).default('510k'),
+  /** Device properties deciding conditional-section applicability (see deviceFlagsSchema). */
+  deviceFlags: deviceFlagsSchema,
+  /** PMA only: original vs a 21 CFR 814.39 supplement/notice (scopes the modules owed). */
+  pmaSubmissionType: z.enum(PMA_SUBMISSION_TYPE_VALUES).optional(),
   variant: z.enum(ESTAR_VARIANTS).default('device'),
-  /** Narrow the authored-content load to one document's sections. */
+  /** Narrow the authored-content load to one LEGACY document's sections. */
   documentId: z.coerce.number().int().positive().optional(),
+  /** Read the GOVERNED device document of this regulatory program instead. */
+  programId: z.string().uuid().optional(),
   /** Target market for the readiness overlay (optional). */
   market: z.string().min(1).optional(),
 });
 
 /**
  * POST /api/510k/estar/assemble
- * body: { pathway?, variant?, documentId?, market? }
+ * body: { pathway?, pmaSubmissionType?, variant?, documentId?, programId?, market? }
  *
  * The device-assembly contract (spec B5) over HTTP: computes what can honestly
- * be produced for the caller org's REAL authored content (cerv2_510k_sections
- * → readiness leaves) against the REAL vendored template drop-point — the same
+ * be produced for the caller org's REAL authored content (the program's
+ * governed document, else cerv2_510k_sections → readiness leaves) against the
+ * REAL vendored template drop-point. Pathway 'pma' scores the content against
+ * the 21 CFR 814 modules (pma-mapper), never the 510(k) eSTAR slots — the same
  * deterministic engine the assemble_device_submission AnA tool uses, with the
  * inputs loaded server-side instead of caller-supplied. Returns the assembly
  * result plus a validationReport whose errors are the blockers that prevent a
@@ -776,26 +1316,41 @@ router.post('/assemble', authMiddleware, requireEditorAccess, requireAssemblyEnt
   if (!validation.success) {
     return res.status(400).json({ error: 'Invalid request payload', details: validation.error.flatten() });
   }
-  const { pathway, variant, documentId, market } = validation.data;
+  const { pathway, pmaSubmissionType, variant, documentId, programId, market } = validation.data;
 
   try {
     const orgId = getOrganizationId(req);
+    const { scope, source } = await resolveDeviceContentScope(orgId, { programId, documentId });
     const [leaves, vendored] = await Promise.all([
-      loadDeviceContentLeaves(orgId, { documentId }),
+      loadDeviceContentLeaves(orgId, scope),
       listVendoredTemplates(),
     ]);
 
+    // The device questions the program answered at intake. Without them every
+    // conditional section is undetermined and no program can report a
+    // producible official eSTAR.
+    const anchorProgramId = scope.programId ?? programId;
+    const storedDeviceFlags = anchorProgramId ? await loadProgramDeviceFlags(orgId, anchorProgramId) : undefined;
     const result = assembleDeviceSubmission({
       pathway,
+      pmaSubmissionType: pmaSubmissionType as (typeof PMA_SUBMISSION_TYPES)[number]['value'] | undefined,
       variant,
       leaves,
-      presentTemplates: vendored.map((t) => t.fileName),
+      // A caller-stated answer wins; the program's intake answers are the fallback.
+      deviceFlags: validation.data.deviceFlags ?? storedDeviceFlags,
+      /* By NAME was the bug: a file called eSTAR-510k-non-ivd.pdf whose bytes do
+         not match checksums.txt counted as present, so this route answered
+         "official eSTAR producible · 0 blockers" for a template the fill behind
+         the Generate button then refuses. Availability is the same question in
+         both places, so it gets the same answer. */
+      presentTemplates: vendored.filter(isUsableEstarTemplate).map((t) => t.fileName),
       market: market as never,
       environment: process.env.NODE_ENV === 'production' ? 'production' : 'staging',
     });
 
     return res.status(200).json({
       ...result,
+      deviceContentSource: source,
       validationReport: {
         // Every blocker prevents a submittable official eSTAR — errors, not advice.
         errors: result.blockers,
@@ -808,7 +1363,7 @@ router.post('/assemble', authMiddleware, requireEditorAccess, requireAssemblyEnt
     });
     return res.status(500).json({
       error: 'DEVICE_ASSEMBLY_FAILED',
-      message: error.message || 'Failed to compute device assembly state',
+      message: 'Failed to compute device assembly state. The problem has been logged.',
     });
   }
 });
@@ -861,7 +1416,152 @@ router.get('/readiness', authMiddleware, async (req, res) => {
     });
     return res.status(500).json({
       error: 'ESTAR_READINESS_FAILED',
-      message: error.message || 'Failed to assess eSTAR readiness',
+      message: 'Failed to assess eSTAR readiness. The problem has been logged.',
+    });
+  }
+});
+
+/**
+ * The evaluator's reason, forwarded only when it is copy.
+ *
+ * lookupOrgTier folds a failed query's driver text into `reason`
+ * ("tier lookup failed: <err.message>") and, when the tier is unknown,
+ * `detail` embeds that same `reason` — so neither can be forwarded as-is by a
+ * read path the browser calls on mount. An allowlist rather than a denylist:
+ * a reason the evaluator did not compose purely from copy answers null, so a
+ * new reason shape can never leak by default. A resolved-but-below-tier
+ * `detail` is composed of tier names only and passes through.
+ */
+const COPY_ONLY_UNKNOWN_TIER_REASONS: ReadonlySet<string> = new Set([
+  'organization not found',
+  'organization context missing',
+]);
+
+function publicEntitlementReason(evaluation: EntitlementEvaluation): string | null {
+  if (evaluation.allowed) return null;
+  if (evaluation.tier !== null) return evaluation.detail;
+  return evaluation.reason !== null && COPY_ONLY_UNKNOWN_TIER_REASONS.has(evaluation.reason)
+    ? evaluation.reason
+    : null;
+}
+
+/**
+ * GET /api/510k/estar/entitlement
+ *
+ * Read-only pre-check of the org's device_assembly_readiness entitlement, so
+ * the "Generate official eSTAR (PDF)" control can learn on mount whether
+ * POST /official (and /build, /assemble) would refuse it with 403 NOT_ENTITLED
+ * instead of discovering that after the first click. Runs the SAME decision
+ * the gate runs (evaluateOrgEntitlement) under the SAME mode
+ * (resolveEntitlementsEnforceMode), and mirrors the middleware's rule that
+ * mode 'off' evaluates nothing — zero tier queries, `allowed: null`. Only
+ * `enforced` (mode 'on') means the POST would actually refuse; in 'warn' the
+ * verdict is reported but the surface must not lock. Produces and persists
+ * nothing; no editor role is required because this is a read path.
+ */
+router.get('/entitlement', authMiddleware, async (req, res) => {
+  const orgId = resolveOrgId(req);
+  if (!orgId) return res.status(400).json({ error: 'Organization context required' });
+
+  try {
+    const mode = resolveEntitlementsEnforceMode();
+    if (mode === 'off') {
+      return res.status(200).json({
+        capability: ASSEMBLY_CAPABILITY,
+        mode,
+        enforced: false,
+        allowed: null,
+        requiredTier: null,
+        tier: null,
+        reason: null,
+      });
+    }
+    const evaluation = await evaluateOrgEntitlement(ASSEMBLY_CAPABILITY, orgId);
+    return res.status(200).json({
+      capability: ASSEMBLY_CAPABILITY,
+      mode,
+      enforced: mode === 'on',
+      allowed: evaluation.allowed,
+      requiredTier: evaluation.requiredTier,
+      tier: evaluation.tier,
+      reason: publicEntitlementReason(evaluation),
+    });
+  } catch (error) {
+    logger.error('estar entitlement pre-check failure', {
+      err: error instanceof Error ? error.message : String(error),
+    });
+    return res.status(500).json({
+      error: 'ESTAR_ENTITLEMENT_FAILED',
+      message: 'Failed to read the export entitlement. The problem has been logged.',
+    });
+  }
+});
+
+const officialFieldsSchema = z.object({
+  ident: z.string().min(1),
+  type: z.enum(ESTAR_TYPES).default('510k'),
+  variant: z.enum(ESTAR_VARIANTS).default('device'),
+});
+
+/**
+ * GET /api/510k/estar/official-fields?ident=&type=510k&variant=device
+ *
+ * Read-only preview of what POST /official will write from the org's governed
+ * records for this program: one row per mapped field with its value and
+ * `store.column` source, null for the keys the platform does not hold — and,
+ * blank or not, the key's `declaredSource` (its governed home), so the surface
+ * can say where a blank value is set instead of offering one. No request data
+ * is merged here — it is the "what will be written" truth, not a what-if.
+ * Produces and persists nothing; sourced values are org data and are never
+ * logged.
+ */
+router.get('/official-fields', authMiddleware, async (req, res) => {
+  const validation = officialFieldsSchema.safeParse(req.query);
+  if (!validation.success) {
+    return res.status(400).json({ error: 'Invalid query', details: validation.error.flatten() });
+  }
+  const { ident, type, variant } = validation.data;
+  const orgId = resolveOrgId(req);
+  if (!orgId) return res.status(400).json({ error: 'Organization context required' });
+
+  try {
+    const anchor = await resolveProjectAnchor(req, orgId, { id: ident, ident });
+    if (!anchor) {
+      return res.status(404).json({ error: 'Project not found in your organization' });
+    }
+
+    const descriptor = descriptorFor(type, templateVariantFor(type, variant));
+    if (!descriptor) {
+      return res.status(400).json({ error: `No eSTAR template descriptor for ${type}/${variant}.` });
+    }
+    const governed = await loadGovernedOfficialFields(req, orgId, anchor, descriptor.id);
+    if (!governed) {
+      return res.status(422).json({
+        error: 'ESTAR_FIELD_MAP_NOT_POPULATED',
+        descriptorId: descriptor.id,
+        blockers: [
+          `The canonical→template field map for "${descriptor.id}" is not populated/verified against the ` +
+            `vendored template, so there is nothing to preview. Enumerate the template's fields and fill estar-field-map.ts.`,
+        ],
+      });
+    }
+
+    const resolved = resolveOfficialEstarFields({ ...governed, honourRequestOverGoverned: false });
+    return res.status(200).json({
+      descriptorId: descriptor.id,
+      type,
+      variant,
+      mappedCount: resolved.fields.length,
+      sourcedCount: resolved.fields.filter((f) => f.source !== null).length,
+      fields: resolved.fields,
+    });
+  } catch (error: any) {
+    logger.error('estar official-fields preview failure', {
+      err: error instanceof Error ? error.message : String(error),
+    });
+    return res.status(500).json({
+      error: 'ESTAR_OFFICIAL_FIELDS_FAILED',
+      message: 'Failed to resolve the official eSTAR field sources. The problem has been logged.',
     });
   }
 });
@@ -890,7 +1590,7 @@ router.get('/catalog', authMiddleware, async (_req, res) => {
     });
     return res.status(500).json({
       error: 'ESTAR_CATALOG_FAILED',
-      message: error.message || 'Failed to build the eSTAR catalog',
+      message: 'Failed to build the eSTAR catalog. The problem has been logged.',
     });
   }
 });
@@ -925,6 +1625,16 @@ const registrationWriteSchema = z.object({
   mdufaFeeTier: z.enum(['standard', 'small_business']).nullish(),
   variants: z.array(z.enum(['device', 'ivd'])).optional(),
   notes: z.string().max(2000).nullish(),
+  // The official eSTAR's Correspondent Information and Declaration of
+  // Conformity facts — org-level, so they live on this row and are the
+  // governed sources estar-administrative-data reads (WO-8 Phase 3).
+  correspondentCompanyName: z.string().max(256).nullish(),
+  correspondentContactEmail: z.string().max(256).nullish(),
+  correspondentTelephone: z.string().max(64).nullish(),
+  // The DoC's company name and address name ONE legal entity, so both are read
+  // from this row (migrations/20260904_estar_registration_declaration_company_name.sql).
+  declarationCompanyName: z.string().max(256).nullish(),
+  declarationCompanyAddress: z.string().max(1000).nullish(),
 });
 
 /**
@@ -937,7 +1647,7 @@ router.get('/registration', authMiddleware, async (req, res) => {
   const organizationId = resolveOrgId(req);
   if (!organizationId) return res.status(400).json({ error: 'Organization context required' });
   try {
-    const row = await getEstarRegistration({ organizationId });
+    const row = await getEstarRegistration(requestDb(req), { organizationId });
     return res.status(200).json({
       registered: !!row,
       registration: row,
@@ -951,7 +1661,7 @@ router.get('/registration', authMiddleware, async (req, res) => {
     });
     return res.status(500).json({
       error: 'ESTAR_REGISTRATION_READ_FAILED',
-      message: error.message || 'Failed to read eSTAR registration',
+      message: 'Failed to read eSTAR registration. The problem has been logged.',
     });
   }
 });
@@ -970,7 +1680,10 @@ router.put('/registration', authMiddleware, requireEditorAccess, async (req, res
   try {
     const organizationId = getOrganizationId(req);
     const userId = getUserId(req);
-    const row = await upsertEstarRegistration(validation.data as EstarRegistrationWrite, { organizationId, userId });
+    const row = await upsertEstarRegistration(requestDb(req), validation.data as EstarRegistrationWrite, {
+      organizationId,
+      userId,
+    });
     return res.status(200).json({
       registered: true,
       registration: row,
@@ -982,7 +1695,7 @@ router.put('/registration', authMiddleware, requireEditorAccess, async (req, res
     });
     return res.status(500).json({
       error: 'ESTAR_REGISTRATION_WRITE_FAILED',
-      message: error.message || 'Failed to save eSTAR registration',
+      message: 'Failed to save eSTAR registration. The problem has been logged.',
     });
   }
 });
@@ -1014,7 +1727,7 @@ router.post('/registration/assess', authMiddleware, async (req, res) => {
       // Source of truth: the org's persisted registration.
       const organizationId = resolveOrgId(req);
       if (!organizationId) return res.status(400).json({ error: 'Organization context required' });
-      registration = await resolveClientRegistration({ organizationId });
+      registration = await resolveClientRegistration(requestDb(req), { organizationId });
     }
     const report = assessClientEstarEligibility(registration);
     return res.status(200).json(report);
@@ -1024,7 +1737,7 @@ router.post('/registration/assess', authMiddleware, async (req, res) => {
     });
     return res.status(500).json({
       error: 'ESTAR_REGISTRATION_FAILED',
-      message: error.message || 'Failed to assess eSTAR registration eligibility',
+      message: 'Failed to assess eSTAR registration eligibility. The problem has been logged.',
     });
   }
 });
@@ -1033,11 +1746,17 @@ const filingLeafSchema = z.object({
   sectionCode: z.string(),
   title: z.string(),
   documentType: z.string().optional(),
+  // Fails closed: a hand-fed leaf is treated as a draft/placeholder (not
+  // substantive) unless the caller explicitly asserts it carries real,
+  // finalized content — a title match alone must never count as "present".
+  substantive: z.boolean().default(false),
 });
 
 const filingReadinessSchema = z.object({
   catalogKey: z.string().min(1),
   variant: z.enum(['device', 'ivd']).default('device'),
+  /** Device properties deciding conditional-section applicability (see deviceFlagsSchema). */
+  deviceFlags: deviceFlagsSchema,
   // Optional explicit registration (what-if); omit to use the org's persisted record.
   registration: z
     .object({
@@ -1052,6 +1771,8 @@ const filingReadinessSchema = z.object({
   // list. `documentId` narrows to one document's sections; omit for org-wide.
   useProjectContent: z.boolean().optional(),
   documentId: z.coerce.number().int().positive().optional(),
+  /** With useProjectContent: read the GOVERNED device document of this program. */
+  programId: z.string().uuid().optional(),
   qSubType: z
     .enum([
       'pre_submission',
@@ -1079,7 +1800,7 @@ router.post('/filing-readiness', authMiddleware, async (req, res) => {
   if (!validation.success) {
     return res.status(400).json({ error: 'Invalid request payload', details: validation.error.flatten() });
   }
-  const { catalogKey, variant, leaves, qSubType, useProjectContent, documentId } = validation.data;
+  const { catalogKey, variant, leaves, qSubType, useProjectContent, documentId, programId } = validation.data;
 
   const entry = getCatalogEntry(catalogKey as EstarCatalogKey);
   if (!entry) {
@@ -1098,15 +1819,16 @@ router.post('/filing-readiness', authMiddleware, async (req, res) => {
     // Registration: an explicit what-if payload if supplied, else the org's
     // persisted registration record (the "clients must register" source of truth).
     const registration =
-      validation.data.registration ?? (await resolveClientRegistration({ organizationId: organizationId! }));
+      validation.data.registration ?? (await resolveClientRegistration(requestDb(req), { organizationId: organizationId! }));
 
     // Content: explicit body leaves, plus the org's REAL authored device content
     // when requested — so readiness reflects what's actually written, not a
     // hand-fed list. Content-bearing sections only (a gap is never invented).
-    const contentLeaves =
+    const content =
       useProjectContent && organizationId
-        ? await loadDeviceContentLeaves(organizationId, documentId !== undefined ? { documentId } : {})
-        : [];
+        ? await resolveDeviceContentScope(organizationId, { programId, documentId })
+        : null;
+    const contentLeaves = content ? await loadDeviceContentLeaves(organizationId!, content.scope) : [];
     const effectiveLeaves = [...(leaves as FilingLeaf[]), ...contentLeaves];
 
     // Resolve official-template producibility from the single source of truth. The
@@ -1117,12 +1839,16 @@ router.post('/filing-readiness', authMiddleware, async (req, res) => {
     const templateVariant: EstarTemplateVariant = isPreStar ? 'prestar' : variant;
     const fill = await fillEstarSubmission({ type: entry.programType, variant: templateVariant, data: {} });
 
+    const readinessProgramId = content?.scope.programId ?? programId;
+    const storedDeviceFlags =
+      organizationId && readinessProgramId ? await loadProgramDeviceFlags(organizationId, readinessProgramId) : undefined;
     const result = assessEstarFilingReadiness({
       catalogKey: catalogKey as EstarCatalogKey,
       variant,
       registration,
       leaves: effectiveLeaves,
       qSubType,
+      deviceFlags: validation.data.deviceFlags ?? storedDeviceFlags,
       templateAvailable: fill.templateAvailable,
       fieldMapPopulated: fill.fieldMapPopulated,
     });
@@ -1130,14 +1856,17 @@ router.post('/filing-readiness', authMiddleware, async (req, res) => {
     if (!result) {
       return res.status(400).json({ error: 'UNKNOWN_CATALOG_KEY', message: `No eSTAR submission catalog entry for "${catalogKey}".` });
     }
-    return res.status(200).json(result);
+    return res.status(200).json({
+      ...result,
+      ...(content ? { deviceContentSource: content.source } : {}),
+    });
   } catch (error: any) {
     logger.error('estar filing-readiness failure', {
       err: error instanceof Error ? error.message : String(error),
     });
     return res.status(500).json({
       error: 'ESTAR_FILING_READINESS_FAILED',
-      message: error.message || 'Failed to assess eSTAR filing readiness',
+      message: 'Failed to assess eSTAR filing readiness. The problem has been logged.',
     });
   }
 });
@@ -1149,7 +1878,7 @@ function submissionFail(res: any, error: any) {
     return res.status(error.code === 'NOT_FOUND' ? 404 : 400).json({ error: error.code, message: error.message });
   }
   logger.error('estar submission route error', { err: error instanceof Error ? error.message : String(error) });
-  return res.status(500).json({ error: 'ESTAR_SUBMISSION_FAILED', message: error.message || 'eSTAR submission tracking failed' });
+  return res.status(500).json({ error: 'ESTAR_SUBMISSION_FAILED', message: 'eSTAR submission tracking failed. The problem has been logged.' });
 }
 
 const createSubmissionSchema = z.object({
@@ -1162,12 +1891,44 @@ const createSubmissionSchema = z.object({
   projectId: z.coerce.number().int().positive().nullish(),
 });
 
-const advanceSubmissionSchema = z.object({
-  status: z.enum(ESTAR_SUBMISSION_STATUSES),
-  filedAt: z.coerce.date().optional(),
-  fdaTrackingNumber: z.string().max(64).nullish(),
-  decision: z.string().max(40).nullish(),
-});
+/**
+ * `filedAt` is deliberately NOT here any more.
+ *
+ * It was `z.coerce.date().optional()` — the date a Part 11 filing record
+ * carries, supplied by the party being recorded. The server stamps it now.
+ * Recording a filing made elsewhere on an earlier date is an import, and an
+ * import should not share a door with a lifecycle transition.
+ *
+ * Reaching `filed` additionally requires the governed signature body: a reason,
+ * a §11.50 meaning, re-authentication, and the vault document id of the
+ * retained eSTAR the filing was made with. The signature's digest is read from
+ * that vault row, never from here.
+ */
+const advanceSubmissionSchema = z
+  .object({
+    status: z.enum(ESTAR_SUBMISSION_STATUSES),
+    fdaTrackingNumber: z.string().max(64).nullish(),
+    decision: z.string().max(40).nullish(),
+    filedArtifactDocumentId: z.string().uuid().optional(),
+  })
+  .and(governedSignatureSchema.partial())
+  .superRefine((v, ctx) => {
+    if (v.status !== 'filed') return;
+    if (!v.filedArtifactDocumentId) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['filedArtifactDocumentId'],
+        message: 'Filing requires the vault document id of the retained eSTAR it was filed with.',
+      });
+    }
+    if (!v.reason || v.reason.trim().length < 8) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['reason'],
+        message: 'A reason of at least 8 characters is required.',
+      });
+    }
+  });
 
 /**
  * POST /api/510k/estar/submissions
@@ -1214,6 +1975,28 @@ router.get('/submissions', authMiddleware, async (req, res) => {
   }
 });
 
+/**
+ * GET /api/510k/estar/retained-artifacts
+ * The org's retained official eSTARs — what a filing can be signed against.
+ * Read-only; the same org predicate the signed filing re-checks on write, so
+ * this can never offer an artifact the signature would refuse.
+ */
+router.get('/retained-artifacts', authMiddleware, async (req, res) => {
+  const organizationId = resolveOrgId(req);
+  if (!organizationId) return res.status(400).json({ error: 'Organization context required' });
+  try {
+    return res.status(200).json({ artifacts: await listRetainedEstarArtifacts(organizationId) });
+  } catch (error: any) {
+    logger.error('retained eSTAR artifact list failure', {
+      err: error instanceof Error ? error.message : String(error),
+    });
+    return res.status(500).json({
+      error: 'ESTAR_RETAINED_ARTIFACTS_FAILED',
+      message: 'The retained eSTAR list could not be read. The problem has been logged.',
+    });
+  }
+});
+
 /** GET /api/510k/estar/submissions/:id — one tracked filing. */
 router.get('/submissions/:id', authMiddleware, async (req, res) => {
   const organizationId = resolveOrgId(req);
@@ -1236,12 +2019,39 @@ router.patch('/submissions/:id', authMiddleware, requireEditorAccess, async (req
   if (!validation.success) {
     return res.status(400).json({ error: 'Invalid request payload', details: validation.error.flatten() });
   }
+  const { status, fdaTrackingNumber, decision, filedArtifactDocumentId, reason, meaning, reauth } =
+    validation.data;
   try {
-    const { status, ...rest } = validation.data;
+    const userId = getUserId(req);
+
+    /* Re-auth gate FIRST for the one transition that is a signature. Captured
+       at signing time, never reused from the session (§11.200). */
+    let signature: EstarFilingSignature | undefined;
+    if (status === 'filed') {
+      const reauthResult = await verifyReauth(userId, reauth);
+      if (!reauthResult.ok) {
+        res.setHeader('WWW-Authenticate', 'ReAuth required');
+        return res.status(401).json({ error: reauthResult.error ?? 'REAUTH_REQUIRED' });
+      }
+      /* What was actually verified, not what was offered: verifyReauth returns
+         ok only after bcrypt matched the password, and it checks the TOTP when
+         one is present. Recording 'password+totp' without a token — or a
+         second factor nobody presented — would be a false attestation on the
+         signature row. */
+      signature = {
+        artifactDocumentId: filedArtifactDocumentId!,
+        reason: reason!,
+        meaning: meaning ?? 'approval',
+        authenticationMethod: reauth?.totp ? 'password+totp' : 'password',
+        secondFactorVerified: Boolean(reauth?.totp),
+        ipAddress: req.ip ?? null,
+      };
+    }
+
     const row = await advanceEstarSubmission(
       String(req.params.id),
-      { toStatus: status, ...rest },
-      { organizationId: getOrganizationId(req), userId: getUserId(req) },
+      { toStatus: status, fdaTrackingNumber, decision, signature },
+      { organizationId: getOrganizationId(req), userId },
     );
     return res.status(200).json(row);
   } catch (error: any) {

@@ -1,7 +1,9 @@
 /**
  * Phase 11 E2E Test Seed Data
  *
- * Seeds multi-role users + a governed project ready for E2E governed workflow tests.
+ * Seeds visibly labeled synthetic multi-role users and a governed project.
+ * The production server never imports this file. Journey records are created
+ * through the live API; this seed supplies authentication/tenant prerequisites.
  * Run with: node tests/e2e/seed-governed-workflow.cjs
  */
 
@@ -9,7 +11,11 @@ const { Client } = require('pg');
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 // Load from .env file (not shell env which may have stale creds)
-require('dotenv').config({ override: true });
+// No `override: true`: this script's own contract (below) is that the operator
+// names the database explicitly. Overriding a deliberately-set DATABASE_URL
+// with .env's value made the seed silently write to a different database than
+// the one the operator pointed it at — the exact guessing the comment forbids.
+require('dotenv').config();
 // No hardcoded fallback. This previously defaulted to a live `neondb_owner`
 // connection string, so running the seed with DATABASE_URL unset would silently
 // point at a real database using the OWNER role — strictly above the
@@ -20,7 +26,7 @@ if (!DB_URL) {
   console.error(
     'seed-governed-workflow: DATABASE_URL is not set.\n' +
       'Set it in your (gitignored) .env or export it for this shell. There is no\n' +
-      'default connection string — the previous one was a committed credential.',
+      'default connection string — the previous one was a committed credential.'
   );
   process.exit(1);
 }
@@ -160,23 +166,31 @@ async function seed() {
     }
 
     // 5. Create a template-based artifact in draft state
-    const artifactId = `art_e2e_${Date.now()}`;
+    const artifactId = 'art_synthetic_golden_seed_v1';
     const contentHash = crypto
       .createHash('sha256')
-      .update('Initial draft content for E2E testing')
+      .update('SYNTHETIC TEST DATA. Not scientific evidence and not for regulatory use.')
       .digest('hex');
     const artIns = await client.query(
-      `INSERT INTO concept2cure_artifacts
+      `WITH inserted AS (
+       INSERT INTO concept2cure_artifacts
        (artifact_id, project_id, organization_id, type, category, title, content, content_hash, version, status, created_by_id, template_id)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING id`,
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+       ON CONFLICT (artifact_id) DO NOTHING
+       RETURNING id
+       )
+       SELECT id FROM inserted
+       UNION ALL
+       SELECT id FROM concept2cure_artifacts WHERE artifact_id = $1
+       LIMIT 1`,
       [
         artifactId,
         numericProjectId,
         orgId,
         'document',
         'regulatory',
-        'E2E Test — 510(k) Summary',
-        'Initial draft content for E2E testing.\n\nThis document serves as a test artifact for the governed workflow lifecycle.',
+        'SYNTHETIC TEST DATA — 510(k) Draft',
+        'SYNTHETIC TEST DATA. Not scientific evidence and not for regulatory use.',
         contentHash,
         1,
         'draft',
@@ -191,12 +205,13 @@ async function seed() {
     await client.query(
       `INSERT INTO concept2cure_artifact_versions
        (artifact_id, organization_id, version, content, content_hash, change_description, created_by_id)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
+       ON CONFLICT (artifact_id, version) DO NOTHING`,
       [
         numericArtifactId,
         orgId,
         1,
-        'Initial draft content for E2E testing.\n\nThis document serves as a test artifact for the governed workflow lifecycle.',
+        'SYNTHETIC TEST DATA. Not scientific evidence and not for regulatory use.',
         contentHash,
         'Initial creation',
         userIds.admin,

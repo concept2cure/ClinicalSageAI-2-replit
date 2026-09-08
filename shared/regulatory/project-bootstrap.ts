@@ -537,6 +537,40 @@ const DEVICE_POSTMARKET_SECTIONS: SectionDefinition[] = [
   { code: '6', title: 'Periodic Safety Update / Annual Report', module: 1, required: true, contentType: 'narrative', guidance: 'MDR Article 86; 21 CFR 814.84' },
 ];
 
+/**
+ * Notified Body Opinion dossier for the device constituent of an integral
+ * drug-device combination (MDR (EU) 2017/745 Art. 117, amending Directive
+ * 2001/83/EC Annex I §12). The sponsor gives the Notified Body the evidence
+ * of the device part's conformity with the relevant GSPRs; the resulting
+ * opinion is then filed with the MAA, so the opinion/assessment outcome is
+ * itself a section of this dossier rather than a letter kept elsewhere.
+ */
+const MDR_ART117_NBOP_SECTIONS: SectionDefinition[] = [
+  { code: '1', title: 'Device Constituent Description and Intended Purpose', module: 1, required: true, contentType: 'mixed', guidance: 'MDR Art. 117; integral combination product (e.g. prefilled pen/syringe)' },
+  { code: '2', title: 'GSPR Conformity of the Device Part', module: 1, required: true, contentType: 'table', guidance: 'MDR Annex I — relevant general safety and performance requirements' },
+  { code: '3', title: 'Risk Management File', module: 1, required: true, contentType: 'mixed', guidance: 'ISO 14971; MDR Annex I §1–9' },
+  { code: '4', title: 'Usability / Human Factors Engineering', module: 1, required: true, contentType: 'mixed', guidance: 'IEC 62366-1' },
+  { code: '5', title: 'Design Verification and Validation', module: 1, required: true, contentType: 'data', guidance: 'e.g. ISO 11608 for needle-based injection systems' },
+  { code: '6', title: 'Manufacturing and Sterility of the Device Part', module: 1, required: true, contentType: 'mixed', guidance: 'sterilisation validation; ISO 11607 packaging where applicable' },
+  { code: '7', title: 'Biocompatibility', module: 1, required: true, contentType: 'data', guidance: 'ISO 10993-1 evaluation of patient-contacting materials' },
+  { code: '8', title: 'Notified Body Opinion and Assessment Outcome', module: 1, required: true, contentType: 'narrative', guidance: 'NB opinion document, filed with the MAA' },
+];
+
+/**
+ * EMA scientific-opinion consultation on a companion diagnostic (IVDR (EU)
+ * 2017/746 Art. 48(6)): the Notified Body assessing the CDx seeks the EMA's
+ * (or the authorising competent authority's) opinion on the suitability of
+ * the device to the medicinal product concerned.
+ */
+const IVDR_ART48_CONSULT_SECTIONS: SectionDefinition[] = [
+  { code: '1', title: 'CDx Device Description and Intended Purpose', module: 1, required: true, contentType: 'mixed', guidance: 'IVDR Art. 2(7) companion diagnostic; Annex II §1' },
+  { code: '2', title: 'Analytical Performance', module: 1, required: true, contentType: 'data', guidance: 'IVDR Annex XIII Part A — sensitivity, specificity, precision, LoD/LoQ' },
+  { code: '3', title: 'Clinical Performance and Clinical Evidence', module: 1, required: true, contentType: 'data', guidance: 'IVDR Annex XIII Part A; clinical performance study data' },
+  { code: '4', title: 'Suitability of the CDx to the Medicinal Product', module: 1, required: true, contentType: 'narrative', guidance: 'IVDR Art. 48(6) — drug–diagnostic association, biomarker definition and cut-off' },
+  { code: '5', title: 'Risk Assessment', module: 1, required: true, contentType: 'mixed', guidance: 'consequences of false positive / false negative results for the treatment decision' },
+  { code: '6', title: 'Consultation Question and Scientific Opinion', module: 1, required: true, contentType: 'narrative', guidance: 'question put to the EMA / competent authority and the opinion received' },
+];
+
 /** Regulatory intelligence & strategy work products (BP-W1-2 absorbed rows):
  *  governed internal documents, not agency submissions, so the structure is the
  *  analysis file itself rather than a dossier module. */
@@ -728,6 +762,11 @@ const SECTION_BLUEPRINTS: Record<string, SectionBlueprint> = {
   eu_ivdr_sections: { id: 'eu_ivdr_sections', name: 'EU IVDR Technical Documentation (Annex II/III)', sections: DEVICE_TECHDOC_SECTIONS },
   eu_doc_sections: { id: 'eu_doc_sections', name: 'EU Declaration of Conformity', sections: DEVICE_TECHDOC_SECTIONS },
   eu_sscp_sections: { id: 'eu_sscp_sections', name: 'Summary of Safety & Clinical Performance (MDR Art. 32)', sections: CER_SECTIONS },
+
+  // Drug-device consultations — the two places a medicines agency legitimately
+  // touches a device/IVD (W2-1): MDR Art. 117 NB Opinion and IVDR Art. 48(6).
+  eu_mdr_art117_nbop_sections: { id: 'eu_mdr_art117_nbop_sections', name: 'Notified Body Opinion — MDR Art. 117', sections: MDR_ART117_NBOP_SECTIONS },
+  eu_ivdr_art48_consult_sections: { id: 'eu_ivdr_art48_consult_sections', name: 'EMA CDx Consultation — IVDR Art. 48(6)', sections: IVDR_ART48_CONSULT_SECTIONS },
 
   // IVD performance evaluation family (analytical + clinical performance)
   eu_ivdr_classification_sections: { id: 'eu_ivdr_classification_sections', name: 'EU IVDR Classification (Rules 1–7)', sections: IVD_PERFORMANCE_SECTIONS },
@@ -1187,6 +1226,15 @@ const TASK_BLUEPRINTS: Record<string, TaskBlueprint> = {
   qms_tasks: { id: 'qms_tasks', name: 'Quality Management System Tasks', milestones: QMS_TASKS },
   device_postmarket_tasks: { id: 'device_postmarket_tasks', name: 'Device Post-Market Tasks', milestones: DEVICE_POSTMARKET_TASKS },
   device_software_tasks: { id: 'device_software_tasks', name: 'Device Software Lifecycle Tasks', milestones: DEVICE_SOFTWARE_TASKS },
+  // Explicit keys for the MDR Art. 117 / IVDR Art. 48(6) consultations. The
+  // NB Opinion is a device-dossier assessment (evidence → assemble → submit &
+  // respond to deficiencies) — the family resolver would give this
+  // pharma_biotech pre_submission row the drug meeting/briefing plan, which is
+  // the wrong rhythm. The Art. 48(6) consultation is a question-driven
+  // scientific-opinion request, not a market submission, so it takes the
+  // pre-submission consultation rhythm rather than device_submission_tasks.
+  eu_mdr_art117_nbop_tasks: { id: 'eu_mdr_art117_nbop_tasks', name: 'MDR Art. 117 NB Opinion Tasks', milestones: DEVICE_SUBMISSION_TASKS },
+  eu_ivdr_art48_consult_tasks: { id: 'eu_ivdr_art48_consult_tasks', name: 'IVDR Art. 48(6) Consultation Tasks', milestones: DEVICE_PRESUB_TASKS },
   // Back-compat keys used as explicit defaultTaskBlueprint on the core US drug entries
   us_ind_tasks: { id: 'us_ind_tasks', name: 'IND Task Blueprint', milestones: DRUG_CTA_TASKS },
   us_nda_tasks: { id: 'us_nda_tasks', name: 'NDA Task Blueprint', milestones: DRUG_MARKETING_TASKS },

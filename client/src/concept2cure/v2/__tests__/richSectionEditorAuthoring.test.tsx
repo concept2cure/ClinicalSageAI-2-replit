@@ -32,8 +32,14 @@ describe('RichSectionEditor — authoring affordances (BP-W1-1)', () => {
     await waitFor(() => {
       expect(screen.getByTitle(/insert table/i)).toBeTruthy();
     });
-    expect(screen.getByTitle('Superscript')).toBeTruthy();
-    expect(screen.getByTitle('Subscript')).toBeTruthy();
+    /* Matched by accessible NAME, not an exact title string. The ribbon now
+       names each control's keyboard shortcut in its own label ("Superscript
+       (⌘.)") so the faster path is discoverable — a bare noun taught nobody
+       it existed. An exact-equality assertion on the label makes the copy
+       unimprovable, which is not what this test is for: it exists to prove the
+       ribbon OFFERS sub/superscript, and it still does. */
+    expect(screen.getByRole('button', { name: /^superscript/i })).toBeTruthy();
+    expect(screen.getByRole('button', { name: /^subscript/i })).toBeTruthy();
     expect(screen.getByLabelText('Insert symbol')).toBeTruthy();
   });
 
@@ -53,17 +59,57 @@ describe('RichSectionEditor — authoring affordances (BP-W1-1)', () => {
     expect(document.querySelector('.ProseMirror sub')?.textContent).toBe('2');
   });
 
-  it('content carrying an image fails closed into source mode instead of being silently dropped', async () => {
-    const stored = '<p>Figure 1 — chromatogram.</p><img src="data:image/png;base64,AAAA" alt="chromatogram">';
+  it('content carrying an image opens RICH with the figure held, not refused to source mode', async () => {
+    /* This test used to pin the opposite: with no image node in the schema,
+       rich mode would have silently rewritten the figure out of the record,
+       so the gate forced source mode. The schema holds figures now
+       (editor/imageNode.ts), so the same content opens rich and the
+       reference — src and alt — is in the canvas, intact. */
+    const stored =
+      '<p>Figure 1 — chromatogram.</p><img src="/api/authoring/images/file_1_a" alt="chromatogram">';
+    const onSave = vi.fn();
+    render(<RichSectionEditor value={stored} onSave={onSave} storageKey={null} />);
+    await waitFor(() => {
+      expect(document.querySelector('.ProseMirror')).toBeTruthy();
+    });
+    expect(document.querySelector('textarea.rse-source')).toBeNull();
+    await waitFor(() => {
+      expect(document.querySelector('.ProseMirror figure.rse-img')).toBeTruthy();
+    });
+    // And nothing was saved behind the author's back on mount.
+    expect(onSave).not.toHaveBeenCalled();
+  });
+
+  it('markup the schema still cannot hold (a <figure>) keeps failing closed into source mode', async () => {
+    const stored = '<figure><img src="/api/authoring/images/file_1_a"><figcaption>Fig 1</figcaption></figure>';
     const onSave = vi.fn();
     render(<RichSectionEditor value={stored} onSave={onSave} storageKey={null} />);
     await waitFor(() => {
       expect(document.querySelector('textarea.rse-source')).toBeTruthy();
     });
-    // The raw record — image tag included — is what is being edited.
     const ta = document.querySelector('textarea.rse-source') as HTMLTextAreaElement;
     expect(ta.value).toBe(stored);
-    // And nothing was saved behind the author's back on mount.
     expect(onSave).not.toHaveBeenCalled();
+  });
+  it('plain-text content the parse would rewrite (a space-aligned column) opens in source mode', async () => {
+    /* format: 'text' used to skip the fidelity gate on the premise that plain
+       text is always representable. The parse collapses runs of spaces, so a
+       space-aligned table was silently rewritten on the first save. */
+    const stored = 'Dose      Subjects\n10 mg     12\n20 mg     11';
+    const onSave = vi.fn();
+    render(<RichSectionEditor value={stored} format="text" onSave={onSave} storageKey={null} />);
+    await waitFor(() => {
+      expect(document.querySelector('textarea.rse-source')).toBeTruthy();
+    });
+    expect((document.querySelector('textarea.rse-source') as HTMLTextAreaElement).value).toBe(stored);
+    expect(onSave).not.toHaveBeenCalled();
+  });
+
+  it('ordinary plain text still opens rich', async () => {
+    render(<RichSectionEditor value={'First paragraph.\n\nSecond paragraph.'} format="text" onSave={vi.fn()} storageKey={null} />);
+    await waitFor(() => {
+      expect(document.querySelector('.ProseMirror')).toBeTruthy();
+    });
+    expect(document.querySelector('textarea.rse-source')).toBeNull();
   });
 });

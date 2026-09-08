@@ -2,7 +2,18 @@
  * 510(k) device-profile intake + openFDA lookups.
  *
  *   GET  /api/510k/device/profile?ident=        read the program's device profile
- *   PUT  /api/510k/device/profile?ident=        update device intake fields
+ *   PUT  /api/510k/device/profile?ident=        update device intake fields — including
+ *                                               the five device-level eSTAR
+ *                                               administrative facts (common name,
+ *                                               classification name, regulation
+ *                                               number, associated product codes,
+ *                                               IFU citation), which the official
+ *                                               eSTAR is filled from; '' or null
+ *                                               CLEARS one — and the PREDICATE OF
+ *                                               RECORD (`predicateDevices`), the
+ *                                               claim of substantial equivalence
+ *                                               the eSTAR's predicate fields are
+ *                                               filled from; null or [] CLEARS it
  *   GET  /api/510k/device/classification?...    openFDA device/classification.json
  *   GET  /api/510k/device/predicates?...        openFDA device/510k.json — the
  *                                               reduced predicate fallback when the
@@ -13,7 +24,9 @@
  *                                               the vendored recognition list
  *
  * Profile reads/writes are org-scoped against regulatory_programs (uuid or
- * program code ident, mirroring the estar-route resolver). openFDA lookups are
+ * program code ident, mirroring the estar-route resolver). The WRITE is editor+
+ * (the same role gate the sibling registration write carries) and audited
+ * DEVICE_PROFILE_UPDATED against the session's actor. openFDA lookups are
  * honest: unavailable upstream → { available:false, unavailableReason } with
  * empty results, never fabricated rows. Fallback predicate results carry
  * source:'openfda' + reduced:true so no surface can present them as the full
@@ -32,14 +45,16 @@ import { and, eq } from 'drizzle-orm';
 
 import { authMiddleware } from '../auth';
 import { requireEntitlement } from '../services/entitlements/require-entitlement';
+import auditService from '../services/auditService';
 import { requestDb } from '../db/requestDb';
-import { regulatoryPrograms } from '../../shared/schema/programs';
+import { regulatoryPrograms, type PredicateDevice } from '../../shared/schema/programs';
 import {
   searchDeviceClassification,
   search510kClearances,
 } from '../services/integrations/openfda-device-client';
 import { lookupRecognizedStandards } from '../services/fda-recognized-standards/recognized-standards.service';
 import { createScopedLogger } from '../utils/logger.js';
+import { governedActorId, requireEditorAccess } from '../middleware/orgMembership';
 
 const logger = createScopedLogger('510k-device-routes');
 const router = Router();
@@ -80,6 +95,14 @@ async function findProgram(req: Request, orgId: number, ident: string) {
       intendedUse: regulatoryPrograms.intendedUse,
       indication: regulatoryPrograms.indication,
       predicateDevices: regulatoryPrograms.predicateDevices,
+      // The device-level eSTAR administrative facts (WO-8 Phase 3) — the
+      // governed sources the official form's 510(k) Summary, Classification
+      // and Labeling fields are filled from.
+      commonName: regulatoryPrograms.commonName,
+      classificationName: regulatoryPrograms.classificationName,
+      regulationNumber: regulatoryPrograms.regulationNumber,
+      associatedProductCodes: regulatoryPrograms.associatedProductCodes,
+      indicationsForUseCitation: regulatoryPrograms.indicationsForUseCitation,
     })
     .from(regulatoryPrograms)
     .where(
@@ -92,6 +115,13 @@ async function findProgram(req: Request, orgId: number, ident: string) {
   return row ?? null;
 }
 
+
+/**
+ * The acting user, from the SESSION only. Null when nothing numeric resolves —
+ * the write is then refused rather than audited against an invented actor
+ * (scripts/ci/check-fabricated-identity: a column that must be filled is never a
+ * reason to manufacture an identity).
+ */
 const identSchema = z.object({ ident: z.string().min(1) });
 
 router.get('/profile', async (req, res) => {
@@ -110,6 +140,89 @@ router.get('/profile', async (req, res) => {
   }
 });
 
+/**
+ * A nullable text intake field: absent ⇒ untouched; '' / whitespace / null ⇒
+ * CLEARED (stored NULL, so the eSTAR projection reports the key blank rather
+ * than writing an empty string into the official form); otherwise the trimmed
+ * string. `max` bounds the raw input before trimming.
+ */
+const clearableText = (max: number) =>
+  z
+    .string()
+    .max(max)
+    .nullable()
+    .optional()
+    .transform((v) => {
+      if (v === undefined) return undefined;
+      const t = v === null ? '' : v.trim();
+      return t.length > 0 ? t : null;
+    });
+
+/**
+ * The PREDICATE OF RECORD — regulatory_programs.predicate_devices.
+ *
+ * The official eSTAR's predicate submission number and trade name are filled
+ * from `predicate_devices[0]` (estar-administrative-data.ts), so an entry here
+ * is a claim of substantial equivalence the sponsor makes TO FDA — not a UI
+ * comparison selection. Held to the same standard as the rest of this patch:
+ *
+ *   - id and name are REQUIRED, and whitespace is not a name;
+ *   - a blank optional fact is DROPPED, never stored as '', because the eSTAR
+ *     projection reports an absent fact blank and must never print an empty
+ *     string into the official form as though it were an answer;
+ *   - ids are distinct, so "which one is predicate [0]" has one answer;
+ *   - the list is CLEARABLE (null / []), because a predicate the sponsor has
+ *     withdrawn must leave the form blank rather than stand as a stale claim.
+ */
+const MAX_PREDICATE_DEVICES = 10;
+
+/** An optional predicate fact: blank/whitespace/null ⇒ absent (key dropped). */
+const optionalPredicateText = (max: number) =>
+  z
+    .string()
+    .max(max)
+    .nullish()
+    .transform((v) => {
+      const t = (v ?? '').trim();
+      return t.length > 0 ? t : undefined;
+    });
+
+const predicateDeviceSchema = z
+  .object({
+    id: z.string().min(1).max(100).transform((v) => v.trim()),
+    name: z.string().min(1).max(500).transform((v) => v.trim()),
+    kNumber: optionalPredicateText(50),
+    manufacturer: optionalPredicateText(500),
+    clearanceDate: optionalPredicateText(50),
+    productCode: optionalPredicateText(50),
+  })
+  .refine((p) => p.id.length > 0 && p.name.length > 0, {
+    message: 'A predicate device needs an id and a name',
+  })
+  /* Built key by key so the stored JSON carries only facts the sponsor
+     actually supplied: `{manufacturer: undefined}` round-trips through the
+     json column as an explicit null, which the eSTAR would then have to tell
+     apart from a real one. */
+  .transform((p): PredicateDevice => {
+    const device: PredicateDevice = { id: p.id, name: p.name };
+    if (p.kNumber) device.kNumber = p.kNumber;
+    if (p.manufacturer) device.manufacturer = p.manufacturer;
+    if (p.clearanceDate) device.clearanceDate = p.clearanceDate;
+    if (p.productCode) device.productCode = p.productCode;
+    return device;
+  });
+
+const predicateDevicesPatch = z
+  .array(predicateDeviceSchema)
+  .max(MAX_PREDICATE_DEVICES)
+  .nullable()
+  .optional()
+  .transform((v) => (v === undefined ? undefined : (v ?? [])))
+  .refine(
+    (v) => v === undefined || new Set(v.map((p) => p.id.toUpperCase())).size === v.length,
+    { message: 'Each predicate device must be listed once' },
+  );
+
 const profilePatchSchema = z
   .object({
     productName: z.string().min(1).max(500).optional(),
@@ -118,14 +231,29 @@ const profilePatchSchema = z
     productCode: z.string().min(1).max(50).optional(),
     intendedUse: z.string().max(10_000).optional(),
     indication: z.string().max(10_000).optional(),
+    // The device-level eSTAR administrative facts (WO-8 Phase 3). Each may be
+    // cleared, because a fact the platform does not hold must be BLANK on the
+    // official form, never a stale value.
+    commonName: clearableText(500),
+    classificationName: clearableText(500),
+    regulationNumber: clearableText(50),
+    associatedProductCodes: clearableText(500),
+    indicationsForUseCitation: clearableText(1000),
+    // The claim of substantial equivalence itself (see predicateDevicesPatch).
+    predicateDevices: predicateDevicesPatch,
   })
-  .refine((p) => Object.keys(p).length > 0, { message: 'At least one field is required' });
+  .refine((p) => Object.values(p).some((v) => v !== undefined), { message: 'At least one field is required' });
 
-// The device-profile WRITE is part of the device_assembly_readiness capability
+// The device-profile WRITE is a governed FDA-submission write: editor+ ROLE
+// first (requireEditorAccess), then the device_assembly_readiness capability
 // (ENTITLEMENTS_ENFORCE: off|warn|on). Reads stay open.
-router.put('/profile', requireEntitlement('device_assembly_readiness'), async (req, res) => {
+router.put('/profile', requireEditorAccess, requireEntitlement('device_assembly_readiness'), async (req, res) => {
   const orgId = getOrgId(req);
   if (orgId === null) return res.status(403).json({ error: 'Organization context required' });
+  // Part 11 §11.10(e): an inspector must be able to ask WHO set the device facts
+  // that appear on the filed form, so no actor ⇒ no write.
+  const actorId = governedActorId(req);
+  if (actorId === null) return res.status(403).json({ error: 'Authenticated actor required' });
   const identParsed = identSchema.safeParse(req.query);
   if (!identParsed.success) return res.status(400).json({ error: 'ident is required' });
   const patchParsed = profilePatchSchema.safeParse(req.body);
@@ -137,12 +265,38 @@ router.put('/profile', requireEntitlement('device_assembly_readiness'), async (r
     const program = await findProgram(req, orgId, identParsed.data.ident);
     if (!program) return res.status(404).json({ error: 'Program not found in your organization' });
 
+    // Only the fields the body named reach the UPDATE: an absent clearable
+    // field is `undefined` after parsing and must not be written as NULL.
+    const patch = Object.fromEntries(
+      Object.entries(patchParsed.data).filter(([, v]) => v !== undefined),
+    ) as Partial<typeof patchParsed.data>;
     await requestDb(req)
       .update(regulatoryPrograms)
-      .set({ ...patchParsed.data, updatedAt: new Date() })
+      .set({ ...patch, updatedAt: new Date() })
       .where(
         and(eq(regulatoryPrograms.id, program.id), eq(regulatoryPrograms.organizationId, orgId)),
       );
+
+    // Audited like the sibling governed write (upsertEstarRegistration): the
+    // real actor and org from the session, the program as the resource, and the
+    // NAMES of the fields this patch changed — the device facts an inspector
+    // reads off the filed form.
+    // WHICH predicate was claimed travels with the entry. The field NAME alone
+    // answers "someone changed the predicate"; an inspector asking "equivalent
+    // to WHAT, and who said so" needs the identities, and a cleared list
+    // ([]) is itself the answer to "when did they withdraw the claim".
+    const details: Record<string, unknown> = { fields: Object.keys(patch) };
+    if (patch.predicateDevices) {
+      details.predicateDevices = patch.predicateDevices.map((p) => p.kNumber ?? p.id);
+    }
+    await auditService.logAction({
+      organizationId: orgId,
+      userId: actorId,
+      action: 'DEVICE_PROFILE_UPDATED',
+      resourceType: 'regulatory_program',
+      resourceId: program.id,
+      details,
+    });
 
     const updated = await findProgram(req, orgId, program.id);
     return res.status(200).json({ profile: updated });

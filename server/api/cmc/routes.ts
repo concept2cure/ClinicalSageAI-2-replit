@@ -11,6 +11,14 @@ import {
   writeThroughProcessValidation,
   writeThroughChangeControl,
   writeThroughComparability,
+  writeThroughContainerClosure,
+  writeThroughReferenceStandard,
+  writeThroughImpurityProfile,
+  writeThroughDissolutionProfile,
+  writeThroughMaterialSpec,
+  writeThroughFormulationRecord,
+  writeThroughManufacturingProcess,
+  writeThroughCharacterizationStudy,
 } from '../../services/cmc-write-through';
 import {
   analyticalMethods,
@@ -20,58 +28,76 @@ import {
   cmcChangeControl,
   drugSubstances,
   drugProducts,
+  cmcContainerClosures,
+  cmcReferenceStandards,
+  cmcImpurityProfiles,
+  cmcDissolutionProfiles,
+  cmcMaterialSpecs,
+  cmcFormulationRecords,
+  cmcCharacterizationStudies,
   insertAnalyticalMethodSchema,
   insertProcessValidationSchema,
   insertStabilityStudySchema,
   insertQcTestingSchema,
   insertCmcChangeControlSchema,
-  insertDrugSubstanceSchema,
-  insertDrugProductSchema,
+  insertCmcReferenceStandardSchema,
+  insertCmcImpurityProfileSchema,
+  insertCmcDissolutionProfileSchema,
 } from '../../../shared/schema';
-import { eq, and, inArray } from 'drizzle-orm';
+/* manufacturing_processes is modelled in shared/cmc-schema.ts, where it has
+   lived since before this register family existed. It is the same table
+   ich-compliance-checker and qbd-analyzer read. */
+import { manufacturingProcesses } from '../../../shared/cmc-schema';
+import { eq, and, inArray, or, isNull, type SQL } from 'drizzle-orm';
+import type { AnyPgColumn } from 'drizzle-orm/pg-core';
 /* Reading a stability programme's recorded series, and the ICH Q1E poolability
    assessment over it, both live in services/cmc/recorded-stability. The
    eligibility rules there are the safety story for a shelf-life claim and have
    two callers — this route and AnA's `assess_recorded_batch_poolability` tool —
    so there is exactly one copy of them. */
-import {
-  readRecordedStabilityResults,
-  parseNumeric,
-  parseAcceptanceCriterion,
-  groupByParameter,
-  assessRecordedPoolability,
-} from '../../services/cmc/recorded-stability';
+import { assessRecordedPoolability } from '../../services/cmc/recorded-stability';
+import { recordGovernedAction, verifyReauth } from '../../routes/c2c/actions';
+import { governedSignatureSchema, resolveActorUserId } from './governance';
 import { createScopedLogger } from '../../utils/logger';
 import * as metricsModule from '../../metrics.js';
+import { serverError } from '../../lib/api-response';
+/* The one path from a register save to the Module 3 canonical layer, shared
+   with the batch record and specification routes: it awaits the write,
+   reports { module3Linked, module3Warning } and meters a failure. */
+import { linkToModule3, type LinkableRow, type WriteThroughFn } from '../../services/cmc/link-to-module3';
+/* The register creates, their body schemas and the governed-state refusals
+   live in ONE service, called by these routes and by the guided interview's
+   commit projector alike (services/cmc/interview-commit.ts). */
+import {
+  PROCESS_VOCAB,
+  QUALIFICATION_VOCAB,
+  RegisterWriteRefusal,
+  characterizationStudyBody,
+  containerClosureBody,
+  createCharacterizationStudy,
+  createContainerClosure,
+  createDrugProduct,
+  createDrugSubstance,
+  createFormulationRecord,
+  createManufacturingProcess,
+  createMaterialSpec,
+  currentFormulationConflict,
+  drugProductBody,
+  drugSubstanceBody,
+  formulationRecordBody,
+  manufacturingProcessBody,
+  materialSpecBody,
+  optionalDate,
+  requiredDate,
+  ungovernedQualificationRefusal,
+  withoutGovernedFields,
+  withoutOrgId,
+  withoutTenantKey,
+  type QualificationVocab,
+} from '../../services/cmc/register-writes';
 
 const router = express.Router();
 const logger = createScopedLogger('cmc-routes');
-
-/**
- * Observe a failed canonical write-through to the Module 3 submission source
- * object. The primary response is intentionally NOT blocked on this — but the
- * failure MUST be observable (logged + metered) rather than silently swallowed.
- * TODO(GA): consider retry/queue for guaranteed write-through.
- */
-function observeWriteThroughFailure(
-  propagation: string,
-  recordId: string | number,
-  err: unknown
-): void {
-  logger.error('Module 3 canonical write-through failed', {
-    recordId: String(recordId),
-    propagation,
-    error: err instanceof Error ? err.message : String(err),
-  });
-  try {
-    (metricsModule as any).metrics.concept2cureErrors.inc({
-      operation: `cmc_${propagation}`,
-      error_type: 'propagation_failed',
-    });
-  } catch {
-    /* metric increment must never affect request flow */
-  }
-}
 
 // Helper to read organization ID from authenticated context
 function getOrgId(req: express.Request): number {
@@ -105,11 +131,6 @@ function getOrgId(req: express.Request): number {
  * undefined, so an optional timestamp left empty in a form is "not set" rather
  * than `new Date('')` → Invalid Date → a second confusing rejection.
  */
-const requiredDate = z.coerce.date();
-const optionalDate = z.preprocess(
-  v => (v === '' || v === null || v === undefined ? undefined : v),
-  z.coerce.date().optional()
-);
 
 /**
  * Normalise a failed write into an honest response.
@@ -130,6 +151,11 @@ function respondWriteError(
       details: error.errors,
     });
   }
+  /* A governed-state refusal from the register service: the write the caller
+     asked for exists, by a route that records who made it. */
+  if (error instanceof RegisterWriteRefusal) {
+    return res.status(error.status).json({ success: false, error: error.message });
+  }
   const message = error instanceof Error ? error.message : String(error);
   if (message.includes('Organization context required')) {
     return res.status(401).json({ success: false, error: 'Organization context required' });
@@ -146,14 +172,6 @@ function respondWriteError(
   return res.status(500).json({ success: false, error: fallback });
 }
 
-/**
- * Strip the tenant key from a validated update body. The organization scope is
- * taken from the authenticated context and must never be settable by the caller.
- */
-function withoutOrgId<T extends Record<string, unknown>>(data: T): Omit<T, 'organizationId'> {
-  const { organizationId: _discard, ...rest } = data as { organizationId?: unknown } & T;
-  return rest as Omit<T, 'organizationId'>;
-}
 
 // Analytical Methods Routes
 router.get('/analytical-methods', async (req, res) => {
@@ -194,23 +212,58 @@ router.get('/analytical-methods', async (req, res) => {
 /* Timestamp-bearing variants of the generated insert schemas — see the
    `requiredDate` / `optionalDate` note above. Each names exactly the timestamp
    columns its table carries, so a schema change that adds one is a compile-time
-   prompt to decide how it crosses the JSON boundary rather than a silent 500. */
-const analyticalMethodBody = insertAnalyticalMethodSchema.extend({
+   prompt to decide how it crosses the JSON boundary rather than a silent 500.
+
+   organizationId is OMITTED from every request body: the generated insert
+   schemas require it (the column is NOT NULL with no default), but tenancy is
+   the SESSION's fact — each handler stamps `organizationId: orgId` from the
+   authenticated context after parse. Requiring it in the body meant every
+   create from the product's own register surfaces (which rightly never send
+   it) answered 400 "organizationId Required" — and accepting it would have
+   invited a caller-supplied tenant, which is worse. */
+
+/**
+ * Drop the tenant key from a generated insert schema. The RUNTIME omit is
+ * plain zod and correct (proven live: scripts/dev/cmc-staff-simulation.sh);
+ * the TYPE-level mask is the problem — drizzle-zod's generated object types
+ * resolve the omit-mask keys to `never`, so a literal
+ * `.omit({ organizationId: true })` fails to compile. One cast, confined
+ * here. The returned type still names organizationId; every handler stamps
+ * the real one from the session immediately after parse, so nothing reads
+ * the phantom.
+ */
+const analyticalMethodBody = withoutTenantKey(insertAnalyticalMethodSchema).extend({
   validationDate: optionalDate,
 });
-const processValidationBody = insertProcessValidationSchema.extend({
+const processValidationBody = withoutTenantKey(insertProcessValidationSchema).extend({
   approvalDate: optionalDate,
 });
-const stabilityStudyBody = insertStabilityStudySchema.extend({
+const stabilityStudyBody = withoutTenantKey(insertStabilityStudySchema).extend({
   startDate: requiredDate,
   plannedEndDate: optionalDate,
 });
-const qcTestingBody = insertQcTestingSchema.extend({
+const qcTestingBody = withoutTenantKey(insertQcTestingSchema).extend({
   testDate: requiredDate,
   releaseDate: optionalDate,
 });
-const changeControlBody = insertCmcChangeControlSchema.extend({
+const changeControlBody = withoutTenantKey(insertCmcChangeControlSchema).extend({
   implementationDate: optionalDate,
+});
+const referenceStandardBody = withoutTenantKey(insertCmcReferenceStandardSchema).extend({
+  expiryDate: optionalDate,
+  retestDate: optionalDate,
+  qualificationDate: optionalDate,
+});
+const impurityProfileBody = withoutTenantKey(insertCmcImpurityProfileSchema).extend({
+  /* The register's own GET returns qualificationDate as an ISO string, so a
+     client that reads a row and writes it back would have been rejected by the
+     z.date() drizzle-zod generates for the column. The field is stripped by
+     withoutGovernedFields regardless — the coercion is what stops the whole
+     request failing before it gets there. */
+  qualificationDate: optionalDate,
+});
+const dissolutionProfileBody = withoutTenantKey(insertCmcDissolutionProfileSchema).extend({
+  testDate: optionalDate,
 });
 
 router.post('/analytical-methods', async (req, res) => {
@@ -220,15 +273,10 @@ router.post('/analytical-methods', async (req, res) => {
     // createInsertSchemaOmit widens the parsed type to `{}`, so cast the
     // Zod-validated values to the table insert type at this boundary.
     const [method] = await db.insert(analyticalMethods).values({ ...validatedData, organizationId: orgId } as typeof analyticalMethods.$inferInsert).returning();
-    // Write-through: upsert canonical source object for Module 3
-    // projectId is not persisted on this table; it is supplied by the caller for canonical linkage.
-    const projectId = (req.body as { projectId?: string }).projectId;
-    if (projectId) {
-      writeThroughAnalyticalMethod(orgId, projectId, String(method.id), method).catch(err =>
-        observeWriteThroughFailure('write_through_analytical_method', method.id, err)
-      );
-    }
-    res.json({ success: true, data: method });
+    /* projectId is not persisted on this table; the caller names the program
+       and the link reports whether the row reached Module 3. */
+    const linkage = await linkToModule3('write_through_analytical_method', orgId, method, writeThroughAnalyticalMethod, req);
+    res.json({ success: true, data: method, ...linkage });
   } catch (error) {
     return respondWriteError(res, error, 'Failed to create analytical method');
   }
@@ -246,15 +294,9 @@ router.put('/analytical-methods/:id', async (req, res) => {
       .set({ ...safeData, updatedAt: new Date() })
       .where(and(eq(analyticalMethods.id, id), eq(analyticalMethods.organizationId, orgId)))
       .returning();
-    // Write-through: upsert canonical source object for Module 3
-    const projectId = (req.body as { projectId?: string }).projectId;
-    if (method && projectId) {
-      writeThroughAnalyticalMethod(orgId, projectId, String(method.id), method).catch(err =>
-        observeWriteThroughFailure('write_through_analytical_method', method.id, err)
-      );
-    }
     if (!method) return res.status(404).json({ success: false, error: 'Analytical method not found' });
-    res.json({ success: true, data: method });
+    const linkage = await linkToModule3('write_through_analytical_method', orgId, method, writeThroughAnalyticalMethod, req);
+    res.json({ success: true, data: method, ...linkage });
   } catch (error) {
     return respondWriteError(res, error, 'Failed to update analytical method');
   }
@@ -280,14 +322,8 @@ router.post('/process-validation', async (req, res) => {
     const orgId = getOrgId(req);
     const validatedData = processValidationBody.parse(req.body);
     const [validation] = await db.insert(processValidation).values({ ...validatedData, organizationId: orgId } as typeof processValidation.$inferInsert).returning();
-    // Write-through: upsert canonical source object for Module 3
-    const projectId = (req.body as { projectId?: string }).projectId;
-    if (projectId) {
-      writeThroughProcessValidation(orgId, projectId, String(validation.id), validation).catch(err =>
-        observeWriteThroughFailure('write_through_process_validation', validation.id, err)
-      );
-    }
-    res.json({ success: true, data: validation });
+    const linkage = await linkToModule3('write_through_process_validation', orgId, validation, writeThroughProcessValidation, req);
+    res.json({ success: true, data: validation, ...linkage });
   } catch (error) {
     return respondWriteError(res, error, 'Failed to create process validation');
   }
@@ -309,13 +345,8 @@ router.put('/process-validation/:id', async (req, res) => {
       .where(and(eq(processValidation.id, id), eq(processValidation.organizationId, orgId)))
       .returning();
     if (!validation) return res.status(404).json({ success: false, error: 'Process validation record not found' });
-    const projectId = (req.body as { projectId?: string }).projectId;
-    if (projectId) {
-      writeThroughProcessValidation(orgId, projectId, String(validation.id), validation).catch(err =>
-        observeWriteThroughFailure('write_through_process_validation', validation.id, err)
-      );
-    }
-    res.json({ success: true, data: validation });
+    const linkage = await linkToModule3('write_through_process_validation', orgId, validation, writeThroughProcessValidation, req);
+    res.json({ success: true, data: validation, ...linkage });
   } catch (error) {
     return respondWriteError(res, error, 'Failed to update process validation');
   }
@@ -369,14 +400,8 @@ router.post('/stability-studies', async (req, res) => {
     const orgId = getOrgId(req);
     const validatedData = stabilityStudyBody.parse(req.body);
     const [study] = await db.insert(stabilityStudies).values({ ...validatedData, organizationId: orgId } as typeof stabilityStudies.$inferInsert).returning();
-    // Write-through: upsert canonical source object for Module 3
-    const projectId = (req.body as { projectId?: string }).projectId;
-    if (projectId) {
-      writeThroughStabilityStudy(orgId, projectId, String(study.id), study).catch(err =>
-        observeWriteThroughFailure('write_through_stability_study', study.id, err)
-      );
-    }
-    res.json({ success: true, data: study });
+    const linkage = await linkToModule3('write_through_stability_study', orgId, study, writeThroughStabilityStudy, req);
+    res.json({ success: true, data: study, ...linkage });
   } catch (error) {
     return respondWriteError(res, error, 'Failed to create stability study');
   }
@@ -399,13 +424,8 @@ router.put('/stability-studies/:id', async (req, res) => {
       .where(and(eq(stabilityStudies.id, id), eq(stabilityStudies.organizationId, orgId)))
       .returning();
     if (!study) return res.status(404).json({ success: false, error: 'Stability study not found' });
-    const projectId = (req.body as { projectId?: string }).projectId;
-    if (projectId) {
-      writeThroughStabilityStudy(orgId, projectId, String(study.id), study).catch(err =>
-        observeWriteThroughFailure('write_through_stability_study', study.id, err)
-      );
-    }
-    res.json({ success: true, data: study });
+    const linkage = await linkToModule3('write_through_stability_study', orgId, study, writeThroughStabilityStudy, req);
+    res.json({ success: true, data: study, ...linkage });
   } catch (error) {
     return respondWriteError(res, error, 'Failed to update stability study');
   }
@@ -432,13 +452,8 @@ router.post('/qc-testing', async (req, res) => {
        This register was the only one with no canonical write-through, so a
        recorded release result never reached the sections whose entire purpose is
        to carry it. */
-    const projectId = (req.body as { projectId?: string }).projectId;
-    if (projectId) {
-      writeThroughQcTesting(orgId, projectId, String(test.id), test).catch(err =>
-        observeWriteThroughFailure('write_through_qc_testing', test.id, err)
-      );
-    }
-    res.json({ success: true, data: test });
+    const linkage = await linkToModule3('write_through_qc_testing', orgId, test, writeThroughQcTesting, req);
+    res.json({ success: true, data: test, ...linkage });
   } catch (error) {
     return respondWriteError(res, error, 'Failed to create QC test');
   }
@@ -456,25 +471,56 @@ router.put('/qc-testing/:id', async (req, res) => {
     const id = parseInt(String(req.params.id));
     const orgId = getOrgId(req);
     const validatedData = qcTestingBody.partial().parse(req.body);
-    const { analyst: _analystIsARecord, ...safeData } = withoutOrgId(
-      validatedData as Record<string, unknown>
-    ) as { analyst?: unknown } & Record<string, unknown>;
+    /* `analyst` is a matter of record, not an edit. `reviewedBy` is the OTHER
+       half of the same fact and was accepted from the request body — so a
+       caller could record a colleague as the second person who verified a
+       release result they never saw. Both are now the session's fact: who
+       reviewed is whoever is signed in, and a review is only recorded when the
+       caller actually asks for one. */
+    const {
+      analyst: _analystIsARecord,
+      reviewedBy: _reviewerIsTheSession,
+      ...safeData
+    } = withoutOrgId(validatedData as Record<string, unknown>) as {
+      analyst?: unknown;
+      reviewedBy?: unknown;
+    } & Record<string, unknown>;
+    const claimsReview = 'reviewedBy' in (req.body as Record<string, unknown>);
+    const reviewerId = resolveActorUserId(req);
+    if (claimsReview && !reviewerId) {
+      return res.status(401).json({ success: false, error: 'AUTH_REQUIRED' });
+    }
+    /* Second-person review, enforced where it counts. The register surface
+       disables the action for the analyst who ran the test; the API said
+       nothing, so the rule held only for callers who chose to follow it. */
+    if (claimsReview) {
+      const [existing] = await db
+        .select({ analyst: qcTesting.analyst })
+        .from(qcTesting)
+        .where(and(eq(qcTesting.id, id), eq(qcTesting.organizationId, orgId)));
+      if (!existing) return res.status(404).json({ success: false, error: 'QC test record not found' });
+      if (existing.analyst && existing.analyst === reviewerId) {
+        return res.status(409).json({
+          success: false,
+          error: 'QC review must be a second person: you recorded this result.',
+        });
+      }
+    }
     const [test] = await db
       .update(qcTesting)
-      .set({ ...safeData, updatedAt: new Date() })
+      .set({
+        ...safeData,
+        ...(claimsReview ? { reviewedBy: reviewerId } : {}),
+        updatedAt: new Date(),
+      })
       .where(and(eq(qcTesting.id, id), eq(qcTesting.organizationId, orgId)))
       .returning();
     if (!test) return res.status(404).json({ success: false, error: 'QC test record not found' });
     /* The review IS the state change that matters downstream: an unreviewed
        result is not releasable evidence, so the canonical source must be
        refreshed here too, not only on create. */
-    const projectId = (req.body as { projectId?: string }).projectId;
-    if (projectId) {
-      writeThroughQcTesting(orgId, projectId, String(test.id), test).catch(err =>
-        observeWriteThroughFailure('write_through_qc_testing', test.id, err)
-      );
-    }
-    res.json({ success: true, data: test });
+    const linkage = await linkToModule3('write_through_qc_testing', orgId, test, writeThroughQcTesting, req);
+    res.json({ success: true, data: test, ...linkage });
   } catch (error) {
     return respondWriteError(res, error, 'Failed to update QC test');
   }
@@ -500,14 +546,8 @@ router.post('/change-control', async (req, res) => {
     const orgId = getOrgId(req);
     const validatedData = changeControlBody.parse(req.body);
     const [change] = await db.insert(cmcChangeControl).values({ ...validatedData, organizationId: orgId } as typeof cmcChangeControl.$inferInsert).returning();
-    // Write-through: upsert canonical source object for Module 3
-    const projectId = (req.body as { projectId?: string }).projectId;
-    if (projectId) {
-      writeThroughChangeControl(orgId, projectId, String(change.id), change).catch(err =>
-        observeWriteThroughFailure('write_through_change_control', change.id, err)
-      );
-    }
-    res.json({ success: true, data: change });
+    const linkage = await linkToModule3('write_through_change_control', orgId, change, writeThroughChangeControl, req);
+    res.json({ success: true, data: change, ...linkage });
   } catch (error) {
     return respondWriteError(res, error, 'Failed to create change control');
   }
@@ -529,13 +569,8 @@ router.put('/change-control/:id', async (req, res) => {
       .where(and(eq(cmcChangeControl.id, id), eq(cmcChangeControl.organizationId, orgId)))
       .returning();
     if (!change) return res.status(404).json({ success: false, error: 'Change-control record not found' });
-    const projectId = (req.body as { projectId?: string }).projectId;
-    if (projectId) {
-      writeThroughChangeControl(orgId, projectId, String(change.id), change).catch(err =>
-        observeWriteThroughFailure('write_through_change_control', change.id, err)
-      );
-    }
-    res.json({ success: true, data: change });
+    const linkage = await linkToModule3('write_through_change_control', orgId, change, writeThroughChangeControl, req);
+    res.json({ success: true, data: change, ...linkage });
   } catch (error) {
     return respondWriteError(res, error, 'Failed to update change control');
   }
@@ -573,16 +608,8 @@ router.get('/drug-substances', async (req, res) => {
 router.post('/drug-substances', async (req, res) => {
   try {
     const orgId = getOrgId(req);
-    const validatedData = insertDrugSubstanceSchema.parse(req.body);
-    const [substance] = await db.insert(drugSubstances).values({ ...validatedData, organizationId: orgId } as typeof drugSubstances.$inferInsert).returning();
-    // Write-through: upsert canonical source object for Module 3
-    const projectId = (req.body as { projectId?: string }).projectId;
-    if (projectId) {
-      writeThroughDrugSubstance(orgId, projectId, String(substance.id), substance).catch(err =>
-        observeWriteThroughFailure('write_through_drug_substance', substance.id, err)
-      );
-    }
-    res.json({ success: true, data: substance });
+    const { row, ...linkage } = await createDrugSubstance(orgId, req.body, req);
+    res.json({ success: true, data: row, ...linkage });
   } catch (error) {
     return respondWriteError(res, error, 'Failed to create drug substance');
   }
@@ -593,20 +620,15 @@ router.put('/drug-substances/:id', async (req, res) => {
   try {
     const id = parseInt(String(req.params.id));
     const orgId = getOrgId(req);
-    const validatedData = insertDrugSubstanceSchema.partial().parse(req.body);
+    const validatedData = drugSubstanceBody.partial().parse(req.body);
     const [substance] = await db
       .update(drugSubstances)
       .set({ ...withoutOrgId(validatedData as Record<string, unknown>), updatedAt: new Date() })
       .where(and(eq(drugSubstances.id, id), eq(drugSubstances.organizationId, orgId)))
       .returning();
     if (!substance) return res.status(404).json({ success: false, error: 'Drug substance not found' });
-    const projectId = (req.body as { projectId?: string }).projectId;
-    if (projectId) {
-      writeThroughDrugSubstance(orgId, projectId, String(substance.id), substance).catch(err =>
-        observeWriteThroughFailure('write_through_drug_substance', substance.id, err)
-      );
-    }
-    res.json({ success: true, data: substance });
+    const linkage = await linkToModule3('write_through_drug_substance', orgId, substance, writeThroughDrugSubstance, req);
+    res.json({ success: true, data: substance, ...linkage });
   } catch (error) {
     return respondWriteError(res, error, 'Failed to update drug substance');
   }
@@ -624,6 +646,13 @@ router.get('/drug-products', async (req, res) => {
         strength: drugProducts.strength,
         routeOfAdministration: drugProducts.routeOfAdministration,
         composition: drugProducts.composition,
+        /* §3.2.P.3.2's batch formula. Left out of this projection, the register
+           card never received it, the edit form defaulted it to blank, and the
+           PUT wrote {} back over the column — so recording a batch formula and
+           then editing anything else about the product silently erased the only
+           producer §3.2.P.3 has. A field the product can capture and cannot
+           read back is a field it loses. */
+        batchFormula: drugProducts.batchFormula,
         manufacturingProcess: drugProducts.manufacturingProcess,
         packagingMaterials: drugProducts.packagingMaterials,
         status: drugProducts.status,
@@ -643,16 +672,8 @@ router.get('/drug-products', async (req, res) => {
 router.post('/drug-products', async (req, res) => {
   try {
     const orgId = getOrgId(req);
-    const validatedData = insertDrugProductSchema.parse(req.body);
-    const [product] = await db.insert(drugProducts).values({ ...validatedData, organizationId: orgId } as typeof drugProducts.$inferInsert).returning();
-    // Write-through: upsert canonical source object for Module 3
-    const projectId = (req.body as { projectId?: string }).projectId;
-    if (projectId) {
-      writeThroughDrugProduct(orgId, projectId, String(product.id), product).catch(err =>
-        observeWriteThroughFailure('write_through_drug_product', product.id, err)
-      );
-    }
-    res.json({ success: true, data: product });
+    const { row, ...linkage } = await createDrugProduct(orgId, req.body, req);
+    res.json({ success: true, data: row, ...linkage });
   } catch (error) {
     return respondWriteError(res, error, 'Failed to create drug product');
   }
@@ -663,23 +684,927 @@ router.put('/drug-products/:id', async (req, res) => {
   try {
     const id = parseInt(String(req.params.id));
     const orgId = getOrgId(req);
-    const validatedData = insertDrugProductSchema.partial().parse(req.body);
+    const validatedData = drugProductBody.partial().parse(req.body);
     const [product] = await db
       .update(drugProducts)
       .set({ ...withoutOrgId(validatedData as Record<string, unknown>), updatedAt: new Date() })
       .where(and(eq(drugProducts.id, id), eq(drugProducts.organizationId, orgId)))
       .returning();
     if (!product) return res.status(404).json({ success: false, error: 'Drug product not found' });
-    const projectId = (req.body as { projectId?: string }).projectId;
-    if (projectId) {
-      writeThroughDrugProduct(orgId, projectId, String(product.id), product).catch(err =>
-        observeWriteThroughFailure('write_through_drug_product', product.id, err)
-      );
-    }
-    res.json({ success: true, data: product });
+    const linkage = await linkToModule3('write_through_drug_product', orgId, product, writeThroughDrugProduct, req);
+    res.json({ success: true, data: product, ...linkage });
   } catch (error) {
     return respondWriteError(res, error, 'Failed to update drug product');
   }
+});
+
+
+/* ── Container closure systems and reference standards ───────────────────────
+ *
+ * The two registers behind §3.2.S.5 / §3.2.S.6 / §3.2.P.6 / §3.2.P.7, which had
+ * no capture path at all. Both the write-through and the composed section read
+ * `scope` to decide which side a record is evidence for, so it is stored on the
+ * row and never inferred.
+ *
+ * Three rules these two endpoints hold that the older registers do not:
+ *
+ *   1. `projectId` is a COLUMN, so the record knows its program after the
+ *      request that created it, and it is IMMUTABLE after creation — silently
+ *      repointing a qualified system's evidence at another program is not an
+ *      edit, it is a different record.
+ *   2. The canonical write-through is AWAITED and its real outcome reported.
+ *      `module3Linked: true` over a write that failed would be the exact lie
+ *      the field exists to prevent. (Every register now holds this one — see
+ *      services/cmc/link-to-module3 — it was first held here.)
+ *   3. Qualification is a governed signature (POST .../:id/qualify), never a
+ *      field on an ordinary save: `status`, `qualifiedBy` and
+ *      `qualificationDate` cannot be written through create or update.
+ */
+
+/**
+ * Scope a register read to one program when the caller names one.
+ *
+ * These two registers store `project_id`, so an org-wide list mixes the
+ * packaging systems of every program a CMC group runs — and the row a staffer
+ * then edits may belong to a different dossier than the one on screen. A record
+ * with NO project is always included: it is unfiled rather than another
+ * program's, and hiding it would leave a saved record nobody can find.
+ */
+function projectFilter(req: express.Request, column: AnyPgColumn): SQL | undefined {
+  const raw = typeof req.query.projectId === 'string' ? req.query.projectId.trim() : '';
+  if (!raw) return undefined;
+  return or(eq(column as never, raw), isNull(column as never));
+}
+
+/**
+ * Refuse a self-declared qualification with a 409 naming the governed path.
+ * The rule itself is `ungovernedQualificationRefusal` in the register
+ * service, shared with the interview commit projector.
+ */
+function refusesUngovernedQualification(
+  res: express.Response,
+  status: unknown,
+  registerPath: string,
+  storedStatus?: unknown,
+  vocab: QualificationVocab = QUALIFICATION_VOCAB,
+): boolean {
+  const refusal = ungovernedQualificationRefusal(status, registerPath, storedStatus, vocab);
+  if (!refusal) return false;
+  res.status(409).json({ success: false, error: refusal });
+  return true;
+}
+
+/**
+ * The governed qualification of a register record, on the same primitives as
+ * the specification approval and the batch release: re-auth first, the state
+ * change and the signature in ONE transaction, then the canonical write-through.
+ *
+ * `table` is a literal from a closed set, never caller input.
+ */
+async function qualifyRegisterRecord(
+  req: express.Request,
+  res: express.Response,
+  spec: {
+    table:
+      | 'cmc_container_closures'
+      | 'cmc_reference_standards'
+      | 'cmc_impurity_profiles'
+      | 'cmc_characterization_studies'
+      | 'manufacturing_processes';
+    target: string;
+    surface: string;
+    subject: string;
+    propagation: string;
+    /**
+     * The register's own signing vocabulary and column names. A manufacturing
+     * process is `validated` and records it on validation_status /
+     * validated_by / validation_date; every other register is `qualified` on
+     * status / qualified_by / qualification_date. Defaults are the common case,
+     * so only the process register states them.
+     */
+    signing?: {
+      statusColumn: string;
+      signedValue: string;
+      signedByColumn: string;
+      signedAtColumn: string;
+    };
+    /** manufacturing_processes has a uuid primary key; the rest are serial. */
+    idKind?: 'int' | 'uuid';
+    reselect: (id: string, orgId: number) => Promise<Record<string, any> | undefined>;
+    writeThrough: WriteThroughFn;
+    /**
+     * A register-specific condition the record must meet to be signable,
+     * evaluated on the row LOCKED inside the signing transaction. Returns the
+     * refusal message, or null when the record may be signed.
+     */
+    precondition?: (row: Record<string, any>) => string | null;
+  },
+): Promise<express.Response> {
+  const parsed = governedSignatureSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({ success: false, error: 'Invalid input data', details: parsed.error.errors });
+  }
+  const { reason, meaning, reauth, idempotencyKey } = parsed.data;
+
+  const signing = spec.signing ?? {
+    statusColumn: 'status',
+    signedValue: 'qualified',
+    signedByColumn: 'qualified_by',
+    signedAtColumn: 'qualification_date',
+  };
+  const rawId = String(req.params.id ?? '').trim();
+  if ((spec.idKind ?? 'int') === 'uuid') {
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(rawId)) {
+      return res.status(400).json({ success: false, error: `A ${spec.subject} id is required` });
+    }
+  } else if (!Number.isInteger(Number(rawId)) || Number(rawId) <= 0) {
+    return res.status(400).json({ success: false, error: `A ${spec.subject} id is required` });
+  }
+  const id: string | number = (spec.idKind ?? 'int') === 'uuid' ? rawId : parseInt(rawId, 10);
+  let orgId: number;
+  try {
+    orgId = getOrgId(req);
+  } catch {
+    return res.status(401).json({ success: false, error: 'Organization context required' });
+  }
+  const userId = resolveActorUserId(req);
+  if (!userId) return res.status(401).json({ success: false, error: 'AUTH_REQUIRED' });
+
+  const reauthResult = await verifyReauth(userId, reauth);
+  if (!reauthResult.ok) {
+    res.setHeader('WWW-Authenticate', 'ReAuth required');
+    return res.status(401).json({ success: false, error: reauthResult.error ?? 'REAUTH_REQUIRED' });
+  }
+
+  const pool = getPool();
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const current = await client.query(
+      `SELECT * FROM ${spec.table} WHERE id = $1 AND organization_id = $2 FOR UPDATE`,
+      [id, orgId],
+    );
+    if (current.rows.length === 0) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({ success: false, error: `${spec.subject} not found` });
+    }
+    /* Already signed. Re-signing would stamp a second person over the first and
+       lose who actually qualified it, so it is refused with the record's own
+       facts rather than overwritten. */
+    if (String(current.rows[0][signing.statusColumn] || '').toLowerCase() === signing.signedValue) {
+      await client.query('ROLLBACK');
+      return res.status(409).json({
+        success: false,
+        error: `This ${spec.subject} is already ${signing.signedValue}`,
+        qualifiedAt: current.rows[0][signing.signedAtColumn] ?? null,
+      });
+    }
+    const unmet = spec.precondition ? spec.precondition(current.rows[0]) : null;
+    if (unmet) {
+      await client.query('ROLLBACK');
+      return res.status(409).json({ success: false, error: unmet });
+    }
+    /* Every interpolated name here is a literal from this file's own closed
+       set — the table union above and the `signing` defaults — never caller
+       input; the values still travel as parameters. */
+    await client.query(
+      `UPDATE ${spec.table}
+          SET ${signing.statusColumn} = '${signing.signedValue}',
+              ${signing.signedByColumn} = $3,
+              ${signing.signedAtColumn} = NOW(),
+              updated_at = NOW()
+        WHERE id = $1 AND organization_id = $2`,
+      [id, orgId, userId],
+    );
+    const governance = await recordGovernedAction(client, {
+      orgId,
+      userId,
+      command: 'sign',
+      target: `${spec.target}:${id}`,
+      reason,
+      payload: { meaning },
+      domain: 'biopharma',
+      surface: spec.surface,
+      idempotencyKey: idempotencyKey ?? null,
+    });
+    await client.query('COMMIT');
+
+    /* Re-read through Drizzle so the response carries the same camelCase row
+       shape every other endpoint of this register returns — the register table
+       adopts the server row after a write, and a snake_case body would blank
+       every column it just filled in. */
+    const row = await spec.reselect(String(id), orgId);
+    const linkage = row
+      ? await linkToModule3(spec.propagation, orgId, row as LinkableRow, spec.writeThrough, req)
+      : { module3Linked: false, module3Warning: `Signed. The record could not be re-read to link it into Module 3.` };
+    return res.json({
+      success: true,
+      data: row,
+      governance: { actionId: governance.actionId, sha256Chain: governance.sha256Chain },
+      ...linkage,
+    });
+  } catch (error) {
+    await client.query('ROLLBACK').catch(() => {});
+    return respondWriteError(res, error, `Failed to ${signing.signedValue === 'validated' ? 'validate' : 'qualify'} ${spec.subject}`);
+  } finally {
+    client.release();
+  }
+}
+
+router.get('/container-closures', async (req, res) => {
+  try {
+    const orgId = getOrgId(req);
+    const rows = await db
+      .select()
+      .from(cmcContainerClosures)
+      .where(and(eq(cmcContainerClosures.organizationId, orgId), projectFilter(req, cmcContainerClosures.projectId)));
+    res.json({ success: true, data: rows });
+  } catch (error) {
+    return respondWriteError(res, error, 'Failed to fetch container closure systems');
+  }
+});
+
+const reselectContainerClosure = async (id: string, orgId: number) => {
+  const [row] = await db
+    .select()
+    .from(cmcContainerClosures)
+    .where(and(eq(cmcContainerClosures.id, parseInt(id, 10)), eq(cmcContainerClosures.organizationId, orgId)));
+  return row as Record<string, any> | undefined;
+};
+
+router.post('/container-closures', async (req, res) => {
+  try {
+    const orgId = getOrgId(req);
+    const { row, ...linkage } = await createContainerClosure(orgId, req.body, req);
+    res.json({ success: true, data: row, ...linkage });
+  } catch (error) {
+    return respondWriteError(res, error, 'Failed to create container closure system');
+  }
+});
+
+/**
+ * Attach the E&L package, correct the record, or add the suitability
+ * justification. A container closure system is qualified over months — the
+ * justification and the extractables/leachables results almost never exist on
+ * the day the system is first recorded, so a create-only endpoint could never
+ * carry the section.
+ *
+ * `projectId` is dropped here: which program a system is evidence for is fixed
+ * at creation, and a silent repoint would move a qualified system's evidence
+ * to another dossier.
+ */
+router.put('/container-closures/:id', async (req, res) => {
+  try {
+    const id = parseInt(String(req.params.id));
+    const orgId = getOrgId(req);
+    const validatedData = containerClosureBody.partial().parse(req.body);
+    const stored = await reselectContainerClosure(String(id), orgId);
+    if (refusesUngovernedQualification(res, (validatedData as { status?: unknown }).status, 'container-closures', stored?.status)) return;
+    const { projectId: _fixedAtCreation, ...editable } = withoutGovernedFields(
+      validatedData as Record<string, unknown>,
+    ) as { projectId?: unknown } & Record<string, unknown>;
+    const [row] = await db
+      .update(cmcContainerClosures)
+      .set({ ...editable, updatedAt: new Date() })
+      .where(and(eq(cmcContainerClosures.id, id), eq(cmcContainerClosures.organizationId, orgId)))
+      .returning();
+    if (!row) return res.status(404).json({ success: false, error: 'Container closure system not found' });
+    const linkage = await linkToModule3('write_through_container_closure', orgId, row, writeThroughContainerClosure, req);
+    res.json({ success: true, data: row, ...linkage });
+  } catch (error) {
+    return respondWriteError(res, error, 'Failed to update container closure system');
+  }
+});
+
+/** The governed qualification of a container closure system (21 CFR Part 11). */
+router.post('/container-closures/:id/qualify', async (req, res) => {
+  return qualifyRegisterRecord(req, res, {
+    table: 'cmc_container_closures',
+    target: 'container_closure',
+    surface: 'cmc-container-closures',
+    subject: 'container closure system',
+    propagation: 'write_through_container_closure',
+    reselect: reselectContainerClosure,
+    writeThrough: writeThroughContainerClosure,
+  });
+});
+
+/* ── Reference standards — §3.2.S.5 / §3.2.P.6 ───────────────────────────────
+ *
+ * Every potency and purity number the QC register holds is reported against a
+ * reference standard. Until now the standard itself was recorded nowhere, so
+ * the two sections that exist to describe it composed from nothing.
+ */
+router.get('/reference-standards', async (req, res) => {
+  try {
+    const orgId = getOrgId(req);
+    const rows = await db
+      .select()
+      .from(cmcReferenceStandards)
+      .where(and(eq(cmcReferenceStandards.organizationId, orgId), projectFilter(req, cmcReferenceStandards.projectId)));
+    res.json({ success: true, data: rows });
+  } catch (error) {
+    return respondWriteError(res, error, 'Failed to fetch reference standards');
+  }
+});
+
+const reselectReferenceStandard = async (id: string, orgId: number) => {
+  const [row] = await db
+    .select()
+    .from(cmcReferenceStandards)
+    .where(and(eq(cmcReferenceStandards.id, parseInt(id, 10)), eq(cmcReferenceStandards.organizationId, orgId)));
+  return row as Record<string, any> | undefined;
+};
+
+router.post('/reference-standards', async (req, res) => {
+  try {
+    const orgId = getOrgId(req);
+    const validatedData = referenceStandardBody.parse(req.body);
+    if (refusesUngovernedQualification(res, (validatedData as { status?: unknown }).status, 'reference-standards')) return;
+    const [row] = await db
+      .insert(cmcReferenceStandards)
+      .values({ ...withoutGovernedFields(validatedData as Record<string, unknown>), organizationId: orgId } as typeof cmcReferenceStandards.$inferInsert)
+      .returning();
+    const linkage = await linkToModule3('write_through_reference_standard', orgId, row, writeThroughReferenceStandard, req);
+    res.json({ success: true, data: row, ...linkage });
+  } catch (error) {
+    return respondWriteError(res, error, 'Failed to create reference standard');
+  }
+});
+
+/** Record the characterisation, correct the record, or retire the standard. */
+router.put('/reference-standards/:id', async (req, res) => {
+  try {
+    const id = parseInt(String(req.params.id));
+    const orgId = getOrgId(req);
+    const validatedData = referenceStandardBody.partial().parse(req.body);
+    const stored = await reselectReferenceStandard(String(id), orgId);
+    if (refusesUngovernedQualification(res, (validatedData as { status?: unknown }).status, 'reference-standards', stored?.status)) return;
+    const { projectId: _fixedAtCreation, ...editable } = withoutGovernedFields(
+      validatedData as Record<string, unknown>,
+    ) as { projectId?: unknown } & Record<string, unknown>;
+    const [row] = await db
+      .update(cmcReferenceStandards)
+      .set({ ...editable, updatedAt: new Date() })
+      .where(and(eq(cmcReferenceStandards.id, id), eq(cmcReferenceStandards.organizationId, orgId)))
+      .returning();
+    if (!row) return res.status(404).json({ success: false, error: 'Reference standard not found' });
+    const linkage = await linkToModule3('write_through_reference_standard', orgId, row, writeThroughReferenceStandard, req);
+    res.json({ success: true, data: row, ...linkage });
+  } catch (error) {
+    return respondWriteError(res, error, 'Failed to update reference standard');
+  }
+});
+
+/** The governed qualification of a reference standard (21 CFR Part 11). */
+router.post('/reference-standards/:id/qualify', async (req, res) => {
+  return qualifyRegisterRecord(req, res, {
+    table: 'cmc_reference_standards',
+    target: 'reference_standard',
+    surface: 'cmc-reference-standards',
+    subject: 'reference standard',
+    propagation: 'write_through_reference_standard',
+    reselect: reselectReferenceStandard,
+    writeThrough: writeThroughReferenceStandard,
+  });
+});
+
+
+/* ── Impurity profiles — §3.2.S.3.2 / §3.2.P.5.5 ─────────────────────────────
+ *
+ * One row per impurity. `scope` decides which side it files under, on the same
+ * rule as the registers above; `project_id` is a column and is immutable after
+ * creation; the canonical write-through is awaited and its true outcome
+ * reported; and qualification is a Part 11 signature over a recorded
+ * qualification basis, never a status a save can set.
+ */
+router.get('/impurity-profiles', async (req, res) => {
+  try {
+    const orgId = getOrgId(req);
+    const rows = await db
+      .select()
+      .from(cmcImpurityProfiles)
+      .where(and(eq(cmcImpurityProfiles.organizationId, orgId), projectFilter(req, cmcImpurityProfiles.projectId)));
+    res.json({ success: true, data: rows });
+  } catch (error) {
+    return respondWriteError(res, error, 'Failed to fetch impurity profiles');
+  }
+});
+
+const reselectImpurityProfile = async (id: string, orgId: number) => {
+  const [row] = await db
+    .select()
+    .from(cmcImpurityProfiles)
+    .where(and(eq(cmcImpurityProfiles.id, parseInt(id, 10)), eq(cmcImpurityProfiles.organizationId, orgId)));
+  return row as Record<string, any> | undefined;
+};
+
+router.post('/impurity-profiles', async (req, res) => {
+  try {
+    const orgId = getOrgId(req);
+    const validatedData = impurityProfileBody.parse(req.body);
+    if (refusesUngovernedQualification(res, (validatedData as { status?: unknown }).status, 'impurity-profiles')) return;
+    const [row] = await db
+      .insert(cmcImpurityProfiles)
+      .values({ ...withoutGovernedFields(validatedData as Record<string, unknown>), organizationId: orgId } as typeof cmcImpurityProfiles.$inferInsert)
+      .returning();
+    const linkage = await linkToModule3('write_through_impurity_profile', orgId, row, writeThroughImpurityProfile, req);
+    res.json({ success: true, data: row, ...linkage });
+  } catch (error) {
+    return respondWriteError(res, error, 'Failed to create impurity profile');
+  }
+});
+
+/**
+ * Record the level from a new batch, attach the qualification basis, or correct
+ * the entry. An impurity's file grows over a programme: the level is measured
+ * long before the toxicological qualification that justifies it exists.
+ */
+router.put('/impurity-profiles/:id', async (req, res) => {
+  try {
+    const id = parseInt(String(req.params.id));
+    const orgId = getOrgId(req);
+    const validatedData = impurityProfileBody.partial().parse(req.body);
+    const stored = await reselectImpurityProfile(String(id), orgId);
+    if (refusesUngovernedQualification(res, (validatedData as { status?: unknown }).status, 'impurity-profiles', stored?.status)) return;
+    const { projectId: _fixedAtCreation, ...editable } = withoutGovernedFields(
+      validatedData as Record<string, unknown>,
+    ) as { projectId?: unknown } & Record<string, unknown>;
+    const [row] = await db
+      .update(cmcImpurityProfiles)
+      .set({ ...editable, updatedAt: new Date() })
+      .where(and(eq(cmcImpurityProfiles.id, id), eq(cmcImpurityProfiles.organizationId, orgId)))
+      .returning();
+    if (!row) return res.status(404).json({ success: false, error: 'Impurity profile not found' });
+    const linkage = await linkToModule3('write_through_impurity_profile', orgId, row, writeThroughImpurityProfile, req);
+    res.json({ success: true, data: row, ...linkage });
+  } catch (error) {
+    return respondWriteError(res, error, 'Failed to update impurity profile');
+  }
+});
+
+/**
+ * The governed qualification of an impurity (21 CFR Part 11).
+ *
+ * ICH Q3A/Q3B qualification is a toxicological conclusion about a specific
+ * level of a specific impurity. Signing it records who reached that conclusion
+ * and on what basis; the register REFUSES the signature when no qualification
+ * basis is recorded, because a signature over an empty basis is the exact shape
+ * of a qualification nobody can point at.
+ */
+router.post('/impurity-profiles/:id/qualify', async (req, res) => {
+  return qualifyRegisterRecord(req, res, {
+    table: 'cmc_impurity_profiles',
+    target: 'impurity_profile',
+    surface: 'cmc-impurity-profiles',
+    subject: 'impurity profile',
+    propagation: 'write_through_impurity_profile',
+    reselect: reselectImpurityProfile,
+    writeThrough: writeThroughImpurityProfile,
+    /* A signature over an empty basis qualifies nothing. Enforced INSIDE the
+       signing transaction, on the row locked FOR UPDATE — as a pre-check before
+       it, a concurrent edit that cleared the basis between the check and the
+       signature produced a signed qualification with nothing behind it, and the
+       check also disclosed the record's state before re-authentication. */
+    precondition: (row) =>
+      String(row.qualification_basis || '').trim()
+        ? null
+        : 'This impurity has no qualification basis recorded. Qualification is a signature over the study, comparator exposure or monograph that qualifies the level — record that first.',
+  });
+});
+
+/* ── Dissolution profiles — §3.2.P.2 / §3.2.P.5 ──────────────────────────────
+ *
+ * `purpose` plays the part `scope` plays above: a development profile is
+ * §3.2.P.2 evidence and a release-specification profile is §3.2.P.5 evidence,
+ * and one must not complete the other's section.
+ *
+ * There is no qualify endpoint here: a dissolution profile is a measurement,
+ * not a state somebody signs. What IS signed is the specification it supports,
+ * which lives in the specification register and already has one.
+ */
+router.get('/dissolution-profiles', async (req, res) => {
+  try {
+    const orgId = getOrgId(req);
+    const rows = await db
+      .select()
+      .from(cmcDissolutionProfiles)
+      .where(and(eq(cmcDissolutionProfiles.organizationId, orgId), projectFilter(req, cmcDissolutionProfiles.projectId)));
+    res.json({ success: true, data: rows });
+  } catch (error) {
+    return respondWriteError(res, error, 'Failed to fetch dissolution profiles');
+  }
+});
+
+router.post('/dissolution-profiles', async (req, res) => {
+  try {
+    const orgId = getOrgId(req);
+    const validatedData = dissolutionProfileBody.parse(req.body);
+    const [row] = await db
+      .insert(cmcDissolutionProfiles)
+      .values({ ...withoutOrgId(validatedData as Record<string, unknown>), organizationId: orgId } as typeof cmcDissolutionProfiles.$inferInsert)
+      .returning();
+    const linkage = await linkToModule3('write_through_dissolution_profile', orgId, row, writeThroughDissolutionProfile, req);
+    res.json({ success: true, data: row, ...linkage });
+  } catch (error) {
+    return respondWriteError(res, error, 'Failed to create dissolution profile');
+  }
+});
+
+/** Add the later timepoints, attach the reference profile, correct the record. */
+router.put('/dissolution-profiles/:id', async (req, res) => {
+  try {
+    const id = parseInt(String(req.params.id));
+    const orgId = getOrgId(req);
+    const validatedData = dissolutionProfileBody.partial().parse(req.body);
+    const { projectId: _fixedAtCreation, ...editable } = withoutOrgId(
+      validatedData as Record<string, unknown>,
+    ) as { projectId?: unknown } & Record<string, unknown>;
+    const [row] = await db
+      .update(cmcDissolutionProfiles)
+      .set({ ...editable, updatedAt: new Date() })
+      .where(and(eq(cmcDissolutionProfiles.id, id), eq(cmcDissolutionProfiles.organizationId, orgId)))
+      .returning();
+    if (!row) return res.status(404).json({ success: false, error: 'Dissolution profile not found' });
+    const linkage = await linkToModule3('write_through_dissolution_profile', orgId, row, writeThroughDissolutionProfile, req);
+    res.json({ success: true, data: row, ...linkage });
+  } catch (error) {
+    return respondWriteError(res, error, 'Failed to update dissolution profile');
+  }
+});
+
+
+
+/* ── Material specifications — §3.2.P.4 excipients, §3.2.S.2.3 raw materials ──
+ *
+ * One register, two canonical source types: `materialRole` decides which, so an
+ * excipient files under §3.2.P.4 and a starting material under §3.2.S.2.3
+ * without either completing the other's section.
+ */
+router.get('/material-specs', async (req, res) => {
+  try {
+    const orgId = getOrgId(req);
+    const rows = await db
+      .select()
+      .from(cmcMaterialSpecs)
+      .where(and(eq(cmcMaterialSpecs.organizationId, orgId), projectFilter(req, cmcMaterialSpecs.projectId)));
+    res.json({ success: true, data: rows });
+  } catch (error) {
+    return respondWriteError(res, error, 'Failed to fetch material specifications');
+  }
+});
+
+router.post('/material-specs', async (req, res) => {
+  try {
+    const orgId = getOrgId(req);
+    const { row, ...linkage } = await createMaterialSpec(orgId, req.body, req);
+    res.json({ success: true, data: row, ...linkage });
+  } catch (error) {
+    return respondWriteError(res, error, 'Failed to create material specification');
+  }
+});
+
+/** Record the supplier's origin declaration, attach the TSE certificate, or correct the entry. */
+router.put('/material-specs/:id', async (req, res) => {
+  try {
+    const id = parseInt(String(req.params.id));
+    const orgId = getOrgId(req);
+    const validatedData = materialSpecBody.partial().parse(req.body);
+    const { projectId: _fixedAtCreation, ...editable } = withoutOrgId(
+      validatedData as Record<string, unknown>,
+    ) as { projectId?: unknown } & Record<string, unknown>;
+    const [row] = await db
+      .update(cmcMaterialSpecs)
+      .set({ ...editable, updatedAt: new Date() })
+      .where(and(eq(cmcMaterialSpecs.id, id), eq(cmcMaterialSpecs.organizationId, orgId)))
+      .returning();
+    if (!row) return res.status(404).json({ success: false, error: 'Material specification not found' });
+    const linkage = await linkToModule3('write_through_material_spec', orgId, row, writeThroughMaterialSpec, req);
+    res.json({ success: true, data: row, ...linkage });
+  } catch (error) {
+    return respondWriteError(res, error, 'Failed to update material specification');
+  }
+});
+
+/* ── Formulation records — §3.2.P.1 composition, §3.2.P.3.2 batch formula ───── */
+router.get('/formulation-records', async (req, res) => {
+  try {
+    const orgId = getOrgId(req);
+    const rows = await db
+      .select()
+      .from(cmcFormulationRecords)
+      .where(and(eq(cmcFormulationRecords.organizationId, orgId), projectFilter(req, cmcFormulationRecords.projectId)));
+    res.json({ success: true, data: rows });
+  } catch (error) {
+    return respondWriteError(res, error, 'Failed to fetch formulation records');
+  }
+});
+
+/**
+ * Record a formulation version.
+ *
+ * Exactly one version may be `current` at a time: §3.2.P.1 renders the current
+ * composition, and two records claiming it means the governing composition is
+ * not established. The register enforces that in the same transaction as the
+ * write, rather than letting the section discover the ambiguity later.
+ */
+router.post('/formulation-records', async (req, res) => {
+  try {
+    const orgId = getOrgId(req);
+    const { row, ...linkage } = await createFormulationRecord(orgId, req.body, req);
+    res.json({ success: true, data: row, ...linkage });
+  } catch (error) {
+    return respondWriteError(res, error, 'Failed to create formulation record');
+  }
+});
+
+/** Revise a formulation, or mark it superseded when a new version takes over. */
+router.put('/formulation-records/:id', async (req, res) => {
+  try {
+    const id = parseInt(String(req.params.id));
+    const orgId = getOrgId(req);
+    const validatedData = formulationRecordBody.partial().parse(req.body);
+    const [storedRow] = await db
+      .select({ projectId: cmcFormulationRecords.projectId })
+      .from(cmcFormulationRecords)
+      .where(and(eq(cmcFormulationRecords.id, id), eq(cmcFormulationRecords.organizationId, orgId)));
+    if (!storedRow) return res.status(404).json({ success: false, error: 'Formulation record not found' });
+    const conflict = await currentFormulationConflict(
+      orgId, validatedData as Record<string, unknown>, id, storedRow.projectId,
+    );
+    if (conflict) return res.status(409).json({ success: false, error: conflict });
+    const { projectId: _fixedAtCreation, ...editable } = withoutOrgId(
+      validatedData as Record<string, unknown>,
+    ) as { projectId?: unknown } & Record<string, unknown>;
+    const [row] = await db
+      .update(cmcFormulationRecords)
+      .set({ ...editable, updatedAt: new Date() })
+      .where(and(eq(cmcFormulationRecords.id, id), eq(cmcFormulationRecords.organizationId, orgId)))
+      .returning();
+    if (!row) return res.status(404).json({ success: false, error: 'Formulation record not found' });
+    const linkage = await linkToModule3('write_through_formulation_record', orgId, row, writeThroughFormulationRecord, req);
+    res.json({ success: true, data: row, ...linkage });
+  } catch (error) {
+    return respondWriteError(res, error, 'Failed to update formulation record');
+  }
+});
+
+/* ── Manufacturing processes — §3.2.S.2.2 / §3.2.P.3.3 ───────────────────────
+ *
+ * The register writes `manufacturing_processes`, which already existed: it was
+ * reconstructed from its two readers (server/services/cmc/ich-compliance-
+ * checker.ts and server/services/cmc/qbd-analyzer.ts) because no writer had
+ * ever been built for it, and it is cmc_process_steps' FK target. A second
+ * table would have left those readers pointed at rows nobody writes.
+ *
+ * `processType` is the side: a drug-substance process is §3.2.S.2 content and a
+ * drug-product one is §3.2.P.3, and neither completes the other's section.
+ */
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+router.get('/manufacturing-processes', async (req, res) => {
+  try {
+    const orgId = getOrgId(req);
+    /* This register's project_id is a uuid column, unlike its siblings' text.
+       Postgres rejects a malformed uuid with 22P02, which would have surfaced
+       as a 500 on a mistyped query string; a bad filter is a bad request. */
+    const projectQuery = typeof req.query.projectId === 'string' ? req.query.projectId.trim() : '';
+    if (projectQuery && !UUID_RE.test(projectQuery)) {
+      return res.status(400).json({ success: false, error: 'projectId must be a uuid' });
+    }
+    const rows = await db
+      .select()
+      .from(manufacturingProcesses)
+      .where(and(eq(manufacturingProcesses.organizationId, orgId), projectFilter(req, manufacturingProcesses.projectId)));
+    res.json({ success: true, data: rows });
+  } catch (error) {
+    return respondWriteError(res, error, 'Failed to fetch manufacturing processes');
+  }
+});
+
+const reselectManufacturingProcess = async (id: string, orgId: number) => {
+  const [row] = await db
+    .select()
+    .from(manufacturingProcesses)
+    .where(and(eq(manufacturingProcesses.id, id), eq(manufacturingProcesses.organizationId, orgId)));
+  return row as Record<string, any> | undefined;
+};
+
+/* A process is `validated` under a signature, not by typing the word. Same rule
+   as qualification on the other registers, different vocabulary because this
+   table's lifecycle column is validation_status and its readers already use it. */
+const PROCESS_SIGNING = {
+  statusColumn: 'validation_status',
+  signedValue: 'validated',
+  signedByColumn: 'validated_by',
+  signedAtColumn: 'validation_date',
+} as const;
+
+router.post('/manufacturing-processes', async (req, res) => {
+  try {
+    const orgId = getOrgId(req);
+    const { row, ...linkage } = await createManufacturingProcess(orgId, req.body, req);
+    res.json({ success: true, data: row, ...linkage });
+  } catch (error) {
+    return respondWriteError(res, error, 'Failed to create manufacturing process');
+  }
+});
+
+/** Add the later steps, attach the parameters, or correct the record. */
+router.put('/manufacturing-processes/:id', async (req, res) => {
+  try {
+    const id = String(req.params.id ?? '').trim();
+    /* Same guard as the GET on this table: its primary key is a uuid, and
+       Postgres answers a malformed one with 22P02, which respondWriteError
+       turned into a 500 and logged as a CMC write failure. A client-side typo
+       is a bad request, not a server fault. */
+    if (!UUID_RE.test(id)) {
+      return res.status(400).json({ success: false, error: 'A manufacturing process id must be a uuid' });
+    }
+    const orgId = getOrgId(req);
+    const validatedData = manufacturingProcessBody.partial().parse(req.body);
+    const stored = await reselectManufacturingProcess(id, orgId);
+    if (!stored) return res.status(404).json({ success: false, error: 'Manufacturing process not found' });
+    const sentStatus = Object.prototype.hasOwnProperty.call(req.body ?? {}, 'validationStatus');
+    const clearedStatus = sentStatus && !String(validatedData.validationStatus ?? '').trim();
+    /* An EXPLICIT clear is a de-signing. refusesUngovernedQualification's
+       out-of-signed-state branch is guarded on a truthy incoming value, so a
+       null or empty string slipped past both branches and wrote SQL NULL over
+       validation_status — stranding validated_by and validation_date on a
+       record that no longer claimed to be validated, and re-opening the
+       governed route for a second person to sign over the first. */
+    if (clearedStatus) {
+      if (String(stored.validationStatus ?? '').toLowerCase() === PROCESS_SIGNING.signedValue) {
+        return res.status(409).json({
+          success: false,
+          error:
+            'This process is validated under a recorded signature and its validation status cannot be cleared by an ordinary edit. ' +
+            'Retire it, or record a new assessment.',
+        });
+      }
+    } else if (refusesUngovernedQualification(res, validatedData.validationStatus, 'manufacturing-processes', stored.validationStatus, PROCESS_VOCAB)) {
+      return;
+    }
+    /* The state a validation signature was refused over must not be reachable
+       one PUT after signing. The /validate precondition refuses to sign a
+       process that records no steps; clearing the steps afterwards would leave
+       the signature attached to a process the register does not describe. */
+    if (String(stored.validationStatus ?? '').toLowerCase() === PROCESS_SIGNING.signedValue
+        && Object.prototype.hasOwnProperty.call(req.body ?? {}, 'processSteps')
+        && (validatedData.processSteps ?? []).length === 0) {
+      return res.status(409).json({
+        success: false,
+        error:
+          'This process is validated under a recorded signature. Removing its steps would leave that signature ' +
+          'attached to a process the register does not describe — retire it, or record a new process.',
+      });
+    }
+    /* The signature columns are written by the governed route only, and the
+       project a process belongs to is fixed at creation. */
+    const {
+      projectId: _fixedAtCreation,
+      validatedBy: _signedBy,
+      validationDate: _signedAt,
+      ...editable
+    } = validatedData as Record<string, unknown>;
+    /* Never write an empty lifecycle: an omitted or cleared status leaves the
+       stored one alone rather than nulling the column. */
+    if (clearedStatus) delete (editable as Record<string, unknown>).validationStatus;
+    const [row] = await db
+      .update(manufacturingProcesses)
+      .set({ ...editable, updatedAt: new Date() })
+      .where(and(eq(manufacturingProcesses.id, id), eq(manufacturingProcesses.organizationId, orgId)))
+      .returning();
+    if (!row) return res.status(404).json({ success: false, error: 'Manufacturing process not found' });
+    const linkage = await linkToModule3('write_through_manufacturing_process', orgId, row, writeThroughManufacturingProcess, req);
+    res.json({ success: true, data: row, ...linkage });
+  } catch (error) {
+    return respondWriteError(res, error, 'Failed to update manufacturing process');
+  }
+});
+
+/** The governed validation of a manufacturing process (21 CFR Part 11). */
+router.post('/manufacturing-processes/:id/validate', async (req, res) => {
+  return qualifyRegisterRecord(req, res, {
+    table: 'manufacturing_processes',
+    target: 'manufacturing_process',
+    surface: 'cmc-manufacturing-processes',
+    subject: 'manufacturing process',
+    propagation: 'write_through_manufacturing_process',
+    signing: PROCESS_SIGNING,
+    idKind: 'uuid',
+    reselect: reselectManufacturingProcess,
+    writeThrough: writeThroughManufacturingProcess,
+    /* A process nobody has described cannot be signed as validated. The
+       signature would attest to a sequence of unit operations the register does
+       not hold. */
+    precondition: (row) => {
+      const steps = Array.isArray(row.process_steps) ? row.process_steps : [];
+      if (steps.length === 0) {
+        return 'This process records no steps. A validation signature would attest to a process the register does not describe — record the unit operations first.';
+      }
+      return null;
+    },
+  });
+});
+
+/* ── Characterisation studies — §3.2.S.3.1 ───────────────────────────────────
+ *
+ * The composer has demanded a `characterization` source since it was written
+ * and nothing produced one. Each study is typed by which of the section's three
+ * questions it answers, so three studies of one kind cannot green all three.
+ */
+router.get('/characterization-studies', async (req, res) => {
+  try {
+    const orgId = getOrgId(req);
+    const rows = await db
+      .select()
+      .from(cmcCharacterizationStudies)
+      .where(and(eq(cmcCharacterizationStudies.organizationId, orgId), projectFilter(req, cmcCharacterizationStudies.projectId)));
+    res.json({ success: true, data: rows });
+  } catch (error) {
+    return respondWriteError(res, error, 'Failed to fetch characterisation studies');
+  }
+});
+
+const reselectCharacterizationStudy = async (id: string, orgId: number) => {
+  const [row] = await db
+    .select()
+    .from(cmcCharacterizationStudies)
+    .where(and(eq(cmcCharacterizationStudies.id, parseInt(id, 10)), eq(cmcCharacterizationStudies.organizationId, orgId)));
+  return row as Record<string, any> | undefined;
+};
+
+router.post('/characterization-studies', async (req, res) => {
+  try {
+    const orgId = getOrgId(req);
+    const { row, ...linkage } = await createCharacterizationStudy(orgId, req.body, req);
+    res.json({ success: true, data: row, ...linkage });
+  } catch (error) {
+    return respondWriteError(res, error, 'Failed to create characterisation study');
+  }
+});
+
+/** Record the result when the study reads out, or correct the entry. */
+router.put('/characterization-studies/:id', async (req, res) => {
+  try {
+    const id = parseInt(String(req.params.id));
+    const orgId = getOrgId(req);
+    const validatedData = characterizationStudyBody.partial().parse(req.body);
+    const stored = await reselectCharacterizationStudy(String(id), orgId);
+    if (refusesUngovernedQualification(res, (validatedData as { status?: unknown }).status, 'characterization-studies', stored?.status)) return;
+    /* The /qualify precondition refuses to sign a study that establishes
+       nothing; clearing the result afterwards would leave the signature
+       attached to exactly that. What the incoming edit leaves behind is what
+       matters, so the check runs over the merged state, not the patch. */
+    if (stored && String(stored.status ?? '').toLowerCase() === 'qualified') {
+      const body = req.body as Record<string, unknown>;
+      const merged = (key: 'result' | 'conclusion') =>
+        Object.prototype.hasOwnProperty.call(body ?? {}, key)
+          ? String((validatedData as Record<string, unknown>)[key] ?? '').trim()
+          : String(stored[key] ?? '').trim();
+      if (!merged('result') && !merged('conclusion')) {
+        return res.status(409).json({
+          success: false,
+          error:
+            'This study is qualified under a recorded signature. Clearing what it established would leave that ' +
+            'signature attesting to nothing — retire it, or record a new study.',
+        });
+      }
+    }
+    const { projectId: _fixedAtCreation, ...editable } = withoutGovernedFields(
+      validatedData as Record<string, unknown>,
+    ) as { projectId?: unknown } & Record<string, unknown>;
+    const [row] = await db
+      .update(cmcCharacterizationStudies)
+      .set({ ...editable, updatedAt: new Date() })
+      .where(and(eq(cmcCharacterizationStudies.id, id), eq(cmcCharacterizationStudies.organizationId, orgId)))
+      .returning();
+    if (!row) return res.status(404).json({ success: false, error: 'Characterisation study not found' });
+    const linkage = await linkToModule3('write_through_characterization_study', orgId, row, writeThroughCharacterizationStudy, req);
+    res.json({ success: true, data: row, ...linkage });
+  } catch (error) {
+    return respondWriteError(res, error, 'Failed to update characterisation study');
+  }
+});
+
+/** The governed qualification of a characterisation study (21 CFR Part 11). */
+router.post('/characterization-studies/:id/qualify', async (req, res) => {
+  return qualifyRegisterRecord(req, res, {
+    table: 'cmc_characterization_studies',
+    target: 'characterization_study',
+    surface: 'cmc-characterization-studies',
+    subject: 'characterisation study',
+    propagation: 'write_through_characterization_study',
+    reselect: reselectCharacterizationStudy,
+    writeThrough: writeThroughCharacterizationStudy,
+    /* A study with neither a result nor a conclusion establishes nothing; a
+       signature on it would attest to a finding the register does not hold. */
+    precondition: (row) =>
+      String(row.result ?? '').trim() || String(row.conclusion ?? '').trim()
+        ? null
+        : 'This study records neither a result nor a conclusion. Record what it established before signing it.',
+  });
 });
 
 // POST /api/cmc/insights/take-action - Take action on AI insights (DB-backed)
@@ -780,7 +1705,15 @@ router.post('/compliance/check-rules', async (req, res) => {
 
     // Query complianceTracking table for real violations
     let rules: any[] = [];
-    let complianceScore = 100;
+    /* `null` until something is actually assessed, NOT 100. This started at 100
+       and stayed there for a project with no compliance_tracking records, under
+       a comment calling that a "clean state" — so the strongest claim this
+       endpoint can make was its answer for having looked at nothing, and it was
+       indistinguishable from a real 100. Zero records is also the DEFAULT: no
+       row is written until someone creates one, so every new project scored
+       100% compliant on the day it was created. */
+    let complianceScore: number | null = null;
+    let assessed = false;
     let recommendedActions: string[] = [];
 
     try {
@@ -788,13 +1721,25 @@ router.post('/compliance/check-rules', async (req, res) => {
 
       const orgId = getOrgId(req);
       const result = await pool.query(
-        `SELECT * FROM compliance_tracking WHERE organization_id = $1 OR organization_id IS NULL ORDER BY created_at DESC LIMIT 50`,
+        /* Strictly the caller's organization. `OR organization_id IS NULL` used
+           to sit here, and it was load-bearing: the CMC project routes bound a
+           drizzle model that mapped no organizationId, so every row the product
+           wrote was NULL-org and without the OR this endpoint returned nothing.
+           It bought that by serving every sponsor's compliance findings —
+           guideline, requirement, violation status, risk level — to every other
+           sponsor as their own. The write now stamps the owning org and
+           migrations/20260908_compliance_tracking_organization_backfill.sql
+           attributes the legacy rows through their project, so the strict
+           predicate returns MORE for a legitimate caller, not less. */
+        `SELECT * FROM compliance_tracking WHERE organization_id = $1 ORDER BY created_at DESC LIMIT 50`,
         [orgId]
       );
 
       const trackingRows = result.rows;
 
       if (trackingRows.length > 0) {
+        assessed = true;
+        complianceScore = 100;
         for (const row of trackingRows) {
           const ruleStatus = row.status === 'compliant' ? 'compliant' : 'violation';
           rules.push({
@@ -812,9 +1757,11 @@ router.post('/compliance/check-rules', async (req, res) => {
           }
         }
       } else {
-        // No compliance tracking records exist yet — return clean state
+        /* Nothing recorded is nothing assessed. Reported as such — no score —
+           rather than as a clean bill of health for a check that never ran. */
         rules = [];
-        complianceScore = 100;
+        complianceScore = null;
+        assessed = false;
         recommendedActions = [];
       }
     } catch (e) {
@@ -822,16 +1769,23 @@ router.post('/compliance/check-rules', async (req, res) => {
       return res.status(500).json({ success: false, error: 'Failed to check compliance rules' });
     }
 
-    complianceScore = Math.max(complianceScore, 0);
+    if (complianceScore !== null) complianceScore = Math.max(complianceScore, 0);
     const violations = rules.filter((r: any) => r.status === 'violation').length;
 
     const complianceCheck = {
       insightId,
       violations,
       rules,
+      /* Explicit, so a caller can tell an assessed-and-clean project from an
+         unassessed one. A score of null with assessed:false is the honest
+         answer; the two together are what make it unambiguous. */
+      assessed,
       complianceScore,
       recommendedActions,
       checkedAt: new Date().toISOString(),
+      ...(assessed
+        ? {}
+        : { message: 'No compliance records exist for this organization — nothing has been assessed.' }),
     };
 
     res.status(200).json({
@@ -900,13 +1854,9 @@ router.post('/comparability-studies', async (req, res) => {
         String(orgId),
       ]
     );
-    // Write-through: read projectId from DB return, not request body
-    if (rows[0]?.project_id) {
-      writeThroughComparability(orgId, rows[0].project_id, String(rows[0].id), rows[0]).catch(err =>
-        observeWriteThroughFailure('write_through_comparability', rows[0].id, err)
-      );
-    }
-    res.json({ success: true, data: rows[0] });
+    /* The program is the stored row's (project_id), never the request body's. */
+    const linkage = await linkToModule3('write_through_comparability', orgId, rows[0], writeThroughComparability);
+    res.json({ success: true, data: rows[0], ...linkage });
   } catch (error) {
     console.error('Error creating comparability study:', error);
     res.status(500).json({ success: false, error: 'Failed to create comparability study' });
@@ -946,13 +1896,9 @@ router.put('/comparability-studies/:id', async (req, res) => {
     if (!rows[0]) {
       return res.status(404).json({ success: false, error: 'Study not found' });
     }
-    // Write-through: read projectId from DB, not request body
-    if (rows[0].project_id) {
-      writeThroughComparability(orgId, rows[0].project_id, String(req.params.id), rows[0]).catch(err =>
-        observeWriteThroughFailure('write_through_comparability', req.params.id, err)
-      );
-    }
-    res.json({ success: true, data: rows[0] });
+    /* The program is the stored row's (project_id), never the request body's. */
+    const linkage = await linkToModule3('write_through_comparability', orgId, rows[0], writeThroughComparability);
+    res.json({ success: true, data: rows[0], ...linkage });
   } catch (error) {
     console.error('Error updating comparability study:', error);
     res.status(500).json({ success: false, error: 'Failed to update comparability study' });
@@ -1017,7 +1963,7 @@ Write a comprehensive draft for this CMC section following ICH guidelines.`,
     });
   } catch (error) {
     console.error('CMC blueprint generation error:', error);
-    res.status(500).json({ success: false, error: error instanceof Error ? error.message : 'Generation failed' });
+    return serverError(res, logger, 'generating enhanced blueprint', error);
   }
 });
 
@@ -1045,10 +1991,7 @@ router.get('/quality/qbd/:projectId', async (req, res) => {
     res.json({ success: true, data: result });
   } catch (error) {
     console.error('QbD analysis error:', error);
-    res.status(500).json({
-      success: false,
-      error: error instanceof Error ? error.message : 'QbD analysis failed',
-    });
+    return serverError(res, logger, 'loading QbD', error);
   }
 });
 
@@ -1070,10 +2013,7 @@ router.post('/ich-compliance', async (req, res) => {
     res.json({ success: true, data: report });
   } catch (error) {
     console.error('ICH compliance check error:', error);
-    res.status(500).json({
-      success: false,
-      error: error instanceof Error ? error.message : 'ICH compliance check failed',
-    });
+    return serverError(res, logger, 'saving ICH compliance', error);
   }
 });
 
@@ -1101,10 +2041,7 @@ router.post('/variations/classify', async (req, res) => {
     res.json({ success: true, data: classification });
   } catch (error) {
     console.error('Variations classifier error:', error);
-    res.status(500).json({
-      success: false,
-      error: error instanceof Error ? error.message : 'Classification failed',
-    });
+    return serverError(res, logger, 'classifying variations', error);
   }
 });
 
@@ -1134,10 +2071,7 @@ router.post('/control-strategy', async (req, res) => {
     res.json({ success: true, data: strategy });
   } catch (error) {
     console.error('Control strategy generator error:', error);
-    res.status(500).json({
-      success: false,
-      error: error instanceof Error ? error.message : 'Control strategy generation failed',
-    });
+    return serverError(res, logger, 'saving control strategy', error);
   }
 });
 
@@ -1191,120 +2125,135 @@ router.post('/stability-studies/:id/shelf-life', async (req, res) => {
       .where(and(eq(stabilityStudies.id, id), eq(stabilityStudies.organizationId, orgId)));
     if (!study) return res.status(404).json({ success: false, error: 'Stability study not found' });
 
-    const { estimateShelfLife } = await import('../../services/cmc/shelf-life');
-    const series = readRecordedStabilityResults(study.stabilityData);
-    if (series.length === 0) {
-      return res.status(409).json({
-        success: false,
-        error: 'This study has no recorded pull-point results — there is nothing to fit.',
-      });
+    /* One implementation, shared with AnA's recorded-estimate tool: the fit a
+       registered shelf life is set from must not have two versions. */
+    const { estimateRecordedShelfLife } = await import('../../services/cmc/recorded-stability');
+    const outcome = await estimateRecordedShelfLife(study);
+    if (!outcome.ok) {
+      return res.status(409).json({ success: false, error: outcome.error });
     }
-
-    /* `storage_conditions` is an ARRAY, and results carry no per-result
-       condition. A study placed at more than one condition therefore has ONE
-       undifferentiated series spanning two degradation regimes, and a straight
-       line through it describes neither. This is a refusal and not a caveat
-       because the output is a month count someone sets a registered shelf life
-       from — a footnote on a plausible-looking number does not survive being
-       copied into a summary. */
-    const placedAt = (Array.isArray(study.storageConditions) ? study.storageConditions : [])
-      .map(c => String(c ?? '').trim())
-      .filter(Boolean);
-    if (placedAt.length > 1) {
-      return res.status(409).json({
-        success: false,
-        error: `This study is placed at ${placedAt.length} storage conditions (${placedAt.join(', ')}) and its results are not recorded against a condition, so the points for one condition cannot be separated from the others. Register one study per condition to fit a shelf life.`,
-      });
-    }
-
-    // Group by the attribute being trended. Q1E fits ONE attribute at a time.
-    const byParameter = groupByParameter(series);
-
-    const maxTime = Number.isFinite(study.duration) && (study.duration as number) > 0
-      ? Math.max(120, (study.duration as number) * 2)
-      : 120;
-
-    const estimates: Array<Record<string, unknown>> = [];
-    for (const [parameter, points] of byParameter) {
-      const usable = points
-        .map(p => ({ time: parseNumeric(p.timePoint), value: parseNumeric(p.result) }))
-        .filter((p): p is { time: number; value: number } => p.time !== null && p.value !== null);
-      const criterion = parseAcceptanceCriterion(points.map(p => p.specification));
-
-      if (usable.length < 3) {
-        estimates.push({
-          parameter,
-          estimable: false,
-          reason: `ICH Q1E regression needs at least 3 numeric timepoints; ${usable.length} of ${points.length} recorded ${points.length === 1 ? 'result is' : 'results are'} numeric.`,
-          pointsRecorded: points.length,
-          pointsUsable: usable.length,
-        });
-        continue;
-      }
-      if (!criterion) {
-        estimates.push({
-          parameter,
-          estimable: false,
-          reason:
-            'No numeric specification limit was recorded against these results, so there is no limit for the confidence bound to intersect. Record the acceptance criterion (e.g. "<= 2.0%" or ">= 95.0%") on the pull-point results.',
-          pointsRecorded: points.length,
-          pointsUsable: usable.length,
-        });
-        continue;
-      }
-
-      try {
-        const result = estimateShelfLife({
-          data: usable,
-          specLimit: criterion.limit,
-          direction: criterion.direction,
-          maxTime,
-        });
-        estimates.push({
-          parameter,
-          estimable: true,
-          specLimit: criterion.limit,
-          direction: criterion.direction,
-          pointsUsed: usable.length,
-          ...result,
-        });
-      } catch (e) {
-        estimates.push({
-          parameter,
-          estimable: false,
-          reason: e instanceof Error ? e.message : String(e),
-          pointsRecorded: points.length,
-          pointsUsable: usable.length,
-        });
-      }
-    }
-
-    // The programme-level answer is the most constraining attribute, which is
-    // what a shelf-life claim is actually limited by.
-    const estimable = estimates.filter(e => e.estimable) as Array<{ parameter: string; shelfLife: number }>;
-    const limiting = estimable.length
-      ? estimable.reduce((min, e) => (e.shelfLife < min.shelfLife ? e : min))
-      : null;
-
-    return res.json({
-      success: true,
-      data: {
-        studyId: study.id,
-        studyTitle: study.studyTitle,
-        productName: study.productName,
-        batchNumber: study.batchNumber,
-        storageConditions: study.storageConditions,
-        basis: 'ICH Q1E — ordinary least squares, one-sided 95% mean confidence limit vs the specification limit',
-        scopeLimit:
-          'Single attribute, single factor, one batch. Batch poolability (ICH Q1E ANCOVA) is assessed separately and is not implied by this estimate.',
-        maxTimeEvaluated: maxTime,
-        limitingParameter: limiting ? limiting.parameter : null,
-        supportedShelfLife: limiting ? limiting.shelfLife : null,
-        estimates,
-      },
-    });
+    return res.json({ success: true, data: outcome.data });
   } catch (error) {
     return respondWriteError(res, error, 'Failed to estimate shelf life');
+  }
+});
+
+/**
+ * POST /api/cmc/stability-studies/:id/trending — out-of-trend assessment of a
+ * recorded study. Same function the composed §3.2.S.7 / §3.2.P.8 and the AnA
+ * tool call (services/cmc/recorded-stability.assessRecordedTrending); the
+ * study-level refusal is a 409, per-series refusals travel in the data.
+ */
+router.post('/stability-studies/:id/trending', async (req, res) => {
+  try {
+    const id = parseInt(String(req.params.id), 10);
+    /* stability_studies.id is a serial: a non-numeric segment reaches Postgres
+       as the literal 'NaN', which answers 22P02 and reached the client as a 500
+       logged as a CMC write failure. A client-side typo is a bad request, and
+       this route writes nothing. */
+    if (!Number.isInteger(id) || id <= 0) {
+      return res.status(400).json({ success: false, error: 'A numeric stability study id is required.' });
+    }
+    const orgId = getOrgId(req);
+    const [study] = await db
+      .select({
+        id: stabilityStudies.id,
+        storageConditions: stabilityStudies.storageConditions,
+        stabilityData: stabilityStudies.stabilityData,
+      })
+      .from(stabilityStudies)
+      .where(and(eq(stabilityStudies.id, id), eq(stabilityStudies.organizationId, orgId)));
+    if (!study) return res.status(404).json({ success: false, error: 'Stability study not found' });
+    const { assessRecordedTrending } = await import('../../services/cmc/recorded-stability');
+    const outcome = assessRecordedTrending(study);
+    if (!outcome.ok) return res.status(409).json({ success: false, error: outcome.error });
+    return res.json({ success: true, data: outcome.data });
+  } catch (error) {
+    return respondWriteError(res, error, 'Failed to assess the stability trend');
+  }
+});
+
+/**
+ * GET /api/cmc/projects/:projectId/process-capability — the capability indices
+ * over the project's RECORDED batch results, per test, for each side.
+ *
+ * ── Why this route exists ────────────────────────────────────────────────────
+ * The Pp/Ppk/Cp/Cpk a reviewer reads in the compiled §3.2.S.4.4 and §3.2.P.5.4
+ * could only be seen by compiling the section. "Is this process capable against
+ * the specification we set" is a question a CMC lead asks before compiling, and
+ * during a deviation, and the answer existed nowhere it could be asked.
+ *
+ * It reads the project's canonical `qc_result` source objects — the same rows
+ * the section composes from — and runs the same assessment
+ * (services/cmc/recorded-capability), so this route and the document can never
+ * disagree.
+ *
+ * Nothing is written, and nothing is refused as a whole: a series that cannot
+ * be assessed is RETURNED with its reason (criteria that disagree, fewer than
+ * six batches, no variation), because a test silently missing from a capability
+ * report reads as a test that passed.
+ */
+router.get('/projects/:projectId/process-capability', async (req, res) => {
+  try {
+    const orgId = getOrgId(req);
+    const projectId = String(req.params.projectId);
+    /* A project this tenant does not hold is a 404, not a capability report
+       with no findings. Without this, a mistyped uuid and another org's program
+       both answered 200 with two empty series — a completed assessment over a
+       register that was never read, which is the one reading this route's own
+       docstring forbids. */
+    const { projectBelongsToTenant } = await import('../../services/cmc/project-membership');
+    if (!(await projectBelongsToTenant({ organizationId: orgId, projectId }))) {
+      return res.status(404).json({
+        success: false,
+        error: 'No such project in this organization — no capability was assessed.',
+      });
+    }
+    const pool = getPool();
+    const { rows } = await pool.query(
+      `SELECT source_payload as "sourcePayload"
+       FROM cmc_source_objects
+       WHERE organization_id = $1 AND project_id = $2 AND source_type = 'qc_result'
+       ORDER BY updated_at DESC`,
+      [orgId, projectId],
+    );
+    const payloads = rows.map((r: { sourcePayload: Record<string, unknown> | null }) => r.sourcePayload || {});
+    const { assessRecordedCapability, capabilitySentence, isBatchAnalysisFor } = await import(
+      '../../services/cmc/recorded-capability'
+    );
+    const sides = ['drug_substance', 'drug_product'] as const;
+    const bySide = Object.fromEntries(
+      sides.map((side) => {
+        const series = assessRecordedCapability(payloads.filter((p) => isBatchAnalysisFor(p, side)));
+        return [side, { series, statements: series.map(capabilitySentence) }];
+      }),
+    ) as Record<(typeof sides)[number], { series: unknown[]; statements: string[] }>;
+    /* "Assessed" means a SERIES was produced, not that rows exist. Keying it on
+       the row count reported a successful, empty capability report for a
+       project whose every QC row is a cleaning swab or a reference-standard
+       qualification (not batch evidence) or carries no test method — N results
+       on file, no test named, and nothing said. A report that names no test
+       reads as a set of tests that passed, which is the one thing this endpoint
+       must never produce. */
+    const seriesCount = sides.reduce((n, side) => n + bySide[side].series.length, 0);
+    const data = {
+      projectId,
+      resultsOnFile: payloads.length,
+      assessed: seriesCount > 0,
+      statement:
+        seriesCount > 0
+          ? null
+          : payloads.length === 0
+            ? 'No batch results are recorded for this project, so process capability is NOT assessed. ' +
+              'Record the QC results, each with its batch number and the acceptance criterion it was judged against.'
+            : `${payloads.length} QC result(s) are on file for this project and none of them is batch-analysis ` +
+              'evidence with a named test method — cleaning-verification and reference-standard results are not ' +
+              'batch data, and a result with no test method opens no series. Process capability is NOT assessed.',
+      sides: bySide,
+    };
+    return res.json({ success: true, data });
+  } catch (error) {
+    return respondWriteError(res, error, 'Failed to assess process capability');
   }
 });
 

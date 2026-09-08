@@ -15,7 +15,7 @@
  */
 
 import { eq, and, asc } from 'drizzle-orm';
-import { db } from '../../db';
+import { db, pool } from '../../db';
 import { tmfArtifactFilings, type TmfArtifactFiling } from '../../../shared/schema/tmf-artifacts';
 import auditService from '../auditService';
 import { createScopedLogger } from '../../utils/logger';
@@ -26,9 +26,82 @@ const logger = createScopedLogger('tmf-artifact-persistence');
 export type TmfCtx = { organizationId: number; userId: number };
 
 export class TmfArtifactError extends Error {
-  constructor(public code: 'NOT_FOUND' | 'UNKNOWN_ARTIFACT', message: string) {
+  constructor(public code: 'NOT_FOUND' | 'UNKNOWN_ARTIFACT' | 'UNRESOLVABLE_DOCUMENT_REF', message: string) {
     super(message);
     this.name = 'TmfArtifactError';
+  }
+}
+
+/**
+ * A `vault://<id>` reference must name a document that EXISTS.
+ *
+ * ── Why this guard exists ────────────────────────────────────────────────────
+ * The eTMF surface's "File" button sent
+ *   documentRef: 'vault://' + trialId + '/' + artifactCode
+ * — a reference it MANUFACTURED from the two things it already knew. No
+ * document was uploaded, none existed, and the store recorded the essential
+ * document as filed against a path pointing at nothing. "File all N" did it for
+ * every outstanding document in one click, which is how a trial reached
+ * INSPECTION-READY without a single document having been filed.
+ *
+ * That is a false GCP record: an inspection-readiness verdict a sponsor acts
+ * on, computed from filings that reference no documents. The client is fixed
+ * too, but the guard belongs HERE — a store that accepts any string as proof a
+ * document exists will be lied to again by the next caller.
+ *
+ * Absent/empty is still allowed and means what it says: a filing recorded with
+ * no document attached. What is refused is a reference that CLAIMS a document
+ * and cannot produce one.
+ */
+async function assertDocumentRefResolves(documentRef: string, organizationId: number): Promise<void> {
+  const m = /^vault:\/\/(.+)$/.exec(documentRef.trim());
+  if (!m) {
+    // A non-vault scheme (an external URL, a paper-archive locator) is not
+    // something this service can verify, and refusing it would break filings
+    // that are legitimately recorded against off-platform originals.
+    return;
+  }
+  const id = m[1].trim();
+  // The manufactured form was `vault://<trialId>/<artifactCode>` — a path, not
+  // an id. Nothing in vault.documents has ever been keyed that way, so it can
+  // never resolve; naming that shape explicitly makes the refusal legible
+  // rather than a generic "not found".
+  if (id.includes('/')) {
+    throw new TmfArtifactError(
+      'UNRESOLVABLE_DOCUMENT_REF',
+      `"${documentRef}" is not a vault document reference — it is a path built from the trial and artifact code. File the actual document and reference the id the vault returns.`,
+    );
+  }
+  try {
+    const { rows } = await pool.query(
+      `SELECT 1 FROM vault.documents d
+        WHERE d.id::text = $1
+          AND EXISTS (
+            SELECT 1 FROM regulatory_programs rp
+             WHERE rp.id = d.program_id
+               AND rp.organization_id = $2
+               AND rp.deleted_at IS NULL
+          )
+        LIMIT 1`,
+      [id, organizationId],
+    );
+    if (rows.length === 0) {
+      throw new TmfArtifactError(
+        'UNRESOLVABLE_DOCUMENT_REF',
+        `No vault document ${id} exists, so this artifact cannot be recorded as filed against it.`,
+      );
+    }
+  } catch (err) {
+    if (err instanceof TmfArtifactError) throw err;
+    // An unprovisioned vault schema must not silently wave the reference
+    // through — that is the exact failure this guard exists to prevent.
+    if ((err as { code?: string })?.code === '42P01') {
+      throw new TmfArtifactError(
+        'UNRESOLVABLE_DOCUMENT_REF',
+        'The vault document store is not provisioned in this deployment, so a vault reference cannot be verified.',
+      );
+    }
+    throw err;
   }
 }
 
@@ -57,6 +130,8 @@ export async function recordTmfArtifactFiling(input: RecordArtifactInput, ctx: T
   if (zone === undefined) {
     throw new TmfArtifactError('UNKNOWN_ARTIFACT', `"${input.artifactCode}" is not a known TMF Reference Model artifact code.`);
   }
+  const ref = typeof input.documentRef === 'string' ? input.documentRef.trim() : '';
+  if (ref) await assertDocumentRefResolves(ref, ctx.organizationId);
 
   const [row] = await db
     .insert(tmfArtifactFilings)

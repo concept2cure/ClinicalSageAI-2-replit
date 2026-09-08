@@ -14,8 +14,13 @@
  */
 
 // dotenv MUST load before any env var read. `override: false` so
-// shell-exported values still win over .env.
+// shell-exported values still win over the files, and so the FIRST file to
+// define a key wins. .env.local is therefore loaded first: it is the
+// git-ignored, machine-local file `npm run up` writes, and a developer's local
+// database URL must beat the committed default — which pointed at a role with
+// no grants and made every query fail on an otherwise correct install.
 import { config as dotenvConfig } from 'dotenv';
+dotenvConfig({ path: '.env.local', override: false, quiet: true });
 dotenvConfig({ override: false, quiet: true });
 
 // Initialize OpenTelemetry + Sentry + IPv4 DNS ordering early, before

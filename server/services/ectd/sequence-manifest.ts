@@ -104,6 +104,9 @@ export function manifestToPriorLeaves(manifest: unknown): PriorLeaf[] {
       md5: e.md5,
       ...(typeof e.href === 'string' ? { href: e.href } : {}),
       ...(typeof e.title === 'string' ? { title: e.title } : {}),
+      // Carried through so a caller folding several sequences into one effective
+      // prior state can drop a leaf whose last operation was a withdrawal.
+      ...(typeof e.operation === 'string' ? { operation: e.operation } : {}),
     });
   }
   return out;

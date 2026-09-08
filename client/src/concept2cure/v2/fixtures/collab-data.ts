@@ -15,7 +15,7 @@
  *     never called from here. This constant only looks like its result.
  */
 import {
-  TB_MOD, TB_TEAM, TB_PROJECTS, TB_OPTIMAL,
+  TB_MOD,
   type TeamMember, type ProjectEntry, type TaskItem,
 } from './task-board-data';
 
@@ -119,16 +119,6 @@ export const CL_MOD: Record<string, string> = {
 
 /* ── Default assignee per module. A constant lookup, not a computation. ── */
 
-export const CL_OPTIMAL: Record<string, string> = {
-  ...TB_OPTIMAL,
-  Submission:      'sm',
-  Quality:         'qa',
-  Labeling:        'mb',
-  'Market Access': 'jc',
-  Evidence:        'sm',
-  Meetings:        'sm',
-  Intelligence:    'jc',
-};
 
 /* ── Task type labels ── */
 
@@ -151,5 +141,4 @@ export const CL_PRI: string[] = ['low', 'medium', 'high', 'critical'];
 
 /* ── Re-exports for consumer convenience ── */
 
-export { TB_TEAM, TB_PROJECTS };
 export type { TeamMember, ProjectEntry, TaskItem };

@@ -63,6 +63,11 @@ const ROUTER = path.join(REPO_ROOT, 'server/routes/authoring.router.ts');
  */
 const MIGRATIONS = [
   'db/migrations/20260725_authoring_document_loop_tables.sql',
+  // ALTERs authoring_documents with the governed-binding column c2c_document_id
+  // the router reads (WHERE c2c_document_id IS NOT NULL) — on the durable applier
+  // (scripts/db/migration-set.mjs) but previously absent from this list, so the
+  // router's SQL referenced a column the test's schema had never created.
+  'migrations/20260728_authoring_document_governed_binding.sql',
   'db/migrations/20260730_authoring_comments_router_columns.sql',
   // ALTERs doc_revisions above with the ledger columns the router now writes
   // (content/chain hashes, origin, input manifest) and installs the
@@ -130,6 +135,13 @@ beforeAll(async () => {
   // PREPARE to plan, and keeps a core-schema absence from masquerading as an
   // authoring defect.
   await pg.exec(`CREATE TABLE IF NOT EXISTS users (id serial PRIMARY KEY, name text, email text)`);
+  // `c2c_documents` is the governed-filing store from another bundle, not an
+  // authoring table. The governed-binding migration (in the list below) is
+  // guarded on it existing and adds authoring_documents.c2c_document_id, which
+  // the router reads (WHERE c2c_document_id IS NOT NULL). A minimal stand-in
+  // with just the FK target (id) lets that migration's DO-block guard pass so
+  // the column is created — same pattern as the `users` stub above.
+  await pg.exec(`CREATE TABLE IF NOT EXISTS c2c_documents (id text PRIMARY KEY)`);
   // The router's own tables, exactly as the migrations define them. A migration
   // that cannot apply standalone (it depends on a table from another bundle) is
   // tolerated — the statements needing it then surface as 42P01 skips, which

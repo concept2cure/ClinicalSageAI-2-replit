@@ -1,7 +1,7 @@
 /**
  * PDEV Overview surface — Program dashboard (PHASE_7_INSTALL.md §0 row 1).
  *
- * Port of design-system/ui_kits/pdev/Surfaces.jsx > PdevOverview with
+ * Port of ui_kits/pdev/Surfaces.jsx > PdevOverview with
  * fixture rows replaced by live data from usePdevProgram + usePdevReadiness.
  * Read-only — no Snapshot mutation in PR 1 (the button surfaces a request
  * to AnA in lieu of POSTing /readiness/snapshot, which is a 7.2 concern).

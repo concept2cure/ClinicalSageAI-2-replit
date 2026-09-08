@@ -178,9 +178,58 @@ describe('GET /:projectIdent/history — program idents filter by the program la
     await getHandler('/:projectIdent/history', 'get')(req, res);
 
     const historyCall = poolQuery.mock.calls.find((c) => String(c[0]).includes('FROM ectd_compilations'));
-    expect(historyCall![1]).toEqual([7, '%Program BX-204%']);
+    // The label is matched as a WHOLE TOKEN now, not as a bare substring.
+    // '%Program BX-204%' also matched "Program BX-2040", so this endpoint
+    // returned OTHER same-org projects' compilations as if they were this
+    // one's — a cross-project leak inside the tenant. The boundary pattern
+    // still finds the label anywhere in a longer compilation name.
+    expect(historyCall![1]).toEqual([7, '(^|[^A-Za-z0-9])Program BX-204($|[^A-Za-z0-9])']);
     expect(res.json).toHaveBeenCalledWith(
       expect.objectContaining({ projectId: null, programId: UUID, compilations: expect.any(Array) }),
     );
+  });
+});
+
+/* ── The draft backbone's application reference ─────────────────────────────
+   `applicationRef` is written into `<ectd:application-number>`. Two things were
+   wrong with what reached it. A program with a RECORDED agency number was
+   ignored in favour of the sponsor's internal code, and a legacy numeric
+   project got `IND-<id>` — a string shaped exactly like an agency IND number,
+   synthesised from a row id, for an application the agency has never seen.
+   "Recorded identity we actually hold", which is what the code claimed to be
+   doing, is the number when there is one, the code when there is not, and a
+   handle that says unassigned when there is neither. */
+describe('POST /:projectIdent/compile — the draft backbone names the application honestly', () => {
+  const backboneOf = (res: any) => String(res.json.mock.calls[0][0].xmlBackbone ?? '');
+  const appNumber = (xml: string) => /<ectd:application-number>([^<]*)<\/ectd:application-number>/.exec(xml)?.[1] ?? null;
+
+  it('uses the recorded agency number when the program has one', async () => {
+    programRows.mockReturnValue([{ ...PROGRAM, application_number: '000512' }]);
+    const res = createMockResponse() as any;
+    await getHandler('/:projectIdent/compile', 'post')(
+      makeReq({ params: { projectIdent: UUID }, body: { submissionType: 'initial', region: 'FDA' } }), res,
+    );
+    expect(appNumber(backboneOf(res))).toBe('000512');
+  });
+
+  it('falls back to the program code when no number is recorded', async () => {
+    programRows.mockReturnValue([PROGRAM]);
+    const res = createMockResponse() as any;
+    await getHandler('/:projectIdent/compile', 'post')(
+      makeReq({ params: { projectIdent: UUID }, body: { submissionType: 'initial', region: 'FDA' } }), res,
+    );
+    expect(appNumber(backboneOf(res))).toBe('BX-204');
+  });
+
+  it('a legacy numeric project does not get an IND-shaped number invented for it', async () => {
+    const res = createMockResponse() as any;
+    await getHandler('/:projectIdent/compile', 'post')(
+      makeReq({ params: { projectIdent: '7' }, body: { submissionType: 'initial', region: 'FDA' } }), res,
+    );
+    const ref = appNumber(backboneOf(res));
+    // `IND-7` reads as an agency identifier and is not one.
+    expect(ref).not.toBe('IND-7');
+    expect(ref).not.toMatch(/^IND-\d+$/);
+    expect(ref).toMatch(/UNASSIGNED/);
   });
 });

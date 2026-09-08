@@ -160,9 +160,10 @@ for (const [label, sql] of CONSUMER_QUERIES) {
 
 // ── 1c. Every NON-PUBLIC uuid-tenant table is policied or explicitly exempt ───
 // The public checks above are integer-keyed and public-only. The non-public
-// schemas use a uuid tenant key; C-46 policied the tenant-owned ones with the
-// context-less-safe COALESCE policy and left two cross-tenant-by-design tables
-// exempt. This asserts no non-public uuid-tenant BASE TABLE is left with NO
+// schemas use a uuid tenant key; C-46 policied the tenant-owned ones and left
+// two cross-tenant-by-design tables exempt. (That policy originally used a
+// COALESCE fallback to stay non-breaking for context-less reads; it now uses
+// the app.rls_enforce shadow clause instead — see 1d.) This asserts no non-public uuid-tenant BASE TABLE is left with NO
 // policy at all (any policy name counts — these schemas use per-subsystem names),
 // so a newly-provisioned uuid-tenant table that nobody policied fails the build.
 const UUID_TENANT_EXEMPT = ['federated_ml.federation_participants', 'audit.event_log'];
@@ -187,6 +188,94 @@ const UUID_TENANT_EXEMPT = ['federated_ml.federation_participants', 'audit.event
   );
   if (rows.length === 0) ok('every non-public uuid-tenant table is policied or exempt (C-46)');
   else fail(`${rows.length} non-public uuid-tenant table(s) unpoliced`, rows.map((r) => r.rel).join(', '));
+}
+
+// ── 1d. No tenant policy may FAIL OPEN ───────────────────────────────────────
+// A predicate of the form `<col> = COALESCE(<resolver>, <col>)` collapses to
+// `<col> = <col>` — TRUE for every row — the moment the resolver yields NULL,
+// which an unset, empty or non-uuid org GUC all do. That is a tenant policy
+// whose failure mode is "return every tenant's rows".
+//
+// It is not hypothetical: measured on a provisioned database as the
+// non-superuser app_service role with app.rls_enforce=on, two rows under
+// different org_ids in cortex.knowledge_gaps came back BOTH with the GUC unset
+// and BOTH with it set to '42' (what an integer org id looks like arriving at a
+// uuid-keyed schema). 48 policies carried the shape.
+//
+// Asserted here rather than fixed only by migration because the shape is easy
+// to reintroduce — there are still source migrations (gcc 074-078) that emit
+// it, and the ordered set repairs them afterwards. This gate is what makes that
+// repair non-optional: any NEW policy written this way fails the deploy.
+{
+  const { rows } = await client.query(
+    `SELECT n.nspname || '.' || c.relname || ' :: ' || p.polname AS rel
+       FROM pg_policy p
+       JOIN pg_class c     ON c.oid = p.polrelid
+       JOIN pg_namespace n ON n.oid = c.relnamespace
+      WHERE COALESCE(pg_get_expr(p.polqual, p.polrelid), '')
+              ~ 'COALESCE\\([^()]*(\\([^()]*\\)[^()]*)*,\\s*(org_id|organization_id|tenant_id)\\s*\\)'
+         OR COALESCE(pg_get_expr(p.polwithcheck, p.polrelid), '')
+              ~ 'COALESCE\\([^()]*(\\([^()]*\\)[^()]*)*,\\s*(org_id|organization_id|tenant_id)\\s*\\)'
+      ORDER BY 1`,
+  );
+  if (rows.length === 0) {
+    ok('no tenant policy falls back to the row\'s own tenant id (fail-open)');
+  } else {
+    fail(
+      `${rows.length} tenant policy(ies) FAIL OPEN — an unresolved scope returns every tenant's rows`,
+      rows.map((r) => r.rel).join(', '),
+    );
+  }
+}
+
+// ── 1e. Every column the app WRITES exists on the deployed database ──────────
+// The L38/L30 class: shared/schema.ts declares a column, drizzle-push
+// (install-fresh) therefore creates it, and no migration ever does — so it is
+// present on a pushed database and absent on a migration-provisioned one, and
+// the INSERT fails 42703 on exactly the long-lived deployments nobody re-pushes.
+//
+// These are the pairs found by diffing a pushed database against every column
+// the migration files create and keeping only those a raw INSERT in server/
+// actually names. Each is written by the module in the comment. Asserted here
+// rather than trusted, because the failure is invisible until the write runs:
+// the table exists, the route exists, and only the column is missing.
+//
+// This assertion FAILS on a migration-provisioned database built before
+// 20260828_artifact_versions_updated_at.sql and
+// 20260828_align_written_columns_with_migrations.sql — which is the point; it
+// is what proves those two migrations are doing their job.
+{
+  const WRITTEN_COLUMNS = [
+    ['concept2cure_artifact_versions', 'updated_at'],   // ana/artifactVersionStore.ts
+    ['concept2cure_signatures', 'created_at'],          // ana/verifiedSealService.ts
+    ['concept2cure_signatures', 'updated_at'],          // ana/verifiedSealService.ts
+    ['regulatory_audit_logs', 'created_at'],            // ana/verifiedSealService.ts
+    ['regulatory_audit_logs', 'updated_at'],            // ana/verifiedSealService.ts
+    ['concept2cure_submission_snapshots', 'updated_at'],// compute/exportGovernance.ts
+    ['knowledge_graph_nodes', 'organization_id'],       // routes/graphrag.ts
+    ['knowledge_graph_edges', 'organization_id'],       // routes/graphrag.ts
+    ['file_uploads', 'checksum_sha256'],                // ana/uploaded-file-access.ts, chat/upload.ts
+  ];
+  const { rows } = await client.query(
+    `SELECT p.tbl || '.' || p.col AS missing
+       FROM unnest($1::text[], $2::text[]) AS p(tbl, col)
+      WHERE to_regclass('public.' || p.tbl) IS NOT NULL
+        AND NOT EXISTS (
+              SELECT 1 FROM information_schema.columns c
+               WHERE c.table_schema = 'public'
+                 AND c.table_name   = p.tbl
+                 AND c.column_name  = p.col)
+      ORDER BY 1`,
+    [WRITTEN_COLUMNS.map((p) => p[0]), WRITTEN_COLUMNS.map((p) => p[1])],
+  );
+  if (rows.length === 0) {
+    ok(`every column the app writes exists (${WRITTEN_COLUMNS.length} checked)`);
+  } else {
+    fail(
+      `${rows.length} column(s) the app WRITES do not exist — those INSERTs fail 42703`,
+      rows.map((r) => r.missing).join(', '),
+    );
+  }
 }
 
 // ── 4. pgvector actually loaded and the C-37 tables exist ─────────────────────

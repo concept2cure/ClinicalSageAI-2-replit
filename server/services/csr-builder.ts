@@ -31,8 +31,73 @@ export interface CSRSection {
   required: boolean;
   description: string;
   content?: string;
-  status: 'empty' | 'drafting' | 'drafted' | 'reviewed' | 'approved';
+  // 'needs_data' — content was drafted (AI or template) but still contains
+  // one or more unresolved data placeholders (e.g. [DATA TO BE INSERTED],
+  // [N], [value]) and is therefore NOT numerically complete. See
+  // hasUnresolvedPlaceholders below. This is deliberately distinct from
+  // 'drafted' so a downstream consumer gating export/submission readiness
+  // on section status cannot mistake prose-with-placeholders for done.
+  status: 'empty' | 'drafting' | 'drafted' | 'needs_data' | 'reviewed' | 'approved';
+  // True exactly when status === 'needs_data'. Duplicated as a boolean flag
+  // (in addition to the status string) so callers that only check a single
+  // field can't miss it either way.
+  needsData?: boolean;
   childSections?: CSRSection[];
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// PLACEHOLDER / DATA-COMPLETENESS DETECTION
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Matches an unresolved data placeholder left in drafted CSR content, e.g.
+ * [DATA TO BE INSERTED], [N], [value], [result], [reasons], [list], [X],
+ * [statistical method to be specified], [favorable/unfavorable]. Both the AI
+ * system prompt (buildSectionSystemPrompt) and the template fallback
+ * (generateSectionTemplate) are instructed to use exactly this bracketed
+ * convention for any real study number/finding that isn't available yet —
+ * so ANY surviving `[...]` span containing a letter means the section still
+ * needs real data, regardless of how much surrounding prose looks finished.
+ *
+ * Deliberately broad on purpose (fail closed per repo working agreement): a
+ * false positive costs a section an extra "needs_data" glance from a
+ * reviewer; a false negative would let a CSR section that's still full of
+ * [DATA TO BE INSERTED] report as filing-ready, which is the bug this gate
+ * exists to close. Legitimate regulatory prose does not use square brackets.
+ */
+const PLACEHOLDER_PATTERN = /\[[^[\]]*[A-Za-z][^[\]]*\]/;
+
+/** True if `content` still contains at least one unresolved data placeholder. */
+export function hasUnresolvedPlaceholders(content: string | null | undefined): boolean {
+  if (!content) return false;
+  return PLACEHOLDER_PATTERN.test(content);
+}
+
+/**
+ * Derive a section's status from its drafted content. Non-empty content that
+ * still carries a placeholder is 'needs_data', not 'drafted' — see
+ * hasUnresolvedPlaceholders.
+ */
+function statusForContent(content: string | undefined): CSRSection['status'] {
+  if (!content) return 'empty';
+  return hasUnresolvedPlaceholders(content) ? 'needs_data' : 'drafted';
+}
+
+/** Apply statusForContent + the needsData mirror flag to a section in place. */
+function applyContentStatus(section: CSRSection): void {
+  section.status = statusForContent(section.content);
+  section.needsData = section.status === 'needs_data';
+}
+
+/**
+ * A section counts as *data-complete* only when it has content AND that
+ * content has no residual placeholders (status 'drafted' or further along
+ * the review pipeline — 'reviewed'/'approved'). Used to compute build-level
+ * progress/status so a job can never report 'complete'/100 while any
+ * section is still 'empty' or 'needs_data'.
+ */
+function isSectionDataComplete(section: CSRSection): boolean {
+  return section.status === 'drafted' || section.status === 'reviewed' || section.status === 'approved';
 }
 
 export const ICH_E3_STRUCTURE: CSRSection[] = [
@@ -74,6 +139,7 @@ export const ICH_E3_STRUCTURE: CSRSection[] = [
       { number: '9.5', title: 'Efficacy and Safety Variables', required: true, status: 'empty', description: 'Endpoint definitions and assessment schedule' },
       { number: '9.6', title: 'Data Quality Assurance', required: true, status: 'empty', description: 'Monitoring, data management, quality control' },
       { number: '9.7', title: 'Statistical Methods', required: true, status: 'empty', description: 'Analysis populations, statistical methods, sample size' },
+      { number: '9.8', title: 'Changes in the Conduct of the Study or Planned Analyses', required: true, status: 'empty', description: 'Protocol amendments, SAP changes and other departures from the planned conduct or analyses, with timing (before/after unblinding) and rationale' },
     ],
   },
   {
@@ -100,6 +166,7 @@ export const ICH_E3_STRUCTURE: CSRSection[] = [
       { number: '12.3', title: 'Deaths, SAEs, Other Significant AEs', required: true, status: 'empty', description: 'Narratives for deaths, SAEs' },
       { number: '12.4', title: 'Clinical Laboratory Evaluation', required: true, status: 'empty', description: 'Lab results, shifts, clinically significant values' },
       { number: '12.5', title: 'Vital Signs, Physical Findings, Other Safety', required: true, status: 'empty', description: 'Vital signs, ECG, other safety data' },
+      { number: '12.6', title: 'Safety Conclusions', required: true, status: 'empty', description: 'Overall safety evaluation integrating exposure, adverse events, deaths and SAEs, laboratory and vital-sign findings' },
     ],
   },
   { number: '13', title: 'Discussion and Overall Conclusions', required: true, status: 'empty', description: 'Efficacy discussion, safety discussion, benefit-risk assessment' },
@@ -137,11 +204,56 @@ export interface CSRBuildRequest {
 
 export interface CSRBuildJob {
   id: number;
-  status: 'queued' | 'generating' | 'complete' | 'failed';
+  // 'needs_data' — drafting finished but one or more targeted sections still
+  // carry unresolved data placeholders; NOT the same as 'complete'. See
+  // computeBuildCompleteness.
+  status: 'queued' | 'generating' | 'complete' | 'needs_data' | 'failed';
   progress: number;
   sections: CSRSection[];
   studyInfo: CSRBuildRequest['studyInfo'];
   createdAt: Date;
+}
+
+/**
+ * Compute a build job's overall status/progress from its drafted section
+ * tree. A job is 'complete'/100 ONLY when every *targeted* section
+ * (respecting sectionsToGenerate — mirrors csr-job-runner's target-list
+ * semantics so a partial build isn't held to the full ICH-E3 backbone) is
+ * data-complete: it has content, and that content has no residual
+ * [DATA TO BE INSERTED]-style placeholder (see hasUnresolvedPlaceholders).
+ * Any targeted section still 'empty' (no template/AI content — e.g. a
+ * section number with no template case) or 'needs_data' (placeholders
+ * remain) holds the whole job at 'needs_data' with progress < 100.
+ *
+ * Fail closed: a CSR with any residual data placeholder — or any required
+ * section that never got drafted at all — must never surface as
+ * 'complete'/100. A downstream consumer gating export on job status depends
+ * on this.
+ */
+function computeBuildCompleteness(
+  sections: CSRSection[],
+  sectionsToGenerate?: string[]
+): { status: 'complete' | 'needs_data'; progress: number } {
+  const flat = flattenICHE3Sections(sections);
+  const targets =
+    sectionsToGenerate && sectionsToGenerate.length > 0
+      ? flat.filter(s => sectionsToGenerate.includes(s.number))
+      : flat;
+
+  if (targets.length === 0) {
+    // Nothing was in scope to draft — vacuously complete (matches
+    // csr-job-runner's totalSections === 0 -> progress 100 convention).
+    return { status: 'complete', progress: 100 };
+  }
+
+  const completeCount = targets.filter(isSectionDataComplete).length;
+  if (completeCount === targets.length) {
+    return { status: 'complete', progress: 100 };
+  }
+  return {
+    status: 'needs_data',
+    progress: Math.floor((completeCount / targets.length) * 100),
+  };
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -185,10 +297,15 @@ export async function launchCSRBuild(request: CSRBuildRequest): Promise<CSRBuild
   // Generate content for each section based on study info
   const generated = await generateCSRSections(sections, request);
 
+  // Fail closed: only report complete/100 when every targeted section is
+  // actually data-complete (no residual placeholders). See
+  // computeBuildCompleteness.
+  const completeness = computeBuildCompleteness(generated, request.sectionsToGenerate);
+
   return {
     id: Date.now(),
-    status: 'complete',
-    progress: 100,
+    status: completeness.status,
+    progress: completeness.progress,
     sections: generated,
     studyInfo: request.studyInfo,
     createdAt: new Date(),
@@ -288,7 +405,7 @@ export async function generateCSRSections(
     } else {
       section.content = generateSectionTemplate(section, info);
     }
-    section.status = section.content ? 'drafted' : 'empty';
+    applyContentStatus(section);
 
     if (section.childSections) {
       for (const child of section.childSections) {
@@ -300,7 +417,7 @@ export async function generateCSRSections(
         } else {
           child.content = generateSectionTemplate(child, info);
         }
-        child.status = child.content ? 'drafted' : 'empty';
+        applyContentStatus(child);
       }
     }
   }
@@ -696,6 +813,8 @@ function generateSectionTemplate(
 
     '9.7': `The statistical analysis plan (SAP) was finalized prior to database lock. The primary analysis population was the intent-to-treat (ITT) population, defined as all randomized patients who received at least one dose of study treatment. The primary endpoint of ${info.primaryEndpoint} was analyzed using [statistical method to be specified]. A two-sided significance level of 0.05 was used for the primary analysis.${info.sampleSize ? `\n\nSample size: ${info.sampleSize} patients were planned to provide [X]% power to detect a clinically meaningful difference.` : ''}`,
 
+    '9.8': `[DATA TO BE INSERTED]\n\nChanges to the conduct of the study after it began: [list each protocol amendment with its number, date and rationale, or state that there were none]. Changes to the planned analyses: [describe each departure from the protocol- or SAP-specified analyses, when it was decided and whether before or after unblinding, or state that there were none].`,
+
     '10.1': `[DATA TO BE INSERTED]\n\nA total of [N] patients were screened, of whom [N] were randomized${info.comparator ? ` to ${info.investigationalProduct} (n=[N]) or ${info.comparator} (n=[N])` : ''}. The most common reasons for screen failure were [reasons]. [N] patients completed the study treatment period. The most common reasons for discontinuation were [reasons].`,
 
     '11.4': `[DATA TO BE INSERTED]\n\nThe primary endpoint of ${info.primaryEndpoint} was met/not met. In the ITT population, ${info.investigationalProduct} demonstrated [result] compared with ${info.comparator || 'baseline'} (p=[value]).`,
@@ -703,6 +822,8 @@ function generateSectionTemplate(
     '12.2': `[DATA TO BE INSERTED]\n\nAdverse events were reported by [N]% of patients in the ${info.investigationalProduct} group${info.comparator ? ` and [N]% in the ${info.comparator} group` : ''}. The most common adverse events (≥5% incidence) were [list]. Most adverse events were mild or moderate in severity.`,
 
     '12.3': `[DATA TO BE INSERTED]\n\n[N] deaths occurred during the study. [N] serious adverse events (SAEs) were reported. Individual narratives for deaths and SAEs are provided below.`,
+
+    '12.6': `[DATA TO BE INSERTED]\n\nOverall, ${info.investigationalProduct} was [well tolerated / associated with the following safety findings] in patients with ${info.indication}. The most frequent adverse events were [list]. [N] deaths and [N] serious adverse events were reported; [summarize assessed relationship to treatment]. [No clinically meaningful trends were observed / Describe trends] in laboratory parameters, vital signs or ECG findings. The safety profile observed in this study is [consistent with / differs from] the known profile of ${info.investigationalProduct} in that [describe].`,
 
     '13': `This Phase ${info.phase} ${info.studyDesign} study evaluated the ${info.primaryEndpoint} of ${info.investigationalProduct} in patients with ${info.indication}.\n\nEFFICACY DISCUSSION\n[To be drafted based on study results]\n\nSAFETY DISCUSSION\n[To be drafted based on safety data]\n\nBENEFIT-RISK ASSESSMENT\nBased on the efficacy and safety data from this study, the benefit-risk profile of ${info.investigationalProduct} is considered [favorable/unfavorable] for the treatment of ${info.indication}.`,
   };
@@ -727,5 +848,6 @@ export default {
   draftCSRSection,
   compareWithExistingCSRs,
   analyzeCSRSafetySignals,
+  hasUnresolvedPlaceholders,
   ICH_E3_STRUCTURE,
 };

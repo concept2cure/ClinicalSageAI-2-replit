@@ -15,7 +15,11 @@ permissions:
   actions: read
 
 concurrency:
-  group: semgrep-${{ github.workflow }}-${{ github.ref }}
+  # Per-SHA on the canonical branch for the same reason as codeql.yml: the
+  # release-evidence policy requires a COMPLETED "Semgrep / Analyze (Semgrep)"
+  # job for the commit under evaluation, and a ref-keyed group let the next
+  # push cancel it. Superseding is unchanged on every other ref.
+  group: semgrep-${{ github.workflow }}-${{ github.ref }}-${{ github.ref_name == 'concept2cure-v2' && github.sha || 'ref' }}
   cancel-in-progress: true
 
 jobs:

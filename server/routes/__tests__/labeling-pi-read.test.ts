@@ -17,7 +17,7 @@ const { upsertLabelingPiSection, listLabelingPiSections, LabelingPiValidationErr
     upsertLabelingPiSection: vi.fn(),
     listLabelingPiSections: vi.fn(),
     LabelingPiValidationError,
-    logAction: vi.fn(),
+    logAction: vi.fn(async (..._a: any[]) => ({ persisted: true, chained: true, tamperProof: true })),
   };
 });
 vi.mock('../../services/labeling/labeling-pi-service', () => ({

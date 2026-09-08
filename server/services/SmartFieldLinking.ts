@@ -2,6 +2,7 @@ import { EventEmitter } from 'events';
 import CrossReferenceMapper from './CrossReferenceMapping.js';
 import { db } from '../db';
 import { fda510kDocuments, fda510kProjects, fda510kStageProgress } from '@shared/schema';
+import type { PropagationCounts, FieldUpdateOutcome, QueuedFieldUpdate } from './SmartFieldLinking.types';
 import { eq, and, desc } from 'drizzle-orm';
 
 /**
@@ -44,7 +45,7 @@ interface FieldLink {
  * scope cannot be resolved from either place. Callers must derive both from a
  * verified principal, never from a request body or socket payload.
  */
-interface FieldUpdate {
+export interface FieldUpdate {
   source: 'workflow' | 'document';
   field: string;
   value: any;
@@ -67,7 +68,7 @@ export class SmartFieldLinking extends EventEmitter {
   private fieldLinks: Map<string, FieldLink> = new Map();
   private fieldSubscriptions: Map<string, Set<string>> = new Map();
   private crossReferenceMapper: CrossReferenceMapper;
-  private updateQueue: FieldUpdate[] = [];
+  private updateQueue: QueuedFieldUpdate[] = [];
   private isProcessing = false;
 
   constructor() {
@@ -262,7 +263,7 @@ export class SmartFieldLinking extends EventEmitter {
    * stream in fieldSync.routes.ts filters on `metadata.organizationId`) always
    * see a proven tenant.
    */
-  async updateField(update: FieldUpdate): Promise<void> {
+  async updateField(update: FieldUpdate): Promise<FieldUpdateOutcome> {
     const scope = this.resolveScope(update);
     await this.assertProjectInOrg(scope.organizationId, scope.projectId);
 
@@ -277,13 +278,19 @@ export class SmartFieldLinking extends EventEmitter {
       },
     };
 
-    // Add to queue
-    this.updateQueue.push(scoped);
+    // Queue the update alongside the callback that will report its outcome.
+    // Every queued entry is settled by whichever drain reaches it — this one,
+    // or the drain already running — so the caller always learns what happened.
+    let settle!: (outcome: FieldUpdateOutcome) => void;
+    const outcome = new Promise<FieldUpdateOutcome>(resolve => { settle = resolve; });
+    this.updateQueue.push({ update: scoped, settle });
 
     // Process queue if not already processing
     if (!this.isProcessing) {
       await this.processUpdateQueue();
     }
+
+    return outcome;
   }
 
   /**
@@ -293,24 +300,37 @@ export class SmartFieldLinking extends EventEmitter {
     this.isProcessing = true;
 
     while (this.updateQueue.length > 0) {
-      const update = this.updateQueue.shift()!;
+      const { update, settle } = this.updateQueue.shift()!;
 
       try {
         // Re-resolve rather than trust the queue entry: every propagation runs
         // under an explicit tenant scope or not at all.
         const scope = this.resolveScope(update);
 
-        if (update.source === 'workflow') {
-          await this.propagateFromWorkflow(update, scope);
-        } else {
-          await this.propagateFromDocument(update, scope);
-        }
+        const counts = update.source === 'workflow'
+          ? await this.propagateFromWorkflow(update, scope)
+          : await this.propagateFromDocument(update, scope);
 
-        // Emit update event for real-time sync
-        this.emit('fieldUpdated', update);
+        // `fieldUpdated` drives real-time sync, so it fires only when a row
+        // actually took the value — a broadcast of a dropped write puts a value
+        // on every other client's screen that is not in the database.
+        if (counts.written > 0) {
+          this.emit('fieldUpdated', update);
+          settle({ status: 'applied', targets: counts.targets, written: counts.written });
+        } else if (counts.targets === 0) {
+          settle({ status: 'not-linked', targets: 0, written: 0 });
+        } else {
+          settle({ status: 'no-destination', targets: counts.targets, written: 0 });
+        }
       } catch (error) {
         console.error('Error processing field update:', error);
         this.emit('updateError', { update, error });
+        settle({
+          status: 'failed',
+          targets: 0,
+          written: 0,
+          reason: error instanceof Error ? error.message : 'Unknown error',
+        });
       }
     }
 
@@ -320,9 +340,9 @@ export class SmartFieldLinking extends EventEmitter {
   /**
    * Propagate changes from workflow to documents
    */
-  private async propagateFromWorkflow(update: FieldUpdate, scope: FieldScope): Promise<void> {
+  private async propagateFromWorkflow(update: FieldUpdate, scope: FieldScope): Promise<PropagationCounts> {
     const link = this.fieldLinks.get(update.field);
-    if (!link) return;
+    if (!link) return { targets: 0, written: 0 };
 
     // Validate field value
     if (link.validation) {
@@ -335,32 +355,36 @@ export class SmartFieldLinking extends EventEmitter {
     // Transform value if needed
     const transformedValue = link.transform ? link.transform(update.value) : update.value;
 
-    // Update all linked document fields
+    // Update all linked document fields, counting what actually landed.
+    let written = 0;
     for (const docField of link.documentFields) {
-      await this.updateDocumentField(
+      if (await this.updateDocumentField(
         docField.documentType,
         docField.fieldPath,
         transformedValue,
         scope
-      );
+      )) written += 1;
     }
+    return { targets: link.documentFields.length, written };
   }
 
   /**
    * Propagate changes from document to workflow
    */
-  private async propagateFromDocument(update: FieldUpdate, scope: FieldScope): Promise<void> {
+  private async propagateFromDocument(update: FieldUpdate, scope: FieldScope): Promise<PropagationCounts> {
     const [documentType, ...fieldPathParts] = update.field.split('.');
     const fieldPath = fieldPathParts.join('.');
 
     const key = `${documentType}.${fieldPath}`;
     const workflowFields = this.fieldSubscriptions.get(key);
 
-    if (!workflowFields) return;
+    if (!workflowFields) return { targets: 0, written: 0 };
 
+    let written = 0;
     for (const workflowField of workflowFields) {
-      await this.updateWorkflowField(workflowField, update.value, scope);
+      if (await this.updateWorkflowField(workflowField, update.value, scope)) written += 1;
     }
+    return { targets: workflowFields.size, written };
   }
 
   /**
@@ -371,10 +395,10 @@ export class SmartFieldLinking extends EventEmitter {
     fieldPath: string,
     value: any,
     scope: FieldScope
-  ): Promise<void> {
+  ): Promise<boolean> {
     if (!db) {
       console.error('Database connection not available');
-      return;
+      return false;
     }
 
     // SECURITY (C2C-DEVICE-001): this SELECT used to match on documentType
@@ -417,7 +441,12 @@ export class SmartFieldLinking extends EventEmitter {
             eq(fda510kDocuments.projectId, scope.projectId)
           )
         );
+      return true;
     }
+
+    // No document row of this type exists for this project yet, so there was
+    // nowhere to put the value. Reported, never swallowed — see updateField.
+    return false;
   }
 
   /**
@@ -427,17 +456,17 @@ export class SmartFieldLinking extends EventEmitter {
     fieldPath: string,
     value: any,
     scope: FieldScope
-  ): Promise<void> {
+  ): Promise<boolean> {
     if (!db) {
       console.error('Database connection not available');
-      return;
+      return false;
     }
 
     // Parse field path to determine stage and section
     const [category] = fieldPath.split('.');
 
     const mapping = STAGE_MAPPING[category];
-    if (!mapping) return;
+    if (!mapping) return false;
 
     // SECURITY (C2C-DEVICE-001): projectId was not even referenced here, so the
     // first stage-progress row in the WHOLE TABLE matching stage+section was
@@ -472,7 +501,14 @@ export class SmartFieldLinking extends EventEmitter {
             eq(fda510kStageProgress.projectId, scope.projectId)
           )
         );
+      return true;
     }
+
+    // fda_510k_stage_progress has NO INSERT anywhere in server/ or the
+    // migrations (ledger L22 / L173), so on a real deployment this SELECT
+    // returns nothing and this branch is never taken. The caller is told, and
+    // decides what to say — it must not be reported as a synchronised field.
+    return false;
   }
 
   /**
@@ -708,3 +744,4 @@ export class SmartFieldLinking extends EventEmitter {
 
 // Export singleton instance
 export const smartFieldLinking = new SmartFieldLinking();
+export type { FieldUpdateOutcome } from './SmartFieldLinking.types';

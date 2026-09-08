@@ -9,6 +9,62 @@ export interface RegulatoryBootstrapContext {
   pool: Pool;
 }
 
+import { GOVERNED_WRITE_ROLES } from '../middleware/orgMembership';
+
+  /*
+   * Module scope, not per-request: this is a constant, and it was being rebuilt
+ * — the object literal AND the drift loop — on every single IVDR request.
+ *
+ * This map is keyed by `organization_users.role`, whose vocabulary is
+   * admin | manager | member | viewer — and it listed NEITHER `manager` NOR
+   * `member`. `member` is the DEFAULT role every invited user gets, so the
+   * whole EU IVDR module answered 403 to the default organisation role,
+   * reads included: a customer who had bought the module could not open it.
+   *
+   * The keys that were here instead — regulatory_lead, regulatory,
+   * quality_assurance, user — are in no role vocabulary this product issues.
+   * They are kept below so a deployment that stamps a custom role keeps what
+   * it had (removing them could only take access away), but they are not the
+   * contract; the four canonical roles are.
+   *
+   * Write capability is taken from GOVERNED_WRITE_ROLES rather than restated,
+   * so "who may write governed data" has one answer in this codebase and the
+   * IVDR module cannot drift from the rest of the product again.
+   */
+  const IVDR_FULL = ['ivdr:read', 'ivdr:write', 'ivdr:classify', 'ivdr:approve', 'ivdr:export'];
+  const IVDR_CONTRIBUTOR = ['ivdr:read', 'ivdr:write', 'ivdr:classify', 'ivdr:export'];
+
+  const IVDR_ROLE_PERMISSIONS: Record<string, string[]> = {
+    // ── Canonical organization_users.role vocabulary ────────────────────
+    admin: IVDR_FULL,
+    manager: IVDR_FULL,
+    /* `member` writes, classifies and exports like any contributor, but not
+       `ivdr:approve` — the only permission behind a supervisory action
+       (CDx stage advancement into notified-body review). That is the one
+       place this module asks for a second pair of eyes, and the default role
+       is not it. */
+    member: IVDR_CONTRIBUTOR,
+    viewer: ['ivdr:read'],
+    // ── Platform roles, which never appear in organization_users.role ────
+    owner: IVDR_FULL,
+    super_admin: IVDR_FULL,
+    superadmin: IVDR_FULL,
+    // ── Legacy/custom keys kept so no deployment loses access ────────────
+    regulatory_lead: IVDR_FULL,
+    regulatory: ['ivdr:read', 'ivdr:write', 'ivdr:classify'],
+    quality_assurance: ['ivdr:read', 'ivdr:write'],
+    user: ['ivdr:read'],
+  };
+
+  /* The drift guard, not decoration: any role the rest of the product lets
+     write governed data and that nobody listed above still gets contributor
+     access here. Adding a role to GOVERNED_WRITE_ROLES can therefore never
+     again leave it locked out of this module — which is the exact shape of
+     the defect this replaces. */
+  for (const role of GOVERNED_WRITE_ROLES) {
+    if (!IVDR_ROLE_PERMISSIONS[role]) IVDR_ROLE_PERMISSIONS[role] = IVDR_CONTRIBUTOR;
+  }
+
 export async function registerRegulatoryRoutes({ app, pool }: RegulatoryBootstrapContext) {
   // SECURITY: every regulatory route family is tenant-scoped. FDA 510(k)
   // payloads, CER reports, manufacturing batch records, PV case files,
@@ -140,20 +196,15 @@ export async function registerRegulatoryRoutes({ app, pool }: RegulatoryBootstra
       const userPermissions: string[] =
         (req as any).user?.permissions || (req as any).tenant?.permissions || [];
 
-      const rolePermMap: Record<string, string[]> = {
-        superadmin: ['ivdr:read', 'ivdr:write', 'ivdr:classify', 'ivdr:approve', 'ivdr:export'],
-        admin: ['ivdr:read', 'ivdr:write', 'ivdr:classify', 'ivdr:approve', 'ivdr:export'],
-        regulatory_lead: ['ivdr:read', 'ivdr:write', 'ivdr:classify', 'ivdr:approve', 'ivdr:export'],
-        regulatory: ['ivdr:read', 'ivdr:write', 'ivdr:classify'],
-        quality_assurance: ['ivdr:read', 'ivdr:write'],
-        viewer: ['ivdr:read'],
-        user: ['ivdr:read'],
-      };
-
-      const userRole = (req as any).userRole || (req as any).tenantContext?.role || '';
+      /* Lower-cased for the same reason requireEditorAccess does it: a role
+         stamped `Admin` by any mint path must not silently fall through to the
+         no-permissions branch. */
+      const userRole = String(
+        (req as any).userRole || (req as any).user?.role || (req as any).tenantContext?.role || '',
+      ).toLowerCase();
       const effectivePerms: Set<string> = new Set([
         ...userPermissions,
-        ...(rolePermMap[userRole] || []),
+        ...(IVDR_ROLE_PERMISSIONS[userRole] || []),
       ]);
 
       const hasWildcard = effectivePerms.has('*');

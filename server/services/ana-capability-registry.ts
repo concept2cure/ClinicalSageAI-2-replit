@@ -12,6 +12,7 @@
  */
 
 import { db } from '../db';
+import { runWithSystemTenantScope } from '../db/tenantStore';
 import { anaCapabilityRegistry, anaOutcomeLog, anaProjectCapabilities } from 'shared/schema/ana-intelligence';
 import { eq, and, desc, sql, or, inArray } from 'drizzle-orm';
 
@@ -641,6 +642,18 @@ export const SEED_CAPABILITIES: SeedCapability[] = [
  * New capabilities are added; existing ones are left untouched.
  */
 export async function seedCapabilityRegistry(): Promise<{ seeded: number; total: number }> {
+  // Declared HERE, not by the caller. ana_capability_registry is a global table
+  // (no tenant column, no policy), but the pool refuses ANY statement issued
+  // with no tenant scope once RLS_ENFORCE=on — the only value production
+  // accepts — and this seed runs from startup, in no request and no job. It
+  // failed on every production boot ("seeding failed (non-blocking)"), the
+  // table stayed empty, and ana-context-router.ts had nothing to route a turn
+  // with. Same pattern as template-seeds.ts: the function that needs the scope
+  // owns it, so no caller can forget it.
+  return runWithSystemTenantScope('ana-capability-registry:seed', () => seedUnscoped());
+}
+
+async function seedUnscoped(): Promise<{ seeded: number; total: number }> {
   let seeded = 0;
 
   for (const cap of SEED_CAPABILITIES) {
@@ -675,7 +688,7 @@ export async function seedCapabilityRegistry(): Promise<{ seeded: number; total:
 
   // Existing rows are skipped by onConflictDoNothing above, so refresh their
   // governance contract from the code source of truth (governanceFor) too.
-  const { updated } = await backfillCapabilityGovernance();
+  const { updated } = await backfillUnscoped();
   if (updated > 0) {
     logger.info(`Refreshed AI governance contract on ${updated} capabilities`);
   }
@@ -694,6 +707,14 @@ export async function seedCapabilityRegistry(): Promise<{ seeded: number; total:
  * run repeatedly; brings existing installs up to date when the policy changes.
  */
 export async function backfillCapabilityGovernance(): Promise<{ updated: number }> {
+  // Own scope for the same reason as the seed: callable from startup or an
+  // operator script with no ambient tenant.
+  return runWithSystemTenantScope('ana-capability-registry:backfill-governance', () =>
+    backfillUnscoped()
+  );
+}
+
+async function backfillUnscoped(): Promise<{ updated: number }> {
   const rows = await db
     .select({
       id: anaCapabilityRegistry.id,

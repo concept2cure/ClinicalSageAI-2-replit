@@ -10,6 +10,7 @@
 import React, { useState, useMemo } from 'react';
 import { I } from '../icons';
 import type { SurfaceViewProps } from '../surfaceViews';
+import { usePublishSurfaceContext } from '../surfaceContext';
 import {
   FILINGS_TAXONOMY,
   FILING_WF_SURFACE,
@@ -66,7 +67,7 @@ function FilingDetail({
       <div className="fc-detail" onClick={(e) => e.stopPropagation()}>
         <div className="fc-detail-top">
           <div className="fc-detail-crumb">{segLabel}{catLabel ? ' -- ' + catLabel : ''}</div>
-          <button className="fc-detail-x" onClick={onClose}>{I.close}</button>
+          <button className="fc-detail-x" aria-label="Close" onClick={onClose}>{I.close}</button>
         </div>
         <h2 className="fc-detail-t">{it.n}</h2>
         {wfLabel && <div className="fc-detail-wf">{I.gitCompare || I.arrowRight} Routes into the {wfLabel} workflow</div>}
@@ -156,6 +157,45 @@ export function FilingsCatalog({ onAsk, onNav }: SurfaceViewProps) {
 
   const segObj = TAX.find((s) => s.seg === seg) || TAX[0] || { cats: [] as any[] };
 
+  /* What AnA can see of this screen.
+     The catalog is a controlled taxonomy, not tenant data — so there is no
+     loading or error branch to publish. What varies, and what a question here
+     is always about, is WHICH slice of it the user is looking at: the segment
+     tab, the search term, and the filing type they have opened. */
+  const anaContext = useMemo(() => {
+    const cats = segObj.cats as { cat: string; items: FilingItem[] }[];
+    return {
+      summary:
+        `Filings catalog: ${total} regulatory filing types across ${TAX.length} segment(s). ` +
+        (term
+          ? `Searching all segments for "${term}" — ${results.length} match(es).`
+          : `The "${TAX.find((s) => s.seg === seg)?.label ?? seg}" segment is open, ` +
+            `${cats.length} category(ies).`) +
+        (sel ? ` "${sel.it.n}" (${sel.segLabel} · ${sel.catLabel}) is open in the detail pane.` : ''),
+      facts: {
+        totalFilingTypes: total,
+        openSegment: seg,
+        searchTerm: term || null,
+        searchMatches: term ? results.length : null,
+        categoriesInSegment: cats.map((c) => ({ category: c.cat, filingTypes: c.items.length })),
+        selectedFiling: sel
+          ? {
+              name: sel.it.n, authority: sel.it.a, format: sel.it.f, ctd: sel.it.c,
+              workflow: sel.it.wf, description: sel.it.d,
+              segment: sel.segLabel, category: sel.catLabel,
+              startsIn: FILING_WF_SURFACE[sel.it.wf] ?? null,
+            }
+          : null,
+      },
+      availableActions: [
+        'Switch segment tab, or search every segment for a filing type',
+        'Open a filing type to read its authority, format, CTD mapping and workflow',
+        'Start a filing, which routes into that filing type\u2019s execution workflow',
+      ],
+    };
+  }, [TAX, total, seg, segObj, term, results.length, sel]);
+  usePublishSurfaceContext('filings-catalog', anaContext);
+
   const startFiling = (it: FilingItem) => {
     /*
      * `localStorage.setItem('C2C_PATHWAY', pw)` used to run here, first.
@@ -184,7 +224,7 @@ export function FilingsCatalog({ onAsk, onNav }: SurfaceViewProps) {
         <div className="fc-search">
           <span className="fc-search-ic">{I.search}</span>
           <input value={q} onChange={(e) => setQ(e.target.value)} aria-label="Search filings" placeholder="Search by name, authority, or pathway — CSR, 510(k), EMA..." autoFocus />
-          {q && <button className="fc-search-x" onClick={() => setQ('')}>{I.close}</button>}
+          {q && <button className="fc-search-x" aria-label="Clear search" onClick={() => setQ('')}>{I.close}</button>}
         </div>
       </div>
 

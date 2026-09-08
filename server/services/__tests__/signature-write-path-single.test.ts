@@ -37,6 +37,14 @@ const read = (p: string) => fs.readFileSync(path.join(repoRoot, p), 'utf8');
 const AUTH_SECURITY = 'server/services/auth-security-service.ts';
 const AUTH_ENTERPRISE = 'server/routes/authEnterprise.ts';
 const CANONICAL_PERSISTENCE = 'server/services/part11/signature-persistence.ts';
+const PART11_SERVICE = 'server/services/part11ComplianceService.ts';
+
+/**
+ * Comments stripped before scanning. The migration notes in these files NAME
+ * the deleted calls, and a guard that cannot tell a description of a write from
+ * a write would be satisfied by deleting the explanation.
+ */
+const code = (src: string) => src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/[^\n]*/g, '');
 
 describe('single electronic-signature write path', () => {
   it('auth-security-service no longer defines a signature writer', () => {
@@ -69,6 +77,24 @@ describe('single electronic-signature write path', () => {
     expect(src).not.toContain('createElectronicSignature');
     expect(/\.insert\(\s*electronicSignatures\s*\)/.test(src)).toBe(false);
     expect(/INSERT\s+INTO\s+electronic_signatures/i.test(src)).toBe(false);
+  });
+
+  it('part11ComplianceService no longer holds the second INSERT (ledger L37)', () => {
+    // The release-signing writer behind POST /api/submissions/:id/sign-release
+    // had its own `.insert(electronicSignatures)`. It was conforming — it bound
+    // content and set the org — and that is why it survived two audits. It
+    // still wrote 20 of the table's 26 columns and could not express
+    // `binding_basis` at all, so its rows could not say what their
+    // `bound_payload_digest` was a digest OF. One substrate, one INSERT.
+    const src = code(read(PART11_SERVICE));
+    expect(
+      /\.insert\(\s*electronicSignatures\s*\)/.test(src),
+      'a second Drizzle INSERT into electronic_signatures is back in ' +
+        'part11ComplianceService — the release path has left the shared writer.',
+    ).toBe(false);
+    expect(/INSERT\s+INTO\s+electronic_signatures/i.test(src)).toBe(false);
+    // Deleting the writer must not delete the write: it goes through the one.
+    expect(src).toContain('persistElectronicSignature');
   });
 
   it('the canonical INSERT still exists, and records the binding fields', () => {

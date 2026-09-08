@@ -16,6 +16,8 @@ import { Router, Request, Response } from 'express';
 import * as crypto from 'crypto';
 
 import { createScopedLogger } from '../utils/logger.js';
+import { serverError } from '../lib/api-response';
+import { requireAuthedOrgId, usableOrgId } from '../utils/authedOrgId.js';
 
 const logger = createScopedLogger('audit-services');
 
@@ -57,7 +59,7 @@ router.post('/figures/generate', async (req: Request, res: Response) => {
     res.json({ success: true, figure: result });
   } catch (error: any) {
     logger.error('Figure generation failed', { err: error instanceof Error ? error.message : String(error) });
-    res.status(500).json({ error: error.message || 'Figure generation failed' });
+    return serverError(res, logger, 'generating figures', error);
   }
 });
 
@@ -86,7 +88,7 @@ router.post('/figures/auto-insert', async (req: Request, res: Response) => {
     res.json({ success: true, figures: result });
   } catch (error: any) {
     logger.error('Auto figure insert failed', { err: error instanceof Error ? error.message : String(error) });
-    res.status(500).json({ error: error.message || 'Auto figure insert failed' });
+    return serverError(res, logger, 'saving auto insert', error);
   }
 });
 
@@ -129,7 +131,7 @@ router.post('/export/pdf', async (req: Request, res: Response) => {
     return res.send(result.buffer);
   } catch (error: any) {
     logger.error('PDF export failed', { err: error instanceof Error ? error.message : String(error) });
-    res.status(500).json({ error: error.message || 'PDF export failed' });
+    return serverError(res, logger, 'saving PDF', error);
   }
 });
 
@@ -244,7 +246,7 @@ router.post('/traceability/map', async (req: Request, res: Response) => {
     return res.json({ success: true, sentences: sentences.length, traceLinks, persisted });
   } catch (error: any) {
     logger.error('Traceability mapping failed', { err: error instanceof Error ? error.message : String(error) });
-    res.status(500).json({ error: error.message || 'Traceability mapping failed' });
+    return serverError(res, logger, 'saving map', error);
   }
 });
 
@@ -275,7 +277,7 @@ router.post('/traceability/click-through', async (req: Request, res: Response) =
     return res.json({ success: true, clickThrough: result });
   } catch (error: any) {
     logger.error('Click-through failed', { err: error instanceof Error ? error.message : String(error) });
-    res.status(500).json({ error: error.message || 'Click-through resolution failed' });
+    return serverError(res, logger, 'saving click through', error);
   }
 });
 
@@ -304,7 +306,7 @@ router.post('/traceability/report', async (req: Request, res: Response) => {
     return res.json({ success: true, report });
   } catch (error: any) {
     logger.error('Traceability report failed', { err: error instanceof Error ? error.message : String(error) });
-    res.status(500).json({ error: error.message || 'Traceability report generation failed' });
+    return serverError(res, logger, 'saving report', error);
   }
 });
 
@@ -333,7 +335,7 @@ router.post('/keywords/extract', async (req: Request, res: Response) => {
     res.json({ success: true, keywords });
   } catch (error: any) {
     logger.error('Keyword extraction failed', { err: error instanceof Error ? error.message : String(error) });
-    res.status(500).json({ error: error.message || 'Keyword extraction failed' });
+    return serverError(res, logger, 'saving extract', error);
   }
 });
 
@@ -363,7 +365,7 @@ router.post('/keywords/consistency', async (req: Request, res: Response) => {
     res.json({ success: true, consistency: result });
   } catch (error: any) {
     logger.error('Keyword consistency check failed', { err: error instanceof Error ? error.message : String(error) });
-    res.status(500).json({ error: error.message || 'Keyword consistency check failed' });
+    return serverError(res, logger, 'saving consistency', error);
   }
 });
 
@@ -405,8 +407,12 @@ router.post('/extraction/queue', async (req: Request, res: Response) => {
     }
     // Tenant comes from the authenticated context, never the body, and its
     // absence is a refusal rather than an extraction attributed to org 0.
-    const organizationId = Number(user?.organizationId);
-    if (!Number.isFinite(organizationId)) {
+    // usableOrgId, not a finite check: Number(null) is 0 and Number.isFinite(0)
+    // is true, and org 0 is a global carve-out in the artifacts RLS policy, so
+    // a finite check alone queues an unresolved tenant's extraction against
+    // every organization.
+    const organizationId = usableOrgId(user?.organizationId);
+    if (organizationId === null) {
       return res.status(403).json({ error: 'Organization context required' });
     }
 
@@ -423,7 +429,7 @@ router.post('/extraction/queue', async (req: Request, res: Response) => {
     res.json({ success: true, jobId });
   } catch (error: any) {
     logger.error('Extraction queue failed', { err: error instanceof Error ? error.message : String(error) });
-    res.status(500).json({ error: error.message || 'Extraction queue failed' });
+    return serverError(res, logger, 'saving queue', error);
   }
 });
 
@@ -433,8 +439,14 @@ router.post('/extraction/queue', async (req: Request, res: Response) => {
  */
 router.get('/extraction/status/:jobId', async (req: Request, res: Response) => {
   try {
+    const guard = requireAuthedOrgId(req, res);
+    if (!guard.ok) return;
+
     const svc = await getSvc<any>(() => import('../services/autoExtractionPipeline.js'));
-    const job = svc.getExtractionStatus(String(req.params.jobId));
+    // Scoped to the caller's organization: a job owned by another tenant 404s
+    // exactly like one that does not exist, so this cannot be used to probe
+    // for job ids.
+    const job = svc.getExtractionStatus(String(req.params.jobId), guard.orgId);
 
     if (!job) {
       return res.status(404).json({ error: 'Job not found' });
@@ -442,7 +454,7 @@ router.get('/extraction/status/:jobId', async (req: Request, res: Response) => {
 
     res.json({ success: true, job });
   } catch (error: any) {
-    res.status(500).json({ error: error.message || 'Status check failed' });
+    return serverError(res, logger, 'loading status', error);
   }
 });
 
@@ -452,11 +464,20 @@ router.get('/extraction/status/:jobId', async (req: Request, res: Response) => {
  */
 router.get('/extraction/project/:projectId', async (req: Request, res: Response) => {
   try {
+    const guard = requireAuthedOrgId(req, res);
+    if (!guard.ok) return;
+
     const svc = await getSvc<any>(() => import('../services/autoExtractionPipeline.js'));
-    const jobs = svc.getProjectExtractionJobs(parseInt(String(req.params.projectId)));
+    // A project belonging to another organization reads as empty, exactly like
+    // a project with no extractions — deliberately not a 404, which would
+    // confirm the project id exists.
+    const jobs = svc.getProjectExtractionJobs(
+      parseInt(String(req.params.projectId)),
+      guard.orgId,
+    );
     res.json({ success: true, jobs });
   } catch (error: any) {
-    res.status(500).json({ error: error.message || 'Job listing failed' });
+    return serverError(res, logger, 'loading project', error);
   }
 });
 
@@ -483,7 +504,7 @@ router.post('/confidence/compute', async (req: Request, res: Response) => {
     res.json({ success: true, score });
   } catch (error: any) {
     logger.error('Confidence computation failed', { err: error instanceof Error ? error.message : String(error) });
-    res.status(500).json({ error: error.message || 'Confidence computation failed' });
+    return serverError(res, logger, 'saving compute', error);
   }
 });
 
@@ -505,7 +526,7 @@ router.post('/confidence/batch', async (req: Request, res: Response) => {
     res.json({ success: true, ...result });
   } catch (error: any) {
     logger.error('Batch confidence failed', { err: error instanceof Error ? error.message : String(error) });
-    res.status(500).json({ error: error.message || 'Batch confidence computation failed' });
+    return serverError(res, logger, 'saving batch', error);
   }
 });
 
@@ -533,7 +554,7 @@ router.post('/verification/verify-claim', async (req: Request, res: Response) =>
     res.json({ success: true, verification: result });
   } catch (error: any) {
     logger.error('Claim verification failed', { err: error instanceof Error ? error.message : String(error) });
-    res.status(500).json({ error: error.message || 'Claim verification failed' });
+    return serverError(res, logger, 'saving verify claim', error);
   }
 });
 
@@ -560,7 +581,7 @@ router.post('/verification/batch-verify', async (req: Request, res: Response) =>
     res.json({ success: true, verification: result });
   } catch (error: any) {
     logger.error('Batch verification failed', { err: error instanceof Error ? error.message : String(error) });
-    res.status(500).json({ error: error.message || 'Batch verification failed' });
+    return serverError(res, logger, 'saving batch verify', error);
   }
 });
 

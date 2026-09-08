@@ -88,7 +88,10 @@ function handlerFor(path) {
 function parseRegistry(src) {
   const calculators = [];
   // Each entry starts at `id: '...'` and runs to the next entry or the array end.
-  const entryRe = /id: '([^']+)',[\s\S]*?path: '([^']+)',([\s\S]*?)(?=\n {2}\{\n {4}id: '|\n\];)/g;
+  // Accept both LF (GitHub runners) and CRLF (Windows worktrees). Without the
+  // optional carriage return, every Windows entry collapses into the first
+  // calculator and produces a misleading wall of dead-key findings.
+  const entryRe = /id: '([^']+)',[\s\S]*?path: '([^']+)',([\s\S]*?)(?=\r?\n {2}\{\r?\n {4}id: '|\r?\n\];)/g;
   let match;
   while ((match = entryRe.exec(src)) !== null) {
     const [, id, path, block] = match;

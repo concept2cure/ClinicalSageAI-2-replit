@@ -11,7 +11,12 @@
 import { getApplicationType } from '../../../shared/regulatory/global-document-registry.js';
 import { getSectionBlueprintForEntry } from '../../../shared/regulatory/project-bootstrap.js';
 import { resolveRegistryId } from './registry/legacySubmissionTypeMapper.js';
-import { getRequiredArtifacts, getMandatoryArtifacts, type ArtifactRequirement } from './requiredArtifactMatrix.js';
+import {
+  getRequiredArtifacts,
+  getMandatoryArtifacts,
+  hasArtifactMatrix,
+  type ArtifactRequirement,
+} from './requiredArtifactMatrix.js';
 import type { RegulatoryApplicationType, SectionDefinition } from '../../../shared/regulatory/document-taxonomy.js';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -63,6 +68,13 @@ export interface ReadinessResult {
     approved: number;
     missing: string[];
     completionPercent: number;
+    /**
+     * False when no artifact matrix is defined for this filing type, so
+     * `completionPercent` here is not a measurement and must not be rendered as
+     * one. Absent (undefined) means assessed — the field was added for the
+     * not-assessed case and existing callers that ignore it keep working.
+     */
+    assessed?: boolean;
   };
   /** Missing required items */
   gaps: ReadinessGap[];
@@ -94,20 +106,50 @@ export function evaluateReadiness(input: ReadinessInput): ReadinessResult {
   const sectionBlueprint = getSectionBlueprintForEntry(entry);
   const requiredArtifacts = getMandatoryArtifacts(registryId);
 
+  /* NOTHING ASSESSED IS NOT ASSESSED-AND-CLEAR.
+     `getMandatoryArtifacts` returns [] both for a filing type whose matrix lists
+     nothing and for one this repo has no matrix for — and there are 9 matrices
+     against a much larger application registry, so the second is the common
+     case. `evaluateArtifacts` then reported completionPercent 100 and
+     `identifyGaps` iterated an empty array, so a recognized filing type with no
+     artifact requirements modelled read as "100% of required artifacts present,
+     zero gaps" and contributed a fabricated 40% to the overall score.
+     buildFallbackResult below already refuses to do this for an UNRESOLVED
+     registry id and says why; this is the same failure one branch over, where
+     the id resolves but the requirements are unknown. */
+  const artifactsAssessed = hasArtifactMatrix(registryId);
+
   // Evaluate sections
   const sectionReadiness = evaluateSections(sectionBlueprint.sections, input.sections);
 
   // Evaluate artifacts
-  const artifactReadiness = evaluateArtifacts(requiredArtifacts, input.artifacts);
+  const artifactReadiness = artifactsAssessed
+    ? evaluateArtifacts(requiredArtifacts, input.artifacts)
+    : { required: 0, present: 0, approved: 0, missing: [], completionPercent: 0, assessed: false };
 
-  // Calculate overall score (60% sections, 40% artifacts)
-  const overallScore = Math.round(
-    sectionReadiness.completionPercent * 0.6 +
-    artifactReadiness.completionPercent * 0.4
-  );
+  /* With no artifact matrix the 40% artifact weight is not a measurement, so it
+     is not scored as one: the score is the section figure alone, and the gap
+     below says the artifact half was never checked. Folding in either a 100 (the
+     old behaviour) or a 0 would state something the evaluator does not know. */
+  const overallScore = artifactsAssessed
+    ? Math.round(sectionReadiness.completionPercent * 0.6 + artifactReadiness.completionPercent * 0.4)
+    : Math.round(sectionReadiness.completionPercent);
 
   // Identify gaps
   const gaps = identifyGaps(sectionBlueprint.sections, input.sections, requiredArtifacts, input.artifacts);
+
+  if (!artifactsAssessed) {
+    gaps.push({
+      type: 'artifact',
+      code: 'ARTIFACT_REQUIREMENTS_NOT_MODELLED',
+      title: 'Artifact requirements not assessed',
+      severity: 'critical',
+      message:
+        `No required-artifact matrix is defined for "${entry.displayName}" (${registryId}), ` +
+        'so no artifact was checked against a known requirement set. This score reflects ' +
+        'section completeness only — treat the artifact half as unassessed, not as complete.',
+    });
+  }
 
   // Regional warnings
   const regionalWarnings = getRegionalWarnings(entry, input);
@@ -254,13 +296,32 @@ function scoreToLevel(score: number): ReadinessResult['level'] {
   return 'not_ready';
 }
 
+/**
+ * Fail-closed result for when the registry entry cannot be resolved.
+ *
+ * When `getApplicationType` returns nothing (a stale, renamed, retired, or
+ * mistyped registry id), the evaluator does NOT know a single required section
+ * or artifact for this filing. It must NOT certify completeness it never checked.
+ *
+ * The pre-fix version returned `artifactReadiness.completionPercent: 100`,
+ * `gaps: []`, and `level: 'early'` — so an unknown filing read as "100% of
+ * required artifacts present, zero gaps." The Report-OS orchestrator only raises
+ * blockers `if (readiness.gaps.length > 0)`, so that empty gaps array let the
+ * indeterminate case flow through as if it were clean. This is the
+ * "nothing-assessed rendered as assessed-and-clear" failure mode: an
+ * indeterminate assessment is now reported as `not_ready` with a critical gap
+ * that names the unresolved registry id, and artifact completeness is 0 (nothing
+ * was verified against a known requirement set) rather than a fabricated 100.
+ */
 function buildFallbackResult(input: ReadinessInput): ReadinessResult {
   const totalSections = input.sections.length;
   const completed = input.sections.filter(s => ['approved', 'locked'].includes(s.status)).length;
 
   return {
-    score: totalSections > 0 ? Math.round((completed / totalSections) * 100) : 0,
-    level: 'early',
+    // Requirements are unknown, so the readiness score is not meaningful; report
+    // the floor rather than a section-only figure that could read "100% ready".
+    score: 0,
+    level: 'not_ready',
     applicationDisplayName: input.registryIdOrLegacy,
     dossierStandard: 'unknown',
     sectionReadiness: {
@@ -271,8 +332,22 @@ function buildFallbackResult(input: ReadinessInput): ReadinessResult {
       notStarted: input.sections.filter(s => s.status === 'not_started').length,
       completionPercent: totalSections > 0 ? Math.round((completed / totalSections) * 100) : 0,
     },
-    artifactReadiness: { required: 0, present: 0, approved: 0, missing: [], completionPercent: 100 },
-    gaps: [],
+    // `required: 0` here means "unknown", NOT "legitimately zero required
+    // artifacts" — so completeness is 0 (nothing verified), never 100.
+    artifactReadiness: { required: 0, present: 0, approved: 0, missing: [], completionPercent: 0 },
+    gaps: [
+      {
+        type: 'artifact',
+        code: 'UNKNOWN_REGISTRY_ENTRY',
+        title: 'Registry entry not found',
+        severity: 'critical',
+        message:
+          `No registry entry could be resolved for "${input.registryIdOrLegacy}" — ` +
+          'the required sections and artifacts for this filing could not be ' +
+          'determined, so this readiness figure is not meaningful. Verify the ' +
+          'application/submission type before relying on this assessment.',
+      },
+    ],
     regionalWarnings: [],
   };
 }

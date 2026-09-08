@@ -3,6 +3,8 @@ import { I } from '../icons';
 import { useLiveRows, EmptyState } from '../dataConnect';
 import { apiRequest, serverMessage } from '@/lib/queryClient';
 import type { SurfaceViewProps } from '../surfaceViews';
+import { usePublishSurfaceContext } from '../surfaceContext';
+import { useSurfaceActionHandlers } from '../surfaceActions';
 import { AnswerLead } from '../AnswerLead';
 import { IndFormsPanel } from './IndFormsPanel';
 import {
@@ -19,6 +21,8 @@ import type {
 } from '../fixtures/ind-lifecycle-data';
 import '../styles/project-home-v2.css';
 import { C2CToast, useToast } from '../toast';
+import { downloadBlob } from '../download';
+import { readShellProject } from '../shellProject';
 
 /* ── Live read shape: one org-scoped IND checklist (GET /api/ind-checklist).
    Assembled by server/services/ind-lifecycle/ind-checklist-view-assembler.ts from
@@ -164,6 +168,31 @@ const CHANGE_KINDS = OPTS(['added', 'revised', 'appended', 'withdrawn']);
 const EMPTY_FORMS: IndlForm[] = [];
 const EMPTY_SECTIONS: IndlSection[] = [];
 
+/* ── The open program, and which checklist row is really its IND ──
+   The checklist endpoint is org-scoped and this surface used to render rows[0]
+   unconditionally — so with two INDs in the org, the CMC build tab could be on
+   one program while this screen silently showed the other's readiness. The
+   program ↔ submission linkage is identity matching (product/title, the same
+   convention ensureSubmissionSpine and the checklist assembler use), applied
+   here so the screens agree. rows[0] remains the fallback when no program is
+   open or no row matches — WITH the mismatch said out loud, never silently. */
+interface ShellProjectRead {
+  id?: unknown;
+  title?: string;
+  product?: string;
+  code?: string;
+}
+
+/* The local copy of this reader is gone — `../shellProject` owns both ends of
+   the window channel, and a second reader is how the two drift. */
+
+function rowMatchesProgram(row: IndlChecklist, p: ShellProjectRead): boolean {
+  const norm = (v: unknown): string => String(v ?? '').trim().toLowerCase();
+  const programKeys = [p.title, p.product, p.code].map(norm).filter(Boolean);
+  const rowKeys = [row.productName, row.drugName, row.code].map(norm).filter(Boolean);
+  return programKeys.some((k) => rowKeys.includes(k));
+}
+
 /* ════ IND Lifecycle -- the deliverable-first IND workspace (21 CFR 312) ════ */
 
 export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
@@ -175,10 +204,42 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
      state, or an honest failed-load state — never a fixture. Readiness and the
      30-day clock are computed deterministically from the loaded forms/sections. */
   const { rows, loading, error } = useLiveRows<IndlChecklist>('/api/ind-checklist');
-  const checklist = rows[0] ?? null;
+  /* Prefer the row that IS the open program's IND; fall back to the first row
+     with the mismatch stated (scopeNote), never silently. */
+  const shellProject = readShellProject();
+  const matched = shellProject ? rows.find((r) => rowMatchesProgram(r, shellProject)) ?? null : null;
+  const checklist = matched ?? rows[0] ?? null;
+  const scopeNote =
+    checklist == null
+      ? null
+      : matched
+        ? rows.length > 1
+          ? `Showing the open program's IND (${checklist.productName ?? checklist.code}) — ${rows.length - 1} other IND${rows.length > 2 ? 's' : ''} in this organization.`
+          : null
+        : shellProject
+          ? `The open program (${shellProject.title ?? shellProject.id}) has no IND checklist yet — showing ${checklist.productName ?? checklist.code}, the organization's first.`
+          : rows.length > 1
+            ? `Showing ${checklist.productName ?? checklist.code} — ${rows.length - 1} other IND${rows.length > 2 ? 's' : ''} in this organization. Open a program to scope this screen to it.`
+            : null;
   const [tab, setTab] = useState<'file' | 'lifecycle'>('file');
   // Status note from the Module-1 forms panel (build/QC/render outcomes).
   const [formsNote, setFormsNote] = useToast();
+
+  /* AnA can switch between the File-the-IND checklist and the Lifecycle view —
+     the same view-state toggle a person makes. The registry enum validates
+     `tab`; the defensive guard keeps the handler honest if it drifts. */
+  useSurfaceActionHandlers('ind-checklist', {
+    'ind-checklist.open-tab': (params) => {
+      const target = params.tab;
+      if (target !== 'file' && target !== 'lifecycle') {
+        return { ok: false, reason: `"${target}" is not an IND tab — choose file or lifecycle.` };
+      }
+      const label = target === 'file' ? 'File the IND' : 'Lifecycle';
+      if (tab === target) return { ok: true, detail: `Already on the ${label} view` };
+      setTab(target);
+      return { ok: true, detail: `Opened the ${label} view` };
+    },
+  });
 
   // Null-safe derivation with stable empty seeds while the checklist is
   // unresolved (loading or failed load) so the readiness memo below is stable.
@@ -200,10 +261,124 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
     () => (receiptDate ? indlClock(receiptDate.toISOString()) : null),
     [receiptDate],
   );
+  /**
+   * What the clock is computed FROM. 21 CFR 312.40(b) starts the 30-day period
+   * at FDA's RECEIPT of the IND; the only date this surface has is the
+   * program's target submission date, which is a plan. A target date more than
+   * 30 days in the past therefore produced status 'safe_to_proceed', a
+   * good-tone chip, and the clock's own sentence — "clinical investigations may
+   * proceed (21 CFR 312.40(b))" — for an IND the FDA may never have received.
+   * That sentence authorises dosing the first human subject; it may only be
+   * said over a recorded receipt. Until the checklist carries one, the clock is
+   * a projection and says so in every register it speaks in.
+   */
+  // Typed as boolean, not narrowed to `false`: the receipt-backed branches stay
+  // live code for the day the checklist carries a recorded FDA receipt date.
+  const clockFromReceipt: boolean = false;
   const clearDate = useMemo(
     () => (clock ? new Date(clock.thirtyDayDate) : null),
     [clock],
   );
+
+  /* What AnA can see of this screen.
+     `R.assessed` is the fact that must not be flattened. A checklist with
+     nothing in it produces `assessed: false, ready: false, 0%` — and reporting
+     that as "0% ready" would let AnA discuss an IND that was never evaluated as
+     one that was evaluated and found wanting. `ready` is only ever true when
+     `assessed` is, and both travel.
+
+     The 30-day clock is null when the org has recorded no target submission
+     date, and that is published as itself rather than as a clock at zero: the
+     FDA 30-day review clock is a regulatory date, not a default. */
+  const anaContext = useMemo(() => {
+    /* `forms` / `sections` come off a live row, so they are only arrays when the
+       column arrived as one. Same degrade-don't-crash rule the render obeys. */
+    const formList = Array.isArray(forms) ? forms : [];
+    const sectionList = Array.isArray(sections) ? sections : [];
+    if (loading) {
+      return { summary: 'The IND checklist is still loading; nothing on screen is final yet.' };
+    }
+    if (error) {
+      return {
+        summary:
+          'The IND checklist could not be read, so this screen is showing no filing readiness because of ' +
+          'a failure, not because nothing is assembled.',
+        availableActions: ['Retry the IND checklist read'],
+      };
+    }
+    if (!checklist) {
+      return {
+        summary: 'IND lifecycle: this organisation has no IND checklist assembled yet, so there is no filing to work.',
+      };
+    }
+    return {
+      summary:
+        `IND lifecycle for ${checklist.code}` +
+        (checklist.drugName ? ` (${checklist.drugName})` : '') +
+        `, "${tab === 'file' ? 'File the IND' : 'Lifecycle'}" tab. ` +
+        (R.assessed
+          ? `Readiness ${R.overallPercentage}% — ${R.requiredSections.completed} of ${R.requiredSections.total} ` +
+            `required section(s) complete, ${formList.filter((f) => f.done).length} of ${formList.length} Module 1 ` +
+            `form(s) done. ${R.ready ? 'Assessed READY to file.' : 'NOT yet ready to file.'}`
+          : 'The checklist held nothing to evaluate, so filing readiness has NOT been assessed — this is not a zero-percent verdict.') +
+        (clock
+          ? clockFromReceipt
+            ? ` The 30-day clock: ${clock.status}, ${clock.daysUntilThirtyDay} day(s) to the 30-day date, ` +
+              `${clock.safeToProceed ? 'safe to proceed' : clock.onHold ? 'ON HOLD' : 'not yet cleared'}.`
+            : ` FDA receipt has NOT been recorded, so the 312.40(b) 30-day period has not started; ` +
+              `${clock.daysUntilThirtyDay} day(s) is a projection from the program's target submission date, not a clearance.`
+          : ' No target submission date is recorded, so no 30-day clock is projected.'),
+      facts: {
+        openTab: tab,
+        submissionId: checklist.submissionId ?? null,
+        code: checklist.code,
+        drugName: checklist.drugName,
+        productName: checklist.productName,
+        indication: checklist.indication,
+        sponsor: checklist.sponsorName,
+        submissionType: checklist.submissionType,
+        readinessAssessed: R.assessed,
+        readyToFile: R.ready,
+        readinessPercent: R.assessed ? R.overallPercentage : null,
+        requiredSections: R.assessed
+          ? {
+              total: R.requiredSections.total,
+              completed: R.requiredSections.completed,
+              incomplete: R.requiredSections.incomplete,
+            }
+          : null,
+        module1Forms: formList.map((f) => ({ id: f.id, title: f.title, reference: f.ref, done: f.done })),
+        sections: sectionList.slice(0, 24).map((sec) => ({
+          code: sec.code, title: sec.title, module: sec.module, status: sec.status,
+        })),
+        thirtyDayClock: clock
+          ? {
+              // `basis` is the load-bearing field: over a projection AnA must
+              // not be able to tell anyone they are clear to proceed, so
+              // safeToProceed is null — unknown — rather than the projection's
+              // own true.
+              basis: clockFromReceipt ? 'fda-receipt' : 'projection-from-target-submission-date',
+              status: clockFromReceipt ? clock.status : 'not_started',
+              thirtyDayDate: clock.thirtyDayDate,
+              daysUntil: clock.daysUntilThirtyDay,
+              safeToProceed: clockFromReceipt ? clock.safeToProceed : null,
+              onHold: clockFromReceipt ? clock.onHold : null,
+              rationale: clockFromReceipt
+                ? clock.rationale
+                : 'FDA receipt has not been recorded, so the 21 CFR 312.40(b) 30-day period has not started; the date is projected from the program’s target submission date.',
+            }
+          : null,
+        targetSubmissionDateRecorded: Boolean(targetReceiptDate),
+      },
+      availableActions: [
+        'Build, QC and render the Module 1 forms',
+        'Generate an IND deliverable (cover letter and the other wired cards) and download its PDF',
+        'File a sequence against the real submission record',
+        'Switch between the file-the-IND and lifecycle tabs',
+      ],
+    };
+  }, [loading, error, checklist, tab, R, forms, sections, clock, clockFromReceipt, targetReceiptDate]);
+  usePublishSurfaceContext('ind-checklist', anaContext);
 
   /* Cover-letter exemplar — the first deliverable wired end-to-end (POST
      /api/ind-lifecycle/cover-letter + /pdf). The other cards mirror it via the
@@ -256,10 +431,10 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
         <div className="surface-head">
           <div>
             {kicker}
-            <h1>IND Lifecycle</h1>
+            <h1>IND lifecycle</h1>
           </div>
         </div>
-        <div className="scaf-note" style={{ padding: '18px 10px' }}>
+        <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>
           Loading the IND checklist…
         </div>
       </div>
@@ -271,7 +446,7 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
         <div className="surface-head">
           <div>
             {kicker}
-            <h1>IND Lifecycle</h1>
+            <h1>IND lifecycle</h1>
           </div>
         </div>
         <EmptyState
@@ -289,7 +464,7 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
         <div className="surface-head">
           <div>
             {kicker}
-            <h1>IND Lifecycle</h1>
+            <h1>IND lifecycle</h1>
           </div>
         </div>
         <EmptyState
@@ -306,7 +481,10 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
   const drug = prog.drugName ?? prog.code;
   // Honest chip: with no recorded target date there is no clock state to name.
   const cst = clock
-    ? INDL_CLOCK_STATUS[clock.status] || { label: '--', tone: 'info' }
+    ? clockFromReceipt
+      ? INDL_CLOCK_STATUS[clock.status] || { label: '--', tone: 'info' }
+      // A projection never wears the cleared-to-proceed chip.
+      : { label: 'Projected from target date', tone: 'info' }
     : { label: 'No target date', tone: 'info' };
   const formsDone = forms.filter((f) => f.done).length;
   const deliverables = INDL_DELIVERABLES.filter((d) => d.group === tab);
@@ -359,15 +537,7 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
         setCl((s) => ({ ...s, busy: false, error: 'Could not render the cover letter PDF — sign in and retry.' }));
         return;
       }
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'ind-cover-letter.pdf';
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(url);
+      downloadBlob('ind-cover-letter.pdf', await res.blob());
       setCl((s) => ({ ...s, busy: false }));
     } catch (e) {
       setCl((s) => ({ ...s, busy: false, error: 'Could not render the cover letter PDF — ' + failMsg(e) + '.' }));
@@ -432,15 +602,7 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
         patchRun(id, { busy: false, error: `Could not render the PDF — ${serverErr(json, res.status)}.` });
         return;
       }
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = w.pdf.filename;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(url);
+      downloadBlob(w.pdf.filename, await res.blob());
       patchRun(id, { busy: false });
     } catch (e) {
       patchRun(id, { busy: false, error: 'Could not render the PDF — ' + failMsg(e) + '.' });
@@ -709,6 +871,15 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
               .filter(Boolean)
               .join(' -- ')}
           </p>
+          {/* Which IND this screen is scoped to, and why — stated whenever the
+              answer is not trivially "the only one". The CMC build tab and this
+              screen must never appear to describe the same program while
+              reading two different submissions. */}
+          {scopeNote && (
+            <p className="surface-sub" data-testid="indl-scope-note">
+              {scopeNote}
+            </p>
+          )}
         </div>
         <div className="surface-head-actions">
           <button
@@ -861,8 +1032,9 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
                         '.',
                     )
                   }
+                  title="Sends this request to AnA in the rail — it does not download a file here"
                 >
-                  {I.download} Export
+                  {I.sparkles} Ask AnA to draft this
                 </button>
               </div>
             </div>
@@ -874,12 +1046,14 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
                   {prog.sponsorName && <span>{prog.sponsorName}</span>}
                   <span>Initial IND — eCTD v4.0 (FDA)</span>
                   <span>
-                    Assessed{' '}
-                    {new Date().toLocaleDateString([], {
-                      year: 'numeric',
-                      month: 'short',
-                      day: 'numeric',
-                    })}
+                    {R.assessed
+                      ? 'Assessed ' +
+                        new Date().toLocaleDateString([], {
+                          year: 'numeric',
+                          month: 'short',
+                          day: 'numeric',
+                        })
+                      : 'Not yet assessed'}
                   </span>
                 </div>
                 <div className="indl-overall">
@@ -1060,7 +1234,7 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
             </div>
             <div className="indl-clock-big">
               {clock ? clock.daysUntilThirtyDay : '--'}
-              <span>days to safe-to-proceed</span>
+              <span>{clockFromReceipt ? 'days to safe-to-proceed' : 'days, projected from the target date'}</span>
             </div>
             <div className="indl-clock-rows">
               <div>
@@ -1078,13 +1252,16 @@ export function IndLifecycle({ onAsk, onNav }: SurfaceViewProps) {
             </div>
             <p className="indl-clock-note">
               {clock ? (
-                <>
-                  {clock.rationale}{' '}
+                clockFromReceipt ? (
+                  <>{clock.rationale}</>
+                ) : (
                   <span className="indl-proj">
-                    Projection from the program's recorded target submission
-                    date, until FDA receipt.
+                    FDA receipt has not been recorded for this IND, so the
+                    312.40(b) 30-day period has not started. The date above is
+                    projected from the program's target submission date — it is
+                    a plan, not a clearance to proceed.
                   </span>
-                </>
+                )
               ) : (
                 <>
                   No target submission date is recorded for this program, so

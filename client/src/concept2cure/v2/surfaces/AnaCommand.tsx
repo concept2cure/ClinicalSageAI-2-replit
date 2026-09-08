@@ -469,7 +469,7 @@ export function AnaCommand({ onAsk }: SurfaceViewProps) {
 
       {/* Portfolio roll-up: one → many programs */}
       {portfolio.loading ? (
-        <div className="scaf-note" style={{ padding: '18px 10px' }}>Loading portfolio…</div>
+        <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>Loading portfolio…</div>
       ) : portfolio.error ? (
         <EmptyState
           tone="error"
@@ -504,7 +504,7 @@ export function AnaCommand({ onAsk }: SurfaceViewProps) {
           })}
         </div>
       )}
-      <div className="ac-port-gap" style={{ margin: '2px 0 6px', padding: '8px 12px', fontSize: 12, lineHeight: 1.5, color: 'var(--text-300)', background: 'var(--bg-050)', border: '1px solid var(--border)', borderRadius: 8, display: 'flex', gap: 8, alignItems: 'flex-start' }}>
+      <div className="ac-port-gap">
         {Ico.info || I.alertTriangle}<span>Org-wide rollup over every program in your organization — average readiness, worst risk, and attention-ranked members.</span>
       </div>
 
@@ -541,7 +541,7 @@ export function AnaCommand({ onAsk }: SurfaceViewProps) {
             {/* Left -- continuity briefing (what changed, newly ready, needs attention) */}
             <div className="ac-col">
               {continuity.loading ? (
-                <div className="scaf-note" style={{ padding: '18px 10px' }}>Loading continuity briefing…</div>
+                <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>Loading continuity briefing…</div>
               ) : continuity.error ? (
                 <EmptyState
                   tone="error"
@@ -602,7 +602,7 @@ export function AnaCommand({ onAsk }: SurfaceViewProps) {
               <div className="ac-sec">{I.sparkles} Next best actions <span className="ac-sec-x">-- ranked, grounded, dispatchable</span></div>
               <div className="ac-recs">
                 {recsRes.loading ? (
-                  <div className="scaf-note" style={{ padding: '18px 10px' }}>Loading recommendations…</div>
+                  <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>Loading recommendations…</div>
                 ) : recsRes.error ? (
                   <EmptyState
                     tone="error"
@@ -652,7 +652,7 @@ export function AnaCommand({ onAsk }: SurfaceViewProps) {
                   executor returns terminal state (no step stream), so the in-flight
                   UI is an honest spinner, not a faked progress bar. */}
               {templates.loading ? (
-                <div className="scaf-note" style={{ padding: '18px 10px' }}>Loading workflows…</div>
+                <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>Loading workflows…</div>
               ) : templates.error ? (
                 <EmptyState
                   tone="error"
@@ -687,7 +687,7 @@ export function AnaCommand({ onAsk }: SurfaceViewProps) {
                 <div className="ac-gate-crumb">{progLabel}{gate ? ' · ' + gate.submissionType : ''} · pre-submission quality gate</div>
                 <div className="ac-gate-sub">readiness + CMC contradictions + CRL + RTF + ICH — one verdict, audited to Part 11</div>
               </div>
-              <button className="ac-gate-x" onClick={() => setGateOpen(false)}>{I.close}</button>
+              <button className="ac-gate-x" aria-label="Close" onClick={() => setGateOpen(false)}>{I.close}</button>
             </div>
             {gateRes.loading ? (
               <div className="scaf-note" style={{ padding: '28px 16px' }}>Running the pre-submission gate…</div>
@@ -753,7 +753,7 @@ export function AnaCommand({ onAsk }: SurfaceViewProps) {
                     : 'Review before running — this executes real steps and is audited'}
                 </div>
               </div>
-              <button className="ac-gate-x" onClick={closeRun}>{I.close}</button>
+              <button className="ac-gate-x" aria-label="Close" onClick={closeRun}>{I.close}</button>
             </div>
 
             {runErr ? (

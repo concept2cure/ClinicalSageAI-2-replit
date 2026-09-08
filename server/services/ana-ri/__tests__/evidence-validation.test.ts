@@ -8,6 +8,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { validateEvidence } from '../evidence-validation';
+import { buildTrustSummary } from '../response-contract';
 
 // Long enough to clear MIN_VALIDATION_LENGTH (200 chars).
 const pad = (s: string) => s + ' ' + 'Context follows. '.repeat(20);
@@ -62,10 +63,55 @@ describe('validateEvidence — itemized flagged claims', () => {
     expect(v.flagged_claims).toBeUndefined();
   });
 
-  it('passes short responses without flagging', () => {
+  it('reports a short response as UNASSESSED, not as verified', () => {
+    /* This test used to assert `v.validated === true` — it pinned the defect
+       in place. The shortcut returned `attempted: true, validated: true` with
+       every count zero, under the comment "Short responses get a quick pass —
+       no claims to validate". That is an assumption about LENGTH dressed as a
+       finding about CONTENT: "21 CFR 314.50(d)(5)(vi)(a) requires an
+       integrated summary of safety" is a whole regulatory claim in 78
+       characters.
+
+       Downstream it became a green check reading "Claims grounded" and a trust
+       line reading "Verified · 0 grounded · 0 weak · 0 missing · 0 sources" —
+       the platform telling someone drafting a submission that an answer's
+       claims had been checked and were sound, when the grounding pipeline had
+       not run.
+
+       Declining to judge a fragment is fine; the extractors want sentence
+       structure. Reporting the declined judgement as a pass is not. */
     const v = validateEvidence('Looks good.', 'ana-ri');
-    expect(v.validated).toBe(true);
+    expect(v.attempted, 'claimed the evidence check ran on a fragment').toBe(false);
+    expect(v.validated, 'claimed an unassessed answer was verified').toBe(false);
     expect(v.flagged_claims).toBeUndefined();
+  });
+
+  it('a short response carrying a real regulatory claim is not called verified', () => {
+    /* The concrete case the length assumption gets wrong. */
+    const v = validateEvidence(
+      '21 CFR 314.50(d)(5)(vi)(a) requires an integrated summary of safety.',
+      'ana-ri',
+    );
+    expect(v.validated).toBe(false);
+    expect(v.attempted).toBe(false);
+  });
+
+  it('says the check was not run, in the words the user actually sees', () => {
+    /* The verdict only matters through what it renders. `buildTrustSummary`
+       keys on `attempted`, so this is the sentence the surface now shows. */
+    const summary = buildTrustSummary(validateEvidence('Looks good.', 'ana-ri'));
+    expect(summary).toMatch(/not run/i);
+    expect(summary).not.toMatch(/\bVerified\b/);
+  });
+
+  it('still verifies a long, well-grounded answer — the working path', () => {
+    /* The fix must not turn everything into "not assessed". A response above
+       the floor is still assessed and can still pass. */
+    const v = validateEvidence(
+      pad('[KNOWN] 21 CFR 314.50 requires an integrated summary of safety.'),
+      'ana-ri',
+    );
+    expect(v.attempted).toBe(true);
   });
 
   it('bounds the flagged list and trims long claims', () => {

@@ -57,17 +57,39 @@ fail() {
     exit 1
 }
 
+# .env.local is read FIRST and wins, matching how server/index.ts loads them.
+# It is the git-ignored, machine-local file `npm run up` writes. Without this,
+# this script exported .env's DATABASE_URL over it and every entrypoint went on
+# using the committed default — a role with no grants on any application table,
+# so a correctly provisioned install still failed every query.
+read_env_key() {
+    local file="$1" key="$2" value
+    [[ -f "$file" ]] || return 1
+    value=$(grep -E "^${key}=" "$file" | tail -n 1 | sed "s/^${key}=//" || true)
+    value="${value%\"}"
+    value="${value#\"}"
+    [[ -n "$value" ]] || return 1
+    printf '%s' "$value"
+}
+
 load_env_file() {
+    local local_file="$PROJECT_ROOT/.env.local"
     local env_file="$PROJECT_ROOT/.env"
-    if [[ -f "$env_file" ]]; then
+    local url
+
+    if url=$(read_env_key "$local_file" DATABASE_URL); then
+        log_info "Loading DATABASE_URL from .env.local"
+        export DATABASE_URL="$url"
+    elif url=$(read_env_key "$env_file" DATABASE_URL); then
         log_info "Loading existing .env values"
-        local env_database_url
-        env_database_url=$(grep -E '^DATABASE_URL=' "$env_file" | tail -n 1 | sed 's/^DATABASE_URL=//' || true)
-        env_database_url="${env_database_url%\"}"
-        env_database_url="${env_database_url#\"}"
-        if [[ -n "$env_database_url" ]]; then
-            export DATABASE_URL="$env_database_url"
-        fi
+        export DATABASE_URL="$url"
+    fi
+
+    # The runtime connects as APP_DATABASE_URL when set; carry it through too.
+    if url=$(read_env_key "$local_file" APP_DATABASE_URL); then
+        export APP_DATABASE_URL="$url"
+    elif url=$(read_env_key "$env_file" APP_DATABASE_URL); then
+        export APP_DATABASE_URL="$url"
     fi
 }
 

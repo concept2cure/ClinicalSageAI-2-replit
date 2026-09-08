@@ -1,35 +1,44 @@
 /**
  * FDA Electronic Submissions Gateway (ESG) — AS2 over HTTPS + SFTP fallback.
  *
- * Real protocol code per FDA ESG Technical Specification (current 2024).
- * Two transports are supported:
+ * AS2 (RFC 4130) transport scaffolding over mTLS. It makes a REAL network call
+ * to the configured FDA AS2 endpoint (no simulation), credential-gated and
+ * fail-closed. Two transports:
  *
  *   1. AS2 over HTTPS (preferred for IND/NDA/BLA, 510(k), DMF):
  *      - mTLS handshake against the FDA AS2 endpoint
- *      - AS2 envelope: MIME message with application/EDI-X12 or
- *        application/octet-stream content, signed (PKCS#7), encrypted
- *        (PKCS#7), with AS2-From / AS2-To / Message-ID headers
+ *      - AS2-From / AS2-To / Message-ID / Disposition-Notification headers
  *      - Synchronous MDN (Message Disposition Notification) returned in
- *        the HTTP response; or asynchronous MDN delivered via callback
+ *        the HTTP response body, persisted verbatim (mdnRaw)
  *
  *   2. SFTP (used for very large submissions + by orgs without AS2):
- *      - SSH key auth against esg-sftp.fda.gov
- *      - PUT to /incoming/<application-id>/<sequence>/<filename.zip>
- *      - FDA picks up and emits ack1/ack2/ack3 over the same SFTP path
+ *      - SSH key auth against esg-sftp.fda.gov, PUT to /incoming/…
+ *      - FDA picks up and emits ack1/ack2/ack3 over /outgoing/ later
  *
- * Both transports require credentials set in the platform secrets store
- * (env vars in dev, vault in prod). The gateway flags presence + emits
- * CredentialError when missing rather than silently failing.
+ * ── KNOWN CONFORMANCE GAP (not yet production-conformant) ────────────────────
+ * The AS2 *message envelope* is NOT yet a PKCS#7/CMS S/MIME structure. The body
+ * is posted as `application/octet-stream`; `signAs2Body` computes a detached
+ * RSA-SHA256 signature but it is NOT attached as an S/MIME `multipart/signed` or
+ * `application/pkcs7-mime` part, and there is no PKCS#7 *encryption*. FDA ESG
+ * (Axway/Cyclone AS2) requires an S/MIME PKCS#7-signed message, so a real FDA
+ * endpoint would REJECT this envelope (a non-2xx, surfaced honestly as a
+ * GatewayError — the success path below only runs on a 2xx, which a conformant
+ * gateway will not return to a non-conformant message). Likewise the synchronous
+ * MDN is persisted but NOT cryptographically verified, and checkStatus() does
+ * not poll FDA for async ack1/ack2/ack3. Closing this needs a real CMS
+ * implementation (a vendored ASN.1/CMS library) + MDN signature verification +
+ * an ack poller. Do not represent AS2 transmission as production-ready until
+ * that lands; SFTP is the nearer-term real path (and requires ssh2-sftp-client,
+ * currently absent from package.json).
+ *
+ * Both transports require credentials in the platform secrets store; the gateway
+ * flags presence + emits CredentialError when missing rather than silently
+ * failing.
  *
  * Acks:
  *   ack1 — receipt-of-transmission (FDA gateway received the bytes)
  *   ack2 — virus scan + structure check passed (FDA AS2 accepted)
  *   ack3 — center-specific (CDER / CDRH / CBER) acceptance into review
- *
- * This file deliberately keeps the AS2 envelope hand-rolled rather than
- * pulling a heavy dependency — the AS2 spec is simple enough (RFC 4130)
- * that a 200-line implementation is more auditable than a vendored
- * library, and we already lean on Node's tls/crypto modules.
  */
 
 import { promises as fs } from 'fs';
@@ -44,6 +53,8 @@ import {
   resolveToRegistryEntry, getSubmissionTypeLabel,
   type GatewayAcknowledgment, type GatewayStatusResult, type GatewayTransmitRequest,
   type GatewayTransmitResult, type SubmissionGateway, type SubmissionStatus,
+  requiredAgencyMetadata,
+  ValidationError
 } from './types';
 
 /* ─── Credential resolution ──────────────────────────────────────── */
@@ -138,6 +149,49 @@ interface As2Message {
   contentType: string;
   body:        Buffer;
   signaturePem: string;
+}
+
+/** The agency application number the SFTP path is filed under; refused when absent. */
+function sftpApplicationId(req: GatewayTransmitRequest): string {
+  const raw = req.metadata?.applicationId;
+  const applicationId = typeof raw === 'string' ? raw.trim() : '';
+  if (!applicationId || /^UNASSIGNED/i.test(applicationId)) {
+    throw new ValidationError('FDA ESG SFTP transmit requires the agency application number; nothing is sent without it.', []);
+  }
+  return applicationId;
+}
+
+/**
+ * What a synchronous MDN says about the message it acknowledges. RFC 3798 /
+ * AS2: `Disposition: <mode>; <type>[/<modifier>: text]` — only a `processed`
+ * type without an `error` or `failure` modifier is an acceptance.
+ */
+function parseMdn(raw: string): { originalMessageId: string | null; accepted: boolean; disposition: string | null } {
+  const field = (name: string): string | null => {
+    const m = raw.match(new RegExp(`^${name}:[ \\t]*(.+?)[ \\t]*$`, 'im'));
+    return m ? m[1] : null;
+  };
+  const disposition = field('Disposition');
+  const afterMode = disposition ? disposition.slice(disposition.indexOf(';') + 1).trim().toLowerCase() : '';
+  const accepted = disposition !== null && disposition.includes(';')
+    && afterMode.startsWith('processed') && !/\b(error|failure|failed)\b/.test(afterMode);
+  return { originalMessageId: field('Original-Message-ID'), accepted, disposition };
+}
+
+/**
+ * Why a 2xx MDN is not an acceptance of `messageId`, or null when it is. A 2xx
+ * used to be recorded as received on its own: an MDN whose disposition was
+ * `failed` or `processed/error`, one for a different message, or a body with
+ * no disposition at all all went into the row as the agency's acceptance.
+ */
+function mdnRefusal(mdn: ReturnType<typeof parseMdn>, messageId: string): string | null {
+  if (mdn.disposition === null) return 'Agency returned success with no MDN disposition in the body.';
+  if (!mdn.accepted) return `Agency MDN did not accept the message: ${mdn.disposition}`;
+  const norm = (v: string) => v.trim().replace(/^<|>$/g, '').toLowerCase();
+  if (mdn.originalMessageId !== null && norm(mdn.originalMessageId) !== norm(messageId)) {
+    return `Agency MDN acknowledges a different message (${mdn.originalMessageId}).`;
+  }
+  return null;
 }
 
 function buildAs2Headers(msg: As2Message): Record<string, string> {
@@ -336,8 +390,12 @@ export class FdaEsgGateway implements SubmissionGateway {
     try {
       await loadFdaCredentials(organizationId, environment);
       return true;
-    } catch (err) {
-      return !(err instanceof CredentialError);
+    } catch {
+      // Any failure to load the credentials — a missing variable, or a cert
+      // or key file that cannot be read — means not configured. This used to
+      // answer true for everything except a missing variable, so an unmounted
+      // or rotated-away certificate showed the gateway as configured.
+      return false;
     }
   }
 
@@ -354,6 +412,14 @@ export class FdaEsgGateway implements SubmissionGateway {
        FDA ESG AS2 path has a documented 1 GB message limit. */
     const useSftp = normalizedReq.bundle.sizeBytes > 1_073_741_824;
     const transport: 'as2' | 'sftp' = useSftp ? 'sftp' : 'as2';
+    // The SFTP path is filed under /incoming/<application>/<sequence>/, so both
+    // are required there; the AS2 envelope carries neither (an eSTAR has no
+    // eCTD sequence). Refuse before a transmittal row exists: a refused
+    // request is not a transmittal.
+    if (transport === 'sftp') {
+      sftpApplicationId(normalizedReq);
+      requiredAgencyMetadata(normalizedReq);
+    }
     const transmittalId = await createTransmittalRow(normalizedReq, transport);
 
     try {
@@ -361,10 +427,12 @@ export class FdaEsgGateway implements SubmissionGateway {
       await updateTransmittal(transmittalId, { status: 'in_transit' });
 
       if (transport === 'sftp') {
-        const applicationId =
-          (req.metadata?.applicationId as string | undefined) ?? `APP-${req.packageId ?? 'pkg'}`;
-        const sequence =
-          (req.metadata?.sequence as string | undefined) ?? '0001';
+        // The application number and sequence name the /incoming/ path FDA
+        // files the bundle under. These defaulted to `APP-<packageId>` and
+        // '0001', so a bundle with no application number was deposited under
+        // a name FDA could not route.
+        const applicationId = sftpApplicationId(normalizedReq);
+        const sequence = requiredAgencyMetadata(normalizedReq).sequenceNumber;
         // Verify the on-disk bytes match the signed descriptor before SFTP
         // streams the file by path.
         await readVerifiedBundle(req.bundle);
@@ -405,6 +473,8 @@ export class FdaEsgGateway implements SubmissionGateway {
         creds.endpointUrl, headers, body,
         creds.clientCertPem, creds.clientKeyPem, creds.fdaCertPem,
       );
+      // The MDN's own Message-ID when FDA sends one; otherwise the AS2 message
+      // the MDN is verified (below) to acknowledge.
       const mdnId =
         (response.headers['message-id'] as string | undefined) ?? messageId;
 
@@ -424,6 +494,14 @@ export class FdaEsgGateway implements SubmissionGateway {
          §11). downloadAcknowledgment() returns this string when present and
          falls back to synthesised text for pre-migration rows. */
       const mdnRaw = response.body.toString('utf8');
+      const refusal = mdnRefusal(parseMdn(mdnRaw), messageId);
+      if (refusal) {
+        await updateTransmittal(transmittalId, {
+          status: 'rejected', httpStatus: response.httpStatus,
+          errorClass: 'gateway', errorMessage: refusal, mdnRaw,
+        });
+        throw new GatewayError(refusal, response.httpStatus, null, mdnRaw);
+      }
       await updateTransmittal(transmittalId, {
         status: 'received', transmissionId: mdnId,
         httpStatus: response.httpStatus, ackReceivedAt: new Date(),
@@ -476,6 +554,7 @@ export class FdaEsgGateway implements SubmissionGateway {
       transmissionId: rows[0].transmission_id,
       status: rows[0].status as SubmissionStatus,
       ackReceivedAt: rows[0].ack_received_at,
+      source: 'stored',
     };
   }
 

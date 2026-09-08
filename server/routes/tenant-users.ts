@@ -4,6 +4,14 @@ import { z } from 'zod';
 import { pool } from '../db';
 import { createScopedLogger } from '../utils/logger.js';
 import { invalidateOrgMembershipCache } from '../middleware/auth';
+import auditService from '../services/auditService';
+import { isEmailConfigured, sendInvitationEmail } from '../services/emailService';
+import {
+  INVITATION_TTL_MS,
+  mintPasswordSetupToken,
+  passwordSetupUrl,
+  resolveAppBaseUrl,
+} from '../services/password-setup-token';
 
 const log = createScopedLogger('tenant-users');
 
@@ -71,6 +79,110 @@ async function authorizeOrgAccess(
 function getCallerId(req: any): number | null {
   const callerId = Number(req.user?.id ?? req.userId);
   return callerId && !Number.isNaN(callerId) ? callerId : null;
+}
+
+/**
+ * The caller's session organization — what POST / falls back to when the
+ * body names no organizationId. AdminAccess and the onboarding wizard rely on
+ * this: the body is optional in createUserSchema, and the route used to
+ * answer 400 "Organization ID is required" to the one screen whose job is
+ * inviting members.
+ */
+function sessionOrganizationId(req: any): number | null {
+  const raw = req.tenantId ?? req.tenantContext?.organizationId ?? req.user?.organizationId;
+  const n = Number(raw);
+  return Number.isInteger(n) && n > 0 ? n : null;
+}
+
+/** What the admin is told about how the invitee will receive their link. */
+interface InvitationDelivery {
+  expiresAt: string | null;
+  emailSent: boolean;
+  /**
+   * 'email' — the invitee has the link; 'link' — the admin must hand it over;
+   * 'failed' — the account exists but no activation link could be issued.
+   */
+  delivery: 'email' | 'link' | 'failed';
+  /** Present only when no email went out: the one copy of the setup link. */
+  setupUrl?: string;
+  /** Present when SMTP is configured but refused the message. */
+  emailError?: string;
+}
+
+/**
+ * Activate a NEWLY created account: mint a password-setup token (the same
+ * token "forgot password" uses — server/services/password-setup-token.ts),
+ * store its hash on the user row, and send the invitation. The account was
+ * inserted with an unusable password hash, so this link is the only way in.
+ *
+ * Delivery is reported honestly. When SMTP is not configured (or refuses the
+ * message) nothing was sent, and the response carries the setup link so the
+ * org admin — who just created the account and is the only reader of this
+ * response — can hand it over. Either way the audit trail records which.
+ */
+async function issueInvitation(
+  req: any,
+  args: { userId: number; email: string; role: string; organizationId: number }
+): Promise<InvitationDelivery> {
+  const setup = mintPasswordSetupToken(INVITATION_TTL_MS);
+  // tenant-isolation-safe: users is a global identity table; this id is the row atomicCreateUser just created for the organization the caller was verified to administer (authorizeOrgAccess), inside this same request.
+  await pool.query(
+    `UPDATE users SET reset_token = $1, reset_token_expires_at = $2, updated_at = NOW() WHERE id = $3`,
+    [setup.tokenHash, setup.expiresAt, args.userId]
+  );
+  const setupUrl = passwordSetupUrl(resolveAppBaseUrl(req), setup.token);
+
+  const orgRow = await pool.query('SELECT name FROM organizations WHERE id = $1', [
+    args.organizationId,
+  ]);
+  const orgName: string = orgRow.rows[0]?.name ?? 'your organization';
+  const inviterName: string = req.user?.name || req.user?.email || 'An administrator';
+
+  let emailSent = false;
+  let emailError: string | undefined;
+  if (isEmailConfigured()) {
+    try {
+      emailSent = await sendInvitationEmail(
+        args.email,
+        inviterName,
+        orgName,
+        setupUrl,
+        setup.expiresAt
+      );
+    } catch (err) {
+      log.error('Invitation email failed', err);
+      emailError = 'The invitation email could not be sent';
+    }
+  }
+  const delivery: InvitationDelivery['delivery'] = emailSent ? 'email' : 'link';
+
+  const audit = await auditService.logAction({
+    tenantId: args.organizationId,
+    userId: getCallerId(req) ?? undefined,
+    action: 'user_invited',
+    resourceType: 'user',
+    resourceId: String(args.userId),
+    ipAddress: req.ip,
+    userAgent: req.get?.('user-agent'),
+    details: {
+      email: args.email,
+      role: args.role,
+      delivery,
+      emailSent,
+      invitationExpiresAt: setup.expiresAt.toISOString(),
+    },
+  });
+  if (!audit.persisted) {
+    log.warn('Audit log write failed (non-fatal)', { action: 'user_invited', err: audit.error });
+  }
+
+  return {
+    expiresAt: setup.expiresAt.toISOString(),
+    emailSent,
+    delivery,
+    ...(emailSent ? {} : { setupUrl }),
+    ...(emailError ? { emailError } : {}),
+  };
 }
 
 /**
@@ -161,7 +273,7 @@ router.post('/invitations/:invitationId/accept', async (req, res) => {
         FORBIDDEN: 403,
         NOT_PENDING: 409,
         QUOTA_EXCEEDED: 403,
-        NO_LICENSE: 400,
+        ORGANIZATION_NOT_FOUND: 404,
       };
       return res.status(statusByError[result.error ?? ''] ?? 400).json({
         success: false,
@@ -302,8 +414,10 @@ router.post('/', async (req, res) => {
     // Parse and validate the request body
     const validatedData = createUserSchema.parse(req.body);
 
-    // Get organization ID from the validated data (already converted to number)
-    const organizationId = validatedData.organizationId;
+    // The target organization: named in the body, else the caller's session
+    // tenant. authorizeOrgAccess below still requires the caller to be an
+    // admin of whichever one it is.
+    const organizationId = validatedData.organizationId ?? sessionOrganizationId(req);
     if (!organizationId) {
       return res.status(400).json({ error: 'Organization ID is required' });
     }
@@ -372,7 +486,7 @@ router.post('/', async (req, res) => {
           message: result.message,
         });
       }
-      return res.status(400).json({
+      return res.status(result.error === 'ORGANIZATION_NOT_FOUND' ? 404 : 400).json({
         success: false,
         error: result.error,
         message: result.message,
@@ -400,169 +514,36 @@ router.post('/', async (req, res) => {
       result.data && typeof result.data === 'object'
         ? (result.data as Record<string, unknown>)
         : {};
+
+    // A brand-new account has no password: activate it with a setup link.
+    // The account and membership are already committed, so a failure here is
+    // reported on the 201 rather than turned into a 500 that would claim the
+    // member was not created.
+    let invitation: InvitationDelivery | undefined;
+    if (createdUser.createdNewUser === true && Number.isInteger(Number(createdUser.id))) {
+      try {
+        invitation = await issueInvitation(req, {
+          userId: Number(createdUser.id),
+          email: validatedData.email,
+          role: validatedData.role,
+          organizationId,
+        });
+      } catch (err) {
+        log.error('Invitation could not be issued for the new member', err);
+        invitation = {
+          expiresAt: null,
+          emailSent: false,
+          delivery: 'failed',
+          emailError: 'The account was created but no activation link could be issued',
+        };
+      }
+    }
+
     res.status(201).json({
       ...createdUser,
       quotaInfo: result.quotaInfo,
+      ...(invitation ? { invitation } : {}),
     });
-  } catch (error) {
-    log.error('Error creating user:', error);
-    if (error instanceof z.ZodError) {
-      return res.status(400).json({ error: 'Invalid user data', details: error.errors });
-    }
-    res.status(500).json({ error: 'Failed to create user' });
-  }
-});
-
-// Original version of user creation (preserved for reference but NOT USED)
-router.post('/legacy', async (req, res) => {
-  try {
-    if (!pool) {
-      log.error('Database pool not available');
-      return res.status(500).json({ error: 'Database connection not available' });
-    }
-
-    log.debug('Create legacy user request received');
-
-    // Parse and validate the request body
-    const validatedData = createUserSchema.parse(req.body);
-
-    // Get organization ID from the validated data (already converted to number)
-    const organizationId = validatedData.organizationId;
-    if (!organizationId) {
-      return res.status(400).json({ error: 'Organization ID is required' });
-    }
-
-    if (!(await authorizeOrgAccess(req, res, organizationId, { requireAdmin: true }))) return;
-
-    // Check if user already exists
-    // tenant-isolation-safe: pre-membership identity resolution — users is a global identity keyed by email (org membership lives in organization_users); caller is org-admin-gated by authorizeOrgAccess above, and cross-org membership requires a consented invitation below.
-    const existingUserQuery = 'SELECT id FROM users WHERE email = $1';
-    const existingUserResult = await pool.query(existingUserQuery, [validatedData.email]);
-
-    let userId;
-
-    if (existingUserResult.rows.length > 0) {
-      // User exists, check if they're already in this organization
-      userId = existingUserResult.rows[0].id;
-
-      const existingOrgUserQuery =
-        'SELECT id FROM organization_users WHERE user_id = $1 AND organization_id = $2';
-      const existingOrgUserResult = await pool.query(existingOrgUserQuery, [
-        userId,
-        organizationId,
-      ]);
-
-      if (existingOrgUserResult.rows.length > 0) {
-        return res.status(400).json({ error: 'User is already a member of this organization' });
-      }
-
-      // Existing user: do NOT overwrite their global profile. The inviter's
-      // org has no authority over a user record that may belong to other
-      // organizations — title/department from the invite form apply only when
-      // the user is created here. (organization_users carries no per-org
-      // profile fields today; add them there if org-specific titles are needed.)
-      if (validatedData.title || validatedData.department) {
-        log.debug(
-          `Invite for existing user ${userId}: ignoring title/department from invite form (cross-org profile is not overwritten)`
-        );
-      }
-
-      // Existing user in ANOTHER organization: membership requires the user's
-      // consent, so create (or reuse) a PENDING invitation instead of adding
-      // them to organization_users (decision-register item 12, #727).
-      const existingInviteResult = await pool.query(
-        `SELECT id FROM organization_invitations
-         WHERE organization_id = $1 AND lower(email) = lower($2) AND status = 'pending'`,
-        [organizationId, validatedData.email]
-      );
-
-      let invitationId;
-      if (existingInviteResult.rows.length > 0) {
-        invitationId = existingInviteResult.rows[0].id;
-      } else {
-        const inviteInsertResult = await pool.query(
-          `INSERT INTO organization_invitations
-             (organization_id, user_id, email, role, invited_by_id, status, created_at)
-           VALUES ($1, $2, $3, $4, $5, 'pending', NOW())
-           ON CONFLICT DO NOTHING
-           RETURNING id`,
-          [organizationId, userId, validatedData.email, validatedData.role, getCallerId(req)]
-        );
-        invitationId = inviteInsertResult.rows[0]?.id;
-      }
-
-      return res.status(202).json({
-        success: true,
-        pendingInvitation: true,
-        message:
-          'User already belongs to another organization. A pending invitation requiring their consent was created; membership will be added when they accept.',
-        data: {
-          invitationId,
-          email: validatedData.email,
-          role: validatedData.role,
-          status: 'pending',
-        },
-      });
-    } else {
-      // Create new user
-      // tenant-isolation-safe: user creation is org-less by design — a users row is a global identity; org membership is created separately via organization_users. Gated by org-admin authorizeOrgAccess above.
-      const createUserQuery = `
-        INSERT INTO users (email, name, title, department, password_hash, status, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())
-        RETURNING id
-      `;
-
-      // Unguessable sentinel — not a valid bcrypt hash, so it can never
-      // authenticate; the user must complete password setup/reset.
-      const tempPasswordHash = 'invited_' + randomUUID();
-
-      const createUserResult = await pool.query(createUserQuery, [
-        validatedData.email,
-        validatedData.name,
-        validatedData.title || null,
-        validatedData.department || null,
-        tempPasswordHash,
-        'active',
-      ]);
-
-      userId = createUserResult.rows[0].id;
-    }
-
-    // Add user to organization
-    const addToOrgQuery = `
-      INSERT INTO organization_users (organization_id, user_id, role, created_at, updated_at)
-      VALUES ($1, $2, $3, NOW(), NOW())
-      RETURNING *
-    `;
-
-    await pool.query(addToOrgQuery, [organizationId, userId, validatedData.role]);
-    // New membership row — drop any cached negative auth-middleware result.
-    invalidateOrgMembershipCache(userId, organizationId);
-
-    // Get the full user data to return
-    const getUserQuery = `
-      SELECT
-        u.id,
-        u.email,
-        u.name,
-        u.title,
-        u.department,
-        u.avatar,
-        u.status,
-        u.last_login as "lastLogin",
-        u.created_at as "createdAt",
-        ou.role,
-        ou.created_at as "joinedAt"
-      FROM users u
-      INNER JOIN organization_users ou ON u.id = ou.user_id
-      WHERE u.id = $1 AND ou.organization_id = $2
-    `;
-
-    const userResult = await pool.query(getUserQuery, [userId, organizationId]);
-    const newUser = userResult.rows[0];
-
-    log.debug('Created user in organization:', newUser);
-    res.status(201).json(newUser);
   } catch (error) {
     log.error('Error creating user:', error);
     if (error instanceof z.ZodError) {

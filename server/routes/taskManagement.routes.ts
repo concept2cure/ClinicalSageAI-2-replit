@@ -2,7 +2,7 @@ import { Router, Request, Response } from 'express';
 import { db } from '../db';
 import { z } from 'zod';
 import { v4 as uuidv4 } from 'uuid';
-import { and, eq, or, ne, lt, desc, asc, inArray, isNull, sql, count, avg } from 'drizzle-orm';
+import { and, eq, desc, asc, inArray, isNull, sql } from 'drizzle-orm';
 import {
   unifiedTasks,
   taskTemplates,
@@ -17,7 +17,6 @@ import { loadTaskAnalytics } from '../services/tasking/task-analytics';
 import { listTemplatesForOrg } from '../services/tasking/task-template-catalog';
 import { createNotification } from '../services/notifications/notification-service';
 import {
-  BUILTIN_WORKFLOW_TEMPLATES,
   getBuiltinWorkflowTemplate,
 } from '../services/tasking/workflow-templates';
 import {

@@ -1,6 +1,6 @@
 /**
  * FilesTreePane — full filesystem view of a pathway program.
- * Ported from `design-system/ui_kits/mdx/FilesTreePane.jsx`.
+ * Ported from `ui_kits/mdx/FilesTreePane.jsx`.
  *
  * Every surface (dossier, correspondence, approvals, audit, sources) is a
  * folder under Files/. The Dossier branch is the live in-memory store; the
@@ -418,7 +418,7 @@ export function FilesTreePane({ pathway, tabs, onOpenSection }: FilesTreePanePro
         <div className="ftp-crumbs">
           {segs.map((s, i) => (
             <React.Fragment key={i}>
-              {i > 0 && <span className="ftp-sep">/</span>}
+              {i > 0 && <span className="ftp-sep" aria-hidden="true">/</span>}
               <span className={`ftp-crumb ${i === segs.length - 1 ? 'last' : ''}`}>{s}</span>
             </React.Fragment>
           ))}

@@ -130,11 +130,35 @@ export async function finalizePdfA(
         warnings.push('Ghostscript output was not a valid PDF; returning input unchanged.');
         return { pdfBytes, converted: false, pdfaPart: before.pdfAPart, warnings };
       }
+      // A zero exit status is NOT evidence of conversion. Ghostscript emits an
+      // ordinary, perfectly valid PDF and exits 0 when it cannot honour -dPDFA:
+      // a missing or unreadable OutputIntent ICC profile is the common cause,
+      // and -dPDFACompatibilityPolicy=1 is precisely the setting that says
+      // "carry on and produce output" rather than abort. This branch used to
+      // accept that file as converted, and then fill in `pdfaPart: '1'` for a
+      // document carrying no PDF/A identifier at all.
+      //
+      // That mattered more than an ordinary wrong value, because `converted` is
+      // the single fact the production gate rests on: pdfa-readiness rolls it up
+      // into allPdfA, pre-transmit-check clears the transmit on it under
+      // ECTD_REQUIRE_PDFA, and the package then reaches the agency as declared
+      // PDF/A-1b. A technical rejection would be the first true thing anyone was
+      // told. Refusing to claim a conversion the bytes do not show is the whole
+      // point of the gate.
+      if (!after.pdfAClaimed) {
+        warnings.push(
+          'Ghostscript exited successfully but its output carries no PDF/A identifier ' +
+            '(no pdfaid:part in the XMP metadata), so the file is NOT PDF/A. This usually ' +
+            'means the OutputIntent ICC profile was missing or unreadable in the image. ' +
+            'Returning input unchanged rather than reporting a conversion that did not happen.',
+        );
+        return { pdfBytes, converted: false, pdfaPart: before.pdfAPart, warnings };
+      }
       return {
         pdfBytes: converted,
         converted: true,
-        // gs PDF/A-1b output should declare part 1; fall back to '1' if XMP scan missed it.
-        pdfaPart: after.pdfAPart ?? '1',
+        // Reported from the output's own declaration, never assumed.
+        pdfaPart: after.pdfAPart,
         warnings,
       };
     } catch (err: any) {

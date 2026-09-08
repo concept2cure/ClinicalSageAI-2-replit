@@ -46,12 +46,15 @@
 import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
 import express from 'express';
 import request from 'supertest';
+import { randomBytes } from 'node:crypto';
 import {
   createJourneyDb,
   extractTableDdl,
   makeRequestDbClient,
   JourneyRecorder,
   type JourneyDb,
+  assertNoSchemaGaps,
+  assertNoDegradedTenantEnrichment,
 } from './harness';
 import {
   SUBMISSION_CORE_PGLITE_DDL,
@@ -60,9 +63,28 @@ import {
 
 const T = 180_000;
 
-process.env.AUDIT_HMAC_KEY = 'journey-drug-nda-ectd-audit-hmac-key-0000000';
+process.env.AUDIT_HMAC_KEY = randomBytes(32).toString('hex');
 
 const h = vi.hoisted(() => ({ db: null as unknown, pool: null as unknown }));
+
+// Only the AI PROVIDER is stubbed — every governed path around it stays real:
+// the run row is written, findings persist, and the dispatch gate reads that
+// persisted review state exactly as it does in production. A clean review is
+// returned so the journey proves the CLEARED path; the never-reviewed refusal
+// is asserted separately, before this runs.
+vi.mock('../../server/services/ai-gateway', () => ({
+  getGateway: () => ({
+    route: async () => ({
+      model: 'stub-model-for-journey',
+      content: JSON.stringify({
+        rtfRiskScore: 0.05,
+        crlRiskScore: 0.05,
+        summary: 'Synthetic journey review: no filing-blocking deficiencies identified.',
+        findings: [],
+      }),
+    }),
+  }),
+}));
 vi.mock('../../server/db', () => ({
   get db() {
     return h.db;
@@ -93,7 +115,8 @@ const USER = 1;
 /** A second authorized user in the same org — the signer. */
 const SIGNER = 2;
 const OUTSIDER = 3;
-const PASSWORD = 'Correct-Horse-Battery-42';
+const PASSWORD = randomBytes(24).toString('base64url');
+const WRONG_PASSWORD = randomBytes(24).toString('base64url');
 
 let jdb: JourneyDb;
 let app: express.Express;
@@ -116,6 +139,9 @@ const R = new JourneyRecorder(
     'migrations/20260527_mutation_primitives.sql',
     'migrations/20260609_audit_hmac_seal.sql',
     'migrations/20260524_program_workbench_schema.sql',
+    // regulatory_programs.application_number (WO-9 Click 1): the column the
+    // create handler now writes; replayed here for the same reason 20260524 is.
+    'migrations/20260907_regulatory_programs_application_number.sql',
     'migrations/20260528_phase9_document_schema.sql',
     'migrations/20260529_phase9_backfill.sql',
     'migrations/20260604_shadow_review.sql',
@@ -137,6 +163,7 @@ beforeAll(async () => {
   const baseline = extractTableDdl('migrations/0000_sweet_joseph.sql', [
     'organizations',
     'users',
+    'organization_users',
     'client_workspaces',
     'projects',
     'audit_logs',
@@ -149,9 +176,14 @@ beforeAll(async () => {
     // what a submission/sequence/leaf is.
     prereqSql: `${baseline}\n${SUBMISSION_CORE_PGLITE_DDL}\n${LEAF_SOURCE_PGLITE_DDL}`,
     migrations: [
+      // The Part 11 tamper-evident store (ledger L145) — cross-cutting.
+      'db/migrations/20260813_audit_tamper_proof_log.sql',
       'migrations/20260527_mutation_primitives.sql',
       'migrations/20260609_audit_hmac_seal.sql',
       'migrations/20260524_program_workbench_schema.sql',
+      // regulatory_programs.application_number (WO-9 Click 1): the column the
+      // create handler now writes; replayed here for the same reason 20260524 is.
+      'migrations/20260907_regulatory_programs_application_number.sql',
       'migrations/20260528_phase9_document_schema.sql',
       // Seeds the nda/bla/maa/jnda/denovo rule packs the phase-9 schema does not,
       // then supersedes the 5-node nda/fda placeholder with the real 71-section
@@ -191,6 +223,13 @@ beforeAll(async () => {
        ($2,'approver@journey.example','Quinn Approver',$4,'VP Regulatory'),
        ($3,'outsider@other.example','Iris Intruder',$4,'Head of Nothing')`,
     [USER, SIGNER, OUTSIDER, hash],
+  );
+  await jdb.pool.query(
+    `INSERT INTO organization_users (organization_id, user_id, role) VALUES
+       ($1,$2,'admin'),
+       ($1,$3,'admin'),
+       ($4,$5,'admin')`,
+    [ORG, USER, SIGNER, OTHER_ORG, OUTSIDER],
   );
   await jdb.pool.query(
     `INSERT INTO client_workspaces (id, organization_id, name, slug) VALUES
@@ -233,6 +272,16 @@ beforeAll(async () => {
 }, T);
 
 afterAll(async () => {
+  // A journey that ran against a database missing a table its subject writes
+  // to proves less than it claims (ledger L145). The one 42P01 this journey
+  // provokes on purpose — the rollback probe hides audit_logs for a single
+  // request — is captured and asserted inside that step, so no allowlist here.
+  // Ordered BEFORE the schema-gap check on purpose: a degraded membership is
+  // usually CAUSED by a missing column, and the gap check would otherwise
+  // throw first and report the symptom while hiding which claims were
+  // proven without an org context (ledger L148).
+  await assertNoDegradedTenantEnrichment();
+  assertNoSchemaGaps(jdb);
   const { jsonPath, mdPath } = R.write('drug-nda-ectd');
   // eslint-disable-next-line no-console
   console.info(`[journey] manifest: ${jsonPath}\n[journey] report:   ${mdPath}`);
@@ -240,11 +289,13 @@ afterAll(async () => {
 });
 
 /** Record a governed Part 11 `sign` action on a typed target, as `userId`. */
-async function signTarget(target: string, userId: number, reason: string) {
+async function signTarget(target: string, userId: number, reason: string, intent: 'freeze' | 'dispatch' | 'transmit' = 'freeze') {
   return asPrincipal(ORG, userId)(request(app).post('/api/c2c/actions/sign')).send({
     target,
     reason,
-    payload: { meaning: 'approval' },
+    // The meaning of the signature names the step it authorizes (11.50); the
+    // server refuses a sign action whose intent is another step.
+    payload: { intent, meaning: 'approval' },
     reauth: { password: PASSWORD },
   });
 }
@@ -346,6 +397,11 @@ describe('golden journey — drug NDA / eCTD', () => {
       // is written LAST, after the programme, the scaffold, the spine and the
       // anchor — so anything that survives proves the transaction was not one.
       await jdb.pool.query(`ALTER TABLE audit_logs RENAME TO audit_logs_journey_hidden`);
+      // The recorder (L145) sees the audit write fail with 42P01 inside this
+      // window. That is the step working, not a schema gap: capture it here,
+      // prove the hidden store was actually written to, and take it out of the
+      // journey's gap list so afterAll needs no allowlist (ledger L146).
+      const gapsBefore = jdb.schemaGaps.length;
       let res;
       try {
         res = await asPrincipal(ORG, USER)(request(app).post('/api/c2c/projects')).send({
@@ -357,6 +413,19 @@ describe('golden journey — drug NDA / eCTD', () => {
       } finally {
         await jdb.pool.query(`ALTER TABLE audit_logs_journey_hidden RENAME TO audit_logs`);
       }
+      // A probe blocked for any other reason proves nothing about the audit
+      // write, so "the hidden store was reached" is part of the verdict, not a
+      // throw — inside expectBlocked a throw reads as the block itself.
+      //
+      // Only the gap this probe CAUSED leaves the journey's list. Any other
+      // relation the request found missing inside the window is a real gap,
+      // and is put back for afterAll to report — taking the whole window out
+      // would have let the probe hide it.
+      const isHiddenAuditStore = (g: { code: string; message: string }) =>
+        g.code === '42P01' && g.message.includes('"audit_logs"');
+      const inWindow = jdb.schemaGaps.splice(gapsBefore);
+      jdb.schemaGaps.push(...inWindow.filter((g) => !isHiddenAuditStore(g)));
+      const auditStoreReached = inWindow.some(isHiddenAuditStore);
       const after = await jdb.pool.query(
         `SELECT (SELECT count(*)::int FROM regulatory_programs) AS g,
                 (SELECT count(*)::int FROM submissions) AS s,
@@ -366,11 +435,13 @@ describe('golden journey — drug NDA / eCTD', () => {
       const a = after.rows[0] as { g: number; s: number; p: number };
       return {
         blocked:
+          auditStoreReached &&
           res.status === 503 &&
           res.body.error === 'PENDING_STORE' &&
           b.g === a.g &&
           b.s === a.s &&
           b.p === a.p,
+        auditStoreReached,
         status: res.status,
         error: res.body?.error,
         programsBefore: b.g,
@@ -479,6 +550,45 @@ describe('golden journey — drug NDA / eCTD', () => {
       return { status: v.body.status };
     });
 
+    await R.step('dispatch-gate-refuses-a-never-reviewed-dossier', async () => {
+      // Fail-closed proof: before any review exists the gate must NOT clear,
+      // and must say why. A sequence with zero completed Shadow Review runs
+      // has zero open criticals for the same reason an unread document has
+      // zero findings — nothing ran to produce any. This step and the cleared
+      // assertion further down used to be one step asserting `cleared: true`
+      // ALONGSIDE `shadowReviewMissing: true`: contradictory, and it encoded
+      // the behaviour where a never-adversarially-reviewed dossier was
+      // dispatched to the agency as cleared. The blocker is matched by name so
+      // this cannot pass on some unrelated blocker appearing.
+      const res = await asPrincipal(ORG, USER)(
+        request(app).get(`/api/submissions/sequences/${sequenceId}/dispatch-readiness`),
+      );
+      expect(res.status, JSON.stringify(res.body)).toBe(200);
+      expect(res.body.gate.cleared).toBe(false);
+      expect(JSON.stringify(res.body.gate.blockers)).toMatch(/Shadow Review/i);
+      return { blockers: res.body.gate.blockers.length };
+    });
+
+    await R.step('shadow-review-runs-before-any-dispatch-readiness-claim', async () => {
+      // The dispatch gate refuses to clear a never-reviewed dossier (an unread
+      // dossier has zero open criticals for the same reason an unopened book
+      // has no typos). The journey therefore has to actually run the review —
+      // asserting a cleared gate without one was asserting a state the product
+      // now correctly refuses to reach.
+      const run = await asPrincipal(ORG, USER)(
+        request(app).post(`/api/submissions/sequences/${sequenceId}/shadow-review`),
+      ).send({ lens: 'fda_filing' });
+      expect(run.status, JSON.stringify(run.body)).toBe(200);
+
+      const runs = await asPrincipal(ORG, USER)(
+        request(app).get(`/api/submissions/sequences/${sequenceId}/shadow-review`),
+      );
+      expect(runs.status, JSON.stringify(runs.body)).toBe(200);
+      const list = Array.isArray(runs.body) ? runs.body : (runs.body.runs ?? []);
+      expect(list.length).toBeGreaterThan(0);
+      return { reviewRuns: list.length };
+    });
+
     await R.step('dispatch-readiness-is-computed-from-server-state', async () => {
       const res = await asPrincipal(ORG, USER)(
         request(app).get(`/api/submissions/sequences/${sequenceId}/dispatch-readiness`),
@@ -486,14 +596,34 @@ describe('golden journey — drug NDA / eCTD', () => {
       expect(res.status, JSON.stringify(res.body)).toBe(200);
       expect(res.body.validationErrors).toBe(0);
       expect(res.body.leafCount).toBe(1);
-      expect(res.body.gate.cleared).toBe(true);
+      /* This endpoint reports the DISPATCH verdict — the transmit re-check —
+         and this journey never builds and signs a release package, so the
+         §11.70 release-signature control blocks it. That is the correct answer
+         and it is asserted exactly: ONE blocker, and it is that control.
+         Everything the old `cleared: true` proved about every other gate —
+         validation, the shadow review, leaf placement, external validation — is
+         still proved, because any of them objecting would add a second blocker
+         and fail here.
+
+         The FREEZE the journey goes on to perform is governed by the same gates
+         minus that one requirement (assess-dispatch-readiness →
+         composeDispatchGatesForStep), which is why it succeeds below. Those two
+         facts together are the scoping: transmit still demands the signature,
+         freeze does not. */
+      const gateBlockers: string[] = res.body.gate.blockers ?? [];
+      expect(res.body.gate.cleared, JSON.stringify(res.body.gate)).toBe(false);
+      expect(gateBlockers, JSON.stringify(res.body.gate)).toHaveLength(1);
+      expect(gateBlockers[0]).toMatch(/release signature/i);
+      expect(res.body.releaseSignature).toMatchObject({ required: true, verdict: 'unsigned', cleared: false });
       // No agency-grade validator is licensed in this environment, and the
       // assessment says so rather than implying a clean external run.
       expect(res.body.externalValidation.configured).toBe(false);
       expect(res.body.externalValidation.ran).toBe(false);
-      // Nothing has adversarially reviewed this dossier — surfaced, not hidden.
-      expect(res.body.shadowReviewRunCount).toBe(0);
-      expect(res.body.shadowReviewMissing).toBe(true);
+      // The review the step above ran is what the gate consulted to clear —
+      // the count and the missing-flag are read back from persisted state, not
+      // from anything this assertion supplies.
+      expect(res.body.shadowReviewRunCount).toBeGreaterThan(0);
+      expect(res.body.shadowReviewMissing).toBe(false);
       // Module-1 completeness is a WARNING, never a fabricated hard error.
       const warnings = (res.body.readiness.findings as Array<{ severity: string; code: string }>)
         .filter((f) => f.severity === 'warning');
@@ -501,6 +631,7 @@ describe('golden journey — drug NDA / eCTD', () => {
       return {
         validationErrors: res.body.validationErrors,
         gateCleared: res.body.gate.cleared,
+        gateBlockers: gateBlockers,
         externalValidation: res.body.externalValidation,
         shadowReviewMissing: res.body.shadowReviewMissing,
         warnings: warnings.length,
@@ -641,7 +772,7 @@ describe('golden journey — drug NDA / eCTD', () => {
       const res = await asPrincipal(ORG, SIGNER)(request(app).post('/api/c2c/actions/sign')).send({
         target: `ectd-sequence:${sequenceId}`,
         reason: 'Attempting to sign without knowing the password.',
-        reauth: { password: 'not-the-password' },
+        reauth: { password: WRONG_PASSWORD },
       });
       const after = await jdb.pool.query(`SELECT count(*)::int AS n FROM electronic_signatures`);
       return {
@@ -686,6 +817,92 @@ describe('golden journey — drug NDA / eCTD', () => {
       };
     });
 
+    // ── Shadow Review has run, because the gate requires it ────────────────
+    await R.step('shadow-review-runs-and-the-presence-gate-clears', async () => {
+      // The dispatch gate blocks a never-adversarially-reviewed dossier: zero
+      // completed runs is UNASSESSED, not clean, so it must not clear. The
+      // journey used to freeze and dispatch without one ever having run — which
+      // is exactly what that rule exists to stop — so it now satisfies the rule
+      // rather than asserting around it.
+      //
+      // The run is SEEDED rather than driven through
+      // POST /sequences/:id/shadow-review, because that endpoint calls a model
+      // and returns 502 INVALID_AI_RESPONSE with no provider reachable. What
+      // this step exists to prove is the GATE's response to a completed run
+      // existing, which is a database fact; the reviewer's AI behaviour is
+      // covered by its own tests. Seeding the row the gate actually counts —
+      // status 'complete', same org, not deleted — keeps the journey honest
+      // about which half it is exercising.
+      await jdb.pool.query(
+        `INSERT INTO shadow_review_runs
+           (sequence_id, organization_id, region, lens, status, summary, created_by)
+         VALUES ($1, $2, 'fda', 'fda_filing', 'complete', 'Journey-seeded completed run', $3)`,
+        [sequenceId, ORG, USER],
+      );
+
+      const res = await asPrincipal(ORG, USER)(
+        request(app).get(`/api/submissions/sequences/${sequenceId}/dispatch-readiness`),
+      );
+      expect(res.status, JSON.stringify(res.body)).toBe(200);
+      expect(res.body.shadowReviewRunCount).toBeGreaterThan(0);
+      expect(res.body.shadowReviewMissing).toBe(false);
+      // The blocker that was present before is gone, and named specifically so
+      // this cannot pass merely because the blocker list changed shape.
+      expect(
+        (res.body.gate.blockers as string[]).some((b) => /Shadow Review/i.test(b)),
+      ).toBe(false);
+      return {
+        shadowReviewRunCount: res.body.shadowReviewRunCount,
+        gateCleared: res.body.gate.cleared,
+        blockers: res.body.gate.blockers,
+      };
+    });
+
+    // ── 11.70: the signature is bound to the leaf manifest it signed ────────
+    await R.expectBlocked('a-leaf-placed-after-signing-invalidates-the-signature', async () => {
+      // The digest was persisted at sign time and never consulted, so a leaf
+      // edited after signing was frozen under a signature applied to other bytes.
+      const placed = await asPrincipal(ORG, USER)(
+        request(app).put(`/api/submissions/sequences/${sequenceId}/leaves`),
+      ).send({ sectionCode: '2.7', title: 'Clinical Summary', lifecycleOp: 'new', documentTable: 'coauthor_documents', documentId: 100 });
+      expect(placed.status, JSON.stringify(placed.body)).toBe(200);
+      const res = await asPrincipal(ORG, SIGNER)(
+        request(app).post(`/api/submissions/sequences/${sequenceId}/freeze`),
+      ).send({ signatureActionId });
+      const seq = await jdb.pool.query(`SELECT status FROM ectd_sequences WHERE id = $1`, [sequenceId]);
+      return {
+        blocked:
+          res.status === 403 &&
+          res.body?.error?.code === 'GOVERNED_REQUIRED' &&
+          /changed after it was signed/.test(String(res.body?.error?.message)) &&
+          (seq.rows[0] as { status: string } | undefined)?.status === 'validated',
+        status: res.status,
+        code: res.body?.error?.code,
+        message: res.body?.error?.message,
+      };
+    });
+
+    await R.step('re-sign-the-current-leaf-manifest', async () => {
+      const res = await signTarget(`ectd-sequence:${sequenceId}`, SIGNER, 'Approved for freeze: re-signed after the 2.7 leaf was placed.');
+      expect(res.status, JSON.stringify(res.body)).toBe(200);
+      signatureActionId = res.body.actionId;
+      return { actionId: signatureActionId };
+    });
+
+    await R.expectBlocked('a-signature-whose-intent-is-dispatch-does-not-freeze', async () => {
+      // 11.50: the meaning of the signature is the step it authorizes.
+      const dispatchSign = await signTarget(`ectd-sequence:${sequenceId}`, SIGNER, 'Approved for dispatch.', 'dispatch');
+      expect(dispatchSign.status, JSON.stringify(dispatchSign.body)).toBe(200);
+      const res = await asPrincipal(ORG, SIGNER)(
+        request(app).post(`/api/submissions/sequences/${sequenceId}/freeze`),
+      ).send({ signatureActionId: dispatchSign.body.actionId });
+      return {
+        blocked: res.status === 403 && res.body?.error?.code === 'GOVERNED_REQUIRED' && /intent 'dispatch', not 'freeze'/.test(String(res.body?.error?.message)),
+        status: res.status,
+        message: res.body?.error?.message,
+      };
+    });
+
     // ── The freeze that is actually authorized ─────────────────────────────
     await R.step('the-matching-signature-freezes-the-sequence', async () => {
       const res = await asPrincipal(ORG, SIGNER)(
@@ -713,6 +930,24 @@ describe('golden journey — drug NDA / eCTD', () => {
       expect(a.new_values.signatureActionId).toBe(signatureActionId);
       expect(a.new_values.validationErrors).toBe(0);
       return { status: s.status, frozenAt: !!s.frozen_at, auditedSignature: a.new_values.signatureActionId };
+    });
+
+    await R.expectBlocked('the-spent-freeze-signature-does-not-authorize-dispatch', async () => {
+      // One sign used to authorize freeze, dispatch and transmit alike: a
+      // replay of the freeze-time actionId dispatched the sequence.
+      const res = await asPrincipal(ORG, SIGNER)(
+        request(app).post(`/api/submissions/sequences/${sequenceId}/dispatch`),
+      ).send({ signatureActionId });
+      const seq = await jdb.pool.query(`SELECT status FROM ectd_sequences WHERE id = $1`, [sequenceId]);
+      return {
+        blocked:
+          res.status === 403 &&
+          res.body?.error?.code === 'GOVERNED_REQUIRED' &&
+          (seq.rows[0] as { status: string } | undefined)?.status === 'frozen',
+        status: res.status,
+        code: res.body?.error?.code,
+        message: res.body?.error?.message,
+      };
     });
 
     await R.expectBlocked('a-frozen-sequences-leaves-are-immutable', async () => {
@@ -782,6 +1017,13 @@ describe('golden journey — drug NDA / eCTD', () => {
         'route, and the production fail-closed rule (ECTD_REQUIRE_EVALIDATOR) is asserted through the pure ' +
         'gate function rather than by mutating NODE_ENV mid-journey. The licensed engine itself CANNOT be ' +
         'exercised here — it is a procurement artifact.',
+      'This journey never builds and signs a release package, so the \u00a711.70 release-signature control ' +
+        'blocks the DISPATCH verdict the readiness endpoint reports \u2014 asserted here as exactly one blocker ' +
+        'rather than worked around. The freeze it does perform is governed by the same gates minus that ' +
+        'requirement, which is the scoping that control\'s own design states (it calls itself the ' +
+        'transmit-time re-check). A journey that drives the package orchestrator to a signed release, and ' +
+        'so reaches a cleared dispatch verdict, is the follow-on; the signed-package path has its own ' +
+        'coverage in server/services/ectd/__tests__/signed-package-export.test.ts.',
       'Assembly to eCTD bytes and transmission to the FDA ESG are deliberately out of scope: the export ' +
         'generator has its own journey (submission-export-package) and transmission needs a live gateway ' +
         'account. This journey ends at a frozen, signature-bound sequence.',

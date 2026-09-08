@@ -4,7 +4,7 @@
  * Search + select an evidence object, pick the link type + strength,
  * write a rationale, then route through <GovernedConfirmDialog> to attach.
  *
- * Port basis: design-system/ui_kits/pdev/Evidence.jsx.
+ * Port basis: ui_kits/pdev/Evidence.jsx.
  *
  * The kit's POOL fixture is gone (per CLAUDE.md "Seed data fixtures must
  * not land in v2"): this searches live against GET /api/evidence-objects,
@@ -104,7 +104,12 @@ export function PdevEvidencePicker({
     };
   }, [programId, query]);
 
-  const onAttach = async () => {
+  /* Takes the ConfirmResult now.
+     This was `onConfirm={() => onAttach()}` — a zero-argument arrow, silently
+     assignable to the dialog's `(result: ConfirmResult) => void` prop — so the
+     reason the operator typed under "Captured verbatim in the audit log" was
+     dropped on the floor, and the server had no field to receive it either. */
+  const onAttach = async (reasonForChange?: string) => {
     if (!selected) return;
     setConfirmError(null);
     try {
@@ -115,6 +120,7 @@ export function PdevEvidencePicker({
         linkType,
         strength,
         rationale: rationale.trim(),
+        reasonForChange,
       });
       onAttached();
       onClose();
@@ -282,7 +288,7 @@ export function PdevEvidencePicker({
             setPending(null);
             setConfirmError(null);
           }}
-          onConfirm={() => onAttach()}
+          onConfirm={(result) => onAttach(result.reason)}
           submitError={confirmError}
         />
       )}

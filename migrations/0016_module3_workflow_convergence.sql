@@ -15,13 +15,27 @@ DO $$ BEGIN
 END $$;
 
 -- 2. Ensure cmc_module3_sections has the unique constraint for upsert
+--
+-- AMENDED IN PLACE 2026-09-08 (CLAUDE.md Rule 1). This created
+--   CONSTRAINT cmc_module3_sections_project_section UNIQUE (project_id, section_key)
+-- which OMITS organization_id.
+--
+-- What was removed: the tenant-blind constraint.
+-- Why: uniqueness is the arbiter ON CONFLICT resolves against, so a key without
+-- the tenant column decides WHOSE ROW an upsert lands on — the cross-tenant
+-- overwrite documented in full in
+-- migrations/20260728_cmc_module3_org_scoped_uniqueness.sql.
+-- Which change removed it: that file, which drops this constraint and creates
+-- the org-scoped index. Amended here as well because install-fresh applies both
+-- files, so leaving the tenant-blind constraint here re-created the very defect
+-- 20260728 exists to remove, and left a window inside a fresh install during
+-- which an upsert could land on another tenant's row. Found by
+-- `npm run ci:migration-drop-safety` once it was taught about the second
+-- applier.
 DO $$ BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_constraint WHERE conname = 'cmc_module3_sections_project_section'
-  ) THEN
-    ALTER TABLE cmc_module3_sections
-      ADD CONSTRAINT cmc_module3_sections_project_section
-      UNIQUE (project_id, section_key);
+  IF to_regclass('public.cmc_module3_sections') IS NOT NULL THEN
+    CREATE UNIQUE INDEX IF NOT EXISTS cmc_module3_sections_org_project_key_idx
+      ON public.cmc_module3_sections (organization_id, project_id, section_key);
   END IF;
 END $$;
 

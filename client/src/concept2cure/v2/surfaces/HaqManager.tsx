@@ -2,12 +2,15 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { I } from '../icons';
 import { EmptyState, useLiveData } from '../dataConnect';
 import { usePublishSurfaceContext } from '../surfaceContext';
-import { apiRequest } from '@/lib/queryClient';
+import { useSurfaceActionHandlers, notifySurfaceActionReady } from '../surfaceActions';
+import { apiRequest, serverMessage } from '@/lib/queryClient';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { C2CForm } from '../C2CForm';
 import type { C2CFormConfig } from '../C2CForm';
 import '../styles/project-home-v2.css';
 import { C2CToast, useToast } from '../toast';
+import { downloadBlob, downloadText, safeFileName } from '../download';
+import { shellProgramName } from '../shellProject';
 
 /* ── Display types — aligned to the GET /api/haq-manager/rounds contract.
    server/routes/haq-manager.ts maps the governed HAQ store (feature store over
@@ -29,7 +32,12 @@ interface HaqRound {
   type: string;
   received: string;
   due: string;
-  clockDays: number;
+  /* Days until the recorded due date, measured against today by the server.
+     Negative is overdue. NULL means the letter records no parseable due date,
+     and there is then no countdown to show — the number this used to render
+     was the one stored when the letter was logged and never refreshed. */
+  clockDays: number | null;
+  clockBasis?: string;
   clockTotal: number;
   note: string;
 }
@@ -74,6 +82,13 @@ const EMPTY_QUESTIONS: Record<string, HaqQuestion[]> = {};
 /* ════ HaqManager -- Health Authority Questions response workbench ════ */
 
 export function HaqManager({ onAsk }: SurfaceViewProps) {
+  /* The open programme, named as a person would say it — never a hardcoded
+     product. `null` when no programme is open, and every caller below phrases
+     its request without one rather than substituting a placeholder: an
+     assistant that has to ask which programme beats one confidently answering
+     about the wrong one. */
+  const program = shellProgramName();
+
   /* Live governed HAQ store — the authority letters as "rounds" plus their
      questions grouped by round (server/routes/haq-manager.ts → GET /rounds).
      useLiveData unwraps the `{ data }` success envelope, so the payload is the
@@ -105,6 +120,45 @@ export function HaqManager({ onAsk }: SurfaceViewProps) {
   }));
   const [activeId, setActiveId] = useState<string>('');
   const effActiveId = activeId || qs[0]?.id || '';
+
+  /* AnA can open any agency question by its id or a phrase from its text — the
+     same row click a person makes — switching rounds if the question lives in
+     another one, so its analysis, draft and commitments show. Resolved across
+     the REAL store with honest misses; held (retry) while the rounds load.
+     Selecting is view-state only — drafting an answer and committing a response
+     stay governed human acts, never reachable from here. */
+  useSurfaceActionHandlers('haq-manager', {
+    'haq-manager.select-question': (params) => {
+      const raw = String(params.question ?? '').trim();
+      if (!raw) return { ok: false, reason: 'Name a question by its id or a phrase from its text.' };
+      if (roundsState.loading) return { ok: false, reason: 'The HAQ rounds are still loading.', retry: true };
+      if (roundsState.error) {
+        return { ok: false, reason: 'The HAQ store did not respond, so there are no questions to open.' };
+      }
+      // Every question across every round, plus optimistic local adds, deduped
+      // by display id (persisted first so its real dbId wins over an add).
+      const seen = new Set<string>();
+      const all: HaqQuestion[] = [];
+      for (const cand of [...Object.values(questionsByRound).flat(), ...extra]) {
+        if (seen.has(cand.id)) continue;
+        seen.add(cand.id);
+        all.push(cand);
+      }
+      if (all.length === 0) return { ok: false, reason: 'No agency questions are recorded yet.' };
+      const needle = raw.toLowerCase();
+      const exact = all.filter((c) => c.id.toLowerCase() === needle);
+      const hits = exact.length ? exact : all.filter((c) => (c.q ?? '').toLowerCase().includes(needle));
+      if (hits.length === 0) return { ok: false, reason: `No agency question matching "${raw}".` };
+      if (hits.length > 1) return { ok: false, reason: `"${raw}" matches ${hits.length} questions — use the exact id.` };
+      const hit = hits[0];
+      if (hit.roundId && hit.roundId !== effRoundId) setRoundId(hit.roundId);
+      setActiveId(hit.id);
+      return { ok: true, detail: `Opened ${hit.id}` };
+    },
+  });
+  useEffect(() => {
+    if (!roundsState.loading && !roundsState.error) notifySurfaceActionReady('haq-manager');
+  }, [roundsState.loading, roundsState.error]);
 
   const HAQ_FORM: C2CFormConfig = {
     eyebrow: 'HAQ — log question',
@@ -188,7 +242,7 @@ export function HaqManager({ onAsk }: SurfaceViewProps) {
             ((q && q.id) || 'question'),
         });
       }
-    } catch (_e) {
+    } catch {
       /* noop */
     }
   }, [effActiveId, effRoundId]);
@@ -219,6 +273,69 @@ export function HaqManager({ onAsk }: SurfaceViewProps) {
       fireToast(`Couldn’t ${verb} — ` + (e instanceof Error ? e.message : String(e)) + '.', 'error');
     }
   };
+  /* ── "Assemble response package" ───────────────────────────────────────────
+     The primary action of the whole workbench, and it had NO onClick at all:
+     a user approved every question in the round, clicked the one button
+     everything else builds toward, and nothing happened.
+
+     POST /api/haq-manager/letters/:id/assemble assembles the package from the
+     round's own approved responses — question text, approved response,
+     citations, commitments, in question order — and REFUSES with the list of
+     what is outstanding if any question is unapproved. The Markdown it returns
+     downloads as-is, or goes to the DOCX/PDF renderer. Nothing is drafted on
+     the way through. */
+  const [assembling, setAssembling] = useState<'docx' | 'md' | null>(null);
+  const assemble = async (format: 'docx' | 'md') => {
+    if (assembling || !round) return;
+    setAssembling(format);
+    try {
+      const res = await apiRequest('POST', `/api/haq-manager/letters/${encodeURIComponent(round.id)}/assemble`, {});
+      const json = (await res.json().catch(() => null)) as
+        | { success?: boolean; error?: string; data?: { markdown: string; title: string; questionCount: number; questionsWithNoResponseText: string[] } }
+        | null;
+      if (!res.ok || json?.success !== true || !json.data?.markdown) {
+        fireToast(
+          // `json.error` was read raw — an enum token or internal string would
+          // have reached the toast. The canonical reader filters both.
+          'The package was not assembled — ' + (serverMessage(json) ?? `the server refused it (HTTP ${res.status})`),
+          'error',
+        );
+        return;
+      }
+      const { markdown, title, questionCount, questionsWithNoResponseText } = json.data;
+      const base = safeFileName(title, 'haq-response-package');
+      let ok: boolean;
+      if (format === 'md') {
+        ok = downloadText(base + '.md', markdown, 'text/markdown;charset=utf-8');
+      } else {
+        const r2 = await apiRequest('POST', '/api/concept2cure/artifacts/export-docx', { title, content: markdown });
+        if (!r2.ok) {
+          const b = await r2.json().catch(() => null);
+          fireToast(
+            'The package assembled but the Word file was not produced — ' +
+              ((b as any)?.error?.message ?? (b as any)?.error ?? `HTTP ${r2.status}`) + '.',
+            'error',
+          );
+          return;
+        }
+        ok = downloadBlob(base + '.docx', await r2.blob());
+      }
+      fireToast(
+        ok
+          ? `Response package downloaded — ${questionCount} approved response${questionCount === 1 ? '' : 's'}.` +
+              (questionsWithNoResponseText.length
+                ? ` ${questionsWithNoResponseText.join(', ')} ${questionsWithNoResponseText.length === 1 ? 'carries' : 'carry'} no response text.`
+                : '')
+          : 'The package was built but the browser refused the download.',
+        ok ? 'ok' : 'error',
+      );
+    } catch (e) {
+      fireToast('The package was not assembled — ' + (e instanceof Error ? e.message : String(e)) + '.', 'error');
+    } finally {
+      setAssembling(null);
+    }
+  };
+
   const approved = qs.filter((x) => x.status === 'approved').length;
   const pct = qs.length ? Math.round((approved / qs.length) * 100) : 0;
   const stPill = (s: string) =>
@@ -260,7 +377,11 @@ export function HaqManager({ onAsk }: SurfaceViewProps) {
               roundType: round.type,
               receivedOn: round.received,
               responseDue: round.due,
+              /* null = no due date recorded, negative = past due. Never a
+                 recalled figure: the basis says how it was arrived at. */
               clockDaysRemaining: round.clockDays,
+              clockBasis: round.clockBasis ?? 'unknown',
+              responseOverdue: typeof round.clockDays === 'number' ? round.clockDays < 0 : null,
             }
           : {}),
         questionCount: qs.length,
@@ -289,7 +410,7 @@ export function HaqManager({ onAsk }: SurfaceViewProps) {
       <div className="haq">
         <div className="haq-head">
           <div>
-            <div className="sec-kicker">PLATFORM — POST-SUBMISSION</div>
+            <div className="reg-eyebrow">PLATFORM — POST-SUBMISSION</div>
             <h1 className="haq-title">Health authority questions</h1>
             <p className="haq-sub">
               Agency information requests and lists of questions — decomposed,
@@ -309,7 +430,7 @@ export function HaqManager({ onAsk }: SurfaceViewProps) {
         </div>
 
         {roundsState.loading ? (
-          <div className="scaf-note" style={{ padding: '18px 10px' }}>
+          <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>
             Loading agency questions…
           </div>
         ) : roundsState.error ? (
@@ -330,10 +451,17 @@ export function HaqManager({ onAsk }: SurfaceViewProps) {
             {/* round selector */}
             <div className="haq-rounds">
               {rounds.map((r) => {
-                const cp = r.clockTotal
-                  ? (r.clockDays / r.clockTotal) * 100
-                  : 0;
-                const urgent = r.clockDays <= 7;
+                /* The bar shows time REMAINING, so it empties as the clock
+                   runs down and reads empty once the date has passed. With no
+                   due date there is no proportion to draw. */
+                const known = typeof r.clockDays === 'number';
+                const left = known ? (r.clockDays as number) : null;
+                const overdue = left !== null && left < 0;
+                const cp =
+                  left === null || !r.clockTotal
+                    ? 0
+                    : Math.max(0, Math.min(100, (left / r.clockTotal) * 100));
+                const urgent = left !== null && left <= 7;
                 return (
                   <button
                     key={r.id}
@@ -356,8 +484,17 @@ export function HaqManager({ onAsk }: SurfaceViewProps) {
                     >
                       <span className="ico">{I.clock}</span>
                       <span>
-                        <b>{r.clockDays}d</b> of {r.clockTotal}d left — due{' '}
-                        {r.due}
+                        {left === null ? (
+                          <>No response due date recorded</>
+                        ) : overdue ? (
+                          <>
+                            <b>{Math.abs(left)}d overdue</b> — was due {r.due}
+                          </>
+                        ) : (
+                          <>
+                            <b>{left}d</b> of {r.clockTotal}d left — due {r.due}
+                          </>
+                        )}
                       </span>
                     </div>
                     <div className="haq-round-bar">
@@ -380,17 +517,28 @@ export function HaqManager({ onAsk }: SurfaceViewProps) {
               <div className="haq-ready-bar">
                 <span style={{ width: pct + '%' }} />
               </div>
-              <button
-                className="haq-assemble"
-                disabled={pct < 100}
-                title={
-                  pct < 100
-                    ? 'Approve all responses to assemble the package'
-                    : 'Assemble the response package'
-                }
-              >
-                {I.fileText} Assemble response package
-              </button>
+              <div className="haq-assemble-row">
+                <button
+                  className="haq-assemble"
+                  disabled={pct < 100 || assembling !== null || qs.length === 0}
+                  onClick={() => void assemble('docx')}
+                  title={
+                    pct < 100
+                      ? 'Approve all responses to assemble the package'
+                      : 'Assemble the response package as a Word document'
+                  }
+                >
+                  {I.fileText} {assembling === 'docx' ? 'Assembling…' : 'Assemble response package'}
+                </button>
+                <button
+                  className="haq-assemble alt"
+                  disabled={pct < 100 || assembling !== null || qs.length === 0}
+                  onClick={() => void assemble('md')}
+                  title="Download the assembled package as Markdown"
+                >
+                  {assembling === 'md' ? 'Assembling…' : 'Markdown'}
+                </button>
+              </div>
             </div>
 
             <div className="haq-grid">
@@ -502,7 +650,13 @@ export function HaqManager({ onAsk }: SurfaceViewProps) {
                       className="haq-act"
                       onClick={() =>
                         onAsk(
-                          `Refine the ${q.id} response to the ${round?.agency} ${round?.type} for BX-204`,
+                          /* `for BX-204` was a string literal, so refining any
+                             tenant's agency response asked about a demo
+                             programme. The round already knows its own
+                             submission — that is the real answer, and the open
+                             programme is the fallback. */
+                          `Refine the ${q.id} response to the ${round?.agency} ${round?.type}` +
+                            (round?.submission ? ` for ${round.submission}` : program ? ` for ${program}` : ''),
                         )
                       }
                     >

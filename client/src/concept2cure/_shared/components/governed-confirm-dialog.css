@@ -1,0 +1,44 @@
+/**
+ * Governed confirmation dialog (GovernedConfirmDialog.tsx) — the reason-for-
+ * change and typed-word confirmation every governed mutation passes through.
+ *
+ * These rules were 22 inline style objects on the component, each value
+ * carrying a hard-coded hex or rgba fallback beside its token, which put them
+ * where no stylesheet gate could see them (ledger L139: the class-coverage gate
+ * listed `c2c-confirm` and `c2c-confirm-backdrop` as rendered with no rule).
+ * Moved here on the global design-system tokens, which main.tsx loads once
+ * before any shell, so the dialog reads the same under .c2c-v2 and .pdev.
+ * Selectors are scoped by the c2c-confirm- prefix rather than by shell.
+ */
+.c2c-confirm-backdrop{ position:fixed; inset:0; z-index:200; display:flex; align-items:center; justify-content:center; background:color-mix(in srgb, var(--bg-inverse) 55%, transparent); }
+.c2c-confirm{ width:480px; max-width:calc(100% - 32px); padding:20px; border-radius:var(--radius-lg); background:var(--bg-000); color:var(--text-100); border:1px solid var(--border); box-shadow:var(--shadow-xl); display:grid; gap:14px; }
+.c2c-confirm-head{ display:flex; align-items:flex-start; gap:12px; }
+.c2c-confirm-ic{ display:inline-flex; align-items:center; justify-content:center; width:32px; height:32px; border-radius:var(--radius-md); background:var(--accent-muted); color:var(--accent-strong); flex-shrink:0; }
+.c2c-confirm-heading{ flex:1; min-width:0; }
+.c2c-confirm-kicker{ font-size:10px; letter-spacing:.04em; text-transform:uppercase; color:var(--text-300); margin-bottom:4px; }
+.c2c-confirm-action{ font-size:15px; font-weight:600; }
+.c2c-confirm-target{ font-size:13px; color:var(--text-200); margin-top:2px; }
+.c2c-confirm-x{ border:0; background:transparent; padding:4px; cursor:pointer; color:var(--text-300); border-radius:var(--radius-sm); }
+.c2c-confirm-x:hover{ color:var(--text-100); }
+.c2c-confirm-x:disabled{ cursor:not-allowed; }
+.c2c-confirm-resource{ padding:8px 10px; background:var(--muted); border-radius:var(--radius-md); font-size:12px; }
+.c2c-confirm-resource-l{ color:var(--text-300); font-size:10px; text-transform:uppercase; }
+.c2c-confirm-mono{ font-family:var(--font-mono, ui-monospace, monospace); }
+.c2c-confirm-label{ display:flex; justify-content:space-between; font-size:12px; margin-bottom:4px; }
+.c2c-confirm-label[data-block]{ display:block; }
+.c2c-confirm-count{ font-family:var(--font-mono, ui-monospace, monospace); color:var(--text-300); }
+.c2c-confirm-count[data-ok]{ color:var(--success); }
+.c2c-confirm-word{ font-family:var(--font-mono, ui-monospace, monospace); padding:1px 6px; border-radius:var(--radius-sm); background:var(--muted); }
+.c2c-confirm-reason, .c2c-confirm-input{ width:100%; padding:8px; border-radius:var(--radius-md); border:1px solid var(--border-control); font-size:13px; background:var(--bg-000); color:var(--text-100); }
+.c2c-confirm-reason{ font-family:inherit; resize:vertical; min-height:60px; }
+.c2c-confirm-input{ padding:6px 10px; font-family:var(--font-mono, ui-monospace, monospace); }
+.c2c-confirm-reason:focus-visible, .c2c-confirm-input:focus-visible{ outline:2px solid var(--border-focus); outline-offset:1px; }
+.c2c-confirm-error{ padding:8px 10px; border-radius:var(--radius-md); background:var(--error-muted); color:var(--error); font-size:12px; }
+.c2c-confirm-acts{ display:flex; justify-content:flex-end; gap:8px; }
+.c2c-confirm-btn{ padding:6px 14px; border-radius:var(--radius-md); border:1px solid var(--border); background:transparent; color:var(--text-100); cursor:pointer; font-size:13px; display:inline-flex; align-items:center; gap:6px; transition:background var(--dur-normal) var(--ease); }
+.c2c-confirm-btn:hover:not(:disabled){ background:var(--bg-050); }
+.c2c-confirm-btn:disabled{ cursor:not-allowed; }
+.c2c-confirm-btn:focus-visible{ outline:2px solid var(--border-focus); outline-offset:1px; }
+.c2c-confirm-btn.pri{ border-color:transparent; background:var(--accent-strong); color:var(--accent-on-strong); }
+.c2c-confirm-btn.pri:hover:not(:disabled){ background:var(--accent-hover); }
+.c2c-confirm-btn.pri:disabled{ background:var(--muted); color:var(--text-300); }

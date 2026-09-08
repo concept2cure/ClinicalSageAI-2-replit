@@ -7,8 +7,15 @@ import React, { useState, useRef, useEffect } from 'react';
 import { I } from '../icons';
 import { SignoffList } from '../SignoffList';
 import type { PendingSignoff } from '../../components/ana/useGovernedAction';
-import type { AnaChatAction, MessageAttachment } from '../../components/ana/useAnaChat';
-import { CHAT_UPLOAD_ACCEPT, ChatAttachmentList, useChatUpload } from '../../hooks/useChatUpload';
+import type {
+  AnaChatAction,
+  AnaChatMessage,
+  RunControlStatus,
+} from '../../components/ana/useAnaChat';
+import { AnaWorkPanel } from '../AnaWorkPanel';
+import { useAgentActivity } from '../useAgentActivity';
+import { useWorkDockVisible } from '../workDock';
+import { shellProgramName } from '../shellProject';
 import { RBM_VOCAB, rbmBand, kriStatusOf, type RbmNavItem } from '../fixtures/rbm-data';
 import '../styles/rbm-v2.css';
 
@@ -403,7 +410,7 @@ export function RbmFormModal({
           </label>
         ))}
         {error && (
-          <div className="rbm-modal-note" role="alert" style={{ color: '#e5484d' }}>
+          <div className="rbm-modal-note" role="alert" style={{ color: 'var(--error)' }}>
             {error}
           </div>
         )}
@@ -502,7 +509,7 @@ export function GovernedApprovalDialog({
           signer, timestamp and reason are written to the immutable audit trail.
         </div>
         {err && (
-          <div className="rbm-modal-note" style={{ color: '#e5484d' }}>
+          <div className="rbm-modal-note" role="alert" style={{ color: 'var(--error)' }}>
             {err}
           </div>
         )}
@@ -529,7 +536,6 @@ export function GovernedApprovalDialog({
 export interface RbmAnaMessage {
   role: string;
   text?: string;
-  attachments?: MessageAttachment[];
   executedActions?: AnaChatAction[];
   pendingSignoffs?: PendingSignoff[];
 }
@@ -548,19 +554,7 @@ function RbmSignoffs({ signoffs }: { signoffs: PendingSignoff[] }) {
 }
 
 function RbmAnaMsg({ m }: { m: RbmAnaMessage }) {
-  if (m.role === 'user') {
-    return (
-      <div className="rbm-ana-user">
-        {m.attachments && m.attachments.length > 0 && (
-          <ChatAttachmentList
-            attachments={m.attachments.map(a => ({ ...a, status: 'ready' as const }))}
-            icon={I.paperclip}
-          />
-        )}
-        {m.text}
-      </div>
-    );
-  }
+  if (m.role === 'user') return <div className="rbm-ana-user">{m.text}</div>;
   return (
     <div className="rbm-ana-ai">
       <div className="rbm-ana-who">
@@ -594,48 +588,43 @@ function RbmAnaMsg({ m }: { m: RbmAnaMessage }) {
 }
 
 /* ── RbmAnaDock ── */
+/** The raw turns the live work dock reads — the pane's own chat instance. */
+export interface RbmAnaWork {
+  messages: AnaChatMessage[];
+  streaming: boolean;
+  runStatus: RunControlStatus;
+  pendingSteers: string[];
+}
+
 export function RbmAnaDock({
   nav,
   study,
-  projectId,
   msgs,
   onAsk,
   onClose,
+  work,
 }: {
   nav: RbmNavItem;
   study: string;
-  projectId?: string | number | null;
   msgs: RbmAnaMessage[];
-  onAsk: (t: string, attachments?: MessageAttachment[]) => void;
+  onAsk: (t: string) => void;
   onClose: () => void;
+  work?: RbmAnaWork;
 }) {
   const [draft, setDraft] = useState('');
   const endRef = useRef<HTMLDivElement>(null);
-  const fileRef = useRef<HTMLInputElement>(null);
-  const upload = useChatUpload({ projectId });
+  /* The same dock the shell rail and the authoring panes mount, under the
+     one shared show/hide choice; the "At work" pill is its one control. */
+  const [workDockOpen, setWorkDockOpen] = useWorkDockVisible();
+  const showWork = Boolean(work) && workDockOpen;
+  const anaWorkQueue = useAgentActivity(showWork, work?.streaming);
   useEffect(() => {
     if (endRef.current) endRef.current.scrollTop = endRef.current.scrollHeight;
   }, [msgs]);
   const ask = (text: string) => {
-    const clean = text.trim();
-    const readyAttachments = upload.attachments.filter(a => a.status === 'ready');
-    if ((!clean && readyAttachments.length === 0) || upload.uploading) return;
-    const attachmentLine = readyAttachments.length
-      ? `Attached: ${readyAttachments.map(a => a.name).join(', ')}`
-      : '';
-    const body = [clean, attachmentLine].filter(Boolean).join('\n\n');
-    const sentAttachments = readyAttachments.map(
-      ({ id, name, fileId, extractionMethod, extractionWords }) => ({
-        id,
-        name,
-        fileId,
-        extractionMethod,
-        extractionWords,
-      })
-    );
-    onAsk(body, sentAttachments);
+    if (!text) return;
+    onAsk(text);
     setDraft('');
-    upload.clear();
   };
   return (
     <aside className="rbm-ana" aria-label="AnA — risk-based monitoring">
@@ -645,14 +634,44 @@ export function RbmAnaDock({
           <div>
             <div className="nm">AnA — RBM co-monitor</div>
             <div className="md">
-              bound to {study} -- {nav.label}
+              bound to {study} — {nav.label}
             </div>
           </div>
         </div>
-        <button className="tb-btn" onClick={onClose} title="Collapse">
-          {I.panelRight}
-        </button>
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+          {work && (
+            <button
+              type="button"
+              className="ana-work-toggle"
+              aria-pressed={workDockOpen}
+              aria-label={workDockOpen ? 'Hide AnA at work' : 'Show AnA at work'}
+              title={workDockOpen ? 'Hide AnA at work' : 'Show AnA at work'}
+              onClick={() => setWorkDockOpen(!workDockOpen)}
+            >
+              {I.activity} AnA at work
+            </button>
+          )}
+          <button className="tb-btn" onClick={onClose} title="Collapse">
+            {I.panelRight}
+          </button>
+        </span>
       </div>
+      {showWork && work && (
+        <div className="ana-work-host">
+          <AnaWorkPanel
+            messages={work.messages}
+            streaming={work.streaming}
+            runStatus={work.runStatus}
+            pendingSteers={work.pendingSteers}
+            queue={anaWorkQueue}
+            context={{
+              project: shellProgramName(),
+              module: 'Risk-based monitoring',
+              surface: nav.label,
+            }}
+          />
+        </div>
+      )}
       <div className="rbm-ana-ctx">
         <div className="rbm-ana-ctx-k">On this surface</div>
         <div className="rbm-ana-ctx-v">
@@ -677,55 +696,23 @@ export function RbmAnaDock({
         ))}
       </div>
       <div className="rbm-ana-composer">
-        <ChatAttachmentList
-          attachments={upload.attachments}
-          onRemove={upload.removeAttachment}
-          statusMessage={upload.statusMessage}
-          icon={I.paperclip}
-        />
         <input
-          ref={fileRef}
-          type="file"
-          multiple
-          hidden
-          accept={CHAT_UPLOAD_ACCEPT}
-          aria-label="Attach files to AnA"
-          onChange={e => {
-            upload.addFiles(e.target.files);
-            e.target.value = '';
+          value={draft}
+          onChange={e => setDraft(e.target.value)}
+          onKeyDown={e => {
+            if (e.key === 'Enter') ask(draft.trim());
           }}
+          aria-label="Ask AnA about this study"
+          placeholder={`Ask AnA about ${study}...`}
         />
-        <div className="rbm-ana-compose-row">
-          <button
-            type="button"
-            className="rbm-ana-attach"
-            title="Attach files for AnA"
-            aria-label="Attach files for AnA"
-            onClick={() => fileRef.current?.click()}
-          >
-            {I.paperclip}
-          </button>
-          <input
-            value={draft}
-            onChange={e => setDraft(e.target.value)}
-            onKeyDown={e => {
-              if (e.key === 'Enter') ask(draft.trim());
-            }}
-            aria-label="Ask AnA about this study"
-            placeholder={`Ask AnA about ${study}...`}
-          />
-          <button
-            className="rbm-ana-send"
-            aria-label="Send message to AnA"
-            disabled={
-              (!draft.trim() && upload.attachments.every(a => a.status !== 'ready')) ||
-              upload.uploading
-            }
-            onClick={() => ask(draft.trim())}
-          >
-            {I.zap}
-          </button>
-        </div>
+        <button
+          className="rbm-ana-send"
+          aria-label="Send message to AnA"
+          disabled={!draft.trim()}
+          onClick={() => ask(draft.trim())}
+        >
+          {I.zap}
+        </button>
       </div>
     </aside>
   );

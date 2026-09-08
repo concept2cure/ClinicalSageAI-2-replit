@@ -155,6 +155,9 @@ describe('assembleOrgIBSections', () => {
     const view = await assembleOrgIBSections(ORG);
     expect(view.provisioned).toBe(false);
     expect(view.sources).toEqual([]);
+    // Provenance is honest 'none' — not a specific store that contributed nothing.
+    expect(view.source).toBe('none');
+    expect(view.source).not.toBe('nonclinical_studies');
     expect(view.completeness).toBeGreaterThanOrEqual(0);
     // Every data-bearing section missing; boilerplate rendered.
     expect(byNum(view.rows, '1').status).toBe('missing');

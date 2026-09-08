@@ -136,7 +136,40 @@ vi.mock('../../server/db', () => {
     })),
   };
 
-  return { db };
+  /*
+   * `pool` is exported too, because the route module uses BOTH. Several handlers
+   * run raw SQL through pool.query — resolveClientWorkspaceId being the one every
+   * create path hits first, now that it reads the caller org's workspace from the
+   * database instead of returning a fabricated constant outside production.
+   * Without this export the module threw `No "pool" export is defined on the
+   * "../../server/db" mock` on entry, which the route caught and reported as a
+   * plain 500. That is the route behaving correctly; the mock was incomplete.
+   *
+   * The workspace lookup answers with a row ONLY for the workspace these tests
+   * claim in tenantContext ({ organizationId: '1', clientWorkspaceId: '1' }), so
+   * the fixture models a workspace that genuinely belongs to the caller's org
+   * rather than waving every query through. resolveClientWorkspaceId fails closed
+   * when that row is absent — it refuses a workspace outside the caller's org —
+   * and that behaviour stays exercisable here.
+   */
+  const pool = {
+    query: vi.fn(async (sql: unknown, params?: unknown[]) => {
+      if (typeof sql === 'string' && /client_workspaces/i.test(sql)) {
+        const wsId = Number((params as unknown[] | undefined)?.[0] ?? 1);
+        const orgId = Number((params as unknown[] | undefined)?.[1] ?? 1);
+        return wsId === 1 && orgId === 1
+          ? { rows: [{ id: 1 }], rowCount: 1 }
+          : { rows: [], rowCount: 0 };
+      }
+      return { rows: [], rowCount: 0 };
+    }),
+    connect: vi.fn(async () => ({
+      query: vi.fn(async () => ({ rows: [], rowCount: 0 })),
+      release: vi.fn(),
+    })),
+  };
+
+  return { db, pool, getPool: () => pool };
 });
 
 vi.mock('../../server/services/ai-gateway/gateway.js', () => ({
@@ -167,12 +200,32 @@ vi.mock('../../server/middleware/tenantContext', () => ({
   requireOrganizationContext: (_req: any, _res: any, next: any) => next(),
 }));
 
+/* §11.200 re-verification at the moment of signing: the route now checks the
+   signer's password (and TOTP when enrolled) through injected deps. The policy
+   itself is pinned in services/part11 tests; here the deps are stubbed so the
+   ROUTE is exercised — a wrong password is refused by the same policy. */
+vi.mock('../../server/services/part11/reverify-signer-deps', () => ({
+  signerReverificationDeps: () => ({
+    loadPasswordHash: async () => 'stored-hash',
+    comparePassword: async (plain: string, hash: string) => plain === 'correct-horse-battery' && hash === 'stored-hash',
+    isMfaEnabled: async () => false,
+    verifyMfaToken: async () => false,
+    warn: () => {},
+  }),
+}));
+
 vi.mock('../../server/middleware/redisRateLimiter', () => ({
   createRedisRateLimiter: () => (_req: any, _res: any, next: any) => next(),
 }));
 
 // Import after mocks
 import concept2cureRouter from '../../server/routes/concept2cure';
+// The artifact domain moved to its own router (L53, slice 8).
+import artifactRouter from '../../server/routes/c2c/artifacts';
+// AI editing moved to its own router (L53, slice 9).
+import aiEditingRouter from '../../server/routes/c2c/ai-editing';
+// Conversation mutations moved to their own router (L53, slice 6).
+import conversationRouter from '../../server/routes/c2c/conversations';
 
 describe('Concept2Cure API', () => {
   beforeEach(() => {
@@ -222,7 +275,7 @@ describe('Concept2Cure API', () => {
 
     const res = createMockResponse();
 
-    const layer = concept2cureRouter.stack.find((l: any) => l.route?.path === '/projects/:projectId/conversations' && l.route?.methods?.post);
+    const layer = conversationRouter.stack.find((l: any) => l.route?.path === '/projects/:projectId/conversations' && l.route?.methods?.post);
     const handler = layer.route.stack[layer.route.stack.length - 1].handle;
 
     await handler(req, res);
@@ -253,7 +306,7 @@ describe('Concept2Cure API', () => {
 
     const res = createMockResponse();
 
-    const layer = concept2cureRouter.stack.find((l: any) => l.route?.path === '/projects/:projectId/artifacts' && l.route?.methods?.post);
+    const layer = artifactRouter.stack.find((l: any) => l.route?.path === '/projects/:projectId/artifacts' && l.route?.methods?.post);
     const handler = layer.route.stack[layer.route.stack.length - 1].handle;
 
     await handler(req, res);
@@ -285,7 +338,7 @@ describe('Concept2Cure API', () => {
 
     const res = createMockResponse();
 
-    const layer = concept2cureRouter.stack.find(
+    const layer = artifactRouter.stack.find(
       (l: any) => l.route?.path === '/projects/:projectId/artifacts' && l.route?.methods?.post
     );
     const handler = layer.route.stack[layer.route.stack.length - 1].handle;
@@ -328,7 +381,7 @@ describe('Concept2Cure API', () => {
     req.tenantContext = { organizationId: '1', clientWorkspaceId: '1' };
 
     const res = createMockResponse();
-    const layer = concept2cureRouter.stack.find(
+    const layer = aiEditingRouter.stack.find(
       (l: any) =>
         l.route?.path === '/ai/templates/:templateId/generate' && l.route?.methods?.post
     );
@@ -389,7 +442,7 @@ describe('Concept2Cure API', () => {
     req.tenantContext = { organizationId: '1', clientWorkspaceId: '1' };
 
     const res = createMockResponse();
-    const layer = concept2cureRouter.stack.find(
+    const layer = aiEditingRouter.stack.find(
       (l: any) =>
         l.route?.path === '/ai/templates/:templateId/generate' && l.route?.methods?.post
     );
@@ -414,7 +467,7 @@ describe('Concept2Cure API', () => {
       params: { projectId: 'proj_1', artifactId: 'artifact_test' },
       body: {
         signaturePurpose: 'Approved for submission',
-        authenticationMethod: 'password',
+        password: 'correct-horse-battery',
       },
     }) as any;
     req.headers = { 'x-forwarded-for': '127.0.0.1' };
@@ -425,7 +478,7 @@ describe('Concept2Cure API', () => {
 
     const res = createMockResponse();
 
-    const layer = concept2cureRouter.stack.find((l: any) => l.route?.path === '/projects/:projectId/artifacts/:artifactId/signatures' && l.route?.methods?.post);
+    const layer = artifactRouter.stack.find((l: any) => l.route?.path === '/projects/:projectId/artifacts/:artifactId/signatures' && l.route?.methods?.post);
     const handler = layer.route.stack[layer.route.stack.length - 1].handle;
 
     await handler(req, res);
@@ -435,7 +488,32 @@ describe('Concept2Cure API', () => {
       success: true,
       data: expect.objectContaining({
         signaturePurpose: 'Approved for submission',
+        signerId: 1,
       }),
     });
+    // What is persisted about HOW identity was established is derived from the
+    // re-verification, never taken from the request body.
+    const { db } = await import('../../server/db');
+    const inserted = (db.insert as any).mock.results
+      .flatMap((r: any) => r.value.values.mock.calls.map((c: any[]) => c[0]))
+      .find((payload: any) => payload?.signatureId);
+    expect(inserted).toBeTruthy();
+    expect(inserted.authenticationMethod).toBe('password');
+    expect(inserted.secondFactorVerified).toBe(false);
+  });
+
+  it('refuses a signature whose password does not verify — identity is checked at the moment of signing', async () => {
+    const req = createMockRequest({
+      params: { projectId: 'proj_1', artifactId: 'artifact_test' },
+      body: { signaturePurpose: 'Approved for submission', password: 'wrong' },
+    }) as any;
+    req.headers = { 'x-forwarded-for': '127.0.0.1' };
+    req.userId = 1;
+    req.userRole = 'admin';
+    req.tenantContext = { organizationId: '1', clientWorkspaceId: '1' };
+    const res = createMockResponse();
+    const layer = artifactRouter.stack.find((l: any) => l.route?.path === '/projects/:projectId/artifacts/:artifactId/signatures' && l.route?.methods?.post);
+    await layer.route.stack[layer.route.stack.length - 1].handle(req, res);
+    expectStatus(res, 401);
   });
 });

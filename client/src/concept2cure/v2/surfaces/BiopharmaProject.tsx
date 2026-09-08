@@ -15,6 +15,8 @@ import React, { useEffect, useState } from 'react';
 import { I } from '../icons';
 import { useLiveData, EmptyState } from '../dataConnect';
 import type { SurfaceViewProps } from '../surfaceViews';
+import { usePublishSurfaceContext } from '../surfaceContext';
+import { useSurfaceActionHandlers, notifySurfaceActionReady } from '../surfaceActions';
 import { isClinicalRegulatoryGraphEnabled } from '../clinicalRegulatoryGraphFlag';
 import {
   APPLICABILITY_LABEL,
@@ -188,6 +190,7 @@ function RegulatoryPanel({
                     <button
                       type="button"
                       className="sp-go"
+                      aria-label="Trace evidence for this finding"
                       onClick={() => onAsk(`Trace the evidence behind FDA finding ${f.findingId}.`)}
                     >
                       {I.route}
@@ -369,6 +372,73 @@ export function CsrWorkflow({ onAsk }: SurfaceViewProps) {
 
   const cols = graphOn ? CSR_COLS_GRAPH : CSR_COLS_BASE;
 
+  /* What AnA can see of this screen. The header hands her "draft CSR §11
+     efficacy evaluation" — a request about a section whose status she could not
+     see.
+
+     `program === null` is published as itself. The ICH E3 section list still
+     comes back in that case, as the canonical structure NOT STARTED, and
+     reading it as drafting progress would report a CSR build that does not
+     exist. The evidence graph is a separate read and degrades separately: its
+     findings are model-extracted regulatory findings, so they travel with their
+     verification state and are never presented as established fact. */
+  const anaContext = React.useMemo(() => {
+    if (boardRes.loading) {
+      return { summary: 'The ICH E3 CSR board is still loading; nothing on screen is final yet.' };
+    }
+    if (boardRes.error) {
+      return {
+        summary:
+          'The CSR workflow board could not be read, so this screen is showing no ICH E3 build state ' +
+          'because of a failure, not because there is none.',
+        availableActions: ['Retry the CSR board read'],
+      };
+    }
+    if (sections.length === 0) {
+      return { summary: 'CSR workflow: the board returned no ICH E3 sections for this organisation yet.' };
+    }
+    return {
+      summary:
+        (program
+          ? `CSR workflow for ${program.title} (${program.code}), ${program.readiness}% ready: `
+          : 'CSR workflow with NO active CSR build job — the ICH E3 board below is the canonical section structure, not started: ') +
+        `${sections.length} section(s), ${sections.filter((x) => x.blocker).length} blocked.` +
+        (graphOn
+          ? findingsRes.loading
+            ? ' The regulatory evidence graph is still loading.'
+            : findingsRes.error
+              ? ' The regulatory evidence graph could not be read.'
+              : ` ${findings.length} regulatory finding(s) alongside the board.`
+          : ''),
+      facts: {
+        buildJobStarted: Boolean(program),
+        program: program ? { title: program.title, code: program.code, readinessPercent: program.readiness } : null,
+        sections: sections.slice(0, 24).map((x) => ({ number: x.num, label: x.label, status: x.status, blocked: Boolean(x.blocker) })),
+        evidenceGraphEnabled: graphOn,
+        evidenceGraphUnavailable: graphOn && findingsRes.error ? 'the evidence-graph read failed' : null,
+        /* Model-extracted findings: verification travels with each one so an
+           unreviewed extraction is never quoted back as established fact. */
+        regulatoryFindings: graphOn && !findingsRes.loading && !findingsRes.error
+          ? findings.slice(0, 10).map((f) => ({
+              findingId: f.findingId, severity: f.severity, discipline: f.discipline,
+              verification: f.verification, conflict: f.conflict,
+              ichE3Sections: (f.mappings ?? []).filter((m) => m.kind === 'ich_e3').map((m) => m.value),
+            }))
+          : null,
+        findingsBySection: graphOn ? Object.fromEntries([...findingsBySection].map(([k, v]) => [k, v.length])) : null,
+        verifiedRegulatoryOutcome: outcome
+          ? { applicationType: outcome.applicationType, applicationNumber: outcome.applicationNumber, outcome: outcome.outcome, letterDate: outcome.letterDate }
+          : null,
+      },
+      availableActions: [
+        'Draft an ICH E3 section',
+        'Open a section to see its status and the regulatory findings mapped to it',
+        'Start a CSR build job to populate real drafting status and readiness',
+      ],
+    };
+  }, [boardRes.loading, boardRes.error, program, sections, graphOn, findingsRes.loading, findingsRes.error, findings, findingsBySection, outcome]);
+  usePublishSurfaceContext('csr-workflow', anaContext);
+
   return (
     <div className="page-inner">
       <PageHead
@@ -389,7 +459,7 @@ export function CsrWorkflow({ onAsk }: SurfaceViewProps) {
       />
 
       {boardRes.loading ? (
-        <div className="scaf-note" style={{ marginTop: 16, maxWidth: 760 }}>
+        <div role="status" className="scaf-note" style={{ marginTop: 16, maxWidth: 760 }}>
           Loading CSR workflow…
         </div>
       ) : boardRes.error ? (
@@ -525,12 +595,82 @@ export function RegulatoryWorkspace({ onAsk }: SurfaceViewProps) {
     }
   }, [tree, active]);
 
+  /* AnA can open any tracked CTD section by its number or label — the same
+     click a person makes. Resolved against the REAL tree with honest misses;
+     held (retry) while it loads, re-attempted on the ready signal below. */
+  useSurfaceActionHandlers('regulatory-workspace', {
+    'regulatory-workspace.open-section': (params) => {
+      const raw = String(params.section ?? '').trim();
+      if (!raw) return { ok: false, reason: 'Name a section by its number or label.' };
+      if (wsRes.loading) return { ok: false, reason: 'The regulatory workspace is still loading.', retry: true };
+      if (wsRes.error) return { ok: false, reason: 'The regulatory workspace did not load, so there is no tree to open a section on.' };
+      if (tree.length === 0) return { ok: false, reason: 'This organization tracks no CTD sections yet.' };
+      const needle = raw.toLowerCase();
+      const byNum = tree.filter((t) => t.num.toLowerCase() === needle);
+      const hits = byNum.length ? byNum : tree.filter((t) => t.label.toLowerCase().includes(needle));
+      if (hits.length === 0) return { ok: false, reason: `No CTD section matching "${raw}".` };
+      if (hits.length > 1) return { ok: false, reason: `"${raw}" matches ${hits.length} sections — name one exactly.` };
+      const t = hits[0];
+      if (active === t.id) return { ok: true, detail: `Already on ${t.num} — ${t.label}` };
+      setActive(t.id);
+      return { ok: true, detail: `Opened ${t.num} — ${t.label}` };
+    },
+  });
+  useEffect(() => {
+    if (!wsRes.loading && !wsRes.error) notifySurfaceActionReady('regulatory-workspace');
+  }, [wsRes.loading, wsRes.error]);
+
+  /* What AnA can see of this screen. Published above the three honest-state
+     early returns below — a hook after an early return is a conditional hook,
+     and "this organisation tracks no CTD sections yet" is itself a screen state
+     a user asks about. */
+  const anaContext = React.useMemo(() => {
+    if (wsRes.loading) {
+      return { summary: 'The regulatory workspace is still loading; nothing on screen is final yet.' };
+    }
+    if (wsRes.error) {
+      return {
+        summary:
+          'The regulatory workspace could not be read, so this screen is showing no CTD section tree ' +
+          'because of a failure, not because none is tracked.',
+        availableActions: ['Retry the regulatory-workspace read'],
+      };
+    }
+    if (tree.length === 0) {
+      return {
+        summary:
+          'Regulatory workspace: this organisation has no project with tracked CTD sections yet, so the ' +
+          'section tree is genuinely empty.',
+      };
+    }
+    const sel = tree.find((t) => t.id === active) ?? tree[0];
+    return {
+      summary:
+        `Regulatory workspace for ${wsRes.data?.projectName ?? 'this project'}: ${tree.length} tracked CTD ` +
+        `section(s)` +
+        (sel ? `, "${sel.num} ${sel.label}" (${sel.status}) is the active section` : '') +
+        `. ${intel.length} intelligence item(s) alongside it.`,
+      facts: {
+        projectId: wsRes.data?.projectId ?? null,
+        projectName: wsRes.data?.projectName ?? null,
+        activeSection: sel ? { id: sel.id, number: sel.num, label: sel.label, status: sel.status } : null,
+        sections: tree.slice(0, 24).map((t) => ({ number: t.num, label: t.label, status: t.status })),
+        intelligence: intel.map((i) => ({ key: i.k, value: i.v })),
+      },
+      availableActions: [
+        'Open a CTD section in the three-pane authoring substrate',
+        'Read the per-section status across the tracked tree',
+      ],
+    };
+  }, [wsRes.loading, wsRes.error, wsRes.data, tree, intel, active]);
+  usePublishSurfaceContext('regulatory-workspace', anaContext);
+
   // Honest states before the three-pane editor: loading, a failed read, or an
   // org with no tracked CTD sections yet — never a fixture tree.
   if (wsRes.loading) {
     return (
       <div className="page-inner">
-        <div className="scaf-note" style={{ marginTop: 16, maxWidth: 760 }}>
+        <div role="status" className="scaf-note" style={{ marginTop: 16, maxWidth: 760 }}>
           Loading regulatory workspace…
         </div>
       </div>
@@ -595,7 +735,7 @@ export function RegulatoryWorkspace({ onAsk }: SurfaceViewProps) {
         <header className="ed-doc-h">
           <div className="ed-crumbs">
             <span>Regulatory workspace</span>
-            <span className="sep">›</span>
+            <span className="sep" aria-hidden="true">›</span>
             <span className="here">{sec.num} {sec.label}</span>
           </div>
           <button className="btn primary" style={{ height: 30 }} onClick={() => onAsk(`Open ${sec.num} in the document editor`)}>

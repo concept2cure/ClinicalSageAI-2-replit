@@ -7,7 +7,6 @@
 
 import express from 'express';
 import { checkForOpenAIKey } from '../../utils/api-security.js';
-import { validateRequestBody } from '../../utils/validation.js';
 import { generateDocumentation, renderProcessDiagram } from '../../utils/document-generator.js';
 import { rateLimit } from 'express-rate-limit';
 import fs from 'fs';
@@ -31,7 +30,6 @@ const imageGenerationLimiter = rateLimit({
   legacyHeaders: false,
   message: 'Too many image generation requests, please try again after a minute',
 });
-import { ai } from '../../lib/unified-ai-client';
 
 // Create router
 const router = express.Router();

@@ -50,7 +50,11 @@ export interface BiosketchFinding {
 
 export interface BiosketchCompletenessResult {
   /** Percent of REQUIRED sections both addressed and with content (0–100). */
-  addressedPct: number;
+  /**
+   * Percentage of required sections satisfied. NULL when none are recorded —
+   * there is then no ratio and no assessment.
+   */
+  addressedPct: number | null;
   requiredTotal: number;
   requiredAddressed: number;
   /** Section keys of required sections not yet satisfied. */
@@ -70,7 +74,12 @@ export function evaluateBiosketchCompleteness(sections: BiosketchSectionView[]):
   const satisfied = (s: BiosketchSectionView): boolean => s.addressed && typeof s.content === 'string' && s.content.trim().length > 0;
   const requiredAddressed = required.filter(satisfied).length;
   const requiredTotal = required.length;
-  const addressedPct = requiredTotal === 0 ? 100 : Math.round((requiredAddressed / requiredTotal) * 100);
+  /* This ended `requiredTotal === 0 ? 100`. readyToFinalize is the gate the
+     service enforces on finalize, and with no required sections recorded the
+     `missing` list is empty too — so an empty biosketch scored 100% and finalized.
+     Nothing had been checked, so there is no percentage. */
+  const addressedPct: number | null =
+    requiredTotal === 0 ? null : Math.round((requiredAddressed / requiredTotal) * 100);
 
   const missing = required.filter((s) => !satisfied(s)).map((s) => s.sectionKey);
 
@@ -83,6 +92,12 @@ export function evaluateBiosketchCompleteness(sections: BiosketchSectionView[]):
     findings.push({ severity: 'warning', message: `Optional section "${s.sectionKey}" is marked addressed but has no content.` });
   }
 
-  const readyToFinalize = missing.length === 0;
+  /* The refusal the service throws is built by joining the CRITICAL findings,
+     so the empty case has to produce one or the message would be truncated. */
+  if (requiredTotal === 0) {
+    findings.push({ severity: 'critical', message: 'This biosketch has no required sections recorded, so its completeness has not been assessed (NIH Biosketch format, FORMS-H). An empty biosketch is not a complete one.' });
+  }
+
+  const readyToFinalize = requiredTotal > 0 && missing.length === 0;
   return { addressedPct, requiredTotal, requiredAddressed, missing, findings, readyToFinalize };
 }

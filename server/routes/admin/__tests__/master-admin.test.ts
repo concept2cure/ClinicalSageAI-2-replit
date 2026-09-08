@@ -13,7 +13,7 @@ import request from 'supertest';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 const queryMock = vi.fn();
-const logActionMock = vi.fn();
+const logActionMock = vi.fn(async (..._a: any[]) => ({ persisted: true, chained: true, tamperProof: true }));
 
 // db: query() + getPool() used by the router.
 vi.mock('../../../db', () => ({

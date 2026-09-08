@@ -22,6 +22,7 @@ import {
   getSubmissionTypeContext,
   type SubmissionTypeContext,
 } from '../../../shared/regulatory/submission-type-bridge.js';
+import { releaseWithoutBypass } from './rlsBypassSession';
 
 // Types
 export interface ReadinessCriterion {
@@ -243,7 +244,7 @@ export class SubmissionReadinessTwinService {
         SubmissionReadinessTwinService.tablesInitialized = true;
         console.log('[ReadinessTwin] All tables initialized successfully');
       } finally {
-        client.release();
+        await releaseWithoutBypass(client);
       }
     } catch (err) {
       console.warn('[ReadinessTwin] Table initialization warning:', (err as Error).message);
@@ -520,7 +521,7 @@ export class SubmissionReadinessTwinService {
       SubmissionReadinessTwinService.criteriaCache.push(mapped);
       return mapped;
     } finally {
-      client.release();
+      await releaseWithoutBypass(client);
     }
   }
 
@@ -772,7 +773,7 @@ export class SubmissionReadinessTwinService {
       console.error('[ReadinessTwin] Assessment failed:', error);
       throw error;
     } finally {
-      client.release();
+      await releaseWithoutBypass(client);
     }
   }
 

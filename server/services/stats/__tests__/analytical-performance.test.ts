@@ -17,6 +17,7 @@ import {
   estimateShelfLife,
   fitQualitativeDoseResponse,
 } from '../analytical-performance';
+import { estimateShelfLife as estimateShelfLifeQ1E } from '../../cmc/shelf-life';
 
 describe('EP05 imprecision (one-way ANOVA)', () => {
   // runs [10,12] and [14,16]: run means 11,15; grand mean 13.
@@ -270,6 +271,48 @@ describe('EP25 stability / shelf-life', () => {
     expect(r.nominalCrossing).not.toBeNull();
     expect(r.shelfLife!).toBeLessThan(r.nominalCrossing!);
     expect(r.shelfLife!).toBeGreaterThan(0);
+  });
+});
+
+describe('EP25 stability is the ICH Q1E engine, not a second copy of it', () => {
+  /* value = 100 − 0.25·t over 12 months of data: the mean line meets 85 at
+     t = 60. ICH Q1E permits proposing at most min(2×12, 12+12) = 24 months from
+     a 12-month study. The scan-based copy this file used to hold returned the
+     crossing (~60) as the shelf life — a number that cannot be filed. */
+  const twelveMonths = [0, 3, 6, 9, 12].map(t => ({ time: t, value: 100 - 0.25 * t }));
+
+  it('caps the proposable shelf life at the Q1E extrapolation limit and reports the crossing alongside', () => {
+    const r = estimateShelfLife({ points: twelveMonths, specLimit: 85, direction: 'lower' });
+    expect(r.nominalCrossing).toBeCloseTo(60, 6);
+    expect(r.statisticalCrossing).toBeCloseTo(60, 1);
+    expect(r.observedPeriod).toBe(12);
+    expect(r.extrapolationLimit).toBe(24);
+    expect(r.shelfLife).toBe(24);
+    expect(r.cappedByExtrapolationLimit).toBe(true);
+  });
+
+  it('returns exactly what the canonical estimator returns, field for field', () => {
+    const canonical = estimateShelfLifeQ1E({ data: twelveMonths, specLimit: 85, direction: 'decreasing' });
+    const r = estimateShelfLife({ points: twelveMonths, specLimit: 85, direction: 'lower' });
+    expect(r.shelfLife).toBe(canonical.shelfLife);
+    expect(r.statisticalCrossing).toBe(canonical.statisticalCrossing);
+    expect(r.extrapolationLimit).toBe(canonical.extrapolationLimit);
+    expect(r.cappedByExtrapolationLimit).toBe(canonical.cappedByExtrapolationLimit);
+    expect(r.exceedsEvaluatedRange).toBe(canonical.exceedsEvaluatedRange);
+    expect(r.regression).toEqual(canonical.regression);
+    expect(r.confidence).toEqual(canonical.confidence);
+    expect(r.notes).toEqual(canonical.notes);
+    expect(r.n).toBe(twelveMonths.length);
+    expect(r.provenance.method).toMatch(/Q1E/);
+  });
+
+  it("maps 'upper' to the increasing (impurity) direction and confidence to alpha", () => {
+    const impurity = [0, 3, 6, 9].map(t => ({ time: t, value: 0.1 + 0.05 * t }));
+    const r = estimateShelfLife({ points: impurity, specLimit: 1.0, direction: 'upper', confidence: 0.9 });
+    const canonical = estimateShelfLifeQ1E({ data: impurity, specLimit: 1.0, direction: 'increasing', alpha: 0.1 });
+    expect(r.confidence.bound).toBe('upper');
+    expect(r.confidence.alpha).toBeCloseTo(0.1, 12);
+    expect(r.shelfLife).toBe(canonical.shelfLife);
   });
 });
 

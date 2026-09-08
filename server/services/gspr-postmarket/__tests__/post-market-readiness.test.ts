@@ -33,6 +33,18 @@ function doc(
 
 const ctx = { deviceName: 'Acme Pump', deviceClass: 'IIb', regulation: 'MDR' as const };
 
+/**
+ * A sponsor-specialised version of generated content: same keys, but every field
+ * replaced with real content that no longer carries the DRAFT scaffold sentinel.
+ * Raw generator output is unspecialised scaffold and (correctly) fails the gate,
+ * so a fixture that needs a genuinely gate-passing document must specialise it.
+ */
+function specialised(content: Record<string, string>): Record<string, string> {
+  return Object.fromEntries(
+    Object.keys(content).map(k => [k, `Sponsor-specialised final content for ${k}.`])
+  );
+}
+
 describe('computeDocStatus', () => {
   it('reports all six types, flagging required ones for a Class IIb device', () => {
     const r = computeDocStatus([], 'IIb', 'MDR', 'p1');
@@ -58,7 +70,7 @@ describe('computeDocStatus', () => {
   it('uses the latest version per type and runs the real validation gate', () => {
     const docs = [
       doc('pms_plan', { version: 1, content: {} }),
-      doc('pms_plan', { version: 2, content: buildPmsPlanContent(ctx), status: 'approved' }),
+      doc('pms_plan', { version: 2, content: specialised(buildPmsPlanContent(ctx)), status: 'approved' }),
     ];
     const r = computeDocStatus(docs, 'IIb', 'MDR', 'p1');
     const pms = r.documents.find(d => d.documentType === 'pms_plan')!;
@@ -79,7 +91,7 @@ describe('computeDocStatus', () => {
   it('allRequiredApproved is true only when every required doc is approved AND passes the gate', () => {
     // Class I device: required = pms_plan + pms_report.
     const docs = [
-      doc('pms_plan', { status: 'approved', content: buildPmsPlanContent({ ...ctx, deviceClass: 'I' }) }),
+      doc('pms_plan', { status: 'approved', content: specialised(buildPmsPlanContent({ ...ctx, deviceClass: 'I' })) }),
       doc('pms_report', {
         status: 'approved',
         content: {

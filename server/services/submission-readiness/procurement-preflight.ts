@@ -7,7 +7,7 @@
  * in. Each already has its own readiness check, but they lived in three places,
  * so nobody could see the whole procurement picture at once:
  *
- *   1. eCTD DTDs            → assets/ectd-dtd/       (dtd-bundler)
+ *   1. eCTD DTDs + stylesheets → assets/ectd-dtd/     (dtd-bundler)
  *   2. FDA eSTAR templates  → assets/estar-templates/ (estar-template-registry)
  *   3. Agency validators    → *_VALIDATOR_URL env     (validator-registry)
  *
@@ -29,7 +29,9 @@ import * as path from 'path';
 import {
   resolveDtdDir,
   requiredDtdsForRegion,
+  requiredStylesheetsForRegion,
   ICH_BACKBONE_DTD,
+  ICH_BACKBONE_STYLESHEET,
   type DtdRegion,
 } from '../ectd/dtd-bundler';
 import {
@@ -70,7 +72,8 @@ export interface PreflightReport {
 }
 
 export interface PreflightObservation {
-  /** Filenames present in the DTD drop-point directory. */
+  /** Filenames present in the eCTD drop-point directory — it holds BOTH the
+   *  agency *.dtd files and the agency *.xsl stylesheets. */
   dtdFilesPresent: string[];
   dtdDir: string;
   /** Filenames present in the eSTAR template drop-point directory. */
@@ -88,11 +91,27 @@ export function buildPreflightReport(obs: PreflightObservation): PreflightReport
   const items: PreflightItem[] = [];
   const present = new Set(obs.dtdFilesPresent.map((f) => f.toLowerCase()));
 
-  // 1. eCTD DTDs — the shared ICH backbone plus each region's Module 1 DTD.
-  //    Deduped across regions so a shared file is reported once.
+  // 1. eCTD supportive files — the shared ICH backbone DTD plus each region's
+  //    Module 1 DTD, AND the stylesheets the same backbones reference. Deduped
+  //    across regions so a shared file is reported once.
+  //
+  //    The stylesheets are procurement items exactly like the DTDs: they are
+  //    vendored into the SAME drop-point, every index.xml carries
+  //    <?xml-stylesheet href="util/style/ectd-2-0.xsl"?> and the FDA backbone
+  //    carries ../../util/style/us-regional.xsl, and assessDtdReadiness — the
+  //    gate this report speaks for — refuses a package that is missing either
+  //    kind. Building the required set from requiredDtdsForRegion alone
+  //    reported procurement READY with both stylesheets still unobtained, for
+  //    packages the packager would then refuse to build.
+  //
+  //    They share the 'ectd_dtd' category because they share a drop-point, a
+  //    gate and an owner; splitting the category would fragment one
+  //    procurement action into two without telling anyone anything new.
   const requiredDtds = new Set<string>([ICH_BACKBONE_DTD]);
+  const requiredStylesheets = new Set<string>([ICH_BACKBONE_STYLESHEET]);
   for (const region of DTD_REGIONS) {
     for (const f of requiredDtdsForRegion(region)) requiredDtds.add(f);
+    for (const f of requiredStylesheetsForRegion(region)) requiredStylesheets.add(f);
   }
   for (const file of [...requiredDtds].sort()) {
     items.push({
@@ -101,6 +120,15 @@ export function buildPreflightReport(obs: PreflightObservation): PreflightReport
       satisfied: present.has(file.toLowerCase()),
       location: path.join(obs.dtdDir, file),
       unblocks: 'DTD-self-contained eCTD packages (ECTD_REQUIRE_DTD gate)',
+    });
+  }
+  for (const file of [...requiredStylesheets].sort()) {
+    items.push({
+      category: 'ectd_dtd',
+      label: file,
+      satisfied: present.has(file.toLowerCase()),
+      location: path.join(obs.dtdDir, file),
+      unblocks: 'backbone stylesheet rendering + self-contained eCTD packages (ECTD_REQUIRE_DTD gate)',
     });
   }
 

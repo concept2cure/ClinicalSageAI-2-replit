@@ -228,9 +228,30 @@ router.put('/:id/sections/:sectionKey', async (req: Request, res: Response) => {
     const detail = await getQSubDetail(orgId, qSubId);
     if (!detail) return notFoundInTenant(res, 'Q-Sub');
 
-    const draftSource = parsed.data.draft_source ?? 'human';
+    // NULL, not 'human'. `q_sub_section_bodies.draft_source` is nullable and its
+    // schema comment names NULL as a value ('ana' | 'human' | NULL), so "the
+    // caller did not say" is directly representable. Resolving an omitted origin
+    // to 'human' turned silence into a positive claim that a person wrote this
+    // prose — in the body of a Pre-Sub briefing document that goes to FDA, and
+    // beside the accepted_at/accepted_by columns that exist to record a human
+    // ACCEPTING an AnA draft. A machine draft nobody accepted then became
+    // indistinguishable from text a person wrote. Same defect, and same fix, as
+    // the governed c2c store (server/routes/c2c/documents.ts).
+    const draftSource = parsed.data.draft_source ?? null;
     const draftedAt = draftSource === 'ana' ? new Date() : null;
-    const actor = String(getUserId(req) ?? 'system');
+
+    // Refuse rather than attribute the prose to a literal. `asserted_by` on
+    // document_span_lineage exists precisely to guarantee attribution — its
+    // CHECK requires the column to be NOT NULL for an author_assertion — so
+    // writing 'system' to satisfy that constraint defeats the thing the
+    // constraint is for. This router is behind authenticateToken (see the
+    // router.use above), so a missing user id is a broken invariant, not an
+    // anonymous caller to be accommodated.
+    const userId = getUserId(req);
+    if (userId === null || userId === undefined) {
+      return clientError(res, 401, 'Sign-in required to author a section body');
+    }
+    const actor = String(userId);
 
     // The section body is authored regulatory prose — content and its author
     // lineage commit together in one transaction, or not at all (the same gate

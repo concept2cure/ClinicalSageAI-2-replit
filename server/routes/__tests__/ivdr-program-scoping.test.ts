@@ -227,3 +227,102 @@ describe('IVDR diagnostic result calculations', () => {
     expect(query).toHaveBeenCalledTimes(1);
   });
 });
+
+/**
+ * Analytical validation parameters and CDx stage changes wrote their audit
+ * history FIRST and UNSCOPED, then ran a tenant-scoped UPDATE whose result
+ * nobody checked.
+ *
+ * Two consequences, on the two records an IVD manufacturer is least able to
+ * have wrong. A caller could append to another organisation's immutable
+ * parameter or stage history by id — the foreign-key constraint accepts any
+ * real row, and only the UPDATE carried `organization_id`. And when that UPDATE
+ * matched nothing, `result.rows[0]` was `undefined`, which serialises away
+ * silently: the response was 200 and the panel showed a limit of detection, or
+ * a companion-diagnostic stage, that had never been stored.
+ *
+ * Both are now the single tenant-scoped statement that
+ * PUT /clinical-evidence/:id/results already used.
+ */
+describe('IVDR governed writes — history follows the row, not the URL', () => {
+  it('does not report success or write parameter history for a missing tenant-scoped validation', async () => {
+    query.mockResolvedValueOnce({ rows: [] });
+    const res = await request(app()).put('/api/ivdr/validations/999/parameters').send({ lod: 0.5 });
+    expect(res.status).toBe(404);
+    expect(query).toHaveBeenCalledTimes(1);
+    expect(query.mock.calls[0][1]).toEqual(['999', 5]); // the ownership read carries the tenant
+    expect(query.mock.calls.some((c) => String(c[0]).includes('INSERT INTO ivdr_validation_parameter_history'))).toBe(false);
+  });
+
+  it('does not report success or write status history for a missing tenant-scoped CDx workflow', async () => {
+    query.mockResolvedValueOnce({ rows: [] });
+    const res = await request(app()).put('/api/ivdr/cdx-workflows/999/status').send({ status: 'post_market' });
+    expect(res.status).toBe(404);
+    expect(res.body.workflow).toBeUndefined();
+    expect(query).toHaveBeenCalledTimes(1);
+    expect(query.mock.calls[0][1]).toContain(5); // the one statement carries the tenant
+  });
+
+  it.each([
+    ['/api/ivdr/validations/7/parameters', { lod: 0.5 }],
+    ['/api/ivdr/cdx-workflows/7/status', { status: 'post_market' }],
+  ])('fails closed before persistence when actor attribution is absent: %s', async (path, body) => {
+    const res = await request(app(5, false)).put(path).send(body);
+    expect(res.status).toBe(403);
+    expect(query).not.toHaveBeenCalled();
+  });
+
+  /* The ownership read that gathers the merge base answers 404 for a row this
+     tenant does not hold, so the write's own empty result only occurs when the
+     row stops matching between the two — deleted, or moved to another
+     organisation, mid-request. It still must not answer 200. */
+  it('does not report success when the validation stops matching mid-request', async () => {
+    query.mockResolvedValueOnce({ rows: [{ acceptance_criteria: null }] });
+    query.mockResolvedValueOnce({ rows: [] });
+    const res = await request(app()).put('/api/ivdr/validations/7/parameters').send({ lod: 0.5 });
+    expect(res.status).toBe(404);
+    expect(res.body.validation).toBeUndefined();
+  });
+
+  it('binds parameter history to the tenant-scoped update in one statement', async () => {
+    query.mockResolvedValueOnce({ rows: [{ acceptance_criteria: null }] });
+    query.mockResolvedValueOnce({ rows: [{ id: 7 }] });
+    const res = await request(app()).put('/api/ivdr/validations/7/parameters').send({ lod: 0.5, reason: 'LoD re-determined' });
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    const write = query.mock.calls[1];
+    expect(String(write[0])).toContain('INSERT INTO ivdr_validation_parameter_history');
+    expect(String(write[0])).toContain('SELECT id, $22, $23, $24, NOW() FROM updated');
+    expect(write[1]).toContain(5); // organization_id constrains the UPDATE the history selects from
+    expect(write[1]?.[22]).toBe('42');
+  });
+
+  it('binds CDx status history to the tenant-scoped update in one statement', async () => {
+    query.mockResolvedValueOnce({ rows: [{ id: 7 }] });
+    const res = await request(app()).put('/api/ivdr/cdx-workflows/7/status').send({ status: 'post_market', notes: 'NB review closed' });
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    const write = query.mock.calls[0];
+    expect(String(write[0])).toContain('INSERT INTO ivdr_cdx_status_history');
+    expect(String(write[0])).toContain('FROM updated');
+    expect(write[1]).toEqual(['7', 'post_market', 5, 'NB review closed', '42']);
+  });
+
+  /**
+   * Every value column is COALESCEd so a partial PUT leaves the rest standing,
+   * but pass_fail_status is one column covering all of them and was rewritten
+   * wholesale from the request body. Sending a new accuracy figure retracted
+   * the pass verdict on a limit of detection whose value and acceptance
+   * criterion were both still in the row.
+   */
+  it('keeps the verdict on parameters a partial update does not resend', async () => {
+    query.mockResolvedValueOnce({
+      rows: [{ lod: 0.5, precision_cv: 12, acceptance_criteria: { lod: { max: 1 }, precisionCV: { max: 10 } } }],
+    });
+    query.mockResolvedValueOnce({ rows: [{ id: 7 }] });
+    const res = await request(app()).put('/api/ivdr/validations/7/parameters').send({ accuracy: 2 });
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+    expect(res.body.passFailStatus.lod).toBe('pass');
+    expect(res.body.passFailStatus.precisionCV).toBe('fail');
+    expect(res.body.passFailStatus.accuracy).toBe('recorded');
+    expect(res.body.passFailStatus.loq).toBe('pending');
+  });
+});

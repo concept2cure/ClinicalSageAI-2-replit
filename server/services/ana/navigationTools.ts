@@ -39,14 +39,14 @@ export const LIST_APP_SCREENS: AnaTool = {
 export const NAVIGATE_TO: AnaTool = {
   name: 'navigate_to',
   description:
-    "Navigate the app to a screen/surface by its target id (from list_app_screens). Validates the target and any params against the governed navigation registry and returns a navigation directive the UI applies; refuses unknown targets or invalid/missing params rather than guessing. Use when the user asks to go somewhere, or to take them to the right surface to complete a task (e.g. open CMC, the dossier map, or the intelligence 'protocol' tab). Project-scoped targets require an active project in context. Tell the user where you're taking them.",
+    "Navigate the app to a screen/surface by its target id (from list_app_screens). Validates the target and any params against the governed navigation registry and returns a navigation directive the UI applies; refuses unknown targets or invalid/missing params rather than guessing. Use when the user asks to go somewhere, or to take them to the right surface to complete a task (e.g. open CMC, the dossier map, or the intelligence 'clinical' group). Project-scoped targets require an active project in context. Tell the user where you're taking them.",
   input_schema: {
     type: 'object',
     properties: {
       target: { type: 'string', description: 'Target screen id from list_app_screens, e.g. "cmc", "dossier-map", "intelligence".' },
       params: {
         type: 'object',
-        description: 'Optional params for the target (e.g. { "intelligenceTab": "protocol" }, { "sectionCode": "3.2.P.8" }).',
+        description: 'Optional params for the target (e.g. { "intelligenceTab": "clinical" }, { "sectionCode": "3.2.P.8" }).',
         additionalProperties: { type: 'string' },
       },
     },
@@ -54,5 +54,83 @@ export const NAVIGATE_TO: AnaTool = {
   },
 };
 
-/** AnA self-navigation tools, spread into ALL_ANA_TOOLS. */
-export const NAVIGATION_TOOLS: AnaTool[] = [LIST_APP_SCREENS, NAVIGATE_TO];
+export const LIST_SCREEN_ACTIONS: AnaTool = {
+  name: 'list_screen_actions',
+  description:
+    "List the ungoverned on-screen operations AnA can perform, from the governed surface-action registry: each action's id, the screen it operates, what it does, and its params. These are the controls a person would click — open a program, search the vault, set a filter, switch a view. Governed work (sign/approve/submit/lock) is structurally absent: it always goes through the propose-and-confirm path. Optionally filter by the screen (surface) id. Use the returned ids verbatim with act_on_screen.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      surface: {
+        type: 'string',
+        description: 'Optional screen id filter (a navigation target id, e.g. "projects", "vault").',
+      },
+    },
+    required: [],
+  },
+};
+
+export const ACT_ON_SCREEN: AnaTool = {
+  name: 'act_on_screen',
+  description:
+    "Perform an ungoverned on-screen operation by its action id (from list_screen_actions) — the click a person would make: open a program from the portfolio, search the vault, set a filter, switch a view. Validates the action and params against the governed surface-action registry and returns a directive the UI performs; refuses unknown actions, governed verbs, or invalid params rather than guessing. The screen must be (or be about to be) the one the action operates — navigate_to it first when needed. Under Live Drive the operation is applied to the user's screen as you make it; otherwise it is offered as a chip the user activates.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      action: {
+        type: 'string',
+        description: 'Action id from list_screen_actions, e.g. "projects.open-program", "vault.search".',
+      },
+      params: {
+        type: 'object',
+        description:
+          'Params for the action (e.g. { "program": "BX-204" }, { "query": "stability" }). Fill required params from the user\'s request or the on-screen context.',
+        additionalProperties: { type: 'string' },
+      },
+    },
+    required: ['action'],
+  },
+};
+
+export const LIST_DEMO_SCRIPTS: AnaTool = {
+  name: 'list_demo_scripts',
+  description:
+    'List the curated product demonstration scripts AnA can run under Live Drive: id, kind (training or sales), title, audience, honest length, and stop count. Use when the user asks for a product tour, training walkthrough, or sales demonstration, then fetch the chosen script with start_product_demo.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      kind: {
+        type: 'string',
+        enum: ['training', 'sales'],
+        description: 'Optional filter: training walkthroughs or sales demonstrations.',
+      },
+    },
+    required: [],
+  },
+};
+
+export const START_PRODUCT_DEMO: AnaTool = {
+  name: 'start_product_demo',
+  description:
+    "Fetch a demonstration script by id (from list_demo_scripts) and begin running it. The script is a validated plan: for each stop, narrate its talking point in your own voice (adapted to the user's real data — never verbatim), then make its move with navigate_to or act_on_screen, and keep a brisk pace. Stops without pinned params (e.g. which program to open) are filled from the on-screen context. Works best under Live Drive demonstration mode (the user starts it from the AnA rail); without Live Drive the moves become offered chips, so say so and offer to continue that way.",
+  input_schema: {
+    type: 'object',
+    properties: {
+      demo: {
+        type: 'string',
+        description: 'Demonstration script id from list_demo_scripts, e.g. "training-orientation", "sales-flagship".',
+      },
+    },
+    required: ['demo'],
+  },
+};
+
+/** AnA self-drive tools (navigation + screen actions + demos), spread into ALL_ANA_TOOLS. */
+export const NAVIGATION_TOOLS: AnaTool[] = [
+  LIST_APP_SCREENS,
+  NAVIGATE_TO,
+  LIST_SCREEN_ACTIONS,
+  ACT_ON_SCREEN,
+  LIST_DEMO_SCRIPTS,
+  START_PRODUCT_DEMO,
+];

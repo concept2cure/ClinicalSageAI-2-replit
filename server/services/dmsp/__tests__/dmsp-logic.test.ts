@@ -80,9 +80,15 @@ describe('evaluateDmspCompleteness', () => {
     expect(r.findings).toHaveLength(0);
   });
 
-  it('treats no elements as vacuously complete', () => {
+  /* This read "treats no elements as vacuously complete", and it was the
+     defect written down. readyToFinalize is the gate the service enforces on
+     finalize, so a DMS plan with no element rows scored 100% and finalized. */
+  it('a plan with no elements is not complete and does not finalize', () => {
     const r = evaluateDmspCompleteness([]);
-    expect(r.addressedPct).toBe(100);
-    expect(r.readyToFinalize).toBe(true);
+    expect(r.addressedPct).toBeNull();
+    expect(r.readyToFinalize).toBe(false);
+    const critical = r.findings.filter((f) => f.severity === 'critical');
+    expect(critical).toHaveLength(1);
+    expect(critical[0].message).toMatch(/no required elements recorded/i);
   });
 });

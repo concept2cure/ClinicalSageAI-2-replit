@@ -37,7 +37,7 @@ This Installation Qualification (IQ) Protocol verifies that the Cortex Prime AI 
 |-----------|---------|----------|
 | PostgreSQL Database | 15.x | Infrastructure |
 | pgvector Extension | 0.5.x | Database Extension |
-| Node.js Runtime | 20.x LTS | Runtime |
+| Node.js Runtime | 22.x LTS | Runtime |
 | Cortex Schema (073-080) | 1.0.0 | Custom Application |
 | Compliance Schema (080) | 1.0.0 | Custom Application |
 

@@ -79,8 +79,8 @@ import fdaFormsRoutes from '../routes/fda-forms.routes';
 import fieldSyncRoutes from '../routes/fieldSync.routes';
 import contentAssemblyRoutes from '../routes/contentAssembly.routes';
 import { createMiscInlineRoutes } from '../routes/misc-inline-routes';
-import licenseRoutes from '../routes/license-routes.js';
 import moduleSubscriptions from '../routes/module-subscriptions.js';
+import moduleAccessRequests from '../routes/module-access-requests.js';
 import licensing from '../routes/licensing.js';
 import billing from '../routes/billing.js';
 import deepResearch from '../routes/deep-research.js';
@@ -188,8 +188,15 @@ export async function registerInlineLitCommerceRoutes({
    * identically to the working cases three functions away.
    */
   const litIntRoutes: ReadonlyArray<{ path: string; router: unknown; name: string }> = [
-    { path: '/', router: licenseRoutes, name: 'License Management' },
     { path: '/api/module-subscriptions', router: moduleSubscriptions, name: 'Module Subscriptions' },
+    // Sits beside module-subscriptions deliberately: it is how a member who
+    // cannot buy asks for a locked module, so it must stay reachable to an
+    // organization that is locked out of everything else.
+    {
+      path: '/api/module-access-requests',
+      router: moduleAccessRequests,
+      name: 'Module Access Requests',
+    },
     { path: '/api/licensing', router: licensing, name: 'Intelligent Licensing & EULA' },
     { path: '/api/billing', router: billing, name: 'Billing' },
     { path: '/api/deep-research', router: deepResearch, name: 'Deep Research' },
@@ -367,6 +374,16 @@ export async function registerInlineAiWorkflowRoutes({
     console.info('✅ Study Design routes mounted (/api/study-design)');
   } catch (error) {
     console.error('❌ Failed to mount Study Design routes:', error);
+  }
+
+  // Biostatistics bridge — study design ↔ biostatistics engines ↔ filing
+  // placement ↔ task board (server/services/biostatistics-bridge).
+  try {
+    const biostatBridgeModule = await import('../routes/biostat-bridge');
+    app.use('/api/biostat-bridge', authMiddleware, biostatBridgeModule.default);
+    console.info('✅ Biostatistics bridge routes mounted (/api/biostat-bridge)');
+  } catch (error) {
+    console.error('❌ Failed to mount Biostatistics bridge routes:', error);
   }
 
   // Financial disclosures — 21 CFR 54 (FCOI, Forms FDA 3454/3455 → Module 1).

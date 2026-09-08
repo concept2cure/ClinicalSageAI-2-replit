@@ -80,6 +80,13 @@ process.env.RLS_ENFORCE = process.env.RLS_ENFORCE || 'on';
 process.env.SKIP_DB_STARTUP_TEST = process.env.SKIP_DB_STARTUP_TEST || 'true';
 process.env.JWT_SECRET =
   process.env.JWT_SECRET || 'test-jwt-secret-for-db-tests-min-32-chars-long';
+// verifyJwtWithRotation prefers JWT_SECRET_DEV over JWT_SECRET when
+// NODE_ENV=test. A developer's .env (loaded lazily by server imports, which
+// never override already-set vars) typically carries a different
+// JWT_SECRET_DEV, so without pinning it here every token a db suite mints
+// with JWT_SECRET fails verification as a blanket 401. tests/setup.ts already
+// pins it for unit tests; the db lane needs the same.
+process.env.JWT_SECRET_DEV = process.env.JWT_SECRET_DEV || process.env.JWT_SECRET;
 
 beforeAll(async () => {
   // ── The load-bearing assertion of this whole project ──────────────────────

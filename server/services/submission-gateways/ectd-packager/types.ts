@@ -90,6 +90,18 @@ export interface LeafRef {
   href: string;
   /** MD5 of the bytes actually written for this leaf. */
   md5: string;
+  /**
+   * The directory that backbone lives in, relative to the sequence root —
+   * `''` for index.xml, `m1/us` for the FDA regional backbone.
+   *
+   * `modified-file` sits on the same element as `href` and resolves against the
+   * same base, so it needs this too. Without it a cross-sequence pointer
+   * authored from the sequence root ('../0000/m1/us/1-2/x.pdf') was written
+   * verbatim into a backbone two directories down and resolved to
+   * 0001/m1/0000/m1/us/1-2/x.pdf — a path in no layout, on every Module 1 leaf
+   * a follow-up sequence supersedes.
+   */
+  backboneDir: string;
 }
 
 /** One entry in the index-md5.txt manifest: a package-relative path + its MD5. */

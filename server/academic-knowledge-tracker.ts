@@ -1,7 +1,7 @@
 // Temporarily defining academicResources and academicEmbeddings schema directly
 // in file to address the broken reference issues with shared/schema
 import { pgTable, serial, varchar, text, timestamp, integer, json } from 'drizzle-orm/pg-core';
-import { count, eq, like, and, desc, asc, or, inArray, sql } from 'drizzle-orm';
+import { count, eq, like, and, desc, or, inArray, sql } from 'drizzle-orm';
 import { db } from './db';
 
 // Temporary schema definitions

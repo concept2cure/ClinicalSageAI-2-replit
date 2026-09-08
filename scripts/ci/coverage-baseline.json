@@ -1,0 +1,18 @@
+{
+  "recordedAt": "2026-09-06T06:27:30.834Z",
+  "tolerance": 0.5,
+  "measured": {
+    "lines": 53.25,
+    "statements": 52.62,
+    "functions": 54.4,
+    "branches": 46.16
+  },
+  "environmentMargin": 1,
+  "note": "Coverage may not fall below `metrics` minus `tolerance`. Raise them when coverage improves; never lower them to make a red build green — that is the regression this gate exists to catch. `measured` is what the run that seeded this actually reported; `metrics` is that minus environmentMargin, which exists only because the seeding run and the enforcing run may be different machines. Once CI has confirmed its own numbers, re-pin there with no margin so the ratchet sits tight against reality.",
+  "metrics": {
+    "lines": 52.25,
+    "statements": 51.62,
+    "functions": 53.4,
+    "branches": 45.16
+  }
+}

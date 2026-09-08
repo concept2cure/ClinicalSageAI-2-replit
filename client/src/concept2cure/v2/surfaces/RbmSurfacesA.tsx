@@ -210,7 +210,7 @@ export function RbmReport({ board, onAsk }: SubProps) {
           <div className="rbm-report-m">As of {R.asOf} -- overall risk <RbmChip vocab="band" value={R.overallRisk} /> -- {R.attentionCount} attention items -- {R.approved ? 'assessment approved' : 'assessment approval pending'}</div>
         </div>
         <div className="rbm-report-acts">
-          <button className="rbm-btn" onClick={() => onAsk?.('Export the risk review report as markdown')}>{I.download}Export markdown</button>
+          <button className="rbm-btn" onClick={() => onAsk?.('Export the risk review report as markdown')} title="Sends this request to AnA in the rail — it does not download a file here">{I.sparkles}Ask AnA to export markdown</button>
           <button className="rbm-btn" onClick={() => window.print()}>{I.fileText}Print</button>
         </div>
       </div>
@@ -348,7 +348,7 @@ export function RbmRact({ board, onReload }: SubProps) {
         <div className="rbm-asmt">
           <div className="rbm-asmt-l">
             <b>{asmt.framework}</b>
-            <span>Version {asmt.version} -- <RbmChip vocab={asmt.status === 'active' ? 'action' : 'item'} value={asmt.status === 'active' ? 'done' : 'open'} /> {asmt.status === 'active' ? 'active' : 'draft — approval pending'} -- {items.length} CtQ factors, {items.filter(x => x.critical).length} critical</span>
+            <span>Version {asmt.version} — <RbmChip vocab={asmt.status === 'active' ? 'action' : 'item'} value={asmt.status === 'active' ? 'done' : 'open'} /> {asmt.status === 'active' ? 'active' : 'draft — approval pending'} — {items.length} CtQ factors, {items.filter(x => x.critical).length} critical</span>
             {asmt.approval ? <span className="rbm-audit">{I.check}Approved by {asmt.approval.by} -- {asmt.approval.when} -- &quot;{asmt.approval.reason}&quot;</span> : null}
           </div>
           {history.length > 1 && (

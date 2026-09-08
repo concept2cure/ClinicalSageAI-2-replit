@@ -1,6 +1,6 @@
 /**
  * Pathway sub-tab data — Correspondence only.
- * Ported from `design-system/ui_kits/mdx/data-pathway-tabs.jsx`.
+ * Ported from `ui_kits/mdx/data-pathway-tabs.jsx`.
  *
  * Consumed by `hooks/usePathwayTabsData.ts` and, through it, by
  * `surfaces/pathway/PathwayPanes.tsx` and `surfaces/pathway/FilesTreePane.tsx`.

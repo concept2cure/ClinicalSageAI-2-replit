@@ -255,6 +255,11 @@ export const ANA_SURFACE_CTX = {
       'Explain ICH Q6B expectations for charge-variant specs',
       'Draft a method-validation justification for sub-visible particles',
       'Reconcile drug-substance specs across CSR-201 and §3.2.S.4.1',
+      /* The control-strategy chain is the regulatory CMC author's daily trace:
+         CQA ← CPP ← method ← specification. And placement is the step that
+         used to be missing entirely — approved §3.2 into the IND sequence. */
+      'Trace each CQA to the CPP that controls it and the method that measures it',
+      'Place the approved Module 3 sections into the IND submission and show what landed',
     ],
   },
   'submission-center': {

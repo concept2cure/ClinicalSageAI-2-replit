@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { I } from '../icons';
-import { EmptyState } from '../dataConnect';
+import { EmptyState, useLiveRows, ErrorState } from '../dataConnect';
+import { usePublishSurfaceContext } from '../surfaceContext';
+import { useSurfaceActionHandlers } from '../surfaceActions';
 import type { SurfaceViewProps } from '../surfaceViews';
 import '../styles/project-home-v2.css';
 
@@ -65,7 +67,7 @@ const AE_SYSTEMS: AeSystem[] = [
     checks: ['Study → tabulated-summary value check', 'SEND domain conformance reference', 'Required 2.6.x subsection map', 'Units → controlled terminology mapping'] },
   { id: 'csr', loc: 'ICH E3', mod: 'Module 5', t: 'Clinical Study Report', tmpl: true, multi: ['tables', 'figures'],
     sub: 'Full ICH E3 CSR from the SAP, TLF shells and the locked database.',
-    guarantees: ['14-section ICH E3 structure enforced', 'TLFs generated from ADaM and placed in-text', '§11 efficacy narrated from the pre-specified analyses', 'Protocol-deviation and disposition tables auto-built'],
+    guarantees: ['16-section ICH E3 structure enforced', 'TLFs generated from ADaM and placed in-text', '§11 efficacy narrated from the pre-specified analyses', 'Protocol-deviation and disposition tables auto-built'],
     checks: ['TLF ↔ dataset reconciliation', 'Section-14 required-table presence', 'Analysis population consistency', 'Cross-reference integrity (in-text ↔ appendix)'] },
   { id: 'proto', loc: 'ICH M11', mod: 'Module 5', t: 'Clinical Protocol', tmpl: true, multi: ['tables'],
     sub: 'ICH M11 protocol — objectives, eligibility, SoA, statistics, risk.',
@@ -124,6 +126,10 @@ declare global {
 
 export function AuthoringEngine({ onAsk, onNav }: SurfaceViewProps) {
   const [tab, setTab] = useState('pyramid');
+  /* The org's real learned templates — same org-scoped read the Template
+     Library surface uses. The epoch lets the error state offer a retry. */
+  const [tplEpoch, setTplEpoch] = useState(0);
+  const tpl = useLiveRows<{ id: string; name: string }>('/api/c2c/templates', ['/api/c2c/templates', tplEpoch]);
   const [sel, setSel] = useState('co25');
   const sys = AE_SYSTEMS.find((s) => s.id === sel) || AE_SYSTEMS[0];
   const ask = onAsk;
@@ -137,12 +143,78 @@ export function AuthoringEngine({ onAsk, onNav }: SurfaceViewProps) {
     ['automations', 'GxP automations'],
   ];
 
+  /* WHAT ANA SEES HERE. This page is a capability brochure: the disclaimer IS
+     the payload — without it, "is my 2.5 grounded?" gets answered from a
+     description of what the engine can do. The template count is the page's
+     only live read; everything else describes no program and no status. */
+  const tabLabel = (tabs.find(([id]) => id === tab) ?? [tab, tab])[1];
+  const anaContext = useMemo(() => {
+    let summary =
+      'AnA Authoring Engine — this page describes what the engine is built to do for each document type; ' +
+      `it reads no programs and reports no program status. The "${tabLabel}" tab is open.`;
+    if (tab === 'systems') {
+      summary += ` The ${sys.t} system (CTD ${sys.loc}) is selected.`;
+    }
+    if (tab === 'templates') {
+      summary += tpl.loading
+        ? ' The organization template read is still loading.'
+        : tpl.error
+          ? ' The organization templates could not be read — a failed read, not an organization with no templates.'
+          : tpl.rows.length === 0
+            ? ' No templates learned for this organization yet.'
+            : ` ${tpl.rows.length} template(s) learned for this organization.`;
+    }
+    return {
+      summary,
+      facts: {
+        describesCapabilityOnly: true,
+        openTab: tab,
+        ...(tab === 'systems'
+          ? { selectedSystemId: sys.id, selectedSystemTitle: sys.t, selectedSystemCtdLocation: sys.loc }
+          : {}),
+        ...(tab === 'templates'
+          ? tpl.loading
+            ? {}
+            : tpl.error
+              ? { templatesUnavailable: true }
+              : { templateCount: tpl.rows.length }
+          : {}),
+      },
+    };
+  }, [tab, tabLabel, sys, tpl.loading, tpl.error, tpl.rows]);
+  /* Capability-reference navigation only: this page reads no programs, and
+     drafting a document stays the person's request. */
+  useSurfaceActionHandlers('authoring-engine', {
+    'authoring-engine.open-tab': (params) => {
+      const target = String(params.tab ?? '');
+      const meta = tabs.find(([id]) => id === target);
+      if (!meta) return { ok: false, reason: `No authoring-engine tab named "${params.tab}".` };
+      if (tab === target) return { ok: true, detail: `Already on ${meta[1]}` };
+      setTab(target);
+      return { ok: true, detail: `Opened ${meta[1]}` };
+    },
+    'authoring-engine.select-system': (params) => {
+      const target = String(params.system ?? '');
+      const sys = AE_SYSTEMS.find((s) => s.id === target);
+      if (!sys) return { ok: false, reason: `No document system named "${params.system}".` };
+      const switched = tab !== 'systems';
+      if (switched) setTab('systems');
+      setSel(sys.id);
+      return {
+        ok: true,
+        detail: `Selected the ${sys.t} system (CTD ${sys.loc})` + (switched ? ' on the document-systems tab' : ''),
+      };
+    },
+  });
+
+  usePublishSurfaceContext('authoring-engine', anaContext);
+
   return (
     <div className="ae">
       <div className="reg-head" style={{ marginBottom: 6 }}>
         <div>
           <div className="reg-eyebrow">Biotech & Pharma {I.dot} authoring</div>
-          <h1 className="reg-title">AnA Authoring Engine</h1>
+          <h1 className="reg-title">AnA authoring engine</h1>
           <p className="reg-sub">One route from raw data to a final draft across the CTD. Each document type has its own drafting system that works from evidence you have locked, cites each claim to its source, and surfaces anything it could not ground — across text, tables, figures and graphs.</p>
         </div>
         <button className="reg-ask" onClick={() => ask('Draft my next CTD document with the right document-type system, grounded on the locked evidence')}>{I.sparkles} Draft with AnA</button>
@@ -255,12 +327,38 @@ export function AuthoringEngine({ onAsk, onNav }: SurfaceViewProps) {
           <div className="scaf-note" style={{ marginBottom: 16 }}>
             Specify the document type and add your template — AnA learns your terminology, formatting and structure, so drafts arrive in your preferred format from the first pass. Templates render to DOCX and PDF.
           </div>
-          <EmptyState
-            title="No templates learned yet"
-            hint="Add a template and AnA learns your terminology, formatting and structure — drafts then arrive in your house style from the first pass. Manage them in the Template Library."
-            icon={I.fileText}
-          />
-          <button className="btn primary" style={{ marginTop: 8 }} onClick={() => open('template-library')}>{I.plus} Add a template</button>
+          {/* ── "No templates learned yet" was a constant ─────────────────────
+              This tab asserted that the tenant had no templates while making no
+              request at all — a tenant with a full Template Library was told
+              its library was empty, on the screen that exists to tell it
+              otherwise. /api/c2c/templates is the same org-scoped read the
+              Template Library surface uses; this now shares it, and separates
+              the three states it can actually be in: still loading, failed to
+              read, and genuinely none. */}
+          {tpl.loading ? (
+            <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>Loading your templates…</div>
+          ) : tpl.error ? (
+            <ErrorState
+              title="Couldn't load your templates"
+              message={tpl.error}
+              retry={() => setTplEpoch((n) => n + 1)}
+            />
+          ) : tpl.rows.length === 0 ? (
+            <EmptyState
+              title="No templates learned yet"
+              hint="Add a template and AnA learns your terminology, formatting and structure — drafts then arrive in your house style from the first pass. Manage them in the Template Library."
+              icon={I.fileText}
+            />
+          ) : (
+            <div className="scaf-note" style={{ padding: '14px 12px' }}>
+              {tpl.rows.length} template{tpl.rows.length === 1 ? '' : 's'} learned for this
+              organization. AnA drafts in their terminology, formatting and structure.
+              Open the Template Library to review or add to them.
+            </div>
+          )}
+          <button className="btn primary" style={{ marginTop: 8 }} onClick={() => open('template-library')}>
+            {I.plus} {tpl.rows.length > 0 ? 'Manage templates' : 'Add a template'}
+          </button>
         </div>
       )}
 

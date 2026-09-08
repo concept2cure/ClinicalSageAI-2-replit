@@ -1,5 +1,27 @@
 /**
- * Regulatory Document Template Registry
+ * DOCX template blueprints — the RENDERING skeleton docxFactory fills.
+ *
+ * ── Which of the four "template" modules is this? ───────────────────────────
+ * `DocumentTemplate` was exported by four modules in server/services/, with
+ * four different shapes, so the name told a reader nothing. Each now says what
+ * it owns and names the others:
+ *
+ *   · intelligence/template-registry.ts — WHICH template applies. DB-backed,
+ *     async, resolves (agency, document_type, submission_type, indication) down
+ *     a most-specific-first chain. Owns the name `DocumentTemplate`.
+ *   · THIS FILE — what a chosen template LOOKS LIKE as a DOCX. Static,
+ *     in-memory, sync. Section blueprints with CTD codes and boilerplate, fed
+ *     to docxFactory. Owns `DocxTemplateBlueprint`.
+ *   · regulatory/templateCatalog.ts — which templates are OFFERED for a
+ *     registry entry. Metadata only (id/title/format/aiDraftable), no
+ *     structure. Owns `CatalogTemplateEntry`.
+ *   · ana-ri/document-actions.ts — the heading outline an AnA quick-action
+ *     scaffolds from. Owns `ActionArtifactOutline`.
+ *
+ * (`market-specs/document-template-library.ts` supplies the heading outlines
+ * templateCatalog's metadata lacks, and already states that boundary itself.)
+ *
+ * This module does NOT decide which template to use — ask template-registry.
  *
  * Architecture (Veeva/Certara pattern):
  *   Template Blueprint → AI fills sections → docxFactory renders DOCX
@@ -39,7 +61,7 @@ export interface TemplateSectionBlueprint {
   expectedTables?: { caption: string; suggestedHeaders: string[] }[];
 }
 
-export interface DocumentTemplate {
+export interface DocxTemplateBlueprint {
   /** Template identifier */
   id: string;
   /** Display name */
@@ -62,7 +84,7 @@ export interface DocumentTemplate {
 // CER TEMPLATE — EU MDR 2017/745 (MEDDEV 2.7/1 Rev 4)
 // ═══════════════════════════════════════════════════════════════════════════════
 
-const cerTemplate: DocumentTemplate = {
+const cerTemplate: DocxTemplateBlueprint = {
   id: 'cer-eu-mdr',
   name: 'Clinical Evaluation Report (EU MDR)',
   submissionType: 'CER',
@@ -227,7 +249,7 @@ const cerTemplate: DocumentTemplate = {
 // 510(K) TEMPLATE — FDA 21 CFR 807 Subpart E
 // ═══════════════════════════════════════════════════════════════════════════════
 
-const fda510kTemplate: DocumentTemplate = {
+const fda510kTemplate: DocxTemplateBlueprint = {
   id: 'fda-510k',
   name: 'FDA 510(k) Premarket Notification',
   submissionType: '510K',
@@ -377,7 +399,7 @@ const fda510kTemplate: DocumentTemplate = {
 // CSR TEMPLATE — ICH E3
 // ═══════════════════════════════════════════════════════════════════════════════
 
-const csrTemplate: DocumentTemplate = {
+const csrTemplate: DocxTemplateBlueprint = {
   id: 'csr-ich-e3',
   name: 'Clinical Study Report (ICH E3)',
   submissionType: 'CSR',
@@ -609,7 +631,7 @@ const csrTemplate: DocumentTemplate = {
 
 // ─── IND Template (FDA IND Application — Modules 1-5) ────────────────────────
 
-const indTemplate: DocumentTemplate = {
+const indTemplate: DocxTemplateBlueprint = {
   id: 'ind-fda',
   name: 'IND Application (FDA)',
   submissionType: 'IND',
@@ -644,13 +666,13 @@ const indTemplate: DocumentTemplate = {
   ],
 };
 
-const templates = new Map<string, DocumentTemplate>();
+const templates = new Map<string, DocxTemplateBlueprint>();
 templates.set(cerTemplate.id, cerTemplate);
 templates.set(fda510kTemplate.id, fda510kTemplate);
 templates.set(csrTemplate.id, csrTemplate);
 templates.set(indTemplate.id, indTemplate);
 
-export function getTemplate(id: string): DocumentTemplate | undefined {
+export function getTemplate(id: string): DocxTemplateBlueprint | undefined {
   return templates.get(id);
 }
 
@@ -678,13 +700,52 @@ export function templateIds(): string[] {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 /**
+ * What a section nobody wrote says.
+ *
+ * `defaultText` used to be emitted as ordinary unmarked body prose, while a
+ * section WITHOUT one was bracketed as an instruction — so the sections that
+ * read as authored fact were exactly the ones nobody authored. Several of those
+ * defaults are positive regulatory declarations:
+ *
+ *   fda-510k   5.3  "Not applicable — device does not contain software."
+ *              5.4  "Not applicable — device is not electrically powered."
+ *              5.5  "Not applicable — device is supplied non-sterile."
+ *              7    "Clinical data is not required for this submission…"
+ *   cer-eu-mdr 3.3  "No clinical investigations were conducted for this device."
+ *              6    "The clinical evaluation was performed by qualified personnel…"
+ *   csr-ich-e3 8.3  "No deaths occurred during the study."
+ *
+ * Nothing in this product ever asked whether the device contains software, is
+ * mains-powered or ships sterile, whether clinical data are required, or who
+ * the evaluators were. The absence of an answer became the answer, addressed to
+ * FDA or a Notified Body — and for a software-driven, mains-powered, sterile
+ * device the same document asserted all three of the opposite.
+ *
+ * The wording is still offered, because a sensible default saves an author
+ * work; it is offered as a PROPOSAL they have to accept. Everything unwritten
+ * now starts with '[' so a reader scanning the DOCX can find every section
+ * still owed, and nothing unwritten can be mistaken for prose someone stands
+ * behind. This is the rule the rest of the repo already keeps: estar-mapper
+ * treats an unanswered device flag as a gap ("a question nobody answered is not
+ * a section nobody needs"), and gspr-postmarket's checkContentField treats
+ * scaffold text as ABSENT so it cannot pass a gate.
+ */
+function unwrittenSection(bp: TemplateSectionBlueprint): string {
+  if (bp.defaultText) {
+    return `[NOT YET AUTHORED — suggested wording, confirm before filing: ${bp.defaultText}]`;
+  }
+  return bp.required ? `[${bp.instruction}]` : `[Optional — ${bp.instruction}]`;
+}
+
+/**
  * Merge LLM-generated content with a template blueprint.
  *
  * The LLM provides partial sections (by sectionCode or title).
  * This function:
  *   1. Walks the template blueprint (including subsections)
  *   2. Matches LLM sections by sectionCode or title
- *   3. Falls back to instruction text / defaultText for missing required sections
+ *   3. Marks every section the caller did not supply as unwritten — see
+ *      {@link unwrittenSection}; a default is offered as a proposal, never as prose
  *   4. Returns a fully populated DocxInput ready for generateRegulatory()
  */
 export function mergeWithTemplate(
@@ -718,13 +779,7 @@ export function mergeWithTemplate(
     const section: DocxSection = {
       title: bp.title,
       sectionCode: bp.sectionCode,
-      paragraphs: llm?.paragraphs?.length
-        ? llm.paragraphs
-        : bp.defaultText
-          ? [bp.defaultText]
-          : bp.required
-            ? [`[${bp.instruction}]`]
-            : [`[Optional — ${bp.instruction}]`],
+      paragraphs: llm?.paragraphs?.length ? llm.paragraphs : [unwrittenSection(bp)],
       tables: llm?.tables,
       pageBreak,
     };

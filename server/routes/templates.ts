@@ -2,7 +2,7 @@
  * templates.ts
  *
  * Extracted from server/index.ts — Template catalog, eCTD template, and drafting task routes.
- * The massive fallbackTemplates static data array lives in server/data/fallback-templates.ts.
+ * The fallbackTemplates static data array lives in services/templates/ectd-fallback-templates.ts (the one copy — see GA ledger L48).
  *
  * Routes (multiple mount points):
  *   GET  /api/templates               — fallback template catalog
@@ -18,7 +18,7 @@ import { getPool } from '../db';
 import { db } from '../db';
 import { getSecureOrgId } from '../utils/tenantContext';
 import { draftingTasks } from '@shared/schema';
-import { fallbackTemplates } from '../data/fallback-templates';
+import { fallbackTemplates } from '../services/templates/ectd-fallback-templates';
 
 // ── Template catalog router (mounted at /api/templates) ────────────────────
 
@@ -381,4 +381,4 @@ draftingRouter.get('/task_status/:task_id', async (req: Request, res: Response) 
 });
 
 // Also export fallbackTemplates for any other code that needs it
-export { fallbackTemplates } from '../data/fallback-templates';
+export { fallbackTemplates } from '../services/templates/ectd-fallback-templates';

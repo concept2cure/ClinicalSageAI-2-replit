@@ -1,0 +1,126 @@
+{
+  "$comment": "Files permitted to mention each dead audit table. `dropped` is the settled list: dead in every code path and off the drizzle push surface. `withheld` is the burndown list — dead in code but still declared as a pgTable, so a SQL-only DROP would not hold — and is empty since L143. These lists may only SHRINK. A file naming a dead table that is not on its list is a resurrection — a new writer, a new reader, a re-added pgTable, or a second CREATE TABLE migration — and fails the build. The six L143 tables (ai_audit_log, coauthor_import_history, coauthor_status_history, csr_extraction_log, document_audit_log, qmp_audit_trail) moved from withheld to dropped when their pgTable declarations went; their remaining mentions are the creator migrations, which are history. Regenerate with npm run ci:dead-audit-tables:write-baseline only after a real reduction.",
+  "generatedBy": "scripts/ci/check-dead-audit-tables.mjs --write-baseline",
+  "count": 80,
+  "dropped": {
+    "public.assumption_history": [
+      "db/migrations/20260901_drop_dead_audit_tables.sql",
+      "migrations/0010_operating_system_foundation.sql",
+      "scripts/ci/check-dead-audit-tables.mjs",
+      "scripts/ci/check-dead-audit-tables.selftest.mjs",
+      "shared/schema/operating-system.ts"
+    ],
+    "public.auth_password_history": [
+      "db/migrations/20260901_drop_dead_audit_tables.sql",
+      "db/migrations/_consolidated/001_auth_security_tables.sql",
+      "scripts/ci/check-dead-audit-tables.mjs",
+      "scripts/ci/check-dead-audit-tables.selftest.mjs",
+      "server/db/_deprecated_migrations/001_auth_security_tables.sql"
+    ],
+    "public.doc_activity_log": [
+      "db/migrations/20260901_drop_dead_audit_tables.sql",
+      "db/migrations/_consolidated/012_document_authoring_schema.sql",
+      "scripts/ci/check-dead-audit-tables.mjs",
+      "scripts/ci/check-dead-audit-tables.selftest.mjs"
+    ],
+    "public.ind_protocol_history": [
+      "db/migrations/20260901_drop_dead_audit_tables.sql",
+      "db/migrations/_consolidated/protocol_schema.sql",
+      "scripts/ci/check-dead-audit-tables.mjs",
+      "scripts/ci/check-dead-audit-tables.selftest.mjs"
+    ],
+    "public.program_activity_log": [
+      "db/migrations/20260901_drop_dead_audit_tables.sql",
+      "migrations/20260524_program_workbench_schema.sql",
+      "scripts/ci/check-dead-audit-tables.mjs",
+      "scripts/ci/check-dead-audit-tables.selftest.mjs",
+      "shared/schema/programs.ts"
+    ],
+    "public.qc_compliance_history": [
+      "db/migrations/048_quality_step7.sql",
+      "db/migrations/20260901_drop_dead_audit_tables.sql",
+      "scripts/ci/check-dead-audit-tables.mjs",
+      "scripts/ci/check-dead-audit-tables.selftest.mjs"
+    ],
+    "public.relation_extraction_log": [
+      "db/migrations/20260901_drop_dead_audit_tables.sql",
+      "migrations/0006_regulatory_atoms.sql",
+      "scripts/ci/check-dead-audit-tables.mjs",
+      "scripts/ci/check-dead-audit-tables.selftest.mjs",
+      "shared/schema/regulatory-atoms.ts"
+    ],
+    "public.strategy_audit": [
+      "db/migrations/028_strategy_core.sql",
+      "db/migrations/20260901_drop_dead_audit_tables.sql",
+      "scripts/ci/check-dead-audit-tables.mjs",
+      "scripts/ci/check-dead-audit-tables.selftest.mjs"
+    ],
+    "public.vault_document_audit_logs": [
+      "db/migrations/20260901_drop_dead_audit_tables.sql",
+      "db/migrations/_consolidated/0002_add_org_id_column.ts",
+      "db/migrations/_consolidated/0002_add_organization_id.ts",
+      "db/migrations/_consolidated/0004_add_tenant_indexes.ts",
+      "scripts/ci/check-dead-audit-tables.mjs",
+      "scripts/ci/check-dead-audit-tables.selftest.mjs"
+    ],
+    "audit.request_correlations": [
+      "db/migrations/019_gcc_idempotency_ratelimit.sql",
+      "db/migrations/20260901_drop_dead_audit_tables.sql",
+      "scripts/ci/check-dead-audit-tables.mjs",
+      "scripts/ci/check-dead-audit-tables.selftest.mjs"
+    ],
+    "cortex.confidence_history": [
+      "db/migrations/075_gcc_epistemic_intelligence.sql",
+      "db/migrations/20260901_drop_dead_audit_tables.sql",
+      "scripts/ci/check-dead-audit-tables.mjs",
+      "scripts/ci/check-dead-audit-tables.selftest.mjs"
+    ],
+    "predicate.proof_pack_audit_events": [
+      "db/migrations/20260211_phase6_6e_proof_pack_exports.sql",
+      "db/migrations/20260211_phase6_6g_proof_pack_trust_chain.sql",
+      "db/migrations/20260211_phase7_0a_render_jobs.sql",
+      "db/migrations/20260901_drop_dead_audit_tables.sql",
+      "scripts/ci/check-dead-audit-tables.mjs",
+      "scripts/ci/check-dead-audit-tables.selftest.mjs"
+    ],
+    "regulatory_harmonization.mapping_rule_history": [
+      "db/migrations/081_grdhe_regulatory_mapping_layer.sql",
+      "db/migrations/20260901_drop_dead_audit_tables.sql",
+      "scripts/ci/check-dead-audit-tables.mjs",
+      "scripts/ci/check-dead-audit-tables.selftest.mjs"
+    ],
+    "public.ai_audit_log": [
+      "db/migrations/20260901_drop_dead_audit_tables.sql",
+      "migrations/0000_sweet_joseph.sql",
+      "scripts/ci/check-dead-audit-tables.mjs"
+    ],
+    "public.coauthor_import_history": [
+      "db/migrations/20260901_drop_dead_audit_tables.sql",
+      "migrations/0000_sweet_joseph.sql",
+      "scripts/ci/check-dead-audit-tables.mjs"
+    ],
+    "public.coauthor_status_history": [
+      "db/migrations/20260901_drop_dead_audit_tables.sql",
+      "migrations/0000_sweet_joseph.sql",
+      "scripts/ci/check-dead-audit-tables.mjs"
+    ],
+    "public.csr_extraction_log": [
+      "db/migrations/20260901_drop_dead_audit_tables.sql",
+      "migrations/0005_csr_knowledge_database.sql",
+      "scripts/ci/check-dead-audit-tables.mjs"
+    ],
+    "public.document_audit_log": [
+      "db/migrations/20260901_drop_dead_audit_tables.sql",
+      "migrations/0000_sweet_joseph.sql",
+      "scripts/ci/check-dead-audit-tables.mjs"
+    ],
+    "public.qmp_audit_trail": [
+      "db/migrations/20260901_drop_dead_audit_tables.sql",
+      "db/migrations/_consolidated/0002_add_org_id_column.ts",
+      "db/migrations/_consolidated/0004_add_tenant_indexes.ts",
+      "migrations/0000_sweet_joseph.sql",
+      "scripts/ci/check-dead-audit-tables.mjs"
+    ]
+  },
+  "withheld": {}
+}

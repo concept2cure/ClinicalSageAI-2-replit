@@ -32,6 +32,10 @@ const ctqFactors = {
 import express from 'express';
 import { tenantContext, getTenantContext } from '../middleware/tenantContext';
 import { db, pool } from '../db';
+import { serverError } from '../lib/api-response';
+import { createScopedLogger } from '../utils/logger';
+
+const logger = createScopedLogger('tenant-section-gating');
 
 const router = express.Router();
 
@@ -68,10 +72,7 @@ router.get('/api/tenant-section-gating/:qmpId', async (req, res) => {
     });
   } catch (error: any) {
     console.error('Error fetching section gating:', error);
-    res.status(500).json({
-      status: 'error',
-      message: error.message,
-    });
+    return serverError(res, logger, 'loading tenant section gating', error);
   }
 });
 
@@ -153,10 +154,7 @@ router.post('/api/tenant-section-gating/:qmpId/update', async (req, res) => {
     });
   } catch (error: any) {
     console.error('Error updating section gating:', error);
-    res.status(500).json({
-      status: 'error',
-      message: error.message,
-    });
+    return serverError(res, logger, 'updating tenant section gating', error);
   }
 });
 
@@ -189,10 +187,7 @@ router.get('/api/tenant-ctq-factors/:section', async (req, res) => {
     });
   } catch (error: any) {
     console.error('Error fetching CTQ factors:', error);
-    res.status(500).json({
-      status: 'error',
-      message: error.message,
-    });
+    return serverError(res, logger, 'loading tenant ctq factors', error);
   }
 });
 
@@ -272,10 +267,7 @@ router.post('/api/tenant-ctq-factors', async (req, res) => {
     });
   } catch (error: any) {
     console.error('Error updating CTQ factor:', error);
-    res.status(500).json({
-      status: 'error',
-      message: error.message,
-    });
+    return serverError(res, logger, 'saving tenant ctq factors', error);
   }
 });
 
@@ -315,10 +307,7 @@ router.delete('/api/tenant-ctq-factors/:id', async (req, res) => {
     });
   } catch (error: any) {
     console.error('Error deleting CTQ factor:', error);
-    res.status(500).json({
-      status: 'error',
-      message: error.message,
-    });
+    return serverError(res, logger, 'deleting tenant ctq factors', error);
   }
 });
 

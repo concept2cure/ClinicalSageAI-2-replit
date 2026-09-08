@@ -12,12 +12,21 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import express, { type Request, type Response, type NextFunction } from 'express';
 import request from 'supertest';
 
-const { createCmcChange, listCmcChanges, CmcChangeValidationError, logAction } = vi.hoisted(() => {
+const { createCmcChange, listCmcChanges, CmcChangeValidationError, logAction, writeThroughChangeControl, inc } = vi.hoisted(() => {
   class CmcChangeValidationError extends Error {}
-  return { createCmcChange: vi.fn(), listCmcChanges: vi.fn(), CmcChangeValidationError, logAction: vi.fn() };
+  return {
+    createCmcChange: vi.fn(),
+    listCmcChanges: vi.fn(),
+    CmcChangeValidationError,
+    logAction: vi.fn(),
+    writeThroughChangeControl: vi.fn(),
+    inc: vi.fn(),
+  };
 });
 vi.mock('../../services/cmc/cmc-change-control-service', () => ({ createCmcChange, listCmcChanges, CmcChangeValidationError }));
 vi.mock('../../services/auditService', () => ({ default: { logAction } }));
+vi.mock('../../services/cmc-write-through', () => ({ writeThroughChangeControl }));
+vi.mock('../../metrics.js', () => ({ metrics: { concept2cureErrors: { inc } } }));
 
 import cmcRouter from '../cmc-changes.routes';
 
@@ -42,7 +51,7 @@ function dbRow(over: Record<string, unknown> = {}) {
   };
 }
 
-beforeEach(() => { createCmcChange.mockReset(); listCmcChanges.mockReset(); logAction.mockReset(); });
+beforeEach(() => { createCmcChange.mockReset(); listCmcChanges.mockReset(); logAction.mockReset(); writeThroughChangeControl.mockReset(); inc.mockReset(); });
 
 describe('GET /api/cmc-changes', () => {
   it('403 without org context', async () => {
@@ -97,5 +106,53 @@ describe('POST /api/cmc-changes', () => {
     const res = await request(appWith(9)).post('/api/cmc-changes').send({ title: 'x', dosageFormFamily: 'biologic', changeCategory: 'nope' });
     expect(res.status).toBe(400);
     expect(res.body.error.code).toBe('VALIDATION');
+  });
+
+  /* ── Module 3 convergence: a governed change marks its §3.2 sections stale ──
+     The legacy register write-throughs on every save; this store never did, so
+     the same conceptual event had two different downstream truths. */
+
+  it('write-throughs to the canonical §3.2 source layer when a CMC project is stated', async () => {
+    createCmcChange.mockResolvedValueOnce(dbRow({ id: 'c-9' }));
+    writeThroughChangeControl.mockResolvedValueOnce({ ok: true, sourceObjectId: '1', sourceHash: 'h', staleSections: ['3.2.P.3'], isNew: true });
+    const res = await request(appWith(9)).post('/api/cmc-changes').send({
+      title: 'New scale-up', dosageFormFamily: 'biologic', changeCategory: 'scale_up',
+      cmcProjectId: 'a3b1c2d4-e5f6-4a1b-8c2d-0123456789ab',
+    });
+    expect(res.status).toBe(201);
+    expect(writeThroughChangeControl).toHaveBeenCalledWith(
+      9,
+      'a3b1c2d4-e5f6-4a1b-8c2d-0123456789ab',
+      'c-9',
+      expect.objectContaining({ title: 'Bioreactor scale-up', change_type: 'scale_up' }),
+      '55',
+    );
+    expect(res.body.meta.module3WriteThrough).toBe('recorded');
+    expect(inc).not.toHaveBeenCalled();
+  });
+
+  it('says skipped when no project is stated — the change persists org-wide but feeds nothing', async () => {
+    createCmcChange.mockResolvedValueOnce(dbRow({ id: 'c-9' }));
+    const res = await request(appWith(9)).post('/api/cmc-changes').send({
+      title: 'New scale-up', dosageFormFamily: 'biologic', changeCategory: 'scale_up',
+    });
+    expect(res.status).toBe(201);
+    expect(writeThroughChangeControl).not.toHaveBeenCalled();
+    expect(res.body.meta.module3WriteThrough).toBe('skipped_no_project');
+  });
+
+  it('reports a failed write-through instead of pretending it recorded, and meters it', async () => {
+    createCmcChange.mockResolvedValueOnce(dbRow({ id: 'c-9' }));
+    // The write-through answers { ok: false, code, reason } rather than throwing
+    // — the route must surface that as 'failed' AND observe it, never as silence.
+    writeThroughChangeControl.mockResolvedValueOnce({ ok: false, code: 'write_failed', reason: 'connection terminated unexpectedly' });
+    const res = await request(appWith(9)).post('/api/cmc-changes').send({
+      title: 'New scale-up', dosageFormFamily: 'biologic', changeCategory: 'scale_up',
+      cmcProjectId: 'a3b1c2d4-e5f6-4a1b-8c2d-0123456789ab',
+    });
+    expect(res.status).toBe(201);
+    expect(res.body.id).toBe('c-9');
+    expect(res.body.meta.module3WriteThrough).toBe('failed');
+    expect(inc).toHaveBeenCalledWith({ operation: 'cmc_write_through_change_control', error_type: 'propagation_failed' });
   });
 });

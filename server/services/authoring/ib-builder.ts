@@ -211,7 +211,7 @@ export async function buildInvestigatorBrochure(request: IBBuildRequest): Promis
     }
 
     const gaps = detectSectionGaps(section, available);
-    const status = sectionStatus(section, available, gaps);
+    let status = sectionStatus(section, available, gaps);
 
     let content = '';
     if (status !== 'missing') {
@@ -221,6 +221,20 @@ export async function buildInvestigatorBrochure(request: IBBuildRequest): Promis
     } else {
       // Even a "missing" section gets a placeholder so the IB skeleton is whole.
       content = `[${section.number} ${section.title}] — not yet available. Missing inputs: ${gaps.join('; ')}.`;
+    }
+
+    // A DATA-BEARING section whose drafted content still shows an unresolved
+    // [placeholder] cannot count as complete. Some sections cannot be
+    // synthesized from a template at all (e.g. the integrated Summary, §1, whose
+    // template always emits "[Integrated summary to be drafted ...]"), so a
+    // 'rendered' verdict from input-availability alone would report the section
+    // complete over an un-drafted body — a false-completeness signal in a
+    // document handed to investigators and IRB/IEC. Boilerplate sections (no
+    // input domains) are exempt: their optional [Sponsor]/[Edition] fields do
+    // not make the section incomplete.
+    const dataBearing = section.inputs.some(d => d !== 'none');
+    if (status === 'rendered' && dataBearing && hasUnresolvedPlaceholder(content)) {
+      status = 'partial';
     }
 
     results.push({
@@ -458,6 +472,16 @@ function buildSourceContext(section: IBSection, request: IBBuildRequest): string
 // TEMPLATE DRAFTING (fallback when AI unavailable)
 // ═══════════════════════════════════════════════════════════════════════════════
 
+/**
+ * True when the content still carries an unresolved bracketed placeholder (a
+ * "[... to be inserted]" / "[Sponsor]" span containing a letter). Governed IB
+ * prose never uses square brackets for anything else, so this is a fail-closed
+ * signal that the section is not actually drafted.
+ */
+function hasUnresolvedPlaceholder(content: string): boolean {
+  return /\[[^\]]*[A-Za-z][^\]]*\]/.test(content);
+}
+
 function draftSectionTemplate(section: IBSection, request: IBBuildRequest): string {
   const p = request.product;
   const product = p.productName;
@@ -491,7 +515,12 @@ function draftSectionTemplate(section: IBSection, request: IBBuildRequest): stri
     case '5.2':
       return `SAFETY AND EFFICACY\n\n${excerptNarrative(request.clinicalOverview, request.clinicalSummary) || '[Summary of safety and efficacy across clinical studies to be inserted.]'}${formatSafetyByBodySystem(request.safety)}`;
     case '5.3':
-      return `MARKETING EXPERIENCE\n\n${request.safety?.marketingExperience || `${product} is investigational and is not currently marketed in any country.`}`;
+      // Do NOT assert "not currently marketed in any country" as a fallback —
+      // that is a specific, checkable regulatory fact the code has no basis to
+      // know (a repurposed/partner-marketed product would make it false). When
+      // no marketing-experience data is supplied, emit an honest gap marker so
+      // the sponsor confirms the status rather than shipping an assumed negative.
+      return `MARKETING EXPERIENCE\n\n${request.safety?.marketingExperience || '[Marketing experience — country/approval/withdrawal status to be confirmed by the Sponsor.]'}`;
     case '6':
       return `SUMMARY OF DATA AND GUIDANCE FOR THE INVESTIGATOR\n\nThis section integrates the nonclinical and clinical findings for ${product} and provides practical guidance to the investigator.\n\nIDENTIFIED RISKS: ${request.safety?.identifiedRisks?.join('; ') || '[to be inserted]'}\nPOTENTIAL RISKS: ${request.safety?.potentialRisks?.join('; ') || '[to be inserted]'}\n\nRECOGNITION AND TREATMENT OF OVERDOSE / ADVERSE DRUG REACTIONS: ${request.safety?.overdoseGuidance || '[Guidance to be inserted.]'}`;
     case '7':

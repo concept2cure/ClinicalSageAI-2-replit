@@ -1,0 +1,8 @@
+{
+  "$comment": "Literal class names a component renders that NO built CSS chunk defines, keyed file::class. A class with no rule behind it cannot style anything on any surface, whatever the component claims. This list may only SHRINK — by writing the rules, by importing the stylesheet that already has them, or by deleting the class from the markup. Regenerate with --write-baseline ONLY after removing entries, and only against a fresh `npm run build`.",
+  "$generated": "2026-09-05",
+  "entryCount": 0,
+  "classCount": 0,
+  "siteCount": 0,
+  "entries": []
+}

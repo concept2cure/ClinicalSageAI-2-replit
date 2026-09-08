@@ -14,6 +14,7 @@
 
 import { pool } from '../../db';
 import type { ProductStatus, MarketStatus, LabelType } from '../../../shared/schema/rim';
+import { expectedLabelType } from './rim-logic';
 
 interface Queryable {
   query: (sql: string, params?: unknown[]) => Promise<{ rows: any[] }>;
@@ -151,4 +152,88 @@ export async function getLabelCurrencyInput(orgId: number, productId: number): P
     registrations: reg.rows.map((r) => ({ country: r.country, marketStatus: r.market_status })),
     approvedLabels: lab.rows.map((l) => ({ country: l.country, labelType: l.label_type })),
   };
+}
+
+/** One market's real label + registration picture — the registration row's dossier. */
+export interface RimMarketDossierEntry {
+  country: string;
+  marketStatus: string;
+  registrationNumber: string | null;
+  approvalDate: string | null;
+  renewalDueDate: string | null;
+  /** The label type this market requires, and the rule that says so. */
+  expectedLabelType: string;
+  expectedLabelBasis: string;
+  /** The org's approved labels for this market (or the global core data sheet). */
+  approvedLabels: Array<{ labelType: string; version: string | null; approvedDate: string | null; country: string | null }>;
+  /** True when the required label type is not among them. */
+  labelGap: boolean;
+}
+
+/**
+ * Assemble the per-market dossier behind a product's registration rows.
+ *
+ * The Registrations surface has an expandable dossier row whose data source was
+ * a deliberately empty object — `const REG_DOSSIERS: Record<string, RegDossier>
+ * = {}` — with a comment saying no fabricated dossiers would be shown until a
+ * real source existed. This is that source, and every field in it is a stored
+ * row or a rule applied to one: the registration record itself, the org's
+ * approved `rim_labels` for that market, and the label type the market requires
+ * per expectedLabelType (which carries its own citation).
+ *
+ * Nothing is invented for a market with no labels: it comes back with an empty
+ * list and `labelGap` true, which is the fact.
+ */
+export async function getMarketDossier(orgId: number, productId: number): Promise<RimMarketDossierEntry[]> {
+  const reg = await pool.query(
+    `SELECT country, market_status, registration_number, approval_date, renewal_due_date
+       FROM rim_registrations
+      WHERE product_id = $1 AND organization_id = $2 AND deleted_at IS NULL
+      ORDER BY country`,
+    [productId, orgId],
+  );
+  const lab = await pool.query(
+    `SELECT country, label_type, version, approved_date
+       FROM rim_labels
+      WHERE product_id = $1 AND organization_id = $2 AND status = 'approved' AND deleted_at IS NULL`,
+    [productId, orgId],
+  );
+
+  const day = (v: unknown): string | null => {
+    if (v == null) return null;
+    if (v instanceof Date) return Number.isNaN(v.getTime()) ? null : v.toISOString().slice(0, 10);
+    const m = /^(\d{4}-\d{2}-\d{2})/.exec(String(v));
+    return m ? m[1] : String(v);
+  };
+
+  return reg.rows.map((r) => {
+    const country = String(r.country ?? '');
+    const { labelType, citation } = expectedLabelType(country);
+    // A market's labels are the ones recorded against it, plus the global core
+    // data sheet (country null), which is what satisfies a core_data_sheet
+    // requirement anywhere — the same rule evaluateLabelCurrency applies.
+    const mine = lab.rows.filter((l) => {
+      const c = l.country == null ? null : String(l.country).toUpperCase();
+      return c === country.toUpperCase() || c === null;
+    });
+    const covered = mine.some(
+      (l) => String(l.label_type) === labelType || (labelType === 'core_data_sheet' && String(l.label_type) === 'core_data_sheet'),
+    );
+    return {
+      country,
+      marketStatus: String(r.market_status ?? ''),
+      registrationNumber: r.registration_number ? String(r.registration_number) : null,
+      approvalDate: day(r.approval_date),
+      renewalDueDate: day(r.renewal_due_date),
+      expectedLabelType: labelType,
+      expectedLabelBasis: citation,
+      approvedLabels: mine.map((l) => ({
+        labelType: String(l.label_type),
+        version: l.version == null ? null : String(l.version),
+        approvedDate: day(l.approved_date),
+        country: l.country == null ? null : String(l.country),
+      })),
+      labelGap: !covered,
+    };
+  });
 }

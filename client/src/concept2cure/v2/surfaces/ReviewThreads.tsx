@@ -83,7 +83,29 @@ function initials(name: string): string {
 }
 
 
-export function ReviewThreadsPane({ onNotice }: { onNotice: FireToast }) {
+/**
+ * The approval-board slice of the parent Review surface's screen state, merged
+ * into THIS pane's published context — the pane is the surface's ONE 'review'
+ * publisher (two publishers on one id fight for the store), and without the
+ * merge AnA saw the threads queue but not one fact about the approval board
+ * beside it. 'loading'/'error' ship as themselves: a zero count over an
+ * outage is a different truth from an empty board.
+ */
+export interface ReviewBoardContextSlice {
+  state: 'loading' | 'error' | 'ready';
+  queueCount?: number;
+  awaitingDecision?: number;
+  selectedDoc?: string | null;
+  selectedState?: string | null;
+}
+
+export function ReviewThreadsPane({
+  onNotice,
+  board,
+}: {
+  onNotice: FireToast;
+  board?: ReviewBoardContextSlice | null;
+}) {
   const [refreshKey, setRefreshKey] = useState(0);
   const [sel, setSel] = useState<string | null>(null);
   const [body, setBody] = useState('');
@@ -114,15 +136,49 @@ export function ReviewThreadsPane({ onNotice }: { onNotice: FireToast }) {
      "review" and not what was in their queue, so "what needs me?" — the exact
      question this surface exists to answer — had to be re-typed by the user. */
   const anaContext = useMemo(() => {
+    // A failed or still-loading my-queue read must NOT publish "0 open threads
+    // and 0 review tasks assigned to you" — that is this surface answering the
+    // exact question it exists for ("what needs me?") with a confident all-clear
+    // from a store that never responded. The `board` slice below was already
+    // guarded this way; the primary queue read was the gap.
+    if (queue.loading) {
+      return { summary: 'Your review queue is still loading; nothing on screen is final yet.' };
+    }
+    if (queue.error) {
+      return {
+        summary:
+          'Your review queue could not be read, so nothing is listed — this is a failure, not an ' +
+          'empty queue. How many threads and tasks await you is unknown, not zero.',
+        facts: { queueState: 'error', readFailure: queue.error },
+        availableActions: ['Retry the review-queue read'],
+      };
+    }
     // Every thread here is already open — my-queue filters status='open'
     // server-side, so there is nothing to re-filter and no status field to do
     // it with.
+    const boardLine =
+      board == null
+        ? ''
+        : board.state === 'loading'
+          ? ' The approval board is still loading.'
+          : board.state === 'error'
+            ? ' The approval board could not be read — its counts are a failure, not zeros.'
+            : ` Approval board: ${board.queueCount} document(s) in the queue, ${board.awaitingDecision} awaiting a decision` +
+              (board.selectedDoc ? `, "${board.selectedDoc}" selected (${board.selectedState}).` : '.');
     return {
       summary:
         `Your review queue: ${threads.length} open thread${threads.length === 1 ? '' : 's'} and ` +
         `${tasks.length} review task${tasks.length === 1 ? '' : 's'} assigned to you.` +
-        (selected ? ` The thread "${selected.title || 'untitled'}" is open.` : ''),
+        (selected ? ` The thread "${selected.title || 'untitled'}" is open.` : '') +
+        boardLine,
       facts: {
+        ...(board && board.state === 'ready'
+          ? {
+              boardQueueCount: board.queueCount,
+              boardAwaitingDecision: board.awaitingDecision,
+              boardSelectedDoc: board.selectedDoc ?? null,
+            }
+          : {}),
         openThreads: threads.length,
         reviewTasks: tasks.length,
         changeRequests: tasks.filter(t => t.taskType === 'change_request').length,
@@ -143,9 +199,15 @@ export function ReviewThreadsPane({ onNotice }: { onNotice: FireToast }) {
         ...(canRequestChanges ? ['Post a formal change request against the open thread'] : []),
         ...(canResolve ? ['Resolve the open thread'] : []),
         'Resolve a review task assigned to you',
+        ...(board && board.state === 'ready'
+          ? [
+              'Select a document in the review queue to see its workflow, passage and comments',
+              'Open the queue and jump to the next document still awaiting a decision',
+            ]
+          : []),
       ],
     };
-  }, [threads, tasks, selected, canComment, canRequestChanges, canResolve]);
+  }, [threads, tasks, selected, canComment, canRequestChanges, canResolve, board, queue.loading, queue.error]);
   usePublishSurfaceContext('review', anaContext);
 
   const post = async () => {
@@ -200,7 +262,7 @@ export function ReviewThreadsPane({ onNotice }: { onNotice: FireToast }) {
       </div>
 
       {queue.loading ? (
-        <div className="scaf-note" style={{ padding: '10px 4px' }}>Loading your review queue…</div>
+        <div role="status" className="scaf-note" style={{ padding: '10px 4px' }}>Loading your review queue…</div>
       ) : queue.error ? (
         <EmptyState tone="error" icon={I.alertTriangle} title="Couldn't load your review queue" hint={queue.error} />
       ) : !threads.length && !tasks.length ? (
@@ -260,7 +322,7 @@ export function ReviewThreadsPane({ onNotice }: { onNotice: FireToast }) {
                 </div>
 
                 {comments.loading ? (
-                  <div className="scaf-note" style={{ padding: '10px 4px' }}>Loading comments…</div>
+                  <div role="status" className="scaf-note" style={{ padding: '10px 4px' }}>Loading comments…</div>
                 ) : comments.error ? (
                   <EmptyState tone="error" icon={I.alertTriangle} title="Couldn't load the comments" hint={comments.error} />
                 ) : (

@@ -45,7 +45,9 @@ const PROBE_CODE = 'DBTEST-W06-DOC';
 
 let owner: Pool;
 let orgId: number;
+let orgUuid: string;
 let otherOrgId: number;
+let otherOrgUuid: string;
 let userId: number;
 let programId: string;
 let otherProgramId: string;
@@ -77,7 +79,18 @@ async function buildApp(): Promise<express.Express> {
     r.userId = userId;
     r.tenantId = actingOrgId();
     r.userRole = 'admin';
-    r.user = { id: userId, organizationId: actingOrgId(), role: 'admin' };
+    // organizationUuid too, not just the integer id: the production chain
+    // (enforceOrgMembership) attaches it, establishRequestTenantScope publishes
+    // it as the app.current_org_id GUC, and identity.current_org_id() — which
+    // every core.can_write_program-backed vault policy resolves through — reads
+    // ONLY the uuid form. A stub without it sets the GUC to '' and every
+    // INSERT into vault.documents is RLS-denied regardless of ownership.
+    r.user = {
+      id: userId,
+      organizationId: actingOrgId(),
+      organizationUuid: actingOrgId() === orgId ? orgUuid : otherOrgUuid,
+      role: 'admin',
+    };
     next();
   });
   /* The REAL middleware, not a stub. This project runs with RLS_ENFORCE=on
@@ -127,6 +140,9 @@ beforeAll(async () => {
     [`${PROBE_PREFIX}tenant`, 'dbtest-w06-tenant'],
   );
   orgId = Number(org.rows[0].id);
+  orgUuid = String(
+    (await owner.query('SELECT uuid FROM organizations WHERE id = $1', [orgId])).rows[0].uuid,
+  );
 
   const other = await owner.query(
     `INSERT INTO organizations (name, slug) VALUES ($1, $2)
@@ -134,6 +150,9 @@ beforeAll(async () => {
     [`${PROBE_PREFIX}other tenant`, 'dbtest-w06-other'],
   );
   otherOrgId = Number(other.rows[0].id);
+  otherOrgUuid = String(
+    (await owner.query('SELECT uuid FROM organizations WHERE id = $1', [otherOrgId])).rows[0].uuid,
+  );
 
   const user = await owner.query(
     `INSERT INTO users (email, name, password_hash) VALUES ($1, $2, $3)

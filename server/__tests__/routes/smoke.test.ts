@@ -323,8 +323,13 @@ describe('Stage 4: Backend beta contract smoke net', () => {
     expect(content).toContain('router.use(authMiddleware);');
     expect(content).toContain('router.use(tenantContextMiddleware);');
     expect(content).toContain('router.use(requireOrganizationContext);');
-    expect(content).toContain('const sendSuccess = <T>');
-    expect(content).toContain('const sendError = (');
+    // The response envelope lives in routes/c2c/shared.ts (L53 slice 2) and the
+    // main router imports it — one pair of helpers, not a second definition.
+    expect(content).toContain("} from './c2c/shared';");
+    expect(content).not.toContain('const sendSuccess = <T>');
+    const shared = fs.readFileSync(path.join(repoRoot, 'server/routes/c2c/shared.ts'), 'utf8');
+    expect(shared).toContain('export const sendSuccess = <T>');
+    expect(shared).toContain('export const sendError = (');
     expect(content).toContain("router.get('/projects/:id'");
     expect(content).toContain("router.post('/projects'");
   });
@@ -334,10 +339,10 @@ describe('Stage 4: Backend beta contract smoke net', () => {
     // the per-endpoint files; the surface contract is documented in the header.
     const content = fs.readFileSync(path.join(repoRoot, 'server/routes/ana-ri.ts'), 'utf8');
 
-    expect(content).toContain('mountChatRoute(router)');
+    expect(content).toContain('mountStreamRoute(router)');
     expect(content).toContain('mountLookupRoutes(router)');
     expect(content).toContain('mountUtilityRoutes(router)');
-    expect(content).toContain('POST /api/ana-ri/chat');
+    expect(content).toContain('POST /api/ana-ri/stream');
     expect(content).toContain('GET  /api/ana-ri/deficiencies');
     expect(content).toContain('POST /api/ana-ri/evaluate');
   });

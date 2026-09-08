@@ -41,6 +41,15 @@ export interface AnaChatAction {
   path?: string;
   /** Params the target requires (e.g. an intelligence sub-tab). */
   params?: Record<string, string>;
+  /**
+   * Present only when `actionType === 'surface_action'`: the surface-action
+   * registry id (e.g. "vault.search") produced server-side by `act_on_screen`
+   * against the governed surface-action contract, plus the screen it operates.
+   * The rail renders these as a button too — performed client-side through
+   * the ONE surface-action bus when the person activates it.
+   */
+  actionId?: string;
+  surfaceId?: string;
 }
 /** A tool invocation surfaced for transparency/auditability during a turn. */
 export interface AnaToolCall {
@@ -65,6 +74,32 @@ export interface AnaToolCall {
    * audit disclosure, this is the sentence.
    */
   message?: string;
+  /** Client clock (ms) when the `tool_use` event arrived. */
+  startedAt?: number;
+  /** Client clock (ms) when the `tool_result` event arrived. */
+  endedAt?: number;
+  /**
+   * How long the step took, measured SERVER-side around the handler and
+   * carried on `tool_result` — the same number the tool-telemetry row gets.
+   * Preferred over the client clocks, which include transport.
+   */
+  latencyMs?: number;
+}
+/**
+ * One phase a turn passed through, in order. Derived from the events the
+ * stream really emitted (see anaProgress.ts) — never a template: a turn that
+ * ran no tools has no "running steps" phase, and a phase exists only once its
+ * event has arrived. `active` is the one in flight; `stopped` means the turn
+ * was cut short in it (stop, cancel, failure, timeout).
+ */
+export interface AnaProgressPhase {
+  /** Server phase id (`orchestrating`, `running_tools`, …) or a client one (`composing`). */
+  phase: string;
+  /** The sentence shown for it — the server's own message when it sent one. */
+  label: string;
+  status: 'active' | 'done' | 'stopped';
+  startedAt: number;
+  endedAt?: number;
 }
 /**
  * Result of `verify_docx_against_source` — the audited "verify it against your
@@ -245,6 +280,18 @@ export interface AnaChatMessage {
   /** Timestamp (ms) when this turn was kicked off. Used for relative time chips. */
   sentAt?: number;
   /**
+   * Client clock (ms) when the turn finished — the answer AND the server's
+   * background finishing work (`post_done`), or the moment it was stopped or
+   * failed. Absent while the turn is in flight. `latencyMs` above is the
+   * server's own answer-time; this is the wall-clock end for the elapsed line.
+   */
+  completedAt?: number;
+  /**
+   * The ordered phases this turn passed through — the numbered progress list
+   * in the work panel. See {@link AnaProgressPhase} for the honesty contract.
+   */
+  progress?: AnaProgressPhase[];
+  /**
    * Draft produced by a document-generating tool this turn. The rail reads
    * `title` only; nothing routes `content` anywhere, so this is NOT
    * editor-openable despite what it used to claim. See ledger L88.
@@ -298,6 +345,8 @@ export interface AnaChatMessage {
   intelligenceQuestion?: import('../../../../../shared/types/intelligence-questions.js').IntelligenceQuestionEvent;
   /** Flow state to send back with the next answer. */
   intelligenceFlowState?: import('../../../../../shared/types/intelligence-questions.js').FlowState;
+  /** The durable interview session (cmc_interview_sessions) behind the question, when one was persisted. Sent back as session_id with each answer. */
+  intelligenceSessionId?: string | null;
   /** Intelligence flow completion — summary + suggested actions. */
   intelligenceFlowComplete?: import('../../../../../shared/types/intelligence-questions.js').IntelligenceFlowCompleteEvent;
   /**
@@ -412,7 +461,58 @@ export interface UseAnaChatOptions {
    * against the tenant's enabled models and drops it silently when invalid.
    */
   modelOverride?: string | null;
+  /**
+   * AnA Live Drive: while true, every turn is sent with `live_drive: true`, so
+   * validated navigate_to / act_on_screen directives stream back as
+   * `drive_navigation` / `drive_action` events for immediate application
+   * instead of waiting as chips. The server gates this per turn on the
+   * `ana_live_drive` entitlement and answers honestly with a `drive_state`
+   * event either way.
+   */
+  liveDrive?: boolean;
+  /**
+   * Drive mode for opted-in turns: 'demo' marks an explicitly started
+   * demonstration (larger applied budgets + the demo prompt block server-side,
+   * same entitlement). Omitted/anything else → the server's default 'assist'.
+   */
+  driveMode?: 'assist' | 'demo';
+  /**
+   * Receives Live Drive events (`drive_state` / `drive_navigation`) as they
+   * stream. The hook stays dumb here on purpose — validation against the
+   * shared navigation registry and the apply/take-over state machine live in
+   * v2/liveDrive.ts, next to the shell that owns navigation.
+   */
+  onDriveEvent?: (event: DriveSseEvent) => void;
+  /**
+   * Fired when the server persists a draft this turn produced
+   * (`artifact_version_saved`, with the governed artifact's external id).
+   * The shell's follow-the-work behavior hangs off this so a driven turn's
+   * document appears in front of the subscriber — from ANY chat instance
+   * (rail or an owned surface's dock), not just the shell's own.
+   */
+  onArtifactSaved?: (artifactId: string) => void;
 }
+/**
+ * Live Drive SSE events, forwarded verbatim to `onDriveEvent` as they stream.
+ * `drive_state` arrives once per opted-in turn (an honest enable — carrying
+ * the turn's mode — or an honest lock carrying the real required tier);
+ * `drive_navigation` / `drive_action` arrive per directive the server emitted
+ * for immediate application. Each `directive` is typed unknown on purpose:
+ * the shell re-validates navigations against the shared navigation registry
+ * (v2/liveDrive.ts) and actions against the shared surface-action registry
+ * (v2/surfaceActions.ts) before anything moves or is performed.
+ */
+export type DriveSseEvent =
+  | {
+      type: 'drive_state';
+      enabled: boolean;
+      mode?: 'assist' | 'demo';
+      reason?: string;
+      requiredTier?: string | null;
+    }
+  | { type: 'drive_navigation'; round?: number; directive: unknown }
+  | { type: 'drive_action'; round?: number; directive: unknown };
+
 /** Control status of an in-flight AnA run (null when no run is active). */
 export type RunControlStatus = 'running' | 'paused' | 'cancelled' | null;
 export interface UseAnaChatReturn {
@@ -439,6 +539,14 @@ export interface UseAnaChatReturn {
   resume: () => Promise<boolean>;
   /** Interject a steering message into the running investigation. */
   interject: (message: string) => Promise<boolean>;
+  /**
+   * Steers the server has ACCEPTED (2xx on the control endpoint) but not yet
+   * spliced into a round — it consumes them only at the next round boundary
+   * and confirms each with an `interjected` event, which removes it here. What
+   * is waiting in the queue, so the person can see a steer is pending rather
+   * than wonder whether it was taken. Cleared when the run ends.
+   */
+  pendingSteers: string[];
   /** Reset the conversation (new thread). */
   reset: () => void;
   /** Hydrate the panel with an existing thread's messages. */

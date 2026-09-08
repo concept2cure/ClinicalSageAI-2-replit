@@ -13,7 +13,7 @@
 export const PV_DOC_FRAMEWORKS = [
   { id: 'mdr-fda',  label: '21 CFR 803',    desc: 'FDA Medical Device Reporting' },
   { id: 'mdr-eu',   label: 'EU MDR Art. 87',desc: 'Serious incident reporting' },
-  { id: 'capa',     label: '21 CFR 820.100',desc: 'CAPA / corrective action' },
+  { id: 'capa',     label: '820.100 · ISO 13485 §8.5.2/8.5.3', desc: 'CAPA / corrective and preventive action' },
   { id: 'fsca',     label: 'FSCA / FSN',    desc: 'Field safety corrective action' },
   { id: 'psur',     label: 'EU MDR PSUR',   desc: 'Periodic safety update' },
 ];

@@ -48,7 +48,8 @@ const ALLOWED_SHADOWS = new Set([
   'server/services/auditService.js', // why: shim for api/enterprise/rbac-routes.js under vitest.
   'server/services/roleBasedAccess.js', // why: shim for api/enterprise/{rbac-routes,routes}.js under vitest.
   'server/utils/authedOrgId.js', // why: shim for phase3-routes.js/enterprise routes '.js' imports under vitest.
-  'server/utils/jwtVerify.js', // why: shim for auth.js + routes/leaves.js '.js' imports under vitest.
+  'server/utils/jwtVerify.js', // why: shim for routes/leaves.js + other '.js' imports under vitest.
+  'server/middleware/auth.js', // why: shim for the ~26 .ts routes + .js API modules importing '../middleware/auth.js' explicitly (ledger M-5 consolidation, 2026-08-28).
   'server/data-importer.js', // why: shim for server/scripts/import_*.js '.js' imports.
   'server/data-importer-v2.js', // why: shim for server/scripts/import_lumen_bio_trials.js.
   'server/utils/textProcessing.js', // why: shim for services/unifiedDocumentIngestion.js.
@@ -57,9 +58,7 @@ const ALLOWED_SHADOWS = new Set([
   //    docs/proof/KNOWN_ISSUES_LEDGER.md M-5). Deleting or repointing these
   //    CHANGES PRODUCTION BEHAVIOR — do not touch without an owner decision.
   'server/db.js', // why: compat wrapper (dbStatus/pool proxy/retrying query); prod bundles it for 312 explicit '.js' imports.
-  'server/middleware/auth.js', // why: diverged legacy middleware; prod bundles it for ~26 .ts routes importing '../middleware/auth.js' (ledger M-5).
   'server/utils/logger.js', // why: hand-synced console mirror of pino logger.ts; prod bundles it for 178 explicit '.js' imports.
-  'server/config/docushareConfig.js', // why: diverged config actually used in prod via docushareHealthCheck.js; .ts twin only reachable from orphaned config/index.ts barrel.
 ]);
 
 function walkJsWithTsTwin(rel) {

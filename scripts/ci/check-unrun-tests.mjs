@@ -163,6 +163,9 @@ function readExtraRunnerGlobs() {
     if (!/\bnode\b[^&|]*--test\b/.test(cmd)) continue;
     for (const tok of cmd.split(/\s+/)) {
       if (/[*?]/.test(tok) && /\.(m?[jt]sx?)$/.test(tok)) globs.push(tok);
+      // A literal file argument (no wildcard) is a runner target too:
+      // `node --test scripts/ci/__tests__/foo.test.mjs` runs exactly that file.
+      else if (/\.(dbtest|test|spec)\.(m?[jt]sx?)$/.test(tok)) globs.push(tok);
     }
   }
   return globs;

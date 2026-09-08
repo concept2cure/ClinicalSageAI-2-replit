@@ -7,7 +7,7 @@
  * from their dedicated endpoints. Every mutation routes through
  * <GovernedConfirmDialog>.
  *
- * Port basis: design-system/ui_kits/pdev/ActivityDetail.jsx.
+ * Port basis: ui_kits/pdev/ActivityDetail.jsx.
  */
 
 import * as React from 'react';
@@ -187,9 +187,9 @@ export function PdevActivityDetail({
               <span className={`pdev-state-pill state-${tone}`}>
                 {PDEV_STATE_LABELS[state]}
               </span>
-              <span className="dot-sep">·</span>
+              <span className="dot-sep" aria-hidden="true">·</span>
               <span>{PDEV_WORKSTREAM_LABELS[activity.registry.workstream]}</span>
-              <span className="dot-sep">·</span>
+              <span className="dot-sep" aria-hidden="true">·</span>
               <span>{PDEV_STAGE_LABELS[activity.registry.stage]}</span>
             </div>
           </div>

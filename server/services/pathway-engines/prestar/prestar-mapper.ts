@@ -102,6 +102,16 @@ export interface PreStarInputLeaf {
   sectionCode: string;
   title: string;
   documentType?: string;
+  /**
+   * True only when this leaf carries real, finalized authored content — never a
+   * draft/placeholder stub. A leaf whose title merely matches a section keyword
+   * must NOT mark that section present unless it is also substantive: otherwise a
+   * stub titled "Specific questions for FDA" containing "TBD" would flip a
+   * required section — and `ready` — to true on an incomplete request. Required
+   * (not optional) so every caller consciously decides this instead of it
+   * silently defaulting to "present".
+   */
+  substantive?: boolean; // optional: undefined ⇒ NOT substantive (fail-closed)
 }
 
 export interface PreStarSlot {
@@ -201,8 +211,21 @@ const FIVE13G_SLOTS: SlotDef[] = [
 
 function registryFor(type: PreStarSubmissionType, qSubType?: QSubType): SlotDef[] {
   switch (type) {
-    case 'q_sub':
-      return Q_SUB_SLOTS[qSubType ?? 'pre_submission'];
+    case 'q_sub': {
+      // The sub-types carry genuinely different mandatory sections: a
+      // Submission Issue Request requires a deficiency reference, an
+      // Informational Meeting requires an information package and no
+      // questions. Defaulting an unstated sub-type to Pre-Submission scored an
+      // SIR complete while missing the reference to FDA's own deficiencies.
+      if (!qSubType) {
+        throw new Error(
+          'A Q-Submission cannot be assessed without its sub-type (pre_submission, submission_issue_request, ' +
+            'informational_meeting, study_risk_determination, pma_day_100_meeting, accessory_classification_request); ' +
+            'each carries different mandatory sections.',
+        );
+      }
+      return Q_SUB_SLOTS[qSubType];
+    }
     case 'ide':
       return IDE_SLOTS;
     case '513g':
@@ -215,22 +238,27 @@ function registryFor(type: PreStarSubmissionType, qSubType?: QSubType): SlotDef[
 }
 
 function evalSlot(slot: SlotDef, leaves: PreStarInputLeaf[]): PreStarSlotStatus {
-  const sources = leaves.filter((l) => slot.match(l)).map((l) => l.sectionCode || l.title);
+  // A matched-but-non-substantive leaf (a draft/placeholder stub whose title
+  // merely matches) never marks a required section present — only a matched
+  // leaf that is ALSO substantive counts.
+  const matched = leaves.filter((l) => slot.match(l));
+  const present = matched.some((l) => l.substantive);
+  const sources = matched.filter((l) => l.substantive).map((l) => l.sectionCode || l.title);
   const { match, ...rest } = slot;
-  return { ...rest, present: sources.length > 0, sources };
+  return { ...rest, present, sources };
 }
 
 export interface MapToPreStarInput {
   leaves: PreStarInputLeaf[];
   submissionType: PreStarSubmissionType;
-  /** Required when submissionType is 'q_sub'; defaults to 'pre_submission'. */
+  /** Required when submissionType is 'q_sub' — refused when absent, never defaulted. */
   qSubType?: QSubType;
 }
 
 /** Map canonical leaves onto the PreSTAR section structure + completeness report. */
 export function mapToPreStar(input: MapToPreStarInput): PreStarResult {
   const leaves = Array.isArray(input.leaves) ? input.leaves : [];
-  const qSubType = input.submissionType === 'q_sub' ? input.qSubType ?? 'pre_submission' : undefined;
+  const qSubType = input.submissionType === 'q_sub' ? input.qSubType : undefined;
   const registry = registryFor(input.submissionType, qSubType);
   const sections = registry.map((s) => evalSlot(s, leaves));
   const requiredSections = sections.filter((s) => s.required);

@@ -1,7 +1,7 @@
 /**
  * Pre-Sub / Q-Sub manager — data
  *
- * Ported verbatim from design-system/ui_kits/mdx/data-presub.jsx. Mirrors the
+ * Ported verbatim from ui_kits/mdx/data-presub.jsx. Mirrors the
  * conversation-with-FDA before a 510(k) gets filed: Pre-Sub, Submission Issue
  * Request, Study Risk Determination, Agreement, and Informational meetings.
  *

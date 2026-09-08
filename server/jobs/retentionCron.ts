@@ -28,6 +28,7 @@ import {
   vaultDocuments,
   vaultRetentionPolicies,
   vaultDocumentArchives,
+  vaultLegalHolds,
 } from '../../shared/schema/vault';
 // audit-logger is plain JS; logAction is fire-and-forget, logSystemEvent records
 // job-level events. Typed via the adjacent audit-logger.d.ts.
@@ -46,6 +47,8 @@ export interface RetentionSummary {
   archived: number;
   softDeleted: number;
   hardDeleted: number;
+  /** Expired documents left in place because a legal hold covers them. */
+  heldByLegalHold: number;
   errors: number;
 }
 
@@ -92,6 +95,33 @@ async function archiveDocument(doc: VaultDocument): Promise<void> {
  * on a failure to enumerate work (e.g. the initial queries), not on per-document
  * errors (those are counted and the sweep continues).
  */
+/**
+ * Programs and documents under an ACTIVE legal hold.
+ *
+ * Read once per sweep rather than per document: a hold covers a program, so the
+ * per-document query would be the same handful of rows N times.
+ *
+ * FAILS CLOSED. If the hold table cannot be read — it does not exist yet on this
+ * database, the query errors, anything — this THROWS, and the sweep aborts
+ * having deleted nothing. The alternative is a sweep that proceeds as though no
+ * holds existed, which is the same outcome as having no holds at all and is
+ * unrecoverable for the records it destroys.
+ */
+async function loadActiveHolds(): Promise<{ programs: Set<string>; documents: Set<string> }> {
+  const rows = await db
+    .select({ programId: vaultLegalHolds.programId, documentId: vaultLegalHolds.documentId })
+    .from(vaultLegalHolds)
+    .where(isNull(vaultLegalHolds.liftedAt));
+
+  const programs = new Set<string>();
+  const documents = new Set<string>();
+  for (const r of rows) {
+    if (r.programId) programs.add(r.programId);
+    if (r.documentId) documents.add(r.documentId);
+  }
+  return { programs, documents };
+}
+
 export async function runRetentionSweep(): Promise<RetentionSummary> {
   return runWithSystemTenantScope('retention-sweep', async () => {
     const summary: RetentionSummary = {
@@ -99,14 +129,45 @@ export async function runRetentionSweep(): Promise<RetentionSummary> {
       archived: 0,
       softDeleted: 0,
       hardDeleted: 0,
+      heldByLegalHold: 0,
       errors: 0,
     };
 
-    const [expired, policies] = await Promise.all([findExpiredDocuments(), loadPolicies()]);
+    /* Holds are loaded BEFORE anything is deleted, and a failure here aborts the
+       whole sweep rather than one document — see loadActiveHolds. */
+    const [expired, policies, holds] = await Promise.all([
+      findExpiredDocuments(),
+      loadPolicies(),
+      loadActiveHolds(),
+    ]);
     summary.scanned = expired.length;
 
     for (const doc of expired) {
       try {
+        /* LEGAL HOLD OUTRANKS RETENTION.
+           Checked before the policy is even resolved, so no archive is written
+           and no delete is attempted for a held record. A retention policy says
+           when a record MAY be destroyed; a hold says it may not be, and the
+           hold wins. Destroying a record under hold is spoliation and is the one
+           thing in this job that cannot be undone. */
+        if (holds.documents.has(doc.id) || holds.programs.has(doc.programId)) {
+          summary.heldByLegalHold += 1;
+          logAction({
+            action: 'document.retention_skipped_legal_hold',
+            userId: 'system',
+            username: 'retention-job',
+            entityType: 'vault_document',
+            entityId: doc.id,
+            details: {
+              programId: doc.programId,
+              documentCode: doc.documentCode,
+              retentionUntil: doc.retentionUntil,
+              heldBy: holds.documents.has(doc.id) ? 'document' : 'program',
+            },
+          });
+          continue;
+        }
+
         const policy = doc.retentionPolicy ? policies.get(doc.retentionPolicy) : undefined;
         const archiveBeforeDelete = policy
           ? policy.archiveBeforeDelete

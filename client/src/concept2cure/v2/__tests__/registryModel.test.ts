@@ -97,6 +97,20 @@ describe('ui-v2 registry model ↔ shared registry parity', () => {
     }
   });
 
+  // ── CMC on the rail (2026-08-23 unification) ─────────────────────────────
+
+  it('CMC / Module 3 is a rail destination, not a hidden surface', () => {
+    // The module was NAV_HIDDEN with no rail entry — reachable only by ⌘K,
+    // deep link, or ProjectHome tiles. The unification promotes it to the
+    // Science & intelligence rail section, where it inherits entitlement
+    // gating from navItem's verdictFor. Both halves matter: a rail entry for
+    // an id still in NAV_HIDDEN would leave registry-derived listings
+    // (surfacesByTier) disagreeing with the rail about whether CMC exists.
+    expect(RAIL_SPECIALIST.map((s) => s.id)).toContain('cmc');
+    expect(NAV_HIDDEN.has('cmc')).toBe(false);
+    expect(getSurface('cmc')).toBeDefined();
+  });
+
   it('AnA modes display engine labels, never vendor/model names', () => {
     const banned = /claude|anthropic|sonnet|opus|haiku|gpt|gemini/i;
     for (const m of ANA_MODES) {

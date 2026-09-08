@@ -95,7 +95,10 @@ interface ToastState {
    RETAINED, not dead code (audit determination): this in-session store still
    has WRITE consumers -- TaskBoard's New task / Move / Start-workflow actions
    and this file's own QuickTask / CollabDiscuss forms call
-   window.C2C.addTask / update. Those are MOCK, unpersisted actions (flagged at
+   window.C2C.addTask / update. `addTask` is now only ever called with a
+   SERVER-issued taskId (both the create modal and the collaboration composer
+   POST /api/tasks/tasks first and adopt the persisted row); the local store is
+   a view of what was written, not a source of ids. (flagged at
    each call site): their rows are orphaned from the live board above, which
    reads the real GET /api/task-management/board. The store stays until those
    writes are wired to POST /api/task-management/tasks in the actions pass -- it
@@ -111,8 +114,8 @@ const defer = (typeof queueMicrotask === 'function')
 
 function emit(): void {
   defer(() => {
-    subs.forEach(fn => { try { fn(); } catch (_e) { /* subscriber error */ } });
-    try { window.dispatchEvent(new CustomEvent('c2c:tasks')); } catch (_e) { /* noop */ }
+    subs.forEach(fn => { try { fn(); } catch { /* subscriber error */ } });
+    try { window.dispatchEvent(new CustomEvent('c2c:tasks')); } catch { /* noop */ }
   });
 }
 
@@ -279,7 +282,7 @@ export const C2C = {
     try {
       const proj = (window as any).C2C_PROJECT as { id?: string } | undefined;
       if (proj?.id) live.project = String(proj.id);
-    } catch (_e) { /* no window / no selection — keep whatever ctx holds */ }
+    } catch { /* no window / no selection — keep whatever ctx holds */ }
 
     // Only adopt the URL's surface when nothing has refined the context for a
     // specific entity; a surface that called setContext({ entityLabel }) is
@@ -294,7 +297,7 @@ export const C2C = {
           live.entityType = d.et;
           live.moduleType = d.mod;
         }
-      } catch (_e) { /* no location — keep ctx */ }
+      } catch { /* no location — keep ctx */ }
     }
 
     return live;
@@ -377,8 +380,14 @@ function QuickTask({ ctx: surfaceCtx, onClose, onCreated, onGoToBoard }: QuickTa
   const [saving, setSaving] = useState(false);
   const [saveErr, setSaveErr] = useState('');
 
+  /* `who` is the assignee the CLIENT can name — which, for "auto", is nobody.
+     C2C.optimalFor deliberately returns '' (its own note explains why: the
+     fixture roster it used to consult named people who do not work here). The
+     server owns the auto decision — getOptimalAssignee runs against the org's
+     real roster when assigneeId is omitted — so the client cannot know the
+     answer until the write comes back. Anything it renders before then is a
+     guess, and a blank one is the worst kind. */
   const who = f.assignee === 'auto' ? C2C.optimalFor(f.moduleType) : f.assignee;
-  const whoName = (C2C.team[who] || { n: who }).n;
 
   /**
    * REAL, awaited create against the org task store.
@@ -424,6 +433,25 @@ function QuickTask({ ctx: surfaceCtx, onClose, onCreated, onGoToBoard }: QuickTa
     if (f.dueDays > 0) {
       body.dueDate = new Date(Date.now() + f.dueDays * 86400000).toISOString();
     }
+    /* ── The three governance toggles were dropped on submit ─────────────────
+       "Critical path", "Regulatory impact" and "Approval gate" set local state
+       and never reached the wire, so a task a user explicitly marked as
+       approval-gated persisted as an ordinary one — and the board, which
+       renders those flags and gates completion on approvalRequired, had no way
+       to know. The user's answer to a governance question was discarded.
+
+       They are not new fields. `createTaskSchema` (taskManagement.routes.ts)
+       already declares them, with a comment saying exactly why: "Governance
+       flags collected by the ui-v2 create form — real unified_tasks columns, so
+       the form's inputs persist instead of being silently dropped." The form
+       collected them; only the POST body did not carry them.
+
+       Sent unconditionally rather than only when true: `false` is an answer,
+       and omitting it would let a server-side default contradict what the user
+       chose. */
+    body.criticalPath = f.criticalPath;
+    body.regulatoryImpact = f.regulatoryImpact;
+    body.approvalRequired = f.approvalRequired;
 
     try {
       const res = await apiRequest('POST', '/api/tasks/tasks', body);
@@ -487,35 +515,35 @@ function QuickTask({ ctx: surfaceCtx, onClose, onCreated, onGoToBoard }: QuickTa
         <span className="cl-ctx-chip"><span className="ico">{I.target || I.crosshair || I.zap}</span>{surfaceCtx.entityLabel || surfaceCtx.surfaceLabel}</span>
         <span className="cl-ctx-meta">stamped as <code>sourceEntityType: {surfaceCtx.entityType}</code></span>
       </div>
-      <div className="cl-field"><label>Task<i>*</i></label>
-        <input type="text" autoFocus value={f.title} onChange={e => set('title', e.target.value)}
+      <div className="cl-field"><label htmlFor="cl-task">Task<i>*</i></label>
+        <input id="cl-task" type="text" autoFocus value={f.title} onChange={e => set('title', e.target.value)}
           placeholder={'e.g. Review ' + C2C.surfaceNoun(surfaceCtx.surfaceId) + ' and resolve open items'} />
       </div>
       <div className="cl-frow">
-        <div className="cl-field"><label>Project</label>
-          <select value={f.project} onChange={e => set('project', e.target.value)}>
+        <div className="cl-field"><label htmlFor="cl-project">Project</label>
+          <select id="cl-project" value={f.project} onChange={e => set('project', e.target.value)}>
             {C2C.projects.map(p => <option key={p.id} value={p.id}>{p.label}</option>)}
           </select>
         </div>
-        <div className="cl-field"><label>Module</label>
-          <select value={f.moduleType} onChange={e => set('moduleType', e.target.value)}>
+        <div className="cl-field"><label htmlFor="cl-module">Module</label>
+          <select id="cl-module" value={f.moduleType} onChange={e => set('moduleType', e.target.value)}>
             {Object.keys(C2C.mod).map(m => <option key={m} value={m}>{m}</option>)}
           </select>
         </div>
       </div>
       <div className="cl-frow">
-        <div className="cl-field"><label>Type</label>
-          <select value={f.taskType} onChange={e => set('taskType', e.target.value)}>
+        <div className="cl-field"><label htmlFor="cl-type">Type</label>
+          <select id="cl-type" value={f.taskType} onChange={e => set('taskType', e.target.value)}>
             {Object.keys(CL_TYPE).map(t => <option key={t} value={t}>{CL_TYPE[t]}</option>)}
           </select>
         </div>
-        <div className="cl-field"><label>Priority</label>
-          <select value={f.priority} onChange={e => set('priority', e.target.value)}>
+        <div className="cl-field"><label htmlFor="cl-priority">Priority</label>
+          <select id="cl-priority" value={f.priority} onChange={e => set('priority', e.target.value)}>
             {CL_PRI.map(p => <option key={p} value={p}>{p}</option>)}
           </select>
         </div>
-        <div className="cl-field"><label>Due in (days)</label>
-          <input type="number" min="0" max="120" value={f.dueDays} onChange={e => set('dueDays', +e.target.value)} />
+        <div className="cl-field"><label htmlFor="cl-due-in-days">Due in (days)</label>
+          <input id="cl-due-in-days" type="number" min="0" max="120" value={f.dueDays} onChange={e => set('dueDays', +e.target.value)} />
         </div>
       </div>
       <div className="cl-field"><label>Assign to</label>
@@ -538,9 +566,20 @@ function QuickTask({ ctx: surfaceCtx, onClose, onCreated, onGoToBoard }: QuickTa
           )}
         </div>
       </div>
+      {/* This said "Auto-assign resolves to <b>{whoName}</b> for <b>{moduleType}</b>"
+          — and with Auto selected, which is the DEFAULT, whoName was the empty
+          string on every render. The user was told a person had been chosen and
+          shown nobody, in the past tense, before any request existed.
+
+          The honest statement is the one the server can keep: it has not chosen
+          yet, it will choose on save, and here are the criteria. The chosen name
+          arrives with the created task (the create handler adopts
+          serverTask.assigneeId), so nothing here has to guess it. */}
       {f.assignee === 'auto' && (
         <div className="cl-note">
-          <span className="ico">{I.sparkles}</span>Auto-assign resolves to <b>{whoName}</b> for <b>{f.moduleType}</b> -- workload-balanced via <code>getOptimalAssignee()</code>.
+          <span className="ico">{I.sparkles}</span>Auto-assign: the assignee is chosen when you save, from your
+          organisation&rsquo;s roster for <b>{f.moduleType}</b>, balanced on current workload. Pick a name above
+          if you want to decide it yourself.
         </div>
       )}
       <div className="cl-field"><label>Flags</label>
@@ -556,8 +595,8 @@ function QuickTask({ ctx: surfaceCtx, onClose, onCreated, onGoToBoard }: QuickTa
           </button>
         </div>
       </div>
-      <div className="cl-field"><label>Note <span className="cl-opt">-- optional</span></label>
-        <textarea rows={2} value={f.note} onChange={e => set('note', e.target.value)} placeholder="Add context for the assignee..." />
+      <div className="cl-field"><label htmlFor="cl-note-optional">Note <span className="cl-opt">-- optional</span></label>
+        <textarea id="cl-note-optional" rows={2} value={f.note} onChange={e => set('note', e.target.value)} placeholder="Add context for the assignee..." />
       </div>
       {/* The old banner here warned that this "Adds this to the in-session task
           board only". That is no longer true — the task is persisted — so the
@@ -580,7 +619,22 @@ function QuickTask({ ctx: surfaceCtx, onClose, onCreated, onGoToBoard }: QuickTa
         </div>
       )}
       <div className="cl-foot">
-        
+        {/* `onGoToBoard` was passed in by the parent (onNav('tasks') — real,
+            working navigation to the task board) and this component never
+            rendered a control for it, so the prop terminated nowhere. An author
+            who had just created a task had no way from here to the board it
+            landed on. */}
+        {onGoToBoard && (
+          <button
+            className="btn ghost"
+            style={{ marginRight: 'auto' }}
+            onClick={onGoToBoard}
+            title="Open the task board"
+            data-testid="collab-go-to-board"
+          >
+            {I.grid || I.arrowRight} Go to board
+          </button>
+        )}
         <button className="btn ghost" onClick={() => void create(true)} disabled={!f.title.trim() || saving}>{I.plus} {saving ? 'Saving…' : 'Create & add another'}</button>
         <button className="btn primary" onClick={() => void create(false)} disabled={!f.title.trim() || saving}>{I.check} {saving ? 'Saving…' : 'Create task'}</button>
       </div>
@@ -603,23 +657,135 @@ function CollabDiscuss({ ctx: surfaceCtx, onClose, onCreated }: CollabDiscussPro
   const [body, setBody] = useState('');
   const [makeTask, setMakeTask] = useState(false);
 
-  const send = () => {
-    if (!body.trim()) return;
-    // MOCK ACTION (flagged): does NOT call POST /api/collaboration/messages; at
-    // most it captures an optimistic in-session task below. Wire in actions pass.
-    if (makeTask) {
-      C2C.addTask({
-        title: body.trim().slice(0, 90), project: surfaceCtx.project,
-        moduleType: surfaceCtx.moduleType || 'Regulatory',
-        taskType: 'review', priority: 'medium', assignee: to, assignmentType: 'manual',
-        sourceEntityType: surfaceCtx.entityType,
-        sourceEntityId: surfaceCtx.entityId || surfaceCtx.surfaceId,
-        sourceLabel: surfaceCtx.entityLabel || surfaceCtx.surfaceLabel,
-        due: 'in 3 days', phase: surfaceCtx.entityLabel || surfaceCtx.surfaceLabel,
-        activity: [{ type: 'note', text: body.trim(), who: 'You', when: 'just now' }],
-      });
-      onCreated?.();
+  /* Set while the POST is in flight, or holding the reason it failed. The
+     message must never be reported as sent until the server says it stored it. */
+  const [sending, setSending] = useState(false);
+  const [sendErr, setSendErr] = useState('');
+
+  /* ── "Send" composed a message and threw it away ───────────────────────────
+     The handler's own comment said so: "MOCK ACTION (flagged): does NOT call
+     POST /api/collaboration/messages". The drawer closed, the user watched
+     their message disappear into what looked like a sent state, and nothing
+     was ever delivered. A banner below the composer admitted it in small text,
+     which is not the same as the button not lying.
+
+     The endpoint exists and was BUILT FOR THIS BUTTON — the comment above
+     POST /api/tasks/messages (taskManagement.routes.ts) reads: "Backs the
+     universal launcher's Collaborate tab, which previously composed a message
+     and threw it away." It persists the message as a notification in the
+     recipient's inbox and refuses a recipient outside the caller's org.
+
+     `C2C.team` is keyed by the real user id from
+     GET /api/task-management/assignees (see the loader above, `team[String(r.id)]`),
+     so the picked key IS `recipientUserId`. */
+  const send = async () => {
+    if (!body.trim() || sending) return;
+    const recipientUserId = Number(to);
+    if (!Number.isInteger(recipientUserId) || recipientUserId <= 0) {
+      setSendErr('Pick who this goes to — a message with no recipient cannot be delivered.');
+      return;
     }
+    setSending(true);
+    setSendErr('');
+    try {
+      const res = await apiRequest('POST', '/api/tasks/messages', {
+        recipientUserId,
+        message: body.trim(),
+        about: (surfaceCtx.entityLabel || surfaceCtx.surfaceLabel || '').slice(0, 300) || undefined,
+        sourceEntityType: surfaceCtx.entityType || undefined,
+        sourceEntityId: (surfaceCtx.entityId || surfaceCtx.surfaceId || '').slice(0, 200) || undefined,
+      });
+      if (!res.ok) {
+        const b = await res.json().catch(() => null);
+        setSending(false);
+        setSendErr(
+          'Not sent — ' + (serverMessage(b) ?? `the server refused the message (HTTP ${res.status})`) +
+            '. Nothing was delivered.',
+        );
+        return;
+      }
+    } catch (e) {
+      setSending(false);
+      setSendErr(
+        'Not sent — ' + (e instanceof Error ? e.message : String(e)) + '. Nothing was delivered.',
+      );
+      return;
+    }
+
+    /* ── "Also create a task and assign it to <name>" ────────────────────────
+       The message half of this composer has always been a real write. The task
+       half was `C2C.addTask` — a client-minted id pushed onto a module-level
+       array — so a user who ticked "Also create a task and assign it to Jane"
+       watched the modal close and no task existed anywhere. Jane was never
+       assigned anything.
+
+       It now POSTs the SAME /api/tasks/tasks the create modal above uses,
+       with the same integer discipline: `assigneeId` is only sent when the
+       picked recipient is a real numeric user id, and `projectId` only when the
+       surface context carries one, because createTaskSchema takes integers and
+       would reject the string forms.
+
+       The task is created only AFTER the message is confirmed stored — the old
+       order created it first, so a failed send left a task behind referencing a
+       message nobody received. And a failed TASK write is now reported: the
+       message went, the task did not, and the user is told exactly that rather
+       than watching the modal close on a half-done action. */
+    if (makeTask) {
+      const taskBody: Record<string, unknown> = {
+        title: body.trim().slice(0, 90),
+        moduleType: surfaceCtx.moduleType || 'Regulatory',
+        taskType: 'review',
+        priority: 'medium',
+        description: body.trim(),
+        dueDate: new Date(Date.now() + 3 * 86400000).toISOString(),
+      };
+      const projectIdNum = Number(surfaceCtx.project);
+      if (surfaceCtx.project && Number.isFinite(projectIdNum) && projectIdNum > 0) {
+        taskBody.projectId = projectIdNum;
+      }
+      if (Number.isInteger(recipientUserId) && recipientUserId > 0) {
+        taskBody.assigneeId = recipientUserId;
+      }
+      try {
+        const tres = await apiRequest('POST', '/api/tasks/tasks', taskBody);
+        const tjson = await tres.json().catch(() => null);
+        const serverTask = (tjson as { data?: Record<string, unknown> } | null)?.data;
+        if (!tres.ok || !serverTask?.taskId) {
+          setSending(false);
+          setSendErr(
+            'The message was sent, but the task was not created — ' +
+              (serverMessage(tjson) ?? `the server refused it (HTTP ${tres.status})`) +
+              '. Create it from the task board if it is still needed.',
+          );
+          return;
+        }
+        // Adopt the SERVER's row, exactly as the create modal does — the id in
+        // the local store is the persisted taskId, never a client-minted one.
+        C2C.addTask({
+          taskId: String(serverTask.taskId),
+          title: body.trim().slice(0, 90), project: surfaceCtx.project,
+          moduleType: surfaceCtx.moduleType || 'Regulatory',
+          taskType: 'review', priority: 'medium',
+          assignee: serverTask.assigneeId != null ? String(serverTask.assigneeId) : to,
+          assignmentType: 'manual',
+          sourceEntityType: surfaceCtx.entityType,
+          sourceEntityId: surfaceCtx.entityId || surfaceCtx.surfaceId,
+          sourceLabel: surfaceCtx.entityLabel || surfaceCtx.surfaceLabel,
+          due: 'in 3 days', phase: surfaceCtx.entityLabel || surfaceCtx.surfaceLabel,
+          activity: [{ type: 'note', text: body.trim(), who: 'You', when: 'just now' }],
+        });
+        onCreated?.();
+      } catch (e) {
+        setSending(false);
+        setSendErr(
+          'The message was sent, but the task was not created — ' +
+            (e instanceof Error ? e.message : String(e)) +
+            '. Create it from the task board if it is still needed.',
+        );
+        return;
+      }
+    }
+    setSending(false);
     onClose();
   };
 
@@ -657,13 +823,23 @@ function CollabDiscuss({ ctx: surfaceCtx, onClose, onCreated }: CollabDiscussPro
         <span className="cl-check">{makeTask ? I.check : ''}</span>
         <span><b>Also create a task</b>{C2C.team[to] ? <> and assign it to {C2C.team[to].n}</> : <>, unassigned</>}</span>
       </button>
-      <div className="cl-warn">
-        <span className="ico">{I.alertTriangle}</span>Posting to the collaboration thread is not yet wired here — the message is not persisted, and real-time delivery is not yet enabled.
-      </div>
+      {sendErr && (
+        <div className="cl-warn" role="alert">
+          <span className="ico">{I.alertTriangle}</span>{sendErr}
+        </div>
+      )}
       <div className="cl-foot">
         
         <button className="btn ghost" onClick={onClose}>Cancel</button>
-        <button className="btn primary" onClick={send} disabled={!body.trim()}>{I.arrowRight} {makeTask ? 'Send & assign' : 'Send'}</button>
+        <button
+          className="btn primary"
+          onClick={() => void send()}
+          disabled={!body.trim() || !to || sending}
+          title={!to ? 'Pick a recipient first' : undefined}
+          data-testid="collab-send"
+        >
+          {I.arrowRight} {sending ? 'Sending…' : makeTask ? 'Send & assign' : 'Send'}
+        </button>
       </div>
     </div>
   );
@@ -738,7 +914,7 @@ export function CollabLayer({ onNav }: CollabLayerProps) {
             </button>
             <button className="cl-fab-mi" onClick={() => { setTab('collab'); setOpen(true); setMenuOpen(false); }}>
               <span className="ico">{I.messageSquare}</span>
-              <span><b>Collaborate</b><em>Message -- @mention — route</em></span>
+              <span><b>Collaborate</b><em>Message — @mention — route</em></span>
             </button>
             <button className="cl-fab-mi" onClick={() => { onNav?.('tasks'); setMenuOpen(false); }}>
               <span className="ico">{I.layoutPanels || I.grid}</span>

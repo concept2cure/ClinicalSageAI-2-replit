@@ -128,8 +128,14 @@ beforeEach(async () => {
     if (/UPDATE authoring_sections/i.test(s)) {
       return { rowCount: 1, rows: [{ id: 'S1', doc_id: 'D1', content: 'new text' }] };
     }
-    if (/SELECT COUNT\(\*\) as pending FROM authoring_workflow_steps/i.test(s)) {
-      return { rowCount: 1, rows: [{ pending: '0' }] };
+    if (/COUNT\(\*\)[\s\S]*FROM authoring_workflow_steps/i.test(s)) {
+      /* A workflow that EXISTS and is complete — which is the scenario this
+         test is named for. `pending: '0'` alone used to be enough, because the
+         handler counted only pending steps and could not tell "all approved"
+         from "no approval workflow was ever created". It now counts the total
+         too, and refuses to approve a document that never had a workflow, so
+         the fixture has to say which of the two it is modelling. */
+      return { rowCount: 1, rows: [{ pending: '0', total: '1' }] };
     }
     return { rowCount: 1, rows: [{}] };
   });

@@ -1,0 +1,33 @@
+-- The Declaration of Conformity company NAME joins its address on the eSTAR
+-- registration, so the declaration names ONE legal entity.
+--
+-- The official FDA eSTAR's Declaration of Conformity page carries two facts
+-- about the declaring company: its name (DoC.DCTextField120) and its address
+-- (DoC.DCTextField130). A Declaration of Conformity is a signed statement by
+-- one identified legal entity, so those two fields MUST name the same entity.
+--
+-- The address already lives on this row
+-- (declaration_company_address, migrations/20260903_estar_registration_correspondent.sql).
+-- The name did not: it was read from the applicant's client workspace name,
+-- falling back to the organization name — and neither of those stores holds an
+-- address at all. For an organization that files on behalf of more than one
+-- client — exactly what client workspaces exist to model, a consultancy or a
+-- CRO — the declaration was therefore filed with one legal entity's name
+-- beside another legal entity's address. A mismatched name and address is a
+-- false statement on a signed, filed form. The name joins the address here so
+-- one row holds the whole declaration and the two fields cannot disagree.
+--
+-- VARCHAR(256) matches correspondent_company_name, the other company-name
+-- column on this table. Nullable, and read as a PRIMARY source with the old
+-- resolution kept behind it: a registration that has not recorded a name still
+-- resolves client_workspaces.name → organizations.name, so this migration
+-- changes no existing export until an organization fills the field in.
+--
+-- One ALTER per column, so the model-vs-migration agreement guard
+-- (scripts/ci/check-model-migration-agreement.mjs) sees each column it
+-- reconciles. Additive + idempotent: safe to re-run, and safe against an
+-- existing table with rows (existing registrations simply have NULLs until
+-- the name is set).
+
+ALTER TABLE estar_registrations
+  ADD COLUMN IF NOT EXISTS declaration_company_name VARCHAR(256);

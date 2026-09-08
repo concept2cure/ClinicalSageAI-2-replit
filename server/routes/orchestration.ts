@@ -75,8 +75,17 @@ function getUserId(req: Request): number {
   throw new Error('Authentication required');
 }
 
+/**
+ * The actor's name for the audit row — never manufactured from their id.
+ * See the note on the same helper in routes/ai-actions.ts (ledger L142).
+ * 'unknown' matches the 'system' sentinel this file already uses a few hundred
+ * lines below for the genuinely unauthenticated case.
+ */
 function getUserName(req: Request): string {
-  return req.user?.email || `user-${getUserId(req)}`;
+  if (req.user?.email) return req.user.email;
+  // Refuse rather than invent: `user-${id}` was a person-shaped guess an
+  // inspector could not tell from a real address (ledger L142).
+  throw new Error('Authentication required');
 }
 
 function getUserRole(req: Request): string {
@@ -186,7 +195,23 @@ router.get('/project/:id', (req: Request, res: Response) => {
 
 router.post('/cancel/:id', (req: Request, res: Response) => {
   try {
+    const orgId = getOrganizationId(req);
     const userId = getUserId(req);
+    /* ── This route had no tenant check ────────────────────────────────────
+       `cancelWorkflow` looks a run up in a process-global map BY ID ALONE, so
+       any authenticated user who knew an execution id could cancel another
+       tenant's workflow run — reachable from the Cancel control on the
+       Orchestration surface. Its sibling two routes up, GET /executions/:id,
+       has always verified `execution.organizationId !== orgId` before
+       answering; the destructive route was the one that did not.
+
+       The ownership check is made FIRST and answers 404, not 403 — matching
+       the read: a run in another tenant should not be distinguishable from a
+       run that does not exist, or the id space itself becomes an oracle. */
+    const execution = getWorkflowExecution(String(req.params.id));
+    if (!execution || execution.organizationId !== orgId) {
+      return res.status(404).json({ error: 'Workflow execution not found' });
+    }
     const success = cancelWorkflow(String(req.params.id), userId);
     if (!success) {
       return res.status(404).json({ error: 'Workflow not found or not cancellable' });
@@ -621,17 +646,17 @@ async function recordGateAudit(req: Request, response: {
   assessedAt: string;
 }): Promise<void> {
   let userId: number;
-  let userName: string;
   try {
     userId = getUserId(req);
-    userName = getUserName(req);
   } catch {
     // System / unauthenticated callers (internal jobs) still get audited
     // but with a sentinel user. The route auth middleware should normally
     // prevent this branch in production.
     userId = 0;
-    userName = 'system';
   }
+  // An authenticated caller is attributed or refused — never filed as the
+  // sentinel, which would record a person's action as the system's.
+  const userName = userId ? getUserName(req) : 'system';
   const { db } = await import('../db.js');
   const { regulatoryAuditLogs } = await import('../../shared/schema.js');
   const auditId = `gate-${response.projectId}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;

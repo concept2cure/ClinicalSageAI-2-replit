@@ -42,6 +42,7 @@ for (const proto of [Range.prototype, Element.prototype, Text.prototype] as unkn
 
 import { DocumentAuthoring } from '../surfaces/DocumentAuthoring';
 import { clearEditorTarget, setEditorTarget } from '../editorTarget';
+import { clearNavParams, stashNavParamsForTarget } from '../navParams';
 
 function ok(payload: unknown) {
   return { ok: true, status: 200, json: async () => payload } as Response;
@@ -76,6 +77,7 @@ function props() {
 
 beforeEach(() => {
   clearEditorTarget();
+  clearNavParams();
   delete (window as unknown as { C2C_PROJECT?: unknown }).C2C_PROJECT;
   apiRequest.mockReset();
   apiRequest.mockImplementation(async (method: string, url: string) => {
@@ -89,6 +91,7 @@ beforeEach(() => {
 afterEach(() => {
   cleanup();
   clearEditorTarget();
+  clearNavParams();
 });
 
 describe('DocumentAuthoring — editor deep-link target', () => {
@@ -115,6 +118,35 @@ describe('DocumentAuthoring — editor deep-link target', () => {
     expect(await screen.findByText(/from the 510\(k\) workspace/i)).toBeTruthy();
     // No honest-miss notice — the target resolved.
     expect(screen.queryByText(/Couldn’t find/)).toBeNull();
+  });
+
+  it('a docId target opens the EXACT document — no search, not the default', async () => {
+    // The strongest claim a sender can make: the correspondence card holds the
+    // linked response draft's id. D2 is NOT the default (D1 is first).
+    setEditorTarget({ docType: null, docId: 'D2' });
+
+    render(<DocumentAuthoring {...props()} />);
+    await waitFor(() => expect(window.C2C_EDITOR_TARGET).toBeUndefined());
+
+    // D2's section is on the canvas — the id resolved directly.
+    await waitFor(() => {
+      expect(canvasText()).toBe('SE discussion body.');
+    });
+    expect(await screen.findByText(/Opened “510\(k\) Submission” — the linked document/)).toBeTruthy();
+    expect(screen.queryByText(/Couldn’t open/)).toBeNull();
+  });
+
+  it('a docId not in scope lands on the default view with an honest miss — never a near-miss open', async () => {
+    setEditorTarget({ docType: null, docId: 'D-GONE' });
+
+    render(<DocumentAuthoring {...props()} />);
+    await waitFor(() => expect(window.C2C_EDITOR_TARGET).toBeUndefined());
+
+    const notice = await screen.findByText(/Couldn’t open the linked document/);
+    expect(notice.textContent).toMatch(/default view/i);
+    await waitFor(() => {
+      expect(canvasText()).toBe('Default document content.');
+    });
   });
 
   it('shows the honest miss notice and falls back to the default view when nothing matches', async () => {
@@ -163,5 +195,53 @@ describe('DocumentAuthoring — editor deep-link target', () => {
       expect(canvasText()).toBe('Default document content.');
     });
     expect(screen.queryByText(/Couldn’t (find|open)/)).toBeNull();
+  });
+});
+
+describe('DocumentAuthoring — navigation-directive hand-off (window.C2C_NAV_PARAMS)', () => {
+  it('a sectionCode from navigate_to opens the named section via the same bounded search', async () => {
+    // 'section-workspace' is the registry target; its alias resolves to this
+    // surface, which is exactly the id the channel keys on.
+    stashNavParamsForTarget('section-workspace', { sectionCode: '11' });
+
+    render(<DocumentAuthoring {...props()} />);
+
+    // One-shot: consumed on mount, hit or miss.
+    await waitFor(() => expect(window.C2C_NAV_PARAMS).toBeUndefined());
+    // The named section — in D2, NOT the default document — is open.
+    await waitFor(() => {
+      expect(canvasText()).toBe('SE discussion body.');
+    });
+    // The hand-off is stated without inventing a workspace family (the
+    // directive claimed none).
+    expect(await screen.findByText(/as requested in chat/i)).toBeTruthy();
+    expect(screen.queryByText(/Couldn’t find/)).toBeNull();
+  });
+
+  it('an authoringDocType from navigate_to opens the matching document by title', async () => {
+    stashNavParamsForTarget('authoring', { authoringDocType: 'Submission' });
+
+    render(<DocumentAuthoring {...props()} />);
+    await waitFor(() => expect(window.C2C_NAV_PARAMS).toBeUndefined());
+
+    // D2 ('510(k) Submission') matches; its first section becomes the canvas.
+    await waitFor(() => {
+      expect(canvasText()).toBe('SE discussion body.');
+    });
+    expect(await screen.findByText(/Opened “510\(k\) Submission”/)).toBeTruthy();
+    expect(screen.queryByText(/Couldn’t find/)).toBeNull();
+  });
+
+  it('an unmatchable authoringDocType lands on the default view with an honest notice', async () => {
+    stashNavParamsForTarget('authoring', { authoringDocType: 'Investigator Brochure' });
+
+    render(<DocumentAuthoring {...props()} />);
+    await waitFor(() => expect(window.C2C_NAV_PARAMS).toBeUndefined());
+
+    const notice = await screen.findByText(/Couldn’t find a document matching “Investigator Brochure”/);
+    expect(notice.textContent).toMatch(/default view/i);
+    await waitFor(() => {
+      expect(canvasText()).toBe('Default document content.');
+    });
   });
 });

@@ -15,6 +15,7 @@
 
 import { Pool } from 'pg';
 import crypto from 'crypto';
+import { releaseWithoutBypass } from './rlsBypassSession';
 
 // Types
 export interface WorkspaceRole {
@@ -245,7 +246,7 @@ export class AdaptiveReviewerWorkspaceService {
         AdaptiveReviewerWorkspaceService.roleCache.push(mapped);
         return mapped;
       } finally {
-        client.release();
+        await releaseWithoutBypass(client);
       }
     }
 
@@ -282,7 +283,7 @@ export class AdaptiveReviewerWorkspaceService {
       AdaptiveReviewerWorkspaceService.roleCache.push(mapped);
       return mapped;
     } finally {
-      client.release();
+      await releaseWithoutBypass(client);
     }
   }
 
@@ -469,7 +470,7 @@ export class AdaptiveReviewerWorkspaceService {
       AdaptiveReviewerWorkspaceService.preferenceCache.set(userId, mapped);
       return mapped;
     } finally {
-      client.release();
+      await releaseWithoutBypass(client);
     }
   }
 
@@ -580,7 +581,7 @@ export class AdaptiveReviewerWorkspaceService {
       AdaptiveReviewerWorkspaceService.preferenceCache.set(userId, mapped);
       return mapped;
     } finally {
-      client.release();
+      await releaseWithoutBypass(client);
     }
   }
 

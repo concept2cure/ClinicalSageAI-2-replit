@@ -23,7 +23,6 @@
  * @module server/services/ectd/ectd4/forward-compat
  */
 
-import { createHash } from 'crypto';
 import {
   oidForV4List,
   isValidV4Code,
@@ -87,8 +86,9 @@ export interface ForwardCompatInput {
    *  (replace/append/delete) that supersede CoUs from an earlier sequence. */
   priorSequenceNumber?: string;
   /** SHA-256 of each leaf's bytes, keyed by absolute sourcePath. eCTD v4.0
-   *  documents are integrity-checked with SHA-256; when a hash is absent a
-   *  deterministic placeholder derived from the business key is used. */
+   *  documents are integrity-checked with SHA-256; when a hash is absent the
+   *  document's integrity check is left EMPTY (honestly "not computed") and a
+   *  note is emitted — a metadata-derived placeholder is NEVER fabricated. */
   sha256ByPath?: Record<string, string>;
 }
 
@@ -107,6 +107,7 @@ export interface ForwardCompatResult {
  */
 export function forwardCompatToV4(input: ForwardCompatInput): ForwardCompatResult {
   const notes: string[] = [];
+  let hashesMissing = false;
   const app = input.application.number;
   const seq = input.submissionUnit.sequenceNumber;
 
@@ -123,9 +124,15 @@ export function forwardCompatToV4(input: ForwardCompatInput): ForwardCompatResul
     // Document (reused across CoUs by business key).
     const docId = documentId(app, docKey);
     if (!documents.has(docKey)) {
-      const sha =
-        (leaf.sourcePath && input.sha256ByPath?.[leaf.sourcePath]) ||
-        createHash('sha256').update(`${app}|${docKey}`).digest('hex');
+      // Use ONLY a real per-leaf content hash. When none was supplied, leave the
+      // integrity check EMPTY (honestly "not computed") — never hash the leaf's
+      // metadata (app|section|filename) into a 64-hex string that is
+      // indistinguishable from a real SHA-256 and would silently pass a format
+      // check as if it were the content hash. forward-compat is a v3→v4
+      // structural preview; the real filing path (packageRpsSubmission) computes
+      // every integrity hash from the actual leaf bytes.
+      const sha = (leaf.sourcePath && input.sha256ByPath?.[leaf.sourcePath]) || '';
+      if (!sha) hashesMissing = true;
       documents.set(docKey, {
         id: docId,
         title: leaf.title,
@@ -153,6 +160,12 @@ export function forwardCompatToV4(input: ForwardCompatInput): ForwardCompatResul
     }
     contextsOfUse.push(cou);
   });
+
+  if (hashesMissing) {
+    notes.push(
+      'Document integrity hashes were NOT computed (no per-leaf SHA-256 supplied): this is a v4 structural preview, not a filing-ready message. Package via packageRpsSubmission to compute every integrity hash from the actual leaf bytes.',
+    );
+  }
 
   return {
     message: {

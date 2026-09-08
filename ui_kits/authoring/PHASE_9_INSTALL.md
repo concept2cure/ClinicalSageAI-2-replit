@@ -61,7 +61,9 @@ useC2cDocumentSection(documentId, key)      // GET /api/c2c/documents/:id/sectio
 useC2cDocumentSectionSave()                 // PATCH /api/c2c/documents/:id/sections/:key  (audited)
 useC2cDocumentLockSection()                 // POST  /api/c2c/documents/:id/sections/:key/lock (audited)
 useC2cDocumentRewriteSelection()            // POST  /api/c2c/documents/:id/sections/:key/rewrite (audited)
-useC2cDocumentDraftSection()                // POST  /api/c2c/documents/:id/sections/:key/ai-draft (audited, stream)
+// useC2cDocumentDraftSection() — REMOVED (ledger L32). The c2c stream drafted against Data Room sources it never
+// parked, so an accept could not carry source lineage. Draft through POST /api/authoring/sections/:id/ai/draft and
+// its /accept, which park the sources and record verified source + author spans in one transaction.
 useC2cDocumentValidate()                    // POST  /api/c2c/documents/:id/validate?pack=<docType>:<agency>
 
 // Rule pack registry
@@ -196,7 +198,7 @@ CREATE INDEX c2c_doc_evidence_section_idx ON c2c_document_section_evidence (sect
 Every mutation route MUST write to `audit_logs` using the PDEV pattern. Required actions:
 
 ```
-agent.ana.authoring.section.ai_draft        (POST  …/sections/:key/ai-draft)
+agent.ana.authoring.section.ai_draft        (removed with the c2c ai-draft stream — ledger L32)
 agent.ana.authoring.section.rewrite          (POST  …/sections/:key/rewrite)
 authoring.section.save                       (PATCH …/sections/:key)
 authoring.section.lock                       (POST  …/sections/:key/lock)

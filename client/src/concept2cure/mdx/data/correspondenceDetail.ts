@@ -1,7 +1,7 @@
 /**
  * Correspondence detail — full letter bodies, deficiency decomposition, and the
  * AnA-drafted response. Ported from
- * `design-system/ui_kits/mdx/data-correspondence-detail.jsx`.
+ * `ui_kits/mdx/data-correspondence-detail.jsx`.
  *
  * Keyed by the correspondence id used in `data/pathwayTabs.ts`
  * (K510_CORRESP / PMA_CORRESP / CER_CORRESP), so the AnaDrafter has real

@@ -4,9 +4,12 @@
  */
 import { Router, Request, Response } from 'express';
 import { eq, desc, and } from 'drizzle-orm';
-import { db, transaction } from '../db';
+import { db, transaction, pool } from '../db';
 import { coauthorDocuments, coauthorSections } from '../../shared/schema';
 import { authMiddleware } from '../auth';
+import { randomUUID } from 'crypto';
+import { queryableFromDrizzle } from '../db/drizzle-queryable.js';
+import { recordDocumentAlias, DocumentAliasConflictError } from '../services/c2c/document-alias-map.js';
 
 import { createScopedLogger } from '../utils/logger.js';
 
@@ -149,7 +152,7 @@ router.post('/documents', authMiddleware, async (req: any, res: Response) => {
       return res.status(400).json({ error: 'Organization ID required' });
     }
 
-    const { title, moduleNumber, content, templateId } = req.body || {};
+    const { title, moduleNumber, content, templateId, sourceAuthoringDocId } = req.body || {};
 
     if (!title) {
       return res.status(400).json({ error: 'title is required' });
@@ -157,24 +160,106 @@ router.post('/documents', authMiddleware, async (req: any, res: Response) => {
 
     const userId = req.user?.id || req.user?.userId;
 
-    const [document] = await db
-      .insert(coauthorDocuments)
-      .values({
+    /* ── THE SNAPSHOT INHERITS THE SOURCE DOCUMENT'S GOVERNED STATE ──
+     *
+     * `status` was hardcoded to 'draft' here, and that one word made the
+     * authoring editor structurally incapable of producing a filable package.
+     *
+     * The eCTD leaf resolver counts a source as submission-finalized only when
+     * its status is 'approved' or 'finalized' — correctly; a draft must never
+     * count toward a complete package. So every snapshot the authoring
+     * surface's "Place into filing" created was unfinalized, which makes
+     * `assertEctdSubmissionComplete` throw whenever completeness is required.
+     * A document the author had frozen, hash-sealed and e-signed was filed as
+     * a draft, and no UI could change it: the only client that PUTs a coauthor
+     * document sends `{ content }` alone.
+     *
+     * THE STATUS IS DERIVED HERE, NEVER ACCEPTED FROM THE CALLER. A
+     * client-supplied status would let any caller stamp 'approved' on anything
+     * and make an incomplete package report itself complete — the same class
+     * of unearned verdict this codebase keeps having to remove. The caller may
+     * only say WHICH document it is snapshotting; what that document's state
+     * IS, is read from the record, under this organization.
+     *
+     * The mapping claims nothing the source has not earned:
+     *   APPROVED  -> 'approved'   an APPROVER e-signature was applied
+     *   FROZEN    -> 'finalized'  content snapshotted, hash-sealed and locked;
+     *                             and, since the freeze gate, proven to carry
+     *                             no unresolved comments or undecided edits
+     *   anything else -> 'draft'  which correctly fails completeness
+     */
+    let snapshotStatus = 'draft';
+    let sourceState: { docId: string; status: string } | null = null;
+    if (sourceAuthoringDocId) {
+      const src = await pool.query<{ status: string | null }>(
+        'SELECT status FROM authoring_documents WHERE id = $1 AND tenant_id = $2',
+        [String(sourceAuthoringDocId), organizationId],
+      );
+      if (src.rowCount === 0) {
+        /* Named a document that is not this organization's, or does not exist.
+           Refused rather than quietly falling back to a draft snapshot: the
+           caller asked for a document's state to be carried, and silently
+           carrying a different one is worse than saying no. */
+        return res.status(404).json({
+          error: 'Source document not found',
+          message:
+            'The document this snapshot was to be taken from does not exist in this organization. Nothing was created.',
+        });
+      }
+      const state = String(src.rows[0].status ?? '').toUpperCase();
+      snapshotStatus = state === 'APPROVED' ? 'approved' : state === 'FROZEN' ? 'finalized' : 'draft';
+      sourceState = { docId: String(sourceAuthoringDocId), status: state || 'UNKNOWN' };
+    }
+
+    /* The row and its identity commit together. A snapshot taken from an
+       authoring document is that document's representation in this store, so
+       it is aliased under the authoring uuid; a document with no source gets a
+       fresh canonical id. A fork — the authoring document already represented
+       here by another row — refuses the create and nothing is persisted. */
+    const canonicalId = sourceState ? String(sourceAuthoringDocId) : randomUUID();
+    const document = await db.transaction(async (tx) => {
+      const [row] = await tx
+        .insert(coauthorDocuments)
+        .values({
+          organizationId,
+          title,
+          content: content || '',
+          moduleNumber: moduleNumber || null,
+          templateId: templateId ? Number(templateId) : null,
+          status: snapshotStatus,
+          createdBy: userId ? String(userId) : null,
+          /* Where this snapshot came from and what that source's state was when
+             it was taken — so the status above can be audited back to the record
+             that justified it rather than being taken on trust. */
+          ...(sourceState ? { metadata: { source: 'authoring-document', ...sourceState } } : {}),
+        })
+        .returning();
+      const alias = await recordDocumentAlias(queryableFromDrizzle(tx), {
         organizationId,
-        title,
-        content: content || '',
-        moduleNumber: moduleNumber || null,
-        templateId: templateId ? Number(templateId) : null,
-        status: 'draft',
-        createdBy: userId ? String(userId) : null,
-      })
-      .returning();
+        canonicalId,
+        store: 'coauthor_documents',
+        nativeId: String(row.id),
+      });
+      if (!alias.recorded && alias.reason === 'relation_absent') {
+        logger.warn('Document alias map absent; snapshot created without cross-store identity', {
+          coauthorDocumentId: row.id,
+          migration: 'migrations/20260814d_document_alias_map.sql',
+        });
+      }
+      return row;
+    });
 
     return res.status(201).json({
       success: true,
       document,
     });
   } catch (error: any) {
+    if (error instanceof DocumentAliasConflictError) {
+      return res.status(409).json({
+        error: 'DOCUMENT_ALIAS_CONFLICT',
+        message: `${error.message}. Nothing was created.`,
+      });
+    }
     logger.error('Create document error', { err: error instanceof Error ? error.message : String(error) });
     return res.status(500).json({ error: 'Failed to create document', message: 'An unexpected error occurred' });
   }

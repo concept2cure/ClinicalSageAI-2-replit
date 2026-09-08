@@ -91,7 +91,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'npm'
 
       - name: Install dependencies
@@ -117,7 +117,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'npm'
 
       - name: Install dependencies
@@ -137,8 +137,8 @@ jobs:
         env:
           CI: true
 
-      - name: Run npm audit (with documented false-positive allowlist)
-        run: node scripts/ci/audit-with-allowlist.mjs
+      - name: Run lockfile audit and dependency-risk ledger gate
+        run: npm run ci:dependency-risk
 
       - name: Trivy filesystem scan (deps + secrets)
         # Blocking: HIGH/CRITICAL findings fail the deploy gate.
@@ -511,7 +511,8 @@ jobs:
           MISSING=""
           for VAR in RLS_ENFORCE DATABASE_URL APP_DATABASE_URL JWT_SECRET \
                      REFRESH_TOKEN_SECRET MFA_ENCRYPTION_KEY AUDIT_HMAC_KEY \
-                     AUDIT_HMAC_SECRET CONNECTOR_ENCRYPTION_KEY; do
+                     AUDIT_HMAC_SECRET CONNECTOR_ENCRYPTION_KEY \
+                     AI_SENSITIVE_DATA_POLICY_MODE AI_PROVIDER_PLACEMENT_APPROVALS; do
             if ! grep -qx "$VAR" <<< "$PRESENT"; then MISSING="$MISSING $VAR"; fi
           done
 
@@ -538,6 +539,16 @@ jobs:
           fi
           if [[ "$RLS_VALUE" != "on" ]]; then
             echo "::error::RLS_ENFORCE must be exactly 'on' in the task definition; got '${RLS_VALUE:-<unset>}'. Aliases (true/1/enforce) are rejected by the production kill-switch."
+            FAIL=1
+          fi
+          # assertSensitivePlacementConfiguration refuses any production boot
+          # without mode=enforce; catch it here instead of as a crash-loop.
+          POLICY_MODE_VALUE=$(jq -r --arg c "$ECS_API_CONTAINER_NAME" '
+            .containerDefinitions[] | select(.name == $c)
+            | (.environment // []) | map(select(.name == "AI_SENSITIVE_DATA_POLICY_MODE")) | .[0].value // ""
+          ' /tmp/api-td-preflight.json)
+          if [[ -n "$POLICY_MODE_VALUE" && "$POLICY_MODE_VALUE" != "enforce" ]]; then
+            echo "::error::AI_SENSITIVE_DATA_POLICY_MODE must be exactly 'enforce' in production; got '$POLICY_MODE_VALUE'."
             FAIL=1
           fi
           [[ "$FAIL" -eq 0 ]] || exit 1
@@ -637,7 +648,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'npm'
 
       - name: Install dependencies

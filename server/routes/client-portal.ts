@@ -159,13 +159,28 @@ async function safeRows<T>(sql: string, params: unknown[]): Promise<T[]> {
   }
 }
 
-/** Humanise a target date into the surface's "next" vocabulary. */
-function nextFromProject(status: string | null, target: Date | string | null): string {
+/**
+ * Humanise a target date into the surface's "next" vocabulary.
+ *
+ * `now` is a required parameter, not a `Date.now()` read, for the same reason
+ * `deadlineUrgency`/`awardPeriodState`/`milestoneBucket` take one: a function
+ * that reads the wall clock cannot be pinned. The fixture-and-regex version of
+ * this test asserted /milestone/ against a hardcoded 2026-09-01 target, which
+ * held only until 2026-09-01 actually arrived; on 2026-09-02 the same code
+ * correctly returned 'Target passed 1d ago' and the suite went red on the
+ * calendar rather than on a defect. Taking the clock as an argument is what
+ * makes every branch below reachable from a test at any wall-clock time.
+ */
+export function nextFromProject(
+  status: string | null,
+  target: Date | string | null,
+  now: number,
+): string {
   if (status === 'completed') return 'Complete';
   if (!target) return status ? `In ${status}` : '';
   const d = new Date(target);
   if (Number.isNaN(d.getTime())) return '';
-  const days = Math.round((d.getTime() - Date.now()) / 86_400_000);
+  const days = Math.round((d.getTime() - now) / 86_400_000);
   if (days < 0) return `Target passed ${-days}d ago`;
   if (days === 0) return 'Target today';
   return `Next milestone · ${days} days`;
@@ -179,6 +194,10 @@ router.get('/overview', async (req: Request, res: Response) => {
       return res.status(403).json({ error: 'This portal is limited to the client it belongs to.' });
     }
     const wsId = scope.clientWorkspaceId;
+    // One clock read per request: every program in a response is measured
+    // against the same instant, so two rows a millisecond apart can't land in
+    // different day buckets.
+    const now = Date.now();
 
     // Programs — the client's projects.
     const programs = (
@@ -199,7 +218,7 @@ router.get('/overview', async (req: Request, res: Response) => {
       pathway: p.type || '—',
       readiness: typeof p.progress === 'number' ? p.progress : 0,
       status: p.status || 'active',
-      next: nextFromProject(p.status, p.target_end_date),
+      next: nextFromProject(p.status, p.target_end_date, now),
       blocker: null as string | null, // no per-program blocker column — honest null
     }));
 

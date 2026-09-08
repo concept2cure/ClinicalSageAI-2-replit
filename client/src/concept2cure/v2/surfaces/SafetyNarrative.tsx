@@ -1,8 +1,10 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 
 import { usePublishSurfaceContext } from '../surfaceContext';
+import { useSurfaceActionHandlers, notifySurfaceActionReady } from '../surfaceActions';
 import { I } from '../icons';
 import { useLiveRows, EmptyState } from '../dataConnect';
+import { apiRequest, serverMessage } from '@/lib/queryClient';
 import { AnswerLead } from '../AnswerLead';
 import type { SurfaceViewProps } from '../surfaceViews';
 import '../styles/project-home-v2.css';
@@ -26,12 +28,21 @@ const CAUSALITIES = ['related', 'probably related', 'possibly related', 'unlikel
    kept alongside them); the nullable clock fields are `| null` and rendered
    null-safe. */
 type LiveSaeCase = SaeCase & {
+  /* Case facts the assembler returns that `SaeCase` (the composer's input
+     shape) does not declare, because the composer does not read them. The
+     save path does — `expectedness` is one of the four inputs to the expedited
+     clock, so a version that dropped it would silently reset it. */
+  awarenessDate?: string;
+  expectedness?: string;
   reportingCategory?: '7-day' | '15-day' | 'none';
   reportingClockStart?: string | null;
   reportingDueDate?: string | null;
   reportingDaysRemaining?: number | null;
   reportingOverdue?: boolean;
   reportingBasis?: string;
+  reportingUnassessedInputs?: string[];
+  /** False = no seriousness assessment is recorded. Absent on an older server. */
+  seriousnessAssessed?: boolean;
 };
 
 /* Stable empty seed for the local editable store while the live worklist is
@@ -76,6 +87,36 @@ export function SafetyNarrative({ onAsk, onNav }: SurfaceViewProps) {
   }, [seed]);
 
   const [toast, fire] = useToast();
+
+  /* AnA can open any SAE case from the worklist by its id or study id — the same
+     row click a person makes — so a drive can land on a specific case before its
+     narrative is discussed. Editing the narrative stays a human act; this only
+     selects. Resolved against the REAL worklist with honest misses; held (retry)
+     while it loads, re-attempted on the ready signal below. */
+  useSurfaceActionHandlers('safety-narrative', {
+    'safety-narrative.select-case': (params) => {
+      const raw = String(params.case ?? '').trim();
+      if (!raw) return { ok: false, reason: 'Name a case by its id or study id.' };
+      if (live.loading) return { ok: false, reason: 'The SAE worklist is still loading.', retry: true };
+      if (live.error) return { ok: false, reason: 'The SAE worklist did not load, so there are no cases to open.' };
+      if (cases.length === 0) return { ok: false, reason: 'No SAE cases are recorded in this worklist yet.' };
+      const needle = raw.toLowerCase();
+      const byId = cases.filter((c) => c.id.toLowerCase() === needle);
+      const byStudy = cases.filter((c) => (c.studyId ?? '').toLowerCase() === needle);
+      const hits = byId.length ? byId
+        : byStudy.length ? byStudy
+        : cases.filter((c) => c.id.toLowerCase().includes(needle));
+      if (hits.length === 0) return { ok: false, reason: `No SAE case matching "${raw}".` };
+      if (hits.length > 1) return { ok: false, reason: `"${raw}" matches ${hits.length} cases — name one exactly.` };
+      const c = hits[0];
+      if (selId === c.id) return { ok: true, detail: `Already on case ${c.id}` };
+      setSelId(c.id);
+      return { ok: true, detail: `Opened case ${c.id}` };
+    },
+  });
+  useEffect(() => {
+    if (!live.loading && !live.error) notifySurfaceActionReady('safety-narrative');
+  }, [live.loading, live.error]);
 
   const sel = cases.find((c) => c.id === selId) || cases[0];
   const result = useMemo(() => (sel ? composeSafetyNarrative(sel) : null), [sel]);
@@ -124,7 +165,7 @@ export function SafetyNarrative({ onAsk, onNav }: SurfaceViewProps) {
       },
       availableActions: [
         'Open an SAE case to see its narrative and its reporting clock',
-        'Complete a missing ICH E3 §16 field on the selected case (drafting only — there is no case-write endpoint, so edits are not persisted)',
+        'Complete a missing ICH E3 §16 field on the selected case and save it under an audited reason for change',
         'QC the composed narrative before handing it off',
       ],
     };
@@ -176,6 +217,68 @@ export function SafetyNarrative({ onAsk, onNav }: SurfaceViewProps) {
     setField('event.seriousnessCriteria', cur.includes(crit) ? cur.filter((x) => x !== crit) : cur.concat([crit]));
   };
 
+  /* ── "Save version" ────────────────────────────────────────────────────────
+     This button fired the toast "Narrative versioning isn't wired to the safety
+     store yet — nothing was saved", and that was true: a safety writer
+     completed the structured case, composed the ICH E3 §16 narrative, and lost
+     every edit on reload. PATCH /api/safety-narratives/cases/:id is now that
+     write.
+
+     What is sent is the structured case AND the composed narrative, under a
+     required reason for change — a causality or seriousness edit can move a
+     case between a 7-day and a 15-day expedited obligation, so the audit trail
+     records the grounds alongside both sides of every changed field. The saved
+     case comes back with its clock RECOMPUTED by the server, and it replaces
+     the local copy, so the writer sees the deadline their edit produced rather
+     than the one they started with. */
+  const [saveReason, setSaveReason] = useState('');
+  const [saving, setSaving] = useState(false);
+  const saveVersion = async () => {
+    if (!sel || !result || saving) return;
+    if (saveReason.trim().length < 8) {
+      fire('Enter a reason for change (at least 8 characters) before saving this version.', 'error');
+      return;
+    }
+    setSaving(true);
+    try {
+      const res = await apiRequest('PATCH', `/api/safety-narratives/cases/${encodeURIComponent(sel.id)}`, {
+        reasonForChange: saveReason.trim(),
+        fields: {
+          causality: sel.event?.causality ?? null,
+          outcome: sel.event?.outcome ?? null,
+          expectedness: sel.expectedness ?? null,
+          reactionPt: sel.event?.term ?? null,
+          onsetDate: sel.event?.onsetDate ?? null,
+          seriousnessCriteria: sel.event?.seriousnessCriteria ?? [],
+          narrative: result.narrative,
+        },
+      });
+      const json = (await res.json().catch(() => null)) as { data?: LiveSaeCase } | null;
+      if (!res.ok || !json?.data) {
+        fire(
+          'The version was not saved — ' +
+            (serverMessage(json) ?? `the server refused it (HTTP ${res.status})`) +
+            '. The case is unchanged.',
+          'error',
+        );
+        return;
+      }
+      const saved = json.data;
+      setCases((cs) => cs.map((c) => (c.id === saved.id ? saved : c)));
+      setSaveReason('');
+      fire(
+        `Saved — ${sel.id} and its narrative are in the safety store. Reporting clock: ${saved.clock}, due ${saved.due}.`,
+      );
+    } catch (e) {
+      fire(
+        'The version was not saved — ' + (e instanceof Error ? e.message : String(e)) + '. The case is unchanged.',
+        'error',
+      );
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
     <div className="sn">
       <C2CToast msg={toast} position="top" />
@@ -186,7 +289,7 @@ export function SafetyNarrative({ onAsk, onNav }: SurfaceViewProps) {
       </div>
 
       {live.loading ? (
-        <div className="scaf-note" style={{ padding: '18px 10px' }}>Loading SAE cases…</div>
+        <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>Loading SAE cases…</div>
       ) : live.error ? (
         <EmptyState
           tone="error"
@@ -217,17 +320,24 @@ export function SafetyNarrative({ onAsk, onNav }: SurfaceViewProps) {
           <div className="sn-sec">Case queue</div>
           <div className="sn-queue">
             {cases.map((c) => {
-              /* A queue row with no `event` yet is not evidence of non-seriousness,
-                 but "Non-serious" is what the existing chip says for an empty
-                 criteria list, and inventing a third state here would assert more
-                 than the row supports. Guarded so the row renders either way. */
-              const serious = (c.event?.seriousnessCriteria || []).length > 0;
+              /* Three states, because there are three. A row whose seriousness
+                 has never been assessed used to read "Non-serious" — the chip
+                 that takes a case off the expedited-reporting path (21 CFR
+                 312.32) — from an empty criteria list. Saying "not recorded"
+                 asserts LESS than that, not more: it reports exactly what the
+                 row holds. The server sends seriousnessAssessed; an older
+                 server omits it and the row falls back to the old two states. */
+              const criteria = c.event?.seriousnessCriteria || [];
+              const serious = criteria.length > 0;
+              const unrecorded = !serious && c.seriousnessAssessed === false;
               const miss = composeSafetyNarrative(c).missingFields.length;
               return (
                 <button key={c.id} className="sn-case" data-on={c.id === sel.id || undefined} onClick={() => setSelId(c.id)}>
                   <div className="sn-case-top">
                     <span className="mono sn-case-id">{c.id}</span>
-                    <span className={'sn-chip ' + (serious ? 'err' : 'idle')}>{serious ? 'Serious' : 'Non-serious'}</span>
+                    <span className={'sn-chip ' + (serious ? 'err' : 'idle')}>
+                      {serious ? 'Serious' : unrecorded ? 'Seriousness not recorded' : 'Non-serious'}
+                    </span>
                   </div>
                   <div className="sn-case-subj">{c.age}{c.sex === 'Female' ? 'F' : c.sex ? 'M' : ''} -- {c.event?.term}</div>
                   <div className="sn-case-meta">
@@ -304,11 +414,20 @@ export function SafetyNarrative({ onAsk, onNav }: SurfaceViewProps) {
                 <button className="bs-da" onClick={() => ask('Review this SAE narrative for ' + sel.id + (sel.event?.term ? ' (' + sel.event?.term + ')' : '') + ' and flag any medical-review or consistency issues before I file it.')}>
                   {I.sparkles} Review with AnA
                 </button>
-                {/* MOCK ACTION (flagged): no case-narrative version-write endpoint
-                    exists, so this button persists nothing. Copy softened so it does
-                    not claim a save that did not occur. */}
-                <button className="bs-da alt" onClick={() => fire('Narrative versioning isn’t wired to the safety store yet — nothing was saved', 'error')}>
-                  {I.check} Save version
+                <input
+                  className="sn-fi sn-save-reason"
+                  value={saveReason}
+                  onChange={(e) => setSaveReason(e.target.value)}
+                  placeholder="Reason for change (audited)"
+                  aria-label="Reason for change, required to save this narrative version"
+                />
+                <button
+                  className="bs-da alt"
+                  onClick={() => void saveVersion()}
+                  disabled={saving || saveReason.trim().length < 8}
+                  title={saveReason.trim().length < 8 ? 'Enter a reason for change to save' : 'Save the case and its narrative to the safety store'}
+                >
+                  {I.check} {saving ? 'Saving…' : 'Save version'}
                 </button>
               </div>
             </div>

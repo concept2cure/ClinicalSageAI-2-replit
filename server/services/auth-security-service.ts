@@ -11,11 +11,12 @@
  * @compliance NIST 800-63B — Authentication assurance levels
  */
 
+import { manifestSignatureHash } from './part11/signature-persistence';
 import * as speakeasy from 'speakeasy';
 import * as QRCode from 'qrcode';
 import * as crypto from 'crypto';
 import { db } from '../db';
-import { eq, and, sql } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import { users, electronicSignatures } from '../../shared/schema';
 import { createScopedLogger } from '../utils/logger';
 /* The §11.70 binding evaluator is shared with part11ComplianceService rather
@@ -474,23 +475,21 @@ export async function verifySignatureIntegrity(signatureId: number): Promise<{
 
     const sig = result[0];
 
-    // Recompute the signature hash and compare
-    const signaturePayload = JSON.stringify({
-      documentId: sig.documentId,
-      versionId: sig.versionId,
-      signerId: sig.signerId,
-      signerEmail: sig.signerEmail,
-      signatureType: sig.signatureType,
-      signatureMeaning: sig.signatureMeaning,
-      timestamp: sig.signedAt?.toISOString(),
-    });
+    /* ── §11.200 attribution hash — re-derived the way the WRITER derived it ─
+       This recomputed a hash over an identifier payload — document id, version
+       id, signer, type, meaning, timestamp — and compared it to
+       signature_hash. No writer has ever produced that hash. The one writer of
+       electronic_signatures (persistElectronicSignature) stores
+       sha256(JSON.stringify(signatureManifest)), so the comparison could not
+       succeed on any real row: this endpoint reported hashIntegrity: COMPROMISED
+       and valid: false for every genuine signature, and its tests passed
+       because their fixture fabricated rows in the identifier shape.
 
-    const expectedHash = crypto
-      .createHash('sha256')
-      .update(signaturePayload)
-      .digest('hex');
-
-    const hashValid = sig.signatureHash === expectedHash;
+       The manifest IS the attributed record, and the hash is over its bytes.
+       Calling the writer's own exported function is what keeps the two from
+       ever disagreeing again. */
+    const expectedHash = manifestSignatureHash(sig.signatureManifest);
+    const hashValid = typeof sig.signatureHash === 'string' && sig.signatureHash === expectedHash;
 
     /* ── §11.70 record binding — the check this endpoint used to skip ────────
        Everything above hashes IDENTIFIERS: document id, version id, signer,

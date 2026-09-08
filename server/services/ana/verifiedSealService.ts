@@ -34,6 +34,7 @@
  */
 
 import crypto from 'node:crypto';
+import { resolveSignerIdentity } from '../part11/resolve-signer-identity.js';
 
 import { getPool } from '../../db';
 import {
@@ -264,10 +265,30 @@ export async function sealVerifiedVersion(
     }
 
     // ── The SealedRecord, recorded as an append-only signature row ──
+    // §11.50 printed name — resolved from the membership record on THIS
+    // transaction, not taken from the caller. `manifestation.printedName` is
+    // whatever the client sent, and `input.signerEmail ?? ''` used to put an
+    // empty string into a NOT NULL column that an inspector reads as the
+    // signer's own identification. The signature hash below covers the printed
+    // name, so hashing a caller-supplied one means the hash attests to a claim
+    // the server never verified.
+    const signer = await resolveSignerIdentity(
+      client,
+      input.userId,
+      input.organizationId,
+      'verified_seal',
+    );
+    // A client-declared name that disagrees with the record is preserved in the
+    // manifest rather than erased — a discrepancy an inspector can see beats one
+    // silently overwritten — but the resolved name is what the row asserts.
+    const declaredPrintedName =
+      manifestation.printedName && manifestation.printedName !== signer.name
+        ? manifestation.printedName
+        : null;
     const signatureId = `sig_${Date.now()}_${crypto.randomBytes(4).toString('hex')}`;
     const signatureHash = crypto
       .createHash('sha256')
-      .update(`${signatureId}:${sealedRecord.contentHash}:${manifestation.printedName}:${sealedAt}`)
+      .update(`${signatureId}:${sealedRecord.contentHash}:${signer.name}:${sealedAt}`)
       .digest('hex');
     await client.query(
       `INSERT INTO concept2cure_signatures (
@@ -288,8 +309,8 @@ export async function sealVerifiedVersion(
         signaturePurpose,
         manifestation.reasonForChange,
         input.userId,
-        manifestation.printedName,
-        input.signerEmail ?? '',
+        signer.name,
+        signer.email,
         input.signerRole ?? null,
         'password' + (input.secondFactorVerified ? '+mfa' : ''),
         now,
@@ -298,7 +319,8 @@ export async function sealVerifiedVersion(
         JSON.stringify({
           part: '21 CFR Part 11 §11.50',
           meaning: manifestation.meaning,
-          printedName: manifestation.printedName,
+          printedName: signer.name,
+          declaredPrintedName,
           dateTimeUtc: sealedAt,
           reasonForChange: manifestation.reasonForChange,
           sealedRecord,
@@ -328,8 +350,8 @@ export async function sealVerifiedVersion(
         versionId,
         input.organizationId,
         input.userId,
-        manifestation.printedName,
-        input.signerEmail ?? null,
+        signer.name,
+        signer.email,
         JSON.stringify({
           sealedAt,
           contentHash: sealedRecord.contentHash,

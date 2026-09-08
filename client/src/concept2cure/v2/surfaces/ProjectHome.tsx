@@ -1,9 +1,10 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { I } from '../icons';
 import { EmptyState, useLiveData, hasKeys, liveMutateOrNull, type DataState } from '../dataConnect';
 import type { SurfaceViewProps } from '../surfaceViews';
-import { getSegmentModules, getSurfaceMeta } from '../registryModel';
 import { usePublishSurfaceContext } from '../surfaceContext';
+import { notifySurfaceActionReady, useSurfaceActionHandlers } from '../surfaceActions';
+import { getSegmentModules, getSurfaceMeta } from '../registryModel';
 import {
   PJ_LIFECYCLE,
   PJ_STAGE_TOOLS,
@@ -63,6 +64,10 @@ interface ProgramRow {
   description: string | null;
   product_name: string | null;
   indication: string | null;
+  /** organizations.name — the sponsor of record in this data model. */
+  sponsor_name?: string | null;
+  /** Agency-assigned IND / NDA / BLA / MAA number; null until assigned, never invented. */
+  application_number?: string | null;
   intended_use: string | null;
   primary_agency: string | null;
   target_submission_date: string | null;
@@ -412,20 +417,9 @@ function DataRoom({
           if (e.key === 'Enter' || e.key === ' ') fileRef.current?.click();
         }}
         aria-label="Add sources to this project"
-        style={{
-          border: '1px dashed var(--border,#d0d5dd)',
-          borderRadius: 10,
-          padding: '14px 16px',
-          display: 'flex',
-          alignItems: 'center',
-          gap: 10,
-          cursor: 'pointer',
-          background: dragging ? 'var(--accent-muted,#eef2ff)' : 'transparent',
-          marginBottom: 12,
-        }}
       >
         <span aria-hidden="true">{I.paperclip}</span>
-        <span style={{ fontSize: 13 }}>
+        <span className="pj-dropzone-t">
           <b>Add sources</b> — drop files here or click to browse. They&rsquo;re read on upload and
           become available to AnA for this project.
         </span>
@@ -543,17 +537,7 @@ function DataRoom({
                 const use = usedIn(s);
                 const size = prettyBytes(s.fileSize);
                 return (
-                  <div
-                    key={s.id}
-                    className="pj-src"
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 10,
-                      padding: '8px 10px',
-                      borderBottom: '1px solid var(--border-subtle,#eaecf0)',
-                    }}
-                  >
+                  <div key={s.id} className="pj-src">
                     {/* Pin as context. Only a source whose text was actually
                         read can ground a draft, so an unreadable one cannot be
                         pinned — offering it would promise grounding the
@@ -735,6 +719,34 @@ const SCHED_STATUS_TONE: Record<string, string> = {
   at_risk: 'tone-warn',
   slipped: 'tone-warn',
   blocked: 'tone-warn',
+};
+
+/**
+ * The program-header status chip was hardcoded `tone-ok`, so a program whose
+ * recorded status was blocked, at_risk or on_hold wore a GREEN pill — a health
+ * verdict drawn without consulting the value it was tied to. A director scanning
+ * the top of the page for at-a-glance health read green-next-to-"blocked" as
+ * good news. `status` is a free-text column, so this maps the values that
+ * carry a verdict and defaults everything else to NEUTRAL: an unknown status
+ * must never read as healthy.
+ */
+const PROGRAM_STATUS_TONE: Record<string, string> = {
+  active: 'tone-ok',
+  on_track: 'tone-ok',
+  completed: 'tone-ok',
+  at_risk: 'tone-warn',
+  blocked: 'tone-warn',
+  slipped: 'tone-warn',
+  on_hold: 'tone-warn',
+  suspended: 'tone-warn',
+  cancelled: 'tone-warn',
+  inactive: 'tone-idle',
+  archived: 'tone-idle',
+};
+/** Same defect one chip over: "priority: low" wore a warn tone. */
+const PRIORITY_TONE: Record<string, string> = {
+  critical: 'tone-warn',
+  high: 'tone-warn',
 };
 
 function SchedulePanel({ pid, onAsk }: { pid: string | null; onAsk: (q: string) => void }) {
@@ -1059,9 +1071,19 @@ function ConversationComposer({
 
 /* ════ Author workspace — real anchored slices + honest empties ════ */
 
+/** One persisted AnA thread of this program (GET /api/chat/threads?program_id=). */
+interface ThreadRow {
+  id: string;
+  title: string | null;
+  created_at: string | null;
+  updated_at: string | null;
+  program_id?: string | null;
+}
+
 function AuthorWorkspace({
   seg,
   pid,
+  completion,
   onNav,
   onAsk,
   teamState,
@@ -1072,6 +1094,8 @@ function AuthorWorkspace({
   seg: string;
   /** regulatory_programs UUID — scopes the data room to this project. */
   pid: string | null;
+  /** Dossier readiness percent from the program row, or null when unknown. */
+  completion: number | null;
   onNav: (id: string) => void;
   onAsk: (q: string) => void;
   teamState: DataState<{ team: TeamRow[] }>;
@@ -1079,6 +1103,20 @@ function AuthorWorkspace({
   wsState: DataState<{ workstreams: WorkstreamRow[] }>;
   draftsState: DataState<{ drafts: DraftRow[] }>;
 }) {
+  /* The program's own AnA threads — REAL. Threads carry the program they were
+     started in (chat_threads.metadata.programId, written when the stream
+     mints the thread), so this lists exactly the conversations held on this
+     project, newest first, and opens one back into the thread surface. Until
+     that key existed this section was an honest empty with nothing behind it:
+     there was no way to resume a project chat from the project. */
+  const threadsState = useLiveData<{ threads: ThreadRow[] }>(
+    pid ? `/api/chat/threads?program_id=${encodeURIComponent(pid)}&limit=8` : null,
+    [pid]
+  );
+  const resumeThread = (id: string) => {
+    window.C2C_CONVO = { id };
+    onNav('conversation-thread');
+  };
   return (
     <div className="pj-grid">
       <div className="pj-main">
@@ -1119,15 +1157,42 @@ function AuthorWorkspace({
           ))}
         </section>
 
-        {/* Conversations — no reachable UUID-keyed backend on this surface */}
+        {/* Conversations — the program's persisted AnA threads, resumable */}
         <section className="pj-sec">
           <div className="pj-sec-h">
             <h2>Conversations</h2>
+            <span className="sec-sub">resume a thread held on this project</span>
           </div>
-          <EmptyState
-            icon={I.messageSquare}
-            title="No project conversations yet"
-            hint="Governed AnA threads for this project will appear here once started. Use the co-author composer above to open the full conversation thread."
+          <Anchored
+            state={threadsState}
+            loadingText="Loading conversations…"
+            errorTitle="Couldn't load conversations"
+            errorHint="The conversation store didn't respond. Sign in and retry, or check that the service is reachable."
+            emptyTitle="No project conversations yet"
+            emptyHint="Start one in the composer above — threads started here are kept on this project and listed for resuming."
+            isEmpty={d => (d.threads ?? []).length === 0}
+            render={d => (
+              <div className="pj-files" data-testid="pj-threads">
+                {(d.threads ?? []).map(t => (
+                  <button
+                    key={t.id}
+                    className="pj-file"
+                    style={{ width: '100%', textAlign: 'left' }}
+                    onClick={() => resumeThread(t.id)}
+                    title="Resume this conversation"
+                  >
+                    <div className="pj-file-n">
+                      {(t.title || 'Untitled conversation').slice(0, 120)}
+                    </div>
+                    <div className="pj-file-m">
+                      {[fmtWhen(t.updated_at || t.created_at), 'Resume']
+                        .filter(Boolean)
+                        .join(' · ')}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
           />
         </section>
 
@@ -1270,6 +1335,27 @@ function AuthorWorkspace({
       </div>
 
       <aside className="pj-side">
+        {/* Dossier readiness — a status figure, so it lives with the other
+            status cards in the aside rather than between the conversation and
+            the work (the constitution's no-KPI-hero rule for project landing). */}
+        {completion != null && (
+          <section className="pj-card">
+            <div className="pj-card-h">
+              <h3>Dossier readiness</h3>
+              <span className="sec-sub">{completion}% complete</span>
+            </div>
+            <div className="pj-map">
+              <div className="pj-map-ring">
+                <Ring value={completion} size={104} stroke={9} />
+                <div className="pj-map-ring-l">
+                  Dossier
+                  <br />
+                  readiness
+                </div>
+              </div>
+            </div>
+          </section>
+        )}
         {/* Memory / instructions / intelligence — served only by the numeric
             project-home read-model (project_intelligence_profiles), not reachable
             from this UUID-scoped surface. Honest empty, never a fabricated body. */}
@@ -1373,7 +1459,22 @@ export function ProjectHome({ onNav, onAsk, segment }: SurfaceViewProps) {
   // Selected-project identity handed off from the Projects surface. Its `id` is
   // the C2C regulatory_programs UUID, which keys the /api/c2c/projects/:id
   // read-models. 'new' (wizard transient) has no persisted record → no fetch.
-  const pid = sel?.id && sel.id !== 'new' ? sel.id : null;
+  //
+  // The `typeof === 'string'` test is the id-SPACE guard this file's header
+  // asks for, and it only became expressible once the global stopped being
+  // declared here as `Record<string, string>` and started carrying its owner's
+  // real `ShellProject` type — whose `id` is `string | number`.
+  //
+  // A NUMBER here is a `projects.id`, not a `regulatory_programs` UUID: a
+  // different id-space, and one this surface's read-models are not keyed on.
+  // Coercing it with `String(...)` would compile and then fetch
+  // /api/c2c/projects/42 — a well-formed request for a DIFFERENT project in the
+  // same organization, returning a real, plausible, wrong program with no error
+  // anywhere. That is the mirror of the hazard the header already warns about
+  // ("parseInt of a UUID would load a different project in the same org"), and
+  // it is why this resolves to null instead: no project is a state the surface
+  // renders honestly, whereas the wrong project is not.
+  const pid = typeof sel?.id === 'string' && sel.id !== 'new' ? sel.id : null;
 
   // REAL, org-scoped, UUID-keyed reads (server/routes/c2c/projects.ts).
   const progState = useLiveData<ProgramRow>(pid ? `/api/c2c/projects/${pid}` : null);
@@ -1402,6 +1503,23 @@ export function ProjectHome({ onNav, onAsk, segment }: SurfaceViewProps) {
   const submissionType = sel?.code || prog?.code || prog?.program_type || null;
   const region = prog?.primary_agency ?? null;
   const indication = prog?.indication ?? null;
+  // Program identity facts (WO-9 Click 1). Read from the row only — never from
+  // the navigation handoff, never derived from the title — so what the screen
+  // says is what the database holds. Absence is stated, never filled in.
+  const sponsorName = prog?.sponsor_name ?? null;
+  const applicationNumber = prog?.application_number ?? null;
+  const applicationNumberLabel = (() => {
+    const t = (prog?.program_type ?? '').toUpperCase();
+    return t === 'IND'
+      ? 'IND number'
+      : t === 'NDA'
+      ? 'NDA number'
+      : t === 'BLA'
+      ? 'BLA number'
+      : t === 'MAA'
+      ? 'MAA number'
+      : 'Application number';
+  })();
   const status = sel?.status || prog?.status || null;
   const priority = prog?.priority ?? null;
   const phase = prog?.phase ?? null;
@@ -1414,25 +1532,183 @@ export function ProjectHome({ onNav, onAsk, segment }: SurfaceViewProps) {
 
   const noProject = !pid;
 
-  usePublishSurfaceContext('project-home', {
-    summary: noProject ? 'Project home with no project selected' : `Project home for ${title}`,
-    facts: noProject
-      ? {}
-      : {
-          projectId: pid,
-          projectTitle: title,
-          productName,
-          submissionType,
-          region,
+  /* What AnA can see of this screen.
+     Project home is where "what should I do next?" is most likely to be asked
+     and least answerable from a screen name — the whole page is one programme's
+     state. Five reads back it, each able to fail alone, so each publishes its
+     own state rather than one merged verdict.
+
+     NO PROJECT SELECTED is published as itself. Every panel below is empty in
+     that case, and reporting that as "this programme has no team, no drafts and
+     no activity" would describe a customer's programme from a missing handoff. */
+  const anaContext = useMemo(() => {
+    if (noProject) {
+      return {
+        summary:
+          'Project home has no project selected, so none of the panels on screen are populated. This is a ' +
+          'missing selection, not an empty programme.',
+        availableActions: ['Open a project from All projects to load its governed workspace'],
+      };
+    }
+    if (progState.error) {
+      return {
+        summary:
+          'This project record could not be read, so the workspace below is empty because of a failure, ' +
+          'not because the programme has nothing in it.',
+        facts: { projectId: pid, stage },
+        availableActions: ['Return to All projects and try again'],
+      };
+    }
+    if (progState.loading) {
+      return {
+        summary: 'The project record is still loading; nothing on screen is final yet.',
+        facts: { projectId: pid, stage },
+      };
+    }
+    const team = teamState.data?.team;
+    const activity = activityState.data?.activity;
+    const workstreams = wsState.data?.workstreams;
+    const drafts = draftsState.data?.drafts;
+    return {
+      summary:
+        `Project home for "${title}"${submissionType ? ` (${submissionType})` : ''}: ` +
+        [
+          status && `status ${status}`,
+          phase && `phase ${phase}`,
+          priority && `priority ${priority}`,
+          region && `primary agency ${region}`,
+          indication && `indication ${indication}`,
+          completion != null && `${completion}% complete`,
+        ]
+          .filter(Boolean)
+          .join(', ') +
+        `. The "${stage}" stage is open.`,
+      facts: {
+        projectId: pid,
+        openStage: stage,
+        program: {
+          title,
+          product: productName,
+          code: submissionType,
+          description: desc,
+          clientType,
+          primaryAgency: region,
+          indication,
           status,
+          priority,
           phase,
-          completion,
-          activeStage: stage,
+          progressPercent: completion,
+          targetSubmissionDate: prog?.target_submission_date ?? null,
         },
-    availableActions: noProject
-      ? ['Open all projects']
-      : ['Ask AnA about this project', 'Open document workspace', 'Open submission center'],
+        team:
+          teamState.loading || teamState.error || !Array.isArray(team)
+            ? null
+            : team.slice(0, 12).map(t => ({ name: t.name, role: t.role })),
+        teamUnavailable: teamState.error ? 'the team read failed' : null,
+        workstreams:
+          wsState.loading || wsState.error || !Array.isArray(workstreams)
+            ? null
+            : workstreams.map(w => ({
+                module: w.module,
+                total: w.total,
+                todo: w.todo,
+                completionPercent: w.completion_pct,
+                lastUpdated: w.last_updated,
+              })),
+        workstreamsUnavailable: wsState.error ? 'the workstream rollup read failed' : null,
+        recentDrafts:
+          draftsState.loading || draftsState.error || !Array.isArray(drafts)
+            ? null
+            : drafts.slice(0, 10).map(d => ({
+                id: d.id,
+                section: d.section_key,
+                label: d.label,
+                status: d.status,
+                version: d.version,
+                documentTitle: d.document_title,
+                docType: d.doc_type,
+                updated: d.updated_at,
+              })),
+        draftsUnavailable: draftsState.error ? 'the drafts read failed' : null,
+        recentActivity:
+          activityState.loading || activityState.error || !Array.isArray(activity)
+            ? null
+            : activity.slice(0, 10).map(a => ({
+                action: a.action,
+                resourceType: a.resource_type,
+                occurredAt: a.occurred_at,
+              })),
+        activityUnavailable: activityState.error ? 'the activity read failed' : null,
+      },
+      availableActions: [
+        'Move through the programme lifecycle stages',
+        'Open a recent draft section in the document editor',
+        'Open this project’s documents in the Vault surface, or its filings in the Submission Center',
+        'Read the per-module completion rollup and the recent audited activity',
+      ],
+    };
+  }, [
+    noProject,
+    pid,
+    stage,
+    progState.loading,
+    progState.error,
+    prog,
+    title,
+    productName,
+    desc,
+    clientType,
+    submissionType,
+    region,
+    indication,
+    status,
+    priority,
+    phase,
+    completion,
+    teamState.loading,
+    teamState.error,
+    teamState.data,
+    activityState.loading,
+    activityState.error,
+    activityState.data,
+    wsState.loading,
+    wsState.error,
+    wsState.data,
+    draftsState.loading,
+    draftsState.error,
+    draftsState.data,
+  ]);
+  usePublishSurfaceContext('project-home', anaContext);
+
+  /* AnA's hands on this screen — the surface-action bus (shared registry:
+     project-home.*, identity-resolved). The one action drives the SAME state
+     the StageTracker's own buttons drive (setStage). Stage is pure view state:
+     it selects which panels render over whatever the five reads deliver, so —
+     same reasoning as vault.search — applying it mid-load is correct, not
+     early, and there is no loading refusal and no retry.
+
+     Known gap, not expressible today: leaving the 'author' stage unmounts its
+     composer, whose in-progress draft is child-local state this handler cannot
+     see — a mid-message guard would need that state lifted out of the child.
+     The registry entry's description already warns AnA not to switch away from
+     author uninvited. */
+  useSurfaceActionHandlers('project-home', {
+    'project-home.set-stage': params => {
+      if (noProject)
+        return { ok: false, reason: 'No project is selected — open one from All projects.' };
+      const target = (params.stage ?? '').trim();
+      const meta = PJ_LIFECYCLE.find(s => s.id === target);
+      if (!meta) return { ok: false, reason: `No lifecycle stage named "${params.stage}".` };
+      setStage(meta.id);
+      return { ok: true, detail: `Opened the ${meta.id} stage` };
+    },
   });
+  /* Ready signal — harmless even though set-stage never answers retry: a
+     directive stashed across the navigate→mount gap is re-attempted by the
+     registration itself, and this keeps the surface on the uniform contract. */
+  useEffect(() => {
+    if (!progState.loading) notifySurfaceActionReady('project-home');
+  }, [progState.loading]);
 
   return (
     <div className="page-inner pj">
@@ -1451,7 +1727,7 @@ export function ProjectHome({ onNav, onAsk, segment }: SurfaceViewProps) {
         <div className="pj-top-l">
           <h1 className="pj-title">{title}</h1>
           {progState.loading && (
-            <div className="pj-desc" style={{ color: 'var(--text-400)' }}>
+            <div role="status" className="pj-desc" style={{ color: 'var(--text-400)' }}>
               Loading project…
             </div>
           )}
@@ -1461,16 +1737,55 @@ export function ProjectHome({ onNav, onAsk, segment }: SurfaceViewProps) {
             {submissionType && <span className="rd-chip tone-idle">{submissionType}</span>}
             {region && <span className="rd-chip tone-idle">{region}</span>}
             {indication && <span className="rd-chip tone-idle">{indication}</span>}
-            {status && <span className="rd-chip tone-ok">{status}</span>}
-            {priority && <span className="rd-chip tone-warn">priority: {priority}</span>}
+            {status && (
+              <span className={`rd-chip ${PROGRAM_STATUS_TONE[status] ?? 'tone-idle'}`}>
+                {status}
+              </span>
+            )}
+            {priority && (
+              <span className={`rd-chip ${PRIORITY_TONE[priority] ?? 'tone-idle'}`}>
+                priority: {priority}
+              </span>
+            )}
             {phase && <span className="rd-chip tone-idle">{phase}</span>}
           </div>
+          {prog && (
+            <section className="pj-facts" aria-label="Program identity">
+              <dl className="pj-fact">
+                <dt>Sponsor</dt>
+                <dd>{sponsorName ?? <span className="pj-fact-none">not recorded</span>}</dd>
+              </dl>
+              <dl className="pj-fact">
+                <dt>Product</dt>
+                <dd>{prog.product_name ?? <span className="pj-fact-none">not recorded</span>}</dd>
+              </dl>
+              <dl className="pj-fact">
+                <dt>Indication</dt>
+                <dd>{indication ?? <span className="pj-fact-none">not recorded</span>}</dd>
+              </dl>
+              <dl className="pj-fact">
+                <dt>{applicationNumberLabel}</dt>
+                <dd>{applicationNumber ?? <span className="pj-fact-none">not assigned</span>}</dd>
+              </dl>
+            </section>
+          )}
         </div>
-        <div className="pj-top-actions">
-          <button className="pj-icon" title="Project settings" onClick={() => onNav('projects')}>
-            {I.more}
-          </button>
-        </div>
+        {/* ── The ⋯ button called "Project settings" is gone ─────────────────
+            Its handler was `onNav('projects')`: it did not open settings, it
+            threw the user out of the project workspace they were in and back
+            to the all-projects list — the exact opposite of what its tooltip
+            promised, and a duplicate of the "All projects" control two rows
+            above it.
+
+            It is removed rather than relabelled or rewired because there is
+            nothing behind it: `shared/constants/ui-surface-registry.ts` has no
+            project-settings surface, and `server/routes/c2c/projects.ts`
+            exposes no PATCH/PUT for a regulatory program at all (only POST /,
+            POST /:id/evidence and DELETE /:id/evidence/:evId). A project's
+            settings cannot be edited anywhere in the product today, so any
+            destination this button reached would be a second lie in place of
+            the first. When a settings surface and its governed write exist,
+            this is where the control belongs. */}
       </div>
 
       <StageTracker stage={stage} setStage={setStage} />
@@ -1589,28 +1904,10 @@ export function ProjectHome({ onNav, onAsk, segment }: SurfaceViewProps) {
             <>
               <ConversationComposer productName={productName} onNav={onNav} />
 
-              {completion != null && (
-                <section className="pj-sec">
-                  <div className="pj-sec-h">
-                    <h2>Dossier readiness</h2>
-                    <span className="sec-sub">{completion}% complete</span>
-                  </div>
-                  <div className="pj-map">
-                    <div className="pj-map-ring">
-                      <Ring value={completion} size={104} stroke={9} />
-                      <div className="pj-map-ring-l">
-                        Dossier
-                        <br />
-                        readiness
-                      </div>
-                    </div>
-                  </div>
-                </section>
-              )}
-
               <AuthorWorkspace
                 seg={seg}
                 pid={pid}
+                completion={completion}
                 onNav={onNav}
                 onAsk={ask}
                 teamState={teamState}

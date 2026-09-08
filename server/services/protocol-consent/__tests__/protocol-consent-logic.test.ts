@@ -75,11 +75,36 @@ describe('evaluateConsentCompleteness', () => {
     expect(r.findings.some((f) => f.severity === 'warning')).toBe(true);
   });
 
-  it('reports 100% for an empty element list (vacuously complete)', () => {
+  /* This test read "reports 100% for an empty element list (vacuously
+     complete)", and it was the defect written down. readyToApprove is the gate
+     approveConsentFormTx enforces, so a consent form with no element rows --
+     created but never populated, or whose elements failed to load -- scored
+     100%, had an empty missingRequired list, passed the gate, and was set to
+     approved. An informed-consent form with no elements at all, through
+     45 CFR 46.116. */
+  it('an empty element list is not a complete form and does not pass the gate', () => {
     const r = evaluateConsentCompleteness([]);
-    expect(r.requiredPresentPct).toBe(100);
-    expect(r.readyToApprove).toBe(true);
+    expect(r.requiredPresentPct).toBeNull();
+    expect(r.readyToApprove).toBe(false);
     expect(r.requiredTotal).toBe(0);
+  });
+
+  /* The refusal message approveConsentFormTx throws is built by joining the
+     CRITICAL findings. With none it would have read "Cannot approve — " and
+     stopped, so the empty case has to produce one. */
+  it('the empty case states why, so the refusal carries a sentence', () => {
+    const critical = evaluateConsentCompleteness([]).findings.filter((f) => f.severity === 'critical');
+    expect(critical).toHaveLength(1);
+    expect(critical[0].message).toMatch(/no required elements recorded/i);
+    expect(critical[0].message).toMatch(/46\.116/);
+  });
+
+  /* A form that HAS required elements, all satisfied, still approves. The new
+     state must not swallow a real assessment. */
+  it('a form whose required elements are all satisfied still passes the gate', () => {
+    const r = evaluateConsentCompleteness(complete());
+    expect(r.readyToApprove).toBe(true);
+    expect(r.requiredPresentPct).toBe(100);
   });
 
   it('rounds partial completion percent across required elements', () => {

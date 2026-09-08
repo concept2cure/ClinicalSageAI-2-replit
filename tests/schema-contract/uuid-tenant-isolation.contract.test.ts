@@ -129,7 +129,7 @@ describe('C-46: policies the tenant-owned tables, exempts the cross-tenant ones'
   });
 });
 
-describe('C-46: the COALESCE policy is non-breaking yet isolating', () => {
+describe('C-46: the non-public tenant policy is non-breaking yet isolating', () => {
   let pg: PGlite;
 
   beforeAll(async () => {
@@ -149,20 +149,41 @@ describe('C-46: the COALESCE policy is non-breaking yet isolating', () => {
     await pg.close();
   });
 
-  const namesUnder = async (setOrg: string | null): Promise<string[]> => {
+  /**
+   * `enforce` is not incidental: the policy was hardened from a COALESCE
+   * (which silently widened to "all rows" whenever the org GUC was unset) to
+   * an explicit `app.rls_enforce = 'on'` kill-switch, matching the shape the
+   * public tenant_isolation_policy already used. Isolation is therefore a
+   * property of an ENFORCING session, and these tests must say which session
+   * they are describing rather than leaving the switch unset and reading
+   * whatever falls out.
+   */
+  const namesUnder = async (
+    setOrg: string | null,
+    { enforce }: { enforce: boolean },
+  ): Promise<string[]> => {
     await pg.exec(setOrg ? `SET app.current_org_id = '${setOrg}';` : `RESET app.current_org_id;`);
+    await pg.exec(enforce ? `SET app.rls_enforce = 'on';` : `RESET app.rls_enforce;`);
     await pg.exec(`SET ROLE uuid_reader;`);
     const { rows } = await pg.query<{ name: string }>(`SELECT name FROM core.programs ORDER BY name`);
     await pg.exec(`RESET ROLE;`);
     return rows.map((r) => r.name);
   };
 
-  it('context-LESS read (no app.current_org_id) sees ALL rows — the service on the raw pool is not broken', async () => {
-    expect(await namesUnder(null)).toEqual(['A-prog', 'B-prog', 'shared-prog']);
+  it('with enforcement OFF the policy is a no-op — the service on the raw pool is not broken', async () => {
+    expect(await namesUnder(null, { enforce: false })).toEqual(['A-prog', 'B-prog', 'shared-prog']);
+    expect(await namesUnder(ORG_A, { enforce: false })).toEqual(['A-prog', 'B-prog', 'shared-prog']);
   });
 
-  it('a SCOPED read sees only its own org plus shared NULL-org rows', async () => {
-    expect(await namesUnder(ORG_A)).toEqual(['A-prog', 'shared-prog']);
-    expect(await namesUnder(ORG_B)).toEqual(['B-prog', 'shared-prog']);
+  it('with enforcement ON a SCOPED read sees only its own org plus shared NULL-org rows', async () => {
+    expect(await namesUnder(ORG_A, { enforce: true })).toEqual(['A-prog', 'shared-prog']);
+    expect(await namesUnder(ORG_B, { enforce: true })).toEqual(['B-prog', 'shared-prog']);
+  });
+
+  it('with enforcement ON an UNSCOPED session sees no tenant rows at all (fail closed)', async () => {
+    // The defect the hardening closed: under COALESCE, a session that simply
+    // never set the org GUC read every tenant's rows. Now it reads none of
+    // them — only the org-less shared rows survive.
+    expect(await namesUnder(null, { enforce: true })).toEqual(['shared-prog']);
   });
 });

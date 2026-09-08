@@ -19,14 +19,14 @@
 import { pool } from '../../db.js';
 import { getGateway } from '../ai-gateway/gateway.js';
 
-export interface TextChunk {
+export interface ContextualTextChunk {
   ordinal: number;
   text: string;
   start: number;
   end: number;
 }
 
-export interface ChunkOptions {
+export interface ContextualChunkOptions {
   size?: number;
   overlap?: number;
   maxChunks?: number;
@@ -37,14 +37,14 @@ const MAX_EXCERPT_CHARS = 4000;
 const MAX_ATOM_CHARS = 16000;
 
 /** Split text into overlapping character chunks. Pure and unit-testable. */
-export function chunkText(text: string, opts: ChunkOptions = {}): TextChunk[] {
+export function chunkText(text: string, opts: ContextualChunkOptions = {}): ContextualTextChunk[] {
   const size = opts.size ?? CHUNK_DEFAULTS.size;
   const overlap = opts.overlap ?? CHUNK_DEFAULTS.overlap;
   const maxChunks = opts.maxChunks ?? CHUNK_DEFAULTS.maxChunks;
   const clean = (text || '').trim();
   if (!clean || size <= 0) return [];
   const step = Math.max(1, size - Math.max(0, overlap));
-  const chunks: TextChunk[] = [];
+  const chunks: ContextualTextChunk[] = [];
   let start = 0;
   let ordinal = 0;
   while (start < clean.length && chunks.length < maxChunks) {
@@ -120,7 +120,7 @@ type ContextGenerator = (docTitle: string, fullText: string, chunk: string) => P
 export async function contextualizeDocument(
   docTitle: string,
   fullText: string,
-  opts: ChunkOptions = {},
+  opts: ContextualChunkOptions = {},
   genContext: ContextGenerator = generateChunkContext,
   batchSize = 4
 ): Promise<ContextualChunk[]> {

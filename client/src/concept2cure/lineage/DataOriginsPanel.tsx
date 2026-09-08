@@ -34,12 +34,12 @@ import {
   type SelectionQuery,
 } from './dataOriginsApi';
 
-const INK = 'var(--c2c-ink, #111827)';
-const MUTED = 'var(--c2c-muted, #6b7280)';
-const RULE = 'var(--c2c-rule, rgba(127,127,127,0.22))';
+const INK = 'var(--text-100)';
+const MUTED = 'var(--text-400)';
+const RULE = 'var(--border)';
 const OK = '#047857';
 const WARN = '#b45309';
-const PANEL_BG = 'var(--c2c-surface, rgba(127,127,127,0.06))';
+const PANEL_BG = 'var(--bg-000)';
 
 const USAGE_LABEL: Record<string, string> = {
   quoted: 'Quoted verbatim',
@@ -99,8 +99,29 @@ function OriginCard({
   onNavigateToSource?: (sourceId: string) => void;
 }) {
   const isAuthor = row.provenanceKind === 'author_assertion';
-  const note = row.state ? STATE_NOTE[row.state] : undefined;
-  const canNavigate = !isAuthor && !!row.referenceId && !!onNavigateToSource;
+  /* Drafted by a machine author, accepted by a human. Neither a source (there
+     is nothing to navigate to) nor the author's own assertion — saying
+     "Asserted by the author" here is the falsehood this kind exists to remove. */
+  const isMachine = row.provenanceKind === 'accepted_machine_draft';
+  /* Drafted by a machine author and accepted by NOBODY. The most important
+     thing this panel can say about a passage, so it is said on the row: in the
+     heading, in the byline, in the dot colour, and in a note of its own. */
+  const isUnaccepted = row.provenanceKind === 'machine_draft';
+  const note = isUnaccepted
+    ? { text: 'No person has accepted this text', color: WARN }
+    : row.state
+      ? STATE_NOTE[row.state]
+      : undefined;
+  const canNavigate =
+    !isAuthor && !isMachine && !isUnaccepted && !!row.referenceId && !!onNavigateToSource;
+  const usageText =
+    row.usage !== 'asserted'
+      ? (USAGE_LABEL[row.usage] ?? row.usage)
+      : isMachine
+        ? 'Drafted by the AI, accepted by the author'
+        : isUnaccepted
+          ? 'Drafted by the AI — no person has accepted it'
+          : (USAGE_LABEL[row.usage] ?? row.usage);
 
   return (
     <li
@@ -117,7 +138,7 @@ function OriginCard({
             width: 8,
             height: 8,
             borderRadius: 2,
-            background: isAuthor ? MUTED : OK,
+            background: isUnaccepted ? WARN : isAuthor || isMachine ? MUTED : OK,
             flex: '0 0 auto',
           }}
         />
@@ -143,17 +164,25 @@ function OriginCard({
           <span style={{ fontWeight: 600, color: INK }}>
             {isAuthor
               ? 'Author assertion'
-              : row.sourceTitle || `Source #${row.referenceId ?? '—'}`}
+              : isMachine
+                ? (row.machineAuthorName ?? `AI draft (${row.machineAuthorId ?? 'machine author'})`)
+                : isUnaccepted
+                ? `${row.machineAuthorName ?? row.machineAuthorId ?? 'AI draft'} — not yet accepted`
+                : row.sourceTitle || `Source #${row.referenceId ?? '—'}`}
           </span>
         )}
       </div>
 
       <div style={{ marginTop: 4, fontSize: 12, color: MUTED }}>
-        {USAGE_LABEL[row.usage] ?? row.usage}
+        {usageText}
         {' · '}
         characters {row.charStart}–{row.charEnd}
         {row.sourceLocator ? ` · ${row.sourceLocator}` : ''}
-        {row.assertedBy ? ` · by ${row.assertedBy}` : ''}
+        {row.assertedBy
+          ? ` · ${isMachine ? 'accepted by' : 'by'} ${row.assertedBy}`
+          : isUnaccepted
+            ? ' · accepted by nobody'
+            : ''}
         {row.confidence != null ? ` · confidence ${Math.round(row.confidence * 100)}%` : ''}
       </div>
 

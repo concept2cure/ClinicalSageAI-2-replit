@@ -37,7 +37,7 @@ describe('stage3 auth/db contract smoke', () => {
     expect(typeof authTs.requireOrgAccess).toBe('function');
   });
 
-  it('preserves compatibility export aliases in auth.js and authAdapter.ts', () => {
+  it('keeps auth.js a pure re-export shim of auth.ts (M-5), and authAdapter.ts intact', () => {
     const repoRoot = path.resolve(__dirname, '../../..');
     const authJsContent = fs.readFileSync(path.join(repoRoot, 'server/middleware/auth.js'), 'utf8');
     const authAdapterContent = fs.readFileSync(
@@ -45,10 +45,29 @@ describe('stage3 auth/db contract smoke', () => {
       'utf8'
     );
 
-    expect(authJsContent).toContain('const verifyJwt = authenticateJWT;');
-    expect(authJsContent).toContain('const hasPermission = (req, requiredPermission)');
-    expect(authJsContent).toContain('verifyJwt,');
-    expect(authJsContent).toContain('hasPermission,');
+    // The shim must re-export the canonical module and carry NO implementation
+    // of its own — the moment auth.js defines a function or imports a verifier,
+    // the resolver-dependent shadow pair (ledger M-5) is back.
+    expect(authJsContent).toContain("} from './auth.ts';");
+    expect(authJsContent).not.toMatch(/^\s*(export\s+)?(default\s+)?(async\s+)?(const|function|class|let|var)\s/m);
+    expect(authJsContent).not.toContain('jsonwebtoken');
+    expect(authJsContent).not.toContain('verifyJwtWithRotation');
+    // The compatibility names route importers actually use stay exported.
+    for (const name of [
+      'authenticateToken',
+      'authenticateJWT',
+      'authenticate',
+      'requireAuth',
+      'requireRole',
+      'requireOrgAccess',
+      'requireSameOrganization',
+      'requirePermission',
+      'optionalAuth',
+      'invalidateOrgMembershipCache',
+      'PLATFORM_SCOPED_ROLES',
+    ]) {
+      expect(authJsContent, `auth.js shim must keep exporting ${name}`).toContain(name);
+    }
     expect(authAdapterContent).toContain('const authModule = require(\'./auth\');');
     expect(authAdapterContent).toContain('export const authenticate =');
     expect(authAdapterContent).toContain('export const requireRole =');

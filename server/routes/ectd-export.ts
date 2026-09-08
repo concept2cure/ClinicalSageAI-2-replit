@@ -23,7 +23,7 @@
  */
 
 import { Router, Request, Response } from 'express';
-import { randomUUID } from 'crypto';
+import { createHash, randomUUID } from 'crypto';
 import { z } from 'zod';
 import { assembleSubmissionEctd } from '../services/ectd/assemble-from-core';
 import { validateEctdPackage } from '../services/submission-gateways/ectd-structural-validator';
@@ -35,7 +35,15 @@ import {
   type ValidationResult as LeafValidationResult,
 } from '../services/ectd/ectd4-validator';
 import { registerExportGovernanceQuick } from '../services/compute/exportGovernance';
+import {
+  applyExportGovernanceHeaders,
+  evaluateExportGovernance,
+} from '../services/export/exportReviewGate';
 import auditService from '../services/auditService';
+import {
+  resolveSignedPackageForExport,
+  refusalHttpStatus,
+} from '../services/ectd/signed-package-export';
 import { createScopedLogger } from '../utils/logger.js';
 
 const log = createScopedLogger('ectd-export');
@@ -181,27 +189,33 @@ async function auditEctdAccess(
     | 'ectd_export_generated'
     | 'ectd_export_previewed'
     | 'ectd_export_validated'
-    | 'ectd_export_preflight_validated',
+    | 'ectd_export_preflight_validated'
+    // Signed-package seam: resolving the record a run's signature binds is
+    // itself regulated-content access, and a REFUSAL is the more important
+    // audit row of the two — a digest-drift or seal-failure refusal is the
+    // tamper-evidence signal an inspector would look for.
+    | 'ectd_signed_package_resolved'
+    | 'ectd_signed_package_refused',
   details: Record<string, unknown> = {},
   // Allow preflight to use a distinct resourceType so dashboards can group
   // by resourceType without colliding with real submissions.
-  resourceType: 'ectd_submission' | 'ectd_preflight' = 'ectd_submission',
+  resourceType: 'ectd_submission' | 'ectd_preflight' | 'ectd_signed_package' = 'ectd_submission',
 ): Promise<void> {
-  try {
-    const user = (req as any).user;
-    await auditService.logAction({
-      tenantId: organizationId,
-      userId: user?.id ?? user?.userId,
-      action,
-      resourceType,
-      resourceId: String(submissionId),
-      ipAddress: req.ip,
-      userAgent: req.headers['user-agent'] as string | undefined,
-      details,
-    });
-  } catch (err) {
+  const user = (req as any).user;
+
+  const ectdAudit = await auditService.logAction({
+    tenantId: organizationId,
+    userId: user?.id ?? user?.userId,
+    action,
+    resourceType,
+    resourceId: String(submissionId),
+    ipAddress: req.ip,
+    userAgent: req.headers['user-agent'] as string | undefined,
+    details,
+  });
+  if (!ectdAudit.persisted) {
     log.warn('eCTD audit write failed (non-fatal)', {
-      err: err instanceof Error ? err.message : String(err),
+      err: ectdAudit.error ?? 'no durable store accepted the row',
       action,
       submissionId,
     });
@@ -209,6 +223,112 @@ async function auditEctdAccess(
 }
 
 const router = Router();
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Signed-package seam — GET /api/ectd/export/by-run/:runId/signed
+//
+// Closes the orchestrator → export gap. The canonical POST /:submissionId path
+// assembles from the submissions spine; it does not know whether an
+// orchestrator run signed a DIFFERENT package for that submission. This route
+// answers the narrower, verifiable question: "what record does run R's
+// signature actually bind, and does that record still verify?"
+//
+// It returns the signed leaf MANIFEST + backbone, not ZIP bytes — the snapshot
+// stores checksums, not payloads (see signed-package-export.ts). A byte-level
+// transmit hop must re-render and check each leaf via verifyLeafBytes() before
+// shipping. Registered ahead of POST /:submissionId; no collision (two path
+// segments vs one), but ordering makes the intent explicit.
+// ─────────────────────────────────────────────────────────────────────────────
+
+router.get('/by-run/:runId/signed', async (req: Request, res: Response) => {
+  const organizationId = requireTenant(req, res);
+  if (organizationId == null) return;
+
+  const runId = String(req.params.runId || '').trim();
+  if (!runId) {
+    return res.status(400).json({ error: 'runId is required' });
+  }
+
+  let result;
+  try {
+    result = await resolveSignedPackageForExport({ runId, organizationId });
+  } catch (err) {
+    log.error('signed-package resolution threw', {
+      err: err instanceof Error ? err.message : String(err),
+      runId,
+      organizationId,
+    });
+    return res.status(500).json({ error: 'signed_package_resolution_failed' });
+  }
+
+  if (!result.ok) {
+    // Audit the refusal. Integrity refusals (seal-failed / digest-drift) are
+    // the rows that matter most here — log them at warn so they surface in
+    // alerting, not just in the audit table.
+    const isIntegrityFailure = result.refusal === 'seal-failed' || result.refusal === 'digest-drift';
+    if (isIntegrityFailure) {
+      log.warn('signed-package integrity refusal', {
+        runId,
+        organizationId,
+        refusal: result.refusal,
+        detail: result.detail,
+      });
+    }
+    await auditEctdAccess(
+      req,
+      organizationId,
+      runId,
+      'ectd_signed_package_refused',
+      { runId, refusal: result.refusal, detail: result.detail, integrityFailure: isIntegrityFailure },
+      'ectd_signed_package',
+    );
+    return res.status(refusalHttpStatus(result.refusal)).json({
+      error: result.refusal,
+      message: result.detail,
+      runId,
+    });
+  }
+
+  const d = result.descriptor;
+  await auditEctdAccess(
+    req,
+    organizationId,
+    runId,
+    'ectd_signed_package_resolved',
+    {
+      runId,
+      submissionId: d.submissionId,
+      applicationNumber: d.applicationNumber,
+      sequenceNumber: d.sequenceNumber,
+      payloadDigest: d.payloadDigest,
+      signatureId: d.signatureId,
+      sealVerdict: d.sealVerdict,
+      leafCount: d.leaves.length,
+    },
+    'ectd_signed_package',
+  );
+
+  return res.json({
+    runId: d.runId,
+    submissionId: d.submissionId,
+    applicationNumber: d.applicationNumber,
+    sequenceNumber: d.sequenceNumber,
+    region: d.region,
+    submissionType: d.submissionType,
+    totalSizeBytes: d.totalSizeBytes,
+    gatewayReady: d.gatewayReady,
+    hardenedScore: d.hardenedScore,
+    signature: {
+      payloadDigest: d.payloadDigest,
+      signatureId: d.signatureId,
+      sealVerdict: d.sealVerdict,
+    },
+    // The signed manifest. Checksums are the content fingerprint a transmit
+    // hop must re-verify rendered bytes against.
+    leaves: d.leaves,
+    backboneXml: d.backboneXml || null,
+  });
+});
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Leaf-level validator request schemas (Phase 1 ectd4-validator surface)
@@ -281,47 +401,30 @@ function buildLeafValidatorOptions(parsed: z.infer<typeof leafValidatorOptionsSc
   return out;
 }
 
-const exportGovernanceSchema = z.object({
-  aiGenerated: z.boolean().default(true),
-  humanReviewApproved: z.boolean().default(false),
-  reviewerName: z.string().trim().min(1).max(200).optional(),
-  reviewerRole: z.string().trim().min(1).max(200).optional(),
-  reviewTimestamp: z.string().datetime().optional(),
-});
-
-function shouldEnforceExportReviewGate(): boolean {
-  if (process.env.CONCEPT2CURE_REQUIRE_EXPORT_HUMAN_REVIEW === 'true') return true;
-  if (process.env.CONCEPT2CURE_REQUIRE_EXPORT_HUMAN_REVIEW === 'false') return false;
-  return process.env.NODE_ENV === 'production';
-}
-
+/**
+ * Thin adapter over the canonical export review gate
+ * (server/services/export/exportReviewGate.ts). All decision logic — schema,
+ * reviewer-attribution rule (INCOMPLETE_HUMAN_REVIEW), and the strict
+ * environment gate (HUMAN_REVIEW_REQUIRED) — lives there; this only renders a
+ * rejection into this router's flat `{ error, message?, details? }` bodies.
+ */
 function validateExportGovernance(req: Request, res: Response) {
-  const parsed = exportGovernanceSchema.safeParse(req.body?.governance ?? {});
-  if (!parsed.success) {
-    res.status(400).json({ error: 'Invalid governance payload', details: parsed.error.flatten() });
+  const evaluation = evaluateExportGovernance(req.body?.governance);
+  if (!evaluation.ok) {
+    if (evaluation.code === 'VALIDATION_ERROR') {
+      res.status(400).json({ error: 'Invalid governance payload', details: evaluation.details });
+    } else {
+      res.status(evaluation.status).json({
+        error: evaluation.code,
+        message: evaluation.message,
+        details: evaluation.details,
+      });
+    }
     return null;
   }
 
-  const governance = parsed.data;
-  if (shouldEnforceExportReviewGate() && !governance.humanReviewApproved) {
-    res.status(403).json({
-      error: 'HUMAN_REVIEW_REQUIRED',
-      message: 'Human review approval is required before export in this environment',
-    });
-    return null;
-  }
-
-  res.setHeader('X-Concept2Cure-AI-Generated', String(governance.aiGenerated));
-  res.setHeader('X-Concept2Cure-Human-Review-Approved', String(governance.humanReviewApproved));
-  res.setHeader('X-Concept2Cure-Review-Required', 'true');
-  if (governance.reviewerName) {
-    res.setHeader('X-Concept2Cure-Reviewer', encodeURIComponent(governance.reviewerName));
-  }
-  if (governance.reviewTimestamp) {
-    res.setHeader('X-Concept2Cure-Review-Timestamp', governance.reviewTimestamp);
-  }
-
-  return governance;
+  applyExportGovernanceHeaders(res, evaluation.governance);
+  return evaluation.governance;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -399,6 +502,25 @@ router.post('/:submissionId', async (req: Request, res: Response) => {
       validation = await validateEctdPackage(result.buffer);
     }
 
+    // Fail closed: a package that FAILED structural validation must not be
+    // returned as a downloadable attachment. Previously the only signal was the
+    // X-ECTD-Valid response header — invisible to a script or human that simply
+    // saves the 200 + zip and forwards it to a gateway. A caller that
+    // deliberately wants the bytes despite errors can opt out with
+    // validateAfter:false; the default (validateAfter:true) now blocks an
+    // invalid package instead of shipping it.
+    if (validation && !validation.valid) {
+      return res.status(422).json({
+        error: 'eCTD package failed structural validation and was not returned',
+        code: 'ECTD_PACKAGE_INVALID',
+        valid: false,
+        errorCount: validation.errors.length,
+        errors: validation.errors.slice(0, 50),
+        sequenceNumber: result.sequenceNumber,
+        region: result.region,
+      });
+    }
+
     console.log(
       `[eCTD Export] Package generated: ${result.filename} ` +
         `(${result.stats.totalFiles} files, ${result.stats.totalGranules} rendered leaves)` +
@@ -438,6 +560,18 @@ router.post('/:submissionId', async (req: Request, res: Response) => {
     if (user?.id == null) {
       return res.status(403).json({ error: 'Tenant context required for governed export' });
     }
+    /* The integrity hash must cover the PACKAGE, not the words describing it.
+       Without `exportHash`, registerExportGovernanceQuick falls back to
+       sha256(`${title}:${filename}:${size}`) — a digest over metadata, which
+       cannot answer the only question a governed export record exists to
+       answer: is this file the file that was exported. Two different packages
+       of the same byte-length under the same name hash identically, and the
+       delivered bytes are never covered at all.
+       `result.buffer` is exactly what `res.send` returns below, so hashing it
+       here binds the record to the artifact the agency receives. The same
+       defect was fixed on the DOCX route (20dc3980b); this is the eCTD package,
+       where it matters most. */
+    const packageSha256 = createHash('sha256').update(result.buffer).digest('hex');
     const governanceResult = await registerExportGovernanceQuick({
       organizationId,
       projectId: submissionId,
@@ -447,6 +581,7 @@ router.post('/:submissionId', async (req: Request, res: Response) => {
       exportFormat: 'zip',
       exportFilename: result.filename,
       exportFileSize: result.buffer.length,
+      exportHash: packageSha256,
       docType: 'ectd_package',
       backendRoute: `/api/ectd/export/${submissionId}`,
       ipAddress: req.ip,
@@ -463,6 +598,9 @@ router.post('/:submissionId', async (req: Request, res: Response) => {
     // generation is the §11.10(e) event we need to record.
     await auditEctdAccess(req, organizationId, submissionId, 'ectd_export_generated', {
       packageSizeBytes: result.buffer?.length,
+      // Same digest as the governance record above, so the §11.10(e) event and
+      // the export record identify one artifact rather than two descriptions.
+      packageSha256,
       region: result.region,
       sequenceNumber: result.sequenceNumber,
     });

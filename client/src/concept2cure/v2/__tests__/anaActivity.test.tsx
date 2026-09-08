@@ -17,7 +17,7 @@
  */
 
 import React from 'react';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { act, cleanup, render, screen, within } from '@testing-library/react';
 
 import { AnaActivity } from '../AnaActivity';
@@ -109,8 +109,13 @@ describe('AnaActivity — the work is visible while it happens', () => {
     // are CSS combinator syntax, and jsdom exposes no global CSS.escape to quote
     // them with. The id lookup takes the string literally, which is what an AT
     // resolving aria-controls does anyway.
+    // Resolves while collapsed too — a reference that only exists once the
+    // disclosure is open is a dangling one the rest of the time.
+    expect(document.getElementById(controls!)).toBeTruthy();
+    expect(document.getElementById(controls!)?.hasAttribute('hidden')).toBe(true);
     act(() => { toggle.click(); });
     expect(document.getElementById(controls!)).toBeTruthy();
+    expect(document.getElementById(controls!)?.hasAttribute('hidden')).toBe(false);
     expect(toggle.getAttribute('aria-expanded')).toBe('true');
   });
 
@@ -223,7 +228,11 @@ describe('AnaActivity — the work is visible while it happens', () => {
     const toggle = container.querySelector('.ana-activity-toggle');
     expect(toggle).toBeTruthy();
     expect(toggle?.getAttribute('aria-expanded')).toBe('false');
-    expect(screen.queryByText('Sample size — biostatistics engine')).toBeNull();
+    // Collapsed: the record stays in the DOM, hidden, so the toggle's
+    // aria-controls keeps pointing at something that exists.
+    const body = container.querySelector('.ana-activity-body') as HTMLElement;
+    expect(body.hasAttribute('hidden')).toBe(true);
+    expect(body.id).toBe(toggle?.getAttribute('aria-controls'));
     expect(toggle?.textContent).toContain('1 step completed');
   });
 });
@@ -287,5 +296,41 @@ describe('AnaActivity — it never claims work that did not happen', () => {
     );
 
     expect(screen.getByRole('button').textContent).toContain('1 step completed');
+  });
+});
+
+describe('AnaActivity — the clock', () => {
+  it('runs a clock beside the live phase and freezes the recorded duration once settled', () => {
+    vi.useFakeTimers();
+    const t0 = 1_700_000_000_000;
+    vi.setSystemTime(t0 + 57_000);
+    const { container, rerender } = render(
+      <AnaActivity streaming phase="Running 2 steps…" startedAt={t0} toolCalls={[call({ status: 'running' })]} />,
+    );
+    const phaseRow = () => container.querySelector('.ana-activity-phase') as HTMLElement;
+    expect(phaseRow().textContent).toContain('Running 2 steps…');
+    expect(phaseRow().textContent).toContain('57s');
+
+    act(() => {
+      vi.advanceTimersByTime(3_000);
+    });
+    expect(phaseRow().textContent).toContain('1m 00s');
+
+    // Settled with a recorded end: the collapsed line names the duration, and
+    // it does not move with the clock afterwards.
+    rerender(<AnaActivity phase="" startedAt={t0} completedAt={t0 + 72_000} toolCalls={[call()]} />);
+    const toggle = () => container.querySelector('.ana-activity-toggle') as HTMLElement;
+    expect(toggle().textContent).toContain('in 1m 12s');
+    act(() => {
+      vi.advanceTimersByTime(30_000);
+    });
+    expect(toggle().textContent).toContain('in 1m 12s');
+    vi.useRealTimers();
+  });
+
+  it('claims no duration for a settled turn with no recorded end', () => {
+    const { container } = render(<AnaActivity startedAt={1_700_000_000_000} toolCalls={[call()]} />);
+    const toggle = container.querySelector('.ana-activity-toggle') as HTMLElement;
+    expect(toggle.textContent).not.toMatch(/ in \d/);
   });
 });

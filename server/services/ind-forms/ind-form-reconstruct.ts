@@ -36,6 +36,7 @@ import {
   type FieldValue,
 } from './ind-form-data-builders';
 import type { IndFormPdfResult } from './ind-form-fill-service';
+import { requiredFieldsLeftBlankOn } from './required-box-report';
 
 // ---------------------------------------------------------------------------
 // Deterministic constants (shared style with the fill service's fallback)
@@ -545,5 +546,11 @@ export async function reconstructForm(
     reconstructed: true,
     fieldCoverage: Object.keys(built.fields).length === 0 ? 1 : 1,
     missingRequired: built.missingRequired,
+    /* Every built field is drawn here, so no box is unplaceable — but a
+       required field with no value is still an empty box on the page, and the
+       reconstruction states that with the same field, computed by the same
+       helper, as an official fill. Omitting it would make "not assessed" and
+       "assessed, none" the same answer to a caller. */
+    requiredFieldsLeftBlank: requiredFieldsLeftBlankOn(built, new Set(Object.keys(built.fields))),
   };
 }

@@ -11,8 +11,12 @@
   "reviewedBy": null,
   "reviewedAt": null,
   "xfaDynamic": true,
-  "fillSupported": false,
+  "fillSupported": true,
   "assetTrusted": false,
   "fieldMap": {},
-  "note": "This is the official FDA blank form. It is an Adobe LiveCycle DYNAMIC XFA form, so it cannot be reliably field-filled by the pdf-lib engine (0 AcroForm fields are exposed). The IND form service therefore renders a deterministic labeled data PDF (usedOfficialTemplate=false). To enable exact official-form filling, generate a static/flattened AcroForm edition with a reviewed canonical->AcroForm fieldMap, or fill via Adobe tooling; then set fillSupported/assetTrusted and populate fieldMap."
+  "note": "Official FDA blank form, dynamic Adobe LiveCycle XFA. Its AcroForm layer is empty, which was long read as 'no fillable fields' — the fields are in the XFA packets and they are real (283 declared, 246 fillable). It is filled through the XFA datasets packet via a PDF incremental update, so every original byte is preserved and Acrobat renders the genuine FDA form. The canonical->SOM-path map is code-reviewed in server/services/ind-forms/official-field-maps.ts (OFFICIAL_XFA_FIELD_MAPS) rather than carried in this manifest's fieldMap, and every path in it is re-verified against this template's own datasets skeleton at fill time. assetTrusted/reviewedBy are left for a named reviewer; they gate the AcroForm fieldMap contract, which does not apply to this form.",
+  "xfaDeclaredFieldCount": 283,
+  "xfaFillableFieldCount": 246,
+  "xfaFieldCountsMeasuredOn": "vendored asset, listXfaFields() over the XFA template + datasets packets",
+  "xfaFieldMapSource": "server/services/ind-forms/official-field-maps.ts (OFFICIAL_XFA_FIELD_MAPS)"
 }

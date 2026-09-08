@@ -59,6 +59,23 @@ export interface M4QcFinding {
 
 export interface M4QcResult {
   ready: boolean;
+  /**
+   * Whether anything was actually assessed — false when the program held no
+   * study report at all.
+   *
+   * `ready` alone could not carry this: with an empty program the loop never
+   * runs, no finding is raised, the error count is zero and `ready` came back
+   * TRUE. The aggregator then reported the module ready and the renderer printed
+   * "READY — no blocking findings" over a module with nothing in it. Silence
+   * from a check that never ran is not the same as a clean result, and this is
+   * the field that tells the two apart.
+   *
+   * A caller with genuinely no such module should supply NO verdict: the
+   * aggregator reports that as MODULE_ABSENT, a warning, which is the honest
+   * shape for "not applicable at this stage".
+   */
+  assessed: boolean;
+
   /** Study ids that were checked. */
   checked: string[];
   /** Disciplines present across the program. */
@@ -116,7 +133,32 @@ export function runM4NonclinicalQc(input: M4QcInput): M4QcResult {
     // PLACEMENT — CTD 4.2.x section must match the study type.
     const expectedSection = ctdSection(r.studyType);
     if (!r.reportSection || r.reportSection.trim() === '') {
-      findings.push({ studyId: r.studyId, severity: 'error', code: 'PLACEMENT', message: `Study "${r.studyId}" has no CTD 4.2.x placement (expected ${expectedSection}).` });
+      /* Still an error: a study with no placement cannot be filed, whether or
+         not this QC knows where it belongs. The expected section is named only
+         when there is one to name. */
+      findings.push({
+        studyId: r.studyId,
+        severity: 'error',
+        code: 'PLACEMENT',
+        message: expectedSection
+          ? `Study "${r.studyId}" has no CTD 4.2.x placement (expected ${expectedSection}).`
+          : `Study "${r.studyId}" has no CTD 4.2.x placement, and its study type "${r.studyType}" is not recognised, so one cannot be derived. Record the section explicitly.`,
+      });
+    } else if (expectedSection === null) {
+      /* THE HONEST ANSWER FOR A TYPE THIS MAP DOES NOT CARRY. `ctdSection`
+         used to return the module root '4.2' here, which this check then
+         enforced — telling a filer whose immunotoxicity report sits correctly
+         at 4.2.3.7.2 that "ICH M4 expects 4.2", and putting '4.2' into the
+         section set, where the M2.4 feed-forward trace matched it against every
+         4.2.x citation in the overview. Not knowing where a study belongs is
+         not the same as knowing it belongs at the root, and a warning that says
+         so is worth more than an error that is wrong. */
+      findings.push({
+        studyId: r.studyId,
+        severity: 'warning',
+        code: 'PLACEMENT',
+        message: `Study "${r.studyId}" is placed at ${r.reportSection}, but its study type "${r.studyType}" is not recognised, so the placement could not be verified against ICH M4.`,
+      });
     } else if (r.reportSection !== expectedSection) {
       findings.push({
         studyId: r.studyId,
@@ -166,11 +208,13 @@ export function runM4NonclinicalQc(input: M4QcInput): M4QcResult {
     a.studyId === b.studyId ? severityRank(a.severity) - severityRank(b.severity) : a.studyId.localeCompare(b.studyId),
   );
 
+  const assessed = (input.reports ?? []).length > 0;
   const errors = findings.filter((f) => f.severity === 'error').length;
   const warnings = findings.length - errors;
 
   return {
-    ready: errors === 0,
+    ready: assessed && errors === 0,
+    assessed,
     checked: [...seen].sort(),
     disciplinesPresent: [...disciplines].sort(),
     missingCoverage,

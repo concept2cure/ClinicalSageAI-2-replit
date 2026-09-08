@@ -15,10 +15,9 @@
  */
 
 import { db } from '../../db.js';
-import { eq, and, desc, sql } from 'drizzle-orm';
+import { eq, and, sql } from 'drizzle-orm';
 import {
   projectIntelligenceProfiles,
-  projects,
 } from '../../../shared/schema.js';
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -105,6 +104,26 @@ export async function computeReadinessScore(
     gatherMilestoneSignal(ctx),
     gatherTwinAssessment(ctx),
   ]);
+
+  // Fail closed on a failed CRITICAL input read. profile / documents /
+  // milestones drive the score AND the gaps list (milestones feed the critical
+  // overdue-milestone gaps, profile the risk gaps); the gather* helpers now
+  // reject on a real failure rather than swallowing it to empty. Computing a
+  // ReadinessScore from a partial set would return a falsely-short gap list and
+  // a score presented as authoritative — a manufactured "here are your gaps"
+  // that dropped some because a read failed. gatherTwinAssessment stays
+  // best-effort (it already degrades to a neutral score).
+  for (const [name, settled] of [
+    ['profile', profileSignal],
+    ['documents', documentSignal],
+    ['milestones', milestoneSignal],
+  ] as const) {
+    if (settled.status === 'rejected') {
+      throw settled.reason instanceof Error
+        ? settled.reason
+        : new Error(`Readiness ${name} signal read failed: ${String(settled.reason)}`);
+    }
+  }
 
   const profile = profileSignal.status === 'fulfilled' ? profileSignal.value : null;
   const docs = documentSignal.status === 'fulfilled' ? documentSignal.value : null;
@@ -296,7 +315,11 @@ async function gatherDocumentSignal(ctx: ReadinessContext): Promise<DocumentSign
         title: String(r.title ?? 'Untitled'),
       })),
     };
-  } catch {
+  } catch (e) {
+    // A missing table (42P01) is a genuine "no documents" empty; any other error
+    // is a real read failure and must propagate, so the readiness score is not
+    // computed from — and its gap list not silently shortened by — a failed read.
+    if ((e as { code?: string })?.code !== '42P01') throw e;
     return { total: 0, approved: 0, inReview: 0, draft: 0, staleDrafts: [] };
   }
 }
@@ -342,7 +365,11 @@ async function gatherMilestoneSignal(ctx: ReadinessContext): Promise<MilestoneSi
       }));
 
     return { total: rows.length, completed, overdue, upcoming };
-  } catch {
+  } catch (e) {
+    // See gatherDocumentSignal: only a missing table is a genuine empty. A real
+    // failure here would otherwise drop overdue milestones — a critical gap that
+    // feeds no numeric dimension — with zero trace on the score.
+    if ((e as { code?: string })?.code !== '42P01') throw e;
     return { total: 0, completed: 0, overdue: [], upcoming: [] };
   }
 }

@@ -84,7 +84,7 @@ describe('SourceTracer — recorded lineage', () => {
     render(<SourceTracer {...props()} />);
 
     expect(await screen.findByText('protocol-v2.pdf')).toBeTruthy();
-    expect(screen.getByText('content unchanged since cited')).toBeTruthy();
+    expect(screen.getByText('matches the source record as stored')).toBeTruthy();
     // The recorded content identity is shown, truncated.
     expect(screen.getByText(/aaaa1111bbbb/)).toBeTruthy();
   });
@@ -122,7 +122,7 @@ describe('SourceTracer — recorded lineage', () => {
     mockSections([section({ sources: [citedSource({ state: 'unverified', citedChecksum: null })] })]);
     render(<SourceTracer {...props()} />);
     expect(await screen.findByText('not checked against content')).toBeTruthy();
-    expect(screen.queryByText('content unchanged since cited')).toBeNull();
+    expect(screen.queryByText('matches the source record as stored')).toBeNull();
   });
 
   it('renders no confidence percentage anywhere — recorded facts are not guesses', async () => {

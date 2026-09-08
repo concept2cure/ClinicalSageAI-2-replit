@@ -26,6 +26,8 @@ import { v4 as uuidv4 } from 'uuid';
 import { clampGraphRagBounds } from './graphrag-util.js';
 import { getPool } from '../db';
 import { getSecureOrgId } from '../utils/tenantContext';
+import { serverError } from '../lib/api-response';
+import { createScopedLogger } from '../utils/logger';
 
 // ---------------------------------------------------------------------------
 // TYPES
@@ -538,6 +540,8 @@ function hybridRank(
 // EXPRESS ROUTES
 // ---------------------------------------------------------------------------
 
+const logger = createScopedLogger('graphrag');
+
 const router = Router();
 
 /**
@@ -677,7 +681,7 @@ router.post('/query', async (req: Request, res: Response) => {
     res.json({ success: true, data: result });
   } catch (err) {
     console.error('[GraphRAG] Query failed:', err);
-    res.status(500).json({ success: false, error: 'GraphRAG query failed', details: String(err) });
+    return serverError(res, logger, 'querying', err);
   }
 });
 
@@ -788,7 +792,7 @@ router.post('/ingest', async (req: Request, res: Response) => {
     });
   } catch (err) {
     console.error('[GraphRAG] Ingestion failed:', err);
-    res.status(500).json({ success: false, error: 'Ingestion failed', details: String(err) });
+    return serverError(res, logger, 'ingesting', err);
   }
 });
 
@@ -820,7 +824,7 @@ router.get('/entities/:entityId/neighborhood', async (req: Request, res: Respons
       },
     });
   } catch (err) {
-    res.status(500).json({ success: false, error: String(err) });
+    return serverError(res, logger, 'loading neighborhood', err);
   }
 });
 
@@ -888,7 +892,7 @@ router.get('/communities', async (req: Request, res: Response) => {
       },
     });
   } catch (err) {
-    res.status(500).json({ success: false, error: String(err) });
+    return serverError(res, logger, 'loading communities', err);
   }
 });
 
@@ -948,7 +952,7 @@ router.get('/citation-trace/:documentId', async (req: Request, res: Response) =>
       },
     });
   } catch (err) {
-    res.status(500).json({ success: false, error: String(err) });
+    return serverError(res, logger, 'loading citation trace', err);
   }
 });
 

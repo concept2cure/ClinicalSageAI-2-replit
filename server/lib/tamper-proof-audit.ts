@@ -23,8 +23,8 @@
  * @compliance FDA 21 CFR Part 11, ICH E6(R2), GAMP 5
  */
 
-import { Pool, PoolClient } from 'pg';
-import { createHash, createHmac, randomBytes, timingSafeEqual } from 'crypto';
+import { Pool } from 'pg';
+import { createHash, createHmac, timingSafeEqual } from 'crypto';
 import { v4 as uuidv4 } from 'uuid';
 import { isIP } from 'node:net';
 

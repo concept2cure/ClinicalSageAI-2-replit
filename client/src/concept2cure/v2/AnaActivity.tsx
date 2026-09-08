@@ -39,23 +39,10 @@ import React from 'react';
 import { SR_ONLY_STYLE } from '../hooks/useChatUpload';
 import { I } from './icons';
 import type { AnaToolCall } from '../components/ana/useAnaChat';
+import { byRound, formatElapsed, LENS_PHRASE } from '../components/ana/anaProgress';
+import { statusGlyph } from './AnaWorkSections';
+import { useNow } from './useNow';
 
-/** How AnA read the question. Rendered as her opening decision, not a label. */
-/**
- * Noun phrases, deliberately. These complete "Reading this as …", and the
- * first draft used verb phrases that either broke the sentence ("Reading this
- * as auditing it", "…as comparing") or claimed a deliberation that did not
- * happen: a lens is assigned by a classifier, so "thinking strategically" and
- * "weighing the risk" describe an act nothing performed. Naming the CATEGORY
- * of question is both true and how a colleague would say it.
- */
-const LENS_PHRASE: Record<string, string> = {
-  audit: 'an audit',
-  improve: 'a request to strengthen the argument',
-  risk: 'a risk question',
-  strategy: 'a strategy question',
-  compare: 'a comparison',
-};
 
 export interface AnaActivityProps {
   /** True while the turn is still in flight. */
@@ -74,7 +61,17 @@ export interface AnaActivityProps {
   thinking?: string;
   /** Title of the deliverable produced this turn, if one was. */
   draftTitle?: string;
+  /**
+   * Client clock (ms) when the turn was sent, and when it ended. With both the
+   * collapsed line can say how long the turn took; with only the first, the
+   * live phase carries a running clock ("Running 2 steps… · 57s") so a long
+   * silent window reads as time passing rather than as a stall.
+   */
+  startedAt?: number;
+  completedAt?: number;
 }
+
+
 
 /**
  * How much of a still-streaming thought to show. Long enough to be a real
@@ -109,28 +106,6 @@ function latestThought(thinking: string): string {
   return `…${space > 0 ? cut.slice(space + 1) : cut}`;
 }
 
-function glyph(status: AnaToolCall['status']): React.ReactElement {
-  if (status === 'success') return I.check;
-  if (status === 'error') return I.alertTriangle;
-  return I.dot;
-}
-
-/**
- * Group calls by agentic-loop round, preserving order. A single-round turn
- * renders flat — the round headings only earn their space once AnA actually
- * went back for more.
- */
-function byRound(calls: AnaToolCall[]): Array<{ round: number; calls: AnaToolCall[] }> {
-  const groups = new Map<number, AnaToolCall[]>();
-  for (const c of calls) {
-    const r = typeof c.round === 'number' && c.round > 0 ? c.round : 1;
-    if (!groups.has(r)) groups.set(r, []);
-    groups.get(r)!.push(c);
-  }
-  return [...groups.entries()]
-    .sort((a, b) => a[0] - b[0])
-    .map(([round, cs]) => ({ round, calls: cs }));
-}
 
 export function AnaActivity({
   streaming,
@@ -141,8 +116,15 @@ export function AnaActivity({
   toolCalls,
   thinking,
   draftTitle,
+  startedAt,
+  completedAt,
 }: AnaActivityProps) {
   const calls = toolCalls ?? [];
+  // The clock ticks only while the turn is live AND has a start; a settled turn
+  // reads its recorded end, and a turn with no start claims no duration.
+  const now = useNow(Boolean(streaming) && typeof startedAt === 'number');
+  const elapsed =
+    typeof startedAt === 'number' ? formatElapsed((completedAt ?? now) - startedAt) : '';
   const rounds = byRound(calls);
   const multiRound = rounds.length > 1;
   const ran = calls.filter(c => c.status !== 'running').length;
@@ -186,6 +168,10 @@ export function AnaActivity({
     if (draftTitle) parts.push(`Drafted ${draftTitle}`);
     if (agentMode) parts.push('Agent mode');
     if (thinking) parts.push('reasoning');
+    // Only a turn with a recorded END gets a duration on its collapsed line; a
+    // turn that settled without one (stopped, failed, or reopened from history)
+    // must not read a clock off the current time.
+    if (elapsed && typeof completedAt === 'number') parts.push(`in ${elapsed}`);
     return parts.length > 0 ? parts.join(' · ') : 'How this was read';
   })();
 
@@ -225,8 +211,11 @@ export function AnaActivity({
         </button>
       )}
 
-      {expanded && (
-        <div className="ana-activity-body" id={bodyId}>
+      {/* Mounted while collapsed and hidden with the attribute, so the
+          toggle's aria-controls always resolves (SC 4.1.2) — the same rule as
+          the dock's sections. */}
+      {(
+        <div className="ana-activity-body" id={bodyId} hidden={!expanded}>
           {/* The live phase. `polite` so a screen-reader user hears progress
               without it interrupting the answer as it arrives. */}
           {streaming && phase && (
@@ -235,6 +224,7 @@ export function AnaActivity({
                 {I.dot}
               </span>
               {phase}
+              {elapsed && <span className="ana-activity-clock">· {elapsed}</span>}
             </div>
           )}
 
@@ -288,10 +278,11 @@ export function AnaActivity({
                 </div>
               )}
               {cs.map((c, i) => (
-                <div key={`${round}-${i}-${c.name}`} className={`ana-activity-step is-${c.status}`}>
-                  <span className="ana-activity-glyph" aria-hidden="true">
-                    {glyph(c.status)}
-                  </span>
+                <div
+                  key={`${round}-${i}-${c.name}`}
+                  className={`ana-activity-step is-${c.status}`}
+                >
+                  <span className="ana-activity-glyph" aria-hidden="true">{statusGlyph(c.status)}</span>
                   <span className="ana-activity-label">{c.label || c.name}</span>
                   {c.status === 'error' && (
                     /* The server writes a sentence for this — "AnA couldn't

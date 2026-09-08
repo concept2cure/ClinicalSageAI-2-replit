@@ -7,7 +7,6 @@
 
 import express from 'express';
 import { checkForOpenAIKey } from '../../utils/api-security.js';
-import { validateRequestBody } from '../../utils/validation.js';
 import { manufacturingDataSchema } from './types.js';
 import { rateLimit } from 'express-rate-limit';
 import fs from 'fs';
@@ -25,8 +24,12 @@ const manufacturingAnalysisLimiter = rateLimit({
   message: 'Too many manufacturing analysis requests, please try again after a minute',
 });
 import { ai } from '../../lib/unified-ai-client';
+import { serverError } from '../../lib/api-response.js';
+import { createScopedLogger } from '../../utils/logger.js';
 
 // Create router
+const logger = createScopedLogger('manufacturing-tuner');
+
 const router = express.Router();
 
 // Configure multer for file uploads
@@ -232,10 +235,7 @@ router.post('/analyze', checkForOpenAIKey, manufacturingAnalysisLimiter, async (
     });
   } catch (error) {
     console.error('Error in manufacturing analysis:', error);
-    return res.status(500).json({
-      error: 'An error occurred while analyzing manufacturing data',
-      details: error.message,
-    });
+    return serverError(res, logger, 'analysing', error);
   }
 });
 
@@ -345,10 +345,7 @@ router.post('/upload', checkForOpenAIKey, upload.array('files', 5), async (req, 
     });
   } catch (error) {
     console.error('Error in file upload:', error);
-    return res.status(500).json({
-      error: 'An error occurred while uploading and processing files',
-      details: error.message,
-    });
+    return serverError(res, logger, 'uploading', error);
   }
 });
 
@@ -377,10 +374,7 @@ router.get('/processing/:uploadId', (req, res) => {
     return res.json(processingResult);
   } catch (error) {
     console.error('Error in getting processing result:', error);
-    return res.status(500).json({
-      error: 'An error occurred while getting the processing result',
-      details: error.message,
-    });
+    return serverError(res, logger, 'loading processing', error);
   }
 });
 
@@ -422,10 +416,7 @@ router.get('/download/:analysisId', (req, res) => {
     }
   } catch (error) {
     console.error('Error in analysis download:', error);
-    return res.status(500).json({
-      error: 'An error occurred while downloading the analysis',
-      details: error.message,
-    });
+    return serverError(res, logger, 'downloading', error);
   }
 });
 
@@ -507,10 +498,7 @@ router.post('/optimize', checkForOpenAIKey, manufacturingAnalysisLimiter, async 
     });
   } catch (error) {
     console.error('Error in optimization recommendations:', error);
-    return res.status(500).json({
-      error: 'An error occurred while generating optimization recommendations',
-      details: error.message,
-    });
+    return serverError(res, logger, 'optimising', error);
   }
 });
 

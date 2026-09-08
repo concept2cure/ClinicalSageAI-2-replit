@@ -52,6 +52,7 @@ import { randomUUID } from 'node:crypto';
 
 import { pool } from '../../db';
 import { visibleOrgClause } from './evidence-spine.service';
+import type { CitationSource } from '@shared/authoring/citations';
 
 /** The `authoring_citations.source` discriminator for a canonical-source citation. */
 export const CRE_SOURCE_CITATION = 'cre_evidence_source';
@@ -68,7 +69,7 @@ export class SourceUsageError extends Error {}
  *                is claimed
  *   unresolved   the reference does not resolve to a source this caller can see
  */
-export type UsageState = 'current' | 'changed' | 'unverified' | 'unresolved';
+export type UsageState = 'current' | 'changed' | 'superseded' | 'unverified' | 'unresolved';
 
 export interface SectionSourceUsage {
   citationId: string;
@@ -127,8 +128,26 @@ function numericIds(ids: Array<number | string>): number[] {
   return out;
 }
 
-function usageState(citedChecksum: string | null, currentChecksum: string | null, resolved: boolean): UsageState {
+function usageState(
+  citedChecksum: string | null,
+  currentChecksum: string | null,
+  resolved: boolean,
+  sourceIsCurrent: boolean | null,
+): UsageState {
   if (!resolved) return 'unresolved';
+  // SUPERSEDED OUTRANKS THE CHECKSUM COMPARISON, and has to.
+  //
+  // A source's checksum is never rewritten: a revised document is ingested as a
+  // NEW row and the old row keeps its bytes and its hash forever. So the cited
+  // and current checksums still MATCH on a source that has been replaced, and
+  // this would report 'current' — "content unchanged since cited" — for exactly
+  // the citation a reviewer most needs to look at.
+  //
+  // `is_current = FALSE` is the fact that says otherwise, recorded by the ingest
+  // path when it links a successor. NULL means the column was not read, or no
+  // successor is known; neither is evidence of supersession, so both fall
+  // through rather than being treated as one.
+  if (sourceIsCurrent === false) return 'superseded';
   if (!citedChecksum || !currentChecksum) return 'unverified';
   return citedChecksum === currentChecksum ? 'current' : 'changed';
 }
@@ -251,7 +270,15 @@ export async function listSectionSources(orgId: number, sectionId: string): Prom
             src.id AS source_id, src.title, src.checksum, src.source_type,
             src.ingestion_status, src.extraction_status, src.updated_at AS source_updated_at,
             src.metadata->>'mimeType'      AS mime_type,
-            src.provenance->>'fileUploadId' AS file_upload_id
+            src.provenance->>'fileUploadId' AS file_upload_id,
+            -- is_current comes from migrations/20260829_cre_source_versioning.sql,
+            -- which is separate from the spine that creates this table. Read
+            -- through to_jsonb so a database that has the spine but not that
+            -- migration yields NULL here instead of failing the whole query:
+            -- naming the column directly would turn every Source Tracer read
+            -- into a 500 mid-deploy. NULL means "not read", which usageState
+            -- treats as no evidence of supersession rather than as false.
+            (to_jsonb(src) ->> 'is_current')::boolean AS source_is_current
        FROM authoring_citations c
        LEFT JOIN cre_evidence_sources src
               ON src.id::text = c.reference_id
@@ -263,6 +290,63 @@ export async function listSectionSources(orgId: number, sectionId: string): Prom
   );
 
   return (rows as Array<Record<string, unknown>>).map(adaptUsageRow);
+}
+
+/**
+ * The bibliographic facts behind a set of source ids, for a document EXPORT.
+ *
+ * An in-text citation stores the source's id and nothing else — the number a
+ * reviewer reads is derived from position at render time, and the reference-list
+ * entry is assembled here, from the registry, at export time. So the export asks
+ * this for exactly the sources its content actually cites.
+ *
+ * Resolved against what this caller can see (`visibleOrgClause`, plus the
+ * global-public rows), so a citation of another tenant's source resolves to
+ * NOTHING and the export states it as unresolved rather than printing a title
+ * this organization is not entitled to read. Ids that do not resolve are simply
+ * absent from the result — that absence IS the unresolved state, and the
+ * renderers say so in the filed document rather than skipping the citation.
+ *
+ * `deleted_at IS NULL`: a source withdrawn from the library cannot go on
+ * lending its name to a claim in a document filed after the withdrawal.
+ */
+/** A DATE column as `YYYY-MM-DD`. `pg` parses DATE into a JS Date, whose
+ *  default string form does not start with the year — and the reference entry
+ *  prints only a year, read off the front. Anything unparseable yields null
+ *  rather than a guess. */
+function isoDay(value: unknown): string | null {
+  if (value == null) return null;
+  if (value instanceof Date) {
+    return Number.isNaN(value.getTime()) ? null : value.toISOString().slice(0, 10);
+  }
+  const s = String(value).trim();
+  return s || null;
+}
+
+export async function listCitationSources(
+  orgId: number,
+  sourceIds: Array<number | string>,
+): Promise<CitationSource[]> {
+  const ids = numericIds(sourceIds);
+  if (ids.length === 0) return [];
+  const c = visibleOrgClause(orgId, 2);
+  const { rows } = await pool.query(
+    `SELECT id, title, sponsor, source_type, document_date,
+            COALESCE(NULLIF(source_record_identifier, ''),
+                     NULLIF(trial_registry_identifier, ''),
+                     NULLIF(application_number, '')) AS identifier
+       FROM cre_evidence_sources
+      WHERE id = ANY($1::int[]) AND ${c.sql} AND deleted_at IS NULL`,
+    [ids, c.param],
+  );
+  return (rows as Array<Record<string, unknown>>).map((r) => ({
+    id: String(r.id),
+    title: (r.title as string) ?? null,
+    sponsor: (r.sponsor as string) ?? null,
+    sourceType: (r.source_type as string) ?? null,
+    date: isoDay(r.document_date),
+    identifier: (r.identifier as string) ?? null,
+  }));
 }
 
 /**
@@ -562,6 +646,7 @@ function adaptUsageRow(r: Record<string, unknown>): SectionSourceUsage {
       (r.payload_sha256 as string) ?? null,
       (r.checksum as string) ?? null,
       r.source_id != null,
+      r.source_is_current == null ? null : Boolean(r.source_is_current),
     ),
     source: adaptUsageSource(r),
   };

@@ -23,8 +23,12 @@ const copilotLimiter = rateLimit({
   message: 'Too many copilot requests, please try again after a minute',
 });
 import { ai } from '../../lib/unified-ai-client';
+import { serverError } from '../../lib/api-response.js';
+import { createScopedLogger } from '../../utils/logger.js';
 
 // Create router
+const logger = createScopedLogger('cmc-copilot');
+
 const router = express.Router();
 
 // Get OpenAI client
@@ -132,10 +136,7 @@ router.post('/query', checkForOpenAIKey, copilotLimiter, async (req, res) => {
     });
   } catch (error) {
     console.error('Error in CMC CoPilot query:', error);
-    return res.status(500).json({
-      error: 'An error occurred while processing the query',
-      details: error.message,
-    });
+    return serverError(res, logger, 'querying', error);
   }
 });
 
@@ -242,10 +243,7 @@ router.post('/specialized-query', checkForOpenAIKey, copilotLimiter, async (req,
     });
   } catch (error) {
     console.error('Error in CMC CoPilot specialized query:', error);
-    return res.status(500).json({
-      error: 'An error occurred while processing the specialized query',
-      details: error.message,
-    });
+    return serverError(res, logger, 'running the specialized query', error);
   }
 });
 
@@ -542,10 +540,7 @@ router.post('/execute-task', checkForOpenAIKey, copilotLimiter, async (req, res)
     });
   } catch (error) {
     console.error('Error in CMC CoPilot task execution:', error);
-    return res.status(500).json({
-      error: 'An error occurred while executing the task',
-      details: error.message,
-    });
+    return serverError(res, logger, 'executing task', error);
   }
 });
 
@@ -609,10 +604,7 @@ router.post('/get-suggestions', checkForOpenAIKey, copilotLimiter, async (req, r
     });
   } catch (error) {
     console.error('Error in CMC CoPilot suggestions:', error);
-    return res.status(500).json({
-      error: 'An error occurred while generating suggestions',
-      details: error.message,
-    });
+    return serverError(res, logger, 'getting suggestions', error);
   }
 });
 
@@ -642,10 +634,7 @@ router.get('/conversation/:conversationId', (req, res) => {
     return res.json(conversationHistory);
   } catch (error) {
     console.error('Error in getting conversation history:', error);
-    return res.status(500).json({
-      error: 'An error occurred while getting the conversation history',
-      details: error.message,
-    });
+    return serverError(res, logger, 'loading conversation', error);
   }
 });
 

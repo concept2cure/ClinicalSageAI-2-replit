@@ -12,8 +12,12 @@
  */
 
 import { Router, Request, Response } from 'express';
+import { serverError } from '../lib/api-response';
+import { createScopedLogger } from '../utils/logger';
 
 const router = Router();
+
+const logger = createScopedLogger('regulatory-registry');
 
 // Lazy import to avoid circular dependencies
 async function getRegistry() {
@@ -57,7 +61,7 @@ router.get('/registry', async (req: Request, res: Response) => {
       },
     });
   } catch (error: any) {
-    res.status(500).json({ success: false, error: error.message });
+    return serverError(res, logger, 'loading registry', error);
   }
 });
 
@@ -70,7 +74,7 @@ router.get('/registry/:id', async (req: Request, res: Response) => {
     if (!entry) return res.status(404).json({ success: false, error: 'Application type not found' });
     res.json({ success: true, data: entry });
   } catch (error: any) {
-    res.status(500).json({ success: false, error: error.message });
+    return serverError(res, logger, 'loading registry', error);
   }
 });
 
@@ -92,7 +96,7 @@ router.get('/taxonomy', async (_req: Request, res: Response) => {
       },
     });
   } catch (error: any) {
-    res.status(500).json({ success: false, error: error.message });
+    return serverError(res, logger, 'loading taxonomy', error);
   }
 });
 
@@ -121,7 +125,7 @@ router.get('/segments', async (_req: Request, res: Response) => {
 
     res.json({ success: true, data: segments });
   } catch (error: any) {
-    res.status(500).json({ success: false, error: error.message });
+    return serverError(res, logger, 'loading segments', error);
   }
 });
 
@@ -140,7 +144,7 @@ router.get('/regions', async (_req: Request, res: Response) => {
 
     res.json({ success: true, data: regions });
   } catch (error: any) {
-    res.status(500).json({ success: false, error: error.message });
+    return serverError(res, logger, 'loading regions', error);
   }
 });
 
@@ -155,7 +159,7 @@ router.get('/search', async (req: Request, res: Response) => {
     const results = search(q);
     res.json({ success: true, data: { results, query: q, count: results.length } });
   } catch (error: any) {
-    res.status(500).json({ success: false, error: error.message });
+    return serverError(res, logger, 'searching', error);
   }
 });
 
@@ -171,7 +175,7 @@ router.get('/resolve', async (req: Request, res: Response) => {
     if (!entry) return res.status(404).json({ success: false, error: `No registry entry for '${legacy}'` });
     res.json({ success: true, data: entry });
   } catch (error: any) {
-    res.status(500).json({ success: false, error: error.message });
+    return serverError(res, logger, 'resolving', error);
   }
 });
 

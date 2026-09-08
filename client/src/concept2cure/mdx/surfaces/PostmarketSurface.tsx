@@ -10,7 +10,7 @@
  * "Situational awareness" accordion.
  *
  * Cross-program surface. Port basis:
- * design-system/ui_kits/mdx/surfaces/Postmarket.jsx.
+ * ui_kits/mdx/surfaces/Postmarket.jsx.
  */
 
 import * as React from 'react';
@@ -136,7 +136,7 @@ export function PostmarketSurface({
           <h1 className="page-title">Post-market vigilance</h1>
           <div className="page-sub">
             {documents.length} regulatory submissions in flight. 21 CFR 803 MDR ·
-            EU MDR Art. 87 · 21 CFR 820.100 CAPA · PSUR.
+            EU MDR Art. 87 · CAPA 21 CFR 820.100 · ISO 13485 §8.5.2/8.5.3 · PSUR.
           </div>
         </div>
         <div className="page-actions">
@@ -388,7 +388,7 @@ export function PostmarketSurface({
                             <div className="pv-capa-card-title">{c.title}</div>
                             <div className="pv-capa-card-foot">
                               <span className="ctable-strong">{c.device}</span>
-                              <span className="dot-sep">·</span>
+                              <span className="dot-sep" aria-hidden="true">·</span>
                               <span>{c.owner}</span>
                             </div>
                           </button>

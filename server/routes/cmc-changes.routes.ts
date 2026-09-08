@@ -25,6 +25,8 @@ import {
   createCmcChange, listCmcChanges, CmcChangeValidationError,
 } from '../services/cmc/cmc-change-control-service';
 import auditService from '../services/auditService';
+import { writeThroughChangeControl } from '../services/cmc-write-through';
+import { observeWriteThroughFailure } from '../services/cmc/link-to-module3';
 
 const router = Router();
 
@@ -100,9 +102,44 @@ router.post('/', async (req: Request, res: Response) => {
       resourceId: change.id,
       details: { title: change.title, dosageFormFamily: change.dosage_form_family, changeCategory: change.change_category },
     });
+
+    /* Module 3 convergence. The legacy register (/api/cmc/change-control)
+       write-throughs to the canonical §3.2 source layer on every save; this
+       governed store never did, so a change proposed HERE never marked
+       3.2.P.3 / impacted sections stale — the same conceptual event with two
+       different downstream truths. When the caller states which CMC project
+       the change belongs to, the write-through is awaited and its outcome
+       REPORTED: the meta field says whether it recorded, and a failed write
+       is metered like every other register's (link-to-module3). The change
+       itself is never rolled back — it is real recorded data whether or not
+       the dossier layer accepted it this second. */
+    let module3WriteThrough: 'recorded' | 'failed' | 'skipped_no_project' = 'skipped_no_project';
+    const cmcProjectId = b.cmcProjectId != null ? String(b.cmcProjectId).trim() : '';
+    if (cmcProjectId) {
+      const wt = await writeThroughChangeControl(
+        orgId,
+        cmcProjectId,
+        change.id,
+        {
+          title: change.title,
+          change_type: change.change_category,
+          description: change.description,
+          status: change.status,
+          regulatory_impact: { dosageFormFamily: change.dosage_form_family, area: change.area },
+        },
+        userId != null ? String(userId) : undefined,
+      );
+      if (wt.ok) {
+        module3WriteThrough = 'recorded';
+      } else {
+        module3WriteThrough = 'failed';
+        observeWriteThroughFailure('write_through_change_control', change.id, wt.reason);
+      }
+    }
+
     // Return the projected (classified) view so the caller sees the computed verdict.
     const [view] = projectCmcChanges([change as unknown as CmcChangeRow]);
-    return res.status(201).json({ data: view, id: change.id });
+    return res.status(201).json({ data: view, id: change.id, meta: { module3WriteThrough } });
   } catch (err) {
     if (err instanceof CmcChangeValidationError) {
       return res.status(400).json({ error: { code: 'VALIDATION', message: err.message } });

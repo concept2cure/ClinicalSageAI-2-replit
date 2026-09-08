@@ -70,7 +70,29 @@ export class SentinelScheduler {
       clearInterval(this.intervals.get(organizationId)!);
     }
 
-    const config = await this.sentinel.getConfig(organizationId);
+    // getConfig reads pm_settings for THIS org on the pooled connection. It runs
+    // in that org's tenant scope for the same reason the scan at runScan() does:
+    // under RLS_ENFORCE=on an unscoped pooled read is refused outright
+    // ("[tenant-rls] FAIL-CLOSED: pool.query requires an active tenant scope"),
+    // and that refusal aborted SentinelScheduler.start() before a single org was
+    // scheduled — the scheduler simply never ran with enforcement on.
+    //
+    // Scoped HERE, at the job boundary, rather than inside getConfig: a data
+    // accessor that establishes its own tenant authority from an argument is a
+    // privilege-escalation shape (a caller scoped to org A could read org B by
+    // passing B's id). The boundary that already knows which org this job is for
+    // is the right place to say so. Least privilege — this is the org's own
+    // scope, not a system/super-admin one.
+    const config = await runWithTenantScope(
+      {
+        tenantId: String(organizationId),
+        orgUuid: null,
+        role: null,
+        source: 'job',
+        caller: 'sentinel-schedule-org',
+      },
+      () => this.sentinel.getConfig(organizationId)
+    );
     if (!config.enabled) {
       log.debug(`[SentinelScheduler] Sentinel disabled for org ${organizationId}`);
       return;

@@ -18,7 +18,7 @@ vi.hoisted(() => {
 
 
 const { audit, dbState } = vi.hoisted(() => ({
-  audit: { logAction: vi.fn().mockResolvedValue(undefined) },
+  audit: { logAction: vi.fn().mockResolvedValue({ persisted: true, chained: true, tamperProof: true }) },
   dbState: { rows: [] as any[] },
 }));
 

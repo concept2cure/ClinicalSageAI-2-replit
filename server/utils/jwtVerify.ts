@@ -99,6 +99,22 @@ export function verifyJwtWithRotation<T = unknown>(
   }
 }
 
+/**
+ * The secret the verifier will accept, resolved RIGHT NOW.
+ *
+ * Exported so first-party token minting cannot drift from verification.
+ * `config.jwt.secret` resolves once, at config-module import; this resolves on
+ * every call. When something loads a .env file BETWEEN those two moments the
+ * two disagree — the config snapshot falls back to JWT_SECRET because
+ * JWT_SECRET_DEV was not yet present, while this function, called later, finds
+ * it. A token signed from the snapshot then fails verification with "invalid
+ * signature". Anything that mints a token to be verified by this module should
+ * take the secret from here.
+ */
+export function activeJwtSecret(): string {
+  return currentSecret();
+}
+
 /** True iff a rotation is in progress (the previous secret is set). */
 export function isJwtRotationInProgress(): boolean {
   return Boolean(previousSecret());

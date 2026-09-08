@@ -5,6 +5,12 @@
  * (the base rules) + a set of deeper cross-dataset/metadata rules, then generates
  * define.xml, and returns a consolidated submission-readiness report.
  *
+ * The define.xml comes from `define-xml-generator`, the one generator, at the
+ * version `spec.defineVersion` names. That default is '2.1': this pipeline used
+ * to emit 2.0 because it called a second generator that only knew 2.0, which was
+ * never a decision anyone made about the submission. A package targeting 2.0
+ * now says so.
+ *
  * Honest scope: covers the mechanical, reproducible rules. It is NOT a
  * substitute for the validator of record (Pinnacle21/CDISC CT) — it does not
  * apply the full controlled-terminology dictionary or every conformance rule.
@@ -14,10 +20,14 @@
 
 import {
   checkDatasetConformance,
-  generateDefineXml,
   type DefineSpec,
   type ConformanceFinding,
-} from './define-xml.js';
+} from './define-spec-conformance.js';
+import {
+  generateDefineXml,
+  type DefineXmlInput,
+  type DefineXmlVersion,
+} from './define-xml-generator.js';
 
 export interface CdiscReadiness {
   submissionReady: boolean;
@@ -32,7 +42,42 @@ export interface CdiscPipelineResult {
   findings: ConformanceFinding[];
   readiness: CdiscReadiness;
   defineXml: string;
+  /** The Define-XML version the `defineXml` above actually is. */
+  defineVersion: DefineXmlVersion;
   notes: string[];
+}
+
+/**
+ * Map the conformance spec shape onto the generator's input. The two models name
+ * the same things differently (`type`/`dataType`, `codelist`/`codelistId`,
+ * `oid`/`id`, `items`/`terms`); this is the single place that translation lives.
+ */
+function toDefineXmlInput(spec: DefineSpec, defineVersion: DefineXmlVersion): DefineXmlInput {
+  return {
+    studyName: spec.studyName,
+    defineVersion,
+    datasets: spec.datasets.map((ds) => ({
+      name: ds.name,
+      label: ds.label,
+      datasetClass: ds.datasetClass,
+      structure: ds.structure,
+      variables: (ds.variables ?? []).map((v) => ({
+        name: v.name,
+        label: v.label,
+        dataType: v.type === 'time' ? 'text' : v.type,
+        length: v.length,
+        mandatory: v.mandatory,
+        codelistId: v.codelist,
+        origin: v.origin,
+      })),
+    })),
+    codelists: (spec.codelists ?? []).map((cl) => ({
+      id: cl.oid,
+      name: cl.name,
+      dataType: cl.type === 'integer' ? 'integer' : 'text',
+      terms: cl.items.map((it) => ({ value: it.code, decode: it.decode })),
+    })),
+  };
 }
 
 /** Deeper rules layered on top of the base structural conformance checks. */
@@ -79,7 +124,8 @@ function deepChecks(spec: DefineSpec): ConformanceFinding[] {
 }
 
 /** Run the full CDISC pipeline: conformance (base + deep) → define.xml → readiness. */
-export function runCdiscPipeline(spec: DefineSpec): CdiscPipelineResult {
+export function runCdiscPipeline(spec: DefineSpec & { defineVersion?: DefineXmlVersion }): CdiscPipelineResult {
+  const defineVersion: DefineXmlVersion = spec.defineVersion ?? '2.1';
   const base = checkDatasetConformance(spec); // throws on an empty/invalid spec
   const deep = deepChecks(spec);
   const findings = [...base.findings, ...deep];
@@ -87,9 +133,9 @@ export function runCdiscPipeline(spec: DefineSpec): CdiscPipelineResult {
   const errors = findings.filter((f) => f.severity === 'error').length;
   const warnings = findings.filter((f) => f.severity === 'warning').length;
 
-  // Reuse the generator; its own conformance run is redundant with ours, so we
-  // keep only its XML.
-  const { xml } = generateDefineXml(spec);
+  // The generator reports its own gaps (keys, orphan codelists); those overlap
+  // ours and the findings above are the report of record here, so keep the XML.
+  const { xml } = generateDefineXml(toDefineXmlInput(spec, defineVersion));
 
   return {
     standard: spec.standard,
@@ -102,7 +148,9 @@ export function runCdiscPipeline(spec: DefineSpec): CdiscPipelineResult {
       warnings,
     },
     defineXml: xml,
+    defineVersion,
     notes: [
+      `define.xml emitted at Define-XML ${defineVersion}.`,
       'Structural + metadata rules only; run Pinnacle21/CDISC-CT before submission.',
       'submissionReady reflects zero structural errors here — not full validator-of-record clearance.',
     ],

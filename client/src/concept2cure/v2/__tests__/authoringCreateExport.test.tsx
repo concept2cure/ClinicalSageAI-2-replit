@@ -125,7 +125,7 @@ describe('AuthoringCreateExport — create → publish', () => {
     expect(onSectionCreated).toHaveBeenCalledWith({ id: 'S-4', code: '2.6.6.1' });
   });
 
-  it('publishes the assembled document as Word via POST /docs/:id/export', async () => {
+  it('exports the assembled document as Word via POST /docs/:id/export', async () => {
     const fireToast = vi.fn();
     render(<AuthoringCreateExport {...base} docId="D1" fireToast={fireToast} />);
     fireEvent.click(screen.getByRole('button', { name: /Word/ }));
@@ -135,10 +135,10 @@ describe('AuthoringCreateExport — create → publish', () => {
       expect(call![2]).toEqual({ format: 'docx' });
     });
     expect(URL.createObjectURL).toHaveBeenCalled();
-    expect(fireToast).toHaveBeenCalledWith(expect.stringMatching(/Published DOCX/));
+    expect(fireToast).toHaveBeenCalledWith(expect.stringMatching(/Exported DOCX/));
   });
 
-  it('publishes a real PDF via POST /docs/:id/export {format: pdf}', async () => {
+  it('exports a real PDF via POST /docs/:id/export {format: pdf}', async () => {
     const fireToast = vi.fn();
     render(<AuthoringCreateExport {...base} docId="D1" fireToast={fireToast} />);
     fireEvent.click(screen.getByRole('button', { name: /PDF/ }));
@@ -147,6 +147,45 @@ describe('AuthoringCreateExport — create → publish', () => {
       expect(call).toBeTruthy();
     });
     expect(URL.createObjectURL).toHaveBeenCalled();
-    expect(fireToast).toHaveBeenCalledWith(expect.stringMatching(/Published PDF/));
+    expect(fireToast).toHaveBeenCalledWith(expect.stringMatching(/Exported PDF/));
+  });
+  it('a download the browser blocks is never reported as exported to the device', async () => {
+    // downloadBlob answers false when the environment refuses the save; the
+    // handler used to discard that answer and say "Published".
+    const saved = URL.createObjectURL;
+    (URL as any).createObjectURL = undefined;
+    try {
+      const fireToast = vi.fn();
+      render(<AuthoringCreateExport {...base} docId="D1" fireToast={fireToast} />);
+      fireEvent.click(screen.getByRole('button', { name: /Word/ }));
+      await waitFor(() => expect(fireToast).toHaveBeenCalled());
+      expect(fireToast).toHaveBeenCalledWith(expect.stringMatching(/browser blocked the download/), 'error');
+      expect(fireToast).not.toHaveBeenCalledWith(expect.stringMatching(/^Exported/));
+    } finally {
+      (URL as any).createObjectURL = saved;
+    }
+  });
+
+  it('a governance refusal (409, not frozen) is not blamed on the connection', async () => {
+    apiRequest.mockImplementation(async (method: string, url: string) => {
+      if (method === 'POST' && url === '/api/authoring/docs/D1/export') {
+        throw Object.assign(new Error('Freeze or approve it first'), { name: 'ApiRequestError', status: 409 });
+      }
+      return { ok: true, status: 200, json: async () => ({ templates: [] }) } as Response;
+    });
+    const fireToast = vi.fn();
+    render(<AuthoringCreateExport {...base} docId="D1" fireToast={fireToast} />);
+    fireEvent.click(screen.getByRole('button', { name: /Word/ }));
+    await waitFor(() => expect(fireToast).toHaveBeenCalled());
+    const msg = String(fireToast.mock.calls[0][0]);
+    expect(msg).toMatch(/Freeze or approve it first/);
+    expect(msg).not.toMatch(/Check your connection/);
+  });
+
+  it('offers no export on a draft document, and says why', () => {
+    render(<AuthoringCreateExport {...base} docId="D1" docStatus="DRAFT" />);
+    const word = screen.getByRole('button', { name: /Word/ }) as HTMLButtonElement;
+    expect(word.disabled).toBe(true);
+    expect(word.title).toMatch(/Freeze or approve this document/);
   });
 });

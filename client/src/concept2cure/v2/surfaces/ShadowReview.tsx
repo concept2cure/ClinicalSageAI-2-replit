@@ -1,8 +1,10 @@
-import React, { useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { I } from '../icons';
 import { useLiveRows, EmptyState } from '../dataConnect';
 import { PedigreeBadge } from '../intelligence/Intelligence';
 import type { SurfaceViewProps } from '../surfaceViews';
+import { usePublishSurfaceContext } from '../surfaceContext';
+import { useSurfaceActionHandlers, notifySurfaceActionReady } from '../surfaceActions';
 import '../styles/project-home-v2.css';
 import {
   SHADOW_LENSES, shadowLens, shadowAggregateRisk, SR_SEV, SR_DIM,
@@ -51,6 +53,32 @@ export function ShadowReview({ onAsk, onNav }: SurfaceViewProps) {
      fallback: real rows, an honest empty, or an honest error. */
   const live = useLiveRows<ShadowLensRow>('/api/shadow-review');
 
+  /* AnA can switch reviewer lens — the same click a person makes. Switching TO
+     a lens that has not been run is itself the honest, intended behaviour (the
+     surface's whole point is distinguishing "not run" from "run, zero
+     findings"), so the handler does not require the target lens to have a row;
+     it only refuses while the worklist read itself is not ready. */
+  useSurfaceActionHandlers('shadow-review', {
+    'shadow-review.select-lens': (params) => {
+      const raw = String(params.lens ?? '').trim();
+      if (!raw) return { ok: false, reason: 'Name a reviewer lens by its id or label.' };
+      if (live.loading) return { ok: false, reason: 'The shadow-review worklist is still loading.', retry: true };
+      if (live.error) return { ok: false, reason: 'The shadow-review store did not load, so there is no worklist to switch lenses on.' };
+      const needle = raw.toLowerCase();
+      const byId = lenses.filter((l) => l.id.toLowerCase() === needle);
+      const hits = byId.length ? byId : lenses.filter((l) => l.label.toLowerCase().includes(needle));
+      if (hits.length === 0) return { ok: false, reason: `No reviewer lens matching "${raw}".` };
+      if (hits.length > 1) return { ok: false, reason: `"${raw}" matches ${hits.length} lenses — name one exactly.` };
+      const l = hits[0];
+      if (lensId === l.id) return { ok: true, detail: `Already on the ${l.label} lens` };
+      setLensId(l.id);
+      return { ok: true, detail: `Switched to the ${l.label} lens` };
+    },
+  });
+  useEffect(() => {
+    if (!live.loading && !live.error) notifySurfaceActionReady('shadow-review');
+  }, [live.loading, live.error]);
+
   const findingsByLens = useMemo(() => {
     const map: Record<string, ShadowFindingRow[]> = {};
     for (const r of live.rows) {
@@ -77,6 +105,69 @@ export function ShadowReview({ onAsk, onNav }: SurfaceViewProps) {
   const crl = risk.crl;
   const criticals = findings.filter((f) => f.severity === 'critical').length;
   const majors = findings.filter((f) => f.severity === 'major').length;
+
+  /* What AnA can see of this screen.
+     `lensRan` is the fact that carries this surface. A lens with no row has NOT
+     been run; a lens with a row and zero findings passed. Both draw an empty
+     finding list, and telling AnA "no findings" for the first would have her
+     report a clean reviewer verdict on a review that never happened — on the
+     surface whose whole purpose is predicting an RTF or CRL before filing. So
+     the two are published as different states, and the risk scores are withheld
+     entirely for a lens that has not run. */
+  const anaContext = useMemo(() => {
+    if (live.loading) {
+      return { summary: 'The shadow-review worklist is still loading; nothing on screen is final yet.' };
+    }
+    if (live.error) {
+      return {
+        summary:
+          'The shadow-review store could not be read, so this screen is showing no reviewer findings ' +
+          'because of a failure. That is NOT a clean review and must not be reported as one.',
+        availableActions: ['Retry the shadow-review read'],
+      };
+    }
+    const lensLabel = lens?.label ?? lensId;
+    if (!lensRan) {
+      return {
+        summary:
+          `Shadow review: the "${lensLabel}" reviewer lens has NOT been run against this submission, so ` +
+          'there are no findings and no RTF or CRL risk score on screen. This is an absence of review, ' +
+          'not a clean result.',
+        facts: {
+          selectedLens: lensId,
+          lensHasRun: false,
+          lensesRun: Object.keys(findingsByLens),
+        },
+        availableActions: ['Run the selected reviewer lens', 'Switch to a lens that has already been run'],
+      };
+    }
+    return {
+      summary:
+        `Shadow review under the "${lensLabel}" reviewer lens: ${findings.length} finding(s) — ` +
+        `${criticals} critical, ${majors} major. Refuse-to-file risk ${rtf}, complete-response risk ${crl} ` +
+        '(0-1 deterministic aggregation over the findings on screen).',
+      facts: {
+        selectedLens: lensId,
+        lensHasRun: true,
+        lensesRun: Object.keys(findingsByLens),
+        findingCount: findings.length,
+        criticalFindings: criticals,
+        majorFindings: majors,
+        refuseToFileRisk: rtf,
+        completeResponseRisk: crl,
+        findings: findings.slice(0, 12).map((f) => ({
+          dimension: f.dimension, severity: f.severity, title: f.title,
+          detail: f.detail, basis: f.basis, recommendation: f.recommendation, leafRef: f.leafRef,
+        })),
+      },
+      availableActions: [
+        'Switch reviewer lens',
+        'Open a finding to read its basis and the recommended fix',
+        'Re-run the lens after addressing findings',
+      ],
+    };
+  }, [live.loading, live.error, lens, lensId, lensRan, findingsByLens, findings, criticals, majors, rtf, crl]);
+  usePublishSurfaceContext('shadow-review', anaContext);
 
   /* AnA's answer-first verdict -- reviewer voice, honest, one clear next step.
      Speaks to the connected submission; no fabricated sequence identity (the
@@ -137,7 +228,7 @@ export function ShadowReview({ onAsk, onNav }: SurfaceViewProps) {
       <div className="sr-body">
         {/* Four-state body: loading -> error -> empty -> real */}
         {live.loading ? (
-          <div className="scaf-note" style={{ padding: '18px 10px' }}>Loading the simulated-reviewer worklist…</div>
+          <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>Loading the simulated-reviewer worklist…</div>
         ) : live.error ? (
           <EmptyState
             tone="error"

@@ -30,11 +30,15 @@ import {
   runPipelineForRole,
 } from '../services/biostatistics-judgment';
 import type { StudyDesignInput, StakeholderRole, StatisticalArtifactType } from '../services/biostatistics-judgment';
+import { serverError } from '../lib/api-response';
+import { createScopedLogger } from '../utils/logger';
 
 const collaborativeSapService = new CollaborativeSapService();
 const externalControlArmService = new ExternalControlArmService();
 
 const router = Router();
+
+const logger = createScopedLogger('biostat-platform');
 
 // All routes require authentication
 const authMiddleware = authenticateToken;
@@ -81,7 +85,7 @@ router.post('/continuum/initialize', authMiddleware, async (req: Request, res: R
 
     res.json({ success: true, data: result });
   } catch (error: any) {
-    res.status(500).json({ success: false, error: error.message });
+    return serverError(res, logger, 'initializing continuum', error);
   }
 });
 
@@ -97,7 +101,7 @@ router.get('/continuum/threads', authMiddleware, async (req: Request, res: Respo
     const threads = await statisticalContinuumService.listThreads(orgId);
     res.json({ success: true, data: threads });
   } catch (error: any) {
-    res.status(500).json({ success: false, error: error.message });
+    return serverError(res, logger, 'loading threads', error);
   }
 });
 
@@ -116,7 +120,7 @@ router.get('/continuum/:threadId', authMiddleware, async (req: Request, res: Res
     }
     res.json({ success: true, data: result });
   } catch (error: any) {
-    res.status(500).json({ success: false, error: error.message });
+    return serverError(res, logger, 'loading continuum', error);
   }
 });
 
@@ -134,7 +138,7 @@ router.put('/continuum/:threadId/sap', authMiddleware, async (req: Request, res:
     const result = await statisticalContinuumService.generateSAP(threadId, orgId);
     res.json({ success: true, data: result });
   } catch (error: any) {
-    res.status(500).json({ success: false, error: error.message });
+    return serverError(res, logger, 'updating SAP', error);
   }
 });
 
@@ -152,7 +156,7 @@ router.put('/continuum/:threadId/analysis-specs', authMiddleware, async (req: Re
     const result = await statisticalContinuumService.generateAnalysisSpecs(threadId, orgId);
     res.json({ success: true, data: result });
   } catch (error: any) {
-    res.status(500).json({ success: false, error: error.message });
+    return serverError(res, logger, 'updating analysis specs', error);
   }
 });
 
@@ -170,7 +174,7 @@ router.put('/continuum/:threadId/tlf-shells', authMiddleware, async (req: Reques
     const result = await statisticalContinuumService.generateTLFShells(threadId, orgId);
     res.json({ success: true, data: result });
   } catch (error: any) {
-    res.status(500).json({ success: false, error: error.message });
+    return serverError(res, logger, 'updating TLF shells', error);
   }
 });
 
@@ -188,7 +192,7 @@ router.post('/continuum/:threadId/results', authMiddleware, async (req: Request,
     const result = await statisticalContinuumService.ingestResults(threadId, req.body, orgId);
     res.json({ success: true, data: result });
   } catch (error: any) {
-    res.status(500).json({ success: false, error: error.message });
+    return serverError(res, logger, 'saving results', error);
   }
 });
 
@@ -204,7 +208,7 @@ router.get('/continuum/:threadId/csr-sections', authMiddleware, async (req: Requ
     const result = await statisticalContinuumService.generateCSRSections(threadId, orgId);
     res.json({ success: true, data: result });
   } catch (error: any) {
-    res.status(500).json({ success: false, error: error.message });
+    return serverError(res, logger, 'loading CSR sections', error);
   }
 });
 
@@ -228,7 +232,7 @@ router.post('/design-optimizer/recommend', authMiddleware, async (req: Request, 
     );
     res.json({ success: true, data: result });
   } catch (error: any) {
-    res.status(500).json({ success: false, error: error.message });
+    return serverError(res, logger, 'recommending design optimizer', error);
   }
 });
 
@@ -245,7 +249,7 @@ router.get('/design-optimizer/regulatory-precedents/:indication', authMiddleware
     const result = await regulatoryOutcomeOptimizerService.getRegulatoryPrecedents(indication, orgId);
     res.json({ success: true, data: result });
   } catch (error: any) {
-    res.status(500).json({ success: false, error: error.message });
+    return serverError(res, logger, 'loading regulatory precedents', error);
   }
 });
 
@@ -261,7 +265,7 @@ router.post('/design-optimizer/sensitivity', authMiddleware, async (req: Request
     const result = await regulatoryOutcomeOptimizerService.runSensitivityAnalysis(req.body, orgId);
     res.json({ success: true, data: result });
   } catch (error: any) {
-    res.status(500).json({ success: false, error: error.message });
+    return serverError(res, logger, 'saving sensitivity', error);
   }
 });
 
@@ -290,7 +294,7 @@ router.post('/estimand/define', authMiddleware, async (req: Request, res: Respon
     }, orgId);
     res.json({ success: true, data: result });
   } catch (error: any) {
-    res.status(500).json({ success: false, error: error.message });
+    return serverError(res, logger, 'saving define', error);
   }
 });
 
@@ -307,7 +311,7 @@ router.post('/estimand/:estimandId/methods', authMiddleware, async (req: Request
     const result = await estimandEngineService.recommendMethods(estimandId, orgId);
     res.json({ success: true, data: result });
   } catch (error: any) {
-    res.status(500).json({ success: false, error: error.message });
+    return serverError(res, logger, 'saving methods', error);
   }
 });
 
@@ -329,7 +333,7 @@ router.post('/multiplicity/design', authMiddleware, async (req: Request, res: Re
     }, orgId);
     res.json({ success: true, data: result });
   } catch (error: any) {
-    res.status(500).json({ success: false, error: error.message });
+    return serverError(res, logger, 'saving design', error);
   }
 });
 
@@ -359,7 +363,7 @@ router.get('/estimand/regulatory-examples/:indication', authMiddleware, async (r
     const result = await estimandEngineService.getRegulatoryExamples(indication, strategy, orgId);
     res.json({ success: true, data: result });
   } catch (error: any) {
-    res.status(500).json({ success: false, error: error.message });
+    return serverError(res, logger, 'loading regulatory examples', error);
   }
 });
 
@@ -376,7 +380,7 @@ router.post('/estimand/:estimandId/validate', authMiddleware, async (req: Reques
     const result = await estimandEngineService.validateEstimand(estimandId, orgId);
     res.json({ success: true, data: result });
   } catch (error: any) {
-    res.status(500).json({ success: false, error: error.message });
+    return serverError(res, logger, 'validating estimand', error);
   }
 });
 
@@ -399,7 +403,7 @@ router.post('/sap/create', authMiddleware, async (req: Request, res: Response) =
     );
     res.json({ success: true, data: result });
   } catch (error: any) {
-    res.status(500).json({ success: false, error: error.message });
+    return serverError(res, logger, 'saving create', error);
   }
 });
 
@@ -420,7 +424,7 @@ router.put('/sap/:sapVersionId/section/:sectionId', authMiddleware, async (req: 
     );
     res.json({ success: true, data: result });
   } catch (error: any) {
-    res.status(500).json({ success: false, error: error.message });
+    return serverError(res, logger, 'updating section', error);
   }
 });
 
@@ -440,7 +444,7 @@ router.post('/sap/:sapVersionId/comment', authMiddleware, async (req: Request, r
     );
     res.json({ success: true, data: result });
   } catch (error: any) {
-    res.status(500).json({ success: false, error: error.message });
+    return serverError(res, logger, 'saving comment', error);
   }
 });
 
@@ -459,7 +463,7 @@ router.post('/sap/:sapVersionId/resolve-comment/:commentId', authMiddleware, asy
     const result = await collaborativeSapService.resolveComment(commentId, orgId, userId);
     res.json({ success: true, data: result });
   } catch (error: any) {
-    res.status(500).json({ success: false, error: error.message });
+    return serverError(res, logger, 'resolving the SAP comment', error);
   }
 });
 
@@ -478,7 +482,7 @@ router.post('/sap/amendment', authMiddleware, async (req: Request, res: Response
     );
     res.json({ success: true, data: result });
   } catch (error: any) {
-    res.status(500).json({ success: false, error: error.message });
+    return serverError(res, logger, 'saving amendment', error);
   }
 });
 
@@ -496,7 +500,7 @@ router.post('/sap/:sapVersionId/sign', authMiddleware, async (req: Request, res:
     const result = await collaborativeSapService.signVersion(sapVersionId, req.body, orgId, userId);
     res.json({ success: true, data: result });
   } catch (error: any) {
-    res.status(500).json({ success: false, error: error.message });
+    return serverError(res, logger, 'signing SAP', error);
   }
 });
 
@@ -513,7 +517,7 @@ router.post('/sap/:sapVersionId/lock', authMiddleware, async (req: Request, res:
     const result = await collaborativeSapService.lockVersion(sapVersionId, orgId);
     res.json({ success: true, data: result });
   } catch (error: any) {
-    res.status(500).json({ success: false, error: error.message });
+    return serverError(res, logger, 'locking SAP', error);
   }
 });
 
@@ -529,7 +533,7 @@ router.get('/sap/:threadId/audit-trail', authMiddleware, async (req: Request, re
     const result = await collaborativeSapService.getAuditTrail(threadId, orgId);
     res.json({ success: true, data: result });
   } catch (error: any) {
-    res.status(500).json({ success: false, error: error.message });
+    return serverError(res, logger, 'loading audit trail', error);
   }
 });
 
@@ -545,7 +549,7 @@ router.get('/sap/version/:sapVersionId', authMiddleware, async (req: Request, re
     const result = await collaborativeSapService.getSapVersion(sapVersionId, orgId);
     res.json({ success: true, data: result });
   } catch (error: any) {
-    res.status(500).json({ success: false, error: error.message });
+    return serverError(res, logger, 'loading version', error);
   }
 });
 
@@ -561,7 +565,7 @@ router.get('/sap/:threadId/versions', authMiddleware, async (req: Request, res: 
     const result = await collaborativeSapService.listVersions(threadId, orgId);
     res.json({ success: true, data: result });
   } catch (error: any) {
-    res.status(500).json({ success: false, error: error.message });
+    return serverError(res, logger, 'loading versions', error);
   }
 });
 
@@ -584,7 +588,7 @@ router.post('/external-control/search', authMiddleware, async (req: Request, res
     );
     res.json({ success: true, data: { arms: result } });
   } catch (error: any) {
-    res.status(500).json({ success: false, error: error.message });
+    return serverError(res, logger, 'searching external control', error);
   }
 });
 
@@ -611,7 +615,7 @@ router.post('/external-control/synthesize', authMiddleware, async (req: Request,
     );
     res.json({ success: true, data: result });
   } catch (error: any) {
-    res.status(500).json({ success: false, error: error.message });
+    return serverError(res, logger, 'synthesising external control', error);
   }
 });
 
@@ -628,7 +632,7 @@ router.post('/external-control/:controlId/validate', authMiddleware, async (req:
     const result = await externalControlArmService.validateControl(controlId, orgId);
     res.json({ success: true, data: result });
   } catch (error: any) {
-    res.status(500).json({ success: false, error: error.message });
+    return serverError(res, logger, 'validating external control', error);
   }
 });
 
@@ -644,7 +648,7 @@ router.get('/external-control/:controlId/regulatory-package', authMiddleware, as
     const result = await externalControlArmService.generateRegulatoryPackage(controlId, orgId);
     res.json({ success: true, data: result });
   } catch (error: any) {
-    res.status(500).json({ success: false, error: error.message });
+    return serverError(res, logger, 'loading regulatory package', error);
   }
 });
 
@@ -661,7 +665,7 @@ router.post('/external-control/ingest-arm', authMiddleware, async (req: Request,
     const result = await externalControlArmService.ingestArmData(req.body, orgId);
     res.json({ success: true, data: result });
   } catch (error: any) {
-    res.status(500).json({ success: false, error: error.message });
+    return serverError(res, logger, 'saving ingest arm', error);
   }
 });
 
@@ -677,7 +681,7 @@ router.get('/external-control/:controlId', authMiddleware, async (req: Request, 
     const result = await externalControlArmService.getControl(controlId, orgId);
     res.json({ success: true, data: result });
   } catch (error: any) {
-    res.status(500).json({ success: false, error: error.message });
+    return serverError(res, logger, 'loading external control', error);
   }
 });
 
@@ -703,7 +707,7 @@ router.post('/adaptive/plan', authMiddleware, async (req: Request, res: Response
 
     res.json({ success: true, data: result });
   } catch (error: any) {
-    res.status(500).json({ success: false, error: error.message });
+    return serverError(res, logger, 'planning adaptive', error);
   }
 });
 
@@ -725,7 +729,7 @@ router.post('/adaptive/:planId/interim-snapshot', authMiddleware, async (req: Re
 
     res.json({ success: true, data: result });
   } catch (error: any) {
-    res.status(500).json({ success: false, error: error.message });
+    return serverError(res, logger, 'saving interim snapshot', error);
   }
 });
 
@@ -743,7 +747,7 @@ router.post('/adaptive/:planId/evaluate/:snapshotId', authMiddleware, async (req
 
     res.json({ success: true, data: result });
   } catch (error: any) {
-    res.status(500).json({ success: false, error: error.message });
+    return serverError(res, logger, 'evaluating adaptive', error);
   }
 });
 
@@ -761,7 +765,7 @@ router.post('/adaptive/:planId/ssr/:snapshotId', authMiddleware, async (req: Req
 
     res.json({ success: true, data: result });
   } catch (error: any) {
-    res.status(500).json({ success: false, error: error.message });
+    return serverError(res, logger, 'saving ssr', error);
   }
 });
 
@@ -784,7 +788,7 @@ router.post('/adaptive/:planId/decision', authMiddleware, async (req: Request, r
 
     res.json({ success: true, data: result });
   } catch (error: any) {
-    res.status(500).json({ success: false, error: error.message });
+    return serverError(res, logger, 'saving decision', error);
   }
 });
 
@@ -802,7 +806,7 @@ router.get('/adaptive/:planId/idmc-report/:lookNumber', authMiddleware, async (r
 
     res.json({ success: true, data: result });
   } catch (error: any) {
-    res.status(500).json({ success: false, error: error.message });
+    return serverError(res, logger, 'loading idmc report', error);
   }
 });
 
@@ -819,7 +823,7 @@ router.get('/adaptive/:planId', authMiddleware, async (req: Request, res: Respon
 
     res.json({ success: true, data: result });
   } catch (error: any) {
-    res.status(500).json({ success: false, error: error.message });
+    return serverError(res, logger, 'loading adaptive', error);
   }
 });
 
@@ -836,7 +840,7 @@ router.get('/adaptive/:planId/operating-characteristics', authMiddleware, async 
 
     res.json({ success: true, data: result });
   } catch (error: any) {
-    res.status(500).json({ success: false, error: error.message });
+    return serverError(res, logger, 'loading operating characteristics', error);
   }
 });
 
@@ -861,7 +865,7 @@ router.post('/knowledge/query', authMiddleware, async (req: Request, res: Respon
     const result = await biostatKnowledgeGraphService.queryGraph(query, orgId);
     res.json({ success: true, data: result });
   } catch (error: any) {
-    res.status(500).json({ success: false, error: error.message });
+    return serverError(res, logger, 'querying knowledge', error);
   }
 });
 
@@ -878,7 +882,7 @@ router.get('/knowledge/method-landscape/:indication', authMiddleware, async (req
     const result = await biostatKnowledgeGraphService.getMethodLandscape(indication, orgId);
     res.json({ success: true, data: result });
   } catch (error: any) {
-    res.status(500).json({ success: false, error: error.message });
+    return serverError(res, logger, 'loading method landscape', error);
   }
 });
 
@@ -898,7 +902,7 @@ router.get('/knowledge/endpoint-method-matrix', authMiddleware, async (req: Requ
     const result = await biostatKnowledgeGraphService.getEndpointMethodMatrix(orgId, filters);
     res.json({ success: true, data: result });
   } catch (error: any) {
-    res.status(500).json({ success: false, error: error.message });
+    return serverError(res, logger, 'loading endpoint method matrix', error);
   }
 });
 
@@ -915,7 +919,7 @@ router.post('/knowledge/ingest-csr', authMiddleware, async (req: Request, res: R
     const result = await biostatKnowledgeGraphService.ingestFromCSR(csrId, orgId);
     res.json({ success: true, data: result });
   } catch (error: any) {
-    res.status(500).json({ success: false, error: error.message });
+    return serverError(res, logger, 'saving ingest CSR', error);
   }
 });
 
@@ -932,7 +936,7 @@ router.get('/knowledge/trend/:concept', authMiddleware, async (req: Request, res
     const result = await biostatKnowledgeGraphService.getMethodTrend(concept, orgId);
     res.json({ success: true, data: result });
   } catch (error: any) {
-    res.status(500).json({ success: false, error: error.message });
+    return serverError(res, logger, 'loading trend', error);
   }
 });
 
@@ -961,7 +965,7 @@ router.post('/judgment/analyze', authMiddleware, async (req: Request, res: Respo
     const report = runJudgmentPipeline(input);
     res.json({ success: true, data: report });
   } catch (error: any) {
-    res.status(500).json({ success: false, error: error.message });
+    return serverError(res, logger, 'analysing judgment', error);
   }
 });
 
@@ -986,7 +990,7 @@ router.post('/judgment/role-interpretation', authMiddleware, async (req: Request
     const result = runPipelineForRole(input as StudyDesignInput, role as StakeholderRole);
     res.json({ success: true, data: result });
   } catch (error: any) {
-    res.status(500).json({ success: false, error: error.message });
+    return serverError(res, logger, 'saving role interpretation', error);
   }
 });
 
@@ -1023,7 +1027,7 @@ router.post('/judgment/generate-artifact', authMiddleware, async (req: Request, 
 
     res.json({ success: true, data: result });
   } catch (error: any) {
-    res.status(500).json({ success: false, error: error.message });
+    return serverError(res, logger, 'saving generate artifact', error);
   }
 });
 

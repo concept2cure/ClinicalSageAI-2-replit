@@ -137,12 +137,26 @@ export async function getConnectorCatalog(
 ): Promise<(ConnectorCatalogEntry & { configured: boolean; healthy: boolean })[]> {
   initializeConnectors();
 
-  // Check which connectors have stored credentials for this org
-  const credResult = await pool.query(
-    `SELECT connector_id, is_valid FROM connector_credentials WHERE organization_id = $1`,
-    [organizationId]
-  );
-  const credMap = new Map(credResult.rows.map((r: any) => [r.connector_id, r.is_valid]));
+  // Which connectors have stored credentials for this org. A missing table
+  // (42P01) is a legitimately-unprovisioned org → an empty credMap, a real
+  // "nothing configured yet." Any OTHER error is a read failure and MUST
+  // propagate: the deep-research board route needs to tell an unprovisioned
+  // empty (→ catalog with everything unconfigured) from a failed read (→ 500 →
+  // the surface's honest "connector inventory unknown due to a failure").
+  // Swallowing a real failure to an empty credMap here served the full catalog
+  // as though it were the org's real, all-configured inventory.
+  let credRows: Array<{ connector_id: string; is_valid: boolean }> = [];
+  try {
+    const credResult = await pool.query(
+      `SELECT connector_id, is_valid FROM connector_credentials WHERE organization_id = $1`,
+      [organizationId]
+    );
+    credRows = credResult.rows as typeof credRows;
+  } catch (e) {
+    if ((e as { code?: string })?.code !== '42P01') throw e;
+    // else: table not provisioned — no credentials stored, empty credMap.
+  }
+  const credMap = new Map(credRows.map((r) => [r.connector_id, r.is_valid]));
 
   return CONNECTOR_CATALOG.map(entry => ({
     ...entry,

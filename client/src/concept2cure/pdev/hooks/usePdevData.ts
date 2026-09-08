@@ -847,6 +847,8 @@ export interface EvidenceAttachArgs {
   linkType: PdevEvidenceLinkType;
   strength: PdevEvidenceStrength;
   rationale: string;
+  /** §11.10(e) reason-for-change from the governed confirm dialog. */
+  reasonForChange?: string;
 }
 
 /** POST /api/pdev/programs/:programId/activities/:activityKey/evidence */

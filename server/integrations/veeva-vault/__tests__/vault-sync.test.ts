@@ -75,7 +75,7 @@ function makeFakes() {
     downloadDocumentFile: vi.fn().mockResolvedValue(Buffer.from('%PDF-1.4 vault-bytes')),
   };
   const pool = { query: vi.fn().mockResolvedValue({ rows: [] }) };
-  const audit = { logAction: vi.fn().mockResolvedValue(undefined) };
+  const audit = { logAction: vi.fn().mockResolvedValue({ persisted: true, chained: true, tamperProof: true }) };
   const svc = new VaultSyncService(client as any, pool, audit);
   return { client, pool, audit, svc };
 }

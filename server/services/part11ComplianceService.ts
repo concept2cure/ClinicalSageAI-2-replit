@@ -14,12 +14,18 @@
  */
 
 import { db } from '../db';
-import { deviceAuditTrail, electronicSignatures, users, organizations } from '../../shared/schema';
+import { writeChainedAuditRow } from './auditService.js';
+import { deviceAuditTrail, users } from '../../shared/schema';
 import { documentVersions, documents, submissions } from '../../shared/schema';
 import { eq, and, desc } from 'drizzle-orm';
 import crypto from 'crypto';
 import auditService from './auditService';
-import { buildVersionBindingDigest, evaluateBindingVerification } from './part11/version-binding';
+import { buildVersionBindingDigest } from './part11/version-binding';
+import {
+  BINDING_BASIS,
+  drizzleSignatureClient,
+  persistElectronicSignature,
+} from './part11/signature-persistence';
 
 interface AuditTrailInput {
   organizationId: number;
@@ -70,6 +76,7 @@ class Part11ComplianceService {
     password,
     boundPayloadDigest: preboundPayloadDigest,
     signerRole,
+    transactionalAuditEvent,
   }: {
     userId: number;
     organizationId: number;
@@ -78,6 +85,14 @@ class Part11ComplianceService {
     signatureReason: string;
     signatureMeaning: string;
     password: string;
+    /**
+     * An audit event the CALLER needs committed with the signature, not after
+     * it. Written on this transaction via `writeChainedAuditRow`, so it lands
+     * or the signature does not exist (ledger L138). Distinct from the
+     * best-effort secondary log below, which is a convenience record whose
+     * durable counterpart is the in-transaction device_audit_trail row.
+     */
+    transactionalAuditEvent?: Parameters<typeof writeChainedAuditRow>[1];
     /**
      * Optional pre-computed §11.70 payload-binding digest (e.g. the submission
      * orchestrator's release digest). When provided it is persisted on the row
@@ -169,51 +184,141 @@ class Part11ComplianceService {
       // The attribution hash is computed over the EXACT manifest that is
       // persisted. Previously the hash covered signatureData while the stored
       // manifest additionally carried boundPayloadDigest, so
-      // validateElectronicSignature's integrity re-derivation (which hashes
+      // verifySignatureIntegrity's integrity re-derivation (which hashes
       // the stored manifest) could never match — every signature verified as
       // "integrity compromised". Hash and manifest must be the same bytes.
       const signatureManifest = { ...signatureData, boundPayloadDigest };
       const signature = this.generateCryptographicSignature(signatureManifest, userId);
 
-      const [electronicSig] = await dbInstance
-        .insert(electronicSignatures)
-        .values({
-          documentId,
-          versionId,
-          organizationId,
-          signatureType: documentType,
-          signaturePurpose: signatureReason,
-          signatureLevel: 1,
-          signerId: userId,
-          signerName: user.name,
-          signerTitle: user.title,
-          signerEmail: user.email,
-          authenticationMethod: 'password',
-          authenticationTimestamp: timestamp,
-          secondFactorVerified: false,
-          signatureHash: signature.hash,
-          signatureMeaning,
-          signatureManifest,
-          boundPayloadDigest,
-          signedAt: timestamp,
-          complianceStatement: 'Electronic signature complies with 21 CFR Part 11',
-          verificationStatus: 'valid',
-        })
-        .returning();
-
-      await this.createAuditTrail({
+      const resolvedAuditUserId = typeof userId === 'number' ? userId : 0;
+      const resolvedAuditEntityId = typeof documentId === 'number' ? documentId : 0;
+      // Atomicity (§11.10(e)): the audit-trail event MUST commit together with
+      // the §11.70 signature, or neither does. Previously the signature was
+      // inserted and committed on its own and the audit write was a separate,
+      // later statement — a failure there (DB blip, schema drift) left a
+      // permanent, active signature with NO recorded event, and the caller's
+      // idempotency pre-check then short-circuited every retry, so the missing
+      // event could never be backfilled. One transaction closes that gap.
+      const electronicSig = await dbInstance.transaction(async (tx) => {
+      // Ledger L37 — ONE INSERT per substrate. This used to be a second
+      // `.insert(electronicSignatures)` builder living here beside the one in
+      // services/part11/signature-persistence.ts. Both were conforming, and
+      // that was the problem: two writers are two answers to what a Part 11 row
+      // must contain, and they had already drifted — this one wrote 20 of the
+      // table's 26 columns and had no way to say what `bound_payload_digest`
+      // was a digest OF, while every row from the shared writer states its
+      // basis. The record below is the same row, column for column, composed
+      // for the shared writer and inserted by it.
+      //
+      // `drizzleSignatureClient(tx)` — not a pool client — so the INSERT runs on
+      // THIS transaction and still commits or rolls back with the
+      // device_audit_trail row below (§11.10(e), the atomicity note above).
+      const sig = await persistElectronicSignature(drizzleSignatureClient(tx), {
+        documentId,
+        versionId,
+        // The basis this row's digest actually has. A caller-supplied digest is
+        // the submission orchestrator's release-package digest; otherwise it is
+        // the digest buildVersionBindingDigest just took over the signed
+        // version's content. Stated, never inferred: an inspector reads this
+        // column to know which re-derivation answers "is this still the content
+        // that was signed?".
+        bindingBasis: preboundPayloadDigest
+          ? BINDING_BASIS.SUBMISSION_RELEASE_PAYLOAD
+          : BINDING_BASIS.DOCUMENT_VERSION_CONTENT,
+        signatureType: documentType,
+        signaturePurpose: signatureReason,
+        signatureLevel: 1,
+        signerId: userId,
+        signerName: user.name,
+        signerTitle: user.title,
+        signerEmail: user.email,
+        authenticationMethod: 'password',
+        authenticationTimestamp: timestamp,
+        secondFactorVerified: false,
+        signatureHash: signature.hash,
+        signatureMeaning,
+        signatureManifest,
+        // The deleted builder omitted is_valid and let the column default to
+        // true. Passed explicitly here because the shared writer requires it:
+        // a signature's validity is an assertion, and a row should not carry it
+        // by defaulting.
+        isValid: true,
+        verificationStatus: 'valid',
+        complianceStatement: 'Electronic signature complies with 21 CFR Part 11',
+        signedAt: timestamp,
+        boundPayloadDigest,
         organizationId,
-        userId,
+      });
+
+      // Same transaction → the §11.10(e) event and the signature are
+      // all-or-nothing. This inlines the primary device_audit_trail write from
+      // createAuditTrail so it shares the signature's transaction.
+      await tx.insert(deviceAuditTrail).values({
+        organizationId,
+        userId: resolvedAuditUserId,
         action: 'ELECTRONIC_SIGNATURE_CREATED',
         entityType: documentType,
-        entityId: documentId,
-        details: {
-          signatureId: electronicSig.id,
-          reason: signatureReason,
-          meaning: signatureMeaning,
-          userName: user.name,
-        },
+        entityId: resolvedAuditEntityId,
+        previousValues: null,
+        newValues: null,
+        changedFields: null,
+        changeReason: signatureReason,
+        userName: user.name || 'Unknown',
+        userRole: null,
+        ipAddress: null,
+        userAgent: null,
+        sessionId: null,
       });
+
+      // The caller's own §11.10(e) event, on THIS transaction. The release
+      // route used to write `release_signature_created` after the signature had
+      // already committed, on its own connection: an audit outage there left a
+      // committed signature with no route-level event, and logAction resolves
+      // normally on a failed write so nothing could even reject. Now the two
+      // land together or neither does.
+      if (transactionalAuditEvent) {
+        await writeChainedAuditRow(drizzleSignatureClient(tx), transactionalAuditEvent);
+      }
+      return sig;
+      });
+
+      // Best-effort SECONDARY log to the general audit service — OUTSIDE the
+      // transaction and non-throwing. The durable §11.10(e) record is the
+      // device_audit_trail row committed atomically above; a failure of this
+      // convenience log must never orphan the signature nor fail the signing.
+      // logAction resolves an outcome rather than rejecting when a write does
+      // not persist, so the previous bare try/catch here could never fire: a
+      // silently unpersisted secondary log read as handled. The outcome is now
+      // inspected, with the catch kept only as belt-and-braces for a promise
+      // documented never to reject — and recorded into the same variable the
+      // check below reads, so either failure path is actually observable.
+      let secondaryAudit: { persisted?: boolean; error?: string } | undefined;
+      try {
+        secondaryAudit = await auditService.logAction({
+          userId: resolvedAuditUserId,
+          action: 'ELECTRONIC_SIGNATURE_CREATED',
+          resourceType: documentType,
+          details: {
+            signatureId: electronicSig.id,
+            reason: signatureReason,
+            meaning: signatureMeaning,
+            userName: user.name,
+            part11Compliance: true,
+          },
+        });
+      } catch (secondaryErr) {
+        secondaryAudit = {
+          persisted: false,
+          error: secondaryErr instanceof Error ? secondaryErr.message : String(secondaryErr),
+        };
+      }
+      if (!secondaryAudit?.persisted) {
+        console.error(
+          '[part11] secondary audit log (best-effort) did NOT persist for signature',
+          electronicSig.id,
+          secondaryAudit?.error,
+        );
+      }
 
       return {
         success: true,
@@ -252,85 +357,6 @@ class Part11ComplianceService {
       versionNumber: version.versionNumber,
       content: version.content,
     });
-  }
-
-  /**
-   * Validate electronic signature
-   */
-  async validateElectronicSignature(signatureId: number, documentId: number) {
-    try {
-      const dbInstance = this.getDb();
-      const [signature] = await dbInstance
-        .select()
-        .from(electronicSignatures)
-        .where(eq(electronicSignatures.id, signatureId))
-        .limit(1);
-
-      if (!signature) {
-        return {
-          valid: false,
-          reason: 'Signature not found',
-        };
-      }
-
-      if (signature.documentId !== documentId) {
-        return {
-          valid: false,
-          reason: 'Signature does not match document',
-        };
-      }
-
-      const manifest = signature.signatureManifest ?? {};
-      const integrityCheck = this.verifySignatureIntegrity(
-        JSON.stringify(manifest),
-        signature.signatureHash
-      );
-
-      if (!integrityCheck.valid) {
-        return {
-          valid: false,
-          reason: 'Signature integrity compromised',
-        };
-      }
-
-      const expiryCheck = this.checkSignatureExpiry(signature.signedAt);
-      if (!expiryCheck.valid) {
-        return {
-          valid: false,
-          reason: 'Signature has expired',
-        };
-      }
-
-      // §11.70 record binding: re-derive the content digest of the SIGNED version
-      // and confirm it still matches what was signed. This is what detects a
-      // post-signing content change — the guarantee the signature exists to make.
-      // versionId is nullable since D6 (governed-target rows anchor via
-      // signed_target and never reach here — the documentId match above already
-      // rejected them); a null version cannot be re-derived, so it reports as
-      // unverifiable rather than silently valid.
-      const bound = (signature as { boundPayloadDigest?: string | null }).boundPayloadDigest;
-      const current = bound && bound.length > 0 && signature.versionId != null
-        ? await this.computeVersionBindingDigest(signature.versionId)
-        : null;
-      const binding = evaluateBindingVerification(bound, current);
-      if (!binding.valid) {
-        return { valid: false, bindingVerified: false, reason: binding.reason };
-      }
-      return {
-        valid: true,
-        bindingVerified: binding.bindingVerified,
-        signedBy: signature.signerId,
-        signedAt: signature.signedAt,
-        reason: signature.signaturePurpose,
-        meaning: signature.signatureMeaning,
-      };
-    } catch (error) {
-      console.error('Error validating electronic signature:', error);
-      return {
-        valid: false,
-        reason: 'Validation error',
-      };
-    }
   }
 
   /**
@@ -721,35 +747,6 @@ class Part11ComplianceService {
       // (route handlers have req.ip), or null when unknown — never a fabricated
       // 127.0.0.1. See FORENSIC_CODE_AUDIT_2026-05-29.md (MEDIUM: Part 11 attribution).
       ipAddress: ipAddress ?? null,
-    };
-  }
-
-  /**
-   * Verify signature integrity
-   */
-  verifySignatureIntegrity(signatureData: string, expectedHash: string) {
-    const calculatedHash = crypto
-      .createHash(this.hashAlgorithm)
-      .update(signatureData)
-      .digest('hex');
-
-    return {
-      valid: calculatedHash === expectedHash,
-    };
-  }
-
-  /**
-   * Check signature expiry
-   */
-  checkSignatureExpiry(signedAt: string | Date) {
-    // Signatures valid for 10 years by default
-    const expiryYears = 10;
-    const expiryDate = new Date(signedAt);
-    expiryDate.setFullYear(expiryDate.getFullYear() + expiryYears);
-
-    return {
-      valid: new Date() < expiryDate,
-      expiryDate,
     };
   }
 

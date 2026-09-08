@@ -42,16 +42,32 @@ import { recordAnaTurn } from '../../services/ana-ri-metrics.js';
 import {
   getOrCreateThread,
   getThreadMessages,
-  saveChatMessage as saveMessage,
-} from '../../services/chat-thread-helpers.js';
+  ThreadAccessError,
+  saveChatMessage as saveMessage, programIdForThread } from '../../services/chat-thread-helpers.js';
 import { planKernelExecution } from '../../services/kernel-router.js';
 import { getKernelPolicyHint } from '../../services/kernel-adaptive-policy.js';
 import { buildMemoryContextForChat } from '../../services/memory-context-assembler.js';
 import { getAllEnabledTools } from '../../services/ana/AnaToolDefinitions.js';
 import { getToolHandler } from '../../services/ana/AnaToolExecutor.js';
 import { getUnhealthyTools } from '../../services/ana/tool-telemetry.js';
-import { directiveFromToolResult } from '../../services/ana-ri/navigation-actions.js';
+import {
+  directiveFromToolResult,
+  surfaceActionFromToolResult,
+} from '../../services/ana-ri/navigation-actions.js';
+import {
+  resolveDriveState,
+  buildDriveStateEvent,
+  buildDriveNavigationEvent,
+  buildDriveActionEvent,
+  buildLiveDrivePromptBlock,
+  auditDriveNavigation,
+  auditDriveAction,
+  driveBudgetFor,
+  DEMO_MAX_ROUNDS,
+} from '../../services/ana-ri/live-drive.js';
+import auditService from '../../services/auditService.js';
 import type { NavigationDirective } from '../../../shared/navigation/index.js';
+import type { SurfaceActionDirective } from '../../../shared/navigation/surface-actions.js';
 import {
   runAgenticToolLoop,
   resolveMaxRounds,
@@ -98,6 +114,7 @@ import {
   resolveProjectIdFromBody,
 } from '../../services/ana-ri/chat-context-builder.js';
 import { appendAnaRequestContextBlocks } from '../../services/ana-ri/surface-context-block.js';
+import { invokedAppHints, invokedAppPins } from '../../services/ana-ri/invoked-apps-block.js';
 import {
   sendError,
   extractRequestContext,
@@ -136,7 +153,8 @@ export function mountStreamRoute(router: Router): void {
         language,
         model_override,
         effort_level,
-        agent_mode,
+        live_drive,
+        drive_mode,
       } = req.body;
 
       if (!message || typeof message !== 'string') {
@@ -247,11 +265,23 @@ export function mountStreamRoute(router: Router): void {
 
       // Resolve context
       const { orgId, userId } = extractRequestContext(req);
-      const agentMode = agent_mode === true;
       const organizationClientTypePromise = resolveOrganizationClientType(orgId);
       const toolPolicyPromise = orgId
         ? loadAnaToolPolicy(getPool(), Number(orgId))
         : Promise.resolve({});
+
+      // ── Live Drive (opt-in screen driving) ─────────────────────────────
+      // The client sends `live_drive: true` only while the person has the
+      // toggle on, plus `drive_mode: 'demo'` for an explicitly started
+      // demonstration (bigger budgets, demo prompt block — same entitlement).
+      // Entitlement (`ana_live_drive`, ENTITLEMENTS_ENFORCE modes) is resolved
+      // in parallel with context assembly; a deny is an honest `drive_state`
+      // event, never a dead turn. No request → zero queries.
+      const driveStatePromise = resolveDriveState(
+        live_drive === true,
+        orgId != null ? Number(orgId) : null,
+        { driveMode: drive_mode },
+      );
 
       // ── Intelligence answer fast-path ──────────────────────────────────
       // When the client submits a structured intelligence flow answer, skip
@@ -268,6 +298,7 @@ export function mountStreamRoute(router: Router): void {
             userId: userId || null,
             projectId: streamProjectId ? Number(streamProjectId) || null : null,
             clientType: await organizationClientTypePromise,
+            projectRef: streamProjectId ? String(streamProjectId) : null,
           });
           const parsed = JSON.parse(resultStr);
           if (parsed?.status === 'intelligence_question' && parsed.question) {
@@ -276,6 +307,10 @@ export function mountStreamRoute(router: Router): void {
                 type: 'intelligence_question',
                 question: parsed.question,
                 flowState: parsed.flowState,
+                /* The durable interview session. A client that carries this
+                   back as session_id on each answer keeps the interview
+                   across a dropped conversation; flow_state alone does not. */
+                sessionId: parsed.session_id ?? null,
               })}\n\n`
             );
             res.write(
@@ -292,6 +327,7 @@ export function mountStreamRoute(router: Router): void {
                 type: 'intelligence_flow_complete',
                 completion: parsed.completion,
                 flowState: parsed.flowState,
+                sessionId: parsed.session_id ?? null,
               })}\n\n`
             );
             res.write(
@@ -476,28 +512,57 @@ export function mountStreamRoute(router: Router): void {
       // Split into stable prefix (cached) + volatile suffix (per-turn) — see /chat
       // handler for rationale. The Claude gateway marks the stable block with
       // cache_control so subsequent turns on the same screen/project hit cache.
-      const agentModeInstruction = agentMode
-        ? '\n\n## Agent mode\nThe user explicitly selected Agent mode. Use the available tools to carry out the requested work instead of only describing a plan. Stream each real tool step and report what actually happened. Governed mutations still require the existing human sign-off and must never be claimed as completed without a successful tool result.'
-        : '';
-      const streamStablePrefix =
-        intelligencePrefix + orchestration.systemPrompt + agentModeInstruction;
-      const streamVolatileSuffix = memoryBlock + enrichment.block;
+      // Live Drive rides the VOLATILE suffix: the mode is per-turn, so putting
+      // it in the cached prefix would poison the cache across toggle flips.
+      const driveState = await driveStatePromise;
+      if (driveState.requested) {
+        res.write(`data: ${JSON.stringify(buildDriveStateEvent(driveState))}\n\n`);
+      }
+      const streamStablePrefix = intelligencePrefix + orchestration.systemPrompt;
+      const streamVolatileSuffix =
+        memoryBlock +
+        enrichment.block +
+        (driveState.enabled ? buildLiveDrivePromptBlock(driveState.mode) : '');
 
-      // Thread resolution (before message building so we can load server history)
-      let threadId = thread_id;
+      // Thread resolution (before message building so we can load server history).
+      //
+      // The id the CLIENT sent is never used as-is. getOrCreateThread resolves
+      // it in the caller's organization and to the caller's own thread, or
+      // mints a fresh one; a colleague's thread id is refused outright. If the
+      // resolution fails for any other reason, `threadId` stays null so that
+      // NO history is loaded from an id nothing has verified — the previous
+      // shape kept the caller-supplied id and read its transcript into the
+      // model context even after persistence had failed.
+      let threadId: string | null = null;
       let persistenceFailed = false;
       if (orgId) {
         try {
           threadId = await getOrCreateThread(
             thread_id || null,
-            typeof userId === 'number' ? userId : undefined,
+            typeof userId === 'number' || typeof userId === 'string' ? userId : undefined,
             'ana-ri',
-            Number(orgId)
+            Number(orgId),
+            // The program the shell has open (its regulatory_programs UUID), so
+            // the thread can be listed under — and resumed from — that project.
+            programIdForThread(project_id || resolveProjectIdFromBody(req.body))
           );
           await saveMessage(threadId, 'user', message);
         } catch (e: any) {
+          if (e instanceof ThreadAccessError) {
+            console.warn('[AnA RI Stream] Refused caller-supplied thread id:', e.code);
+            res.write(
+              `data: ${JSON.stringify({
+                type: 'error',
+                code: e.code,
+                error: 'That conversation belongs to another user.',
+              })}\n\n`
+            );
+            res.end();
+            return;
+          }
           console.error('[AnA RI Stream] Thread persistence failed:', e?.message);
           persistenceFailed = true;
+          threadId = null;
         }
       }
 
@@ -673,8 +738,8 @@ export function mountStreamRoute(router: Router): void {
       res.write(
         `data: ${JSON.stringify({
           type: 'status',
-          phase: agentMode ? 'agent_planning' : 'generating',
-          message: agentMode ? 'Agent mode: planning the next action…' : 'Generating response…',
+          phase: 'generating',
+          message: 'Generating response…',
         })}\n\n`
       );
 
@@ -827,6 +892,17 @@ export function mountStreamRoute(router: Router): void {
       // services/ana-ri/navigation-actions.ts for why it is tool-driven and offered
       // rather than performed.
       const collectedNavigation: NavigationDirective[] = [];
+      // Validated surface-action directives from `act_on_screen` this turn —
+      // same carrier contract: offered as chips by post-processing, applied
+      // live under Drive within the mode's action budget.
+      const collectedSurfaceActions: SurfaceActionDirective[] = [];
+      // Live Drive: how many directives were emitted for immediate application
+      // this turn, per kind. Budgets come from the shared per-mode policy
+      // (assist = the chip budget, so driving can never move a person more
+      // times than offering would have offered; demo = a full-tour allowance).
+      const driveBudget = driveBudgetFor(driveState.mode);
+      let driveNavigationsApplied = 0;
+      let driveActionsApplied = 0;
       // Document drafts emitted this turn — persisted to the governed artifact
       // version history (concept2cure_artifacts / _artifact_versions) by
       // post-processing so Document Studio version history survives the session.
@@ -850,7 +926,13 @@ export function mountStreamRoute(router: Router): void {
       const streamThinkingResolved = resolveThinkingConfig({
         effort: effortUsed,
         riskTier: routingPlan.riskTier,
-        substantive: substantiveTurn,
+        // A demonstration turn runs a validated script — per-round private
+        // reasoning would only slow the tour down, so demo drops the
+        // substantive nudge. High-stakes ('high' riskTier) and an explicit
+        // Thorough effort still reason: resolveThinkingConfig enables those
+        // regardless of this flag, so governance keeps its floor.
+        substantive:
+          substantiveTurn && !(driveState.enabled && driveState.mode === 'demo'),
       });
       const streamThinkingConfig = streamThinkingResolved.enabled
         ? streamThinkingResolved
@@ -885,9 +967,27 @@ export function mountStreamRoute(router: Router): void {
         filterToolsByPolicy(allTools, toolPolicy),
         typeof message === 'string' ? message : '',
         {
-          pinned: Array.isArray(selected_tools)
-            ? selected_tools.filter((t: unknown): t is string => typeof t === 'string')
-            : undefined,
+          // A driving turn MUST be offered the self-drive tools whatever the
+          // message's wording scores — a demo ask like "run the sales demo"
+          // must never lose navigate_to/act_on_screen to relevance trimming.
+          pinned: [
+            ...(Array.isArray(selected_tools)
+              ? selected_tools.filter((t: unknown): t is string => typeof t === 'string')
+              : []),
+            // An @app mention names a capability; operating it needs the
+            // self-drive tools whatever the wording scores.
+            ...invokedAppPins(message),
+            ...(driveState.enabled
+              ? [
+                  'list_app_screens',
+                  'navigate_to',
+                  'list_screen_actions',
+                  'act_on_screen',
+                  'list_demo_scripts',
+                  'start_product_demo',
+                ]
+              : []),
+          ],
           context: {
             clientType: organizationClientType ?? undefined,
             projectType:
@@ -898,12 +998,17 @@ export function mountStreamRoute(router: Router): void {
               asStr(documentContextForTools?.module) ??
               asStr(documentContextForTools?.section) ??
               asStr(authoringContextForTools?.moduleCode) ??
-              asStr(authoringContextForTools?.sectionCode),
+              asStr(authoringContextForTools?.sectionCode) ??
+              asStr(document_context),
             surface:
               asStr(moduleContextForTools?.surface) ??
               asStr(requestContext?.screenName) ??
               asStr(requestContext?.screen) ??
-              asStr(intent_lens),
+              asStr(intent_lens) ??
+              asStr(authoring_context),
+            // The invoked app's id, label and words, so its tools survive the
+            // relevance cap (shared/navigation/callable-apps).
+            hints: invokedAppHints(message),
           },
           // Reliability-aware: trim currently-unhealthy tools first when over the cap
           // (the always-on core + platform bridge are unaffected). Per-tenant when an
@@ -1057,6 +1162,10 @@ export function mountStreamRoute(router: Router): void {
                     userId: userId || null,
                     projectId: streamProjectId ? Number(streamProjectId) || null : null,
                     clientType: organizationClientType,
+                    projectRef: streamProjectId ? String(streamProjectId) : null,
+                    // Lets navigate_to tell the model the truth about what its
+                    // directive does this turn (applied live vs offered chip).
+                    liveDrive: driveState.enabled,
                   });
                 } catch (toolErr: any) {
                   resultStr = JSON.stringify({
@@ -1084,14 +1193,17 @@ export function mountStreamRoute(router: Router): void {
                 errorMessage: toolErrorMessage,
                 latencyMs: Date.now() - toolStart,
               });
-              return { toolUse, resultStr, toolStatus, toolErrorMessage };
+              // The same server-measured duration the telemetry row gets, so the
+              // client's work panel can show how long each step really took
+              // rather than timing the round-trip from its own side.
+              return { toolUse, resultStr, toolStatus, toolErrorMessage, latencyMs: Date.now() - toolStart };
             },
             4
           );
 
           const entries: ToolResultEntry[] = [];
           const roundFailures: FailedToolCall[] = [];
-          for (const { toolUse, resultStr, toolStatus, toolErrorMessage } of ran) {
+          for (const { toolUse, resultStr, toolStatus, toolErrorMessage, latencyMs } of ran) {
             entries.push({ tool_use_id: toolUse.id, content: resultStr, name: toolUse.name });
             const stepLabel = describeToolPlan([toolUse])[0].label;
             // Record this call in the turn's tool-trace memory + evidence corpus.
@@ -1124,6 +1236,7 @@ export function mountStreamRoute(router: Router): void {
                 name: toolUse.name,
                 label: stepLabel,
                 status: toolStatus,
+                latencyMs,
                 ...(humanMessage ? { message: humanMessage } : {}),
                 result: resultStr,
               })}\n\n`
@@ -1143,13 +1256,65 @@ export function mountStreamRoute(router: Router): void {
                 // here, offered as a chip by post-processing; a refused target
                 // (unknown id, missing param) yields null and never becomes one.
                 const directive = directiveFromToolResult(toolUse.name, resultStr);
-                if (directive) collectedNavigation.push(directive);
+                if (directive) {
+                  collectedNavigation.push(directive);
+                  // Live Drive: the person opted in and is entitled, so the
+                  // directive is ALSO emitted now for immediate application —
+                  // budgeted per mode, audited, and re-validated client-side
+                  // against the same shared registry before the screen moves.
+                  if (driveState.enabled && driveNavigationsApplied < driveBudget.navigations) {
+                    driveNavigationsApplied += 1;
+                    res.write(
+                      `data: ${JSON.stringify(buildDriveNavigationEvent(directive, round))}\n\n`
+                    );
+                    auditDriveNavigation(
+                      {
+                        organizationId: orgId,
+                        userId: userId ?? null,
+                        threadId,
+                        runId,
+                        round,
+                        directive,
+                        driveMode: driveState.mode,
+                      },
+                      entry => auditService.logAction(entry)
+                    );
+                  }
+                }
+                // A validated surface action AnA resolved this turn — the same
+                // carrier contract as navigation: chip via post-processing,
+                // applied live under Drive within the mode's action budget,
+                // audited per applied operation, client re-validates and only
+                // performs through a handler the mounted surface registered.
+                const actionDirective = surfaceActionFromToolResult(toolUse.name, resultStr);
+                if (actionDirective) {
+                  collectedSurfaceActions.push(actionDirective);
+                  if (driveState.enabled && driveActionsApplied < driveBudget.actions) {
+                    driveActionsApplied += 1;
+                    res.write(
+                      `data: ${JSON.stringify(buildDriveActionEvent(actionDirective, round))}\n\n`
+                    );
+                    auditDriveAction(
+                      {
+                        organizationId: orgId,
+                        userId: userId ?? null,
+                        threadId,
+                        runId,
+                        round,
+                        directive: actionDirective,
+                        driveMode: driveState.mode,
+                      },
+                      entry => auditService.logAction(entry)
+                    );
+                  }
+                }
                 if (parsed?.status === 'intelligence_question' && parsed.question) {
                   res.write(
                     `data: ${JSON.stringify({
                       type: 'intelligence_question',
                       question: parsed.question,
                       flowState: parsed.flowState,
+                      sessionId: parsed.session_id ?? null,
                     })}\n\n`
                   );
                 }
@@ -1159,6 +1324,7 @@ export function mountStreamRoute(router: Router): void {
                       type: 'intelligence_flow_complete',
                       completion: parsed.completion,
                       flowState: parsed.flowState,
+                      sessionId: parsed.session_id ?? null,
                     })}\n\n`
                   );
                 }
@@ -1417,7 +1583,13 @@ export function mountStreamRoute(router: Router): void {
           // The ceiling is soft — a loop still discovering novel ground earns up
           // to resolveRoundExtension() extra rounds; a circling loop never does.
           {
-            maxRounds: resolveMaxRounds(effortUsed),
+            // Demo mode raises (never lowers) the ceiling: a narrated tour
+            // spends roughly one round per stop, so a full script must not be
+            // cut off at the effort ceiling mid-demonstration.
+            maxRounds:
+              driveState.enabled && driveState.mode === 'demo'
+                ? Math.max(resolveMaxRounds(effortUsed), DEMO_MAX_ROUNDS)
+                : resolveMaxRounds(effortUsed),
             progressExtension: resolveRoundExtension(effortUsed),
           }
         );
@@ -1488,7 +1660,6 @@ export function mountStreamRoute(router: Router): void {
           // effort the server actually used — which may differ from the request
           // when a governance policyHint pinned the strategy). Additive field.
           effortUsed,
-          agentMode,
           usage: gwResponse.usage,
           latencyMs: gwResponse.latencyMs,
           response: fullContent || undefined,
@@ -1517,7 +1688,7 @@ export function mountStreamRoute(router: Router): void {
         streamProjectId,
         orgId,
         userId: typeof userId === 'number' ? userId : undefined,
-        threadId,
+        threadId: threadId ?? undefined,
         userName: (req as any).user?.name,
         effectiveRole,
         sectionCode,
@@ -1527,6 +1698,7 @@ export function mountStreamRoute(router: Router): void {
         toolEvidenceCorpus,
         collectedProvenance,
         collectedNavigation,
+        collectedSurfaceActions,
         collectedDrafts,
         messages,
         model: gwResponse.model,

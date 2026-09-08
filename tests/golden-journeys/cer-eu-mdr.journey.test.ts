@@ -51,6 +51,8 @@ import {
   makeRequestDbClient,
   JourneyRecorder,
   type JourneyDb,
+  assertNoSchemaGaps,
+  assertNoDegradedTenantEnrichment,
 } from './harness';
 
 const T = 180_000;
@@ -109,6 +111,9 @@ const R = new JourneyRecorder(
     'migrations/20260527_mutation_primitives.sql',
     'migrations/20260609_audit_hmac_seal.sql',
     'migrations/20260524_program_workbench_schema.sql',
+    // regulatory_programs.application_number (WO-9 Click 1): the column the
+    // create handler now writes; replayed here for the same reason 20260524 is.
+    'migrations/20260907_regulatory_programs_application_number.sql',
     'migrations/20260528_phase9_document_schema.sql',
     'migrations/20260506_kit_section_draft_provenance.sql',
     'migrations/20260814_projects_regulatory_program_anchor.sql',
@@ -162,9 +167,14 @@ beforeAll(async () => {
   jdb = await createJourneyDb({
     prereqSql: `${baseline}\n${literature}`,
     migrations: [
+      // The Part 11 tamper-evident store (ledger L145) — cross-cutting.
+      'db/migrations/20260813_audit_tamper_proof_log.sql',
       'migrations/20260527_mutation_primitives.sql',
       'migrations/20260609_audit_hmac_seal.sql',
       'migrations/20260524_program_workbench_schema.sql',
+      // regulatory_programs.application_number (WO-9 Click 1): the column the
+      // create handler now writes; replayed here for the same reason 20260524 is.
+      'migrations/20260907_regulatory_programs_application_number.sql',
       'migrations/20260528_phase9_document_schema.sql',
       'migrations/20260506_kit_section_draft_provenance.sql',
       'migrations/20260814_projects_regulatory_program_anchor.sql',
@@ -233,6 +243,14 @@ beforeAll(async () => {
 }, T);
 
 afterAll(async () => {
+  // A journey that ran against a database missing a table its subject writes
+  // to proves less than it claims (ledger L145).
+  // Ordered BEFORE the schema-gap check on purpose: a degraded membership is
+  // usually CAUSED by a missing column, and the gap check would otherwise
+  // throw first and report the symptom while hiding which claims were
+  // proven without an org context (ledger L148).
+  await assertNoDegradedTenantEnrichment();
+  assertNoSchemaGaps(jdb);
   const { jsonPath, mdPath } = R.write('cer-eu-mdr');
   // eslint-disable-next-line no-console
   console.info(`[journey] manifest: ${jsonPath}\n[journey] report:   ${mdPath}`);

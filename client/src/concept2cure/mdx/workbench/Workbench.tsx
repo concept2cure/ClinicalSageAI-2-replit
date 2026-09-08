@@ -5,7 +5,7 @@
  *   - SubmissionsSurface   Submission center — pipeline + list + detail drawer
  *   - TemplatesSurface     Templates — index of org-approved boilerplate
  *
- * Ported verbatim from design-system/ui_kits/mdx/Workbench.jsx.
+ * Ported verbatim from ui_kits/mdx/Workbench.jsx.
  * The vault lives in surfaces/VaultSurface.tsx (data/vault.ts +
  * hooks/useVault.ts) alongside the other extracted surfaces.
  */
@@ -35,6 +35,7 @@ import { useMdxPrograms } from '../hooks/useMdxPrograms';
 import { useSampleRows, useSampleValue, useShowingSample } from '../lib/useSampleRows';
 import { SampleDataBanner } from '../components/SampleDataBanner';
 import { EmptyState } from '../../v2/dataConnect';
+import { downloadCsv } from '../../v2/download';
 
 /**
  * Column widths for the validation-rules table, shared by its head and its rows
@@ -271,18 +272,11 @@ export function ValidationSurface({ onAskAna }: WorkbenchProps) {
             onClick={() => {
               const headers = ['Severity', 'Rule', 'Program', 'Section', 'Category', 'Message', 'Since'];
               const rows = sourceRules.map(r => [r.severity, r.id, r.prog, r.sect, r.category, r.msg, r.since]);
-              const csv = [headers, ...rows]
-                .map(line => line.map(c => `"${String(c).replace(/"/g, '""')}"`).join(','))
-                .join('\r\n');
-              const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
-              const url = URL.createObjectURL(blob);
-              const a = document.createElement('a');
-              a.href = url;
-              a.download = `validation-report-${new Date().toISOString().slice(0, 10)}.csv`;
-              document.body.appendChild(a);
-              a.click();
-              a.remove();
-              URL.revokeObjectURL(url);
+              downloadCsv(
+                `validation-report-${new Date().toISOString().slice(0, 10)}.csv`,
+                headers,
+                rows,
+              );
             }}
           >
             {I.download} Export report
@@ -548,7 +542,7 @@ export function SubmissionsSurface({ onAskAna }: WorkbenchProps) {
                 <div className="sub-row-title">{s.title}</div>
                 <div className="sub-row-meta">
                   <span>{s.target}</span>
-                  <span className="dot-sep">·</span>
+                  <span className="dot-sep" aria-hidden="true">·</span>
                   <span>
                     {s.files} files · {s.bytes}
                   </span>

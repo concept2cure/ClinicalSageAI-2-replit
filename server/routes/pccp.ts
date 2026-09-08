@@ -32,8 +32,12 @@ import {
   updatePlan,
   validatePlan,
 } from '../services/ai-ml-pccp/pccp.service';
+import { serverError } from '../lib/api-response';
+import { createScopedLogger } from '../utils/logger';
 
 const router = Router();
+
+const logger = createScopedLogger('pccp');
 router.use(authenticateToken);
 
 function getOrgId(req: Request): number | null {
@@ -87,7 +91,7 @@ router.get(
       const plans = await listProgramPlans(orgId, String(req.params.programId));
       res.json({ programId: req.params.programId, plans, count: plans.length });
     } catch (err: any) {
-      res.status(500).json({ error: 'List failed', detail: err?.message });
+      return serverError(res, logger, 'loading plans', err);
     }
   }
 );
@@ -114,7 +118,7 @@ router.post(
       });
       res.status(201).json(plan);
     } catch (err: any) {
-      res.status(500).json({ error: 'Create failed', detail: err?.message });
+      return serverError(res, logger, 'saving plans', err);
     }
   }
 );
@@ -137,7 +141,7 @@ router.patch('/plans/:planId', requirePlanAccess, async (req: Request, res: Resp
     res.json(updated);
   } catch (err: any) {
     if (err?.code === 'PCCP_LOCKED') return res.status(409).json({ error: 'Plan is locked' });
-    res.status(500).json({ error: 'Update failed', detail: err?.message });
+    return serverError(res, logger, 'updating plans', err);
   }
 });
 
@@ -151,7 +155,7 @@ router.get(
       const mods = await getModifications(String(req.params.planId));
       res.json({ planId: req.params.planId, modifications: mods, count: mods.length });
     } catch (err: any) {
-      res.status(500).json({ error: 'Fetch failed', detail: err?.message });
+      return serverError(res, logger, 'loading modifications', err);
     }
   }
 );
@@ -174,7 +178,7 @@ router.post(
       res.status(201).json(mod);
     } catch (err: any) {
       if (err?.code === 'PCCP_LOCKED') return res.status(409).json({ error: 'Plan is locked' });
-      res.status(500).json({ error: 'Create failed', detail: err?.message });
+      return serverError(res, logger, 'saving modifications', err);
     }
   }
 );
@@ -205,7 +209,7 @@ router.patch('/modifications/:modificationId', async (req: Request, res: Respons
     const updated = await updateModification(String(req.params.modificationId), req.body ?? {});
     res.json(updated);
   } catch (err: any) {
-    res.status(500).json({ error: 'Update failed', detail: err?.message });
+    return serverError(res, logger, 'updating modifications', err);
   }
 });
 
@@ -218,7 +222,7 @@ router.post('/plans/:planId/validate', requirePlanAccess, async (req: Request, r
     if (!result) return res.status(404).json({ error: 'Plan not found' });
     res.json(result);
   } catch (err: any) {
-    res.status(500).json({ error: 'Validate failed', detail: err?.message });
+    return serverError(res, logger, 'validating plans', err);
   }
 });
 
@@ -247,7 +251,7 @@ router.post('/plans/:planId/approve', requirePlanAccess, async (req: Request, re
     }
     res.json(result);
   } catch (err: any) {
-    res.status(500).json({ error: 'Approve failed', detail: err?.message });
+    return serverError(res, logger, 'approving plans', err);
   }
 });
 
@@ -266,7 +270,7 @@ router.post('/plans/:planId/supersede', requirePlanAccess, async (req: Request, 
     if (!result) return res.status(404).json({ error: 'Plan not found' });
     res.status(201).json(result);
   } catch (err: any) {
-    res.status(500).json({ error: 'Supersede failed', detail: err?.message });
+    return serverError(res, logger, 'saving supersede', err);
   }
 });
 

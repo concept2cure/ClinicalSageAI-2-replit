@@ -31,7 +31,13 @@ const fakePool: any = { query: vi.fn().mockResolvedValue({ rows: [] }) };
 vi.mock('../../db.js', () => ({ getPool: () => fakePool, pool: fakePool }));
 
 // Spy on the audit service so we can assert the route logged.
-const auditLogAction = vi.fn().mockResolvedValue(undefined);
+// logAction resolves an AuditWriteResult (server/services/auditService.ts)
+// and the route dereferences it (.persisted / .error), so the mock must
+// resolve the real success shape — resolving undefined makes the route
+// throw a TypeError and fall into its 500 catch.
+const auditLogAction = vi
+  .fn()
+  .mockResolvedValue({ persisted: true, chained: true, tamperProof: true });
 vi.mock('../../services/auditService', () => ({
   default: { logAction: auditLogAction },
 }));

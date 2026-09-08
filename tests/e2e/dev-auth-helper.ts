@@ -22,8 +22,8 @@
 
 import type { Page } from '@playwright/test';
 
-/** The user install-fresh / the default-org seed provisions (org-admin). */
-export const DEFAULT_DEV_USER = 'jonmichaelpsmith@gmail.com';
+/** The canonical org-admin seed provisions this user; override for explicit fixtures. */
+export const DEFAULT_DEV_USER = process.env.SMOKE_USER_EMAIL || 'jm.smith@concept2cure.pro';
 
 interface DevLoginResponse {
   success?: boolean;

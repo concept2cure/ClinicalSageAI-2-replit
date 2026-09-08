@@ -29,6 +29,7 @@ import { promises as fs } from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 import { createHash, generateKeyPairSync, createSign } from 'crypto';
+import { fingerprintPackageContent, sha256Hex, type PackageContentRow } from '../../ectd/package-content-fingerprint';
 
 /* ─── DB stub ────────────────────────────────────────────────────── */
 
@@ -40,16 +41,32 @@ const { poolQueries, storedBundle, httpsRequests, mdnResponse, audit, recordGove
     storedBundle:  { value: null as unknown },
     httpsRequests: [] as Array<{ options: any; body: Buffer }>,
     mdnResponse:   { statusCode: 200, body: '' },
-    audit:         { logAction: vi.fn().mockResolvedValue(undefined) },
+    audit:         { logAction: vi.fn().mockResolvedValue({ persisted: true, chained: true, tamperProof: true }) },
     recordGovernedAction: vi.fn(async (_client: unknown, _params: Record<string, any>) => ({
       actionId: 'act_1', auditId: 'aud_1', sha256Chain: 'deadbeef',
     })),
   }));
 
+/** The package's content as the transmit gate re-reads it; the stored
+ *  descriptor carries its fingerprint, so the zip still reflects the package. */
+const CONTENT: PackageContentRow[] = [
+  { sectionDbId: 13, sectionKey: 'estar-summary', sectionLabel: '510(k) Summary', sortOrder: 0, artifactDbId: 1, title: '510(k) summary', version: 1, ctdSection: null, contentSha256: sha256Hex('510(k) summary') },
+];
+const CONTENT_FINGERPRINT = fingerprintPackageContent(CONTENT);
+
 function queryImpl(sql: string, args: unknown[] = []) {
   poolQueries.push({ sql, args });
   if (sql.includes('FROM c2c_submission_packages')) {
     return Promise.resolve({ rows: [{ metadata: { bundle: storedBundle.value } }], rowCount: 1 });
+  }
+  if (sql.includes('FROM c2c_package_sections')) {
+    return Promise.resolve({
+      rows: CONTENT.map((r) => ({
+        section_db_id: r.sectionDbId, section_key: r.sectionKey, section_label: r.sectionLabel, sort_order: r.sortOrder, artifact_db_id: r.artifactDbId,
+        title: r.title, version: r.version, ctd_section: r.ctdSection, content_sha256: r.contentSha256,
+      })),
+      rowCount: CONTENT.length,
+    });
   }
   if (sql.includes('INSERT INTO submission_transmittals')) {
     return Promise.resolve({ rows: [{ id: 4242 }], rowCount: 1 });
@@ -206,6 +223,7 @@ beforeEach(() => {
     format: 'estar',
     displayName: '510k-pkg-42.zip',
     validation: { errorCount: 0, warningCount: 1 },
+    contentFingerprint: CONTENT_FINGERPRINT,
   };
 });
 

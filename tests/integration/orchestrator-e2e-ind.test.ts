@@ -201,6 +201,7 @@ const ORDERED_STEPS: StepKey[] = [
   'm1.admin',
   'package.assemble',
   'package.validate',
+  'package.sign',
 ];
 
 /**
@@ -356,7 +357,9 @@ describe('Phase-1 IND e2e — happy path', () => {
     for (const key of ORDERED_STEPS) {
       const step = run.steps.find(s => s.key === key);
       expect(step, `step ${key} should appear on the run`).toBeDefined();
-      expect(['complete', 'skipped']).toContain(step!.status);
+      // package.sign is the one non-terminal step here: it is waiting on the
+      // human signer, which is exactly the run-level status asserted above.
+      expect(key === 'package.sign' ? ['awaiting-signature'] : ['complete', 'skipped']).toContain(step!.status);
     }
 
     // Validator outputs surfaced to caller.
@@ -579,14 +582,48 @@ describe('Phase-1 IND e2e — awaiting-async resume', () => {
       resumeRunId: first.run.runId,
     });
     expect(second.run.runId).toBe(first.run.runId);
-    expect(second.run.status).toBe('complete');
-    // csr.draft-narrative now complete; downstream steps complete (or
-    // skipped where their inputs are empty).
+    // The resumed IND run reaches the SAME Part 11 gate as a fresh run: the
+    // package is gateway-ready (mocked validator) and no release signature
+    // exists, so the run suspends awaiting the signer. It used to report
+    // `complete` with package.sign never started — an IND "completed" with no
+    // §11.70 signature ever requested.
+    expect(second.run.status).toBe('awaiting-signature');
+    const resumedSign = second.run.steps.find(s => s.key === 'package.sign');
+    expect(resumedSign?.status).toBe('awaiting-signature');
+    expect(resumedSign?.outputRef).toBeTruthy();
+    expect(JSON.parse(resumedSign!.outputRef!).payloadDigest).toMatch(/^[0-9a-f]{64}$/);
+    // csr.draft-narrative now complete; every other downstream step complete
+    // (or skipped where their inputs are empty).
     for (const key of ORDERED_STEPS) {
+      if (key === 'package.sign') continue;
       const step = second.run.steps.find(s => s.key === key);
       expect(step, `step ${key} should appear on the resumed run`).toBeDefined();
       expect(['complete', 'skipped']).toContain(step!.status);
     }
+  });
+
+  it('a resumed IND run whose validation was skipped is `partial`, not `complete` — the gate was never checked', async () => {
+    hoisted.launchCSRBuildAsync.mockResolvedValue({ jobId: 9003, status: 'queued' });
+    hoisted.getCSRBuildJobStatus.mockResolvedValue({ status: 'complete', progress: 100, sectionsComplete: 13, error: null });
+    const inputs: OrchestratorInputs = {
+      ...buildMinimalIndOrchestratorInputs(1, 42),
+      enableCSRNarrative: true,
+      userId: 42,
+      projectId: 7,
+      skipValidation: true,
+      csrInputs: [{
+        studyId: 'CSR-FIX-2', protocolNumber: 'P-002', phase: '1', studyDesign: 'open-label',
+        primaryEndpoint: 'tolerability', primaryResult: 'pending', sampleSize: 12,
+      }],
+    };
+    const first = await runOrchestrator(inputs);
+    expect(first.run.status).toBe('awaiting-async');
+    const second = await runOrchestrator(inputs, { resumeRunId: first.run.runId });
+    expect(second.run.steps.find(s => s.key === 'package.validate')?.status).toBe('skipped');
+    const sign = second.run.steps.find(s => s.key === 'package.sign');
+    expect(sign?.status).toBe('skipped');
+    expect(sign?.outputRef).toMatch(/cannot sign a non-gateway-ready package/);
+    expect(second.run.status).toBe('partial');
   });
 });
 

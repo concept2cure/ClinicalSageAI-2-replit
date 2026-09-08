@@ -93,10 +93,17 @@ describe('Evidence Validation', () => {
     expect(result.reviewer_risk_summary).toBeTruthy();
   });
 
-  it('passes short responses without deep validation', () => {
+  it('reports a short response as unassessed rather than verified', () => {
+    /* Was `attempted: true, validated: true` — the second test pinning the
+       same defect. A response below the validation floor is not analysed at
+       all, so calling it validated made the grounding strip draw a green check
+       reading "Claims grounded" and the trust line read "Verified · 0 grounded
+       · 0 weak · 0 missing · 0 sources" for an answer nothing had checked.
+       Skipping a fragment is reasonable; reporting the skip as a pass is not.
+       See server/services/ana-ri/evidence-validation.ts. */
     const result = validateEvidence(SHORT_RESPONSE);
-    expect(result.attempted).toBe(true);
-    expect(result.validated).toBe(true);
+    expect(result.attempted).toBe(false);
+    expect(result.validated).toBe(false);
     expect(result.source_count).toBe(0);
   });
 

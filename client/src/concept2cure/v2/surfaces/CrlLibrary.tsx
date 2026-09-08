@@ -34,10 +34,11 @@
  * is handed the shell's `onAsk` and the shell draws the rail that answers it.
  * The point of looking at a letter is being able to ask about it.
  */
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 
 import { I } from '../icons';
 import { EmptyState, useLiveData } from '../dataConnect';
+import { useSurfaceActionHandlers, notifySurfaceActionReady } from '../surfaceActions';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { AnswerLead } from '../AnswerLead';
 import {
@@ -51,6 +52,7 @@ import {
   type MappingView,
   type RegulatoryFindingView,
 } from '../fixtures/clinical-regulatory-evidence';
+import { usePublishSurfaceContext } from '../surfaceContext';
 import '../styles/project-home-v2.css';
 
 interface CrlQuery {
@@ -295,7 +297,114 @@ export function CrlLibrary({ onAsk }: SurfaceViewProps) {
   const insufficient = res.data?.insufficientEvidence;
   const sel = findings.find((f) => f.findingId === selId) ?? findings[0] ?? null;
 
+  /* AnA can open any deficiency finding by its id — the same row click a person
+     makes — so a drive can land on a specific finding's detail. Resolved against
+     the REAL search results with honest misses; held (retry) while the search
+     loads, re-attempted on the ready signal below. */
+  useSurfaceActionHandlers('crl-library', {
+    'crl-library.select-finding': (params) => {
+      const raw = String(params.finding ?? '').trim();
+      if (!raw) return { ok: false, reason: 'Name a finding by its id.' };
+      // Gate on res.loading/res.error alone: during a refetch useLiveData keeps
+      // the PRIOR query's `findings`, so resolving then would select against
+      // stale results. Held (retry) re-attempts on the ready signal once the new
+      // search lands.
+      if (res.loading) {
+        return { ok: false, reason: 'The CRL findings are still loading.', retry: true };
+      }
+      if (res.error) {
+        return { ok: false, reason: 'The CRL search did not respond, so there are no findings to open.' };
+      }
+      if (findings.length === 0) return { ok: false, reason: 'No findings in these results to open.' };
+      const needle = raw.toLowerCase();
+      const exact = findings.filter((f) => f.findingId.toLowerCase() === needle);
+      const hits = exact.length ? exact : findings.filter((f) => f.findingId.toLowerCase().includes(needle));
+      if (hits.length === 0) return { ok: false, reason: `No finding matching "${raw}" in these results.` };
+      if (hits.length > 1) return { ok: false, reason: `"${raw}" matches ${hits.length} findings — name one exactly.` };
+      const f = hits[0];
+      if (selId === f.findingId) return { ok: true, detail: `Already on ${f.findingId}` };
+      setSelId(f.findingId);
+      return { ok: true, detail: `Opened ${f.findingId}` };
+    },
+  });
+  useEffect(() => {
+    if (!res.loading && !res.error) notifySurfaceActionReady('crl-library');
+  }, [res.loading, res.error]);
+
   const set = <K extends keyof CrlQuery>(k: K, v: CrlQuery[K]) => setQ({ ...q, [k]: v });
+
+  /* What AnA can see of this screen.
+     Published BEFORE the loading/error early returns below, because a hook that
+     only runs on the success path is a hook that goes silent exactly when the
+     user most needs to ask what happened — and React would refuse the
+     conditional call anyway.
+
+     A FAILED read publishes the failure. `findings` is [] both when the corpus
+     genuinely has nothing for these constraints and when the evidence graph did
+     not answer, and "no findings match" over an outage is a claim about the
+     regulatory record that no one made. The verification state travels with
+     every finding for the same reason it is on screen: an extracted, unreviewed
+     finding must not be quoted back as established fact. */
+  const anaContext = useMemo(() => {
+    // Gate on res.loading / res.error ALONE, not `&& !res.data`: useLiveData
+    // KEEPS the previous query's data while a new fetch is in flight, and this
+    // surface rebuilds `path` from `applied` on every Search — so during a
+    // refetch `res.data` is the PRIOR query's payload while `filters` below is
+    // the NEW query. Falling through would publish the old counts as though they
+    // answered the new filters (and a prior genuine zero as a false "no findings
+    // for these constraints"). A search in progress is not an answer.
+    if (res.loading) {
+      return { summary: 'The regulatory evidence graph is still being searched; nothing on screen is final yet.' };
+    }
+    if (res.error) {
+      return {
+        summary:
+          'The regulatory evidence graph could not be reached, so this screen is showing no findings ' +
+          'because of a failure, not because the corpus has none for these constraints.',
+        availableActions: ['Retry the search once the evidence service responds'],
+      };
+    }
+    const filters = Object.entries(applied).filter(([, v]) => v);
+    return {
+      summary:
+        `FDA CRL library: ${findings.length} regulatory finding(s) match` +
+        (filters.length
+          ? ` the filters ${filters.map(([k, v]) => `${k}="${v}"`).join(', ')}`
+          : ' with no filters applied') +
+        (coverage ? `, drawn from ${coverage.eligible} of ${coverage.scanned} letters scanned` : '') +
+        (sel ? `. "${sel.findingId}" is open in the detail pane` : '') +
+        (insufficient ? `. The corpus reports insufficient evidence: ${insufficient.reason}` : ''),
+      facts: {
+        matchedFindings: findings.length,
+        appliedFilters: Object.fromEntries(filters),
+        coverage: coverage ? { eligible: coverage.eligible, scanned: coverage.scanned } : null,
+        insufficientEvidence: insufficient
+          ? { reason: insufficient.reason, usable: insufficient.usable, total: insufficient.total }
+          : null,
+        // Enough to name a finding back to the user, not the whole result set.
+        findings: findings.slice(0, 10).map((f) => ({
+          findingId: f.findingId, severity: f.severity, discipline: f.discipline,
+          category: f.category, verification: f.verification, conflict: f.conflict,
+          applicability: f.applicability, epistemicStatus: f.epistemicStatus,
+        })),
+        selected: sel
+          ? {
+              findingId: sel.findingId, severity: sel.severity, discipline: sel.discipline,
+              category: sel.category, finding: sel.finding, requestedAction: sel.requestedAction,
+              verification: sel.verification, conflict: sel.conflict,
+              reviewedAt: sel.reviewedAt,
+              mappedTo: (sel.mappings ?? []).map((m) => ({ kind: m.kind, value: m.value, status: m.status })),
+            }
+          : null,
+      },
+      availableActions: [
+        'Search the corpus by application type, free text, discipline, CTD section or verification state',
+        'Open a finding to read its requested action, mappings and source reference',
+        'Clear the filters and search the whole corpus',
+      ],
+    };
+  }, [res.loading, res.error, res.data, findings, coverage, insufficient, sel, applied]);
+  usePublishSurfaceContext('crl-library', anaContext);
 
   /* ── Loading and error: two of the four honest states ── */
   if (res.loading && !res.data) {
@@ -457,27 +566,27 @@ export function CrlLibrary({ onAsk }: SurfaceViewProps) {
 
       {/* ── Coverage row. Every count with its denominator (§8.1). ── */}
       {coverage && (
-        <div className="pj-card crl-coverage" style={{ marginBottom: 14 }}>
+        <div className="pj-card crl-coverage">
           <div className="pj-card-b crl-coverage-b">
             <span className="crl-coverage-k">Coverage</span>
             <span>{coverage.scanned} letters scanned</span>
-            <span className="crl-sep">·</span>
+            <span className="crl-sep" aria-hidden="true">·</span>
             <span>{withDenominator(coverage.eligible, coverage.scanned)} eligible on these filters</span>
-            <span className="crl-sep">·</span>
+            <span className="crl-sep" aria-hidden="true">·</span>
             <span>
               {withDenominator(coverage.structured, coverage.eligible)} with structured findings
             </span>
-            <span className="crl-sep">·</span>
+            <span className="crl-sep" aria-hidden="true">·</span>
             <span className="crl-verified">
               {withDenominator(coverage.verified, coverage.structured)} verified
             </span>
-            <span className="crl-sep">·</span>
+            <span className="crl-sep" aria-hidden="true">·</span>
             <span className="crl-note">
               Public FDA evidence only — no tenant-private source is in this result.
             </span>
             {coverage.freshness && (
               <>
-                <span className="crl-sep">·</span>
+                <span className="crl-sep" aria-hidden="true">·</span>
                 <span className="crl-note">Corpus snapshot {coverage.freshness}</span>
               </>
             )}

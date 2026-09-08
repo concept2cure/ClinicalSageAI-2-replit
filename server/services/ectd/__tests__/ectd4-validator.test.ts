@@ -122,4 +122,14 @@ describe('validatePackage', () => {
     const res = validatePackage(leaves);
     expect(res.findings.some((f) => /md5|checksum/i.test(f.message))).toBe(true);
   });
+  it('blocks valid on a non-conformant (2-6-2) filename — not merely a warning', () => {
+    const leaves = IND_REQUIRED.map((sectionCode) => leaf({ sectionCode }));
+    // A real ESG technical-rejection cause: uppercase + space in the filename.
+    leaves[0] = leaf({ sectionCode: 'm1.1', filePath: 'm1.1/Cover Letter.pdf' });
+    const res = validatePackage(leaves);
+    const fn = res.findings.find((f) => f.code === 'INVALID_FILENAME');
+    expect(fn).toBeDefined();
+    expect(fn!.severity).toBe('error'); // was 'warning' — did not block valid
+    expect(res.valid).toBe(false);
+  });
 });

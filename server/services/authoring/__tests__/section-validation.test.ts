@@ -9,7 +9,16 @@ import { validateDraftSection } from '../section-validation.js';
 describe('validateDraftSection', () => {
   it('returns a well-formed snapshot for empty / trivial text', () => {
     const snap = validateDraftSection('');
-    expect(snap.verdict.attempted).toBe(true);
+    // attempted: FALSE. Empty (or sub-threshold) text is UNASSESSED, not
+    // verified — the claim and label extractors want sentence structure, and
+    // running them on a fragment produces noise rather than a verdict. This
+    // used to return attempted+validated true with every count zero, which
+    // rendered downstream as "Verified · 0 grounded · 0 sources" and drew a
+    // green "Claims grounded" check on an answer the grounding pipeline had
+    // never run on. Declining to judge is fine; reporting the declined
+    // judgement as a pass is not.
+    expect(snap.verdict.attempted).toBe(false);
+    expect(snap.compliant).toBe(false);
     expect(typeof snap.compliant).toBe('boolean');
     expect(typeof snap.trustSummary).toBe('string');
     expect(snap.trustSummary.length).toBeGreaterThan(0);

@@ -79,12 +79,46 @@ function clip(s: string, max: number): string {
   return t.length <= max ? t : `${t.slice(0, max)}…`;
 }
 
+/** Compact per-file recall line: where a vault document is and what it is for. */
+export interface VaultFileDigest {
+  fileName: string;
+  documentTitle: string;
+  programName?: string | null;
+  folderId?: string | null;
+  ctdSection?: string | null;
+  placementStatus: string;
+  /** extracted | extraction_failed | cataloged | uncataloged */
+  catalogStatus: string;
+  documentKind?: string | null;
+  purpose?: string | null;
+}
+
 export interface SessionBootstrapParts {
   workingMemorySummary?: string | null;
   projectAtoms: BootstrapAtom[];
   clientAtoms: BootstrapAtom[];
   outcomeLessons: OutcomeLesson[];
+  /** Project-vault files on record (document catalog); omitted when the catalog is off. */
+  vaultFiles?: VaultFileDigest[];
   atomLimit?: number;
+}
+
+/** One recall line per file — location first, then what it is (or, honestly, that it awaits study). */
+export function formatVaultFileLine(f: VaultFileDigest): string {
+  const location =
+    f.placementStatus === 'unfiled'
+      ? 'unfiled — needs review'
+      : [f.folderId, f.ctdSection].filter(Boolean).join(' · ') || f.placementStatus;
+  const name = clip(f.documentTitle || f.fileName, 90);
+  const where = `${f.programName ? `${clip(f.programName, 40)} / ` : ''}${location}`;
+  if (f.catalogStatus === 'cataloged') {
+    const what = [f.documentKind, f.purpose].filter(Boolean).map(s => clip(String(s), 160)).join(' — ');
+    return `- **${name}** (${where}): ${what || 'cataloged'}`;
+  }
+  if (f.catalogStatus === 'extraction_failed') {
+    return `- **${name}** (${where}): extraction FAILED — the content is not readable yet; say so if asked.`;
+  }
+  return `- **${name}** (${where}): not yet studied — read it in full and catalog it when it becomes relevant.`;
 }
 
 /**
@@ -115,6 +149,15 @@ export function formatSessionBootstrap(parts: SessionBootstrapParts): string {
     for (const a of client) {
       lines.push(`- **${clip(a.title, 120)}**${a.category ? ` _(${a.category})_` : ''}: ${clip(a.content, 240)}`);
     }
+  }
+
+  const files = (parts.vaultFiles ?? []).slice(0, 12);
+  if (files.length) {
+    lines.push('### Project files on record');
+    for (const f of files) lines.push(formatVaultFileLine(f));
+    lines.push(
+      '_Use list_project_documents for the full folder; read_project_document to study a file (all of it)._'
+    );
   }
 
   const lessons = parts.outcomeLessons.filter(l => l.lessonsLearned && l.lessonsLearned.trim()).slice(0, 5);

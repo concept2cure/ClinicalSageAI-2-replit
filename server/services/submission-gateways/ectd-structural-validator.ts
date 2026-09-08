@@ -41,6 +41,8 @@ export interface EctdValidationResult {
   findings: EctdFinding[];
 }
 
+import { FILENAME_PATTERN } from '../ectd/ectd-regional-rules';
+
 const PDF_MAGIC = Buffer.from('%PDF-', 'utf8');
 const EMPTY_SECTION_MARKER = '[EMPTY SECTION]';
 
@@ -57,10 +59,14 @@ interface EctdLeaf {
  * @param opts.region eCTD region (informational; reserved for region rules).
  * @param opts.emptyLeafPaths Paths the caller already flagged empty (in addition
  *        to leafs whose content begins with the `[EMPTY SECTION]` marker).
+ * @param opts.enforceFileNames Apply the eCTD leaf file-name rule
+ *        (FILENAME_PATTERN: lowercase [a-z0-9.-], ≤ 64 characters including the
+ *        extension) as an ERROR. Set for eCTD bundles; a device form (eSTAR /
+ *        EUDAMED) is not an eCTD leaf and is not subject to it.
  */
 export function validateEctdLeafs(
   leafs: EctdLeaf[],
-  opts: { region: string; emptyLeafPaths?: string[] },
+  opts: { region: string; emptyLeafPaths?: string[]; enforceFileNames?: boolean },
 ): EctdValidationResult {
   const findings: EctdFinding[] = [];
   const emptySet = new Set(opts.emptyLeafPaths ?? []);
@@ -98,6 +104,22 @@ export function validateEctdLeafs(
         message: 'PDF leaf does not begin with the %PDF- magic bytes (corrupt or non-PDF content).',
         filePath: leaf.path,
       });
+    }
+
+    // LEAF-FILENAME: the eCTD file-name rule the regional validator treats as
+    // blocking (EMA-CESP-005). Nothing on the assemble/transmit path applied it
+    // before, so a long section key shipped an 84-character leaf name with a
+    // clean gate.
+    if (opts.enforceFileNames) {
+      const baseName = leaf.path.slice(leaf.path.lastIndexOf('/') + 1);
+      if (!FILENAME_PATTERN.test(baseName)) {
+        findings.push({
+          severity: 'error',
+          ruleId: 'LEAF-FILENAME',
+          message: `Leaf file name '${baseName}' breaks the eCTD file-name rule (lowercase a-z, 0-9, '.', '-'; at most 64 characters including the extension).`,
+          filePath: leaf.path,
+        });
+      }
     }
 
     // SECTION-EMPTY: an empty-section placeholder leaf (warning, not blocking).
@@ -239,6 +261,17 @@ export async function validateEctdPackage(zipBuffer: Buffer): Promise<EctdZipVal
 
   const fileNames = Object.keys(zip.files).filter((f) => !zip.files[f].dir);
 
+  // The eCTD file-name rule (FILENAME_PATTERN) on every packaged file. The
+  // assemble path composes names to it, but this validator — the one the
+  // export route runs by default — never checked, so an over-long leaf name
+  // left with a clean gate.
+  for (const f of fileNames) {
+    const baseName = f.slice(f.lastIndexOf('/') + 1);
+    if (!FILENAME_PATTERN.test(baseName)) {
+      errors.push(`File name '${baseName}' breaks the eCTD file-name rule (lowercase a-z, 0-9, '.', '-'; at most 64 characters including the extension).`);
+    }
+  }
+
   // 1. index.xml exists, is well-formed, and its hrefs resolve.
   if (!fileNames.includes('index.xml')) {
     errors.push('Missing required file: index.xml (eCTD backbone)');
@@ -262,6 +295,20 @@ export async function validateEctdPackage(zipBuffer: Buffer): Promise<EctdZipVal
         'index.xml references a DTD via DOCTYPE but no DTD is bundled under util/dtd/ — ' +
           'the package is not self-contained and is not submission-ready until the ICH/regional ' +
           'DTDs are vendored into util/dtd/.',
+      );
+    }
+
+    // Stylesheet self-containment: index.xml references a stylesheet via
+    // <?xml-stylesheet?>; a submission-ready package must bundle it under
+    // util/style/. eValidator flags a reference the package cannot resolve, and
+    // the backbone will not open through the ICH stylesheet in a browser.
+    const styleHref = /<\?xml-stylesheet[^>]*href="([^"]+)"/i.exec(indexContent)?.[1];
+    const hasBundledStylesheet = fileNames.some((f) => f.startsWith('util/style/') && f.endsWith('.xsl'));
+    if (styleHref && !hasBundledStylesheet) {
+      warnings.push(
+        `index.xml references stylesheet "${styleHref}" but no stylesheet is bundled under util/style/ — ` +
+          'the package is not self-contained and is not submission-ready until the ICH/regional ' +
+          'stylesheets are vendored into util/style/.',
       );
     }
   }

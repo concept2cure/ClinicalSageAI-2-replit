@@ -6,6 +6,23 @@ import {
   methodForm,
   methodBody,
   qcTestForm,
+  containerClosureForm,
+  containerClosureBody,
+  containerClosurePatch,
+  referenceStandardForm,
+  referenceStandardBody,
+  referenceStandardPatch,
+  qualifyForm,
+  qualifyBody,
+  parseRowLines,
+  rowLinesOf,
+  MATERIAL_COLUMNS,
+  CHARACTERISATION_COLUMNS,
+  manufacturingProcessForm,
+  manufacturingProcessPatch,
+} from '../surfaces/cmcRegisterForms';
+import type { ContainerClosureRow } from '../surfaces/cmcRegisterForms';
+import {
   qcTestBody,
   qcReviewBody,
   stabilityForm,
@@ -471,15 +488,49 @@ describe('drug substance and drug product — §3.2.S / §3.2.P', () => {
     expect(body).toEqual({ substanceName: 'BX-204', manufacturingProcess: {}, status: 'development' });
   });
 
+  it('an EDIT round-trip keeps the batch formula the API row carries', () => {
+    /* The register card reads a row, the edit form defaults from it, and the
+       PUT sends the form back. Any field the row does not carry comes back
+       blank and OVERWRITES what was stored — which is how recording a batch
+       formula and then editing the strength erased §3.2.P.3's only producer.
+       The API row must carry it, and the body must send it back unchanged. */
+    const apiRow = {
+      productName: 'BX-204 injection',
+      dosageForm: 'Solution for injection',
+      strength: '50 mg/mL',
+      routeOfAdministration: 'Intravenous',
+      composition: { description: 'BX-204 50 mg/mL, histidine buffer' },
+      batchFormula: { description: 'Per 500 L batch: BX-204 25.0 kg; histidine 1.55 kg' },
+      manufacturingProcess: { description: 'Compounding', site: 'Cork, Ireland' },
+      packagingMaterials: { containerClosure: '2R Type I glass vial' },
+      status: 'development',
+    };
+    // The edit form's defaults, exactly as the register builds them.
+    const fields = drugProductForm(apiRow).fields;
+    const values = Object.fromEntries(fields.map((f) => [f.key, String(f.default ?? '')]));
+    expect(values.batchFormula).toBe('Per 500 L batch: BX-204 25.0 kg; histidine 1.55 kg');
+    // …and the body the PUT sends carries it back, not an empty object.
+    const body = drugProductBody({ ...values, strength: '100 mg/mL' });
+    expect(body.batchFormula).toEqual({ description: 'Per 500 L batch: BX-204 25.0 kg; histidine 1.55 kg' });
+    expect(body.strength).toBe('100 mg/mL');
+  });
+
   it('collects the composition and container closure for §3.2.P', () => {
     const body = drugProductBody({
       productName: 'BX-204 injection', dosageForm: 'Solution for injection',
       strength: '50 mg/mL', routeOfAdministration: 'Intravenous', status: 'development',
       composition: 'BX-204 50 mg/mL, histidine buffer, sucrose, polysorbate 80.',
+      batchFormula: 'Per 500 L batch: BX-204 25.0 kg; histidine 1.55 kg; sucrose 40.0 kg; polysorbate 80 0.10 kg.',
       process: 'Compounding, sterile filtration, aseptic fill.',
       site: 'Cork, Ireland', containerClosure: '2R Type I glass vial, bromobutyl stopper',
     });
     expect(body.composition).toEqual({ description: 'BX-204 50 mg/mL, histidine buffer, sucrose, polysorbate 80.' });
+    /* §3.2.P.3.2's batch formula — the section's `formulation` input, which had
+       no field in the product at all and so could never be recorded. It is a
+       per-BATCH statement and stays separate from the per-unit composition. */
+    expect(body.batchFormula).toEqual({
+      description: 'Per 500 L batch: BX-204 25.0 kg; histidine 1.55 kg; sucrose 40.0 kg; polysorbate 80 0.10 kg.',
+    });
     expect(body.packagingMaterials).toEqual({ containerClosure: '2R Type I glass vial, bromobutyl stopper' });
     expect(body.manufacturingProcess).toEqual({
       description: 'Compounding, sterile filtration, aseptic fill.',
@@ -531,6 +582,8 @@ describe('every create form is fully submittable from its own defaults', () => {
     ['drug substance', drugSubstanceForm()],
     ['drug product', drugProductForm()],
     ['comparability', comparabilityForm()],
+    ['container closure', containerClosureForm()],
+    ['reference standard', referenceStandardForm()],
   ];
 
   it.each(forms)('%s: required selects always offer at least one option', (_name, config) => {
@@ -544,5 +597,416 @@ describe('every create form is fully submittable from its own defaults', () => {
   it.each(forms)('%s: no field key is declared twice', (_name, config) => {
     const keys = config.fields.map((f) => f.key);
     expect(new Set(keys).size).toBe(keys.length);
+  });
+});
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Container closure + reference standards — the two registers §3.2.S.5 /
+   §3.2.S.6 / §3.2.P.6 / §3.2.P.7 had no capture path for at all.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+describe('parseRowLines — a tabular field typed into a textarea', () => {
+  it('maps pipe-delimited lines onto the declared keys', () => {
+    expect(parseRowLines('Vial | Type I glass | Schott | SPEC-01 | USP <660>', [
+      'component', 'material', 'supplier', 'specification', 'compendialReference',
+    ])).toEqual([
+      { component: 'Vial', material: 'Type I glass', supplier: 'Schott', specification: 'SPEC-01', compendialReference: 'USP <660>' },
+    ]);
+  });
+
+  it('omits blank cells rather than storing empty strings, and skips blank lines', () => {
+    expect(parseRowLines('Stopper | Bromobutyl | |  | \n\n  \n', [
+      'component', 'material', 'supplier', 'specification', 'compendialReference',
+    ])).toEqual([{ component: 'Stopper', material: 'Bromobutyl' }]);
+  });
+
+  it('is empty for an untouched field — never a row of nothing', () => {
+    expect(parseRowLines('', ['component'])).toEqual([]);
+    expect(parseRowLines(undefined, ['component'])).toEqual([]);
+  });
+});
+
+describe('containerClosureBody', () => {
+  const filled = {
+    systemName: '10 mL Type I vial / 20 mm stopper',
+    scope: 'drug_product',
+    componentType: 'primary',
+    containerDescription: '10 mL clear Type I borosilicate glass vial',
+    closureDescription: '20 mm bromobutyl stopper, aluminium flip-off seal',
+    supplier: 'Schott / West',
+    status: 'qualified',
+    compendialStandards: 'USP <660>, USP <381>',
+    materialsOfConstruction: 'Vial | Type I borosilicate glass | Schott | SPEC-VIAL-01 | USP <660>',
+    suitabilityJustification: 'Protection and compatibility demonstrated over 12 months.',
+    elStudyType: 'Controlled extraction, 40C/75%RH, 6 months',
+    elProtocol: 'PR-EL-014',
+    elThreshold: '1.5 ug/day',
+    elConclusion: 'All extractables below the AET.',
+    elResults: 'Zinc dibutyldithiocarbamate | 0.4 | ug/day | 1.5 ug/day | below AET',
+    integrityMethod: 'Helium leak (USP <1207>)',
+    integrityCriteria: '<= 6e-6 mbar L/s',
+    integrityResult: '2.1e-6 mbar L/s',
+    qualificationDate: '2026-06-01',
+  };
+
+  it('carries every recorded field, with the tabular ones parsed into json rows', () => {
+    const body = containerClosureBody(filled, 'a3b1c2d4-e5f6-4a1b-8c2d-0123456789ab');
+    expect(body.scope).toBe('drug_product');
+    expect(body.compendialStandards).toEqual(['USP <660>', 'USP <381>']);
+    expect(body.materialsOfConstruction).toEqual([
+      { component: 'Vial', material: 'Type I borosilicate glass', supplier: 'Schott', specification: 'SPEC-VIAL-01', compendialReference: 'USP <660>' },
+    ]);
+    expect(body.extractablesLeachables).toMatchObject({
+      studyType: 'Controlled extraction, 40C/75%RH, 6 months',
+      protocol: 'PR-EL-014',
+      analyticalEvaluationThreshold: '1.5 ug/day',
+      conclusion: 'All extractables below the AET.',
+    });
+    expect((body.extractablesLeachables as { results: unknown[] }).results).toHaveLength(1);
+    expect(body.integrityTesting).toEqual({
+      method: 'Helium leak (USP <1207>)',
+      acceptanceCriteria: '<= 6e-6 mbar L/s',
+      result: '2.1e-6 mbar L/s',
+    });
+    expect(body.projectId).toBe('a3b1c2d4-e5f6-4a1b-8c2d-0123456789ab');
+  });
+
+  /* An empty study object is truthy. Sending one would be recorded as an E&L
+     study that does not exist, and the composed section would stop saying the
+     package is absent — which is the only signal a reviewer has. */
+  it('sends no E&L study and no integrity record when neither was entered', () => {
+    const body = containerClosureBody({
+      systemName: 'HDPE drum',
+      scope: 'drug_substance',
+      componentType: 'primary',
+      containerDescription: 'HDPE drum, 25 kg',
+      closureDescription: 'Screw cap',
+      status: 'draft',
+    });
+    expect(body.extractablesLeachables).toBeUndefined();
+    expect(body.integrityTesting).toBeUndefined();
+    expect(body.materialsOfConstruction).toBeUndefined();
+    expect(body.compendialStandards).toBeUndefined();
+    expect(body.projectId).toBeUndefined();
+  });
+});
+
+describe('referenceStandardBody', () => {
+  it('carries the identity, the characterisation rows and the dates', () => {
+    const body = referenceStandardBody({
+      standardCode: 'RS-DS-001',
+      standardName: 'BX-204 primary reference standard',
+      scope: 'drug_substance',
+      standardType: 'primary',
+      lotNumber: 'RS-LOT-2405',
+      assignedValue: '98.7% (as-is)',
+      materialSource: 'DS lot BX204-DS-2403',
+      characterization: 'Identity | FTIR | Conforms to reference spectrum\nPurity | RP-HPLC | 99.4% area',
+      certificateOfAnalysis: 'CoA-RS-001-2405',
+      qualificationProtocol: 'PR-RS-002',
+      storageConditions: '-70C, desiccated',
+      status: 'qualified',
+      retestDate: '2027-05-01',
+    }, 'a3b1c2d4-e5f6-4a1b-8c2d-0123456789ab');
+    expect(body.standardCode).toBe('RS-DS-001');
+    expect(body.characterization).toHaveLength(2);
+    expect(body.characterization?.[1]).toEqual({ attribute: 'Purity', method: 'RP-HPLC', result: '99.4% area' });
+    expect(body.retestDate).toBe(new Date('2027-05-01').toISOString());
+    expect(body.expiryDate).toBeUndefined();
+    expect(body.projectId).toBe('a3b1c2d4-e5f6-4a1b-8c2d-0123456789ab');
+  });
+});
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   The adversarial review of the two registers: what the edit drawer destroyed,
+   what it could not clear, and what it silently dropped.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+describe('the edit drawer is seeded from the stored record', () => {
+  const stored: ContainerClosureRow = {
+    scope: 'drug_product',
+    systemName: '10 mL Type I vial / 20 mm stopper',
+    componentType: 'primary',
+    containerDescription: '10 mL clear Type I borosilicate glass vial',
+    closureDescription: '20 mm bromobutyl stopper',
+    supplier: 'Schott / West',
+    compendialStandards: ['USP <660>', 'USP <381>'],
+    suitabilityJustification: 'Protection and compatibility demonstrated over 12 months.',
+    materialsOfConstruction: [
+      { component: 'Vial', material: 'Type I borosilicate glass', supplier: 'Schott', specification: 'SPEC-VIAL-01', compendialReference: 'USP <660>' },
+      { component: 'Stopper', material: 'Bromobutyl rubber', supplier: 'West' },
+    ],
+    extractablesLeachables: {
+      studyType: 'Controlled extraction',
+      protocol: 'PR-EL-014',
+      conditions: '40C/75%RH, 6 months',
+      analyticalEvaluationThreshold: '1.5 ug/day',
+      results: [{ analyte: 'Zinc dibutyldithiocarbamate', level: '0.4', unit: 'ug/day', threshold: '1.5 ug/day', assessment: 'below AET' }],
+    },
+    integrityTesting: { method: 'Helium leak (USP <1207>)', acceptanceCriteria: '<= 6e-6 mbar L/s', result: '2.1e-6 mbar L/s', testDate: '2026-04-02T00:00:00.000Z' },
+    status: 'draft',
+  };
+  const valuesOf = (config: ReturnType<typeof containerClosureForm>) =>
+    Object.fromEntries(config.fields.map((f) => [f.key, f.default ?? '']));
+
+  /* The drawer opened blank over every json column. A packaging engineer adding
+     the E&L conclusion therefore sent an object containing only the conclusion,
+     and the PUT replaced the whole column — the analyte results, the protocol
+     and the threshold destroyed by a save that reported success. */
+  it('carries the stored E&L package, materials and integrity record into the form', () => {
+    const v = valuesOf(containerClosureForm(stored));
+    expect(v.elStudyType).toBe('Controlled extraction');
+    expect(v.elProtocol).toBe('PR-EL-014');
+    expect(v.elConditions).toBe('40C/75%RH, 6 months');
+    expect(v.elThreshold).toBe('1.5 ug/day');
+    expect(v.elResults).toContain('Zinc dibutyldithiocarbamate | 0.4 | ug/day | 1.5 ug/day | below AET');
+    expect(v.materialsOfConstruction).toContain('Vial | Type I borosilicate glass | Schott | SPEC-VIAL-01 | USP <660>');
+    expect(v.materialsOfConstruction).toContain('Stopper | Bromobutyl rubber | West');
+    expect(v.integrityMethod).toBe('Helium leak (USP <1207>)');
+    expect(v.integrityTestDate).toBe('2026-04-02');
+  });
+
+  it('a round trip through the drawer changes nothing it was not asked to change', () => {
+    const patched = containerClosurePatch(valuesOf(containerClosureForm(stored)));
+    expect(patched.materialsOfConstruction).toEqual(stored.materialsOfConstruction);
+    expect(patched.extractablesLeachables).toEqual(stored.extractablesLeachables);
+    expect(patched.integrityTesting).toEqual(stored.integrityTesting);
+    expect(patched.compendialStandards).toEqual(stored.compendialStandards);
+    expect(patched.suitabilityJustification).toBe(stored.suitabilityJustification);
+  });
+
+  it('adding one E&L conclusion keeps the results that were already recorded', () => {
+    const v = { ...valuesOf(containerClosureForm(stored)), elConclusion: 'All extractables below the AET.' };
+    const patched = containerClosurePatch(v);
+    expect(patched.extractablesLeachables?.conclusion).toBe('All extractables below the AET.');
+    expect(patched.extractablesLeachables?.results).toHaveLength(1);
+    expect(patched.extractablesLeachables?.protocol).toBe('PR-EL-014');
+  });
+
+  /* The mirror defect: `opt()` omits a blank, so a value entered against the
+     wrong record could be overwritten but never removed. */
+  it('a field the staffer clears is actually cleared', () => {
+    const v = { ...valuesOf(containerClosureForm(stored)), suitabilityJustification: '', supplier: '' };
+    const patched = containerClosurePatch(v);
+    expect(patched.suitabilityJustification).toBeNull();
+    expect(patched.supplier).toBeNull();
+    // Untouched fields are still carried, not nulled with it.
+    expect(patched.materialsOfConstruction).toHaveLength(2);
+  });
+
+  it('the reference standard drawer does the same for its characterisation', () => {
+    const row = {
+      scope: 'drug_substance', standardCode: 'RS-DS-001', standardName: 'Primary standard',
+      standardType: 'primary', status: 'draft',
+      characterization: [
+        { attribute: 'Identity', method: 'FTIR', result: 'Conforms' },
+        { attribute: 'Purity', method: 'RP-HPLC', result: '99.4% area' },
+      ],
+      certificateOfAnalysis: 'CoA-001',
+    };
+    const v = Object.fromEntries(referenceStandardForm(row).fields.map((f) => [f.key, f.default ?? '']));
+    expect(v.characterization).toBe('Identity | FTIR | Conforms\nPurity | RP-HPLC | 99.4% area');
+    const patched = referenceStandardPatch({ ...v, lotNumber: 'RS-LOT-2405' });
+    expect(patched.characterization).toEqual(row.characterization);
+    expect(patched.lotNumber).toBe('RS-LOT-2405');
+    expect(patched.expiryDate).toBeNull();
+  });
+});
+
+describe('neither register offers qualification as a status', () => {
+  /* Qualification is a Part 11 signature (POST .../:id/qualify) that records who
+     qualified the record, when and why. The API refuses a self-declared
+     'qualified' on create and update, so offering it here would only produce a
+     rejected save — and, worse, would look like the governed act. */
+  it('the status control cannot set qualified', () => {
+    for (const config of [containerClosureForm(), referenceStandardForm()]) {
+      const status = config.fields.find((f) => f.key === 'status')!;
+      expect(status.options).not.toContain('qualified');
+    }
+  });
+
+  /* A qualified record KEEPS its status through an ordinary edit. Offering only
+     the ungoverned statuses sent 'draft' on every Update, which reverted a Part
+     11 signature while leaving qualified_by and qualification_date populated —
+     an unsigned de-qualification the drawer performed automatically. */
+  it('a qualified record round-trips its own status instead of reverting to draft', () => {
+    const status = containerClosureForm({ status: 'qualified' } as never).fields.find((f) => f.key === 'status')!;
+    expect(status.default).toBe('qualified');
+    expect(status.options).toContain('qualified');
+    // …and it still cannot be sent BACK to draft from the drawer.
+    expect(status.options).not.toContain('draft');
+  });
+
+  it('the qualification form collects a reason and a re-authentication', () => {
+    const keys = qualifyForm('container closure system', 'Vial system').fields.map((f) => f.key);
+    expect(keys).toEqual(expect.arrayContaining(['meaning', 'reason', 'password']));
+    const body = qualifyBody({ reason: 'Qualification report QR-014 accepted.', meaning: 'approval', password: 'pw', totp: '' });
+    expect(body).toEqual({
+      reason: 'Qualification report QR-014 accepted.',
+      meaning: 'approval',
+      reauth: { password: 'pw', totp: undefined },
+    });
+  });
+});
+
+describe('parseRowLines keeps what was typed', () => {
+  /* Iterating the KEYS silently dropped every cell past the last column: a note
+     typed as a sixth cell simply vanished from the record and the dossier. */
+  it('keeps cells beyond the declared columns rather than deleting them', () => {
+    expect(parseRowLines('Ferrule | Al | West | SPEC-1 | USP <381> | re-qualified 2026 | see NC-114', MATERIAL_COLUMNS))
+      .toEqual([{
+        component: 'Ferrule', material: 'Al', supplier: 'West', specification: 'SPEC-1',
+        compendialReference: 'USP <381> | re-qualified 2026 | see NC-114',
+      }]);
+  });
+
+  it('round-trips through rowLinesOf', () => {
+    const rows = [{ attribute: 'Identity', method: 'FTIR', result: 'Conforms' }];
+    expect(parseRowLines(rowLinesOf(rows, CHARACTERISATION_COLUMNS), CHARACTERISATION_COLUMNS)).toEqual(rows);
+  });
+
+  it('rowLinesOf is empty for a column that holds nothing', () => {
+    expect(rowLinesOf(null, MATERIAL_COLUMNS)).toBe('');
+    expect(rowLinesOf([{}], MATERIAL_COLUMNS)).toBe('');
+  });
+});
+
+/* ─────────────────────────────────────────────────────────────────────────────
+ * The edit round trip must not delete what the drawer cannot show.
+ *
+ * rowLinesOf/parseRowLines project a jsonb row to the columns the textarea
+ * declares. PROCESS_STEP_COLUMNS has no `inProcessControls`, so per-step
+ * controls — which the mapper reads, the card counts, and §3.2.S.2 renders —
+ * were silently dropped on every Update. The PUT sends processSteps
+ * unconditionally, so the truncated array overwrote the stored column: pressing
+ * Update with no changes at all deleted every step-level control, dropped the
+ * card's count to "none", and flipped §3.2.S.2's completeness key to null.
+ *
+ * This is the exact failure rowLinesOf's own doc comment says it was added to
+ * prevent, one level deeper.
+ * ────────────────────────────────────────────────────────────────────────── */
+describe('manufacturingProcessPatch — the round trip preserves what it cannot render', () => {
+  const storedSteps = [
+    {
+      stepNumber: '1',
+      unitOperation: 'Blending',
+      description: 'Blend for 10 minutes',
+      inProcessControls: [{ test: 'Blend uniformity', acceptanceCriteria: 'RSD <= 5%' }],
+      scaleDependencies: { orderOfAddition: 'API last' },
+    },
+    {
+      stepNumber: '2',
+      unitOperation: 'Compression',
+      inProcessControls: [{ test: 'Hardness', acceptanceCriteria: '8-12 kp' }],
+    },
+  ];
+  const row = {
+    processName: 'Tablet manufacture',
+    processType: 'drug_product',
+    batchSize: '250,000 tablets',
+    processSteps: storedSteps,
+  };
+
+  it('an Update that changes nothing keeps every step-level in-process control', () => {
+    const form = manufacturingProcessForm(row as never);
+    const values: Record<string, string> = {};
+    for (const f of form.fields) values[f.key] = String((f as { default?: unknown }).default ?? '');
+
+    const body = manufacturingProcessPatch(values, row as never) as {
+      processSteps: Array<Record<string, unknown>> | null;
+    };
+    expect(body.processSteps).toHaveLength(2);
+    expect(body.processSteps![0].inProcessControls).toEqual([
+      { test: 'Blend uniformity', acceptanceCriteria: 'RSD <= 5%' },
+    ]);
+    expect(body.processSteps![1].inProcessControls).toEqual([
+      { test: 'Hardness', acceptanceCriteria: '8-12 kp' },
+    ]);
+    /* Anything else the drawer cannot show survives too — the fix is the class,
+       not the one key. */
+    expect(body.processSteps![0].scaleDependencies).toEqual({ orderOfAddition: 'API last' });
+    // …and the fields the drawer DOES show still round-trip.
+    expect(body.processSteps![0].unitOperation).toBe('Blending');
+    expect(body.processSteps![1].stepNumber).toBe('2');
+  });
+
+  it('an edited step keeps its own controls, and a new step simply has none', () => {
+    const values: Record<string, string> = {
+      processName: 'Tablet manufacture',
+      processType: 'drug_product',
+      validationStatus: 'not-started',
+      processSteps: '1 | Blending | Blend for 12 minutes\n2 | Compression\n3 | Coating',
+    };
+    const body = manufacturingProcessPatch(values, row as never) as {
+      processSteps: Array<Record<string, unknown>>;
+    };
+    expect(body.processSteps).toHaveLength(3);
+    expect(body.processSteps[0].description).toBe('Blend for 12 minutes');
+    expect(body.processSteps[0].inProcessControls).toEqual([
+      { test: 'Blend uniformity', acceptanceCriteria: 'RSD <= 5%' },
+    ]);
+    expect(body.processSteps[2].unitOperation).toBe('Coating');
+    expect(body.processSteps[2].inProcessControls).toBeUndefined();
+  });
+
+  it('a deleted step takes its own controls with it', () => {
+    const values: Record<string, string> = {
+      processName: 'Tablet manufacture',
+      processType: 'drug_product',
+      validationStatus: 'not-started',
+      processSteps: '1 | Blending',
+    };
+    const body = manufacturingProcessPatch(values, row as never) as {
+      processSteps: Array<Record<string, unknown>>;
+    };
+    expect(body.processSteps).toHaveLength(1);
+    expect(body.processSteps[0].inProcessControls).toEqual([
+      { test: 'Blend uniformity', acceptanceCriteria: 'RSD <= 5%' },
+    ]);
+  });
+});
+
+/* ── Impurity register: ICH M7 inputs round-trip ──────────────────────────── */
+import { impurityProfileBody, impurityProfilePatch, impurityProfileForm } from '../surfaces/cmcRegisterForms';
+
+describe('impurity register — the ICH M7 inputs are carried, never defaulted', () => {
+  const base = { impurityName: 'NDMA', materialName: 'BX-204', scope: 'drug_substance', impurityType: 'mutagenic', levelUnit: 'ppm', status: 'draft' };
+
+  it('sends the M7 inputs when recorded and omits them when blank', () => {
+    const withM7 = impurityProfileBody({ ...base, amesResult: 'positive', structuralAlert: 'yes', treatmentDuration: 'lifetime', cohortOfConcern: 'CoC_nitrosamine' }, 'p1');
+    expect(withM7).toMatchObject({ amesResult: 'positive', structuralAlert: 'yes', treatmentDuration: 'lifetime', cohortOfConcern: 'CoC_nitrosamine' });
+    const blank = impurityProfileBody(base, 'p1');
+    for (const k of ['amesResult', 'structuralAlert', 'carcinogenicityData', 'treatmentDuration', 'cohortOfConcern']) {
+      expect(blank, k).not.toHaveProperty(k);
+    }
+  });
+
+  it('clears an M7 input explicitly on update, rather than leaving a stale value', () => {
+    const patch = impurityProfilePatch({ ...base, amesResult: '' });
+    expect(patch.amesResult).toBeNull();
+    expect(patch.cohortOfConcern).toBeNull();
+  });
+
+  it('offers no default for any M7 input — the renderer\'s own "Select…" is the only blank', () => {
+    const fields = impurityProfileForm(null).fields;
+    for (const k of ['amesResult', 'structuralAlert', 'carcinogenicityData', 'treatmentDuration', 'cohortOfConcern']) {
+      const f = fields.find((x) => x.key === k);
+      expect(f, k).toBeTruthy();
+      expect(f?.default, k).toBe('');
+      // C2CForm prepends its own empty "Select…" option; a second blank would be an unlabeled duplicate.
+      expect((f as { options?: string[] }).options, k).not.toContain('');
+    }
+  });
+});
+
+/* ── Formulation register: §3.2.P.2.2 development rationale round-trip ────── */
+import { formulationRecordBody, formulationRecordPatch } from '../surfaces/cmcRegisterForms';
+
+describe('formulation register — the development rationale is carried, and cleared explicitly', () => {
+  it('sends formulationDevelopment when recorded, omits it when blank, nulls it on update', () => {
+    const base = { formulationName: 'BX-701 5 mg tablet', status: 'current' };
+    expect(formulationRecordBody({ ...base, formulationDevelopment: 'QTPP-driven choice of IR tablet' }, 'p1').formulationDevelopment).toBe('QTPP-driven choice of IR tablet');
+    expect(formulationRecordBody(base, 'p1')).not.toHaveProperty('formulationDevelopment');
+    expect(formulationRecordPatch({ ...base, formulationDevelopment: '' }).formulationDevelopment).toBeNull();
   });
 });

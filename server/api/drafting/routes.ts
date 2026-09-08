@@ -11,9 +11,11 @@
  * defensible regulatory content.
  */
 import { Router, Request, Response } from 'express';
-import type { Pool, PoolClient } from 'pg';
+import type { Pool } from 'pg';
 import { v4 as uuidv4 } from 'uuid';
 import { getRequestDbClient, type RequestDbClient } from '../../middleware/tenantContext';
+import { serverError } from '../../lib/api-response';
+import { createScopedLogger } from '../../utils/logger';
 import { ai } from '../../lib/unified-ai-client';
 
 // Types
@@ -205,7 +207,7 @@ function formatEvidenceForPrompt(chunks: SearchResult[]): string {
           if (structured.markdown) {
             content = structured.markdown;
           }
-        } catch (e) {
+        } catch {
           // Use raw text
         }
       }
@@ -242,7 +244,7 @@ function parseAIResponse(content: string): {
         })),
       };
     }
-  } catch (e) {
+  } catch {
     console.warn('[Drafting] Failed to parse JSON response, using raw text');
   }
 
@@ -313,6 +315,39 @@ async function logDraftingSession(
 
 // Express Router
 const router = Router();
+const log = createScopedLogger('drafting');
+
+/**
+ * The Cognitive Fabric store this service reads is NOT provisioned.
+ *
+ * Every query here goes to `vault.drafting_sessions`, `vault.extracted_entities`
+ * and the `vault.hybrid_search` / `vault.table_priority_search` functions. All
+ * four are defined only in db/migrations/_legacy/044_gcc_cognitive_fabric_rag.sql,
+ * which is on no apply path, so on a database built by install-fresh +
+ * deploy-migrate none of them exist. Verified live:
+ *
+ *   GET /api/gcc/drafting/stats
+ *     → 500 {"error":"relation \"vault.drafting_sessions\" does not exist"}
+ *
+ * — a 500 that also handed the caller the database's own error text.
+ *
+ * Answering 503 with a named code is the honest response: this is a
+ * provisioning state, not a request the caller got wrong, and it is the same
+ * answer the clinical-operations router gives for the same two SQLSTATEs. It
+ * is NOT a fix for the missing store; reconstructing the chunk/entity tables
+ * and the two search functions is its own change, and inventing them here
+ * would be worse than saying so.
+ */
+function notProvisioned(res: Response, error: unknown): Response | null {
+  const code = (error as { code?: string })?.code;
+  if (code !== '42P01' && code !== '3F000' && code !== '42883') return null;
+  log.warn('drafting store not provisioned', { code });
+  return res.status(503).json({
+    error: 'DRAFTING_STORE_NOT_PROVISIONED',
+    message:
+      'The defensible-drafting store is not provisioned on this deployment, so no draft can be generated or read.',
+  });
+}
 
 /**
  * POST /api/gcc/drafting/generate
@@ -427,13 +462,8 @@ Generate a regulatory-grade response using the evidence above. Remember to outpu
     );
 
     return res.json(response);
-  } catch (error: any) {
-    console.error(`[Drafting] Session ${sessionId} failed:`, error.message);
-    return res.status(500).json({
-      error: 'Drafting generation failed',
-      message: error.message,
-      sessionId,
-    });
+  } catch (error: unknown) {
+    return notProvisioned(res, error) ?? serverError(res, log, 'generating a draft', error, { sessionId });
   }
 });
 
@@ -468,8 +498,8 @@ router.get('/sessions', async (req: Request, res: Response) => {
       sessions: result.rows,
       count: result.rowCount,
     });
-  } catch (error: any) {
-    return res.status(500).json({ error: error.message });
+  } catch (error: unknown) {
+    return notProvisioned(res, error) ?? serverError(res, log, 'listing drafting sessions', error);
   }
 });
 
@@ -494,8 +524,8 @@ router.get('/sessions/:id', async (req: Request, res: Response) => {
     }
 
     return res.json({ session: result.rows[0] });
-  } catch (error: any) {
-    return res.status(500).json({ error: error.message });
+  } catch (error: unknown) {
+    return notProvisioned(res, error) ?? serverError(res, log, 'reading a drafting session', error);
   }
 });
 
@@ -536,7 +566,7 @@ Only extract entities you're confident about.`,
       if (jsonMatch) {
         entities = JSON.parse(jsonMatch[0]);
       }
-    } catch (e) {
+    } catch {
       console.warn('[Drafting] Entity extraction parse failed');
     }
 
@@ -562,8 +592,8 @@ Only extract entities you're confident about.`,
     }
 
     return res.json({ entities, stored: chunkId ? entities.length : 0 });
-  } catch (error: any) {
-    return res.status(500).json({ error: error.message });
+  } catch (error: unknown) {
+    return notProvisioned(res, error) ?? serverError(res, log, 'extracting entities', error);
   }
 });
 
@@ -601,8 +631,8 @@ router.get('/stats', async (req: Request, res: Response) => {
       stats: result.rows[0],
       entityDistribution: entityResult.rows,
     });
-  } catch (error: any) {
-    return res.status(500).json({ error: error.message });
+  } catch (error: unknown) {
+    return notProvisioned(res, error) ?? serverError(res, log, 'reading drafting statistics', error);
   }
 });
 

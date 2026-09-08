@@ -35,7 +35,18 @@ vi.mock('../../services/user-intelligence.js', () => ({
   generateWorkRecommendations: vi.fn(),
   addToWorkQueue: vi.fn(),
 }));
-vi.mock('../../db.js', () => ({ pool: { query: (...a: unknown[]) => query(...a) } }));
+/* Both exports. The route reads through `pool` and the canonical grant writer
+   (services/entitlements/module-grants.ts) reads through `query`; mocking only
+   the first let the real database module load inside the writer and turned
+   every toggle into a 500. */
+vi.mock('../../db.js', () => ({
+  pool: { query: (...a: unknown[]) => query(...a) },
+  query: (...a: unknown[]) => query(...a),
+}));
+vi.mock('../../db', () => ({
+  pool: { query: (...a: unknown[]) => query(...a) },
+  query: (...a: unknown[]) => query(...a),
+}));
 
 import moduleSubscriptionsRouter from '../module-subscriptions';
 
@@ -172,7 +183,13 @@ describe('PUT /api/module-subscriptions/:moduleId/toggle', () => {
     expect(res.body.enabled).toBe(true);
     const [sql, params] = query.mock.calls[0] as [string, unknown[]];
     expect(sql).toContain('module_subscriptions');
-    expect(params).toEqual([7, 'cmc-wizard', true, '42']);
+    /* Org 7 comes from the token, never the body — that is the org-scoping this
+       case is named for. The trailing null is the expiry, and it is the point of
+       routing this through the canonical writer: the row may already hold a
+       lapsed trial's past date, and writing `enabled = true` beside it would
+       produce an instantly-expired grant while this endpoint reported success.
+       Stating null clears it. */
+    expect(params).toEqual([7, 'cmc-wizard', true, '42', null]);
   });
 
   it('admin disable → { enabled: false }', async () => {
@@ -184,6 +201,6 @@ describe('PUT /api/module-subscriptions/:moduleId/toggle', () => {
     expect(res.status).toBe(200);
     expect(res.body.enabled).toBe(false);
     const [, params] = query.mock.calls[0] as [string, unknown[]];
-    expect(params).toEqual([7, 'cmc-wizard', false, '42']);
+    expect(params).toEqual([7, 'cmc-wizard', false, '42', null]);
   });
 });

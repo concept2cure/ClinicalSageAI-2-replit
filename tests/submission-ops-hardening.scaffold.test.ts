@@ -44,6 +44,9 @@ vi.mock('drizzle-orm', () => ({
   inArray: vi.fn(() => ({ __op: 'inArray' })),
   isNull: vi.fn(() => ({ __op: 'isNull' })),
   asc: vi.fn(() => ({ __op: 'asc' })),
+  // The route now composes leaf file names through the leaf-source resolver,
+  // whose schema imports declare Drizzle relations at module load.
+  relations: vi.fn(() => ({})),
 }));
 
 vi.mock('../server/submission-ops/policy-engine', () => ({
@@ -71,7 +74,10 @@ function appWithAuth() {
   app.use(express.json());
   app.use((req, _res, next) => {
     (req as any).organizationId = 99;
-    (req as any).user = { id: 777, organizationId: 99 };
+    /* A role, because every write on this router is now role-gated. These harnesses
+       attached none and still passed, which is exactly what they failed to notice. */
+    (req as any).user = { id: 777, organizationId: 99, role: 'admin' };
+    (req as any).userRole = 'admin';
     next();
   });
   app.use('/api/submission-ops', submissionOpsRouter);
@@ -106,6 +112,7 @@ describe('Submission Ops hardening runtime integration', () => {
     const res = await request(appWithAuth()).post('/api/submission-ops/artifact-section-map').send({
       artifactId: 5,
       sectionDbId: 8,
+      reason: 'Map the protocol into the clinical section', // governed change
     });
 
     expect(res.status).toBe(400);

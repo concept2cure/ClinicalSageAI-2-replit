@@ -1,6 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { I } from '../icons';
 import { EmptyState, useLiveRows } from '../dataConnect';
+import { usePublishSurfaceContext } from '../surfaceContext';
+import { useSurfaceActionHandlers, notifySurfaceActionReady } from '../surfaceActions';
 import type { SurfaceViewProps } from '../surfaceViews';
 import '../styles/project-home-v2.css';
 
@@ -108,6 +110,13 @@ function ChangeDecision({ title, flag, dec }: ChangeDecisionProps) {
 
 export function ChangeAssessment({ onAsk }: SurfaceViewProps) {
   const live = useLiveRows<ChangeItem>('/api/change-assessment');
+  /* Gated on error as well as loading. `useLiveRows`/`useLiveData` return
+     `data: null` on a FAILED read, so each count below derives from an empty
+     list and resolves to 0 — and with `loading` already false the strip renders
+     a SETTLED zero rather than a placeholder. Rows are empty in three
+     situations and only the third may say "nothing is on file"; the pattern is
+     MarketAccess.tsx:62. */
+  const kv = (n: number | string) => (live.loading || live.error ? '—' : String(n));
   const items = live.rows;
   const [sel, setSel] = useState<string | null>(null);
 
@@ -129,6 +138,75 @@ export function ChangeAssessment({ onAsk }: SurfaceViewProps) {
     items.flatMap((c) => [c.fda ? 'FDA' : null, c.eu ? 'EU' : null].filter(Boolean) as string[]),
   ).size;
 
+  /* WHAT ANA SEES HERE. Branches mirror the render exactly. On error the
+     screen's kv() shows '—' for every KPI, so no numeric facts are published
+     there — a failed read is a failure, not zero changes. A jurisdiction with
+     no determination on the selected row is reported absent, never asserted. */
+  const anaContext = useMemo(() => {
+    if (live.loading) {
+      return { summary: 'Change assessment — loading the 510(k)-change / MDR significant-change worklist; nothing is on screen yet.' };
+    }
+    if (live.error) {
+      return {
+        summary:
+          'Change assessment — the 510(k)-change / MDR significant-change worklist did not load, so no counts are on screen — a failed read, not an empty worklist.',
+      };
+    }
+    if (items.length === 0 || !item) {
+      return { summary: 'Change assessment — no change assessments on file yet; record a change or ask AnA to assess one and its FDA / EU MDR determination appears here.' };
+    }
+    return {
+      summary:
+        'Change assessment — ' + items.length + ' open change(s): ' + triggers + ' trigger a filing, '
+        + (items.length - triggers) + ' document-to-file, ' + jurisdictions + ' jurisdiction(s) assessed. Selected: '
+        + item.id + ' — ' + item.title + '.',
+      facts: {
+        openChanges: items.length,
+        triggerFiling: triggers,
+        documentToFile: items.length - triggers,
+        jurisdictionsAssessed: jurisdictions,
+        selected: {
+          id: item.id,
+          title: item.title,
+          device: item.device,
+          area: item.area,
+          raised: item.raised,
+          owner: item.owner,
+          docStatus: item.doc?.status ?? null,
+        },
+        determinationsPresent: { fda: !!item.fda, eu: !!item.eu },
+      },
+      availableActions: [
+        'Selecting a row in the worklist is the only screen control here — the FDA and EU MDR determinations shown are read-outs of recorded assessments, not something this screen edits',
+        'Ask AnA to assess a new change, or to draft the selected change’s document-to-file',
+      ],
+    };
+  }, [live.loading, live.error, items, item, triggers, jurisdictions]);
+  /* Selection only — the FDA and EU MDR determinations this screen shows are
+     computed from the change record; recording one stays a human act. */
+  useSurfaceActionHandlers('change-assessment', {
+    'change-assessment.select-change': (params) => {
+      const raw = String(params.change ?? '').trim();
+      if (!raw) return { ok: false, reason: 'Name a change to select.' };
+      if (live.loading) return { ok: false, reason: 'The change worklist is still loading.', retry: true };
+      if (live.error) {
+        return { ok: false, reason: 'The change worklist could not be read, so there is nothing to select from.' };
+      }
+      const needle = raw.toLowerCase();
+      const exact = items.filter((c) => c.id.toLowerCase() === needle || c.title.toLowerCase() === needle);
+      const hits = exact.length ? exact : items.filter((c) => c.title.toLowerCase().includes(needle));
+      if (hits.length === 0) return { ok: false, reason: `No change named "${raw}".` };
+      if (hits.length > 1) return { ok: false, reason: `"${raw}" matches ${hits.length} changes — name one exactly.` };
+      setSel(hits[0].id);
+      return { ok: true, detail: `Selected ${hits[0].id} — ${hits[0].title}` };
+    },
+  });
+  useEffect(() => {
+    if (!live.loading && !live.error) notifySurfaceActionReady('change-assessment');
+  }, [live.loading, live.error]);
+
+  usePublishSurfaceContext('change-assessment', anaContext);
+
   return (
     <div className="page-inner reg">
       <div className="reg-head">
@@ -141,10 +219,10 @@ export function ChangeAssessment({ onAsk }: SurfaceViewProps) {
       </div>
 
       <div className="reg-kpis">
-        <div className="reg-kpi"><div className="reg-kpi-v">{items.length}</div><div className="reg-kpi-l">Open changes</div></div>
-        <div className="reg-kpi" data-tone="err"><div className="reg-kpi-v">{triggers}</div><div className="reg-kpi-l">Trigger a filing</div></div>
-        <div className="reg-kpi"><div className="reg-kpi-v">{items.length - triggers}</div><div className="reg-kpi-l">Document to file</div></div>
-        <div className="reg-kpi"><div className="reg-kpi-v">{jurisdictions}</div><div className="reg-kpi-l">Jurisdictions assessed</div></div>
+        <div className="reg-kpi"><div className="reg-kpi-v">{kv(items.length)}</div><div className="reg-kpi-l">Open changes</div></div>
+        <div className="reg-kpi" data-tone="err"><div className="reg-kpi-v">{kv(triggers)}</div><div className="reg-kpi-l">Trigger a filing</div></div>
+        <div className="reg-kpi"><div className="reg-kpi-v">{kv(items.length - triggers)}</div><div className="reg-kpi-l">Document to file</div></div>
+        <div className="reg-kpi"><div className="reg-kpi-v">{kv(jurisdictions)}</div><div className="reg-kpi-l">Jurisdictions assessed</div></div>
       </div>
 
       {live.loading ? (
@@ -200,7 +278,14 @@ export function ChangeAssessment({ onAsk }: SurfaceViewProps) {
               <div className="chg-doc-l">{I.fileText} Generates: <b>{item.doc?.kind}</b></div>
               <div className="chg-doc-acts">
                 <button className="reg-doc-open" onClick={() => onAsk && onAsk(`Draft the ${item.doc?.kind} for ${item.id} -- ${item.title}`)}>{I.sparkles} Draft with AnA</button>
-                <button className="reg-doc-open ghost">{I.externalLink} Open change record</button>
+                {/* "Open change record" was a dead button — no onClick, and no
+                    second view to reach. The .chg-detail pane beside it already
+                    IS the change record: id, device, area, raised date, both
+                    jurisdictions' decision trees, outcomes, rationales, doc kind
+                    and status. Removed rather than wired, because wiring it
+                    would mean inventing a change-record document store this
+                    product does not have. "Draft with AnA" is the real action
+                    here and it works. */}
               </div>
             </div>
           </div>

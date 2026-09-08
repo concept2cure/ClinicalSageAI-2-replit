@@ -7,7 +7,7 @@
  * dossiers).
  *
  * Cross-program surface. Port basis:
- * design-system/ui_kits/mdx/surfaces/Analytics.jsx.
+ * ui_kits/mdx/surfaces/Analytics.jsx.
  */
 
 import * as React from 'react';
@@ -286,9 +286,9 @@ export function AnalyticsSurface({ onAskAna }: AnalyticsSurfaceProps) {
                 </div>
                 <div className="anl-blocker-foot">
                   <span>{b.pathway}</span>
-                  <span className="dot-sep">·</span>
+                  <span className="dot-sep" aria-hidden="true">·</span>
                   <span>median age {b.median}d</span>
-                  <span className="dot-sep">·</span>
+                  <span className="dot-sep" aria-hidden="true">·</span>
                   <span style={{ color: 'var(--text-400)' }}>{b.owner}</span>
                 </div>
               </button>

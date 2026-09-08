@@ -164,6 +164,107 @@ export function attributeQuotedSpans(
   return out;
 }
 
+/** One model-asserted derivation: a snippet of the generated text the model
+ *  claims it derived from a specific retrieved source. NOT a verified fact. */
+export interface ParaphraseAssertion {
+  /** A snippet of the GENERATED text the model says it derived from `sourceId`. */
+  quote: string;
+  /** The cre_evidence_sources.id the model claims the snippet derives from. */
+  sourceId: number;
+}
+
+/**
+ * Model-ASSERTED paraphrase spans — the honest, layered complement to
+ * {@link attributeQuotedSpans}.
+ *
+ * A verified quote is a substring fact: the generated text appears in the source,
+ * checkable by anyone. A paraphrase is NOT — it is the model's own claim that it
+ * derived a passage from a particular retrieved source. This records exactly that
+ * claim and no more, under two guards that keep it honest:
+ *
+ *   1. It only attributes a clause the model actually flagged: the clause's text
+ *      must appear (normalized) inside one of the model's asserted `quote`s — the
+ *      model cannot tag text it never quoted back.
+ *   2. It only attributes to a source that was actually retrieved (`sourceId`
+ *      present in `sources`) — the model cannot cite a document it was not given.
+ *
+ * Everything returned carries `usage: 'paraphrased'`, never `'quoted'`, so a
+ * reader (and the Data Origins panel) can always tell a checkable citation from a
+ * claimed one. The verified-quote pass is meant to run FIRST: pass its clause
+ * ranges as `alreadyQuotedRanges` and any clause already proven a quote is left to
+ * it — a verified fact always wins over an assertion about the same characters.
+ *
+ * Pure and deterministic, exactly like attributeQuotedSpans; the only difference
+ * is that the haystacks are the model's asserted quotes, not the source content.
+ * Offsets are the detected clause's own — the same coordinate system the reader
+ * and document_span_lineage use.
+ */
+export function attributeAssertedParaphraseSpans(
+  generatedText: string,
+  sources: RetrievedSource[],
+  assertions: ParaphraseAssertion[],
+  opts: AttributeOptions & { alreadyQuotedRanges?: Set<string> } = {},
+): AttributedSpan[] {
+  if (!generatedText || generatedText.length === 0) return [];
+  if (!Array.isArray(assertions) || assertions.length === 0) return [];
+
+  const minChars = opts.minQuoteChars ?? DEFAULT_MIN_QUOTE_CHARS;
+  const granularity = opts.granularity ?? 'clause';
+  const multiSource = opts.multiSource ?? true;
+  const alreadyQuoted = opts.alreadyQuotedRanges ?? new Set<string>();
+
+  // Only sources actually retrieved can be cited — an assertion naming anything
+  // else is dropped rather than resolved to a guessed id.
+  const validSourceIds = new Set(
+    (Array.isArray(sources) ? sources : [])
+      .filter((s) => s && Number.isInteger(s.sourceId) && s.sourceId > 0)
+      .map((s) => s.sourceId),
+  );
+
+  // Each assertion becomes a normalized haystack tagged with its (valid) source id.
+  const claims = assertions
+    .filter(
+      (a) =>
+        a &&
+        typeof a.quote === 'string' &&
+        Number.isInteger(a.sourceId) &&
+        validSourceIds.has(a.sourceId),
+    )
+    .map((a) => ({ sourceId: a.sourceId, norm: normalizeForMatch(a.quote) }))
+    .filter((a) => a.norm.length > 0);
+
+  if (claims.length === 0) return [];
+
+  const out: AttributedSpan[] = [];
+
+  for (const span of detectSpans(generatedText, granularity)) {
+    // A verified quote about these characters wins — leave it to the quote pass.
+    if (alreadyQuoted.has(`${span.charStart}:${span.charEnd}`)) continue;
+
+    const needle = normalizeForMatch(span.text);
+    if (needle.length < minChars) continue;
+
+    const seen = new Set<number>();
+    for (const c of claims) {
+      if (seen.has(c.sourceId)) continue;
+      if (c.norm.includes(needle)) {
+        out.push({
+          charStart: span.charStart,
+          charEnd: span.charEnd,
+          sourceId: c.sourceId,
+          usage: 'paraphrased',
+          spanText: span.text,
+        });
+        seen.add(c.sourceId);
+        if (!multiSource) break;
+      }
+    }
+  }
+
+  out.sort((a, b) => a.charStart - b.charStart || a.charEnd - b.charEnd || a.sourceId - b.sourceId);
+  return out;
+}
+
 /**
  * How much of the generated text is verifiably quoted from a source.
  *

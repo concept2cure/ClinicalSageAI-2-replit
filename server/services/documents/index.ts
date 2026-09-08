@@ -36,9 +36,6 @@ export { default as documentTemplateMapper } from '../documentTemplateMapper';
 export { default as DocumentOrchestrationService } from '../DocumentOrchestrationService';
 export { documentDataCenterService as DocumentDataCenterService } from '../DocumentDataCenterService';
 
-// Generator services (submission-specific)
-export { default as pmaDocumentGenerator } from '../pmaDocumentGenerator.js';
-
 // Types
 export interface DocumentMetadata {
   id: string;
@@ -124,9 +121,12 @@ export const DOCUMENT_SERVICE_REGISTRY = {
   workflow: 'DocumentOrchestrationService',
   dataCenter: 'DocumentDataCenterService',
 
-  // Generation ('510k' removed — legacy fda510kDocumentGenerator deleted;
-  // canonical 510(k) drafting is /api/510k/estar/* over cerv2_510k_sections)
-  pma: 'pmaDocumentGenerator',
+  // Generation: no entries. The legacy fda510kDocumentGenerator and
+  // pmaDocumentGenerator are deleted — the latter was unreachable from any
+  // route and emitted a hard-coded fixture dossier. Canonical 510(k) / De Novo /
+  // PMA drafting is /api/510k/estar/* (build, assemble, filing-readiness) over
+  // the governed store (c2c_documents / c2c_document_sections) and, for the
+  // legacy editor, cerv2_510k_sections.
 } as const;
 
 export type DocumentCapability = keyof typeof DOCUMENT_SERVICE_REGISTRY;

@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { I } from '../icons';
-import type { SurfaceViewProps, OwnedSurfaceViewProps } from '../surfaceViews';
+import type { OwnedSurfaceViewProps } from '../surfaceViews';
 import { useLiveData, useLiveRows, EmptyState } from '../dataConnect';
 import { RBM_NAV, RBM_LINKS } from '../fixtures/rbm-data';
 import type { RbmBoard, RbmProgram } from './rbmBoard';
@@ -20,7 +20,7 @@ import {
   RbmOversight,
   RbmPlan,
 } from './RbmSurfaces';
-import { useAnaChat, type MessageAttachment } from '../../components/ana/useAnaChat';
+import { useAnaChat } from '../../components/ana/useAnaChat';
 import '../styles/project-home-v2.css';
 import '../styles/rbm-v2.css';
 
@@ -90,7 +90,7 @@ const LINK_ICONS: Record<string, string> = {
    destructured here and never read, which is exactly the shape the union
    exists to forbid: a surface that hides the rail while still holding the
    handle that writes into it. */
-export function Rbm({ onNav }: OwnedSurfaceViewProps) {
+export function Rbm({ onNav, liveDrive }: OwnedSurfaceViewProps) {
   const [study, setStudy] = useState<string | null>(null);
   const [tab, setTab] = useState('overview');
   const [anaOpen, setAnaOpen] = useState(true);
@@ -118,50 +118,108 @@ export function Rbm({ onNav }: OwnedSurfaceViewProps) {
   const selProgram = programs.rows.find(p => p.id === study) || null;
   const studyLabel = selProgram?.label ?? 'the study';
   const nav = RBM_NAV.find(n => n.id === tab)!;
-  const moduleContext = {
-    surface: 'rbm',
-    summary: study
-      ? `Risk-based monitoring for ${studyLabel}, showing ${nav.label}`
-      : 'Risk-based monitoring with no study selected',
-    facts: study
-      ? {
-          programId: study,
-          programName: studyLabel,
-          activeView: nav.label,
-          activeTool: nav.tool,
-        }
-      : {},
-    available_actions: study ? nav.starters : [],
-  };
 
   /* AnA — the REAL streaming assistant (/api/ana-ri/stream), grounded to the
      selected RBM program. The former rbmAnaResolve() heuristic that fabricated
      canned cards from fixture constants is gone: the dock now shows the real
      turn (streamed text, executed actions, and the real Part 11 sign-off for a
      governed command). */
+  /* What AnA can see of this screen — through this surface's OWN conversation.
+     RBM owns the rail's column, so `usePublishSurfaceContext` is the wrong
+     channel here: nothing in this shell reads it, because the shell's rail is
+     not drawn. The grounding channel for an owned conversation is the
+     `moduleContext` its own `useAnaChat` forwards, exactly as
+     `document-authoring` and `ectd-coauthor` already do.
+
+     This hook passed none. So the dock ran the real assistant, on the real
+     endpoint, with the real study id — and could still not name a single KRI,
+     QTL breach or flagged site on the screen beside it, on a surface whose only
+     subject is those readings.
+
+     A NOT-READY board publishes as not ready. `boardReady` is false while a
+     study switch is in flight, and `bd` still holds the PREVIOUS study's risk
+     data in that window; grounding on it would have AnA discuss one study's
+     KRIs under another study's name. */
+  const anaModuleContext = useMemo(() => {
+    if (!study) {
+      return {
+        surface: 'rbm',
+        studySelected: false,
+        note: 'No study is selected, so no RBM board is on screen.',
+      };
+    }
+    if (board.loading || !boardReady) {
+      return {
+        surface: 'rbm',
+        studyId: study,
+        studyLabel,
+        boardReady: false,
+        note: 'The RBM board for this study is still loading.',
+      };
+    }
+    if (board.error) {
+      return {
+        surface: 'rbm',
+        studyId: study,
+        studyLabel,
+        boardReady: false,
+        note: 'The RBM board could not be read, so no risk readings are on screen — a failure, not a clean board.',
+      };
+    }
+    if (!hasData || !bd) {
+      return {
+        surface: 'rbm',
+        studyId: study,
+        studyLabel,
+        boardReady: true,
+        boardSeeded: false,
+        note: 'This study has no RBM data seeded yet, so the board is genuinely empty.',
+      };
+    }
+    return {
+      surface: 'rbm',
+      studyId: study,
+      studyLabel,
+      openTab: tab,
+      boardReady: true,
+      boardSeeded: true,
+      asOf: bd.asOf,
+      summary: bd.summary,
+      /* The punch-list the overview leads with, capped — enough for AnA to name
+         an item back to the user, not the whole board. */
+      attention: (bd.attention ?? [])
+        .slice(0, 8)
+        .map(a => ({ severity: a.sev, kind: a.kind, tab: a.nav, title: a.t, detail: a.d })),
+      reportApproved: bd.report ? bd.report.approved : null,
+      storeProvisioned: bd.pendingStore ? false : true,
+    };
+  }, [study, studyLabel, tab, board.loading, board.error, boardReady, hasData, bd]);
   const anaChat = useAnaChat({
     screenName: 'rbm',
     projectId: study ?? undefined,
-    moduleContext,
+    moduleContext: anaModuleContext,
+    // Live Drive bridge — same opt-in and shell-level apply machine as the rail.
+    liveDrive: liveDrive?.on,
+    onDriveEvent: liveDrive?.onDriveEvent,
+    onArtifactSaved: liveDrive?.onWorkSaved,
   });
   const anaMsgs: RbmAnaMessage[] = anaChat.messages.map(m => ({
     role: m.role,
     text: m.text || (m.streaming ? m.statusPhase || 'Thinking…' : ''),
-    attachments: m.attachments,
     executedActions: m.executedActions,
     pendingSignoffs: m.pendingSignoffs,
   }));
-  const askAna = (text: string, attachments?: MessageAttachment[]) => {
+  const askAna = (text: string) => {
     if (!text) return;
     if (!anaOpen) setAnaOpen(true);
-    void anaChat.send(text, attachments);
+    void anaChat.send(text);
   };
 
   const Body = SURFACES[tab];
 
   return (
-    <div className="rbm" data-screen-label={`RBM -- ${nav.label}`}>
-      <div className="reg-h">
+    <div data-screen-label={`RBM -- ${nav.label}`}>
+      <div className="reg-head">
         <div>
           <div className="ph-eyebrow">Clinical — risk-based quality management</div>
           <h1 className="reg-title">Risk-based monitoring</h1>
@@ -294,10 +352,17 @@ export function Rbm({ onNav }: OwnedSurfaceViewProps) {
           <RbmAnaDock
             nav={nav}
             study={studyLabel.split(' --')[0]}
-            projectId={study}
             msgs={anaMsgs}
             onAsk={askAna}
             onClose={() => setAnaOpen(false)}
+            /* The live work dock reads the raw turns: phases, tool timings,
+               pending steers and outputs the pane's message shape does not carry. */
+            work={{
+              messages: anaChat.messages,
+              streaming: anaChat.isStreaming,
+              runStatus: anaChat.runStatus,
+              pendingSteers: anaChat.pendingSteers,
+            }}
           />
         ) : (
           <button className="rbm-ana-seam" onClick={() => setAnaOpen(true)} title="Open AnA">

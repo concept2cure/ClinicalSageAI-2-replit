@@ -41,6 +41,13 @@ const log = createScopedLogger('ectd-validator-hardening');
 export interface HardenedValidationContext {
   /** Submission's tracking ID in c2c_ectd_submissions / ectdCompilations */
   submissionId: string;
+  /**
+   * Authenticated tenant. REQUIRED: the sequence-history read is tenant-scoped
+   * and refuses rather than falling back to a cross-tenant query, so a caller
+   * that cannot supply this gets a blocking SEQ_TENANT_SCOPE_MISSING finding
+   * rather than a silently unscoped answer.
+   */
+  organizationId: number;
   /** ICH region this package targets */
   region: RegulatoryRegion;
   /** Application number (IND123456, NDA215789, EMEA/H/C/12345, ...) */
@@ -144,9 +151,18 @@ export async function validateEctdPackageHardened(
   const dtdFindings: DtdFinding[] = backboneXml
     ? validateDtdConformance(backboneXml, leaves)
     : [{
-        severity: 'warning',
+        // Fail closed: with no backbone, DTD conformance was NOT checked, so the
+        // package cannot be declared gateway-ready. A 'warning' here left
+        // gatewayReady:true over zero DTD structural checking — a caller could
+        // omit the backbone (the route schema allows it) and be told the package
+        // is ready when the index.xml that ships was never examined. This is an
+        // error so it blocks gatewayReady; every production caller already passes
+        // the assembled backboneXml, so only a genuinely backbone-less
+        // validation (a dry-run, or an assembly that produced no backbone) trips
+        // it — exactly the case that must not read as ready.
+        severity: 'error',
         code: 'DTD_NO_BACKBONE',
-        message: 'No backbone XML provided — DTD validation skipped',
+        message: 'No backbone XML provided — DTD validation could not be performed; package is not gateway-ready.',
         fix: 'Pass the generated index.xml or backbone JSON for DTD validation',
       }];
 
@@ -166,7 +182,8 @@ export async function validateEctdPackageHardened(
   // 5) Sequence-gap detection
   const sequenceFindings = await detectSequenceGaps(
     context.applicationNumber,
-    context.sequenceNumber
+    context.sequenceNumber,
+    context.organizationId
   );
 
   // 6) Regional rules
@@ -234,8 +251,21 @@ export async function validateEctdPackageHardened(
 export function validateDtdConformance(backboneXml: string, leaves: ECTDLeaf[]): DtdFinding[] {
   const findings: DtdFinding[] = [];
 
+  // Strip XML comments before anything else: every check below scans the
+  // backbone with regexes, and a comment's contents are prose, not markup.
+  // Leaving them in cut both ways against the vendored fixtures —
+  //   false positive: the `<leaf>` written in index-valid.xml's own header
+  //     comment was scanned as leaf #0, raising three phantom
+  //     DTD_LEAF_MISSING_ATTR findings (and shifting `leaves[leafIdx]`, so
+  //     every later finding was attributed to the wrong file);
+  //   false negative: index-invalid.xml omits <?xml?> deliberately, but the
+  //     literal "<?xml ... ?>" in its comment satisfied the presence check, so
+  //     a backbone genuinely missing its declaration passed.
+  // Replace with a space, never '', so stripping cannot fuse adjacent tokens.
+  const xml = backboneXml.replace(/<!--[\s\S]*?-->/g, ' ');
+
   // Well-formedness — quick brace check before structural rules
-  if (!/<\?xml/i.test(backboneXml)) {
+  if (!/<\?xml/i.test(xml)) {
     findings.push({
       severity: 'error',
       code: 'DTD_NO_DECLARATION',
@@ -247,7 +277,7 @@ export function validateDtdConformance(backboneXml: string, leaves: ECTDLeaf[]):
   // Accept both a bare filename and a package-relative path (the packager emits
   // SYSTEM "util/dtd/ich-ectd-3-2.dtd"); what matters is that the referenced
   // DTD is ich-ectd-3-2.dtd.
-  if (!/<!DOCTYPE\s+ectd:ectd\s+SYSTEM\s+["'][^"']*ich-ectd-3-2\.dtd["']/i.test(backboneXml)) {
+  if (!/<!DOCTYPE\s+ectd:ectd\s+SYSTEM\s+["'][^"']*ich-ectd-3-2\.dtd["']/i.test(xml)) {
     findings.push({
       severity: 'error',
       code: 'DTD_NO_DOCTYPE',
@@ -257,7 +287,7 @@ export function validateDtdConformance(backboneXml: string, leaves: ECTDLeaf[]):
   }
 
   // Root element check
-  if (!/<ectd:ectd[\s>]/.test(backboneXml)) {
+  if (!/<ectd:ectd[\s>]/.test(xml)) {
     findings.push({
       severity: 'error',
       code: 'DTD_BAD_ROOT',
@@ -267,7 +297,7 @@ export function validateDtdConformance(backboneXml: string, leaves: ECTDLeaf[]):
   }
 
   // Namespace declarations
-  if (!/xmlns:ectd="http:\/\/www\.ich\.org\/ectd"/.test(backboneXml)) {
+  if (!/xmlns:ectd="http:\/\/www\.ich\.org\/ectd"/.test(xml)) {
     findings.push({
       severity: 'error',
       code: 'DTD_MISSING_ECTD_NS',
@@ -275,7 +305,7 @@ export function validateDtdConformance(backboneXml: string, leaves: ECTDLeaf[]):
       fix: 'Add xmlns:ectd="http://www.ich.org/ectd" to the root element',
     });
   }
-  if (!/xmlns:xlink="http:\/\/www\.w3\.org\/1999\/xlink"/.test(backboneXml)) {
+  if (!/xmlns:xlink="http:\/\/www\.w3\.org\/1999\/xlink"/.test(xml)) {
     findings.push({
       severity: 'error',
       code: 'DTD_MISSING_XLINK_NS',
@@ -285,7 +315,7 @@ export function validateDtdConformance(backboneXml: string, leaves: ECTDLeaf[]):
   }
 
   // Per-leaf attribute requirements
-  const leafMatches = backboneXml.matchAll(/<leaf\b([^>]*)\/?>/g);
+  const leafMatches = xml.matchAll(/<leaf\b([^>]*)\/?>/g);
   let leafIdx = 0;
   for (const match of leafMatches) {
     const attrs = match[1] || '';
@@ -321,7 +351,7 @@ export function validateDtdConformance(backboneXml: string, leaves: ECTDLeaf[]):
   // emit). This is what retires the legacy conventions: a flat <m3> block or an
   // abbreviated <m2-summaries> heading is flagged here, with the authoritative
   // fix named.
-  const elementMatches = backboneXml.matchAll(/<([a-zA-Z0-9:_-]+)[\s>/]/g);
+  const elementMatches = xml.matchAll(/<([a-zA-Z0-9:_-]+)[\s>/]/g);
   const seenElements = new Set<string>();
   for (const match of elementMatches) {
     seenElements.add(match[1]);
@@ -467,12 +497,52 @@ export function auditStudyIdTagging(leaves: ECTDLeaf[]): ValidationFinding[] {
  * Detect missing or out-of-order sequence numbers for an application.
  * Queries the submission tracking table (ectdCompilations or fallback) for
  * historical sequences and verifies the new sequence is the expected next.
+ *
+ * ── Tenant scope (required, not optional) ────────────────────────────────────
+ *
+ * This read WAS keyed on `application_number` alone, with no organization
+ * filter — a cross-tenant read of another org's submission history, in a
+ * codebase that tenant-scopes every other regulated query. It is also wrong in
+ * both directions functionally: a collision on application number lets one
+ * org's history report a DUPLICATE against another org's legitimate 0000, or
+ * manufacture a GAP from history the caller never filed. FDA-assigned numbers
+ * are unique in production, but nothing here enforces that, and the CRO
+ * multi-sponsor model makes a shared-number environment ordinary rather than
+ * hypothetical.
+ *
+ * `organizationId` is therefore a REQUIRED parameter. Making it optional would
+ * leave the unscoped path reachable by omission, which is how the defect
+ * existed in the first place; a caller that cannot supply one has no business
+ * reading submission history.
  */
 export async function detectSequenceGaps(
   applicationNumber: string,
-  newSequenceNumber: string
+  newSequenceNumber: string,
+  organizationId: number
 ): Promise<SequenceFinding[]> {
   const findings: SequenceFinding[] = [];
+
+  // A tenant gate that cannot be evaluated is not a tenant gate. Refuse rather
+  // than fall back to an unscoped read — and BLOCK, because "we could not
+  // determine the history" must never read as "there is no history" (the same
+  // invariant the outage branch below preserves).
+  if (!Number.isFinite(organizationId) || organizationId <= 0) {
+    log.error('SEQ_TENANT_SCOPE_MISSING — sequence history requested without an organization', {
+      applicationNumber,
+      attemptedSequence: newSequenceNumber,
+      organizationId,
+    });
+    findings.push({
+      severity: 'error',
+      code: 'SEQ_TENANT_SCOPE_MISSING',
+      message:
+        `Sequence history for application ${applicationNumber} could not be verified: no organization ` +
+        `context was supplied, and submission history is never read across tenants.`,
+      fix: 'Supply the authenticated organization id to the validator. Submission cannot be marked gateway-ready until sequence history is confirmed within its own tenant.',
+      attemptedSequence: newSequenceNumber,
+    });
+    return findings;
+  }
 
   // Query existing sequence numbers for this application across the
   // various tables that track sequence history. A DB outage must surface
@@ -494,6 +564,7 @@ export async function detectSequenceGaps(
   // primary) still blocks — the "an outage must never be swallowed as no-history"
   // invariant (RECONCILIATION_AUDIT_2026-06-29 §A.3 / §D.1) is preserved.
   const UNDEFINED_TABLE = '42P01';
+  const UNDEFINED_COLUMN = '42703';
   const sqlState = (err: unknown): string | undefined =>
     err && typeof err === 'object' && 'code' in err
       ? String((err as { code: unknown }).code)
@@ -501,9 +572,13 @@ export async function detectSequenceGaps(
 
   let result: { rows: Array<{ sequence_number: string }> };
   try {
+    // PRIMARY, always-present source. `ectd_compilations.organization_id` is
+    // declared in the canonical schema, so an absent column here is a genuine
+    // schema mismatch and rightly reaches the outer catch and blocks.
     const primary = await pool.query(
-      `SELECT sequence_number FROM ectd_compilations WHERE application_number = $1`,
-      [applicationNumber]
+      `SELECT sequence_number FROM ectd_compilations
+        WHERE application_number = $1 AND organization_id = $2`,
+      [applicationNumber, organizationId]
     );
     const rows = [...(primary.rows || [])];
 
@@ -513,15 +588,32 @@ export async function detectSequenceGaps(
     // catch and blocks the gate.
     try {
       const secondary = await pool.query(
-        `SELECT sequence_number FROM ectd_submissions WHERE application_number = $1`,
-        [applicationNumber]
+        `SELECT sequence_number FROM ectd_submissions
+          WHERE application_number = $1 AND organization_id = $2`,
+        [applicationNumber, organizationId]
       );
       rows.push(...(secondary.rows || []));
     } catch (subErr) {
-      if (sqlState(subErr) === UNDEFINED_TABLE) {
+      const state = sqlState(subErr);
+      if (state === UNDEFINED_TABLE) {
         log.warn('SEQ_SUBMISSIONS_ABSENT — ectd_submissions not provisioned; using ectd_compilations only', {
           applicationNumber,
         });
+      } else if (state === UNDEFINED_COLUMN) {
+        /* The table exists but carries no organization_id. Its own migration
+           notes the tenant column lands "only on the install-fresh path", so
+           this is a real deploy shape rather than a defect here. An
+           un-scopable source cannot be read: folding it in would restore
+           exactly the cross-tenant read this parameter exists to close. Drop
+           it and say so.
+
+           Safe in the blocking direction: losing history can only shrink the
+           known set, and an empty history with a non-0000 sequence raises
+           SEQ_FIRST_NOT_0000 below — a block, not a pass. */
+        log.warn(
+          'SEQ_SUBMISSIONS_UNSCOPABLE — ectd_submissions has no organization_id; excluded from history rather than read across tenants',
+          { applicationNumber, attemptedSequence: newSequenceNumber },
+        );
       } else {
         throw subErr;
       }

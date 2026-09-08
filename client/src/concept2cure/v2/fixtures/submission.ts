@@ -19,7 +19,25 @@ export interface ScFinding { id: string; rule: string; severity: string; status:
 export interface ScShadow { id: string; severity: string; msg: string; ref: string }
 export interface ScCrossRegion { region: string; item: string; status: string; note: string }
 
-export const SC_REGIONS = [{ v: 'fda', l: 'FDA (US)' }, { v: 'eu', l: 'EU' }, { v: 'jp', l: 'PMDA (Japan)' }];
+/** One spelling per region, matching the server's primaryRegion enum — the
+ *  store already writes 'eu' and 'jp' (never their agency aliases), so those
+ *  aliases are deliberately not offered as second spellings of the same
+ *  market. Extended past fda/eu/jp so a non-US submission can be OPENED, not
+ *  only displayed — the global-markets half of the product's mandate. */
+export const SC_REGIONS = [
+  { v: 'fda', l: 'FDA (US)' },
+  { v: 'eu', l: 'EU (EMA)' },
+  { v: 'jp', l: 'PMDA (Japan)' },
+  { v: 'ca', l: 'Health Canada' },
+  { v: 'uk', l: 'MHRA (UK)' },
+  { v: 'ch', l: 'Swissmedic' },
+  { v: 'au', l: 'TGA (Australia)' },
+  { v: 'cn', l: 'NMPA (China)' },
+  { v: 'br', l: 'ANVISA (Brazil)' },
+  { v: 'in', l: 'CDSCO (India)' },
+  { v: 'kr', l: 'MFDS (Korea)' },
+  { v: 'sg', l: 'HSA (Singapore)' },
+];
 
 export const SC_APPTYPES = [
   { v: 'ind', l: 'IND' },
@@ -31,15 +49,6 @@ export const SC_APPTYPES = [
   { v: 'de_novo', l: 'De Novo' },
   { v: 'pma', l: 'PMA' },
   { v: 'cta', l: 'CTA' },
-];
-
-export const SC_PATHWAYS = [
-  { v: 'ectd_v322', l: 'eCTD v3.2.2' },
-  { v: 'ectd_v40', l: 'eCTD v4.0 (RPS)' },
-  { v: 'estar', l: 'eSTAR' },
-  { v: 'mdr', l: 'EU MDR tech doc' },
-  { v: 'ivdr', l: 'EU IVDR tech doc' },
-  { v: 'ctis', l: 'CTIS' },
 ];
 
 const SC_SEQ_STATUS_RAW = {
@@ -112,14 +121,6 @@ export const SC_SEQUENCES_RAW = [
     leaves: 18,
     updated: '4 hr ago',
   },
-];
-
-export const SC_LEAVES = [
-  { path: 'm1/us/1.1', title: 'Form FDA 356h', op: 'new', module: '1' },
-  { path: 'm2/2.5', title: 'Clinical Overview', op: 'replace', module: '2' },
-  { path: 'm3/3.2.s.4.4', title: 'Comparability protocol', op: 'new', module: '3' },
-  { path: 'm5/5.3.5.1', title: 'ISS — integrated safety', op: 'append', module: '5' },
-  { path: 'm1/us/1.14.1', title: 'Draft labeling (superseded)', op: 'delete', module: '1' },
 ];
 
 export const SC_FINDINGS_RAW = [
@@ -204,11 +205,6 @@ export const SC_CROSSREGION_RAW = [
     note: 'Reusable from the FDA sequence with regional wrappers.',
   },
 ];
-export const SC_SEQUENCES: ScSequence[] = SC_SEQUENCES_RAW;
-export const SC_FINDINGS: ScFinding[] = SC_FINDINGS_RAW;
-export const SC_SHADOW: ScShadow[] = SC_SHADOW_RAW;
-export const SC_CROSSREGION: ScCrossRegion[] = SC_CROSSREGION_RAW;
-
 export const SC_SEQ_STATUS: Record<string, ToneMap> = SC_SEQ_STATUS_RAW;
 export const SC_TRANSITIONS: Record<string, string[]> = SC_TRANSITIONS_RAW;
 export const SC_LIFECYCLE_OPS: Record<string, ToneMap> = SC_LIFECYCLE_OPS_RAW;

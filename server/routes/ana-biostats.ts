@@ -16,13 +16,13 @@ import { Router, Request, Response } from 'express';
 import { authenticateToken } from '../middleware/auth';
 import { anaBiostatsOrchestrator } from '../services/ana-biostats/orchestrator';
 import { inputNormalizer } from '../services/ana-biostats/input-normalizer';
-import { computationEngine } from '../services/ana-biostats/computation-engine';
 import { judgmentEngine } from '../services/ana-biostats/judgment-engine';
 import { domainAdapter } from '../services/ana-biostats/domain-adapter';
 import { regulatoryCustomizer } from '../services/ana-biostats/regulatory-customizer';
 import { documentGenerator } from '../services/ana-biostats/document-generator';
 
 import { createScopedLogger } from '../utils/logger.js';
+import { serverError } from '../lib/api-response';
 
 const logger = createScopedLogger('ana-biostats');
 
@@ -57,7 +57,7 @@ router.post('/workflow', authenticateToken, async (req: Request, res: Response) 
     const orgId = resolveOrganizationId(req);
     const userId = resolveUserId(req);
 
-    const { workflowType, input, generateDocument, documentType, autoAttachToDossier, reviewRequired } = req.body;
+    const { workflowType, input, generateDocument, documentType, autoAttachToDossier, reviewRequired, dossierSectionId } = req.body;
 
     if (!workflowType || !input) {
       return res.status(400).json({
@@ -74,12 +74,21 @@ router.post('/workflow', authenticateToken, async (req: Request, res: Response) 
       documentType: documentType ?? getDefaultDocType(workflowType),
       autoAttachToDossier,
       reviewRequired,
+      // The dossier section the attach step maps into. This was accepted by the
+      // integrator (workflow-integrator.ts::executeWorkflowActions) but never
+      // read from the request, so `autoAttachToDossier` could not attach
+      // anything over HTTP. A non-positive or non-integer value is dropped and
+      // the attach step reports it honestly rather than mapping into section 0.
+      dossierSectionId:
+        Number.isInteger(Number(dossierSectionId)) && Number(dossierSectionId) > 0
+          ? Number(dossierSectionId)
+          : undefined,
     });
 
     return res.json(result);
   } catch (error: any) {
     logger.error('Workflow error', { err: error instanceof Error ? error.message : String(error) });
-    return res.status(500).json({ error: error.message || 'Workflow execution failed' });
+    return serverError(res, logger, 'saving workflow', error);
   }
 });
 
@@ -99,7 +108,7 @@ router.post('/compute', authenticateToken, async (req: Request, res: Response) =
     return res.json(result);
   } catch (error: any) {
     logger.error('Compute error', { err: error instanceof Error ? error.message : String(error) });
-    return res.status(500).json({ error: error.message || 'Computation failed' });
+    return serverError(res, logger, 'saving compute', error);
   }
 });
 
@@ -132,7 +141,7 @@ router.post('/compare', authenticateToken, async (req: Request, res: Response) =
     return res.json(result);
   } catch (error: any) {
     logger.error('Compare error', { err: error instanceof Error ? error.message : String(error) });
-    return res.status(500).json({ error: error.message || 'Scenario comparison failed' });
+    return serverError(res, logger, 'saving compare', error);
   }
 });
 
@@ -151,7 +160,7 @@ router.post('/validate', authenticateToken, async (req: Request, res: Response) 
     return res.json(result);
   } catch (error: any) {
     logger.error('Validation error', { err: error instanceof Error ? error.message : String(error) });
-    return res.status(500).json({ error: error.message || 'Validation failed' });
+    return serverError(res, logger, 'validating', error);
   }
 });
 
@@ -190,7 +199,7 @@ router.post('/document', authenticateToken, async (req: Request, res: Response) 
     return res.json(document);
   } catch (error: any) {
     logger.error('Document generation error', { err: error instanceof Error ? error.message : String(error) });
-    return res.status(500).json({ error: error.message || 'Document generation failed' });
+    return serverError(res, logger, 'saving document', error);
   }
 });
 
@@ -220,7 +229,7 @@ router.post('/judge', authenticateToken, async (req: Request, res: Response) => 
     return res.json({ judgment, domainAdaptation: domain, regulatoryCustomization: regulatory });
   } catch (error: any) {
     logger.error('Judgment error', { err: error instanceof Error ? error.message : String(error) });
-    return res.status(500).json({ error: error.message || 'Judgment failed' });
+    return serverError(res, logger, 'saving judge', error);
   }
 });
 
@@ -248,7 +257,7 @@ router.post('/compute-enhanced', authenticateToken, async (req: Request, res: Re
     return res.json({ validation, computation: result });
   } catch (error: any) {
     logger.error('Enhanced compute error', { err: error instanceof Error ? error.message : String(error) });
-    return res.status(500).json({ error: error.message || 'Enhanced computation failed' });
+    return serverError(res, logger, 'saving compute enhanced', error);
   }
 });
 
@@ -267,7 +276,7 @@ router.post('/multiplicity', authenticateToken, async (req: Request, res: Respon
     return res.json(result);
   } catch (error: any) {
     logger.error('Multiplicity error', { err: error instanceof Error ? error.message : String(error) });
-    return res.status(500).json({ error: error.message || 'Multiplicity computation failed' });
+    return serverError(res, logger, 'saving multiplicity', error);
   }
 });
 
@@ -292,7 +301,7 @@ router.post('/missing-data-impact', authenticateToken, async (req: Request, res:
     return res.json(impact);
   } catch (error: any) {
     logger.error('Missing data impact error', { err: error instanceof Error ? error.message : String(error) });
-    return res.status(500).json({ error: error.message || 'Missing data impact computation failed' });
+    return serverError(res, logger, 'saving missing data impact', error);
   }
 });
 
@@ -328,7 +337,7 @@ router.post('/sme-route', authenticateToken, async (req: Request, res: Response)
     return res.json(routing);
   } catch (error: any) {
     logger.error('SME routing error', { err: error instanceof Error ? error.message : String(error) });
-    return res.status(500).json({ error: error.message || 'SME routing failed' });
+    return serverError(res, logger, 'saving sme route', error);
   }
 });
 
@@ -353,7 +362,7 @@ router.get('/sme-agents', authenticateToken, async (req: Request, res: Response)
     return res.json({ agents });
   } catch (error: any) {
     logger.error('SME agents list error', { err: error instanceof Error ? error.message : String(error) });
-    return res.status(500).json({ error: error.message || 'Failed to list SME agents' });
+    return serverError(res, logger, 'loading sme agents', error);
   }
 });
 

@@ -7,8 +7,7 @@
 
 import express from 'express';
 import { checkForOpenAIKey } from '../../utils/api-security.js';
-import { validateRequestBody } from '../../utils/validation.js';
-import { complianceDocumentSchema, regulatoryMarketSchema } from './types.js';
+import { complianceDocumentSchema } from './types.js';
 import { rateLimit } from 'express-rate-limit';
 import fs from 'fs';
 import path from 'path';
@@ -25,8 +24,12 @@ const complianceLimiter = rateLimit({
   message: 'Too many compliance processing requests, please try again after a minute',
 });
 import { ai } from '../../lib/unified-ai-client';
+import { serverError } from '../../lib/api-response.js';
+import { createScopedLogger } from '../../utils/logger.js';
 
 // Create router
+const logger = createScopedLogger('cmc-global-compliance');
+
 const router = express.Router();
 
 // Configure multer for file uploads
@@ -240,10 +243,7 @@ router.post('/transform', checkForOpenAIKey, complianceLimiter, async (req, res)
     });
   } catch (error) {
     console.error('Error in global compliance transformation:', error);
-    return res.status(500).json({
-      error: 'An error occurred while transforming the document',
-      details: error.message,
-    });
+    return serverError(res, logger, 'transforming', error);
   }
 });
 
@@ -334,10 +334,7 @@ router.post('/upload', checkForOpenAIKey, upload.single('document'), async (req,
     });
   } catch (error) {
     console.error('Error in document upload:', error);
-    return res.status(500).json({
-      error: 'An error occurred while uploading and processing the document',
-      details: error.message,
-    });
+    return serverError(res, logger, 'uploading', error);
   }
 });
 
@@ -452,10 +449,7 @@ router.post('/compatibility-matrix', checkForOpenAIKey, complianceLimiter, async
     });
   } catch (error) {
     console.error('Error in compatibility matrix generation:', error);
-    return res.status(500).json({
-      error: 'An error occurred while generating the compatibility matrix',
-      details: error.message,
-    });
+    return serverError(res, logger, 'saving compatibility matrix', error);
   }
 });
 
@@ -510,10 +504,7 @@ router.get('/download/:transformationId', (req, res) => {
     }
   } catch (error) {
     console.error('Error in transformation download:', error);
-    return res.status(500).json({
-      error: 'An error occurred while downloading the transformation',
-      details: error.message,
-    });
+    return serverError(res, logger, 'downloading', error);
   }
 });
 
@@ -543,10 +534,7 @@ router.get('/download-analysis/:analysisId', (req, res) => {
     return res.json(analysisData);
   } catch (error) {
     console.error('Error in analysis download:', error);
-    return res.status(500).json({
-      error: 'An error occurred while downloading the analysis',
-      details: error.message,
-    });
+    return serverError(res, logger, 'downloading analysis', error);
   }
 });
 
@@ -575,10 +563,7 @@ router.get('/processing/:uploadId', (req, res) => {
     return res.json(processingResult);
   } catch (error) {
     console.error('Error in getting processing result:', error);
-    return res.status(500).json({
-      error: 'An error occurred while getting the processing result',
-      details: error.message,
-    });
+    return serverError(res, logger, 'loading processing', error);
   }
 });
 

@@ -301,6 +301,10 @@ export function createAuditTrailRoutes(pool: Pool): Router {
       const principal = getActingPrincipal(req);
       const results: { eventId: number; action: string }[] = [];
       const skipped: { index: number; reason: string }[] = [];
+      // Distinct from a validation-skip: an actual INSERT failure means a
+      // (default GxP-relevant) event was NOT recorded. Tracked so the batch is
+      // reported as partial/failed rather than a clean success.
+      let insertFailures = 0;
 
       for (let i = 0; i < batch.length; i++) {
         const evt = batch[i];
@@ -335,13 +339,25 @@ export function createAuditTrailRoutes(pool: Pool): Router {
           );
           results.push({ eventId: result.rows[0].id, action: evt.eventType || evt.action || '' });
         } catch (err) {
+          // Do NOT silently drop the event. Record the failure in `skipped` so
+          // results.length + skipped.length === total always holds, and count it
+          // as an insert failure so the response reports a partial/failed batch
+          // rather than 201 success — a GxP event lost with no client signal is
+          // an §11.10(e) gap.
           console.error('Failed to insert batch audit event:', err);
-          // Continue processing remaining events
+          skipped.push({
+            index: i,
+            reason: 'insert_failed: ' + (err instanceof Error ? err.message : String(err)),
+          });
+          insertFailures++;
         }
       }
 
-      return res.status(201).json({
-        success: true,
+      const partial = insertFailures > 0;
+      return res.status(partial ? 207 : 201).json({
+        success: !partial,
+        partial,
+        insertFailures,
         inserted: results.length,
         skipped: skipped.length,
         skippedDetails: skipped,

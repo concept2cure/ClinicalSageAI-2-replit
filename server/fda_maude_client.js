@@ -89,7 +89,7 @@ function makeRequest(endpoint, params = {}) {
           try {
             const errorData = JSON.parse(data);
             reject(new Error(errorData.error?.message || `HTTP Error: ${res.statusCode}`));
-          } catch (error) {
+          } catch {
             reject(new Error(`HTTP Error: ${res.statusCode} ${res.statusMessage || ''}`));
           }
         }

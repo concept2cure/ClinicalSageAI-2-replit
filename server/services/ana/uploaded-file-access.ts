@@ -26,6 +26,7 @@
 
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
+import { createHash } from 'node:crypto';
 import { createScopedLogger } from '../../utils/logger';
 
 const logger = createScopedLogger('ana-uploaded-files');
@@ -37,6 +38,26 @@ export interface UploadedFile {
   fileSize: number;
   storagePath: string;
   buffer: Buffer;
+  /**
+   * What the stored digest proved about these bytes.
+   *
+   *   'verified'      — a checksum was recorded and the bytes still match it.
+   *   'unverifiable'  — the row predates checksumming (checksum_sha256 IS NULL).
+   *
+   * A MISMATCH is never reported here: loadUploadedFile throws instead, because
+   * a document whose bytes no longer match what was received must not be handed
+   * to a caller that would then treat it as the original.
+   *
+   * Present rather than omitted-when-unknown on purpose. A caller that renders
+   * "verified" has to look at this field to do so, which means it cannot claim
+   * verification for a legacy row by forgetting to check.
+   */
+  integrity: 'verified' | 'unverifiable';
+}
+
+/** Lowercase hex SHA-256, the form stored in file_uploads.checksum_sha256. */
+export function sha256Hex(buffer: Buffer): string {
+  return createHash('sha256').update(buffer).digest('hex');
 }
 
 function uploadsRoot(): string {
@@ -169,8 +190,9 @@ export async function loadUploadedFile(
     file_size: string | number;
     storage_path: string;
     organization_id: number | string | null;
+    checksum_sha256: string | null;
   }>(
-    `SELECT id, original_name, mime_type, file_size, storage_path, organization_id
+    `SELECT id, original_name, mime_type, file_size, storage_path, organization_id, checksum_sha256
        FROM file_uploads WHERE id = $1`,
     [fileId],
   );
@@ -197,6 +219,39 @@ export async function loadUploadedFile(
     );
   }
 
+  // ── Integrity: the bytes must still be the bytes we were given ───────────
+  // Until now nothing ever re-derived a digest from the stored bytes, so a file
+  // altered on disk, truncated by a failed write, or restored from a bad backup
+  // was served to a regulatory user as the original. Checked HERE, in the one
+  // module that resolves an upload id to bytes, so no caller can opt out by
+  // reading the row itself.
+  //
+  // Fails closed: a mismatch throws rather than returning the bytes with a
+  // warning attached. A caller holding a Buffer will use it, and the whole
+  // point is that these particular bytes cannot be trusted.
+  const recorded = row.checksum_sha256;
+  let integrity: UploadedFile['integrity'] = 'unverifiable';
+  if (recorded) {
+    const actual = sha256Hex(buffer);
+    if (actual !== recorded) {
+      logger.error('upload integrity check FAILED — stored bytes do not match the recorded digest', {
+        fileId,
+        orgId: organizationId ?? null,
+        storagePath,
+        recordedSha256: recorded,
+        actualSha256: actual,
+        recordedSize: Number(row.file_size) || null,
+        actualSize: buffer.length,
+      });
+      throw new Error(
+        `upload "${fileId}" failed its integrity check: the stored bytes no longer match the ` +
+          `SHA-256 recorded when it was received. The file has been altered or corrupted since ` +
+          `upload and will not be served. Ask the user to re-upload it.`,
+      );
+    }
+    integrity = 'verified';
+  }
+
   return {
     fileId: row.id,
     fileName: row.original_name || fileId,
@@ -204,6 +259,7 @@ export async function loadUploadedFile(
     fileSize: Number(row.file_size) || buffer.length,
     storagePath,
     buffer,
+    integrity,
   };
 }
 
@@ -231,8 +287,8 @@ export async function saveDerivedUpload(params: {
   const { getPool } = await import('../../db.js');
   const pool = getPool();
   await pool.query(
-    `INSERT INTO file_uploads (id, user_id, organization_id, original_name, mime_type, file_size, storage_path, status, created_at)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, 'uploaded', NOW())`,
+    `INSERT INTO file_uploads (id, user_id, organization_id, original_name, mime_type, file_size, storage_path, checksum_sha256, status, created_at)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'uploaded', NOW())`,
     [
       fileId,
       params.userId ?? null,
@@ -241,6 +297,9 @@ export async function saveDerivedUpload(params: {
       params.mimeType,
       params.buffer.length,
       storagePath,
+      // Digest of the bytes actually written, so a later read can prove the
+      // file on disk is still this one.
+      sha256Hex(params.buffer),
     ],
   );
 

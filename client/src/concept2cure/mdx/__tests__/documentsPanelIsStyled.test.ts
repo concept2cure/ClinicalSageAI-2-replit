@@ -4,7 +4,7 @@
  * ── The defect this exists for ───────────────────────────────────────────────
  * DocumentsPanel shipped with no CSS at all. Its docblock said "CSS lives in
  * client/src/concept2cure/mdx/app.css (DOCUMENTS PANEL section)" and there was
- * no such section: the port from design-system/ui_kits/mdx brought the JSX and
+ * no such section: the port from ui_kits/mdx brought the JSX and
  * left the stylesheet behind. All 24 `docs-*` classes matched nothing in any
  * bundle, on the five surfaces that render it — Vault, Engineering, UDI,
  * Post-market and Analytics — where the document list is the main content.
@@ -26,6 +26,21 @@
  * against a competing one, or ships in a bundle this surface loads. Those need
  * a browser and live in scripts/visual-qa. This catches the one failure mode
  * that is both catastrophic and invisible here — no rule whatsoever.
+ *
+ * ── Its relationship to the repo-wide gate ───────────────────────────────────
+ * `scripts/ci/check-component-class-coverage.mjs` now asks this question of
+ * EVERY component in client/src, against the BUILT css rather than the source
+ * sheet — the generalisation of this file, written because DocumentsPanel was
+ * not the only component that had been ported as markup and left behind as
+ * stylesheet. This file is kept and is not a second copy of it: it covers two
+ * things the general gate deliberately does not, because they are specific to
+ * this component and cannot be asked generically —
+ *
+ *   · the dynamic prefixes `docs-fw-` and `docs-esig-`, whose suffix is only
+ *     known at runtime. The gate skips every interpolated name rather than
+ *     guessing at a fragment; here the prefix is known and checkable.
+ *   · the docblock pointer. "CSS lives in …/app.css" was false for months and
+ *     no gate reads a comment. This one does.
  */
 import fs from 'node:fs';
 import path from 'node:path';

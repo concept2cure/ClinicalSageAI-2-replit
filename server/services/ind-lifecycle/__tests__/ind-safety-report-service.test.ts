@@ -74,6 +74,7 @@ describe('classifyIndSafetyReport — 21 CFR 312.32', () => {
       serious: true,
       suspected: true,
       unexpected: true,
+      expectednessRecorded: true,
       fatalOrLifeThreatening: true,
     });
   });
@@ -139,12 +140,26 @@ describe('classifyIndSafetyReport — 21 CFR 312.32', () => {
     expect(c.regulatoryBasis).toContain('312.33');
   });
 
-  it('NOT reportable: expectedness unknown/absent is treated conservatively as expected', () => {
+  it('NOT reportable: expectedness unknown/absent never starts the clock, and says it was not assessed', () => {
     const c = classifyIndSafetyReport(
       makeEvent({ seriousnessCriteria: 'life_threatening', causality: 'probable', expectedness: null }),
     );
     expect(c.obligation).toBe('NOT_REPORTABLE');
     expect(c.determinations.unexpected).toBe(false);
+    // Nobody assessed this event against the IB/RSI. The rationale used to
+    // assert "event is expected (listed in the IB)" here — a determination no
+    // reviewer had made.
+    expect(c.determinations.expectednessRecorded).toBe(false);
+    expect(c.rationale).toMatch(/not been recorded/);
+    expect(c.rationale).not.toMatch(/event is expected/);
+  });
+
+  it('NOT reportable: a recorded "expected" determination is reported as such', () => {
+    const c = classifyIndSafetyReport(
+      makeEvent({ seriousnessCriteria: 'death', causality: 'probable', expectedness: 'expected (listed in IB)' }),
+    );
+    expect(c.determinations.expectednessRecorded).toBe(true);
+    expect(c.rationale).toMatch(/event is expected/);
   });
 });
 

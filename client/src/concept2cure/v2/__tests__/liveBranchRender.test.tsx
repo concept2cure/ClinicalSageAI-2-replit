@@ -1,21 +1,23 @@
 // @vitest-environment jsdom
 /**
- * Live-branch render gate — "the seeded first user's view renders too".
+ * Every surface renders with no data yet, without a crash.
  *
- * The crash gate (surfaceRender.test) proves every surface renders in its
- * OFFLINE state: no backend reachable, so useLiveList/useLive/liveGet all fall
- * back to the shipped fixture with sample:true. But a first human on a seeded
- * org hits the OTHER branch — the backend answers, the surface adopts the live
- * payload, and sample flips to false. Surfaces sometimes render differently in
- * that branch (a "Live" pill instead of "Sample data", live-only affordances,
- * roll-ups computed off adopted rows), and nothing exercises it.
+ * WHAT THIS USED TO BE. A "live-branch" gate: the offline crash gate proved
+ * every surface renders when `useLiveList` / `useLive` / `liveGet` fell back to
+ * a shipped fixture with `sample:true`, and this one forced the OTHER branch by
+ * stubbing those hooks to return the same fixture with `sample:false` — same
+ * data, opposite provenance flag.
  *
- * This forces the live branch for every surface by stubbing the dataConnect
- * read hooks to return { sample:false } with the surface's OWN fixture as the
- * adopted payload — a shape-matching, non-fabricated stand-in for what the
- * backend would return. Then it renders every surface and fails on any
- * crash-class console.error, exactly like the offline gate. Same data, opposite
- * provenance flag: this closes the branch the offline gate can't reach.
+ * Both branches are gone. Ledger L72 deleted the `live ?? fixture` helpers, so
+ * no read hook can hand a surface a fixture and call it live, and there is no
+ * sample flag to flip. The stub that forced the branch stubbed three symbols
+ * that no longer exist, which made it a no-op dressed as a control.
+ *
+ * WHAT IT PROVES NOW. Every registered surface mounts and renders on the
+ * fixture-free contract before any data arrives — the state a real first user
+ * sees for the first paint — and fails on any crash-class console.error. That
+ * is a narrower claim than the name "live branch" made, and it is the one the
+ * test can actually support.
  */
 import React from 'react';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
@@ -24,32 +26,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { getSurface, type UiSurface } from '@shared/constants/ui-surface-registry';
 import { AuthProvider } from '@/services/portal/authService';
 
-// Force the live-adopted branch: every read hook reports sample:false and hands
-// back the fixture the surface passed in (its own display shape). liveGet is
-// async and returns the raw-envelope fixture unchanged. Everything else in
-// dataConnect (SampleTag, matchesShape, unwrapList) stays real.
-vi.mock('../dataConnect', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../dataConnect')>();
-  return {
-    ...actual,
-    useLiveList: (_path: string | null, fixture: unknown[]) => ({
-      data: fixture,
-      loading: false,
-      sample: false,
-    }),
-    useLive: (_path: string | null, fixture: unknown) => ({
-      data: fixture,
-      loading: false,
-      sample: false,
-    }),
-    liveGet: async (_path: string, fixture: unknown) => ({
-      data: fixture,
-      sample: false,
-    }),
-  };
-});
-
-// Imported after the mock is registered so the surfaces bind to the stubbed hooks.
+// No dataConnect stub. The hooks it used to force are deleted (L72), and a
+// mock of absent symbols is a control that controls nothing.
 const { SURFACE_VIEWS } = await import('../surfaceViews');
 
 function Providers({ children }: { children: React.ReactNode }) {
@@ -125,29 +103,10 @@ function isCrash(args: unknown[]): boolean {
   );
 }
 
-describe('every surface renders its live (sample:false) branch without crashing', () => {
+describe('every surface renders with no data yet, without crashing', () => {
   const ids = Object.keys(SURFACE_VIEWS).sort();
 
-  // Guard against a vacuous pass: if the dataConnect mock silently failed to
-  // apply, every surface would fall back to sample:true (the offline branch the
-  // crash gate already covers) and this suite would prove nothing. dossier-map
-  // renders <SampleTag sample={sample} />, so the real pill must read "Live"
-  // here — confirming the mock actually put the surface in the live branch.
-  it('the dataConnect live-branch mock is applied (guards against a vacuous pass)', async () => {
-    // Verify the stub forces sample:false directly, rather than via one
-    // surface's SampleTag pill. Surfaces are progressively re-anchored off the
-    // legacy useLive/useLiveList hooks onto the fixture-free contract and drop
-    // their SampleTag, so a hard-coded surface guard (it used to render
-    // dossier-map) rots the moment that surface is migrated. Asserting the mock
-    // itself proves the stub is applied, so the it.each below genuinely
-    // exercises the live-adopted branch for every surface still on the legacy
-    // hooks — without depending on any single surface staying un-migrated.
-    const { useLive, useLiveList } = await import('../dataConnect');
-    expect(useLive('/x', { k: 1 })).toMatchObject({ sample: false, data: { k: 1 } });
-    expect(useLiveList('/x', [{ k: 1 }])).toMatchObject({ sample: false, data: [{ k: 1 }] });
-  });
-
-  it.each(ids)('%s renders live-adopted data without a crash-class error', (id) => {
+  it.each(ids)('%s renders its no-data-yet state without a crash-class error', (id) => {
     const surface = getSurface(id) ?? stubSurface(id);
     const View = SURFACE_VIEWS[id].component;
     const spy = vi.spyOn(console, 'error').mockImplementation(() => {});

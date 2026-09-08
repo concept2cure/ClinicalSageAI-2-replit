@@ -4,7 +4,6 @@ import { fileURLToPath } from 'node:url';
 import { sql } from 'drizzle-orm';
 import { db } from '../db';
 import { huggingFaceService } from '../huggingface-service';
-import * as openaiServiceModule from './openai-service';
 import { eq } from 'drizzle-orm';
 import { getOpenAIClient } from './openai-client';
 
@@ -14,7 +13,10 @@ const logger = createScopedLogger('csr-extractor');
 // ESM has no module-scope __dirname; recreate it from import.meta.url.
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-const openaiService: any = openaiServiceModule;
+/* Was `const openaiService: any = openaiServiceModule;` over an import of
+   ./openai-service — the UNGOVERNED, direct-OpenAI-client sibling. Nothing in
+   this file ever called it; the `any` cast is why no unused-symbol check ever
+   said so. Both are gone with the module. */
 
 // Constants
 const PROCESSED_CSR_DIR = path.join(process.cwd(), 'data/processed_csrs');
@@ -128,8 +130,11 @@ interface CSRMappingTemplate {
     processed_date: string;
     processing_version: string;
     confidence_scores: {
-      overall: number;
-      sections: Record<string, number>;
+      // `null` means "not assessed" — no real extracted content existed to
+      // derive a confidence signal from for that section/overall. Never a
+      // fabricated placeholder number.
+      overall: number | null;
+      sections: Record<string, number | null>;
     };
   };
 }
@@ -519,6 +524,103 @@ ${context}
     }
   }
 
+  /**
+   * Derives a confidence score for a section from the real content that was
+   * extracted for it, instead of asserting a fixed number. Returns `null`
+   * ("not assessed") when nothing was extracted for that section — never a
+   * fabricated value. When content is present, the score scales with how
+   * much text/data was actually captured (more extracted evidence -> higher
+   * confidence), which is a coarse but honest proxy for extraction
+   * reliability given there is no model-reported uncertainty available here.
+   */
+  private scoreForExtractedContent(
+    ...values: Array<string | string[] | null | undefined>
+  ): number | null {
+    let totalLength = 0;
+    let hasContent = false;
+
+    for (const value of values) {
+      if (!value) continue;
+      if (Array.isArray(value)) {
+        const joined = value.filter(v => typeof v === 'string' && v.trim().length > 0).join(' ');
+        if (joined.length > 0) {
+          hasContent = true;
+          totalLength += joined.length;
+        }
+      } else if (typeof value === 'string' && value.trim().length > 0) {
+        hasContent = true;
+        totalLength += value.trim().length;
+      }
+    }
+
+    if (!hasContent) return null;
+    if (totalLength < 40) return 0.3;
+    if (totalLength < 150) return 0.55;
+    if (totalLength < 400) return 0.75;
+    return 0.9;
+  }
+
+  /**
+   * Computes confidence_scores for the fully-mapped CSR from what was
+   * actually extracted into each section. Sections with no real extracted
+   * content are `null` (not assessed) rather than a hardcoded high score.
+   * `overall` is the average of the sections that were actually assessed,
+   * or `null` if none were assessed at all.
+   */
+  private computeConfidenceScores(mappedData: CSRMappingTemplate): {
+    overall: number | null;
+    sections: Record<string, number | null>;
+  } {
+    const sections: Record<string, number | null> = {
+      meta: this.scoreForExtractedContent(
+        mappedData.meta.study_id,
+        mappedData.meta.sponsor,
+        mappedData.meta.phase,
+        mappedData.meta.indication,
+        mappedData.meta.molecule
+      ),
+      efficacy: this.scoreForExtractedContent(
+        mappedData.results.primary_outcome,
+        mappedData.summary.results,
+        mappedData.efficacy.primary,
+        mappedData.efficacy.secondary
+      ),
+      safety: this.scoreForExtractedContent(
+        mappedData.safety.teae_summary,
+        mappedData.safety.sae_summary,
+        mappedData.safety.discontinuations
+      ),
+      design: this.scoreForExtractedContent(
+        mappedData.summary.design,
+        mappedData.design.randomization,
+        mappedData.design.blinding
+      ),
+      semantic: this.scoreForExtractedContent(
+        mappedData.semantic.design_rationale,
+        mappedData.semantic.regulatory_classification,
+        mappedData.semantic.study_type
+      ),
+      pharmacology: this.scoreForExtractedContent(
+        mappedData.pharmacology.moa_explained,
+        mappedData.pharmacology.dose_selection_justification,
+        mappedData.pharmacology.bioavailability_finding
+      ),
+      stats_traceability: this.scoreForExtractedContent(
+        mappedData.stats_traceability.primary_model,
+        mappedData.stats_traceability.power_analysis_basis,
+        mappedData.stats_traceability.multiplicity_adjustment_method
+      ),
+    };
+
+    const assessed = Object.values(sections).filter((v): v is number => v !== null);
+    const overall =
+      assessed.length > 0
+        ? Math.round((assessed.reduce((sum, v) => sum + v, 0) / assessed.length) * 100) / 100
+        : null;
+
+    return { overall, sections };
+  }
+
   async processCSR(reportId: number): Promise<CSRMappingTemplate> {
     try {
       // Get the CSR report data from the database
@@ -684,17 +786,14 @@ ${context}
             mappedData.summary.design = sectionSummaries['METHODOLOGY'];
           }
 
-          // Update confidence scores
-          mappedData.processing_metadata.confidence_scores.overall = 0.92; // Higher confidence with enhanced extraction
-          mappedData.processing_metadata.confidence_scores.sections = {
-            meta: 0.95,
-            efficacy: 0.9,
-            safety: 0.85,
-            design: 0.92,
-            semantic: 0.88,
-            pharmacology: 0.85,
-            stats_traceability: 0.87,
-          };
+          // Confidence scores are computed once, after all extraction and
+          // merging (enhanced + fallback) has completed — see the single
+          // `computeConfidenceScores` call near the end of this method. A
+          // fixed "0.92 because enhanced extraction ran" score used to be
+          // asserted here regardless of what was actually extracted, and it
+          // was silently overwritten by a second hardcoded value further
+          // down in this method — neither value ever reflected real
+          // extraction quality.
         } catch (error) {
           logger.error(`Error in enhanced CSR extraction for ${reportId}:`, { error: error });
           // Continue with basic extraction if enhanced fails
@@ -918,13 +1017,13 @@ ${context}
       // Set processing metadata
       mappedData.processing_metadata.processed_date = new Date().toISOString();
       mappedData.processing_metadata.processing_version = '1.0.0';
-      mappedData.processing_metadata.confidence_scores.overall = 0.85; // Default confidence
-      mappedData.processing_metadata.confidence_scores.sections = {
-        meta: 0.95,
-        efficacy: 0.85,
-        safety: 0.8,
-        design: 0.9,
-      };
+      // Confidence is derived from what was actually extracted (presence
+      // and amount of real text per section), not a fixed placeholder —
+      // see computeConfidenceScores. A section with no extracted content
+      // is reported as `null` (not assessed) rather than a fabricated
+      // number.
+      mappedData.processing_metadata.confidence_scores =
+        this.computeConfidenceScores(mappedData);
 
       // Get embeddings if HuggingFace service is available
       try {

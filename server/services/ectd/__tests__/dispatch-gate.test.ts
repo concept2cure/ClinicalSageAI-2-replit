@@ -35,11 +35,48 @@ describe('evaluateDispatchGate', () => {
     expect(result.blockers).toHaveLength(2);
   });
 
-  it('treats non-finite counts as zero (no spurious blocker)', () => {
-    const result = evaluateDispatchGate({
+  /**
+   * This asserted the OPPOSITE — that a non-finite count is "no spurious
+   * blocker" and clears the gate. NaN is what an arithmetic failure leaves
+   * behind and undefined is what a read that never happened leaves behind;
+   * coercing either to zero made "we could not determine whether there are
+   * blockers" indistinguishable from "there are none", in the one function
+   * documented as the provable pre-transmit rule, and sent the sequence to the
+   * agency.
+   *
+   * No caller can reach it today — AnaToolExecutor rejects a non-finite count
+   * before calling, the /dispatch-qc route parses with z.number().int().min(0),
+   * and assess-dispatch-readiness counts in SQL — so this is the direction of a
+   * defensive default rather than a live defect. It is pinned because the old
+   * assertion would have defended the open direction against anyone who later
+   * tried to close it. Fail closed, never fabricate.
+   */
+  it('BLOCKS on a count it could not determine — unknown is not zero', () => {
+    const nanErrors = evaluateDispatchGate({
+      validationErrors: Number.NaN,
+      unacknowledgedShadowCriticals: 0,
+    });
+    expect(nanErrors.cleared).toBe(false);
+    expect(nanErrors.blockers.join(' ')).toMatch(/could not be determined/i);
+
+    const missingCriticals = evaluateDispatchGate({
+      validationErrors: 0,
+      unacknowledgedShadowCriticals: undefined as unknown as number,
+    });
+    expect(missingCriticals.cleared).toBe(false);
+
+    // Both undetermined — both named, so the operator learns what is unknown
+    // rather than only that something is.
+    const neither = evaluateDispatchGate({
       validationErrors: Number.NaN,
       unacknowledgedShadowCriticals: Number.POSITIVE_INFINITY,
     });
+    expect(neither.cleared).toBe(false);
+    expect(neither.blockers).toHaveLength(2);
+  });
+
+  it('still clears on genuine zeros — the gate has not been welded shut', () => {
+    const result = evaluateDispatchGate({ validationErrors: 0, unacknowledgedShadowCriticals: 0 });
     expect(result.cleared).toBe(true);
     expect(result.blockers).toEqual([]);
   });

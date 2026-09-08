@@ -8,8 +8,10 @@
  *     characteristics, known use problems, hazard-related use scenarios, critical
  *     tasks, formative + summative evaluation, HFE/UE report).
  *   - Use-related risk analysis: identify critical tasks (where a use error could
- *     cause serious harm), flag unmitigated ones, and judge residual-risk
- *     acceptability.
+ *     cause serious harm), flag unmitigated ones, and report the critical-task
+ *     gate they put the file in. It does NOT judge residual-risk acceptability;
+ *     under IEC 62366-1 that is a documented manufacturer determination, not a
+ *     consequence of a count.
  *
  * Pure and deterministic.
  */
@@ -74,6 +76,19 @@ export interface UseScenario {
   mitigated: boolean;
 }
 
+/**
+ * The three states a use-related risk analysis can leave the critical-task gate
+ * in. This is a position on CRITICAL TASKS and nothing more.
+ *
+ *  - `not-assessed` — no hazard-related use scenarios are recorded, so no
+ *    analysis has run. An empty scenario set is not a finding of "none".
+ *  - `blocked`      — at least one critical task carries no documented
+ *    mitigation.
+ *  - `clear`        — scenarios are recorded and every critical task identified
+ *    in them carries a documented mitigation.
+ */
+export type CriticalTaskGate = 'not-assessed' | 'blocked' | 'clear';
+
 export interface UseRelatedRiskResult {
   totalScenarios: number;
   /** Tasks where a use error could cause serious or critical harm. */
@@ -81,18 +96,48 @@ export interface UseRelatedRiskResult {
   criticalTaskCount: number;
   /** Critical tasks lacking a mitigation — must be addressed before summative testing. */
   unmitigatedCriticalTasks: number;
-  /** True when every critical task has a documented mitigation. */
-  residualRiskAcceptable: boolean;
+  /**
+   * What this analysis FOUND about critical tasks.
+   *
+   * This replaces `residualRiskAcceptable: boolean`, which was
+   * `unmitigatedCriticalTasks === 0` and claimed "residual use-related risk is
+   * acceptable". Two things were wrong with it, and this result object is
+   * served straight through by POST /use-related-risk into an HFE/UE report a
+   * regulatory reviewer reads:
+   *
+   *  1. `unmitigatedCriticalTasks` is a filter over `criticalTasks`, which is
+   *     itself a filter over the scenarios passed in. Over a scenario set that
+   *     records nothing — the caller-side state of an HFE/UE file no one has
+   *     examined yet — both filters are vacuously empty, the count is 0, and the
+   *     field read `true`. A file nothing had ever looked at was reported
+   *     identically to one examined and found controlled. That state is now
+   *     `not-assessed` and is reported as such.
+   *  2. Even with scenarios recorded and every critical task mitigated, residual
+   *     use-related risk acceptability is, under IEC 62366-1, a DOCUMENTED
+   *     MANUFACTURER DETERMINATION recorded by a person across the whole HFE/UE
+   *     file. It does not follow from this count, so this service does not state
+   *     it — in any state. `clear` says the critical-task gate is clear, and
+   *     stops there. (This mirrors the correction already made client-side in
+   *     client/src/concept2cure/v2/surfaces/HumanFactors.tsx.)
+   */
+  criticalTaskGate: CriticalTaskGate;
   framework: 'IEC 62366-1 / FDA HFE';
 }
 
 const SERIOUS = new Set<HarmSeverity>(['serious', 'critical']);
 
-/** Identify critical tasks and judge residual-risk acceptability. */
+/**
+ * Identify critical tasks and report the critical-task gate they put the HFE/UE
+ * file in. Residual-risk acceptability is deliberately not returned; see
+ * `UseRelatedRiskResult.criticalTaskGate`.
+ *
+ * An empty scenario list used to throw. It now returns a `not-assessed` result:
+ * "nothing has been assessed" is a state this analysis has to be able to REPORT,
+ * because it is the exact state the old boolean silently rendered as acceptable.
+ * Callers that require scenarios still reject an empty list at their own edge —
+ * POST /use-related-risk validates `scenarios` with `.min(1)`, unchanged.
+ */
 export function analyzeUseRelatedRisk(scenarios: UseScenario[]): UseRelatedRiskResult {
-  if (scenarios.length === 0) {
-    throw new Error('Use-related risk analysis requires at least one use scenario.');
-  }
   const criticalTasks = scenarios
     .filter(s => SERIOUS.has(s.potentialHarmSeverity))
     .map(s => ({
@@ -107,7 +152,12 @@ export function analyzeUseRelatedRisk(scenarios: UseScenario[]): UseRelatedRiskR
     criticalTasks,
     criticalTaskCount: criticalTasks.length,
     unmitigatedCriticalTasks,
-    residualRiskAcceptable: unmitigatedCriticalTasks === 0,
+    criticalTaskGate:
+      scenarios.length === 0
+        ? 'not-assessed'
+        : unmitigatedCriticalTasks > 0
+          ? 'blocked'
+          : 'clear',
     framework: 'IEC 62366-1 / FDA HFE',
   };
 }

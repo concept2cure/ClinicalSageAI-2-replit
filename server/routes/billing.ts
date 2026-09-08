@@ -21,6 +21,7 @@ import type { Request, Response } from 'express';
 import { z } from 'zod';
 import Stripe from 'stripe';
 import {
+  FreeTierNotAvailableError,
   createCheckoutSession,
   createDTCCheckoutSession,
   createPortalSession,
@@ -62,7 +63,14 @@ const portalBodySchema = z.object({
 });
 
 const dtcCheckoutBodySchema = z.object({
-  tier: z.enum(['standard', 'professional', 'enterprise']).optional(),
+  // 'free' is accepted because the SERVICE has always been able to provision it
+  // (createDTCCheckoutSession's free branch sets the tier, invalidates the
+  // posture and provisions the tier's modules without touching Stripe). Only
+  // this enum refused it, which made the onboarding wizard's free-tier
+  // "Activate workspace" button provision nothing at all. Activating free is
+  // gated in the service to a tenant that has no paid plan to lose — it is an
+  // activation path, never a downgrade.
+  tier: z.enum(['free', 'standard', 'professional', 'enterprise']).optional(),
   billingCycle: z.enum(['monthly', 'annual']).optional(),
   currency: z
     .string()
@@ -238,6 +246,12 @@ router.post('/dtc-checkout', authenticateToken, async (req: Request, res: Respon
 
     res.json(result);
   } catch (error) {
+    // A refused free-tier activation is a precondition failure, not a server
+    // fault: reporting it as 500 would tell the caller to retry something that
+    // can never succeed, and hide the one sentence that says why.
+    if (error instanceof FreeTierNotAvailableError) {
+      return res.status(409).json({ error: error.message, code: 'PLAN_ALREADY_ACTIVE' });
+    }
     logger.error('DTC checkout error', { err: error instanceof Error ? error.message : String(error) });
     res.status(500).json({ error: 'Failed to create DTC checkout' });
   }

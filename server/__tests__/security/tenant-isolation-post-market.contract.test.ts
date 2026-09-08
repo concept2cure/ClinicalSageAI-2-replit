@@ -76,7 +76,7 @@ vi.mock('../../services/gspr-postmarket/post-market.service', () => ({
 }));
 
 vi.mock('../../services/auditService', () => ({
-  default: { logAction: vi.fn().mockResolvedValue(undefined) },
+  default: { logAction: vi.fn().mockResolvedValue({ persisted: true, chained: true, tamperProof: true }) },
 }));
 
 let app: express.Express;

@@ -52,6 +52,8 @@ function row(over: Record<string, unknown> = {}) {
     model: null,
     program: 'BX-204',
     is_signed: true,
+    is_reviewed: false,
+    source_count: 0,
     signed_version: 7,
     ...over,
   };
@@ -99,6 +101,16 @@ describe('GET /api/artifacts-center — signature staleness', () => {
     const a = res.body.data[0];
     expect(a.sig).toBe(false);
     expect(a.sigStale).toBeNull();
+  });
+
+  it('reports persisted review and source counts without inventing either', async () => {
+    query.mockResolvedValueOnce({
+      rows: [row({ is_reviewed: true, source_count: 2 })],
+    });
+    const res = await request(appWith(3)).get('/api/artifacts-center');
+    expect(res.body.data[0]).toMatchObject({ reviewed: true, sourceCount: 2 });
+    expect(query.mock.calls[0][0]).toContain('d.version_reviewed = a.version');
+    expect(query.mock.calls[0][0]).toContain("json_typeof(a.metadata -> 'sourceArtifactIds')");
   });
 
   it('scopes the read to the caller organization', async () => {

@@ -55,6 +55,32 @@ const REGISTRY_REGION_TO_ENGINE: Record<string, Region> = {
   CH: 'eu', BR: 'fda', IN: 'fda', KR: 'fda', SG: 'fda', ICH: 'fda',
 };
 
+/**
+ * The tokens that ARE each engine region's own jurisdiction. Anything else that
+ * still resolves to that region (Health Canada -> fda, MHRA -> eu, ...) is a
+ * PROXY: the engine holds no rule data for that agency and is answering with the
+ * nearest CTD-compatible one. Health Canada does not require FDA Form 1571 and
+ * does not run a PDUFA clock, so a result built from a proxy must say so.
+ */
+const ENGINE_REGION_JURISDICTIONS: Record<Region, Set<string>> = {
+  fda: new Set(['fda', 'us', 'usa', 'united states']),
+  eu: new Set(['eu', 'ema', 'europe', 'european union']),
+  jp: new Set(['jp', 'japan', 'pmda', 'mhlw']),
+};
+
+/** True when `raw` resolved to `resolved` only by cross-jurisdiction substitution. */
+function isProxyRegion(raw: string, resolved: Region): boolean {
+  const own = ENGINE_REGION_JURISDICTIONS[resolved];
+  if (!own) return true;
+  const key = raw.trim().toLowerCase();
+  if (own.has(key)) return false;
+  // A registry ID (e.g. 'US_IND') is native when its own region is this engine
+  // region's jurisdiction; 'CA_NDS' resolving to fda is not.
+  const entry = resolveToRegistryEntry(raw);
+  if (entry && own.has(String(entry.region ?? '').toLowerCase())) return false;
+  return true;
+}
+
 // Maps registry applicationFamily to the nearest reasoning-engine ApplicationType
 const FAMILY_TO_APPTYPE: Record<string, ApplicationType> = {
   clinical_trial: 'ind',
@@ -123,6 +149,14 @@ export function resolveToReasoningParams(submissionType: string): { region: Regi
 export interface RegionStructure {
   region: string;
   supported: boolean;
+  /** The region string the caller actually asked for, always echoed. */
+  requestedRegion?: string;
+  /**
+   * True when `region` is a cross-jurisdiction PROXY for `requestedRegion` — the
+   * engine has no rule data for the requested agency. The sections and clock
+   * below are the proxy region's, not the requested one's.
+   */
+  proxyForRequestedRegion?: boolean;
   requiredSections?: RequiredSection[];
   reviewClock?: ReviewClock;
   note?: string;
@@ -149,6 +183,7 @@ export function buildSubmissionStructure(regions: string[], applicationType: str
     if (!region || !appType) {
       out.push({
         region: raw,
+        requestedRegion: raw,
         supported: false,
         note: !region
           ? `Region "${raw}" is not in the reasoning-engine rule data.`
@@ -159,9 +194,27 @@ export function buildSubmissionStructure(regions: string[], applicationType: str
     const sections = resolve<RequiredSection[]>({ task: 'required-sections', region, applicationType: appType });
     const clock = resolve<ReviewClock>({ task: 'review-clock', region, applicationType: appType });
     profileVersion = sections.profileVersion;
+    /* The result used to push only the NORMALIZED region and drop `raw`, so a
+       planner asking for Health Canada received region 'fda', supported: true,
+       FDA Module 1 (Form 1571 / 356h, financial certification) and a PDUFA
+       clock, with nothing recording that a substitution had occurred — despite
+       this module's own docstring promising unsupported regions are reported
+       "never fabricated". Echo what was asked and disclose the proxy. */
+    const proxied = isProxyRegion(raw, region);
     out.push({
       region,
+      requestedRegion: raw,
       supported: true,
+      ...(proxied
+        ? {
+            proxyForRequestedRegion: true,
+            note:
+              `The reasoning engine holds no rule data for "${raw}". The required sections and ` +
+              `review clock below are ${region.toUpperCase()}'s, offered as the nearest ` +
+              `CTD-compatible structure — they are NOT "${raw}"'s own requirements. Forms, fees, ` +
+              `and review timelines differ by agency; confirm against that agency's guidance.`,
+          }
+        : {}),
       requiredSections: sections.data,
       reviewClock: clock.data,
     });

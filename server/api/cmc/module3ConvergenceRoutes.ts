@@ -16,8 +16,19 @@ import {
   classifyAndMapArtifactToSource,
   bridgeCompileToArtifact,
 } from '../../services/module3-convergence-service';
-import { composeModule3FromCanonicalSources, impactedSectionsForSourceType, CmcSourceType } from '../../services/module3Composer';
+import { impactedSectionsForSourceType, CmcSourceType } from '../../services/module3Composer';
+/* The canonical Module 3 composition and persistence. Core sections + emittable
+   3.2.A appendices + 3.2.R for the recorded region; one row, one lineage
+   rewrite and one provenance event per section. */
+import { composeProjectModule3, persistComposedSection } from '../../services/cmc/module3-compile';
+
+/** Said the same way by every build path, so the remedy does not depend on which one the user hit. */
+const NO_CANONICAL_SOURCES_ERROR =
+  'No canonical source objects for this project — nothing to build from.';
+const NO_CANONICAL_SOURCES_HINT =
+  'Upload and classify source documents first, then rebuild the section.';
 import { createSourceHash } from '../../services/cmc-module3-compiler';
+import { resolveCmcArtifactProject } from '../../services/cmc/resolve-cmc-artifact-project';
 
 const router = express.Router();
 
@@ -98,99 +109,70 @@ router.post('/build-section/:projectId/:sectionKey', async (req, res) => {
 
     await client.query('BEGIN');
 
-    // 1. Fetch source objects
-    const { rows: sourceObjects } = await client.query(
-      `SELECT id, source_type as "sourceType", source_payload as "sourcePayload", source_hash as "sourceHash"
-       FROM cmc_source_objects
-       WHERE organization_id = $1 AND project_id = $2
-       ORDER BY updated_at DESC`,
-      [orgId, projectId]
-    );
+    /* ONE composition and ONE persist — services/cmc/module3-compile, the same
+       pair the AnA build handlers and the compile route run. This handler used
+       to carry its own copy of the whole body (source read, compose, upsert,
+       lineage rewrite, provenance event), and that copy composed the CORE
+       §3.2.S / §3.2.P / 3.1 / 3.3 rules only. composeProjectModule3 is a strict
+       superset: core, plus the emittable 3.2.A appendices, plus 3.2.R for the
+       region the linked submission records — and it runs the regional read
+       under a SAVEPOINT, because inside this transaction a failed statement
+       poisons everything after it even when caught.
 
-    // 2. Compose all sections but filter to the requested one
-    const allComposed = composeModule3FromCanonicalSources(sourceObjects as any);
+       So a request for a regional or appendix section came back
+       404 "not found in composition rules", which was not true: the rule
+       exists, this copy just could not reach the pass that emits it. 3.2.R is a
+       required region-specific module in every CTD filing. */
+    const { sources, sections: allComposed } = await composeProjectModule3(client, orgId, projectId);
+
+    if (sources.length === 0) {
+      await client.query('ROLLBACK');
+      return res.status(400).json({
+        success: false,
+        error: NO_CANONICAL_SOURCES_ERROR,
+        hint: NO_CANONICAL_SOURCES_HINT,
+      });
+    }
+
     const section = allComposed.find((s) => s.sectionKey === sectionKey);
-
     if (!section) {
       await client.query('ROLLBACK');
-      return res.status(404).json({ success: false, error: `Section ${sectionKey} not found in composition rules` });
+      return res.status(404).json({
+        success: false,
+        error: `Section ${sectionKey} is not composable from this project's sources (no composition rule, or no recorded region for a regional section).`,
+      });
     }
 
-    // 3. Upsert compiled section
-    const upsert = await client.query(
-      `INSERT INTO cmc_module3_sections (organization_id, project_id, section_key, section_path, deterministic_json, narrative_text, compiled_hash, stale, stale_reason, approval_state)
-       VALUES ($1,$2,$3,$4,$5::jsonb,$6,$7,$8,$9,'draft')
-       ON CONFLICT (organization_id, project_id, section_key)
-       DO UPDATE SET deterministic_json = excluded.deterministic_json,
-                     compiled_hash = excluded.compiled_hash,
-                     stale = excluded.stale,
-                     stale_reason = excluded.stale_reason,
-                     narrative_text = excluded.narrative_text,
-                     updated_at = now()
-       RETURNING id`,
-      [
-        orgId, projectId, section.sectionKey, section.sectionPath,
-        JSON.stringify({
-          ...section.structuredPayload,
-          completeness: section.completeness,
-          missingInputs: section.missingInputs,
-        }),
-        section.narrativeDraft,
-        createSourceHash(section.structuredPayload),
-        false, null,
-      ]
-    );
-    const sectionId = upsert.rows[0]?.id;
-
-    if (sectionId) {
-      // 4. Refresh lineage
-      // Scoped by org as well as section id. `sectionId` comes from the upsert's
-      // RETURNING, so before the arbiter carried organization_id this deleted the
-      // VICTIM's provenance rows — the traceability tying each Module 3 section
-      // back to the source objects it was compiled from.
-      await client.query(
-        `DELETE FROM cmc_section_lineage WHERE section_id = $1 AND organization_id = $2`,
-        [sectionId, orgId]
-      );
-      for (const lin of section.lineage) {
-        await client.query(
-          `INSERT INTO cmc_section_lineage (organization_id, section_id, source_object_id, source_hash_at_compile)
-           VALUES ($1, $2, $3, $4)`,
-          [orgId, sectionId, lin.sourceObjectId, lin.sourceHashAtCompile]
-        );
-      }
-
-      // 5. Provenance
-      await client.query(
-        `INSERT INTO cmc_provenance_events (organization_id, project_id, artifact_type, artifact_id, event_type, event_payload, created_by)
-         VALUES ($1,$2,'section',$3,'compiled',$4::jsonb,$5)`,
-        [
-          orgId, projectId, sectionId,
-          JSON.stringify({
-            sectionKey: section.sectionKey,
-            completeness: section.completeness,
-            missingInputs: section.missingInputs,
-            trigger: 'build-section-api',
-          }),
-          (req as any).user?.id || 'system',
-        ]
-      );
-    }
+    await persistComposedSection(client, orgId, projectId, section, {
+      actorId: String((req as any).user?.id ?? 'system'),
+      event: 'compiled',
+      eventPayload: { trigger: 'build-section-api' },
+    });
 
     await client.query('COMMIT');
 
-    // 6. Auto-bridge to governed artifact
+    // 6. Auto-bridge to governed artifact. A bridge that could not run is
+    // reported, not swallowed — the old catch-and-warn hid the spine break.
     let bridgedArtifact: { artifactId: string; isNew: boolean } | null = null;
+    let bridgeSkip: { reason: string; detail: string } | null = null;
     try {
-      bridgedArtifact = await bridgeCompileToArtifact(orgId, projectId, section.sectionKey, {
+      const bridged = await bridgeCompileToArtifact(orgId, projectId, section.sectionKey, {
         narrativeDraft: section.narrativeDraft,
         tables: section.tables,
         completeness: section.completeness,
         missingInputs: section.missingInputs,
         lineage: section.lineage,
-      });
+      }, { createdById: Number((req as any).user?.id) || null });
+      if (bridged.bridged) {
+        bridgedArtifact = { artifactId: bridged.artifactId, isNew: bridged.isNew };
+      } else {
+        bridgeSkip = { reason: bridged.reason, detail: bridged.detail };
+      }
     } catch (bridgeErr) {
-      console.warn(`Bridge to artifact failed for ${sectionKey}:`, bridgeErr);
+      bridgeSkip = {
+        reason: 'error',
+        detail: bridgeErr instanceof Error ? bridgeErr.message : String(bridgeErr),
+      };
     }
 
     return res.json({
@@ -202,6 +184,7 @@ router.post('/build-section/:projectId/:sectionKey', async (req, res) => {
         narrativePreview: section.narrativeDraft.substring(0, 500),
         sourceCount: section.lineage.length,
         bridgedArtifact,
+        bridgeSkip,
       },
     });
   } catch (error) {
@@ -250,15 +233,20 @@ router.get('/source-lineage/:projectId/:sectionKey', async (req, res) => {
         )
       : { rows: [] };
 
-    // Get governed artifact
-    const artifactRes = await pool.query(
-      `SELECT id, artifact_id as "artifactId", title, status, version,
-              metadata, updated_at as "updatedAt"
-       FROM concept2cure_artifacts
-       WHERE organization_id = $1 AND project_id = $2 AND ctd_section = $3
-       ORDER BY version DESC LIMIT 1`,
-      [orgId, projectId, sectionKey]
-    );
+    // Get governed artifact — via the integer artifact spine; the raw TEXT
+    // project id aborts this query for uuid programs (22P02).
+    const spine = await resolveCmcArtifactProject(orgId, projectId);
+    const artifactRes =
+      spine.state === 'linked'
+        ? await pool.query(
+            `SELECT id, artifact_id as "artifactId", title, status, version,
+                    metadata, updated_at as "updatedAt"
+             FROM concept2cure_artifacts
+             WHERE organization_id = $1 AND project_id = $2 AND ctd_section = $3
+             ORDER BY version DESC LIMIT 1`,
+            [orgId, spine.artifactProjectId, sectionKey]
+          )
+        : { rows: [] as any[] };
 
     // Check for hash drift (source changed since compile)
     const driftingSources = lineageRes.rows.filter(
@@ -272,6 +260,9 @@ router.get('/source-lineage/:projectId/:sectionKey', async (req, res) => {
         compiled: sectionRes.rows[0] || null,
         sourceObjects: lineageRes.rows,
         governedArtifact: artifactRes.rows[0] || null,
+        // Distinguishes "no artifact" from "registry not addressable".
+        artifactRegistry:
+          spine.state === 'linked' ? { state: 'linked' } : { state: spine.state, detail: spine.detail },
         driftingSources: driftingSources.map((d: any) => ({
           sourceObjectId: d.sourceObjectId,
           sourceType: d.sourceType,

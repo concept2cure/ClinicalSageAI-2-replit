@@ -50,3 +50,31 @@ describe('assessNonclinicalSafety', () => {
     expect(a.summary).toMatch(/Insufficient input/);
   });
 });
+
+describe('a dose alone is not FIH readiness', () => {
+  it('reports insufficient_input when the study battery was never assessed, and says so', () => {
+    // Dose-only input used to read 'ready_for_fih' with the ICH M3(R2)/S-series
+    // battery never checked; the tool then serialised programGaps as [].
+    const a = assessNonclinicalSafety({
+      drugSubstanceName: 'BX-115',
+      fih: { speciesNoaels: [{ species: 'rat', noaelMgPerKg: 10 }] },
+    });
+    expect(a.fihDose).not.toBeNull();
+    expect(a.programAssessed).toBe(false);
+    expect(a.readiness).toBe('insufficient_input');
+    expect(a.summary).toMatch(/study battery was not assessed/);
+    expect(a.summary).not.toMatch(/battery is complete/);
+  });
+
+  it('is ready_for_fih only when the battery was assessed and complete', () => {
+    const a = assessNonclinicalSafety({
+      fih: { speciesNoaels: [{ species: 'rat', noaelMgPerKg: 10 }] },
+      program: { maxClinicalDurationWeeks: 2, targetPhase: 1 },
+      presentStudies: ['single_dose_tox', 'repeat_dose_tox_rodent', 'repeat_dose_tox_nonrodent', 'safety_pharm_cardiovascular', 'safety_pharm_cns', 'safety_pharm_respiratory', 'genotox_ames', 'genotox_chromosomal', 'pk_adme', 'local_tolerance'] as any,
+    });
+    expect(a.programAssessed).toBe(true);
+    expect(['ready_for_fih', 'gaps_block_fih']).toContain(a.readiness);
+    if (a.readiness === 'ready_for_fih') expect(a.programGaps?.gaps).toHaveLength(0);
+  });
+});
+

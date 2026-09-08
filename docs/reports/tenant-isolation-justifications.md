@@ -40,11 +40,64 @@ entries" table below — enforced by `scripts/ci/check-baseline-justifications.m
 
 ## Justified entries (remain in baseline)
 
-_None — the baseline is empty as of 2026-08-07._ Every previously-justified
-entry is now dispositioned inline (grep `tenant-isolation-safe:`) or via the
-file allowlist; see the 2026-08-07 Resolved subsection for the per-file mapping.
+### 2026-09-06 — the optional-tenant-predicate rule, and what it surfaced
+
+`check-tenant-isolation.mjs` gained a rule for a shape it used to accept:
+
+```sql
+WHERE ($1::INT IS NULL OR org_id = $1)
+```
+
+The old test asked only whether a statement MENTIONED a tenant column, and this
+one does — which is why it read as safe. It is TRUE whenever the parameter is
+null, so the predicate is optional and the caller decides. That is how
+`clinical-operations-routes.ts` came to serve every organization's studies,
+sites, enrollment, monitoring visits and protocol deviations to a request with
+no tenant on it, across fifteen query sites, while this gate reported nothing.
+
+Running the corrected rule took the baseline from 2 to 12; closing the four in `ana-ri/context-enrichment.ts` the same day brought it to 10. **These entries are
+frozen, not blessed.** Each is a deliberate optional-org affordance whose own
+author documented it; none has been re-argued from scratch here, and each is
+listed with its owner so it can be. The value delivered today is that no NEW
+escape can be added silently.
+
+| File | Entries | What the null case means, per the code | Disposition |
+|---|---|---|---|
+| `server/services/kernel-observability.ts` | 4 | Aggregate `COUNT`/`AVG` over `ai_kernel_decision_records`; a null org is the platform-wide observability roll-up. | Frozen. Aggregates, not row reads — but the roll-up should say whether it is platform-wide or one tenant's. Kernel stream. |
+| `server/services/deep-research-orchestrator.ts` | 1 | `getJobStatus`; its comment states org is "optional only for internal callers that just created the job" and that "Route handlers MUST pass the authenticated org". | Frozen. The MUST is a convention, not enforcement — a required parameter would make it one. Research stream. |
+| `server/services/kernel-adaptive-policy.ts` | 1 | Policy read with the same optional-org shape. | Frozen. Kernel stream. |
+| `server/routes/admin/licensing-history.ts` | 1 | Platform-admin licensing history; mounted inside the router guarded by `requirePlatformAdmin`, and the null is an explicit cross-tenant display filter. | Frozen — genuinely authorized. `admin/master-admin.ts`, the same pattern, is already in `ALLOWLIST_FILES`; this file arguably belongs there too rather than in the baseline. |
+| `server/routes/c2c/project-vault.ts` | 2 | Vault document search, scoped `d.program_id = $1`. It names no tenant column, which is what the gate's keyword test sees — `vault.documents` is isolated by the parent-scoped `core.can_access_program(program_id)` RLS predicate instead, the mechanism `bf6bc5479` documents and taught `rls-coverage-check.sql` to recognise. This gate reads SQL text and cannot see a policy. | Frozen. Arrived with the vault stream's search work; **not re-argued here**. Its soundness depends on `rls-parent-scope-delegates-check.sql` continuing to pass, which is the assertion that same commit added. Vault stream. |
+| `server/services/advancedRAGPipeline.ts` | 1 | Pre-existing entry, unrelated to this rule (a raw `rag_chunks` join with no tenant column mentioned at all). | Frozen, pre-dates this change. |
+
+Every previously-justified entry from before this date is dispositioned inline
+(grep `tenant-isolation-safe:`) or via the file allowlist; see the 2026-08-07
+Resolved subsection for the per-file mapping.
 
 ## Resolved (no longer in baseline)
+
+### 2026-09-06 — `ana-ri/context-enrichment.ts` (4): no organization, no memory
+
+Four reads of `project_memory_entries` carried
+`($2::int IS NULL OR organization_id = $2)`, described in the code as
+preserving "prior behavior exactly" for "legacy paths without org context".
+What it preserved was a read across every tenant — and what these functions
+return goes into a **model's prompt**, so another sponsor's notes and decisions
+would have been summarised back to the user as their own context.
+
+The fix was not a redesign but a consistency correction: `enrichWithClientJourney`
+and `enrichWithAgentActivity`, in this same file, already returned `''` without an
+org. The four memory reads now agree with them, and their predicates are
+unconditional. Contributing nothing is a smaller loss than contributing someone
+else's.
+
+Both callers (`chat-context-builder.ts`, `routes/ana-ri/stream.ts`) already pass
+the request's resolved organization; they simply allowed `undefined` through.
+
+Revert-proven: restoring the escape to `enrichWithClaims` fails both tests —
+the no-org case issues a memory read again, and the scoped case regains the
+`IS NULL OR`.
+
 
 ### 2026-08-07 — baseline driven to zero (inline suppression + bootstrap allowlist)
 

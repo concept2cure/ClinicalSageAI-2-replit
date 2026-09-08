@@ -23,7 +23,11 @@ import { createMockRequest, createMockResponse } from '../setup';
 const { mockSelectRows, mockInsertReturning, auditLog } = vi.hoisted(() => ({
   mockSelectRows: vi.fn<[], unknown[]>(() => []),
   mockInsertReturning: vi.fn(async () => [{ id: 5 }]),
-  auditLog: vi.fn(async () => {}),
+  // logAction resolves an AuditWriteResult (server/services/auditService.ts)
+  // and the governed path dereferences it (.persisted / .error), so the mock
+  // must resolve the real success shape — resolving undefined makes the route
+  // throw a TypeError and 500.
+  auditLog: vi.fn(async () => ({ persisted: true, chained: true, tamperProof: true })),
 }));
 
 // Fake drizzle db, built inside vi.hoisted per the 510k-device-routes idiom.
@@ -47,11 +51,34 @@ vi.mock('../../server/services/provenance/artifact-provenance', () => ({
   recordArtifactProvenanceDrizzle: vi.fn(async () => {}),
 }));
 
-fakeDb.select = vi.fn(() => ({
-  from: vi.fn(() => ({
-    where: vi.fn(() => ({ limit: vi.fn(async () => mockSelectRows()) })),
-  })),
-}));
+/*
+ * A self-referential chain, so every drizzle builder shape this router uses
+ * lands on the same `limit`.
+ *
+ * The program lookup reads the sponsor from the program's ORGANISATION, so the
+ * chain carries a leftJoin between from() and where(). The previous literal
+ * offered only `.from().where().limit()`, so `.leftJoin` was undefined, the
+ * TypeError was swallowed by `resolveProgramIdent`'s own `catch`, and EVERY
+ * program-ident case below resolved to null and 404'd — five assertions,
+ * including the fail-closed audit one, were failing against a mock defect
+ * rather than against the route.
+ *
+ * Self-referential rather than a shape-by-shape literal (the other half of this
+ * merge) because the failure being repaired is a mock that did not offer a link
+ * the builder uses. Enumerating the shapes reproduces that risk every time the
+ * query grows a clause; returning the same chain from every link cannot.
+ */
+fakeDb.select = vi.fn(() => {
+  const chain: any = {
+    from: vi.fn(() => chain),
+    leftJoin: vi.fn(() => chain),
+    innerJoin: vi.fn(() => chain),
+    where: vi.fn(() => chain),
+    orderBy: vi.fn(() => chain),
+    limit: vi.fn(async () => mockSelectRows()),
+  };
+  return chain;
+});
 fakeDb.insert = vi.fn(() => ({
   values: vi.fn(() => ({ returning: mockInsertReturning })),
 }));
@@ -217,6 +244,24 @@ describe('POST /:formId/artifact — program-spine ident (audited-unplaced degra
     expect(res.status).toHaveBeenCalledWith(500);
     const payload = res.json.mock.calls[0][0];
     expect(JSON.stringify(payload)).not.toContain('"audited":true');
+    expect(fakeDb.insert).not.toHaveBeenCalled();
+  });
+
+  it('FAILS CLOSED when the audit write resolves unpersisted — the real service reports failure this way', async () => {
+    // logAction does not reject on a persistence failure; it resolves
+    // { persisted: false, ... }. The route must read the outcome, or it
+    // answers audited:true over nothing.
+    mockSelectRows.mockReturnValue([{ id: UUID, code: 'BX-204', name: 'BX-204 CGM' }]);
+    auditLog.mockResolvedValueOnce({ persisted: false, chained: false, tamperProof: false, error: 'audit store down' });
+    const req = makeReq({ projectIdent: UUID, sponsorName: 'Acme Bio' });
+    const res = createMockResponse() as any;
+
+    await artifactHandler()(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(500);
+    const payload = res.json.mock.calls[0][0];
+    expect(JSON.stringify(payload)).not.toContain('"audited":true');
+    expect(payload.error).toBe('AUDIT_WRITE_FAILED');
     expect(fakeDb.insert).not.toHaveBeenCalled();
   });
 

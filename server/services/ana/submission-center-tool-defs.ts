@@ -11,6 +11,7 @@
  */
 
 import type { AnaTool } from '../ai-gateway/types';
+import { PLACEABLE_DOCUMENT_TABLE_LIST } from '../ectd/leaf-document-tables';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Submission-center tools — give AnA reach over the canonical core + ingestion
@@ -863,7 +864,7 @@ export const LIST_REGULATORY_CAPABILITIES: AnaTool = {
 export const PLACE_INTO_SEQUENCE: AnaTool = {
   name: 'place_into_sequence',
   description:
-    "Place a document into an eCTD sequence of the canonical submission core — create or update a submission_leaves row (upsert semantics: pass leaf_id to update an existing leaf, omit it to create one). Tenant and acting user come from the active context; the write is audited (LEAF_CREATED / LEAF_UPDATED). The server REFUSES a frozen or dispatched sequence (its leaves are immutable) and a coauthor document not owned by the caller's organization — surface that refusal verbatim, never claim a placement the server declined. document_table/document_id link the leaf to its source: coauthor_documents and unified_documents are the locally-renderable sources the assembler can materialize into the package; an unknown table fails closed at assembly as an unresolved leaf, so prefer those. Use this when a user asks to file a drafted document into a sequence.",
+    "Place a document into an eCTD sequence of the canonical submission core — create or update a submission_leaves row (upsert semantics: pass leaf_id to update an existing leaf, omit it to create one). Tenant and acting user come from the active context; the write is audited (LEAF_CREATED / LEAF_UPDATED). The server REFUSES a frozen or dispatched sequence (its leaves are immutable) and a source document not owned by the caller's organization (coauthor_documents, unified_documents, ctd_onboarding_documents, rendered_leaf_files and c2c_document_sections are all tenancy-checked at placement) — surface that refusal verbatim, never claim a placement the server declined. document_table/document_id link the leaf to its source. document_table is a CLOSED set — the server REFUSES (400) any value outside it, so a guessed or misspelled table is never placed; pick the table the document actually lives in. coauthor_documents, unified_documents, ctd_onboarding_documents, rendered_leaf_files and c2c_document_sections are materialized into the package; vault_documents is a documented pointer the assembler cannot materialize: the dispatch-readiness gate reports it as an ERROR (EXTERNAL_DOCUMENT_NOT_MATERIALIZABLE) and transmit fails closed on it, so do not place one unless the user explicitly asks for that pointer. Use this when a user asks to file a drafted document into a sequence.",
   input_schema: {
     type: 'object',
     properties: {
@@ -871,7 +872,12 @@ export const PLACE_INTO_SEQUENCE: AnaTool = {
       section_code: { type: 'string', description: 'CTD section code for the leaf, e.g. "2.7.3" or "m1/us/1.2".' },
       title: { type: 'string', description: 'Leaf title (usually the document title).' },
       lifecycle_op: { type: 'string', enum: ['new', 'replace', 'append', 'delete'], description: "Lifecycle operation; defaults to 'new'." },
-      document_table: { type: 'string', description: "Source document table, e.g. 'coauthor_documents' or 'unified_documents'." },
+      document_table: {
+        type: 'string',
+        enum: [...PLACEABLE_DOCUMENT_TABLE_LIST],
+        description:
+          'Source document table the leaf points at. Must be one of the listed values — anything else is refused at placement.',
+      },
       document_id: { type: 'number', description: 'Source document id in that table (integer).' },
       document_type: { type: 'string', description: 'Optional document type label.' },
       granularity: { type: 'string', description: "Optional granularity, e.g. 'document' or 'leaf'." },

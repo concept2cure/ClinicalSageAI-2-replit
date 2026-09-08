@@ -153,10 +153,24 @@ export interface LifecycleBindings {
   registerGovernedDocument(doc: CanonicalDocument, ctx: AdvanceContext): Promise<void>;
   /** Apply a 21 CFR Part 11 e-signature (server/services/part11 + esignature route). */
   applySignature(doc: CanonicalDocument, meaning: ApprovalSignature['meaning'], ctx: AdvanceContext): Promise<ApprovalSignature>;
-  /** Write/point a submission_leaf so the approved doc becomes placed (submission-service.upsertLeaf). */
-  upsertLeaf(doc: CanonicalDocument, placement: DossierPlacement, ctx: AdvanceContext): Promise<{ leafId: string }>;
-  /** Assemble the sequence into an eCTD package (ectd/assemble-from-core). */
-  assemble(doc: CanonicalDocument, ctx: AdvanceContext): Promise<{ packageSha256?: string }>;
+  /**
+   * Write/point a submission_leaf so the approved doc becomes placed
+   * (submission-service.upsertLeaf).
+   *
+   * OPTIONAL, and deliberately so: there is no default. A fallback here would
+   * have to invent a leaf id, and a placement citing a leaf that was never
+   * written is a falsified record. When this is absent the `placed` transition
+   * is REFUSED (see advanceDocument), not simulated.
+   */
+  upsertLeaf?(doc: CanonicalDocument, placement: DossierPlacement, ctx: AdvanceContext): Promise<{ leafId: string }>;
+  /**
+   * Assemble the sequence into an eCTD package (ectd/assemble-from-core).
+   *
+   * OPTIONAL for the same reason: the only thing a fallback could return is a
+   * digest computed over something other than package bytes, which is a package
+   * seal for a package that does not exist. Absent → `packaged` is REFUSED.
+   */
+  assemble?(doc: CanonicalDocument, ctx: AdvanceContext): Promise<{ packageSha256?: string; packageMd5?: string }>;
   /** Append ONE event to the single audit authority (auditService.logAction). */
   audit(event: DocumentAuditEvent): Promise<void>;
 }
@@ -169,6 +183,14 @@ export interface AdvanceResult {
   blockedBy?: string[];
   state: RegulatedDocumentState;
   auditEvent?: DocumentAuditEvent;
+  /**
+   * The digest of the package the `assemble` binding actually produced, passed
+   * back so the caller seals the export record from a real assembly instead of
+   * recomputing a hash over an identifier string.
+   */
+  packageSha256?: string;
+  /** The md5 of the same package — the digest the eCTD index itself carries. */
+  packageMd5?: string;
 }
 
 /**
@@ -196,6 +218,8 @@ export async function advanceDocument(
   // 2. Route to the existing blessed service for this transition.
   const next: RegulatedDocumentState = { ...state };
   let signatureRef = ctx.signatureRef;
+  let packageSha256: string | undefined;
+  let packageMd5: string | undefined;
 
   if (to === 'approved') {
     const sig = await bindings.applySignature(document, 'approved', ctx);
@@ -203,11 +227,35 @@ export async function advanceDocument(
     signatureRef = sig.signatureRef;
     await bindings.registerGovernedDocument(document, ctx);
   } else if (to === 'placed') {
+    // No leaf writer wired → refuse. Inventing an id here would record a
+    // placement against a submission_leaves row that does not exist.
+    if (!bindings.upsertLeaf) {
+      return {
+        ok: false,
+        from: state.stage,
+        to,
+        blockedBy: ['PLACEMENT_BINDING_NOT_WIRED: no upsertLeaf binding is configured, so no submission leaf can be written for this placement'],
+        state,
+      };
+    }
     const placement = ctx.placement ?? state.placement!;
     const { leafId } = await bindings.upsertLeaf(document, placement, ctx);
     next.placement = { ...placement, leafId };
   } else if (to === 'packaged') {
-    await bindings.assemble(document, ctx);
+    // No assembler wired → refuse. The alternative is to mark packaging
+    // validated over a package nothing built.
+    if (!bindings.assemble) {
+      return {
+        ok: false,
+        from: state.stage,
+        to,
+        blockedBy: ['PACKAGING_BINDING_NOT_WIRED: no assemble binding is configured, so no eCTD package can be built or sealed for this document'],
+        state,
+      };
+    }
+    const assembled = await bindings.assemble(document, ctx);
+    packageSha256 = assembled?.packageSha256;
+    packageMd5 = assembled?.packageMd5;
     next.packagingValidated = true;
   }
 
@@ -217,7 +265,7 @@ export async function advanceDocument(
   const auditEvent = buildAuditEvent({ ...state }, to, { ...ctx, signatureRef });
   await bindings.audit(auditEvent);
 
-  return { ok: true, from: state.stage, to, state: next, auditEvent };
+  return { ok: true, from: state.stage, to, state: next, auditEvent, packageSha256, packageMd5 };
 }
 
 // ─── Live binding adapter (documentation of the real wiring) ──────────────────

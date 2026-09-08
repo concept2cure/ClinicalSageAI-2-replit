@@ -1,5 +1,22 @@
 /**
- * Document template registry — the canonical "which template?" service.
+ * Document template registry — the canonical "WHICH template?" service.
+ *
+ * That word was an assertion until the modules it implicitly ranked said so
+ * too. Two siblings also exported `DocumentTemplate`, with different shapes, so
+ * a reader who grepped for the canonical registry found a claim rather than a
+ * fact. The boundary, stated in all three:
+ *
+ *   · THIS FILE — WHICH template applies. DB-backed, async, resolves down the
+ *     most-specific-first chain below. Owns the name `DocumentTemplate`.
+ *   · docx/templateRegistry.ts — what a chosen template LOOKS LIKE as a DOCX.
+ *     Static section blueprints for docxFactory. Owns `DocxTemplateBlueprint`.
+ *   · regulatory/templateCatalog.ts — which templates are OFFERED for a
+ *     registry entry. Metadata only. Owns `CatalogTemplateEntry`.
+ *
+ * Canonical for RESOLUTION only — this file renders nothing and lists no
+ * catalog. `templates/templateStore.ts` (durable CRUD) and
+ * `protocol-templates-service.ts` (tenant-scoped capability) share the export
+ * names and are separate concerns again.
  *
  * AnA must produce documents that match the right template for the right
  * agency and the right submission. A protocol for an FDA IND is not the

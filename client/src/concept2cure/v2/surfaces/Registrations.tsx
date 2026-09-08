@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 
 import { usePublishSurfaceContext } from '../surfaceContext';
+import { useSurfaceActionHandlers } from '../surfaceActions';
 import { I } from '../icons';
 import { useLiveData, useLiveRows, isRowsWith, hasKeys, EmptyState } from '../dataConnect';
 import type { SurfaceViewProps } from '../surfaceViews';
@@ -38,24 +39,9 @@ interface RegMarketRow {
   days: number | null;
 }
 
-interface RegDossierDoc {
-  n: string;
-  st: string;
-  sec: string;
-  blocker?: boolean;
-}
-
-interface RegDossierCert {
-  n: string;
-  id: string;
-  granted: string;
-}
-
-interface RegDossier {
-  filing: string;
-  docs: RegDossierDoc[];
-  cert: RegDossierCert | null;
-}
+/* `RegDossierDoc` / `RegDossierCert` / `RegDossier` lived here to type a dossier
+   that had no data source. The real one (RimMarketDossier, below) is the
+   server's shape, so the imagined one is gone rather than kept beside it. */
 
 /* Real registration-grid row — the server's rim_registrations record from
    GET /api/rim/registrations ({ registrations, summary }). Every value the
@@ -91,10 +77,37 @@ const isGridResponse = (v: unknown): v is GridResponse =>
     (v as GridResponse).registrations,
   );
 
-/* No fabricated dossiers: the RIM grid does not carry per-registration document
-   sets, so the design's expandable dossier stays dormant (rows render
-   un-expanded) until a real dossier source is wired — never faked. */
-const REG_DOSSIERS: Record<string, RegDossier> = {};
+/* ── The dossier now has a real source ─────────────────────────────────────────
+   This was `const REG_DOSSIERS: Record<string, RegDossier> = {}` — deliberately
+   empty, with a comment saying no fabricated dossiers would be shown until a
+   real source existed. Honest, and completely inert: because the lookup always
+   missed, the caret never rendered and clicking a registration row did nothing
+   at all.
+
+   GET /api/rim/products/:id/market-dossier is that source. Every field in it is
+   a stored row or a rule applied to one — the registration record, the org's
+   approved rim_labels for that market, and the label type the market requires
+   with the citation that says so. A market with no labels comes back empty with
+   `labelGap` true, which is the fact rather than a gap in the UI. */
+interface RimMarketDossier {
+  country: string;
+  marketStatus: string;
+  registrationNumber: string | null;
+  approvalDate: string | null;
+  renewalDueDate: string | null;
+  expectedLabelType: string;
+  expectedLabelBasis: string;
+  approvedLabels: Array<{ labelType: string; version: string | null; approvedDate: string | null; country: string | null }>;
+  labelGap: boolean;
+}
+
+const LABEL_TYPE_LABEL: Record<string, string> = {
+  uspi: 'USPI',
+  smpc: 'EU SmPC',
+  core_data_sheet: 'Company core data sheet',
+  pil: 'Patient information leaflet',
+};
+const labelTypeName = (t: string) => LABEL_TYPE_LABEL[t] ?? t.replace(/_/g, ' ');
 
 const _rgStatusPill: Record<string, string> = { approved: 'ok', 'under-review': 'warn', planned: 'neutral' };
 const _rgStatusLabel: Record<string, string> = { approved: 'Approved', 'under-review': 'Under review', planned: 'Planned' };
@@ -133,16 +146,29 @@ function toRegRow(r: RimRegistration): RegMarketRow {
 interface RegRowProps {
   r: RegMarketRow;
   prod: string;
+  /** The product the dossier read is keyed on. */
+  productId: number;
   onAsk: ((text: string) => void) | undefined;
 }
 
-function RegRow({ r, prod, onAsk }: RegRowProps) {
+function RegRow({ r, prod, productId, onAsk }: RegRowProps) {
   const [open, setOpen] = useState(false);
-  const dossier = REG_DOSSIERS[prod + '·' + r.mkt];
+  /* Fetched only while the row is open — a grid of thirty markets must not fire
+     thirty dossier reads to render a table nobody has expanded yet. */
+  const doss = useLiveRows<RimMarketDossier>(
+    open ? `/api/rim/products/${productId}/market-dossier` : null,
+    [open, productId],
+  );
+  const mine = doss.rows.find((d) => d.country.toUpperCase() === r.mkt.toUpperCase()) ?? null;
+
   return (
     <>
-      <tr className={'reg-row' + (dossier ? ' has-doss' : '') + (open ? ' open' : '')} onClick={() => dossier && setOpen(o => !o)}>
-        <td><div className="reg-mkt">{dossier && <span className="reg-caret">{open ? I.chevDown : (I.chevRight || I.right)}</span>}<span className="reg-flag">{r.flag}</span><div><div className="reg-mkt-n">{r.mkt}</div><div className="reg-mkt-a">{r.auth}</div></div></div></td>
+      <tr
+        className={'reg-row has-doss' + (open ? ' open' : '')}
+        onClick={() => setOpen((o) => !o)}
+        aria-expanded={open}
+      >
+        <td><div className="reg-mkt"><span className="reg-caret">{open ? I.chevDown : (I.chevRight || I.right)}</span><span className="reg-flag">{r.flag}</span><div><div className="reg-mkt-n">{r.mkt}</div><div className="reg-mkt-a">{r.auth}</div></div></div></td>
         <td className="reg-proc">{r.proc}</td>
         <td><span className="reg-id">{r.id}</span></td>
         <td><span className={`reg-pill ${_rgStatusPill[r.status] || 'neutral'}`}>{_rgStatusLabel[r.status] || r.status}</span></td>
@@ -150,24 +176,65 @@ function RegRow({ r, prod, onAsk }: RegRowProps) {
         <td className="reg-date">{r.expiry}</td>
         <td><div className="reg-next"><span>{r.next}</span>{r.days != null && <span className={`reg-next-d ${r.days <= 14 ? 'warn' : ''}`}>{r.days}d</span>}</div></td>
       </tr>
-      {open && dossier && (
+      {open && (
         <tr className="reg-doss-row"><td colSpan={7}>
           <div className="reg-doss">
-            <div className="reg-doss-h"><span className="reg-doss-l">{I.folder} {dossier.filing}</span><span className="reg-doss-c">{dossier.docs.length} documents</span></div>
-            <div className="reg-doss-list">
-              {dossier.docs.map((d, j) => (
-                <button key={j} className={'reg-doc' + (d.blocker ? ' blk' : '')} onClick={(e) => { e.stopPropagation(); onAsk && onAsk(`Open "${d.n}" from the ${r.mkt} ${prod} dossier`); }}>
-                  <span className="reg-doc-ic">{I.fileText}</span>
-                  <span className="reg-doc-n">{d.n}</span>
-                  <span className="reg-doc-sec">{d.sec}</span>
-                  <span className={`reg-pill ${_rgDocPill[d.st] || 'neutral'}`}>{d.st}</span>
-                  <span className="reg-doc-go">{I.arrowRight || I.right}</span>
-                </button>
-              ))}
-            </div>
-            {dossier.cert
-              ? <button className="reg-cert" onClick={(e) => { e.stopPropagation(); onAsk && onAsk(`Open the authorization document ${dossier.cert!.id} for ${r.mkt}`); }}>{I.shieldCheck || I.check}<span><b>{dossier.cert.n}</b> {I.dot} {dossier.cert.id} {I.dot} granted {dossier.cert.granted}</span><span className="reg-doc-go">{I.download || I.arrowRight}</span></button>
-              : <div className="reg-cert pending">{I.clock} Authorization document issues once the agency review clock closes.</div>}
+            {doss.loading ? (
+              <div className="reg-cert pending">{I.clock} Reading the {r.mkt} label record…</div>
+            ) : doss.error ? (
+              /* A failed dossier read is NOT "this market has no labels" — the
+                 second is a regulatory claim about the org's file. */
+              <div className="reg-cert pending" role="alert">
+                {I.alertTriangle} The {r.mkt} label record could not be read, so nothing is shown here — this is a failed read, not an empty dossier.
+              </div>
+            ) : !mine ? (
+              <div className="reg-cert pending">{I.info || I.clock} No label record is on file for {r.mkt} yet.</div>
+            ) : (
+              <>
+                <div className="reg-doss-h">
+                  <span className="reg-doss-l">{I.folder} {r.mkt} label record</span>
+                  <span className="reg-doss-c">
+                    {mine.approvedLabels.length} approved label{mine.approvedLabels.length === 1 ? '' : 's'}
+                  </span>
+                </div>
+                <div className="reg-doss-list">
+                  {mine.approvedLabels.map((l, j) => (
+                    <button
+                      key={j}
+                      className="reg-doc"
+                      onClick={(e) => { e.stopPropagation(); onAsk && onAsk(`Open the approved ${labelTypeName(l.labelType)} for ${prod} in ${r.mkt}`); }}
+                    >
+                      <span className="reg-doc-ic">{I.fileText}</span>
+                      <span className="reg-doc-n">{labelTypeName(l.labelType)}{l.version ? ' v' + l.version : ''}</span>
+                      <span className="reg-doc-sec">{l.country == null ? 'global' : l.country}{l.approvedDate ? ' · approved ' + l.approvedDate : ''}</span>
+                      <span className="reg-pill ok">approved</span>
+                      <span className="reg-doc-go">{I.arrowRight || I.right}</span>
+                    </button>
+                  ))}
+                  {mine.approvedLabels.length === 0 && (
+                    <div className="reg-cert pending">{I.clock} No approved label is on file for this market.</div>
+                  )}
+                </div>
+                {mine.labelGap ? (
+                  <div className="reg-doss-gap" role="alert">
+                    {I.alertTriangle}
+                    <span>
+                      This market requires an approved <b>{labelTypeName(mine.expectedLabelType)}</b> and none is on file.
+                      <span className="reg-doss-basis"> {mine.expectedLabelBasis}</span>
+                    </span>
+                  </div>
+                ) : (
+                  <div className="reg-cert">
+                    {I.shieldCheck || I.check}
+                    <span>
+                      <b>{labelTypeName(mine.expectedLabelType)}</b> is on file for {r.mkt}
+                      {mine.registrationNumber ? <> {I.dot} {mine.registrationNumber}</> : null}
+                      {mine.approvalDate ? <> {I.dot} approved {mine.approvalDate}</> : null}
+                    </span>
+                  </div>
+                )}
+              </>
+            )}
           </div>
         </td></tr>
       )}
@@ -183,8 +250,19 @@ function RegRow({ r, prod, onAsk }: RegRowProps) {
 export function Registrations({ onAsk }: SurfaceViewProps) {
   const [tab, setTab] = useState('reg');
   const grid = useLiveData<GridResponse>('/api/rim/registrations', ['/api/rim/registrations'], isGridResponse);
+  /* Gated on error as well as loading. `useLiveRows`/`useLiveData` return
+     `data: null` on a FAILED read, so each count below derives from an empty
+     list and resolves to 0 — and with `loading` already false the strip renders
+     a SETTLED zero rather than a placeholder. Rows are empty in three
+     situations and only the third may say "nothing is on file"; the pattern is
+     MarketAccess.tsx:62. */
+  /* Was `grid.loading ? '—' : n`, a half-guard: a failed RIM read left
+     loading false and every count 0, so the header stated the org holds no
+     marketing authorizations anywhere. On the clock/commit/strategy tabs no
+     error panel is on screen at all, so those zeros stood alone. */
+  const kv = (n: number | string) => (grid.loading || grid.error ? '—' : String(n));
   /* The chips used to render `(standards.data || REG_STANDARDS_FALLBACK).map`.
-     `useLive` hands back the parsed body cast to DataStandard[] without looking
+     the retired `useLive` handed back the parsed body cast to DataStandard[] without looking
      at it, and `||` only fires on null/undefined — so a 200 carrying `{}`,
      `{ data: … }`, an error body or a JSON string was truthy, walked past the
      fallback, and `.map` threw inside render on six of seven skewed bodies.
@@ -208,6 +286,12 @@ export function Registrations({ onAsk }: SurfaceViewProps) {
     .map((r) => ({ r, days: daysUntil(r.renewal_due_date) }))
     .filter((x) => x.days != null)
     .sort((a, b) => (a.days as number) - (b.days as number));
+  /* Registrations the renewal schedule cannot place: no renewal-due date on the
+     RIM record, or one that will not parse. The schedule showed only the dated
+     ones and said nothing about the rest, so a grid where three of twelve carry
+     a date read as a complete renewal plan — and the registration that lapses
+     first may well be one of the nine. */
+  const withoutRenewalDate = regs.length - renewals.length;
 
   /* What AnA can see of this screen.
      She knew the user was on "registrations" and nothing else — not how many
@@ -238,7 +322,10 @@ export function Registrations({ onAsk }: SurfaceViewProps) {
         `Market registrations: ${regs.length} registration(s) across ${countries} country/countries and ${products} product(s) — ` +
         `${approved} approved, ${review} submitted or under review` +
         (soonest
-          ? `; soonest renewal ${productLabel(soonest.r)} in ${soonest.r.country} due in ${soonest.days} day(s)`
+          ? `; of the ${renewals.length} with a recorded renewal date the soonest is ${productLabel(soonest.r)} in ${soonest.r.country}, due in ${soonest.days} day(s)`
+          : '') +
+        (withoutRenewalDate > 0
+          ? `. ${withoutRenewalDate} registration(s) carry no renewal date, so what lapses first is NOT established by this grid`
           : ''),
       facts: {
         registrationCount: regs.length,
@@ -246,6 +333,10 @@ export function Registrations({ onAsk }: SurfaceViewProps) {
         submittedOrUnderReview: review,
         countries,
         products,
+        // The renewal schedule covers only the dated registrations; naming the
+        // rest is what keeps `soonestRenewal` from reading as "what lapses first".
+        registrationsWithRenewalDate: renewals.length,
+        registrationsWithoutRenewalDate: withoutRenewalDate,
         soonestRenewal: soonest
           ? {
               product: productLabel(soonest.r),
@@ -262,7 +353,7 @@ export function Registrations({ onAsk }: SurfaceViewProps) {
         'Switch between the registrations grid and the data-standards view',
       ],
     };
-  }, [grid.loading, grid.error, regs, approved, review, countries, products, renewals, tab]);
+  }, [grid.loading, grid.error, regs, approved, review, countries, products, renewals, withoutRenewalDate, tab]);
   usePublishSurfaceContext('registrations', anaContext);
 
   // Group the real rows by product for the design's grouped table layout.
@@ -277,21 +368,35 @@ export function Registrations({ onAsk }: SurfaceViewProps) {
   const ask = (q: string) => onAsk && onAsk(q);
   const tabs: [string, string][] = [['reg', 'Registrations'], ['clock', 'Approvals tracker'], ['vary', 'Renewals & variations'], ['commit', 'HA commitments'], ['strategy', 'Submission strategy']];
 
+  /* AnA can open any registrations tab — the same view-state switch a person
+     makes. The registry enum has validated `tab`; the defensive lookup keeps the
+     handler honest if it drifts. */
+  useSurfaceActionHandlers('registrations', {
+    'registrations.open-tab': (params) => {
+      const target = params.tab;
+      const hit = tabs.find((t) => t[0] === target);
+      if (!hit) return { ok: false, reason: `"${target}" is not a registrations tab.` };
+      if (tab === target) return { ok: true, detail: `Already on the ${hit[1]} tab` };
+      setTab(target);
+      return { ok: true, detail: `Opened the ${hit[1]} tab` };
+    },
+  });
+
   return (
-    <div className="page-host reg">
+    <div className="reg">
       <div className="reg-head">
         <div>
           <div className="reg-eyebrow">Lifecycle {I.dot} cross-market</div>
           <h1 className="reg-title">Registrations</h1>
           <p className="reg-sub">Authorization status across markets, agency review clocks, renewals &amp; variations, and health-authority commitments &mdash; one registration ledger for every market you file in.</p>
         </div>
-        <button className="reg-ask" onClick={() => ask('Build a global registration & sequencing plan across my markets')}>{I.sparkles} Plan markets with AnA</button>
+        <button className="reg-ask" onClick={() => ask('Build a global registration & sequencing plan across my markets')}>{I.sparkles} Ask AnA to plan markets</button>
       </div>
 
       <div className="reg-kpis">
-        <div className="reg-kpi"><div className="reg-kpi-v">{grid.loading ? '—' : countries}</div><div className="reg-kpi-l">Markets {I.dot} {grid.loading ? '—' : products} product{products === 1 ? '' : 's'}</div></div>
-        <div className="reg-kpi" data-tone="ok"><div className="reg-kpi-v">{grid.loading ? '—' : approved}</div><div className="reg-kpi-l">Approved / cleared</div></div>
-        <div className="reg-kpi" data-tone="warn"><div className="reg-kpi-v">{grid.loading ? '—' : review}</div><div className="reg-kpi-l">Under review {I.dot} on clocks</div></div>
+        <div className="reg-kpi"><div className="reg-kpi-v">{kv(countries)}</div><div className="reg-kpi-l">Markets {I.dot} {kv(products)} product{products === 1 ? '' : 's'}</div></div>
+        <div className="reg-kpi" data-tone="ok"><div className="reg-kpi-v">{kv(approved)}</div><div className="reg-kpi-l">Approved / cleared</div></div>
+        <div className="reg-kpi" data-tone="warn"><div className="reg-kpi-v">{kv(review)}</div><div className="reg-kpi-l">Under review {I.dot} on clocks</div></div>
         <div className="reg-kpi" data-tone="ai"><div className="reg-kpi-v">&mdash;</div><div className="reg-kpi-l">Open HA commitments</div></div>
       </div>
 
@@ -320,7 +425,7 @@ export function Registrations({ onAsk }: SurfaceViewProps) {
                 {groups.map((g) => (
                   <React.Fragment key={g.label}>
                     <tr className="reg-group"><td colSpan={7}>{g.label}</td></tr>
-                    {g.rows.map((rr) => <RegRow key={rr.id} r={toRegRow(rr)} prod={g.label} onAsk={onAsk} />)}
+                    {g.rows.map((rr) => <RegRow key={rr.id} r={toRegRow(rr)} prod={g.label} productId={rr.product_id} onAsk={onAsk} />)}
                   </React.Fragment>
                 ))}
               </tbody>
@@ -377,6 +482,12 @@ export function Registrations({ onAsk }: SurfaceViewProps) {
                 ))}
               </tbody>
             </table>
+          )}
+          {!grid.loading && !grid.error && withoutRenewalDate > 0 && (
+            <div className="reg-pad reg-note">
+              {withoutRenewalDate} registration(s) carry no renewal-due date in RIM and are not on this
+              schedule. What lapses first is not established until every registration carries one.
+            </div>
           )}
         </div>
       )}

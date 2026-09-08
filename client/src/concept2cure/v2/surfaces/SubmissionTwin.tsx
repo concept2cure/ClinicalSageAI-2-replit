@@ -24,6 +24,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { I } from '../icons';
 import type { SurfaceViewProps } from '../surfaceViews';
+import { usePublishSurfaceContext } from '../surfaceContext';
 import { EmptyState } from '../dataConnect';
 import { apiRequest } from '@/lib/queryClient';
 import '../styles/project-home-v2.css';
@@ -41,7 +42,7 @@ async function readData<T = any>(method: 'GET' | 'POST', path: string, body?: un
     const res = await apiRequest(method, path, body);
     const parsed = (await res.json().catch(() => null)) as any;
     return { ok: res.ok, status: res.status, data: (parsed?.data ?? null) as T | null, raw: parsed };
-  } catch (e) {
+  } catch {
     return { ok: false, status: 0, data: null, raw: null };
   }
 }
@@ -71,6 +72,12 @@ export function SubmissionTwin(_props: SurfaceViewProps) {
   const [drift, setDrift] = useState<DriftAlert[]>([]);
   const [impacts, setImpacts] = useState<ChangeImpact[]>([]);
   const [nextArtifact, setNextArtifact] = useState<NextArtifact | null>(null);
+  // Per-panel read-error flags. Without these, a failed secondary GET fell into
+  // its "No X" empty state, indistinguishable from a genuine zero — a false
+  // claim about the submission's own drift / challenge / impact history.
+  const [secErr, setSecErr] = useState<{ challenges: boolean; drift: boolean; impacts: boolean }>({
+    challenges: false, drift: false, impacts: false,
+  });
   const [lastAssessmentId, setLastAssessmentId] = useState<number | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const [toast, fireToast] = useToast();
@@ -85,6 +92,7 @@ export function SubmissionTwin(_props: SurfaceViewProps) {
       readData<NextArtifact>('GET', `/api/submission-twin/next-artifact/${id}`),
     ]);
     if (!r.ok) { setReadyState('error'); setReadiness(null); } else { setReadiness(r.data); setReadyState('ready'); }
+    setSecErr({ challenges: !c.ok, drift: !d.ok, impacts: !ci.ok });
     setChallenges(Array.isArray(c.data) ? c.data : []);
     setDrift(Array.isArray(d.data) ? d.data : []);
     setImpacts(Array.isArray(ci.data) ? ci.data : []);
@@ -143,12 +151,91 @@ export function SubmissionTwin(_props: SurfaceViewProps) {
     if (ok && pkg != null) { fireToast('Change impact resolved.'); void refreshAll(pkg); } else fireToast('Couldn’t resolve the change impact.', 'error');
   }, [pkg, refreshAll, fireToast]);
 
+  /* What AnA can see of this screen.
+     NO PACKAGE LOADED is its own state: every panel is empty until an id is
+     entered, and reporting that as "no drift, no challenges" would be a
+     readiness statement about a submission nobody selected.
+
+     The reviewer challenges are SIMULATED — the surface's own button says so —
+     and they are labelled as such here, because an assistant repeating a
+     simulated reviewer deficiency as a real one manufactures agency feedback.
+     `lastAssessmentId` travels too: challenges can only be simulated after an
+     assessment has run, so their absence often means "no assessment yet"
+     rather than "no challenges found". */
+  const anaContext = React.useMemo(() => {
+    if (pkg == null) {
+      return {
+        summary:
+          'Submission Twin has no submission package loaded, so nothing on screen is populated — this is a ' +
+          'missing selection, not a clean twin.',
+        availableActions: ['Enter a submission package id and load it'],
+      };
+    }
+    if (readyState === 'loading' || readyState === 'idle') {
+      return { summary: `Submission Twin for package ${pkg}: the readiness model is still loading.`, facts: { packageId: pkg } };
+    }
+    if (readyState === 'error' || !readiness) {
+      return {
+        summary:
+          `Submission Twin for package ${pkg}: the readiness model could not be read, so no readiness or ` +
+          'fragility score is on screen — a failure, not a zero.',
+        facts: { packageId: pkg },
+        availableActions: ['Re-run the twin assessment'],
+      };
+    }
+    const openDrift = drift.filter((d) => !d.resolved);
+    const openImpacts = impacts.filter((i) => !i.resolved);
+    return {
+      summary:
+        `Submission Twin for package ${pkg}: readiness ${readiness.readinessScore}, fragility ` +
+        `${readiness.fragilityScore}, ${(readiness.weakZones ?? []).length} weak zone(s). ` +
+        `${openDrift.length} unresolved drift alert(s), ${openImpacts.length} unresolved change impact(s), ` +
+        `${challenges.length} SIMULATED reviewer challenge(s)` +
+        (lastAssessmentId == null ? ' (no assessment has been run in this session, so challenges cannot be simulated yet)' : '') +
+        '.',
+      facts: {
+        packageId: pkg,
+        readinessScore: readiness.readinessScore,
+        fragilityScore: readiness.fragilityScore,
+        weakZones: readiness.weakZones ?? [],
+        lastAssessmentId,
+        /* Simulated, not received. Never repeat these as agency feedback. */
+        simulatedReviewerChallenges: challenges.slice(0, 10).map((c) => ({
+          id: c.id, reviewerLens: c.reviewerLens, challenge: c.challengeText,
+          targetSection: c.targetSection, severity: c.severity,
+          deficiencyLikelihood: c.deficiencyLikelihood,
+          suggestedResponse: c.suggestedResponse, suggestedArtifact: c.suggestedArtifact,
+        })),
+        challengesAreSimulated: true,
+        driftAlerts: drift.slice(0, 10).map((d) => ({
+          id: d.id, type: d.driftType, severity: d.severity,
+          description: d.description, suggestedFix: d.suggestedFix, resolved: d.resolved,
+        })),
+        changeImpacts: impacts.slice(0, 10).map((i) => ({
+          id: i.id, changeType: i.changeType, severity: i.impactSeverity,
+          description: i.impactDescription, remediation: i.remediation, resolved: i.resolved,
+        })),
+        nextArtifact: nextArtifact
+          ? { type: nextArtifact.artifactType, rationale: nextArtifact.rationale, priority: nextArtifact.priority }
+          : null,
+      },
+      availableActions: [
+        'Run a twin assessment on the loaded package',
+        'Detect drift, and resolve a drift alert',
+        'Simulate reviewer challenges (requires an assessment first)',
+        'Resolve a change impact',
+        'Load a different submission package',
+      ],
+    };
+  }, [pkg, readyState, readiness, challenges, drift, impacts, nextArtifact, lastAssessmentId]);
+  usePublishSurfaceContext('submission-twin', anaContext);
+
   return (
     <div className="cm-body">
       <div className="pj-card">
-        <div className="pj-card-h"><span className="t">Submission Twin</span><span className="s">Living readiness · drift · reviewer challenges · change impact</span></div>
+        <div className="pj-card-h"><span className="t">Submission twin</span><span className="s">Living readiness · drift · reviewer challenges · change impact</span></div>
         <div className="pj-card-b" style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
-          <label style={{ fontSize: 12, color: 'var(--c2c-dim,#667085)' }}>Submission package id</label>
+          <label style={{ fontSize: 12, color: 'var(--text-400)' }}>Submission package id</label>
           <input className="c2c-input" style={{ height: 30, width: 120 }} inputMode="numeric" value={pkgInput}
             onChange={(e) => setPkgInput(e.target.value.replace(/\D/g, ''))} onKeyDown={(e) => { if (e.key === 'Enter') applyPkg(); }} aria-label="Package size" placeholder="e.g. 1024" />
           <button className="nda-open" onClick={applyPkg} disabled={!pkgInput}>{I.search} Load</button>
@@ -178,8 +265,8 @@ export function SubmissionTwin(_props: SurfaceViewProps) {
                 : (
                   <div>
                     <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap', marginBottom: 12 }}>
-                      <div><div style={{ fontSize: 30, fontWeight: 700 }}>{readiness.readinessScore}</div><div style={{ fontSize: 12, color: 'var(--c2c-dim,#667085)' }}>Readiness</div></div>
-                      <div><div style={{ fontSize: 30, fontWeight: 700, color: readiness.fragilityScore >= 50 ? 'var(--c2c-err,#b42318)' : undefined }}>{readiness.fragilityScore}</div><div style={{ fontSize: 12, color: 'var(--c2c-dim,#667085)' }}>Fragility</div></div>
+                      <div><div style={{ fontSize: 30, fontWeight: 700 }}>{readiness.readinessScore}</div><div style={{ fontSize: 12, color: 'var(--text-400)' }}>Readiness</div></div>
+                      <div><div style={{ fontSize: 30, fontWeight: 700, color: readiness.fragilityScore >= 50 ? 'var(--error)' : undefined }}>{readiness.fragilityScore}</div><div style={{ fontSize: 12, color: 'var(--text-400)' }}>Fragility</div></div>
                     </div>
                     {readiness.weakZones.length > 0 && (
                       <div>
@@ -209,12 +296,13 @@ export function SubmissionTwin(_props: SurfaceViewProps) {
           <div className="pj-card">
             <div className="pj-card-h"><span className="t">Simulated reviewer challenges</span><span className="s">{challenges.length}</span></div>
             <div className="pj-card-b" style={{ padding: 0 }}>
-              {challenges.length === 0 ? <div style={{ padding: 16 }}><EmptyState icon={I.eye} title="No challenges yet" hint="Run an assessment, then Simulate challenges to surface the questions a reviewer is likely to raise." /></div>
+              {secErr.challenges ? <div style={{ padding: 16 }}><EmptyState tone="error" icon={I.alertTriangle} title="Couldn’t load challenges" hint="The challenges read didn’t respond — this is not an empty list. Retry." /></div>
+                : challenges.length === 0 ? <div style={{ padding: 16 }}><EmptyState icon={I.eye} title="No challenges yet" hint="Run an assessment, then Simulate challenges to surface the questions a reviewer is likely to raise." /></div>
                 : <table className="reg-tbl"><thead><tr><th>Lens</th><th>Challenge</th><th>Section</th><th>Likelihood</th><th style={{ textAlign: 'right' }}>Severity</th></tr></thead>
                   <tbody>{challenges.map((c) => (
                     <tr key={String(c.id)}>
                       <td style={{ fontWeight: 600 }}>{c.reviewerLens ?? '—'}</td>
-                      <td>{c.challengeText}{c.suggestedResponse ? <div style={{ fontSize: 12, color: 'var(--c2c-dim,#667085)', marginTop: 2 }}>Response: {c.suggestedResponse}</div> : null}</td>
+                      <td>{c.challengeText}{c.suggestedResponse ? <div style={{ fontSize: 12, color: 'var(--text-400)', marginTop: 2 }}>Response: {c.suggestedResponse}</div> : null}</td>
                       <td className="mono">{c.targetSection ?? '—'}</td>
                       <td>{c.deficiencyLikelihood != null ? String(c.deficiencyLikelihood) : '—'}</td>
                       <td style={{ textAlign: 'right' }}><span className={'rd-chip tone-' + sevTone(c.severity)}>{c.severity ?? '—'}</span></td>
@@ -226,13 +314,14 @@ export function SubmissionTwin(_props: SurfaceViewProps) {
           <div className="pj-card">
             <div className="pj-card-h"><span className="t">Narrative-drift alerts</span><span className="s">{drift.length}</span></div>
             <div className="pj-card-b" style={{ padding: 0 }}>
-              {drift.length === 0 ? <div style={{ padding: 16 }}><EmptyState icon={I.zap} title="No active drift" hint="Detect drift compares the same claim across artifacts and flags inconsistencies here." /></div>
+              {secErr.drift ? <div style={{ padding: 16 }}><EmptyState tone="error" icon={I.alertTriangle} title="Couldn’t load drift alerts" hint="The drift read didn’t respond — this is not a clean result. Retry." /></div>
+                : drift.length === 0 ? <div style={{ padding: 16 }}><EmptyState icon={I.zap} title="No active drift" hint="Detect drift compares the same claim across artifacts and flags inconsistencies here." /></div>
                 : <table className="reg-tbl"><thead><tr><th>Type</th><th>Description</th><th>Suggested fix</th><th style={{ textAlign: 'right' }}>Action</th></tr></thead>
                   <tbody>{drift.map((d) => (
                     <tr key={String(d.id)}>
                       <td><span className={'rd-chip tone-' + sevTone(d.severity)}>{d.driftType ?? d.severity ?? 'drift'}</span></td>
                       <td>{d.description ?? '—'}</td>
-                      <td style={{ color: 'var(--c2c-dim,#667085)' }}>{d.suggestedFix ?? ''}</td>
+                      <td style={{ color: 'var(--text-400)' }}>{d.suggestedFix ?? ''}</td>
                       <td style={{ textAlign: 'right' }}><button className="nda-open" onClick={() => resolveDrift(d.id)}>{I.check} Resolve</button></td>
                     </tr>))}</tbody></table>}
             </div>
@@ -242,13 +331,14 @@ export function SubmissionTwin(_props: SurfaceViewProps) {
           <div className="pj-card">
             <div className="pj-card-h"><span className="t">Unresolved change impacts</span><span className="s">{impacts.length}</span></div>
             <div className="pj-card-b" style={{ padding: 0 }}>
-              {impacts.length === 0 ? <div style={{ padding: 16 }}><EmptyState icon={I.gitBranch} title="No unresolved impacts" hint="When an artifact changes, its downstream consequences are analyzed and listed here to resolve." /></div>
+              {secErr.impacts ? <div style={{ padding: 16 }}><EmptyState tone="error" icon={I.alertTriangle} title="Couldn’t load change impacts" hint="The change-impacts read didn’t respond — this is not an empty list. Retry." /></div>
+                : impacts.length === 0 ? <div style={{ padding: 16 }}><EmptyState icon={I.gitBranch} title="No unresolved impacts" hint="When an artifact changes, its downstream consequences are analyzed and listed here to resolve." /></div>
                 : <table className="reg-tbl"><thead><tr><th>Change</th><th>Impact</th><th>Remediation</th><th style={{ textAlign: 'right' }}>Action</th></tr></thead>
                   <tbody>{impacts.map((im) => (
                     <tr key={String(im.id)}>
                       <td><span className={'rd-chip tone-' + sevTone(im.impactSeverity)}>{im.changeType ?? 'change'}</span></td>
                       <td>{im.impactDescription ?? '—'}</td>
-                      <td style={{ color: 'var(--c2c-dim,#667085)' }}>{im.remediation ?? ''}</td>
+                      <td style={{ color: 'var(--text-400)' }}>{im.remediation ?? ''}</td>
                       <td style={{ textAlign: 'right' }}><button className="nda-open" onClick={() => resolveImpact(im.id)}>{I.check} Resolve</button></td>
                     </tr>))}</tbody></table>}
             </div>

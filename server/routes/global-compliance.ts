@@ -20,8 +20,12 @@ import { Router, Request, Response } from 'express';
 import { pool } from '../db';
 import { authenticateToken } from '../middleware/auth.js';
 import { recordArtifactProvenance } from '../services/provenance/artifact-provenance';
+import { serverError } from '../lib/api-response';
+import { createScopedLogger } from '../utils/logger';
 
 const router = Router();
+
+const logger = createScopedLogger('global-compliance');
 router.use(authenticateToken);
 
 function resolveRequestContext(req: Request): { userId: number; orgId: number; role: string } {
@@ -99,7 +103,7 @@ router.get('/regions', async (_req: Request, res: Response) => {
       },
     });
   } catch (err: any) {
-    res.status(500).json({ error: 'Failed to load regional frameworks', details: err.message });
+    return serverError(res, logger, 'loading regions', err);
   }
 });
 
@@ -176,7 +180,7 @@ router.post('/regions/:orgId/enable', async (req: Request, res: Response) => {
 
     res.json({ success: true, data: result.rows[0] });
   } catch (err: any) {
-    res.status(500).json({ error: 'Failed to enable framework', details: err.message });
+    return serverError(res, logger, 'saving enable', err);
   }
 });
 
@@ -230,7 +234,7 @@ router.post('/gap-analysis/:orgId', async (req: Request, res: Response) => {
       },
     });
   } catch (err: any) {
-    res.status(500).json({ error: 'Gap analysis failed', details: err.message });
+    return serverError(res, logger, 'saving gap analysis', err);
   }
 });
 
@@ -291,7 +295,7 @@ router.post('/gdpr/:orgId/ropa', async (req: Request, res: Response) => {
     );
     res.json({ success: true, data: result.rows[0] });
   } catch (err: any) {
-    res.status(500).json({ error: 'Failed to create RoPA entry', details: err.message });
+    return serverError(res, logger, 'saving ropa', err);
   }
 });
 
@@ -336,7 +340,7 @@ router.post('/gdpr/:orgId/breach', async (req: Request, res: Response) => {
       },
     });
   } catch (err: any) {
-    res.status(500).json({ error: 'Failed to report breach', details: err.message });
+    return serverError(res, logger, 'saving breach', err);
   }
 });
 
@@ -374,7 +378,7 @@ router.post('/gdpr/:orgId/dsr', async (req: Request, res: Response) => {
       },
     });
   } catch (err: any) {
-    res.status(500).json({ error: 'Failed to create DSR', details: err.message });
+    return serverError(res, logger, 'saving dsr', err);
   }
 });
 
@@ -530,7 +534,7 @@ router.get('/gdpr/:orgId/data-subject/:dataSubjectId/export', async (req: Reques
       },
     });
   } catch (err: any) {
-    return res.status(500).json({ error: 'Failed to export data subject payload', details: err.message });
+    return serverError(res, logger, 'exporting data subject', err);
   }
 });
 
@@ -676,7 +680,7 @@ router.delete('/gdpr/:orgId/data-subject/:dataSubjectId', async (req: Request, r
     });
   } catch (err: any) {
     await client.query('ROLLBACK').catch(() => undefined);
-    return res.status(500).json({ error: 'Failed to process erasure request', details: err.message });
+    return serverError(res, logger, 'deleting data subject', err);
   } finally {
     client.release();
   }
@@ -711,7 +715,7 @@ router.post('/gdpr/:orgId/transfer-assessment', async (req: Request, res: Respon
 
     res.json({ success: true, data: result.rows[0] });
   } catch (err: any) {
-    res.status(500).json({ error: 'Failed to create transfer assessment', details: err.message });
+    return serverError(res, logger, 'saving transfer assessment', err);
   }
 });
 
@@ -740,7 +744,7 @@ router.post('/gdpr/:orgId/dpia', async (req: Request, res: Response) => {
 
     res.json({ success: true, data: result.rows[0] });
   } catch (err: any) {
-    res.status(500).json({ error: 'Failed to create DPIA', details: err.message });
+    return serverError(res, logger, 'saving dpia', err);
   }
 });
 
@@ -801,7 +805,7 @@ router.post('/pharmacovigilance/:orgId/adverse-event', async (req: Request, res:
       },
     });
   } catch (err: any) {
-    res.status(500).json({ error: 'Failed to report adverse event', details: err.message });
+    return serverError(res, logger, 'saving adverse event', err);
   }
 });
 
@@ -912,7 +916,7 @@ router.post('/pharmacovigilance/:orgId/signal', async (req: Request, res: Respon
 
     res.json({ success: true, data: result.rows[0] });
   } catch (err: any) {
-    res.status(500).json({ error: 'Failed to report signal', details: err.message });
+    return serverError(res, logger, 'saving signal', err);
   }
 });
 
@@ -942,7 +946,7 @@ router.post('/pharmacovigilance/:orgId/rmp', async (req: Request, res: Response)
 
     res.json({ success: true, data: result.rows[0] });
   } catch (err: any) {
-    res.status(500).json({ error: 'Failed to create RMP', details: err.message });
+    return serverError(res, logger, 'saving RMP', err);
   }
 });
 

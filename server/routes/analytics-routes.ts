@@ -14,6 +14,8 @@ import { protocolOptimizerService } from '../protocol-optimizer-service';
 import { analyzeText } from '../openai-service';
 import { createScopedLogger } from '../utils/logger.js';
 import { powerTwoSampleMeans } from '../services/stats/assurance';
+import { csvRow } from '../utils/csv';
+import { serverError } from '../lib/api-response';
 
 const log = createScopedLogger('analytics-routes');
 
@@ -143,11 +145,7 @@ router.post('/upload-protocol', upload.single('file'), async (req, res) => {
         }
       } catch (error) {
         log.error('PDF extraction error:', error);
-        return res.status(500).json({
-          success: false,
-          message: 'Failed to extract text from PDF',
-          error: (error as Error).message,
-        });
+        return serverError(res, log, 'uploading protocol', error);
       }
     } else if (
       [
@@ -185,11 +183,7 @@ For best results, please use PDF format.`;
       analysisOutput = result.stdout;
     } catch (error) {
       log.error('Analysis execution error:', error);
-      return res.status(500).json({
-        success: false,
-        message: 'Failed to analyze protocol content',
-        error: (error as Error).message,
-      });
+      return serverError(res, log, 'uploading protocol', error);
     }
 
     // Score the protocol confidence
@@ -284,11 +278,7 @@ For best results, please use PDF format.`;
     res.json(result);
   } catch (error) {
     log.error('Error processing protocol:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Error processing protocol',
-      error: (error as Error).message,
-    });
+    return serverError(res, log, 'uploading protocol', error);
   }
 });
 
@@ -333,11 +323,7 @@ router.post('/analyze-protocol-text', async (req, res) => {
       fs.writeFileSync(tempFilePath, text);
     } catch (error) {
       log.error('Error saving temporary file:', error);
-      return res.status(500).json({
-        success: false,
-        message: 'Error processing protocol text',
-        error: (error as Error).message,
-      });
+      return serverError(res, log, 'analysing protocol text', error);
     }
 
     // Call the deep CSR analyzer
@@ -362,11 +348,7 @@ router.post('/analyze-protocol-text', async (req, res) => {
       }
 
       log.error('Analysis execution error:', error);
-      return res.status(500).json({
-        success: false,
-        message: 'Failed to analyze protocol text',
-        error: (error as Error).message,
-      });
+      return serverError(res, log, 'analysing protocol text', error);
     }
 
     // Score the protocol confidence
@@ -453,11 +435,7 @@ router.post('/analyze-protocol-text', async (req, res) => {
     res.json(result);
   } catch (error) {
     log.error('Error analyzing protocol text:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Error analyzing protocol text',
-      error: (error as Error).message,
-    });
+    return serverError(res, log, 'analysing protocol text', error);
   }
 });
 
@@ -827,67 +805,63 @@ For each recommendation, include specific citations to relevant regulatory guide
         ],
       },
       {
+        // A wisdom trace states what was DONE, so each line here must name a
+        // step this handler actually performs. The previous version claimed
+        // four, of which one was true. `Statistical power calculations
+        // validated against historical data` and `Inclusion/exclusion criteria
+        // evaluated for population representativeness` describe work no code
+        // in this handler does. The comparison line reported a count without
+        // saying that the count is routinely zero: findSimilarProtocols reads
+        // the `protocols` table, which has no INSERT anywhere in this
+        // repository (ledger L167), so on any real deployment it is empty and
+        // the sentence read "Compared against database of 0 similar protocols"
+        // — an assertion of comparison, with nothing compared.
         section: 'Evidence Base',
         insights: [
-          `Compared against database of ${similarProtocols.length} similar protocols`,
-          `Regulatory precedents considered for this therapeutic area (FDA, EMA, PMDA, NMPA)`,
-          `Statistical power calculations validated against historical data`,
-          `Inclusion/exclusion criteria evaluated for population representativeness`,
+          similarProtocols.length > 0
+            ? `Compared against ${similarProtocols.length} stored protocol(s) matching indication "${protocolData.indication}"`
+            : `No stored protocol matched indication "${protocolData.indication}", so no comparison against prior protocols was performed`,
+          'Regulatory guideline references for FDA, EMA, PMDA and Health Canada are listed under global_regulations. They are a fixed reference set, not a per-protocol assessment.',
         ],
         citations: [
           'ICH E9: Statistical Principles for Clinical Trials',
           'FDA Guidance for Industry: E6(R2) Good Clinical Practice',
-          'Ganju J. (2022). Sample size calculation in clinical trials. Nat Rev Methods Primers. 2:74',
-          'Bothwell LE, et al. (2023). Adaptive design methods in clinical trials. N Engl J Med. 388:1453-1464',
         ],
       },
       {
+        // `based on similar trials` asserted the same absent comparison set.
+        // What this handler genuinely produces is the narrative analysis in
+        // detailed_analysis; the qualitative points below are guidance, and are
+        // labelled as such rather than as findings about THIS protocol.
         section: 'Risk Assessment',
         insights: [
-          `Identified potential operational challenges based on similar trials`,
-          `Evaluated endpoint selection against regulatory expectations`,
-          `Assessed sample size adequacy for primary and secondary objectives`,
-          `Analyzed statistical approach for robustness and regulatory acceptance`,
+          'Narrative assessment of design, endpoints, statistics and operational risk is returned in detailed_analysis.',
+          'The points below are standing regulatory guidance, not findings derived from this protocol.',
         ],
         citations: [
-          'Mehrotra DV, et al. (2024). Statistical considerations for clinical trials conducted during the COVID-19 pandemic. Statistics in Biopharmaceutical Research. 16(1):3-15',
           'FDA. (2023). Considerations for the Development of Rare Disease Drugs. Guidance for Industry. https://www.fda.gov/regulatory-information/search-fda-guidance-documents',
         ],
       },
     ];
 
-    // Add academic citations based on the indication
-    const academicCitations = [
-      {
-        title:
-          'Recent advances in clinical trial design for drug development in ' +
-          protocolData.indication,
-        authors: 'Johnson R, Smith J, Williams K',
-        journal: 'Journal of Clinical Research',
-        year: '2024',
-        volume: '45',
-        pages: '212-228',
-        doi: '10.1016/j.jcr.2024.01.005',
-      },
-      {
-        title: 'Statistical power considerations in ' + protocolData.phase + ' clinical trials',
-        authors: 'Chen L, Patel M, Rodriguez S',
-        journal: 'Biostatistics',
-        year: '2023',
-        volume: '24',
-        pages: '103-115',
-        doi: '10.1093/biostatistics/kxy021',
-      },
-      {
-        title: 'Endpoint selection for regulatory approval in ' + protocolData.indication,
-        authors: 'Baxter P, Thompson J, Wilson C',
-        journal: 'Therapeutic Innovation & Regulatory Science',
-        year: '2025',
-        volume: '59',
-        pages: '45-62',
-        doi: '10.1007/s43441-024-00521-1',
-      },
-    ];
+    // ACADEMIC CITATIONS REMOVED — they were manufactured, per request.
+    //
+    // This block built three "references" by interpolating the caller's own
+    // indication and phase into title templates ('Endpoint selection for
+    // regulatory approval in ' + protocolData.indication), then attached fixed
+    // authors, journal, year, volume, pages and a DOI. A DOI is a resolvable
+    // identifier for one specific published work; minting one is not citation
+    // formatting, it is manufacturing evidence, and this product exists to
+    // assemble filings for regulators.
+    //
+    // Nothing replaces it. A literature search is a capability this handler
+    // does not have, and an empty, honest response is the correct output of a
+    // search that was never run. `academic_citations` is therefore gone from
+    // the response rather than emitted empty, so no consumer can read absence
+    // as "we looked and found nothing".
+    //
+    // scripts/ci/check-no-mock-in-prod-routes.mjs now refuses any hardcoded DOI
+    // in server/routes/**, which is what would have caught this.
 
     // Create comprehensive IND assessment
     const indAnalysis = {
@@ -930,37 +904,43 @@ For each recommendation, include specific citations to relevant regulatory guide
     // fabricated with Math.random() yet dressed with academic citations,
     // which is the dangerous case. The qualitative factors and mitigation
     // strategies below are real guidance and remain.
+    //
+    // The per-factor `citation` fields are gone with them. This handler runs no
+    // literature search, so it did not consult those papers — whether or not
+    // they exist is beside the point, and verifying them is not the remedy: a
+    // reference the code never looked up must not be presented as the basis of
+    // its advice. Two of the three carried a DOI. The qualitative factors
+    // themselves are standing guidance and are kept, now labelled as guidance
+    // rather than as evidence about THIS protocol.
     const dropoutPrediction = {
       predicted_rate: null as string | null,
       confidence_interval: null as [string, string] | null,
+      basis: 'Standing guidance on dropout risk. Not derived from this protocol, and not a prediction for it.',
       factors: [
         {
           name: 'Treatment duration',
           impact: 'High',
-          evidence: 'Longer trials (>20 weeks) show higher dropout rates in similar indications',
-          citation:
-            'Walsh CA, et al. (2024). Patient dropout patterns in clinical trials: A systematic review. Contemporary Clinical Trials, 127:106944. DOI: 10.1016/j.cct.2024.01.003',
+          guidance: 'Longer trials (>20 weeks) are generally associated with higher dropout.',
         },
         {
           name: 'Visit frequency',
           impact: 'Medium',
-          evidence: 'Monthly visits balanced between participant burden and engagement',
-          citation:
-            'Matsui D. (2022). Patient adherence to clinical trial protocols: Understanding and addressing challenges. Applied Clinical Trials, 31(4):12-16',
+          guidance: 'Visit cadence trades participant burden against engagement.',
         },
         {
           name: 'Procedures per visit',
           impact: 'Medium',
-          evidence: 'Assessment burden appears reasonable based on protocol description',
-          citation:
-            'Hui D, et al. (2023). Association between patient-reported burden and dropout rates in oncology clinical trials. JAMA Oncology, 9(3):341-348. DOI: 10.1001/jamaoncol.2023.0078',
+          guidance: 'Assessment burden per visit is a known driver of withdrawal.',
         },
       ],
+      // Regulatory guidance documents are named (they are identifiable
+      // published standards a reader can pull); the journal reference that
+      // stood beside them is removed on the same ground as the others.
       mitigation_strategies: [
-        'Implement patient retention program with reminders (Gul RB, et al. 2023. Patient Preference and Adherence, 17:2345-2356)',
+        'Implement a patient retention programme with reminders',
         'Consider reducing visit burden where scientifically valid (FDA Patient-Focused Drug Development Guidance, 2023)',
-        'Plan for higher dropout in site selection and enrollment targets (EMA Guideline on Missing Data, EMA/CPMP/EWP/1776/99 Rev. 1)',
-        'Utilize patient engagement technology to maintain connection between visits (Clinical Trials Transformation Initiative, 2024)',
+        'Plan for higher dropout in site selection and enrolment targets (EMA Guideline on Missing Data, EMA/CPMP/EWP/1776/99 Rev. 1)',
+        'Maintain contact between visits through patient-engagement tooling',
       ],
     };
 
@@ -975,7 +955,6 @@ For each recommendation, include specific citations to relevant regulatory guide
       ind_analysis: indAnalysis,
       dropout_prediction: dropoutPrediction,
       global_regulations: globalRegulationsData,
-      academic_citations: academicCitations,
       timestamp: new Date().toISOString(),
     };
 
@@ -987,10 +966,7 @@ For each recommendation, include specific citations to relevant regulatory guide
     res.json(response);
   } catch (error) {
     log.error('Error in demo analysis:', error);
-    res.status(500).json({
-      error: 'Failed to analyze protocol',
-      message: error instanceof Error ? error.message : 'Unknown error',
-    });
+    return serverError(res, log, 'saving demo analysis', error);
   }
 });
 
@@ -1161,10 +1137,7 @@ router.get('/dashboard', async (req, res) => {
     });
   } catch (error) {
     log.error('Error generating analytics dashboard:', error);
-    res.status(500).json({
-      error: 'Failed to generate analytics dashboard',
-      message: (error as Error).message,
-    });
+    return serverError(res, log, 'loading dashboard', error);
   }
 });
 
@@ -1285,14 +1258,18 @@ router.get('/export', async (req, res) => {
         csvContent += `Average Endpoints,${reportData.averageEndpoints}\n`;
         csvContent += `Success Rate,${reportData.successRate}%\n\n`;
 
+        /* Indication names are built by ctgov-normalizer with
+           `conditions.join(', ')`, so every multi-condition study emitted three
+           fields under a two-column header and pushed the count into a phantom
+           column — HTTP 200, plausible-looking file, wrong data. */
         csvContent += 'Indication,Count\n';
         Object.entries(reportData.reportsByIndication).forEach(([indication, count]) => {
-          csvContent += `${indication},${count}\n`;
+          csvContent += csvRow([indication, count]) + '\n';
         });
 
         csvContent += '\nPhase,Count\n';
         Object.entries(reportData.reportsByPhase).forEach(([phase, count]) => {
-          csvContent += `${phase},${count}\n`;
+          csvContent += csvRow([phase, count]) + '\n';
         });
       } else if (type === 'predictive') {
         csvContent = 'Endpoint,Predicted Effect Size,Confidence Interval,Reliability\n';
@@ -1436,10 +1413,7 @@ router.get('/export', async (req, res) => {
     }
   } catch (error) {
     log.error('Error exporting analytics report:', error);
-    res.status(500).json({
-      error: 'Failed to export analytics report',
-      message: (error as Error).message,
-    });
+    return serverError(res, log, 'exporting', error);
   }
 });
 export default router;

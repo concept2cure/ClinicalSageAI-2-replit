@@ -38,6 +38,7 @@ import { SampleDataBanner } from '../../components/SampleDataBanner';
 import { useSampleMode } from '../../components/DataGate';
 import { useSampleRows } from '../../lib/useSampleRows';
 import type { EditorSectionRef } from '../../../v2/editorTarget';
+import { downloadCsv } from '../../../v2/download';
 
 export interface GeneratorTabProps {
   program: Program | null;
@@ -61,18 +62,11 @@ export interface GeneratorTabProps {
 
 function downloadSectionsCsv(rows: Array<{ label: string; status: string }>) {
   const headers = ['Section', 'Status'];
-  const csv = [headers, ...rows.map((s) => [s.label, String(s.status)])]
-    .map((line) => line.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(','))
-    .join('\r\n');
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `cer-sections-${new Date().toISOString().slice(0, 10)}.csv`;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  URL.revokeObjectURL(url);
+  downloadCsv(
+    `cer-sections-${new Date().toISOString().slice(0, 10)}.csv`,
+    headers,
+    rows.map((s) => [s.label, String(s.status)]),
+  );
 }
 
 export function GeneratorTab({
@@ -142,10 +136,17 @@ export function GeneratorTab({
     ? 'Assembling the export from your authored sections…'
     : exportOutcome
       ? exportOutcome.ok
-        ? exportOutcome.governed
-          ? `Exported ${exportOutcome.filename ?? 'document'} — placed in the artifact registry`
-          : `Exported ${exportOutcome.filename ?? 'document'} — delivered and audit-logged; ` +
-            'registry placement is pending the document-identity contract'
+        ? // "Exported" was said whether or not the file reached the browser.
+          // Whether the server placed it in the registry and whether the user
+          // actually received it are two different facts, and both are reported.
+          !exportOutcome.delivered
+          ? exportOutcome.filename
+            ? `${exportOutcome.filename} was produced but the browser blocked the download`
+            : 'Export accepted, but the server returned no file to download'
+          : exportOutcome.governed
+            ? `Exported ${exportOutcome.filename ?? 'document'} — placed in the artifact registry`
+            : `Exported ${exportOutcome.filename ?? 'document'} — delivered and audit-logged; ` +
+              'registry placement is pending the document-identity contract'
         : `Export refused — ${exportOutcome.error}`
       : null;
 

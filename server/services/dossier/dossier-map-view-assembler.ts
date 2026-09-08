@@ -41,6 +41,7 @@
  * project id) returns [] and the surface renders its own honest empty state.
  */
 import { pool } from '../../db';
+import { compareSectionCode } from '../../../shared/regulatory/section-code';
 
 /** Canonical CTD module titles (M1–M5). Fixed structure, not per-org data — the honest
  *  blueprint enrichment. The surface prints the "M{m}" prefix itself, so these carry no
@@ -150,7 +151,7 @@ export async function assembleProjectDossierMap(
     const complete = list.filter((x) => COMPLETE.has(x.status)).length;
     const pct = total > 0 ? Math.round((complete / total) * 100) : 0;
     const secLabels = list
-      .sort((a, b) => a.code.localeCompare(b.code, undefined, { numeric: true }))
+      .sort((a, b) => compareSectionCode(a.code, b.code))
       .map((x) => sectionLabel(x.code, x.title));
     return {
       m,

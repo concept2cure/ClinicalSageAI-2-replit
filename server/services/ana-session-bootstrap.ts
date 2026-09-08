@@ -131,11 +131,25 @@ export async function buildSessionBootstrapContext(input: SessionBootstrapInput)
   // 4. AnA's own recent lessons.
   const outcomeLessons = await safe(loadRecentOutcomeLessons(organizationId, projectId, 5), []);
 
+  // 5. Project files on record (document catalog) — what exists in the vault,
+  //    where each file is filed, and what each is for — so a file uploaded in
+  //    a prior session is remembered, not rediscovered by accident. Gated on
+  //    the catalog feature; degrades to nothing like every other source.
+  const vaultFiles = await safe(
+    (async () => {
+      const svc = await import('./vault/document-catalog.service.js');
+      if (!(await svc.isDocumentCatalogEnabled(organizationId))) return undefined;
+      return await svc.getCatalogBootstrapDigest(organizationId, 12);
+    })(),
+    undefined
+  );
+
   return formatSessionBootstrap({
     workingMemorySummary,
     projectAtoms,
     clientAtoms,
     outcomeLessons,
+    vaultFiles,
     atomLimit,
   });
 }

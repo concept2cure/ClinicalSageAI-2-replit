@@ -33,6 +33,7 @@
  */
 
 import type { NavigationDirective } from '../../../shared/navigation/index.js';
+import type { SurfaceActionDirective } from '../../../shared/navigation/surface-actions.js';
 
 /**
  * An executed-action chip carrying a navigation target.
@@ -112,6 +113,86 @@ export function toNavigationActions(
       targetId: d.targetId,
       path: d.path,
       scope: d.scope,
+      ...(d.params && Object.keys(d.params).length > 0 ? { params: d.params } : {}),
+      executed: true,
+    });
+  }
+  return out;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Surface actions — the same carrier contract for `act_on_screen`.
+// Tool-driven only, offered (chip) unless the person opted into Live Drive,
+// registry-validated at every hand-off. One module carries both directive
+// kinds so a second, subtly different carrier can never grow beside this one.
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * An offer-chip carrying a validated surface action. The client performs it
+ * through the ONE surface-action bus (v2/surfaceActions) when the person
+ * activates it — same offered-not-performed contract as the navigate chip.
+ */
+export interface SurfaceActionChip {
+  actionType: 'surface_action';
+  label: string;
+  actionId: string;
+  surfaceId: string;
+  params?: Record<string, string>;
+  executed: true;
+}
+
+/**
+ * Read an `act_on_screen` tool result and return its directive, or null.
+ * Anything that is not a successful `action_ready` — an unknown action, a
+ * governed refusal, missing params, or unparseable output — returns null.
+ * A refusal upstream must not become an operation downstream.
+ */
+export function surfaceActionFromToolResult(
+  toolName: string,
+  resultStr: string,
+): SurfaceActionDirective | null {
+  if (toolName !== 'act_on_screen') return null;
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(resultStr);
+  } catch {
+    return null;
+  }
+  if (!parsed || typeof parsed !== 'object') return null;
+  const o = parsed as Record<string, unknown>;
+  if (o.status !== 'action_ready') return null;
+  const d = o.directive as Record<string, unknown> | undefined;
+  if (!d || typeof d !== 'object') return null;
+  if (
+    d.actionType !== 'surface_action' ||
+    typeof d.actionId !== 'string' ||
+    typeof d.surfaceId !== 'string' ||
+    typeof d.label !== 'string'
+  ) {
+    return null;
+  }
+  return d as unknown as SurfaceActionDirective;
+}
+
+/**
+ * Collapse a turn's surface-action directives into chips — same dedup, cap,
+ * and first-occurrence-wins contract as the navigation chips.
+ */
+export function toSurfaceActionChips(
+  directives: readonly SurfaceActionDirective[],
+): SurfaceActionChip[] {
+  const seen = new Set<string>();
+  const out: SurfaceActionChip[] = [];
+  for (const d of directives) {
+    if (out.length >= MAX_NAVIGATION_ACTIONS) break;
+    const key = `${d.actionId}:${JSON.stringify(d.params ?? {})}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push({
+      actionType: 'surface_action',
+      label: d.label,
+      actionId: d.actionId,
+      surfaceId: d.surfaceId,
       ...(d.params && Object.keys(d.params).length > 0 ? { params: d.params } : {}),
       executed: true,
     });

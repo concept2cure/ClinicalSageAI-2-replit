@@ -29,7 +29,8 @@ const DDL = `
 CREATE TABLE organizations (id serial PRIMARY KEY, name text);
 CREATE TABLE submissions (id serial PRIMARY KEY, organization_id int, title text, product_name text, application_type text, updated_at timestamptz DEFAULT now(), deleted_at timestamptz);
 CREATE TABLE ectd_sequences (id serial PRIMARY KEY, organization_id int, submission_id int, deleted_at timestamptz);
-CREATE TABLE submission_leaves (id serial PRIMARY KEY, organization_id int, sequence_id int, section_code text, document_table text, document_id int, deleted_at timestamptz);
+CREATE TABLE submission_leaves (id serial PRIMARY KEY, organization_id int, sequence_id int, section_code text, document_table text, document_id int, document_type text, deleted_at timestamptz);
+CREATE TABLE rendered_leaf_files (id serial PRIMARY KEY, organization_id int, rendered_from text, file_name text, sha256 text, section_code text);
 CREATE TABLE coauthor_documents (id serial PRIMARY KEY, organization_id int, module_number text, status text, module_name text);
 CREATE TABLE regulatory_programs (id serial PRIMARY KEY, organization_id int, name text, code text, program_type text, product_name text, target_submission_date timestamptz, updated_at timestamptz DEFAULT now(), deleted_at timestamptz);
 `;
@@ -47,7 +48,7 @@ beforeAll(async () => {
 }, 60_000);
 afterAll(async () => { await pglite.close(); });
 beforeEach(async () => {
-  await pglite.exec(`DELETE FROM submissions; DELETE FROM ectd_sequences; DELETE FROM submission_leaves; DELETE FROM coauthor_documents; DELETE FROM regulatory_programs;`);
+  await pglite.exec(`DELETE FROM submissions; DELETE FROM ectd_sequences; DELETE FROM submission_leaves; DELETE FROM coauthor_documents; DELETE FROM regulatory_programs; DELETE FROM rendered_leaf_files;`);
 });
 
 /** Seed an IND regulatory program (the store that records the target date). */
@@ -217,5 +218,95 @@ describe('assembleOrgIndChecklists — targetReceiptDate (regulatory_programs)',
     await seedProgram(ORG, { deleted: true }); // right identity, soft-deleted
     const rows = await assembleOrgIndChecklists(ORG) as any[];
     expect(rows[0].targetReceiptDate).toBeNull();
+  });
+});
+
+/* ── WO-9 Click 2: a sponsor-completed official form placed as a leaf ────────
+   The forms panel's upload path stores the sponsor's completed, signed FDA form
+   (rendered_leaf_files) and places it as a Module 1 leaf typed form_<n>. The
+   checklist above this panel says "Form FDA 3674 — Open" from the coauthor
+   status alone; once the signed official form is placed, that is the complete
+   form, and the chip must say so from the placed leaf — never from a fixture. */
+describe('assembleOrgIndChecklists — sponsor-completed official form leaves', () => {
+  async function placeUploadedForm(org: number, seqId: number, documentType: string, sectionCode = 'm1.1'): Promise<number> {
+    const f = await pglite.query(
+      `INSERT INTO rendered_leaf_files (organization_id, rendered_from, file_name, sha256, section_code)
+       VALUES ($1, 'ind_form_sponsor_upload', 'form-fda-3674-signed.pdf', 'abc', $2) RETURNING id`,
+      [org, sectionCode],
+    );
+    const fileId = (f.rows[0] as { id: number }).id;
+    await pglite.query(
+      `INSERT INTO submission_leaves (organization_id, sequence_id, section_code, document_table, document_id, document_type)
+       VALUES ($1, $2, $3, 'rendered_leaf_files', $4, $5)`,
+      [org, seqId, sectionCode, fileId, documentType],
+    );
+    return fileId;
+  }
+  async function sequenceOf(subId: number): Promise<number> {
+    const q = await pglite.query(`SELECT id FROM ectd_sequences WHERE submission_id = $1 LIMIT 1`, [subId]);
+    return (q.rows[0] as { id: number }).id;
+  }
+
+  it('a placed form_3674 leaf backed by a retained file marks FDA 3674 complete; the others keep their authored state', async () => {
+    const subId = await seedIND(ORG);            // 1571/1572 approved, 3674 still draft
+    await placeUploadedForm(ORG, await sequenceOf(subId), 'form_3674');
+    const [ind] = (await assembleOrgIndChecklists(ORG)) as any[];
+    const byId: Record<string, boolean> = Object.fromEntries(ind.forms.map((f: any) => [f.id, f.done]));
+    expect(byId).toMatchObject({ FDA_1571: true, FDA_1572: true, FDA_3674: true });
+    // The uploaded form is a Module 1 form, not a tracked eCTD section.
+    expect(ind.sections.some((sec: any) => sec.code === 'm1.1')).toBe(false);
+  });
+
+  it('a leaf whose file belongs to another organisation does not complete the form', async () => {
+    const subId = await seedIND(ORG);
+    const seqId = await sequenceOf(subId);
+    const f = await pglite.query(
+      `INSERT INTO rendered_leaf_files (organization_id, rendered_from, file_name, sha256) VALUES ($1, 'ind_form_sponsor_upload', 'x.pdf', 'x') RETURNING id`,
+      [OTHER],
+    );
+    await pglite.query(
+      `INSERT INTO submission_leaves (organization_id, sequence_id, section_code, document_table, document_id, document_type)
+       VALUES ($1, $2, 'm1.1', 'rendered_leaf_files', $3, 'form_3674')`,
+      [ORG, seqId, (f.rows[0] as { id: number }).id],
+    );
+    const [ind] = (await assembleOrgIndChecklists(ORG)) as any[];
+    expect(ind.forms.find((x: any) => x.id === 'FDA_3674').done).toBe(false);
+  });
+
+  it('a form leaf with no document behind it (awaiting the sponsor\'s file) does not complete the form', async () => {
+    const subId = await seedIND(ORG);
+    await pglite.query(
+      `INSERT INTO submission_leaves (organization_id, sequence_id, section_code, document_table, document_id, document_type)
+       VALUES ($1, $2, 'm1.1', NULL, NULL, 'form_3674')`,
+      [ORG, await sequenceOf(subId)],
+    );
+    const [ind] = (await assembleOrgIndChecklists(ORG)) as any[];
+    expect(ind.forms.find((x: any) => x.id === 'FDA_3674').done).toBe(false);
+  });
+});
+
+/* ── An absent authoring store must not erase a real IND ────────────────────
+   The checklist's IDENTITY comes from `submissions`; `coauthor_documents` only
+   supplies per-section authoring status. The read of it was unguarded inside the
+   bulk Promise.all, so on a database where the authoring store is not
+   provisioned the whole assembly threw 42P01, the route degraded the ENTIRE
+   response to `[]`, and a tenant with real IND submissions was shown "No IND
+   checklist yet". The honest degradation is no section status, not no IND. */
+describe('assembleOrgIndChecklists — a missing authoring store degrades sections, not the IND', () => {
+  it('still reports the IND, with honest empty sections, when coauthor_documents is absent', async () => {
+    await seedIND(ORG);
+    await pglite.exec('DROP TABLE coauthor_documents');
+    try {
+      const rows = (await assembleOrgIndChecklists(ORG)) as any[];
+      expect(rows).toHaveLength(1);
+      expect(rows[0].code).toBe('BX-301');
+      expect(rows[0].sponsorName).toBe('Concept2Cure');
+      expect(rows[0].sections).toEqual([]);
+      expect(rows[0].forms.every((f: any) => f.done === false)).toBe(true);
+    } finally {
+      await pglite.exec(
+        `CREATE TABLE coauthor_documents (id serial PRIMARY KEY, organization_id int, module_number text, status text, module_name text);`,
+      );
+    }
   });
 });

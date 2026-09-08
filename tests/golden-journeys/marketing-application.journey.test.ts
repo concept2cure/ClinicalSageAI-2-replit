@@ -33,7 +33,7 @@
 import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
 import express from 'express';
 import request from 'supertest';
-import { createJourneyDb, JourneyRecorder, type JourneyDb } from './harness';
+import { createJourneyDb, JourneyRecorder, type JourneyDb, assertNoSchemaGaps, assertNoDegradedTenantEnrichment } from './harness';
 
 const T = 180_000;
 
@@ -72,7 +72,10 @@ const OTHER_PROJECT = 202;
  * endpoint aggregates.
  */
 const PREREQ = `
-  CREATE TABLE organizations (id SERIAL PRIMARY KEY, name TEXT);
+  -- \`uuid\` as db/migrations/20260129_add_org_uuid_alignment.sql adds it; the
+  -- org-membership middleware LEFT JOINs it on every request and, without it,
+  -- degrades to a membership-only decision with orgUuid = null (ledger L148).
+  CREATE TABLE organizations (id SERIAL PRIMARY KEY, name TEXT, uuid UUID NOT NULL DEFAULT gen_random_uuid());
   CREATE TABLE users (id SERIAL PRIMARY KEY, email TEXT);
   CREATE TABLE projects (id SERIAL PRIMARY KEY, organization_id INTEGER REFERENCES organizations(id), name TEXT);
   CREATE TABLE ectd_modules (id SERIAL PRIMARY KEY, name TEXT);
@@ -133,6 +136,8 @@ beforeAll(async () => {
   jdb = await createJourneyDb({
     prereqSql: PREREQ,
     migrations: [
+      // The Part 11 tamper-evident store (ledger L145) — cross-cutting.
+      'db/migrations/20260813_audit_tamper_proof_log.sql',
       'db/migrations/20260220_ind_section_tracking.sql',
       'db/migrations/20260725_project_sections_content_columns.sql',
     ],
@@ -159,6 +164,14 @@ beforeAll(async () => {
 }, T);
 
 afterAll(async () => {
+  // A journey that ran against a database missing a table its subject writes
+  // to proves less than it claims (ledger L145).
+  // Ordered BEFORE the schema-gap check on purpose: a degraded membership is
+  // usually CAUSED by a missing column, and the gap check would otherwise
+  // throw first and report the symptom while hiding which claims were
+  // proven without an org context (ledger L148).
+  await assertNoDegradedTenantEnrichment();
+  assertNoSchemaGaps(jdb);
   const { jsonPath, mdPath } = R.write('marketing-application');
   // eslint-disable-next-line no-console
   console.info(`[journey] manifest: ${jsonPath}\n[journey] report:   ${mdPath}`);

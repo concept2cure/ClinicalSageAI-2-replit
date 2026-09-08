@@ -52,6 +52,7 @@ import {
   type StepRecord,
   type BoundDigestValidatorOutcome,
 } from '../submission-package-orchestrator';
+import { sealSignPayloadDigest } from '../ectd/sign-payload-seal';
 import type { ECTDLeaf } from '../ectd/ectd4-validator';
 import type { CanonicalSource } from '../module3Composer';
 
@@ -342,5 +343,72 @@ describe('resumeAwaitingSignature — snapshot hydration', () => {
     const sign = run.steps.find((s) => s.key === 'package.sign')!;
     expect(sign.status).toBe('failed');
     expect(sign.error).toBe('signature_payload_drift');
+  });
+});
+
+// ── 6. Server-keyed seal enforcement on resume (sealed posture) ─────────────────
+
+describe('resumeAwaitingSignature — payload seal (AUDIT_HMAC_KEY configured)', () => {
+  const KEY = 'test-audit-hmac-key-with-plenty-of-entropy-0123456789';
+  let prevKey: string | undefined;
+  beforeEach(() => {
+    prevKey = process.env.AUDIT_HMAC_KEY;
+    process.env.AUDIT_HMAC_KEY = KEY;
+  });
+  afterEach(() => {
+    if (prevKey === undefined) delete process.env.AUDIT_HMAC_KEY;
+    else process.env.AUDIT_HMAC_KEY = prevKey;
+  });
+
+  it('completes when the persisted seal is valid', async () => {
+    const leaves = [makeLeaf('m3.2.S.1', 'a'.repeat(32))];
+    const snap = snapshotFor(leaves);
+    const payloadDigest = digestForSnapshot(snap);
+    const payloadSeal = sealSignPayloadDigest(payloadDigest, IDENTITY.organizationId)!;
+    const payload = { payloadDigest, payloadSeal, awaitingSince: new Date(0).toISOString(), signedSnapshot: snap };
+
+    H.runRow = makeRunRow(payload);
+    H.signatureRows = [{ id: 555 }];
+
+    const { run } = await runOrchestrator(RESUME_INPUTS, { resumeRunId: 'run-1' });
+    const sign = run.steps.find((s) => s.key === 'package.sign')!;
+    expect(sign.status).toBe('complete');
+    expect(JSON.parse(sign.outputRef!).signatureId).toBe(555);
+  });
+
+  it('fails closed when the seal does not verify (forged snapshot+digest, no valid seal)', async () => {
+    // Attacker forged a self-consistent snapshot+digest (passes the integrity
+    // guard) but cannot forge the seal without the key.
+    const leaves = [makeLeaf('m3.2.S.1', 'f'.repeat(32))];
+    const snap = snapshotFor(leaves);
+    const payloadDigest = digestForSnapshot(snap); // self-consistent
+    const payloadSeal = 'deadbeef'.repeat(8); // 64 hex chars, but wrong
+    const payload = { payloadDigest, payloadSeal, awaitingSince: new Date(0).toISOString(), signedSnapshot: snap };
+
+    H.runRow = makeRunRow(payload);
+    H.signatureRows = [{ id: 555 }];
+
+    const { run } = await runOrchestrator(RESUME_INPUTS, { resumeRunId: 'run-1' });
+    const sign = run.steps.find((s) => s.key === 'package.sign')!;
+    expect(sign.status).toBe('failed');
+    expect(sign.error).toBe('signature_seal_verification_failed');
+  });
+
+  it('fails closed (downgrade) when a snapshot-bearing run has its seal STRIPPED under a sealed posture', async () => {
+    const leaves = [makeLeaf('m3.2.S.1', 'a'.repeat(32))];
+    const snap = snapshotFor(leaves);
+    const payloadDigest = digestForSnapshot(snap);
+    // No payloadSeal on the persisted payload, but AUDIT_HMAC_KEY IS configured
+    // (this describe block sets it). A snapshot-bearing run under a sealed posture
+    // MUST carry a valid seal — its absence is a strip-the-seal downgrade attempt.
+    const payload = { payloadDigest, awaitingSince: new Date(0).toISOString(), signedSnapshot: snap };
+
+    H.runRow = makeRunRow(payload);
+    H.signatureRows = [{ id: 555 }];
+
+    const { run } = await runOrchestrator(RESUME_INPUTS, { resumeRunId: 'run-1' });
+    const sign = run.steps.find((s) => s.key === 'package.sign')!;
+    expect(sign.status).toBe('failed');
+    expect(sign.error).toBe('signature_seal_verification_failed');
   });
 });

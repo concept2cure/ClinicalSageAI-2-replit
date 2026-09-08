@@ -279,9 +279,6 @@ export interface StageTool {
 
 /* ── Meetings ── */
 
-export const MTG_TONE: Record<string, string> = { completed: 'ok', scheduled: 'ai', requested: 'warn', planned: 'idle', cancelled: 'err' };
-export const MTG_ICON: Record<string, string> = { completed: 'checkCircle', scheduled: 'calendar', requested: 'clock', planned: 'calendar', cancelled: 'x' };
-
 /* ── Lifecycle ── */
 
 export const PJ_LIFECYCLE: LifecycleStage[] = [
@@ -294,15 +291,6 @@ export const PJ_LIFECYCLE: LifecycleStage[] = [
   { id: 'lifecycle', label: 'Lifecycle', icon: 'globe', blurb: 'Registrations, variations, market access & PV' },
 ];
 
-export const PJ_STAGE_NEXT: Record<string, string> = {
-  plan: 'Type B meeting briefing book due in 12 days',
-  evidence: '3 claims in §2.5 still need a linked source',
-  author: '§2.5 Clinical Overview at 72% — 2 contradictions to resolve',
-  review: '4 sections awaiting your review & e-signature',
-  submit: 'eCTD validation: 2 errors to clear before transmit',
-  respond: 'FDA Day-74 information request — 6 questions open',
-  lifecycle: '2 markets due for renewal this quarter',
-};
 
 export const PJ_STAGE_TOOLS: Record<string, StageTool[]> = {
   plan: [
@@ -324,26 +312,7 @@ export const PJ_STAGE_TOOLS: Record<string, StageTool[]> = {
 
 /* ── Portfolio ── */
 
-export const WS_TONE: Record<string, string> = { MDX: 'ai', Biotech: 'ok', Pharma: 'warn', CRO: 'idle' };
-
 /* ── Tone / label maps ── */
-
-export const TASK_TONE: Record<string, string> = { todo: 'idle', 'in-progress': 'acc', review: 'warn', done: 'ok', blocked: 'err' };
-export const TASK_LABEL: Record<string, string> = { todo: 'To do', 'in-progress': 'In progress', review: 'In review', done: 'Done', blocked: 'Blocked' };
-export const PRI_TONE: Record<string, string> = { urgent: 'err', high: 'warn', medium: 'acc', low: 'idle' };
-export const PHASE_TONE: Record<string, string> = { completed: 'ok', 'in-progress': 'acc', pending: 'idle', blocked: 'err' };
-export const GOAL_TONE: Record<string, string> = { achieved: 'ok', active: 'acc', at_risk: 'warn', revised: 'idle', dropped: 'idle' };
-export const FIND_TONE: Record<string, string> = { pass: 'ok', warn: 'warn', fail: 'err' };
-
-export const KANBAN_COLS = ['todo', 'in-progress', 'review', 'done', 'blocked'] as const;
-
-export const TASK_TONE2: Record<string, string> = { todo: 'idle', 'in-progress': 'ai', review: 'warn', done: 'ok', blocked: 'err' };
-export const TASK_LABEL2: Record<string, string> = { todo: 'To do', 'in-progress': 'In progress', review: 'In review', done: 'Done', blocked: 'Blocked' };
-export const PRI_TONE2: Record<string, string> = { urgent: 'err', high: 'warn', medium: 'idle', low: 'idle' };
-
-export const PV_TYPE_BG: Record<string, string> = { pdf: 'var(--error)', docx: 'var(--ai)', xlsx: 'var(--success)', zip: 'var(--accent-200)', xml: 'var(--warning)' };
-
-export const STAT_ORDER = ['todo', 'in-progress', 'review', 'done', 'blocked'] as const;
 
 /* ── Helpers ── */
 

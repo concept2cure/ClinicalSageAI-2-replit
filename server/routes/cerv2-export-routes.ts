@@ -23,7 +23,6 @@
 
 import { Router, Request, Response } from 'express';
 import archiver from 'archiver';
-import { createHash } from 'crypto';
 import { z } from 'zod';
 import rateLimit from 'express-rate-limit';
 import { and, eq } from 'drizzle-orm';
@@ -37,19 +36,26 @@ import {
 } from '../export/renderers';
 import { PassThrough } from 'stream';
 import { authMiddleware } from '../auth';
-import { createGovernedExportConsequence } from '../services/export/governedExportConsequence';
+import {
+  createGovernedExportConsequence,
+  createAuditedUnplacedExport,
+} from '../services/export/governedExportConsequence';
+import {
+  applyExportGovernanceHeaders,
+  evaluateExportGovernance,
+} from '../services/export/exportReviewGate';
 import type { ExportSourceType } from '../services/export/governedExportConsequence';
 import { requestDb } from '../db/requestDb';
 import { fda510kProjects, projects } from '../../shared/schema';
 import { regulatoryPrograms } from '../../shared/schema/programs';
 import { resolveProgramProjectAnchor } from '../services/c2c/program-project-anchor';
-import auditService from '../services/auditService';
 import {
   loadAuthoredDeviceSections,
   sectionsToEditorJson,
 } from '../services/pathway-engines/estar/estar-content-leaves';
 
 import { createScopedLogger } from '../utils/logger.js';
+import { requireEditorAccess } from '../middleware/orgMembership';
 
 const logger = createScopedLogger('cerv2-export-routes');
 
@@ -76,25 +82,6 @@ router.use(['/pdf', '/docx', '/zip'], exportRateLimiter);
 // be dropped from any environment that still sets it.
 
 // ── Auth guard ─────────────────────────────────────────────────────────────────
-const allowedRoles = new Set(['admin', 'owner', 'editor', 'super_admin']);
-const requireEditorAccess = (req: any, res: any, next: () => void) => {
-  const role = String(req.userRole || req.user?.role || '').toLowerCase();
-  if (!role || !allowedRoles.has(role)) {
-    return res.status(403).json({ error: 'Insufficient permissions' });
-  }
-  // Verify organization context exists (prevents cross-org access).
-  // Trust only middleware-derived sources — never client-supplied headers.
-  const orgId = req.tenantId || req.tenantContext?.organizationId;
-  if (!orgId) {
-    return res.status(400).json({ error: 'Organization context required' });
-  }
-  const numericOrgId = Number(orgId);
-  if (!Number.isFinite(numericOrgId) || numericOrgId <= 0) {
-    return res.status(400).json({ error: 'Valid numeric organization context required' });
-  }
-  req.resolvedOrganizationId = numericOrgId;
-  return next();
-};
 
 // ── Validation schemas ─────────────────────────────────────────────────────────
 const validDocTypes = ['cerv2_510k', 'cerv2_pma', 'cerv2_cer'] as const;
@@ -340,8 +327,9 @@ async function resolveExportRequest(
  * Delivery path for program-spine (UUID) anchors with no PM-spine project row:
  * the artifact registry cannot place the export yet, so deliver the file and
  * audit-log it with its SHA-256 (provenance preserved), saying plainly that
- * registry placement is pending rather than pretending it happened. Mirrors
- * the audited-unplaced contract in 510k-estar-routes.ts.
+ * registry placement is pending rather than pretending it happened. The ONE
+ * implementation is `createAuditedUnplacedExport` (shared with the eSTAR and
+ * technical-file routes); this is only the res.json adapter.
  */
 async function respondAuditedUnplaced(
   req: Request,
@@ -357,91 +345,53 @@ async function respondAuditedUnplaced(
     metadata: Record<string, unknown>;
   }
 ) {
-  const sha256 = createHash('sha256').update(opts.buffer).digest('hex');
-  await auditService.logAction({
+  const body = await createAuditedUnplacedExport({
     organizationId: (req as any).resolvedOrganizationId,
     userId: getUserId(req),
-    action: 'EXPORT_GENERATED',
+    sourceType: opts.sourceType,
+    backendRoute: opts.backendRoute,
     resourceType: 'cerv2_export',
     resourceId: opts.programUuid ?? opts.fallbackResourceId,
-    details: {
-      backendRoute: opts.backendRoute,
-      sourceType: opts.sourceType,
-      filename: opts.filename,
-      sha256,
-      artifactRegistry: 'unplaced_pending_document_identity_contract',
-      ...opts.metadata,
-    },
+    programUuid: opts.programUuid,
+    filename: opts.filename,
+    mimeType: opts.mimeType,
+    buffer: opts.buffer,
+    metadata: opts.metadata,
   });
-
-  return res.status(200).json({
-    governed: false,
-    audited: true,
-    source_type: opts.sourceType,
-    artifact_id: null,
-    artifact_registry:
-      'unplaced — artifact registry requires a PM-spine project row; ' +
-      'export is audit-logged with its SHA-256 (pending document-identity contract)',
-    program_id: opts.programUuid,
-    sha256,
-    downloadable_output_ref: {
-      encoding: 'base64',
-      mime_type: opts.mimeType,
-      filename: opts.filename,
-      data: opts.buffer.toString('base64'),
-    },
-  });
+  return res.status(200).json(body);
 }
 
 const sanitizeFilename = (value: string) =>
   value.replace(/[^a-zA-Z0-9._-]/g, '_').replace(/_+/g, '_');
 
-const exportGovernanceSchema = z.object({
-  aiGenerated: z.boolean().default(true),
-  humanReviewApproved: z.boolean().default(false),
-  reviewerName: z.string().trim().min(1).max(200).optional(),
-  reviewerRole: z.string().trim().min(1).max(200).optional(),
-  reviewTimestamp: z.string().datetime().optional(),
-});
-
-function shouldEnforceExportReviewGate(): boolean {
-  if (process.env.CONCEPT2CURE_REQUIRE_EXPORT_HUMAN_REVIEW === 'true') return true;
-  if (process.env.CONCEPT2CURE_REQUIRE_EXPORT_HUMAN_REVIEW === 'false') return false;
-  return process.env.NODE_ENV === 'production';
-}
-
-function applyGovernanceHeaders(res: Response, governance: z.infer<typeof exportGovernanceSchema>) {
-  res.setHeader('X-Concept2Cure-AI-Generated', String(governance.aiGenerated));
-  res.setHeader('X-Concept2Cure-Human-Review-Approved', String(governance.humanReviewApproved));
-  res.setHeader('X-Concept2Cure-Review-Required', 'true');
-  res.setHeader('X-Concept2Cure-Review-Notice', 'Human review required for regulated use');
-  res.setHeader('X-Concept2Cure-Governance-Persistence', 'governed');
-  if (governance.reviewerName) {
-    res.setHeader('X-Concept2Cure-Reviewer', encodeURIComponent(governance.reviewerName));
-  }
-  if (governance.reviewTimestamp) {
-    res.setHeader('X-Concept2Cure-Review-Timestamp', governance.reviewTimestamp);
-  }
-}
-
+/**
+ * Thin adapter over the canonical export review gate
+ * (server/services/export/exportReviewGate.ts). All decision logic — schema,
+ * reviewer-attribution rule (INCOMPLETE_HUMAN_REVIEW), and the strict
+ * environment gate (HUMAN_REVIEW_REQUIRED) — lives there; this only renders a
+ * rejection into this router's flat `{ error, message?, details? }` bodies and
+ * adds the CERV2-specific governance headers.
+ */
 function validateExportGovernance(req: Request, res: Response) {
-  const parsed = exportGovernanceSchema.safeParse(req.body?.governance ?? {});
-  if (!parsed.success) {
-    res.status(400).json({ error: 'Invalid governance payload', details: parsed.error.flatten() });
+  const evaluation = evaluateExportGovernance(req.body?.governance);
+  if (!evaluation.ok) {
+    if (evaluation.code === 'VALIDATION_ERROR') {
+      res.status(400).json({ error: 'Invalid governance payload', details: evaluation.details });
+    } else {
+      res.status(evaluation.status).json({
+        error: evaluation.code,
+        message: evaluation.message,
+        details: evaluation.details,
+      });
+    }
     return null;
   }
 
-  const governance = parsed.data;
-  if (shouldEnforceExportReviewGate() && !governance.humanReviewApproved) {
-    res.status(403).json({
-      error: 'HUMAN_REVIEW_REQUIRED',
-      message: 'Human review approval is required before export in this environment',
-    });
-    return null;
-  }
-
-  applyGovernanceHeaders(res, governance);
-  return governance;
+  applyExportGovernanceHeaders(res, evaluation.governance, {
+    'X-Concept2Cure-Review-Notice': 'Human review required for regulated use',
+    'X-Concept2Cure-Governance-Persistence': 'governed',
+  });
+  return evaluation.governance;
 }
 
 function resolveCtdPlacement(docType: (typeof validDocTypes)[number]) {
@@ -565,9 +515,14 @@ router.post('/pdf', authMiddleware, requireEditorAccess, async (req: Request, re
       pdfBuffer = await renderCombinedPdf(docType, content);
     } catch (renderErr: any) {
       logger.error('PDF render failed', { err: renderErr instanceof Error ? renderErr.message : String(renderErr) });
+      // renderErr.message is the renderer's own text — font paths, temp-file
+      // locations, spawn errors. The stable code stays; the detail goes to the log.
+      logger.error('PDF rendering failed', {
+        err: renderErr instanceof Error ? renderErr.message : String(renderErr),
+      });
       return res.status(500).json({
         error: 'PDF rendering failed',
-        message: renderErr.message || 'The document could not be converted to PDF',
+        message: 'The document could not be converted to PDF. The problem has been logged.',
       });
     }
 
@@ -646,9 +601,12 @@ router.post('/docx', authMiddleware, requireEditorAccess, async (req: Request, r
       docxBuffer = await renderCombinedDocx(docType, content);
     } catch (renderErr: any) {
       logger.error('DOCX render failed', { err: renderErr instanceof Error ? renderErr.message : String(renderErr) });
+      logger.error('DOCX rendering failed', {
+        err: renderErr instanceof Error ? renderErr.message : String(renderErr),
+      });
       return res.status(500).json({
         error: 'DOCX rendering failed',
-        message: renderErr.message || 'The document could not be converted to DOCX',
+        message: 'The document could not be converted to DOCX. The problem has been logged.',
       });
     }
 

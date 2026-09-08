@@ -221,7 +221,9 @@ async function request(method: 'GET' | 'POST', path: string, body?: any) {
 // unit test against the current route wiring.
 describe('AnA RI resilience', () => {
   it('returns degraded mode response when gateway is unavailable', async () => {
-    const res = await request('POST', '/api/ana-ri/chat', { message: 'Help with IND strategy' });
+    // Retargeted from the deleted /api/ana-ri/chat. This is the only
+    // fail-closed assertion in this router — it must not be dropped.
+    const res = await request('POST', '/api/ana-ri/stream', { message: 'Help with IND strategy' });
     expect(res.status).toBe(503);
     expect(res.body.success).toBe(false);
     expect(res.body.error.code).toBe('GATEWAY_UNAVAILABLE');

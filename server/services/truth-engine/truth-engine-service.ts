@@ -132,17 +132,25 @@ export async function runConsistencyCheck(
   } catch (err) {
     const { code, message } = classifyGatewayError(err);
     // Audit the failed AI attempt (best-effort) before surfacing the error.
-    try {
-      await auditService.logAction({
+    // Never block on audit — but the catch that used to assert this could not
+    // fire: `logAction` resolves normally on a persistence failure. This records
+    // a FAILED consistency check, which is the outcome most worth keeping, so a
+    // lost row is reported rather than assumed away.
+    const failureAudit = await auditService.logAction({
+      organizationId: ctx.organizationId,
+      userId: ctx.userId,
+      action: 'AI_GENERATE',
+      resourceType: 'submission',
+      resourceId: params.submissionId,
+      details: { task: 'consistency-check', promptVersion: 'consistency-check@v1.0', outcome: 'failed', code },
+    });
+    if (!failureAudit.persisted) {
+      logger.warn('Consistency-check failure audit row was not persisted', {
+        submissionId: params.submissionId,
         organizationId: ctx.organizationId,
-        userId: ctx.userId,
-        action: 'AI_GENERATE',
-        resourceType: 'submission',
-        resourceId: params.submissionId,
-        details: { task: 'consistency-check', promptVersion: 'consistency-check@v1.0', outcome: 'failed', code },
+        code,
+        auditError: failureAudit.error ?? 'no durable store accepted the row',
       });
-    } catch {
-      /* never block on audit */
     }
     throw new TruthEngineError(code, message);
   }

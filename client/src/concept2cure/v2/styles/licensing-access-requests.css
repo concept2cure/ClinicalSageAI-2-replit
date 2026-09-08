@@ -1,0 +1,130 @@
+/* ══ Module access requests ════════════════════════════════════════════════
+   Three surfaces share this sheet because they are three views of one record:
+   the ask (inside the lock panel), the org administrator's queue, and the
+   platform owner's cross-workspace panel.
+
+   The queue views deliberately declare NO table chrome of their own. They reuse
+   the Master Licensing console's `.ml-*` grid (misc-surfaces-v2.css) so a
+   request row lines up with every other governed row in the product; only the
+   column template, which is per-table by design via `--ml-cols`, and the parts
+   that have no equivalent there — the requester's own words, the decision
+   footer, the reason field — are declared here.
+
+   Contrast: --text-300 is the floor for small text (--text-400 measures 3.37:1
+   and fails SC 1.4.3 at these sizes; --text-500 is never text). Interactive
+   boundaries use --border-control, dividers keep --border. */
+
+/* ── The ask, inside the lock panel ───────────────────────────────────────── */
+
+.c2c-v2 .nav-unlock-req {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+.c2c-v2 .nav-unlock-req-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--text-300);
+}
+.c2c-v2 .nav-unlock-req-ic {
+  display: inline-flex;
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: var(--text-300);
+}
+.c2c-v2 .nav-unlock-req-ic svg {
+  width: 13px;
+  height: 13px;
+}
+.c2c-v2 .nav-unlock-req-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-300);
+}
+.c2c-v2 .nav-unlock-req-input {
+  width: 100%;
+  padding: 8px 10px;
+  font: inherit;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--text-100);
+  background: var(--bg-000);
+  border: 1px solid var(--border-control);
+  border-radius: var(--radius-md);
+  resize: vertical;
+}
+.c2c-v2 .nav-unlock-req-input::placeholder {
+  color: var(--text-300);
+}
+
+/* ── The queues ───────────────────────────────────────────────────────────── */
+
+.c2c-v2 .mar-surface {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+/* One workspace: requester · app · asked · answer. The all-workspaces panel
+   prepends the workspace column. */
+.c2c-v2 .ml-table-requests {
+  --ml-cols: minmax(190px, 1.4fr) minmax(170px, 1.1fr) 130px minmax(220px, 1.6fr);
+  min-width: 760px;
+}
+.c2c-v2 .ml-table-requests-all {
+  --ml-cols: minmax(150px, 1fr) minmax(180px, 1.3fr) minmax(150px, 1fr) 130px minmax(210px, 1.5fr);
+  min-width: 900px;
+}
+
+/* The requester's own words. Quoted visually so an administrator can tell what
+   somebody wrote from what the product wrote. */
+.c2c-v2 .mar-note {
+  margin: 6px 0 0;
+  padding-left: 9px;
+  border-left: 2px solid var(--border-control);
+  font-size: 11.5px;
+  line-height: 1.55;
+  color: var(--text-200);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.c2c-v2 .mar-acts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+.c2c-v2 .mar-answer {
+  font-size: 11.5px;
+  line-height: 1.55;
+  color: var(--text-300);
+  word-break: break-word;
+}
+.c2c-v2 .mar-answer b {
+  color: var(--text-200);
+  font-weight: 600;
+}
+
+/* Screen-reader-only, matching .ml-vh — a control labelled only "Approve"
+   inside a grid of rows says nothing about which request it answers. */
+.c2c-v2 .mar-vh {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}

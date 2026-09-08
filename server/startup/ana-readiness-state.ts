@@ -174,7 +174,39 @@ export function logAnaReadinessBanner(): void {
 }
 
 /** Test seam: restore module state between cases. */
+/**
+ * Outcome of the boot-time AnA capability registry seed.
+ *
+ * 'pending' until the seed has run; 'seeded' when the table holds rows;
+ * 'empty' when it ran and still holds none; 'failed' when it threw. Reported
+ * by /readyz on both paths. It does not flip readiness on its own — a process
+ * with a live provider still answers turns — but an operator reading
+ * `capabilityRegistry: 'failed'` knows capability routing (ana-context-router)
+ * is running on an empty table, which before this was invisible: the seed
+ * failed on every production boot under RLS_ENFORCE=on and logged itself as
+ * "non-blocking".
+ */
+export type CapabilityRegistryState = 'pending' | 'seeded' | 'empty' | 'failed';
+
+let capabilityRegistryState: CapabilityRegistryState = 'pending';
+let capabilityRegistryDetail = '';
+
+export function setCapabilityRegistryState(state: CapabilityRegistryState, detail = ''): void {
+  capabilityRegistryState = state;
+  capabilityRegistryDetail = detail;
+}
+
+export function getCapabilityRegistryState(): CapabilityRegistryState {
+  return capabilityRegistryState;
+}
+
+export function getCapabilityRegistryDetail(): string {
+  return capabilityRegistryDetail;
+}
+
 export function resetAnaReadinessForTests(): void {
+  capabilityRegistryState = 'pending';
+  capabilityRegistryDetail = '';
   anaReadiness = 'unknown';
   anaDetail = '';
 }

@@ -24,12 +24,16 @@ const {
   mockGetEmbeddingService,
   mockCreateSource,
   mockFindSourceByChecksum,
+  mockFindSupersededCandidate,
+  mockCreateSupersedingSource,
 } = vi.hoisted(() => ({
   mockResolveGovernedContext: vi.fn(),
   mockPoolQuery: vi.fn(),
   mockGetEmbeddingService: vi.fn(),
   mockCreateSource: vi.fn(),
   mockFindSourceByChecksum: vi.fn(),
+  mockFindSupersededCandidate: vi.fn(),
+  mockCreateSupersedingSource: vi.fn(),
 }));
 
 vi.mock('../../server/services/concept2cure/governedDocumentContractService.js', () => ({
@@ -49,6 +53,11 @@ vi.mock('../../server/services/enhancedEmbeddingService.js', () => ({
 vi.mock('../../server/services/clinical-regulatory-evidence/evidence-spine.service.js', () => ({
   createSource: mockCreateSource,
   findSourceByChecksum: mockFindSourceByChecksum,
+  // The upload handler resolves whether this document supersedes an earlier
+  // source before it creates identity; a mocked ESM module THROWS on a missing
+  // export, so both must be present even when no predecessor is found.
+  findSupersededCandidate: mockFindSupersededCandidate,
+  createSupersedingSource: mockCreateSupersedingSource,
 }));
 
 // The chat router pulls a large graph; stub what the upload path never reaches.
@@ -96,15 +105,23 @@ function getPostHandler(routePath: string) {
 }
 
 async function runUpload(
-  opts: { projectId?: string | null; tenantId?: number | null; content?: string } = {},
+  opts: {
+    projectId?: string | null;
+    tenantId?: number | null;
+    content?: string;
+    fileName?: string;
+  } = {},
 ) {
-  const { projectId = 'proj_12', tenantId = 5, content = 'enrollment data' } = opts;
+  const {
+    projectId = 'proj_12', tenantId = 5, content = 'enrollment data',
+    fileName = 'protocol.txt',
+  } = opts;
   const req = createMockRequest({ body: projectId ? { projectId } : {} }) as any;
   req.user = { id: 9 };
   if (tenantId != null) req.tenantId = tenantId;
   const buffer = Buffer.from(content, 'utf8');
   req.file = {
-    originalname: 'protocol.txt',
+    originalname: fileName,
     mimetype: 'text/plain',
     buffer,
     size: buffer.length,
@@ -142,6 +159,10 @@ beforeEach(() => {
   });
   mockFindSourceByChecksum.mockResolvedValue(null);
   mockCreateSource.mockResolvedValue({ id: 4242 });
+  // No predecessor by default: the upload is a new document, so the handler
+  // takes the createSource path (createSupersedingSource stays unused).
+  mockFindSupersededCandidate.mockResolvedValue(null);
+  mockCreateSupersedingSource.mockResolvedValue({ source: { id: 4242 } });
 });
 
 describe('chat upload → canonical source identity', () => {
@@ -249,5 +270,91 @@ describe('chat upload → canonical source identity', () => {
     expect(mockFindSourceByChecksum).not.toHaveBeenCalled();
     expect(mockCreateSource).not.toHaveBeenCalled();
     expect(payload(res).sourceId).toBeNull();
+  });
+});
+
+describe('chat upload → source version is observed, never invented (L21)', () => {
+  it('records the version the document declares, and where it read it', async () => {
+    await runUpload({
+      fileName: 'protocol.txt',
+      content: 'CLINICAL STUDY PROTOCOL\nProtocol C2C-401\nVersion 3.2\n15 January 2026',
+    });
+
+    const [, params] = mockCreateSource.mock.calls[0];
+    expect(params.version).toBe('3.2');
+    expect(params.provenance.versionDeclaration).toMatchObject({
+      declared: true,
+      version: '3.2',
+      basis: 'document_text_declaration',
+      evidence: 'Version 3.2',
+      determinedBy: 'chat_upload ingest',
+    });
+  });
+
+  it('reads the version off the filename when the document declares none', async () => {
+    await runUpload({ fileName: 'SAP_v2.txt', content: 'Primary endpoint is ORR.' });
+
+    const [, params] = mockCreateSource.mock.calls[0];
+    expect(params.version).toBe('2');
+    expect(params.provenance.versionDeclaration).toMatchObject({
+      declared: true, basis: 'filename_declaration',
+    });
+  });
+
+  it('records an UNKNOWN version as unknown — not as 1, not as a date', async () => {
+    // The row this test exists for. Nothing about this upload declares a
+    // version. `version` must stay null, and the fact that evidence WAS
+    // examined must be on the record: a bare null is indistinguishable from a
+    // row that no version determination ever ran against, and the ingest must
+    // not close that gap by inventing a number a reviewer would read as real.
+    await runUpload({
+      fileName: 'brochure.txt',
+      content: 'Investigator Brochure. Section 1. Physical properties.',
+    });
+
+    const [, params] = mockCreateSource.mock.calls[0];
+    expect(params.version).toBeNull();
+    for (const tempting of ['1', 1, 'v1', 'latest', '1.0']) {
+      expect(params.version).not.toBe(tempting);
+    }
+    expect(params.provenance.versionDeclaration).toEqual({
+      declared: false,
+      version: null,
+      basis: null,
+      reason: 'no_declaration_found',
+      examined: ['document_text', 'filename'],
+      determinedBy: 'chat_upload ingest',
+    });
+  });
+
+  it('declines to pick when the document declares two different versions', async () => {
+    await runUpload({
+      fileName: 'protocol_v9.txt',
+      content: 'Protocol Version 2.0, superseding Version 1.0.',
+    });
+
+    const [, params] = mockCreateSource.mock.calls[0];
+    expect(params.version).toBeNull();
+    expect(params.provenance.versionDeclaration).toMatchObject({
+      declared: false, reason: 'ambiguous_declarations', candidates: ['2.0', '1.0'],
+    });
+    // And it did NOT rescue itself from the filename — that would be resolving
+    // the document's own conflict with weaker evidence.
+    expect(params.provenance.versionDeclaration.examined).toEqual(['document_text']);
+  });
+
+  it('carries the determination onto a superseding upload too', async () => {
+    // A revision is exactly where a version matters most; the supersession
+    // branch builds its own params object and must not drop it.
+    mockFindSupersededCandidate.mockResolvedValue({ id: 300 });
+
+    await runUpload({ fileName: 'protocol.txt', content: 'PROTOCOL\nVersion 4.0' });
+
+    expect(mockCreateSource).not.toHaveBeenCalled();
+    const [, params] = mockCreateSupersedingSource.mock.calls[0];
+    expect(params.version).toBe('4.0');
+    expect(params.provenance.versionDeclaration).toMatchObject({ declared: true, version: '4.0' });
+    // The supersedes record still travels alongside it.
+    expect(params.provenance.supersedes).toMatchObject({ sourceId: 300 });
   });
 });

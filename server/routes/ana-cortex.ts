@@ -13,7 +13,7 @@ router.use((req, res, next) => {
   next();
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
+// ───────────────────────────────────────────────────────────────────────────
 // Canonical AnA RI regulatory-analysis + ICH guidance handlers.
 //
 // History: this router previously returned fully hardcoded JSON dressed as AI
@@ -29,7 +29,7 @@ router.use((req, res, next) => {
 // caller's query + context — not hardcoded. Invalid model JSON returns 502
 // rather than a fabricated fallback. Citation-grounding hardening (no numeric
 // claim without a sourced reference) is tracked as follow-on work.
-// ─────────────────────────────────────────────────────────────────────────────
+// ───────────────────────────────────────────────────────────────────────────
 
 const REGULATORY_ANALYSIS_JSON_SHAPE = `{
   "comprehensive_analysis": {
@@ -340,8 +340,20 @@ ${context.activeDocumentExcerpt ? `\nDocument excerpt:\n"${context.activeDocumen
       aiProvider = result.provider;
       aiModel = result.model;
     } catch (gatewayError) {
-      console.error('[AnA Chat] AI Gateway error:', gatewayError);
-      aiResponse = `I understand you're asking about "${message.slice(0, 100)}". While I'm having trouble connecting to my AI engine right now, here's what I can tell you:\n\n- For regulatory guidance, consult the relevant FDA guidance documents\n- For document drafting, start with the CTD structure appropriate for your submission type\n- For compliance questions, reference 21 CFR Part 11 and ICH guidelines\n\nPlease try again in a moment, or use the AI actions in the editor toolbar for document-specific assistance.`;
+      // Fail closed. This used to answer the user with hand-written prose that
+      // quoted their own question back ("I understand you're asking about ...")
+      // and then dispensed generic regulatory advice — consult FDA guidance,
+      // start from the CTD structure, reference 21 CFR Part 11 — at HTTP 200, in
+      // the same `response` field a real answer uses, with success: true. A
+      // caller could not tell it apart from analysis. For a regulatory product
+      // that is fabrication, not a graceful degrade.
+      console.error('[AnA Chat] AI Gateway error — failing closed:', gatewayError);
+      return res.status(503).json({
+        success: false,
+        error: 'AI_PROVIDER_UNAVAILABLE',
+        message:
+          'The AI service could not be reached, so no answer was generated. Please retry.',
+      });
     }
 
     res.json({
@@ -362,9 +374,13 @@ ${context.activeDocumentExcerpt ? `\nDocument excerpt:\n"${context.activeDocumen
     });
   } catch (error) {
     console.error('[AnA Chat] Error:', error);
+    // No `response` field on an error. A client that renders `response`
+    // would otherwise print assistant-voiced prose as though AnA had replied,
+    // even on a 500.
     res.status(500).json({
+      success: false,
       error: 'Chat service temporarily unavailable',
-      response: "I'm having trouble connecting right now. Please try again in a moment.",
+      message: 'No answer was generated. Please try again in a moment.',
     });
   }
 });

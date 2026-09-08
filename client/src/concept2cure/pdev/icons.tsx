@@ -1,5 +1,5 @@
 /**
- * PDEV Lucide subset — mirrors design-system/ui_kits/pdev/Icons.jsx.
+ * PDEV Lucide subset — mirrors ui_kits/pdev/Icons.jsx.
  * Shapes are 1:1 with the kit so per-pixel cadence matches.
  */
 

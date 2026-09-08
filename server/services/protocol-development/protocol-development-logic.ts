@@ -91,7 +91,11 @@ export interface CompletenessFinding { severity: 'critical' | 'warning' | 'info'
 
 export interface CompletenessResult {
   /** Percent of REQUIRED sections marked complete (0–100). */
-  requiredCompletionPct: number;
+  /**
+   * Percentage of required sections complete. NULL when the protocol records
+   * no required sections — there is then no ratio and no assessment.
+   */
+  requiredCompletionPct: number | null;
   requiredTotal: number;
   requiredComplete: number;
   findings: CompletenessFinding[];
@@ -108,11 +112,25 @@ export function evaluateCompleteness(input: CompletenessInput): CompletenessResu
   const required = input.sections.filter((s) => s.required);
   const requiredComplete = required.filter((s) => s.status === 'complete').length;
   const requiredTotal = required.length;
-  const requiredCompletionPct = requiredTotal === 0 ? 100 : Math.round((requiredComplete / requiredTotal) * 100);
+  /* This ended `requiredTotal === 0 ? 100`. readyToFinalize is the gate the
+     service enforces on finalize, and a protocol whose section list is empty
+     produced no per-section critical findings — so for any kind whose other
+     checks pass (an objective recorded, and no eligibility or visit-schedule
+     requirement), an unsectioned protocol scored 100% and finalized. Nothing
+     had been checked, so there is no percentage. */
+  const requiredCompletionPct: number | null =
+    requiredTotal === 0 ? null : Math.round((requiredComplete / requiredTotal) * 100);
 
   const findings: CompletenessFinding[] = [];
   for (const s of required.filter((x) => x.status !== 'complete')) {
     findings.push({ severity: 'critical', message: `Required section "${s.title}" is ${s.status.replace('_', ' ')}.` });
+  }
+  if (requiredTotal === 0) {
+    findings.push({
+      severity: 'critical',
+      message:
+        'This protocol has no required sections recorded, so its completeness has not been assessed. An unsectioned protocol is not a finished one.',
+    });
   }
   if (input.objectiveCount === 0) findings.push({ severity: 'critical', message: 'No objectives/endpoints defined.' });
 

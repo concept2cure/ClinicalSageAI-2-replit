@@ -6,7 +6,7 @@
  * read-model that aggregates the existing PrecedentEngine service into the exact
  * display shape the surface renders:
  *
- *   { results, risk, strategy, patterns: { crl, rtf, ema, adcomm } }
+ *   { results, risk, strategy, patterns: { crl, rtf, ema, adcomm }, sources }
  *
  * Envelope: { success: true, data: <displayShape> }.
  *
@@ -36,6 +36,16 @@
  *   - strategy.rationale → assembled ONLY from the engine's real computed fields
  *                          (supportingPrecedents / estimatedTimeline /
  *                          testingRequirements / keyRisks); no prose is invented.
+ *   - sources.registry   → whether the FDA 510(k) registry was consulted for this
+ *                          search and what came back. Strategy 2 of the engine
+ *                          used to SELECT from `predicate.fda_510k_clearances`,
+ *                          a relation no migration creates and nothing writes,
+ *                          so it raised on every call and its catch returned []
+ *                          — a device search for a heavily cleared product code
+ *                          reported zero precedents, structurally. It now reads
+ *                          the openFDA device/510k dataset, and an unreachable
+ *                          registry is REPORTED here rather than rendered as an
+ *                          empty result (MDX_WORK_ORDER W2-8).
  *   - patterns.*         → curated rule-based pattern libraries in the service,
  *                          filtered to the submission context and enriched with
  *                          the org's adversarial-precedent matches. Only the
@@ -47,7 +57,8 @@
 
 import { Router, Request, Response } from 'express';
 import { z } from 'zod';
-import { precedentEngine } from '../services/precedent-engine';
+import { precedentEngine, type RegistryStatus } from '../services/precedent-engine';
+import { buildDeviceLenses, isDevicePathway, lensKeysFor } from '../services/precedent/device-lenses';
 import { createScopedLogger } from '../utils/logger';
 
 const log = createScopedLogger('precedent-engine-board');
@@ -98,12 +109,22 @@ interface PrecedentBoardDTO {
   results: PrecedentResultDTO[];
   risk: RiskAnalysisDTO;
   strategy: StrategyDTO;
-  patterns: {
-    crl: PatternAnalysisDTO;
-    rtf: PatternAnalysisDTO;
-    ema: PatternAnalysisDTO;
-    adcomm: PatternAnalysisDTO;
-  };
+  /**
+   * Analysis lenses, keyed. Which keys are present depends on the pathway —
+   * see `lenses` for the order and the set. The drug keys (crl/rtf/ema/adcomm)
+   * and the device keys (rta/ai/nse/predicate/panel) are never both present:
+   * a 510(k) submitter has no use for an EMA Day-120 question pattern, and the
+   * board used to show them all four regardless.
+   */
+  patterns: Record<string, PatternAnalysisDTO>;
+  /** The lens keys that apply to this submission type, in display order. */
+  lenses: string[];
+  /**
+   * What was consulted to build `results`, so the surface can say WHY a device
+   * search came back thin. Without this the FDA registry being unreachable and
+   * the FDA registry holding no match render identically — as "no precedents".
+   */
+  sources: { registry: RegistryStatus };
 }
 
 // Derive the service return element/result types WITHOUT importing named types,
@@ -298,15 +319,32 @@ export default function createPrecedentEngineBoardRoutes(): Router {
     };
 
     try {
-      const [resultsR, riskR, strategyR, crlR, rtfR, emaR, adcommR] = await Promise.allSettled([
-        precedentEngine.search(searchInput, organizationId),
+      const device = isDevicePathway(q.submissionType);
+
+      /* The four drug analyzers are not run for a device pathway. Their output
+         is not merely mislabelled there — analyzeRTFTriggers checks Form FDA
+         356h, Orange Book patent certification and CTD modules, none of which
+         exist in a 510(k) — so a device search neither shows them nor pays for
+         their queries. A skipped analyzer is represented as a rejection, which
+         the substitution below already handles. */
+      const skipped = (name: string): PromiseSettledResult<never> => ({
+        status: 'rejected',
+        reason: new Error(`${name} is a drug analyzer; not run for ${q.submissionType}`),
+      });
+
+      const [resultsR, riskR, strategyR] = await Promise.allSettled([
+        precedentEngine.searchWithSources(searchInput, organizationId),
         precedentEngine.analyzeRisk(analysisInput),
         precedentEngine.recommendStrategy(analysisInput),
-        precedentEngine.analyzeCRLTriggers(analysisInput),
-        precedentEngine.analyzeRTFTriggers(analysisInput),
-        precedentEngine.analyzeEMAPatterns(analysisInput),
-        precedentEngine.analyzeAdvisoryCommitteeRisk(analysisInput),
       ]);
+      const [crlR, rtfR, emaR, adcommR] = device
+        ? [skipped('CRL'), skipped('RTF'), skipped('EMA'), skipped('AdComm')]
+        : await Promise.allSettled([
+            precedentEngine.analyzeCRLTriggers(analysisInput),
+            precedentEngine.analyzeRTFTriggers(analysisInput),
+            precedentEngine.analyzeEMAPatterns(analysisInput),
+            precedentEngine.analyzeAdvisoryCommitteeRisk(analysisInput),
+          ]);
 
       // Surface any degraded sub-call honestly in the logs; the board still
       // returns with that section empty rather than 500-ing the whole request.
@@ -320,21 +358,43 @@ export default function createPrecedentEngineBoardRoutes(): Router {
         ['adcomm', adcommR],
       ];
       for (const [name, r] of settled) {
+        // A drug analyzer skipped on a device pathway is a choice, not a failure.
+        if (device && ['crl', 'rtf', 'ema', 'adcomm'].includes(name)) continue;
         if (r.status === 'rejected') {
           const reason = r.reason instanceof Error ? r.reason.message : String(r.reason);
           log.warn(`precedent board sub-call "${name}" failed: ${reason}`);
         }
       }
 
+      // Fail closed on the precedent SEARCH read. searchWithSources already
+      // swallows per-query table-missing errors and returns [] internally, so a
+      // rejection here is a genuine failure — coercing it to [] published
+      // "0 precedents" to the assistant, indistinguishable from an empty corpus
+      // and defeating the surface's own "a failed read, not an empty corpus"
+      // branch (which only fires on a non-200). Surface it (→ the 500 → the
+      // surface's board.error).
+      if (resultsR.status === 'rejected') throw resultsR.reason;
+      const records = resultsR.value.records;
+      const patterns: Record<string, PatternAnalysisDTO> = device
+        ? buildDeviceLenses({ submissionType: q.submissionType, productCode: q.productCode }, records)
+        : {
+            crl: crlR.status === 'fulfilled' ? mapCrl(crlR.value) : emptyPattern('CRL trigger patterns'),
+            rtf: rtfR.status === 'fulfilled' ? mapRtf(rtfR.value) : emptyPattern('RTF (Refuse-to-File) triggers'),
+            ema: emaR.status === 'fulfilled' ? mapEma(emaR.value) : emptyPattern('EMA Day-120/180 question patterns'),
+            adcomm: adcommR.status === 'fulfilled' ? mapAdcomm(adcommR.value) : emptyPattern('Advisory Committee risk'),
+          };
+
       const data: PrecedentBoardDTO = {
-        results: resultsR.status === 'fulfilled' ? resultsR.value.map(mapResult) : [],
+        results: records.map(mapResult),
         risk: riskR.status === 'fulfilled' ? mapRisk(riskR.value) : emptyRisk(),
         strategy: strategyR.status === 'fulfilled' ? mapStrategy(strategyR.value) : emptyStrategy(),
-        patterns: {
-          crl: crlR.status === 'fulfilled' ? mapCrl(crlR.value) : emptyPattern('CRL trigger patterns'),
-          rtf: rtfR.status === 'fulfilled' ? mapRtf(rtfR.value) : emptyPattern('RTF (Refuse-to-File) triggers'),
-          ema: emaR.status === 'fulfilled' ? mapEma(emaR.value) : emptyPattern('EMA Day-120/180 question patterns'),
-          adcomm: adcommR.status === 'fulfilled' ? mapAdcomm(adcommR.value) : emptyPattern('Advisory Committee risk'),
+        patterns,
+        lenses: [...lensKeysFor(q.submissionType)],
+        sources: {
+          registry:
+            resultsR.status === 'fulfilled'
+              ? resultsR.value.registry
+              : { consulted: false, available: false, reason: 'The precedent search did not complete.' },
         },
       };
 

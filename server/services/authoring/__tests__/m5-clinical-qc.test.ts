@@ -115,3 +115,41 @@ describe('runM5ClinicalQc — coverage + structure', () => {
     expect(res.ready).toBe(false);
   });
 });
+
+/**
+ * "Nothing was assessed" is not "everything passed".
+ *
+ * `runM5ClinicalQc({ csrs: [] })` returned `ready: true`, `checked: []`,
+ * `findings: []`, `counts: {errors: 0, warnings: 0}` — silence indistinguishable
+ * from a clean clinical program. `expectedPhases` has no default on purpose
+ * ("phase requirements are program/stage specific"), so nothing filled the gap
+ * the way M4's ICH M3(R2) coverage warnings do for its own empty case.
+ *
+ * The aggregator then reported Module 5 ready and the renderer printed
+ * "READY — no blocking findings" into an inspector report.
+ *
+ * A caller with genuinely no Module 5 has a way to say so: supply no verdict at
+ * all, which the aggregator already reports as MODULE_ABSENT, a warning. A
+ * verdict computed over nothing is a different statement and now says so.
+ */
+describe('runM5ClinicalQc — an empty program is unassessed, not clean', () => {
+  it('does not report ready over zero clinical study reports', () => {
+    const res = runM5ClinicalQc({ csrs: [] });
+    expect(res.assessed, 'nothing was assessed').toBe(false);
+    expect(res.ready, 'an unassessed module must not read as ready').toBe(false);
+  });
+
+  it('is assessed as soon as there is a CSR to assess', () => {
+    const res = runM5ClinicalQc({
+      csrs: [
+        {
+          studyId: 'STUDY-1',
+          phase: '3',
+          reportSection: '5.3.5.1',
+          sections: [{ number: '1', title: 'Title Page', required: true, status: 'approved' }],
+        },
+      ],
+    });
+    expect(res.assessed).toBe(true);
+  });
+});

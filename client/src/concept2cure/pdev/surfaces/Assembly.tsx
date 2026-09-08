@@ -6,7 +6,7 @@
  *   - Compile CTA disabled when overallReadiness < threshold; force
  *     option available with 30-char reason + 'yes-transmit' confirm.
  *
- * Port basis: design-system/ui_kits/pdev/Surfaces.jsx > PdevAssembly.
+ * Port basis: ui_kits/pdev/Surfaces.jsx > PdevAssembly.
  */
 
 import * as React from 'react';

@@ -50,7 +50,7 @@ const { svc, audit } = vi.hoisted(() => ({
     runReviewerSimulation: vi.fn(async (..._a: any[]) => ({ runId: 'rs-1' })),
     submitToFDA: vi.fn(async (..._a: any[]) => ({ packageId: 'pkg-1', transactionId: 'tx-1' })),
   },
-  audit: { logAction: vi.fn().mockResolvedValue(undefined) },
+  audit: { logAction: vi.fn().mockResolvedValue({ persisted: true, chained: true, tamperProof: true }) },
 }));
 
 // vi.hoisted because TenantAccessError is referenced inside the

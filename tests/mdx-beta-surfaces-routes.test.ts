@@ -151,6 +151,11 @@ describe('GET /api/mdx/ana-drafts', () => {
 /* ─── Vault aggregator ───────────────────────────────────────────── */
 
 describe('GET /api/mdx/vault', () => {
+  // The route returns the merged list most-recently-updated first, so the two
+  // rows need distinct, ordered timestamps. With a bare `new Date()` on each
+  // they tie only while both land in the same millisecond; on a loaded runner
+  // the second lands later and sorts ahead, which is why this passed in the
+  // Test job and failed in Integration Tests on the same commit.
   it('lists artifacts and groups by family', async () => {
     queryFn.mockResolvedValueOnce({
       rows: [
@@ -158,14 +163,14 @@ describe('GET /api/mdx/vault', () => {
           id: 1, artifact_id: 'artifact_aaa', title: 'Cover letter', type: 'markdown',
           category: 'document', ctd_section: '1.1', status: 'draft', version: 1,
           content_hash: null, created_by_id: null,
-          created_at: new Date(), updated_at: new Date(), locked_at: null,
+          created_at: new Date('2026-09-01T09:00:00Z'), updated_at: new Date('2026-09-01T10:00:00Z'), locked_at: null,
           metadata: null,
         },
         {
           id: 2, artifact_id: 'artifact_bbb', title: 'Device description', type: 'markdown',
           category: 'document', ctd_section: '3.2.P', status: 'approved', version: 2,
           content_hash: 'abc123', created_by_id: 7,
-          created_at: new Date(), updated_at: new Date(), locked_at: null,
+          created_at: new Date('2026-09-01T09:00:00Z'), updated_at: new Date('2026-09-01T09:30:00Z'), locked_at: null,
           metadata: { eSig: true },
         },
       ],

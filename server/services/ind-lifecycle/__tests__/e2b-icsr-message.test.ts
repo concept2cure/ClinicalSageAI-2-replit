@@ -36,7 +36,7 @@ const baseEvent: AdverseEvent = {
   createdAt: new Date('2026-01-06T00:00:00.000Z'),
 };
 
-const icsrMeta: ICSR = {
+const icsrMeta: ICSR & { studyRegistrationNumber?: string } = {
   id: 'icsr-1',
   adverseEventId: 'ae-123',
   icsrType: 'initial',
@@ -46,6 +46,8 @@ const icsrMeta: ICSR = {
   e2bVersion: 'R3',
   worldwideUniqueId: 'US-C2C-2026-000123',
   reportType: 'study',
+  // A study report names its study (C.5.1.r.1) — mandatory for transmit readiness.
+  studyRegistrationNumber: 'IND 123456',
   seriousness: 'life_threatening',
   organizationId: 'org-1',
 };

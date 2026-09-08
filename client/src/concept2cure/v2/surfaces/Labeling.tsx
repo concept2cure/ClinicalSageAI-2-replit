@@ -4,6 +4,7 @@ import { useLiveData, useLiveRows, EmptyState, unwrapList } from '../dataConnect
 import { apiRequest, extractApiError } from '@/lib/queryClient';
 import { AnswerLead } from '../AnswerLead';
 import type { SurfaceViewProps } from '../surfaceViews';
+import { usePublishSurfaceContext } from '../surfaceContext';
 import { C2CForm } from '../C2CForm';
 import type { C2CFormConfig } from '../C2CForm';
 import '../styles/project-home-v2.css';
@@ -256,6 +257,86 @@ export function Labeling({ onAsk }: SurfaceViewProps) {
 
   const tTone: Record<string, string> = { approved: 'ok', review: 'warn', in_progress: 'ai', pending: 'idle', rejected: 'err' };
 
+  /* What AnA can see of this screen.
+     The three reads here are chained — no labeling document means no symbols and
+     no translations — so "there is no document" has to be published as itself.
+     Reported as an empty translation board it would read to AnA as a label with
+     nothing left to translate, which is the opposite claim. */
+  const anaContext = useMemo(() => {
+    if (docsLive.loading) {
+      return { summary: 'The labeling document is still loading; nothing on screen is final yet.' };
+    }
+    if (docsLive.error) {
+      return {
+        summary:
+          'The labeling store could not be read, so this screen is showing no label because of a failure, ' +
+          'not because none exists.',
+        availableActions: ['Retry the labeling document read'],
+      };
+    }
+    if (!docRow) {
+      return {
+        summary:
+          'Labeling: this organisation has no labeling document yet, so there are no symbols or ' +
+          'translations to show — the boards below are empty for that reason.',
+        availableActions: ['Create a labeling document for a device'],
+      };
+    }
+    const byStatus = trans.reduce<Record<string, number>>((acc, t) => {
+      acc[t.status] = (acc[t.status] ?? 0) + 1;
+      return acc;
+    }, {});
+    return {
+      summary:
+        `Labeling: "${docRow.device_name}" ${kindLabel} v${docRow.version} (${docRow.status})` +
+        (docRow.udi_di ? `, UDI-DI ${docRow.udi_di}` : '') +
+        '. ' +
+        // Gated on the SEPARATE translations read, mirroring the on-screen lead:
+        // a failed/in-flight fetch must not report "0 translation(s) — none yet"
+        // for a label that may hold a fully approved set. The facts already
+        // carried translationsUnavailable; the summary was the gap.
+        (transState.loading
+          ? 'Translations are still loading. '
+          : transState.error
+            ? 'The translation set could not be read — its coverage is unknown, not zero. '
+            : `${trans.length} translation(s) — ` +
+              (Object.keys(byStatus).length
+                ? Object.entries(byStatus).map(([k, n]) => `${n} ${k.replace('_', ' ')}`).join(', ')
+                : 'none yet') +
+              '. ') +
+        (symbolsLive.loading
+          ? 'Symbols are still loading.'
+          : symbolsLive.error
+            ? 'The symbol list could not be read.'
+            : `${symbolsLive.rows.length} symbol(s) recorded.`),
+      facts: {
+        document: {
+          id: docRow.id, device: docRow.device_name, kind: kindLabel,
+          version: docRow.version, status: docRow.status, udiDi: docRow.udi_di,
+        },
+        translations: trans.map((t) => ({
+          id: t.id, language: t.language, name: t.name,
+          method: t.method, backTranslationVerified: t.btv, status: t.status,
+        })),
+        translationsByStatus: byStatus,
+        translationsUnavailable: transState.error ? 'the translation read failed' : null,
+        symbols: symbolsLive.loading || symbolsLive.error
+          ? null
+          : symbolsLive.rows.map((sy) => ({
+              code: sy.symbol_code, name: sy.symbol_name,
+              description: sy.description, requiredBy: sy.required_by ?? [],
+            })),
+        symbolsUnavailable: symbolsLive.error ? 'the symbol read failed' : null,
+      },
+      availableActions: [
+        'Add a target-language translation (a real persisted write)',
+        'Advance a translation through pending, in progress, review, approved',
+        'Read the symbol set and what each symbol is required by',
+      ],
+    };
+  }, [docsLive.loading, docsLive.error, docRow, kindLabel, trans, transState.loading, transState.error, symbolsLive.loading, symbolsLive.error, symbolsLive.rows]);
+  usePublishSurfaceContext('labeling', anaContext);
+
   const transFormConfig: C2CFormConfig = {
     eyebrow: 'Labeling / translation',
     title: 'Add translation',
@@ -268,8 +349,26 @@ export function Labeling({ onAsk }: SurfaceViewProps) {
     governed: 'Back-translation QC is expected before a language reaches Approved.',
     submitLabel: 'Add translation',
     fields: [
-      { key: 'language', label: 'Language code', type: 'text', placeholder: 'e.g. pt, sv, cs', required: true },
-      { key: 'name', label: 'Language name', type: 'text', placeholder: 'e.g. Portuguese', required: true },
+      /* ── "Language name" is gone ────────────────────────────────────────
+         It was REQUIRED — the form refused to submit without it — and then
+         `addTrans` never read `v.name`. The typed name was discarded on every
+         submit, silently.
+
+         It could not have been saved: `labeling_translations` keys a
+         translation on its ISO language code and has no name column, and the
+         display name is DERIVED from the code by `languageName()` (Intl
+         DisplayNames). A free-text name beside the code would be a second
+         spelling of one fact — the case where the two disagree has no correct
+         resolution. So the code carries the guidance the name field was
+         giving, and the row is titled from it. */
+      {
+        key: 'language',
+        label: 'Language code',
+        type: 'text',
+        placeholder: 'e.g. pt, sv, cs, pt-BR',
+        desc: 'The ISO 639-1 code (or BCP-47 tag). The language name shown on the board is derived from it.',
+        required: true,
+      },
       { key: 'method', label: 'Translation method', type: 'select', options: EN.method.map(m => ({ value: m[0], label: m[1] })), required: true },
     ],
   };
@@ -292,7 +391,7 @@ export function Labeling({ onAsk }: SurfaceViewProps) {
       </div>
 
       {docsLive.loading ? (
-        <div className="scaf-note" style={{ padding: '18px 10px' }}>Loading the labeling document…</div>
+        <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>Loading the labeling document…</div>
       ) : docsLive.error ? (
         <EmptyState
           tone="error"
@@ -311,12 +410,31 @@ export function Labeling({ onAsk }: SurfaceViewProps) {
           <AnswerLead
             tone={cov.total > 0 && cov.approved === cov.total ? 'good' : 'calm'}
             eyebrow="Where the label package stands right now"
-            headline={cov.total === 0
+            /* Gated on the TRANSLATIONS read, not the document read.
+               This lead sits inside the document-read gate, while `cov` derives
+               from a separate translations read — so a failed or in-flight
+               translations fetch made `cov.total` 0 and the headline told a
+               device owner that no target-language IFU exists, for an EU MDR
+               filing that may hold a fully approved set. The table twelve lines
+               below said "Couldn't load translations" at the same moment. */
+            headline={transState.loading
+              ? <>Reading this label's translation coverage…</>
+              : transState.error
+              ? <>Couldn't read this label's translation coverage, so nothing is claimed about it here.</>
+              : cov.total === 0
               ? <>No translations are recorded for this label yet.</>
               : cov.approved < cov.total
                 ? <>The label content is controlled; <b>{cov.total - cov.approved}</b> of {cov.total} translation{cov.total === 1 ? '' : 's'} {cov.total - cov.approved === 1 ? 'is' : 'are'} still short of approved.</>
                 : <>All {cov.total} translation{cov.total === 1 ? '' : 's'} are approved.</>}
-            body={cov.total === 0
+            body={transState.loading
+              /* The body was gated only on `cov.total === 0`, so during a
+                 pending or failed read it printed the "add translations to
+                 start tracking" call to action directly under a headline that
+                 said "Reading…" / "Couldn't read". It now follows the headline. */
+              ? <>Coverage figures appear once the translations have been read.</>
+              : transState.error
+              ? <>No coverage figure is claimed until the translations can be read.</>
+              : cov.total === 0
               ? <>Add the target-language IFU/label translations to start tracking back-translation QC and approval coverage.</>
               : <>Translation coverage is <b>{cov.approved}/{cov.total}</b> approved ({cov.pct}%), <b>{cov.btv}</b> back-translation verified. Each warning should trace to the ISO 14971 hazard it controls.</>}
             reassure="I will draft the missing-language IFU and run the back-translation check, and flag any language that stalls in QC — you approve each one."
@@ -331,7 +449,7 @@ export function Labeling({ onAsk }: SurfaceViewProps) {
                 <div className="sec-sub">symbol glossary</div>
               </div>
               {symbolsLive.loading ? (
-                <div className="scaf-note" style={{ padding: '18px 10px' }}>Loading symbols…</div>
+                <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>Loading symbols…</div>
               ) : symbolsLive.error ? (
                 <EmptyState
                   tone="error"
@@ -421,13 +539,16 @@ export function Labeling({ onAsk }: SurfaceViewProps) {
           <div className="sec">
             <div className="sec-hdr">
               <div className="sec-title">Translations and coverage</div>
-              <div className="sec-sub">{cov.approved}/{cov.total} approved / {cov.btv} back-translation verified</div>
+              {/* "0/0 approved / 0 back-translation verified" printed over a
+                  pending or failed read, directly above a table that said
+                  "Loading…" / "Couldn't load". Figures only from a settled read. */}
+              <div className="sec-sub">{transState.loading ? 'Reading translations…' : transState.error ? 'Coverage not read' : `${cov.approved}/${cov.total} approved / ${cov.btv} back-translation verified`}</div>
               <button className="btn ghost" style={{ marginLeft: 'auto' }} onClick={() => setTForm(true)}>{I.plus} Add translation</button>
             </div>
-            <div className="lbl-cov-bar"><div className="lbl-cov-fill" style={{ width: cov.pct + '%' }} /></div>
+            <div className="lbl-cov-bar"><div className="lbl-cov-fill" style={{ width: (transState.loading || transState.error ? 0 : cov.pct) + '%' }} /></div>
             <div className="ctable" style={{ marginTop: 10 }}>
               {transState.loading && trans.length === 0 ? (
-                <div className="scaf-note" style={{ padding: '18px 10px' }}>Loading translations…</div>
+                <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>Loading translations…</div>
               ) : transState.error && trans.length === 0 ? (
                 <EmptyState
                   tone="error"

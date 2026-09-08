@@ -13,6 +13,7 @@
 import crypto from 'crypto';
 import { db } from '../db';
 import { eq, and, desc, sql, ilike, inArray } from 'drizzle-orm';
+import { csvRow } from '../utils/csv';
 import {
   immutableReportRecords,
   reportAtomProvenance,
@@ -1587,16 +1588,23 @@ export class IntelligentReportEngine {
       'Section,Field,Value,SourceTable,SourceField,Confidence,DriftDetected',
     ];
     for (const p of provenance) {
+      /* `.replace(/,/g, ';')` was not escaping — it REWROTE the recorded value,
+         so a provenance export whose whole purpose is to prove the report
+         matches the source of record no longer matched it. Quotes and newlines
+         passed through untouched (a multi-line description split one entry
+         across two rows), and sectionPath / fieldLabel got nothing at all.
+         Note the X-Integrity-Hash header is computed over the pre-flattening
+         JSON, so it never covered these bytes. */
       csvRows.push(
-        [
+        csvRow([
           p.sectionPath,
           p.fieldLabel || '',
-          (p.reportedValue || '').replace(/,/g, ';'),
+          p.reportedValue || '',
           p.sourceTable,
           p.sourceField,
-          String(p.confidence || ''),
-          String(p.driftDetected || false),
-        ].join(',')
+          p.confidence || '',
+          p.driftDetected || false,
+        ])
       );
     }
 

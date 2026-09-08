@@ -85,7 +85,11 @@ describe('Readiness Evaluator', () => {
     expect(result.dossierStandard).toBe('eSTAR');
   });
 
-  it('handles unknown types gracefully', () => {
+  it('fails closed on an unknown type: not ready, zero score, and a gap that names the id', () => {
+    // 'early' was the old answer here, and 'early' flows into the aggregator's
+    // normal scored path — an unresolved registry entry read as a young filing
+    // rather than an unassessable one. The fallback suite pins the fail-closed
+    // contract; this case keeps the legacy entry point on the same contract.
     const result = evaluateReadiness({
       registryIdOrLegacy: 'UNKNOWN_TYPE',
       sections: [
@@ -94,8 +98,14 @@ describe('Readiness Evaluator', () => {
       artifacts: [],
     });
 
-    expect(result.level).toBe('early');
+    // An unknown registry entry is a filing whose requirements cannot be known.
+    // It used to read 'early' — 0 of 0 required sections, i.e. "100% of nothing"
+    // — and readinessEvaluator now fails closed to not_ready with a critical gap
+    // (fix(readiness), 19acd257f). This assertion was left on the old value.
+    expect(result.level).toBe('not_ready');
     expect(result.score).toBe(0);
+    expect(result.dossierStandard).toBe('unknown');
+    expect(JSON.stringify(result.gaps)).toContain('UNKNOWN_TYPE');
   });
 
   it('returns ready for fully completed project', () => {

@@ -12,10 +12,12 @@
  * clock, predicted HAQs, cross-module contradictions and open blockers --
  * every row routes into the deep surface that owns it.
  */
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { I } from '../icons';
 import { getSurfaceMeta } from '../registryModel';
 import { useLiveRows, EmptyState } from '../dataConnect';
+import { usePublishSurfaceContext } from '../surfaceContext';
+import { useSurfaceActionHandlers, notifySurfaceActionReady } from '../surfaceActions';
 import type { SurfaceViewProps } from '../surfaceViews';
 import '../styles/project-home-v2.css';
 
@@ -151,7 +153,7 @@ const PJ_STAGES: PjStage[] = [
     what: 'Phase 1->3 execution: dose-finding, the pivotal trial, risk-based monitoring and interim DSMB reviews. The End-of-Phase-2 meeting fixes the pivotal design and endpoints that the whole submission will rest on.',
     deliv: [['Phase 1/2 CSRs', 1], ['EOP2 meeting alignment', 1], ['Pivotal trial — enrolled', 1], ['Pivotal topline & CSR', 0]],
     caps: ['rbm', 'clinical-ops', 'biostatistics', 'csr-workflow', 'protocol-dev', 'safety-narrative'],
-    interactions: [['Type B', 'End-of-Phase-2 meeting', 'Complete'], ['DSMB', 'Interim review 3 — continue', 'Complete'], ['Pivotal', 'BX204-301 · database lock', 'Upcoming']],
+    interactions: [['Type B', 'End-of-Phase-2 meeting', 'Complete'], ['DSMB', 'Interim review 3 — continue', 'Complete'], ['Pivotal', 'Pivotal trial database lock', 'Upcoming']],
     ana: 'Summarize pivotal readiness — enrollment, DSMB history, and the gap to database lock' },
   { id: 'presub', num: 'Stage 5', label: 'Pre-submission', icon: 'messageSquare',
     gate: 'Pre-NDA / Pre-BLA meeting · filing plan & format agreed',
@@ -250,15 +252,108 @@ export function BiopharmaJourney({ onAsk, onNav }: SurfaceViewProps) {
     onNav(id);
   };
   const setSeg = (v: string) => {
-    try { (window as any).__C2C_SEGMENT = v; } catch (_e) { /* noop */ }
+    try { (window as any).__C2C_SEGMENT = v; } catch { /* noop */ }
     setSegState(v);
     setSel(null);
   };
 
+  /* AnA can select a lifecycle stage or switch the segment — the same clicks a
+     person makes. Both affordances only render on screen once the record loads
+     (see the loading/error/empty early returns below), so the handler refuses
+     in all three states rather than changing state AnA can't see reflected in
+     the published context. Held (retry) while it loads. */
+  useSurfaceActionHandlers('program-journey', {
+    'program-journey.select-stage': (params) => {
+      const raw = String(params.stage ?? '').trim();
+      if (!raw) return { ok: false, reason: 'Name a stage by its id or label.' };
+      if (loading) return { ok: false, reason: 'The program journey is still loading.', retry: true };
+      if (error) return { ok: false, reason: 'The program journey did not load, so there is no record to select a stage on.' };
+      if (empty) return { ok: false, reason: 'No program journey is recorded in this organization yet.' };
+      const needle = raw.toLowerCase();
+      const byId = PJ_STAGES.filter((s) => s.id.toLowerCase() === needle);
+      const hits = byId.length ? byId : PJ_STAGES.filter((s) => s.label.toLowerCase().includes(needle));
+      if (hits.length === 0) return { ok: false, reason: `No lifecycle stage matching "${raw}".` };
+      if (hits.length > 1) return { ok: false, reason: `"${raw}" matches ${hits.length} stages — name one exactly.` };
+      const s = hits[0];
+      if (sel === s.id) return { ok: true, detail: `Already on ${s.label}` };
+      setSel(s.id);
+      return { ok: true, detail: `Selected ${s.label}` };
+    },
+    'program-journey.switch-segment': (params) => {
+      const target = params.segment;
+      if (target !== 'biotech' && target !== 'pharma') {
+        return { ok: false, reason: `"${target}" is not a segment — choose biotech or pharma.` };
+      }
+      if (loading) return { ok: false, reason: 'The program journey is still loading.', retry: true };
+      if (error) return { ok: false, reason: 'The program journey did not load, so there is no view to switch.' };
+      if (empty) return { ok: false, reason: 'No program journey is recorded in this organization yet.' };
+      if (seg === target) return { ok: true, detail: `Already on the ${target} segment` };
+      setSeg(target);
+      return { ok: true, detail: `Switched to the ${target} segment` };
+    },
+  });
+  useEffect(() => {
+    if (!loading && !error && !empty) notifySurfaceActionReady('program-journey');
+  }, [loading, error, empty]);
+
+  /* WHAT ANA SEES HERE — published above the honest-state early returns so one
+     call covers every branch. Two never-fabricate rules this surface holds: no
+     per-deliverable status exists on the record, and no agency-interaction
+     outcomes do — neither is published. */
+  const anaContext = useMemo(() => {
+    if (loading) {
+      return { summary: 'The program journey is still loading; nothing on screen is final yet.' };
+    }
+    if (error) {
+      return {
+        summary:
+          'The program journey could not be loaded — the program-journey store did not respond. A failed read, not an empty portfolio.',
+      };
+    }
+    if (empty) {
+      return {
+        summary:
+          'Program journey: no program journey data yet — once a program is provisioned for this organization, its end-to-end regulatory arc appears here.',
+      };
+    }
+    const bySegCtx: Record<string, PjRecord> = {};
+    for (const r of rows) bySegCtx[r.seg] = r;
+    const rec = bySegCtx[seg] ?? rows[0];
+    const overlay = rec.overlay ?? {};
+    const done = PJ_STAGES.filter((s) => (overlay[s.id] ?? ['upcoming', 0])[0] === 'done').length;
+    return {
+      summary:
+        `Program journey (${seg}): ${rec.code} — ${rec.name} (${rec.app}), ${done} of 9 stages complete` +
+        (typeof rec.readiness === 'number' ? `, ${rec.readiness}% ready` : '') +
+        `. Current stage: ${rec.current}.`,
+      facts: {
+        program: {
+          code: rec.code,
+          name: rec.name,
+          app: rec.app,
+          modality: rec.modality,
+          indication: rec.indication,
+          pathway: rec.pathway,
+          agency: rec.agency,
+        },
+        // typeof, not truthiness: 0% ready is a real readiness.
+        ...(typeof rec.readiness === 'number' ? { readiness: rec.readiness } : {}),
+        ...(rec.target ? { target: rec.target } : {}),
+        currentStage: rec.current,
+        doneCount: done,
+        stagesTotal: 9,
+        segment: seg,
+        ...(sel ? { selectedStage: sel } : {}),
+      },
+      availableActions: ['Switch the biotech/pharma segment view; select a stage'],
+    };
+  }, [loading, error, empty, rows, seg, sel]);
+  usePublishSurfaceContext('program-journey', anaContext);
+
   if (loading) {
     return (
       <div className="pj">
-        <div className="scaf-note" style={{ padding: '40px 16px', textAlign: 'center' }}>Loading program journey…</div>
+        <div role="status" className="scaf-note" style={{ padding: '40px 16px', textAlign: 'center' }}>Loading program journey…</div>
       </div>
     );
   }
@@ -396,13 +491,33 @@ export function BiopharmaJourney({ onAsk, onNav }: SurfaceViewProps) {
 
             <p className="pj-what">{stage.what}</p>
 
+            {/* ── The tick marks were a constant, not this programme's state ──
+                Each row rendered a green check or a clock from `d[1]`, a
+                hardcoded 1/0 in the PJ_STAGES catalog — e.g. 'IND initial
+                (Forms 1571/1572/3674)', 1. Every tenant on every programme saw
+                the same deliverables reported complete, and a regulatory lead
+                reading "Safe-to-proceed clearance ✓" was reading a literal in
+                this file, not their filing.
+
+                PJ_STAGES is deliberately definitional — the header above says
+                so — and the per-programme status arrives in `rec.overlay`,
+                which is real and IS applied to the stage itself (st/pct). There
+                is no per-DELIVERABLE status in the record, so there is nothing
+                to overlay here.
+
+                So the list says what the stage requires, which is true and
+                useful, and claims nothing about whether this programme has done
+                it. The stage's own progress above remains the live signal. */}
             <div className="pj-seclbl">Key deliverables</div>
             <div className="pj-deliv">
               {stage.deliv.map((d, i) => (
-                <div key={i} className="pj-deliv-row" data-done={d[1] ? true : undefined}>
-                  <span className="dot">{d[1] ? I.checkCircle : I.clock}</span>{d[0]}
+                <div key={i} className="pj-deliv-row">
+                  <span className="dot">{I.circle || I.clock}</span>{d[0]}
                 </div>
               ))}
+            </div>
+            <div className="pj-deliv-note">
+              What this stage requires. Per-deliverable status is not tracked on the programme record — the stage progress above is the live signal.
             </div>
 
             <div className="pj-seclbl">Capabilities that serve this stage</div>
@@ -417,15 +532,33 @@ export function BiopharmaJourney({ onAsk, onNav }: SurfaceViewProps) {
               })}
             </div>
 
-            <div className="pj-seclbl">Agency interactions</div>
+            {/* The KIND and the description are definitional — Stage 2 is where a
+                Type B Pre-IND meeting happens, and that is true of anyone. The
+                OUTCOME was not, and the outcome is what this block really showed.
+
+                `PjRecord` carries no `interactions` field, so nothing could ever
+                override the literals: every organization was told its Pre-IND
+                minutes were filed, its 30-day safe-to-proceed was Complete and a
+                DSMB had said continue — under a header built from its own live
+                programme code. That is fabricated regulatory history, and it is
+                the most dangerous sentence this surface could show a customer.
+
+                The interactions stay listed, because knowing Stage 3 turns on a
+                30-day safe-to-proceed is genuinely useful. The status chip goes
+                until a record backs it; Agency meetings owns that, and the row
+                still routes there. Same call the deliverables above just got. */}
+            <div className="pj-seclbl">Agency interactions at this stage</div>
             <div className="pj-interact">
               {stage.interactions.map((x, i) => (
                 <button key={i} className="pj-int" onClick={() => open('agency-meetings')}>
                   <span className="pj-int-kind">{x[0]}</span>
                   <div className="pj-int-b"><div className="pj-int-t">{x[1]}</div></div>
-                  <span className="pj-chip" data-t={x[2] === 'Complete' ? 'done' : x[2] === 'Upcoming' ? 'upcoming' : 'active'}>{x[2]}</span>
+                  <span className="go">{I.right}</span>
                 </button>
               ))}
+            </div>
+            <div className="pj-deliv-note">
+              Which agency interactions this stage involves. Their outcomes are not tracked on the programme record — Agency meetings holds the real history.
             </div>
 
             <button className="pj-ana" onClick={() => ask(stage.ana)}>{I.sparkles} {stage.ana}</button>

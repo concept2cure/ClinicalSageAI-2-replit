@@ -6,8 +6,14 @@
 
 import { serverMessage } from '@/lib/queryClient';
 import { getAuthHeaders } from '../../utils/authToken';
+import { downloadBlob } from '../v2/download';
 
-export type SpanProvenanceKind = 'cre_evidence_source' | 'author_assertion';
+export type SpanProvenanceKind =
+  | 'cre_evidence_source'
+  | 'author_assertion'
+  | 'accepted_machine_draft'
+  /** Drafted by a machine author; no person has accepted it. assertedBy is null. */
+  | 'machine_draft';
 export type SpanState = 'current' | 'changed' | 'unverified' | 'unresolved';
 
 export interface OriginRow {
@@ -20,8 +26,14 @@ export interface OriginRow {
   referenceId: string | null;
   payloadSha256: string | null;
   sourceLocator: string | null;
+  /** For an author assertion, the author; for an accepted machine draft, the
+   *  human who accepted the machine's words. */
   assertedBy: string | null;
   assertedAt: string | null;
+  /** Set for accepted_machine_draft: the machine author, and its display name
+   *  as the server names it. */
+  machineAuthorId?: string | null;
+  machineAuthorName?: string | null;
   usage: string;
   confidence: number | null;
   state?: SpanState;
@@ -35,7 +47,14 @@ export interface DataOriginsReport {
   origins: OriginRow[];
   uncovered: Array<{ charStart: number; charEnd: number }>;
   coveragePercent: number;
-  counts: { total: number; fromSources: number; authorAsserted: number; stale: number };
+  counts: {
+    total: number;
+    fromSources: number;
+    authorAsserted: number;
+    machineDrafted?: number;
+    machineDraftedUnaccepted?: number;
+    stale: number;
+  };
   generatedAt: string;
 }
 
@@ -80,15 +99,12 @@ export async function downloadDataOriginsPdf(q: SelectionQuery): Promise<void> {
     throw new Error(serverMessage(body) || `PDF export failed (${res.status})`);
   }
 
-  const blob = await res.blob();
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `data-origins-${q.documentId}-${q.charStart}-${q.charEnd}.pdf`;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  // Revoking immediately can cancel the download in some browsers; one frame is
-  // enough for the click to have been handed off.
-  requestAnimationFrame(() => URL.revokeObjectURL(url));
+  /* This site was the only one of seven that knew revoking immediately can
+     cancel the download — it deferred by a frame and said why. That knowledge
+     now lives in `downloadBlob` (which defers by a second, well past the
+     hand-off) instead of in a comment six other copies never read. */
+  downloadBlob(
+    `data-origins-${q.documentId}-${q.charStart}-${q.charEnd}.pdf`,
+    await res.blob(),
+  );
 }

@@ -59,7 +59,11 @@ CREATE TABLE IF NOT EXISTS audit_logs (
   ana_action_id TEXT,
   sha256_chain TEXT,
   occurred_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
-  hmac_seal    TEXT
+  hmac_seal    TEXT,
+  old_values   JSON,
+  new_values   JSON,
+  ip_address   TEXT,
+  user_agent   TEXT
 );
 `;
 

@@ -51,7 +51,7 @@ import os from 'node:os';
 import { createHash } from 'node:crypto';
 import { parseStringPromise } from 'xml2js';
 import { checkWellFormed, isXmllintAvailable } from '../../server/services/ectd/xml-validator';
-import { JourneyRecorder } from './harness';
+import { JourneyRecorder, assertNoSchemaGaps, assertNoDegradedTenantEnrichment } from './harness';
 
 const T = 180_000;
 
@@ -188,6 +188,15 @@ beforeAll(async () => {
 }, T);
 
 afterAll(async () => {
+  // A journey that ran against a database missing a table its subject writes
+  // to proves less than it claims (ledger L145/L147). `createIndPgliteDb`
+  // records the gaps at the PGlite seam, where Drizzle's statements land too.
+  // Ordered BEFORE the schema-gap check on purpose: a degraded membership is
+  // usually CAUSED by a missing column, and the gap check would otherwise
+  // throw first and report the symptom while hiding which claims were
+  // proven without an org context (ledger L148).
+  await assertNoDegradedTenantEnrichment();
+  assertNoSchemaGaps(harness);
   try {
     R.write('submission-export-validation');
   } finally {

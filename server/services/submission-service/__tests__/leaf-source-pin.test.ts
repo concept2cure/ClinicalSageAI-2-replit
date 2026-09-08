@@ -40,7 +40,7 @@ vi.mock('../../../db', () => ({
     }),
   },
 }));
-vi.mock('../../auditService', () => ({ default: { logAction: vi.fn() } }));
+vi.mock('../../auditService', () => ({ default: { logAction: vi.fn(async (..._a: any[]) => ({ persisted: true, chained: true, tamperProof: true })) } }));
 
 import { upsertLeaf } from '../submission-service';
 

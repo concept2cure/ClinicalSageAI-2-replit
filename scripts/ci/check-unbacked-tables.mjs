@@ -146,9 +146,21 @@ for (const f of collect(path.join(repoRoot, 'server'), ['.ts'])) {
  *
  * Third phantom-table variant this pattern has had to absorb; see the note
  * above about the two earlier ones.
+ *
+ * FOURTH: `IS DISTINCT FROM`. The comparison operator ends in the keyword this
+ * pattern keys on, so
+ *
+ *     (so.source_hash IS DISTINCT FROM l.source_hash_at_compile)
+ *
+ * yielded a phantom table `l.source_hash_at_compile` — an aliased COLUMN — and
+ * failed the gate on valid SQL that references no such table. Same narrow
+ * remedy as the `FOR UPDATE` case above: suppress only a FROM preceded by
+ * DISTINCT, which is never a table-introducing FROM. Adding the column name to
+ * NOT_A_TABLE would have been the weaker fix, silencing this one spelling while
+ * leaving the next `IS DISTINCT FROM` to fail the same way.
  */
 const REF_RE =
-  /\b(?<!FOR\s)(?<!FOR\s{2})(FROM|JOIN|INSERT\s+INTO|UPDATE|DELETE\s+FROM)\s+(?:ONLY\s+)?([a-zA-Z_][\w]*(?:\.[a-zA-Z_][\w]*)?)(\s*\()?/gi;
+  /\b(?<!FOR\s)(?<!FOR\s{2})(?<!DISTINCT\s)(?<!DISTINCT\s{2})(FROM|JOIN|INSERT\s+INTO|UPDATE|DELETE\s+FROM)\s+(?:ONLY\s+)?([a-zA-Z_][\w]*(?:\.[a-zA-Z_][\w]*)?)(\s*\()?/gi;
 
 /** SQL keywords and set-returning functions that follow FROM/JOIN but are not tables. */
 const NOT_A_TABLE = new Set([

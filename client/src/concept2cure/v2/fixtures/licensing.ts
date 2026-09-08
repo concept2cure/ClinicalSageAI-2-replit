@@ -119,14 +119,6 @@ export const LIC_TIER_LEVEL: Record<string, number> = {
   enterprise: 3,
 };
 
-export const LIC_PAYMENT_STATUS: string[] = [
-  'active',
-  'trialing',
-  'past_due',
-  'canceled',
-  'incomplete',
-];
-
 /* Platform-grantable roles (GRANTABLE_ROLES); business-tier confer finance. */
 export const LIC_ROLES: LicRole[] = [
   { id: 'owner', label: 'Owner', business: true, desc: 'Full control incl. finance & billing' },
@@ -136,10 +128,6 @@ export const LIC_ROLES: LicRole[] = [
   { id: 'support', label: 'Support', business: false, desc: 'Assist tenants; read-heavy' },
 ];
 
-/* Helper: price after annual discount */
-export function licAnnual(monthly: number, pct?: number): number {
-  return Math.round(monthly * 12 * (1 - (pct || 0) / 100));
-}
 
 /* Helper: seat bundle discount lookup */
 export function licBundle(seats: number): { discountPct: number; label: string | null } {

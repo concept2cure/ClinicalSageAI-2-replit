@@ -15,6 +15,8 @@
 import { Router, Request, Response } from 'express';
 
 import { authenticateToken } from '../middleware/auth';
+import { serverError } from '../lib/api-response';
+import { createScopedLogger } from '../utils/logger';
 import auditService from '../services/auditService';
 import { corpusVersion } from '../services/ivd-knowledge/knowledge.service';
 import {
@@ -46,10 +48,15 @@ function pathParam(req: Request, key: string): string {
   const v = req.params[key];
   return Array.isArray(v) ? (v[0] ?? '') : (v ?? '');
 }
-function fail(res: Response, e: unknown): Response {
-  const msg = e instanceof Error ? e.message : 'unknown';
-  return res.status(500).json({ error: 'Operation failed', detail: msg });
-}
+const logger = createScopedLogger('ivd-assessments');
+
+/* This file kept a private `fail()` that put `Error.message` in the response as
+   `detail` — the exact disclosure server/lib/api-response.ts documents having
+   removed from every other MDX endpoint. A Postgres failure here shipped its
+   table, column and constraint names to whatever read the response: a browser
+   devtools panel, a proxy log, a saved HAR. `serverError` logs the real message
+   against the request id the caller is shown, and answers with a code, a
+   sentence and that id — one way of doing this, not two. */
 function orgGuard(req: Request, res: Response): number | null {
   const orgId = getOrgId(req);
   if (orgId === null) { res.status(403).json({ error: 'Organization context required' }); return null; }
@@ -67,7 +74,7 @@ router.get('/', async (req, res) => {
       limit: limitRaw ? parseInt(limitRaw, 10) || undefined : undefined,
     });
     res.json({ rows, count: rows.length });
-  } catch (e) { fail(res, e); }
+  } catch (e) { serverError(res, logger, 'listing IVD assessments', e); }
 });
 
 router.post('/', async (req, res) => {
@@ -94,7 +101,7 @@ router.post('/', async (req, res) => {
     } as any);
     await auditService.logAction({ tenantId: orgId, userId: getUserId(req) ?? undefined, action: 'ivd.assessment.save', resourceType: 'ivd_assessment', resourceId: row.id, details: { type: b.assessmentType } });
     res.status(201).json(row);
-  } catch (e) { fail(res, e); }
+  } catch (e) { serverError(res, logger, 'saving the IVD assessment', e); }
 });
 
 router.get('/documents', async (req, res) => {
@@ -102,7 +109,7 @@ router.get('/documents', async (req, res) => {
   try {
     const rows = await listGeneratedDocuments(orgId, { docType: q(req, 'doc_type'), programId: q(req, 'program_id') });
     res.json({ rows, count: rows.length });
-  } catch (e) { fail(res, e); }
+  } catch (e) { serverError(res, logger, 'listing generated IVD documents', e); }
 });
 
 router.post('/documents', async (req, res) => {
@@ -122,7 +129,7 @@ router.post('/documents', async (req, res) => {
     });
     await auditService.logAction({ tenantId: orgId, userId: getUserId(req) ?? undefined, action: 'ivd.document.save', resourceType: 'ivd_generated_document', resourceId: row.id, details: { docType: b.docType } });
     res.status(201).json(row);
-  } catch (e) { fail(res, e); }
+  } catch (e) { serverError(res, logger, 'saving the generated IVD document', e); }
 });
 
 router.get('/:id', async (req, res) => {
@@ -131,7 +138,7 @@ router.get('/:id', async (req, res) => {
     const row = await getAssessment(orgId, pathParam(req, 'id'));
     if (!row) return res.status(404).json({ error: 'Assessment not found' });
     res.json(row);
-  } catch (e) { fail(res, e); }
+  } catch (e) { serverError(res, logger, 'loading the IVD assessment', e); }
 });
 
 router.delete('/:id', async (req, res) => {
@@ -141,7 +148,7 @@ router.delete('/:id', async (req, res) => {
     if (!ok) return res.status(404).json({ error: 'Assessment not found' });
     await auditService.logAction({ tenantId: orgId, userId: getUserId(req) ?? undefined, action: 'ivd.assessment.delete', resourceType: 'ivd_assessment', resourceId: pathParam(req, 'id') });
     res.json({ ok: true });
-  } catch (e) { fail(res, e); }
+  } catch (e) { serverError(res, logger, 'deleting the IVD assessment', e); }
 });
 
 export default router;

@@ -392,7 +392,16 @@
   --color-text-primary: #141413;
   --color-text-secondary: #4a4a46;
   --color-text-tertiary: #6b6963;
-  --color-text-code: #141413;
+  /* --color-text-code is deliberately GONE. It was #141413, and the rule it fed
+     — `code, pre, kbd` below — is the last generic code rule in this sheet, so
+     it beat the `code,kbd,pre,.mono { color: var(--text-200) }` above it and
+     painted every inline <code> near-black: 1.22:1 on the dark page.
+     Re-pointing it at var(--text-200) here did NOT fix it, and that is the
+     point worth recording: a custom property is substituted where it is
+     DECLARED, and :root is never .dark, so the alias just froze the LIGHT
+     --text-200 (#3d3d3a) instead — 1.44:1, a different wrong answer. The rule
+     below now reads the themed token directly, with no :root indirection to
+     freeze. */
   --color-link: #2563eb;
   --color-link-hover: #1d4ed8;
 
@@ -508,7 +517,7 @@ a:hover {
 code,
 pre,
 kbd {
-  color: var(--color-text-code);
+  color: var(--text-200);
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono',
     'Courier New', monospace;
   font-variant-ligatures: none;

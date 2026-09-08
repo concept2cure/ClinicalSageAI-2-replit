@@ -102,6 +102,28 @@ function catalogMigrationFiles(): string[] {
  */
 const NEVER_LICENSABLE = new Set(['audit-trail', 'part11-console']);
 
+/**
+ * Module ids that MORE THAN ONE migration seeds, and why.
+ *
+ * The INSERTs are upserts, so a later migration restating a row is a legitimate
+ * re-key rather than a duplicate. What is not legitimate is two migrations
+ * disagreeing about a row without anyone knowing — the winner then depends on
+ * apply order alone. Each acknowledged re-key is listed here; anything new
+ * fails the duplicate check until it is either fixed or recorded with a reason.
+ *
+ * design-controls / human-factors
+ *   migrations/20260814j_catalog_missing_product_surfaces.sql seeded both in the
+ *   ROOT migrations/ tree as 'Design controls' / 'Human factors' under category
+ *   'Device & diagnostics' (sort 210/220) with `{"tiers": []}` — which is what
+ *   left them unsellable. db/migrations/20260823_module_catalog_mdx_registers.sql
+ *   re-keys them to 'Design controls (DHF)' / 'Human factors (IEC 62366-1)'
+ *   under 'Evidence & data' (255/305) at the standard tier. That file is ordered
+ *   after 20260814j in C2C_MIGRATION_FILES and asserts its own end state, so the
+ *   later definition wins deterministically. Its header carries the same
+ *   correction — it originally claimed neither id had ever been catalogued.
+ */
+const KNOWN_RESEEDS = ['design-controls', 'human-factors'];
+
 /** Every app id the shell presents to a user, across every segment. */
 function shellAppIds(): Set<string> {
   const ids = new Set<string>();
@@ -164,8 +186,21 @@ describe('Apps catalog ↔ shell taxonomy', () => {
   /** The base migration alone, for the assertions that are about ITS structure. */
   const baseSql = sources[0];
   const retired = new Set(sources.flatMap(retiredModuleIds));
-  /** Every row the migrations INSERT, retired or not — the structural set. */
-  const seededRows = sources.flatMap(seededModuleIds);
+  /** Every INSERT row across every catalog migration, in apply order — including
+   *  an id a later migration RE-KEYS. */
+  const insertedInOrder = sources.flatMap(seededModuleIds);
+  /**
+   * The catalog as a deployed database actually holds it: one row per
+   * module_id, last definition winning.
+   *
+   * This used to be the flat `insertedInOrder` list, which modelled the
+   * migrations as if every INSERT added a row. They do not — every one of them
+   * is `ON CONFLICT (module_id) DO UPDATE`, and the whole follow-up pattern
+   * this file documents depends on that. So a legitimate re-key (a later
+   * migration restating a row's name, category and tier) read as a duplicate
+   * entitlement, and the counts below drifted from what any database holds.
+   */
+  const seededRows = Array.from(new Set(insertedInOrder));
   /** What the catalog actually advertises: inserted, minus stood back down. */
   const seeded = seededRows.filter((id) => !retired.has(id));
   const shell = shellAppIds();
@@ -242,23 +277,44 @@ describe('Apps catalog ↔ shell taxonomy', () => {
   });
 
   it('seeds no duplicate module ids (module_id is UNIQUE)', () => {
-    expect(seededRows.length).toBe(new Set(seededRows).size);
+    /* A repeated id is not automatically a bug — the INSERTs are upserts and a
+       follow-up migration may restate a row. It IS a bug when nobody knew: two
+       migrations that disagree about a row's name, category or tier, with the
+       winner decided by apply order alone.
+       So each one is acknowledged here, with the reason, and anything NEW fails. */
+    const seedCount = new Map<string, number>();
+    for (const id of insertedInOrder) seedCount.set(id, (seedCount.get(id) ?? 0) + 1);
+    const reseeded = [...seedCount.entries()].filter(([, n]) => n > 1).map(([id]) => id).sort();
+    expect(
+      reseeded,
+      'a module id is seeded by more than one migration — if that is a deliberate re-key, add it to KNOWN_RESEEDS with the reason',
+    ).toEqual(KNOWN_RESEEDS);
   });
 
   it('gives every module its true deep link, unique per module', () => {
     // The legacy seed pointed six different modules at one dead '/ind-workspace'.
     // Keying paths off the surface id makes that collision impossible.
     const paths = Array.from(sql.matchAll(/'(\/concept2cure\/[a-z0-9-]+)'/g)).map((m) => m[1]);
-    expect(paths.length).toBe(seededRows.length);
-    expect(new Set(paths).size).toBe(paths.length);
+    // One path per EFFECTIVE row; a re-keyed id contributes its path twice in
+    // the text and once in the catalog, so both sides are de-duplicated.
+    expect(new Set(paths).size).toBe(seededRows.length);
     for (const id of seededRows) expect(paths).toContain(`/concept2cure/${id}`);
   });
 
-  it('invents no commercial packaging — every module is seeded unrestricted', () => {
-    // Tiers/industries are a business decision. Until one is made, no module may
-    // ship gated by a tier this migration guessed.
-    const policies = Array.from(sql.matchAll(/'(\{"tiers":[^']*\})'::json/g)).map((m) => m[1]);
-    expect(policies.length).toBe(seededRows.length);
+  it('guesses no commercial packaging — the BASE seed ships every module unrestricted', () => {
+    /* Tiers/industries are a business decision, and 20260810 said so in its own
+       header: it "deliberately left [packaging] to be applied later rather than
+       guessed here". That promise is what this pins.
+
+       It used to pin the whole concatenated seed, which meant the gate failed
+       the moment the decision was actually MADE —
+       20260823_module_catalog_commercial_packaging.sql applies packaging with a
+       per-group citation back to billing.ts PRICING[] and license-manager.ts
+       FEATURE_TIER_MAP. A gate that forbids a decision from ever being taken is
+       not protecting anything; it is freezing the product. The base migration's
+       promise stands; what follows it is allowed to be a decision. */
+    const policies = Array.from(baseSql.matchAll(/'(\{"tiers":[^']*\})'::json/g)).map((m) => m[1]);
+    expect(policies.length).toBeGreaterThan(0);
     for (const p of policies) expect(JSON.parse(p)).toEqual({ tiers: [], industries: [] });
   });
 

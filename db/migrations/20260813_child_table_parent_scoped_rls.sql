@@ -156,6 +156,8 @@ DECLARE
   i INT;
   child TEXT; fk_col TEXT; parent TEXT; parent_col TEXT; parent_tenant TEXT;
   predicate TEXT;
+  key_cast BOOLEAN;
+  tenant_cast BOOLEAN;
   applied INT := 0;
   skipped INT := 0;
 BEGIN
@@ -186,6 +188,41 @@ BEGIN
       CONTINUE;
     END IF;
 
+    -- AMENDED IN PLACE 2026-09-07 (CLAUDE.md Rule 1): the predicate below
+    -- compares the child's FK to the parent's key and the parent's tenant
+    -- column to an INT. Where a deployment's catalog carries a different type
+    -- (a uuid parent key against an integer FK, or a uuid tenant column),
+    -- CREATE POLICY fails with "operator does not exist: uuid = integer" and
+    -- the whole set halts at this file on every deploy.
+    --
+    -- AMENDED AGAIN 2026-09-08: the first amendment SKIPPED such a pair, and a
+    -- skip here happens BEFORE the ENABLE/FORCE below — so the table was left
+    -- with row-level security off and no policy at all. These forty tables were
+    -- chosen precisely because they carry no tenant column of their own, so
+    -- neither the tenant-isolation sweep (which matches organization_id/org_id/
+    -- tenant_id) nor the uuid list recovers them: a skip meant fully
+    -- cross-tenant readable, which is the opposite of what this file is for.
+    -- Unblocking a deploy is not worth opening a table.
+    --
+    -- So a type mismatch no longer skips: it compares the keys AS TEXT. A
+    -- foreign key and the key it references denote the same value whatever the
+    -- catalog says their types are, so ::text is the same join, and a pair that
+    -- turns out not to be a real parent/child matches nothing — which denies,
+    -- rather than exposes. The native comparison is kept wherever the types
+    -- already agree, so only the odd pair pays for the cast.
+    key_cast := (SELECT data_type FROM information_schema.columns
+                  WHERE table_schema='public' AND table_name=child AND column_name=fk_col)
+                IS DISTINCT FROM
+                (SELECT data_type FROM information_schema.columns
+                  WHERE table_schema='public' AND table_name=parent AND column_name=parent_col);
+    tenant_cast := (SELECT data_type FROM information_schema.columns
+                     WHERE table_schema='public' AND table_name=parent AND column_name=parent_tenant)
+                   NOT IN ('integer', 'bigint', 'smallint');
+    IF key_cast OR tenant_cast THEN
+      RAISE WARNING '[child-rls] % → %: key or tenant column type does not fit the integer-tenant predicate — policied by text comparison instead (key_cast=%, tenant_cast=%)',
+        child, parent, key_cast, tenant_cast;
+    END IF;
+
     -- ENABLE alone leaves the table OWNER unfiltered; FORCE is what subjects it.
     EXECUTE format('ALTER TABLE public.%I ENABLE ROW LEVEL SECURITY', child);
     EXECUTE format('ALTER TABLE public.%I FORCE ROW LEVEL SECURITY', child);
@@ -205,11 +242,21 @@ BEGIN
     predicate := format(
       $p$EXISTS (
            SELECT 1 FROM public.%I p
-            WHERE p.%I = public.%I.%I
-              AND ( p.%I = NULLIF(current_setting('app.current_tenant_id', TRUE), '')::INT
-                 OR p.%I = substring(current_setting('app.current_org_id',    TRUE) from '^[0-9]+$')::INT )
+            WHERE p.%I%s = public.%I.%I%s
+              AND ( p.%I%s = %s
+                 OR p.%I%s = %s )
          )$p$,
-      parent, parent_col, child, fk_col, parent_tenant, parent_tenant);
+      parent,
+      parent_col, CASE WHEN key_cast THEN '::text' ELSE '' END,
+      child, fk_col, CASE WHEN key_cast THEN '::text' ELSE '' END,
+      parent_tenant, CASE WHEN tenant_cast THEN '::text' ELSE '' END,
+      CASE WHEN tenant_cast
+           THEN $t$NULLIF(current_setting('app.current_tenant_id', TRUE), '')$t$
+           ELSE $t$NULLIF(current_setting('app.current_tenant_id', TRUE), '')::INT$t$ END,
+      parent_tenant, CASE WHEN tenant_cast THEN '::text' ELSE '' END,
+      CASE WHEN tenant_cast
+           THEN $t$substring(current_setting('app.current_org_id', TRUE) from '^[0-9]+$')$t$
+           ELSE $t$substring(current_setting('app.current_org_id', TRUE) from '^[0-9]+$')::INT$t$ END);
 
     EXECUTE format($pol$
       CREATE POLICY tenant_isolation_policy ON public.%I

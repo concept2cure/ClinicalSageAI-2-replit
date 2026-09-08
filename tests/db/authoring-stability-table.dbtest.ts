@@ -43,8 +43,24 @@ import { SignJWT } from 'jose';
 import { Pool } from 'pg';
 import { databaseUrl } from '../setup.db';
 
-/** Marks every row this suite creates, so cleanup never touches anything else. */
-const PROBE_TITLE = 'dbtest-w11 Module 3 stability';
+/**
+ * Marks every row this suite creates, so cleanup never touches anything else.
+ *
+ * UNIQUE PER RUN, and it has to be. The title was a fixed string, and the
+ * teardown below is written to survive the Part 11 ledger refusing its DELETE —
+ * it catches the append-only error and marks the row "(retired)" instead. That
+ * is the right behaviour for an immutable ledger, but it means the documents
+ * are never actually removed: doc_revisions_append_only() blocks the cascade,
+ * so `DELETE FROM authoring_documents WHERE title LIKE 'dbtest-w11%'` fails for
+ * the owner too. Every run therefore left its document behind, and the next run
+ * POSTed the same title and got 409 Conflict — this suite passed once per
+ * database and failed every time after, which is invisible in CI (a fresh
+ * database each run) and immediate for anyone running it twice locally.
+ *
+ * A per-run suffix cannot collide with a row no one is allowed to delete. The
+ * cleanup still matches on the prefix, so it only ever sees its own rows.
+ */
+const PROBE_TITLE = `dbtest-w11 Module 3 stability ${process.pid}-${Date.now().toString(36)}`;
 
 const CONDITIONS = ['25°C / 60% RH', '30°C / 65% RH', '40°C / 75% RH'];
 const TIMEPOINTS = ['0 M', '3 M', '6 M', '9 M', '12 M'];
@@ -242,6 +258,19 @@ describe('BP-W1-1 wave gate — a stability table reaches Word as a table', () =
   });
 
   it('exports to Word as a REAL table — <w:tbl>, 10 rows, 70 cells', async () => {
+    // Freeze first. The export route refuses an editable document with 409:
+    // exporting one would present it as a 21 CFR Part 11 filing artifact, with
+    // a signature manifest attributed to content that has no immutable snapshot
+    // behind it. This suite predates that guard and used to export straight
+    // from the editable state, so it began failing on a correct fail-closed
+    // change rather than on anything about Word tables. Freezing is what a real
+    // caller does before exporting, so the test now exercises the real path.
+    const frozen = await request(app)
+      .post(`/api/authoring/docs/${docId}/freeze`)
+      .set('Authorization', auth)
+      .send({ reason: 'dbtest: sealing the record so it can be exported' });
+    expect(frozen.status, `freeze: ${JSON.stringify(frozen.body)}`).toBe(200);
+
     const res = await request(app)
       .post(`/api/authoring/docs/${docId}/export`)
       .set('Authorization', auth)

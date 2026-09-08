@@ -8,7 +8,6 @@
 
 import express from 'express';
 import { checkForOpenAIKey } from '../../utils/api-security.js';
-import { validateRequestBody } from '../../utils/validation.js';
 import { changeImpactSchema } from './types.js';
 import { rateLimit } from 'express-rate-limit';
 import fs from 'fs';

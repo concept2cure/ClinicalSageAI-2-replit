@@ -1,7 +1,7 @@
 /**
  * PathwayPanes — the pathway sub-tab bar shared by every pathway surface
  * (510k / PMA / CER), plus the DossierDrawer that routes any pane to the live
- * document section. Ported from `design-system/ui_kits/mdx/PathwayPanes.jsx`.
+ * document section. Ported from `ui_kits/mdx/PathwayPanes.jsx`.
  *
  * Tabs: Workspace · Audit trail · Correspondence · Approvals · Files.
  * The host surface passes its existing content as `workspace`; the other tabs
@@ -20,6 +20,7 @@ import { DossierStore, useSection } from '../../store/dossierStore';
 import { DataGate } from '../../components/DataGate';
 import { FilesTreePane } from './FilesTreePane';
 import { AnaDrafter } from '../../components/AnaDrafter';
+import { CORRESP_DETAIL } from '../../data/correspondenceDetail';
 import { usePathwayTabsData } from '../../hooks/usePathwayTabsData';
 import { useDossierHydration } from '../../hooks/useDossier';
 import { useSectionSave, type SaveState } from '../../hooks/useSectionSave';
@@ -313,7 +314,9 @@ function CorrespondencePane({ pathway, items, onOpenSection, onAskAna, onDraftRe
   items: Correspondence[];
   onOpenSection: OpenSection;
   onAskAna: (text: string) => void;
-  onDraftResponse?: (c: Correspondence) => void;
+  /** Returns true when the drafter took ownership of this letter. False means
+      the caller must fall back to asking AnA — never a silent no-op. */
+  onDraftResponse?: (c: Correspondence) => boolean;
 }) {
   const [statusFilter, setStatusFilter] = React.useState('all');
   const [selectedId, setSelectedId] = React.useState<string | undefined>(items[0]?.id);
@@ -338,9 +341,9 @@ function CorrespondencePane({ pathway, items, onOpenSection, onAskAna, onDraftRe
         <div className="corr-bar-l">
           <span className="corr-stat">
             <span className="cs-num err">{counts.open}</span> open
-            <span className="cs-sep">·</span>
+            <span className="cs-sep" aria-hidden="true">·</span>
             <span className="cs-num warn">{counts.review}</span> in review
-            <span className="cs-sep">·</span>
+            <span className="cs-sep" aria-hidden="true">·</span>
             <span className="cs-num">{counts.closed}</span> closed
           </span>
         </div>
@@ -403,7 +406,9 @@ function CorrDetail({ c, onOpenSection, onAskAna, onDraftResponse }: {
   c: Correspondence;
   onOpenSection: OpenSection;
   onAskAna: (text: string) => void;
-  onDraftResponse?: (c: Correspondence) => void;
+  /** Returns true when the drafter took ownership of this letter. False means
+      the caller must fall back to asking AnA — never a silent no-op. */
+  onDraftResponse?: (c: Correspondence) => boolean;
 }) {
   const days = daysUntil(c.due);
   const overdue = days !== null && days < 0;
@@ -460,7 +465,13 @@ function CorrDetail({ c, onOpenSection, onAskAna, onDraftResponse }: {
       )}
 
       <div className="audit-det-actions">
-        <button className="audit-act primary" onClick={() => (onDraftResponse ? onDraftResponse(c) : onAskAna(`Draft response to ${c.kind}: ${c.subject}`))}>
+        <button
+          className="audit-act primary"
+          onClick={() => {
+            if (onDraftResponse?.(c)) return;
+            onAskAna(`Draft response to ${c.kind}: ${c.subject}`);
+          }}
+        >
           {I.sparkles} Draft response with AnA
         </button>
         <button className="audit-act">{I.userPlus} Assign</button>
@@ -509,7 +520,7 @@ function ApprovalsPane({ approvals, onOpenSection, currentUser = 'You' }: { appr
               </div>
               <span className="audit-signed" title="Signed · Part 11">{I.lock}</span>
               {a.target_id && (
-                <button className="ap-link" onClick={() => onOpenSection({ id: a.target_id!, label: a.target })}>
+                <button className="ap-link" aria-label={`Open ${a.target}`} onClick={() => onOpenSection({ id: a.target_id!, label: a.target })}>
                   {I.arrowRight}
                 </button>
               )}
@@ -1120,9 +1131,28 @@ export function PathwayPanes({ pathway, workspace, onAskAna, onOpenEditor, progr
             sample={fixtures.correspondence}
             emptyHint="Agency and notified-body letters appear here once received for this program."
           >
-            {(items) => (
-              <CorrespondencePane pathway={pathway} items={items} onOpenSection={openSection} onAskAna={onAskAna} onDraftResponse={(c) => setDrafterCorr(c)} />
-            )}
+            {(items) => {
+              /* Only hand a letter to AnaDrafter when a structured decomposition
+                 of it actually exists. Passing this unconditionally shadowed
+                 CorrDetail's real-AnA fallback, so on live correspondence the
+                 primary action opened a workspace that could only say "No
+                 structured letter on file" — a dead button on the one screen
+                 where a response to an agency is written. Live letters now
+                 reach AnA. */
+              return (
+              <CorrespondencePane
+                pathway={pathway}
+                items={items}
+                onOpenSection={openSection}
+                onAskAna={onAskAna}
+                onDraftResponse={c => {
+                  if (!CORRESP_DETAIL[c.id]) return false;
+                  setDrafterCorr(c);
+                  return true;
+                }}
+              />
+              );
+            }}
           </DataGate>
         )}
         {tab === 'approvals' && (

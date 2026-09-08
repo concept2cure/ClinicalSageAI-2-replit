@@ -1,0 +1,20 @@
+// Pre-fix AuthoringFilingBar.doFreeze (recovered). The comment above the catch
+// says apiRequest throws on non-2xx, which is true of every status but 401 —
+// the one that returns, and lands here on "Document frozen and sealed".
+export function doFreezeFixture({ docId, fireToast, onChanged, setDialog }: any) {
+  return async (v: Record<string, string>) => {
+    try {
+      const res = await apiRequest('POST', `/api/authoring/docs/${docId}/freeze`, {
+        reason: v.reason,
+        version: v.version || undefined,
+      });
+      const json = await res.json().catch(() => null);
+      const hash = (json as { contentHash?: string })?.contentHash;
+      fireToast('Document frozen and sealed' + (hash ? ' · ' + String(hash).slice(0, 12) + '…' : '') + '.');
+      setDialog(null);
+      onChanged();
+    } catch (e) {
+      fireToast('Couldn’t freeze the document.', 'error');
+    }
+  };
+}

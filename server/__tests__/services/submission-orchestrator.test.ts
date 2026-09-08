@@ -1,4 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
+import { readFileSync } from 'node:fs';
+import path from 'node:path';
 
 // Mock the DB before importing modules that use it
 vi.mock('../../db', () => ({
@@ -179,10 +181,48 @@ describe('module3-extensions', () => {
       expect(keys).toContain('3.2.A.3');
     });
 
-    it('marks 3.2.A.2 as not applicable for small molecules', () => {
+    it('marks 3.2.A.2 as not applicable when the substance is RECORDED as a chemical synthesis', () => {
+      const chemical: CanonicalSource = {
+        ...drugSubstanceSource,
+        sourcePayload: { ...drugSubstanceSource.sourcePayload, modality: 'small_molecule' },
+      };
+      const sections = composeAppendices([chemical]);
+      const a2 = sections.find(s => s.sectionKey === '3.2.A.2');
+      expect(a2?.narrativeDraft).toContain('does not apply to the drug substance');
+
+      /* AND IT SAYS WHICH FACT IT READ. This row records a modality and NO
+         manufacturing route, which is the ordinary shape for a small molecule
+         — and the narrative interpolated the empty route regardless, producing
+         "whose recorded manufacturing route is: ." A sentence asserting a
+         recorded route with nothing in it, in the one appendix whose subject is
+         adventitious agents, is the same claim-over-unread-data the branch
+         around it was written to remove. */
+      expect(a2?.narrativeDraft).not.toMatch(/manufacturing route is:\s*\./);
+      expect(a2?.narrativeDraft).toContain('modality is recorded as a chemical synthesis');
+      expect(a2?.narrativeDraft).toContain('no manufacturing route recorded');
+    });
+
+    it('names the route itself when one IS recorded', () => {
+      const chemical: CanonicalSource = {
+        ...drugSubstanceSource,
+        sourcePayload: {
+          ...drugSubstanceSource.sourcePayload,
+          manufacturingRoute: 'Multi-step chemical synthesis from 4-aminophenol',
+        },
+      };
+      const a2 = composeAppendices([chemical]).find(s => s.sectionKey === '3.2.A.2');
+      expect(a2?.narrativeDraft).toContain('Multi-step chemical synthesis from 4-aminophenol');
+      expect(a2?.narrativeDraft).toContain('does not apply to the drug substance');
+    });
+
+    it('does NOT declare 3.2.A.2 not applicable from a row that records no origin either way', () => {
+      // A drug-substance row carrying only a name is not evidence of a chemical
+      // synthesis. The section says applicability is not established rather
+      // than issuing an adventitious-agent all-clear nobody recorded.
       const sections = composeAppendices([drugSubstanceSource]);
       const a2 = sections.find(s => s.sectionKey === '3.2.A.2');
-      expect(a2?.narrativeDraft).toContain('not applicable');
+      expect(a2?.narrativeDraft).toContain('NOT ESTABLISHED');
+      expect(a2?.narrativeDraft?.toLowerCase()).not.toContain('not applicable for chemical');
     });
 
     it('lists novel excipients in 3.2.A.3', () => {
@@ -397,6 +437,45 @@ describe('ectd-validator-hardening', () => {
         </ectd:ectd>`;
       const findings = validateDtdConformance(xml, []);
       expect(findings.some(f => f.code === 'DTD_LEAF_MISSING_ATTR')).toBe(true);
+    });
+
+    // The vendored fixtures are the gate's own acceptance case. Nothing loaded
+    // them before, so the gate had never actually been exercised end to end:
+    // index-valid.xml failed on three phantom DTD_LEAF_MISSING_ATTR findings
+    // raised against the `<leaf>` written inside its own documentation comment.
+    // Assert both directions here so a regression in comment handling — in
+    // either direction — fails the suite rather than the demo.
+    const fixture = (name: string): string =>
+      readFileSync(path.resolve(process.cwd(), 'assets/ectd-dtd/fixtures', name), 'utf8');
+
+    it('passes the vendored conformant backbone fixture with zero findings', () => {
+      const findings = validateDtdConformance(fixture('index-valid.xml'), []);
+      expect(findings).toEqual([]);
+    });
+
+    it('does not read <leaf> inside an XML comment as a leaf', () => {
+      // index-valid.xml documents DTD_LEAF_MISSING_ATTR using a literal <leaf>
+      // in its header comment; only the four real leaves may be scanned.
+      const findings = validateDtdConformance(fixture('index-valid.xml'), []);
+      expect(findings.filter(f => f.code === 'DTD_LEAF_MISSING_ATTR')).toEqual([]);
+    });
+
+    it('fails the vendored non-conformant backbone fixture on every seeded violation', () => {
+      const findings = validateDtdConformance(fixture('index-invalid.xml'), []);
+      const codes = new Set(findings.map(f => f.code));
+      for (const expected of [
+        'DTD_NO_DECLARATION',
+        'DTD_NO_DOCTYPE',
+        'DTD_BAD_ROOT',
+        'DTD_MISSING_ECTD_NS',
+        'DTD_MISSING_XLINK_NS',
+        'DTD_LEAF_MISSING_ATTR',
+        'DTD_CHECKSUM_TYPE',
+        'DTD_UNKNOWN_ELEMENT',
+      ]) {
+        expect(codes, `expected ${expected} from index-invalid.xml`).toContain(expected);
+      }
+      expect(findings.some(f => f.severity === 'error')).toBe(true);
     });
   });
 

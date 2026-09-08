@@ -3,14 +3,14 @@ import { advisePmaReadiness, PMA_ADVISORY_TOOL_SPEC } from '../pma-advisor';
 import type { PmaInputLeaf } from '../../pathway-engines/pma/pma-mapper';
 
 const completePma: PmaInputLeaf[] = [
-  { sectionCode: '1', title: 'Cover letter and administrative information' },
-  { sectionCode: '2', title: 'Device description and indications for use' },
-  { sectionCode: '3', title: 'Manufacturing and quality system information' },
-  { sectionCode: '4', title: 'Nonclinical bench and biocompatibility studies' },
-  { sectionCode: '5', title: 'Clinical investigation — pivotal study' },
-  { sectionCode: '6', title: 'Proposed labeling' },
-  { sectionCode: '7', title: 'Summary of safety and effectiveness data' },
-  { sectionCode: '8', title: 'Statistical analysis plan and results' },
+  { sectionCode: '1', title: 'Cover letter and administrative information', substantive: true },
+  { sectionCode: '2', title: 'Device description and indications for use', substantive: true },
+  { sectionCode: '3', title: 'Manufacturing and quality system information', substantive: true },
+  { sectionCode: '4', title: 'Nonclinical bench and biocompatibility studies', substantive: true },
+  { sectionCode: '5', title: 'Clinical investigation — pivotal study', substantive: true },
+  { sectionCode: '6', title: 'Proposed labeling', substantive: true },
+  { sectionCode: '7', title: 'Summary of safety and effectiveness data', substantive: true },
+  { sectionCode: '8', title: 'Statistical analysis plan and results', substantive: true },
 ];
 
 describe('advisePmaReadiness', () => {
@@ -24,7 +24,7 @@ describe('advisePmaReadiness', () => {
   });
 
   it('advises not-fileable with missing modules + actions when incomplete', () => {
-    const a = advisePmaReadiness({ leaves: [{ sectionCode: '1', title: 'Cover letter' }] });
+    const a = advisePmaReadiness({ leaves: [{ sectionCode: '1', title: 'Cover letter', substantive: true }] });
     expect(a.ready).toBe(false);
     expect(a.missingRequiredModules.length).toBeGreaterThan(0);
     expect(a.recommendedActions.length).toBe(a.missingRequiredModules.length);

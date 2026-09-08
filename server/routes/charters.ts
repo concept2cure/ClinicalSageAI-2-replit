@@ -333,30 +333,29 @@ router.post('/', async (req: Request, res: Response) => {
     const customInstructionsHash = body.customInstructions
       ? createHash('sha256').update(body.customInstructions).digest('hex')
       : null;
-    try {
-      await auditService.logAction({
-        organizationId: tenant.orgId,
-        userId: tenant.userId,
-        action: 'charter.created',
-        resourceType: 'charter',
-        resourceId: newCharter.id,
-        ipAddress: req.ip,
-        userAgent: req.get('user-agent') ?? undefined,
-        details: {
-          projectId: body.projectId,
-          submissionType: body.submissionType,
-          regulatoryRegion: body.regulatoryRegion,
-          productName: body.productName,
-          indication: body.targetIndication ?? null,
-          customInstructionsHash,
-          approvalStatus: 'draft',
-          version: 1,
-          contentHash,
-        },
-      });
-    } catch (auditErr) {
-      log.error('charter.created audit write threw — row created without audit', {
-        err: auditErr instanceof Error ? auditErr.message : String(auditErr),
+    const charterCreatedAudit = await auditService.logAction({
+      organizationId: tenant.orgId,
+      userId: tenant.userId,
+      action: 'charter.created',
+      resourceType: 'charter',
+      resourceId: newCharter.id,
+      ipAddress: req.ip,
+      userAgent: req.get('user-agent') ?? undefined,
+      details: {
+        projectId: body.projectId,
+        submissionType: body.submissionType,
+        regulatoryRegion: body.regulatoryRegion,
+        productName: body.productName,
+        indication: body.targetIndication ?? null,
+        customInstructionsHash,
+        approvalStatus: 'draft',
+        version: 1,
+        contentHash,
+      },
+    });
+    if (!charterCreatedAudit.persisted) {
+      log.error('charter.created audit row was not persisted — row created without audit', {
+        err: charterCreatedAudit.error ?? 'no durable store accepted the row',
         charterId: newCharter.id,
         organizationId: tenant.orgId,
       });
@@ -427,25 +426,24 @@ router.get('/:charterId', async (req: Request, res: Response) => {
     // integrity audit can reproduce exactly what the user saw without
     // re-querying — the row could have mutated between this read and the
     // audit replay.
-    try {
-      await auditService.logAction({
-        organizationId: tenant.orgId,
-        userId: tenant.userId,
-        action: 'charter.read',
-        resourceType: 'charter',
-        resourceId: charter.id,
-        ipAddress: req.ip,
-        userAgent: req.get('user-agent') ?? undefined,
-        details: {
-          projectId: charter.projectId,
-          version: charter.version,
-          approvalStatus: charter.approvalStatus,
-          contentHash: charter.contentHash,
-        },
-      });
-    } catch (auditErr) {
-      log.error('charter.read audit write threw — read served without audit', {
-        err: auditErr instanceof Error ? auditErr.message : String(auditErr),
+    const charterReadAudit = await auditService.logAction({
+      organizationId: tenant.orgId,
+      userId: tenant.userId,
+      action: 'charter.read',
+      resourceType: 'charter',
+      resourceId: charter.id,
+      ipAddress: req.ip,
+      userAgent: req.get('user-agent') ?? undefined,
+      details: {
+        projectId: charter.projectId,
+        version: charter.version,
+        approvalStatus: charter.approvalStatus,
+        contentHash: charter.contentHash,
+      },
+    });
+    if (!charterReadAudit.persisted) {
+      log.error('charter.read audit row was not persisted — read served without audit', {
+        err: charterReadAudit.error ?? 'no durable store accepted the row',
         charterId: charter.id,
         organizationId: tenant.orgId,
       });
@@ -745,34 +743,33 @@ router.post('/:charterId/commitments', async (req: Request, res: Response) => {
     // charter_audit_events row IS the §11.10(e) coverage of record for the
     // charter graph.
     // ──────────────────────────────────────────────────────────────────────
-    try {
-      await auditService.logAction({
-        organizationId: tenant.orgId,
-        userId: tenant.userId,
-        action: 'charter.commitment.created',
-        resourceType: 'charter_commitment',
-        resourceId: txResult.id,
-        ipAddress: req.ip,
-        userAgent: req.get('user-agent') ?? undefined,
-        details: {
-          charterId: ownedCharter.id,
-          projectId: ownedCharter.projectId,
-          category: body.category,
-          title: body.title,
-          dueDate: dueDate.toISOString(),
-          ownerUserId,
-          ownerRole,
-          priority: body.priority ?? 'medium',
-          requiresSignature: body.requiresSignature ?? false,
-          status: 'pending',
-        },
-      });
-    } catch (auditErr) {
+    const commitmentAudit = await auditService.logAction({
+      organizationId: tenant.orgId,
+      userId: tenant.userId,
+      action: 'charter.commitment.created',
+      resourceType: 'charter_commitment',
+      resourceId: txResult.id,
+      ipAddress: req.ip,
+      userAgent: req.get('user-agent') ?? undefined,
+      details: {
+        charterId: ownedCharter.id,
+        projectId: ownedCharter.projectId,
+        category: body.category,
+        title: body.title,
+        dueDate: dueDate.toISOString(),
+        ownerUserId,
+        ownerRole,
+        priority: body.priority ?? 'medium',
+        requiresSignature: body.requiresSignature ?? false,
+        status: 'pending',
+      },
+    });
+    if (!commitmentAudit.persisted) {
       log.error(
-        'charter.commitment.created audit_logs write threw — in-tx audit row stands',
+        'charter.commitment.created audit_logs row was not persisted — in-tx audit row stands',
         {
           err:
-            auditErr instanceof Error ? auditErr.message : String(auditErr),
+            commitmentAudit.error ?? 'no durable store accepted the row',
           charterId: ownedCharter.id,
           commitmentId: txResult.id,
           organizationId: tenant.orgId,

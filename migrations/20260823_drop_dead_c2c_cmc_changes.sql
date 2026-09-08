@@ -1,0 +1,24 @@
+-- Drop c2c_cmc_changes — the dead third change-control store.
+--
+-- ── Why three stores existed, and which two remain ────────────────────────────
+-- CMC change control accreted three tables:
+--
+--   cmc_change_control    the legacy org register (shared/schema.ts), served by
+--                         /api/cmc/change-control; write-throughs to the
+--                         canonical §3.2 source layer on every save.   KEPT
+--   cmc_change_controls   the governed post-approval store
+--                         (20260730_cmc_change_control_store.sql), served by
+--                         /api/cmc-changes with deterministic SUPAC/EU
+--                         classification at read time; as of this change set
+--                         it write-throughs too when a project is stated. KEPT
+--   c2c_cmc_changes       a seed-blob store (20260718_cmc_changes_store.sql)
+--                         whose readers and writers were all removed when
+--                         /api/cmc-changes converged onto cmc_change_controls.
+--                         Verified before this drop: zero code references
+--                         outside its own DDL and one comment.        DROPPED
+--
+-- Zero-duplication rule (CLAUDE.md): a parallel path is migrated onto the
+-- canonical one and DELETED in the same change. The seed data it may carry is
+-- demo content, not tenant data — nothing governed is lost.
+
+DROP TABLE IF EXISTS c2c_cmc_changes;

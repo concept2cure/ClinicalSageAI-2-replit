@@ -99,6 +99,23 @@ export interface SubmissionBundle {
   sizeBytes: number;
   /** Region-specific format flag. */
   format: SubmissionFormat;
+  /**
+   * Per-sequence leaf manifest: each SHIPPED leaf's CTD section + final package
+   * href + md5 (+ optional op/title). The exporter/compiler persists this as the
+   * sequence's immutable `leaf_manifest`; the NEXT sequence loads it
+   * (loadPriorSequenceManifest) and diffs to derive replace/append/delete
+   * lifecycle operations. Raw shape (fed through buildLeafManifest before
+   * persisting) so the packager needs no ectd/ import. Optional: a bundle may be
+   * constructed outside the packager (integrity checks) without one.
+   */
+  leafManifest?: Array<{
+    ctdSection: string;
+    fileName: string;
+    href: string;
+    md5: string;
+    operation?: string;
+    title?: string;
+  }>;
   /** Optional human-readable display name. */
   displayName?: string;
   /**
@@ -125,8 +142,39 @@ export interface SubmissionBundle {
     required: string[];
     present: string[];
     missing: string[];
+    /**
+     * The util/style/*.xsl stylesheets the region's backbones reference and the
+     * package does NOT contain. `selfContained` has always accounted for these
+     * (assessDtdReadiness ORs both gaps), but only the DTD half was carried
+     * here — so the pre-transmit gate refused a stylesheet-only gap with an
+     * empty file list, naming nothing the operator could act on. Optional
+     * because bundles assembled before this field existed carry no value; the
+     * gate must read its absence as "not itemised", never as "none missing".
+     */
+    missingStylesheets?: string[];
     selfContained: boolean;
   };
+  /**
+   * Optional regional Module 1 backbone status: whether the region has its OWN
+   * conformant M1 backbone (fda / ema / pmda / ca) or the written
+   * `<cc>-regional.xml` is an EMA-structure PLACEHOLDER (the eight widened
+   * regions). Set by the packager; consumed by the pre-transmit gate so a
+   * placeholder can never be read as region-conformant. Shape matches
+   * `RegionalBackboneStatus` in server/services/ectd/regional-backbone-readiness.ts.
+   */
+  regionalBackbone?: {
+    region: Region;
+    file: string;
+    regionConformant: boolean;
+    /** Not conformant because another region's structure is reused. */
+    placeholderOf?: Region;
+    /** Not conformant for the region's own builder: the specific gap. */
+    conformanceGap?: string;
+  };
+  /** The region the bundle was BUILT for, as recorded on its descriptor by the
+   *  assemble route. Lets the pre-transmit region-identity check hold for
+   *  bundles with no backbone evidence (device formats). */
+  builtRegion?: Region;
   /**
    * Optional Study Tagging File (STF) roll-up: how many per-study stf.xml files
    * were generated + cross-linked into M4/M5, and how many study leaves were
@@ -231,6 +279,19 @@ export interface GatewayStatusResult {
   ackLevel?: 1 | 2 | 3;
   ackReceivedAt: Date | null;
   rawResponse?: unknown;
+  /**
+   * Where this status came from: 'agency' when checkStatus() asked the agency
+   * just now, 'stored' when it re-read the platform's own last-known row.
+   * FDA ESG has no live poll yet; its stored row was presented as a live check.
+   */
+  source: 'agency' | 'stored';
+  /**
+   * Why the agency was not asked, when source is 'stored' after a poll was
+   * attempted: the poll threw, or the agency answered something other than a
+   * status. Every gateway used to swallow this and hand back the stored row
+   * as if it were the poll's answer.
+   */
+  pollError?: string | null;
 }
 
 export interface GatewayAcknowledgment {
@@ -331,6 +392,26 @@ export class GatewayError extends Error {
     super(message);
     this.name = 'GatewayError';
   }
+}
+
+/**
+ * The eCTD sequence number and submission type a gateway writes into the
+ * agency's metadata. Refuses to default them: every gateway used to fill an
+ * absent sequence with '0000' (or '0001') and an absent type with 'initial',
+ * so a follow-up sequence whose caller forgot the metadata was announced to
+ * the agency as an original submission.
+ */
+export function requiredAgencyMetadata(req: GatewayTransmitRequest): { sequenceNumber: string; submissionType: string } {
+  const raw = req.metadata?.sequence;
+  const sequenceNumber = typeof raw === 'string' ? raw.trim() : typeof raw === 'number' ? String(raw).padStart(4, '0') : '';
+  if (!/^\d{4}$/.test(sequenceNumber)) {
+    throw new ValidationError('Transmit requires the four-digit eCTD sequence number in metadata.sequence; nothing is sent without it.', []);
+  }
+  const submissionType = typeof req.submissionType === 'string' ? req.submissionType.trim() : '';
+  if (!submissionType) {
+    throw new ValidationError('Transmit requires the submission type; nothing is sent without it.', []);
+  }
+  return { sequenceNumber, submissionType };
 }
 
 /** Thrown when the package fails pre-transmit validation. */

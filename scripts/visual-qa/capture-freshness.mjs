@@ -31,7 +31,22 @@ const SOURCE_DIRS = ['client/src', 'shared'];
 const SOURCE_EXT = new Set(['.ts', '.tsx', '.css', '.js', '.jsx']);
 const SKIP_DIRS = new Set(['node_modules', '__tests__', '.git']);
 
-function newestSourceMtime(root) {
+/**
+ * Newest source file under `dirs`, and which one it is.
+ *
+ * Exported because a capture is not the only artefact that can go stale against
+ * the source: `scripts/ci/check-component-class-coverage.mjs` reads the built
+ * CSS in dist/ and needs the same answer about the same tree, plus
+ * design-system. One implementation, two callers — a second copy of "what is
+ * the newest source file" would be free to drift and quietly disagree, which
+ * is the failure this whole file exists to prevent.
+ *
+ * @param {string} root absolute repo root
+ * @param {string[]} [dirs] repo-relative trees to walk; defaults to the ones a
+ *   markup capture depends on
+ * @returns {{ newest: number, newestFile: string }} epoch ms, and the path
+ */
+export function newestSourceMtime(root, dirs = SOURCE_DIRS) {
   let newest = 0;
   let newestFile = '';
   const walk = (dir) => {
@@ -55,7 +70,7 @@ function newestSourceMtime(root) {
       }
     }
   };
-  for (const d of SOURCE_DIRS) walk(path.join(root, d));
+  for (const d of dirs) walk(path.join(root, d));
   return { newest, newestFile };
 }
 

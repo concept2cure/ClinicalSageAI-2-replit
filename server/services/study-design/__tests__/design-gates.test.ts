@@ -9,7 +9,11 @@ import {
   estimandGate,
   endpointRedFlags,
   frameworkRules,
+  interimAnalysisGate,
+  methodEndpointGate,
+  missingDataGate,
   multiplicityGate,
+  populationGate,
   powerRedFlags,
   runAllGates,
   type DesignFinding,
@@ -80,6 +84,7 @@ function baseDesign(): StudyDesign {
       dropoutRate: 0.2,
       plannedAnalyses: [{ endpointName: 'HbA1c change', method: 'MMRM' }],
       multiplicity: { method: 'none' },
+      missingDataStrategy: 'multiple imputation under missing-at-random',
       sensitivityAnalysesSpecified: true,
       powerAssumptions: {
         effectSize: 0.4,
@@ -299,5 +304,122 @@ describe('defensibility report', () => {
     const report = validateDesign(d);
     expect(report.findings[0].severity).toBe('critical');
     expect(report.standardsChecked).toContain('ICH E9(R1)');
+  });
+});
+
+describe('§9 analysis populations', () => {
+  it('flags a superiority trial whose only primary set is per-protocol', () => {
+    const d = clone(baseDesign());
+    d.population.analysisPopulations = [
+      { kind: 'PP', definition: 'completers without major deviations', isPrimaryAnalysisSet: true },
+      { kind: 'Safety', definition: 'all treated' },
+    ];
+    const f = populationGate(d);
+    expect(codes(f)).toContain('POP-003');
+    expect(f.find(x => x.code === 'POP-003')!.severity).toBe('major');
+  });
+
+  it('flags a plan with no primary analysis set and no safety population', () => {
+    const d = clone(baseDesign());
+    d.population.analysisPopulations = [{ kind: 'ITT', definition: 'all randomized' }];
+    expect(codes(populationGate(d))).toEqual(['POP-002', 'POP-004']);
+  });
+
+  it('flags a design with no populations at all as major', () => {
+    const d = clone(baseDesign());
+    d.population.analysisPopulations = [];
+    expect(codes(populationGate(d))).toEqual(['POP-001']);
+  });
+});
+
+describe('§11 method–endpoint matching', () => {
+  it('flags a t-test planned on a time-to-event primary endpoint', () => {
+    const d = clone(baseDesign());
+    d.endpoints[0] = { name: 'OS', role: 'primary', type: 'time_to_event', definition: 'overall survival', eventDefinition: 'death from any cause' };
+    d.objectives[0].endpointName = 'OS';
+    d.estimands[0].endpointName = 'OS';
+    d.statisticalPlan.plannedAnalyses = [{ endpointName: 'OS', method: 't-test on median survival' }];
+    const f = methodEndpointGate(d);
+    expect(codes(f)).toEqual(['MTH-002']);
+    expect(f[0].severity).toBe('major');
+    expect(f[0].suggestedFix).toMatch(/Kaplan|Cox/);
+  });
+
+  it('accepts a Cox model on the same endpoint', () => {
+    const d = clone(baseDesign());
+    d.endpoints[0] = { name: 'OS', role: 'primary', type: 'time_to_event', definition: 'overall survival', eventDefinition: 'death from any cause' };
+    d.objectives[0].endpointName = 'OS';
+    d.estimands[0].endpointName = 'OS';
+    d.statisticalPlan.plannedAnalyses = [{ endpointName: 'OS', method: 'Cox proportional hazards, stratified log-rank' }];
+    expect(methodEndpointGate(d)).toEqual([]);
+  });
+
+  it('flags a chi-square on an ordinal endpoint and ANOVA without baseline on a continuous one', () => {
+    const d = clone(baseDesign());
+    d.endpoints.push({ name: 'mRS', role: 'key_secondary', type: 'ordinal', definition: 'modified Rankin scale at day 90' });
+    d.estimands.push({ ...d.estimands[0], endpointName: 'mRS' });
+    d.statisticalPlan.plannedAnalyses = [
+      { endpointName: 'HbA1c change', method: 'ANOVA' },
+      { endpointName: 'mRS', method: 'chi-square on dichotomised mRS' },
+    ];
+    const f = methodEndpointGate(d);
+    expect(codes(f)).toEqual(['MTH-003', 'MTH-002']);
+  });
+
+  it('flags a primary endpoint with no planned analysis', () => {
+    const d = clone(baseDesign());
+    d.statisticalPlan.plannedAnalyses = [];
+    expect(codes(methodEndpointGate(d))).toEqual(['MTH-001']);
+  });
+});
+
+describe('§12 missing data', () => {
+  it('flags an absent strategy as major', () => {
+    const d = clone(baseDesign());
+    delete d.statisticalPlan.missingDataStrategy;
+    expect(codes(missingDataGate(d))).toEqual(['MIS-001']);
+  });
+
+  it('flags LOCF as primary — major without sensitivity analyses, minor with', () => {
+    const d = clone(baseDesign());
+    d.statisticalPlan.missingDataStrategy = 'LOCF';
+    d.statisticalPlan.sensitivityAnalysesSpecified = false;
+    expect(missingDataGate(d).find(f => f.code === 'MIS-002')!.severity).toBe('major');
+    d.statisticalPlan.sensitivityAnalysesSpecified = true;
+    expect(missingDataGate(d).find(f => f.code === 'MIS-002')!.severity).toBe('minor');
+  });
+
+  it('flags censoring at discontinuation under a treatment-policy estimand', () => {
+    const d = clone(baseDesign());
+    d.statisticalPlan.missingDataStrategy = 'censor at treatment discontinuation';
+    expect(codes(missingDataGate(d))).toEqual(['MIS-004']);
+  });
+});
+
+describe('§13 interim analysis', () => {
+  it('flags interims with no spending function as critical and no DMC as major', () => {
+    const d = clone(baseDesign());
+    d.statisticalPlan.interim = { informationFractions: [0.5, 1] };
+    const f = interimAnalysisGate(d);
+    expect(codes(f)).toEqual(['INT-001', 'INT-003', 'INT-004']);
+    expect(f[0].severity).toBe('critical');
+  });
+
+  it('flags a schedule that does not end at the final analysis', () => {
+    const d = clone(baseDesign());
+    d.statisticalPlan.interim = { informationFractions: [0.3, 0.6], spendingFunction: 'obrien_fleming', efficacyBoundaries: [3.9, 2.0] };
+    d.safety = { dmcCharter: { present: true, hasStatisticalMember: true } };
+    expect(codes(interimAnalysisGate(d))).toEqual(['INT-002']);
+  });
+
+  it('clears a properly specified group-sequential plan', () => {
+    const d = clone(baseDesign());
+    d.statisticalPlan.interim = { informationFractions: [0.5, 1], spendingFunction: 'lan_demets', efficacyBoundaries: [2.96, 1.97], futilityBoundaries: [0.5, null] };
+    d.safety = { dmcCharter: { present: true, hasStatisticalMember: true } };
+    expect(interimAnalysisGate(d)).toEqual([]);
+  });
+
+  it('is silent when no interim is planned', () => {
+    expect(interimAnalysisGate(baseDesign())).toEqual([]);
   });
 });

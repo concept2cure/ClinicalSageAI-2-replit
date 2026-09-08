@@ -239,6 +239,17 @@ export interface GatewayRequest {
   /** Conversation messages (system + user + assistant history) */
   messages: GatewayMessage[];
 
+  /** @internal Classification captured before any policy redaction. */
+  sensitiveDataClass?: 'none' | 'pii' | 'phi' | 'unknown';
+
+  /** @internal Tenant placement resolution retained for the last-mile gate. */
+  sensitiveTenantPolicy?: {
+    resolution: 'resolved' | 'absent' | 'unknown';
+    residency?: DataResidency;
+    zeroDataRetention?: boolean;
+    allowedSubstrates?: SubstrateClass[];
+  };
+
   /** Maximum tokens to generate */
   maxTokens?: number;
 

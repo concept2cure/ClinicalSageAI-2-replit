@@ -17,7 +17,7 @@ import request from 'supertest';
 
 const { createHfFile, listHfFiles, HfFileValidationError, logAction, query } = vi.hoisted(() => {
   class HfFileValidationError extends Error {}
-  return { createHfFile: vi.fn(), listHfFiles: vi.fn(), HfFileValidationError, logAction: vi.fn(), query: vi.fn() };
+  return { createHfFile: vi.fn(), listHfFiles: vi.fn(), HfFileValidationError, logAction: vi.fn(async (..._a: any[]) => ({ persisted: true, chained: true, tamperProof: true })), query: vi.fn() };
 });
 vi.mock('../../services/human-factors/hf-files-service', () => ({ createHfFile, listHfFiles, HfFileValidationError }));
 vi.mock('../../services/auditService', () => ({ default: { logAction } }));

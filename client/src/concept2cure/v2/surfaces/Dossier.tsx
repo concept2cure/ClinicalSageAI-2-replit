@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { I } from '../icons';
 import type { SurfaceViewProps } from '../surfaceViews';
+import { usePublishSurfaceContext } from '../surfaceContext';
 import { EmptyState } from '../dataConnect';
 import { apiRequest } from '@/lib/queryClient';
 import '../styles/project-home-v2.css';
@@ -74,6 +75,63 @@ export function Dossier({ onNav }: SurfaceViewProps) {
     return () => { cancelled = true; };
   }, [projectId]);
 
+  /* What AnA can see of this screen.
+     Each of the five states is published as itself. "No program open", "the
+     artifact store is not provisioned in this environment" and "the read
+     failed" are three different reasons for an empty screen, and collapsing
+     them into "0 sections ready" would have AnA report a filing readiness
+     figure that nothing computed. */
+  const anaContext = useMemo(() => {
+    if (projectId == null) {
+      return {
+        summary:
+          'Dossier readiness is scoped to one program and no program with a numeric project id is open, ' +
+          'so there is no section readiness on screen — this is not an empty dossier.',
+        availableActions: ['Open a program, then its per-CTD-section readiness appears here'],
+      };
+    }
+    if (state === 'loading' || state === 'idle') {
+      return { summary: 'Dossier section readiness is still loading; nothing on screen is final yet.' };
+    }
+    if (state === 'unprovisioned') {
+      return {
+        summary:
+          'The governed artifact store is not provisioned in this environment, so no CTD-section readiness ' +
+          'can be rolled up — the screen is empty for that reason, not because the program has no artifacts.',
+      };
+    }
+    if (state === 'error' || !payload) {
+      return {
+        summary:
+          'Dossier readiness could not be read, so this screen is showing no CTD sections because of a ' +
+          'failure, not because the program has none.',
+        availableActions: ['Retry the dossier-readiness read'],
+      };
+    }
+    return {
+      summary:
+        `Dossier readiness for project ${payload.projectId}: ${payload.summary.totalSections} CTD section(s) — ` +
+        `${payload.summary.readySections} ready, ${payload.summary.inProgressSections} in progress, ` +
+        `${payload.summary.draftSections} still draft.`,
+      facts: {
+        projectId: payload.projectId,
+        summary: payload.summary,
+        // Enough to name a section back to the user, not every artifact count.
+        sections: payload.sections.slice(0, 20).map((sec) => ({
+          ctdSection: sec.ctdSection, status: sec.status, artifacts: sec.artifactCount,
+          draft: sec.draftCount, inReview: sec.reviewCount,
+          approved: sec.approvedCount, locked: sec.lockedCount,
+          lastUpdated: sec.lastUpdated,
+        })),
+      },
+      availableActions: [
+        'Read per-CTD-section readiness rolled up from the program\u2019s governed artifacts',
+        'Open a section to work on its artifacts',
+      ],
+    };
+  }, [projectId, state, payload]);
+  usePublishSurfaceContext('dossier', anaContext);
+
   return (
     <div className="dsr">
       <div className="dsr-head">
@@ -92,7 +150,7 @@ export function Dossier({ onNav }: SurfaceViewProps) {
           <EmptyState
             icon={I.folder}
             title="Open a program to see its dossier readiness"
-            hint="Per-CTD-section readiness is rolled up from the program's governed artifacts (GET /api/dossier-readiness/:projectId). Open a program with a numeric project id, then its section states appear here."
+            hint="Per-CTD-section readiness is rolled up from the program's governed artifacts. Open a program with a numeric project id, then its section states appear here."
           />
         ) : state === 'loading' ? (
           <EmptyState icon={I.folder} title="Loading section readiness…" />
@@ -108,10 +166,10 @@ export function Dossier({ onNav }: SurfaceViewProps) {
         ) : (
           <>
             <div style={{ display: 'flex', gap: 18, flexWrap: 'wrap', margin: '14px 0' }}>
-              <div><div style={{ fontSize: 24, fontWeight: 700 }}>{payload.summary.totalSections}</div><div style={{ fontSize: 12, color: 'var(--c2c-dim,#667085)' }}>Sections</div></div>
-              <div><div style={{ fontSize: 24, fontWeight: 700, color: 'var(--c2c-ok,#12b76a)' }}>{payload.summary.readySections}</div><div style={{ fontSize: 12, color: 'var(--c2c-dim,#667085)' }}>Ready</div></div>
-              <div><div style={{ fontSize: 24, fontWeight: 700 }}>{payload.summary.inProgressSections}</div><div style={{ fontSize: 12, color: 'var(--c2c-dim,#667085)' }}>In progress</div></div>
-              <div><div style={{ fontSize: 24, fontWeight: 700 }}>{payload.summary.draftSections}</div><div style={{ fontSize: 12, color: 'var(--c2c-dim,#667085)' }}>Draft</div></div>
+              <div><div style={{ fontSize: 24, fontWeight: 700 }}>{payload.summary.totalSections}</div><div style={{ fontSize: 12, color: 'var(--text-400)' }}>Sections</div></div>
+              <div><div style={{ fontSize: 24, fontWeight: 700, color: 'var(--success)' }}>{payload.summary.readySections}</div><div style={{ fontSize: 12, color: 'var(--text-400)' }}>Ready</div></div>
+              <div><div style={{ fontSize: 24, fontWeight: 700 }}>{payload.summary.inProgressSections}</div><div style={{ fontSize: 12, color: 'var(--text-400)' }}>In progress</div></div>
+              <div><div style={{ fontSize: 24, fontWeight: 700 }}>{payload.summary.draftSections}</div><div style={{ fontSize: 12, color: 'var(--text-400)' }}>Draft</div></div>
             </div>
             <div className="pj-card">
               <div className="pj-card-h"><span className="t">Section readiness</span><span className="s">weakest-artifact rollup</span></div>
@@ -130,7 +188,7 @@ export function Dossier({ onNav }: SurfaceViewProps) {
           </>
         )}
 
-        <div style={{ marginTop: 14, fontSize: 13, color: 'var(--c2c-dim,#667085)' }}>
+        <div style={{ marginTop: 14, fontSize: 13, color: 'var(--text-400)' }}>
           The nested folder/document tree isn’t connected yet (no backend serves that contract), so none is shown.{' '}
           <button type="button" onClick={() => onNav && onNav('dossier-map')}
             style={{ background: 'none', border: 'none', padding: 0, color: 'var(--accent-200)', font: 'inherit', cursor: 'pointer', textDecoration: 'underline' }}>

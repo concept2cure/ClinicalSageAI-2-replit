@@ -15,6 +15,7 @@ import { pool } from '../../db.js';
 import {
   getOrCreateThread,
   getThreadMessages,
+  ThreadAccessError,
   saveChatMessage as saveMessage,
 } from '../../services/chat-thread-helpers.js';
 import { getEmbeddingService } from '../../services/enhancedEmbeddingService.js';
@@ -49,6 +50,16 @@ import { getCachedSignalReliability } from '../../services/intelligence/learning
 import type { SignalReliability } from '../../services/intelligence/learning-loop-service.js';
 import { orchestrate, type OrchestratorOutput } from '../../services/ana-ri/orchestrator.js';
 import { resolveOrganizationClientType } from '../../services/ana-ri/chat-context-builder.js';
+import {
+  directiveFromToolResult,
+  surfaceActionFromToolResult,
+  toNavigationActions,
+  toSurfaceActionChips,
+  type NavigationAction,
+  type SurfaceActionChip,
+} from '../../services/ana-ri/navigation-actions.js';
+import type { NavigationDirective } from '../../../shared/navigation/index.js';
+import type { SurfaceActionDirective } from '../../../shared/navigation/surface-actions.js';
 import {
   handleSubmissionChat,
   isPostSectionGenerationTurn,
@@ -95,7 +106,26 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
 
     // ── STEP 2: CREATE / VALIDATE THREAD ─────────────────────────────────────────
     const requestedThreadId = Array.isArray(thread_id) ? thread_id[0] : thread_id;
-    const threadId = await getOrCreateThread(requestedThreadId ?? null, (req as any).user?.id);
+    // Resolved AS THE CALLER: in this organization, and to this user's own
+    // thread. A colleague's thread id is refused; an unknown or foreign id
+    // mints a fresh thread rather than touching a row nothing verified.
+    let threadId: string;
+    try {
+      threadId = await getOrCreateThread(
+        requestedThreadId ?? null,
+        (req as any).user?.id,
+        'thread',
+        numericOrgId
+      );
+    } catch (e: any) {
+      if (e instanceof ThreadAccessError) {
+        return res.status(403).json({
+          error: 'That conversation belongs to another user',
+          code: e.code,
+        });
+      }
+      throw e;
+    }
 
     // Fix B: Enforce thread ownership — if thread_id was supplied, verify org match
     if (requestedThreadId && numericOrgId) {
@@ -390,6 +420,15 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
     // The catch block returns 503, so reaching the response site implies
     // the assignment inside the try succeeded — hence non-null at use.
     let orchestratorResult: OrchestratorOutput | null = null;
+    // Validated navigation directives the agentic loop's navigate_to produced
+    // this turn. Hoisted for the same reason: collected inside the try (the
+    // loop's onToolExecution), offered as chips by the action step after it.
+    // This caller used to DROP them silently — AnA resolved a target, told the
+    // user she could take them there, and no chip ever reached this client.
+    const collectedNavigation: NavigationDirective[] = [];
+    // Surface actions ride the same carrier: act_on_screen results become
+    // offer-chips here too (this route never applies anything live).
+    const collectedSurfaceActions: SurfaceActionDirective[] = [];
 
     // ── STEP 6: GENERATE (no silent demo fallback) ─────────────────────
     const gw = ensureGateway();
@@ -412,9 +451,18 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
         try {
           const { decisionLifecycleService } =
             await import('../../services/decision-lifecycle-service.js');
-          decisionContext = decisionLifecycleService.getDecisionContext(String(project_id), {
-            limit: 5,
-          });
+          // Scoped to the caller's tenant: this context is fed to the
+          // orchestrator as grounding, so an unscoped read would not just
+          // leak another organization's decisions, it would let the model
+          // quote them back in an answer. numericOrgId is resolved above and
+          // used throughout this handler; the decision read was the one that
+          // did not pass it.
+          decisionContext = numericOrgId
+            ? decisionLifecycleService.getDecisionContext(String(project_id), {
+                limit: 5,
+                organizationId: numericOrgId,
+              })
+            : [];
         } catch {
           /* non-blocking */
         }
@@ -776,6 +824,15 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
           documentType: tool_context && typeof tool_context === 'object' ? ((tool_context as any).documentType ?? null) : null,
         },
         onToolExecution: (toolName, input, result) => {
+          // A navigate_to that resolved against the governed registry becomes
+          // an offer-chip in the response (same contract as the SSE path;
+          // refusals yield null here and never become one).
+          const directive = directiveFromToolResult(toolName, result);
+          if (directive) collectedNavigation.push(directive);
+          // An act_on_screen that resolved against the surface-action registry
+          // becomes an offer-chip the same way (refusals yield null).
+          const actionDirective = surfaceActionFromToolResult(toolName, result);
+          if (actionDirective) collectedSurfaceActions.push(actionDirective);
           // Persist the invocation for usage analytics. Latency is 0 here
           // because the agentic-loop hook fires post-success without a
           // start timestamp; the streaming path captures real latency.
@@ -864,14 +921,18 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
     // ── STEP 6b: GUIDANCE-TO-ACTION EXECUTION ──────────────────────────
     // Process AnA's response for action signals and execute governed actions.
     // Only runs when project context is available (org + project scoped).
-    let executedActions: Array<{
-      actionType: string;
-      executed: boolean;
-      confidence: string;
-      artifactId: string | null;
-      threadId: string | null;
-      error: string | null;
-    }> = [];
+    let executedActions: Array<
+      | {
+          actionType: string;
+          executed: boolean;
+          confidence: string;
+          artifactId: string | null;
+          threadId: string | null;
+          error: string | null;
+        }
+      | NavigationAction
+      | SurfaceActionChip
+    > = [];
 
     if (numericOrgId && project_id) {
       try {
@@ -899,6 +960,18 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
         // Non-fatal — chat still works, actions just don't execute
         console.warn('[AnA RI] Guidance action processing failed:', actionErr?.message);
       }
+    }
+
+    // Navigation chips AFTER guidance actions — same ordering rationale as the
+    // SSE path's post-processing: an artifact the turn actually created still
+    // leads. Deduped + capped by toNavigationActions (first occurrence wins).
+    if (collectedNavigation.length > 0) {
+      executedActions = [...executedActions, ...toNavigationActions(collectedNavigation)];
+    }
+
+    // Surface-action chips under the identical offered-not-performed contract.
+    if (collectedSurfaceActions.length > 0) {
+      executedActions = [...executedActions, ...toSurfaceActionChips(collectedSurfaceActions)];
     }
 
     // Save to legacy chat_messages for backward compat

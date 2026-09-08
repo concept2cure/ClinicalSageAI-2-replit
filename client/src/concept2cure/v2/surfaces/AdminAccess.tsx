@@ -1,6 +1,12 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { I } from '../icons';
 import { useLiveData, EmptyState } from '../dataConnect';
+import { usePublishSurfaceContext } from '../surfaceContext';
+import { useSurfaceActionHandlers } from '../surfaceActions';
+import { ceremonyOpen } from '../ceremony';
+import { apiRequest, serverMessage } from '@/lib/queryClient';
+import { C2CForm, type C2CFormConfig } from '../C2CForm';
+import { C2CToast, useToast } from '../toast';
 import type { SurfaceViewProps } from '../surfaceViews';
 import '../styles/admin-access.css';
 
@@ -71,14 +77,140 @@ const TABS = [
 type TabId = (typeof TABS)[number]['id'];
 
 const MCOLS = '40px 1.4fr 100px 1fr 90px 70px 90px';
-const KCOLS = '110px 1fr 1.4fr 90px 90px 110px 70px';
+// + a trailing Action column for the explicit Revoke control.
+const KCOLS = '110px 1fr 1.4fr 90px 90px 110px 70px 90px';
 
 export function AdminAccess({ onAsk }: SurfaceViewProps) {
   /* Fixture-free read: adopt the org's REAL admin estate from GET
      /api/mdx/admin (org-scoped, org-admin gated). A failed fetch (network,
      401/403, 500) is an honest error; a successful load with no members is an
      honest empty — never a codebase fixture, never a "Sample data" pill. */
-  const { data, loading, error } = useLiveData<AdminData>('/api/mdx/admin');
+  const [adminEpoch, setAdminEpoch] = useState(0);
+  const { data, loading, error } = useLiveData<AdminData>('/api/mdx/admin', ['/api/mdx/admin', adminEpoch]);
+
+  /* ── "Invite member" opened nothing ───────────────────────────────────────
+     The page's primary CTA ran ask('Invite a new member. Confirm name, email,
+     role…') — a sentence typed into the AnA panel. No form appeared, no invite
+     was created, and no request was made, on the one screen whose job is
+     managing who has access.
+
+     POST /api/tenant-users exists, is org-admin gated (authorizeOrgAccess with
+     requireAdmin), enforces the seat-licensing gate and audits the create. The
+     roster is re-read afterwards so the new member appears because the server
+     stored them. */
+  const [toast, fireToast] = useToast();
+  const [inviting, setInviting] = useState(false);
+
+  /** The key a Revoke click is confirming. Null when no confirmation is open. */
+  const [revoking, setRevoking] = useState<{ id: string; name: string } | null>(null);
+
+  const revokeKey = async () => {
+    const k = revoking;
+    setRevoking(null);
+    if (!k) return;
+    try {
+      const res = await apiRequest('DELETE', `/api/api-keys/${encodeURIComponent(k.id)}`);
+      if (!res.ok) {
+        const b = await res.json().catch(() => null);
+        fireToast(
+          'Key not revoked — ' + (serverMessage(b) ?? `the server refused it (HTTP ${res.status})`) + '.',
+          'error',
+        );
+        return;
+      }
+      fireToast(`API key "${k.name}" revoked — the revocation is in the audit trail.`);
+      setAdminEpoch((n) => n + 1);
+    } catch (e) {
+      fireToast(
+        'Key not revoked — ' + (e instanceof Error ? e.message : String(e)) + '. Nothing changed.',
+        'error',
+      );
+    }
+  };
+
+  const REVOKE_FORM: C2CFormConfig = {
+    eyebrow: 'API keys · revoke',
+    title: revoking ? `Revoke "${revoking.name}"?` : 'Revoke key',
+    governed:
+      'Revocation is immediate and cannot be undone. Any service authenticating with this key stops working at once. The revocation is recorded in the audit trail against you.',
+    submitLabel: 'Revoke key',
+    fields: [],
+  };
+
+  const INVITE_FORM: C2CFormConfig = {
+    eyebrow: 'Admin and access · new member',
+    title: 'Invite a member',
+    governed:
+      'Creating a member consumes a licensed seat and emits a 21 CFR Part 11 audit entry naming you as the actor.',
+    submitLabel: 'Send invite',
+    fields: [
+      { key: 'name', label: 'Full name', type: 'text', required: true },
+      { key: 'email', label: 'Email', type: 'text', required: true, half: true },
+      {
+        key: 'role', label: 'Role', type: 'select',
+        options: ['member', 'manager', 'admin', 'viewer'],
+        required: true, half: true,
+      },
+      { key: 'title', label: 'Job title', type: 'text', half: true },
+      { key: 'department', label: 'Department', type: 'text', half: true },
+    ],
+  };
+
+  const invite = async (v: Record<string, string>) => {
+    setInviting(false);
+    try {
+      const res = await apiRequest('POST', '/api/tenant-users', {
+        name: (v.name || '').trim(),
+        email: (v.email || '').trim(),
+        role: v.role,
+        title: (v.title || '').trim() || undefined,
+        department: (v.department || '').trim() || undefined,
+        // organizationId is optional on createUserSchema — the route resolves
+        // the tenant from the session, so this surface does not need an
+        // AuthProvider just to name it. Reading it from useAuth here broke
+        // every AdminAccess test, which render the surface standalone.
+      });
+      if (!res.ok) {
+        const b = await res.json().catch(() => null);
+        fireToast(
+          'Member not invited — ' + (serverMessage(b) ?? `the server refused it (HTTP ${res.status})`) + '.',
+          'error',
+        );
+        return;
+      }
+      // The server says how the invitee gets their setup link. When this
+      // deployment has no email delivery, the link comes back once, here, and
+      // the admin hands it over — so put it on the clipboard and say so.
+      const body = await res.json().catch(() => null);
+      const inv = body && typeof body === 'object' ? (body as { invitation?: { delivery?: string; setupUrl?: string } }).invitation : undefined;
+      const who = (v.name || '').trim();
+      if (inv && inv.delivery === 'failed') {
+        fireToast(
+          `${who} was added as ${v.role}, but no activation link could be issued — they cannot sign in yet. Ask them to use "Forgot password", or retry the invitation.`,
+          'error',
+        );
+      } else if (inv && inv.delivery === 'link' && inv.setupUrl) {
+        let copied = false;
+        try {
+          await navigator.clipboard?.writeText(inv.setupUrl);
+          copied = true;
+        } catch {
+          copied = false;
+        }
+        fireToast(
+          `${who} invited as ${v.role}. This server sends no email, so ${copied ? 'their password setup link is on your clipboard' : `share this setup link with them: ${inv.setupUrl}`} — it expires in 21 days.`,
+        );
+      } else {
+        fireToast(`${who} invited as ${v.role}. An invitation email with their password setup link was sent.`);
+      }
+      setAdminEpoch((n) => n + 1);
+    } catch (e) {
+      fireToast(
+        'Member not invited — ' + (e instanceof Error ? e.message : String(e)) + '. Nothing was created.',
+        'error',
+      );
+    }
+  };
 
   const [tab, setTab] = useState<TabId>('members');
   const [selected, setSelected] = useState<string>('');
@@ -120,6 +252,101 @@ export function AdminAccess({ onAsk }: SurfaceViewProps) {
 
   const ask = (t: string) => onAsk(t);
 
+  /* WHAT ANA SEES HERE. Aggregates only: a per-member MFA/SSO list is a target
+     list, so who-lacks-MFA is published as a count and never as names. No
+     emails, no grants, no role scopes, no key ids/scopes/owners, no audit
+     hashes, no SSO domains, no setting values. roleFilter is dead state
+     (nothing sets it) and is not published. */
+  const anaContext = useMemo(() => {
+    if (loading) {
+      return { summary: 'Admin and access is still loading; the KPI counts read "--" and nothing on screen is final yet.' };
+    }
+    if (error) {
+      return {
+        summary:
+          'The admin read-model could not be read, or this account lacks organization-admin access — a failed read, not an organization with no administrators.',
+        availableActions: ['Retry the admin read as an organization admin'],
+      };
+    }
+    if (!hasData) {
+      return {
+        summary:
+          'This organization has no members, roles or keys to administer yet — a real empty, not a failure; they appear here as soon as they exist.',
+      };
+    }
+    const tabLabel = TABS.find((t) => t.id === tab)?.label ?? tab;
+    return {
+      summary:
+        `Admin and access, on the "${tabLabel}" tab: ${allMembers.length} member(s) (${activeMembers} active, ` +
+        `${mfaMembers} MFA-enrolled), ${roles.length} role(s), ${apiKeys.length} API key(s), ` +
+        `${audit.length} admin audit entry(ies) shown. SSO is ${sso ? 'configured' : 'not reported'}.`,
+      facts: {
+        tab,
+        memberCount: allMembers.length,
+        activeMembers,
+        mfaMembers,
+        roleCount: roles.length,
+        apiKeyCount: apiKeys.length,
+        auditEntryCount: audit.length,
+        ssoConfigured: sso !== null,
+        scimEnabled: sso?.scim?.enabled ?? null,
+        stateFilter,
+        aMemberIsSelected: member != null,
+      },
+      availableActions: [
+        'Inviting a member, granting program access, editing role scopes, revoking an API key and changing org settings each capture a reason and emit a Part 11 audit entry — administrator acts, proposed only in conversation',
+        'Switch between the Members, Roles + scopes, SSO + provisioning, API keys and Settings tabs, or filter members by state (all / active / invited / disabled)',
+      ],
+    };
+  }, [loading, error, hasData, tab, allMembers.length, activeMembers, mfaMembers, roles.length, apiKeys.length, audit.length, sso, stateFilter, member]);
+  /* View state only. Every mutation this screen offers — invite, grant,
+     scope edit, key revoke, setting change — is a governed administrator act
+     that routes through the rail's §11.50 sign-off, and none is reachable
+     from here. Switching under an open invite/revoke form would discard it. */
+  useSurfaceActionHandlers('admin-console', {
+    'admin-console.open-tab': (params) => {
+      const target = String(params.tab ?? '');
+      const meta = TABS.find((t) => t.id === target);
+      if (!meta) return { ok: false, reason: `No admin tab named "${params.tab}".` };
+      if (tab === target) return { ok: true, detail: `Already on ${meta.label}` };
+      if (ceremonyOpen()) {
+        return {
+          ok: false,
+          reason:
+            'A governed form is open on this screen — switching tabs would discard it. ' +
+            'Let the person finish or cancel it first.',
+        };
+      }
+      setTab(target as TabId);
+      return { ok: true, detail: `Opened ${meta.label}` };
+    },
+    'admin-console.filter-members': (params) => {
+      const target = String(params.state ?? '');
+      if (!['all', 'active', 'invited', 'disabled'].includes(target)) {
+        return { ok: false, reason: `No member state named "${params.state}".` };
+      }
+      if (ceremonyOpen()) {
+        return {
+          ok: false,
+          reason:
+            'A governed form is open on this screen — changing the view would discard it. ' +
+            'Let the person finish or cancel it first.',
+        };
+      }
+      const switched = tab !== 'members';
+      if (switched) setTab('members');
+      setStateFilter(target);
+      return {
+        ok: true,
+        detail:
+          `Filtered members to ${target}` + (switched ? ' on the members tab' : '') +
+          ' — counts on screen are aggregates; individual records stay on the screen',
+      };
+    },
+  });
+
+  usePublishSurfaceContext('admin-console', anaContext);
+
   return (
     <div className="adm-access">
       <div className="page-header">
@@ -133,7 +360,17 @@ export function AdminAccess({ onAsk }: SurfaceViewProps) {
         </div>
         <div className="page-actions">
           <button className="btn ghost small" onClick={() => ask('Audit a member — every action, signing, and program touched this week. Export as a Part 11 PDF.')}>{I.eye} Audit a member</button>
-          <button className="btn primary small" onClick={() => ask('Invite a new member. Confirm name, email, role, group memberships, and which programs they should be granted access to.')}>{I.plus} Invite member</button>
+          {/* Was a chat prompt: the page's primary CTA typed a sentence into
+              the AnA panel and no invite form, no invite and no POST happened.
+              POST /api/tenant-users exists, is org-admin gated and enforces the
+              seat-licensing gate. */}
+          <button
+            className="btn primary small"
+            onClick={() => setInviting(true)}
+            data-testid="admin-invite-member"
+          >
+            {I.plus} Invite member
+          </button>
         </div>
       </div>
 
@@ -148,7 +385,7 @@ export function AdminAccess({ onAsk }: SurfaceViewProps) {
       </div>
 
       {loading ? (
-        <div className="adm-empty" style={{ padding: '18px 14px' }}>Loading admin and access…</div>
+        <div role="status" className="adm-empty" style={{ padding: '18px 14px' }}>Loading admin and access…</div>
       ) : error ? (
         <EmptyState
           tone="error"
@@ -288,11 +525,32 @@ export function AdminAccess({ onAsk }: SurfaceViewProps) {
                 <div className="adm-empty">No API keys. Create one to let a service authenticate — scopes are fixed at creation and every use is audited.</div>
               ) : (
                 <div className="ctable">
-                  <div className="ctable-head" style={{ gridTemplateColumns: KCOLS }}><div>Key</div><div>Name</div><div>Scopes</div><div>Owner</div><div>Created</div><div>Rotate in</div><div>Last used</div></div>
+                  {/* ── The whole ROW was a button that claimed to rotate the key ──
+                      Clicking anywhere on a row ran ask('Rotate API key … Stage a
+                      new key, dual-publish for 24h, deprecate the old key…') — a
+                      sentence into the AnA panel. No key was staged, rotated or
+                      deprecated, and the only affordance on the keys table did
+                      nothing.
+
+                      Two things were wrong, and only one of them is "no handler".
+                      Rotating a credential is destructive and must be deliberate;
+                      a whole table row is the wrong trigger for it at any level of
+                      wiring — a stray click should never be able to invalidate a
+                      key a live integration is authenticating with.
+
+                      So the row is a row, and the destructive action is its own
+                      explicit control. `DELETE /api/api-keys/:id` exists, is
+                      tenant-scoped and audits through auditApiKeyEvent
+                      ('api_key_revoked'), so REVOKE is wired for real. Rotation —
+                      stage, dual-publish, deprecate — has no endpoint and is a
+                      three-step ceremony; it is not silently reduced to a revoke
+                      here, and the 'Rotate in' column keeps telling the admin when
+                      one is due. */}
+                  <div className="ctable-head" style={{ gridTemplateColumns: KCOLS }}><div>Key</div><div>Name</div><div>Scopes</div><div>Owner</div><div>Created</div><div>Rotate in</div><div>Last used</div><div>Action</div></div>
                   {apiKeys.map((k) => {
                     const overdue = k.rotateIn === 'overdue';
                     return (
-                      <button key={k.id} className="ctable-row" style={{ gridTemplateColumns: KCOLS }} onClick={() => ask(`Rotate API key ${k.name} (${k.id}). Stage a new key, dual-publish for 24h, deprecate the old key, and confirm the audit entry.`)}>
+                      <div key={k.id} className="ctable-row" style={{ gridTemplateColumns: KCOLS }}>
                         <div className="mono small">{k.id}</div>
                         <div className="ctable-strong">{k.name}</div>
                         <div className="adm-groups">{k.scopes.map((s) => <span key={s} className="adm-scope mono tiny">{s}</span>)}</div>
@@ -300,7 +558,17 @@ export function AdminAccess({ onAsk }: SurfaceViewProps) {
                         <div className="adm-muted">{k.created}</div>
                         <div className={overdue ? 'adm-overdue' : ''}>{k.rotateIn || '—'}</div>
                         <div className="adm-muted">{k.lastUsed}</div>
-                      </button>
+                        <div>
+                          <button
+                            className="btn ghost small"
+                            onClick={() => setRevoking(k)}
+                            title={`Revoke ${k.name} — any service using this key stops authenticating immediately`}
+                            data-testid="apikey-revoke"
+                          >
+                            {I.x || I.trash} Revoke
+                          </button>
+                        </div>
+                      </div>
                     );
                   })}
                 </div>
@@ -347,6 +615,22 @@ export function AdminAccess({ onAsk }: SurfaceViewProps) {
           </section>
         </>
       )}
+
+      {inviting && (
+        <C2CForm
+          config={INVITE_FORM}
+          onCancel={() => setInviting(false)}
+          onSubmit={invite}
+        />
+      )}
+      {revoking && (
+        <C2CForm
+          config={REVOKE_FORM}
+          onCancel={() => setRevoking(null)}
+          onSubmit={() => void revokeKey()}
+        />
+      )}
+      <C2CToast msg={toast} />
     </div>
   );
 }

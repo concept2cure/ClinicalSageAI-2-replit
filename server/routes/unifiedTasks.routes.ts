@@ -21,8 +21,12 @@ import {
   notifyTaskEvent,
   cascadeUnblockOnCompletion,
 } from '../services/tasking/task-side-effects';
+import { serverError } from '../lib/api-response';
+import { createScopedLogger } from '../utils/logger';
 
 const router = Router();
+
+const logger = createScopedLogger('unified-tasks');
 
 // Request validation schemas
 const createTaskSchema = z.object({
@@ -184,10 +188,7 @@ router.get('/all', async (req: Request, res: Response) => {
     });
   } catch (error: any) {
     console.error('Error fetching all tasks:', error);
-    res.status(500).json({
-      success: false,
-      error: error.message || 'Failed to fetch tasks',
-    });
+    return serverError(res, logger, 'loading all', error);
   }
 });
 
@@ -236,10 +237,7 @@ router.get('/by-module/:module', async (req: Request, res: Response) => {
     });
   } catch (error: any) {
     console.error('Error fetching module tasks:', error);
-    res.status(500).json({
-      success: false,
-      error: error.message || 'Failed to fetch module tasks',
-    });
+    return serverError(res, logger, 'loading by module', error);
   }
 });
 
@@ -320,10 +318,7 @@ router.get('/dashboard/unified', async (req: Request, res: Response) => {
     });
   } catch (error: any) {
     console.error('Error fetching dashboard metrics:', error);
-    res.status(500).json({
-      success: false,
-      error: error.message || 'Failed to fetch dashboard metrics',
-    });
+    return serverError(res, logger, 'loading unified', error);
   }
 });
 
@@ -357,10 +352,7 @@ router.post('/sync/:module', async (req: Request, res: Response) => {
     });
   } catch (error: any) {
     console.error('Error syncing module tasks:', error);
-    res.status(500).json({
-      success: false,
-      error: error.message || 'Failed to sync module tasks',
-    });
+    return serverError(res, logger, 'syncing', error);
   }
 });
 
@@ -499,10 +491,7 @@ router.patch('/:id/status', async (req: Request, res: Response) => {
     });
   } catch (error: any) {
     console.error('Error updating task status:', error);
-    res.status(500).json({
-      success: false,
-      error: error.message || 'Failed to update task status',
-    });
+    return serverError(res, logger, 'updating status', error);
   }
 });
 
@@ -531,10 +520,7 @@ router.get('/:id', async (req: Request, res: Response) => {
     });
   } catch (error: any) {
     console.error('Error fetching task:', error);
-    res.status(500).json({
-      success: false,
-      error: error.message || 'Failed to fetch task',
-    });
+    return serverError(res, logger, 'loading the task', error);
   }
 });
 
