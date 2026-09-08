@@ -502,7 +502,6 @@ export const SURFACE_ACTIONS: Record<string, string[]> = {
   ],
   'submission-center': ['compile_dossier', 'route_document_to_module', 'export_document', 'save_document_version'],
   'submission-twin': ['run_validation', 'compile_dossier'],
-  'submission-orchestrator': ['compile_dossier', 'run_validation'],
   'decision-lineage': ['get_document', 'export_document', 'run_validation'],
   dossier: ['compile_dossier', 'route_document_to_module', 'export_document'],
   vault: ['promote_artifact', 'attach_sources_to_document', 'export_document'],
@@ -562,7 +561,7 @@ export const SEGMENT_MODULES = {
         'decision-lineage',
       ],
     },
-    { label: 'Submit & file', items: ['submission-center', 'device-submission', 'device-validation', 'submission-orchestrator', 'submission-twin', 'gateway-transmittals', 'pyramid', 'dossier-map', 'haq-manager'] },
+    { label: 'Submit & file', items: ['submission-center', 'device-submission', 'device-validation', 'submission-twin', 'gateway-transmittals', 'pyramid', 'dossier-map', 'haq-manager'] },
     { label: 'Review & govern', items: ['review', 'tasks', 'device-tasks', 'agency-meetings', 'audit-trail', 'quality', 'qmp', 'part11-console', 'identity-console', 'report-governance'] },
     {
       label: 'Intelligence & risk',
@@ -590,7 +589,7 @@ export const SEGMENT_MODULES = {
       label: 'Evidence & data',
       items: ['vault', 'evidence-search', 'artifacts-center', 'decision-lineage'],
     },
-    { label: 'Submit & file', items: ['submission-center', 'submission-orchestrator', 'submission-twin', 'gateway-transmittals', 'pyramid', 'dossier-map', 'haq-manager'] },
+    { label: 'Submit & file', items: ['submission-center', 'submission-twin', 'gateway-transmittals', 'pyramid', 'dossier-map', 'haq-manager'] },
     { label: 'Review & govern', items: ['review', 'tasks', 'agency-meetings', 'audit-trail', 'quality', 'qmp', 'part11-console', 'identity-console', 'report-governance'] },
     {
       label: 'Intelligence & risk',
@@ -697,7 +696,7 @@ export const SEGMENT_MODULES = {
     },
     {
       label: 'Submit & file',
-      items: ['submission-center', 'submission-orchestrator', 'ind-checklist', 'dossier-map', 'haq-manager'],
+      items: ['submission-center', 'ind-checklist', 'dossier-map', 'haq-manager'],
     },
     {
       label: 'Science & intelligence',
@@ -1109,7 +1108,6 @@ export const ANA_SUGGESTIONS: Record<string, string[]> = {
   _default: ['Summarize this surface', 'What needs my attention?', 'Draft the next action'],
   'global-ri': ['Compute NCE exclusivity for FDA', 'Classify an IVD for EU MDR', 'Build a cross-market strategy brief'],
   'submission-center': ['Validate the OR-902 package', 'What gates transmit?', 'Compare ESG vs eSTAR export'],
-  'submission-orchestrator': ['Which steps were skipped and why?', 'Is the signed package still valid?', 'What is blocking this run?'],
   'document-authoring': ['Draft §2.5 from the predicate', 'Check claims against evidence', 'Rewrite for FDA tone'],
   projects: ['Which programs are blocked?', 'Portfolio readiness report', 'Flag filing risks this week'],
   vault: ['Find the latest biocompat report', 'What is still unfiled in the cabinet?', 'Search by SHA-256'],

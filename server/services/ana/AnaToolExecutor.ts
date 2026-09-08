@@ -15,6 +15,16 @@
  */
 
 import { getGateway } from '../ai-gateway/gateway';
+// Region + gateway taxonomy — shared with the tool schemas in
+// AnaToolDefinitions so an accepted value and an advertised one are the same
+// list. This module has no runtime deps, so importing it here does not pull in
+// the twelve gateway implementations. See region-constants.ts.
+import {
+  gatewayList,
+  isGatewayName,
+  isRegion,
+  regionList,
+} from '../submission-gateways/region-constants.js';
 // Type-only: the prior-sequence auto-load path assigns loadPriorSequenceManifest's
 // PriorLeaf[] into the same local as the hand-mapped input leaves. Without this
 // annotation the local is inferred from `p: any`, which makes every field
@@ -8413,9 +8423,8 @@ registerToolHandler('package_ectd_for_region', async (input, ctx) => {
     return JSON.stringify({ error: 'package_ectd_for_region requires tenant context.' });
   }
   const region = typeof input.region === 'string' ? input.region.toLowerCase() : '';
-  const VALID_REGIONS = ['fda', 'ema', 'pmda', 'ca', 'uk', 'cn', 'au', 'ch', 'br', 'in', 'kr', 'sg'];
-  if (!VALID_REGIONS.includes(region)) {
-    return JSON.stringify({ error: `region must be one of: ${VALID_REGIONS.join(' / ')}.` });
+  if (!isRegion(region)) {
+    return JSON.stringify({ error: `region must be one of: ${regionList()}.` });
   }
   const leaves = Array.isArray(input.leaves) ? (input.leaves as Array<Record<string, unknown>>) : [];
   if (leaves.length === 0) {
@@ -8474,15 +8483,11 @@ registerToolHandler('transmit_submission', async (input, ctx) => {
   }
   const region  = typeof input.region === 'string' ? input.region.toLowerCase() : '';
   const gateway = typeof input.gateway === 'string' ? input.gateway.toLowerCase() : '';
-  const VALID_REGIONS_TX = ['fda', 'ema', 'pmda', 'ca', 'uk', 'cn', 'au', 'ch', 'br', 'in', 'kr', 'sg'];
-  const VALID_GATEWAYS   = ['esg', 'cesp', 'eudamed', 'pmda_gateway', 'hc_cesg',
-                             'mhra_gateway', 'nmpa_gateway', 'tga_ebs', 'swissmedic_egateway',
-                             'anvisa_gateway', 'cdsco_sugam', 'mfds_dbio', 'hsa_prism'];
-  if (!VALID_REGIONS_TX.includes(region)) {
-    return JSON.stringify({ error: `region must be one of: ${VALID_REGIONS_TX.join(' / ')}.` });
+  if (!isRegion(region)) {
+    return JSON.stringify({ error: `region must be one of: ${regionList()}.` });
   }
-  if (!VALID_GATEWAYS.includes(gateway)) {
-    return JSON.stringify({ error: `gateway must be one of: ${VALID_GATEWAYS.join(' / ')}.` });
+  if (!isGatewayName(gateway)) {
+    return JSON.stringify({ error: `gateway must be one of: ${gatewayList()}.` });
   }
   // ── This tool no longer transmits. ──────────────────────────────────────────
   //

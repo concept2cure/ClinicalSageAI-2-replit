@@ -1,0 +1,52 @@
+{
+  "errors": [],
+  "api": [
+    {
+      "url": "/api/biostat-bridge/designs?program_id=ab75896b-d316-49f9-b6a9-229ee3359e0e",
+      "status": 200
+    },
+    {
+      "url": "/api/biostat-bridge/designs?program_id=ab75896b-d316-49f9-b6a9-229ee3359e0e",
+      "status": 200
+    },
+    {
+      "url": "/api/biostat-bridge/designs/sd_87f2f9511d634a57b85c044c14e3d405/assessment",
+      "status": 200
+    }
+  ],
+  "list": {
+    "designRows": [
+      "A phase 3 study of BX-301 in relapsed/refractory multiple myelomaPhase 3 · relapsed/refrac",
+      "A phase 3 study of BX-301 in relapsed/refractory multiple myelomaPhase 3 · relapsed/refrac",
+      "A phase 2 study of BX-301 in relapsed/refractory multiple myelomaPhase 2 · relapsed/refrac"
+    ],
+    "hasReadinessChip": true,
+    "chips": [
+      "100%",
+      "90%",
+      "60%",
+      "marginal"
+    ],
+    "honestEmpty": false,
+    "heading": "Biostatistics"
+  },
+  "panel": {
+    "gapsShown": false,
+    "placements": [
+      "A phase 3 study of BX-301 in relapsed/refractory multiple myelomaPhase",
+      "A phase 3 study of BX-301 in relapsed/refractory multiple myelomaPhase",
+      "A phase 2 study of BX-301 in relapsed/refractory multiple myelomaPhase"
+    ],
+    "reviewTable": true,
+    "applyButton": [
+      "Sample Size Rationale",
+      "Apply sample size to design"
+    ],
+    "taskButton": [
+      "Tasking",
+      "My Tasks",
+      "Task",
+      "Raise tasks (6)"
+    ]
+  }
+}

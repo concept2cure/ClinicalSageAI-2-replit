@@ -321,10 +321,22 @@ either template, and that is asserted.
 `root.AdministrativeDocumentation.ADAddAttachment910` — the **User Fee Form** — writes
 `/CHAPTER 1/CH1.04/` when `ApplicationType.ATRadioButton100 == 2` (Health Canada) and
 `/CHAPTER 1/CH1.09/` otherwise (FDA). CH1.04 appears first in the file, so the reader returned
-the **Health Canada** chapter for a US submission. This platform deliberately does not write
-that radio (`estar-field-map.ts`), so it cannot choose. `chapters` is now a list, and
-`resolveAttachmentSlot` refuses with `ambiguous_chapter` naming the radio rather than filing a
-US MDUFA cover sheet under another country's chapter.
+the **Health Canada** chapter for a US submission.
+
+`chapters` is a list now — and the first correction of this was itself too strict. It refused
+the slot outright, on the reasoning that the platform does not write that radio so it cannot
+choose. But it does not have to choose: the templates **ship**
+`root.ApplicationType.ATRadioButton100 = "1"`, and `1 != 2`, so the else branch is FDA's own
+answer. Computing it from the document's own value is not a guess; it is the same computation
+FDA's script performs on the same input. Refusing it cost a real slot — the User Fee Form is one
+of the two `mapToEstar` already reports as `missingRequired`.
+
+So `resolveAttachmentSlot(slot, values)` resolves a conditional slot when the deciding value is
+supplied and refuses (`undecided_condition`) when it is not. The condition is transcribed into
+`CONDITIONAL_ATTACHMENT_SLOTS` **and asserted against the template**, like the forbidden-extension
+list: every slot with more than one chapter must have an entry whose branches are exactly that
+slot's chapters. A future template that makes another control conditional fails that test instead
+of silently resolving to whichever branch appears first, which is the defect this replaces.
 
 **And 19 of the 165 appends were commented out** — 6 inside `/* … */`, 13 behind `//`. The
 reader was reading FDA's discarded drafts as live routing. Comments are stripped now, measured
@@ -341,43 +353,93 @@ deduping appends on the control name — so they shared one mistake and agreed l
 Agreement between two methods is worth exactly as much as the independence of their failure
 modes, and that is worth writing down somewhere it will be read again.
 
-## 4. The last slice, and a measurement that changes its shape
+## 4. The last slice, specified
 
-Slice 5 was specified as *"`instanceManager.addInstance` plus `AttachmentName`, so the
-applicant's Acrobat shows the attachment against the right section"* — writing into the
-`form` packet. That packet carries a `checksum="Mblo39MqJv5vXQAURANwJ3C/hnA="` attribute, and
-what Acrobat writes into it when a user attaches a file has never been observed here, so
-building it would have been guesswork of exactly the kind this stream refuses.
+A design panel (three approaches, two judges each, one synthesis — all six surveyors and both
+judges reading the code rather than this report) settled the shape. What it found that this
+report had wrong is in §3e; what it settled is here.
 
-**It is very probably not necessary.** Measured 2026-09-07 on both templates:
+**The manifest is written through the existing fill engine.** Proven twice independently, once by
+a surveyor and once by the synthesis, each with a call-time one-entry field map
+(`{ attachmentManifest: { xfaSomPath: 'root.Verification.AttachmentManifest', type: 'text' } }`)
+and no change to `fillXfaDatasets` or `ESTAR_FIELD_MAPS`:
 
-| fact | measurement |
-|---|---|
-| the manifest field | `root.Verification.AttachmentManifest`, type `text`, **`inDatasets: true`** |
-| its data node | `root.AttachmentManifest`, seeded **`***Start***`** |
-| what FDA's script appends | `"<<" + d[AttachmentIndex].path + "\|/CHAPTER 1/CH1.01/" + ">>"` |
+```
+SEED:      {"root.AttachmentManifest":"***Start***","root.CompletionCheck":"0"}
+fill:      filled=["attachmentManifest"] skipped=[] warnings=[]
+bytes:     5280666 -> 5284892  (then attach) -> 5289869
+READ BACK: "***Start***<<A1_Cover_letter.pdf|/CHAPTER 1/CH1.01/>><<E1_Biocompatibility.pdf|/CHAPTER 3/CH3.05/CH3.05.06/>>"
+FDA's own parser replayed on it: indexOf('<<') = 11 > 0 ✓
+  arrAttachmentManifestNames = ["A1_Cover_letter.pdf","E1_Biocompatibility.pdf"]
+pypdf 6.16.2, using none of this repo's code: /Names ['/JavaScript','/EmbeddedFiles'],
+  JavaScript entries 3, XFA packets 20, name-tree keys date-shaped, /F the manifest paths
+```
 
-The manifest — the thing CDRH actually routes by — lives in the **`datasets` packet**, which
-is the packet `fillXfaDatasets` already writes, and the token is built from the attachment's
-**path in the document's file list**, which slices 1–3 now put there. The template/data SOM
-mismatch (`root.Verification.AttachmentManifest` vs `root.AttachmentManifest`) is the case
-`resolveDataSomPath` was written for and the field map already handles.
+`***Start***` is a permanent 11-character prefix and it is **load-bearing**: FDA's
+`checkRemovedAttachments()` tests `indexOf("<<") > 0`, strictly greater than zero. Drop the seed
+and the first `<<` lands at index 0, `0 > 0` is false, and FDA's own validator silently no-ops.
 
-So slice 5 is:
+**What the slice is:** append `<<path|chapter>>` per attachment to `root.AttachmentManifest` after
+the seed, through the existing engine; render each mapped section with
+`renderStructuredLeafPdf` (`server/services/ectd/leaf-pdf-renderer.ts`, pdf-lib only, on the
+`ci:check-pdf-runtime` approved list, byte-deterministic) — **not** `renderPdfBuffersPerSection`,
+whose PDFKit fallback stamps *"Do not file this rendering as the formatted document"* on page one
+and whose output changes with whether the deployment has Chromium; resolve vault bytes through
+`readVerifiedVaultBytes`, which already refuses a hash mismatch, a missing file and a path
+escaping `uploads/`; then the route and the surface.
 
-- append `<<{name}|{chapter}>>` to `root.AttachmentManifest` for each embedded file, after
-  the `***Start***` seed, through the existing fill engine — no `form`-packet surgery;
-- decide the completeness indicators, which ARE form-level and cosmetic to the applicant;
-- source the bytes from authored sections (rendered) and vault evidence, and choose the slot
-  per section — the first place a human decision belongs;
-- the route and the surface.
+**Three things the panel found that must be fixed on the way:**
 
-**What still needs JM.** Whether an eSTAR assembled this way is accepted by CDRH's validator
-cannot be settled from the templates. One reference artifact would settle it: an eSTAR with a
-single attachment added in Acrobat and saved. Its `datasets`, `form` and `/EmbeddedFiles`
-diff against the blank template is the specification — the same way the Acrobat walk-through
-in HANDOFF §5 settled the summary-rebuild questions. Until then slice 5 can be built against
-the manifest as FDA's own script writes it, which is the best available evidence.
+1. `loadAuthoredDeviceSections` filters on `isAuthored` **alone** — `(content ?? '').trim().length > 0`
+   — and never applies `isSubstantive`. So a section with status `drafting` and a 41-character body
+   would be rendered and filed into a named CDRH document slot. That is the difference between
+   filing an approved section and filing an unreviewed machine draft.
+2. Adding `attachmentReport` to `withOfficialExtras` **necessarily breaks**
+   `ci:governed-export-consequence-shape`'s pinned literal. That gate has no selftest, contrary to
+   what one design assumed; the literal and its consumer change in the same commit.
+3. `buildEmbeddedFileObjects` emits no `/Desc`, while FDA's handler sets
+   `d[AttachmentIndex].description` on every one of the 113/145 controls.
+
+**Per-slot cardinality, measured** (three sources disagreed and all three were wrong): exactly
+**two** controls per template refuse a second attachment — `CLAddAttachment110` and
+`ADAddAttachment803`. The "Only three attachments can be attached per attachment upload section"
+text is real, and sits inside a `/* … */` block.
+
+## 4b. The form layer, which nothing here can reach
+
+The honest limit of a datasets-only build, measured on both templates:
+
+- The completeness indicators are `<draw>` elements — 105 nIVD / 109 IVD `NoIndicator` draws,
+  **zero** `<field name="NoIndicator">`, zero occurrences in the datasets packet.
+  `CLNoIndicator110` ships `<color value="255,0,0"/>` with the tooltip "Required Question
+  Incomplete". A machine-built eSTAR therefore **opens with every attachment question red**.
+- `<subform name="CLAttachment110" presence="hidden">` means the per-attachment row — with its
+  Open and Delete buttons — is never instantiated by a datasets-only fill. The applicant cannot
+  remove our files through the form.
+- `root.CompletionCheck` is writable and reads back as `1`, and **should not be written**:
+  nothing in either template reads it, and `Validation()` recomputes it from those same
+  form-layer draw colours. Writing `1` is a claim the form contradicts on first open.
+- Slot subforms are `presence`-gated by the applicant's own answers (3277
+  `.presence = "visible"|"hidden"` assignments), so a mapped slot can be one the form declares
+  not applicable.
+
+None of this is solved by any design, and none of it is guessable. It is what the reference
+artifact in §4c settles.
+
+## 4c. The one artifact that settles four questions
+
+One eSTAR with a single attachment added in Acrobat Pro and saved. Its `datasets`, `form` and
+`/EmbeddedFiles` diff against the blank template answers, at once:
+
+1. whether the LiveCycle runtime preserves a datasets-only `AttachmentManifest` on open, or
+   recomputes it — **the question that decides whether the slice works at all in a viewer**;
+2. whether CDRH needs the `form`-packet `CLAttachment110` occurrence and its `AttachmentName`, or
+   routes by the manifest alone;
+3. whether Acrobat writes `/Desc`, and with what string;
+4. what the indicators and the `form` packet's `checksum` become once an attachment exists.
+
+Everything else about attachments has now been measured from the templates. This is the one thing
+that cannot be.
 
 ## 5. What this does NOT do
 

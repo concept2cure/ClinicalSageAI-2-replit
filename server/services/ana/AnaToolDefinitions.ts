@@ -520,6 +520,14 @@ import { DIGITAL_HEALTH_TOOLS } from './digitalHealthTools';
 import { VACCINE_TOOLS } from './vaccineTools';
 import { BENEFIT_RISK_TOOLS } from './benefitRiskTools';
 import { POST_APPROVAL_TOOLS } from './postApprovalTools';
+// Region + gateway taxonomy — the ONE source of truth these two tool schemas
+// advertise, shared with the handlers in AnaToolExecutor so the advertised
+// enum and the accepted value cannot drift. See region-constants.ts for why.
+import {
+  ALL_GATEWAY_NAMES,
+  ALL_REGIONS,
+  agencyList,
+} from '../submission-gateways/region-constants.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Evidence & literature tool definitions moved to
@@ -1273,11 +1281,11 @@ export const FETCH_TEMPLATE_AND_FILL: AnaTool = {
 export const PACKAGE_ECTD_FOR_REGION: AnaTool = {
   name: 'package_ectd_for_region',
   description:
-    "Assemble a regional eCTD zip (FDA us-regional.xml / EMA eu-regional.xml / PMDA jp-regional.xml / Health Canada ca-regional.xml) from a set of CTD leaves. Produces the correct Module 1 folder structure per region, computes SHA-256, and returns the bundle metadata for downstream transmit. Use after AnA has gathered the leaf manifest for a submission.",
+    `Assemble a regional eCTD zip from a set of CTD leaves, for any of the twelve regions the gateway layer supports: ${agencyList()}. Produces that region's Module 1 folder structure and regional backbone (us-regional.xml / eu-regional.xml / jp-regional.xml / ca-regional.xml / …), computes SHA-256, and returns the bundle metadata for downstream transmit. The bundle carries a regionalBackbone status recording whether the backbone is built to the agency's own Module 1 structure or reuses another region's as a placeholder — read it before telling a user a package is agency-conformant. Use after AnA has gathered the leaf manifest for a submission.`,
   input_schema: {
     type: 'object',
     properties: {
-      region:          { type: 'string', enum: ['fda', 'ema', 'pmda', 'ca'] },
+      region:          { type: 'string', enum: [...ALL_REGIONS] },
       application_id:  { type: 'string', description: 'IND/NDA number (FDA), procedure number (EMA), application number (PMDA), dossier id (Health Canada).' },
       sequence:        { type: 'string', description: '4-digit submission sequence, e.g. 0001.' },
       submission_type: { type: 'string', description: 'original | amendment | response | annual_report | safety.' },
@@ -1313,12 +1321,12 @@ export const TRANSMIT_SUBMISSION: AnaTool = {
   // reported to the user as a failure. It does not transmit — see the handler
   // in AnaToolExecutor.ts and the gateway guard in submission-gateways/index.ts.
   description:
-    'Explains how to transmit an already-packaged bundle to a regulatory gateway (FDA ESG, EMA CESP, EMA EUDAMED, PMDA Gateway, Health Canada CESG). This tool does NOT transmit: agency transmission is irreversible and requires a person to re-authenticate, give a reason, pass the eCTD structural gate and apply a Part 11 signature on the Gateway transmittals surface. Call it to hand the user the exact next step and the bundle identifiers they will need. Everything before the wire — packaging, digest verification, status checks, acknowledgements — is available as separate tools.',
+    `Explains how to transmit an already-packaged bundle to any of the thirteen regulatory gateways the registry binds: FDA ESG, EMA CESP, EMA EUDAMED, PMDA Gateway, Health Canada CESG, MHRA Product Submissions (UK), NMPA / CDE (China), TGA eBusiness Services (Australia), Swissmedic eGateway, ANVISA SOLICITA (Brazil), CDSCO SUGAM (India), MFDS dBio (South Korea) and HSA PRISM (Singapore). This tool does NOT transmit: agency transmission is irreversible and requires a person to re-authenticate, give a reason, pass the eCTD structural gate and apply a Part 11 signature on the Gateway transmittals surface. Call it to hand the user the exact next step and the bundle identifiers they will need. Everything before the wire — packaging, digest verification, status checks, acknowledgements — is available as separate tools.`,
   input_schema: {
     type: 'object',
     properties: {
-      region:      { type: 'string', enum: ['fda', 'ema', 'pmda', 'ca'] },
-      gateway:     { type: 'string', enum: ['esg', 'cesp', 'eudamed', 'pmda_gateway', 'hc_cesg'] },
+      region:      { type: 'string', enum: [...ALL_REGIONS] },
+      gateway:     { type: 'string', enum: [...ALL_GATEWAY_NAMES] },
       environment: { type: 'string', enum: ['staging', 'production'], description: "Default 'production'." },
       bundle_path: { type: 'string', description: 'Absolute path to the package on disk.' },
       bundle_sha256: { type: 'string', description: '64-char hex SHA-256.' },
