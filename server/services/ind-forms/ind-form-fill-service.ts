@@ -40,7 +40,6 @@
  */
 
 import { promises as fs } from 'fs';
-import path from 'path';
 import crypto from 'node:crypto';
 import { PDFDocument, StandardFonts, rgb, type PDFFont } from 'pdf-lib';
 
@@ -68,6 +67,8 @@ import {
   FORM_1574,
 } from './ind-form-data-builders';
 import { hasReconstruction, reconstructForm } from './ind-form-reconstruct';
+import { indFormTemplatesDir, indFormTemplatePath } from './template-locations';
+import { requiredFieldsLeftBlankOn } from './required-box-report';
 import { getOfficialXfaFieldMap } from './official-field-maps';
 import {
   fillXfaDatasets,
@@ -119,6 +120,38 @@ export interface IndFormPdfResult {
   /** Built fields whose mapped widget rejected the value (wrong widget type). */
   unfilledFields?: string[];
   /**
+   * The REQUIRED boxes that carry NO value in the document this call produced —
+   * what the sponsor must still complete by hand before the form can be signed.
+   *
+   * ONE fact, ONE definition, on EVERY path. A required box is blank here for
+   * either of two reasons, and the sponsor cannot tell them apart by looking at
+   * the form:
+   *   - the project supplied no value for it (`missingRequired` also says so), or
+   *   - no reviewed mapping writes it onto this template (`unmappedFields` /
+   *     `unfilledFields` also say so, and `describeRenderPlan().sponsorCompletes`
+   *     says so before anything is rendered).
+   * Those two other facts keep their own names; this one is the union, because
+   * "which boxes are blank on the page in front of me" is a single question.
+   *
+   * WHY THAT MATTERS: the first cut of this field computed something different
+   * on each path. The XFA side listed every required field whose value did not
+   * reach the form; the AcroForm side listed only fields it could not PLACE —
+   * and a required field with no data is placed there as `setText('')`, which
+   * counts as filled. FDA 356h therefore reported `[]` — "assessed, none" — for
+   * a form whose applicant_address, application_type, dosage_form,
+   * route_of_administration and indication boxes were every one of them blank.
+   *
+   * A DERIVED gate (`built.qcOnlyFields`, e.g. `certification_selected`) is
+   * never named here: it is a completeness verdict the builder computes, not a
+   * box that exists on any edition of the form. `built.requiredFields` already
+   * excludes them.
+   *
+   * Not optional, and present on every path including the labeled draft and the
+   * reconstruction. `undefined` would make "not assessed" and "assessed, none"
+   * the same value to any caller writing `(r.requiredFieldsLeftBlank ?? [])`.
+   */
+  requiredFieldsLeftBlank: string[];
+  /**
    * True when the output is a faithful sectioned RECONSTRUCTION of the form
    * (drawn box structure), used for pure dynamic XFA forms (1571/3674) that have
    * no fillable AcroForm layer and no official page to overlay. Never the
@@ -160,13 +193,16 @@ export function buildFormById(formId: string, meta: IndProjectMetadata): BuiltFo
 // Template resolution
 // ---------------------------------------------------------------------------
 
-export function templatesDir(): string {
-  return process.env.IND_FORM_TEMPLATES_DIR || path.join('templates', 'forms', 'acroforms');
-}
-
-export function templatePathFor(formId: string): string {
-  return path.join(templatesDir(), `${formId}.pdf`);
-}
+/**
+ * Template location resolution lives in `./template-locations` and NOWHERE
+ * ELSE. The coverage report (`regulatory/registry/registryCoverage`) reads the
+ * same manifests to say whether an official edition is installed; when the two
+ * resolved the directory separately they disagreed off-root, with the report
+ * denying assets this renderer was filling from. Re-exported here because these
+ * two names are the service's public surface and its tests and the routes
+ * import them from here.
+ */
+export { indFormTemplatesDir as templatesDir, indFormTemplatePath as templatePathFor };
 
 interface VerifiedTemplate {
   bytes: Buffer;
@@ -176,7 +212,7 @@ interface VerifiedTemplate {
 /** The vendored asset's manifest as written, or null when there is none here. */
 async function readTemplateManifest(formId: string): Promise<Record<string, unknown> | null> {
   try {
-    const raw = await fs.readFile(`${templatePathFor(formId)}.manifest.json`, 'utf8');
+    const raw = await fs.readFile(`${indFormTemplatePath(formId)}.manifest.json`, 'utf8');
     const parsed = JSON.parse(raw) as unknown;
     return parsed && typeof parsed === 'object' && !Array.isArray(parsed)
       ? (parsed as Record<string, unknown>)
@@ -188,7 +224,7 @@ async function readTemplateManifest(formId: string): Promise<Record<string, unkn
 
 async function readTemplate(formId: string): Promise<VerifiedTemplate | null> {
   try {
-    const templatePath = templatePathFor(formId);
+    const templatePath = indFormTemplatePath(formId);
     const [bytes, rawManifest] = await Promise.all([
       fs.readFile(templatePath),
       fs.readFile(`${templatePath}.manifest.json`, 'utf8'),
@@ -261,6 +297,10 @@ async function fillOfficialTemplate(
   const requiredIds = new Set(built.requiredFields);
   const unmapped: string[] = [];
   const unfilled: string[] = [];
+  /* The ids whose widget actually took a value. Tracked rather than inferred:
+     "everything that is not in unmapped/unfilled" would silently include a
+     field the loop never reached. */
+  const wrote = new Set<string>();
   let filled = 0;
 
   for (const [fieldId, value] of entries) {
@@ -277,6 +317,7 @@ async function fillOfficialTemplate(
       } else {
         form.getTextField(acroName).setText(value);
       }
+      wrote.add(fieldId);
       filled += 1;
     } catch {
       // Present but a different widget than expected — record it; never
@@ -286,14 +327,23 @@ async function fillOfficialTemplate(
   }
 
   // Fail closed: an official fill may not claim success if a REQUIRED field
-  // could not be placed or written. Such a template is unqualified for this
-  // form, and renderBuiltForm falls back to the deterministic labeled draft.
-  const requiredUnplaced = [...requiredIds].filter(
+  // could not be PLACED — no mapping, no widget, or a widget that rejected the
+  // value. Such a template is unqualified for this form, and renderBuiltForm
+  // falls back to the deterministic labeled draft.
+  //
+  // This is deliberately NOT the same question as `requiredFieldsLeftBlank`
+  // below, and the two no longer share a name because conflating them is what
+  // made this path report a clean form. PLACEABILITY is about the template: can
+  // a value be written into that box at all. BLANKNESS is about the output the
+  // sponsor receives: is there a value in that box. A required field with no
+  // data is perfectly placeable — `setText('')` succeeds — and leaves the box
+  // empty, so it belongs in the second list and must not trip this gate.
+  const requiredUnplaceable = [...requiredIds].filter(
     (id) => unmapped.includes(id) || unfilled.includes(id),
   );
-  if (requiredUnplaced.length > 0) {
+  if (requiredUnplaceable.length > 0) {
     throw new Error(
-      `Official ${formId}: required field(s) unfillable (${requiredUnplaced.join(', ')})`,
+      `Official ${formId}: required field(s) unfillable (${requiredUnplaceable.join(', ')})`,
     );
   }
 
@@ -315,6 +365,11 @@ async function fillOfficialTemplate(
     missingRequired: built.missingRequired,
     unmappedFields: unmapped.length > 0 ? unmapped : undefined,
     unfilledFields: unfilled.length > 0 ? unfilled : undefined,
+    /* Not `[]`. Past the gate above nothing required is UNPLACEABLE, but a
+       required box is still blank whenever the project supplied no value for
+       it — the ordinary case for an early-stage program, and the case this
+       path used to report as an assessed-clean form. */
+    requiredFieldsLeftBlank: requiredFieldsLeftBlankOn(built, wrote),
   };
 }
 
@@ -347,7 +402,7 @@ async function readXfaTemplate(formId: string): Promise<VerifiedXfaTemplate | nu
   const fieldMap = getOfficialXfaFieldMap(formId);
   if (!fieldMap || Object.keys(fieldMap).length === 0) return null;
   try {
-    const templatePath = templatePathFor(formId);
+    const templatePath = indFormTemplatePath(formId);
     const [bytes, rawManifest] = await Promise.all([
       fs.readFile(templatePath),
       fs.readFile(`${templatePath}.manifest.json`, 'utf8'),
@@ -382,7 +437,14 @@ async function readXfaTemplate(formId: string): Promise<VerifiedXfaTemplate | nu
  * editable official form the sponsor opens, completes and signs. An unfilled box
  * there is a box the sponsor fills, exactly as if they had downloaded the blank
  * form. So the honest report is which fields we wrote and which we did not, in
- * `unmappedFields` and `missingRequired`, not a silent downgrade to a drawing.
+ * `unmappedFields`, `missingRequired` and `requiredFieldsLeftBlank`, not a
+ * silent downgrade to a drawing.
+ *
+ * That reasoning used to live HERE AND NOWHERE ELSE. A sponsor reading the
+ * result saw `missingRequired: []` on a 1571 whose IND-type and phase boxes are
+ * blank, and a flat `unmappedFields` in which those two required boxes were
+ * indistinguishable from `us_agent_name`. The decision is unchanged; what it
+ * leaves for the sponsor is now named in `requiredFieldsLeftBlank`.
  */
 async function fillOfficialXfaTemplate(
   formId: string,
@@ -417,6 +479,19 @@ async function fillOfficialXfaTemplate(
     fieldCoverage: result.filled.length / (entries.length || 1),
     missingRequired: built.missingRequired,
     unmappedFields: unmapped.length > 0 ? unmapped : undefined,
+    /* The fail-open decision documented above is now STATED IN THE RESULT, not
+       only in a code comment. `missingRequired` answers "was the data
+       supplied?", which is empty for a 1571 carrying an IND type and a phase —
+       while both boxes are blank on the file the sponsor opens, because neither
+       is mapped. Naming them is the difference between "you still have to tick
+       these two" and a result that reads as complete.
+
+       Computed by the same helper the AcroForm path uses, over `filled` (the
+       keys whose value reached the form ANYWHERE). `fillXfaDatasets` treats a
+       boolean `false` as data and writes it as "0", so an unticked required
+       certification would count as filled there; the helper's own presence rule
+       catches it, which is why both halves of the test live in one place. */
+    requiredFieldsLeftBlank: requiredFieldsLeftBlankOn(built, filledSet),
   };
 }
 
@@ -519,6 +594,12 @@ async function renderFallback(formId: string, built: BuiltForm): Promise<IndForm
     // The fallback renders every built field, so coverage is complete.
     fieldCoverage: entries.length === 0 ? 1 : 1,
     missingRequired: built.missingRequired,
+    /* The draft draws every built field, so nothing is unplaceable — but a
+       required field with no value is still an empty line on the page, and the
+       question "which required boxes are blank" has the same answer here as on
+       an official fill. Reporting it (rather than omitting the key) is what
+       stops "not assessed" and "assessed, none" from being one value. */
+    requiredFieldsLeftBlank: requiredFieldsLeftBlankOn(built, new Set(Object.keys(built.fields))),
   };
 }
 
@@ -730,7 +811,7 @@ export async function describeRenderPlan(formId: string): Promise<FormRenderPlan
 let renderPlanCache: { dir: string; plans: Promise<FormRenderPlan[]> } | null = null;
 
 export async function describeAllRenderPlans(): Promise<FormRenderPlan[]> {
-  const dir = templatesDir();
+  const dir = indFormTemplatesDir();
   if (!renderPlanCache || renderPlanCache.dir !== dir) {
     const plans = Promise.all(SUPPORTED_FORM_IDS.map((formId) => describeRenderPlan(formId)));
     renderPlanCache = { dir, plans };
@@ -740,6 +821,81 @@ export async function describeAllRenderPlans(): Promise<FormRenderPlan[]> {
     });
   }
   return renderPlanCache.plans;
+}
+
+/**
+ * The REQUIRED boxes an official render leaves for the sponsor, whatever the
+ * project data — the data-independent half of `requiredFieldsLeftBlank`, for
+ * callers that record a field map without rendering a PDF.
+ *
+ * The governed artifact routes store a structured field map and report
+ * `ready = missingRequired.length === 0`. That is a statement about the DATA and
+ * it stays one; this is the other fact, and it gets its own name rather than
+ * being folded into `ready` — conflating "the data is complete" with "the form
+ * is complete" is the same mistake, one level up, that this round is repairing.
+ * FDA 1571 is the live case: `ind_type` and `phase_of_study` are deliberately
+ * unmapped, so a fully populated 1571 artifact is data-complete and still
+ * arrives with two required boxes for the sponsor to tick in Acrobat.
+ *
+ * Derived from `describeRenderPlan`, never re-derived: that function is the
+ * repo's single statement of what a render will produce, and a test pins it
+ * against the render itself. So this cannot drift from the PDF.
+ *
+ * An unsupported form id THROWS rather than answering `[]` — "no boxes are left
+ * for you" about a form nobody can produce is the fabricated clean answer this
+ * whole change exists to remove. A form with no official template returns []
+ * legitimately: a draft or reconstruction draws every built field, so no box is
+ * left unwritten (what is still missing there is data, and `missingRequired`
+ * carries it).
+ *
+ * A PRESENT-BUT-UNREADABLE template also throws, and that distinction is the
+ * whole point. `readTemplate`/`readXfaTemplate` swallow every failure in one
+ * catch — missing file, corrupt manifest, SHA-256 MISMATCH, unreviewed
+ * manifest, EIO, a wrong IND_FORM_TEMPLATES_DIR — so `officialTemplate: false`
+ * used to mean either "no official edition exists" or "the official edition did
+ * not verify", and both answered []. The callers persist that answer:
+ * `sponsorMustComplete` goes into `concept2cure_artifacts.metadata` and into
+ * the 21 CFR Part 11 audit row. A tampered FDA_1571 therefore recorded, under
+ * signature, that nothing was left for the sponsor — for a form whose IND-type
+ * and phase boxes are blank on every render. The asset's presence on disk is
+ * what separates the two, so it is checked directly rather than inferred from a
+ * null.
+ */
+/**
+ * Is an official asset for this form ON DISK, whatever its verification state?
+ *
+ * The discriminator between "this form has no official edition" and "this
+ * form's official edition did not verify" — the two facts `officialTemplate:
+ * false` conflates. Only presence is asked: an unreadable, tampered or
+ * unreviewed file is still present, and that is precisely the case that must
+ * refuse rather than answer "none".
+ */
+async function officialAssetIsPresent(formId: string): Promise<boolean> {
+  try {
+    await fs.access(indFormTemplatePath(formId));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export async function requiredBoxesLeftToSponsor(formId: string): Promise<string[]> {
+  const plan = (await describeAllRenderPlans()).find((p) => p.formId === formId);
+  if (!plan) {
+    throw new Error(`No render plan for form ${formId}; the boxes it leaves for a sponsor are unknown.`);
+  }
+  if (!plan.officialTemplate) {
+    if (await officialAssetIsPresent(formId)) {
+      throw new Error(
+        `Form ${formId} has a vendored official template that could not be read or verified, ` +
+          `so the boxes it leaves for a sponsor are UNKNOWN. Refusing to report "none" — ` +
+          `check the asset and its manifest (digest, reviewer, source) in ${indFormTemplatesDir()}.`,
+      );
+    }
+    return [];
+  }
+  const writes = new Set(plan.platformWrites);
+  return buildFormById(formId, {}).requiredFields.filter((id) => !writes.has(id));
 }
 
 /**

@@ -30,6 +30,7 @@ import {
   buildFormById,
   blankTemplateDigests,
   describeAllRenderPlans,
+  requiredBoxesLeftToSponsor,
   SUPPORTED_FORM_IDS,
   type SupportedFormId,
   type IndFormPdfResult,
@@ -324,6 +325,14 @@ function sendPdf(res: Response, result: IndFormPdfResult): void {
   if (result.unfilledFields && result.unfilledFields.length > 0) {
     res.setHeader('X-Form-Unfilled', result.unfilledFields.join(','));
   }
+  // The required boxes that are EMPTY on the bytes below — whether because the
+  // project supplied no value or because no reviewed mapping writes them. Set
+  // UNCONDITIONALLY, unlike its three neighbours above: an empty value is the
+  // assertion "assessed, and none", and omitting the header when the list is
+  // empty would make that indistinguishable from a server that never looked.
+  // The renderer reports it on every path, so there is no case where this is
+  // unknown; an absent header means an older server, not a clean form.
+  res.setHeader('X-Form-Required-Blank', result.requiredFieldsLeftBlank.join(','));
   res.status(200).send(Buffer.from(result.pdfBytes));
 }
 
@@ -516,9 +525,12 @@ router.post('/:formId/pdf-from-records', limiter, requireRole(AUTHOR), async (re
  * Body: IndProjectMetadata + ({ projectId: number } | { projectIdent: string }).
  * For 1572 this persists the FIRST investigator's form (per-investigator
  * persistence mirrors /1572/pdf-all and is a follow-on).
- * Returns 201 { artifactId, formId, projectId, ready, missingRequired, contentHash }
- * for the governed path; 200 { governed:false, audited:true, artifactId:null, … }
- * for the audited-unplaced program path.
+ * Returns 201 { artifactId, formId, projectId, ready, missingRequired,
+ * sponsorMustComplete, contentHash } for the governed path; 200
+ * { governed:false, audited:true, artifactId:null, … } for the audited-unplaced
+ * program path. `ready` is about the DATA (`missingRequired` is empty);
+ * `sponsorMustComplete` is about the FORM — the required boxes the official
+ * render leaves blank for the sponsor however complete the data is.
  */
 router.post('/:formId/artifact', limiter, requireRole(AUTHOR), async (req, res) => {
   const ctx = ctxOf(req);
@@ -548,6 +560,22 @@ router.post('/:formId/artifact', limiter, requireRole(AUTHOR), async (req, res) 
   let effectiveProjectId = projectId;
 
   try {
+    /*
+     * The required boxes the official render leaves for the sponsor whatever
+     * the data (FDA 1571: ind_type, phase_of_study). A DIFFERENT fact from
+     * `ready`, which answers "is the project data complete" — this artifact
+     * stores a field map, so that remains the right meaning for `ready`, and
+     * folding these ids into it would repeat the conflation this change is
+     * undoing one level down. Both facts travel in the response instead.
+     *
+     * Computed BEFORE anything is persisted and deliberately not caught here:
+     * `requiredBoxesLeftToSponsor` throws rather than answering `[]` for a form
+     * it cannot plan, and the handler's catch turns that into a 500. A governed
+     * row that recorded "nothing left for the sponsor" because a template read
+     * hiccuped is precisely the fabricated clean result to avoid.
+     */
+    const sponsorMustComplete = await requiredBoxesLeftToSponsor(formId);
+
     if (isProgramIdent) {
       // Program-spine path: resolve org-scoped, then anchor, then — only if
       // there is no anchor — the audited-unplaced degradation.
@@ -596,6 +624,7 @@ router.post('/:formId/artifact', limiter, requireRole(AUTHOR), async (req, res) 
             programId: program.id,
             programCode: program.code,
             ready,
+            sponsorMustComplete,
             contentHash: programContentHash,
             // Stable audit enum, deliberately unchanged: existing Part 11 rows
             // carry this value and queries match on it. What changed is WHICH
@@ -619,6 +648,7 @@ router.post('/:formId/artifact', limiter, requireRole(AUTHOR), async (req, res) 
           programId: program.id,
           ready,
           missingRequired: builtForProgram.missingRequired,
+          sponsorMustComplete,
           contentHash: programContentHash,
           artifact_registry:
             'unplaced — this program has no anchored project row, and the governed artifact ' +
@@ -673,6 +703,11 @@ router.post('/:formId/artifact', limiter, requireRole(AUTHOR), async (req, res) 
         storageFormat: 'structured-field-map',
         ready,
         missingRequired: built.missingRequired,
+        // Stored beside `ready`, not folded into it. `ready` travels alone into
+        // dashboards and audit queries, and on its own "ready: true" for a 1571
+        // reads as a form that can be signed — while its IND-type and phase
+        // boxes are blank on every render of it. Both facts, or neither.
+        sponsorMustComplete,
       },
     }).returning({ id: concept2cureArtifacts.id });
 
@@ -704,13 +739,21 @@ router.post('/:formId/artifact', limiter, requireRole(AUTHOR), async (req, res) 
       organizationId: ctx.organizationId,
       resourceType: 'concept2cure_artifact',
       resourceId: artifactId,
-      metadata: { formId, projectId: effectiveProjectId, ready, contentHash },
+      metadata: { formId, projectId: effectiveProjectId, ready, sponsorMustComplete, contentHash },
     });
     if (!artifactAudit.persisted) {
       logger.warn('ind-form artifact audit row was not persisted', { err: artifactAudit.error ?? 'no durable store accepted the row' });
     }
 
-    res.status(201).json({ artifactId, formId, projectId: effectiveProjectId, ready, missingRequired: built.missingRequired, contentHash });
+    res.status(201).json({
+      artifactId,
+      formId,
+      projectId: effectiveProjectId,
+      ready,
+      missingRequired: built.missingRequired,
+      sponsorMustComplete,
+      contentHash,
+    });
   } catch (err) {
     fail(res, err);
   }
@@ -731,8 +774,10 @@ router.post('/:formId/artifact', limiter, requireRole(AUTHOR), async (req, res) 
  * disclosable interest (the sponsor certifies "none" on 3454 instead).
  *
  * Body: IndProjectMetadata + { projectId: number }.
- * Returns 201 { formId, projectId, artifacts: [{ artifactId, investigatorName,
- *   ready, missingRequired, contentHash }] }.
+ * Returns 201 { formId, projectId, sponsorMustComplete, artifacts: [{ artifactId,
+ *   investigatorName, ready, missingRequired, contentHash }] }.
+ * `sponsorMustComplete` is data-independent (a property of the form and its
+ * reviewed mapping), so it is one value for the batch.
  */
 const PER_INVESTIGATOR_FORMS = new Set<string>([FORM_1572, FORM_3455]);
 
@@ -763,6 +808,12 @@ router.post('/:formId/artifact-all', limiter, requireRole(AUTHOR), async (req, r
     if (!project) {
       return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Project not found for this organization.' } });
     }
+
+    // Data-independent, so it is one value for the batch rather than a copy on
+    // every investigator's row. Same contract as /:formId/artifact: it throws
+    // rather than reporting "none" for a form it cannot plan, and the handler's
+    // catch turns that into a 500 before anything is persisted.
+    const sponsorMustComplete = await requiredBoxesLeftToSponsor(formId);
 
     const builts = formId === FORM_1572 ? buildAllForm1572(body) : buildAllForm3455(body);
     const shortId = formId.replace(/^FDA_/, '').toLowerCase();
@@ -814,6 +865,8 @@ router.post('/:formId/artifact-all', limiter, requireRole(AUTHOR), async (req, r
               storageFormat: 'structured-field-map',
               ready: r.ready,
               missingRequired: r.missingRequired,
+              // See /:formId/artifact: `ready` is the data, this is the form.
+              sponsorMustComplete,
               investigatorIndex: r.idx,
               investigatorName: r.investigatorName,
             },
@@ -855,7 +908,7 @@ router.post('/:formId/artifact-all', limiter, requireRole(AUTHOR), async (req, r
         organizationId: ctx.organizationId,
         resourceType: 'concept2cure_artifact',
         resourceId: r.artifactId,
-        metadata: { formId, projectId, ready: r.ready, contentHash: r.contentHash, investigatorIndex: r.idx },
+        metadata: { formId, projectId, ready: r.ready, sponsorMustComplete, contentHash: r.contentHash, investigatorIndex: r.idx },
       });
       if (!batchArtifactAudit.persisted) {
         logger.warn('ind-form artifact audit row was not persisted (batch)', { err: batchArtifactAudit.error ?? 'no durable store accepted the row' });
@@ -865,6 +918,7 @@ router.post('/:formId/artifact-all', limiter, requireRole(AUTHOR), async (req, r
     res.status(201).json({
       formId,
       projectId,
+      sponsorMustComplete,
       artifacts: rows.map((r) => ({
         artifactId: r.artifactId,
         investigatorName: r.investigatorName,
@@ -891,6 +945,9 @@ router.post('/1572/pdf-all', limiter, requireRole(AUTHOR), async (req, res) => {
         reconstructed: r.reconstructed === true,
         fieldCoverage: r.fieldCoverage,
         missingRequired: r.missingRequired,
+        // Per document: each investigator's form leaves its own boxes blank.
+        // Always an array — see IndFormPdfResult.requiredFieldsLeftBlank.
+        requiredFieldsLeftBlank: r.requiredFieldsLeftBlank,
         pdfBase64: Buffer.from(r.pdfBytes).toString('base64'),
       })),
     });
@@ -917,6 +974,9 @@ router.post('/3455/pdf-all', limiter, requireRole(AUTHOR), async (req, res) => {
         reconstructed: r.reconstructed === true,
         fieldCoverage: r.fieldCoverage,
         missingRequired: r.missingRequired,
+        // Per document: each investigator's form leaves its own boxes blank.
+        // Always an array — see IndFormPdfResult.requiredFieldsLeftBlank.
+        requiredFieldsLeftBlank: r.requiredFieldsLeftBlank,
         pdfBase64: Buffer.from(r.pdfBytes).toString('base64'),
       })),
     });

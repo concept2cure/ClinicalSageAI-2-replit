@@ -31,13 +31,18 @@ const routeChecks = [
     mustContain: [
       'const consequence = await createGovernedExportConsequence({',
       // The official-eSTAR route returns the consequence THROUGH
-      // withOfficialExtras, which spreads it and adds the fill report and the
-      // retention record beside it — the consequence's own keys reach the
-      // client unchanged. Both halves are pinned: the return statement, and
-      // the wrapper's spread that makes it a superset rather than a
-      // replacement.
-      'return res.status(200).json(withOfficialExtras(consequence, fieldReport, retention));',
-      'return { ...body, ...(fieldReport ? { fieldReport } : {}), retention };',
+      // withOfficialExtras, which spreads it and adds the fill report, the
+      // template-erased field list and the retention record beside it — the
+      // consequence's own keys reach the client unchanged. Both halves are
+      // pinned: the return statement, and the wrapper's spread that makes it a
+      // superset rather than a replacement.
+      //
+      // `erasedFields` joined the wrapper on 2026-09-08 (the values the FDA
+      // template's own scripts erase, which no caller could see before). The
+      // tokens are updated, NOT relaxed: this check exists to catch a `.json(x)`
+      // that replaces the consequence body, and it still would.
+      'return res.status(200).json(withOfficialExtras(consequence, fieldReport, retention, result.erasedFields));',
+      'return { ...body, ...(fieldReport ? { fieldReport } : {}), erasedFields: [...erasedFields], retention };',
     ],
   },
   {

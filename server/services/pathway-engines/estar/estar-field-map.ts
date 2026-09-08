@@ -505,6 +505,262 @@ export const ESTAR_TEMPLATE_RECOMPUTED_FIELDS: Readonly<Record<string, EstarReco
   indicationsForUseCitation: { writtenBy: [], rebuiltFrom: null, clearedByPathwayClick: false, rebuildOutcome: 'reproduces' },
 };
 
+/**
+ * WHAT THE REBUILD DOES TO THE VALUES THIS FILL ACTUALLY CARRIES.
+ *
+ * `ESTAR_TEMPLATE_RECOMPUTED_FIELDS` is a claim about the TEMPLATE — measured
+ * once, pinned by `estar-field-map.template-behaviour.test.ts`. It is not yet a
+ * claim about a filing: `rebuildOutcome` alone cannot say whether a particular
+ * fill loses anything, because two of the three outcomes depend on the VALUES.
+ *
+ *   - `'substitutes'` is only a substitution when the source the rebuild reads
+ *     holds a DIFFERENT string. `declarationCompanyName` falls back to
+ *     `client_workspaces.name` then `organizations.name`, which is exactly what
+ *     `applicantCompanyName` resolves to, so on the ordinary filing the rebuild
+ *     rewrites the cell with an identical string and nothing is lost. Reporting
+ *     that as a substitution on every filing is a warning that cries wolf.
+ *   - The same key is a DEFERRED substitution when the map writes the source but
+ *     this fill left it blank. FDA's script clears the cell unconditionally and
+ *     only refills it `if (... ADTextField210.rawValue != null)`, so the
+ *     delivered form still shows our value — until the applicant types their own
+ *     company name, which a 510(k) requires, and the cell becomes theirs. This
+ *     was answered as a plain erasure until 2026-09-08, which read as a harmless
+ *     gap and raised no blocker; the outcome is the same false attestation as
+ *     the both-written case, one keystroke later.
+ *   - It is a true ERASURE when NOTHING IN THE MAP writes the rebuild's source
+ *     at all: no value of ours can ever reach the guarded refill, so the clear
+ *     stands and the cell goes blank. A gap, not a wrong entity.
+ *   - `'blanks'` with `rebuiltFrom: null` is not an erasure at all. Nothing
+ *     RECOMPUTES those cells — the predicate pair's only writer is
+ *     `PredicatesSE.PredicateReference.DeletePredicate [click]`, the applicant
+ *     explicitly deleting the predicate. Calling them erased tells a filer their
+ *     predicate was dropped from a form that still holds it.
+ *
+ * So this is the one place that turns the measured table into findings about a
+ * concrete set of values, and both the fill's refusal and the field report read
+ * it — the alternative was two filters over the same table drifting apart.
+ *
+ * And it asks the question about the text the WRITER will put in the cell, not
+ * about the shape the caller happened to send: see {@link estarCellText}.
+ */
+export type EstarRebuildEffect =
+  /** The form clears this cell and rebuilds it from a source nothing writes. */
+  | 'erased'
+  /** The form rebuilds this cell from ANOTHER key's written value — the cell is wrong, not blank. */
+  | 'substituted'
+  /**
+   * The form rebuilds this cell from another MAPPED key that this fill left
+   * blank. The delivered cell holds our value; FDA's guarded refill
+   * (`if (<source>.rawValue != null)`) does not fire until the applicant types
+   * into the source, and the unconditional clear above it means our value goes
+   * the moment they do. So the cell is ours only until the applicant fills in
+   * the source field, and then it is theirs. Same loss as `'substituted'`,
+   * deferred by one keystroke — see `assessOneKey`.
+   */
+  | 'substituted-on-entry';
+
+/** Both effects in which ANOTHER key's value takes this cell over. */
+export function isEstarSubstitution(finding: EstarRebuildFinding): boolean {
+  return finding.effect === 'substituted' || finding.effect === 'substituted-on-entry';
+}
+
+export interface EstarRebuildFinding {
+  readonly key: string;
+  readonly effect: EstarRebuildEffect;
+  /** The template's own caption for the cell, so a message can name what a filer sees. */
+  readonly caption: string;
+  readonly somPath: string | null;
+  /** Substitutions only: the mapped key whose value the form puts in this cell. */
+  readonly substitutedByKey?: string;
+  readonly substitutedByCaption?: string;
+  /** Substitutions only: the text the writer puts in this cell. */
+  readonly writtenValue?: string;
+  /** `'substituted'` only: the text the rebuild leaves there instead. */
+  readonly survivingValue?: string;
+}
+
+/**
+ * A value whose coercion to text THROWS — an object with a null prototype or a
+ * throwing `toString`. `String(value)` is the last line of the writer's own
+ * `toText`, so such a value blows the fill up a moment later and no artifact is
+ * produced either way; it is given its own answer here rather than being folded
+ * into `null`, because `null` means "the writer writes nothing", and a value
+ * reported as unwritten produces no finding at all. That is the fail-open this
+ * assessor exists to close, and it must not be reintroduced by an edge case.
+ */
+export const ESTAR_UNRENDERABLE_VALUE: unique symbol = Symbol('estar.unrenderableCellValue');
+
+/** What {@link estarCellText} answers: the text, nothing, or unrenderable. */
+export type EstarCellText = string | typeof ESTAR_UNRENDERABLE_VALUE | null;
+
+/**
+ * THE TEXT THE WRITER WILL PUT IN THIS KEY'S CELL, or `null` when the writer
+ * will put nothing there.
+ *
+ * This has to be the WRITER'S question, not a convenient one. The previous
+ * version asked `typeof raw !== 'string'` and answered "no value" for anything
+ * else — while `toText()` in `server/services/forms/fill-official-pdf.ts` ends
+ * `return String(value)` and the route's schema is `data: z.record(z.unknown())`.
+ * So `declarationCompanyName: ['Declaring Entity GmbH']` reached the Declaration
+ * of Conformity cell as `Declaring Entity GmbH`, the assessor saw "not a string,
+ * nothing written", emitted no finding, and the refusal below never fired: the
+ * exact false attestation this module exists to refuse, delivered with
+ * `filled: true` and `blockers: []`. Verified end-to-end against the vendored
+ * nIVD template on 2026-09-08.
+ *
+ * Mirrors `hasData` + `toText` / `toBoolean` there, branch for branch. Those are
+ * module-private to the writer, so the equivalence is PINNED rather than
+ * imported: `estar-declaration-entity.test.ts` fills the real template with each
+ * shape and asserts the cell that comes back is the string this returns.
+ *
+ * The one deliberate difference is trimming: the writer writes the untrimmed
+ * string, and this compares trimmed, because a declaring entity that differs
+ * from the applicant only by surrounding whitespace is the same legal entity and
+ * blocking a filing over it would be noise. Everything else — a boolean's
+ * `'Yes'`/`'No'`, a checkbox's `'1'`/`'0'`, an array's join, an object's
+ * `[object Object]` — is the writer's own rendering.
+ */
+export function estarCellText(spec: OfficialPdfFieldSpec | undefined, raw: unknown): EstarCellText {
+  // 1. The writer's `hasData`: undefined, null and blank strings are "no value"
+  //    and are recorded as skipped. Everything else — `false`, `0`, `[]` — has
+  //    data as far as the writer is concerned and gets rendered below.
+  if (raw === undefined || raw === null) return null;
+  if (typeof raw === 'string' && raw.trim().length === 0) return null;
+
+  // 2. The writer's coercion, per the declared widget type.
+  let text: string;
+  try {
+    if (spec?.type === 'checkbox') text = estarCellBoolean(raw) ? '1' : '0';
+    else if (typeof raw === 'string') text = raw;
+    else if (typeof raw === 'boolean') text = raw ? 'Yes' : 'No';
+    else text = String(raw);
+  } catch {
+    return ESTAR_UNRENDERABLE_VALUE;
+  }
+
+  // 3. A value that renders to nothing (`[]`, `''` after coercion) puts no text
+  //    in the cell, so there is nothing of ours for the form to take away.
+  const trimmed = text.trim();
+  return trimmed.length > 0 ? trimmed : null;
+}
+
+/** The writer's `toBoolean`: only explicit affirmatives are true. */
+function estarCellBoolean(raw: unknown): boolean {
+  if (typeof raw === 'boolean') return raw;
+  if (typeof raw === 'number') return raw !== 0;
+  if (typeof raw === 'string') {
+    const v = raw.trim().toLowerCase();
+    if (['true', 'yes', 'on', '1', 'checked', 'x'].includes(v)) return true;
+  }
+  return false;
+}
+
+/**
+ * The mapped key that writes `som`, whether as its primary path or one of its
+ * `alsoWriteSomPaths`. `rebuiltFrom` names a repeat as `Device[].TradeName`
+ * while the map writes the single shipped instance as `Device.TradeName`, so
+ * both sides are compared with the repeat markers removed.
+ */
+function keyWriting(fieldMap: OfficialPdfFieldMap, som: string): string | null {
+  const want = som.replace(/\[\]/g, '');
+  for (const [key, spec] of Object.entries(fieldMap)) {
+    for (const path of [spec.xfaSomPath, ...(spec.alsoWriteSomPaths ?? [])]) {
+      if (path && path.replace(/\[\]/g, '') === want) return key;
+    }
+  }
+  return null;
+}
+
+/**
+ * Evaluate {@link ESTAR_TEMPLATE_RECOMPUTED_FIELDS} against the values a fill
+ * carries. Returns one finding per mapped key whose written value the template's
+ * own scripts will not leave standing — nothing for a key that was not written,
+ * and nothing for a rebuild that puts back an identical string.
+ *
+ * `writtenKeys`, when given, restricts the assessment to the keys the fill
+ * really wrote (a value whose SOM path the template skipped never reached a
+ * cell, so the form has nothing of ours to take away).
+ *
+ * Comparison is exact after trimming. A declaring entity spelled differently
+ * from the applicant is still a different string in a signed declaration, and
+ * making the two match is a one-field correction; guessing that two spellings
+ * are the same legal entity is not this module's call to make.
+ */
+export function assessEstarTemplateRebuild(
+  fieldMap: OfficialPdfFieldMap,
+  values: Readonly<Record<string, unknown>>,
+  writtenKeys?: ReadonlyArray<string>,
+): EstarRebuildFinding[] {
+  const restrict = writtenKeys ? new Set(writtenKeys) : null;
+  const findings: EstarRebuildFinding[] = [];
+  for (const key of Object.keys(fieldMap)) {
+    if (restrict && !restrict.has(key)) continue;
+    const finding = assessOneKey(fieldMap, values, key);
+    if (finding) findings.push(finding);
+  }
+  return findings;
+}
+
+/** What the rebuild leaves in ONE mapped cell, or null when nothing is lost. */
+function assessOneKey(
+  fieldMap: OfficialPdfFieldMap,
+  values: Readonly<Record<string, unknown>>,
+  key: string,
+): EstarRebuildFinding | null {
+  const spec = fieldMap[key];
+  const written = estarCellText(spec, values[key]);
+  if (written === null) return null; // nothing written here, so nothing to lose
+  const record = ESTAR_TEMPLATE_RECOMPUTED_FIELDS[key];
+  if (!record || record.rebuildOutcome === 'reproduces') return null;
+  // No rebuild source means no rebuild: the cell is only ever cleared by an
+  // explicit destructive click (Delete Predicate), which is the applicant's own
+  // act on a form they are holding, not something this fill did to them.
+  if (!record.rebuiltFrom) return null;
+
+  const base = { key, caption: spec.caption ?? key, somPath: spec.xfaSomPath ?? null };
+  if (record.rebuildOutcome === 'blanks') return { ...base, effect: 'erased' };
+
+  // 'substitutes': the rebuild reads a source this map DOES write. Which key,
+  // and does it hold the same string?
+  const sourceKey = keyWriting(fieldMap, record.rebuiltFrom);
+  // Nothing in this map writes the rebuild's source, so FDA's guarded refill can
+  // never fire from a value of ours: the unconditional clear stands and the cell
+  // goes blank. A gap, not a wrong entity.
+  if (sourceKey === null) return { ...base, effect: 'erased' };
+
+  const surviving = estarCellText(fieldMap[sourceKey], values[sourceKey]);
+  const substitutedBy = {
+    substitutedByKey: sourceKey,
+    substitutedByCaption: fieldMap[sourceKey]?.caption ?? sourceKey,
+    writtenValue: describeCellText(written),
+  };
+  /* THE SOURCE IS MAPPED BUT THIS FILL LEFT IT BLANK — and this used to answer
+     'erased', which read as a harmless gap and raised no blocker. It is not a
+     gap. We deliver a form whose cell holds OUR value; FDA's clear is
+     unconditional and its refill is guarded on the source being non-null, so the
+     applicant's first entry into the source field — `ADTextField210`, the
+     applicant company name, which a 510(k) requires — replaces our value with
+     theirs. The Declaration of Conformity then attests in the applicant's name,
+     which is exactly the false attestation the both-written case is refused for.
+     Naming it separately keeps the two messages honest about WHEN it happens. */
+  if (surviving === null) return { ...base, effect: 'substituted-on-entry', ...substitutedBy };
+
+  // Either side unrenderable: the writer throws on the same value moments later,
+  // so no eSTAR is produced. Reporting a substitution is the fail-closed answer;
+  // calling it equal would be the fail-open one.
+  if (written === ESTAR_UNRENDERABLE_VALUE || surviving === ESTAR_UNRENDERABLE_VALUE) {
+    return { ...base, effect: 'substituted', ...substitutedBy, survivingValue: describeCellText(surviving) };
+  }
+  if (surviving === written) return null; // the rebuild puts back the same string
+  return { ...base, effect: 'substituted', ...substitutedBy, survivingValue: surviving };
+}
+
+/** A cell's text for a human-readable message. */
+function describeCellText(text: EstarCellText): string {
+  if (text === ESTAR_UNRENDERABLE_VALUE) return '(a value the form cannot render as text)';
+  return text ?? '';
+}
+
 /** The field map for a descriptor id, or undefined if the descriptor is unknown. */
 export function getEstarFieldMap(descriptorId: string): OfficialPdfFieldMap | undefined {
   return ESTAR_FIELD_MAPS[descriptorId];
@@ -516,4 +772,4 @@ export function isFieldMapPopulated(descriptorId: string): boolean {
   return !!m && Object.keys(m).length > 0;
 }
 
-export default { ESTAR_FIELD_MAPS, getEstarFieldMap, isFieldMapPopulated };
+export default { ESTAR_FIELD_MAPS, getEstarFieldMap, isFieldMapPopulated, assessEstarTemplateRebuild };

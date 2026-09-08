@@ -793,3 +793,132 @@ describe('POST /api/510k/estar/official — retention of the delivered artifact'
     expect(mockIngest).not.toHaveBeenCalled();
   });
 });
+
+/* ───────────────────────────────────────────────────────────────────────────
+ * WHAT THE ROUTE TELLS THE CALLER ABOUT VALUES THE FORM WILL NOT KEEP.
+ *
+ * `fillEstarSubmission` names them on `erasedFields`, and NO production caller
+ * read it: on the verbatim path `describeOfficialFill` returns `fieldReport:
+ * null`, so the 200 body said nothing, and `officialMetadata` carried
+ * filledFields/skippedFields but never erasedFields, so the registered artifact
+ * record was silent too. These pin it through the route, on both paths.
+ * ─────────────────────────────────────────────────────────────────────────── */
+
+describe('POST /api/510k/estar/official — erased values reach the caller (verbatim path)', () => {
+  // The REAL vendored template and the REAL field map — no fixture. This is the
+  // artifact CDRH ingests, filled by the code that ships.
+  const haveTemplate = require('fs').existsSync(
+    path.resolve(process.cwd(), 'assets/estar-templates/eSTAR-510k-non-ivd.pdf'),
+  );
+
+  beforeEach(() => vi.clearAllMocks());
+
+  function officialReq(data: Record<string, unknown>) {
+    return makeReq({
+      meta: { id: 'k123', projectId: 33, title: 'Official eSTAR' },
+      type: '510k',
+      variant: 'device',
+      data,
+    });
+  }
+
+  it.skipIf(!haveTemplate)('names the erased keys in the 200 body AND in the registered metadata', async () => {
+    const req = officialReq({ deviceTradeName: 'BX-204 CGM', deviceCommonName: 'Continuous glucose monitor' });
+    const res = createMockResponse() as any;
+
+    await getHandler('/official')(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(200);
+    const payload = res.json.mock.calls[0][0];
+    // No governed resolution ran, so there is no fieldReport — which is exactly
+    // why the erasure has to be said here, on its own.
+    expect(payload.fieldReport).toBeUndefined();
+    expect(payload.erasedFields).toEqual(['deviceCommonName']);
+
+    const arg = mockGovernedConsequence.mock.calls[0][0] as any;
+    expect(arg.metadata.filledFields.sort()).toEqual(['deviceCommonName', 'deviceTradeName']);
+    expect(arg.metadata.erasedFields).toEqual(['deviceCommonName']);
+  });
+
+  it.skipIf(!haveTemplate)('reports an EMPTY erased list rather than omitting it (assessed ≠ unassessed)', async () => {
+    const req = officialReq({ deviceTradeName: 'BX-204 CGM' });
+    const res = createMockResponse() as any;
+
+    await getHandler('/official')(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.json.mock.calls[0][0].erasedFields).toEqual([]);
+    expect((mockGovernedConsequence.mock.calls[0][0] as any).metadata.erasedFields).toEqual([]);
+  });
+
+  it.skipIf(!haveTemplate)('REFUSES 422 when every written value is one the form erases (P3)', async () => {
+    const req = officialReq({ deviceCommonName: 'Continuous glucose monitor' });
+    const res = createMockResponse() as any;
+
+    await getHandler('/official')(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(422);
+    const payload = res.json.mock.calls[0][0];
+    expect(payload.error).toBe('ESTAR_NOT_PRODUCIBLE');
+    expect(payload.officialEstarPdf).toBe(false);
+    expect(payload.blockers.join(' ')).toContain('deviceCommonName');
+    expect(mockGovernedConsequence).not.toHaveBeenCalled();
+    expect(mockIngest).not.toHaveBeenCalled();
+  });
+
+  it.skipIf(!haveTemplate)('REFUSES 422 on the reviewer\'s non-string declaring entity (P1, over HTTP)', async () => {
+    // `data: z.record(z.unknown())` accepts this from a plain JSON body, and the
+    // writer's toText() ends `return String(value)` — so the DoC cell really did
+    // come back reading "Declaring Entity GmbH" with filled:true, blockers:[].
+    const req = officialReq({
+      deviceTradeName: 'BX-204 CGM',
+      applicantCompanyName: 'Acme Devices, Inc.',
+      declarationCompanyName: ['Declaring Entity GmbH'],
+    });
+    const res = createMockResponse() as any;
+
+    await getHandler('/official')(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(422);
+    const payload = res.json.mock.calls[0][0];
+    expect(payload.error).toBe('ESTAR_NOT_PRODUCIBLE');
+    expect(payload.blockers.join(' ')).toContain('Declaring Entity GmbH');
+    expect(mockGovernedConsequence).not.toHaveBeenCalled();
+    expect(mockIngest).not.toHaveBeenCalled();
+  });
+});
+
+describe('POST /api/510k/estar/official — erased values reach the caller (governed path)', () => {
+  useTemplateFixture({ prefix: 'estar-official-erased-', template: makeAdministrativeEstar, map: ADMIN_MAP });
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockLoadInputs.mockResolvedValue({
+      ...GOVERNED_RECORDS,
+      program: { ...GOVERNED_RECORDS.program, commonName: 'Continuous glucose monitor' },
+    });
+  });
+
+  it('says the same thing beside the fieldReport, and in the metadata', async () => {
+    const req = makeReq({
+      meta: { id: 'k123', projectId: 33, title: 'Official eSTAR' },
+      type: '510k',
+      variant: 'device',
+      useProgramData: true,
+      data: {},
+    });
+    const res = createMockResponse() as any;
+
+    await getHandler('/official')(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(200);
+    const payload = res.json.mock.calls[0][0];
+    // The report already said it under its own heading; the top-level list is
+    // what the verbatim path has instead, and the two must never disagree.
+    expect(payload.fieldReport.clearedByTemplateKeys).toEqual(['deviceCommonName']);
+    expect(payload.erasedFields).toEqual(['deviceCommonName']);
+    expect((mockGovernedConsequence.mock.calls[0][0] as any).metadata.erasedFields).toEqual([
+      'deviceCommonName',
+    ]);
+  });
+});

@@ -51,11 +51,27 @@ vi.mock('../../server/services/provenance/artifact-provenance', () => ({
   recordArtifactProvenanceDrizzle: vi.fn(async () => {}),
 }));
 
-fakeDb.select = vi.fn(() => ({
-  from: vi.fn(() => ({
-    where: vi.fn(() => ({ limit: vi.fn(async () => mockSelectRows()) })),
-  })),
-}));
+/*
+ * A self-referential chain, so every drizzle builder shape this router uses
+ * lands on the same `limit`. The previous literal offered only
+ * `.from().where().limit()`; `resolveProgramIdent` joins the sponsor
+ * organization — `.from().leftJoin().where().limit()` — so `.leftJoin` was
+ * undefined, the TypeError was swallowed by that function's own `catch`, and
+ * EVERY program-ident case below resolved to null and 404'd. Five assertions,
+ * including the fail-closed audit one, were failing against a mock defect
+ * rather than the route.
+ */
+fakeDb.select = vi.fn(() => {
+  const chain: any = {
+    from: vi.fn(() => chain),
+    leftJoin: vi.fn(() => chain),
+    innerJoin: vi.fn(() => chain),
+    where: vi.fn(() => chain),
+    orderBy: vi.fn(() => chain),
+    limit: vi.fn(async () => mockSelectRows()),
+  };
+  return chain;
+});
 fakeDb.insert = vi.fn(() => ({
   values: vi.fn(() => ({ returning: mockInsertReturning })),
 }));
