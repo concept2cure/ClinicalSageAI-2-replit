@@ -221,17 +221,36 @@ export function IndFormsPanel({ note }: { note: FireToast }) {
           ? 'faithful reconstruction — NOT the official Adobe-rendered form'
           : 'labeled draft — official template not installed';
       const coverage = hdr('X-Form-Field-Coverage');
-      const missingHdr = hdr('X-Form-Missing-Required');
-      const missingCount = missingHdr ? missingHdr.split(',').filter(Boolean).length : 0;
-      // Boxes the platform did not write. On an official form these are boxes
-      // the sponsor completes in Acrobat before signing, so naming the count is
-      // the difference between "here is your form" and "here is your form, and
-      // here is what is still blank on it".
-      const unmappedHdr = hdr('X-Form-Unmapped');
-      const unmappedCount = unmappedHdr ? unmappedHdr.split(',').filter(Boolean).length : 0;
-      const detail = `${coverage ? ' · coverage ' + coverage : ''}`
-        + `${missingCount ? ' · ' + missingCount + ' required field(s) still missing' : ''}`
-        + `${unmappedCount ? ' · ' + unmappedCount + ' box(es) left for you to complete on the form' : ''}`;
+      const headerCount = (k: string): number | null => {
+        const v = hdr(k);
+        return v === null ? null : v.split(',').filter(Boolean).length;
+      };
+      /* WHICH REQUIRED BOXES ARE BLANK ON THE BYTES THAT JUST ARRIVED.
+         This counted `X-Form-Unmapped` — every box no reviewed mapping writes,
+         required OR OPTIONAL — and called it "left for you to complete". That is
+         wrong in both directions: it bills the sponsor for optional boxes they
+         need not touch, and it MISSES a required box that a mapping does write
+         but the project record has no value for, which goes out empty and is
+         absent from `unmapped`. That case reported nothing at all over a form
+         with a blank required box on it.
+
+         `X-Form-Required-Blank` is the renderer's own documented answer to this
+         one question (required-and-empty, whatever the cause) and is set on
+         every path INCLUDING when the list is empty — so an absent header is an
+         older server, not a clean form, and is said as such rather than counted
+         as zero. `X-Form-Missing-Required` is the subset with no value in the
+         record; it is reported as a subset because the two causes need
+         different actions — enter it in the project, or complete it in
+         Acrobat. */
+      const requiredBlank = headerCount('X-Form-Required-Blank');
+      const missingCount = headerCount('X-Form-Missing-Required') ?? 0;
+      const blankClause = requiredBlank === null
+        ? ' · this server did not report which required boxes are still blank'
+        : requiredBlank > 0
+          ? ` · ${requiredBlank} required box(es) blank on the form for you to complete`
+            + (missingCount ? ` (${missingCount} because the project record has no value)` : '')
+          : '';
+      const detail = `${coverage ? ' · coverage ' + coverage : ''}${blankClause}`;
       if (!delivered) {
         note(`FDA ${shortFormId(formId)} rendered (${kind})${detail}, but the browser blocked the download.`, 'error');
         return;
@@ -260,7 +279,24 @@ export function IndFormsPanel({ note }: { note: FireToast }) {
       if (res.status === 401 || res.status === 403) { note('Saving a governed artifact requires the regulatory-author role.', 'error'); return; }
       if (res.status === 404) { note('Couldn’t save — the open project isn’t in your organization.', 'error'); return; }
       const missing = Array.isArray(json?.missingRequired) ? json.missingRequired.length : 0;
-      const readiness = json?.ready ? ' (ready)' : missing ? ` (draft · ${missing} required field(s) missing)` : ' (draft)';
+      /* TWO FACTS, NOT ONE. `ready` answers "is the project DATA complete" —
+         this artifact stores a field map, not a PDF — and `sponsorMustComplete`
+         answers "which required boxes does an official render leave for the
+         sponsor whatever the data". FDA 1571's ind_type and phase_of_study are
+         deliberately unmapped, so a fully populated 1571 artifact is
+         data-complete AND still arrives with two boxes to tick in Acrobat.
+         Printing "(ready)" off `ready` alone announced that artifact as a
+         finished form. The route returns `sponsorMustComplete` on every 201, so
+         its ABSENCE is an older server rather than a form with nothing left —
+         reading it as [] would reintroduce the same fail-open one level up. */
+      const sponsorBoxes = Array.isArray(json?.sponsorMustComplete) ? json.sponsorMustComplete.length : null;
+      const readiness = !json?.ready
+        ? (missing ? ` (draft · ${missing} required field(s) missing)` : ' (draft)')
+        : sponsorBoxes === null
+          ? ' (project data complete — this server did not report which boxes are left on the form)'
+          : sponsorBoxes > 0
+            ? ` (project data complete · ${sponsorBoxes} required box(es) for you to complete and sign in Acrobat)`
+            : ' (ready)';
       if (res.ok && json?.artifactId) {
         note(`FDA ${shortFormId(formId)} saved to the dossier as a governed artifact${readiness}.`);
         return;

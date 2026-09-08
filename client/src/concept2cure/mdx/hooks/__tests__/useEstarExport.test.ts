@@ -153,6 +153,8 @@ describe('exportStatusLine (pure)', () => {
       blockedByEntitlement: true,
       requiredTier: null,
       fieldReport: null,
+      erasedFields: null,
+      official: true,
       error: 'NOT_ENTITLED',
     };
     expect(exportStatusLine(false, outcome)).toBe(
@@ -174,6 +176,8 @@ const SUCCESS: EstarExportOutcome = {
   blockedByEntitlement: false,
   requiredTier: null,
   fieldReport: null,
+  erasedFields: [],
+  official: true,
   error: null,
 };
 
@@ -349,6 +353,87 @@ describe('exportStatusLine — administrative fill wording', () => {
   });
 });
 
+/* THE VERBATIM PATH HAS NO FIELD REPORT, AND HAD NO VOICE.
+ *
+ * `describeOfficialFill` returns `fieldReport: null` whenever no governed
+ * resolution ran — which is every export that does not set `useProgramData`.
+ * The server names the keys the template's own scripts erase on `erasedFields`
+ * in the 200 body on BOTH paths, and the hook read only `fieldReport`, so on
+ * the verbatim path the status line said nothing at all about values the form
+ * is about to take back. */
+describe('exportStatusLine — the verbatim path still reports erasure', () => {
+  it('names the erased keys when there is no field report to carry them', () => {
+    const outcome: EstarExportOutcome = {
+      ...SUCCESS,
+      fieldReport: null,
+      erasedFields: ['deviceCommonName', 'declarationCompanyName'],
+    };
+    expect(exportStatusLine(false, outcome)).toBe(
+      'Downloaded BX-204_eSTAR.pdf · 2 value(s) the form clears when you complete it: ' +
+        'deviceCommonName, declarationCompanyName',
+    );
+  });
+
+  it('does not say it twice when the field report already carries it', () => {
+    /* On the governed path `clearedByTemplateKeys` is the same finding under
+       another name; the report's own caveat is the one the user reads. */
+    const outcome: EstarExportOutcome = {
+      ...SUCCESS,
+      fieldReport: {
+        mappedCount: 4, filledCount: 4, blankCount: 0, blankKeys: [], ignoredRequestKeys: [],
+        advisories: [],
+        clearedByTemplateKeys: ['deviceCommonName'],
+        substitutedByTemplateKeys: [],
+      },
+      erasedFields: ['deviceCommonName'],
+    };
+    const line = exportStatusLine(false, outcome);
+    expect(line).toContain('1 the form changes when you complete it');
+    expect(line).not.toContain('the form clears when you complete it');
+  });
+
+  it('an ASSESSED empty list claims nothing, and an UNREPORTED one says so', () => {
+    expect(exportStatusLine(false, { ...SUCCESS, erasedFields: [] })).toBe(
+      'Downloaded BX-204_eSTAR.pdf',
+    );
+    /* `erasedFields` is on every 200 this server sends, so `null` is an older
+       server. Rendering that as "nothing was erased" is the fail-open the
+       server-side field exists to close. */
+    expect(exportStatusLine(false, { ...SUCCESS, erasedFields: null })).toBe(
+      'Downloaded BX-204_eSTAR.pdf · this server did not report which values the form clears',
+    );
+  });
+
+  it('the DRAFT package says nothing about erasure — there is no FDA form to clear', async () => {
+    /* exportDraftPackage produces a content ZIP, not the official eSTAR, so no
+       template script clears anything and the server has nothing to report.
+       Complaining "this server did not report" on every draft export would put
+       a permanent false warning on a path the field does not apply to. */
+    fetchMock.mockResolvedValue(jsonResponse({ governed: true, downloadable_output_ref: null }));
+    const { result } = renderHook(() => useEstarExport());
+    await act(async () => { await result.current.exportDraftPackage(PROGRAM); });
+    await waitFor(() => expect(result.current.outcome?.ok).toBe(true));
+    expect(result.current.outcome?.official).toBe(false);
+    expect(exportStatusLine(false, result.current.outcome)).not.toContain('did not report');
+  });
+
+  it('the hook carries erasedFields off the 200 body, and null when absent', async () => {
+    fetchMock.mockResolvedValue(
+      jsonResponse({ governed: true, erasedFields: ['deviceCommonName'], downloadable_output_ref: null }),
+    );
+    const { result } = renderHook(() => useEstarExport());
+    await act(async () => { await result.current.exportOfficialEstar(PROGRAM); });
+    await waitFor(() => expect(result.current.outcome?.ok).toBe(true));
+    expect(result.current.outcome?.erasedFields).toEqual(['deviceCommonName']);
+
+    fetchMock.mockResolvedValue(jsonResponse({ governed: true, downloadable_output_ref: null }));
+    const older = renderHook(() => useEstarExport());
+    await act(async () => { await older.result.current.exportOfficialEstar(PROGRAM); });
+    await waitFor(() => expect(older.result.current.outcome?.ok).toBe(true));
+    expect(older.result.current.outcome?.erasedFields).toBeNull();
+  });
+});
+
 describe('useEstarExport — reset()', () => {
   it('forgets the last outcome, and is stable across renders', async () => {
     fetchMock.mockResolvedValue(jsonResponse({ governed: true }));
@@ -406,7 +491,8 @@ describe('useEstarEntitlement — the lock known before the first click', () => 
     expect(entitlementRequiredLine(null)).toBe('Requires a higher plan — device assembly readiness');
     const outcome: EstarExportOutcome = {
       ok: false, delivered: false, governed: false, filename: null, formattingErrors: 0, formattingWarnings: 0,
-      blockers: [], blockedByEntitlement: true, requiredTier: 'standard', fieldReport: null, error: 'NOT_ENTITLED',
+      blockers: [], blockedByEntitlement: true, requiredTier: 'standard', fieldReport: null,
+      erasedFields: null, official: true, error: 'NOT_ENTITLED',
     };
     expect(exportStatusLine(false, outcome)).toBe(entitlementRequiredLine('standard'));
   });
@@ -415,7 +501,9 @@ describe('useEstarEntitlement — the lock known before the first click', () => 
 describe('exportStatusLine — a produced package is not a delivered one', () => {
   const BASE = {
     ok: true, governed: true, filename: 'K250001_eSTAR.pdf', formattingErrors: 0, formattingWarnings: 0,
-    blockers: [], blockedByEntitlement: false, requiredTier: null, fieldReport: null, error: null,
+    blockers: [], blockedByEntitlement: false, requiredTier: null, fieldReport: null,
+    // Assessed and clean, so these lines pin the delivery wording alone.
+    erasedFields: [] as string[], official: true, error: null,
   };
 
   it('says Downloaded only when the browser actually took the file', () => {

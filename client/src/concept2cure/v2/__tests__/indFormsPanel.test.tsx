@@ -21,6 +21,7 @@ vi.mock('@/lib/queryClient', async (importOriginal) => ({
 const isListing = (url: string) => url.startsWith('/api/ind-forms/?') || url === '/api/ind-forms/';
 
 import { IndFormsPanel } from '../surfaces/IndFormsPanel';
+import type { FireToast } from '../toast';
 
 afterEach(() => cleanup());
 beforeEach(() => {
@@ -115,6 +116,59 @@ describe('IndFormsPanel — real FDA forms engine', () => {
     await waitFor(() => expect(note).toHaveBeenCalledWith(expect.stringMatching(/saved to the dossier as a governed artifact/)));
   });
 
+  /* "READY" IS ABOUT THE DATA. THE FORM IS A SECOND FACT.
+   *
+   * The artifact route computes both and returns both: `ready` answers "is the
+   * project data complete" (it stores a field map, not a PDF), and
+   * `sponsorMustComplete` answers "which required boxes does an official render
+   * leave for the sponsor whatever the data". FDA 1571 is the live case — its
+   * ind_type and phase_of_study boxes are deliberately unmapped, so a fully
+   * populated 1571 artifact is data-complete AND arrives with two required
+   * boxes to tick in Acrobat.
+   *
+   * The panel printed "(ready)" off `ready` alone, so that artifact was
+   * announced as finished. */
+  function mockArtifact(body: Record<string, unknown>) {
+    (window as any).C2C_PROJECT = { id: 7 };
+    apiRequest.mockImplementation(async (method: string, url: string) => {
+      if (method === 'GET' && isListing(url)) return { ok: true, status: 200, json: async () => ({ forms: ['1571'] }) } as Response;
+      if (method === 'POST' && url === '/api/ind-forms/1571/artifact') {
+        return { ok: true, status: 201, json: async () => ({ artifactId: 'a1', formId: 'FDA_1571', projectId: 7, contentHash: 'abc', ...body }) } as Response;
+      }
+      return { ok: true, status: 200, json: async () => ({}) } as Response;
+    });
+  }
+
+  async function clickSave(note: ReturnType<typeof vi.fn> & FireToast) {
+    render(<IndFormsPanel note={note} />);
+    await screen.findByText(/FDA 1571/);
+    fireEvent.click(screen.getAllByRole('button', { name: /Save to dossier/ })[0]);
+    await waitFor(() => expect(note).toHaveBeenCalled());
+    return String(note.mock.calls.at(-1)![0]);
+  }
+
+  it('does not call a data-complete artifact "ready" when boxes are left on the form', async () => {
+    mockArtifact({ ready: true, missingRequired: [], sponsorMustComplete: ['ind_type', 'phase_of_study'] });
+    const msg = await clickSave(vi.fn() as unknown as ReturnType<typeof vi.fn> & FireToast);
+    expect(msg).toMatch(/2 required box\(es\) for you to complete/);
+    expect(msg).not.toMatch(/\(ready\)/);
+  });
+
+  it('says "ready" only when the data is complete AND the form leaves nothing', async () => {
+    mockArtifact({ ready: true, missingRequired: [], sponsorMustComplete: [] });
+    const msg = await clickSave(vi.fn() as unknown as ReturnType<typeof vi.fn> & FireToast);
+    expect(msg).toMatch(/\(ready\)/);
+  });
+
+  it('an absent sponsorMustComplete is "not reported", never "nothing left"', async () => {
+    /* The route returns it on every 201, so absence is an older server. Reading
+       it as [] is the same fail-open the field itself exists to close. */
+    mockArtifact({ ready: true, missingRequired: [] });
+    const msg = await clickSave(vi.fn() as unknown as ReturnType<typeof vi.fn> & FireToast);
+    expect(msg).not.toMatch(/\(ready\)/);
+    expect(msg).toMatch(/did not report which boxes are left on the form/);
+  });
+
   it('a program UUID project takes the audited-unplaced path and the note says exactly that', async () => {
     const uuid = '2b6d4a80-6a35-4b1e-9f6e-3a9d2c1e5f70';
     (window as any).C2C_PROJECT = { id: uuid };
@@ -163,30 +217,110 @@ describe('IndFormsPanel — real FDA forms engine', () => {
     expect(apiRequest.mock.calls.some((c) => c[1] === '/api/ind-forms/1571/artifact')).toBe(false);
   });
 
-  it('names the official template and the boxes still left blank on it', async () => {
-    // 1571 fills through its XFA datasets packet, so the response is the real
-    // FDA form — with boxes the platform deliberately did not write. Reporting
-    // only "official template" would imply a finished form.
+  /* WHICH HEADER ANSWERS "WHAT IS STILL BLANK ON MY FORM".
+   *
+   * The renderer publishes three, and they are three different facts:
+   *   X-Form-Unmapped        — every box no reviewed mapping writes, REQUIRED
+   *                            OR OPTIONAL.
+   *   X-Form-Missing-Required— required fields the project record has no value
+   *                            for.
+   *   X-Form-Required-Blank  — the union, and the renderer's own documented
+   *                            answer to "which required boxes are empty on the
+   *                            bytes I just sent you". Set on EVERY path,
+   *                            including when the list is empty.
+   *
+   * The toast read `X-Form-Unmapped`, which is wrong in both directions:
+   * it counts optional boxes the sponsor need not touch, and it MISSES a
+   * required box that a reviewed mapping writes but the project has no value
+   * for — that box is blank on the page and absent from `unmapped`. The two
+   * cases below are the two directions.
+   */
+  function renderHeaders(h: Record<string, string>) {
     apiRequest.mockImplementation(async (method: string, url: string) => {
       if (method === 'GET' && isListing(url)) return { ok: true, status: 200, json: async () => ({ forms: ['1571'] }) } as Response;
       if (method === 'POST' && url === '/api/ind-forms/1571/pdf') {
-        const h: Record<string, string> = {
-          'X-Form-Field-Coverage': '0.500',
-          'X-Form-Used-Official-Template': 'true',
-          'X-Form-Reconstructed': 'false',
-          'X-Form-Unmapped': 'ind_type,phase_of_study,us_agent_name',
-        };
         return { ok: true, status: 200, blob: async () => new Blob(['%PDF-1.7']), json: async () => null, headers: { get: (k: string) => h[k] ?? null } } as unknown as Response;
       }
       return { ok: true, status: 200, json: async () => ({}) } as Response;
     });
-    const note = vi.fn();
+  }
+
+  async function clickPdf(note: ReturnType<typeof vi.fn> & FireToast) {
     render(<IndFormsPanel note={note} />);
     await screen.findByText(/FDA 1571/);
     fireEvent.click(screen.getAllByRole('button', { name: /PDF/ })[0]);
-    await waitFor(() => expect(note).toHaveBeenCalledWith(expect.stringMatching(/official FDA template/)));
-    expect(note).toHaveBeenCalledWith(expect.stringMatching(/3 box\(es\) left for you to complete/));
-    expect(note).not.toHaveBeenCalledWith(expect.stringMatching(/reconstruction/));
+    await waitFor(() => expect(note).toHaveBeenCalled());
+    return String(note.mock.calls.at(-1)![0]);
+  }
+
+  it('names the official template and the boxes still left blank on it', async () => {
+    // 1571 fills through its XFA datasets packet, so the response is the real
+    // FDA form — with boxes the platform deliberately did not write. Reporting
+    // only "official template" would imply a finished form.
+    renderHeaders({
+      'X-Form-Field-Coverage': '0.500',
+      'X-Form-Used-Official-Template': 'true',
+      'X-Form-Reconstructed': 'false',
+      'X-Form-Unmapped': 'ind_type,phase_of_study,us_agent_name',
+      'X-Form-Required-Blank': 'ind_type,phase_of_study',
+    });
+    const note = vi.fn() as unknown as ReturnType<typeof vi.fn> & FireToast;
+    const msg = await clickPdf(note);
+    expect(msg).toMatch(/official FDA template/);
+    // TWO required boxes are blank, not the three unmapped ones: `us_agent_name`
+    // is unmapped and OPTIONAL, and the sponsor is not told to complete it.
+    expect(msg).toMatch(/2 required box\(es\) blank on the form/);
+    expect(msg).not.toMatch(/3 /);
+    expect(msg).not.toMatch(/reconstruction/);
+  });
+
+  it('counts a required box the project has no value for, which `unmapped` never names', async () => {
+    /* The other direction, and the one a sponsor is hurt by. `drug_name` IS
+       mapped — a reviewed mapping writes it — so it is absent from
+       X-Form-Unmapped; the project record simply holds nothing for it, so the
+       box goes out EMPTY. Reading `unmapped` reported "nothing left for you"
+       over a form with a blank required box on it. */
+    renderHeaders({
+      'X-Form-Field-Coverage': '0.900',
+      'X-Form-Used-Official-Template': 'true',
+      'X-Form-Reconstructed': 'false',
+      'X-Form-Missing-Required': 'drug_name',
+      'X-Form-Required-Blank': 'drug_name',
+      // No X-Form-Unmapped at all: every box on this form has a mapping.
+    });
+    const note = vi.fn() as unknown as ReturnType<typeof vi.fn> & FireToast;
+    const msg = await clickPdf(note);
+    expect(msg).toMatch(/1 required box\(es\) blank on the form/);
+    // And it says WHY, because the two causes need different actions from the
+    // user: enter it in the project record, or complete it in Acrobat.
+    expect(msg).toMatch(/1 because the project record has no value/);
+  });
+
+  it('says the server did not report, rather than implying a clean form', async () => {
+    /* X-Form-Required-Blank is set unconditionally by this renderer, so an
+       ABSENT header means an older server — not a form with nothing left to
+       complete. Counting an absent header as zero is the fail-open. */
+    renderHeaders({
+      'X-Form-Field-Coverage': '1.000',
+      'X-Form-Used-Official-Template': 'true',
+      'X-Form-Reconstructed': 'false',
+    });
+    const note = vi.fn() as unknown as ReturnType<typeof vi.fn> & FireToast;
+    const msg = await clickPdf(note);
+    expect(msg).toMatch(/did not report which required boxes are still blank/);
+  });
+
+  it('an EMPTY X-Form-Required-Blank is "assessed, none" and claims nothing', async () => {
+    renderHeaders({
+      'X-Form-Field-Coverage': '1.000',
+      'X-Form-Used-Official-Template': 'true',
+      'X-Form-Reconstructed': 'false',
+      'X-Form-Required-Blank': '',
+    });
+    const note = vi.fn() as unknown as ReturnType<typeof vi.fn> & FireToast;
+    const msg = await clickPdf(note);
+    expect(msg).not.toMatch(/required box\(es\) blank/);
+    expect(msg).not.toMatch(/did not report/);
   });
 
   it('does not claim the PDF arrived when the browser blocked the download', async () => {
