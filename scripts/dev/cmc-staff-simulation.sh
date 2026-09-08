@@ -577,6 +577,31 @@ CODE=$(req place1 POST "/api/cmc/module3-os/place-into-submission/$PROGRAM" '{"s
 LEAVES_AFTER=$(PGPASSWORD=c2c_local psql -h 127.0.0.1 -U c2c -d clinicalsage -tAc "SELECT count(*) FROM submission_leaves")
 [ "$CODE" = 409 ] && [ "$LEAVES_BEFORE" = "$LEAVES_AFTER" ] && ok "placement refused (409), zero leaves written" || bad "placement did not refuse cleanly ($CODE; leaves $LEAVES_BEFORE→$LEAVES_AFTER)"
 
+step "14b. The signer can READ what the signature covers — §11.50 is over content, not a section number"
+# Until this route existed, the only thing the product could show a signer at the
+# moment of approval was the section key, its percentage and its missing inputs:
+# the narrative and tables the approve route hashes and snapshots were served by
+# nothing. A signature over a section NUMBER is not a signature over a record.
+CODE=$(req read4 GET "/api/cmc/module3-os/sections/$PROGRAM/3.2.S.4")
+RNARR=$(cat "$OUT/read4.json" | jq -r '.data.narrative // ""' 2>/dev/null | wc -c)
+RTAB=$(cat "$OUT/read4.json" | jq -r '[.data.tables[]?] | length' 2>/dev/null)
+RMD=$(cat "$OUT/read4.json" | jq -r '.data.markdown // ""' 2>/dev/null | wc -c)
+RLIN=$(cat "$OUT/read4.json" | jq -r '[.data.lineage[]?] | length' 2>/dev/null)
+RUNK=$(cat "$OUT/read4.json" | jq -r '.data.tablesUnknown' 2>/dev/null)
+RHASH=$(cat "$OUT/read4.json" | jq -r '.data.compiledHash // empty' 2>/dev/null)
+[ "$CODE" = 200 ] && [ "${RNARR:-0}" -gt 100 ] && [ "${RTAB:-0}" -ge 1 ] && [ "${RMD:-0}" -gt "${RNARR:-0}" ] \
+  && [ "${RLIN:-0}" -ge 1 ] && [ "$RUNK" = "false" ] && [ -n "$RHASH" ] \
+  && ok "§3.2.S.4 reads back in full: $RNARR chars of narrative, $RTAB tables, $RLIN source records, content hash on the record" \
+  || bad "section read: code=$CODE narrativeChars=$RNARR tables=$RTAB markdownChars=$RMD lineage=$RLIN tablesUnknown=$RUNK hash='$RHASH'"
+# The markdown a signer reads is the markdown that gets FILED — one renderer.
+RMDTXT=$(cat "$OUT/read4.json" | jq -r '.data.markdown // ""' 2>/dev/null)
+echo "$RMDTXT" | head -1 | grep -q '^## ' \
+  && ok "what the signer reads is the filed document, heading and all" \
+  || bad "the section markdown is not the filed shape: $(echo "$RMDTXT" | head -c 80)"
+# A section that was never compiled is a 404, never an empty document to sign.
+CODE=$(req read404 GET "/api/cmc/module3-os/sections/$PROGRAM/3.2.Z.9")
+[ "$CODE" = 404 ] && ok "an uncompiled section refuses to be read (404), rather than serving an empty one to sign" || bad "uncompiled section read: $CODE"
+
 step "15. QA approves every COMPLETE compiled section (Part 11 re-auth each time); an incomplete one is refused"
 # An approval is a claim about content that was reviewed. The approve route
 # reads the section's own compiled record and refuses when the compiler says

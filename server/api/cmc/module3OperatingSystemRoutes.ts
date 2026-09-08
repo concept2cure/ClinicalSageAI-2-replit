@@ -6,16 +6,22 @@ import {
   summarizeSectionDiff,
   createSourceHash,
 } from '../../services/cmc-module3-compiler';
-import { CMC_SOURCE_TYPES, impactedSectionsForSourceType } from '../../services/module3Composer';
+import { CMC_SOURCE_TYPES, impactedSectionsForSourceType, renderComposedSectionMarkdown } from '../../services/module3Composer';
 import { compiledRecordOf, composeProjectModule3, persistComposedSection } from '../../services/cmc/module3-compile';
 import { detectContradictions, deriveImpactTasks } from '../../services/cmc-impact-contradiction-engine';
 import { syncContradictionTasks } from '../../services/cmc/contradiction-tasks';
 import { readContradictionRegisters } from '../../services/cmc/contradiction-registers';
 import { buildCanonicalGovernedState } from '../../services/governed-ana-execution.js';
 import { evaluateFinalExportGate, evaluateModule3GovernedState } from '../../services/cmc/final-export-gate';
-import { readCompiledRecord, type CompiledRecordStatus } from '../../services/cmc/compiled-record';
+import {
+  parsedDeterministicJson,
+  readCompiledRecord,
+  readSectionTables,
+  type CompiledRecordStatus,
+} from '../../services/cmc/compiled-record';
 import { placeModule3IntoSubmission } from '../../services/cmc/place-module3-into-submission';
 import { bridgeCompileToArtifact } from '../../services/module3-convergence-service';
+import { getSectionLabels } from '../../services/module3-convergence-service';
 import { verifyReauth, recordGovernedAction } from '../../routes/c2c/actions';
 import {
   persistGovernedActionSignature,
@@ -450,6 +456,106 @@ router.get('/readiness/:projectId', async (req, res) => {
       return res.status(401).json({ success: false, error: 'Organization context required' });
     }
     return serverError(res, logger, 'loading readiness', error);
+  }
+});
+
+/**
+ * GET /api/cmc/module3-os/sections/:projectId/:sectionKey — ONE section, in full.
+ *
+ * ── Why this route exists ────────────────────────────────────────────────────
+ * The listing above deliberately strips the compiled blob: it is a register of
+ * twenty-one rows, not the dossier. Nothing else served the blob either, and no
+ * screen fetched it — so the only thing a signer could see at the moment of
+ * approving §3.2.S.4 was its key, its percentage and its missing inputs.
+ *
+ * A Part 11 signature is a signature over CONTENT. §11.50 requires the
+ * manifestation to carry what was signed and §11.10(a) requires the record to
+ * be accurate; approving a section whose narrative and tables the product never
+ * showed anyone is a signature over a section NUMBER. The approve route already
+ * binds a sha256 of the compiled record and snapshots a version — this is the
+ * other half: the signer can read exactly what that hash covers, in the form it
+ * will be filed in.
+ *
+ * It returns the narrative and tables as stored, the markdown the leaf and the
+ * governed artifact are both rendered from (one renderer,
+ * module3Composer.renderComposedSectionMarkdown — so what is read here is byte
+ * for byte what gets filed), the compiler's own verdict, and the source objects
+ * the section was composed from. A section that has never been compiled is a
+ * 404, not an empty document.
+ */
+router.get('/sections/:projectId/:sectionKey', async (req, res) => {
+  try {
+    const orgId = getOrgId(req);
+    const projectIdRaw = req.params.projectId;
+    const projectId = Array.isArray(projectIdRaw) ? projectIdRaw[0] : (projectIdRaw ?? '');
+    const sectionKey = String(req.params.sectionKey ?? '');
+    const pool = getPool();
+    const { rows } = await pool.query(
+      `SELECT id, section_key as "sectionKey", section_path as "sectionPath", narrative_text as "narrativeText",
+              deterministic_json as "deterministicJson", stale, stale_reason as "staleReason",
+              approval_state as "approvalState", approved_version_id as "approvedVersionId",
+              compiled_hash as "compiledHash", updated_at as "updatedAt"
+       FROM cmc_module3_sections
+       WHERE organization_id = $1 AND project_id = $2 AND section_key = $3`,
+      [orgId, projectId, sectionKey],
+    );
+    const row = rows[0];
+    if (!row) {
+      return res.status(404).json({
+        success: false,
+        error: `§${sectionKey} has not been compiled for this project, so there is nothing to read.`,
+      });
+    }
+
+    const record = readCompiledRecord({ deterministicJson: row.deterministicJson });
+    const tables = readSectionTables(parsedDeterministicJson({ deterministicJson: row.deterministicJson }));
+    const label = getSectionLabels()[sectionKey] || sectionKey;
+    const narrative = String(row.narrativeText ?? '');
+
+    /* The lineage the section was composed from, so a signer can see WHICH
+       records the words rest on rather than taking the narrative's word for it. */
+    const lineage = await pool.query(
+      `SELECT so.source_type as "sourceType", so.source_key as "sourceKey",
+              l.source_hash_at_compile as "sourceHashAtCompile",
+              (so.source_hash IS DISTINCT FROM l.source_hash_at_compile) as "changedSinceCompile"
+         FROM cmc_section_lineage l
+         LEFT JOIN cmc_source_objects so ON so.id = l.source_object_id
+        WHERE l.organization_id = $1 AND l.section_id = $2
+        ORDER BY so.source_type, so.source_key`,
+      [orgId, row.id],
+    );
+
+    return res.json({
+      success: true,
+      data: {
+        sectionKey: row.sectionKey,
+        sectionPath: row.sectionPath,
+        title: label,
+        approvalState: row.approvalState,
+        approvedVersionId: row.approvedVersionId,
+        stale: row.stale,
+        staleReason: row.staleReason,
+        compiledHash: row.compiledHash,
+        updatedAt: row.updatedAt,
+        completeness: record.completeness,
+        missingInputs: record.missingInputs,
+        narrative,
+        /* undefined means the row predates tables being stored — the same
+           distinction placement and the export gate make, carried here so a
+           reader is told the tables are unknown rather than shown none. */
+        tables: tables ?? null,
+        tablesUnknown: tables === undefined,
+        /* What will actually be filed, from the one renderer both the leaf and
+           the governed artifact use. */
+        markdown: renderComposedSectionMarkdown(label, narrative, tables ?? []),
+        lineage: lineage.rows,
+      },
+    });
+  } catch (error) {
+    if ((error instanceof Error ? error.message : String(error)).includes('Organization context required')) {
+      return res.status(401).json({ success: false, error: 'Organization context required' });
+    }
+    return serverError(res, logger, 'loading the section', error);
   }
 });
 
