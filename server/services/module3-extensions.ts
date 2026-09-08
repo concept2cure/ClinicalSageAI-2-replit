@@ -170,9 +170,20 @@ const APPENDIX_RULES: AppendixRule[] = [
       const explicitSmallMolecule = /^(small[-_ ]?molecule|synthetic|chemical)$/i.test(modality);
       const explicitBiologic =
         /^biologic(al)?$/i.test(modality) || /^biologic(al)?$/i.test(molecularType);
+      /* Widened 2026-09-08 in the FAIL-CLOSED direction. The list missed the
+         way an expression system is usually written down: a substance whose
+         recorded route is "CHO cell culture" matched nothing (the pattern asks
+         for cell LINE, not cell culture) and fell through to the branch below,
+         which declared the section not applicable. A false positive here costs
+         a section that asks for viral-safety data it may not need; a false
+         negative files an adventitious-agents all-clear for a cell-culture
+         product. The INN stems are added for the same reason — a substance
+         named "belantezumab" is a monoclonal antibody by its name alone. */
       const biologicHeuristic =
-        /\b(biologic|recombinant|monoclonal|vaccine|fermentation|mammalian)\b|\bmAb\b|\bcell[\s-]*line\b|\b(human|animal)\s*tissue\b|\bplasma[-\s]derived\b/i
-          .test(`${route} ${processDesc} ${name}`);
+        /\b(biologic|recombinant|monoclonal|vaccine|fermentation|mammalian|hybridoma|bioreactor|transgenic|plasmid|viral\s*vector)\b/i.test(`${route} ${processDesc} ${name}`) ||
+        /\bmAb\b|\bcell[\s-]*(line|culture|bank)\b|\b(human|animal)\s*tissue\b|\bplasma[-\s]derived\b/i.test(`${route} ${processDesc} ${name}`) ||
+        /\b(cho|hek\s*293|sf9|vero|per\.?c6|e\.?\s?coli|pichia|saccharomyces|baculovirus)\b/i.test(`${route} ${processDesc}`) ||
+        /(mab|cept|kinra|ase|tide|parin)\b/i.test(String(name).trim().split(/\s+/).pop() || '');
       const isBiologic =
         explicitBiologic ||
         (!explicitSmallMolecule &&
@@ -207,20 +218,34 @@ const APPENDIX_RULES: AppendixRule[] = [
           };
         }
         return {
+          /* This paragraph used to assert that the substance is "synthesized
+             via ${route} with no animal- or human-derived raw materials, no
+             cell-line propagation, and no fermentation step recorded against
+             it" — three claims, none of them read from any field. The register
+             holds no raw-material origin here at all, so "no animal- or
+             human-derived raw materials" was a positive safety claim over data
+             this section never examined, in the one appendix whose subject is
+             adventitious agents; and with the route printed verbatim it could
+             read "synthesized via CHO cell culture with no cell-line
+             propagation". What the record actually supports is narrower: no
+             biological origin is RECORDED, and the origin of the raw materials
+             is stated where it is captured, not here. */
           narrative: `Per ICH M4Q, Section 3.2.A.2 (Adventitious Agents Safety Evaluation) addresses viral, ` +
             `bacterial, fungal, mycoplasma, and TSE/BSE safety for biologically-derived materials. ` +
-            `\n\nNot applicable for chemical drug substances. ` +
-            (name ? `The drug substance ${name} is synthesized via ${route || 'a chemical route'} ` : 'The drug substance is produced via a chemical synthetic route ') +
-            `with no animal- or human-derived raw materials, no cell-line propagation, and no fermentation step ` +
-            `recorded against it. ` +
-            `This section is therefore not applicable, and an adventitious agents safety evaluation is not required. ` +
-            `\n\nRaw materials are controlled per 3.2.S.2.3 and excipients per 3.2.P.4. ` +
+            `\n\nNo biological origin, source organism, cell line or fermentation step is recorded against ` +
+            (name ? `${name}` : 'the drug substance') + `, whose recorded manufacturing route is: ${route || processDesc}. ` +
+            `On that record this section does not apply to the drug substance itself. ` +
+            `\n\nThis is a statement about the SUBSTANCE, not about every material used to make it: the origin of ` +
+            `the raw and starting materials is recorded in §3.2.S.2.3 and that of the excipients in §3.2.P.4 and ` +
+            `§3.2.A.3, and this section neither reads nor certifies them. ` +
             `Any future change to a biologically-derived starting material would trigger re-assessment of this section.`,
           tables: [kvTable('Adventitious Agents Safety Evaluation', {
-            'Applicability': 'Not applicable — chemical drug substance',
+            'Applicability': 'Does not apply to the drug substance — no biological origin is recorded',
             'Drug Substance': name || '—',
             'Manufacturing Route': route || '—',
             'Biological Origin': 'None recorded',
+            'Raw Material Origin': 'Recorded in §3.2.S.2.3 — not assessed by this section',
+            'Excipient Origin': 'Recorded in §3.2.A.3 — not assessed by this section',
           })],
         };
       }

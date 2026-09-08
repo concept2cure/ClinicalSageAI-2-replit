@@ -499,9 +499,28 @@ P4XRAW=$(echo "$P4" | jq -r '[.tables[]? | .rows[]? | select(.[] | tostring | te
 A3=$(cat "$OUT/compile.json" | jq -r '[.sections[]? | select(.sectionKey=="3.2.A.3")][0]' 2>/dev/null)
 A3GEL=$(echo "$A3" | jq -r '[.tables[]? | .rows[]? | select(.[] | tostring | test("Gelatin"))] | length' 2>/dev/null)
 A3FREE=$(echo "$A3" | jq -r '.narrativeDraft // ""' 2>/dev/null | grep -c "No excipients of human or animal origin are used")
-[ "${A3GEL:-0}" -ge 1 ] && [ "${A3FREE:-0}" = "0" ] \
-  && ok "§3.2.A.3 names the animal-origin excipient and never calls the product animal-free" \
-  || bad "§3.2.A.3: gelatinRows=$A3GEL animalFreeClaim=$A3FREE"
+# Gelatin is ONE material: the formulation names it and the excipient register
+# holds its CEP. Before the join it appeared twice — once uncertified from the
+# formulation, once certified from the register — and both of the assertions
+# above were already green on that, so this step could not fail on the defect it
+# was written beside. What it must show now: one row, the CEP in the certificate
+# column, and a section that is actually complete.
+A3CERT=$(echo "$A3" | jq -r '[.tables[]? | .rows[]? | select(.[0] | tostring | test("gelatin"; "i"))][0][3] // empty' 2>/dev/null)
+A3COMPLETE=$(echo "$A3" | jq -r '.completeness // 0' 2>/dev/null)
+[ "${A3GEL:-0}" = "1" ] && [ "${A3FREE:-0}" = "0" ] && echo "$A3CERT" | grep -q "CEP" && [ "${A3COMPLETE:-0}" = "100" ] \
+  && ok "§3.2.A.3 lists the animal-origin excipient once, with the certificate the register holds ($A3CERT)" \
+  || bad "§3.2.A.3: gelatinRows=$A3GEL animalFreeClaim=$A3FREE cert='$A3CERT' completeness=$A3COMPLETE"
+# §3.2.A.2 is the appendix next door and the product is a CHO cell-culture mAb:
+# it must not file the chemical-substance branch, and it must never claim raw
+# materials it does not read.
+A2=$(cat "$OUT/compile.json" | jq -r '[.sections[]? | select(.sectionKey=="3.2.A.2")][0]' 2>/dev/null)
+A2NARR=$(echo "$A2" | jq -r '.narrativeDraft // ""' 2>/dev/null)
+A2CHEM=$(echo "$A2NARR" | grep -c "does not apply to the drug substance")
+A2RAW=$(echo "$A2NARR" | grep -c "no animal- or human-derived raw materials")
+[ "${A2CHEM:-1}" = "0" ] && [ "${A2RAW:-1}" = "0" ] \
+  && ok "§3.2.A.2 does not file a chemical-substance all-clear for a cell-culture product" \
+  || bad "§3.2.A.2: notApplicableClaim=$A2CHEM rawMaterialClaim=$A2RAW"
+
 
 step "11g. §3.2.S.2 and §3.2.S.3 compose from the process and characterisation registers"
 S2=$(cat "$OUT/compile.json" | jq -r '[.sections[]? | select(.sectionKey=="3.2.S.2")][0]' 2>/dev/null)

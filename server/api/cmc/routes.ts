@@ -2232,24 +2232,34 @@ router.get('/projects/:projectId/process-capability', async (req, res) => {
       '../../services/cmc/recorded-capability'
     );
     const sides = ['drug_substance', 'drug_product'] as const;
+    const bySide = Object.fromEntries(
+      sides.map((side) => {
+        const series = assessRecordedCapability(payloads.filter((p) => isBatchAnalysisFor(p, side)));
+        return [side, { series, statements: series.map(capabilitySentence) }];
+      }),
+    ) as Record<(typeof sides)[number], { series: unknown[]; statements: string[] }>;
+    /* "Assessed" means a SERIES was produced, not that rows exist. Keying it on
+       the row count reported a successful, empty capability report for a
+       project whose every QC row is a cleaning swab or a reference-standard
+       qualification (not batch evidence) or carries no test method — N results
+       on file, no test named, and nothing said. A report that names no test
+       reads as a set of tests that passed, which is the one thing this endpoint
+       must never produce. */
+    const seriesCount = sides.reduce((n, side) => n + bySide[side].series.length, 0);
     const data = {
       projectId,
       resultsOnFile: payloads.length,
-      /* An empty register is SAID, not left to be inferred from two empty
-         arrays: a caller rendering "no capability findings" over them would be
-         reporting a capable process from an unexamined register. */
-      assessed: payloads.length > 0,
+      assessed: seriesCount > 0,
       statement:
-        payloads.length === 0
-          ? 'No batch results are recorded for this project, so process capability is NOT assessed. ' +
-            'Record the QC results, each with its batch number and the acceptance criterion it was judged against.'
-          : null,
-      sides: Object.fromEntries(
-        sides.map((side) => {
-          const series = assessRecordedCapability(payloads.filter((p) => isBatchAnalysisFor(p, side)));
-          return [side, { series, statements: series.map(capabilitySentence) }];
-        }),
-      ),
+        seriesCount > 0
+          ? null
+          : payloads.length === 0
+            ? 'No batch results are recorded for this project, so process capability is NOT assessed. ' +
+              'Record the QC results, each with its batch number and the acceptance criterion it was judged against.'
+            : `${payloads.length} QC result(s) are on file for this project and none of them is batch-analysis ` +
+              'evidence with a named test method — cleaning-verification and reference-standard results are not ' +
+              'batch data, and a result with no test method opens no series. Process capability is NOT assessed.',
+      sides: bySide,
     };
     return res.json({ success: true, data });
   } catch (error) {

@@ -50,7 +50,11 @@ import { renderComposedSectionMarkdown, type GeneratedTable } from '../module3Co
  * caller (and its tests) can name the condition instead of matching prose.
  */
 export const LEGACY_NO_TABLES_SKIP_REASON =
-  'Compiled before section tables were carried; recompile the section before placing.';
+  /* The remedy is TWO steps, and naming only the first sent a staffer round a
+     loop: a recompile that changes the section returns it to draft (an approval
+     is a signature over content), so recompiling alone leaves it unplaceable
+     for the second reason — not approved. */
+  'Compiled before section tables were carried; recompile the section AND re-approve it before placing.';
 
 /* The tables reader moved to ./compiled-record: the export gate applies the
    same refusal (an approved section with no `tables` key is unplaceable), and

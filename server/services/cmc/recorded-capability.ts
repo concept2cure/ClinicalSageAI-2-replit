@@ -37,6 +37,7 @@ import {
 export interface RecordedQcResult {
   testMethod?: unknown;
   sampleType?: unknown;
+  status?: unknown;
   isBatchAnalysis?: unknown;
   batchAnalysisSide?: unknown;
   batchNumber?: unknown;
@@ -183,6 +184,14 @@ export function isBatchAnalysisFor(
   side: 'drug_substance' | 'drug_product',
 ): boolean {
   const type = String(p?.sampleType ?? '').toLowerCase();
+  /* A RETIRED record feeds nothing — the rule the composer applies to every
+     source before a section reads it. The route and the tool read the project's
+     qc_result rows directly, so without this they would report capability over
+     a result the filed section excludes: the same computation over a different
+     input set is still two answers. No qc_result payload carries a status
+     today, so this changes nothing now and closes the divergence before it
+     opens. */
+  if (String((p as { status?: unknown })?.status ?? '').trim().toLowerCase() === 'retired') return false;
   if (p?.isBatchAnalysis === false) return false;
   if (NON_BATCH_SAMPLE_TYPES.includes(type)) return false;
   const decided = typeof p?.batchAnalysisSide === 'string' ? p.batchAnalysisSide : null;
