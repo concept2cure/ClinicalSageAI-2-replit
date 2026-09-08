@@ -352,16 +352,24 @@ describe('createDeviceAttachmentResolver', () => {
   const PROGRAM = '2b6d4a80-6a35-4b1e-9f6e-3a9d2c1e5f70';
 
   /** A c2c_documents row plus its sections, answered like the real pg client. */
-  function fakeClient(sections: Array<Record<string, unknown>>): DeviceContentClient & { calls: string[] } {
+  function fakeClient(
+    sections: Array<Record<string, unknown>>,
+  ): DeviceContentClient & { calls: string[]; params: unknown[][] } {
     const calls: string[] = [];
+    // The BOUND VALUES too, so a test can assert what was asked and not only
+    // how often. One fake: a second one inlined at a call site is a second
+    // definition of the same store, and it was what tsc caught.
+    const params: unknown[][] = [];
     return {
       calls,
+      params,
       // Generic to match DeviceContentClient's own query<T>: a fixed
       // Record<string, unknown> return type does not satisfy a generic method
       // signature for arbitrary T, so a non-generic mock silently fails
       // typecheck against the interface it stands in for.
-      query: async <T = Record<string, unknown>>(text: string) => {
+      query: async <T = Record<string, unknown>>(text: string, values?: unknown[]) => {
         calls.push(text.replace(/\s+/g, ' ').trim().slice(0, 40));
+        params.push(values ?? []);
         if (/FROM c2c_documents/.test(text)) {
           return { rows: [{ id: 'doc-1', doc_type: 'k510' }] as T[] };
         }
@@ -436,6 +444,31 @@ describe('createDeviceAttachmentResolver', () => {
     await resolve({ kind: 'authored_section', sectionCode: 'A.1' });
     // Two queries for the first call (document, then sections), none after.
     expect(client.calls).toHaveLength(2);
+  });
+
+  it("reads ONLY the export's own document class, never the newest device document", async () => {
+    /* loadGovernedDeviceDocument is ORDER BY created_at DESC LIMIT 1 over
+       doc_type = ANY($3), and GOVERNED_DEVICE_DOC_TYPES is
+       ['k510','denovo','pma','cer']. The rule-pack keys an attachment is filed
+       by are PER-PATHWAY and they collide — D5 is "Shelf life and packaging" in
+       the k510 pack and "Cybersecurity" in the denovo pack; E1 is
+       "Biocompatibility" in one and "Proposed labeling" in the other
+       (migrations/20260901b_estar_510k_denovo_outlines.sql). So generating a
+       CER, or scaffolding a De Novo beside a 510(k), would change which
+       document a named CDRH slot is filled from, with a clean 200. */
+    const client = fakeClient([FINAL]);
+    const resolve = createDeviceAttachmentResolver({
+      organizationId: 2,
+      programUuid: PROGRAM,
+      docTypes: ['k510'],
+      client,
+    });
+    await resolve({ kind: 'authored_section', sectionCode: 'A.1' });
+
+    // The class list is the THIRD bound value of the document lookup.
+    expect(client.params[0][2]).toEqual(['k510']);
+    expect(client.params[0][2]).not.toContain('cer');
+    expect(client.params[0][2]).not.toContain('denovo');
   });
 
   it('says plainly that a legacy project has no governed document or vault', async () => {
