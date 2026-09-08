@@ -22,6 +22,10 @@ import {
 } from '../services/connectors/connector-registry.js';
 import { getUsageSummary } from '../services/usage-metering.js';
 import { ai } from '../lib/unified-ai-client.js';
+import { serverError } from '../lib/api-response';
+import { createScopedLogger } from '../utils/logger';
+
+const logger = createScopedLogger('deep-research');
 
 const router = Router();
 
@@ -80,7 +84,7 @@ router.get('/jobs', async (req: Request, res: Response) => {
     const jobs = await listJobs(Number(orgId), limit);
     res.json({ jobs });
   } catch (err) {
-    res.status(500).json({ error: String(err) });
+    return serverError(res, logger, 'loading jobs', err);
   }
 });
 
@@ -110,7 +114,7 @@ router.post('/jobs/:id/stop', async (req: Request, res: Response) => {
     await cancelJob(parseInt(String(req.params.id), 10), Number(orgId));
     res.json({ success: true });
   } catch (err) {
-    res.status(500).json({ error: String(err) });
+    return serverError(res, logger, 'stopping jobs', err);
   }
 });
 
@@ -176,7 +180,7 @@ router.get('/connectors', async (req: Request, res: Response) => {
     const catalog = await getConnectorCatalog(Number(orgId));
     res.json({ connectors: catalog });
   } catch (err) {
-    res.status(500).json({ error: String(err) });
+    return serverError(res, logger, 'loading connectors', err);
   }
 });
 
@@ -205,7 +209,7 @@ router.post('/connectors', requireTier('professional'), async (req: Request, res
     }
     res.json({ success: true });
   } catch (err) {
-    res.status(500).json({ error: String(err) });
+    return serverError(res, logger, 'saving connectors', err);
   }
 });
 
@@ -224,7 +228,7 @@ router.get('/usage', async (req: Request, res: Response) => {
     const summary = await getUsageSummary(Number(orgId));
     res.json({ usage: summary });
   } catch (err) {
-    res.status(500).json({ error: String(err) });
+    return serverError(res, logger, 'loading usage', err);
   }
 });
 

@@ -24,8 +24,12 @@ const preclinicalTranslationLimiter = rateLimit({
   message: 'Too many preclinical translation requests, please try again after a minute',
 });
 import { ai } from '../../lib/unified-ai-client';
+import { serverError } from '../../lib/api-response.js';
+import { createScopedLogger } from '../../utils/logger.js';
 
 // Create router
+const logger = createScopedLogger('preclinical-translator');
+
 const router = express.Router();
 
 // Configure multer for file uploads
@@ -277,10 +281,7 @@ router.post('/translate', checkForOpenAIKey, preclinicalTranslationLimiter, asyn
     });
   } catch (error) {
     console.error('Error in preclinical translation:', error);
-    return res.status(500).json({
-      error: 'An error occurred while translating preclinical data',
-      details: error.message,
-    });
+    return serverError(res, logger, 'translating', error);
   }
 });
 
@@ -378,10 +379,7 @@ router.post('/upload', checkForOpenAIKey, upload.array('files', 5), async (req, 
     });
   } catch (error) {
     console.error('Error in file upload:', error);
-    return res.status(500).json({
-      error: 'An error occurred while uploading and processing files',
-      details: error.message,
-    });
+    return serverError(res, logger, 'uploading', error);
   }
 });
 
@@ -474,10 +472,7 @@ router.post('/generate-mbr', checkForOpenAIKey, preclinicalTranslationLimiter, a
     });
   } catch (error) {
     console.error('Error in MBR generation:', error);
-    return res.status(500).json({
-      error: 'An error occurred while generating the master batch record',
-      details: error.message,
-    });
+    return serverError(res, logger, 'generating MBR', error);
   }
 });
 
@@ -519,10 +514,7 @@ router.get('/download/:translationId', (req, res) => {
     }
   } catch (error) {
     console.error('Error in translation download:', error);
-    return res.status(500).json({
-      error: 'An error occurred while downloading the translation',
-      details: error.message,
-    });
+    return serverError(res, logger, 'downloading', error);
   }
 });
 
@@ -551,10 +543,7 @@ router.get('/processing/:uploadId', (req, res) => {
     return res.json(processingResult);
   } catch (error) {
     console.error('Error in getting processing result:', error);
-    return res.status(500).json({
-      error: 'An error occurred while getting the processing result',
-      details: error.message,
-    });
+    return serverError(res, logger, 'loading processing', error);
   }
 });
 
