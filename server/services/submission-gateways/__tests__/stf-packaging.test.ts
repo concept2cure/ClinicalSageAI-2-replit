@@ -34,6 +34,7 @@ async function build(work: string): Promise<JSZip> {
   ];
   const bundle = await packageEctdSubmission({
     region: 'fda', applicationId: '123456', sequence: '0000', submissionType: 'original',
+    fda: { applicationType: 'nda' }, // a package must declare what it is; this used to default to NDA silently
     sponsorId: 'D', sponsorName: 'S', productName: 'P', outputDir: path.join(work, 'out'),
     environment: 'staging', leaves,
     studyMeta: [{ studyId: 'STUDY-001', studyTitle: 'Pivotal efficacy', studyCategory: 'clinical-study-report' }],
@@ -101,6 +102,7 @@ describe('STF cross-linking in packageEctdSubmission', () => {
       await fs.writeFile(path.join(src, 'cover.pdf'), pdf('cover'));
       const bundle = await packageEctdSubmission({
         region: 'fda', applicationId: '1', sequence: '0000', submissionType: 'original',
+        fda: { applicationType: 'nda' }, // a package must declare what it is; this used to default to NDA silently
         sponsorId: 'D', sponsorName: 'S', productName: 'P', outputDir: path.join(work, 'out'),
         environment: 'staging',
         leaves: [{ ctdSection: '1.2', operation: 'new', sourcePath: path.join(src, 'cover.pdf'), fileName: 'cover.pdf', title: 'Cover' }],

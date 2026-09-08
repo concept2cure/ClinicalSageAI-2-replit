@@ -16,6 +16,7 @@ import { I } from '../icons';
 import { useLiveData, EmptyState } from '../dataConnect';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { usePublishSurfaceContext } from '../surfaceContext';
+import { useSurfaceActionHandlers, notifySurfaceActionReady } from '../surfaceActions';
 import { isClinicalRegulatoryGraphEnabled } from '../clinicalRegulatoryGraphFlag';
 import {
   APPLICABILITY_LABEL,
@@ -189,6 +190,7 @@ function RegulatoryPanel({
                     <button
                       type="button"
                       className="sp-go"
+                      aria-label="Trace evidence for this finding"
                       onClick={() => onAsk(`Trace the evidence behind FDA finding ${f.findingId}.`)}
                     >
                       {I.route}
@@ -457,7 +459,7 @@ export function CsrWorkflow({ onAsk }: SurfaceViewProps) {
       />
 
       {boardRes.loading ? (
-        <div className="scaf-note" style={{ marginTop: 16, maxWidth: 760 }}>
+        <div role="status" className="scaf-note" style={{ marginTop: 16, maxWidth: 760 }}>
           Loading CSR workflow…
         </div>
       ) : boardRes.error ? (
@@ -593,6 +595,31 @@ export function RegulatoryWorkspace({ onAsk }: SurfaceViewProps) {
     }
   }, [tree, active]);
 
+  /* AnA can open any tracked CTD section by its number or label — the same
+     click a person makes. Resolved against the REAL tree with honest misses;
+     held (retry) while it loads, re-attempted on the ready signal below. */
+  useSurfaceActionHandlers('regulatory-workspace', {
+    'regulatory-workspace.open-section': (params) => {
+      const raw = String(params.section ?? '').trim();
+      if (!raw) return { ok: false, reason: 'Name a section by its number or label.' };
+      if (wsRes.loading) return { ok: false, reason: 'The regulatory workspace is still loading.', retry: true };
+      if (wsRes.error) return { ok: false, reason: 'The regulatory workspace did not load, so there is no tree to open a section on.' };
+      if (tree.length === 0) return { ok: false, reason: 'This organization tracks no CTD sections yet.' };
+      const needle = raw.toLowerCase();
+      const byNum = tree.filter((t) => t.num.toLowerCase() === needle);
+      const hits = byNum.length ? byNum : tree.filter((t) => t.label.toLowerCase().includes(needle));
+      if (hits.length === 0) return { ok: false, reason: `No CTD section matching "${raw}".` };
+      if (hits.length > 1) return { ok: false, reason: `"${raw}" matches ${hits.length} sections — name one exactly.` };
+      const t = hits[0];
+      if (active === t.id) return { ok: true, detail: `Already on ${t.num} — ${t.label}` };
+      setActive(t.id);
+      return { ok: true, detail: `Opened ${t.num} — ${t.label}` };
+    },
+  });
+  useEffect(() => {
+    if (!wsRes.loading && !wsRes.error) notifySurfaceActionReady('regulatory-workspace');
+  }, [wsRes.loading, wsRes.error]);
+
   /* What AnA can see of this screen. Published above the three honest-state
      early returns below — a hook after an early return is a conditional hook,
      and "this organisation tracks no CTD sections yet" is itself a screen state
@@ -643,7 +670,7 @@ export function RegulatoryWorkspace({ onAsk }: SurfaceViewProps) {
   if (wsRes.loading) {
     return (
       <div className="page-inner">
-        <div className="scaf-note" style={{ marginTop: 16, maxWidth: 760 }}>
+        <div role="status" className="scaf-note" style={{ marginTop: 16, maxWidth: 760 }}>
           Loading regulatory workspace…
         </div>
       </div>

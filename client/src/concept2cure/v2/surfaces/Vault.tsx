@@ -305,6 +305,51 @@ function DataRoomLane({
   );
 }
 
+/* GET /api/c2c/project-vault/:id/search — the find view's contract. `total` is
+   the real count, not the page length, so the surface can say "12 of 340"
+   instead of implying the page is everything. */
+interface VaultSearchHit {
+  id: string;
+  title: string;
+  fileName: string | null;
+  documentType: string | null;
+  size: string | null;
+  folderId: string | null;
+  ctdSection: string | null;
+  placementStatus: string | null;
+  /** A body excerpt when the match was in the content; null when it was not. */
+  snippet: string | null;
+}
+interface VaultSearchShape {
+  query: string;
+  total: number;
+  limit: number;
+  offset: number;
+  results: VaultSearchHit[];
+}
+
+/** A search hit rendered in the same row component the tree uses. */
+function searchHitToDoc(h: VaultSearchHit): VaultDoc {
+  return {
+    id: h.id,
+    num: h.ctdSection || '',
+    title: h.title,
+    type: h.documentType || '',
+    status: h.placementStatus || 'unfiled',
+    pct: 0,
+    owner: '',
+    ver: '',
+    updated: '',
+    /* The server's ts_headline excerpt, with its <b> markers stripped: this is
+       rendered as text, and a highlight that arrives as literal markup would
+       read as corruption. */
+    preview: (h.snippet || '').replace(/<\/?b>/g, ''),
+    src: 'upload',
+    docId: h.id,
+    sizeLabel: h.size || undefined,
+  };
+}
+
 /* ── Vault (DMS) surface ──
    Document management aligned to the real dossier structure. The folder tree IS
    the project's live eCTD / eSTAR / IVDR / TMF spine (segment- and
@@ -586,12 +631,23 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
   const folder = findFolder(tree, activeFolder) || tree[0] || null;
   const folderDocs = folder ? flattenDocs(folder.children) : [];
   const searching = q.trim().length > 0;
+
+  /* SEARCH RUNS ON THE SERVER.
+     This was `allDocs.filter(d => (title + preview + num + type).includes(q))` —
+     a substring match over the rows the tree happened to deliver, which cannot
+     match document CONTENT and misses anything the read did not carry. On a
+     document management system that is the difference between "not found" and
+     "not there", and a reviewer reads the first as the second.
+     GET /:id/search is ranked full text over title, file name and extracted
+     body. The tree stays the browse view; this is the find view. */
+  const trimmedQ = q.trim();
+  const searchPath =
+    projectId && trimmedQ ? '/api/c2c/project-vault/' + encodeURIComponent(projectId) +
+      '/search?q=' + encodeURIComponent(trimmedQ) + '&limit=100' : null;
+  const searchState = useLiveData<VaultSearchShape>(searchPath, [searchPath]);
+
   const results = searching
-    ? allDocs.filter((d) =>
-        (d.title + ' ' + (d.preview || '') + ' ' + (d.num || '') + ' ' + (d.type || ''))
-          .toLowerCase()
-          .includes(q.toLowerCase()),
-      )
+    ? (searchState.data?.results ?? []).map(searchHitToDoc)
     : folderDocs;
   const sel =
     allDocs.find((d) => d.id === selId) || results[0] || allDocs[0] || null;
@@ -861,7 +917,7 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
           hint="The Vault (DMS) shows the governed document tree for the project you have open. Open a project from Projects or Project management to load its CTD / eSTAR / IVDR / TMF spine."
         />
       ) : vaultState.loading ? (
-        <div className="scaf-note" style={{ padding: '18px 10px' }}>
+        <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>
           Loading the project vault…
         </div>
       ) : vaultState.error ? (
@@ -938,10 +994,44 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
               {searching && (
                 <>
                   <span className="vd-crumb-sep" aria-hidden="true">&rsaquo;</span>
-                  <span className="vd-crumb cur">Search &quot;{q}&quot;</span>
+                  <span className="vd-crumb cur">
+                    Search &quot;{q}&quot;
+                    {searchState.data && searchState.data.total > results.length
+                      ? ` — ${results.length} of ${searchState.data.total}`
+                      : ''}
+                  </span>
                 </>
               )}
+              {/* THE SEARCH BOX.
+                  There was none. `q` existed and was driven only by AnA's
+                  vault.search action, so the assistant could search this surface
+                  and the person looking at it could not. Both now drive the same
+                  state, which was the original design intent. */}
+              <label className="vd-search">
+                <span className="sr-only">Search this vault</span>
+                <input
+                  type="search"
+                  value={q}
+                  onChange={(e) => setQ(e.target.value)}
+                  placeholder="Search titles and document text"
+                  aria-label="Search this vault"
+                />
+              </label>
             </div>
+            {searching && searchState.error && (
+              /* An error is not an empty result. Without this the screen reads
+                 "no documents match your search", which is a different and
+                 believable claim. */
+              <div className="scaf-note" role="alert" style={{ margin: '8px 0 0', color: 'var(--error)' }}>
+                The vault could not be searched, so nothing was searched — this is
+                not a result of zero matches. {redactInternals(searchState.error, 'The search did not complete.')}
+              </div>
+            )}
+            {searching && searchState.loading && !searchState.error && (
+              <div className="scaf-note" role="status" style={{ margin: '8px 0 0' }}>
+                Searching…
+              </div>
+            )}
             <div className="vd-cols">
               <span className="vd-col-name">Name</span>
               <span className="vd-col-type">Type</span>

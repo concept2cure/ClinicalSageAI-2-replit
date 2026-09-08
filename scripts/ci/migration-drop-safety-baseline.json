@@ -1,0 +1,22 @@
+{
+  "_comment": [
+    "Reviewed exceptions to the replay-safe-DROP rule (CLAUDE.md RULE 1).",
+    "An entry here is a decision on the record, not a snooze: each one names why",
+    "the pairing is safe to replay. Adding an entry without a reason is the thing",
+    "this file exists to prevent. See scripts/ci/check-migration-drop-safety.mjs."
+  ],
+  "allow": [
+    {
+      "dropper": "migrations/20260728_cmc_module3_org_scoped_uniqueness.sql",
+      "object": "index:public.cmc_module3_sections_project_key_idx",
+      "creator": "db/migrations/20260401_cmc_convergence_os.sql",
+      "reason": "Deliberate index REPLACEMENT, not removal: 20260401 creates the project-scoped unique index and 20260728 replaces it with the org-scoped cmc_module3_sections_org_project_key_idx. The dropper is ordered after the creator, so every deploy re-creates the old index and immediately drops it again and the run converges on the org-scoped one. Safe because an index carries no data. The residual risk is real but bounded: if 20260728 is ever removed from the set or fails, the non-org-scoped uniqueness silently returns, which would let one org's project key collide with another's. Retire this entry by amending 20260401 in place to create the org-scoped index directly."
+    },
+    {
+      "dropper": "migrations/20260728_cmc_module3_org_scoped_uniqueness.sql",
+      "object": "index:public.cmc_source_objects_project_key_idx",
+      "creator": "db/migrations/20260401_cmc_convergence_os.sql",
+      "reason": "Same replacement as the entry above, for cmc_source_objects: 20260401 creates the project-scoped unique index, 20260728 replaces it with cmc_source_objects_org_project_key_idx. Same ordering, same convergence, same retirement path."
+    }
+  ]
+}

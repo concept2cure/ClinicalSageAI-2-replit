@@ -853,6 +853,16 @@ export const SURFACE_ACTIONS: readonly SurfaceActionTarget[] = [
 
   // ── Biostatistics designer ──
   {
+    id: 'biostatistics.load-design',
+    surfaceId: 'biostatistics',
+    label: 'Load a persisted study design',
+    description:
+      'Seed the designer from one of the program\'s persisted study designs (resolved against the live list by id or title; honest misses and ambiguity refusals). A read — the engine recomputes on screen; writing the sample size back to the design and raising tasks stay governed human acts.',
+    params: [
+      { name: 'design', required: true, description: 'The study design id or title as listed in the designer\'s study picker (case-insensitive; partial titles resolve when unambiguous).' },
+    ],
+  },
+  {
     id: 'biostatistics.set-preset',
     surfaceId: 'biostatistics',
     label: 'Apply a design preset',
@@ -1298,6 +1308,81 @@ export const SURFACE_ACTIONS: readonly SurfaceActionTarget[] = [
         description: 'The tab to open.',
         enum: ['research', 'connectors'],
       },
+    ],
+  },
+
+  // ── Program journey (biopharma lifecycle) ──
+  {
+    id: 'program-journey.select-stage',
+    surfaceId: 'program-journey',
+    label: 'Select a lifecycle stage',
+    description:
+      'On the program journey, select one of the 9 lifecycle stages (discovery through post-approval) by its id or label so its gate, deliverables and agency interactions show — the same stage click a person makes. Resolved against the fixed stage catalog with honest misses; held while the program record loads.',
+    params: [
+      { name: 'stage', required: true, description: 'The stage id (e.g. "preind") or its label (e.g. "Pre-IND / enabling"), case-insensitive.' },
+    ],
+  },
+  {
+    id: 'program-journey.switch-segment',
+    surfaceId: 'program-journey',
+    label: 'Switch the biotech/pharma segment view',
+    description: 'On the program journey, switch between the biotech (BLA) and pharma (NDA) segment view.',
+    params: [
+      { name: 'segment', required: true, description: 'The segment to view.', enum: ['biotech', 'pharma'] },
+    ],
+  },
+
+  // ── Usage & billing ──
+  // UsageBilling is ONE component mounted under TWO registry ids ('usage' /
+  // 'billing') depending on which nav target brought the person here — only
+  // one publishes at a time (usePublishSurfaceContext('usage', activeId===
+  // 'usage' ? ctx : null), symmetrically for 'billing'). Independently, the
+  // SAME rendered screen has three internal on-screen tabs (usage / billing /
+  // limits — the `tab` state, already reported as `facts.openTab` regardless
+  // of activeId). The act channel mirrors the publish gating: whichever
+  // registry id is currently mounted owns the switch between all three tabs.
+  {
+    id: 'usage.open-tab',
+    surfaceId: 'usage',
+    label: 'Open a usage/billing tab',
+    description:
+      'Switch between the usage-metering, billing/invoices, and plan-limits tabs. Read-only: it never changes a plan, adds a payment method, or triggers a charge — those stay deliberate human acts elsewhere on the screen.',
+    params: [
+      { name: 'tab', required: true, description: 'The tab to open.', enum: ['usage', 'billing', 'limits'] },
+    ],
+  },
+  {
+    id: 'billing.open-tab',
+    surfaceId: 'billing',
+    label: 'Open a usage/billing tab',
+    description:
+      'Switch between the billing/invoices, usage-metering, and plan-limits tabs. Read-only: it never changes a plan, adds a payment method, or triggers a charge — those stay deliberate human acts elsewhere on the screen.',
+    params: [
+      { name: 'tab', required: true, description: 'The tab to open.', enum: ['usage', 'billing', 'limits'] },
+    ],
+  },
+
+  // ── Protocol development ──
+  {
+    id: 'protocol-dev.open-section',
+    surfaceId: 'protocol-dev',
+    label: 'Open a protocol section',
+    description:
+      'On the protocol authoring workspace, open a section by its number or title so it can be read or drafted — the same click a person makes. Drafting itself, and any governed register write, stay deliberate human/AnA-assisted acts elsewhere on the screen. Resolved against the real document with honest misses.',
+    params: [
+      { name: 'section', required: true, description: 'The section number (e.g. "4.2") or a distinctive phrase from its title, case-insensitive.' },
+    ],
+  },
+
+  // ── Regulatory workspace (CTD authoring substrate) ──
+  {
+    id: 'regulatory-workspace.open-section',
+    surfaceId: 'regulatory-workspace',
+    label: 'Open a CTD section',
+    description:
+      'On the regulatory workspace, open a tracked CTD section by its number or label so it becomes the active section in the three-pane authoring substrate — the same click a person makes. Resolved against the real section tree with honest misses; held while it loads.',
+    params: [
+      { name: 'section', required: true, description: 'The CTD section number (e.g. "3.2.P.8") or a distinctive phrase from its label, case-insensitive.' },
     ],
   },
 ] as const;

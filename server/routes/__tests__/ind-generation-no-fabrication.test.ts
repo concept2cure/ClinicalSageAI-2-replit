@@ -29,7 +29,6 @@ vi.mock('../../services/ai-gateway/index.js', () => ({
 vi.mock('../../services/docx/masterDocumentBuilder.js', () => ({
   getMasterDocumentBuilder: () => ({
     generateFromScratch: vi.fn(),
-    generateEctdXml: vi.fn(),
   }),
 }));
 
@@ -69,6 +68,17 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.unstubAllGlobals();
+});
+
+describe('the orphaned assembly routes are gone', () => {
+  // POST /assemble counted a section complete when any artifact existed for
+  // it and answered "eCTD package assembled. Ready for export." over a
+  // hand-rolled backbone; POST /generate-form returned a one-paragraph
+  // summary named FDA_Form_<n>.docx. Neither had a caller.
+  it.each(['/api/ind-generation/assemble', '/api/ind-generation/generate-form'])('%s is not a route', async (path) => {
+    const res = await request(app()).post(path).send({ projectId: 'proj-1', formType: '1571', sponsorName: 'Acme' });
+    expect(res.status).toBe(404);
+  });
 });
 
 describe('POST /api/ind-generation/generate-section — no fabrication', () => {

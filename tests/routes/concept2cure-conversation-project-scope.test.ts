@@ -109,7 +109,8 @@ vi.mock('../../server/middleware/redisRateLimiter', () => ({
   createRedisRateLimiter: () => (_req: any, _res: any, next: any) => next(),
 }));
 
-import concept2cureRouter from '../../server/routes/concept2cure';
+// Conversation mutations moved to their own router (L53, slice 6).
+import conversationRouter from '../../server/routes/c2c/conversations';
 
 function configureSelectSequence(resolvedValues: any[]) {
   let callIndex = 0;
@@ -170,7 +171,7 @@ describe('Concept2Cure conversation routes enforce project scope', () => {
     req.tenantContext = { organizationId: '1', clientWorkspaceId: '1' };
 
     const res = createMockResponse();
-    const layer = concept2cureRouter.stack.find(
+    const layer = conversationRouter.stack.find(
       (l: any) =>
         l.route?.path === '/projects/:projectId/conversations/:conversationId' &&
         l.route?.methods?.patch
@@ -206,7 +207,7 @@ describe('Concept2Cure conversation routes enforce project scope', () => {
     req.tenantContext = { organizationId: '1', clientWorkspaceId: '1' };
 
     const res = createMockResponse();
-    const layer = concept2cureRouter.stack.find(
+    const layer = conversationRouter.stack.find(
       (l: any) =>
         l.route?.path === '/projects/:projectId/conversations/:conversationId' &&
         l.route?.methods?.delete

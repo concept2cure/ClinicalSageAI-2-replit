@@ -5,7 +5,6 @@
  * required for the 510(k) literature discovery feature.
  */
 
-import { Pool } from 'pg';
 import path from 'path';
 import fs from 'fs';
 import { getPool } from '../db';

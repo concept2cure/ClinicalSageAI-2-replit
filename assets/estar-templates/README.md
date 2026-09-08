@@ -40,33 +40,41 @@ immediate use.
 
 Download the current eSTAR templates from FDA and place them here, matching the
 filenames in `ESTAR_TEMPLATE_MANIFEST` (update the manifest filenames + pinned
-`version` if FDA's distribution names differ). Several logical descriptors may
-resolve to the **same** physical FDA PDF — the one nIVD eSTAR PDF carries
-510(k)/De Novo/PMA — so a maintainer can point them at a single file:
+`version` if FDA's distribution names differ). Several logical descriptors
+resolve to the **same** physical FDA PDF: per the family table above FDA ships
+ONE nIVD eSTAR PDF and ONE IVD eSTAR PDF that each carry 510(k), De Novo and PMA
+— the pathway is selected inside the form (`root.ApplicationType.USA.ATRadioButton110`),
+not by downloading a different file. So the De Novo and PMA descriptors point at
+the 510(k)-named files below; only their field maps differ (the 510(k) Summary
+page and predicate fields are 510(k)-only):
 
-| Pathway | Variant | Family | Expected filename |
-|---|---|---|---|
-| 510(k) | Device (non-IVD) | nIVD | `eSTAR-510k-non-ivd.pdf` |
-| 510(k) | IVD | IVD | `eSTAR-510k-ivd.pdf` |
-| De Novo | Device (non-IVD) | nIVD | `eSTAR-denovo-non-ivd.pdf` |
-| De Novo | IVD | IVD | `eSTAR-denovo-ivd.pdf` |
-| PMA | Device (non-IVD) | nIVD | `eSTAR-pma-non-ivd.pdf` |
-| PMA | IVD | IVD | `eSTAR-pma-ivd.pdf` |
-| Q-Submission | PreSTAR | PreSTAR | `PreSTAR-q-sub.pdf` |
-| IDE | PreSTAR | PreSTAR | `PreSTAR-ide.pdf` |
-| 513(g) | PreSTAR | PreSTAR | `PreSTAR-513g.pdf` |
+| Pathway | Variant | Family | Descriptor id | Expected filename |
+|---|---|---|---|---|
+| 510(k) | Device (non-IVD) | nIVD | `510k-device` | `eSTAR-510k-non-ivd.pdf` |
+| 510(k) | IVD | IVD | `510k-ivd` | `eSTAR-510k-ivd.pdf` |
+| De Novo | Device (non-IVD) | nIVD | `de_novo-device` | `eSTAR-510k-non-ivd.pdf` (same file as 510(k)) |
+| De Novo | IVD | IVD | `de_novo-ivd` | `eSTAR-510k-ivd.pdf` (same file as 510(k)) |
+| PMA | Device (non-IVD) | nIVD | `pma-device` | `eSTAR-510k-non-ivd.pdf` (same file as 510(k)) |
+| PMA | IVD | IVD | `pma-ivd` | `eSTAR-510k-ivd.pdf` (same file as 510(k)) |
+| Q-Submission | PreSTAR | PreSTAR | `q_sub-prestar` | `PreSTAR-q-sub.pdf` (not vendored) |
+| IDE | PreSTAR | PreSTAR | `ide-prestar` | `PreSTAR-ide.pdf` (not vendored) |
+| 513(g) | PreSTAR | PreSTAR | `513g-prestar` | `PreSTAR-513g.pdf` (not vendored) |
 
 FDA eSTAR program page: <https://www.fda.gov/medical-devices/premarket-submissions-selecting-and-preparing-correct-submission/estar-program>
 
 ## Currently vendored
 
-| File | Family | Version | FDA effective date | SHA-256 |
-|---|---|---|---|---|
-| `eSTAR-510k-non-ivd.pdf` | nIVD | **7.0** | 2026-06-01 | `73de2f1e…0edb92` |
-| `eSTAR-510k-ivd.pdf` | IVD | **7.0** | 2026-06-01 | `90d93649…c1594f` |
+| File | Family | Version | FDA effective date | Descriptors filled from it | SHA-256 |
+|---|---|---|---|---|---|
+| `eSTAR-510k-non-ivd.pdf` | nIVD | **7.0** | 2026-06-01 | `510k-device`, `de_novo-device`, `pma-device` | `73de2f1e…0edb92` |
+| `eSTAR-510k-ivd.pdf` | IVD | **7.0** | 2026-06-01 | `510k-ivd`, `de_novo-ivd`, `pma-ivd` | `90d93649…c1594f` |
 
-Both are pinned in `ESTAR_TEMPLATE_MANIFEST` (`version: '7.0'`) and their versions
-are read from the templates' own XFA `template` packet, not from the FDA page.
+Both are pinned in `ESTAR_TEMPLATE_MANIFEST` (`version: '7.0'` on all six marketing
+descriptors) and their versions are read from the templates' own XFA `template`
+packet, not from the FDA page. The De Novo and PMA descriptors share these files
+because FDA distributes one PDF per family that carries all three marketing
+pathways; each descriptor keeps its own field map in `estar-field-map.ts`. The
+PreSTAR2 template is not vendored, so its three descriptors stay `'unset'`.
 
 **These are Adobe LiveCycle DYNAMIC XFA forms.** Their AcroForm `/Fields` array is
 EMPTY and `/NeedsRendering true` is set — `listAcroFields` returns 0 fields, and no

@@ -589,7 +589,7 @@ export const UI_V2_SURFACES: UiSurface[] = [
     group: 'authoring',
     icon: 'clipboardList',
     uiKit: 'authoring',
-    apiPrefixes: ['/api/protocol-development', '/api/protocol-soa', '/api/protocol-risks', '/api/protocol-milestones', '/api/protocol-budget', '/api/protocol-amendments', '/api/protocol-deviations', '/api/protocol-reviews', '/api/protocol-consent', '/api/protocol-export'],
+    apiPrefixes: ['/api/protocol-development', '/api/protocol-soa', '/api/protocol-risks', '/api/protocol-milestones', '/api/protocol-budget', '/api/protocol-amendments', '/api/protocol-deviations', '/api/protocol-reviews', '/api/protocol-consent', '/api/protocol-export', '/api/biostat-bridge'],
     anaToolFamilies: ['create_protocol_document', 'update_protocol_section', 'review_protocol_completeness', 'finalize_protocol_document', 'add_soa_assessment', 'review_soa_matrix'],
     sharedContract: null,
     discoveryCatalog: null,

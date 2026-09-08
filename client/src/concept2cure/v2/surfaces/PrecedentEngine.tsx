@@ -604,7 +604,7 @@ export function PrecedentEngine({ onAsk }: SurfaceViewProps) {
               </button>
             </span>
           ))}
-          {savedNote && <span style={{ fontSize: 12, color: 'var(--c2c-dim,#667085)' }}>{savedNote}</span>}
+          {savedNote && <span style={{ fontSize: 12, color: 'var(--text-400)' }}>{savedNote}</span>}
         </div>
       )}
     </div>
@@ -1072,6 +1072,7 @@ export function PrecedentEngine({ onAsk }: SurfaceViewProps) {
                           </span>
                           <button
                             className="sp-go"
+                            aria-label="Ask AnA to explain and pre-empt this"
                             onClick={() => ask('Explain and pre-empt: ' + f.label)}
                           >
                             {I.sparkles}
@@ -1092,13 +1093,6 @@ export function PrecedentEngine({ onAsk }: SurfaceViewProps) {
                 <div>
                   <div
                     className="de-quote"
-                    style={{
-                      padding: '10px 12px',
-                      background: 'var(--bg-050)',
-                      borderLeft: '3px solid var(--accent-100)',
-                      borderRadius: 8,
-                      marginBottom: 10,
-                    }}
                   >
                     {/* Unchanged in the normal case. In the failure case this
                         rendered "Recommended: Insufficient precedent data",

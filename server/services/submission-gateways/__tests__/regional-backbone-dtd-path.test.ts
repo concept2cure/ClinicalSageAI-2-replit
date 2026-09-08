@@ -69,6 +69,7 @@ describe('regional backbone DOCTYPE resolves to the bundled util/dtd/ folder', (
           applicationId: '123456',
           sequence: '0000',
           submissionType: 'original',
+          fda: { applicationType: 'nda' }, // a package must declare what it is; this used to default to NDA silently
           sponsorId: 'D',
           sponsorName: 'S',
           productName: 'P',
@@ -99,6 +100,7 @@ describe('regional backbone DOCTYPE resolves to the bundled util/dtd/ folder', (
         applicationId: '123456',
         sequence: '0000',
         submissionType: 'original',
+        fda: { applicationType: 'nda' }, // a package must declare what it is; this used to default to NDA silently
         sponsorId: 'D',
         sponsorName: 'S',
         productName: 'P',
@@ -121,6 +123,98 @@ describe('regional backbone DOCTYPE resolves to the bundled util/dtd/ folder', (
       expect(m).toBeTruthy();
       expect(resolveSystemPath('index.xml', m![1])).toBe('util/dtd/ich-ectd-3-2.dtd');
     } finally {
+      await fs.rm(work, { recursive: true, force: true });
+    }
+  });
+});
+
+/**
+ * ── The same defect, one line down ───────────────────────────────────────────
+ * The FDA backbone's DOCTYPE was corrected to climb two levels; the
+ * <?xml-stylesheet?> processing instruction on the very next line still said
+ * `../util/style/us-regional.xsl`, which from m1/us/ lands on m1/util/style/ —
+ * a folder no package contains. index.xml carried no stylesheet PI at all, and
+ * nothing bundled *.xsl into the package. eValidator flags a backbone that
+ * references a stylesheet the package does not ship, and WO-9 Click 4 requires
+ * index.xml to open in a browser through the ICH stylesheet.
+ *
+ * None of this needs the real stylesheets: the PI href is resolved from the
+ * backbone's own location, and bundling is exercised with stand-in *.xsl files
+ * through the same drop-point the DTDs use ($ECTD_DTD_DIR).
+ */
+describe('stylesheet references resolve to the bundled util/style/ folder', () => {
+  async function packageOne(work: string, region: 'fda' | 'ema') {
+    const bytes = pdf('general');
+    const src = path.join(work, 'general.pdf');
+    await fs.writeFile(src, bytes);
+    const bundle = await packageEctdSubmission({
+      region,
+      applicationId: '123456',
+      sequence: '0000',
+      submissionType: 'original',
+      fda: { applicationType: 'nda' },
+      sponsorId: 'D',
+      sponsorName: 'S',
+      productName: 'P',
+      outputDir: path.join(work, 'out'),
+      environment: 'staging',
+      leaves: [
+        { operation: 'new', ctdSection: '3.2.S.1', fileName: 'general.pdf', md5: md5(bytes), title: 'General', sourcePath: src },
+      ],
+    });
+    return JSZip.loadAsync(await fs.readFile(bundle.path));
+  }
+  const piHref = (xml: string) => /<\?xml-stylesheet[^>]*href="([^"]+)"/.exec(xml)?.[1];
+
+  it('fda: m1/us/us-regional.xml points its stylesheet at util/style/us-regional.xsl', async () => {
+    const work = await fs.mkdtemp(path.join(os.tmpdir(), 'ectd-xsl-path-fda-'));
+    try {
+      const zip = await packageOne(work, 'fda');
+      const xml = await zip.file('m1/us/us-regional.xml')!.async('string');
+      const href = piHref(xml);
+      expect(href, 'us-regional.xml has no stylesheet PI').toBeTruthy();
+      expect(resolveSystemPath('m1/us/us-regional.xml', href!)).toBe('util/style/us-regional.xsl');
+    } finally {
+      await fs.rm(work, { recursive: true, force: true });
+    }
+  });
+
+  it('the ICH index.xml carries a stylesheet PI that resolves to util/style/ectd-2-0.xsl', async () => {
+    const work = await fs.mkdtemp(path.join(os.tmpdir(), 'ectd-xsl-path-index-'));
+    try {
+      const zip = await packageOne(work, 'fda');
+      const index = await zip.file('index.xml')!.async('string');
+      const href = piHref(index);
+      expect(href, 'index.xml has no stylesheet PI').toBeTruthy();
+      expect(resolveSystemPath('index.xml', href!)).toBe('util/style/ectd-2-0.xsl');
+      // The PI must sit in the prolog after the XML declaration, before the root.
+      expect(index.indexOf('<?xml-stylesheet')).toBeGreaterThan(index.indexOf('<?xml '));
+      expect(index.indexOf('<?xml-stylesheet')).toBeLessThan(index.indexOf('<ectd:ectd'));
+    } finally {
+      await fs.rm(work, { recursive: true, force: true });
+    }
+  });
+
+  it('bundles vendored *.xsl into util/style/ and checksums them into the MD5 index', async () => {
+    const work = await fs.mkdtemp(path.join(os.tmpdir(), 'ectd-xsl-bundle-'));
+    const drop = path.join(work, 'drop');
+    await fs.mkdir(drop);
+    await fs.writeFile(path.join(drop, 'ectd-2-0.xsl'), '<xsl:stylesheet version="1.0"/>');
+    await fs.writeFile(path.join(drop, 'us-regional.xsl'), '<xsl:stylesheet version="1.0"/>');
+    const previous = process.env.ECTD_DTD_DIR;
+    process.env.ECTD_DTD_DIR = drop;
+    try {
+      const zip = await packageOne(work, 'fda');
+      expect(zip.file('util/style/ectd-2-0.xsl'), 'ICH stylesheet not bundled').toBeTruthy();
+      expect(zip.file('util/style/us-regional.xsl'), 'FDA stylesheet not bundled').toBeTruthy();
+      const md5Index = zip.file('util/index-md5.txt');
+      expect(md5Index, 'no util/index-md5.txt in package').toBeTruthy();
+      const listing = await md5Index!.async('string');
+      expect(listing).toContain('util/style/ectd-2-0.xsl');
+      expect(listing).toContain('util/style/us-regional.xsl');
+    } finally {
+      if (previous === undefined) delete process.env.ECTD_DTD_DIR;
+      else process.env.ECTD_DTD_DIR = previous;
       await fs.rm(work, { recursive: true, force: true });
     }
   });

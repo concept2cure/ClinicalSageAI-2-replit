@@ -1,6 +1,6 @@
 /**
  * Lucide-derived icon set ported verbatim from
- * design-system/ui_kits/mdx/Icons.jsx (1.75 stroke, 16px default).
+ * ui_kits/mdx/Icons.jsx (1.75 stroke, 16px default).
  *
  * Class-name and prop contract matches the kit exactly so the CSS in app.css
  * (which targets `.ico`, `[stroke="currentColor"]`, etc.) renders identically.

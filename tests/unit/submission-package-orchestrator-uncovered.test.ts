@@ -51,6 +51,8 @@ import {
   runOrchestrator,
   regenerateAffected,
   markDownstreamStale,
+  getRun,
+  getRunAudit,
   type OrchestratorInputs,
   type OrchestratorRun,
   type StepKey,
@@ -313,6 +315,35 @@ describe('regenerateAffected', () => {
     expect(result.regenerated).not.toContain('m1.admin');
   });
 
+  it('persists the stale markers on the superseded run and names it, so its record stops claiming `complete`', async () => {
+    const previousRun: OrchestratorRun = {
+      runId: 'prev-run-stale',
+      organizationId: 1,
+      submissionId: 'sub-1',
+      applicationNumber: 'IND123456',
+      region: 'US',
+      submissionType: 'IND',
+      startedAt: new Date(Date.now() - 60_000).toISOString(),
+      status: 'complete',
+      steps: [
+        { key: 'csr.tabulate', status: 'complete', inputHash: 'B', dependsOn: [] },
+        { key: 'm2.5.clinical', status: 'complete', inputHash: 'B', dependsOn: ['csr.tabulate'] },
+      ],
+    };
+    hoisted.poolQuery.mockClear();
+    const result = await regenerateAffected(previousRun, inputsWithSomeData(), 'csr.tabulate');
+    expect(result.supersededRunId).toBe('prev-run-stale');
+    expect(result.run.runId).not.toBe('prev-run-stale');
+    // The previous run's row was written with the stale marker before the
+    // fresh pass started — the first write names prev-run-stale, not the new id.
+    const writes = hoisted.poolQuery.mock.calls
+      .map(c => ({ sql: String(c[0]), args: (c[1] ?? []) as unknown[] }))
+      .filter(w => /submission_orchestrator_runs/i.test(w.sql) && w.args.includes('prev-run-stale'));
+    expect(writes.length).toBeGreaterThan(0);
+    const stepsArg = writes[0].args.find(a => typeof a === 'string' && a.includes('m2.5.clinical')) as string;
+    expect(JSON.parse(stepsArg).find((s: { key: string }) => s.key === 'm2.5.clinical').status).toBe('stale');
+  });
+
   it('PINS CURRENT BEHAVIOR: re-runs the entire pipeline regardless of stale marking', async () => {
     // ─────────────────────────────────────────────────────────────────────
     // CONTRADICTION WITH AUDIT: the Move 12 prompt asks us to assert that
@@ -410,6 +441,25 @@ describe('regenerateAffected', () => {
 // ═══════════════════════════════════════════════════════════════════════════
 // Region-CHECK violation — Move 7 / §D.6 silent data loss
 // ═══════════════════════════════════════════════════════════════════════════
+
+describe('getRun / getRunAudit — a failed read is not a missing run', () => {
+  it('getRun throws OrchestratorReadError on a database failure instead of returning null', async () => {
+    hoisted.poolQuery.mockRejectedValueOnce(new Error('connection refused'));
+    await expect(getRun('run-x', 1)).rejects.toMatchObject({ name: 'OrchestratorReadError', operation: 'getRun' });
+  });
+
+  it('getRunAudit throws OrchestratorReadError on a database failure instead of returning an empty history', async () => {
+    hoisted.poolQuery.mockRejectedValueOnce(new Error('connection refused'));
+    await expect(getRunAudit('run-x', 1)).rejects.toMatchObject({ name: 'OrchestratorReadError', operation: 'getRunAudit' });
+  });
+
+  it('a genuinely missing run is still null, and a run with no events is still []', async () => {
+    hoisted.poolQuery.mockResolvedValueOnce({ rows: [], rowCount: 0 });
+    expect(await getRun('run-missing', 1)).toBeNull();
+    hoisted.poolQuery.mockResolvedValueOnce({ rows: [], rowCount: 0 });
+    expect(await getRunAudit('run-missing', 1)).toEqual([]);
+  });
+});
 
 describe('region-CHECK violation handling', () => {
   it('PINS POST-FIX BEHAVIOR: a CHECK violation (23514) is re-thrown — no silent dark-row creation', async () => {

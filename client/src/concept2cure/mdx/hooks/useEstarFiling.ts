@@ -14,8 +14,8 @@
  * not just readable.
  */
 
-import { useCallback } from 'react';
-import { buildAuthHeaders, useFetchJson } from './useFetchJson';
+import { useCallback, useState } from 'react';
+import { buildAuthHeaders, saveFailureFor, useFetchJson, type SaveFailure } from './useFetchJson';
 
 /** Mutators need the same Bearer + x-organization-id headers as the read
  *  path — cookies alone 401 at the global /api gate (see buildAuthHeaders). */
@@ -36,12 +36,36 @@ export const ESTAR_PREREQUISITES = [
 ] as const;
 
 export type EstarPrerequisiteId = (typeof ESTAR_PREREQUISITES)[number]['id'];
-/** camelCase boolean fields the PUT /registration body accepts. */
-export type EstarRegistrationPatch = Partial<Record<(typeof ESTAR_PREREQUISITES)[number]['field'], boolean>>;
+
+/** The org-level text facts the official eSTAR reads from the registration:
+    its correspondent block and the Declaration of Conformity company name and
+    address. The declaration pair is one legal entity, so the name sits directly
+    above the address. `max` mirrors the server's write limits. Display order. */
+export const ESTAR_CORRESPONDENT_FIELDS = [
+  { field: 'correspondentCompanyName', label: 'Correspondent company name', max: 256 },
+  { field: 'correspondentContactEmail', label: 'Correspondent contact email', max: 256 },
+  { field: 'correspondentTelephone', label: 'Correspondent telephone', max: 64 },
+  { field: 'declarationCompanyName', label: 'Declaration of Conformity company name', max: 256 },
+  { field: 'declarationCompanyAddress', label: 'Declaration of Conformity company address', max: 1000 },
+] as const;
+
+export type EstarCorrespondentField = (typeof ESTAR_CORRESPONDENT_FIELDS)[number]['field'];
+/** Stored values: null = not held (the eSTAR field stays blank, never guessed). */
+export type EstarCorrespondentValues = Record<EstarCorrespondentField, string | null>;
+
+/** The org's registration row as GET /registration returns it. */
+export interface EstarRegistrationRecord extends Partial<EstarCorrespondentValues> {
+  [key: string]: unknown;
+}
+
+/** The PUT /registration body: the four prerequisite booleans plus the
+    correspondent/declaration strings (null clears one). */
+export type EstarRegistrationPatch = Partial<Record<(typeof ESTAR_PREREQUISITES)[number]['field'], boolean>> &
+  Partial<EstarCorrespondentValues>;
 
 export interface EstarRegistrationView {
   registered: boolean;
-  registration: Record<string, unknown> | null;
+  registration: EstarRegistrationRecord | null;
   clientRegistration: { clientId: string; satisfied: EstarPrerequisiteId[]; variants?: Array<'device' | 'ivd'> };
 }
 
@@ -61,17 +85,91 @@ export function prerequisiteRows(satisfied: readonly string[] | null | undefined
 }
 
 /**
+ * Pure: the correspondent/declaration values held on a registration row.
+ * A missing row, a missing column, or a non-string reads as null — the form
+ * shows an empty input, never a placeholder that looks like a value.
+ */
+export function correspondentValues(
+  registration: EstarRegistrationRecord | null | undefined,
+): EstarCorrespondentValues {
+  const out = {} as EstarCorrespondentValues;
+  for (const f of ESTAR_CORRESPONDENT_FIELDS) {
+    const v = registration?.[f.field];
+    out[f.field] = typeof v === 'string' ? v : null;
+  }
+  return out;
+}
+
+/**
+ * Pure: the four prerequisite booleans as the PUT body carries them.
+ *
+ * A PREREQUISITE WE HAVE NOT READ IS NOT AN UNMET ONE. `satisfied` is null or
+ * undefined whenever the registration read has not landed or has FAILED, and
+ * `new Set(satisfied ?? [])` turned that into "none of the four are satisfied" —
+ * so saving the correspondent block, or toggling any one prerequisite, wrote
+ * `false` over all four. An organization that had recorded its FDA ESG account,
+ * its CDRH Portal account, its DUNS/FEI identity and its MDUFA fee account lost
+ * every one of them to a save about something else, on a read they never saw
+ * fail.
+ *
+ * The text fields beside these have always had this guard — `registrationPatchToggling`
+ * documents `stored === undefined` as "not loaded, do not touch the text". The
+ * booleans did not.
+ *
+ * So: with `satisfied` unknown, assert only what the operator just did. A
+ * toggled prerequisite is a fact — they clicked it — and the other three are
+ * omitted, which the PUT leaves untouched (every field is `.optional()` in
+ * registrationWriteSchema and Drizzle's `.set()` skips undefined keys).
+ */
+function prerequisiteBooleans(
+  satisfied: readonly string[] | null | undefined,
+  toggleId?: EstarPrerequisiteId,
+): EstarRegistrationPatch {
+  const patch: EstarRegistrationPatch = {};
+  if (satisfied == null) {
+    /* Unknown. The toggle is the one thing we do know: it flips off whatever the
+       operator saw on screen, which for an unread registration is unset. */
+    if (toggleId) {
+      const toggled = ESTAR_PREREQUISITES.find((p) => p.id === toggleId);
+      if (toggled) patch[toggled.field] = true;
+    }
+    return patch;
+  }
+  const set = new Set(satisfied);
+  for (const p of ESTAR_PREREQUISITES) {
+    patch[p.field] = p.id === toggleId ? !set.has(p.id) : set.has(p.id);
+  }
+  return patch;
+}
+
+/**
  * Pure: build a PUT /registration patch that toggles one prerequisite while
- * preserving the rest from the current satisfied[]. Unit-testable.
+ * preserving the rest from the current satisfied[]. When the stored row is
+ * given, its correspondent/declaration values travel too, so a toggle can
+ * never blank text the org already holds. Unit-testable.
  */
 export function registrationPatchToggling(
   satisfied: readonly string[] | null | undefined,
   toggleId: EstarPrerequisiteId,
+  stored?: EstarRegistrationRecord | null,
 ): EstarRegistrationPatch {
-  const set = new Set(satisfied ?? []);
-  const patch: EstarRegistrationPatch = {};
-  for (const p of ESTAR_PREREQUISITES) {
-    patch[p.field] = p.id === toggleId ? !set.has(p.id) : set.has(p.id);
+  const patch = prerequisiteBooleans(satisfied, toggleId);
+  return stored === undefined ? patch : { ...patch, ...correspondentValues(stored) };
+}
+
+/**
+ * Pure: build the PUT /registration body for the correspondent/declaration
+ * block. Every text field is sent trimmed; an emptied one is sent as null,
+ * which clears it. The prerequisite booleans are preserved from satisfied[].
+ */
+export function correspondentPatch(
+  satisfied: readonly string[] | null | undefined,
+  form: Record<EstarCorrespondentField, string>,
+): EstarRegistrationPatch {
+  const patch = prerequisiteBooleans(satisfied);
+  for (const f of ESTAR_CORRESPONDENT_FIELDS) {
+    const v = form[f.field].trim();
+    patch[f.field] = v ? v : null;
   }
   return patch;
 }
@@ -81,12 +179,20 @@ export interface UseEstarRegistrationResult {
   loading: boolean;
   error: string | null;
   refresh: () => void;
-  /** PUT /registration — persist the prerequisite booleans; refreshes on success. */
+  /** PUT /registration — persist the prerequisite booleans and the
+   *  correspondent/declaration strings; refreshes on success. Null when the
+   *  server rejected the write (editor-only). */
   save: (patch: EstarRegistrationPatch) => Promise<EstarRegistrationView | null>;
+  /** Why the last save did not land, or null when the last one did. This write
+   *  is editor-only on the server, and a viewer's refusal used to arrive as the
+   *  same "the server rejected the update" a malformed value gets. The
+   *  classification is the server's status, never a role rule re-stated here. */
+  saveFailure: SaveFailure | null;
 }
 
 export function useEstarRegistration(): UseEstarRegistrationResult {
   const { data, loading, error, refresh } = useFetchJson<EstarRegistrationView>('/api/510k/estar/registration');
+  const [saveFailure, setSaveFailure] = useState<SaveFailure | null>(null);
   const save = useCallback(
     async (patch: EstarRegistrationPatch) => {
       try {
@@ -96,17 +202,24 @@ export function useEstarRegistration(): UseEstarRegistrationResult {
           headers: jsonHeaders(),
           body: JSON.stringify(patch),
         });
-        if (!res.ok) return null;
+        if (!res.ok) {
+          setSaveFailure(saveFailureFor(res.status));
+          return null;
+        }
         const j = (await res.json()) as EstarRegistrationView;
+        setSaveFailure(null);
         refresh();
         return j;
       } catch {
+        /* The request never reached a verdict — a thrown fetch is a transport
+           failure, not the server declining the content. */
+        setSaveFailure('unavailable');
         return null;
       }
     },
     [refresh],
   );
-  return { registration: data ?? null, loading, error, refresh, save };
+  return { registration: data ?? null, loading, error, refresh, save, saveFailure };
 }
 
 /* ─── Catalog ───────────────────────────────────────────────────────── */
@@ -202,6 +315,11 @@ export interface EstarSubmissionView {
   filedAt: string | null;
   reviewGoalDays: number | null;
   decisionDueAt: string | null;
+  /* What the filing was filed WITH: the retained eSTAR in the program vault and
+     the SHA-256 of its bytes. Null on rows recorded before the binding existed
+     — a filing with no binding says so rather than implying one. */
+  filedArtifactDocumentId: string | null;
+  filedArtifactSha256: string | null;
 }
 
 export interface UseEstarSubmissionsResult {
@@ -217,12 +335,107 @@ export interface UseEstarSubmissionsResult {
     /** Attach the filing to a project (joins the PM spine). */
     projectId?: number;
   }) => Promise<EstarSubmissionView | null>;
-  /** PATCH /submissions/:id — advance the lifecycle. */
+  /** PATCH /submissions/:id — advance the lifecycle. NOT for `filed`, which is
+   *  a signature: use `file()`. */
   advance: (
     id: string,
     status: string,
     extra?: { fdaTrackingNumber?: string; decision?: string },
   ) => Promise<EstarSubmissionView | null>;
+  /** PATCH /submissions/:id with the governed signature — the filed transition. */
+  file: (id: string, input: EstarFilingSignatureInput) => Promise<EstarFilingOutcome>;
+}
+
+/**
+ * What a signer supplies to file. The filing DATE is not here: the server
+ * stamps it, because a Part 11 filing date supplied by the party being recorded
+ * is a backdating hole. Neither is the artifact's hash — the server reads it
+ * from the vault row the document id names, so a filing cannot claim a digest
+ * nobody stored.
+ */
+export interface EstarFilingSignatureInput {
+  /** vault.documents id of the retained official eSTAR being filed. */
+  filedArtifactDocumentId: string;
+  /** Reason for signing; the server requires at least 8 characters. */
+  reason: string;
+  /** The §11.50 meaning declared. */
+  meaning: EstarSignatureMeaning;
+  password: string;
+  /** Authenticator code, when the account has MFA enabled. */
+  totp?: string;
+  fdaTrackingNumber?: string;
+}
+
+export type EstarFilingOutcome =
+  | { ok: true; submission: EstarSubmissionView }
+  | { ok: false; reason: string };
+
+/** The §11.50 meanings the server accepts (server/api/cmc/governance.ts). */
+export const ESTAR_SIGNATURE_MEANINGS = [
+  'approval',
+  'review',
+  'responsibility',
+  'authorship',
+] as const;
+export type EstarSignatureMeaning = (typeof ESTAR_SIGNATURE_MEANINGS)[number];
+
+/**
+ * One sentence for why a filing did not happen, from the SERVER's own answer.
+ *
+ * Never guessed: a wrong password and a role refusal are different problems and
+ * an operator sent to check the wrong one loses the signing session for nothing.
+ */
+export function describeFilingRefusal(status: number, code: string | null): string {
+  if (code === 'REAUTH_PASSWORD_INVALID' || code === 'REAUTH_PASSWORD_REQUIRED') {
+    return 'That password was not accepted. Nothing was filed and nothing was signed.';
+  }
+  if (code === 'REAUTH_TOTP_INVALID') {
+    return 'That authenticator code was not accepted. Nothing was filed and nothing was signed.';
+  }
+  if (code === 'REAUTH_USER_NOT_FOUND') {
+    return 'Your account could not be re-verified. Nothing was filed and nothing was signed.';
+  }
+  if (status === 403) return 'Your role cannot file a submission.';
+  if (status === 404) return 'This filing is no longer in your organization.';
+  if (status >= 400 && status < 500) {
+    return 'The filing was refused. Check the eSTAR you selected and your reason, then try again.';
+  }
+  return 'Not filed — the server did not answer. Nothing was changed.';
+}
+
+/* ─── Retained eSTAR artifacts (what a filing can be signed against) ─────── */
+
+export interface RetainedEstarArtifactView {
+  documentId: string;
+  programId: string;
+  documentCode: string;
+  version: string;
+  contentHash: string;
+  fileName: string;
+  fileSize: number;
+  createdAt: string;
+}
+
+export interface UseRetainedEstarArtifactsResult {
+  artifacts: RetainedEstarArtifactView[] | null;
+  loading: boolean;
+  error: string | null;
+  refresh: () => void;
+}
+
+/**
+ * GET /retained-artifacts — the org's retained official eSTARs, newest first.
+ *
+ * `artifacts: null` means unresolved (loading, or the read failed) and is kept
+ * distinct from `[]`, which is a real answer: no official eSTAR has been
+ * produced yet. A signing form must not offer "nothing to file against" when
+ * the truth is that it could not look.
+ */
+export function useRetainedEstarArtifacts(): UseRetainedEstarArtifactsResult {
+  const { data, loading, error, refresh } = useFetchJson<{ artifacts: RetainedEstarArtifactView[] }>(
+    '/api/510k/estar/retained-artifacts',
+  );
+  return { artifacts: data?.artifacts ?? null, loading, error, refresh };
 }
 
 /**
@@ -286,5 +499,41 @@ export function useEstarSubmissions(
     [refresh],
   );
 
-  return { submissions: data?.submissions ?? null, loading, error, refresh, startTracking, advance };
+  const file = useCallback(
+    async (id: string, input: EstarFilingSignatureInput): Promise<EstarFilingOutcome> => {
+      try {
+        const res = await fetch(`/api/510k/estar/submissions/${encodeURIComponent(id)}`, {
+          method: 'PATCH',
+          credentials: 'include',
+          headers: jsonHeaders(),
+          body: JSON.stringify({
+            status: 'filed',
+            filedArtifactDocumentId: input.filedArtifactDocumentId,
+            reason: input.reason,
+            meaning: input.meaning,
+            reauth: { password: input.password, ...(input.totp ? { totp: input.totp } : {}) },
+            ...(input.fdaTrackingNumber ? { fdaTrackingNumber: input.fdaTrackingNumber } : {}),
+          }),
+        });
+        if (!res.ok) {
+          /* The server's own code, when it gave one — never a guess. */
+          let code: string | null = null;
+          try {
+            code = ((await res.json()) as { error?: string }).error ?? null;
+          } catch {
+            /* no JSON body; the status alone decides */
+          }
+          return { ok: false, reason: describeFilingRefusal(res.status, code) };
+        }
+        const submission = (await res.json()) as EstarSubmissionView;
+        refresh();
+        return { ok: true, submission };
+      } catch {
+        return { ok: false, reason: describeFilingRefusal(0, null) };
+      }
+    },
+    [refresh],
+  );
+
+  return { submissions: data?.submissions ?? null, loading, error, refresh, startTracking, advance, file };
 }

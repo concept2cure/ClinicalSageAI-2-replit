@@ -53,6 +53,32 @@ const VIEWPORT = { width: 1440, height: 900 };
 const SHEETS = builtStylesheets(TAG);
 const STYLES = styleTags(SHEETS);
 
+/* The surface's place IN the shell, not merely inside it.
+ *
+ * `.c2c-v2.shell` is `grid-template-columns: var(--rail) 1fr var(--ana)`
+ * — 264px / 796px / 380px at this viewport. A fragment dropped in as the
+ * shell's only child becomes grid item #1 and is laid out in the 264px LEFT
+ * RAIL column: measured, every surface came out 268px wide instead of 796px.
+ * The cascade was right and the geometry was a third of life size, which made
+ * the screenshots this script writes actively misleading — a reviewer opening
+ * .visual-qa/shots/ would see every surface crushed into a column the product
+ * never puts it in, and read that as a layout defect.
+ *
+ * V2App.tsx renders `<Rail/> <main className="main"><div className="page">
+ * {body}</div></main> <AnaRail/>`, and `.c2c-v2 .main` carries an explicit
+ * `grid-column: 2`, so wrapping in main+page is enough to land in the content
+ * column — no placeholder rail sibling required. MDX surfaces carry their own
+ * `.mdx-shell > .page` and therefore nest one `.page` inside another here,
+ * which is exactly what the live app does with them too.
+ *
+ * check-overflow.mjs reached the same conclusion from the other direction and
+ * documents it at its own `pageFor`: it deliberately wraps in a bare
+ * `.c2c-v2` box, because for overflow the container IS the measurement and it
+ * wants the fragment's own width. Contrast is unaffected either way — colour
+ * does not depend on column width. */
+const SHELL_OPEN = '<main class="main"><div class="page">';
+const SHELL_CLOSE = '</div></main>';
+
 /**
  * The surface as the shell actually mounts it: inside `<div class="c2c-v2 shell">`
  * (V2App.tsx:336). Getting this wrapper wrong would silently change every
@@ -73,7 +99,7 @@ const STYLES = styleTags(SHEETS);
  */
 function page(markup, styles = STYLES) {
   return `<!doctype html><html><head><meta charset="utf-8">${styles}</head>
-<body><div class="c2c-v2 shell">${markup}</div></body></html>`;
+<body><div class="c2c-v2 shell">${SHELL_OPEN}${markup}${SHELL_CLOSE}</div></body></html>`;
 }
 
 /** Every element's computed style, flattened to a comparable string. */

@@ -2,7 +2,8 @@
  * POST /api/haq-manager/questions — WRITE-BACK for the v2 HaqManager
  * "Log question" form.
  *
- * Locks: org-scoped persist (org from the request's tenant context, default 1),
+ * Locks: org-scoped persist (org from the request's tenant context — there is
+ * no default; without one the router refuses),
  * 400 when roundId or q is missing, a store.insert into subcategory 'question'
  * with a payload whose letterId === roundId, and a 201 response whose data is the
  * question mapped exactly as GET /rounds maps questions (id === qid, roundId ===
@@ -24,7 +25,7 @@ vi.mock('../../utils/feature-persistence', () => ({
 import haqRouter from '../haq-manager';
 
 /** Build an app; `org` (when set) is stamped onto tenantContext by getOrgId. */
-function app(org?: number) {
+function app(org: number | undefined = 7) {
   const a = express();
   a.use(express.json());
   if (org !== undefined) {
@@ -76,7 +77,7 @@ describe('POST /api/haq-manager/questions', () => {
     expect(insertMock).toHaveBeenCalledTimes(1);
 
     const [orgArg, subcategory, title, payload] = insertMock.mock.calls[0];
-    expect(orgArg).toBe(1); // default org when no tenant context
+    expect(orgArg).toBe(7); // the org on the request, never a default
     expect(subcategory).toBe('question');
     expect(title).toBe('IR-07');
     expect(payload.letterId).toBe('fda-ir1');

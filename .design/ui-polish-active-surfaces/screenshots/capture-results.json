@@ -1,0 +1,57 @@
+{
+  "shots": [
+    "review-home-light-desktop-1280.png",
+    "review-projects-light-desktop-1280.png",
+    "review-vault-light-desktop-1280.png",
+    "review-tasks-light-desktop-1280.png",
+    "review-apps-light-desktop-1280.png",
+    "review-home-light-tablet-768.png",
+    "review-projects-light-tablet-768.png",
+    "review-vault-light-tablet-768.png",
+    "review-tasks-light-tablet-768.png",
+    "review-apps-light-tablet-768.png",
+    "review-home-light-mobile-375.png",
+    "review-projects-light-mobile-375.png",
+    "review-vault-light-mobile-375.png",
+    "review-tasks-light-mobile-375.png",
+    "review-apps-light-mobile-375.png",
+    "review-home-dark-desktop-1280.png",
+    "review-projects-dark-desktop-1280.png",
+    "review-vault-dark-desktop-1280.png",
+    "review-tasks-dark-desktop-1280.png",
+    "review-apps-dark-desktop-1280.png",
+    "review-home-dark-tablet-768.png",
+    "review-projects-dark-tablet-768.png",
+    "review-vault-dark-tablet-768.png",
+    "review-tasks-dark-tablet-768.png",
+    "review-apps-dark-tablet-768.png",
+    "review-home-dark-mobile-375.png",
+    "review-projects-dark-mobile-375.png",
+    "review-vault-dark-mobile-375.png",
+    "review-tasks-dark-mobile-375.png",
+    "review-apps-dark-mobile-375.png",
+    "review-projects-state-loading-light-1280.png",
+    "review-projects-state-empty-light-1280.png",
+    "review-projects-state-failed-light-1280.png",
+    "review-projects-state-loading-dark-1280.png",
+    "review-projects-state-empty-dark-1280.png",
+    "review-projects-state-failed-dark-1280.png"
+  ],
+  "themeProof": {
+    "light": {
+      "hasDarkClass": false,
+      "dataTheme": null,
+      "bg000": "#faf9f5",
+      "accent200": "#ad5132",
+      "bodyBg": "rgb(250, 249, 245)"
+    },
+    "dark": {
+      "hasDarkClass": true,
+      "dataTheme": "dark",
+      "bg000": "#262624",
+      "accent200": "#e8916f",
+      "bodyBg": "rgb(250, 249, 245)"
+    }
+  },
+  "consoleErrors": []
+}

@@ -23,7 +23,10 @@ vi.mock('../server/routes/c2c/actions', () => ({
 }));
 
 const { dbState } = vi.hoisted(() => ({
-  dbState: { pkg: null as any, updateSet: null as any, selects: 0 },
+  // `lockedMetadata`, when set, is what the row lock reads — separately from
+  // the snapshot the route's first select returns — so a test can put a
+  // colleague's change between the two and prove the decision used the lock.
+  dbState: { pkg: null as any, updateSet: null as any, selects: 0, lockedMetadata: undefined as any },
 }));
 
 function makeDb() {
@@ -41,7 +44,16 @@ function makeDb() {
   return chain;
 }
 
-const clientQuery = vi.fn().mockResolvedValue({ rows: [] });
+/** The pool client: serves the package row lock (SELECT … FOR UPDATE) from the
+ *  stubbed package and captures the metadata the locked UPDATE writes. */
+const clientQuery = vi.fn(async (sql: string, params: unknown[] = []) => {
+  if (/FOR UPDATE/.test(sql)) {
+    const locked = dbState.lockedMetadata !== undefined ? dbState.lockedMetadata : dbState.pkg?.metadata ?? null;
+    return { rows: [{ metadata: locked }] };
+  }
+  if (/^UPDATE c2c_submission_packages/.test(sql)) dbState.updateSet = { metadata: JSON.parse(String(params[1])) };
+  return { rows: [] };
+});
 const connectFn = vi.fn(() => Promise.resolve({ query: clientQuery, release: vi.fn() }));
 vi.mock('../server/db', () => ({
   get db() { return makeDb(); },
@@ -62,7 +74,10 @@ function makeApp() {
   const app = express();
   app.use(express.json());
   app.use((req, _res, next) => {
-    (req as any).user = { id: 777, organizationId: 99 };
+    /* A role, because every write on this router is now role-gated. These harnesses
+       attached none and still passed, which is exactly what they failed to notice. */
+    (req as any).user = { id: 777, organizationId: 99, role: 'admin' };
+    (req as any).userRole = 'admin';
     next();
   });
   app.use('/api/submission-ops', submissionOpsRouter);
@@ -86,6 +101,7 @@ beforeEach(() => {
   dbState.pkg = null;
   dbState.updateSet = null;
   dbState.selects = 0;
+  dbState.lockedMetadata = undefined;
   recordGovernedActionFn.mockReset();
   recordGovernedActionFn.mockResolvedValue({ actionId: 'act_x', auditId: 'aud_x', sha256Chain: 'c' });
   connectFn.mockClear();
@@ -108,6 +124,18 @@ describe('PUT /api/submission-ops/packages/:packageId/regulatory-identifiers', (
     const res = await put({ ...GOOD, applicationNumber: 'EMEA/H/C/001234', applicantName: `Acme${ch(0x01)}Bio` });
     expect(res.status).toBe(400);
     expect(res.body.fields).toEqual(['applicationNumber', 'applicantName']);
+  });
+
+  it('REFUSES an applicant name the XML layer would strip or empty (C1 controls, noncharacters)', async () => {
+    // These pass a C0-only control-char check but escapeXml strips them, so the
+    // backbone would carry an altered or EMPTY <name> while the gate said usable.
+    dbState.pkg = pkgWith({});
+    // …and a lone surrogate, which the zip writer would rewrite to U+FFFD.
+    for (const name of [ch(0x85), ch(0xfffe) + ch(0xffff), `Acme${ch(0x9f)}Bio`, `Acme${String.fromCharCode(0xd800)} Bio`]) {
+      const res = await put({ ...GOOD, applicantName: name });
+      expect(res.status, JSON.stringify(name)).toBe(400);
+      expect(res.body.fields).toEqual(['applicantName']);
+    }
   });
 
   it('REFUSES a missing reason (governed change)', async () => {
@@ -150,20 +178,71 @@ describe('PUT /api/submission-ops/packages/:packageId/regulatory-identifiers', (
     const ledger = recordGovernedActionFn.mock.calls[0][1];
     expect(ledger).toMatchObject({ orgId: 99, userId: 777, target: 'submission:5', reason: GOOD.reason });
     expect(ledger.payload).toMatchObject({ change: 'regulatory-identifiers', applicationNumber: 'IND123456', staleBundleCleared: true });
+    // from → to: the audit row can answer what the identifiers were changed FROM.
+    expect(ledger.payload.previous).toEqual({ applicationNumber: 'IND000001', applicantId: 'DUNS-1', applicantName: 'Old Name' });
     expect(clientQuery).toHaveBeenCalledWith('BEGIN');
     expect(clientQuery).toHaveBeenCalledWith('COMMIT');
+    // The write was decided under the row lock, against the CURRENT row.
+    expect(clientQuery.mock.calls.some((c) => /FOR UPDATE/.test(String(c[0])))).toBe(true);
   });
 
-  it('re-recording the SAME identifiers keeps an existing bundle (nothing about its backbone changed)', async () => {
+  it('decides against the LOCKED row, never the pre-lock snapshot: a colleague’s change that landed meanwhile is neither reverted nor re-reported', async () => {
+    // The snapshot the route read first still shows the OLD identifiers and a bundle…
+    dbState.pkg = pkgWith({
+      regulatory: { applicationNumber: 'IND000001', applicantId: 'DUNS-1', applicantName: 'Old Name' },
+      bundle: { path: '/bundles/old.zip', sha256: 'f'.repeat(64), sizeBytes: 10, format: 'ectd' },
+    });
+    // …but by the time the row is locked another PUT has recorded the SAME
+    // values this one carries, cleared that bundle, and added a note.
+    dbState.lockedMetadata = {
+      regulatory: { applicationNumber: 'IND123456', applicantId: 'DUNS-123456789', applicantName: 'Acme Biologics, Inc.', recordedBy: 42 },
+      noteAddedMeanwhile: 'kept',
+    };
+    const res = await put(GOOD);
+    expect(res.status).toBe(200);
+    expect(res.body.data).toMatchObject({ changed: false, staleBundleCleared: false });
+    expect(dbState.updateSet.metadata.bundle).toBeUndefined(); // the cleared bundle is NOT put back
+    expect(dbState.updateSet.metadata.noteAddedMeanwhile).toBe('kept'); // the newer row is what gets merged
+    // The audit row says what the identifiers were changed FROM on the real row.
+    const ledger = recordGovernedActionFn.mock.calls[0][1];
+    expect(ledger.payload.previous).toEqual({
+      applicationNumber: 'IND123456', applicantId: 'DUNS-123456789', applicantName: 'Acme Biologics, Inc.',
+    });
+  });
+
+  it('re-recording the SAME identifiers keeps an existing bundle and its preflight summary (nothing about its backbone changed)', async () => {
     const bundle = { path: '/bundles/current.zip', sha256: 'a'.repeat(64), sizeBytes: 10, format: 'ectd' };
+    const preflight = { bundleSha256: 'a'.repeat(64), errorCount: 0, blocking: false };
     dbState.pkg = pkgWith({
       regulatory: { applicationNumber: 'IND123456', applicantId: 'DUNS-123456789', applicantName: 'Acme Biologics, Inc.' },
       bundle,
+      preflight,
     });
     const res = await put(GOOD);
     expect(res.status).toBe(200);
     expect(res.body.data).toMatchObject({ changed: false, staleBundleCleared: false });
     expect(dbState.updateSet.metadata.bundle).toEqual(bundle);
+    expect(dbState.updateSet.metadata.preflight).toEqual(preflight);
+  });
+
+  it('CHANGED identifiers drop the preflight summary together with the bundle it described', async () => {
+    dbState.pkg = pkgWith({
+      regulatory: { applicationNumber: 'IND000001', applicantId: 'DUNS-1', applicantName: 'Old Name' },
+      bundle: { path: '/bundles/old.zip', sha256: 'f'.repeat(64), sizeBytes: 10, format: 'ectd' },
+      preflight: { bundleSha256: 'f'.repeat(64), errorCount: 0, blocking: false },
+    });
+    const res = await put(GOOD);
+    expect(res.status).toBe(200);
+    expect(res.body.data.staleBundleCleared).toBe(true);
+    expect(dbState.updateSet.metadata.bundle).toBeUndefined();
+    expect(dbState.updateSet.metadata.preflight).toBeUndefined();
+  });
+
+  it('accepts the numeric row id as well as the pkg_ text id (the dispatch surface uses the numeric one)', async () => {
+    dbState.pkg = pkgWith({});
+    const res = await put(GOOD, '5');
+    expect(res.status).toBe(200);
+    expect(res.body.data.packageId).toBe('pkg_locked');
   });
 
   it('trims surrounding whitespace but never rewrites a value', async () => {

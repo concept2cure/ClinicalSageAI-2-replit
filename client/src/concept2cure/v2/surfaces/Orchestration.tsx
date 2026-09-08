@@ -879,7 +879,7 @@ export function Orchestration({ onAsk, onNav }: SurfaceViewProps) {
             </div>
             <div className="orch-find-meta">
               <span className="rd-chip tone-idle">{f.type.replace(/_/g, ' ')}</span>
-              <span className={'rd-chip tone-' + (ORCH_TONE[f.status === 'fail' ? 'failed' : f.status === 'warn' ? 'paused' : 'completed'] || 'idle')}>
+              <span className={'rd-chip tone-' + (f.status === 'fail' ? ORCH_TONE.failed : f.status === 'warn' ? ORCH_TONE.paused : ORCH_TONE.completed)}>
                 {f.status === 'fail' ? 'Fail' : f.status === 'warn' ? 'Warn' : 'Pass'}
               </span>
             </div>
@@ -890,7 +890,7 @@ export function Orchestration({ onAsk, onNav }: SurfaceViewProps) {
   };
 
   return (
-    <div className="page-inner orch">
+    <div className="page-inner">
       {newRunOpen && (
         <div className="orch-newrun-bd" onClick={() => setNewRunOpen(false)}>
           <div
@@ -1001,7 +1001,7 @@ export function Orchestration({ onAsk, onNav }: SurfaceViewProps) {
 
       {view === 'runs' && (
         runsState.loading && runs.length === 0 ? (
-          <div className="scaf-note" style={{ padding: '18px 10px' }}>Loading workflow runs…</div>
+          <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>Loading workflow runs…</div>
         ) : runsState.error && runs.length === 0 ? (
           <EmptyState
             tone="error"
@@ -1103,7 +1103,7 @@ export function Orchestration({ onAsk, onNav }: SurfaceViewProps) {
 
       {view === 'approvals' && (
         cpsState.loading && cps.length === 0 ? (
-          <div className="scaf-note" style={{ padding: '18px 10px' }}>Loading approval gates…</div>
+          <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>Loading approval gates…</div>
         ) : cpsState.error && cps.length === 0 ? (
           <EmptyState
             tone="error"
@@ -1230,7 +1230,7 @@ export function Orchestration({ onAsk, onNav }: SurfaceViewProps) {
 
       {view === 'readiness' && (
         rdRead === 'loading' ? (
-          <div className="scaf-note" style={{ padding: '18px 10px' }}>Loading readiness…</div>
+          <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>Loading readiness…</div>
         ) : rdState.error ? (
           /* UI standards §8: a failure always offers a way out. Each of these
              three hints ENDED with "sign in and retry" while offering nothing to

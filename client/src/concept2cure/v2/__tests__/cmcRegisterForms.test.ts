@@ -488,15 +488,49 @@ describe('drug substance and drug product — §3.2.S / §3.2.P', () => {
     expect(body).toEqual({ substanceName: 'BX-204', manufacturingProcess: {}, status: 'development' });
   });
 
+  it('an EDIT round-trip keeps the batch formula the API row carries', () => {
+    /* The register card reads a row, the edit form defaults from it, and the
+       PUT sends the form back. Any field the row does not carry comes back
+       blank and OVERWRITES what was stored — which is how recording a batch
+       formula and then editing the strength erased §3.2.P.3's only producer.
+       The API row must carry it, and the body must send it back unchanged. */
+    const apiRow = {
+      productName: 'BX-204 injection',
+      dosageForm: 'Solution for injection',
+      strength: '50 mg/mL',
+      routeOfAdministration: 'Intravenous',
+      composition: { description: 'BX-204 50 mg/mL, histidine buffer' },
+      batchFormula: { description: 'Per 500 L batch: BX-204 25.0 kg; histidine 1.55 kg' },
+      manufacturingProcess: { description: 'Compounding', site: 'Cork, Ireland' },
+      packagingMaterials: { containerClosure: '2R Type I glass vial' },
+      status: 'development',
+    };
+    // The edit form's defaults, exactly as the register builds them.
+    const fields = drugProductForm(apiRow).fields;
+    const values = Object.fromEntries(fields.map((f) => [f.key, String(f.default ?? '')]));
+    expect(values.batchFormula).toBe('Per 500 L batch: BX-204 25.0 kg; histidine 1.55 kg');
+    // …and the body the PUT sends carries it back, not an empty object.
+    const body = drugProductBody({ ...values, strength: '100 mg/mL' });
+    expect(body.batchFormula).toEqual({ description: 'Per 500 L batch: BX-204 25.0 kg; histidine 1.55 kg' });
+    expect(body.strength).toBe('100 mg/mL');
+  });
+
   it('collects the composition and container closure for §3.2.P', () => {
     const body = drugProductBody({
       productName: 'BX-204 injection', dosageForm: 'Solution for injection',
       strength: '50 mg/mL', routeOfAdministration: 'Intravenous', status: 'development',
       composition: 'BX-204 50 mg/mL, histidine buffer, sucrose, polysorbate 80.',
+      batchFormula: 'Per 500 L batch: BX-204 25.0 kg; histidine 1.55 kg; sucrose 40.0 kg; polysorbate 80 0.10 kg.',
       process: 'Compounding, sterile filtration, aseptic fill.',
       site: 'Cork, Ireland', containerClosure: '2R Type I glass vial, bromobutyl stopper',
     });
     expect(body.composition).toEqual({ description: 'BX-204 50 mg/mL, histidine buffer, sucrose, polysorbate 80.' });
+    /* §3.2.P.3.2's batch formula — the section's `formulation` input, which had
+       no field in the product at all and so could never be recorded. It is a
+       per-BATCH statement and stays separate from the per-unit composition. */
+    expect(body.batchFormula).toEqual({
+      description: 'Per 500 L batch: BX-204 25.0 kg; histidine 1.55 kg; sucrose 40.0 kg; polysorbate 80 0.10 kg.',
+    });
     expect(body.packagingMaterials).toEqual({ containerClosure: '2R Type I glass vial, bromobutyl stopper' });
     expect(body.manufacturingProcess).toEqual({
       description: 'Compounding, sterile filtration, aseptic fill.',
@@ -929,5 +963,50 @@ describe('manufacturingProcessPatch — the round trip preserves what it cannot 
     expect(body.processSteps[0].inProcessControls).toEqual([
       { test: 'Blend uniformity', acceptanceCriteria: 'RSD <= 5%' },
     ]);
+  });
+});
+
+/* ── Impurity register: ICH M7 inputs round-trip ──────────────────────────── */
+import { impurityProfileBody, impurityProfilePatch, impurityProfileForm } from '../surfaces/cmcRegisterForms';
+
+describe('impurity register — the ICH M7 inputs are carried, never defaulted', () => {
+  const base = { impurityName: 'NDMA', materialName: 'BX-204', scope: 'drug_substance', impurityType: 'mutagenic', levelUnit: 'ppm', status: 'draft' };
+
+  it('sends the M7 inputs when recorded and omits them when blank', () => {
+    const withM7 = impurityProfileBody({ ...base, amesResult: 'positive', structuralAlert: 'yes', treatmentDuration: 'lifetime', cohortOfConcern: 'CoC_nitrosamine' }, 'p1');
+    expect(withM7).toMatchObject({ amesResult: 'positive', structuralAlert: 'yes', treatmentDuration: 'lifetime', cohortOfConcern: 'CoC_nitrosamine' });
+    const blank = impurityProfileBody(base, 'p1');
+    for (const k of ['amesResult', 'structuralAlert', 'carcinogenicityData', 'treatmentDuration', 'cohortOfConcern']) {
+      expect(blank, k).not.toHaveProperty(k);
+    }
+  });
+
+  it('clears an M7 input explicitly on update, rather than leaving a stale value', () => {
+    const patch = impurityProfilePatch({ ...base, amesResult: '' });
+    expect(patch.amesResult).toBeNull();
+    expect(patch.cohortOfConcern).toBeNull();
+  });
+
+  it('offers no default for any M7 input — the renderer\'s own "Select…" is the only blank', () => {
+    const fields = impurityProfileForm(null).fields;
+    for (const k of ['amesResult', 'structuralAlert', 'carcinogenicityData', 'treatmentDuration', 'cohortOfConcern']) {
+      const f = fields.find((x) => x.key === k);
+      expect(f, k).toBeTruthy();
+      expect(f?.default, k).toBe('');
+      // C2CForm prepends its own empty "Select…" option; a second blank would be an unlabeled duplicate.
+      expect((f as { options?: string[] }).options, k).not.toContain('');
+    }
+  });
+});
+
+/* ── Formulation register: §3.2.P.2.2 development rationale round-trip ────── */
+import { formulationRecordBody, formulationRecordPatch } from '../surfaces/cmcRegisterForms';
+
+describe('formulation register — the development rationale is carried, and cleared explicitly', () => {
+  it('sends formulationDevelopment when recorded, omits it when blank, nulls it on update', () => {
+    const base = { formulationName: 'BX-701 5 mg tablet', status: 'current' };
+    expect(formulationRecordBody({ ...base, formulationDevelopment: 'QTPP-driven choice of IR tablet' }, 'p1').formulationDevelopment).toBe('QTPP-driven choice of IR tablet');
+    expect(formulationRecordBody(base, 'p1')).not.toHaveProperty('formulationDevelopment');
+    expect(formulationRecordPatch({ ...base, formulationDevelopment: '' }).formulationDevelopment).toBeNull();
   });
 });

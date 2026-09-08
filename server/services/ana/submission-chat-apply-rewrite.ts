@@ -26,6 +26,8 @@ import {
   markProposalApplied,
 } from './submission-chat-proposal-store.js';
 import { emit as emitMetric } from './submission-chat-metrics.js';
+import { enforceAuthorLineage } from '../clinical-regulatory-evidence/lineage-gate.js';
+import { ANA_MACHINE_AUTHOR_ID } from '../authoring/revision-ledger.js';
 
 const UNSUPPORTED_RATIO_BLOCK_THRESHOLD = parseFloat(
   process.env.ANA_REWRITE_UNSUPPORTED_BLOCK_RATIO ?? '0.3'
@@ -675,6 +677,22 @@ export async function applyRewrite(
           },
         }),
       ]
+    );
+
+    /* Lineage in the same transaction as the overwrite (ledger L160), and a
+       gap rolls the rewrite back with its snapshot.
+       The rewrite is AnA's text: the user asked for it in chat and the model
+       produced the words. Asking for a rewrite is not asserting its contents,
+       so it is recorded as AnA's unaccepted draft with the user as requester.
+       A later save that keeps a clause unchanged carries it forward
+       unaccepted; editing one makes it theirs. */
+    await enforceAuthorLineage(
+      client,
+      input.organizationId,
+      { documentTable: 'concept2cure_artifacts', documentId: String(row.id) },
+      newContent,
+      String(input.userId),
+      { machineDraft: { authorId: ANA_MACHINE_AUTHOR_ID } },
     );
 
     /* ── 2b. A version row for the NEW content ─────────────────────────────

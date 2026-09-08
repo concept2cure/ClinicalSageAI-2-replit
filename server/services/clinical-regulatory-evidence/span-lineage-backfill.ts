@@ -35,7 +35,7 @@ import { replaceAuthorSpans, type Queryable } from './span-lineage.service';
 
 const DOCUMENT_TABLE = 'authoring_sections';
 
-export interface BackfillOptions {
+export interface SpanLineageBackfillOptions {
   /** Write rows. When false, the same analysis runs and nothing is written. */
   apply?: boolean;
   /** Sections examined per invocation. */
@@ -43,7 +43,7 @@ export interface BackfillOptions {
   exec?: Queryable;
 }
 
-export interface BackfillReport {
+export interface SpanLineageBackfillReport {
   organizationId: number;
   examined: number;
   /** Sections given lineage, attributed to a provable author. */
@@ -74,8 +74,8 @@ interface SectionRow {
  */
 export async function backfillSectionLineage(
   orgId: number,
-  opts: BackfillOptions = {},
-): Promise<BackfillReport> {
+  opts: SpanLineageBackfillOptions = {},
+): Promise<SpanLineageBackfillReport> {
   const exec = opts.exec ?? (pool as unknown as Queryable);
   const apply = opts.apply === true;
   const limit = Math.max(1, Math.min(opts.limit ?? 200, 2_000));
@@ -100,7 +100,7 @@ export async function backfillSectionLineage(
     [orgId, DOCUMENT_TABLE, limit],
   );
 
-  const report: BackfillReport = {
+  const report: SpanLineageBackfillReport = {
     organizationId: orgId,
     examined: sections.length,
     attributed: 0,

@@ -91,6 +91,40 @@ describe('AnaWorkPanel — the work is visible while it happens', () => {
     expect(screen.getByText('Finished in 1m 12s')).toBeTruthy();
   });
 
+  it('says a turn that timed out or lost its connection did not finish — never "Finished"', () => {
+    // Neither path sets `stopped` (that is the person's own stop); both close
+    // the record with the last phase marked stopped.
+    const cut = liveTurn({
+      streaming: false,
+      completedAt: T0 + 90_000,
+      progress: [
+        { phase: 'orchestrating', label: 'Planning response…', status: 'done', startedAt: T0, endedAt: T0 + 800 },
+        { phase: 'running_tools', label: 'Running 2 steps…', status: 'stopped', startedAt: T0 + 800, endedAt: T0 + 90_000 },
+      ],
+      warnings: ['Response timed out'],
+    });
+    render(<AnaWorkPanel messages={cut} streaming={false} />);
+    expect(screen.getByText('Did not finish · 1m 30s')).toBeTruthy();
+    expect(screen.queryByText(/Finished in/)).toBeNull();
+  });
+
+  it('opens Outputs itself when the first output lands, and still lets the person collapse it', () => {
+    const { rerender } = render(<AnaWorkPanel messages={liveTurn()} streaming />);
+    const header = () => screen.getByRole('button', { name: /^Outputs/ });
+    expect(header().getAttribute('aria-expanded')).toBe('false');
+    rerender(
+      <AnaWorkPanel
+        messages={liveTurn({ generatedDraft: { title: 'Clinical Overview 2.5', content: '#' } })}
+        streaming
+      />,
+    );
+    expect(header().getAttribute('aria-expanded')).toBe('true');
+    fireEvent.click(header());
+    // The regression: `open || outputs.length > 0` made this a button that did nothing.
+    expect(header().getAttribute('aria-expanded')).toBe('false');
+    expect(document.getElementById(header().getAttribute('aria-controls') as string)?.hasAttribute('hidden')).toBe(true);
+  });
+
   it('says a stopped turn was stopped, never finished', () => {
     const stopped = liveTurn({ streaming: false, stopped: true, completedAt: T0 + 30_000 });
     render(<AnaWorkPanel messages={stopped} streaming={false} />);
@@ -109,15 +143,25 @@ describe('AnaWorkPanel — the work is visible while it happens', () => {
     vi.useFakeTimers();
     vi.setSystemTime(T0 + 5_000);
     render(<AnaWorkPanel messages={liveTurn()} streaming />);
+    // Tools starts closed — its rows restate the Work queue in forensic
+    // form — so the section is opened first, like a person would.
+    const tools = screen.getByRole('button', { name: /^Tools/ });
+    expect(tools.getAttribute('aria-expanded')).toBe('false');
+    fireEvent.click(tools);
     // Summary line built from the real labels.
     expect(
-      screen.getByText('searching the literature, sample size — biostatistics engine · 2 tools'),
+      screen.getByText('Searching the literature, sample size — biostatistics engine · 2 tools'),
     ).toBeTruthy();
     expect(screen.getByText('2.3s')).toBeTruthy();
-    // The inputs are behind a disclosure, never inline.
-    expect(screen.queryByText(/"alpha"/)).toBeNull();
-    fireEvent.click(screen.getByRole('button', { name: 'Inputs' }));
-    expect(screen.getByText(/"alpha": 0.05/)).toBeTruthy();
+    // The inputs are behind a disclosure, never inline: mounted (so the
+    // button's aria-controls resolves) but hidden until opened.
+    const inputs = screen.getByText(/"alpha": 0.05/);
+    expect(inputs.hasAttribute('hidden')).toBe(true);
+    const inputsBtn = screen.getByRole('button', { name: 'Inputs' });
+    expect(inputsBtn.getAttribute('aria-controls')).toBe(inputs.id);
+    fireEvent.click(inputsBtn);
+    expect(inputs.hasAttribute('hidden')).toBe(false);
+    expect(inputs.getAttribute('role')).toBe('region');
   });
 
   it('shows steers waiting for the next round', () => {
@@ -196,10 +240,22 @@ describe('AnaWorkPanel — outputs and context', () => {
     expect(screen.getByText('1 governed action waiting for sign-off')).toBeTruthy();
   });
 
+  it('leaves draft rows to a host that lists them as artifact cards', () => {
+    const msgs = liveTurn({
+      streaming: false,
+      completedAt: T0 + 5_000,
+      generatedDraft: { title: 'Clinical Overview 2.5', content: '#', artifactId: 'art_1', version: 2 },
+      executedActions: [{ label: 'Validated the draft', actionType: 'run_validation', executed: true }],
+    });
+    render(<AnaWorkPanel messages={msgs} streaming={false} omitDrafts />);
+    expect(screen.queryByText('Drafted Clinical Overview 2.5')).toBeNull();
+    expect(screen.getByText('Validated the draft')).toBeTruthy();
+  });
+
   it('shows the grounding context it was given and nothing it was not', () => {
     render(
       <AnaWorkPanel
-        messages={liveTurn({ effortUsed: 'thorough' })}
+        messages={liveTurn({ effortUsed: 'thorough', detectedLens: 'risk' })}
         streaming
         context={{ project: 'ONC-221 · Phase II', module: 'CMC', engine: 'Balanced' }}
       />,
@@ -208,7 +264,41 @@ describe('AnaWorkPanel — outputs and context', () => {
     expect(screen.getByText('ONC-221 · Phase II')).toBeTruthy();
     expect(screen.getByText('CMC')).toBeTruthy();
     expect(screen.getByText('thorough')).toBeTruthy();
+    // The lens is a classifier code on the wire; the row says it as a phrase.
+    expect(screen.getByText('a risk question')).toBeTruthy();
+    expect(screen.queryByText('risk')).toBeNull();
     expect(screen.queryByText('Surface')).toBeNull();
+  });
+
+  it('keeps every section header pointing at an element that exists, open or collapsed', () => {
+    const { container } = render(<AnaWorkPanel messages={liveTurn()} streaming />);
+    const headers = container.querySelectorAll('.ana-work-sec-h');
+    expect(headers.length).toBe(5);
+    // Titles are real headings, so a screen reader can browse to them.
+    expect(container.querySelectorAll('h3.ana-work-sec-hh').length).toBe(5);
+    for (const h of headers) {
+      const id = h.getAttribute('aria-controls') as string;
+      const body = document.getElementById(id);
+      expect(body).not.toBeNull();
+      // Collapsed bodies stay in the DOM, hidden — never unmounted.
+      expect(body!.hasAttribute('hidden')).toBe(h.getAttribute('aria-expanded') === 'false');
+    }
+    // Collapse one and the reference still resolves.
+    fireEvent.click(screen.getByRole('button', { name: /^Progress/ }));
+    const progress = screen.getByRole('button', { name: /^Progress/ });
+    expect(progress.getAttribute('aria-expanded')).toBe('false');
+    expect(document.getElementById(progress.getAttribute('aria-controls') as string)?.hasAttribute('hidden')).toBe(true);
+  });
+
+  it('speaks the same placeholder the list shows before the first phase arrives', () => {
+    const { container } = render(
+      <AnaWorkPanel
+        messages={liveTurn({ progress: [], statusPhase: 'Planning response…' })}
+        streaming
+        announce
+      />,
+    );
+    expect(container.querySelector('[aria-live]')?.textContent).toContain('Planning response…');
   });
 
   it('owns a single polite live region only when asked to announce', () => {

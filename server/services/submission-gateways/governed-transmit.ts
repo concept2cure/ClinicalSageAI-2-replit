@@ -10,7 +10,11 @@
  * as the AnA 510(k) chat command actually did — call a second, non-transmitting
  * "ESG service" that could never reach the wire at all.
  *
- * So the ceremony now lives here, once, and every caller passes through it:
+ * So the ceremony now lives here, once, and every caller that transmits a
+ * STORED bundle passes through it (the HTTP transmit route and the AnA
+ * handler). The one caller that does not is `transmitSequence` in
+ * services/submission-service, which packages a sequence just in time and
+ * hands it to the gateway directly with no stored descriptor involved:
  *
  *   1. the descriptor naming the bytes must be the SERVER-GENERATED one the
  *      tenant-scoped assemble route persisted on
@@ -38,6 +42,7 @@
  */
 
 import { promises as fsp } from 'fs';
+import { persistGovernedActionSignature, BINDING_BASIS } from '../part11/signature-persistence';
 import { dirname } from 'path';
 
 import { pool } from '../../db';
@@ -45,6 +50,15 @@ import { getGateway } from './index';
 import type { GatewayName, GatewayTransmitResult, Region, SubmissionBundle } from './types';
 import { findActiveTransmittal } from './fda-esg';
 import { getBundle } from '../submission-bundle-storage';
+import { recordFiledSequence } from '../ectd/package-content-change';
+import { isFiledLeaf } from '../ectd/package-sequence-lifecycle';
+import {
+  assessPackageContent,
+  isCurrentContentFingerprint,
+  CONTENT_DRIFT_MESSAGE,
+  unprovenMessage,
+  type ContentAssessment,
+} from '../ectd/package-content-fingerprint';
 import {
   bundleTrustEnforced,
   hasUnsafePathSyntax,
@@ -69,6 +83,8 @@ export type GovernedTransmitRefusalCode =
   | 'BUNDLE_OUTSIDE_NAMESPACE'
   | 'BUNDLE_STORAGE_KEY_OUTSIDE_NAMESPACE'
   | 'BUNDLE_VALIDATION_ERRORS'
+  | 'BUNDLE_CONTENT_DRIFT'
+  | 'BUNDLE_CONTENT_UNPROVEN'
   | 'ACTIVE_TRANSMITTAL';
 
 /** A refusal the caller should surface verbatim to the operator. */
@@ -119,6 +135,55 @@ export interface ResolvedBundle {
   submissionGrade?: SubmissionBundle['submissionGrade'];
   dtdStatus?: SubmissionBundle['dtdStatus'];
   regionalBackbone?: SubmissionBundle['regionalBackbone'];
+  // The region the bundle was BUILT for, as recorded by the assemble route —
+  // region identity must hold for bundles that carry no backbone evidence
+  // (device formats) too.
+  builtRegion?: Region;
+  // Fingerprint of the content (sections, mappings, declared placements,
+  // artifact content) the zip was built from, as the assemble route recorded
+  // it. Recomputed from the database at transmit; a difference refuses. Only
+  // a value from the CURRENT scheme is carried — anything else is unproven.
+  contentFingerprint?: string;
+  /** The sequence this bundle files, what it declares itself to be, and the
+   *  leaf inventory the packager published — the record the NEXT sequence
+   *  diffs against, once an agency has accepted these bytes. */
+  sequence?: string;
+  submissionType?: string;
+  leafManifest?: Array<{ ctdSection: string; fileName: string; href: string; md5: string; operation?: string; title?: string }>;
+}
+
+/* Shape guards for the stored evidence blocks (see ResolvedBundle). Each
+   requires exactly the fields the pre-transmit gate reads, so an object that
+   would make the gate misread or throw is never forwarded. */
+function isSubmissionGrade(v: unknown): v is NonNullable<SubmissionBundle['submissionGrade']> {
+  const g = v as Record<string, unknown> | null;
+  return (
+    !!g && typeof g === 'object' &&
+    Array.isArray(g.notConverted) && Number.isInteger(g.pdfLeaves) && Number.isInteger(g.pdfaConverted)
+  );
+}
+function isDtdStatus(v: unknown): v is NonNullable<SubmissionBundle['dtdStatus']> {
+  const d = v as Record<string, unknown> | null;
+  return !!d && typeof d === 'object' && typeof d.selfContained === 'boolean' && Array.isArray(d.missing);
+}
+const GATEWAY_REGIONS: ReadonlySet<string> = new Set(['fda', 'ema', 'pmda', 'ca', 'uk', 'ch', 'au', 'cn', 'br', 'in', 'kr', 'sg']);
+function isRegionalBackbone(v: unknown): v is NonNullable<SubmissionBundle['regionalBackbone']> {
+  const r = v as Record<string, unknown> | null;
+  return (
+    !!r && typeof r === 'object' &&
+    typeof r.regionConformant === 'boolean' &&
+    typeof r.region === 'string' && GATEWAY_REGIONS.has(r.region) &&
+    typeof r.file === 'string' &&
+    (r.placeholderOf === undefined || (typeof r.placeholderOf === 'string' && GATEWAY_REGIONS.has(r.placeholderOf))) &&
+    (r.conformanceGap === undefined || typeof r.conformanceGap === 'string')
+  );
+}
+/** The region the assemble route built the bundle for (descriptor.region,
+ *  'FDA' | 'EMA' | 'PMDA' | 'CA'), as a gateway region; undefined when absent. */
+function builtRegionOf(v: unknown): Region | undefined {
+  if (typeof v !== 'string') return undefined;
+  const r = v.toLowerCase();
+  return r === 'fda' || r === 'ema' || r === 'pmda' || r === 'ca' ? (r as Region) : undefined;
 }
 
 /**
@@ -189,11 +254,28 @@ async function loadStoredBundle(
     // Internal eCTD structural validation findings, so the transmit hard-gate
     // can block on error-severity findings.
     validation: stored.validation && typeof stored.validation === 'object' ? stored.validation : undefined,
-    submissionGrade:
-      stored.submissionGrade && typeof stored.submissionGrade === 'object' ? stored.submissionGrade : undefined,
-    dtdStatus: stored.dtdStatus && typeof stored.dtdStatus === 'object' ? stored.dtdStatus : undefined,
-    regionalBackbone:
-      stored.regionalBackbone && typeof stored.regionalBackbone === 'object' ? stored.regionalBackbone : undefined,
+    // Evidence blocks are shape-checked like sha256/sizeBytes: a malformed block
+    // is DROPPED (the gate then warns "cannot prove"), never forwarded — `{}` as
+    // a PDF/A grade was read by the gate as full compliance.
+    submissionGrade: isSubmissionGrade(stored.submissionGrade) ? stored.submissionGrade : undefined,
+    dtdStatus: isDtdStatus(stored.dtdStatus) ? stored.dtdStatus : undefined,
+    regionalBackbone: isRegionalBackbone(stored.regionalBackbone) ? stored.regionalBackbone : undefined,
+    builtRegion: builtRegionOf(stored.region),
+    contentFingerprint: isCurrentContentFingerprint(stored.contentFingerprint) ? stored.contentFingerprint : undefined,
+    sequence: typeof stored.sequence === 'string' && /^\d{4}$/.test(stored.sequence) ? stored.sequence : undefined,
+    submissionType: typeof stored.submissionType === 'string' ? stored.submissionType : undefined,
+    // Shape-checked with the SAME guard the reader applies, and dropped whole
+    // when any entry fails it. readFiledSequences drops a partial inventory
+    // because a prior state missing a leaf computes `new` for a document that
+    // is already on file — but that guard sat only on the READER. An
+    // unreadable manifest passed through here was written to the history,
+    // reported as recorded, and then silently dropped by the very guard meant
+    // to prevent it: the filing was at the agency and invisible to every
+    // subsequent diff. Dropping it here makes the loss visible instead.
+    leafManifest:
+      Array.isArray(stored.leafManifest) && stored.leafManifest.every(isFiledLeaf)
+        ? (stored.leafManifest as ResolvedBundle['leafManifest'])
+        : undefined,
   };
 }
 
@@ -211,7 +293,7 @@ export type RecordGovernedAction = (
     domain?: string;
     surface?: string;
   },
-) => Promise<unknown>;
+) => Promise<{ actionId: string; auditId: string; sha256Chain: string }>;
 
 export interface GovernedTransmitInput {
   region: Region;
@@ -225,6 +307,16 @@ export interface GovernedTransmitInput {
   metadata?: Record<string, unknown>;
   /** Operator's stated reason. Recorded on the governed `sign` ledger entry. */
   reason: string;
+  /**
+   * The §11.50 meaning the signer declared for THIS transmission
+   * (authorship/review/approval/responsibility/release). It was the constant
+   * 'submission' here — a meaning nobody chose, recorded as if they had.
+   */
+  meaning: string;
+  /** The re-authentication factors the caller actually verified ('password', 'password+totp', 'session'). */
+  authenticationMethod: string;
+  secondFactorVerified: boolean;
+  ipAddress?: string | null;
   /**
    * When the human's re-authentication was VERIFIED for this transmit, by the
    * caller that verified it. Never synthesised here — a made-up timestamp is a
@@ -250,7 +342,43 @@ export interface GovernedTransmitOutcome {
   bundle: { sha256: string; sizeBytes: number; format: BundleFormat };
   /** True when the post-transmit governed-action ledger write failed. */
   ledgerWriteFailed: boolean;
+  /**
+   * The package content re-assessed AFTER the gateway accepted the bytes. The
+   * pre-transmit check reads outside any lock and the send is external I/O
+   * that cannot run inside a transaction, so the window between the two is
+   * evidenced rather than assumed closed: 'drift' means the package changed
+   * while the assembled bundle was being sent; 'unknown' means the re-read
+   * failed; 'not-assessed' means no fingerprint was assessed (dev/test only).
+   */
+  contentAfterTransmit: 'match' | 'drift' | 'unknown' | 'not-assessed';
+  /**
+   * False when the sequence just filed could NOT be appended to the package's
+   * filed history. The bytes are with the agency either way; what is lost is
+   * the baseline the NEXT sequence diffs against, so the caller must say so
+   * rather than let a follow-up be planned against a stale history.
+   * 'not-applicable' ONLY for a bundle that files no eCTD sequence.
+   */
+  filedSequenceRecorded: boolean | 'not-applicable';
+  /**
+   * Why the filing was not recorded, when it was not. `'not-applicable'` used
+   * to cover two unrelated cases: a bundle that files no sequence, and an eCTD
+   * bundle whose descriptor carries no usable leaf inventory. The second is a
+   * lost baseline reported as a non-event — the filing reaches the agency, the
+   * history does not learn about it, and the NEXT assembly is refused with
+   * "file sequence 0000 first", which the operator did.
+   */
+  filedSequenceReason:
+    | 'recorded'
+    | 'no-sequence'          // not an eCTD sequence filing (or a dev/test client bundle)
+    | 'no-usable-manifest'   // an eCTD sequence whose leaf inventory is absent or unreadable
+    | 'write-failed';        // the append itself did not land
 }
+
+/** Operator wording for a content change that landed during the send. */
+export const CONTENT_CHANGED_DURING_TRANSMIT =
+  'The package content changed while the transmission was in progress. The agency received the assembled bundle ' +
+  'as recorded on this transmittal (its sha256); the package no longer matches it. Review the change and re-assemble ' +
+  'before any further transmission.';
 
 /**
  * Run the full governed transmit ceremony and hand the bytes to the regional
@@ -381,6 +509,37 @@ export async function executeGovernedTransmit(
     );
   }
 
+  // Content integrity: the zip must still reflect the package. The descriptor
+  // carries the fingerprint of the sections, mappings, declared placements and
+  // artifact content it was built from; it is recomputed from the database
+  // here and any difference refuses. The mapping routes clear a stale bundle
+  // when a mapping changes, but an artifact edited after assembly changes
+  // nothing on the package row — only this comparison catches it. A stored
+  // descriptor without a fingerprint (assembled before it existed) is UNKNOWN,
+  // and UNKNOWN blocks wherever descriptor trust is enforced, exactly like
+  // missing structural-validation evidence.
+  // The assessment is the one the preflight route reports, so the two never
+  // disagree about a bundle. A match is kept as evidence for the sign row.
+  let provenAgainst: { assembled: string; atTransmit: string } | null = null;
+  if (input.packageId != null && !input.clientBundle) {
+    let assessment: ContentAssessment;
+    try {
+      assessment = await assessPackageContent(pool, input.packageId, organizationId, bundle.contentFingerprint);
+    } catch (err) {
+      throw new GovernedTransmitInternalError('transmit-content-fingerprint', err);
+    }
+    if (assessment.state === 'drift') {
+      throw new GovernedTransmitRefusal('BUNDLE_CONTENT_DRIFT', CONTENT_DRIFT_MESSAGE, 422, {
+        assembledFingerprint: assessment.assembled,
+        currentFingerprint: assessment.current,
+      });
+    }
+    if (assessment.state === 'unproven' && bundleTrustEnforced()) {
+      throw new GovernedTransmitRefusal('BUNDLE_CONTENT_UNPROVEN', unprovenMessage(assessment.reason), 422);
+    }
+    if (assessment.state === 'match') provenAgainst = { assembled: assessment.current, atTransmit: assessment.current };
+  }
+
   // Rematerialize the local bundle file from durable storage if a container
   // recycle lost it since assembly. No-op for local-only descriptors.
   try {
@@ -433,6 +592,7 @@ export async function executeGovernedTransmit(
       submissionGrade: bundle.submissionGrade,
       dtdStatus: bundle.dtdStatus,
       regionalBackbone: bundle.regionalBackbone,
+      builtRegion: bundle.builtRegion,
     },
     environment,
     submissionType: input.submissionType,
@@ -448,6 +608,58 @@ export async function executeGovernedTransmit(
     },
   });
 
+  // Re-assess the content AFTER the gateway accepted the bytes: the window
+  // between the pre-transmit check and the send is evidenced, not assumed
+  // closed (see GovernedTransmitOutcome.contentAfterTransmit).
+  let contentAfterTransmit: GovernedTransmitOutcome['contentAfterTransmit'] = 'not-assessed';
+  if (provenAgainst && input.packageId != null) {
+    try {
+      const again = await assessPackageContent(pool, input.packageId, organizationId, bundle.contentFingerprint);
+      contentAfterTransmit = again.state === 'match' ? 'match' : again.state === 'drift' ? 'drift' : 'unknown';
+    } catch (err) {
+      contentAfterTransmit = 'unknown';
+      input.log?.error('transmit-content-recheck-failed', {
+        message: err instanceof Error ? err.message : String(err),
+        region,
+        gateway,
+      });
+    }
+  }
+
+  // The agency has the bytes: this sequence is now ON FILE, and the next one
+  // must diff against it. Recorded before the ledger write and independently
+  // of it — an audit outage must not also cost the lifecycle baseline. Never
+  // throws: the transmit is irreversible and is not undone by a failure here.
+  let filedSequenceRecorded: GovernedTransmitOutcome['filedSequenceRecorded'] = 'not-applicable';
+  let filedSequenceReason: GovernedTransmitOutcome['filedSequenceReason'] = 'no-sequence';
+  if (input.packageId != null && !input.clientBundle && bundle.sequence) {
+    if (!bundle.leafManifest?.length) {
+      // An eCTD sequence WITH no readable inventory is not a non-event: the
+      // filing is at the agency and the history will not know it happened.
+      // Reported as a failure so the caller can say so, where it used to stay
+      // 'not-applicable' and say nothing at all.
+      filedSequenceRecorded = false;
+      filedSequenceReason = 'no-usable-manifest';
+      input.log?.error('transmit-filed-sequence-no-manifest', {
+        packageId: String(input.packageId), sequence: bundle.sequence, region, gateway,
+      });
+    } else {
+      filedSequenceRecorded = await recordFiledSequence(input.packageId, {
+        sequence: bundle.sequence,
+        submissionType: bundle.submissionType ?? '',
+        sha256: bundle.sha256,
+        transmittalId: result.transmittalId ?? null,
+        leaves: bundle.leafManifest,
+      });
+      filedSequenceReason = filedSequenceRecorded ? 'recorded' : 'write-failed';
+      if (!filedSequenceRecorded) {
+        input.log?.error('transmit-filed-sequence-record-failed', {
+          packageId: String(input.packageId), sequence: bundle.sequence, region, gateway,
+        });
+      }
+    }
+  }
+
   // Record the governed sign AFTER the external transmit succeeds. The external
   // transmit is irreversible, so if the ledger write fails we report it and
   // still return the transmit result (the gateway already accepted the
@@ -458,21 +670,82 @@ export async function executeGovernedTransmit(
     const client = await pool.connect();
     try {
       await client.query('BEGIN');
-      await recordGovernedAction(client, {
-        orgId: organizationId,
-        userId,
-        command: 'sign',
-        target: `submission:${input.packageId ?? input.programId ?? 'pkg'}`,
-        reason,
-        payload: {
-          meaning: 'submission',
+      const signedTarget = `submission:${input.packageId ?? input.programId ?? `transmittal-${result.transmittalId}`}`;
+      /* WHAT was filed, alongside who signed for it. Without these the ledger
+         records that a bundle was transmitted but not which eCTD sequence it
+         filed, so an auditor reconstructing the lifecycle from the signatures
+         cannot — and a lost baseline (filedSequenceRecorded false) left no
+         durable trace at all beyond a server log and one field in an HTTP
+         response the operator may never have seen. */
+      const filedSequenceFacts = {
+        sequence: bundle.sequence ?? null,
+        submissionType: bundle.submissionType ?? null,
+        filedSequenceRecorded,
+        filedSequenceReason,
+      };
+      const signPayload = {
+          meaning: input.meaning,
           region,
           gateway,
           bundleSha256: bundle.sha256,
-          transactionId: (result as unknown as { transactionId?: unknown })?.transactionId ?? null,
+          transmittalId: result.transmittalId,
+          transmissionId: result.transmissionId ?? null,
+          ...filedSequenceFacts,
+      };
+      const recorded = await recordGovernedAction(client, {
+        orgId: organizationId,
+        userId,
+        command: 'sign',
+        target: signedTarget,
+        reason,
+        payload: {
+          meaning: input.meaning,
+          region,
+          gateway,
+          bundleSha256: bundle.sha256,
+          // GatewayTransmitResult carries `transmissionId`. This read a
+          // `transactionId` that no gateway sets — through a cast to unknown that
+          // hid the type error — so every Part 11 sign row recorded null and the
+          // ledger could not be joined to the agency receipt or basket id.
+          transmissionId: result.transmissionId ?? null,
+          // Which content state the shipped zip was proven against, and
+          // whether the package still held it once the bytes had left.
+          contentFingerprint: provenAgainst
+            ? { assembled: provenAgainst.assembled, atTransmit: provenAgainst.atTransmit, afterTransmit: contentAfterTransmit }
+            : null,
+          ...filedSequenceFacts,
         },
         domain: 'mdx',
         surface: input.surface ?? 'submission-gateway',
+      });
+      // The transmit's sign is an electronic signature (11.50/11.70), not only
+      // a ledger row: printed name, declared meaning, authentication method and
+      // a digest of the exact bundle bytes the agency received. Freeze and
+      // dispatch always wrote this row; transmit — the irreversible act — never
+      // did, so no signature manifestation existed for it anywhere.
+      await persistGovernedActionSignature(client, {
+        orgId: organizationId,
+        userId,
+        target: signedTarget,
+        reason,
+        payload: signPayload,
+        actionId: recorded.actionId,
+        auditId: recorded.auditId,
+        sha256Chain: recorded.sha256Chain,
+        authenticationMethod: input.authenticationMethod,
+        secondFactorVerified: input.secondFactorVerified,
+        ipAddress: input.ipAddress ?? null,
+        occurredAt: new Date(),
+        binding: {
+          digest: bundle.sha256,
+          basis: BINDING_BASIS.TRANSMITTED_BUNDLE_SHA256,
+          note: `sha256 of the ${bundle.sizeBytes}-byte bundle handed to ${region}/${gateway}; verified against the staged bytes before transport.`,
+        },
+        // In the attributed record itself, not only in the digest it is bound
+        // to: the manifest is what an auditor reads, and "which eCTD sequence
+        // did this signature file" is not answerable from a hash.
+        extraManifest: filedSequenceFacts,
+        manifestKind: 'governed-transmit',
       });
       await client.query('COMMIT');
     } catch (ledgerErr) {
@@ -494,5 +767,8 @@ export async function executeGovernedTransmit(
     result,
     bundle: { sha256: bundle.sha256, sizeBytes: bundle.sizeBytes, format: bundle.format },
     ledgerWriteFailed,
+    contentAfterTransmit,
+    filedSequenceRecorded,
+    filedSequenceReason,
   };
 }

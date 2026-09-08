@@ -236,7 +236,7 @@ export function AuthoringCollab({ documentId, sectionId, fireToast }: AuthoringC
               {initials(p.displayName || p.userId)}
             </span>
           ))}
-          {peers.length > 4 && <span style={{ fontSize: 11, color: 'var(--c2c-dim,#667085)' }}>+{peers.length - 4}</span>}
+          {peers.length > 4 && <span style={{ fontSize: 11, color: 'var(--text-400)' }}>+{peers.length - 4}</span>}
         </div>
       )}
       {otherLock ? (

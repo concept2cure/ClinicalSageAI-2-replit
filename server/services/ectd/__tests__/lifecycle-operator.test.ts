@@ -55,10 +55,22 @@ describe('computeLifecycleOperations', () => {
     expect(res.leaves[0].operation).toBe('append');
   });
 
-  it('marks a leaf dropped from the new sequence as delete, carrying prior metadata', () => {
+  it('a prior leaf the new sequence does not mention is unchanged, NOT withdrawn', () => {
+    // This asserted `delete`. A new sequence in this product holds only what
+    // changed — it is created empty and the amendment planner plans leaves for
+    // changed documents alone — so reading absence as withdrawal made a
+    // two-document amendment delete the rest of the dossier at the agency.
     const p = [prior({ ctdSection: '5.3.5.1', fileName: 'old-study.pdf', md5: 'ccc', title: 'Old Study', sourcePath: '/archive/old.pdf' })];
     const res = computeLifecycleOperations(p, []);
-    expect(res.summary).toMatchObject({ delete: 1 });
+    expect(res.summary).toMatchObject({ delete: 0, unchanged: 1, new: 0, replace: 0 });
+    expect(res.leaves).toHaveLength(0);
+  });
+
+  it('a DECLARED withdrawal is a delete carrying the prior leaf\'s identity and checksum', () => {
+    const p = [prior({ ctdSection: '5.3.5.1', fileName: 'old-study.pdf', md5: 'ccc', title: 'Old Study', sourcePath: '/archive/old.pdf' })];
+    const d = [desired({ ctdSection: '5.3.5.1', fileName: 'old-study.pdf', md5: '', withdraw: true, title: '', sourcePath: '' })];
+    const res = computeLifecycleOperations(p, d);
+    expect(res.summary).toMatchObject({ delete: 1, unchanged: 0 });
     expect(res.leaves[0]).toMatchObject({
       operation: 'delete',
       ctdSection: '5.3.5.1',
@@ -67,6 +79,11 @@ describe('computeLifecycleOperations', () => {
       sourcePath: '/archive/old.pdf',
       md5: 'ccc',
     });
+  });
+
+  it('refuses to withdraw a leaf that was never filed', () => {
+    const d = [desired({ ctdSection: '5.3.5.1', fileName: 'never-filed.pdf', md5: '', withdraw: true })];
+    expect(() => computeLifecycleOperations([], d)).toThrow(/nothing on file to delete/);
   });
 
   it('uses an explicit leafKey identity over ctdSection/fileName (rename within same leaf)', () => {
@@ -88,6 +105,7 @@ describe('computeLifecycleOperations', () => {
       desired({ ctdSection: '2.5', fileName: 'overview.pdf', md5: 'o2' }), // replace
       desired({ ctdSection: '2.7', fileName: 'summary.pdf', md5: 's1' }), // unchanged
       desired({ ctdSection: '3.2.P.1', fileName: 'composition.pdf', md5: 'c1' }), // new
+      desired({ ctdSection: '5.3.5.1', fileName: 'study-a.pdf', md5: '', withdraw: true }), // delete (declared)
     ];
     const res = computeLifecycleOperations(p, d);
     expect(res.summary).toMatchObject({ new: 1, replace: 1, delete: 1, unchanged: 1, append: 0 });
@@ -137,7 +155,8 @@ describe('computeLifecycleOperations', () => {
 
     it('a delete points modified-file at the withdrawn prior leaf', () => {
       const p = [prior({ ctdSection: '5.3.5.1', fileName: 'old-study.pdf', md5: 'c', href: 'm5/53-clin-stud-rep/535/old-study.pdf' })];
-      const res = computeLifecycleOperations(p, [], { priorSequencePrefix: '../0000' });
+      const d = [desired({ ctdSection: '5.3.5.1', fileName: 'old-study.pdf', md5: '', withdraw: true })];
+      const res = computeLifecycleOperations(p, d, { priorSequencePrefix: '../0000' });
       expect(res.leaves[0].operation).toBe('delete');
       expect(res.leaves[0].modifiedFile).toBe('../0000/m5/53-clin-stud-rep/535/old-study.pdf');
     });

@@ -509,17 +509,16 @@ describe('Move 6 — csr.draft-narrative async enqueue + resume', () => {
     const narrStep = resumed.run.steps.find(s => s.key === 'csr.draft-narrative')!;
     expect(narrStep.status).toBe('complete');
 
-    // Downstream pipeline ran: m2.7.clinical, m1.admin, package.assemble,
-    // package.validate are now complete (the validator is gatewayReady=true
-    // per the default mock).
-    const m27 = resumed.run.steps.find(s => s.key === 'm2.7.clinical')!;
-    expect(m27.status).toBe('complete');
+    // Downstream ran: m2.7 / m1 / assemble / validate complete (gatewayReady mock).
+    expect(resumed.run.steps.find(s => s.key === 'm2.7.clinical')!.status).toBe('complete');
     const pkgAssemble = resumed.run.steps.find(s => s.key === 'package.assemble')!;
     expect(pkgAssemble.status).toBe('complete');
     const pkgValidate = resumed.run.steps.find(s => s.key === 'package.validate')!;
     expect(pkgValidate.status).toBe('complete');
 
-    expect(resumed.run.status).toBe('complete');
+    // §C.11: the resumed IND hits the same e-signature gate as a fresh run.
+    expect(resumed.run.steps.find(s => s.key === 'package.sign')!.status).toBe('awaiting-signature');
+    expect(resumed.run.status).toBe('awaiting-signature');
     // validateEctdPackageHardened ran once during resume (not during the
     // original enqueue, which short-circuited at awaiting-async).
     expect(hoisted.validateEctdPackageHardened).toHaveBeenCalledTimes(1);
@@ -703,18 +702,29 @@ describe('Path-to-GA §C.4 — submissionFk dual-write across Moves 3/5/6', () =
 // every other pool.query invocation.
 
 describe('Path-to-GA §C.11 — package.sign e-sig gate', () => {
-  it('package.sign is `skipped` for non-REQUIRED submission types (OQ-1 allowlist)', async () => {
-    // 510k is NOT in the REQUIRED allowlist (IND/NDA/BLA/MAA only).
+  it('a 510(k) never reaches package.sign — it cannot be filed on the eCTD backbone at all', async () => {
+    /* This case used to assert that a 510(k) run completes with package.sign
+       `skipped`, 510k being outside the REQUIRED allowlist (IND/NDA/BLA/MAA).
+       It completed because the regional packager defaulted an unmappable
+       application type to `fdaat1` — NDA. The run "succeeded" by producing a
+       device dossier that declared itself a New Drug Application in the
+       backbone field the ESG routes on.
+
+       There is no eCTD Module 1 application-type code for 510(k), De Novo or
+       PMA, because those pathways are filed via eSTAR/eCopy and not on this
+       backbone. So the packager now refuses, and the run fails there rather
+       than at the signature gate. Note what the two lists imply together: every
+       submission type OUTSIDE the REQUIRED allowlist is exactly a pathway that
+       cannot be packaged here, which is why this test can no longer reach
+       package.sign at all. The allowlist's other half — that an IND DOES gate
+       on a signature — is covered by the two cases below. */
     const { run } = await runOrchestrator(
       baseInputs({ submissionType: '510k' as OrchestratorInputs['submissionType'] }),
     );
 
+    expect(run.status).not.toBe('complete');
     const signStep = run.steps.find(s => s.key === 'package.sign')!;
-    expect(signStep.status).toBe('skipped');
-    expect(signStep.outputRef).toMatch(/not in REQUIRED/);
-
-    // Run does NOT suspend — completes normally.
-    expect(run.status).toBe('complete');
+    expect(signStep.status).not.toBe('complete');
   });
 
   it('package.sign transitions to `awaiting-signature` when no matching signature exists (IND submission, no sig in DB)', async () => {

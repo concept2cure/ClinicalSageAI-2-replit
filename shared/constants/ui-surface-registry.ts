@@ -188,7 +188,7 @@ export const UI_SURFACES: UiSurface[] = [
   },
   {
     id: 'artifacts-center',
-    label: 'Artifacts Center',
+    label: 'Artifacts center',
     navTier: 'global',
     layoutMode: 'artifacts-center',
     icon: 'sparkles',
@@ -294,7 +294,7 @@ export const UI_SURFACES: UiSurface[] = [
   },
   {
     id: 'submission-center',
-    label: 'Submission Center',
+    label: 'Submission center',
     navTier: 'project',
     layoutMode: 'submissions',
     icon: 'rocket',
@@ -311,7 +311,7 @@ export const UI_SURFACES: UiSurface[] = [
   },
   {
     id: 'submission-twin',
-    label: 'Submission Twin',
+    label: 'Submission twin',
     navTier: 'project',
     layoutMode: 'submissions',
     icon: 'layers',
@@ -378,7 +378,7 @@ export const UI_SURFACES: UiSurface[] = [
   },
   {
     id: 'ectd-publishing',
-    label: 'Publishing Center',
+    label: 'Publishing center',
     navTier: 'project',
     layoutMode: 'submissions',
     icon: 'gitBranch',
@@ -643,13 +643,13 @@ export const UI_SURFACES: UiSurface[] = [
     icon: 'sigma',
     group: 'clinical',
     uiKit: null,
-    apiPrefixes: ['/api/biostat', '/api/ana-biostats'],
+    apiPrefixes: ['/api/biostat', '/api/ana-biostats', '/api/biostat-bridge'],
     anaToolFamilies: [],
     sharedContract: null,
     discoveryCatalog: null,
     readiness: 'routes-ready',
     compliance: [A11Y, TONE],
-    notes: 'SAP authoring, power analysis, TLF shells, adaptive trial plans, IDMC.',
+    notes: 'SAP authoring, power analysis, TLF shells, adaptive trial plans, IDMC. Loads the program\'s persisted study designs through the biostatistics bridge (docs/BIOSTATISTICS_BRIDGE.md): gaps, filing placement per application type, governed sample-size write-back and task raising.',
   },
   {
     id: 'biostat-workbench',

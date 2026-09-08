@@ -38,6 +38,7 @@ import { Router, type Request, type Response } from 'express';
 import { query as q } from '../db.js';
 import { getSecureOrgId } from '../utils/tenantContext.js';
 import { createScopedLogger } from '../utils/logger.js';
+import { readCompiledRecord } from '../services/cmc/compiled-record.js';
 
 const logger = createScopedLogger('cmc-module3-board');
 
@@ -65,6 +66,19 @@ interface PortfolioRow {
   sequences: number | null;
 }
 
+/**
+ * Is this error "no backend here", or a read that failed?
+ *
+ * Every block below answered both with `provisioned: false`, so a transient
+ * database error rendered as "the correspondence store is not provisioned" —
+ * and the overdue-IR KPI silently swapped to a different metric under the same
+ * label. 42P01 (undefined_table) is genuinely unprovisioned; anything else is a
+ * read that did not complete, and the surface must be told which it got.
+ */
+function isUnprovisioned(err: unknown): boolean {
+  return (err as { code?: string } | null)?.code === '42P01';
+}
+
 /** One open agency question touching Module 3 — straight from reg_questions. */
 interface CorrespondenceRow {
   id: number | string;
@@ -86,6 +100,10 @@ interface SectionRow {
   key: string;
   path: string;
   st: 'approved' | 'review' | 'draft';
+  /** The compiler's own score for the section; null when it never scored it. */
+  completeness: number | null;
+  /** The required inputs the compiler found missing — what an approval would sign over. */
+  missingInputs: string[];
 }
 
 /** Resolve the JWT-derived org id as the integer tenant_id / organization_id, or null. */
@@ -113,7 +131,7 @@ function mapApprovalState(state: unknown): SectionRow['st'] {
  */
 async function buildSpinePortfolio(
   tenantId: number,
-): Promise<{ rows: PortfolioRow[]; provisioned: boolean }> {
+): Promise<{ rows: PortfolioRow[]; provisioned: boolean; unreadable: boolean }> {
   try {
     const rows = (
       await q(
@@ -156,12 +174,13 @@ async function buildSpinePortfolio(
         sequences: r.sequences,
       })),
       provisioned: true,
+      unreadable: false,
     };
   } catch (err) {
-    logger.warn('submissions spine read failed — spine portfolio unprovisioned', {
+    logger.warn('submissions spine read failed', {
       err: err instanceof Error ? err.message : String(err),
     });
-    return { rows: [], provisioned: false };
+    return { rows: [], provisioned: false, unreadable: !isUnprovisioned(err) };
   }
 }
 
@@ -178,7 +197,18 @@ async function buildSpinePortfolio(
  */
 async function buildCorrespondence(
   tenantId: number,
-): Promise<{ rows: CorrespondenceRow[]; provisioned: boolean }> {
+): Promise<{
+  rows: CorrespondenceRow[];
+  provisioned: boolean;
+  /** True when the read FAILED (as opposed to the store being absent). */
+  unreadable: boolean;
+  /** Open questions matching the filter, BEFORE the page limit. */
+  totalOpen: number;
+  /** Overdue among ALL of them — not among the page. */
+  overdueTotal: number;
+  /** True when the page shows fewer than the store holds. */
+  truncated: boolean;
+}> {
   try {
     const rows = (
       await q(
@@ -208,7 +238,31 @@ async function buildCorrespondence(
       response_doc_id: string | null;
       overdue: boolean;
     }>;
+    /* The counts come from the STORE, not from the page above. `irOverdue` —
+       rendered as "You have N information requests overdue" — was the overdue
+       count of this LIMIT 50 page, so an org with more than fifty open Module 3
+       questions was told it had fewer overdue than it did. A page is for
+       reading; a count is for acting on. */
+    const totals = (
+      await q(
+        `select count(*)::int as total,
+                count(*) filter (
+                  where due_date is not null and due_date < current_date
+                )::int as overdue
+           from reg_questions
+          where organization_id = $1
+            and status in ('OPEN','DRAFTED','IN_REVIEW')
+            and (section_reference ilike '3.%' or section_reference ilike 'm3%'
+                 or section_reference is null)`,
+        [tenantId],
+      )
+    ).rows[0] as { total: number; overdue: number } | undefined;
+    const totalOpen = Number(totals?.total ?? rows.length);
+
     return {
+      totalOpen,
+      overdueTotal: Number(totals?.overdue ?? rows.filter((r) => r.overdue).length),
+      truncated: totalOpen > rows.length,
       rows: rows.map((r) => ({
         id: r.id,
         question: r.question_text,
@@ -223,12 +277,16 @@ async function buildCorrespondence(
         responseDocId: r.response_doc_id ?? null,
       })),
       provisioned: true,
+      unreadable: false,
     };
   } catch (err) {
-    logger.warn('reg_questions read failed — correspondence unprovisioned', {
+    logger.warn('reg_questions read failed', {
       err: err instanceof Error ? err.message : String(err),
     });
-    return { rows: [], provisioned: false };
+    return {
+      rows: [], provisioned: false, unreadable: !isUnprovisioned(err),
+      totalOpen: 0, overdueTotal: 0, truncated: false,
+    };
   }
 }
 
@@ -239,7 +297,7 @@ async function buildCorrespondence(
  */
 async function buildPortfolio(
   tenantId: number,
-): Promise<{ rows: PortfolioRow[]; provisioned: boolean }> {
+): Promise<{ rows: PortfolioRow[]; provisioned: boolean; unreadable: boolean }> {
   let subs: Array<{ sub_id: string; product_id: string; region: string; sub_type: string }>;
   try {
     subs = (
@@ -252,10 +310,10 @@ async function buildPortfolio(
       )
     ).rows;
   } catch (err) {
-    logger.warn('reg_submissions read failed — portfolio unprovisioned', {
+    logger.warn('reg_submissions read failed', {
       err: err instanceof Error ? err.message : String(err),
     });
-    return { rows: [], provisioned: false };
+    return { rows: [], provisioned: false, unreadable: !isUnprovisioned(err) };
   }
 
   const rows: PortfolioRow[] = [];
@@ -308,7 +366,7 @@ async function buildPortfolio(
     });
   }
 
-  return { rows, provisioned: true };
+  return { rows, provisioned: true, unreadable: false };
 }
 
 /**
@@ -320,12 +378,12 @@ async function buildPortfolio(
 async function buildSections(
   tenantId: number,
   projectId: string | undefined,
-): Promise<{ rows: SectionRow[]; provisioned: boolean } | null> {
+): Promise<{ rows: SectionRow[]; provisioned: boolean; unreadable: boolean } | null> {
   if (!projectId) return null;
   try {
     const rows = (
       await q(
-        `select section_key, section_path, approval_state
+        `select section_key, section_path, approval_state, deterministic_json
            from cmc_module3_sections
           where organization_id = $1 and project_id = $2
           order by section_key`,
@@ -335,21 +393,32 @@ async function buildSections(
       section_key: string;
       section_path: string | null;
       approval_state: string | null;
+      deterministic_json: unknown;
     }>;
     return {
-      rows: rows.map((r) => ({
-        key: r.section_key,
-        path: r.section_path ?? '',
-        st: mapApprovalState(r.approval_state),
-      })),
+      /* completeness / missingInputs are read by the same rule the approve
+         route and the export gate apply, so the Overview shows the signer
+         exactly what those two will refuse. Found live: 21/21 approved, three
+         at 0%, and no completeness anywhere on the table. */
+      rows: rows.map((r) => {
+        const record = readCompiledRecord(r);
+        return {
+          key: r.section_key,
+          path: r.section_path ?? '',
+          st: mapApprovalState(r.approval_state),
+          completeness: record.completeness,
+          missingInputs: record.missingInputs,
+        };
+      }),
       provisioned: true,
+      unreadable: false,
     };
   } catch (err) {
-    logger.warn('cmc_module3_sections read failed — sections unprovisioned', {
+    logger.warn('cmc_module3_sections read failed', {
       projectId,
       err: err instanceof Error ? err.message : String(err),
     });
-    return { rows: [], provisioned: false };
+    return { rows: [], provisioned: false, unreadable: !isUnprovisioned(err) };
   }
 }
 
@@ -391,6 +460,7 @@ export default function createCmcModule3BoardRoutes(): Router {
           ...legacy.rows.filter((r) => !spineKeys.has(`${r.sub}`.trim().toLowerCase())),
         ],
         provisioned: spine.provisioned || legacy.provisioned,
+        unreadable: spine.unreadable || legacy.unreadable,
       };
 
       const rpiValues = portfolio.rows
@@ -402,17 +472,26 @@ export default function createCmcModule3BoardRoutes(): Router {
 
       /* One source for 'overdue IRs': the same org-wide reg_questions read
          the correspondence card renders — the KPI and the tab can no longer
-         disagree. The legacy per-submission sum remains only the fallback for
-         environments where that read is unprovisioned. */
-      const irOverdue = correspondence.provisioned
-        ? correspondence.rows.filter((r) => r.overdue).length
-        : portfolio.rows
-            .map((r) => r.ir)
-            .filter((v): v is number => typeof v === 'number')
-            .reduce((a, b) => a + b, 0);
+         disagree. The legacy per-submission sum remains the fallback ONLY where
+         reg_questions is genuinely absent. When either read FAILED there is no
+         honest count to publish, so this is null and the surface says the figure
+         is not established rather than showing a different metric under the same
+         label. */
+      const irOverdue: number | null = correspondence.provisioned
+        ? correspondence.overdueTotal
+        : correspondence.unreadable || portfolio.unreadable
+          ? null
+          : portfolio.rows
+              .map((r) => r.ir)
+              .filter((v): v is number => typeof v === 'number')
+              .reduce((a, b) => a + b, 0);
 
-      const sectionsTotal = sections ? sections.rows.length : null;
-      const sectionsApproved = sections
+      /* A failed section read publishes NO counts: 0 sections / 0 approved /
+         0% ready beside sectionsUnreadable:true was a believable figure over
+         a register nothing had read. */
+      const sectionsReadable = Boolean(sections && !sections.unreadable);
+      const sectionsTotal = sections && sectionsReadable ? sections.rows.length : null;
+      const sectionsApproved = sections && sectionsReadable
         ? sections.rows.filter((s) => s.st === 'approved').length
         : null;
       const readyPercent =
@@ -452,6 +531,16 @@ export default function createCmcModule3BoardRoutes(): Router {
             spinePortfolioProvisioned: spine.provisioned,
             sectionsProvisioned: sections ? sections.provisioned : null,
             correspondenceProvisioned: correspondence.provisioned,
+            /* provisioned:false answers two different questions; these say which
+               one you got, so a failed read is never rendered as "none open". */
+            correspondenceUnreadable: correspondence.unreadable,
+            portfolioUnreadable: portfolio.unreadable,
+            sectionsUnreadable: sections ? sections.unreadable : null,
+            /* The card shows a page; these describe the store behind it, so a
+               surface can say "50 of 128" rather than imply it holds them all. */
+            correspondenceTotalOpen: correspondence.provisioned ? correspondence.totalOpen : null,
+            correspondenceOverdueTotal: correspondence.provisioned ? correspondence.overdueTotal : null,
+            correspondenceTruncated: correspondence.provisioned ? correspondence.truncated : null,
             generatedAt: new Date().toISOString(),
           },
         },

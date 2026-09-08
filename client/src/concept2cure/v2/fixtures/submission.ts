@@ -51,15 +51,6 @@ export const SC_APPTYPES = [
   { v: 'cta', l: 'CTA' },
 ];
 
-export const SC_PATHWAYS = [
-  { v: 'ectd_v322', l: 'eCTD v3.2.2' },
-  { v: 'ectd_v40', l: 'eCTD v4.0 (RPS)' },
-  { v: 'estar', l: 'eSTAR' },
-  { v: 'mdr', l: 'EU MDR tech doc' },
-  { v: 'ivdr', l: 'EU IVDR tech doc' },
-  { v: 'ctis', l: 'CTIS' },
-];
-
 const SC_SEQ_STATUS_RAW = {
   draft: { l: 'Draft', t: 'idle' },
   assembling: { l: 'Assembling', t: 'ai' },
@@ -130,14 +121,6 @@ export const SC_SEQUENCES_RAW = [
     leaves: 18,
     updated: '4 hr ago',
   },
-];
-
-export const SC_LEAVES = [
-  { path: 'm1/us/1.1', title: 'Form FDA 356h', op: 'new', module: '1' },
-  { path: 'm2/2.5', title: 'Clinical Overview', op: 'replace', module: '2' },
-  { path: 'm3/3.2.s.4.4', title: 'Comparability protocol', op: 'new', module: '3' },
-  { path: 'm5/5.3.5.1', title: 'ISS — integrated safety', op: 'append', module: '5' },
-  { path: 'm1/us/1.14.1', title: 'Draft labeling (superseded)', op: 'delete', module: '1' },
 ];
 
 export const SC_FINDINGS_RAW = [
@@ -222,11 +205,6 @@ export const SC_CROSSREGION_RAW = [
     note: 'Reusable from the FDA sequence with regional wrappers.',
   },
 ];
-export const SC_SEQUENCES: ScSequence[] = SC_SEQUENCES_RAW;
-export const SC_FINDINGS: ScFinding[] = SC_FINDINGS_RAW;
-export const SC_SHADOW: ScShadow[] = SC_SHADOW_RAW;
-export const SC_CROSSREGION: ScCrossRegion[] = SC_CROSSREGION_RAW;
-
 export const SC_SEQ_STATUS: Record<string, ToneMap> = SC_SEQ_STATUS_RAW;
 export const SC_TRANSITIONS: Record<string, string[]> = SC_TRANSITIONS_RAW;
 export const SC_LIFECYCLE_OPS: Record<string, ToneMap> = SC_LIFECYCLE_OPS_RAW;

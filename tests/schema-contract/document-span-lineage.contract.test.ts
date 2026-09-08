@@ -31,6 +31,12 @@ const MIGRATION = join(REPO_ROOT, 'db/migrations/20260803_document_span_lineage.
 const DRIZZLE = join(REPO_ROOT, 'shared/schema/document-span-lineage.ts');
 
 const MIGRATION_PATH = 'db/migrations/20260803_document_span_lineage.sql';
+/**
+ * Later migrations that ADD COLUMNs to this table. The deploy set applies them
+ * after the CREATE TABLE, so the columns a real database has are the union —
+ * and the parity below measures that union, not the CREATE TABLE alone.
+ */
+const WIDENING_PATHS = ['migrations/20260907_span_lineage_accepted_machine_draft.sql', 'migrations/20260908_span_lineage_machine_draft.sql'];
 // Imported rather than re-typed — see the note in tenant-isolation-sweep.contract.test.ts.
 const SWEEP_PATH = TENANT_ISOLATION_SWEEP;
 
@@ -50,8 +56,26 @@ function strippedSql(): string {
     .join('\n');
 }
 
-/** Column names declared by the CREATE TABLE body (top level only). */
+/** Columns a later migration adds to the table with ADD COLUMN IF NOT EXISTS. */
+function widenedColumns(): string[] {
+  return WIDENING_PATHS.flatMap((rel) =>
+    [
+      ...readFileSync(join(REPO_ROOT, rel), 'utf8')
+        .split('\n')
+        .map((line) => line.replace(/--.*$/, ''))
+        .join('\n')
+        .matchAll(/ADD COLUMN IF NOT EXISTS\s+([a-z_][a-z0-9_]*)/gi),
+    ].map((m) => m[1].toLowerCase()),
+  );
+}
+
+/** Column names declared by the CREATE TABLE body (top level only), plus
+ *  those a later widening adds — what a deployed database actually has. */
 function sqlColumns(): string[] {
+  return [...createTableColumns(), ...widenedColumns()];
+}
+
+function createTableColumns(): string[] {
   const sql = strippedSql();
   const start = sql.search(/CREATE TABLE IF NOT EXISTS\s+public\.document_span_lineage\s*\(/i);
   expect(start, 'CREATE TABLE not found').toBeGreaterThan(-1);
@@ -107,7 +131,8 @@ function drizzleColumns(): string[] {
 describe('document_span_lineage — SQL ↔ Drizzle column parity', () => {
   it('the parsers actually found something', () => {
     // Without this, every assertion below could pass vacuously.
-    expect(sqlColumns().length).toBeGreaterThan(15);
+    expect(createTableColumns().length).toBeGreaterThan(15);
+    expect(widenedColumns()).toContain('machine_author_id');
     expect(drizzleColumns().length).toBeGreaterThan(15);
   });
 
@@ -124,7 +149,7 @@ describe('document_span_lineage — SQL ↔ Drizzle column parity', () => {
     const extra = drizzleColumns().filter((c) => !sqlColumns().includes(c));
     expect(
       extra,
-      `Columns in the Drizzle table but absent from the migration: ${extra.join(', ')}. ` +
+      `Columns in the Drizzle table but absent from the migrations for this table: ${extra.join(', ')}. ` +
         `Every statement touching them fails against a real database — the exact ` +
         `failure mode that hid in evidence_links.`
     ).toEqual([]);
@@ -201,5 +226,43 @@ describe('document_span_lineage — apply-set position', () => {
         `table is created and never isolated — it would accept rows and leak across ` +
         `tenants with nothing failing.`
     ).toBeLessThan(sweep);
+  });
+});
+
+/*
+ * migrations/20260907 adds the accepted_machine_draft kind to this table by
+ * widening its two CHECKs and adding machine_author_id. It can only do that
+ * after the table exists and, like the table, must be applied before the
+ * tenant-isolation sweep. The behaviour of the kind is proven in
+ * server/services/clinical-regulatory-evidence/__tests__/machine-draft-lineage.pglite.integration.test.ts;
+ * this pins only that the migration is applied at all, and in the right place.
+ */
+describe('the accepted_machine_draft widening (migrations/20260907)', () => {
+  const MACHINE_KIND_PATH = 'migrations/20260907_span_lineage_accepted_machine_draft.sql';
+
+  it('is registered in the apply set, after the table it widens', () => {
+    const table = C2C_MIGRATION_FILES.indexOf(MIGRATION_PATH);
+    const widening = C2C_MIGRATION_FILES.indexOf(MACHINE_KIND_PATH);
+    expect(widening, 'the widening is not in the apply set').toBeGreaterThan(-1);
+    expect(widening, 'the widening would run before the table exists').toBeGreaterThan(table);
+  });
+
+  it('is registered BEFORE the tenant-isolation sweep', () => {
+    const widening = C2C_MIGRATION_FILES.indexOf(MACHINE_KIND_PATH);
+    const sweep = C2C_MIGRATION_FILES.indexOf(SWEEP_PATH);
+    expect(sweep).toBeGreaterThan(-1);
+    expect(widening).toBeLessThan(sweep);
+  });
+
+  it('widens both CHECKs with the replay-safe DROP IF EXISTS / ADD idiom and names all three kinds', () => {
+    const body = readFileSync(join(REPO_ROOT, MACHINE_KIND_PATH), 'utf8');
+    for (const c of ['document_span_lineage_kind_valid', 'document_span_lineage_kind_shape']) {
+      expect(body).toMatch(new RegExp(`DROP CONSTRAINT IF EXISTS ${c}`));
+      expect(body).toMatch(new RegExp(`ADD CONSTRAINT ${c}`));
+    }
+    expect(body).toMatch(/ADD COLUMN IF NOT EXISTS machine_author_id/);
+    expect(body).toMatch(/'cre_evidence_source', 'author_assertion', 'accepted_machine_draft'/);
+    expect(body).toMatch(/provenance_kind\s*=\s*'accepted_machine_draft'[\s\S]*?machine_author_id IS NOT NULL/);
+    expect(body).toMatch(/provenance_kind\s*=\s*'accepted_machine_draft'[\s\S]*?asserted_by IS NOT NULL/);
   });
 });

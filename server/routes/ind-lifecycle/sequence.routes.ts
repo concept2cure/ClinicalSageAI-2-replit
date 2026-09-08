@@ -18,6 +18,7 @@ import { createDispatchSnapshot, listDispatchSnapshots } from '../../services/in
 import { renderPackageManifestPdf, renderSequenceDiffPdf } from '../../services/ind-lifecycle/ind-document-renderer';
 import { listLeaves, getSequence } from '../../services/submission-service/submission-service';
 import { getCrossReferenceRegister } from '../../services/ind-lifecycle/ind-cross-reference-persistence';
+import { listOverdueSafetyReports } from '../../services/ind-lifecycle/ind-safety-report-persistence';
 import { AUTHOR, limiter, ctxOf, body, fail, noAuth, sendPdf, readinessFrom, filingTypeParam, FILING_TYPE_VALUES } from './shared';
 
 const router = Router();
@@ -66,14 +67,16 @@ async function computeGateForSequence(seqId: number, b: any, ctx: Ctx) {
   });
   const clock = b.clockInput?.receiptDate ? evaluateRegulatoryClock(b.clockInput) : null;
   const timeline = b.timelineInput?.receiptDate ? buildIndTimeline(b.timelineInput) : null;
+  const submissionId = (sequence as { submissionId?: number }).submissionId;
+  // From the register, never the request body (see submission.routes).
+  const overdueSafetyReports = submissionId ? (await listOverdueSafetyReports(submissionId, ctx)).length : b.overdueSafetyReports;
   const actionItems = deriveIndActionItems({
-    readiness: readinessFrom(b.readinessInput),
+    readiness: readinessFrom(b.readinessInput, overdueSafetyReports),
     clock,
     timeline,
     sequenceValidation,
-    overdueSafetyReports: b.overdueSafetyReports,
+    overdueSafetyReports,
   });
-  const submissionId = (sequence as { submissionId?: number }).submissionId;
   const unauthorizedCrossReferences = submissionId
     ? (await getCrossReferenceRegister(submissionId, ctx)).counts.missingLoa
     : 0;

@@ -33,10 +33,18 @@ function toDay(v: unknown): string | null {
 }
 
 /** seriousness_criteria is a JSON array stored as TEXT; parse defensively (also accepts a comma list). */
-function parseCriteria(v: unknown): string[] {
+/**
+ * The recorded seriousness criteria, or null when the column holds nothing.
+ *
+ * This returned [] for an unrecorded column, so a case nobody had assessed was
+ * indistinguishable from one assessed and found to meet no criterion — and the
+ * queue chip read the second meaning off the first, calling an unassessed case
+ * "Non-serious".
+ */
+function parseCriteria(v: unknown): string[] | null {
   if (Array.isArray(v)) return v.map(String);
   const s = String(v ?? '').trim();
-  if (!s) return [];
+  if (!s) return null;
   try {
     const p = JSON.parse(s);
     if (Array.isArray(p)) return p.map(String);
@@ -63,6 +71,9 @@ export async function assembleOrgSaeCases(orgId: number, now: Date = new Date())
 
   return (rows as Array<Record<string, unknown>>).map((r) => {
     const criteria = parseCriteria(r.seriousness_criteria);
+    // Recorded at all? The display contract carries this so the surface can say
+    // "not recorded" instead of reading absence as a non-serious verdict.
+    const seriousnessAssessed = criteria !== null;
     const awarenessDate = toDay(r.report_date);
     const reporting = computeExpeditedReportingClock(
       {
@@ -101,11 +112,12 @@ export async function assembleOrgSaeCases(orgId: number, now: Date = new Date())
       concomitantMeds: [],
       event: {
         term: orUndef(r.reaction_pt) ?? orUndef(r.event_description) ?? '',
-        seriousnessCriteria: criteria,
+        seriousnessCriteria: criteria ?? [],
         causality: orUndef(r.causality),
         outcome: orUndef(r.outcome),
         onsetDate: toDay(r.onset_date) ?? undefined,
       },
+      seriousnessAssessed,
       // Live-computed expedited-reporting clock (21 CFR 312.32(c) / ICH E2A).
       reportingCategory: reporting.category,
       reportingClockStart: reporting.clockStart,
@@ -113,6 +125,8 @@ export async function assembleOrgSaeCases(orgId: number, now: Date = new Date())
       reportingDaysRemaining: reporting.daysRemaining,
       reportingOverdue: reporting.overdue,
       reportingBasis: reporting.basis,
+      /** Determination inputs that were never recorded (see the clock). */
+      reportingUnassessedInputs: reporting.unassessedInputs,
     };
   });
 }

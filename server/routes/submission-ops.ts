@@ -60,20 +60,44 @@ import {
   REGULATORY_IDENTIFIER_FIELDS,
 } from '../services/ectd/regulatory-identifiers';
 import { recordGovernedAction } from './c2c/actions';
-import PDFDocument from 'pdfkit';
-import { PassThrough } from 'stream';
-import {
-  renderMarkdownToPDF,
-  mapSectionToECTDPath,
-} from '../services/documentExportService';
+import { mapSectionToECTDPath } from '../services/documentExportService';
+import { buildLeafPdf } from '../services/ectd/leaf-pdf';
+import { resolveSubmissionTypeCode, submissionTypeTerms } from '../services/ectd/controlled-vocab';
 import {
   isBundleStorageEnabled,
   bundleStorageBucket,
   bundleStorageKey,
   putBundle,
+  deleteBundle,
   readBundleBytes,
 } from '../services/submission-bundle-storage';
+import { leafFileName } from '../services/ectd/leaf-source-resolver';
+import type { LeafBytes } from '../services/ectd/package-leaf-bytes';
+import {
+  planSequence,
+  readFiledSequences,
+  SequenceLifecycleRefusal,
+  type SequencePlan,
+} from '../services/ectd/package-sequence-lifecycle';
+import {
+  assessPackageContent,
+  fingerprintPackageContent,
+  sha256Hex,
+  CONTENT_DRIFT_MESSAGE,
+  unprovenMessage,
+  type PackageContentRow,
+} from '../services/ectd/package-content-fingerprint';
+import {
+  contentRevisionOf,
+  mapArtifactToSection,
+  markContentChanged,
+  recordPackageGovernedAction,
+  withPackageMetadataLock,
+  type LockClient,
+} from '../services/ectd/package-content-change';
+import { bundleTrustEnforced } from '../services/submission-gateways/bundle-namespace';
 import { validateEctdLeafs } from '../services/submission-gateways/ectd-structural-validator';
+import { ValidationError as PackagerValidationError } from '../services/submission-gateways/types';
 import type { EctdFinding } from '../services/submission-gateways/ectd-structural-validator';
 import {
   VALIDATOR_REGISTRY,
@@ -81,6 +105,24 @@ import {
 } from '../services/submission-gateways/validator-registry';
 import { serverError } from '../lib/api-response';
 import { createScopedLogger } from '../utils/logger';
+
+/*
+ * Every mutating route in this file was gated by nothing but `getOrgId(req)`,
+ * which is tenant scoping, not authorization. This router owns the submission
+ * PACKAGE — create it, put documents in it, set the agency application number
+ * and applicant identity the regional Module 1 backbone is built from, publish
+ * it, and assemble the bundle that is shipped to FDA ESG. A read-only `viewer`
+ * could do all of it.
+ *
+ * Gating /transmit alone (which this file does not own) would have left the
+ * last door on a corridor with no others: a viewer still chose WHAT was sent
+ * and UNDER WHOSE application number, and only the final click was checked.
+ *
+ * Three POST routes are deliberately NOT gated because they write nothing:
+ * `/policies/resolve` and `/packages/:packageId/preflight` are computations
+ * shaped as POSTs, and `/digests/:digestId/read` is a reader's own receipt.
+ */
+import { requireEditorAccess } from '../middleware/orgMembership';
 
 const router = Router();
 
@@ -118,6 +160,9 @@ const createPackageSchema = z.object({
 const createArtifactSectionMapSchema = z.object({
   artifactId: z.number({ required_error: 'artifactId is required' }),
   sectionDbId: z.number({ required_error: 'sectionDbId is required' }),
+  // Mapping a document into a package section changes what would be filed
+  // with an agency: a governed change, recorded with the operator's reason.
+  reason: z.string().min(8, 'reason must be at least 8 characters'),
   documentFamily: z.string().optional(),
   ownerUserId: z.number().optional(),
   ownerRole: z.string().optional(),
@@ -177,7 +222,7 @@ router.get('/packages', async (req: Request, res: Response) => {
   }
 });
 
-router.post('/packages', async (req: Request, res: Response) => {
+router.post('/packages', requireEditorAccess, async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
     const userId = getUserId(req);
@@ -232,7 +277,7 @@ router.get('/packages/:packageId', async (req: Request, res: Response) => {
       .from(c2cSubmissionPackages)
       .where(
         and(
-          eq(c2cSubmissionPackages.packageId, String(req.params.packageId)),
+          packageKeyClause(String(req.params.packageId)),
           eq(c2cSubmissionPackages.orgId, orgId)
         )
       );
@@ -243,7 +288,7 @@ router.get('/packages/:packageId', async (req: Request, res: Response) => {
       .select()
       .from(c2cPackageSections)
       .where(eq(c2cPackageSections.packageDbId, pkg.id))
-      .orderBy(asc(c2cPackageSections.sortOrder));
+      .orderBy(asc(c2cPackageSections.sortOrder), asc(c2cPackageSections.id));
 
     res.json({ data: { ...pkg, sections } });
   } catch (e) {
@@ -263,7 +308,7 @@ router.get('/packages/:packageId/sections', async (req: Request, res: Response) 
       .from(c2cSubmissionPackages)
       .where(
         and(
-          eq(c2cSubmissionPackages.packageId, String(req.params.packageId)),
+          packageKeyClause(String(req.params.packageId)),
           eq(c2cSubmissionPackages.orgId, orgId)
         )
       );
@@ -274,7 +319,7 @@ router.get('/packages/:packageId/sections', async (req: Request, res: Response) 
       .select()
       .from(c2cPackageSections)
       .where(eq(c2cPackageSections.packageDbId, pkg.id))
-      .orderBy(asc(c2cPackageSections.sortOrder));
+      .orderBy(asc(c2cPackageSections.sortOrder), asc(c2cPackageSections.id));
 
     res.json({ data: sections });
   } catch (e) {
@@ -282,11 +327,335 @@ router.get('/packages/:packageId/sections', async (req: Request, res: Response) 
   }
 });
 
+/**
+ * A package's section list is part of what an assembled bundle is built FROM:
+ * the section key routes each leaf to its ICH module, the label becomes the
+ * placeholder leaf's title, and the sort order decides the order the leaves
+ * appear in the backbone. Until these routes existed the list was fixed at
+ * package creation, so a mistyped key could only be escaped by abandoning the
+ * package.
+ *
+ * All three are governed (a reason is recorded), tenant-scoped, and commit the
+ * row write in the SAME transaction as the package's content-revision bump and
+ * stale-bundle clear — see services/ectd/package-content-change.
+ */
+// The key becomes a leaf path component through leafSlug, so surrounding
+// whitespace is stripped rather than stored: ' 2.5 ' and '2.5' must not be two
+// different sections that file their leaves at two different paths. The value
+// is otherwise never rewritten — same contract as the identifiers route.
+const createSectionSchema = z.object({
+  sectionKey: z.string().trim().min(1).max(120),
+  sectionLabel: z.string().trim().min(1).max(300),
+  sortOrder: z.number().int().min(0).max(10000).optional(),
+  reason: z.string().min(8, 'reason must be at least 8 characters'),
+});
+const updateSectionSchema = z
+  .object({
+    sectionKey: z.string().trim().min(1).max(120).optional(),
+    sectionLabel: z.string().trim().min(1).max(300).optional(),
+    sortOrder: z.number().int().min(0).max(10000).optional(),
+    reason: z.string().min(8, 'reason must be at least 8 characters'),
+  })
+  .refine(
+    (v) => v.sectionKey !== undefined || v.sectionLabel !== undefined || v.sortOrder !== undefined,
+    { message: 'Nothing to change: give a sectionKey, a sectionLabel or a sortOrder.' },
+  );
+const deleteSectionSchema = z.object({
+  reason: z.string().min(8, 'reason must be at least 8 characters'),
+});
+
+/**
+ * Resolve a tenant-owned package and one of its sections — for the 404 alone.
+ * The values read here are NOT the ones an edit decides on: both routes below
+ * re-read the row under the package lock, because a section read outside it is
+ * the lost update the lock exists to prevent.
+ *
+ * Tenancy comes from the section's PACKAGE, as it does in mapArtifactToSection
+ * — one key for a section across both primitives. Scoping by the section row's
+ * own org_id instead left a row whose stamp disagreed with its package
+ * uneditable and undeletable by everyone, while still shipping in the bundle.
+ */
+async function resolvePackageSection(packageKey: string, sectionKey: string, orgId: number) {
+  const [pkg] = await db
+    .select({ id: c2cSubmissionPackages.id })
+    .from(c2cSubmissionPackages)
+    .where(and(packageKeyClause(packageKey), eq(c2cSubmissionPackages.orgId, orgId)));
+  if (!pkg) return { pkg: null, section: null };
+  const n = /^\d{1,10}$/.test(sectionKey) ? Number(sectionKey) : NaN;
+  const sectionClause =
+    Number.isSafeInteger(n) && n > 0 && n <= 2147483647
+      ? eq(c2cPackageSections.id, n)
+      : eq(c2cPackageSections.sectionId, sectionKey);
+  const [section] = await db
+    .select()
+    .from(c2cPackageSections)
+    .where(and(sectionClause, eq(c2cPackageSections.packageDbId, pkg.id)));
+  return { pkg, section: section ?? null };
+}
+
+/** A section edit that turned out to change nothing: rolls the transaction
+ *  back so nothing is bumped, carrying the row it decided against. */
+class SectionUnchanged extends Error {
+  readonly name = 'SectionUnchanged';
+  constructor(readonly current: { sectionKey: string; sectionLabel: string; sortOrder: number }) { super('unchanged'); }
+}
+/** The three columns a section edit can move, all covered by the fingerprint. */
+type SectionValues = { sectionKey: string; sectionLabel: string; sortOrder: number };
+
+/** A section still holding something a person put there. */
+class SectionNotEmpty extends Error {
+  readonly name = 'SectionNotEmpty';
+  constructor(readonly mappedCount: number, readonly milestoneLinks: number) { super('not empty'); }
+}
+
+/** The section row as the edit decides on it, read under the package lock. */
+async function lockedSection(client: LockClient, sectionDbId: number, packageDbId: number) {
+  const { rows } = await client.query(
+    `SELECT section_key, section_label, sort_order FROM c2c_package_sections
+      WHERE id = $1 AND package_db_id = $2 FOR UPDATE`,
+    [sectionDbId, packageDbId],
+  );
+  if (rows.length === 0) throw new SectionGone('section gone');
+  const r = rows[0] as Record<string, unknown>;
+  return {
+    sectionKey: String(r.section_key ?? ''),
+    sectionLabel: String(r.section_label ?? ''),
+    // NULL and 0 are the same order everywhere the value is read (assemble's
+    // `?? 0`, the fingerprint reader's null check), so they compare as equal.
+    sortOrder: r.sort_order == null ? 0 : Number(r.sort_order),
+  };
+}
+
+router.post('/packages/:packageId/sections', requireEditorAccess, async (req: Request, res: Response) => {
+  try {
+    const orgId = getOrgId(req);
+    const userId = getUserId(req);
+    const parsed = createSectionSchema.safeParse(req.body ?? {});
+    if (!parsed.success) {
+      return res.status(400).json({ error: 'Validation failed', details: parsed.error.flatten().fieldErrors });
+    }
+    const [pkg] = await db
+      .select({ id: c2cSubmissionPackages.id })
+      .from(c2cSubmissionPackages)
+      .where(and(packageKeyClause(String(req.params.packageId)), eq(c2cSubmissionPackages.orgId, orgId)));
+    if (!pkg) return res.status(404).json({ error: 'Package not found' });
+
+    const sectionId = `sec_${randomUUID()}`;
+    const outcome = await markContentChanged(pkg.id, async (client) => {
+      const { rows } = await client.query(
+        `INSERT INTO c2c_package_sections (section_id, org_id, package_db_id, section_key, section_label, sort_order)
+         VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
+        [sectionId, orgId, pkg.id, parsed.data.sectionKey, parsed.data.sectionLabel, parsed.data.sortOrder ?? 0],
+      );
+      return rows[0] as Record<string, unknown>;
+    });
+    const ledgerWriteFailed = await recordPackageGovernedAction({
+      orgId,
+      userId,
+      packageDbId: pkg.id,
+      reason: parsed.data.reason,
+      payload: {
+        change: 'section-added',
+        sectionDbId: Number(outcome.result.id),
+        sectionKey: parsed.data.sectionKey,
+        staleBundleCleared: outcome.staleBundleCleared,
+      },
+    });
+    res.status(201).json({
+      data: { id: Number(outcome.result.id), sectionId, sectionKey: parsed.data.sectionKey, sectionLabel: parsed.data.sectionLabel },
+      staleBundleCleared: outcome.staleBundleCleared,
+      ledgerWriteFailed,
+    });
+  } catch (e) {
+    return serverError(res, logger, 'adding a package section', e);
+  }
+});
+
+router.patch('/packages/:packageId/sections/:sectionId', requireEditorAccess, async (req: Request, res: Response) => {
+  try {
+    const orgId = getOrgId(req);
+    const userId = getUserId(req);
+    const parsed = updateSectionSchema.safeParse(req.body ?? {});
+    if (!parsed.success) {
+      return res.status(400).json({ error: 'Validation failed', details: parsed.error.flatten().fieldErrors });
+    }
+    const { pkg, section } = await resolvePackageSection(
+      String(req.params.packageId), String(req.params.sectionId), orgId,
+    );
+    if (!pkg) return res.status(404).json({ error: 'Package not found' });
+    if (!section) return res.status(404).json({ error: 'Section not found' });
+
+    // The row the edit decides on is read UNDER the package lock, and only the
+    // fields the caller named are rewritten. Deciding from a row read before
+    // the lock reverted a rename that committed in between and then recorded an
+    // audit row asserting the key had never moved — the lost update this lock
+    // exists to prevent.
+    let outcome: { staleBundleCleared: boolean; result: { previous: SectionValues; next: SectionValues } } | null = null;
+    let unchanged: SectionValues | null = null;
+    try {
+      outcome = await markContentChanged(pkg.id, async (client) => {
+        const previous = await lockedSection(client, section.id, pkg.id);
+        const next: SectionValues = {
+          sectionKey: parsed.data.sectionKey ?? previous.sectionKey,
+          sectionLabel: parsed.data.sectionLabel ?? previous.sectionLabel,
+          sortOrder: parsed.data.sortOrder ?? previous.sortOrder,
+        };
+        if (
+          next.sectionKey === previous.sectionKey &&
+          next.sectionLabel === previous.sectionLabel &&
+          next.sortOrder === previous.sortOrder
+        ) {
+          // Nothing about the package's content moved: roll back so nothing is
+          // invalidated and nothing is recorded — a no-op is not a governed change.
+          throw new SectionUnchanged(previous);
+        }
+        await client.query(
+          `UPDATE c2c_package_sections SET section_key = $2, section_label = $3, sort_order = $4, updated_at = now()
+            WHERE id = $1`,
+          [section.id, next.sectionKey, next.sectionLabel, next.sortOrder],
+        );
+        return { previous, next };
+      });
+    } catch (e) {
+      if (e instanceof SectionUnchanged) unchanged = e.current;
+      else if (e instanceof SectionGone) return res.status(404).json({ error: 'Section not found' });
+      else throw e;
+    }
+    if (unchanged) {
+      return res.json({
+        data: { id: section.id, ...unchanged },
+        changed: false, staleBundleCleared: false, ledgerWriteFailed: false,
+      });
+    }
+
+    const { previous, next } = outcome!.result;
+    const ledgerWriteFailed = await recordPackageGovernedAction({
+      orgId,
+      userId,
+      packageDbId: pkg.id,
+      reason: parsed.data.reason,
+      payload: {
+        change: 'section-updated',
+        sectionDbId: section.id,
+        previous,
+        next,
+        staleBundleCleared: outcome!.staleBundleCleared,
+      },
+    });
+    res.json({
+      data: { id: section.id, ...next },
+      changed: true,
+      staleBundleCleared: outcome!.staleBundleCleared,
+      ledgerWriteFailed,
+    });
+  } catch (e) {
+    return serverError(res, logger, 'updating a package section', e);
+  }
+});
+
+router.delete('/packages/:packageId/sections/:sectionId', requireEditorAccess, async (req: Request, res: Response) => {
+  try {
+    const orgId = getOrgId(req);
+    const userId = getUserId(req);
+    const parsed = deleteSectionSchema.safeParse(req.body ?? {});
+    if (!parsed.success) {
+      return res.status(400).json({ error: 'Validation failed', details: parsed.error.flatten().fieldErrors });
+    }
+    const { pkg, section } = await resolvePackageSection(
+      String(req.params.packageId), String(req.params.sectionId), orgId,
+    );
+    if (!pkg) return res.status(404).json({ error: 'Package not found' });
+    if (!section) return res.status(404).json({ error: 'Section not found' });
+
+    // Everything a section owns cascades when it goes. What a person put there
+    // — a mapped artifact, a milestone's gate assignment — is refused rather
+    // than destroyed: each is its own governed act. Derived rows (readiness
+    // snapshots) do cascade, and linked blockers are unlinked, so the counts
+    // are named in the audit row instead of vanishing unrecorded.
+    //
+    // Counted UNDER the lock, with the delete, in one transaction: counting
+    // first and deleting afterwards let a mapping created in between be
+    // cascaded away with only a `section-removed` record to show for it.
+    // The org is not a predicate here — the section already belongs to a
+    // package of this tenant, so ANY row pointing at it must block the delete,
+    // whatever org id the row itself carries.
+    let outcome: {
+      staleBundleCleared: boolean;
+      result: { readinessSnapshotsRemoved: number; blockersUnlinked: number };
+    } | null = null;
+    let notEmpty: SectionNotEmpty | null = null;
+    try {
+      outcome = await markContentChanged(pkg.id, async (client) => {
+        await lockedSection(client, section.id, pkg.id);
+        const countOf = async (sql: string) =>
+          Number(((await client.query(sql, [section.id])).rows[0] as any)?.n ?? 0);
+        const mappedCount = await countOf('SELECT count(*)::int AS n FROM c2c_artifact_section_map WHERE section_db_id = $1');
+        const milestoneLinks = await countOf('SELECT count(*)::int AS n FROM c2c_milestone_sections WHERE section_db_id = $1');
+        if (mappedCount > 0 || milestoneLinks > 0) throw new SectionNotEmpty(mappedCount, milestoneLinks);
+        const readinessSnapshotsRemoved = await countOf('SELECT count(*)::int AS n FROM c2c_readiness_snapshots WHERE section_db_id = $1');
+        const blockersUnlinked = await countOf('SELECT count(*)::int AS n FROM c2c_blockers WHERE section_db_id = $1');
+        const { rows } = await client.query(
+          'DELETE FROM c2c_package_sections WHERE id = $1 RETURNING id',
+          [section.id],
+        );
+        if (rows.length === 0) throw new SectionGone('section gone');
+        return { readinessSnapshotsRemoved, blockersUnlinked };
+      });
+    } catch (e) {
+      if (e instanceof SectionNotEmpty) notEmpty = e;
+      else if (e instanceof SectionGone) return res.status(404).json({ error: 'Section not found' });
+      else throw e;
+    }
+    if (notEmpty) {
+      const holds = [
+        notEmpty.mappedCount > 0 ? `${notEmpty.mappedCount} mapped artifact${notEmpty.mappedCount === 1 ? '' : 's'}` : null,
+        notEmpty.milestoneLinks > 0 ? `${notEmpty.milestoneLinks} milestone gate assignment${notEmpty.milestoneLinks === 1 ? '' : 's'}` : null,
+      ].filter(Boolean);
+      return res.status(409).json({
+        error:
+          `This section still holds ${holds.join(' and ')}; remove them first ` +
+          '(DELETE /api/submission-ops/artifact-section-map/:mappingId for a mapping) so each removal is recorded on its own.',
+        code: 'SECTION_NOT_EMPTY',
+        mappedCount: notEmpty.mappedCount,
+        milestoneLinks: notEmpty.milestoneLinks,
+      });
+    }
+
+    const ledgerWriteFailed = await recordPackageGovernedAction({
+      orgId,
+      userId,
+      packageDbId: pkg.id,
+      reason: parsed.data.reason,
+      payload: {
+        change: 'section-removed',
+        sectionDbId: section.id,
+        sectionKey: section.sectionKey,
+        // What the cascade took with it, rather than leaving it unrecorded.
+        readinessSnapshotsRemoved: outcome!.result.readinessSnapshotsRemoved,
+        blockersUnlinked: outcome!.result.blockersUnlinked,
+        staleBundleCleared: outcome!.staleBundleCleared,
+      },
+    });
+    res.json({
+      data: {
+        deleted: true,
+        sectionDbId: section.id,
+        readinessSnapshotsRemoved: outcome!.result.readinessSnapshotsRemoved,
+        blockersUnlinked: outcome!.result.blockersUnlinked,
+      },
+      staleBundleCleared: outcome!.staleBundleCleared,
+      ledgerWriteFailed,
+    });
+  } catch (e) {
+    return serverError(res, logger, 'removing a package section', e);
+  }
+});
+
 // ============================================================
 // ARTIFACT-SECTION MAPPING
 // ============================================================
 
-router.post('/artifact-section-map', async (req: Request, res: Response) => {
+router.post('/artifact-section-map', requireEditorAccess, async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
     const actorUserId = getUserId(req);
@@ -305,69 +674,113 @@ router.post('/artifact-section-map', async (req: Request, res: Response) => {
       ownershipType,
     } = parsed.data;
 
-    const [artifact] = await db
-      .select({
-        id: concept2cureArtifacts.id,
-        projectId: concept2cureArtifacts.projectId,
-      })
-      .from(concept2cureArtifacts)
-      .where(and(eq(concept2cureArtifacts.id, artifactId), eq(concept2cureArtifacts.organizationId, orgId)));
-    if (!artifact) {
-      return res.status(404).json({ error: 'Artifact not found for organization' });
+    // The one governed mapping operation (tenant checks on both sides, one
+    // mapping per (artifact, section), and the row committing in the same
+    // transaction as the package's content-change bump and stale-bundle
+    // clear). This route is its HTTP shape; the biostatistics workflow calls
+    // the same function rather than writing the row itself.
+    const outcome = await mapArtifactToSection({
+      orgId,
+      artifactDbId: artifactId,
+      sectionDbId,
+      actorUserId,
+      reason: parsed.data.reason,
+      documentFamily,
+      ownerUserId,
+      ownerRole,
+      ownerFunction,
+      ownershipType,
+    });
+    if (!outcome.ok) {
+      return res.status(outcome.code === 'PROJECT_MISMATCH' ? 400 : 404).json({ error: outcome.message });
+    }
+    if (outcome.duplicate) {
+      return res.status(200).json({ data: outcome.mapping, duplicate: true });
     }
 
-    const [section] = await db
-      .select({
-        id: c2cPackageSections.id,
-        packageDbId: c2cPackageSections.packageDbId,
-      })
-      .from(c2cPackageSections)
-      .innerJoin(
-        c2cSubmissionPackages,
-        and(
-          eq(c2cSubmissionPackages.id, c2cPackageSections.packageDbId),
-          eq(c2cSubmissionPackages.orgId, orgId)
-        )
-      )
-      .where(eq(c2cPackageSections.id, sectionDbId));
-    if (!section) {
-      return res.status(404).json({ error: 'Section not found for organization' });
-    }
+    res.status(201).json({
+      data: outcome.mapping,
+      staleBundleCleared: outcome.staleBundleCleared,
+      ledgerWriteFailed: outcome.ledgerWriteFailed,
+    });
+  } catch (e) {
+    return serverError(res, logger, 'saving artifact section map', e);
+  }
+});
 
-    const [pkg] = await db
-      .select({
-        id: c2cSubmissionPackages.id,
-        projectId: c2cSubmissionPackages.projectId,
-      })
-      .from(c2cSubmissionPackages)
-      .where(and(eq(c2cSubmissionPackages.id, section.packageDbId), eq(c2cSubmissionPackages.orgId, orgId)));
-    if (!pkg) {
-      return res.status(404).json({ error: 'Package not found for section' });
-    }
+const deleteArtifactSectionMapBody = z.object({
+  reason: z.string().min(8, 'reason must be at least 8 characters'),
+});
 
-    if (artifact.projectId !== pkg.projectId) {
-      return res
-        .status(400)
-        .json({ error: 'Artifact and target section package must belong to the same project' });
+/**
+ * DELETE /artifact-section-map/:mappingId
+ *
+ * Remove an artifact from a package section. There was no way to do this
+ * through the API, so a mapping that made a package unplaceable (LEAF-UNPLACED)
+ * or duplicated a document could not be corrected once created. Tenant-scoped
+ * through the mapping row's own org; governed (reason recorded); a bundle
+ * assembled with the mapping in place is cleared as stale.
+ */
+router.delete('/artifact-section-map/:mappingId', requireEditorAccess, async (req: Request, res: Response) => {
+  try {
+    const orgId = getOrgId(req);
+    const userId = getUserId(req);
+    const parsed = deleteArtifactSectionMapBody.safeParse(req.body ?? {});
+    if (!parsed.success) {
+      return res.status(400).json({ error: 'Validation failed', details: parsed.error.flatten().fieldErrors });
+    }
+    const mappingId = Number(req.params.mappingId);
+    if (!Number.isSafeInteger(mappingId) || mappingId <= 0 || mappingId > 2147483647) {
+      return res.status(404).json({ error: 'Mapping not found' });
     }
 
     const [mapping] = await db
-      .insert(c2cArtifactSectionMap)
-      .values({
-        orgId,
-        artifactId,
-        sectionDbId,
-        documentFamily,
-        ownerUserId: ownerUserId || actorUserId || null,
-        ownerRole,
-        ownerFunction,
-        ownershipType,
+      .select({
+        id: c2cArtifactSectionMap.id,
+        artifactId: c2cArtifactSectionMap.artifactId,
+        sectionDbId: c2cArtifactSectionMap.sectionDbId,
+        packageDbId: c2cPackageSections.packageDbId,
       })
-      .returning();
+      .from(c2cArtifactSectionMap)
+      .innerJoin(c2cPackageSections, eq(c2cPackageSections.id, c2cArtifactSectionMap.sectionDbId))
+      .where(and(eq(c2cArtifactSectionMap.id, mappingId), eq(c2cArtifactSectionMap.orgId, orgId)));
+    if (!mapping) return res.status(404).json({ error: 'Mapping not found' });
 
-    res.status(201).json({ data: mapping });
+    // The DELETE commits together with the revision bump and the stale-bundle
+    // clear (see markContentChanged); a row that vanished meanwhile rolls the
+    // transaction back with nothing bumped.
+    let outcome: { staleBundleCleared: boolean; result: true };
+    try {
+      outcome = await markContentChanged(mapping.packageDbId, async (client) => {
+        const { rows } = await client.query(
+          'DELETE FROM c2c_artifact_section_map WHERE id = $1 AND org_id = $2 RETURNING id',
+          [mappingId, orgId],
+        );
+        if (rows.length === 0) throw new MappingGone('mapping gone');
+        return true as const;
+      });
+    } catch (e) {
+      if (!(e instanceof MappingGone)) throw e;
+      return res.status(404).json({ error: 'Mapping not found' });
+    }
+    const staleBundleCleared = outcome.staleBundleCleared;
+    const ledgerWriteFailed = await recordPackageGovernedAction({
+      orgId,
+      userId,
+      packageDbId: mapping.packageDbId,
+      reason: parsed.data.reason,
+      payload: {
+        change: 'artifact-unmapped',
+        mappingId,
+        artifactId: mapping.artifactId,
+        sectionDbId: mapping.sectionDbId,
+        staleBundleCleared,
+      },
+    });
+
+    res.json({ data: { deleted: true, mappingId, staleBundleCleared, ledgerWriteFailed } });
   } catch (e) {
-    return serverError(res, logger, 'saving artifact section map', e);
+    return serverError(res, logger, 'deleting artifact-section mapping', e);
   }
 });
 
@@ -423,7 +836,7 @@ router.get('/packages/:packageId/milestones', async (req: Request, res: Response
       .from(c2cSubmissionPackages)
       .where(
         and(
-          eq(c2cSubmissionPackages.packageId, String(req.params.packageId)),
+          packageKeyClause(String(req.params.packageId)),
           eq(c2cSubmissionPackages.orgId, orgId)
         )
       );
@@ -463,7 +876,7 @@ router.get('/packages/:packageId/milestones', async (req: Request, res: Response
   }
 });
 
-router.post('/packages/:packageId/milestones', async (req: Request, res: Response) => {
+router.post('/packages/:packageId/milestones', requireEditorAccess, async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
     const userId = getUserId(req);
@@ -472,7 +885,7 @@ router.post('/packages/:packageId/milestones', async (req: Request, res: Respons
       .from(c2cSubmissionPackages)
       .where(
         and(
-          eq(c2cSubmissionPackages.packageId, String(req.params.packageId)),
+          packageKeyClause(String(req.params.packageId)),
           eq(c2cSubmissionPackages.orgId, orgId)
         )
       );
@@ -542,7 +955,7 @@ router.get('/policies', async (req: Request, res: Response) => {
   }
 });
 
-router.post('/policies', async (req: Request, res: Response) => {
+router.post('/policies', requireEditorAccess, async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
     const userId = getUserId(req);
@@ -605,7 +1018,7 @@ router.post('/policies', async (req: Request, res: Response) => {
   }
 });
 
-router.put('/policies/:policyId', async (req: Request, res: Response) => {
+router.put('/policies/:policyId', requireEditorAccess, async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
     // SECURITY: Whitelist allowed update fields to prevent field injection
@@ -644,7 +1057,7 @@ router.put('/policies/:policyId', async (req: Request, res: Response) => {
   }
 });
 
-router.delete('/policies/:policyId', async (req: Request, res: Response) => {
+router.delete('/policies/:policyId', requireEditorAccess, async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
     const [deleted] = await db
@@ -688,7 +1101,7 @@ router.get('/packages/:packageId/readiness', async (req: Request, res: Response)
       .from(c2cSubmissionPackages)
       .where(
         and(
-          eq(c2cSubmissionPackages.packageId, String(req.params.packageId)),
+          packageKeyClause(String(req.params.packageId)),
           eq(c2cSubmissionPackages.orgId, orgId)
         )
       );
@@ -747,7 +1160,7 @@ router.get('/packages/:packageId/readiness-history', async (req: Request, res: R
       .from(c2cSubmissionPackages)
       .where(
         and(
-          eq(c2cSubmissionPackages.packageId, String(req.params.packageId)),
+          packageKeyClause(String(req.params.packageId)),
           eq(c2cSubmissionPackages.orgId, orgId)
         )
       );
@@ -821,7 +1234,7 @@ router.get('/blockers', async (req: Request, res: Response) => {
   }
 });
 
-router.patch('/blockers/:blockerId', async (req: Request, res: Response) => {
+router.patch('/blockers/:blockerId', requireEditorAccess, async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
     const { status, nextAction, resolvedById } = req.body;
@@ -968,7 +1381,7 @@ router.get('/hotspots', async (req: Request, res: Response) => {
       .select()
       .from(c2cPackageSections)
       .where(eq(c2cPackageSections.packageDbId, pkg.id))
-      .orderBy(asc(c2cPackageSections.sortOrder));
+      .orderBy(asc(c2cPackageSections.sortOrder), asc(c2cPackageSections.id));
 
     const hotspots = await Promise.all(
       sections.map(async (section: any) => {
@@ -1023,7 +1436,7 @@ router.get('/hotspots', async (req: Request, res: Response) => {
 // AUTOMATION
 // ============================================================
 
-router.post('/automation/run', async (req: Request, res: Response) => {
+router.post('/automation/run', requireEditorAccess, async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
     const { projectId, packageDbId } = req.body;
@@ -1294,7 +1707,7 @@ router.get('/command-center', async (req: Request, res: Response) => {
  * 3. Requires explicit confirmation header
  * 4. Creates audit trail entry
  */
-router.post('/packages/:packageId/publish', async (req: Request, res: Response) => {
+router.post('/packages/:packageId/publish', requireEditorAccess, async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
     const userId = getUserId(req);
@@ -1315,7 +1728,7 @@ router.post('/packages/:packageId/publish', async (req: Request, res: Response) 
       .from(c2cSubmissionPackages)
       .where(
         and(
-          eq(c2cSubmissionPackages.packageId, String(req.params.packageId)),
+          packageKeyClause(String(req.params.packageId)),
           eq(c2cSubmissionPackages.orgId, orgId)
         )
       );
@@ -1415,7 +1828,7 @@ router.post('/packages/:packageId/publish', async (req: Request, res: Response) 
  * Root directory under which assembled submission bundles are persisted.
  * Configurable via SUBMISSION_BUNDLE_DIR. Defaults to a repo-/cwd-local
  * `uploads/submission-bundles` directory, matching the repo's existing
- * `uploads/` file convention (see server/pdf-processor.ts, data-importer.ts).
+ * `uploads/` file convention (see data-importer.ts).
  */
 const BUNDLE_DIR = process.env.SUBMISSION_BUNDLE_DIR
   ? path.resolve(process.env.SUBMISSION_BUNDLE_DIR)
@@ -1455,6 +1868,33 @@ function leafSlug(value: string): string {
 }
 
 /**
+ * Package lookup key for the transmit-path routes: either the package's text id
+ * (pkg_…) or its numeric row id. The dispatch surface identifies a package by
+ * the numeric id the transmit route takes, and an operator working the
+ * record-identifiers → assemble → transmit loop should not need to know both.
+ */
+function packageKeyClause(key: string) {
+  // A numeric key must fit the int4 row id; an out-of-range digit string is
+  // simply not a package (404), never a Postgres range error (500).
+  const n = /^\d{1,10}$/.test(key) ? Number(key) : NaN;
+  return Number.isSafeInteger(n) && n > 0 && n <= 2147483647
+    ? eq(c2cSubmissionPackages.id, n)
+    : eq(c2cSubmissionPackages.packageId, key);
+}
+
+// withPackageMetadataLock / contentRevisionOf / markContentChanged /
+// recordPackageGovernedAction / mapArtifactToSection are the SINGLE
+// implementations, imported from services/ectd/package-content-change. They
+// lived here while the transmit path was the only caller; the artifact editor
+// and the biostatistics workflow now invalidate through the same primitives,
+// and a second copy of this rule has been a defect every time it existed.
+
+/** Thrown inside a mapping transaction to roll it back without bumping. */
+class MappingGone extends Error { readonly name = 'MappingGone'; }
+/** Thrown inside a section transaction to roll it back without bumping. */
+class SectionGone extends Error { readonly name = 'SectionGone'; }
+
+/**
  * Best-effort ICH module (1–5) for a c2c_package_sections sectionKey. These
  * keys are semantic (e.g. `module3_cmc`, `labeling`, `cer`), not ICH-numeric,
  * so we derive the module from, in order: an explicit module-N prefix, an
@@ -1479,44 +1919,29 @@ function sectionKeyToEctdPath(sectionKey: string, regionCode: string): string {
   return mod === 1 ? `m1/${regionCode}/${slug}.pdf` : `m${mod}/${slug}.pdf`;
 }
 
-/**
- * Renders a single eCTD leaf as a real PDF: a bold title line followed by the
- * section markdown rendered via the canonical pdfkit markdown renderer. Resolves
- * a `%PDF`-prefixed Buffer. Mirrors the buffer pattern in documentExportService.
- */
-async function buildLeafPdf(title: string, markdown: string): Promise<Buffer> {
-  const doc: any = new (PDFDocument as any)({
-    size: 'A4',
-    margins: { top: 72, right: 72, bottom: 72, left: 72 },
-    bufferPages: true,
-  });
-
-  const chunks: Buffer[] = [];
-  const bufferStream = new PassThrough();
-  bufferStream.on('data', (chunk: Buffer) => chunks.push(chunk));
-  doc.pipe(bufferStream);
-
-  doc.fontSize(14).font('Helvetica-Bold').text(title);
-  doc.moveDown();
-  doc.fontSize(11).font('Helvetica');
-  renderMarkdownToPDF(doc, markdown, 11);
-
-  doc.end();
-
-  return new Promise<Buffer>((resolve) => {
-    bufferStream.on('end', () => resolve(Buffer.concat(chunks)));
-  });
-}
-
 const assembleBody = z.object({
   // Optional explicit overrides; otherwise derived from packageFamily.
-  region: z.enum(['FDA', 'EMA', 'PMDA']).optional(),
+  // Health Canada is a transmit target (ca / hc_cesg) and the packager builds
+  // its backbone, so it must be assemblable too — the gate's own remediation
+  // ("re-assemble for CA") used to be a 400 here.
+  region: z.enum(['FDA', 'EMA', 'PMDA', 'CA']).optional(),
   format: z.enum(SUBMISSION_FORMATS).optional(),
   // An eCTD sequence number is exactly four digits (ICH eCTD v3.2.2 §3.2). The
   // value becomes a filesystem path component in the canonical packager, so the
   // charset is enforced here — a free-form string was a path-traversal vector.
   sequence: z.string().regex(/^\d{4}$/, 'sequence must be exactly four digits (e.g. 0000)').optional(),
-  reason: z.string().min(8).optional(),
+  /**
+   * What this sequence is filing. Sequence 0000 is an original by definition
+   * and needs none; any later sequence must declare one, because the regional
+   * backbone has to state whether it is an amendment, a supplement or an
+   * annual report, and the packager refuses to guess (see planSequence).
+   */
+  submissionType: z.string().trim().min(1).max(120).optional(),
+  // Governed transition: the operator's reason is recorded on the audit row.
+  // It used to be optional with a placeholder ('eCTD bundle assembled')
+  // written in its place — a fabricated justification on a hash-chained
+  // ledger, and a control the UI promised that the server did not enforce.
+  reason: z.string().min(8, 'reason must be at least 8 characters'),
 });
 
 /**
@@ -1553,7 +1978,7 @@ const regulatoryIdentifiersBody = z.object({
   reason: z.string().min(8, 'reason must be at least 8 characters'),
 });
 
-router.put('/packages/:packageId/regulatory-identifiers', async (req: Request, res: Response) => {
+router.put('/packages/:packageId/regulatory-identifiers', requireEditorAccess, async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
     const userId = getUserId(req);
@@ -1577,77 +2002,51 @@ router.put('/packages/:packageId/regulatory-identifiers', async (req: Request, r
     const [pkg] = await db
       .select()
       .from(c2cSubmissionPackages)
-      .where(
-        and(
-          eq(c2cSubmissionPackages.packageId, String(req.params.packageId)),
-          eq(c2cSubmissionPackages.orgId, orgId),
-        ),
-      );
+      .where(and(packageKeyClause(String(req.params.packageId)), eq(c2cSubmissionPackages.orgId, orgId)));
     if (!pkg) return res.status(404).json({ error: 'Package not found' });
 
-    const existingMetadata =
-      pkg.metadata && typeof pkg.metadata === 'object' ? (pkg.metadata as Record<string, unknown>) : {};
-    const previous = readRegulatoryIdentifiers(existingMetadata).values;
     const next = {
       applicationNumber: usableIdentifier('applicationNumber', parsed.data.applicationNumber)!,
       applicantId: usableIdentifier('applicantId', parsed.data.applicantId)!,
       applicantName: usableIdentifier('applicantName', parsed.data.applicantName)!,
     };
-    const changed = REGULATORY_IDENTIFIER_FIELDS.some((f) => previous[f] !== next[f]);
     const regulatory = { ...next, recordedAt: new Date().toISOString(), recordedBy: userId };
 
-    // A bundle assembled under different identifiers carries the OLD ones in its
-    // backbone. Clear it so the transmit gate cannot ship it; re-assemble.
-    const { bundle: existingBundle, ...metadataWithoutBundle } = existingMetadata;
-    const staleBundleCleared = changed && existingBundle !== undefined;
-    const metadata = staleBundleCleared
-      ? { ...metadataWithoutBundle, regulatory }
-      : { ...existingMetadata, regulatory };
+    // Decided and written under the row lock: `previous` (the audit row's FROM
+    // values), `changed`, and whether a bundle assembled under the OLD
+    // identifiers — its backbone carries them — must be cleared so the transmit
+    // gate cannot ship it.
+    const { previous, changed, staleBundleCleared } = await withPackageMetadataLock(pkg.id, (current) => {
+      const previous = readRegulatoryIdentifiers(current).values;
+      const changed = REGULATORY_IDENTIFIER_FIELDS.some((f) => previous[f] !== next[f]);
+      // Changed identifiers make the stored bundle stale (its backbone carries
+      // the old ones); the preflight summary that described it goes with it.
+      const { bundle: existingBundle, preflight: _orphan, ...metadataWithoutBundle } = current;
+      const staleBundleCleared = changed && existingBundle !== undefined;
+      const metadata = changed ? { ...metadataWithoutBundle, regulatory } : { ...current, regulatory };
+      return { metadata, result: { previous, changed, staleBundleCleared } };
+    });
 
-    await db
-      .update(c2cSubmissionPackages)
-      .set({ metadata, updatedAt: new Date() })
-      .where(eq(c2cSubmissionPackages.id, pkg.id));
-
-    // Governed action, same posture as assemble: the write is real and must not
-    // be lost over an audit outage, but the caller is told when the ledger row
-    // could not be written.
-    let ledgerWriteFailed = false;
-    try {
-      const client = await pool.connect();
-      try {
-        await client.query('BEGIN');
-        await recordGovernedAction(client as any, {
-          orgId,
-          userId,
-          command: 'transition',
-          target: `submission:${pkg.id}`,
-          reason: parsed.data.reason,
-          payload: {
-            change: 'regulatory-identifiers',
-            applicationNumber: next.applicationNumber,
-            applicantId: next.applicantId,
-            applicantName: next.applicantName,
-            changed,
-            staleBundleCleared,
-          },
-          domain: 'mdx',
-          surface: 'submission-gateway',
-        });
-        await client.query('COMMIT');
-      } catch (ledgerErr) {
-        try { await client.query('ROLLBACK'); } catch { /* noop */ }
-        throw ledgerErr;
-      } finally {
-        client.release();
-      }
-    } catch (ledgerErr) {
-      ledgerWriteFailed = true;
-      console.error(
-        '[submission-ops] regulatory-identifiers-ledger-write-failed',
-        ledgerErr instanceof Error ? ledgerErr.message : ledgerErr,
-      );
-    }
+    // Governed action: who, when, what, FROM → TO, reason.
+    const ledgerWriteFailed = await recordPackageGovernedAction({
+      orgId,
+      userId,
+      packageDbId: pkg.id,
+      reason: parsed.data.reason,
+      payload: {
+        change: 'regulatory-identifiers',
+        previous: {
+          applicationNumber: previous.applicationNumber,
+          applicantId: previous.applicantId,
+          applicantName: previous.applicantName,
+        },
+        applicationNumber: next.applicationNumber,
+        applicantId: next.applicantId,
+        applicantName: next.applicantName,
+        changed,
+        staleBundleCleared,
+      },
+    });
 
     return res.json({
       success: true,
@@ -1658,7 +2057,7 @@ router.put('/packages/:packageId/regulatory-identifiers', async (req: Request, r
   }
 });
 
-router.post('/packages/:packageId/assemble', async (req: Request, res: Response) => {
+router.post('/packages/:packageId/assemble', requireEditorAccess, async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
     const userId = getUserId(req);
@@ -1676,7 +2075,7 @@ router.post('/packages/:packageId/assemble', async (req: Request, res: Response)
       .from(c2cSubmissionPackages)
       .where(
         and(
-          eq(c2cSubmissionPackages.packageId, String(req.params.packageId)),
+          packageKeyClause(String(req.params.packageId)),
           eq(c2cSubmissionPackages.orgId, orgId),
         ),
       );
@@ -1692,12 +2091,16 @@ router.post('/packages/:packageId/assemble', async (req: Request, res: Response)
       });
     }
 
-    // Load sections (same query as the sections route).
+    // Load sections (same query as the sections route). The row id breaks a
+    // tie on sortOrder: without it two sections sharing an order come back in
+    // whatever order Postgres chooses, and this loop decides both the leaf
+    // order in the backbone and which of two colliding leaf names takes the
+    // `-2` suffix — so the same content could assemble to different bytes.
     const sections = await db
       .select()
       .from(c2cPackageSections)
       .where(eq(c2cPackageSections.packageDbId, pkg.id))
-      .orderBy(asc(c2cPackageSections.sortOrder));
+      .orderBy(asc(c2cPackageSections.sortOrder), asc(c2cPackageSections.id));
 
     // Resolve region/format up front so leaf paths can be routed to the correct
     // ICH module region directory.
@@ -1713,21 +2116,36 @@ router.post('/packages/:packageId/assemble', async (req: Request, res: Response)
       }
       return { region: resolvedRegion, format: resolvedFormat };
     })();
-    if (
-      (format === 'ectd' || format === 'pmda_ectd') &&
-      (format === 'pmda_ectd') !== (region === 'PMDA')
-    ) {
+    // Every format pins its region: pmda_ectd ⇔ PMDA; ectd ⇔ FDA or EMA;
+    // estar ⇔ FDA (an eSTAR is a CDRH form); eudamed_register ⇔ EMA. A body
+    // override that contradicts the format is a 400 for device families too —
+    // the check used to guard only the two eCTD formats, so {region:'PMDA'} on
+    // a 510(k) built an 'estar' bundle with Japanese Module 1 paths.
+    const requiredRegion =
+      format === 'pmda_ectd' ? 'PMDA' : format === 'estar' ? 'FDA' : format === 'eudamed_register' ? 'EMA' : null;
+    const regionFormatConsistent = requiredRegion
+      ? region === requiredRegion
+      : !(format === 'ectd' && region === 'PMDA');
+    if (!regionFormatConsistent) {
       return res.status(400).json({
-        error: `format '${format}' is inconsistent with region '${region}': pmda_ectd is the PMDA format and ectd is the FDA/EMA format.`,
+        error:
+          `format '${format}' is inconsistent with region '${region}': ` +
+          (requiredRegion ? `${format} is the ${requiredRegion} format.` : 'ectd is the FDA/EMA format; PMDA uses pmda_ectd.'),
         code: 'REGION_FORMAT_MISMATCH',
       });
     }
     const sequence = parsed.data.sequence ?? '0000';
     const existingMetadata =
       pkg.metadata && typeof pkg.metadata === 'object' ? (pkg.metadata as Record<string, unknown>) : {};
+    // The content revision this assembly starts from. The section content is
+    // read below; every mapping change bumps the revision under the row lock,
+    // so a revision that differs when the bundle is about to be stored means
+    // the zip may not contain what the package now maps. Taken BEFORE the
+    // content read so a change between the two also discards (safe side).
+    const contentRevisionAtStart = contentRevisionOf(existingMetadata);
 
     // Region code used in m1/<region>/.. leaf paths (per ICH M4 / regional M1).
-    const regionCode = region === 'EMA' ? 'eu' : region === 'PMDA' ? 'jp' : 'us';
+    const regionCode = region === 'EMA' ? 'eu' : region === 'PMDA' ? 'jp' : region === 'CA' ? 'ca' : 'us';
 
     // Build eCTD leafs from section content. Section content is sourced from the
     // artifacts mapped to each section (c2c_artifact_section_map -> concept2cure
@@ -1745,15 +2163,39 @@ router.post('/packages/:packageId/assemble', async (req: Request, res: Response)
     // are computed over it, never over a parallel list that can diverge.
     const isEctdFormat = format === 'ectd' || format === 'pmda_ectd';
     // Placement is region-aware: Module 1 headings are published per agency.
-    const packagerRegion = region === 'EMA' ? 'ema' : region === 'PMDA' ? 'pmda' : 'fda';
+    const packagerRegion = region === 'EMA' ? 'ema' : region === 'PMDA' ? 'pmda' : region === 'CA' ? 'ca' : 'fda';
     const seenPaths = new Set<string>();
     const leafs: { path: string; mediaType: string; content: Buffer }[] = [];
     const emptyLeafPaths: string[] = [];
     let emptyLeafCount = 0;
-    const ctdLeaves: Array<{ ctdSection: string; fileName: string; bytes: Buffer; title: string }> = [];
+    // `operation` / `modifiedFile` are filled in by the sequence-lifecycle plan
+    // below; they are what makes a follow-up sequence packageable at all.
+    const ctdLeaves: Array<{
+      ctdSection: string; fileName: string; bytes: Buffer; title: string;
+      // The leaf's path in `leafs`, so that when the lifecycle drops a leaf as
+      // unchanged the same leaf can be dropped from the set validation, the
+      // leaf count and the empty-section list are computed over. They used to
+      // describe the pre-drop set, so the descriptor and the transmit gate both
+      // described a package the bytes were not.
+      modulePath: string;
+      operation?: LeafBytes['operation']; modifiedFile?: string;
+    }> = [];
     // Placement findings (unplaced / disagreement), merged into the validation
     // result below so the governed transmit gate sees them.
     const placementFindings: Array<{ severity: 'error' | 'warning'; ruleId: string; message: string }> = [];
+    // An artifact ships as ONE leaf. The section map has no uniqueness on
+    // (artifact, section), so a duplicate row — or the same artifact mapped
+    // into two sections — used to ship a second copy under a suffixed name with
+    // no finding. artifactDbId → the section label it shipped from.
+    // Keyed on artifact AND placement: the same document legitimately files at
+    // two sections (a literature reference cited from 4.3 and 5.4), and that is
+    // two leaves — only the same artifact at the SAME section is a duplicate.
+    const shippedArtifacts = new Map<string, string>();
+    // What this bundle is built from — every section, each mapped artifact's
+    // placement and content — for the fingerprint the transmit gate recomputes
+    // from the database. An artifact edited after assembly changes nothing on
+    // the package row, so only that comparison catches it.
+    const contentRows: PackageContentRow[] = [];
 
     for (const section of sections) {
       const mapped = await db
@@ -1766,6 +2208,10 @@ router.post('/packages/:packageId/assemble', async (req: Request, res: Response)
           // The artifact's declared eCTD placement — the most specific evidence
           // for the leaf's real CTD section when the section key is a product label.
           ctdSection: concept2cureArtifacts.ctdSection,
+          // Stamped into the leaf PDF instead of the wall clock, so re-assembling
+          // unchanged content produces the same bytes and the sequence lifecycle
+          // can see that nothing changed. See services/ectd/leaf-pdf.ts.
+          updatedAt: concept2cureArtifacts.updatedAt,
         })
         .from(c2cArtifactSectionMap)
         .innerJoin(
@@ -1780,7 +2226,41 @@ router.post('/packages/:packageId/assemble', async (req: Request, res: Response)
         )
         .orderBy(asc(concept2cureArtifacts.id));
 
+      if (mapped.length === 0) {
+        // An empty section is part of the content too: it ships a placeholder.
+        contentRows.push({
+          sectionDbId: section.id, sectionKey: section.sectionKey, sectionLabel: section.sectionLabel,
+          sortOrder: Number(section.sortOrder ?? 0),
+          artifactDbId: null, title: null, version: null, ctdSection: null, contentSha256: null,
+        });
+      }
+      for (const a of mapped) {
+        // Title and version are embedded in the leaf (index.xml title, PDF
+        // heading), so they are part of what the zip was built from.
+        contentRows.push({
+          sectionDbId: section.id,
+          sectionKey: section.sectionKey,
+          sectionLabel: section.sectionLabel,
+          sortOrder: Number(section.sortOrder ?? 0),
+          artifactDbId: a.artifactDbId,
+          title: a.title ?? '',
+          version: Number(a.version ?? 0),
+          ctdSection: a.ctdSection ?? null,
+          contentSha256: sha256Hex(a.content ?? ''),
+        });
+      }
+
       const sectionLabel = `${section.sectionLabel} (${section.sectionKey})`;
+      // The instant the content in this section last changed. A leaf's PDF
+      // timestamps come from here rather than from `new Date()`: rendering has
+      // to be reproducible or the sequence lifecycle can never see that a
+      // document is unchanged. An empty section has no artifact, so its own row
+      // dates the placeholder it ships.
+      const sectionContentAt = (rows: Array<{ updatedAt: Date | null }>): Date =>
+        rows.reduce<Date | null>((newest, r) => {
+          const t = r.updatedAt ? new Date(r.updatedAt) : null;
+          return t && (!newest || t > newest) ? t : newest;
+        }, null) ?? new Date(section.updatedAt ?? section.createdAt);
 
       if (!isEctdFormat) {
         // Non-eCTD: one path-keyed leaf per section; de-dupe collisions by
@@ -1801,7 +2281,11 @@ router.post('/packages/:packageId/assemble', async (req: Request, res: Response)
             .map((a) => `### ${a.title} (${a.artifactId} v${a.version})\n\n${a.content ?? ''}\n`)
             .join('\n');
         }
-        leafs.push({ path: leafPath, mediaType: 'application/pdf', content: await buildLeafPdf(sectionLabel, markdown) });
+        leafs.push({
+          path: leafPath,
+          mediaType: 'application/pdf',
+          content: await buildLeafPdf({ title: sectionLabel, markdown, contentModifiedAt: sectionContentAt(mapped) }),
+        });
         continue;
       }
 
@@ -1818,6 +2302,15 @@ router.post('/packages/:packageId/assemble', async (req: Request, res: Response)
         const unitLabel = artifact
           ? `${artifact.title} (${artifact.artifactId} v${artifact.version}) in ${sectionLabel}`
           : sectionLabel;
+        const shipKey = artifact && placement.code ? `${artifact.artifactDbId}@${placement.code}` : null;
+        if (shipKey && shippedArtifacts.has(shipKey)) {
+          placementFindings.push({
+            severity: 'warning',
+            ruleId: 'LEAF-DUPLICATE-MAPPING',
+            message: `${unitLabel}: this artifact already ships as a leaf at ${placement.code} from ${shippedArtifacts.get(shipKey)}; the same document at the same section is one leaf, so this mapping was skipped. Remove the duplicate mapping.`,
+          });
+          continue;
+        }
         if (!placement.code) {
           const sectionModule = moduleForSectionKey(section.sectionKey);
           placementFindings.push({
@@ -1846,16 +2339,32 @@ router.post('/packages/:packageId/assemble', async (req: Request, res: Response)
           });
         }
 
-        const slug = leafSlug(artifact ? `${section.sectionKey}-${artifact.artifactId}` : section.sectionKey);
-        let fileName = `${slug}.pdf`;
-        if (seenPaths.has(fileName)) {
-          fileName = `${slug}-${artifact ? artifact.artifactDbId : section.id}.pdf`;
-        }
+        // eCTD file names are lowercase [a-z0-9.-] and at most 64 characters
+        // INCLUDING the extension (FILENAME_PATTERN). The section slug is cut to
+        // the budget left after a discriminator — the artifact id's random
+        // suffix, or the section id for a placeholder — so two artifacts in one
+        // section never collide and a long section key cannot overflow the rule
+        // (it used to reach 84 characters with no finding).
+        const disc = artifact
+          ? artifact.artifactId.replace(/^artifact_/, '').slice(-12).toLowerCase().replace(/[^a-z0-9]/g, '') || `a${artifact.artifactDbId}`
+          : `s${section.id}`;
+        // Composed by the canonical leaf-name helper (label gives way, the
+        // discriminator is kept whole, 64-character rule); a numeric tiebreaker
+        // is appended to the discriminator only when the name is already taken
+        // in THIS package.
+        let fileName = leafFileName(section.sectionKey, disc);
+        for (let n = 2; seenPaths.has(fileName); n += 1) fileName = leafFileName(section.sectionKey, `${disc}-${n}`);
         seenPaths.add(fileName);
-        // Module-level path for the internal structural validator (which checks
-        // media type, %PDF magic, empty markers and Module 1 presence). The
-        // packager derives the real in-package path from the CTD section.
-        const modulePath = `m${placement.code.split('.')[0]}/${fileName}`;
+        // The leaf's IN-PACKAGE path, derived the way the canonical packager
+        // derives it (`m<module>/<section-dashed>/<file>`, Module 1 under the
+        // region directory), so the validator's findings cite a path that
+        // exists in the zip rather than a module-level approximation.
+        const moduleDigit = placement.code.split('.')[0];
+        const sectionDashed = placement.code.replace(/\./g, '-');
+        const modulePath =
+          moduleDigit === '1'
+            ? `m1/${regionCode}/${sectionDashed}/${fileName}`
+            : `m${moduleDigit}/${sectionDashed}/${fileName}`;
 
         let markdown: string;
         if (!artifact) {
@@ -1866,16 +2375,96 @@ router.post('/packages/:packageId/assemble', async (req: Request, res: Response)
           markdown = `### ${artifact.title} (${artifact.artifactId} v${artifact.version})\n\n${artifact.content ?? ''}\n`;
         }
         const title = artifact ? `${artifact.title} — ${sectionLabel}` : sectionLabel;
-        const bytes = await buildLeafPdf(title, markdown);
-        ctdLeaves.push({ ctdSection: placement.code, fileName, bytes, title });
+        const bytes = await buildLeafPdf({
+          title,
+          markdown,
+          contentModifiedAt: sectionContentAt(artifact ? [artifact] : []),
+        });
+        ctdLeaves.push({ ctdSection: placement.code, fileName, bytes, title, modulePath });
         leafs.push({ path: modulePath, mediaType: 'application/pdf', content: bytes });
+        if (shipKey) shippedArtifacts.set(shipKey, sectionLabel);
       }
+    }
+
+    // ─── eCTD sequence lifecycle ────────────────────────────────────────
+    //
+    // An eCTD application is a sequence of filings, and every sequence after
+    // 0000 says leaf by leaf what it does to what is already on file. Until
+    // this ran, the route set no operation on any leaf, so the packager
+    // refused every later sequence outright — the package path could file an
+    // original and nothing else.
+    //
+    // The diff is the canonical `computeLifecycleOperations`, reached through
+    // planSequence, which supplies the package-specific half: the sequences
+    // this package actually TRANSMITTED (a bundle assembled and never sent is
+    // not on file) folded into what is currently on file.
+    let lifecycle: SequencePlan | null = null;
+    if (isEctdFormat) {
+      try {
+        // The region's own vocabulary, so an unfilable submission type is
+        // refused here — with the terms that would work — rather than throwing
+        // out of the packager once the leaves are already rendered.
+        const terms = submissionTypeTerms(packagerRegion);
+        lifecycle = planSequence({
+          sequence,
+          submissionType: parsed.data.submissionType,
+          submissionTypeVocabulary: terms
+            ? { terms, accepts: (v: string) => resolveSubmissionTypeCode(v) !== null }
+            : null,
+          filed: readFiledSequences(existingMetadata),
+          desired: ctdLeaves.map((l) => ({
+            ctdSection: l.ctdSection,
+            fileName: l.fileName,
+            md5: createHash('md5').update(l.bytes).digest('hex'),
+            title: l.title,
+          })),
+        });
+      } catch (e) {
+        if (!(e instanceof SequenceLifecycleRefusal)) throw e;
+        return res.status(409).json({
+          error: e.message,
+          code: e.code,
+          gate: 'sequence_lifecycle',
+          // The list travels as data too, so a surface can offer the terms
+          // instead of asking the operator to read them out of a sentence.
+          ...(e.acceptedSubmissionTypes ? { acceptedSubmissionTypes: e.acceptedSubmissionTypes } : {}),
+        });
+      }
+      // Apply the plan: each shipping leaf carries its operation (and, when it
+      // supersedes one already on file, the modified-file pointer to it), and a
+      // leaf byte-identical to what is on file does not ship at all — a
+      // sequence carries what changed, not the whole tree.
+      const planByKey = new Map(lifecycle.leaves.map((l) => [`${l.ctdSection}/${l.fileName}`, l]));
+      const kept: typeof ctdLeaves = [];
+      for (const l of ctdLeaves) {
+        const plan = planByKey.get(`${l.ctdSection}/${l.fileName}`);
+        if (!plan) continue; // unchanged since the last filing
+        kept.push({ ...l, operation: plan.operation as any, ...(plan.modifiedFile ? { modifiedFile: plan.modifiedFile } : {}) });
+      }
+      // The drop applies to EVERYTHING computed over the leaf set, not just to
+      // what reaches the packager. `leafs` is the set validation runs on and the
+      // set leafCount reports; leaving it whole meant the descriptor claimed
+      // leaves the zip does not contain and the transmit gate blocked on
+      // findings about them.
+      const keptPaths = new Set(kept.map((l) => l.modulePath));
+      const droppedLeafs = leafs.filter((l) => !keptPaths.has(l.path));
+      if (droppedLeafs.length > 0) {
+        const survivors = leafs.filter((l) => keptPaths.has(l.path));
+        leafs.length = 0;
+        leafs.push(...survivors);
+        const keptEmpty = emptyLeafPaths.filter((p) => keptPaths.has(p));
+        emptyLeafPaths.length = 0;
+        emptyLeafPaths.push(...keptEmpty);
+        emptyLeafCount = keptEmpty.length;
+      }
+      ctdLeaves.length = 0;
+      ctdLeaves.push(...kept);
     }
 
     // Internal eCTD structural validation (pre-flight). Findings are stored on
     // the descriptor and surfaced to the UI; transmit hard-blocks on errors.
     // This is INTERNAL structural validation only — NOT an agency validator.
-    const validation = validateEctdLeafs(leafs, { region, emptyLeafPaths });
+    const validation = validateEctdLeafs(leafs, { region, emptyLeafPaths, enforceFileNames: isEctdFormat });
 
     // Assemble the real zip buffer.
     //
@@ -1900,6 +2489,18 @@ router.post('/packages/:packageId/assemble', async (req: Request, res: Response)
           regionalBackbone?: unknown;
         }
       | undefined;
+    /**
+     * What the packager actually put in the bundle, leaf by leaf, with each
+     * leaf's published href and checksum. This is the inventory a LATER
+     * sequence diffs against once this one is transmitted, so it is stored on
+     * the descriptor and copied into the package's filed history at transmit.
+     */
+    let canonicalLeafManifest: Array<{
+      ctdSection: string; fileName: string; href: string; md5: string; operation?: string; title?: string;
+    }> | null = null;
+    // The identifiers the backbone was BUILT with, compared against the
+    // package's current ones before the bundle is stored (see below).
+    let identifiersAtBuild: ReturnType<typeof readRegulatoryIdentifiers> | null = null;
     let zip: Buffer;
     if (isEctdFormat) {
       // Placement findings: LEAF-UNPLACED is error-severity so the governed
@@ -1918,6 +2519,7 @@ router.post('/packages/:packageId/assemble', async (req: Request, res: Response)
       // an internal id dressed up as an agency identifier. Both also become
       // filename components in the packager, so the charset is enforced.
       const identifiers = readRegulatoryIdentifiers(existingMetadata);
+      identifiersAtBuild = identifiers;
       const { applicationNumber, applicantId, applicantName } = identifiers.values;
       const missingIdentifiers = identifiers.missing;
       if (missingIdentifiers.length > 0) {
@@ -1935,7 +2537,15 @@ router.post('/packages/:packageId/assemble', async (req: Request, res: Response)
           region: packagerRegion,
           applicationId: applicationNumber ?? `UNASSIGNED-${leafSlug(pkg.packageId)}`,
           sequence,
-          submissionType: 'original',
+          submissionType: parsed.data.submissionType ?? 'original',
+          /* The FDA backbone has to state what is being filed. This used to
+             pass nothing, and the packager defaulted the application type to
+             `fdaat1` — NDA — so every package assembled here declared itself a
+             New Drug Application whatever it actually was. `packageFamily` is
+             the pathway ('ind', '510k', 'cer', 'ivdr_td'); the packager
+             resolves it, and refuses the ones that have no eCTD Module 1 code
+             rather than mislabelling them. */
+          fda: { applicationType: pkg.packageFamily, ...(parsed.data.submissionType ? { submissionType: parsed.data.submissionType } : {}) },
           sponsorId: applicantId ?? `UNASSIGNED-ORG-${orgId}`,
           sponsorName: applicantName ?? `UNASSIGNED (organization ${orgId})`,
           productName: pkg.title,
@@ -1944,18 +2554,71 @@ router.post('/packages/:packageId/assemble', async (req: Request, res: Response)
           leaves: ctdLeaves,
         });
         zip = await fs.promises.readFile(canonical.path);
+        canonicalLeafManifest = canonical.leafManifest ?? null;
         canonicalEvidence = {
           format: canonical.format as typeof format,
           submissionGrade: canonical.submissionGrade,
           dtdStatus: canonical.dtdStatus,
           regionalBackbone: canonical.regionalBackbone,
         };
+      } catch (packErr) {
+        if (!(packErr instanceof PackagerValidationError)) throw packErr;
+        // The packager REFUSED the package (its findings say why). This used to
+        // surface as a bare 500 with the findings lost, while the previous
+        // descriptor on metadata.bundle stayed intact and transmittable — a
+        // failed re-assembly left an old zip as the package's bundle. Persist
+        // the refusal as blocking findings, clear the stale descriptor, and
+        // answer 422 so the caller sees the reasons.
+        for (const f of packErr.findings ?? []) {
+          const message =
+            f && typeof f === 'object' && typeof (f as { message?: unknown }).message === 'string'
+              ? (f as { message: string }).message
+              : String(f);
+          validation.findings.push({ severity: 'error', ruleId: 'PACKAGER-REFUSED', message });
+          validation.errorCount += 1;
+        }
+        if (!(packErr.findings ?? []).length) {
+          validation.findings.push({ severity: 'error', ruleId: 'PACKAGER-REFUSED', message: packErr.message });
+          validation.errorCount += 1;
+        }
+        const refusal = {
+          errorCount: validation.errorCount,
+          warningCount: validation.warningCount,
+          infoCount: validation.infoCount,
+          findings: validation.findings,
+        };
+        const staleBundleCleared = await withPackageMetadataLock(pkg.id, (current) => {
+          // The stale bundle's preflight summary goes with it.
+          const { bundle: staleBundle, preflight: _orphan, ...metadataWithoutBundle } = current;
+          return {
+            metadata: { ...metadataWithoutBundle, assemblyRefusal: { at: new Date().toISOString(), by: userId, validation: refusal } },
+            result: staleBundle !== undefined,
+          };
+        });
+        // Clearing a transmittable bundle is a mutation of regulated content:
+        // it is recorded like any other, and a lost ledger row is reported.
+        const ledgerWriteFailed = await recordPackageGovernedAction({
+          orgId,
+          userId,
+          packageDbId: pkg.id,
+          reason: parsed.data.reason,
+          payload: { change: 'assembly-refused', staleBundleCleared, errorCount: refusal.errorCount, region, format },
+        });
+        return res.status(422).json({
+          error: packErr.message,
+          code: 'PACKAGER_REFUSED',
+          staleBundleCleared,
+          ledgerWriteFailed,
+          validation: refusal,
+        });
       } finally {
         await fs.promises.rm(work, { recursive: true, force: true }).catch(() => {});
       }
     } else {
       const zipBuffer = await buildECTDZip({
-        region,
+        // Device formats pin FDA (eSTAR) or EMA (EUDAMED); a CA region is
+        // refused by the region/format check above, so it cannot reach here.
+        region: region as 'FDA' | 'EMA' | 'PMDA',
         sequence,
         operation: 'new',
         leafs,
@@ -2001,6 +2664,9 @@ router.post('/packages/:packageId/assemble', async (req: Request, res: Response)
       // The format the package was actually BUILT as (the packager's own), so a
       // PMDA build can never be persisted labelled as FDA/EMA eCTD.
       format: canonicalEvidence?.format ?? format,
+      // The region the bundle was BUILT for, so a downstream reader can detect a
+      // contradiction without inferring it from the backbone.
+      region,
       leafCount: leafs.length,
       emptyLeafCount,
       storage,
@@ -2014,18 +2680,86 @@ router.post('/packages/:packageId/assemble', async (req: Request, res: Response)
         infoCount: validation.infoCount,
         findings: validation.findings,
       },
+      // Fingerprint of the content the zip was built from; governed transmit
+      // recomputes it and refuses a bundle the package has since moved past.
+      contentFingerprint: fingerprintPackageContent(contentRows),
+      // ─── what this bundle files, for the sequence AFTER it ───────────
+      // The sequence number and submission type the backbone declares, the
+      // lifecycle plan that produced its operations, and the leaf inventory
+      // the packager published. Governed transmit copies the inventory into
+      // the package's filed history when the bytes are accepted, and the next
+      // sequence diffs against that.
+      sequence,
+      submissionType: parsed.data.submissionType ?? (sequence === '0000' ? 'original' : null),
+      lifecycle: lifecycle
+        ? { summary: lifecycle.summary, omittedCount: lifecycle.omitted.length }
+        : undefined,
+      leafManifest: canonicalLeafManifest ?? undefined,
       assembledAt,
       assembledBy: userId,
     };
 
-    // Store the descriptor under metadata.bundle (JSONB) and bump updated_at.
-    await db
-      .update(c2cSubmissionPackages)
-      .set({
-        metadata: { ...existingMetadata, bundle: descriptor },
-        updatedAt: new Date(),
-      })
-      .where(eq(c2cSubmissionPackages.id, pkg.id));
+    // Store the descriptor under metadata.bundle — decided and written under
+    // the row lock against the package's CURRENT metadata, never the snapshot
+    // taken before the (slow) packaging step. A zip is stale by definition
+    // when the package's content changed since this assembly read it (a
+    // mapping added or removed) or when the backbone was built with
+    // identifiers that have since changed: it is not stored, the zip written
+    // above is removed, and the discard is recorded with its cause.
+    const discardCause = await withPackageMetadataLock<'content_changed' | 'identifiers_changed' | null>(
+      pkg.id,
+      (current) => {
+        if (contentRevisionOf(current) !== contentRevisionAtStart) {
+          return { metadata: null, result: 'content_changed' };
+        }
+        if (identifiersAtBuild) {
+          const now = readRegulatoryIdentifiers(current).values;
+          const drifted = REGULATORY_IDENTIFIER_FIELDS.some((f) => now[f] !== identifiersAtBuild!.values[f]);
+          if (drifted) return { metadata: null, result: 'identifiers_changed' };
+        }
+        // The previous bundle's preflight summary does not describe this one.
+        const { preflight: _previous, ...rest } = current;
+        return { metadata: { ...rest, bundle: descriptor }, result: null };
+      },
+    );
+    if (discardCause) {
+      // Nothing references this zip: remove both copies. A bundle that WAS
+      // stored (and may have been transmitted) is never deleted — it is the
+      // record; this one never became one.
+      await fs.promises.unlink(bundlePath).catch(() => {});
+      const durableCopy = storage.provider === 's3' ? storage.key : null;
+      let durableCopyDeleted = false;
+      if (durableCopy) {
+        try {
+          await deleteBundle(durableCopy);
+          durableCopyDeleted = true;
+        } catch (delErr) {
+          console.error(
+            '[submission-ops] assemble-discard-durable-delete-failed',
+            delErr instanceof Error ? delErr.message : delErr,
+          );
+        }
+      }
+      const ledgerWriteFailed = await recordPackageGovernedAction({
+        orgId,
+        userId,
+        packageDbId: pkg.id,
+        reason: parsed.data.reason,
+        payload: { change: 'assembly-discarded', cause: discardCause, sha256, region, format, durableCopy, durableCopyDeleted },
+      });
+      return res.status(409).json({
+        error:
+          discardCause === 'identifiers_changed'
+            ? 'The regulatory identifiers changed while the bundle was being assembled; its backbone carries the old ones, so it was not stored. Assemble again.'
+            : 'An artifact was mapped or unmapped while the bundle was being assembled; the zip may not contain what the package now maps, so it was not stored. Assemble again.',
+        code: 'STALE_ASSEMBLY',
+        gate: discardCause,
+        // A durable copy that could not be removed is named so it can be.
+        durableCopy: durableCopy && !durableCopyDeleted ? durableCopy : null,
+        durableCopyDeleted,
+        ledgerWriteFailed,
+      });
+    }
 
     // Audit: medium-risk governed transition (no reauth). Written in its own
     // transaction via the shared ledger primitive. The flag carries the outcome
@@ -2040,8 +2774,8 @@ router.post('/packages/:packageId/assemble', async (req: Request, res: Response)
           userId,
           command: 'transition',
           target: `submission:${pkg.id}`,
-          reason: parsed.data.reason ?? 'eCTD bundle assembled',
-          payload: { sha256, sizeBytes, format, leafCount: leafs.length },
+          reason: parsed.data.reason,
+          payload: { sha256, sizeBytes, format, region, leafCount: leafs.length },
           domain: 'mdx',
           surface: 'submission-gateway',
         });
@@ -2090,6 +2824,14 @@ router.post('/packages/:packageId/assemble', async (req: Request, res: Response)
           sizeBytes: descriptor.sizeBytes,
           format: descriptor.format,
           leafCount: descriptor.leafCount,
+          // What this bundle files. The operator asked for a sequence and a
+          // submission type, so the answer says which sequence was built and
+          // what the diff against the filed history decided — "3 left unchanged
+          // on file" is the difference between a follow-up and a re-filing of
+          // the whole application, and it is not visible anywhere else.
+          sequence: descriptor.sequence,
+          submissionType: descriptor.submissionType,
+          lifecycle: descriptor.lifecycle,
           storage: { provider: descriptor.storage.provider },
           validation: {
             errorCount: descriptor.validation.errorCount,
@@ -2135,6 +2877,13 @@ router.post('/packages/:packageId/assemble', async (req: Request, res: Response)
  * cache of the run just performed, not a governed state transition, so no
  * governed action is recorded. Tenant-scoped.
  */
+/** Two descriptors are the same bundle only when both carry the same sha256.
+ *  Fail closed: two sha-less descriptors are not "the same bundle". */
+function sameBundle(stored: unknown, evaluated: { sha256?: unknown }): boolean {
+  const s = stored && typeof stored === 'object' ? (stored as { sha256?: unknown }).sha256 : undefined;
+  return typeof s === 'string' && typeof evaluated.sha256 === 'string' && s === evaluated.sha256;
+}
+
 router.post('/packages/:packageId/preflight', async (req: Request, res: Response) => {
   try {
     const orgId = getOrgId(req);
@@ -2145,7 +2894,7 @@ router.post('/packages/:packageId/preflight', async (req: Request, res: Response
       .from(c2cSubmissionPackages)
       .where(
         and(
-          eq(c2cSubmissionPackages.packageId, String(req.params.packageId)),
+          packageKeyClause(String(req.params.packageId)),
           eq(c2cSubmissionPackages.orgId, orgId),
         ),
       );
@@ -2169,6 +2918,7 @@ router.post('/packages/:packageId/preflight', async (req: Request, res: Response
             infoCount?: number;
             findings?: EctdFinding[];
           };
+          contentFingerprint?: unknown;
         }
       | undefined;
 
@@ -2288,6 +3038,48 @@ router.post('/packages/:packageId/preflight', async (req: Request, res: Response
       }
     }
 
+    // CONTENT INTEGRITY: does the zip still reflect the package? The SAME
+    // assessment governed transmit refuses on (assessPackageContent), surfaced
+    // here so the operator and the portfolio rollup learn of drift before the
+    // transmit ceremony. A bundle without a fingerprint is unproven: an error
+    // wherever transmit would refuse it, a warning where descriptor trust is
+    // relaxed — never silently a pass. A failed read is an error, not a pass.
+    {
+      const contentValidator: (typeof validators)[number] = {
+        id: 'content_integrity',
+        label: 'Content integrity (the bundle still reflects the package)',
+        configured: true,
+        ran: false,
+        errorCount: 0,
+        warningCount: 0,
+      };
+      try {
+        const assessment = await assessPackageContent(pool, pkg.id, orgId, bundle.contentFingerprint);
+        if (assessment.state === 'drift') {
+          findings.push({ severity: 'error', ruleId: 'BUNDLE-CONTENT-DRIFT', message: CONTENT_DRIFT_MESSAGE });
+          contentValidator.ran = true;
+          contentValidator.errorCount = 1;
+        } else if (assessment.state === 'unproven') {
+          const severity = bundleTrustEnforced() ? 'error' : 'warning';
+          findings.push({ severity, ruleId: 'BUNDLE-CONTENT-UNPROVEN', message: unprovenMessage(assessment.reason) });
+          // The assessment DID run — it read the descriptor and found nothing
+          // it can compare. Reporting ran:false would read as "not looked at".
+          contentValidator.ran = true;
+          if (severity === 'error') contentValidator.errorCount = 1;
+          else contentValidator.warningCount = 1;
+        } else {
+          contentValidator.ran = true;
+        }
+      } catch (e) {
+        const message = `Content integrity could not be assessed: ${e instanceof Error ? e.message : 'content read failed'}`;
+        findings.push({ severity: 'error', ruleId: 'VALIDATOR-ERROR', message });
+        contentValidator.ran = true;
+        contentValidator.errorCount = 1;
+        contentValidator.error = message;
+      }
+      validators.push(contentValidator);
+    }
+
     // Combined counts across all findings.
     let errorCount = 0;
     let warningCount = 0;
@@ -2300,7 +3092,17 @@ router.post('/packages/:packageId/preflight', async (req: Request, res: Response
     // JSONB pattern as assemble's `bundle` descriptor). Summary only — the
     // finding bodies are already derivable (internal ones live on
     // metadata.bundle.validation; external ones are re-runnable). A failed
-    // write must not lose the computed findings: log and still respond.
+    // write must not lose the computed findings: log and still respond,
+    // saying the summary was not persisted.
+    //
+    // Written under the package row lock against the CURRENT row, and only
+    // while the bundle this run evaluated is still the stored one. The
+    // unlocked write of the pre-run snapshot this replaces reverted
+    // identifiers recorded while the (slow) external validators ran and put
+    // a bundle cleared as stale back as transmittable. A run whose bundle was
+    // cleared or replaced meanwhile describes a bundle the package no longer
+    // has, so its findings are not the package's: nothing is written and the
+    // caller is told to run preflight again.
     const preflightSummary = {
       ranAt: new Date().toISOString(),
       ranBy: (req as any).user?.id ?? null,
@@ -2317,19 +3119,41 @@ router.post('/packages/:packageId/preflight', async (req: Request, res: Response
         ...(v.error ? { error: v.error } : {}),
       })),
     };
+    let persisted: 'stored' | 'superseded' | 'failed' = 'failed';
     try {
-      await db
-        .update(c2cSubmissionPackages)
-        .set({
-          metadata: { ...metadata, preflight: preflightSummary },
-          updatedAt: new Date(),
-        })
-        .where(eq(c2cSubmissionPackages.id, pkg.id));
+      persisted = await withPackageMetadataLock<'stored' | 'superseded'>(pkg.id, (current) => {
+        if (!sameBundle(current.bundle, bundle)) return { metadata: null, result: 'superseded' };
+        return { metadata: { ...current, preflight: preflightSummary }, result: 'stored' };
+      });
     } catch (persistErr) {
       console.error(
         '[submission-ops] preflight-persist-failed',
         persistErr instanceof Error ? persistErr.message : persistErr,
       );
+    }
+    if (persisted === 'failed') {
+      // The lock could not be taken or the write failed. Before these findings
+      // are returned as the package's, make sure they still describe its
+      // bundle; when that cannot be confirmed either, they are not returned
+      // as its own.
+      try {
+        const [again] = await db
+          .select({ metadata: c2cSubmissionPackages.metadata })
+          .from(c2cSubmissionPackages)
+          .where(eq(c2cSubmissionPackages.id, pkg.id));
+        const now = again?.metadata && typeof again.metadata === 'object' ? (again.metadata as Record<string, unknown>).bundle : undefined;
+        if (!sameBundle(now, bundle)) persisted = 'superseded';
+      } catch {
+        persisted = 'superseded';
+      }
+    }
+    if (persisted === 'superseded') {
+      return res.status(409).json({
+        gate: 'bundle_superseded',
+        error:
+          'The bundle was cleared or replaced while preflight ran, or its identity could not be confirmed, so these findings are not tied to the package’s current bundle. Assemble if needed, then run preflight again.',
+        evaluatedSha256: bundle.sha256 ?? null,
+      });
     }
 
     return res.json({
@@ -2346,6 +3170,9 @@ router.post('/packages/:packageId/preflight', async (req: Request, res: Response
         blocking: errorCount > 0,
         errorCount,
         warningCount,
+        // False when the summary could not be written: the findings above are
+        // still this run's, but portfolio rollups will not reflect it.
+        persisted: persisted === 'stored',
       },
     });
   } catch (e) {

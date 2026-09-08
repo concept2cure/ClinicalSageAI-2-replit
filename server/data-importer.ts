@@ -2,7 +2,6 @@ import fs from 'fs';
 import path from 'path';
 import { spawn } from 'child_process';
 import csvParser from 'csv-parser';
-import { pool, query } from './db';
 import { sql } from 'drizzle-orm';
 import { csrReports, csrDetails } from '../shared/schema';
 import { db as _db } from './drizzle';
@@ -17,7 +16,6 @@ const db = _db!;
 export type InsertCsrReport = typeof csrReports.$inferInsert;
 export type InsertCsrDetails = typeof csrDetails.$inferInsert;
 import { extractTextFromPdf } from './openai-service';
-import { validatePdfFile, getPdfMetadata, savePdfFile } from './pdf-processor';
 import { analyzeCsrContent, generateCsrSummary } from './openai-service';
 import { createScopedLogger } from './utils/logger.js';
 

@@ -26,6 +26,13 @@ import {
 } from '../../../../shared/schema/estar-submission';
 import { getCatalogEntry, type EstarCatalogKey } from './estar-catalog';
 import auditService from '../../auditService';
+import { recordGovernedAction } from '../../../routes/c2c/actions';
+import {
+  BINDING_BASIS,
+  persistGovernedActionSignature,
+  type SignatureDbClient,
+} from '../../part11/signature-persistence';
+import { queryableFromDrizzle } from '../../../db/drizzle-queryable';
 import { createScopedLogger } from '../../../utils/logger';
 
 const logger = createScopedLogger('estar-submission-service');
@@ -147,11 +154,170 @@ export async function getEstarSubmission(
   return row as EstarSubmissionRow;
 }
 
+/**
+ * The signature a FILING carries. Declaring a submission made to FDA is the
+ * most consequential act in this workflow, and it used to require nothing: a
+ * status word, a date the client chose, and a free-text tracking number bound
+ * to no artifact.
+ *
+ * `artifactDocumentId` names the retained eSTAR in the program vault. Its hash
+ * is READ FROM THAT ROW, never taken from the caller, so a filing cannot claim
+ * a digest nobody stored. `filedAt` is absent by design: the server stamps it.
+ */
+export interface EstarFilingSignature {
+  /** vault.documents id of the retained official eSTAR this filing was made with. */
+  artifactDocumentId: string;
+  /** Reason-for-signing from the signature form (length enforced at the route). */
+  reason: string;
+  /** The §11.50 meaning the signer declared. */
+  meaning: string;
+  /** How the signer re-authenticated (verifyReauth already passed). */
+  authenticationMethod: string;
+  secondFactorVerified: boolean;
+  ipAddress?: string | null;
+}
+
 export interface AdvanceEstarSubmissionInput {
   toStatus: EstarSubmissionStatus;
-  filedAt?: Date;
   fdaTrackingNumber?: string | null;
   decision?: string | null;
+  /** REQUIRED to reach `filed`; ignored for every other transition. */
+  signature?: EstarFilingSignature;
+}
+
+export interface SignedFilingParams {
+  id: string;
+  organizationId: number;
+  userId: number;
+  /** The status the transition was validated FROM; the UPDATE re-asserts it. */
+  fromStatus: EstarSubmissionStatus;
+  reviewGoalDays: number | null;
+  artifactDocumentId: string;
+  reason: string;
+  meaning: string;
+  authenticationMethod: string;
+  secondFactorVerified: boolean;
+  ipAddress?: string | null;
+  fdaTrackingNumber?: string | null;
+  /** The server's clock. Passed in so the write and the signature share one instant. */
+  now: Date;
+}
+
+/**
+ * Apply a SIGNED filing on the caller's transaction client: resolve the
+ * artifact, move the row, record the governed action, write the electronic
+ * signature. Everything on one client, so the signature lands with the filing
+ * or not at all.
+ *
+ * Order is load-bearing. The artifact is resolved before anything is written —
+ * a filing bound to a document this organization does not hold is refused, not
+ * signed. The UPDATE re-asserts both the organization and the status it was
+ * validated from, so a row that moved underneath us matches nothing and is a
+ * NOT_FOUND rather than a signature attesting a transition that did not happen.
+ * Only then is the act recorded and signed.
+ *
+ * Exported for its own tests: the SQL and the two Part 11 writes are observable
+ * against a fake client, with no database.
+ */
+export async function applySignedFiling(
+  client: SignatureDbClient,
+  p: SignedFilingParams,
+): Promise<{ artifactSha256: string }> {
+  const artifact = await client.query(
+    `SELECT content_hash FROM vault.documents
+      WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL
+      LIMIT 1`,
+    [p.artifactDocumentId, p.organizationId],
+  );
+  const artifactSha256: string | undefined = artifact.rows[0]?.content_hash;
+  if (!artifactSha256) {
+    throw new EstarSubmissionError(
+      'VALIDATION',
+      'The eSTAR named for this filing is not a retained document in your organization vault.',
+    );
+  }
+
+  const decisionDueAt = computeDecisionDue(p.now, p.reviewGoalDays);
+  // COALESCE on the tracking number: filing may supply one, and omitting it
+  // leaves whatever is already there. Clearing it is not a filing action.
+  const updated = await client.query(
+    `UPDATE estar_submissions
+        SET status = 'filed',
+            filed_at = $3,
+            decision_due_at = $4,
+            filed_artifact_document_id = $5,
+            filed_artifact_sha256 = $6,
+            fda_tracking_number = COALESCE($7, fda_tracking_number),
+            updated_at = $3
+      WHERE id = $1 AND organization_id = $2 AND status = $8
+      RETURNING id`,
+    [
+      p.id,
+      p.organizationId,
+      p.now,
+      decisionDueAt,
+      p.artifactDocumentId,
+      artifactSha256,
+      p.fdaTrackingNumber ?? null,
+      p.fromStatus,
+    ],
+  );
+  if (!updated.rows[0]) {
+    throw new EstarSubmissionError(
+      'NOT_FOUND',
+      'The filing changed while it was being signed; nothing was filed and nothing was signed.',
+    );
+  }
+
+  const target = `estar-submission:${p.id}`;
+  const governed = await recordGovernedAction(client, {
+    orgId: p.organizationId,
+    userId: p.userId,
+    command: 'sign',
+    target,
+    reason: p.reason,
+    payload: {
+      meaning: p.meaning,
+      toStatus: 'filed',
+      artifactDocumentId: p.artifactDocumentId,
+      artifactSha256,
+      filedAt: p.now.toISOString(),
+    },
+    domain: 'mdx',
+    surface: 'estar-filing',
+  });
+
+  await persistGovernedActionSignature(client, {
+    orgId: p.organizationId,
+    userId: p.userId,
+    target,
+    reason: p.reason,
+    payload: { meaning: p.meaning },
+    actionId: governed.actionId,
+    auditId: governed.auditId,
+    sha256Chain: governed.sha256Chain,
+    authenticationMethod: p.authenticationMethod,
+    secondFactorVerified: p.secondFactorVerified,
+    ipAddress: p.ipAddress ?? null,
+    occurredAt: p.now,
+    binding: {
+      digest: artifactSha256,
+      basis: BINDING_BASIS.FILED_ESTAR_ARTIFACT,
+      note:
+        `sha256 of the retained official eSTAR (vault.documents ${p.artifactDocumentId}), ` +
+        'read from the stored row at filing time.',
+    },
+    // An auditor reading the manifest should not have to join a hash back to a
+    // document to learn what was filed.
+    extraManifest: {
+      filedArtifactDocumentId: p.artifactDocumentId,
+      filedAt: p.now.toISOString(),
+    },
+    manifestKind: 'governed-estar-filing',
+    command: 'sign',
+  });
+
+  return { artifactSha256 };
 }
 
 /**
@@ -175,16 +341,46 @@ export async function advanceEstarSubmission(
     );
   }
 
+  /* FILING IS A SIGNATURE. Every other transition is a status change this
+     service audits; reaching `filed` declares a submission made to FDA, so it
+     goes through the governed path: an artifact this organization holds, a
+     server-stamped instant, a ledger row and an electronic signature bound to
+     the artifact's hash, all on one transaction. */
+  if (input.toStatus === 'filed') {
+    if (!input.signature) {
+      throw new EstarSubmissionError(
+        'VALIDATION',
+        'Filing an eSTAR requires an electronic signature naming the retained eSTAR it was filed with.',
+      );
+    }
+    const now = new Date();
+    await db.transaction(async (tx) => {
+      await applySignedFiling(queryableFromDrizzle(tx), {
+        id,
+        organizationId: ctx.organizationId,
+        userId: ctx.userId,
+        fromStatus: current.status as EstarSubmissionStatus,
+        reviewGoalDays: current.reviewGoalDays,
+        artifactDocumentId: input.signature!.artifactDocumentId,
+        reason: input.signature!.reason,
+        meaning: input.signature!.meaning,
+        authenticationMethod: input.signature!.authenticationMethod,
+        secondFactorVerified: input.signature!.secondFactorVerified,
+        ipAddress: input.signature!.ipAddress ?? null,
+        fdaTrackingNumber: input.fdaTrackingNumber ?? null,
+        now,
+      });
+    });
+    // Re-read through the same accessor every other path returns, so the
+    // response shape cannot drift from the raw UPDATE's column names.
+    return getEstarSubmission(id, ctx);
+  }
+
   const patch: Partial<typeof estarSubmissions.$inferInsert> = {
     status: input.toStatus,
     updatedAt: new Date(),
   };
   if (input.fdaTrackingNumber !== undefined) patch.fdaTrackingNumber = input.fdaTrackingNumber;
-  if (input.toStatus === 'filed') {
-    const filedAt = input.filedAt ?? new Date();
-    patch.filedAt = filedAt;
-    patch.decisionDueAt = computeDecisionDue(filedAt, current.reviewGoalDays);
-  }
   if (input.toStatus === 'decision' && input.decision !== undefined) {
     patch.decision = input.decision;
   }
@@ -207,6 +403,7 @@ export async function advanceEstarSubmission(
 }
 
 export default {
+  applySignedFiling,
   canTransition,
   computeDecisionDue,
   createEstarSubmission,

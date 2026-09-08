@@ -9,6 +9,9 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
  *   3. It refuses a sequence that does not belong to the stated submission.
  *   4. An approved section with no compiled narrative is skipped and SAID to
  *      be skipped — never filed as an empty leaf.
+ *   5. A run in which EVERY approved section was skipped filed nothing, so it
+ *      refuses (carrying the per-section reasons) instead of reporting a
+ *      successful placement of zero sections.
  */
 
 const evaluateFinalExportGate = vi.fn();
@@ -18,13 +21,21 @@ vi.mock('../final-export-gate', () => ({
 
 const getSequence = vi.fn();
 const upsertLeaf = vi.fn();
+const listSequences = vi.fn<(...args: any[]) => Promise<any[]>>(async () => []);
+const listLeaves = vi.fn<(...args: any[]) => Promise<any[]>>(async () => []);
 vi.mock('../../submission-service/submission-service', () => ({
   getSequence: (...args: unknown[]) => getSequence(...args),
   upsertLeaf: (...args: unknown[]) => upsertLeaf(...args),
+  listSequences: (...args: unknown[]) => listSequences(...args),
+  listLeaves: (...args: unknown[]) => listLeaves(...args),
 }));
 
 const poolQueries: Array<{ sql: string; params: unknown[] }> = [];
-let sectionRows: Array<{ sectionKey: string; narrativeText: string | null }> = [];
+let sectionRows: Array<{
+  sectionKey: string;
+  narrativeText: string | null;
+  deterministicJson?: Record<string, unknown> | null;
+}> = [];
 const inserted: Array<Record<string, unknown>> = [];
 let nextSnapshotId = 500;
 
@@ -48,7 +59,11 @@ vi.mock('../../../db', () => ({
   },
 }));
 
-import { placeModule3IntoSubmission, toLeafSectionCode } from '../place-module3-into-submission';
+import {
+  LEGACY_NO_TABLES_SKIP_REASON,
+  placeModule3IntoSubmission,
+  toLeafSectionCode,
+} from '../place-module3-into-submission';
 
 const GATE_PASS = {
   allowed: true,
@@ -66,6 +81,10 @@ describe('placeModule3IntoSubmission', () => {
     evaluateFinalExportGate.mockReset();
     getSequence.mockReset();
     upsertLeaf.mockReset();
+    listSequences.mockReset();
+    listSequences.mockResolvedValue([]);
+    listLeaves.mockReset();
+    listLeaves.mockResolvedValue([]);
     poolQueries.length = 0;
     inserted.length = 0;
     sectionRows = [];
@@ -88,9 +107,11 @@ describe('placeModule3IntoSubmission', () => {
     });
 
     expect(result.placed).toBe(false);
-    if (!result.placed) {
+    if (!result.placed && result.refusedBy === 'final-export-gate') {
       expect(result.error).toMatch(/stale after approval/);
       expect(result.data.staleSections).toBe(3);
+    } else {
+      throw new Error('expected the final-export gate to be the refuser');
     }
     // Nothing was read from the sequence, snapshotted, or placed.
     expect(getSequence).not.toHaveBeenCalled();
@@ -98,13 +119,57 @@ describe('placeModule3IntoSubmission', () => {
     expect(inserted).toHaveLength(0);
   });
 
+  it('files a section already placed in an earlier sequence as replace of that leaf, not as new', async () => {
+    // This always filed 'new', so an amendment's m3.2.S.7 was announced to the
+    // agency as brand-new content with no lifecycle link to the leaf it revises.
+    evaluateFinalExportGate.mockResolvedValue(GATE_PASS);
+    getSequence.mockResolvedValue({ id: 20, submissionId: 10, sequenceNumber: '0001', status: 'draft' });
+    listSequences.mockResolvedValue([
+      { id: 20, submissionId: 10, sequenceNumber: '0001' },
+      { id: 10, submissionId: 10, sequenceNumber: '0000' },
+      { id: 30, submissionId: 10, sequenceNumber: '0002' }, // later — never a parent
+    ]);
+    listLeaves.mockImplementation(async (sequenceId: number) =>
+      sequenceId === 10
+        ? [
+            { id: 700, sectionCode: 'm3.2.S.1', documentType: 'cmc_module3_section', lifecycleOp: 'new' },
+            { id: 701, sectionCode: 'm3.2.P.8', documentType: 'protocol', lifecycleOp: 'new' }, // not a Module 3 placement
+          ]
+        : sequenceId === 30
+          ? [{ id: 800, sectionCode: 'm3.2.P.8', documentType: 'cmc_module3_section', lifecycleOp: 'new' }]
+          : [],
+    );
+    upsertLeaf.mockImplementation(async (input: { sectionCode: string }) => ({ id: 900, sectionCode: input.sectionCode }));
+    // `deterministicJson` carrying a tables array is what marks a section as
+    // composed AFTER the table-carrying compiler — a row without one is skipped
+    // as a pre-tables section (see the 'pre-tables' case below), which would
+    // make this a refusal rather than a lifecycle-op assertion.
+    sectionRows = [
+      { sectionKey: '3.2.S.1', narrativeText: 'Revised general information.', deterministicJson: { tables: [] } },
+      { sectionKey: '3.2.P.8', narrativeText: 'Stability narrative.', deterministicJson: { tables: [] } },
+    ];
+
+    const result = await placeModule3IntoSubmission({ orgId: 7, userId: 42, cmcProjectId: 'proj-1', submissionId: 10, sequenceId: 20 });
+    expect(result.placed).toBe(true);
+
+    const s1 = upsertLeaf.mock.calls.find((c) => c[0].sectionCode === 'm3.2.S.1')![0];
+    expect(s1.lifecycleOp).toBe('replace');
+    expect(s1.parentLeafId).toBe(700);
+    const p8 = upsertLeaf.mock.calls.find((c) => c[0].sectionCode === 'm3.2.P.8')![0];
+    expect(p8.lifecycleOp).toBe('new');
+    expect(p8.parentLeafId ?? null).toBeNull();
+    // Every sequence read is tenant-scoped.
+    expect(listSequences).toHaveBeenCalledWith(10, { organizationId: 7 });
+    expect(listLeaves).toHaveBeenCalledWith(10, { organizationId: 7 });
+  });
+
   it('snapshots approved sections into coauthor_documents and places m-prefixed leaves', async () => {
     evaluateFinalExportGate.mockResolvedValue(GATE_PASS);
     getSequence.mockResolvedValue({ id: 20, submissionId: 10, status: 'draft' });
     upsertLeaf.mockImplementation(async (input: { sectionCode: string }) => ({ id: 900, sectionCode: input.sectionCode }));
     sectionRows = [
-      { sectionKey: '3.2.S.1', narrativeText: 'General information narrative.' },
-      { sectionKey: '3.2.P.8', narrativeText: 'Stability narrative.' },
+      { sectionKey: '3.2.S.1', narrativeText: 'General information narrative.', deterministicJson: { tables: [] } },
+      { sectionKey: '3.2.P.8', narrativeText: 'Stability narrative.', deterministicJson: { tables: [] } },
     ];
 
     const result = await placeModule3IntoSubmission({
@@ -159,8 +224,8 @@ describe('placeModule3IntoSubmission', () => {
     getSequence.mockResolvedValue({ id: 20, submissionId: 10, status: 'draft' });
     upsertLeaf.mockResolvedValue({ id: 901 });
     sectionRows = [
-      { sectionKey: '3.2.S.1', narrativeText: '  ' },
-      { sectionKey: '3.2.S.4', narrativeText: 'Control of drug substance.' },
+      { sectionKey: '3.2.S.1', narrativeText: '  ', deterministicJson: { tables: [] } },
+      { sectionKey: '3.2.S.4', narrativeText: 'Control of drug substance.', deterministicJson: { tables: [] } },
     ];
 
     const result = await placeModule3IntoSubmission({
@@ -177,6 +242,169 @@ describe('placeModule3IntoSubmission', () => {
       expect(result.skipped).toEqual([{ sectionKey: '3.2.S.1', reason: 'No compiled narrative to place.' }]);
     }
   });
+
+  it('carries the composed tables the narrative cites into the placed snapshot', async () => {
+    evaluateFinalExportGate.mockResolvedValue(GATE_PASS);
+    getSequence.mockResolvedValue({ id: 20, submissionId: 10, status: 'draft' });
+    upsertLeaf.mockResolvedValue({ id: 902 });
+    const narrative =
+      '2 controlled change(s) are recorded in the change register; see the change history table.';
+    sectionRows = [
+      {
+        sectionKey: '3.2.P.3',
+        narrativeText: narrative,
+        deterministicJson: {
+          sectionKey: '3.2.P.3',
+          completeness: 100,
+          missingInputs: [],
+          tables: [
+            {
+              title: 'Change History — Drug Product',
+              headers: ['Change ID', 'Effective'],
+              rows: [
+                ['CC-0001', '2026-01-04'],
+                ['CC-0002', '2026-02-11'],
+              ],
+            },
+          ],
+        },
+      },
+    ];
+
+    const result = await placeModule3IntoSubmission({
+      orgId: 7,
+      userId: 42,
+      cmcProjectId: 'proj-1',
+      submissionId: 10,
+      sequenceId: 20,
+    });
+
+    expect(result.placed).toBe(true);
+    expect(inserted).toHaveLength(1);
+    const content = String(inserted[0].content);
+    expect(content).toContain('## Manufacture (Drug Product)');
+    expect(content).toContain(narrative);
+    // The tables the narrative cites must be IN the filed snapshot.
+    expect(content).toContain('### Change History — Drug Product');
+    expect(content).toContain('| Change ID | Effective |');
+    expect(content).toContain('| --- | --- |');
+    expect(content).toContain('| CC-0001 | 2026-01-04 |');
+    expect(content).toContain('| CC-0002 | 2026-02-11 |');
+    if (result.placed) {
+      expect(result.placements[0].tableCount).toBe(1);
+    }
+  });
+
+  it('places the placeable sections and says which ones were skipped as pre-tables', async () => {
+    evaluateFinalExportGate.mockResolvedValue(GATE_PASS);
+    getSequence.mockResolvedValue({ id: 20, submissionId: 10, status: 'draft' });
+    upsertLeaf.mockResolvedValue({ id: 903 });
+    sectionRows = [
+      {
+        sectionKey: '3.2.S.1',
+        narrativeText: 'General information narrative.',
+        deterministicJson: { sectionKey: '3.2.S.1', completeness: 100, missingInputs: [], tables: [] },
+      },
+      {
+        sectionKey: '3.2.S.4',
+        narrativeText: 'Impurity limits are reported in the table above.',
+        // Compiled before tables were carried: NO `tables` key at all.
+        deterministicJson: { sectionKey: '3.2.S.4', completeness: 100, missingInputs: [] },
+      },
+    ];
+
+    const result = await placeModule3IntoSubmission({
+      orgId: 7,
+      userId: 42,
+      cmcProjectId: 'proj-1',
+      submissionId: 10,
+      sequenceId: 20,
+    });
+
+    expect(result.placed).toBe(true);
+    if (result.placed) {
+      expect(result.placements.map((p) => p.sectionKey)).toEqual(['3.2.S.1']);
+      expect(result.skipped).toEqual([
+        { sectionKey: '3.2.S.4', reason: LEGACY_NO_TABLES_SKIP_REASON },
+      ]);
+    }
+    expect(upsertLeaf).toHaveBeenCalledTimes(1);
+    expect(inserted).toHaveLength(1);
+  });
+
+  /* A placement that placed NOTHING is not a placement. Every section approved
+     before the tables were carried lands here on the first attempt after that
+     change, so this is the common case at rollout — it must refuse, not report
+     a successful filing of zero leaves. */
+  it('refuses the whole placement — with no write — when every approved section is unplaceable', async () => {
+    evaluateFinalExportGate.mockResolvedValue(GATE_PASS);
+    getSequence.mockResolvedValue({ id: 20, submissionId: 10, status: 'draft' });
+    upsertLeaf.mockResolvedValue({ id: 903 });
+    // Row order is the SELECT's ORDER BY section_key.
+    sectionRows = [
+      { sectionKey: '3.2.P.8', narrativeText: '   ', deterministicJson: { tables: [] } },
+      {
+        sectionKey: '3.2.S.4',
+        narrativeText: 'Impurity limits are reported in the table above.',
+        // Compiled before tables were carried: NO `tables` key at all.
+        deterministicJson: { sectionKey: '3.2.S.4', completeness: 100, missingInputs: [] },
+      },
+    ];
+
+    const result = await placeModule3IntoSubmission({
+      orgId: 7,
+      userId: 42,
+      cmcProjectId: 'proj-1',
+      submissionId: 10,
+      sequenceId: 20,
+    });
+
+    expect(result.placed).toBe(false);
+    if (!result.placed && result.refusedBy === 'nothing-placeable') {
+      expect(result.skipped).toEqual([
+        { sectionKey: '3.2.P.8', reason: 'No compiled narrative to place.' },
+        { sectionKey: '3.2.S.4', reason: LEGACY_NO_TABLES_SKIP_REASON },
+      ]);
+      // The refusal names the count and carries the reasons in its own wording.
+      expect(result.error).toContain('2 approved section(s)');
+      expect(result.error).toContain(LEGACY_NO_TABLES_SKIP_REASON);
+    } else {
+      throw new Error('expected a nothing-placeable refusal');
+    }
+    expect(upsertLeaf).not.toHaveBeenCalled();
+    expect(inserted).toHaveLength(0);
+  });
+
+  it('places a genuinely table-free section with no table block and no trailing blank tail', async () => {
+    evaluateFinalExportGate.mockResolvedValue(GATE_PASS);
+    getSequence.mockResolvedValue({ id: 20, submissionId: 10, status: 'draft' });
+    upsertLeaf.mockResolvedValue({ id: 904 });
+    sectionRows = [
+      {
+        sectionKey: '3.2.S.1',
+        narrativeText: 'General information narrative.',
+        deterministicJson: { sectionKey: '3.2.S.1', completeness: 100, missingInputs: [], tables: [] },
+      },
+    ];
+
+    const result = await placeModule3IntoSubmission({
+      orgId: 7,
+      userId: 42,
+      cmcProjectId: 'proj-1',
+      submissionId: 10,
+      sequenceId: 20,
+    });
+
+    expect(result.placed).toBe(true);
+    if (result.placed) {
+      expect(result.placements).toHaveLength(1);
+      expect(result.placements[0].tableCount).toBe(0);
+      expect(result.skipped).toHaveLength(0);
+    }
+    const content = String(inserted[0].content);
+    expect(content).not.toContain('###');
+    expect(content.endsWith('General information narrative.')).toBe(true);
+  });
 });
 
 describe('toLeafSectionCode', () => {
@@ -184,5 +412,31 @@ describe('toLeafSectionCode', () => {
     expect(toLeafSectionCode('3.2.S.1')).toBe('m3.2.S.1');
     expect(toLeafSectionCode('3.1')).toBe('m3.1');
     expect(toLeafSectionCode('3.3')).toBe('m3.3');
+  });
+});
+
+describe('the governed artifact and the filed leaf are the same bytes', () => {
+  it('renders a narrative with a trailing space identically for both consumers', async () => {
+    /* renderComposedSectionMarkdown documents itself as the one renderer both
+       consumers use "so there is one function, not two". The bridge did not
+       call it — it re-implemented the same two lines — and placement trimmed
+       the narrative while the bridge did not. Several generators end a
+       narrative with a trailing space, so the coauthor_documents snapshot
+       pinned by upsertLeaf and the governed artifact for the SAME compile of
+       the same section hashed differently. */
+    const { renderComposedSectionMarkdown } = await import('../../module3Composer');
+    const label = 'Drug Substance — Characterisation';
+    const tables = [{ title: 'T', headers: ['A'], rows: [['1']] }];
+
+    const trailing = renderComposedSectionMarkdown(label, 'Structure confirmed. ', tables);
+    const trimmed = renderComposedSectionMarkdown(label, 'Structure confirmed.', tables);
+    expect(trailing).toBe(trimmed);
+    expect(trailing).not.toContain('. \n\n|');
+
+    // Leading whitespace too, and a null narrative is empty, not "null".
+    expect(renderComposedSectionMarkdown(label, '\n  Structure confirmed.\n', null)).toBe(
+      renderComposedSectionMarkdown(label, 'Structure confirmed.', null),
+    );
+    expect(renderComposedSectionMarkdown(label, undefined as unknown as string, null)).toBe(`## ${label}\n\n`);
   });
 });

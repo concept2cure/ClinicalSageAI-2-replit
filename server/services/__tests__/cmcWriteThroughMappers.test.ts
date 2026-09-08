@@ -34,8 +34,10 @@ import {
   mapFormulationRecordPayload,
   mapManufacturingProcessPayload,
   mapCharacterizationStudyPayload,
+  mapStabilityPayload,
 } from '../cmc-write-through';
 import { MODULE3_SECTION_RULES, composeModule3FromCanonicalSources, tablesToMarkdown } from '../module3Composer';
+import { composeAppendices, emittableAppendices } from '../module3-extensions';
 
 /** A canonical source as the composer receives it. */
 const src = (sourceType: string, sourcePayload: Record<string, unknown>) =>
@@ -152,6 +154,18 @@ describe('mapDrugProductPayload — the §3.2.P register row (nested packaging/p
     expect(p.batchFormulaDetail).toEqual(row.batchFormula);
     const noBatchFormula = mapDrugProductPayload({ ...row, batchFormula: undefined });
     expect(noBatchFormula.formulation).toBeNull();
+    /* The shape the register's own form now writes — a json column whose
+       staffer-typed text sits under `description`, exactly as composition does.
+       Read through textOf() it rendered as the literal "description: Per
+       250,000-tablet batch…" into §3.2.P.3.2. */
+    const typed = mapDrugProductPayload({
+      ...row,
+      batchFormula: { description: 'Per 250,000-tablet batch: BX-701 1.25 kg; MCC 20.0 kg; magnesium stearate 0.25 kg' },
+    });
+    expect(typed.formulation).toBe('Per 250,000-tablet batch: BX-701 1.25 kg; MCC 20.0 kg; magnesium stearate 0.25 kg');
+    expect(typed.formulation).not.toMatch(/description:/);
+    // The per-unit composition is a different fact and never stands in for it.
+    expect(typed.composition).not.toBe(typed.formulation);
   });
 });
 
@@ -1206,6 +1220,17 @@ const impurity = (over: Record<string, unknown> = {}) =>
   });
 
 describe('mapImpurityProfilePayload — one row per impurity, assessed against ICH', () => {
+  it('carries the ICH M7 inputs as recorded and never defaults them', () => {
+    const withM7 = impurity({ impurityType: 'mutagenic', amesResult: 'positive', structuralAlert: 'yes', carcinogenicityData: 'not-tested', treatmentDuration: 'lifetime', cohortOfConcern: 'CoC_nitrosamine' });
+    expect(withM7).toMatchObject({ amesResult: 'positive', structuralAlert: 'yes', carcinogenicityData: 'not-tested', treatmentDuration: 'lifetime', cohortOfConcern: 'CoC_nitrosamine' });
+    // The stored row shape.
+    expect(mapImpurityProfilePayload({ impurity_name: 'X', impurity_type: 'mutagenic', ames_result: 'negative', structural_alert: 'no' })).toMatchObject({ amesResult: 'negative', structuralAlert: 'no' });
+    // Unrecorded stays unrecorded — the assessment refuses on it, it is not read as negative.
+    const blank = impurity({ impurityType: 'mutagenic' });
+    expect(blank.amesResult ?? '').toBe('');
+    expect(blank.structuralAlert ?? '').toBe('');
+  });
+
   it('renders a ppm level as ppm, never as a percentage', () => {
     /* The table this replaced printed `${observedLevel}%` unconditionally, so a
        residual solvent recorded at 300 ppm appeared in a filing as 300% — a
@@ -1860,6 +1885,36 @@ describe('mapManufacturingProcessPayload — the process, not one sentence about
     expect(s2.missingInputs).toContain('manufacturingProcessComplete');
   });
 
+  it('emits §3.2.P.2\'s manufacturingProcessDev from the recorded process development, drug-product side only', () => {
+    /* §3.2.P.2 requires `manufacturingProcessDev` and nothing produced it, so
+       the section could never complete. The register captures the development
+       history in process_development; a drug-PRODUCT process (§3.2.P.2.3) is
+       what the pharmaceutical development section describes — a drug-substance
+       process's development belongs to §3.2.S.2.6 and must not complete it. */
+    const dev = 'Roller compaction selected over wet granulation after the moisture-sensitivity study DS-014.';
+    const dp = mapManufacturingProcessPayload(process({ processType: 'Drug Product', processDevelopment: dev }));
+    expect(dp.manufacturingProcessDev).toBe(dev);
+    expect(required('3.2.P.2')).toContain('manufacturingProcessDev');
+
+    const ds = mapManufacturingProcessPayload(process({ processType: 'Drug Substance', processDevelopment: dev }));
+    expect(ds.manufacturingProcessDev).toBeNull();
+  });
+
+  it('never emits a placeholder for manufacturingProcessDev when no development was recorded', () => {
+    const none = mapManufacturingProcessPayload(process({ processType: 'Drug Product', processDevelopment: '' }));
+    expect(none.manufacturingProcessDev).toBeNull();
+    const snake = mapManufacturingProcessPayload(process({ processType: 'Drug Product', processDevelopment: undefined, process_development: '   ' }));
+    expect(snake.manufacturingProcessDev).toBeNull();
+  });
+
+  /* NOT pinned here: §3.2.P.2 composing from this field. MODULE3_SECTION_RULES'
+     3.2.P.2 rule (module3Composer.ts) does not list `manufacturing_process` in
+     its requiredSourceTypes, so the composer never matches a process source
+     for that section and `manufacturingProcessDev` cannot count toward its
+     completeness until that rule names the register. The mapper's side of the
+     contract — emit the field, drug-product side, only when recorded — is what
+     the two tests above pin. */
+
   it('§3.2.P.3 renders the register rather than the drug product form when both exist', () => {
     /* The section read `processSteps` through a first-match array helper, so
        once the register began emitting rows the two shapes competed for one
@@ -2130,5 +2185,201 @@ describe('review: what the register data is allowed to CLAIM', () => {
     const narrative = composed.find((c) => c.sectionKey === '3.2.P.4')!.narrativeDraft;
     expect(narrative).not.toContain('each controlled to the specification');
     expect(narrative).toContain('record neither a specification nor a compendial monograph');
+  });
+});
+
+describe('mapFormulationRecordPayload — §3.2.P.2.2 has a producer', () => {
+  it('emits formulationDevelopment from the recorded rationale, and null when none is recorded', async () => {
+    const base = { formulationName: 'BX-701 5 mg tablet', status: 'current', components: [{ component: 'BX-701', role: 'Active' }] };
+    expect(mapFormulationRecordPayload({ ...base, formulationDevelopment: 'Immediate-release tablet chosen over capsule for dose uniformity; MCC:lactose ratio fixed at 2:1 after prototypes F1-F3.' }).formulationDevelopment).toMatch(/prototypes F1-F3/);
+    expect(mapFormulationRecordPayload({ ...base, formulation_development: 'stored shape' }).formulationDevelopment).toBe('stored shape');
+    expect(mapFormulationRecordPayload({ ...base, formulationDevelopment: '   ' }).formulationDevelopment).toBeNull();
+    expect(mapFormulationRecordPayload(base).formulationDevelopment).toBeNull();
+  });
+});
+
+describe('review: the stability mapper carries the condition array beside the joined string', () => {
+  it('emits storageConditions as an array so a multi-condition study can be told apart', async () => {
+    const { mapStabilityPayload } = await import('../cmc-write-through');
+    const p = mapStabilityPayload({ studyTitle: 'S1', storageConditions: ['25°C/60%RH', '40°C/75%RH'], stabilityData: [] });
+    expect(p.storageConditions).toEqual(['25°C/60%RH', '40°C/75%RH']);
+    expect(p.storageCondition).toBe('25°C/60%RH, 40°C/75%RH');
+    expect(mapStabilityPayload({ studyTitle: 'S2', stabilityData: [] }).storageConditions).toBeNull();
+  });
+});
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   §3.2.A.3 — the formulation component and the excipient register row that
+   describe the SAME material are one excipient, and the certificate lives on
+   the register row.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+describe('§3.2.A.3 joins a formulation component to the excipient register row of the same name', () => {
+  const gelatinRegisterRow = () =>
+    mapMaterialSpecPayload({
+      materialRole: 'excipient',
+      materialName: 'Gelatin',
+      functionInFormulation: 'Capsule shell',
+      grade: 'Ph. Eur.',
+      supplier: 'Rousselot',
+      origin: 'bovine',
+      tseCertificate: 'CEP R1-CEP 2000-045-Rev 03 (TSE)',
+      status: 'specified',
+    });
+
+  const capsuleFormulation = (gelatin: Record<string, unknown>) =>
+    mapFormulationRecordPayload({
+      formulationName: 'BX-cap 25 mg hard capsule',
+      version: 'F-v1.0',
+      components: [
+        { component: 'BX-204', role: 'Active', amountPerUnit: '25', unit: 'mg', origin: 'synthetic' },
+        { component: 'Lactose monohydrate', role: 'Diluent', amountPerUnit: '100', unit: 'mg', origin: 'bovine milk' },
+        gelatin,
+      ],
+      status: 'current',
+    });
+
+  it('a bovine gelatin shell whose CEP is on the register is reported CERTIFIED, once, and the section is complete', () => {
+    /* The formulation row records the component's quantity and role; the
+       register row records the supplier's certificate. Read separately, the
+       formulation's gelatin was listed as "NOT RECORDED — no TSE/BSE
+       certificate", the register's gelatin was listed as certified beneath it,
+       and the section — reading NOT ESTABLISHED in its own narrative — compiled
+       at 0% over a certificate it held. */
+    const a3 = emittableAppendices(
+      composeAppendices([
+        src('excipient', gelatinRegisterRow()),
+        src('formulation_record', capsuleFormulation({ component: 'gelatin', role: 'Capsule shell', amountPerUnit: '76', unit: 'mg', origin: 'bovine' })),
+      ]),
+    ).find((s) => s.sectionKey === '3.2.A.3')!;
+    const table = a3.tables.find((t) => t.title.startsWith('Excipients of Human or Animal Origin'))!;
+    const gelatinRows = table.rows.filter((r) => /gelatin/i.test(String(r[0])));
+    expect(gelatinRows).toHaveLength(1);
+    expect(gelatinRows[0][3]).toBe('CEP R1-CEP 2000-045-Rev 03 (TSE)');
+    expect(a3.narrativeDraft).toContain('A TSE/BSE certificate is recorded for each');
+    expect(a3.narrativeDraft).not.toMatch(/NOT ESTABLISHED/);
+    expect(a3.completeness).toBe(100);
+    expect(a3.missingInputs).toEqual([]);
+  });
+
+  it('the join fills a blank origin and role from the register row, and never overwrites what the formulation recorded', () => {
+    const a3 = emittableAppendices(
+      composeAppendices([
+        src('excipient', gelatinRegisterRow()),
+        src('formulation_record', capsuleFormulation({ component: 'Gelatin', amountPerUnit: '76', unit: 'mg' })),
+      ]),
+    ).find((s) => s.sectionKey === '3.2.A.3')!;
+    const table = a3.tables.find((t) => t.title.startsWith('Excipients of Human or Animal Origin'))!;
+    const gelatin = table.rows.find((r) => /gelatin/i.test(String(r[0])))!;
+    expect(gelatin[1]).toBe('Capsule shell');
+    expect(gelatin[2]).toBe('bovine');
+    expect(gelatin[3]).toBe('CEP R1-CEP 2000-045-Rev 03 (TSE)');
+
+    /* The formulation's own role wins over the register's. */
+    const own = emittableAppendices(
+      composeAppendices([
+        src('excipient', gelatinRegisterRow()),
+        src('formulation_record', capsuleFormulation({ component: 'Gelatin', role: 'Shell (size 2)', amountPerUnit: '76', unit: 'mg' })),
+      ]),
+    ).find((s) => s.sectionKey === '3.2.A.3')!;
+    const ownRow = own.tables
+      .find((t) => t.title.startsWith('Excipients of Human or Animal Origin'))!
+      .rows.find((r) => /gelatin/i.test(String(r[0])))!;
+    expect(ownRow[1]).toBe('Shell (size 2)');
+  });
+
+  it('a register row with NO certificate does not certify the formulation component, and the section stays incomplete', () => {
+    const a3 = emittableAppendices(
+      composeAppendices([
+        src('excipient', { ...gelatinRegisterRow(), tseCertificate: '' }),
+        src('formulation_record', capsuleFormulation({ component: 'Gelatin', role: 'Capsule shell', amountPerUnit: '76', unit: 'mg', origin: 'bovine' })),
+      ]),
+    ).find((s) => s.sectionKey === '3.2.A.3')!;
+    const table = a3.tables.find((t) => t.title.startsWith('Excipients of Human or Animal Origin'))!;
+    const gelatinRows = table.rows.filter((r) => /gelatin/i.test(String(r[0])));
+    expect(gelatinRows).toHaveLength(1);
+    expect(gelatinRows[0][3]).toMatch(/^NOT RECORDED/);
+    expect(a3.narrativeDraft).toMatch(/NOT established/);
+    expect(a3.completeness).toBe(0);
+    expect(a3.missingInputs.join(' ')).toMatch(/NOT established/);
+  });
+
+  it('a register excipient the formulation does not name is still listed on its own', () => {
+    const a3 = emittableAppendices(
+      composeAppendices([
+        src('excipient', gelatinRegisterRow()),
+        src('excipient', mapMaterialSpecPayload({
+          materialRole: 'excipient', materialName: 'Lanolin', functionInFormulation: 'Emollient',
+          origin: 'ovine', status: 'specified',
+        })),
+        src('formulation_record', capsuleFormulation({ component: 'Gelatin', role: 'Capsule shell', amountPerUnit: '76', unit: 'mg', origin: 'bovine' })),
+      ]),
+    ).find((s) => s.sectionKey === '3.2.A.3')!;
+    const table = a3.tables.find((t) => t.title.startsWith('Excipients of Human or Animal Origin'))!;
+    expect(table.rows.filter((r) => /gelatin/i.test(String(r[0])))).toHaveLength(1);
+    expect(table.rows.filter((r) => /lanolin/i.test(String(r[0])))).toHaveLength(1);
+    expect(a3.narrativeDraft).toContain('A TSE/BSE certificate is recorded for 1 of 2');
+  });
+});
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Stability is side-scoped: §3.2.S.7 is the drug substance's stability and
+   §3.2.P.8 the drug product's, and the register already asks which.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+describe('mapStabilityPayload — the scope the register captures reaches the composer', () => {
+  const study = (over: Record<string, unknown> = {}) => ({
+    studyTitle: 'BX-701 long term',
+    storageConditions: ['25C/60%RH'],
+    timePoints: ['0', '3', '6', '12'],
+    shelfLife: '24 months at 25C/60%RH',
+    ...over,
+  });
+
+  it('emits the scope and the side-scoped keys', () => {
+    const ds = mapStabilityPayload(study({ scope: 'DS' }));
+    expect(ds.stabilityScope).toBe('drug_substance');
+    expect(ds.drugSubstanceTimePoints).toBeTruthy();
+    expect(ds.drugSubstanceStorageCondition).toBe('25C/60%RH');
+    expect(ds.drugProductShelfLifeClaim).toBeNull();
+
+    const dp = mapStabilityPayload(study({ scope: 'DP' }));
+    expect(dp.stabilityScope).toBe('drug_product');
+    expect(dp.drugProductShelfLifeClaim).toBe('24 months at 25C/60%RH');
+    expect(dp.drugSubstanceTimePoints).toBeNull();
+
+    const both = mapStabilityPayload(study({ scope: 'both' }));
+    expect(both.drugSubstanceTimePoints).toBeTruthy();
+    expect(both.drugProductShelfLifeClaim).toBeTruthy();
+  });
+
+  it('a DRUG SUBSTANCE study does not complete §3.2.P.8, and vice versa', () => {
+    /* The mapper emitted sixteen keys and not `scope`, and the composer filters
+       by source TYPE — so every stability study fed both sections: a
+       drug-substance study set the drug product's shelf life, and a
+       drug-product study set the substance's storage condition and pull
+       points. The register form's own control is labelled with the section
+       each choice files under. */
+    const dsOnly = composeModule3FromCanonicalSources([src('stability', mapStabilityPayload(study({ scope: 'DS' })))]);
+    const p8 = dsOnly.find((s) => s.sectionKey === '3.2.P.8')!;
+    expect(p8.missingInputs).toContain('drugProductShelfLifeClaim');
+    expect(p8.completeness).toBeLessThan(100);
+    const s7 = dsOnly.find((s) => s.sectionKey === '3.2.S.7')!;
+    expect(s7.missingInputs).toEqual([]);
+
+    const dpOnly = composeModule3FromCanonicalSources([src('stability', mapStabilityPayload(study({ scope: 'DP' })))]);
+    const s7b = dpOnly.find((s) => s.sectionKey === '3.2.S.7')!;
+    expect(s7b.missingInputs).toContain('drugSubstanceTimePoints');
+    expect(dpOnly.find((s) => s.sectionKey === '3.2.P.8')!.missingInputs).toEqual([]);
+  });
+
+  it('the drug product study does not set the drug substance section’s condition', () => {
+    const composed = composeModule3FromCanonicalSources([
+      src('stability', mapStabilityPayload(study({ scope: 'DP', storageConditions: ['40C/75%RH'], studyTitle: 'DP accelerated' }))),
+      src('stability', mapStabilityPayload(study({ scope: 'DS', storageConditions: ['5C ± 3C'], studyTitle: 'DS long term' }))),
+    ]);
+    const s7 = composed.find((s) => s.sectionKey === '3.2.S.7')!;
+    expect(tablesToMarkdown(s7.tables)).toContain('5C ± 3C');
+    expect(tablesToMarkdown(s7.tables)).not.toContain('40C/75%RH');
   });
 });

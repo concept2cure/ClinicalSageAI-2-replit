@@ -439,7 +439,10 @@ export default function createIVDRRoutes(pool: Pool): Router {
     try {
       const { id } = req.params as { id: string };
       const orgId = getServerOrgId(req);
-      const userId = (req as any).userId || (req as any).user?.id || 'system';
+      const userId = getAuthenticatedActorId(req);
+      if (!userId) {
+        return res.status(403).json({ error: 'An authenticated actor is required for validation parameter changes' });
+      }
       const {
         lod, // Limit of Detection
         loq, // Limit of Quantitation
@@ -462,50 +465,53 @@ export default function createIVDRRoutes(pool: Pool): Router {
         reason, // Change reason for audit trail
       } = req.body;
 
-      // ── Compute real pass/fail against acceptance criteria ──────────
-      const paramVals: Record<string, number | null> = {
-        lod,
-        loq,
-        precisionCV,
-        withinRunCV,
-        betweenRunCV,
-        betweenDayCV,
-        reproducibilityCV,
-        sensitivity,
-        specificity,
-        accuracy,
-        carryOver,
-      };
-      const criteria = acceptanceCriteria || {};
-      const passFailStatus: Record<string, string> = {};
-      for (const [key, val] of Object.entries(paramVals)) {
-        if (val == null) {
-          passFailStatus[key] = 'pending';
-          continue;
-        }
-        const crit = criteria[key];
-        if (!crit) {
-          passFailStatus[key] = 'recorded';
-          continue;
-        }
-        const numVal = Number(val);
-        let pass = true;
-        if (crit.min != null && numVal < Number(crit.min)) pass = false;
-        if (crit.max != null && numVal > Number(crit.max)) pass = false;
-        passFailStatus[key] = pass ? 'pass' : 'fail';
+      /* Every value column below is COALESCEd, so a PUT carrying one parameter
+         leaves the rest of the record standing. pass_fail_status is a single
+         column holding the verdict for all of them, so it cannot be merged the
+         same way — it has to be recomputed over the record as it will stand
+         after this write. Computing it from the request body alone marked every
+         parameter the caller did not resend as 'pending', silently retracting
+         the pass verdict on a limit of detection whose value, and whose
+         acceptance criterion, were both still in the row. */
+      const current = await pool.query(
+        `SELECT lod, loq, precision_cv, within_run_cv, between_run_cv, between_day_cv,
+                reproducibility_cv, sensitivity, specificity, accuracy, carry_over,
+                acceptance_criteria
+         FROM ivdr_analytical_validations WHERE id = $1 AND organization_id = $2`,
+        [id, orgId]
+      );
+      if (current.rows.length === 0) {
+        return res.status(404).json({ error: 'Analytical validation was not found' });
       }
+      const stored = current.rows[0];
 
-      // Append to parameter history (immutable audit trail)
-      await pool.query(
-        `INSERT INTO ivdr_validation_parameter_history
-         (validation_id, parameters, updated_by, reason, created_at)
-         VALUES ($1, $2, $3, $4, NOW())`,
-        [id, JSON.stringify(req.body), userId, reason || null]
+      // ── Compute real pass/fail against acceptance criteria ──────────
+      const passFailStatus = computeParameterVerdicts(
+        {
+          lod,
+          loq,
+          precisionCV,
+          withinRunCV,
+          betweenRunCV,
+          betweenDayCV,
+          reproducibilityCV,
+          sensitivity,
+          specificity,
+          accuracy,
+          carryOver,
+        },
+        stored,
+        acceptanceCriteria
       );
 
-      // Update current parameters + new columns
+      /* Update + immutable history are one statement: a missing/foreign row
+         cannot create orphan history, and either both effects commit or neither.
+         The history INSERT used to run first and unscoped, so a caller could
+         append to another organisation's parameter audit trail by id, and the
+         no-op UPDATE that followed still answered 200. */
       const result = await pool.query(
-        `UPDATE ivdr_analytical_validations SET
+        `WITH updated AS (
+         UPDATE ivdr_analytical_validations SET
            lod = COALESCE($2, lod),
            loq = COALESCE($3, loq),
            precision_cv = COALESCE($4, precision_cv),
@@ -527,7 +533,15 @@ export default function createIVDRRoutes(pool: Pool): Router {
            pass_fail_status = $20,
            updated_at = NOW()
          WHERE id = $1 AND organization_id = $21
-         RETURNING *`,
+         RETURNING *
+       ), history AS (
+         INSERT INTO ivdr_validation_parameter_history
+           (validation_id, parameters, updated_by, reason, created_at)
+         SELECT id, $22, $23, $24, NOW() FROM updated
+         RETURNING validation_id
+       )
+       SELECT updated.* FROM updated
+       INNER JOIN history ON history.validation_id = updated.id`,
         [
           id,
           lod,
@@ -550,8 +564,15 @@ export default function createIVDRRoutes(pool: Pool): Router {
           acceptanceCriteria ? JSON.stringify(acceptanceCriteria) : null,
           JSON.stringify(passFailStatus),
           orgId,
+          JSON.stringify(req.body),
+          userId,
+          reason || null,
         ]
       );
+
+      if (result.rows.length === 0) {
+        return res.status(404).json({ error: 'Analytical validation was not found' });
+      }
 
       return res.json({ validation: result.rows[0], passFailStatus });
     } catch (error: any) {
@@ -896,7 +917,10 @@ export default function createIVDRRoutes(pool: Pool): Router {
       const { id } = req.params as { id: string };
       const orgId = getServerOrgId(req);
       const { status, notes } = req.body;
-      const userId = (req as any).userId || 'system';
+      const userId = getAuthenticatedActorId(req);
+      if (!userId) {
+        return res.status(403).json({ error: 'An authenticated actor is required for CDx stage changes' });
+      }
 
       const validStatuses = [
         'initiation',
@@ -913,18 +937,32 @@ export default function createIVDRRoutes(pool: Pool): Router {
         });
       }
 
-      // Append to status history (immutable audit)
-      await pool.query(
-        `INSERT INTO ivdr_cdx_status_history
-         (workflow_id, status, notes, updated_by, created_at)
-         VALUES ($1, $2, $3, $4, NOW())`,
-        [id, status, notes || null, userId]
+      /* Stage change + immutable history are one statement: a missing/foreign
+         row cannot create orphan history, and either both effects commit or
+         neither. The history INSERT used to run first and unscoped, so a caller
+         could record a stage transition against another organisation's
+         companion-diagnostic audit trail by id, and the no-op UPDATE that
+         followed still answered 200 — the panel showed a stage the workflow
+         had never reached. */
+      const result = await pool.query(
+        `WITH updated AS (
+         UPDATE ivdr_cdx_workflows SET status = $2, updated_at = NOW()
+         WHERE id = $1 AND organization_id = $3
+         RETURNING *
+       ), history AS (
+         INSERT INTO ivdr_cdx_status_history
+           (workflow_id, status, notes, updated_by, created_at)
+         SELECT id, $2, $4, $5, NOW() FROM updated
+         RETURNING workflow_id
+       )
+       SELECT updated.* FROM updated
+       INNER JOIN history ON history.workflow_id = updated.id`,
+        [id, status, orgId, notes || null, userId]
       );
 
-      const result = await pool.query(
-        `UPDATE ivdr_cdx_workflows SET status = $2, updated_at = NOW() WHERE id = $1 AND organization_id = $3 RETURNING *`,
-        [id, status, orgId]
-      );
+      if (result.rows.length === 0) {
+        return res.status(404).json({ error: 'CDx workflow was not found' });
+      }
 
       return res.json({ workflow: result.rows[0] });
     } catch (error: any) {
@@ -1348,39 +1386,47 @@ export default function createIVDRRoutes(pool: Pool): Router {
       // Mark job as in-progress (ephemeral — see TODO(phase-2) at the Map)
       submissionJobs[jobKey] = { status: 'generating', startedAt: new Date().toISOString() };
 
-      // Gather the project's IVDR data in parallel
+      /* Gather the project's IVDR data in parallel.
+         These five reads are NOT caught. They used to swallow a failure into
+         `{ rows: [] }`, which the manifest then reported as `count: 0`,
+         `hasClassification: false` and `status: 'completed'` — a submission
+         package telling a manufacturer no classification was on file when the
+         truth was that it could not be read. A rejection now reaches the
+         handler's catch, which marks the job failed and answers an error.
+         The exclusion counts below stay caught, because null there is already
+         reported as 'unavailable' rather than as zero. */
       const [classifications, validations, evidence, cdxWorkflows, gsprAssessment, unassignedResult] = await Promise.all([
         pool.query(
           `SELECT * FROM ivdr_classifications
             WHERE organization_id = $1 AND program_id = $2
             ORDER BY created_at DESC`,
           [orgId, projectId]
-        ).catch(() => ({ rows: [] })),
+        ),
         pool.query(
           `SELECT v.* FROM ivdr_analytical_validations v
             LEFT JOIN ivdr_classifications c ON v.classification_id = c.id
             WHERE v.organization_id = $1 AND c.program_id = $2
             ORDER BY v.created_at DESC`,
           [orgId, projectId]
-        ).catch(() => ({ rows: [] })),
+        ),
         pool.query(
           `SELECT e.* FROM ivdr_clinical_evidence e
             LEFT JOIN ivdr_classifications c ON e.classification_id = c.id
             WHERE e.organization_id = $1 AND c.program_id = $2
             ORDER BY e.created_at DESC`,
           [orgId, projectId]
-        ).catch(() => ({ rows: [] })),
+        ),
         pool.query(
           `SELECT w.* FROM ivdr_cdx_workflows w
             LEFT JOIN ivdr_classifications c ON w.classification_id = c.id
             WHERE w.organization_id = $1 AND c.program_id = $2
             ORDER BY w.created_at DESC`,
           [orgId, projectId]
-        ).catch(() => ({ rows: [] })),
+        ),
         pool.query(
           `SELECT * FROM ivdr_gspr_assessments WHERE project_id = $1 AND organization_id = $2`,
           [projectId, orgId]
-        ).catch(() => ({ rows: [] })),
+        ),
         /* Rows this organisation owns that cannot be attributed to ANY
            programme — no classification link, or a classification whose
            program_id is NULL (the legacy 001-shape). They are excluded from
@@ -1550,99 +1596,73 @@ export default function createIVDRRoutes(pool: Pool): Router {
   router.get('/eudamed-export/:projectId', async (req: Request, res: Response) => {
     try {
       const orgId = getServerOrgId(req);
-      const { projectId } = req.params;
+      const { projectId } = req.params as { projectId: string };
 
-      // Gather classification and GSPR data
+      /* This endpoint took a projectId and scoped only the GSPR read by it.
+         Classification, CDx and clinical evidence were read ORG-WIDE, the
+         first two as "the most recently created row in the organisation" —
+         so a manufacturer exporting EUDAMED data for one assay got another
+         assay's risk class, intended purpose and rule trace under the device
+         name of whichever classification happened to be newest, plus a study
+         count covering the whole portfolio. Same scoping as the submission
+         package: validate the programme, prove ownership, then read through
+         program_id. */
+      if (!UUID_RE.test(projectId)) {
+        return res.status(422).json({
+          error: 'projectId must be a regulatory programme UUID',
+          code: 'IVDR_EUDAMED_BAD_PROJECT',
+        });
+      }
+      const ownership = await pool.query(
+        `SELECT 1 FROM regulatory_programs
+          WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL
+          LIMIT 1`,
+        [projectId, orgId]
+      );
+      if (ownership.rows.length === 0) {
+        return res.status(404).json({
+          error: 'Project not found in this organization',
+          code: 'IVDR_EUDAMED_PROJECT_NOT_FOUND',
+        });
+      }
+
+      /* Uncaught, for the reason the submission package gathers are: an export
+         that reports "Not classified" because the read failed is indistinguishable
+         from one reporting a device that genuinely has no classification. */
       const [classResult, gsprResult, cdxResult, evidenceResult] = await Promise.all([
         pool.query(
-          `SELECT * FROM ivdr_classifications WHERE organization_id = $1 ORDER BY created_at DESC LIMIT 1`,
-          [orgId]
-        ).catch(() => ({ rows: [] })),
+          `SELECT * FROM ivdr_classifications
+            WHERE organization_id = $1 AND program_id = $2
+            ORDER BY created_at DESC LIMIT 1`,
+          [orgId, projectId]
+        ),
         pool.query(
           `SELECT * FROM ivdr_gspr_assessments WHERE project_id = $1 AND organization_id = $2`,
           [projectId, orgId]
-        ).catch(() => ({ rows: [] })),
+        ),
         pool.query(
-          `SELECT * FROM ivdr_cdx_workflows WHERE organization_id = $1 ORDER BY created_at DESC LIMIT 1`,
-          [orgId]
-        ).catch(() => ({ rows: [] })),
+          `SELECT w.* FROM ivdr_cdx_workflows w
+            LEFT JOIN ivdr_classifications c ON w.classification_id = c.id
+            WHERE w.organization_id = $1 AND c.program_id = $2
+            ORDER BY w.created_at DESC LIMIT 1`,
+          [orgId, projectId]
+        ),
         pool.query(
-          `SELECT COUNT(*) as total, COUNT(*) FILTER (WHERE status = 'completed') as completed FROM ivdr_clinical_evidence WHERE organization_id = $1`,
-          [orgId]
-        ).catch(() => ({ rows: [{ total: 0, completed: 0 }] })),
+          `SELECT COUNT(*) AS total, COUNT(*) FILTER (WHERE e.status = 'completed') AS completed
+             FROM ivdr_clinical_evidence e
+             LEFT JOIN ivdr_classifications c ON e.classification_id = c.id
+            WHERE e.organization_id = $1 AND c.program_id = $2`,
+          [orgId, projectId]
+        ),
       ]);
 
-      const classification = classResult.rows[0] || null;
-      const gspr = gsprResult.rows[0] || null;
-      const cdx = cdxResult.rows[0] || null;
-      const evidenceSummary = evidenceResult.rows[0] || { total: 0, completed: 0 };
-
-      // Compute GSPR compliance stats if available
-      let gsprCompliancePercent = 0;
-      if (gspr && gspr.requirements) {
-        const reqs = gspr.requirements;
-        const applicable = reqs.filter((r: any) => r.status !== 'not_applicable');
-        const compliant = applicable.filter((r: any) => r.status === 'compliant');
-        gsprCompliancePercent = applicable.length > 0
-          ? Math.round((compliant.length / applicable.length) * 100)
-          : 0;
-      }
-
-      // Build EUDAMED-compatible export
-      const eudamedExport = {
-        exportVersion: '1.0.0',
-        exportDate: new Date().toISOString(),
-        regulatoryFramework: 'IVDR EU 2017/746',
-        deviceIdentification: {
-          // UDI-DI / Basic UDI-DI / manufacturer SRN are issued by GS1/HIBCC/EUDAMED
-          // and must not be synthesized from internal IDs. No stored registration
-          // record exists for this org/project, so they are reported as null
-          // (identifiers not yet issued/recorded).
-          basicUdiDi: null,
-          udiDi: null,
-          deviceName: classification?.device_name || gspr?.device_name || 'Unknown Device',
-          tradeName: classification?.device_name || gspr?.device_name || null,
-          manufacturerSRN: null,
-        },
-        manufacturer: {
-          organizationId: orgId,
-          role: 'manufacturer',
-          registrationStatus: 'not_registered',
-        },
-        classification: {
-          riskClass: classification?.ivdr_class || 'Not classified',
-          classificationRule: classification?.rule_trace ? 'Annex VIII' : null,
-          ruleTrace: classification?.rule_trace || [],
-          intendedPurpose: classification?.intended_purpose || null,
-        },
-        riskClass: classification?.ivdr_class || 'Not classified',
-        companionDiagnostic: {
-          isCDx: cdx ? true : false,
-          linkedMedicinalProduct: cdx?.therapeutic_area || null,
-          cdxStatus: cdx?.status || null,
-        },
-        certificates: {
-          euDeclarationOfConformity: classification?.ivdr_class === 'A' ? 'self-declaration' : 'notified_body_required',
-          notifiedBodyRequired: classification?.ivdr_class !== 'A',
-          // No certificate record is tracked here; do not fabricate a status.
-          certificateStatus: null,
-        },
-        clinicalEvidence: {
-          totalStudies: Number(evidenceSummary.total) || 0,
-          completedStudies: Number(evidenceSummary.completed) || 0,
-          performanceEvaluationAvailable: Number(evidenceSummary.total) > 0,
-        },
-        gsprCompliance: {
-          assessmentAvailable: !!gspr,
-          compliancePercent: gsprCompliancePercent,
-          totalRequirements: gspr ? gspr.requirements.length : 23,
-        },
-        postMarketSurveillance: {
-          pmsPlanRequired: true,
-          psurFrequency: classification?.ivdr_class === 'D' || classification?.ivdr_class === 'C' ? 'annual' : 'biennial',
-          vigilanceSystem: 'required',
-        },
-      };
+      const eudamedExport = buildEudamedExport({
+        orgId,
+        classification: classResult.rows[0] || null,
+        gspr: gsprResult.rows[0] || null,
+        cdx: cdxResult.rows[0] || null,
+        evidenceSummary: evidenceResult.rows[0] || { total: 0, completed: 0 },
+      });
 
       return res.json({ eudamedExport });
     } catch (error: any) {
@@ -1656,6 +1676,142 @@ export default function createIVDRRoutes(pool: Pool): Router {
 // ═══════════════════════════════════════════════════════════════════════════════
 // HELPERS
 // ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * The EUDAMED actor/device registration blob. Extracted from the route so the
+ * handler stays inside the function-length limit; the shape is unchanged.
+ */
+function buildEudamedExport(input: {
+  orgId: number | string;
+  classification: Record<string, any> | null;
+  gspr: Record<string, any> | null;
+  cdx: Record<string, any> | null;
+  evidenceSummary: Record<string, any>;
+}) {
+  const { orgId, classification, gspr, cdx, evidenceSummary } = input;
+      
+  // Compute GSPR compliance stats if available
+  let gsprCompliancePercent = 0;
+  if (gspr && Array.isArray(gspr.requirements)) {
+    const reqs = gspr.requirements;
+    const applicable = reqs.filter((r: any) => r.status !== 'not_applicable');
+    const compliant = applicable.filter((r: any) => r.status === 'compliant');
+    gsprCompliancePercent = applicable.length > 0
+      ? Math.round((compliant.length / applicable.length) * 100)
+      : 0;
+  }
+
+  // Build EUDAMED-compatible export
+  return {
+    exportVersion: '1.0.0',
+    exportDate: new Date().toISOString(),
+    regulatoryFramework: 'IVDR EU 2017/746',
+    deviceIdentification: {
+      // UDI-DI / Basic UDI-DI / manufacturer SRN are issued by GS1/HIBCC/EUDAMED
+      // and must not be synthesized from internal IDs. No stored registration
+      // record exists for this org/project, so they are reported as null
+      // (identifiers not yet issued/recorded).
+      basicUdiDi: null,
+      udiDi: null,
+      deviceName: classification?.device_name || gspr?.device_name || 'Unknown Device',
+      tradeName: classification?.device_name || gspr?.device_name || null,
+      manufacturerSRN: null,
+    },
+    manufacturer: {
+      organizationId: orgId,
+      role: 'manufacturer',
+      registrationStatus: 'not_registered',
+    },
+    classification: {
+      riskClass: classification?.ivdr_class || 'Not classified',
+      classificationRule: classification?.rule_trace ? 'Annex VIII' : null,
+      ruleTrace: classification?.rule_trace || [],
+      intendedPurpose: classification?.intended_purpose || null,
+    },
+    riskClass: classification?.ivdr_class || 'Not classified',
+    companionDiagnostic: {
+      isCDx: cdx ? true : false,
+      linkedMedicinalProduct: cdx?.therapeutic_area || null,
+      cdxStatus: cdx?.status || null,
+    },
+    certificates: {
+      euDeclarationOfConformity: classification?.ivdr_class === 'A' ? 'self-declaration' : 'notified_body_required',
+      notifiedBodyRequired: classification?.ivdr_class !== 'A',
+      // No certificate record is tracked here; do not fabricate a status.
+      certificateStatus: null,
+    },
+    clinicalEvidence: {
+      totalStudies: Number(evidenceSummary.total) || 0,
+      completedStudies: Number(evidenceSummary.completed) || 0,
+      performanceEvaluationAvailable: Number(evidenceSummary.total) > 0,
+    },
+    gsprCompliance: {
+      assessmentAvailable: !!gspr,
+      compliancePercent: gsprCompliancePercent,
+      /* The stored assessment's own requirement count. The constant 23 that
+         stood here was reported for projects that had no assessment at all,
+         which reads as 23 requirements on file and none met; and reading
+         .length off an assessment whose requirements column was null threw. */
+      totalRequirements: Array.isArray(gspr?.requirements) ? gspr.requirements.length : null,
+    },
+    postMarketSurveillance: {
+      pmsPlanRequired: true,
+      psurFrequency: classification?.ivdr_class === 'D' || classification?.ivdr_class === 'C' ? 'annual' : 'biennial',
+      vigilanceSystem: 'required',
+    },
+  };
+}
+
+/**
+ * Verdicts for the analytical validation record AS IT WILL STAND after a
+ * partial update: a parameter the caller did not resend keeps the value already
+ * in the row, and is judged against the criteria already in the row unless this
+ * request replaces them. Computing this from the request body alone retracted
+ * the pass verdict on every parameter the caller left out.
+ *
+ * 'pending'  — no value, here or stored.
+ * 'recorded' — a value with no acceptance criterion to judge it by.
+ */
+const VALIDATION_PARAMETER_COLUMNS: Record<string, string> = {
+  lod: 'lod',
+  loq: 'loq',
+  precisionCV: 'precision_cv',
+  withinRunCV: 'within_run_cv',
+  betweenRunCV: 'between_run_cv',
+  betweenDayCV: 'between_day_cv',
+  reproducibilityCV: 'reproducibility_cv',
+  sensitivity: 'sensitivity',
+  specificity: 'specificity',
+  accuracy: 'accuracy',
+  carryOver: 'carry_over',
+};
+
+function computeParameterVerdicts(
+  incoming: Record<string, unknown>,
+  stored: Record<string, any>,
+  acceptanceCriteria: Record<string, { min?: number; max?: number }> | undefined
+): Record<string, string> {
+  const criteria = acceptanceCriteria ?? stored.acceptance_criteria ?? {};
+  const verdicts: Record<string, string> = {};
+  for (const [key, sent] of Object.entries(incoming)) {
+    const val = sent ?? stored[VALIDATION_PARAMETER_COLUMNS[key]];
+    if (val == null) {
+      verdicts[key] = 'pending';
+      continue;
+    }
+    const crit = criteria[key];
+    if (!crit) {
+      verdicts[key] = 'recorded';
+      continue;
+    }
+    const numVal = Number(val);
+    const pass =
+      (crit.min == null || numVal >= Number(crit.min)) &&
+      (crit.max == null || numVal <= Number(crit.max));
+    verdicts[key] = pass ? 'pass' : 'fail';
+  }
+  return verdicts;
+}
 
 function getClassPath(classification: string) {
   switch (classification) {

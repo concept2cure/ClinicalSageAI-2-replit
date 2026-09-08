@@ -111,6 +111,9 @@ const R = new JourneyRecorder(
     'migrations/20260527_mutation_primitives.sql',
     'migrations/20260609_audit_hmac_seal.sql',
     'migrations/20260524_program_workbench_schema.sql',
+    // regulatory_programs.application_number (WO-9 Click 1): the column the
+    // create handler now writes; replayed here for the same reason 20260524 is.
+    'migrations/20260907_regulatory_programs_application_number.sql',
     'migrations/20260528_phase9_document_schema.sql',
     'migrations/20260506_kit_section_draft_provenance.sql',
     'migrations/20260814_projects_regulatory_program_anchor.sql',
@@ -169,6 +172,9 @@ beforeAll(async () => {
       'migrations/20260527_mutation_primitives.sql',
       'migrations/20260609_audit_hmac_seal.sql',
       'migrations/20260524_program_workbench_schema.sql',
+      // regulatory_programs.application_number (WO-9 Click 1): the column the
+      // create handler now writes; replayed here for the same reason 20260524 is.
+      'migrations/20260907_regulatory_programs_application_number.sql',
       'migrations/20260528_phase9_document_schema.sql',
       'migrations/20260506_kit_section_draft_provenance.sql',
       'migrations/20260814_projects_regulatory_program_anchor.sql',

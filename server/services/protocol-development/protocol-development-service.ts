@@ -18,7 +18,12 @@ import {
   type ProtocolKind,
   type CompletenessResult,
 } from './protocol-development-logic';
-import { enforceAuthorLineage } from '../clinical-regulatory-evidence/lineage-gate';
+import {
+  enforceAuthorLineage,
+  enforceSourceAndAuthorLineage,
+  type SourceAndAuthorLineageResult,
+} from '../clinical-regulatory-evidence/lineage-gate';
+import type { RetrievedSource } from '../clinical-regulatory-evidence/source-attribution';
 
 interface Queryable {
   query: (sql: string, params?: unknown[]) => Promise<{ rows: any[] }>;
@@ -90,7 +95,7 @@ export async function updateSynopsisTx(client: Queryable, orgId: number, docId: 
 
 // ─── Sections ────────────────────────────────────────────────────────────────
 
-export async function updateSectionTx(client: Queryable, orgId: number, sectionId: number, input: { content?: string | null; status?: string }, actorUserId: number): Promise<void> {
+export async function updateSectionTx(client: Queryable, orgId: number, sectionId: number, input: { content?: string | null; status?: string; sources?: RetrievedSource[] }, actorUserId: number): Promise<SourceAndAuthorLineageResult | null> {
   if (input.status && !['not_started', 'draft', 'complete'].includes(input.status)) throw new ProtocolDevError('BAD_INPUT', `Invalid status "${input.status}".`);
   const sec = await client.query(
     `SELECT s.id, d.status AS doc_status, d.id AS doc_id FROM protocol_sections s JOIN protocol_documents d ON d.id = s.protocol_document_id
@@ -107,8 +112,18 @@ export async function updateSectionTx(client: Queryable, orgId: number, sectionI
   // and assert coverage in this transaction. A status-only edit (content
   // undefined/null) no-ops the gate inside the helper, matching the COALESCE
   // that leaves content unchanged.
-  await enforceAuthorLineage(client, orgId, { documentTable: 'protocol_sections', documentId: String(sectionId) }, input.content ?? null, String(actorUserId));
+  // With `sources` (an AnA draft naming the Data Room passages it quoted —
+  // ledger L154), the clauses that quote them verbatim are recorded against
+  // those sources and the rest against the author; without, every clause is
+  // the author's assertion. Same gate, same transaction, either way.
+  let lineage: SourceAndAuthorLineageResult | null = null;
+  if (input.sources && input.sources.length > 0 && typeof input.content === 'string') {
+    lineage = await enforceSourceAndAuthorLineage(client, orgId, { documentTable: 'protocol_sections', documentId: String(sectionId) }, input.content, String(actorUserId), input.sources);
+  } else {
+    await enforceAuthorLineage(client, orgId, { documentTable: 'protocol_sections', documentId: String(sectionId) }, input.content ?? null, String(actorUserId));
+  }
   await client.query(`UPDATE protocol_documents SET status = CASE WHEN status = 'draft' THEN 'in_development' ELSE status END, updated_at = now() WHERE id = $1 AND organization_id = $2`, [sec.rows[0].doc_id, orgId]);
+  return lineage;
 }
 
 // ─── Structured components ───────────────────────────────────────────────────

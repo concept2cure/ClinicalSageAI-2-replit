@@ -99,7 +99,7 @@ describe('composeE2bR3Icsr', () => {
   });
 
   it('reports completeness = 1 and no gaps when all mandatory elements are present', () => {
-    const { gaps, completeness } = composeE2bR3Icsr(baseEvent, { icsr: icsrMeta });
+    const { gaps, completeness } = composeE2bR3Icsr(baseEvent, { icsr: { ...icsrMeta, studyRegistrationNumber: 'IND 123456' } as any });
     expect(gaps).toEqual([]);
     expect(completeness).toBe(1);
   });
@@ -182,5 +182,41 @@ describe('composeE2bR3Icsr — report lifecycle (C.1.* admin)', () => {
     const { xml } = composeE2bR3Icsr(baseEvent, { icsr: nullify, nullificationReason: 'Invalid case.' });
     expect(xml).toContain('id="C.1.11.1"');
     expect(xml).toContain('Invalid case.');
+  });
+});
+
+describe('C.1.3, E.i.9 and C.5.1 come from the case, not from constants', () => {
+  const byIdOf = (r: any) => {
+    const all = [...r.icsr.caseAdmin, ...r.icsr.primarySource, ...r.icsr.patient, ...r.icsr.reaction, ...r.icsr.drug, r.icsr.narrative];
+    return Object.fromEntries(all.map((e: any) => [e.id, e.value])) as Record<string, string>;
+  };
+
+  it('maps C.1.3 from icsr.reportType — a spontaneous report is not "report from study"', () => {
+    const r = composeE2bR3Icsr(baseEvent, { icsr: { ...icsrMeta, reportType: 'spontaneous' } as any });
+    expect(byIdOf(r)['C.1.3']).toBe('1 (spontaneous report)');
+    expect(r.gaps.map((g) => g.id)).not.toContain('C.1.3');
+  });
+
+  it('an absent report type is a gap, not a default', () => {
+    const r = composeE2bR3Icsr(baseEvent, { icsr: { ...icsrMeta, reportType: undefined } as any });
+    expect(byIdOf(r)['C.1.3']).toBe('');
+    expect(r.gaps.map((g) => g.id)).toContain('C.1.3');
+  });
+
+  it('emits the country of occurrence as E.i.9 and never as the reporter country', () => {
+    const r = composeE2bR3Icsr({ ...baseEvent, countryOfOccurrence: 'US' }, { icsr: { ...icsrMeta, reportType: 'study', studyRegistrationNumber: 'IND 123456' } as any });
+    const ids = byIdOf(r);
+    expect(ids['E.i.9']).toBe('US');
+    expect(ids['C.2.r.3']).toBe('');
+    const withReporter = composeE2bR3Icsr(baseEvent, { icsr: { ...icsrMeta, reportType: 'study', studyRegistrationNumber: 'IND 123456', reporterCountry: 'DE' } as any });
+    expect(byIdOf(withReporter)['C.2.r.3']).toBe('DE');
+  });
+
+  it('a study report without a study registration number is a C.5.1.r.1 gap', () => {
+    const r = composeE2bR3Icsr(baseEvent, { icsr: { ...icsrMeta, reportType: 'study' } as any });
+    expect(r.gaps.map((g) => g.id)).toContain('C.5.1.r.1');
+    const ok = composeE2bR3Icsr(baseEvent, { icsr: { ...icsrMeta, reportType: 'study', studyRegistrationNumber: 'IND 123456' } as any });
+    expect(ok.gaps.map((g) => g.id)).not.toContain('C.5.1.r.1');
+    expect(byIdOf(ok)['C.5.1.r.1']).toBe('IND 123456');
   });
 });

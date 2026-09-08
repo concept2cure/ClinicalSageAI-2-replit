@@ -155,11 +155,26 @@ export async function resolveAccessibleThread(
  *
  * @throws ThreadAccessError when the id names a colleague's thread.
  */
+/** The shell's project key is the regulatory_programs UUID; `project_id` on this table is an integer. */
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * The program a thread was started in, as the shell names it (a
+ * regulatory_programs UUID), or null. Kept in `metadata.programId` because the
+ * table's `project_id` column is an integer that the shell's key never fits —
+ * which is why, until now, no thread could be listed back under its project
+ * and "resume a project chat" had nothing to resume.
+ */
+export function programIdForThread(projectId: unknown): string | null {
+  return typeof projectId === 'string' && UUID_RE.test(projectId) ? projectId.toLowerCase() : null;
+}
+
 export async function getOrCreateThread(
   threadId: string | null,
   userId?: number | string | null,
   prefix: string = 'thread',
-  organizationId?: number | null
+  organizationId?: number | null,
+  programId?: string | null
 ): Promise<string> {
   await ensureChatTables();
   if (threadId) {
@@ -169,9 +184,15 @@ export async function getOrCreateThread(
   const newId = `${prefix}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   const ownerId =
     userId === null || userId === undefined || userId === '' ? null : Number(userId);
+  const program = programIdForThread(programId);
   await pool.query(
-    'INSERT INTO chat_threads (id, user_id, organization_id, created_at, updated_at) VALUES ($1, $2, $3, NOW(), NOW())',
-    [newId, Number.isFinite(ownerId as number) ? ownerId : null, organizationId || null]
+    'INSERT INTO chat_threads (id, user_id, organization_id, metadata, created_at, updated_at) VALUES ($1, $2, $3, $4, NOW(), NOW())',
+    [
+      newId,
+      Number.isFinite(ownerId as number) ? ownerId : null,
+      organizationId || null,
+      program ? JSON.stringify({ programId: program }) : null,
+    ]
   );
   return newId;
 }

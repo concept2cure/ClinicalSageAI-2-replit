@@ -81,7 +81,7 @@ function currentProjectId(): string | null {
     const p = (window as unknown as { C2C_PROJECT?: { id?: string | number } }).C2C_PROJECT;
     const id = p && p.id != null ? String(p.id).trim() : '';
     return id || null;
-  } catch (_e) {
+  } catch {
     return null;
   }
 }
@@ -407,7 +407,7 @@ export function Inconsistency({ onAsk, onNav }: SurfaceViewProps) {
     return {
       tone: 'calm' as const, eyebrow: 'AnA — path to a clean filing',
       headline: <>{progCode} has {openN} open {openN === 1 ? 'inconsistency' : 'inconsistencies'} to tidy before the filing is perfect.</>,
-      body: 'None of them block the submission under ' + reg + ' -- they\'re advisory or review-level — but a perfect filing carries none of them.',
+      body: 'None of them block the submission under ' + reg + ' — they\'re advisory or review-level — but a perfect filing carries none of them.',
       reassure: 'I\'ll clear them with you so the dossier reads as one coherent story.',
       action: { label: 'Clean them up with AnA', onClick: () => ask('Walk me through resolving the open ' + progCode + ' inconsistencies.') },
     };
@@ -616,7 +616,7 @@ export function Inconsistency({ onAsk, onNav }: SurfaceViewProps) {
           hint="Open a project to see its cross-document contradiction board. The board reads that project's governed findings, assumption registry, and decision records."
         />
       ) : boardState.loading && !boardData ? (
-        <div className="scaf-note" style={{ padding: '18px 10px' }}>Loading the inconsistency board...</div>
+        <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>Loading the inconsistency board...</div>
       ) : boardState.error ? (
         <EmptyState
           tone="error"

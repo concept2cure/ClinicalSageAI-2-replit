@@ -15,6 +15,37 @@
   padding:28px 32px 80px;
 }
 
+/* ── Projects directory — summary line, toolbar, two-column cards ──
+   Replaces the four `.metric` tiles and the `.launch-grid` that used to head
+   this surface. The figures survive (see `kv()` in Projects.tsx — every one is
+   an em dash while the read is in flight or failed); they are one quiet line
+   now instead of four large ones, so the directory starts with the projects. */
+.c2c-v2 .pj-summary{display:flex;flex-wrap:wrap;align-items:center;gap:6px 18px;margin:2px 0 18px;font-size:12px;color:var(--text-400);}
+.c2c-v2 .pj-summary-i strong{font-weight:600;color:var(--text-200);font-variant-numeric:tabular-nums;}
+.c2c-v2 .pj-summary-i[data-tone="err"] strong{color:var(--error);}
+.c2c-v2 .pj-summary-i[data-tone="warn"] strong{color:var(--warning);}
+
+.c2c-v2 .pj-toolbar{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+.c2c-v2 .pj-search{display:flex;align-items:center;gap:8px;min-width:0;flex:0 1 320px;padding:6px 11px;border:1px solid var(--bg-200);border-radius:9px;background:var(--bg-000);}
+.c2c-v2 .pj-search:focus-within{border-color:var(--accent-200);box-shadow:0 0 0 3px var(--accent-000);}
+.c2c-v2 .pj-search .ico{flex-shrink:0;color:var(--text-400);display:inline-flex;}
+.c2c-v2 .pj-search .ico svg{width:14px;height:14px;}
+.c2c-v2 .pj-search-i{flex:1;min-width:0;border:0;background:none;font-size:13px;color:var(--text-100);outline:none;}
+.c2c-v2 .pj-search-i::placeholder{color:var(--text-400);}
+
+.c2c-v2 .pj-cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;align-items:start;}
+.c2c-v2 .pj-card{display:flex;flex-direction:column;padding:16px 18px;border:1px solid var(--bg-200);border-radius:12px;background:var(--bg-000);text-align:left;transition:background var(--dur),border-color var(--dur);}
+.c2c-v2 .pj-card:hover{background:var(--bg-050);border-color:var(--bg-300);}
+.c2c-v2 .pj-card-t{font-size:14px;font-weight:600;color:var(--text-100);letter-spacing:-.01em;line-height:1.35;}
+.c2c-v2 .pj-card-m{margin-top:3px;font-size:11.5px;color:var(--text-400);}
+.c2c-v2 .pj-card-r{display:flex;justify-content:space-between;font-size:11px;color:var(--text-300);font-variant-numeric:tabular-nums;}
+.c2c-v2 .pj-card-f{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:12px;}
+.c2c-v2 .pj-card-blk,.c2c-v2 .pj-card-ok{display:inline-flex;align-items:center;gap:5px;font-size:11px;}
+.c2c-v2 .pj-card-blk{color:var(--warning);}
+.c2c-v2 .pj-card-ok{color:var(--success);}
+.c2c-v2 .pj-card-blk svg,.c2c-v2 .pj-card-ok svg{width:12px;height:12px;flex-shrink:0;}
+@media(max-width:900px){.c2c-v2 .pj-cards{grid-template-columns:1fr;}}
+
 /* ── New project wizard — full canvas ──
    Was an 880px `.esign-modal` over the portfolio, with a 440px scroll pane
    inside it for the global filing registry. It is now a view of the `projects`
@@ -134,6 +165,7 @@
   gap:16px 20px;
 }
 .c2c-v2 .npw-field{display:flex;flex-direction:column;gap:5px;}
+.c2c-v2 .npw-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
 .c2c-v2 .npw-field-wide{grid-column:1/-1;}
 .c2c-v2 .npw-field-l{font-size:11.5px;font-weight:500;color:var(--text-300);}
 .c2c-v2 .npw-field .c2c-input{min-height:36px;font-size:13px;padding:6px 11px;}
@@ -265,6 +297,17 @@
 .c2c-v2 .ph-act-n{font-size:11px;color:var(--text-400);}
 
 /* Evidence search */
+/* project sources panel: drop zone, search, rows */
+.c2c-v2 .pj-dropzone{display:flex;align-items:center;gap:10px;padding:14px 16px;margin-bottom:12px;border:1px dashed var(--border);border-radius:var(--radius-lg);background:transparent;cursor:pointer;transition:background var(--dur) ease-out,border-color var(--dur) ease-out;}
+.c2c-v2 .pj-dropzone:hover,.c2c-v2 .pj-dropzone[data-dragging]{background:var(--accent-000);border-color:var(--accent-100);}
+.c2c-v2 .pj-dropzone:focus-visible{outline:2px solid var(--accent-100);outline-offset:2px;}
+.c2c-v2 .pj-dropzone-t{font-size:13px;color:var(--text-200);}
+.c2c-v2 .pj-input{width:100%;height:32px;padding:0 10px;border:1px solid var(--border-control);border-radius:var(--radius-md);background:var(--bg-000);font-size:12.5px;}
+.c2c-v2 .pj-input:focus{border-color:var(--accent-100);outline:none;box-shadow:0 0 0 3px var(--accent-000);}
+.c2c-v2 .pj-srcs{border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;background:var(--bg-000);}
+.c2c-v2 .pj-src{display:flex;align-items:center;gap:10px;padding:8px 10px;border-bottom:1px solid var(--border-subtle);}
+.c2c-v2 .pj-src:last-child{border-bottom:0;}
+.c2c-v2 .pj-top-l{flex:1;min-width:0;}
 .c2c-v2 .ev-search{display:flex;align-items:center;gap:10px;border:1px solid var(--border-control);border-radius:var(--v2-radius-xl,16px);padding:8px 10px 8px 14px;background:var(--bg-050);}
 .c2c-v2 .ev-search:focus-within{border-color:var(--accent-100);box-shadow:0 0 0 3px var(--accent-000);}
 .c2c-v2 .ev-search .ico{color:var(--text-400);font-size:17px;}
@@ -293,6 +336,7 @@
 .c2c-v2 .pd-main{overflow-y:auto;overflow-x:hidden;padding:24px 28px;min-width:0;}
 .c2c-v2 .pd-aside{border-left:1px solid var(--border);overflow-y:auto;padding:20px 18px;background:var(--bg-050);}
 .c2c-v2 .pd-head{margin-bottom:18px;}
+.c2c-v2 .pd-head-l{flex:1;min-width:0;}
 .c2c-v2 .pd-head-row1{display:flex;align-items:center;gap:12px;}
 .c2c-v2 .pd-head-row1 .pd-code{font-family:var(--font-mono);font-size:12px;color:var(--accent-200);background:var(--accent-000);border:1px solid var(--accent-muted,var(--border));padding:2px 8px;border-radius:6px;}
 .c2c-v2 .pd-head-row1 h1{font-size:24px;font-weight:640;letter-spacing:-.01em;margin:0;}

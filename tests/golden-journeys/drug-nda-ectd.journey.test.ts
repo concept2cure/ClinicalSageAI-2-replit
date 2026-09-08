@@ -139,6 +139,9 @@ const R = new JourneyRecorder(
     'migrations/20260527_mutation_primitives.sql',
     'migrations/20260609_audit_hmac_seal.sql',
     'migrations/20260524_program_workbench_schema.sql',
+    // regulatory_programs.application_number (WO-9 Click 1): the column the
+    // create handler now writes; replayed here for the same reason 20260524 is.
+    'migrations/20260907_regulatory_programs_application_number.sql',
     'migrations/20260528_phase9_document_schema.sql',
     'migrations/20260529_phase9_backfill.sql',
     'migrations/20260604_shadow_review.sql',
@@ -178,6 +181,9 @@ beforeAll(async () => {
       'migrations/20260527_mutation_primitives.sql',
       'migrations/20260609_audit_hmac_seal.sql',
       'migrations/20260524_program_workbench_schema.sql',
+      // regulatory_programs.application_number (WO-9 Click 1): the column the
+      // create handler now writes; replayed here for the same reason 20260524 is.
+      'migrations/20260907_regulatory_programs_application_number.sql',
       'migrations/20260528_phase9_document_schema.sql',
       // Seeds the nda/bla/maa/jnda/denovo rule packs the phase-9 schema does not,
       // then supersedes the 5-node nda/fda placeholder with the real 71-section
@@ -283,11 +289,13 @@ afterAll(async () => {
 });
 
 /** Record a governed Part 11 `sign` action on a typed target, as `userId`. */
-async function signTarget(target: string, userId: number, reason: string) {
+async function signTarget(target: string, userId: number, reason: string, intent: 'freeze' | 'dispatch' | 'transmit' = 'freeze') {
   return asPrincipal(ORG, userId)(request(app).post('/api/c2c/actions/sign')).send({
     target,
     reason,
-    payload: { meaning: 'approval' },
+    // The meaning of the signature names the step it authorizes (11.50); the
+    // server refuses a sign action whose intent is another step.
+    payload: { intent, meaning: 'approval' },
     reauth: { password: PASSWORD },
   });
 }
@@ -588,7 +596,25 @@ describe('golden journey — drug NDA / eCTD', () => {
       expect(res.status, JSON.stringify(res.body)).toBe(200);
       expect(res.body.validationErrors).toBe(0);
       expect(res.body.leafCount).toBe(1);
-      expect(res.body.gate.cleared, JSON.stringify(res.body.gate)).toBe(true);
+      /* This endpoint reports the DISPATCH verdict — the transmit re-check —
+         and this journey never builds and signs a release package, so the
+         §11.70 release-signature control blocks it. That is the correct answer
+         and it is asserted exactly: ONE blocker, and it is that control.
+         Everything the old `cleared: true` proved about every other gate —
+         validation, the shadow review, leaf placement, external validation — is
+         still proved, because any of them objecting would add a second blocker
+         and fail here.
+
+         The FREEZE the journey goes on to perform is governed by the same gates
+         minus that one requirement (assess-dispatch-readiness →
+         composeDispatchGatesForStep), which is why it succeeds below. Those two
+         facts together are the scoping: transmit still demands the signature,
+         freeze does not. */
+      const gateBlockers: string[] = res.body.gate.blockers ?? [];
+      expect(res.body.gate.cleared, JSON.stringify(res.body.gate)).toBe(false);
+      expect(gateBlockers, JSON.stringify(res.body.gate)).toHaveLength(1);
+      expect(gateBlockers[0]).toMatch(/release signature/i);
+      expect(res.body.releaseSignature).toMatchObject({ required: true, verdict: 'unsigned', cleared: false });
       // No agency-grade validator is licensed in this environment, and the
       // assessment says so rather than implying a clean external run.
       expect(res.body.externalValidation.configured).toBe(false);
@@ -605,7 +631,7 @@ describe('golden journey — drug NDA / eCTD', () => {
       return {
         validationErrors: res.body.validationErrors,
         gateCleared: res.body.gate.cleared,
-        gateBlockers: res.body.gate.blockers,
+        gateBlockers: gateBlockers,
         externalValidation: res.body.externalValidation,
         shadowReviewMissing: res.body.shadowReviewMissing,
         warnings: warnings.length,
@@ -832,6 +858,51 @@ describe('golden journey — drug NDA / eCTD', () => {
       };
     });
 
+    // ── 11.70: the signature is bound to the leaf manifest it signed ────────
+    await R.expectBlocked('a-leaf-placed-after-signing-invalidates-the-signature', async () => {
+      // The digest was persisted at sign time and never consulted, so a leaf
+      // edited after signing was frozen under a signature applied to other bytes.
+      const placed = await asPrincipal(ORG, USER)(
+        request(app).put(`/api/submissions/sequences/${sequenceId}/leaves`),
+      ).send({ sectionCode: '2.7', title: 'Clinical Summary', lifecycleOp: 'new', documentTable: 'coauthor_documents', documentId: 100 });
+      expect(placed.status, JSON.stringify(placed.body)).toBe(200);
+      const res = await asPrincipal(ORG, SIGNER)(
+        request(app).post(`/api/submissions/sequences/${sequenceId}/freeze`),
+      ).send({ signatureActionId });
+      const seq = await jdb.pool.query(`SELECT status FROM ectd_sequences WHERE id = $1`, [sequenceId]);
+      return {
+        blocked:
+          res.status === 403 &&
+          res.body?.error?.code === 'GOVERNED_REQUIRED' &&
+          /changed after it was signed/.test(String(res.body?.error?.message)) &&
+          (seq.rows[0] as { status: string } | undefined)?.status === 'validated',
+        status: res.status,
+        code: res.body?.error?.code,
+        message: res.body?.error?.message,
+      };
+    });
+
+    await R.step('re-sign-the-current-leaf-manifest', async () => {
+      const res = await signTarget(`ectd-sequence:${sequenceId}`, SIGNER, 'Approved for freeze: re-signed after the 2.7 leaf was placed.');
+      expect(res.status, JSON.stringify(res.body)).toBe(200);
+      signatureActionId = res.body.actionId;
+      return { actionId: signatureActionId };
+    });
+
+    await R.expectBlocked('a-signature-whose-intent-is-dispatch-does-not-freeze', async () => {
+      // 11.50: the meaning of the signature is the step it authorizes.
+      const dispatchSign = await signTarget(`ectd-sequence:${sequenceId}`, SIGNER, 'Approved for dispatch.', 'dispatch');
+      expect(dispatchSign.status, JSON.stringify(dispatchSign.body)).toBe(200);
+      const res = await asPrincipal(ORG, SIGNER)(
+        request(app).post(`/api/submissions/sequences/${sequenceId}/freeze`),
+      ).send({ signatureActionId: dispatchSign.body.actionId });
+      return {
+        blocked: res.status === 403 && res.body?.error?.code === 'GOVERNED_REQUIRED' && /intent 'dispatch', not 'freeze'/.test(String(res.body?.error?.message)),
+        status: res.status,
+        message: res.body?.error?.message,
+      };
+    });
+
     // ── The freeze that is actually authorized ─────────────────────────────
     await R.step('the-matching-signature-freezes-the-sequence', async () => {
       const res = await asPrincipal(ORG, SIGNER)(
@@ -859,6 +930,24 @@ describe('golden journey — drug NDA / eCTD', () => {
       expect(a.new_values.signatureActionId).toBe(signatureActionId);
       expect(a.new_values.validationErrors).toBe(0);
       return { status: s.status, frozenAt: !!s.frozen_at, auditedSignature: a.new_values.signatureActionId };
+    });
+
+    await R.expectBlocked('the-spent-freeze-signature-does-not-authorize-dispatch', async () => {
+      // One sign used to authorize freeze, dispatch and transmit alike: a
+      // replay of the freeze-time actionId dispatched the sequence.
+      const res = await asPrincipal(ORG, SIGNER)(
+        request(app).post(`/api/submissions/sequences/${sequenceId}/dispatch`),
+      ).send({ signatureActionId });
+      const seq = await jdb.pool.query(`SELECT status FROM ectd_sequences WHERE id = $1`, [sequenceId]);
+      return {
+        blocked:
+          res.status === 403 &&
+          res.body?.error?.code === 'GOVERNED_REQUIRED' &&
+          (seq.rows[0] as { status: string } | undefined)?.status === 'frozen',
+        status: res.status,
+        code: res.body?.error?.code,
+        message: res.body?.error?.message,
+      };
     });
 
     await R.expectBlocked('a-frozen-sequences-leaves-are-immutable', async () => {
@@ -928,6 +1017,13 @@ describe('golden journey — drug NDA / eCTD', () => {
         'route, and the production fail-closed rule (ECTD_REQUIRE_EVALIDATOR) is asserted through the pure ' +
         'gate function rather than by mutating NODE_ENV mid-journey. The licensed engine itself CANNOT be ' +
         'exercised here — it is a procurement artifact.',
+      'This journey never builds and signs a release package, so the \u00a711.70 release-signature control ' +
+        'blocks the DISPATCH verdict the readiness endpoint reports \u2014 asserted here as exactly one blocker ' +
+        'rather than worked around. The freeze it does perform is governed by the same gates minus that ' +
+        'requirement, which is the scoping that control\'s own design states (it calls itself the ' +
+        'transmit-time re-check). A journey that drives the package orchestrator to a signed release, and ' +
+        'so reaches a cleared dispatch verdict, is the follow-on; the signed-package path has its own ' +
+        'coverage in server/services/ectd/__tests__/signed-package-export.test.ts.',
       'Assembly to eCTD bytes and transmission to the FDA ESG are deliberately out of scope: the export ' +
         'generator has its own journey (submission-export-package) and transmission needs a live gateway ' +
         'account. This journey ends at a frozen, signature-bound sequence.',

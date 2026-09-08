@@ -12,7 +12,7 @@
  * - Failure behavior (missing data, low confidence, unresolvable authority)
  */
 
-import { describe, test, expect, vi, beforeEach } from 'vitest';
+import { describe, test, expect, vi } from 'vitest';
 
 // ─── Mock pool and DB ────────────────────────────────────────────────────────
 
@@ -52,14 +52,11 @@ vi.mock('../../../shared/schema/index', () => ({
 // ─── Decision Architecture Types ─────────────────────────────────────────────
 
 import {
-  buildPreflightDecision,
   buildGovernedActionDecision,
   buildDecisionReceipt,
   getAuthorityForAction,
   isActorAuthorized,
   isValidTransition,
-  createDecisionId,
-  createReceiptId,
   AUTHORITY_BOUNDARY_MAP,
 } from '../../../shared/types/decision-architecture.js';
 

@@ -1,5 +1,5 @@
 /**
- * PDEV closed-enum surface — port of design-system/ui_kits/pdev/data.jsx
+ * PDEV closed-enum surface — port of ui_kits/pdev/data.jsx
  * with fixture rows stripped per CLAUDE.md ("Seed data fixtures must not
  * land in v2"). Runtime data comes from /api/pdev/* endpoints.
  *

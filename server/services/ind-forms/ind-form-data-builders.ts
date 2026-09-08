@@ -45,6 +45,11 @@ export interface BuiltForm {
   /** Ids of ALL required fields (present or not), in declaration order. Lets the
    *  official-fill gate qualify a template on required-field placeability. */
   requiredFields: string[];
+  /** Ids of DERIVED gates — data the builder computes to judge completeness
+   *  (`certification_selected`, `interest_type_selected`), never a box that
+   *  exists on the printed form. A consumer describing what a sponsor still has
+   *  to complete must not list one, and no template can ever place one. */
+  qcOnlyFields: string[];
   /** Deterministic semantic validation findings beyond simple presence checks. */
   validationErrors: Array<{ fieldId: string; code: string; message: string }>;
 }
@@ -227,11 +232,13 @@ function assemble(formId: string, specs: FieldSpec[]): BuiltForm {
   const fields: Record<string, FieldValue> = {};
   const missingRequired: string[] = [];
   const requiredFields: string[] = [];
+  const qcOnlyFields: string[] = [];
   const validationErrors: BuiltForm['validationErrors'] = [];
   for (const spec of specs) {
     fields[spec.id] = spec.value;
     // qcOnly gates stay out of requiredFields (the official-fill placeability
     // gate) but still count toward missingRequired (QC readiness).
+    if (spec.qcOnly) qcOnlyFields.push(spec.id);
     if (spec.required && !spec.qcOnly) requiredFields.push(spec.id);
     if (spec.required && !isPresent(spec.value)) {
       missingRequired.push(spec.id);
@@ -244,7 +251,7 @@ function assemble(formId: string, specs: FieldSpec[]): BuiltForm {
       });
     }
   }
-  return { formId, fields, missingRequired, requiredFields, validationErrors };
+  return { formId, fields, missingRequired, requiredFields, qcOnlyFields, validationErrors };
 }
 
 // ---------------------------------------------------------------------------
@@ -276,7 +283,12 @@ export function buildForm1571(meta: IndProjectMetadata): BuiltForm {
     { id: 'us_agent_name', value: s(agent.name), required: false },
     { id: 'us_agent_address', value: s(agent.address), required: false },
     { id: 'us_agent_phone', value: s(agent.phone), required: false },
-    { id: 'authorized_rep_name', value: s(sponsor.authorizedRepName), required: true },
+    // The 1571 signature block is a signature, not a data box: the official form
+    // carries the representative as first/middle/last plus a signature widget,
+    // with no single full-name field to write into. buildForm356h already made
+    // exactly this call for the same two ids; 1571 was the outlier, and while it
+    // stayed required no official fill of this form could ever qualify.
+    { id: 'authorized_rep_name', value: s(sponsor.authorizedRepName), required: false },
     { id: 'authorized_rep_title', value: s(sponsor.authorizedRepTitle), required: false },
   ];
 
@@ -339,7 +351,13 @@ export function buildForm1572(
     { id: 'irb_address', value: s(investigator.irbAddress), required: false },
     { id: 'sub_investigators', value: subInv, required: false },
     { id: 'study_title', value: s(meta.studyTitle), required: false },
-    { id: 'protocol_numbers', value: s(meta.protocolNumbers) || s(meta.serialNumber), required: false },
+    // NOT `|| meta.serialNumber`. The serial number is the IND submission
+    // sequence (0000, 0001…); the protocol number identifies the study
+    // (C2C-1042-101). They are unrelated identifiers, and this map feeds
+    // db_prot_name_code — Box 6 of the official 1572 — so the fallback printed
+    // "0000" into the protocol box of a form an investigator signs. A protocol
+    // number the platform does not hold is blank, not borrowed.
+    { id: 'protocol_numbers', value: s(meta.protocolNumbers), required: false },
   ];
 
   return assemble(FORM_1572, specs);
@@ -383,7 +401,14 @@ export function buildForm3674(meta: IndProjectMetadata): BuiltForm {
     { id: 'cert_not_applicable', value: basis === 'not_applicable_to_374j', required: false },
     { id: 'cert_requirements_met', value: basis === 'requirements_met', required: false },
     { id: 'cert_submitted_no_data', value: basis === 'submitted_no_data', required: false },
-    // At least one certification basis must be selected.
+    // At least one certification basis must be selected. DERIVED from the three
+    // checkboxes above, so it is `qcOnly` — the same treatment 3455's
+    // `interest_type_selected` gets, and for the same reason: it is a QC verdict,
+    // not a box on the form. Without the flag it sat in `requiredFields`, which
+    // is the official-fill PLACEABILITY gate, so any AcroForm edition of this
+    // form would have been refused as unqualified for a field no template can
+    // ever carry. It still counts toward `missingRequired` — a 3674 with no
+    // certification basis selected is genuinely incomplete.
     {
       id: 'certification_selected',
       value:
@@ -391,6 +416,7 @@ export function buildForm3674(meta: IndProjectMetadata): BuiltForm {
         basis === 'requirements_met' ||
         basis === 'submitted_no_data',
       required: true,
+      qcOnly: true,
     },
   ];
 
@@ -607,7 +633,11 @@ export function buildForm1574(meta: IndProjectMetadata): BuiltForm {
   return assemble(FORM_1574, [
     { id: 'sponsor_name', value: s(meta.sponsorName) || s(meta.sponsor?.name), required: true },
     { id: 'drug_name', value: s(meta.drugName), required: true },
-    { id: 'protocol_number', value: s(meta.protocolNumbers) || s(meta.serialNumber), required: true },
+    // Same substitution as the 1572 carried, and here the field is required, so
+    // the serial number silently satisfied the gate: a 1574 reported complete
+    // while its protocol number was an IND sequence number. Blank now, and
+    // reported in missingRequired.
+    { id: 'protocol_number', value: s(meta.protocolNumbers), required: true },
     { id: 'irb_name_address', value: s(meta.irbNameAddress), required: true },
     { id: 'irb_chair_name', value: s(meta.irbChairName), required: true },
     { id: 'irb_assurance_number', value: s(meta.irbAssuranceNumber), required: false },

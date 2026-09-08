@@ -53,6 +53,8 @@ import {
   resolveToRegistryEntry, getSubmissionTypeLabel,
   type GatewayAcknowledgment, type GatewayStatusResult, type GatewayTransmitRequest,
   type GatewayTransmitResult, type SubmissionGateway, type SubmissionStatus,
+  requiredAgencyMetadata,
+  ValidationError
 } from './types';
 
 /* ─── Credential resolution ──────────────────────────────────────── */
@@ -147,6 +149,49 @@ interface As2Message {
   contentType: string;
   body:        Buffer;
   signaturePem: string;
+}
+
+/** The agency application number the SFTP path is filed under; refused when absent. */
+function sftpApplicationId(req: GatewayTransmitRequest): string {
+  const raw = req.metadata?.applicationId;
+  const applicationId = typeof raw === 'string' ? raw.trim() : '';
+  if (!applicationId || /^UNASSIGNED/i.test(applicationId)) {
+    throw new ValidationError('FDA ESG SFTP transmit requires the agency application number; nothing is sent without it.', []);
+  }
+  return applicationId;
+}
+
+/**
+ * What a synchronous MDN says about the message it acknowledges. RFC 3798 /
+ * AS2: `Disposition: <mode>; <type>[/<modifier>: text]` — only a `processed`
+ * type without an `error` or `failure` modifier is an acceptance.
+ */
+function parseMdn(raw: string): { originalMessageId: string | null; accepted: boolean; disposition: string | null } {
+  const field = (name: string): string | null => {
+    const m = raw.match(new RegExp(`^${name}:[ \\t]*(.+?)[ \\t]*$`, 'im'));
+    return m ? m[1] : null;
+  };
+  const disposition = field('Disposition');
+  const afterMode = disposition ? disposition.slice(disposition.indexOf(';') + 1).trim().toLowerCase() : '';
+  const accepted = disposition !== null && disposition.includes(';')
+    && afterMode.startsWith('processed') && !/\b(error|failure|failed)\b/.test(afterMode);
+  return { originalMessageId: field('Original-Message-ID'), accepted, disposition };
+}
+
+/**
+ * Why a 2xx MDN is not an acceptance of `messageId`, or null when it is. A 2xx
+ * used to be recorded as received on its own: an MDN whose disposition was
+ * `failed` or `processed/error`, one for a different message, or a body with
+ * no disposition at all all went into the row as the agency's acceptance.
+ */
+function mdnRefusal(mdn: ReturnType<typeof parseMdn>, messageId: string): string | null {
+  if (mdn.disposition === null) return 'Agency returned success with no MDN disposition in the body.';
+  if (!mdn.accepted) return `Agency MDN did not accept the message: ${mdn.disposition}`;
+  const norm = (v: string) => v.trim().replace(/^<|>$/g, '').toLowerCase();
+  if (mdn.originalMessageId !== null && norm(mdn.originalMessageId) !== norm(messageId)) {
+    return `Agency MDN acknowledges a different message (${mdn.originalMessageId}).`;
+  }
+  return null;
 }
 
 function buildAs2Headers(msg: As2Message): Record<string, string> {
@@ -345,8 +390,12 @@ export class FdaEsgGateway implements SubmissionGateway {
     try {
       await loadFdaCredentials(organizationId, environment);
       return true;
-    } catch (err) {
-      return !(err instanceof CredentialError);
+    } catch {
+      // Any failure to load the credentials — a missing variable, or a cert
+      // or key file that cannot be read — means not configured. This used to
+      // answer true for everything except a missing variable, so an unmounted
+      // or rotated-away certificate showed the gateway as configured.
+      return false;
     }
   }
 
@@ -363,6 +412,14 @@ export class FdaEsgGateway implements SubmissionGateway {
        FDA ESG AS2 path has a documented 1 GB message limit. */
     const useSftp = normalizedReq.bundle.sizeBytes > 1_073_741_824;
     const transport: 'as2' | 'sftp' = useSftp ? 'sftp' : 'as2';
+    // The SFTP path is filed under /incoming/<application>/<sequence>/, so both
+    // are required there; the AS2 envelope carries neither (an eSTAR has no
+    // eCTD sequence). Refuse before a transmittal row exists: a refused
+    // request is not a transmittal.
+    if (transport === 'sftp') {
+      sftpApplicationId(normalizedReq);
+      requiredAgencyMetadata(normalizedReq);
+    }
     const transmittalId = await createTransmittalRow(normalizedReq, transport);
 
     try {
@@ -370,10 +427,12 @@ export class FdaEsgGateway implements SubmissionGateway {
       await updateTransmittal(transmittalId, { status: 'in_transit' });
 
       if (transport === 'sftp') {
-        const applicationId =
-          (req.metadata?.applicationId as string | undefined) ?? `APP-${req.packageId ?? 'pkg'}`;
-        const sequence =
-          (req.metadata?.sequence as string | undefined) ?? '0001';
+        // The application number and sequence name the /incoming/ path FDA
+        // files the bundle under. These defaulted to `APP-<packageId>` and
+        // '0001', so a bundle with no application number was deposited under
+        // a name FDA could not route.
+        const applicationId = sftpApplicationId(normalizedReq);
+        const sequence = requiredAgencyMetadata(normalizedReq).sequenceNumber;
         // Verify the on-disk bytes match the signed descriptor before SFTP
         // streams the file by path.
         await readVerifiedBundle(req.bundle);
@@ -414,6 +473,8 @@ export class FdaEsgGateway implements SubmissionGateway {
         creds.endpointUrl, headers, body,
         creds.clientCertPem, creds.clientKeyPem, creds.fdaCertPem,
       );
+      // The MDN's own Message-ID when FDA sends one; otherwise the AS2 message
+      // the MDN is verified (below) to acknowledge.
       const mdnId =
         (response.headers['message-id'] as string | undefined) ?? messageId;
 
@@ -433,6 +494,14 @@ export class FdaEsgGateway implements SubmissionGateway {
          §11). downloadAcknowledgment() returns this string when present and
          falls back to synthesised text for pre-migration rows. */
       const mdnRaw = response.body.toString('utf8');
+      const refusal = mdnRefusal(parseMdn(mdnRaw), messageId);
+      if (refusal) {
+        await updateTransmittal(transmittalId, {
+          status: 'rejected', httpStatus: response.httpStatus,
+          errorClass: 'gateway', errorMessage: refusal, mdnRaw,
+        });
+        throw new GatewayError(refusal, response.httpStatus, null, mdnRaw);
+      }
       await updateTransmittal(transmittalId, {
         status: 'received', transmissionId: mdnId,
         httpStatus: response.httpStatus, ackReceivedAt: new Date(),
@@ -485,6 +554,7 @@ export class FdaEsgGateway implements SubmissionGateway {
       transmissionId: rows[0].transmission_id,
       status: rows[0].status as SubmissionStatus,
       ackReceivedAt: rows[0].ack_received_at,
+      source: 'stored',
     };
   }
 

@@ -55,7 +55,9 @@ const db = {
   validations: [] as ProgramRow[],
   evidence: [] as ProgramRow[],
   cdx: [] as ProgramRow[],
+  gspr: [] as Record<string, unknown>[],
   countsFail: false,
+  classificationsFail: false,
 };
 
 /* Apply the programme predicate only when the SQL actually carries it. A
@@ -86,7 +88,9 @@ beforeEach(() => {
   db.validations = [];
   db.evidence = [];
   db.cdx = [];
+  db.gspr = [];
   db.countsFail = false;
+  db.classificationsFail = false;
 
   query.mockImplementation(async (sqlRaw: unknown, argsRaw?: unknown) => {
     const sql = String(sqlRaw).replace(/\s+/g, ' ');
@@ -110,11 +114,18 @@ beforeEach(() => {
         ],
       };
     }
-    if (sql.includes('FROM ivdr_classifications')) return { rows: scoped(db.classifications, sql, args) };
+    if (sql.includes("COUNT(*) AS total")) {
+      const rows = scoped(db.evidence, sql, args);
+      return { rows: [{ total: rows.length, completed: rows.filter((r: any) => r.status === 'completed').length }] };
+    }
+    if (sql.includes('FROM ivdr_classifications')) {
+      if (db.classificationsFail) throw new Error('classification read unavailable');
+      return { rows: scoped(db.classifications, sql, args) };
+    }
     if (sql.includes('FROM ivdr_analytical_validations')) return { rows: scoped(db.validations, sql, args) };
     if (sql.includes('FROM ivdr_clinical_evidence')) return { rows: scoped(db.evidence, sql, args) };
     if (sql.includes('FROM ivdr_cdx_workflows')) return { rows: scoped(db.cdx, sql, args) };
-    if (sql.includes('FROM ivdr_gspr_assessments')) return { rows: [] };
+    if (sql.includes('FROM ivdr_gspr_assessments')) return { rows: db.gspr };
     return { rows: [] };
   });
 });
@@ -284,5 +295,127 @@ describe('IVDR submission package job durability', () => {
     expect(res.status).toBe(404);
     expect(res.body.code).toBe('IVDR_SUBMISSION_NOT_FOUND');
     expect(res.body.jobDurability).toBe('ephemeral');
+  });
+});
+
+/**
+ * GET /api/ivdr/eudamed-export/:projectId took a projectId and scoped only the
+ * GSPR read by it. Classification, CDx and clinical evidence were read
+ * ORG-WIDE — the first two as "the newest row in the organisation".
+ *
+ * A manufacturer with more than one assay exporting EUDAMED registration data
+ * for one of them got the risk class, rule trace, intended purpose and device
+ * name of whichever classification happened to be newest, the newest CDx
+ * workflow in the organisation, and a study count covering the whole
+ * portfolio. Nothing in the response said so: every field was populated and
+ * plausible, and the wrong ones sit in deviceIdentification and
+ * classification — the two blocks a EUDAMED actor registration is made of.
+ *
+ * Same scoping as the submission package: validate the programme, prove
+ * ownership, read through program_id.
+ */
+describe('IVDR EUDAMED export project scoping', () => {
+  it("exports only the requested project's records — project B's never appear", async () => {
+    db.classifications = [
+      { id: 1, device_name: 'Assay A', ivdr_class: 'B', program_id: PROJECT_A },
+      { id: 2, device_name: 'Assay B', ivdr_class: 'D', program_id: PROJECT_B },
+    ];
+    db.cdx = [{ id: 31, therapeutic_area: 'Oncology-B', status: 'post_market', program_id: PROJECT_B }];
+    db.evidence = [
+      { id: 21, status: 'completed', program_id: PROJECT_A },
+      { id: 22, status: 'completed', program_id: PROJECT_B },
+      { id: 23, status: 'in_progress', program_id: PROJECT_B },
+    ];
+
+    const res = await request(app()).get(`/api/ivdr/eudamed-export/${PROJECT_A}`);
+    expect(res.status, JSON.stringify(res.body)).toBe(200);
+
+    const ex = res.body.eudamedExport;
+    expect(ex.deviceIdentification.deviceName).toBe('Assay A');
+    expect(ex.riskClass).toBe('B');
+    expect(ex.classification.riskClass).toBe('B');
+    expect(ex.companionDiagnostic.isCDx).toBe(false);
+    expect(ex.clinicalEvidence.totalStudies).toBe(1);
+
+    const serialized = JSON.stringify(res.body);
+    for (const leak of ['Assay B', 'Oncology-B']) {
+      expect(serialized).not.toContain(leak);
+    }
+  });
+
+  it('scopes every gather by org AND programme in the SQL itself', async () => {
+    await request(app()).get(`/api/ivdr/eudamed-export/${PROJECT_A}`);
+    for (const fragment of [
+      'FROM ivdr_classifications WHERE organization_id = $1 AND program_id = $2',
+      'FROM ivdr_cdx_workflows w',
+      'FROM ivdr_clinical_evidence e',
+    ]) {
+      const { sql, args } = callFor(fragment);
+      expect(sql).toMatch(/organization_id = \$1/);
+      expect(sql).toMatch(/program_id = \$2/);
+      expect(args).toEqual([ORG, PROJECT_A]);
+    }
+    const gspr = callFor('FROM ivdr_gspr_assessments');
+    expect(gspr.args).toEqual([PROJECT_A, ORG]);
+  });
+
+  it('422s a non-UUID projectId before touching the database', async () => {
+    const res = await request(app()).get('/api/ivdr/eudamed-export/not-a-uuid');
+    expect(res.status).toBe(422);
+    expect(query).not.toHaveBeenCalled();
+  });
+
+  it('404s a programme owned by another org before gathering anything', async () => {
+    db.programOwner = { [PROJECT_A]: OTHER_ORG };
+    db.classifications = [{ id: 1, device_name: 'Assay A', program_id: PROJECT_A }];
+    const res = await request(app()).get(`/api/ivdr/eudamed-export/${PROJECT_A}`);
+    expect(res.status).toBe(404);
+    expect(query).toHaveBeenCalledTimes(1);
+    expect(JSON.stringify(res.body)).not.toContain('Assay A');
+  });
+
+  /* "Not classified" for a device that IS classified, because the read failed,
+     is the export saying the opposite of the truth in the field a notified body
+     reads first. */
+  it('does not report a failed classification read as "Not classified"', async () => {
+    db.classificationsFail = true;
+    const res = await request(app()).get(`/api/ivdr/eudamed-export/${PROJECT_A}`);
+    expect(res.status).toBeGreaterThanOrEqual(500);
+    expect(res.body.eudamedExport).toBeUndefined();
+  });
+
+  it('reports the assessment\'s own requirement count, and null when there is none', async () => {
+    const withAssessment = await request(app()).get(`/api/ivdr/eudamed-export/${PROJECT_A}`);
+    expect(withAssessment.body.eudamedExport.gsprCompliance).toMatchObject({
+      assessmentAvailable: false,
+      totalRequirements: null,
+    });
+
+    db.gspr = [{ requirements: [{ status: 'compliant' }, { status: 'not_applicable' }] }];
+    const res = await request(app()).get(`/api/ivdr/eudamed-export/${PROJECT_A}`);
+    expect(res.body.eudamedExport.gsprCompliance).toMatchObject({
+      assessmentAvailable: true,
+      totalRequirements: 2,
+      compliancePercent: 100,
+    });
+  });
+});
+
+/**
+ * The five package gathers swallowed a read failure into `{ rows: [] }`, which
+ * the manifest reported as `count: 0`, `hasClassification: false` and
+ * `status: 'completed'` — a submission package telling a manufacturer no
+ * classification was on file when the truth was that it could not be read.
+ */
+describe('IVDR submission package read failures', () => {
+  it('fails the job rather than reporting an unreadable section as empty', async () => {
+    db.classificationsFail = true;
+    const a = app(); // one router instance — job tracking is per-factory
+    const res = await request(a).post(`/api/ivdr/submission-package/${PROJECT_A}`);
+    expect(res.status).not.toBe(201);
+    expect(res.body.manifest).toBeUndefined();
+
+    const status = await request(a).get(`/api/ivdr/submission-package/${PROJECT_A}/status`);
+    expect(status.body.status).toBe('failed');
   });
 });

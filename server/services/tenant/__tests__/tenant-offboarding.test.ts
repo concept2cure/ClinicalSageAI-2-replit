@@ -411,6 +411,38 @@ describe('purgeTenant — what it actually does', () => {
     expect(PURGE_CHILD_TABLES).not.toContain('stripe_events');
     expect(PURGE_CHILD_TABLES).toContain('module_access_requests');
     expect(PURGE_CHILD_TABLES).toContain('project_workflows');
-    for (const t of PURGE_CHILD_TABLES) expect(t).toMatch(/^[a-z_][a-z0-9_]*$/);
+    // Bare or schema-qualified; the qualifier is what lets a non-public table be
+    // named at all. Anything else is refused by purgeChildTable.
+    for (const t of PURGE_CHILD_TABLES) {
+      expect(t).toMatch(/^[a-z_][a-z0-9_]*(\.[a-z_][a-z0-9_]*)?$/);
+    }
+  });
+
+  /**
+   * The vault was in the list and was never purged.
+   *
+   * The entries read `vault_documents` and `document_chunks`, which resolve to
+   * `public.vault_documents` and `public.document_chunks`. Neither exists — the
+   * real tables live in the `vault` schema — so every purge raised 42P01 and
+   * skipped them, silently, while the list read as though the customer's actual
+   * regulatory documents were being deleted. A dot could not have been written
+   * before this: the old name regex rejected it.
+   */
+  it('names the vault tables where they actually live', () => {
+    expect(PURGE_CHILD_TABLES).toContain('vault.documents');
+    expect(PURGE_CHILD_TABLES).toContain('vault.document_chunks');
+    // The names that silently hit nothing must be gone, not merely joined.
+    expect(PURGE_CHILD_TABLES).not.toContain('vault_documents');
+    expect(PURGE_CHILD_TABLES).not.toContain('document_chunks');
+  });
+
+  it('deletes chunks before the documents their scoping predicate reads', () => {
+    // vault.document_chunks has no organization_id; it is scoped through a
+    // subquery over vault.documents. Ordered after its parent, that subquery
+    // would match nothing and every chunk would survive the purge.
+    const chunks = PURGE_CHILD_TABLES.indexOf('vault.document_chunks');
+    const docs = PURGE_CHILD_TABLES.indexOf('vault.documents');
+    expect(chunks).toBeGreaterThanOrEqual(0);
+    expect(chunks).toBeLessThan(docs);
   });
 });

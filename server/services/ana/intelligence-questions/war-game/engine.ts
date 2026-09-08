@@ -103,8 +103,13 @@ export function runWarGame(
       ALL_DIMENSIONS.length,
   );
 
+  // ── Severity counts ─────────────────────────────────────────────────
+  const criticalCount = findings.filter((f) => f.severity === 'critical').length;
+  const warningCount = findings.filter((f) => f.severity === 'warning').length;
+  const infoCount = findings.filter((f) => f.severity === 'info').length;
+
   // ── Assessment & risk level ─────────────────────────────────────────
-  const overallAssessment: WarGameReport['overallAssessment'] =
+  let overallAssessment: WarGameReport['overallAssessment'] =
     overallScore >= 85
       ? 'audit_ready'
       : overallScore >= 70
@@ -113,7 +118,7 @@ export function runWarGame(
           ? 'significant_gaps'
           : 'not_ready';
 
-  const regulatoryRiskLevel: WarGameReport['regulatoryRiskLevel'] =
+  let regulatoryRiskLevel: WarGameReport['regulatoryRiskLevel'] =
     overallScore >= 85
       ? 'low'
       : overallScore >= 70
@@ -122,10 +127,40 @@ export function runWarGame(
           ? 'high'
           : 'critical';
 
-  // ── Severity counts ─────────────────────────────────────────────────
-  const criticalCount = findings.filter((f) => f.severity === 'critical').length;
-  const warningCount = findings.filter((f) => f.severity === 'warning').length;
-  const infoCount = findings.filter((f) => f.severity === 'info').length;
+  // A finding's severity must CAP the headline verdict. The overall score is a
+  // mean of seven dimension scores, and a single critical finding deducts its
+  // penalty from only one dimension — so a filing with an OPEN CRITICAL blocker
+  // (e.g. "Nitrosamine Risk Not Evaluated") still averaged ~96/100 and read
+  // "Audit-Ready / low regulatory risk", contradicting the critical it lists. A
+  // critical is an unresolved blocker: the filing cannot be audit-ready and is
+  // at least high risk. An unresolved warning is at best "needs work"/moderate.
+  const ASSESS_RANK: Record<WarGameReport['overallAssessment'], number> = {
+    audit_ready: 0,
+    needs_work: 1,
+    significant_gaps: 2,
+    not_ready: 3,
+  };
+  const RISK_RANK: Record<WarGameReport['regulatoryRiskLevel'], number> = {
+    low: 0,
+    moderate: 1,
+    high: 2,
+    critical: 3,
+  };
+  const capAssessment = (
+    cur: WarGameReport['overallAssessment'],
+    floor: WarGameReport['overallAssessment'],
+  ) => (ASSESS_RANK[cur] >= ASSESS_RANK[floor] ? cur : floor);
+  const capRisk = (
+    cur: WarGameReport['regulatoryRiskLevel'],
+    floor: WarGameReport['regulatoryRiskLevel'],
+  ) => (RISK_RANK[cur] >= RISK_RANK[floor] ? cur : floor);
+  if (criticalCount > 0) {
+    overallAssessment = capAssessment(overallAssessment, 'significant_gaps');
+    regulatoryRiskLevel = capRisk(regulatoryRiskLevel, 'high');
+  } else if (warningCount > 0) {
+    overallAssessment = capAssessment(overallAssessment, 'needs_work');
+    regulatoryRiskLevel = capRisk(regulatoryRiskLevel, 'moderate');
+  }
 
   // ── Executive summary ───────────────────────────────────────────────
   const assessmentLabel: Record<WarGameReport['overallAssessment'], string> = {

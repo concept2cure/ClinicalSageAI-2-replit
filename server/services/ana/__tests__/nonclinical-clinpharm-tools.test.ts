@@ -254,6 +254,33 @@ describe('assess_nonclinical_safety handler', () => {
     expect(out.readiness).toBe('gaps_block_fih');
     expect(out.recommendedStartingDoseMg).toBe(10);
     expect(out.blockers.length).toBeGreaterThan(0);
+    expect(out.programAssessed).toBe(true);
+  });
+
+  it('a dose with no program context is not ready_for_fih, and programGaps is null rather than []', async () => {
+    // Dose-only input used to read 'ready_for_fih' and serialise programGaps
+    // as [] — "assessed, no gaps" — when the study battery was never checked.
+    const handler = getToolHandler('assess_nonclinical_safety')!;
+    const out = JSON.parse(await handler({ drugSubstanceName: 'BX-115', fih: { speciesNoaels: [{ species: 'rat', noaelMgPerKg: 10 }] } }));
+    expect(out.readiness).toBe('insufficient_input');
+    expect(out.programAssessed).toBe(false);
+    expect(out.programGaps).toBeNull();
+    expect(out.summary).toMatch(/study battery was not assessed/);
+  });
+});
+
+describe('assemble_briefing_book handler — fixture questions are labelled in the content itself', () => {
+  it('prepends a SAMPLE DATA banner when the questions for the Agency come from the fixture', async () => {
+    const handler = getToolHandler('assemble_briefing_book')!;
+    const out = JSON.parse(await handler({ product_name: 'BX-115', indication: 'type 2 diabetes', run_premortem: false }));
+    expect(String(out.content)).toMatch(/^> SAMPLE DATA — the questions for the Agency below are a fixture/);
+  });
+
+  it('does not add the banner when the sponsor supplied its own key questions', async () => {
+    const handler = getToolHandler('assemble_briefing_book')!;
+    const out = JSON.parse(await handler({ product_name: 'BX-115', key_questions: ['Does the Agency agree with the proposed primary endpoint?'], run_premortem: false }));
+    expect(String(out.content)).not.toMatch(/SAMPLE DATA — the questions for the Agency/);
+    expect(String(out.content)).toContain('Does the Agency agree with the proposed primary endpoint?');
   });
 });
 

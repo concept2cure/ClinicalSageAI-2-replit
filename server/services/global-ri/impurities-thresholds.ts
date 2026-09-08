@@ -243,7 +243,7 @@ function resolveThreshold(
 }
 
 /** The impurity classes ICH Q3A/Q3B thresholds actually govern. */
-export type ImpurityClass =
+export type ImpurityCategory =
   | 'organic'
   | 'degradation'
   | 'inorganic'
@@ -303,7 +303,7 @@ const OUT_OF_SCOPE_CLASSES: Record<string, string> = {
  * substance specification and Q3A, not re-thresholded here (Q3B(R2) §1.2
  * excludes it), so the drug-product matrix answers only for degradation.
  */
-function outOfProductScope(impurityClass: ImpurityClass): string | null {
+function outOfProductScope(impurityClass: ImpurityCategory): string | null {
   return impurityClass === 'organic'
     ? 'ICH Q3A(R2) and the drug substance specification — Q3B(R2) covers degradation products of the drug product, not process impurities carried in with the substance'
     : null;
@@ -322,7 +322,7 @@ function outOfProductScope(impurityClass: ImpurityClass): string | null {
 export function resolveImpurityThresholds(input: {
   matrix: 'drug_substance' | 'drug_product';
   maxDailyDoseMg: number | null | undefined;
-  impurityClass: ImpurityClass;
+  impurityClass: ImpurityCategory;
 }): ResolvedThresholdSet {
   const { matrix, impurityClass } = input;
   if (impurityClass === 'unresolved') {

@@ -142,7 +142,7 @@ function SigningPinPanel() {
   }, [pin, confirm, current]);
 
   return (
-    <div style={{ padding: '10px 12px', borderBottom: '1px solid var(--c2c-line,#e4e7ec)' }}>
+    <div style={{ padding: '10px 12px', borderBottom: '1px solid var(--border)' }}>
       <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
         <span style={{ fontSize: 12, fontWeight: 600 }}>{I.lock} Signing PIN</span>
         <span style={{ flex: 1 }} />
@@ -202,7 +202,7 @@ function SigningPinPanel() {
           style={{
             fontSize: 11.5,
             margin: '6px 0 0',
-            color: note.tone === 'ok' ? 'var(--success,#067647)' : 'var(--c2c-err,#b42318)',
+            color: note.tone === 'ok' ? 'var(--success,#067647)' : 'var(--error)',
           }}
         >
           {note.text}
@@ -282,7 +282,7 @@ function SignatureManifest({ docId }: { docId: string | null }) {
   return (
     <div style={{ padding: '4px 0' }}>
       {rows.map((s) => (
-        <div key={s.id} className="es-manifest" style={{ padding: '10px 12px', borderBottom: '1px solid var(--c2c-line,#e4e7ec)' }}>
+        <div key={s.id} className="es-manifest" style={{ padding: '10px 12px', borderBottom: '1px solid var(--border)' }}>
           <Row label="Signed by">
             {s.signer_name
               ? <><b>{s.signer_name}</b>{s.signer_email ? <span style={{ color: 'var(--text-400)' }}> · {s.signer_email}</span> : null}</>

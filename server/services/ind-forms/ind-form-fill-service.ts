@@ -19,11 +19,13 @@
  *     AcroForm layer (3454/3455 are static XFA whose AcroForm layer pdf-lib fills
  *     after stripping the XFA). Until a reviewed edition is installed, the labeled
  *     draft renders.
- *   - Reconstruction (1571, 3674): these are pure Adobe LiveCycle DYNAMIC XFA with
- *     no fillable AcroForm layer and no official page to overlay, so a bundled
- *     asset carries an empty fieldMap and never promotes. Instead of a bare draft
- *     they render a faithful sectioned RECONSTRUCTION (reconstructed=true; see
- *     ./ind-form-reconstruct), clearly labeled NOT the official Adobe-rendered form.
+ *   - XFA fill (1571, 3674): these are pure Adobe LiveCycle DYNAMIC XFA. Their
+ *     AcroForm layer is empty, so the AcroForm gate above never promotes them —
+ *     which is why they long rendered a reconstruction. The fields are real, they
+ *     just live in the XFA packets: 1571 declares 283 and 246 are fillable, 3674
+ *     declares 190 and 178 are. They now fill through the XFA `datasets` packet
+ *     (readXfaTemplate → fillOfficialXfaTemplate), producing the genuine FDA PDF.
+ *     The reconstruction remains the fallback when that path cannot qualify.
  * ==============================================================================
  *
  * Behaviour:
@@ -66,6 +68,12 @@ import {
   FORM_1574,
 } from './ind-form-data-builders';
 import { hasReconstruction, reconstructForm } from './ind-form-reconstruct';
+import { getOfficialXfaFieldMap } from './official-field-maps';
+import {
+  fillXfaDatasets,
+  isDynamicXfaPdf,
+  type OfficialPdfFieldMap,
+} from '../forms/fill-official-pdf';
 
 // ---------------------------------------------------------------------------
 // Constants (mirror leaf-pdf-renderer for the deterministic fallback)
@@ -163,6 +171,19 @@ export function templatePathFor(formId: string): string {
 interface VerifiedTemplate {
   bytes: Buffer;
   fieldMap: Record<string, string>;
+}
+
+/** The vendored asset's manifest as written, or null when there is none here. */
+async function readTemplateManifest(formId: string): Promise<Record<string, unknown> | null> {
+  try {
+    const raw = await fs.readFile(`${templatePathFor(formId)}.manifest.json`, 'utf8');
+    const parsed = JSON.parse(raw) as unknown;
+    return parsed && typeof parsed === 'object' && !Array.isArray(parsed)
+      ? (parsed as Record<string, unknown>)
+      : null;
+  } catch {
+    return null;
+  }
 }
 
 async function readTemplate(formId: string): Promise<VerifiedTemplate | null> {
@@ -294,6 +315,108 @@ async function fillOfficialTemplate(
     missingRequired: built.missingRequired,
     unmappedFields: unmapped.length > 0 ? unmapped : undefined,
     unfilledFields: unfilled.length > 0 ? unfilled : undefined,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Official dynamic-XFA fill path (FDA 1571, 3674)
+// ---------------------------------------------------------------------------
+
+interface VerifiedXfaTemplate {
+  bytes: Buffer;
+  fieldMap: OfficialPdfFieldMap;
+}
+
+/**
+ * Load a vendored template for the XFA fill path.
+ *
+ * The trust contract differs from readTemplate's on one point, deliberately. The
+ * AcroForm path fills from a field map carried IN THE MANIFEST, so the manifest
+ * needs a named reviewer to vouch for that data. The XFA path fills from
+ * OFFICIAL_XFA_FIELD_MAPS — a code-reviewed module, enumerated from these exact
+ * bytes — and every path in it is re-checked against the template's own datasets
+ * skeleton at fill time, so a stale entry yields a blank box rather than a wrong
+ * one. That is the same contract the device eSTAR fill already ships on
+ * (estar-field-map.ts + assets/estar-templates/checksums.txt).
+ *
+ * What is still required here, and fails closed: the manifest names this form,
+ * its sha256 matches the bytes on disk, its sourceUrl is fda.gov, and the file
+ * really is a dynamic XFA form.
+ */
+async function readXfaTemplate(formId: string): Promise<VerifiedXfaTemplate | null> {
+  const fieldMap = getOfficialXfaFieldMap(formId);
+  if (!fieldMap || Object.keys(fieldMap).length === 0) return null;
+  try {
+    const templatePath = templatePathFor(formId);
+    const [bytes, rawManifest] = await Promise.all([
+      fs.readFile(templatePath),
+      fs.readFile(`${templatePath}.manifest.json`, 'utf8'),
+    ]);
+    const manifest = JSON.parse(rawManifest) as Record<string, unknown>;
+    const sourceUrl = new URL(String(manifest.sourceUrl ?? ''));
+    const sourceIsFda =
+      sourceUrl.protocol === 'https:' &&
+      (sourceUrl.hostname === 'fda.gov' || sourceUrl.hostname.endsWith('.fda.gov'));
+    const actualSha256 = crypto.createHash('sha256').update(bytes).digest('hex');
+    if (manifest.formId !== formId) return null;
+    if (manifest.sha256 !== actualSha256) return null;
+    if (!sourceIsFda) return null;
+    if (!isDynamicXfaPdf(bytes)) return null;
+    return { bytes, fieldMap };
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Fill the official dynamic-XFA form through its `datasets` packet.
+ *
+ * The output IS the FDA file: fillXfaDatasets appends a PDF incremental update,
+ * so every original byte is preserved and Acrobat renders the real form with our
+ * values in it.
+ *
+ * WHY THIS DOES NOT FAIL CLOSED ON AN UNPLACED REQUIRED FIELD, when the AcroForm
+ * path does: that path flattens its output, so a required field it could not
+ * place is permanently absent from a read-only PDF, and claiming "official" would
+ * be claiming a complete form. XFA output is never flattened — it stays the live,
+ * editable official form the sponsor opens, completes and signs. An unfilled box
+ * there is a box the sponsor fills, exactly as if they had downloaded the blank
+ * form. So the honest report is which fields we wrote and which we did not, in
+ * `unmappedFields` and `missingRequired`, not a silent downgrade to a drawing.
+ */
+async function fillOfficialXfaTemplate(
+  formId: string,
+  templateBytes: Buffer,
+  built: BuiltForm,
+  fieldMap: OfficialPdfFieldMap,
+): Promise<IndFormPdfResult> {
+  const entries = Object.entries(built.fields);
+  const data: Record<string, unknown> = {};
+  for (const [fieldId, value] of entries) {
+    data[fieldId] = typeof value === 'boolean' ? value : valueToText(value);
+  }
+
+  const result = await fillXfaDatasets(templateBytes, fieldMap, data, {
+    missingFieldPolicy: 'skip',
+  });
+
+  // Never claim an official fill that wrote nothing: with no value placed the
+  // output is byte-for-byte the blank form, and the reconstruction at least
+  // carries the project's data.
+  if (result.filled.length === 0) {
+    throw new Error(`Official ${formId}: the XFA fill placed no values`);
+  }
+
+  const filledSet = new Set(result.filled);
+  const unmapped = entries.map(([id]) => id).filter((id) => !filledSet.has(id));
+
+  return {
+    formId,
+    pdfBytes: result.bytes,
+    usedOfficialTemplate: true,
+    fieldCoverage: result.filled.length / (entries.length || 1),
+    missingRequired: built.missingRequired,
+    unmappedFields: unmapped.length > 0 ? unmapped : undefined,
   };
 }
 
@@ -451,9 +574,20 @@ export async function renderBuiltForm(
       // Fall through to a reconstruction if the form has one, else the draft.
     }
   }
-  // Pure dynamic XFA forms (1571/3674) have no fillable AcroForm layer and no
-  // official page to overlay — render a faithful sectioned reconstruction rather
-  // than the bare labeled draft. Clearly labeled as NOT the official form.
+  // Dynamic XFA forms (1571/3674) expose no AcroForm widgets, so the gate above
+  // never promotes them. Their fields are in the XFA packets: fill those and the
+  // output is the genuine FDA form, not a drawing of one.
+  const xfa = await readXfaTemplate(formId);
+  if (xfa) {
+    try {
+      return await fillOfficialXfaTemplate(formId, xfa.bytes, built, xfa.fieldMap);
+    } catch {
+      // A map that no longer matches the vendored edition is never used.
+    }
+  }
+  // Nothing official could be produced — render a faithful sectioned
+  // reconstruction rather than the bare labeled draft. Clearly labeled as NOT
+  // the official form.
   if (hasReconstruction(formId)) {
     return reconstructForm(formId, built);
   }
@@ -475,4 +609,154 @@ export async function generateAllIndForms(
   results.push(await generateIndForm(FORM_356H, meta));
   results.push(await generateIndForm(FORM_1574, meta));
   return results;
+}
+
+// ---------------------------------------------------------------------------
+// The render plan — what WILL be produced, stated before it is
+// ---------------------------------------------------------------------------
+
+/** How a form's PDF will be produced. Mirrors renderBuiltForm's own order. */
+export type FormRenderMethod =
+  | 'official-acroform'
+  | 'official-xfa-datasets'
+  | 'reconstruction'
+  | 'draft';
+
+export interface FormRenderPlan {
+  formId: string;
+  method: FormRenderMethod;
+  /** True only for the two official methods — the output IS the FDA file. */
+  officialTemplate: boolean;
+  /** The vendored template edition (its manifest `version`), else null. */
+  edition: string | null;
+  /** The person who reviewed this asset for filling, or null when nobody has. */
+  reviewedBy: string | null;
+  /** Canonical field ids the platform writes onto the official form. */
+  platformWrites: string[];
+  /** Boxes the platform deliberately leaves for the sponsor, with their labels. */
+  sponsorCompletes: Array<{ id: string; label: string }>;
+}
+
+/**
+ * State what the engine will produce for a form, WITHOUT producing it.
+ *
+ * The panel used to learn how a form had rendered only after the bytes came
+ * back, on the X-Form-* headers of a download. Someone deciding whether to send
+ * a form to a sponsor needs it before the click: whether the output is the
+ * genuine FDA file or a labeled reconstruction, which edition, who has reviewed
+ * the fill, and — the part that decides whether the form can actually be signed
+ * — which boxes the platform will leave blank for the sponsor to complete in
+ * Adobe Acrobat.
+ *
+ * Every verdict comes from the SAME gates renderBuiltForm applies (readTemplate,
+ * then readXfaTemplate, then a reconstruction, then the draft), so the plan
+ * cannot drift from the render: pinned by __tests__/ind-form-render-plan.test.ts,
+ * which renders each form and compares. A form whose template is absent or fails
+ * verification reports no edition and no reviewer, and claims nothing about
+ * boxes on a form it is not producing.
+ */
+export async function describeRenderPlan(formId: string): Promise<FormRenderPlan> {
+  // Refuses an unsupported id exactly as the render path does, before any I/O.
+  const built = buildFormById(formId, {});
+
+  const acroform = await readTemplate(formId);
+  const xfa = acroform ? null : await readXfaTemplate(formId);
+  const official = acroform ?? xfa;
+
+  if (!official) {
+    // No official form is being produced, so there are no boxes ON one to
+    // describe. A reconstruction draws every value it was given; calling any of
+    // them "left for you to complete on the form" would name a form that is not
+    // in the output.
+    return {
+      formId,
+      method: hasReconstruction(formId) ? 'reconstruction' : 'draft',
+      officialTemplate: false,
+      edition: null,
+      reviewedBy: null,
+      platformWrites: [],
+      sponsorCompletes: [],
+    };
+  }
+
+  const manifest = (await readTemplateManifest(formId)) ?? {};
+  const mapped = new Set(Object.keys(official.fieldMap));
+  const derived = new Set(built.qcOnlyFields);
+  const labels = labelsForForm(formId);
+
+  const platformWrites: string[] = [];
+  const sponsorCompletes: Array<{ id: string; label: string }> = [];
+  for (const id of Object.keys(built.fields)) {
+    if (mapped.has(id)) {
+      platformWrites.push(id);
+      continue;
+    }
+    // A DERIVED gate (`certification_selected`) is a completeness verdict the
+    // builder computes, not a box that exists on any edition of the form.
+    if (derived.has(id)) continue;
+    sponsorCompletes.push({ id, label: labels[id] ?? id });
+  }
+
+  const reviewedBy = typeof manifest.reviewedBy === 'string' && manifest.reviewedBy.trim() !== ''
+    ? manifest.reviewedBy.trim()
+    : null;
+  const edition = typeof manifest.version === 'string' && manifest.version.trim() !== ''
+    ? manifest.version.trim()
+    : null;
+
+  return {
+    formId,
+    method: acroform ? 'official-acroform' : 'official-xfa-datasets',
+    officialTemplate: true,
+    edition,
+    reviewedBy,
+    platformWrites,
+    sponsorCompletes,
+  };
+}
+
+/**
+ * The render plan for every supported form, in registry order.
+ *
+ * Memoised per templates directory: each plan digests its whole template to
+ * verify the manifest, so the seven vendored FDA forms are ~20 MB of I/O, and
+ * this is read on every load of the forms panel. The vendored assets are
+ * deployment artifacts, not runtime-mutable state, so the directory is a sound
+ * cache key — dropping a NEW template in place while the server runs needs a
+ * restart to be seen (the vendoring runbook already says so). `describeRenderPlan`
+ * itself is deliberately left uncached: it is the exact per-form read the tests
+ * pin the render against.
+ */
+let renderPlanCache: { dir: string; plans: Promise<FormRenderPlan[]> } | null = null;
+
+export async function describeAllRenderPlans(): Promise<FormRenderPlan[]> {
+  const dir = templatesDir();
+  if (!renderPlanCache || renderPlanCache.dir !== dir) {
+    const plans = Promise.all(SUPPORTED_FORM_IDS.map((formId) => describeRenderPlan(formId)));
+    renderPlanCache = { dir, plans };
+    // A failed read must not be cached as the answer forever.
+    plans.catch(() => {
+      if (renderPlanCache?.plans === plans) renderPlanCache = null;
+    });
+  }
+  return renderPlanCache.plans;
+}
+
+/**
+ * The digests of the BLANK vendored template for a form — its decrypted asset
+ * and, when the manifest records one, the encrypted original as FDA publishes
+ * it.
+ *
+ * Used to refuse an "attached completed form" that is byte-identical to the
+ * blank one. A sponsor who attaches the blank template has attached nothing;
+ * accepting it would place an empty, unsigned form into a filing as though it
+ * were the signed one. Returns [] when no manifest is present, in which case
+ * there is nothing to compare against and the caller must not claim otherwise.
+ */
+export async function blankTemplateDigests(formId: string): Promise<string[]> {
+  const manifest = await readTemplateManifest(formId);
+  if (!manifest) return [];
+  return [manifest.sha256, manifest.sha256EncryptedOriginal]
+    .filter((v): v is string => typeof v === 'string' && /^[0-9a-f]{64}$/i.test(v))
+    .map((v) => v.toLowerCase());
 }

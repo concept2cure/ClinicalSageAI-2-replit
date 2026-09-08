@@ -456,11 +456,16 @@ data — side-effect-free, persists nothing — and reports:
 ```
 
 `ready` is computed as `templateAvailable && fieldMapPopulated`, the **same gate**
-`POST /api/510k/estar/official` enforces. The UI's "Generate official eSTAR" button
-(`client/src/concept2cure/mdx/hooks/useK510.ts:179`) is driven by this probe, so it
-un-disables itself with no front-end change. `tests/routes/estar-official-pdf.test.ts:235`
-pins both halves of this behaviour — the not-ready path with blockers, and the ready
-path once a template + map are present.
+`POST /api/510k/estar/official` enforces. The UI's official-eSTAR panel
+(`client/src/concept2cure/mdx/surfaces/OfficialEstarPanel.tsx`, mounted on the 510(k),
+PMA and IVD surfaces) is driven by this probe through `useEstarReadiness(type, variant)`:
+its readiness gate shows the blockers while `ready` is false, its governed field preview
+(`useEstarOfficialFields`) lists every administrative field with the value the platform
+holds and its source — a blank field with a declared source reads "Not set" and names
+the home to fill in, never a guessed value — and its one Generate control un-disables
+itself once the probe reports ready, with no front-end change.
+`tests/routes/estar-official-pdf.test.ts:235` pins both halves of this behaviour — the
+not-ready path with blockers, and the ready path once a template + map are present.
 
 ### Step 6 — Produce one real eSTAR before declaring victory
 

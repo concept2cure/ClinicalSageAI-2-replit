@@ -94,13 +94,16 @@ describe('buildForm1571', () => {
     expect(built.missingRequired).toContain('indication');
     expect(built.missingRequired).toContain('ind_type');
     expect(built.missingRequired).toContain('phase_of_study');
-    expect(built.missingRequired).toContain('authorized_rep_name');
     // sponsor_address required too
     expect(built.missingRequired).toContain('sponsor_address');
-    // order: sponsor_name before drug_name before authorized_rep_name
+    // authorized_rep_name is NOT required: the 1571 signature block is a
+    // signature, not a data box, and buildForm356h treats the same id the same
+    // way. While it was required, no official fill of this form could qualify.
+    expect(built.missingRequired).not.toContain('authorized_rep_name');
+    // order: sponsor_name before drug_name before phase_of_study
     const i = built.missingRequired;
     expect(i.indexOf('sponsor_name')).toBeLessThan(i.indexOf('drug_name'));
-    expect(i.indexOf('drug_name')).toBeLessThan(i.indexOf('authorized_rep_name'));
+    expect(i.indexOf('drug_name')).toBeLessThan(i.indexOf('phase_of_study'));
   });
 
   it('is deterministic — same input yields equal field maps', () => {
@@ -300,5 +303,80 @@ describe('NDA/BLA and IRB forms', () => {
     const built = buildForm1574(meta);
     expect(built.formId).toBe(FORM_1574);
     expect(built.missingRequired).toContain('irb_chair_name');
+  });
+});
+
+describe('the protocol number is never borrowed from the IND serial number', () => {
+  // The serial number is the IND submission sequence (0000, 0001…). The protocol
+  // number identifies the study. Both builders used to fall back from one to the
+  // other, and the 1572 map feeds db_prot_name_code — Box 6 of the official form
+  // — so an investigator signed a 1572 whose protocol number read "0000".
+  const META = { sponsorName: 'Acme Bio', drugName: 'ACME-001', serialNumber: '0000' };
+
+  it('1572 leaves the protocol number blank rather than printing the serial', () => {
+    const built = buildForm1572({ name: 'Dr Pat Smith', facilityName: 'Site A', irbName: 'WCG IRB' }, META);
+    expect(built.fields.protocol_numbers).toBe('');
+    expect(built.fields.protocol_numbers).not.toBe('0000');
+  });
+
+  it('1574 leaves it blank AND reports it missing, instead of silently passing the gate', () => {
+    const built = buildForm1574(META);
+    expect(built.fields.protocol_number).toBe('');
+    expect(built.missingRequired).toContain('protocol_number');
+  });
+
+  it('a real protocol number is still carried through both forms', () => {
+    const withProtocol = { ...META, protocolNumbers: 'C2C-1042-101' };
+    expect(buildForm1572({ name: 'Dr Pat Smith' }, withProtocol).fields.protocol_numbers).toBe('C2C-1042-101');
+    const f1574 = buildForm1574(withProtocol);
+    expect(f1574.fields.protocol_number).toBe('C2C-1042-101');
+    expect(f1574.missingRequired).not.toContain('protocol_number');
+  });
+});
+
+/* ── Derived gates are not boxes on the form ─────────────────────────────────
+   `requiredFields` is the official-fill PLACEABILITY gate: fillOfficialTemplate
+   refuses a template that cannot place one of them. A field the builder DERIVES
+   from other fields has no widget on any edition of the form, so listing it
+   there refuses a template for a box that does not exist. 3455's
+   `interest_type_selected` was flagged `qcOnly` for that reason; 3674's
+   `certification_selected` — the same kind of derived verdict — was not. */
+describe('derived QC gates stay out of the official-fill placeability gate', () => {
+  it('3674: certification_selected is reported as a derived gate, never as a placeable required field', () => {
+    const built = buildForm3674({ sponsorName: 'Acme', drugName: 'C2C-1', ctgovCertificationBasis: 'requirements_met' });
+    expect(built.qcOnlyFields).toContain('certification_selected');
+    expect(built.requiredFields).not.toContain('certification_selected');
+    // Still a completeness verdict: an unselected basis is still missing.
+    const noBasis = buildForm3674({ sponsorName: 'Acme', drugName: 'C2C-1' });
+    expect(noBasis.missingRequired).toContain('certification_selected');
+  });
+
+  it('3455: interest_type_selected keeps the same treatment (the precedent this follows)', () => {
+    const built = buildForm3455({
+      sponsorName: 'Acme',
+      investigators: [
+        { name: 'Dr. Pat Smith', financial: { hasDisclosableInterest: true, interestTypes: ['significant_equity'] } },
+      ],
+    });
+    expect(built.qcOnlyFields).toContain('interest_type_selected');
+    expect(built.requiredFields).not.toContain('interest_type_selected');
+  });
+
+  it('every builder reports qcOnlyFields, and no id is both derived and placeable', () => {
+    const meta: IndProjectMetadata = { sponsorName: 'Acme', drugName: 'C2C-1', indication: 'X' };
+    const inv = { name: 'Dr. Pat Smith' };
+    const builts = [
+      buildForm1571(meta),
+      buildForm1572(inv, meta),
+      buildForm3674(meta),
+      buildForm3454(meta),
+      buildForm3455({ ...meta, investigators: [inv] }),
+      buildForm356h(meta),
+      buildForm1574(meta),
+    ];
+    for (const built of builts) {
+      expect(Array.isArray(built.qcOnlyFields)).toBe(true);
+      for (const id of built.qcOnlyFields) expect(built.requiredFields).not.toContain(id);
+    }
   });
 });

@@ -20,12 +20,6 @@ import type {
   GeneratedStatisticalArtifact,
   ArtifactSection,
   StudyDesignInput,
-  PowerAdequacyJudgment,
-  AssumptionFragility,
-  EndpointMethodDefensibility,
-  StatisticalRiskProfile,
-  TradeoffAnalysis,
-  RoleAwareInterpretation,
 } from './types';
 
 // ═══════════════════════════════════════════════════════════════════════════════

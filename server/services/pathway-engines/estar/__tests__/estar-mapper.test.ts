@@ -93,7 +93,6 @@ describe('mapToEstar', () => {
     for (const id of [
       '510k-summary-or-statement',
       'truthful-accurate-statement',
-      'cdrh-cover-sheet',
       'user-fee-cover-sheet',
       'cybersecurity',
       'risk-management',
@@ -104,6 +103,35 @@ describe('mapToEstar', () => {
     ]) {
       expect(ids.has(id)).toBe(true);
     }
+  });
+
+  /* FDA retired the paper CDRH cover sheet (Form 3514) when eSTAR became
+     mandatory — 510(k) 2023-10-01, De Novo 2025-10-01 — because the eSTAR
+     captures that data. migrations/20260901b_estar_510k_denovo_outlines.sql
+     struck the section from both outlines; this mapper kept demanding it, so a
+     finished dossier scored a required slot short and the readiness surface told
+     the filer to produce a form FDA no longer accepts. */
+  it('does not require the CDRH cover sheet FDA retired for eSTAR', () => {
+    const ids = new Set(mapToEstar({ leaves: [], type: '510k' }).sections.map((s) => s.id));
+    expect(ids.has('cdrh-cover-sheet')).toBe(false);
+    const deNovo = new Set(mapToEstar({ leaves: [], type: 'de_novo' }).sections.map((s) => s.id));
+    expect(deNovo.has('cdrh-cover-sheet')).toBe(false);
+  });
+
+  /* The statute says "truthful and accurate"; both shipped rule packs title the
+     section "Truthful and accuracy statement". One letter, and the section the
+     filer wrote and approved scored as absent. */
+  it.each([
+    'Truthful and accuracy statement (21 CFR 807.87(k))',
+    'Truthful and accuracy statement',
+    'Truthful and Accurate Statement',
+  ])('recognises the truthful-statement section titled %s', (title) => {
+    const r = mapToEstar({
+      type: '510k',
+      leaves: [{ sectionCode: 'A6', title, documentType: 'x', substantive: true } as never],
+    });
+    const slot = r.sections.find((x) => x.id === 'truthful-accurate-statement');
+    expect(slot?.present, `not matched: ${title}`).toBe(true);
   });
 
   it('does not block readiness on what it genuinely cannot decide, but does report it', () => {

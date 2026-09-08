@@ -266,7 +266,7 @@ function SummaryBody({
   children: (sum: NcSummary) => React.ReactNode;
 }) {
   if (state.loading) {
-    return <div className="scaf-note" style={{ padding: '18px 10px' }}>Loading…</div>;
+    return <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>Loading…</div>;
   }
   if (state.error) {
     return (
@@ -664,7 +664,7 @@ export function Nonclinical({ onAsk, onNav }: SurfaceViewProps) {
         >
           <div className="sp-list">
             {liveStudies.loading && studies.length === 0 ? (
-              <div className="scaf-note" style={{ padding: '18px 10px' }}>Loading nonclinical studies…</div>
+              <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>Loading nonclinical studies…</div>
             ) : liveStudies.error && studies.length === 0 ? (
               <EmptyState
                 tone="error"

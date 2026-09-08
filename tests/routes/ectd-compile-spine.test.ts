@@ -58,11 +58,12 @@ const LEAVES = [
   { section_code: '3.2.S', title: 'Drug Substance', lifecycle_op: 'new', document_table: 'unified_documents', document_id: 200 },
 ];
 
-function mockSpine(opts: { leaves?: unknown[] } = {}) {
+function mockSpine(opts: { leaves?: unknown[]; program?: Record<string, unknown> } = {}) {
   const leaves = opts.leaves ?? LEAVES;
+  const program = opts.program ?? PROGRAM;
   poolQuery.mockReset();
   poolQuery.mockImplementation(async (sql: string) => {
-    if (/FROM regulatory_programs/i.test(sql)) return { rows: [PROGRAM] };
+    if (/FROM regulatory_programs/i.test(sql)) return { rows: [program] };
     if (/FROM submissions/i.test(sql)) return { rows: [{ id: 55, application_type: 'ind' }] };
     if (/FROM ectd_sequences/i.test(sql)) {
       return { rows: [{ id: 9, sequence_number: '0000', region: 'fda' }] };
@@ -170,6 +171,33 @@ describe('POST /:projectIdent/compile — spine-backed compiles run the real gen
     expect(payload.leafFilesRendered).toBe(1);
   });
 
+  it('a placed leaf with no document behind it does not satisfy its required section', async () => {
+    // The resolver skips a NULL document_table/document_id before it can become
+    // "unresolved", so its key was never in unresolvedKeys and isMaterialized
+    // reported it rendered: a required section read as satisfied by a leaf that
+    // has nothing behind it, with no blocker raised.
+    mockSpine({
+      leaves: [
+        { section_code: '2.5', title: 'Clinical Overview', lifecycle_op: 'new', document_table: null, document_id: null },
+        { section_code: '3.2.S', title: 'Drug Substance', lifecycle_op: 'new', document_table: 'unified_documents', document_id: 200 },
+      ],
+    });
+    const { zipPath } = await makeBundleZip(REAL_BACKBONE);
+    assembleSequenceMock.mockResolvedValue(assembledResult(zipPath, { materialized: 1 }));
+
+    const res = createMockResponse() as any;
+    await getHandler('/:projectIdent/compile', 'post')(makeReq(), res);
+
+    const payload = res.json.mock.calls[0][0];
+    const at25 = payload.validationResults.filter((v: any) => v.sectionCode === '2.5');
+    // Before the fix this section was reported "placed and rendered".
+    expect(at25.map((v: any) => v.rule)).toContain('LEAF_SOURCE_UNRESOLVED');
+    expect(at25.map((v: any) => v.rule)).not.toContain('REQUIRED_SECTION_OK');
+    // The leaf that does have a document is unaffected.
+    const at32s = payload.validationResults.filter((v: any) => v.sectionCode === '3.2.S');
+    expect(at32s.map((v: any) => v.rule)).toContain('REQUIRED_SECTION_OK');
+  });
+
   it('surfaces a DTD-incomplete package as a blocker, never as ready', async () => {
     mockSpine();
     const { zipPath } = await makeBundleZip(REAL_BACKBONE);
@@ -253,5 +281,72 @@ describe('GET /:projectIdent/status — spine leaf state drives the blockers', (
     expect(blockers).toMatch(/Run Compile/);
     // A program WITH placed leaves is not hit with the unlinked-store blocker.
     expect(blockers).not.toMatch(/no linked section-tracking store/);
+  });
+});
+
+/* ── The agency's number belongs in the agency's field ──────────────────────
+   `applicationId` becomes `<application-number>` in the FDA us-regional
+   backbone. It was stamped from `anchor.programCode` — the SPONSOR's internal
+   program code ("BX-204") — because when that code was written nothing in the
+   data model held an agency-assigned number. `regulatory_programs.
+   application_number` does now, so a filing whose IND number is recorded must
+   carry THAT, not an internal code the agency has never seen.
+
+   The fallback chain is unchanged in spirit and is the point of these tests:
+   recorded agency number, else the program code, else a handle that says
+   plainly it is unassigned. Nothing is ever invented. */
+describe('POST /:projectIdent/compile — which identifier reaches <application-number>', () => {
+  it('stamps the RECORDED agency application number when the program has one', async () => {
+    mockSpine({ program: { ...PROGRAM, application_number: '000512' } });
+    const { zipPath } = await makeBundleZip(REAL_BACKBONE);
+    assembleSequenceMock.mockResolvedValue(assembledResult(zipPath));
+
+    const res = createMockResponse() as any;
+    await getHandler('/:projectIdent/compile', 'post')(makeReq(), res);
+
+    expect(assembleSequenceMock).toHaveBeenCalledWith(
+      expect.objectContaining({ applicationId: '000512' }),
+    );
+    // The sponsor's internal code never reaches the agency's field.
+    expect(assembleSequenceMock.mock.calls[0][0].applicationId).not.toBe('BX-204');
+    // And the compilation is recorded under the same number, so the history
+    // filter and the next sequence's manifest lookup agree with the backbone.
+    const insert = poolQuery.mock.calls.find(([sql]) => /INSERT INTO ectd_compilations/i.test(String(sql)));
+    expect(insert?.[1]).toContain('000512');
+  });
+
+  it('falls back to the program code when no agency number is recorded — never invents one', async () => {
+    mockSpine();
+    const { zipPath } = await makeBundleZip(REAL_BACKBONE);
+    assembleSequenceMock.mockResolvedValue(assembledResult(zipPath));
+
+    const res = createMockResponse() as any;
+    await getHandler('/:projectIdent/compile', 'post')(makeReq(), res);
+
+    expect(assembleSequenceMock).toHaveBeenCalledWith(
+      expect.objectContaining({ applicationId: 'BX-204' }),
+    );
+  });
+
+  it('says "unassigned" when the program has neither a number nor a code', async () => {
+    mockSpine({ program: { ...PROGRAM, code: null, application_number: null } });
+    const { zipPath } = await makeBundleZip(REAL_BACKBONE);
+    assembleSequenceMock.mockResolvedValue(assembledResult(zipPath));
+
+    const res = createMockResponse() as any;
+    await getHandler('/:projectIdent/compile', 'post')(makeReq(), res);
+
+    expect(assembleSequenceMock.mock.calls[0][0].applicationId).toMatch(/^UNASSIGNED-SEQ-/);
+  });
+
+  it('an empty or whitespace application_number is not a recorded number', async () => {
+    mockSpine({ program: { ...PROGRAM, application_number: '   ' } });
+    const { zipPath } = await makeBundleZip(REAL_BACKBONE);
+    assembleSequenceMock.mockResolvedValue(assembledResult(zipPath));
+
+    const res = createMockResponse() as any;
+    await getHandler('/:projectIdent/compile', 'post')(makeReq(), res);
+
+    expect(assembleSequenceMock.mock.calls[0][0].applicationId).toBe('BX-204');
   });
 });

@@ -385,7 +385,12 @@ export default class FDAFormGenerator {
       deviceName: fda510kProject?.deviceName || 'Not Specified',
       intendedUse,
       indications,
-      prescriptionUse: workflowData?.device_information?.prescriptionUse !== false,
+      // Both opt-IN. These were asymmetric — OTC `=== true` but prescription
+      // `!== false` — so a device with no device_information at all rendered a
+      // Form 3881 asserting "Prescription Use (21 CFR 801 Subpart D)", a
+      // regulatory-use classification nobody entered. Neither box is checked
+      // until someone says which it is.
+      prescriptionUse: workflowData?.device_information?.prescriptionUse === true,
       overCounterUse: workflowData?.device_information?.overCounterUse === true,
       patientPopulation: workflowData?.device_information?.patientPopulation || '',
       predicateDevice: workflowData?.predicate_comparison?.predicateDevice || '',
@@ -419,7 +424,13 @@ export default class FDAFormGenerator {
       applicantName: organization?.name || 'Not Specified',
       deviceName: fda510kProject?.deviceName || 'Not Specified',
       certifierName: workflowData?.certification?.certifierName || workflowData?.setup?.projectLead || '',
-      certifierTitle: workflowData?.certification?.certifierTitle || 'Regulatory Affairs Manager',
+      // Never fabricate the signer's title. It appears in the certification body
+      // ("in my capacity as <title>") and the signature block of a Part 11
+      // certification statement, so an invented 'Regulatory Affairs Manager'
+      // asserts a capacity the signer never claimed — and it counted toward the
+      // stored completeness. Blank until provided; the render shows '(Title)' and
+      // the completeness calc treats it as unfilled (see below).
+      certifierTitle: workflowData?.certification?.certifierTitle || '',
       // Certification attestations are the signer's to make — never hardcode them
       // true. Source each from an explicit input and default to false (unchecked)
       // so a generated draft never pre-certifies compliance the user hasn't affirmed.
@@ -433,7 +444,15 @@ export default class FDAFormGenerator {
         typeof workflowData?.certification?.clinicalStudiesConducted === 'boolean'
           ? workflowData.certification.clinicalStudiesConducted
           : undefined,
-      financialInterests: workflowData?.certification?.financialInterests || false,
+      // Tri-state, same rule as clinicalStudies above: a `|| false` default
+      // auto-checked "No financial interests to disclose (Form FDA 3454
+      // attached)" — an affirmative financial-disclosure certification the signer
+      // never made. Until they explicitly state it, this is undefined and NEITHER
+      // disclosure box is checked (see render).
+      financialInterests:
+        typeof workflowData?.certification?.financialInterests === 'boolean'
+          ? workflowData.certification.financialInterests
+          : undefined,
       deviceCompliance: workflowData?.certification?.deviceCompliance === true,
       truthfulStatement: workflowData?.certification?.truthfulStatement === true,
       // Never fabricate an execution date. A signature date comes from the actual
@@ -843,13 +862,17 @@ export default class FDAFormGenerator {
     <div style="margin-left: 30px; margin-top: 15px;">
       <p><strong>If clinical studies were conducted:</strong></p>
       <div class="checkbox-group">
-        <input type="checkbox" class="checkbox" ${!data.financialInterests ? 'checked' : ''}>
+        <input type="checkbox" class="checkbox" ${data.financialInterests === false ? 'checked' : ''}>
         <label>No financial interests to disclose (Form FDA 3454 attached)</label>
       </div>
       <div class="checkbox-group">
-        <input type="checkbox" class="checkbox" ${data.financialInterests ? 'checked' : ''}>
+        <input type="checkbox" class="checkbox" ${data.financialInterests === true ? 'checked' : ''}>
         <label>Financial interests disclosed (Form FDA 3455 attached)</label>
       </div>
+      ${data.financialInterests === undefined ? `
+      <div class="field-value"><em>Financial-interest disclosure not yet recorded &mdash; neither box
+      is checked until the certifier states which applies.</em></div>
+      ` : ''}
     </div>
     ` : ''}
   </div>

@@ -47,10 +47,17 @@ async function preflightCriticalForOrg(tenantId: number): Promise<number | null>
   try {
     const row = (
       await q(
+        // Only a summary that describes the package's CURRENT bundle counts:
+        // the writers drop the summary with the bundle it described, and this
+        // cross-check is the backstop so an orphaned summary (bundle cleared
+        // or replaced, preflight not yet re-run) is never aggregated as the
+        // package's current outcome.
         `select count(*)::int as ran,
                 coalesce(sum((metadata->'preflight'->>'errorCount')::int), 0)::int as critical
            from c2c_submission_packages
-          where org_id = $1 and metadata->'preflight' is not null`,
+          where org_id = $1
+            and metadata->'preflight' is not null
+            and metadata->'preflight'->>'bundleSha256' = metadata->'bundle'->>'sha256'`,
         [tenantId]
       )
     ).rows[0];

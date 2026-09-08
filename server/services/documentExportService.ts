@@ -487,8 +487,21 @@ export async function assembleECTDPackage(options: ECTDPackageOptions): Promise<
     const totalSize =
       files.reduce((sum, f) => sum + f.size, 0) + Buffer.byteLength(indexXml, 'utf-8');
 
-    // 7. Store package record
-    await storePackageRecord(packageId, options, files.length, totalSize);
+    // 7. Store package record. A package that assembled but was not recorded is
+    //    reported as such rather than passing silently: the validation report is
+    //    what a user reads to decide whether the package is fit to file.
+    const record = await storePackageRecord(packageId, options, files.length, totalSize);
+    if (!record.stored) {
+      validationReport.push({
+        ruleId: 'package_record_not_stored',
+        severity: 'warning',
+        message:
+          'The package was assembled but no assembly record was stored, so there is no ' +
+          'persisted account of what was assembled, when, or by whom. ' +
+          (record.reason ?? ''),
+        regulatoryBasis: '21 CFR Part 11 (records and audit trail)',
+      });
+    }
 
     // 8. Audit log
     await logExport(
@@ -943,12 +956,32 @@ export async function renderMarkdownDraftToPDF(
   });
 }
 
+/**
+ * Record the assembly of an eCTD package.
+ *
+ * `reg_ectd_packages` has NO migration anywhere in this repository — nothing
+ * creates it — so this INSERT cannot succeed on a database built from this
+ * repo, and the live-schema baseline lists the table as absent from a full,
+ * successful provisioning run. Every package assembled through this service has
+ * therefore gone unrecorded: no row saying what was assembled, when, by whom,
+ * for which sequence, with what file count and size.
+ *
+ * The failure was swallowed into a console.warn and `assembleECTDPackage`
+ * returned `success: true` regardless, so nothing a caller could see said the
+ * assembly record was missing. For a filing package the assembly record is part
+ * of the record, and "we have the bytes but no account of producing them" is
+ * exactly what an inspection asks about.
+ *
+ * The INSERT is still attempted and still non-fatal — a storage problem must
+ * not destroy a package a user is waiting on — but the outcome is now returned
+ * so the caller can put it in the validation report the user actually reads.
+ */
 async function storePackageRecord(
   packageId: string,
   options: ECTDPackageOptions,
   fileCount: number,
   totalSize: number
-): Promise<void> {
+): Promise<{ stored: boolean; reason?: string }> {
   try {
     await pool.query(
       `INSERT INTO reg_ectd_packages (project_id, name, version, sequence, status, metadata, created_at, updated_at)
@@ -972,8 +1005,15 @@ async function storePackageRecord(
         }),
       ]
     );
+    return { stored: true };
   } catch (error) {
-    console.warn('[ExportPackager] Failed to store package record:', error);
+    const reason = error instanceof Error ? error.message : String(error);
+    console.error(
+      '[ExportPackager] eCTD package assembled but NOT recorded: the INSERT into ' +
+        'reg_ectd_packages failed. No migration in this repository creates that table, ' +
+        'so this fails on every database built from it. Cause: ' + reason,
+    );
+    return { stored: false, reason };
   }
 }
 

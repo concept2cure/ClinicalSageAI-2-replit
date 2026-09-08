@@ -1,6 +1,8 @@
 /**
  * EstarFilingPanel — the eSTAR filing journey, made clickable inside the PMA
- * surface: REGISTER (toggle the four FDA prerequisites → PUT /registration) →
+ * surface: REGISTER (toggle the four FDA prerequisites → PUT /registration;
+ * enter the correspondent and Declaration of Conformity facts the official
+ * eSTAR reads from the registration → the same PUT) →
  * SELECT a submission from the catalog → ASSESS filing-readiness against the
  * org's real authored content (POST /filing-readiness) → START TRACKING it
  * (POST /submissions) → ADVANCE its lifecycle (PATCH /submissions/:id).
@@ -11,8 +13,8 @@
  */
 
 import * as React from 'react';
-import { useState } from 'react';
-import { EmptyState } from '../../v2/dataConnect';
+import { useEffect, useId, useState } from 'react';
+import { EmptyState, ErrorState } from '../../v2/dataConnect';
 import {
   useEstarRegistration,
   useEstarSubmissions,
@@ -20,10 +22,25 @@ import {
   assessFilingReadiness,
   prerequisiteRows,
   registrationPatchToggling,
+  correspondentValues,
+  correspondentPatch,
+  ESTAR_CORRESPONDENT_FIELDS,
+  type EstarCorrespondentField,
   type EstarPrerequisiteId,
+  type EstarRegistrationPatch,
+  type EstarRegistrationRecord,
+  type EstarRegistrationView,
   type FilingReadinessResult,
   type EstarSubmissionView,
+  useRetainedEstarArtifacts,
+  ESTAR_SIGNATURE_MEANINGS,
+  type EstarFilingSignatureInput,
+  type EstarSignatureMeaning,
+  type RetainedEstarArtifactView,
 } from '../hooks/useEstarFiling';
+import { describeSaveFailure, type SaveFailure } from '../hooks/useFetchJson';
+import { notifyOfficialEstarFieldsChanged } from '../hooks/useEstarOfficialFields';
+import { IntakeTextField } from './DeviceProfilePanel';
 
 /** Allowed next statuses (mirrors the server lifecycle) for the advance buttons. */
 const NEXT_STATUS: Record<string, string[]> = {
@@ -85,14 +102,239 @@ function ReadinessCard({ r }: { r: FilingReadinessResult }) {
   );
 }
 
+/** Meaning labels, in the order the form offers them. */
+const MEANING_LABEL: Record<EstarSignatureMeaning, string> = {
+  approval: 'Approval',
+  review: 'Review',
+  responsibility: 'Responsibility',
+  authorship: 'Authorship',
+};
+
+const MIN_FILING_REASON = 8;
+
+/** "eSTAR-510k-device · sha256-a1b2… · 7 Sep 2026" — enough to tell two apart. */
+function describeArtifact(a: RetainedEstarArtifactView): string {
+  return `${a.documentCode} · ${a.version} · ${formatDate(a.createdAt) ?? a.createdAt}`;
+}
+
+/**
+ * The filing signature.
+ *
+ * Filing declares a submission made to FDA, and it used to be one unlabelled
+ * button. It now asks for what 21 CFR Part 11 requires and the server enforces:
+ * WHICH retained eSTAR is being filed (the signature binds to that document's
+ * stored hash), WHY, what the signature MEANS (§11.50), and re-authentication
+ * captured now rather than reused from the session (§11.200). The filing date
+ * is absent on purpose — the server stamps it.
+ *
+ * With no retained eSTAR there is nothing to bind to, and the form says exactly
+ * that instead of offering an empty picker.
+ */
+function FilingSignatureForm({
+  artifacts,
+  artifactsLoading,
+  artifactsError,
+  busy,
+  error,
+  onCancel,
+  onSubmit,
+}: {
+  artifacts: RetainedEstarArtifactView[] | null;
+  artifactsLoading: boolean;
+  artifactsError: string | null;
+  busy: boolean;
+  error: string | null;
+  onCancel: () => void;
+  onSubmit: (input: EstarFilingSignatureInput) => void;
+}) {
+  const [documentId, setDocumentId] = useState('');
+  const [reason, setReason] = useState('');
+  const [meaning, setMeaning] = useState<EstarSignatureMeaning>('approval');
+  const [password, setPassword] = useState('');
+  const [totp, setTotp] = useState('');
+  const ids = useId();
+
+  const reasonOk = reason.trim().length >= MIN_FILING_REASON;
+  const canSubmit = !!documentId && reasonOk && password.length > 0 && !busy;
+
+  /* Three different situations, three different answers — through the shared
+     primitives, never a hand-rolled panel. A read that FAILED is not an empty
+     list, and neither is one still in flight. */
+  if (artifactsError) {
+    return (
+      <ErrorState
+        testId="estar-retained-artifacts-error"
+        variant="inline"
+        title="The retained eSTAR list could not be read"
+        message={artifactsError}
+        onDismiss={onCancel}
+      />
+    );
+  }
+  if (artifacts === null || artifactsLoading) {
+    return (
+      <EmptyState
+        testId="estar-retained-artifacts-loading"
+        busy
+        title="Reading the retained eSTARs…"
+      />
+    );
+  }
+  if (artifacts.length === 0) {
+    return (
+      <EmptyState
+        testId="estar-retained-artifacts-empty"
+        title="No retained eSTAR to file against"
+        hint="Produce the official eSTAR first — a filing is signed against the exact bytes it was made with."
+        action={{ label: 'Close', onAct: onCancel }}
+        regulation="Serves the 21 CFR Part 11 signature/record link (§11.70)"
+      />
+    );
+  }
+
+  return (
+    <div style={{ marginTop: 10, display: 'grid', gap: 8 }}>
+      <div>
+        <label htmlFor={`${ids}-doc`} className="pma-mod-desc">
+          eSTAR being filed
+        </label>
+        <select
+          id={`${ids}-doc`}
+          value={documentId}
+          onChange={(e) => setDocumentId(e.target.value)}
+          style={{ width: '100%' }}
+        >
+          <option value="">Select the retained eSTAR…</option>
+          {artifacts.map((a) => (
+            <option key={a.documentId} value={a.documentId}>
+              {describeArtifact(a)}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <div>
+        <label htmlFor={`${ids}-reason`} className="pma-mod-desc">
+          Reason for signing
+        </label>
+        <textarea
+          id={`${ids}-reason`}
+          rows={2}
+          value={reason}
+          onChange={(e) => setReason(e.target.value)}
+          aria-invalid={reason.length > 0 && !reasonOk}
+          aria-describedby={`${ids}-reason-hint`}
+          style={{ width: '100%' }}
+        />
+        <div id={`${ids}-reason-hint`} className="pma-mod-desc">
+          At least {MIN_FILING_REASON} characters.
+        </div>
+      </div>
+
+      <fieldset style={{ border: 0, padding: 0, margin: 0 }}>
+        <legend className="pma-mod-desc">What this signature means</legend>
+        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+          {ESTAR_SIGNATURE_MEANINGS.map((m) => (
+            <label key={m} style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
+              <input
+                type="radio"
+                name={`${ids}-meaning`}
+                value={m}
+                checked={meaning === m}
+                onChange={() => setMeaning(m)}
+              />
+              {MEANING_LABEL[m]}
+            </label>
+          ))}
+        </div>
+      </fieldset>
+
+      <div style={{ display: 'flex', gap: 8 }}>
+        <div style={{ flex: 1 }}>
+          <label htmlFor={`${ids}-pw`} className="pma-mod-desc">
+            Password
+          </label>
+          <input
+            id={`${ids}-pw`}
+            type="password"
+            autoComplete="current-password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            style={{ width: '100%' }}
+          />
+        </div>
+        <div style={{ flex: 1 }}>
+          <label htmlFor={`${ids}-totp`} className="pma-mod-desc">
+            Authenticator code (if enabled)
+          </label>
+          <input
+            id={`${ids}-totp`}
+            inputMode="numeric"
+            autoComplete="one-time-code"
+            value={totp}
+            onChange={(e) => setTotp(e.target.value)}
+            style={{ width: '100%' }}
+          />
+        </div>
+      </div>
+
+      {error && (
+        <ErrorState
+          testId="estar-filing-signature-error"
+          variant="inline"
+          title="The filing was not signed"
+          message={error}
+        />
+      )}
+
+      <div style={{ display: 'flex', gap: 6 }}>
+        <button
+          className="section-more"
+          disabled={!canSubmit}
+          onClick={() =>
+            onSubmit({
+              filedArtifactDocumentId: documentId,
+              reason: reason.trim(),
+              meaning,
+              password,
+              ...(totp.trim() ? { totp: totp.trim() } : {}),
+            })
+          }
+        >
+          Sign and file
+        </button>
+        <button className="section-more" disabled={busy} onClick={onCancel}>
+          Cancel
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function SubmissionCard({
   s,
   busy,
   onAdvance,
+  signing,
+  onStartFiling,
+  onCancelFiling,
+  onFile,
+  filingError,
+  artifacts,
+  artifactsLoading,
+  artifactsError,
 }: {
   s: EstarSubmissionView;
   busy: boolean;
   onAdvance: (id: string, status: string) => void;
+  signing: boolean;
+  onStartFiling: (id: string) => void;
+  onCancelFiling: () => void;
+  onFile: (id: string, input: EstarFilingSignatureInput) => void;
+  filingError: string | null;
+  artifacts: RetainedEstarArtifactView[] | null;
+  artifactsLoading: boolean;
+  artifactsError: string | null;
 }) {
   const due = formatDate(s.decisionDueAt);
   const nexts = NEXT_STATUS[s.status] ?? [];
@@ -106,6 +348,15 @@ function SubmissionCard({
         {s.programType.toUpperCase()} · {s.variant}
         {s.fdaTrackingNumber ? ` · ${s.fdaTrackingNumber}` : ''}
       </div>
+      {/* What this filing was filed WITH. A filing recorded before the binding
+          existed carries none, and says so rather than implying one. */}
+      {s.status !== 'draft' && (
+        <div className="pma-mod-desc">
+          {s.filedArtifactSha256
+            ? `Filed against eSTAR ${s.filedArtifactSha256.slice(0, 16)}…`
+            : 'No eSTAR bound to this filing'}
+        </div>
+      )}
       <div className="pma-mod-foot">
         <span>{due ? `Decision due ${due}` : 'No review clock'}</span>
         <span style={{ display: 'flex', gap: 6 }}>
@@ -114,21 +365,219 @@ function SubmissionCard({
               key={n}
               className="section-more"
               disabled={busy}
-              onClick={() => onAdvance(s.id, n)}
-              title={`Advance to ${formatStatus(n)}`}
+              /* `filed` is a signature, not an advance — it opens the form. */
+              onClick={() => (n === 'filed' ? onStartFiling(s.id) : onAdvance(s.id, n))}
+              title={n === 'filed' ? 'Sign and file this submission' : `Advance to ${formatStatus(n)}`}
             >
-              {formatStatus(n)}
+              {n === 'filed' ? 'Sign and file…' : formatStatus(n)}
             </button>
           ))}
         </span>
       </div>
+      {signing && (
+        <FilingSignatureForm
+          artifacts={artifacts}
+          artifactsLoading={artifactsLoading}
+          artifactsError={artifactsError}
+          busy={busy}
+          error={filingError}
+          onCancel={onCancelFiling}
+          onSubmit={(input) => onFile(s.id, input)}
+        />
+      )}
     </div>
   );
 }
 
+type CorrespondentForm = Record<EstarCorrespondentField, string>;
+
+/* The correspondent trio shares one row; the Declaration of Conformity pair —
+   one legal entity's name and its address — stacks under it, name directly
+   above address, because the two must name the same company. */
+const CORRESPONDENT_ROW = ESTAR_CORRESPONDENT_FIELDS.filter((f) => !f.field.startsWith('declaration'));
+const DECLARATION_ROWS = ESTAR_CORRESPONDENT_FIELDS.filter((f) => f.field.startsWith('declaration'));
+
+function correspondentForm(stored: EstarRegistrationRecord | null | undefined): CorrespondentForm {
+  const values = correspondentValues(stored);
+  const form = {} as CorrespondentForm;
+  for (const f of ESTAR_CORRESPONDENT_FIELDS) form[f.field] = values[f.field] ?? '';
+  return form;
+}
+
+/**
+ * The correspondent / Declaration of Conformity block. Text fields on the org's
+ * eSTAR registration, shown as stored (blank when not held — never a
+ * placeholder value) and saved through the same PUT as the prerequisites, with
+ * those booleans preserved. A refused write names the refusal: this PUT is
+ * editor-only on the server, and telling a read-only operator that the server
+ * "rejected the update" sends them looking for a bad value in fields their role
+ * simply cannot write.
+ */
+function CorrespondentBlock({
+  stored,
+  satisfied,
+  save,
+  saveFailure,
+}: {
+  stored: EstarRegistrationRecord | null | undefined;
+  satisfied: readonly string[] | null | undefined;
+  save: (patch: EstarRegistrationPatch) => Promise<EstarRegistrationView | null>;
+  saveFailure: SaveFailure | null;
+}) {
+  const [form, setForm] = useState<CorrespondentForm>(() => correspondentForm(stored));
+  const [saving, setSaving] = useState(false);
+  const [status, setStatus] = useState<string | null>(null);
+  /* A failed save is held as a FLAG, not a sentence: the sentence depends on
+     `saveFailure`, which the hook sets in the same batch, so resolving it at
+     render time reads the current classification and not a stale closure. */
+  const [saveRefused, setSaveRefused] = useState(false);
+
+  /* What the form holds, and what it was last seeded from. An EDIT is a
+     difference between the two — not a difference from whatever the row says
+     now — so a row that changed elsewhere still re-seeds a form nobody has
+     typed into. */
+  const live = React.useRef<CorrespondentForm>(form);
+  const seeded = React.useRef<CorrespondentForm>(form);
+
+  function onField(field: EstarCorrespondentField, value: string) {
+    live.current = { ...live.current, [field]: value };
+    setForm(live.current);
+  }
+
+  /* Re-seed when the stored row changes (first load, refresh after a save) —
+     but never over text typed and not yet saved. Every read hands this block a
+     NEW row object, and save() refreshes the registration, so a prerequisite
+     toggled above re-seeded this form: a Declaration of Conformity company name
+     half-typed when the toggle was clicked vanished with no message, and the
+     next official eSTAR filed that field blank. An unsaved edit now stands
+     until its own Save replaces it. */
+  useEffect(() => {
+    const next = correspondentForm(stored);
+    const edited = ESTAR_CORRESPONDENT_FIELDS.some(
+      (f) => live.current[f.field] !== seeded.current[f.field],
+    );
+    seeded.current = next;
+    if (edited) return;
+    live.current = next;
+    setForm(next);
+  }, [stored]);
+
+  const base = correspondentForm(stored);
+  const dirty = ESTAR_CORRESPONDENT_FIELDS.some((f) => form[f.field].trim() !== base[f.field]);
+
+  async function onSave() {
+    if (!dirty || saving) return;
+    setSaving(true);
+    setStatus(null);
+    setSaveRefused(false);
+    const saved = await save(correspondentPatch(satisfied, form));
+    setSaving(false);
+    setSaveRefused(!saved);
+    setStatus(saved ? 'Saved' : null);
+    /* The official eSTAR preview reads this block and names it as the home of
+       the correspondent and Declaration of Conformity fields. Only an ACCEPTED
+       save changed anything, so only an accepted save asks it to re-read. */
+    if (saved) notifyOfficialEstarFieldsChanged();
+  }
+
+  return (
+    <>
+      <div className="section-hdr">
+        <div>
+          <div className="section-title">Correspondent and declaration</div>
+          <div className="section-sub">
+            Held on the org's eSTAR registration and written into the official eSTAR's
+            correspondent and Declaration of Conformity fields. The declaration's company name
+            and address are one legal entity, so both are held here. A blank field stays blank in
+            the eSTAR.
+          </div>
+        </div>
+      </div>
+      <div
+        style={{
+          margin: '8px 0 12px',
+          padding: '12px 14px',
+          border: '1px solid var(--border-100)',
+          borderRadius: 6,
+        }}
+      >
+        <div style={{ display: 'grid', gridTemplateColumns: '2fr 2fr 1fr', gap: 10 }}>
+          {CORRESPONDENT_ROW.map((f) => (
+            <IntakeTextField
+              key={f.field}
+              label={f.label}
+              value={form[f.field]}
+              maxLength={f.max}
+              onChange={(v) => onField(f.field, v)}
+            />
+          ))}
+        </div>
+        {DECLARATION_ROWS.map((f) => (
+          <div key={f.field} style={{ marginTop: 10 }}>
+            <IntakeTextField
+              label={f.label}
+              value={form[f.field]}
+              maxLength={f.max}
+              onChange={(v) => onField(f.field, v)}
+            />
+          </div>
+        ))}
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 10 }}>
+          <button
+            className="section-more"
+            disabled={saving || !dirty}
+            title={dirty ? 'Save the changed fields' : 'No changes to save'}
+            onClick={() => void onSave()}
+          >
+            {saving ? 'Saving…' : 'Save'}
+          </button>
+          {(status || saveRefused) && (
+            <span className="section-sub" role="status" style={{ margin: 0 }}>
+              {saveRefused ? describeSaveFailure(saveFailure ?? 'unavailable') : status}
+            </span>
+          )}
+        </div>
+      </div>
+    </>
+  );
+}
+
 export function EstarFilingPanel() {
-  const { registration, loading: regLoading, save } = useEstarRegistration();
-  const { submissions, loading: subLoading, startTracking, advance } = useEstarSubmissions();
+  /*
+   * BOTH `error`s were dropped on the floor, and both reads then failed into a
+   * sentence that reads like an answer. A registration that could not be read
+   * rendered "Not yet registered — toggle the prerequisites you hold", telling
+   * an organization that holds all four FDA prerequisites that it holds none,
+   * and inviting the very toggle that used to overwrite them. A submissions
+   * read that failed rendered "No tracked filings yet" over filings that exist.
+   * "An error is never rendered as an empty result" (CLAUDE.md).
+   */
+  const {
+    registration,
+    loading: regLoading,
+    error: regError,
+    refresh: refreshRegistration,
+    save,
+    saveFailure,
+  } = useEstarRegistration();
+  const {
+    submissions,
+    loading: subLoading,
+    error: subError,
+    refresh: refreshSubmissions,
+    startTracking,
+    advance,
+    file,
+  } = useEstarSubmissions();
+  /* What a filing can be signed against. Read once for the panel — every card's
+     form offers the same org-scoped list the server re-checks on write. */
+  const {
+    artifacts,
+    loading: artifactsLoading,
+    error: artifactsError,
+  } = useRetainedEstarArtifacts();
+  const [signingId, setSigningId] = useState<string | null>(null);
+  const [filingError, setFilingError] = useState<string | null>(null);
   const { catalog } = useEstarCatalog();
 
   const [selectedKey, setSelectedKey] = useState<string>('');
@@ -143,7 +592,14 @@ export function EstarFilingPanel() {
 
   async function onToggle(id: EstarPrerequisiteId) {
     setBusy(`reg:${id}`);
-    await save(registrationPatchToggling(satisfied, id));
+    /* `registration?.registration` — deliberately NOT `?? null`. The helper
+       reads undefined as "the registration has not loaded, so leave the text
+       alone" and null as "loaded, and the org holds no row". Coercing the
+       first onto the second sent explicit nulls for all five text columns
+       before the GET landed (or after it failed), so a toggle blanked the
+       correspondent and Declaration of Conformity facts the org already
+       held. Loaded-with-no-row still travels as null, which clears nothing. */
+    await save(registrationPatchToggling(satisfied, id, registration?.registration));
     setBusy(null);
   }
   async function onSelect(key: string) {
@@ -167,6 +623,24 @@ export function EstarFilingPanel() {
     await advance(id, status);
     setBusy(null);
   }
+  function onStartFiling(id: string) {
+    setFilingError(null);
+    setSigningId(id);
+  }
+  async function onFile(id: string, input: EstarFilingSignatureInput) {
+    setBusy(id);
+    const outcome = await file(id, input);
+    setBusy(null);
+    /* The form stays open on a refusal, holding what was typed, with the
+       server's own reason — a re-auth that failed is not a reason to make the
+       operator start over. */
+    if (outcome.ok) {
+      setSigningId(null);
+      setFilingError(null);
+    } else {
+      setFilingError(outcome.reason);
+    }
+  }
 
   return (
     <>
@@ -177,12 +651,23 @@ export function EstarFilingPanel() {
           <div className="section-sub">
             {regLoading
               ? 'Loading registration…'
-              : registered
-                ? `Registered · ${satisfiedCount}/4 FDA prerequisites held`
-                : 'Not yet registered — toggle the prerequisites you hold'}
+              : regError
+                ? 'The registration could not be read'
+                : registered
+                  ? `Registered · ${satisfiedCount}/4 FDA prerequisites held`
+                  : 'Not yet registered — toggle the prerequisites you hold'}
           </div>
         </div>
       </div>
+      {regError ? (
+        <ErrorState
+          testId="estar-registration-read-error"
+          variant="inline"
+          title="The eSTAR registration could not be read"
+          message={regError}
+          retry={refreshRegistration}
+        />
+      ) : null}
       <div className="health">
         {rows.map((r) => (
           <div key={r.id} className="health-card">
@@ -201,6 +686,14 @@ export function EstarFilingPanel() {
           </div>
         ))}
       </div>
+
+      {/* CORRESPONDENT + DECLARATION (same registration row, same PUT) */}
+      <CorrespondentBlock
+        stored={registration?.registration}
+        satisfied={satisfied}
+        save={save}
+        saveFailure={saveFailure}
+      />
 
       {/* SELECT + ASSESS */}
       <div className="section-hdr">
@@ -239,20 +732,47 @@ export function EstarFilingPanel() {
           <div className="section-sub">
             {subLoading
               ? 'Loading…'
-              : submissions && submissions.length > 0
-                ? `${submissions.length} filing${submissions.length === 1 ? '' : 's'} tracked`
-                : 'No tracked filings yet'}
+              : subError
+                ? 'The tracked filings could not be read'
+                : submissions && submissions.length > 0
+                  ? `${submissions.length} filing${submissions.length === 1 ? '' : 's'} tracked`
+                  : 'No tracked filings yet'}
           </div>
         </div>
       </div>
-      {submissions && submissions.length > 0 ? (
+      {subError ? (
+        <ErrorState
+          testId="estar-submissions-read-error"
+          variant="inline"
+          title="The tracked filings could not be read"
+          message={subError}
+          retry={refreshSubmissions}
+        />
+      ) : null}
+      {subError ? null : submissions && submissions.length > 0 ? (
         <div className="pma-modules">
           {submissions.map((s) => (
-            <SubmissionCard key={s.id} s={s} busy={busy === s.id} onAdvance={onAdvance} />
+            <SubmissionCard
+              key={s.id}
+              s={s}
+              busy={busy === s.id}
+              onAdvance={onAdvance}
+              signing={signingId === s.id}
+              onStartFiling={onStartFiling}
+              onCancelFiling={() => {
+                setSigningId(null);
+                setFilingError(null);
+              }}
+              onFile={onFile}
+              filingError={signingId === s.id ? filingError : null}
+              artifacts={artifacts}
+              artifactsLoading={artifactsLoading}
+              artifactsError={artifactsError}
+            />
           ))}
         </div>
       ) : (
-        !subLoading && (
+        !subLoading && !subError && (
           /* An empty result rendered NOTHING — the whole body was conditioned on
              having rows, so a program with no tracked filings got a header and
              blank space, which reads as a surface that failed to draw rather

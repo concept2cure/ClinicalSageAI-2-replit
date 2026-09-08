@@ -81,12 +81,20 @@ export interface CompletenessArtifact {
 }
 
 export interface CompletenessResult {
-  completenessPct: number;
+  /**
+   * Percentage of required artifacts that are final — NULL when nothing is
+   * required, because there is then no ratio and no assessment. It was 100.
+   */
+  completenessPct: number | null;
   totalRequired: number;
   present: number;
   gaps: Array<{ zone: number; zoneName: string; artifactName: string; status: ArtifactStatus }>;
   byZone: Record<number, { required: number; present: number }>;
-  verdict: 'inspection_ready' | 'minor_gaps' | 'at_risk';
+  /**
+   * `not_assessed` is the state of a TMF whose expected artifact set is empty:
+   * nothing has been indexed, so nothing has been checked. It is NOT readiness.
+   */
+  verdict: 'not_assessed' | 'inspection_ready' | 'minor_gaps' | 'at_risk';
 }
 
 /**
@@ -112,7 +120,19 @@ export function evaluateCompleteness(artifacts: CompletenessArtifact[]): Complet
     }
   }
   const totalRequired = required.length;
-  const completenessPct = totalRequired === 0 ? 100 : Math.round((present / totalRequired) * 100);
+
+  /* An empty required set returned 100% and — since `present === totalRequired`
+     is 0 === 0 — the verdict `inspection_ready`. A trial whose TMF index holds
+     no expected artifacts was therefore reported to the sponsor, and by AnA in
+     conversation, as "TMF 100% complete — inspection ready". Nothing had been
+     indexed, so nothing had been checked: that is the absence of an assessment,
+     not the result of one. ICH E6(R2) §8 readiness is a claim a sponsor acts on
+     in front of an inspector; it is never the default. */
+  if (totalRequired === 0) {
+    return { completenessPct: null, totalRequired: 0, present: 0, gaps, byZone, verdict: 'not_assessed' };
+  }
+
+  const completenessPct = Math.round((present / totalRequired) * 100);
   // inspection_ready requires EVERY required artifact present (zero gaps): a single
   // missing required document is inspection-blocking and must never be masked by
   // rounding completenessPct up to >= 98 (e.g. 199/200 final rounds to 100%).

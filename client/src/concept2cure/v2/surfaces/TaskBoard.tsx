@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { I } from '../icons';
+import { useDialog } from '../useDialog';
 import { useLiveRows, useLiveData, hasKeys, EmptyState } from '../dataConnect';
 import { apiRequest, ApiRequestError, serverMessage } from '@/lib/queryClient';
 import { useAuth } from '@/services/portal/authService';
@@ -20,7 +21,7 @@ import {
 import '../styles/project-home-v2.css';
 
 /* ═══════════════════════════════════════════════════════════════════
-   Task Board -- the org-wide unifiedTasks board served by
+   Task Board -- the org-wide unified task board served by
    /api/task-management. Org-scoped by design; filter to a project
    below. Tasks from sections, the pyramid engine, the legacy WBS and
    modules are surfaced here with their origin store labelled.
@@ -29,7 +30,7 @@ import '../styles/project-home-v2.css';
    ═══════════════════════════════════════════════════════════════════ */
 
 /**
- * Display row for the org-wide unifiedTasks board. Mirrors the server
+ * Display row for the org-wide unified task board. Mirrors the server
  * TaskBoardItem shape returned by GET /api/task-management/board
  * (server/routes/taskBoard.routes.ts). impactScore / phase / estimatedHours are
  * REAL nullable columns and render null-safe (never fabricated); the backend
@@ -199,7 +200,7 @@ function AutomationCard() {
     <div className="tb-an-card">
       <div className="tb-an-h">Automation</div>
       {rules.loading ? (
-        <div className="tb-an-auto">Loading this organization&rsquo;s rules…</div>
+        <div role="status" className="tb-an-auto">Loading this organization&rsquo;s rules…</div>
       ) : rules.error ? (
         <>
           <div className="tb-an-auto">Couldn&rsquo;t load the automation rules.</div>
@@ -727,7 +728,7 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
       )}
 
       {liveTasks.loading ? (
-        <div className="scaf-note" style={{ padding: '18px 10px' }}>Loading the task board…</div>
+        <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>Loading the task board…</div>
       ) : liveTasks.error ? (
         <EmptyState
           tone="error"
@@ -739,7 +740,7 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
         <EmptyState
           icon={I.checkSquare}
           title="No tasks on the board yet"
-          hint="This is the org-wide unifiedTasks board. Create a task or start a workflow from a template and it appears here once it is persisted, with its origin store labelled."
+          hint="This is the org-wide unified task board. Create a task or start a workflow from a template and it appears here once it is persisted, with its origin store labelled."
         />
       ) : (
       <>
@@ -879,7 +880,7 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
 
       {view === 'path' && (
         <div className="tb-path">
-          <div className="tb-path-h">Critical path -- {critChain.length} tasks — computed from the <code>taskDependencies</code> DAG (getCriticalPath)</div>
+          <div className="tb-path-h">Critical path — {critChain.length} tasks — computed from the <code>taskDependencies</code> DAG (getCriticalPath)</div>
           {critChain.map((t, i) => (
             <div
               key={t.taskId}
@@ -1096,9 +1097,11 @@ function TaskDetail({ t, byId, projLabel, onClose, onAsk, onMove, nameOf, onErr,
     setConfirmArchive(false);
   };
 
+  const dialogRef = useDialog(onClose);
+
   return (
     <div className="tb-detail-bd" onClick={onClose}>
-      <div className="tb-detail" onClick={e => e.stopPropagation()}>
+      <div className="tb-detail" role="dialog" aria-modal="true" aria-label="Task detail" tabIndex={-1} ref={dialogRef} onClick={e => e.stopPropagation()}>
         <div className="tb-detail-h">
           <div><span className="mono" style={{ fontSize: 10.5, color: 'var(--text-400)' }}>{t.taskId}</span><h3>{t.title}</h3></div>
           <button className="tb-detail-x" onClick={onClose} aria-label="Close">{I.close}</button>
@@ -1280,9 +1283,11 @@ function ESignTaskModal({ req, taskTitle, onClose, onSigned }: ESignTaskModalPro
     setPin(''); // never leave a rejected PIN in the field
   };
 
+  const dialogRef = useDialog(onClose);
+
   return (
     <div className="tb-detail-bd" onClick={onClose}>
-      <div className="tb-detail tb-create" role="dialog" aria-modal="true" aria-label="Electronic signature required" onClick={e => e.stopPropagation()}>
+      <div className="tb-detail tb-create" role="dialog" aria-modal="true" aria-label="Electronic signature required" tabIndex={-1} ref={dialogRef} onClick={e => e.stopPropagation()}>
         <div className="tb-detail-h">
           <div><h3>{I.lock} Sign to complete</h3></div>
           <button className="tb-detail-x" onClick={onClose} aria-label="Cancel signing">{I.close}</button>
@@ -1295,17 +1300,17 @@ function ESignTaskModal({ req, taskTitle, onClose, onSigned }: ESignTaskModalPro
             in the audit ledger (21 CFR Part 11 §11.50).
           </div>
           <div className="tb-frow">
-            <div className="tb-field"><label>Meaning of signature</label>
-              <select value={meaning} onChange={e => setMeaning(e.target.value)}>
+            <div className="tb-field"><label htmlFor="tb-sign-meaning">Meaning of signature</label>
+              <select id="tb-sign-meaning" value={meaning} onChange={e => setMeaning(e.target.value)}>
                 {SIGN_MEANINGS.map(m => <option key={m} value={m}>{m.charAt(0) + m.slice(1).toLowerCase()}</option>)}
               </select>
             </div>
-            <div className="tb-field"><label>Signing PIN<i>*</i></label>
-              <input type="password" autoComplete="off" value={pin} onChange={e => setPin(e.target.value)} placeholder="Your signing PIN" aria-label="Signing PIN" />
+            <div className="tb-field"><label htmlFor="tb-sign-pin">Signing PIN<i>*</i></label>
+              <input id="tb-sign-pin" type="password" autoComplete="off" value={pin} onChange={e => setPin(e.target.value)} placeholder="Your signing PIN" />
             </div>
           </div>
-          <div className="tb-field full"><label>Reason for sign-off<i>*</i></label>
-            <textarea rows={2} value={reason} onChange={e => setReason(e.target.value)} placeholder="e.g. Reviewed the deliverable against the acceptance criteria" />
+          <div className="tb-field full"><label htmlFor="tb-sign-reason">Reason for sign-off<i>*</i></label>
+            <textarea id="tb-sign-reason" rows={2} value={reason} onChange={e => setReason(e.target.value)} placeholder="e.g. Reviewed the deliverable against the acceptance criteria" />
           </div>
           {err && <div className="tb-auto-note" data-warn="true" role="alert"><span className="ico">{I.alertTriangle}</span><span>{err}</span></div>}
         </div>
@@ -1425,35 +1430,37 @@ function TaskCreate({ onClose, onCreate, proj, tasks }: TaskCreateProps) {
     // On success the parent closes the modal.
   };
 
+  const dialogRef = useDialog(onClose);
+
   return (
     <div className="tb-detail-bd tb-create-bd" onClick={onClose}>
-      <div className="tb-detail tb-create" onClick={e => e.stopPropagation()}>
+      <div className="tb-detail tb-create" role="dialog" aria-modal="true" aria-label="New task" tabIndex={-1} ref={dialogRef} onClick={e => e.stopPropagation()}>
         <div className="tb-detail-h">
           <div><span className="mono" style={{ fontSize: 10.5, color: 'var(--text-400)' }}>unifiedTasks — new</span><h3>New task</h3></div>
           <button className="tb-detail-x" onClick={onClose} aria-label="Close">{I.close}</button>
         </div>
         <div className="tb-form">
-          <div className="tb-field full"><label>Title<i>*</i></label><input type="text" autoFocus value={f.title} onChange={e => set('title', e.target.value)} placeholder="e.g. Reconcile 2.5.4 efficacy claim with CSR-201 dataset" /></div>
+          <div className="tb-field full"><label htmlFor="tb-title">Title<i>*</i></label><input id="tb-title" type="text" autoFocus value={f.title} onChange={e => set('title', e.target.value)} placeholder="e.g. Reconcile 2.5.4 efficacy claim with CSR-201 dataset" /></div>
           <div className="tb-frow">
-            <div className="tb-field"><label>Project</label><select value={f.project} onChange={e => set('project', e.target.value)}>{projects.rows.length ? projects.rows.map(p => <option key={p.id} value={String(p.id)}>{p.name}</option>) : <option value="">No projects available</option>}</select></div>
-            <div className="tb-field"><label>Module</label><select value={f.moduleType} onChange={e => set('moduleType', e.target.value)}>{Object.keys(TB_MOD).map(m => <option key={m} value={m}>{m}</option>)}</select></div>
+            <div className="tb-field"><label htmlFor="tb-project">Project</label><select id="tb-project" value={f.project} onChange={e => set('project', e.target.value)}>{projects.rows.length ? projects.rows.map(p => <option key={p.id} value={String(p.id)}>{p.name}</option>) : <option value="">No projects available</option>}</select></div>
+            <div className="tb-field"><label htmlFor="tb-module">Module</label><select id="tb-module" value={f.moduleType} onChange={e => set('moduleType', e.target.value)}>{Object.keys(TB_MOD).map(m => <option key={m} value={m}>{m}</option>)}</select></div>
           </div>
           <div className="tb-frow">
-            <div className="tb-field"><label>Task type</label><select value={f.taskType} onChange={e => set('taskType', e.target.value)}>{Object.keys(TB_TYPE).map(t => <option key={t} value={t}>{TB_TYPE[t]}</option>)}</select></div>
+            <div className="tb-field"><label htmlFor="tb-task-type">Task type</label><select id="tb-task-type" value={f.taskType} onChange={e => set('taskType', e.target.value)}>{Object.keys(TB_TYPE).map(t => <option key={t} value={t}>{TB_TYPE[t]}</option>)}</select></div>
             {/* Exactly the server's accepted vocabulary. createTaskSchema
                 (taskManagement.routes.ts) validates priority against
                 z.enum(['low','medium','high','critical']), so the 'urgent'
                 option this picker used to offer was a guaranteed HTTP 400: the
                 task simply failed to create for anyone who chose it. */}
-            <div className="tb-field"><label>Priority</label><select value={f.priority} onChange={e => set('priority', e.target.value)}>{['low', 'medium', 'high', 'critical'].map(p => <option key={p} value={p}>{p}</option>)}</select></div>
+            <div className="tb-field"><label htmlFor="tb-priority">Priority</label><select id="tb-priority" value={f.priority} onChange={e => set('priority', e.target.value)}>{['low', 'medium', 'high', 'critical'].map(p => <option key={p} value={p}>{p}</option>)}</select></div>
           </div>
           <div className="tb-frow">
-            <div className="tb-field"><label>Status</label><select value={f.status} onChange={e => set('status', e.target.value)}>{TB_COLS.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}</select></div>
-            <div className="tb-field"><label>Assignee</label><select value={f.assignee} onChange={e => set('assignee', e.target.value)}><option value="auto">Auto — optimal assignee</option>{assignees.rows.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}</select></div>
+            <div className="tb-field"><label htmlFor="tb-status">Status</label><select id="tb-status" value={f.status} onChange={e => set('status', e.target.value)}>{TB_COLS.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}</select></div>
+            <div className="tb-field"><label htmlFor="tb-assignee">Assignee</label><select id="tb-assignee" value={f.assignee} onChange={e => set('assignee', e.target.value)}><option value="auto">Auto — optimal assignee</option>{assignees.rows.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}</select></div>
           </div>
           <div className="tb-frow">
-            <div className="tb-field"><label>Impact score -- {f.impactScore}/10</label><input type="range" min="0" max="10" value={f.impactScore} onChange={e => set('impactScore', +e.target.value)} /></div>
-            <div className="tb-field"><label>Due in (days)</label><input type="number" min="0" max="120" value={f.dueDays} onChange={e => set('dueDays', +e.target.value)} /></div>
+            <div className="tb-field"><label htmlFor="tb-impact-score-10">Impact score -- {f.impactScore}/10</label><input id="tb-impact-score-10" type="range" min="0" max="10" value={f.impactScore} onChange={e => set('impactScore', +e.target.value)} /></div>
+            <div className="tb-field"><label htmlFor="tb-due-in-days">Due in (days)</label><input id="tb-due-in-days" type="number" min="0" max="120" value={f.dueDays} onChange={e => set('dueDays', +e.target.value)} /></div>
           </div>
           <div className="tb-field full"><label>Flags</label>
             <div className="tb-toggles">
@@ -1614,16 +1621,18 @@ function WorkflowStart({ proj, onClose, onInstantiate }: WorkflowStartProps) {
     }
   };
 
+  const dialogRef = useDialog(onClose);
+
   return (
     <div className="tb-detail-bd" onClick={onClose}>
-      <div className="tb-detail tb-create" onClick={e => e.stopPropagation()}>
+      <div className="tb-detail tb-create" role="dialog" aria-modal="true" aria-label="Start workflow from template" tabIndex={-1} ref={dialogRef} onClick={e => e.stopPropagation()}>
         <div className="tb-detail-h">
           <div><span className="mono" style={{ fontSize: 10.5, color: 'var(--text-400)' }}>taskTemplates — from-template</span><h3>Start a workflow</h3></div>
           <button className="tb-detail-x" onClick={onClose} aria-label="Close">{I.close}</button>
         </div>
 
         {templates.loading ? (
-          <div className="tb-form"><div className="scaf-note">Loading workflow templates…</div></div>
+          <div className="tb-form"><div role="status" className="scaf-note">Loading workflow templates…</div></div>
         ) : templates.error ? (
           <div className="tb-form">
             <EmptyState
@@ -1644,8 +1653,8 @@ function WorkflowStart({ proj, onClose, onInstantiate }: WorkflowStartProps) {
         ) : (
         <div className="tb-form">
           <div className="tb-frow">
-            <div className="tb-field"><label>Workflow template</label><select value={tid} onChange={e => setTid(e.target.value)}>{templates.rows.map(t => <option key={t.templateId} value={t.templateId}>{t.name}</option>)}</select></div>
-            <div className="tb-field"><label>Project</label><select value={project} onChange={e => setProject(e.target.value)}><option value="">Select a programme…</option>{projects.rows.map(p => <option key={p.id} value={String(p.id)}>{p.name}</option>)}</select></div>
+            <div className="tb-field"><label htmlFor="tb-workflow-template">Workflow template</label><select id="tb-workflow-template" value={tid} onChange={e => setTid(e.target.value)}>{templates.rows.map(t => <option key={t.templateId} value={t.templateId}>{t.name}</option>)}</select></div>
+            <div className="tb-field"><label htmlFor="tb-project-2">Project</label><select id="tb-project-2" value={project} onChange={e => setProject(e.target.value)}><option value="">Select a programme…</option>{projects.rows.map(p => <option key={p.id} value={String(p.id)}>{p.name}</option>)}</select></div>
           </div>
           {tpl && (
             <>

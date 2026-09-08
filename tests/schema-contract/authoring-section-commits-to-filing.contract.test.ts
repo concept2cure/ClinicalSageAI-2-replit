@@ -131,6 +131,8 @@ beforeAll(async () => {
       'db/migrations/20260725_authoring_signature_freeze_binding.sql',
       'db/migrations/20260730_authoring_runtime_ddl.sql',
       'db/migrations/20260803_document_span_lineage.sql',
+      'migrations/20260907_span_lineage_accepted_machine_draft.sql',
+      'migrations/20260908_span_lineage_machine_draft.sql',
       'migrations/20260728_authoring_comments_threading.sql',
       // The governed store: rule packs, c2c_documents, c2c_document_sections,
       // the readiness trigger and the Part 11 snapshot trigger.
