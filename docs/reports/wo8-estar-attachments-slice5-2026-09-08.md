@@ -223,6 +223,110 @@ pass has not been tested (CLAUDE.md).
 
 ---
 
+## 6b. Four defects found in this slice AFTER it was pushed
+
+Found by re-reading my own diff adversarially, and by one `tsc` run — not by any
+failing test. All four are recorded here rather than quietly fixed, because §6's
+mutation table would otherwise read as though the slice went out correct.
+
+### 6b.1 The governed-section resolver was broken at runtime (`a9042cc52`)
+
+The route built it with `client: requestDb(req)`. `requestDb` returns a **Drizzle**
+instance — its `.query` is the relational-query namespace, not the `(text, params)`
+function `DeviceContentClient` calls — so **every `authored_section` attachment would have
+thrown `client.query is not a function`**. The `vault_document` source was unaffected.
+
+It was invisible to the test suite by construction: the route's attachment tests mock
+`createDeviceAttachmentResolver`, which is the right seam for testing the route's *wiring*
+and is exactly why nothing ever **executed** the resolver. The resolver shipped with no test
+of its own. It has five now, against a fake client, and the load-bearing one was seen
+failing with the Drizzle-shaped client that shipped — `client.query is not a function`,
+verbatim.
+
+The fix is to pass no client at all, which is what all four other callers of
+`loadAuthoredDeviceSections` in that file already do. If the shared pool becomes wrong under
+RLS enforcement it becomes wrong for all of them at once, and the fix belongs to all of them
+rather than to a fifth, divergent path.
+
+### 6b.2 The audited-unplaced delivery path had no size ceiling (`a9042cc52`)
+
+`createGovernedExportConsequence` has refused a buffer over `GOVERNED_EXPORT_MAX_BYTES`
+(25 MiB default) since it was written. `createAuditedUnplacedExport` — the path a
+program-uuid anchor takes, which is most of them — checked only that the buffer was
+**non-empty**.
+
+That difference was invisible while every export through it was a fixed ~5.3 MB eSTAR or a
+small draft ZIP. **This slice removed exactly that ceiling on the input.** Measured before
+the fix:
+
+```
+60 MiB in  →  83,886,080 base64 characters, delivered in one JSON response body
+```
+
+on a route any editor can call. One ceiling now, read from one exported function, so the two
+paths cannot drift.
+
+### 6b.3 An oversized submission was a 500 with a false message (`a9042cc52`)
+
+The ceiling threw at **delivery** — after the renders, the vault reads, the encryption and
+the retention write — and the route rendered it as *"Official eSTAR export failed before
+consequence persistence"*, which is untrue once retention has already written a vault row.
+
+`fillEstarSubmission` now takes the deliverer's ceiling (`maxOutputBytes`, from the same
+`getMaxGovernedExportBytes`) and refuses in the same 422-with-reasons channel as every other
+attachment refusal:
+
+> Cannot deliver this eSTAR: the finished form is 8.3 MB and the limit is 6.0 MB.
+> 1 attachment(s) carry 3.0 MB of it — "Big Report.pdf" 3.0 MB. Remove or reduce one and
+> export again.
+
+Nothing is retained or registered, because nothing is returned. The engine takes the number
+rather than importing an export-layer concern: it has no opinion about export governance,
+only about not handing back something larger than the caller said it can deliver.
+
+### 6b.4 The filer's field count was protected by a docblock and nothing else (`891149d35`)
+
+`fieldReportClause` renders *"N of M administrative fields filled"*, and a filer reads that
+line to decide whether the form is done. The manifest **is** a field the fill writes and
+reports as filled, so counting it would make the line read *2 of 20* on one administrative
+value, or *21 of 20* with every governed record present.
+
+It does not — `reportOfficialEstarFill` walks only the resolved map's own fields, and the
+manifest key is deliberately outside every map in `ESTAR_FIELD_MAPS`. That was correct, and
+asserted by a docblock and no test, which is the same state §6b.5 describes. Now pinned
+through the route with attachments and `useProgramData` together, and seen failing with the
+manifest key moved into the map.
+
+### 6b.5 And one from earlier the same day (`a07b1cb9f`, `a9a9c9ae3`)
+
+Two more properties were true, load-bearing and held by nothing:
+
+- **The jurisdiction radio.** The plan resolves the User Fee Form's chapter from a value it
+  reads out of the TEMPLATE, which is correct only while nothing the fill writes can change
+  it. Both templates ship `"1"` and no field map writes that path — so the answer is right
+  today and would silently become "a US MDUFA cover sheet filed under Health Canada's
+  chapter" the day one does. Now a contract test across `ESTAR_FIELD_MAPS` and
+  `CONDITIONAL_ATTACHMENT_SLOTS`, covering `alsoWriteSomPaths` as well as the primary path.
+- **Chained object numbering.** `nextFreeObjectNumber` was tested only on a *pristine* PDF,
+  where the newest trailer and the first trailer are the same trailer — so nine tests could
+  not tell a reader of one from a reader of the other. `attachPlannedFiles` numbers from a
+  document that has ALREADY had the datasets fill appended; a stale read collides with that
+  revision's own cross-reference stream, silently destroying the form fill the attachment was
+  meant to travel with. Same defect class as the `startxrefOffset` first-match bug of
+  2026-09-07, one primitive along. Both new tests seen failing with that bug reintroduced;
+  all nine existing ones pass straight through it.
+
+### What this says about the slice
+
+The mutation table in §6 is real: every rule I *wrote a test for* was seen to fail. What it
+could not show is the rules I did not think to write a test for, and four of those were
+wrong. Three of the four share one shape — **a property that was true, load-bearing, and
+asserted only in prose**. The fourth was caught by `tsc`, not by 513 passing tests, because
+the only code path that would have executed it was mocked at exactly the seam that made the
+route testable.
+
+---
+
 ## 7. What this does NOT do
 
 **There is no surface yet, and that is a scope boundary, not an omission.**
