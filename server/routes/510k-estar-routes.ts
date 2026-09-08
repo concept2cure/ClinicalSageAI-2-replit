@@ -1053,11 +1053,17 @@ router.post('/official', authMiddleware, requireEditorAccess, requireAssemblyEnt
             attachments,
             /* The resolver is built per request and used once. It carries the
                organization and the program, and both branches re-assert them in
-               their own query — a document is never reached by id alone. */
+               their own query — a document is never reached by id alone.
+               No `client` override: DeviceContentClient wants a raw pg
+               Pool/PoolClient/PGlite query surface, not the Drizzle instance
+               requestDb(req) returns, so this defaults to the shared pool —
+               the same default the other loadDeviceContentLeaves call sites in
+               this file already rely on. Tenant isolation here comes from the
+               explicit organizationId/programUuid re-asserted in every query,
+               not from which connection object executes it. */
             attachmentResolver: createDeviceAttachmentResolver({
               organizationId: getOrganizationId(req),
               programUuid: anchor.programUuid,
-              client: requestDb(req),
             }),
           }
         : {}),
