@@ -1122,8 +1122,37 @@ Two ways to resolve it, and the choice is a regulatory one:
    `transitionSequenceGoverned` composing the freeze verdict without the
    release-signature gate.
 
-This report does not pick one. Altering the reach of a Part 11 control, or
-hand-rolling a signed orchestrator run inside a golden journey — the only other
-way to make it green — are both decisions to take deliberately rather than to
-make a red test pass. The journey is left exactly as upstream left it, failing
-and telling the truth, which is what it is for.
+**JM chose (1): scope the gate to dispatch.** Done, and the journey is green.
+
+`composeDispatchGatesForStep` states the membership in the one place gate
+membership is asserted. The freeze case is expressed as "a release signature is
+not REQUIRED" rather than "the gate is omitted", which is what keeps the gate's
+second rule intact: an `invalid` verdict blocks unconditionally, so a TAMPERED
+signature still blocks a freeze. Requiredness governs whether a signature must
+be present, never whether a broken one may be ignored. Every other gate governs
+both steps, pinned by a test that iterates them, so a gate added later cannot be
+dropped from the freeze verdict by omission.
+
+Freeze keeps the Part 11 signature it always had — `transitionSequenceGoverned`
+Gate 1, bound to this sequence, this step, this actor and this leaf manifest —
+so nothing about the freeze is less governed than before; only the *transmit*
+re-check moved to transmit.
+
+The readiness endpoint still reports the DISPATCH verdict, so the journey now
+asserts what is true of it: exactly one blocker and it is the release signature
+— which also proves no other gate objects — while the freeze that follows
+succeeds. Those two facts together are the scoping. A journey that drives the
+package orchestrator to a signed release, and so reaches a cleared dispatch
+verdict, is recorded as the follow-on.
+
+### Also fixed — a test that had gone blind
+
+`chat-threads-read-honesty.test.ts` was failing on the branch for its own,
+unrelated reason. `listThreadMessages` gained a step resolving WHICH store holds
+a thread; the test's ownership mock still answered a shape from before that step
+existed, so the handler 404'd and the transcript read whose failure the test
+asserts was never reached. A read failure reported as "no such thread" is the
+same fabrication the file was written against — an infrastructure error stated
+as a fact about the user's data. The mock now matches the resolver, and the test
+asserts the transcript read was actually called, which is the assertion that
+would have caught the rot.
