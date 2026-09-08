@@ -205,3 +205,17 @@ Pinned by `server/routes/chat/__tests__/thread-messages-store.test.ts` (6 tests)
 ### Note on the walk
 
 The seeded rows live only in this container's local database; nothing was seeded into any deployed environment, and no seed file was added to the migration set.
+
+## Addendum 5 — 2026-09-07, the other half of the loop: minting and continuing
+
+Addendum 4 proved a project's conversations can be listed and resumed. The write half was still unproven: a conversation STARTED with a project open must be minted carrying that program, or the project's list can never find it again, and a RESUMED conversation must continue its own thread rather than mint a second one. Walk: `evidence/ana-ui-2026-09-06/project-send-walk-2026-09-07.mjs`, measurements `project-send-2026-09-07.json`.
+
+| Send | Captured request body |
+|---|---|
+| New conversation from the project landing composer | `project_id` = the open program's UUID, `thread_id` absent → the server mints a thread carrying the program |
+| Continuing a resumed conversation | `thread_id` = `ana-ri_seed_1`, `project_id` carried → the same thread continues; no second thread |
+| Page errors | none |
+
+The mint itself cannot be observed in this environment — the stream route resolves the thread well after its AI-provider check, which fails closed at 503 with no provider configured — so the server half is pinned by test instead, where it previously had none at all: `server/services/__tests__/chat-thread-program-key.test.ts` (5) covers that `getOrCreateThread` writes `metadata.programId` lower-cased when a program is open, writes no metadata for a numeric or absent project (the integer `project_id` column is a different channel), never re-homes an existing thread, and that the stream route passes the request's project id through `programIdForThread`. Shown failing first by removing the metadata write: the mint test fails on it.
+
+With addendum 4 this closes the loop end to end — mint → list → resume → continue — with the client half measured in a browser and the server half pinned by tests.
