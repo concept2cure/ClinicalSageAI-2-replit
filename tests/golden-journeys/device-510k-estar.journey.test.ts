@@ -220,6 +220,7 @@ beforeAll(async () => {
       // store the route fails closed and the journey's authoring step 500s.
       'db/migrations/20260803_document_span_lineage.sql',
       'migrations/20260907_span_lineage_accepted_machine_draft.sql',
+      'migrations/20260908_span_lineage_machine_draft.sql',
       // The org's eSTAR registration row — the governed home of the official
       // form's correspondent / Declaration of Conformity facts (step 8c).
       'migrations/20260730_estar_registration.sql',

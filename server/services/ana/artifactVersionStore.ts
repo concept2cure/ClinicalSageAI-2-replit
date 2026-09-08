@@ -23,6 +23,7 @@ import {
   enforceSourceAndAuthorLineage,
   type SourceAndAuthorLineageResult,
 } from '../clinical-regulatory-evidence/lineage-gate';
+import { ANA_MACHINE_AUTHOR_ID } from '../authoring/revision-ledger';
 import type { RetrievedSource } from '../clinical-regulatory-evidence/source-attribution';
 
 /**
@@ -82,7 +83,7 @@ export interface UpsertDocumentArtifactVersionResult {
   version: number;
   contentHash: string;
   /** What the lineage gate recorded for this version; null on a de-dupe no-op. */
-  lineage: SourceAndAuthorLineageResult | { sourceSpans: 0; authorSpans: number } | null;
+  lineage: SourceAndAuthorLineageResult | { sourceSpans: 0; machineDraftSpans: number; authorSpans: 0 } | null;
 }
 
 /**
@@ -102,17 +103,29 @@ async function recordVersionLineage(
     );
   }
   const ref = { documentTable: 'concept2cure_artifacts', documentId: String(artifactPk) };
+  /* This store exists to persist the drafts AnA produced in a conversation
+     (routes/ana-ri/post-processing.ts writes them back as the stream ends).
+     The user has not read them, let alone accepted them — the surface even
+     warns when one "was drafted but could not be saved". So every clause is
+     AnA's unaccepted draft, requested by this user; recording it as their own
+     assertion claimed they had stood behind text they had not yet seen. */
+  const machineDraft = { authorId: ANA_MACHINE_AUTHOR_ID };
   if (input.sources && input.sources.length > 0) {
-    return enforceSourceAndAuthorLineage(client, input.organizationId, ref, input.content, String(userId), input.sources);
+    return enforceSourceAndAuthorLineage(
+      client, input.organizationId, ref, input.content, String(userId), input.sources, { machineDraft },
+    );
   }
-  await enforceAuthorLineage(client, input.organizationId, ref, input.content, String(userId));
+  await enforceAuthorLineage(client, input.organizationId, ref, input.content, String(userId), { machineDraft });
+  // Counts the MACHINE-DRAFT rows now, not the author assertions: with the
+  // machineDraft claim above there are none of the latter, and reporting zero
+  // recorded spans for a save that recorded a full set would be a new silence.
   const counted = await client.query(
     `SELECT count(*)::int AS n FROM document_span_lineage
       WHERE organization_id = $1 AND document_table = $2 AND document_id = $3
-        AND provenance_kind = 'author_assertion' AND deleted_at IS NULL`,
+        AND provenance_kind = 'machine_draft' AND deleted_at IS NULL`,
     [input.organizationId, ref.documentTable, ref.documentId],
   );
-  return { sourceSpans: 0, authorSpans: Number(counted.rows[0]?.n ?? 0) };
+  return { sourceSpans: 0, machineDraftSpans: Number(counted.rows[0]?.n ?? 0), authorSpans: 0 };
 }
 
 /**
