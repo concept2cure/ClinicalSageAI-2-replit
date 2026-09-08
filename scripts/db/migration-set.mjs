@@ -1609,15 +1609,14 @@ export const C2C_MIGRATION_FILES = [
   // entitlement change. Idempotent UPDATE keyed on module_id.
   'migrations/20260820c_catalog_maa_module1_regional.sql',
 
-  // ── The submission orchestrator gets a catalog row (2026-09-07) ───────────
-  // The surface shipped registered, routed and rendering, but reachable from
-  // no nav menu and absent from NAVIGATION_TARGETS. Making it reachable also
-  // makes it a shell app, and the shell must never present an app the catalog
-  // cannot express an entitlement for — without a row it is ungatable
-  // (module_subscriptions FKs into available_modules) and silently free (an
-  // unknown id is treated as not-licensable by design). Tiered 'standard' to
-  // match its Submit & file siblings; no earlier file classifies this id, so
-  // this file owns its tier.
+  // ── The submission-orchestrator catalog row is retired (2026-09-07) ───────
+  // This entry briefly SEEDED that row, for a surface that should never have
+  // been created: `ectd-compile` is already the assemble-the-submission
+  // surface, so a second one was the parallel path the zero-duplication rule
+  // forbids. The surface is deleted and its panels folded into EctdCompile;
+  // the file is amended IN PLACE to deprecate the row rather than seed it
+  // (RULE 1 — a follow-up DROP in a set that replays every deploy either
+  // reverts or re-creates-then-removes forever).
   'db/migrations/20260907_module_catalog_submission_orchestrator.sql',
 
   // Moved here from AFTER the sweep, where it was appended upstream. C-33 and
