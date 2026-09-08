@@ -2,12 +2,12 @@
 
 Date: 2026-09-07. Branch `concept2cure-v2`. Roadmap item 4 of
 `docs/handoff/HANDOFF_DEVICE.md` §6 — the keystone: without it, nothing the platform
-authors reaches the filed form (0 of 112 nIVD / 140 IVD attachment slots populated).
+authors reaches the filed form (0 of 113 nIVD / 145 IVD attachment slots populated).
 
 This closes four of five slices — the multi-object writer (§1–2), the encrypted object
 construction (§3a), the catalog name tree (§3b) and the slot map (§3d). **A file is now
 genuinely attached to the real FDA eSTAR, with the form and its scripts intact** (§3c), and
-every one of the 112/140 slots is enumerable with the chapter token CDRH routes by. The
+every one of the 113/145 slots is enumerable with the chapter token CDRH routes by. The
 last slice is specified in §4.
 
 ## 1. Why the writer had to change first
@@ -69,7 +69,7 @@ That is stated in the docstring, and §3 is what happens when it is not honoured
 | `server/services/forms/__tests__/pdf-embedded-files.test.ts` | 9 passed (new), against the REAL encrypted template, seen failing first |
 | `server/services/forms/__tests__/pdf-object-store.test.ts` | 11 passed (new), both templates, including the chained-update regression |
 | `server/services/forms/__tests__/pdf-attach.test.ts` | 12 passed (new), both templates, 6 seen failing on the older-startxref bug |
-| `server/.../estar/__tests__/estar-attachment-slots.test.ts` | 15 passed (new), both templates, counts and chapter shapes pinned |
+| `server/.../estar/__tests__/estar-attachment-slots.test.ts` | 25 passed, both templates; 18 seen failing against the old reader (§3e) |
 | `server/.../estar/__tests__/estar-attachment-acceptance.test.ts` | 27 passed (new), the six delete-guards, seen failing first |
 | `server/services/forms` (the datasets fill, against the REAL vendored templates) | unchanged through the generalised writer and the startxref fix |
 | forms + estar engine + official-eSTAR route + the nine export contracts | 30 files / 357 passed |
@@ -263,12 +263,14 @@ constant is a transcription error waiting for a deploy.
 
 | | nIVD | IVD |
 |---|---|---|
-| attachment slots | **112** | **140** |
-| distinct chapter tokens | 65 | 77 |
+| attachment slots | **113** | **145** |
+| distinct chapter tokens | 67 | 78 |
 
-- **112 and 140 are the same numbers `device-market-readiness-2026-09-07.md` reached** by
-  counting `*AddAttachment*` controls — arrived at here from the opposite direction, through
-  the manifest writes.
+> **Corrected 2026-09-08.** This section first reported 112 and 140, and said those numbers
+> agreeing with `device-market-readiness-2026-09-07.md`'s independent count was "the strongest
+> evidence available that the extraction is right". It was not evidence at all — both were
+> counting distinct field NAMES, and the name is not unique. See §3e.
+
 - Fewer chapters than slots, because several controls file into one chapter: five
   `ADAddAttachment0xx` all route to `/CHAPTER 1/CH1.04/`.
 - The chapter paths are **not** `/CHAPTER n/CHn.nn/`. There is a
@@ -284,6 +286,60 @@ constant is a transcription error waiting for a deploy.
   the labeling kind. It is not somewhere a file can be attached, and its real slot
   (`LBAddAttachment360`) is in the map on its own. Counting it would offer an attachment
   target that does not exist.
+
+## 3e. The slot reader was wrong three ways, and the corroboration was not corroboration
+
+A design panel reviewing this work read the reader rather than its output, and found three
+defects. Each was reproduced before anything was changed.
+
+**1. A slot's identity was its short name, and the name is not unique.** Measured on the
+templates: nIVD has **113** `*AddAttachment*` field declarations over **112 distinct names** —
+`AddAttachment`, bare, is declared twice, once under `ReprocSterDocs` and once under
+`BiocompatibilityDocs`. IVD has **145** declarations over **140 names**. The reader deduped on
+the name, so the second declaration lost:
+
+```
+bare AddAttachment @ 6174133 | enclosing subform: ReprocSterDocs
+bare AddAttachment @ 6980222 | enclosing subform: BiocompatibilityDocs
+shipped reader, nIVD → 1 entry: chapter /CHAPTER 3/CH3.08/, "Reprocessing … Documents"
+                       "Biocompatibility Documents" present anywhere? false
+```
+
+The nIVD **Biocompatibility** slot did not exist in the map. Outline node E1 "Biocompatibility"
+is `mandatory: true` in the shipped 510(k) pack, so the one slot its content could be routed to
+was the one the reader had dropped. Identity is now the full SOM path
+(`root.Biocompatibility.BiocompatibilityDocs.AddAttachment`), and a test asserts that slot
+exists with its own chapter and description.
+
+**2. Descriptions were hunted in a 1200-character window behind the append**, so they could come
+from a different handler than the chapter, and three nIVD / two IVD slots FDA does name reported
+`null` (`EMAddAttachment415`, `EMAddAttachment450`, `EMAddAttachment950`). The scan now runs
+inside the control's own declaration, which cannot cross into a neighbour's. Zero nulls on
+either template, and that is asserted.
+
+**3. One control writes two chapters, and the reader silently picked the first.**
+`root.AdministrativeDocumentation.ADAddAttachment910` — the **User Fee Form** — writes
+`/CHAPTER 1/CH1.04/` when `ApplicationType.ATRadioButton100 == 2` (Health Canada) and
+`/CHAPTER 1/CH1.09/` otherwise (FDA). CH1.04 appears first in the file, so the reader returned
+the **Health Canada** chapter for a US submission. This platform deliberately does not write
+that radio (`estar-field-map.ts`), so it cannot choose. `chapters` is now a list, and
+`resolveAttachmentSlot` refuses with `ambiguous_chapter` naming the radio rather than filing a
+US MDUFA cover sheet under another country's chapter.
+
+**And 19 of the 165 appends were commented out** — 6 inside `/* … */`, 13 behind `//`. The
+reader was reading FDA's discarded drafts as live routing. Comments are stripped now, measured
+safe: all 113/145 slots still resolve a chapter and a description, and no chapter path contains
+`//`.
+
+### What this says about the corroboration
+
+The original section argued that 112/140 was trustworthy because
+`device-market-readiness-2026-09-07.md` had reached the same numbers from the opposite
+direction. Two measurements agreeing is only evidence when they can fail differently. Both of
+these counted distinct field names — the audit by counting `*AddAttachment*` controls, this by
+deduping appends on the control name — so they shared one mistake and agreed loudly about it.
+Agreement between two methods is worth exactly as much as the independence of their failure
+modes, and that is worth writing down somewhere it will be read again.
 
 ## 4. The last slice, and a measurement that changes its shape
 
@@ -332,6 +388,6 @@ occurrence carrying its `AttachmentName`; without those, an attachment is a file
 document rather than "the software documentation for section 5". Slices 4 and 5.
 
 Nothing in the product calls any of this yet — no route accepts attachments, and the eSTAR
-the export produces today still populates 0 of 112/140 slots. What has changed is that every
+the export produces today still populates 0 of 113/145 slots. What has changed is that every
 reason it could not has now been removed: the writer can express the objects, they can be
 enciphered, and they can be joined to the document without destroying the form.

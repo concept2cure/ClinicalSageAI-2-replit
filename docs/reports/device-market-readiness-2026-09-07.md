@@ -16,10 +16,18 @@ with FDA eSTAR administrative pre-fill, an audit trail and tenant isolation. Not
 |---|---|---|
 | fillable fields in the template's `datasets` | 454 | 538 |
 | fields the platform maps (`estar-field-map.ts`) | 20 | 19 |
-| attachment slots (`*AddAttachment*` controls) | 112 | 140 |
+| attachment slots (`*AddAttachment*` controls) | 112 → **113** | 140 → **145** |
 | attachment slots the platform fills | **0** | **0** |
 | typical filled count on real seeded data (device golden journey, steps 13–15) | 5 → 8 of 20 | — |
 | of the 20, cleared or replaced by FDA's own scripts on the applicant's first click | 9 | — |
+
+> **Corrected 2026-09-08.** These counted distinct control NAMES, and the name is not unique —
+> `AddAttachment` is declared twice in nIVD and five names twice in IVD. The real declaration
+> counts are 113 and 145. `docs/reports/wo8-estar-attachments-2026-09-07.md` §3e has the
+> measurement and what it cost: the nIVD Biocompatibility slot was missing from the platform's
+> slot map entirely, and this table agreeing with that map was mistaken for corroboration when
+> both had made the same mistake.
+
 
 - `POST /official` (`server/routes/510k-estar-routes.ts:957`) writes text into the XFA
   `datasets` packet only. `fillXfaDatasets` (`server/services/forms/fill-official-pdf.ts:1235`)
