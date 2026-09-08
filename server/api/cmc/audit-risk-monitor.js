@@ -26,8 +26,12 @@ const auditMonitoringLimiter = rateLimit({
   message: 'Too many audit monitoring requests, please try again after a minute',
 });
 import { ai } from '../../lib/unified-ai-client';
+import { serverError } from '../../lib/api-response.js';
+import { createScopedLogger } from '../../utils/logger.js';
 
 // Create router
+const logger = createScopedLogger('audit-risk-monitor');
+
 const router = express.Router();
 
 // Configure multer for file uploads
@@ -274,10 +278,7 @@ router.post('/analyze', checkForOpenAIKey, auditMonitoringLimiter, async (req, r
     });
   } catch (error) {
     console.error('Error in document audit:', error);
-    return res.status(500).json({
-      error: 'An error occurred while auditing the document',
-      details: error.message,
-    });
+    return serverError(res, logger, 'analysing', error);
   }
 });
 
@@ -438,10 +439,7 @@ router.post('/analyze-collection', checkForOpenAIKey, auditMonitoringLimiter, as
     });
   } catch (error) {
     console.error('Error in collection audit:', error);
-    return res.status(500).json({
-      error: 'An error occurred while auditing the document collection',
-      details: error.message,
-    });
+    return serverError(res, logger, 'analysing collection', error);
   }
 });
 
@@ -568,10 +566,7 @@ router.post(
       });
     } catch (error) {
       console.error('Error in inspection simulation:', error);
-      return res.status(500).json({
-        error: 'An error occurred while generating inspection simulation',
-        details: error.message,
-      });
+      return serverError(res, logger, 'saving inspection simulation', error);
     }
   }
 );
@@ -665,10 +660,7 @@ router.post('/upload', checkForOpenAIKey, upload.single('document'), async (req,
     });
   } catch (error) {
     console.error('Error in document upload:', error);
-    return res.status(500).json({
-      error: 'An error occurred while uploading and processing the document',
-      details: error.message,
-    });
+    return serverError(res, logger, 'uploading', error);
   }
 });
 
@@ -698,10 +690,7 @@ router.get('/download/:auditId', (req, res) => {
     return res.json(auditData);
   } catch (error) {
     console.error('Error in audit download:', error);
-    return res.status(500).json({
-      error: 'An error occurred while downloading the audit',
-      details: error.message,
-    });
+    return serverError(res, logger, 'downloading', error);
   }
 });
 
@@ -731,10 +720,7 @@ router.get('/download-collection/:collectionAuditId', (req, res) => {
     return res.json(collectionAuditData);
   } catch (error) {
     console.error('Error in collection audit download:', error);
-    return res.status(500).json({
-      error: 'An error occurred while downloading the collection audit',
-      details: error.message,
-    });
+    return serverError(res, logger, 'downloading collection', error);
   }
 });
 
@@ -764,10 +750,7 @@ router.get('/download-simulation/:simulationId', (req, res) => {
     return res.json(simulationData);
   } catch (error) {
     console.error('Error in simulation download:', error);
-    return res.status(500).json({
-      error: 'An error occurred while downloading the inspection simulation',
-      details: error.message,
-    });
+    return serverError(res, logger, 'downloading simulation', error);
   }
 });
 
@@ -796,10 +779,7 @@ router.get('/processing/:uploadId', (req, res) => {
     return res.json(processingResult);
   } catch (error) {
     console.error('Error in getting processing result:', error);
-    return res.status(500).json({
-      error: 'An error occurred while getting the processing result',
-      details: error.message,
-    });
+    return serverError(res, logger, 'loading processing', error);
   }
 });
 

@@ -66,6 +66,7 @@ import { recordGovernedAction, verifyReauth } from '../../routes/c2c/actions';
 import { governedSignatureSchema, resolveActorUserId } from './governance';
 import { createScopedLogger } from '../../utils/logger';
 import * as metricsModule from '../../metrics.js';
+import { serverError } from '../../lib/api-response';
 
 const router = express.Router();
 const logger = createScopedLogger('cmc-routes');
@@ -2246,7 +2247,7 @@ Write a comprehensive draft for this CMC section following ICH guidelines.`,
     });
   } catch (error) {
     console.error('CMC blueprint generation error:', error);
-    res.status(500).json({ success: false, error: error instanceof Error ? error.message : 'Generation failed' });
+    return serverError(res, logger, 'generating enhanced blueprint', error);
   }
 });
 
@@ -2274,10 +2275,7 @@ router.get('/quality/qbd/:projectId', async (req, res) => {
     res.json({ success: true, data: result });
   } catch (error) {
     console.error('QbD analysis error:', error);
-    res.status(500).json({
-      success: false,
-      error: error instanceof Error ? error.message : 'QbD analysis failed',
-    });
+    return serverError(res, logger, 'loading QbD', error);
   }
 });
 
@@ -2299,10 +2297,7 @@ router.post('/ich-compliance', async (req, res) => {
     res.json({ success: true, data: report });
   } catch (error) {
     console.error('ICH compliance check error:', error);
-    res.status(500).json({
-      success: false,
-      error: error instanceof Error ? error.message : 'ICH compliance check failed',
-    });
+    return serverError(res, logger, 'saving ICH compliance', error);
   }
 });
 
@@ -2330,10 +2325,7 @@ router.post('/variations/classify', async (req, res) => {
     res.json({ success: true, data: classification });
   } catch (error) {
     console.error('Variations classifier error:', error);
-    res.status(500).json({
-      success: false,
-      error: error instanceof Error ? error.message : 'Classification failed',
-    });
+    return serverError(res, logger, 'classifying variations', error);
   }
 });
 
@@ -2363,10 +2355,7 @@ router.post('/control-strategy', async (req, res) => {
     res.json({ success: true, data: strategy });
   } catch (error) {
     console.error('Control strategy generator error:', error);
-    res.status(500).json({
-      success: false,
-      error: error instanceof Error ? error.message : 'Control strategy generation failed',
-    });
+    return serverError(res, logger, 'saving control strategy', error);
   }
 });
 
