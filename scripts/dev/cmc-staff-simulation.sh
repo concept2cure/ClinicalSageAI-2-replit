@@ -58,8 +58,14 @@ PROGRAM=$(cat "$OUT/program.json" | JQ '.data.id // .id // empty')
 echo "   meta: $(cat "$OUT/program.json" | JQ '.meta // .data.meta // empty' | head -c 400)"
 
 step "3. Process development registers the drug substance (feeds 3.2.S.1/S.2)"
-CODE=$(req ds POST /api/cmc/drug-substances "{\"substanceName\":\"BX-701\",\"inn\":\"belantezumab\",\"casNumber\":\"1234-56-7\",\"molecularFormula\":\"C6H8O6\",\"manufacturingProcess\":{\"manufacturer\":\"Acme Biologics\",\"route\":\"CHO cell culture\",\"site\":\"Basel\"},\"status\":\"development\",\"developmentPhase\":\"phase1\",\"projectId\":\"$PROGRAM\"}")
+CODE=$(req ds POST /api/cmc/drug-substances "{\"substanceName\":\"BX-701\",\"inn\":\"belantezumab\",\"casNumber\":\"1234-56-7\",\"molecularFormula\":\"C6H8O6\",\"manufacturingProcess\":{\"manufacturer\":\"Acme Biologics\",\"route\":\"CHO cell culture\",\"site\":\"Basel\"},\"status\":\"development\",\"developmentPhase\":\"phase1\",\"projectId\":\"$PROGRAM\",\"modality\":\"biologic\",\"biologicalOrigin\":\"CHO cell culture, fed-batch\",\"cellLine\":\"CHO-K1; MCB lot MCB-2401, WCB lot WCB-2403\",\"sourceOrganism\":\"Cricetulus griseus (Chinese hamster ovary)\",\"viralSafetyEvaluation\":\"Two orthogonal clearance steps validated per ICH Q5A(R2): low-pH hold (>= 4.8 log10 X-MuLV) and 20 nm nanofiltration (>= 5.2 log10 MVM). In-process bioburden, mycoplasma and adventitious-agent testing at harvest.\",\"tseStatus\":\"Chemically defined, animal-component-free media throughout; no animal-derived raw material enters the process. EMA EMEA/410/01 rev. 3 risk assessment on file.\"}")
 [ "$CODE" = 200 -o "$CODE" = 201 ] && ok "drug substance registered ($CODE)" || bad "drug substance failed ($CODE): $(head -c300 "$OUT/ds.json")"
+
+# §3.2.A.2 must now be composed from what the register holds, not from the
+# substance's name: the section's biologic branch used to assert a control
+# strategy, viral clearance and cell-bank characterisation over nothing.
+A2CHECK=$(cat "$OUT/ds.json" | jq -r '.data.viralSafetyEvaluation // empty' 2>/dev/null)
+[ -n "$A2CHECK" ] && ok "the drug substance carries its ICH Q5A(R2) record" || bad "the substance's viral safety evaluation did not persist"
 
 step "4. Analytical development registers the assay method (feeds 3.2.S.4)"
 CODE=$(req method POST /api/cmc/analytical-methods "{\"methodCode\":\"AM-001\",\"title\":\"RP-HPLC Assay\",\"purpose\":\"assay\",\"analyte\":\"BX-701\",\"matrix\":\"drug substance\",\"technique\":\"HPLC\",\"status\":\"validated\",\"validationDate\":\"2026-06-01T00:00:00.000Z\",\"ichQ2Parameters\":{\"characteristics\":[\"accuracy\",\"precision\",\"specificity\"]},\"projectId\":\"$PROGRAM\"}")

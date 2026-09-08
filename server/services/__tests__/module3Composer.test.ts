@@ -98,3 +98,50 @@ describe('renderComposedSectionMarkdown', () => {
     );
   });
 });
+
+describe('§3.2.P.8 — a first IND can file its stability section', () => {
+  const src = (sourceType: string, sourcePayload: Record<string, unknown>) =>
+    ({ id: `${sourceType}-1`, sourceType, sourcePayload, sourceHash: 'h' }) as never;
+
+  it('does not require a comparability status no first-in-human programme can have', () => {
+    /* comparabilityStatus has exactly one producer — the comparability
+       register — and ICH Q5E comparability compares a change against a prior
+       process, which a first IND does not have. Required unconditionally, the
+       section capped at 50%: the approve route refused the signature and the
+       export gate refused the filing, so the product declined to file a correct
+       dossier and told the staffer to record something the guideline does not
+       ask of them. */
+    const p8 = composeModule3FromCanonicalSources([
+      src('stability', { studyName: 'DP-24m', stabilityScope: 'drug_product', drugProductShelfLifeClaim: '24 months at 25°C/60%RH', storageCondition: '25°C/60%RH' }),
+    ]).find((s) => s.sectionKey === '3.2.P.8')!;
+    expect(p8.missingInputs).not.toContain('comparabilityStatus');
+    expect(p8.completeness).toBe(100);
+  });
+
+  it('DOES require it once a comparability assessment is on file', () => {
+    const p8 = composeModule3FromCanonicalSources([
+      src('stability', { studyName: 'DP-24m', stabilityScope: 'drug_product', drugProductShelfLifeClaim: '24 months at 25°C/60%RH' }),
+      src('comparability', { assessmentName: 'Post-scale-up', comparabilityStatus: '' }),
+    ]).find((s) => s.sectionKey === '3.2.P.8')!;
+    expect(p8.missingInputs).toContain('comparabilityStatus');
+    expect(p8.completeness).toBeLessThan(100);
+  });
+
+  it('is complete when the assessment on file states its status', () => {
+    const p8 = composeModule3FromCanonicalSources([
+      src('stability', { studyName: 'DP-24m', stabilityScope: 'drug_product', drugProductShelfLifeClaim: '24 months at 25°C/60%RH' }),
+      src('comparability', { assessmentName: 'Post-scale-up', comparabilityStatus: 'comparable' }),
+    ]).find((s) => s.sectionKey === '3.2.P.8')!;
+    expect(p8.missingInputs).toEqual([]);
+    expect(p8.completeness).toBe(100);
+  });
+
+  it('still refuses when the shelf-life claim itself is missing', () => {
+    // The conditional mechanism must not have loosened the unconditional field.
+    const p8 = composeModule3FromCanonicalSources([
+      src('stability', { studyName: 'DP-24m', stabilityScope: 'drug_product', storageCondition: '25°C/60%RH' }),
+    ]).find((s) => s.sectionKey === '3.2.P.8')!;
+    expect(p8.missingInputs).toContain('drugProductShelfLifeClaim');
+    expect(p8.completeness).toBeLessThan(100);
+  });
+});

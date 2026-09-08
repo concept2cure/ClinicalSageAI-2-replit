@@ -1970,6 +1970,13 @@ export const C2C_MIGRATION_FILES = [
   // Creator + a drop of that constraint; 0006 was amended in place to stop
   // declaring it, so the drop cannot be undone by a replay.
   'migrations/20260907_cmc_comparability_register_reachable.sql',
+
+  // §3.2.A.2's six inputs. The section reads modality, biological origin,
+  // source organism, cell line, the ICH Q5A(R2) viral safety evaluation and the
+  // TSE/BSE status, and no table held any of them — so for a biologic it was
+  // composed from the substance's NAME. Additive and nullable; a small-molecule
+  // programme records none of them.
+  'migrations/20260908_drug_substance_biologic_origin.sql',
   // ── regulatory_programs.application_number (WO-9 Click 1) ──────────────────
   // The agency-assigned IND / NDA / BLA / MAA number, distinct from the sponsor's
   // own program code. Additive, IF NOT EXISTS, nullable — never fabricated.
