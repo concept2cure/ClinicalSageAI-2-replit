@@ -224,6 +224,7 @@ jobs:
           npm run ci:canonicalizers
           npm run ci:commonjs-require
           npm run ci:governed-export-consequence-shape
+          npm run ci:governed-export-consequence-shape:selftest
           npm run ci:governed-export-routes
           npm run ci:migration-set-order
           npm run ci:model-migration-agreement

@@ -388,7 +388,8 @@ and whose output changes with whether the deployment has Chromium; resolve vault
 `readVerifiedVaultBytes`, which already refuses a hash mismatch, a missing file and a path
 escaping `uploads/`; then the route and the surface.
 
-**Three things the panel found that must be fixed on the way:**
+**Three things the panel found that must be fixed on the way** (all three are done — 1 and 3
+on 2026-09-07, 2 on 2026-09-08; see `wo8-estar-attachments-slice5-2026-09-08.md`)**:**
 
 1. `loadAuthoredDeviceSections` filters on `isAuthored` **alone** — `(content ?? '').trim().length > 0`
    — and never applies `isSubstantive`. So a section with status `drafting` and a 41-character body
@@ -404,6 +405,20 @@ escaping `uploads/`; then the route and the surface.
 **two** controls per template refuse a second attachment — `CLAddAttachment110` and
 `ADAddAttachment803`. The "Only three attachments can be attached per attachment upload section"
 text is real, and sits inside a `/* … */` block.
+
+> **CORRECTED 2026-09-08 — it is FIVE, not two.** The paragraph above is wrong, and it is
+> wrong in the way this report spends §3e warning about: a number read once and written
+> down. Slice 5 needed the rule, read it from the template instead of copying the sentence,
+> and found five controls per template — identical on both — each opening its handler with
+> `if (<the attachment row>.presence == "visible") { messageBox("Only a single …") }`:
+> `CoverLetter.CLAddAttachment110`, `…RelatedSubmissions.NSE510k.ADAddAttachment660`,
+> `RiskManagement.RiskMitigationTable.RMAddAttachment100`,
+> `RiskManagement.BenefitRisk.BRAddAttachment110`,
+> `AdministrativeDocumentation.ADAddAttachment803`. The two named above are the first and
+> the last. The rule is now read by `listEstarAttachmentSlots` and asserted whole in
+> `estar-attachment-slots.test.ts`; see
+> `docs/reports/wo8-estar-attachments-slice5-2026-09-08.md` §3a. The `/* … */` finding
+> above is confirmed.
 
 ## 4b. The form layer, which nothing here can reach
 

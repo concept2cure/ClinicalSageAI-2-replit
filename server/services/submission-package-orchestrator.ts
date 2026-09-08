@@ -925,11 +925,24 @@ export async function findActiveReleaseSignature(params: {
   if (!params.boundPayloadDigest) return null;
   try {
     const result = await pool.query(
+      /* ORDER BY id, not created_at. `created_at` is declared on the
+         electronicSignatures Drizzle model but NO migration ever adds it to
+         electronic_signatures — the drizzle journal ships `signed_at` only, and
+         nothing in migrations/ or db/migrations/ creates it. On a database
+         provisioned from the migration set this query therefore raised 42703,
+         was swallowed by the catch below as "non-fatal", and returned null —
+         which resolveSignedPackageForExport maps to 'signature-revoked'. So on
+         such a database the §11.70 release gate could never clear for ANY
+         IND/NDA/BLA/MAA, and told the operator the signature "was superseded or
+         rolled back" when nothing of the sort had happened.
+         `id` is the serial primary key, so newest-first is identical, and it
+         exists on every provisioning path. This is the only consumer of that
+         column anywhere in the server. */
       `SELECT id FROM electronic_signatures
         WHERE organization_id = $1
           AND bound_payload_digest = $2
           AND superseded_by IS NULL
-        ORDER BY created_at DESC
+        ORDER BY id DESC
         LIMIT 1`,
       [params.organizationId, params.boundPayloadDigest],
     );

@@ -407,6 +407,11 @@ export async function assessSequenceDispatchReadiness(
   const releaseSignature = await resolveReleaseSignatureStatus({
     submissionId: sequence.submissionId,
     organizationId,
+    // Sequence-grained, like every other input this assessor composes. Without
+    // it a release signed over sequence 0000's package cleared this gate for
+    // 0001 and every later sequence under the same submission — see the header
+    // of resolveReleaseSignatureStatus.
+    sequenceNumber: sequence.sequenceNumber,
   });
   const signatureRequired = isReleaseSignatureRequired(submissionApplicationType);
   const signatureInput = {
