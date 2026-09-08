@@ -1,13 +1,14 @@
-# Roadmap item 4 — attachments in the official eSTAR (slices 1–3 of 5)
+# Roadmap item 4 — attachments in the official eSTAR (slices 1–4 of 5)
 
 Date: 2026-09-07. Branch `concept2cure-v2`. Roadmap item 4 of
 `docs/handoff/HANDOFF_DEVICE.md` §6 — the keystone: without it, nothing the platform
 authors reaches the filed form (0 of 112 nIVD / 140 IVD attachment slots populated).
 
-This closes the first three of five slices — the multi-object writer (§1–2), the encrypted
-object construction (§3a) and the catalog name tree (§3b). **A file is now genuinely
-attached to the real FDA eSTAR, with the form and its scripts intact** (§3c). The remaining
-two are specified in §4.
+This closes four of five slices — the multi-object writer (§1–2), the encrypted object
+construction (§3a), the catalog name tree (§3b) and the slot map (§3d). **A file is now
+genuinely attached to the real FDA eSTAR, with the form and its scripts intact** (§3c), and
+every one of the 112/140 slots is enumerable with the chapter token CDRH routes by. The
+last slice is specified in §4.
 
 ## 1. Why the writer had to change first
 
@@ -68,6 +69,7 @@ That is stated in the docstring, and §3 is what happens when it is not honoured
 | `server/services/forms/__tests__/pdf-embedded-files.test.ts` | 9 passed (new), against the REAL encrypted template, seen failing first |
 | `server/services/forms/__tests__/pdf-object-store.test.ts` | 11 passed (new), both templates, including the chained-update regression |
 | `server/services/forms/__tests__/pdf-attach.test.ts` | 12 passed (new), both templates, 6 seen failing on the older-startxref bug |
+| `server/.../estar/__tests__/estar-attachment-slots.test.ts` | 15 passed (new), both templates, counts and chapter shapes pinned |
 | `server/services/forms` (the datasets fill, against the REAL vendored templates) | unchanged through the generalised writer and the startxref fix |
 | forms + estar engine + official-eSTAR route + the nine export contracts | 30 files / 357 passed |
 | `npx tsc --noEmit` | clean |
@@ -192,12 +194,52 @@ datasets has trade name: True          ← and still filled
 
 This is the first attachment this platform has ever embedded in the official form.
 
-## 4. The remaining two slices
+## 3d. Slice 4 — the slot map, read from the template rather than transcribed
 
-4. **The slot map.** Section → one of the 112/140 `*AddAttachment*` controls → its
-   `/CHAPTER n/CHn.nn/` `AttachmentManifest` token → its completeness indicator. This is
-   read off the template's own `form` packet, the way `estar-field-map.ts` was: measured,
-   not guessed, and pinned per template.
+An attachment does not reach CDRH by being embedded. It reaches CDRH as a routing token in
+the form's `Verification.AttachmentManifest`, and FDA's own script says exactly what one is:
+
+```js
+d[AttachmentIndex].description = "Administrative Documentation | Cover Letter";
+Verification.AttachmentManifest.rawValue =
+  Verification.AttachmentManifest.rawValue + "<<" + d[AttachmentIndex].path
+  + "|/CHAPTER 1/CH1.01/" + ">>";
+```
+
+So a slot is three facts — the `AddAttachment` control, the chapter token it writes, and
+FDA's own description of what belongs there — and all three are already in the template.
+`estar-attachment-slots.ts` reads them. Nothing is transcribed into a table: the template
+ships in the image, so a vendored copy could only drift from it, and a hand-copied regulatory
+constant is a transcription error waiting for a deploy.
+
+**Measured, and the measurements were not what a guess would have produced.**
+
+| | nIVD | IVD |
+|---|---|---|
+| attachment slots | **112** | **140** |
+| distinct chapter tokens | 65 | 77 |
+
+- **112 and 140 are the same numbers `device-market-readiness-2026-09-07.md` reached** by
+  counting `*AddAttachment*` controls — arrived at here from the opposite direction, through
+  the manifest writes.
+- Fewer chapters than slots, because several controls file into one chapter: five
+  `ADAddAttachment0xx` all route to `/CHAPTER 1/CH1.04/`.
+- The chapter paths are **not** `/CHAPTER n/CHn.nn/`. There is a
+  `/CHAPTER 6A/CH6A.03/CH6A.03.01/`, and the deepest run four levels
+  (`/CHAPTER 3/CH3.05/CH3.05.05/CH3.05.05.01/`). A tighter pattern — the one the shape
+  suggests — rejects a fifth of the real slots.
+- The **delete** path is a decoy. The template also adjusts the manifest with
+  `.replace(…, "")`, keyed by an `iAttachmentIndices` table that maps only fifteen indices.
+  Reading that finds an eighth of the slots and looks like an answer.
+- One append site per template is excluded, and it earned its own test:
+  `LBAttachment360.Type` is the labeling-type dropdown, which RE-ROUTES an already-attached
+  file between `/CHAPTER 5/CH5.04`, `CH5.08`, `CH5.09` and `CH5.10` as the applicant changes
+  the labeling kind. It is not somewhere a file can be attached, and its real slot
+  (`LBAddAttachment360`) is in the map on its own. Counting it would offer an attachment
+  target that does not exist.
+
+## 4. The last slice
+
 5. **The `form`-packet occurrence.** `instanceManager.addInstance` plus `AttachmentName`, so
    the applicant's Acrobat shows the attachment against the right section rather than an
    embedded file nothing references.
