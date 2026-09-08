@@ -686,6 +686,47 @@ describe.skipIf(!fsSync.existsSync(NIVD_TEMPLATE))(
       expect(back['root.AttachmentManifest']).toBe('***Start***');
     });
 
+    /*
+     * THE CEILING ATTACHMENTS MADE REACHABLE. The official eSTAR was a fixed
+     * ~5.3 MB until this slice, so the delivery layer's 25 MiB limit could not
+     * be hit and throwing there was harmless. A filer mapping real documents
+     * into real slots hits it easily — and the throw lands AFTER the renders,
+     * the vault reads, the encryption and the retention write, so it reaches
+     * the operator as "the problem has been logged" with the bytes already in
+     * the vault and nothing delivered.
+     */
+    it('refuses an oversized submission as a sentence, not an exception', async () => {
+      const fat = Buffer.alloc(3 * 1024 * 1024, 0x41);
+      const r = await fillEstarSubmission({
+        ...oneAttachment,
+        maxOutputBytes: 6 * 1024 * 1024,
+        attachmentResolver: async () => ({
+          ok: true,
+          bytes: fat,
+          fileName: 'Big Report.pdf',
+          mimeType: 'application/pdf',
+        }),
+      });
+
+      expect(r.filled).toBe(false);
+      expect(r.pdfBytes).toBeUndefined();
+      const said = r.blockers.join(' ');
+      // The numbers a filer can act on, and WHICH document is the problem.
+      expect(said).toMatch(/the finished form is [\d.]+ MB and the limit is 6\.0 MB/);
+      expect(said).toContain('"Big Report.pdf" 3.0 MB');
+      expect(said).toMatch(/Remove or reduce one/);
+      // The report still says what was planned, so the operator sees the whole picture.
+      expect(r.attachmentReport!.attached).toHaveLength(1);
+    });
+
+    it('delivers when the output fits, and the ceiling is opt-in', async () => {
+      const under = await fillEstarSubmission({ ...oneAttachment, maxOutputBytes: 25 * 1024 * 1024 });
+      expect(under.filled).toBe(true);
+      // Absent maxOutputBytes, the engine has no opinion — byte-identical output.
+      const none = await fillEstarSubmission(oneAttachment);
+      expect(Buffer.from(none.pdfBytes!).equals(Buffer.from(under.pdfBytes!))).toBe(true);
+    });
+
     it('is a caller bug, not a regulatory refusal, to ask for attachments with no resolver', async () => {
       await expect(
         fillEstarSubmission({

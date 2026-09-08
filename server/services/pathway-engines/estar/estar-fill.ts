@@ -93,6 +93,19 @@ export interface FillEstarInput {
    * so identical inputs produce identical bytes; defaults to now.
    */
   attachmentClock?: Date;
+  /**
+   * The largest output the CALLER can deliver. Unset ⇒ no ceiling here.
+   *
+   * The engine has no opinion about export governance; it takes the number from
+   * whoever has to hand the bytes over (`getMaxGovernedExportBytes`). Before
+   * attachments the official eSTAR was a fixed ~5.3 MB and could not approach
+   * any ceiling, so the delivery layer's limit was unreachable and throwing
+   * there was harmless. It is reachable now — a filer maps real documents into
+   * real slots — and a limit discovered by throwing AFTER the renders, the
+   * vault reads, the encryption and the retention write is a 500 where a
+   * sentence belongs.
+   */
+  maxOutputBytes?: number;
 }
 
 export interface FillEstarResult {
@@ -595,9 +608,39 @@ export async function fillEstarSubmission(input: FillEstarInput): Promise<FillEs
     return base;
   }
 
+  const output = plan ? attachPlannedFiles(result.bytes, plan.attachments) : result.bytes;
+
+  /* Refused HERE, and as a blocker, for two reasons. It is precise — the real
+     encrypted output, not the sum of the inputs plus a guess at overhead — and
+     it reaches the operator through the same 422-with-reasons channel as every
+     other attachment refusal, naming the documents and the numbers, instead of
+     as an exception the route can only render as "the problem has been logged".
+     Nothing is retained or registered, because nothing is returned. */
+  if (input.maxOutputBytes !== undefined && output.length > input.maxOutputBytes) {
+    const attached = plan?.attachments ?? [];
+    const carried = attached.reduce((n, a) => n + a.byteLength, 0);
+    base.blockers.push(
+      `Cannot deliver this eSTAR: the finished form is ${mib(output.length)} and the limit is ` +
+        `${mib(input.maxOutputBytes)}.` +
+        (attached.length > 0
+          ? ` ${attached.length} attachment(s) carry ${mib(carried)} of it — ` +
+            attached
+              .map((a) => `"${a.fileName}" ${mib(a.byteLength)}`)
+              .join(', ') +
+            '. Remove or reduce one and export again.'
+          : ''),
+    );
+    return base;
+  }
+
   base.filled = true;
-  base.pdfBytes = plan ? attachPlannedFiles(result.bytes, plan.attachments) : result.bytes;
+  base.pdfBytes = output;
   return base;
+}
+
+/** A byte count as a filer would read it. */
+function mib(bytes: number): string {
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
 /** Sentinel: the plan recorded a blocker on `base` and the fill must not proceed. */

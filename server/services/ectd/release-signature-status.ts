@@ -95,17 +95,46 @@ function refusalToVerdict(refusal: SignedExportRefusal): ReleaseSignatureVerdict
 }
 
 /**
- * Resolve the release-signature state for a submission.
+ * Resolve the release-signature state for a submission's SEQUENCE.
  *
  * Returns `undetermined` (never `unsigned`) on any lookup failure — a DB error
  * is not evidence that no signature exists, and the gate treats the two
  * differently on purpose.
+ *
+ * ── Why `sequenceNumber` is not optional in spirit ───────────────────────────
+ * The run lookup below can only be keyed on the submission: orchestrator runs
+ * carry `submission_id_fk`, not a sequence. But a submission holds MANY
+ * sequences — 0000 original, 0001 amendment, and so on — and the caller
+ * (assess-dispatch-readiness) is keyed on exactly one of them. Accepting any
+ * run under the submission therefore let a release signed over sequence 0000's
+ * package clear the dispatch gate for 0001, 0002 and every later sequence,
+ * none of which anyone had signed. That is the failure signed-package-export.ts
+ * names in its own header — "a user could orchestrate + sign package A and then
+ * export package B under the same submission id" — reintroduced one layer up,
+ * at the gate that decides whether the dispatch may happen at all.
+ *
+ * So the submission narrows the candidates and the SEQUENCE decides: a run
+ * clears this sequence only when the package it signed was this sequence's.
+ * The signed snapshot carries that identity (`descriptor.sequenceNumber`), so
+ * the comparison is against what was actually signed, not against anything the
+ * caller supplied alongside it.
+ *
+ * `sequenceNumber` is typed optional only so an existing caller that genuinely
+ * assesses a submission as a whole keeps compiling; when it is absent the old
+ * submission-wide behaviour applies and the detail string says so, rather than
+ * silently implying a sequence was checked.
  */
 export async function resolveReleaseSignatureStatus(params: {
   submissionId: number;
   organizationId: number;
+  /** The eCTD sequence being assessed, e.g. '0001'. */
+  sequenceNumber?: string | null;
 }): Promise<ReleaseSignatureStatus> {
   const { submissionId, organizationId } = params;
+  const sequenceNumber =
+    typeof params.sequenceNumber === 'string' && params.sequenceNumber.trim() !== ''
+      ? params.sequenceNumber.trim()
+      : null;
 
   if (!Number.isFinite(submissionId) || submissionId <= 0) {
     return { verdict: 'undetermined', detail: 'invalid submission id' };
@@ -155,16 +184,29 @@ export async function resolveReleaseSignatureStatus(params: {
   // An integrity failure on the newest run is returned immediately rather than
   // falling through to an older, still-valid signature.
   let firstNonUnsigned: ReleaseSignatureStatus | null = null;
+  /** Runs that carry a valid signature over a DIFFERENT sequence. */
+  let signedOtherSequences = 0;
 
   for (const runId of runIds) {
     const result = await resolveSignedPackageForExport({ runId, organizationId });
 
     if (result.ok) {
+      const signedSequence = result.descriptor.sequenceNumber;
+      // A perfectly valid signature over ANOTHER sequence of this submission
+      // is not this sequence's signature. Skip it and keep looking: it is not
+      // evidence about this package in either direction, so it must neither
+      // clear the gate nor block it.
+      if (sequenceNumber !== null && String(signedSequence ?? '').trim() !== sequenceNumber) {
+        signedOtherSequences++;
+        continue;
+      }
       return {
         verdict: 'signed',
         runId,
         signatureId: result.descriptor.signatureId,
-        detail: `verified against run ${runId}`,
+        detail: sequenceNumber
+          ? `verified against run ${runId} for sequence ${sequenceNumber}`
+          : `verified against run ${runId}`,
       };
     }
 
@@ -184,12 +226,25 @@ export async function resolveReleaseSignatureStatus(params: {
     }
   }
 
-  return (
-    firstNonUnsigned ?? {
+  if (firstNonUnsigned) return firstNonUnsigned;
+
+  // Say which of the two "unsigned" states this is. "There is no signature"
+  // and "there is a signature, over a different sequence" send an operator to
+  // completely different places, and the second one is the one that used to
+  // clear this gate.
+  if (signedOtherSequences > 0) {
+    return {
       verdict: 'unsigned',
-      detail: `no run among ${runIds.length} carries a completed release signature`,
-    }
-  );
+      detail:
+        `no release signature covers sequence ${sequenceNumber} — ` +
+        `${signedOtherSequences} run(s) under this submission are signed, but over a different sequence`,
+    };
+  }
+
+  return {
+    verdict: 'unsigned',
+    detail: `no run among ${runIds.length} carries a completed release signature`,
+  };
 }
 
 export default {

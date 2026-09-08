@@ -13,6 +13,7 @@ import { authMiddleware } from '../auth';
 import {
   createGovernedExportConsequence,
   createAuditedUnplacedExport,
+  getMaxGovernedExportBytes,
 } from '../services/export/governedExportConsequence';
 import {
   EstarRetentionError,
@@ -70,7 +71,7 @@ import {
 } from '../services/pathway-engines/estar/estar-content-leaves';
 import { PMA_SUBMISSION_TYPES } from '../services/pathway-engines/pma/pma-mapper';
 import { and, eq } from 'drizzle-orm';
-import { requestDb, requestPgClient } from '../db/requestDb';
+import { requestDb } from '../db/requestDb';
 import { fda510kProjects } from '../../shared/schema';
 import { regulatoryPrograms } from '../../shared/schema/programs';
 import { loadProgramDeviceFlags } from '../services/pathway-engines/estar/program-device-flags';
@@ -1071,25 +1072,30 @@ router.post('/official', authMiddleware, requireEditorAccess, requireAssemblyEnt
       variant: templateVariant,
       data: fillData,
       flatten,
+      /* The producer is told the ceiling the deliverer enforces, so an
+         oversized submission is a sentence naming the documents rather than a
+         500 after the work is done. One function answers for both. */
+      maxOutputBytes: getMaxGovernedExportBytes(),
       ...(attachments?.length
         ? {
             attachments,
             /* The resolver is built per request and used once. It carries the
                organization and the program, and both branches re-assert them in
                their own query — a document is never reached by id alone. */
+            /* No `client`: the resolver's governed-section reads default to
+               the shared pool, which is what every other caller of
+               loadAuthoredDeviceSections in this file does (/build at :533,
+               /assemble, /filing-readiness). `requestDb(req)` is a DRIZZLE
+               instance for `.select().from(...)` — its `.query` is the
+               relational-query namespace, not the `(text, params)` function
+               DeviceContentClient wants — so passing it here threw at runtime
+               and typechecked only until the next tsc run. If the shared pool
+               becomes wrong under RLS enforcement it becomes wrong for all four
+               callers at once, and the fix belongs to all four rather than to a
+               fifth, divergent path here. */
             attachmentResolver: createDeviceAttachmentResolver({
               organizationId: getOrganizationId(req),
               programUuid: anchor.programUuid,
-              /* `requestPgClient`, NOT `requestDb`. The resolver's client is the
-                 raw `query(text, params)` surface (`DeviceContentClient`), and a
-                 Drizzle instance's `.query` is the relational-query BUILDER — an
-                 object, not a function — so `requestDb(req)` here typechecked
-                 only because the object is structurally wide, and the first
-                 `authored_section` attachment would have thrown
-                 "client.query is not a function" at runtime. Both are bound to
-                 the same request-scoped connection, so tenant scoping and the
-                 RLS session vars are unchanged. */
-              client: requestPgClient(req),
             }),
           }
         : {}),
@@ -1217,9 +1223,12 @@ router.post('/official', authMiddleware, requireEditorAccess, requireAssemblyEnt
           'so it was not delivered. The problem has been logged.',
       });
     }
+    /* NOT "before consequence persistence" unconditionally — that sentence was
+       written when the only failures here happened before retention, and it is
+       false for anything thrown after it. Say what is actually known. */
     return res.status(500).json({
       error: 'GOVERNED_EXPORT_FAILED',
-      message: 'Official eSTAR export failed before consequence persistence. The problem has been logged.',
+      message: 'Official eSTAR export failed and was not delivered. The problem has been logged.',
     });
   }
 });

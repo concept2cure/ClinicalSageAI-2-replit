@@ -48,24 +48,10 @@ vi.mock('../../server/services/export/governedExportConsequence', async (importO
 // stand for an ident that resolves to nothing in this organization. When
 // `fakeDbState.error` is set every select REJECTS with it instead — the read
 // failed, which is a different fact from "no row" and must be answered as one.
-// `fakeSqlClient` is the OTHER request-scoped surface and is deliberately a
-// different object: `requestPgClient(req)` returns the raw `query(text, params)`
-// client, while `requestDb(req)` returns Drizzle, whose `.query` is the
-// relational-query BUILDER — an object, not a function. Mocking both as one
-// Drizzle-shaped fake is how the route came to hand a Drizzle instance to the
-// attachment resolver's `DeviceContentClient`: nothing in the mock had a
-// callable `.query`, so nothing could notice. See the client-contract test at
-// the end of the attachment describe.
-const { fakeDb, fakeSqlClient, fakeDbState } = vi.hoisted(() => {
+const { fakeDb, fakeDbState } = vi.hoisted(() => {
   const fakeDbState = { rows: [{ id: 33, deviceName: 'Test Device' }] as unknown[], error: null as unknown };
   return {
     fakeDbState,
-    fakeSqlClient: {
-      query: async () => {
-        if (fakeDbState.error) throw fakeDbState.error;
-        return { rows: fakeDbState.rows };
-      },
-    } as any,
     fakeDb: {
       select: () => ({
         from: () => ({
@@ -81,10 +67,7 @@ const { fakeDb, fakeSqlClient, fakeDbState } = vi.hoisted(() => {
   };
 });
 vi.mock('../../server/db', () => ({ db: fakeDb }));
-vi.mock('../../server/db/requestDb', () => ({
-  requestDb: () => fakeDb,
-  requestPgClient: () => fakeSqlClient,
-}));
+vi.mock('../../server/db/requestDb', () => ({ requestDb: () => fakeDb }));
 
 // The governed-records loader is the ONLY DB read the program-data path adds;
 // its projection/resolution stay real. Stubbed per test with the records an
@@ -681,7 +664,7 @@ describe('resolveProjectAnchor — a failed read is an error, never "not found"'
     {
       route: 'POST /official',
       error: 'GOVERNED_EXPORT_FAILED',
-      message: 'Official eSTAR export failed before consequence persistence. The problem has been logged.',
+      message: 'Official eSTAR export failed and was not delivered. The problem has been logged.',
       call: async (ident: string) => {
         const meta = /^\d+$/.test(ident) ? { id: 'k123', projectId: Number(ident) } : { id: 'k123', ident };
         const res = createMockResponse() as any;
@@ -1084,23 +1067,35 @@ describe.skipIf(!fsSync.existsSync(REAL_NIVD))(
       });
     });
 
-    it('hands the resolver a client it can actually query with', () => {
+    it('hands the resolver a client it can actually query with', async () => {
       /* `DeviceContentClient` is the raw `query(text, params)` surface, and
          `loadAuthoredDeviceSections` calls `client.query(...)` on it directly.
-         The route passed `requestDb(req)` — a Drizzle instance, whose `.query`
-         is the relational-query builder OBJECT — which satisfied the structural
-         type and would have thrown "client.query is not a function" on the first
+         This route once passed `requestDb(req)` — a Drizzle instance, whose
+         `.query` is the relational-query namespace OBJECT — which satisfied the
+         structural type and threw "client.query is not a function" on the first
          `authored_section` attachment. Every other test in this describe mocks
          the resolver factory away, so this is the only place the contract is
-         checked. Asserting the shape, not the identity, so the route may change
-         which request-scoped helper it uses as long as it stays queryable. */
+         checked.
+
+         The invariant is the shape, not the identity: omitting `client` is
+         valid and is what ships (the resolver then defaults to the shared pool,
+         as the three other loadAuthoredDeviceSections callers in this file do,
+         and every one of its queries re-asserts org_id in SQL). Anything passed
+         explicitly must expose the raw-query FUNCTION. Either is fine; a
+         Drizzle instance is not. */
       const req = attachReq([
         { slot: COVER_LETTER_SLOT, source: { kind: 'authored_section', sectionCode: 'A.1' } },
       ]);
-      return getHandler('/official')(req, createMockResponse() as any).then(() => {
-        const client = (mockResolverFactory.mock.calls[0][0] as any).client;
-        expect(typeof client?.query).toBe('function');
-      });
+      await getHandler('/official')(req, createMockResponse() as any);
+
+      const { client } = mockResolverFactory.mock.calls[0][0] as { client?: { query?: unknown } };
+      expect(
+        client === undefined || typeof client.query === 'function',
+        client === undefined
+          ? 'unreachable'
+          : `the attachment resolver was handed a client whose .query is a ${typeof client.query}, ` +
+            'not a function — loadAuthoredDeviceSections calls client.query(text, params) directly',
+      ).toBe(true);
     });
 
     it('refuses the export, with the reason, when a section is not fileable', async () => {
