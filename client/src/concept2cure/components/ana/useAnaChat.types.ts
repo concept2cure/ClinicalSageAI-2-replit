@@ -163,6 +163,8 @@ export interface AnaChatMessage {
   attachments?: MessageAttachment[];
   /** True while tokens are still arriving for this message. */
   streaming?: boolean;
+  /** True when the user explicitly selected Agent mode for this turn. */
+  agentMode?: boolean;
   /**
    * Progress phase label shown while streaming before the first token arrives
    * (e.g. "Planning response…", "Loading project memory…", "Generating…").
@@ -347,7 +349,11 @@ export interface AnaChatMessage {
           alreadyUsed: boolean;
           reasons: string[];
         }>;
-        preset: { title: string; scopeType: string; panels: Array<{ reportTypeId: string; scopeType: string; label?: string | null }> } | null;
+        preset: {
+          title: string;
+          scopeType: string;
+          panels: Array<{ reportTypeId: string; scopeType: string; label?: string | null }>;
+        } | null;
         source?: string;
       };
 }
@@ -421,7 +427,7 @@ export interface UseAnaChatReturn {
   send: (
     text: string,
     attachments?: MessageAttachment[],
-    sendOpts?: { toolsOverride?: string[] },
+    sendOpts?: { toolsOverride?: string[]; agentMode?: boolean }
   ) => Promise<void>;
   /** Abort the current stream (and cancel the run server-side). */
   stop: () => void;

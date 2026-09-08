@@ -48,6 +48,7 @@ import {
 import { getCachedSignalReliability } from '../../services/intelligence/learning-loop-service.js';
 import type { SignalReliability } from '../../services/intelligence/learning-loop-service.js';
 import { orchestrate, type OrchestratorOutput } from '../../services/ana-ri/orchestrator.js';
+import { resolveOrganizationClientType } from '../../services/ana-ri/chat-context-builder.js';
 import {
   handleSubmissionChat,
   isPostSectionGenerationTurn,
@@ -90,6 +91,7 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
     const userId: number | string = rawUserId ?? 'anonymous';
     const numericOrgId = orgId ? (typeof orgId === 'string' ? Number(orgId) : orgId) : null;
     const numericUserId = typeof userId === 'string' ? parseInt(userId, 10) || 0 : userId;
+    const organizationClientTypePromise = resolveOrganizationClientType(numericOrgId);
 
     // ── STEP 2: CREATE / VALIDATE THREAD ─────────────────────────────────────────
     const requestedThreadId = Array.isArray(thread_id) ? thread_id[0] : thread_id;
@@ -707,6 +709,25 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
       })();
 
       // ── Agentic tool-use loop: AnA can search, check compliance, generate docs ──
+      const organizationClientType = await organizationClientTypePromise;
+      const selectionContext =
+        tool_context && typeof tool_context === 'object'
+          ? {
+              projectType:
+                typeof (tool_context as Record<string, unknown>).projectType === 'string'
+                  ? (tool_context as Record<string, unknown>).projectType
+                  : undefined,
+              documentType:
+                typeof (tool_context as Record<string, unknown>).documentType === 'string'
+                  ? (tool_context as Record<string, unknown>).documentType
+                  : undefined,
+              surface:
+                typeof (tool_context as Record<string, unknown>).surface === 'string'
+                  ? (tool_context as Record<string, unknown>).surface
+                  : undefined,
+              clientType: organizationClientType ?? undefined,
+            }
+          : { clientType: organizationClientType ?? undefined };
       const baseRequest = {
         taskType: routingPlan.taskType,
         messages: gwMessages,
@@ -721,7 +742,7 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
         // reach), honouring any tools the user pinned in the tool picker.
         tools: selectToolsForTurn(getAllEnabledTools(), typeof message === 'string' ? message : '', {
           pinned: Array.isArray(selected_tools) ? selected_tools.filter((t: unknown): t is string => typeof t === 'string') : undefined,
-          context: tool_context && typeof tool_context === 'object' ? tool_context : undefined,
+          context: selectionContext,
         }),
         toolChoice: 'auto' as const,
         ...(validatedChatProvider ? { provider: validatedChatProvider } : {}),
@@ -745,6 +766,7 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
           userId: numericUserId || null,
           projectId:
             typeof project_id === 'string' ? parseInt(project_id, 10) || null : project_id || null,
+          clientType: organizationClientType,
           // Tenant UUID so the project_knowledge_search tool can scope retrieval.
           organizationUuid: orgUuid ?? null,
           // Situational context (surface/project/document type) — same signal the

@@ -60,6 +60,8 @@ const LENS_PHRASE: Record<string, string> = {
 export interface AnaActivityProps {
   /** True while the turn is still in flight. */
   streaming?: boolean;
+  /** True when the user selected Agent mode for this turn. */
+  agentMode?: boolean;
   /** Server-reported phase, e.g. "Loading project memory…". */
   phase?: string;
   /** Detected intent lens for this turn (audit / risk / compare / …). */
@@ -95,7 +97,10 @@ const THOUGHT_TAIL = 180;
  * fragment is never read as a complete sentence.
  */
 function latestThought(thinking: string): string {
-  const lines = thinking.split(/\n+/).map(l => l.trim()).filter(Boolean);
+  const lines = thinking
+    .split(/\n+/)
+    .map(l => l.trim())
+    .filter(Boolean);
   const last = lines[lines.length - 1] ?? '';
   if (last.length <= THOUGHT_TAIL) return last;
   const cut = last.slice(last.length - THOUGHT_TAIL);
@@ -122,12 +127,15 @@ function byRound(calls: AnaToolCall[]): Array<{ round: number; calls: AnaToolCal
     if (!groups.has(r)) groups.set(r, []);
     groups.get(r)!.push(c);
   }
-  return [...groups.entries()].sort((a, b) => a[0] - b[0]).map(([round, cs]) => ({ round, calls: cs }));
+  return [...groups.entries()]
+    .sort((a, b) => a[0] - b[0])
+    .map(([round, cs]) => ({ round, calls: cs }));
 }
 
 export function AnaActivity({
   streaming,
   phase,
+  agentMode,
   lens,
   documentType,
   toolCalls,
@@ -152,7 +160,12 @@ export function AnaActivity({
 
   // A settled turn that did nothing worth reporting adds nothing. Say nothing.
   const hasDecision = Boolean(lens && LENS_PHRASE[lens]) || Boolean(documentType);
-  const hasBody = calls.length > 0 || hasDecision || Boolean(thinking) || Boolean(draftTitle);
+  const hasBody =
+    calls.length > 0 ||
+    hasDecision ||
+    Boolean(agentMode) ||
+    Boolean(thinking) ||
+    Boolean(draftTitle);
   if (!streaming && !hasBody) return null;
   if (streaming && !hasBody && !phase) return null;
 
@@ -171,6 +184,7 @@ export function AnaActivity({
     if (ran > 0) parts.push(`${ran} ${ran === 1 ? 'step' : 'steps'} completed`);
     if (failed > 0) parts.push(`${failed} failed`);
     if (draftTitle) parts.push(`Drafted ${draftTitle}`);
+    if (agentMode) parts.push('Agent mode');
     if (thinking) parts.push('reasoning');
     return parts.length > 0 ? parts.join(' · ') : 'How this was read';
   })();
@@ -186,6 +200,7 @@ export function AnaActivity({
    * in the same paint as its first content is the documented case AT misses. */
   const spoken = [
     streaming && phase ? phase : null,
+    agentMode ? 'Agent mode selected' : null,
     failed > 0 ? `${failed} ${failed === 1 ? 'step' : 'steps'} did not complete` : null,
     draftTitle ? `Drafted ${draftTitle}` : null,
   ]
@@ -194,7 +209,9 @@ export function AnaActivity({
 
   return (
     <div className="ana-activity" data-streaming={streaming ? 'true' : 'false'}>
-      <span aria-live="polite" style={SR_ONLY_STYLE}>{spoken}</span>
+      <span aria-live="polite" style={SR_ONLY_STYLE}>
+        {spoken}
+      </span>
       {!streaming && (
         <button
           type="button"
@@ -214,15 +231,24 @@ export function AnaActivity({
               without it interrupting the answer as it arrives. */}
           {streaming && phase && (
             <div className="ana-activity-phase">
-              <span className="ana-activity-pulse" aria-hidden="true">{I.dot}</span>
+              <span className="ana-activity-pulse" aria-hidden="true">
+                {I.dot}
+              </span>
               {phase}
             </div>
           )}
 
           {hasDecision && (
             <div className="ana-activity-read">
-              {lens && LENS_PHRASE[lens] ? `Reading this as ${LENS_PHRASE[lens]}` : 'Reading this question'}
+              {lens && LENS_PHRASE[lens]
+                ? `Reading this as ${LENS_PHRASE[lens]}`
+                : 'Reading this question'}
               {documentType ? ` · ${documentType}` : ''}
+            </div>
+          )}
+          {agentMode && (
+            <div className="ana-activity-read">
+              Agent mode · AnA will use available tools and return the governed result here.
             </div>
           )}
 
@@ -230,8 +256,8 @@ export function AnaActivity({
               stretch of it, live; once the record is opened after the fact it
               is the whole thing, in a bounded scroll so a long deliberation
               cannot push the answer off the screen. Both are her own words. */}
-          {thinking && (
-            streaming ? (
+          {thinking &&
+            (streaming ? (
               <div className="ana-activity-think is-live">{latestThought(thinking)}</div>
             ) : (
               /* tabIndex + a name, because this one SCROLLS. A container with
@@ -249,8 +275,7 @@ export function AnaActivity({
               >
                 {thinking}
               </div>
-            )
-          )}
+            ))}
 
           {rounds.map(({ round, calls: cs }) => (
             <div key={round} className="ana-activity-round">
@@ -263,11 +288,10 @@ export function AnaActivity({
                 </div>
               )}
               {cs.map((c, i) => (
-                <div
-                  key={`${round}-${i}-${c.name}`}
-                  className={`ana-activity-step is-${c.status}`}
-                >
-                  <span className="ana-activity-glyph" aria-hidden="true">{glyph(c.status)}</span>
+                <div key={`${round}-${i}-${c.name}`} className={`ana-activity-step is-${c.status}`}>
+                  <span className="ana-activity-glyph" aria-hidden="true">
+                    {glyph(c.status)}
+                  </span>
                   <span className="ana-activity-label">{c.label || c.name}</span>
                   {c.status === 'error' && (
                     /* The server writes a sentence for this — "AnA couldn't
@@ -286,7 +310,9 @@ export function AnaActivity({
 
           {draftTitle && (
             <div className="ana-activity-step is-success">
-              <span className="ana-activity-glyph" aria-hidden="true">{I.fileText}</span>
+              <span className="ana-activity-glyph" aria-hidden="true">
+                {I.fileText}
+              </span>
               <span className="ana-activity-label">Drafted {draftTitle}</span>
             </div>
           )}

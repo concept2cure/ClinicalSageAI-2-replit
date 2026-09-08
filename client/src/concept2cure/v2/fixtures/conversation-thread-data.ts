@@ -8,6 +8,7 @@
    `PendingSignoff` is a second definition of what a Part 11 signature carries,
    free to drift from the one `GovernedActionSignoff` actually consumes. */
 import type { AnaChatAction } from '../../components/ana/useAnaChat';
+import type { MessageAttachment } from '../../components/ana/useAnaChat';
 import type { PendingSignoff } from '../../components/ana/useGovernedAction';
 
 /* ---- Types ---- */
@@ -41,6 +42,7 @@ export interface CtProposal {
 export interface CtTurn {
   role: string;
   text?: string;
+  attachments?: MessageAttachment[];
   thinking?: string;
   tools?: CtToolCall[];
   answer?: string;

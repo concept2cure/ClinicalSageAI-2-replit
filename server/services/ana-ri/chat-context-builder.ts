@@ -193,6 +193,43 @@ export function resolveProjectIdFromBody(body: any): string | number | undefined
   return body?.project_id || body?.context?.projectId || body?.project_context?.projectId;
 }
 
+let organizationClientTypeUnavailable = false;
+
+/**
+ * Read the organization's configured client type without making AnA depend on
+ * an optional column during partial-schema deployments.
+ */
+export async function resolveOrganizationClientType(
+  organizationId: number | null | undefined
+): Promise<string | null> {
+  if (
+    !organizationId ||
+    !Number.isFinite(organizationId) ||
+    organizationClientTypeUnavailable ||
+    !pool
+  ) {
+    return null;
+  }
+
+  try {
+    const { rows } = await pool.query<{ client_type: string | null }>(
+      'SELECT client_type FROM organizations WHERE id = $1 LIMIT 1',
+      [organizationId]
+    );
+    const clientType = rows[0]?.client_type?.trim();
+    return clientType || null;
+  } catch (error: any) {
+    // Partial local schemas may not have organizations.client_type yet. Cache
+    // only schema absence so operational failures remain observable and retry.
+    if (error?.code === '42703' || error?.code === '42P01') {
+      organizationClientTypeUnavailable = true;
+      return null;
+    }
+    console.warn('[AnA RI] Organization client type unavailable:', error?.message);
+    return null;
+  }
+}
+
 /**
  * Race a promise against a timeout, resolving to `fallback` if it doesn't settle
  * in time. Used to bound OPTIONAL context enrichment so a slow DB can never stall

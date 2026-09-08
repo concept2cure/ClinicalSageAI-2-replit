@@ -32,7 +32,7 @@ import { AnaGrounding, type AnaGroundingEvidence } from './AnaGrounding';
 import { CrlPremortemPanel, type CrlPremortemArtifact } from '../components/ana/CrlPremortemPanel';
 import { SignoffList } from './SignoffList';
 import type { PendingSignoff } from '../components/ana/useGovernedAction';
-import type { AnaChatAction } from '../components/ana/useAnaChat';
+import type { AnaChatAction, MessageAttachment } from '../components/ana/useAnaChat';
 import {
   AI_ACTIONS,
   ANA_MODES,
@@ -64,6 +64,7 @@ export interface ShellSurfaceRef {
 export interface AnaMessage {
   role: 'user' | 'ana';
   body?: string;
+  attachments?: MessageAttachment[];
   model?: string;
   sample?: boolean;
   actions?: string[];
@@ -122,18 +123,24 @@ export function Rail({
 }) {
   const { user, logout } = useAuth();
   const [acct, setAcct] = React.useState(false);
-  const name = user?.displayName || [user?.firstName, user?.lastName].filter(Boolean).join(' ') || 'Signed in';
+  const name =
+    user?.displayName || [user?.firstName, user?.lastName].filter(Boolean).join(' ') || 'Signed in';
   const initials =
     (user?.firstName?.[0] ?? '') + (user?.lastName?.[0] ?? '') || name.slice(0, 2).toUpperCase();
   const role = user?.roles?.[0] ?? '';
-  const isOrgAdmin = (user?.roles ?? []).some((r) =>
-    ['admin', 'owner', 'super_admin', 'platform_admin', 'business_admin'].includes(String(r).toLowerCase()),
+  const isOrgAdmin = (user?.roles ?? []).some(r =>
+    ['admin', 'owner', 'super_admin', 'platform_admin', 'business_admin'].includes(
+      String(r).toLowerCase()
+    )
   );
   const acctGo = (id?: string) => {
     setAcct(false);
     if (id) onNav(id);
   };
-  const ACCT_ITEMS: ({ label: string; ic: string; to?: string; action?: 'logout' } | { sep: true })[] = [
+  const ACCT_ITEMS: (
+    | { label: string; ic: string; to?: string; action?: 'logout' }
+    | { sep: true }
+  )[] = [
     // Admin is reached from the bottom-left account menu — the same place and
     // gesture as Claude's admin/settings. Gated to org admins; admin-console
     // itself renders a non-leaky denied state, but we hide the entry entirely
@@ -156,7 +163,14 @@ export function Rail({
    */
   const railVisible = (s: { id: string }) =>
     s.id === 'crl-library' ? isClinicalRegulatoryGraphEnabled() : true;
-  const navItem = (s: { id: string; label: string; icon: string; badge?: string; count?: number; target?: string }) => {
+  const navItem = (s: {
+    id: string;
+    label: string;
+    icon: string;
+    badge?: string;
+    count?: number;
+    target?: string;
+  }) => {
     const target = s.target ?? s.id;
     return (
       <button
@@ -203,7 +217,7 @@ export function Rail({
       <div className="rail-scroll">
         <div className="rail-section">Client categories</div>
         <div className="rail-nav">
-          {CLIENT_CATEGORIES.map((c) => (
+          {CLIENT_CATEGORIES.map(c => (
             <button
               key={c.id}
               type="button"
@@ -234,7 +248,7 @@ export function Rail({
           type="button"
           className="rail-account"
           title={name}
-          onClick={() => setAcct((v) => !v)}
+          onClick={() => setAcct(v => !v)}
           data-open={acct || undefined}
         >
           <div className="avatar">{initials}</div>
@@ -310,10 +324,10 @@ export function TopBar({
     .join('')
     .slice(0, 2)
     .toUpperCase();
-  const tier = NAV_TIERS_V2.find((t) => t.id === (NAV_GROUP_OF[surface.id] ?? 'biopharma'));
+  const tier = NAV_TIERS_V2.find(t => t.id === (NAV_GROUP_OF[surface.id] ?? 'biopharma'));
   const [segOpen, setSegOpen] = React.useState(false);
   const seg = getSegment(segment) ?? SEGMENTS[0];
-  const secondary = SEGMENTS.filter((s) => !s.primary);
+  const secondary = SEGMENTS.filter(s => !s.primary);
   const segOpt = (s: (typeof SEGMENTS)[number]) => (
     <button
       key={s.id}
@@ -348,7 +362,7 @@ export function TopBar({
           <button
             type="button"
             className="tb-dom"
-            onClick={() => setSegOpen((o) => !o)}
+            onClick={() => setSegOpen(o => !o)}
             title="Switch client domain"
             data-open={segOpen}
           >
@@ -366,14 +380,20 @@ export function TopBar({
                 {secondary.map(segOpt)}
                 <div className="tb-dom-foot">
                   {I.info}
-                  <span>Scopes modules, default workflow &amp; AnA context. Nav stays the same.</span>
+                  <span>
+                    Scopes modules, default workflow &amp; AnA context. Nav stays the same.
+                  </span>
                 </div>
               </div>
             </>
           )}
         </div>
       )}
-      <button type="button" className="tb-org" title="Organization (switcher lands with the auth flow phase)">
+      <button
+        type="button"
+        className="tb-org"
+        title="Organization (switcher lands with the auth flow phase)"
+      >
         <span className="tb-org-mark">{orgMark}</span>
         <span className="tb-org-name">{orgName}</span>
         <span className="tb-org-chev">{I.down}</span>
@@ -389,7 +409,13 @@ export function TopBar({
         type="button"
         className="tb-task"
         title="New task — assign & track from this screen"
-        onClick={() => { try { (window as any).C2C?.open?.('task'); } catch (_e) { /* launcher not mounted */ } }}
+        onClick={() => {
+          try {
+            (window as any).C2C?.open?.('task');
+          } catch (_e) {
+            /* launcher not mounted */
+          }
+        }}
       >
         <span className="ico">{I.checkSquare ?? I.plus}</span>
         <span className="tb-task-lbl">Task</span>
@@ -399,7 +425,13 @@ export function TopBar({
         className="tb-btn"
         title="Collaborate — message a colleague about this screen"
         aria-label="Collaborate"
-        onClick={() => { try { (window as any).C2C?.open?.('collab'); } catch (_e) { /* launcher not mounted */ } }}
+        onClick={() => {
+          try {
+            (window as any).C2C?.open?.('collab');
+          } catch (_e) {
+            /* launcher not mounted */
+          }
+        }}
       >
         {I.messageSquare}
       </button>
@@ -436,6 +468,8 @@ export function AnaRail({
   setMode,
   messages,
   onSend,
+  agentMode,
+  setAgentMode,
   onAct,
   welcome,
   onDismissWelcome,
@@ -455,7 +489,13 @@ export function AnaRail({
   mode: string;
   setMode: (m: string) => void;
   messages: AnaMessage[];
-  onSend: (text: string) => void;
+  onSend: (
+    text: string,
+    attachments?: MessageAttachment[],
+    options?: { agentMode?: boolean }
+  ) => void;
+  agentMode: boolean;
+  setAgentMode: (value: boolean) => void;
   onAct: (id: string) => void;
   /** First-run AnA welcome (P1, assist-only). Null once the client has started
    *  a conversation or dismissed it — the rail only renders it when present. */
@@ -486,7 +526,6 @@ export function AnaRail({
      RUNNING turn, a draft starts the next one, and sharing one buffer would
      make it ambiguous which a half-typed sentence was about to do. */
   const [steer, setSteer] = React.useState('');
-  const [agent, setAgent] = React.useState(false);
   const [plusOpen, setPlusOpen] = React.useState(false);
   const [modeOpen, setModeOpen] = React.useState(false);
   const fileRef = React.useRef<HTMLInputElement>(null);
@@ -507,13 +546,18 @@ export function AnaRail({
    * /api/chat/upload path the main Ana composer, the MDX rail and the PDEV
    * dock use, which OCRs the document and writes its text into project memory
    * so AnA can actually retrieve it. */
-  const { attachments, addFiles, removeAttachment, clear: clearAttachments, statusMessage } =
-    useChatUpload({ projectId });
+  const {
+    attachments,
+    addFiles,
+    removeAttachment,
+    clear: clearAttachments,
+    statusMessage,
+  } = useChatUpload({ projectId });
 
-  const readyAttachments = attachments.filter((a) => a.status === 'ready');
-  const uploadingAttachments = attachments.filter((a) => a.status === 'uploading');
-  const failedAttachments = attachments.filter((a) => a.status === 'error');
-  const model = ANA_MODES.find((m) => m.id === mode)?.model ?? 'Balanced';
+  const readyAttachments = attachments.filter(a => a.status === 'ready');
+  const uploadingAttachments = attachments.filter(a => a.status === 'uploading');
+  const failedAttachments = attachments.filter(a => a.status === 'error');
+  const model = ANA_MODES.find(m => m.id === mode)?.model ?? 'Balanced';
   const co = getCoauthor(segment);
   /* AnA's per-surface context is local, and no longer claims otherwise.
    *
@@ -550,25 +594,40 @@ export function AnaRail({
     // error, and the message says nothing about it.
     if (!t && readyAttachments.length === 0) return;
 
-    const names = readyAttachments.map((a) => a.name);
-    const attachmentLine = names.length
-      ? `Attached: ${names.join(', ')}`
-      : '';
+    const names = readyAttachments.map(a => a.name);
+    const attachmentLine = names.length ? `Attached: ${names.join(', ')}` : '';
 
     // With text, the attachment reference is appended so AnA has both. Without
     // text, the reference IS the message — and it names the files it actually
     // received rather than counting chips the user happened to see.
     const bodyText = t ? (attachmentLine ? `${t}\n\n${attachmentLine}` : t) : attachmentLine;
 
-    onSend(agent ? `[Agent] ${bodyText}` : bodyText);
+    onSend(
+      agentMode ? `[Agent] ${bodyText}` : bodyText,
+      readyAttachments.map(({ id, name, fileId, extractionMethod, extractionWords }) => ({
+        id,
+        name,
+        fileId,
+        extractionMethod,
+        extractionWords,
+      })),
+      { agentMode }
+    );
     setDraft('');
     clearAttachments();
   };
 
+  const sendPrompt = (text: string) => onSend(text, undefined, { agentMode });
+
   if (!open) {
     return (
       <aside className="ana-seam" aria-label="AnA (collapsed)">
-        <button type="button" className="ana-seam-btn" onClick={() => setOpen(true)} title="Open AnA · ⌘\">
+        <button
+          type="button"
+          className="ana-seam-btn"
+          onClick={() => setOpen(true)}
+          title="Open AnA · ⌘\"
+        >
           <span className="ana-seam-mark">✻</span>
           <span className="ana-seam-label">AnA</span>
         </button>
@@ -591,7 +650,12 @@ export function AnaRail({
           <button type="button" className="tb-btn" title="New thread">
             {I.plus}
           </button>
-          <button type="button" className="tb-btn" onClick={() => setOpen(false)} title="Collapse · ⌘\">
+          <button
+            type="button"
+            className="tb-btn"
+            onClick={() => setOpen(false)}
+            title="Collapse · ⌘\"
+          >
             {I.panelRight}
           </button>
         </div>
@@ -611,17 +675,18 @@ export function AnaRail({
             </div>
             <div className="ana-welcome-sub">{welcome.subline}</div>
             <div className="ana-welcome-starters">
-              {welcome.starters.map((s) => (
+              {welcome.starters.map(s => (
                 <button
                   key={s.label}
                   type="button"
                   className="ana-welcome-starter"
                   // A starter either opens a real flow (upload) or begins a
                   // live AnA turn — never a canned reply either way.
-                  onClick={() => (s.navTo && onNav ? onNav(s.navTo) : onSend(s.prompt))}
+                  onClick={() => (s.navTo && onNav ? onNav(s.navTo) : sendPrompt(s.prompt))}
                 >
                   <span className="ico">
-                    {(s.iconKey ? (I as Record<string, React.ReactNode>)[s.iconKey] : null) ?? I.sparkles}
+                    {(s.iconKey ? (I as Record<string, React.ReactNode>)[s.iconKey] : null) ??
+                      I.sparkles}
                   </span>
                   {s.label}
                 </button>
@@ -692,7 +757,9 @@ export function AnaRail({
                       key={i}
                       type="button"
                       className="ana-ctx-chip"
-                      onClick={() => onSend(`Show the ${e.count} linked ${e.label} in ${ac.module}`)}
+                      onClick={() =>
+                        sendPrompt(`Show the ${e.count} linked ${e.label} in ${ac.module}`)
+                      }
                     >
                       <b>{e.count}</b> {e.label}
                     </button>
@@ -727,7 +794,12 @@ export function AnaRail({
             {suggestions.length > 0 && (
               <div className="ana-greet-chips">
                 {suggestions.slice(0, 3).map((s, i) => (
-                  <button key={i} type="button" className="ana-greet-chip" onClick={() => onSend(s)}>
+                  <button
+                    key={i}
+                    type="button"
+                    className="ana-greet-chip"
+                    onClick={() => sendPrompt(s)}
+                  >
                     {I.sparkles}
                     {s}
                   </button>
@@ -737,113 +809,127 @@ export function AnaRail({
           </div>
         )}
         {messages.map((m, i) => (
-            <div key={i} className={`ana-msg ${m.role}`}>
-              {m.role === 'ana' && (
-                <div className="who">
-                  AnA · {m.model || model}
-                  {m.sample ? ' · sample' : ''}
-                </div>
-              )}
-              <div className="bd">{m.body}</div>
-              {/* Caveats sit directly under the answer they qualify, above the
+          <div key={i} className={`ana-msg ${m.role}`}>
+            {m.role === 'ana' && (
+              <div className="who">
+                AnA · {m.model || model}
+                {m.sample ? ' · sample' : ''}
+              </div>
+            )}
+            <div className="bd">{m.body}</div>
+            {/* Caveats sit directly under the answer they qualify, above the
                   work record and never inside it. `useAnaChat` records a
                   server degraded-mode signal, and a timeout, on the message —
                   and on timeout it KEEPS whatever text had already streamed.
                   Nothing rendered these, so a turn cut off mid-answer showed
                   its truncated text with no sign it was truncated: an
                   incomplete result presented as a complete one. */}
-              {/* The pre-mortem artifact, when this turn assembled one. No
+            {/* The pre-mortem artifact, when this turn assembled one. No
                   `onExport` is passed: the rail has no DOCX route for it, and
                   the panel now disables that action and says where export lives
                   rather than offering a button that does nothing. */}
-              {m.role === 'ana' && m.crlPremortem && (
-                <div className="ana-premortem">
-                  <CrlPremortemPanel artifact={m.crlPremortem} />
-                </div>
-              )}
-              {/* How well-grounded the answer is. Above the caveats and the
+            {m.role === 'ana' && m.crlPremortem && (
+              <div className="ana-premortem">
+                <CrlPremortemPanel artifact={m.crlPremortem} />
+              </div>
+            )}
+            {/* How well-grounded the answer is. Above the caveats and the
                   work record on purpose: those say what went wrong and how she
                   got here, this says how far the answer can be trusted, which
                   is read first. */}
-              {m.role === 'ana' && <AnaGrounding evidence={m.evidence} />}
-              {/* Steers AnA accepted for this turn. Shown because a steer you
+            {m.role === 'ana' && <AnaGrounding evidence={m.evidence} />}
+            {/* Steers AnA accepted for this turn. Shown because a steer you
                   cannot see afterwards is one you cannot tell was taken — and
                   the server has already written it into the decision lineage. */}
-              {m.role === 'ana' && Array.isArray(m.interjections) && m.interjections.length > 0 && (
-                <div className="ana-steers">
-                  {m.interjections.map((t, si) => (
-                    <div key={si} className="ana-steer">
-                      <span className="ana-steer-ic" aria-hidden="true">{I.chevRight}</span>
-                      <span><span className="ana-steer-k">You steered AnA:</span> {t}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-              {m.role === 'ana' && Array.isArray(m.warnings) && m.warnings.length > 0 && (
-                <div className="ana-msg-warnings" role="note">
-                  {m.warnings.map((w, wi) => (
-                    <div key={wi} className="ana-msg-warning">
-                      <span className="ana-msg-warning-ic" aria-hidden="true">{I.alertTriangle}</span>
-                      <span>{w}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-              {m.role === 'ana' && m.activity && <AnaActivity {...m.activity} />}
-              {m.role === 'ana' && Array.isArray(m.actions) && m.actions.length > 0 && (
-                <div className="ana-msg-actions">
-                  {m.actions.map((id) => {
-                    const a = AI_ACTIONS.find((x) => x.id === id);
-                    if (!a) return null;
-                    return (
-                      <button key={id} type="button" className="ana-next-chip" onClick={() => onAct(id)}>
-                        {I.arrowRight}
-                        {a.label}
-                        {a.governed ? (
-                          <span className="ana-chip-gov" title="Governed · e-sign required">
-                            {I.lock}
-                          </span>
-                        ) : null}
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
-              {m.role === 'ana' &&
-                Array.isArray(m.executedActions) &&
-                m.executedActions.length > 0 && (
-                  <div className="ana-msg-executed">
-                    {m.executedActions.map((a, i) =>
-                      /* A navigation target AnA resolved is the one executed
+            {m.role === 'ana' && Array.isArray(m.interjections) && m.interjections.length > 0 && (
+              <div className="ana-steers">
+                {m.interjections.map((t, si) => (
+                  <div key={si} className="ana-steer">
+                    <span className="ana-steer-ic" aria-hidden="true">
+                      {I.chevRight}
+                    </span>
+                    <span>
+                      <span className="ana-steer-k">You steered AnA:</span> {t}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+            {m.role === 'ana' && Array.isArray(m.warnings) && m.warnings.length > 0 && (
+              <div className="ana-msg-warnings" role="note">
+                {m.warnings.map((w, wi) => (
+                  <div key={wi} className="ana-msg-warning">
+                    <span className="ana-msg-warning-ic" aria-hidden="true">
+                      {I.alertTriangle}
+                    </span>
+                    <span>{w}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+            {m.role === 'ana' && m.activity && <AnaActivity {...m.activity} />}
+            {m.role === 'ana' && Array.isArray(m.actions) && m.actions.length > 0 && (
+              <div className="ana-msg-actions">
+                {m.actions.map(id => {
+                  const a = AI_ACTIONS.find(x => x.id === id);
+                  if (!a) return null;
+                  return (
+                    <button
+                      key={id}
+                      type="button"
+                      className="ana-next-chip"
+                      onClick={() => onAct(id)}
+                    >
+                      {I.arrowRight}
+                      {a.label}
+                      {a.governed ? (
+                        <span className="ana-chip-gov" title="Governed · e-sign required">
+                          {I.lock}
+                        </span>
+                      ) : null}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+            {m.role === 'ana' &&
+              Array.isArray(m.executedActions) &&
+              m.executedActions.length > 0 && (
+                <div className="ana-msg-executed">
+                  {m.executedActions.map((a, i) =>
+                    /* A navigation target AnA resolved is the one executed
                          action you can act on: it is an offer, not a report, so
                          it renders as a button. Everything else is a record of
                          what already happened and stays inert. Guarded on
                          `targetId` as well as the type, because a chip that
                          cannot say where it goes must not look like it can. */
-                      a.actionType === 'navigate' && a.targetId && onNav ? (
-                        <button
-                          key={i}
-                          type="button"
-                          className="ana-exec-chip is-nav"
-                          onClick={() => onNav(a.targetId as string)}
-                        >
-                          {I.arrowRight} {a.label}
-                        </button>
-                      ) : (
+                    a.actionType === 'navigate' && a.targetId && onNav ? (
+                      <button
+                        key={i}
+                        type="button"
+                        className="ana-exec-chip is-nav"
+                        onClick={() => onNav(a.targetId as string)}
+                      >
+                        {I.arrowRight} {a.label}
+                      </button>
+                    ) : (
                       <span
                         key={i}
-                        className={`ana-exec-chip${a.executed ? ' is-done' : ''}${a.error ? ' is-err' : ''}`}
+                        className={`ana-exec-chip${a.executed ? ' is-done' : ''}${
+                          a.error ? ' is-err' : ''
+                        }`}
                         title={a.error || a.label}
                       >
                         {a.error ? I.alertTriangle : a.executed ? I.check : I.zap} {a.label}
                       </span>
-                    ))}
-                  </div>
-                )}
-              {m.role === 'ana' &&
-                Array.isArray(m.pendingSignoffs) &&
-                m.pendingSignoffs.length > 0 && <RailSignoffs signoffs={m.pendingSignoffs} />}
-            </div>
+                    )
+                  )}
+                </div>
+              )}
+            {m.role === 'ana' &&
+              Array.isArray(m.pendingSignoffs) &&
+              m.pendingSignoffs.length > 0 && <RailSignoffs signoffs={m.pendingSignoffs} />}
+          </div>
         ))}
       </div>
       <div className="ana-foot">
@@ -856,7 +942,7 @@ export function AnaRail({
                   key={i}
                   type="button"
                   className="ana-coauth-act"
-                  onClick={() => onSend(a.prompt ?? a.label)}
+                  onClick={() => sendPrompt(a.prompt ?? a.label)}
                 >
                   <span className="ico">{(a.icon && I[a.icon]) || I.sparkles}</span>
                   {a.label}
@@ -888,7 +974,7 @@ export function AnaRail({
             {onSteer && (
               <form
                 className="ana-runctl-steer"
-                onSubmit={(e) => {
+                onSubmit={e => {
                   e.preventDefault();
                   const v = steer.trim();
                   if (!v) return;
@@ -901,7 +987,7 @@ export function AnaRail({
                   className="ana-runctl-input"
                   value={steer}
                   maxLength={2000}
-                  onChange={(e) => setSteer(e.target.value)}
+                  onChange={e => setSteer(e.target.value)}
                   placeholder="Steer this run…"
                   aria-label="Steer this run"
                 />
@@ -934,7 +1020,7 @@ export function AnaRail({
         <div className="ana-composer">
           {attachments.length > 0 && (
             <div className="ana-files">
-              {attachments.map((a) => {
+              {attachments.map(a => {
                 // The chip states what actually happened. A chip that shows a
                 // filename and nothing else is what let the old composer imply
                 // a file had been received when it had not.
@@ -943,16 +1029,12 @@ export function AnaRail({
                   a.status === 'uploading'
                     ? `Uploading ${a.name}…`
                     : a.status === 'error'
-                      ? `${a.name} — ${a.error || 'upload failed'}`
-                      : read
-                        ? `${a.name} · ${read}`
-                        : a.name;
+                    ? `${a.name} — ${a.error || 'upload failed'}`
+                    : read
+                    ? `${a.name} · ${read}`
+                    : a.name;
                 return (
-                  <span
-                    key={a.id}
-                    className={`ana-file ana-file-${a.status}`}
-                    title={label}
-                  >
+                  <span key={a.id} className={`ana-file ana-file-${a.status}`} title={label}>
                     <span className="ico">{I.paperclip}</span>
                     {label}
                     <button
@@ -974,10 +1056,12 @@ export function AnaRail({
           </span>
           <textarea
             rows={1}
-            placeholder={agent ? 'Describe a task for AnA to carry out…' : 'Ask AnA, or describe a task…'}
+            placeholder={
+              agentMode ? 'Describe a task for AnA to carry out…' : 'Ask AnA, or describe a task…'
+            }
             value={draft}
-            onChange={(e) => setDraft(e.target.value)}
-            onKeyDown={(e) => {
+            onChange={e => setDraft(e.target.value)}
+            onKeyDown={e => {
               if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
                 send();
@@ -995,7 +1079,7 @@ export function AnaRail({
             // extract; the picker now offers exactly that.
             accept={CHAT_UPLOAD_ACCEPT}
             className="ana-hidden-input"
-            onChange={(e) => {
+            onChange={e => {
               addFiles(e.target.files);
               // Reset so re-picking the same file fires onChange again.
               e.target.value = '';
@@ -1007,7 +1091,7 @@ export function AnaRail({
             multiple
             accept="image/png,image/jpeg,image/gif,image/webp"
             className="ana-hidden-input"
-            onChange={(e) => {
+            onChange={e => {
               addFiles(e.target.files);
               e.target.value = '';
             }}
@@ -1020,7 +1104,7 @@ export function AnaRail({
                 title="Attach"
                 aria-label="Attach"
                 onClick={() => {
-                  setPlusOpen((o) => !o);
+                  setPlusOpen(o => !o);
                   setModeOpen(false);
                 }}
               >
@@ -1032,14 +1116,14 @@ export function AnaRail({
                 type="button"
                 className="ana-modepull"
                 onClick={() => {
-                  setModeOpen((o) => !o);
+                  setModeOpen(o => !o);
                   setPlusOpen(false);
                 }}
                 title="Control & engine"
               >
-                <span className="ana-modepull-ic">{agent ? I.wand : I.sparkles}</span>
+                <span className="ana-modepull-ic">{agentMode ? I.wand : I.sparkles}</span>
                 <span>
-                  {agent ? 'Agent' : 'Ask'} · {ANA_MODES.find((m) => m.id === mode)?.model}
+                  {agentMode ? 'Agent' : 'Ask'} · {ANA_MODES.find(m => m.id === mode)?.model}
                 </span>
                 {I.down}
               </button>
@@ -1066,7 +1150,7 @@ export function AnaRail({
                   type="button"
                   className="ana-menu-item"
                   onClick={() => {
-                    onSend(s);
+                    sendPrompt(s);
                     setPlusOpen(false);
                   }}
                 >
@@ -1086,7 +1170,8 @@ export function AnaRail({
                 {/* Was "PDF · DOCX · XLSX · CSV" — XLSX and CSV are not
                     extractable, so the menu named formats that would be
                     rejected. This lists what the server can actually read. */}
-                <span className="ico">{I.paperclip}</span>Attach file<span className="mh">PDF · DOCX · TXT</span>
+                <span className="ico">{I.paperclip}</span>Attach file
+                <span className="mh">PDF · DOCX · TXT</span>
               </button>
               <button
                 type="button"
@@ -1102,7 +1187,7 @@ export function AnaRail({
                 type="button"
                 className="ana-menu-item"
                 onClick={() => {
-                  onSend('Reference a document from the Vault');
+                  sendPrompt('Reference a document from the Vault');
                   setPlusOpen(false);
                 }}
               >
@@ -1113,17 +1198,18 @@ export function AnaRail({
                 type="button"
                 className="ana-menu-item"
                 onClick={() => {
-                  onSend('Connect a data source');
+                  sendPrompt('Connect a data source');
                   setPlusOpen(false);
                 }}
               >
-                <span className="ico">{I.database}</span>Connect data source<span className="mh">FAERS · EUDAMED</span>
+                <span className="ico">{I.database}</span>Connect data source
+                <span className="mh">FAERS · EUDAMED</span>
               </button>
               <button
                 type="button"
                 className="ana-menu-item"
                 onClick={() => {
-                  onSend('Reference another project');
+                  sendPrompt('Reference another project');
                   setPlusOpen(false);
                 }}
               >
@@ -1133,7 +1219,7 @@ export function AnaRail({
                 type="button"
                 className="ana-menu-item"
                 onClick={() => {
-                  onSend('Manage connectors');
+                  sendPrompt('Manage connectors');
                   setPlusOpen(false);
                 }}
               >
@@ -1144,7 +1230,7 @@ export function AnaRail({
                 type="button"
                 className="ana-menu-item"
                 onClick={() => {
-                  onSend('>run a RIM tool');
+                  sendPrompt('>run a RIM tool');
                   setPlusOpen(false);
                 }}
               >
@@ -1154,7 +1240,7 @@ export function AnaRail({
                 type="button"
                 className="ana-menu-item"
                 onClick={() => {
-                  onSend('Show slash commands and skills');
+                  sendPrompt('Show slash commands and skills');
                   setPlusOpen(false);
                 }}
               >
@@ -1168,27 +1254,29 @@ export function AnaRail({
               <button
                 type="button"
                 className="ana-menu-item"
-                data-on={!agent || undefined}
+                data-on={!agentMode || undefined}
                 onClick={() => {
-                  setAgent(false);
+                  setAgentMode(false);
                   setModeOpen(false);
                 }}
               >
-                <span className="ico">{I.sparkles}</span>Ask<span className="mh">AnA answers; you act</span>
+                <span className="ico">{I.sparkles}</span>Ask
+                <span className="mh">AnA answers; you act</span>
               </button>
               <button
                 type="button"
                 className="ana-menu-item"
-                data-on={agent || undefined}
+                data-on={agentMode || undefined}
                 onClick={() => {
-                  setAgent(true);
+                  setAgentMode(true);
                   setModeOpen(false);
                 }}
               >
-                <span className="ico">{I.wand}</span>Agent<span className="mh">AnA takes governed actions</span>
+                <span className="ico">{I.wand}</span>Agent
+                <span className="mh">AnA takes governed actions</span>
               </button>
               <div className="ana-menu-sec">Engine</div>
-              {ANA_MODES.map((m) => (
+              {ANA_MODES.map(m => (
                 <button
                   key={m.id}
                   type="button"
@@ -1203,7 +1291,7 @@ export function AnaRail({
               ))}
             </div>
           )}
-          {agent && (
+          {agentMode && (
             <div className="ana-agent-note">
               <span className="ico">{I.shieldCheck}</span>Agent mode — AnA runs tools &amp; drafts
               governed actions. Changes require your e-signature.
@@ -1258,20 +1346,32 @@ export function CmdK({
     if (!q.trim()) {
       return [
         { id: '_hd_jump', kind: 'header', label: 'Jump to' },
-        ...UI_SURFACES.slice(0, 8).map((s) => ({
+        ...UI_SURFACES.slice(0, 8).map(s => ({
           id: s.id,
           kind: 'nav',
           label: s.label,
-          hint: NAV_TIERS_V2.find((t) => t.id === (NAV_GROUP_OF[s.id] ?? 'biopharma'))?.label,
+          hint: NAV_TIERS_V2.find(t => t.id === (NAV_GROUP_OF[s.id] ?? 'biopharma'))?.label,
           icon: s.icon,
         })),
         { id: '_hd_actions', kind: 'header', label: 'Quick actions' },
-        { id: 'run_validation', kind: 'action', label: 'Run validation', hint: 'Action', icon: 'zap' },
-        { id: 'export_document', kind: 'action', label: 'Export document', hint: 'Action · e-sign', icon: 'zap' },
+        {
+          id: 'run_validation',
+          kind: 'action',
+          label: 'Run validation',
+          hint: 'Action',
+          icon: 'zap',
+        },
+        {
+          id: 'export_document',
+          kind: 'action',
+          label: 'Export document',
+          hint: 'Action · e-sign',
+          icon: 'zap',
+        },
       ];
     }
     if (isCmd) {
-      return AI_ACTIONS.filter((a) => !term || a.label.toLowerCase().includes(term)).map((a) => ({
+      return AI_ACTIONS.filter(a => !term || a.label.toLowerCase().includes(term)).map(a => ({
         id: a.id,
         kind: 'action',
         label: a.label,
@@ -1285,7 +1385,7 @@ export function CmdK({
     // domain group, and the AnA tool families the surface exposes. Cap high —
     // .cmdk-list scrolls (app.css) — so ⌘K reaches the full ~99-surface registry
     // rather than stopping at the first 8 label/notes hits.
-    const navs = UI_SURFACES.filter((s) => {
+    const navs = UI_SURFACES.filter(s => {
       const haystack = [
         s.label,
         s.notes ?? '',
@@ -1299,20 +1399,20 @@ export function CmdK({
     }).slice(0, 25);
     if (navs.length) {
       results.push({ id: '_hd_surfaces', kind: 'header', label: 'Surfaces' });
-      navs.forEach((s) =>
+      navs.forEach(s =>
         results.push({
           id: s.id,
           kind: 'nav',
           label: s.label,
-          hint: NAV_TIERS_V2.find((t) => t.id === (NAV_GROUP_OF[s.id] ?? 'biopharma'))?.label,
+          hint: NAV_TIERS_V2.find(t => t.id === (NAV_GROUP_OF[s.id] ?? 'biopharma'))?.label,
           icon: s.icon,
         })
       );
     }
-    const acts = AI_ACTIONS.filter((a) => a.label.toLowerCase().includes(term)).slice(0, 3);
+    const acts = AI_ACTIONS.filter(a => a.label.toLowerCase().includes(term)).slice(0, 3);
     if (acts.length) {
       results.push({ id: '_hd_actions2', kind: 'header', label: 'Actions' });
-      acts.forEach((a) =>
+      acts.forEach(a =>
         results.push({
           id: a.id,
           kind: 'action',
@@ -1335,7 +1435,7 @@ export function CmdK({
     return results;
   }, [q, term, isCmd]);
 
-  const selectable = React.useMemo(() => items.filter((it) => it.kind !== 'header'), [items]);
+  const selectable = React.useMemo(() => items.filter(it => it.kind !== 'header'), [items]);
 
   const run = React.useCallback(
     (it?: CmdKItem) => {
@@ -1356,10 +1456,10 @@ export function CmdK({
         onClose();
       } else if (e.key === 'ArrowDown') {
         e.preventDefault();
-        setSel((s) => Math.min(s + 1, selectable.length - 1));
+        setSel(s => Math.min(s + 1, selectable.length - 1));
       } else if (e.key === 'ArrowUp') {
         e.preventDefault();
-        setSel((s) => Math.max(s - 1, 0));
+        setSel(s => Math.max(s - 1, 0));
       } else if (e.key === 'Enter') {
         e.preventDefault();
         run(selectable[sel]);
@@ -1373,13 +1473,19 @@ export function CmdK({
   let selIdx = -1;
   return (
     <div className="cmdk-bd" onClick={onClose}>
-      <div className="cmdk" role="dialog" aria-modal="true" aria-label="Command palette" onClick={(e) => e.stopPropagation()}>
+      <div
+        className="cmdk"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Command palette"
+        onClick={e => e.stopPropagation()}
+      >
         <div className="cmdk-in">
           <span className="ico">{I.search}</span>
           <input
             ref={inputRef}
             value={q}
-            onChange={(e) => {
+            onChange={e => {
               setQ(e.target.value);
               setSel(0);
             }}
@@ -1400,7 +1506,7 @@ export function CmdK({
           )}
         </div>
         <div className="cmdk-list">
-          {items.map((it) => {
+          {items.map(it => {
             if (it.kind === 'header') {
               return (
                 <div key={it.id} className="cmdk-hdr">

@@ -103,6 +103,14 @@ export const C2C_MIGRATION_FILES = [
   'migrations/20260609_audit_hmac_seal.sql',
   // ── End golden-journey prerequisites ────────────────────────────────────────
 
+  // ── Project schema repairs ─────────────────────────────────────────────────
+  // These additive repairs close the gap between the projects model and the
+  // columns its live read path selects. They must run on existing databases;
+  // fresh-only Drizzle/root provisioning is not enough.
+  'db/migrations/20260305_projects_add_path_column.sql',
+  'db/migrations/20260508_project_therapeutic_area.sql',
+  'migrations/20260603_project_retrieval_mode.sql',
+
   // ── The canonical submission core ───────────────────────────────────────────
   // Creates submissions / submission_regions / ectd_sequences / submission_leaves
   // — the region-agnostic core `server/routes/submissions.ts` serves and
@@ -234,6 +242,9 @@ export const C2C_MIGRATION_FILES = [
   // CREATE TABLE IF NOT EXISTS cannot add a column to a table that already
   // exists, so the guarded ALTER is the only way the column lands.
   'migrations/20260728_c2c_document_sections_timestamps.sql',
+  // Chat thread persistence is used by both AnA route variants. This migration
+  // creates the store and repairs older runtime-created narrow tables.
+  'migrations/20260728_chat_thread_store.sql',
   // ── CMC Module 3 operating system (added 2026-07-28) ──────────────────────
   // The ONLY file that creates cmc_module3_sections, cmc_source_objects,
   // cmc_section_lineage, cmc_provenance_events and seven siblings — and it was
@@ -1467,7 +1478,6 @@ export const C2C_MIGRATION_FILES = [
   // subsystem's own, including C-30's parent-scoped ones), and it SKIPS a
   // non-integer tenant key with a NOTICE instead of aborting the deploy.
   TENANT_ISOLATION_SWEEP,
-
 ];
 
 /** Files that open their own transaction must not be wrapped in a second one. */

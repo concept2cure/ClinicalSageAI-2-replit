@@ -42,6 +42,7 @@ import { I } from '../icons';
 import { connected, liveGetOrNull, liveMutateOrNull, EmptyState } from '../dataConnect';
 import { sanitizeChatHtml } from '../../components/ana/renderSafeMarkdown';
 import { useAnaChat } from '../../components/ana/useAnaChat';
+import { CHAT_UPLOAD_ACCEPT, ChatAttachmentList, useChatUpload } from '../../hooks/useChatUpload';
 import { SignoffList } from '../SignoffList';
 import type { PendingSignoff } from '../../components/ana/useGovernedAction';
 import { AnswerLead } from '../AnswerLead';
@@ -146,17 +147,19 @@ function statusToken(s: string | null | undefined): string {
 
 function runValidateAction(docId: number): Promise<ValidationResult | null> {
   return liveMutateOrNull<{ validation?: ValidationResult }>(
-    'POST', '/api/coauthor/documents/' + docId + '/validate', {},
+    'POST',
+    '/api/coauthor/documents/' + docId + '/validate',
+    {}
   )
-    .then((r) => r.data?.validation || null)
+    .then(r => r.data?.validation || null)
     .catch(() => null);
 }
 
 function runComplianceAction(docId: number): Promise<ComplianceResult | null> {
   return liveGetOrNull<{ compliance?: ComplianceResult }>(
-    '/api/coauthor/documents/' + docId + '/compliance',
+    '/api/coauthor/documents/' + docId + '/compliance'
   )
-    .then((r) => r.data?.compliance || null)
+    .then(r => r.data?.compliance || null)
     .catch(() => null);
 }
 
@@ -213,6 +216,7 @@ export function EctdCoauthor(_props: OwnedSurfaceViewProps) {
   const [validationUnavailable, setValidationUnavailable] = useState(false);
   const [complianceUnavailable, setComplianceUnavailable] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
 
   /* Fixture-free read: adopt the org's REAL coauthor documents. A failed fetch
      is an honest error; a successful zero-row load is an honest empty — never a
@@ -223,7 +227,7 @@ export function EctdCoauthor(_props: OwnedSurfaceViewProps) {
     let cancelled = false;
     setLoading(true);
     setError(null);
-    liveGetOrNull<{ documents: CoauthorDoc[] }>('/api/coauthor/documents').then((res) => {
+    liveGetOrNull<{ documents: CoauthorDoc[] }>('/api/coauthor/documents').then(res => {
       if (cancelled) return;
       if (res.error) {
         setError(res.error);
@@ -237,7 +241,7 @@ export function EctdCoauthor(_props: OwnedSurfaceViewProps) {
       for (const d of list) open[moduleOf(d)] = true;
       setOpenModules(open);
       if (list.length > 0) {
-        setActiveId((cur) => (cur != null && list.some((d) => d.id === cur) ? cur : list[0].id));
+        setActiveId(cur => (cur != null && list.some(d => d.id === cur) ? cur : list[0].id));
       }
       setLoading(false);
     });
@@ -246,7 +250,7 @@ export function EctdCoauthor(_props: OwnedSurfaceViewProps) {
     };
   }, []);
 
-  const activeDoc = useMemo(() => docs.find((d) => d.id === activeId) || null, [docs, activeId]);
+  const activeDoc = useMemo(() => docs.find(d => d.id === activeId) || null, [docs, activeId]);
   const activeRef = activeDoc ? activeDoc.moduleNumber || activeDoc.title : '';
 
   /* The pane's own named conversation — the REAL streaming assistant, grounded
@@ -254,17 +258,29 @@ export function EctdCoauthor(_props: OwnedSurfaceViewProps) {
   const moduleContext = useMemo(
     () => ({
       surface: 'ectd-coauthor',
-      coauthorDocumentId: activeDoc?.id ?? null,
-      moduleNumber: activeDoc?.moduleNumber ?? null,
-      documentTitle: activeDoc?.title ?? null,
+      summary: activeDoc
+        ? `eCTD co-authoring ${activeDoc.title}`
+        : 'eCTD co-author with no document selected',
+      facts: activeDoc
+        ? {
+            coauthorDocumentId: activeDoc.id,
+            moduleNumber: activeDoc.moduleNumber ?? null,
+            documentTitle: activeDoc.title,
+            documentStatus: activeDoc.status,
+          }
+        : {},
+      available_actions: activeDoc
+        ? ['Validate document structure', 'Check ICH M4 compliance', 'Draft with AnA']
+        : [],
     }),
-    [activeDoc?.id, activeDoc?.moduleNumber, activeDoc?.title],
+    [activeDoc]
   );
   const anaChat = useAnaChat({
     screenName: 'ectd-coauthor',
     projectId: readProjectId(),
     moduleContext,
   });
+  const upload = useChatUpload({ projectId: readProjectId() });
   const turns = anaChat.messages;
 
   /* Validation + compliance are per-document — clear stale results when the
@@ -286,10 +302,10 @@ export function EctdCoauthor(_props: OwnedSurfaceViewProps) {
       byMod.get(m)!.push(d);
     }
     const keys = [
-      ...MODULE_ORDER.filter((k) => byMod.has(k)),
-      ...Array.from(byMod.keys()).filter((k) => !MODULE_ORDER.includes(k)),
+      ...MODULE_ORDER.filter(k => byMod.has(k)),
+      ...Array.from(byMod.keys()).filter(k => !MODULE_ORDER.includes(k)),
     ];
-    return keys.map((k) => ({
+    return keys.map(k => ({
       m: k,
       title: ECTD_MODULE_LABELS[k] || 'Unassigned',
       docs: byMod.get(k)!,
@@ -302,31 +318,31 @@ export function EctdCoauthor(_props: OwnedSurfaceViewProps) {
   const visibleModules = useMemo(() => {
     if (!treeFilter) return treeModules;
     return treeModules
-      .map((mod) => ({
+      .map(mod => ({
         ...mod,
         docs: mod.docs.filter(
-          (d) =>
+          d =>
             (d.title || '').toLowerCase().includes(treeFilter) ||
-            (d.moduleNumber || '').toLowerCase().includes(treeFilter),
+            (d.moduleNumber || '').toLowerCase().includes(treeFilter)
         ),
       }))
-      .filter((mod) => mod.docs.length > 0);
+      .filter(mod => mod.docs.length > 0);
   }, [treeModules, treeFilter]);
 
   /* KPIs derived from the REAL rows only (never hardcoded). Readiness weights
      approved/finalized fully and review/in-progress at half. */
   const total = docs.length;
-  const approvedCount = docs.filter((d) => statusToken(d.status) === 'approved').length;
-  const reviewCount = docs.filter((d) => statusToken(d.status) === 'review').length;
+  const approvedCount = docs.filter(d => statusToken(d.status) === 'approved').length;
+  const reviewCount = docs.filter(d => statusToken(d.status) === 'review').length;
   const readiness = total ? Math.round(((approvedCount + reviewCount * 0.5) / total) * 100) : 0;
 
-  const toggleModule = (m: string) => setOpenModules((prev) => ({ ...prev, [m]: !prev[m] }));
+  const toggleModule = (m: string) => setOpenModules(prev => ({ ...prev, [m]: !prev[m] }));
 
   const runValidate = () => {
     if (!activeDoc) return;
     setBusy('validate');
     setTab('validation');
-    runValidateAction(activeDoc.id).then((v) => {
+    runValidateAction(activeDoc.id).then(v => {
       setValidation(v);
       setValidationUnavailable(v === null);
       setBusy('');
@@ -336,7 +352,7 @@ export function EctdCoauthor(_props: OwnedSurfaceViewProps) {
     if (!activeDoc) return;
     setBusy('compliance');
     setTab('compliance');
-    runComplianceAction(activeDoc.id).then((c) => {
+    runComplianceAction(activeDoc.id).then(c => {
       setCompliance(c);
       setComplianceUnavailable(c === null);
       setBusy('');
@@ -345,12 +361,28 @@ export function EctdCoauthor(_props: OwnedSurfaceViewProps) {
 
   const send = () => {
     const q = draft.trim();
-    if (!q || anaChat.isStreaming) return;
+    const readyAttachments = upload.attachments.filter(a => a.status === 'ready');
+    if ((!q && readyAttachments.length === 0) || upload.uploading || anaChat.isStreaming) return;
     // Answered HERE, in the pane it was typed into. The turn streams from
     // /api/ana-ri/stream with this document as module context; nothing is
     // manufactured locally and no completed tool chip is invented.
+    const attachmentLine = readyAttachments.length
+      ? `Attached: ${readyAttachments.map(a => a.name).join(', ')}`
+      : '';
+    const sectionLine = activeRef ? `eCTD section: §${activeRef}` : '';
+    const body = [q, sectionLine, attachmentLine].filter(Boolean).join('\n\n');
+    const sentAttachments = readyAttachments.map(
+      ({ id, name, fileId, extractionMethod, extractionWords }) => ({
+        id,
+        name,
+        fileId,
+        extractionMethod,
+        extractionWords,
+      })
+    );
     setDraft('');
-    void anaChat.send(q + (activeRef ? ' (eCTD §' + activeRef + ')' : ''));
+    void anaChat.send(body, sentAttachments);
+    upload.clear();
   };
 
   /* Keep the newest turn in view as tokens arrive. */
@@ -361,35 +393,67 @@ export function EctdCoauthor(_props: OwnedSurfaceViewProps) {
 
   const artTitle = activeDoc ? activeDoc.title : 'eCTD Co-Author';
   const artMeta = activeDoc
-    ? '§' + (activeDoc.moduleNumber || '—') + ' -- ' + (activeDoc.moduleName || ECTD_MODULE_LABELS[moduleOf(activeDoc)] || 'eCTD document')
+    ? '§' +
+      (activeDoc.moduleNumber || '—') +
+      ' -- ' +
+      (activeDoc.moduleName || ECTD_MODULE_LABELS[moduleOf(activeDoc)] || 'eCTD document')
     : 'No document selected';
 
   return (
     <div className="ec-shell" data-tree-collapsed={treeCollapsed} data-focus={focus}>
       {/* Top bar */}
       <div className="ec-topbar">
-        <button className="ec-topbtn" onClick={() => setTreeCollapsed((v) => !v)} title="Toggle eCTD tree">{I.sidebar || I.menu || I.layers}</button>
+        <button
+          className="ec-topbtn"
+          onClick={() => setTreeCollapsed(v => !v)}
+          title="Toggle eCTD tree"
+        >
+          {I.sidebar || I.menu || I.layers}
+        </button>
         <div className="ec-crumbs">
           {activeDoc ? (
             <>
-              <b>{activeDoc.moduleName || ('Module ' + moduleOf(activeDoc))}</b>
-              <span className="sep">/</span>{activeDoc.status}
-              <span className="sep">/</span><b>&sect;{activeDoc.moduleNumber || '—'} {activeDoc.title}</b>
+              <b>{activeDoc.moduleName || 'Module ' + moduleOf(activeDoc)}</b>
+              <span className="sep">/</span>
+              {activeDoc.status}
+              <span className="sep">/</span>
+              <b>
+                &sect;{activeDoc.moduleNumber || '—'} {activeDoc.title}
+              </b>
             </>
           ) : (
             <b>eCTD Co-Author</b>
           )}
         </div>
         <div className="ec-spacer"></div>
-        {activeDoc && <span className="ec-autosave">{I.check} {activeDoc.status}</span>}
-        <button className="ec-topbtn" onClick={() => setFocus((v) => !v)} title="Focus mode">{focus ? (I.minimize || I.x) : (I.maximize || I.expand || I.layers)}</button>
-        <button className="ec-topbtn primary" onClick={runValidate} disabled={!activeDoc}>{I.shieldCheck || I.shield} Validate</button>
+        {activeDoc && (
+          <span className="ec-autosave">
+            {I.check} {activeDoc.status}
+          </span>
+        )}
+        <button className="ec-topbtn" onClick={() => setFocus(v => !v)} title="Focus mode">
+          {focus ? I.minimize || I.x : I.maximize || I.expand || I.layers}
+        </button>
+        <button className="ec-topbtn primary" onClick={runValidate} disabled={!activeDoc}>
+          {I.shieldCheck || I.shield} Validate
+        </button>
       </div>
 
       {/* eCTD tree */}
       <aside className="ec-tree">
-        <div className="ec-tree-head"><b>eCTD backbone</b><span className="mono">M1--5</span></div>
-        <div className="ec-tree-search">{I.search}<input aria-label="Find a section" placeholder="Find section..." value={treeQuery} onChange={(e) => setTreeQuery(e.target.value)} /></div>
+        <div className="ec-tree-head">
+          <b>eCTD backbone</b>
+          <span className="mono">M1--5</span>
+        </div>
+        <div className="ec-tree-search">
+          {I.search}
+          <input
+            aria-label="Find a section"
+            placeholder="Find section..."
+            value={treeQuery}
+            onChange={e => setTreeQuery(e.target.value)}
+          />
+        </div>
         {loading ? (
           <div className="ec-empty">Loading eCTD documents…</div>
         ) : error ? (
@@ -397,22 +461,38 @@ export function EctdCoauthor(_props: OwnedSurfaceViewProps) {
         ) : docs.length === 0 ? (
           <div className="ec-empty">No eCTD documents yet.</div>
         ) : visibleModules.length === 0 ? (
-          <div className="ec-empty">No sections match "{treeQuery.trim()}". Clear the search to see the full backbone.</div>
+          <div className="ec-empty">
+            No sections match "{treeQuery.trim()}". Clear the search to see the full backbone.
+          </div>
         ) : (
-          visibleModules.map((mod) => (
+          visibleModules.map(mod => (
             <div key={mod.m} className="ec-tree-mod">
               <button className="ec-tree-row" onClick={() => toggleModule(mod.m)}>
-                <span className="ec-caret" data-open={treeFilter ? true : !!openModules[mod.m]}>{I.chevronRight || '›'}</span>
+                <span className="ec-caret" data-open={treeFilter ? true : !!openModules[mod.m]}>
+                  {I.chevronRight || '›'}
+                </span>
                 <span className="ec-tnum">M{mod.m}</span>
                 <span className="ec-tlabel">{mod.title}</span>
               </button>
               {(treeFilter ? true : openModules[mod.m]) && (
                 <div className="ec-tree-children">
-                  {mod.docs.map((d) => (
-                    <button key={d.id} className="ec-tree-row" data-active={activeId === d.id} onClick={() => { setActiveId(d.id); setTab('document'); }}>
+                  {mod.docs.map(d => (
+                    <button
+                      key={d.id}
+                      className="ec-tree-row"
+                      data-active={activeId === d.id}
+                      onClick={() => {
+                        setActiveId(d.id);
+                        setTab('document');
+                      }}
+                    >
                       <span className="ec-tnum">{d.moduleNumber || '—'}</span>
                       <span className="ec-tlabel">{d.title}</span>
-                      <span className="ec-tstatus" data-s={statusToken(d.status)} title={d.status}></span>
+                      <span
+                        className="ec-tstatus"
+                        data-s={statusToken(d.status)}
+                        title={d.status}
+                      ></span>
                     </button>
                   ))}
                 </div>
@@ -421,57 +501,127 @@ export function EctdCoauthor(_props: OwnedSurfaceViewProps) {
           ))
         )}
         <div className="ec-tree-foot">
-          <div className="ec-tree-foot-row"><span>Documents</span><b>{total}</b></div>
-          <div className="ec-tree-foot-row"><span>Approved</span><b>{approvedCount}</b></div>
-          <div className="ec-tree-foot-row"><span>eCTD readiness</span><b>{readiness}%</b></div>
+          <div className="ec-tree-foot-row">
+            <span>Documents</span>
+            <b>{total}</b>
+          </div>
+          <div className="ec-tree-foot-row">
+            <span>Approved</span>
+            <b>{approvedCount}</b>
+          </div>
+          <div className="ec-tree-foot-row">
+            <span>eCTD readiness</span>
+            <b>{readiness}%</b>
+          </div>
         </div>
       </aside>
 
       {/* Intelligence (AnA) */}
       <section className="ec-intel">
-        <div className="ec-intel-head"><b>AnA</b><span className="hint">co-authoring &sect;{activeRef || '—'} -- {live ? 'live' : 'bound to dossier'}</span></div>
+        <div className="ec-intel-head">
+          <b>AnA</b>
+          <span className="hint">
+            co-authoring &sect;{activeRef || '—'} -- {live ? 'live' : 'bound to dossier'}
+          </span>
+        </div>
         <div className="ec-intel-scroll" ref={scrollRef}>
           <div className="ec-thread">
             {turns.length === 0 && (
               <div className="ec-empty">
                 Ask about {activeRef ? '§' + activeRef : 'this dossier'} — AnA answers here,
-                grounded on the document you have open. Every turn is saved to your
-                organization's governed conversation store.
+                grounded on the document you have open. Every turn is saved to your organization's
+                governed conversation store.
               </div>
             )}
-            {turns.map((m, i) => m.role === 'user' ? (
-              <div key={i} className="ec-msg-user">{m.text}</div>
-            ) : (
-              <div key={i} className="ec-msg-ai">
-                <span className="ec-avatar">AnA</span>
-                <div className="ec-body">
-                  {/* While the reply streams the server's status phase stands in
-                      until the first token lands — never a fabricated sentence. */}
-                  <p>{m.text || (m.streaming ? m.statusPhase || 'Thinking…' : '')}</p>
-                  {Array.isArray(m.executedActions) && m.executedActions.length > 0 && (
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
-                      {m.executedActions.map((a, ai) => (
-                        <span key={ai} className="ec-chip" title={a.error || a.label}>
-                          {a.error ? (I.alertTriangle || I.x) : I.check} {a.label}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                  {Array.isArray(m.pendingSignoffs) && m.pendingSignoffs.length > 0 && (
-                    <EctdSignoffs signoffs={m.pendingSignoffs} />
-                  )}
+            {turns.map((m, i) =>
+              m.role === 'user' ? (
+                <div key={i} className="ec-msg-user">
+                  {m.text}
                 </div>
-              </div>
-            ))}
+              ) : (
+                <div key={i} className="ec-msg-ai">
+                  <span className="ec-avatar">AnA</span>
+                  <div className="ec-body">
+                    {/* While the reply streams the server's status phase stands in
+                      until the first token lands — never a fabricated sentence. */}
+                    <p>{m.text || (m.streaming ? m.statusPhase || 'Thinking…' : '')}</p>
+                    {Array.isArray(m.executedActions) && m.executedActions.length > 0 && (
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+                        {m.executedActions.map((a, ai) => (
+                          <span key={ai} className="ec-chip" title={a.error || a.label}>
+                            {a.error ? I.alertTriangle || I.x : I.check} {a.label}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                    {Array.isArray(m.pendingSignoffs) && m.pendingSignoffs.length > 0 && (
+                      <EctdSignoffs signoffs={m.pendingSignoffs} />
+                    )}
+                  </div>
+                </div>
+              )
+            )}
           </div>
         </div>
         <div className="ec-intel-foot">
           <div className="ec-composer">
-            <textarea rows={1} aria-label="Filter capabilities" placeholder={'Ask AnA to draft, tighten, or cite ' + (activeRef ? '§' + activeRef : 'a section') + '...'} value={draft}
-              onChange={(e) => setDraft(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } }} />
+            <ChatAttachmentList
+              attachments={upload.attachments}
+              onRemove={upload.removeAttachment}
+              statusMessage={upload.statusMessage}
+              icon={I.paperclip}
+            />
+            <input
+              ref={fileRef}
+              type="file"
+              multiple
+              hidden
+              accept={CHAT_UPLOAD_ACCEPT}
+              aria-label="Attach files to AnA"
+              onChange={e => {
+                upload.addFiles(e.target.files);
+                e.target.value = '';
+              }}
+            />
+            <textarea
+              rows={1}
+              aria-label="Filter capabilities"
+              placeholder={
+                'Ask AnA to draft, tighten, or cite ' +
+                (activeRef ? '§' + activeRef : 'a section') +
+                '...'
+              }
+              value={draft}
+              onChange={e => setDraft(e.target.value)}
+              onKeyDown={e => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  send();
+                }
+              }}
+            />
             <div className="ec-composer-row">
-              <span className="ec-chip">{I.paperclip || I.plus} Sources</span>
-              <button className="ec-send" aria-label="Send message to AnA" disabled={!draft.trim() || anaChat.isStreaming} onClick={send}>{I.arrowUp || I.arrowRight || '→'}</button>
+              <button
+                type="button"
+                className="ec-chip ec-chip-button"
+                title="Attach files for AnA"
+                aria-label="Attach files for AnA"
+                onClick={() => fileRef.current?.click()}
+              >
+                {I.paperclip || I.plus} Attach
+              </button>
+              <button
+                className="ec-send"
+                aria-label="Send message to AnA"
+                disabled={
+                  (!draft.trim() && upload.attachments.every(a => a.status !== 'ready')) ||
+                  upload.uploading ||
+                  anaChat.isStreaming
+                }
+                onClick={send}
+              >
+                {I.arrowUp || I.arrowRight || '→'}
+              </button>
             </div>
           </div>
         </div>
@@ -484,8 +634,21 @@ export function EctdCoauthor(_props: OwnedSurfaceViewProps) {
           <span className="ec-art-meta">{artMeta}</span>
           <span className="ec-spacer"></span>
           <div className="ec-art-tabs">
-            {(['document', 'validation', 'compliance'] as const).map((k) => (
-              <button key={k} className="ec-art-tab" data-active={tab === k} onClick={() => { setTab(k); if (activeDoc) { if (k === 'compliance' && !compliance) runCompliance(); if (k === 'validation' && !validation) runValidate(); } }}>{k.charAt(0).toUpperCase() + k.slice(1)}</button>
+            {(['document', 'validation', 'compliance'] as const).map(k => (
+              <button
+                key={k}
+                className="ec-art-tab"
+                data-active={tab === k}
+                onClick={() => {
+                  setTab(k);
+                  if (activeDoc) {
+                    if (k === 'compliance' && !compliance) runCompliance();
+                    if (k === 'validation' && !validation) runValidate();
+                  }
+                }}
+              >
+                {k.charAt(0).toUpperCase() + k.slice(1)}
+              </button>
             ))}
           </div>
         </div>
@@ -508,7 +671,8 @@ export function EctdCoauthor(_props: OwnedSurfaceViewProps) {
                   title="No eCTD documents yet"
                   hint={
                     <>
-                      Create a co-author document to draft it against the eCTD backbone — it is persisted as a governed document — or ask AnA to start one.
+                      Create a co-author document to draft it against the eCTD backbone — it is
+                      persisted as a governed document — or ask AnA to start one.
                     </>
                   }
                 />
@@ -516,22 +680,49 @@ export function EctdCoauthor(_props: OwnedSurfaceViewProps) {
                 <>
                   <AnswerLead
                     tone="calm"
-                    eyebrow={'What §' + (activeDoc.moduleNumber || '—') + ' needs before it can promote'}
-                    headline={<><b>&sect;{activeDoc.moduleNumber || '—'} {activeDoc.title}</b> is <b>{activeDoc.status}</b>. The dossier is <b>{readiness}%</b> eCTD-ready across {total} document{total === 1 ? '' : 's'}.</>}
-                    body={<>Run eCTD structural validation and ICH M4 compliance against the live backbone as you write — both are computed on the server from this document and its sections.</>}
+                    eyebrow={
+                      'What §' + (activeDoc.moduleNumber || '—') + ' needs before it can promote'
+                    }
+                    headline={
+                      <>
+                        <b>
+                          &sect;{activeDoc.moduleNumber || '—'} {activeDoc.title}
+                        </b>{' '}
+                        is <b>{activeDoc.status}</b>. The dossier is <b>{readiness}%</b> eCTD-ready
+                        across {total} document{total === 1 ? '' : 's'}.
+                      </>
+                    }
+                    body={
+                      <>
+                        Run eCTD structural validation and ICH M4 compliance against the live
+                        backbone as you write — both are computed on the server from this document
+                        and its sections.
+                      </>
+                    }
                     reassure="I keep each check traced to the persisted document and re-run eCTD structure and ICH M4 as it changes."
                     action={{ label: 'Run eCTD validation', onClick: runValidate }}
                     secondary="Or keep drafting — the artifact reflects the saved document."
                   />
                   <h1 className="ec-doc-h1">{activeDoc.title}</h1>
-                  <div className="ec-doc-num">&sect;{activeDoc.moduleNumber || '—'}{activeDoc.moduleName ? ' -- ' + activeDoc.moduleName : ''}</div>
+                  <div className="ec-doc-num">
+                    &sect;{activeDoc.moduleNumber || '—'}
+                    {activeDoc.moduleName ? ' -- ' + activeDoc.moduleName : ''}
+                  </div>
                   {activeDoc.content && activeDoc.content.trim() ? (
-                    <div className="ec-doc-body" dangerouslySetInnerHTML={{ __html: sanitizeChatHtml(activeDoc.content) }} />
+                    <div
+                      className="ec-doc-body"
+                      dangerouslySetInnerHTML={{ __html: sanitizeChatHtml(activeDoc.content) }}
+                    />
                   ) : (
                     <EmptyState
                       icon={I.fileText || I.file}
                       title="This document has no content yet"
-                      hint={<>Draft §{activeDoc.moduleNumber || 'this section'} in the authoring editor, or ask AnA to start it. The body renders the saved document content.</>}
+                      hint={
+                        <>
+                          Draft §{activeDoc.moduleNumber || 'this section'} in the authoring editor,
+                          or ask AnA to start it. The body renders the saved document content.
+                        </>
+                      }
                     />
                   )}
                 </>
@@ -544,31 +735,70 @@ export function EctdCoauthor(_props: OwnedSurfaceViewProps) {
           <div className="ec-art-panel">
             <div className="ec-doc-inner">
               <div className="ec-panel-head">
-                <div><div className="ec-panel-t">eCTD structural validation</div><div className="ec-panel-s">ICH M4 eCTD structural rules {live ? '-- live' : ''}</div></div>
-                <button className="ec-topbtn primary" onClick={runValidate} disabled={!activeDoc}>{busy === 'validate' ? 'Validating...' : <>{I.refresh || I.check} Re-validate</>}</button>
+                <div>
+                  <div className="ec-panel-t">eCTD structural validation</div>
+                  <div className="ec-panel-s">
+                    ICH M4 eCTD structural rules {live ? '-- live' : ''}
+                  </div>
+                </div>
+                <button className="ec-topbtn primary" onClick={runValidate} disabled={!activeDoc}>
+                  {busy === 'validate' ? 'Validating...' : <>{I.refresh || I.check} Re-validate</>}
+                </button>
               </div>
               {!activeDoc ? (
-                <div className="ec-empty">Select an eCTD document to validate its structure against the backbone.</div>
+                <div className="ec-empty">
+                  Select an eCTD document to validate its structure against the backbone.
+                </div>
               ) : (
                 <>
-                  {!validation && !validationUnavailable && busy !== 'validate' && <div className="ec-empty">Run validation to check module structure, cross-references and section status against the eCTD backbone.</div>}
-                  {validationUnavailable && busy !== 'validate' && (
-                    <div className="ec-empty sp-tone-warn">
-                      The validation service did not return a result. No findings are shown because none were produced — this is not a clean result.
+                  {!validation && !validationUnavailable && busy !== 'validate' && (
+                    <div className="ec-empty">
+                      Run validation to check module structure, cross-references and section status
+                      against the eCTD backbone.
                     </div>
                   )}
-                  {busy === 'validate' && <div className="ec-empty">Validating {activeDoc.title} against ICH M4 structure...</div>}
+                  {validationUnavailable && busy !== 'validate' && (
+                    <div className="ec-empty sp-tone-warn">
+                      The validation service did not return a result. No findings are shown because
+                      none were produced — this is not a clean result.
+                    </div>
+                  )}
+                  {busy === 'validate' && (
+                    <div className="ec-empty">
+                      Validating {activeDoc.title} against ICH M4 structure...
+                    </div>
+                  )}
                   {validation && (
                     <>
                       <div className="ec-vstat" data-valid={validation.isValid}>
-                        <span className={'ec-vbadge ' + (validation.isValid ? 'ok' : 'err')}>{validation.isValid ? 'Valid' : validation.errorCount + ' error' + (validation.errorCount === 1 ? '' : 's')}</span>
-                        <span className="mono">{validation.errorCount} error -- {validation.warningCount} warning -- {validation.totalSections} sections</span>
+                        <span className={'ec-vbadge ' + (validation.isValid ? 'ok' : 'err')}>
+                          {validation.isValid
+                            ? 'Valid'
+                            : validation.errorCount +
+                              ' error' +
+                              (validation.errorCount === 1 ? '' : 's')}
+                        </span>
+                        <span className="mono">
+                          {validation.errorCount} error -- {validation.warningCount} warning --{' '}
+                          {validation.totalSections} sections
+                        </span>
                       </div>
                       <div className="ec-findings">
                         {validation.findings.map((f, i) => (
                           <div key={i} className="ec-finding" data-sev={f.severity}>
-                            <span className="ec-fsev">{f.severity === 'error' ? (I.alertTriangle || I.x) : (I.info || I.alertCircle)}</span>
-                            <div><div className="ec-ftype mono">{f.type}{f.sectionId ? ' -- §' + f.sectionId : ''}{f.module ? ' -- M' + f.module : ''}</div><div className="ec-fmsg">{f.message}</div></div>
+                            <span className="ec-fsev">
+                              {f.severity === 'error'
+                                ? I.alertTriangle || I.x
+                                : I.info || I.alertCircle}
+                            </span>
+                            <div>
+                              <div className="ec-ftype mono">
+                                {f.type}
+                                {f.sectionId ? ' -- §' + f.sectionId : ''}
+                                {f.module ? ' -- M' + f.module : ''}
+                              </div>
+                              <div className="ec-fmsg">{f.message}</div>
+                            </div>
                           </div>
                         ))}
                       </div>
@@ -584,30 +814,55 @@ export function EctdCoauthor(_props: OwnedSurfaceViewProps) {
           <div className="ec-art-panel">
             <div className="ec-doc-inner">
               <div className="ec-panel-head">
-                <div><div className="ec-panel-t">ICH M4 compliance</div><div className="ec-panel-s">Checked against ICH M4 {live ? '-- live' : ''}</div></div>
-                <button className="ec-topbtn primary" onClick={runCompliance} disabled={!activeDoc}>{busy === 'compliance' ? 'Checking...' : <>{I.refresh || I.check} Re-check</>}</button>
+                <div>
+                  <div className="ec-panel-t">ICH M4 compliance</div>
+                  <div className="ec-panel-s">Checked against ICH M4 {live ? '-- live' : ''}</div>
+                </div>
+                <button className="ec-topbtn primary" onClick={runCompliance} disabled={!activeDoc}>
+                  {busy === 'compliance' ? 'Checking...' : <>{I.refresh || I.check} Re-check</>}
+                </button>
               </div>
               {!activeDoc ? (
-                <div className="ec-empty">Select an eCTD document to check its ICH M4 compliance.</div>
+                <div className="ec-empty">
+                  Select an eCTD document to check its ICH M4 compliance.
+                </div>
               ) : (
                 <>
-                  {!compliance && !complianceUnavailable && busy !== 'compliance' && <div className="ec-empty">Run the ICH M4 compliance check across the organisation of the CTD.</div>}
-                  {complianceUnavailable && busy !== 'compliance' && (
-                    <div className="ec-empty sp-tone-warn">
-                      The compliance service did not return a result. No score is shown because none was computed — this is not a passing score.
+                  {!compliance && !complianceUnavailable && busy !== 'compliance' && (
+                    <div className="ec-empty">
+                      Run the ICH M4 compliance check across the organisation of the CTD.
                     </div>
                   )}
-                  {busy === 'compliance' && <div className="ec-empty">Checking ICH M4 organisation...</div>}
+                  {complianceUnavailable && busy !== 'compliance' && (
+                    <div className="ec-empty sp-tone-warn">
+                      The compliance service did not return a result. No score is shown because none
+                      was computed — this is not a passing score.
+                    </div>
+                  )}
+                  {busy === 'compliance' && (
+                    <div className="ec-empty">Checking ICH M4 organisation...</div>
+                  )}
                   {compliance && (
                     <>
                       <div className="ec-cscore">
-                        <div className="ec-cscore-num">{compliance.complianceScore}<span className="u">%</span></div>
-                        <div><div className="ec-cscore-l">{compliance.standard} compliance</div><div className="ec-cscore-s mono">{compliance.compliantCount}/{compliance.totalChecks} checks compliant -- {compliance.nonCompliantCount} to resolve</div></div>
+                        <div className="ec-cscore-num">
+                          {compliance.complianceScore}
+                          <span className="u">%</span>
+                        </div>
+                        <div>
+                          <div className="ec-cscore-l">{compliance.standard} compliance</div>
+                          <div className="ec-cscore-s mono">
+                            {compliance.compliantCount}/{compliance.totalChecks} checks compliant --{' '}
+                            {compliance.nonCompliantCount} to resolve
+                          </div>
+                        </div>
                       </div>
                       <div className="ec-checks">
                         {compliance.checks.map((c, i) => (
                           <div key={i} className="ec-check" data-ok={c.status === 'compliant'}>
-                            <span className="ec-check-dot">{c.status === 'compliant' ? I.check : (I.x)}</span>
+                            <span className="ec-check-dot">
+                              {c.status === 'compliant' ? I.check : I.x}
+                            </span>
                             <span className="ec-check-id mono">{c.ruleId}</span>
                             <span className="ec-check-desc">{c.description}</span>
                             {c.module && <span className="ec-check-mod mono">M{c.module}</span>}

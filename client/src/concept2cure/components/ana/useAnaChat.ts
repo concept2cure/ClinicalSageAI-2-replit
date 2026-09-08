@@ -63,7 +63,6 @@ import type {
   UseAnaChatReturn,
 } from './useAnaChat.types';
 
-
 /**
  * Abort the stream if no bytes arrive for this long. Guards against a stalled
  * gateway leaving the composer locked in a "Planning response…" state forever.
@@ -71,12 +70,8 @@ import type {
  */
 const STREAM_IDLE_TIMEOUT_MS = 90_000;
 
-
-
 /** Client-side cap on the tool result kept for the inspect disclosure (state size). */
 const TOOL_RESULT_VIEW_CAP = 4000;
-
-
 
 /**
  * Map a parsed `assemble_crl_premortem_artifact` tool result into the client
@@ -84,7 +79,7 @@ const TOOL_RESULT_VIEW_CAP = 4000;
  * artifact. Exported for unit testing the parse in isolation from the stream.
  */
 export function mapCrlPremortemArtifact(
-  parsed: Record<string, unknown> | null | undefined,
+  parsed: Record<string, unknown> | null | undefined
 ): import('./CrlPremortemPanel').CrlPremortemArtifact | null {
   if (!parsed || typeof parsed !== 'object' || parsed.error) return null;
   const a = parsed.artifact;
@@ -102,7 +97,7 @@ export function mapCrlPremortemArtifact(
  * never re-flagged as sealable.
  */
 export function mapBriefingPremortem(
-  parsed: Record<string, unknown> | null | undefined,
+  parsed: Record<string, unknown> | null | undefined
 ): BriefingBookPremortemResult | null {
   if (!parsed || typeof parsed !== 'object' || parsed.error) return null;
   const pm = parsed.premortem as Record<string, unknown> | undefined;
@@ -117,7 +112,8 @@ export function mapBriefingPremortem(
     anticipated: true,
     perQuestion,
     unmappedChallenges: unmapped,
-    overallRisk: (pm.overallRisk as BriefingBookPremortemResult['overallRisk']) ?? 'insufficient_data',
+    overallRisk:
+      (pm.overallRisk as BriefingBookPremortemResult['overallRisk']) ?? 'insufficient_data',
     precedentCount: typeof pm.precedentCount === 'number' ? pm.precedentCount : 0,
     dataSource: pm.dataSource === 'live' ? 'live' : 'fixture',
     // Sample/not_assessed is never sealable: only a true server flag passes.
@@ -133,14 +129,16 @@ export function mapBriefingPremortem(
  * Exported for unit testing the parse in isolation from the SSE stream.
  */
 export function mapVerificationResult(
-  parsed: Record<string, unknown> | null | undefined,
+  parsed: Record<string, unknown> | null | undefined
 ): VerificationResult | null {
   if (!parsed || typeof parsed !== 'object' || parsed.error) return null;
   const div = parsed.divergence;
   return {
     ok: Boolean(parsed.ok),
     missingRequiredStrings: Array.isArray(parsed.missingRequiredStrings)
-      ? (parsed.missingRequiredStrings as unknown[]).filter((s): s is string => typeof s === 'string')
+      ? (parsed.missingRequiredStrings as unknown[]).filter(
+          (s): s is string => typeof s === 'string'
+        )
       : [],
     requiredStringsChecked:
       typeof parsed.requiredStringsChecked === 'number' ? parsed.requiredStringsChecked : undefined,
@@ -150,21 +148,22 @@ export function mapVerificationResult(
   };
 }
 
-
-
-
-
 /**
  * Map a parsed `check_dossier_consistency` tool result into the client
  * ConsistencyResult shape. Returns null for an error envelope or non-object.
  * Mirrors mapVerificationResult; exported for unit testing in isolation.
  */
 export function mapConsistencyResult(
-  parsed: Record<string, unknown> | null | undefined,
+  parsed: Record<string, unknown> | null | undefined
 ): ConsistencyResult | null {
   if (!parsed || typeof parsed !== 'object' || parsed.error) return null;
 
-  const allowedVerdicts: ConsistencyVerdict[] = ['clean', 'minor_issues', 'needs_review', 'blocker'];
+  const allowedVerdicts: ConsistencyVerdict[] = [
+    'clean',
+    'minor_issues',
+    'needs_review',
+    'blocker',
+  ];
   const verdict = allowedVerdicts.includes(parsed.verdict as ConsistencyVerdict)
     ? (parsed.verdict as ConsistencyVerdict)
     : 'clean';
@@ -240,16 +239,11 @@ const TOOL_LABELS: Record<string, string> = {
   verify_docx_against_source: 'Verifying against your source',
 };
 
-
 function toolLabel(name: string): string {
   if (TOOL_LABELS[name]) return TOOL_LABELS[name];
   const spaced = name.replace(/_/g, ' ').trim();
   return spaced ? spaced.charAt(0).toUpperCase() + spaced.slice(1) : 'Running a tool';
 }
-
-
-
-
 
 export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
   const [messages, setMessages] = useState<AnaChatMessage[]>([]);
@@ -277,20 +271,17 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
   const control = useCallback(
     async (
       action: 'pause' | 'resume' | 'interject' | 'cancel',
-      message?: string,
+      message?: string
     ): Promise<boolean> => {
       const runId = runIdRef.current;
       if (!runId) return false;
       try {
-        const res = await fetch(
-          `/api/ana-ri/stream/${encodeURIComponent(runId)}/control`,
-          {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
-            credentials: 'include',
-            body: JSON.stringify(message !== undefined ? { action, message } : { action }),
-          },
-        );
+        const res = await fetch(`/api/ana-ri/stream/${encodeURIComponent(runId)}/control`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+          credentials: 'include',
+          body: JSON.stringify(message !== undefined ? { action, message } : { action }),
+        });
         if (!res.ok) return false;
         // Optimistic local status; the server also echoes control SSE events.
         if (action === 'pause') setRunStatus('paused');
@@ -301,7 +292,7 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
         return false;
       }
     },
-    [],
+    []
   );
 
   const pause = useCallback(() => control('pause'), [control]);
@@ -395,7 +386,7 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
     async (
       rawText: string,
       attachments?: MessageAttachment[],
-      sendOpts?: { toolsOverride?: string[] },
+      sendOpts?: { toolsOverride?: string[] }
     ) => {
       const text = rawText.trim();
       if (!text || isStreamingRef.current) return;
@@ -420,6 +411,7 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
           role: 'assistant',
           text: '',
           streaming: true,
+          ...(sendOpts?.agentMode ? { agentMode: true } : {}),
           statusPhase: 'Planning response…',
           sentAt,
         },
@@ -528,7 +520,9 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
       const pinnedFromShell: Array<number | string> = (() => {
         try {
           const g = (window as unknown as { C2C_SOURCE_PINS?: unknown }).C2C_SOURCE_PINS;
-          return Array.isArray(g) ? (g as Array<number | string>).filter((v) => v != null && v !== '') : [];
+          return Array.isArray(g)
+            ? (g as Array<number | string>).filter(v => v != null && v !== '')
+            : [];
         } catch {
           return [];
         }
@@ -538,7 +532,11 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
           ? options.selectedSourceIds
           : pinnedFromShell;
       if (pinnedFromShell.length > 0) {
-        try { delete (window as unknown as { C2C_SOURCE_PINS?: unknown }).C2C_SOURCE_PINS; } catch { /* noop */ }
+        try {
+          delete (window as unknown as { C2C_SOURCE_PINS?: unknown }).C2C_SOURCE_PINS;
+        } catch {
+          /* noop */
+        }
       }
 
       const body = JSON.stringify({
@@ -589,6 +587,7 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
         // default routing (effort='balanced', no model pin).
         effort_level: options.effortLevel ?? undefined,
         model_override: options.modelOverride ?? undefined,
+        agent_mode: sendOpts?.agentMode === true ? true : undefined,
       });
 
       let streamedText = '';
@@ -650,7 +649,8 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
                     ? {
                         ...m,
                         detectedLens: lens && lens !== 'auto' ? lens : m.detectedLens,
-                        suggestedActions: actions && actions.length > 0 ? actions : m.suggestedActions,
+                        suggestedActions:
+                          actions && actions.length > 0 ? actions : m.suggestedActions,
                         detectedDocumentType: docTemplate?.chipLabel ?? m.detectedDocumentType,
                         detectedDocumentTemplate: docTemplate ?? m.detectedDocumentTemplate,
                       }
@@ -664,9 +664,7 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
               if (phase) {
                 setMessages(prev =>
                   prev.map(m =>
-                    m.id === assistantId && m.text === ''
-                      ? { ...m, statusPhase: phase }
-                      : m
+                    m.id === assistantId && m.text === '' ? { ...m, statusPhase: phase } : m
                   )
                 );
               }
@@ -677,9 +675,7 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
               const next = streamedText;
               setMessages(prev =>
                 prev.map(m =>
-                  m.id === assistantId
-                    ? { ...m, text: next, statusPhase: undefined }
-                    : m
+                  m.id === assistantId ? { ...m, text: next, statusPhase: undefined } : m
                 )
               );
             } else if (event.type === 'thinking') {
@@ -691,9 +687,7 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
               const thinkingNow = streamedThinking;
               setMessages(prev =>
                 prev.map(m =>
-                  m.id === assistantId
-                    ? { ...m, thinking: thinkingNow, statusPhase: undefined }
-                    : m
+                  m.id === assistantId ? { ...m, thinking: thinkingNow, statusPhase: undefined } : m
                 )
               );
             } else if (event.type === 'run_started') {
@@ -742,9 +736,7 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
                   return {
                     ...m,
                     text:
-                      typeof cleaned === 'string' && cleaned.trim().length > 0
-                        ? cleaned
-                        : m.text,
+                      typeof cleaned === 'string' && cleaned.trim().length > 0 ? cleaned : m.text,
                     streaming: false,
                     statusPhase: undefined,
                     executedActions: actions,
@@ -755,9 +747,7 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
                         : m.groundingSources,
                     latencyMs: capturedLatencyMs,
                     fallback:
-                      capturedProvider !== undefined
-                        ? capturedProvider !== 'anthropic'
-                        : undefined,
+                      capturedProvider !== undefined ? capturedProvider !== 'anthropic' : undefined,
                     effortUsed: capturedEffortUsed ?? m.effortUsed,
                   };
                 })
@@ -774,13 +764,17 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
                           validated: Boolean(ev.validated),
                           sourceCount: typeof ev.source_count === 'number' ? ev.source_count : 0,
                           groundedClaims:
-                            typeof ev.grounded_claim_count === 'number' ? ev.grounded_claim_count : 0,
+                            typeof ev.grounded_claim_count === 'number'
+                              ? ev.grounded_claim_count
+                              : 0,
                           weakClaims:
                             typeof ev.weak_or_ungrounded_claim_count === 'number'
                               ? ev.weak_or_ungrounded_claim_count
                               : 0,
                           missingSupport:
-                            typeof ev.missing_support_count === 'number' ? ev.missing_support_count : 0,
+                            typeof ev.missing_support_count === 'number'
+                              ? ev.missing_support_count
+                              : 0,
                           riskSummary:
                             typeof ev.reviewer_risk_summary === 'string'
                               ? ev.reviewer_risk_summary
@@ -808,9 +802,7 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
               if (msg) {
                 setMessages(prev =>
                   prev.map(m =>
-                    m.id === assistantId
-                      ? { ...m, warnings: [...(m.warnings || []), msg] }
-                      : m
+                    m.id === assistantId ? { ...m, warnings: [...(m.warnings || []), msg] } : m
                   )
                 );
               }
@@ -874,7 +866,9 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
               // E14 — capture the CRL/RTF pre-mortem decision artifact so the
               // Document Studio can render the board-ready pre-mortem panel.
               const crlPremortem =
-                name === 'assemble_crl_premortem_artifact' ? mapCrlPremortemArtifact(parsedResult) : null;
+                name === 'assemble_crl_premortem_artifact'
+                  ? mapCrlPremortemArtifact(parsedResult)
+                  : null;
               // Capture the dossier-consistency sweep so the Document Studio
               // ConsistencyPanel (the second verification surface) can show the
               // verdict + per-divergence conflicts. This is the natural surface
@@ -895,7 +889,9 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
                   if (m.id !== assistantId) return m;
                   let next = m;
                   if (m.toolCalls) {
-                    const idx = [...m.toolCalls].reverse().findIndex(t => t.name === name && t.status === 'running');
+                    const idx = [...m.toolCalls]
+                      .reverse()
+                      .findIndex(t => t.name === name && t.status === 'running');
                     if (idx !== -1) {
                       const realIdx = m.toolCalls.length - 1 - idx;
                       const calls = m.toolCalls.slice();
@@ -983,7 +979,12 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
                 setMessages(prev =>
                   prev.map(m =>
                     m.id === assistantId
-                      ? { ...m, intelligenceFlowComplete: completion, intelligenceFlowState: flowState, intelligenceQuestion: undefined }
+                      ? {
+                          ...m,
+                          intelligenceFlowComplete: completion,
+                          intelligenceFlowState: flowState,
+                          intelligenceQuestion: undefined,
+                        }
                       : m
                   )
                 );
@@ -992,11 +993,7 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
               const report = event.report;
               if (report) {
                 setMessages(prev =>
-                  prev.map(m =>
-                    m.id === assistantId
-                      ? { ...m, warGameReport: report }
-                      : m
-                  )
+                  prev.map(m => (m.id === assistantId ? { ...m, warGameReport: report } : m))
                 );
               }
             } else if (event.type === 'report_canvas') {
@@ -1027,10 +1024,10 @@ export function useAnaChat(options: UseAnaChatOptions): UseAnaChatReturn {
                 text:
                   m.text.length > 0
                     ? m.text
-                    // Drop apologetic voice + generic "please try again" per
-                    // the microcopy rule; state what happened, the user
-                    // already sees the composer to retry.
-                    : 'AnA stopped responding before finishing this turn. The prior turns are preserved.',
+                    : // Drop apologetic voice + generic "please try again" per
+                      // the microcopy rule; state what happened, the user
+                      // already sees the composer to retry.
+                      'AnA stopped responding before finishing this turn. The prior turns are preserved.',
                 streaming: false,
                 statusPhase: undefined,
                 warnings: [...(m.warnings || []), 'Response timed out'],

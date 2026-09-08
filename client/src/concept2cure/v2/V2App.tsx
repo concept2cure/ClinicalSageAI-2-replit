@@ -21,7 +21,11 @@ import React from 'react';
 import { useLocation } from 'wouter';
 import { getSurface, type UiSurface } from '@shared/constants/ui-surface-registry';
 import { AnaRail, CmdK, Rail, TopBar, type AnaMessage } from './Shell';
-import { useAnaChat, type AnaChatMessage } from '../components/ana/useAnaChat';
+import {
+  useAnaChat,
+  type AnaChatMessage,
+  type MessageAttachment,
+} from '../components/ana/useAnaChat';
 import { useActiveSurfaceContext, toModuleContext } from './surfaceContext';
 import { useAuth } from '@/services/portal/authService';
 import { getJwtOrgId } from '@/utils/authToken';
@@ -31,9 +35,7 @@ import { SurfaceBoundary } from './SurfaceScaffold';
 import { CollabLayer } from './surfaces/CollabLauncher';
 import { SURFACE_VIEWS } from './surfaceViews';
 import { Home, KitSurfaceScaffold } from './surfaces/Surfaces';
-import { getAction, getSegment, resolveSegmentId,
-  effortForMode,
-} from './registryModel';
+import { getAction, getSegment, resolveSegmentId, effortForMode } from './registryModel';
 import { locationForSurface, surfaceIdFromLocation } from './routing';
 import { OPEN_PROGRAM_EVENT, OPEN_PROGRAM_SURFACE } from './programAction';
 import './styles/app-v2.css';
@@ -89,6 +91,7 @@ interface Prefs {
   railCollapsed: boolean;
   anaOpen: boolean;
   anaMode: string;
+  agentMode: boolean;
   segment: string;
   /** Set once the client dismisses (or outgrows) the first-run AnA welcome. */
   welcomeDismissed: boolean;
@@ -99,6 +102,7 @@ const DEFAULT_PREFS: Prefs = {
   railCollapsed: true,
   anaOpen: false,
   anaMode: 'standard',
+  agentMode: false,
   segment: 'biopharma',
   welcomeDismissed: false,
 };
@@ -135,7 +139,7 @@ function loadPrefs(): Prefs {
    renders, which is why it needs a test of its own rather than relying on the
    component suites, all of which pass their props in directly. */
 export function adaptChatMessage(m: AnaChatMessage): AnaMessage {
-  if (m.role === 'user') return { role: 'user', body: m.text };
+  if (m.role === 'user') return { role: 'user', body: m.text, attachments: m.attachments };
   return {
     role: 'ana',
     // The body no longer has to carry the waiting state on its own. While a
@@ -165,6 +169,7 @@ export function adaptChatMessage(m: AnaChatMessage): AnaMessage {
     activity: {
       streaming: m.streaming,
       phase: m.statusPhase,
+      agentMode: m.agentMode,
       lens: m.detectedLens,
       documentType: m.detectedDocumentType,
       toolCalls: m.toolCalls,
@@ -181,7 +186,7 @@ function hasReportableWork(m: AnaChatMessage): boolean {
       m.detectedLens ||
       m.detectedDocumentType ||
       m.thinking ||
-      m.generatedDraft?.title,
+      m.generatedDraft?.title
   );
 }
 
@@ -204,7 +209,7 @@ export function V2App() {
   const [cmdkOpen, setCmdkOpen] = React.useState(false);
 
   const set = <K extends keyof Prefs>(k: K, v: Prefs[K]) =>
-    setPrefs((p) => {
+    setPrefs(p => {
       const next = { ...p, [k]: v };
       try {
         localStorage.setItem(PREFS_KEY, JSON.stringify(next));
@@ -215,6 +220,13 @@ export function V2App() {
     });
 
   const activeId = surfaceIdFromLocation(location);
+  const surface: UiSurface | undefined = activeId === 'home' ? undefined : getSurface(activeId);
+  const fallbackSurfaceSummary =
+    activeId === 'home'
+      ? 'The user is on Home.'
+      : surface
+      ? `The user is on ${surface.label}.`
+      : 'The user is on an unavailable workspace route.';
   /* The real AnA assistant for the whole shell — one streaming conversation
      (/api/ana-ri/stream) shared by the rail, ⌘K and every surface's onAsk. */
   /* What the active surface is showing, forwarded to AnA as `module_context` on
@@ -226,8 +238,12 @@ export function V2App() {
      previous screen can never be presented as this one's. */
   const activeSurfaceContext = useActiveSurfaceContext(activeId);
   const anaModuleContext = React.useMemo(
-    () => toModuleContext(activeSurfaceContext),
-    [activeSurfaceContext]
+    () =>
+      toModuleContext(activeSurfaceContext, {
+        surfaceId: activeId,
+        summary: fallbackSurfaceSummary,
+      }),
+    [activeId, activeSurfaceContext, fallbackSurfaceSummary]
   );
   const anaChat = useAnaChat({
     screenName: activeId,
@@ -281,7 +297,7 @@ export function V2App() {
       const mod = e.metaKey || e.ctrlKey;
       if (mod && e.key.toLowerCase() === 'k') {
         e.preventDefault();
-        setCmdkOpen((o) => !o);
+        setCmdkOpen(o => !o);
       }
       /* ⌘\ toggles the rail — but `set` PERSISTS, and on a surface that owns
          the conversation there is no rail to toggle. Un-guarded, this wrote
@@ -316,7 +332,6 @@ export function V2App() {
     return () => window.removeEventListener(OPEN_PROGRAM_EVENT, onOpenProgram);
   }, [nav]);
 
-  const surface: UiSurface | undefined = activeId === 'home' ? undefined : getSurface(activeId);
   const ctxSurface: UiSurface =
     surface ??
     ({
@@ -333,7 +348,8 @@ export function V2App() {
       discoveryCatalog: null,
       readiness: 'routes-ready',
       compliance: ['accessibility-enforcement', 'microcopy-tone'],
-      notes: 'Home opens with the segment pathway chips and the composer. Ports in the surface phase.',
+      notes:
+        'Home opens with the segment pathway chips and the composer. Ports in the surface phase.',
     } as UiSurface);
 
   /* Hand a question to the surface that owns the shell's conversation.
@@ -358,7 +374,7 @@ export function V2App() {
       } catch {
         /* non-fatal: the thread opens empty rather than seeded */
       }
-      setConvoEpoch((n) => n + 1);
+      setConvoEpoch(n => n + 1);
       nav('conversation-thread');
     },
     [nav]
@@ -378,7 +394,11 @@ export function V2App() {
      nothing visible here, and your question waiting for you, opened, on the
      next surface that does draw one. The question goes to the surface that
      shows it instead. */
-  const ask = (text: string) => {
+  const ask = (
+    text: string,
+    attachments?: MessageAttachment[],
+    options?: { agentMode?: boolean }
+  ) => {
     const clean = text.replace(/^\[Agent\]\s*/i, '').trim();
     if (!clean) return;
     if (ownsConversation) {
@@ -386,7 +406,9 @@ export function V2App() {
       return;
     }
     if (!prefs.anaOpen) set('anaOpen', true);
-    void anaChat.send(clean);
+    void anaChat.send(clean, attachments, {
+      agentMode: options?.agentMode ?? prefs.agentMode,
+    });
   };
 
   /* Governed + ungoverned actions both execute through ANA, the real agentic
@@ -402,8 +424,7 @@ export function V2App() {
 
   /* The surface's mount identity. Only `conversation-thread` varies within one
      id — see `startShellConversation` above. */
-  const bodyKey =
-    activeId === 'conversation-thread' ? `${activeId}#${convoEpoch}` : activeId;
+  const bodyKey = activeId === 'conversation-thread' ? `${activeId}#${convoEpoch}` : activeId;
 
   let body: React.ReactNode;
   if (activeId === 'home') {
@@ -449,16 +470,18 @@ export function V2App() {
         activeId={activeId}
         onNav={nav}
         collapsed={prefs.railCollapsed}
-        setCollapsed={(v) => set('railCollapsed', v)}
+        setCollapsed={v => set('railCollapsed', v)}
         segment={prefs.segment}
         setSegment={selectSegment}
       />
       <main className="main">
         <TopBar
-          surface={activeId === 'home' ? { id: 'home', label: 'Home', navTier: 'global' } : ctxSurface}
+          surface={
+            activeId === 'home' ? { id: 'home', label: 'Home', navTier: 'global' } : ctxSurface
+          }
           onPalette={() => setCmdkOpen(true)}
           segment={prefs.segment}
-          onSegment={(id) => {
+          onSegment={id => {
             set('segment', id);
             const s = getSegment(id);
             if (s?.defaultSurface) nav(s.defaultSurface);
@@ -473,13 +496,15 @@ export function V2App() {
       {!ownsConversation && (
         <AnaRail
           open={prefs.anaOpen}
-          setOpen={(v) => set('anaOpen', v)}
+          setOpen={v => set('anaOpen', v)}
           surface={ctxSurface}
           segment={prefs.segment}
           mode={prefs.anaMode}
-          setMode={(m) => set('anaMode', m)}
+          setMode={m => set('anaMode', m)}
           messages={railMessages}
-          onSend={ask}
+          onSend={(text, attachments, options) => ask(text, attachments, options)}
+          agentMode={prefs.agentMode}
+          setAgentMode={value => set('agentMode', value)}
           onAct={onAct}
           welcome={welcome}
           onDismissWelcome={() => set('welcomeDismissed', true)}
@@ -496,7 +521,7 @@ export function V2App() {
           onPause={() => void anaChat.pause()}
           onResume={() => void anaChat.resume()}
           onStop={() => anaChat.stop()}
-          onSteer={(m) => void anaChat.interject(m)}
+          onSteer={m => void anaChat.interject(m)}
         />
       )}
       <CmdK
@@ -504,7 +529,7 @@ export function V2App() {
         onClose={() => setCmdkOpen(false)}
         onNav={nav}
         onAsk={ask}
-        onAct={(id) => {
+        onAct={id => {
           onAct(id);
           setCmdkOpen(false);
         }}

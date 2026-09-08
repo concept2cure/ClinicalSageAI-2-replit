@@ -211,6 +211,7 @@ function mockCommonDeps(options: {
     buildRouteContextBlock: vi.fn(() => ''),
     buildChatContext: vi.fn(async () => ({ block: '', sources: [] })),
     resolveProjectIdFromBody: vi.fn((body: any) => body?.project_id || body?.context?.projectId),
+    resolveOrganizationClientType: vi.fn(async () => null),
     prefetchRouteIntelligenceContext: vi.fn(async () => ({
       projectIdNumber: null,
       feedbackContext: null,

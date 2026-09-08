@@ -6,11 +6,21 @@ import { RBM_NAV, RBM_LINKS } from '../fixtures/rbm-data';
 import type { RbmBoard, RbmProgram } from './rbmBoard';
 import { rbmBoardHasData } from './rbmBoard';
 import {
-  SeedEmpty, RbmAnaDock, type RbmAnaMessage,
-  RbmOverview, RbmReport, RbmRact, RbmKris, RbmQtls,
-  RbmSignals, RbmPatients, RbmSites, RbmOversight, RbmPlan,
+  SeedEmpty,
+  RbmAnaDock,
+  type RbmAnaMessage,
+  RbmOverview,
+  RbmReport,
+  RbmRact,
+  RbmKris,
+  RbmQtls,
+  RbmSignals,
+  RbmPatients,
+  RbmSites,
+  RbmOversight,
+  RbmPlan,
 } from './RbmSurfaces';
-import { useAnaChat } from '../../components/ana/useAnaChat';
+import { useAnaChat, type MessageAttachment } from '../../components/ana/useAnaChat';
 import '../styles/project-home-v2.css';
 import '../styles/rbm-v2.css';
 
@@ -25,9 +35,15 @@ type SubSurface = React.ComponentType<{
 }>;
 
 const SURFACES: Record<string, SubSurface> = {
-  overview: RbmOverview, report: RbmReport, ract: RbmRact,
-  kris: RbmKris, qtls: RbmQtls, signals: RbmSignals,
-  patients: RbmPatients, sites: RbmSites, oversight: RbmOversight,
+  overview: RbmOverview,
+  report: RbmReport,
+  ract: RbmRact,
+  kris: RbmKris,
+  qtls: RbmQtls,
+  signals: RbmSignals,
+  patients: RbmPatients,
+  sites: RbmSites,
+  oversight: RbmOversight,
   plan: RbmPlan,
 };
 
@@ -47,7 +63,10 @@ const SEED_ACTIONS: Record<string, string[]> = {
 
 /* ── Icon map for cross-app links ── */
 const LINK_ICONS: Record<string, string> = {
-  project: 'folder', vault: 'vault', biostats: 'sigma', tasks: 'checkSquare',
+  project: 'folder',
+  vault: 'vault',
+  biostats: 'sigma',
+  tasks: 'checkSquare',
 };
 
 /* ════════════════════════════════════════════════════════════════════
@@ -99,23 +118,43 @@ export function Rbm({ onNav }: OwnedSurfaceViewProps) {
   const selProgram = programs.rows.find(p => p.id === study) || null;
   const studyLabel = selProgram?.label ?? 'the study';
   const nav = RBM_NAV.find(n => n.id === tab)!;
+  const moduleContext = {
+    surface: 'rbm',
+    summary: study
+      ? `Risk-based monitoring for ${studyLabel}, showing ${nav.label}`
+      : 'Risk-based monitoring with no study selected',
+    facts: study
+      ? {
+          programId: study,
+          programName: studyLabel,
+          activeView: nav.label,
+          activeTool: nav.tool,
+        }
+      : {},
+    available_actions: study ? nav.starters : [],
+  };
 
   /* AnA — the REAL streaming assistant (/api/ana-ri/stream), grounded to the
      selected RBM program. The former rbmAnaResolve() heuristic that fabricated
      canned cards from fixture constants is gone: the dock now shows the real
      turn (streamed text, executed actions, and the real Part 11 sign-off for a
      governed command). */
-  const anaChat = useAnaChat({ screenName: 'rbm', projectId: study ?? undefined });
+  const anaChat = useAnaChat({
+    screenName: 'rbm',
+    projectId: study ?? undefined,
+    moduleContext,
+  });
   const anaMsgs: RbmAnaMessage[] = anaChat.messages.map(m => ({
     role: m.role,
     text: m.text || (m.streaming ? m.statusPhase || 'Thinking…' : ''),
+    attachments: m.attachments,
     executedActions: m.executedActions,
     pendingSignoffs: m.pendingSignoffs,
   }));
-  const askAna = (text: string) => {
+  const askAna = (text: string, attachments?: MessageAttachment[]) => {
     if (!text) return;
     if (!anaOpen) setAnaOpen(true);
-    void anaChat.send(text);
+    void anaChat.send(text, attachments);
   };
 
   const Body = SURFACES[tab];
@@ -127,9 +166,9 @@ export function Rbm({ onNav }: OwnedSurfaceViewProps) {
           <div className="ph-eyebrow">Clinical — risk-based quality management</div>
           <h1 className="reg-title">Risk-based monitoring</h1>
           <p className="reg-sub">
-            ICH E6(R3) RBQM for the study: risk assessment, KRIs and QTLs, central
-            statistical monitoring, site oversight and the monitoring plan. Every score
-            is engine output — the number behind each chip is always visible.
+            ICH E6(R3) RBQM for the study: risk assessment, KRIs and QTLs, central statistical
+            monitoring, site oversight and the monitoring plan. Every score is engine output — the
+            number behind each chip is always visible.
           </p>
         </div>
         <div className="rbm-study">
@@ -145,7 +184,9 @@ export function Rbm({ onNav }: OwnedSurfaceViewProps) {
               <option value="">No RBM studies</option>
             ) : (
               programs.rows.map(s => (
-                <option key={s.id} value={s.id}>{s.label}</option>
+                <option key={s.id} value={s.id}>
+                  {s.label}
+                </option>
               ))
             )}
           </select>
@@ -172,7 +213,8 @@ export function Rbm({ onNav }: OwnedSurfaceViewProps) {
                 {(I as Record<string, React.ReactNode>)[LINK_ICONS[k] || 'folder']}
               </span>
               <span className="rbm-link-t">
-                <b>{L.label}</b><em>{L.value}</em>
+                <b>{L.label}</b>
+                <em>{L.value}</em>
               </span>
               <span className="rbm-link-go">{I.chevRight}</span>
             </button>
@@ -231,7 +273,14 @@ export function Rbm({ onNav }: OwnedSurfaceViewProps) {
               <EmptyState title="Loading the RBM board…" icon={I.clock} />
             </div>
           ) : hasData ? (
-            <Body key={bd.programId + '@' + bd.asOf} board={bd} onTab={setTab} onAsk={askAna} onNav={onNav} onReload={reload} />
+            <Body
+              key={bd.programId + '@' + bd.asOf}
+              board={bd}
+              onTab={setTab}
+              onAsk={askAna}
+              onNav={onNav}
+              onReload={reload}
+            />
           ) : (
             <SeedEmpty
               title={`No RBM data for ${studyLabel} yet`}
@@ -245,16 +294,13 @@ export function Rbm({ onNav }: OwnedSurfaceViewProps) {
           <RbmAnaDock
             nav={nav}
             study={studyLabel.split(' --')[0]}
+            projectId={study}
             msgs={anaMsgs}
             onAsk={askAna}
             onClose={() => setAnaOpen(false)}
           />
         ) : (
-          <button
-            className="rbm-ana-seam"
-            onClick={() => setAnaOpen(true)}
-            title="Open AnA"
-          >
+          <button className="rbm-ana-seam" onClick={() => setAnaOpen(true)} title="Open AnA">
             <span className="mk">{'✻'}</span>AnA
           </button>
         )}

@@ -18,8 +18,6 @@
 
 import type { Request, Response, Router } from 'express';
 
-import type { QueryResult, QueryResultRow } from 'pg';
-
 import { getPool } from '../../db.js';
 import type { GatewayMessage } from '../../services/ai-gateway/types.js';
 import {
@@ -96,8 +94,10 @@ import {
   buildOrchestratorAuthoringContext,
   buildRouteContextBlock,
   prefetchRouteIntelligenceContext,
+  resolveOrganizationClientType,
   resolveProjectIdFromBody,
 } from '../../services/ana-ri/chat-context-builder.js';
+import { appendAnaRequestContextBlocks } from '../../services/ana-ri/surface-context-block.js';
 import {
   sendError,
   extractRequestContext,
@@ -111,15 +111,6 @@ import {
   runControlRegistry,
   type HumanControlEvent,
 } from '../../services/ana/run-control-registry.js';
-
-// Thin facade over getPool() so the extracted body keeps its `dbPool.query(...)`
-// shape without needing to touch the original handler.
-const dbPool = {
-  query: <R extends QueryResultRow = QueryResultRow>(
-    text: string,
-    values?: unknown[]
-  ): Promise<QueryResult<R>> => getPool().query<R>(text, values as unknown[]),
-};
 
 /** Register POST /stream on the given router. */
 export function mountStreamRoute(router: Router): void {
@@ -139,11 +130,13 @@ export function mountStreamRoute(router: Router): void {
         submission_type,
         conversation_history,
         authoring_context,
+        module_context,
         project_id,
         selected_tools,
         language,
         model_override,
         effort_level,
+        agent_mode,
       } = req.body;
 
       if (!message || typeof message !== 'string') {
@@ -254,6 +247,8 @@ export function mountStreamRoute(router: Router): void {
 
       // Resolve context
       const { orgId, userId } = extractRequestContext(req);
+      const agentMode = agent_mode === true;
+      const organizationClientTypePromise = resolveOrganizationClientType(orgId);
       const toolPolicyPromise = orgId
         ? loadAnaToolPolicy(getPool(), Number(orgId))
         : Promise.resolve({});
@@ -272,6 +267,7 @@ export function mountStreamRoute(router: Router): void {
             organizationId: orgId,
             userId: userId || null,
             projectId: streamProjectId ? Number(streamProjectId) || null : null,
+            clientType: await organizationClientTypePromise,
           });
           const parsed = JSON.parse(resultStr);
           if (parsed?.status === 'intelligence_question' && parsed.question) {
@@ -383,6 +379,7 @@ export function mountStreamRoute(router: Router): void {
         decisionContext: streamDecisionContext,
         rimContext: streamRimContext,
       });
+      const organizationClientType = await organizationClientTypePromise;
 
       // Orchestrate
       const orchestration = orchestrate({
@@ -409,6 +406,10 @@ export function mountStreamRoute(router: Router): void {
       if (streamRouteBlock) {
         orchestration.systemPrompt += `\n\n## Current UI Route\n${streamRouteBlock}`;
       }
+      orchestration.systemPrompt = appendAnaRequestContextBlocks(orchestration.systemPrompt, {
+        moduleContext: module_context,
+        organizationClientType,
+      });
 
       if (authoringContextBlock) {
         orchestration.systemPrompt += `\n\n## Current Authoring Context\n${authoringContextBlock}`;
@@ -475,7 +476,11 @@ export function mountStreamRoute(router: Router): void {
       // Split into stable prefix (cached) + volatile suffix (per-turn) — see /chat
       // handler for rationale. The Claude gateway marks the stable block with
       // cache_control so subsequent turns on the same screen/project hit cache.
-      const streamStablePrefix = intelligencePrefix + orchestration.systemPrompt;
+      const agentModeInstruction = agentMode
+        ? '\n\n## Agent mode\nThe user explicitly selected Agent mode. Use the available tools to carry out the requested work instead of only describing a plan. Stream each real tool step and report what actually happened. Governed mutations still require the existing human sign-off and must never be claimed as completed without a successful tool result.'
+        : '';
+      const streamStablePrefix =
+        intelligencePrefix + orchestration.systemPrompt + agentModeInstruction;
       const streamVolatileSuffix = memoryBlock + enrichment.block;
 
       // Thread resolution (before message building so we can load server history)
@@ -668,8 +673,8 @@ export function mountStreamRoute(router: Router): void {
       res.write(
         `data: ${JSON.stringify({
           type: 'status',
-          phase: 'generating',
-          message: 'Generating response…',
+          phase: agentMode ? 'agent_planning' : 'generating',
+          message: agentMode ? 'Agent mode: planning the next action…' : 'Generating response…',
         })}\n\n`
       );
 
@@ -867,6 +872,15 @@ export function mountStreamRoute(router: Router): void {
       // intent selection never removes a capability — anything dropped stays
       // reachable through execute_platform_command. User-pinned tools are honoured.
       const asStr = (v: unknown): string | undefined => (typeof v === 'string' ? v : undefined);
+      const asRecord = (v: unknown): Record<string, unknown> | undefined =>
+        v && typeof v === 'object' && !Array.isArray(v)
+          ? (v as Record<string, unknown>)
+          : undefined;
+      const requestContext = asRecord(req.body.context);
+      const projectContextForTools = asRecord(project_context);
+      const documentContextForTools = asRecord(document_context);
+      const authoringContextForTools = asRecord(authoring_context);
+      const moduleContextForTools = asRecord(module_context);
       const streamTools = selectToolsForTurn(
         filterToolsByPolicy(allTools, toolPolicy),
         typeof message === 'string' ? message : '',
@@ -875,9 +889,21 @@ export function mountStreamRoute(router: Router): void {
             ? selected_tools.filter((t: unknown): t is string => typeof t === 'string')
             : undefined,
           context: {
-            projectType: asStr(submission_type),
-            documentType: asStr(document_context),
-            surface: asStr(intent_lens) ?? asStr(authoring_context),
+            clientType: organizationClientType ?? undefined,
+            projectType:
+              asStr(submission_type) ??
+              asStr(projectContextForTools?.submissionType) ??
+              asStr(authoringContextForTools?.submissionType),
+            documentType:
+              asStr(documentContextForTools?.module) ??
+              asStr(documentContextForTools?.section) ??
+              asStr(authoringContextForTools?.moduleCode) ??
+              asStr(authoringContextForTools?.sectionCode),
+            surface:
+              asStr(moduleContextForTools?.surface) ??
+              asStr(requestContext?.screenName) ??
+              asStr(requestContext?.screen) ??
+              asStr(intent_lens),
           },
           // Reliability-aware: trim currently-unhealthy tools first when over the cap
           // (the always-on core + platform bridge are unaffected). Per-tenant when an
@@ -1030,6 +1056,7 @@ export function mountStreamRoute(router: Router): void {
                     organizationId: orgId,
                     userId: userId || null,
                     projectId: streamProjectId ? Number(streamProjectId) || null : null,
+                    clientType: organizationClientType,
                   });
                 } catch (toolErr: any) {
                   resultStr = JSON.stringify({
@@ -1461,6 +1488,7 @@ export function mountStreamRoute(router: Router): void {
           // effort the server actually used — which may differ from the request
           // when a governance policyHint pinned the strategy). Additive field.
           effortUsed,
+          agentMode,
           usage: gwResponse.usage,
           latencyMs: gwResponse.latencyMs,
           response: fullContent || undefined,

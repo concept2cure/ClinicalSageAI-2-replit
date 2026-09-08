@@ -43,6 +43,20 @@ async function ensureChatTables(): Promise<void> {
         metadata JSONB,
         created_at TIMESTAMP DEFAULT NOW()
       );
+      ALTER TABLE chat_threads ADD COLUMN IF NOT EXISTS project_id INTEGER;
+      ALTER TABLE chat_threads ADD COLUMN IF NOT EXISTS organization_id INTEGER;
+      ALTER TABLE chat_threads ADD COLUMN IF NOT EXISTS title TEXT;
+      ALTER TABLE chat_threads ADD COLUMN IF NOT EXISTS model TEXT;
+      ALTER TABLE chat_threads ADD COLUMN IF NOT EXISTS system_prompt TEXT;
+      ALTER TABLE chat_threads ADD COLUMN IF NOT EXISTS metadata JSONB;
+      ALTER TABLE chat_threads ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT NOW();
+      ALTER TABLE chat_messages ADD COLUMN IF NOT EXISTS model TEXT;
+      ALTER TABLE chat_messages ADD COLUMN IF NOT EXISTS tokens_used INTEGER DEFAULT 0;
+      ALTER TABLE chat_messages ADD COLUMN IF NOT EXISTS metadata JSONB;
+      CREATE INDEX IF NOT EXISTS idx_chat_threads_org ON chat_threads (organization_id);
+      CREATE INDEX IF NOT EXISTS idx_chat_threads_user ON chat_threads (user_id);
+      CREATE INDEX IF NOT EXISTS idx_chat_threads_project ON chat_threads (project_id);
+      CREATE INDEX IF NOT EXISTS idx_chat_messages_thread ON chat_messages (thread_id, created_at);
     `);
     tablesEnsured = true;
   } catch (e: unknown) {
@@ -59,7 +73,10 @@ async function ensureChatTables(): Promise<void> {
     // which both creates it and repairs databases carrying the old narrow
     // shape. The DDL here is kept as a same-shape fallback for a database that
     // has not had migrations applied — it must stay in sync with that file.
-    console.warn('[chat-thread-helpers] Table ensure warning:', e instanceof Error ? e.message : String(e));
+    console.warn(
+      '[chat-thread-helpers] Table ensure warning:',
+      e instanceof Error ? e.message : String(e)
+    );
     tablesEnsured = true; // Don't retry
   }
 }
@@ -203,7 +220,14 @@ export async function saveChatMessage(
 ): Promise<void> {
   await pool.query(
     'INSERT INTO chat_messages (thread_id, role, content, model, tokens_used, metadata, created_at) VALUES ($1, $2, $3, $4, $5, $6, NOW())',
-    [threadId, role, content, model || null, tokens || 0, metadata ? JSON.stringify(metadata) : null]
+    [
+      threadId,
+      role,
+      content,
+      model || null,
+      tokens || 0,
+      metadata ? JSON.stringify(metadata) : null,
+    ]
   );
   await pool.query('UPDATE chat_threads SET updated_at = NOW() WHERE id = $1', [threadId]);
 }

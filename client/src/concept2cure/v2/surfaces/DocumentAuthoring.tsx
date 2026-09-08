@@ -69,7 +69,12 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { I } from '../icons';
 import type { OwnedSurfaceViewProps } from '../surfaceViews';
 import { EmptyState } from '../dataConnect';
-import { useAnaChat, type AnaChatMessage } from '../../components/ana/useAnaChat';
+import {
+  useAnaChat,
+  type AnaChatMessage,
+  type MessageAttachment,
+} from '../../components/ana/useAnaChat';
+import { CHAT_UPLOAD_ACCEPT, ChatAttachmentList, useChatUpload } from '../../hooks/useChatUpload';
 import { SignoffList } from '../SignoffList';
 import type { PendingSignoff } from '../../components/ana/useGovernedAction';
 import type { AuthoringContextPack } from '@shared/types/authoring-context';
@@ -619,6 +624,7 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
      guessing from the message text, so "tighten this" means this section. */
   const [anaDraft, setAnaDraft] = useState('');
   const anaScrollRef = useRef<HTMLDivElement>(null);
+  const anaFileRef = useRef<HTMLInputElement>(null);
   const authoringContext = useMemo<AuthoringContextPack | null>(
     () =>
       projectIdForOutline
@@ -647,13 +653,24 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
   const moduleContext = useMemo(
     () => ({
       surface: 'document-authoring',
-      documentId: activeDocId,
-      documentTitle: activeDoc?.title ?? null,
-      sectionId: activeSectionId,
-      sectionCode: activeSection?.code ?? null,
-      sectionTitle: activeSection?.title ?? null,
+      summary: activeDoc
+        ? `Editing ${activeDoc.title}`
+        : 'Document authoring with no document selected',
+      facts: activeDoc
+        ? {
+            documentId: activeDocId,
+            documentTitle: activeDoc.title,
+            documentStatus: activeDoc.status,
+            sectionId: activeSectionId,
+            sectionCode: activeSection?.code ?? null,
+            sectionTitle: activeSection?.title ?? null,
+          }
+        : {},
+      available_actions: activeDoc
+        ? ['Draft with AnA', 'Save section', 'View revision history', 'Manage sources']
+        : ['Open a document'],
     }),
-    [activeDocId, activeDoc?.title, activeSectionId, activeSection?.code, activeSection?.title]
+    [activeDoc, activeDocId, activeSectionId, activeSection?.code, activeSection?.title]
   );
   const ana = useAnaChat({
     screenName: 'document-authoring',
@@ -661,6 +678,7 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
     authoringContext,
     moduleContext,
   });
+  const anaUpload = useChatUpload({ projectId: projectIdForOutline });
   const anaComposerRef = useRef<HTMLTextAreaElement>(null);
   const anaReturnFocusRef = useRef<HTMLElement | null>(null);
   const anaWasOpenRef = useRef(false);
@@ -695,14 +713,37 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
      defect was a question with no visible destination, so a silent send would
      only move the silence. */
   const askAna = useCallback(
-    (text: string) => {
+    (text: string, attachments?: MessageAttachment[]) => {
       const clean = (text ?? '').trim();
       if (!clean) return;
       openAna();
-      void ana.send(clean);
+      void ana.send(clean, attachments);
     },
     [ana, openAna]
   );
+
+  const submitAnaDraft = () => {
+    if (anaUpload.uploading || ana.isStreaming) return;
+    const clean = anaDraft.trim();
+    const readyAttachments = anaUpload.attachments.filter(a => a.status === 'ready');
+    if (!clean && readyAttachments.length === 0) return;
+    const attachmentLine = readyAttachments.length
+      ? `Attached: ${readyAttachments.map(a => a.name).join(', ')}`
+      : '';
+    const body = [clean, attachmentLine].filter(Boolean).join('\n\n');
+    const sentAttachments = readyAttachments.map(
+      ({ id, name, fileId, extractionMethod, extractionWords }) => ({
+        id,
+        name,
+        fileId,
+        extractionMethod,
+        extractionWords,
+      })
+    );
+    setAnaDraft('');
+    void askAna(body, sentAttachments);
+    anaUpload.clear();
+  };
 
   useEffect(() => {
     if (rail !== 'ana') return;
@@ -1920,6 +1961,24 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
             )}
           </div>
           <div style={{ padding: '10px 12px', borderTop: '1px solid var(--c2c-line,#e4e7ec)' }}>
+            <ChatAttachmentList
+              attachments={anaUpload.attachments}
+              onRemove={anaUpload.removeAttachment}
+              statusMessage={anaUpload.statusMessage}
+              icon={I.paperclip}
+            />
+            <input
+              ref={anaFileRef}
+              type="file"
+              multiple
+              hidden
+              accept={CHAT_UPLOAD_ACCEPT}
+              aria-label="Attach files to AnA"
+              onChange={e => {
+                anaUpload.addFiles(e.target.files);
+                e.target.value = '';
+              }}
+            />
             <textarea
               className="c2c-input"
               ref={anaComposerRef}
@@ -1929,10 +1988,7 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
               onKeyDown={e => {
                 if (e.key === 'Enter' && !e.shiftKey) {
                   e.preventDefault();
-                  const t = anaDraft.trim();
-                  if (!t || ana.isStreaming) return;
-                  setAnaDraft('');
-                  askAna(t);
+                  submitAnaDraft();
                 }
               }}
               placeholder={activeSection ? `Ask about ${activeSection.code}…` : 'Ask AnA…'}
@@ -1947,19 +2003,27 @@ export function DocumentAuthoring({ onNav }: OwnedSurfaceViewProps) {
                 marginTop: 6,
               }}
             >
+              <button
+                type="button"
+                className="ed-ana-attach"
+                title="Attach files for AnA"
+                aria-label="Attach files for AnA"
+                onClick={() => anaFileRef.current?.click()}
+              >
+                {I.paperclip}
+              </button>
               <span style={{ fontSize: 11, opacity: 0.7 }}>
                 {I.lock} AnA proposes; you accept and save.
               </span>
               <button
                 className="btn primary"
                 style={{ height: 28 }}
-                disabled={!anaDraft.trim() || ana.isStreaming}
-                onClick={() => {
-                  const t = anaDraft.trim();
-                  if (!t) return;
-                  setAnaDraft('');
-                  askAna(t);
-                }}
+                disabled={
+                  (!anaDraft.trim() && anaUpload.attachments.every(a => a.status !== 'ready')) ||
+                  anaUpload.uploading ||
+                  ana.isStreaming
+                }
+                onClick={submitAnaDraft}
               >
                 {ana.isStreaming ? 'Answering…' : 'Send'}
               </button>

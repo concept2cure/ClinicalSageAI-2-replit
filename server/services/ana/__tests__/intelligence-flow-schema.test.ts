@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { ALL_ANA_TOOLS } from '../AnaToolDefinitions.js';
+import { getToolHandler } from '../AnaToolExecutor.js';
 
 /**
  * Regression guard for the answer_intelligence_question schema/handler mismatch:
@@ -27,5 +28,25 @@ describe('answer_intelligence_question schema matches its handler', () => {
     expect(required).toContain('node_id');
     expect(required).toContain('answers');
     expect(required).not.toContain('flow_id');
+  });
+});
+
+describe('intelligence flow client context', () => {
+  it('maps IVD and diagnostics tenants to the device flow family', async () => {
+    const handler = getToolHandler('list_intelligence_flows')!;
+    const result = JSON.parse(await handler({}, { clientType: 'ivd' }));
+    const categories = result.flows.map((flow: { category: string }) => flow.category);
+
+    expect(categories).toContain('device_510k');
+    expect(categories).not.toContain('ind_submission');
+  });
+
+  it('leaves CRO context cross-domain instead of falsely constraining it to pharma', async () => {
+    const handler = getToolHandler('list_intelligence_flows')!;
+    const result = JSON.parse(await handler({}, { clientType: 'cro' }));
+    const categories = result.flows.map((flow: { category: string }) => flow.category);
+
+    expect(categories).toContain('device_510k');
+    expect(categories).toContain('ind_submission');
   });
 });

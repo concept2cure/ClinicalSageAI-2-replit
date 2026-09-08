@@ -76,6 +76,26 @@ describe('selectToolsForTurn', () => {
     );
     expect(n.has('draft_nonclinical_overview_m2_4')).toBe(true);
   });
+
+  it('selects IVD tools from tenant context when the message is generic', () => {
+    const n = names(
+      selectToolsForTurn(ALL, 'draft it', {
+        maxTools: 30,
+        context: { clientType: 'ivd' },
+      }),
+    );
+    expect(n.has('search_ivd_knowledge')).toBe(true);
+  });
+
+  it('maps generic medtech context to device capability vocabulary', () => {
+    const n = names(
+      selectToolsForTurn(ALL, 'draft it', {
+        maxTools: 30,
+        context: { clientType: 'medtech' },
+      }),
+    );
+    expect(n.has('draft_510k_substantial_equivalence')).toBe(true);
+  });
 });
 
 describe('getToolCatalog', () => {

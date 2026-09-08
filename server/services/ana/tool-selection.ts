@@ -50,6 +50,8 @@ const STOPWORDS: ReadonlySet<string> = new Set([
 export interface ToolSelectionContext {
   /** Submission/program type, e.g. "IND", "NDA", "BLA", "510k". */
   projectType?: string;
+  /** Tenant client domain, e.g. "biotech", "medtech", "ivd", "cro". */
+  clientType?: string;
   /** Active document / CTD type, e.g. "nonclinical_overview", "qos", "clinical_summary". */
   documentType?: string;
   /** Active surface / screen, e.g. "cmc", "nonclinical", "labeling". */
@@ -101,6 +103,29 @@ function scoreTool(tool: NamedTool, terms: string[]): number {
 }
 
 /**
+ * Client types are product vocabulary, while tool names are capability
+ * vocabulary. Supply only domain-level synonyms so a generic request from a
+ * known tenant can surface relevant tools without constraining the bridge.
+ */
+function clientTypeHints(clientType: string | undefined): string[] {
+  const normalized = clientType?.trim().toLowerCase();
+  if (!normalized) return [];
+  if (
+    ['medtech', 'medical-device', 'medical_device', 'device', 'mdx', 'ivd', 'diagnostics'].includes(
+      normalized
+    )
+  ) {
+    return ['device', '510k', 'predicate', 'ivd', 'diagnostic'];
+  }
+  if (normalized === 'biotech') return ['biologic', 'bla', 'ind', 'clinical', 'cmc'];
+  if (normalized === 'pharma' || normalized === 'biopharma') {
+    return ['drug', 'nda', 'ind', 'clinical', 'cmc'];
+  }
+  if (normalized === 'cro') return ['clinical', 'trial', 'protocol', 'csr', 'monitoring'];
+  return [];
+}
+
+/**
  * Select the tools to offer for a turn. Always includes the bridge + core; fills
  * the remaining budget with the highest-relevance tools for the query. Returns
  * the full set unchanged when it already fits within `maxTools`, and can be
@@ -124,10 +149,13 @@ export function selectToolsForTurn<T extends NamedTool>(
   const alwaysNames = new Set(always.map(t => t.name));
 
   // Fold the situational context into the intent signal so selection reflects
-  // the project, document type, and surface — not just the message wording.
+  // the client domain, project, document type, and surface — not just the
+  // message wording.
   const ctx = opts.context;
   const signal = [
     query,
+    ctx?.clientType ?? '',
+    ...clientTypeHints(ctx?.clientType),
     ctx?.projectType ?? '',
     ctx?.documentType ?? '',
     ctx?.surface ?? '',

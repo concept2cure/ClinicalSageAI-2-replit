@@ -188,6 +188,8 @@ export interface ToolContext {
   surface?: string | null;
   /** Submission/program type (e.g. 'IND', 'NDA', '510k') — situational context. */
   projectType?: string | null;
+  /** Tenant client type from the system of record — domain context for flows. */
+  clientType?: string | null;
   /** Active document / CTD type (e.g. 'nonclinical_overview', 'qos') — situational context. */
   documentType?: string | null;
 }
@@ -254,6 +256,30 @@ export function getToolHandler(name: string): ToolHandler | undefined {
  */
 export function getRegisteredToolNames(): string[] {
   return [...toolHandlers.keys()];
+}
+
+type IntelligenceClientType = 'pharma' | 'biotech' | 'medtech';
+
+/**
+ * The intelligence engine supports three domain filters. Map known tenant
+ * aliases into those filters and leave service/unknown tenants unfiltered;
+ * defaulting them to pharma would hide their valid device workflows.
+ */
+function resolveIntelligenceClientType(ctx?: ToolContext): IntelligenceClientType | null {
+  const raw = String(ctx?.clientType ?? ctx?.projectType ?? '')
+    .trim()
+    .toLowerCase();
+
+  if (raw === 'pharma' || raw === 'biopharma') return 'pharma';
+  if (raw === 'biotech') return 'biotech';
+  if (
+    ['medtech', 'medical-device', 'medical_device', 'device', 'mdx', 'ivd', 'diagnostics'].includes(
+      raw
+    )
+  ) {
+    return 'medtech';
+  }
+  return null;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -4691,7 +4717,7 @@ const NEEDS_PARAMS_MESSAGE =
 registerToolHandler('compute_sample_size', async (input: Record<string, unknown>, ctx) => {
   try {
     const { anaBiostatsOrchestrator } = await import('../ana-biostats/index.js');
-     
+
     const result = anaBiostatsOrchestrator.quickCompute(toBiostatsInput(input, ctx) as any);
 
     if (!result.validation.valid) {
@@ -4741,7 +4767,7 @@ registerToolHandler('compute_sample_size', async (input: Record<string, unknown>
 registerToolHandler('compute_fih_dose', async (input: Record<string, unknown>) => {
   try {
     const { computeFirstInHumanDose } = await import('../preclinical/fih-dose-engine.js');
-     
+
     const result = computeFirstInHumanDose(input as any);
     return JSON.stringify({
       status: 'computed',
@@ -4767,7 +4793,7 @@ registerToolHandler('classify_tox_findings', async (input: Record<string, unknow
       return JSON.stringify({ status: 'needs_parameters', message: 'findings[] (organ + finding) is required.' });
     }
     const { classifyToxFindings } = await import('../preclinical/tox-findings-classifier.js');
-     
+
     const summary = classifyToxFindings(findings as any);
     return JSON.stringify({
       status: 'classified',
@@ -4795,7 +4821,7 @@ registerToolHandler('select_exposure_response_dose', async (input: Record<string
       normalized.exposuresByDose = map;
     }
     const { selectExposureResponseDose } = await import('../clinical-pharmacology/exposure-response-engine.js');
-     
+
     const result = selectExposureResponseDose(normalized as any);
     return JSON.stringify({
       status: 'computed',
@@ -4822,9 +4848,9 @@ registerToolHandler('draft_nonclinical_overview_m2_4', async (input: Record<stri
     }
     const { buildEnrichedM24 } = await import('../preclinical/nonclinical-m24-adapter.js');
     const { summary, toxProfile } = buildEnrichedM24({
-       
+
       studies: studies as any,
-       
+
       findings: input.findings as any,
       drugSubstanceName: input.drugSubstanceName as string | undefined,
       indication: input.indication as string | undefined,
@@ -4951,7 +4977,7 @@ registerToolHandler('list_platform_commands', async (input: Record<string, unkno
   try {
     const { COMMAND_REGISTRY } = await import('../ana-ri/command-executor.js');
     const q = typeof input.query === 'string' ? input.query.toLowerCase().trim() : '';
-     
+
     let list = COMMAND_REGISTRY as Array<any>;
     if (q) list = list.filter(c => `${c.name} ${c.description ?? ''}`.toLowerCase().includes(q));
     return JSON.stringify({
@@ -4979,7 +5005,7 @@ registerToolHandler('execute_platform_command', async (input: Record<string, unk
     }
     const params = input.params && typeof input.params === 'object' ? (input.params as Record<string, unknown>) : {};
     const { executeCommands, COMMAND_REGISTRY } = await import('../ana-ri/command-executor.js');
-     
+
     if (!(COMMAND_REGISTRY as Array<any>).some(c => c.name === command)) {
       return JSON.stringify({ status: 'unknown_command', message: `Unknown command "${command}". Call list_platform_commands to see the catalog.` });
     }
@@ -4988,7 +5014,7 @@ registerToolHandler('execute_platform_command', async (input: Record<string, unk
       organizationId: Number(organizationId),
       activeProjectId: ctx?.projectId != null ? Number(ctx.projectId) : undefined,
     };
-     
+
     const results = await executeCommands([{ command, params } as any], cmdCtx as any);
     const result = results[0];
     return JSON.stringify({
@@ -5012,7 +5038,7 @@ registerToolHandler('draft_quality_overall_summary_m2_3', async (input: Record<s
     }
     const { composeModule3FromCanonicalSources } = await import('../module3Composer.js');
     const { buildM23QualityOverallSummary } = await import('../m2-summary-builders.js');
-     
+
     const module3Sections = composeModule3FromCanonicalSources(cmcSources as any);
     const summary = buildM23QualityOverallSummary({
       module3Sections,
@@ -5043,7 +5069,7 @@ registerToolHandler('draft_nonclinical_summaries_m2_6', async (input: Record<str
       return JSON.stringify({ status: 'needs_parameters', message: 'studies[] is required to draft the M2.6 summaries.' });
     }
     const { buildM26NonclinicalSummaries } = await import('../preclinical/m26-nonclinical-summaries.js');
-     
+
     const r = buildM26NonclinicalSummaries(input as any);
     return JSON.stringify({
       status: 'drafted',
@@ -5066,7 +5092,7 @@ registerToolHandler('draft_nonclinical_summaries_m2_6', async (input: Record<str
 registerToolHandler('assess_nonclinical_safety', async (input: Record<string, unknown>) => {
   try {
     const { assessNonclinicalSafety } = await import('../preclinical/nonclinical-safety-assessment.js');
-     
+
     const a = assessNonclinicalSafety(input as any);
     return JSON.stringify({
       status: 'assessed',
@@ -5095,9 +5121,9 @@ registerToolHandler('assess_nonclinical_program', async (input: Record<string, u
     const { assessNonclinicalProgram } = await import('../preclinical/nonclinical-program-requirements.js');
     const present = Array.isArray(input.present) ? input.present : [];
     const result = assessNonclinicalProgram(
-       
+
       input as any,
-       
+
       present as any,
     );
     return JSON.stringify({
@@ -5118,7 +5144,7 @@ registerToolHandler('assess_nonclinical_program', async (input: Record<string, u
 registerToolHandler('assess_concentration_qtc', async (input: Record<string, unknown>) => {
   try {
     const { assessConcentrationQtc } = await import('../clinical-pharmacology/concentration-qtc.js');
-     
+
     const result = assessConcentrationQtc(input as any);
     return JSON.stringify({
       status: 'computed',
@@ -5146,7 +5172,7 @@ registerToolHandler('characterize_pk', async (input: Record<string, unknown>) =>
     const mod = await import('../clinical-pharmacology/pk-characterization.js');
     const result: Record<string, unknown> = { status: 'computed', engine: 'deterministic' };
     if (dp) {
-       
+
       result.doseProportionality = mod.assessDoseProportionality(dp as any);
     }
     if (acc) {
@@ -5167,7 +5193,7 @@ registerToolHandler('characterize_pk', async (input: Record<string, unknown>) =>
 registerToolHandler('assess_ddi_risk', async (input: Record<string, unknown>) => {
   try {
     const { assessDdiRisk } = await import('../clinical-pharmacology/ddi-static-model.js');
-     
+
     const result = assessDdiRisk(input as any);
     return JSON.stringify({
       status: 'computed',
@@ -5189,7 +5215,7 @@ registerToolHandler('draft_clinical_summary_m2_7', async (input: Record<string, 
     }
     const { buildM27ClinicalSummary } = await import('../m2-summary-builders.js');
     const summary = buildM27ClinicalSummary({
-       
+
       csrs: csrs as any,
       indication: (input.indication as string) ?? '',
       investigationalProduct: (input.investigationalProduct as string) ?? '',
@@ -5221,9 +5247,9 @@ registerToolHandler('compare_statistical_scenarios', async (input: Record<string
     }
     const meta = { userId: ctx?.userId ?? 0, organizationId: ctx?.organizationId ?? 0 };
     const result = await anaBiostatsOrchestrator.compareScenarios(
-       
+
       toBiostatsInput(a, ctx) as any,
-       
+
       toBiostatsInput(b, ctx) as any,
       meta,
     );
@@ -5254,7 +5280,7 @@ registerToolHandler('compare_statistical_scenarios', async (input: Record<string
 registerToolHandler('assess_statistical_defensibility', async (input: Record<string, unknown>, ctx) => {
   try {
     const { anaBiostatsOrchestrator } = await import('../ana-biostats/index.js');
-     
+
     const result = anaBiostatsOrchestrator.quickCompute(toBiostatsInput(input, ctx) as any);
     if (!result.validation.valid) {
       return JSON.stringify({ status: 'needs_parameters', errors: result.validation.errors, message: NEEDS_PARAMS_MESSAGE });
@@ -5318,7 +5344,7 @@ registerToolHandler('generate_statistical_document', async (input: Record<string
     if (!documentType) {
       return JSON.stringify({ error: 'generate_statistical_document requires a documentType.' });
     }
-     
+
     const result = anaBiostatsOrchestrator.quickCompute(toBiostatsInput(input, ctx) as any);
     if (!result.validation.valid) {
       return JSON.stringify({ status: 'needs_parameters', errors: result.validation.errors, message: NEEDS_PARAMS_MESSAGE });
@@ -5327,7 +5353,7 @@ registerToolHandler('generate_statistical_document', async (input: Record<string
       return JSON.stringify({ error: 'Engine did not return a complete computation; cannot generate the document.' });
     }
     const doc = documentGenerator.generate(
-       
+
       documentType as any,
       result.validation.normalizedInput,
       result.computation,
@@ -5360,7 +5386,7 @@ registerToolHandler('generate_statistical_document', async (input: Record<string
 registerToolHandler('assess_analytical_similarity', async (input: Record<string, unknown>) => {
   try {
     const { assessAnalyticalSimilarity } = await import('../biologics/analytical-similarity.js');
-     
+
     const result = assessAnalyticalSimilarity(input as any);
     return JSON.stringify({
       status: 'computed',
@@ -5378,7 +5404,7 @@ registerToolHandler('assess_analytical_similarity', async (input: Record<string,
 registerToolHandler('assess_comparability', async (input: Record<string, unknown>) => {
   try {
     const { assessComparability } = await import('../biologics/comparability.js');
-     
+
     const result = assessComparability(input as any);
     return JSON.stringify({
       status: 'computed',
@@ -5396,7 +5422,7 @@ registerToolHandler('assess_comparability', async (input: Record<string, unknown
 registerToolHandler('assess_immunogenicity', async (input: Record<string, unknown>) => {
   try {
     const { assessImmunogenicity } = await import('../biologics/immunogenicity.js');
-     
+
     const result = assessImmunogenicity(input as any);
     return JSON.stringify({
       status: 'computed',
@@ -5414,7 +5440,7 @@ registerToolHandler('assess_immunogenicity', async (input: Record<string, unknow
 registerToolHandler('assess_bla_filing_risk', async (input: Record<string, unknown>) => {
   try {
     const { assessBlaFilingRisk } = await import('../biologics/regulatory-risk.js');
-     
+
     const result = assessBlaFilingRisk(input as any);
     return JSON.stringify({
       status: 'computed',
@@ -5432,7 +5458,7 @@ registerToolHandler('assess_bla_filing_risk', async (input: Record<string, unkno
 registerToolHandler('generate_sop', async (input: Record<string, unknown>) => {
   try {
     const { generateSop } = await import('../sop-generator.js');
-     
+
     const result = generateSop(input as any);
     return JSON.stringify({
       status: 'generated',
@@ -5455,7 +5481,7 @@ registerToolHandler('generate_sop', async (input: Record<string, unknown>) => {
 registerToolHandler('resolve_submission_plan', async (input: Record<string, unknown>) => {
   try {
     const { resolveSubmissionPlan, submissionCoverageMatrix } = await import('../regulatory/submission-resolver.js');
-     
+
     const plan = resolveSubmissionPlan(input as any);
     const coverage = submissionCoverageMatrix();
     return JSON.stringify({
@@ -17861,7 +17887,7 @@ registerToolHandler('start_intelligence_flow', async (input, ctx) => {
     organizationId: ctx?.organizationId ?? null,
     userId: ctx?.userId ?? null,
     projectId: ctx?.projectId ? String(ctx.projectId) : null,
-    clientType: (ctx?.projectType === 'medtech' ? 'medtech' : ctx?.projectType === 'biotech' ? 'biotech' : 'pharma') as 'pharma' | 'biotech' | 'medtech',
+    clientType: resolveIntelligenceClientType(ctx),
   };
 
   try {
@@ -17905,7 +17931,7 @@ registerToolHandler('answer_intelligence_question', async (input, ctx) => {
     organizationId: ctx?.organizationId ?? null,
     userId: ctx?.userId ?? null,
     projectId: ctx?.projectId ? String(ctx.projectId) : null,
-    clientType: (ctx?.projectType === 'medtech' ? 'medtech' : ctx?.projectType === 'biotech' ? 'biotech' : 'pharma') as 'pharma' | 'biotech' | 'medtech',
+    clientType: resolveIntelligenceClientType(ctx),
   };
 
   try {
@@ -17955,7 +17981,7 @@ registerToolHandler('list_intelligence_flows', async (_input, ctx) => {
     organizationId: ctx?.organizationId ?? null,
     userId: ctx?.userId ?? null,
     projectId: ctx?.projectId ? String(ctx.projectId) : null,
-    clientType: (ctx?.projectType === 'medtech' ? 'medtech' : ctx?.projectType === 'biotech' ? 'biotech' : 'pharma') as 'pharma' | 'biotech' | 'medtech',
+    clientType: resolveIntelligenceClientType(ctx),
   };
 
   const flows = getAvailableFlows(engineCtx);

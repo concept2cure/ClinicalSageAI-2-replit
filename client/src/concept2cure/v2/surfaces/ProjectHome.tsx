@@ -3,8 +3,21 @@ import { I } from '../icons';
 import { EmptyState, useLiveData, hasKeys, liveMutateOrNull, type DataState } from '../dataConnect';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { getSegmentModules, getSurfaceMeta } from '../registryModel';
-import { PJ_LIFECYCLE, PJ_STAGE_TOOLS, Ring, pjInitials, fileTone } from '../fixtures/project-home-data';
-import { useChatUpload, attachmentReadLabel as readLabel } from '../../hooks/useChatUpload';
+import { usePublishSurfaceContext } from '../surfaceContext';
+import {
+  PJ_LIFECYCLE,
+  PJ_STAGE_TOOLS,
+  Ring,
+  pjInitials,
+  fileTone,
+} from '../fixtures/project-home-data';
+import {
+  CHAT_UPLOAD_ACCEPT,
+  ChatAttachmentList,
+  useChatUpload,
+  attachmentReadLabel as readLabel,
+} from '../../hooks/useChatUpload';
+import type { MessageAttachment } from '../../components/ana/useAnaChat';
 import '../styles/project-home-v2.css';
 
 /* ── Window globals — cross-surface project selection handoff ──
@@ -18,7 +31,7 @@ import '../styles/project-home-v2.css';
 declare global {
   interface Window {
     C2C_PROJECT?: Record<string, string>;
-    C2C_CONVO?: Record<string, string>;
+    C2C_CONVO?: { id: string; seed?: string | null; attachments?: MessageAttachment[] };
     /** cre_evidence_sources ids the user pinned in the data room as AnA context. */
     C2C_SOURCE_PINS?: string[];
     C2C?: Record<string, (...args: unknown[]) => void>;
@@ -98,7 +111,9 @@ interface DraftRow {
 function fmtWhen(v: string | null | undefined): string | null {
   if (!v) return null;
   const d = new Date(v);
-  return Number.isNaN(d.getTime()) ? null : d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+  return Number.isNaN(d.getTime())
+    ? null
+    : d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 }
 
 /* Small four-state wrapper mirroring the Nonclinical/Biostatistics reference:
@@ -115,10 +130,21 @@ function Anchored<T>(props: {
 }) {
   const { state } = props;
   if (state.loading) {
-    return <div className="scaf-note" style={{ padding: '16px 10px' }}>{props.loadingText}</div>;
+    return (
+      <div className="scaf-note" style={{ padding: '16px 10px' }}>
+        {props.loadingText}
+      </div>
+    );
   }
   if (state.error) {
-    return <EmptyState tone="error" icon={I.alertTriangle} title={props.errorTitle} hint={props.errorHint} />;
+    return (
+      <EmptyState
+        tone="error"
+        icon={I.alertTriangle}
+        title={props.errorTitle}
+        hint={props.errorHint}
+      />
+    );
   }
   if (!state.data || (props.isEmpty ? props.isEmpty(state.data) : false)) {
     return <EmptyState icon={I.fileText} title={props.emptyTitle} hint={props.emptyHint} />;
@@ -133,11 +159,19 @@ function StageTracker({ stage, setStage }: { stage: string; setStage: (s: string
   return (
     <div className="pj-lc" role="tablist" aria-label="Project lifecycle">
       {PJ_LIFECYCLE.map((s, i) => {
-        const status = i < curIdx ? 'done' : (i === curIdx ? 'active' : 'upcoming');
+        const status = i < curIdx ? 'done' : i === curIdx ? 'active' : 'upcoming';
         return (
-          <button key={s.id} className="pj-lc-stage" data-status={status} aria-selected={stage === s.id || undefined}
-            onClick={() => setStage(s.id)} title={s.blurb}>
-            <span className="pj-lc-node"><span className="pj-lc-ic">{I[s.icon] || I.grid}</span></span>
+          <button
+            key={s.id}
+            className="pj-lc-stage"
+            data-status={status}
+            aria-selected={stage === s.id || undefined}
+            onClick={() => setStage(s.id)}
+            title={s.blurb}
+          >
+            <span className="pj-lc-node">
+              <span className="pj-lc-ic">{I[s.icon] || I.grid}</span>
+            </span>
             <span className="pj-lc-l">{s.label}</span>
           </button>
         );
@@ -151,12 +185,18 @@ function StagePanel({ stage, onNav }: { stage: string; onNav: (id: string) => vo
   const tools = PJ_STAGE_TOOLS[stage] || [];
   return (
     <section className="pj-sec">
-      <div className="pj-sec-h"><h2>{meta.label}</h2><span className="sec-sub">{meta.blurb}</span></div>
+      <div className="pj-sec-h">
+        <h2>{meta.label}</h2>
+        <span className="sec-sub">{meta.blurb}</span>
+      </div>
       <div className="pj-tools">
         {tools.map(t => (
           <button key={t.id} className="pj-tool" onClick={() => onNav(t.id)}>
             <span className="pj-tool-ico">{I[t.icon] || I.grid}</span>
-            <span className="pj-tool-b"><span className="pj-tool-t">{t.label}</span><span className="pj-tool-d">{t.desc}</span></span>
+            <span className="pj-tool-b">
+              <span className="pj-tool-t">{t.label}</span>
+              <span className="pj-tool-d">{t.desc}</span>
+            </span>
             <span className="pj-tool-go">{I.right}</span>
           </button>
         ))}
@@ -214,7 +254,9 @@ interface ChangedUsageRow {
  * not the same as "cited nowhere", and guessing would be the fabrication this
  * surface exists to avoid.
  */
-function usedIn(s: SourceRow): { label: string; tone: 'ok' | 'warn' | 'muted'; title: string } | null {
+function usedIn(
+  s: SourceRow
+): { label: string; tone: 'ok' | 'warn' | 'muted'; title: string } | null {
   if (!s.usage) return null;
   const { sections, documents, changedSections } = s.usage;
   if (sections === 0) {
@@ -234,7 +276,11 @@ function usedIn(s: SourceRow): { label: string; tone: 'ok' | 'warn' | 'muted'; t
         'This source changed after those sections cited it. They were drafted from the earlier content — review them; nothing is rewritten automatically.',
     };
   }
-  return { label: `${where}${docs}`, tone: 'ok', title: 'Sections that recorded a citation of this source' };
+  return {
+    label: `${where}${docs}`,
+    tone: 'ok',
+    title: 'Sections that recorded a citation of this source',
+  };
 }
 
 function prettyBytes(n: number | null): string | null {
@@ -242,7 +288,10 @@ function prettyBytes(n: number | null): string | null {
   const units = ['B', 'KB', 'MB', 'GB'];
   let v = n;
   let i = 0;
-  while (v >= 1024 && i < units.length - 1) { v /= 1024; i++; }
+  while (v >= 1024 && i < units.length - 1) {
+    v /= 1024;
+    i++;
+  }
   return `${v < 10 && i > 0 ? v.toFixed(1) : Math.round(v)} ${units[i]}`;
 }
 
@@ -274,7 +323,15 @@ function readState(s: SourceRow): { label: string; tone: 'ok' | 'warn' | 'muted'
   return { label: 'Not processed yet', tone: 'muted' };
 }
 
-function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: string) => void; onAsk: (q: string) => void }) {
+function DataRoom({
+  pid,
+  onNav,
+  onAsk,
+}: {
+  pid: string | null;
+  onNav: (id: string) => void;
+  onAsk: (q: string) => void;
+}) {
   const [reloadKey, setReloadKey] = useState(0);
   const [q, setQ] = useState('');
   // Sources the user has pinned as context for the next AnA turn. Handed over
@@ -287,7 +344,7 @@ function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: strin
   const state = useLiveData<{ sources: SourceRow[] }>(
     pid ? `/api/c2c/projects/${pid}/sources` : null,
     [pid, reloadKey],
-    hasKeys<{ sources: SourceRow[] }>('sources'),
+    hasKeys<{ sources: SourceRow[] }>('sources')
   );
 
   // Sections in this project drafted from a source that has since changed. Read
@@ -296,7 +353,7 @@ function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: strin
   // fabricated all-clear.
   const changed = useLiveData<{ changes: ChangedUsageRow[]; count: number }>(
     pid ? `/api/c2c/projects/${pid}/source-changes` : null,
-    [pid, reloadKey],
+    [pid, reloadKey]
   );
   const changes = changed.data?.changes ?? [];
 
@@ -312,7 +369,7 @@ function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: strin
 
   const sources = state.data?.sources ?? [];
   const rows = sources.filter(s =>
-    q.trim() ? (s.title || '').toLowerCase().includes(q.trim().toLowerCase()) : true,
+    q.trim() ? (s.title || '').toLowerCase().includes(q.trim().toLowerCase()) : true
   );
   const total = sources.length;
   const readable = sources.filter(s => s.extractionStatus === 'extracted').length;
@@ -327,8 +384,10 @@ function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: strin
           {state.error
             ? "couldn't load this project's sources — the list below is incomplete"
             : total > 0
-              ? `${total} source${total === 1 ? '' : 's'} · ${readable} readable — what this project's documents are written from`
-              : "the sources this project's documents are written from"}
+            ? `${total} source${
+                total === 1 ? '' : 's'
+              } · ${readable} readable — what this project's documents are written from`
+            : "the sources this project's documents are written from"}
         </span>
       </div>
 
@@ -336,9 +395,12 @@ function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: strin
       <div
         className="pj-dropzone"
         data-dragging={dragging || undefined}
-        onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
+        onDragOver={e => {
+          e.preventDefault();
+          setDragging(true);
+        }}
         onDragLeave={() => setDragging(false)}
-        onDrop={(e) => {
+        onDrop={e => {
           e.preventDefault();
           setDragging(false);
           if (e.dataTransfer?.files?.length) addFiles(e.dataTransfer.files);
@@ -346,12 +408,20 @@ function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: strin
         onClick={() => fileRef.current?.click()}
         role="button"
         tabIndex={0}
-        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') fileRef.current?.click(); }}
+        onKeyDown={e => {
+          if (e.key === 'Enter' || e.key === ' ') fileRef.current?.click();
+        }}
         aria-label="Add sources to this project"
         style={{
-          border: '1px dashed var(--border,#d0d5dd)', borderRadius: 10, padding: '14px 16px',
-          display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer',
-          background: dragging ? 'var(--accent-muted,#eef2ff)' : 'transparent', marginBottom: 12,
+          border: '1px dashed var(--border,#d0d5dd)',
+          borderRadius: 10,
+          padding: '14px 16px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 10,
+          cursor: 'pointer',
+          background: dragging ? 'var(--accent-muted,#eef2ff)' : 'transparent',
+          marginBottom: 12,
         }}
       >
         <span aria-hidden="true">{I.paperclip}</span>
@@ -365,7 +435,10 @@ function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: strin
           aria-label="Attach files to this project"
           multiple
           hidden
-          onChange={(e) => { if (e.target.files?.length) addFiles(e.target.files); e.target.value = ''; }}
+          onChange={e => {
+            if (e.target.files?.length) addFiles(e.target.files);
+            e.target.value = '';
+          }}
         />
       </div>
 
@@ -380,8 +453,11 @@ function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: strin
           className="sp-tone-warn"
           role="status"
           style={{
-            border: '1px solid var(--border,#d0d5dd)', borderRadius: 10,
-            padding: '10px 12px', marginBottom: 12, fontSize: 12.5,
+            border: '1px solid var(--border,#d0d5dd)',
+            borderRadius: 10,
+            padding: '10px 12px',
+            marginBottom: 12,
+            fontSize: 12.5,
           }}
         >
           <b>
@@ -389,7 +465,7 @@ function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: strin
             {changes.length === 1 ? 'was' : 'were'} drafted from a source that has since changed.
           </b>
           <div style={{ marginTop: 6, display: 'grid', gap: 3 }}>
-            {changes.slice(0, 6).map((c) => (
+            {changes.slice(0, 6).map(c => (
               <span key={c.citationId}>
                 {c.documentTitle || 'Untitled document'}
                 {c.sectionCode ? ` · ${c.sectionCode}` : ''}
@@ -408,14 +484,21 @@ function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: strin
       )}
 
       {/* Live upload state, and the screen-reader announcement the hook maintains. */}
-      <div aria-live="polite" className="sr-only">{statusMessage}</div>
+      <div aria-live="polite" className="sr-only">
+        {statusMessage}
+      </div>
       {attachments.length > 0 && (
         <div style={{ marginBottom: 10, display: 'flex', flexWrap: 'wrap', gap: 6 }}>
           {attachments.map(a => (
             <span
               key={a.id}
               className={a.status === 'error' ? 'sp-tone-warn' : undefined}
-              style={{ fontSize: 12, border: '1px solid var(--border,#d0d5dd)', borderRadius: 999, padding: '2px 10px' }}
+              style={{
+                fontSize: 12,
+                border: '1px solid var(--border,#d0d5dd)',
+                borderRadius: 999,
+                padding: '2px 10px',
+              }}
             >
               {a.status === 'uploading' ? `Uploading ${a.name}…` : a.name}
               {a.status === 'ready' && readLabel(a.extractionMethod, a.extractionWords)
@@ -433,7 +516,7 @@ function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: strin
             className="pj-input"
             placeholder="Search sources…"
             value={q}
-            onChange={(e) => setQ(e.target.value)}
+            onChange={e => setQ(e.target.value)}
             aria-label="Search sources"
             style={{ width: '100%', maxWidth: 320, fontSize: 13, padding: '5px 10px' }}
           />
@@ -447,7 +530,7 @@ function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: strin
         errorHint="The sources read didn't respond. Sign in and retry, or check the service is reachable."
         emptyTitle="No sources in this project yet"
         emptyHint="Add the documents this project's submission will be written from — protocols, CSRs, prior correspondence. Every file is read on upload and becomes a traceable source."
-        isEmpty={(d) => (d.sources ?? []).length === 0}
+        isEmpty={d => (d.sources ?? []).length === 0}
         render={() =>
           rows.length === 0 ? (
             <div className="scaf-note" style={{ padding: '10px' }}>
@@ -455,7 +538,7 @@ function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: strin
             </div>
           ) : (
             <div className="pj-srcs">
-              {rows.map((s) => {
+              {rows.map(s => {
                 const rs = readState(s);
                 const use = usedIn(s);
                 const size = prettyBytes(s.fileSize);
@@ -464,7 +547,10 @@ function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: strin
                     key={s.id}
                     className="pj-src"
                     style={{
-                      display: 'flex', alignItems: 'center', gap: 10, padding: '8px 10px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 10,
+                      padding: '8px 10px',
                       borderBottom: '1px solid var(--border-subtle,#eaecf0)',
                     }}
                   >
@@ -476,9 +562,9 @@ function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: strin
                       type="checkbox"
                       checked={pinned.includes(s.id)}
                       disabled={s.extractionStatus !== 'extracted'}
-                      onChange={(e) =>
-                        setPinned((prev) =>
-                          e.target.checked ? [...prev, s.id] : prev.filter((id) => id !== s.id),
+                      onChange={e =>
+                        setPinned(prev =>
+                          e.target.checked ? [...prev, s.id] : prev.filter(id => id !== s.id)
                         )
                       }
                       aria-label={`Use ${s.title || `source ${s.id}`} as context`}
@@ -490,7 +576,16 @@ function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: strin
                     />
                     <span aria-hidden="true">{I.fileText}</span>
                     <span style={{ flex: 1, minWidth: 0 }}>
-                      <span style={{ display: 'block', fontSize: 13, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      <span
+                        style={{
+                          display: 'block',
+                          fontSize: 13,
+                          fontWeight: 600,
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
                         {s.title || `Source ${s.id}`}
                       </span>
                       <span className="sec-sub" style={{ fontSize: 11.5 }}>
@@ -503,8 +598,18 @@ function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: strin
                           sent no usage field rather than shown as zero. */}
                       {use && (
                         <span
-                          className={use.tone === 'ok' ? 'sp-tone-ok' : use.tone === 'warn' ? 'sp-tone-warn' : undefined}
-                          style={{ display: 'block', fontSize: 11.5, opacity: use.tone === 'muted' ? 0.7 : 1 }}
+                          className={
+                            use.tone === 'ok'
+                              ? 'sp-tone-ok'
+                              : use.tone === 'warn'
+                              ? 'sp-tone-warn'
+                              : undefined
+                          }
+                          style={{
+                            display: 'block',
+                            fontSize: 11.5,
+                            opacity: use.tone === 'muted' ? 0.7 : 1,
+                          }}
                           title={use.title}
                         >
                           {use.label}
@@ -512,7 +617,13 @@ function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: strin
                       )}
                     </span>
                     <span
-                      className={rs.tone === 'ok' ? 'sp-tone-ok' : rs.tone === 'warn' ? 'sp-tone-warn' : undefined}
+                      className={
+                        rs.tone === 'ok'
+                          ? 'sp-tone-ok'
+                          : rs.tone === 'warn'
+                          ? 'sp-tone-warn'
+                          : undefined
+                      }
                       style={{ fontSize: 11.5, whiteSpace: 'nowrap' }}
                       title="Reported by the source's own extraction status"
                     >
@@ -527,10 +638,19 @@ function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: strin
       />
 
       <div className="cm-pushbar" style={{ marginTop: 12 }}>
-        <button className="btn ghost" style={{ fontSize: 12, padding: '4px 12px' }} onClick={() => onNav('source-tracer')}>
+        <button
+          className="btn ghost"
+          style={{ fontSize: 12, padding: '4px 12px' }}
+          onClick={() => onNav('source-tracer')}
+        >
           Trace a claim to its source {I.right}
         </button>
-        <button className="btn ghost" style={{ fontSize: 12, padding: '4px 12px' }} onClick={() => onNav('document-authoring')} disabled={uploading}>
+        <button
+          className="btn ghost"
+          style={{ fontSize: 12, padding: '4px 12px' }}
+          onClick={() => onNav('document-authoring')}
+          disabled={uploading}
+        >
           Write from these sources {I.right}
         </button>
         {pinned.length > 0 && (
@@ -543,7 +663,9 @@ function DataRoom({ pid, onNav, onAsk }: { pid: string | null; onNav: (id: strin
               // documents — not on whatever its own retrieval would have picked.
               window.C2C_SOURCE_PINS = pinned.map(String);
               onAsk(
-                `Use the ${pinned.length} source${pinned.length === 1 ? '' : 's'} I pinned in the data room as the context for this project.`,
+                `Use the ${pinned.length} source${
+                  pinned.length === 1 ? '' : 's'
+                } I pinned in the data room as the context for this project.`
               );
             }}
           >
@@ -624,12 +746,12 @@ function SchedulePanel({ pid, onAsk }: { pid: string | null; onAsk: (q: string) 
   const state = useLiveData<ScheduleViewRow>(
     ident ? `/api/concept2cure/projects/${ident}/schedule-of-events` : null,
     [ident, reloadKey],
-    hasKeys<ScheduleViewRow>('plan', 'milestones'),
+    hasKeys<ScheduleViewRow>('plan', 'milestones')
   );
 
   const askGenerate = () =>
     onAsk(
-      'Generate a schedule of events for this project — the regulatory milestone plan for its pathway, with dates toward our target submission.',
+      'Generate a schedule of events for this project — the regulatory milestone plan for its pathway, with dates toward our target submission.'
     );
 
   // Real POST /projects/:id/schedule-of-events/generate (routes/
@@ -642,13 +764,13 @@ function SchedulePanel({ pid, onAsk }: { pid: string | null; onAsk: (q: string) 
     const res = await liveMutateOrNull<ScheduleViewRow>(
       'POST',
       `/api/concept2cure/projects/${ident}/schedule-of-events/generate`,
-      {},
+      {}
     );
     setGenBusy(false);
     if (res.error) {
       setGenError(res.error);
     } else {
-      setReloadKey((k) => k + 1);
+      setReloadKey(k => k + 1);
     }
   };
 
@@ -661,7 +783,9 @@ function SchedulePanel({ pid, onAsk }: { pid: string | null; onAsk: (q: string) 
             ? [
                 state.data.plan.regulatoryFramework,
                 `v${state.data.plan.version}`,
-                fmtDue(state.data.plan.targetDate) ? `target ${fmtDue(state.data.plan.targetDate)}` : null,
+                fmtDue(state.data.plan.targetDate)
+                  ? `target ${fmtDue(state.data.plan.targetDate)}`
+                  : null,
               ]
                 .filter(Boolean)
                 .join(' · ')
@@ -686,35 +810,50 @@ function SchedulePanel({ pid, onAsk }: { pid: string | null; onAsk: (q: string) 
           errorHint="The schedule-of-events read didn't respond. Sign in and retry, or check the service is reachable."
           emptyTitle="No schedule generated"
           emptyHint="Ask AnA to generate one — a regulatory milestone plan grounded in this project's pathway — or generate it from the pathway template below."
-          isEmpty={(d) => !d.plan && (d.milestones ?? []).length === 0}
-          render={(d) => {
+          isEmpty={d => !d.plan && (d.milestones ?? []).length === 0}
+          render={d => {
             const milestones = d.milestones ?? [];
-            const open = milestones.filter((m) => m.status !== 'completed');
+            const open = milestones.filter(m => m.status !== 'completed');
             const completed = milestones.length - open.length;
             const shown = open.slice(0, SCHED_SHOWN);
             return (
               <>
                 {d.health?.summary && (
-                  <div className="scaf-note" style={{ padding: '4px 0 10px', fontSize: 12.5 }}>{d.health.summary}</div>
+                  <div className="scaf-note" style={{ padding: '4px 0 10px', fontSize: 12.5 }}>
+                    {d.health.summary}
+                  </div>
                 )}
                 <div className="pj-sched" style={{ display: 'grid', gap: 0 }}>
-                  {shown.map((m) => {
+                  {shown.map(m => {
                     const due = fmtDue(m.targetDate);
                     return (
                       <div
                         key={m.key || m.id}
                         style={{
-                          display: 'flex', alignItems: 'baseline', gap: 10, padding: '7px 2px',
+                          display: 'flex',
+                          alignItems: 'baseline',
+                          gap: 10,
+                          padding: '7px 2px',
                           borderBottom: '1px solid var(--border-subtle,#eaecf0)',
                         }}
                       >
-                        <span className={`rd-chip ${SCHED_STATUS_TONE[m.status] ?? 'tone-idle'}`} style={{ whiteSpace: 'nowrap' }}>
+                        <span
+                          className={`rd-chip ${SCHED_STATUS_TONE[m.status] ?? 'tone-idle'}`}
+                          style={{ whiteSpace: 'nowrap' }}
+                        >
                           {String(m.status || 'not_started').replace(/_/g, ' ')}
                         </span>
                         <span style={{ flex: 1, minWidth: 0 }}>
                           <span style={{ display: 'block', fontSize: 13, fontWeight: 600 }}>
                             {m.title}
-                            {m.isCritical && <span className="sp-tone-warn" style={{ fontSize: 11, marginLeft: 6 }}>critical path</span>}
+                            {m.isCritical && (
+                              <span
+                                className="sp-tone-warn"
+                                style={{ fontSize: 11, marginLeft: 6 }}
+                              >
+                                critical path
+                              </span>
+                            )}
                           </span>
                           <span className="sec-sub" style={{ fontSize: 11.5 }}>
                             {[m.regulatoryBasis, m.ownerRole].filter(Boolean).join(' · ')}
@@ -731,7 +870,9 @@ function SchedulePanel({ pid, onAsk }: { pid: string | null; onAsk: (q: string) 
                   })}
                 </div>
                 <div className="sec-sub" style={{ fontSize: 11.5, marginTop: 8 }}>
-                  {open.length > SCHED_SHOWN ? `+${open.length - SCHED_SHOWN} more upcoming · ` : ''}
+                  {open.length > SCHED_SHOWN
+                    ? `+${open.length - SCHED_SHOWN} more upcoming · `
+                    : ''}
                   {completed > 0 ? `${completed} completed · ` : ''}
                   {milestones.length} milestone{milestones.length === 1 ? '' : 's'} total
                 </div>
@@ -745,17 +886,30 @@ function SchedulePanel({ pid, onAsk }: { pid: string | null; onAsk: (q: string) 
           generate_schedule_of_events AnA tool, and the button calls the real
           POST generate endpoint. Rendered only in the numeric id-space where
           they can actually act on THIS project. */}
-      {ident && !state.loading && !state.error && state.data && !state.data.plan
-        && (state.data.milestones ?? []).length === 0 && (
-        <div className="cm-pushbar" style={{ marginTop: 10 }}>
-          <button className="btn ghost" style={{ fontSize: 12, padding: '4px 12px' }} onClick={askGenerate}>
-            {I.sparkles} Ask AnA to generate one
-          </button>
-          <button className="btn" style={{ fontSize: 12, padding: '4px 12px' }} disabled={genBusy} onClick={generate}>
-            {genBusy ? 'Generating…' : 'Generate schedule'}
-          </button>
-        </div>
-      )}
+      {ident &&
+        !state.loading &&
+        !state.error &&
+        state.data &&
+        !state.data.plan &&
+        (state.data.milestones ?? []).length === 0 && (
+          <div className="cm-pushbar" style={{ marginTop: 10 }}>
+            <button
+              className="btn ghost"
+              style={{ fontSize: 12, padding: '4px 12px' }}
+              onClick={askGenerate}
+            >
+              {I.sparkles} Ask AnA to generate one
+            </button>
+            <button
+              className="btn"
+              style={{ fontSize: 12, padding: '4px 12px' }}
+              disabled={genBusy}
+              onClick={generate}
+            >
+              {genBusy ? 'Generating…' : 'Generate schedule'}
+            </button>
+          </div>
+        )}
       {genError && (
         <div className="sp-tone-warn" role="status" style={{ fontSize: 12, marginTop: 6 }}>
           Couldn&rsquo;t generate the schedule: {genError}
@@ -784,16 +938,44 @@ function SchedulePanel({ pid, onAsk }: { pid: string | null; onAsk: (q: string) 
    show it. The one remaining message is the standing intro — framing, not a
    reply, and it says nothing about what has been done. */
 
-function ConversationComposer({ productName, onNav }: { productName: string; onNav: (id: string) => void }) {
+function ConversationComposer({
+  productName,
+  onNav,
+}: {
+  productName: string;
+  onNav: (id: string) => void;
+}) {
   const [draft, setDraft] = useState('');
+  const fileRef = useRef<HTMLInputElement>(null);
+  const projectId = window.C2C_PROJECT?.id ?? null;
+  const upload = useChatUpload({ projectId });
 
   const intro =
-    "I'm your co-author on " + productName + ", bound to this project's governed dossier. " +
+    "I'm your co-author on " +
+    productName +
+    ", bound to this project's governed dossier. " +
     "Ask me to draft, reconcile, or review a section and I'll open the full thread with " +
     'every step grounded to its source.';
 
   const openThread = () => {
-    window.C2C_CONVO = { id: 'new', seed: draft.trim() || '' };
+    if (upload.uploading) return;
+    const readyAttachments = upload.attachments.filter(a => a.status === 'ready');
+    const attachmentLine = readyAttachments.length
+      ? `Attached: ${readyAttachments.map(a => a.name).join(', ')}`
+      : '';
+    window.C2C_CONVO = {
+      id: 'new',
+      seed: [draft.trim(), attachmentLine].filter(Boolean).join('\n\n'),
+      attachments: readyAttachments.map(
+        ({ id, name, fileId, extractionMethod, extractionWords }) => ({
+          id,
+          name,
+          fileId,
+          extractionMethod,
+          extractionWords,
+        })
+      ),
+    };
     onNav('conversation-thread');
   };
 
@@ -801,17 +983,74 @@ function ConversationComposer({ productName, onNav }: { productName: string; onN
     <div className="pj-convo">
       <div className="pj-convo-h">
         <span className="pj-convo-mark">{I.sparkles}</span>
-        <div className="pj-convo-id"><span className="pj-convo-t">AnA · co-author</span><span className="pj-convo-ctx">{productName} · governed dossier</span></div>
-        <button className="pj-convo-open" onClick={openThread}>Open full thread {I.arrowRight}</button>
+        <div className="pj-convo-id">
+          <span className="pj-convo-t">AnA · co-author</span>
+          <span className="pj-convo-ctx">{productName} · governed dossier</span>
+        </div>
+        <button className="pj-convo-open" onClick={openThread} disabled={upload.uploading}>
+          Open full thread {I.arrowRight}
+        </button>
       </div>
       <div className="pj-convo-scroll">
-        <div className="pj-msg ana"><span className="pj-msg-av">{I.sparkles}</span><div className="pj-msg-b">{intro}</div></div>
+        <div className="pj-msg ana">
+          <span className="pj-msg-av">{I.sparkles}</span>
+          <div className="pj-msg-b">{intro}</div>
+        </div>
       </div>
       <div className="pj-composer">
-        <textarea rows={2} aria-label="Message AnA about this project" placeholder={'Message AnA about ' + productName + '…'} value={draft} onChange={e => setDraft(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); openThread(); } }} />
+        <ChatAttachmentList
+          attachments={upload.attachments}
+          onRemove={upload.removeAttachment}
+          statusMessage={upload.statusMessage}
+          icon={I.paperclip}
+        />
+        <input
+          ref={fileRef}
+          type="file"
+          multiple
+          hidden
+          accept={CHAT_UPLOAD_ACCEPT}
+          aria-label="Attach files to the project conversation"
+          onChange={e => {
+            upload.addFiles(e.target.files);
+            e.target.value = '';
+          }}
+        />
+        <textarea
+          rows={2}
+          aria-label="Message AnA about this project"
+          placeholder={'Message AnA about ' + productName + '…'}
+          value={draft}
+          onChange={e => setDraft(e.target.value)}
+          onKeyDown={e => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+              e.preventDefault();
+              openThread();
+            }
+          }}
+        />
         <div className="pj-composer-row">
+          <button
+            type="button"
+            className="pj-comp-attach"
+            title="Attach files for AnA"
+            aria-label="Attach files for AnA"
+            onClick={() => fileRef.current?.click()}
+          >
+            {I.paperclip}
+          </button>
           <span className="sp" />
-          <button className="pj-comp-send" aria-label="Send message to AnA" disabled={!draft.trim()} onClick={openThread}>{I.arrowUp}</button>
+          <button
+            className="pj-comp-send"
+            aria-label="Open full thread"
+            disabled={
+              (!draft.trim() && upload.attachments.every(a => a.status !== 'ready')) ||
+              upload.uploading
+            }
+            onClick={openThread}
+          >
+            {I.arrowUp}
+          </button>
         </div>
       </div>
     </div>
@@ -821,7 +1060,14 @@ function ConversationComposer({ productName, onNav }: { productName: string; onN
 /* ════ Author workspace — real anchored slices + honest empties ════ */
 
 function AuthorWorkspace({
-  seg, pid, onNav, onAsk, teamState, activityState, wsState, draftsState,
+  seg,
+  pid,
+  onNav,
+  onAsk,
+  teamState,
+  activityState,
+  wsState,
+  draftsState,
 }: {
   seg: string;
   /** regulatory_programs UUID — scopes the data room to this project. */
@@ -838,7 +1084,10 @@ function AuthorWorkspace({
       <div className="pj-main">
         {/* Workspace tools — canonical registry navigation (not data) */}
         <section className="pj-sec">
-          <div className="pj-sec-h"><h2>Workspace</h2><span className="sec-sub">Every capability, scoped to this project</span></div>
+          <div className="pj-sec-h">
+            <h2>Workspace</h2>
+            <span className="sec-sub">Every capability, scoped to this project</span>
+          </div>
           {getSegmentModules(seg).map((grp: { label: string; items: string[] }) => (
             <div key={grp.label} className="pj-toolgrp">
               <div className="pj-toolgrp-l">{grp.label}</div>
@@ -846,9 +1095,21 @@ function AuthorWorkspace({
                 {grp.items.map(id => {
                   const m = getSurfaceMeta(id);
                   return (
-                    <button key={id} className="pj-tool" title={(m as { notes?: string }).notes || m.label} onClick={() => onNav(id)}>
-                      <span className="pj-tool-ico">{I[(m as { icon?: string }).icon || ''] || I.grid}</span>
-                      <span className="pj-tool-b"><span className="pj-tool-t">{m.label}</span><span className="pj-tool-d">{String((m as { notes?: string }).notes || '').split('. ')[0]}</span></span>
+                    <button
+                      key={id}
+                      className="pj-tool"
+                      title={(m as { notes?: string }).notes || m.label}
+                      onClick={() => onNav(id)}
+                    >
+                      <span className="pj-tool-ico">
+                        {I[(m as { icon?: string }).icon || ''] || I.grid}
+                      </span>
+                      <span className="pj-tool-b">
+                        <span className="pj-tool-t">{m.label}</span>
+                        <span className="pj-tool-d">
+                          {String((m as { notes?: string }).notes || '').split('. ')[0]}
+                        </span>
+                      </span>
                       <span className="pj-tool-go">{I.right}</span>
                     </button>
                   );
@@ -860,7 +1121,9 @@ function AuthorWorkspace({
 
         {/* Conversations — no reachable UUID-keyed backend on this surface */}
         <section className="pj-sec">
-          <div className="pj-sec-h"><h2>Conversations</h2></div>
+          <div className="pj-sec-h">
+            <h2>Conversations</h2>
+          </div>
           <EmptyState
             icon={I.messageSquare}
             title="No project conversations yet"
@@ -870,7 +1133,10 @@ function AuthorWorkspace({
 
         {/* Linked modules — REAL: per-CTD-module section rollup */}
         <section className="pj-sec">
-          <div className="pj-sec-h"><h2>Module completion</h2><span className="sec-sub">section status by CTD module</span></div>
+          <div className="pj-sec-h">
+            <h2>Module completion</h2>
+            <span className="sec-sub">section status by CTD module</span>
+          </div>
           <Anchored
             state={wsState}
             loadingText="Loading module completion…"
@@ -878,16 +1144,32 @@ function AuthorWorkspace({
             errorHint="The project workstream rollup didn't respond. Sign in and retry, or check the service is reachable."
             emptyTitle="No document sections yet"
             emptyHint="Once this project has governed document sections, per-module completion appears here."
-            isEmpty={(d) => (d.workstreams ?? []).length === 0}
-            render={(d) => (
+            isEmpty={d => (d.workstreams ?? []).length === 0}
+            render={d => (
               <div className="pj-mods">
                 {(d.workstreams ?? []).map((w, i) => {
                   const done = Number(w.completion_pct ?? 0);
                   const label = String(w.module ?? '—').toUpperCase();
                   return (
-                    <button key={i} className="pj-lmod" data-risk={done < 50 || undefined} onClick={() => onNav('dossier-map')}>
-                      <span className="pj-lmod-t">{label}{Number(w.total) ? ` · ${Number(w.total)} section${Number(w.total) === 1 ? '' : 's'}` : ''}</span>
-                      <span className="pj-lmod-track"><span className="pj-lmod-fill" data-risk={done < 50 || undefined} style={{ width: done + '%' }} /></span>
+                    <button
+                      key={i}
+                      className="pj-lmod"
+                      data-risk={done < 50 || undefined}
+                      onClick={() => onNav('dossier-map')}
+                    >
+                      <span className="pj-lmod-t">
+                        {label}
+                        {Number(w.total)
+                          ? ` · ${Number(w.total)} section${Number(w.total) === 1 ? '' : 's'}`
+                          : ''}
+                      </span>
+                      <span className="pj-lmod-track">
+                        <span
+                          className="pj-lmod-fill"
+                          data-risk={done < 50 || undefined}
+                          style={{ width: done + '%' }}
+                        />
+                      </span>
                       <span className="pj-lmod-pct">{done}%</span>
                     </button>
                   );
@@ -904,20 +1186,36 @@ function AuthorWorkspace({
         {/* Tasks & readiness — project_tasks / readiness engine are keyed by the
             NUMERIC projects.id, not reachable from this UUID-scoped surface. */}
         <section className="pj-sec">
-          <div className="pj-sec-h"><h2>Tasks &amp; readiness</h2></div>
+          <div className="pj-sec-h">
+            <h2>Tasks &amp; readiness</h2>
+          </div>
           <EmptyState
             icon={I.checkCircle}
             title="Tasks &amp; submission readiness aren't wired to this workspace yet"
-            hint={<>Project tasks and the readiness engine are keyed to the numeric project record, which this workspace doesn't resolve yet. Open the task board to see and manage this org's tasks.</>}
+            hint={
+              <>
+                Project tasks and the readiness engine are keyed to the numeric project record,
+                which this workspace doesn't resolve yet. Open the task board to see and manage this
+                org's tasks.
+              </>
+            }
           />
           <div style={{ marginTop: 8 }}>
-            <button className="btn ghost" style={{ fontSize: 12, padding: '4px 12px' }} onClick={() => onNav('task-board')}>Open task board {I.right}</button>
+            <button
+              className="btn ghost"
+              style={{ fontSize: 12, padding: '4px 12px' }}
+              onClick={() => onNav('task-board')}
+            >
+              Open task board {I.right}
+            </button>
           </div>
         </section>
 
         {/* Team & activity — REAL: project_members + audit_logs */}
         <section className="pj-sec">
-          <div className="pj-sec-h"><h2>Team &amp; activity</h2></div>
+          <div className="pj-sec-h">
+            <h2>Team &amp; activity</h2>
+          </div>
           <Anchored
             state={teamState}
             loadingText="Loading team…"
@@ -925,13 +1223,17 @@ function AuthorWorkspace({
             errorHint="The project members read didn't respond. Sign in and retry, or check the service is reachable."
             emptyTitle="No project members yet"
             emptyHint="Members added to this project (with their role) appear here."
-            isEmpty={(d) => (d.team ?? []).length === 0}
-            render={(d) => (
+            isEmpty={d => (d.team ?? []).length === 0}
+            render={d => (
               <div className="pj-team">
                 {(d.team ?? []).map((g, i) => {
                   const nm = g.name || g.email || 'Member';
                   return (
-                    <span key={i} className="pj-team-m"><span className="pj-team-av">{pjInitials(nm)}</span>{nm}{g.role && <span className="rd-chip tone-idle">{g.role}</span>}</span>
+                    <span key={i} className="pj-team-m">
+                      <span className="pj-team-av">{pjInitials(nm)}</span>
+                      {nm}
+                      {g.role && <span className="rd-chip tone-idle">{g.role}</span>}
+                    </span>
                   );
                 })}
               </div>
@@ -945,13 +1247,18 @@ function AuthorWorkspace({
               errorHint="The project audit read didn't respond. Sign in and retry, or check the service is reachable."
               emptyTitle="No recorded activity yet"
               emptyHint="Audited actions on this project appear here as they happen."
-              isEmpty={(d) => (d.activity ?? []).length === 0}
-              render={(d) => (
+              isEmpty={d => (d.activity ?? []).length === 0}
+              render={d => (
                 <div className="pj-acts">
                   {(d.activity ?? []).map((a, i) => (
                     <div key={i} className="pj-act">
-                      <span className="pj-act-w">{a.actor_id != null ? 'User ' + a.actor_id : 'System'}</span>
-                      <span className="pj-act-t">{String(a.action ?? '').replace(/_/g, ' ')}{a.resource_type ? ' · ' + a.resource_type : ''}</span>
+                      <span className="pj-act-w">
+                        {a.actor_id != null ? 'User ' + a.actor_id : 'System'}
+                      </span>
+                      <span className="pj-act-t">
+                        {String(a.action ?? '').replace(/_/g, ' ')}
+                        {a.resource_type ? ' · ' + a.resource_type : ''}
+                      </span>
                       <span className="pj-act-n">{fmtWhen(a.occurred_at) ?? ''}</span>
                     </div>
                   ))}
@@ -967,7 +1274,9 @@ function AuthorWorkspace({
             project-home read-model (project_intelligence_profiles), not reachable
             from this UUID-scoped surface. Honest empty, never a fabricated body. */}
         <section className="pj-card">
-          <div className="pj-card-h"><h3>Memory</h3></div>
+          <div className="pj-card-h">
+            <h3>Memory</h3>
+          </div>
           <EmptyState
             icon={I.penLine}
             title="No project memory yet"
@@ -976,7 +1285,9 @@ function AuthorWorkspace({
         </section>
 
         <section className="pj-card">
-          <div className="pj-card-h"><h3>Instructions</h3></div>
+          <div className="pj-card-h">
+            <h3>Instructions</h3>
+          </div>
           <EmptyState
             icon={I.penLine}
             title="No custom instructions yet"
@@ -988,12 +1299,19 @@ function AuthorWorkspace({
             (The prior 'Files' card fabricated an uploaded-document list; this shows
             the project's real drafted sections instead.) */}
         <section className="pj-card">
-          <div className="pj-card-h"><h3>Recent drafts</h3>
+          <div className="pj-card-h">
+            <h3>Recent drafts</h3>
             {/* Upload is a flagged mock ACTION — no upload endpoint is wired on
                 this surface, so the picker below intentionally does not fabricate
                 a persisted/processing row. Uploading lives in the document
                 workspace. */}
-            <button className="pj-edit" title="Add document (opens the document workspace)" onClick={() => onNav('document-authoring')}>{I.plus}</button>
+            <button
+              className="pj-edit"
+              title="Add document (opens the document workspace)"
+              onClick={() => onNav('document-authoring')}
+            >
+              {I.plus}
+            </button>
           </div>
           <Anchored
             state={draftsState}
@@ -1002,19 +1320,36 @@ function AuthorWorkspace({
             errorHint="The project sections read didn't respond. Sign in and retry, or check the service is reachable."
             emptyTitle="No drafted sections yet"
             emptyHint="Governed document sections drafted on this project will appear here, newest first."
-            isEmpty={(d) => (d.drafts ?? []).length === 0}
-            render={(d) => (
+            isEmpty={d => (d.drafts ?? []).length === 0}
+            render={d => (
               <div className="pj-files">
-                {(d.drafts ?? []).map((f) => {
+                {(d.drafts ?? []).map(f => {
                   const nm = f.label || f.document_title || f.section_key || 'Section';
                   return (
-                    <button key={f.id} className="pj-file" style={{ width: '100%', textAlign: 'left' }} onClick={() => onNav('document-authoring')}>
+                    <button
+                      key={f.id}
+                      className="pj-file"
+                      style={{ width: '100%', textAlign: 'left' }}
+                      onClick={() => onNav('document-authoring')}
+                    >
                       <div className="pj-file-top">
-                        <span className="pj-file-badge">{String(f.doc_type || 'doc').toUpperCase()}</span>
-                        <span className="pj-file-status" data-s={fileTone(f.status || '')}>{f.status || 'draft'}</span>
+                        <span className="pj-file-badge">
+                          {String(f.doc_type || 'doc').toUpperCase()}
+                        </span>
+                        <span className="pj-file-status" data-s={fileTone(f.status || '')}>
+                          {f.status || 'draft'}
+                        </span>
                       </div>
                       <div className="pj-file-n">{nm}</div>
-                      <div className="pj-file-m">{[f.section_key, f.version != null ? 'v' + f.version : null, fmtWhen(f.updated_at)].filter(Boolean).join(' · ')}</div>
+                      <div className="pj-file-m">
+                        {[
+                          f.section_key,
+                          f.version != null ? 'v' + f.version : null,
+                          fmtWhen(f.updated_at),
+                        ]
+                          .filter(Boolean)
+                          .join(' · ')}
+                      </div>
                     </button>
                   );
                 })}
@@ -1043,9 +1378,15 @@ export function ProjectHome({ onNav, onAsk, segment }: SurfaceViewProps) {
   // REAL, org-scoped, UUID-keyed reads (server/routes/c2c/projects.ts).
   const progState = useLiveData<ProgramRow>(pid ? `/api/c2c/projects/${pid}` : null);
   const teamState = useLiveData<{ team: TeamRow[] }>(pid ? `/api/c2c/projects/${pid}/team` : null);
-  const activityState = useLiveData<{ activity: ActivityRow[] }>(pid ? `/api/c2c/projects/${pid}/activity` : null);
-  const wsState = useLiveData<{ workstreams: WorkstreamRow[] }>(pid ? `/api/c2c/projects/${pid}/workstreams` : null);
-  const draftsState = useLiveData<{ drafts: DraftRow[] }>(pid ? `/api/c2c/projects/${pid}/drafts` : null);
+  const activityState = useLiveData<{ activity: ActivityRow[] }>(
+    pid ? `/api/c2c/projects/${pid}/activity` : null
+  );
+  const wsState = useLiveData<{ workstreams: WorkstreamRow[] }>(
+    pid ? `/api/c2c/projects/${pid}/workstreams` : null
+  );
+  const draftsState = useLiveData<{ drafts: DraftRow[] }>(
+    pid ? `/api/c2c/projects/${pid}/drafts` : null
+  );
 
   const [stage, setStage] = useState('author');
 
@@ -1067,23 +1408,53 @@ export function ProjectHome({ onNav, onAsk, segment }: SurfaceViewProps) {
   const completion = prog?.progress_percent ?? null;
 
   const seg = sel
-    ? ({ MDX: 'medtech', Biotech: 'biotech', Pharma: 'pharma', CRO: 'cro' }[sel.ws ?? ''] ?? 'biotech')
-    : (segment || 'biotech');
+    ? { MDX: 'medtech', Biotech: 'biotech', Pharma: 'pharma', CRO: 'cro' }[sel.ws ?? ''] ??
+      'biotech'
+    : segment || 'biotech';
 
   const noProject = !pid;
 
+  usePublishSurfaceContext('project-home', {
+    summary: noProject ? 'Project home with no project selected' : `Project home for ${title}`,
+    facts: noProject
+      ? {}
+      : {
+          projectId: pid,
+          projectTitle: title,
+          productName,
+          submissionType,
+          region,
+          status,
+          phase,
+          completion,
+          activeStage: stage,
+        },
+    availableActions: noProject
+      ? ['Open all projects']
+      : ['Ask AnA about this project', 'Open document workspace', 'Open submission center'],
+  });
+
   return (
     <div className="page-inner pj">
-      <button className="pj-back" onClick={() => onNav('projects')}>{I.left} All projects</button>
+      <button className="pj-back" onClick={() => onNav('projects')}>
+        {I.left} All projects
+      </button>
 
       <div className="pj-crumb">
-        <span className="pj-crumb-i" data-cur><span className="pj-crumb-k">Project</span>{title}</span>
+        <span className="pj-crumb-i" data-cur>
+          <span className="pj-crumb-k">Project</span>
+          {title}
+        </span>
       </div>
 
       <div className="pj-top">
         <div className="pj-top-l">
           <h1 className="pj-title">{title}</h1>
-          {progState.loading && <div className="pj-desc" style={{ color: 'var(--text-400)' }}>Loading project…</div>}
+          {progState.loading && (
+            <div className="pj-desc" style={{ color: 'var(--text-400)' }}>
+              Loading project…
+            </div>
+          )}
           {desc && <div className="pj-desc">{desc}</div>}
           <div className="pj-tags">
             {clientType && <span className="rd-chip tone-ai">{clientType}</span>}
@@ -1096,15 +1467,21 @@ export function ProjectHome({ onNav, onAsk, segment }: SurfaceViewProps) {
           </div>
         </div>
         <div className="pj-top-actions">
-          <button className="pj-icon" title="Project settings" onClick={() => onNav('projects')}>{I.more}</button>
+          <button className="pj-icon" title="Project settings" onClick={() => onNav('projects')}>
+            {I.more}
+          </button>
         </div>
       </div>
 
       <StageTracker stage={stage} setStage={setStage} />
       <div className="pj-stageband">
         <div className="pj-stageband-l">
-          <span className="pj-stageband-stage">{(PJ_LIFECYCLE.find(s => s.id === stage) ?? { label: '' }).label}</span>
-          <span className="pj-stageband-blurb">{(PJ_LIFECYCLE.find(s => s.id === stage) ?? { blurb: '' }).blurb}</span>
+          <span className="pj-stageband-stage">
+            {(PJ_LIFECYCLE.find(s => s.id === stage) ?? { label: '' }).label}
+          </span>
+          <span className="pj-stageband-blurb">
+            {(PJ_LIFECYCLE.find(s => s.id === stage) ?? { blurb: '' }).blurb}
+          </span>
         </div>
       </div>
 
@@ -1128,7 +1505,9 @@ export function ProjectHome({ onNav, onAsk, segment }: SurfaceViewProps) {
               Honest empty rather than a fabricated file tree. */}
           {stage === 'evidence' && (
             <section className="pj-sec">
-              <div className="pj-sec-h"><h2>Evidence &amp; vault</h2></div>
+              <div className="pj-sec-h">
+                <h2>Evidence &amp; vault</h2>
+              </div>
               <EmptyState
                 icon={I.folder}
                 title="The document vault opens in its own workspace"
@@ -1140,14 +1519,22 @@ export function ProjectHome({ onNav, onAsk, segment }: SurfaceViewProps) {
           {/* Submit — submissions are owned by the Submission Center surface. */}
           {stage === 'submit' && (
             <section className="pj-sec">
-              <div className="pj-sec-h"><h2>Submissions</h2></div>
+              <div className="pj-sec-h">
+                <h2>Submissions</h2>
+              </div>
               <EmptyState
                 icon={I.rocket}
                 title="Submissions open in the Submission Center"
                 hint="Agency gateways, the eCTD pipeline and this project's submissions are managed in the Submission Center, wired to the real submissions store."
               />
               <div style={{ marginTop: 8 }}>
-                <button className="btn primary" style={{ fontSize: 12, padding: '4px 12px' }} onClick={() => onNav('submission-center')}>{I.right} Open Submission Center</button>
+                <button
+                  className="btn primary"
+                  style={{ fontSize: 12, padding: '4px 12px' }}
+                  onClick={() => onNav('submission-center')}
+                >
+                  {I.right} Open Submission Center
+                </button>
               </div>
             </section>
           )}
@@ -1155,14 +1542,22 @@ export function ProjectHome({ onNav, onAsk, segment }: SurfaceViewProps) {
           {/* Review — tasks are keyed by the numeric project record, not reachable here. */}
           {stage === 'review' && (
             <section className="pj-sec">
-              <div className="pj-sec-h"><h2>Review &amp; approvals</h2></div>
+              <div className="pj-sec-h">
+                <h2>Review &amp; approvals</h2>
+              </div>
               <EmptyState
                 icon={I.checkCircle}
                 title="Review tasks aren't wired to this workspace yet"
                 hint="Project tasks and approvals are managed on the task board. This workspace doesn't resolve the numeric project record the task store is keyed on."
               />
               <div style={{ marginTop: 8 }}>
-                <button className="btn ghost" style={{ fontSize: 12, padding: '4px 12px' }} onClick={() => onNav('task-board')}>Open task board {I.right}</button>
+                <button
+                  className="btn ghost"
+                  style={{ fontSize: 12, padding: '4px 12px' }}
+                  onClick={() => onNav('task-board')}
+                >
+                  Open task board {I.right}
+                </button>
               </div>
             </section>
           )}
@@ -1170,45 +1565,61 @@ export function ProjectHome({ onNav, onAsk, segment }: SurfaceViewProps) {
           {/* Plan — the live schedule-of-events panel, the canonical tool
               catalog, and honest empties for the panels whose backends are
               org-shaped/absent here (meetings, eTMF, grants). */}
-          {stage === 'plan' && (<>
-            <SchedulePanel pid={pid} onAsk={ask} />
-            <StagePanel stage="plan" onNav={onNav} />
-            <section className="pj-sec">
-              <div className="pj-sec-h"><h2>Agency meetings &amp; planning data</h2></div>
-              <EmptyState
-                icon={I.calendar}
-                title="Meetings, eTMF and grants open in their own surfaces"
-                hint="Agency meetings, the Trial Master File and grant milestones are managed in their dedicated surfaces, each wired to its real store. Use the tools above to open them."
-              />
-            </section>
-          </>)}
+          {stage === 'plan' && (
+            <>
+              <SchedulePanel pid={pid} onAsk={ask} />
+              <StagePanel stage="plan" onNav={onNav} />
+              <section className="pj-sec">
+                <div className="pj-sec-h">
+                  <h2>Agency meetings &amp; planning data</h2>
+                </div>
+                <EmptyState
+                  icon={I.calendar}
+                  title="Meetings, eTMF and grants open in their own surfaces"
+                  hint="Agency meetings, the Trial Master File and grant milestones are managed in their dedicated surfaces, each wired to its real store. Use the tools above to open them."
+                />
+              </section>
+            </>
+          )}
 
           {stage === 'respond' && <StagePanel stage="respond" onNav={onNav} />}
           {stage === 'lifecycle' && <StagePanel stage="lifecycle" onNav={onNav} />}
 
-          {stage === 'author' && (<>
-            <ConversationComposer productName={productName} onNav={onNav} />
+          {stage === 'author' && (
+            <>
+              <ConversationComposer productName={productName} onNav={onNav} />
 
-            {completion != null && (
-              <section className="pj-sec">
-                <div className="pj-sec-h"><h2>Dossier readiness</h2><span className="sec-sub">{completion}% complete</span></div>
-                <div className="pj-map">
-                  <div className="pj-map-ring"><Ring value={completion} size={104} stroke={9} /><div className="pj-map-ring-l">Dossier<br />readiness</div></div>
-                </div>
-              </section>
-            )}
+              {completion != null && (
+                <section className="pj-sec">
+                  <div className="pj-sec-h">
+                    <h2>Dossier readiness</h2>
+                    <span className="sec-sub">{completion}% complete</span>
+                  </div>
+                  <div className="pj-map">
+                    <div className="pj-map-ring">
+                      <Ring value={completion} size={104} stroke={9} />
+                      <div className="pj-map-ring-l">
+                        Dossier
+                        <br />
+                        readiness
+                      </div>
+                    </div>
+                  </div>
+                </section>
+              )}
 
-            <AuthorWorkspace
-              seg={seg}
-              pid={pid}
-              onNav={onNav}
-              onAsk={ask}
-              teamState={teamState}
-              activityState={activityState}
-              wsState={wsState}
-              draftsState={draftsState}
-            />
-          </>)}
+              <AuthorWorkspace
+                seg={seg}
+                pid={pid}
+                onNav={onNav}
+                onAsk={ask}
+                teamState={teamState}
+                activityState={activityState}
+                wsState={wsState}
+                draftsState={draftsState}
+              />
+            </>
+          )}
         </>
       )}
     </div>

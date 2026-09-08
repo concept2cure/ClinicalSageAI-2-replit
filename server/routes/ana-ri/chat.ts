@@ -67,8 +67,10 @@ import {
   buildOrchestratorAuthoringContext,
   buildRouteContextBlock,
   prefetchRouteIntelligenceContext,
+  resolveOrganizationClientType,
   resolveProjectIdFromBody,
 } from '../../services/ana-ri/chat-context-builder.js';
+import { appendAnaRequestContextBlocks } from '../../services/ana-ri/surface-context-block.js';
 import {
   getFirecrawlQuotaStatus,
   recordSuccessfulFirecrawlScrape,
@@ -136,6 +138,7 @@ router.post('/chat', async (req: Request, res: Response) => {
       submission_type,
       conversation_history,
       authoring_context,
+      module_context,
       preferred_provider,
       useFirecrawl,
       language,
@@ -188,6 +191,7 @@ router.post('/chat', async (req: Request, res: Response) => {
         title: req.body.context?.userTitle,
         department: req.body.context?.department,
       });
+    const organizationClientTypePromise = resolveOrganizationClientType(orgId);
 
     // Shared builder parity: keep authoring-context serialization identical across chat/stream.
     const authoringContextBlock = buildAuthoringContextBlock(authoring_context);
@@ -364,6 +368,10 @@ router.post('/chat', async (req: Request, res: Response) => {
     if (chatRouteBlock) {
       orchestration.systemPrompt += `\n\n## Current UI Route\n\nThis is where the user is right now in the app. Use it to resolve "this project", "here", "this screen":\n\n${chatRouteBlock}`;
     }
+    orchestration.systemPrompt = appendAnaRequestContextBlocks(orchestration.systemPrompt, {
+      moduleContext: module_context,
+      organizationClientType: await organizationClientTypePromise,
+    });
 
     // Inject authoring context into system prompt if available
     if (authoringContextBlock) {

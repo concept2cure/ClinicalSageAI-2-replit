@@ -7,8 +7,8 @@
  * (artifact + embedded atom) so AnA can retrieve the content.
  */
 
-import type { CSSProperties } from 'react';
-import { useCallback, useState } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
+import { createElement, Fragment, useCallback, useState } from 'react';
 import { ApiRequestError, serverMessage } from '@/lib/queryClient';
 import { getAuthHeaders } from '../../utils/authToken';
 
@@ -101,6 +101,58 @@ export const SR_ONLY_STYLE: CSSProperties = {
   whiteSpace: 'nowrap',
   border: 0,
 };
+
+export function ChatAttachmentList({
+  attachments,
+  onRemove,
+  statusMessage,
+  icon,
+}: {
+  attachments: ChatAttachment[];
+  onRemove?: (id: string) => void;
+  statusMessage?: string;
+  icon?: ReactNode;
+}) {
+  if (attachments.length === 0 && !statusMessage) return null;
+
+  const items = attachments.map(attachment => {
+    const read = attachmentReadLabel(attachment.extractionMethod, attachment.extractionWords);
+    const label =
+      attachment.status === 'uploading'
+        ? `Uploading ${attachment.name}…`
+        : attachment.status === 'error'
+          ? `${attachment.name} — ${attachment.error || 'Upload failed'}`
+          : read
+            ? `${attachment.name} · ${read}`
+            : attachment.name;
+
+    return createElement(
+      'span',
+      { key: attachment.id, className: `ana-file ana-file-${attachment.status}`, title: label },
+      icon && createElement('span', { className: 'ico', 'aria-hidden': true }, icon),
+      createElement('span', null, label),
+      onRemove &&
+        createElement(
+          'button',
+          {
+            type: 'button',
+            'aria-label': `Remove ${attachment.name}`,
+            onClick: () => onRemove(attachment.id),
+          },
+          '×',
+        ),
+    );
+  });
+
+  return createElement(
+    Fragment,
+    null,
+    attachments.length > 0 &&
+      createElement('div', { className: 'ana-files', 'aria-label': 'Attached files' }, items),
+    statusMessage &&
+      createElement('span', { 'aria-live': 'polite', style: SR_ONLY_STYLE }, statusMessage),
+  );
+}
 
 export function useChatUpload(options: UseChatUploadOptions = {}): UseChatUpload {
   const { projectId } = options;
