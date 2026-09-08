@@ -226,12 +226,87 @@ function officialFormAssetTrusted(formId: string): boolean {
   const read = readFormManifest(formId);
   if (!read) return false;
   const { dir, manifest: m } = read;
-  const fieldMapPopulated =
-    m.fieldMap !== null && typeof m.fieldMap === 'object' && Object.keys(m.fieldMap as object).length > 0;
-  if (m.assetTrusted === true && m.fillSupported === true && fieldMapPopulated && Boolean(m.reviewedBy)) {
+  if (m.assetTrusted === true && m.fillSupported === true && acroFormFillable(dir, formId, m)) {
     return true;
   }
   return xfaFillable(dir, formId, m);
+}
+
+/**
+ * The static-AcroForm half of the contract, mirroring the renderer's
+ * `readTemplate` (server/services/ind-forms/ind-form-fill-service.ts:176-202)
+ * the way `xfaFillable` below mirrors the XFA reader.
+ *
+ * This branch used to check four manifest ASSERTIONS and verify nothing:
+ * `assetTrusted && fillSupported && fieldMap-non-empty && reviewedBy`. The
+ * renderer requires seven things, and re-hashes the bytes. So a manifest that
+ * merely claimed trust — with a stale hash, a swapped PDF, a non-FDA source, a
+ * missing edition, or a field path left blank — made `formsFullyBacked` report
+ * true for US_IND, US_NDA and US_BLA while every one of those forms rendered as
+ * a labeled DRAFT. The report asserted the package carries the official FDA
+ * form; the package carried a reconstruction.
+ *
+ * `assetTrusted` and `fillSupported` are kept in the caller ON TOP of these
+ * checks rather than replaced by them. The renderer does not read those two, so
+ * mirroring alone would have WIDENED the claim to assets no human has blessed.
+ * The result is the intersection: this report can no longer call a form backed
+ * that the renderer would refuse, and where it is stricter than the renderer it
+ * errs toward reporting less backing than exists, which is the safe direction
+ * for a number that gates a filing.
+ */
+function acroFormFillable(
+  dir: string,
+  formId: string,
+  m: {
+    formId?: unknown;
+    version?: unknown;
+    reviewedBy?: unknown;
+    reviewedAt?: unknown;
+    sourceUrl?: unknown;
+    sha256?: unknown;
+    fieldMap?: unknown;
+  },
+): boolean {
+  if (m.formId !== formId) return false;
+  if (typeof m.version !== 'string' || m.version.length === 0) return false;
+  if (typeof m.reviewedBy !== 'string' || m.reviewedBy.length === 0) return false;
+  if (!Number.isFinite(Date.parse(String(m.reviewedAt ?? '')))) return false;
+
+  const fieldMap =
+    m.fieldMap && typeof m.fieldMap === 'object' && !Array.isArray(m.fieldMap)
+      ? (m.fieldMap as Record<string, unknown>)
+      : {};
+  const entries = Object.values(fieldMap);
+  // A map entry pointing at no field places nothing, so an empty target is not
+  // a populated map however many keys it has.
+  if (entries.length === 0) return false;
+  if (!entries.every((v) => typeof v === 'string' && v.length > 0)) return false;
+
+  return sourceIsFdaAndBytesMatch(dir, formId, m.sourceUrl, m.sha256);
+}
+
+/**
+ * The integrity pair both branches need: the asset came from FDA over https, and
+ * the bytes on disk still hash to what the manifest pinned. Shared so the two
+ * branches cannot drift apart again — the AcroForm branch missing exactly this
+ * is what let a tampered manifest read as backed.
+ */
+function sourceIsFdaAndBytesMatch(
+  dir: string,
+  formId: string,
+  sourceUrl: unknown,
+  sha256: unknown,
+): boolean {
+  try {
+    const url = new URL(String(sourceUrl ?? ''));
+    const sourceIsFda =
+      url.protocol === 'https:' && (url.hostname === 'fda.gov' || url.hostname.endsWith('.fda.gov'));
+    if (!sourceIsFda) return false;
+    const bytes = readFileSync(joinPath(dir, `${formId}.pdf`));
+    return createHash('sha256').update(bytes).digest('hex') === sha256;
+  } catch {
+    return false;
+  }
 }
 
 /** The named human reviewer on the installed asset's manifest, or null. An
@@ -255,16 +330,7 @@ function xfaFillable(
   if (m.xfaDynamic !== true || m.fillSupported !== true) return false;
   const map = getOfficialXfaFieldMap(formId);
   if (!map || Object.keys(map).length === 0) return false;
-  try {
-    const url = new URL(String(m.sourceUrl ?? ''));
-    const sourceIsFda =
-      url.protocol === 'https:' && (url.hostname === 'fda.gov' || url.hostname.endsWith('.fda.gov'));
-    if (!sourceIsFda) return false;
-    const bytes = readFileSync(joinPath(dir, `${formId}.pdf`));
-    return createHash('sha256').update(bytes).digest('hex') === m.sha256;
-  } catch {
-    return false;
-  }
+  return sourceIsFdaAndBytesMatch(dir, formId, m.sourceUrl, m.sha256);
 }
 
 function requiredFormCoverage(entry: RegulatoryApplicationType): RequiredFormCoverage[] {
