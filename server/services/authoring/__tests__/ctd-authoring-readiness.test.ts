@@ -13,9 +13,9 @@ import type { M2Summary } from '../../m2-summary-builders';
 
 const m2Ready: M2QcResult = { ready: true, checked: ['2.3', '2.4'], missingSummaries: [], completenessByKey: {}, findings: [], counts: { errors: 0, warnings: 0 } };
 const m2NotReady: M2QcResult = { ...m2Ready, ready: false, counts: { errors: 2, warnings: 0 } };
-const m4Ready: M4QcResult = { ready: true, checked: ['TX-1'], disciplinesPresent: ['toxicology'], missingCoverage: [], findings: [], counts: { errors: 0, warnings: 1 } };
+const m4Ready: M4QcResult = { ready: true, assessed: true, checked: ['TX-1'], disciplinesPresent: ['toxicology'], missingCoverage: [], findings: [], counts: { errors: 0, warnings: 1 } };
 const m4NotReady: M4QcResult = { ...m4Ready, ready: false, counts: { errors: 1, warnings: 0 } };
-const m5Ready: M5QcResult = { ready: true, checked: ['STUDY-1'], phasesPresent: ['1'], missingPhases: [], findings: [], counts: { errors: 0, warnings: 0 } };
+const m5Ready: M5QcResult = { ready: true, assessed: true, checked: ['STUDY-1'], phasesPresent: ['1'], missingPhases: [], findings: [], counts: { errors: 0, warnings: 0 } };
 const m5NotReady: M5QcResult = { ...m5Ready, ready: false, counts: { errors: 1, warnings: 0 } };
 const m1Ready: M1QcResult = { ready: true, present: ['FDA_1571', 'FDA_1572', 'FDA_3674'], missingForms: [], findings: [], counts: { errors: 0, warnings: 0 } };
 const m1NotReady: M1QcResult = { ...m1Ready, ready: false, counts: { errors: 1, warnings: 0 } };

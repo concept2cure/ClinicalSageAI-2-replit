@@ -208,3 +208,18 @@ describe('runM4NonclinicalQc — placement beyond the first-tier sections', () =
     expect(findings.map((f) => f.message).join(' ')).toContain('4.2.3.7.2');
   });
 });
+
+describe('runM4NonclinicalQc — an empty program is unassessed, not clean', () => {
+  it('does not report ready over zero study reports', () => {
+    /* The empty case raised five ICH M3(R2) COVERAGE warnings, so the report
+       was not silent — but `ready` was still true and warnings do not block, so
+       the aggregator called Module 4 ready over a program with nothing in it. */
+    const res = runM4NonclinicalQc({ reports: [] });
+    expect(res.assessed).toBe(false);
+    expect(res.ready).toBe(false);
+  });
+
+  it('is assessed as soon as there is a report to assess', () => {
+    expect(runM4NonclinicalQc({ reports: fullProgram() }).assessed).toBe(true);
+  });
+});

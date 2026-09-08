@@ -59,6 +59,23 @@ export interface M4QcFinding {
 
 export interface M4QcResult {
   ready: boolean;
+  /**
+   * Whether anything was actually assessed — false when the program held no
+   * study report at all.
+   *
+   * `ready` alone could not carry this: with an empty program the loop never
+   * runs, no finding is raised, the error count is zero and `ready` came back
+   * TRUE. The aggregator then reported the module ready and the renderer printed
+   * "READY — no blocking findings" over a module with nothing in it. Silence
+   * from a check that never ran is not the same as a clean result, and this is
+   * the field that tells the two apart.
+   *
+   * A caller with genuinely no such module should supply NO verdict: the
+   * aggregator reports that as MODULE_ABSENT, a warning, which is the honest
+   * shape for "not applicable at this stage".
+   */
+  assessed: boolean;
+
   /** Study ids that were checked. */
   checked: string[];
   /** Disciplines present across the program. */
@@ -191,11 +208,13 @@ export function runM4NonclinicalQc(input: M4QcInput): M4QcResult {
     a.studyId === b.studyId ? severityRank(a.severity) - severityRank(b.severity) : a.studyId.localeCompare(b.studyId),
   );
 
+  const assessed = (input.reports ?? []).length > 0;
   const errors = findings.filter((f) => f.severity === 'error').length;
   const warnings = findings.length - errors;
 
   return {
-    ready: errors === 0,
+    ready: assessed && errors === 0,
+    assessed,
     checked: [...seen].sort(),
     disciplinesPresent: [...disciplines].sort(),
     missingCoverage,
