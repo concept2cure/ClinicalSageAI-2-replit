@@ -138,3 +138,23 @@ blanket "every file must be applied" gate would need a 254-entry baseline and
 would be noise rather than enforcement. The narrower lesson stands: a migration
 that alters a constraint rather than creating a table is invisible to every
 current reachability guard.
+
+### The surface, against the same live data
+
+The API section above exercised the route. The Biostatistics surface itself was
+then rendered in a browser against the same database — its first run on real
+rows. Walks: `biostat-surface-walk-2026-09-08.mjs`,
+`biostat-surface-writes-walk-2026-09-08.mjs`; measurements and screenshots in
+the same evidence directory.
+
+| Step | Measured |
+|---|---|
+| Open `/concept2cure/biostatistics` with a program open | the program's three designs listed with live readiness chips (100% / 90% / 60%) and the engine's verdict chip; the list read is program-scoped |
+| Select a design | the assessment loads (200), the statistical-review table renders, and the two governed actions appear: "Apply sample size to design" and "Raise tasks (6)" |
+| "Raise tasks (6)" → reason → confirm | `POST /tasks` 200; six tasks created; toast: *"6 tasks raised on the board — each carries the design as its source."*; the button relabels to "Raise tasks", because the panel reloaded and none is open any more |
+| "Apply sample size to design" → reason → confirm | `POST /apply-sample-size` 200; toast names the number and the audit record: *"Sample size 302 written to … — the write and its audit record committed to…"* |
+| Page errors | none across both walks |
+
+Both governed actions open a reason form before anything is written — nothing
+fires on the click itself — and the surface's own state is refreshed from the
+server after each write rather than being assumed.
