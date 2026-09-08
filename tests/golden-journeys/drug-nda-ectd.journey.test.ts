@@ -596,7 +596,25 @@ describe('golden journey — drug NDA / eCTD', () => {
       expect(res.status, JSON.stringify(res.body)).toBe(200);
       expect(res.body.validationErrors).toBe(0);
       expect(res.body.leafCount).toBe(1);
-      expect(res.body.gate.cleared, JSON.stringify(res.body.gate)).toBe(true);
+      /* This endpoint reports the DISPATCH verdict — the transmit re-check —
+         and this journey never builds and signs a release package, so the
+         §11.70 release-signature control blocks it. That is the correct answer
+         and it is asserted exactly: ONE blocker, and it is that control.
+         Everything the old `cleared: true` proved about every other gate —
+         validation, the shadow review, leaf placement, external validation — is
+         still proved, because any of them objecting would add a second blocker
+         and fail here.
+
+         The FREEZE the journey goes on to perform is governed by the same gates
+         minus that one requirement (assess-dispatch-readiness →
+         composeDispatchGatesForStep), which is why it succeeds below. Those two
+         facts together are the scoping: transmit still demands the signature,
+         freeze does not. */
+      const gateBlockers: string[] = res.body.gate.blockers ?? [];
+      expect(res.body.gate.cleared, JSON.stringify(res.body.gate)).toBe(false);
+      expect(gateBlockers, JSON.stringify(res.body.gate)).toHaveLength(1);
+      expect(gateBlockers[0]).toMatch(/release signature/i);
+      expect(res.body.releaseSignature).toMatchObject({ required: true, verdict: 'unsigned', cleared: false });
       // No agency-grade validator is licensed in this environment, and the
       // assessment says so rather than implying a clean external run.
       expect(res.body.externalValidation.configured).toBe(false);
@@ -613,7 +631,7 @@ describe('golden journey — drug NDA / eCTD', () => {
       return {
         validationErrors: res.body.validationErrors,
         gateCleared: res.body.gate.cleared,
-        gateBlockers: res.body.gate.blockers,
+        gateBlockers: gateBlockers,
         externalValidation: res.body.externalValidation,
         shadowReviewMissing: res.body.shadowReviewMissing,
         warnings: warnings.length,
@@ -999,6 +1017,13 @@ describe('golden journey — drug NDA / eCTD', () => {
         'route, and the production fail-closed rule (ECTD_REQUIRE_EVALIDATOR) is asserted through the pure ' +
         'gate function rather than by mutating NODE_ENV mid-journey. The licensed engine itself CANNOT be ' +
         'exercised here — it is a procurement artifact.',
+      'This journey never builds and signs a release package, so the \u00a711.70 release-signature control ' +
+        'blocks the DISPATCH verdict the readiness endpoint reports \u2014 asserted here as exactly one blocker ' +
+        'rather than worked around. The freeze it does perform is governed by the same gates minus that ' +
+        'requirement, which is the scoping that control\'s own design states (it calls itself the ' +
+        'transmit-time re-check). A journey that drives the package orchestrator to a signed release, and ' +
+        'so reaches a cleared dispatch verdict, is the follow-on; the signed-package path has its own ' +
+        'coverage in server/services/ectd/__tests__/signed-package-export.test.ts.',
       'Assembly to eCTD bytes and transmission to the FDA ESG are deliberately out of scope: the export ' +
         'generator has its own journey (submission-export-package) and transmission needs a live gateway ' +
         'account. This journey ends at a frozen, signature-bound sequence.',
