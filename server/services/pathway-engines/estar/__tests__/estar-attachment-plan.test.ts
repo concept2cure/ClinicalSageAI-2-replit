@@ -19,6 +19,7 @@ import {
   ATTACHMENT_MANIFEST_SEED,
   EstarAttachmentPlanError,
   attachmentFileName,
+  createDeviceAttachmentResolver,
   manifestSeed,
   planEstarAttachments,
   type EstarAttachmentResolver,
@@ -28,6 +29,7 @@ import {
   listEstarAttachmentSlots,
 } from '../estar-attachment-slots';
 import { ESTAR_FIELD_MAPS } from '../estar-field-map';
+import type { DeviceContentClient } from '../estar-content-leaves';
 
 const DIR = process.env.ESTAR_TEMPLATE_DIR ?? 'assets/estar-templates';
 const TEMPLATES = [
@@ -331,3 +333,116 @@ for (const t of TEMPLATES) {
     });
   });
 }
+
+/**
+ * The RESOLVER, run for real.
+ *
+ * It shipped with no test at all. The route's attachment tests mock the factory
+ * — the right seam for testing the route's WIRING — which meant nothing ever
+ * executed the resolver itself, and it went out passing `requestDb(req)` as its
+ * `client`: a Drizzle instance whose `.query` is the relational-query namespace,
+ * not the `(text, params)` function `DeviceContentClient` calls. Every
+ * governed-section attachment would have thrown at runtime.
+ *
+ * A fake client is enough to run every branch, which is the point of the
+ * injection — these run on every commit rather than only where a program's
+ * governed document happens to exist.
+ */
+describe('createDeviceAttachmentResolver', () => {
+  const PROGRAM = '2b6d4a80-6a35-4b1e-9f6e-3a9d2c1e5f70';
+
+  /** A c2c_documents row plus its sections, answered like the real pg client. */
+  function fakeClient(sections: Array<Record<string, unknown>>): DeviceContentClient & { calls: string[] } {
+    const calls: string[] = [];
+    return {
+      calls,
+      // Generic to match DeviceContentClient's own query<T>: a fixed
+      // Record<string, unknown> return type does not satisfy a generic method
+      // signature for arbitrary T, so a non-generic mock silently fails
+      // typecheck against the interface it stands in for.
+      query: async <T = Record<string, unknown>>(text: string) => {
+        calls.push(text.replace(/\s+/g, ' ').trim().slice(0, 40));
+        if (/FROM c2c_documents/.test(text)) {
+          return { rows: [{ id: 'doc-1', doc_type: 'k510' }] as T[] };
+        }
+        if (/FROM c2c_document_sections/.test(text)) return { rows: sections as T[] };
+        return { rows: [] as T[] };
+      },
+    };
+  }
+
+  const FINAL = {
+    section_key: 'A.1',
+    label: 'Cover Letter',
+    status: 'approved',
+    content: 'A cover letter with enough substance to clear the forty-character floor.',
+    mandatory: true,
+  };
+
+  it('renders a finalized governed section to a real PDF', async () => {
+    const client = fakeClient([FINAL]);
+    const resolve = createDeviceAttachmentResolver({
+      organizationId: 2,
+      programUuid: PROGRAM,
+      client,
+    });
+
+    const out = await resolve({ kind: 'authored_section', sectionCode: 'A.1' });
+    expect(out.ok).toBe(true);
+    if (!out.ok) return;
+    expect(out.mimeType).toBe('application/pdf');
+    expect(out.bytes.subarray(0, 5).toString()).toBe('%PDF-');
+    expect(out.fileName).toBe('A.1 Cover Letter.pdf');
+  });
+
+  it('REFUSES a section that is authored but still a draft', async () => {
+    /* The difference between filing an approved section and filing an
+       unreviewed machine draft into a named CDRH slot. `drafting` is what
+       write_kit_section defaults to, and it rejects bodies under 40 characters
+       — the same floor — so every AI draft would otherwise pass on length. */
+    const resolve = createDeviceAttachmentResolver({
+      organizationId: 2,
+      programUuid: PROGRAM,
+      client: fakeClient([{ ...FINAL, status: 'drafting' }]),
+    });
+
+    const out = await resolve({ kind: 'authored_section', sectionCode: 'A.1' });
+    expect(out.ok).toBe(false);
+    if (out.ok) return;
+    expect(out.reason).toMatch(/not finalized/);
+  });
+
+  it('refuses a section that has no authored content', async () => {
+    const resolve = createDeviceAttachmentResolver({
+      organizationId: 2,
+      programUuid: PROGRAM,
+      client: fakeClient([FINAL]),
+    });
+    const out = await resolve({ kind: 'authored_section', sectionCode: 'Z.9' });
+    expect(out.ok).toBe(false);
+    if (out.ok) return;
+    expect(out.reason).toMatch(/no authored content/);
+  });
+
+  it('loads the section set ONCE however many attachments ask for it', async () => {
+    const client = fakeClient([FINAL]);
+    const resolve = createDeviceAttachmentResolver({
+      organizationId: 2,
+      programUuid: PROGRAM,
+      client,
+    });
+    await resolve({ kind: 'authored_section', sectionCode: 'A.1' });
+    await resolve({ kind: 'authored_section', sectionCode: 'A.1' });
+    await resolve({ kind: 'authored_section', sectionCode: 'A.1' });
+    // Two queries for the first call (document, then sections), none after.
+    expect(client.calls).toHaveLength(2);
+  });
+
+  it('says plainly that a legacy project has no governed document or vault', async () => {
+    const resolve = createDeviceAttachmentResolver({ organizationId: 2, programUuid: null });
+    const out = await resolve({ kind: 'authored_section', sectionCode: 'A.1' });
+    expect(out.ok).toBe(false);
+    if (out.ok) return;
+    expect(out.reason).toMatch(/no regulatory program/);
+  });
+});

@@ -664,7 +664,7 @@ describe('resolveProjectAnchor — a failed read is an error, never "not found"'
     {
       route: 'POST /official',
       error: 'GOVERNED_EXPORT_FAILED',
-      message: 'Official eSTAR export failed before consequence persistence. The problem has been logged.',
+      message: 'Official eSTAR export failed and was not delivered. The problem has been logged.',
       call: async (ident: string) => {
         const meta = /^\d+$/.test(ident) ? { id: 'k123', projectId: Number(ident) } : { id: 'k123', ident };
         const res = createMockResponse() as any;
