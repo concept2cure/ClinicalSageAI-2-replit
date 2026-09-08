@@ -169,6 +169,10 @@ interface CompileAnchor {
   /** Resolved regulatory_programs UUID when the ident named a program. */
   programId: string | null;
   programCode: string | null;
+  /** The agency-assigned application number (IND / NDA / BLA / MAA) when the
+   *  program records one — `regulatory_programs.application_number`. NULL until
+   *  the agency assigns it; never derived from anything else. */
+  applicationNumber: string | null;
   title: string | null;
   /** Program product_name — one of the spine identity keys. */
   productName: string | null;
@@ -195,6 +199,7 @@ async function resolveCompileAnchor(ident: string, orgId: number): Promise<Compi
       numericProjectId: numeric,
       programId: null,
       programCode: null,
+      applicationNumber: null,
       title: null,
       productName: null,
       programType: null,
@@ -205,7 +210,8 @@ async function resolveCompileAnchor(ident: string, orgId: number): Promise<Compi
   const byUuid = UUID_RE.test(ident);
   try {
     const result = await pool.query(
-      `SELECT id, code, name, product_name, program_type, primary_agency FROM regulatory_programs
+      `SELECT id, code, name, product_name, program_type, primary_agency, application_number
+         FROM regulatory_programs
         WHERE ${byUuid ? 'id = $1' : 'code = $1'} AND organization_id = $2 AND deleted_at IS NULL
         LIMIT 1`,
       [ident, orgId],
@@ -216,6 +222,7 @@ async function resolveCompileAnchor(ident: string, orgId: number): Promise<Compi
         numericProjectId: null,
         programId: String(row.id),
         programCode: row.code != null ? String(row.code) : null,
+        applicationNumber: row.application_number != null ? String(row.application_number) : null,
         title: row.name != null ? String(row.name) : null,
         productName: row.product_name != null ? String(row.product_name) : null,
         programType: row.program_type != null ? String(row.program_type) : null,
@@ -227,6 +234,31 @@ async function resolveCompileAnchor(ident: string, orgId: number): Promise<Compi
     // A failed lookup is a non-match — never a guessed anchor.
   }
   return null;
+}
+
+/**
+ * The identifier that goes in the agency's application-number field.
+ *
+ * `applicationId` becomes `<application-number>` in the FDA us-regional
+ * backbone (and the equivalent field in the EU/JP backbones), so it must be the
+ * number the AGENCY assigned whenever the program records one. It used to be
+ * `anchor.programCode` unconditionally — the sponsor's internal code, e.g.
+ * `BX-204` — because at the time nothing in the data model held an agency
+ * number. `regulatory_programs.application_number` does now.
+ *
+ * The chain below keeps the rule the previous comment stated, and only improves
+ * what "recorded identity" can mean: the recorded agency number, else the
+ * program's own code, else a handle that says plainly it is unassigned. A blank
+ * or whitespace column is NOT a recorded number. Nothing is ever invented — an
+ * invented agency number is a filing that references another sponsor's
+ * application.
+ */
+function applicationIdFor(anchor: CompileAnchor, fallbackKey: string): string {
+  const recorded = (anchor.applicationNumber ?? '').trim();
+  if (recorded !== '') return recorded;
+  const code = (anchor.programCode ?? '').trim();
+  if (code !== '') return code;
+  return fallbackKey;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -490,14 +522,24 @@ router.post('/:projectIdent/compile', async (req: Request, res: Response) => {
         };
       });
 
-    // 4. Generate eCTD 4.0 XML backbone. The application reference is the
-    //    recorded identity we actually hold: the legacy numeric id (unchanged),
-    //    or the program's real recorded code — never an invented number.
+    // 4. Generate eCTD 4.0 XML backbone. `applicationRef` is written into
+    //    <ectd:application-number>, so it takes the same chain the assembled
+    //    package uses (applicationIdFor): the RECORDED agency number, else the
+    //    program's own code, else a handle that says it is unassigned.
+    //
+    //    A legacy numeric project used to get `IND-${numericProjectId}` here —
+    //    a string shaped exactly like an agency IND number, synthesised from a
+    //    row id, for an application the agency has never seen. That is the one
+    //    thing this field must never contain, and the comment above it claimed
+    //    the opposite ("recorded identity we actually hold"). Such a project has
+    //    no program record and therefore nothing recorded, so it says so.
     const xmlBackbone = generateECTD4Backbone({
-      applicationRef:
+      applicationRef: applicationIdFor(
+        anchor,
         anchor.numericProjectId !== null
-          ? `IND-${anchor.numericProjectId}`
-          : anchor.programCode ?? anchor.programId ?? ident,
+          ? `UNASSIGNED-PROJECT-${anchor.numericProjectId}`
+          : anchor.programId ?? ident,
+      ),
       submissionType,
       region,
       modules: moduleStatuses,
@@ -784,12 +826,13 @@ async function compileFromSpine(
       sequenceId: seq.id,
       organizationId: orgId,
       userId: resolveUserId(req),
-      // Recorded identity only: the program's real code, else a handle that
-      // says it is unassigned — never an invented agency number, and never an
-      // applicant name the agency would read as real. The comment here already
-      // claimed "neutral", but `Organization 7` in <name> does not read as a
-      // gap; these follow regulatory-identifiers.ts' stated wording instead.
-      applicationId: anchor.programCode ?? `UNASSIGNED-SEQ-${seq.id}`,
+      // Recorded identity only: the agency's assigned number when the program
+      // records one, else the program's real code, else a handle that says it is
+      // unassigned — never an invented agency number, and never an applicant
+      // name the agency would read as real. The comment here already claimed
+      // "neutral", but `Organization 7` in <name> does not read as a gap; these
+      // follow regulatory-identifiers.ts' stated wording instead.
+      applicationId: applicationIdFor(anchor, `UNASSIGNED-SEQ-${seq.id}`),
       sponsorId: `UNASSIGNED-ORG-${orgId}`,
       sponsorName: `UNASSIGNED (organization ${orgId})`,
     });
@@ -887,7 +930,9 @@ async function compileFromSpine(
         compileStatus,
         xmlBackbone,
         JSON.stringify(validationResults),
-        anchor.programCode ?? `SEQ-${seq.id}`,
+        // The SAME identifier the backbone carries, so the compilation history
+        // and the next sequence's manifest lookup agree with what was filed.
+        applicationIdFor(anchor, `SEQ-${seq.id}`),
         seq.sequenceNumber,
         leafManifestJson,
         // Stable per-submission key: lets the NEXT sequence locate this manifest
