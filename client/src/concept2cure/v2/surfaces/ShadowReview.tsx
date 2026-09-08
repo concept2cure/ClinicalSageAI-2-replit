@@ -1,9 +1,10 @@
-import React, { useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { I } from '../icons';
 import { useLiveRows, EmptyState } from '../dataConnect';
 import { PedigreeBadge } from '../intelligence/Intelligence';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { usePublishSurfaceContext } from '../surfaceContext';
+import { useSurfaceActionHandlers, notifySurfaceActionReady } from '../surfaceActions';
 import '../styles/project-home-v2.css';
 import {
   SHADOW_LENSES, shadowLens, shadowAggregateRisk, SR_SEV, SR_DIM,
@@ -51,6 +52,32 @@ export function ShadowReview({ onAsk, onNav }: SurfaceViewProps) {
      shadow_review_findings, the tables runShadowReview persists). No fixture
      fallback: real rows, an honest empty, or an honest error. */
   const live = useLiveRows<ShadowLensRow>('/api/shadow-review');
+
+  /* AnA can switch reviewer lens — the same click a person makes. Switching TO
+     a lens that has not been run is itself the honest, intended behaviour (the
+     surface's whole point is distinguishing "not run" from "run, zero
+     findings"), so the handler does not require the target lens to have a row;
+     it only refuses while the worklist read itself is not ready. */
+  useSurfaceActionHandlers('shadow-review', {
+    'shadow-review.select-lens': (params) => {
+      const raw = String(params.lens ?? '').trim();
+      if (!raw) return { ok: false, reason: 'Name a reviewer lens by its id or label.' };
+      if (live.loading) return { ok: false, reason: 'The shadow-review worklist is still loading.', retry: true };
+      if (live.error) return { ok: false, reason: 'The shadow-review store did not load, so there is no worklist to switch lenses on.' };
+      const needle = raw.toLowerCase();
+      const byId = lenses.filter((l) => l.id.toLowerCase() === needle);
+      const hits = byId.length ? byId : lenses.filter((l) => l.label.toLowerCase().includes(needle));
+      if (hits.length === 0) return { ok: false, reason: `No reviewer lens matching "${raw}".` };
+      if (hits.length > 1) return { ok: false, reason: `"${raw}" matches ${hits.length} lenses — name one exactly.` };
+      const l = hits[0];
+      if (lensId === l.id) return { ok: true, detail: `Already on the ${l.label} lens` };
+      setLensId(l.id);
+      return { ok: true, detail: `Switched to the ${l.label} lens` };
+    },
+  });
+  useEffect(() => {
+    if (!live.loading && !live.error) notifySurfaceActionReady('shadow-review');
+  }, [live.loading, live.error]);
 
   const findingsByLens = useMemo(() => {
     const map: Record<string, ShadowFindingRow[]> = {};

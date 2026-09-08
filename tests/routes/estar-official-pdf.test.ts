@@ -1086,6 +1086,13 @@ describe.skipIf(!fsSync.existsSync(REAL_NIVD))(
       expect(mockResolverFactory.mock.calls[0][0]).toMatchObject({
         organizationId: 2,
         programUuid: PROGRAM,
+        /* THIS export's document class, not "the newest device document". The
+           loader's default spans k510, denovo, pma AND cer, and the rule-pack
+           keys an attachment is filed by collide across packs — D5 is "Shelf
+           life and packaging" in k510 and "Cybersecurity" in denovo. A CER
+           generated for the same program would otherwise change which document
+           a named CDRH slot is filled from, with a clean 200. */
+        docTypes: ['k510'],
       });
     });
 

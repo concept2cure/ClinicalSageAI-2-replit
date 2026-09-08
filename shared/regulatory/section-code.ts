@@ -79,6 +79,47 @@ function compareSegment(a: Segment, b: Segment): number {
   return a.text < b.text ? -1 : a.text > b.text ? 1 : 0;
 }
 
+/** A syntactically-shaped CTD code: a module digit optionally followed by dotted
+ *  sub-sections. Syntax only — it says nothing about whether the code exists in
+ *  the ICH tree (see isPlaceableCtdCode, server-side, for that). */
+const CTD_CODE = /^\s*([1-5])((?:\.[0-9A-Za-z]+)*)\s*$/;
+
+/**
+ * The package folder a CTD section's leaves live in, as a slug: `3.2.S.4.2` →
+ * `3-2-s-4-2`. Lowercase, the eCTD convention.
+ *
+ * Shared so the packager's layout and the placement dialog's preview cannot
+ * disagree about where a document is going to end up. Returns null for anything
+ * that is not a CTD code.
+ */
+export function ctdFolderSlug(value: string | null | undefined): string | null {
+  const code = normalizeCtdCode(value);
+  return code === null ? null : code.replace(/\./g, '-').toLowerCase();
+}
+
+/**
+ * Normalize a candidate CTD code's SYNTAX, or null when it is not code-shaped.
+ * Accepts an optional leading 'm' ('m3.2.P.1', 'm1.1').
+ *
+ * Canonical ICH spelling: alpha segments are uppercased (3.2.S.1, 3.2.P.1,
+ * 2.3.S). `section_code` is free text on the write paths, and '3.2.s.1' and
+ * '3.2.S.1' reached the packager as two distinct codes — one CTD section, two
+ * sibling leaf folders.
+ *
+ * Lives in shared/ because BOTH sides need the same answer: the packager
+ * derives a leaf's module and folder from it (regional-packager
+ * `leafPackagePath`), `upsertLeaf` refuses a write that is not code-shaped, and
+ * the placement dialog tells the author what their input resolves to before
+ * they commit it. Three copies of this rule is how they disagree.
+ */
+export function normalizeCtdCode(value: string | null | undefined): string | null {
+  if (!value) return null;
+  const stripped = String(value).trim().replace(/^m/i, '');
+  const m = CTD_CODE.exec(stripped);
+  if (!m) return null;
+  return `${m[1]}${m[2].toUpperCase()}`;
+}
+
 /**
  * Compare two section codes for display and assembly order.
  * Suitable directly as an `Array.prototype.sort` comparator.

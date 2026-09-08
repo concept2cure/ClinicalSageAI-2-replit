@@ -412,6 +412,13 @@ export async function assessSequenceDispatchReadiness(
     // 0001 and every later sequence under the same submission — see the header
     // of resolveReleaseSignatureStatus.
     sequenceNumber: sequence.sequenceNumber,
+    // And the sequence's own id, so the resolver can also see a release signed
+    // on the SUBMISSIONS spine (governed sign on 'ectd-sequence:<id>', bound to
+    // this sequence's leaf manifest). Without it that spine cannot be addressed
+    // at all, and a sequence authored and signed entirely through the product's
+    // own governed path reads as unsigned — which made dispatch and transmit
+    // unreachable for every submission type the gate applies to.
+    sequenceId,
   });
   const signatureRequired = isReleaseSignatureRequired(submissionApplicationType);
   const signatureInput = {

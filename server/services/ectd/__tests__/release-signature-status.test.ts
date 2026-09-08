@@ -40,6 +40,7 @@ import { describe, expect, it, vi, beforeEach } from 'vitest';
 
 const mockResolveSignedPackageForExport = vi.fn();
 const mockDbExecute = vi.fn();
+const mockSequenceSpine = vi.fn();
 
 vi.mock('../signed-package-export.js', async () => {
   const actual = await vi.importActual<typeof import('../signed-package-export.js')>(
@@ -50,6 +51,10 @@ vi.mock('../signed-package-export.js', async () => {
     resolveSignedPackageForExport: (...args: unknown[]) => mockResolveSignedPackageForExport(...args),
   };
 });
+
+vi.mock('../sequence-release-signature.js', () => ({
+  resolveSequenceReleaseSignature: (...args: unknown[]) => mockSequenceSpine(...args),
+}));
 
 vi.mock('../../../db.js', () => ({
   pool: { query: vi.fn(async () => ({ rows: [] })) },
@@ -104,9 +109,15 @@ function signedFor(sequenceNumber: string, runId: string) {
   };
 }
 
+const SEQUENCE_ID = 5150;
+
 beforeEach(() => {
   mockResolveSignedPackageForExport.mockReset();
   mockDbExecute.mockReset();
+  mockSequenceSpine.mockReset();
+  // Default: the submissions spine holds nothing, so every case above keeps
+  // asserting the orchestrator spine's own behaviour.
+  mockSequenceSpine.mockResolvedValue({ verdict: 'unsigned', detail: 'no dispatch-intent signature' });
 });
 
 describe('resolveReleaseSignatureStatus — the verdict is about THIS sequence', () => {
@@ -245,6 +256,171 @@ describe('resolveReleaseSignatureStatus — the verdict is about THIS sequence',
   });
 });
 
+/* ── The two spines ────────────────────────────────────────────────────────────
+   A release can be signed on either of two spines, and this resolver could see
+   only one. The orchestrator spine signs a built package (package.sign on a
+   run); the SUBMISSIONS spine signs the sequence itself — a governed sign on
+   'ectd-sequence:<id>' whose bound_payload_digest is a sha256 over that
+   sequence's row and its ordered leaf manifest, i.e. exactly what a dispatch
+   would transmit.
+
+   A submission authored through the submissions spine has no orchestrator run
+   at all. It was therefore reported 'unsigned' — and because the gate REQUIRES
+   a release signature for IND / NDA / BLA / MAA, which is every type it applies
+   to, dispatch and transmit were unreachable for it however correctly the
+   operator signed. The gate was not protecting anything there; it was denying a
+   signature that existed.
+
+   What must not change while fixing that: the orchestrator spine's DEFINITE
+   answers still win, an integrity failure on either spine still blocks, and an
+   undetermined orchestrator lookup is never rescued by the other spine — an
+   outage there is an 'invalid' we cannot see. */
+describe('a release signed on the submissions spine', () => {
+  /** The orchestrator spine holds nothing for this submission. */
+  function noOrchestratorRuns() {
+    runsAre();
+    unlinkedRunsAre(0);
+  }
+
+  it('clears the gate when the sequence itself carries a verified release signature', async () => {
+    noOrchestratorRuns();
+    mockSequenceSpine.mockResolvedValue({
+      verdict: 'signed',
+      detail: 'signed for dispatch on ectd-sequence:5150, bound to the current leaf manifest',
+      signatureId: 4242,
+    });
+
+    const status = await resolveReleaseSignatureStatus({
+      submissionId: SUBMISSION,
+      organizationId: ORG,
+      sequenceNumber: THIS_SEQUENCE,
+      sequenceId: SEQUENCE_ID,
+    });
+
+    expect(
+      status.verdict,
+      'a sequence signed through the product\'s own governed path still reads as unsigned',
+    ).toBe('signed');
+    expect(status.signatureId).toBe(4242);
+  });
+
+  it('addresses the submissions spine by SEQUENCE id, scoped to this organization', async () => {
+    noOrchestratorRuns();
+    await resolveReleaseSignatureStatus({
+      submissionId: SUBMISSION,
+      organizationId: ORG,
+      sequenceNumber: THIS_SEQUENCE,
+      sequenceId: SEQUENCE_ID,
+    });
+    expect(mockSequenceSpine).toHaveBeenCalledWith({ sequenceId: SEQUENCE_ID, organizationId: ORG });
+  });
+
+  it('blocks on a sequence signature that no longer binds its content', async () => {
+    // Drift is evidence of tampering or staleness, and it blocks whether or not
+    // the orchestrator spine had anything to say.
+    noOrchestratorRuns();
+    mockSequenceSpine.mockResolvedValue({
+      verdict: 'invalid',
+      detail: 'the sequence changed after it was signed for dispatch',
+    });
+
+    const status = await resolveReleaseSignatureStatus({
+      submissionId: SUBMISSION,
+      organizationId: ORG,
+      sequenceNumber: THIS_SEQUENCE,
+      sequenceId: SEQUENCE_ID,
+    });
+
+    expect(status.verdict).toBe('invalid');
+  });
+
+  it('reports a revoked sequence signature as revoked, not as unsigned', async () => {
+    noOrchestratorRuns();
+    mockSequenceSpine.mockResolvedValue({ verdict: 'revoked', detail: 'superseded' });
+
+    const status = await resolveReleaseSignatureStatus({
+      submissionId: SUBMISSION,
+      organizationId: ORG,
+      sequenceNumber: THIS_SEQUENCE,
+      sequenceId: SEQUENCE_ID,
+    });
+
+    expect(status.verdict).toBe('revoked');
+  });
+
+  it('says so about BOTH spines when neither holds a signature', async () => {
+    noOrchestratorRuns();
+
+    const status = await resolveReleaseSignatureStatus({
+      submissionId: SUBMISSION,
+      organizationId: ORG,
+      sequenceNumber: THIS_SEQUENCE,
+      sequenceId: SEQUENCE_ID,
+    });
+
+    expect(status.verdict).toBe('unsigned');
+    expect(String(status.detail)).toMatch(/orchestrator/i);
+    expect(
+      String(status.detail),
+      'the detail implies only the orchestrator spine was checked',
+    ).toMatch(/dispatch-intent signature/i);
+  });
+
+  it('NEVER rescues a tampered orchestrator signature', async () => {
+    // The whole point of returning early on a definite orchestrator verdict.
+    // 'invalid' means a signature exists on that spine and does not verify; a
+    // valid signature elsewhere is not permission to ignore it.
+    runsAre('run-a');
+    mockResolveSignedPackageForExport.mockResolvedValue({
+      ok: false,
+      refusal: 'digest-drift',
+      detail: 'the package content changed after signing',
+    });
+    mockSequenceSpine.mockResolvedValue({ verdict: 'signed', signatureId: 1 });
+
+    const status = await resolveReleaseSignatureStatus({
+      submissionId: SUBMISSION,
+      organizationId: ORG,
+      sequenceNumber: THIS_SEQUENCE,
+      sequenceId: SEQUENCE_ID,
+    });
+
+    expect(status.verdict, 'a tampered orchestrator signature was cleared by the other spine').toBe('invalid');
+    expect(mockSequenceSpine, 'the other spine was consulted at all').not.toHaveBeenCalled();
+  });
+
+  it('does NOT consult the other spine when the orchestrator lookup is undetermined', async () => {
+    // An outage on the orchestrator spine hides whatever it would have said —
+    // possibly 'invalid'. Clearing on the other spine would let that through.
+    mockDbExecute.mockRejectedValue(new Error('connection reset'));
+    mockSequenceSpine.mockResolvedValue({ verdict: 'signed', signatureId: 1 });
+
+    const status = await resolveReleaseSignatureStatus({
+      submissionId: SUBMISSION,
+      organizationId: ORG,
+      sequenceNumber: THIS_SEQUENCE,
+      sequenceId: SEQUENCE_ID,
+    });
+
+    expect(status.verdict).toBe('undetermined');
+    expect(mockSequenceSpine).not.toHaveBeenCalled();
+  });
+
+  it('leaves the orchestrator answer alone when no sequence id is supplied', async () => {
+    noOrchestratorRuns();
+    mockSequenceSpine.mockResolvedValue({ verdict: 'signed', signatureId: 1 });
+
+    const status = await resolveReleaseSignatureStatus({
+      submissionId: SUBMISSION,
+      organizationId: ORG,
+      sequenceNumber: THIS_SEQUENCE,
+    });
+
+    expect(status.verdict).toBe('unsigned');
+    expect(mockSequenceSpine).not.toHaveBeenCalled();
+  });
+});
+
 describe('the assessor actually passes the sequence', () => {
   /* Everything above tests the resolver in isolation, and the resolver falls
      back to submission-wide behaviour when no sequenceNumber is supplied. So a
@@ -266,6 +442,19 @@ describe('the assessor actually passes the sequence', () => {
       /sequenceNumber:\s*sequence\.sequenceNumber/.test(calls[0] ?? ''),
       'the assessor resolves a release signature WITHOUT naming its sequence, so a ' +
         'signature over any other sequence of the same submission clears this one',
+    ).toBe(true);
+  });
+
+  it('hands the resolver the sequence ID, or the submissions spine is unreachable', () => {
+    // sequenceId is typed optional so a submission-grained caller keeps
+    // compiling; that leaves the second spine one deleted argument away from
+    // being dead code, and its absence reads as 'unsigned' — the exact false
+    // statement this pair of changes removes.
+    const calls = src.match(/resolveReleaseSignatureStatus\(\{[\s\S]*?\}\)/g) ?? [];
+    expect(
+      /(^|[^A-Za-z])sequenceId\s*,/.test(calls[0] ?? ''),
+      'the assessor no longer passes sequenceId, so a release signed on the ' +
+        'submissions spine cannot be seen and reads as unsigned',
     ).toBe(true);
   });
 });

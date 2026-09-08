@@ -150,6 +150,25 @@ export interface LoadDeviceContentLeavesOptions {
   /** Scope to one legacy document's sections (cerv2_510k_sections.document_id) when known. */
   documentId?: number;
   /**
+   * Which governed document CLASS to read, when `programId` is set. Defaults to
+   * `GOVERNED_DEVICE_DOC_TYPES` — every device class — which is
+   * `ORDER BY created_at DESC LIMIT 1` across k510, denovo, pma AND cer.
+   *
+   * That default is right for a readiness sweep and wrong for anything that
+   * files a section under its rule-pack KEY, because the keys are per-pathway
+   * and they collide: `D5` is "Shelf life and packaging" in the k510 pack and
+   * "Cybersecurity" in the denovo pack; `E1` is "Biocompatibility" in one and
+   * "Proposed labeling and instructions for use" in the other
+   * (migrations/20260901b_estar_510k_denovo_outlines.sql). Generating a CER, or
+   * scaffolding a De Novo beside a 510(k), changes which document answers — so
+   * a caller that means "this program's 510(k) content" must say so.
+   *
+   * The docblock on `loadGovernedDeviceSections` already names this exact use
+   * for the EU technical-file assembler; this is the same argument, applied to
+   * the callers that reach a named CDRH attachment slot.
+   */
+  docTypes?: ReadonlyArray<string>;
+  /**
    * The regulatory program (regulatory_programs.id) whose GOVERNED device
    * document to read. When set, the legacy store is not consulted at all.
    */
@@ -340,7 +359,9 @@ export async function loadDeviceContentLeaves(
   opts: LoadDeviceContentLeavesOptions = {},
 ): Promise<FilingLeaf[]> {
   if (opts.programId) {
-    const rows = await loadGovernedDeviceSections(organizationId, opts.programId, opts.client);
+    const rows = await loadGovernedDeviceSections(
+      organizationId, opts.programId, opts.client, opts.docTypes ?? GOVERNED_DEVICE_DOC_TYPES,
+    );
     return sectionsToLeaves(governedSectionsToDeviceSections(rows));
   }
   const where =
@@ -432,7 +453,9 @@ export async function loadAuthoredDeviceSections(
   opts: LoadDeviceContentLeavesOptions = {},
 ): Promise<AuthoredDeviceSection[]> {
   if (opts.programId) {
-    const rows = await loadGovernedDeviceSections(organizationId, opts.programId, opts.client);
+    const rows = await loadGovernedDeviceSections(
+      organizationId, opts.programId, opts.client, opts.docTypes ?? GOVERNED_DEVICE_DOC_TYPES,
+    );
     return governedSectionsToDeviceSections(rows)
       .filter(isAuthored)
       .map((r) => ({

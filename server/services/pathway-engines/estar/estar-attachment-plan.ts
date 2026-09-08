@@ -389,6 +389,25 @@ export interface DeviceAttachmentResolverInput {
   organizationId: number;
   /** The regulatory program whose governed sections and vault are readable. */
   programUuid: string | null;
+  /**
+   * The governed document CLASS this export files from — `['k510']`,
+   * `['denovo']`, `['pma']`.
+   *
+   * REQUIRED in spirit, optional only so a caller that has no class (there is
+   * none today) degrades to the loader's default rather than reading nothing.
+   * Without it the loader takes the most recently created document of ANY
+   * device class, CER included, and the rule-pack keys this resolver files by
+   * are per-pathway and collide: `D5` is "Shelf life and packaging" in the k510
+   * pack and "Cybersecurity" in the denovo pack; `E1` is "Biocompatibility" in
+   * one and "Proposed labeling and instructions for use" in the other. So
+   * generating a CER, or scaffolding a De Novo beside a 510(k), silently
+   * changes which document a named CDRH attachment slot is filled from — with a
+   * clean 200 and no blocker.
+   *
+   * That is tolerable for the draft package `/build` produces and is not
+   * tolerable here, which is the same line `substantive` draws.
+   */
+  docTypes?: ReadonlyArray<string>;
   client?: DeviceContentClient;
 }
 
@@ -420,6 +439,7 @@ export function createDeviceAttachmentResolver(
       if (sections === null) {
         sections = await loadAuthoredDeviceSections(input.organizationId, {
           programId: input.programUuid,
+          docTypes: input.docTypes,
           client: input.client,
         });
       }

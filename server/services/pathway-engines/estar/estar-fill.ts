@@ -707,6 +707,15 @@ async function planAttachments(
     );
   }
 
+  /* SEEDED BEFORE ANYTHING CAN REFUSE. The report used to be assigned only
+     after the plan succeeded, so the two refusals above it — a static AcroForm,
+     and a template whose manifest node is missing or already carries tokens —
+     produced a 422 with a blocker and NO report at all. The operator was told
+     "Cannot attach documents to this eSTAR" and nothing about the thirty
+     placements they had asked for. `requested` is a fact from the request, and
+     it is true on every path. */
+  base.attachmentReport = { requested: requests.length, attached: [], refused: [], manifest: null };
+
   if (!dynamicXfa) {
     base.blockers.push(
       'Cannot attach documents to this template: it is a static AcroForm, and the eSTAR attachment ' +
