@@ -351,24 +351,23 @@ for (const t of TEMPLATES) {
 describe('createDeviceAttachmentResolver', () => {
   const PROGRAM = '2b6d4a80-6a35-4b1e-9f6e-3a9d2c1e5f70';
 
-  /** A c2c_documents row plus its sections, answered like the real pg client.
-   *  `query` is cast to `DeviceContentClient`'s shape: the interface method
-   *  carries its own generic `<T = Record<string, unknown>>`, and a plain,
-   *  non-generic mock function is not structurally assignable to a generic
-   *  method signature even though every row this fake ever returns already
-   *  IS `Record<string, unknown>` — the same default `T` resolves to. */
-  function fakeClient(sections: Array<Record<string, unknown>>): { calls: string[] } & DeviceContentClient {
+  /** A c2c_documents row plus its sections, answered like the real pg client. */
+  function fakeClient(sections: Array<Record<string, unknown>>): DeviceContentClient & { calls: string[] } {
     const calls: string[] = [];
     return {
       calls,
-      query: (async (text: string) => {
+      // Generic to match DeviceContentClient's own query<T>: a fixed
+      // Record<string, unknown> return type does not satisfy a generic method
+      // signature for arbitrary T, so a non-generic mock silently fails
+      // typecheck against the interface it stands in for.
+      query: async <T = Record<string, unknown>>(text: string) => {
         calls.push(text.replace(/\s+/g, ' ').trim().slice(0, 40));
         if (/FROM c2c_documents/.test(text)) {
-          return { rows: [{ id: 'doc-1', doc_type: 'k510' }] };
+          return { rows: [{ id: 'doc-1', doc_type: 'k510' }] as T[] };
         }
-        if (/FROM c2c_document_sections/.test(text)) return { rows: sections };
-        return { rows: [] };
-      }) as DeviceContentClient['query'],
+        if (/FROM c2c_document_sections/.test(text)) return { rows: sections as T[] };
+        return { rows: [] as T[] };
+      },
     };
   }
 
