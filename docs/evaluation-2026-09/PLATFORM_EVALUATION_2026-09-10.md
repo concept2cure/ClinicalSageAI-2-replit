@@ -145,10 +145,14 @@ design, and it is the design WO-5 proposes extending to the other 42 baselines.
 2. **Tenant isolation proven, not asserted** (WO-3). The 10 raw-SQL candidates
    are static analysis. 82 route files still run on the shared pool, which is
    what keeps RLS inert. The proof is a live two-tenant probe.
-3. **The gates that guard all of this run nowhere** (WO-4). Six `:strict`
-   variants — including `ci:tenant-isolation:strict` and
-   `ci:duplicate-table-ddl:strict` — are in `package.json` and in **no**
-   pipeline. Every finding in §1 could regress tomorrow without CI noticing.
+3. **Nothing drives the debt to zero** (WO-4). Six `:strict` variants — the
+   ones that demand an *empty* baseline — are in `package.json` and in no
+   pipeline. ~~Every finding in §1 could regress tomorrow without CI
+   noticing.~~ **Corrected 2026-09-10:** that was wrong. All six *non-strict*
+   variants run in `ci.yml`'s `lint` job on every push and PR, and they do catch
+   growth — the non-strict `ci:duplicate-table-ddl` is what caught WO-0's 64th
+   table. The debt cannot grow; nothing makes it shrink, and nothing reported
+   how far from zero it was. Fixed by running the six `:strict` gates nightly.
 
 ---
 
@@ -375,9 +379,10 @@ is real.
 
 ### 5.2 The finding that generalises
 
-**Six of the strict gates that guard the pilot bar run in no pipeline at all.**
-Cross-referencing `package.json` against `.husky/pre-push`,
-`.github/workflows/ci.yml` and `.github/workflows/pr-checks.yml`:
+**Six `:strict` gates run in no pipeline** — the variants that demand an empty
+baseline rather than "no worse than N". Cross-referencing `package.json` against
+`.husky/pre-push`, `.github/workflows/ci.yml` and
+`.github/workflows/pr-checks.yml`:
 
 | Gate | In CI? |
 |---|---|
@@ -388,8 +393,18 @@ Cross-referencing `package.json` against `.husky/pre-push`,
 | `ci:migration-prefix-collisions:strict` | ❌ nowhere |
 | `ci:proof-tier:strict` | ❌ nowhere |
 
-Every one of §1's findings is therefore free to regress without CI noticing —
-and one already has (`duplicate-table-ddl`, 63 baselined vs 64 measured).
+**Corrected 2026-09-10 (WO-4).** An earlier draft concluded from this table that
+"every one of §1's findings is free to regress without CI noticing." That does
+not follow, and it is wrong. Each of the six has a *non-strict* sibling running
+in `ci.yml`'s `lint` job — no `if:` condition, so every push and PR — and those
+siblings do catch growth. The regression this section cited as proof
+(`duplicate-table-ddl`, 63 baselined vs 64 measured) was caught **by exactly
+that non-strict gate**, which is how WO-0 found it.
+
+What the missing `:strict` variants actually cost is narrower and still real:
+the debt is prevented from growing but nothing drives it to zero, and no run
+reported how far each baseline was from empty. WO-4 put all six into the
+nightly governance job so that distance is now published daily.
 
 Three further honesty defects in the gate layer, each of which makes a green
 build mean less than it appears:

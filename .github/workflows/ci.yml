@@ -585,9 +585,13 @@ jobs:
         # client/src/concept2cure/{biopharma,pdev}/app.css and
         # client/src/styles/projects-prototype.css (module-scoped --rail-*/--pdev-*
         # layout vars plus --border-100/--border-200/--error-text aliases). The fix
-        # belongs in those stylesheets / the index.css shim. Flip to blocking once
-        # `npm run ci:token-cascade` is clean.
-        continue-on-error: true
+        # belongs in those stylesheets / the index.css shim.
+        #
+        # FLIPPED TO BLOCKING 2026-09-10 (WO-4). The condition recorded above —
+        # "once `npm run ci:token-cascade` is clean" — is met: the gate reports
+        # PASS, all 39 stylesheets resolving, verified on two consecutive runs.
+        # An advisory gate reports; it does not gate, and this one no longer
+        # needs to be advisory.
         run: npm run ci:token-cascade
 
       - name: Audit — repo health scan (no regressions)
@@ -1686,7 +1690,41 @@ jobs:
         run: npm run ci:audit-route-mounts:full-strict
       - name: Repo health audit (strict debt gate)
         run: npm run audit:repo-health:full-strict
+      # The :strict variants of the ratcheted debt gates. Each demands an EMPTY
+      # baseline, so each fails until its work order lands (WO-1 schema
+      # authority, WO-2 blank-database completeness, WO-3 tenant isolation,
+      # WO-10 deletion program). Their NON-strict siblings already run per-PR in
+      # the lint job and hold the line — these say how far the line still is
+      # from zero, which nothing else reports.
+      #
+      # Run as one step that executes all six and reports every count, rather
+      # than six steps where the first failure hides the other five.
+      - name: Strict debt gates (zero-baseline promotion targets)
+        if: always()
+        run: |
+          failed=0
+          for gate in \
+            ci:duplicate-table-ddl:strict \
+            ci:migration-prefix-collisions:strict \
+            ci:unbacked-tables:strict \
+            ci:tenant-isolation:strict \
+            ci:unreferenced-modules:strict \
+            ci:proof-tier:strict
+          do
+            echo "::group::$gate"
+            if npm run --silent "$gate"; then
+              echo "::notice::$gate — zero-debt, ready to promote into pr-checks.yml"
+            else
+              echo "::warning::$gate — debt remains; see its work order"
+              failed=1
+            fi
+            echo "::endgroup::"
+          done
+          exit $failed
       - name: Upload nightly governance artifacts
+        # always(): the debt gates above are EXPECTED to fail until their work
+        # orders land, and the artifacts are the whole point of the run.
+        if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: governance-audits-nightly
