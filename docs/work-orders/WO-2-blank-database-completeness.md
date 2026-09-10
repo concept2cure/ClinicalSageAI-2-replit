@@ -121,3 +121,86 @@ table needs a shape decision plus `organization_id INTEGER NOT NULL` per
    `docs/evaluation-2026-09/evidence/applier-reachability.mjs`. Expect this to
    surface more entries — that is the point, and it is why it belongs here
    rather than in a restore-green change.
+
+---
+
+## PROGRESS — 2026-09-10: the first live measurement
+
+**A real database was stood up and the numbers are now measured rather than
+inherited.** PostgreSQL 16 + pgvector, `install-fresh` then `deploy-migrate`,
+exactly the pair `blank-db-provisioning` runs in CI.
+
+| Step | Result |
+|---|---|
+| `install-fresh` | 966 tables · *"Application schema install complete"* · 2 classified skips · *"tenant isolation: every integer tenant-keyed table is policied ✓"* |
+| `deploy-migrate` | **261/261** files applied · authoring subsystem 19/19 · tenant-parentage FKs 6/6 · `tenant_isolation_policy` 19/19 |
+| `ci:tables-live-schema` | 1,281 relations · 785 referenced by server SQL · 25 resolved as functions · **70 absent** |
+
+**The 73 was real and reproducible.** Two of its entries — `tasks` and
+`vault.document_chunks` — now exist and the gate named them as ratchet-down
+candidates; both removed **by hand** rather than by regenerating the file,
+because this database is PG16 while CI's job uses `pgvector/pgvector:pg15` and a
+wholesale regenerate from a different major version could silently move entries
+the gate never named. **73 → 70.**
+
+### The one unbaselined absence was caused by this work order's own prerequisite
+
+`contradiction_links`, written and read by
+`server/services/assumption-registry-service.ts`.
+
+ADR-0007 point 6 recorded that its DDL lived *"only in dead `migrations/0010`"*.
+**"Dead" was true of `deploy-migrate` and false of `install-fresh`**, whose
+root-tree overlay reads every `migrations/*.sql` — so every from-scratch
+database did have the table. Retiring 0010 under WO-1 (commit `9a47438b6`)
+removed it from every future fresh install.
+
+**No repository-only check reported that.** `ci:duplicate-table-ddl` went 51 →
+47, `ci:unbacked-tables` stayed green, every schema-contract test passed. A
+provisioned database is what saw it. That is this work order's premise
+demonstrated on the person writing it, which is the most convincing form
+available — and it is why WO-1's remaining 47 are now marked *blocked on WO-2*
+rather than merely sequenced after it.
+
+**Ported, not reverted.** `db/migrations/20260910_contradiction_links_port.sql`,
+listed in `C2C_MIGRATION_FILES` so RULE 1's replay reaches databases that
+already exist — restoring 0010 would have restored the duplicates WO-1 retired
+it to resolve, and would still have fixed only fresh installs. That is WO-1's
+exit criterion B, now demonstrated end to end: the table was dropped, one
+`deploy-migrate` pass recreated it, and the canonical sweep reported
+*"tenant_isolation_policy applied to 1 newly-provisioned table(s)"*.
+
+`ci:migration-set-order` rejected the first placement — the pinned invariant is
+the final **pair**, not just the sweep — and the pre-push hook then required
+`npm run db:sync-manifest`. Both gates did their job.
+
+### And the endpoints were worse than the missing table
+
+`POST /api/operating-system/contradiction-links` validated six required fields,
+called `createContradictionLink()` **with no arguments** (a method that returns
+null unless all six are present), and answered **HTTP 201 Created** with a
+`data` object assembled by echoing the request body back. `GET` answered
+`{ data: [], count: 0 }` without reading anything.
+
+So the API said *created*, returned a plausible representation of the record,
+and then reported that the project had no contradiction links — three false
+statements, none of them detectable by a client. This is the failure mode this
+work order's own opening quotes:
+
+> A guarded one degrades to a silent no-op, **which is worse: it looks durable
+> and is not.**
+
+Both endpoints now do the real thing; `null` from the service is a 500 rather
+than a success; the service's catch no longer claims *"table unavailable
+(non-blocking)"* (neither half is true now); and its reader throws instead of
+returning `[]`, because an empty array asserts a project has no contradictions
+and *"none found"* is the answer a reviewer accepts without checking. Five
+contract tests pin it at the route boundary, where the lie was visible.
+
+### What remains
+
+- **70 baselined absences.** Each still needs the decision in Scope item 1 —
+  code-derived migration, repoint the query, or delete it. The harness to
+  measure them now exists and is reproducible in about fifteen minutes.
+- **The harness is not yet a repo artefact.** Scope item 3 asks for it as a
+  script; today it was run by hand. Worth landing before the next pass, because
+  the value shown here came entirely from being able to run it.
