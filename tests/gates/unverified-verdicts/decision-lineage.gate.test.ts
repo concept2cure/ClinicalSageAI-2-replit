@@ -15,7 +15,7 @@
  */
 import express from 'express';
 import request from 'supertest';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { mockPool } from '../../setup';
 import { assertNoVerdictClaims } from '../../../scripts/ci/lib/verdict-inspector.mjs';
 
@@ -41,8 +41,12 @@ function failOnlyTheChain() {
   );
 }
 
+/** The stub's original query, restored after this file (singleFork shares a process). */
+const originalQuery = mockPool.query;
+let router: express.Router;
+let auditService: { verifyChain: () => Promise<unknown> };
+
 async function app() {
-  const router = (await import('../../../server/routes/decision-lineage')).default;
   const a = express();
   a.use(express.json());
   a.use((req, _res, next) => {
@@ -54,12 +58,21 @@ async function app() {
 }
 
 describe('decision-lineage: the chain verifier could not run', () => {
+  // Imports live in beforeAll (hookTimeout 60 s): a cold transform of the
+  // router graph costs seconds and must not be charged to a test's 10 s budget.
+  beforeAll(async () => {
+    failOnlyTheChain();
+    router = (await import('../../../server/routes/decision-lineage')).default;
+    auditService = (await import('../../../server/services/auditService')).default;
+  });
   beforeEach(() => {
     failOnlyTheChain();
   });
+  afterAll(() => {
+    (mockPool as { query: unknown }).query = originalQuery;
+  });
 
   it('auditService.verifyChain says it did not run, rather than "invalid"', async () => {
-    const { default: auditService } = await import('../../../server/services/auditService');
     const outcome = (await auditService.verifyChain()) as { ran?: boolean; reason?: string };
     expect(outcome.ran).toBe(false);
     expect(outcome.reason).toMatch(/42P01|does not exist/);
