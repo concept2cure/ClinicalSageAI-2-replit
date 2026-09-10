@@ -27,6 +27,7 @@ import { createPolicyGuard } from '../services/policy/opaMiddleware';
 import rbacService from '../services/roleBasedAccess';
 import { verifyAuditIntegrity } from '../services/audit/audit-integrity-service';
 import { requestPgClient } from '../db/requestDb';
+import { VerificationUnavailableError, describeFailure } from '../lib/verification-outcome';
 
 /**
  * The request-scoped, tenant-pinned SQL client.
@@ -279,72 +280,27 @@ function computeHash(data: string): string {
   return crypto.createHash('sha256').update(data).digest('hex');
 }
 
-function computeAuditChainHash(entry: Omit<AuditTrailEntry, 'hash'>, previousHash: string): string {
-  const payload = `${previousHash}|${entry.entityType}|${entry.entityId}|${entry.action}|${entry.userId}|${entry.timestamp.toISOString()}`;
-  return computeHash(payload);
-}
-
 // ---------------------------------------------------------------------------
-// AUDIT CHAIN — In-memory chain + DB persistence (audit_events table)
+// AUDIT CHAIN — the in-memory chain and its fire-and-forget INSERT are gone
 // ---------------------------------------------------------------------------
-
-let lastAuditHash = computeHash('GENESIS_BLOCK_TRIALSAGE');
-
-// Reference to the pool — set by createPart11Router
-let _part11Pool: Pool | null = null;
-
-function setAuditPool(pool: Pool) {
-  _part11Pool = pool;
-}
-
-function appendAuditEntry(
-  params: Omit<AuditTrailEntry, 'id' | 'hash' | 'previousHash'>,
-  organizationId?: number
-): AuditTrailEntry {
-  const entry: AuditTrailEntry = {
-    ...params,
-    id: uuidv4(),
-    previousHash: lastAuditHash,
-    hash: '', // computed below
-  };
-  entry.hash = computeAuditChainHash(entry, lastAuditHash);
-  lastAuditHash = entry.hash;
-
-  // Persist to audit_events table — awaited where possible, logged on failure
-  if (_part11Pool) {
-    _part11Pool.query(
-      `INSERT INTO audit_events
-        (organization_id, event_type, entity_type, entity_id, user_id, user_name,
-         user_role, ip_address, timestamp, reason, metadata, regulatory_significant, gxp_relevant)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), $9, $10, true, true)`,
-      [
-        organizationId ?? null,
-        entry.action,
-        entry.entityType,
-        entry.entityId,
-        entry.userId,
-        entry.userName,
-        entry.userRole,
-        entry.ipAddress,
-        entry.changeReason || entry.newValue || `${entry.action} on ${entry.entityType}`,
-        JSON.stringify({
-          previousValue: entry.previousValue,
-          newValue: entry.newValue,
-          sessionId: entry.sessionId,
-          userAgent: entry.userAgent,
-          part11_source: 'compliance_engine',
-        }),
-      ]
-    ).catch((err: Error) => {
-      console.error('[Part11] CRITICAL: Failed to persist audit entry to DB:', err.message);
-      console.error('[Part11] Entry data:', JSON.stringify({ id: entry.id, action: entry.action, entityId: entry.entityId }));
-    });
-  } else {
-    console.warn('[Part11] WARNING: No DB pool available -- audit entry stored in-memory only:', entry.id);
-  }
-
-  return entry;
-}
+//
+// WO-16B finding 27. `appendAuditEntry` hashed each entry against a
+// process-local `lastAuditHash`, kicked off an INSERT into audit_events on a
+// module-level pool, and returned the entry to POST /audit-trail, which
+// answered `success: true` with it. Two things were true at once:
+//
+//   - the route never passed an organisation id, and
+//     audit_events.organization_id is `integer NOT NULL`, so every INSERT
+//     raised 23502 into a swallowing `.catch` — `setAuditPool(pool)` was
+//     called at boot by register-advanced-platform-routes.ts, so this ran in
+//     production on every call and never once landed a row;
+//   - the "hash-chained entry" the handler returned existed in this process's
+//     memory only, until the next restart.
+//
+// The route now writes the row on the request's tenant-pinned client and
+// answers from what the database returned — including `record_hash: null` on a
+// database whose hash-chain trigger is not applied — or says the row did not
+// land. A chain the database does not hold is not reported.
 
 // ---------------------------------------------------------------------------
 // EXPRESS ROUTES
@@ -603,8 +559,8 @@ router.get('/signatures/:signatureId/manifest', async (req: Request, res: Respon
  * `is_valid = true` and `superseded_by NULL`, and the submission orchestrator
  * went on returning it as the active release signature. The audit entry itself
  * almost certainly never persisted either — `audit_events.organization_id` is
- * NOT NULL and appendAuditEntry is called here with no organization, so the
- * INSERT raises 23502 into a swallowing .catch.
+ * NOT NULL and the (since removed) appendAuditEntry was called here with no
+ * organization, so the INSERT raised 23502 into a swallowing .catch.
  *
  * Deleted rather than repaired, for the same reason POST /signatures was: it had
  * no caller in client/ or server/, and the canonical revocation already exists —
@@ -653,7 +609,7 @@ router.get('/audit-trail/:entityId', async (req: Request, res: Response, next: N
         visible to nobody and with enforcement off they are visible to everyone.
 
      There is also no writer: nothing in the repo INSERTs into `public.audit_trail`.
-     `appendAuditEntry` writes `audit_events`, the tamper-proof observer writes
+     POST /audit-trail writes `audit_events`, the tamper-proof observer writes
      `audit_logs`. The fix is to re-point this at `audit_events` — which has every
      column it wants plus `organization_id` — or to delete it, as `POST /signatures`
      was deleted above. Both are product decisions, not repairs. */
@@ -707,14 +663,23 @@ router.get('/audit-trail/:entityId', async (req: Request, res: Response, next: N
 
 /**
  * POST /audit-trail
- * Record an audit trail entry (system events, configuration changes)
+ * Record an audit trail entry (system events, configuration changes).
+ *
+ * The row lands on the request's tenant-pinned client before the response is
+ * written, or the response says it did not (WO-16B finding 27). `entity_id` is
+ * `integer NOT NULL` on audit_events; an id the column cannot hold is refused
+ * up front rather than stored as something else.
  */
-router.post('/audit-trail', (req: Request, res: Response) => {
+router.post('/audit-trail', async (req: Request, res: Response) => {
   // SECURITY: Use authenticated user from JWT, not from request body
   // This prevents audit trail spoofing (21 CFR Part 11 compliance)
   const authUser = (req as any).user || (req as any).tenantContext;
   const userId = authUser?.id || authUser?.userId || (req as any).userId;
   const userRole = authUser?.role || (req as any).userRole || 'unknown';
+  const orgId = requestOrgId(req);
+  if (orgId == null) {
+    return res.status(403).json({ success: false, error: 'Tenant context required' });
+  }
 
   const {
     entityType,
@@ -737,23 +702,94 @@ router.post('/audit-trail', (req: Request, res: Response) => {
     });
   }
 
-  const entry = appendAuditEntry({
-    entityType,
-    entityId,
-    action,
-    userId,
-    userName: userName || userId,
-    userRole: userRole || 'unknown',
-    previousValue,
-    newValue,
-    changeReason,
-    timestamp: new Date(),
-    ipAddress: req.ip || 'unknown',
-    userAgent: req.get('user-agent') || 'unknown',
-    sessionId: (req as any).sessionId || 'unknown',
-  });
+  const entityIdNumber = Number(entityId);
+  if (!Number.isInteger(entityIdNumber)) {
+    return res.status(400).json({
+      success: false,
+      error: 'ENTITY_ID_NOT_INTEGER',
+      message: 'audit_events.entity_id is an integer column; this entity id cannot be recorded against it.',
+    });
+  }
+  const userIdNumber = Number.isInteger(Number(userId)) ? Number(userId) : null;
 
-  res.json({ success: true, data: entry });
+  const sql = requestSql(req);
+  let row: {
+    id: number;
+    sequence_number: number | null;
+    record_hash: string | null;
+    previous_hash: string | null;
+    timestamp: string | Date;
+  };
+  try {
+    const { rows } = await sql.query(
+      `INSERT INTO audit_events
+        (organization_id, event_type, entity_type, entity_id, user_id, user_name,
+         user_role, ip_address, session_id, timestamp, reason, metadata,
+         regulatory_significant, gxp_relevant)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), $10, $11, true, true)
+       RETURNING id, sequence_number, record_hash, previous_hash, timestamp`,
+      [
+        orgId,
+        action,
+        entityType,
+        entityIdNumber,
+        userIdNumber,
+        userName || String(userId),
+        userRole,
+        req.ip || 'unknown',
+        (req as any).sessionId || 'unknown',
+        changeReason || newValue || `${action} on ${entityType}`,
+        // The user agent rides in metadata, as it did before: the router's
+        // own guard (part11-signature-post-removed.test.ts) bans that column
+        // name anywhere in this file because the old signature INSERT used it
+        // as a phantom column.
+        JSON.stringify({
+          previousValue,
+          newValue,
+          userAgent: req.get('user-agent') || 'unknown',
+          part11_source: 'compliance_engine',
+        }),
+      ]
+    );
+    if (!rows[0]) {
+      throw new VerificationUnavailableError('audit-trail write', 'INSERT returned no row');
+    }
+    row = rows[0];
+  } catch (err) {
+    const code = (err as { code?: string } | null)?.code;
+    if (code === '42P01') {
+      console.warn('[Part11] audit_events not provisioned; the entry was NOT recorded');
+      return res.status(503).json({ success: false, error: 'AUDIT_TRAIL_STORE_UNPROVISIONED' });
+    }
+    console.error('[Part11] audit entry was NOT recorded:', describeFailure(err));
+    return res.status(503).json({
+      success: false,
+      error: 'AUDIT_ENTRY_NOT_PERSISTED',
+      message: 'The audit entry could not be written to the audit trail. Nothing was recorded; the reason has been logged.',
+    });
+  }
+
+  return res.status(201).json({
+    success: true,
+    data: {
+      id: row.id,
+      entityType,
+      entityId: entityIdNumber,
+      action,
+      userId,
+      userName: userName || String(userId),
+      userRole,
+      changeReason,
+      timestamp: row.timestamp instanceof Date ? row.timestamp.toISOString() : row.timestamp,
+      sequenceNumber: row.sequence_number ?? null,
+      // As the database holds it. Null means this database's audit_events is
+      // not hash-chained (the trigger migration is not in the deploy set);
+      // it is reported, not manufactured.
+      recordHash: row.record_hash ?? null,
+      previousHash: row.previous_hash ?? null,
+      hashChained: row.record_hash != null,
+    },
+  });
 });
 
 /**
@@ -1179,8 +1215,9 @@ router.get('/health', (_req: Request, res: Response) => {
       trustedTimestamps: !!process.env.TRUSTED_TIMESTAMP_SERVICE, // TSA integration (only true if actually configured)
     },
     hashAlgorithm: 'SHA-256',
-    auditChainLength: 'active',
-    lastAuditHash: lastAuditHash.substring(0, 16) + '...',
+    // No chain verdict here: GET /audit-trail/chain-integrity verifies the
+    // chain against the database. (This used to print the head of a
+    // process-local hash chain nothing persisted.)
   });
 });
 
@@ -1238,5 +1275,4 @@ router.get('/audit-trail/seal-integrity', async (req: Request, res: Response) =>
   }
 });
 
-export { setAuditPool };
 export default router;

@@ -116,9 +116,9 @@ here. It is being undone underneath.
 | `server/routes/protocol_routes.ts:378-392` | /api/protocol/analyze-file fabricates the text of every PDF/DOCX upload, then analyses the fabrication |
 | `server/protocol-analyzer-service.ts:109-226` | protocol-analyzer-service invents sample size, endpoints, design and arms when the protocol does not state them, and asserts FDA/EMA compliance unconditionally |
 | `server/services/cerGenerationService.ts:128` | Every generated Clinical Evaluation Report records 'contraindications: None identified' for a column that does not exist |
-| `server/services/audit/signedAuditExport.ts:170-188` | Signed audit-trail export asserts chainIntegrity 'intact' over rows that carry no hash at all — and HMAC-signs the claim |
+| `server/services/audit/signedAuditExport.ts:170-188` | Signed audit-trail export asserts chainIntegrity 'intact' over rows that carry no hash at all, and over an empty result set — and HMAC-signs the claim. *(Corrected 2026-09-10, WO-16B: the `catch` at :188 honestly reports `'unavailable'` and was never a defect; the two paths that report a conclusion they did not reach are the empty set at :167 and the all-null-hash loop.)* |
 | `server/services/audit/signedAuditExport.ts:337-361` | The audit row recording that an audit export happened can never be written — string into an INTEGER NOT NULL column, swallowed |
-| `server/routes/part11-compliance.ts:314-341, 740-757` | POST /api/part11/audit-trail answers success:true with a hash-chained entry that is never persisted — the INSERT always violates NOT NULL |
+| `server/routes/part11-compliance.ts:314-341, 740-757` | POST /api/part11/audit-trail answers success:true with a hash-chained entry that is never persisted — the INSERT always violates NOT NULL. *(Verified 2026-09-10, WO-16B, and the original wording stands: `setAuditPool(pool)` was injected at boot by `register-advanced-platform-routes.ts:185`, the route was `appendAuditEntry`'s only caller and never passed an organisation id, and `audit_events.organization_id` is `integer NOT NULL` on the live catalog — so the INSERT ran in production on every call and raised 23502 into a swallowing `.catch` every time. The brief's "'always' is not established" was an over-correction, and my own first draft of this correction — "nothing in production ever called setAuditPool" — came from a grep truncated by a line limit and was wrong; the untruncated grep found the caller. The durable defect is still the fire-and-forget + success:true.)* |
 | `server/services/grdhe/grdheService.ts:1355-1400` | GRDHE electronic signature writes the user id as the §11.50 printed name, hashes the wrong thing, and asserts an authentication that never happened |
 | `server/services/grdhe/grdheService.ts:1450-1476` | verifyElectronicSignature computes the expected content hash, discards it, and returns valid:true unconditionally |
 | `server/src/routes/stability.router.ts:2463-2497` | Stability sign-off manufactures the signer's printed name from an email local-part, never verifies the password it demands, and stores a fake 'hash' |
@@ -146,3 +146,91 @@ prediction-bearing route in `regulatory-digital-twin.ts`, the `DataGate` /
 builds, standing banner, never a fallback), the nat-history-dossier guard that
 makes `provenance: 'sample'` non-exportable, and `sap-generator-service`'s
 refusal to state a power figure it was not given.
+
+---
+
+## WO-16B — the Part 11 ten, executed 10 September 2026 (cortex session)
+
+**Can this platform hold a customer's electronic signature today? Not through
+any path but one.** The single conforming path — `/api/esignature/sign` →
+`services/part11/signature-persistence.ts`, credentials verified by
+`part11ComplianceService.verifyUserCredentials` — was not among the ten and is
+untouched. Every other signature-shaped surface in this slice either recorded a
+signature it had not verified (28, 30), verified nothing (29), or reported a
+verdict for a check that had not run (12, 13, 14, 25, 26, 27, 10). Those are now
+gone or honest. What remains true after this change: the audit_events hash-chain
+trigger is still not in the deploy set, so on a canonically provisioned database
+`record_hash` is null on every row and every chain surface now says
+`unverified` rather than `intact`. That is the honest state, and it is a
+convergence-migration decision, not a route fix.
+
+### The thread, and the shape
+
+Every one of the ten collapsed "could not verify" into "failed" (12) or into
+"passed" (29, 25, 27, 10) or into a workflow verdict (14). The fix is a third
+state, not a boolean: `server/lib/verification-outcome.ts` generalises the
+`{ ran: true, … } | { ran: false, reason }` union that
+`server/routes/innovation-routes.ts` shipped for ownership guards, with
+`VerificationUnavailableError` playing `GuardUnavailableError`'s role and mapping
+to **503** at every route. Where the output is a document, the state reaches the
+document: `<AuditLog unavailable="true" reason="…"/>` is a different artefact
+from `<AuditLog count="0">`, and an export that cannot record itself refuses.
+
+### Restated, verified, and what was done
+
+| # | Restated in my words (verified at source; catalog checked live) | Outcome |
+|---|---|---|
+| **29** | `verifyElectronicSignature` read the row, computed a hash it never compared, and answered `valid: true` for every non-invalidated row. It could not have compared: the stored `content_hash` was taken over `type\|id\|version\|<js now()>` and the recomputation used the database's `authentication_timestamp`, so the two would never match. Reachable at `GET /api/grdhe/signatures/:id/verify`; no client. | **Fixed by removal.** Method deleted; route answers 410 naming `/api/auth/enterprise/electronic-signature/:id/verify`. |
+| **28** | `createElectronicSignature` wrote `request.userId` into `signer_name` (a user id as the §11.50 printed name), hashed no content, and stored `authentication_method` + `authentication_timestamp = NOW()` for a password it never checked ("placeholder for the actual dual-authentication flow"). Reachable at `POST /api/grdhe/signatures`; no client; `regulatory_harmonization.electronic_signatures` held 0 rows live. | **Fixed by removal.** Method deleted; route answers 410 `ESIGNATURE_ENDPOINT_REMOVED` naming `/api/esignature/sign`, the precedent `signature-write-path-single.test.ts` set. Table not dropped. |
+| **30** | `POST /api/stability/studies/:id/request-signoff` destructured `password` and never used it, set `signer_name = email.split('@')[0]`, and stored `hash = \`${stage}-${Date.now()}\``. No client reference; `server/src/routes` is outside the orphan scanner's walk, so it could not have been counted either way; `stab_signoffs` held 0 rows live. | **Fixed by removal.** Route answers 410 `STABILITY_SIGNOFF_REMOVED` and says a Part 11 stability sign-off does not yet exist. The `stab_signoffs` reader (dependencies view) is untouched and honestly empty. |
+| **27** | The INSERT ran on a module-level pool that `register-advanced-platform-routes.ts:185` injected at boot, the route was `appendAuditEntry`'s only caller and never passed an organisation id, and `organization_id` is `integer NOT NULL` — so on every call, in production, the INSERT raised 23502 into a swallowing `.catch` while the handler answered `success: true` with a "hash-chained entry" that lived in process memory until restart. WO-16's "always violates NOT NULL" was right; the brief's "'always' is not established" was an over-correction; and my own first correction ("setAuditPool has no caller") was wrong — a grep cut off by a line limit, caught by the typecheck when I removed the function. The durable defect is the one the brief named: fire-and-forget + success:true. | **Fixed.** Route writes on the request's tenant-pinned client with the JWT's organisation, awaits `RETURNING`, answers 201 from the row (with `recordHash: null, hashChained: false` where the database holds no chain), 503 `AUDIT_ENTRY_NOT_PERSISTED` / `AUDIT_TRAIL_STORE_UNPROVISIONED` otherwise, 400 for an entity id the integer column cannot hold. The in-memory chain, `setAuditPool` and the `/status` field that printed its head are gone. No client posts here. |
+| **25** | `snapshotChainIntegrity` answered `intact` for an empty result set and for a table in which no row carries `record_hash` (the loop skipped every link), then HMAC-signed the manifest. Its `catch` answered `unavailable` and was never a defect — WO-16's row implied it was; corrected above. | **Fixed.** Four states: `intact` / `broken` / `unverified` (ran, nothing verifiable, with `hashedEntries`, `unhashedEntries`, `reason`) / `unavailable` (did not run, with `reason`). Partially-hashed chains are `unverified` too. |
+| **26** | The row recording that an export happened put the export id (a string) into `entity_id integer NOT NULL` — 22P02 on every call, swallowed — after the manifest had already been sealed. "Can never be written" holds: a string never fits that column. | **Fixed.** The row is written *before* sealing (entity_id `0`, the repository's convention for "no integer entity", with the export id in `reason` and `metadata`), its id rides in the signed manifest as `exportRecord.auditEventId`, and a failed write refuses the export: `VerificationUnavailableError` → 503 `AUDIT_EXPORT_NOT_RECORDED` on both export routes. An export without an organisation id is refused for the same reason. |
+| **12** | `auditService.verifyChain` returned `{ valid: false, entriesVerified: 0 }` when the store had not initialised or the query threw — indistinguishable from a broken chain — and `/verify-chain` rendered it as `INTEGRITY_FAILURE` / `NON_COMPLIANT` against four named regulations. | **Fixed.** `verifyChain` returns `ChainVerification` (`ran: false, reason` when it could not run); the route answers 503 `UNVERIFIABLE` / `UNVERIFIABLE`; `DecisionLineageService` carries `chainVerification: 'verified' \| 'failed' \| 'unverifiable'` and its export prints it. The DecisionLineage screen already renders a 503 as "Couldn't verify the hash chain". |
+| **13** | `/compliance-report` emitted the attestation ("generated from an immutable, cryptographically-verified audit trail") unconditionally, and marked ICH E6(R2) and GAMP 5 `COMPLIANT` unconditionally — nothing in the report evaluates either. | **Fixed.** Chain-dependent verdicts take `COMPLIANT` / `REVIEW_REQUIRED` / `UNVERIFIABLE`; the two unevaluated frameworks say `NOT_ASSESSED` with a note; the attestation is emitted only over a verified chain and `attestationWithheld` says why otherwise. No client consumer. |
+| **14** | `findActiveReleaseSignature` caught every error as "non-fatal" and returned `null`, the same value as a genuine miss, so the signed-package export refused with `signature-revoked` — "it was superseded or rolled back" — about a lookup that had thrown (the 42703 its own comment records). | **Fixed.** The lookup throws `VerificationUnavailableError`; the export refuses with a new `signature-unverifiable` (→ 503), whose detail says the signature has *not* been found revoked; the EctdCompile screen titles it "could not be checked right now". |
+| **10** | The AnALedger collector swallowed every error on the audit and signature loads into `[]`, and the XML rendered `<AuditLog count="0">` / `<Signatures count="0">`. A count is a claim. | **Fixed.** `ArtifactLedger` carries `auditLogUnavailable` / `signaturesUnavailable` (reason strings; a missing table counts); the XML renders `unavailable="true" reason="…"` with no count; the DOCX export refuses (`LEDGER_UNAVAILABLE`, 503) rather than embed a ledger it cannot substantiate; the provenance summary prints the state. |
+
+**Refuted:** none outright; three characterisations corrected (25's catch
+branch, 27's "always", and 29's unreachability — it *was* reachable, via
+`/api/grdhe`). **Deferred:** none of the ten. Two adjacent things were seen and
+left, deliberately: `securityHealth.checkAuditChainIntegrity` grades a thrown
+verification as a critical `fail` (same class as 12, not in the ten, not
+touched); and the `audit_events` hash-chain trigger is absent from
+`C2C_MIGRATION_FILES`, which is why every chain surface now honestly reports
+`unverified` on a canonical database — a convergence decision for the schema
+session, recorded here, not made here.
+
+### Proven red before green
+
+`tests/gates/unverified-verdicts/` — six files, 25 assertions, every one red on
+the pre-fix head (`Tests 25 failed (25)`), green after. Failure is injected at
+the dependency in each: a rejecting pool, a rejecting request-scoped client, or
+a pool handed to the function as its parameter; nothing at a service boundary is
+mocked. The one existing test that changed, `signed-package-export.test.ts`,
+gained a case; the existing guard `part11-signature-post-removed.test.ts` was
+kept and respected (it bans `user_agent` as a column token in that router, so
+the new INSERT carries the user agent in metadata as the old code did).
+
+### One rule the fixes had to respect
+
+`ci:server-error-leaks` flagged the first version of these 503s: they put the
+caught Postgres text in the body. The repository's containment rule (and its
+`serverError` helper) is that failure detail goes to the log against the
+request id, and the client gets a code, one sentence and that id. So
+`respondVerificationUnavailable` in `verification-outcome.ts` is the 503
+sibling of `serverError`: the operator still gets the reason with one log
+lookup; a regulatory reader never receives the internal shape of a store. The
+reasons that reach *documents* (the export manifest's `chainIntegrity.reason`,
+the AnALedger's `reason` attribute) stay, because there the reader is the
+tenant's own reviewer and the reason is what makes the absence honest.
+
+### The gate
+
+`npm run ci:unverified-verdicts` — `scripts/ci/check-unverified-verdicts.mjs`, a
+new file with its own npm script, wired into `.github/workflows/pr-checks.yml`
+beside the other hard gates. It is the first gate in this repository that reads
+a response payload rather than source or schema. Its rule lives in
+`scripts/ci/lib/verdict-inspector.mjs` and self-tests first: it must catch the
+seven fabricated shapes this slice found and accept the six honest ones, or the
+gate fails before any surface runs. Then it runs the six surface files.

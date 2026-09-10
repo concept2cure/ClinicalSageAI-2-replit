@@ -74,6 +74,9 @@ export interface LineageGraph {
     totalRejections: number;
     totalDelegations: number;
     chainVerified: boolean;
+    /** WO-16B: 'unverifiable' when the verifier could not run — not 'failed'. */
+    chainVerification: 'verified' | 'failed' | 'unverifiable';
+    chainVerificationReason?: string;
     complianceFrameworks: string[];
   };
 }
@@ -323,14 +326,20 @@ export class DecisionLineageService {
       logger.warn('Failed to query general audit logs for lineage', err);
     }
 
-    // Verify chain integrity
-    let chainVerified = false;
-    try {
-      const result = await auditService.verifyChain();
-      chainVerified = result.valid;
-    } catch {
-      chainVerified = false;
-    }
+    // Verify chain integrity — three outcomes. A verifier that did not run is
+    // reported as such; it is not a failed chain (WO-16B finding 12).
+    const chainResult = await auditService.verifyChain();
+    const chainVerified = chainResult.ran && chainResult.valid;
+    const chainVerification: 'verified' | 'failed' | 'unverifiable' = !chainResult.ran
+      ? 'unverifiable'
+      : chainResult.valid
+        ? 'verified'
+        : 'failed';
+    const chainVerificationReason = !chainResult.ran
+      ? chainResult.reason
+      : chainResult.valid
+        ? undefined
+        : chainResult.invalidReason;
 
     return {
       rootEntityType: entityType,
@@ -344,6 +353,8 @@ export class DecisionLineageService {
         totalRejections: rejectionCount,
         totalDelegations: delegationCount,
         chainVerified,
+        chainVerification,
+        chainVerificationReason,
         complianceFrameworks: [
           'FDA 21 CFR Part 11',
           'EU Annex 11',
@@ -480,7 +491,7 @@ export class DecisionLineageService {
       `# Generated: ${graph.metadata.generatedAt}`,
       `# Entity: ${graph.rootEntityType} #${graph.rootEntityId}`,
       `# Compliance: ${graph.metadata.complianceFrameworks.join(', ')}`,
-      `# Chain Verified: ${graph.metadata.chainVerified ? 'PASS' : 'UNVERIFIED'}`,
+      `# Chain Verified: ${graph.metadata.chainVerification === 'verified' ? 'PASS' : graph.metadata.chainVerification === 'failed' ? 'FAIL' : 'UNVERIFIABLE (the verifier could not run)'}`,
       '',
       headers.join(','),
       ...rows.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')),

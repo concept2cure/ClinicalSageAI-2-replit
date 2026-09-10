@@ -134,7 +134,9 @@ function minimalLedger(): ArtifactLedger {
     citations: null,
     authoringPlan: null,
     auditLog: [],
+    auditLogUnavailable: null,
     signatures: [],
+    signaturesUnavailable: null,
     proposals: [],
     runs: { totalRuns: 0, latestRunId: null, latestRunAt: null, modelsUsed: [] },
   };

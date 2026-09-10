@@ -98,6 +98,8 @@
     "ci:duplicate-table-ddl:strict": "node scripts/ci/check-duplicate-table-ddl.mjs --strict",
     "ci:duplicate-table-ddl:write-baseline": "node scripts/ci/check-duplicate-table-ddl.mjs --write-baseline",
     "ci:unbacked-tables": "node scripts/ci/check-unbacked-tables.mjs",
+    "ci:unverified-verdicts": "node scripts/ci/check-unverified-verdicts.mjs",
+    "ci:unverified-verdicts:selftest": "node scripts/ci/check-unverified-verdicts.mjs --self-test",
     "ci:unbacked-tables:strict": "node scripts/ci/check-unbacked-tables.mjs --strict",
     "ci:unbacked-tables:write-baseline": "node scripts/ci/check-unbacked-tables.mjs --write-baseline",
     "ci:tenant-entry-points": "node scripts/ci/check-tenant-entry-points.mjs",

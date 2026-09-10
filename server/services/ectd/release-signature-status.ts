@@ -92,6 +92,10 @@ function refusalToVerdict(refusal: SignedExportRefusal): ReleaseSignatureVerdict
     // The run vanished between the query and the read — we cannot say.
     case 'run-not-found':
       return 'undetermined';
+    // The signature lookup could not run (WO-16B finding 14). Not revoked:
+    // nothing is known about the signature's standing.
+    case 'signature-unverifiable':
+      return 'undetermined';
   }
 }
 
