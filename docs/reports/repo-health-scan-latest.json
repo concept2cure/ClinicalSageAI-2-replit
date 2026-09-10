@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-10T06:24:55.814Z",
+  "generatedAt": "2026-09-10T06:37:25.745Z",
   "git": {
-    "sha": "ef13d5ffa0f14c8685d066ecb7fddcd8aee63cdc",
+    "sha": "bc267f82bdd6788acbfb94b94a9e6d365cfc2df5",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2089,7 +2089,7 @@
       },
       {
         "file": "server/services/__tests__/ana-ri.test.ts",
-        "bytes": 119187
+        "bytes": 119467
       },
       {
         "file": "client/src/concept2cure/v2/editor/RichSectionEditor.tsx",
@@ -2243,7 +2243,7 @@
       },
       {
         "file": "server/services/__tests__/ana-ri.test.ts",
-        "lines": 2787
+        "lines": 2791
       },
       {
         "file": "server/services/ana/AnaToolDefinitions.ts",
