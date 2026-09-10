@@ -1,7 +1,7 @@
 {
   "$comment": "Pre-existing duplicate CREATE TABLE definitions, pinned to the exact set of files that define each table. Each entry is a defect to be reconciled per ADR-0006, not an approved pattern. A NEW table collision, or a NEW file defining an already-colliding table, fails CI. Shrink this file; never grow it. Standing exceptions (documented in ledger C-8/C-10/C-11): entries whose only rival is a dead root-lineage 0010 file — their canonical DDL lives in db/migrations/20260725_* and ADR-0006 retirement of the dead files removes the entries.",
-  "generatedAt": "2026-09-10T03:14:44.802Z",
-  "total": 56,
+  "generatedAt": "2026-09-10T03:25:41.143Z",
+  "total": 51,
   "entries": {
     "api_usage_logs": [
       "db/migrations/20260319_billing_usage_budgets_alerts.sql",
@@ -180,18 +180,6 @@
       "migrations/20260610_ha_interactions_commitments.sql",
       "sql/create_regulatory_commitments_table.sql"
     ],
-    "resolution_bundle_items": [
-      "db/migrations/20260725_resolution_orchestration_tables.sql",
-      "migrations/0010_resolution_orchestration.sql"
-    ],
-    "resolution_bundles": [
-      "db/migrations/20260725_resolution_orchestration_tables.sql",
-      "migrations/0010_resolution_orchestration.sql"
-    ],
-    "resolution_plans": [
-      "db/migrations/20260725_resolution_orchestration_tables.sql",
-      "migrations/0010_resolution_orchestration.sql"
-    ],
     "risk_controls": [
       "migrations/20260507_mdx_beta_surfaces.sql",
       "migrations/20260609_design_risk.sql"
@@ -216,17 +204,9 @@
       "db/migrations/20260725_submission_orchestrator_store_port.sql",
       "migrations/0018_submission_orchestrator.sql"
     ],
-    "supersession_records": [
-      "db/migrations/20260725_resolution_orchestration_tables.sql",
-      "migrations/0010_resolution_orchestration.sql"
-    ],
     "timeline_phases": [
       "migrations/0012_project_charter_timeline.sql",
       "migrations/20260629_charter_tables_rebuild.sql"
-    ],
-    "udi_records": [
-      "migrations/20260507_mdx_beta_surfaces.sql",
-      "migrations/20260524_udi_records.sql"
     ]
   }
 }
