@@ -13,9 +13,6 @@
     "server/api/ai/routes.ts": {
       "reason": "POST /api/ai/regulatory-guidance fetches https://api.openai.com/v1/chat/completions directly with model 'gpt-4o' and temperature 0.7. 'gpt-4o' is a floating alias and nothing records which model actually answered; no prompt hash over a system prompt that interpolates caller context; no fallback chain, so one non-200 becomes a 503. Mounted at /api/ai."
     },
-    "server/routes/graphrag.ts": {
-      "reason": "extractEntities() fetches https://api.openai.com/v1/chat/completions (gpt-4o-mini) with up to 8000 characters of ingested regulatory document text, from POST /api/graphrag/query and /ingest. Same missing audit as api/ai/routes.ts, plus the PII/PHI classifier never sees the ingested body, and a failure silently degrades to regex extraction with no provenance distinction between model-extracted and regex-extracted entities."
-    },
     "server/services/deep-research-orchestrator.ts": {
       "reason": "generateSynthesis() calls getAnthropicClient().messages.create(...) for a 4096-token regulatory-intelligence briefing that is persisted and shown to users. Invisible to the old guard because the CONSTRUCTION lives in the baselined anthropic-client.ts and the call site was never scanned. No audit row, no prompt hash over the aggregated evidence corpus, no retry ladder \u2014 a failure silently swaps in buildFallbackSynthesis()."
     },

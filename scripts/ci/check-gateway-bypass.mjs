@@ -102,6 +102,19 @@ const JS_SEARCH_PATHS = ['server', 'services', 'workers', 'shared', 'scripts'];
  * miss real calls of the same shape. The baselined client factories are NOT
  * here — they stay in the baseline so they remain visible as burndown.
  */
+/**
+ * A NOTE FOR ANYONE MIGRATING A CALL OFF A PROVIDER (added 2026-09-10).
+ *
+ * The scan is `git grep -lE` over raw file text — it does not strip comments,
+ * by design, because a bypass hidden behind a comment-stripper bug is exactly
+ * what this gate must not miss. The consequence is that a migration note
+ * QUOTING the provider host keeps the file flagged after the real call is gone.
+ *
+ * Describe the old endpoint in prose instead of pasting the URL. That is what
+ * server/routes/graphrag.ts does, and its comment says so. Adding a migrated
+ * file to NOT_A_BYPASS below would be the wrong fix: these are path exclusions,
+ * so a future real bypass in that file would never be reported.
+ */
 const NOT_A_BYPASS = [
   // Test files assert on the literal patterns and mock the SDK call shapes.
   /(^|\/)__tests__\//,
