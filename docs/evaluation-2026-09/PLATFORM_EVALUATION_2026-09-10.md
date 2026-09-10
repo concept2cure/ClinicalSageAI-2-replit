@@ -430,6 +430,16 @@ customer data in front of anyone.
 | [WO-8](../work-orders/WO-8-skipped-tests.md) | Triage 34 skipped tests | G1 | Each un-skipped or annotated with why it cannot run |
 | [WO-9](../work-orders/WO-9-pilot-surface-lock.md) | Lock the pilot surface set | G1 | Pilot surfaces in a rail; the rest behind an explicit experimental affordance |
 | [WO-10](../work-orders/WO-10-deletion-program.md) | Proof-gated deletion program | none — hygiene | Deletion-proof procedure exists **before** anything is deleted |
+| [WO-11](../work-orders/WO-11-tenant-settings-authorization.md) | Tenant settings mutations enforce no role check | G1+ | Non-admin member refused on all three routes, proven by test |
+
+**WO-11 was found while executing WO-0**, and is worth noting as a method point:
+`server/routes/tenant-config.ts` imported `requireAdminRole` and never applied
+it, while its docblock claimed "Only organization admins and super admins can
+update settings." The unused import was a fossil of a guard someone meant to
+wire. Three mutating routes — including a full settings reset — are reachable by
+any authenticated member of the organization. Paying down lint debt surfaced an
+authorization gap that no security-specific gate had caught, which is an
+argument for the ratchets being worth their maintenance.
 
 ### Sequencing
 

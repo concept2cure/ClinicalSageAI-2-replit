@@ -3,7 +3,7 @@ import { db, query } from '../db';
 // cer_reports. Alias it here and map the old column names at the call sites
 // (cer_id → reportId, content_text → content, indication → clinicalBackground).
 import { cerReports as clinicalEvaluationReports } from '../../shared/schema';
-import { and, eq, isNull, like, sql } from 'drizzle-orm';
+import { eq, like, sql } from 'drizzle-orm';
 import {
   generateEmbeddings,
   generateStructuredResponse,

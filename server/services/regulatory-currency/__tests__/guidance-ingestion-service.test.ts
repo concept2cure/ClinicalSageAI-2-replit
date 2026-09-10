@@ -6,7 +6,7 @@
  *   3. fetchFdaGuidanceList — returns unavailable on network failure (mock fetch)
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, afterEach } from 'vitest';
 import {
   fetchIchGuidelineUpdates,
   checkGuidanceFreshness,

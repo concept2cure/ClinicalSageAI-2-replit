@@ -14,7 +14,7 @@
  * @module server/services/cortexPrimeService
  */
 
-import { Pool, PoolClient } from 'pg';
+import { Pool } from 'pg';
 import { getPool } from '../db';
 
 // ============================================================================

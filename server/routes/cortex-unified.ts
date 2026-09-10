@@ -38,7 +38,7 @@ import {
   detectIntent,
   detectSubmissionType,
 } from '../services/ana-ri/orchestrator.js';
-import type { UserRole, IntentLens } from '../services/ana-ri/persona.js';
+import type { UserRole } from '../services/ana-ri/persona.js';
 import { planKernelExecution } from '../services/kernel-router.js';
 import {
   parseSharedMemoryContract,

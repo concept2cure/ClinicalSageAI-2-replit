@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { I } from '../icons';
 import { EmptyState, isRowsWith, useLiveData, useLiveRows, type DataState } from '../dataConnect';
 import type { SurfaceViewProps } from '../surfaceViews';

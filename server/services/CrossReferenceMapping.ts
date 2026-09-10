@@ -5,7 +5,7 @@
 
 import { db } from '../db';
 import { fda510kDataMappings, fda510kStageProgress, fda510kDocuments } from '@shared/schema';
-import { eq, and, or } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
 
 interface MappingRule {
   sourceField: string;

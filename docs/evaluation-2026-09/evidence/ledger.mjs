@@ -68,7 +68,7 @@ const LEDGER = [
 const rows = [];
 for (const [file, extract, isLint] of LEDGER) {
   if (!existsSync(file)) { rows.push({ file, entries: null, note: 'file absent' }); continue; }
-  let entries = null;
+  let entries;
   try { entries = extract(JSON.parse(readFileSync(file, 'utf8'))) ?? null; }
   catch (err) { rows.push({ file, entries: null, note: `unreadable: ${err.message}` }); continue; }
   rows.push({ file, entries, class: isLint ? 'lint/cosmetic' : 'defect' });
@@ -84,8 +84,8 @@ writeFileSync(new URL('02-suppression-ledger.json', import.meta.url), `${JSON.st
   { generated: new Date().toISOString(), excluded: ['scripts/ci/coverage-baseline.json (percentage floor)', 'scripts/ci/proof-tier-baseline.json (inverted ratchet — an asset floor)'],
     totals: { total, defectClass: defects, lintClass: lint }, rows }, null, 2)}\n`);
 
-for (const r of rows) console.log(String(r.entries ?? '—').padStart(6), (r.class ?? r.note ?? '').padEnd(14), r.file);
-console.log('-'.repeat(72));
-console.log(`${String(defects).padStart(6)}  defect-class entries under active suppression`);
-console.log(`${String(lint).padStart(6)}  lint/cosmetic entries`);
-console.log(`${String(total).padStart(6)}  TOTAL across ${rows.length} baseline files`);
+for (const r of rows) console.info(String(r.entries ?? '—').padStart(6), (r.class ?? r.note ?? '').padEnd(14), r.file);
+console.info('-'.repeat(72));
+console.info(`${String(defects).padStart(6)}  defect-class entries under active suppression`);
+console.info(`${String(lint).padStart(6)}  lint/cosmetic entries`);
+console.info(`${String(total).padStart(6)}  TOTAL across ${rows.length} baseline files`);

@@ -11,7 +11,7 @@
  * re-render does not perturb a sequence's index-md5.
  */
 
-import { Router, Request, Response } from 'express';
+import { Router, Response } from 'express';
 import { requireRole } from '../middleware/auth';
 import { createRateLimiter } from '../middleware/rateLimiter';
 import { renderM2SummaryPdf } from '../services/authoring/m2-summary-renderer';

@@ -8,7 +8,7 @@
  * @module server/services/ana/intelligence-questions/validators
  */
 
-import type { QuestionNode, QuestionField, FieldPredicate } from './types.js';
+import type { QuestionNode, QuestionField } from './types.js';
 import { evaluatePredicate } from './engine.js';
 
 export interface ValidationError {

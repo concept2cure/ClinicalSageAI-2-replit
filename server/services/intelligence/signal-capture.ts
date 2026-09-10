@@ -22,7 +22,7 @@
 
 // DB imports are lazy — only loaded inside persistSignals() to avoid
 // failing module load in test environments without a database.
-import type { JudgmentScore, JudgmentReport, JudgmentVerdict } from './judgment-framework.js';
+import type { JudgmentReport, JudgmentVerdict } from './judgment-framework.js';
 import type { PatternMatch } from './pattern-registry.js';
 
 // ═══════════════════════════════════════════════════════════════════════════════

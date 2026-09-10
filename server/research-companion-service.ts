@@ -1,6 +1,6 @@
 import { csrReports } from 'shared/schema';
 import { db } from './db';
-import { eq, and, like, or, desc } from 'drizzle-orm';
+import { like, or } from 'drizzle-orm';
 import { huggingFaceService, HFModel } from './huggingface-service';
 import { academicKnowledgeService } from './academic-knowledge-service';
 

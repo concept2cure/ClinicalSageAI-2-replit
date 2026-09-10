@@ -6,7 +6,7 @@
  */
 import { Router, type Request } from 'express';
 import { z } from 'zod';
-import { and, eq, SQL, sql } from 'drizzle-orm';
+import { and, eq, sql } from 'drizzle-orm';
 import { qmpSectionGating, ctqFactors, qualityManagementPlans } from '../../shared/schema';
 import { authMiddleware } from '../auth';
 import { requireOrganizationContext } from '../middleware/tenantContext';

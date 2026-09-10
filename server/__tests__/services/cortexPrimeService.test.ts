@@ -5,7 +5,7 @@
  * These tests ensure core functionality remains intact during cleanup.
  */
 
-import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 
 // Mock the database pool. CortexPrimeService imports `getPool` from
 // `../db` (server/db.ts), NOT `../db/pool` — the previous mock targeted

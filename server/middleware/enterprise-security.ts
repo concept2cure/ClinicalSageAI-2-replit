@@ -23,7 +23,7 @@ import { Request, Response, NextFunction } from 'express';
 import type { IncomingMessage, ServerResponse } from 'http';
 import rateLimit from 'express-rate-limit';
 import helmet from 'helmet';
-import { createHash, randomBytes } from 'crypto';
+import { randomBytes } from 'crypto';
 import { reportSecurityAlert } from '../services/security-alerts';
 
 // ============================================================================

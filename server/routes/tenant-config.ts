@@ -5,9 +5,9 @@
  */
 import { Router } from 'express';
 import { z } from 'zod';
-import { eq, and } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import { organizations } from '../../shared/schema';
-import { authMiddleware, requireAdminRole } from '../auth';
+import { authMiddleware } from '../auth';
 import { requireOrganizationContext } from '../middleware/tenantContext';
 import { createScopedLogger } from '../utils/logger';
 import { requestDb } from '../db/requestDb';
@@ -148,6 +148,20 @@ router.get('/:tenantId/settings', authMiddleware, requireOrganizationContext, as
 /**
  * Update tenant settings
  * Only organization admins and super admins can update settings
+ *
+ * ⚠️ THE LINE ABOVE IS NOT ENFORCED — see WO-11. The chain on this route and on
+ * the two below it (POST /:tenantId/settings/reset, PATCH
+ * /:tenantId/settings/:section) is authMiddleware + requireOrganizationContext,
+ * and requireOrganizationContext performs no role check
+ * (server/middleware/tenantContext.ts). So ANY authenticated member of the
+ * organization can change its tenant settings, including a full reset.
+ *
+ * This file imported `requireAdminRole` from '../auth' and never applied it;
+ * the unused import was removed on 2026-09-10 during the WO-0 lint cleanup,
+ * which is what surfaced the gap. The guard is NOT added here because turning
+ * it on is a behaviour change that could lock out users in organisations whose
+ * roles were never provisioned — that is an owner decision, not a
+ * restore-green one.
  */
 router.patch(
   '/:tenantId/settings',

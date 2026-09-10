@@ -4,7 +4,7 @@
  * Handles tenant-specific Critical-to-Quality (CTQ) factors
  * for section gating and quality controls.
  */
-import { Router, Request } from 'express';
+import { Router } from 'express';
 import { z } from 'zod';
 import { eq, and, SQL } from 'drizzle-orm';
 import { ctqFactors } from '../../shared/schema';

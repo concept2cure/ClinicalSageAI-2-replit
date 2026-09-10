@@ -306,11 +306,31 @@ function lineageTables() {
       }
     }
 
-    // ALTER TABLE [schema.]name ADD COLUMN [IF NOT EXISTS] col
-    for (const am of src.matchAll(
-      /ALTER\s+TABLE\s+(?:ONLY\s+)?(?:["`]?([a-z0-9_]+)["`]?\s*\.\s*)?["`]?([a-z0-9_]+)["`]?\s+ADD\s+COLUMN\s+(?:IF\s+NOT\s+EXISTS\s+)?["`]?([a-z0-9_]+)["`]?/gi,
+    // ALTER TABLE [schema.]name ADD COLUMN [IF NOT EXISTS] col [, ADD COLUMN ...]
+    //
+    // Matched in two stages, because one ALTER TABLE may carry any number of
+    // comma-separated ADD COLUMN clauses:
+    //
+    //   ALTER TABLE cmc_impurity_profiles
+    //     ADD COLUMN IF NOT EXISTS ames_result text,
+    //     ADD COLUMN IF NOT EXISTS structural_alert text,
+    //     ...
+    //
+    // A single regex anchored on ALTER TABLE captures only the FIRST clause, so
+    // every later column read as "declared by the model, created by no
+    // migration" — a false divergence against a table the database has in full.
+    // db/migrations/20260906_cmc_impurity_m7_inputs.sql is exactly this shape:
+    // it adds five columns, four of which the gate could not see, and the fix it
+    // then demanded was a migration re-adding columns that already existed.
+    for (const stmt of src.matchAll(
+      /ALTER\s+TABLE\s+(?:ONLY\s+)?(?:["`]?([a-z0-9_]+)["`]?\s*\.\s*)?["`]?([a-z0-9_]+)["`]?([^;]*)/gi,
     )) {
-      entry(qualify(am[1], am[2])).columns.add(am[3].toLowerCase());
+      const e = entry(qualify(stmt[1], stmt[2]));
+      for (const col of stmt[3].matchAll(
+        /ADD\s+COLUMN\s+(?:IF\s+NOT\s+EXISTS\s+)?["`]?([a-z0-9_]+)["`]?/gi,
+      )) {
+        e.columns.add(col[1].toLowerCase());
+      }
     }
   }
   return byTable;

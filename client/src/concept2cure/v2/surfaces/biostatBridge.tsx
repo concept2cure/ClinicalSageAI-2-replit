@@ -462,7 +462,7 @@ function RaiseTasksForm({ assessment: a, onCancel, onDone, onError }: {
     }
   };
   return (
-    <div className="pj-card-b" style={{ borderTop: '1px solid var(--line-100,#e5e2dc)', padding: 12, display: 'grid', gap: 8 }} role="group" aria-label="Raise tasks">
+    <div className="pj-card-b" style={{ borderTop: '1px solid var(--border)', padding: 12, display: 'grid', gap: 8 }} role="group" aria-label="Raise tasks">
       <div style={{ fontSize: 12, fontWeight: 600 }}>Tasks proposed by the assessment</div>
       {open.length === 0 ? (
         <div style={muted}>Every proposed task is already on the board.</div>

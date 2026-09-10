@@ -22,7 +22,7 @@
 import PDFDocument from 'pdfkit';
 import { pool } from '../db.js';
 import crypto from 'crypto';
-import { Writable, PassThrough } from 'stream';
+import { PassThrough } from 'stream';
 import { appendVeraPdfValidation } from './documentQuality/pdfValidationAttachment';
 import auditService from './auditService';
 

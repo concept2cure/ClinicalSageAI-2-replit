@@ -35,7 +35,7 @@ const results = [];
 for (const gate of gates) {
   const started = Date.now();
   let code = 0;
-  let out = '';
+  let out;
   try {
     const r = await run('npm', ['run', '--silent', gate], {
       timeout: TIMEOUT_MS,

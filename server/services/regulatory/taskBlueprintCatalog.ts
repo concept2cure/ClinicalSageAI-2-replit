@@ -10,7 +10,7 @@
 import { resolveRegistryId } from './registry/legacySubmissionTypeMapper.js';
 import { getTaskBlueprintForEntry } from '../../../shared/regulatory/project-bootstrap.js';
 import { getApplicationType } from '../../../shared/regulatory/global-document-registry.js';
-import type { TaskBlueprint, MilestoneDefinition } from '../../../shared/regulatory/document-taxonomy.js';
+import type { TaskBlueprint } from '../../../shared/regulatory/document-taxonomy.js';
 
 import * as usInd from './registry/blueprints/usIndBlueprint.js';
 import * as usNda from './registry/blueprints/usNdaBlueprint.js';

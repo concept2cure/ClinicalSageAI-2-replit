@@ -7,7 +7,7 @@
  */
 import { db } from '../db';
 import { featureToggles } from '../../shared/schema';
-import { eq, and, or } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import { runWithSystemTenantScope } from '../db/tenantStore';
 
 export class FeatureToggleService {

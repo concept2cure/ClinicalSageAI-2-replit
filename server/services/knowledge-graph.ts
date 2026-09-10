@@ -23,9 +23,9 @@
  * @compliance FDA 21 CFR Part 11, ICH E6(R2)
  */
 
-import { Pool, PoolClient } from 'pg';
+import { Pool } from 'pg';
 import { v4 as uuidv4 } from 'uuid';
-import { createHash, randomBytes } from 'crypto';
+import { randomBytes } from 'crypto';
 
 // Types
 export type EntityType = 

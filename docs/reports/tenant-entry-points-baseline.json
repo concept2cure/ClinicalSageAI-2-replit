@@ -24,8 +24,8 @@
       "digest": "4c3fadcd75fb5a11"
     },
     "server/jobs/retentionCron.ts": {
-      "reason": "DELIBERATELY UNCONDITIONAL. Retention deletion must run FOR non-entitled tenants \u2014 that is its purpose. A suspended or pending-deletion tenant is the primary case, and gating it on entitlement would mean data is never retained out of the tenants whose retention clock is actually running. Its only notification path (notifyAdmins) addresses PLATFORM admins with an estate summary, not tenant users.",
-      "digest": "7dbd57942d60c53a"
+      "reason": "DELIBERATELY UNCONDITIONAL. Retention deletion must run FOR non-entitled tenants \u2014 that is its purpose. A suspended or pending-deletion tenant is the primary case, and gating it on entitlement would mean data is never retained out of the tenants whose retention clock is actually running. Its only notification path (notifyAdmins) addresses PLATFORM admins with an estate summary, not tenant users. RE-READ 2026-09-10 against d32dc3c5f (\"Stop the retention sweep destroying records under legal hold\"), which is what drifted this digest. The justification is unchanged by it: a legal hold is a per-record protection applied across the whole estate, not a tenant-entitlement gate, and the sweep still runs for non-entitled tenants. Two properties worth carrying forward \u2014 loadActiveHolds reads vaultLegalHolds estate-wide and unscoped, which is correct for a platform sweep and must not be 'fixed' into a tenant-scoped read; and it FAILS CLOSED, so an unreadable hold table aborts the sweep having deleted nothing. No tenant-facing notification path was added; notifyAdmins still addresses RETENTION_ADMIN_EMAILS, i.e. platform operators.",
+      "digest": "97b7e066358657db"
     },
     "server/jobs/scheduleOfEventsSweep.ts": {
       "reason": "NO PER-TENANT FAN-OUT at the sweep level: zero organization_id references, runs under a system scope. NOTE \u2014 the RLS burndown lists this as a writer, so if it ever selects per-organization it needs filterTenantsForBackgroundWork like taskDueSweep. The digest below is what forces that re-read.",

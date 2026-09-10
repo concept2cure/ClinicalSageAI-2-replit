@@ -1,6 +1,6 @@
 import { db } from '../db';
 import { fda510kDocuments, fda510kStageProgress, fda510kProjects } from '@shared/schema';
-import { eq, and, desc } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
 import { smartFieldLinking } from './SmartFieldLinking.js';
 import CrossReferenceMapper from './CrossReferenceMapping.js';
 

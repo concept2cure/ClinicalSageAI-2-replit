@@ -1,7 +1,7 @@
 import { Router, Response } from 'express';
 import DocumentOrchestrationService from '../services/DocumentOrchestrationService.js';
 import { db } from '../db';
-import { fda510kDocuments, fda510kProjects } from '@shared/schema';
+import { fda510kDocuments } from '@shared/schema';
 import { eq, and } from 'drizzle-orm';
 import PDFDocument from 'pdfkit';
 import { getSecureOrgId } from '../utils/tenantContext';

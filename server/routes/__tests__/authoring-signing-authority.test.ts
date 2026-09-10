@@ -22,7 +22,7 @@
  * sends a deliberately wrong PIN and requires 403, not 401.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import express, { type Request, type Response, type NextFunction } from 'express';
+import express, { type NextFunction } from 'express';
 import request from 'supertest';
 import { SignJWT } from 'jose';
 

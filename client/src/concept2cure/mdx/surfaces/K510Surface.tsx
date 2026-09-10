@@ -414,7 +414,7 @@ export function K510Surface({ program, onAskAna, onOpenEditor }: K510SurfaceProp
                         instead of it — the operator needs both the refusal and
                         the state the form is still in. */}
                     {deviceProfile.saveFailure && (
-                      <span style={{ marginLeft: 6, color: 'var(--danger-100, var(--text-200))' }}>
+                      <span style={{ marginLeft: 6, color: 'var(--error)' }}>
                         {describeSaveFailure(deviceProfile.saveFailure)}
                       </span>
                     )}

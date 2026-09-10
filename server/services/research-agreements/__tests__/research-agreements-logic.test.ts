@@ -3,7 +3,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { evaluateAgreementReadiness, summarizeAgreementPortfolio, type AgreementView, type AgreementPortfolioRow } from '../research-agreements-logic';
+import { evaluateAgreementReadiness, summarizeAgreementPortfolio, type AgreementPortfolioRow } from '../research-agreements-logic';
 
 function agreement(over: Partial<AgreementPortfolioRow> = {}): AgreementPortfolioRow {
   return {

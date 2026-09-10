@@ -7,7 +7,7 @@
  */
 
 import * as crypto from 'crypto';
-import { eq, and } from 'drizzle-orm';
+import { eq } from 'drizzle-orm';
 import { unifiedDocuments, workflowDocumentVersions } from '../../../../shared/schema/unified_workflow';
 import { registerActionHandler } from '../action-registry';
 import { fetchDocument, isValidDocumentStatus } from '../shared-utils';

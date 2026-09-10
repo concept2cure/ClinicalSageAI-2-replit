@@ -1,5 +1,5 @@
 import { authMiddleware } from '../auth';
-import { qualityManagementPlans, cerSections } from '../../shared/schema';
+import { cerSections } from '../../shared/schema';
 
 // Define these locally since they're not exported from schema
 const cerSectionsGating = {
@@ -31,7 +31,7 @@ const ctqFactors = {
 
 import express from 'express';
 import { tenantContext, getTenantContext } from '../middleware/tenantContext';
-import { db, pool } from '../db';
+import { pool } from '../db';
 import { serverError } from '../lib/api-response';
 import { createScopedLogger } from '../utils/logger';
 

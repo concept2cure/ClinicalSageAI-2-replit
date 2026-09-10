@@ -71,6 +71,17 @@ export function LiveDriveOverlay({
     return () => window.removeEventListener('keydown', onKey);
   }, [active, onTakeOver]);
 
+  /* Cleared only once the server has accepted it. Previously this emptied the
+     box unconditionally, so a refused steer was indistinguishable from a sent
+     one — see the note on the same seam in Shell.tsx's run-control bar.
+
+     Declared above the `!active` early return, with the other hooks: it used to
+     sit below it, so the hook ran only while the overlay was active and React
+     saw a different hook count on the render where `active` flipped back on —
+     "Rendered more hooks than during the previous render", a crash rather than
+     a warning. */
+  const [steerRefused, setSteerRefused] = React.useState(false);
+
   if (!active) return null;
   const last = steps.length > 0 ? steps[steps.length - 1] : null;
   const demo = mode === 'demo';
@@ -78,10 +89,6 @@ export function LiveDriveOverlay({
      position the client cannot verify. */
   const moves = turnApplied + turnActionsApplied;
 
-  /* Cleared only once the server has accepted it. Previously this emptied the
-     box unconditionally, so a refused steer was indistinguishable from a sent
-     one — see the note on the same seam in Shell.tsx's run-control bar. */
-  const [steerRefused, setSteerRefused] = React.useState(false);
   const submitSteer = () => {
     const text = steer.trim();
     if (!text || !onSteer) return;

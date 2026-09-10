@@ -9,7 +9,7 @@ import {
   type BiostatKnowledgeEdge,
   type MethodRegulatoryOutcome,
 } from '../../shared/schema';
-import { eq, and, like, desc, sql, count } from 'drizzle-orm';
+import { eq, and, like } from 'drizzle-orm';
 import { ai } from '../lib/unified-ai-client';
 
 // --- Types ---

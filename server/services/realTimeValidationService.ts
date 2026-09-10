@@ -16,8 +16,8 @@
 import { EventEmitter } from 'events';
 import { generateUUID } from '../utils/id-generator';
 import { db } from '../db';
-import { components, documents, coauthorValidationHistory } from '../../shared/schema';
-import { eq, and, ilike, desc, gte, sql } from 'drizzle-orm';
+import { coauthorValidationHistory } from '../../shared/schema';
+import { eq, and, desc, gte } from 'drizzle-orm';
 
 interface ValidationResult {
   isValid: boolean;

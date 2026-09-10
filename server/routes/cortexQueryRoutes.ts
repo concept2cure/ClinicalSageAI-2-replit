@@ -22,7 +22,7 @@
 import { Router, Request, Response } from 'express';
 import pg from 'pg';
 import { getGateway } from '../services/ai-gateway/index.js';
-import type { GatewayRequest, RoutingStrategy } from '../services/ai-gateway/types.js';
+import type { RoutingStrategy } from '../services/ai-gateway/types.js';
 import { getEmbeddingService } from '../services/enhancedEmbeddingService.js';
 import { ragRouter } from '../services/ragRouter.js';
 

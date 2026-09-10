@@ -1,4 +1,4 @@
-import { eq, and, sql, desc, like, or } from 'drizzle-orm';
+import { eq, and, sql, desc, like } from 'drizzle-orm';
 import { db } from '../db';
 import { csrReports, csrDetails } from '../../shared/schema';
 import { huggingFaceService } from '../huggingface-service';

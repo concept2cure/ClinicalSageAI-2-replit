@@ -21,7 +21,7 @@ import {
   type InsertTranslationalPattern,
   type InsertDoseEscalationStudy
 } from '@shared/schema';
-import { eq, and, gte, sql } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 
 interface SafetySignal {
   type: 'AE' | 'SAE' | 'DLT';

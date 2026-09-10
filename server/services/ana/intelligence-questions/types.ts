@@ -27,7 +27,7 @@ export type {
   IntelligenceAnswerPayload,
 } from '../../../../shared/types/intelligence-questions.js';
 
-import type { FlowState, FlowCategory } from '../../../../shared/types/intelligence-questions.js';
+import type { FlowState } from '../../../../shared/types/intelligence-questions.js';
 
 /** Context passed to the engine from the stream handler. */
 export interface FlowEngineContext {

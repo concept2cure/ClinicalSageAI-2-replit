@@ -19,7 +19,7 @@ import {
   AssumptionRegistryService,
   type CreateAssumptionInput,
 } from './assumption-registry-service';
-import { DecisionRecordService, type CreateDecisionInput } from './decision-record-service';
+import { DecisionRecordService } from './decision-record-service';
 import { GovernanceBoundaryService } from './governance-boundary-service';
 
 // ═══════════════════════════════════════════════════════════════════════════════
