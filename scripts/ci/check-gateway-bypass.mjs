@@ -110,10 +110,17 @@ const JS_SEARCH_PATHS = ['server', 'services', 'workers', 'shared', 'scripts'];
  * what this gate must not miss. The consequence is that a migration note
  * QUOTING the provider host keeps the file flagged after the real call is gone.
  *
- * Describe the old endpoint in prose instead of pasting the URL. That is what
- * server/routes/graphrag.ts does, and its comment says so. Adding a migrated
+ * Describe what was removed in prose instead of pasting it. That applies to the
+ * provider URL (server/routes/graphrag.ts) and equally to the call and
+ * assignment forms in patterns 3 and 4 — `= getOpenAIClient(` is matched
+ * wherever it appears, comment included
+ * (server/services/submission-twin-service.ts hit this one). Adding a migrated
  * file to NOT_A_BYPASS below would be the wrong fix: these are path exclusions,
  * so a future real bypass in that file would never be reported.
+ *
+ * Note also that the scan is `git grep`, which reads the INDEX. An unstaged
+ * working-tree fix is invisible to it — `git add` first, or the gate will keep
+ * reporting a bypass you have already removed.
  */
 const NOT_A_BYPASS = [
   // Test files assert on the literal patterns and mock the SDK call shapes.
