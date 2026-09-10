@@ -420,6 +420,66 @@ For a pilot on real customer data, "we cannot state what schema is deployed" is
 a stop condition, not a caveat. It is WO-1 and WO-2, and they are upstream of
 everything else.
 
+### 4.2b Two things this evaluation got wrong about §4, corrected by testing it
+
+Both were found by adversarially verifying the WO-1 remediation *before*
+applying it, and both make §4's thesis stronger rather than weaker.
+
+**The widest applier in the model has no caller.** `docs/evaluation-2026-09/`
+`evidence/applier-reachability.mjs` described `scripts/db_migrate.sh` as "the
+operator provisioning path, and the reason the gcc tree exists in a real
+database", crediting it with 304 files — more than any other path. A grep for
+`db_migrate` across the tree returns its own source, one doc telling a human to
+run it against a *non-production* database, and one CI workflow explicitly
+**declining** to run it (`.github/workflows/neon-preview-db.yml:92`):
+
+> *Running `scripts/db_migrate.sh` here would re-apply all ~166 migrations from
+> scratch — most aren't idempotent, so the whole step fails on something like a
+> duplicate CREATE TABLE.*
+
+The repo's own CI says the script would break if run. So the number that matters
+is not 304:
+
+| | Files |
+|---|---:|
+| `deploy-migrate` — the production deploy entrypoint | 261 |
+| `install-fresh` — from-scratch provisioning | 291 |
+| **reachable ONLY by the manual script CI expects to fail** | **107** |
+| reachable by no durable applier at all | 18 |
+
+**125 of 568 non-archived `.sql` files may be on no deployed database.** None of
+the 107 is a `_gcc_` file — this is `073_cortex_prime_unified_brain.sql`, the
+`0XX` operational series, and the `100`–`103` template loaders. It is also the
+most likely explanation for `ci:tables-live-schema`'s baseline of 73 tables the
+server queries and a live database does not have. A gate measuring the symptom
+was green; the cause was a path everyone assumed ran.
+
+**And the fix WO-1 proposed would not have fixed anything.** The plan for the
+largest collision group was to make one definition reachable on every applier
+and amend the loser in place. Two independent adversarial reviewers rejected it
+on the same ground, and they are right:
+
+> *All five primitives are created with `CREATE TABLE IF NOT EXISTS`. Adding
+> 073 to install-fresh's step-6 list changes the shape ONLY on databases
+> provisioned after the change. `IF NOT EXISTS` never adds a column to an
+> existing table … So a change filed to remove a two-shape divergence instead
+> introduces a THIRD shape keyed on install date.*
+
+**You cannot converge duplicate `CREATE TABLE` definitions by editing
+`CREATE TABLE` statements.** Every already-provisioned database keeps what it
+has. Convergence needs `ALTER TABLE … ADD COLUMN IF NOT EXISTS` on a *replaying*
+applier — which means inside `C2C_MIGRATION_FILES`, because RULE 1's
+unconditional re-execution is a property of `deploy-migrate` and of nothing
+else. `install-fresh` and the manual script both provision once and never
+return.
+
+That distinction is missing from WO-1's exit criterion, which is
+`ci:duplicate-table-ddl:strict` passing with baselines deleted. **That gate
+checks the repository.** Passing it converges the *files*; it says nothing about
+any database, and it would go green on a change that left every deployed
+environment exactly as divergent as before. WO-1 has been re-scoped to two exit
+criteria — one for the repository, one for the estate — and §7 states both.
+
 ### 4.3 What is *not* wrong here
 
 The migration system is not carelessly built. `ci:migration-drop-safety`,
@@ -427,8 +487,9 @@ The migration system is not carelessly built. `ci:migration-drop-safety`,
 ADR-0006 defines canonical lineage, and the drop-safety gate ships with a
 self-test that constructs the real create-then-drop hazard in both orders. The
 problem is not absence of discipline; it is that the discipline has not yet been
-applied to the 64 pre-existing collisions, and the gate that would hold the line
-runs in no pipeline.
+applied to the pre-existing collisions (64 at the start of this evaluation, 47
+now), and that the discipline is aimed at the repository while the risk lives in
+the estate — §4.2b.
 
 ---
 
@@ -658,7 +719,7 @@ customer data in front of anyone.
 | ID | Title | Blocks | Exit criterion |
 |---|---|---|---|
 | [**WO-0**](../work-orders/WO-0-restore-green-canonical-branch.md) | **Restore a green canonical branch** | **everything** | ✅ **DONE 2026-09-10** — all six green; sweep non-zero 28 → 23, remainder all `:strict`/unwired/nightly/ENV-BLOCKED |
-| [WO-1](../work-orders/WO-1-schema-authority.md) | Establish schema authority | G1+ | `ci:duplicate-table-ddl:strict` and `ci:migration-prefix-collisions:strict` pass with baselines **deleted** |
+| [WO-1](../work-orders/WO-1-schema-authority.md) | Establish schema authority | G1+ | **Two criteria.** (A) `ci:duplicate-table-ddl:strict` and `ci:migration-prefix-collisions:strict` pass with baselines **deleted**. (B) each divergent table has an `ALTER TABLE … ADD COLUMN IF NOT EXISTS` convergence step **in `C2C_MIGRATION_FILES`**, so existing databases converge too — A alone changes only the repo (§4.2b) |
 | [WO-2](../work-orders/WO-2-blank-database-completeness.md) | Make a blank database complete | G1+ | `ci:tables-live-schema` passes with baseline deleted, against a from-scratch install |
 | [WO-3](../work-orders/WO-3-tenant-isolation-proof.md) | Prove tenant isolation on real data | G1+ | Live two-tenant probe, plus `requestdb-coverage` 229 → 0 |
 | [WO-4](../work-orders/WO-4-enforce-strict-gates.md) | Enforce the six unenforced strict gates | all | Each runs in `pr-checks.yml`, verified by making one fail |

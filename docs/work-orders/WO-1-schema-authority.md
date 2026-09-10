@@ -49,6 +49,11 @@ tenant-isolation fix built on top of this is a fix you cannot prove.
 
 ## Exit criteria
 
+**Two of them, and the second was missing until 2026-09-10.** See
+*The exit criterion was measuring the repository* below for why.
+
+**A. The repository defines each table once.**
+
 ```bash
 npm run ci:duplicate-table-ddl:strict          # exit 0, baseline file absent
 npm run ci:migration-prefix-collisions:strict  # exit 0, baseline file absent
@@ -61,6 +66,54 @@ npm run ci:migration-drop-safety:selftest      # failure branch still exercised
 would turn this gate green in one command and is the wrong outcome. The
 baseline's own header says: *"Each entry is a defect to be reconciled per
 ADR-0006."*
+
+**B. Every database that already exists converges onto that definition.**
+
+For each table whose duplicate definitions DIVERGE in columns, a convergence
+migration exists that is:
+
+- `ALTER TABLE … ADD COLUMN IF NOT EXISTS` — never a second `CREATE TABLE`,
+- listed in `C2C_MIGRATION_FILES`, so RULE 1's unconditional re-execution
+  carries it to already-provisioned databases,
+- and verified against `ci:tables-live-schema` on a database restored from a
+  real environment, not a fresh install.
+
+Criterion A without criterion B is a repository that looks converged over an
+estate that is not. A is cheap and visible; B is the one that changes what a
+customer's database contains.
+
+### The exit criterion was measuring the repository
+
+Criterion A was the whole of this work order until an adversarial review of the
+proposed cortex remediation rejected it. Two independent reviewers reached the
+same conclusion:
+
+> *All five primitives are created with `CREATE TABLE IF NOT EXISTS`. Adding
+> 073 to install-fresh's step-6 list changes the shape ONLY on databases
+> provisioned after the change. `IF NOT EXISTS` never adds a column to an
+> existing table … So a change filed to remove a two-shape divergence instead
+> introduces a THIRD shape keyed on install date.*
+
+**You cannot converge duplicate `CREATE TABLE` definitions by editing
+`CREATE TABLE` statements.** That is obvious once stated and it was not stated
+anywhere in this work order, in the gate, or in ADR-0006. Every
+already-provisioned database keeps the shape it has, whatever the repository
+says afterwards.
+
+RULE 1's replay guarantee is what makes convergence possible at all — and it is
+a property of `applyMigrationFiles` over `C2C_MIGRATION_FILES`, which is
+`deploy-migrate`. `install-fresh` provisions once. `db_migrate.sh` provisions
+once and, per `.github/workflows/neon-preview-db.yml:92`, is expected to fail if
+run at all. So a convergence step that is not in `C2C_MIGRATION_FILES` reaches
+no existing database, and `ci:duplicate-table-ddl:strict` cannot tell the
+difference — it reads files.
+
+The same review corrected a second thing this work order depended on:
+`db_migrate.sh` has **no automated caller**, so its 304 files are not
+"operator-provisioned schema". 107 `.sql` files are reachable by it and nothing
+else. Those tables may exist in no deployed database at all — which is what
+ADR-0007 means by *"the deployed shape is canonical"*, and why promoting a
+definition that only that script applies would have been backwards.
 
 ## Blast radius
 
