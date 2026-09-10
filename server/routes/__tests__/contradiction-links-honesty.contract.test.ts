@@ -62,6 +62,7 @@ const BODY = {
 
 /** The row a real INSERT ... RETURNING * would give back. */
 const STORED = { id: 'uuid-1', ...BODY, organization_id: 42, is_active: true };
+type StoredLink = typeof STORED;
 
 beforeEach(() => {
   createSpy.mockReset();
@@ -97,8 +98,11 @@ describe('POST /contradiction-links reports what was stored', () => {
     expect(res.status).toBe(201);
     // The old handler returned `{projectId, sourceType, …}` reassembled from the
     // request. A response a client can trust has to come from the database.
-    expect(res.body.data).toEqual(STORED);
-    expect(res.body.data.id).toBe('uuid-1');
+    const data = res.status === 201 ? res.body.data : undefined;
+    expect(data).toEqual(STORED);
+    // `id` is the load-bearing one: BODY has no id, so this can only have come
+    // from the INSERT ... RETURNING.
+    expect(data?.id).toBe('uuid-1');
   });
 
   it('does NOT report success when nothing was written', async () => {
@@ -146,7 +150,7 @@ describe('GET /contradiction-links reads rather than asserting emptiness', () =>
 async function loadHandlers() {
   const { AssumptionRegistryService } = await import('../../services/assumption-registry-service');
   const service = AssumptionRegistryService.getInstance() as unknown as {
-    createContradictionLink: (...a: unknown[]) => Promise<unknown>;
+    createContradictionLink: (...a: unknown[]) => Promise<StoredLink | null>;
     getContradictionLinks: (p: number, o: number) => Promise<unknown[]>;
   };
 
@@ -164,9 +168,12 @@ async function loadHandlers() {
         comparisonType,
         { ...options, createdById: userId },
       );
+      // `status` is a literal on both arms so the result is a discriminated
+      // union: a test that wants `body.data` has to prove it is on the 201 arm
+      // first, which is the same thing a client has to do.
       if (!link) {
         return {
-          status: 500,
+          status: 500 as const,
           body: {
             success: false,
             error: {
@@ -176,7 +183,7 @@ async function loadHandlers() {
           },
         };
       }
-      return { status: 201, body: { success: true, data: link } };
+      return { status: 201 as const, body: { success: true, data: link } };
     },
 
     async handleList(projectId: number, orgId: number) {
