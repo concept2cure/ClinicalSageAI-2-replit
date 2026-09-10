@@ -43,17 +43,23 @@ export class ProtocolOptimizerService {
           academicReferences
         );
       } else {
-        // Fallback to simpler template-based approach if OpenAI is not available
-        return `## Protocol Optimization Recommendations for ${protocolMeta.indication} Study
+        // Fallback template. `indication` and `phase` are optional now — the
+        // analyser no longer defaults them — so these read "your protocol"
+        // rather than naming a therapeutic area the document never stated.
+        const area = protocolMeta.indication ?? 'your';
+        const phaseLabel = protocolMeta.phase
+          ? `${protocolMeta.phase.replace('phase', 'Phase ')} `
+          : '';
+        return `## Protocol Optimization Recommendations for ${area} Study
 
-Based on our analysis of your ${protocolMeta.phase.replace('phase', 'Phase ')} ${protocolMeta.indication} protocol, we recommend the following optimizations:
+Based on our analysis of your ${phaseLabel}${area} protocol, we recommend the following optimizations:
 
-1. **Consider industry standard endpoints for ${protocolMeta.indication} studies**
+1. **Consider industry standard endpoints for ${area} studies**
    - Ensure alignment with regulatory expectations
    - Include patient-reported outcomes
 
 2. **Optimize sample size for statistical power**
-   - Based on similar studies in ${protocolMeta.indication}
+   - Based on similar studies in ${area}
    - Account for expected effect size and dropout rate
 
 3. **Enhance inclusion/exclusion criteria**
@@ -61,7 +67,7 @@ Based on our analysis of your ${protocolMeta.phase.replace('phase', 'Phase ')} $
    - Balance enrollment feasibility with population specificity
 
 4. **Review safety monitoring procedures**
-   - Implement standard safety assessments for ${protocolMeta.indication} studies
+   - Implement standard safety assessments for ${area} studies
    - Include appropriate stopping rules`;
       }
     } catch (error) {
@@ -80,36 +86,50 @@ Based on our analysis of your ${protocolMeta.phase.replace('phase', 'Phase ')} $
     // Generate some sample recommendations based on rules
     const recommendations: Recommendation[] = [];
 
-    // Check sample size
-    if (protocolData.sample_size < 50) {
-      recommendations.push({
-        field: 'sample_size',
-        original: protocolData.sample_size,
-        suggested: Math.max(50, protocolData.sample_size * 2),
-        reason:
-          'Small sample sizes reduce statistical power. Consider increasing to improve chances of detecting treatment effect.',
-        confidence: 0.9,
-      });
-    } else if (protocolData.sample_size > 500 && protocolData.phase === 'Phase I') {
-      recommendations.push({
-        field: 'sample_size',
-        original: protocolData.sample_size,
-        suggested: 50,
-        reason:
-          'Sample size is unusually large for a Phase I trial, which typically focuses on safety in a small group.',
-        confidence: 0.7,
-      });
+    /* ── 2026-09-10: these rules used to fire on invented inputs ──────────────
+       ProtocolData's fields were required and defaulted by the analyser, so a
+       protocol that never stated a sample size arrived here as 100 and a
+       protocol that never stated an indication arrived as a therapeutic area.
+       The rules below then produced recommendations about those values. The
+       fields are optional now; a rule whose input is missing does not fire and
+       does not substitute one. Saying nothing about an unstated sample size is
+       the correct output. */
+
+    // Check sample size — only when the protocol actually stated one.
+    const n = protocolData.sample_size;
+    if (n !== undefined) {
+      if (n < 50) {
+        recommendations.push({
+          field: 'sample_size',
+          original: n,
+          suggested: Math.max(50, n * 2),
+          reason:
+            'Small sample sizes reduce statistical power. Consider increasing to improve chances of detecting treatment effect.',
+          confidence: 0.9,
+        });
+      } else if (n > 500 && protocolData.phase === 'Phase I') {
+        recommendations.push({
+          field: 'sample_size',
+          original: n,
+          suggested: 50,
+          reason:
+            'Sample size is unusually large for a Phase I trial, which typically focuses on safety in a small group.',
+          confidence: 0.7,
+        });
+      }
     }
 
-    // Check duration
+    // Check duration — needs BOTH a stated duration and a stated indication.
+    const weeks = protocolData.duration_weeks;
     if (
-      protocolData.duration_weeks < 12 &&
-      protocolData.indication.toLowerCase().includes('chronic')
+      weeks !== undefined &&
+      weeks < 12 &&
+      protocolData.indication?.toLowerCase().includes('chronic')
     ) {
       recommendations.push({
         field: 'duration_weeks',
-        original: protocolData.duration_weeks,
-        suggested: Math.max(24, protocolData.duration_weeks * 2),
+        original: weeks,
+        suggested: Math.max(24, weeks * 2),
         reason:
           'For chronic conditions, longer follow-up periods are recommended to better assess long-term outcomes.',
         confidence: 0.8,
@@ -125,17 +145,22 @@ Based on our analysis of your ${protocolMeta.phase.replace('phase', 'Phase ')} $
       'infectious disease': ['Viral Load', 'Time to Resolution of Symptoms'],
     };
 
-    const indication = protocolData.indication.toLowerCase();
+    // Needs a stated indication AND a stated primary endpoint. Recommending a
+    // replacement endpoint requires knowing the current one; with the endpoint
+    // defaulted to 'Overall Response Rate' this rule used to compare an
+    // invented endpoint against a reference list and advise on the result.
+    const indication = protocolData.indication?.toLowerCase() ?? '';
+    const currentEndpoint = protocolData.primary_endpoint;
     for (const [category, endpoints] of Object.entries(commonEndpoints)) {
-      if (indication.includes(category.toLowerCase())) {
+      if (currentEndpoint !== undefined && indication.includes(category.toLowerCase())) {
         const isUsingCommonEndpoint = endpoints.some(endpoint =>
-          protocolData.primary_endpoint.toLowerCase().includes(endpoint.toLowerCase())
+          currentEndpoint.toLowerCase().includes(endpoint.toLowerCase())
         );
 
         if (!isUsingCommonEndpoint) {
           recommendations.push({
             field: 'primary_endpoint',
-            original: protocolData.primary_endpoint,
+            original: currentEndpoint,
             suggested: endpoints[0],
             reason: `Consider using established endpoints like ${endpoints.join(', ')} for ${category} trials, which may improve regulatory acceptance.`,
             confidence: 0.6,

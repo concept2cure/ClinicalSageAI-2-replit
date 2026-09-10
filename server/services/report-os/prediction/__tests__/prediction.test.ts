@@ -125,7 +125,7 @@ describe('assemblePredictionReport', () => {
     // readiness score rescaled — (score/100)*0.8 minus a per-gap penalty — so
     // "implying" asserted a link between a checklist and a regulatory outcome
     // that nothing computes.
-    const report = assemblePredictionReport(readinessInput(), { generatedAt: FIXED_AT });
+    const report = assemblePredictionReport(readinessInput(), META);
     const text = JSON.stringify(report);
 
     expect(text).not.toMatch(/approval probability of \d/i);
@@ -142,7 +142,7 @@ describe('assemblePredictionReport', () => {
     // statement about today's inputs and not a dead branch.
     const report = assemblePredictionReport(
       readinessInput({ predictedApprovalProbability: 0.66 }),
-      { generatedAt: FIXED_AT },
+      META,
     );
     expect(JSON.stringify(report)).toContain('66');
     expect(JSON.stringify(report)).not.toContain('No approval-probability model backs');
@@ -153,7 +153,7 @@ describe('assemblePredictionReport', () => {
     // clock — presented identically to a real one.
     const report = assemblePredictionReport(
       readinessInput({ reviewClockDays: null, reviewClockBasis: null }),
-      { generatedAt: FIXED_AT },
+      META,
     );
     expect(JSON.stringify(report)).toContain('No statutory review clock is on record');
   });

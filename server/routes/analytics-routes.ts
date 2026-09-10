@@ -818,9 +818,15 @@ For each recommendation, include specific citations to relevant regulatory guide
         // — an assertion of comparison, with nothing compared.
         section: 'Evidence Base',
         insights: [
-          similarProtocols.length > 0
-            ? `Compared against ${similarProtocols.length} stored protocol(s) matching indication "${protocolData.indication}"`
-            : `No stored protocol matched indication "${protocolData.indication}", so no comparison against prior protocols was performed`,
+          // Three cases, not two. `indication` became optional on 2026-09-10
+          // (the analyser stopped defaulting it), so "no comparison" now has
+          // two distinct causes and quoting an absent value would have rendered
+          // the literal string indication "undefined".
+          !protocolData.indication
+            ? 'This protocol does not state an indication, so no comparison against prior protocols could be attempted'
+            : similarProtocols.length > 0
+              ? `Compared against ${similarProtocols.length} stored protocol(s) matching indication "${protocolData.indication}"`
+              : `No stored protocol matched indication "${protocolData.indication}", so no comparison against prior protocols was performed`,
           'Regulatory guideline references for FDA, EMA, PMDA and Health Canada are listed under global_regulations. They are a fixed reference set, not a per-protocol assessment.',
         ],
         citations: [
