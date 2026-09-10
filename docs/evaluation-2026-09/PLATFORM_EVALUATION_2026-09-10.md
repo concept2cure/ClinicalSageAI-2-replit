@@ -445,16 +445,23 @@ customer data in front of anyone.
 | [WO-8](../work-orders/WO-8-skipped-tests.md) | Triage 34 skipped tests | G1 | Each un-skipped or annotated with why it cannot run |
 | [WO-9](../work-orders/WO-9-pilot-surface-lock.md) | Lock the pilot surface set | G1 | Pilot surfaces in a rail; the rest behind an explicit experimental affordance |
 | [WO-10](../work-orders/WO-10-deletion-program.md) | Proof-gated deletion program | none — hygiene | Deletion-proof procedure exists **before** anything is deleted |
-| [WO-11](../work-orders/WO-11-tenant-settings-authorization.md) | Tenant settings mutations enforce no role check | G1+ | Non-admin member refused on all three routes, proven by test |
+| [WO-12](../work-orders/WO-12-complexity-refactor.md) | Complexity growth now inside the eslint baseline | none — deferred | `complexity` ≤ 1,687 and `max-lines-per-function` ≤ 1,190 |
 
-**WO-11 was found while executing WO-0**, and is worth noting as a method point:
-`server/routes/tenant-config.ts` imported `requireAdminRole` and never applied
-it, while its docblock claimed "Only organization admins and super admins can
-update settings." The unused import was a fossil of a guard someone meant to
-wire. Three mutating routes — including a full settings reset — are reachable by
-any authenticated member of the organization. Paying down lint debt surfaced an
-authorization gap that no security-specific gate had caught, which is an
-argument for the ratchets being worth their maintenance.
+**A withdrawn finding, kept here because the retraction is the useful part.**
+While executing WO-0 I reported that `server/routes/tenant-config.ts` enforced no
+role check on three mutating routes, having read the middleware chain
+(`authMiddleware, requireOrganizationContext`) and confirmed that
+`requireOrganizationContext` checks no role. That was wrong. All three handlers
+perform the check inline — `if (req.userRole !== 'super_admin' && req.userRole
+!== 'admin') return res.status(403)` at :179, :248 and :366. The docblock's
+claim is enforced; the unused `requireAdminRole` import was an unused import,
+nothing more.
+
+The error is worth recording because it is the exact failure mode
+`docs/audit-2026-07/12-findings-register.md` warns about — of ten headline
+findings that audit put through adversarial verification, six were overstated,
+three materially. A middleware chain is not an authorization boundary on its
+own, and a finding that stops at the route signature has not been verified.
 
 ### Sequencing
 
