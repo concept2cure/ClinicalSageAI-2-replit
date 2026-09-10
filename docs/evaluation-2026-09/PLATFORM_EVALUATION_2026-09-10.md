@@ -122,6 +122,21 @@ enforces bidirectional parity — a stale baseline fails as loudly as a new defe
 because a baseline that overstates debt hides the next real one. That is good
 design, and it is the design WO-5 proposes extending to the other 42 baselines.
 
+> **RESOLVED 2026-09-10, same day.** WO-0 was executed against this finding; all
+> six now pass and the sweep's non-zero count fell 28 → 23. Three of the six
+> were not what the gate reported: `model-migration-agreement` was a **parser
+> bug** (its `ALTER TABLE` regex saw only the first `ADD COLUMN` of a
+> comma-separated statement, so the "fix" it demanded would have added a
+> migration for columns that already existed); `duplicate-table-ddl` was a
+> genuine **two-applier schema split** on `cmc_comparability_assessments`, which
+> is §4's thesis in miniature; and `tenant-blind-models` was a stale baseline
+> over an already-fixed cross-tenant leak. One caveat survives: the eslint total
+> is green because 130 unused imports were removed, **not** because the
+> complexity growth was fixed — `complexity` +34 and `max-lines-per-function`
+> +34 remain inside the new 6,575 baseline. See
+> [`WO-0`](../work-orders/WO-0-restore-green-canonical-branch.md) for the full
+> outcome.
+
 ### The three things that decide the pilot bar
 
 1. **Schema authority** (WO-1, WO-2). Until one manifest defines each table
@@ -419,7 +434,7 @@ customer data in front of anyone.
 
 | ID | Title | Blocks | Exit criterion |
 |---|---|---|---|
-| [**WO-0**](../work-orders/WO-0-restore-green-canonical-branch.md) | **Restore a green canonical branch** | **everything** | Every CI-wired gate exits 0 in `evidence/sweep.mjs`, ENV-BLOCKED set excepted |
+| [**WO-0**](../work-orders/WO-0-restore-green-canonical-branch.md) | **Restore a green canonical branch** | **everything** | ✅ **DONE 2026-09-10** — all six green; sweep non-zero 28 → 23, remainder all `:strict`/unwired/nightly/ENV-BLOCKED |
 | [WO-1](../work-orders/WO-1-schema-authority.md) | Establish schema authority | G1+ | `ci:duplicate-table-ddl:strict` and `ci:migration-prefix-collisions:strict` pass with baselines **deleted** |
 | [WO-2](../work-orders/WO-2-blank-database-completeness.md) | Make a blank database complete | G1+ | `ci:tables-live-schema` passes with baseline deleted, against a from-scratch install |
 | [WO-3](../work-orders/WO-3-tenant-isolation-proof.md) | Prove tenant isolation on real data | G1+ | Live two-tenant probe, plus `requestdb-coverage` 82 → 0 |

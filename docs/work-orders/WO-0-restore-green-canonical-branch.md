@@ -1,7 +1,7 @@
 # WO-0 — Restore a green canonical branch
 
 **To:** JM Smith · **From:** Claude Code · **Date:** 10 September 2026
-**Status:** OPEN · **Blocks:** everything. **Do this before any other work order.**
+**Status:** ✅ CLOSED 2026-09-10 — see Outcome at the end. · **Blocked:** everything (now unblocked)
 **Estimate:** 2–4 days
 
 ---
@@ -94,3 +94,64 @@ the only branch that ships. Whatever the cause — CI not gating pushes to it,
 red merges, or `--no-verify` — the fix is procedural, not technical, and it
 belongs in the same conversation as WO-4. `.husky/pre-push` runs only 7 gates;
 the other ~135 run in GitHub Actions, and only if Actions is actually blocking.
+
+---
+
+## OUTCOME — closed 2026-09-10
+
+All six gates green. Verified individually and by a full 142-gate sweep
+(`docs/evaluation-2026-09/evidence/01-gate-sweep.json`): non-zero exits fell
+**28 → 23**, and every remaining non-zero is either a `:strict` variant that no
+push/PR job runs (WO-1, WO-2, WO-3, WO-10), a gate wired nowhere
+(`duplicate-exported-types`, `surface-text-ramp`, `tenant-resolvers`), a
+nightly-only job (`audit:repo-health:full-strict`, gated
+`if: github.event_name == 'schedule'`), or one of the documented ENV-BLOCKED
+nine. `audit:repo-health:no-regression`, which *is* per-PR, passes.
+
+| Gate | Result |
+|---|---|
+| `ci:eslint-ratchet` | 6,575 (baseline ratcheted 6,596 → 6,575) |
+| `ci:check-phantom-tokens` | 14 tokens / 63 sites (baseline 14) |
+| `ci:duplicate-table-ddl` | 63 (baseline 63) |
+| `ci:model-migration-agreement` | 25 divergent (baseline 29) |
+| `ci:tenant-blind-models` | 4 (baseline 4) |
+| `ci:tenant-entry-points` | 9 (baseline 9) |
+
+### Three were not what the gate said they were
+
+- **`model-migration-agreement` was a gate bug.** Its `ALTER TABLE` regex caught
+  only the first `ADD COLUMN` of a comma-separated statement, so four of the
+  five columns in `db/migrations/20260906_cmc_impurity_m7_inputs.sql` were
+  invisible. The fix it demanded would have written a migration re-adding
+  columns that already existed. Parser fixed; proved still able to catch a real
+  divergence by seeding one.
+- **`duplicate-table-ddl` was a two-applier schema split.**
+  `cmc_comparability_assessments` was created by `0006` (install-fresh, *with*
+  the `organizations` FK) and by `20260907` (deploy-migrate, *without*). Which
+  schema you got depended on which applier ran — §4 of the evaluation, concrete.
+- **`tenant-blind-models` was a stale baseline over a fixed leak.**
+  `compliance_tracking` rows had been written `organization_id` NULL, forcing
+  reads to widen to `OR organization_id IS NULL`, serving each sponsor's
+  findings to every other. Already fixed and backfilled.
+
+### Two caveats carried forward
+
+1. **The eslint total is green for the wrong reason.** It came down because 130
+   unused imports were removed (`tsc`: 0 errors), not because the regression was
+   fixed. `complexity` +34 and `max-lines-per-function` +34 are still inside the
+   new 6,575 baseline. Legitimate by the gate's own rule ("the ratchet is on the
+   total"), but those 81 warnings are a scheduled refactor still owed.
+2. **A new finding, WO-11.** The lint cleanup surfaced an unused
+   `requireAdminRole` import in `server/routes/tenant-config.ts` whose docblock
+   claims admin-only settings updates. Three mutating routes, including a full
+   reset, are reachable by any authenticated org member. Not enabled here —
+   turning the guard on could 403 users whose roles were never provisioned.
+
+### Method note for WO-5
+
+Two baselines lose information when regenerated with `--write-baseline`:
+`tenant-blind-models` silently drops its `_readme` (which warns that "fixing"
+the remaining four models would *create* a cross-tenant write), and
+`tenant-entry-points` would overwrite hand-written justifications. Both were
+edited by hand here instead. Any baseline-governance tooling must preserve
+prose, not just counts.

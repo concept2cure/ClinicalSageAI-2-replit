@@ -32,8 +32,8 @@
       "digest": "bfd4fd54a2a03e88"
     },
     "server/routes/api-keys.ts": {
-      "reason": "FALSE POSITIVE of the shape matcher (matches on the string 'validateApiKey'). This is the session-authenticated router for MANAGING keys, mounted under /api behind the auth boundary, so enforceTenantLifecycle already covers it. It is not itself an alternative-auth surface.",
-      "digest": "2cea38b3e490f332"
+      "reason": "FALSE POSITIVE of the shape matcher (matches on the string 'validateApiKey'). This is the session-authenticated router for MANAGING keys, mounted under /api behind the auth boundary, so enforceTenantLifecycle already covers it. It is not itself an alternative-auth surface. RE-READ 2026-09-10: the digest drifted only because WO-0's lint cleanup removed an unused type-only import (`type ApiKeyScope`), which has no runtime effect. Re-verified against the current file: router.use(authMiddleware) and router.use(requireAdminRole) at :56-57, mounted at /api/api-keys by server/bootstrap/register-document-routes.ts. The justification holds and is now stronger than as first written \u2014 the router is admin-guarded, not merely session-authenticated.",
+      "digest": "f0d2d3958e177b94"
     },
     "server/routes/mdx-admin.ts": {
       "reason": "FALSE POSITIVE (matches on the word 'SCIM' in prose). Mounted at /api/mdx, behind the auth boundary, so the lifecycle guard already covers it.",
