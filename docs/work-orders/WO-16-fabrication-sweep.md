@@ -274,15 +274,15 @@ Treat the tiers in that JSON as unranked leads.
 | 2 | `routes/real-world-evidence.ts` outage → all-clear | CONFIRMED_VERBATIM | high | **FIXED** `bfacd8890` |
 | 3 | `routes/ai-assistance.ts` hardcoded credibility | CONFIRMED_VERBATIM | medium | open |
 | 4 | `routes/document-understanding.ts` phantom models | CONFIRMED_VERBATIM | high | open |
-| 5 | `services/ivdrPackContent.ts` failed query → "no records" | CONFIRMED_VERBATIM | high | open |
+| 5 | `services/ivdrPackContent.ts` failed query → "no records" | CONFIRMED_VERBATIM | high | **FIXED** `345178089` |
 | 6 | `services/contradiction-engine-service.ts` Pass-8 swallowing | CONFIRMED_NARROWER | medium | open |
 | 7 | `services/cognitive-ecosystem/fhir-validation.service.ts` | CONFIRMED_NARROWER | **low** | open |
-| 8 | `services/tenant-export/tenant-export.service.ts` | CONFIRMED_VERBATIM | high | open |
+| 8 | `services/tenant-export/tenant-export.service.ts` | CONFIRMED_VERBATIM | high | **FIXED** `10b5bd2c2` |
 | 9 | `api/cmc/workflowRoutes.ts` CMC doc from a drug name | CONFIRMED_NARROWER | high | open |
 | 10 | `services/intelligence/readiness-scoring-engine.ts` | CONFIRMED_NARROWER | **critical** | **FIXED** `41dbc96ff` |
 | 11 | `protocol-analyzer-service.ts` invented protocols | CONFIRMED_VERBATIM | high | **FIXED** `7c71de271` |
 | 12 | `v2/surfaces/ReportEngine.tsx` fake power calculation | CONFIRMED_VERBATIM | high | **FIXED** `41dbc96ff` |
-| 13 | `routes/biotech-artifacts.ts` invented ICSR/PSUR facts | CONFIRMED_VERBATIM | high | open |
+| 13 | `routes/biotech-artifacts.ts` invented ICSR/PSUR facts | CONFIRMED_VERBATIM | high | **FIXED** `f567da99b` |
 | 14 | `routes/protocol_routes.ts` fabricated PDF text | CONFIRMED_VERBATIM | high | **FIXED** `7c71de271` |
 | 15 | `protocol-analyzer-service.ts` unconditional FDA/EMA verdict | CONFIRMED_VERBATIM | high | **FIXED** `7c71de271` |
 | 16 | `services/cerGenerationService.ts` contraindications | CONFIRMED_VERBATIM | high | open |
@@ -348,3 +348,48 @@ clinical facts of an E2B(R3) ICSR, a PSUR and a CIOMS-I — `seriousness ||
 content. Then **#5** and **#8** (both are the same "failed query rendered as an
 empty result" shape, and #8 has a fix to copy), then **#4**, **#16**, **#9**,
 **#3**, **#6**, and **#7** last on reach.
+
+
+---
+
+## Second-pass corrections, 10 September (after the adversarial verification completed)
+
+**Finding 1 — I fixed it with the wrong engine, and corrected it.** `bfacd8890`
+replaced the fabricated FAERS statistics with a real implementation, but wired
+the route to `pharmacovigilance-knowledge.ts::detectSafetySignal` when
+`stats/signal-disproportionality.ts::screenSignalPanel` is the canonical one —
+its own test suite, five existing consumers, a real BCPNN IC025 and a real
+Gamma-Poisson EBGM where the other's docstring admits to "a deterministic
+approximation of the MGPS shrinkage". So the first fix resolved the fabrication
+and entrenched the duplication. Corrected in `d26cf7dec`. **The lesson is the
+one this whole work order is about: "a real implementation exists" is not the
+same question as "which one is canonical", and I answered the first and assumed
+the second.**
+
+**Finding 13 was worse than recorded, and the sweep missed the auth gap.** The
+verification found `/api/biotech-artifacts` had NO authentication and was the one
+mount in `register-document-routes.ts` without `authenticateToken`. Executing the
+previous router proved the rest: `POST /pv/icsr` with an EMPTY BODY returned
+HTTP 200 and an E2B(R3) XML carrying `<serious>2</serious>` — non-serious, the
+code that decides whether a 15-day expedited report is owed — addressed to
+EudraVigilance. Fixed in `f567da99b`.
+
+**Finding 5's file attribution was wrong**, as the verifier said. The swallowing
+catches are in `ivdrPackContent.ts`; the `"No analytical validation records."`
+strings are in `docxGenerator.ts` and `ivdrPackHtml.ts`. The fix spans all three.
+
+**Finding 8's answer already existed in the repo.** `tenant-full-export.service
+.ts` records `coverage.tablesFailed` rather than folding a failure into a count.
+Copied rather than reinvented.
+
+### Still open in this lane, in order
+
+**#4** `document-understanding.ts` (phantom models advertised as active) ·
+**#16** `cerGenerationService.ts` · **#9** `api/cmc/workflowRoutes.ts` (note the
+route path in the JSON is wrong — it is `/api/cmc/workflows`) · **#3**
+`ai-assistance.ts` · **#6** `contradiction-engine-service.ts` · **#7**
+`fhir-validation.service.ts` (last — reach is zero).
+
+Plus one found while fixing and not yet addressed: `protocol-optimizer-service.ts`
+stamps `confidence: 0.9 / 0.8 / 0.7` on rule-based recommendations, where the
+field name asserts a computed confidence and the values are per-rule constants.
