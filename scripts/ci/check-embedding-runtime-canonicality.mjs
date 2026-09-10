@@ -73,6 +73,14 @@ const APPROVED = new Set([
   // server/brain/vaultRetriever.js — migrated 2026-05-07 to
   // embeddingService.embed() with corpus 'vaultDocumentChunks'.
   'server/openai-service.ts',
+  // THE CANONICAL RUNTIME'S OWN PROVIDER, allowlisted 2026-09-10 when the
+  // patterns were widened to any `.embeddings.create(` receiver rather than a
+  // receiver literally named `openai`. This file IS the governed path that the
+  // other entries are migration targets TOWARD — enhancedEmbeddingService.embed()
+  // resolves a provider and calls it here — so it is the one place the call is
+  // correct. It is listed rather than pattern-excluded so that the exception is
+  // visible and someone can challenge it.
+  'server/services/ai-gateway/embeddings/embedding-provider.ts',
 ]);
 
 // See scripts/ci/lib/allowlist-paths.mjs. Two entries here were orphaned by
@@ -82,11 +90,48 @@ if (assertAllowlistPathsExist({ tag: '[ci:embedding-runtime]', repoRoot, name: '
   process.exit(1);
 }
 
+/**
+ * ── PROVIDER COVERAGE, and an honest account of the boundary (2026-09-10) ────
+ * The first four patterns are OpenAI-shaped. That was noted as a blind spot —
+ * "a HuggingFace embedding call is invisible to this gate" — and the note was
+ * half right, so the correction matters more than the addition.
+ *
+ * A raw-HTTP embedding call to another provider is NOT invisible to CI. Its
+ * hostname is matched by scripts/ci/check-gateway-bypass.mjs, whose JS_PATTERNS
+ * carry api-inference.huggingface.co, api.cohere.(com|ai), api.voyageai.com,
+ * generativelanguage.googleapis.com and eleven more — and
+ * server/huggingface-service.ts is tracked in that gate's baseline today. The
+ * two guards divide the work: THIS one asks "did an embedding call skip the
+ * canonical runtime", the other asks "did any model call skip the gateway", and
+ * a hostname is the other one's job.
+ *
+ * The genuine residual gap is an embedding call made through a provider SDK,
+ * where no hostname appears in the source at all. Neither guard could see that:
+ * not the hostname list, because there is no hostname; not the four patterns
+ * below, because the receiver is not named `openai`. Two shapes close it:
+ *
+ *   .embeddings.create(     any OpenAI-COMPATIBLE SDK regardless of receiver —
+ *                           Azure, LiteLLM proxies, Voyage's compat client
+ *   .embedContent(          Google's generative-ai SDK
+ *
+ * Deliberately NOT added: a bare `.embed(`. That is the canonical runtime's own
+ * method name (`embeddingService.embed()`), so matching it would flag every
+ * correct caller — a guard that fires on the right answer teaches people to
+ * disable it.
+ *
+ * Note this file is read RAW, with no comment stripping (see the scan loop
+ * below), so every pattern here must be call-shaped rather than prose-shaped. A
+ * hostname or an endpoint path would match a header comment discussing it —
+ * which is exactly the trap check-gateway-bypass.mjs documents in its own
+ * header, having been caught by it.
+ */
 const DIRECT_CALL_PATTERNS = [
   /\bopenai\.embeddings\.create\s*\(/,
   /\bopenAI\.embeddings\.create\s*\(/,
   /\bgetOpenAI\(\)\.embeddings\.create\s*\(/,
   /\.embeddings\.create\s*\(\s*\{[^}]*model:\s*['"]text-embedding-/,
+  /\.embeddings\.create\s*\(/,
+  /\.embedContent\s*\(/,
 ];
 
 const SCAN_ROOTS = [path.join(repoRoot, 'server')];
