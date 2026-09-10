@@ -31,6 +31,8 @@
     "db:ensure": "tsx server/db/ensureCoreTables.ts",
     "db:apply-c2c": "node scripts/db/apply-c2c-migrations.mjs",
     "db:migrate:deploy": "node scripts/db/deploy-migrate.mjs",
+    "db:provision-test": "bash scripts/db/provision-test-db.sh",
+    "db:provision-test:status": "bash scripts/db/provision-test-db.sh --status",
     "db:check-schema-entrypoints": "node scripts/db/install-fresh.mjs --check-schema-entrypoints",
     "db:check-assembly": "node scripts/check_assembly_docs.mjs",
     "build": "vite build && node scripts/build-server.mjs",
