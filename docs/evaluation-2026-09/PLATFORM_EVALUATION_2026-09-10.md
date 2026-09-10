@@ -501,6 +501,58 @@ any database, and it would go green on a change that left every deployed
 environment exactly as divergent as before. WO-1 has been re-scoped to two exit
 criteria — one for the repository, one for the estate — and §7 states both.
 
+### 4.2c The counterweight this evaluation under-credited
+
+Everything above is about schema the repository cannot pin down. Set against it,
+fairly, is a piece of pipeline this document should have named earlier: **CI
+provisions a database from nothing on every push and proves things about it.**
+
+`.github/workflows/ci.yml:1133`, job `blank-db-provisioning`. It runs on push
+and PR to `**` behind `needs: lint`, with no `if:` condition, against a
+`pgvector/pgvector:pg15` service. Its fourteen steps, in order:
+
+| | Step |
+|---|---|
+| 1 | Assert the database really is blank |
+| 2 | **Deploy migration must REFUSE an unprovisioned database** |
+| 3 | Provision from scratch (`install-fresh`) |
+| 4 | Deploy migration succeeds on the provisioned database |
+| 5 | **Deploy migration is idempotent — every release re-runs it** |
+| 6 | RLS coverage — every org-keyed table carries the tenant policy |
+| 7 | RLS parent-scope delegates exist |
+| 8 | Verify the readiness contract independently |
+| 9 | Post-deploy invariants hold on the real deployed database |
+| 10 | `ci:tables-live-schema` — server SQL resolves against the LIVE schema |
+| 11 | Guardrails — what a tenant purge cannot reach |
+
+Step 2 is unusual and worth pointing at: the pipeline asserts that the deploy
+path **fails loudly** on a database nobody provisioned, rather than half-applying
+onto it. Step 5 proves RULE 1's replay property empirically rather than by
+argument. Step 6 is the RLS claim §5 relies on, checked against a real database
+rather than against migration text.
+
+`ci:tables-live-schema`'s own header explains why it exists and is worth quoting,
+because it is this evaluation's thesis stated by the repository first:
+
+> *`ci:unbacked-tables` asks "does any .sql file in this repo contain a CREATE
+> TABLE for this name?" … Both compare the repo to itself, and a repository can
+> always answer yes about its own text … In every one of those, the repository
+> says "created" and the database says "does not exist". Only a live database can
+> tell them apart.*
+
+**So the from-scratch path is genuinely proven, on every push.** That is a
+stronger position than most platforms at this stage, and §4 should not be read as
+saying otherwise.
+
+**What it cannot prove is the one that matters for the pilot.** Every assertion
+above is about a database provisioned *at that commit*. It says nothing about a
+database provisioned six months ago and carried forward by `deploy-migrate`
+alone — which, per §4.2b, is the only population `deploy-migrate` reaches and the
+one a paying customer actually has. A fresh install and a long-lived estate are
+different objects, and the pipeline measures the first. That is the gap WO-1's
+exit criterion B and WO-2 exist to close, and naming the pipeline's real strength
+is what makes the remaining gap legible rather than rhetorical.
+
 ### 4.3 What is *not* wrong here
 
 The migration system is not carelessly built. `ci:migration-drop-safety`,
