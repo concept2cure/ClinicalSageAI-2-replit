@@ -64,6 +64,17 @@ export interface IvdrPackContent {
   } | null;
 
   /** § 5 Binder evidence appendix (from manifest) */
+  /**
+   * Sections whose database read FAILED, so a renderer can say "could not be
+   * read" instead of "no records". Empty on a healthy build.
+   *
+   * IVDR (EU) 2017/746 Annex II makes analytical performance and clinical
+   * evidence mandatory content, so "No clinical evidence records." is a claim
+   * that the manufacturer holds none — a different document from one whose
+   * query failed. See the note on readSection below.
+   */
+  readFailures: Array<{ section: string; error: string }>;
+
   binderEvidence: ManifestV1['binderEvidence'];
 
   /** § 6 AI provenance chain (from manifest) */
@@ -125,6 +136,39 @@ export interface BuildContentOpts {
  * Build the canonical content model from DB + manifest.
  * All DB queries happen here — renderers receive pure data.
  */
+
+/**
+ * IVDR pack section reads, with failures recorded rather than swallowed.
+ *
+ * ── 2026-09-10 ───────────────────────────────────────────────────────────────
+ * The four queries below each carried `.catch(() => ({ rows: [] }))`. A failed
+ * read therefore produced an empty section, and the renderers turned that into
+ * a printed assertion in the technical documentation a manufacturer files:
+ *   server/services/docxGenerator.ts:221  "No analytical validation records."
+ *   server/services/docxGenerator.ts:261  "No clinical evidence records."
+ *   server/services/ivdrPackHtml.ts:108,126  the same two, in HTML.
+ *
+ * Under IVDR (EU) 2017/746 Annex II, analytical performance and clinical
+ * evidence are mandatory content. "No records." is a statement that the
+ * manufacturer holds none — a very different document from one that could not
+ * read them. This preserves partial packs (a broken section must not fail the
+ * whole build) while making the gap explicit in `readFailures`, which the
+ * renderers now print instead of the sentence above.
+ */
+async function readSection(
+  failures: Array<{ section: string; error: string }>,
+  section: string,
+  run: () => Promise<{ rows: any[] }>
+): Promise<{ rows: any[] }> {
+  try {
+    return await run();
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    failures.push({ section, error: message.slice(0, 200) });
+    return { rows: [] };
+  }
+}
+
 export async function buildIvdrPackContent(opts: BuildContentOpts): Promise<IvdrPackContent> {
   const { pool, organizationId, projectId, packId, packType, packVersion, manifest } = opts;
 
@@ -137,42 +181,43 @@ export async function buildIvdrPackContent(opts: BuildContentOpts): Promise<Ivdr
   // catch() swallowed the 42703 on every build, so every pack rendered its
   // sections empty while reporting success. Re-pointed to the canonical
   // columns the tables actually carry.
+  const readFailures: Array<{ section: string; error: string }> = [];
   const [classRes, analyticalRes, clinicalRes, cdxRes] = await Promise.all([
-    pool
-      .query(
+    readSection(readFailures, 'classification', () =>
+      pool.query(
         `SELECT ivdr_class, device_name, intended_purpose, rationale, created_at
          FROM ivdr_classifications WHERE organization_id = $1
          ORDER BY created_at DESC LIMIT 1`,
         [organizationId]
       )
-      .catch(() => ({ rows: [] })),
+    ),
 
-    pool
-      .query(
+    readSection(readFailures, 'analyticalValidations', () =>
+      pool.query(
         `SELECT analyte_name, validation_type, acceptance_criteria, status,
                 lod, loq, precision_cv, sensitivity, specificity, accuracy
          FROM ivdr_analytical_validations WHERE organization_id = $1 ORDER BY created_at`,
         [organizationId]
       )
-      .catch(() => ({ rows: [] })),
+    ),
 
-    pool
-      .query(
+    readSection(readFailures, 'clinicalEvidence', () =>
+      pool.query(
         `SELECT study_title, study_type, sample_size, conclusion_text, status,
                 calculated_sensitivity, calculated_specificity
          FROM ivdr_clinical_evidence WHERE organization_id = $1 ORDER BY created_at`,
         [organizationId]
       )
-      .catch(() => ({ rows: [] })),
+    ),
 
-    pool
-      .query(
+    readSection(readFailures, 'cdx', () =>
+      pool.query(
         `SELECT medicinal_product_name, therapeutic_indication, biomarker, biomarker_type, status
          FROM ivdr_cdx_workflows WHERE organization_id = $1
          ORDER BY created_at DESC LIMIT 1`,
         [organizationId]
       )
-      .catch(() => ({ rows: [] })),
+    ),
   ]);
 
   const classRow = classRes.rows[0] || null;
@@ -225,6 +270,8 @@ export async function buildIvdrPackContent(opts: BuildContentOpts): Promise<Ivdr
         }
       : null,
 
+    readFailures,
+
     binderEvidence: manifest.binderEvidence,
     provenanceChain: manifest.provenanceChain,
 
@@ -233,4 +280,28 @@ export async function buildIvdrPackContent(opts: BuildContentOpts): Promise<Ivdr
       manifestHashSha256: manifest.hashes.manifestHashSha256,
     },
   };
+}
+
+/**
+ * The sentence a renderer prints for an EMPTY section — which is not the same
+ * sentence for a section that could not be read.
+ *
+ * Both the DOCX and HTML renderers used to print a flat "No <label> records."
+ * whichever it was. Under IVDR (EU) 2017/746 Annex II these sections are
+ * mandatory content, so that sentence asserts the manufacturer holds no
+ * analytical performance data or no clinical evidence — a claim a failed query
+ * must never make on their behalf.
+ *
+ * Exported and shared so the two renderers cannot drift into two wordings.
+ */
+export function sectionEmptyText(
+  content: Pick<IvdrPackContent, 'readFailures'>,
+  section: string,
+  label: string
+): string {
+  const failure = (content.readFailures ?? []).find(f => f.section === section);
+  return failure
+    ? `The ${label} records could not be read (${failure.error}). This section is INCOMPLETE — ` +
+      `it is not a statement that no ${label} records exist.`
+    : `No ${label} records.`;
 }

@@ -21,7 +21,7 @@ import {
   Header,
   ShadingType,
 } from 'docx';
-import type { IvdrPackContent } from './ivdrPackContent';
+import { sectionEmptyText, type IvdrPackContent } from './ivdrPackContent';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // Generic DOCX helpers (existing)
@@ -218,7 +218,9 @@ export async function generateIvdrDocx(content: IvdrPackContent): Promise<Buffer
       })
     );
   } else {
-    children.push(p('No analytical validation records.', { italics: true }));
+    // "No records." asserts the manufacturer holds none. When the read failed,
+    // say that instead — see readFailures in ivdrPackContent.ts.
+    children.push(p(sectionEmptyText(content, 'analyticalValidations', 'analytical validation'), { italics: true }));
   }
 
   // § 3 Clinical evidence
@@ -258,7 +260,7 @@ export async function generateIvdrDocx(content: IvdrPackContent): Promise<Buffer
       })
     );
   } else {
-    children.push(p('No clinical evidence records.', { italics: true }));
+    children.push(p(sectionEmptyText(content, 'clinicalEvidence', 'clinical evidence'), { italics: true }));
   }
 
   // § 4 CDx
