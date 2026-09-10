@@ -726,7 +726,7 @@ customer data in front of anyone.
 | [WO-5](../work-orders/WO-5-baseline-governance.md) | Baseline governance and honest gate output | all | All 43 baselines carry owner/reason/expiry; CI prints `RATCHET PASS — N REMAIN` |
 | [WO-6](../work-orders/WO-6-ai-gateway-bypass-burndown.md) | Burn down the 19 AI-gateway bypasses | G1+ | `gateway-bypass` baseline 19 → 0, or each survivor re-justified |
 | [WO-7](../work-orders/WO-7-esignature-enforcement.md) | E-signature on regulated promotion | G3, partially G1+ | Governed transition refuses without signature manifestation; covered by a test |
-| [WO-8](../work-orders/WO-8-skipped-tests.md) | Triage 34 skipped tests | G1 | Each un-skipped or annotated with why it cannot run |
+| [WO-8](../work-orders/WO-8-skipped-tests.md) | Triage the skipped tests | G1 | ✅ **DONE 2026-09-10** — 31 of the 34 were `skipIf` environment guards, not skips. Of the 12 real ones: 8 deleted (they asserted against `const src = ''` for components removed in the design-system port, so none could ever be un-skipped), 1 un-skipped with real assertions (sign-out had shipped and nobody revisited the skip), 2 kept with written unblocking conditions |
 | [WO-9](../work-orders/WO-9-pilot-surface-lock.md) | Lock the pilot surface set | G1 | Pilot surfaces in a rail; the rest behind an explicit experimental affordance |
 | [WO-10](../work-orders/WO-10-deletion-program.md) | Proof-gated deletion program | none — hygiene | Deletion-proof procedure exists **before** anything is deleted |
 | [WO-12](../work-orders/WO-12-complexity-refactor.md) | Complexity growth now inside the eslint baseline | none — deferred | `complexity` ≤ 1,687 and `max-lines-per-function` ≤ 1,190 |

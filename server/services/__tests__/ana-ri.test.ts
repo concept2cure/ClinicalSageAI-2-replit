@@ -1251,7 +1251,11 @@ describe('AnA RI Context Enrichment', () => {
   // The Claude Design bundle does not surface a slash-command menu in the
   // chat composer, so there is no frontend list to parse. The backend-side
   // test below still guarantees each registered command has a handler.
-  it.skip('frontend/backend slash-command parity — removed with AnaPersistentPanel', () => {});
+  // REMOVED 2026-09-10 (WO-8): an `it.skip` with an EMPTY BODY, named
+  // 'frontend/backend slash-command parity — removed with AnaPersistentPanel'.
+  // It asserted nothing, so un-skipping it would have passed while testing
+  // nothing, and AnaPersistentPanel no longer exists. It counted toward the
+  // skipped-test backlog while being neither a test nor a skip of one.
 
   it('ensures every backend slash command has a handler (no slash_unhandled)', async () => {
     for (const command of SUPPORTED_SLASH_COMMANDS) {
