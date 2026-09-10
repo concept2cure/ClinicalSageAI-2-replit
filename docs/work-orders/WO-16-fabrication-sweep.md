@@ -272,8 +272,8 @@ Treat the tiers in that JSON as unranked leads.
 |---|---|---|---|---|
 | 1 | `routes/real-world-evidence.ts` FAERS statistics | CONFIRMED_VERBATIM | high | **FIXED** `bfacd8890` |
 | 2 | `routes/real-world-evidence.ts` outage → all-clear | CONFIRMED_VERBATIM | high | **FIXED** `bfacd8890` |
-| 3 | `routes/ai-assistance.ts` hardcoded credibility | CONFIRMED_VERBATIM | medium | open |
-| 4 | `routes/document-understanding.ts` phantom models | CONFIRMED_VERBATIM | high | open |
+| 3 | `routes/ai-assistance.ts` hardcoded credibility | CONFIRMED_VERBATIM | medium | **FIXED** (this commit) |
+| 4 | `routes/document-understanding.ts` phantom models | CONFIRMED_VERBATIM | high | **FIXED** `e08cceee0` |
 | 5 | `services/ivdrPackContent.ts` failed query → "no records" | CONFIRMED_VERBATIM | high | **FIXED** `345178089` |
 | 6 | `services/contradiction-engine-service.ts` Pass-8 swallowing | CONFIRMED_NARROWER | medium | open |
 | 7 | `services/cognitive-ecosystem/fhir-validation.service.ts` | CONFIRMED_NARROWER | **low** | open |
@@ -285,7 +285,7 @@ Treat the tiers in that JSON as unranked leads.
 | 13 | `routes/biotech-artifacts.ts` invented ICSR/PSUR facts | CONFIRMED_VERBATIM | high | **FIXED** `f567da99b` |
 | 14 | `routes/protocol_routes.ts` fabricated PDF text | CONFIRMED_VERBATIM | high | **FIXED** `7c71de271` |
 | 15 | `protocol-analyzer-service.ts` unconditional FDA/EMA verdict | CONFIRMED_VERBATIM | high | **FIXED** `7c71de271` |
-| 16 | `services/cerGenerationService.ts` contraindications | CONFIRMED_VERBATIM | high | open |
+| 16 | `services/cerGenerationService.ts` contraindications | CONFIRMED_VERBATIM | high | **FIXED** `9aed6ded6` |
 
 ## Corrections to my own findings file — read these before working an entry
 
