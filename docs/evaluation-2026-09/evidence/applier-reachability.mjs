@@ -17,7 +17,24 @@
  *                                         deploy path. Explicitly does NOT
  *                                         apply db/migrations/*_gcc_*.sql, and
  *                                         preflights that a base schema exists.
- *   2. scripts/db/install-fresh.mjs       every migrations/*.sql except six
+ *   2. scripts/db/install-fresh.mjs       CANNOT RUN IN THE PRODUCTION IMAGE —
+ *                                         it shells out to `drizzle-kit push`,
+ *                                         and drizzle-kit is a devDependency
+ *                                         (package.json), so `npm ci --omit=dev`
+ *                                         leaves it absent. deploy-migrate's own
+ *                                         header says so at :21-23 and FAILS
+ *                                         LOUDLY at preflight rather than
+ *                                         provisioning an island of tables.
+ *                                         That is by design: a database is
+ *                                         provisioned once from a toolchain that
+ *                                         has drizzle-kit, and deploy-migrate
+ *                                         carries every change after that. It
+ *                                         does mean the two paths cannot be
+ *                                         collapsed, and that a file on
+ *                                         install-fresh only reaches an
+ *                                         environment provisioned AFTER it
+ *                                         landed. Files —
+ *                                         every migrations/*.sql except six
  *                                         named RLS files, PLUS the authoring
  *                                         subsystem, PLUS a named list of
  *                                         pre-overlay creators from

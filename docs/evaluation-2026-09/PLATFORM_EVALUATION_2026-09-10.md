@@ -447,8 +447,29 @@ is not 304:
 | **reachable ONLY by the manual script CI expects to fail** | **107** |
 | reachable by no durable applier at all | 18 |
 
-**125 of 568 non-archived `.sql` files may be on no deployed database.** None of
-the 107 is a `_gcc_` file — this is `073_cortex_prime_unified_brain.sql`, the
+**125 of 568 non-archived `.sql` files may be on no deployed database.**
+
+And the two that *are* automated are not interchangeable, which sharpens the
+point rather than softening it: **`install-fresh` cannot run in the production
+image at all.** It shells out to `drizzle-kit push`, and `drizzle-kit` is a
+`devDependency` — `npm ci --omit=dev` leaves it absent. `deploy-migrate`'s own
+header says so and makes it a hard preflight failure:
+
+> *It does not provision a blank database … which shells out to `drizzle-kit
+> push` — a devDependency that the production image does not contain … So on a
+> database that was never provisioned this script FAILS LOUDLY at the preflight
+> below rather than applying an island of tables onto an empty schema … Half-
+> provisioned is the state nobody can reason about; absent is at least honest.*
+
+That is a deliberate and defensible design: provision once from a toolchain that
+has `drizzle-kit`, then let `deploy-migrate` carry every change afterwards. Its
+consequence is the one §4 is about — **a file on `install-fresh` only reaches an
+environment provisioned after that file landed**, and only 261 files are on the
+path that reaches an environment provisioned before it. Two environments
+provisioned six months apart are not running the same schema, and nothing in the
+repository records which is which.
+
+None of the 107 is a `_gcc_` file — this is `073_cortex_prime_unified_brain.sql`, the
 `0XX` operational series, and the `100`–`103` template loaders. It is also the
 most likely explanation for `ci:tables-live-schema`'s baseline of 73 tables the
 server queries and a live database does not have. A gate measuring the symptom

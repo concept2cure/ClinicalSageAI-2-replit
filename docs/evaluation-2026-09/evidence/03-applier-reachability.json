@@ -1,5 +1,5 @@
 {
-  "generated": "2026-09-10T06:23:52.367Z",
+  "generated": "2026-09-10T06:38:03.678Z",
   "note": "Coverage per applier. Deliberately makes NO claim about which tables exist in a deployed database — that needs a live DB (ci:tables-live-schema).",
   "totals": {
     "files": 568,
