@@ -1,9 +1,9 @@
 {
   "$schema": "https://concept2cure-riai.com/schemas/migrations-manifest-v1.json",
   "version": "1.0.0",
-  "generatedAt": "2026-09-10T15:46:47.058Z",
+  "generatedAt": "2026-09-10T18:54:45.183Z",
   "description": "Migration manifest for Concept2Cure.RI database schema. Documents execution order, dependencies, and resolves numbering conflicts.",
-  "totalMigrations": 292,
+  "totalMigrations": 290,
   "conflicts": {
     "summary": "20+ migrations share the same prefix number. This manifest defines canonical execution order.",
     "conflictingPrefixes": [
@@ -14,7 +14,7 @@
           "007_gcc_heatmap_views.sql",
           "007_gcc_shadow_run_groups.sql"
         ],
-        "resolution": "Execute in alphabetical order: verify → heatmap → shadow"
+        "resolution": "Execute in alphabetical order: verify \u2192 heatmap \u2192 shadow"
       },
       {
         "prefix": "008",
@@ -226,15 +226,13 @@
       ]
     },
     "cortex_prime": {
-      "description": "Unified AI brain and cognitive services",
+      "description": "Unified AI brain and cognitive services (073 and 079 retired 2026-09-10, WO-14 Route B - see db/migrations/_legacy/README.md)",
       "migrations": [
-        "073_cortex_prime_unified_brain.sql",
         "074_gcc_regulatory_intuition_engine.sql",
         "075_gcc_epistemic_intelligence.sql",
         "076_gcc_causal_inference_engine.sql",
         "077_gcc_self_evolving_intelligence.sql",
-        "078_gcc_cross_domain_transfer.sql",
-        "079_gcc_unified_functions_views.sql"
+        "078_gcc_cross_domain_transfer.sql"
       ],
       "dependencies": [
         "compliance"
@@ -383,13 +381,11 @@
     "069_gcc_multitenant_rls_expansion.sql",
     "070_gcc_rls_extended_ga.sql",
     "072_gcc_innovation_platform_core.sql",
-    "073_cortex_prime_unified_brain.sql",
     "074_gcc_regulatory_intuition_engine.sql",
     "075_gcc_epistemic_intelligence.sql",
     "076_gcc_causal_inference_engine.sql",
     "077_gcc_self_evolving_intelligence.sql",
     "078_gcc_cross_domain_transfer.sql",
-    "079_gcc_unified_functions_views.sql",
     "080_gcc_21cfr_part11_compliance.sql",
     "100_regulatory_templates.sql",
     "101_complete_template_catalog.sql",
@@ -664,10 +660,6 @@
         "reason": "Data segregation and access control"
       },
       {
-        "file": "073_cortex_prime_unified_brain.sql",
-        "reason": "Core AI brain for Cortex Prime"
-      },
-      {
         "file": "20260130_add_workflow_rls_and_step_runs_immutability.sql",
         "reason": "Workflow RLS and append-only step_runs immutability for compliance"
       }
@@ -692,13 +684,11 @@
     "cortex_prime": {
       "description": "Unified AI brain (run after compliance)",
       "migrations": [
-        "073_cortex_prime_unified_brain.sql",
         "074_gcc_regulatory_intuition_engine.sql",
         "075_gcc_epistemic_intelligence.sql",
         "076_gcc_causal_inference_engine.sql",
         "077_gcc_self_evolving_intelligence.sql",
-        "078_gcc_cross_domain_transfer.sql",
-        "079_gcc_unified_functions_views.sql"
+        "078_gcc_cross_domain_transfer.sql"
       ]
     }
   },

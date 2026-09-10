@@ -363,29 +363,26 @@ export const requireOrgAccess = (req: Request, res: Response, next: NextFunction
   // requested organization" waved through any customer admin for ANY
   // organization id, including one they had no membership in.
   //
-  // Scope of the live exposure, stated honestly — and CORRECTED 2026-09-10,
-  // because half of what this paragraph used to assert was false.
+  // Scope of the live exposure, stated honestly. This paragraph has been
+  // corrected twice on 2026-09-10 and the history matters.
   //
-  // It said the only consumer, server/routes/cortexRoutes.ts, "is not mounted by
-  // any bootstrap registrar and never reads an organization id from request
-  // input". The second half holds. The FIRST HALF DOES NOT: cortexRoutes IS
-  // mounted, via server/startup/routes.ts:127 -> bootstrap/
-  // register-document-routes.ts:425-426 (`app.use('/api/cortex', …)`) ->
-  // routes/cortex-unified.ts:1432 mountSubRouters() -> :1145-1147
-  // (`router.use('/', cortexRoutes)`), and its endpoints answer.
+  // It first said the only consumer, server/routes/cortexRoutes.ts, "is not
+  // mounted by any bootstrap registrar and never reads an organization id from
+  // request input". The first half was FALSE — cortexRoutes was mounted, via
+  // startup/routes.ts -> bootstrap/register-document-routes.ts
+  // (`app.use('/api/cortex', …)`) -> routes/cortex-unified.ts mountSubRouters(),
+  // and its endpoints answered. The second half held: its handlers took the org
+  // from `req.user.organizationId`, so this guard's request-input comparison
+  // had nothing to bypass. "Latent, not exploitable" rested on that one reason.
   //
-  // So "latent, not exploitable" rested on two independent reasons and only one
-  // of them was ever true. The surviving one is real and was re-verified here:
-  // this guard compares against `req.params.orgId ?? req.params.organizationId
-  // ?? req.body?.organizationId ?? req.query?.organizationId`, and cortexRoutes
-  // supplies none of those — every handler takes the org from
-  // `req.user.organizationId` (:174, :236, :260), the authenticated identity.
-  // With no requested org id there is nothing for a bypass to bypass.
-  //
-  // That is a much thinner margin than the original text implied, and worth
-  // saying plainly: the safety here is a property of how six handlers happen to
-  // read their org id, not of the router being unreachable. One handler adding
-  // `req.params.orgId` would make it live, and nothing would flag that.
+  // Later the same day cortexRoutes was RETIRED (WO-14, Route B): unmounted and
+  // deleted, with the test server/__tests__/routes/cortex-prime-unmounted.test.ts
+  // pinning the paths as 404. As of that change this middleware has NO
+  // consumer at all. That is not a reason to leave the bypass in — it is the
+  // reason to fix it here, because the next router to reach for a middleware
+  // named `requireOrgAccess` would inherit the bypass without ever reading it.
+  // The margin was always a property of how callers happened to read their org
+  // id, never of this guard.
   //
   // It is still not the cross-tenant deletion an audit reproduced (that was
   // requireRole + tenants-simple.ts, closed by routing those routes through

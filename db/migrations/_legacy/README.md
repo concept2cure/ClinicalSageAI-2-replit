@@ -151,3 +151,33 @@ They are on no applier, they have **zero** references from any `.ts`, `.js`,
 `.mjs`, `.sh` or `.yml` file, and all 24 tables they define exist on no
 database. They were renamed on the way (`server-database-schema.sql` and so on)
 because `schema.sql` is too generic a name for a shared archive.
+
+# 2026-09-10 — WO-14: Cortex Prime retired (Route B)
+
+**Archived:** 2026-09-10 · **Work order:** WO-14 · **Decision:** the product
+owner chose Route B ("dead code"); the decision memo with the measurements is at
+the top of `docs/work-orders/WO-14-cortex-prime-is-broken-and-mounted.md`.
+
+| File | What it created | Why it is here |
+|---|---|---|
+| `073_cortex_prime_unified_brain.sql` | `cortex.atoms`, `edges`, `agents`, `traces`, `threads`, `atom_types` | **On no applier.** Not `_gcc_`-named, not in `C2C_MIGRATION_FILES`, not in the root tree; only `scripts/db_migrate.sh`'s glob matched it, and nothing calls that. Proven on a database provisioned from empty: `cortex.atom_types`, which only this file creates, did not exist. |
+| `079_gcc_unified_functions_views.sql` | twelve `CREATE TABLE IF NOT EXISTS cortex.*` stubs — the **only** creator of `edges`, `agents`, `traces`, `threads` on any applier, and the loser to 074/077/078 for the other eight — plus eight PL/pgSQL functions, five `_v2` compatibility views in `vault`/`ai`/`lumen`/`agent_runtime`, `cortex.statistics` and `cortex.health_check()` | Every object it creates was reachable only through `server/services/cortexPrimeService.ts`, retired in the same change. The five views have zero references anywhere in the repository. `health_check()` returned `status: error` on every database because it sized two indexes nothing creates. Nothing later in the `_gcc_` tree references anything 079 defines. |
+
+What was measured before archiving, on `c2c_testdb` built from empty by
+`scripts/db/provision-test-db.sh` (1,228 tables, pgvector present):
+
+- **0 rows** in every table these two files create.
+- The service's SQL named **27 columns the provisioned shape lacked**, across six
+  tables, and passed an integer org id into a `uuid` column.
+- **No file in `client/src` contains the string `cortex`.** Nothing on the server
+  outside the retired service touched `cortex.*`.
+- Every write endpoint under `/api/cortex` answered **HTTP 500** with the real
+  router and the real pool.
+
+**Not archived: `074`–`078`.** They stay on install-fresh and CI, create 22
+further `cortex.*` tables and 22 functions, and carry their own RLS policies.
+With the service gone they have no caller. That retirement is a separate work
+order, scoped on its own measurements.
+
+**No DROP was issued.** A database that already has these tables keeps them,
+empty. That is deliberate (CLAUDE.md RULE 1) and reversible.
