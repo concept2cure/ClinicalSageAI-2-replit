@@ -19,9 +19,6 @@
     "server/services/deep-research-orchestrator.ts": {
       "reason": "generateSynthesis() calls getAnthropicClient().messages.create(...) for a 4096-token regulatory-intelligence briefing that is persisted and shown to users. Invisible to the old guard because the CONSTRUCTION lives in the baselined anthropic-client.ts and the call site was never scanned. No audit row, no prompt hash over the aggregated evidence corpus, no retry ladder \u2014 a failure silently swaps in buildFallbackSynthesis()."
     },
-    "server/services/EvidenceManagementService.ts": {
-      "reason": "Sends 4000 characters of an UPLOADED customer evidence file to gpt-4o via getOpenAIClient().chat.completions.create. Same shared-client blind spot as deep-research-orchestrator. No PII/PHI classification and no substrate/retention record on customer file content. Reachable from /api/evidence-management and from authoring-actions."
-    },
     "server/huggingface-service.ts": {
       "reason": "generateEmbeddings() and queryHuggingFace() axios.post to api-inference.huggingface.co (Mixtral, Llama-2, Zephyr). A whole second provider with its own HF_API_KEY, absent from the gateway's provider model, cost accounting, residency model and audit ledger. generateEmbeddings additionally bypasses embedding-corpus-policy.ts and its dimension-consistency guarantee. Five other methods in this file were already migrated to aiComplete; these two were not."
     },
