@@ -6,6 +6,82 @@
 
 ---
 
+## Decision memo — 10 September 2026, from the session that took Cortex
+
+**One question, for the product owner:** is Cortex Prime a live capability for
+the pilot (**Route A**) or dead code (**Route B**)? Nothing below is engineering.
+It is the five measurements WO-14A §4 asked for, taken on a database provisioned
+from empty this afternoon (`npm run db:provision-test`: 1,228 base tables,
+pgvector present, `app_service role: ok`), plus one HTTP probe against that
+database with the real router, the real pool, `RLS_ENFORCE=on`, and only the
+JWT step faked.
+
+### What breaks today
+
+| | Measured |
+|---|---|
+| Mount chain | Unconditional at every hop: `server/index.ts:145` → `startup/routes.ts:127` (inside `registerPreStartRoutes`) → `register-document-routes.ts:425` (a `try`, not a flag, and outside the `DEMO_ROUTES_ENABLED` block) → `cortex-unified.ts:1145-1147` → `cortexRoutes.ts`. No flag gates any of it. |
+| HTTP, as deployed | `POST /api/cortex/atoms` **500**, `GET /api/cortex/atoms/:id` **500**, `DELETE` **500** — JSON `{"error":"Internal server error"}` from `cortexRoutes.ts:690`. `GET /api/cortex/main/health` 200 with `{"status":"error"}`. `GET /api/cortex/health` — the one on the public allowlist — 200 `"healthy"` from a static handler (`cortex-unified.ts:151`) that never touches the database. |
+| Service SQL | All eleven methods WO-14 names fail on the provisioned shape, confirmed by `EXPLAIN` on the literal statements. It is worse than one column each: the service names **27 columns the shape lacks, across six tables**, before the three `is_active` predicates. `createThread` names 9 columns and 7 are absent; `createTrace` 9 and 5; `createEdge` 7 and 4. `getExpertiseScores` also lacks `domain_area` and `expertise_level`, so removing its `is_active` predicate would return rows whose mapped fields are undefined. |
+| Tenant key | `cortexRoutes.ts:174` passes the integer `organizationId` from the JWT, stringified, into `cortex.atoms.org_id uuid`. With every column present, every write would still fail on type. WO-14 did not list this. |
+| Schema shape | `073` is on no applier — proven, not inferred: `cortex.atom_types`, which only `073` creates, does not exist on the provisioned database. The live shape is `074` for `atoms` and the `079` stubs for `edges`, `agents`, `traces`, `threads`. Columns, 073 vs live: atoms 15/13, edges 9/6, agents 13/8, traces 15/10, threads 12/5 — WO-14's table holds exactly. The two shapes also disagree on names (`strength`/`weight`, `config`/`context`, `input_data`/`input`, `evidence_text`/nothing) and on `agents.capabilities` (`TEXT[]`/`JSONB`). |
+| Rows | 0 in eleven of the twelve tables. 9 in `domain_knowledge`, all from the seed at `078:783` (five therapeutic areas, two pathways, two submission types). Nothing user-written exists anywhere. |
+| Callers | `client/src`: **0 files contain the string `cortex`.** Server-side, nothing outside `cortexPrimeService.ts` references any `cortex.*` table or function; the 34-table, 30-function schema that `074`–`079` create is reachable only through that service, through `cortexRoutes.ts`. The other sub-routers under `/api/cortex` (advisory, query, ana, the inline thread and chat routes) read `lumen_data_atoms` and `chat_threads`, not `cortex.*`. |
+| `cortex.health_check()` | `{"status":"error","error":"relation \"idx_atoms_embedding_3072\" does not exist"}` — as WO-14 predicted; nothing in the repository creates either index it sizes. |
+| RLS | `atoms`, `threads`, `traces` are policied and FORCED on `org_id` by the uuid sweep. `agents` and `edges` have no tenant column and no policy. `expertise_scores` has RLS enabled and one policy, `expertise_read`, whose predicate is `true`. |
+
+### Route A — it is live
+
+**Cost.** (1) Choose the canonical shape — 073's and 079's disagree on names
+and types, so this is a design decision, not a merge — then write the
+convergence migration in `C2C_MIGRATION_FILES` (`ALTER TABLE … ADD COLUMN IF
+NOT EXISTS`, the 27 columns above). (2) Put `073` on install-fresh step 6 by a
+named list, not a rename, and amend the 079 stubs to the canonical shape,
+`evolution_ledger` excepted. (3) Rewrite the eleven methods, move the routes to
+the uuid tenant key, and drop the `is_active` predicates rather than add the
+column. (4) Fix `079:779` and the late-bound references at `074:587` and
+`079:617`. (5) A real-database contract test that runs the service's SQL; the
+mocked one proves nothing. (6) Decide RLS for `agents`, `edges`,
+`expertise_scores`. (7) Only then the twelve baseline entries. And it ships an
+API with no screen: Route A is the schema work *and then* a product surface that
+does not exist yet. Days, not a day, and IQ-CORTEX-001 stays `1.0.0-DRAFT` until
+someone qualifies it.
+
+**Irreversible.** A file in `C2C_MIGRATION_FILES` replays on every deploy
+forever (RULE 1); it can be amended in place, never dropped. The schema becomes
+governed.
+
+### Route B — it is dead
+
+**Cost.** Unmount `cortexRoutes` at `cortex-unified.ts:1145-1147` — the other
+sub-routers, the inline routes and the static `/health` stay, they do not use
+`cortex.*`. Archive `cortexRoutes.ts`, `cortexPrimeService.ts`, its mocked test,
+and `services/cortex/index.ts`'s `UnifiedCortexService` (no importer). Update
+`services/index.ts:42,138`. Retire `073` (on no applier, so no database changes
+shape) and the twelve `079` stubs together with the five `_v2` views and
+`cortex.statistics` / `health_check` that read them (no callers). Update
+`schema.test.ts`'s file list, `migrations_manifest.json`,
+`AGENT_ARCHITECTURE.md:370`; mark IQ-CORTEX-001 superseded; resolve the twelve
+baseline entries, 27 → 15. Verify by re-provisioning from empty and showing
+`/api/cortex/atoms` returns 404 where it returns 500 today. About a day.
+
+**What it leaves open.** `074`–`078` create 22 further tables and 22 functions,
+all `_gcc_`, all on install-fresh and CI, all with zero callers once the service
+is gone. That is a separate retirement; I would not fold it into this change.
+
+**Irreversible.** Nothing on a database: no DROP is issued, and the tables stay
+as empty orphans wherever they exist. Code comes back from git. The IQ draft was
+never approved, so nothing is retracted.
+
+### Recommendation
+
+Route B for the pilot, unless a screen or a customer commitment exists that the
+repository cannot show me. Every measurement says the same thing: no write has
+ever succeeded, nothing reads it, and the only record of intent is an unapproved
+draft.
+
+---
+
 ## The finding
 
 Every write method and five read methods of `server/services/cortexPrimeService.ts`
