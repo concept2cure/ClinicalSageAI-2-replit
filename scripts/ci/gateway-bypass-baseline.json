@@ -28,15 +28,6 @@
     "server/routes/integration-test.ts": {
       "reason": "NOT INFERENCE. Fetches https://api.openai.com/v1/models purely as a reachability probe (the code says so: 'don't burn tokens'), and the router is mounted only under testRoutesEnabled, so it is fenced out of production. Baselined rather than path-excluded because it IS egress to a provider host and should stay visible if that mount fence ever moves."
     },
-    "server/services/innovation/auto-traceability-service.ts": {
-      "reason": "openai.embeddings.create via the shared client \u2014 allowlisted by the embedding-runtime canonicality gate, outside the AI gateway's audit trail."
-    },
-    "server/services/innovation/regulatory-delta-radar-service.ts": {
-      "reason": "openai.embeddings.create via the shared client \u2014 allowlisted by the embedding-runtime canonicality gate, outside the AI gateway's audit trail."
-    },
-    "server/services/innovation/regulatory-negotiation-logbook-service.ts": {
-      "reason": "openai.embeddings.create via the shared client \u2014 allowlisted by the embedding-runtime canonicality gate, outside the AI gateway's audit trail."
-    },
     "server/services/semanticSearch.js": {
       "reason": "DEAD CODE. axios.post to api.openai.com/v1/embeddings, but its only importers (server/pipelines/bulk_import.js, indexDocs.js) are themselves recorded as unreferenced modules, and its DB target is a logged no-op since the Phase 2 retrieval convergence. Kept visible because it is still on the embedding-runtime APPROVED list; deleting the file resolves both."
     },

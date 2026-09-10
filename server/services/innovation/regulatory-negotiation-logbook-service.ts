@@ -15,7 +15,6 @@
 
 import { Pool } from 'pg';
 import { ai } from '../../lib/unified-ai-client';
-import { getOpenAIClient } from '../openai-client';
 import crypto from 'crypto';
 
 import { createScopedLogger } from '../../utils/logger.js';
@@ -371,18 +370,33 @@ export class RegulatoryNegotiationLogbookService {
 
     const entryNumber = countResult.rows[0]?.next_num || 1;
 
-    // Generate embedding for content
+    // Generate embedding for content, through the canonical runtime (WO-6):
+    // getEmbeddingService applies the corpus policy that a direct provider call
+    // bypasses, and honours EMBEDDING_PROVIDER=local for air-gapped installs.
+    //
+    // The catch is KEPT, unlike the two sibling services. Those returned a zero
+    // vector, which scores 0 against everything and silently became "no
+    // traceability links" and "every requirement is a gap". This one leaves the
+    // column NULL, which is honest: the entry is simply not semantically
+    // searchable. Refusing to persist a Part 11 negotiation entry because an
+    // embedding provider is down would lose the record, which is worse than
+    // losing its searchability.
+    //
+    // The cost is a silent partial write — the entry saves, the caller is told
+    // nothing, and nothing later finds it to re-embed. The log line names that
+    // consequence so it is at least diagnosable; a backfill marker is WO-6.
     let embedding = null;
     if (entry.content) {
       try {
-        const openai = getOpenAIClient();
-        const embeddingResponse = await openai.embeddings.create({
-          model: 'text-embedding-3-small',
-          input: entry.content.substring(0, 8000)
-        });
-        embedding = embeddingResponse.data[0].embedding;
+        const { getEmbeddingService } = await import('../enhancedEmbeddingService.js');
+        const result = await getEmbeddingService(this.pool).embed(entry.content.substring(0, 8000));
+        embedding = result.embedding;
       } catch (error) {
-        logger.error('Failed to generate embedding', { err: error instanceof Error ? error.message : String(error) });
+        logger.error(
+          'Failed to generate embedding — the entry will be SAVED but stays invisible to ' +
+            'semantic search until it is re-embedded',
+          { threadId: entry.threadId, err: error instanceof Error ? error.message : String(error) },
+        );
       }
     }
 
@@ -490,17 +504,23 @@ export class RegulatoryNegotiationLogbookService {
       params.push(updates.content);
       fields.push(`content = $${params.length}`);
 
-      // Update embedding
+      // Update embedding through the canonical runtime (WO-6). Same reasoning as
+      // the create path above — and the same residual: on failure the CONTENT
+      // is updated while content_embedding keeps the vector of the OLD text, so
+      // semantic search answers about a version that no longer exists. That is
+      // a worse residual than the create path's NULL and is why the log says so
+      // explicitly rather than 'Failed to update embedding'.
       try {
-        const openai = getOpenAIClient();
-        const embeddingResponse = await openai.embeddings.create({
-          model: 'text-embedding-3-small',
-          input: updates.content.substring(0, 8000)
-        });
-        params.push(`[${embeddingResponse.data[0].embedding.join(',')}]`);
+        const { getEmbeddingService } = await import('../enhancedEmbeddingService.js');
+        const result = await getEmbeddingService(this.pool).embed(updates.content.substring(0, 8000));
+        params.push(`[${result.embedding.join(',')}]`);
         fields.push(`content_embedding = $${params.length}`);
       } catch (error) {
-        logger.error('Failed to update embedding', { err: error instanceof Error ? error.message : String(error) });
+        logger.error(
+          'Failed to update embedding — content is being updated but content_embedding will ' +
+            'keep the STALE vector of the previous text until re-embedded',
+          { err: error instanceof Error ? error.message : String(error) },
+        );
       }
     }
 
@@ -545,15 +565,20 @@ export class RegulatoryNegotiationLogbookService {
     // Generate embedding for position
     let embedding = null;
     const positionText = `${position.topic}\n${position.sponsorPosition}\n${position.fdaPosition || ''}`;
+    // Canonical embedding runtime (WO-6). The catch is kept for the same reason
+    // as the entry-create path: the POSITION is the regulated record and must
+    // persist even when the embedding provider does not. A NULL embedding
+    // leaves it un-searchable, which is honest; losing it would not be.
     try {
-      const openai = getOpenAIClient();
-      const embeddingResponse = await openai.embeddings.create({
-        model: 'text-embedding-3-small',
-        input: positionText.substring(0, 8000)
-      });
-      embedding = embeddingResponse.data[0].embedding;
+      const { getEmbeddingService } = await import('../enhancedEmbeddingService.js');
+      const result = await getEmbeddingService(this.pool).embed(positionText.substring(0, 8000));
+      embedding = result.embedding;
     } catch (error) {
-      logger.error('Failed to generate position embedding', { err: error instanceof Error ? error.message : String(error) });
+      logger.error(
+        'Failed to generate position embedding — the position will be SAVED but stays ' +
+          'invisible to semantic search until it is re-embedded',
+        { topic: position.topic, err: error instanceof Error ? error.message : String(error) },
+      );
     }
 
     if (position.id) {
@@ -716,19 +741,20 @@ export class RegulatoryNegotiationLogbookService {
     agency?: string;
     limit?: number;
   }): Promise<{ results: SearchResult[] }> {
-    // Generate query embedding
-    let queryEmbedding: number[];
-    try {
-      const openai = getOpenAIClient();
-      const embeddingResponse = await openai.embeddings.create({
-        model: 'text-embedding-3-small',
-        input: options.query
-      });
-      queryEmbedding = embeddingResponse.data[0].embedding;
-    } catch (error) {
-      logger.error('Search embedding failed', { err: error instanceof Error ? error.message : String(error) });
-      return { results: [] };
-    }
+    // Generate query embedding, through the canonical runtime (WO-6).
+    //
+    // This one does NOT catch, and that is the change. It used to end with
+    // `return { results: [] }` — so when the embedding provider was
+    // unreachable, a user searching their own FDA negotiation history was told
+    // there was NOTHING THERE. That is the working agreement's "an error is
+    // never rendered as an empty result", exactly, on a regulated record set
+    // where an empty answer is a statement a reader will act on.
+    //
+    // Unlike the write paths above there is nothing to preserve by degrading: a
+    // search that cannot run has no partial answer worth returning. The route
+    // is wrapped in asyncHandler, so the caller learns the search failed.
+    const { getEmbeddingService } = await import('../enhancedEmbeddingService.js');
+    const queryEmbedding = (await getEmbeddingService(this.pool).embed(options.query)).embedding;
 
     const results: SearchResult[] = [];
     const params: any[] = [`[${queryEmbedding.join(',')}]`];

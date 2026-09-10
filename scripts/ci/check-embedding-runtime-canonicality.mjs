@@ -46,9 +46,23 @@ const APPROVED = new Set([
   // code removed per issue #726; was a direct embedding caller).
   // documentIngestionWorkflow.js — deleted 2026-05-07 (was dead + broken
   // syntax, never imported by a live route). See git log.
-  'server/services/innovation/regulatory-delta-radar-service.ts',
-  'server/services/innovation/regulatory-negotiation-logbook-service.ts',
-  'server/services/innovation/auto-traceability-service.ts',
+  // The three innovation services — MIGRATED 2026-09-10 (WO-6) to
+  // getEmbeddingService(pool).embed(), so they now go through the corpus policy
+  // this gate exists to protect and through the gateway's embedding seam
+  // (EMBEDDING_PROVIDER=local included). Retired as comments, matching the
+  // vaultRetriever.js precedent below:
+  //   regulatory-delta-radar-service.ts    — also stopped returning a zero
+  //     vector on failure, which scored 0 against everything and, because the
+  //     scan reads below-threshold AS A GAP, reported every requirement as a
+  //     regulatory gap during an outage — and PERSISTED the zeros to pgvector.
+  //   auto-traceability-service.ts         — same zero vector, opposite
+  //     direction: 0 < the 0.75 link threshold, so a 21 CFR 820.30 traceability
+  //     scan reported NO LINKS FOUND.
+  //   regulatory-negotiation-logbook-service.ts — its search path returned
+  //     `{ results: [] }` on embedding failure, telling a user their FDA
+  //     negotiation history was empty. Now throws; the write paths still
+  //     degrade to a NULL embedding, deliberately, so the regulated record
+  //     survives an outage that its searchability does not.
   // Search/index helpers that embed queries.
   'server/services/semanticSearch.js',
   // Workers — pre-existing batch path.
