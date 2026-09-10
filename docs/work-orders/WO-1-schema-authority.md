@@ -148,3 +148,63 @@ that goes unnoticed, so the number had to be wrong before the cause was found.
 The script now models all six paths and deliberately makes **no** claim about
 which tables exist in a deployed database — that cannot be derived from the
 repository, which is the whole point of `ci:tables-live-schema` and of WO-2.
+
+### Next action, fully scoped: retire `migrations/0010_operating_system_foundation.sql`
+
+This is the single highest-value remaining move — it resolves 5 duplicates,
+closes one of the three surviving prefix collisions, and **fixes a live ADR
+violation**. It is written up here rather than done because it needs one change
+this session should not make unreviewed.
+
+**The evidence that it is right:**
+
+- **ADR-0007 decides it.** *"The deployed shape is canonical:
+  `db/migrations/20260323_assumption_decision_contradiction.sql`. The raw-SQL
+  services … were correct all along."* Its point 6 calls `migrations/0010`
+  **dead** outright, and notes `contradiction_links` — written by
+  `assumption-registry-service.ts:173,205` — "throws in production today"
+  because its DDL lives only there.
+- **The contract test is waiting for it.**
+  `tests/schema-contract/operating-system-collision.contract.test.ts:192`: *"The
+  order-independence acceptance … remains gated on ADR-0006 retiring the dead
+  0010 files, and lives in the C-6 block above until then."*
+- **Fresh installs currently violate the ADR.** install-fresh's overlay runs
+  before deploy-migrate, so on a fresh install the dead file's 41-column
+  `assumption_records` and 42-column `decision_records` win over the canonical
+  25/26-column deployed shape. Same for `governance_boundary_rules`, where the
+  divergence is worse than column names:
+
+  | | canonical (`db/migrations`) | dead `0010` |
+  |---|---|---|
+  | `from_boundary` / `to_boundary` | `TEXT` + CHECK enum | native `governance_boundary` ENUM |
+  | `domain_track` | `TEXT`, deliberately — the file cites ADR-0007 | native `domain_track` ENUM |
+  | `created_at` / `updated_at` | `TIMESTAMPTZ` | **`TIMESTAMP`** — timezone-naive |
+
+  Governance audit timestamps are timezone-aware or not depending on how the
+  database was provisioned.
+- **No dependency blocks it.** The twelve ENUM types it defines are used by no
+  other SQL file (the live files' `domain_track` is a *column* of type `TEXT`,
+  not a use of the type). `assumption_history` and `contradiction_links` have no
+  other SQL creator, which is precisely ADR-0007 point 6's already-recorded
+  defect.
+
+**What blocks it, and it is a good block.** I archived the file, ran the
+contract test, and **8 of 10 tests failed** with
+`ENOENT: no such file or directory`. `tests/schema-contract/harness.ts:149` maps
+`drizzleShaped: 'migrations/0010_operating_system_foundation.sql'` and applies
+it to a live database to characterise the collision. So the test that gates the
+retirement is itself pinned to the file being retired — by design, and it must
+be rewritten in the same change:
+
+1. Rewrite `harness.ts`'s `drizzleShaped` fixture to carry the Drizzle-shaped
+   DDL **inline**, so the collision characterisation survives the file's removal.
+2. Promote the C-6 order-independence assertions to the ADR-0007 acceptance
+   block, per that block's own comment.
+3. Archive `migrations/0010_operating_system_foundation.sql`.
+4. Re-run the contract test, `ci:model-migration-agreement` (it fails on the
+   archive alone — the Drizzle models diverge once the file stops creating
+   those tables), and the seven migration gates.
+
+I reverted rather than push through it: the change is right, the acceptance test
+disagreeing is the system working, and rewriting a Part 11 schema-contract
+harness belongs in a reviewed change of its own.
