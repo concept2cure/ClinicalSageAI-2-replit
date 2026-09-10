@@ -147,10 +147,16 @@ export async function registerDocumentRoutes({
   }
 
   // ── Biotech Document Artifacts (eCTD, PV, Clinical Ops document generation) ──
+  //
+  // AUTH ADDED 2026-09-10. This was the one mount in this file without
+  // authenticateToken — the /api/ectd mounts above all carry it — and the router
+  // itself contains no auth of any kind. It generates E2B(R3) ICSR XML addressed
+  // to EudraVigilance, PSURs, CIOMS I forms and GCP deviation records, so it was
+  // an unauthenticated regulated-document generator.
   try {
     const biotechArtifactsModule = await import('../routes/biotech-artifacts');
-    app.use('/api/biotech-artifacts', biotechArtifactsModule.default);
-    console.log('✅ Biotech Artifact Generator routes mounted (10 document types)');
+    app.use('/api/biotech-artifacts', authenticateToken, biotechArtifactsModule.default);
+    console.log('✅ Biotech Artifact Generator routes mounted (10 document types, auth-gated)');
   } catch (error) {
     console.error('❌ Failed to mount Biotech Artifact routes:', error);
   }
