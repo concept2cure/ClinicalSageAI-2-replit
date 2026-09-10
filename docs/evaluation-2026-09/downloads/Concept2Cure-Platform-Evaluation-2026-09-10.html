@@ -1,0 +1,406 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Platform evaluation — Concept2Cure.RI / TrialSage</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+/* Fonts resolve from docs/investor/fonts/, sibling to the rendered HTML. They are
+   gitignored; run with --fetch-fonts to populate them. Absent, every face falls
+   back to the system serif/sans declared in the stacks below. */
+@font-face { font-family: 'Lora'; font-weight: 400; font-style: normal; src: url('fonts/Lora-400.ttf') format('truetype'); }
+@font-face { font-family: 'Lora'; font-weight: 500; font-style: normal; src: url('fonts/Lora-500.ttf') format('truetype'); }
+@font-face { font-family: 'Lora'; font-weight: 600; font-style: normal; src: url('fonts/Lora-600.ttf') format('truetype'); }
+@font-face { font-family: 'Lora'; font-weight: 400; font-style: italic; src: url('fonts/Lora-400i.ttf') format('truetype'); }
+@font-face { font-family: 'Inter'; font-weight: 400; font-style: normal; src: url('fonts/Inter-400.ttf') format('truetype'); }
+@font-face { font-family: 'Inter'; font-weight: 500; font-style: normal; src: url('fonts/Inter-500.ttf') format('truetype'); }
+@font-face { font-family: 'Inter'; font-weight: 600; font-style: normal; src: url('fonts/Inter-600.ttf') format('truetype'); }
+
+:root {
+  --canvas:          #faf9f5;
+  --canvas-muted:    #f4f3ee;
+  --canvas-elevated: #ffffff;
+  --ink:             #141413;
+  --ink-muted:       #565550;
+  --ink-faint:       #8a887f;
+  --border:          #e8e6dc;
+  --border-faint:    #f0eee6;
+  --accent:          #d97757;
+  --accent-subtle:   #f7e9e2;
+  --ai:              #6a9bcc;
+  --olive:           #788c5d;
+  --amber:           #d97706;
+  --sans: 'Inter', -apple-system, 'Helvetica Neue', sans-serif;
+  --serif: 'Lora', Georgia, serif;
+  --mono: 'Liberation Mono', 'DejaVu Sans Mono', monospace;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--canvas);
+  color: var(--ink);
+  font-family: var(--serif);
+  font-size: 11pt;
+  line-height: 1.55;
+  font-weight: 400;
+}
+
+main {
+  max-width: 780px;
+  margin: 0 auto;
+  padding: 48px 56px 96px;
+}
+
+.cover {
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 32px;
+  margin-bottom: 40px;
+}
+
+.cover .kicker {
+  font-family: var(--sans);
+  font-size: 9pt;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.cover h1 {
+  font-family: var(--serif);
+  font-weight: 600;
+  font-size: 30pt;
+  line-height: 1.15;
+  margin: 12px 0 20px;
+  letter-spacing: -0.01em;
+}
+
+.cover .meta {
+  font-family: var(--sans);
+  font-size: 9.5pt;
+  color: var(--ink-muted);
+  line-height: 1.6;
+}
+
+.cover .meta strong {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.cover .confidential {
+  font-family: var(--sans);
+  font-size: 8.5pt;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  margin-top: 24px;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--serif);
+  font-weight: 600;
+  color: var(--ink);
+  letter-spacing: -0.005em;
+  page-break-after: avoid;
+  break-after: avoid-page;
+}
+
+h1 {
+  font-size: 22pt;
+  line-height: 1.22;
+  margin: 44px 0 16px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid var(--accent);
+}
+
+h2 {
+  font-size: 15.5pt;
+  line-height: 1.28;
+  margin: 36px 0 12px;
+  color: var(--ink);
+}
+
+h3 {
+  font-size: 12.5pt;
+  line-height: 1.32;
+  margin: 26px 0 8px;
+  color: var(--ink-muted);
+}
+
+p {
+  margin: 0 0 12px;
+  hyphens: auto;
+}
+
+strong { font-weight: 600; color: var(--ink); }
+em { font-style: italic; color: var(--ink); }
+
+code {
+  font-family: var(--mono);
+  font-size: 0.88em;
+  background: var(--canvas-muted);
+  padding: 1px 5px;
+  border-radius: 3px;
+  color: var(--ink);
+  border: 1px solid var(--border-faint);
+}
+
+ul, ol {
+  margin: 0 0 14px;
+  padding-left: 22px;
+}
+
+li {
+  margin-bottom: 4px;
+}
+
+li::marker {
+  color: var(--accent);
+}
+
+hr {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 40px 0;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 12px 0 22px;
+  font-family: var(--sans);
+  font-size: 9.5pt;
+  background: var(--canvas-elevated);
+  border: 1px solid var(--border);
+}
+
+thead {
+  background: var(--canvas-muted);
+}
+
+th, td {
+  padding: 7px 12px;
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid var(--border-faint);
+  line-height: 1.4;
+}
+
+th {
+  font-weight: 600;
+  color: var(--ink);
+  letter-spacing: 0.02em;
+  font-size: 8.6pt;
+  text-transform: uppercase;
+  border-bottom: 1px solid var(--border);
+}
+
+tbody tr:last-child td {
+  border-bottom: none;
+}
+
+tbody tr:nth-child(even) {
+  background: var(--canvas-muted);
+}
+
+td code {
+  background: transparent;
+  border: none;
+  padding: 0;
+  font-size: 0.92em;
+}
+
+.toc {
+  background: var(--canvas-muted);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  padding: 20px 26px;
+  margin: 24px 0 40px;
+  font-family: var(--sans);
+  font-size: 10pt;
+  line-height: 1.7;
+}
+
+.toc h2 { margin-top: 0; font-family: var(--sans); font-size: 10pt; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-faint); border: none; padding: 0; }
+
+.footer {
+  margin-top: 56px;
+  padding-top: 24px;
+  border-top: 1px solid var(--border);
+  font-family: var(--sans);
+  font-size: 8.5pt;
+  color: var(--ink-faint);
+  text-align: center;
+  font-style: italic;
+}
+
+@media print {
+  @page { size: letter; margin: 14mm 16mm; }
+  body { background: white; font-size: 10.3pt; line-height: 1.5; }
+  main { max-width: none; padding: 0; }
+  /* Sections flow rather than each claiming a fresh sheet: at 20 sections a
+     forced break per h1 padded the document by roughly half again its length. */
+  .cover { page-break-after: always; break-after: page; }
+  h1 { font-size: 15pt; margin: 20px 0 9px; }
+  h2 { font-size: 11.5pt; margin: 15px 0 7px; }
+  h3 { font-size: 10pt; margin: 12px 0 5px; }
+  p { margin: 0 0 7px; }
+  hr { margin: 16px 0; }
+  table { font-size: 8.2pt; margin: 8px 0 14px; }
+  th, td { padding: 4px 8px; }
+  ul, ol { margin-bottom: 9px; }
+  table, tr, td, th { page-break-inside: avoid; break-inside: avoid; }
+  h1, h2, h3 { page-break-after: avoid; break-after: avoid-page; }
+}
+</style>
+</head>
+<body>
+<main>
+  <section class="cover">
+    <div class="kicker">Confidential — investor technical brief</div>
+    <h1>Platform evaluation — Concept2Cure.RI / TrialSage</h1>
+    <div class="meta">
+      <div><strong>Version</strong> · 2026-09-10</div>
+      <div><strong>Codebase branch</strong> · <code>concept2cure-v2</code> @ <code>d31a9db6</code></div>
+      <div><strong>Audience</strong> · owner, engineering leads, and anyone deciding whether to put real customer data in front of a human tester</div>
+    </div>
+    <div class="confidential">Prepared for prospective investors</div>
+  </section>
+  <h2 id="how-to-read-this">How to read this</h2>
+<p>Every figure below was produced by a command run against this repository at <code>d31a9db6</code> on Node 22.22.2 with a clean <code>npm ci</code>. Nothing is inherited from a prior assessment without being re-executed, and where a prior figure is quoted for comparison it is labelled with its source and SHA.</p>
+<p>Results are reported in five classes and never collapsed into &quot;pass&quot;:</p>
+<table><thead><tr><th style="text-align:left">Class</th><th style="text-align:left">Meaning</th></tr></thead><tbody><tr><td style="text-align:left"><strong>ZERO-DEBT PASS</strong></td><td style="text-align:left">Gate has no baseline. Clean.</td></tr><tr><td style="text-align:left"><strong>RATCHET PASS — N REMAIN</strong></td><td style="text-align:left">Gate passed because the count is no worse than a baseline of N. <strong>N defects still exist.</strong></td></tr><tr><td style="text-align:left"><strong>INVENTORY</strong></td><td style="text-align:left">Script always exits 0. Cannot pass or fail. Not evidence of anything.</td></tr><tr><td style="text-align:left"><strong>FAIL</strong></td><td style="text-align:left">Gate found something above its threshold.</td></tr><tr><td style="text-align:left"><strong>ENV-BLOCKED</strong></td><td style="text-align:left">Could not run here (needs a live database, network, or a build artifact). Not a pass.</td></tr></tbody></table>
+<p>There is no composite score in this document. A &quot;6.5 out of 10&quot; is not derivable from anything measured here, and a number like that gets repeated in rooms where its provenance cannot be checked. The readiness question is asked instead against the G1/G2/G3 ladder this repository already reasons in (<code>docs/audit-2026-07/14-readiness-gate-ladder.md</code>), because a verdict that attaches to an existing ladder can be argued with.</p>
+<hr>
+<h2 id="1-executive-summary">1. Executive summary</h2>
+<p><strong>The platform is materially better than it was six weeks ago, and the headline risk has moved.</strong> Between <code>576ec5d</code> (2026-07-28, the last purchase-grade audit) and <code>d31a9db6</code> there are <strong>918 commits</strong>. Measured against that audit's own suppression basket, most tranches went <em>down</em>, several substantially:</p>
+<table><thead><tr><th style="text-align:left">Suppressed defect class</th><th style="text-align:right">2026-07-28 <code>576ec5d</code></th><th style="text-align:right">2026-09-10 <code>d31a9db6</code></th><th style="text-align:right">Δ</th></tr></thead><tbody><tr><td style="text-align:left">Tenant-isolation raw-SQL candidates</td><td style="text-align:right">25</td><td style="text-align:right"><strong>10</strong></td><td style="text-align:right"><strong>−15</strong></td></tr><tr><td style="text-align:left">Unbacked tables (queried, never created)</td><td style="text-align:right">89</td><td style="text-align:right"><strong>36</strong></td><td style="text-align:right"><strong>−53</strong></td></tr><tr><td style="text-align:left">Unreferenced modules</td><td style="text-align:right">190</td><td style="text-align:right"><strong>98</strong></td><td style="text-align:right"><strong>−92</strong></td></tr><tr><td style="text-align:left">Mock/simulated markers in production routes</td><td style="text-align:right">11</td><td style="text-align:right"><strong>0</strong></td><td style="text-align:right"><strong>−11</strong></td></tr><tr><td style="text-align:left">Route-mount errors</td><td style="text-align:right">8 errors + 7 warnings</td><td style="text-align:right"><strong>0 errors</strong> + 8 warnings</td><td style="text-align:right"><strong>−8 errors</strong></td></tr><tr><td style="text-align:left">Orphan endpoint candidates</td><td style="text-align:right">556 of 914</td><td style="text-align:right"><strong>505 of 884</strong></td><td style="text-align:right">−51</td></tr><tr><td style="text-align:left">Duplicate-basename groups (repo health)</td><td style="text-align:right">249 groups</td><td style="text-align:right"><strong>0</strong></td><td style="text-align:right"><strong>−249</strong></td></tr><tr><td style="text-align:left">Files on the shared pool (blocks RLS)</td><td style="text-align:right">81</td><td style="text-align:right">82</td><td style="text-align:right">+1</td></tr><tr><td style="text-align:left"><strong>Files bypassing the governed AI gateway</strong></td><td style="text-align:right"><strong>3</strong></td><td style="text-align:right"><strong>19</strong></td><td style="text-align:right"><strong>+16</strong></td></tr></tbody></table>
+<p>Four of that audit's seven G1 blockers are demonstrably fixed at HEAD, and fixed properly rather than papered over — §6 shows the code.</p>
+<p><strong>What has not moved is the thing that now matters most.</strong> Schema authority is unresolved and is upstream of every assurance claim the pilot depends on:</p>
+<ul><li><strong>64 tables have more than one <code>CREATE TABLE</code> definition</strong> across 593</li></ul>
+<p>non-archived SQL files — one more than the baseline of 63, so <code>ci:duplicate-table-ddl:strict</code> fails on an unbaselined regression.</p>
+<ul><li><strong>73 tables the server queries do not exist on a live database</strong></li></ul>
+<p>(<code>ci:tables-live-schema</code>, baseline 73 — a green gate).</p>
+<ul><li><strong>36 tables are referenced by runtime code and created by nothing in the repo.</strong></li><li><strong>4 migration prefixes collide</strong> across 13 files.</li></ul>
+<p>Combined with <code>CLAUDE.md</code> RULE 1 — every migration re-runs on every deploy, unconditionally, and journal drift is written but never read — this produces a specific, checkable claim, and it is the most important sentence in this document:</p>
+<p>&gt; <strong>The schema of a deployed environment is not derivable from the repository.</strong></p>
+<p><code>scripts/ci/check-duplicate-table-ddl.mjs</code> says so itself: because every definition is <code>IF NOT EXISTS</code>-guarded, &quot;the surviving column set is decided by migration ORDER, not by code — and it can differ per environment.&quot; For a platform whose value proposition is regulatory record-keeping, that is not maintainability debt. It means RLS coverage, purge proof, and audit reconciliation are all assertions against a target no one can pin down.</p>
+<p><strong>Verdict against the ladder:</strong></p>
+<table><thead><tr><th style="text-align:left">Gate</th><th style="text-align:left">Verdict</th><th style="text-align:left">Distance</th></tr></thead><tbody><tr><td style="text-align:left"><strong>G1 · Pilot on non-regulated data</strong></td><td style="text-align:left">🟡 <strong>CLOSE</strong></td><td style="text-align:left">1–2 weeks — WO-4, WO-6, WO-9</td></tr><tr><td style="text-align:left"><strong>G1+ · Pilot on real customer data</strong> ← <em>your stated bar</em></td><td style="text-align:left">🔴 <strong>NOT READY</strong></td><td style="text-align:left"><strong>4–7 weeks</strong> — WO-1, WO-2, WO-3 are hard prerequisites</td></tr><tr><td style="text-align:left"><strong>G3 · GxP / submission-grade</strong></td><td style="text-align:left">🔴 <strong>NOT READY</strong></td><td style="text-align:left">6–12 months, mostly non-engineering</td></tr></tbody></table>
+<p><strong>Your stated bar does not sit on a rung of the existing ladder.</strong> That audit defines G1 as design partners on <em>non-regulated</em> data, and explicitly carves out tenant isolation: &quot;tenant isolation being single-layer (RLS inert) is acceptable for a non-regulated pilot with a handful of trusted design partners.&quot; <strong>That carve-out expires the moment the data is real.</strong> An external pilot on real customer data is G1 plus the tenancy half of G2, and the work orders in §7 are scoped to exactly that.</p>
+<h3 id="the-finding-that-outranks-all-of-the-above">The finding that outranks all of the above</h3>
+<p><strong><code>concept2cure-v2</code> is red right now on six gates that CI actually runs.</strong> Not strict variants that run nowhere — gates wired into <code>ci.yml</code> and <code>pr-checks.yml</code>:</p>
+<table><thead><tr><th style="text-align:left">Gate</th><th style="text-align:right">Baseline</th><th style="text-align:right">Measured</th><th style="text-align:left">Delta</th></tr></thead><tbody><tr><td style="text-align:left"><code>ci:eslint-ratchet</code></td><td style="text-align:right">6,596</td><td style="text-align:right"><strong>6,712</strong></td><td style="text-align:left">+116 warnings, and 1 error</td></tr><tr><td style="text-align:left"><code>ci:check-phantom-tokens</code></td><td style="text-align:right">14</td><td style="text-align:right"><strong>17</strong> (66 sites)</td><td style="text-align:left">+3</td></tr><tr><td style="text-align:left"><code>ci:duplicate-table-ddl</code></td><td style="text-align:right">63</td><td style="text-align:right"><strong>64</strong></td><td style="text-align:left">+1 table with a second definition</td></tr><tr><td style="text-align:left"><code>ci:model-migration-agreement</code></td><td style="text-align:right">29</td><td style="text-align:right">30</td><td style="text-align:left">+1 table diverging from its migration</td></tr><tr><td style="text-align:left"><code>ci:tenant-blind-models</code></td><td style="text-align:right">5</td><td style="text-align:right">—</td><td style="text-align:left">stale baseline — an entry got <em>fixed</em> and was never removed</td></tr><tr><td style="text-align:left"><code>ci:tenant-entry-points</code></td><td style="text-align:right">10</td><td style="text-align:right">—</td><td style="text-align:left"><code>retentionCron.ts</code> changed after its entitlement justification</td></tr></tbody></table>
+<p>Four of those six are regressions a working pipeline should have refused at the PR that introduced them. That they sit on the branch <code>CLAUDE.md</code> RULE 0 designates as the only branch that ships means either CI is not gating merges to it or red results are being merged past. <strong>That is worth resolving before planning a customer pilot around this pipeline</strong>, and it is WO-0.</p>
+<p>The other two are instructive rather than alarming: <code>tenant-blind-models</code> fails because a baselined defect was <em>fixed</em> and nobody removed the entry. The gate enforces bidirectional parity — a stale baseline fails as loudly as a new defect, because a baseline that overstates debt hides the next real one. That is good design, and it is the design WO-5 proposes extending to the other 42 baselines.</p>
+<h3 id="the-three-things-that-decide-the-pilot-bar">The three things that decide the pilot bar</h3>
+<ol><li><strong>Schema authority</strong> (WO-1, WO-2). Until one manifest defines each table</li></ol>
+<p>once and a blank database provisions everything the server queries, no isolation or retention proof means anything.</p>
+<ol><li><strong>Tenant isolation proven, not asserted</strong> (WO-3). The 10 raw-SQL candidates</li></ol>
+<p>are static analysis. 82 route files still run on the shared pool, which is what keeps RLS inert. The proof is a live two-tenant probe.</p>
+<ol><li><strong>The gates that guard all of this run nowhere</strong> (WO-4). Six <code>:strict</code></li></ol>
+<p>variants — including <code>ci:tenant-isolation:strict</code> and <code>ci:duplicate-table-ddl:strict</code> — are in <code>package.json</code> and in <strong>no</strong> pipeline. Every finding in §1 could regress tomorrow without CI noticing.</p>
+<hr>
+<h2 id="2-method-and-what-this-evaluation-cannot-tell-you">2. Method, and what this evaluation cannot tell you</h2>
+<p><strong>Executed here:</strong> the full <code>ci:</code> / <code>audit:</code> / <code>readiness:</code> inventory (145 scripts after excluding <code>:write-baseline</code>, <code>:list</code>, and three destructive or network-bound entries), the baseline census, and targeted re-tests of the seven G1 blockers from the July audit. The runner is <code>evidence/sweep.mjs</code>; raw results are <code>evidence/01-gate-sweep.json</code>. The ledger census is <code>evidence/ledger.mjs</code> → <code>evidence/02-suppression-ledger.json</code>.</p>
+<p><strong>Not executed, and therefore not claimed:</strong></p>
+<ul><li><strong>The test suite.</strong> 464 test files exist. None were run. A DB-backed suite</li></ul>
+<p>would fail here on environment, and reporting that as a finding would repeat the error this document exists to correct.</p>
+<ul><li><strong>Anything requiring a live database.</strong> <code>ci:tables-live-schema</code> and</li></ul>
+<p><code>ci:purge-coverage</code> are <strong>ENV-BLOCKED</strong>. Their baselines are read from disk and reported as baselines, not as passes.</p>
+<ul><li><strong>Anything requiring the network.</strong> <code>ci:dependency-risk</code> needs the npm</li></ul>
+<p>advisory API; it returned HTTP 403 through this environment's proxy.</p>
+<ul><li><strong>Runtime behaviour.</strong> No browser, no boot, no request was issued. Every</li></ul>
+<p>tenancy finding below is static analysis, and is labelled as such.</p>
+<p><strong>One methodological correction to the assessment this replaces.</strong> A prior evaluation of this platform was produced on 2026-09-09 as a deliberate &quot;clean-room&quot; exercise, &quot;without consulting prior platform assessments.&quot; Its gate numbers are accurate — I re-ran its six headline figures and matched all six exactly. But the clean-room premise cost it the trend, and the trend is the finding: a snapshot of 10 tenant-isolation candidates reads as an alarm, while 25 → 10 over 918 commits reads as a burndown working. That evaluation also reported its own commits, SHAs, and pull requests as having landed on <code>concept2cure-v2</code>. None had; its sandbox removes the <code>origin</code> remote at bootstrap, so the work could not leave the container. <strong>Its observations were sound and its self-reporting was not</strong>, which is a useful reminder that a document's provenance is part of its evidence.</p>
+<hr>
+<h2 id="2b-gate-truth-all-142-gates">2b. Gate truth — all 142 gates</h2>
+<p><code>evidence/sweep.mjs</code> ran every <code>ci:</code> / <code>audit:</code> / <code>readiness:</code> script except <code>:write-baseline</code> (rewrites the thing being measured), <code>:list</code> (always exits 0), <code>audit:prune-artifacts</code> (deletes files), <code>audit:last-20-prs</code> (runs <code>npm ci</code> and queries GitHub) and <code>audit:bundle</code> (full production build).</p>
+<p><strong>142 gates ran. 114 exited 0. 28 did not.</strong> Those 28 are not 28 failures:</p>
+<table><thead><tr><th style="text-align:left">Class</th><th style="text-align:right">Count</th><th style="text-align:left">Gates</th></tr></thead><tbody><tr><td style="text-align:left"><strong>FAIL — CI-enforced</strong></td><td style="text-align:right"><strong>6</strong></td><td style="text-align:left"><code>eslint-ratchet</code>, <code>check-phantom-tokens</code>, <code>duplicate-table-ddl</code>, <code>model-migration-agreement</code>, <code>tenant-blind-models</code>, <code>tenant-entry-points</code> → <strong>WO-0</strong></td></tr><tr><td style="text-align:left"><strong>FAIL — strict variant, enforced nowhere</strong></td><td style="text-align:right">6</td><td style="text-align:left"><code>tenant-isolation:strict</code>, <code>duplicate-table-ddl:strict</code>, <code>unbacked-tables:strict</code>, <code>unreferenced-modules:strict</code>, <code>migration-prefix-collisions:strict</code>, <code>reasoning-tier-*:strict</code> → <strong>WO-4</strong></td></tr><tr><td style="text-align:left"><strong>FAIL — real, not CI-wired</strong></td><td style="text-align:right">6</td><td style="text-align:left"><code>tenant-resolvers</code> (190 baselined, above it), <code>duplicate-exported-types</code>, <code>surface-text-ramp</code>, <code>audit:repo-health:strict</code> / <code>:full-strict</code> (42 files &gt;100 KB vs ceiling 33; 95 &gt;1,500 lines vs 82)</td></tr><tr><td style="text-align:left"><strong>ENV-BLOCKED — needs a live database</strong></td><td style="text-align:right">5</td><td style="text-align:left"><code>tables-live-schema</code>, <code>purge-coverage</code>, <code>audit:archive</code>, <code>audit:verify:24h</code>, <code>audit:verify:full</code>, <code>readiness:check:strict</code></td></tr><tr><td style="text-align:left"><strong>ENV-BLOCKED — needs network</strong></td><td style="text-align:right">2</td><td style="text-align:left"><code>dependency-risk</code>, <code>dependency-risk:reseal</code> (npm advisory API returned 403 through this proxy)</td></tr><tr><td style="text-align:left"><strong>ENV-BLOCKED — needs a build or coverage artefact</strong></td><td style="text-align:right">2</td><td style="text-align:left"><code>component-class-coverage</code> (<strong>exit 2</strong> = stale/absent build, which the script distinguishes from exit 1 = real findings), <code>coverage-ratchet</code></td></tr></tbody></table>
+<p><strong>And the 114 that exited 0 are not 114 clean bills of health.</strong> Of them, at least 31 are ratchet passes standing on a non-empty baseline (§3), and a further set cannot fail at all. <code>readiness:check</code> non-strict prints <code>WARN-ONLY</code> in its own header; all 14 <code>:list</code> variants, <code>ci:report-branch-drift</code> and <code>audit:evidence-pack</code> exit 0 unconditionally; <code>ci:token-cascade</code> is <code>continue-on-error: true</code> in <code>ci.yml:590</code> and cannot block a merge regardless of result.</p>
+<p>Raw results, with exit code and output tail per gate: [<code>evidence/01-gate-sweep.json</code>](evidence/01-gate-sweep.json).</p>
+<hr>
+<h2 id="3-the-suppression-ledger">3. The suppression ledger</h2>
+<p>Baseline files are the most honest artefact in this repository, and there are now <strong>43</strong> of them. A gate that reads a baseline cannot report &quot;clean&quot;; it reports &quot;no worse than N&quot;. Summed exactly (<code>evidence/ledger.mjs</code>, explicit per-file extractors — an earlier heuristic version mis-read six of them):</p>
+<table><thead><tr><th style="text-align:left">Class</th><th style="text-align:right">Entries</th></tr></thead><tbody><tr><td style="text-align:left"><strong>Defect-class entries under active suppression</strong></td><td style="text-align:right"><strong>2,244</strong></td></tr><tr><td style="text-align:left">Lint / cosmetic entries</td><td style="text-align:right">6,703</td></tr><tr><td style="text-align:left"><strong>Total tolerated across 43 baselines</strong></td><td style="text-align:right"><strong>8,947</strong></td></tr></tbody></table>
+<p><em>Excluded from the total, because neither is a count of tolerated defects:</em> <code>coverage-baseline.json</code> (a percentage floor) and <code>proof-tier-baseline.json</code> (an <strong>inverted</strong> ratchet — a floor of 77 proof files that must not disappear, i.e. an asset).</p>
+<h3 id="the-ten-largest-tranches">The ten largest tranches</h3>
+<table><thead><tr><th style="text-align:right">Entries</th><th style="text-align:left">Baseline</th><th style="text-align:left">What it tolerates</th></tr></thead><tbody><tr><td style="text-align:right">6,596</td><td style="text-align:left"><code>eslint-warning-baseline.json</code></td><td style="text-align:left">Lint warnings across 21 rules</td></tr><tr><td style="text-align:right">611</td><td style="text-align:left"><code>purge-coverage-baseline.json</code></td><td style="text-align:left">Tables with no proven purge path</td></tr><tr><td style="text-align:right">246</td><td style="text-align:left"><code>duplicate-exported-types-baseline.json</code></td><td style="text-align:left">Exported names meaning two different things</td></tr><tr><td style="text-align:right">244</td><td style="text-align:left"><code>env-var-docs-baseline.json</code></td><td style="text-align:left">Env vars read by code, absent from <code>.env.example</code></td></tr><tr><td style="text-align:right">190</td><td style="text-align:left"><code>tenant-resolvers-baseline.json</code></td><td style="text-align:left">Modules not migrated to the canonical tenant resolver</td></tr><tr><td style="text-align:right">151</td><td style="text-align:left"><code>drizzle-tenant-scope-baseline.json</code></td><td style="text-align:left">ORM query sites with no tenant scope</td></tr><tr><td style="text-align:right">151</td><td style="text-align:left"><code>server-error-leaks-baseline.json</code></td><td style="text-align:left">Sites leaking internal error detail (92 files)</td></tr><tr><td style="text-align:right">98</td><td style="text-align:left"><code>unreferenced-modules-baseline.json</code></td><td style="text-align:left">Modules nothing references</td></tr><tr><td style="text-align:right">82</td><td style="text-align:left"><code>requestdb-coverage-baseline.json</code></td><td style="text-align:left">Route files still on the shared pool</td></tr><tr><td style="text-align:right">80</td><td style="text-align:left"><code>dead-audit-tables-baseline.json</code></td><td style="text-align:left">Audit tables nothing writes to</td></tr></tbody></table>
+<h3 id="reading-the-growth-honestly">Reading the growth honestly</h3>
+<p>The July audit put the comparable figure at ~1,620; the defect-class figure is now 2,244. <strong>That is not 600 new defects.</strong> Most of the difference is <em>new instrumentation finding pre-existing debt</em>: <code>tenant-resolvers</code>, <code>drizzle-tenant-scope</code>, <code>server-error-leaks</code>, <code>dead-audit-tables</code>, <code>tables-live-schema</code>, <code>insert-columns</code>, <code>model-migration-agreement</code> and <code>writerless-stores</code> are gates that did not exist in July. A gate landing with a baseline of 151 has discovered 151 defects, not created them.</p>
+<p>This distinction matters for how the ledger is read as a signal. <strong>Gates appearing is good news that looks like bad news.</strong> The genuinely bad news is narrower and worth naming precisely:</p>
+<ul><li><strong><code>gateway-bypass</code> 3 → 19.</strong> Nineteen files reach a model provider outside the</li></ul>
+<p>governed AI gateway — including two <code>.js</code> shadow files (<code>semanticSearch.js</code>, <code>huggingface-service.js</code>). Each entry carries a written reason naming what governance is lost. On a platform whose differentiator is a governed AI layer, sold to regulated customers, this is the regression that should worry you most after schema authority.</p>
+<ul><li><strong><code>duplicate-table-ddl</code> 63 baselined, 64 measured.</strong> One unbaselined</li></ul>
+<p>regression — a table gained a second definition and no gate in any pipeline caught it, because <code>:strict</code> runs nowhere (§5).</p>
+<ul><li><strong><code>env-var-docs</code> 244, unchanged, and still wired to no npm script.</strong> The July</li></ul>
+<p>audit flagged this gate as non-existent. It is still non-existent.</p>
+<hr>
+<h2 id="4-schema-authority-the-blocking-risk">4. Schema authority — the blocking risk</h2>
+<h3 id="4-1-the-mechanism">4.1 The mechanism</h3>
+<p>Three facts, each independently verified, combine into one problem.</p>
+<p><strong>Fact 1 — every migration re-runs on every deploy.</strong> <code>applyMigrationFiles</code> (<code>scripts/db/migration-set.mjs</code>) executes every entry of <code>C2C_MIGRATION_FILES</code> unconditionally. There is no &quot;already applied, skip&quot; branch. <code>recordApplied</code> computes a content hash and returns <code>'new' | 'unchanged' | 'drift'</code>, and the caller discards it. Drift is written to <code>c2c_migration_journal</code>; nothing reads it. This is documented as RULE 1 in <code>CLAUDE.md</code> and is by design — the set is replayable because nearly every file is additive and <code>IF NOT EXISTS</code>-guarded.</p>
+<p><strong>Fact 2 — 64 tables have multiple definitions.</strong> Measured:</p>
+<p>``<code> $ npm run ci:duplicate-table-ddl:strict [ci:duplicate-table-ddl] scanned 593 non-archived .sql files; 1186 distinct tables; 64 defined more than once (strict mode) </code>``</p>
+<p><strong>Fact 3 — the guard that makes replay safe is what makes definitions ambiguous.</strong> From the gate's own output: because each definition is <code>CREATE TABLE IF NOT EXISTS</code>, &quot;the surviving column set is decided by migration ORDER, not by code — and it can differ per environment.&quot;</p>
+<h3 id="4-2-the-consequence">4.2 The consequence</h3>
+<p>Put together: <strong>the deployed schema is a function of file ordering across multiple migration roots, not of the repository's contents.</strong> Two environments that applied the same commit in a different order can hold different column sets, and nothing reports the difference — the journal records drift that nothing reads.</p>
+<p>Downstream, this makes several assurance claims unfalsifiable rather than false:</p>
+<ul><li><strong>RLS coverage</strong> asserts policies against tables whose columns are</li></ul>
+<p>order-dependent.</p>
+<ul><li><strong><code>ci:purge-coverage</code></strong> tolerates 611 tables with no proven purge path — a</li></ul>
+<p>retention claim over a schema that cannot be pinned down.</p>
+<ul><li><strong>Audit reconciliation</strong> compares a chain to tables that may or may not have</li></ul>
+<p>the columns the code expects.</p>
+<ul><li><strong><code>ci:tables-live-schema</code></strong> already measures the gap directly: **73 tables the</li></ul>
+<p>server queries do not exist on a live database.** That gate is green, because 73 is its baseline.</p>
+<p>For a pilot on real customer data, &quot;we cannot state what schema is deployed&quot; is a stop condition, not a caveat. It is WO-1 and WO-2, and they are upstream of everything else.</p>
+<h3 id="4-3-what-is-not-wrong-here">4.3 What is <em>not</em> wrong here</h3>
+<p>The migration system is not carelessly built. <code>ci:migration-drop-safety</code>, <code>ci:migration-set-order</code> and <code>ci:migration-reachability</code> all exist and pass, ADR-0006 defines canonical lineage, and the drop-safety gate ships with a self-test that constructs the real create-then-drop hazard in both orders. The problem is not absence of discipline; it is that the discipline has not yet been applied to the 64 pre-existing collisions, and the gate that would hold the line runs in no pipeline.</p>
+<hr>
+<h2 id="5-tenancy-and-the-gates-that-guard-nothing">5. Tenancy — and the gates that guard nothing</h2>
+<h3 id="5-1-measured-state">5.1 Measured state</h3>
+<p>``<code> $ npm run ci:tenant-isolation:strict Total: 10 candidate(s). These are RAW SQL queries against known tenant-scoped tables that don't reference an org_id / tenant_id / workspace_id in the same statement. </code>``</p>
+<p>Ten, down from 25 in July. In context, though, the raw-SQL candidates are the smallest of five overlapping tranches:</p>
+<table><thead><tr><th style="text-align:right">Entries</th><th style="text-align:left">Baseline</th><th style="text-align:left">Meaning</th></tr></thead><tbody><tr><td style="text-align:right">190</td><td style="text-align:left"><code>tenant-resolvers</code></td><td style="text-align:left">Modules not on the canonical tenant resolver</td></tr><tr><td style="text-align:right">151</td><td style="text-align:left"><code>drizzle-tenant-scope</code></td><td style="text-align:left">ORM query sites with no tenant scope</td></tr><tr><td style="text-align:right">82</td><td style="text-align:left"><code>requestdb-coverage</code></td><td style="text-align:left"><strong>Route files still on the shared pool — this is what keeps RLS inert</strong></td></tr><tr><td style="text-align:right">10</td><td style="text-align:left"><code>tenant-isolation</code></td><td style="text-align:left">Raw SQL with no tenant predicate</td></tr><tr><td style="text-align:right">10</td><td style="text-align:left"><code>tenant-entry-points</code></td><td style="text-align:left">Entry points whose tenant entitlement drifted</td></tr><tr><td style="text-align:right">5</td><td style="text-align:left"><code>tenant-blind-models</code></td><td style="text-align:left">Models with no tenant column at all</td></tr></tbody></table>
+<p>The 82 shared-pool route files are the load-bearing number. RLS policies exist, but a route on the shared pool connects as a role that bypasses them, so the second layer of defence is not merely weak — for those routes it is not engaged. The July audit reached the same conclusion and its carve-out was explicit: acceptable for non-regulated pilot data, not acceptable once the data is real.</p>
+<h3 id="5-2-the-finding-that-generalises">5.2 The finding that generalises</h3>
+<p><strong>Six of the strict gates that guard the pilot bar run in no pipeline at all.</strong> Cross-referencing <code>package.json</code> against <code>.husky/pre-push</code>, <code>.github/workflows/ci.yml</code> and <code>.github/workflows/pr-checks.yml</code>:</p>
+<table><thead><tr><th style="text-align:left">Gate</th><th style="text-align:left">In CI?</th></tr></thead><tbody><tr><td style="text-align:left"><code>ci:tenant-isolation:strict</code></td><td style="text-align:left">❌ nowhere (only <code>:no-regression</code> runs)</td></tr><tr><td style="text-align:left"><code>ci:duplicate-table-ddl:strict</code></td><td style="text-align:left">❌ nowhere</td></tr><tr><td style="text-align:left"><code>ci:unbacked-tables:strict</code></td><td style="text-align:left">❌ nowhere</td></tr><tr><td style="text-align:left"><code>ci:unreferenced-modules:strict</code></td><td style="text-align:left">❌ nowhere</td></tr><tr><td style="text-align:left"><code>ci:migration-prefix-collisions:strict</code></td><td style="text-align:left">❌ nowhere</td></tr><tr><td style="text-align:left"><code>ci:proof-tier:strict</code></td><td style="text-align:left">❌ nowhere</td></tr></tbody></table>
+<p>Every one of §1's findings is therefore free to regress without CI noticing — and one already has (<code>duplicate-table-ddl</code>, 63 baselined vs 64 measured).</p>
+<p>Three further honesty defects in the gate layer, each of which makes a green build mean less than it appears:</p>
+<ul><li><strong><code>ci:token-cascade</code> is <code>continue-on-error: true</code></strong> (<code>ci.yml:590</code>). Its</li></ul>
+<p>pass/fail cannot block a merge.</p>
+<ul><li><strong><code>ci:no-dev-auth-in-prod</code> non-strict is not lenient.</strong></li></ul>
+<p><code>check-no-dev-auth-in-prod.mjs:205</code> reads <code>process.exit(strict ? 1 : 1)</code> — the two modes are identical.</p>
+<ul><li>**<code>ci:fixture-fallback</code> and <code>ci:org-path-param-guards</code> read baseline files</li></ul>
+<p>that do not exist on disk**, so they currently behave as zero-debt gates by accident rather than by decision.</p>
+<hr>
+<h2 id="6-the-july-g1-blockers-re-tested-at-head">6. The July G1 blockers, re-tested at HEAD</h2>
+<p>Each of the seven was re-checked in the code, not inherited.</p>
+<table><thead><tr><th style="text-align:left">#</th><th style="text-align:left">July finding</th><th style="text-align:left">Status at <code>d31a9db6</code></th><th style="text-align:left">Evidence</th></tr></thead><tbody><tr><td style="text-align:left"><strong>G1-1</strong></td><td style="text-align:left">Fresh install silently half-works; skipped migrations reported as success</td><td style="text-align:left">🟢 <strong>FIXED</strong></td><td style="text-align:left"><code>scripts/db/install-fresh.mjs</code> now reports skips <strong>by name</strong>; its own header documents the old behaviour (&quot;described, without evidence, as 'safe to skip'&quot;) and states skips are &quot;not silently faked&quot;</td></tr><tr><td style="text-align:left"><strong>G1-2</strong></td><td style="text-align:left"><code>/readyz</code> green over a database missing auth tables</td><td style="text-align:left">🟢 <strong>FIXED</strong></td><td style="text-align:left"><code>server/startup/services.ts</code> now calls <code>setSchemaReadiness</code> on <strong>13</strong> paths including every error and missing-table branch</td></tr><tr><td style="text-align:left"><strong>G1-3</strong></td><td style="text-align:left">Live cross-tenant write path (Schedule-of-Events)</td><td style="text-align:left">🟡 <strong>PARTIAL</strong></td><td style="text-align:left">Raw-SQL candidates 25 → 10, but 82 route files remain on the shared pool. Static only — no live probe has been run. <strong>WO-3</strong></td></tr><tr><td style="text-align:left"><strong>G1-4</strong></td><td style="text-align:left">Stored XSS via <code>derivePreview</code> HTML-entity decode</td><td style="text-align:left">🟢 <strong>FIXED</strong></td><td style="text-align:left"><code>derivePreview</code> strips tags, decodes only safe entities, then strips any residual <code>[&lt;&gt;]</code>, and documents &quot;The result is TEXT.&quot; <code>BatchDraft.tsx</code> now renders through a DOMPurify allowlist; the one remaining <code>dangerouslySetInnerHTML</code> is a static literal</td></tr><tr><td style="text-align:left"><strong>G1-5</strong></td><td style="text-align:left">Typecheck gate vacuous — counted <code>/error TS/</code>, ignored exit code, OOM'd</td><td style="text-align:left">🟢 <strong>FIXED</strong></td><td style="text-align:left"><code>typecheck-no-regression.mjs</code> now treats null status, signal kill, or status &gt; 2 as &quot;did not complete&quot; and fails; the old bug is documented in-file at :93–:101</td></tr><tr><td style="text-align:left"><strong>G1-6</strong></td><td style="text-align:left">AnA attach button discarded every file</td><td style="text-align:left">🟢 <strong>FIXED</strong></td><td style="text-align:left">Behaviour removed; <code>client/src/concept2cure/v2/__tests__/anaRailAttach.test.tsx</code> is a regression test for it</td></tr><tr><td style="text-align:left"><strong>G1-7</strong></td><td style="text-align:left">~85 of 96 surfaces reachable only by typed URL</td><td style="text-align:left">🟡 <strong>MUCH IMPROVED</strong></td><td style="text-align:left"><code>RAIL_PRIMARY</code> (5 entries) replaced by four rails — <code>RAIL_CORE</code> 12, <code>RAIL_SPECIALIST</code> 6, <code>RAIL_EXPLORE</code> 14, <code>RAIL_QUICK</code> 9 = <strong>41 rail-reachable</strong> of 83 registered surfaces; <code>NAV_HIDDEN</code> 40 → 29. <strong>WO-9</strong> to finish</td></tr></tbody></table>
+<p><strong>Five of seven fixed, two improved.</strong> This is the strongest evidence in the document that the team's remediation loop works, and it is precisely what a clean-room snapshot cannot see.</p>
+<hr>
+<h2 id="7-work-orders">7. Work orders</h2>
+<p>Eleven work orders, in <code>docs/work-orders/</code>. <strong>WO-0 comes before all of them</strong> — until the branch is green there is no signal to work against. WO-1 and WO-2 are hard prerequisites for WO-3; WO-3 is a hard prerequisite for putting real customer data in front of anyone.</p>
+<table><thead><tr><th style="text-align:left">ID</th><th style="text-align:left">Title</th><th style="text-align:left">Blocks</th><th style="text-align:left">Exit criterion</th></tr></thead><tbody><tr><td style="text-align:left">[<strong>WO-0</strong>](../work-orders/WO-0-restore-green-canonical-branch.md)</td><td style="text-align:left"><strong>Restore a green canonical branch</strong></td><td style="text-align:left"><strong>everything</strong></td><td style="text-align:left">Every CI-wired gate exits 0 in <code>evidence/sweep.mjs</code>, ENV-BLOCKED set excepted</td></tr><tr><td style="text-align:left">[WO-1](../work-orders/WO-1-schema-authority.md)</td><td style="text-align:left">Establish schema authority</td><td style="text-align:left">G1+</td><td style="text-align:left"><code>ci:duplicate-table-ddl:strict</code> and <code>ci:migration-prefix-collisions:strict</code> pass with baselines <strong>deleted</strong></td></tr><tr><td style="text-align:left">[WO-2](../work-orders/WO-2-blank-database-completeness.md)</td><td style="text-align:left">Make a blank database complete</td><td style="text-align:left">G1+</td><td style="text-align:left"><code>ci:tables-live-schema</code> passes with baseline deleted, against a from-scratch install</td></tr><tr><td style="text-align:left">[WO-3](../work-orders/WO-3-tenant-isolation-proof.md)</td><td style="text-align:left">Prove tenant isolation on real data</td><td style="text-align:left">G1+</td><td style="text-align:left">Live two-tenant probe, plus <code>requestdb-coverage</code> 82 → 0</td></tr><tr><td style="text-align:left">[WO-4](../work-orders/WO-4-enforce-strict-gates.md)</td><td style="text-align:left">Enforce the six unenforced strict gates</td><td style="text-align:left">all</td><td style="text-align:left">Each runs in <code>pr-checks.yml</code>, verified by making one fail</td></tr><tr><td style="text-align:left">[WO-5](../work-orders/WO-5-baseline-governance.md)</td><td style="text-align:left">Baseline governance and honest gate output</td><td style="text-align:left">all</td><td style="text-align:left">All 43 baselines carry owner/reason/expiry; CI prints <code>RATCHET PASS — N REMAIN</code></td></tr><tr><td style="text-align:left">[WO-6](../work-orders/WO-6-ai-gateway-bypass-burndown.md)</td><td style="text-align:left">Burn down the 19 AI-gateway bypasses</td><td style="text-align:left">G1+</td><td style="text-align:left"><code>gateway-bypass</code> baseline 19 → 0, or each survivor re-justified</td></tr><tr><td style="text-align:left">[WO-7](../work-orders/WO-7-esignature-enforcement.md)</td><td style="text-align:left">E-signature on regulated promotion</td><td style="text-align:left">G3, partially G1+</td><td style="text-align:left">Governed transition refuses without signature manifestation; covered by a test</td></tr><tr><td style="text-align:left">[WO-8](../work-orders/WO-8-skipped-tests.md)</td><td style="text-align:left">Triage 34 skipped tests</td><td style="text-align:left">G1</td><td style="text-align:left">Each un-skipped or annotated with why it cannot run</td></tr><tr><td style="text-align:left">[WO-9](../work-orders/WO-9-pilot-surface-lock.md)</td><td style="text-align:left">Lock the pilot surface set</td><td style="text-align:left">G1</td><td style="text-align:left">Pilot surfaces in a rail; the rest behind an explicit experimental affordance</td></tr><tr><td style="text-align:left">[WO-10](../work-orders/WO-10-deletion-program.md)</td><td style="text-align:left">Proof-gated deletion program</td><td style="text-align:left">none — hygiene</td><td style="text-align:left">Deletion-proof procedure exists <strong>before</strong> anything is deleted</td></tr></tbody></table>
+<h3 id="sequencing">Sequencing</h3>
+<p>``<code> Days 1-4   WO-0   ← the branch is red; nothing else has a signal until this lands Week 1-2   WO-4 ──┐                    (cheap; stops the next regression) WO-1 ──┼── schema authority Week 2-4   WO-2 ──┘ Week 3-5   WO-3          (needs WO-1 + WO-2 complete) Week 4-6   WO-6, WO-9, WO-8 Week 5-7   WO-5 Later      WO-7 (G3), WO-10 (hygiene, never urgent) </code>``</p>
+<p><strong>Start with WO-0, then WO-4.</strong> WO-0 because a red branch means no work order below it can be measured. WO-4 because it is the cheapest item on the list and it is the reason the others can regress while you work on them.</p>
+<h3 id="two-things-explicitly-not-recommended">Two things explicitly <em>not</em> recommended</h3>
+<ul><li>**Do not bulk-delete the 98 unreferenced modules or act on &quot;505 orphan</li></ul>
+<p>endpoints of 884.&quot;** A 57% orphan rate in a system in daily use is a detector-precision artefact — the consumer heuristic does not see dynamic dispatch. <code>unreferenced-modules</code> sits <em>at</em> its baseline of 98, which is a ratchet holding steady, not a fire. WO-10 requires a deletion-proof procedure before a single file is removed.</p>
+<ul><li><strong>Do not rewrite baselines to make gates green.</strong> Every baseline in this</li></ul>
+<p>repository is framed by its own header as a defect list to shrink (<code>unbacked-tables-baseline.json</code>: <em>&quot;Each is a defect awaiting a code-derived migration or a retirement, NOT an approved pattern. Shrink this file; never grow it.&quot;</em>). WO-1 and WO-2 require baselines <strong>deleted</strong>, not rewritten.</p>
+<hr>
+<h2 id="8-what-would-change-this-verdict">8. What would change this verdict</h2>
+<p>The verdict is 🔴 for a real-data pilot on three specific, falsifiable claims. Each has a command that would overturn it:</p>
+<table><thead><tr><th style="text-align:left">Claim</th><th style="text-align:left">Command that would disprove it</th></tr></thead><tbody><tr><td style="text-align:left">The deployed schema is not derivable from the repository</td><td style="text-align:left"><code>ci:duplicate-table-ddl:strict</code> passing with no baseline file</td></tr><tr><td style="text-align:left">A blank database does not provision what the server queries</td><td style="text-align:left"><code>ci:tables-live-schema</code> passing with no baseline, against a fresh install</td></tr><tr><td style="text-align:left">Tenant isolation is asserted, not proven</td><td style="text-align:left">A live two-tenant probe in CI, plus <code>requestdb-coverage</code> at 0</td></tr></tbody></table>
+<p>If those three go green, the real-data pilot bar is met and the remaining work orders are quality, not safety.</p>
+  <div class="footer">Concept2Cure.RI &middot; investor technical brief &middot; grounded in source at each cited path.</div>
+</main>
+</body>
+</html>

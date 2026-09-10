@@ -1,0 +1,229 @@
+{
+  "generated": "2026-09-10T01:27:15.114Z",
+  "excluded": [
+    "scripts/ci/coverage-baseline.json (percentage floor)",
+    "scripts/ci/proof-tier-baseline.json (inverted ratchet — an asset floor)"
+  ],
+  "totals": {
+    "total": 8947,
+    "defectClass": 2244,
+    "lintClass": 6703
+  },
+  "rows": [
+    {
+      "file": "scripts/ci/eslint-warning-baseline.json",
+      "entries": 6596,
+      "class": "lint/cosmetic"
+    },
+    {
+      "file": "docs/reports/purge-coverage-baseline.json",
+      "entries": 611,
+      "class": "defect"
+    },
+    {
+      "file": "scripts/ci/duplicate-exported-types-baseline.json",
+      "entries": 246,
+      "class": "defect"
+    },
+    {
+      "file": "docs/reports/env-var-docs-baseline.json",
+      "entries": 244,
+      "class": "defect"
+    },
+    {
+      "file": "scripts/ci/tenant-resolvers-baseline.json",
+      "entries": 190,
+      "class": "defect"
+    },
+    {
+      "file": "scripts/ci/drizzle-tenant-scope-baseline.json",
+      "entries": 151,
+      "class": "defect"
+    },
+    {
+      "file": "scripts/ci/server-error-leaks-baseline.json",
+      "entries": 151,
+      "class": "defect"
+    },
+    {
+      "file": "scripts/ci/unreferenced-modules-baseline.json",
+      "entries": 98,
+      "class": "defect"
+    },
+    {
+      "file": "docs/reports/requestdb-coverage-baseline.json",
+      "entries": 82,
+      "class": "defect"
+    },
+    {
+      "file": "scripts/ci/dead-audit-tables-baseline.json",
+      "entries": 80,
+      "class": "defect"
+    },
+    {
+      "file": "scripts/ci/tables-live-schema-baseline.json",
+      "entries": 73,
+      "class": "defect"
+    },
+    {
+      "file": "scripts/ci/duplicate-table-ddl-baseline.json",
+      "entries": 63,
+      "class": "defect"
+    },
+    {
+      "file": "scripts/ci/phantom-tokens-baseline.json",
+      "entries": 63,
+      "class": "lint/cosmetic"
+    },
+    {
+      "file": "scripts/ci/insert-columns-baseline.json",
+      "entries": 49,
+      "class": "defect"
+    },
+    {
+      "file": "scripts/ci/unbacked-tables-baseline.json",
+      "entries": 36,
+      "class": "defect"
+    },
+    {
+      "file": "scripts/ci/model-migration-agreement-baseline.json",
+      "entries": 29,
+      "class": "defect"
+    },
+    {
+      "file": "scripts/ci/writerless-stores-baseline.json",
+      "entries": 27,
+      "class": "defect"
+    },
+    {
+      "file": "scripts/ci/shell-css-collisions-baseline.json",
+      "entries": 22,
+      "class": "lint/cosmetic"
+    },
+    {
+      "file": "scripts/ci/css-selector-shadowing-baseline.json",
+      "entries": 21,
+      "class": "lint/cosmetic"
+    },
+    {
+      "file": "scripts/ci/gateway-bypass-baseline.json",
+      "entries": 19,
+      "class": "defect"
+    },
+    {
+      "file": "docs/reports/workflow-target-baseline.json",
+      "entries": 16,
+      "class": "defect"
+    },
+    {
+      "file": "scripts/ci/commonjs-require-baseline.json",
+      "entries": 15,
+      "class": "defect"
+    },
+    {
+      "file": "migrations/.prefix-collisions-baseline.json",
+      "entries": 13,
+      "class": "defect"
+    },
+    {
+      "file": "docs/reports/tenant-entry-points-baseline.json",
+      "entries": 10,
+      "class": "defect"
+    },
+    {
+      "file": "docs/reports/tenant-isolation-baseline.json",
+      "entries": 10,
+      "class": "defect"
+    },
+    {
+      "file": "docs/reports/route-mount-audit-baseline.json",
+      "entries": 8,
+      "class": "defect"
+    },
+    {
+      "file": "scripts/ci/canonicalizers-baseline.json",
+      "entries": 7,
+      "class": "defect"
+    },
+    {
+      "file": "scripts/ci/orm-table-reachability-baseline.json",
+      "entries": 7,
+      "class": "defect"
+    },
+    {
+      "file": "docs/reports/tenant-blind-models-baseline.json",
+      "entries": 5,
+      "class": "defect"
+    },
+    {
+      "file": "scripts/ci/migration-drop-safety-baseline.json",
+      "entries": 2,
+      "class": "defect"
+    },
+    {
+      "file": "docs/reports/path-containment-baseline.json",
+      "entries": 2,
+      "class": "defect"
+    },
+    {
+      "file": "scripts/ci/empty-state-honesty-baseline.json",
+      "entries": 1,
+      "class": "lint/cosmetic"
+    },
+    {
+      "file": ".typecheck-baseline.json",
+      "entries": 0,
+      "class": "defect"
+    },
+    {
+      "file": "docs/reports/no-mock-in-prod-routes-baseline.json",
+      "entries": 0,
+      "class": "defect"
+    },
+    {
+      "file": "scripts/ci/action-overclaim-baseline.json",
+      "entries": 0,
+      "class": "defect"
+    },
+    {
+      "file": "scripts/ci/client-reachability-baseline.json",
+      "entries": 0,
+      "class": "defect"
+    },
+    {
+      "file": "scripts/ci/component-class-coverage-baseline.json",
+      "entries": 0,
+      "class": "defect"
+    },
+    {
+      "file": "scripts/ci/dead-audit-catch-baseline.json",
+      "entries": 0,
+      "class": "defect"
+    },
+    {
+      "file": "scripts/ci/error-envelope-reads-baseline.json",
+      "entries": 0,
+      "class": "defect"
+    },
+    {
+      "file": "scripts/ci/fabricated-identity-baseline.json",
+      "entries": 0,
+      "class": "defect"
+    },
+    {
+      "file": "scripts/ci/internals-in-copy-baseline.json",
+      "entries": 0,
+      "class": "defect"
+    },
+    {
+      "file": "scripts/ci/migration-reachability-baseline.json",
+      "entries": 0,
+      "class": "defect"
+    },
+    {
+      "file": "scripts/ci/orphaned-stylesheets-baseline.json",
+      "entries": 0,
+      "class": "defect"
+    }
+  ]
+}

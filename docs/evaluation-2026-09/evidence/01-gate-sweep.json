@@ -1,0 +1,859 @@
+{
+  "sha": "d31a9db6257e48bd36a72c0c1420f2c055cd68e3",
+  "node": "v22.22.2",
+  "generated": "2026-09-10T01:31:28.536Z",
+  "results": [
+    {
+      "gate": "audit:archive",
+      "code": 1,
+      "ms": 1844,
+      "tail": "ERROR: Set DATABASE_URL or DATABASE_NEON_NEW_SECRET"
+    },
+    {
+      "gate": "audit:dead-code",
+      "code": 0,
+      "ms": 4847,
+      "tail": "  ],\n  \"introduced\": [],\n  \"resolved\": [],\n  \"baselineCount\": 98\n}\nOK: no new unreachable modules."
+    },
+    {
+      "gate": "audit:evidence-pack",
+      "code": 0,
+      "ms": 1952,
+      "tail": "[evidence-pack] wrote docs/reports/evidence-pack-2026-09-10.md (337 lines)\n  Controls: AIOS-04, AIOS-05, AIOS-07, AIOS-02, AIOS-01"
+    },
+    {
+      "gate": "audit:orphaned-endpoints",
+      "code": 0,
+      "ms": 687,
+      "tail": "Summary:    docs/reports/orphan-endpoints-latest.md\nTop owners:\n   380  Platform API Gateway\n    65  CMC Platform\n    36  Identity Access\n    24  Regulatory Intelligence"
+    },
+    {
+      "gate": "audit:orphaned-endpoints:strict",
+      "code": 0,
+      "ms": 598,
+      "tail": "Summary:    docs/reports/orphan-endpoints-latest.md\nTop owners:\n   380  Platform API Gateway\n    65  CMC Platform\n    36  Identity Access\n    24  Regulatory Intelligence"
+    },
+    {
+      "gate": "audit:repo-health:full-strict",
+      "code": 1,
+      "ms": 1025,
+      "tail": "- duplicate basenames: 209   [reported, not gated]\n- files over byte threshold: 42\n- files over line threshold: 95\n❌ repo health strict gate failed:\n   • 42 files exceed 100000 bytes, above the ceiling of 33. The ceiling in package.json moves DOWN only.\n   • 95 files exceed 1500 lines, above the ceiling of 82. The ceiling in package.json moves DOWN only."
+    },
+    {
+      "gate": "audit:repo-health:no-regression",
+      "code": 0,
+      "ms": 713,
+      "tail": "- files over line threshold: 95\n- baseline: docs/reports/repo-health-scan-latest.json\n- delta content-duplicate groups: 0\n- delta duplicate basenames: 0\n- delta files over byte threshold: 0\n- delta files over line threshold: 0"
+    },
+    {
+      "gate": "audit:repo-health:strict",
+      "code": 1,
+      "ms": 677,
+      "tail": "- duplicate basenames: 209   [reported, not gated]\n- files over byte threshold: 42\n- files over line threshold: 95\n❌ repo health strict gate failed:\n   • 42 files exceed 100000 bytes, above the ceiling of 33. The ceiling in package.json moves DOWN only.\n   • 95 files exceed 1500 lines, above the ceiling of 82. The ceiling in package.json moves DOWN only."
+    },
+    {
+      "gate": "audit:ui-authority",
+      "code": 0,
+      "ms": 1226,
+      "tail": "  [PASS] No Poppins font references found in client/\n── Summary ──\n  Passed: 47\n  Failed: 0\n  Total:  47\nAUDIT PASSED — all checks green."
+    },
+    {
+      "gate": "audit:verify:24h",
+      "code": 2,
+      "ms": 191,
+      "tail": "ERROR: Set DATABASE_URL or DATABASE_NEON_NEW_SECRET"
+    },
+    {
+      "gate": "audit:verify:full",
+      "code": 2,
+      "ms": 191,
+      "tail": "ERROR: Set DATABASE_URL or DATABASE_NEON_NEW_SECRET"
+    },
+    {
+      "gate": "ci:action-overclaim",
+      "code": 0,
+      "ms": 280,
+      "tail": "check-action-overclaim: no new occurrences. 0 baselined."
+    },
+    {
+      "gate": "ci:action-overclaim:self-test",
+      "code": 0,
+      "ms": 195,
+      "tail": "  ✓ SubmissionCenterPlanner.pre-fix.tsx.fixture: flagged 1 — e.g. \"Generate plan (plan_submission)\"\n  ✓ client/src/concept2cure/v2/surfaces/Biostatistics.tsx: silent on the repaired source\n  ✓ client/src/concept2cure/v2/editor/RichSectionEditor.tsx: silent on the repaired source\n  ✓ client/src/concept2cure/v2/surfaces/RbmSurfacesA.tsx: silent on the repaired source\n  ✓ client/src/concept2cure/v2/surfaces/SubmissionCenter.tsx: silent on the repaired source\nself-test PASSED — catches the real defect, quiet on the repair."
+    },
+    {
+      "gate": "ci:ana-surface-context",
+      "code": 0,
+      "ms": 199,
+      "tail": "  conversation are grounded on that channel, because the shell draws no rail there.\n  122 ids are registered; 2 of those (ind-lifecycle, task-board) are DEEP_LINK_ALIASES sources the router\n  rewrites before the shell has an active id, so they are not routable and cannot be\n  published under. Ids, not files, are the unit AnA experiences: one file can serve\n  several, and a child can publish for a parent that has no call of its own\n  (77 surface file(s) hold a call)."
+    },
+    {
+      "gate": "ci:artifact-provenance",
+      "code": 0,
+      "ms": 1111,
+      "tail": "[ci:artifact-provenance] 22/22 artifact producers emit provenance; 0 in baseline debt.\n[ci:artifact-provenance] OK — no new provenance-less artifact producers."
+    },
+    {
+      "gate": "ci:audit-logs-fixture",
+      "code": 0,
+      "ms": 367,
+      "tail": "[ci:audit-logs-fixture] audit_logs fixtures vs writeChainedAuditRow\n  columns the writer writes : 16\n  fixtures found            : 16\n✅ every audit_logs fixture accepts the writer's full column list."
+    },
+    {
+      "gate": "ci:audit-route-mounts:full-strict",
+      "code": 0,
+      "ms": 189,
+      "tail": "  • ...and 28 more\nOwner summary (warning/error counts):\n- Platform API Gateway (server/index.ts): 0 errors, 4 warnings\n- CMC Platform (server/routes/cmc*.ts): 0 errors, 2 warnings\n- AI Platform (server/services/ai-gateway/): 0 errors, 1 warnings\n- Platform Kernel (server/routes/concept2cure.ts): 0 errors, 1 warnings"
+    },
+    {
+      "gate": "ci:audit-route-mounts:no-regression",
+      "code": 0,
+      "ms": 186,
+      "tail": "Owner summary (warning/error counts):\n- Platform API Gateway (server/index.ts): 0 errors, 4 warnings\n- CMC Platform (server/routes/cmc*.ts): 0 errors, 2 warnings\n- AI Platform (server/services/ai-gateway/): 0 errors, 1 warnings\n- Platform Kernel (server/routes/concept2cure.ts): 0 errors, 1 warnings\nBaseline delta: +0 new errors, +0 new warnings (baseline: docs/reports/route-mount-audit-baseline.json)"
+    },
+    {
+      "gate": "ci:audit-route-mounts:strict",
+      "code": 0,
+      "ms": 182,
+      "tail": "Owner summary (warning/error counts):\n- Platform API Gateway (server/index.ts): 0 errors, 4 warnings\n- CMC Platform (server/routes/cmc*.ts): 0 errors, 2 warnings\n- AI Platform (server/services/ai-gateway/): 0 errors, 1 warnings\n- Platform Kernel (server/routes/concept2cure.ts): 0 errors, 1 warnings\nBaseline delta: +0 new errors, +0 new warnings (baseline: docs/reports/route-mount-audit-baseline.json)"
+    },
+    {
+      "gate": "ci:ban-new-pool",
+      "code": 0,
+      "ms": 190,
+      "tail": "✅ ban-new-pool: only allowlisted Pool constructions found.\n   (scanned 2738 files)"
+    },
+    {
+      "gate": "ci:baseline-justifications",
+      "code": 0,
+      "ms": 165,
+      "tail": "[ci:baseline-justifications] OK — 6 baseline file(s) all justified, no stale rows."
+    },
+    {
+      "gate": "ci:biostat-calculator-keys",
+      "code": 0,
+      "ms": 167,
+      "tail": "check-biostat-calculator-keys: 106 field keys across 15 calculators, all read by their handlers."
+    },
+    {
+      "gate": "ci:canonicalizers",
+      "code": 0,
+      "ms": 408,
+      "tail": "Local canonicalizers: 7 (baseline 7)\nOK: no new canonicalizers."
+    },
+    {
+      "gate": "ci:check-bundle-reachability",
+      "code": 0,
+      "ms": 3041,
+      "tail": "check-bundle-reachability: 299 runtime imports and 120 mounted routers across 20 registrar/catalog files (0 type-only skipped); 2628 modules in the bundle.\n✅ every registered module reaches the production bundle."
+    },
+    {
+      "gate": "ci:check-chip-tones",
+      "code": 0,
+      "ms": 498,
+      "tail": "[chip-tones] OK — 129 literal tone use(s), all 28 resolve to a CSS rule."
+    },
+    {
+      "gate": "ci:check-client-api-calls",
+      "code": 0,
+      "ms": 1677,
+      "tail": "check-client-api-calls-resolve: 133 client /api prefixes, 319 server /api prefixes.\n✅ every client /api call has a server route behind it."
+    },
+    {
+      "gate": "ci:check-client-reachability",
+      "code": 0,
+      "ms": 220,
+      "tail": "[ci:client-reachability] 409 reachable / 0 unreachable (baseline 0) from client/src/main.tsx.\n[ci:client-reachability] OK — no new unreachable client modules."
+    },
+    {
+      "gate": "ci:check-css-selector-shadowing",
+      "code": 0,
+      "ms": 369,
+      "tail": "[css-shadowing] OK — 41 stylesheets, 21 known shadowed selector(s), 0 new."
+    },
+    {
+      "gate": "ci:check-docx-runtime",
+      "code": 0,
+      "ms": 609,
+      "tail": "Approved runtimes:\n  1. JS docx    → server/services/docx/docxFactory.ts\n                  server/services/docxGenerator.ts\n  2. python-docx → workers/artifact-compute/docx-python-runtime.py\n                  (+ the docx-insert / docx-xml / docx-validate\n                   surgical-edit runtimes in the same directory)"
+    },
+    {
+      "gate": "ci:check-editor-integrity",
+      "code": 0,
+      "ms": 243,
+      "tail": "  @tiptap/extension-text (1 file(s))\n  @tiptap/extension-text-align (1 file(s))\n  @tiptap/pm (9 file(s))\n  @tiptap/react (1 file(s))\n  @tiptap/starter-kit (7 file(s))\nEditor extension integrity check PASSED."
+    },
+    {
+      "gate": "ci:check-embedding-runtime",
+      "code": 0,
+      "ms": 385,
+      "tail": "[ci:embedding-runtime-canonicality] OK — no new direct embedding callers"
+    },
+    {
+      "gate": "ci:check-legacy-dep-quarantine",
+      "code": 0,
+      "ms": 351,
+      "tail": "── @supabase/supabase-js imports (2 found) ──\n  [✓ known] server/services/indCopilot.js:11\n  [✓ known] scripts/setup_reference_model.js:13\n── aws-sdk v2 imports (0 found) ──\n══════════════════════════════════════════════════════════════\nResult: PASS — no new quarantine violations."
+    },
+    {
+      "gate": "ci:check-orphaned-stylesheets",
+      "code": 0,
+      "ms": 243,
+      "tail": "[ci:orphaned-stylesheets] 45 imported / 0 orphaned (0 lines, baseline 0).\n[ci:orphaned-stylesheets] OK — no new orphaned stylesheets."
+    },
+    {
+      "gate": "ci:check-pdf-runtime",
+      "code": 0,
+      "ms": 348,
+      "tail": "[ci:pdf-runtime-canonicality] OK — no new PDF entry points outside the approved list"
+    },
+    {
+      "gate": "ci:check-phantom-tokens",
+      "code": 1,
+      "ms": 308,
+      "tail": "      client/src/concept2cure/v2/surfaces/biostatBridge.tsx:465\nThis renders the fallback every time — the var() is decoration, and the style is\nimmune to any change in the token layer while reading as token-driven in review.\nPoint it at a real token from design-system/colors_and_type.css. If no token fits,\nadd one there first: an invented local literal is how one concept ends up with six\ndifferent colours (see --danger)."
+    },
+    {
+      "gate": "ci:check-route-collisions",
+      "code": 0,
+      "ms": 255,
+      "tail": "check-route-collisions: 10 prefixes carry more than one router; 57 routers read.\n✅ no route is defined twice under a shared prefix."
+    },
+    {
+      "gate": "ci:check-rule-pack-provenance",
+      "code": 0,
+      "ms": 195,
+      "tail": "treat them as unverified. But an undeclared pack tells a filer nothing about\nwhat their submission outline was built from. Add an UPDATE to\nmigrations/20260810c_rule_pack_provenance.sql (or a later provenance migration) stating the basis,\nconfidence and governing rule, and only claim what you actually checked.\n✅ undeclared packs: 5/5 (ceiling is downward-only).\n✅ no pack is marked reviewed without a named reviewer, a date and a tree digest."
+    },
+    {
+      "gate": "ci:check-shell-css-collisions",
+      "code": 0,
+      "ms": 214,
+      "tail": "[ci:shell-css-collisions] 22 class name(s) defined in more than one shell tree (baseline 22) — pdev+v2:22\n[ci:shell-css-collisions] OK — no new cross-shell collisions."
+    },
+    {
+      "gate": "ci:check-test-imports",
+      "code": 0,
+      "ms": 754,
+      "tail": "[ci:test-imports] 2350 test files · 4051 local imports checked · 4935 bare package specifiers skipped (out of scope).\n[ci:test-imports] OK — every local import in every test file resolves."
+    },
+    {
+      "gate": "ci:check-unrun-tests",
+      "code": 0,
+      "ms": 224,
+      "tail": "[ci:unrun-tests] 2341 test files · 13 vitest globs · 4 non-vitest runner globs · 0 unrun (0 allowlisted).\n[ci:unrun-tests] OK — every test file is reachable by a runner, or explained."
+    },
+    {
+      "gate": "ci:committed-secrets",
+      "code": 0,
+      "ms": 5479,
+      "tail": "[ci:committed-secrets] OK — no committed credential material found in tracked files."
+    },
+    {
+      "gate": "ci:commonjs-require",
+      "code": 0,
+      "ms": 333,
+      "tail": "check-commonjs-require: no new occurrences. 16 baselined across 15 file(s)."
+    },
+    {
+      "gate": "ci:component-class-coverage",
+      "code": 2,
+      "ms": 172,
+      "tail": "[ci:component-class-coverage] no built stylesheets in dist/public/assets.\n[ci:component-class-coverage] Run `npm run build` first — this gate reads the SHIPPED css, not source.\n[ci:component-class-coverage] A rule in a stylesheet the bundler never sees does not style anything, so\n[ci:component-class-coverage] measuring against source would count exactly the coverage that is missing."
+    },
+    {
+      "gate": "ci:component-class-coverage:self-test",
+      "code": 0,
+      "ms": 177,
+      "tail": "[ci:component-class-coverage] self-test OK — 17 class-reader cases pass."
+    },
+    {
+      "gate": "ci:coverage-ratchet",
+      "code": 1,
+      "ms": 158,
+      "tail": "[ci:coverage-ratchet] ❌ no coverage summary at coverage/coverage-summary.json.\n  This gate reads the report; it does not produce it. Run the suite with\n  --coverage --coverage.reporter=json-summary first."
+    },
+    {
+      "gate": "ci:db-test-isolation",
+      "code": 0,
+      "ms": 192,
+      "tail": "[ci:db-test-isolation] OK — 20 real-database test file(s) run unmocked, and every mocked vitest config excludes them."
+    },
+    {
+      "gate": "ci:dead-audit-catch",
+      "code": 0,
+      "ms": 319,
+      "tail": "check-dead-audit-catch: no new occurrences. 0 baselined across 0 file(s)."
+    },
+    {
+      "gate": "ci:dead-audit-catch:self-test",
+      "code": 0,
+      "ms": 177,
+      "tail": "  ✓ plain dead catch is flagged\n  ✓ recorded-and-read catch is exempt\n  ✓ recorded but read only OUTSIDE the block is flagged\n  ✓ recorded but only MENTIONED in a comment is flagged\nself-test PASSED — the exemption admits only handling that runs."
+    },
+    {
+      "gate": "ci:dead-audit-tables",
+      "code": 0,
+      "ms": 2427,
+      "tail": "[ci:dead-audit-tables] ✅ 19 dropped + 0 withheld table(s); none declared on the drizzle push surface (11 file(s) scanned); 19/19 in the migration's drop list; 80 permitted mention(s), baseline 80 (shrink-only)."
+    },
+    {
+      "gate": "ci:dead-audit-tables:selftest",
+      "code": 0,
+      "ms": 14298,
+      "tail": "  notices emitted:\n    [dead-audit-drop] keeping public.doc_activity_log — foreign key(s) from live_child point at it.\n    [dead-audit-drop] keeping public.qc_compliance_history — DROP RESTRICT refused: cannot drop table qc_compliance_history because other objects depend on it\n    [dead-audit-drop] KEEPING public.strategy_audit — 1 row(s) present. An audit table with records is evidence under 21 CFR Part 11 §11.10(e), not debris. It needs owner sign-off and a retention disposition before any drop; re-run this migration afterwards and it will be picked up with no edit.\n    [dead-audit-drop] dropped 9, kept 3 (rows / dependencies / wrong relkind), 7 already absent.\n✅ drops what is dead, refuses what is not, and says which is which."
+    },
+    {
+      "gate": "ci:dependency-risk",
+      "code": 1,
+      "ms": 9826,
+      "tail": "Dependency risk gate: unreviewed Critical/High finding(s): @tiptap/core, @xmldom/xmldom, js-yaml, multer, nodemailer"
+    },
+    {
+      "gate": "ci:dependency-risk:reseal",
+      "code": 1,
+      "ms": 2383,
+      "tail": "  - NEW finding not covered by the ledger: GHSA-QFVM-CV95-JQJF against multer (high)\n  - NEW finding not covered by the ledger: GHSA-535W-7CP7-47Q4 against multer (high)\n  - NEW finding not covered by the ledger: GHSA-2X7J-588G-CCC2 against nodemailer (high)\nNothing was written. A reseal only rebinds an unchanged, already-reviewed finding set;\nanything else needs a human-reviewed, evidence-backed ledger row first\n(see docs/security/WO-07-dependency-risk-decision.md, \"Resealing the ledger\")."
+    },
+    {
+      "gate": "ci:design-system",
+      "code": 0,
+      "ms": 306,
+      "tail": "[design-system] OK — no icon-library, spring/bounce or inline <style> violations on live concept2cure surfaces."
+    },
+    {
+      "gate": "ci:document-alias-attribute-free",
+      "code": 0,
+      "ms": 189,
+      "tail": "[ci:document-alias-attribute-free] OK — 1 statement(s) across 1 file(s); c2c_document_aliases still holds identities only."
+    },
+    {
+      "gate": "ci:drizzle-tenant-scope",
+      "code": 0,
+      "ms": 427,
+      "tail": "[ci:drizzle-tenant-scope] OK — 148 site(s), all baselined; 3 fixed since the baseline was written.\n[ci:drizzle-tenant-scope] Re-run with --write-baseline to bank the 3 fix(es)."
+    },
+    {
+      "gate": "ci:drizzle-tenant-scope:selftest",
+      "code": 0,
+      "ms": 441,
+      "tail": "[ci:drizzle-tenant-scope] A route handler takes its ids from the URL, and a serial id is enumerable across\n  the estate. Constrain the organization in the statement, as the sibling handlers in\n  server/routes/c2c/tasks.ts do:\n      .where(and(eq(table.someId, id), eq(table.organizationId, getOrganizationId(req))))\n  A lookup used only to derive an org id must itself be org-scoped, or it is a way to\n  read another tenant's row and adopt its tenancy."
+    },
+    {
+      "gate": "ci:duplicate-exported-types",
+      "code": 1,
+      "ms": 325,
+      "tail": "  ReadinessCheck\n      server/services/biostatistics-bridge/design-adapter.ts\n      server/services/kernel-beta-readiness.ts\nGive each module's type the name of what it actually is. A reader who greps the noun\nmust land on the module that owns it — that is the difference between a canonical\nclaim and a canonical fact."
+    },
+    {
+      "gate": "ci:duplicate-table-ddl",
+      "code": 1,
+      "ms": 228,
+      "tail": "  Every one of these is guarded by CREATE TABLE IF NOT EXISTS, so the\n  surviving column set is decided by migration ORDER, not by code — and\n  it can differ per environment.\n  Fix: define the table in exactly one migration (see ADR-0006).\n  If this is a pre-existing collision being tracked for reconciliation:\n    npm run ci:duplicate-table-ddl:write-baseline"
+    },
+    {
+      "gate": "ci:duplicate-table-ddl:strict",
+      "code": 1,
+      "ms": 219,
+      "tail": "  Every one of these is guarded by CREATE TABLE IF NOT EXISTS, so the\n  surviving column set is decided by migration ORDER, not by code — and\n  it can differ per environment.\n  Fix: define the table in exactly one migration (see ADR-0006).\n  If this is a pre-existing collision being tracked for reconciliation:\n    npm run ci:duplicate-table-ddl:write-baseline"
+    },
+    {
+      "gate": "ci:ectd-stubs",
+      "code": 0,
+      "ms": 3633,
+      "tail": "[ectd-validate] Computed bundle hash: e4446ba912b572d27dbd382f…\n[ectd-validate] ✅ Bundle hash verified: e4446ba912b572d2…\n[ectd-validate] ✅ Proof-pack layout validated\n[ectd-validate] ✅ Cross-reference: leaf_map ↔ sequence_plan leaf_ids are 1:1\n[ectd-validate] ✅ Cross-reference: m1_index leaf_ids ⊆ leaf_map leaf_ids\n[ectd-validate] All eCTD stubs validated successfully (AJV schema + hash + layout + cross-ref)."
+    },
+    {
+      "gate": "ci:empty-state-honesty",
+      "code": 0,
+      "ms": 531,
+      "tail": "check-empty-state-honesty: no new occurrences. 1 baselined across 1 file(s)."
+    },
+    {
+      "gate": "ci:empty-state-honesty:self-test",
+      "code": 0,
+      "ms": 184,
+      "tail": "  ✓ NdaCockpit.pre-fix.tsx.fixture: flagged 2 — e.g. \"You're % ready to file &mdash…\"\n  ✓ client/src/concept2cure/v2/surfaces/NdaCockpit.tsx: silent on the fixed source\n  ✓ BiopharmaSpecialty.pre-fix.tsx.fixture: flagged 3 — e.g. \"{nextMs ? The for is due . Staying ahead of PREA milestones avoids defer…\"\n  ✓ client/src/concept2cure/v2/surfaces/BiopharmaSpecialty.tsx: silent on the fixed source\nself-test PASSED — catches the real defect, quiet on the repair."
+    },
+    {
+      "gate": "ci:error-envelope",
+      "code": 0,
+      "ms": 326,
+      "tail": "[ci:error-envelope] OK — 0 hand-rolled read(s) (baseline 0), none new."
+    },
+    {
+      "gate": "ci:eslint-ratchet",
+      "code": 1,
+      "ms": 105860,
+      "tail": "  Every count here was frozen so the backlog could be paid down, not added to —\n  6.7k warnings is already a green light bolted over a wall of noise, and a new\n  one is invisible in it without this gate. Fix the new warnings (run\n  `npm run lint` for file:line detail, or `node scripts/ci/check-eslint-warning-ratchet.mjs --list`\n  for per-rule counts). Do NOT regenerate the baseline to make room; it moves\n  in one direction."
+    },
+    {
+      "gate": "ci:fabricated-identity",
+      "code": 0,
+      "ms": 1304,
+      "tail": "[ci:fabricated-identity] OK — 0 baselined occurrence(s), 0 new."
+    },
+    {
+      "gate": "ci:fixture-fallback",
+      "code": 0,
+      "ms": 301,
+      "tail": "[ci:fixture-fallback] `live ?? FIXTURE` in client/src/concept2cure\n  ungated content fallbacks  : 0\n  baselined (known, unfixed) : 0\n✅ no new ungated fixture fallback. 0 baselined."
+    },
+    {
+      "gate": "ci:frozen-theme-aliases",
+      "code": 0,
+      "ms": 171,
+      "tail": "[ci:frozen-theme-aliases] scanned 3 stylesheet(s): design-system/colors_and_type.css (163 root / 84 dark), client/src/index.css (65 root / 0 dark), client/src/concept2cure/v2/styles/app-v2.css (15 root / 7 dark)\n[ci:frozen-theme-aliases] OK — no :root alias is frozen against its dark counterpart."
+    },
+    {
+      "gate": "ci:gateway-bypass",
+      "code": 0,
+      "ms": 1498,
+      "tail": "[check-gateway-bypass] OK — no new bypasses (19 baselined site(s) tolerated)."
+    },
+    {
+      "gate": "ci:governed-export-consequence-shape",
+      "code": 0,
+      "ms": 162,
+      "tail": "✅ Governed export consequence shape check passed."
+    },
+    {
+      "gate": "ci:governed-export-consequence-shape:selftest",
+      "code": 0,
+      "ms": 418,
+      "tail": "✅ passes on the unmodified tree\n✅ rejected: the official route stops returning the governed consequence\n✅ rejected: the wrapper REPLACES the consequence instead of spreading it\n✅ rejected: the delivered-bytes hash is dropped from the consequence\n✅ rejected: a cerv2 export route stops declaring its backend route\n✅ Governed export consequence shape self-test passed."
+    },
+    {
+      "gate": "ci:governed-export-routes",
+      "code": 0,
+      "ms": 171,
+      "tail": "✅ Governed export route contract check passed."
+    },
+    {
+      "gate": "ci:insert-columns-declared",
+      "code": 0,
+      "ms": 507,
+      "tail": "  static INSERTs examined      : 710\n  skipped (unjudgeable)        : 7\n  migration lineage tables     : 1075\n  tables unknown to BOTH       : 15\n  baselined (known, unfixed)   : 49\n✅ no new violations. 49 baselined and awaiting burn-down."
+    },
+    {
+      "gate": "ci:insert-columns-declared:selftest",
+      "code": 0,
+      "ms": 304,
+      "tail": "  ok   users.password_hash → present (expected present; Drizzle baseline (not in the increment set))\n  ok   stab_timepoints.month → present (expected present; db/migrations/022_stability_v2.sql, after a comma-bearing comment)\n  ok   stab_timepoints.label → present (expected present; same CREATE TABLE)\n  ok   users.username → absent (expected absent; never declared or created)\n  ok   users.subscribed → absent (expected absent; never declared or created)\n✅ parser agrees with every case whose truth was established against a real database."
+    },
+    {
+      "gate": "ci:internals-in-copy",
+      "code": 0,
+      "ms": 500,
+      "tail": "check-internals-in-copy: no new occurrences. 0 baselined across 0 file(s)."
+    },
+    {
+      "gate": "ci:journey-migration-reachability",
+      "code": 0,
+      "ms": 180,
+      "tail": "[ci:journey-migration-reachability] OK — all 42 golden-journey-declared migrations are on a durable apply path."
+    },
+    {
+      "gate": "ci:js-ts-shadows",
+      "code": 0,
+      "ms": 166,
+      "tail": "[ci:js-ts-shadows] OK — 12 shadow pair(s), all allowlisted with justification"
+    },
+    {
+      "gate": "ci:jwt-verify-pinned",
+      "code": 0,
+      "ms": 344,
+      "tail": "[ci:jwt-verify-pinned] OK — every production jwt.verify call pins an algorithm"
+    },
+    {
+      "gate": "ci:lineage-save-gate",
+      "code": 0,
+      "ms": 469,
+      "tail": "[ci:lineage-save-gate] ok  server/services/ana/submission-chat-apply-rewrite.ts\n[ci:lineage-save-gate] ok  server/services/ai-actions/handlers/refine-with-validation.ts\n[ci:lineage-save-gate] ok  server/services/module3-convergence-service.ts\n[ci:lineage-save-gate] ok  server/routes/q-sub.ts\n[ci:lineage-save-gate] ok  server/services/labeling/labeling-pi-service.ts\n[ci:lineage-save-gate] OK — 16 guarded path(s) enforce lineage on save."
+    },
+    {
+      "gate": "ci:migration-drop-safety",
+      "code": 0,
+      "ms": 224,
+      "tail": "[ci:migration-drop-safety] OK — 261 migrations, 28 DROP(s), none re-created by the set, 2 reviewed exception(s)."
+    },
+    {
+      "gate": "ci:migration-drop-safety:selftest",
+      "code": 0,
+      "ms": 403,
+      "tail": "  ✓ REPEATED — dropper after creator (re-added and re-dropped every deploy)\n  ✓ UNDONE — dropper before creator (the drop reverts on the next deploy)\n  ✓ quiet — drop-and-re-add of the same name in one file\n  ✓ quiet — a DROP nothing in the set re-creates\n  ✓ quiet — a reviewed baseline exception suppresses a real pairing\n[ci:migration-drop-safety:selftest] OK — 5/5 cases; the gate fires on both replay modes and stays quiet on the two safe shapes."
+    },
+    {
+      "gate": "ci:migration-prefix-collisions",
+      "code": 0,
+      "ms": 159,
+      "tail": "[ci:migration-prefix-collisions] OK — no NEW collisions (4 baselined collision prefix(es) tolerated)"
+    },
+    {
+      "gate": "ci:migration-prefix-collisions:strict",
+      "code": 1,
+      "ms": 166,
+      "tail": "  0011:\n    - 0011_ai_threads_title.sql (baselined)\n    - 0011_governed_decision_transitions.sql (baselined)\nFix: rename your new migration to the next free 4-digit prefix.\n     ls migrations/ | grep -E \"^[0-9]{4}_\" | sort | tail -1\nIf the collision is intentional and approved, add it to migrations/.prefix-collisions-baseline.json (re-run with --write-baseline)."
+    },
+    {
+      "gate": "ci:migration-reachability",
+      "code": 0,
+      "ms": 646,
+      "tail": "[ci:migration-reachability] 1354 durably-created tables; 0 server-referenced table(s) created only by a deploy-dead migration; 0 baselined\n[ci:migration-reachability] ✅ no new unreachable table references."
+    },
+    {
+      "gate": "ci:migration-set-order",
+      "code": 0,
+      "ms": 162,
+      "tail": "[ci:migration-set-order] OK — 261 migrations, sweep last, uuid step in the final pair, all present, no duplicates."
+    },
+    {
+      "gate": "ci:model-migration-agreement",
+      "code": 1,
+      "ms": 318,
+      "tail": "  IF NOT EXISTS makes the model a no-op — so code written against these\n  columns raises 42703 on EVERY execution. That is how every document upload\n  in this product returned 500; see\n  migrations/20260821_vault_documents_canonical_shape.sql.\n  Fix by adding a migration that reconciles the table, not by widening this\n  baseline. Use --list to see every divergence."
+    },
+    {
+      "gate": "ci:no-dev-auth-in-prod",
+      "code": 0,
+      "ms": 215,
+      "tail": "[ci:no-dev-auth-in-prod] OK — no leaky dev-auth gates found"
+    },
+    {
+      "gate": "ci:no-dev-auth-in-prod:strict",
+      "code": 0,
+      "ms": 214,
+      "tail": "[ci:no-dev-auth-in-prod] OK — no leaky dev-auth gates found"
+    },
+    {
+      "gate": "ci:no-mock-in-prod-routes",
+      "code": 0,
+      "ms": 416,
+      "tail": "✅ no-mock-in-prod-routes check passed (current=0, baseline=0, new=0)"
+    },
+    {
+      "gate": "ci:node-runtime",
+      "code": 0,
+      "ms": 202,
+      "tail": "Node runtime contracts are pinned to Node 22 (17 fixed surfaces plus active workflows)."
+    },
+    {
+      "gate": "ci:node-runtime:self-test",
+      "code": 0,
+      "ms": 340,
+      "tail": "Node runtime guard self-test passed: 8 simulated drifts were rejected."
+    },
+    {
+      "gate": "ci:org-path-param-guards",
+      "code": 0,
+      "ms": 364,
+      "tail": "[ci:org-path-param-guards] 43 route(s) take an org/tenant id from the path; 43 guarded, 0 not (baseline 0).\n[ci:org-path-param-guards] OK — every org path param is checked against the caller."
+    },
+    {
+      "gate": "ci:orm-reachability",
+      "code": 0,
+      "ms": 518,
+      "tail": "[ci:orm-reachability] OK — 7 unreachable model(s) (baseline 7), none new."
+    },
+    {
+      "gate": "ci:password-hygiene",
+      "code": 0,
+      "ms": 373,
+      "tail": "[ci:password-hygiene] OK — no plaintext compares, weak hashes, or hardcoded passwords found in server/"
+    },
+    {
+      "gate": "ci:password-hygiene:strict",
+      "code": 0,
+      "ms": 371,
+      "tail": "[ci:password-hygiene] OK — no plaintext compares, weak hashes, or hardcoded passwords found in server/"
+    },
+    {
+      "gate": "ci:path-containment",
+      "code": 0,
+      "ms": 711,
+      "tail": "[ci:path-containment] 2 file(s) match the shape; 2 baselined\n[ci:path-containment] OK"
+    },
+    {
+      "gate": "ci:pptx-image-reachability",
+      "code": 0,
+      "ms": 262,
+      "tail": "PPTX image reachability: PASS\n  resolved entry: /home/user/ClinicalSageAI-2-replit/node_modules/pptxgenjs/dist/pptxgen.cjs.js\n  shipped pptxgenjs Node bundle does not import image-size\n  production generator uses no pptxgenjs image-capable API"
+    },
+    {
+      "gate": "ci:proof-tier",
+      "code": 0,
+      "ms": 172,
+      "tail": "      + [tenant-contract] tests/rls-users-preauth-scope.contract.test.ts\n      + [golden-journeys] tests/golden-journeys/cer-eu-mdr.journey.test.ts\n      + [golden-journeys] tests/golden-journeys/device-510k-estar.journey.test.ts\n      + [golden-journeys] tests/golden-journeys/drug-nda-ectd.journey.test.ts\n      + [e2e-browser] tests/e2e/golden-customer-journey.e2e.ts\n[ci:proof-tier] ✅ proof surface intact — no proofs removed, every journey emits a manifest, doc in sync."
+    },
+    {
+      "gate": "ci:proof-tier:strict",
+      "code": 0,
+      "ms": 167,
+      "tail": "      + [tenant-contract] tests/rls-users-preauth-scope.contract.test.ts\n      + [golden-journeys] tests/golden-journeys/cer-eu-mdr.journey.test.ts\n      + [golden-journeys] tests/golden-journeys/device-510k-estar.journey.test.ts\n      + [golden-journeys] tests/golden-journeys/drug-nda-ectd.journey.test.ts\n      + [e2e-browser] tests/e2e/golden-customer-journey.e2e.ts\n[ci:proof-tier] ✅ proof surface intact — no proofs removed, every journey emits a manifest, doc in sync."
+    },
+    {
+      "gate": "ci:purge-coverage",
+      "code": 1,
+      "ms": 176,
+      "tail": "❌ purge-coverage: DATABASE_URL is unset or a placeholder.\n   This check measures a LIVE schema; refusing to pass without one."
+    },
+    {
+      "gate": "ci:reasoning-tier-ga-readiness",
+      "code": 0,
+      "ms": 167,
+      "tail": "✅ Reasoning Tier GA-readiness docs check passed."
+    },
+    {
+      "gate": "ci:reasoning-tier-readiness",
+      "code": 0,
+      "ms": 359,
+      "tail": "   Run with --strict (npm run ci:reasoning-tier-readiness:strict) to make this a failure.\n✅ Reasoning Tier readiness suite passed — DOCUMENTS AND CONTRACTS ONLY.\n   No UAT run evidence exists, so this run establishes no GA readiness.\n   The GA gate is npm run ci:reasoning-tier-readiness:strict, which fails\n   until real evidence is committed under\n   docs/release/evidence/reasoning-tier-uat/<cycle-id>/."
+    },
+    {
+      "gate": "ci:reasoning-tier-readiness:strict",
+      "code": 1,
+      "ms": 335,
+      "tail": "▶ node scripts/ci/check-reasoning-tier-ga-readiness.mjs\n✅ Reasoning Tier GA-readiness docs check passed.\n▶ node scripts/ci/check-reasoning-tier-uat-evidence.mjs --strict\n❌ ⚠️ no UAT run evidence files found under docs/release/evidence/reasoning-tier-uat/<cycle-id>/*.md (strict mode)\n❌ failed: node scripts/ci/check-reasoning-tier-uat-evidence.mjs --strict\nReasoning Tier readiness suite failed (1 step(s) failed)."
+    },
+    {
+      "gate": "ci:reasoning-tier-uat-evidence",
+      "code": 0,
+      "ms": 162,
+      "tail": "⚠️ no UAT run evidence files found under docs/release/evidence/reasoning-tier-uat/<cycle-id>/*.md\nNO_UAT_EVIDENCE — structure only. This is not evidence that UAT was run.\n   Run with --strict (npm run ci:reasoning-tier-readiness:strict) to make this a failure."
+    },
+    {
+      "gate": "ci:reasoning-tier-uat-evidence:strict",
+      "code": 1,
+      "ms": 196,
+      "tail": "❌ ⚠️ no UAT run evidence files found under docs/release/evidence/reasoning-tier-uat/<cycle-id>/*.md (strict mode)"
+    },
+    {
+      "gate": "ci:reg-reference-single-copy",
+      "code": 0,
+      "ms": 238,
+      "tail": "[ci:reg-reference-single-copy] regulatory reference data, one copy each\n  ✓ fallbackTemplates — 1 declaring module(s)\n      server/services/templates/ectd-fallback-templates.ts"
+    },
+    {
+      "gate": "ci:regulated-delete-audit",
+      "code": 0,
+      "ms": 238,
+      "tail": "[regulated-delete-audit] OK — every regulated-table delete has an audit call (or is operator-allow-listed)."
+    },
+    {
+      "gate": "ci:report-branch-drift",
+      "code": 0,
+      "ms": 6980,
+      "tail": "      ... and 597 more\n--- MERGED / EMPTY BRANCHES (1) ---\n  claude/ui-design-kit-review-tpsb71 — MERGED\n======================================================================\n  Total: 2 branches | 1 stranded | 1 merged/empty\n======================================================================"
+    },
+    {
+      "gate": "ci:required-workflow-concurrency",
+      "code": 0,
+      "ms": 336,
+      "tail": "Required-workflow concurrency guard OK — 4 policy-required workflow(s) keep a per-commit run on concept2cure-v2:\n  ✓ CI (.github/workflows/ci.yml)\n  ✓ CodeQL (.github/workflows/codeql.yml)\n  ✓ Semgrep (.github/workflows/semgrep.yml)\n  ✓ Tier 5 Browser Smoke (.github/workflows/tier5-browser-smoke.yml)"
+    },
+    {
+      "gate": "ci:required-workflow-concurrency:self-test",
+      "code": 0,
+      "ms": 201,
+      "tail": "Required-workflow concurrency guard self-test passed: 6 simulated drifts rejected, 3 safe shapes accepted."
+    },
+    {
+      "gate": "ci:requirements-pins",
+      "code": 0,
+      "ms": 802,
+      "tail": "[ci:requirements-pins] OK — 21 pinned package(s) install on Python 3.11 (declared by .replit modules)."
+    },
+    {
+      "gate": "ci:risk-codes",
+      "code": 0,
+      "ms": 697,
+      "tail": "OK: Generated risk code types are up to date."
+    },
+    {
+      "gate": "ci:rls-allowlist-sync",
+      "code": 0,
+      "ms": 177,
+      "tail": "[ci:rls-allowlist-sync] OK — 6 entries match across RLS_ALLOWLIST and 4 consumers"
+    },
+    {
+      "gate": "ci:route-ownership-matrix",
+      "code": 0,
+      "ms": 170,
+      "tail": "✅ Route ownership matrix written: docs/reports/route-ownership-matrix-latest.md"
+    },
+    {
+      "gate": "ci:route-ownership-matrix:check",
+      "code": 0,
+      "ms": 174,
+      "tail": "✅ Route ownership matrix check passed."
+    },
+    {
+      "gate": "ci:saml-fail-closed",
+      "code": 0,
+      "ms": 164,
+      "tail": "✓ SAML SSO fail-closed invariants hold (vetted library, signed assertion required)."
+    },
+    {
+      "gate": "ci:server-error-leaks",
+      "code": 0,
+      "ms": 597,
+      "tail": "[ci:server-error-leaks] OK — 151 baselined site(s) across 92 file(s); no file gained one."
+    },
+    {
+      "gate": "ci:session-scoped-rls-bypass",
+      "code": 0,
+      "ms": 642,
+      "tail": "[ci:session-scoped-rls-bypass] OK — no new session-scoped RLS bypass. 34 baselined occurrence(s) remain in 7 unmounted innovation service(s), every one of them releasing through releaseWithoutBypass(); the baseline may only shrink."
+    },
+    {
+      "gate": "ci:success-before-ok",
+      "code": 0,
+      "ms": 256,
+      "tail": "check-success-before-ok: no occurrences across 151 file(s)."
+    },
+    {
+      "gate": "ci:success-before-ok:self-test",
+      "code": 0,
+      "ms": 191,
+      "tail": "  ✓ DocumentAuthoringRename.pre-fix.tsx.fixture: flagged 1 — e.g. fireToast(`Section renamed — ${code} · ${title}. Its content and history are unchanged.`\n  ✓ client/src/concept2cure/v2/surfaces/AuthoringFilingBar.tsx: silent on the repaired source\n  ✓ client/src/concept2cure/v2/surfaces/Vault.tsx: silent on the repaired source\n  ✓ client/src/concept2cure/v2/surfaces/Biostatistics.tsx: silent on the repaired source\n  ✓ client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx: silent on the repaired source\nself-test PASSED — catches the real defect, quiet on the repair."
+    },
+    {
+      "gate": "ci:surface-discoverability",
+      "code": 0,
+      "ms": 149,
+      "tail": "[ci:surface-discoverability] OK — 122 renderable surface(s): 94 in the Apps catalog, 28 declared contextual."
+    },
+    {
+      "gate": "ci:surface-text-ramp",
+      "code": 1,
+      "ms": 491,
+      "tail": "[ci:surface-text-ramp] FAIL — generated ramp sheet(s) do not match the stylesheets:\n    client/src/concept2cure/v2/styles/surface-text-ramp.css — stale\n  A stylesheet gained or lost a tinted-surface rule, so the re-based\n  text ramp no longer covers what the sources imply. Regenerate:\n    node scripts/design/generate-surface-text-ramp.mjs"
+    },
+    {
+      "gate": "ci:tables-live-schema",
+      "code": 1,
+      "ms": 476,
+      "tail": "  question. Without a live, provisioned database there is nothing to check,\n  and reporting success would make it the very kind of guard it was written\n  to replace. Run it in the blank-db-provisioning job, or locally against a\n  database built by:\n      DATABASE_URL='postgres://…' node scripts/db/install-fresh.mjs\n      DATABASE_URL='postgres://…' node scripts/db/deploy-migrate.mjs"
+    },
+    {
+      "gate": "ci:tenant-blind-models",
+      "code": 1,
+      "ms": 177,
+      "tail": "[ci:tenant-blind-models] 225 table(s) carry a tenant column; 704 model(s) scanned; 4 blind (baseline 5).\n[ci:tenant-blind-models] baseline entr(ies) no longer blind — remove them:\n  shared/cmc-schema.ts::complianceTracking\n  Regenerate: node scripts/ci/check-tenant-blind-models.mjs --write-baseline"
+    },
+    {
+      "gate": "ci:tenant-column-types",
+      "code": 0,
+      "ms": 196,
+      "tail": "[ci:tenant-column-types] OK — all tenant columns are integer-typed"
+    },
+    {
+      "gate": "ci:tenant-entry-points",
+      "code": 1,
+      "ms": 186,
+      "tail": "[ci:tenant-entry-points] 15 entry point(s); 6 consider tenant entitlement, 9 do not (baseline 9)\n[ci:tenant-entry-points] FAIL — 1 baselined entry point(s) CHANGED since justification:\n    server/jobs/retentionCron.ts  (scheduled-sweep)\n  Re-read the justification against the new code. If it still holds, refresh\n  the digest: npm run ci:tenant-entry-points:write-baseline"
+    },
+    {
+      "gate": "ci:tenant-isolation",
+      "code": 0,
+      "ms": 595,
+      "tail": "    L63  tables=[]\n      `SELECT\n    L72  tables=[]\n      `SELECT\n    … 1 more\nTotal: 10 candidate(s). These are RAW SQL queries against known tenant-scoped tables that don't reference an org_id / tenant_id / workspace_id in the same statement. Each one is either a real tenant-isolation bug, needs a `// tenant-isolation-safe: <reason>` marker at the call site, or belongs in the file allowlist with a one-line justification (admin tool / schema migration / pre-tenant-resolution auth)."
+    },
+    {
+      "gate": "ci:tenant-isolation:no-regression",
+      "code": 0,
+      "ms": 592,
+      "tail": "    L63  tables=[]\n      `SELECT\n    L72  tables=[]\n      `SELECT\n    … 1 more\nTotal: 10 candidate(s). These are RAW SQL queries against known tenant-scoped tables that don't reference an org_id / tenant_id / workspace_id in the same statement. Each one is either a real tenant-isolation bug, needs a `// tenant-isolation-safe: <reason>` marker at the call site, or belongs in the file allowlist with a one-line justification (admin tool / schema migration / pre-tenant-resolution auth)."
+    },
+    {
+      "gate": "ci:tenant-isolation:strict",
+      "code": 1,
+      "ms": 648,
+      "tail": "    L63  tables=[]\n      `SELECT\n    L72  tables=[]\n      `SELECT\n    … 1 more\nTotal: 10 candidate(s). These are RAW SQL queries against known tenant-scoped tables that don't reference an org_id / tenant_id / workspace_id in the same statement. Each one is either a real tenant-isolation bug, needs a `// tenant-isolation-safe: <reason>` marker at the call site, or belongs in the file allowlist with a one-line justification (admin tool / schema migration / pre-tenant-resolution auth)."
+    },
+    {
+      "gate": "ci:tenant-resolvers",
+      "code": 1,
+      "ms": 347,
+      "tail": "Local tenant resolvers: 193 (baseline 190)\nFAIL: 3 new local tenant resolver(s). Import { resolveOrgId, resolveUserId } from server/types/auth-request instead:\n  - server/api/cmc/batchRecordRoutes.ts\n  - server/routes/biostat-bridge.ts\n  - server/routes/ind.ts\nA second answer to \"which organization is this\" is a tenant-isolation decision, not a helper."
+    },
+    {
+      "gate": "ci:toast-canonicality",
+      "code": 0,
+      "ms": 660,
+      "tail": "✓ Toast canonicality: one implementation, no hand-rolled renders, no erased tones.\n  (0 render sites on 5 un-converged pill classes are pinned at baseline.)"
+    },
+    {
+      "gate": "ci:token-cascade",
+      "code": 0,
+      "ms": 206,
+      "tail": "  ok   client/src/concept2cure/v2/styles/rich-section-editor.css                        16/16    \n  ok   client/src/concept2cure/v2/styles/submission-v2.css                              12/12    \n  ok   client/src/concept2cure/v2/styles/surfaces-v2.css                                36/36    \n  ok   client/src/concept2cure/v2/styles/translation-v2.css                             34/34    \n  ok   client/src/styles/projects-prototype.css                                         24/24    \n[token-cascade] PASS — all 39 stylesheets resolve cleanly."
+    },
+    {
+      "gate": "ci:token-contrast",
+      "code": 0,
+      "ms": 164,
+      "tail": "✅ token-contrast: 61 pairs checked — text ≥ 4.5:1, non-text ≥ 3:1.\n   15 documented exceptions (brand, muted-text ramp, structural borders) held at or above their recorded ratios."
+    },
+    {
+      "gate": "ci:typecheck:no-regression",
+      "code": 0,
+      "ms": 209139,
+      "tail": "[ci:typecheck-no-regression] running tsc --noEmit (baseline: 0)\n[ci:typecheck-no-regression] errors found: 0 (tsc exit 0)\n[ci:typecheck-no-regression] OK — error count 0 matches baseline."
+    },
+    {
+      "gate": "ci:ui-kits",
+      "code": 0,
+      "ms": 1163,
+      "tail": "[projects] ✓ OK (1 scripts)\n[risk] ✓ OK (4 scripts)\n[submission] ✓ OK (4 scripts)\n[task-tray] ✓ OK (1 scripts)\n[tasking] ✓ OK (3 scripts)\nTotal issues: 0"
+    },
+    {
+      "gate": "ci:unbacked-tables",
+      "code": 0,
+      "ms": 929,
+      "tail": "[ci:unbacked-tables] 1493 tables/views created across migrations, drizzle and runtime DDL; 747 referenced in server SQL; 35 unbacked; 36 baselined\n[ci:unbacked-tables] ✅ no new references to tables nothing creates."
+    },
+    {
+      "gate": "ci:unbacked-tables:strict",
+      "code": 1,
+      "ms": 768,
+      "tail": "  which route handlers turn into a 500 — the endpoint never works. A guarded\n  one degrades to a silent no-op, which is worse: it looks durable and is not.\n  Fix: add a code-derived migration for the table (see ledger C-11/C-14), or\n  point the query at the table that actually holds the data.\n  If this is pre-existing debt being tracked:\n    npm run ci:unbacked-tables:write-baseline"
+    },
+    {
+      "gate": "ci:unreferenced-modules",
+      "code": 0,
+      "ms": 480,
+      "tail": "Unreferenced modules: 98 (baseline 98)\nOK: no new unreachable modules."
+    },
+    {
+      "gate": "ci:unreferenced-modules:strict",
+      "code": 1,
+      "ms": 550,
+      "tail": "Unreferenced modules: 98 (baseline 98)\nFAIL (--strict): 98 unreferenced module(s) remain."
+    },
+    {
+      "gate": "ci:workflow-targets",
+      "code": 0,
+      "ms": 395,
+      "tail": "[ci:workflow-targets] 16 dead reference(s); 16 baselined\n[ci:workflow-targets] OK"
+    },
+    {
+      "gate": "ci:writerless-stores",
+      "code": 0,
+      "ms": 610,
+      "tail": "    qSubQuestions — 3 reader file(s)\n    qSubTimelineEntries — 2 reader file(s)\n    regulatoryObligations — 1 reader file(s)\n    regulatorySequences — 1 reader file(s)\n    reports — 1 reader file(s)\n    sections — 3 reader file(s)"
+    },
+    {
+      "gate": "readiness:check",
+      "code": 0,
+      "ms": 2108,
+      "tail": "── Summary ──\n  All passed:        false\n  Critical failures: 1\n  Warnings:          1\n⚠ WARN: 1 critical failure(s) detected (warn-only mode).\n  1 warning(s) — platform will operate in degraded mode."
+    },
+    {
+      "gate": "readiness:check:strict",
+      "code": 1,
+      "ms": 1378,
+      "tail": "  All passed:        false\n  Critical failures: 1\n  Warnings:          1\n✗ STRICT MODE: 1 critical failure(s) — exiting with code 1.\n  Fix critical issues before deploy.\n{\"level\":40,\"time\":\"2026-09-10T01:31:28.502Z\",\"pid\":5253,\"hostname\":\"vm\",\"context\":{\"criticalFailures\":1,\"warnings\":1,\"failed\":[\"redis_connectivity\",\"ana_ai_provider\"]},\"msg\":\"[startup-invariants] STARTUP INVARIANT FAILURES\"}"
+    }
+  ]
+}
