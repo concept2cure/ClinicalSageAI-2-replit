@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-10T19:07:22.978Z",
+  "generatedAt": "2026-09-10T21:12:01.760Z",
   "git": {
-    "sha": "4fa3e5e2bd0cc672e0c6e4af01f491fdaed249fc",
+    "sha": "41dbc96ffe5ad35c73cc3ee19583ff22c4e2e9e2",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2117,7 +2117,7 @@
       },
       {
         "file": "server/services/ana-ri/context-enrichment.ts",
-        "bytes": 104231
+        "bytes": 105559
       },
       {
         "file": "server/services/ai-gateway/gateway.ts",
@@ -2434,12 +2434,12 @@
         "lines": 1794
       },
       {
-        "file": "server/routes/ana-cortex-ft.ts",
-        "lines": 1785
+        "file": "server/services/ana-ri/context-enrichment.ts",
+        "lines": 1791
       },
       {
-        "file": "server/services/ana-ri/context-enrichment.ts",
-        "lines": 1762
+        "file": "server/routes/ana-cortex-ft.ts",
+        "lines": 1785
       },
       {
         "file": "server/services/ana/submission-chat-handler.ts",
