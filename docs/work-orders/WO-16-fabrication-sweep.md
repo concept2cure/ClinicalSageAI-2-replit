@@ -234,3 +234,117 @@ a response payload rather than source or schema. Its rule lives in
 `scripts/ci/lib/verdict-inspector.mjs` and self-tests first: it must catch the
 seven fabricated shapes this slice found and accept the six honest ones, or the
 gate fails before any surface runs. Then it runs the six surface files.
+
+---
+
+# Verification pass — the fabricated-content lane, 16 findings, one agent each
+
+**Added 10 September 2026 by the schema/gates session.** The Part 11 lane is
+[WO-16B](WO-16B-part11-integrity-session-brief.md) and belongs to the other
+session; this section covers the sixteen findings in the fabricated-content
+cluster.
+
+## Why this pass happened, and what it corrects about the sweep above
+
+The sweep that produced `WO-16-fabrication-findings.json` refuted **4 of 135**
+findings — 3%, against 24% on comparable prior work. I attributed that to my own
+design: every finding from a lens went into ONE verifier prompt, so the verifier
+graded a batch rather than a claim. This pass re-ran verification with **one
+agent per finding**, each required to read the source, quote it, trace the mount
+chain to a `file:line`, and restate the claim in its own words — then two
+adversarial refuters per survivor, on distinct lenses (code-reading, and
+reach/consequence).
+
+**Result: all 16 confirmed, none refuted. But the severity distribution the
+findings file asserts is wrong**, and that is the finding worth recording:
+
+| Severity in `WO-16-fabrication-findings.json` | After per-finding verification |
+|---|---|
+| 16 × critical | **1 critical, 12 high, 2 medium, 1 low** |
+
+So the sweep was reliable about **where** and unreliable about **how bad**. Nine
+of the sixteen also needed their claim narrowed or their attribution corrected.
+Treat the tiers in that JSON as unranked leads.
+
+## The verdict table
+
+| # | File | Verdict | Severity | Status |
+|---|---|---|---|---|
+| 1 | `routes/real-world-evidence.ts` FAERS statistics | CONFIRMED_VERBATIM | high | **FIXED** `bfacd8890` |
+| 2 | `routes/real-world-evidence.ts` outage → all-clear | CONFIRMED_VERBATIM | high | **FIXED** `bfacd8890` |
+| 3 | `routes/ai-assistance.ts` hardcoded credibility | CONFIRMED_VERBATIM | medium | open |
+| 4 | `routes/document-understanding.ts` phantom models | CONFIRMED_VERBATIM | high | open |
+| 5 | `services/ivdrPackContent.ts` failed query → "no records" | CONFIRMED_VERBATIM | high | open |
+| 6 | `services/contradiction-engine-service.ts` Pass-8 swallowing | CONFIRMED_NARROWER | medium | open |
+| 7 | `services/cognitive-ecosystem/fhir-validation.service.ts` | CONFIRMED_NARROWER | **low** | open |
+| 8 | `services/tenant-export/tenant-export.service.ts` | CONFIRMED_VERBATIM | high | open |
+| 9 | `api/cmc/workflowRoutes.ts` CMC doc from a drug name | CONFIRMED_NARROWER | high | open |
+| 10 | `services/intelligence/readiness-scoring-engine.ts` | CONFIRMED_NARROWER | **critical** | **FIXED** `41dbc96ff` |
+| 11 | `protocol-analyzer-service.ts` invented protocols | CONFIRMED_VERBATIM | high | **FIXED** `7c71de271` |
+| 12 | `v2/surfaces/ReportEngine.tsx` fake power calculation | CONFIRMED_VERBATIM | high | **FIXED** `41dbc96ff` |
+| 13 | `routes/biotech-artifacts.ts` invented ICSR/PSUR facts | CONFIRMED_VERBATIM | high | open |
+| 14 | `routes/protocol_routes.ts` fabricated PDF text | CONFIRMED_VERBATIM | high | **FIXED** `7c71de271` |
+| 15 | `protocol-analyzer-service.ts` unconditional FDA/EMA verdict | CONFIRMED_VERBATIM | high | **FIXED** `7c71de271` |
+| 16 | `services/cerGenerationService.ts` contraindications | CONFIRMED_VERBATIM | high | open |
+
+## Corrections to my own findings file — read these before working an entry
+
+These are wrong in `WO-16-fabrication-findings.json` as written. I have not
+rewritten the JSON, because a findings file that silently changes is worse than
+one with a correction list attached:
+
+- **#7 is not critical, it is low.** The claim ("two FHIR rule evaluators return
+  `{ passed: true }` from their catch") is true of the code, and the reach is
+  **zero** — affirmatively disproven at three independent hops, not merely
+  unproven. No mount exists. Fixing it is still correct; prioritising it over
+  #13 would not be.
+- **#9 names the wrong route.** The finding, and the JSDoc it was copied from,
+  say `POST /api/cmc/ai-command`. The router is mounted at `/api/cmc/workflows`.
+  The verifier reproduced the defect by executing the real schema.
+- **#5 attributes the strings to the wrong file.** `ivdrPackContent.ts:148/157/
+  166/175` produce the silent empty result (`.catch(() => ({ rows: [] }))`); the
+  "No analytical validation records." strings live elsewhere. The defect is real
+  and broader than stated — the same catches feed both a count and a resource
+  list.
+- **#8 understates it.** Each swallowed catch feeds both `counts.<resource>` and
+  `resources.<resource>`, so a failed query does not merely misreport a number.
+  The verifier also found the answer already written: `tenant-full-export
+  .service.ts:252-259` is the same team's fix for the same problem. Reuse it
+  rather than inventing a second shape.
+- **#10's stated mechanism is beside the point.** The finding says the engine's
+  fallback "is the only branch that ever runs". Not established — the twin table
+  has a writer — and irrelevant, because **both** branches fabricated. See
+  `41dbc96ff`.
+- **#6 is narrower than "every detector defeats the fail-closed branch".** The
+  swallowing is real and the gate at `:1434` cannot fire for those four; the
+  consequence claim needed narrowing.
+
+## Sites found during the fixes that no finding named
+
+Each was in a file a finding pointed at, and none was in the list:
+
+- `real-world-evidence.ts` never checked `response.ok`, so an openFDA 404, 429
+  or 500 reported **zero reports on the success path** without reaching the
+  catch. Also `demographicDistribution` and `reportsByYear` returned `{}` while
+  never being computed, and `GET /health` asserted eight hardcoded `true`s
+  including `hipaaCompliant` and three analytics with no implementation.
+- `submission-readiness-twin-service.ts:912` was a **second** fabricated
+  approval-probability formula, independent of the one the finding named.
+- `protocol_routes.ts` `POST /optimize-deep` produced "recommendations" by fixed
+  arithmetic on defaults, with rationales citing trial and benchmark evidence it
+  never read, while destructuring `prediction` and `benchmarks` and using
+  neither. Disabled (501), following the `/generate` precedent in the same file.
+- `protocol-analyzer-service.ts` also asserted `global_compliance: {FDA: true,
+  EMA: true, ...}`, a monitoring determination, and invented geographic regions.
+- `protocol-optimizer-service.ts` stamps `confidence: 0.9 / 0.8 / 0.7` on
+  rule-based recommendations. **Still open** — the constants are per-rule and
+  the field name asserts a computed confidence.
+
+## Open, in the order I would take them
+
+**#13 `biotech-artifacts.ts`** is the one I would do next: it invents the
+clinical facts of an E2B(R3) ICSR, a PSUR and a CIOMS-I — `seriousness ||
+'non_serious'`, `causality || 'possible'` — which are regulated safety-report
+content. Then **#5** and **#8** (both are the same "failed query rendered as an
+empty result" shape, and #8 has a fix to copy), then **#4**, **#16**, **#9**,
+**#3**, **#6**, and **#7** last on reach.
