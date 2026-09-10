@@ -732,7 +732,7 @@ clean-room snapshot cannot see.
 
 ## 7. Work orders
 
-Twelve work orders, in `docs/work-orders/`. **WO-0 comes before all of them** —
+Thirteen work orders, in `docs/work-orders/`. **WO-0 comes before all of them** —
 until the branch is green there is no signal to work against. WO-1 and WO-2 are
 hard prerequisites for WO-3; WO-3 is a hard prerequisite for putting real
 customer data in front of anyone.
@@ -751,6 +751,7 @@ customer data in front of anyone.
 | [WO-9](../work-orders/WO-9-pilot-surface-lock.md) | Lock the pilot surface set | G1 | Pilot surfaces in a rail; the rest behind an explicit experimental affordance |
 | [WO-10](../work-orders/WO-10-deletion-program.md) | Proof-gated deletion program | none — hygiene | Deletion-proof procedure exists **before** anything is deleted |
 | [WO-12](../work-orders/WO-12-complexity-refactor.md) | Complexity growth now inside the eslint baseline | none — deferred | `complexity` ≤ 1,687 and `max-lines-per-function` ≤ 1,190 |
+| [**WO-14**](../work-orders/WO-14-cortex-prime-is-broken-and-mounted.md) | **Cortex Prime is mounted and broken on every write path** | **G1+** | A product decision: unmount it, or converge the schema *and* fix the service. Verified by execution — a review materialised both applier shapes on a real PostgreSQL 16 and ran the service's literal SQL; 11 methods fail, on a router that answers at `/api/cortex` |
 | [**WO-13**](../work-orders/WO-13-grdhe-tenant-scoping.md) | **Give the audit trails a tenant key** | **G1+** | `electronic_signatures` carries a tenant column and is `tenant`-scoped rather than refused; `regulatory_harmonization.audit_log` and `audit.tamper_proof_log` each have a key, a policy, **or** a written exemption naming the cross-org reader that needs one |
 
 **A withdrawn finding, kept here because the retraction is the useful part.**

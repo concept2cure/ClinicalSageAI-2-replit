@@ -1,8 +1,49 @@
 /**
- * Cortex Prime Service Integration Tests
- * 
- * Baseline tests before consolidation refactoring.
- * These tests ensure core functionality remains intact during cleanup.
+ * Cortex Prime Service — MODULE SHAPE ONLY. These are not integration tests.
+ *
+ * ── RELABELLED 2026-09-10 (WO-1/WO-14), because the old title was a claim ────
+ * This file called itself "Cortex Prime Service Integration Tests" and said
+ * "these tests ensure core functionality remains intact". It does neither.
+ * Every one of its 29 assertions is `expect(typeof service.X).toBe('function')`
+ * — it verifies that TypeScript exports exist. No method is called, and the
+ * pool is mocked to answer `{ rows: [] }` to any query, so even if one were,
+ * the SQL would never meet a schema.
+ *
+ * That matters because of what the file was green over. An adversarial review
+ * on 2026-09-10 materialised the cortex schema from the migrations, in each
+ * applier's own sort order, on a real PostgreSQL 16 and ran this service's
+ * literal SQL against it. Result: getAtom, updateAtom, deleteAtom (:310, :355,
+ * :367), getThread (:555) and getExpertiseScores (:846) all fail with
+ * `column "is_active" does not exist` — no definition of cortex.atoms,
+ * cortex.threads or cortex.expertise_scores has that column, on any applier, and
+ * no ALTER adds it. Every write method is worse: createAtom wants
+ * source_id/quality_score/metadata, createThread wants
+ * title/context_atom_ids/expires_at, createAgent wants
+ * agent_name/description/prompt_template, createEdge wants evidence/metadata,
+ * createTrace wants input/output/reasoning/status/token_usage — none of which
+ * any migration creates. The failing column even DIFFERS BY ENVIRONMENT:
+ * createEdge dies on `evidence` against an operator-provisioned database and on
+ * `strength` against a fresh install, because the two appliers build different
+ * shapes (evaluation §4).
+ *
+ * `/api/cortex` is mounted — startup/routes.ts:127 -> bootstrap/
+ * register-document-routes.ts:425 -> cortex-unified.ts:1145 — so those are live
+ * HTTP 500s, not dead code.
+ *
+ * Mocking the exact boundary where the bug lives is why this survived. A mock
+ * that answers `{ rows: [] }` to every query cannot distinguish a correct query
+ * from one naming a column that does not exist, and asserting on `typeof`
+ * removes even that chance.
+ *
+ * These assertions are KEPT — a module that stops exporting its API is worth
+ * catching, and the file's own history says the mock target was wrong once
+ * before. They are relabelled so nobody reads them as coverage of behaviour.
+ * The real coverage this subsystem needs is a schema-contract test that applies
+ * the cortex migrations and runs the service's SQL; that is WO-14, along with
+ * the product decision the review could not make — whether Cortex Prime is a
+ * live capability or dead code, given that
+ * docs/validation/IQ-CORTEX-001-INSTALLATION_QUALIFICATION.md presents it as
+ * qualified.
  */
 
 import { describe, it, expect, vi } from 'vitest';
@@ -22,7 +63,7 @@ vi.mock('../../db', async (importOriginal) => {
   return { ...actual, getPool: vi.fn(() => fakePool) };
 });
 
-describe('CortexPrimeService', () => {
+describe('CortexPrimeService — module shape (NOT behaviour; see the header)', () => {
   describe('Atom Operations', () => {
     it('should create an atom with required fields', async () => {
       const { CortexPrimeService } = await import('../../services/cortexPrimeService');
