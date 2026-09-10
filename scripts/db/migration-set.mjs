@@ -2026,6 +2026,18 @@ export const C2C_MIGRATION_FILES = [
   // Additive, IF NOT EXISTS; a replay is a no-op.
   'migrations/20260908b_estar_submissions_filed_artifact.sql',
 
+  // ── contradiction_links: restore a table this repo stopped creating ───────
+  // Its only creator was migrations/0010_operating_system_foundation.sql, which
+  // is dead on deploy-migrate but was NEVER dead on install-fresh (that overlay
+  // reads every migrations/*.sql). Retiring 0010 in 9a47438b6 therefore removed
+  // the table from every future fresh install, and no repository-only gate saw
+  // it — ci:tables-live-schema caught it against a real provisioned database.
+  // Listed HERE, not restored to the root tree, so RULE 1's replay carries it to
+  // databases that already exist. Must stay ABOVE the sweep so the sweep
+  // policies it — and above the uuid step too, because ci:migration-set-order
+// pins the FINAL PAIR to the two isolation steps. See ADR-0007 point 6.
+  'db/migrations/20260910_contradiction_links_port.sql',
+
   UUID_TENANT_ISOLATION_NONPUBLIC,
 
   // ── Tenant isolation for everything the set just created (ledger C-33) ───

@@ -696,22 +696,52 @@ router.post('/contradiction-links', async (req: Request, res: Response) => {
       });
     }
 
-    // createContradictionLink is a no-arg compatibility shim on the current service.
-    await service.createContradictionLink();
+    // ── Actually persists, as of 2026-09-10 (WO-2) ──────────────────────────
+    // This used to call `service.createContradictionLink()` with NO ARGUMENTS —
+    // against a method that returns null unless six of them are present — and
+    // then answer HTTP 201 Created with a `data` object built by echoing the
+    // caller's own request back. Nothing was written, and GET below answered
+    // `[]`, which reads as "this project has no contradictions" rather than
+    // "this endpoint stores nothing". A 201 for a record that does not exist is
+    // worse than a 500: the client is told the write succeeded and handed a
+    // plausible representation of it.
+    //
+    // It was a shim because `contradiction_links` did not exist on any
+    // provisioned database — its only creator, migrations/0010, was retired in
+    // 9a47438b6 and had been reachable on install-fresh alone. The table is now
+    // created by db/migrations/20260910_contradiction_links_port.sql, on
+    // C2C_MIGRATION_FILES so RULE 1's replay reaches existing databases too, and
+    // the canonical sweep policies it (verified: dropped the table, one
+    // deploy-migrate pass recreated it and reported "tenant_isolation_policy
+    // applied to 1 newly-provisioned table(s)").
+    //
+    // So the arguments the handler already validated are now passed through, and
+    // the response reports what was STORED rather than what was sent.
+    const link = await service.createContradictionLink(
+      orgId,
+      projectId,
+      sourceType,
+      sourceId,
+      targetType,
+      targetId,
+      comparisonType,
+      { ...options, createdById: userId },
+    );
 
-    res.status(201).json({
-      success: true,
-      data: {
-        projectId,
-        sourceType,
-        sourceId,
-        targetType,
-        targetId,
-        comparisonType,
-        ...options,
-        createdById: userId,
-      },
-    });
+    // The service still swallows a write failure and returns null (its catch
+    // logs "table unavailable (non-blocking)"). Until that is tightened, treat
+    // null as the failure it is rather than reporting success over it.
+    if (!link) {
+      return res.status(500).json({
+        success: false,
+        error: {
+          code: 'CONTRADICTION_LINK_NOT_STORED',
+          message: 'The contradiction link could not be stored. Nothing was written.',
+        },
+      });
+    }
+
+    res.status(201).json({ success: true, data: link });
   } catch (error: any) {
     res.status(400).json({ success: false, error: error.message });
   }
@@ -731,9 +761,13 @@ router.get('/contradiction-links', async (req: Request, res: Response) => {
       return res.status(400).json({ success: false, error: 'projectId is required and must be a number' });
     }
 
-    // The current registry service does not persist contradiction links
-    // (createContradictionLink is a no-op shim), so none can be retrieved.
-    const links: unknown[] = [];
+    // ── Actually reads, as of 2026-09-10 (WO-2) ─────────────────────────────
+    // This returned `{ success: true, data: [], count: 0 }` without looking at
+    // anything, which asserts "we checked and this project has none". An empty
+    // result is a claim about the data, and it was the more dangerous direction
+    // here: "no contradictions found" is exactly the answer a reviewer wants.
+    // The table now exists (see the POST above), so this queries it.
+    const links = await service.getContradictionLinks(projectId, orgId);
     res.json({ success: true, data: links, count: links.length });
   } catch (error: any) {
     return serverError(res, logger, 'loading contradiction links', error);

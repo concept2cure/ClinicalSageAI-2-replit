@@ -1,9 +1,9 @@
 {
-  "_comment": "Tables the server QUERIES that do not exist on a database built by a full, successful provisioning run (install-fresh + deploy-migrate). Unlike ci:unbacked-tables and ci:migration-reachability \u2014 which compare the repo to itself and can only tell you whether some file CLAIMS to create a table \u2014 every entry here was checked against a real PostgreSQL and was not there. Each one is an endpoint that 500s on \"relation does not exist\", or a write inside a try/catch that silently discards its data. This file may only SHRINK: fix an entry (add the creating migration to a durable applier, or delete the dead query) and remove it here. Re-running --baseline to make a failure go away converts a caught defect into an accepted one.",
+  "_comment": "Tables the server QUERIES that do not exist on a database built by a full, successful provisioning run (install-fresh + deploy-migrate). Unlike ci:unbacked-tables and ci:migration-reachability \u2014 which compare the repo to itself and can only tell you whether some file CLAIMS to create a table \u2014 every entry here was checked against a real PostgreSQL and was not there. Each one is an endpoint that 500s on \"relation does not exist\", or a write inside a try/catch that silently discards its data. This file may only SHRINK: fix an entry (add the creating migration to a durable applier, or delete the dead query) and remove it here. Re-running --baseline to make a failure go away converts a caught defect into an accepted one. | RATCHETED DOWN 2026-09-10 (WO-2): 73 -> 71. `tasks` and `vault.document_chunks` now exist on a from-scratch database and the gate named them as ratchet-down candidates. Verified against a real PostgreSQL 16 + pgvector built by install-fresh + deploy-migrate (261/261 files applied, readiness contract green): 1280 relations, 785 referenced by server SQL. Only these two entries were removed, by hand rather than by regenerating the file, because this database is PG16 while CI's blank-db-provisioning job uses pgvector/pgvector:pg15 \u2014 a wholesale regenerate from a different major version could silently move entries the gate never named.",
   "generatedAt": "2026-09-02T21:49:45.720Z",
   "liveRelationCount": 1272,
   "referencedCount": 774,
-  "count": 73,
+  "count": 70,
   "tables": {
     "academic_embeddings": [
       "server/academic-knowledge-tracker.ts"
@@ -203,18 +203,11 @@
     "step_runs": [
       "server/services/workflow/WorkflowExecutionEngine.ts"
     ],
-    "tasks": [
-      "server/routes/concept2cure.ts"
-    ],
     "trials": [
       "server/storage.ts"
     ],
     "user_roles": [
       "server/services/rules-engine/actions/index.ts"
-    ],
-    "vault.document_chunks": [
-      "server/services/advancedRAGPipeline.ts",
-      "server/workers/layout-aware-ingestion.ts"
     ],
     "vault.drafting_sessions": [
       "server/api/drafting/routes.ts"
