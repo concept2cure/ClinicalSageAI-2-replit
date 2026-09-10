@@ -16551,6 +16551,21 @@ registerToolHandler('get_submission_readiness_twin', async (input, ctx) => {
         'Lead with the overall score, its trend, and the criteria met-vs-total. Then the ranked recommendations with their effort, because that is what the user acts on. Report per-module readiness where it is uneven rather than averaging it away. The predicted approval probability, review time and deficiency count are MODEL ESTIMATES from historical patterns — attribute them as such and never assert them as the likelihood of approval.',
     });
   } catch (err: any) {
+    // programBelongsToOrg now THROWS when every program->org source failed to
+    // run, rather than returning false (2026-09-10). Keep that distinction all
+    // the way out to the model: "we could not check" must not be paraphrased
+    // to the user as "no such program", which is what a bare error string
+    // invites. The instruction to withhold a score is the important half —
+    // a readiness figure for an unverified program is an invented answer.
+    if (err?.name === 'GuardUnavailableError') {
+      return JSON.stringify({
+        status: 'ownership_unverifiable',
+        message:
+          'The check that proves this program belongs to this organization could not be run, so no ' +
+          'program data was read. Do NOT report a readiness score, and do NOT tell the user the program ' +
+          'does not exist — neither is known. Say the check is unavailable and stop.',
+      });
+    }
     return JSON.stringify({ error: `get_submission_readiness_twin failed: ${err?.message || 'unknown error'}` });
   }
 });
