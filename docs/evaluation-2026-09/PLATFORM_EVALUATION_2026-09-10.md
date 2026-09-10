@@ -778,6 +778,12 @@ Week 1-2   WO-4 ──┐                    (cheap; stops the next regression)
            WO-1 ──┼── schema authority
 Week 2-4   WO-2 ──┘
 Week 3-5   WO-3          (needs WO-1 + WO-2 complete)
+           WO-14         (a product decision, not engineering — do it early;
+                          it decides whether WO-1's cortex work happens at all)
+
+  NOTE: WO-1's remaining 47 are BLOCKED on WO-2, not merely sequenced after it.
+  Four of five adversarial refutations turned on what a POPULATED database
+  already contains, which no repository-only check can see (§4.2b).
 Week 3-5   WO-13         (the other half of the grdhe fix — do not let this sit)
 Week 4-6   WO-6, WO-9, WO-8
 Week 5-7   WO-5
@@ -787,6 +793,45 @@ Later      WO-7 (G3), WO-10 (hygiene, never urgent)
 **Start with WO-0, then WO-4.** WO-0 because a red branch means no work order
 below it can be measured. WO-4 because it is the cheapest item on the list and
 it is the reason the others can regress while you work on them.
+
+### What adversarial review cost, and what it bought
+
+WO-1's remaining 47 duplicate definitions were put through five specialist
+analysts and ten independent adversarial verifiers — fifteen agents, roughly two
+million tokens, about an hour. **Nine of the ten verifications came back
+refuted.** Every group's proposed remediation carried at least one defect that
+would have made the repository or a customer database worse:
+
+- a fix that would have introduced a **third** schema shape rather than
+  converging two;
+- an apply-set **proven by execution** to abort partway and leave
+  `to_regclass('public.audit_logs')` null — strictly worse than the state it
+  replaced;
+- a rename whose appended `UPDATE` would have rolled back its own file under
+  install-fresh's per-file transaction, **deleting four tables from every fresh
+  install**;
+- a rename that is a **no-op on every existing deployment**, because its file is
+  not on the only applier that touches a populated database;
+- a baseline deletion that breaks a **blocking** CI step, demonstrated by running
+  the gate.
+
+And one verifier caught an analyst repeating this evaluation's own signature
+error, having been explicitly warned about it: *"It states 'NOTHING IN server/
+QUERIES THIS TABLE', calls the grep 'Exhaustive' … Running that identical grep
+returns five live query sites … the import line was read, the handler bodies
+were not."*
+
+What survived was the **diagnosis**, in every group and under every lens: the
+applier map, the winner per applier, the column divergences, the runtime
+impacts. Verifiers re-derived them from source rather than trusting this
+evaluation's own evidence files, and could not break them.
+
+**So the 47 are now understood and none of them was touched.** That is the right
+outcome, and it is the argument for the method: an hour of adversarial review
+instead of a bad deploy to discover the same five things. It is also why WO-1's
+remaining scope is now marked *blocked on WO-2* rather than merely sequenced
+after it — four of the five refutations turned on what a **populated** database
+already contains, which no repository-only gate can see.
 
 ### Two things explicitly *not* recommended
 

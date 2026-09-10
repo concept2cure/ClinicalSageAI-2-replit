@@ -1,7 +1,7 @@
 # WO-1 — Establish schema authority
 
 **To:** JM Smith · **From:** Claude Code · **Date:** 10 September 2026
-**Status:** OPEN · **Blocks:** external pilot on real customer data
+**Status:** OPEN — duplicates 64 → 47; remaining scope BLOCKED on WO-2 (see the third pass) · **Blocks:** external pilot on real customer data
 **Prerequisite for:** WO-2, WO-3
 
 ---
@@ -355,3 +355,95 @@ table on every deploy, forever, with nobody reading the result.
   failure rather than a note.
 
 Run the report against every environment before running `--delete` against any.
+
+---
+
+## PROGRESS — 2026-09-10, third pass: the remaining 47, put through adversarial review
+
+**Outcome: none of it was applied, and that is the result.** Five specialist
+analysts took the 47 remaining collisions in five groups; two independent
+adversarial verifiers then attacked each group's proposals under two lenses —
+applier-order and blast-radius. Fifteen agents, ~2.0M tokens, 607 tool calls,
+about an hour.
+
+**Nine of the ten verifications came back refuted. Every group's remediation
+contained at least one defect that would have made the repository or a customer
+database worse.** The tenth — the applier-order lens on the fifth group — came
+back clean.
+
+### The pattern in the results
+
+**The diagnosis held everywhere; the prescription failed everywhere.** Every
+verifier independently re-derived the applier globs from source rather than
+trusting the evidence JSON, and every one confirmed the winner-per-applier map,
+the column-set divergences and the runtime impacts. One re-derived
+`C2C_MIGRATION_FILES` by importing the real array (261 entries) and testing all
+fifteen named files; another noted the sweep is genuinely last via a `const` at
+`migration-set.mjs:2040` that a naive regex parse misses.
+
+So the 47 are now understood. What nobody had was a safe way to fix them.
+
+### What the review stopped, specifically
+
+| Group | The proposal | Why it was refused |
+|---|---|---|
+| cortex | Add `073` to install-fresh, amend `079` | `CREATE TABLE IF NOT EXISTS` never adds a column to an existing table, so it changes only databases provisioned afterwards — **a change filed to remove a two-shape divergence would have introduced a third, keyed on install date** |
+| non-lineage | Run four migrations from the `db-verify` README under `ON_ERROR_STOP=1` | **Proven by execution** on PGlite: aborts at statement 11 on `relation "audit_events" does not exist`, so the three files queued behind it never run and `to_regclass('public.audit_logs')` ends `null`. Strictly worse than today |
+| split-applier | Rename `notes` → `execution_notes` and append an `UPDATE` | On a fresh box the `CREATE TABLE` no longer has `notes`, so the appended `UPDATE` raises 42703 — and install-fresh's overlay wraps each file in its own transaction and **rolls the whole file back**, deleting all four contradiction tables from every fresh install |
+| same-applier-root | Rename the `risk_items` pair | `migrations/20260609_design_risk.sql` is not in `C2C_MIGRATION_FILES`, and `deploy-migrate` is the only applier that touches a populated database — so the rename is a **no-op on every existing deployment** and `/api/design-risk` stays broken |
+| concept2cure-core | Widen `044b`'s `core.programs`, delete the baseline entry | Widening leaves **both** `CREATE TABLE`s in place, so deleting the baseline entry unbaselines a still-live collision and `ci:duplicate-table-ddl` — a blocking step at `ci.yml:91` — exits 1. The verifier proved it by running the gate |
+
+And one that is worth quoting, because it is the failure mode this work order's
+own history warned about, repeated by an agent that had been told about it:
+
+> *It states "NOTHING IN server/ QUERIES THIS TABLE", calls the grep
+> "Exhaustive" … Running that identical grep returns five live query sites …
+> This is the prior session's exact failure mode restated — the import line was
+> read, the handler bodies were not.*
+
+`concept2cure_review_comments` is written on every review-comment POST. The
+proposal would have handed a future dead-table sweep a live table.
+
+### What this changes
+
+**Stop attacking the remaining 47 file by file.** The evidence says the
+per-collision edit is not the unit of work:
+
+1. **Convergence needs a migration, not an amendment** (exit criterion B above).
+   Every safe fix for a *divergent* table is an `ALTER TABLE … ADD COLUMN IF NOT
+   EXISTS` inside `C2C_MIGRATION_FILES`, because that is the only replaying
+   path. Editing creators is for the repository half only.
+2. **It cannot be verified from the repository.** Four of the five refutations
+   turned on what a *populated* database already contains — which shape it was
+   provisioned with, whether the table already exists, whether the column is
+   there. `ci:duplicate-table-ddl:strict` reads files and cannot see any of it.
+   **So WO-1's remaining scope is blocked on WO-2**, which stands up a database
+   to measure against. Proceeding without one is how five plausible proposals
+   became five defects.
+3. **The gate that would catch a bad convergence does not exist.** Nothing
+   checks that a table with two definitions has an `ADD COLUMN` step reaching
+   every environment. Proposed for WO-5, alongside the skip-reason check WO-8
+   surfaced.
+
+### Recorded for whoever picks this up
+
+Findings that survived every lens, and are safe to act on once WO-2 provides a
+database:
+
+- The seven `cortex.*` `079` stubs that lose to `074`/`077`/`078` on every
+  applier are dead code, not divergence — only **five** cortex tables actually
+  diverge (WO-14).
+- `db/migrations/20260501_q_sub.sql` and `migrations/20260501_q_sub.sql` are
+  **byte-identical** (md5 `ebad5201783623187705fae35c4f6bde`, empty diff). A
+  duplicate with no divergence is the cheapest class in the set.
+- `scripts/db-verify/00_bootstrap_base.sql` and the `sql/` files are on no
+  applier; the collisions involving them are a categorisation question, not a
+  schema one — but see the non-lineage row above before touching the README's
+  apply set.
+- `cortex.expertise_scores` has RLS enabled and no tenant column at all
+  (`077:534` after a `-- NO org_id` comment), and `cortex.health_check()`
+  returns `status: error` on every applier because it sizes two indexes no file
+  creates.
+
+**The most useful thing this pass produced is a negative result, and it cost
+about an hour to get instead of a bad deploy to discover.**
