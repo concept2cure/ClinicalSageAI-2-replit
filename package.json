@@ -58,6 +58,7 @@
     "pack:platform-evaluation": "node scripts/build-investor-brief.mjs --in docs/evaluation-2026-09/PLATFORM_EVALUATION_2026-09-10.md --out docs/evaluation-2026-09/downloads/Concept2Cure-Platform-Evaluation-2026-09-10.html",
     "pack:platform-evaluation:pdf": "node scripts/build-investor-brief.mjs --in docs/evaluation-2026-09/PLATFORM_EVALUATION_2026-09-10.md --out docs/evaluation-2026-09/downloads/Concept2Cure-Platform-Evaluation-2026-09-10.html --pdf --pdf-out docs/evaluation-2026-09/downloads/Concept2Cure-Platform-Evaluation-2026-09-10.pdf",
     "pack:iq-oq": "node scripts/ops/generate-iq-oq-pack.mjs",
+    "ops:audit-fabricated-capa": "node scripts/ops/audit-fabricated-capa-rows.mjs",
     "pack:iq-oq:run": "node scripts/ops/generate-iq-oq-pack.mjs --run",
     "ocr:vendor": "node scripts/vendor-tesseract-langdata.mjs",
     "lint": "eslint .",

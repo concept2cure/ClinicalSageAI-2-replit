@@ -45,8 +45,15 @@
 --    REMOVING THE STATEMENT DOES NOT REMOVE THE ROWS ALREADY WRITTEN. Existing
 --    databases need an audit before those rows are deleted, because a customer
 --    may have edited or referenced one; that is an operator task with a human
---    decision in it, not something a replayed migration should do silently. See
---    the WO-1 outcome note.
+--    decision in it, not something a replayed migration should do silently.
+--
+--    The audit is scripts/ops/audit-fabricated-capa-rows.mjs
+--    (`npm run ops:audit-fabricated-capa`). It reports by default and deletes
+--    only on --delete, and only rows that still match the seed EXACTLY on
+--    study_id, title, why, owner and status. A row someone has since edited is
+--    reported for a human and never deleted, because an edited CAPA may carry
+--    real investigation content. Run the report against every environment
+--    before running --delete against any.
 --
 -- Which change removed them: WO-1, schema authority. The canonical creator for
 -- stab_results is and remains db/migrations/022_stability_v2.sql.

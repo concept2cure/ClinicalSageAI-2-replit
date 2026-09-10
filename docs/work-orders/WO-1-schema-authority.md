@@ -279,3 +279,26 @@ into no pipeline, unrelated.
 raw SQL — had DDL only in the retired file and throws in production today.
 Deleting the Drizzle model does not change that; porting the table or retiring
 the sub-feature remains the scoped follow-up the ADR records.
+
+### Operator follow-up for the fabricated CAPA rows
+
+`scripts/ops/audit-fabricated-capa-rows.mjs` (`npm run ops:audit-fabricated-capa`).
+
+Removing the INSERT stopped the bleeding; it did not remove the ~2N rows already
+written to every environment. This script closes that out, and is deliberately
+not a migration: a DELETE in a replayed migration would run against a regulated
+table on every deploy, forever, with nobody reading the result.
+
+- **Reports by default**, deletes only on `--delete`, `--json` for an evidence pack.
+- Deletes only rows still matching the seed **exactly** on `study_id`, `title`,
+  `why`, `owner` and `status`. `due_date` is excluded from the match on purpose —
+  the migration computed it as `CURRENT_DATE + INTERVAL`, so no two copies agree
+  on it and matching on it would find nothing.
+- A row that has been **edited since seeding is never deleted**. It is reported
+  separately for a human, because an edited CAPA may now carry real
+  investigation content.
+- Exits 1 when fabricated rows are present and nothing was deleted, so a runbook
+  step or release gate can treat "fabricated records still in the database" as a
+  failure rather than a note.
+
+Run the report against every environment before running `--delete` against any.
