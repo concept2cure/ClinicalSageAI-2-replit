@@ -666,6 +666,19 @@ build mean less than it appears:
 - **`ci:fixture-fallback` and `ci:org-path-param-guards` read baseline files
   that do not exist on disk**, so they currently behave as zero-debt gates by
   accident rather than by decision.
+- **`ci:baseline-justifications` governs one baseline of 44** (added
+  2026-09-10). The name reads as general baseline governance; the script is
+  `docs/reports/tenant-isolation-baseline.json` and nothing else. Its success
+  line compounded it — *"6 baseline file(s) all justified"*, where the 6 counts
+  **source files inside that single baseline**, so the natural reading is that
+  six of the repo's baselines are governed. None of the other 43 has a
+  justification-parity check.
+
+  What the gate *does* is right, and it is the model WO-5 should extend:
+  bidirectional parity, so a stale justification fails as loudly as a missing
+  one. The defect is what its name and output let a reader conclude. Corrected
+  in place — the output now states its scope, and
+  `ci:tenant-isolation-justifications` is an alias that says what it covers.
 
 ---
 
@@ -796,7 +809,7 @@ customer data in front of anyone.
 | [WO-2](../work-orders/WO-2-blank-database-completeness.md) | Make a blank database complete | G1+ | `ci:tables-live-schema` passes with baseline deleted, against a from-scratch install |
 | [WO-3](../work-orders/WO-3-tenant-isolation-proof.md) | Prove tenant isolation on real data | G1+ | Live two-tenant probe, plus `requestdb-coverage` 229 → 0 |
 | [WO-4](../work-orders/WO-4-enforce-strict-gates.md) | Enforce the six unenforced strict gates | all | Each runs in `pr-checks.yml`, verified by making one fail |
-| [WO-5](../work-orders/WO-5-baseline-governance.md) | Baseline governance and honest gate output | all | All 43 baselines carry owner/reason/expiry; CI prints `RATCHET PASS — N REMAIN` |
+| [WO-5](../work-orders/WO-5-baseline-governance.md) | Baseline governance and honest gate output | all | All 44 baselines carry owner/reason/expiry; CI prints `RATCHET PASS — N REMAIN`. **`ci:baseline-justifications` covers exactly one of them** — see §2b |
 | [WO-6](../work-orders/WO-6-ai-gateway-bypass-burndown.md) | Burn down the 19 AI-gateway bypasses | G1+ | `gateway-bypass` baseline 19 → 0, or each survivor re-justified |
 | [WO-7](../work-orders/WO-7-esignature-enforcement.md) | E-signature on regulated promotion | G3, partially G1+ | Governed transition refuses without signature manifestation; covered by a test |
 | [WO-8](../work-orders/WO-8-skipped-tests.md) | Triage the skipped tests | G1 | ✅ **DONE 2026-09-10** — 31 of the 34 were `skipIf` environment guards, not skips. Of the 12 real ones: 8 deleted (they asserted against `const src = ''` for components removed in the design-system port, so none could ever be un-skipped), 1 un-skipped with real assertions (sign-out had shipped and nobody revisited the skip), 2 kept with written unblocking conditions |
