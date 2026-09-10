@@ -16,7 +16,7 @@
  *
  * Analytics IMPLEMENTED here:
  *   - Signal detection — PRR / ROR / EBGM disproportionality over a FAERS 2x2
- *     table, computed by pharmacovigilance-knowledge.ts::detectSafetySignal
+ *     table, computed by stats/signal-disproportionality.ts::screenSignalPanel
  *   - Descriptive FAERS counts: reactions, indications, seriousness, age band,
  *     sex, report year — all over the page retrieved, never extrapolated
  *
@@ -40,9 +40,9 @@ import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import { runRWEStudy, RWESourceNotConfiguredError } from '../services/rwe-study-service';
 import {
-  detectSafetySignal,
-  type DisproportionalityMeasure,
-} from '../services/pharmacovigilance/pharmacovigilance-knowledge';
+  screenSignalPanel,
+  type SignalPanelResult,
+} from '../services/stats/signal-disproportionality';
 
 // ---------------------------------------------------------------------------
 // TYPES
@@ -235,26 +235,45 @@ export interface EndpointResult {
  * (MGPS)', which is the FDA's Bayesian data-mining algorithm and was not
  * implemented anywhere in this file.
  *
- * The measures now come from detectSafetySignal() in
- * server/services/pharmacovigilance/pharmacovigilance-knowledge.ts, which was
- * already in the repository, already carries the Evans 2001 / Rothman /
- * DuMouchel criteria with citations, and is already covered by
- * server/services/compliance/__tests__/pv-signal-detection.test.ts. This route
- * had grown a second, fabricated implementation of a capability the platform
- * already owned.
+ * The measures now come from screenSignalPanel() in
+ * server/services/stats/signal-disproportionality.ts — the repository's
+ * canonical disproportionality engine, with its own test suite
+ * (stats/__tests__/signal-disproportionality.test.ts) and five existing
+ * consumers (ana/statisticalDesignTools, ana/ivdLifecycleTools,
+ * AnaToolExecutor, routes/ivd-lifecycle, routes/pharmacovigilance-routes).
+ * This route had grown a SECOND, fabricated implementation of a capability the
+ * platform already owned.
+ *
+ * 2026-09-10, second pass: an earlier version of this fix wired the route to
+ * pharmacovigilance-knowledge.ts::detectSafetySignal instead. That is a real
+ * implementation too, but it is the weaker of the two and it is not the
+ * canonical one — its own docstring says its EBGM is "a deterministic
+ * approximation of the MGPS shrinkage, not the full Gamma-Poisson fit", and it
+ * computes no Information Component at all. screenSignalPanel runs the
+ * frequentist PRR/ROR, a real BCPNN IC025 and a real Gamma-Poisson EBGM over the
+ * same table and reports their concordance. Choosing it removes the duplication
+ * rather than picking a side of it.
  */
 export interface SafetySignal {
   adverseEvent: string;
   /** The 2x2 table the measures were computed from, so a reviewer can re-derive them. */
   contingencyTable: { a: number; b: number; c: number; d: number };
-  /** PRR / ROR / EBGM as returned by the pharmacovigilance engine, each with its citation. */
-  measures: DisproportionalityMeasure[];
-  /** True only when a measure crossed its own published signalling threshold. */
-  signalOfDisproportionateReporting: boolean;
-  rationale: string[];
-  /** Low-count and zero-cell caveats. Never suppressed — they qualify the estimate. */
-  warnings: string[];
-  citations: string[];
+  /**
+   * The full panel: frequentist PRR/ROR with 95% CIs and a Yates-corrected
+   * chi-squared, BCPNN IC025, and Gamma-Poisson EBGM — each carrying its own
+   * signalling threshold, so a reviewer sees which criterion fired.
+   */
+  panel: SignalPanelResult;
+  /** How many of the three methods flag a signal (0-3). */
+  concordance: number;
+  tier: SignalPanelResult['tier'];
+  /**
+   * Where the three methods disagree, and why. Never suppressed: a frequentist
+   * flag that Bayesian shrinkage does not survive is usually a small-count
+   * coincidence, and collapsing that into one boolean is how a weak association
+   * gets reported as a signal.
+   */
+  divergenceNotes: string[];
   caseCount: number;
 }
 
@@ -703,16 +722,15 @@ async function faersDisproportionality(
   const c = Math.max(0, nEvent - a);
   const d = Math.max(0, nAll - a - b - c);
 
-  const result = detectSafetySignal({ a, b, c, d });
+  const panel = screenSignalPanel({ a, b, c, d });
 
   return {
     adverseEvent: reactionTerm,
     contingencyTable: { a, b, c, d },
-    measures: result.measures,
-    signalOfDisproportionateReporting: result.signalOfDisproportionateReporting,
-    rationale: result.rationale,
-    warnings: result.warnings,
-    citations: result.citations,
+    panel,
+    concordance: panel.concordance,
+    tier: panel.tier,
+    divergenceNotes: panel.divergenceNotes,
     caseCount: caseCountInPage,
   };
 }
@@ -955,23 +973,23 @@ router.post('/signal-detection', async (req: Request, res: Response) => {
     const signals = await Promise.all(
       candidates.map(r => faersDisproportionality(drugName, r.term, r.count))
     );
-    const flagged = signals.filter(s => s.signalOfDisproportionateReporting);
+    const flagged = signals.filter(s => s.concordance > 0);
 
     res.json({
       success: true,
       data: {
         drugName,
         method: {
-          // What was actually run, named after the functions that ran it. The
+          // What was actually run, named after the function that ran it. The
           // previous value was the literal string 'Multi-item Gamma Poisson
           // Shrinker (MGPS)' over arithmetic that computed no such thing.
-          computed: ['PRR', 'ROR', 'EBGM'],
+          computed: ['PRR/ROR + chi-squared (Yates)', 'BCPNN IC025', 'Gamma-Poisson EBGM'],
           implementation:
-            'server/services/pharmacovigilance/pharmacovigilance-knowledge.ts::detectSafetySignal',
+            'server/services/stats/signal-disproportionality.ts::screenSignalPanel',
           note:
-            'EBGM here is a deterministic shrinkage approximation, not a full ' +
-            'Gamma-Poisson (MGPS) fit. Thresholds and citations are carried on ' +
-            'each measure.',
+            'All three methods run over the same 2x2 table and their agreement is ' +
+            'reported as `concordance` (0-3). Disagreement is surfaced in ' +
+            'divergenceNotes rather than collapsed into one number.',
         },
         candidateSelection: {
           basis: 'most frequently reported reactions among the serious reports retrieved',
@@ -1020,8 +1038,8 @@ router.get('/health', (_req: Request, res: Response) => {
       fhirIntegration: process.env.FHIR_BASE_URL ? 'configured' : 'not_configured',
       faersQuery: 'available',
       clinicalTrialsGov: 'available',
-      // Real as of 2026-09-10: PRR/ROR/EBGM over a FAERS 2x2 table via
-      // pharmacovigilance-knowledge.ts::detectSafetySignal.
+      // Real as of 2026-09-10: PRR/ROR + BCPNN IC025 + Gamma-Poisson EBGM over a
+      // FAERS 2x2 table via stats/signal-disproportionality.ts::screenSignalPanel.
       signalDetection: 'available',
       propensityScoreMatching: 'not_implemented',
       survivalAnalysis: 'not_implemented',

@@ -180,7 +180,12 @@ describe('signal detection reports real disproportionality, not rescaled frequen
     // The label is gone. This is the string that named an algorithm the file
     // did not implement.
     expect(JSON.stringify(res.body)).not.toContain('Multi-item Gamma Poisson Shrinker');
-    expect(res.body.data.method.computed).toEqual(['PRR', 'ROR', 'EBGM']);
+    expect(res.body.data.method.computed).toEqual([
+      'PRR/ROR + chi-squared (Yates)',
+      'BCPNN IC025',
+      'Gamma-Poisson EBGM',
+    ]);
+    expect(res.body.data.method.implementation).toContain('screenSignalPanel');
 
     const signal = res.body.data.signals[0];
 
@@ -188,14 +193,19 @@ describe('signal detection reports real disproportionality, not rescaled frequen
     // d = 1000000 - 300 - 600 - 900.
     expect(signal.contingencyTable).toEqual({ a: 300, b: 600, c: 900, d: 998200 });
 
-    // Real measures, each carrying the citation for its own threshold.
-    const prr = signal.measures.find((m: { method: string }) => m.method === 'PRR');
-    expect(prr.citation).toContain('Evans');
+    // Real measures from all three methods over the same table.
     // PRR = (300/900) / (900/999100) ~= 370 — a large disproportionality, which
     // is the point: the OLD code would have answered 1.0 + percentage/15 here,
     // i.e. a number just above 1, for the same data.
-    expect(prr.pointEstimate).toBeGreaterThan(100);
-    expect(signal.signalOfDisproportionateReporting).toBe(true);
+    expect(signal.panel.frequentist.prr).toBeGreaterThan(100);
+    expect(signal.panel.frequentist.prrCi95).toHaveLength(2);
+    expect(signal.panel.frequentist.chiSquaredYates).toBeGreaterThan(4);
+    // A real Information Component lower bound, not the constant +/-0.5.
+    expect(signal.panel.bcpnn.ic025).toBeGreaterThan(0);
+    // A real Gamma-Poisson EBGM, not an approximation label.
+    expect(signal.panel.ebgm.ebgm).toBeGreaterThan(1);
+    expect(signal.concordance).toBe(3);
+    expect(signal.tier).toBe('strong');
 
     // None of the invented fields survive.
     expect(signal.reportingOddsRatio).toBeUndefined();
@@ -203,10 +213,12 @@ describe('signal detection reports real disproportionality, not rescaled frequen
     expect(signal.confidence).toBeUndefined();
   });
 
-  it('carries the engine low-count warning instead of suppressing it', async () => {
-    // a = 1. Below the a >= 3 count criterion, so the estimate is unstable and
-    // the engine says so. A surface that dropped `warnings` would present an
-    // unstable estimate as a finding.
+  it('surfaces method disagreement instead of collapsing it to one boolean', async () => {
+    // a = 1. Below the EMA a >= 3 count gate, so the frequentist criterion does
+    // not fire; Bayesian shrinkage may or may not. Whatever the outcome, the
+    // route must report the concordance rather than a single yes/no — a weak
+    // association that only one method flags is how a coincidence gets reported
+    // as a signal.
     fetchMock.mockImplementation(async (url: string) => {
       if (!url.endsWith('&limit=1')) {
         return okJson({ meta: { results: { total: 4 } }, results: [report('DIZZINESS')] });
@@ -224,7 +236,13 @@ describe('signal detection reports real disproportionality, not rescaled frequen
       .send({ drugName: 'aspirin' });
 
     expect(res.status).toBe(200);
-    expect(res.body.data.signals[0].warnings.join(' ')).toMatch(/a < 3|statistically\s+unstable/);
+    const signal = res.body.data.signals[0];
+    // The frequentist gate needs a >= 3; with a = 1 it cannot fire.
+    expect(signal.panel.frequentist.signal).toBe(false);
+    expect(signal.concordance).toBeLessThan(3);
+    expect(Array.isArray(signal.divergenceNotes)).toBe(true);
+    // The 2x2 table is returned so a reviewer can see the count for themselves.
+    expect(signal.panel.counts.a).toBe(1);
   });
 
   it('reports the page size separately from the FAERS-wide total', async () => {
