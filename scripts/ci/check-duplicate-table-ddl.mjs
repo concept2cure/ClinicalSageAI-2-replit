@@ -138,9 +138,32 @@ function collectSql(dir, acc = []) {
  * Extract created table names, schema-qualified so that
  * `CREATE TABLE audit.foo` is recorded as `audit.foo` and not as a table named
  * `audit`. Getting this wrong inflates the count dramatically.
+ *
+ * QUOTED IDENTIFIERS COUNT (fixed 2026-09-10, WO-1). The previous pattern
+ * required a bare word right after the optional IF NOT EXISTS, so a leading
+ * double quote failed the match outright — and `drizzle-kit generate` emits
+ * every statement quoted: `CREATE TABLE "concept2cure_artifacts" (`. That made
+ * `migrations/0000_sweet_joseph.sql`, which holds **297 CREATE TABLE
+ * statements** and is the largest migration in the repository, completely
+ * invisible to this guard. It is the drizzle baseline, it sits in the root
+ * `migrations/` tree, and install-fresh's overlay walks it, so those are 297
+ * real definitions on a real applier that this gate counted as zero.
+ *
+ * Two consequences, both of which this guard exists to prevent:
+ *   - the collision count was understated, because a table defined once here
+ *     and once in a hand-written file looked like a single definition;
+ *   - "who else creates this table?" — the question every archive decision in
+ *     WO-1 turns on — could be answered "nobody" while an on-applier creator
+ *     sat unread in the baseline. The `contradiction_links` regression of
+ *     2026-09-10 is exactly that failure, found by a live database rather than
+ *     by this gate.
+ *
+ * `"?` on each identifier segment, matching the pattern already used by
+ * scripts/ci/check-migration-reachability.mjs. It cannot re-open the comment
+ * false positive described below: comments are stripped before this runs.
  */
 const CREATE_TABLE_RE =
-  /CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?([a-zA-Z_][a-zA-Z0-9_]*(?:\.[a-zA-Z_][a-zA-Z0-9_]*)?)/gi;
+  /CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?"?([a-zA-Z_][a-zA-Z0-9_]*)"?(?:\s*\.\s*"?([a-zA-Z_][a-zA-Z0-9_]*)"?)?/gi;
 
 /**
  * Strip SQL comments before scanning.
@@ -165,7 +188,12 @@ function tablesIn(file) {
     return [];
   }
   const found = new Set();
-  for (const m of stripComments(sql).matchAll(CREATE_TABLE_RE)) found.add(m[1].toLowerCase());
+  // m[1] is the first identifier, m[2] the part after a dot when the name is
+  // schema-qualified. Joining here (rather than capturing the whole thing in one
+  // group) is what lets each segment carry its own optional double quotes.
+  for (const m of stripComments(sql).matchAll(CREATE_TABLE_RE)) {
+    found.add((m[2] ? `${m[1]}.${m[2]}` : m[1]).toLowerCase());
+  }
   return [...found];
 }
 

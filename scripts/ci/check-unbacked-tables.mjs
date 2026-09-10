@@ -94,8 +94,27 @@ function collect(dir, exts, acc = []) {
 /** Prose that mentions DDL is not DDL (see the duplicate-table guard's C-12 note). */
 const stripComments = (sql) => sql.replace(/\/\*[\s\S]*?\*\//g, ' ').replace(/--[^\n]*/g, ' ');
 
+/**
+ * QUOTED IDENTIFIERS COUNT (fixed 2026-09-10, WO-1). The previous pattern
+ * required a bare word after the optional IF NOT EXISTS, so a leading double
+ * quote failed the match — and `drizzle-kit generate` quotes everything:
+ * `CREATE TABLE "concept2cure_artifacts" (`. `migrations/0000_sweet_joseph.sql`
+ * holds 297 such statements, sits in the root `migrations/` tree that
+ * install-fresh's overlay walks, and was counted here as creating NOTHING.
+ *
+ * For THIS guard the failure direction is the dangerous one. It asks "does
+ * anything create the table the server queries?", so a missed creator produces
+ * a FALSE ALARM rather than a false pass — but it also meant the guard could be
+ * satisfied by archiving a file while an on-applier creator sat unread, and the
+ * `contradiction_links` regression of 2026-09-10 is that failure exactly.
+ * Same fix and same shape as check-duplicate-table-ddl.mjs; comments are still
+ * stripped first, so the C-12 false positive stays closed.
+ */
 const CREATE_RE =
-  /CREATE\s+(?:TABLE|(?:MATERIALIZED\s+)?VIEW)\s+(?:IF\s+NOT\s+EXISTS\s+)?([a-zA-Z_][\w]*(?:\.[a-zA-Z_][\w]*)?)/gi;
+  /CREATE\s+(?:TABLE|(?:MATERIALIZED\s+)?VIEW)\s+(?:IF\s+NOT\s+EXISTS\s+)?"?([a-zA-Z_][\w]*)"?(?:\s*\.\s*"?([a-zA-Z_][\w]*)"?)?/gi;
+
+/** Join the two identifier segments back into a qualified name. */
+const qualified = (m) => (m[2] ? `${m[1]}.${m[2]}` : m[1]);
 
 // ── 1..3: everything that creates storage ────────────────────────────────────
 
@@ -104,7 +123,7 @@ const addCreated = (name) => created.add(name.toLowerCase());
 
 for (const f of collect(repoRoot, ['.sql']).filter((p) => !isArchived(p))) {
   const sql = stripComments(fs.readFileSync(path.join(repoRoot, f), 'utf8'));
-  for (const m of sql.matchAll(CREATE_RE)) addCreated(m[1]);
+  for (const m of sql.matchAll(CREATE_RE)) addCreated(qualified(m));
 }
 
 for (const f of collect(path.join(repoRoot, 'shared'), ['.ts'])) {
@@ -114,7 +133,7 @@ for (const f of collect(path.join(repoRoot, 'shared'), ['.ts'])) {
 
 for (const f of collect(path.join(repoRoot, 'server'), ['.ts'])) {
   const src = stripComments(fs.readFileSync(path.join(repoRoot, f), 'utf8'));
-  for (const m of src.matchAll(CREATE_RE)) addCreated(m[1]);
+  for (const m of src.matchAll(CREATE_RE)) addCreated(qualified(m));
 }
 
 // ── references in raw SQL ────────────────────────────────────────────────────
