@@ -1,18 +1,18 @@
 {
-  "generated": "2026-09-10T01:44:59.981Z",
+  "generated": "2026-09-10T05:38:29.113Z",
   "excluded": [
     "scripts/ci/coverage-baseline.json (percentage floor)",
     "scripts/ci/proof-tier-baseline.json (inverted ratchet — an asset floor)"
   ],
   "totals": {
-    "total": 8947,
-    "defectClass": 2244,
-    "lintClass": 6703
+    "total": 9053,
+    "defectClass": 2371,
+    "lintClass": 6682
   },
   "rows": [
     {
       "file": "scripts/ci/eslint-warning-baseline.json",
-      "entries": 6596,
+      "entries": 6575,
       "class": "lint/cosmetic"
     },
     {
@@ -28,6 +28,11 @@
     {
       "file": "docs/reports/env-var-docs-baseline.json",
       "entries": 244,
+      "class": "defect"
+    },
+    {
+      "file": "docs/reports/requestdb-coverage-baseline.json",
+      "entries": 229,
       "class": "defect"
     },
     {
@@ -51,11 +56,6 @@
       "class": "defect"
     },
     {
-      "file": "docs/reports/requestdb-coverage-baseline.json",
-      "entries": 82,
-      "class": "defect"
-    },
-    {
       "file": "scripts/ci/dead-audit-tables-baseline.json",
       "entries": 80,
       "class": "defect"
@@ -66,11 +66,6 @@
       "class": "defect"
     },
     {
-      "file": "scripts/ci/duplicate-table-ddl-baseline.json",
-      "entries": 63,
-      "class": "defect"
-    },
-    {
       "file": "scripts/ci/phantom-tokens-baseline.json",
       "entries": 63,
       "class": "lint/cosmetic"
@@ -78,6 +73,11 @@
     {
       "file": "scripts/ci/insert-columns-baseline.json",
       "entries": 49,
+      "class": "defect"
+    },
+    {
+      "file": "scripts/ci/duplicate-table-ddl-baseline.json",
+      "entries": 47,
       "class": "defect"
     },
     {
@@ -121,17 +121,17 @@
       "class": "defect"
     },
     {
-      "file": "migrations/.prefix-collisions-baseline.json",
-      "entries": 13,
-      "class": "defect"
-    },
-    {
       "file": "docs/reports/tenant-entry-points-baseline.json",
       "entries": 10,
       "class": "defect"
     },
     {
       "file": "docs/reports/tenant-isolation-baseline.json",
+      "entries": 10,
+      "class": "defect"
+    },
+    {
+      "file": "migrations/.prefix-collisions-baseline.json",
       "entries": 10,
       "class": "defect"
     },
@@ -152,7 +152,7 @@
     },
     {
       "file": "docs/reports/tenant-blind-models-baseline.json",
-      "entries": 5,
+      "entries": 4,
       "class": "defect"
     },
     {

@@ -1,7 +1,7 @@
 # Platform evaluation — Concept2Cure.RI / TrialSage
 
-**Version:** 2026-09-10
-**Codebase branch:** `concept2cure-v2` @ `d31a9db6`
+**Version:** 2026-09-10 · rev 2
+**Codebase branch:** `concept2cure-v2` @ `d31a9db6` (measured), remediation through `27c3d16d`
 **Audience:** owner, engineering leads, and anyone deciding whether to put real customer data in front of a human tester
 
 ---
@@ -22,6 +22,15 @@ Results are reported in five classes and never collapsed into "pass":
 | **INVENTORY** | Script always exits 0. Cannot pass or fail. Not evidence of anything. |
 | **FAIL** | Gate found something above its threshold. |
 | **ENV-BLOCKED** | Could not run here (needs a live database, network, or a build artifact). Not a pass. |
+
+**Rev 2 (2026-09-10, same day).** This document was written, then acted on, and
+the acting changed it. Work orders WO-0 and WO-4 were executed and closed, WO-1
+started, and two live defects were found and fixed that no gate had reported
+(§1). Four of my own findings turned out to be wrong and are struck through in
+place rather than deleted — a retracted finding is evidence about how the
+finding was reached, and deleting it would leave the document looking more
+reliable than the process that produced it. Where a figure moved, both the old
+and new value are shown.
 
 There is no composite score in this document. A "6.5 out of 10" is not
 derivable from anything measured here, and a number like that gets repeated in
@@ -48,8 +57,15 @@ suppression basket, most tranches went *down*, several substantially:
 | Route-mount errors | 8 errors + 7 warnings | **0 errors** + 8 warnings | **−8 errors** |
 | Orphan endpoint candidates | 556 of 914 | **505 of 884** | −51 |
 | Duplicate-basename groups (repo health) | 249 groups | **0** | **−249** |
-| Files on the shared pool (blocks RLS) | 81 | 82 | +1 |
+| Files on the shared pool | 81 † | **229** † | *not comparable — see §5.1* |
 | **Files bypassing the governed AI gateway** | **3** | **19** | **+16** |
+
+† Both figures come from the same gate, and the gate was miscounting. Its
+detector matched one of the nine import shapes these routes use, so the true
+count on this row was never 81 or 82. Widened and rebaselined to **229** during
+this evaluation; the July figure cannot be restated, so the delta is unknown
+rather than +1. §5.1 has the mechanism, and it is less alarming than the number
+looks.
 
 Four of that audit's seven G1 blockers are demonstrably fixed at HEAD, and fixed
 properly rather than papered over — §6 shows the code.
@@ -137,14 +153,66 @@ design, and it is the design WO-5 proposes extending to the other 42 baselines.
 > [`WO-0`](../work-orders/WO-0-restore-green-canonical-branch.md) for the full
 > outcome.
 
+### Two live defects, found by execution, that no gate found
+
+Everything above came from gates. The two most serious findings in this
+evaluation did not, and that is the most useful thing in the document.
+
+**1. Any tenant could read any other tenant's Part 11 audit trail.**
+`GET /api/grdhe/audit/:tableName/:recordId` was mounted behind
+`authenticateToken` and nothing else. It took a table name and a record id,
+checked the table name against an allowlist — an anti-SQL-injection measure, not
+an authorization one — and returned the full audit history for that record,
+including the `old_data` and `new_data` JSONB columns, which hold the before and
+after of every regulated change. There was no tenant predicate in the query, no
+tenant column on the audit table to write one against, and no RLS policy: the
+enforcement sweep scans `WHERE c.table_schema = 'public'` and these tables are
+not in `public`. Record ids are sequential. Any authenticated user of any tenant
+could enumerate them and read every other tenant's regulated change history.
+
+Fixed in `5aa07bc8e`. Every auditable table is now declared as
+`tenant`-scoped, `global`, or `unscopable`; a `tenant` table gets an EXISTS
+probe against the caller's org before the audit query runs, and an unlisted
+table is refused rather than served. A cross-tenant request returns an empty
+result rather than 403, deliberately — a 403 confirms the record exists, which
+is the same leak in a smaller quantity. **WO-13** carries the remaining half:
+`electronic_signatures` still has no tenant column to scope by, so it is
+currently declared `unscopable` and refused outright.
+
+**2. Two fabricated CAPA records were inserted on every deploy.**
+`db/migrations/030_stability_results.sql` ended in an unguarded
+`INSERT INTO capa` — no `WHERE NOT EXISTS`, no `ON CONFLICT`, and `capa.id` is
+`SERIAL`, so nothing could dedupe it. Under RULE 1 that file replays on every
+deploy, so an estate that has deployed *N* times carries *2N* of these. CAPA is
+a corrective-and-preventive-action record. One of the two names an investigator,
+"Dr. Johnson", who does not exist.
+
+The INSERT is gone (`cdd12788c`), which does not remove rows already written;
+`npm run ops:audit-fabricated-capa` (`e650c5e3d`) reports them per environment
+and deletes only rows still byte-identical to the seed, never one a human has
+since edited.
+
+**What these two have in common is more important than either.** Neither is
+subtle, and 142 gates missed both — because both live in the space the gates do
+not model. The tenancy gates count *files* on the shared pool and *raw SQL
+without a tenant predicate*; grdhe's query had a predicate (on `record_id`) and
+its table was outside the sweep's schema filter, so it was invisible to every
+one of them. RULE 1's drop-safety gate checks that migrations do not DROP; no
+gate checks that a replayed migration does not INSERT. A suppression ledger of
+9,053 measures the debt the gates can see. It says nothing about the debt they
+cannot, and this evaluation found two of those in a week of reading — which is
+the strongest argument in the document for WO-3's live probe over any amount of
+additional static analysis.
+
 ### The three things that decide the pilot bar
 
 1. **Schema authority** (WO-1, WO-2). Until one manifest defines each table
    once and a blank database provisions everything the server queries, no
    isolation or retention proof means anything.
 2. **Tenant isolation proven, not asserted** (WO-3). The 10 raw-SQL candidates
-   are static analysis. 82 route files still run on the shared pool, which is
-   what keeps RLS inert. The proof is a live two-tenant probe.
+   are static analysis, and 229 route files still run on the shared pool
+   (§5.1 — instrumented, so this is depth rather than absence). Neither is a
+   proof. The proof is a live two-tenant probe, and none has ever been run.
 3. **Nothing drives the debt to zero** (WO-4). Six `:strict` variants — the
    ones that demand an *empty* baseline — are in `package.json` and in no
    pipeline. ~~Every finding in §1 could regress tomorrow without CI
@@ -233,9 +301,15 @@ per-file extractors — an earlier heuristic version mis-read six of them):
 
 | Class | Entries |
 |---|---:|
-| **Defect-class entries under active suppression** | **2,244** |
-| Lint / cosmetic entries | 6,703 |
-| **Total tolerated across 43 baselines** | **8,947** |
+| **Defect-class entries under active suppression** | **2,371** |
+| Lint / cosmetic entries | 6,682 |
+| **Total tolerated across 43 baselines** | **9,053** |
+
+Re-measured 2026-09-10 after this evaluation's own changes: **+127 defect-class**
+(the `requestdb-coverage` detector fix, 82 → 229, which found no new debt — it
+stopped failing to see debt that was already there) and **−21 lint** (the unused
+imports removed under WO-0). An earlier draft of this table read 2,244 / 6,703 /
+8,947.
 
 *Excluded from the total, because neither is a count of tolerated defects:*
 `coverage-baseline.json` (a percentage floor) and `proof-tier-baseline.json` (an
@@ -246,21 +320,21 @@ an asset).
 
 | Entries | Baseline | What it tolerates |
 |---:|---|---|
-| 6,596 | `eslint-warning-baseline.json` | Lint warnings across 21 rules |
+| 6,575 | `eslint-warning-baseline.json` | Lint warnings across 21 rules |
 | 611 | `purge-coverage-baseline.json` | Tables with no proven purge path |
 | 246 | `duplicate-exported-types-baseline.json` | Exported names meaning two different things |
 | 244 | `env-var-docs-baseline.json` | Env vars read by code, absent from `.env.example` |
+| **229** | `requestdb-coverage-baseline.json` | Route files still on the shared pool — **82 until the detector was fixed on 2026-09-10** (§5.1) |
 | 190 | `tenant-resolvers-baseline.json` | Modules not migrated to the canonical tenant resolver |
 | 151 | `drizzle-tenant-scope-baseline.json` | ORM query sites with no tenant scope |
 | 151 | `server-error-leaks-baseline.json` | Sites leaking internal error detail (92 files) |
 | 98 | `unreferenced-modules-baseline.json` | Modules nothing references |
-| 82 | `requestdb-coverage-baseline.json` | Route files still on the shared pool |
 | 80 | `dead-audit-tables-baseline.json` | Audit tables nothing writes to |
 
 ### Reading the growth honestly
 
 The July audit put the comparable figure at ~1,620; the defect-class figure is
-now 2,244. **That is not 600 new defects.** Most of the difference is *new
+now 2,371. **That is not 750 new defects.** Most of the difference is *new
 instrumentation finding pre-existing debt*: `tenant-resolvers`,
 `drizzle-tenant-scope`, `server-error-leaks`, `dead-audit-tables`,
 `tables-live-schema`, `insert-columns`, `model-migration-agreement` and
@@ -365,17 +439,48 @@ smallest of five overlapping tranches:
 |---:|---|---|
 | 190 | `tenant-resolvers` | Modules not on the canonical tenant resolver |
 | 151 | `drizzle-tenant-scope` | ORM query sites with no tenant scope |
-| 82 | `requestdb-coverage` | **Route files still on the shared pool — this is what keeps RLS inert** |
+| 229 | `requestdb-coverage` | **Route files still on the shared pool** — corrected from 82 below |
 | 10 | `tenant-isolation` | Raw SQL with no tenant predicate |
 | 10 | `tenant-entry-points` | Entry points whose tenant entitlement drifted |
 | 5 | `tenant-blind-models` | Models with no tenant column at all |
 
-The 82 shared-pool route files are the load-bearing number. RLS policies exist,
+~~The 82 shared-pool route files are the load-bearing number. RLS policies exist,
 but a route on the shared pool connects as a role that bypasses them, so the
 second layer of defence is not merely weak — for those routes it is not
-engaged. The July audit reached the same conclusion and its carve-out was
-explicit: acceptable for non-regulated pilot data, not acceptable once the data
-is real.
+engaged.~~
+
+**Corrected 2026-09-10. Both halves of that were wrong.**
+
+*The count.* It is **229**, not 82. `ci:requestdb-coverage`'s detector recognised
+one of the nine import shapes a route uses — it required the binding to be
+literally `db`, in braces, from a specifier with no extension — so it was blind
+to 147 files. Worse, the ratchet could be moved for free: this evaluation's own
+WO-0 lint cleanup rewrote `import { db, pool }` to `import { pool }` in
+`tenant-section-gating.ts`, and the gate stopped counting a file that still runs
+eight `pool.query()` calls on the shared pool. Detector widened and rebaselined
+to 229, with the reason recorded in the baseline file.
+
+*The mechanism.* A shared-pool route does **not** simply bypass RLS.
+`server/db/poolInstrumentation.ts` wraps the pool so that under `RLS_ENFORCE=on`
+every non-infrastructure query runs inside a micro-transaction that applies the
+tenant scope first, and **fails closed** with no scope; `server/db/rlsEnforcement.ts`
+refuses to boot production on anything else. The second layer *is* engaged.
+
+The migration still matters, for narrower and more specific reasons:
+
+- **No read consistency.** Per-statement micro-transactions, not a pinned
+  connection — a read-then-write pair in one handler can straddle another
+  tenant's commit.
+- **The protection is ambient, not lexical.** It depends on AsyncLocalStorage
+  scope surviving every async boundary — timers, emitters, queue callbacks.
+  `requestDb(req)` makes the dependency an argument you can see.
+- **Module-level singletons escape it entirely** — a pool captured at import time
+  runs outside any request.
+- **One env var is the whole layer.** `RLS_ENFORCE ≠ 'on'` makes the
+  instrumentation inert.
+
+So this is defence-in-depth, not an open door — which is the opposite of §5.3
+below, where RLS enforcement genuinely does not help.
 
 ### 5.2 The finding that generalises
 
@@ -420,6 +525,52 @@ build mean less than it appears:
 
 ---
 
+### 5.3 Where RLS does not help at all
+
+§5.1's correction is genuinely reassuring, and it has a hard boundary that is
+easy to miss: **RLS filters only where a policy exists.** Three conditions each
+put a table outside it, and the tooling reports nothing in any of the three
+cases.
+
+| Condition | Why the sweep misses it | Live example |
+|---|---|---|
+| Table is not in schema `public` | Both tenant sweeps filter `WHERE c.table_schema = 'public'` | `regulatory_harmonization.*`, `audit.tamper_proof_log` |
+| Table has no tenant column | There is nothing to write a policy against | `electronic_signatures` |
+| Org column is `uuid`, not `integer` | The sweep matches `organization_id INTEGER` | flagged in RULE 1's corollary |
+
+This is the test that separated a real leak from a false alarm twice during this
+evaluation, in both directions:
+
+- **`stab_signoffs` looked untenanted and is not.** Its `CREATE TABLE` has no
+  tenant column, and I wrote that up as a finding on that basis alone. Wrong:
+  `db/migrations/20260728_stability_tenant_isolation.sql` runs later on the same
+  applier and sweeps every `stab_*` table — adding `tenant_id` with a
+  `current_setting('app.current_tenant_id')` default, enabling *and* forcing
+  RLS, and creating `tenant_isolation_policy`. Reading the creating migration is
+  not reading the schema.
+- **`grdhe`'s audit tables looked policied and were not.** Same surface
+  appearance, opposite answer, because `regulatory_harmonization` is not
+  `public` and the sweep never reached it.
+
+Applying the same test to the two readers with the least defence-in-depth,
+flagged during this evaluation as the next things to check:
+`csr-analytics.ts`'s ten unpredicated reads hit `csr_reports`, which is `public`
+with an `integer organization_id` and is therefore swept; `graphrag.ts`'s nine
+sites hit `knowledge_graph_nodes`/`_edges`, which
+`db/migrations/20260813_knowledge_graph_tenant_keys.sql` policies explicitly,
+and whose own comment records the right instinct — *"the policy below makes NULL
+rows visible to NOBODY rather than to everybody."* Both are defence-in-depth,
+not open doors.
+
+One latent case remains, recorded here rather than fixed because it is not
+reachable over HTTP today: `server/services/auditService.ts:519-531` drops
+`filters.tenantId` on its Drizzle fallback path, against `audit.tamper_proof_log`
+— a non-`public` table, so unpoliced. No route reaches that path at present. The
+first one that does inherits a cross-tenant read of the tamper-proof log, and no
+gate will say so. **WO-13.**
+
+---
+
 ## 6. The July G1 blockers, re-tested at HEAD
 
 Each of the seven was re-checked in the code, not inherited.
@@ -428,7 +579,7 @@ Each of the seven was re-checked in the code, not inherited.
 |---|---|---|---|
 | **G1-1** | Fresh install silently half-works; skipped migrations reported as success | 🟢 **FIXED** | `scripts/db/install-fresh.mjs` now reports skips **by name**; its own header documents the old behaviour ("described, without evidence, as 'safe to skip'") and states skips are "not silently faked" |
 | **G1-2** | `/readyz` green over a database missing auth tables | 🟢 **FIXED** | `server/startup/services.ts` now calls `setSchemaReadiness` on **13** paths including every error and missing-table branch |
-| **G1-3** | Live cross-tenant write path (Schedule-of-Events) | 🟡 **PARTIAL** | Raw-SQL candidates 25 → 10, but 82 route files remain on the shared pool. Static only — no live probe has been run. **WO-3** |
+| **G1-3** | Live cross-tenant write path (Schedule-of-Events) | 🟡 **PARTIAL** | Raw-SQL candidates 25 → 10, and 229 route files remain on the shared pool — instrumented, so protected in depth (§5.1). Still static only: no live probe has ever been run. **WO-3** |
 | **G1-4** | Stored XSS via `derivePreview` HTML-entity decode | 🟢 **FIXED** | `derivePreview` strips tags, decodes only safe entities, then strips any residual `[<>]`, and documents "The result is TEXT." `BatchDraft.tsx` now renders through a DOMPurify allowlist; the one remaining `dangerouslySetInnerHTML` is a static literal |
 | **G1-5** | Typecheck gate vacuous — counted `/error TS/`, ignored exit code, OOM'd | 🟢 **FIXED** | `typecheck-no-regression.mjs` now treats null status, signal kill, or status > 2 as "did not complete" and fails; the old bug is documented in-file at :93–:101 |
 | **G1-6** | AnA attach button discarded every file | 🟢 **FIXED** | Behaviour removed; `client/src/concept2cure/v2/__tests__/anaRailAttach.test.tsx` is a regression test for it |
@@ -442,7 +593,7 @@ clean-room snapshot cannot see.
 
 ## 7. Work orders
 
-Eleven work orders, in `docs/work-orders/`. **WO-0 comes before all of them** —
+Twelve work orders, in `docs/work-orders/`. **WO-0 comes before all of them** —
 until the branch is green there is no signal to work against. WO-1 and WO-2 are
 hard prerequisites for WO-3; WO-3 is a hard prerequisite for putting real
 customer data in front of anyone.
@@ -452,7 +603,7 @@ customer data in front of anyone.
 | [**WO-0**](../work-orders/WO-0-restore-green-canonical-branch.md) | **Restore a green canonical branch** | **everything** | ✅ **DONE 2026-09-10** — all six green; sweep non-zero 28 → 23, remainder all `:strict`/unwired/nightly/ENV-BLOCKED |
 | [WO-1](../work-orders/WO-1-schema-authority.md) | Establish schema authority | G1+ | `ci:duplicate-table-ddl:strict` and `ci:migration-prefix-collisions:strict` pass with baselines **deleted** |
 | [WO-2](../work-orders/WO-2-blank-database-completeness.md) | Make a blank database complete | G1+ | `ci:tables-live-schema` passes with baseline deleted, against a from-scratch install |
-| [WO-3](../work-orders/WO-3-tenant-isolation-proof.md) | Prove tenant isolation on real data | G1+ | Live two-tenant probe, plus `requestdb-coverage` 82 → 0 |
+| [WO-3](../work-orders/WO-3-tenant-isolation-proof.md) | Prove tenant isolation on real data | G1+ | Live two-tenant probe, plus `requestdb-coverage` 229 → 0 |
 | [WO-4](../work-orders/WO-4-enforce-strict-gates.md) | Enforce the six unenforced strict gates | all | Each runs in `pr-checks.yml`, verified by making one fail |
 | [WO-5](../work-orders/WO-5-baseline-governance.md) | Baseline governance and honest gate output | all | All 43 baselines carry owner/reason/expiry; CI prints `RATCHET PASS — N REMAIN` |
 | [WO-6](../work-orders/WO-6-ai-gateway-bypass-burndown.md) | Burn down the 19 AI-gateway bypasses | G1+ | `gateway-bypass` baseline 19 → 0, or each survivor re-justified |
@@ -461,6 +612,7 @@ customer data in front of anyone.
 | [WO-9](../work-orders/WO-9-pilot-surface-lock.md) | Lock the pilot surface set | G1 | Pilot surfaces in a rail; the rest behind an explicit experimental affordance |
 | [WO-10](../work-orders/WO-10-deletion-program.md) | Proof-gated deletion program | none — hygiene | Deletion-proof procedure exists **before** anything is deleted |
 | [WO-12](../work-orders/WO-12-complexity-refactor.md) | Complexity growth now inside the eslint baseline | none — deferred | `complexity` ≤ 1,687 and `max-lines-per-function` ≤ 1,190 |
+| [**WO-13**](../work-orders/WO-13-grdhe-tenant-scoping.md) | **Finish the grdhe tenant scoping** | **G1+** | `electronic_signatures` carries a tenant column and is `tenant`-scoped, not refused; `regulatory_harmonization` tables carry RLS policies; `auditService`'s Drizzle fallback keeps its tenant filter |
 
 **A withdrawn finding, kept here because the retraction is the useful part.**
 While executing WO-0 I reported that `server/routes/tenant-config.ts` enforced no
@@ -486,6 +638,7 @@ Week 1-2   WO-4 ──┐                    (cheap; stops the next regression)
            WO-1 ──┼── schema authority
 Week 2-4   WO-2 ──┘
 Week 3-5   WO-3          (needs WO-1 + WO-2 complete)
+Week 3-5   WO-13         (the other half of the grdhe fix — do not let this sit)
 Week 4-6   WO-6, WO-9, WO-8
 Week 5-7   WO-5
 Later      WO-7 (G3), WO-10 (hygiene, never urgent)
@@ -524,3 +677,14 @@ Each has a command that would overturn it:
 
 If those three go green, the real-data pilot bar is met and the remaining work
 orders are quality, not safety.
+
+**One caveat on that sentence, added after §1's two live defects.** All three
+commands above are static. Neither of the two most serious findings in this
+evaluation would have been caught by any of them going green, because both sat
+outside what the gates model — a cross-tenant read whose query *did* carry a
+predicate, and a replayed `INSERT` into a regulated table. So treat the three as
+necessary and not sufficient. The sufficient test is WO-3's live two-tenant
+probe: two real tenants, real records, and an attempt to read across the
+boundary on every route that serves regulated data. Until that has been run and
+has failed to find anything, "isolated" remains a claim about the code rather
+than an observation of the system.
