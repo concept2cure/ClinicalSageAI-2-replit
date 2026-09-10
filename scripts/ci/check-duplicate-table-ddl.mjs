@@ -56,18 +56,36 @@ const JSON_OUT = jsonIdx !== -1 ? args[jsonIdx + 1] : null;
 const BASELINE_PATH = path.join(repoRoot, 'scripts', 'ci', 'duplicate-table-ddl-baseline.json');
 
 /**
- * Paths whose DDL is historical, not deployed.
+ * Paths whose .sql is not migration lineage and must not be compared against it.
  *
- * db/migrations/_consolidated/ is included on evidence, not convention: it has
- * ZERO entries in migrations_manifest.json's executionOrder, none of its
- * tables are in the drizzle-kit push surface, and its files are byte-identical
- * to docs/archive/server-deprecated-migrations/ (verified for
- * 012_document_authoring_schema.sql) — it is a stale copy of an
- * already-archived lineage. See ledger C-11.
+ * HISTORICAL RECORDS. A superseded file naturally defines tables the lineage
+ * that replaced it also defines, so comparing them produces noise rather than
+ * findings. `db/migrations/_consolidated/` is included on evidence, not
+ * convention: it has ZERO entries in migrations_manifest.json's executionOrder,
+ * none of its tables are in the drizzle-kit push surface, and its files are
+ * byte-identical to docs/archive/server-deprecated-migrations/ (verified for
+ * 012_document_authoring_schema.sql) — it is a stale copy of an already-archived
+ * lineage. See ledger C-11.
+ *
+ * TEST FIXTURES (`tests/**\/fixtures/`), added 2026-09-10 (WO-1). Same idea,
+ * different reason. A schema-contract test that CHARACTERISES a collision has to
+ * be able to apply the losing shape, so that DDL must exist somewhere — but it
+ * is applied only to a PGlite instance inside a test, never to a database.
+ * `tests/schema-contract/fixtures/drizzle-shaped-operating-system.sql` is the
+ * case that prompted this: it was migrations/0010_operating_system_foundation.sql
+ * until ADR-0006 retired it, and it stays only so
+ * operating-system-collision.contract.test.ts can keep demonstrating the defect
+ * it guards against. Counting it as a second creator would report the very
+ * duplication the retirement removed.
+ *
+ * Narrow deliberately: only `fixtures/` under `tests/`. A .sql file anywhere
+ * else in the test tree is still scanned, because a migration that drifts into
+ * tests/ is exactly the kind of thing this gate should catch.
  */
 const ARCHIVED = ['_legacy/', '_deprecated_migrations/', 'docs/archive/', '_consolidated/', 'node_modules/'];
+const TEST_FIXTURE = /(^|\/)tests\/.*\/fixtures\//;
 
-const isArchived = (p) => ARCHIVED.some((a) => p.includes(a));
+const isArchived = (p) => ARCHIVED.some((a) => p.includes(a)) || TEST_FIXTURE.test(p);
 
 /** Recursively collect .sql files under the repo. */
 function collectSql(dir, acc = []) {

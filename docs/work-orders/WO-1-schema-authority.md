@@ -208,3 +208,74 @@ be rewritten in the same change:
 I reverted rather than push through it: the change is right, the acceptance test
 disagreeing is the system working, and rewriting a Part 11 schema-contract
 harness belongs in a reviewed change of its own.
+
+---
+
+## PROGRESS — 2026-09-10, second pass: the 0010 retirement landed
+
+**Duplicates 51 → 47. Prefix collision groups 4 → 3** (the `0010` group is gone
+entirely). The blocked retirement described above is done, in the four steps it
+needed.
+
+### What made it possible
+
+The blocker was that `tests/schema-contract/harness.ts:149` pinned
+`drizzleShaped` to the file being retired and applied it to a live PGlite
+instance. That is not incidental — the collision test exists to *demonstrate*
+that the surviving schema depended on application order, so the losing shape has
+to remain applicable. Deleting the file outright would have deleted the test's
+ability to show the defect it guards.
+
+So the DDL moved rather than died:
+`tests/schema-contract/fixtures/drizzle-shaped-operating-system.sql`, verbatim,
+with a header saying what it is and why it must never go back under a migration
+tree. `check-duplicate-table-ddl.mjs` now excludes `tests/**/fixtures/` —
+narrowly, so a migration that drifts into `tests/` is still caught.
+
+### The orphaned Drizzle models are deleted
+
+`shared/schema/operating-system.ts` carried a banner saying `assumptionRecords`,
+`assumptionHistory`, `decisionRecords` and `contradictionLinks` were "retained
+solely so their removal is its own reviewed change under the ADR-0006 legacy
+retirement". This is that retirement — and it had to be the same change, because
+removing the file alone left those models declaring **28 and 27 columns no
+migration creates**, which is exactly what `ci:model-migration-agreement`
+reported when the archive was attempted on its own.
+
+Four tables, ten enums and eight type/schema exports removed; the file went
+594 → 215 lines. Two enums survived — `governanceBoundaryEnum` and
+`domainTrackEnum` — because the **canonical** governance tables below them use
+those. Worth noting for ADR-0007 point 5: the deployed DDL stores those columns
+as `TEXT` with `CHECK`, not as Postgres ENUM types, and this module is not in the
+drizzle-kit push surface, so the `pgEnum` declarations are typed access that
+creates nothing.
+
+**Zero importers re-verified at deletion.** A bare-word grep first suggested
+three importers of `assumptionRecords`/`decisionRecords`, which would have
+falsified ADR-0007's premise. All three were artefacts: one match inside a
+comment describing what the service used to do, and two local variable names in
+`governed-intelligence-inconsistency-routes.ts:230-232`. The only real import
+from this module is `governance-boundary-service.ts:21`, and it takes
+`governanceBoundaryRules` / `governanceBoundaryTransitions` only. ADR-0007 stands
+exactly as written.
+
+### Verification
+
+| Check | Result |
+|---|---|
+| `operating-system-collision.contract.test.ts` | **10/10** — the gating test |
+| `governance-boundary-failopen.contract.test.ts` | 4/4 — the harness's other consumer |
+| `server/services/__tests__/operating-system.test.ts` | 33/33 (it uses the names as mock keys, not imports) |
+| `ci:typecheck:no-regression` | 0 errors — catches any dangling import of a deleted symbol |
+| 12 migration / schema gates | all PASS, including `ci:model-migration-agreement` |
+
+`ci:duplicate-exported-types` still fails on `ReadinessCheck`, byte-identical to
+what `evidence/01-gate-sweep.json` recorded at `d31a9db6`. Pre-existing, wired
+into no pipeline, unrelated.
+
+### What ADR-0007 point 6 still leaves open
+
+`contradiction_links` — written by `assumption-registry-service.ts:173,205` via
+raw SQL — had DDL only in the retired file and throws in production today.
+Deleting the Drizzle model does not change that; porting the table or retiring
+the sub-feature remains the scoped follow-up the ADR records.

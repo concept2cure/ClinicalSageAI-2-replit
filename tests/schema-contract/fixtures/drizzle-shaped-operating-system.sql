@@ -1,3 +1,23 @@
+-- TEST FIXTURE — NOT A MIGRATION. Nothing applies this file to any database
+-- except tests/schema-contract/harness.ts, which loads it into PGlite.
+--
+-- Provenance: this is migrations/0010_operating_system_foundation.sql, verbatim,
+-- moved here on 2026-09-10 (WO-1) when that file was retired per ADR-0007 and
+-- ADR-0006.
+--
+-- WHY IT STILL EXISTS. ADR-0007 decided the DEPLOYED shape is canonical
+-- (db/migrations/20260323_assumption_decision_contradiction.sql) and called this
+-- one dead. But tests/schema-contract/operating-system-collision.contract.test.ts
+-- exists to CHARACTERISE the collision between the two shapes -- that the
+-- surviving schema depended on application order, which was the defect. Deleting
+-- this DDL outright would delete the test's ability to demonstrate the defect it
+-- guards against, so it survives as a fixture rather than as lineage.
+--
+-- Do NOT move this back under migrations/ or db/migrations/. It has no
+-- execution path, and returning it to a migration tree would give every table
+-- below a second creator -- the exact hazard ADR-0006 and CLAUDE.md RULE 1
+-- exist to prevent.
+
 -- Operating-System Foundation Migration
 -- Structured Assumptions, Auditable Decisions, Governance Boundaries,
 -- Contradiction-Readiness Linkage

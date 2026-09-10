@@ -32,115 +32,15 @@ import { organizations, users, projects, concept2cureArtifacts, concept2cureArti
 // ═══════════════════════════════════════════════════════════════════════════════
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// ⚠️  ORPHANED DEFINITIONS — DO NOT USE (conflicts C-1, C-2, C-7, C-9)
+// CANONICAL ENUMS — used by the governance boundary tables below
 // ═══════════════════════════════════════════════════════════════════════════════
-// Everything from here to the GOVERNANCE BOUNDARY section describes a table
-// shape that exists in NO deployed environment. Its DDL lives only in
-// migrations/0010_operating_system_foundation.sql, which has no execution path
-// (not journaled; this module is not exported from shared/schema.ts, so
-// drizzle-kit push never creates these tables; apply-c2c-migrations.mjs does
-// not include it). See C2C_SCHEMA_AND_ENUM_CONFLICT_LEDGER.md §C-9.
-//
-// The DEPLOYED shape is db/migrations/20260323_assumption_decision_contradiction.sql,
-// served by the raw-SQL services (assumption-registry-service.ts,
-// decision-record-service.ts) whose vocabularies are CANONICAL per the revised
-// ADR-0007. Typed gate access goes through
-// shared/constants/operating-system-vocab.ts. These definitions have ZERO
-// importers (verified 2026-07-25) and are retained solely so their removal is
-// its own reviewed change under the ADR-0006 legacy retirement.
-//
-// Adding an importer of assumptionRecords / assumptionHistory / decisionRecords /
-// contradictionLinks or these enums is a defect: queries generated from them
-// THROW against production columns. The governance tables further down are NOT
-// orphaned — they are canonical, with DDL in
-// db/migrations/20260725_governance_boundary_tables.sql.
-// ═══════════════════════════════════════════════════════════════════════════════
-
-export const assumptionCategoryEnum = pgEnum('assumption_category', [
-  'effect_size',
-  'variance',
-  'event_rate',
-  'attrition',
-  'endpoint',
-  'analysis_population',
-  'comparator',
-  'scenario',
-  'regulator_overlay',
-  'missing_data',
-  'multiplicity',
-  'other',
-]);
-
-export const assumptionValueTypeEnum = pgEnum('assumption_value_type', [
-  'numeric',
-  'text',
-  'enum',
-  'range',
-  'json',
-]);
-
-export const assumptionSourceTypeEnum = pgEnum('assumption_source_type', [
-  'artifact',
-  'manual',
-  'ana_generated',
-  'imported',
-  'historical_comparator',
-]);
-
-export const assumptionConfidenceEnum = pgEnum('assumption_confidence', [
-  'strong',
-  'moderate',
-  'provisional',
-  'uncertain',
-]);
-
-export const assumptionStatusEnum = pgEnum('assumption_status', [
-  'draft',
-  'review',
-  'approved',
-  'superseded',
-  'rejected',
-]);
-
-export const decisionContextTypeEnum = pgEnum('decision_context_type', [
-  'regulatory_analysis',
-  'biostatistics_analysis',
-  'artifact_review',
-  'scenario_comparison',
-  'risk_assessment',
-  'document_generation',
-  'submission_readiness',
-  'other',
-]);
-
-export const decisionActionStateEnum = pgEnum('decision_action_state', [
-  'recommended_only',
-  'prepared',
-  'executed',
-  'rejected',
-  'superseded',
-]);
-
-export const decisionApprovalStateEnum = pgEnum('decision_approval_state', [
-  'not_required',
-  'pending_review',
-  'approved',
-  'rejected',
-]);
-
-export const decisionEscalationStateEnum = pgEnum('decision_escalation_state', [
-  'none',
-  'recommended',
-  'opened',
-  'resolved',
-]);
-
-export const decisionConfidenceEnum = pgEnum('decision_confidence', [
-  'strong',
-  'moderate',
-  'provisional',
-  'uncertain',
-]);
+// These two survived the 2026-09-10 retirement described below because the
+// GOVERNANCE BOUNDARY tables reference them. Note the deployed DDL
+// (db/migrations/20260725_governance_boundary_tables.sql) stores these columns
+// as TEXT with CHECK constraints, not as Postgres ENUM types; this module is not
+// in the drizzle-kit push surface, so these pgEnum declarations are typed access
+// only and create nothing. ADR-0007 point 5 records pgEnum-typing the TEXT CHECK
+// columns as future work on the canonical shape.
 
 export const governanceBoundaryEnum = pgEnum('governance_boundary', [
   'advisory',
@@ -159,249 +59,40 @@ export const domainTrackEnum = pgEnum('domain_track', [
 ]);
 
 // ═══════════════════════════════════════════════════════════════════════════════
-// 1. ASSUMPTION REGISTRY
+// RETIRED 2026-09-10 (WO-1, ADR-0006 legacy retirement)
 // ═══════════════════════════════════════════════════════════════════════════════
-
-/**
- * Structured, project-bound, reusable, reviewable, version-aware assumptions.
- *
- * Every critical assumption (effect size, dropout rate, event rate, etc.)
- * becomes a first-class operating object — queryable, linkable, auditable.
- */
-export const assumptionRecords = pgTable(
-  'assumption_records',
-  {
-    id: uuid('id').primaryKey().defaultRandom(),
-    organizationId: integer('organization_id')
-      .notNull()
-      .references(() => organizations.id),
-    projectId: integer('project_id')
-      .notNull()
-      .references(() => projects.id, { onDelete: 'cascade' }),
-
-    // Classification
-    category: assumptionCategoryEnum('category').notNull(),
-    name: text('name').notNull(),
-    description: text('description'),
-
-    // Value
-    valueType: assumptionValueTypeEnum('value_type').notNull().default('text'),
-    numericValue: real('numeric_value'),
-    textValue: text('text_value'),
-    jsonValue: json('json_value').$type<Record<string, unknown>>(),
-    unit: text('unit'), // e.g., '%', 'events/year', 'mmHg'
-
-    // Rationale
-    rationale: text('rationale'),
-
-    // Source attribution
-    sourceType: assumptionSourceTypeEnum('source_type').default('manual'),
-    sourceArtifactId: integer('source_artifact_id')
-      .references(() => concept2cureArtifacts.id),
-    sourceArtifactVersionId: integer('source_artifact_version_id')
-      .references(() => concept2cureArtifactVersions.id),
-    sourceRunId: uuid('source_run_id'), // workflow run that produced this
-    sourceDescription: text('source_description'), // human-readable provenance
-
-    // Domain & regulatory context
-    domainTrack: domainTrackEnum('domain_track'),
-    regulatorBody: text('regulator_body'), // FDA, EMA, PMDA, etc.
-    jurisdiction: text('jurisdiction'), // US, EU, JP, etc.
-    regulatoryReference: text('regulatory_reference'), // ICH E9, FDA guidance, etc.
-
-    // Confidence & lifecycle
-    confidence: assumptionConfidenceEnum('confidence').default('provisional'),
-    status: assumptionStatusEnum('status').default('draft').notNull(),
-
-    // Version & supersession
-    version: integer('version').default(1).notNull(),
-    supersededById: uuid('superseded_by_id'), // self-referencing for version chain
-    supersessionReason: text('supersession_reason'),
-
-    // Contradiction-readiness linkage
-    linkedArtifactIds: json('linked_artifact_ids').$type<number[]>().default([]),
-    linkedArtifactVersionIds: json('linked_artifact_version_ids').$type<number[]>().default([]),
-    linkedSectionCodes: json('linked_section_codes').$type<string[]>().default([]),
-    linkedDecisionIds: json('linked_decision_ids').$type<string[]>().default([]),
-
-    // Review/approval
-    reviewedById: integer('reviewed_by_id').references(() => users.id),
-    reviewedAt: timestamp('reviewed_at'),
-    approvedById: integer('approved_by_id').references(() => users.id),
-    approvedAt: timestamp('approved_at'),
-    rejectedById: integer('rejected_by_id').references(() => users.id),
-    rejectedAt: timestamp('rejected_at'),
-    rejectionReason: text('rejection_reason'),
-
-    // Audit
-    createdById: integer('created_by_id').references(() => users.id),
-    updatedById: integer('updated_by_id').references(() => users.id),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at').defaultNow().notNull(),
-  },
-  (table) => ({
-    projectIdx: index('assumption_project_idx').on(table.projectId),
-    orgIdx: index('assumption_org_idx').on(table.organizationId),
-    categoryIdx: index('assumption_category_idx').on(table.category),
-    statusIdx: index('assumption_status_idx').on(table.status),
-    confidenceIdx: index('assumption_confidence_idx').on(table.confidence),
-    regulatorBodyIdx: index('assumption_regulator_body_idx').on(table.regulatorBody),
-    sourceArtifactIdx: index('assumption_source_artifact_idx').on(table.sourceArtifactId),
-    supersededByIdx: index('assumption_superseded_by_idx').on(table.supersededById),
-  })
-);
-
-/**
- * Assumption version history — append-only audit trail.
- * Created whenever an assumption is updated or superseded.
- */
-export const assumptionHistory = pgTable(
-  'assumption_history',
-  {
-    id: uuid('id').primaryKey().defaultRandom(),
-    assumptionId: uuid('assumption_id').notNull(),
-    organizationId: integer('organization_id')
-      .notNull()
-      .references(() => organizations.id),
-
-    // Snapshot of the assumption at this point in time
-    version: integer('version').notNull(),
-    category: text('category').notNull(),
-    name: text('name').notNull(),
-    valueType: text('value_type').notNull(),
-    numericValue: real('numeric_value'),
-    textValue: text('text_value'),
-    jsonValue: json('json_value').$type<Record<string, unknown>>(),
-    unit: text('unit'),
-    rationale: text('rationale'),
-    confidence: text('confidence'),
-    status: text('status').notNull(),
-    regulatorBody: text('regulator_body'),
-    jurisdiction: text('jurisdiction'),
-
-    // Change metadata
-    changeAction: text('change_action').notNull(), // 'created', 'updated', 'superseded', 'approved', 'rejected'
-    changeReason: text('change_reason'),
-    changedById: integer('changed_by_id').references(() => users.id),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-  },
-  (table) => ({
-    assumptionIdx: index('assumption_history_assumption_idx').on(table.assumptionId),
-    orgIdx: index('assumption_history_org_idx').on(table.organizationId),
-  })
-);
-
-
+// The orphaned assumption/decision/contradiction definitions that stood here —
+// assumptionRecords, assumptionHistory, decisionRecords, contradictionLinks and
+// their ten enums — have been DELETED.
+//
+// They described a table shape that existed in no deployed environment. Their
+// only DDL was migrations/0010_operating_system_foundation.sql, which had no
+// execution path; that file is now
+// tests/schema-contract/fixtures/drizzle-shaped-operating-system.sql, kept as a
+// fixture solely so operating-system-collision.contract.test.ts can still apply
+// the losing shape and demonstrate the order-dependence defect.
+//
+// The banner they carried said they were "retained solely so their removal is
+// its own reviewed change under the ADR-0006 legacy retirement". This is that
+// retirement: removing the file without removing these would leave the models
+// declaring 28 and 27 columns that no migration creates, which is what
+// ci:model-migration-agreement reported when the file was archived alone.
+//
+// The DEPLOYED shape is db/migrations/20260323_assumption_decision_contradiction.sql,
+// served by the raw-SQL services (assumption-registry-service.ts,
+// decision-record-service.ts) whose vocabularies are CANONICAL per the revised
+// ADR-0007. Typed gate access goes through
+// shared/constants/operating-system-vocab.ts.
+//
+// Zero importers at deletion, re-verified 2026-09-10: the only module importing
+// from this file is server/services/governance-boundary-service.ts, and it takes
+// governanceBoundaryRules / governanceBoundaryTransitions only.
+//
+// ADR-0007 point 6 records the one residual: contradiction_links, written by
+// assumption-registry-service.ts:173,205 via raw SQL, had DDL only in the retired
+// file and throws in production today. Porting or retiring that sub-feature is a
+// scoped follow-up, unchanged by this deletion.
 // ═══════════════════════════════════════════════════════════════════════════════
-// 2. DECISION RECORDS
-// ═══════════════════════════════════════════════════════════════════════════════
-
-/**
- * Formal decision records that trace:
- * analysis → judgment → recommendation → confidence → action → approval.
- *
- * Every material decision (accept assumption, generate artifact, escalate risk)
- * becomes a queryable, auditable record tied to projects and artifacts.
- */
-export const decisionRecords = pgTable(
-  'decision_records',
-  {
-    id: uuid('id').primaryKey().defaultRandom(),
-    organizationId: integer('organization_id')
-      .notNull()
-      .references(() => organizations.id),
-    projectId: integer('project_id')
-      .notNull()
-      .references(() => projects.id, { onDelete: 'cascade' }),
-
-    // Context
-    contextType: decisionContextTypeEnum('context_type').notNull(),
-    contextDescription: text('context_description'), // human-readable: "Sample size rationale for Phase 3"
-
-    // Related objects
-    relatedArtifactId: integer('related_artifact_id')
-      .references(() => concept2cureArtifacts.id),
-    relatedArtifactVersionId: integer('related_artifact_version_id')
-      .references(() => concept2cureArtifactVersions.id),
-    relatedRunId: uuid('related_run_id'), // workflow run
-    relatedAssumptionIds: json('related_assumption_ids').$type<string[]>().default([]),
-
-    // Recommendation
-    recommendationType: text('recommendation_type'), // e.g., 'sample_size_increase', 'endpoint_change', 'risk_mitigation'
-    recommendationSummary: text('recommendation_summary').notNull(),
-    recommendationDetail: text('recommendation_detail'), // full reasoning
-
-    // Confidence
-    confidence: decisionConfidenceEnum('confidence').notNull().default('provisional'),
-    evidenceSources: json('evidence_sources').$type<string[]>().default([]),
-
-    // Action state
-    actionState: decisionActionStateEnum('action_state').notNull().default('recommended_only'),
-    actionDescription: text('action_description'), // what action was actually taken
-
-    // Approval state
-    approvalState: decisionApprovalStateEnum('approval_state').default('not_required'),
-
-    // Escalation
-    escalationState: decisionEscalationStateEnum('escalation_state').default('none'),
-    escalationReason: text('escalation_reason'),
-    escalationResolvedAt: timestamp('escalation_resolved_at'),
-
-    // Executed artifact linkage
-    executedArtifactId: integer('executed_artifact_id')
-      .references(() => concept2cureArtifacts.id),
-    executedArtifactVersionId: integer('executed_artifact_version_id')
-      .references(() => concept2cureArtifactVersions.id),
-
-    // Domain & regulatory context (body-aware)
-    domainTrack: domainTrackEnum('domain_track'),
-    regulatorBody: text('regulator_body'),
-    jurisdiction: text('jurisdiction'),
-    regulatoryReference: text('regulatory_reference'),
-
-    // Governance boundary
-    governanceBoundary: governanceBoundaryEnum('governance_boundary').default('advisory'),
-
-    // Supersession
-    supersededById: uuid('superseded_by_id'),
-    supersessionReason: text('supersession_reason'),
-
-    // Contradiction-readiness linkage
-    linkedSectionCodes: json('linked_section_codes').$type<string[]>().default([]),
-    linkedAssumptionIds: json('linked_assumption_ids').$type<string[]>().default([]),
-
-    // Notes / provenance
-    notes: text('notes'),
-    provenance: json('provenance').$type<Record<string, unknown>>(),
-
-    // Approval tracking
-    approvedById: integer('approved_by_id').references(() => users.id),
-    approvedAt: timestamp('approved_at'),
-    rejectedById: integer('rejected_by_id').references(() => users.id),
-    rejectedAt: timestamp('rejected_at'),
-    rejectionReason: text('rejection_reason'),
-
-    // Audit
-    createdById: integer('created_by_id').references(() => users.id),
-    updatedById: integer('updated_by_id').references(() => users.id),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at').defaultNow().notNull(),
-  },
-  (table) => ({
-    projectIdx: index('decision_project_idx').on(table.projectId),
-    orgIdx: index('decision_org_idx').on(table.organizationId),
-    contextTypeIdx: index('decision_context_type_idx').on(table.contextType),
-    actionStateIdx: index('decision_action_state_idx').on(table.actionState),
-    approvalStateIdx: index('decision_approval_state_idx').on(table.approvalState),
-    confidenceIdx: index('decision_confidence_idx').on(table.confidence),
-    regulatorBodyIdx: index('decision_regulator_body_idx').on(table.regulatorBody),
-    relatedArtifactIdx: index('decision_related_artifact_idx').on(table.relatedArtifactId),
-    executedArtifactIdx: index('decision_executed_artifact_idx').on(table.executedArtifactId),
-    governanceBoundaryIdx: index('decision_governance_boundary_idx').on(table.governanceBoundary),
-    supersededByIdx: index('decision_superseded_by_idx').on(table.supersededById),
-  })
-);
-
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // 3. GOVERNANCE BOUNDARY RULES
@@ -508,87 +199,16 @@ export const governanceBoundaryTransitions = pgTable(
   })
 );
 
-
 // ═══════════════════════════════════════════════════════════════════════════════
 // 4. CONTRADICTION-READINESS LINKAGE
 // ═══════════════════════════════════════════════════════════════════════════════
 
-/**
- * Cross-object comparison links for future contradiction detection.
- *
- * Links assumptions/decisions/artifacts so a future contradiction engine
- * can compare protocol vs SAP, SAP vs CSR, summary vs body, etc.
- */
-export const contradictionLinks = pgTable(
-  'contradiction_links',
-  {
-    id: uuid('id').primaryKey().defaultRandom(),
-    organizationId: integer('organization_id')
-      .notNull()
-      .references(() => organizations.id),
-    projectId: integer('project_id')
-      .notNull()
-      .references(() => projects.id, { onDelete: 'cascade' }),
-
-    // Link endpoints (at least one pair must be populated)
-    sourceType: text('source_type').notNull(), // 'assumption', 'decision', 'artifact', 'artifact_section'
-    sourceId: text('source_id').notNull(), // UUID or integer as string
-    sourceLabel: text('source_label'), // human-readable: "Protocol dropout assumption"
-
-    targetType: text('target_type').notNull(),
-    targetId: text('target_id').notNull(),
-    targetLabel: text('target_label'),
-
-    // Comparison metadata
-    comparisonType: text('comparison_type').notNull(), // 'protocol_vs_sap', 'sap_vs_csr', 'assumption_vs_result', etc.
-    fieldPath: text('field_path'), // specific field being compared, e.g., 'dropout_rate'
-
-    // Domain & body context
-    domainTrack: domainTrackEnum('domain_track'),
-    regulatorBody: text('regulator_body'),
-    sectionCodes: json('section_codes').$type<string[]>().default([]),
-
-    // Status
-    isActive: boolean('is_active').default(true).notNull(),
-    lastCheckedAt: timestamp('last_checked_at'),
-    inconsistencyDetected: boolean('inconsistency_detected').default(false),
-    inconsistencyDetail: text('inconsistency_detail'),
-
-    // Audit
-    createdById: integer('created_by_id').references(() => users.id),
-    createdAt: timestamp('created_at').defaultNow().notNull(),
-    updatedAt: timestamp('updated_at').defaultNow().notNull(),
-  },
-  (table) => ({
-    orgIdx: index('contradiction_link_org_idx').on(table.organizationId),
-    projectIdx: index('contradiction_link_project_idx').on(table.projectId),
-    sourceIdx: index('contradiction_link_source_idx').on(table.sourceType, table.sourceId),
-    targetIdx: index('contradiction_link_target_idx').on(table.targetType, table.targetId),
-    comparisonTypeIdx: index('contradiction_link_comparison_idx').on(table.comparisonType),
-  })
-);
-
-
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES & INSERT SCHEMAS
 // ═══════════════════════════════════════════════════════════════════════════════
-
-// Assumption types
-export type AssumptionRecord = InferSelectModel<typeof assumptionRecords>;
-export type AssumptionHistoryRecord = InferSelectModel<typeof assumptionHistory>;
-export const insertAssumptionSchema = createInsertSchema(assumptionRecords);
-export const insertAssumptionHistorySchema = createInsertSchema(assumptionHistory);
-
-// Decision types
-export type DecisionRecord = InferSelectModel<typeof decisionRecords>;
-export const insertDecisionSchema = createInsertSchema(decisionRecords);
 
 // Governance types
 export type GovernanceBoundaryRule = InferSelectModel<typeof governanceBoundaryRules>;
 export type GovernanceBoundaryTransition = InferSelectModel<typeof governanceBoundaryTransitions>;
 export const insertGovernanceBoundaryRuleSchema = createInsertSchema(governanceBoundaryRules);
 export const insertGovernanceBoundaryTransitionSchema = createInsertSchema(governanceBoundaryTransitions);
-
-// Contradiction types
-export type ContradictionLink = InferSelectModel<typeof contradictionLinks>;
-export const insertContradictionLinkSchema = createInsertSchema(contradictionLinks);
