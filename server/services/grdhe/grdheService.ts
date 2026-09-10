@@ -171,6 +171,32 @@ const AUDITABLE_TABLE_SCOPES = {
 } as const satisfies Record<string, AuditableTableScope>;
 
 /** Widened lookup: an unlisted table must read as undefined, not as a type error. */
+/**
+ * Why the audit-scope refusals are a typed error rather than a bare `Error`.
+ *
+ * The route used to `catch (err)` around `getAuditLog` and answer 409
+ * AUDIT_NOT_TENANT_SCOPABLE for ANY throw. Three of the things that can throw
+ * in there are deliberate refusals; the rest are database failures on the
+ * EXISTS probe or the audit query. So a transient connection error was reported
+ * to the caller as "this table cannot be tenant-scoped and is withheld" — a
+ * false statement about the schema, produced by an outage, in the same shape a
+ * real policy decision takes.
+ *
+ * That is the defect this whole endpoint's fix exists to remove, reintroduced
+ * one layer out: an error rendered as a more specific claim than the truth. A
+ * caller cannot retry a 409, and an operator reading it would go looking for a
+ * missing tenant column that is not missing.
+ */
+export class AuditScopeError extends Error {
+  constructor(
+    readonly code: 'AUDIT_TENANT_REQUIRED' | 'AUDIT_TABLE_UNCLASSIFIED' | 'AUDIT_NOT_TENANT_SCOPABLE',
+    message: string,
+  ) {
+    super(message);
+    this.name = 'AuditScopeError';
+  }
+}
+
 const auditableTableScope = (table: string): AuditableTableScope | undefined =>
   (AUDITABLE_TABLE_SCOPES as Record<string, AuditableTableScope>)[table];
 
@@ -1513,17 +1539,24 @@ export class GRDHEService {
     const { limit = 100, offset = 0 } = options;
 
     if (!tenantId) {
-      throw new Error('getAuditLog: tenantId is required (tenant scope).');
+      throw new AuditScopeError(
+        'AUDIT_TENANT_REQUIRED',
+        'getAuditLog: tenantId is required (tenant scope).',
+      );
     }
 
     const scope = auditableTableScope(tableName);
     if (!scope) {
       // Not classified => not auditable through this path. Adding a table to the
       // route's allowlist without classifying it here now fails instead of leaking.
-      throw new Error(`getAuditLog: ${tableName} is not classified for tenant scoping.`);
+      throw new AuditScopeError(
+        'AUDIT_TABLE_UNCLASSIFIED',
+        `getAuditLog: ${tableName} is not classified for tenant scoping.`,
+      );
     }
     if (scope.kind === 'unscopable') {
-      throw new Error(
+      throw new AuditScopeError(
+        'AUDIT_NOT_TENANT_SCOPABLE',
         `getAuditLog: ${tableName} carries no tenant column, so ownership cannot be ` +
           'proven and its audit trail is withheld. See ' +
           'docs/work-orders/WO-13-grdhe-tenant-scoping.md.',

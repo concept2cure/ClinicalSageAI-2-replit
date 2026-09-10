@@ -19,7 +19,7 @@
  */
 
 import { Router, Request, Response, NextFunction } from 'express';
-import { grdheService } from '../services/grdhe/grdheService';
+import { grdheService, AuditScopeError } from '../services/grdhe/grdheService';
 import {
   DataRegion,
   TerminologySystem,
@@ -1062,14 +1062,26 @@ router.get('/audit/:tableName/:recordId', asyncHandler(async (req: Request, res:
       offset: offset ? parseInt(offset as string) : 0
     });
   } catch (err) {
-    /* getAuditLog throws for a table it cannot scope — today only
-       electronic_signatures, which has no tenant column at all. Refusing is
-       deliberate: serving a Part 11 signature trail that cannot be attributed to
-       a sponsor is the failure this fix exists to stop. See WO-13. */
+    /* Only a deliberate scope refusal answers 409. getAuditLog also runs an
+       EXISTS probe and the audit query itself, and this used to catch EVERY
+       throw — so a transient database error was reported to the caller as "this
+       table cannot be tenant-scoped and is withheld", which is a false claim
+       about the schema produced by an outage, in the same shape a real policy
+       decision takes. A caller cannot retry a 409, and an operator reading it
+       would go looking for a missing tenant column that is not missing.
+
+       Today the refusals are: electronic_signatures (no tenant column at all —
+       serving a Part 11 signature trail that cannot be attributed to a sponsor
+       is the failure this endpoint's fix exists to stop) and any table added to
+       the allowlist above without being classified in AUDITABLE_TABLE_SCOPES.
+       See WO-13. Anything else rethrows to the router's error handler as a
+       500, which is what it is. */
+    if (!(err instanceof AuditScopeError)) throw err;
+
     return res.status(409).json({
       success: false,
       error: {
-        code: 'AUDIT_NOT_TENANT_SCOPABLE',
+        code: err.code,
         message: `The audit trail for ${tableName} cannot be tenant-scoped and is withheld`
       }
     });

@@ -11,7 +11,7 @@
  * @module shared/schema/operating-system
  */
 
-import { InferSelectModel, sql } from 'drizzle-orm';
+import { InferSelectModel } from 'drizzle-orm';
 import {
   integer,
   pgTable,
@@ -21,11 +21,10 @@ import {
   boolean,
   uuid,
   json,
-  real,
   index,
 } from 'drizzle-orm/pg-core';
 import { createInsertSchema } from 'drizzle-zod';
-import { organizations, users, projects, concept2cureArtifacts, concept2cureArtifactVersions } from '../schema';
+import { organizations, users, projects, concept2cureArtifacts } from '../schema';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // ENUMS

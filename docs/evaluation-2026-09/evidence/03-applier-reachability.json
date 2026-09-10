@@ -1,15 +1,125 @@
 {
-  "generated": "2026-09-10T05:56:16.811Z",
+  "generated": "2026-09-10T06:23:52.367Z",
   "note": "Coverage per applier. Deliberately makes NO claim about which tables exist in a deployed database — that needs a live DB (ci:tables-live-schema).",
   "totals": {
     "files": 568,
     "unreachedByDurableApplier": 18,
-    "ciTestDbOnly": 0
+    "ciTestDbOnly": 0,
+    "manualScriptOnly": 107
   },
+  "manualOnly": [
+    "db/migrations/016_perf_indexes.sql",
+    "db/migrations/020_new_process_wizard.sql",
+    "db/migrations/023_stability_step2.sql",
+    "db/migrations/028_strategy_core.sql",
+    "db/migrations/029_strategy_step2.sql",
+    "db/migrations/047_quality_step6.sql",
+    "db/migrations/048_quality_step7.sql",
+    "db/migrations/049_quality_step8.sql",
+    "db/migrations/068_regulatory_schema_alignment.sql",
+    "db/migrations/073_cortex_prime_unified_brain.sql",
+    "db/migrations/100_regulatory_templates.sql",
+    "db/migrations/101_complete_template_catalog.sql",
+    "db/migrations/102_load_all_templates.sql",
+    "db/migrations/103_load_complete_templates.sql",
+    "db/migrations/20260125_add_atom_embeddings.sql",
+    "db/migrations/20260128_concept2cure_foundation.sql",
+    "db/migrations/20260128_concept2cure_signatures.sql",
+    "db/migrations/20260128_concept2cure_wbs_assignments.sql",
+    "db/migrations/20260129_add_org_industry_stripe_audit_logs.sql",
+    "db/migrations/20260129_add_org_uuid_alignment.sql",
+    "db/migrations/20260129_proof_audit_logs.sql",
+    "db/migrations/20260129_workflow_indexes_and_dlq.sql",
+    "db/migrations/20260130_add_assembly_audit_logs.sql",
+    "db/migrations/20260130_add_assembly_docs_table.sql",
+    "db/migrations/20260130_add_workflow_rls_and_step_runs_immutability.sql",
+    "db/migrations/20260203_phase2_anchors_xrefs.sql",
+    "db/migrations/20260203_phase2_graph_rls_indexes_patch.sql",
+    "db/migrations/20260203_phase2_review_batch_persistence.sql",
+    "db/migrations/20260203_phase2_review_batch_runner_hardening.sql",
+    "db/migrations/20260203_rps_event_store.sql",
+    "db/migrations/20260204_review_batch_worker.sql",
+    "db/migrations/20260205_review_batch_admin.sql",
+    "db/migrations/20260206_phase4_orchestration_kernel.sql",
+    "db/migrations/20260206_phase5_idempotent_provenance.sql",
+    "db/migrations/20260206_phase6_docx_factory.sql",
+    "db/migrations/20260206_review_batch_ops_control.sql",
+    "db/migrations/20260207_phase4_seed_templates.sql",
+    "db/migrations/20260209_create_pm_settings.sql",
+    "db/migrations/20260211_phase6_6g_proof_pack_trust_chain.sql",
+    "db/migrations/20260212_phase7_0c_render_tenant_safety.sql",
+    "db/migrations/20260216_enterprise_4pillar_expansion.sql",
+    "db/migrations/20260222_audit_events_hash_chain.sql",
+    "db/migrations/20260222_ivdr_schema_hardening.sql",
+    "db/migrations/20260223_ivdr_packs_building_status.sql",
+    "db/migrations/20260224_ai_claims_verifier_flags.sql",
+    "db/migrations/20260224_binder_evidence_source_types.sql",
+    "db/migrations/20260225_ivdr_pack_warnings_artifact_hashes.sql",
+    "db/migrations/20260305_projects_add_path_column.sql",
+    "db/migrations/20260311_concept2cure_artifacts.sql",
+    "db/migrations/20260311_concept2cure_provenance_events.sql",
+    "db/migrations/20260313_concept2cure_submission_snapshots.sql",
+    "db/migrations/20260313_phase11_governed_workflow.sql",
+    "db/migrations/20260314_phase12_multi_user_review.sql",
+    "db/migrations/20260317_submission_twin.sql",
+    "db/migrations/20260318_ga_immutability_hardening.sql",
+    "db/migrations/20260319_billing_usage_budgets_alerts.sql",
+    "db/migrations/20260319_evidence_fabric.sql",
+    "db/migrations/20260319_ga_indexes_and_fixes.sql",
+    "db/migrations/20260325_ai_goal_plan_hardening.sql",
+    "db/migrations/20260325_ana_kernel_log_immutability_hashchain.sql",
+    "db/migrations/20260401_project_sharing_visibility.sql",
+    "db/migrations/20260402_supply_chain_tables.sql",
+    "db/migrations/20260501_q_sub.sql",
+    "db/migrations/20260508_authoring_plans.sql",
+    "db/migrations/20260508_consistency_alerts.sql",
+    "db/migrations/20260508_guidance_alerts.sql",
+    "db/migrations/20260508_project_therapeutic_area.sql",
+    "db/migrations/20260526_drop_invalid_cdisc_fks.sql",
+    "db/migrations/20260526_updated_at_triggers.sql",
+    "db/migrations/20260609_scim_tenants.sql",
+    "db/migrations/20260611_organization_invitations.sql",
+    "db/migrations/20260611_scim_ip_allowlist.sql",
+    "db/migrations/20260612_org_client_type_user_preferences.sql",
+    "db/migrations/20260617_precedent_org_isolation.sql",
+    "db/migrations/20260617_project_schedule_of_events.sql",
+    "db/migrations/20260621_intelligent_licensing_eula.sql",
+    "db/migrations/20260629_ana_artifact_thread_lookup.sql",
+    "db/migrations/20260716_biopharma_specialty.sql",
+    "db/migrations/20260716_change_assessments.sql",
+    "db/migrations/20260716_enablement.sql",
+    "db/migrations/20260717_biostat_docs.sql",
+    "db/migrations/20260717_cro_portfolio_store.sql",
+    "db/migrations/20260717_decision_lineage_store.sql",
+    "db/migrations/20260717_doc_journey_store.sql",
+    "db/migrations/20260717_dossier_map_store.sql",
+    "db/migrations/20260717_ind_checklist_store.sql",
+    "db/migrations/20260717_market_access_store.sql",
+    "db/migrations/20260717_nda_modules_store.sql",
+    "db/migrations/20260717_protocol_dev_store.sql",
+    "db/migrations/20260717_reg_change_store.sql",
+    "db/migrations/20260717_research_admin_store.sql",
+    "db/migrations/20260717_sae_cases_store.sql",
+    "db/migrations/20260717_sae_reporting_clock.sql",
+    "db/migrations/20260717_shadow_review_store.sql",
+    "db/migrations/20260718_bla_assessments_store.sql",
+    "db/migrations/20260718_cmc_changes_store.sql",
+    "db/migrations/20260725_drop_orphaned_foresight_prediction_tables.sql",
+    "db/migrations/20260727_authoring_object_permissions.sql",
+    "db/migrations/20260727_drop_clinical_evidence_duplicate_lineage.sql",
+    "db/migrations/20260727_drop_source_citations_phantom.sql",
+    "db/migrations/20260727_prm_program_link.sql",
+    "db/migrations/20260730_authoring_comments_router_columns.sql",
+    "db/migrations/20260730_authoring_runtime_ddl.sql",
+    "db/migrations/20260730_authoring_subsystem_schema.sql",
+    "db/migrations/20260730_ectd_compilations_leaf_manifest.sql",
+    "db/migrations/20260731_retire_intelligence_cluster_blobs.sql",
+    "db/migrations/20260817_doc_revisions_immutable_ledger.sql"
+  ],
   "coverage": {
     "deploy-migrate (production)": 261,
     "install-fresh": 291,
-    "db_migrate.sh (operator)": 304,
+    "db_migrate.sh (MANUAL — no automated caller)": 304,
     "ci psql loop (TEST DB ONLY)": 43,
     "drizzle journal": 1
   },
@@ -37,113 +147,113 @@
   "byFile": {
     "db/migrations/000_gcc_bootstrap_core.sql": [
       "install-fresh",
-      "db_migrate.sh (operator)",
+      "db_migrate.sh (MANUAL — no automated caller)",
       "ci psql loop (TEST DB ONLY)"
     ],
     "db/migrations/001_gcc_core.sql": [
       "install-fresh",
-      "db_migrate.sh (operator)",
+      "db_migrate.sh (MANUAL — no automated caller)",
       "ci psql loop (TEST DB ONLY)"
     ],
     "db/migrations/002_gcc_audit_immutability.sql": [
       "install-fresh",
-      "db_migrate.sh (operator)",
+      "db_migrate.sh (MANUAL — no automated caller)",
       "ci psql loop (TEST DB ONLY)"
     ],
     "db/migrations/003_gcc_prose_versioning.sql": [
       "install-fresh",
-      "db_migrate.sh (operator)",
+      "db_migrate.sh (MANUAL — no automated caller)",
       "ci psql loop (TEST DB ONLY)"
     ],
     "db/migrations/004_gcc_enhanced_citations.sql": [
       "install-fresh",
-      "db_migrate.sh (operator)",
+      "db_migrate.sh (MANUAL — no automated caller)",
       "ci psql loop (TEST DB ONLY)"
     ],
     "db/migrations/005_gcc_database_roles.sql": [
       "install-fresh",
-      "db_migrate.sh (operator)",
+      "db_migrate.sh (MANUAL — no automated caller)",
       "ci psql loop (TEST DB ONLY)"
     ],
     "db/migrations/006_gcc_dashboard_views.sql": [
       "install-fresh",
-      "db_migrate.sh (operator)",
+      "db_migrate.sh (MANUAL — no automated caller)",
       "ci psql loop (TEST DB ONLY)"
     ],
     "db/migrations/016_perf_indexes.sql": [
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/017_gcc_shadow_agent_rbac.sql": [
       "install-fresh",
-      "db_migrate.sh (operator)",
+      "db_migrate.sh (MANUAL — no automated caller)",
       "ci psql loop (TEST DB ONLY)"
     ],
     "db/migrations/018_gcc_purge_workflow.sql": [
       "install-fresh",
-      "db_migrate.sh (operator)",
+      "db_migrate.sh (MANUAL — no automated caller)",
       "ci psql loop (TEST DB ONLY)"
     ],
     "db/migrations/019_gcc_idempotency_ratelimit.sql": [
       "install-fresh",
-      "db_migrate.sh (operator)",
+      "db_migrate.sh (MANUAL — no automated caller)",
       "ci psql loop (TEST DB ONLY)"
     ],
     "db/migrations/020_new_process_wizard.sql": [
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/022_stability_v2.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/023_stability_step2.sql": [
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/024_stability_step3.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/026_stability_step4.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/028_strategy_core.sql": [
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/029_strategy_step2.sql": [
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/030_stability_results.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/036_gcc_discovery_bridge.sql": [
       "install-fresh",
-      "db_migrate.sh (operator)",
+      "db_migrate.sh (MANUAL — no automated caller)",
       "ci psql loop (TEST DB ONLY)"
     ],
     "db/migrations/037_gcc_registry_trial_ledger.sql": [
       "install-fresh",
-      "db_migrate.sh (operator)",
+      "db_migrate.sh (MANUAL — no automated caller)",
       "ci psql loop (TEST DB ONLY)"
     ],
     "db/migrations/038_gcc_ectd_seeder_service.sql": [
       "install-fresh",
-      "db_migrate.sh (operator)",
+      "db_migrate.sh (MANUAL — no automated caller)",
       "ci psql loop (TEST DB ONLY)"
     ],
     "db/migrations/039_gcc_label_impact_simulator.sql": [
       "install-fresh",
-      "db_migrate.sh (operator)",
+      "db_migrate.sh (MANUAL — no automated caller)",
       "ci psql loop (TEST DB ONLY)"
     ],
     "db/migrations/040_gcc_site_intelligence.sql": [
       "install-fresh",
-      "db_migrate.sh (operator)",
+      "db_migrate.sh (MANUAL — no automated caller)",
       "ci psql loop (TEST DB ONLY)"
     ],
     "db/migrations/041_gcc_signing_gates.sql": [
       "install-fresh",
-      "db_migrate.sh (operator)",
+      "db_migrate.sh (MANUAL — no automated caller)",
       "ci psql loop (TEST DB ONLY)"
     ],
     "db/migrations/044b_gcc_lumen_schema_prerequisite.sql": [
@@ -156,1043 +266,1043 @@
       "ci psql loop (TEST DB ONLY)"
     ],
     "db/migrations/047_quality_step6.sql": [
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/048_quality_step7.sql": [
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/049_quality_step8.sql": [
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/050_gcc_ectd_v4_domain_registry.sql": [
       "install-fresh",
-      "db_migrate.sh (operator)",
+      "db_migrate.sh (MANUAL — no automated caller)",
       "ci psql loop (TEST DB ONLY)"
     ],
     "db/migrations/051_gcc_multi_tenant_identity.sql": [
       "install-fresh",
-      "db_migrate.sh (operator)",
+      "db_migrate.sh (MANUAL — no automated caller)",
       "ci psql loop (TEST DB ONLY)"
     ],
     "db/migrations/052_gcc_ectd_v4_cou_graph.sql": [
       "install-fresh",
-      "db_migrate.sh (operator)",
+      "db_migrate.sh (MANUAL — no automated caller)",
       "ci psql loop (TEST DB ONLY)"
     ],
     "db/migrations/053_gcc_rls_policies.sql": [
       "install-fresh",
-      "db_migrate.sh (operator)",
+      "db_migrate.sh (MANUAL — no automated caller)",
       "ci psql loop (TEST DB ONLY)"
     ],
     "db/migrations/054_gcc_part11_audit.sql": [
       "install-fresh",
-      "db_migrate.sh (operator)",
+      "db_migrate.sh (MANUAL — no automated caller)",
       "ci psql loop (TEST DB ONLY)"
     ],
     "db/migrations/055_gcc_test_scenarios.sql": [
       "install-fresh",
-      "db_migrate.sh (operator)",
+      "db_migrate.sh (MANUAL — no automated caller)",
       "ci psql loop (TEST DB ONLY)"
     ],
     "db/migrations/056_gcc_test_runner.sql": [
       "install-fresh",
-      "db_migrate.sh (operator)",
+      "db_migrate.sh (MANUAL — no automated caller)",
       "ci psql loop (TEST DB ONLY)"
     ],
     "db/migrations/057_gcc_product_master.sql": [
       "install-fresh",
-      "db_migrate.sh (operator)",
+      "db_migrate.sh (MANUAL — no automated caller)",
       "ci psql loop (TEST DB ONLY)"
     ],
     "db/migrations/058_gcc_fhir_resources.sql": [
       "install-fresh",
-      "db_migrate.sh (operator)",
+      "db_migrate.sh (MANUAL — no automated caller)",
       "ci psql loop (TEST DB ONLY)"
     ],
     "db/migrations/059_gcc_vector_embeddings.sql": [
       "install-fresh",
-      "db_migrate.sh (operator)",
+      "db_migrate.sh (MANUAL — no automated caller)",
       "ci psql loop (TEST DB ONLY)"
     ],
     "db/migrations/063_gcc_cognitive_agent_runtime.sql": [
       "install-fresh",
-      "db_migrate.sh (operator)",
+      "db_migrate.sh (MANUAL — no automated caller)",
       "ci psql loop (TEST DB ONLY)"
     ],
     "db/migrations/064_gcc_cognitive_audit_schema.sql": [
       "install-fresh",
-      "db_migrate.sh (operator)",
+      "db_migrate.sh (MANUAL — no automated caller)",
       "ci psql loop (TEST DB ONLY)"
     ],
     "db/migrations/065_gcc_global_dossier_schema.sql": [
       "install-fresh",
-      "db_migrate.sh (operator)",
+      "db_migrate.sh (MANUAL — no automated caller)",
       "ci psql loop (TEST DB ONLY)"
     ],
     "db/migrations/066_gcc_manufacturing_digital_twins.sql": [
       "install-fresh",
-      "db_migrate.sh (operator)",
+      "db_migrate.sh (MANUAL — no automated caller)",
       "ci psql loop (TEST DB ONLY)"
     ],
     "db/migrations/067_gcc_federated_learning_intelligence.sql": [
       "install-fresh",
-      "db_migrate.sh (operator)",
+      "db_migrate.sh (MANUAL — no automated caller)",
       "ci psql loop (TEST DB ONLY)"
     ],
     "db/migrations/068_regulatory_schema_alignment.sql": [
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/069_gcc_multitenant_rls_expansion.sql": [
       "install-fresh",
-      "db_migrate.sh (operator)",
+      "db_migrate.sh (MANUAL — no automated caller)",
       "ci psql loop (TEST DB ONLY)"
     ],
     "db/migrations/070_gcc_rls_extended_ga.sql": [
       "install-fresh",
-      "db_migrate.sh (operator)",
+      "db_migrate.sh (MANUAL — no automated caller)",
       "ci psql loop (TEST DB ONLY)"
     ],
     "db/migrations/072_gcc_innovation_platform_core.sql": [
       "install-fresh",
-      "db_migrate.sh (operator)",
+      "db_migrate.sh (MANUAL — no automated caller)",
       "ci psql loop (TEST DB ONLY)"
     ],
     "db/migrations/073_cortex_prime_unified_brain.sql": [
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/074_gcc_regulatory_intuition_engine.sql": [
       "install-fresh",
-      "db_migrate.sh (operator)",
+      "db_migrate.sh (MANUAL — no automated caller)",
       "ci psql loop (TEST DB ONLY)"
     ],
     "db/migrations/075_gcc_epistemic_intelligence.sql": [
       "install-fresh",
-      "db_migrate.sh (operator)",
+      "db_migrate.sh (MANUAL — no automated caller)",
       "ci psql loop (TEST DB ONLY)"
     ],
     "db/migrations/076_gcc_causal_inference_engine.sql": [
       "install-fresh",
-      "db_migrate.sh (operator)",
+      "db_migrate.sh (MANUAL — no automated caller)",
       "ci psql loop (TEST DB ONLY)"
     ],
     "db/migrations/077_gcc_self_evolving_intelligence.sql": [
       "install-fresh",
-      "db_migrate.sh (operator)",
+      "db_migrate.sh (MANUAL — no automated caller)",
       "ci psql loop (TEST DB ONLY)"
     ],
     "db/migrations/078_gcc_cross_domain_transfer.sql": [
       "install-fresh",
-      "db_migrate.sh (operator)",
+      "db_migrate.sh (MANUAL — no automated caller)",
       "ci psql loop (TEST DB ONLY)"
     ],
     "db/migrations/079_gcc_unified_functions_views.sql": [
       "install-fresh",
-      "db_migrate.sh (operator)",
+      "db_migrate.sh (MANUAL — no automated caller)",
       "ci psql loop (TEST DB ONLY)"
     ],
     "db/migrations/080_gcc_21cfr_part11_compliance.sql": [
       "install-fresh",
-      "db_migrate.sh (operator)",
+      "db_migrate.sh (MANUAL — no automated caller)",
       "ci psql loop (TEST DB ONLY)"
     ],
     "db/migrations/081_grdhe_regulatory_mapping_layer.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/082_ectd_submission_agent.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/100_regulatory_templates.sql": [
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/101_complete_template_catalog.sql": [
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/102_load_all_templates.sql": [
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/103_load_complete_templates.sql": [
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260125_add_atom_embeddings.sql": [
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260125_ai_provider_audit_log.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260125_enhanced_cortex_schema.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260128_concept2cure_foundation.sql": [
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260128_concept2cure_signatures.sql": [
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260128_concept2cure_wbs_assignments.sql": [
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260129_add_org_industry_stripe_audit_logs.sql": [
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260129_add_org_uuid_alignment.sql": [
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260129_phase5_intelligent_document_system.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260129_proof_audit_logs.sql": [
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260129_workflow_indexes_and_dlq.sql": [
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260130_add_assembly_audit_logs.sql": [
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260130_add_assembly_docs_table.sql": [
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260130_add_workflow_rls_and_step_runs_immutability.sql": [
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260203_phase2_anchors_xrefs.sql": [
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260203_phase2_graph_rls_indexes_patch.sql": [
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260203_phase2_review_batch_persistence.sql": [
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260203_phase2_review_batch_runner_hardening.sql": [
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260203_rps_event_store.sql": [
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260204_review_batch_worker.sql": [
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260205_review_batch_admin.sql": [
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260206_phase4_orchestration_kernel.sql": [
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260206_phase5_contradiction_scanner.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260206_phase5_evidence_fabric.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260206_phase5_idempotent_provenance.sql": [
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260206_phase6_docx_factory.sql": [
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260206_review_batch_ops_control.sql": [
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260207_phase4_seed_templates.sql": [
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260207_phase6_6_predicate_intelligence.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260207_phase6_6a_fda_clearance_universe.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260208_phase6_6a_risk_rollups.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260209_create_pm_settings.sql": [
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260209_phase6_6a_fda_ingest_runs.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260211_phase6_6d_defense_packets.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260211_phase6_6e_proof_pack_exports.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260211_phase6_6g_proof_pack_trust_chain.sql": [
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260211_phase7_0a_render_jobs.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260212_phase7_0c_render_tenant_safety.sql": [
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260216_enterprise_4pillar_expansion.sql": [
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260220_ind_section_tracking.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260220_user_intelligence_platform.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260222_audit_events_hash_chain.sql": [
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260222_audit_events_immutability.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260222_ivdr_schema_hardening.sql": [
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260223_ivdr_binder_packs.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260223_ivdr_packs_building_status.sql": [
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260224_ai_claims_verifier_flags.sql": [
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260224_ai_trace_chain.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260224_binder_evidence_source_types.sql": [
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260225_ivdr_pack_warnings_artifact_hashes.sql": [
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260305_projects_add_path_column.sql": [
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260306_chat_tool_runs.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260306_precedent_engine.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260311_concept2cure_artifacts.sql": [
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260311_concept2cure_provenance_events.sql": [
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260313_concept2cure_submission_snapshots.sql": [
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260313_phase11_governed_workflow.sql": [
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260314_phase12_multi_user_review.sql": [
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260317_global_regulatory_compliance.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260317_submission_twin.sql": [
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260318_ga_immutability_hardening.sql": [
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260319_billing_usage_budgets_alerts.sql": [
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260319_evidence_fabric.sql": [
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260319_ga_indexes_and_fixes.sql": [
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260322_quality_checkpoints.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260322_regulatory_precedent_intelligence.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260323_assumption_decision_contradiction.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260323_reactive_dependency_layer.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260324_ai_goal_plan_runs.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260324_ai_kernel_agent_protocol_events.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260324_ai_kernel_decision_records.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260324_ai_kernel_policy_outcomes.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260324_ana_kernel_decision_log.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260325_ai_goal_plan_hardening.sql": [
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260325_ai_goal_plan_step_events.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260325_ana_kernel_log_immutability_hashchain.sql": [
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260325_decision_receipts.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260326_artifact_compute_plane.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260326_conversation_os_durability.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260326_conversation_os_durability_phase2.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260331_communication_center_scaffold.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260331_regulatory_correspondence_os.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260401_cmc_convergence_os.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260401_project_sharing_visibility.sql": [
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260401_submission_center_items.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260402_cmc_runtime_ddl_to_migration.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260402_supply_chain_tables.sql": [
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260501_q_sub.sql": [
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260508_ana_submission_chat_proposals.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260508_artifact_citations.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260508_authoring_plans.sql": [
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260508_consistency_alerts.sql": [
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260508_guidance_alerts.sql": [
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260508_project_therapeutic_area.sql": [
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260520_ana_failure_learning.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260520_document_templates.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260520_growth_mindset_extensions.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260520_regulatory_intelligence_layer.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260526_drop_invalid_cdisc_fks.sql": [
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260526_updated_at_triggers.sql": [
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260609_scim_tenants.sql": [
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260611_organization_invitations.sql": [
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260611_scim_ip_allowlist.sql": [
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260612_org_client_type_user_preferences.sql": [
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260617_audit_events_hmac_seal.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260617_audit_logs_immutability.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260617_precedent_org_isolation.sql": [
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260617_project_schedule_of_events.sql": [
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260621_intelligent_licensing_eula.sql": [
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260621_weekly_usage_limits.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260629_ana_artifact_thread_lookup.sql": [
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260716_biopharma_specialty.sql": [
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260716_change_assessments.sql": [
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260716_enablement.sql": [
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260716_nonclinical_display.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260717_agency_meetings_store.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260717_biostat_docs.sql": [
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260717_cro_portfolio_store.sql": [
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260717_decision_lineage_store.sql": [
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260717_design_controls_store.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260717_doc_journey_store.sql": [
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260717_dossier_map_store.sql": [
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260717_evidence_asks_store.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260717_evidence_objects_store.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260717_human_factors_store.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260717_ind_checklist_store.sql": [
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260717_labeling_pi_store.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260717_maa_module1_store.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260717_market_access_store.sql": [
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260717_nda_m1_docs_store.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260717_nda_modules_store.sql": [
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260717_nda_rtf_store.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260717_program_journey_store.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260717_protocol_dev_store.sql": [
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260717_reg_change_store.sql": [
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260717_research_admin_store.sql": [
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260717_sae_cases_store.sql": [
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260717_sae_reporting_clock.sql": [
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260717_shadow_review_store.sql": [
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260718_bla_assessments_store.sql": [
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260718_cmc_changes_store.sql": [
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260718_pediatric_orphan_cards.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260718_smpc_sections_store.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260724_clinical_regulatory_evidence_spine.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260724_qms_change_control_store.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260725_authoring_audit_trail.sql": [
       "install-fresh",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260725_authoring_document_loop_tables.sql": [
       "install-fresh",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260725_authoring_signature_freeze_binding.sql": [
       "install-fresh",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260725_authoring_signatures_and_workflow.sql": [
       "install-fresh",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260725_bundle_execution_receipts.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260725_drop_orphaned_foresight_prediction_tables.sql": [
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260725_ectd_compilations_project_level.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260725_esig_gate_columns_port.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260725_governance_boundary_tables.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260725_project_sections_content_columns.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260725_resolution_orchestration_tables.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260725_submission_orchestrator_store_port.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260725_users_signing_lockout_columns.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260727_authoring_object_permissions.sql": [
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260727_collab_document_state.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260727_drop_clinical_evidence_duplicate_lineage.sql": [
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260727_drop_source_citations_phantom.sql": [
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260727_industry_context_profiles.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260727_prm_program_link.sql": [
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260727_unified_tasks_mdx_metadata.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260728_artifacts_table.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260728_schedule_of_events_org_scoped_uniqueness.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260728_stability_backing_tables.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260728_stability_tenant_isolation.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260730_authoring_comments_router_columns.sql": [
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260730_authoring_runtime_ddl.sql": [
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260730_authoring_subsystem_schema.sql": [
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260730_c2c_ana_actions_command_vocab.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260730_cmc_change_control_store.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260730_cmc_evidence_tables.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260730_cmc_projects_reconstruction.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260730_ectd_compilations_leaf_manifest.sql": [
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260730_ectd_compilations_sequence_columns.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260730_esign_audit_db_level_immutability.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260730_fix_atom_embedding_dimension.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260730_fk_delete_policies_port.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260730_graphrag_knowledge_tables.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260730_licensing_ip_tables.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260730_manufacturing_processes_reconstruction.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260730_orchestrator_run_ledger_hardening.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260730_project_milestones_reconciliation.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260730_release_signature_uniqueness.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260730_submission_center_tables.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260731_retire_intelligence_cluster_blobs.sql": [
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260801_atom_identity_existing_db_reconciliation.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260801_consolidated_tree_reconciliation.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260801_hf_files_store.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260801_labeling_pi_store.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260801_market_access_store.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260801_program_journey_store.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260801_reg_change_store.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260801_tenant_isolation_sweep.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260801_uuid_tenant_isolation_nonpublic.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260803_document_span_lineage.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260807_collab_section_locks.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260807_task_graph_org_columns.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260807_unified_tasks_soft_delete.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260809_source_attribution_draft_candidates.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260810_c2c_work_items_source_uniqueness.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260810_reconcile_module_catalog.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260813_ai_gateway_audit_log.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260813_audit_tamper_proof_log.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260813_child_table_parent_scoped_rls.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260813_knowledge_graph_tenant_keys.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260817_doc_revisions_immutable_ledger.sql": [
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260821_regulatory_twin_simulations_tenant_scope.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260821_uuid_org_guc_cast_heal.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260823_fix_provision_org_modules_tier_ladder.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260823_module_catalog_commercial_packaging.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260823_module_catalog_customer_copy.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260823_module_catalog_mdx_registers.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260824_cmc_professional_tier.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260824_enforcement_mode_setting.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260824_module_access_requests.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260824_module_grant_expiry.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260828_align_written_columns_with_migrations.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260828_artifact_versions_updated_at.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260828_drop_orphaned_org_guc_policies.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260828_ectd_compilations_submission_id.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260828_fail_closed_insert_withcheck_policies.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260828_fail_closed_org_coalesce_policies.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260828_file_uploads_checksum.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260828_program_org_resolution_canonical.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260830_reg_questions_response_doc.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260901_cmc_container_closure_reference_standard_registers.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260901_drop_dead_audit_tables.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260902_clinical_ops_schema.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260902_cmc_impurity_dissolution_registers.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260902_manufacturing_responses.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260903_cmc_impurity_route_of_administration.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260903_cmc_manufacturing_characterization_registers.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260903_cmc_material_formulation_registers.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260905_gdpr_dsar_execution_evidence.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260906_cmc_formulation_development.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260906_cmc_impurity_m7_inputs.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260906_cmc_interview_sessions.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260907_module_catalog_submission_orchestrator.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/20260907_qc_testing_batch_attribution.sql": [
       "deploy-migrate (production)",
-      "db_migrate.sh (operator)"
+      "db_migrate.sh (MANUAL — no automated caller)"
     ],
     "db/migrations/emergency_security_migration.sql": [],
     "migrations/0000_sweet_joseph.sql": [

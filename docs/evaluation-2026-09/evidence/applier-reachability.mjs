@@ -32,9 +32,34 @@
  *                                         database. It does exist.)
  *   3. scripts/db_migrate.sh              db/migrations/ — bootstrap, 0XX, 1XX
  *                                         and date-prefixed, excluding _legacy/
- *                                         and _consolidated/. The operator
- *                                         provisioning path, and the reason the
- *                                         gcc tree exists in a real database.
+ *                                         and _consolidated/.
+ *
+ *      ── CORRECTED 2026-09-10, and this one matters ──────────────────────────
+ *      An earlier revision of this file called db_migrate.sh "the operator
+ *      provisioning path, and the reason the gcc tree exists in a real
+ *      database". Neither half is established, and the second is contradicted
+ *      by the repo.
+ *
+ *      NOTHING CALLS IT. A grep for `db_migrate` across the tree returns its own
+ *      source, one doc telling a human to run it against a non-production
+ *      database (QUALITY_ASSURANCE_MODULE_GA.md:36), and one CI workflow
+ *      explicitly DECLINING to run it — .github/workflows/neon-preview-db.yml:92:
+ *
+ *          "Running `scripts/db_migrate.sh` here would re-apply all ~166
+ *           migrations from scratch — most aren't idempotent, so the whole step
+ *           fails on something like a duplicate CREATE TABLE."
+ *
+ *      So it is a manual command that the repo's own CI says would FAIL if run,
+ *      not an applier any environment is provisioned by. It still belongs in
+ *      this model — a file it alone covers is a file that reaches a database
+ *      only if a human runs a script CI expects to break, which is a finding —
+ *      but its 304 files must never be read as "on a real database". Only
+ *      deploy-migrate and install-fresh are automated.
+ *
+ *      This correction inverts a conclusion. A table created ONLY by a file on
+ *      db_migrate.sh (db/migrations/073_cortex_prime_unified_brain.sql is the
+ *      case that surfaced it) may exist in NO deployed database, which is
+ *      exactly what ADR-0007 means by "the deployed shape is canonical".
  *   4. the psql loop in ci.yml            db/migrations/*_gcc_*.sql, against
  *                                         localhost/concept2cure-ri_test — a CI
  *                                         database only.
@@ -122,7 +147,10 @@ const APPLIERS = {
     (path.dirname(rel) === 'db/migrations' && path.basename(rel).includes('_gcc_')) ||
     // step 4: the authoring subsystem
     /^db\/migrations\/20260725_authoring_/.test(rel),
-  'db_migrate.sh (operator)': dbMigrateSh,
+  // Labelled MANUAL because nothing invokes it — see the header. Counting it
+  // as a provisioning path is how a shape that may exist on no database gets
+  // treated as canonical.
+  'db_migrate.sh (MANUAL — no automated caller)': dbMigrateSh,
   'ci psql loop (TEST DB ONLY)': (rel) => path.dirname(rel) === 'db/migrations' && path.basename(rel).includes('_gcc_'),
   'drizzle journal': (rel) => journal.has(rel),
 };
@@ -156,6 +184,19 @@ for (const [name, fn] of Object.entries(APPLIERS)) coverage[name] = files.filter
 
 /** A file no DURABLE applier applies — CI-only does not count as durable. */
 const DURABLE = Object.entries(APPLIERS).filter(([n]) => !n.includes('TEST DB ONLY')).map(([, fn]) => fn);
+
+/**
+ * The two appliers something actually invokes. deploy-migrate is the production
+ * deploy entrypoint; install-fresh is from-scratch provisioning. Everything else
+ * needs a human or is a CI test database.
+ *
+ * Reported separately because "reached by an applier" and "present on a
+ * database anyone runs" are different claims, and conflating them is what made
+ * an earlier revision of this script describe db_migrate.sh's 304 files as
+ * operator-provisioned schema.
+ */
+const AUTOMATED = ['deploy-migrate (production)', 'install-fresh'].map((n) => APPLIERS[n]);
+const manualOnly = files.filter((f) => !AUTOMATED.some((fn) => fn(f)) && DURABLE.some((fn) => fn(f)));
 const unreached = files.filter((f) => !DURABLE.some((fn) => fn(f)));
 const ciOnly = files.filter((f) => !DURABLE.some((fn) => fn(f)) && APPLIERS['ci psql loop (TEST DB ONLY)'](f));
 
@@ -164,13 +205,22 @@ console.info('coverage per applier:');
 for (const [name, list] of Object.entries(coverage)) {
   console.info(`  ${String(list.length).padStart(4)}  ${name}`);
 }
-console.info(`\n  ${String(unreached.length).padStart(4)}  reached by NO durable applier`);
+console.info(
+  `\n  ${String(manualOnly.length).padStart(4)}  reached ONLY by the manual script (no automated caller)`,
+);
+console.info(`  ${String(unreached.length).padStart(4)}  reached by NO durable applier`);
 console.info(`  ${String(ciOnly.length).padStart(4)}    ...of which applied ONLY to the CI test database`);
 
 writeFileSync(new URL('03-applier-reachability.json', import.meta.url), JSON.stringify({
   generated: new Date().toISOString(),
   note: 'Coverage per applier. Deliberately makes NO claim about which tables exist in a deployed database — that needs a live DB (ci:tables-live-schema).',
-  totals: { files: files.length, unreachedByDurableApplier: unreached.length, ciTestDbOnly: ciOnly.length },
+  totals: {
+    files: files.length,
+    unreachedByDurableApplier: unreached.length,
+    ciTestDbOnly: ciOnly.length,
+    manualScriptOnly: manualOnly.length,
+  },
+  manualOnly,
   coverage: Object.fromEntries(Object.entries(coverage).map(([k, v]) => [k, v.length])),
   unreached, ciOnly,
   /**
