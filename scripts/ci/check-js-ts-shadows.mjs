@@ -48,7 +48,11 @@ const ALLOWED_SHADOWS = new Set([
   'server/services/auditService.js', // why: shim for api/enterprise/rbac-routes.js under vitest.
   'server/services/roleBasedAccess.js', // why: shim for api/enterprise/{rbac-routes,routes}.js under vitest.
   'server/utils/authedOrgId.js', // why: shim for phase3-routes.js/enterprise routes '.js' imports under vitest.
-  'server/utils/jwtVerify.js', // why: shim for routes/leaves.js + other '.js' imports under vitest.
+  // why: shim for the '.js'-suffixed imports under vitest. Eight live importers,
+  // among them server/middleware/tenantContext.ts, server/socketServer.ts and
+  // server/routes/authEnterprise.ts. (This comment used to name routes/leaves.js
+  // first; that file was deleted 2026-09-10 and the entry stands on the rest.)
+  'server/utils/jwtVerify.js',
   'server/middleware/auth.js', // why: shim for the ~26 .ts routes + .js API modules importing '../middleware/auth.js' explicitly (ledger M-5 consolidation, 2026-08-28).
   'server/data-importer.js', // why: shim for server/scripts/import_*.js '.js' imports.
   'server/data-importer-v2.js', // why: shim for server/scripts/import_lumen_bio_trials.js.
