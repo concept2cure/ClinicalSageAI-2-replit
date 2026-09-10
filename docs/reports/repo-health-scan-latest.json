@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-10T19:07:22.978Z",
+  "generatedAt": "2026-09-10T21:30:36.579Z",
   "git": {
-    "sha": "4fa3e5e2bd0cc672e0c6e4af01f491fdaed249fc",
+    "sha": "20e0a3c90b64d6d1f114f2790a1b1fe9a3915a56",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -1993,7 +1993,7 @@
       },
       {
         "file": "server/routes/ana-features.ts",
-        "bytes": 179440
+        "bytes": 180184
       },
       {
         "file": "server/routes/c2c/artifacts.ts",
@@ -2021,7 +2021,7 @@
       },
       {
         "file": "server/services/submission-package-orchestrator.ts",
-        "bytes": 141216
+        "bytes": 141946
       },
       {
         "file": "server/services/labeling/labeling-intelligence-knowledge.ts",
@@ -2117,7 +2117,7 @@
       },
       {
         "file": "server/services/ana-ri/context-enrichment.ts",
-        "bytes": 104231
+        "bytes": 105559
       },
       {
         "file": "server/services/ai-gateway/gateway.ts",
@@ -2147,7 +2147,7 @@
       },
       {
         "file": "server/routes/ana-features.ts",
-        "lines": 5415
+        "lines": 5427
       },
       {
         "file": "server/services/ana-ri/command-executor.ts",
@@ -2186,12 +2186,12 @@
         "lines": 3229
       },
       {
-        "file": "server/routes/submission-ops.ts",
-        "lines": 3184
+        "file": "server/services/submission-package-orchestrator.ts",
+        "lines": 3186
       },
       {
-        "file": "server/services/submission-package-orchestrator.ts",
-        "lines": 3177
+        "file": "server/routes/submission-ops.ts",
+        "lines": 3184
       },
       {
         "file": "server/services/cmc-quality/cmc-quality-knowledge.ts",
@@ -2215,7 +2215,7 @@
       },
       {
         "file": "server/src/routes/stability.router.ts",
-        "lines": 2830
+        "lines": 2807
       },
       {
         "file": "server/services/__tests__/ana-ri.test.ts",
@@ -2434,12 +2434,12 @@
         "lines": 1794
       },
       {
-        "file": "server/routes/ana-cortex-ft.ts",
-        "lines": 1785
+        "file": "server/services/ana-ri/context-enrichment.ts",
+        "lines": 1791
       },
       {
-        "file": "server/services/ana-ri/context-enrichment.ts",
-        "lines": 1762
+        "file": "server/routes/ana-cortex-ft.ts",
+        "lines": 1785
       },
       {
         "file": "server/services/ana/submission-chat-handler.ts",
@@ -2486,10 +2486,6 @@
         "lines": 1623
       },
       {
-        "file": "server/services/grdhe/grdheService.ts",
-        "lines": 1617
-      },
-      {
         "file": "server/services/contradiction-engine-service.ts",
         "lines": 1608
       },
@@ -2508,6 +2504,10 @@
       {
         "file": "client/src/concept2cure/v2/surfaces/IndLifecycle.tsx",
         "lines": 1532
+      },
+      {
+        "file": "server/services/grdhe/grdheService.ts",
+        "lines": 1501
       }
     ]
   },

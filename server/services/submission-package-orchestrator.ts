@@ -32,6 +32,7 @@
  */
 
 import { pool } from '../db.js';
+import { VerificationUnavailableError, describeFailure } from '../lib/verification-outcome.js';
 import crypto from 'crypto';
 import {
   composeFullModule3,
@@ -914,6 +915,14 @@ function tryParseSignPayload(raw: string | undefined): PackageSignStepPayload | 
  *
  * Returns the signature id on hit, null on miss-or-cross-org (collapsed
  * semantics — caller cannot distinguish).
+ *
+ * THROWS `VerificationUnavailableError` when the lookup could not run (WO-16B
+ * finding 14). This used to catch every error, log it as "non-fatal" and
+ * return null — the same value as a genuine miss — so a database missing the
+ * column (the 42703 in the comment below) was reported to the operator as
+ * "the signature was superseded or rolled back": a §11.70 verdict about a
+ * check that never ran. A caller that needs the verdict must now decide what
+ * "could not check" means; none of them may read it as "revoked".
  */
 export async function findActiveReleaseSignature(params: {
   organizationId: number;
@@ -952,11 +961,11 @@ export async function findActiveReleaseSignature(params: {
     if (!Number.isFinite(id) || id <= 0) return null;
     return { id };
   } catch (err) {
-    console.warn(
-      '[Orchestrator] findActiveReleaseSignature failed (non-fatal):',
-      err instanceof Error ? err.message : err,
+    console.error(
+      '[Orchestrator] findActiveReleaseSignature could not run — not treating this as "no active signature":',
+      describeFailure(err),
     );
-    return null;
+    throw new VerificationUnavailableError('release-signature lookup', describeFailure(err));
   }
 }
 

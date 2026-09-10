@@ -25,10 +25,8 @@ import {
   TerminologySystem,
   RegulatoryFormat,
   ExportStatus,
-  SignatureMeaning,
   CreateExportJobRequest,
-  CreateAdverseEventRequest,
-  SignatureRequest
+  CreateAdverseEventRequest
 } from '../services/grdhe/types';
 import {
   generateFDA3500AXML,
@@ -914,84 +912,48 @@ router.post('/adverse-events/:eventId/validate', asyncHandler(async (req: Reques
 }));
 
 // =============================================================================
-// ELECTRONIC SIGNATURE ENDPOINTS (21 CFR Part 11)
+// ELECTRONIC SIGNATURE ENDPOINTS (21 CFR Part 11) — retired 2026-09-10
 // =============================================================================
+//
+// WO-16B findings 28 and 29. POST /signatures wrote a signature whose printed
+// name was the user id, whose hash covered no content, and whose
+// authentication was asserted but never performed; GET /signatures/:id/verify
+// answered `valid: true` for every row it found. Both are gone. The routes stay
+// so a caller is told where the one conforming path is, the same way
+// POST /api/auth/enterprise/electronic-signature answers today
+// (server/services/__tests__/signature-write-path-single.test.ts).
 
 /**
- * POST /api/grdhe/signatures
- * Create an electronic signature
+ * POST /api/grdhe/signatures — REMOVED. Sign through /api/esignature/sign.
  */
-router.post('/signatures', asyncHandler(async (req: Request, res: Response) => {
-  const request: SignatureRequest = req.body;
-  
-  // Validate required fields
-  const requiredFields = ['objectType', 'objectId', 'meaning', 'reason', 'userId', 'password'];
-  const missingFields = requiredFields.filter(f => !(request as any)[f]);
-  
-  if (missingFields.length > 0) {
-    return res.status(400).json({
-      success: false,
-      error: {
-        code: 'MISSING_FIELDS',
-        message: `Missing required fields: ${missingFields.join(', ')}`
-      }
-    });
-  }
-  
-  // Validate meaning against the canonical SignatureMeaning vocabulary.
-  const validMeanings: SignatureMeaning[] = [
-    'authored',
-    'reviewed',
-    'verified',
-    'approved',
-    'rejected',
-    'acknowledged',
-    'witnessed',
-    'responsible_for_content',
-    'legal_responsibility',
-  ];
-  if (!validMeanings.includes(request.meaning)) {
-    return res.status(400).json({
-      success: false,
-      error: {
-        code: 'INVALID_MEANING',
-        message: `Invalid signature meaning. Must be one of: ${validMeanings.join(', ')}`
-      }
-    });
-  }
-  
-  try {
-    const signature = await grdheService.createElectronicSignature(request);
-    
-    res.status(201).json({
-      success: true,
-      data: signature
-    });
-  } catch (error: any) {
-    res.status(400).json({
-      success: false,
-      error: {
-        code: 'SIGNATURE_FAILED',
-        message: error.message
-      }
-    });
-  }
-}));
-
-/**
- * GET /api/grdhe/signatures/:signatureId/verify
- * Verify an electronic signature
- */
-router.get('/signatures/:signatureId/verify', asyncHandler(async (req: Request, res: Response) => {
-  const signatureId = String(req.params.signatureId);
-  
-  const result = await grdheService.verifyElectronicSignature(signatureId);
-  
-  res.json({
-    success: true,
-    data: result
+router.post('/signatures', (_req: Request, res: Response) => {
+  res.status(410).json({
+    success: false,
+    error: {
+      code: 'ESIGNATURE_ENDPOINT_REMOVED',
+      message:
+        'This endpoint recorded electronic signatures without verifying the signer and is retired. ' +
+        'Use POST /api/esignature/sign, the single Part 11 signing path (credentials verified, content bound).',
+      canonical: '/api/esignature/sign',
+    },
   });
-}));
+});
+
+/**
+ * GET /api/grdhe/signatures/:signatureId/verify — REMOVED. It verified nothing.
+ */
+router.get('/signatures/:signatureId/verify', (_req: Request, res: Response) => {
+  res.status(410).json({
+    success: false,
+    error: {
+      code: 'ESIGNATURE_ENDPOINT_REMOVED',
+      message:
+        'This endpoint answered valid:true for every signature it found and is retired. ' +
+        'Verify through GET /api/auth/enterprise/electronic-signature/:id/verify.',
+      canonical: '/api/auth/enterprise/electronic-signature/:id/verify',
+    },
+  });
+});
 
 // =============================================================================
 // AUDIT TRAIL ENDPOINTS

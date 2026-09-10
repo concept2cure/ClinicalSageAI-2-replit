@@ -41,10 +41,6 @@ import {
   TerminologyVersionLock,
   ValidationError,
   ValidationWarning,
-  ElectronicSignature,
-  SignatureMeaning,
-  SignatureRequest,
-  AuthenticationMethod,
   CanonicalAdverseEvent,
   CanonicalProduct,
   GDPRProcessingRecord,
@@ -1346,134 +1342,22 @@ export class GRDHEService {
   }
 
   // ===========================================================================
-  // ELECTRONIC SIGNATURES (21 CFR Part 11)
+  // ELECTRONIC SIGNATURES — retired 2026-09-10 (WO-16B findings 28, 29)
   // ===========================================================================
-
-  /**
-   * Create electronic signature
-   */
-  async createElectronicSignature(request: SignatureRequest): Promise<ElectronicSignature> {
-    // In production, validate password against authentication system
-    // This is a placeholder for the actual dual-authentication flow
-    
-    const contentHash = computeHash(
-      request.objectType + '|' + 
-      request.objectId + '|' + 
-      (request.objectVersion || '') + '|' + 
-      new Date().toISOString()
-    );
-
-    const signatureValue = computeHash(
-      contentHash + '|' + 
-      request.userId + '|' + 
-      request.meaning + '|' + 
-      request.reason
-    );
-
-    const result = await db.execute(sql`
-      INSERT INTO regulatory_harmonization.electronic_signatures (
-        signed_object_type, signed_object_id, signed_object_version,
-        content_hash, content_hash_algorithm,
-        signature_meaning, signature_reason,
-        signer_user_id, signer_name, signer_title, signer_organization,
-        authentication_method, authentication_timestamp,
-        signature_value, signature_algorithm
-      ) VALUES (
-        ${request.objectType},
-        ${request.objectId}::uuid,
-        ${request.objectVersion || null},
-        ${contentHash},
-        'SHA-256',
-        ${request.meaning}::regulatory_harmonization.signature_meaning,
-        ${request.reason},
-        ${request.userId},
-        ${request.userId},
-        ${null},
-        ${null},
-        ${request.authMethod || 'password_and_meaning'}::text,
-        NOW(),
-        ${signatureValue},
-        'SHA-256'
-      )
-      RETURNING *
-    `);
-
-    const row = result.rows[0] as any;
-
-    await this.logAudit(
-      'electronic_signatures',
-      row.id,
-      'SIGN',
-      null,
-      { objectType: request.objectType, objectId: request.objectId, meaning: request.meaning },
-      request.reason
-    );
-
-    return {
-      id: row.id,
-      signedObjectType: row.signed_object_type,
-      signedObjectId: row.signed_object_id,
-      signedObjectVersion: row.signed_object_version,
-      contentHash: row.content_hash,
-      contentHashAlgorithm: row.content_hash_algorithm,
-      signatureMeaning: row.signature_meaning,
-      signatureReason: row.signature_reason,
-      signerUserId: row.signer_user_id,
-      signerName: row.signer_name,
-      signerTitle: row.signer_title,
-      signerOrganization: row.signer_organization,
-      signerEmail: row.signer_email,
-      authenticationMethod: row.authentication_method,
-      authenticationTimestamp: new Date(row.authentication_timestamp),
-      authenticationSessionId: row.authentication_session_id,
-      signatureValue: row.signature_value,
-      signatureAlgorithm: row.signature_algorithm,
-      certificateThumbprint: row.certificate_thumbprint,
-      certificateIssuer: row.certificate_issuer,
-      certificateSerialNumber: row.certificate_serial_number,
-      timestampToken: row.timestamp_token,
-      timestampAuthority: row.timestamp_authority,
-      timestampAuthorityUrl: row.timestamp_authority_url,
-      isValid: row.is_valid,
-      invalidatedAt: row.invalidated_at ? new Date(row.invalidated_at) : undefined,
-      invalidationReason: row.invalidation_reason,
-      countersignedBy: row.countersigned_by,
-      createdAt: new Date(row.created_at),
-      ipAddress: row.ip_address,
-      userAgent: row.user_agent
-    };
-  }
-
-  /**
-   * Verify electronic signature
-   */
-  async verifyElectronicSignature(signatureId: string): Promise<{ valid: boolean; reason?: string }> {
-    const result = await db.execute(sql`
-      SELECT * FROM regulatory_harmonization.electronic_signatures
-      WHERE id = ${signatureId}::uuid
-    `);
-
-    if (result.rows.length === 0) {
-      return { valid: false, reason: 'Signature not found' };
-    }
-
-    const row = result.rows[0] as any;
-
-    if (!row.is_valid) {
-      return { valid: false, reason: row.invalidation_reason || 'Signature invalidated' };
-    }
-
-    // Recompute content hash and compare
-    const expectedContentHash = computeHash(
-      row.signed_object_type + '|' + 
-      row.signed_object_id + '|' + 
-      (row.signed_object_version || '') + '|' + 
-      new Date(row.authentication_timestamp).toISOString()
-    );
-
-    // Note: In production, this would verify against stored hash and PKI certificate
-    return { valid: true };
-  }
+  //
+  // `createElectronicSignature` and `verifyElectronicSignature` lived here. The
+  // writer put the user id in the §11.50 printed-name field, hashed
+  // `type|id|version|now()` rather than any content, and recorded an
+  // authentication_method and authentication_timestamp for a password it never
+  // checked. The verifier computed a hash, discarded it, and returned
+  // `{ valid: true }` for every non-invalidated row. Neither can be repaired
+  // into a second signing path: there is ONE conforming writer
+  // (server/services/part11/signature-persistence.ts, behind
+  // /api/esignature/sign, credentials verified by
+  // part11ComplianceService.verifyUserCredentials) and one verifier
+  // (/api/auth/enterprise/electronic-signature/:id/verify). The GRDHE routes
+  // answer 410 and name them. regulatory_harmonization.electronic_signatures
+  // is not dropped; it held no rows on a database provisioned from empty.
 
   // ===========================================================================
   // AUDIT LOGGING

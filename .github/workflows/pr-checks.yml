@@ -205,6 +205,18 @@ jobs:
         # growing.
         run: npm run ci:insert-columns-declared
 
+      - name: No verdict for a check that did not run
+        if: "!cancelled() && steps.install.conclusion == 'success'"
+        # Hard gate, and a new kind: every other gate here reads source or
+        # schema; this one makes a Part 11 surface's dependency fail and reads
+        # what the surface ANSWERS. WO-16B found ten places where "could not
+        # verify" was reported as failed (INTEGRITY_FAILURE against four named
+        # regulations because a store did not initialise) or as passed
+        # (valid:true after comparing nothing; <AuditLog count="0"> after the
+        # query threw). The inspector self-tests first, then each surface runs
+        # over a rejecting pool. Proven red on the pre-fix head.
+        run: npm run ci:unverified-verdicts
+
       - name: Gates that existed but ran nowhere
         if: "!cancelled() && steps.install.conclusion == 'success'"
         # An audit of what CI actually executes found 88 gate files, 67 of them

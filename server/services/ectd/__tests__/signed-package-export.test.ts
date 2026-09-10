@@ -293,6 +293,28 @@ describe('resolveSignedPackageForExport — refuses tampered packages', () => {
     expect(result.refusal).toBe('signature-revoked');
   });
 
+  it('REFUSES as signature-unverifiable — NOT revoked — when the signature lookup could not run (WO-16B finding 14)', async () => {
+    mockGetRun.mockResolvedValue(runWithSignStep({ payload: validPayload() }));
+    const notRun = Object.assign(new Error('release-signature lookup could not be run: 42703: column "bound_payload_digest" does not exist'), {
+      name: 'VerificationUnavailableError',
+      detail: '42703: column "bound_payload_digest" does not exist',
+      what: 'release-signature lookup',
+    });
+    mockFindActiveReleaseSignature.mockRejectedValue(notRun);
+
+    const result = await resolveSignedPackageForExport({
+      runId: RUN_ID,
+      organizationId: ORG,
+      env: SEALED_ENV,
+    });
+
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.refusal).toBe('signature-unverifiable');
+    expect(result.detail).toMatch(/NOT been found revoked/);
+    expect(refusalHttpStatus('signature-unverifiable')).toBe(503);
+  });
+
   it('REFUSES a change to the identity tuple (org swap) even with intact leaves', async () => {
     // Cross-tenant re-pointing: same package bytes, different owning org.
     const reassigned = { ...SNAPSHOT, organizationId: 999 };

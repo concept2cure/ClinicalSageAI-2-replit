@@ -12,6 +12,7 @@
  * tamper-evident audit trail for every create / read / update / delete.
  */
 
+import { didNotRun, type VerificationOutcome } from '../lib/verification-outcome';
 import {
   TamperProofAuditLog,
   getTamperProofAuditLog,
@@ -190,6 +191,19 @@ async function ensureInitialized(): Promise<TamperProofAuditLog | null> {
  * here by design and must use `writeChainedAuditRow` on their own transaction —
  * see its note below.
  */
+/**
+ * The outcome of `verifyChain`: it ran — and the chain is valid or not — or it
+ * did not run. Callers must branch on `ran`; none may read `valid` off the
+ * `ran: false` arm, because it is not there.
+ */
+export type ChainVerification = VerificationOutcome<{
+  valid: boolean;
+  entriesVerified: number;
+  firstInvalidEntry?: number;
+  invalidReason?: string;
+  verifiedAt: string;
+}>;
+
 export interface AuditWriteResult {
   /** True when at least one durable store accepted the row. */
   persisted: boolean;
@@ -581,18 +595,40 @@ class AuditService {
 
   /**
    * Verify the integrity of the tamper-proof audit chain.
-   * Returns verification result with pass/fail and detail.
+   *
+   * Three outcomes, not two (WO-16B finding 12). This used to return
+   * `{ valid: false, entriesVerified: 0 }` when the store had not initialised
+   * or the query threw — the same value as a chain that had genuinely broken —
+   * and /api/decision-lineage/verify-chain rendered that as INTEGRITY_FAILURE /
+   * NON_COMPLIANT against four named regulations. A verifier that could not
+   * run has no verdict to give; it says so with `ran: false` and a reason the
+   * operator can act on.
    */
-  async verifyChain(): Promise<{ valid: boolean; entriesVerified: number }> {
+  async verifyChain(): Promise<ChainVerification> {
+    let tpLog: TamperProofAuditLog | null;
     try {
-      const tpLog = await ensureInitialized();
-      if (tpLog) {
-        return await tpLog.verifyChain();
-      }
+      tpLog = await ensureInitialized();
     } catch (error) {
-      logger.error('Audit chain verification failed', error);
+      logger.error('Audit chain verification could not run: store initialisation failed', error);
+      return didNotRun(error);
     }
-    return { valid: false, entriesVerified: 0 };
+    if (!tpLog) {
+      return { ran: false, reason: 'audit store not initialised: no database pool available' };
+    }
+    try {
+      const result = await tpLog.verifyChain();
+      return {
+        ran: true,
+        valid: result.valid,
+        entriesVerified: result.entriesVerified,
+        firstInvalidEntry: result.firstInvalidEntry,
+        invalidReason: result.invalidReason,
+        verifiedAt: result.verifiedAt.toISOString(),
+      };
+    } catch (error) {
+      logger.error('Audit chain verification could not run', error);
+      return didNotRun(error);
+    }
   }
 }
 

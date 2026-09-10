@@ -308,6 +308,7 @@ function refusalTitle(code: string): string {
     case 'seal-failed': return 'Integrity failure — the signature seal did not verify';
     case 'awaiting-signature': return 'Awaiting a signer';
     case 'signature-revoked': return 'The signature was superseded or rolled back';
+    case 'signature-unverifiable': return 'The signature could not be checked right now — nothing is known about its standing';
     case 'not-signed': return 'No release signature on this run';
     case 'snapshot-missing': return 'Signed before snapshot persistence';
     default: return 'The signed package could not be read';

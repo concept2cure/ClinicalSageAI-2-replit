@@ -169,17 +169,36 @@ router.post('/record', async (req: Request, res: Response) => {
 router.get('/verify-chain', async (_req: Request, res: Response) => {
   try {
     const result = await auditService.verifyChain();
+    const frameworks = [
+      'FDA 21 CFR Part 11 §11.10(e)',
+      'EU Annex 11 §9',
+      'ICH E6(R2) §5.5.3',
+      'PMDA ERES Guidelines',
+    ];
+    if (!result.ran) {
+      // WO-16B finding 12. The verifier did not run — the store failed to
+      // initialise, or the query threw. That is not an integrity failure and
+      // it is not compliance; it is an answer nobody has yet. 503, the same
+      // status innovation-routes gives an ownership check that could not run.
+      // The reason goes to the log, not the body (ci:server-error-leaks).
+      logger.error('chain verification could not run', { reason: result.reason });
+      return res.status(503).json({
+        chainIntegrity: 'UNVERIFIABLE',
+        entriesVerified: 0,
+        verifiedAt: new Date().toISOString(),
+        complianceStatus: 'UNVERIFIABLE',
+        message: 'The audit chain verifier could not run. Nothing was verified and nothing failed verification; the reason has been logged.',
+        frameworks,
+      });
+    }
     res.json({
       chainIntegrity: result.valid ? 'VERIFIED' : 'INTEGRITY_FAILURE',
       entriesVerified: result.entriesVerified,
-      verifiedAt: new Date().toISOString(),
+      firstInvalidEntry: result.firstInvalidEntry,
+      invalidReason: result.invalidReason,
+      verifiedAt: result.verifiedAt,
       complianceStatus: result.valid ? 'COMPLIANT' : 'NON_COMPLIANT',
-      frameworks: [
-        'FDA 21 CFR Part 11 §11.10(e)',
-        'EU Annex 11 §9',
-        'ICH E6(R2) §5.5.3',
-        'PMDA ERES Guidelines',
-      ],
+      frameworks,
     });
   } catch (err) {
     logger.error('Chain verification failed', err);
@@ -204,6 +223,21 @@ router.get('/compliance-report', async (req: Request, res: Response) => {
     });
 
     const chainResult = await auditService.verifyChain();
+    if (!chainResult.ran) {
+      logger.error('compliance report: chain verification could not run', { reason: chainResult.reason });
+    }
+    // WO-16B finding 13. Every verdict below that depends on the chain takes
+    // one of THREE values. The two frameworks this report never evaluates
+    // (ICH E6(R2), GAMP 5) were hardcoded COMPLIANT; a verdict nothing computed
+    // is invented, so they say NOT_ASSESSED. The attestation asserts a
+    // "cryptographically-verified audit trail" and is emitted only when one was.
+    const chainStatus: 'VERIFIED' | 'INTEGRITY_FAILURE' | 'UNVERIFIABLE' = !chainResult.ran
+      ? 'UNVERIFIABLE'
+      : chainResult.valid
+        ? 'VERIFIED'
+        : 'INTEGRITY_FAILURE';
+    const chainDependent = (): 'COMPLIANT' | 'REVIEW_REQUIRED' | 'UNVERIFIABLE' =>
+      chainStatus === 'VERIFIED' ? 'COMPLIANT' : chainStatus === 'INTEGRITY_FAILURE' ? 'REVIEW_REQUIRED' : 'UNVERIFIABLE';
 
     const gxpRelevant = allDecisions.filter(d => d.regulatory.gxpRelevant);
     const signatureRequired = allDecisions.filter(d => d.regulatory.requiresSignature);
@@ -219,8 +253,13 @@ router.get('/compliance-report', async (req: Request, res: Response) => {
         to: toDate?.toISOString() || 'present',
       },
       chainIntegrity: {
-        status: chainResult.valid ? 'VERIFIED' : 'UNVERIFIED',
-        entriesVerified: chainResult.entriesVerified,
+        status: chainStatus,
+        entriesVerified: chainResult.ran ? chainResult.entriesVerified : 0,
+        note: !chainResult.ran
+          ? 'The verifier could not run; the reason has been logged. This is not a verdict.'
+          : chainResult.valid
+            ? undefined
+            : chainResult.invalidReason,
       },
       statistics: {
         totalDecisionRecords: allDecisions.length,
@@ -234,34 +273,46 @@ router.get('/compliance-report', async (req: Request, res: Response) => {
         {
           framework: 'FDA 21 CFR Part 11',
           sections: ['§11.10(e) Audit trails', '§11.10(k.2) Electronic signatures', '§11.50 Signature manifestation'],
-          status: chainResult.valid ? 'COMPLIANT' : 'REVIEW_REQUIRED',
+          status: chainDependent(),
         },
         {
           framework: 'EU Annex 11',
           sections: ['§9 Audit trails', '§12 Security', '§14 Electronic signatures'],
-          status: chainResult.valid ? 'COMPLIANT' : 'REVIEW_REQUIRED',
+          status: chainDependent(),
         },
         {
           framework: 'ICH E6(R2) GCP',
           sections: ['§5.5.3 Data integrity', '§5.5.4 Essential documents'],
-          status: 'COMPLIANT',
+          status: 'NOT_ASSESSED',
+          note: 'No check in this report evaluates this framework.',
         },
         {
           framework: 'PMDA ERES Guidelines',
           sections: ['Electronic records management', 'Electronic signatures'],
-          status: chainResult.valid ? 'COMPLIANT' : 'REVIEW_REQUIRED',
+          status: chainDependent(),
         },
         {
           framework: 'GAMP 5',
           sections: ['Data integrity by design', 'Risk-based approach'],
-          status: 'COMPLIANT',
+          status: 'NOT_ASSESSED',
+          note: 'No check in this report evaluates this framework.',
         },
       ],
-      attestation: {
-        statement: 'This report was generated from an immutable, cryptographically-verified audit trail. All decision records are hash-chained and tamper-evident per FDA 21 CFR Part 11 requirements.',
-        generatedBy: 'ClinicalSageAI Decision Lineage Engine',
-        version: '1.0.0',
-      },
+      attestation:
+        chainStatus === 'VERIFIED'
+          ? {
+              statement:
+                'This report was generated from an immutable, cryptographically-verified audit trail. All decision records are hash-chained and tamper-evident per FDA 21 CFR Part 11 requirements.',
+              generatedBy: 'ClinicalSageAI Decision Lineage Engine',
+              version: '1.0.0',
+            }
+          : null,
+      attestationWithheld:
+        chainStatus === 'VERIFIED'
+          ? undefined
+          : chainStatus === 'INTEGRITY_FAILURE'
+            ? 'The audit chain failed verification; this report cannot attest to a tamper-evident trail.'
+            : 'The audit chain verifier could not run; nothing was verified and nothing failed verification. The reason has been logged.',
     };
 
     res.json(report);
