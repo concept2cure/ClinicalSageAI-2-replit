@@ -1,7 +1,7 @@
 {
   "$comment": "Pre-existing duplicate CREATE TABLE definitions, pinned to the exact set of files that define each table. Each entry is a defect to be reconciled per ADR-0006, not an approved pattern. A NEW table collision, or a NEW file defining an already-colliding table, fails CI. Shrink this file; never grow it. Standing exceptions (documented in ledger C-8/C-10/C-11): entries whose only rival is a dead root-lineage 0010 file — their canonical DDL lives in db/migrations/20260725_* and ADR-0006 retirement of the dead files removes the entries.",
-  "generatedAt": "2026-09-10T04:34:14.756Z",
-  "total": 47,
+  "generatedAt": "2026-09-10T15:25:22.870Z",
+  "total": 42,
   "entries": {
     "api_usage_logs": [
       "db/migrations/20260319_billing_usage_budgets_alerts.sql",
@@ -139,26 +139,6 @@
     "project_commitments": [
       "migrations/0012_project_charter_timeline.sql",
       "migrations/20260629_charter_tables_rebuild.sql"
-    ],
-    "q_sub_commitments": [
-      "db/migrations/20260501_q_sub.sql",
-      "migrations/20260501_q_sub.sql"
-    ],
-    "q_sub_meetings": [
-      "db/migrations/20260501_q_sub.sql",
-      "migrations/20260501_q_sub.sql"
-    ],
-    "q_sub_questions": [
-      "db/migrations/20260501_q_sub.sql",
-      "migrations/20260501_q_sub.sql"
-    ],
-    "q_sub_timeline_entries": [
-      "db/migrations/20260501_q_sub.sql",
-      "migrations/20260501_q_sub.sql"
-    ],
-    "q_submissions": [
-      "db/migrations/20260501_q_sub.sql",
-      "migrations/20260501_q_sub.sql"
     ],
     "regulatory_commitments": [
       "migrations/20260610_ha_interactions_commitments.sql",

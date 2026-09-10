@@ -1,3 +1,42 @@
+-- ============================================================================
+-- ARCHIVED 2026-09-10 (WO-1, ADR-0006). DO NOT RE-ADD THIS MIRROR.
+-- ============================================================================
+-- This was a BYTE-IDENTICAL copy of migrations/20260501_q_sub.sql — same md5
+-- (ebad5201783623187705fae35c4f6bde), `cmp` reported no difference, and
+-- scripts/db/migration-set.mjs:1172 already said so in a comment. So nothing is
+-- lost by archiving it: no shape, constraint, default or index differed, and
+-- CLAUDE.md RULE 1's amend-in-place requirement is not engaged, because nothing
+-- was removed from the surviving definition — only a second copy of it.
+--
+-- WHICH COPY SURVIVES WAS FORCED BY THE APPLIERS, NOT CHOSEN.
+-- migrations/20260501_q_sub.sql is pinned by name in C2C_MIGRATION_FILES
+-- (migration-set.mjs:1173), so deploy-migrate runs it; install-fresh's root-tree
+-- overlay runs it too. Both real appliers execute the root copy and neither
+-- executes this one. Keeping this one instead would have meant repointing
+-- migration-set.mjs AND adding it to install-fresh's PRE_OVERLAY_CREATORS,
+-- because the root tree's migrations/20260507_mdx_beta_surfaces.sql:143 declares
+-- `q_submission_id uuid NOT NULL REFERENCES q_submissions(id)` and would fail
+-- with 42P01 if q_submissions were not already there.
+--
+-- WHY THE MIRROR EXISTED, so the reasoning is not repeated.
+-- docs/reports/MDX_BETA_BACKEND_PROGRESS_2026-05-01.md:26-27 records it as
+-- deliberate — "a mirror at db/migrations/20260501_q_sub.sql so the bash runner
+-- picks it up too". That was defensible when written. It is not now, for two
+-- reasons: scripts/db_migrate.sh (the bash runner) has NO automated caller, and
+-- .github/workflows/neon-preview-db.yml:92 explicitly declines to run it
+-- ("would re-apply all ~166 migrations from scratch — most aren't idempotent");
+-- and the mirror was never completed, so on that path q_submissions existed
+-- while regulatory_programs (migrations/20260524_program_workbench_schema.sql)
+-- and q_sub_section_bodies did not — every Q-Sub read joins
+-- regulatory_programs, so the tables it created could not serve a request.
+--
+-- THE DEFECT THIS REMOVES is divergence, not duplication. Both files being
+-- identical was an accident of nobody having edited one. The moment anyone
+-- ALTERed the Q-Sub schema by editing a single copy, install-fresh- and
+-- db_migrate.sh-provisioned databases would silently diverge under
+-- CREATE TABLE IF NOT EXISTS, with no gate able to see it.
+-- ============================================================================
+
 -- Q-Sub (Pre-Submission) migration
 --
 -- Mirrors shared/schema/q-sub.ts. Hand-authored to mirror the drizzle table
