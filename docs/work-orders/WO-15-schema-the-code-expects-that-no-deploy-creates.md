@@ -9,7 +9,7 @@
 ## Why this is separate from WO-1 and WO-2
 
 WO-1 removes duplicate definitions. WO-2 asks whether a **blank** database
-provisions what the server queries. Neither covers the five findings below,
+provisions what the server queries. Neither covers the eight findings below,
 which share one shape:
 
 > the code names a table or column, the provisioning path that reaches a
@@ -30,10 +30,133 @@ wrong.
 
 ---
 
-## Finding 1 — `core.programs` can be permanently missing `org_id`, and the failure is silent
+## Finding 1 — a missing `psql` leaves `core.programs` cross-tenant readable, and the deploy says it is fine
 
-**Severity: highest here.** It is a tenant-isolation guard that fails open into
-a deny, so it neither protects nor reports.
+**Severity: highest here.** Rewritten 2026-09-10 after a full reproduction. Three
+claims in the first draft were wrong, and the two worst consequences were
+missing. Corrections are marked ⚠ below rather than deleted, because the wrong
+version is quoted in `scripts/ci/duplicate-table-ddl-baseline.json` and in the
+first draft of this file.
+
+### Reproduced end to end
+
+Not argued — run. `install-fresh.mjs` with `psql` hidden behind a PATH shim, then
+the real `deploy-migrate.mjs`:
+
+```
+▶ 8/8 Verify                       (install-fresh)
+  tables (public): 777 · RLS policies: 636 · core route tables: 5/5
+⚠️  Install finished with 1 incomplete area(s):
+   • governed content (Part 11 audit): psql unavailable; 43 *_gcc_* file(s) not applied
+❌ Install INCOMPLETE — not reporting success.        ← exit 1
+
+▶ 1/5 Preflight — database already provisioned?       (deploy-migrate)
+  ✓ base schema present (organizations, users, c2c_documents, regulatory_programs)
+  ✓ 262/262 migration files applied
+▶ 5/5 Verify readiness contract
+  authoring subsystem: 19/19 · tenant-parentage FKs: 6/6 · tenant_isolation_policy: 19/19
+✅ Schema migration complete — safe to roll services.  ← exit 0
+```
+
+`core.programs` is then the 7-column shape from `044b`, and:
+
+```
+$ SELECT 1 FROM core.programs WHERE id::text=$1 AND org_id::text=$2 LIMIT 1;
+ERROR:  42703: column "org_id" does not exist
+```
+
+### ⚠ Correction 1 — install-fresh does NOT report success
+
+The first draft's headline was "the failure reports as success", attributed to
+step 6's `recordIncomplete` + `return`. But `report()`
+(`install-fresh.mjs:1681-1696`) prints `❌ Install INCOMPLETE — not reporting
+success.` and returns 1.
+
+**The success report comes from the next command.** `deploy-migrate` exits 0 with
+"safe to roll services" on the database install-fresh just refused to bless.
+That changes the fix: hardening step 6 does not close the loop on its own,
+because `deploy-migrate` has no way to know install-fresh failed. **A
+`deploy-migrate` preflight assertion on `core.programs`' shape would.**
+
+### ⚠ Correction 2 — `069` IS on an applier, so `org_id` is not permanently lost
+
+The first draft said `db/migrations/069_gcc_multitenant_rls_expansion.sql` is "on
+NO applier". It contains `_gcc_`, so it matches the same glob as `000` — it runs
+on install-fresh step 6 and in CI's psql loop, at sort index 33, after `044b`.
+
+Proven by applying the step-6 loop to the broken probe: `43 applied, 0 failed`,
+and `org_id`, `programs_org_idx` and `programs_org_fk` all appear. Its
+`ADD COLUMN IF NOT EXISTS` **does** repair the column on any re-run with psql
+present.
+
+What stays permanently broken is `metadata`, `created_by` and `status NOT NULL`
+— those come only from `000`'s `CREATE TABLE IF NOT EXISTS`, which no-ops
+forever. And the narrower statement that survives, which is the one that
+matters: **nothing on the deploy-only path ever adds `org_id`.** On an estate
+where install-fresh ran once from a checkout and only `deploy-migrate` runs
+thereafter, the original conclusion holds exactly.
+
+### ⚠ Correction 3 — the route defect is a lie, not lost access
+
+The first draft framed `guardQuery`'s swallowed 42703 as a cross-tenant check
+failing open into a deny. The deny is real; the access consequence is smaller.
+Source 1 of `PROGRAM_ORG_SOURCES` cannot match on a *healthy* database either:
+`core.programs.org_id` is `uuid`, and `programBelongsToOrg` passes
+`String(orgId)` where `orgId: number` is a `public.organizations.id` integer
+(`organizations` carries both `id integer` and a separate `uuid` column).
+
+So the missing column converts a query that returns zero rows into a query that
+throws. **The defect is that the control reports having run when it did not** —
+and the `uuid`-vs-`integer` mismatch is a second bug worth fixing in the same
+change. See Finding 9 for the general form.
+
+### The two consequences the first draft missed, both worse than the route
+
+**`core.programs` ships with RLS disabled and no policy.**
+`db/migrations/20260801_uuid_tenant_isolation_nonpublic.sql` (set index 260)
+declares `('core','programs','org_id')` at line 133 and skips it when the column
+is absent:
+
+```
+[NOTICE] [uuid-rls] SKIPPED core.programs — expected uuid column org_id not found (schema drift)
+[NOTICE] [uuid-rls] tenant_isolation_policy applied to 16 non-public uuid-tenant table(s); 13 skipped
+```
+
+Probe: `relrowsecurity = f`, zero rows in `pg_policies`. A healthy database
+carries `tenant_isolation_policy` on both `core.programs` and
+`core.program_ownerships`. **That is a genuinely cross-tenant-readable table**,
+not a broken feature. The NOTICE is one line in a 500-line log, is not counted,
+and does not affect exit status.
+
+**The resolver every `vault.documents` RLS policy authorizes through raises
+42703 at runtime.** `core.get_program_org_id`, installed by set index 225,
+applies green — `20260828_program_org_resolution_canonical.sql:41-45` chose
+`plpgsql` over `LANGUAGE sql` precisely so it would not validate its relations
+at CREATE time, and says so — then:
+
+```
+$ SELECT core.get_program_org_id('7ce04f26-...'::uuid);
+ERROR:  42703: column "org_id" does not exist
+QUERY:  COALESCE((SELECT org_id FROM core.programs WHERE id = p_program_id), ...
+```
+
+### And a new ordering hazard, found en route
+
+`069` does `CREATE OR REPLACE FUNCTION core.get_program_org_id` with the **old
+two-branch `LANGUAGE sql` body**. So running the gcc loop *after* `deploy-migrate`
+silently reverts index 225's canonical three-branch `plpgsql` version and drops
+the `regulatory_programs` fallback. Proven on the probe: `lanname` went
+`plpgsql` → `sql`. That is exactly the vault-ingest-under-RLS failure index 225
+exists to fix, reinstated by any install-fresh re-run that follows a deploy.
+`provision-test-db.sh` happens to run them in the safe order; nothing enforces
+it.
+
+### Why no test catches any of this
+
+`tests/schema-contract/uuid-tenant-isolation.contract.test.ts:80` hand-creates
+`core.programs (id serial primary key, org_id uuid, name text)` before asserting
+the policy attaches. It manufactures the column whose absence is the defect, so
+it can never detect it.
 
 `core.programs` has two creators:
 
@@ -201,15 +324,189 @@ on a preview branch predating the base table. Verified identical.)
 
 ---
 
+## Finding 6 — a trigger writes a column the table does not have, so orchestrator runs can never advance
+
+**Severity: second only to Finding 1, and it is live on every freshly
+provisioned environment including this one.**
+
+`submission_orchestrator_runs` has three definitions, and the one that wins is
+the one nobody wrote down:
+
+- `migrations/0018_submission_orchestrator.sql:17` (install-fresh overlay #24)
+  and `db/migrations/20260725_submission_orchestrator_store_port.sql:63`
+  (deploy-migrate index 37) declare **byte-identical** table bodies, both
+  including `created_at` and `updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()`.
+- `shared/schema/submissions.ts:196` declares neither.
+
+`drizzle-kit push` runs at install-fresh **step 2**, the overlay at step 3, so
+push creates the table and 0018's `CREATE TABLE IF NOT EXISTS` is a no-op. Only
+0018's indexes, seed, function and **trigger** take effect. Live confirms it:
+the FKs carry drizzle's truncated names
+(`submission_orchestrator_runs_organization_id_organizations_id_f`), not
+PostgreSQL's `_fkey`.
+
+So the table has no `updated_at` — but 0018 installed
+`trg_orchestrator_runs_updated_at`, whose function body assigns
+`NEW.updated_at`:
+
+```
+ERROR:  42703: record "new" has no field "updated_at"
+CONTEXT:  PL/pgSQL assignment "NEW.updated_at = NOW()"
+          PL/pgSQL function submission_orchestrator_runs_set_updated_at() line 3
+```
+
+The trigger is `BEFORE UPDATE` only, so the first `INSERT` succeeds. But
+`persistRun` (`server/services/submission-package-orchestrator.ts:1014`) uses
+`ON CONFLICT (run_id) DO UPDATE`, which every subsequent step-write and every
+resume takes, and `42703` is in its own `SCHEMA_SHAPE_ERROR_CODES` (`:984`), so
+it re-throws to the route. **A run can be created and never advanced or
+completed.** The same statements succeed against the port shape.
+
+Note the polarity: ledger C-19 fixed this family in the deploy direction and
+nothing closed the gap in the other one. The C-19 contract test
+(`tests/schema-contract/orchestrator-ledger-hardening.contract.test.ts:39`)
+applies the port to a bare PGlite and never applies push, so it exercises only
+the shape that works.
+
+Two smaller items in the same family:
+`migrations/20260629_orchestrator_region_check_alignment.sql` widens the region
+`CHECK` to 13 values and is on neither the port nor `C2C_MIGRATION_FILES`, while
+`server/routes/submission-orchestrator.ts:200` accepts all 13; and the
+`steps.run_id` FK is `NO ACTION` live, neither the `CASCADE` both files declare
+nor the `RESTRICT` that `20260730_orchestrator_run_ledger_hardening.sql`
+installs — its `DO` block matches only `confdeltype = 'c'`, so it silently
+no-opped. `docs/compliance/part11-immutability-record-class-policy.md:34`
+asserts the CASCADE that is not there.
+
+## Finding 7 — one table, two column names, and four of nine writes always fail silently
+
+`contradiction_consequence_log` names its free-text column **`execution_notes`**
+in `db/migrations/20260323_assumption_decision_contradiction.sql:280`
+(deploy-migrate index 42) and **`notes`** in
+`migrations/20260524_contradiction_engine_schema.sql:118` (install-fresh overlay
+#47). install-fresh never runs the first; deploy-migrate never runs the second.
+
+Server code writes both names, from different services:
+
+| Column written | Sites | Works on the deploy shape | Works on the install-fresh shape |
+|---|---|---|---|
+| `notes` | `contradiction-consequence-service.ts:454,502,557,700` | **42703** | ✅ |
+| `execution_notes` | `contradiction-resolution-orchestrator.ts:463,550,595,620` | ✅ | **42703** |
+
+Demonstrated against both shapes. **Whichever shape a database has, four of the
+nine consequence-log writes fail** — and all nine sit inside `catch` blocks that
+discard the error, four of them with no logging at all. The table is write-only:
+nothing in the repository ever reads it.
+
+The wider divergence in this family is not one column name. Between the two
+shapes there are **14 CHECK constraints** present on one side and absent on the
+other, one column type change (`truth_hierarchy_level` `integer NOT NULL CHECK
+BETWEEN 1 AND 7` versus `text`), six nullability flips, five default changes,
+and a `timestamptz`/`timestamp` split on every timestamp in the family.
+`contradiction_decision_links` does not exist at all under the deploy-migrate
+lineage. And `detected_by` is written by no code: it defaults to `'system'` on
+one shape and to `null` on the other, so `mapFinding` returns a different answer
+depending on how the database was built.
+
+## Finding 8 — two gates cannot see what they were written to catch
+
+Neither is a schema defect; both are reasons the defects above went unreported.
+
+- **`scripts/ci/check-embedding-runtime-canonicality.mjs:87-92`** matches four
+  regexes, all OpenAI-shaped (`openai.embeddings.create`, `getOpenAI()...`,
+  `model: 'text-embedding-...'`). A HuggingFace embedding call is invisible to
+  it. `server/huggingface-service.ts` and its five callers are not baselined and
+  not excluded — they simply do not match, so the gate passes and would keep
+  passing if ten more were added. A guard written against one provider does not
+  govern a second.
+- **`scripts/db/install-fresh.mjs:700`** verifies the push surface with a
+  `/\bpgTable\(/` regex. The vault tables are declared `vault.table('documents',
+  …)` (`shared/schema/vault.ts:70,158`), so the check cannot see them. That
+  matters because `drizzle-kit push` emits **no `vault.*` tables at all** —
+  measured by running push against a throwaway database with the schema and the
+  `vector` extension pre-created: 481 of 481 public tables, zero vault tables.
+  The vault schema therefore has no push-side verification of any kind.
+
+`embeddingService.embedForCorpus(text, corpus)`, which
+`server/services/embedding-corpus-policy.ts:48` instructs runtime callers to
+use, **does not exist** — and `enhancedEmbeddingService.ts`, which that file's
+header calls "the single approved runtime that consults it", does not import the
+policy at all. The policy and its runtime are unconnected.
+
+## Finding 9 — authorization checks that report having run when they did not
+
+The general form of Correction 3, found by scanning every non-test
+`server/**/*.ts` for a `catch` returning a falsy value in an authorization
+context. Two real instances, and the repo already contains the model answer.
+
+`server/routes/innovation-routes.ts:109-140` — `guardQuery` wraps every
+ownership query and ends `catch { …; return null; }`. **No binding, no logging,
+no metric.** It conflates four categories that need different handling:
+
+| Class | Example | Correct handling |
+|---|---|---|
+| genuine no-match | *no error*, `rows.length === 0` | deny — the only legitimate one |
+| caller garbage | `22P02` invalid uuid | deny (already pre-empted by `id::text`) |
+| **schema failure** | `42703`, `42P01`, `42501`, `3F000` | **must not deny — the control did not run** |
+| **infrastructure** | `08006`, `53300`, `57014`, no pool | **must not deny — and it is transient, so it yields intermittent 404s** |
+
+Two properties make it worse than an ordinary fail-closed guard. The
+three-source OR loop in `PROGRAM_ORG_SOURCES` means that with one source broken
+the verdict is decided by whichever sources still parse — allow if any matches,
+deny if none does. That is not fail-closed, it is fail-whatever. And the deny is
+a deliberately indistinguishable 404 (`:97-99`), so a totally broken check is
+invisible to operators as well as callers.
+
+**The information needed for the fix already exists and is thrown away.** The
+signature is `Promise<Record[] | null>` — the third state is reserved — and every
+call site collapses it (`:162`, `:230`, `:250`, `:270`, `:290`).
+
+Second instance: `server/routes/c2c/project-access.ts:286` — `verifyProjectAccess`
+ends `catch { return false }`, unlogged, on a cross-tenant project check. That
+same file already does it right at `:255`
+(`if (isMissingTableError(error)) return fallback; throw error;`).
+
+`server/services/ana/AnaToolExecutor.ts:16515` inherits the defect by calling
+`programBelongsToOrg` — deliberately, per its comment at `:16493`, "rather than
+a fourth copy" — so fixing `guardQuery` fixes it.
+
+Cleared on inspection, and worth citing as the right shape:
+`server/middleware/requirePlatformAdmin.ts:72` and
+`server/services/roleBasedAccess.ts:103,147` deny **and log**;
+`server/routes/pdev/pdev-routes.ts:128` has no catch at all, so an error becomes
+a 500. And `server/middleware/moduleEntitlementGate.ts:189-199` states the
+invariant outright — it fails *open* for a billing gate, which is the opposite
+direction from a tenant boundary, but its comment is the rule that `guardQuery`
+breaks: **"Never silent."**
+
 ## Scope
 
-1. **Finding 1 first**, and its two halves are separable: make the missing-psql
-   branch of install-fresh step 6 fatal (or provision `core.programs`
-   canonically on the deploy path), and put an
-   `ALTER TABLE core.programs ADD COLUMN IF NOT EXISTS org_id …` into
-   `C2C_MIGRATION_FILES` so existing databases converge — per the WO-1
-   convergence rule, editing the `CREATE TABLE` repairs nothing that already
-   exists. Separately, `guardQuery` must not render a missing column as a deny.
+1. **Finding 1 first.** Four separable pieces, and the reproduction says which
+   ones actually close it:
+   - a convergence migration in `C2C_MIGRATION_FILES` adding `org_id`,
+     `metadata`, `created_by` and the `status NOT NULL` posture, plus
+     `programs_org_idx` and the guarded `programs_org_fk`. Placement window is
+     index **12–224**: after `044b` at 11 creates the table, strictly before
+     index 225 reads `org_id`, and before index 260 decides whether to policy
+     it. Immediately after 11 is the natural slot.
+     `org_id` must stay **nullable with no default** — `069`'s own backfill
+     fires only when exactly one organisation exists, so `SET NOT NULL` would
+     fail on any zero- or multi-org database, and a default would silently
+     mis-assign ownership. The FK must keep `069`'s `information_schema` guard,
+     because the `identity` schema is gcc-only and absent on this path.
+   - **a `deploy-migrate` preflight assertion on `core.programs`' shape.** Per
+     Correction 1 this is the piece that closes the loop: install-fresh already
+     exits 1, and `deploy-migrate` is what declares the database fit anyway.
+   - making install-fresh step 6 fatal when `psql` is missing. Defensible — no
+     supported environment both runs step 6 and lacks psql (CI installs
+     `postgresql-client` at `ci.yml:784,862,1006`; the production image has no
+     psql but never runs install-fresh, per `deploy-migrate.mjs:20-28`), and
+     `--allow-incomplete` already exists as the deliberate opt-out. Note that
+     **no CI job exercises the psql-missing branch**, so it has never been
+     tested at all.
+   - the `069` / index-225 ordering hazard: `069` must stop clobbering
+     `core.get_program_org_id`, or the canonical version must be re-asserted
+     after any gcc run.
 2. **Findings 2 and 3 together** — one convergence migration in
    `C2C_MIGRATION_FILES` bringing `project_charters` to the declared shape and
    putting the four charter tables on the deploy path, plus the three stale
@@ -228,10 +525,26 @@ npm run ci:tables-live-schema                 # no new absences
 # and the one that matters, per finding:
 psql "$DATABASE_URL" -c "select org_id from core.programs limit 1"
 psql "$DATABASE_URL" -c "select pma_config from project_charters limit 1"
+psql "$DATABASE_URL" -c "update submission_orchestrator_runs set status = status"
 ```
 
-Each must succeed on a database provisioned by **`deploy-migrate` alone**, not
-only by a complete `install-fresh`. That distinction is the whole work order.
+~~Each must succeed on a database provisioned by **`deploy-migrate` alone**.~~
+**Corrected 2026-09-10: no such database can exist.** `deploy-migrate.mjs:87`
+declares `BASE_SCHEMA_SENTINELS = ['organizations','users','c2c_documents','regulatory_programs']`
+and its preflight (`:110-131`) calls `process.exit(3)` if any is missing, so it
+refuses an unprovisioned database outright.
+
+The scenario that actually produces these defects is narrower and worth stating
+exactly, because it is what the fixes have to survive: **an `install-fresh`
+whose later steps did not complete, followed by `deploy-migrate`.** Steps 2-3
+create every sentinel the preflight looks for, and step 6 — the `*_gcc_*` psql
+loop — is the only non-fatal step in the script. Finding 1 is that path. The
+same shape of hazard is documented for step 2 itself at
+`install-fresh.mjs:786-805`: a `drizzle-kit push` that aborts mid-loop and still
+exits 0.
+
+So the exit criterion is: each command above succeeds on a database where step 6
+was skipped and `deploy-migrate` then ran to completion.
 
 ## What is NOT claimed
 
