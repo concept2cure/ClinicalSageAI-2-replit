@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-08T05:34:36.265Z",
+  "generatedAt": "2026-09-10T05:24:21.863Z",
   "git": {
-    "sha": "df661212bef56c08615cc5c8e5db9993a5a3cd04",
+    "sha": "5aa07bc8e132790bbaa30933a85fb7076fab1f52",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -16,7 +16,7 @@
     "contentDuplicateGroups": 0,
     "contentDuplicateFiles": 0,
     "largeFilesByBytes": 42,
-    "largeFilesByLines": 95
+    "largeFilesByLines": 96
   },
   "findings": {
     "duplicateBasenames": [
@@ -2522,6 +2522,10 @@
         "lines": 1602
       },
       {
+        "file": "server/services/grdhe/grdheService.ts",
+        "lines": 1584
+      },
+      {
         "file": "server/services/advancedRAGPipeline.ts",
         "lines": 1569
       },
@@ -2537,7 +2541,7 @@
       "owner": "Backend Platform (server/routes + server/services owners)",
       "duplicateGroups": 403,
       "largeByBytes": 32,
-      "largeByLines": 78
+      "largeByLines": 79
     },
     {
       "owner": "Unassigned (TBD)",
