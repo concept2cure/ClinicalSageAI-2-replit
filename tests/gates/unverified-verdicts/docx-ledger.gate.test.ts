@@ -13,7 +13,7 @@
  * answers everything else. RED on the pre-fix head: `count="0"` in the XML, a
  * ledger with no way to say otherwise, and a DOCX produced regardless.
  */
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { mockPool } from '../../setup';
 import { assertNoVerdictClaims } from '../../../scripts/ci/lib/verdict-inspector.mjs';
 
@@ -48,6 +48,25 @@ function queryText(arg: unknown): string {
   return typeof arg === 'string' ? arg : String((arg as { text?: string })?.text ?? '');
 }
 
+const originalQuery = mockPool.query;
+type Collector = typeof import('../../../server/services/export/docx-ledger-collector');
+type Xml = typeof import('../../../server/services/export/docx-ledger-xml');
+type Exporter = typeof import('../../../server/services/export/docx-ledger-export');
+let collectArtifactLedger: Collector['collectArtifactLedger'];
+let serializeAnALedgerXml: Xml['serializeAnALedgerXml'];
+let exportArtifactWithLedger: Exporter['exportArtifactWithLedger'];
+
+// Imported once (hookTimeout 60 s): the export graph is seconds to transform
+// cold and must not be charged to a test's 10 s budget.
+beforeAll(async () => {
+  ({ collectArtifactLedger } = await import('../../../server/services/export/docx-ledger-collector'));
+  ({ serializeAnALedgerXml } = await import('../../../server/services/export/docx-ledger-xml'));
+  ({ exportArtifactWithLedger } = await import('../../../server/services/export/docx-ledger-export'));
+});
+afterAll(() => {
+  (mockPool as { query: unknown }).query = originalQuery;
+});
+
 function failProvenanceQueries(err = denied) {
   // Reassigned, not re-implemented: the runtime wraps the stub's query in
   // place at import time (see decision-lineage.gate.test.ts).
@@ -67,7 +86,6 @@ describe('AnALedger: a failed provenance query is "unavailable", never a count',
   });
 
   it('the collector carries the third state for audit log and signatures', async () => {
-    const { collectArtifactLedger } = await import('../../../server/services/export/docx-ledger-collector');
     const ledger = await collectArtifactLedger('art-1', 7);
     expect(ledger).not.toBeNull();
     expect(ledger!.auditLogUnavailable).toMatch(/42501/);
@@ -77,8 +95,6 @@ describe('AnALedger: a failed provenance query is "unavailable", never a count',
   });
 
   it('the XML says unavailable, with the reason, and asserts no count', async () => {
-    const { collectArtifactLedger } = await import('../../../server/services/export/docx-ledger-collector');
-    const { serializeAnALedgerXml } = await import('../../../server/services/export/docx-ledger-xml');
     const xml = serializeAnALedgerXml((await collectArtifactLedger('art-1', 7))!);
     expect(xml).toMatch(/<AuditLog unavailable="true" reason="[^"]*42501[^"]*"\/>/);
     expect(xml).toMatch(/<Signatures unavailable="true" reason="[^"]*42501[^"]*"\/>/);
@@ -89,14 +105,12 @@ describe('AnALedger: a failed provenance query is "unavailable", never a count',
 
   it('a missing table is unavailable too — absence of the store is not an empty history', async () => {
     failProvenanceQueries(table => Object.assign(new Error(`relation "${table}" does not exist`), { code: '42P01' }));
-    const { collectArtifactLedger } = await import('../../../server/services/export/docx-ledger-collector');
     const ledger = await collectArtifactLedger('art-1', 7);
     expect(ledger!.auditLogUnavailable).toMatch(/42P01/);
     expect(ledger!.signaturesUnavailable).toMatch(/42P01/);
   });
 
   it('the DOCX export refuses to produce a document whose signature block it cannot substantiate', async () => {
-    const { exportArtifactWithLedger } = await import('../../../server/services/export/docx-ledger-export');
     await expect(exportArtifactWithLedger('art-1', 7)).rejects.toMatchObject({
       name: 'VerificationUnavailableError',
     });
@@ -113,8 +127,6 @@ describe('AnALedger: when the queries ran and found nothing, the count is honest
   });
 
   it('renders count="0" only for a query that actually returned zero rows', async () => {
-    const { collectArtifactLedger } = await import('../../../server/services/export/docx-ledger-collector');
-    const { serializeAnALedgerXml } = await import('../../../server/services/export/docx-ledger-xml');
     const ledger = (await collectArtifactLedger('art-1', 7))!;
     expect(ledger.auditLogUnavailable).toBeNull();
     expect(ledger.signaturesUnavailable).toBeNull();
