@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-10T17:44:11.322Z",
+  "generatedAt": "2026-09-10T19:07:22.978Z",
   "git": {
-    "sha": "a6bc548c2c3550cc6209789df4cf740838f6375b",
+    "sha": "4fa3e5e2bd0cc672e0c6e4af01f491fdaed249fc",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -12,7 +12,7 @@
   },
   "managedMirrors": [],
   "summary": {
-    "duplicateBasenames": 208,
+    "duplicateBasenames": 206,
     "contentDuplicateGroups": 0,
     "contentDuplicateFiles": 0,
     "largeFilesByBytes": 42,
@@ -1017,14 +1017,6 @@
         ]
       },
       {
-        "basename": "cortexprimeservice.test",
-        "count": 2,
-        "paths": [
-          "server/__tests__/services/cortexPrimeService.test.ts",
-          "tests/services/cortexPrimeService.test.ts"
-        ]
-      },
-      {
         "basename": "coverage-analysis",
         "count": 2,
         "paths": [
@@ -1945,14 +1937,6 @@
         ]
       },
       {
-        "basename": "validation",
-        "count": 2,
-        "paths": [
-          "server/middleware/validation.ts",
-          "services/proof/validation.ts"
-        ]
-      },
-      {
         "basename": "vitest.config",
         "count": 2,
         "paths": [
@@ -2531,13 +2515,13 @@
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
-      "duplicateGroups": 401,
+      "duplicateGroups": 399,
       "largeByBytes": 32,
       "largeByLines": 79
     },
     {
       "owner": "Unassigned (TBD)",
-      "duplicateGroups": 155,
+      "duplicateGroups": 153,
       "largeByBytes": 2,
       "largeByLines": 7
     },
