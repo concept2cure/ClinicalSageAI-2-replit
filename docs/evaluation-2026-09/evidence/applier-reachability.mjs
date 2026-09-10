@@ -56,7 +56,30 @@ import { readFileSync, readdirSync, writeFileSync, existsSync } from 'node:fs';
 import path from 'node:path';
 
 const setSrc = readFileSync('scripts/db/migration-set.mjs', 'utf8');
-const FRESH_EXCLUDED = new Set([
+const setSrcFresh = readFileSync('scripts/db/install-fresh.mjs', 'utf8');
+/**
+ * install-fresh's RLS_MIGRATIONS (scripts/db/install-fresh.mjs:91).
+ *
+ * ── CORRECTED 2026-09-10 ─────────────────────────────────────────────────────
+ * An earlier revision of this script called this set FRESH_EXCLUDED and
+ * subtracted it from install-fresh's coverage, on the strength of the overlay
+ * step's comment: "RLS migrations are applied separately in their required
+ * order (next step), so exclude them here."
+ *
+ * The words that mattered were "applied separately", not "excluded". These six
+ * files ARE applied by install-fresh — at step 5, in exactly this order
+ * (0005 seeds CSR-knowledge RLS; 0019 -> 0020 -> 0021 is the tenant rollout,
+ * audit then coerce column types then enable RLS everywhere; the two dated
+ * files add AI-placement and research-admin policies). Excluding them reported
+ * migrations/0021_enable_rls_everywhere.sql — the sweep that policies every
+ * tenant-keyed table in EVERY schema — as reachable by no applier at all.
+ *
+ * That is the worst possible file to get wrong here, and it was wrong in the
+ * direction that understates protection: it would have supported a conclusion
+ * that a fresh install ships with no RLS rollout. Ordering within an applier is
+ * not exclusion from it.
+ */
+const FRESH_RLS_ORDERED = new Set([
   '0005_csr_knowledge_database.sql', '0019_tenant_column_audit.sql',
   '0020_coerce_text_tenant_columns.sql', '0021_enable_rls_everywhere.sql',
   '20260608_ai_placement_policies.sql', '20260612_rls_research_admin.sql',
@@ -72,10 +95,29 @@ const dbMigrateSh = (rel) => {
   return /^0\d\d_.*\.sql$/.test(b) || /^1\d\d_.*\.sql$/.test(b) || /^20\d{6}_.*\.sql$/.test(b);
 };
 
+// Fail loudly if install-fresh's list and this model's copy of it drift apart.
+{
+  const declared = [...(setSrcFresh.match(/const RLS_MIGRATIONS = \[([\s\S]*?)\]/)?.[1] ?? '')
+    .matchAll(/'([^']+\.sql)'/g)].map((m) => m[1]);
+  const missing = declared.filter((f) => !FRESH_RLS_ORDERED.has(f));
+  const extra = [...FRESH_RLS_ORDERED].filter((f) => !declared.includes(f));
+  if (declared.length && (missing.length || extra.length)) {
+    console.error(
+      '[applier-reachability] install-fresh RLS_MIGRATIONS drifted from this model:' +
+        (missing.length ? `\n  in install-fresh, not here: ${missing.join(', ')}` : '') +
+        (extra.length ? `\n  here, not in install-fresh: ${extra.join(', ')}` : ''),
+    );
+    process.exit(1);
+  }
+}
+
 const APPLIERS = {
   'deploy-migrate (production)': (rel) => setSrc.includes(`'${rel}'`),
   'install-fresh': (rel) =>
-    (path.dirname(rel) === 'migrations' && !FRESH_EXCLUDED.has(path.basename(rel))) ||
+    // steps 3 and 5: the whole root tree. The RLS six are applied at step 5
+    // rather than in the overlay, which is an ordering difference, not an
+    // exclusion — see FRESH_RLS_ORDERED.
+    path.dirname(rel) === 'migrations' ||
     // step 6: the governed-content tree
     (path.dirname(rel) === 'db/migrations' && path.basename(rel).includes('_gcc_')) ||
     // step 4: the authoring subsystem

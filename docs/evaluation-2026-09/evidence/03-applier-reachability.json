@@ -1,26 +1,20 @@
 {
-  "generated": "2026-09-10T05:40:38.150Z",
+  "generated": "2026-09-10T05:56:16.811Z",
   "note": "Coverage per applier. Deliberately makes NO claim about which tables exist in a deployed database — that needs a live DB (ci:tables-live-schema).",
   "totals": {
     "files": 568,
-    "unreachedByDurableApplier": 24,
+    "unreachedByDurableApplier": 18,
     "ciTestDbOnly": 0
   },
   "coverage": {
     "deploy-migrate (production)": 261,
-    "install-fresh": 285,
+    "install-fresh": 291,
     "db_migrate.sh (operator)": 304,
     "ci psql loop (TEST DB ONLY)": 43,
     "drizzle journal": 1
   },
   "unreached": [
     "db/migrations/emergency_security_migration.sql",
-    "migrations/0005_csr_knowledge_database.sql",
-    "migrations/0019_tenant_column_audit.sql",
-    "migrations/0020_coerce_text_tenant_columns.sql",
-    "migrations/0021_enable_rls_everywhere.sql",
-    "migrations/20260608_ai_placement_policies.sql",
-    "migrations/20260612_rls_research_admin.sql",
     "sql/advanced_analytics_schema.sql",
     "sql/analytics_schema.sql",
     "sql/cmc_blueprints.sql",
@@ -1217,7 +1211,9 @@
     "migrations/0004_workflow_performance_indexes.sql": [
       "install-fresh"
     ],
-    "migrations/0005_csr_knowledge_database.sql": [],
+    "migrations/0005_csr_knowledge_database.sql": [
+      "install-fresh"
+    ],
     "migrations/0006_regulatory_atoms.sql": [
       "install-fresh"
     ],
@@ -1279,13 +1275,19 @@
     "migrations/0018_submission_orchestrator.sql": [
       "install-fresh"
     ],
-    "migrations/0019_tenant_column_audit.sql": [],
+    "migrations/0019_tenant_column_audit.sql": [
+      "install-fresh"
+    ],
     "migrations/001_create_ivdr_tables.sql": [
       "deploy-migrate (production)",
       "install-fresh"
     ],
-    "migrations/0020_coerce_text_tenant_columns.sql": [],
-    "migrations/0021_enable_rls_everywhere.sql": [],
+    "migrations/0020_coerce_text_tenant_columns.sql": [
+      "install-fresh"
+    ],
+    "migrations/0021_enable_rls_everywhere.sql": [
+      "install-fresh"
+    ],
     "migrations/20260327_data_lineage_tracking.sql": [
       "install-fresh"
     ],
@@ -1443,7 +1445,9 @@
     "migrations/20260605_consistency_findings.sql": [
       "install-fresh"
     ],
-    "migrations/20260608_ai_placement_policies.sql": [],
+    "migrations/20260608_ai_placement_policies.sql": [
+      "install-fresh"
+    ],
     "migrations/20260608_submission_leaf_document_type.sql": [
       "install-fresh"
     ],
@@ -1533,7 +1537,9 @@
     "migrations/20260612_grant_subawards.sql": [
       "install-fresh"
     ],
-    "migrations/20260612_rls_research_admin.sql": [],
+    "migrations/20260612_rls_research_admin.sql": [
+      "install-fresh"
+    ],
     "migrations/20260614_ind_cross_references.sql": [
       "install-fresh"
     ],

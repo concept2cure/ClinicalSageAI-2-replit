@@ -316,6 +316,28 @@ jobs:
         # structurally unable to filter by tenant.
         run: npm run ci:tenant-blind-models
 
+      - name: Guardrails — no per-request table without a tenant key
+        if: "!cancelled() && steps.install.conclusion == 'success'"
+        # The third sibling, and the one underneath the other two. Both of those
+        # operate on tables that HAVE a tenant column — one checks its type, one
+        # checks the model sees it. Neither can see a table with no tenant column
+        # at all, and neither can any RLS sweep here: all four key off
+        # (organization_id, org_id, tenant_id), so a table with none is outside
+        # the population every mechanism operates on.
+        #
+        # Three cross-tenant defects on 2026-09-10 were all exactly that, in
+        # three unrelated subsystems, and 142 gates reported none of them. This
+        # gate is the only one that treats a MISSING column as the finding.
+        run: npm run ci:unkeyed-request-tables
+
+      - name: Guardrails — the unkeyed-table gate can still fail
+        if: "!cancelled() && steps.install.conclusion == 'success'"
+        # A gate only ever seen to pass has not been tested. This writes a real
+        # unkeyed table and a route that reads it, asserts red, then asserts
+        # green for the same table with organization_id — so a gate that failed
+        # on everything would not slip through either.
+        run: npm run ci:unkeyed-request-tables:selftest
+
       - name: Guardrails — WCAG AA contrast on design tokens
         if: "!cancelled() && steps.install.conclusion == 'success'"
         # Contrast is arithmetic on two hex values, so this cannot drift into
@@ -1697,8 +1719,16 @@ jobs:
       # the lint job and hold the line — these say how far the line still is
       # from zero, which nothing else reports.
       #
-      # Run as one step that executes all six and reports every count, rather
-      # than six steps where the first failure hides the other five.
+      # Run as one step that executes all of them and reports every count,
+      # rather than one step each, where the first failure hides the rest.
+      #
+      # ci:unkeyed-request-tables has TWO entries because it has two distances
+      # to zero, and they mean different things. :strict is "no per-request
+      # table lacks a tenant key" — the end state. :unreviewed is "every table
+      # that lacks one has at least been CLASSIFIED global / derived / exempt" —
+      # which is reachable much sooner and is the one that would have caught
+      # the 2026-09-10 disclosures, because all three would have sat in that
+      # baseline unclassified.
       - name: Strict debt gates (zero-baseline promotion targets)
         if: always()
         run: |
@@ -1709,7 +1739,9 @@ jobs:
             ci:unbacked-tables:strict \
             ci:tenant-isolation:strict \
             ci:unreferenced-modules:strict \
-            ci:proof-tier:strict
+            ci:proof-tier:strict \
+            ci:unkeyed-request-tables:strict \
+            ci:unkeyed-request-tables:unreviewed
           do
             echo "::group::$gate"
             if npm run --silent "$gate"; then
