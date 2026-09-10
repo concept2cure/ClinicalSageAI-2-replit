@@ -1,20 +1,8 @@
 {
   "$comment": "Pre-existing duplicate CREATE TABLE definitions, pinned to the exact set of files that define each table. Each entry is a defect to be reconciled per ADR-0006, not an approved pattern. A NEW table collision, or a NEW file defining an already-colliding table, fails CI. Shrink this file; never grow it. Standing exceptions (documented in ledger C-8/C-10/C-11): entries whose only rival is a dead root-lineage 0010 file — their canonical DDL lives in db/migrations/20260725_* and ADR-0006 retirement of the dead files removes the entries.",
-  "generatedAt": "2026-09-10T15:40:30.888Z",
-  "total": 60,
+  "generatedAt": "2026-09-10T15:46:47.403Z",
+  "total": 31,
   "entries": {
-    "api_usage_logs": [
-      "db/migrations/20260319_billing_usage_budgets_alerts.sql",
-      "migrations/20260702_usage_model_credit_ledger.sql"
-    ],
-    "audit_logs": [
-      "db/migrations/20260129_add_org_industry_stripe_audit_logs.sql",
-      "migrations/0000_sweet_joseph.sql"
-    ],
-    "c2c_bla_assessments": [
-      "db/migrations/20260718_bla_assessments_store.sql",
-      "migrations/20260604_bla_workbench.sql"
-    ],
     "c2c_blockers": [
       "migrations/0002_phase15_submission_ops.sql",
       "migrations/20260524_c2c_blockers.sql"
@@ -29,43 +17,6 @@
     ],
     "compliance_tracking": [
       "db/migrations/20260402_cmc_runtime_ddl_to_migration.sql",
-      "migrations/0000_sweet_joseph.sql"
-    ],
-    "concept2cure_artifact_versions": [
-      "db/migrations/20260128_concept2cure_foundation.sql",
-      "db/migrations/20260311_concept2cure_artifacts.sql",
-      "migrations/0000_sweet_joseph.sql"
-    ],
-    "concept2cure_artifacts": [
-      "db/migrations/20260128_concept2cure_foundation.sql",
-      "db/migrations/20260311_concept2cure_artifacts.sql",
-      "migrations/0000_sweet_joseph.sql"
-    ],
-    "concept2cure_conversations": [
-      "db/migrations/20260128_concept2cure_foundation.sql",
-      "migrations/0000_sweet_joseph.sql"
-    ],
-    "concept2cure_messages": [
-      "db/migrations/20260128_concept2cure_foundation.sql",
-      "migrations/0000_sweet_joseph.sql"
-    ],
-    "concept2cure_provenance_events": [
-      "db/migrations/20260311_concept2cure_provenance_events.sql",
-      "db/migrations/20260313_phase11_governed_workflow.sql",
-      "migrations/0000_sweet_joseph.sql"
-    ],
-    "concept2cure_review_comments": [
-      "db/migrations/20260313_concept2cure_submission_snapshots.sql",
-      "db/migrations/20260313_phase11_governed_workflow.sql",
-      "migrations/0000_sweet_joseph.sql"
-    ],
-    "concept2cure_signatures": [
-      "db/migrations/20260128_concept2cure_signatures.sql",
-      "migrations/0000_sweet_joseph.sql"
-    ],
-    "concept2cure_submission_snapshots": [
-      "db/migrations/20260313_concept2cure_submission_snapshots.sql",
-      "db/migrations/20260313_phase11_governed_workflow.sql",
       "migrations/0000_sweet_joseph.sql"
     ],
     "contradiction_consequence_log": [
@@ -133,22 +84,6 @@
       "db/migrations/073_cortex_prime_unified_brain.sql",
       "db/migrations/079_gcc_unified_functions_views.sql"
     ],
-    "cro_team_assignments": [
-      "db/migrations/20260128_concept2cure_wbs_assignments.sql",
-      "migrations/0000_sweet_joseph.sql"
-    ],
-    "csr_reports": [
-      "migrations/0000_sweet_joseph.sql",
-      "server/database/schema.sql"
-    ],
-    "ectd_templates": [
-      "migrations/0000_sweet_joseph.sql",
-      "server/db/ectd-schema.sql"
-    ],
-    "pm_settings": [
-      "db/migrations/20260209_create_pm_settings.sql",
-      "migrations/0000_sweet_joseph.sql"
-    ],
     "project_commitments": [
       "migrations/0012_project_charter_timeline.sql",
       "migrations/20260629_charter_tables_rebuild.sql"
@@ -157,30 +92,6 @@
       "db/migrations/20260220_ind_section_tracking.sql",
       "migrations/0000_sweet_joseph.sql"
     ],
-    "project_modules": [
-      "db/migrations/20260216_enterprise_4pillar_expansion.sql",
-      "migrations/0000_sweet_joseph.sql"
-    ],
-    "project_rules": [
-      "db/migrations/20260216_enterprise_4pillar_expansion.sql",
-      "migrations/0000_sweet_joseph.sql"
-    ],
-    "project_tasks": [
-      "db/migrations/20260128_concept2cure_wbs_assignments.sql",
-      "migrations/0000_sweet_joseph.sql"
-    ],
-    "project_workflow_stages": [
-      "db/migrations/20260128_concept2cure_wbs_assignments.sql",
-      "migrations/0000_sweet_joseph.sql"
-    ],
-    "proof_audit_logs": [
-      "db/migrations/20260129_proof_audit_logs.sql",
-      "migrations/0000_sweet_joseph.sql"
-    ],
-    "reg_questions": [
-      "migrations/0000_sweet_joseph.sql",
-      "server/schema/regulatory.sql"
-    ],
     "risk_controls": [
       "migrations/20260507_mdx_beta_surfaces.sql",
       "migrations/20260609_design_risk.sql"
@@ -188,18 +99,6 @@
     "risk_items": [
       "migrations/20260507_mdx_beta_surfaces.sql",
       "migrations/20260609_design_risk.sql"
-    ],
-    "rule_execution_log": [
-      "db/migrations/20260216_enterprise_4pillar_expansion.sql",
-      "migrations/0000_sweet_joseph.sql"
-    ],
-    "sentinel_findings": [
-      "db/migrations/20260216_enterprise_4pillar_expansion.sql",
-      "migrations/0000_sweet_joseph.sql"
-    ],
-    "strategy_p34_exports": [
-      "db/migrations/029_strategy_step2.sql",
-      "db/migrations/030_stability_results.sql"
     ],
     "submission_orchestrator_dependencies": [
       "db/migrations/20260725_submission_orchestrator_store_port.sql",
@@ -212,26 +111,6 @@
     "submission_orchestrator_steps": [
       "db/migrations/20260725_submission_orchestrator_store_port.sql",
       "migrations/0018_submission_orchestrator.sql"
-    ],
-    "supply_chain_batches": [
-      "db/migrations/20260402_supply_chain_tables.sql",
-      "migrations/0000_sweet_joseph.sql"
-    ],
-    "supply_chain_materials": [
-      "db/migrations/20260402_supply_chain_tables.sql",
-      "migrations/0000_sweet_joseph.sql"
-    ],
-    "supply_chain_shipments": [
-      "db/migrations/20260402_supply_chain_tables.sql",
-      "migrations/0000_sweet_joseph.sql"
-    ],
-    "supply_chain_suppliers": [
-      "db/migrations/20260402_supply_chain_tables.sql",
-      "migrations/0000_sweet_joseph.sql"
-    ],
-    "supply_chain_temperature_readings": [
-      "db/migrations/20260402_supply_chain_tables.sql",
-      "migrations/0000_sweet_joseph.sql"
     ],
     "template_usage": [
       "db/migrations/20260730_authoring_runtime_ddl.sql",

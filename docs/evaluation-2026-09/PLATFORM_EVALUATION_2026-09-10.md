@@ -76,6 +76,13 @@ unresolved and is upstream of every assurance claim the pilot depends on:
 - **64 tables have more than one `CREATE TABLE` definition** across 593
   non-archived SQL files — one more than the baseline of 63, so
   `ci:duplicate-table-ddl:strict` fails on an unbaselined regression.
+  **Updated 2026-09-10: 64 was an undercount, and the figure is now 31.**
+  The guard's pattern required a bare identifier after `CREATE TABLE`, so
+  quoted names never matched — which made `migrations/0000_sweet_joseph.sql`
+  and its **297** `CREATE TABLE "…"` statements invisible. Fixed: distinct
+  tables 1150 → 1416, collisions 34 → 60. WO-1 then archived 18 files that no
+  applier runs, taking it to **31**, of which 12 are the parked `cortex.*`
+  entries. See WO-1's status block.
 - **73 tables the server queries do not exist on a live database**
   (`ci:tables-live-schema`, baseline 73 — a green gate).
 - **36 tables are referenced by runtime code and created by nothing in the repo.**
@@ -403,6 +410,21 @@ $ npm run ci:duplicate-table-ddl:strict
 1186 distinct tables; 64 defined more than once (strict mode)
 ```
 
+**Corrected 2026-09-10.** That measurement was taken through a guard that could
+not see quoted identifiers, so the "1186 distinct tables" was itself short by
+266. The same command today, after the fix and after WO-1's stage 2:
+
+```
+$ npm run ci:duplicate-table-ddl
+[ci:duplicate-table-ddl] scanned 567 non-archived .sql files;
+1385 distinct tables; 31 defined more than once; 31 baselined
+```
+
+The fact survives — tables do have multiple definitions, and order still
+decides the survivor. What changed is that the number was never trustworthy in
+the direction that mattered: it under-reported. Proved by making the old
+pattern fail on a quoted duplicate it had reported as green.
+
 **Fact 3 — the guard that makes replay safe is what makes definitions
 ambiguous.** From the gate's own output: because each definition is
 `CREATE TABLE IF NOT EXISTS`, "the surviving column set is decided by migration
@@ -572,9 +594,17 @@ The migration system is not carelessly built. `ci:migration-drop-safety`,
 ADR-0006 defines canonical lineage, and the drop-safety gate ships with a
 self-test that constructs the real create-then-drop hazard in both orders. The
 problem is not absence of discipline; it is that the discipline has not yet been
-applied to the pre-existing collisions (64 at the start of this evaluation, 47
-now), and that the discipline is aimed at the repository while the risk lives in
-the estate — §4.2b.
+applied to the pre-existing collisions (64 at the start of this evaluation, **31
+now**, against a corrected measurement that peaked at 60 once the guard could
+see quoted identifiers), and that the discipline is aimed at the repository
+while the risk lives in the estate — §4.2b.
+
+That last clause is now less true than it was. `scripts/db/provision-test-db.sh`
+builds the estate's shape locally in one command, and WO-1's stage 2 archived 18
+files only after checking each against it — 31 tables would have lost their last
+visible creator, 29 of which exist on no database at all, and every
+`ALTER … ADD COLUMN` target in the set was confirmed present. What the estate
+still hides is covered by WO-15.
 
 ---
 

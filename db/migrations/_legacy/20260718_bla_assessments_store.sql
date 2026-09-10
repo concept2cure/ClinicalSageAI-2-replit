@@ -1,3 +1,22 @@
+-- ============================================================================
+-- ARCHIVED 2026-09-10 (WO-1, ADR-0006) — NO APPLIER RUNS THIS FILE.
+-- ============================================================================
+-- It is in none of C2C_MIGRATION_FILES (deploy-migrate), the root migrations/
+-- overlay, PRE_OVERLAY_CREATORS, AUTHORING_SUBSYSTEM_FILES, or the *_gcc_*
+-- tree. The only glob that would match it belongs to scripts/db_migrate.sh,
+-- which has no automated caller.
+--
+-- Defined a second time here: c2c_bla_assessments
+-- Real creator: migrations/20260604_bla_workbench.sql (install-fresh overlay #67)
+--
+-- Verified against a database built from empty by
+-- scripts/db/provision-test-db.sh before archiving: nothing this file
+-- uniquely creates was present, and every ALTER ... ADD COLUMN target it
+-- carries already exists. Full reasoning, and why that check is mandatory
+-- rather than a formality, in db/migrations/_legacy/README.md
+-- (see the 2026-09-10 section).
+-- ============================================================================
+
 -- BLA 351(a) biologics assessment store — persistence + Part 11 sign-off ledger
 -- for the biologics workbench (server/routes/biopharma/bla-workbench.ts,
 -- mounted at /api/biopharma/bla). The three science engines (analytical

@@ -31,10 +31,25 @@ import crypto from 'node:crypto';
 const REPO_ROOT = path.resolve(__dirname, '..', '..', '..', '..');
 
 /** The real table definition, lifted verbatim from the migration rather than
- *  hand-mirrored here — hand-mirroring is the drift this test exists to catch. */
+ *  hand-mirrored here — hand-mirroring is the drift this test exists to catch.
+ *
+ *  PATH UPDATED 2026-09-10 (WO-1), AND THE WORD "real" NOW NEEDS A CAVEAT.
+ *  This file was archived to db/migrations/_legacy/ because no applier runs it:
+ *  it is in none of C2C_MIGRATION_FILES, the root migrations/ overlay,
+ *  PRE_OVERLAY_CREATORS, AUTHORING_SUBSYSTEM_FILES or the *_gcc_* tree. The
+ *  table on a real database is created by `shared/schema.ts` via drizzle-kit
+ *  push, which runs at install-fresh step 2 — before the overlay — so this
+ *  file's CREATE TABLE IF NOT EXISTS was always a silent no-op.
+ *
+ *  Reading it still serves this test's purpose, which is to exercise the
+ *  rewrite against a column set nobody retyped by hand. But it is a HISTORICAL
+ *  shape, not the deployed one: the live concept2cure_artifact_versions carries
+ *  `updated_at`, which this file does not declare. If this test ever needs to
+ *  assert the deployed shape rather than merely apply a plausible one, it must
+ *  read shared/schema.ts, not this. */
 function realVersionsDdl(): string {
   const sql = fs.readFileSync(
-    path.join(REPO_ROOT, 'db/migrations/20260311_concept2cure_artifacts.sql'),
+    path.join(REPO_ROOT, 'db/migrations/_legacy/20260311_concept2cure_artifacts.sql'),
     'utf8',
   );
   const m = sql.match(

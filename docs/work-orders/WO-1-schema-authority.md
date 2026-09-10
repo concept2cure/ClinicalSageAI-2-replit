@@ -1,8 +1,47 @@
 # WO-1 — Establish schema authority
 
 **To:** JM Smith · **From:** Claude Code · **Date:** 10 September 2026
-**Status:** OPEN — duplicates 64 → 47; remaining scope BLOCKED on WO-2 (see the third pass) · **Blocks:** external pilot on real customer data
+**Status:** OPEN — duplicates 64 → **31**, and the number itself was wrong until today · **Blocks:** external pilot on real customer data
 **Prerequisite for:** WO-2, WO-3
+
+> ### 2026-09-10 — where this actually stands
+>
+> **The count was understated, and the gate is what was broken.** Both
+> `ci:duplicate-table-ddl` and `ci:unbacked-tables` matched `CREATE TABLE`
+> followed by a *bare* identifier, so a leading double quote failed the match —
+> and `drizzle-kit generate` quotes everything. `migrations/0000_sweet_joseph.sql`
+> holds **297 CREATE TABLE statements**, is the largest migration in the
+> repository, sits in the root `migrations/` tree that install-fresh's overlay
+> walks, and both guards counted it as creating nothing. Fixed, and proved by
+> making the old pattern fail on a quoted duplicate it reported as green:
+> distinct tables 1150 → 1416, collisions 34 → 60.
+>
+> **Progress against the true number.** 60 → **31**, in four commits, every one
+> checked against a database built from empty by `scripts/db/provision-test-db.sh`:
+>
+> | | What | Duplicates |
+> |---|---|---|
+> | Stage 0 | `scripts/db/provision-test-db.sh` — the harness the rest depends on | — |
+> | Stage 1 | a byte-identical `q_sub` mirror; two `sql/` orphans; the db-verify fixture excluded after diffing all six shapes live | 47 → 34 |
+> | gate fix | the 297 invisible definitions above | 34 → **60**, honestly |
+> | Stage 2 | **18 files that no applier runs**, archived | 60 → **31** |
+>
+> **The block on WO-2 is lifted.** The third pass below refused five of five
+> remediations because they turned on what a *populated* database contains,
+> which no repository-only check can see. That instrument now exists and is
+> repeatable (`npm run db:provision-test`, `docs/DB_TEST_HARNESS.md`).
+>
+> **What the remaining 31 are.** 12 are `cortex.*`, parked by your call pending
+> WO-14's product decision. The other 19 are live-shape reconciliations, not
+> dead text — the honest end state for this work order is `:strict` green over a
+> documented cortex-only baseline of 12, not a deleted baseline file. Deleting
+> it outright needs WO-14.
+>
+> **Five live defects were found on the way and are NOT in this work order.**
+> They are schema the code expects that no deploy path creates — including a
+> `core.programs` that can be permanently missing `org_id` while a cross-tenant
+> guard renders the failure as a silent deny. See
+> [WO-15](WO-15-schema-the-code-expects-that-no-deploy-creates.md).
 
 ---
 

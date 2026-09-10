@@ -1,3 +1,22 @@
+-- ============================================================================
+-- ARCHIVED 2026-09-10 (WO-1, ADR-0006) — NO APPLIER RUNS THIS FILE.
+-- ============================================================================
+-- It is in none of C2C_MIGRATION_FILES (deploy-migrate), the root migrations/
+-- overlay, PRE_OVERLAY_CREATORS, AUTHORING_SUBSYSTEM_FILES, or the *_gcc_*
+-- tree. The only glob that would match it belongs to scripts/db_migrate.sh,
+-- which has no automated caller.
+--
+-- Defined a second time here: strategy_p34_exports — and with a shape the live table does not have
+-- Real creator: db/migrations/030_stability_results.sql (deploy-migrate #72). See the README: 029's other three tables exist on no database and nothing reads them.
+--
+-- Verified against a database built from empty by
+-- scripts/db/provision-test-db.sh before archiving: nothing this file
+-- uniquely creates was present, and every ALTER ... ADD COLUMN target it
+-- carries already exists. Full reasoning, and why that check is mandatory
+-- rather than a formality, in db/migrations/_legacy/README.md
+-- (see the 2026-09-10 section).
+-- ============================================================================
+
 -- PAT configs per process
 create table if not exists strategy_pat (
   pat_id uuid primary key default gen_random_uuid(),

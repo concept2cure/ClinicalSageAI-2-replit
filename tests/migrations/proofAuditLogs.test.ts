@@ -12,9 +12,16 @@
  *      never that secret, so `describe.skip` fires in CI by design.
  *   2. `ssl: 'require'` — Neon mandates TLS; CI's local pgvector
  *      container has no SSL, so this would fail there anyway.
- *   3. It asserts on `proof_audit_logs`, created by
+ *   3. It asserts on `proof_audit_logs`. ~~created by
  *      db/migrations/20260129_proof_audit_logs.sql — a non-`_gcc_`
- *      migration that CI's integration job does not apply.
+ *      migration that CI's integration job does not apply.~~
+ *      **Corrected 2026-09-10 (WO-1):** that file is not merely unapplied by
+ *      CI's integration job — NO applier runs it, on any path, so it has been
+ *      archived to db/migrations/_legacy/. The table is created by
+ *      `shared/schema.ts` via drizzle-kit push (install-fresh step 2) and is
+ *      present on a database built from empty. So reason 3 as originally
+ *      written was wrong about why the table might be missing; the table is
+ *      there, and reasons 1 and 2 are what actually gate this suite.
  *
  * Net: this verifies the Part 11 proof-audit table shape against the
  * actual Neon database it ships to. To run it locally, export
