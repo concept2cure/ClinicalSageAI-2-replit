@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-10T05:24:21.863Z",
+  "generatedAt": "2026-09-10T06:24:55.814Z",
   "git": {
-    "sha": "5aa07bc8e132790bbaa30933a85fb7076fab1f52",
+    "sha": "ef13d5ffa0f14c8685d066ecb7fddcd8aee63cdc",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2510,6 +2510,10 @@
         "lines": 1623
       },
       {
+        "file": "server/services/grdhe/grdheService.ts",
+        "lines": 1617
+      },
+      {
         "file": "server/services/contradiction-engine-service.ts",
         "lines": 1608
       },
@@ -2520,10 +2524,6 @@
       {
         "file": "server/services/toxicology/toxicology-knowledge.ts",
         "lines": 1602
-      },
-      {
-        "file": "server/services/grdhe/grdheService.ts",
-        "lines": 1584
       },
       {
         "file": "server/services/advancedRAGPipeline.ts",
