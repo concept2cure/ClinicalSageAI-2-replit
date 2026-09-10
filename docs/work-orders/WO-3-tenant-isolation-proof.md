@@ -48,9 +48,25 @@ exists because the stated bar is real customer data.
 3. Give the 5 tenant-blind models a tenant column, or document why they are
    genuinely global.
 4. Re-record the 10 drifted tenant entry-point justifications.
-5. **Build the live proof.** There is an unmerged branch —
+5. ~~**Build the live proof.** There is an unmerged branch —
    `codex/add-rls-two-tenant-isolation-proof` — that appears to do exactly this.
-   Read it, rebase it onto `concept2cure-v2`, and land it rather than rebuilding.
+   Read it, rebase it onto `concept2cure-v2`, and land it rather than
+   rebuilding.~~
+   **Corrected 2026-09-10: it already landed.**
+   `tests/db/two-tenant-application-rls.dbtest.ts` exists on this branch and
+   runs in CI (`.github/workflows/ci.yml:1109`, `npm run test:db`). It is not a
+   sketch: it mounts two real route modules, authenticates through the
+   production `authenticateToken` middleware with a token signed by
+   `activeJwtSecret()`, connects through `requestPgClient` as the real
+   non-superuser `app_service` role that install-fresh provisions, seeds two
+   organisations (90301 / 90302), and asserts across three domains
+   (`projects`, `documents`, `audit_logs`) in three shapes — list/read/existence
+   probes, update and delete returning an indistinguishable not-found, and
+   `WITH CHECK` refusing a planted row — plus a negative control that the
+   pooled session context is reset. Thirteen tests.
+   **What this work order still has to build is BREADTH, not the probe.** It
+   covers two route modules and three tables. The remaining scope is extending
+   the same harness to the rest of the routes that serve regulated data.
 
 ## Exit criteria
 
@@ -60,13 +76,37 @@ npm run ci:drizzle-tenant-scope        # baseline 151 -> 0
 npm run ci:tenant-blind-models         # exit 0
 npm run ci:tenant-entry-points         # exit 0, justifications current
 # and the one that actually matters:
-npm run test:db -- <the two-tenant probe>   # org A cannot read org B, demonstrated
+npm run test:db                        # incl. two-tenant-application-rls.dbtest.ts
 ```
 
 The static gates are necessary and not sufficient. **The exit criterion is the
 live probe**: seed two organisations, authenticate as A, attempt to read B's
-rows through the real route stack, and assert the empty result. Until that test
-exists and runs in CI, isolation is asserted rather than proven.
+rows through the real route stack, and assert the empty result.
+
+**Corrected 2026-09-10.** This section previously ended "Until that test exists
+and runs in CI, isolation is asserted rather than proven." That was wrong on
+both halves: the test exists (`tests/db/two-tenant-application-rls.dbtest.ts`)
+and it runs in CI (`ci.yml:1109`). The claim was written from the gate baselines
+without opening `tests/db/`.
+
+The narrower statement that survives: **isolation is PROVEN for the surface the
+probe covers and ASSERTED everywhere else.** The probe mounts two route modules
+and exercises three tables. So the exit criterion is not "build a probe" but
+"extend this one until the routes that serve regulated data are all inside it",
+and the honest interim status is a coverage number, not a yes/no.
+
+Two properties of the existing probe make that extension cheap, and both are
+easy to lose:
+- it connects as `app_service`, the real `NOSUPERUSER NOBYPASSRLS` role — a
+  superuser bypasses RLS unconditionally and an owner bypasses it unless the
+  table carries `FORCE`, so a probe on the wrong account passes while proving
+  nothing;
+- it runs with `RLS_ENFORCE=on` — the canonical policy's first `USING` clause is
+  `NULLIF(current_setting('app.rls_enforce', TRUE), '') IS DISTINCT FROM 'on'`,
+  so with the variable unset every policy passes everything.
+
+`docs/DB_TEST_HARNESS.md` and `npm run db:provision-test` reproduce that
+database locally.
 
 ## Blast radius
 

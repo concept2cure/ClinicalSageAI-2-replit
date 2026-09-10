@@ -222,7 +222,19 @@ additional static analysis.
 2. **Tenant isolation proven, not asserted** (WO-3). The 10 raw-SQL candidates
    are static analysis, and 229 route files still run on the shared pool
    (§5.1 — instrumented, so this is depth rather than absence). Neither is a
-   proof. The proof is a live two-tenant probe, and none has ever been run.
+   proof. ~~The proof is a live two-tenant probe, and none has ever been run.~~
+   **Corrected 2026-09-10:** that last clause was wrong, and I wrote it from the
+   gate baselines without opening `tests/db/`.
+   `tests/db/two-tenant-application-rls.dbtest.ts` is exactly that probe — real
+   `authenticateToken` middleware, `requestPgClient`, the non-superuser
+   `app_service` role, two seeded organisations, thirteen assertions across
+   `projects` / `documents` / `audit_logs` covering reads, updates, deletes and
+   `WITH CHECK` — and it runs on every push at `ci.yml:1109`.
+   The finding that survives is about **breadth**: the probe mounts two route
+   modules of the ~368 in `server/routes/`. So isolation is proven for the
+   surface it covers and asserted for the rest, and WO-3's job is to extend it
+   rather than to build it. All three cross-tenant defects found on 2026-09-10
+   were at the route layer, which is the layer that coverage number describes.
 3. **Nothing drives the debt to zero** (WO-4). Six `:strict` variants — the
    ones that demand an *empty* baseline — are in `package.json` and in no
    pipeline. ~~Every finding in §1 could regress tomorrow without CI
@@ -923,7 +935,7 @@ Each has a command that would overturn it:
 |---|---|
 | The deployed schema is not derivable from the repository | `ci:duplicate-table-ddl:strict` passing with no baseline file |
 | A blank database does not provision what the server queries | `ci:tables-live-schema` passing with no baseline, against a fresh install |
-| Tenant isolation is asserted, not proven | A live two-tenant probe in CI, plus `requestdb-coverage` at 0 |
+| Tenant isolation is asserted, not proven | ~~A live two-tenant probe in CI~~ — **already true** (`tests/db/two-tenant-application-rls.dbtest.ts`, `ci.yml:1109`). What would disprove the surviving, narrower claim is that probe extended to every route serving regulated data, plus `requestdb-coverage` at 0 |
 
 If those three go green, the real-data pilot bar is met and the remaining work
 orders are quality, not safety.
@@ -938,3 +950,12 @@ probe: two real tenants, real records, and an attempt to read across the
 boundary on every route that serves regulated data. Until that has been run and
 has failed to find anything, "isolated" remains a claim about the code rather
 than an observation of the system.
+
+**Corrected 2026-09-10.** That probe exists and runs
+(`tests/db/two-tenant-application-rls.dbtest.ts`, `ci.yml:1109`) — see §"the
+three things" above. The operative words in the paragraph are therefore **"on
+every route that serves regulated data"**: the probe covers two route modules,
+so what is outstanding is its extension, not its construction. Stated as an
+observation rather than a claim: on the surface the probe covers, org A has been
+observed unable to read, update, delete or plant into org B's rows through the
+production stack; on the remaining routes, nothing has been observed either way.
