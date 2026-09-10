@@ -4,7 +4,6 @@
  * Consolidates all Cortex (AI advisory) routes into a single entry point.
  *
  * Consolidated from:
- * - cortexRoutes.ts (main Cortex operations)
  * - cortexAdvisoryRoutes.ts (advisory features)
  * - cortexManagementRoutes.ts (management features)
  * - cortexQueryRoutes.ts (query operations)
@@ -170,11 +169,6 @@ router.get('/docs', (_req: Request, res: Response) => {
     version: '2.0.0',
     description: 'Consolidated API for all AI advisory and assistance operations',
     endpoints: {
-      '/main': {
-        description: 'Core Cortex operations',
-        methods: ['GET', 'POST'],
-        legacyPath: '/api/cortex/*',
-      },
       '/advisory': {
         description: 'AI advisory features',
         methods: ['GET', 'POST'],
@@ -1140,15 +1134,13 @@ router.post('/save-draft', requireAuth, async (req: Request, res: Response) => {
 // ══════════════════════════════════════════════════════════════════════════════
 
 async function mountSubRouters() {
-  // Main Cortex routes
-  try {
-    const cortexModule = await import('./cortexRoutes');
-    router.use('/', cortexModule.default); // Legacy-compatible root mount
-    router.use('/main', cortexModule.default);
-    logger.info('Mounted: / (legacy) and /main (core Cortex)');
-  } catch (error) {
-    logger.error('Failed to mount core Cortex routes:', error);
-  }
+  // Cortex Prime (cortexRoutes.ts, mounted here at `/` and `/main`) was retired
+  // 2026-09-10 — WO-14, Route B, by product decision. Every write path it
+  // exposed answered 500: its service issued SQL against 27 columns no applier
+  // ever created and passed an integer org id into a uuid column, measured on a
+  // database provisioned from empty. Nothing in client/src called it. The
+  // paths now fall through this router as 404; the test that pins that is
+  // server/__tests__/routes/cortex-prime-unmounted.test.ts.
 
   // Advisory routes
   try {

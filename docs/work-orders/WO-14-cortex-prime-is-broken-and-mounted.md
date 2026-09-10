@@ -270,3 +270,80 @@ every write today.
   sizes `idx_atoms_embedding_3072` and `idx_atoms_embedding_1536`, which no file
   in the repository creates, so its `EXCEPTION WHEN OTHERS` branch fires on
   every applier. Relevant because `/api/cortex/main/health` reads as a signal.
+
+---
+
+## Route B — executed 10 September 2026
+
+**Decision.** The product owner chose Route B ("dead code"), and on the
+follow-up question chose to retire `079` whole rather than only its twelve
+stubs, on the evidence that everything in 079 is Cortex Prime and nothing after
+it in the `_gcc_` tree references anything it creates.
+
+### What changed
+
+| Area | Change |
+|---|---|
+| Router | `cortex-unified.ts`: the `/` and `/main` mount of `cortexRoutes` removed, the `/main` entry dropped from `/docs`. Advisory, query, ana, the inline thread and chat routes, and the static `/health` are untouched — none of them used `cortex.*`. |
+| Code removed | `server/routes/cortexRoutes.ts`, `server/services/cortexPrimeService.ts`, `server/__tests__/services/cortexPrimeService.test.ts` (the mocked test WO-14 relabelled), `server/middleware/validation.ts` (its only importer was the router; `apiValidation.ts` is the surviving validator). |
+| Exports | `services/index.ts`: the `cortexPrimeService` export and the `'cortex.prime'` registry entry. `services/cortex/index.ts`: the re-export and the `UnifiedCortexService` wrapper, which had no importer; the compliance-service and AnA-client re-exports stay. |
+| Migrations | `073_cortex_prime_unified_brain.sql` and `079_gcc_unified_functions_views.sql` moved to `db/migrations/_legacy/` with a README section stating the evidence. `migrations_manifest.json` regenerated and its hand-maintained sections (`domains.cortex_prime`, `criticalMigrations`, `migrationGroups.cortex_prime`) edited. **No DROP anywhere.** |
+| Tests | `server/__tests__/routes/cortex-prime-unmounted.test.ts` added (below). `schema.test.ts`: the two files removed from the file list, and the "should have cortex_prime schema migration" assertion inverted into a guard that no such file reappears. `smoke.test.ts`: the block asserting a fictional `/api/cortex/brain/*` route structure and the "CortexPrimeService exportable" assertion removed. |
+| Comments and docs | `auth.ts`: the `requireOrgAccess` paragraph now records that its last consumer is retired — the bypass is fixed there for the next router, not for one that exists. `IQ-CORTEX-001` marked **Superseded** (kept; it never left DRAFT, nothing is retracted). `CORTEX_PRIME_ARCHITECTURE.md` status changed from "Production Ready", which was never true, to RETIRED. `AGENT_ARCHITECTURE.md` migration row struck through. |
+| Baselines | Three entries that named removed files shrunk by hand, totals adjusted: `unbacked-tables` (`cortex.statistics`, 38 → 37), `unkeyed-request-tables` (`cortex.edges`, 115 → 114), `server-error-leaks` (`cortexRoutes.ts`, 151 → 150 sites, 92 → 91 files). `duplicate-table-ddl` regenerated in the final commit, 27 → 15, `$reasons` and `$note` restored with the twelve cortex reasons removed. |
+
+### Verified, in this order
+
+1. **The 404 test was red before the unmount.** On the pre-change head, with
+   only auth faked: `POST /api/cortex/atoms` 500, `GET /main/health` 200,
+   `GET /main/stats` 200 — three of six assertions failing. Green after: 6/6.
+2. **Repository gates**, all green after the change: `migration-set-order`
+   (262, sweep last), `migration-drop-safety` (28 DROPs, none re-created),
+   `migration-reachability` (0 unreachable), `unbacked-tables` (37/37),
+   `server-error-leaks` (150 sites / 91 files, none gained),
+   `unkeyed-request-tables` (114/114), `dead-audit-tables`,
+   `unreferenced-modules` (97/97 — it went red at 98 when the router's deletion
+   orphaned `validation.ts`, which is why that file is gone rather than
+   baselined), `db:sync-manifest:check` (290 in sync),
+   `require-migration-headers`. `duplicate-table-ddl` reports 15 collisions
+   against the 27 baselined until the final commit brings the baseline to 15.
+3. **Re-provisioned from empty** into a separate database
+   (`C2C_TESTDB=c2c_wo14_routeb`, because the other session was using
+   `c2c_testdb`): governed content **42/42** applied, **1,224** base tables
+   (1,228 before — the four tables only 079 created), `app_service role: ok`.
+   A catalog diff against the pre-change database shows **exactly ten
+   relations gone** — `cortex.agents`, `edges`, `threads`, `traces`,
+   `cortex.statistics`, and the five `_v2` views — **exactly eight functions
+   gone** (079's), and exactly two policies gone (the ones on `threads` and
+   `traces`). `cortex.atoms` (074's) keeps its FORCED `tenant_isolation_policy`.
+   Nothing else moved. This is the check the `contradiction_links` incident
+   taught: a repository-only gate cannot see a lost creator, a live database can.
+4. **`ci:tables-live-schema`** against that database: 70 baselined absences,
+   no new ones.
+5. **The real router against the real pool, `RLS_ENFORCE=on`, only the JWT step
+   faked:** `POST /api/cortex/atoms` **404**, `GET /atoms/:id` 404,
+   `DELETE /atoms/:id` 404, `GET /main/health` 404, `GET /main/stats` 404;
+   `GET /api/cortex/health` 200 `healthy` (the static handler, unchanged); the
+   inline `POST /threads` still 401 without a token, exactly as before.
+
+### Left deliberately undone, and one thing for the owner
+
+- **`074`–`078` stay.** 22 `cortex.*` tables, 22 functions, the 9-row
+  `domain_knowledge` seed and their RLS policies remain on every fresh install
+  with no caller. Separate work order; needs its own measurement pass because
+  those files also emit the fail-open policy shape the deploy smoke asserts
+  against (`deploy-smoke-assert.mjs` §1d).
+- **No DROP on any database.** A database that already carries `cortex.agents`,
+  `edges`, `threads`, `traces` or the `_v2` views keeps them, empty.
+- **Internal documents that listed the removed files** were annotated, not
+  rewritten: `CLAUDE_PROJECT_REFERENCE.md`, `ENTERPRISE_INTEGRATION_PLAN_AMENDED.md`
+  (its two "✅ Built" rows now say retired), `PROJECT_CORTEX_IMPLEMENTATION.md`,
+  `LUMEN_CORTEX_INTELLIGENCE.md`. `AI_CONSOLIDATION_PLAN.md` already called
+  those endpoints dead; `docs/beta-work/stage-3-*` is a historical plan.
+- **For the owner, not edited here:**
+  `docs/investor/INVESTOR_TECHNICAL_BRIEF_2026-09-08.md` §9.2 presents CORTEX
+  Prime — `cortexPrimeService.ts`, "1,207 lines", the five primitives, graph
+  traversal — as "the technical substrate under things a competitor cannot".
+  Dated two days before this change, it describes a subsystem that never
+  completed a write on any database and whose file no longer exists. That
+  document is outward-facing and is yours to correct; it should not say this.
