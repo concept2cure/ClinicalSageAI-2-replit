@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-10T06:37:25.745Z",
+  "generatedAt": "2026-09-10T17:29:45.828Z",
   "git": {
-    "sha": "bc267f82bdd6788acbfb94b94a9e6d365cfc2df5",
+    "sha": "dd28c59960109630d27ebfaf57897d1ca69f144f",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -12,7 +12,7 @@
   },
   "managedMirrors": [],
   "summary": {
-    "duplicateBasenames": 209,
+    "duplicateBasenames": 208,
     "contentDuplicateGroups": 0,
     "contentDuplicateFiles": 0,
     "largeFilesByBytes": 42,
@@ -1270,14 +1270,6 @@
         "paths": [
           "server/routes/ha-interactions.ts",
           "shared/schema/ha-interactions.ts"
-        ]
-      },
-      {
-        "basename": "huggingface-service",
-        "count": 2,
-        "paths": [
-          "server/huggingface-service.ts",
-          "server/services/huggingface-service.js"
         ]
       },
       {
@@ -2539,7 +2531,7 @@
   "ownerSummary": [
     {
       "owner": "Backend Platform (server/routes + server/services owners)",
-      "duplicateGroups": 403,
+      "duplicateGroups": 401,
       "largeByBytes": 32,
       "largeByLines": 79
     },
