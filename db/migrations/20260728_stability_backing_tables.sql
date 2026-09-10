@@ -97,15 +97,31 @@
 -- status/title from cmc_methods and study_id/stage/signer_name/signer_email/
 -- reason/hash/signed_at from stab_signoffs, all of which 20260730 provides.
 --
--- ⚠ CARRIED TO WO-3, NOT FIXED HERE. The surviving stab_signoffs has
--- `tenant_id INTEGER` — nullable, no default — and stability.router.ts:2493
--- inserts without naming tenant_id at all, while :2521 reads back filtering on
--- study_id with no tenant predicate. So every e-signature row is written with
--- tenant_id NULL and read untenanted. That is the compliance_tracking failure
--- mode (see docs/reports/tenant-blind-models-baseline.json) on a Part 11
--- signature table. Fixing it means an ALTER, a backfill and a change to both
--- statements — tenant isolation work, deliberately out of scope for a
--- schema-authority change.
+-- ⚠ CORRECTED 2026-09-10, SAME DAY. An earlier revision of this note claimed
+-- the surviving stab_signoffs left every e-signature row untenanted: tenant_id
+-- INTEGER nullable with no default, stability.router.ts:2493 inserting without
+-- naming it, :2521 reading back on study_id with no tenant predicate. The
+-- statements are indeed untenanted in source, but the conclusion was WRONG,
+-- and it was wrong because the note was written against the CREATE TABLE line
+-- alone without reading further down the applier.
+--
+-- db/migrations/20260728_stability_tenant_isolation.sql runs LATER in
+-- C2C_MIGRATION_FILES and sweeps every stab_* base table: it sets
+--   ALTER COLUMN tenant_id SET DEFAULT NULLIF(current_setting('app.current_tenant_id', TRUE), '')::INT
+-- then ENABLE + FORCE ROW LEVEL SECURITY with tenant_isolation_policy. So on a
+-- deployed database the column DOES carry a request-derived default, the INSERT
+-- that omits tenant_id gets the caller's tenant stamped from the connection,
+-- and the read is filtered by the policy rather than by the statement.
+-- server/src/routes/stability.router.ts:223 reinforces this: its `pool` is a
+-- fail-closed request-scoped facade that throws "Tenant context required"
+-- without a scope, and server/db/rlsEnforcement.ts refuses to boot production
+-- unless RLS_ENFORCE=on.
+--
+-- Residual, which is real but much smaller than first stated: the protection is
+-- one control deep — an RLS policy plus an ambient connection setting — and the
+-- statements carry no tenant predicate of their own. That is a defence-in-depth
+-- item for WO-3, not the untenanted-signature-rows defect this note originally
+-- described.
 --
 -- Which change removed them: WO-1. Canonical creator for both:
 -- db/migrations/20260730_cmc_evidence_tables.sql.

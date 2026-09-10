@@ -1027,12 +1027,54 @@ router.get('/audit/:tableName/:recordId', asyncHandler(async (req: Request, res:
       }
     });
   }
-  
-  const auditLog = await grdheService.getAuditLog(tableName, recordId, {
-    limit: limit ? parseInt(limit as string) : 100,
-    offset: offset ? parseInt(offset as string) : 0
-  });
-  
+
+  /* The allowlist above is an anti-SQL-injection measure — its own comment says
+     so — and an allowlist is not an authorization check. Until 2026-09-10 it was
+     the ONLY check here: recordId came straight off the URL, getAuditLog took no
+     tenant, regulatory_harmonization.audit_log has no tenant column, and that
+     schema carries no RLS policy (the sweep in 20260801_tenant_isolation_sweep.sql
+     is `WHERE c.table_schema = 'public'`, so it cannot reach it). Any
+     authenticated user of any tenant who supplied another tenant's record UUID
+     got that record's full Part 11 before/after trail, old_data and new_data
+     included.
+
+     This is the IDOR shape the assertTenantMatchesAuth header above describes
+     PRs #496-#499 closing elsewhere in this router. This endpoint was missed.
+     Ownership is now proven in the service by joining the audited table, which
+     is where the tenant key actually lives. */
+  const authedTenantUuid =
+    (req as any).user?.organizationUuid ??
+    (req as any).tenantContext?.organizationUuid;
+  if (!authedTenantUuid) {
+    return res.status(403).json({
+      success: false,
+      error: {
+        code: 'TENANT_CONTEXT_REQUIRED',
+        message: 'An audit trail can only be read within a tenant context'
+      }
+    });
+  }
+
+  let auditLog;
+  try {
+    auditLog = await grdheService.getAuditLog(tableName, recordId, String(authedTenantUuid), {
+      limit: limit ? parseInt(limit as string) : 100,
+      offset: offset ? parseInt(offset as string) : 0
+    });
+  } catch (err) {
+    /* getAuditLog throws for a table it cannot scope — today only
+       electronic_signatures, which has no tenant column at all. Refusing is
+       deliberate: serving a Part 11 signature trail that cannot be attributed to
+       a sponsor is the failure this fix exists to stop. See WO-13. */
+    return res.status(409).json({
+      success: false,
+      error: {
+        code: 'AUDIT_NOT_TENANT_SCOPABLE',
+        message: `The audit trail for ${tableName} cannot be tenant-scoped and is withheld`
+      }
+    });
+  }
+
   res.json({
     success: true,
     data: auditLog,

@@ -133,6 +133,47 @@ function setNestedValue(obj: any, path: string, value: any): void {
 // GRDHE SERVICE CLASS
 // =============================================================================
 
+type AuditableTableScope =
+  | { kind: 'tenant'; column: string }
+  | { kind: 'global' }
+  | { kind: 'unscopable' };
+
+/**
+ * Tenant classification for every table auditable through getAuditLog.
+ *
+ * Verified against db/migrations/081_grdhe_regulatory_mapping_layer.sql, which
+ * is on the production applier (scripts/db/migration-set.mjs:705):
+ *
+ *   tenant_id UUID NOT NULL   tenant_data_residency, export_jobs,
+ *                             canonical_adverse_events, canonical_products
+ *   no tenant column          terminology_versions, terminology_mappings,
+ *                             mapping_rules  -- shared reference data by design:
+ *                             MedDRA/SNOMED registries and approved mapping
+ *                             rules are platform-wide, not customer content
+ *   no tenant column, but
+ *   SHOULD have one           electronic_signatures  -- 21 CFR Part 11 signature
+ *                             manifestations stored with no sponsor attribution.
+ *                             Withheld here until it is tenant-scoped; see
+ *                             docs/work-orders/WO-13-grdhe-tenant-scoping.md
+ *
+ * An unlisted table throws. That is the point: this map, not the route's
+ * SQL-injection allowlist, is what decides whether a trail may be served.
+ */
+const AUDITABLE_TABLE_SCOPES = {
+  tenant_data_residency: { kind: 'tenant', column: 'tenant_id' },
+  export_jobs: { kind: 'tenant', column: 'tenant_id' },
+  canonical_adverse_events: { kind: 'tenant', column: 'tenant_id' },
+  canonical_products: { kind: 'tenant', column: 'tenant_id' },
+  terminology_versions: { kind: 'global' },
+  terminology_mappings: { kind: 'global' },
+  mapping_rules: { kind: 'global' },
+  electronic_signatures: { kind: 'unscopable' },
+} as const satisfies Record<string, AuditableTableScope>;
+
+/** Widened lookup: an unlisted table must read as undefined, not as a type error. */
+const auditableTableScope = (table: string): AuditableTableScope | undefined =>
+  (AUDITABLE_TABLE_SCOPES as Record<string, AuditableTableScope>)[table];
+
 export class GRDHEService {
   private static instance: GRDHEService;
 
@@ -1438,14 +1479,69 @@ export class GRDHEService {
   }
 
   /**
-   * Get audit log for a record
+   * Get audit log for a record, scoped to the tenant that owns that record.
+   *
+   * ── WHY tenantId IS REQUIRED ────────────────────────────────────────────────
+   * regulatory_harmonization.audit_log has NO tenant column — its only org-ish
+   * field is `user_organization TEXT`, a display string about the ACTOR, not a
+   * tenant key — and the regulatory_harmonization schema carries NO RLS policy
+   * (the public-only sweep in db/migrations/20260801_tenant_isolation_sweep.sql
+   * cannot reach it, and 0021_enable_rls_everywhere selects only tables that
+   * have a tenant column).
+   *
+   * So there was nothing scoping this query. It previously ran as
+   *   SELECT * FROM audit_log WHERE table_name = $1 AND record_id = $2
+   * behind a route whose only check was an allowlist commented "prevent SQL
+   * injection" — an allowlist is not an authorization check. Any authenticated
+   * user of any tenant who supplied another tenant's record UUID received that
+   * record's full Part 11 before/after trail, old_data and new_data included.
+   *
+   * That is the same IDOR shape the header of assertTenantMatchesAuth in
+   * server/routes/grdheRoutes.ts describes PRs #496-#499 closing elsewhere in
+   * this router. This endpoint was missed.
+   *
+   * Ownership is proven by joining the AUDITED table, because that is where the
+   * tenant key lives. Tables are classified explicitly rather than inferred:
+   * silence about a table must fail closed, not fall through.
    */
   async getAuditLog(
     tableName: string,
     recordId: string,
+    tenantId: string,
     options: { limit?: number; offset?: number } = {}
   ): Promise<AuditLogEntry[]> {
     const { limit = 100, offset = 0 } = options;
+
+    if (!tenantId) {
+      throw new Error('getAuditLog: tenantId is required (tenant scope).');
+    }
+
+    const scope = auditableTableScope(tableName);
+    if (!scope) {
+      // Not classified => not auditable through this path. Adding a table to the
+      // route's allowlist without classifying it here now fails instead of leaking.
+      throw new Error(`getAuditLog: ${tableName} is not classified for tenant scoping.`);
+    }
+    if (scope.kind === 'unscopable') {
+      throw new Error(
+        `getAuditLog: ${tableName} carries no tenant column, so ownership cannot be ` +
+          'proven and its audit trail is withheld. See ' +
+          'docs/work-orders/WO-13-grdhe-tenant-scoping.md.',
+      );
+    }
+
+    if (scope.kind === 'tenant') {
+      // Deliberately an EXISTS probe returning [] rather than a 403: a distinct
+      // "exists but not yours" response would itself be a cross-tenant existence
+      // oracle over regulated record ids.
+      const owned = await db.execute(sql`
+        SELECT 1 FROM ${sql.raw(`regulatory_harmonization.${tableName}`)}
+        WHERE id = ${recordId}::uuid
+          AND ${sql.raw(scope.column)} = ${tenantId}::uuid
+        LIMIT 1
+      `);
+      if (owned.rows.length === 0) return [];
+    }
 
     const result = await db.execute(sql`
       SELECT * FROM regulatory_harmonization.audit_log
