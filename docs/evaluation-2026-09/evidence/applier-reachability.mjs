@@ -97,7 +97,18 @@ const walk = (dir, out = []) => {
   return out;
 };
 
-const files = [...walk('db/migrations'), ...walk('migrations')];
+/**
+ * The two migration lineages, PLUS the other places .sql lives in this repo.
+ *
+ * Added 2026-09-10 (WO-1). The earlier version walked only the two lineages,
+ * which quietly assumed every .sql outside them was irrelevant. It is not:
+ * `scripts/db-verify/00_bootstrap_base.sql` and four files under `sql/` each
+ * carry CREATE TABLE for tables a lineage also creates, and they show up in
+ * ci:duplicate-table-ddl as collisions. Walking them here lets the model say
+ * "on no applier" about them explicitly rather than by omission — which is the
+ * difference between a fact and a gap.
+ */
+const files = [...walk('db/migrations'), ...walk('migrations'), ...walk('sql'), ...walk('scripts/db-verify')];
 const coverage = {};
 for (const [name, fn] of Object.entries(APPLIERS)) coverage[name] = files.filter(fn);
 
@@ -120,6 +131,16 @@ writeFileSync(new URL('03-applier-reachability.json', import.meta.url), JSON.str
   totals: { files: files.length, unreachedByDurableApplier: unreached.length, ciTestDbOnly: ciOnly.length },
   coverage: Object.fromEntries(Object.entries(coverage).map(([k, v]) => [k, v.length])),
   unreached, ciOnly,
+  /**
+   * Per-file applier list. The aggregate counts above answer "how many"; this
+   * answers "which", which is what you need to decide what a duplicate
+   * CREATE TABLE actually costs. Two definitions on the SAME applier race on
+   * order; two on DIFFERENT appliers give two environments different shapes;
+   * one on an applier and one on nothing is dead DDL.
+   */
+  byFile: Object.fromEntries(
+    files.map((f) => [f, Object.entries(APPLIERS).filter(([, fn]) => fn(f)).map(([n]) => n)]),
+  ),
 }, null, 2) + '\n');
 
 if (ciOnly.length) {

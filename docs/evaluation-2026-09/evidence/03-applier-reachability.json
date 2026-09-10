@@ -1,14 +1,14 @@
 {
-  "generated": "2026-09-10T03:19:02.672Z",
+  "generated": "2026-09-10T05:40:38.150Z",
   "note": "Coverage per applier. Deliberately makes NO claim about which tables exist in a deployed database — that needs a live DB (ci:tables-live-schema).",
   "totals": {
-    "files": 554,
-    "unreachedByDurableApplier": 7,
+    "files": 568,
+    "unreachedByDurableApplier": 24,
     "ciTestDbOnly": 0
   },
   "coverage": {
     "deploy-migrate (production)": 261,
-    "install-fresh": 288,
+    "install-fresh": 285,
     "db_migrate.sh (operator)": 304,
     "ci psql loop (TEST DB ONLY)": 43,
     "drizzle journal": 1
@@ -20,7 +20,2032 @@
     "migrations/0020_coerce_text_tenant_columns.sql",
     "migrations/0021_enable_rls_everywhere.sql",
     "migrations/20260608_ai_placement_policies.sql",
-    "migrations/20260612_rls_research_admin.sql"
+    "migrations/20260612_rls_research_admin.sql",
+    "sql/advanced_analytics_schema.sql",
+    "sql/analytics_schema.sql",
+    "sql/cmc_blueprints.sql",
+    "sql/create_compliance_check_history_table.sql",
+    "sql/create_regulatory_commitments_table.sql",
+    "sql/esg_submissions.sql",
+    "sql/faers_schema.sql",
+    "sql/harvest_rules.sql",
+    "sql/ind_data_model.sql",
+    "sql/inspection.sql",
+    "sql/migrations/001_add_mfa_and_lockout_columns.sql",
+    "sql/migrations/20260327_external_evidence_indexes.sql",
+    "sql/migrations/20260327_external_evidence_intelligence.sql",
+    "sql/redaction_rules.sql",
+    "sql/reference_model.sql",
+    "sql/section_order.sql",
+    "scripts/db-verify/00_bootstrap_base.sql"
   ],
-  "ciOnly": []
+  "ciOnly": [],
+  "byFile": {
+    "db/migrations/000_gcc_bootstrap_core.sql": [
+      "install-fresh",
+      "db_migrate.sh (operator)",
+      "ci psql loop (TEST DB ONLY)"
+    ],
+    "db/migrations/001_gcc_core.sql": [
+      "install-fresh",
+      "db_migrate.sh (operator)",
+      "ci psql loop (TEST DB ONLY)"
+    ],
+    "db/migrations/002_gcc_audit_immutability.sql": [
+      "install-fresh",
+      "db_migrate.sh (operator)",
+      "ci psql loop (TEST DB ONLY)"
+    ],
+    "db/migrations/003_gcc_prose_versioning.sql": [
+      "install-fresh",
+      "db_migrate.sh (operator)",
+      "ci psql loop (TEST DB ONLY)"
+    ],
+    "db/migrations/004_gcc_enhanced_citations.sql": [
+      "install-fresh",
+      "db_migrate.sh (operator)",
+      "ci psql loop (TEST DB ONLY)"
+    ],
+    "db/migrations/005_gcc_database_roles.sql": [
+      "install-fresh",
+      "db_migrate.sh (operator)",
+      "ci psql loop (TEST DB ONLY)"
+    ],
+    "db/migrations/006_gcc_dashboard_views.sql": [
+      "install-fresh",
+      "db_migrate.sh (operator)",
+      "ci psql loop (TEST DB ONLY)"
+    ],
+    "db/migrations/016_perf_indexes.sql": [
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/017_gcc_shadow_agent_rbac.sql": [
+      "install-fresh",
+      "db_migrate.sh (operator)",
+      "ci psql loop (TEST DB ONLY)"
+    ],
+    "db/migrations/018_gcc_purge_workflow.sql": [
+      "install-fresh",
+      "db_migrate.sh (operator)",
+      "ci psql loop (TEST DB ONLY)"
+    ],
+    "db/migrations/019_gcc_idempotency_ratelimit.sql": [
+      "install-fresh",
+      "db_migrate.sh (operator)",
+      "ci psql loop (TEST DB ONLY)"
+    ],
+    "db/migrations/020_new_process_wizard.sql": [
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/022_stability_v2.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/023_stability_step2.sql": [
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/024_stability_step3.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/026_stability_step4.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/028_strategy_core.sql": [
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/029_strategy_step2.sql": [
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/030_stability_results.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/036_gcc_discovery_bridge.sql": [
+      "install-fresh",
+      "db_migrate.sh (operator)",
+      "ci psql loop (TEST DB ONLY)"
+    ],
+    "db/migrations/037_gcc_registry_trial_ledger.sql": [
+      "install-fresh",
+      "db_migrate.sh (operator)",
+      "ci psql loop (TEST DB ONLY)"
+    ],
+    "db/migrations/038_gcc_ectd_seeder_service.sql": [
+      "install-fresh",
+      "db_migrate.sh (operator)",
+      "ci psql loop (TEST DB ONLY)"
+    ],
+    "db/migrations/039_gcc_label_impact_simulator.sql": [
+      "install-fresh",
+      "db_migrate.sh (operator)",
+      "ci psql loop (TEST DB ONLY)"
+    ],
+    "db/migrations/040_gcc_site_intelligence.sql": [
+      "install-fresh",
+      "db_migrate.sh (operator)",
+      "ci psql loop (TEST DB ONLY)"
+    ],
+    "db/migrations/041_gcc_signing_gates.sql": [
+      "install-fresh",
+      "db_migrate.sh (operator)",
+      "ci psql loop (TEST DB ONLY)"
+    ],
+    "db/migrations/044b_gcc_lumen_schema_prerequisite.sql": [
+      "deploy-migrate (production)",
+      "install-fresh",
+      "ci psql loop (TEST DB ONLY)"
+    ],
+    "db/migrations/044c_gcc_vault_schema.sql": [
+      "install-fresh",
+      "ci psql loop (TEST DB ONLY)"
+    ],
+    "db/migrations/047_quality_step6.sql": [
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/048_quality_step7.sql": [
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/049_quality_step8.sql": [
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/050_gcc_ectd_v4_domain_registry.sql": [
+      "install-fresh",
+      "db_migrate.sh (operator)",
+      "ci psql loop (TEST DB ONLY)"
+    ],
+    "db/migrations/051_gcc_multi_tenant_identity.sql": [
+      "install-fresh",
+      "db_migrate.sh (operator)",
+      "ci psql loop (TEST DB ONLY)"
+    ],
+    "db/migrations/052_gcc_ectd_v4_cou_graph.sql": [
+      "install-fresh",
+      "db_migrate.sh (operator)",
+      "ci psql loop (TEST DB ONLY)"
+    ],
+    "db/migrations/053_gcc_rls_policies.sql": [
+      "install-fresh",
+      "db_migrate.sh (operator)",
+      "ci psql loop (TEST DB ONLY)"
+    ],
+    "db/migrations/054_gcc_part11_audit.sql": [
+      "install-fresh",
+      "db_migrate.sh (operator)",
+      "ci psql loop (TEST DB ONLY)"
+    ],
+    "db/migrations/055_gcc_test_scenarios.sql": [
+      "install-fresh",
+      "db_migrate.sh (operator)",
+      "ci psql loop (TEST DB ONLY)"
+    ],
+    "db/migrations/056_gcc_test_runner.sql": [
+      "install-fresh",
+      "db_migrate.sh (operator)",
+      "ci psql loop (TEST DB ONLY)"
+    ],
+    "db/migrations/057_gcc_product_master.sql": [
+      "install-fresh",
+      "db_migrate.sh (operator)",
+      "ci psql loop (TEST DB ONLY)"
+    ],
+    "db/migrations/058_gcc_fhir_resources.sql": [
+      "install-fresh",
+      "db_migrate.sh (operator)",
+      "ci psql loop (TEST DB ONLY)"
+    ],
+    "db/migrations/059_gcc_vector_embeddings.sql": [
+      "install-fresh",
+      "db_migrate.sh (operator)",
+      "ci psql loop (TEST DB ONLY)"
+    ],
+    "db/migrations/063_gcc_cognitive_agent_runtime.sql": [
+      "install-fresh",
+      "db_migrate.sh (operator)",
+      "ci psql loop (TEST DB ONLY)"
+    ],
+    "db/migrations/064_gcc_cognitive_audit_schema.sql": [
+      "install-fresh",
+      "db_migrate.sh (operator)",
+      "ci psql loop (TEST DB ONLY)"
+    ],
+    "db/migrations/065_gcc_global_dossier_schema.sql": [
+      "install-fresh",
+      "db_migrate.sh (operator)",
+      "ci psql loop (TEST DB ONLY)"
+    ],
+    "db/migrations/066_gcc_manufacturing_digital_twins.sql": [
+      "install-fresh",
+      "db_migrate.sh (operator)",
+      "ci psql loop (TEST DB ONLY)"
+    ],
+    "db/migrations/067_gcc_federated_learning_intelligence.sql": [
+      "install-fresh",
+      "db_migrate.sh (operator)",
+      "ci psql loop (TEST DB ONLY)"
+    ],
+    "db/migrations/068_regulatory_schema_alignment.sql": [
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/069_gcc_multitenant_rls_expansion.sql": [
+      "install-fresh",
+      "db_migrate.sh (operator)",
+      "ci psql loop (TEST DB ONLY)"
+    ],
+    "db/migrations/070_gcc_rls_extended_ga.sql": [
+      "install-fresh",
+      "db_migrate.sh (operator)",
+      "ci psql loop (TEST DB ONLY)"
+    ],
+    "db/migrations/072_gcc_innovation_platform_core.sql": [
+      "install-fresh",
+      "db_migrate.sh (operator)",
+      "ci psql loop (TEST DB ONLY)"
+    ],
+    "db/migrations/073_cortex_prime_unified_brain.sql": [
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/074_gcc_regulatory_intuition_engine.sql": [
+      "install-fresh",
+      "db_migrate.sh (operator)",
+      "ci psql loop (TEST DB ONLY)"
+    ],
+    "db/migrations/075_gcc_epistemic_intelligence.sql": [
+      "install-fresh",
+      "db_migrate.sh (operator)",
+      "ci psql loop (TEST DB ONLY)"
+    ],
+    "db/migrations/076_gcc_causal_inference_engine.sql": [
+      "install-fresh",
+      "db_migrate.sh (operator)",
+      "ci psql loop (TEST DB ONLY)"
+    ],
+    "db/migrations/077_gcc_self_evolving_intelligence.sql": [
+      "install-fresh",
+      "db_migrate.sh (operator)",
+      "ci psql loop (TEST DB ONLY)"
+    ],
+    "db/migrations/078_gcc_cross_domain_transfer.sql": [
+      "install-fresh",
+      "db_migrate.sh (operator)",
+      "ci psql loop (TEST DB ONLY)"
+    ],
+    "db/migrations/079_gcc_unified_functions_views.sql": [
+      "install-fresh",
+      "db_migrate.sh (operator)",
+      "ci psql loop (TEST DB ONLY)"
+    ],
+    "db/migrations/080_gcc_21cfr_part11_compliance.sql": [
+      "install-fresh",
+      "db_migrate.sh (operator)",
+      "ci psql loop (TEST DB ONLY)"
+    ],
+    "db/migrations/081_grdhe_regulatory_mapping_layer.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/082_ectd_submission_agent.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/100_regulatory_templates.sql": [
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/101_complete_template_catalog.sql": [
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/102_load_all_templates.sql": [
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/103_load_complete_templates.sql": [
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260125_add_atom_embeddings.sql": [
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260125_ai_provider_audit_log.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260125_enhanced_cortex_schema.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260128_concept2cure_foundation.sql": [
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260128_concept2cure_signatures.sql": [
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260128_concept2cure_wbs_assignments.sql": [
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260129_add_org_industry_stripe_audit_logs.sql": [
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260129_add_org_uuid_alignment.sql": [
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260129_phase5_intelligent_document_system.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260129_proof_audit_logs.sql": [
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260129_workflow_indexes_and_dlq.sql": [
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260130_add_assembly_audit_logs.sql": [
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260130_add_assembly_docs_table.sql": [
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260130_add_workflow_rls_and_step_runs_immutability.sql": [
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260203_phase2_anchors_xrefs.sql": [
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260203_phase2_graph_rls_indexes_patch.sql": [
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260203_phase2_review_batch_persistence.sql": [
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260203_phase2_review_batch_runner_hardening.sql": [
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260203_rps_event_store.sql": [
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260204_review_batch_worker.sql": [
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260205_review_batch_admin.sql": [
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260206_phase4_orchestration_kernel.sql": [
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260206_phase5_contradiction_scanner.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260206_phase5_evidence_fabric.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260206_phase5_idempotent_provenance.sql": [
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260206_phase6_docx_factory.sql": [
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260206_review_batch_ops_control.sql": [
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260207_phase4_seed_templates.sql": [
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260207_phase6_6_predicate_intelligence.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260207_phase6_6a_fda_clearance_universe.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260208_phase6_6a_risk_rollups.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260209_create_pm_settings.sql": [
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260209_phase6_6a_fda_ingest_runs.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260211_phase6_6d_defense_packets.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260211_phase6_6e_proof_pack_exports.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260211_phase6_6g_proof_pack_trust_chain.sql": [
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260211_phase7_0a_render_jobs.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260212_phase7_0c_render_tenant_safety.sql": [
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260216_enterprise_4pillar_expansion.sql": [
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260220_ind_section_tracking.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260220_user_intelligence_platform.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260222_audit_events_hash_chain.sql": [
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260222_audit_events_immutability.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260222_ivdr_schema_hardening.sql": [
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260223_ivdr_binder_packs.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260223_ivdr_packs_building_status.sql": [
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260224_ai_claims_verifier_flags.sql": [
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260224_ai_trace_chain.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260224_binder_evidence_source_types.sql": [
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260225_ivdr_pack_warnings_artifact_hashes.sql": [
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260305_projects_add_path_column.sql": [
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260306_chat_tool_runs.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260306_precedent_engine.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260311_concept2cure_artifacts.sql": [
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260311_concept2cure_provenance_events.sql": [
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260313_concept2cure_submission_snapshots.sql": [
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260313_phase11_governed_workflow.sql": [
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260314_phase12_multi_user_review.sql": [
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260317_global_regulatory_compliance.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260317_submission_twin.sql": [
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260318_ga_immutability_hardening.sql": [
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260319_billing_usage_budgets_alerts.sql": [
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260319_evidence_fabric.sql": [
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260319_ga_indexes_and_fixes.sql": [
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260322_quality_checkpoints.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260322_regulatory_precedent_intelligence.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260323_assumption_decision_contradiction.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260323_reactive_dependency_layer.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260324_ai_goal_plan_runs.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260324_ai_kernel_agent_protocol_events.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260324_ai_kernel_decision_records.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260324_ai_kernel_policy_outcomes.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260324_ana_kernel_decision_log.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260325_ai_goal_plan_hardening.sql": [
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260325_ai_goal_plan_step_events.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260325_ana_kernel_log_immutability_hashchain.sql": [
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260325_decision_receipts.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260326_artifact_compute_plane.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260326_conversation_os_durability.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260326_conversation_os_durability_phase2.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260331_communication_center_scaffold.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260331_regulatory_correspondence_os.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260401_cmc_convergence_os.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260401_project_sharing_visibility.sql": [
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260401_submission_center_items.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260402_cmc_runtime_ddl_to_migration.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260402_supply_chain_tables.sql": [
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260501_q_sub.sql": [
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260508_ana_submission_chat_proposals.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260508_artifact_citations.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260508_authoring_plans.sql": [
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260508_consistency_alerts.sql": [
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260508_guidance_alerts.sql": [
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260508_project_therapeutic_area.sql": [
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260520_ana_failure_learning.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260520_document_templates.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260520_growth_mindset_extensions.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260520_regulatory_intelligence_layer.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260526_drop_invalid_cdisc_fks.sql": [
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260526_updated_at_triggers.sql": [
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260609_scim_tenants.sql": [
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260611_organization_invitations.sql": [
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260611_scim_ip_allowlist.sql": [
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260612_org_client_type_user_preferences.sql": [
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260617_audit_events_hmac_seal.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260617_audit_logs_immutability.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260617_precedent_org_isolation.sql": [
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260617_project_schedule_of_events.sql": [
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260621_intelligent_licensing_eula.sql": [
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260621_weekly_usage_limits.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260629_ana_artifact_thread_lookup.sql": [
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260716_biopharma_specialty.sql": [
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260716_change_assessments.sql": [
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260716_enablement.sql": [
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260716_nonclinical_display.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260717_agency_meetings_store.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260717_biostat_docs.sql": [
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260717_cro_portfolio_store.sql": [
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260717_decision_lineage_store.sql": [
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260717_design_controls_store.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260717_doc_journey_store.sql": [
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260717_dossier_map_store.sql": [
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260717_evidence_asks_store.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260717_evidence_objects_store.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260717_human_factors_store.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260717_ind_checklist_store.sql": [
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260717_labeling_pi_store.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260717_maa_module1_store.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260717_market_access_store.sql": [
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260717_nda_m1_docs_store.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260717_nda_modules_store.sql": [
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260717_nda_rtf_store.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260717_program_journey_store.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260717_protocol_dev_store.sql": [
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260717_reg_change_store.sql": [
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260717_research_admin_store.sql": [
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260717_sae_cases_store.sql": [
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260717_sae_reporting_clock.sql": [
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260717_shadow_review_store.sql": [
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260718_bla_assessments_store.sql": [
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260718_cmc_changes_store.sql": [
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260718_pediatric_orphan_cards.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260718_smpc_sections_store.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260724_clinical_regulatory_evidence_spine.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260724_qms_change_control_store.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260725_authoring_audit_trail.sql": [
+      "install-fresh",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260725_authoring_document_loop_tables.sql": [
+      "install-fresh",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260725_authoring_signature_freeze_binding.sql": [
+      "install-fresh",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260725_authoring_signatures_and_workflow.sql": [
+      "install-fresh",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260725_bundle_execution_receipts.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260725_drop_orphaned_foresight_prediction_tables.sql": [
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260725_ectd_compilations_project_level.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260725_esig_gate_columns_port.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260725_governance_boundary_tables.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260725_project_sections_content_columns.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260725_resolution_orchestration_tables.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260725_submission_orchestrator_store_port.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260725_users_signing_lockout_columns.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260727_authoring_object_permissions.sql": [
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260727_collab_document_state.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260727_drop_clinical_evidence_duplicate_lineage.sql": [
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260727_drop_source_citations_phantom.sql": [
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260727_industry_context_profiles.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260727_prm_program_link.sql": [
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260727_unified_tasks_mdx_metadata.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260728_artifacts_table.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260728_schedule_of_events_org_scoped_uniqueness.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260728_stability_backing_tables.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260728_stability_tenant_isolation.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260730_authoring_comments_router_columns.sql": [
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260730_authoring_runtime_ddl.sql": [
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260730_authoring_subsystem_schema.sql": [
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260730_c2c_ana_actions_command_vocab.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260730_cmc_change_control_store.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260730_cmc_evidence_tables.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260730_cmc_projects_reconstruction.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260730_ectd_compilations_leaf_manifest.sql": [
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260730_ectd_compilations_sequence_columns.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260730_esign_audit_db_level_immutability.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260730_fix_atom_embedding_dimension.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260730_fk_delete_policies_port.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260730_graphrag_knowledge_tables.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260730_licensing_ip_tables.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260730_manufacturing_processes_reconstruction.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260730_orchestrator_run_ledger_hardening.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260730_project_milestones_reconciliation.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260730_release_signature_uniqueness.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260730_submission_center_tables.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260731_retire_intelligence_cluster_blobs.sql": [
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260801_atom_identity_existing_db_reconciliation.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260801_consolidated_tree_reconciliation.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260801_hf_files_store.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260801_labeling_pi_store.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260801_market_access_store.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260801_program_journey_store.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260801_reg_change_store.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260801_tenant_isolation_sweep.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260801_uuid_tenant_isolation_nonpublic.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260803_document_span_lineage.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260807_collab_section_locks.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260807_task_graph_org_columns.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260807_unified_tasks_soft_delete.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260809_source_attribution_draft_candidates.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260810_c2c_work_items_source_uniqueness.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260810_reconcile_module_catalog.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260813_ai_gateway_audit_log.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260813_audit_tamper_proof_log.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260813_child_table_parent_scoped_rls.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260813_knowledge_graph_tenant_keys.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260817_doc_revisions_immutable_ledger.sql": [
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260821_regulatory_twin_simulations_tenant_scope.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260821_uuid_org_guc_cast_heal.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260823_fix_provision_org_modules_tier_ladder.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260823_module_catalog_commercial_packaging.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260823_module_catalog_customer_copy.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260823_module_catalog_mdx_registers.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260824_cmc_professional_tier.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260824_enforcement_mode_setting.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260824_module_access_requests.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260824_module_grant_expiry.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260828_align_written_columns_with_migrations.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260828_artifact_versions_updated_at.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260828_drop_orphaned_org_guc_policies.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260828_ectd_compilations_submission_id.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260828_fail_closed_insert_withcheck_policies.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260828_fail_closed_org_coalesce_policies.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260828_file_uploads_checksum.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260828_program_org_resolution_canonical.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260830_reg_questions_response_doc.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260901_cmc_container_closure_reference_standard_registers.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260901_drop_dead_audit_tables.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260902_clinical_ops_schema.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260902_cmc_impurity_dissolution_registers.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260902_manufacturing_responses.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260903_cmc_impurity_route_of_administration.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260903_cmc_manufacturing_characterization_registers.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260903_cmc_material_formulation_registers.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260905_gdpr_dsar_execution_evidence.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260906_cmc_formulation_development.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260906_cmc_impurity_m7_inputs.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260906_cmc_interview_sessions.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260907_module_catalog_submission_orchestrator.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/20260907_qc_testing_batch_attribution.sql": [
+      "deploy-migrate (production)",
+      "db_migrate.sh (operator)"
+    ],
+    "db/migrations/emergency_security_migration.sql": [],
+    "migrations/0000_sweet_joseph.sql": [
+      "install-fresh",
+      "drizzle journal"
+    ],
+    "migrations/0001_phase13_full.sql": [
+      "install-fresh"
+    ],
+    "migrations/0002_phase15_submission_ops.sql": [
+      "install-fresh"
+    ],
+    "migrations/0003_billing_stripe.sql": [
+      "install-fresh"
+    ],
+    "migrations/0004_workflow_performance_indexes.sql": [
+      "install-fresh"
+    ],
+    "migrations/0005_csr_knowledge_database.sql": [],
+    "migrations/0006_regulatory_atoms.sql": [
+      "install-fresh"
+    ],
+    "migrations/0007_ctd_onboarding_pipeline.sql": [
+      "install-fresh"
+    ],
+    "migrations/0007_gap_analysis_results.sql": [
+      "install-fresh"
+    ],
+    "migrations/0007_orchestration_phase3.sql": [
+      "install-fresh"
+    ],
+    "migrations/0007_support_admin.sql": [
+      "install-fresh"
+    ],
+    "migrations/0007_tenant_isolation_fixes.sql": [
+      "install-fresh"
+    ],
+    "migrations/0008_api_keys.sql": [
+      "install-fresh"
+    ],
+    "migrations/0008_critical_fk_delete_policies.sql": [
+      "install-fresh"
+    ],
+    "migrations/0008_ga_hardening.sql": [
+      "install-fresh"
+    ],
+    "migrations/0009_email_otp_fields.sql": [
+      "install-fresh"
+    ],
+    "migrations/0010_biostats_signal_engine.sql": [
+      "install-fresh"
+    ],
+    "migrations/0011_ai_threads_title.sql": [
+      "install-fresh"
+    ],
+    "migrations/0011_governed_decision_transitions.sql": [
+      "install-fresh"
+    ],
+    "migrations/0012_project_charter_timeline.sql": [
+      "install-fresh"
+    ],
+    "migrations/0013_ana_intelligence_system.sql": [
+      "deploy-migrate (production)",
+      "install-fresh"
+    ],
+    "migrations/0014_report_os_foundation.sql": [
+      "install-fresh"
+    ],
+    "migrations/0015_document_artifact_bridge.sql": [
+      "install-fresh"
+    ],
+    "migrations/0016_module3_workflow_convergence.sql": [
+      "install-fresh"
+    ],
+    "migrations/0017_module3_project_id_fix.sql": [
+      "install-fresh"
+    ],
+    "migrations/0018_submission_orchestrator.sql": [
+      "install-fresh"
+    ],
+    "migrations/0019_tenant_column_audit.sql": [],
+    "migrations/001_create_ivdr_tables.sql": [
+      "deploy-migrate (production)",
+      "install-fresh"
+    ],
+    "migrations/0020_coerce_text_tenant_columns.sql": [],
+    "migrations/0021_enable_rls_everywhere.sql": [],
+    "migrations/20260327_data_lineage_tracking.sql": [
+      "install-fresh"
+    ],
+    "migrations/20260331_performance_indexes.sql": [
+      "deploy-migrate (production)",
+      "install-fresh"
+    ],
+    "migrations/20260429_ai_ml_pccp.sql": [
+      "install-fresh"
+    ],
+    "migrations/20260429_evidence_sufficiency.sql": [
+      "install-fresh"
+    ],
+    "migrations/20260429_gspr_postmarket.sql": [
+      "deploy-migrate (production)",
+      "install-fresh"
+    ],
+    "migrations/20260429_regulatory_graph.sql": [
+      "install-fresh"
+    ],
+    "migrations/20260429_reviewer_simulation.sql": [
+      "install-fresh"
+    ],
+    "migrations/20260501_q_sub.sql": [
+      "deploy-migrate (production)",
+      "install-fresh"
+    ],
+    "migrations/20260504_capa_mdr.sql": [
+      "install-fresh"
+    ],
+    "migrations/20260505_saved_precedent_queries.sql": [
+      "install-fresh"
+    ],
+    "migrations/20260506_kit_section_draft_provenance.sql": [
+      "deploy-migrate (production)",
+      "install-fresh"
+    ],
+    "migrations/20260507_mdx_beta_surfaces.sql": [
+      "deploy-migrate (production)",
+      "install-fresh"
+    ],
+    "migrations/20260508_ivd_diagnostic_surfaces.sql": [
+      "deploy-migrate (production)",
+      "install-fresh"
+    ],
+    "migrations/20260508_preclinical_provenance.sql": [
+      "install-fresh"
+    ],
+    "migrations/20260509_submission_gateways.sql": [
+      "install-fresh"
+    ],
+    "migrations/20260510_notifications_and_clinical.sql": [
+      "install-fresh"
+    ],
+    "migrations/20260511_qms_and_labeling.sql": [
+      "install-fresh"
+    ],
+    "migrations/20260512_legacy_imports.sql": [
+      "install-fresh"
+    ],
+    "migrations/20260520_pdev_workflow_activities.sql": [
+      "install-fresh"
+    ],
+    "migrations/20260521_org_lifecycle_state.sql": [
+      "install-fresh"
+    ],
+    "migrations/20260524_c2c_blockers.sql": [
+      "install-fresh"
+    ],
+    "migrations/20260524_contradiction_engine_schema.sql": [
+      "install-fresh"
+    ],
+    "migrations/20260524_program_workbench_schema.sql": [
+      "deploy-migrate (production)",
+      "install-fresh"
+    ],
+    "migrations/20260525_audit_logs_updated_at.sql": [
+      "install-fresh"
+    ],
+    "migrations/20260527_concept2cure_project_links.sql": [
+      "install-fresh"
+    ],
+    "migrations/20260527_mutation_primitives.sql": [
+      "deploy-migrate (production)",
+      "install-fresh"
+    ],
+    "migrations/20260528_phase9_document_schema.sql": [
+      "deploy-migrate (production)",
+      "install-fresh"
+    ],
+    "migrations/20260529_phase10_schema.sql": [
+      "install-fresh"
+    ],
+    "migrations/20260529_phase11_intelligence.sql": [
+      "install-fresh"
+    ],
+    "migrations/20260529_phase9_backfill.sql": [
+      "deploy-migrate (production)",
+      "install-fresh"
+    ],
+    "migrations/20260530_csr_reports_nct_id.sql": [
+      "install-fresh"
+    ],
+    "migrations/20260531_template_specs.sql": [
+      "install-fresh"
+    ],
+    "migrations/20260601_chat_message_metadata.sql": [
+      "install-fresh"
+    ],
+    "migrations/20260602_working_memory_embeddings.sql": [
+      "deploy-migrate (production)",
+      "install-fresh"
+    ],
+    "migrations/20260603_ai_capability_governance.sql": [
+      "deploy-migrate (production)",
+      "install-fresh"
+    ],
+    "migrations/20260603_commitments.sql": [
+      "deploy-migrate (production)",
+      "install-fresh"
+    ],
+    "migrations/20260603_governance_permission_grants.sql": [
+      "install-fresh"
+    ],
+    "migrations/20260603_living_record_program_link.sql": [
+      "install-fresh"
+    ],
+    "migrations/20260603_living_record_spine.sql": [
+      "install-fresh"
+    ],
+    "migrations/20260603_project_retrieval_mode.sql": [
+      "install-fresh"
+    ],
+    "migrations/20260603_pv_operational.sql": [
+      "deploy-migrate (production)",
+      "install-fresh"
+    ],
+    "migrations/20260604_bla_workbench.sql": [
+      "install-fresh"
+    ],
+    "migrations/20260604_evidence_graph_and_embeddings.sql": [
+      "install-fresh"
+    ],
+    "migrations/20260604_shadow_review.sql": [
+      "deploy-migrate (production)",
+      "install-fresh"
+    ],
+    "migrations/20260604_study_twins.sql": [
+      "install-fresh"
+    ],
+    "migrations/20260604_submission_core_canonical.sql": [
+      "deploy-migrate (production)",
+      "install-fresh"
+    ],
+    "migrations/20260605_consistency_findings.sql": [
+      "install-fresh"
+    ],
+    "migrations/20260608_ai_placement_policies.sql": [],
+    "migrations/20260608_submission_leaf_document_type.sql": [
+      "install-fresh"
+    ],
+    "migrations/20260608_vault_retention.sql": [
+      "install-fresh"
+    ],
+    "migrations/20260609_audit_hmac_seal.sql": [
+      "deploy-migrate (production)",
+      "install-fresh"
+    ],
+    "migrations/20260609_design_risk.sql": [
+      "install-fresh"
+    ],
+    "migrations/20260609_ind_master_data.sql": [
+      "install-fresh"
+    ],
+    "migrations/20260610_controlled_substances.sql": [
+      "install-fresh"
+    ],
+    "migrations/20260610_egrants.sql": [
+      "install-fresh"
+    ],
+    "migrations/20260610_etmf.sql": [
+      "install-fresh"
+    ],
+    "migrations/20260610_financial_disclosure_21cfr54.sql": [
+      "install-fresh"
+    ],
+    "migrations/20260610_ha_interactions_commitments.sql": [
+      "install-fresh"
+    ],
+    "migrations/20260610_iacuc_animal_governance.sql": [
+      "install-fresh"
+    ],
+    "migrations/20260610_ibc_biosafety.sql": [
+      "install-fresh"
+    ],
+    "migrations/20260610_ind_dispatch_snapshots.sql": [
+      "install-fresh"
+    ],
+    "migrations/20260610_inspection_readiness.sql": [
+      "install-fresh"
+    ],
+    "migrations/20260610_irb_submissions.sql": [
+      "install-fresh"
+    ],
+    "migrations/20260610_ivd_assessments.sql": [
+      "install-fresh"
+    ],
+    "migrations/20260610_lifecycle_obligations.sql": [
+      "install-fresh"
+    ],
+    "migrations/20260610_nonclinical_send.sql": [
+      "install-fresh"
+    ],
+    "migrations/20260610_rim_lite.sql": [
+      "install-fresh"
+    ],
+    "migrations/20260610_veeva_vault_links.sql": [
+      "install-fresh"
+    ],
+    "migrations/20260611_drop_charter_staging_tables.sql": [
+      "install-fresh"
+    ],
+    "migrations/20260611_effort_certification.sql": [
+      "install-fresh"
+    ],
+    "migrations/20260611_research_compliance.sql": [
+      "install-fresh"
+    ],
+    "migrations/20260611_research_security.sql": [
+      "install-fresh"
+    ],
+    "migrations/20260612_ana_relational_external_intel.sql": [
+      "deploy-migrate (production)",
+      "install-fresh"
+    ],
+    "migrations/20260612_grant_budget.sql": [
+      "install-fresh"
+    ],
+    "migrations/20260612_grant_closeout.sql": [
+      "install-fresh"
+    ],
+    "migrations/20260612_grant_costshare_nce.sql": [
+      "install-fresh"
+    ],
+    "migrations/20260612_grant_subawards.sql": [
+      "install-fresh"
+    ],
+    "migrations/20260612_rls_research_admin.sql": [],
+    "migrations/20260614_ind_cross_references.sql": [
+      "install-fresh"
+    ],
+    "migrations/20260614_ind_safety_reports.sql": [
+      "install-fresh"
+    ],
+    "migrations/20260615_ind_amendments.sql": [
+      "install-fresh"
+    ],
+    "migrations/20260615_ind_annual_reports.sql": [
+      "install-fresh"
+    ],
+    "migrations/20260615_ind_icsr_transmissions.sql": [
+      "install-fresh"
+    ],
+    "migrations/20260615_regulatory_assessments.sql": [
+      "install-fresh"
+    ],
+    "migrations/20260615_report_subscriptions.sql": [
+      "install-fresh"
+    ],
+    "migrations/20260615_tmf_artifact_filings.sql": [
+      "install-fresh"
+    ],
+    "migrations/20260616_drop_unused_cdisc_reference_tables.sql": [
+      "install-fresh"
+    ],
+    "migrations/20260617_ai_provider_preference.sql": [
+      "install-fresh"
+    ],
+    "migrations/20260618_coverage_analysis.sql": [
+      "install-fresh"
+    ],
+    "migrations/20260619_research_committees.sql": [
+      "install-fresh"
+    ],
+    "migrations/20260620_grant_funding_profiles.sql": [
+      "install-fresh"
+    ],
+    "migrations/20260621_protocol_development.sql": [
+      "install-fresh"
+    ],
+    "migrations/20260622_protocol_risks.sql": [
+      "install-fresh"
+    ],
+    "migrations/20260628_csr_job_state.sql": [
+      "install-fresh"
+    ],
+    "migrations/20260629_charter_tables_rebuild.sql": [
+      "install-fresh"
+    ],
+    "migrations/20260629_orchestrator_awaiting_async_status.sql": [
+      "install-fresh"
+    ],
+    "migrations/20260629_orchestrator_awaiting_signature_status.sql": [
+      "install-fresh"
+    ],
+    "migrations/20260629_orchestrator_region_check_alignment.sql": [
+      "install-fresh"
+    ],
+    "migrations/20260629_orchestrator_submission_id_fk.sql": [
+      "install-fresh"
+    ],
+    "migrations/20260629_orchestrator_tenant_scope.sql": [
+      "install-fresh"
+    ],
+    "migrations/20260629_protocol_amendments.sql": [
+      "install-fresh"
+    ],
+    "migrations/20260629_protocol_consent.sql": [
+      "install-fresh"
+    ],
+    "migrations/20260629_protocol_deviations.sql": [
+      "install-fresh"
+    ],
+    "migrations/20260629_protocol_reviews.sql": [
+      "install-fresh"
+    ],
+    "migrations/20260629_rbm_surfaces.sql": [
+      "deploy-migrate (production)",
+      "install-fresh"
+    ],
+    "migrations/20260629_submission_transmittals_active_lock.sql": [
+      "install-fresh"
+    ],
+    "migrations/20260629_submission_transmittals_mdn_raw.sql": [
+      "install-fresh"
+    ],
+    "migrations/20260629_translation_platform.sql": [
+      "install-fresh"
+    ],
+    "migrations/20260630_protocol_milestones.sql": [
+      "install-fresh"
+    ],
+    "migrations/20260630_protocol_templates.sql": [
+      "install-fresh"
+    ],
+    "migrations/20260630_rbm_kri_values.sql": [
+      "deploy-migrate (production)",
+      "install-fresh"
+    ],
+    "migrations/20260701_protocol_soa.sql": [
+      "install-fresh"
+    ],
+    "migrations/20260701_rbm_patient_profiles.sql": [
+      "deploy-migrate (production)",
+      "install-fresh"
+    ],
+    "migrations/20260702_protocol_budget.sql": [
+      "install-fresh"
+    ],
+    "migrations/20260702_usage_model_credit_ledger.sql": [
+      "install-fresh"
+    ],
+    "migrations/20260703_dmsp.sql": [
+      "install-fresh"
+    ],
+    "migrations/20260704_biosketch.sql": [
+      "install-fresh"
+    ],
+    "migrations/20260704_other_support.sql": [
+      "install-fresh"
+    ],
+    "migrations/20260705_export_control.sql": [
+      "install-fresh"
+    ],
+    "migrations/20260705_invention_disclosure.sql": [
+      "install-fresh"
+    ],
+    "migrations/20260705_research_agreements.sql": [
+      "install-fresh"
+    ],
+    "migrations/20260706_org_user_persona.sql": [
+      "install-fresh"
+    ],
+    "migrations/20260706_report_definitions.sql": [
+      "install-fresh"
+    ],
+    "migrations/20260716_template_doc_types.sql": [
+      "install-fresh"
+    ],
+    "migrations/20260724_ana_deep_investigations.sql": [
+      "deploy-migrate (production)",
+      "install-fresh"
+    ],
+    "migrations/20260724_lumen_council_provisioning.sql": [
+      "deploy-migrate (production)",
+      "install-fresh"
+    ],
+    "migrations/20260726_authoring_citation_source_usage.sql": [
+      "deploy-migrate (production)",
+      "install-fresh"
+    ],
+    "migrations/20260726_cre_source_program_scope.sql": [
+      "deploy-migrate (production)",
+      "install-fresh"
+    ],
+    "migrations/20260726_file_uploads_tenancy.sql": [
+      "deploy-migrate (production)",
+      "install-fresh"
+    ],
+    "migrations/20260726_rbm_metric_ingestion.sql": [
+      "deploy-migrate (production)",
+      "install-fresh"
+    ],
+    "migrations/20260726_rbm_not_evaluated_backfill.sql": [
+      "deploy-migrate (production)",
+      "install-fresh"
+    ],
+    "migrations/20260727_authoring_document_program_scope.sql": [
+      "deploy-migrate (production)",
+      "install-fresh"
+    ],
+    "migrations/20260727_onboarding_proposal_runs.sql": [
+      "install-fresh"
+    ],
+    "migrations/20260728_authoring_comments_threading.sql": [
+      "deploy-migrate (production)",
+      "install-fresh"
+    ],
+    "migrations/20260728_authoring_document_governed_binding.sql": [
+      "deploy-migrate (production)",
+      "install-fresh"
+    ],
+    "migrations/20260728_authoring_reviews.sql": [
+      "install-fresh"
+    ],
+    "migrations/20260728_c2c_document_sections_timestamps.sql": [
+      "deploy-migrate (production)",
+      "install-fresh"
+    ],
+    "migrations/20260728_c2c_section_version_author_kind.sql": [
+      "deploy-migrate (production)",
+      "install-fresh"
+    ],
+    "migrations/20260728_chat_thread_store.sql": [
+      "install-fresh"
+    ],
+    "migrations/20260728_cmc_module3_org_scoped_uniqueness.sql": [
+      "deploy-migrate (production)",
+      "install-fresh"
+    ],
+    "migrations/20260729_unified_documents_provision.sql": [
+      "deploy-migrate (production)",
+      "install-fresh"
+    ],
+    "migrations/20260729b_unified_workflow_companion_tables.sql": [
+      "deploy-migrate (production)",
+      "install-fresh"
+    ],
+    "migrations/20260730_estar_registration.sql": [
+      "deploy-migrate (production)",
+      "install-fresh"
+    ],
+    "migrations/20260730_estar_submission.sql": [
+      "deploy-migrate (production)",
+      "install-fresh"
+    ],
+    "migrations/20260730_estar_submission_project_link.sql": [
+      "deploy-migrate (production)",
+      "install-fresh"
+    ],
+    "migrations/20260730_work_item_source_ref.sql": [
+      "deploy-migrate (production)",
+      "install-fresh"
+    ],
+    "migrations/20260730_workflow_doc_versions_org_id.sql": [
+      "deploy-migrate (production)",
+      "install-fresh"
+    ],
+    "migrations/20260731_workflow_doc_versions_org_not_null.sql": [
+      "deploy-migrate (production)",
+      "install-fresh"
+    ],
+    "migrations/20260731c_canonical_documents.sql": [
+      "install-fresh"
+    ],
+    "migrations/20260804_phase9_rule_pack_outlines.sql": [
+      "deploy-migrate (production)",
+      "install-fresh"
+    ],
+    "migrations/20260806_cta_ema_ctr536_outline.sql": [
+      "deploy-migrate (production)",
+      "install-fresh"
+    ],
+    "migrations/20260806b_anda_ide_filing_types.sql": [
+      "deploy-migrate (production)",
+      "install-fresh"
+    ],
+    "migrations/20260810_pma_fda_814_20_outline.sql": [
+      "deploy-migrate (production)",
+      "install-fresh"
+    ],
+    "migrations/20260810b_eu_mdr_ivdr_outlines.sql": [
+      "deploy-migrate (production)",
+      "install-fresh"
+    ],
+    "migrations/20260810c_rule_pack_provenance.sql": [
+      "deploy-migrate (production)",
+      "install-fresh"
+    ],
+    "migrations/20260810d_rule_pack_review_attribution.sql": [
+      "deploy-migrate (production)",
+      "install-fresh"
+    ],
+    "migrations/20260813_tenant_offboarding_lifecycle.sql": [
+      "deploy-migrate (production)",
+      "install-fresh"
+    ],
+    "migrations/20260813b_tenant_export_receipts.sql": [
+      "deploy-migrate (production)",
+      "install-fresh"
+    ],
+    "migrations/20260813c2_electronic_signatures_tenant_key.sql": [
+      "deploy-migrate (production)",
+      "install-fresh"
+    ],
+    "migrations/20260813c_ivdr_schema_reconciliation.sql": [
+      "deploy-migrate (production)",
+      "install-fresh"
+    ],
+    "migrations/20260813d_esignature_governed_unification.sql": [
+      "deploy-migrate (production)",
+      "install-fresh"
+    ],
+    "migrations/20260814_projects_regulatory_program_anchor.sql": [
+      "deploy-migrate (production)",
+      "install-fresh"
+    ],
+    "migrations/20260814b_literature_screening_decisions.sql": [
+      "deploy-migrate (production)",
+      "install-fresh"
+    ],
+    "migrations/20260814c_pmcf_enrollment_records.sql": [
+      "deploy-migrate (production)",
+      "install-fresh"
+    ],
+    "migrations/20260814d_document_alias_map.sql": [
+      "deploy-migrate (production)",
+      "install-fresh"
+    ],
+    "migrations/20260814e_submission_leaf_source_pin.sql": [
+      "deploy-migrate (production)",
+      "install-fresh"
+    ],
+    "migrations/20260814f_section_version_ana_action_backlink.sql": [
+      "deploy-migrate (production)",
+      "install-fresh"
+    ],
+    "migrations/20260814g_section_version_reason_required.sql": [
+      "deploy-migrate (production)",
+      "install-fresh"
+    ],
+    "migrations/20260814h_review_task_type_domain_repair.sql": [
+      "deploy-migrate (production)",
+      "install-fresh"
+    ],
+    "migrations/20260814i_draft_candidate_generator.sql": [
+      "deploy-migrate (production)",
+      "install-fresh"
+    ],
+    "migrations/20260814j_catalog_missing_product_surfaces.sql": [
+      "deploy-migrate (production)",
+      "install-fresh"
+    ],
+    "migrations/20260814k_catalog_mission_control.sql": [
+      "deploy-migrate (production)",
+      "install-fresh"
+    ],
+    "migrations/20260814l_catalog_filing_strategy.sql": [
+      "deploy-migrate (production)",
+      "install-fresh"
+    ],
+    "migrations/20260814m_catalog_honest_module_descriptions.sql": [
+      "deploy-migrate (production)",
+      "install-fresh"
+    ],
+    "migrations/20260814m_regulatory_intel_platform_tier.sql": [
+      "deploy-migrate (production)",
+      "install-fresh"
+    ],
+    "migrations/20260814n_seed_regulatory_intel_platform_knowledge.sql": [
+      "deploy-migrate (production)",
+      "install-fresh"
+    ],
+    "migrations/20260814o_catalog_retire_duplicate_ind_lifecycle.sql": [
+      "deploy-migrate (production)",
+      "install-fresh"
+    ],
+    "migrations/20260815_workflow_approval_tables.sql": [
+      "deploy-migrate (production)",
+      "install-fresh"
+    ],
+    "migrations/20260817_reconcile_declared_updated_at_columns.sql": [
+      "deploy-migrate (production)",
+      "install-fresh"
+    ],
+    "migrations/20260820_working_memory_project_id.sql": [
+      "deploy-migrate (production)",
+      "install-fresh"
+    ],
+    "migrations/20260820b_rim_learned_patterns.sql": [
+      "deploy-migrate (production)",
+      "install-fresh"
+    ],
+    "migrations/20260820c_catalog_maa_module1_regional.sql": [
+      "deploy-migrate (production)",
+      "install-fresh"
+    ],
+    "migrations/20260821_regulatory_twin_simulations.sql": [
+      "deploy-migrate (production)",
+      "install-fresh"
+    ],
+    "migrations/20260821_vault_documents_canonical_shape.sql": [
+      "deploy-migrate (production)",
+      "install-fresh"
+    ],
+    "migrations/20260822_section_version_author_kind_unspecified.sql": [
+      "deploy-migrate (production)",
+      "install-fresh"
+    ],
+    "migrations/20260823_cmc_register_store_parity.sql": [
+      "deploy-migrate (production)",
+      "install-fresh"
+    ],
+    "migrations/20260823_drop_dead_c2c_cmc_changes.sql": [
+      "deploy-migrate (production)",
+      "install-fresh"
+    ],
+    "migrations/20260823_vault_document_placement.sql": [
+      "deploy-migrate (production)",
+      "install-fresh"
+    ],
+    "migrations/20260829_cre_source_versioning.sql": [
+      "deploy-migrate (production)",
+      "install-fresh"
+    ],
+    "migrations/20260901_ind_fda_m1_v2_3_outline.sql": [
+      "deploy-migrate (production)",
+      "install-fresh"
+    ],
+    "migrations/20260901b_estar_510k_denovo_outlines.sql": [
+      "deploy-migrate (production)",
+      "install-fresh"
+    ],
+    "migrations/20260902_ind_fda_outline_v2_2_initial_ind_flags.sql": [
+      "deploy-migrate (production)",
+      "install-fresh"
+    ],
+    "migrations/20260902_ind_icsr_transmissions_transport_receipt.sql": [
+      "deploy-migrate (production)",
+      "install-fresh"
+    ],
+    "migrations/20260903_estar_registration_correspondent.sql": [
+      "deploy-migrate (production)",
+      "install-fresh"
+    ],
+    "migrations/20260903_regulatory_programs_estar_device_fields.sql": [
+      "deploy-migrate (production)",
+      "install-fresh"
+    ],
+    "migrations/20260903_rendered_leaf_files.sql": [
+      "deploy-migrate (production)",
+      "install-fresh"
+    ],
+    "migrations/20260904_estar_registration_declaration_company_name.sql": [
+      "deploy-migrate (production)",
+      "install-fresh"
+    ],
+    "migrations/20260905_document_catalog.sql": [
+      "deploy-migrate (production)",
+      "install-fresh"
+    ],
+    "migrations/20260905_vault_documents_organization_id.sql": [
+      "deploy-migrate (production)",
+      "install-fresh"
+    ],
+    "migrations/20260905b_vault_document_chunks.sql": [
+      "deploy-migrate (production)",
+      "install-fresh"
+    ],
+    "migrations/20260906_artifact_section_map_unique.sql": [
+      "deploy-migrate (production)",
+      "install-fresh"
+    ],
+    "migrations/20260906_ivdr_history_tenant_isolation.sql": [
+      "deploy-migrate (production)",
+      "install-fresh"
+    ],
+    "migrations/20260906_vault_documents_fulltext.sql": [
+      "deploy-migrate (production)",
+      "install-fresh"
+    ],
+    "migrations/20260906b_vault_legal_holds.sql": [
+      "deploy-migrate (production)",
+      "install-fresh"
+    ],
+    "migrations/20260906c_draft_candidate_assertions.sql": [
+      "deploy-migrate (production)",
+      "install-fresh"
+    ],
+    "migrations/20260907_cmc_comparability_register_reachable.sql": [
+      "deploy-migrate (production)",
+      "install-fresh"
+    ],
+    "migrations/20260907_quality_specifications_tenant_required.sql": [
+      "deploy-migrate (production)",
+      "install-fresh"
+    ],
+    "migrations/20260907_regulatory_programs_application_number.sql": [
+      "deploy-migrate (production)",
+      "install-fresh"
+    ],
+    "migrations/20260907_span_lineage_accepted_machine_draft.sql": [
+      "deploy-migrate (production)",
+      "install-fresh"
+    ],
+    "migrations/20260908_compliance_tracking_organization_backfill.sql": [
+      "deploy-migrate (production)",
+      "install-fresh"
+    ],
+    "migrations/20260908_drug_substance_biologic_origin.sql": [
+      "deploy-migrate (production)",
+      "install-fresh"
+    ],
+    "migrations/20260908_span_lineage_machine_draft.sql": [
+      "deploy-migrate (production)",
+      "install-fresh"
+    ],
+    "migrations/20260908b_estar_submissions_filed_artifact.sql": [
+      "deploy-migrate (production)",
+      "install-fresh"
+    ],
+    "migrations/phase13_review_threads_tasks.sql": [
+      "install-fresh"
+    ],
+    "sql/advanced_analytics_schema.sql": [],
+    "sql/analytics_schema.sql": [],
+    "sql/cmc_blueprints.sql": [],
+    "sql/create_compliance_check_history_table.sql": [],
+    "sql/create_regulatory_commitments_table.sql": [],
+    "sql/esg_submissions.sql": [],
+    "sql/faers_schema.sql": [],
+    "sql/harvest_rules.sql": [],
+    "sql/ind_data_model.sql": [],
+    "sql/inspection.sql": [],
+    "sql/migrations/001_add_mfa_and_lockout_columns.sql": [],
+    "sql/migrations/20260327_external_evidence_indexes.sql": [],
+    "sql/migrations/20260327_external_evidence_intelligence.sql": [],
+    "sql/redaction_rules.sql": [],
+    "sql/reference_model.sql": [],
+    "sql/section_order.sql": [],
+    "scripts/db-verify/00_bootstrap_base.sql": []
+  }
 }
