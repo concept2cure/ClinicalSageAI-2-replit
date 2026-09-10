@@ -177,7 +177,8 @@ table is refused rather than served. A cross-tenant request returns an empty
 result rather than 403, deliberately — a 403 confirms the record exists, which
 is the same leak in a smaller quantity. **WO-13** carries the remaining half:
 `electronic_signatures` still has no tenant column to scope by, so it is
-currently declared `unscopable` and refused outright.
+currently declared `unscopable` and refused outright — and §5.3 finds the
+same hole in a second, unrelated subsystem.
 
 **2. Two fabricated CAPA records were inserted on every deploy.**
 `db/migrations/030_stability_results.sql` ended in an unguarded
@@ -195,10 +196,19 @@ since edited.
 **What these two have in common is more important than either.** Neither is
 subtle, and 142 gates missed both — because both live in the space the gates do
 not model. The tenancy gates count *files* on the shared pool and *raw SQL
-without a tenant predicate*; grdhe's query had a predicate (on `record_id`) and
-its table was outside the sweep's schema filter, so it was invisible to every
-one of them. RULE 1's drop-safety gate checks that migrations do not DROP; no
-gate checks that a replayed migration does not INSERT. A suppression ledger of
+without a tenant predicate*; grdhe's query had a predicate (on `record_id`), and
+a table with no tenant column cannot appear in a sweep that looks for tenant
+columns, so it was invisible to every one of them. RULE 1's drop-safety gate
+checks that migrations do not DROP; no gate checks that a replayed migration
+does not INSERT.
+
+A third defect, found the same way and after those two, makes the point sharper.
+`auditService.getAuditLog` applied its tenant filter on the primary path and,
+when that path failed, fell through to a store with no tenant column — returning
+every tenant's rows as an array the caller could not distinguish from a correct
+answer. Nothing reaches it today, so it is a refusal now rather than an incident.
+Three findings, three unrelated subsystems, one shape: **the tenant isolation is
+on the data and not on the record of what happened to the data** (§5.3). A suppression ledger of
 9,053 measures the debt the gates can see. It says nothing about the debt they
 cannot, and this evaluation found two of those in a week of reading — which is
 the strongest argument in the document for WO-3's live probe over any amount of
@@ -525,49 +535,96 @@ build mean less than it appears:
 
 ---
 
-### 5.3 Where RLS does not help at all
+### 5.3 The platform policies its data and not its audit trails
 
-§5.1's correction is genuinely reassuring, and it has a hard boundary that is
-easy to miss: **RLS filters only where a policy exists.** Three conditions each
-put a table outside it, and the tooling reports nothing in any of the three
-cases.
+**This section replaces a draft written earlier today that was wrong, and the
+error is worth stating because it is the same error three times.** That draft
+said RLS covers only schema `public`, and named `regulatory_harmonization.*` as
+a table the sweep therefore misses. Both halves are false.
+`db/migrations/20260801_uuid_tenant_isolation_nonpublic.sql` is a second sweep
+built for exactly this: an explicit 28-entry `(schema, table, column)` list
+covering `core`, `manufacturing`, `compliance`, `global_dossier`, `cortex`,
+`federated_ml`, `regulatory_intel` and `regulatory_harmonization`, keyed
+per-table because the tenant column name differs (`org_id` /
+`organization_id` / `tenant_id`). `canonical_adverse_events` and
+`canonical_products` — the patient-level tables — are in that list, on
+`tenant_id`. They are policied.
 
-| Condition | Why the sweep misses it | Live example |
+The right question was never "which schema". It is **which tables carry a tenant
+key at all**, and the answer separates cleanly along a line nobody drew on
+purpose:
+
+| | Tenant column | Policied |
 |---|---|---|
-| Table is not in schema `public` | Both tenant sweeps filter `WHERE c.table_schema = 'public'` | `regulatory_harmonization.*`, `audit.tamper_proof_log` |
-| Table has no tenant column | There is nothing to write a policy against | `electronic_signatures` |
-| Org column is `uuid`, not `integer` | The sweep matches `organization_id INTEGER` | flagged in RULE 1's corollary |
+| `regulatory_harmonization.canonical_adverse_events` | `tenant_id` | ✅ |
+| `regulatory_harmonization.canonical_products` | `tenant_id` | ✅ |
+| `regulatory_harmonization.export_jobs` | `tenant_id` | ✅ |
+| `regulatory_harmonization.tenant_data_residency` | `tenant_id` | ✅ |
+| **`regulatory_harmonization.audit_log`** | **none** | ❌ *cannot be* |
+| **`audit.tamper_proof_log`** | **none** | ❌ *cannot be* |
+| **`regulatory_harmonization.electronic_signatures`** | **none** | ❌ *cannot be* |
 
-This is the test that separated a real leak from a false alarm twice during this
-evaluation, in both directions:
+**The data is isolated. The record of what happened to the data is not.** Both
+subsystems reached that state independently, which makes it a pattern rather
+than an oversight: `audit_log` carries `user_organization TEXT` — free-text
+metadata about who acted, not a key anything can filter on — and
+`tamper_proof_log` carries nothing at all (id, sequence, event type, actor,
+resource, action, details, hash chain, client context).
+
+And the 2026-08-01 sweep did think about this. It exempted `audit.event_log`
+deliberately, in writing:
+
+> *21 CFR Part 11 immutable audit trail, written by DB triggers … and read only
+> by cross-org compliance views and a background hash-integrity job; **there is
+> no per-tenant request reader to isolate**, and a policy would drop NULL-org
+> system events and break the compliance/export readers.*
+
+That is the right way to make the call, and for that table the reasoning holds.
+`regulatory_harmonization.audit_log` never reached the same triage — and unlike
+`audit.event_log`, it **did** have a per-tenant request reader:
+`GET /api/grdhe/audit/:tableName/:recordId`, mounted on `authenticateToken`,
+serving `old_data`/`new_data` for any record id a caller could guess. So the gap
+was not a missing sweep. It was one audit table that got the analysis and one
+that did not.
+
+That also explains why the fix (§1) took the shape it did. With no tenant column
+on the audit row there is nothing to police, so the guard derives the tenant from
+the **audited record** instead: an EXISTS probe against the parent table — which
+*is* policied — before the audit query runs. Same for
+`auditService.getAuditLog`, where the tamper-proof fallback now refuses a
+tenant-scoped read outright rather than answering it from a table that cannot
+honour the scope.
+
+**The test that separates a real finding from a false alarm, since I got it wrong
+in both directions today:**
 
 - **`stab_signoffs` looked untenanted and is not.** Its `CREATE TABLE` has no
-  tenant column, and I wrote that up as a finding on that basis alone. Wrong:
+  tenant column, and I wrote it up on that basis alone. Wrong:
   `db/migrations/20260728_stability_tenant_isolation.sql` runs later on the same
-  applier and sweeps every `stab_*` table — adding `tenant_id` with a
-  `current_setting('app.current_tenant_id')` default, enabling *and* forcing
-  RLS, and creating `tenant_isolation_policy`. Reading the creating migration is
-  not reading the schema.
-- **`grdhe`'s audit tables looked policied and were not.** Same surface
-  appearance, opposite answer, because `regulatory_harmonization` is not
-  `public` and the sweep never reached it.
+  applier and sweeps every `stab_*` table — adding `tenant_id`, enabling *and*
+  forcing RLS, creating `tenant_isolation_policy`. Reading the creating
+  migration is not reading the schema.
+- **`regulatory_harmonization` looked unpoliced and is not** — the correction
+  above. Reading one sweep is not reading the sweeps.
+- **`grdhe`'s audit table looked like the rest of its schema and was not.**
 
-Applying the same test to the two readers with the least defence-in-depth,
-flagged during this evaluation as the next things to check:
+So: check for an actual `CREATE POLICY` on the actual table, after every
+migration on every applier has run. Nothing short of that is evidence.
+
+Applying it to the two readers with the least defence-in-depth:
 `csr-analytics.ts`'s ten unpredicated reads hit `csr_reports`, which is `public`
-with an `integer organization_id` and is therefore swept; `graphrag.ts`'s nine
-sites hit `knowledge_graph_nodes`/`_edges`, which
-`db/migrations/20260813_knowledge_graph_tenant_keys.sql` policies explicitly,
-and whose own comment records the right instinct — *"the policy below makes NULL
-rows visible to NOBODY rather than to everybody."* Both are defence-in-depth,
-not open doors.
+with an integer `organization_id` and is swept by `0021_enable_rls_everywhere`;
+`graphrag.ts`'s nine sites hit `knowledge_graph_nodes`/`_edges`, which
+`db/migrations/20260813_knowledge_graph_tenant_keys.sql` policies explicitly, and
+whose own comment records the right instinct — *"the policy below makes NULL rows
+visible to NOBODY rather than to everybody."* Both are defence-in-depth, not open
+doors.
 
-One latent case remains, recorded here rather than fixed because it is not
-reachable over HTTP today: `server/services/auditService.ts:519-531` drops
-`filters.tenantId` on its Drizzle fallback path, against `audit.tamper_proof_log`
-— a non-`public` table, so unpoliced. No route reaches that path at present. The
-first one that does inherits a cross-tenant read of the tamper-proof log, and no
-gate will say so. **WO-13.**
+**WO-13** is now scoped to the row that is left: give the two audit trails and
+`electronic_signatures` a tenant key, or — where a cross-org reader is genuinely
+required — an exemption written down and reasoned the way `audit.event_log`'s
+was, so the next per-tenant reader mounted over one of them is a decision rather
+than an accident.
 
 ---
 
@@ -612,7 +669,7 @@ customer data in front of anyone.
 | [WO-9](../work-orders/WO-9-pilot-surface-lock.md) | Lock the pilot surface set | G1 | Pilot surfaces in a rail; the rest behind an explicit experimental affordance |
 | [WO-10](../work-orders/WO-10-deletion-program.md) | Proof-gated deletion program | none — hygiene | Deletion-proof procedure exists **before** anything is deleted |
 | [WO-12](../work-orders/WO-12-complexity-refactor.md) | Complexity growth now inside the eslint baseline | none — deferred | `complexity` ≤ 1,687 and `max-lines-per-function` ≤ 1,190 |
-| [**WO-13**](../work-orders/WO-13-grdhe-tenant-scoping.md) | **Finish the grdhe tenant scoping** | **G1+** | `electronic_signatures` carries a tenant column and is `tenant`-scoped, not refused; `regulatory_harmonization` tables carry RLS policies; `auditService`'s Drizzle fallback keeps its tenant filter |
+| [**WO-13**](../work-orders/WO-13-grdhe-tenant-scoping.md) | **Give the audit trails a tenant key** | **G1+** | `electronic_signatures` carries a tenant column and is `tenant`-scoped rather than refused; `regulatory_harmonization.audit_log` and `audit.tamper_proof_log` each have a key, a policy, **or** a written exemption naming the cross-org reader that needs one |
 
 **A withdrawn finding, kept here because the retraction is the useful part.**
 While executing WO-0 I reported that `server/routes/tenant-config.ts` enforced no
