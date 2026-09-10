@@ -40,9 +40,14 @@ function readinessInput(overrides: Partial<ReadinessTrajectoryInput> = {}): Read
   return {
     kind: 'readiness_trajectory',
     overallScore: 78,
-    predictedApprovalProbability: 0.66,
-    predictedReviewTimeDays: 304,
-    predictedDeficiencyCount: 4,
+    // null in every real path since 2026-09-10 — the twin no longer derives an
+    // approval probability from the readiness score, and no model replaced it.
+    // The fixture matches the producer; a fixture carrying 0.66 would be
+    // testing a shape nothing emits.
+    predictedApprovalProbability: null,
+    reviewClockDays: 300,
+    reviewClockBasis: 'statutory/user-fee review clock for US_NDA; not adjusted for this program',
+    unmetCriteriaCount: 4,
     trend: [{ asOf: FIXED_AT, score: 78 }],
     ...overrides,
   };
@@ -112,6 +117,45 @@ describe('assemblePredictionReport', () => {
     expect(buildDisclosure(deficiencyInput({ sampleSize: 30 })).sampleRegime).toBe('warm_up');
     expect(buildDisclosure(deficiencyInput({ sampleSize: 99 })).sampleRegime).toBe('warm_up');
     expect(buildDisclosure(deficiencyInput({ sampleSize: 100 })).sampleRegime).toBe('mature');
+  });
+
+  it('states that no approval-probability model exists rather than printing one', () => {
+    // The executive summary used to read "Overall readiness scores 78, implying
+    // a predicted approval probability of 66%." The probability was the
+    // readiness score rescaled — (score/100)*0.8 minus a per-gap penalty — so
+    // "implying" asserted a link between a checklist and a regulatory outcome
+    // that nothing computes.
+    const report = assemblePredictionReport(readinessInput(), { generatedAt: FIXED_AT });
+    const text = JSON.stringify(report);
+
+    expect(text).not.toMatch(/approval probability of \d/i);
+    expect(text).not.toContain('implying');
+    expect(text).toContain('No approval-probability model backs this assessment');
+    // The real figures survive.
+    expect(text).toContain('78');
+    expect(text).toContain('Criteria not met or partially met');
+  });
+
+  it('renders a modelled approval probability if one is ever supplied', () => {
+    // The field is not deleted: it is the right home for a real model's output.
+    // This pins that supplying one still works, so the null path above is a
+    // statement about today's inputs and not a dead branch.
+    const report = assemblePredictionReport(
+      readinessInput({ predictedApprovalProbability: 0.66 }),
+      { generatedAt: FIXED_AT },
+    );
+    expect(JSON.stringify(report)).toContain('66');
+    expect(JSON.stringify(report)).not.toContain('No approval-probability model backs');
+  });
+
+  it('says so when no statutory review clock is on record', () => {
+    // An unrecognised submission type used to fall back to 180 days — the PMA
+    // clock — presented identically to a real one.
+    const report = assemblePredictionReport(
+      readinessInput({ reviewClockDays: null, reviewClockBasis: null }),
+      { generatedAt: FIXED_AT },
+    );
+    expect(JSON.stringify(report)).toContain('No statutory review clock is on record');
   });
 
   it('uses heuristic_gap_score method for readiness trajectory', () => {

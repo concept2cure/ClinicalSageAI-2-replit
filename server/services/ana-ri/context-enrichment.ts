@@ -442,7 +442,36 @@ async function enrichWithReadiness(projectId: string | number, orgId?: number): 
         `| ${k} | ${typeof v === 'number' ? v : (v && typeof v === 'object' && 'score' in v ? (v as Record<string, unknown>).score : '—')}/100 |`
       ).join('\n');
 
-      return `\n\n## Live Readiness Assessment\n**Overall Score: ${score.overallScore}/100** | Trend: ${score.trend?.direction || 'unknown'}\n\n**Predictions:** Approval probability ~${score.predictions?.approvalProbability ?? '—'}% | Est. ${score.predictions?.estimatedDeficiencies ?? '—'} deficiencies | ~${score.predictions?.estimatedReviewDays ?? '—'} review days\n\n| Dimension | Score |\n|---|---|\n${dimLines}\n\n**Top Gaps (${score.gaps.length} total):**\n${gapLines || '- None identified'}\n\nPresent these scores directly. Be specific about gaps and remediation steps.`;
+      /* This block used to render, unconditionally:
+           **Predictions:** Approval probability ~{score+10}% | Est. {N}
+           deficiencies | ~180 review days
+         ...and then told the model "Present these scores directly." So three
+         numbers derived from the readiness score, or hardcoded, were handed to
+         the assistant with an instruction to state them as fact to a customer.
+         The engine now returns null when no twin assessment backs them, and
+         this renders the absence instead of an em-dash inside a sentence that
+         still reads as a prediction. */
+      const p = score.predictions;
+      const outlook =
+        p?.basis === 'twin_assessment'
+          ? `**From the recorded readiness assessment:** ` +
+            [
+              p.approvalProbability !== null
+                ? `approval probability ${p.approvalProbability}%`
+                : null,
+              p.estimatedDeficiencies !== null
+                ? `${p.estimatedDeficiencies} criteria not met or partially met`
+                : null,
+              p.estimatedReviewDays !== null
+                ? `${p.estimatedReviewDays}-day agency review clock for this pathway (not a forecast for this program)`
+                : null,
+            ]
+              .filter(Boolean)
+              .join(' | ')
+          : `**No readiness assessment is on record for this program.** Do not state an ` +
+            `approval probability, a review-time estimate or a deficiency count — none has been computed.`;
+
+      return `\n\n## Live Readiness Assessment\n**Overall Score: ${score.overallScore}/100** | Trend: ${score.trend?.direction || 'unknown'}\n\n${outlook}\n\n| Dimension | Score |\n|---|---|\n${dimLines}\n\n**Top Gaps (${score.gaps.length} total):**\n${gapLines || '- None identified'}\n\nPresent the scores above directly, and only those. Be specific about gaps and remediation steps.`;
     } catch (e: unknown) {
       logger.warn('Live readiness failed, falling back to memory', { error: e instanceof Error ? e.message : 'unknown error' });
     }

@@ -122,13 +122,38 @@ function genRecommendations(a: ParsedProtocol, csrs: SimilarProtocol[] = []): st
 function genStatisticalInsights(a: ParsedProtocol): string {
   let s = `# Statistical Analysis Insights\nGenerated: ${new Date().toLocaleString()}\n\n`;
   if (a.sample_size) {
-    s += `## Sample Size and Power\n\n### Power Analysis\nWith your proposed sample size of ${a.sample_size}, estimated power varies by effect size:\n\n`;
-    [{ size: 0.2, desc: 'small' }, { size: 0.5, desc: 'medium' }, { size: 0.8, desc: 'large' }].forEach(e => {
-      const p = Math.min(0.99, 0.4 + ((a.sample_size || 0) * e.size) / 100);
-      s += `- **${e.desc.charAt(0).toUpperCase() + e.desc.slice(1)} effect (${e.size})**: Approximately ${(p * 100).toFixed(1)}% power at alpha=0.05\n`;
-    });
+    /* ── 2026-09-10: this block used to PRINT A POWER FIGURE ──────────────────
+       It read:
+         const p = Math.min(0.99, 0.4 + (sample_size * effectSize) / 100);
+         `Approximately ${(p * 100).toFixed(1)}% power at alpha=0.05`
+       which is linear in n, capped at 99%, and is not a power calculation by
+       any definition — power comes from the noncentral t (or the corresponding
+       binomial / log-rank form), not from a line. It was rendered to one
+       decimal place beside an alpha, which is the notation of a computed
+       result, and the surrounding surface files this document into a real
+       Module 5 document via saveToAuthoring.
+
+       It is not replaced with a better formula, because the inputs a real one
+       needs are not captured here: whether sample_size is total or per-arm, the
+       allocation ratio, the outcome type, and the variance or event rate. Any
+       number derived without those would be the same defect with more digits.
+       So the section now states what is missing and asks for it. */
+    s += `## Sample Size and Power\n\n### Power Analysis\n`;
+    s += `**Not calculated.** This report captured a sample size of ${a.sample_size}, which is not sufficient to compute power.\n\n`;
+    s += `A power calculation needs, in addition:\n\n`;
+    s += `- whether ${a.sample_size} is the total enrolment or the per-arm enrolment, and the allocation ratio;\n`;
+    s += `- the outcome type (continuous, binary, or time-to-event) and its primary analysis;\n`;
+    s += `- the target effect size on that outcome's own scale, with the variance, control-arm proportion, or expected event rate;\n`;
+    s += `- the Type I error rate and whether the test is one- or two-sided.\n\n`;
+    s += `Supply these to your biostatistician, or record them in the protocol, and the calculation can be performed and cited.\n\n`;
+
     const drop = Math.round((a.sample_size || 0) * 0.15);
-    s += `\n### Dropout Considerations\n- Based on typical dropout rates in ${a.indication || 'clinical'} studies, we recommend accounting for approximately 15% participant attrition.\n- Consider enrolling an additional ${drop} participants (total: ${(a.sample_size || 0) + drop}) to maintain statistical power after dropouts.\n\n`;
+    /* The 15% was presented as "typical dropout rates in {indication} studies".
+       No indication-specific dropout data is consulted anywhere in this file —
+       the rate is a hardcoded constant, so the provenance claim was invented
+       even though the number is a common planning default. It is now labelled
+       as the placeholder it is. */
+    s += `### Dropout Considerations\n- **A 15% attrition placeholder is used below. It is not derived from ${a.indication || 'this indication'} — no dropout data is consulted by this report.** Replace it with the observed rate from comparable studies before relying on the adjusted figure.\n- At 15%, an additional ${drop} participants (total: ${(a.sample_size || 0) + drop}) would offset attrition.\n\n`;
   }
   s += `## Study Design Considerations\n\n### Randomization Strategy\n- For your ${a.phase ? `Phase ${a.phase}` : ''} study in ${a.indication || 'this indication'}, consider stratified randomization to balance important prognostic factors.\n- Key stratification variables might include: age groups, disease severity, and baseline biomarkers.\n\n### Interim Analysis\n- We recommend implementing interim analyses at 30% and 60% enrollment to assess safety and conditional power.\n- Consider using O'Brien-Fleming boundaries to control Type I error rate across multiple looks at the data.\n\n### Statistical Model Considerations\n- Consider including the following covariates in your primary analysis: age, sex, disease duration, and baseline scores.\n- For time-to-event outcomes, ensure appropriate censoring mechanisms are defined.\n- For repeated measures, consider mixed-effects models to account for within-subject correlation.\n\n`;
   s += `---\n*These statistical insights are general recommendations and should be reviewed by a qualified biostatistician.*\n`;
@@ -341,7 +366,9 @@ function genGovernedEvidenceReport(kind: string): string {
 
 const DOC_REGISTRY: DocDef[] = [
   { id: 'recommendations', label: 'Design Recommendations', gen: genRecommendations, needsCsr: true, blurb: 'Evidence-based protocol design recommendations vs. similar studies.' },
-  { id: 'statistical', label: 'Statistical Insights', gen: (a) => genStatisticalInsights(a), blurb: 'Power analysis, dropout, randomization and modelling guidance.' },
+  // blurb: no longer promises "power analysis" — the section states the inputs a
+  // power calculation needs rather than printing a figure. See genStatisticalInsights.
+  { id: 'statistical', label: 'Statistical Insights', gen: (a) => genStatisticalInsights(a), blurb: 'What a power calculation still needs, plus dropout, randomization and modelling guidance.' },
   { id: 'ind', label: 'IND Readiness', gen: (a) => genIndReadiness(a), blurb: 'Qualitative IND readiness assessment with regulatory citations.' },
 ];
 
