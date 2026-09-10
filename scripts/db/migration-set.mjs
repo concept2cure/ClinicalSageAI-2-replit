@@ -1484,6 +1484,29 @@ export const C2C_MIGRATION_FILES = [
   //     only, via the fail-closed `app.audit_archive_bypass` GUC it already sets
   //     with SET LOCAL on one dedicated connection.
   // Ordered BEFORE the tenant-isolation sweeps, which must remain last (C-33).
+  /* The hash chain the immutability triggers below were meant to protect.
+     Added 2026-09-10; it had been on NO applier — not _gcc_-named so not
+     install-fresh step 6 or the CI psql loop, not in the root migrations/ tree
+     so not the step-3 overlay, not matching db_migrate.sh's 0NN_ glob, and not
+     in this list. Verified against a canonically provisioned database: the
+     three immutability triggers are present and trg_audit_events_hash_chain is
+     absent, as is the audit_events_hash_chain() function.
+
+     So the immutability half of the Part 11 audit design shipped and the
+     integrity half did not, and 20260617_audit_events_hmac_seal.sql below seals
+     rows whose chain columns are never populated. Every chain surface therefore
+     reports 'unverified' on a canonical database — correctly, since no row
+     carries a record_hash (server/services/audit/signedAuditExport.ts counts
+     hashed vs unhashed rather than reporting 'intact' over an unchecked chain).
+
+     Ordered BEFORE the immutability entry because the chain must exist before
+     the table is sealed against modification. Its backfill was REMOVED as part
+     of this change — see the header of that file for why; in short, hashing
+     historical rows from their current contents manufactures an integrity
+     claim, and the UPDATE it used would have raised P0A01 against the
+     already-deployed no-update trigger. */
+  'db/migrations/20260222_audit_events_hash_chain.sql',
+
   'db/migrations/20260222_audit_events_immutability.sql',
   'db/migrations/20260617_audit_logs_immutability.sql',
 

@@ -101,61 +101,39 @@ CREATE TRIGGER trg_audit_events_hash_chain
   FOR EACH ROW
   EXECUTE FUNCTION audit_events_hash_chain();
 
--- Backfill existing rows that have NULL hashes (in deterministic order: org, created_at, id)
--- Runs in a single transaction (implicit in DO block) with advisory lock per org.
-DO $$
-DECLARE
-  r RECORD;
-  prev_hash TEXT := NULL;
-  seq INTEGER := 0;
-  cur_org INTEGER := NULL;
-BEGIN
-  FOR r IN
-    SELECT id, organization_id, event_type, entity_type, entity_id,
-           user_id, user_name, timestamp, reason
-    FROM audit_events
-    WHERE record_hash IS NULL
-    ORDER BY organization_id, COALESCE(timestamp, created_at), id  -- stable deterministic order
-  LOOP
-    IF r.organization_id IS DISTINCT FROM cur_org THEN
-      -- Lock this org while we backfill its chain
-      PERFORM pg_advisory_xact_lock(hashtext('audit_events_chain_' || COALESCE(r.organization_id, 0)::text));
-      -- Reset chain for new org
-      SELECT record_hash, sequence_number INTO prev_hash, seq
-      FROM audit_events
-      WHERE organization_id = r.organization_id AND record_hash IS NOT NULL
-      ORDER BY sequence_number DESC
-      LIMIT 1;
-      cur_org := r.organization_id;
-      IF seq IS NULL THEN seq := 0; prev_hash := NULL; END IF;
-    END IF;
-
-    seq := seq + 1;
-    UPDATE audit_events SET
-      sequence_number = seq,
-      previous_hash = prev_hash,
-      record_hash = encode(
-        sha256(
-          convert_to(
-            seq::text || '|' ||
-            COALESCE(r.event_type, '') || '|' ||
-            COALESCE(r.entity_type, '') || '|' ||
-            COALESCE(r.entity_id::text, '') || '|' ||
-            COALESCE(r.user_id::text, '') || '|' ||
-            COALESCE(r.user_name, '') || '|' ||
-            COALESCE(r.timestamp::text, '') || '|' ||
-            COALESCE(r.reason, '') || '|' ||
-            COALESCE(prev_hash, 'GENESIS'),
-            'UTF8'
-          )
-        ),
-        'hex'
-      )
-    WHERE id = r.id;
-
-    SELECT record_hash INTO prev_hash FROM audit_events WHERE id = r.id;
-  END LOOP;
-
-  RAISE NOTICE 'Backfilled % audit_events rows with hash chain', seq;
-END;
-$$;
+-- ═══════════════════════════════════════════════════════════════════════════════
+-- THE BACKFILL WAS REMOVED. 2026-09-10, when this file was added to
+-- C2C_MIGRATION_FILES. Two independent reasons, either sufficient.
+--
+-- 1. A BACKFILLED CHAIN IS NOT EVIDENCE, IT IS THE APPEARANCE OF EVIDENCE.
+--    The removed block walked every row with a NULL record_hash and computed a
+--    hash from that row's CURRENT contents. A hash chain proves that a row has
+--    not changed SINCE IT WAS HASHED. Hashing history today proves nothing
+--    about that history: if a row was altered at any point before the backfill,
+--    the backfill hashes the altered content and stamps the chain valid. The
+--    result verifies as 'intact' and attests to nothing — which is exactly the
+--    class of defect this trigger exists to prevent.
+--
+--    Rows written before this trigger is installed are OUTSIDE the chain, and
+--    that is the truth about them. server/services/audit/signedAuditExport.ts
+--    reports it: it counts hashedEntries and unhashedEntries separately and
+--    returns 'unverified' — not 'intact' — while any unhashed row is in range,
+--    naming how many links could not be checked.
+--
+-- 2. IT WOULD HAVE FAILED THE DEPLOY. The backfill issued
+--    `UPDATE audit_events SET ...`, and 20260222_audit_events_immutability.sql
+--    installs `trg_audit_events_no_update`, a BEFORE UPDATE FOR EACH ROW
+--    trigger that raises P0A01 unconditionally — no session-GUC bypass, no
+--    pg_trigger_depth() exemption. That trigger is already present on every
+--    deployed database, so ordering this file before it in the set would not
+--    have helped: the first deploy carrying this migration would have raised
+--    IMMUTABILITY_VIOLATION on the first historical row and aborted.
+--
+-- What remains is INSERT-time chaining, which is idempotent under RULE 1's
+-- unconditional replay: the columns are guarded, the index and constraint are
+-- guarded, the function is CREATE OR REPLACE, and the trigger is dropped and
+-- recreated. On a database whose audit_events rows are all unhashed, the
+-- trigger's lookup finds prev_seq NULL and starts the chain at 1 with a GENESIS
+-- predecessor — a clean chain from the first row written after this deploys,
+-- with the prior rows honestly outside it.
+-- ═══════════════════════════════════════════════════════════════════════════════
