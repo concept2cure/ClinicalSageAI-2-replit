@@ -459,6 +459,36 @@ class AuditService {
    *
    * Reads from the Drizzle `audit_logs` table first (fast, indexed).
    * Falls back to TamperProofAuditLog search if Drizzle is unavailable.
+   *
+   * ── THE FALLBACK CANNOT BE TENANT-SCOPED, SO IT REFUSES ─────────────────────
+   * `audit.tamper_proof_log` has no tenant or organization column
+   * (db/migrations/20260813_audit_tamper_proof_log.sql:64 — id, sequence_number,
+   * event_type, actor, resource, action, details, the hash chain, client
+   * context, and nothing else). `TamperProofAuditLog.search` therefore has no
+   * tenant parameter to accept, and its query is
+   * `SELECT * FROM audit.tamper_proof_log WHERE 1=1` plus whatever optional
+   * filters it was given. The table is in schema `audit`, and both tenant
+   * sweeps filter `WHERE c.table_schema = 'public'`, so no RLS policy covers it
+   * either.
+   *
+   * Before 2026-09-10 this method passed userId/resourceType/fromDate/toDate to
+   * that fallback and dropped `tenantId` on the floor. The shape of the bug
+   * matters more than its reachability: a caller asked for one tenant's Part 11
+   * audit trail, the primary path threw, and the `catch` below fell through to a
+   * path that answered the question for EVERY tenant — and returned an array, so
+   * the caller could not tell. An error widening a result set is worse than an
+   * error surfacing, and it is the exact inverse of this repo's "an error is
+   * never rendered as an empty result" rule.
+   *
+   * Nothing reaches this today: `queryAuditEvents` in
+   * server/services/audit/auditLogger.ts is this method's only caller, and
+   * nothing imports `queryAuditEvents`. That is why this is a refusal and not an
+   * incident. The first route that wires it up inherits the behaviour, so the
+   * refusal is here rather than in a comment.
+   *
+   * Giving `audit.tamper_proof_log` a tenant column and a policy is WO-13.
+   * Until then a tenant-scoped read has no correct answer from the fallback,
+   * and the honest response to "no correct answer" is to say so.
    */
   async getAuditLog(filters?: {
     userId?: string | number;
@@ -518,6 +548,19 @@ class AuditService {
     }
 
     // --- Fallback: TamperProofAuditLog ---
+    // Refuse rather than answer a tenant-scoped question with every tenant's
+    // rows. See the header: this store has no tenant column to filter on.
+    const scopeRequested = filters?.tenantId ?? filters?.organizationId;
+    if (scopeRequested != null) {
+      logger.error(
+        'getAuditLog: durable audit_logs query unavailable and the tamper-proof ' +
+          'fallback cannot be tenant-scoped; refusing rather than returning ' +
+          'cross-tenant audit rows',
+        { tenantId: scopeRequested },
+      );
+      throw new Error('AUDIT_LOG_TENANT_SCOPE_UNAVAILABLE');
+    }
+
     try {
       const tpLog = await ensureInitialized();
       if (tpLog) {
