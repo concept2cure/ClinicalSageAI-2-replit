@@ -481,8 +481,59 @@ breaks: **"Never silent."**
 
 ## Scope
 
-1. **Finding 1 first.** Four separable pieces, and the reproduction says which
-   ones actually close it:
+> ### ⛔ 2026-09-10 — the convergence migration proposed below was REVIEWED AND REFUSED
+>
+> Ten agents across five hazard dimensions, each adversarially verified: **13
+> findings refuted, 41 survived.** The proposal does not ship. The three that
+> kill it:
+>
+> **It would have manufactured a green signal.** With `org_id` present, index
+> 260 does attach `tenant_isolation_policy` and index 261 does `FORCE` it — the
+> deploy log and `\d` both then read as fixed. But `069` (the backfill) and
+> `0021` are `indexOf = -1` in `C2C_MIGRATION_FILES`, so on the defect path
+> every row has `org_id NULL` — measured, 2 of 2 — and the canonical policy's
+> third arm is `OR org_id IS NULL`. **The policy admits 100% of rows to every
+> tenant.** Turning "no policy" into "a policy that isolates nothing", while the
+> deploy prints success, is precisely the invented result this platform must
+> never produce. Anything shipped here either carries the backfill and the
+> `FORCE` with it, or says in writing that it delivers a policy and not
+> isolation.
+>
+> **It does not even fix the resolver.** `core.get_program_org_id`'s second
+> branch reads `core.program_ownerships`, which is also gcc-only and also
+> absent. Adding `org_id` alone converts the `42703` into a `42P01` — the same
+> failure wearing a different code.
+>
+> **It could strand the deploy.** `ADD CONSTRAINT` raises `23503` on a
+> partially-converged database, which `EXCEPTION WHEN duplicate_object` does not
+> catch; at index 12 with `stopOnFirstFailure` that leaves ~250 migrations
+> unapplied. Separately, `SET NOT NULL` is RLS-blind while the `UPDATE` feeding
+> it is not — with `app.rls_enforce='on'` the UPDATE matched 0 of 1 NULL rows
+> and `SET NOT NULL` then failed, wedging every subsequent deploy. Latent only
+> until someone hardens the deploy connection.
+>
+> Two of my own scoping claims were also wrong: the placement window is
+> **12–69**, not 12–224 (`BATCH_START` at index 70 is the binding upper bound),
+> and index 225 imposes no ordering constraint at all because plpgsql defers
+> resolution.
+>
+> **And the strategic finding, which is why per-table convergence is the wrong
+> shape of fix: 167 tables exist only on install-fresh step 6.** `core.programs`
+> is one symptom. Converging it one table at a time treats none of the cause.
+> The cause is that step 6 is optional and `deploy-migrate` cannot tell it was
+> skipped — so the fix belongs at that boundary (a deploy-migrate preflight
+> assertion, per Correction 1), not in 167 ALTERs.
+>
+> What survived as safe and useful: the file is genuinely idempotent and
+> convergent, there is no transaction-nesting problem, no journal drift, no pool
+> poisoning, no replay oscillation, and no heavy lock in the normal case. Those
+> were real risks and they were checked by execution rather than argued away.
+
+1. ~~**Finding 1 first.** Four separable pieces~~ — **superseded by the review
+   above.** The convergence migration is not the first move; the
+   `deploy-migrate` preflight assertion is, because it is the only piece that
+   scales past one table. Kept below for the constraints it records, which the
+   review confirmed or corrected:
    - a convergence migration in `C2C_MIGRATION_FILES` adding `org_id`,
      `metadata`, `created_by` and the `status NOT NULL` posture, plus
      `programs_org_idx` and the guarded `programs_org_fk`. Placement window is
