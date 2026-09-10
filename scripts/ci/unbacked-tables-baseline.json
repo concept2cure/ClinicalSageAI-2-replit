@@ -1,6 +1,6 @@
 {
   "$comment": "Tables referenced by server SQL that NOTHING in the repo creates — no migration, no drizzle pgTable, no runtime DDL. Pinned to the exact referencing file set, so an entry cannot silently acquire new call sites. Every entry is a feature that either returns 500 (unguarded query) or silently no-ops (query inside try/catch). Each is a defect awaiting a code-derived migration or a retirement, NOT an approved pattern. Shrink this file; never grow it. See ledger C-11/C-14 for the remediation pattern: derive the shape from the queries, add one canonical migration, prove it with a golden journey.",
-  "generatedAt": "2026-09-05T12:41:54.785Z",
+  "generatedAt": "2026-09-10T03:20:36.876Z",
   "total": 36,
   "entries": {
     "academic_embeddings": [
@@ -42,11 +42,11 @@
     "cyp": [
       "server/services/ana/pediatricTools.ts"
     ],
+    "document_approvals": [
+      "server/services/unifiedTaskService.ts"
+    ],
     "ectd_v4.submissions": [
       "server/services/cognitive-ecosystem/cognitive-audit.service.ts"
-    ],
-    "expected_prev": [
-      "server/src/control-plane/persistent-queries.ts"
     ],
     "extraction_jobs": [
       "server/routes/integration-test.ts"

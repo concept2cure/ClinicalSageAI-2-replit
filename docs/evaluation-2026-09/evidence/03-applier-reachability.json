@@ -1,0 +1,26 @@
+{
+  "generated": "2026-09-10T03:19:02.672Z",
+  "note": "Coverage per applier. Deliberately makes NO claim about which tables exist in a deployed database — that needs a live DB (ci:tables-live-schema).",
+  "totals": {
+    "files": 554,
+    "unreachedByDurableApplier": 7,
+    "ciTestDbOnly": 0
+  },
+  "coverage": {
+    "deploy-migrate (production)": 261,
+    "install-fresh": 288,
+    "db_migrate.sh (operator)": 304,
+    "ci psql loop (TEST DB ONLY)": 43,
+    "drizzle journal": 1
+  },
+  "unreached": [
+    "db/migrations/emergency_security_migration.sql",
+    "migrations/0005_csr_knowledge_database.sql",
+    "migrations/0019_tenant_column_audit.sql",
+    "migrations/0020_coerce_text_tenant_columns.sql",
+    "migrations/0021_enable_rls_everywhere.sql",
+    "migrations/20260608_ai_placement_policies.sql",
+    "migrations/20260612_rls_research_admin.sql"
+  ],
+  "ciOnly": []
+}

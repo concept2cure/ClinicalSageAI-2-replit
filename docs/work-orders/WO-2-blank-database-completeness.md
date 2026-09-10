@@ -68,3 +68,56 @@ it rather than building a parallel harness.
 ## Estimate
 
 2–3 weeks, overlapping WO-1.
+
+---
+
+## Added 2026-09-10 by WO-1 — a gate blind spot, and one table it hid
+
+`ci:unbacked-tables` counts a table as backed if **any non-archived `.sql` file
+under `db/migrations/` or `migrations/` contains its `CREATE TABLE`**. Its own
+header says so. That treats the *existence of a file* as provisioning, and a
+file on no applier provisions nothing.
+
+WO-1 archived two dead schema dumps to `sql/_legacy/` —
+`cro_database_schema.sql` and `document_versions.sql`, referenced by nothing
+since 2026-06-16 and applied by no path. The gate immediately reported a table
+it had been calling backed:
+
+```
+🚫 Server SQL references tables that NOTHING in this repo creates:
+  document_approvals
+      server/services/unifiedTaskService.ts
+```
+
+`unifiedTaskService.ts:667` runs it unguarded:
+
+```js
+// Query vault approval tasks (raw query to avoid missing schema bindings)
+const approvalsResult = await dbInstance.execute(sql`
+  select id, approver_id as approverId, status, approval_date as approvalDate
+  from document_approvals
+  where status = 'PENDING'
+  limit 50
+`);
+```
+
+The comment is the tell. Someone hit a missing schema binding and routed around
+it with raw SQL rather than asking why the binding was missing — and raw SQL is
+exactly what the drizzle-side checks cannot see. The table's only definition was
+in a dump nothing applies, so this query has never worked in any environment.
+
+Baselined rather than fixed here: WO-1's scope is authority, and creating this
+table needs a shape decision plus `organization_id INTEGER NOT NULL` per
+`CLAUDE.md` RULE 1. The baseline did not grow — `document_approvals` entered as
+`expected_prev` left, so it stands at 36.
+
+### Two things for this work order
+
+1. **Decide `document_approvals`**: create it properly, or point the query at
+   the table that holds vault approvals, or delete the query. It has never
+   returned a row.
+2. **Fix the gate's definition of "created."** A table should count as backed
+   only when its creating file is on a durable applier. The applier map is in
+   `docs/evaluation-2026-09/evidence/applier-reachability.mjs`. Expect this to
+   surface more entries — that is the point, and it is why it belongs here
+   rather than in a restore-green change.

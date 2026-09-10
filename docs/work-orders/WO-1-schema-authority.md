@@ -72,3 +72,79 @@ validated against a from-scratch install (WO-2's harness) before merge.
 2–3 weeks. The 64 are not uniform — expect a long tail where two definitions
 diverged and picking either loses a column someone depends on. Those are the
 ones to escalate, not to guess at.
+
+---
+
+## PROGRESS — 2026-09-10 (not closed)
+
+**Duplicates 64 → 56.** Eight resolved. The remaining 56 are genuinely the
+2–3 weeks this work order estimated; what follows is the map that makes them
+tractable, and one bug found on the way that mattered more than the count.
+
+### The 63 were not one problem. They are five, at very different risk
+
+Classified by which applier each definition sits on
+(`docs/evaluation-2026-09/evidence/applier-reachability.mjs`):
+
+| Count | Class | Risk |
+|---:|---|---|
+| 23 | **SPLIT-APPLIER** — one creator on deploy-migrate, one on install-fresh | Two environments can hold different shapes |
+| 18 | **NEITHER-APPLIER** — dead DDL | None at runtime; noise that hides the rest |
+| 10 | ONE-LIVE-ONE-DEAD | A trap for readers, not for the database |
+| 5 | BOTH-FRESH-ONLY | Fresh installs only |
+| ~~3~~ 0 | ~~**BOTH-ON-DEPLOY-SET**~~ | **Resolved** — was the dangerous class |
+
+Work the classes, not the alphabet. `BOTH-ON-DEPLOY-SET` was three entries and
+the only class where set position silently decides a production schema.
+
+### Done
+
+1. **`stab_results`, `cmc_methods`, `stab_signoffs`** — all three
+   BOTH-ON-DEPLOY-SET. `stab_results` was two entirely different tables under
+   one name (`result_id` UUID + four FKs vs `id` SERIAL + VARCHARs); the
+   runtime uses the first and got it only because entry 598 precedes entry 600.
+2. **Two dead schema dumps archived** to `sql/_legacy/` —
+   `cro_database_schema.sql` (490 lines) and `document_versions.sql`, both
+   referenced by nothing since 2026-06-16. Removed four duplicates including
+   `users`, `organizations` and `audit_logs`, which were never competing
+   migrations at all.
+3. **The `capa` bug** — see the WO-1 commit. Two fabricated CAPA records were
+   being INSERTed on every deploy, unguarded, into a regulated table.
+
+### The thing to understand before doing the remaining 56
+
+**There are six paths that apply SQL in this repository, not one**, and they
+cover different subsets:
+
+| Applier | Covers | Files |
+|---|---|---:|
+| `deploy-migrate.mjs` | `C2C_MIGRATION_FILES` (production, incremental) | 261 |
+| `install-fresh.mjs` | `migrations/*.sql` less six RLS files, + authoring subsystem, + named pre-overlay creators, + the whole `*_gcc_*` tree at step 6 | 288 |
+| `db_migrate.sh` | `db/migrations/` 0XX, 1XX, date-prefixed (operator) | 304 |
+| ci.yml psql loop | `db/migrations/*_gcc_*.sql` → **a CI test database** | 43 |
+| drizzle `migrate()` | the journaled baseline | 1 |
+| `preview_db_test` | only migrations a PR adds | — |
+
+Only **7** non-archived `.sql` files are reached by no durable applier, and all
+seven are accounted for: the six RLS migrations `install-fresh` excludes by name
+and one `emergency_security_migration.sql`.
+
+**So the problem is not that tables go uncreated. It is that answering "which
+applier creates this table, in which shape" requires reading six code paths,
+several of which are documented only in prose inside a 2,000-line module.** That
+is the schema-authority problem stated precisely, and it is why the fix is one
+manifest rather than 56 individual reconciliations.
+
+### Two corrections recorded, because the method matters
+
+An earlier revision of the reachability script modelled **two** appliers and
+concluded that 69 tables were "referenced by server code and created by
+nothing" — including `vault.documents`. That was wrong, twice over: it missed
+`db_migrate.sh`, and then missed `install-fresh` step 6. Both were caught by
+checking an implausible result against a known-good case rather than by
+re-reading the code. A document vault that exists in no database is not a thing
+that goes unnoticed, so the number had to be wrong before the cause was found.
+
+The script now models all six paths and deliberately makes **no** claim about
+which tables exist in a deployed database — that cannot be derived from the
+repository, which is the whole point of `ci:tables-live-schema` and of WO-2.
