@@ -31,11 +31,35 @@
 > which no repository-only check can see. That instrument now exists and is
 > repeatable (`npm run db:provision-test`, `docs/DB_TEST_HARNESS.md`).
 >
-> **What the remaining 31 are.** 12 are `cortex.*`, parked by your call pending
-> WO-14's product decision. The other 19 are live-shape reconciliations, not
-> dead text — the honest end state for this work order is `:strict` green over a
-> documented cortex-only baseline of 12, not a deleted baseline file. Deleting
-> it outright needs WO-14.
+> **What the remaining 27 are — and why this work order cannot finish them.**
+> Every one of the 27 has now been diffed against a live database, and the
+> answer is uniform: **none of them is dead text.** That is the material change
+> in this work order's scope.
+>
+> | Count | What | Why WO-1 cannot resolve it |
+> |---:|---|---|
+> | 12 | `cortex.*` | parked by your call, pending WO-14's product decision |
+> | 5 | hand-written DDL vs the pushed shape (`compliance_tracking`, `project_milestones`, `template_usage`, `vault.documents`, `vault.document_chunks`) | needs a convergence migration, or is already reconciled and the pair is the record of it |
+> | 3 | `contradiction_*` | the two shapes differ by 14 CHECK constraints, a column type, six nullability flips and a `timestamptz`/`timestamp` split — plus a column-name split that breaks four writes on *either* shape (WO-15 §7) |
+> | 3 | `submission_orchestrator_*` | the live shape is broken by a trigger writing a column push omits (WO-15 §6) |
+> | 2 | `risk_items` / `risk_controls` | blocked on ledger C-29's open rename decision |
+> | 1 | `c2c_template_specs` | **not a defect** — a verified byte-identical defensive guard |
+> | 1 | `core.programs` | WO-15 §1; removing the entry fails `ci.yml:91` while both `CREATE`s remain |
+>
+> **So the original exit criterion is not reachable from here, and pretending
+> otherwise would be the dishonesty this work order exists to remove.**
+> Deleting `duplicate-table-ddl-baseline.json` requires WO-14 (12 entries) and
+> C-29 (2). Promoting `:strict` to blocking requires the file to be empty, so it
+> requires the same. And the remaining 11 are not deduplication at all — each
+> needs an `ALTER TABLE … ADD COLUMN IF NOT EXISTS` inside `C2C_MIGRATION_FILES`,
+> which is [WO-15](WO-15-schema-the-code-expects-that-no-deploy-creates.md)'s
+> work, not this one's.
+>
+> **WO-1's remaining deliverable is therefore the baseline itself**, and it is
+> done: all 27 entries carry a written classification, there is no "unreviewed"
+> category, and two of them are marked as things that must NOT be "fixed" by
+> removal. A reader can now tell parked from blocked from not-a-defect from
+> outstanding, which was not true this morning.
 >
 > **Five live defects were found on the way and are NOT in this work order.**
 > They are schema the code expects that no deploy path creates — including a
