@@ -81,11 +81,38 @@ const BASELINE_PATH = path.join(repoRoot, 'scripts', 'ci', 'duplicate-table-ddl-
  * Narrow deliberately: only `fixtures/` under `tests/`. A .sql file anywhere
  * else in the test tree is still scanned, because a migration that drifts into
  * tests/ is exactly the kind of thing this gate should catch.
+ *
+ * THE VERIFICATION HARNESS BOOTSTRAP (`scripts/db-verify/`), added 2026-09-10
+ * (WO-1). A third fixture, in a directory that does not look like one.
+ * `00_bootstrap_base.sql` defines six tables the lineage also defines —
+ * audit_logs, c2c_ana_actions, clinical_studies, coi_disclosures,
+ * effort_certifications, effort_lines — which is 6 of the 47 collisions this
+ * baseline carried. It is not dead code and must not be archived: three tests
+ * load it by path (qms-vault-audit-atomicity.contract,
+ * esignature-audit-atomicity.contract, governed-action.pglite.integration).
+ * Nothing automated applies it — no package.json script, no workflow, no hook.
+ *
+ * EXCLUDED ONLY BECAUSE THE SHAPES WERE CHECKED FIRST, and the check is the
+ * part worth keeping. An exclusion here would be dangerous in one specific way:
+ * if the bootstrap declared a column the product does not have, the harness
+ * would be verifying against a schema nothing ships, and hiding that behind an
+ * exclusion is how a fixture becomes a second source of truth. So every one of
+ * the six was diffed against a database built from empty by
+ * scripts/db/provision-test-db.sh (install-fresh + deploy-migrate, 1228 tables).
+ * Result: each fixture definition is a strict SUBSET of the live table — it
+ * declares no column the real schema lacks. Several are deliberately minimal
+ * (clinical_studies: 4 columns against 28 live), which is what a bootstrap
+ * should be. Re-run that diff before widening this exclusion.
+ *
+ * Same narrowness rule: `scripts/db-verify/` only. A .sql file elsewhere under
+ * scripts/ is still scanned.
  */
 const ARCHIVED = ['_legacy/', '_deprecated_migrations/', 'docs/archive/', '_consolidated/', 'node_modules/'];
 const TEST_FIXTURE = /(^|\/)tests\/.*\/fixtures\//;
+const DB_VERIFY_BOOTSTRAP = /(^|\/)scripts\/db-verify\//;
 
-const isArchived = (p) => ARCHIVED.some((a) => p.includes(a)) || TEST_FIXTURE.test(p);
+const isArchived = (p) =>
+  ARCHIVED.some((a) => p.includes(a)) || TEST_FIXTURE.test(p) || DB_VERIFY_BOOTSTRAP.test(p);
 
 /** Recursively collect .sql files under the repo. */
 function collectSql(dir, acc = []) {

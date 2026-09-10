@@ -1,19 +1,11 @@
 {
   "$comment": "Pre-existing duplicate CREATE TABLE definitions, pinned to the exact set of files that define each table. Each entry is a defect to be reconciled per ADR-0006, not an approved pattern. A NEW table collision, or a NEW file defining an already-colliding table, fails CI. Shrink this file; never grow it. Standing exceptions (documented in ledger C-8/C-10/C-11): entries whose only rival is a dead root-lineage 0010 file — their canonical DDL lives in db/migrations/20260725_* and ADR-0006 retirement of the dead files removes the entries.",
-  "generatedAt": "2026-09-10T15:25:58.888Z",
-  "total": 40,
+  "generatedAt": "2026-09-10T15:26:33.367Z",
+  "total": 34,
   "entries": {
     "api_usage_logs": [
       "db/migrations/20260319_billing_usage_budgets_alerts.sql",
       "migrations/20260702_usage_model_credit_ledger.sql"
-    ],
-    "audit_logs": [
-      "db/migrations/20260129_add_org_industry_stripe_audit_logs.sql",
-      "scripts/db-verify/00_bootstrap_base.sql"
-    ],
-    "c2c_ana_actions": [
-      "migrations/20260527_mutation_primitives.sql",
-      "scripts/db-verify/00_bootstrap_base.sql"
     ],
     "c2c_bla_assessments": [
       "db/migrations/20260718_bla_assessments_store.sql",
@@ -30,14 +22,6 @@
     "charter_sections": [
       "migrations/0012_project_charter_timeline.sql",
       "migrations/20260629_charter_tables_rebuild.sql"
-    ],
-    "clinical_studies": [
-      "migrations/20260510_notifications_and_clinical.sql",
-      "scripts/db-verify/00_bootstrap_base.sql"
-    ],
-    "coi_disclosures": [
-      "migrations/20260611_research_security.sql",
-      "scripts/db-verify/00_bootstrap_base.sql"
     ],
     "concept2cure_artifact_versions": [
       "db/migrations/20260128_concept2cure_foundation.sql",
@@ -123,14 +107,6 @@
     "cortex.traces": [
       "db/migrations/073_cortex_prime_unified_brain.sql",
       "db/migrations/079_gcc_unified_functions_views.sql"
-    ],
-    "effort_certifications": [
-      "migrations/20260611_effort_certification.sql",
-      "scripts/db-verify/00_bootstrap_base.sql"
-    ],
-    "effort_lines": [
-      "migrations/20260611_effort_certification.sql",
-      "scripts/db-verify/00_bootstrap_base.sql"
     ],
     "project_commitments": [
       "migrations/0012_project_charter_timeline.sql",
