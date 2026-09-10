@@ -1,7 +1,7 @@
 {
   "$comment": "Tables a per-request server path reads that carry NO tenant column, so no RLS sweep in this repository can policy them. Each entry needs a reason whose first word is one of: global | derived | exempt | unreviewed. \"unreviewed\" is a DEFECT awaiting triage, not a category \u2014 three cross-tenant disclosures on 2026-09-10 were all tables that would have sat here as \"unreviewed\". Shrink this file; never grow it. See docs/work-orders/WO-13-grdhe-tenant-scoping.md.",
   "generatedAt": "2026-09-10T05:58:22.417Z",
-  "total": 116,
+  "total": 115,
   "entries": {
     "adversarial.regulatory_adversarial_precedents": "unreviewed \u2014 no one has classified this table yet",
     "ai_claim_citations": "unreviewed \u2014 no one has classified this table yet",
@@ -59,7 +59,6 @@
     "faers_reports": "unreviewed \u2014 no one has classified this table yet",
     "fda_510k_initial_data_forms": "unreviewed \u2014 no one has classified this table yet",
     "guidance_reference_index": "unreviewed \u2014 no one has classified this table yet",
-    "ind_sections": "unreviewed \u2014 no one has classified this table yet",
     "intelligence.agency_requirements": "unreviewed \u2014 no one has classified this table yet",
     "intelligence.calibration_buckets": "unreviewed \u2014 no one has classified this table yet",
     "intelligence.document_templates": "unreviewed \u2014 no one has classified this table yet",
@@ -120,5 +119,5 @@
     "vault.document_read_receipts": "unreviewed \u2014 no one has classified this table yet",
     "vigilance_events": "unreviewed \u2014 no one has classified this table yet"
   },
-  "$note_on_reasons": "Seven entries below carry a written classification; the rest are 'unreviewed', which is the honest state and not a category. Writing 116 justifications nobody has checked would make this file assert more than anyone knows \u2014 and a baseline that overstates its own certainty is the failure mode this repository already documents for the other 42."
+  "$note_on_reasons": "Seven entries below carry a written classification; the rest are 'unreviewed', which is the honest state and not a category. Writing 116 justifications nobody has checked would make this file assert more than anyone knows \u2014 and a baseline that overstates its own certainty is the failure mode this repository already documents for the other 42. | 2026-09-10 (WO-1): ind_sections removed. Its only CREATE TABLE was sql/ind_data_model.sql, a file on no applier, archived to sql/_legacy/. The table is absent from a real provisioned database and always was; its only reader, server/services/indCopilot.js, queries SUPABASE rather than this pool and is quarantined (server/utils/database.js:84 records that this is deliberate). So the entry was a phantom created by a phantom creator, and the gate's stale-entry check is what surfaced it."
 }

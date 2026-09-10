@@ -1,3 +1,25 @@
+-- ============================================================================
+-- ARCHIVED 2026-09-10 (WO-1, ADR-0006) — a standalone CREATE TABLE script on NO applier.
+-- ============================================================================
+-- This file defined `regulatory_commitments` a second time. It was never applied by anything:
+-- deploy-migrate runs only C2C_MIGRATION_FILES, install-fresh walks
+-- migrations/ and named parts of db/migrations/, and neither reaches sql/.
+-- A repo-wide grep found zero references from .ts/.js/.mjs/.sh/.yml — only
+-- baselines and audit evidence, which are records OF the duplication, not users
+-- of the file.
+--
+-- The canonical creator is migrations/20260610_ha_interactions_commitments.sql,
+-- which is on install-fresh. That was not taken on trust: `regulatory_commitments`
+-- was confirmed present on a database built from empty by
+-- scripts/db/provision-test-db.sh (install-fresh + deploy-migrate, 1228 tables)
+-- with this file already archived.
+--
+-- That check is the point. Retiring migrations/0010 earlier in this same work
+-- order removed the ONLY creator of `contradiction_links` and no gate saw it —
+-- ci:duplicate-table-ddl went 51 -> 47, ci:unbacked-tables stayed green, every
+-- schema-contract test passed. Only a provisioned database could tell.
+-- ============================================================================
+
 -- Create regulatory_commitments table for enhanced commitment management
 -- This table stores extracted commitments with full lifecycle management capabilities
 

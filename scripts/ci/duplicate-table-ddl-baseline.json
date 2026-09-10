@@ -1,7 +1,7 @@
 {
   "$comment": "Pre-existing duplicate CREATE TABLE definitions, pinned to the exact set of files that define each table. Each entry is a defect to be reconciled per ADR-0006, not an approved pattern. A NEW table collision, or a NEW file defining an already-colliding table, fails CI. Shrink this file; never grow it. Standing exceptions (documented in ledger C-8/C-10/C-11): entries whose only rival is a dead root-lineage 0010 file — their canonical DDL lives in db/migrations/20260725_* and ADR-0006 retirement of the dead files removes the entries.",
-  "generatedAt": "2026-09-10T15:25:22.870Z",
-  "total": 42,
+  "generatedAt": "2026-09-10T15:25:58.888Z",
+  "total": 40,
   "entries": {
     "api_usage_logs": [
       "db/migrations/20260319_billing_usage_budgets_alerts.sql",
@@ -132,17 +132,9 @@
       "migrations/20260611_effort_certification.sql",
       "scripts/db-verify/00_bootstrap_base.sql"
     ],
-    "ind_cross_references": [
-      "migrations/20260614_ind_cross_references.sql",
-      "sql/ind_data_model.sql"
-    ],
     "project_commitments": [
       "migrations/0012_project_charter_timeline.sql",
       "migrations/20260629_charter_tables_rebuild.sql"
-    ],
-    "regulatory_commitments": [
-      "migrations/20260610_ha_interactions_commitments.sql",
-      "sql/create_regulatory_commitments_table.sql"
     ],
     "risk_controls": [
       "migrations/20260507_mdx_beta_surfaces.sql",
