@@ -384,8 +384,30 @@ export interface Recommendation {
     actionType: AIActionType | WorkflowTemplateId;
     payload: Record<string, unknown>;
   };
-  /** Confidence in this recommendation (0-1). */
-  confidence: number;
+  /**
+   * How this recommendation was produced. Every recommendation from
+   * `server/services/orchestration/recommendation-engine.ts` is `rules_based`:
+   * a deterministic filter over project state, which either matched or did not.
+   * Mirrors the same field on the sibling engine
+   * (`server/services/intelligence/recommendation-engine.ts`).
+   */
+  sourceType: 'rules_based' | 'ai_inferred';
+  /**
+   * Confidence in this recommendation (0-1), or `null` when nothing computed
+   * one.
+   *
+   * `null` for every `rules_based` recommendation: a rule that fires on a
+   * matched condition has no score to report, and a per-rule constant printed
+   * as a percentage is a fabricated one. (WO-16C finding 124: the orchestration
+   * engine used to stamp 0.95 / 0.9 / 0.85 / 0.8 / 0.7 literals here and the
+   * AnA Command surface painted them as unlabeled confidence chips.) Only an
+   * `ai_inferred` recommendation may carry a number — the same convention the
+   * sibling engine documents as "0-100, null for rules_based".
+   *
+   * Consumers must handle `null` explicitly; `confidence || 0` renders "0%",
+   * which is a fabricated score, not an absent one.
+   */
+  confidence: number | null;
   /** Module context. */
   module?: string;
   /** When this recommendation was generated. */
