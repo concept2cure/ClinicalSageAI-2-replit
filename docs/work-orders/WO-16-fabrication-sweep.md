@@ -417,3 +417,292 @@ with its backfill removed — a backfilled chain hashes history from its current
 contents and so attests to nothing, and the backfill's UPDATE would have raised
 P0A01 against the already-deployed no-update trigger. Verified end to end on the
 canonical database.
+
+---
+
+# WO-16C — the 104 unverified findings, one agent each plus an adversarial panel
+
+**Run by:** the cortex / WO-16B session · **11 September 2026** · **Verified at head `c5e770288`**
+
+**Sixty-five of the 104 describe something true about the code, but only sixteen
+have any consequence a customer can reach, none is critical, and the one that
+would have changed the pilot answer — an audit-trail entry whose actor the
+caller could name themselves — is fixed in this pass.**
+
+## What was run
+
+One verifier agent per finding, then **two adversarial refuters per survivor on
+distinct lenses** — one re-reading the code, one attacking reach and consequence
+— each told to default to `refuted: true` unless it could positively confirm the
+claim from source it had read itself. 104 verifiers and 128 refuters, 232 agents,
+about 26M subagent tokens.
+
+The refuters were not decoration. They refuted 21 findings outright, split on 48
+more, and where they let a finding stand they still capped its severity: the
+final rating for every finding is the verifier's, lowered to the lowest rating
+any refuter gave it. That rule is why the numbers below are so much smaller than
+the verifier pass alone produced. A verifier-only run would have reported 3
+criticals and 22 highs; after the panel there are none and six.
+
+## The answer in numbers
+
+| | Findings |
+|---|---|
+| Not a defect at all | **39** |
+| — refuted by both refuters | 21 |
+| — one refuter refuted, the residue has no consequence | 16 |
+| — already fixed (your lane, `440df4a4e`, `f567da99b`) | 2 |
+| Real, and something reaches a customer | **65** |
+| — high | 6 |
+| — medium | 10 |
+| — low (true, but dead, unrendered, or cosmetic) | 49 |
+| — critical | 0 |
+
+**The sweep's tiers do not survive contact with the code, in both directions.**
+
+| Sweep tier | → high | → medium | → low | → nothing |
+|---|---|---|---|---|
+| high (45) | 6 | 5 | 26 | 8 |
+| medium (43) | 0 | 3 | 21 | 19 |
+| low (16) | 0 | 2 | 2 | 12 |
+
+Two of the sweep's `low` entries are worth more than most of its `high` ones, and
+26 of its 45 `high` entries are dead code or a prompt instruction nothing renders.
+The one structural reason, visible in the table: **39 of the 65 live findings
+have no `client/src` caller at all.** The sweep tiered on how alarming a literal
+looked in isolation, not on whether anything reads it.
+
+## Does any of it change the pilot answer?
+
+No — with one exception that is now closed, and one caveat that is yours.
+
+**#67 would have.** `POST /api/part11/audit-trail` took the actor's printed name
+from `req.body.userName` and wrote it onto a persisted, hash-chained
+`audit_events` row flagged `regulatory_significant`. Every other identity field
+on that INSERT came from the authenticated principal; only the field a reviewer
+reads when asking *who did this* came from the caller. An audit trail in which a
+tenant member can file an entry under a colleague's name is not an audit trail,
+which is the same sentence you wrote about the chain trigger. It is fixed
+(`bb5ec75e3`), derived now by the same rule the sibling writer to the same table
+already used. This one was mine to catch in WO-16B and I did not: I rewrote that
+handler and never noticed the name came from the body while everything around it
+came from auth.
+
+**The caveat, now closed at both ends.** Nothing in these 104 touches the
+`audit_events` hash-chain trigger; you took that and landed it while this panel
+was running. The two findings meet at the same row, so it is worth saying how:
+your change makes the chain over `audit_events` verifiable, and #67 was writing a
+caller-asserted actor name into that same chain. A verifiable chain over a
+misattributed row attests only that the misattribution was not altered later.
+Both halves had to be true, and now are.
+
+None of the remaining five highs blocks a pilot on its own. They are wrong
+numbers and unearned labels on screens, not corrupted records.
+
+## Fixed in this pass
+
+Three, all confirmed by a panel that held on both lenses, all small and local,
+all outside your §5 file list, each proven red before green.
+
+| # | What it was | Commit |
+|---|---|---|
+| 67 | The Part 11 audit row's printed actor came from the request body | `bb5ec75e3` |
+| 48 | The endpoint recommender asked a model to *write* the FDA/EMA guidance it then cited | `bb5ec75e3` |
+| 71 | Every decision-lineage export certified five frameworks nothing evaluates | `ce703ea54` |
+
+**#48 is worse than the sweep said, and the refuters found why.**
+`loadRegulatoryGuidance` caches a file only when its parsed content has
+`.indication` and an array `.guidance`; both files under `regulatory_data/` are
+top-level arrays. The cache is therefore never written, `foundGuidance` is always
+false, and the model-generated branch was not a fallback — it was the only source
+this service had. The array is load-bearing: `classifyEndpointBasis` returns
+`regulatory_recommended`, the highest basis there is, for any endpoint with a
+non-empty `regulatory_guidance`, so an invented citation outranked endpoints
+backed by the real corpus. I confirmed the empty-cache mechanism by reading the
+loader and the two data files myself before accepting it.
+
+**#71 contradicted your own WO-16B fix.** `a668d73e2` made the compliance report
+on that router say `NOT_ASSESSED` for ICH E6(R2) and GAMP 5, because no check
+evaluates them. The export from the same router went on asserting all five
+unconditionally — and the export is the file a reviewer keeps. Since a hardcoded
+constant has no dependency to fail, red-before-green took two steps: a throwaway
+probe asserting the pre-fix output passed against the old code, then failed
+against the new one and was deleted.
+
+## The ranked backlog — everything with a consequence
+
+Ordered by severity, then by whether the panel split, then by reach. "1 of 2
+refuted" means one refuter would throw the finding out entirely; those rows are
+ranked below an equal-severity row both refuters let stand.
+
+| # | Sweep said | Now | Panel | File | Reach | Fix | What a customer actually gets |
+|---|---|---|---|---|---|---|---|
+| 59 | high | **high** | both held | `client/src/concept2cure/v2/surfaces/Biostatistics.tsx` | mounted, 4 client callers | small-local | On the Biostatistics screen's document preview (Biostatistics.tsx:898) and in the document the customer files into the dossier under Module 5 (toast at line 699: "filed to the dossier under Module 5"), the Sample Size Rationale carries "- **Confidence Level**: moderate (64/100)" (or low 42/100) and… |
+| 70 | high | **high** | both held | `server/services/workflow/DecisionLineageService.ts` | mounted, 2 client callers | medium | An authenticated user opening the DecisionLineage surface sees a '21 CFR §11' badge on every node of every trail, and any pending approval shown as performed by its first assignee at the moment the page loaded. Clicking XML/CSV/JSON under 'Export for the audit package' downloads a file headed 'Deci… |
+| 71 | high | **high** | both held | `server/services/workflow/DecisionLineageService.ts` | mounted, 2 client callers | small-local | A signed-in customer on the Decision Lineage surface exports a lineage record and downloads a file that, regardless of entity, org, or whether any check ran, states: CSV — "# Compliance: FDA 21 CFR Part 11, EU Annex 11, ICH E6(R2) GCP, PMDA ERES Guidelines, GAMP 5"; XML — the same line inside a com… |
+| 45 | high | **high** | both held | `server/services/statistical-defensibility-service.ts` | mounted, 1 client caller | small-local | On the Biostatistics workbench (surface 'biostat-workbench'), after entering only phase/indication/design/primary-endpoint/sample size, the customer sees a large "Overall score" number, a Rating chip (strong/adequate/weak/deficient) and a Reviewer-risk chip (BiostatWorkbench.tsx:492-494), under a c… |
+| 67 | high | **high** | both held | `server/routes/part11-compliance.ts` | mounted, 1 client caller | small-local | An authenticated member of a tenant who calls POST /api/part11/audit-trail with `userName: "<anyone>"` creates a persisted, hash-chained, regulatory_significant audit_events row attributed to that printed name. The customer then sees that forged actor as the "actor" column/detail in the v2 Admin >… |
+| 48 | high | **high** | both held | `server/services/endpoint-recommender-service.ts` | mounted, no client caller | small-local | An API-key integrator calling GET /api/v1/endpoints/recommend?indication=... receives, for any endpoint whose name the model happens to echo as a key, a `regulatory_guidance` array of model-invented `{authority:'FDA'\|'EMA'\|..., document_name:'<invented title>', guidance_text:'<invented quote>'}`… |
+| 107 | medium | **medium** | both held | `client/src/concept2cure/mdx/hooks/usePathwayTabsData.ts` | mounted, 4 client callers | small-local | On the Audit tab of the device pathway surface (510(k)/PMA/IVD/CER), under the heading "Serves the 21 CFR Part 11 audit trail" and a "Tamper-evident · SHA-256 · N events" badge, every audit row is chipped with a kind the client invented from the action string. Because the server writes the canonica… |
+| 42 | high | **medium** | both held | `server/services/unified-work/unified-work-view.ts` | mounted, 3 client callers | small-local | On the Workbench "Tasks and reviews" page (v2 surface 'device-tasks'), the header line "+N not on this board: X schedule milestone(s), Y tracked filing(s) · Z blocking" is computed from summary.bySource.schedule + summary.bySource.filing and summary.blocking. If the project_tasks or estar_submissio… |
+| 58 | high | **medium** | both held | `server/services/orchestration/readiness-engine.ts` | mounted, 3 client callers | medium | On the AnaCommand pre-submission gate panel (AnaCommand.tsx:712-713) a customer whose project has no validations and no CMC rows sees 'compliance 50' and, with no routed/promoted items, 'consistency 50' as labelled subscores, with no marker that neither dimension was assessed. On both the Orchestra… |
+| 99 | medium | **medium** | both held | `server/services/shadow-review/shadow-review-service.ts` | mounted, 3 client callers | medium | On the "Shadow review" surface (Review & govern → Shadow review), for a lens whose latest complete run recorded no rtf/format-dimension findings, the "Administrative gate — will they accept the filing?" card shows "0%", an empty fill bar and the words "low risk"; if there are also no critical/major… |
+| 124 | low | **medium** | both held | `server/services/orchestration/recommendation-engine.ts` | mounted, 3 client callers | small-local | On the AnA Command screen ("Next best actions" column), every recommendation card shows an unlabeled percentage chip — "95%" beside "X is in review status but has never been validated", "90%" beside "Task Y is blocked", "70%" beside "Z has not been updated in over 30 days" — that is a constant type… |
+| 133 | low | **medium** | both held | `server/services/pdev/pdev-workflow-bridge.ts` | mounted, 3 client callers | medium | Conditional, but concrete when it fires — nothing is invented, a required record silently goes missing. Normal operation: no difference; the audit row lands and the customer sees nothing. When either audit store is down, unconfigured, or rejects the row (pool exhausted, RLS WITH CHECK failure, conn… |
+| 109 | medium | **medium** | both held | `client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx` | mounted, 2 client callers | small-local | On the device workstream's Submissions surface, selecting a package renders an "Activity" list in the detail drawer where the actor column reads "System" for every milestone row (Workbench.tsx:648), regardless of who created the milestone (createdById is on the row but never resolved to a name). Th… |
+| 63 | high | **medium** | both held | `server/routes/regulatoryRoutes.ts` | mounted, no client caller | small-local | Nothing on any product screen — no client code calls the path. An authenticated user or integration that requests GET /api/regulatory/risk/<anything> (or /api/regulatory/regulatory/risk/<anything>) receives JSON `{ sectionId, analysis }` where `analysis` is a fixed text titled 'Regulatory Requireme… |
+| 65 | high | **medium** | both held | `server/routes/analytics-routes.ts` | mounted, no client caller | small-local | A logged-in customer (or an integration) that POSTs any protocol text to /api/analytics/demo-analysis receives JSON in which `ind_analysis.strengths` states the protocol has "Well-defined primary and secondary endpoints", "Clear inclusion/exclusion criteria", "Appropriate statistical analysis plan"… |
+| 72 | high | **medium** | both held | `server/services/audit/chainIntegrityMonitor.ts` | conditional, 1 client caller | small-local | No screen, no generated document, no export and no persisted record carries this verdict — that is the honest answer, and it is why this is not critical. What a customer can actually get: an authenticated GET to /api/audit/chain-monitor/status (or a POST to .../check) returns `{"success":true,"data… |
+
+## Recommended order, and what each costs
+
+**Take these four first.** All small, all local, all with a real screen behind them.
+
+1. **#59** `Biostatistics.tsx` — three fixed constants in a judgment table that is
+   previewed on screen and then filed into the dossier under Module 5. The engine
+   reads real input; only three of its dimensions are typed in. Trap (iii)
+   applies: make those dimensions derive from evidence the surface already has,
+   rather than deleting a working engine.
+2. **#107** `usePathwayTabsData.ts` — the device pathway's Audit tab renders every
+   row under a heading reading "Serves the 21 CFR Part 11 audit trail" and a
+   "Tamper-evident · SHA-256 · N events" badge. Four client callers.
+3. **#42** `unified-work-view.ts` — four `.catch(() => [])` turn a failed source
+   query into "0 open, 0 blocking" on the Workbench board. The WO-16B pattern
+   fits directly: record which source did not run and say so.
+4. **#124** `recommendation-engine.ts` — every "Next best action" card carries an
+   unlabelled percentage chip whose value is a per-rule constant.
+
+**#70 is the one that needs a design decision,** not a patch. The lineage graph
+stamps a `21 CFR §11` badge on every node and reports a pending approval as
+performed by its first assignee. The badge is the same class of claim #71 was,
+but fixing it properly means deciding what the badge is asserting per node, which
+is your subsystem's call, not a local edit.
+
+**#45** `statistical-defensibility-service.ts` is small but sits behind an LLM
+prompt that mandates seven 0–100 scores with no "cannot determine" option. The
+fix is the WO-16B shape — read each dimension with a numeric guard, average only
+what was assessed, return `null` plus an `unassessed` list — and it is worth
+doing next to #59, since both land on the Biostatistics workbench.
+
+## What I did not do, and why
+
+- **#30 `ai-assistance.ts` is yours** (§5), and you have already closed it —
+  `parseCredibilityScore` now reads the model's own rating and `credibilityBasis`
+  carries the third state. Recorded here only because both refuters independently
+  found the part the sweep missed, and it is the more interesting half: the
+  *real-AI* branches hard-coded `credibility: 85` and returned it with
+  `isRealAI: true` and `fallback: false` — no signal at all — while the prompt at
+  line 283 explicitly asked the model to rate credibility 0–100 and the answer was
+  dropped into `analysis`. The fallback 75 the sweep named was the
+  better-behaved of the two, because at least it admitted it was a template.
+- **The 49 low findings are real and I am not proposing work on them.** Almost all
+  are one of: a route with no client caller, a prompt instruction with no rendered
+  effect, or a defensive fallback no reachable code path can trigger. They belong
+  in the record, not in a sprint.
+- **The 39 refuted are written down with the source that refutes them**, below.
+  Refuted is a result. Several were refuted because a hop the verifier asserted
+  does not exist in source — which is the same failure mode the original sweep
+  had, caught here by making a second agent look for the hop itself.
+
+## Everything that is true but has no consequence
+
+Real as a statement about the code; dead, unrendered, or unreachable in practice.
+
+| # | Sweep said | Panel | File | Why it is low |
+|---|---|---|---|---|
+| 43 | high | both held | `server/services/ana/AnaToolExecutor.ts` | `resolveCapabilities` (server/services/entitlements/resolver.ts:105, 111) substitutes the literal tier `'standard'` whenever the `SELECT tier FROM organizations` query throws (caught at 112… |
+| 85 | medium | both held | `server/services/working-memory.ts` | In `buildMemoryContextForChat` the working-memory layer can only ever be labelled 'ok' or 'empty': a failed `conversation_working_memory` read is swallowed at source (`getLatestWorkingMemor… |
+| 82 | medium | both held | `server/routes/c2c/project-access.ts` | verifyProjectAccess (server/routes/c2c/project-access.ts:273-288) wraps its access lookup in a bare, unbound, non-logging `catch { return false; }`. When loadProjectAccessRow throws for an… |
+| 30 | high | both held | `server/routes/ai-assistance.ts` *(yours)* | In POST /api/ai-assistance/verify (server/routes/ai-assistance.ts:254), the returned `credibility` is a literal constant on all three branches and `sources_verified` is always just `sources… |
+| 31 | high | both held | `server/routes/document-understanding.ts` | POST /api/document-understanding/analyze (and /extract-tables, /extract-form-fields) returns, for a file read only as UTF-8 text and never rendered, a `bbox` on every element (x fixed at 72… |
+| 33 | high | both held | `server/api/cmc/blueprintRoutes.ts` | POST /api/cmc/blueprint/generate-blueprint returns three literal arrays as data.workflows, data.compliance and data.risks, with no field marking them static. Narrowly: createWorkflowTemplat… |
+| 37 | high | both held | `server/api/ai/routes.ts` | POST /api/ai/analyze-compliance (server/api/ai/routes.ts:299), mounted unconditionally behind authenticateToken at server/bootstrap/register-core-routes.ts:47-48, returns an unqualified 0-1… |
+| 46 | high | both held | `server/services/sentenceTraceabilityService.ts` | In mapBatchToSources, the model is shown only a 300-char truncation of each real source (sentenceTraceabilityService.ts:436) and asked to return a "relevant excerpt from source" plus a conf… |
+| 51 | high | both held | `server/routes/cerv2-ai-routes.ts` | At c5e770288 the two LLM system prompts in server/routes/cerv2-ai-routes.ts — :285 (POST /api/cerv2/ai/suggest) and :737 (POST /api/cerv2/ai/analyze-section) — instruct the model to cite ap… |
+| 52 | high | both held | `server/api/cmc/routes.ts` | POST /api/cmc/generate-enhanced-blueprint (server/api/cmc/routes.ts:1916-1968) validates only `section`. When `drugSubstance`/`drugProduct` are omitted it inserts the literal strings "Drug… |
+| 64 | high | both held | `server/services/regulatory-intelligence-service.ts` | generateSpecialConsiderations (server/services/regulatory-intelligence-service.ts:532-577) returns hardcoded 2-3-sentence arrays selected only by exact match on the `phase` string and a sub… |
+| 76 | medium | both held | `server/services/sap-generator-service.ts` | In server/services/sap-generator-service.ts the SAP body template hardcodes two trial-design pre-specification claims that no caller can supply or suppress: line 174 emits "Stratification f… |
+| 86 | medium | both held | `server/routes/c2c/context-intelligence.ts` | GET /api/concept2cure/compliance (server/routes/c2c/context-intelligence.ts:785-810) wraps its `compliance_tracking` SELECT in a bare `catch {}` (:801-803) that discards the error and falls… |
+| 89 | medium | both held | `server/services/figureGenerationService.ts` | With OPENAI_API_KEY set, every figure reachable through the only caller is generated from zero source data — audit-services.ts:42-54 forwards `dataSource`/`options`, which FigureGenerationR… |
+| 95 | medium | both held | `server/services/biostatistics-judgment/assumption-fragility.ts` | In assessEffectSizeFragility (server/services/biostatistics-judgment/assumption-fragility.ts:119-155) the figure presented to the caller as "approximate power" after a 20% effect-size reduc… |
+| 96 | medium | both held | `server/services/figureGenerationService.ts` | `computeFigureConfidence` (server/services/figureGenerationService.ts:561-579) computes `FigureSpec.confidence` — declared at :37 as "0-1 confidence in data accuracy" — from a 0.5 base plus… |
+| 94 | medium | already fixed 41dbc96ff | `server/services/innovation/submission-readiness-twin-service.ts` | Nothing today. Because the only writer of innovation.readiness_twin_assessments is behind an unmounted router, every AnA "how ready are we to file?" query returns status not_assessed ("No r… |
+| 39 | high | 1 of 2 refuted | `server/services/governed-decision-repository.ts` | recordGovernedDecisionSync (server/services/governed-decision-repository.ts:243-263) returns a GovernedDecisionReference before the decision_records INSERT is attempted, and every failure o… |
+| 44 | high | 1 of 2 refuted | `server/services/realTimeValidationService.ts` | In server/services/realTimeValidationService.ts, `analyzeContentWithAI` catches any failure of the gateway call or of `JSON.parse` and returns the literal `{ issues: [], suggestions: [] }`… |
+| 57 | high | 1 of 2 refuted | `server/services/shadow-review/shadow-review-service.ts` | In the branch where the model's returned rtfRiskScore/crlRiskScore exceeds the findings-derived aggregate, shadow-review-service.ts:162-163 persists the model's own number unchanged (:184)… |
+| 112 | medium | 1 of 2 refuted | `server/services/report-os/lineage-trace-report.ts` | server/services/report-os/lineage-trace-report.ts:245 renders the literal 'system' in the Actor column of the Evidence & Provenance Trace Report whenever concept2cure_provenance_events.acto… |
+| 40 | high | 1 of 2 refuted | `server/services/ana/lineage-dossier.ts` | In server/services/ana/lineage-dossier.ts the six satellite loaders (271-274, 302-305, 358-361, 392-395, 468-471, 507-510) catch every error — not only the 42P01 missing-table case they doc… |
+| 61 | high | 1 of 2 refuted | `server/services/regulatory-precedent-intelligence/seeds/crl-trigger-patterns.ts` | Two things stand, and neither is the sweep's original "invented rates drive a tenant's readiness verdict". (1) The fabricated statistics in crl-trigger-patterns.ts and advisory-committee-pa… |
+| 104 | medium | 1 of 2 refuted | `server/services/ana-ri/mdx-explain-audit-row.ts` | `renderExplainer` invents the actor when the row did not record one. `server/services/ana-ri/mdx-explain-audit-row.ts:171` defaults a missing `new_values.actorKind` to the literal `'human'`… |
+| 73 | high | 1 of 2 refuted | `server/routes/audit-trail-routes.ts` | `formatAuditRow` (server/routes/audit-trail-routes.ts:132-160), which shapes the response of GET /api/audit/logs, /api/audit-logs and /api/audit (lines 178, 200, 519 — all mounted unconditi… |
+| 108 | medium | 1 of 2 refuted | `client/src/concept2cure/v2/surfaces/DecisionLineage.tsx` | In DecisionLineage.tsx the third lead branch — taken whenever the adopted graph has no node with action 'locked' and no pending-signature decision node (lines 115-116) — renders at line 168… |
+| 32 | high | 1 of 2 refuted | `server/api/cmc/blueprintRoutes.ts` | On the success branch of generateAIBlueprint (server/api/cmc/blueprintRoutes.ts:325-373) six fields of the returned blueprint are compile-time constants that vary with nothing: sections.dru… |
+| 34 | high | 1 of 2 refuted | `server/routes/manufacturing-routes.ts` | GET /api/manufacturing/ai/review (server/routes/manufacturing-routes.ts:768-833) and POST /api/manufacturing/ai/simulate-deficiency (839-863) are mounted unconditionally behind authenticate… |
+| 35 | high | 1 of 2 refuted | `server/src/services/ai/stability.ts` | In `aiRootCauseOOS` the catch branch (server/src/services/ai/stability.ts:233-251) returns four `probableCauses` and four `recommendations` that are string literals independent of the `oosD… |
+| 36 | high | 1 of 2 refuted | `server/api/ai/routes.ts` | In `server/api/ai/routes.ts`, the `section === 'section_completion'` branch of `POST /api/ai/generate-boilerplate` (lines 426-429) picks one entry of the matched CTD template's `criticalFla… |
+| 38 | high | 1 of 2 refuted | `server/services/governed-decision-repository.ts` | The third-state collapse is real and every reach hop checks out in source, but no customer-facing surface consumes it. Concretely: on a deploy-migrate production database where decision_rec… |
+| 41 | high | 1 of 2 refuted | `server/services/ana/since-last-visit.ts` | getSinceLastVisit swallows failures from exactly two live reads — getDeadlineRadar (since-last-visit.ts:168-172; deadline-radar.ts:171 propagates a failed `regulatory_obligations` read) and… |
+| 50 | high | 1 of 2 refuted | `server/routes/c2c/ai-editing.ts` | On both POST /ai/edit-section and POST /ai/templates/:templateId/generate, text retrieved from the tenant's own lumen_data_atoms is concatenated verbatim (truncated to 600 / 500 chars) into… |
+| 53 | high | 1 of 2 refuted | `server/routes/cortexQueryRoutes.ts` | In handleAdvisoryMode (server/routes/cortexQueryRoutes.ts:382-459), all three structured fields of results.advisory are manufactured rather than read from the model, and nothing in the payl… |
+| 54 | high | 1 of 2 refuted | `server/services/intelligence/readiness-scoring-engine.ts` | In server/services/intelligence/readiness-scoring-engine.ts:181, `ModuleScore.gapCount` (declared `readonly gapCount: number` at :48) is not a count of anything: it is a constant per score… |
+| 66 | high | 1 of 2 refuted | `server/routes/cer-routes.ts` | At server/routes/cer-routes.ts:246-274, generateCERNarrative builds a single user prompt whose only inputs are caller-POSTed FAERS aggregates — report count, manufacturer/generic strings th… |
+| 74 | high | 1 of 2 refuted | `server/services/grdhe/grdheService.ts` | server/services/grdhe/grdheService.ts:69-72 defines `getCurrentUserId()`, which takes no request argument and returns `process.env.CURRENT_USER_ID \|\| 'system'`. `CURRENT_USER_ID` is set n… |
+| 75 | medium | 1 of 2 refuted | `server/routes/cortexAdvisoryRoutes.ts` | `server/routes/cortexAdvisoryRoutes.ts:422` emits `confidence: 85` — an unlabelled integer literal with no input and no computation — as a field of the success response of GET /api/cortex/a… |
+| 77 | medium | 1 of 2 refuted | `server/services/knowledgeGraphService.ts` | server/services/knowledgeGraphService.ts sets `confidence` to a hard-coded per-heuristic literal on every edge it manufactures — 0.6 for a regex-pattern match (:267), 0.5 for same atom_type… |
+| 79 | medium | 1 of 2 refuted | `server/api/enterprise/routes.js` | In `performLocalTextEnhancement` (server/api/enterprise/routes.js:397-400), when the request body's `improvements` array contains the literal string `'regulatory compliance'`, the function… |
+| 84 | medium | 1 of 2 refuted | `server/src/services/reg/evidence.ts` | In `server/src/services/reg/evidence.ts`, each of the three evidence queries in `gatherEvidence` ends in `.catch(() => ({ rows: [] }))` (:24, :38, :52), so once the module-scope pool has in… |
+| 88 | medium | 1 of 2 refuted | `server/services/contradiction-consequence-service.ts` | In server/services/contradiction-consequence-service.ts the review_thread, harmonization_rewrite and dossier_review_attachment consequences have no persistent effect other than a single INS… |
+| 90 | medium | 1 of 2 refuted | `server/routes/planner-routes.ts` | POST /api/planner/generate-sap (server/routes/planner-routes.ts:100-167) sends the model a required-section outline containing "Sample size calculation and power" (:119) and, when csrContex… |
+| 91 | medium | 1 of 2 refuted | `server/services/statistical-continuum-service.ts` | In `generateAnalysisSpecs`, the ADaM-specification user prompt asserts a trial duration to the model that no input supplied: statistical-continuum-service.ts:254 renders `Duration: ${protoc… |
+| 92 | medium | 1 of 2 refuted | `server/routes/ana-cortex-ft.ts` | POST /api/ana-cortex-ft/inference and POST /api/ana-cortex-ft/generate-section attach invented numeric quality signals to citations that were never verified. Every bracketed string matching… |
+| 97 | medium | 1 of 2 refuted | `server/services/regulatory-graph/standards-applicability.service.ts` | Every entry `recommendApplicability` emits carries a `confidence` number written as a bare literal into the rule branch that produced it — 22 literals across the 9 rules in `RULES` (277-287… |
+| 118 | low | 1 of 2 refuted | `server/utils/document-generator.js` | In server/utils/document-generator.js the `pdf` (95-99) and `docx`/default (122-127) branches of generateDocumentation write the raw LLM text verbatim to `<id>.pdf` / `<id>.docx` with no en… |
+| 127 | low | 1 of 2 refuted | `server/api/ai/routes.ts` | In POST /api/ai/generate-boilerplate (server/api/ai/routes.ts:386), the `section === 'section_completion'` branch at :426-429 selects one entry of the matched CTD template's `criticalFlags`… |
+| 116 | medium | 1 of 2 refuted | `server/services/automation/scheduled-jobs.ts` | On any deploy with REDIS_URL set, two scheduled handlers in server/services/automation/scheduled-jobs.ts run no query and return a fabricated success: handleDataFreshnessCheck (:81-110) ret… |
+
+## Not a defect — refuted, already fixed, or no consequence
+
+Each row names the source that closes it. Where two refuters are quoted, both
+reached the conclusion independently on different lenses.
+
+| # | Sweep said | Outcome | File | The source that closes it |
+|---|---|---|---|---|
+| 47 | high | refuted by both | `server/services/ana-ri/artifact-generator.ts` | **code** The restatement is materially overstated on its load-bearing clause and on its consequence, though a thin residue survives. (1) "no per-artifact grounding constraint" is contradicted by the very file quoted. The deficien… |
+| 49 | high | refuted by both | `server/services/safety-narrative-service.ts` | **reach** REACH HOPS — I re-verified each one at head c5e770288 and the verifier's map is accurate as far as it goes. Mount: `import safetyNarrative from '../routes/safety-narrative.js'` (register-inline-routes.ts:88), entry at :… |
+| 55 | high | refuted by both | `server/services/innovation/evidence-confidence-heatmap-service.ts` | **code** The restatement's central persistence mechanism is false. It says runAssessment "INSERTs an assessment row plus innovation.evidence_gaps rows whose claim_text is the manufactured sentence", and customer_impact repeats it… |
+| 56 | high | no consequence | `server/services/innovation/evidence-confidence-heatmap-service.ts` | **reach** Reach collapses at every hop, and one hop the verifier asserted does not exist at all. (1) MOUNT — confirmed absent, and it is not a flag/env condition, it is a deleted mount. `server/bootstrap/register-advanced-platfor… |
+| 60 | high | refuted by both | `server/services/cerGenerationService.ts` | **code** The finding's headline — "CER benefit-risk verdict IS derived by dividing the count of listed benefits by the count of listed risks" — is false of every value this system computes, and the restatement's framing of the su… |
+| 62 | high | refuted by both | `server/services/precedent-engine.ts` | **code** The load-bearing inference of the restatement is false against the source it cites, and the defect it describes is unreachable on every path, including one the reach map missed. 1. NO DOC/CODE MISMATCH. The claim says "'… |
+| 68 | high | refuted by both | `server/routes/audit-trail-routes.ts` | **code** The helper text is real, but the restatement's load-bearing verb — "persist that substitute" — is false for the id half, and the other two values are not inventions of this file. 1) user_id 0 CANNOT be persisted. `audit_… |
+| 69 | high | refuted by both | `server/routes/mdx-audit.ts` | **reach** The transport reach holds — I verified every hop myself — but the TRIGGER for the claim's headline element has no producer in source, and that element is what carries the 'high' rating.\n\nHOPS I CONFIRMED (all real): m… |
+| 78 | medium | refuted by both | `server/services/lumen-context/base-system-prompt.ts` | **code** The literal text is where the verifier says it is — I read lines 226-245 of server/services/lumen-context/base-system-prompt.ts and the three specimens (Study 301 N=648 / Study 302 N=612, LSM -0.82% / -0.79% with CIs and… |
+| 80 | medium | no consequence | `server/services/auditService.ts` | **reach** Reach and consequence both collapse, and one asserted hop is wrong in source. CODE SHAPE (not disputed): at head c5e770288 the quoted body is byte-accurate. `getAuditLog` is defined at auditService.ts:507; the primary D… |
+| 81 | medium | refuted by both | `server/services/ana/contradiction-watch.ts` | **code** The literal quote is accurate — contradiction-watch.ts:155-157 really is a bare `catch { return []; }` with no log and no discriminant. But the restatement's operative claim ("All three production consumers then treat th… |
+| 83 | medium | no consequence | `server/services/biostats-signal-engine/engine.ts` | **reach** REACH IS ZERO — every hop verified by me at head c5e770288, and the consequence collapses to nothing. CODE TEXT: not in dispute. I read engine.ts:434-461; the quoted source is accurate line-for-line, including `} catch… |
+| 87 | medium | already fixed | `server/routes/innovation-routes.ts` | Fixed at 440df4a4e. The sweep's claim was true of the pre-fix code: guardQuery returned a bare `null` for "no pool", "connect failed", and "query failed" alike, with no logging, and every caller discarded the null so a check that… |
+| 93 | medium | no consequence | `server/services/cognitive-ecosystem/digital-twin-runtime.service.ts` | **reach** Refuted on reach and consequence. I re-walked every hop in source and could not find a single live one; the fabrication is real text in a file nothing executes. (1) MOUNT — absent. `server/bootstrap/register-document-ro… |
+| 98 | medium | refuted by both | `server/services/evidence-sufficiency/evidence-sufficiency.service.ts` | **code** The mechanism half of the restatement is accurate (I confirmed scorePillar's 100/60/50/30/0 tiers at lines 190-196, the 1-or-2 minimums and the three requiresQuantitative pillars in pillars.ts, and deriveVerdict's weight… |
+| 100 | medium | already fixed | `server/routes/biotech-artifacts.ts` | Fixed at f567da99b. At sweep time the cover-letter handler substituted `applicant \|\| 'Concept2Cure Inc.'`, `applicationNumber \|\| 'IND-000000'` and `sequence \|\| '0001'` (and the validation-report handler `sequence \|\| '0001… |
+| 101 | medium | refuted by both | `server/services/ai-gateway/gateway.ts` | **code** Two of the restatement's three load-bearing assertions fail against the code at c5e770288. (1) "that value is written to the AI audit ledger" is FALSE. route() runs 467-686. The deterministic branch RETURNS at gateway.ts… |
+| 102 | medium | refuted by both | `shared/schema/gspr.seed.ts` | **code** The restatement is materially overstated in three code-checkable ways, and the part that survives is a dev-only data defect, not a fabricated value. (1) "computeCoverage divides decided mappings by exactly the seeded in-… |
+| 103 | medium | refuted by both | `regulatory_data/guidance.json` | **code** The finding's core identification survives, but its stated mechanism and its entire customer-impact paragraph are falsified by running the exact code it cites, and the error inverts the shape of the defect.\n\nCONFIRMED… |
+| 105 | medium | refuted by both | `server/services/regulatory-programs.service.ts` | **reach** REACH: the server hops hold, but the chain terminates before any consequence, and I verified the terminal hop myself rather than accepting the assertion. Hops I confirmed in source: the mount at register-inline-routes.t… |
+| 106 | medium | no consequence | `client/src/concept2cure/v2/surfaces/CmcModule3Build.tsx` | **reach** REFUTED ON CONSEQUENCE. The surface reach hops all hold — I confirmed each in source — but the DEFECT has no producer, so the finding as titled ("displays a missing creator as 'system'") describes an event that cannot o… |
+| 110 | medium | refuted by both | `server/api/cmc/collaborationRoutes.ts` | **code** The finding as titled — "CMC collaboration comments are authored by 'Current User' with userId 'current-user-id' and role 'Team Member'" — is false at head c5e770288, and I closed the one gap the verifier left open, whic… |
+| 111 | medium | no consequence | `server/services/authoring/doc-journey-view-assembler.ts` | **reach** TRANSPORT HOPS ALL VERIFY — I am not refuting those. I read each one at c5e770288: server/index.ts:70 imports './startup/routes'; server/startup/routes.ts:173 `await registerInlineAiWorkflowRoutes(inlineCtx);` with no f… |
+| 113 | medium | refuted by both | `server/services/tasking/task-audit.ts` | **code** Both halves of the restatement are materially overstated, and the one that drives the re-rating to HIGH is simply false. (1) "The §11.50 signature manifestation — whose only persistence is this ledger payload (task-signo… |
+| 114 | medium | refuted by both | `server/services/regulatory-graph/defense-packet-staleness.service.ts` | **reach** The reach as the verifier restated it does not survive source. Three of its load-bearing hops are dead ends, and the one hop it never checked (the job trigger) is env-gated off. (1) THE TWO "GOVERNED" HOPS CANNOT REACH… |
+| 115 | medium | refuted by both | `client/src/concept2cure/_shared/components/EsignModal.tsx` | **reach** REACH: most hops hold, but the one hop the finding lives or dies on — a production render that actually prints the literal 'You' — does not exist in source. Hops I confirmed myself at c5e770288: the mount is real and un… |
+| 117 | medium | refuted by both | `server/services/decision-lifecycle-service.ts` | **code** The restatement's own "live defect" rests on one unverified assumption, which the verifier listed as unverified point #1 and never closed: "Whether req.userId is actually populated on /api/authoring-actions requests in p… |
+| 119 | low | no consequence | `server/utils/generate_sap_snippet.ts` | **reach** REFUTED ON REACH AND CONSEQUENCE. The literal text is real — I read server/utils/generate_sap_snippet.ts:168 and it does hardcode "approximately 80% power ... at a two-sided significance level of 0.05" from sampleSize/a… |
+| 120 | low | no consequence | `server/services/innovation/compliance-guardrails-sdk-service.ts` | **reach** On the reach-and-consequence lens the finding collapses completely: no paying customer can see, download, or otherwise be affected by the fabricated run, and nothing is persisted anywhere. I verified each hop myself at… |
+| 121 | low | no consequence | `server/services/artifact-document-bridge.ts` | **reach** REACH COLLAPSES COMPLETELY — there is no hop to verify, and I confirmed each absence myself at head c5e770288. The quoted source is accurate: I read `server/services/artifact-document-bridge.ts` lines 76-106 and the tex… |
+| 122 | low | no consequence | `server/storage.ts` | **reach** REACH AND CONSEQUENCE COLLAPSE. The code pattern is real — I read it verbatim — but there is no hop from it to any customer, and the one hop chain the verifier listed leads somewhere else entirely. HOP 1 (mount, VERIFIE… |
+| 123 | low | refuted by both | `server/services/ind/ctd/lifecycle-document-types.ts` | **reach** REACH VERDICT: the two hops that would give this finding any consequence do not exist in source. The text hop is real; the consequence hop is empty in both directions (no model, no client), so this is precisely "a promp… |
+| 125 | low | no consequence | `server/services/ana-scoped-rule-loader.ts` | **reach** REACH LENS — refuted on consequence; every hop verified myself at head c5e770288. The string is real: `grep -rn "reviewer satisfaction"` over the whole repo (excluding node_modules/.git) returns exactly ONE hit, server/… |
+| 126 | low | no consequence | `server/routes/cognitive-ecosystem.ts` | **reach** The code text is verbatim accurate — I read server/routes/cognitive-ecosystem.ts:145-158 and the handler does echo workflowId with constant status 'running', currentNode 'analysis', progress 0.45, checkpoints []. But un… |
+| 128 | low | no consequence | `client/src/concept2cure/mdx/data/presub.ts` | **reach** REFUTED ON CONSEQUENCE. The quoted text is accurate — I read presub.ts:200-300 and the fabricated CDRH prose, the sample-size verdict, the labelling instruction and "FDA · Dr. K. Patel" are all verbatim there. But the f… |
+| 129 | low | no consequence | `server/seed.ts` | **reach** REFUTED ON REACH AND CONSEQUENCE. The claim's own reach chain has no first hop: nothing in the repository executes server/seed.ts, and I confirmed this five independent ways at c5e770288, going past what the verifier ch… |
+| 130 | low | refuted by both | `server/services/ana/se-discussion/fixtures.ts` | **reach** REACH IS NIL, AND THE ONE RESIDUAL CONSEQUENCE THE VERIFIER ASSERTS DOES NOT EXIST TODAY. I confirmed the relevant tree is byte-identical to the claimed head: `git diff c5e770288 HEAD -- server/services/ana/se-discussio… |
+| 131 | low | no consequence | `server/prisma/client.js` | **reach** REACH AND CONSEQUENCE BOTH COLLAPSE — and the verifier's own reach block concedes it (mounted: NOT_MOUNTED, customer_impact: "Nothing"). I re-walked every hop in source at c5e770288 (file is byte-identical there; `git d… |
+| 132 | low | no consequence | `server/utils/audit-logger.js` | **reach** The three code facts are real and I re-confirmed them at head (the file is byte-identical between c5e770288 and HEAD 8327d15a4 — `git diff --stat` over audit-logger.js/retentionCron.ts/run-retention.ts is empty). `od -c… |

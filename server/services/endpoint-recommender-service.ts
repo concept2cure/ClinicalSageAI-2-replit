@@ -609,7 +609,7 @@ export class EndpointRecommenderService {
               document_name: item.document || 'Regulatory Guidance',
               guidance_text:
                 item.text || item.description || 'Recommended endpoint per regulatory guidance',
-              date: item.date || '2023',
+              date: item.date ?? undefined, // WO-16C 48: no date rather than a stamped '2023'
               url: item.url || undefined,
             });
           }
@@ -618,79 +618,37 @@ export class EndpointRecommenderService {
         }
       }
 
-      // If no guidance found in cache, try to generate some with AI
+      // WO-16C finding 48. What stood here asked a language model to write the
+      // regulatory guidance — `{authority, document_name, guidance_text}`,
+      // primed with two real FDA and EMA titles as the example format — and
+      // returned whatever came back, unverified, as this service's
+      // `regulatory_guidance`. Two things made that worse than an unlucky
+      // fallback:
+      //
+      //   - it was not a fallback. `loadRegulatoryGuidance` (line 219) caches a
+      //     file only if its parsed content has `.indication` and an array
+      //     `.guidance`; both files under `regulatory_data/` are top-level
+      //     arrays, so the cache is never written, `foundGuidance` is always
+      //     false, and the generated branch was the only source this service
+      //     had;
+      //   - the array is load-bearing. `classifyEndpointBasis` (line 104)
+      //     returns 'regulatory_recommended' — the highest basis, base strength
+      //     80 — for any endpoint with a non-empty `regulatory_guidance`, so an
+      //     invented citation outranked endpoints backed by the real corpus.
+      //
+      // No guidance retrieved now means no guidance returned. An endpoint then
+      // falls to the basis its real evidence earns. Wiring this to a retrieval
+      // source that can actually be cited is separate work; inventing one is
+      // not a substitute for it.
       if (!foundGuidance) {
-        const aiGuidance = await this.getAIRegulatoryGuidance(indication, phase);
-
-        // Add AI-generated guidance to result
-        for (const [endpoint, guidance] of Object.entries(aiGuidance)) {
-          result[endpoint] = guidance;
-        }
+        logger.info(
+          `No regulatory guidance retrieved for ${indication}${phase ? ` (${phase})` : ''}; returning none`,
+        );
       }
 
       return result;
     } catch (error) {
       logger.error('Error getting regulatory guidance:', { error: error });
-      return {};
-    }
-  }
-
-  /**
-   * Generate regulatory guidance using AI when cached data is not available
-   */
-  private async getAIRegulatoryGuidance(
-    indication: string,
-    phase: string = ''
-  ): Promise<Record<string, RegulatoryGuidance[]>> {
-    try {
-      const prompt = `
-Generate regulatory guidance for ${phase || 'clinical'} trial endpoints for ${indication}.
-Output a JSON object where keys are endpoint descriptions and values are arrays of regulatory guidance objects.
-
-Example format:
-{
-  "Overall Survival": [
-    {
-      "authority": "FDA",
-      "document_name": "Guidance for Industry: Clinical Trial Endpoints for the Approval of Cancer Drugs and Biologics",
-      "guidance_text": "Overall survival is defined as the time from randomization to death from any cause, and is the most reliable cancer endpoint."
-    }
-  ],
-  "Progression-Free Survival": [
-    {
-      "authority": "EMA",
-      "document_name": "Guideline on the evaluation of anticancer medicinal products in man",
-      "guidance_text": "PFS is defined as the time from randomization to objective tumor progression or death."
-    }
-  ]
-}
-
-Include only the most relevant endpoints for ${indication} ${phase || 'trials'} based on major regulatory authorities (FDA, EMA, PMDA, Health Canada, MHRA).
-`;
-
-      // Query Hugging Face API
-      const response = await this.hfService.queryHuggingFace(prompt);
-
-      // Parse response to extract JSON object
-      try {
-        const jsonMatch = response.match(/{[\s\S]*}/);
-        if (jsonMatch) {
-          const jsonStr = jsonMatch[0];
-          const guidance = JSON.parse(jsonStr);
-
-          // Validate the structure
-          if (typeof guidance === 'object' && !Array.isArray(guidance)) {
-            return guidance;
-          }
-        }
-      } catch (parseError) {
-        logger.error('Error parsing AI regulatory guidance:', { error: parseError });
-      }
-
-      // Return empty object if parsing failed
-      return {};
-    } catch (error) {
-      logger.error('Error generating AI regulatory guidance:', { error: error });
       return {};
     }
   }

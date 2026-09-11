@@ -77,8 +77,51 @@ export interface LineageGraph {
     /** WO-16B: 'unverifiable' when the verifier could not run — not 'failed'. */
     chainVerification: 'verified' | 'failed' | 'unverifiable';
     chainVerificationReason?: string;
-    complianceFrameworks: string[];
+    /**
+     * WO-16C finding 71. This was a five-element string literal, computed from
+     * nothing, printed by all three exports as an assertion of conformance.
+     * Each framework now carries the status the same router's compliance
+     * report gives it, so an exported audit file and the report agree.
+     */
+    complianceFrameworks: FrameworkAssessment[];
   };
+}
+
+/** A framework's standing, in the vocabulary routes/decision-lineage.ts uses. */
+export interface FrameworkAssessment {
+  framework: string;
+  status: 'COMPLIANT' | 'REVIEW_REQUIRED' | 'UNVERIFIABLE' | 'NOT_ASSESSED';
+  note?: string;
+}
+
+const NOT_EVALUATED_HERE = 'No check in this lineage record evaluates this framework.';
+
+/**
+ * The frameworks a lineage record can speak to, and what it can honestly say
+ * about each.
+ *
+ * Three of the five rest on the hash-chain verifier, so they take its three
+ * states — including "the verifier could not run", which WO-16B established is
+ * not a failure. The other two are named in the export header but nothing in
+ * this subsystem evaluates them, so they say so rather than claim conformance.
+ * Identical in content and order to the block in routes/decision-lineage.ts.
+ */
+export function assessComplianceFrameworks(
+  chainVerification: 'verified' | 'failed' | 'unverifiable',
+): FrameworkAssessment[] {
+  const chainDependent: FrameworkAssessment['status'] =
+    chainVerification === 'verified'
+      ? 'COMPLIANT'
+      : chainVerification === 'failed'
+        ? 'REVIEW_REQUIRED'
+        : 'UNVERIFIABLE';
+  return [
+    { framework: 'FDA 21 CFR Part 11', status: chainDependent },
+    { framework: 'EU Annex 11', status: chainDependent },
+    { framework: 'ICH E6(R2) GCP', status: 'NOT_ASSESSED', note: NOT_EVALUATED_HERE },
+    { framework: 'PMDA ERES Guidelines', status: chainDependent },
+    { framework: 'GAMP 5', status: 'NOT_ASSESSED', note: NOT_EVALUATED_HERE },
+  ];
 }
 
 /** Filters for lineage queries */
@@ -355,13 +398,7 @@ export class DecisionLineageService {
         chainVerified,
         chainVerification,
         chainVerificationReason,
-        complianceFrameworks: [
-          'FDA 21 CFR Part 11',
-          'EU Annex 11',
-          'ICH E6(R2) GCP',
-          'PMDA ERES Guidelines',
-          'GAMP 5',
-        ],
+        complianceFrameworks: assessComplianceFrameworks(chainVerification),
       },
     };
   }
@@ -490,7 +527,7 @@ export class DecisionLineageService {
       `# Decision Lineage Report`,
       `# Generated: ${graph.metadata.generatedAt}`,
       `# Entity: ${graph.rootEntityType} #${graph.rootEntityId}`,
-      `# Compliance: ${graph.metadata.complianceFrameworks.join(', ')}`,
+      `# Compliance: ${graph.metadata.complianceFrameworks.map(f => `${f.framework} = ${f.status}`).join('; ')}`,
       `# Chain Verified: ${graph.metadata.chainVerification === 'verified' ? 'PASS' : graph.metadata.chainVerification === 'failed' ? 'FAIL' : 'UNVERIFIABLE (the verifier could not run)'}`,
       '',
       headers.join(','),
@@ -534,8 +571,8 @@ export class DecisionLineageService {
 <!--
   Decision Lineage Report — eCTD Audit Trail
   Generated: ${graph.metadata.generatedAt}
-  Compliance: ${graph.metadata.complianceFrameworks.join(', ')}
-  Chain Verified: ${graph.metadata.chainVerified ? 'PASS' : 'UNVERIFIED'}
+  Compliance: ${graph.metadata.complianceFrameworks.map(f => `${f.framework} = ${f.status}`).join('; ')}
+  Chain verification: ${graph.metadata.chainVerification === 'verified' ? 'PASS' : graph.metadata.chainVerification === 'failed' ? 'FAIL' : 'UNVERIFIABLE (the verifier could not run)'}
 -->
 <decision-lineage
   xmlns="urn:clinicalsageai:lineage:1.0"
@@ -548,8 +585,13 @@ export class DecisionLineageService {
     <total-rejections>${graph.metadata.totalRejections}</total-rejections>
     <total-delegations>${graph.metadata.totalDelegations}</total-delegations>
     <chain-verified>${graph.metadata.chainVerified}</chain-verified>
+    <chain-verification>${graph.metadata.chainVerification}</chain-verification>
     <compliance-frameworks>
-      ${graph.metadata.complianceFrameworks.map(f => `<framework>${escapeXml(f)}</framework>`).join('\n      ')}
+      ${graph.metadata.complianceFrameworks
+        .map(f =>
+          `<framework name="${escapeXml(f.framework)}" status="${escapeXml(f.status)}"${f.note ? ` note="${escapeXml(f.note)}"` : ''} />`,
+        )
+        .join('\n      ')}
     </compliance-frameworks>
   </metadata>
   <decision-records>${nodesXml}
