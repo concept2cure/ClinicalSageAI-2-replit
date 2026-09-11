@@ -238,7 +238,90 @@ Sharper still: `migrations/20260611_drop_charter_staging_tables.sql:31` justifie
 e.g. `pmaConfig` in `server/routes/pma-workflow-routes.ts`" — and `pma_config`
 is one of the 21 that do not exist.
 
-## Finding 3 — the four charter tables are on no deploy path
+## Finding 3 — CORRECTED 2026-09-11, then FIXED
+
+> **The claim below is half wrong, and the wrong half is the headline.** The
+> four tables do NOT fail to exist. `project_charters`, `charter_sections`,
+> `timeline_phases`, `project_commitments` and `charter_audit_events` are all
+> declared in `shared/schema/project-charter.ts`, so `drizzle-kit push` creates
+> them at install-fresh step 2. Verified present on a canonically provisioned
+> database. Any deployed database has them.
+>
+> **What is genuinely on no replaying applier is the Part 11 immutability
+> enforcement.** Drizzle cannot express a trigger, so
+> `charter_audit_events_no_update` and `charter_audit_events_no_delete` come
+> only from `migrations/20260629_charter_tables_rebuild.sql`, which runs on
+> install-fresh's overlay and nowhere else. Drop either one — a restore, a
+> schema tool, a manual intervention — and nothing puts it back: the charter
+> audit trail silently becomes mutable, and no gate notices.
+>
+> **FIXED** by `migrations/20260911_charter_audit_immutability.sql`, a new file
+> in `C2C_MIGRATION_FILES` carrying the function and the two triggers verbatim,
+> with the trigger installs guarded on `charter_audit_events` existing.
+>
+> **The first attempt was to list `20260629` itself, and it was wrong.** That
+> file is not self-contained: it has five `REFERENCES project_charters(id)`
+> clauses and does not create `project_charters` — that table comes from Drizzle
+> push, and nothing in the set creates it. Applying the set in order to a
+> database that has not been pushed dies at the first FK.
+> `tests/schema-contract/tenant-isolation-sweep.contract.test.ts` C-33 does
+> exactly that and caught it:
+>
+> ```
+> pass 1: migrations/20260629_charter_tables_rebuild.sql failed
+>   — relation "project_charters" does not exist
+> ```
+>
+> The live-database proof of the first attempt had passed, and could not have
+> caught this: that database already carried `project_charters` from
+> install-fresh, so it could not expose a dependency the set does not satisfy. A
+> green migration against a database that happens to be complete is not evidence
+> that the set is complete.
+>
+> The rebuild's other 367 lines also buy nothing. Every table it creates is
+> `CREATE TABLE IF NOT EXISTS` against a table push has already made, so on any
+> real database that DDL no-ops; the function and the two triggers are the entire
+> delta. Carrying the rest would put a second, independent definition of four
+> Drizzle-owned tables onto the replaying applier in exchange for nothing. So
+> `20260629` stays on install-fresh only.
+>
+> `migrations/20260611_drop_charter_staging_tables.sql` must never join the set
+> either: it DROPs three of the tables, and under RULE 1's unconditional replay
+> that would destroy their contents on every deploy, green.
+>
+> **Proven by making it fail first**, on the canonical database:
+>
+> | Step | Result |
+> |---|---|
+> | `20260629` applied to a bare database | `ERROR: relation "project_charters" does not exist`, exit 3 — the C-33 failure reproduced |
+> | the new file applied to that same bare database | exit 0, `NOTICE: … triggers NOT installed`, 0 triggers, 0 tables — self-contained |
+> | both triggers dropped, then `UPDATE` on a seeded audit row | **succeeded** — hash silently rewritten |
+> | then `DELETE` on that row | **succeeded** — audit row destroyed |
+> | real `deploy-migrate` run | exit 0, "safe to roll services", both triggers back |
+> | `UPDATE` / `DELETE` retried | `ERROR: charter_audit_events is append-only (§11.10(e)); UPDATE blocked` / `DELETE blocked`, row intact |
+> | `deploy-migrate` run a second time | exit 0, 2 triggers, probe row survived — replay-safe |
+>
+> The two middle rows are the finding itself, executed: that is the state every
+> deploy-migrate-maintained database is in today.
+>
+> Gates green at 264 migrations: `ci:migration-set-order`,
+> `ci:migration-drop-safety`, `ci:migration-reachability`,
+> `ci:duplicate-table-ddl` (no new duplicate definitions — the focused file adds
+> no table DDL). `tests/schema-contract/` green across all three shards, 75
+> files, 962 tests.
+>
+> **Not claimed:** this converges no column. It installs enforcement and nothing
+> else, so a database whose shape came from push keeps that shape; column
+> convergence is still WO-1's problem. Nor does anything yet *report* whether the
+> triggers are present — nothing in the repository reads them, verified by
+> grepping ts/js/mjs/sql for the trigger and function names. If such a surface is
+> ever built it must probe `pg_trigger` and report a third state, not assume this
+> migration ran.
+>
+> The stale comments the original finding lists are still worth fixing and are
+> not touched here.
+
+### Original finding, as written
 
 `charter_sections`, `timeline_phases`, `project_commitments` and
 `charter_audit_events` are created only by `migrations/0012` and

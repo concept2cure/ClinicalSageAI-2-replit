@@ -1510,6 +1510,64 @@ export const C2C_MIGRATION_FILES = [
   'db/migrations/20260222_audit_events_immutability.sql',
   'db/migrations/20260617_audit_logs_immutability.sql',
 
+  /* The charter-domain audit trail's own immutability, added 2026-09-11.
+     Same shape as the two entries above and the hash chain below them: an
+     append-only guarantee that a fresh install had and no replaying applier
+     re-asserted.
+
+     WHAT IS AND IS NOT WRONG HERE — WO-15 finding 3 says the four charter
+     tables "are on no deploy path" and so "may not exist" on a populated
+     database. The second half is WRONG and is corrected in that work order:
+     project_charters, charter_sections, timeline_phases, project_commitments
+     AND charter_audit_events are all declared in shared/schema/project-charter.ts
+     (projectCharters:76 … charterAuditEvents:446), so drizzle-kit push creates
+     them at install-fresh step 2. Verified present on a canonically
+     provisioned database.
+
+     What Drizzle CANNOT express is a trigger. charter_audit_events_no_update
+     and charter_audit_events_no_delete existed only in
+     migrations/20260629_charter_tables_rebuild.sql, which runs on install-
+     fresh's overlay and nowhere else — so a database deploy-migrate maintains
+     has the audit table and none of its protection, and if either trigger is
+     dropped by a restore or a schema tool, nothing puts it back and the charter
+     audit trail silently becomes mutable.
+
+     WHY THE SMALL FILE AND NOT THE REBUILD. Listing 20260629 itself was tried
+     first and is WRONG, for a reason its live-database proof could not reach:
+     the rebuild is NOT self-contained. It has five REFERENCES
+     project_charters(id) clauses and does not create project_charters — that
+     table comes from drizzle push, and nothing in this set creates it.
+     Applying the set in order to a database that has not been pushed dies at
+     the first FK with `relation "project_charters" does not exist`.
+     tests/schema-contract/tenant-isolation-sweep.contract.test.ts C-33 applies
+     the set exactly that way and caught it; the live proof passed only because
+     that database already carried project_charters from install-fresh, so it
+     could not expose a dependency the set does not satisfy.
+
+     And the rebuild's other 367 lines buy nothing: every table it creates is
+     CREATE TABLE IF NOT EXISTS against a table push has already made, so the
+     DDL no-ops on any real database. The function and the two triggers are the
+     whole delta. Carrying the rest would put a second, independent definition
+     of four Drizzle-owned tables on the replaying applier in exchange for
+     nothing. So the triggers are lifted verbatim into the guarded file below
+     and 20260629 stays on install-fresh only.
+
+     NEVER add migrations/20260611_drop_charter_staging_tables.sql to the set.
+     It DROPs project_commitments, charter_sections and timeline_phases — RULE
+     1's create-then-drop hazard exactly: replayed every deploy, it would
+     destroy those tables' contents every time, green.
+
+     Replay-safety: CREATE OR REPLACE FUNCTION is idempotent and each trigger is
+     DROP … IF EXISTS then CREATE in the same file, the idiom
+     check-migration-drop-safety.mjs recognises. The trigger installs are
+     guarded on charter_audit_events existing, so the file is a documented
+     no-op — RAISE NOTICE, no claim of immutability — on a database that lacks
+     the table, which is what makes it self-contained where the rebuild was not.
+
+     NOT claimed: this converges no column. It installs enforcement, nothing
+     else; databases whose shape came from push keep that shape. */
+  'migrations/20260911_charter_audit_immutability.sql',
+
   /* The SAME §11.70 seal column on audit_events, the SIEM/export-facing audit
      table. 20260609 added it to audit_logs and is on the applier; this one was
      not, so server/services/audit/chain.ts's verifyAuditEventsChainSeals —
