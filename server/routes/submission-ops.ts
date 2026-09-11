@@ -39,6 +39,7 @@ import {
   concept2cureArtifacts,
   concept2cureReviewTasks,
   concept2cureReviewAssignments,
+  users,
 } from '../../shared/schema';
 import { eq, and, desc, sql, count, inArray, isNull, asc } from 'drizzle-orm';
 import { randomUUID } from 'crypto';
@@ -849,6 +850,30 @@ router.get('/packages/:packageId/milestones', async (req: Request, res: Response
       .where(eq(c2cMilestones.packageDbId, pkg.id))
       .orderBy(asc(c2cMilestones.sortOrder));
 
+    /* Resolve the actor. `c2c_milestones` stores only created_by_id, so the
+       Submission center's Activity strip had no name to show and its client
+       substituted the literal "System" for every row (WO-16C finding 109).
+       One batched lookup gives it the real actor; a milestone with no creator,
+       or whose user record is gone, comes back `createdByName: null` and the
+       client renders an empty actor rather than inventing one. */
+    const creatorIds = Array.from(
+      new Set(
+        milestones
+          .map((m: any) => m.createdById)
+          .filter((id: unknown): id is number => typeof id === 'number')
+      )
+    );
+    const creatorNames = new Map<number, string>();
+    if (creatorIds.length > 0) {
+      const creators = await db
+        .select({ id: users.id, name: users.name })
+        .from(users)
+        .where(inArray(users.id, creatorIds));
+      for (const u of creators) {
+        if (u.name) creatorNames.set(u.id, u.name);
+      }
+    }
+
     // Attach sections for each milestone
     const result = await Promise.all(
       milestones.map(async (m: any) => {
@@ -866,7 +891,12 @@ router.get('/packages/:packageId/milestones', async (req: Request, res: Response
           )
           .where(eq(c2cMilestoneSections.milestoneDbId, m.id));
 
-        return { ...m, sections };
+        return {
+          ...m,
+          sections,
+          createdByName:
+            typeof m.createdById === 'number' ? creatorNames.get(m.createdById) ?? null : null,
+        };
       })
     );
 

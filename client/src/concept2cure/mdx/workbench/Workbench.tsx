@@ -645,7 +645,9 @@ export function SubmissionsSurface({ onAskAna }: WorkbenchProps) {
                 {sel.log.map((l, i) => (
                   <div key={i} className="activity-row">
                     <span className="activity-when">{l.when}</span>
-                    <span className="activity-who">{l.who}</span>
+                    {/* An unresolved actor renders '—', the repo's unknown-value
+                        convention (FilesTreePane). Never a stand-in name. */}
+                    <span className="activity-who">{l.who || '—'}</span>
                     <span className="activity-what">{l.what}</span>
                   </div>
                 ))}
