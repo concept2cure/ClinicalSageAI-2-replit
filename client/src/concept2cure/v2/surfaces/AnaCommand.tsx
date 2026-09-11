@@ -121,7 +121,14 @@ interface Rec {
   evidence: string[];
   suggestedAction: string;
   actionPayload?: { actionType: string; payload?: Record<string, unknown> };
-  confidence: number;
+  /* null whenever nothing computed a score — which is EVERY recommendation the
+     orchestration engine emits, because every one of its rules is a
+     deterministic filter (sourceType 'rules_based'). It used to send a per-rule
+     literal (0.95 / 0.9 / 0.7) that this surface painted as a confidence chip;
+     WO-16C finding 124. Read it null-safely: `confidence || 0` renders "0%",
+     which is a fabricated score rather than an absent one. */
+  sourceType?: 'rules_based' | 'ai_inferred';
+  confidence: number | null;
 }
 interface RecommendationSet { recommendations: Rec[] }
 
@@ -625,7 +632,13 @@ export function AnaCommand({ onAsk }: SurfaceViewProps) {
                         <span className={'ac-chip ' + (SEV_MAP[r.severity] || 'idle')}>{r.severity}</span>
                         <span className="ac-rec-tt">{r.targetObjectTitle || r.targetObjectType}</span>
                         <span className="ac-rec-mod">{r.module}</span>
-                        <span className="ac-rec-conf">{Math.round((r.confidence || 0) * 100)}%</span>
+                        {/* Only a recommendation that carries a real computed score shows
+                            one. A rules-based recommendation has none, so the row ends
+                            after the module — no chip, rather than a "0%" nothing
+                            measured. */}
+                        {typeof r.confidence === 'number' ? (
+                          <span className="ac-rec-conf" title="Model confidence">{Math.round(r.confidence * 100)}%</span>
+                        ) : null}
                       </div>
                       <div className="ac-rec-reason">{r.reason}</div>
                       <div className="ac-rec-ev">{(r.evidence || []).map((e, i) => (<span key={i} className="ac-rec-evi">{I.dot || null} {e}</span>))}</div>
