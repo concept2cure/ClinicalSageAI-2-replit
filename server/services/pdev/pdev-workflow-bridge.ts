@@ -44,6 +44,78 @@ import auditService from '../auditService';
 
 const logger = createScopedLogger('pdev-workflow-bridge');
 
+// ─────────────────────────────────────────────────────────────────────────────
+// The §11.10(e) audit row: recorded, or not — never assumed
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Whether the 21 CFR Part 11 §11.10(e) audit row for a governed PDEV
+ * transition actually reached a durable store.
+ *
+ * WO-16C finding 133. Every audit write in this file used to be
+ * `void auditService.logAction({…})`. That is not fire-and-forget with a
+ * guarantee behind it: `logAction` never rejects on a persistence failure —
+ * by deliberate policy, "an audit-trail outage must not break the user action
+ * it records" — it resolves `AuditWriteResult` and says so in `persisted`.
+ * Discarding that value meant the bridge could not tell a recorded approval
+ * from an unrecorded one, and neither could the route: the response was
+ * byte-identical either way, while the checkpoint, the workflow run and the
+ * activity state had all committed. The only trace of the missing record was
+ * one `logger.error` line in the server log.
+ *
+ * So the outcome is carried, in the third state this repo already uses for
+ * "the thing did not happen" (`VerificationOutcome`'s `{ran}/{reason}` in
+ * server/lib/verification-outcome.ts), spoken in `AuditWriteResult`'s own
+ * word: `persisted`. A caller cannot read `reason` off the success arm and
+ * cannot claim success without the flag.
+ *
+ * This does NOT make the write transactional — the governed rows are already
+ * committed by the time the audit row is attempted, and a path that needs the
+ * row to EXIST before its mutation lands must use
+ * `writeChainedAuditRow(client, …)` on its own transaction. What it removes is
+ * the silence.
+ */
+export type PdevAuditRecordOutcome =
+  | { persisted: true }
+  | { persisted: false; reason: string };
+
+/** The object call form of `auditService.logAction` (its entry type is not exported). */
+type PdevAuditEntry = Extract<Parameters<typeof auditService.logAction>[0], object>;
+
+/**
+ * Write one audit row and REPORT what happened to it. Never throws: an
+ * audit-trail outage must not break the transition it records, which is the
+ * same policy `logAction` holds — the difference is that the caller is now
+ * told, and tells its own caller.
+ */
+async function recordAuditRow(entry: PdevAuditEntry): Promise<PdevAuditRecordOutcome> {
+  let result: Awaited<ReturnType<typeof auditService.logAction>> | undefined;
+  let thrown: string | undefined;
+  try {
+    result = await auditService.logAction(entry);
+  } catch (err) {
+    // Documented never to happen; if it ever does, it is still not a reason to
+    // report an audit row that does not exist.
+    thrown = err instanceof Error ? err.message : String(err);
+  }
+  if (result?.persisted) return { persisted: true };
+
+  const reason =
+    thrown ??
+    result?.error ??
+    'auditService.logAction reported no durable store; the audit row cannot be shown to exist';
+  logger.error(
+    'PDEV audit row NOT persisted — the 21 CFR Part 11 §11.10(e) record for this transition does not exist',
+    {
+      action: entry.action,
+      resourceType: entry.resourceType,
+      resourceId: entry.resourceId,
+      reason,
+    },
+  );
+  return { persisted: false, reason };
+}
+
 const COMPLETED_TARGET_STATES: ReadonlySet<PdevActivityState> = new Set([
   'approved',
   'locked',
@@ -98,6 +170,13 @@ export interface PdevWorkflowKickoffResult {
   activityStateId: string;
   /** Activity moved to this state during kickoff (typically `human_review_required`). */
   holdingState: PdevActivityState;
+  /**
+   * Whether the §11.10(e) audit row for this kickoff was durably recorded.
+   * Required, not optional: the workflow run and the activity hold commit
+   * regardless, so an envelope that omitted this could not be told apart from
+   * one where the record exists.
+   */
+  auditTrail: PdevAuditRecordOutcome;
 }
 
 export interface PdevApprovalChainStatus {
@@ -184,6 +263,13 @@ export interface PdevCheckpointDecisionResult {
   /** Set when the chain completes — the activity is moved to its target state. */
   activityFinalState?: PdevActivityState;
   rejectionReason?: string;
+  /**
+   * Whether the §11.10(e) audit row for this decision was durably recorded.
+   * Required, not optional — see `PdevAuditRecordOutcome`. The approver's
+   * identity survives in `approval_checkpoints.approvals` either way; what is
+   * lost when this is `persisted: false` is the audit-trail entry.
+   */
+  auditTrail: PdevAuditRecordOutcome;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -330,7 +416,7 @@ export class PdevWorkflowBridge {
       activityStateId = inserted[0].id;
     }
 
-    void auditService.logAction({
+    const auditTrail = await recordAuditRow({
       tenantId: input.organizationId,
       userId: input.requestedByUserId,
       action: 'pdev_workflow_kickoff',
@@ -351,7 +437,7 @@ export class PdevWorkflowBridge {
       targetState: input.targetState,
     });
 
-    return { workflowRunId, checkpointIds, activityStateId, holdingState };
+    return { workflowRunId, checkpointIds, activityStateId, holdingState, auditTrail };
   }
 
   /**
@@ -546,7 +632,7 @@ export class PdevWorkflowBridge {
           );
       }
 
-      void auditService.logAction({
+      const auditTrail = await recordAuditRow({
         tenantId: input.organizationId,
         userId: input.userId,
         action: 'pdev_workflow_checkpoint_rejected',
@@ -566,6 +652,7 @@ export class PdevWorkflowBridge {
         checkpointStatus: 'failed',
         workflowStatus: 'failed',
         rejectionReason: input.reason,
+        auditTrail,
       };
     }
 
@@ -605,7 +692,7 @@ export class PdevWorkflowBridge {
       .where(eq(approvalCheckpoints.id, input.checkpointId));
 
     if (!checkpointMet) {
-      void auditService.logAction({
+      const auditTrail = await recordAuditRow({
         tenantId: input.organizationId,
         userId: input.userId,
         action: 'pdev_workflow_checkpoint_partial_approval',
@@ -623,6 +710,7 @@ export class PdevWorkflowBridge {
       return {
         checkpointStatus: partialPlan.checkpointStatus,
         workflowStatus: run.status,
+        auditTrail,
       };
     }
 
@@ -663,7 +751,7 @@ export class PdevWorkflowBridge {
         })
         .where(eq(workflowRuns.id, run.id));
 
-      void auditService.logAction({
+      const auditTrail = await recordAuditRow({
         tenantId: input.organizationId,
         userId: input.userId,
         action: 'pdev_workflow_checkpoint_approved',
@@ -683,6 +771,7 @@ export class PdevWorkflowBridge {
         checkpointStatus: metPlan.checkpointStatus,
         workflowStatus: metPlan.workflowStatus,
         nextCheckpointId: nextCheckpoint.id,
+        auditTrail,
       };
     }
 
@@ -715,7 +804,7 @@ export class PdevWorkflowBridge {
         );
     }
 
-    void auditService.logAction({
+    const auditTrail = await recordAuditRow({
       tenantId: input.organizationId,
       userId: input.userId,
       action: 'pdev_workflow_completed',
@@ -745,6 +834,7 @@ export class PdevWorkflowBridge {
       checkpointStatus: metPlan.checkpointStatus,
       workflowStatus: metPlan.workflowStatus,
       activityFinalState: targetState,
+      auditTrail,
     };
   }
 }
