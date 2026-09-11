@@ -5,13 +5,23 @@
  * NOT a seed-only blob.
  *
  * The surface renders one row per reviewer lens that has actually been run —
- * { lens, findings[] }, each finding carrying { dimension, severity, title, detail,
- * basis, recommendation, leafRef } — and recomputes the RTF/CRL gate risk itself from
- * those findings. So this assembler maps the latest COMPLETE run per lens and its
- * findings only; no blob, no fabricated field. An org that has never run a reviewer
+ * { lens, runId, rtfRiskScore, crlRiskScore, findings[] }, each finding carrying
+ * { dimension, severity, title, detail, basis, recommendation, leafRef }. So this
+ * assembler maps the latest COMPLETE run per lens, the gate scores that run RECORDED,
+ * and its findings; no blob, no fabricated field. An org that has never run a reviewer
  * returns [] and the surface shows its honest empty state. A lens with a complete run
  * and zero findings still appears (findings: []) so the surface can distinguish
  * "reviewed clean" from "not yet run".
+ *
+ * WO-16C finding 99 — why the scores are here at all. The surface used to re-derive the
+ * RTF/CRL gates client-side from the findings list, through a verbatim copy of the
+ * service's `aggregateRisk`. That function returns 0 for a gate with no findings in its
+ * dimensions, and on the server that 0 is only a FLOOR: `runShadowReview` persists
+ * `Math.max(model self-report, aggregate)`. So a complete run that recorded, say, 0.90
+ * painted "0%" and "low risk" here while SubmissionCenter printed 0.90 for the same run.
+ * The recorded score is the run's verdict, so it travels with the row. It is nullable —
+ * `rtf_risk_score` is a nullable column and a run may hold none — and a null is passed
+ * through AS null, never coerced to 0: a score nothing recorded is not a score of zero.
  */
 import { pool } from '../../db';
 
@@ -24,17 +34,23 @@ const lensRank = (lens: string): number => {
 
 const str = (v: unknown): string => (v == null ? '' : String(v));
 const nul = (v: unknown): string | null => (v == null ? null : String(v));
+/** A recorded 0..1 score, or null when the run recorded none. Never a coerced 0. */
+const score = (v: unknown): number | null => {
+  if (v === null || v === undefined || v === '') return null;
+  const n = Number(v);
+  return Number.isFinite(n) ? n : null;
+};
 
 export async function assembleOrgShadowReview(orgId: number): Promise<Record<string, unknown>[]> {
   // Latest COMPLETE run per lens for the org (soft-delete aware).
   const runsRes = await pool.query(
-    `SELECT DISTINCT ON (lens) id, lens
+    `SELECT DISTINCT ON (lens) id, lens, rtf_risk_score, crl_risk_score
        FROM shadow_review_runs
       WHERE organization_id = $1 AND status = 'complete' AND deleted_at IS NULL
       ORDER BY lens, created_at DESC NULLS LAST, id DESC`,
     [orgId],
   );
-  const runs = runsRes.rows as Array<{ id: number; lens: string }>;
+  const runs = runsRes.rows as Array<{ id: number; lens: string; rtf_risk_score: unknown; crl_risk_score: unknown }>;
   if (runs.length === 0) return [];
 
   const runIds = runs.map((r) => Number(r.id));
@@ -62,6 +78,12 @@ export async function assembleOrgShadowReview(orgId: number): Promise<Record<str
   }
 
   return runs
-    .map((r) => ({ lens: r.lens, findings: findingsByRun.get(Number(r.id)) ?? [] }))
+    .map((r) => ({
+      lens: r.lens,
+      runId: Number(r.id),
+      rtfRiskScore: score(r.rtf_risk_score),
+      crlRiskScore: score(r.crl_risk_score),
+      findings: findingsByRun.get(Number(r.id)) ?? [],
+    }))
     .sort((a, b) => lensRank(a.lens) - lensRank(b.lens));
 }

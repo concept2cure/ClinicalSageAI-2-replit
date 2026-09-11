@@ -7,20 +7,36 @@ import { usePublishSurfaceContext } from '../surfaceContext';
 import { useSurfaceActionHandlers, notifySurfaceActionReady } from '../surfaceActions';
 import '../styles/project-home-v2.css';
 import {
-  SHADOW_LENSES, shadowLens, shadowAggregateRisk, SR_SEV, SR_DIM,
+  SHADOW_LENSES, shadowLens, SR_SEV, SR_DIM,
 } from '../fixtures/shadow-review-data';
-import type { ShadowFinding, SeverityMeta } from '../fixtures/shadow-review-data';
+import type { SeverityMeta } from '../fixtures/shadow-review-data';
 
-/* -- Helpers -- */
+/* -- Helpers --
 
-function riskBand(v: number): string { return v >= 0.66 ? 'high' : v >= 0.33 ? 'med' : 'low'; }
-function riskWord(v: number): string { return v >= 0.66 ? 'high' : v >= 0.33 ? 'moderate' : 'low'; }
+   A gate score is `number | null`: the score the run RECORDED, or null when it
+   recorded none. Null is the third state — not zero, not "low risk" — so every
+   helper below takes the null and every caller has to answer for it. */
+type GateScore = number | null;
 
-/* Live read row: one reviewer lens with its findings list (JSONB), shaped to
-   exactly what GET /api/shadow-review returns (server shadow-review.routes.ts →
-   shapeFinding). detail/basis/recommendation/leafRef are nullable columns —
-   rendered null-safe, never fabricated. dimension/severity are free text off
-   the wire (the store does not narrow them to the display unions). */
+function riskBand(v: GateScore): string { return v === null ? 'unscored' : v >= 0.66 ? 'high' : v >= 0.33 ? 'med' : 'low'; }
+function riskWord(v: GateScore): string { return v === null ? 'not scored' : v >= 0.66 ? 'high risk' : v >= 0.33 ? 'moderate risk' : 'low risk'; }
+function riskPct(v: GateScore): string { return v === null ? 'not scored' : Math.round(v * 100) + '%'; }
+
+/* Live read row: one reviewer lens, the gate scores its latest COMPLETE run
+   recorded, and that run's findings — exactly what GET /api/shadow-review
+   returns (shadow-review-view-assembler). detail/basis/recommendation/leafRef
+   are nullable columns — rendered null-safe, never fabricated. dimension and
+   severity are free text off the wire (the store does not narrow them to the
+   display unions).
+
+   WO-16C finding 99: rtfRiskScore/crlRiskScore are read here rather than
+   recomputed from `findings`. The recompute (a verbatim client copy of the
+   service's `aggregateRisk`) returned 0 for a gate with no findings in its
+   dimensions, but on the server that 0 is only a floor — runShadowReview
+   persists max(model self-report, aggregate). The card therefore showed "0%
+   low risk" for runs whose recorded score was far higher and which
+   SubmissionCenter printed at that higher value. They are nullable: a run that
+   recorded no score for a gate renders the third state, never 0%. */
 interface ShadowFindingRow {
   dimension: string;
   severity: string;
@@ -30,7 +46,13 @@ interface ShadowFindingRow {
   recommendation: string | null;
   leafRef: string | null;
 }
-interface ShadowLensRow { lens: string; findings: ShadowFindingRow[]; }
+interface ShadowLensRow {
+  lens: string;
+  runId?: number | null;
+  rtfRiskScore?: number | null;
+  crlRiskScore?: number | null;
+  findings: ShadowFindingRow[];
+}
 
 /* ================================================================
    ShadowReview -- AnA simulates the reviewer who will read your
@@ -79,30 +101,34 @@ export function ShadowReview({ onAsk, onNav }: SurfaceViewProps) {
     if (!live.loading && !live.error) notifySurfaceActionReady('shadow-review');
   }, [live.loading, live.error]);
 
-  const findingsByLens = useMemo(() => {
-    const map: Record<string, ShadowFindingRow[]> = {};
+  const rowByLens = useMemo(() => {
+    const map: Record<string, ShadowLensRow> = {};
     for (const r of live.rows) {
-      if (r && r.lens && Array.isArray(r.findings)) map[r.lens] = r.findings;
+      if (r && r.lens && Array.isArray(r.findings)) map[r.lens] = r;
     }
     return map;
   }, [live.rows]);
 
   // Distinguish "this lens was run (row present, possibly zero findings)" from
   // "this lens has not been run" — an honest empty beats a fabricated clean pass.
-  const lensRan = Object.prototype.hasOwnProperty.call(findingsByLens, lensId);
+  const lensRan = Object.prototype.hasOwnProperty.call(rowByLens, lensId);
 
   const findings = useMemo(() => {
-    const f = findingsByLens[lensId] || [];
+    const f = rowByLens[lensId]?.findings || [];
     // Severity is free text off the wire; rank unknowns last so a bad value
     // never throws on the sort.
     return f.slice().sort((a, b) => (SR_SEV[a.severity]?.rank ?? 99) - (SR_SEV[b.severity]?.rank ?? 99));
-  }, [lensId, findingsByLens]);
+  }, [lensId, rowByLens]);
 
-  // shadowAggregateRisk is the canonical deterministic aggregation (typed to the
-  // display union); the live rows carry the same value space as loose strings.
-  const risk = useMemo(() => shadowAggregateRisk(findings as unknown as ShadowFinding[]), [findings]);
-  const rtf = risk.rtf;
-  const crl = risk.crl;
+  /* The gate scores the RUN recorded — read, never re-derived. A score off the
+     wire that is absent or not a finite number is null (the third state), not
+     zero: 0% is a verdict, and only the run may issue it. */
+  const gateScore = (v: unknown): GateScore =>
+    typeof v === 'number' && Number.isFinite(v) ? Math.max(0, Math.min(1, v)) : null;
+  const rtf: GateScore = lensRan ? gateScore(rowByLens[lensId]?.rtfRiskScore) : null;
+  const crl: GateScore = lensRan ? gateScore(rowByLens[lensId]?.crlRiskScore) : null;
+  const runId = lensRan ? rowByLens[lensId]?.runId ?? null : null;
+  const scored = rtf !== null || crl !== null;
   const criticals = findings.filter((f) => f.severity === 'critical').length;
   const majors = findings.filter((f) => f.severity === 'major').length;
 
@@ -136,7 +162,7 @@ export function ShadowReview({ onAsk, onNav }: SurfaceViewProps) {
         facts: {
           selectedLens: lensId,
           lensHasRun: false,
-          lensesRun: Object.keys(findingsByLens),
+          lensesRun: Object.keys(rowByLens),
         },
         availableActions: ['Run the selected reviewer lens', 'Switch to a lens that has already been run'],
       };
@@ -144,17 +170,27 @@ export function ShadowReview({ onAsk, onNav }: SurfaceViewProps) {
     return {
       summary:
         `Shadow review under the "${lensLabel}" reviewer lens: ${findings.length} finding(s) — ` +
-        `${criticals} critical, ${majors} major. Refuse-to-file risk ${rtf}, complete-response risk ${crl} ` +
-        '(0-1 deterministic aggregation over the findings on screen).',
+        `${criticals} critical, ${majors} major. ` +
+        (scored
+          ? `Refuse-to-file risk ${riskPct(rtf)}, complete-response risk ${riskPct(crl)} — the 0-1 scores this ` +
+            'run itself recorded, NOT a count of the findings on screen.'
+          : 'This run recorded no gate score, so there is no refuse-to-file or complete-response risk on ' +
+            'screen. That is a missing score, not a score of zero, and must not be reported as a clean gate.'),
       facts: {
         selectedLens: lensId,
         lensHasRun: true,
-        lensesRun: Object.keys(findingsByLens),
+        lensesRun: Object.keys(rowByLens),
+        runId: rowByLens[lensId]?.runId ?? null,
         findingCount: findings.length,
         criticalFindings: criticals,
         majorFindings: majors,
+        // null = the run recorded no score for this gate. Never report it as 0.
         refuseToFileRisk: rtf,
         completeResponseRisk: crl,
+        gateScoresRecorded: scored,
+        gateScoreSource: scored
+          ? 'shadow_review_runs.rtf_risk_score / crl_risk_score — the score this run recorded'
+          : 'none recorded by this run',
         findings: findings.slice(0, 12).map((f) => ({
           dimension: f.dimension, severity: f.severity, title: f.title,
           detail: f.detail, basis: f.basis, recommendation: f.recommendation, leafRef: f.leafRef,
@@ -166,13 +202,17 @@ export function ShadowReview({ onAsk, onNav }: SurfaceViewProps) {
         'Re-run the lens after addressing findings',
       ],
     };
-  }, [live.loading, live.error, lens, lensId, lensRan, findingsByLens, findings, criticals, majors, rtf, crl]);
+  }, [live.loading, live.error, lens, lensId, lensRan, rowByLens, findings, criticals, majors, rtf, crl, scored]);
   usePublishSurfaceContext('shadow-review', anaContext);
 
   /* AnA's answer-first verdict -- reviewer voice, honest, one clear next step.
      Speaks to the connected submission; no fabricated sequence identity (the
      read contract does not return one). */
-  const worst = rtf >= crl ? 'rtf' : 'crl';
+  const worst = (rtf ?? -1) >= (crl ?? -1) ? 'rtf' : 'crl';
+  /* An elevated RECORDED score with no blocking finding is not a clean review —
+     the run's own score is the verdict, and the reviewer model may score a gate
+     high (an empty leaf set, say) while raising no individual finding. */
+  const elevated = (rtf ?? 0) >= 0.33 || (crl ?? 0) >= 0.33;
   const lead = criticals > 0
     ? {
         tone: 'urgent' as const,
@@ -182,13 +222,17 @@ export function ShadowReview({ onAsk, onNav }: SurfaceViewProps) {
     : majors > 0
       ? {
           tone: 'calm' as const,
-          h: <>Your submission is <b>fileable, with {majors} substantive point{majors > 1 ? 's' : ''}</b> a {lens.agency} reviewer would raise. RTF risk {Math.round(rtf * 100)}%, {lens.gates.crl.split(' ')[0]} risk {Math.round(crl * 100)}%.</>,
+          h: <>Your submission is <b>fileable, with {majors} substantive point{majors > 1 ? 's' : ''}</b> a {lens.agency} reviewer would raise. RTF risk {riskPct(rtf)}, {lens.gates.crl.split(' ')[0]} risk {riskPct(crl)}.</>,
           b: <>None are filing-blockers, but each is a likely question in the review cycle. Address them in the dossier now and you shorten the back-and-forth after you file.</>,
         }
       : {
-          tone: 'good' as const,
-          h: <>The {lens.label} recorded no blocking findings on your connected sequence. RTF risk {Math.round(rtf * 100)}%, {lens.gates.crl.split(' ')[0]} risk {Math.round(crl * 100)}%.</>,
-          b: <>This is a clean simulated review. It is not a guarantee — but a reviewer opening this sequence would not hit an administrative or substantive wall.</>,
+          tone: (!scored || elevated ? 'calm' : 'good') as 'calm' | 'good',
+          h: <>The {lens.label} recorded no blocking findings on your connected sequence. RTF risk {riskPct(rtf)}, {lens.gates.crl.split(' ')[0]} risk {riskPct(crl)}.</>,
+          b: !scored
+            ? <>This run recorded no score for either gate, so nothing here clears them. An absent score is not a low one — re-run this reviewer to get a scored result before you treat the sequence as fileable.</>
+            : elevated
+              ? <>The reviewer raised no critical or major finding, but this run still recorded an elevated gate risk. That score is the run's own verdict, not a count of the list below — treat the gate as open, not clear.</>
+              : <>This is a clean simulated review. It is not a guarantee — but a reviewer opening this sequence would not hit an administrative or substantive wall.</>,
         };
 
   const showResults = !live.loading && !live.error && !live.empty && lensRan;
@@ -253,17 +297,26 @@ export function ShadowReview({ onAsk, onNav }: SurfaceViewProps) {
             {/* The two gates that kill a filing */}
             <div className="sr-gates">
               {([
-                { k: 'rtf', v: rtf, name: lens.gates.rtf, sub: 'Administrative gate — will they accept the filing?', dims: 'rtf + format findings' },
-                { k: 'crl', v: crl, name: lens.gates.crl, sub: 'Substantive gate — will they approve after review?', dims: 'crl + nb findings' },
+                { k: 'rtf', v: rtf, name: lens.gates.rtf, sub: 'Administrative gate — will they accept the filing?' },
+                { k: 'crl', v: crl, name: lens.gates.crl, sub: 'Substantive gate — will they approve after review?' },
               ] as const).map((g) => (
                 <div key={g.k} className={'sr-gate band-' + riskBand(g.v)}>
                   <div className="sr-gate-top">
                     <span className="sr-gate-name">{g.name}</span>
-                    <span className="sr-gate-pct">{Math.round(g.v * 100)}%</span>
+                    {/* A gate the run did not score shows no percentage and no
+                        fill: an unrecorded score is not a score of zero. */}
+                    <span className="sr-gate-pct">{g.v === null ? '—' : Math.round(g.v * 100) + '%'}</span>
                   </div>
-                  <div className="sr-gate-track"><div className="sr-gate-fill" style={{ width: Math.round(g.v * 100) + '%' }} /></div>
-                  <div className="sr-gate-word">{riskWord(g.v)} risk</div>
+                  <div className="sr-gate-track">
+                    {g.v !== null && <div className="sr-gate-fill" style={{ width: Math.round(g.v * 100) + '%' }} />}
+                  </div>
+                  <div className="sr-gate-word">{riskWord(g.v)}</div>
                   <div className="sr-gate-sub">{g.sub}</div>
+                  {g.v === null && (
+                    <div className="sr-gate-sub">
+                      This run recorded no score for this gate{runId ? ` (run #${runId})` : ''}, so none is shown. Re-run the reviewer to score it.
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
@@ -304,7 +357,7 @@ export function ShadowReview({ onAsk, onNav }: SurfaceViewProps) {
         <div className="sr-foot">
           <PedigreeBadge level="model_assisted" />
           <PedigreeBadge level="deterministic_registry" />
-          <span className="sr-foot-note">Findings are model-assisted — produced by the platform’s governed regulatory-review model, not by a human reviewer. The RTF/CRL risk aggregation is deterministic (a single critical saturates the gate). Connect a sequence to run the live reviewer against it.</span>
+          <span className="sr-foot-note">Findings are model-assisted — produced by the platform’s governed regulatory-review model, not by a human reviewer. The RTF/CRL percentages are the scores the run itself recorded: the reviewer model’s own gate risk, floored by a deterministic aggregation over its findings (a single critical saturates the gate). A gate the run did not score shows “not scored”, never 0%. Connect a sequence to run the live reviewer against it.</span>
           <div className="sr-actions">
             {/* FLAG (mock action): asks AnA to run the reviewer rather than calling
                 POST /sequences/:seqId/shadow-review directly — the real endpoint

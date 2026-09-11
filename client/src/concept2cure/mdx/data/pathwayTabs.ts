@@ -51,7 +51,47 @@ export const AUDIT_KIND_META: Record<AuditKind, AuditKindMeta> = {
   attach:            { label: 'Attach',   tone: 'neutral' },
   export:            { label: 'Export',   tone: 'neutral' },
   access:            { label: 'Access',   tone: 'neutral' },
+  /* Only reached when the row carries no action string at all; a row that has
+     one shows it verbatim through `auditChipMeta` below. */
+  unclassified:      { label: 'Action not recorded', tone: 'neutral' },
 };
+
+/**
+ * The chip a row is rendered with.
+ *
+ * For every classified kind this is the closed-enum label above. For the third
+ * state it is the action string THE SERVER RECORDED, shown verbatim — because
+ * the alternative that shipped was to guess, and the guess was `access`: a
+ * `signature_apply`, a `section.delete` and a `data_modify` all rendered as
+ * "Access", a read, with the real action nowhere on the screen. A label this
+ * client cannot derive is not a label this client may invent.
+ */
+export function auditChipMeta(e: { kind: AuditKind; action?: string }): AuditKindMeta {
+  if (e.kind === 'unclassified') {
+    const action = (e.action || '').trim();
+    return action ? { label: action, tone: 'neutral' } : AUDIT_KIND_META.unclassified;
+  }
+  return AUDIT_KIND_META[e.kind] || { label: e.kind, tone: 'neutral' };
+}
+
+/**
+ * What a narrow kind filter cannot speak for, or null when it can speak for
+ * every row in the window.
+ *
+ * The kind filters ("E-sign", "Review", "Edits", …) partition a vocabulary that
+ * unclassified rows are by definition outside of. Answering "No events match
+ * this filter." over a window that contains them reports a verdict — no
+ * e-signatures here — for a question that was never asked of those rows. This
+ * sentence is the difference between that and "this filter cannot tell".
+ */
+export function unclassifiedFilterCaveat(unclassified: number, total: number): string | null {
+  if (unclassified <= 0) return null;
+  return (
+    `${unclassified} of ${total} events carry an action this view has no category for. ` +
+    'They are listed under "All" with the recorded action shown verbatim; this filter ' +
+    'cannot say whether any of them belong to it.'
+  );
+}
 
 const K510_CORRESP: Correspondence[] = [
   { id: 'rta-3', kind: 'AI-Hold', channel: 'CDRH eSTAR', from: 'CDRH', received: '2026-04-29T08:14:00Z', due: '2026-05-13', status: 'open', ai: true,

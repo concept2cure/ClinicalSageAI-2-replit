@@ -77,8 +77,17 @@ vi.mock('../../../db', () => {
   };
 });
 
+// Resolves a real `AuditWriteResult`, as `logAction` does. It used to resolve
+// UNDEFINED, which meant this file could not tell a persisted audit row from a
+// lost one — see pdev-workflow-bridge-audit-outcome.test.ts, which drives the
+// `persisted: false` arm with a failing pool instead of a mock.
 vi.mock('../../auditService', () => ({
-  default: { logAction: async (e: any) => { AUDIT.calls.push(e); } },
+  default: {
+    logAction: async (e: any) => {
+      AUDIT.calls.push(e);
+      return { persisted: true, chained: true, tamperProof: true };
+    },
+  },
 }));
 
 vi.mock('../pdev-clearance', () => ({
@@ -207,7 +216,8 @@ describe('pdevWorkflowBridge.kickoff — orchestration', () => {
     expect(H.tables.pdev_program_activities).toHaveLength(1);
     expect(H.tables.pdev_program_activities[0].state).toBe('human_review_required');
 
-    // Audit event emitted.
+    // Audit event emitted — and its outcome reported, not assumed.
     expect(AUDIT.calls.some(c => c.action === 'pdev_workflow_kickoff')).toBe(true);
+    expect(result.auditTrail).toEqual({ persisted: true });
   });
 });
