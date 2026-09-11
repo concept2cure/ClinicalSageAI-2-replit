@@ -112,7 +112,19 @@ export interface ContradictionFinding {
   consequenceType: ConsequenceType | null;
   consequenceObjectId: string | null;
   consequenceExecuted: boolean;
-  detectedBy: string;
+  /**
+   * Who or what detected this finding — NULL on every row today.
+   *
+   * No code in the repository writes contradiction_findings.detected_by,
+   * and the creator every provisioned database gets
+   * (migrations/20260524_contradiction_engine_schema.sql) declares it a
+   * plain nullable TEXT. This was typed `string` and read with
+   * `as string`, so every consumer was told a value existed. The other
+   * creator's `DEFAULT 'system'` was removed on 2026-09-11 rather than
+   * adopted: it would have stamped each finding with an attribution
+   * nothing recorded.
+   */
+  detectedBy: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -937,7 +949,7 @@ class ContradictionEngineService {
       consequenceType: row.consequence_type as ConsequenceType | null,
       consequenceObjectId: row.consequence_object_id as string | null,
       consequenceExecuted: (row.consequence_executed as boolean) ?? false,
-      detectedBy: row.detected_by as string,
+      detectedBy: (row.detected_by as string | null) ?? null,
       createdAt: (row.created_at as Date)?.toISOString() ?? '',
       updatedAt: (row.updated_at as Date)?.toISOString() ?? '',
     };
@@ -989,7 +1001,7 @@ class ContradictionEngineService {
             where: (a: any, { eq }: any) => eq(a.projectId, projectId),
             orderBy: (a: any, { desc }: any) => [desc(a.updatedAt)],
           })
-          .catch(() => [])) || [];
+          ) || [];
 
       // Group by ctdSection
       const bySectionCode = new Map<string, any[]>();
@@ -1053,6 +1065,15 @@ class ContradictionEngineService {
       log.warn('Approved-vs-working drift detection failed', {
         error: err instanceof Error ? err.message : String(err),
       });
+      // Re-thrown as of 2026-09-10. Swallowing here made scanProjectFull's
+      // fail-closed gate unreachable for this detector: the promise resolved,
+      // so the gate at the allSettled loop never saw a rejection, the `.then()`
+      // pushed this detector's name into `detectionMethods` as though it had
+      // run, and summary.total came back short by whatever it would have found.
+      // The gate's own comment is the contract — "A contradiction scan that
+      // could not run its full detector set is unknown, not clean" — and the
+      // three Pass-7 detectors already behave this way.
+      throw err;
     }
 
     return findings;
@@ -1077,7 +1098,7 @@ class ContradictionEngineService {
           ?.findMany?.({
             where: (a: any, { eq }: any) => eq(a.projectId, projectId),
           })
-          .catch(() => [])) || [];
+          ) || [];
 
       // Check for artifacts in review/approved status with superseded assumptions
       const supersededAssumptions = await assumptionRegistryService.search({
@@ -1164,6 +1185,15 @@ class ContradictionEngineService {
       log.warn('Status conflict detection failed', {
         error: err instanceof Error ? err.message : String(err),
       });
+      // Re-thrown as of 2026-09-10. Swallowing here made scanProjectFull's
+      // fail-closed gate unreachable for this detector: the promise resolved,
+      // so the gate at the allSettled loop never saw a rejection, the `.then()`
+      // pushed this detector's name into `detectionMethods` as though it had
+      // run, and summary.total came back short by whatever it would have found.
+      // The gate's own comment is the contract — "A contradiction scan that
+      // could not run its full detector set is unknown, not clean" — and the
+      // three Pass-7 detectors already behave this way.
+      throw err;
     }
 
     return findings;
@@ -1192,7 +1222,7 @@ class ContradictionEngineService {
           ?.findMany?.({
             where: (a: any, { eq }: any) => eq(a.projectId, projectId),
           })
-          .catch(() => [])) || [];
+          ) || [];
 
       // Build section content map for harmonize check
       const sections: Record<string, string> = {};
@@ -1263,6 +1293,15 @@ class ContradictionEngineService {
       log.warn('Cross-artifact content conflict detection failed', {
         error: err instanceof Error ? err.message : String(err),
       });
+      // Re-thrown as of 2026-09-10. Swallowing here made scanProjectFull's
+      // fail-closed gate unreachable for this detector: the promise resolved,
+      // so the gate at the allSettled loop never saw a rejection, the `.then()`
+      // pushed this detector's name into `detectionMethods` as though it had
+      // run, and summary.total came back short by whatever it would have found.
+      // The gate's own comment is the contract — "A contradiction scan that
+      // could not run its full detector set is unknown, not clean" — and the
+      // three Pass-7 detectors already behave this way.
+      throw err;
     }
 
     return findings;
@@ -1296,7 +1335,7 @@ class ContradictionEngineService {
           ?.findMany?.({
             where: (a: any, { eq }: any) => eq(a.projectId, projectId),
           })
-          .catch(() => [])) || [];
+          ) || [];
 
       for (const art of artifacts) {
         if (!art.ctdSection || !art.content) continue;
@@ -1358,6 +1397,15 @@ class ContradictionEngineService {
       log.warn('Body-specific expectation conflict detection failed', {
         error: err instanceof Error ? err.message : String(err),
       });
+      // Re-thrown as of 2026-09-10. Swallowing here made scanProjectFull's
+      // fail-closed gate unreachable for this detector: the promise resolved,
+      // so the gate at the allSettled loop never saw a rejection, the `.then()`
+      // pushed this detector's name into `detectionMethods` as though it had
+      // run, and summary.total came back short by whatever it would have found.
+      // The gate's own comment is the contract — "A contradiction scan that
+      // could not run its full detector set is unknown, not clean" — and the
+      // three Pass-7 detectors already behave this way.
+      throw err;
     }
 
     return findings;

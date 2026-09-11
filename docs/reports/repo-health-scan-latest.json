@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-10T21:30:36.579Z",
+  "generatedAt": "2026-09-11T07:30:01.983Z",
   "git": {
-    "sha": "20e0a3c90b64d6d1f114f2790a1b1fe9a3915a56",
+    "sha": "4c6f38153db90cf09ec6778963e994583aa82529",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2474,6 +2474,10 @@
         "lines": 1657
       },
       {
+        "file": "server/services/contradiction-engine-service.ts",
+        "lines": 1656
+      },
+      {
         "file": "server/services/clinical-outcome-assessment/coa-knowledge.ts",
         "lines": 1650
       },
@@ -2484,10 +2488,6 @@
       {
         "file": "services/regulatory/globalPyramids.ts",
         "lines": 1623
-      },
-      {
-        "file": "server/services/contradiction-engine-service.ts",
-        "lines": 1608
       },
       {
         "file": "server/services/pediatric/pediatric-knowledge.ts",

@@ -1,5 +1,4 @@
 import { ProtocolData } from './protocol-analyzer-service';
-import { huggingFaceService } from './huggingface-service';
 import { isApiKeyAvailable, generateTailoredProtocolRecommendations } from './openai-service';
 
 export interface OptimizationResult {
@@ -14,7 +13,18 @@ export interface Recommendation {
   original: string | number;
   suggested: string | number;
   reason: string;
-  confidence: number;
+  /**
+   * How strongly this RULE is held, fixed when the rule was written — not a
+   * confidence in this recommendation being right for this protocol.
+   *
+   * Renamed from `confidence` on 2026-09-11. Every value is a literal chosen at
+   * authoring time (0.9 for the small-sample rule, 0.7 for the large-Phase-I
+   * rule, 0.8 for the chronic-duration rule, 0.6 for the endpoint rule) and
+   * nothing about the submitted protocol moves any of them. Calling that a
+   * confidence invited it to be read as "we are 90% sure this is correct",
+   * which no part of this service computes.
+   */
+  ruleStrength: number;
 }
 
 export class ProtocolOptimizerService {
@@ -105,7 +115,7 @@ Based on our analysis of your ${phaseLabel}${area} protocol, we recommend the fo
           suggested: Math.max(50, n * 2),
           reason:
             'Small sample sizes reduce statistical power. Consider increasing to improve chances of detecting treatment effect.',
-          confidence: 0.9,
+          ruleStrength: 0.9,
         });
       } else if (n > 500 && protocolData.phase === 'Phase I') {
         recommendations.push({
@@ -114,7 +124,7 @@ Based on our analysis of your ${phaseLabel}${area} protocol, we recommend the fo
           suggested: 50,
           reason:
             'Sample size is unusually large for a Phase I trial, which typically focuses on safety in a small group.',
-          confidence: 0.7,
+          ruleStrength: 0.7,
         });
       }
     }
@@ -132,7 +142,7 @@ Based on our analysis of your ${phaseLabel}${area} protocol, we recommend the fo
         suggested: Math.max(24, weeks * 2),
         reason:
           'For chronic conditions, longer follow-up periods are recommended to better assess long-term outcomes.',
-        confidence: 0.8,
+        ruleStrength: 0.8,
       });
     }
 
@@ -163,7 +173,7 @@ Based on our analysis of your ${phaseLabel}${area} protocol, we recommend the fo
             original: currentEndpoint,
             suggested: endpoints[0],
             reason: `Consider using established endpoints like ${endpoints.join(', ')} for ${category} trials, which may improve regulatory acceptance.`,
-            confidence: 0.6,
+            ruleStrength: 0.6,
           });
         }
       }
@@ -188,9 +198,13 @@ Based on our analysis of your ${phaseLabel}${area} protocol, we recommend the fo
       }
     }
 
-    // Calculate an improvement score based on the recommendations
+    // A weighted COUNT OF RULES THAT FIRED — 0.5 plus a tenth of each rule's
+    // authored strength, capped below. It does not measure how much the
+    // protocol would improve, and it cannot: nothing here compares a before and
+    // an after. The name is kept because it is on the exported type, and this
+    // comment is the correction.
     const improvementScore = recommendations.reduce(
-      (score, rec) => score + rec.confidence * 0.1,
+      (score, rec) => score + rec.ruleStrength * 0.1,
       recommendations.length > 0 ? 0.5 : 0
     );
 
@@ -202,92 +216,21 @@ Based on our analysis of your ${phaseLabel}${area} protocol, we recommend the fo
     };
   }
 
-  /**
-   * Performs a more detailed optimization with Hugging Face models
+  /*
+   * getDeepOptimizationRecommendations was REMOVED on 2026-09-11.
+   *
+   * Its docstring read "Performs a more detailed optimization with Hugging Face
+   * models" and its body read "In a real implementation, this would enhance the
+   * optimization with HF models / For this demo, we'll simulate that by adding
+   * more detailed recommendations", with "deeper analysis" in its own scare
+   * quotes. No Hugging Face model was called: `huggingFaceService` was imported
+   * at the top of this file and never referenced. It ran optimizeProtocol and
+   * appended three more hardcoded rules.
+   *
+   * It also had ZERO callers — referenced nowhere but its own definition — so
+   * nothing is lost. The unused import went with it.
    */
-  async getDeepOptimizationRecommendations(
-    protocolData: ProtocolData
-  ): Promise<OptimizationResult> {
-    // This would use the Hugging Face model to make more advanced recommendations
-    // First get basic optimization
-    const basicOptimization = await this.optimizeProtocol(protocolData);
 
-    // In a real implementation, this would enhance the optimization with HF models
-    // For this demo, we'll simulate that by adding more detailed recommendations
-
-    const enhancedRecommendations = [...basicOptimization.recommendations];
-
-    // Add additional recommendations based on "deeper analysis"
-    if (protocolData.design && !protocolData.design.toLowerCase().includes('randomized')) {
-      enhancedRecommendations.push({
-        field: 'design',
-        original: protocolData.design || 'Not specified',
-        suggested: 'Randomized, Double-Blind, Placebo-Controlled',
-        reason:
-          'Randomized controlled trials provide stronger evidence than non-randomized designs. Consider implementing randomization to reduce bias.',
-        confidence: 0.85,
-      });
-    }
-
-    if (protocolData.arms && protocolData.arms < 2) {
-      enhancedRecommendations.push({
-        field: 'arms',
-        original: protocolData.arms || 1,
-        suggested: 2,
-        reason:
-          'Single-arm studies provide limited evidence of treatment effect. Consider adding a control arm for comparison.',
-        confidence: 0.9,
-      });
-    }
-
-    // Add secondary endpoint recommendations if they don't exist
-    if (!protocolData.secondary_endpoints || protocolData.secondary_endpoints.length === 0) {
-      enhancedRecommendations.push({
-        field: 'secondary_endpoints',
-        original: 'None specified',
-        suggested: 'Add safety and quality of life endpoints',
-        reason:
-          'Secondary endpoints provide additional valuable information beyond the primary outcome. Consider adding patient-reported outcomes and safety assessments.',
-        confidence: 0.8,
-      });
-    }
-
-    // Enhance the optimization with improved values
-    const enhancedOptimized = { ...basicOptimization.optimized };
-
-    // Apply enhanced recommendations
-    for (const rec of enhancedRecommendations.filter(
-      r => !basicOptimization.recommendations.some(b => b.field === r.field)
-    )) {
-      switch (rec.field) {
-        case 'design':
-          enhancedOptimized.design = String(rec.suggested);
-          break;
-        case 'arms':
-          enhancedOptimized.arms = Number(rec.suggested);
-          break;
-        case 'secondary_endpoints':
-          enhancedOptimized.secondary_endpoints = [
-            'Safety and Tolerability',
-            'Quality of Life Assessment',
-          ];
-          break;
-      }
-    }
-
-    // Calculate an enhanced improvement score
-    const enhancedImprovementScore = enhancedRecommendations.reduce(
-      (score, rec) => score + rec.confidence * 0.1,
-      enhancedRecommendations.length > 0 ? 0.6 : 0
-    );
-
-    return {
-      original: protocolData,
-      optimized: enhancedOptimized,
-      recommendations: enhancedRecommendations,
-      improvementScore: Math.min(0.98, enhancedImprovementScore),
-    };
-  }
 }
 
 // Export a singleton instance for convenience

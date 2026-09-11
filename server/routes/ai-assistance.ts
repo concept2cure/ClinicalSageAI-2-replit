@@ -298,10 +298,18 @@ router.post('/verify', async (req, res) => {
           timeoutPromise,
         ]);
 
+        const credibility = parseCredibilityScore(aiResponse);
         verificationResults = {
-          credibility: 85,
-          sources_verified: sources ? sources.length : 0,
-          recommendations: aiResponse.split('\n').filter(line => line.trim().length > 0).slice(0, 5),
+          // Read from the model's reply, or absent. Was the literal 85.
+          credibility,
+          credibilityBasis:
+            credibility === null
+              ? 'The model did not return a parseable 0-100 rating. No score is reported; read the analysis.'
+              : "Parsed from the model's own reply to the rating request.",
+          // Counts sources the CALLER supplied. Nothing in this handler checks
+          // that any of them exists or says what it is cited for — they are
+          // interpolated into the prompt as text. Was `sources_verified`.
+          sources_supplied: sources ? sources.length : 0,
           analysis: aiResponse,
           isRealAI: true,
         };
@@ -335,10 +343,14 @@ router.post('/verify', async (req, res) => {
           timeoutPromise,
         ]);
 
+        const credibility = parseCredibilityScore(aiResponse);
         verificationResults = {
-          credibility: 85,
-          sources_verified: sources ? sources.length : 0,
-          recommendations: aiResponse.split('\n').filter((line: any) => line.trim().length > 0).slice(0, 5),
+          credibility,
+          credibilityBasis:
+            credibility === null
+              ? 'The model did not return a parseable 0-100 rating. No score is reported; read the analysis.'
+              : "Parsed from the model's own reply to the rating request.",
+          sources_supplied: sources ? sources.length : 0,
           analysis: aiResponse,
           isRealAI: true,
         };
@@ -374,13 +386,18 @@ router.post('/verify', async (req, res) => {
     logAIRequest('/verify', false, error);
     
     console.error('Content verification error:', error);
-    res.status(500).json({ 
-      error: 'Verification service temporarily unavailable',
-      fallback: true,
+    // `credibility: 0` was here. Zero is a verdict — "this content has no
+    // credibility" — and the service had merely failed. A crashed verifier
+    // reports no score at all.
+    res.status(503).json({
+      success: false,
+      error: {
+        code: 'VERIFICATION_UNAVAILABLE',
+        message:
+          'The verification service failed, so no verification was performed. This is not a ' +
+          'finding about the content.',
+      },
       isRealAI: false,
-      credibility: 0,
-      sources_verified: 0,
-      recommendations: ['Manual verification recommended']
     });
   }
 });
@@ -480,19 +497,52 @@ Standard recommendations for regulatory documents:
 }
 
 // Fallback verification function
-function getFallbackVerification(content: string, sources?: string[]) {
+
+/**
+ * Pull the 0-100 credibility rating out of the model's own reply.
+ *
+ * ── 2026-09-10 ───────────────────────────────────────────────────────────────
+ * The prompt has always ended "Rate credibility 0-100." The reply was never
+ * parsed. Both real-AI success paths returned the integer literal `85`, the
+ * template fallback returned `75` ("Default template credibility"), and the
+ * error path returned `0`. So the number a reviewer read was a constant in every
+ * branch, including the branch where no model ran at all and the branch where
+ * the service had failed — and `0` in particular reads as "this content has no
+ * credibility" when it means "the verifier crashed".
+ *
+ * Returns null when no rating can be read, which callers must render as absent
+ * rather than substituting one.
+ */
+function parseCredibilityScore(text: string): number | null {
+  if (!text) return null;
+  // Accept the shapes a model actually produces: "Credibility: 82",
+  // "credibility score of 82/100", "**Credibility Rating:** 82".
+  const m =
+    text.match(/credibility[^0-9]{0,40}?(\d{1,3})\s*(?:\/\s*100)?/i) ??
+    text.match(/(?:^|\n)\s*(?:score|rating)[^0-9]{0,20}?(\d{1,3})\s*(?:\/\s*100)?/i);
+  if (!m) return null;
+  const n = Number(m[1]);
+  return Number.isFinite(n) && n >= 0 && n <= 100 ? n : null;
+}
+
+function getFallbackVerification(_content: string, sources?: string[]) {
   return {
-    credibility: 75, // Default template credibility
-    sources_verified: sources ? sources.length : 0,
-    recommendations: [
+    // No model ran. `credibility: 75` was here, described in its own comment as
+    // "Default template credibility" — a score for content nothing assessed.
+    credibility: null,
+    credibilityBasis:
+      'No verification was performed: every AI provider was unavailable. The checklist below is ' +
+      'generic guidance, not a finding about this content.',
+    sources_supplied: sources ? sources.length : 0,
+    genericChecklist: [
       'Verify all regulatory citations are current',
       'Cross-reference data with primary sources',
       'Ensure statistical analyses are properly validated',
       'Confirm compliance with latest guidance documents',
       'Review for consistency with established submissions'
     ],
-    analysis: 'Template-based verification. Manual review recommended for critical content.',
-    note: 'This is a template-based verification. Real-time AI verification is currently unavailable.'
+    analysis: null,
+    note: 'No AI verification ran. The items above are a standing checklist, identical for every input.'
   };
 }
 

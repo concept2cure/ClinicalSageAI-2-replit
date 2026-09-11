@@ -41,7 +41,8 @@ export interface PdevContradictionListItem {
   objectA: { type: string; id: string; label: string | null };
   /** Object B label / type / id. */
   objectB: { type: string; id: string; label: string | null };
-  detectedBy: string;
+  /** NULL on every row — nothing writes contradiction_findings.detected_by. */
+  detectedBy: string | null;
   createdAt: string;
   resolvedAt: string | null;
   /** Consequence path, if executed. */

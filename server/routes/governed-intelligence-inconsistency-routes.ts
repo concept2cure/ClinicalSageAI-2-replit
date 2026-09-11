@@ -60,7 +60,8 @@ interface InconsistencyFinding {
   deterministicRule: string | null;
   consequenceType: string | null;
   reviewState: string;
-  detectedBy: string;
+  /** NULL on every row — nothing writes contradiction_findings.detected_by. */
+  detectedBy: string | null;
   authorityState: string;
   resolvedBy: string | null;
   resolvedAt: string | null;

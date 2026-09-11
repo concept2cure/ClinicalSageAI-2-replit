@@ -238,7 +238,90 @@ Sharper still: `migrations/20260611_drop_charter_staging_tables.sql:31` justifie
 e.g. `pmaConfig` in `server/routes/pma-workflow-routes.ts`" — and `pma_config`
 is one of the 21 that do not exist.
 
-## Finding 3 — the four charter tables are on no deploy path
+## Finding 3 — CORRECTED 2026-09-11, then FIXED
+
+> **The claim below is half wrong, and the wrong half is the headline.** The
+> four tables do NOT fail to exist. `project_charters`, `charter_sections`,
+> `timeline_phases`, `project_commitments` and `charter_audit_events` are all
+> declared in `shared/schema/project-charter.ts`, so `drizzle-kit push` creates
+> them at install-fresh step 2. Verified present on a canonically provisioned
+> database. Any deployed database has them.
+>
+> **What is genuinely on no replaying applier is the Part 11 immutability
+> enforcement.** Drizzle cannot express a trigger, so
+> `charter_audit_events_no_update` and `charter_audit_events_no_delete` come
+> only from `migrations/20260629_charter_tables_rebuild.sql`, which runs on
+> install-fresh's overlay and nowhere else. Drop either one — a restore, a
+> schema tool, a manual intervention — and nothing puts it back: the charter
+> audit trail silently becomes mutable, and no gate notices.
+>
+> **FIXED** by `migrations/20260911_charter_audit_immutability.sql`, a new file
+> in `C2C_MIGRATION_FILES` carrying the function and the two triggers verbatim,
+> with the trigger installs guarded on `charter_audit_events` existing.
+>
+> **The first attempt was to list `20260629` itself, and it was wrong.** That
+> file is not self-contained: it has five `REFERENCES project_charters(id)`
+> clauses and does not create `project_charters` — that table comes from Drizzle
+> push, and nothing in the set creates it. Applying the set in order to a
+> database that has not been pushed dies at the first FK.
+> `tests/schema-contract/tenant-isolation-sweep.contract.test.ts` C-33 does
+> exactly that and caught it:
+>
+> ```
+> pass 1: migrations/20260629_charter_tables_rebuild.sql failed
+>   — relation "project_charters" does not exist
+> ```
+>
+> The live-database proof of the first attempt had passed, and could not have
+> caught this: that database already carried `project_charters` from
+> install-fresh, so it could not expose a dependency the set does not satisfy. A
+> green migration against a database that happens to be complete is not evidence
+> that the set is complete.
+>
+> The rebuild's other 367 lines also buy nothing. Every table it creates is
+> `CREATE TABLE IF NOT EXISTS` against a table push has already made, so on any
+> real database that DDL no-ops; the function and the two triggers are the entire
+> delta. Carrying the rest would put a second, independent definition of four
+> Drizzle-owned tables onto the replaying applier in exchange for nothing. So
+> `20260629` stays on install-fresh only.
+>
+> `migrations/20260611_drop_charter_staging_tables.sql` must never join the set
+> either: it DROPs three of the tables, and under RULE 1's unconditional replay
+> that would destroy their contents on every deploy, green.
+>
+> **Proven by making it fail first**, on the canonical database:
+>
+> | Step | Result |
+> |---|---|
+> | `20260629` applied to a bare database | `ERROR: relation "project_charters" does not exist`, exit 3 — the C-33 failure reproduced |
+> | the new file applied to that same bare database | exit 0, `NOTICE: … triggers NOT installed`, 0 triggers, 0 tables — self-contained |
+> | both triggers dropped, then `UPDATE` on a seeded audit row | **succeeded** — hash silently rewritten |
+> | then `DELETE` on that row | **succeeded** — audit row destroyed |
+> | real `deploy-migrate` run | exit 0, "safe to roll services", both triggers back |
+> | `UPDATE` / `DELETE` retried | `ERROR: charter_audit_events is append-only (§11.10(e)); UPDATE blocked` / `DELETE blocked`, row intact |
+> | `deploy-migrate` run a second time | exit 0, 2 triggers, probe row survived — replay-safe |
+>
+> The two middle rows are the finding itself, executed: that is the state every
+> deploy-migrate-maintained database is in today.
+>
+> Gates green at 264 migrations: `ci:migration-set-order`,
+> `ci:migration-drop-safety`, `ci:migration-reachability`,
+> `ci:duplicate-table-ddl` (no new duplicate definitions — the focused file adds
+> no table DDL). `tests/schema-contract/` green across all three shards, 75
+> files, 962 tests.
+>
+> **Not claimed:** this converges no column. It installs enforcement and nothing
+> else, so a database whose shape came from push keeps that shape; column
+> convergence is still WO-1's problem. Nor does anything yet *report* whether the
+> triggers are present — nothing in the repository reads them, verified by
+> grepping ts/js/mjs/sql for the trigger and function names. If such a surface is
+> ever built it must probe `pg_trigger` and report a third state, not assume this
+> migration ran.
+>
+> The stale comments the original finding lists are still worth fixing and are
+> not touched here.
+
+### Original finding, as written
 
 `charter_sections`, `timeline_phases`, `project_commitments` and
 `charter_audit_events` are created only by `migrations/0012` and
@@ -378,7 +461,92 @@ installs — its `DO` block matches only `confdeltype = 'c'`, so it silently
 no-opped. `docs/compliance/part11-immutability-record-class-policy.md:34`
 asserts the CASCADE that is not there.
 
-## Finding 7 — one table, two column names, and four of nine writes always fail silently
+## Finding 7 — CORRECTED 2026-09-11, then FIXED
+
+> **The mechanism is right; the framing is wrong, and the wrong framing
+> understates it.** The finding says "whichever shape a database has, four of the
+> nine writes fail", as though two lineages were in play. Only one is.
+> `scripts/db/deploy-migrate.mjs` refuses an unprovisioned database —
+>
+> ```
+> ✗ This database has not been provisioned — refusing to migrate.
+>   Missing base tables: organizations, users, c2c_documents, regulatory_programs
+> ```
+>
+> — so **there is no such thing as a deploy-migrate-lineage database.**
+> install-fresh provisions every one of them, its step-3 overlay applies all of
+> `migrations/*.sql` including `20260524` (which names the column `notes`), and
+> `db/migrations/20260323` runs later as a `CREATE TABLE IF NOT EXISTS` against a
+> table that already exists — so it no-ops and converges nothing. install-fresh
+> never runs it directly either: step 6 matches only `db/migrations/*_gcc_*`.
+>
+> So it is not "four of nine, depending". It is **always the same four** — the
+> orchestrator's — on **every** database, permanently. Executed against a
+> canonically provisioned database:
+>
+> ```
+> ERROR: column "execution_notes" of relation
+>        "contradiction_consequence_log" does not exist
+> ```
+>
+> while the consequence-service's `notes` write on the same database resolves
+> fine. The write-only claim is confirmed: every one of the 15 references in the
+> repository is an INSERT or a comment; nothing ever SELECTs the table, so a
+> consequence that was never recorded is indistinguishable from one that was.
+>
+> **`contradiction_decision_links`** — the finding says it "does not exist at all
+> under the deploy-migrate lineage". True of a lineage that cannot exist; it is
+> present on every provisioned database. Confirmed live. No change made, but it
+> is created only by an install-fresh-only file, so it is not re-asserted by the
+> replaying applier — the same class as the charter triggers in finding 3.
+>
+> **FIXED, in four parts:**
+>
+> 1. The orchestrator's four INSERTs now name `notes`.
+> 2. `db/migrations/20260323` amended **in place** (RULE 1 — no DROP appended):
+>    `execution_notes` → `notes`, so the two creators cannot diverge again.
+> 3. `migrations/20260911_contradiction_consequence_log_convergence.sql`, new in
+>    `C2C_MIGRATION_FILES`, does what the amendment cannot: `ALTER TABLE … ADD
+>    COLUMN IF NOT EXISTS notes` plus a guarded backfill, because
+>    **`CREATE TABLE IF NOT EXISTS` converges nothing.**
+> 4. `detected_by`: `20260323` declared it `TEXT NOT NULL DEFAULT 'system'` while
+>    the shape that ships declares plain `TEXT`. **No code writes this column.**
+>    The default was removed rather than adopted — it would stamp every finding
+>    with an attribution nothing recorded — and
+>    `ContradictionFinding.detectedBy` is retyped `string | null`, with
+>    `pdev-contradiction-bridge` and the inconsistency route following, because
+>    it was typed `string` and read `as string` while being NULL on every row.
+>
+> **Proven by making it fail first.** A database was built from the
+> pre-amendment `20260323` (`git show HEAD:…`), which is the shape the fix exists
+> to repair:
+>
+> | | Before the convergence migration | After |
+> |---|---|---|
+> | `detected_by` on a seeded row | `system` — nothing recorded this | `system` kept (existing data is not destroyed) |
+> | a **new** finding's `detected_by` | `system` | `NULL` — honest |
+> | free-text column | `execution_notes = 'LEGACY NOTE TEXT'` | `notes` backfilled, `execution_notes` left in place per RULE 1 |
+> | the fixed code's INSERT | `ERROR: column "notes" … does not exist` | `SUCCEEDED, notes=post-fix` |
+>
+> Applied twice more: exit 0, backfilled text unchanged, the post-fix row not
+> clobbered. On the canonically provisioned database the whole file is a no-op,
+> as designed — the shape was already correct there.
+>
+> A new gate, `tests/schema-contract/contradiction-consequence-log-columns.contract.test.ts`,
+> PREPARE-plans every consequence-log write extracted from the three service
+> sources against the canonical creator. Proven red first: 4 failed / 1 passed,
+> naming exactly the orchestrator's four and the real 42703. Now 5/5.
+>
+> Gates green at 265 migrations; `tests/schema-contract/` green across all three
+> shards (76 files, 968 tests); 20 contradiction-related suites, 174 tests, green.
+>
+> **Not claimed:** the wider divergence below — 14 CHECK constraints, the
+> `truth_hierarchy_level` type split, six nullability flips, the
+> `timestamptz`/`timestamp` split — is untouched. Only the two divergences that
+> change answers were fixed.
+
+### Original finding, as written
+
 
 `contradiction_consequence_log` names its free-text column **`execution_notes`**
 in `db/migrations/20260323_assumption_decision_contradiction.sql:280`

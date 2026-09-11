@@ -272,20 +272,20 @@ Treat the tiers in that JSON as unranked leads.
 |---|---|---|---|---|
 | 1 | `routes/real-world-evidence.ts` FAERS statistics | CONFIRMED_VERBATIM | high | **FIXED** `bfacd8890` |
 | 2 | `routes/real-world-evidence.ts` outage → all-clear | CONFIRMED_VERBATIM | high | **FIXED** `bfacd8890` |
-| 3 | `routes/ai-assistance.ts` hardcoded credibility | CONFIRMED_VERBATIM | medium | open |
-| 4 | `routes/document-understanding.ts` phantom models | CONFIRMED_VERBATIM | high | open |
+| 3 | `routes/ai-assistance.ts` hardcoded credibility | CONFIRMED_VERBATIM | medium | **FIXED** (this commit) |
+| 4 | `routes/document-understanding.ts` phantom models | CONFIRMED_VERBATIM | high | **FIXED** `e08cceee0` |
 | 5 | `services/ivdrPackContent.ts` failed query → "no records" | CONFIRMED_VERBATIM | high | **FIXED** `345178089` |
-| 6 | `services/contradiction-engine-service.ts` Pass-8 swallowing | CONFIRMED_NARROWER | medium | open |
-| 7 | `services/cognitive-ecosystem/fhir-validation.service.ts` | CONFIRMED_NARROWER | **low** | open |
+| 6 | `services/contradiction-engine-service.ts` Pass-8 swallowing | CONFIRMED_NARROWER | medium | **FIXED** (this commit) |
+| 7 | `services/cognitive-ecosystem/fhir-validation.service.ts` | CONFIRMED_NARROWER | **low** | **FIXED** (this commit) |
 | 8 | `services/tenant-export/tenant-export.service.ts` | CONFIRMED_VERBATIM | high | **FIXED** `10b5bd2c2` |
-| 9 | `api/cmc/workflowRoutes.ts` CMC doc from a drug name | CONFIRMED_NARROWER | high | open |
+| 9 | `api/cmc/workflowRoutes.ts` CMC doc from a drug name | CONFIRMED_NARROWER | high | **FIXED** (this commit) |
 | 10 | `services/intelligence/readiness-scoring-engine.ts` | CONFIRMED_NARROWER | **critical** | **FIXED** `41dbc96ff` |
 | 11 | `protocol-analyzer-service.ts` invented protocols | CONFIRMED_VERBATIM | high | **FIXED** `7c71de271` |
 | 12 | `v2/surfaces/ReportEngine.tsx` fake power calculation | CONFIRMED_VERBATIM | high | **FIXED** `41dbc96ff` |
 | 13 | `routes/biotech-artifacts.ts` invented ICSR/PSUR facts | CONFIRMED_VERBATIM | high | **FIXED** `f567da99b` |
 | 14 | `routes/protocol_routes.ts` fabricated PDF text | CONFIRMED_VERBATIM | high | **FIXED** `7c71de271` |
 | 15 | `protocol-analyzer-service.ts` unconditional FDA/EMA verdict | CONFIRMED_VERBATIM | high | **FIXED** `7c71de271` |
-| 16 | `services/cerGenerationService.ts` contraindications | CONFIRMED_VERBATIM | high | open |
+| 16 | `services/cerGenerationService.ts` contraindications | CONFIRMED_VERBATIM | high | **FIXED** `9aed6ded6` |
 
 ## Corrections to my own findings file — read these before working an entry
 
@@ -393,3 +393,27 @@ route path in the JSON is wrong — it is `/api/cmc/workflows`) · **#3**
 Plus one found while fixing and not yet addressed: `protocol-optimizer-service.ts`
 stamps `confidence: 0.9 / 0.8 / 0.7` on rule-based recommendations, where the
 field name asserts a computed confidence and the values are per-rule constants.
+
+
+---
+
+## All sixteen closed — 11 September 2026
+
+Every finding in the fabricated-content lane is now fixed, with a red-first test
+for each. The last three: #9 (CMC ai-command), #6 (contradiction Pass-8) and #7
+(FHIR rule engine).
+
+**Still open, found while fixing and not yet addressed:**
+`server/protocol-optimizer-service.ts` stamps `confidence: 0.9 / 0.8 / 0.7` on
+rule-based recommendations. The values are per-rule constants and the field name
+asserts a computed confidence. Smaller than anything above, and real.
+
+**Not a finding in this file, but the largest thing this lane surfaced:** the
+`audit_events` hash chain was on no applier, so on a canonically provisioned
+database no audit row carried a `record_hash` and every Part 11 chain surface
+reported `unverified`. Fixed by adding
+`db/migrations/20260222_audit_events_hash_chain.sql` to `C2C_MIGRATION_FILES`
+with its backfill removed — a backfilled chain hashes history from its current
+contents and so attests to nothing, and the backfill's UPDATE would have raised
+P0A01 against the already-deployed no-update trigger. Verified end to end on the
+canonical database.
