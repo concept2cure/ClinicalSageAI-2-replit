@@ -10,6 +10,23 @@ Last updated 2026-09-11.
 
 ---
 
+## 0. Who is working on what — claim your lane here
+
+Sessions cannot message each other. This table is the only coordination
+mechanism, so **claim before you start and release when you stop.** Keep entries
+to one line; edit only your own row to limit merge conflicts.
+
+| Lane | Session | Claimed |
+|---|---|---|
+| WO-15 finding 8 — the two blind gates (`scripts/ci/`, `scripts/db/`) | `…session_01E2moDuSNSNTBqAHV5GtWoz` | 2026-09-11 21:0x |
+| WO-15 finding 4 — `/api/design-risk` | expected: `…session_01J935DZwfFEardJCv85SJds` | unconfirmed |
+| WO-16C — fabrication sweep (`server/services/`, `server/routes/`) | `…session_01E8btkB8mcLirW4rNvsMNxK` (inferred from commits) | active |
+
+If you are one of the sessions above, correct your own row. If a lane you want
+is claimed, take the next unclaimed finding in §3 rather than duplicating it.
+
+---
+
 ## 1. The rules come first
 
 `CLAUDE.md` at the repo root is authoritative and overrides any instruction in a

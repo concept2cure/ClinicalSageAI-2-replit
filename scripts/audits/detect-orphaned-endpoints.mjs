@@ -96,6 +96,18 @@ const ROUTE_DECL = /\b(?:router|app|api|express\(\))\s*\.\s*(get|post|put|patch|
 // Match: app.use('/api/foo', someModule.default) / app.use('/api/foo', router)
 // preceded somewhere in the same file by an import of the router module.
 const APP_USE_MOUNT = /\bapp\s*\.\s*use\s*\(\s*['"`](\/api\/[^'"`]+)['"`]\s*,\s*([A-Za-z_$][\w$]*)/g;
+
+// Match a table-driven mount entry: { path: '/api/foo', router: fooRouter, ... }
+// server/bootstrap/register-document-routes.ts and its siblings register whole
+// groups of routers from an array of these instead of calling app.use per
+// router. APP_USE_MOUNT cannot see that form, so every endpoint in those files
+// fell through the "no /api/ prefix and no known mount" skip below and was
+// silently absent from BOTH the declared set and the orphan count. That is 111
+// mount entries across six bootstrap files: adding this pattern took the
+// declared set from 865 to 1776, so the gate had been measuring less than half
+// the mounted API and reporting it as the whole.
+const TABLE_MOUNT =
+  /\bpath\s*:\s*['"`](\/api\/[^'"`]+)['"`]\s*,\s*router\s*:\s*([A-Za-z_$][\w$]*)/g;
 const STATIC_IMPORT = /import\s+(?:[\w$\s{},*]+?\s+from\s+)?['"]([^'"]+)['"]/g;
 const DYNAMIC_IMPORT = /(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*=\s*await\s+import\s*\(\s*['"]([^'"]+)['"]\s*\)/g;
 const NAMED_STATIC_IMPORT = /import\s+(?:(?:\{[^}]*\b([A-Za-z_$][\w$]*)\b[^}]*\})|(\w+))\s+from\s+['"]([^'"]+)['"]/g;
@@ -136,16 +148,18 @@ function discoverMountMap() {
       if (name) names.set(name, sm[3]);
     }
 
-    APP_USE_MOUNT.lastIndex = 0;
-    let am;
-    while ((am = APP_USE_MOUNT.exec(text)) !== null) {
-      const mount = am[1];
-      const name = am[2];
-      const importPath = names.get(name) ?? names.get(name.replace(/Module$/, ''));
-      if (!importPath) continue;
-      const resolved = resolveImportPath(file, importPath);
-      if (!resolved) continue;
-      mountMap.set(resolved, mount);
+    for (const pattern of [APP_USE_MOUNT, TABLE_MOUNT]) {
+      pattern.lastIndex = 0;
+      let am;
+      while ((am = pattern.exec(text)) !== null) {
+        const mount = am[1];
+        const name = am[2];
+        const importPath = names.get(name) ?? names.get(name.replace(/Module$/, ''));
+        if (!importPath) continue;
+        const resolved = resolveImportPath(file, importPath);
+        if (!resolved) continue;
+        mountMap.set(resolved, mount);
+      }
     }
   }
 
