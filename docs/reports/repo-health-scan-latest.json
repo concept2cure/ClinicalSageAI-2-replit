@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-11T02:35:53.320Z",
+  "generatedAt": "2026-09-11T07:30:01.983Z",
   "git": {
-    "sha": "1ac887b2cbe391a8dede452c6a343271257f2ea1",
+    "sha": "4c6f38153db90cf09ec6778963e994583aa82529",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2474,12 +2474,12 @@
         "lines": 1657
       },
       {
-        "file": "server/services/clinical-outcome-assessment/coa-knowledge.ts",
-        "lines": 1650
+        "file": "server/services/contradiction-engine-service.ts",
+        "lines": 1656
       },
       {
-        "file": "server/services/contradiction-engine-service.ts",
-        "lines": 1644
+        "file": "server/services/clinical-outcome-assessment/coa-knowledge.ts",
+        "lines": 1650
       },
       {
         "file": "server/services/unifiedDocumentIngestion.js",
