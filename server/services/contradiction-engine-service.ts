@@ -989,7 +989,7 @@ class ContradictionEngineService {
             where: (a: any, { eq }: any) => eq(a.projectId, projectId),
             orderBy: (a: any, { desc }: any) => [desc(a.updatedAt)],
           })
-          .catch(() => [])) || [];
+          ) || [];
 
       // Group by ctdSection
       const bySectionCode = new Map<string, any[]>();
@@ -1053,6 +1053,15 @@ class ContradictionEngineService {
       log.warn('Approved-vs-working drift detection failed', {
         error: err instanceof Error ? err.message : String(err),
       });
+      // Re-thrown as of 2026-09-10. Swallowing here made scanProjectFull's
+      // fail-closed gate unreachable for this detector: the promise resolved,
+      // so the gate at the allSettled loop never saw a rejection, the `.then()`
+      // pushed this detector's name into `detectionMethods` as though it had
+      // run, and summary.total came back short by whatever it would have found.
+      // The gate's own comment is the contract — "A contradiction scan that
+      // could not run its full detector set is unknown, not clean" — and the
+      // three Pass-7 detectors already behave this way.
+      throw err;
     }
 
     return findings;
@@ -1077,7 +1086,7 @@ class ContradictionEngineService {
           ?.findMany?.({
             where: (a: any, { eq }: any) => eq(a.projectId, projectId),
           })
-          .catch(() => [])) || [];
+          ) || [];
 
       // Check for artifacts in review/approved status with superseded assumptions
       const supersededAssumptions = await assumptionRegistryService.search({
@@ -1164,6 +1173,15 @@ class ContradictionEngineService {
       log.warn('Status conflict detection failed', {
         error: err instanceof Error ? err.message : String(err),
       });
+      // Re-thrown as of 2026-09-10. Swallowing here made scanProjectFull's
+      // fail-closed gate unreachable for this detector: the promise resolved,
+      // so the gate at the allSettled loop never saw a rejection, the `.then()`
+      // pushed this detector's name into `detectionMethods` as though it had
+      // run, and summary.total came back short by whatever it would have found.
+      // The gate's own comment is the contract — "A contradiction scan that
+      // could not run its full detector set is unknown, not clean" — and the
+      // three Pass-7 detectors already behave this way.
+      throw err;
     }
 
     return findings;
@@ -1192,7 +1210,7 @@ class ContradictionEngineService {
           ?.findMany?.({
             where: (a: any, { eq }: any) => eq(a.projectId, projectId),
           })
-          .catch(() => [])) || [];
+          ) || [];
 
       // Build section content map for harmonize check
       const sections: Record<string, string> = {};
@@ -1263,6 +1281,15 @@ class ContradictionEngineService {
       log.warn('Cross-artifact content conflict detection failed', {
         error: err instanceof Error ? err.message : String(err),
       });
+      // Re-thrown as of 2026-09-10. Swallowing here made scanProjectFull's
+      // fail-closed gate unreachable for this detector: the promise resolved,
+      // so the gate at the allSettled loop never saw a rejection, the `.then()`
+      // pushed this detector's name into `detectionMethods` as though it had
+      // run, and summary.total came back short by whatever it would have found.
+      // The gate's own comment is the contract — "A contradiction scan that
+      // could not run its full detector set is unknown, not clean" — and the
+      // three Pass-7 detectors already behave this way.
+      throw err;
     }
 
     return findings;
@@ -1296,7 +1323,7 @@ class ContradictionEngineService {
           ?.findMany?.({
             where: (a: any, { eq }: any) => eq(a.projectId, projectId),
           })
-          .catch(() => [])) || [];
+          ) || [];
 
       for (const art of artifacts) {
         if (!art.ctdSection || !art.content) continue;
@@ -1358,6 +1385,15 @@ class ContradictionEngineService {
       log.warn('Body-specific expectation conflict detection failed', {
         error: err instanceof Error ? err.message : String(err),
       });
+      // Re-thrown as of 2026-09-10. Swallowing here made scanProjectFull's
+      // fail-closed gate unreachable for this detector: the promise resolved,
+      // so the gate at the allSettled loop never saw a rejection, the `.then()`
+      // pushed this detector's name into `detectionMethods` as though it had
+      // run, and summary.total came back short by whatever it would have found.
+      // The gate's own comment is the contract — "A contradiction scan that
+      // could not run its full detector set is unknown, not clean" — and the
+      // three Pass-7 detectors already behave this way.
+      throw err;
     }
 
     return findings;

@@ -275,7 +275,7 @@ Treat the tiers in that JSON as unranked leads.
 | 3 | `routes/ai-assistance.ts` hardcoded credibility | CONFIRMED_VERBATIM | medium | **FIXED** (this commit) |
 | 4 | `routes/document-understanding.ts` phantom models | CONFIRMED_VERBATIM | high | **FIXED** `e08cceee0` |
 | 5 | `services/ivdrPackContent.ts` failed query → "no records" | CONFIRMED_VERBATIM | high | **FIXED** `345178089` |
-| 6 | `services/contradiction-engine-service.ts` Pass-8 swallowing | CONFIRMED_NARROWER | medium | open |
+| 6 | `services/contradiction-engine-service.ts` Pass-8 swallowing | CONFIRMED_NARROWER | medium | **FIXED** (this commit) |
 | 7 | `services/cognitive-ecosystem/fhir-validation.service.ts` | CONFIRMED_NARROWER | **low** | open |
 | 8 | `services/tenant-export/tenant-export.service.ts` | CONFIRMED_VERBATIM | high | **FIXED** `10b5bd2c2` |
 | 9 | `api/cmc/workflowRoutes.ts` CMC doc from a drug name | CONFIRMED_NARROWER | high | **FIXED** (this commit) |
