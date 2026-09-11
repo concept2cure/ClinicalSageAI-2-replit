@@ -87,6 +87,15 @@ export function TasksSurface({ onAskAna }: WorkbenchProps) {
           <div className="page-sub">
             Everything assigned across the portfolio — blockers, peer reviews, e-signatures.
           </div>
+          {/* A source whose query failed contributes nothing, so the counts
+              below are a floor. Saying so is the difference between "nothing
+              else is outstanding" and "we could not read everything". */}
+          {unified.summary?.partial === true && (
+            <div className="page-sub">
+              Some work sources could not be read, so these counts are incomplete. The reason has
+              been logged.
+            </div>
+          )}
           {offBoard > 0 && (
             <div className="page-sub">
               {`+${offBoard} not on this board: `}
