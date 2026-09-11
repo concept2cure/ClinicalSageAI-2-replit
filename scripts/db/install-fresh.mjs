@@ -1038,8 +1038,17 @@ async function main() {
       // consolidation (2026-08-13) made that decision: the rival definition is
       // deleted, shape-2 names are canonical, and the file now applies cleanly
       // — so it is no longer classified as an expected skip.
-      ['20260609_design_risk.sql',
-        'risk_items/risk_management_files shapes collide with shared/schema.ts — ledger C-29; both consumers live, needs a rename decision'],
+      // 20260609_design_risk.sql was classified-skipped here ("needs a rename
+      // decision") for the C-29 collision: its uuid-keyed risk_items/risk_controls
+      // are a rival definition of the serial-keyed pair shared/schema.ts declares
+      // and push creates. The decision is made (2026-09-11), the same way D11d
+      // made it for IVDR: the rival is deleted, the Drizzle shapes are canonical.
+      // The file is gone, so there is nothing left to classify — and with it the
+      // eight tables that had no creator on any applier (design_inputs,
+      // design_outputs, design_verifications, design_validations, design_reviews,
+      // design_changes, design_plans, risk_management_files) and the 20
+      // /api/design-risk endpoints that read them. The live DHF surface binds to
+      // /api/design-controls (c2c_design_controls), which fails closed on 42P01.
     ]);
 
     const rlsSet = new Set(RLS_MIGRATIONS);

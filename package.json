@@ -199,7 +199,7 @@
     "ci:tenant-isolation:write-baseline": "node scripts/ci/check-tenant-isolation.mjs --write-baseline",
     "audit:ui-authority": "tsx scripts/audit-ui-authority.ts",
     "audit:orphaned-endpoints": "node scripts/audits/detect-orphaned-endpoints.mjs",
-    "audit:orphaned-endpoints:strict": "node scripts/audits/detect-orphaned-endpoints.mjs --threshold 590",
+    "audit:orphaned-endpoints:strict": "node scripts/audits/detect-orphaned-endpoints.mjs --threshold 1184",
     "audit:evidence-pack": "node scripts/audits/generate-evidence-pack.mjs",
     "ci:check-editor-integrity": "node scripts/ci/check-editor-extension-integrity.mjs",
     "ci:check-legacy-dep-quarantine": "node scripts/ci/check-legacy-dep-quarantine.mjs",

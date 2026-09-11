@@ -769,7 +769,7 @@ export const UI_SURFACES: UiSurface[] = [
     icon: 'alertTriangle',
     group: 'device',
     uiKit: 'risk',
-    apiPrefixes: ['/api/mdx', '/api/design-risk'],
+    apiPrefixes: ['/api/mdx'],
     anaToolFamilies: [],
     sharedContract: null,
     discoveryCatalog: null,

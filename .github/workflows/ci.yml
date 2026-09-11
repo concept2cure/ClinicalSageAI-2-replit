@@ -620,16 +620,25 @@ jobs:
         if: "!cancelled() && steps.install.conclusion == 'success'"
         run: npm run audit:repo-health:no-regression
 
-      - name: Audit — orphaned endpoints (threshold 600)
+      - name: Audit — orphaned endpoints (threshold 1184)
         if: "!cancelled() && steps.install.conclusion == 'success'"
         # Regenerates docs/reports/orphan-endpoints-latest.{json,md} and fails
-        # if the orphan count exceeds 570 (current: 556). Ratchet the threshold
+        # if the orphan count exceeds 1184 (current: 1170). Ratchet the threshold
         # down in package.json as the backlog is triaged.
         #
-        # Tightened from 900 -> 600 -> 570. The count had fallen to 556 without
-        # the gate following it, leaving 344 of slack — enough for the backlog
-        # to grow by more than half again while CI reported green. A ratchet
-        # that trails reality by that much is not a ratchet.
+        # Tightened from 900 -> 600 -> 570, then RE-BASED UPWARD to 1184 on
+        # 2026-09-11. The rise is not a regression and nothing was added: the
+        # detector could only see `app.use('/api/x', router)` mounts, so the 111
+        # table-driven `{ path, router }` entries across the six
+        # server/bootstrap/register-*.ts files were absent from the declared set
+        # entirely. Teaching it that form took declared from 865 to 1776 — the
+        # gate had been measuring less than half the mounted API and reporting it
+        # as the whole, which is why a 570 ratchet on 556 read as tight. The real
+        # figure was always four digits.
+        #
+        # Deleting /api/design-risk in the same change removed 20 of them
+        # (1190 -> 1170): 20 endpoints over ten tables that existed on no
+        # database, duplicating the live /api/design-controls path.
         #
         # The 14 of remaining headroom is deliberate, for the reason the 600
         # step gave: a feature branch legitimately adds endpoints before the

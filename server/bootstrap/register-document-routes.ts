@@ -3,7 +3,7 @@
  *
  * The 33 routers previously loaded through `config.map(c => import(c.mod))` were
  * all absent from dist/index.js — esbuild cannot resolve a variable specifier —
- * so the eCTD compiler, the whole evidence layer, the QMS/CAPA/design-risk stack
+ * so the eCTD compiler, the whole evidence layer, the QMS/CAPA stack
  * and every IVD route 404d in production while the boot log said each had
  * mounted successfully. Static now; the reasoning is in ./mount-routes.ts.
  */
@@ -39,7 +39,6 @@ import postMarket from '../routes/post-market.js';
 import evidenceSufficiency from '../routes/evidence-sufficiency.js';
 import qSub from '../routes/q-sub.js';
 import capaMdr from '../routes/capa-mdr.js';
-import designRisk from '../routes/design-risk.js';
 import qms from '../routes/qms.js';
 import ivdLifecycle from '../routes/ivd-lifecycle.js';
 import ivdKnowledge from '../routes/ivd-knowledge.js';
@@ -262,7 +261,6 @@ export async function registerDocumentRoutes({
     { path: '/api/evidence-sufficiency', router: evidenceSufficiency, name: 'Evidence Sufficiency' },
     { path: '/api/q-sub', router: qSub, name: 'Q-Submissions (Pre-Sub / SIR / SRD)' },
     { path: '/api/capa-mdr', router: capaMdr, name: 'CAPA + complaint + MDR / vigilance triage' },
-    { path: '/api/design-risk', router: designRisk, name: 'Design controls (DHF) + Risk Management File (ISO 14971)' },
     { path: '/api/qms', router: qms, name: 'Quality Management System (document control, training, suppliers, audits)' },
     { path: '/api/ivd-lifecycle', router: ivdLifecycle, name: 'IVD lifecycle calculators (analytical, software, change, registration)' },
     { path: '/api/ivd-knowledge', router: ivdKnowledge, name: 'IVD knowledge base (scientific / legal / regulatory intelligence corpus)' },
