@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-10T21:30:36.579Z",
+  "generatedAt": "2026-09-11T02:35:53.320Z",
   "git": {
-    "sha": "20e0a3c90b64d6d1f114f2790a1b1fe9a3915a56",
+    "sha": "1ac887b2cbe391a8dede452c6a343271257f2ea1",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2478,16 +2478,16 @@
         "lines": 1650
       },
       {
+        "file": "server/services/contradiction-engine-service.ts",
+        "lines": 1644
+      },
+      {
         "file": "server/services/unifiedDocumentIngestion.js",
         "lines": 1628
       },
       {
         "file": "services/regulatory/globalPyramids.ts",
         "lines": 1623
-      },
-      {
-        "file": "server/services/contradiction-engine-service.ts",
-        "lines": 1608
       },
       {
         "file": "server/services/pediatric/pediatric-knowledge.ts",
