@@ -1568,6 +1568,34 @@ export const C2C_MIGRATION_FILES = [
      else; databases whose shape came from push keep that shape. */
   'migrations/20260911_charter_audit_immutability.sql',
 
+  /* contradiction_consequence_log / contradiction_findings — column
+     convergence, added 2026-09-11 (WO-15 finding 7).
+
+     db/migrations/20260323_assumption_decision_contradiction.sql (index 42
+     above) was amended in place the same day: its consequence-log column
+     `execution_notes` renamed to `notes`, and a `detected_by TEXT NOT NULL
+     DEFAULT 'system'` reduced to plain `TEXT`. Both sit inside CREATE TABLE IF
+     NOT EXISTS blocks, so the amendment governs only a database that does not
+     yet have the tables. This file is the other half: the ALTERs that reach a
+     database which already does.
+
+     The column name mattered because four INSERTs in
+     contradiction-resolution-orchestrator.ts named `execution_notes` and no
+     provisioned database has ever had that column — deploy-migrate refuses an
+     unprovisioned database, so install-fresh builds them all and its overlay's
+     migrations/20260524_contradiction_engine_schema.sql creates the table with
+     `notes`. 20260323 then runs against an existing table and no-ops. Those
+     four writes raised 42703 every time, into catch blocks that discard the
+     error, on a table nothing ever reads. Confirmed by executing one verbatim
+     against a canonically provisioned database.
+
+     The default mattered because no code writes detected_by, so 'system' would
+     be an attribution nothing recorded.
+
+     Expected to be a no-op on every real database — that is what the guards
+     and the IF NOT EXISTS are for, and why it is safe to carry. */
+  'migrations/20260911_contradiction_consequence_log_convergence.sql',
+
   /* The SAME §11.70 seal column on audit_events, the SIEM/export-facing audit
      table. 20260609 added it to audit_logs and is on the applier; this one was
      not, so server/services/audit/chain.ts's verifyAuditEventsChainSeals —

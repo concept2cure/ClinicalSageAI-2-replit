@@ -461,7 +461,92 @@ installs — its `DO` block matches only `confdeltype = 'c'`, so it silently
 no-opped. `docs/compliance/part11-immutability-record-class-policy.md:34`
 asserts the CASCADE that is not there.
 
-## Finding 7 — one table, two column names, and four of nine writes always fail silently
+## Finding 7 — CORRECTED 2026-09-11, then FIXED
+
+> **The mechanism is right; the framing is wrong, and the wrong framing
+> understates it.** The finding says "whichever shape a database has, four of the
+> nine writes fail", as though two lineages were in play. Only one is.
+> `scripts/db/deploy-migrate.mjs` refuses an unprovisioned database —
+>
+> ```
+> ✗ This database has not been provisioned — refusing to migrate.
+>   Missing base tables: organizations, users, c2c_documents, regulatory_programs
+> ```
+>
+> — so **there is no such thing as a deploy-migrate-lineage database.**
+> install-fresh provisions every one of them, its step-3 overlay applies all of
+> `migrations/*.sql` including `20260524` (which names the column `notes`), and
+> `db/migrations/20260323` runs later as a `CREATE TABLE IF NOT EXISTS` against a
+> table that already exists — so it no-ops and converges nothing. install-fresh
+> never runs it directly either: step 6 matches only `db/migrations/*_gcc_*`.
+>
+> So it is not "four of nine, depending". It is **always the same four** — the
+> orchestrator's — on **every** database, permanently. Executed against a
+> canonically provisioned database:
+>
+> ```
+> ERROR: column "execution_notes" of relation
+>        "contradiction_consequence_log" does not exist
+> ```
+>
+> while the consequence-service's `notes` write on the same database resolves
+> fine. The write-only claim is confirmed: every one of the 15 references in the
+> repository is an INSERT or a comment; nothing ever SELECTs the table, so a
+> consequence that was never recorded is indistinguishable from one that was.
+>
+> **`contradiction_decision_links`** — the finding says it "does not exist at all
+> under the deploy-migrate lineage". True of a lineage that cannot exist; it is
+> present on every provisioned database. Confirmed live. No change made, but it
+> is created only by an install-fresh-only file, so it is not re-asserted by the
+> replaying applier — the same class as the charter triggers in finding 3.
+>
+> **FIXED, in four parts:**
+>
+> 1. The orchestrator's four INSERTs now name `notes`.
+> 2. `db/migrations/20260323` amended **in place** (RULE 1 — no DROP appended):
+>    `execution_notes` → `notes`, so the two creators cannot diverge again.
+> 3. `migrations/20260911_contradiction_consequence_log_convergence.sql`, new in
+>    `C2C_MIGRATION_FILES`, does what the amendment cannot: `ALTER TABLE … ADD
+>    COLUMN IF NOT EXISTS notes` plus a guarded backfill, because
+>    **`CREATE TABLE IF NOT EXISTS` converges nothing.**
+> 4. `detected_by`: `20260323` declared it `TEXT NOT NULL DEFAULT 'system'` while
+>    the shape that ships declares plain `TEXT`. **No code writes this column.**
+>    The default was removed rather than adopted — it would stamp every finding
+>    with an attribution nothing recorded — and
+>    `ContradictionFinding.detectedBy` is retyped `string | null`, with
+>    `pdev-contradiction-bridge` and the inconsistency route following, because
+>    it was typed `string` and read `as string` while being NULL on every row.
+>
+> **Proven by making it fail first.** A database was built from the
+> pre-amendment `20260323` (`git show HEAD:…`), which is the shape the fix exists
+> to repair:
+>
+> | | Before the convergence migration | After |
+> |---|---|---|
+> | `detected_by` on a seeded row | `system` — nothing recorded this | `system` kept (existing data is not destroyed) |
+> | a **new** finding's `detected_by` | `system` | `NULL` — honest |
+> | free-text column | `execution_notes = 'LEGACY NOTE TEXT'` | `notes` backfilled, `execution_notes` left in place per RULE 1 |
+> | the fixed code's INSERT | `ERROR: column "notes" … does not exist` | `SUCCEEDED, notes=post-fix` |
+>
+> Applied twice more: exit 0, backfilled text unchanged, the post-fix row not
+> clobbered. On the canonically provisioned database the whole file is a no-op,
+> as designed — the shape was already correct there.
+>
+> A new gate, `tests/schema-contract/contradiction-consequence-log-columns.contract.test.ts`,
+> PREPARE-plans every consequence-log write extracted from the three service
+> sources against the canonical creator. Proven red first: 4 failed / 1 passed,
+> naming exactly the orchestrator's four and the real 42703. Now 5/5.
+>
+> Gates green at 265 migrations; `tests/schema-contract/` green across all three
+> shards (76 files, 968 tests); 20 contradiction-related suites, 174 tests, green.
+>
+> **Not claimed:** the wider divergence below — 14 CHECK constraints, the
+> `truth_hierarchy_level` type split, six nullability flips, the
+> `timestamptz`/`timestamp` split — is untouched. Only the two divergences that
+> change answers were fixed.
+
+### Original finding, as written
+
 
 `contradiction_consequence_log` names its free-text column **`execution_notes`**
 in `db/migrations/20260323_assumption_decision_contradiction.sql:280`

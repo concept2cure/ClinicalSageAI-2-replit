@@ -112,7 +112,19 @@ export interface ContradictionFinding {
   consequenceType: ConsequenceType | null;
   consequenceObjectId: string | null;
   consequenceExecuted: boolean;
-  detectedBy: string;
+  /**
+   * Who or what detected this finding — NULL on every row today.
+   *
+   * No code in the repository writes contradiction_findings.detected_by,
+   * and the creator every provisioned database gets
+   * (migrations/20260524_contradiction_engine_schema.sql) declares it a
+   * plain nullable TEXT. This was typed `string` and read with
+   * `as string`, so every consumer was told a value existed. The other
+   * creator's `DEFAULT 'system'` was removed on 2026-09-11 rather than
+   * adopted: it would have stamped each finding with an attribution
+   * nothing recorded.
+   */
+  detectedBy: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -937,7 +949,7 @@ class ContradictionEngineService {
       consequenceType: row.consequence_type as ConsequenceType | null,
       consequenceObjectId: row.consequence_object_id as string | null,
       consequenceExecuted: (row.consequence_executed as boolean) ?? false,
-      detectedBy: row.detected_by as string,
+      detectedBy: (row.detected_by as string | null) ?? null,
       createdAt: (row.created_at as Date)?.toISOString() ?? '',
       updatedAt: (row.updated_at as Date)?.toISOString() ?? '',
     };
