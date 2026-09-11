@@ -676,6 +676,18 @@ router.post('/audit-trail', async (req: Request, res: Response) => {
   const authUser = (req as any).user || (req as any).tenantContext;
   const userId = authUser?.id || authUser?.userId || (req as any).userId;
   const userRole = authUser?.role || (req as any).userRole || 'unknown';
+  // WO-16C finding 67. The comment above was true of every identity field on
+  // this INSERT except the one a reviewer actually reads. `user_name` came from
+  // `req.body.userName`, so any authenticated member of a tenant could file a
+  // §11.10(e) entry under a colleague's printed name — on a row this handler
+  // flags `regulatory_significant`. It is derived here by the same rule the
+  // sibling writer to the same table uses (audit-trail-routes.ts:52), because
+  // two provenance rules for one column means the weaker one decides what the
+  // trail can be trusted to say. A principal carrying no name records
+  // 'system' — never the caller's claim, and never the bare user id, which
+  // reads as a name and is not one.
+  const userName: string =
+    authUser?.email || (req as any).userEmail || authUser?.name || 'system';
   const orgId = requestOrgId(req);
   if (orgId == null) {
     return res.status(403).json({ success: false, error: 'Tenant context required' });
@@ -685,7 +697,6 @@ router.post('/audit-trail', async (req: Request, res: Response) => {
     entityType,
     entityId,
     action,
-    userName,
     previousValue,
     newValue,
     changeReason,
@@ -734,7 +745,7 @@ router.post('/audit-trail', async (req: Request, res: Response) => {
         entityType,
         entityIdNumber,
         userIdNumber,
-        userName || String(userId),
+        userName,
         userRole,
         req.ip || 'unknown',
         (req as any).sessionId || 'unknown',
@@ -777,7 +788,7 @@ router.post('/audit-trail', async (req: Request, res: Response) => {
       entityId: entityIdNumber,
       action,
       userId,
-      userName: userName || String(userId),
+      userName,
       userRole,
       changeReason,
       timestamp: row.timestamp instanceof Date ? row.timestamp.toISOString() : row.timestamp,
