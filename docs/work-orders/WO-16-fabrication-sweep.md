@@ -278,7 +278,7 @@ Treat the tiers in that JSON as unranked leads.
 | 6 | `services/contradiction-engine-service.ts` Pass-8 swallowing | CONFIRMED_NARROWER | medium | open |
 | 7 | `services/cognitive-ecosystem/fhir-validation.service.ts` | CONFIRMED_NARROWER | **low** | open |
 | 8 | `services/tenant-export/tenant-export.service.ts` | CONFIRMED_VERBATIM | high | **FIXED** `10b5bd2c2` |
-| 9 | `api/cmc/workflowRoutes.ts` CMC doc from a drug name | CONFIRMED_NARROWER | high | open |
+| 9 | `api/cmc/workflowRoutes.ts` CMC doc from a drug name | CONFIRMED_NARROWER | high | **FIXED** (this commit) |
 | 10 | `services/intelligence/readiness-scoring-engine.ts` | CONFIRMED_NARROWER | **critical** | **FIXED** `41dbc96ff` |
 | 11 | `protocol-analyzer-service.ts` invented protocols | CONFIRMED_VERBATIM | high | **FIXED** `7c71de271` |
 | 12 | `v2/surfaces/ReportEngine.tsx` fake power calculation | CONFIRMED_VERBATIM | high | **FIXED** `41dbc96ff` |
