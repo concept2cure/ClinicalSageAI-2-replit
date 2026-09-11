@@ -869,32 +869,58 @@ For each recommendation, include specific citations to relevant regulatory guide
     // scripts/ci/check-no-mock-in-prod-routes.mjs now refuses any hardcoded DOI
     // in server/routes/**, which is what would have caught this.
 
-    // Create comprehensive IND assessment
+    // IND readiness: NOT ASSESSED. Nothing in this handler assesses it.
+    //
+    // WO-16C finding 65, 2026-09-11. This object was a literal that read
+    // neither `content`, nor `protocolData`, nor `detailedAnalysis`, and it
+    // stated, about whatever was submitted:
+    //
+    //   strengths: 'Well-defined primary and secondary endpoints'
+    //              'Clear inclusion/exclusion criteria'
+    //              'Appropriate statistical analysis plan'
+    //              'Adequate safety monitoring provisions'
+    //   regulatory_guidance[0..2]:
+    //              'Aligns with FDA guidance for Phase 2 trials in this
+    //               indication'
+    //              'Consistent with ICH E6(R2) requirements for Good Clinical
+    //               Practice'
+    //              'Meets basic requirements for EMA Scientific Advice
+    //               submissions'
+    //
+    // — for a Phase 1 protocol, for a Phase 3 protocol, for a protocol with no
+    // endpoint, for the string 'hello'. They are adequacy and alignment
+    // verdicts on a document nobody read, and they are written to
+    // exports/<session_id>/analysis_results.json with the caller's session id
+    // on them. They are removed, not relabelled: a verdict nothing computed
+    // has no truthful phrasing. (The identical four strengths and the same
+    // Phase 2 claim were removed from the client's own `genIndReadiness` in
+    // 6866d4fb1; this was the server twin.) The old comment here called them
+    // "static regulatory guidance", which was true of `citations` and of
+    // nothing else.
+    //
+    // What survives is what this handler actually has: a standing checklist of
+    // topics, each naming the published document that governs it. It is
+    // labelled as standing guidance — the same treatment `dropoutPrediction`
+    // below already carries — so no consumer can read it as a finding about
+    // their protocol. The former `improvement_areas` strings ('Additional
+    // details needed on…', 'Strengthen…', 'Expand on…') presupposed a
+    // deficiency in a protocol that was never read, so they are stated as the
+    // topics they are. `status` uses the repo's third state
+    // (server/lib/verification-outcome.ts; the NOT_ASSESSED frameworks in
+    // routes/decision-lineage.ts): not adequate, not inadequate — not
+    // assessed. `score` stays null until a real scorer is connected.
     const indAnalysis = {
       title: 'IND Readiness Assessment',
-      // No deterministic IND-readiness scorer is wired. The score was
-      // previously `Math.floor(Math.random()*15)+75` — a fabricated value.
-      // The qualitative strengths / improvement areas / citations below are
-      // static regulatory guidance and remain. Score is null until a real
-      // scorer is connected.
+      status: 'NOT_ASSESSED' as const,
       score: null as number | null,
-      strengths: [
-        'Well-defined primary and secondary endpoints',
-        'Clear inclusion/exclusion criteria',
-        'Appropriate statistical analysis plan',
-        'Adequate safety monitoring provisions',
-      ],
-      improvement_areas: [
-        'Additional details needed on concomitant medication management (FDA 21 CFR 312.23(a)(6))',
-        'Consider adding interim analysis points (ICH E9, Section 4.5)',
-        'Strengthen data management plan section (ICH E6(R2), Section 5.5)',
-        'Expand on randomization implementation details (EMA Guideline on multiplicity issues)',
-      ],
-      regulatory_guidance: [
-        'Aligns with FDA guidance for Phase 2 trials in this indication',
-        'Consistent with ICH E6(R2) requirements for Good Clinical Practice',
-        'Meets basic requirements for EMA Scientific Advice submissions',
-        'May require additional ethnic considerations for PMDA submission (PMDA: Points to Consider for Ethnic Factors)',
+      basis:
+        'No IND-readiness assessment was performed: this endpoint has no IND-readiness scorer wired. The items below are standing regulatory guidance, not derived from this protocol and not an assessment of it.',
+      standing_guidance: [
+        'Concomitant medication management (FDA 21 CFR 312.23(a)(6))',
+        'Interim analysis points (ICH E9, Section 4.5)',
+        'Data management plan (ICH E6(R2), Section 5.5)',
+        'Randomization implementation details (EMA Guideline on multiplicity issues)',
+        'Ethnic factors for a PMDA submission (PMDA: Points to Consider for Ethnic Factors)',
       ],
       citations: [
         'U.S. Food and Drug Administration. (2023). IND Application Procedures: Clinical Hold. 21 CFR 312.42',
