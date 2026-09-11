@@ -387,10 +387,12 @@ export function DecisionLineage({ onAsk }: SurfaceViewProps) {
                       <div className="dl-node-top">
                         <span className={'dl-node-type tone-' + cfg.tone}>{cfg.label}</span>
                         <span className="dl-node-action">{dlActionLabel(n.action)}</span>
-                        <span className="dl-node-when">{dlTime(n.performedAt)}</span>
+                        <span className="dl-node-when">
+                          {n.performedAt ? dlTime(n.performedAt) : 'not recorded'}
+                        </span>
                       </div>
                       <div className="dl-node-who">
-                        {n.performedBy}
+                        {n.performedBy || 'unattributed'}
                         {n.performedByRole ? (
                           <span className="dl-node-role"> -- {n.performedByRole}</span>
                         ) : null}
@@ -430,8 +432,30 @@ export function DecisionLineage({ onAsk }: SurfaceViewProps) {
                         {n.regulatory && n.regulatory.gxpRelevant && (
                           <span className="dl-badge gxp">GxP</span>
                         )}
-                        {n.regulatory && n.regulatory.cfr11Compliant && (
-                          <span className="dl-badge cfr">21 CFR §11</span>
+                        {/* WO-16C finding 70: this badge used to render from a
+                            server-side literal `cfr11Compliant: true`, so every
+                            node in every trail carried a Part 11 verdict nothing
+                            computed. It now renders the per-record element check
+                            the server actually performs, in both directions. */}
+                        {n.regulatory && n.regulatory.part11RecordCheck && (
+                          <span
+                            className={
+                              'dl-badge' +
+                              (n.regulatory.part11RecordCheck.status === 'COMPLETE' ? ' cfr' : '')
+                            }
+                            title={
+                              n.regulatory.part11RecordCheck.status === 'COMPLETE'
+                                ? 'This record carries what 21 CFR Part 11 requires an entry to carry: an attributed actor, a recorded timestamp, and any required signature. Not a compliance verdict.'
+                                : 'This record is missing: ' +
+                                  n.regulatory.part11RecordCheck.missing
+                                    .map((m) => m.replace(/-/g, ' '))
+                                    .join(', ')
+                            }
+                          >
+                            {n.regulatory.part11RecordCheck.status === 'COMPLETE'
+                              ? 'Part 11 record complete'
+                              : 'Part 11 record incomplete'}
+                          </span>
                         )}
                         {n.regulatory && n.regulatory.requiresSignature && (
                           <span className={'dl-badge sig ' + (sigStatus || '')}>

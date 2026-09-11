@@ -36,6 +36,51 @@ const logger = createScopedLogger('decision-lineage');
 // TYPES
 // ═══════════════════════════════════════════════════════════════════════════════
 
+/**
+ * WO-16C finding 70. The elements 21 CFR Part 11 requires an audit-trail entry
+ * to carry — §11.10(e) "secure, computer-generated, time-stamped audit trails
+ * to independently record … the identity of the person" and, where a signature
+ * is required, §11.50 signature manifestation.
+ */
+export type Part11RecordElement = 'attributed-actor' | 'recorded-timestamp' | 'applied-signature';
+
+/**
+ * What ONE lineage record can honestly say about itself.
+ *
+ * This is deliberately NOT a compliance verdict, for the record or for the
+ * system: it reports only which of the elements above are present in the row
+ * the graph was built from. `COMPLETE` means "this record carries what Part 11
+ * requires a record to carry", never "this decision is Part 11 compliant".
+ * The field it replaced — `cfr11Compliant: true` — was a literal at all five
+ * node constructors, computed from nothing, printed as a conformance assertion
+ * into every export and as a badge on every node of the surface.
+ */
+export interface Part11RecordCheck {
+  status: 'COMPLETE' | 'INCOMPLETE';
+  /** The required elements this record does not carry. Empty when COMPLETE. */
+  missing: Part11RecordElement[];
+}
+
+/**
+ * Assess one record. Pure, total, and with no default pass: every element is
+ * asserted from a value the source row supplied, and absence is reported as
+ * absence rather than substituted for.
+ */
+export function assessPart11Record(record: {
+  performedBy: string | null;
+  performedAt: string | null;
+  requiresSignature: boolean;
+  signatureStatus?: 'pending' | 'signed' | 'rejected';
+}): Part11RecordCheck {
+  const missing: Part11RecordElement[] = [];
+  if (!record.performedBy) missing.push('attributed-actor');
+  if (!record.performedAt) missing.push('recorded-timestamp');
+  if (record.requiresSignature && record.signatureStatus !== 'signed') {
+    missing.push('applied-signature');
+  }
+  return { status: missing.length === 0 ? 'COMPLETE' : 'INCOMPLETE', missing };
+}
+
 /** A single node in the decision lineage graph */
 export interface LineageNode {
   id: string;
@@ -43,8 +88,21 @@ export interface LineageNode {
   entityType: string;
   entityId: number;
   action: string;
-  performedBy: string;
-  performedAt: string; // ISO 8601
+  /**
+   * The actor the SOURCE ROW attributes this event to — `null` when the row
+   * attributes it to nobody. WO-16C finding 70: this used to fall back to the
+   * literal `'system'` for an `audit_logs` row with a NULL `user_id`, and to
+   * `assignedTo[0]` for an approval nobody had acted on yet. Both named an
+   * actor the record does not name. A missing actor is now missing.
+   */
+  performedBy: string | null;
+  /**
+   * ISO 8601, from the record — `null` when the record carries no time for
+   * this event, which is the case for an approval still awaiting a decision.
+   * It used to fall back to `new Date()`, i.e. the moment the graph or export
+   * was built, which reads as the moment the decision was taken.
+   */
+  performedAt: string | null;
   details: Record<string, unknown>;
   /** Hash of the audit record for tamper verification */
   recordHash?: string;
@@ -57,7 +115,8 @@ export interface LineageNode {
     gxpRelevant: boolean;
     requiresSignature: boolean;
     signatureStatus?: 'pending' | 'signed' | 'rejected';
-    cfr11Compliant: boolean;
+    /** Which Part 11 record elements this row carries — not a verdict. */
+    part11RecordCheck: Part11RecordCheck;
   };
 }
 
@@ -124,6 +183,13 @@ export function assessComplianceFrameworks(
   ];
 }
 
+/** One cell of the CSV export: `COMPLETE`, or what the record is missing. */
+function formatPart11RecordCheck(check: Part11RecordCheck): string {
+  return check.status === 'COMPLETE'
+    ? 'COMPLETE'
+    : `INCOMPLETE (${check.missing.join('; ')})`;
+}
+
 /** Filters for lineage queries */
 export interface LineageQueryFilters {
   entityType?: string;
@@ -174,6 +240,12 @@ export class DecisionLineageService {
       details: {
         decisionId,
         ...params.details,
+        // WO-16C finding 70. `audit_logs.user_id` is an integer column, and
+        // auditService nulls any actor id that is not numeric — so a caller
+        // that identifies people by email or uuid loses the actor entirely and
+        // the graph then has nothing to attribute the decision to. Keep what
+        // the caller actually said, next to the decision it belongs to.
+        performedBy: params.performedBy,
         parentDecisionIds: params.parentDecisionIds || [],
         gxpRelevant: params.gxpRelevant ?? true,
         requiresSignature: params.requiresSignature ?? false,
@@ -222,26 +294,44 @@ export class DecisionLineageService {
           if (status === 'approved') approvalCount++;
           if (status === 'rejected') rejectionCount++;
 
+          // WO-16C finding 70. `assigned_to` is who the step is WAITING ON;
+          // `completed_by` / `completed_at` are who acted and when, and both are
+          // NULL for a step nobody has acted on. Reporting the assignee at the
+          // moment of export as the performer of an `awaiting_decision` node
+          // invented the two fields an audit trail exists to record. The
+          // assignment is real, so it stays — as an assignment, in `details`.
+          const performedBy = (approval.completedBy as string | null) || null;
+          const performedAt = approval.completedAt?.toISOString() || null;
+          const signatureStatus: 'pending' | 'signed' | 'rejected' =
+            status === 'approved' ? 'signed' : status === 'pending' ? 'pending' : 'rejected';
+
           nodes.push({
             id: nodeId,
             nodeType: 'decision',
             entityType: 'workflow_approval',
             entityId: approval.id,
             action: status === 'pending' ? 'awaiting_decision' : status,
-            performedBy: (approval.assignedTo as string[])?.[0] || 'unassigned',
-            performedAt: approval.completedAt?.toISOString() || new Date().toISOString(),
+            performedBy,
+            performedAt,
             details: {
               workflowId: wf.id,
               stepId: approval.stepId,
               comments: approval.comments,
+              status,
+              assignedTo: (approval.assignedTo as string[]) || [],
             },
             parentIds: [],
             childIds: [],
             regulatory: {
               gxpRelevant: true,
               requiresSignature: true,
-              signatureStatus: status === 'approved' ? 'signed' : status === 'pending' ? 'pending' : 'rejected',
-              cfr11Compliant: true,
+              signatureStatus,
+              part11RecordCheck: assessPart11Record({
+                performedBy,
+                performedAt,
+                requiresSignature: true,
+                signatureStatus,
+              }),
             },
           });
         }
@@ -267,21 +357,28 @@ export class DecisionLineageService {
 
           if (action.includes('delegat')) delegationCount++;
 
+          const performedBy = (entry.performedBy as string | null) || null;
+          const performedAt = entry.createdAt?.toISOString() || null;
+
           nodes.push({
             id: nodeId,
             nodeType: action.includes('delegat') ? 'delegation' : 'workflow_step',
             entityType: 'workflow_history',
             entityId: entry.id,
             action,
-            performedBy: (entry.performedBy as string) || 'system',
-            performedAt: entry.createdAt?.toISOString() || new Date().toISOString(),
+            performedBy,
+            performedAt,
             details: (entry.details as Record<string, unknown>) || {},
             parentIds: [],
             childIds: [],
             regulatory: {
               gxpRelevant: true,
               requiresSignature: false,
-              cfr11Compliant: true,
+              part11RecordCheck: assessPart11Record({
+                performedBy,
+                performedAt,
+                requiresSignature: false,
+              }),
             },
           });
         }
@@ -299,21 +396,28 @@ export class DecisionLineageService {
 
       for (const log of docLogs) {
         const nodeId = `docaudit-${log.id}`;
+        const performedBy = (log.performedBy as string | null) || null;
+        const performedAt = log.performedAt?.toISOString() || null;
+
         nodes.push({
           id: nodeId,
           nodeType: 'document_state',
           entityType: 'document_audit',
           entityId: log.id,
           action: (log.action as string) || 'unknown',
-          performedBy: (log.performedBy as string) || 'system',
-          performedAt: log.performedAt?.toISOString() || new Date().toISOString(),
+          performedBy,
+          performedAt,
           details: (log.details as Record<string, unknown>) || {},
           parentIds: [],
           childIds: [],
           regulatory: {
             gxpRelevant: true,
             requiresSignature: false,
-            cfr11Compliant: true,
+            part11RecordCheck: assessPart11Record({
+              performedBy,
+              performedAt,
+              requiresSignature: false,
+            }),
           },
         });
       }
@@ -345,22 +449,35 @@ export class DecisionLineageService {
         const nodeId = `audit-${log.id}`;
         const action = log.action || 'unknown';
         if (action.startsWith('decision:')) {
-          // These are lineage-specific entries
+          // These are lineage-specific entries.
+          // WO-16C finding 70: `audit_logs.user_id` is nullable, and NULL for
+          // every decision whose actor could not be resolved to a numeric user
+          // (auditService coerces a non-numeric actor id to NULL before the
+          // INSERT). The literal 'system' named an actor that does not exist;
+          // the actor the caller supplied, where there was one, is preserved by
+          // recordDecision in `details.performedBy` and travels in `details`.
+          const performedBy = log.userId != null ? String(log.userId) : null;
+          const performedAt = log.createdAt?.toISOString() || null;
+
           nodes.push({
             id: nodeId,
             nodeType: 'decision',
             entityType: log.tableName || 'unknown',
             entityId: 0,
             action: action.replace('decision:', ''),
-            performedBy: log.userId?.toString() || 'system',
-            performedAt: log.createdAt?.toISOString() || new Date().toISOString(),
+            performedBy,
+            performedAt,
             details: (log.newValues as Record<string, unknown>) || {},
             parentIds: [],
             childIds: [],
             regulatory: {
               gxpRelevant: true,
               requiresSignature: false,
-              cfr11Compliant: true,
+              part11RecordCheck: assessPart11Record({
+                performedBy,
+                performedAt,
+                requiresSignature: false,
+              }),
             },
           });
         }
@@ -439,21 +556,29 @@ export class DecisionLineageService {
         .limit(limit);
 
       for (const row of rows) {
+        // Same nullable `user_id` as getLineageGraph reads — see the note there.
+        const performedBy = row.userId != null ? String(row.userId) : null;
+        const performedAt = row.createdAt?.toISOString() || null;
+
         nodes.push({
           id: `audit-${row.id}`,
           nodeType: row.action?.startsWith('decision:') ? 'decision' : 'document_state',
           entityType: row.tableName || 'unknown',
           entityId: parseInt(row.recordId || '0', 10),
           action: row.action || 'unknown',
-          performedBy: row.userId?.toString() || 'system',
-          performedAt: row.createdAt?.toISOString() || new Date().toISOString(),
+          performedBy,
+          performedAt,
           details: (row.newValues as Record<string, unknown>) || {},
           parentIds: [],
           childIds: [],
           regulatory: {
             gxpRelevant: true,
             requiresSignature: false,
-            cfr11Compliant: true,
+            part11RecordCheck: assessPart11Record({
+              performedBy,
+              performedAt,
+              requiresSignature: false,
+            }),
           },
         });
       }
@@ -505,7 +630,7 @@ export class DecisionLineageService {
     const headers = [
       'Node ID', 'Type', 'Entity Type', 'Entity ID', 'Action',
       'Performed By', 'Performed At', 'GxP Relevant', 'Requires Signature',
-      'Signature Status', 'CFR 11 Compliant', 'Details',
+      'Signature Status', 'Part 11 Record Elements', 'Details',
     ];
 
     const rows = graph.nodes.map(n => [
@@ -514,12 +639,14 @@ export class DecisionLineageService {
       n.entityType,
       n.entityId,
       n.action,
-      n.performedBy,
-      n.performedAt,
+      // An absent actor or time is printed as absent. It was printed as the
+      // literal 'system' and as the moment this file was generated (finding 70).
+      n.performedBy ?? 'not attributed',
+      n.performedAt ?? 'not recorded',
       n.regulatory.gxpRelevant ? 'Yes' : 'No',
       n.regulatory.requiresSignature ? 'Yes' : 'No',
       n.regulatory.signatureStatus || 'N/A',
-      n.regulatory.cfr11Compliant ? 'Yes' : 'No',
+      formatPart11RecordCheck(n.regulatory.part11RecordCheck),
       JSON.stringify(n.details),
     ]);
 
@@ -527,6 +654,9 @@ export class DecisionLineageService {
       `# Decision Lineage Report`,
       `# Generated: ${graph.metadata.generatedAt}`,
       `# Entity: ${graph.rootEntityType} #${graph.rootEntityId}`,
+      `# Part 11 Record Elements: per-record presence check of what 21 CFR Part 11 requires an entry to carry`,
+      `#   (§11.10(e) attributed actor and recorded timestamp; §11.50 applied signature where one is required).`,
+      `#   COMPLETE means the record carries those elements. It is not a verdict on the decision or the system.`,
       `# Compliance: ${graph.metadata.complianceFrameworks.map(f => `${f.framework} = ${f.status}`).join('; ')}`,
       `# Chain Verified: ${graph.metadata.chainVerification === 'verified' ? 'PASS' : graph.metadata.chainVerification === 'failed' ? 'FAIL' : 'UNVERIFIABLE (the verifier could not run)'}`,
       '',
@@ -554,13 +684,17 @@ export class DecisionLineageService {
       <entity-type>${escapeXml(n.entityType)}</entity-type>
       <entity-id>${n.entityId}</entity-id>
       <action>${escapeXml(n.action)}</action>
-      <performed-by>${escapeXml(n.performedBy)}</performed-by>
-      <performed-at>${escapeXml(n.performedAt)}</performed-at>
+      ${n.performedBy !== null
+        ? `<performed-by>${escapeXml(n.performedBy)}</performed-by>`
+        : `<performed-by attributed="false" />`}
+      ${n.performedAt !== null
+        ? `<performed-at>${escapeXml(n.performedAt)}</performed-at>`
+        : `<performed-at recorded="false" />`}
       <regulatory>
         <gxp-relevant>${n.regulatory.gxpRelevant}</gxp-relevant>
         <requires-signature>${n.regulatory.requiresSignature}</requires-signature>
         <signature-status>${n.regulatory.signatureStatus || 'none'}</signature-status>
-        <cfr11-compliant>${n.regulatory.cfr11Compliant}</cfr11-compliant>
+        <part11-record-elements status="${n.regulatory.part11RecordCheck.status}" missing="${escapeXml(n.regulatory.part11RecordCheck.missing.join(' '))}" />
       </regulatory>
     </decision-record>`).join('');
 
@@ -573,6 +707,11 @@ export class DecisionLineageService {
   Generated: ${graph.metadata.generatedAt}
   Compliance: ${graph.metadata.complianceFrameworks.map(f => `${f.framework} = ${f.status}`).join('; ')}
   Chain verification: ${graph.metadata.chainVerification === 'verified' ? 'PASS' : graph.metadata.chainVerification === 'failed' ? 'FAIL' : 'UNVERIFIABLE (the verifier could not run)'}
+  part11-record-elements: a per-record presence check of what 21 CFR Part 11 requires an entry to
+    carry — §11.10(e) attributed actor and recorded timestamp, §11.50 applied signature where one
+    is required. COMPLETE means the record carries those elements; it is not a verdict on the
+    decision or on the system. A <performed-by attributed="false"/> or <performed-at recorded="false"/>
+    element means the source record names nobody, or records no time, for that event.
 -->
 <decision-lineage
   xmlns="urn:clinicalsageai:lineage:1.0"
