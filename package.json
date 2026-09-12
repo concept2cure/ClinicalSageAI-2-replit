@@ -573,7 +573,7 @@
     "@types/jest": "^30.0.0",
     "@types/js-yaml": "^4.0.9",
     "@types/jsdom": "27.0.0",
-    "@types/lodash": "^4.17.13",
+    "@types/lodash": "^4.17.25",
     "@types/node": "26.2.0",
     "@types/node-fetch": "^2.6.12",
     "@types/nodemailer": "^6.4.15",
