@@ -148,6 +148,26 @@ describe('what it says when it finds nothing', () => {
     expect(out.message).not.toContain('All ');
   });
 
+  it('an EMPTY index is reported as empty, not as a provider failure or a miss', async () => {
+    // The state most deployments will actually be in: the catalog is on (free
+    // at ingest) and the passage index is not (it embeds every upload). The
+    // search used to embed the query first and fail at the provider, so the
+    // tool reported "the embedding provider is unreachable" — infrastructure
+    // blame for a switch being off. The service now answers from coverage
+    // without embedding anything, and the message names the switch.
+    searchDocumentPassages.mockResolvedValue({
+      hits: [],
+      coverage: { total: 6, indexed: 0, pending: 6, failed: 0 },
+    });
+    const out = await call({ query: 'assay at six months' });
+    expect(out.ok).toBe(true);
+    expect(out.unavailable).toBeUndefined();
+    expect(out.message).toContain('None of the 6 document(s)');
+    expect(out.message).toContain('nothing was searched');
+    expect(out.message).toContain('ana.vault_chunking');
+    expect(out.message).not.toContain('embedding provider');
+  });
+
   it('says plainly when the vault holds no documents at all', async () => {
     searchDocumentPassages.mockResolvedValue({
       hits: [],

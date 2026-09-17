@@ -39,6 +39,20 @@ function coverageNote(
     );
   }
   if (c.total === 0) return 'No documents are filed in this vault yet.';
+  if (c.indexed === 0) {
+    /* The index is EMPTY — a different statement from "nothing matched", and a
+       very different one from "the embedding provider is unreachable", which is
+       what this used to report because the query was embedded before anyone
+       checked whether there was anything to search. An empty index almost
+       always means the ana.vault_chunking feature is off, so the answer routes
+       to a switch instead of to a shrug. */
+    return (
+      `None of the ${c.total} document(s) in this vault are in the passage index, so nothing was ` +
+      'searched — this is not a result about what the documents say. The index is built by the ' +
+      'ana.vault_chunking feature; if it is off, say so plainly rather than reporting the content as ' +
+      'absent, and read the file itself with read_project_document to answer from it.'
+    );
+  }
   if (c.indexed >= c.total) return `All ${c.total} document(s) are in the passage index.`;
   const parts: string[] = [`${c.indexed} of ${c.total} document(s) are in the passage index`];
   if (c.pending > 0) parts.push(`${c.pending} not indexed yet`);
