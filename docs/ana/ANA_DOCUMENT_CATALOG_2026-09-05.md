@@ -143,6 +143,44 @@ suggestion refused, an explicit unfile honoured, and another organization's
 caller unable to move the document. The taxonomy guard and the tenancy
 predicate were each removed in turn to watch exactly one test go red.
 
+### A passage citation names a page
+
+**Mapper:** `server/services/ocr/page-offsets.ts` · **Written by:** `chunkAndEmbedDocument`
+
+`search_document_passages` advertised "the sentences that answer the question,
+with the document and page they came from", and the chunk INSERT did not list
+`page_number` or `section_title` at all — so every passage came back with a null
+locator. A citation nobody can turn to is not a citation.
+
+The extractors already had the material and nobody was using it: `pdf-parse`
+returns a per-page array beside its combined text, and the OCR path builds its
+text by joining per-page recognitions. What was missing was the mapping from a
+character offset back to a page.
+
+It is established by ALIGNMENT, not arithmetic. Summing page lengths and adding
+a separator is right until an extractor trims, re-wraps whitespace or drops a
+blank page — and then it is quietly off by one for the rest of the document,
+which is worse than no page at all, because a wrong citation reads as a checked
+one. So each page's text is located in the combined text, in order, from where
+the previous page ended. Every page found ⇒ the map is exact whatever the
+extractor did in between. Any page not found ⇒ the whole map is discarded and
+the chunks carry no page, which is honest.
+
+Blank pages keep their number (a zero-width span, so nothing is attributed to
+them but page 7 is still page 7), and the page numbers the extractor reports are
+used rather than the array index, so a ranged extraction cites pages 5–6 as 5–6.
+
+The tool description was corrected in the same change: a page is promised only
+"for a paged format whose pages could be located", because a .docx has none.
+
+`tests/db/vault-passage-search.dbtest.ts` ingests a three-page PDF whose pages
+each exceed the 4,000-character chunk target, then re-derives the expected page
+for every chunk from the STORED TEXT independently of the mapper and asserts
+each `page_number` matches — plus that all three pages are actually reached, so
+a mapping stuck on page 1 cannot pass. Reverting the write to NULL turns it red.
+`server/services/ocr/__tests__/page-offsets.test.ts` covers the refusals: an
+unfindable page, out-of-order pages, empty input.
+
 ### Both chat paths rehydrate at session start
 
 **Helper:** `sessionBootstrapBlockFor` (`server/services/ana-session-bootstrap.ts`) ·
