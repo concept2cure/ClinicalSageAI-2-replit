@@ -74,8 +74,14 @@ interface VaultDisplayShape {
   documentCount: number;
   tree: VaultFolder[];
   pendingStore?: boolean;
-  /** Uploads awaiting a person's filing decision (visible queue, not a black hole). */
+  /** Uploads awaiting a person's filing decision (visible queue, not a black hole).
+   *  Counted over the whole programme by the server, NOT over `uploadsWindow` —
+   *  a queue derived from the page below would shrink as the backlog grew. */
   unfiledCount?: number;
+  /** How much of the filing cabinet the tree actually carries. The server caps
+   *  that read (the vault is unbounded), so rendering the page without saying
+   *  so would state a partial cabinet as the whole one. */
+  uploadsWindow?: { shown: number; total: number; truncated: boolean };
   /** The capture→classify→file pipeline over the project's data room. */
   dataRoom?: DataRoomBlock;
   /** Branches the server could not serve, with why — rendered, not swallowed:
@@ -882,6 +888,20 @@ export function Vault({ onAsk, onNav }: SurfaceViewProps) {
           {(downloadNote ?? uploadNote)!.text}
         </div>
       )}
+
+      {/* The filing cabinet is a WINDOW onto the vault, not the vault. Said
+          plainly for the same reason the unavailable branches below are: a
+          reviewer who believes a partial cabinet is the whole one concludes a
+          document is absent, and in a regulated vault "absent" is a finding.
+          The unfiled count beside the title is programme-wide, so it stays
+          correct here and is not re-stated. */}
+      {vault?.uploadsWindow?.truncated ? (
+        <div className="scaf-note" role="status" style={{ margin: '0 0 12px' }}>
+          Uploaded files: showing the {vault.uploadsWindow.shown.toLocaleString()} most
+          recently updated of {vault.uploadsWindow.total.toLocaleString()} documents in
+          this programme. Search to reach the rest.
+        </div>
+      ) : null}
 
       {/* A branch the server could not serve is said, not silently omitted —
           otherwise "no Uploaded files folder" and "no uploads" look identical. */}

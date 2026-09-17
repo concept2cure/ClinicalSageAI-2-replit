@@ -99,12 +99,6 @@ beforeAll(async () => {
     CREATE TABLE vault.documents (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
       program_id UUID NOT NULL,
-      -- The ingest INSERT writes this (added after the fixture was first
-      -- written, by the change that made a new vault upload attributable).
-      -- Omitting it made every statement here fail 42703 rather than exercise
-      -- the ON CONFLICT clause — which is the fixture drifting from the route,
-      -- exactly what extracting the real SQL is meant to surface.
-      organization_id INTEGER,
       document_code TEXT NOT NULL,
       document_title TEXT, document_type TEXT,
       version TEXT DEFAULT '1.0',
@@ -118,9 +112,15 @@ beforeAll(async () => {
       placement_confidence TEXT, placement_rationale TEXT,
       placed_by INT, placed_at TIMESTAMPTZ,
       processing_status TEXT, created_by INT,
-      -- The tenant key the real table carries (its own migration) and the
-      -- ingest writes; the retrieval path filters on it, so a row left NULL is
-      -- an orphan no tenant can retrieve.
+      -- The tenant key the real table carries (migrations/20260905_vault_
+      -- documents_organization_id.sql) and the ingest INSERT writes. The
+      -- retrieval path filters on it, so a row left NULL is an orphan no tenant
+      -- can retrieve. Declared HERE because that is where the migration adds
+      -- it; declaring it twice (this fixture briefly did) is 42701 at setup,
+      -- and omitting it is 42703 on every statement — either way the suite
+      -- errors out rather than exercising the ON CONFLICT clause, which is the
+      -- fixture drifting from the route and is exactly what extracting the
+      -- real SQL is meant to surface.
       organization_id INT,
       created_at TIMESTAMPTZ DEFAULT NOW(),
       updated_at TIMESTAMPTZ DEFAULT NOW(),
