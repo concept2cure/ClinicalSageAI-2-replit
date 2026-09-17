@@ -92,6 +92,8 @@ export const DEFAULT_MODELS: ModelConfig[] = [
     id: 'gpt-4o',
     provider: 'openai',
     model: 'gpt-4o',
+    thinkingMode: 'none',
+    supportsSamplingParams: true,
     contextWindow: 128000,
     qualityScore: 95,
     costPer1kInput: 0.005,
@@ -112,6 +114,8 @@ export const DEFAULT_MODELS: ModelConfig[] = [
     id: 'gpt-4o-mini',
     provider: 'openai',
     model: 'gpt-4o-mini',
+    thinkingMode: 'none',
+    supportsSamplingParams: true,
     contextWindow: 128000,
     qualityScore: 82,
     costPer1kInput: 0.00015,
@@ -123,12 +127,20 @@ export const DEFAULT_MODELS: ModelConfig[] = [
   {
     // Internal id kept stable for alias continuity; the `model` field is the
     // actual ID sent to Anthropic and tracks the current flagship release.
-    // Bumping this string is the sanctioned way to move AnA to a newer flagship
-    // — the reasoning-only surface (adaptive thinking, no sampling params) is
-    // auto-detected from the version (see isReasoningOnlyModel).
+    // Bumping this string is the sanctioned way to move AnA to a newer
+    // flagship — and it now works, because the wire surface is DECLARED below
+    // rather than inferred from the version. It used to be read off a regex
+    // over this string, so a newer model fell outside the pattern, got the
+    // legacy surface, and 400'd on the parameters it does not accept.
+    // Bumping `model` means reviewing `thinkingMode` and
+    // `supportsSamplingParams` with it, and updating the approved-models
+    // lockfile (server/services/ai-governance/approved-models.ts), whose drift
+    // gate fails CI on an unreviewed swap.
     id: 'claude-opus-4',
     provider: 'anthropic',
     model: 'claude-opus-4-8',
+    thinkingMode: 'adaptive',
+    supportsSamplingParams: false,
     contextWindow: 200000,
     qualityScore: 99,
     costPer1kInput: 0.015,
@@ -155,6 +167,8 @@ export const DEFAULT_MODELS: ModelConfig[] = [
     id: 'claude-opus-4-legacy',
     provider: 'anthropic',
     model: 'claude-opus-4-7',
+    thinkingMode: 'adaptive',
+    supportsSamplingParams: false,
     contextWindow: 200000,
     qualityScore: 98,
     costPer1kInput: 0.015,
@@ -177,6 +191,8 @@ export const DEFAULT_MODELS: ModelConfig[] = [
     id: 'claude-sonnet-4',
     provider: 'anthropic',
     model: 'claude-sonnet-4-6',
+    thinkingMode: 'budget',
+    supportsSamplingParams: true,
     contextWindow: 200000,
     qualityScore: 97,
     costPer1kInput: 0.003,
@@ -199,6 +215,8 @@ export const DEFAULT_MODELS: ModelConfig[] = [
     id: 'claude-sonnet-4-legacy',
     provider: 'anthropic',
     model: 'claude-sonnet-4-20250514',
+    thinkingMode: 'budget',
+    supportsSamplingParams: true,
     contextWindow: 200000,
     qualityScore: 93,
     costPer1kInput: 0.003,
@@ -219,6 +237,8 @@ export const DEFAULT_MODELS: ModelConfig[] = [
     id: 'claude-haiku-4',
     provider: 'anthropic',
     model: 'claude-haiku-4-5-20251001',
+    thinkingMode: 'budget',
+    supportsSamplingParams: true,
     contextWindow: 200000,
     qualityScore: 85,
     costPer1kInput: 0.0008,
@@ -230,6 +250,8 @@ export const DEFAULT_MODELS: ModelConfig[] = [
     id: 'kimi-k2-0711',
     provider: 'moonshot',
     model: 'kimi-k2-0711-preview',
+    thinkingMode: 'none',
+    supportsSamplingParams: true,
     contextWindow: 131072,
     qualityScore: 88,
     costPer1kInput: 0.0006,
@@ -241,6 +263,8 @@ export const DEFAULT_MODELS: ModelConfig[] = [
     id: 'moonshot-v1-128k',
     provider: 'moonshot',
     model: 'moonshot-v1-128k',
+    thinkingMode: 'none',
+    supportsSamplingParams: true,
     contextWindow: 128000,
     qualityScore: 85,
     costPer1kInput: 0.0008,
@@ -252,6 +276,8 @@ export const DEFAULT_MODELS: ModelConfig[] = [
     id: 'moonshot-v1-32k',
     provider: 'moonshot',
     model: 'moonshot-v1-32k',
+    thinkingMode: 'none',
+    supportsSamplingParams: true,
     contextWindow: 32000,
     qualityScore: 83,
     costPer1kInput: 0.0004,
@@ -1146,39 +1172,59 @@ export class AIGateway {
   }
 
   /**
-   * Opus 4.7 and later removed the sampling parameters (temperature/top_p/top_k)
-   * and the manual extended-thinking shape (thinking.type "enabled" with
-   * budget_tokens) — sending any of them now returns a 400. Matches
-   * claude-opus-4-7 / claude-opus-4-8 and provider-prefixed variants
-   * (anthropic.claude-opus-4-7), but NOT the dated 4.0 snapshot
-   * claude-opus-4-20250514, which still accepts the legacy surface.
+   * Did the model that served this call accept sampling parameters?
+   *
+   * Answered from the registry, by the provider + model string the response
+   * reports. A model the registry does not know returns `false`: the caller
+   * (the audit ledger) must not assert a sampling parameter it cannot show
+   * was transmitted.
    */
-  private isReasoningOnlyModel(model: string): boolean {
-    const m = /claude-opus-4-(\d{1,2})(?!\d)/.exec(model);
-    return m ? Number(m[1]) >= 7 : false;
+  private modelAcceptsSamplingParams(provider: ProviderName, model: string): boolean {
+    const entry = this.models.find(m => m.provider === provider && m.model === model);
+    return entry?.supportsSamplingParams === true;
   }
 
   /**
-   * Apply Anthropic sampling + thinking params in a model-aware way.
+   * Apply Anthropic sampling + thinking params from the registry entry's
+   * declared wire surface.
    *
-   * Reasoning-only models (Opus 4.7/4.8 family) reject sampling params and
-   * manual thinking — they use adaptive thinking with no sampling controls.
-   * Summarized display keeps reasoning visible for the streaming path. Older
-   * Claude models (Sonnet 4.6, Haiku 4.5, the dated 4.0 snapshots) keep the
-   * legacy temperature + budget_tokens surface.
+   * This used to ask a regex — `/claude-opus-4-(\d{1,2})/`, version >= 7 —
+   * whether the model was reasoning-only. That made the shape of a request a
+   * function of how a model was NAMED: any model outside the pattern got the
+   * legacy surface, including newer ones that reject `temperature` and
+   * `budget_tokens` with a 400. The registry's own comment calls bumping the
+   * model string "the sanctioned way to move AnA to a newer flagship", and
+   * that bump was exactly what the regex broke.
+   *
+   * Capability now comes from the entry (`thinkingMode`,
+   * `supportsSamplingParams`), so moving to a new model is a data change and
+   * a substrate that lacks a feature can say so.
    */
   private applyAnthropicSamplingParams(
     params: any,
     modelConfig: ModelConfig,
     request: GatewayRequest
   ): void {
-    if (this.isReasoningOnlyModel(modelConfig.model)) {
+    if (modelConfig.thinkingMode === 'adaptive') {
       if (request.thinking?.enabled) {
         // Adaptive thinking self-budgets — the resolver's budgetTokens is a hint
         // that only the legacy surface below consumes. Summarized display keeps
         // the reasoning stream visible to the client on the SSE path.
         params.thinking = { type: 'adaptive', display: 'summarized' };
       }
+      return;
+    }
+    if (!modelConfig.supportsSamplingParams) {
+      // Declared as rejecting sampling params without adaptive thinking on
+      // offer. Send neither rather than falling through to a surface this
+      // model does not accept.
+      return;
+    }
+    if (modelConfig.thinkingMode === 'none' && request.thinking?.enabled) {
+      // Thinking was asked for and this model has no surface for it. Honour
+      // the sampling half and leave `thinking` off, rather than sending a
+      // shape that 400s.
+      params.temperature = request.temperature ?? 0.7;
       return;
     }
     if (request.thinking?.enabled) {
@@ -2234,9 +2280,13 @@ export class AIGateway {
         // `number | undefined`; the writer coalesces it (`entry.temperature ??
         // null`), so the column still stores NULL — the DB outcome is identical
         // and the type is honest.
-        temperature: this.isReasoningOnlyModel(response.model)
-          ? undefined
-          : request.temperature ?? 0.7,
+        // Read from the registry entry that served the call, not from the
+        // model's name. Unknown model ⇒ record nothing: we cannot establish
+        // that a temperature was sent, and by this comment's own rule an
+        // unverifiable assertion is worse than "not applicable".
+        temperature: this.modelAcceptsSamplingParams(response.provider, response.model)
+          ? request.temperature ?? 0.7
+          : undefined,
         // The seed that was actually SENT. Undefined on every Anthropic call —
         // that API has no seed parameter — so the column stays NULL there
         // rather than asserting a value the provider never saw. Exactly the
