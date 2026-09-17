@@ -138,13 +138,22 @@ export const DEFAULT_MODELS: ModelConfig[] = [
     // gate fails CI on an unreviewed swap.
     id: 'claude-opus-4',
     provider: 'anthropic',
-    model: 'claude-opus-4-8',
+    model: 'claude-opus-5',
     thinkingMode: 'adaptive',
     supportsSamplingParams: false,
-    contextWindow: 200000,
+    // 1M window. It read 200000 for every Claude entry, which is the Claude 3
+    // figure. Under-declaring it is the harmful direction for the admission
+    // gate (see context-budget.ts): the gate refuses a request the model would
+    // have taken and tells the author to cut a document that fit. Over-
+    // declaring only means the provider refuses it, which is where we already
+    // were.
+    contextWindow: 1000000,
     qualityScore: 99,
-    costPer1kInput: 0.015,
-    costPer1kOutput: 0.075,
+    // $5 / $25 per MTok. These read 0.015/0.075 — Claude 3 Opus pricing —
+    // through four model generations, so recordApiUsageSafe and every cost
+    // report were roughly 3x over.
+    costPer1kInput: 0.005,
+    costPer1kOutput: 0.025,
     capabilities: [
       'chat',
       'document_analysis',
@@ -158,21 +167,22 @@ export const DEFAULT_MODELS: ModelConfig[] = [
     enabled: true,
   },
   {
-    // Opus 4.7 — the previous flagship. Kept enabled as the top intra-provider
-    // fallback rung: if 4.8 is not yet GA for the tenant's tier or is
-    // temporarily unavailable (rate limit, overloaded), the chain drops to 4.7
-    // before Sonnet. It shares the reasoning-only surface (adaptive thinking),
-    // so a fallback preserves the same reasoning behavior. Marginally lower
-    // quality score than 4.8 so the chain prefers 4.8 when both are reachable.
+    // Opus 4.8 — the previous flagship. Kept enabled as the top intra-provider
+    // fallback rung: if Opus 5 is not yet GA for the tenant's tier or is
+    // temporarily unavailable (rate limit, overloaded), the chain drops here
+    // before Sonnet. It shares the reasoning-only surface (adaptive thinking,
+    // no sampling params), so a fallback preserves the same reasoning
+    // behaviour. Marginally lower quality score so the chain prefers Opus 5
+    // when both are reachable.
     id: 'claude-opus-4-legacy',
     provider: 'anthropic',
-    model: 'claude-opus-4-7',
+    model: 'claude-opus-4-8',
     thinkingMode: 'adaptive',
     supportsSamplingParams: false,
-    contextWindow: 200000,
+    contextWindow: 1000000,
     qualityScore: 98,
-    costPer1kInput: 0.015,
-    costPer1kOutput: 0.075,
+    costPer1kInput: 0.005,
+    costPer1kOutput: 0.025,
     capabilities: [
       'chat',
       'document_analysis',
@@ -190,13 +200,18 @@ export const DEFAULT_MODELS: ModelConfig[] = [
     // the current Sonnet release.
     id: 'claude-sonnet-4',
     provider: 'anthropic',
-    model: 'claude-sonnet-4-6',
-    thinkingMode: 'budget',
-    supportsSamplingParams: true,
-    contextWindow: 200000,
+    model: 'claude-sonnet-5',
+    // Sonnet 5 shares the flagship's reasoning-only surface: adaptive
+    // thinking, and temperature/top_p/top_k rejected. Note this differs from
+    // Sonnet 4.6 below, which keeps the legacy budget_tokens surface — the
+    // reason these are per-entry flags rather than a family rule.
+    thinkingMode: 'adaptive',
+    supportsSamplingParams: false,
+    contextWindow: 1000000,
     qualityScore: 97,
-    costPer1kInput: 0.003,
-    costPer1kOutput: 0.015,
+    // $2 / $10 per MTok.
+    costPer1kInput: 0.002,
+    costPer1kOutput: 0.010,
     capabilities: [
       'chat',
       'document_analysis',
@@ -210,15 +225,21 @@ export const DEFAULT_MODELS: ModelConfig[] = [
     enabled: true,
   },
   {
-    // Sonnet 4 legacy — dated snapshot from May 2025. Same role as
-    // opus-4-legacy: intra-provider fallback when 4.6 is unavailable.
+    // Sonnet 4.6 — the previous Sonnet. Same role as claude-opus-4-legacy:
+    // the intra-provider rung below the current Sonnet. Replaces the dated
+    // `claude-sonnet-4-20250514` snapshot that held this slot; a fallback
+    // should be the previous generation, not a year-old pin. It keeps the
+    // LEGACY thinking surface (budget_tokens + temperature), which the entry
+    // above does not — so a drop to this rung changes the request shape, and
+    // the declared flags are what make that safe.
     id: 'claude-sonnet-4-legacy',
     provider: 'anthropic',
-    model: 'claude-sonnet-4-20250514',
+    model: 'claude-sonnet-4-6',
     thinkingMode: 'budget',
     supportsSamplingParams: true,
-    contextWindow: 200000,
+    contextWindow: 1000000,
     qualityScore: 93,
+    // $3 / $15 per MTok.
     costPer1kInput: 0.003,
     costPer1kOutput: 0.015,
     capabilities: [
@@ -236,13 +257,17 @@ export const DEFAULT_MODELS: ModelConfig[] = [
   {
     id: 'claude-haiku-4',
     provider: 'anthropic',
-    model: 'claude-haiku-4-5-20251001',
+    // `claude-haiku-4-5` is the complete model id; the date suffix was a
+    // stale-prior artifact. Haiku keeps the 200K window — unlike the Opus and
+    // Sonnet entries above, that figure is correct here.
+    model: 'claude-haiku-4-5',
     thinkingMode: 'budget',
     supportsSamplingParams: true,
     contextWindow: 200000,
     qualityScore: 85,
-    costPer1kInput: 0.0008,
-    costPer1kOutput: 0.004,
+    // $1 / $5 per MTok.
+    costPer1kInput: 0.001,
+    costPer1kOutput: 0.005,
     capabilities: ['chat', 'general', 'summarization', 'structured_output'],
     enabled: true,
   },
