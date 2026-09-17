@@ -40,13 +40,12 @@
  * @module server/services/vault/vault-ingest.service
  */
 
-import path from 'node:path';
-import { promises as fs } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { pool } from '../../db.js';
 import { createScopedLogger } from '../../utils/logger.js';
 import { assertUploadSafe, UploadSafetyError, type UploadOrigin } from '../../middleware/uploadSafety.js';
 import { writeChainedAuditRow } from '../auditService.js';
+import { getStorageProvider } from '../storage/index.js';
 import {
   classifyForFiling,
   resolveVaultView,
@@ -193,27 +192,54 @@ export async function ingestVaultDocument(args: VaultIngestArgs): Promise<VaultI
 
   const contentHash = sha256Bytes(args.fileBuffer);
 
-  // Tenant-scoped local storage path (mirrors chat upload pattern)
-  const storagePath = `uploads/vault/${args.programId}/${contentHash}${path.extname(fileName)}`;
-  const s3Key = storagePath; // local-mode: key == path
-  const s3Bucket = 'local';  // no S3 configured; downstream can migrate later
+  /* Bytes go through the canonical storage seam — `server/services/storage/`.
+     They used to be written straight to `uploads/vault/{programId}/{hash}` with
+     that relative PATH stored in `s3_key` and `s3_bucket = 'local'`, bypassing
+     the abstraction entirely. That cost two things:
 
-  /* Writing the bytes is NOT best-effort, and treating it as such was the
-     worst thing this route did.
+       1. A vault document could not become a submission leaf. The eCTD packager
+          fetches non-local bytes through `getStorageProvider().get(versionId,
+          orgId)`, which resolves a PROVIDER-MINTED version uuid under
+          `storage/vault/{orgId}/{projectId}/versions/`. A vault `s3_key` is a
+          path in a different root and a different key space, so the provider
+          could not find it even given a correct id. That — not the INTEGER vs
+          UUID id space — is the blocker behind the resolver's refusal of
+          `vault_documents`.
+       2. The vault's bytes could not follow the platform to S3, because nothing
+          about them went through the thing that would move them.
+
+     The provider is also the tenant boundary for the bytes: `get()` REQUIRES an
+     orgId because object storage sits outside Postgres RLS. Handing it `orgId`
+     here is what makes that boundary available on the way back out.
+
+     Writing the bytes is NOT best-effort, and treating it as such was the worst
+     thing this route did.
      The failure was caught, logged at warn, and execution fell through to the
      INSERT below — so a `vault.documents` row was committed carrying a
-     `content_hash` and an `s3_key` for bytes that are not on disk. The row
-     looks indistinguishable from a good one: the hash is real, it is the
-     correct SHA-256 of the file the user chose. It just refers to nothing.
+     `content_hash` for bytes that are not on disk. The row looks
+     indistinguishable from a good one: the hash is real, it is the correct
+     SHA-256 of the file the user chose. It just refers to nothing.
      The user is told the upload succeeded, the document appears in the vault,
      and the absence surfaces whenever someone later tries to retrieve the
      artifact a submission depends on.
      A rejected upload is recoverable. A hash for bytes nobody has is a record
-     that lies, so this fails the request instead. */
+     that lies, so this fails the request instead — unchanged, and now covering
+     a provider failure as well as a disk one. */
+  let storageVersionId: string;
+  let storageProvider: string;
+  let storageFileId: string;
   try {
-    const resolved = path.resolve(process.cwd(), storagePath);
-    await fs.mkdir(path.dirname(resolved), { recursive: true });
-    await fs.writeFile(resolved, args.fileBuffer);
+    const stored = await getStorageProvider().put({
+      orgId,
+      projectId: args.programId,
+      filename: fileName,
+      bytes: args.fileBuffer,
+      mime: mimeType,
+      metadata: { contentHash, documentCode: args.documentCode },
+    });
+    storageVersionId = stored.vaultVersionId;
+    storageProvider = stored.provider;
+    storageFileId = stored.vaultFileId;
   } catch (err) {
     logger.error('Vault file persistence failed — refusing to record the document', {
       reason: err instanceof Error ? err.message : 'unknown',
@@ -222,6 +248,31 @@ export async function ingestVaultDocument(args: VaultIngestArgs): Promise<VaultI
     return { ok: false, status: 500, code: 'STORAGE_WRITE_FAILED',
       message: 'The document could not be stored. Nothing was recorded — try again.' };
   }
+
+  /* `s3_key` carries the PROVIDER's own handle (`vault://{org}/{project}/{file}`)
+     rather than a filesystem path, because the bytes are no longer at one.
+
+     It is not left NULL, for two reasons that only show up on a real database:
+       - the column is NOT NULL on a drizzle-push/baseline database
+         (migrations/0000_sweet_joseph.sql:6267), so a NULL here fails every
+         upload;
+       - migrations/20260821_vault_documents_canonical_shape.sql:131 runs
+         `UPDATE vault.documents SET s3_key = id::text WHERE s3_key IS NULL` and,
+         like every file in the set, re-runs on EVERY deploy — so a NULL would
+         be quietly replaced by a path that resolves to nothing on the next one.
+
+     Writing the old `uploads/...` path would have been the "record that lies"
+     this path refuses above; the provider handle is simply where the bytes are,
+     said in the provider's terms. It also cannot be mistaken for a local path:
+     the legacy reader resolves `s3_key` under `uploads/` and refuses anything
+     that escapes it, so a `vault://` value fails closed rather than reading some
+     other file. The authoritative address for these rows is
+     `storage_version_id`, which the reader consults first.
+
+     `s3_bucket` carries the provider name so a row stays readable after the
+     platform default changes. */
+  const s3Key: string = storageFileId;
+  const s3Bucket = storageProvider;
 
   // Text extraction (best-effort for the upload itself — the document is
   // still admitted — but the OUTCOME is captured either way, so a failure
@@ -340,7 +391,8 @@ export async function ingestVaultDocument(args: VaultIngestArgs): Promise<VaultI
         folder_id, evidence_kind, ctd_section,
         placement_status, placement_confidence, placement_rationale,
         placed_by, placed_at,
-        processing_status, created_by, organization_id
+        processing_status, created_by, organization_id,
+        storage_version_id, storage_provider
       ) VALUES (
         $1, $2, $3, $4,
         $5, $6, $7, $8, $9, $10,
@@ -350,13 +402,16 @@ export async function ingestVaultDocument(args: VaultIngestArgs): Promise<VaultI
         $19, $20, $21,
         $22, $23, $24,
         $25, CASE WHEN $25::integer IS NULL THEN NULL ELSE NOW() END,
-        'PENDING', $26, $27
+        'PENDING', $26, $27,
+        $28, $29
       )
       ON CONFLICT (program_id, document_code, version) DO UPDATE SET
         document_title = EXCLUDED.document_title,
         document_type = EXCLUDED.document_type,
         s3_bucket = EXCLUDED.s3_bucket,
         s3_key = EXCLUDED.s3_key,
+        storage_version_id = EXCLUDED.storage_version_id,
+        storage_provider = EXCLUDED.storage_provider,
         file_name = EXCLUDED.file_name,
         file_size = EXCLUDED.file_size,
         mime_type = EXCLUDED.mime_type,
@@ -437,6 +492,8 @@ export async function ingestVaultDocument(args: VaultIngestArgs): Promise<VaultI
         placement.placedBy,
         userId,
         orgId,
+        storageVersionId,
+        storageProvider,
       ],
     );
 

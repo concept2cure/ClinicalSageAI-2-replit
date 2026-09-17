@@ -96,6 +96,13 @@ export const vaultDocuments = vault.table(
     s3Bucket: text('s3_bucket').notNull(),
     s3Key: text('s3_key').notNull(),
     s3VersionId: text('s3_version_id'),
+    /** Version id minted by IStorageProvider.put(); pass to get(id, orgId).
+     *  NULL means the row predates the storage provider and its bytes are
+     *  addressed by s3Key — the read path is a dual read, not a cutover.
+     *  See migrations/20260917_vault_documents_storage_version.sql. */
+    storageVersionId: text('storage_version_id'),
+    /** Which provider minted storageVersionId (local | s3 | azure | gcs). */
+    storageProvider: text('storage_provider'),
     storageClass: storageClass('storage_class').notNull().default('STANDARD'),
 
     fileName: text('file_name').notNull(),

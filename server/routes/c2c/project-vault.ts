@@ -64,6 +64,7 @@ import {
 } from '../../services/vault/vault-filing.service.js';
 import { listClientDocuments } from '../../services/clinical-regulatory-evidence/evidence-spine.service.js';
 import { writeChainedAuditRow } from '../../services/auditService.js';
+import { getStorageProvider } from '../../services/storage/index.js';
 
 const logger = createScopedLogger('c2c-project-vault-routes');
 
@@ -536,35 +537,105 @@ export type VerifiedVaultBytes =
   | { ok: true; bytes: Buffer }
   | { ok: false; status: number; error: string; message?: string };
 
+/**
+ * Where a vault document's bytes live. A row has ONE of these, never neither:
+ *   - `storageVersionId` — written through `getStorageProvider()`, the canonical
+ *     seam. This is the shape every new upload takes.
+ *   - `storageKey` — the legacy relative path in `s3_key`, for every row written
+ *     before the vault moved onto the provider.
+ * Both are carried because this is a DUAL-READ, not a cutover: no bytes were
+ * moved when the write path changed, so old documents must keep working
+ * unchanged until a deliberate backfill says otherwise.
+ */
+export interface VaultByteSource {
+  /** `vault.documents.storage_version_id` — NULL on rows predating the provider. */
+  storageVersionId: string | null;
+  /** `vault.documents.s3_key` — NULL on rows written through the provider. */
+  storageKey: string | null;
+  /** The caller's organization. Required: object storage sits outside Postgres
+   *  RLS, so for provider-backed bytes this argument IS the tenant boundary. */
+  organizationId: number;
+}
+
 export async function readVerifiedVaultBytes(
-  storageKey: string,
+  source: VaultByteSource,
   recordedHash: string | null,
   documentId: string,
 ): Promise<VerifiedVaultBytes> {
-  const resolved = path.resolve(process.cwd(), storageKey);
-  // Refuse a key that escapes the storage root. `s3_key` is written by this
-  // codebase today, but a path-traversal read is not a risk worth carrying on
-  // the assumption that it always will be.
-  const root = path.resolve(process.cwd(), 'uploads');
-  if (!resolved.startsWith(root + path.sep)) {
-    logger.error('vault download refused: storage key escapes the uploads root', { documentId });
+  let bytes: Buffer;
+
+  if (source.storageVersionId) {
+    // Provider-backed. `get()` returns null both for "no such version" and for
+    // "belongs to another organization" — the interface refuses to distinguish
+    // them, because a 403 on a foreign id confirms the id exists. Either way
+    // there are no bytes to serve, and that is what we report.
+    let got: Awaited<ReturnType<ReturnType<typeof getStorageProvider>['get']>>;
+    try {
+      got = await getStorageProvider().get(source.storageVersionId, source.organizationId);
+    } catch (err) {
+      logger.error('vault download: storage provider read failed', {
+        documentId,
+        reason: err instanceof Error ? err.message : 'unknown',
+      });
+      return {
+        ok: false,
+        status: 409,
+        error: 'STORED_FILE_MISSING',
+        message:
+          'The vault record exists but its stored file could not be read. Nothing was downloaded.',
+      };
+    }
+    if (!got) {
+      logger.error('vault download: stored version not readable for this organization', {
+        documentId,
+      });
+      return {
+        ok: false,
+        status: 409,
+        error: 'STORED_FILE_MISSING',
+        message:
+          'The vault record exists but its stored file could not be read. Nothing was downloaded.',
+      };
+    }
+    bytes = got.bytes;
+  } else if (source.storageKey) {
+    const resolved = path.resolve(process.cwd(), source.storageKey);
+    // Refuse a key that escapes the storage root. `s3_key` is written by this
+    // codebase today, but a path-traversal read is not a risk worth carrying on
+    // the assumption that it always will be.
+    const root = path.resolve(process.cwd(), 'uploads');
+    if (!resolved.startsWith(root + path.sep)) {
+      logger.error('vault download refused: storage key escapes the uploads root', { documentId });
+      return { ok: false, status: 409, error: 'NO_STORED_FILE' };
+    }
+
+    try {
+      bytes = await fs.readFile(resolved);
+    } catch {
+      logger.error('vault download: stored file missing on disk', {
+        documentId,
+        key: source.storageKey,
+      });
+      return {
+        ok: false,
+        status: 409,
+        error: 'STORED_FILE_MISSING',
+        message:
+          'The vault record exists but its stored file could not be read. Nothing was downloaded.',
+      };
+    }
+  } else {
+    // Neither address. The row was recorded without bytes reaching storage,
+    // which the ingest path refuses to do — so this is a corrupt record, and
+    // serving nothing with an explanation beats serving a zero-byte file.
+    logger.error('vault download refused: record carries no storage address', { documentId });
     return { ok: false, status: 409, error: 'NO_STORED_FILE' };
   }
 
-  let bytes: Buffer;
-  try {
-    bytes = await fs.readFile(resolved);
-  } catch {
-    logger.error('vault download: stored file missing on disk', { documentId, key: storageKey });
-    return {
-      ok: false,
-      status: 409,
-      error: 'STORED_FILE_MISSING',
-      message:
-        'The vault record exists but its stored file could not be read. Nothing was downloaded.',
-    };
-  }
-
+  // Verified the same way whichever address served the bytes. `content_hash` in
+  // the database is authoritative; the provider reports a hash of its own, but
+  // checking the bytes against the RECORD is what catches a store that returned
+  // the wrong object as well as one that returned altered bytes.
   if (recordedHash) {
     const actual = createHash('sha256').update(bytes).digest('hex');
     if (actual !== recordedHash) {
@@ -1111,7 +1182,8 @@ export default function createProjectVaultRoutes(): Router {
       if (prog.rows.length === 0) return res.status(404).json({ success: false, error: 'NOT_FOUND' });
 
       const docRes = await pool.query(
-        `SELECT id, file_name, document_title, mime_type, file_size, s3_key, content_hash
+        `SELECT id, file_name, document_title, mime_type, file_size, s3_key,
+                storage_version_id, content_hash
            FROM vault.documents
           WHERE id = $1 AND program_id = $2 AND deleted_at IS NULL
             AND EXISTS (
@@ -1127,12 +1199,16 @@ export default function createProjectVaultRoutes(): Router {
       const doc = docRes.rows[0] as {
         id: string; file_name: string | null; document_title: string | null;
         mime_type: string | null; file_size: string | number | null;
-        s3_key: string | null; content_hash: string | null;
+        s3_key: string | null; storage_version_id: string | null; content_hash: string | null;
       };
 
-      if (!doc.s3_key) {
-        // A row with no storage key describes a document whose bytes were never
+      if (!doc.storage_version_id && !doc.s3_key) {
+        // A row with NEITHER address describes a document whose bytes were never
         // kept. Say that rather than 404 — the record exists, the file does not.
+        // Both are checked because this is a dual-read: new uploads carry a
+        // provider version id and no s3_key, rows written before the vault moved
+        // onto the storage provider carry the reverse, and testing only the old
+        // one would refuse every new upload as "catalogued without content".
         return res.status(409).json({
           success: false,
           error: 'NO_STORED_FILE',
@@ -1140,7 +1216,15 @@ export default function createProjectVaultRoutes(): Router {
         });
       }
 
-      const read = await readVerifiedVaultBytes(doc.s3_key, doc.content_hash, documentId);
+      const read = await readVerifiedVaultBytes(
+        {
+          storageVersionId: doc.storage_version_id,
+          storageKey: doc.s3_key,
+          organizationId: orgId,
+        },
+        doc.content_hash,
+        documentId,
+      );
       if (!read.ok) {
         return res.status(read.status).json({
           success: false,
