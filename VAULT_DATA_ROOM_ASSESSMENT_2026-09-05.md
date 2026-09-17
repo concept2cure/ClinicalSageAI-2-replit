@@ -201,7 +201,37 @@ make the middleware refuse rather than pass `''`; (b) add the explicit org join 
 `advancedRAGPipeline.ts:895,:935` — unconditional, cheap, no schema change, and the correct fix
 regardless; (c) only then `FORCE`.
 
-### 4.5 A vault document can never become a submission
+### 4.5 A vault document can never become a submission — **CLOSED 2026-09-17**
+
+> **This gap is closed.** A vault document can now be filed into a submission and
+> assembled into a package. What it took, in order:
+>
+> 1. **Vault bytes moved onto the canonical storage seam.** Ingest writes through
+>    `getStorageProvider()` and records `storage_version_id`. This was the blocker
+>    nobody had written down, and it was the real one — see correction 3 below.
+> 2. **`submission_leaves.document_uuid`** — one nullable sibling column beside the
+>    integer `document_id`. NOT a widening: that is Option A of the identity
+>    contract and stays rejected. Adjudicated with the product owner 2026-09-17.
+> 3. **`vault_documents` moved from `EXTERNAL_DOCUMENT_TABLES` into
+>    `RESOLVABLE_DOCUMENT_TABLES`**, with a resolver branch and a tenancy verifier
+>    at the write boundary (the repo's own drift guard refused to let the first
+>    land without the second).
+>
+> Four fail-closed gates on the read path, because the eCTD index md5 is computed
+> from whatever is staged and nothing downstream would catch wrong bytes: an
+> org-scoped row read through the programme, the provider's own orgId boundary on
+> the bytes, a hash check against `content_hash`, and a `%PDF-` header verified on
+> the bytes rather than trusted from the mime string. Bytes are staged RAW — the
+> vault copy is the governed record, and re-rendering would file something the
+> vault has never seen.
+>
+> **Still required before a customer sees it:** rows uploaded before the storage
+> move must be backfilled (`npm run db:backfill-vault-storage -- --org N`); until
+> then such a leaf resolves as unresolved and names that script. And there is no
+> UI affordance yet — no "file into submission" control on the Vault surface. The
+> capability is complete end to end; the button is not built.
+
+The original assessment follows, for the record.
 
 `server/services/ectd/leaf-document-tables.ts` declares `vault_documents` non-materializable.
 The leaf is surfaced as **unresolved**, never dropped, and transmit fails closed on any
@@ -536,11 +566,10 @@ ALL SEVEN SHIPPED**, each verified by making the check fail first.
   neither touched it: the purge used `public.vault_documents`, the export swept
   `public` only.
 
-Still open from §4: a vault document has a tenant now but still cannot become a submission
-leaf (§4.5). **Corrected 2026-09-17:** not "until `submission_leaves.document_id` widens" —
-that is rejected by the approved identity contract and would not have sufficed anyway. The
-binding constraint is the storage seam: the packager cannot reach bytes that vault ingest
-wrote outside the storage provider. See §4.5.
+~~Still open from §4: a vault document has a tenant now but still cannot become a submission
+leaf (§4.5).~~ **CLOSED 2026-09-17.** The storage seam (the real blocker) and the leaf id
+space were both closed; a vault document can be filed and assembled. Remaining: backfill
+pre-existing rows onto the provider, and build the UI affordance. See §4.5.
 
 **Weeks 2–4 — make the vault usable**
 Server-side vault search with a GIN index and pagination; a search box in `Vault.tsx`; wire the
