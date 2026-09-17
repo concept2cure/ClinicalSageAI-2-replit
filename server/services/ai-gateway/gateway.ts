@@ -459,7 +459,29 @@ function partitionSystemMessages(
       bodyMessages.push(m);
       continue;
     }
-    const placementOk = bodyMessages.length > 0 && bodyMessages[bodyMessages.length - 1].role === 'user';
+    const previousBody = bodyMessages[bodyMessages.length - 1];
+
+    // Two operator instructions in a row are one instruction. Merging them is
+    // not a nicety: the API wants an inline system turn to follow a USER turn,
+    // so a second consecutive one would fail placement — and, before this
+    // branch existed, fell through to the persona, where a mid-run steer would
+    // have silently become part of AnA's identity for the rest of the
+    // conversation. That is the worst available outcome for a steer: not
+    // dropped, not applied, permanently misfiled.
+    if (
+      m.inlineSystem &&
+      supportsInlineSystem &&
+      previousBody?.role === 'system' &&
+      previousBody.inlineSystem
+    ) {
+      bodyMessages[bodyMessages.length - 1] = {
+        ...previousBody,
+        content: `${previousBody.content}\n\n${m.content}`,
+      };
+      continue;
+    }
+
+    const placementOk = previousBody?.role === 'user';
     if (m.inlineSystem && supportsInlineSystem && placementOk) {
       bodyMessages.push(m);
       continue;
