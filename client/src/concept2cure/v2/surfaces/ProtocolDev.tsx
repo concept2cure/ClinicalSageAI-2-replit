@@ -13,7 +13,9 @@ import { downloadBlob, downloadText, safeFileName } from '../download';
 import { C2CForm } from '../C2CForm';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { usePublishSurfaceContext } from '../surfaceContext';
+import { useSurfaceActionHandlers } from '../surfaceActions';
 import { C2CToast, useToast } from '../toast';
+import { StudyDesignStatisticsTab } from './biostatBridge';
 
 const Ic = PG.Ic;
 
@@ -25,6 +27,10 @@ const TABS = [
   { id: 'objectives',  label: 'Objectives',              icon: 'clipboardList' },
   { id: 'eligibility', label: 'Eligibility',             icon: 'checkSquare' },
   { id: 'soa',         label: 'Schedule of assessments', icon: 'grid' },
+  // The protocol's statistics live on its study design (the design-as-data
+  // spine), read through the biostatistics bridge; the tab links into the
+  // designer with the design pre-loaded instead of retyped.
+  { id: 'statistics',  label: 'Statistics',              icon: 'sigma' },
   { id: 'risks',       label: 'Risk register',           icon: 'alertTriangle' },
   { id: 'milestones',  label: 'Milestones',              icon: 'gitBranch' },
   { id: 'budget',      label: 'Budget',                  icon: 'barChart' },
@@ -560,7 +566,7 @@ export function ConsentTab({ doc, onToggle }: ConsentTabProps) {
    the registry could accept it without ever checking the props it actually
    receives. `onAsk` is required and non-null now, which is what the surface has
    always been handed. */
-export function ProtocolWorkspace({ onAsk }: SurfaceViewProps) {
+export function ProtocolWorkspace({ onAsk, onNav }: SurfaceViewProps) {
   // GET /api/protocol-dev → the org's in-development protocol(s), already shaped
   // to the PdevDoc render contract (server/routes/protocol-dev.routes.ts reads
   // the real c2c_protocol_dev table via pool, org-scoped, JSONB rehydrated).
@@ -659,11 +665,11 @@ export function ProtocolWorkspace({ onAsk }: SurfaceViewProps) {
           hint="Start a clinical protocol to author it here — sections, objectives, schedule of assessments, risk register, budget, amendments, and review threads are all governed on this document." />
       </div>);
   }
-  return <ProtocolWorkspaceDoc doc={doc} onAsk={onAsk} onChanged={() => setReloadKey((k) => k + 1)} />;
+  return <ProtocolWorkspaceDoc doc={doc} onAsk={onAsk} onNav={onNav} onChanged={() => setReloadKey((k) => k + 1)} />;
 }
 
 /* ---- Workspace body — a real, loaded protocol document ---- */
-function ProtocolWorkspaceDoc({ doc, onAsk, onChanged }: { doc: PdevDoc; onAsk: (msg: string) => void; onChanged?: () => void }) {
+function ProtocolWorkspaceDoc({ doc, onAsk, onNav, onChanged }: { doc: PdevDoc; onAsk: (msg: string) => void; onNav: (id: string) => void; onChanged?: () => void }) {
   const [tab, setTab] = useState('document');
   const [activeSec, setActiveSec] = useState(doc.openSection);
   // Which governed form is open — the four registers plus the three actions
@@ -690,6 +696,27 @@ function ProtocolWorkspaceDoc({ doc, onAsk, onChanged }: { doc: PdevDoc; onAsk: 
   const sections = doc.sections || [];
   const sec = sections.find((s: any) => s.id === activeSec) || sections[0];
   const onSec = (s: any) => { setActiveSec(s.id); setTab(s.tab || 'document'); };
+
+  /* AnA can open any protocol section by its number or title — the same click
+     a person makes. By the time this component is mounted, the parent's
+     honest-state reads (loading/error/empty) have already resolved to a real
+     document, so there is no not-ready state to gate here. */
+  useSurfaceActionHandlers('protocol-dev', {
+    'protocol-dev.open-section': (params) => {
+      const raw = String(params.section ?? '').trim();
+      if (!raw) return { ok: false, reason: 'Name a section by its number or title.' };
+      if (sections.length === 0) return { ok: false, reason: 'This protocol has no sections recorded yet.' };
+      const needle = raw.toLowerCase();
+      const byNum = sections.filter((s: any) => String(s.num).toLowerCase() === needle);
+      const hits = byNum.length ? byNum : sections.filter((s: any) => String(s.title).toLowerCase().includes(needle));
+      if (hits.length === 0) return { ok: false, reason: `No protocol section matching "${raw}".` };
+      if (hits.length > 1) return { ok: false, reason: `"${raw}" matches ${hits.length} sections — name one exactly.` };
+      const s = hits[0];
+      if (activeSec === s.id) return { ok: true, detail: `Already on section ${s.num} — ${s.title}` };
+      onSec(s);
+      return { ok: true, detail: `Opened section ${s.num} — ${s.title}` };
+    },
+  });
   const generate = (s: any) => onAsk('Draft ' + s.title + ' for ' + doc.shortTitle + ' from the linked evidence.');
   /* ── Export: the assembled protocol, rendered ─────────────────────────────
      The header's Export button opened the same dead dialog. The assembly has
@@ -749,6 +776,7 @@ function ProtocolWorkspaceDoc({ doc, onAsk, onChanged }: { doc: PdevDoc; onAsk: 
       case 'objectives':  return <ObjectivesTab doc={doc} onAdd={() => openReg('objective')} />;
       case 'eligibility': return <EligibilityTab doc={doc} onAdd={() => openReg('eligibility')} />;
       case 'soa':         return <SoaTab doc={doc} canWrite={canWrite} onError={(m) => fireToast(m, 'error')} />;
+      case 'statistics':  return <StudyDesignStatisticsTab onNav={onNav} />;
       case 'risks':       return <RiskTab doc={doc} onAdd={() => openReg('risk')} />;
       case 'milestones':  return <MilestonesTab doc={doc} onAdd={() => openReg('milestone')} />;
       case 'budget':      return <BudgetTab doc={doc} />;

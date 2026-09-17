@@ -15,15 +15,21 @@
  *      the same function behind POST /guard/final-export, so the placement
  *      refusal IS the gate's verdict, not a second opinion.
  *   2. For each approved, non-stale §3.2 section: file a point-in-time
- *      snapshot of the compiled narrative into `coauthor_documents` (the
- *      canonical renderable leaf source, org-scoped, integer-keyed), with
- *      moduleNumber = the m-prefixed eCTD code the renderer prints as the
- *      section header.
+ *      snapshot of the compiled narrative AND the tables that narrative cites
+ *      into `coauthor_documents` (the canonical renderable leaf source,
+ *      org-scoped, integer-keyed), with moduleNumber = the m-prefixed eCTD code
+ *      the renderer prints as the section header. The snapshot is built by
+ *      module3Composer.renderComposedSectionMarkdown — the same renderer the
+ *      governed-artifact bridge uses — so the filed leaf and the governed
+ *      artifact are the same document.
  *   3. Place that snapshot as a leaf via submission-service `upsertLeaf` — the
  *      same audited write the Submission Center Builder makes. upsertLeaf
  *      re-verifies org scope, refuses locked sequences, and pins the sha256
  *      of the snapshot content.
  *   4. Record a `placed_into_submission` provenance event per section.
+ *   5. A run that filed NO leaf is a REFUSAL, not a placement of zero
+ *      sections — nothing was written, so nothing may be reported as
+ *      filed. The refusal carries each section's own skip reason.
  *
  * Section codes translate '3.2.S.1' → 'm3.2.S.1' (services/regulatory/
  * ind-ectd-sections.ts vocabulary), so the IND checklist assembler, package
@@ -36,6 +42,26 @@ import { coauthorDocuments } from '../../../shared/schema';
 import { getSequence, listLeaves, listSequences, upsertLeaf } from '../submission-service/submission-service';
 import { evaluateFinalExportGate, type FinalExportGateVerdict } from './final-export-gate';
 import { getSectionLabels } from '../module3-convergence-service';
+import { renderComposedSectionMarkdown, type GeneratedTable } from '../module3Composer';
+
+/**
+ * Wording for the one refusal this seam adds: a section whose stored
+ * deterministic_json predates tables being carried at all. Exported so the
+ * caller (and its tests) can name the condition instead of matching prose.
+ */
+export const LEGACY_NO_TABLES_SKIP_REASON =
+  /* The remedy is TWO steps, and naming only the first sent a staffer round a
+     loop: a recompile that changes the section returns it to draft (an approval
+     is a signature over content), so recompiling alone leaves it unplaceable
+     for the second reason — not approved. */
+  'Compiled before section tables were carried; recompile the section AND re-approve it before placing.';
+
+/* The tables reader moved to ./compiled-record: the export gate applies the
+   same refusal (an approved section with no `tables` key is unplaceable), and
+   this module imports the gate, so keeping it here would have made a cycle.
+   Re-exported so this module's own name for it still resolves. */
+import { readSectionTables } from './compiled-record';
+export { readSectionTables };
 
 export interface PlaceModule3Input {
   orgId: number;
@@ -54,14 +80,36 @@ export interface PlacedSection {
   title: string;
   coauthorDocumentId: number;
   leafId: number;
+  /** How many composed tables were carried into the filed snapshot. */
+  tableCount: number;
+}
+
+export interface SkippedSection {
+  sectionKey: string;
+  reason: string;
 }
 
 export type PlaceModule3Result =
   | {
       placed: false;
+      /** The final-export gate refused before anything was read or written. */
+      refusedBy: 'final-export-gate';
       /** The gate's own wording — surfaced verbatim to the caller. */
       error: string;
       data: FinalExportGateVerdict['data'];
+    }
+  | {
+      placed: false;
+      /**
+       * The gate passed, but every approved section turned out to be
+       * unplaceable, so no leaf was written. "Placed nothing" is a refusal,
+       * not a placement: a caller that reads only a success flag would
+       * otherwise record "Module 3 filed" over a sequence with no Module 3
+       * leaves in it. Nothing was written when this is returned.
+       */
+      refusedBy: 'nothing-placeable';
+      error: string;
+      skipped: SkippedSection[];
     }
   | {
       placed: true;
@@ -69,12 +117,124 @@ export type PlaceModule3Result =
       sequenceId: number;
       placements: PlacedSection[];
       /** Sections the gate passed but that carry nothing renderable — stated, not hidden. */
-      skipped: Array<{ sectionKey: string; reason: string }>;
+      skipped: SkippedSection[];
     };
+
+/**
+ * The wording of the nothing-placeable refusal. It states the count and quotes
+ * the sections' own reasons (the first three; the full list travels in
+ * `skipped`), so the refusal is actionable without a second request.
+ */
+function nothingPlaceableError(skipped: SkippedSection[]): string {
+  const shown = skipped.slice(0, 3).map((s) => `§${s.sectionKey}: ${s.reason}`).join(' ');
+  const more = skipped.length > 3 ? ` (+${skipped.length - 3} more)` : '';
+  return `Nothing was placed — all ${skipped.length} approved section(s) were skipped. ${shown}${more}`;
+}
 
 /** '3.2.S.1' → 'm3.2.S.1' — the eCTD spine's vocabulary. */
 export function toLeafSectionCode(sectionKey: string): string {
   return 'm' + sectionKey;
+}
+
+/** The `placed_into_submission` provenance event — one per placed section. */
+async function recordPlacementProvenance(
+  pool: { query: (sql: string, params: unknown[]) => Promise<unknown> },
+  orgId: number,
+  cmcProjectId: string,
+  actorId: string,
+  payload: {
+    sectionKey: string;
+    leafSectionCode: string;
+    submissionId: number;
+    sequenceId: number;
+    leafId: number;
+    coauthorDocumentId: number;
+    tableCount: number;
+  },
+): Promise<void> {
+  await pool.query(
+    `INSERT INTO cmc_provenance_events
+       (organization_id, project_id, artifact_type, artifact_id, event_type, event_payload, created_by)
+     VALUES ($1, $2, 'section', $3, 'placed_into_submission', $4::jsonb, $5)`,
+    [orgId, cmcProjectId, payload.sectionKey, JSON.stringify(payload), actorId],
+  );
+}
+
+/**
+ * File ONE placeable section: point-in-time snapshot → leaf → provenance.
+ *
+ * Nothing here is conditional — the caller has already decided the section is
+ * placeable. The snapshot is the canonical renderable leaf source: what is
+ * filed is what was approved (nothing edits placement snapshots, and upsertLeaf
+ * pins its sha256), rendered by the same renderer the governed-artifact bridge
+ * uses so the filed leaf and the governed artifact are the same document.
+ */
+async function fileSectionAsLeaf(params: {
+  pool: { query: (sql: string, p: unknown[]) => Promise<unknown> };
+  input: PlaceModule3Input;
+  sectionKey: string;
+  label: string;
+  narrative: string;
+  tables: GeneratedTable[];
+  /** The same section's leaf in an earlier sequence, when it has one. */
+  prior?: { id: number };
+}): Promise<PlacedSection> {
+  const { pool, input, sectionKey, label, narrative, tables, prior } = params;
+  const { orgId, userId, cmcProjectId, submissionId, sequenceId } = input;
+  const leafSectionCode = toLeafSectionCode(sectionKey);
+  const title = `Module 3 — ${label} (§${sectionKey})`;
+
+  const [snapshot] = await db
+    .insert(coauthorDocuments)
+    .values({
+      organizationId: orgId,
+      title,
+      content: renderComposedSectionMarkdown(label, narrative, tables),
+      status: 'approved',
+      moduleNumber: leafSectionCode,
+      createdBy: String(userId),
+      metadata: {
+        placedFrom: 'cmc-module3-os',
+        cmcProjectId,
+        sectionKey,
+      },
+    })
+    .returning({ id: coauthorDocuments.id });
+
+  const leaf = await upsertLeaf(
+    {
+      sequenceId,
+      sectionCode: leafSectionCode,
+      title,
+      lifecycleOp: prior ? 'replace' : 'new',
+      parentLeafId: prior?.id ?? null,
+      documentTable: 'coauthor_documents',
+      documentId: snapshot.id,
+      documentType: 'cmc_module3_section',
+    },
+    { organizationId: orgId, userId },
+  );
+
+  const placement: PlacedSection = {
+    sectionKey,
+    leafSectionCode,
+    title,
+    coauthorDocumentId: snapshot.id,
+    leafId: (leaf as { id: number }).id,
+    tableCount: tables.length,
+  };
+
+  await recordPlacementProvenance(pool, orgId, cmcProjectId, String(userId), {
+    sectionKey,
+    leafSectionCode,
+    submissionId,
+    sequenceId,
+    leafId: placement.leafId,
+    coauthorDocumentId: placement.coauthorDocumentId,
+    tableCount: placement.tableCount,
+  });
+
+  return placement;
 }
 
 /**
@@ -111,7 +271,12 @@ export async function placeModule3IntoSubmission(input: PlaceModule3Input): Prom
     actorId: String(userId),
   });
   if (!gate.allowed) {
-    return { placed: false, error: gate.error ?? 'Final export gate refused placement.', data: gate.data };
+    return {
+      placed: false,
+      refusedBy: 'final-export-gate',
+      error: gate.error ?? 'Final export gate refused placement.',
+      data: gate.data,
+    };
   }
 
   // 2. The target sequence must exist in this org AND belong to the stated
@@ -132,7 +297,8 @@ export async function placeModule3IntoSubmission(input: PlaceModule3Input): Prom
   // 3. Approved sections with their compiled narrative.
   const pool = getPool();
   const { rows: sections } = await pool.query(
-    `SELECT section_key AS "sectionKey", narrative_text AS "narrativeText"
+    `SELECT section_key AS "sectionKey", narrative_text AS "narrativeText",
+            deterministic_json AS "deterministicJson"
      FROM cmc_module3_sections
      WHERE organization_id = $1 AND project_id = $2
        AND approval_state = 'approved' AND stale = false
@@ -142,9 +308,13 @@ export async function placeModule3IntoSubmission(input: PlaceModule3Input): Prom
 
   const labels = getSectionLabels();
   const placements: PlacedSection[] = [];
-  const skipped: Array<{ sectionKey: string; reason: string }> = [];
+  const skipped: SkippedSection[] = [];
 
-  for (const s of sections as Array<{ sectionKey: string; narrativeText: string | null }>) {
+  for (const s of sections as Array<{
+    sectionKey: string;
+    narrativeText: string | null;
+    deterministicJson: unknown;
+  }>) {
     const narrative = (s.narrativeText ?? '').trim();
     if (!narrative) {
       // An approved section with no compiled narrative has nothing to render
@@ -154,72 +324,45 @@ export async function placeModule3IntoSubmission(input: PlaceModule3Input): Prom
       continue;
     }
 
-    const label = labels[s.sectionKey] || s.sectionKey;
-    const leafSectionCode = toLeafSectionCode(s.sectionKey);
-    const title = `Module 3 — ${label} (§${s.sectionKey})`;
+    /* The composer writes a narrative that CITES its tables. A section whose
+       stored payload predates tables being carried cannot be rendered
+       faithfully — placing it would file prose saying "see the change history
+       table" into a document with no table in it. Fail closed and name the
+       remedy; a plain recompile restores placement. */
+    const tables = readSectionTables(s.deterministicJson);
+    if (tables === undefined) {
+      skipped.push({ sectionKey: s.sectionKey, reason: LEGACY_NO_TABLES_SKIP_REASON });
+      continue;
+    }
 
-    // Point-in-time snapshot into the canonical renderable leaf source. What
-    // is filed is what was approved — the snapshot is immutable by convention
-    // (nothing edits placement snapshots), and upsertLeaf pins its sha256.
-    const [snapshot] = await db
-      .insert(coauthorDocuments)
-      .values({
-        organizationId: orgId,
-        title,
-        content: `## ${label}\n\n${narrative}`,
-        status: 'approved',
-        moduleNumber: leafSectionCode,
-        createdBy: String(userId),
-        metadata: {
-          placedFrom: 'cmc-module3-os',
-          cmcProjectId,
-          sectionKey: s.sectionKey,
-        },
-      })
-      .returning({ id: coauthorDocuments.id });
-
-    const prior = priorBySection.get(leafSectionCode);
-    const leaf = await upsertLeaf(
-      {
-        sequenceId,
-        sectionCode: leafSectionCode,
-        title,
-        lifecycleOp: prior ? 'replace' : 'new',
-        parentLeafId: prior?.id ?? null,
-        documentTable: 'coauthor_documents',
-        documentId: snapshot.id,
-        documentType: 'cmc_module3_section',
-      },
-      { organizationId: orgId, userId },
+    placements.push(
+      await fileSectionAsLeaf({
+        pool,
+        input,
+        sectionKey: s.sectionKey,
+        label: labels[s.sectionKey] || s.sectionKey,
+        narrative,
+        tables,
+        // A re-placement of a section already filed in an earlier sequence is a
+        // `replace` of that leaf, not a second `new` one.
+        prior: priorBySection.get(toLeafSectionCode(s.sectionKey)),
+      }),
     );
+  }
 
-    await pool.query(
-      `INSERT INTO cmc_provenance_events
-         (organization_id, project_id, artifact_type, artifact_id, event_type, event_payload, created_by)
-       VALUES ($1, $2, 'section', $3, 'placed_into_submission', $4::jsonb, $5)`,
-      [
-        orgId,
-        cmcProjectId,
-        s.sectionKey,
-        JSON.stringify({
-          sectionKey: s.sectionKey,
-          leafSectionCode,
-          submissionId,
-          sequenceId,
-          leafId: (leaf as { id: number }).id,
-          coauthorDocumentId: snapshot.id,
-        }),
-        String(userId),
-      ],
-    );
-
-    placements.push({
-      sectionKey: s.sectionKey,
-      leafSectionCode,
-      title,
-      coauthorDocumentId: snapshot.id,
-      leafId: (leaf as { id: number }).id,
-    });
+  /* Every approved section was unplaceable — nothing was snapshotted and no
+     leaf was written. Refuse rather than report a placement of zero sections:
+     this is exactly the state of a project whose sections were all approved
+     before the composed tables were carried, so it is the common answer at
+     rollout, and a client reading only a success flag must not read it as a
+     filed Module 3. The remedy is in each section's own reason. */
+  if (placements.length === 0) {
+    return {
+      placed: false,
+      refusedBy: 'nothing-placeable',
+      error: nothingPlaceableError(skipped),
+      skipped,
+    };
   }
 
   return { placed: true, submissionId, sequenceId, placements, skipped };

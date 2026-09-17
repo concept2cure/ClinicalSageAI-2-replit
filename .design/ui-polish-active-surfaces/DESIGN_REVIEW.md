@@ -10,14 +10,25 @@ Date: 2026-09-05
 Six ran: design-reviewer, a11y-auditor, part11-ux-auditor, microcopy-reviewer,
 motion-auditor, design-system-auditor. Plus honest-state-auditor.
 
-**Screenshots were NOT captured, and that is a real gap in this review.** The
-app needs Postgres and the Docker daemon is unavailable in this environment, so
-the running application could not be reached. What replaced them is stronger for
-the contrast question and weaker for everything else: the repo's own
-`visual-qa` pipeline renders all 126 captured surfaces in headless Chromium
-under the real shipped stylesheets and measures computed colour per text node.
-Layout, overflow, focus rings and responsive behaviour were NOT visually
-verified. Treat the layout half of this review as code-read only.
+~~**Screenshots were NOT captured, and that is a real gap in this review.**~~
+**Closed 2026-09-08 — see "Screenshots (added 2026-09-08)" below.** The original
+text is kept because it explains what the rest of this document was written
+without.
+
+> _Original note (2026-09-05):_ The app needs Postgres and the Docker daemon is
+> unavailable in this environment, so the running application could not be
+> reached. What replaced them is stronger for the contrast question and weaker
+> for everything else: the repo's own `visual-qa` pipeline renders all 126
+> captured surfaces in headless Chromium under the real shipped stylesheets and
+> measures computed colour per text node. Layout, overflow, focus rings and
+> responsive behaviour were NOT visually verified. Treat the layout half of this
+> review as code-read only.
+
+The blocker was environmental, not architectural: Postgres is provisionable
+locally with `scripts/db/install-fresh.mjs` (the Docker daemon is not needed —
+the container was already running), and Chromium ships at `/opt/pw-browsers`.
+36 screenshots now exist under `screenshots/`, and the layout half of this
+review is no longer code-read only.
 
 ## The finding that matters
 
@@ -136,6 +147,15 @@ the same braced comment and watching it parse cleanly.
 6. **Keyboard-unreachable controls**: `ProtocolDev.tsx` heat-map cell and risk
    row, `Orchestration.tsx` nav chip, `QmpWorkspace.tsx` table cell.
 
+7. **`document.body` stays light-themed in dark mode** (found 2026-09-08 by the
+   screenshot pass). `getComputedStyle(document.body).backgroundColor` is
+   `rgb(250, 249, 245)` under both themes. Not visible today because `.c2c-v2`
+   covers the viewport, so this is latent — but it is the fourth instance of the
+   exact shape root causes #1–#3 describe: a value resolving where the dark
+   tokens are not in scope. It would surface on overscroll, behind a shell
+   shorter than the viewport, or in a print/export path. Small fix, but it wants
+   the same care as the alias re-declaration rather than a hardcoded body rule.
+
 ## Fixed in this pass
 
 - Dark-mode text ramp and accent aliases (above).
@@ -154,3 +174,86 @@ tree. The Part 11 signature ceremony (`GovernedApprovalDialog`, `SignoffList`,
 `AuthoringSignatures`) meets §11.50 including the printed-name fallback. And
 the CI gates here are unusually good — two of them caught my own mistakes
 mid-pass, which is the point of a gate.
+
+---
+
+## Screenshots (added 2026-09-08)
+
+Captured by `capture-2026-09-08.mjs` in this folder, against the real dev server
+on a locally provisioned Postgres, in Chromium 1194. 36 shots: five active
+surfaces (home, projects, vault, tasks, apps) × light and dark × 1280 / 768 /
+375, plus the three read-states of one surface in both themes. Zero page errors
+across all of it.
+
+Dark is set through the **real preference** (`c2c-v2-prefs.dark`), not by forcing
+a class or an attribute. That matters here specifically: root cause #1 above was
+a shell whose class said dark while the generated ramp stayed light, so a capture
+that forced only one of the two would photograph a state no user can reach and
+would hide the very bug this review is about.
+
+Rows in the populated Projects shots are synthetic, served through request
+interception, as are the loading and failed states — a failed read cannot be
+photographed on demand otherwise. None of it is evidence about real data; it is
+evidence about layout and colour.
+
+### Both dark-theme root-cause fixes verified live
+
+Measured from `getComputedStyle` on the shell, not read off the pixels:
+
+| | light | dark |
+|---|---|---|
+| `.c2c-v2` has `dark` class | no | **yes** |
+| `data-theme` attribute | absent | **`"dark"`** |
+| `--bg-000` | `#faf9f5` | **`#262624`** |
+| `--accent-200` | `#ad5132` | **`#e8916f`** |
+
+Root cause #1 (the ramp's `[data-theme="dark"]` selector never matching) and
+root cause #2 (accent aliases frozen at light values — the review measured 223
+elements stuck at `#ad5132`) are both confirmed fixed in a running browser.
+`--accent-200` resolving to `#e8916f` is the direct disproof of the frozen-alias
+bug.
+
+### New: `document.body` keeps the light background in dark mode
+
+`getComputedStyle(document.body).backgroundColor` is `rgb(250, 249, 245)` —
+`--bg-000`'s LIGHT value — in both themes. The dark shots look correct because
+`.c2c-v2` paints over the full viewport, so **this is latent, not visible
+today**. It is the same shape as the two root causes above (a value resolving in
+a scope where the dark tokens are not in view), and it would surface as a light
+band on overscroll, behind a shell shorter than the viewport, or in any print or
+screenshot path that captures the body. Filed below rather than fixed here.
+
+### Must-fix #3 confirmed, with pictures
+
+The claim was that loading, empty and failed "still look like three different
+components." They do, and the shots settle it:
+
+| State | What it renders |
+|---|---|
+| loading | thin left-accent rule, left-aligned text, no icon, full width |
+| empty | large dashed-border panel, centred, folder icon + bold title + hint |
+| failed | solid warning-bordered panel, icon + title + reason + "Try again" |
+
+Three different containers, three different alignments, three different border
+treatments, in one slot. `review-projects-state-{loading,empty,failed}-*.png`.
+
+### Honest-state discipline verified visually
+
+Worth recording because it is the thing this codebase most insists on, and the
+distinction is only legible side by side:
+
+- **empty** portfolio → `0 active programs · 0% average readiness · 0 blocked`
+- **failed** read → `— active programs · — average readiness · — blocked`
+
+Zero when the count is genuinely zero; an em dash when it is unknown. The
+`kv()` guard is doing exactly what it exists to do, and the two states cannot be
+mistaken for each other.
+
+### Not covered by these shots
+
+Focus rings, keyboard traversal and motion were not captured — they need
+interaction, not a screenshot, and must-fix #4 and #6 remain open on code-read
+evidence. The 8 remaining dark contrast failures are also not adjudicated here;
+they were measured per-element by `visual-qa:contrast`, which remains the right
+instrument for them. The `--text-400` on `--canvas-elevated` pair (3.6:1) a
+designer still needs to settle is visible in the dark Projects shots.

@@ -125,3 +125,54 @@ describe('compose510kSummary', () => {
     expect(a.body).toBe(b.body);
   });
 });
+
+/**
+ * The substantial-equivalence conclusion is the operative legal assertion of a
+ * 510(k) Summary. It used to be appended UNCONDITIONALLY — outside every branch,
+ * with renderBody not even receiving the `missingSections` it would need to gate
+ * on — so a draft whose Substantial Equivalence and Performance sections both
+ * render as "not yet populated" still closed by concluding equivalence "based on
+ * the comparison of intended use, technological characteristics, and
+ * performance data", three lines under the placeholders that say the comparison
+ * had not been made. The sibling engine se-discussion-builder.ts already gates
+ * the identical sentence on whether the comparison supports it.
+ */
+describe('compose510kSummary — the SE conclusion is gated on the sections it cites', () => {
+  const SE_SENTENCE = /is substantially equivalent to the predicate device\(s\) cited above/i;
+
+  const withMissing = (missing: string[]) =>
+    allPresent().map(s =>
+      missing.includes(s.sectionNumber)
+        ? { ...s, content: '', status: 'missing', completionPercentage: 0 }
+        : s,
+    );
+
+  it('asserts equivalence when every cited section is populated', async () => {
+    pullMock.mockResolvedValueOnce(allPresent());
+    const draft = await compose510kSummary(baseInput);
+    expect(draft.body).toMatch(SE_SENTENCE);
+    expect(draft.body).not.toMatch(/NOT asserted/i);
+  });
+
+  it('does NOT assert equivalence when the SE and Performance sections are unpopulated', async () => {
+    pullMock.mockResolvedValueOnce(withMissing(['6', '11']));
+    const draft = await compose510kSummary(baseInput);
+    expect(draft.body).not.toMatch(SE_SENTENCE);
+    expect(draft.body).toMatch(/Substantial equivalence is NOT asserted in this draft/i);
+    expect(draft.body).toMatch(/Substantial Equivalence, Performance Testing/);
+  });
+
+  it('does NOT assert equivalence when only Indications for Use is missing', async () => {
+    pullMock.mockResolvedValueOnce(withMissing(['3']));
+    const draft = await compose510kSummary(baseInput);
+    expect(draft.body).not.toMatch(SE_SENTENCE);
+    expect(draft.body).toMatch(/Indications for Use is not yet populated/i);
+  });
+
+  it('an unpopulated Labeling section alone does not block the conclusion', async () => {
+    // §12 is not part of the comparison the sentence cites.
+    pullMock.mockResolvedValueOnce(withMissing(['12']));
+    const draft = await compose510kSummary(baseInput);
+    expect(draft.body).toMatch(SE_SENTENCE);
+  });
+});

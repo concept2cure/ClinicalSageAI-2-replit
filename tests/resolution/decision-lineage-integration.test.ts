@@ -22,8 +22,11 @@ interface LineageNode {
   entityType: string;
   entityId: number;
   action: string;
-  performedBy: string;
-  performedAt: string;
+  // WO-16C finding 70: both are nullable — the service reports an actor or a
+  // time only when the source record carries one, and no longer substitutes
+  // 'system' / the moment of export for one it does not.
+  performedBy: string | null;
+  performedAt: string | null;
   details: Record<string, unknown>;
   recordHash?: string;
   parentIds: string[];
@@ -32,7 +35,10 @@ interface LineageNode {
     gxpRelevant: boolean;
     requiresSignature: boolean;
     signatureStatus?: 'pending' | 'signed' | 'rejected';
-    cfr11Compliant: boolean;
+    // Replaced the hardcoded `cfr11Compliant: true` (WO-16C finding 70): a
+    // per-record presence check of the elements Part 11 requires an entry to
+    // carry, not a conformance verdict.
+    part11RecordCheck: { status: 'COMPLETE' | 'INCOMPLETE'; missing: string[] };
   };
 }
 
@@ -136,19 +142,33 @@ describe('Lineage Graph Structure', () => {
         id: 'node-1', nodeType: 'document_state', entityType: 'artifact', entityId: 42,
         action: 'created', performedBy: 'user-1', performedAt: '2026-03-20T10:00:00Z',
         details: { status: 'draft' }, parentIds: [], childIds: ['node-2'],
-        regulatory: { gxpRelevant: true, requiresSignature: false, cfr11Compliant: true },
+        regulatory: {
+          gxpRelevant: true,
+          requiresSignature: false,
+          part11RecordCheck: { status: 'COMPLETE', missing: [] },
+        },
       },
       {
         id: 'node-2', nodeType: 'decision', entityType: 'artifact', entityId: 42,
         action: 'approved', performedBy: 'reviewer-1', performedAt: '2026-03-21T10:00:00Z',
         details: { fromStatus: 'review', toStatus: 'approved' }, parentIds: ['node-1'], childIds: ['node-3'],
-        regulatory: { gxpRelevant: true, requiresSignature: true, signatureStatus: 'signed', cfr11Compliant: true },
+        regulatory: {
+          gxpRelevant: true,
+          requiresSignature: true,
+          signatureStatus: 'signed',
+          part11RecordCheck: { status: 'COMPLETE', missing: [] },
+        },
       },
       {
         id: 'node-3', nodeType: 'document_state', entityType: 'artifact', entityId: 42,
         action: 'locked', performedBy: 'reviewer-1', performedAt: '2026-03-22T10:00:00Z',
         details: { status: 'locked' }, parentIds: ['node-2'], childIds: [],
-        regulatory: { gxpRelevant: true, requiresSignature: true, signatureStatus: 'signed', cfr11Compliant: true },
+        regulatory: {
+          gxpRelevant: true,
+          requiresSignature: true,
+          signatureStatus: 'signed',
+          part11RecordCheck: { status: 'COMPLETE', missing: [] },
+        },
       },
     ],
     edges: [
@@ -192,7 +212,11 @@ describe('Lineage Graph Structure', () => {
   it('regulatory nodes have GxP relevance flags', () => {
     for (const node of mockGraph.nodes) {
       expect(node.regulatory.gxpRelevant).toBe(true);
-      expect(node.regulatory.cfr11Compliant).toBe(true);
+      // The interface carries a per-record element check, never a standing
+      // Part 11 verdict. The real service's values are asserted against real
+      // rows in server/services/workflow/__tests__/decision-lineage-node-fabrication.test.ts.
+      expect(node.regulatory.part11RecordCheck.status).toMatch(/^(COMPLETE|INCOMPLETE)$/);
+      expect(node.regulatory).not.toHaveProperty('cfr11Compliant');
     }
   });
 

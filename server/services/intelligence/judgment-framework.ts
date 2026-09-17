@@ -115,6 +115,25 @@ const VERDICT_THRESHOLDS: Record<JudgmentVerdict, { min: number; max: number }> 
   fail: { min: 0, max: 24 },
 };
 
+/**
+ * Sum weighted factor scores, rescaled by the weight actually present.
+ *
+ * A model's factor weights are authored to sum to 1. When a factor is omitted
+ * because its input was never measured, a plain sum silently reports the
+ * missing weight as zero score — so "we could not measure this" and "this
+ * scored badly" produce the same number. Renormalising keeps the score on the
+ * scale its verdict thresholds were written against, and the omitted factor is
+ * visible in `factors` for anyone who needs to know what went into it.
+ *
+ * Returns 0 for an empty factor list rather than dividing by zero; a model with
+ * no measurable factor has nothing to say, and its `confidence` reports that.
+ */
+function renormalisedScore(factors: readonly JudgmentFactor[]): number {
+  const totalWeight = factors.reduce((sum, f) => sum + f.weight, 0);
+  if (totalWeight <= 0) return 0;
+  return Math.round(factors.reduce((sum, f) => sum + f.weightedScore, 0) / totalWeight);
+}
+
 function scoreToVerdict(score: number): JudgmentVerdict {
   if (score >= 85) return 'pass';
   if (score >= 70) return 'acceptable';
@@ -335,16 +354,29 @@ export function evaluateReviewerSensitivity(
   const factors: JudgmentFactor[] = [];
   const findings: JudgmentFinding[] = [];
 
-  // Factor 1: Predicted deficiency count
-  const predictedDeficiencies = readiness?.predictions.estimatedDeficiencies ?? 5;
+  /* ── 2026-09-10: two factors here used to be defaulted, not measured ────────
+     `?? 5` deficiencies and `?? 50` approval probability. Both fed the weighted
+     sum at full weight, so 50% of a judgment's fourth factor was a number
+     nobody computed, and the composite could not be distinguished from one
+     built on real inputs. The readiness engine now returns null instead of
+     deriving those figures from the readiness score, so the fix here is to
+     OMIT the factor and renormalise the surviving weights — see
+     renormalise() below. Defaulting at the point of use would just relocate
+     the invention. */
+
+  // Factor 1: criteria the readiness assessment scored unmet. Omitted entirely
+  // when no assessment is on record.
+  const predictedDeficiencies = readiness?.predictions.estimatedDeficiencies ?? null;
+  if (predictedDeficiencies !== null) {
   const deficiencyScore = Math.max(0, 100 - (predictedDeficiencies * 10));
   factors.push({
     name: 'predicted_deficiencies',
     weight: 0.35,
     rawScore: deficiencyScore,
     weightedScore: deficiencyScore * 0.35,
-    detail: `${predictedDeficiencies} deficiencies predicted`,
+    detail: `${predictedDeficiencies} criteria not met or partially met in the readiness assessment`,
   });
+  }
 
   // Factor 2: High-severity gap density
   const highGaps = gaps.filter(g => g.severity === 'critical' || g.severity === 'high');
@@ -368,15 +400,19 @@ export function evaluateReviewerSensitivity(
     detail: `${crossRefIssues.length} cross-reference issue(s)`,
   });
 
-  // Factor 4: Approval probability
-  const approvalProb = readiness?.predictions.approvalProbability ?? 50;
-  factors.push({
-    name: 'approval_probability',
-    weight: 0.15,
-    rawScore: approvalProb,
-    weightedScore: approvalProb * 0.15,
-    detail: `Predicted approval probability: ${approvalProb}%`,
-  });
+  // Factor 4: approval probability. Null in every path today — no model
+  // produces one — so this factor is normally absent and the other three carry
+  // the judgment at renormalised weights.
+  const approvalProb = readiness?.predictions.approvalProbability ?? null;
+  if (approvalProb !== null) {
+    factors.push({
+      name: 'approval_probability',
+      weight: 0.15,
+      rawScore: approvalProb,
+      weightedScore: approvalProb * 0.15,
+      detail: `Modelled approval probability: ${approvalProb}%`,
+    });
+  }
 
   // Findings for sensitive areas
   for (const gap of highGaps) {
@@ -390,11 +426,18 @@ export function evaluateReviewerSensitivity(
     });
   }
 
-  const totalScore = Math.round(factors.reduce((sum, f) => sum + f.weightedScore, 0));
+  // Renormalised, not summed: this model's factors are conditional now, and a
+  // plain sum would read an OMITTED factor as a zero-scoring one. Dropping the
+  // 0.35 deficiency factor would cost up to 35 points of a 0-100 score and look
+  // like a bad submission rather than an unmeasured one.
+  const totalScore = renormalisedScore(factors);
 
   return {
     model: 'reviewer_sensitivity',
     score: totalScore,
+    // Confidence already distinguishes "no readiness data" (30) from a full
+    // assessment (70); with factors now omitted rather than defaulted, that
+    // number finally describes something real.
     confidence: readiness ? 70 : 30,
     basis: 'rules_based',
     verdict: scoreToVerdict(totalScore),

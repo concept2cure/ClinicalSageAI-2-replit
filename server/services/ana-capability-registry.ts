@@ -14,7 +14,7 @@
 import { db } from '../db';
 import { runWithSystemTenantScope } from '../db/tenantStore';
 import { anaCapabilityRegistry, anaOutcomeLog, anaProjectCapabilities } from 'shared/schema/ana-intelligence';
-import { eq, and, desc, sql, or, inArray } from 'drizzle-orm';
+import { eq, and, desc, sql } from 'drizzle-orm';
 
 import { createScopedLogger } from '../utils/logger.js';
 import { governanceFor } from './ai-governance/risk-tiers';

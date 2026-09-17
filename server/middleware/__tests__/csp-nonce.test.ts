@@ -13,7 +13,7 @@
 
 import express from 'express';
 import request from 'supertest';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { cspNonce, permissionsPolicy, securityHeaders } from '../enterprise-security';
 
 function buildApp() {
@@ -155,5 +155,50 @@ describe('Permissions-Policy', () => {
     const res = await request(buildApp()).get('/');
     const policy = res.headers['permissions-policy'] as string;
     expect(policy).toContain('clipboard-write=(self)');
+  });
+});
+
+describe('report-only CSP does not carry upgrade-insecure-requests', () => {
+  // The report-only policy is the DEVELOPMENT branch of securityHeaders, chosen
+  // at module load from NODE_ENV — so this test re-imports the module under
+  // NODE_ENV=development. helmet adds upgrade-insecure-requests by default;
+  // browsers ignore it in a report-only policy and log a console error on every
+  // page for it, which fails a "no console errors" acceptance bar before the
+  // app has rendered anything. The enforcing production policy keeps it.
+  it('omits the directive in the development (report-only) policy', async () => {
+    const previous = process.env.NODE_ENV;
+    process.env.NODE_ENV = 'development';
+    vi.resetModules();
+    try {
+      const dev = await import('../enterprise-security');
+      const app = express();
+      app.use(dev.securityHeaders);
+      app.get('/', (_req, res) => res.send('ok'));
+      const res = await request(app).get('/');
+      const reportOnly = res.headers['content-security-policy-report-only'];
+      expect(reportOnly, 'development must emit a report-only CSP').toBeTruthy();
+      expect(res.headers['content-security-policy']).toBeUndefined();
+      expect(reportOnly).not.toMatch(/upgrade-insecure-requests/);
+    } finally {
+      process.env.NODE_ENV = previous;
+      vi.resetModules();
+    }
+  });
+
+  it('keeps the directive in the enforcing production policy', async () => {
+    const previous = process.env.NODE_ENV;
+    process.env.NODE_ENV = 'production';
+    vi.resetModules();
+    try {
+      const prod = await import('../enterprise-security');
+      const app = express();
+      app.use(prod.securityHeaders);
+      app.get('/', (_req, res) => res.send('ok'));
+      const res = await request(app).get('/');
+      expect(res.headers['content-security-policy']).toMatch(/upgrade-insecure-requests/);
+    } finally {
+      process.env.NODE_ENV = previous;
+      vi.resetModules();
+    }
   });
 });

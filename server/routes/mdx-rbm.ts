@@ -47,7 +47,7 @@
  *     GET   /api/mdx/rbm-summary/:programId
  */
 
-import { Router, Request, Response } from 'express';
+import { Router, Request } from 'express';
 import { z } from 'zod';
 
 import { createScopedLogger } from '../utils/logger';

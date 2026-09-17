@@ -525,6 +525,24 @@ describe('Module 1 transmittal — the m1.1 Form 1571 leaf', () => {
     // The official FDA template is vendored, so this is the real filled form —
     // not a reconstruction and not a blank.
     expect(res.body.form1571.attached, res.body.form1571.reason).toBe(true);
+    /* ATTACHED, and the response says which required boxes are still blank on
+       the PDF it filed.
+
+       This path used to gate on `missingRequired` alone — a statement about the
+       DATA the caller supplied — and return `{ attached: true }` with no reason.
+       On the 1571 the two facts differ by design: `ind_type` and
+       `phase_of_study` are deliberately unmapped because they are the sponsor's
+       attestations to tick, so a fully-populated 1571 is data-complete and STILL
+       renders with two required boxes empty. Those bytes then become the m1.1
+       leaf of a real amendment sequence, and the filing response said the form
+       was produced and attached with nothing about the blanks.
+
+       Attaching is right — they are the sponsor's boxes. Saying nothing is not. */
+    expect(
+      String(res.body.form1571.reason ?? ''),
+      'the filing response does not name the required boxes left blank on the filed 1571',
+    ).toMatch(/ind_type/);
+    expect(String(res.body.form1571.reason ?? '')).toMatch(/phase_of_study/);
     const m11 = res.body.leaves.find((l: any) => l.sectionCode === 'm1.1');
     expect(m11.documentTable).toBe('rendered_leaf_files');
     expect(typeof m11.documentId).toBe('number');

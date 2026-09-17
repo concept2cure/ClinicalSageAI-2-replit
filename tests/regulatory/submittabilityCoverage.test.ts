@@ -75,15 +75,36 @@ describe('the classification is not hiding real filings', () => {
   });
 
   it('does NOT classify the marketing-authorisation spine as components', () => {
-    // The load-bearing assertion. These are the filings the business runs on; if
-    // any were ever classified `not_a_filing` the gate would go quiet about them.
+    // The load-bearing assertion, stated as what the comment always meant: these
+    // are the filings the business runs on, and if any were ever classified
+    // `not_a_filing` the gate would go quiet about them.
+    //
+    // It used to assert `tier === 'submittable'` as a proxy for that. The proxy
+    // stopped holding when `portal_only` was introduced — EU_CTA is a real
+    // filing that reaches CTIS, a portal, so it is emphatically not a component
+    // and equally not transmittable through a gateway. Asserting the proxy would
+    // have forced EU_CTA back to `submittable` via CESP, which is the defect
+    // portal_only exists to state.
     for (const id of ['US_IND', 'US_NDA', 'US_BLA', 'EU_CTA', 'EU_MAA', 'CA_NDS', 'JP_CTN']) {
       const entry = GLOBAL_REGISTRY.find(e => e.id === id);
       expect(entry, `${id} missing from the registry`).toBeDefined();
-      expect(getSubmittability(entry!).tier, `${id} must be a real, submittable filing`).toBe(
-        'submittable'
+      expect(getSubmittability(entry!).tier, `${id} must be a real filing, not a component`).not.toBe(
+        'not_a_filing'
       );
     }
+  });
+
+  it('reports each spine filing through the channel it actually uses', () => {
+    // The other half, split out so neither claim rides on the other. Everything
+    // with a real gateway must still say so — a repair that demoted the spine
+    // would be worthless — and the one portal filing must name its portal.
+    for (const id of ['US_IND', 'US_NDA', 'US_BLA', 'EU_MAA', 'CA_NDS', 'JP_CTN']) {
+      const entry = GLOBAL_REGISTRY.find(e => e.id === id)!;
+      expect(getSubmittability(entry).tier, `${id} lost its gateway`).toBe('submittable');
+    }
+    const cta = getSubmittability(GLOBAL_REGISTRY.find(e => e.id === 'EU_CTA')!);
+    expect(cta.tier, 'a CTR CTA is a CTIS portal submission, not a CESP dossier').toBe('portal_only');
+    expect(String(cta.portalChannel ?? '')).toMatch(/CTIS/i);
   });
 
   it('keeps the component set a small minority of the registry', () => {

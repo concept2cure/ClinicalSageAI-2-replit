@@ -44,9 +44,13 @@ import {
   verifyLedger,
   type RevisionOrigin,
   machineContributors,
+  acceptedMachineText,
+  ANA_MACHINE_AUTHOR_ID,
+  MACHINE_AUTHOR_IDS,
 } from '../services/authoring/revision-ledger';
 import {
   checkSectionWritable,
+  checkDocumentWritable,
   LOCKED_DOCUMENT_STATUSES as LOCKED_STATUSES,
 } from '../services/authoring/document-lock';
 
@@ -2332,6 +2336,12 @@ router.patch('/sections/:sectionId', async (req: Request, res: Response) => {
        only the ones it recognises as non-human, because a human co-author is
        already named by created_by. */
     const contributors = machineContributors(req.body?.acceptedAuthors);
+    /* And the accepted text itself. `contributors` says who drafted SOME of
+       this save; this says WHICH words, so the lineage gate can record the
+       machine's clauses as the machine's — accepted by this actor — instead
+       of as this actor's own assertion. Same closed vocabulary, same boundary:
+       an author the server does not name is dropped here. */
+    const acceptedMachine = acceptedMachineText(req.body?.acceptedMachineText);
     const tenantId = getTenantId(req);
     const updatedByUser = getActorId(req);
     if (!updatedByUser) {
@@ -2556,6 +2566,7 @@ router.patch('/sections/:sectionId', async (req: Request, res: Response) => {
         { documentTable: 'authoring_sections', documentId: String(sectionId) },
         content,
         updatedByUser,
+        { acceptedMachineText: acceptedMachine },
       );
 
       // ── Commit the working copy into the filing ─────────────────────────────
@@ -2571,6 +2582,10 @@ router.patch('/sections/:sectionId', async (req: Request, res: Response) => {
           actorId: String(updatedByUser),
           tenantId,
           reason: typeof req.body?.changeReason === 'string' ? req.body.changeReason : undefined,
+          // Same signal createRevision's `origin` already uses two blocks up.
+          // Only the machine-author id is ever written here — never a guessed
+          // 'human' for the zero-contributor case, see commit-section-to-filing.ts.
+          draftSource: contributors.length > 0 ? contributors[0].id : null,
         });
       }
 
@@ -4003,7 +4018,15 @@ router.post('/sections/:sectionId/ai/draft/accept', async (req: Request, res: Re
         // source ids already resolved. The gate records each still-present,
         // still-retrieved one as a usage='paraphrased' span — an assertion behind
         // the verified-quote pass, never ahead of it.
-        { assertions: candidate.assertions },
+        {
+          assertions: candidate.assertions,
+          // The accepted content IS the machine's draft wherever the author
+          // left it unedited: a clause verbatim in what was generated is
+          // recorded as AnA's, accepted by this actor; a clause the author
+          // changed is the author's own. Attribution by verbatim match against
+          // the draft as generated — never by a flag on the whole save.
+          acceptedMachineText: [{ authorId: ANA_MACHINE_AUTHOR_ID, text: candidate.content }],
+        },
       );
 
       /* AND THE ACCEPTED DRAFT REACHES THE FILING.
@@ -4034,6 +4057,11 @@ router.post('/sections/:sectionId/ai/draft/accept', async (req: Request, res: Re
           typeof req.body?.changeReason === 'string' && req.body.changeReason.trim()
             ? req.body.changeReason
             : undefined,
+        // Unconditional, unlike the manual-save call site above: this whole
+        // route exists to accept an AI draft, so the content it commits is by
+        // definition AI-drafted — there is no ambiguous zero-contributor case
+        // here the way there is on an ordinary interactive save.
+        draftSource: 'ana',
       });
 
       await client.query('COMMIT');
@@ -6930,6 +6958,45 @@ router.post('/users/pin', async (req: Request, res: Response) => {
 
 // ── Tracked Change Decisions (persist accept/reject) ──────────────────────────
 
+/**
+ * Who PROPOSED a tracked change, for the audit event — never validated against
+ * a roster, because there is no roster this could safely check. `authorId` on
+ * a human mark is the editor's own email (client/src/concept2cure/v2/editor/
+ * suggestions.ts), not a numeric user id, so it cannot be matched against
+ * doc_permissions or organization_users; a legitimate proposer can also be a
+ * live co-author whose mark predates any grant, a person whose grant was later
+ * revoked, or (per suggestions.ts's own doc comment) simply the case where the
+ * proposer and the decider are different people entirely — refusing an
+ * unrecognised proposer would drop a verified, hash-audited DECISION to guard
+ * an unverifiable PROPOSAL, which is the wrong thing to fail closed on here.
+ *
+ * What IS checkable is whether the claimed proposer is this server's own AI
+ * system, because that identity is a closed, server-owned vocabulary
+ * (MACHINE_AUTHOR_IDS — the same list machineContributors validates against
+ * for the revision ledger). So the one thing this function does is stop a
+ * caller from relabelling that identity: when `authorId` names a machine
+ * author, the CANONICAL name is recorded and the caller's own `authorName` is
+ * discarded, exactly as machineContributors discards it for the same reason
+ * ("the id is the claim being checked, and echoing a caller-supplied display
+ * name would put unvalidated text in the attribution position of a filed
+ * record" — revision-ledger.ts). Everything else is recorded as what it is:
+ * text the editing client asserted, not a verified identity — the audit rail
+ * already renders it qualified as "(proposed by X, as recorded by the editing
+ * client)" (DocumentAuthoring.tsx), and `proposedByVerified` carries that same
+ * fact into the stored row for any reader that does not go through the rail.
+ */
+function describeProposer(authorName: unknown, authorId: unknown): {
+  proposedBy?: string;
+  proposedByVerified?: boolean;
+} {
+  if (typeof authorId === 'string' && MACHINE_AUTHOR_IDS[authorId]) {
+    return { proposedBy: MACHINE_AUTHOR_IDS[authorId], proposedByVerified: true };
+  }
+  const claimed = typeof authorName === 'string' ? authorName : typeof authorId === 'string' ? authorId : null;
+  if (!claimed) return {};
+  return { proposedBy: claimed.slice(0, 200), proposedByVerified: false };
+}
+
 // authoring_tracked_change_decisions is now provisioned by
 // db/migrations/20260730_authoring_runtime_ddl.sql. Retained as a no-op so
 // existing call sites need no change; the router no longer issues runtime DDL.
@@ -6971,6 +7038,17 @@ router.post('/documents/:id/tracked-change-decisions', async (req: Request, res:
       });
     }
 
+    /* This route sits under /documents/:id, outside the /sections/:sectionId
+       prefix guard that refuses a FROZEN/APPROVED document on every other
+       authoring write. Nothing else here resolves the parent document at all,
+       so an accept against a sealed filing reached the INSERT unconditionally
+       and the hash-chained audit event below recorded a decision the record
+       itself was no longer able to accept. */
+    const lock = await checkDocumentWritable(pool, String(artifactId), tenantId);
+    if (!lock.writable && lock.code === 'DOCUMENT_FROZEN') {
+      return res.status(403).json({ error: 'DOCUMENT_FROZEN', message: lock.reason });
+    }
+
     const result = await pool.query(
       `INSERT INTO authoring_tracked_change_decisions
          (artifact_id, change_id, decision, user_id, user_name, tenant_id)
@@ -7003,12 +7081,11 @@ router.post('/documents/:id/tracked-change-decisions', async (req: Request, res:
         ...(typeof req.body?.sectionId === 'string' ? { sectionId: req.body.sectionId } : {}),
         /* Who PROPOSED the change, which is not who decided it — that is the
            audit row's own actor. A redline record that cannot tell the two
-           apart says nothing about review at all. */
-        ...(typeof req.body?.authorName === 'string'
-          ? { proposedBy: req.body.authorName }
-          : typeof req.body?.authorId === 'string'
-            ? { proposedBy: req.body.authorId }
-            : {}),
+           apart says nothing about review at all. See describeProposer above
+           for why this is canonicalised only for a machine author and
+           otherwise recorded as caller-asserted text, never validated as a
+           human identity. */
+        ...describeProposer(req.body?.authorName, req.body?.authorId),
         ...(typeof req.body?.at === 'string' ? { proposedAt: req.body.at } : {}),
       },
       tenantId
@@ -7055,6 +7132,15 @@ router.post('/documents/:id/tracked-change-decisions/bulk', async (req: Request,
       });
     }
 
+    // See the single-decision route above: this endpoint is equally outside
+    // the /sections/:sectionId lock guard, and "Accept all" is the single
+    // click by which an entire AI draft is adopted — the case with the most
+    // to lose from writing past a sealed document.
+    const lock = await checkDocumentWritable(pool, String(artifactId), tenantId);
+    if (!lock.writable && lock.code === 'DOCUMENT_FROZEN') {
+      return res.status(403).json({ error: 'DOCUMENT_FROZEN', message: lock.reason });
+    }
+
     // Upsert each decision
     const results = [];
     for (const changeId of changeIds) {
@@ -7078,17 +7164,24 @@ router.post('/documents/:id/tracked-change-decisions/bulk', async (req: Request,
        that looks complete is worse than one that admits its limit. */
     const MAX_SUMMARISED = 20;
     const rawChanges = Array.isArray(req.body?.changes) ? req.body.changes : [];
-    const summarised = rawChanges.slice(0, MAX_SUMMARISED).map((c: any) => ({
+    const summarised = rawChanges.slice(0, MAX_SUMMARISED).map((c: any) => {
+      // See describeProposer above (single-decision route): canonical name for
+      // a recognised machine author, otherwise caller-asserted text flagged as
+      // such via proposedByVerified.
+      const proposer = describeProposer(c?.authorName, c?.authorId);
+      return {
       changeId: typeof c?.changeId === 'string' ? c.changeId : null,
       changeType: typeof c?.changeType === 'string' ? c.changeType : null,
-      proposedBy:
-        typeof c?.authorName === 'string'
-          ? c.authorName
-          : typeof c?.authorId === 'string'
-            ? c.authorId
-            : null,
+      proposedBy: proposer.proposedBy ?? null,
+      proposedByVerified: proposer.proposedByVerified ?? null,
       text: typeof c?.text === 'string' ? c.text.slice(0, 200) : null,
-    }));
+      // The single-decision route above records this; the client already sends
+      // it (DocumentAuthoring.tsx's flushDecisions puts `at` on every change in
+      // the batch), and "Accept all" is the case that adopts the most text at
+      // once — the case that most needs to say when each change was proposed.
+      proposedAt: typeof c?.at === 'string' ? c.at : null,
+      };
+    });
     await createAuditEvent(
       artifactId,
       'tracked_change_bulk_decision',
@@ -7097,6 +7190,9 @@ router.post('/documents/:id/tracked-change-decisions/bulk', async (req: Request,
         changeIds,
         decision,
         count: changeIds.length,
+        // Same client field the single route records at the top level of its
+        // metadata (authoring.router.ts, POST /documents/:id/tracked-change-decisions).
+        ...(typeof req.body?.sectionId === 'string' ? { sectionId: req.body.sectionId } : {}),
         ...(summarised.length > 0 ? { changes: summarised } : {}),
         ...(rawChanges.length > MAX_SUMMARISED
           ? { changesOmittedFromSummary: rawChanges.length - MAX_SUMMARISED }

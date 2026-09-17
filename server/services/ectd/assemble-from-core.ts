@@ -370,7 +370,16 @@ export interface AssembleSubmissionResult {
   unresolvedLeaves: UnresolvedLeaf[];
   skipped: Array<{ sectionCode: string; reason: string }>;
   /** DTD self-containment status from the packager. */
-  dtdStatus?: { required: string[]; present: string[]; missing: string[]; selfContained: boolean };
+  // `missingStylesheets` travels with `missing`: selfContained is false when
+  // EITHER is non-empty, so a consumer that reads only `missing` cannot say
+  // which files are absent (see SubmissionBundle['dtdStatus']).
+  dtdStatus?: {
+    required: string[];
+    present: string[];
+    missing: string[];
+    missingStylesheets?: string[];
+    selfContained: boolean;
+  };
   stats: {
     totalModules: number;
     totalGranules: number;

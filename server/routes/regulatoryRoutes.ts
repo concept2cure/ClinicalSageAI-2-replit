@@ -230,23 +230,26 @@ router.get('/regulatory/search', async (req, res) => {
   res.json(results);
 });
 
-router.get('/risk/:sectionId', async (req, res) => {
-  const { sectionId } = req.params;
-  await regulatoryService.initialize();
-  const analysis = await regulatoryService.analyzeProtocolCompliance(
-    `Section ${sectionId}`,
-    'Phase 2'
-  );
-  res.json({ sectionId, analysis });
-});
-
-router.get('/regulatory/risk/:sectionId', async (req, res) => {
-  const { sectionId } = req.params;
-  await regulatoryService.initialize();
-  const analysis = await regulatoryService.analyzeProtocolCompliance(
-    `Section ${sectionId}`,
-    'Phase 2'
-  );
-  res.json({ sectionId, analysis });
-});
+// REMOVED 2026-09-11 (WO-16C #63): GET /risk/:sectionId and its verbatim
+// duplicate GET /regulatory/risk/:sectionId.
+//
+// Neither handler loaded the section it was named for. Both passed the literal
+// two-word string `Section ${sectionId}` plus a hardcoded 'Phase 2' into
+// RegulatoryIntelligenceService.analyzeProtocolCompliance, whose screen is a
+// substring match of keyword phrases taken from each requirement. No
+// requirement text contains the token "section", so every requirement scored
+// non-compliant and every caller — for every sectionId — received the same
+// maximal deficiency report: all 11 mandatory Phase 2 requirements under
+// "CRITICAL ISSUES REQUIRING IMMEDIATE ATTENTION:", with agency, guideline and
+// document reference. That is a regulatory verdict about a section nothing
+// read. The screen's METHOD disclaimer covers the heuristic; it does not cover
+// a placeholder standing in for the input.
+//
+// No section-content source is wired to this router, so there was no truthful
+// version to relabel into — a real per-section screen needs a section lookup
+// (protocol/CTD section by id, scoped to the org) and the phase from that
+// record, which is a new feature, not a caption change. Nothing called either
+// path (no client/src caller, no test), so the surface is gone rather than
+// answering a fabricated verdict; requests now 404.
+// Pinned by server/routes/__tests__/regulatory-risk-section-screen-removed.test.ts.
 export default router;

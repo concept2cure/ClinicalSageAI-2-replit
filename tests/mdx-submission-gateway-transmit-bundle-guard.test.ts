@@ -111,7 +111,12 @@ function makeApp(orgId = CALLER_ORG) {
   const app = express();
   app.use(express.json());
   app.use((req, _res, next) => {
-    (req as any).user = { id: 777, organizationId: orgId };
+    /* An editor role: the transmit route gates on the caller's organization
+       role (requireEditorAccess) before the bundle guards this file exercises
+       run, so the harness acts as an admin — the role gate itself is pinned in
+       mdx-submission-gateway-routes.test.ts. */
+    (req as any).user = { id: 777, organizationId: orgId, role: 'admin' };
+    (req as any).userRole = 'admin';
     next();
   });
   app.use('/api/mdx', gatewayRouter);

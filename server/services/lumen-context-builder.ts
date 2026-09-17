@@ -790,13 +790,26 @@ ${moduleIntel.workflowStages
       const readiness = computeReadinessAssessment(payload);
       const recSet = generateRecommendations(payload, { projectId: context.project.id, limit: 5 });
 
+      // A subscore of `null` was never measured (readiness-engine returns null
+      // for compliance with no validations and no CMC signals, and for
+      // consistency with no check applicable). Printing it as a percentage —
+      // or as `null%` — hands the model a number nothing computed and tells it
+      // to reference it, so it is printed as "not assessed" with the engine's
+      // own reason instead.
+      const pct = (v: number | null) => (v === null ? 'not assessed' : `${v}%`);
+      const unassessedNote = readiness.unassessedDimensions.length > 0
+        ? `\n- **Not assessed**: ${readiness.unassessedDimensions
+            .map(u => `${u.dimension} (${u.reason})`)
+            .join('; ')}`
+        : '';
+
       parts.push(`
 ## Submission Readiness Intelligence
-- **Overall Readiness**: ${readiness.overallScore}% (${readiness.status.replace(/_/g, ' ')})
-- **Completeness**: ${readiness.scores.completeness}% | **Quality**: ${
-        readiness.scores.quality
-      }% | **Compliance**: ${readiness.scores.compliance}%
-- **Routing**: ${readiness.scores.routing}% | **Consistency**: ${readiness.scores.consistency}%
+- **Overall Readiness**: ${readiness.overallScore}% (${readiness.status.replace(/_/g, ' ')})${unassessedNote}
+- **Completeness**: ${pct(readiness.scores.completeness)} | **Quality**: ${
+        pct(readiness.scores.quality)
+      } | **Compliance**: ${pct(readiness.scores.compliance)}
+- **Routing**: ${pct(readiness.scores.routing)} | **Consistency**: ${pct(readiness.scores.consistency)}
 - **Blockers**: ${readiness.blockers.length}${
         readiness.blockers.length > 0
           ? ` — ${readiness.blockers

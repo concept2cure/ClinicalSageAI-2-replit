@@ -11,7 +11,7 @@
  * - Tenant isolation enforced
  * - Audit trail for all operations
  */
-import { Router, Response, Request, NextFunction } from 'express';
+import { Router, Response, Request } from 'express';
 import { ComplianceCertificateGenerator } from '../../services/proof/ComplianceCertificate';
 import { ProofVerificationService } from '../../services/proof/ProofVerificationService';
 import { ProofAuditService } from '../../services/proof/ProofAuditService';

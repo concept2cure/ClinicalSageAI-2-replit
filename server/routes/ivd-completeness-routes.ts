@@ -381,7 +381,21 @@ export default function createIvdCompletenessRoutes(): Router {
       });
 
       const allItems = families.reduce<IvdItem[]>((a, f) => a.concat(f.items), []);
-      const overall = avgPct(allItems);
+      /* THE DENOMINATOR IS THE SEVEN FAMILIES, NOT THE EVIDENCE THAT EXISTS.
+         This was `avgPct(allItems)`, and `allItems` is the concatenation of the
+         families' item arrays — so a family with NO records contributed nothing
+         to the mean instead of contributing a zero, and the average could only
+         ever be taken over things that are present. `descItems` hardcodes
+         pct: 100 for every row in ivdr_classifications, so recording one Annex
+         VIII classification — the first thing a user does — made allItems a
+         single 100% item and this 100: "Your IVDR technical file is 100%
+         complete", over a file with no GSPR assessment, no analytical or
+         clinical performance, no scientific validity, no PER and no PMPF plan.
+
+         The family is the unit the surface itself names, and a family holding
+         nothing is 0% — which is a fact about the technical file, not an
+         absence of data to average. */
+      const overall = Math.round(families.reduce((a, f) => a + f.pct, 0) / families.length);
       const program = perDoc?.deviceName ?? classRows[0]?.deviceName ?? null;
 
       return res.json({
@@ -391,12 +405,18 @@ export default function createIvdCompletenessRoutes(): Router {
           spine: 'EU IVDR 2017/746 · Annex II/III · Annex XIII',
           standard: 'IVDR',
           overall,
+          /* Counted over the SAME unit as `overall` above. These were counted
+             over allItems, so beside a headline of 100% they read "1/1
+             Requirements evidenced — 0 Not yet started": three statements of
+             one falsehood rather than one. `flags` was the literal 0 — a number
+             on an "Open evidence flags" tile that was the result of no check at
+             all — and is now the count of items actually carrying a flag. */
           summary: {
-            total: allItems.length,
-            evidenced: allItems.filter((i) => (i.pct || 0) >= 100).length,
-            inProgress: allItems.filter((i) => (i.pct || 0) > 0 && (i.pct || 0) < 100).length,
-            notStarted: allItems.filter((i) => (i.pct || 0) === 0).length,
-            flags: 0,
+            total: families.length,
+            evidenced: families.filter((f) => f.pct >= 100).length,
+            inProgress: families.filter((f) => f.pct > 0 && f.pct < 100).length,
+            notStarted: families.filter((f) => f.pct === 0).length,
+            flags: allItems.filter((i) => Boolean(i.flag)).length,
           },
           families,
           gsprSourced: gsprPct != null,

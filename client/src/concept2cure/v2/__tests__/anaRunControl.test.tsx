@@ -77,13 +77,37 @@ describe('mid-run control reaches the rail', () => {
     expect(onStop).toHaveBeenCalledTimes(1);
   });
 
-  it('sends a steer into the running turn', () => {
+  it('sends a steer into the running turn', async () => {
     const { onSteer, container } = renderRail();
     const input = screen.getByLabelText('Steer this run') as HTMLInputElement;
     fireEvent.change(input, { target: { value: 'focus on EU MDR Article 61(5)' } });
     fireEvent.submit(container.querySelector('.ana-runctl-steer') as HTMLFormElement);
     expect(onSteer).toHaveBeenCalledWith('focus on EU MDR Article 61(5)');
-    // Cleared, so the same steer cannot be sent twice by a stray Enter.
+    // Clearing is a microtask later than it used to be, and deliberately so: the
+    // box now empties only once the server has ACCEPTED the steer, because
+    // emptying it is the only acknowledgement this control has and a refusal
+    // used to be indistinguishable from a send. Hence the await.
+    await act(async () => {});
+    expect(input.value).toBe('');
+    // The original reason for clearing — that a stray Enter cannot send the same
+    // steer twice — is now carried by the in-flight guard instead, which holds
+    // during the window where the text is still on screen awaiting an answer.
+    expect(onSteer).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not double-send while the first steer is still in flight', async () => {
+    let release!: (v: boolean) => void;
+    const onSteer = vi.fn(() => new Promise<boolean>((r) => { release = r; }));
+    const { container } = renderRail({ onSteer });
+    const input = screen.getByLabelText('Steer this run') as HTMLInputElement;
+    const form = container.querySelector('.ana-runctl-steer') as HTMLFormElement;
+    fireEvent.change(input, { target: { value: 'narrow to Class III' } });
+    fireEvent.submit(form);
+    // The text is still on screen while the server is deciding — a second Enter
+    // in that window must not queue the same instruction again.
+    fireEvent.submit(form);
+    expect(onSteer).toHaveBeenCalledTimes(1);
+    await act(async () => { release(true); });
     expect(input.value).toBe('');
   });
 
@@ -127,5 +151,82 @@ describe('a steer AnA took is visible afterwards', () => {
     ] as AnaMessage[]);
 
     expect(container.querySelector('.ana-steers')).toBeNull();
+  });
+});
+
+/**
+ * A steer the server REFUSED is not a steer that was sent.
+ *
+ * WHAT WENT WRONG
+ * `onSteer(v); setSteer('')` cleared the box synchronously, before anything
+ * knew the server's answer. `interject` does return one — `control()` answers
+ * `false` on a 404 (the run is already gone), a 409, a validation refusal and
+ * on a thrown fetch — but every call site discarded it (`void
+ * anaChat.interject(m)` at V2App.tsx:829 and :871).
+ *
+ * So all four failures looked exactly like success: the sentence disappeared
+ * from the input, which is the only acknowledgement this control has, and
+ * nothing anywhere recorded that it had been typed. The person had steered a
+ * run into nothing and had no way to know.
+ *
+ * WHAT IS PINNED
+ * That an accepted steer still clears (the old behaviour must survive), that a
+ * refused one keeps the text so it can be resent without retyping, and that the
+ * refusal is stated rather than left to be inferred from a box that did not
+ * empty. A handler that reports nothing is treated as accepted — the
+ * pre-existing contract — because telling someone their steer failed on no
+ * evidence is its own fabrication.
+ */
+describe('a steer the server refused says so, and keeps the text', () => {
+  const submit = (v: string) => {
+    const input = screen.getByLabelText('Steer this run') as HTMLInputElement;
+    fireEvent.change(input, { target: { value: v } });
+    fireEvent.submit(input.closest('form')!);
+    return input;
+  };
+
+  it('clears the box when the server accepts', async () => {
+    const input = (() => {
+      renderRail({ onSteer: vi.fn().mockResolvedValue(true) });
+      return submit('narrow to Class III');
+    })();
+    await act(async () => {});
+    expect(input.value).toBe('');
+    expect(screen.queryByText(/Not sent/)).toBeNull();
+  });
+
+  it('KEEPS the text and says it was not sent when the server refuses', async () => {
+    renderRail({ onSteer: vi.fn().mockResolvedValue(false) });
+    const input = submit('narrow to Class III');
+    await act(async () => {});
+    // The whole defect in one assertion: the sentence must still be there.
+    expect(input.value).toBe('narrow to Class III');
+    expect(screen.getByText(/Not sent — AnA did not accept this steer/)).toBeTruthy();
+    expect(input.getAttribute('aria-invalid')).toBe('true');
+  });
+
+  it('treats a thrown handler as a refusal, not a send', async () => {
+    renderRail({ onSteer: vi.fn().mockRejectedValue(new Error('network')) });
+    const input = submit('stop citing 2019');
+    await act(async () => {});
+    expect(input.value).toBe('stop citing 2019');
+    expect(screen.getByText(/Not sent/)).toBeTruthy();
+  });
+
+  it('treats a handler that reports nothing as accepted (unchanged contract)', async () => {
+    renderRail({ onSteer: vi.fn() });
+    const input = submit('shorter');
+    await act(async () => {});
+    expect(input.value).toBe('');
+    expect(screen.queryByText(/Not sent/)).toBeNull();
+  });
+
+  it('clears the refusal once the person edits the text again', async () => {
+    renderRail({ onSteer: vi.fn().mockResolvedValue(false) });
+    const input = submit('narrow to Class III');
+    await act(async () => {});
+    expect(screen.getByText(/Not sent/)).toBeTruthy();
+    fireEvent.change(input, { target: { value: 'narrow to Class II' } });
+    expect(screen.queryByText(/Not sent/)).toBeNull();
   });
 });

@@ -13,7 +13,7 @@
  */
 
 import { db } from '../db';
-import { eq, and, sql } from 'drizzle-orm';
+import { sql } from 'drizzle-orm';
 import { ai } from '../lib/unified-ai-client';
 
 // ---------------------------------------------------------------------------

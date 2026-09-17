@@ -16,7 +16,7 @@
  * @module server/services/data-lineage-service
  */
 import { db } from '../db';
-import { eq, and, or, desc, sql, count, inArray } from 'drizzle-orm';
+import { eq, and, desc, sql, count } from 'drizzle-orm';
 import {
   dataLineageRecords,
   evidenceChainRecords,

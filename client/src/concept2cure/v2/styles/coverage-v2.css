@@ -943,7 +943,7 @@
 }
 .c2c-v2 .vd-search input::placeholder{ color:var(--text-400); }
 .c2c-v2 .vd-search input:hover{ border-color:var(--border-strong, var(--border)); }
-.c2c-v2 .vd-search input:focus-visible{ outline:2px solid var(--focus, var(--accent)); outline-offset:1px; border-color:transparent; }
+.c2c-v2 .vd-search input:focus-visible{ outline:2px solid var(--accent-200); outline-offset:1px; border-color:transparent; }
 @media (prefers-reduced-motion: reduce){ .c2c-v2 .vd-search input{ transition:none; } }
 .c2c-v2 .vd-crumb.cur{ color:var(--text-100); font-weight:600; cursor:default; }
 .c2c-v2 .vd-crumb svg{ width:13px; height:13px; }

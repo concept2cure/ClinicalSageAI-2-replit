@@ -97,7 +97,32 @@ async function form1571LeafSource(
       renderedFrom: 'ind_form_1571',
       sectionCode: 'm1.1',
     });
-    return { source: leafSourceFor(stored), attached: true };
+    /* Attached — and the response names the REQUIRED boxes still blank on the
+       PDF just filed.
+
+       The refusal above gates on `missingRequired`, which is a statement about
+       the DATA the caller supplied. `requiredFieldsLeftBlank` is the other
+       fact: what the rendered form actually carries. On the 1571 they differ by
+       design — `ind_type` and `phase_of_study` are deliberately unmapped
+       because they are the sponsor's own attestations — so a data-complete 1571
+       still renders with two required boxes empty, and those bytes become the
+       m1.1 leaf of a real amendment sequence.
+
+       Not a refusal: they are the sponsor's boxes to tick, and refusing would
+       block every 1571 amendment. But `{ attached: true }` with no reason told
+       the filer the transmittal form was done. Both facts, or neither. */
+    const blank = Array.isArray(form.requiredFieldsLeftBlank) ? form.requiredFieldsLeftBlank : [];
+    return {
+      source: leafSourceFor(stored),
+      attached: true,
+      ...(blank.length > 0
+        ? {
+            reason:
+              `Form FDA 1571 was attached to the m1.1 leaf, and ${blank.length} required ` +
+              `box(es) are blank on it for the sponsor to complete and sign: ${blank.join(', ')}.`,
+          }
+        : {}),
+    };
   } catch (err) {
     return {
       attached: false,

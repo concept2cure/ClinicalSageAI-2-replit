@@ -333,3 +333,50 @@ describe('the protocol number is never borrowed from the IND serial number', () 
     expect(f1574.missingRequired).not.toContain('protocol_number');
   });
 });
+
+/* ── Derived gates are not boxes on the form ─────────────────────────────────
+   `requiredFields` is the official-fill PLACEABILITY gate: fillOfficialTemplate
+   refuses a template that cannot place one of them. A field the builder DERIVES
+   from other fields has no widget on any edition of the form, so listing it
+   there refuses a template for a box that does not exist. 3455's
+   `interest_type_selected` was flagged `qcOnly` for that reason; 3674's
+   `certification_selected` — the same kind of derived verdict — was not. */
+describe('derived QC gates stay out of the official-fill placeability gate', () => {
+  it('3674: certification_selected is reported as a derived gate, never as a placeable required field', () => {
+    const built = buildForm3674({ sponsorName: 'Acme', drugName: 'C2C-1', ctgovCertificationBasis: 'requirements_met' });
+    expect(built.qcOnlyFields).toContain('certification_selected');
+    expect(built.requiredFields).not.toContain('certification_selected');
+    // Still a completeness verdict: an unselected basis is still missing.
+    const noBasis = buildForm3674({ sponsorName: 'Acme', drugName: 'C2C-1' });
+    expect(noBasis.missingRequired).toContain('certification_selected');
+  });
+
+  it('3455: interest_type_selected keeps the same treatment (the precedent this follows)', () => {
+    const built = buildForm3455({
+      sponsorName: 'Acme',
+      investigators: [
+        { name: 'Dr. Pat Smith', financial: { hasDisclosableInterest: true, interestTypes: ['significant_equity'] } },
+      ],
+    });
+    expect(built.qcOnlyFields).toContain('interest_type_selected');
+    expect(built.requiredFields).not.toContain('interest_type_selected');
+  });
+
+  it('every builder reports qcOnlyFields, and no id is both derived and placeable', () => {
+    const meta: IndProjectMetadata = { sponsorName: 'Acme', drugName: 'C2C-1', indication: 'X' };
+    const inv = { name: 'Dr. Pat Smith' };
+    const builts = [
+      buildForm1571(meta),
+      buildForm1572(inv, meta),
+      buildForm3674(meta),
+      buildForm3454(meta),
+      buildForm3455({ ...meta, investigators: [inv] }),
+      buildForm356h(meta),
+      buildForm1574(meta),
+    ];
+    for (const built of builts) {
+      expect(Array.isArray(built.qcOnlyFields)).toBe(true);
+      for (const id of built.qcOnlyFields) expect(built.requiredFields).not.toContain(id);
+    }
+  });
+});

@@ -1,0 +1,38 @@
+{
+  "homeGreeting": "Good morning, JM",
+  "homeActionCount": 4,
+  "browseTriggerVisible": true,
+  "pathwayChipsGone": true,
+  "inlineModuleGridGone": true,
+  "overlayGroupCount": 7,
+  "overlayCardCount": 57,
+  "searchNarrowed": true,
+  "searchCardsRemaining": 1,
+  "searchEmptyMessage": "Nothing matches “zzzz-no-such-capability”. Try a shorter word, or ask AnA on the home screen.",
+  "escapeClosed": true,
+  "navigatedFrom": "Program journey",
+  "overlayClosedOnNav": true,
+  "urlAfterNav": "http://localhost:5000/concept2cure/program-journey",
+  "overlayNarrowSingleColumn": true,
+  "projectsSummaryText": "4 active programs70% average readiness1 blocked1 filing < 60 days",
+  "projectsMetricTilesGone": true,
+  "projectsCardCount": 4,
+  "projectsColumns": 2,
+  "projectsSearchCount": 1,
+  "projectsSearchTitles": [
+    "Companion assay KP-2"
+  ],
+  "leadSearchCount": 0,
+  "projectsNarrowColumns": 1,
+  "failedSummaryText": "— active programs— average readiness— blocked— filing < 60 days",
+  "failedBodyHasPercent": false,
+  "failedShowsErrorPanel": true,
+  "consoleErrors": [
+    "Failed to load resource: net::ERR_CONNECTION_RESET",
+    "Failed to load resource: net::ERR_CONNECTION_RESET",
+    "Failed to load resource: net::ERR_CONNECTION_RESET",
+    "Failed to load resource: net::ERR_CONNECTION_RESET",
+    "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+    "Failed to load resource: the server responded with a status of 500 (Internal Server Error)"
+  ]
+}

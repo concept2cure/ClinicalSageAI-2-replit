@@ -3,8 +3,8 @@
 ## The Definitive Life Sciences AI Mind
 
 **Version:** 1.0.0  
-**Status:** Production Ready  
-**Last Updated:** January 2025
+**Status:** RETIRED 2026-09-10 (WO-14, Route B — product decision). This design never reached a working state: every write path of `cortexPrimeService.ts` issued SQL against columns no applier created, `cortex.health_check()` reported `error` on every database, and no client screen called `/api/cortex/atoms`. The router is unmounted, the service archived, and migrations 073/079 moved to `db/migrations/_legacy/`. Kept as a design record; "Production Ready" below was never true.  
+**Last Updated:** January 2025 (design); September 2026 (retirement)
 
 ---
 

@@ -13,7 +13,12 @@
 
 import * as React from 'react';
 import { I } from '../../icons';
-import { AUDIT_KIND_META, PATHWAY_TABS_DATA } from '../../data/pathwayTabs';
+import {
+  AUDIT_KIND_META,
+  PATHWAY_TABS_DATA,
+  auditChipMeta,
+  unclassifiedFilterCaveat,
+} from '../../data/pathwayTabs';
 import { useVaultUpload } from '../../../v2/useVaultUpload';
 import { EmptyState, ErrorState } from '../../../v2/dataConnect';
 import { DossierStore, useSection } from '../../store/dossierStore';
@@ -145,6 +150,13 @@ function AuditTrailPane({ events, onOpenSection }: { pathway: PathwayKey; events
      boundary, where the surface is already labelled as sample content. */
   const unchainedCount = events.filter((e) => e.chain === 'unchained').length;
 
+  /* Rows whose recorded action this client has no category for. The kind
+     filters below partition a vocabulary these rows are outside of, so a
+     narrow filter cannot speak for them and has to say so. */
+  const unclassifiedCount = events.filter((e) => e.kind === 'unclassified').length;
+  const filterCaveat =
+    filterKind === 'all' ? null : unclassifiedFilterCaveat(unclassifiedCount, events.length);
+
   const groups = React.useMemo(() => {
     const out: Array<{ day: string; items: AuditEvent[] }> = [];
     let curDay: string | null = null;
@@ -208,11 +220,20 @@ function AuditTrailPane({ events, onOpenSection }: { pathway: PathwayKey; events
             <div key={g.day} className="audit-group">
               <div className="audit-day">{g.day}</div>
               {g.items.map((e) => {
-                const meta = AUDIT_KIND_META[e.kind] || { label: e.kind, tone: 'neutral' };
+                const meta = auditChipMeta(e);
                 return (
                   <button key={e.id} className={`audit-row ${selectedId === e.id ? 'sel' : ''}`} onClick={() => setSelectedId(e.id)}>
                     <span className="audit-time">{new Date(e.when).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}</span>
-                    <span className={`audit-chip tone-${meta.tone}`}>{meta.label}</span>
+                    <span
+                      className={`audit-chip tone-${meta.tone}`}
+                      title={
+                        e.kind === 'unclassified'
+                          ? 'The action recorded on this event, shown exactly as the server wrote it. This view has no category for it and does not assign one.'
+                          : undefined
+                      }
+                    >
+                      {meta.label}
+                    </span>
                     <span className="audit-actor">
                       <span className="aa-name">{e.actor}</span>
                       <span className="aa-target">{e.target}</span>
@@ -224,6 +245,11 @@ function AuditTrailPane({ events, onOpenSection }: { pathway: PathwayKey; events
             </div>
           ))}
           {filtered.length === 0 && <div className="audit-empty">No events match this filter.</div>}
+          {/* "No events match this filter." over a window that contains rows
+              this view could not classify would report a verdict — no
+              e-signatures here — on rows the filter never asked the question
+              of. It states what it cannot speak for instead. */}
+          {filterCaveat && <div className="audit-empty audit-unclassified">{filterCaveat}</div>}
         </div>
 
         <div className="audit-detail">
@@ -235,7 +261,7 @@ function AuditTrailPane({ events, onOpenSection }: { pathway: PathwayKey; events
 }
 
 function AuditDetail({ e, onOpenSection }: { e: AuditEvent; onOpenSection: OpenSection }) {
-  const meta = AUDIT_KIND_META[e.kind] || { label: e.kind, tone: 'neutral' };
+  const meta = auditChipMeta(e);
   return (
     <div className="audit-det">
       <div className="audit-det-hdr">
@@ -247,6 +273,10 @@ function AuditDetail({ e, onOpenSection }: { e: AuditEvent; onOpenSection: OpenS
       <dl className="audit-det-grid">
         <dt>When</dt>
         <dd>{fmtTime(e.when, { full: true })}</dd>
+        {/* The action as recorded, always — the chip above is this client's
+            reading of it, and on an unclassified row there is no reading. */}
+        <dt>Action</dt>
+        <dd className="mono">{e.action || '—'}</dd>
         <dt>Actor</dt>
         <dd>{e.actor}<span className="audit-role"> · {e.role}</span></dd>
         <dt>IP</dt>

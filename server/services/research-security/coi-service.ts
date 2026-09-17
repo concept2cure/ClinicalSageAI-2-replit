@@ -3,7 +3,7 @@
  * @module server/services/research-security/coi-service
  */
 import { pool } from '../../db';
-import type { CoiDisclosureType, CoiStatus } from '../../../shared/schema/research-security';
+import type { CoiDisclosureType } from '../../../shared/schema/research-security';
 
 interface Queryable { query: (sql: string, params?: unknown[]) => Promise<{ rows: any[] }>; }
 export class CoiError extends Error { constructor(public code: 'NOT_FOUND' | 'BAD_INPUT', message: string) { super(message); this.name = 'CoiError'; } }

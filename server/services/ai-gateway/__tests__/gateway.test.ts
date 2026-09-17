@@ -23,7 +23,7 @@ import {
 } from '../gateway';
 import { GatewayPolicyEngine } from '../policy';
 import { GatewayAuditLogger } from '../audit';
-import type { GatewayRequest, GatewayResponse, GatewayConfig } from '../types';
+import type { GatewayRequest, GatewayConfig } from '../types';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Test Helpers

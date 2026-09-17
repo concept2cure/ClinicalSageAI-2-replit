@@ -40,6 +40,20 @@ export interface PdfAClassification {
 // PDF headers/markers are ASCII; scan a bounded window so huge files stay cheap.
 const HEAD_BYTES = 1024;
 const SCAN_BYTES = 512 * 1024; // XMP metadata appears early; cap the scan.
+/**
+ * A second bounded window at the END of the file, for the trailer.
+ *
+ * The encryption test ran against the head window alone, and `/Encrypt` is a
+ * TRAILER entry — the spec puts it at the end of the file. So it was found only
+ * in PDFs small enough for the head window to reach the trailer. Every clinical
+ * study report, every 2.7 summary, every scanned appendix is larger than 512 KB,
+ * and for all of them the gate returned `encrypted: false`: a check that could
+ * only ever pass, reported as a check that passed.
+ *
+ * 64 KB comfortably covers a trailer plus a cross-reference stream, and keeps
+ * the cost bounded for the 300 MB files this is pointed at.
+ */
+const TAIL_BYTES = 64 * 1024;
 
 function toLatin1(bytes: Uint8Array, start: number, end: number): string {
   let s = '';
@@ -83,8 +97,13 @@ export function classifyPdfA(input: Uint8Array | ArrayBuffer): PdfAClassificatio
   const pdfAConformance = confMatch ? confMatch[1].toUpperCase() : null;
   const pdfAClaimed = pdfAPart !== null;
 
-  // /Encrypt presence => secured PDF (eCTD prohibits security/encryption).
-  const encrypted = /\/Encrypt\b/.test(scan);
+  /* /Encrypt presence => secured PDF (eCTD prohibits security/encryption).
+     Read from the head window AND a tail window, because that is where the
+     trailer dictionary that declares it actually lives. The two windows overlap
+     harmlessly on a small file. */
+  const tailStart = Math.max(0, bytes.length - TAIL_BYTES);
+  const tail = tailStart > SCAN_BYTES ? toLatin1(bytes, tailStart, bytes.length) : '';
+  const encrypted = /\/Encrypt\b/.test(scan) || /\/Encrypt\b/.test(tail);
 
   let acceptableForEctd = true;
   const reasons: string[] = [];

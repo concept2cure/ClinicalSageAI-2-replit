@@ -45,7 +45,7 @@ import { promises as fs } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { pool } from '../../db.js';
 import { createScopedLogger } from '../../utils/logger.js';
-import { assertUploadSafe, UploadSafetyError } from '../../middleware/uploadSafety.js';
+import { assertUploadSafe, UploadSafetyError, type UploadOrigin } from '../../middleware/uploadSafety.js';
 import { writeChainedAuditRow } from '../auditService.js';
 import {
   classifyForFiling,
@@ -82,6 +82,14 @@ export interface VaultIngestArgs {
   /** Carried into the Part 11 audit row; a tool call has neither. */
   ipAddress?: string;
   userAgent?: string;
+  /**
+   * Where the bytes came from. Defaults to 'upload', which is every HTTP
+   * ingest — the route's schema has no such field, so nothing a client sends
+   * can reach it. 'platform-generated' is for bytes this process produced
+   * itself (the official FDA eSTAR retained after an export); see the Origin
+   * note in middleware/uploadSafety.
+   */
+  origin?: UploadOrigin;
 }
 
 export interface VaultIngestFiling {
@@ -175,7 +183,7 @@ export async function ingestVaultDocument(args: VaultIngestArgs): Promise<VaultI
   // this handler returned by hand, so the client contract is unchanged apart
   // from that new 503.
   try {
-    await assertUploadSafe(args.fileBuffer, mimeType, fileName);
+    await assertUploadSafe(args.fileBuffer, mimeType, fileName, { origin: args.origin ?? 'upload' });
   } catch (err) {
     if (err instanceof UploadSafetyError) {
       return { ok: false, status: err.status, code: err.code, message: err.message };

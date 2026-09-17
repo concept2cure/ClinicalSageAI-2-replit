@@ -11,6 +11,9 @@
  *   - Process capability indices Cp / Cpk / Pp / Ppk
  *   - 21 CFR 820.80 — Receiving, in-process, and finished-device acceptance
  */
+import { assessProcessCapability } from '../cmc/process-capability';
+import type { ParsedAcceptanceCriterion } from '../cmc/recorded-stability';
+
 
 // ─────────────────────────────────────────────────────────────────────────────
 // IQ/OQ/PQ stage gating
@@ -87,45 +90,62 @@ export interface CapabilityResult {
   mean: number;
   stdDev: number;
   cp: number | null;
+  /** Performance index on the overall sd (Ppk) — what this calculator has always reported as cpk. */
   cpk: number | null;
+  /** Within-process Cpk from the moving-range sigma (ISO 22514 individuals convention). */
+  cpkWithin: number | null;
   capable: boolean;
   minCpk: number;
+  n: number;
+  /** Fewer than 25 measurements: the index carries wide sampling error. */
+  preliminary: boolean;
+  outOfSpecification: number;
+  notes: string[];
 }
 
-/** Compute process capability indices against one- or two-sided specs. */
+/**
+ * Compute process capability indices against one- or two-sided specs.
+ *
+ * An adapter over the ONE capability implementation
+ * (services/cmc/process-capability — ISO 22514 / individuals–moving-range
+ * convention). This file used to carry its own: overall sd only, two
+ * measurements accepted, no out-of-specification gate. `cpk` here is the
+ * performance index on the overall sd (Ppk, the figure the old code
+ * reported); the within-process Cpk from the moving range is returned as
+ * `cpkWithin`. Fewer than six measurements refuse, as the engine does — an
+ * index over two points is not a capability.
+ */
 export function computeProcessCapability(args: CapabilityArgs): CapabilityResult {
   const { measurements } = args;
-  if (measurements.length < 2) {
-    throw new Error('Process capability requires at least 2 measurements.');
-  }
   const minCpk = args.minCpk ?? 1.33;
-  const n = measurements.length;
-  const mean = measurements.reduce((s, v) => s + v, 0) / n;
-  const variance = measurements.reduce((s, v) => s + (v - mean) ** 2, 0) / (n - 1);
-  const stdDev = Math.sqrt(variance);
-  const round = (x: number | null) => (x === null ? null : Math.round(x * 1000) / 1000);
-
   const { lowerSpecLimit: lsl, upperSpecLimit: usl } = args;
-  let cp: number | null = null;
-  if (lsl !== undefined && usl !== undefined && stdDev > 0) {
-    cp = (usl - lsl) / (6 * stdDev);
+  if (lsl === undefined && usl === undefined) {
+    throw new Error('Process capability requires at least one specification limit.');
   }
-
-  let cpk: number | null = null;
-  if (stdDev > 0) {
-    const cpu = usl !== undefined ? (usl - mean) / (3 * stdDev) : Infinity;
-    const cpl = lsl !== undefined ? (mean - lsl) / (3 * stdDev) : Infinity;
-    const candidate = Math.min(cpu, cpl);
-    cpk = Number.isFinite(candidate) ? candidate : null;
-  }
-
+  const criterion: ParsedAcceptanceCriterion =
+    lsl !== undefined && usl !== undefined
+      ? { limit: lsl, direction: 'decreasing', upperLimit: usl, twoSided: true }
+      : lsl !== undefined
+        ? { limit: lsl, direction: 'decreasing', upperLimit: null, twoSided: false }
+        : { limit: usl as number, direction: 'increasing', upperLimit: null, twoSided: false };
+  const assessed = assessProcessCapability(
+    measurements.map((value, i) => ({ batch: `m${i + 1}`, value })),
+    criterion,
+  );
+  if (!assessed.ok) throw new Error(assessed.message);
+  const round = (x: number | null) => (x === null ? null : Math.round(x * 1000) / 1000);
   return {
-    mean: round(mean)!,
-    stdDev: round(stdDev)!,
-    cp: round(cp),
-    cpk: round(cpk),
-    capable: cpk !== null && cpk >= minCpk,
+    mean: round(assessed.mean)!,
+    stdDev: round(assessed.sdOverall)!,
+    cp: round(assessed.pp),
+    cpk: round(assessed.ppk),
+    cpkWithin: round(assessed.cpk),
+    capable: assessed.verdict === 'capable' && assessed.ppk >= minCpk,
     minCpk,
+    n: assessed.n,
+    preliminary: assessed.preliminary,
+    outOfSpecification: assessed.batchesOutOfSpecification.length,
+    notes: assessed.notes,
   };
 }
 

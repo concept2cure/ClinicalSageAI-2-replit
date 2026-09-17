@@ -12,6 +12,8 @@ describe('deepening tools — registration', () => {
     'estimate_recorded_shelf_life',
     'get_submission_readiness_twin',
     'assess_benefit_risk',
+    'assess_recorded_stability_trend',
+    'assess_recorded_process_capability',
   ])('%s is defined and registered', (name) => {
     expect(names).toContain(name);
     expect(typeof getToolHandler(name)).toBe('function');
@@ -116,12 +118,32 @@ describe('get_submission_readiness_twin', () => {
     const out = JSON.parse(
       await call({ program_id: '00000000-0000-4000-8000-000000000000' }, { organizationId: 101 }),
     );
-    // Either the tenant proof fails (no such program here) or the environment
-    // has no innovation schema at all. Neither may yield a readiness number.
-    expect(['not_found', 'error']).toContain(out.status ?? 'error');
+    // Three outcomes are acceptable, and the third is the point:
+    //   not_found              — the tenant proof RAN and this org does not own it
+    //   ownership_unverifiable — the proof COULD NOT RUN (no innovation schema
+    //                            in this environment), added when the ownership
+    //                            guard stopped reporting verdicts it had not
+    //                            computed. It is not a denial and not an
+    //                            allowance; see GuardUnavailableError in
+    //                            server/routes/innovation-routes.ts.
+    //   error                  — anything else went wrong
+    // What unites them is the assertion below: none may yield a readiness
+    // number. This list previously held only the first and last, so the honest
+    // third state read as a failure here.
+    expect(['not_found', 'ownership_unverifiable', 'error']).toContain(out.status ?? 'error');
     expect(out.dashboard).toBeUndefined();
     if (out.status === 'not_found') {
       expect(out.message).toMatch(/Do not report a readiness score/);
+    }
+    if (out.status === 'ownership_unverifiable') {
+      // It must say the CHECK could not run, and must steer the model off both
+      // wrong conclusions — not "no score" (an allowance) and not "no such
+      // program" (a denial). Note the message legitimately contains the phrase
+      // "does not exist" while instructing the model NOT to say it, so this
+      // asserts on the instruction rather than on the absence of the words.
+      expect(out.message).toMatch(/could not be run/i);
+      expect(out.message).toMatch(/do NOT report a readiness score/i);
+      expect(out.message).toMatch(/do NOT tell the user the program does not exist/i);
     }
   });
 });
@@ -313,5 +335,73 @@ describe('compare_recorded_dissolution', () => {
     const tool = ALL_ANA_TOOLS.find((t) => t.name === 'compare_recorded_dissolution')!;
     expect(tool.description).toMatch(/Relay a refusal verbatim/);
     expect(tool.description).toMatch(/never assumed to be 12/);
+  });
+});
+
+/**
+ * The two register-reading tools added with the trending and capability work.
+ * Their arithmetic lives in services/cmc/recorded-stability and
+ * services/cmc/recorded-capability and is covered there; what matters HERE is
+ * the boundary each tool owns — tenant scope, a stated refusal instead of an
+ * invented answer, and which project the read is actually about.
+ */
+describe('assess_recorded_stability_trend', () => {
+  const call = (input: Record<string, unknown>, ctx?: Record<string, unknown>) =>
+    getToolHandler('assess_recorded_stability_trend')!(input, ctx as never);
+
+  it('refuses without an organization rather than reading across tenants', async () => {
+    const out = await call({ study_id: 1 }, {});
+    expect(String(out)).toMatch(/active organization context is required/i);
+  });
+
+  it('asks for the study id instead of guessing one', async () => {
+    const out = JSON.parse(String(await call({}, { organizationId: 1 })));
+    expect(out.status).toBe('needs_parameters');
+    expect(out.message).toMatch(/numeric stability study id/i);
+    for (const bad of ['abc', -1, 0, null]) {
+      const r = JSON.parse(String(await call({ study_id: bad }, { organizationId: 1 })));
+      expect(r.status).toBe('needs_parameters');
+    }
+  });
+});
+
+describe('assess_recorded_process_capability', () => {
+  const call = (input: Record<string, unknown>, ctx?: Record<string, unknown>) =>
+    getToolHandler('assess_recorded_process_capability')!(input, ctx as never);
+
+  it('refuses without an organization', async () => {
+    const out = await call({ project_id: 'p1' }, {});
+    expect(String(out)).toMatch(/active organization context is required/i);
+  });
+
+  it('asks which project when neither the session nor the caller names one', async () => {
+    const out = JSON.parse(String(await call({}, { organizationId: 1 })));
+    expect(out.status).toBe('needs_parameters');
+    expect(out.message).toMatch(/project id is required/i);
+  });
+
+  it('the OPEN program outranks a project id the model supplied', async () => {
+    /* Inverted, a product code or a hallucinated string named in the prompt
+       redirected the read — and the tool then reported "no batch results are
+       recorded" about a register it never opened while the open program's
+       batches sat unexamined. The refusal below names the project it actually
+       tried to read, which is how this is observable at all. */
+    const out = JSON.parse(String(await call(
+      { project_id: 'BX-701' },
+      { organizationId: 999999, projectRef: 'the-open-program' },
+    )));
+    expect(out.status).toBe('not_found');
+    expect(out.message).toContain('the-open-program');
+    expect(out.message).not.toContain('BX-701');
+  });
+
+  it('says a project it could not find was not read, and never reports an absence of findings for it', async () => {
+    const out = JSON.parse(String(await call(
+      { project_id: 'no-such-project' },
+      { organizationId: 999999 },
+    )));
+    expect(out.status).toBe('not_found');
+    expect(out.message).toMatch(/no QC register was read and no capability was assessed/i);
+    expect(out.instruction).toMatch(/Never report a capability result, or the absence of one/i);
   });
 });

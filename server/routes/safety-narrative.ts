@@ -14,6 +14,10 @@ import { safetyNarrativeService } from '../services/safety-narrative-service';
 import { assembleOrgSaeCases } from '../services/pv/sae-cases-view-assembler';
 import { pool } from '../db';
 import auditService from '../services/auditService';
+import { serverError } from '../lib/api-response';
+import { createScopedLogger } from '../utils/logger';
+
+const logger = createScopedLogger('safety-narrative');
 
 const router = Router();
 
@@ -287,7 +291,7 @@ router.post('/aggregate', async (req: Request, res: Response) => {
     });
   } catch (error: any) {
     console.error('Aggregate safety narrative error:', error);
-    res.status(500).json({ success: false, error: error.message });
+    return serverError(res, logger, 'saving aggregate', error);
   }
 });
 
@@ -350,7 +354,7 @@ router.post('/sae', async (req: Request, res: Response) => {
     });
   } catch (error: any) {
     console.error('SAE narrative error:', error);
-    res.status(500).json({ success: false, error: error.message });
+    return serverError(res, logger, 'saving SAE', error);
   }
 });
 
@@ -391,7 +395,7 @@ router.post('/benefit-risk', async (req: Request, res: Response) => {
     res.json({ success: true, data: result });
   } catch (error: any) {
     console.error('Benefit-risk narrative error:', error);
-    res.status(500).json({ success: false, error: error.message });
+    return serverError(res, logger, 'saving benefit risk', error);
   }
 });
 
@@ -424,7 +428,7 @@ router.post('/signal-summary', async (req: Request, res: Response) => {
     });
   } catch (error: any) {
     console.error('Signal summary error:', error);
-    res.status(500).json({ success: false, error: error.message });
+    return serverError(res, logger, 'saving signal summary', error);
   }
 });
 
@@ -457,7 +461,7 @@ router.post('/cross-study', async (req: Request, res: Response) => {
     });
   } catch (error: any) {
     console.error('Cross-study safety summary error:', error);
-    res.status(500).json({ success: false, error: error.message });
+    return serverError(res, logger, 'saving cross study', error);
   }
 });
 

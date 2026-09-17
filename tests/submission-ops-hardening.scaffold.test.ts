@@ -74,7 +74,10 @@ function appWithAuth() {
   app.use(express.json());
   app.use((req, _res, next) => {
     (req as any).organizationId = 99;
-    (req as any).user = { id: 777, organizationId: 99 };
+    /* A role, because every write on this router is now role-gated. These harnesses
+       attached none and still passed, which is exactly what they failed to notice. */
+    (req as any).user = { id: 777, organizationId: 99, role: 'admin' };
+    (req as any).userRole = 'admin';
     next();
   });
   app.use('/api/submission-ops', submissionOpsRouter);

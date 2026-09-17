@@ -43,8 +43,21 @@
 -- searched — which is a true and defensible outcome — whereas an empty scopes
 -- list means nothing was searched at all. Those two are the same sentence in
 -- prose and different facts in an inspection.
-ALTER TABLE gdpr_data_subject_requests
-  ADD COLUMN IF NOT EXISTS execution_evidence JSONB;
+-- to_regclass-guarded so the file is a no-op on a lineage without the DSAR
+-- table, which is what every file the migration set applies must be (a bare
+-- ALTER raises 42P01 there, and COMMENT ON has no IF EXISTS form).
+DO $$
+BEGIN
+  IF to_regclass('public.gdpr_data_subject_requests') IS NULL THEN
+    RAISE NOTICE 'gdpr_data_subject_requests not present; skipping execution_evidence.';
+    RETURN;
+  END IF;
 
-COMMENT ON COLUMN gdpr_data_subject_requests.execution_evidence IS
-  'What was actually carried out to satisfy this request (action, scopes searched with row counts, operator, timestamp). NULL means the request was completed without recorded evidence.';
+  ALTER TABLE gdpr_data_subject_requests
+    ADD COLUMN IF NOT EXISTS execution_evidence JSONB;
+
+  EXECUTE $c$
+    COMMENT ON COLUMN gdpr_data_subject_requests.execution_evidence IS
+  'What was actually carried out to satisfy this request (action, scopes searched with row counts, operator, timestamp). NULL means the request was completed without recorded evidence.'
+  $c$;
+END $$;

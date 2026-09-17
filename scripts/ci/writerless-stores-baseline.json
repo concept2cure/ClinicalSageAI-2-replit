@@ -52,7 +52,7 @@
     },
     "fda510kStageProgress": {
       "readerCount": 5,
-      "reason": "NOT ADJUDICATED \u2014 surfaced 2026-09-02 when UPDATE-only writers stopped counting as writers: something updates rows here but nothing in server/ or the migrations inserts them, so no row can ever match. Give it a real writer, drop the readers, or say why an empty read is correct."
+      "reason": "ADJUDICATED 2026-09-06 (ledger L173) \u2014 CONFIRMED WRITERLESS AND HARMFUL, kept declared. fda_510k_stage_progress has no INSERT anywhere in server/ or the migrations; the only one in the repository is in a test fixture. Its single UPDATE, SmartFieldLinking.updateWorkflowField, is guarded by `if (progress.length > 0)` on a SELECT of this table, so on any deployment it is a silent no-op and EVERY `source: 'document'` field update is dropped. The harm was not the empty read but what the callers said about it: updateField returned Promise<void>, so POST /api/field-sync/update-field answered \"Field updated and synchronized\" unconditionally and the socket handler emitted field-update-success AND broadcast field-updated to every subscriber in the project room \u2014 putting a value on other clients' screens that the database never held. FIXED at the honesty boundary: updateField now returns applied | not-linked | no-destination | failed, the route answers 409 NO_DESTINATION_ROW instead of success, and the broadcast fires only when a row actually took the value. The store stays declared here because giving it a writer is a FEATURE (provisioning 510(k) stage rows), not a repair, and inventing one unasked would be a shape change; what is fixed is that its emptiness can no longer be reported as a successful save."
     },
     "fdaCommunications": {
       "readerCount": 2,
@@ -108,7 +108,7 @@
     },
     "standardsApplicability": {
       "readerCount": 2,
-      "reason": "NOT ADJUDICATED \u2014 surfaced 2026-09-02 when UPDATE-only writers stopped counting as writers: something updates rows here but nothing in server/ or the migrations inserts them, so no row can ever match. Give it a real writer, drop the readers, or say why an empty read is correct."
+      "reason": "ADJUDICATED 2026-09-06 (ledger L165) \u2014 CONFIRMED WRITERLESS, kept declared. `standards_applicability` has no INSERT anywhere in the repository, so listProgramApplicability returns nothing for every program. The harm was the reporting built on it: applicabilityGapReport filtered its non-conformant and missing-evidence counts from those rows and so reported ZERO of each \u2014 an empty store rendered as a clean standards assessment. FIXED in L165: the report now carries `assessed`, and nonConformantCount / missingEvidenceCount are null rather than 0 when nothing was examined, so 'nothing was assessed' can no longer be read as 'nothing was wrong'. The store stays declared because giving it a writer is a feature (building the applicability capture path), not a repair. Reason corrected 2026-09-06: L165 landed the fix but left this entry reading NOT ADJUDICATED, so the ledger and this baseline disagreed and the store kept appearing in the awaiting-a-decision list."
     }
   }
 }

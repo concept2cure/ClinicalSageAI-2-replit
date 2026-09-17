@@ -424,66 +424,19 @@ describe('510(k) eSTAR build route — governed wiring', () => {
   });
 });
 
-// ProjectWorkspaceShell.tsx was removed in the design-system port (CLAUDE.md).
-// These UI-shell assertions move to the Phase 3 workbench when it ships.
-describe.skip('UI consequence loop — export artifacts visible in project context', () => {
-  const shellSrc = '';
-
-  it('displays "Export" source labels for export-type artifacts', () => {
-    // Upstream uses specific source types: export_pdf, export_docx, export_zip, export_estar_zip
-    expect(shellSrc).toContain("source === 'export_pdf'");
-    expect(shellSrc).toContain("source === 'export_docx'");
-    expect(shellSrc).toContain("source === 'export_zip'");
-    expect(shellSrc).toContain("source === 'export_estar_zip'");
-    // Also supports governed_export as fallback
-    expect(shellSrc).toContain("source === 'governed_export'");
-  });
-
-  it('shows governed indicator for artifacts with governed metadata', () => {
-    expect(shellSrc).toContain('metadata?.governed');
-    expect(shellSrc).toContain('Governed');
-  });
-
-  it('shows provenance indicator for artifacts with provenancePresent', () => {
-    expect(shellSrc).toContain('metadata?.provenancePresent');
-    expect(shellSrc).toContain('Prov ✓');
-  });
-
-  it('shows audit indicator for artifacts with auditPresent', () => {
-    expect(shellSrc).toContain('metadata?.auditPresent');
-    expect(shellSrc).toContain('Audit ✓');
-  });
-
-  it('has Open, Provenance, Audit, and Place buttons for each artifact', () => {
-    // Check for button labels in the Recent Governed Documents section
-    expect(shellSrc).toContain('Open');
-    expect(shellSrc).toContain('Provenance');
-    expect(shellSrc).toContain('Audit');
-    expect(shellSrc).toContain('Place');
-  });
-});
-
-// useDeliverable.ts was removed with the disconnected legacy island in the
-// design-system port (CLAUDE.md) — it was unreachable from ZenApp. The
-// client-side governed-export consequence loop moves to the Phase 3 workbench
-// when it ships. Server-side governed wiring stays covered above.
-describe.skip('useDeliverable — governed export consequence loop', () => {
-  const src = '';
-
-  it('reads X-Concept2Cure-Artifact-Id from response headers', () => {
-    expect(src).toContain("response.headers.get('X-Concept2Cure-Artifact-Id')");
-  });
-
-  it('reads governance persistence status from response headers', () => {
-    expect(src).toContain('X-Concept2Cure-Governance-Persistence');
-  });
-
-  it('invalidates project artifact queries after governed export', () => {
-    expect(src).toContain('invalidateQueries');
-    expect(src).toContain('/artifacts');
-  });
-
-  it('includes governed artifact ID in toast notification', () => {
-    expect(src).toContain('Governed artifact');
-  });
-});
+// ── UI consequence loop — REMOVED 2026-09-10 (WO-8), not skipped ─────────────
+//
+// Two `describe.skip` blocks used to sit here, asserting on
+// ProjectWorkspaceShell.tsx and useDeliverable.ts. Both files were removed in
+// the design-system port, and the blocks compensated with `const shellSrc = ''`
+// — so un-skipping them fails every assertion against an empty string and says
+// nothing about the product. Neither file exists (`find client server` matches
+// neither), so neither block could ever be un-skipped.
+//
+// Deleted for the same reason as phase10's 10H–10K: a skipped block that cannot
+// run is dead code shaped like pending work, and it counts toward a
+// skipped-test backlog it can never leave.
+//
+// Server-side governed export wiring stays fully covered above — that is where
+// the consequence loop is enforced. When the Phase 3 workbench ships a project
+// context, write the client assertions against what it actually builds.

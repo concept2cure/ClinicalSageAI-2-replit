@@ -589,7 +589,7 @@ export const UI_V2_SURFACES: UiSurface[] = [
     group: 'authoring',
     icon: 'clipboardList',
     uiKit: 'authoring',
-    apiPrefixes: ['/api/protocol-development', '/api/protocol-soa', '/api/protocol-risks', '/api/protocol-milestones', '/api/protocol-budget', '/api/protocol-amendments', '/api/protocol-deviations', '/api/protocol-reviews', '/api/protocol-consent', '/api/protocol-export'],
+    apiPrefixes: ['/api/protocol-development', '/api/protocol-soa', '/api/protocol-risks', '/api/protocol-milestones', '/api/protocol-budget', '/api/protocol-amendments', '/api/protocol-deviations', '/api/protocol-reviews', '/api/protocol-consent', '/api/protocol-export', '/api/biostat-bridge'],
     anaToolFamilies: ['create_protocol_document', 'update_protocol_section', 'review_protocol_completeness', 'finalize_protocol_document', 'add_soa_assessment', 'review_soa_matrix'],
     sharedContract: null,
     discoveryCatalog: null,
@@ -1142,7 +1142,15 @@ export const UI_V2_SURFACES: UiSurface[] = [
     group: 'device',
     icon: 'gitBranch',
     uiKit: null,
-    apiPrefixes: ['/api/design-risk'],
+    // /api/design-controls, not /api/design-risk. This entry named the latter,
+    // which was a 20-endpoint duplicate whose ten tables existed on no database:
+    // its only creator was classified-skipped on install-fresh for a shape
+    // collision and was on no deploy applier, so every one of those endpoints
+    // returned 500. The surface never called them — DesignControls.tsx reads and
+    // writes /api/design-controls (server/routes/design-controls.routes.ts, which
+    // fails closed to an empty list on 42P01) — so `routes-ready` was true of the
+    // surface and false of the prefix it advertised. The duplicate is deleted.
+    apiPrefixes: ['/api/design-controls'],
     anaToolFamilies: [],
     sharedContract: null,
     discoveryCatalog: null,

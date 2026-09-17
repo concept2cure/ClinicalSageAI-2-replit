@@ -13,11 +13,27 @@
 
 /* ── Types ── */
 
+/**
+ * WO-16C finding 70. `cfr11Compliant: boolean` used to live here, and the
+ * surface rendered a "21 CFR §11" badge wherever it was true — which the
+ * server set to `true` on every node, from a literal nothing computed. The
+ * server now sends a per-record presence check instead: which of the elements
+ * 21 CFR Part 11 requires an entry to carry (§11.10(e) attributed actor and
+ * recorded timestamp, §11.50 applied signature where one is required) this
+ * record actually has. COMPLETE is a statement about the record, not a
+ * compliance verdict about the decision or the system.
+ * Server shape: DecisionLineageService.Part11RecordCheck.
+ */
+export interface LineagePart11RecordCheck {
+  status: 'COMPLETE' | 'INCOMPLETE';
+  missing: Array<'attributed-actor' | 'recorded-timestamp' | 'applied-signature'>;
+}
+
 export interface LineageRegulatory {
   gxpRelevant: boolean;
   requiresSignature: boolean;
   signatureStatus?: 'signed' | 'pending' | 'rejected';
-  cfr11Compliant: boolean;
+  part11RecordCheck: LineagePart11RecordCheck;
 }
 
 export interface LineageNodeDetails {
@@ -51,9 +67,11 @@ export interface LineageNode {
   entityType: string;
   entityId: number;
   action: string;
-  performedBy: string;
+  /** null when the source record attributes the event to nobody. */
+  performedBy: string | null;
   performedByRole?: string;
-  performedAt: string;
+  /** null when the source record carries no time — e.g. a pending approval. */
+  performedAt: string | null;
   details: LineageNodeDetails;
   recordHash: string;
   parentIds: string[];

@@ -14,6 +14,9 @@
  */
 
 import { getGateway } from '../ai-gateway/gateway';
+import { classifyGatewayError, isGatewayError } from '../ai-gateway/gateway-error-map';
+import type { BatchDraftFailure, BatchDraftResult } from './batch-draft-result';
+import { createScopedLogger } from '../../utils/logger';
 import type {
   GatewayRequest,
   GatewayResponse,
@@ -655,18 +658,32 @@ ${documentContent}`,
 
   /**
    * Batch process multiple document sections (parallel with concurrency limit).
+   *
+   * Each slice settles PER SECTION. This ran through `Promise.all`, so one
+   * section that could not be drafted — realistically one whose existing
+   * content is too large for any model, which the gateway now refuses before
+   * dispatch — rejected the whole call, and the other sections' drafts,
+   * already generated and paid for, were discarded. A failed section is now a
+   * failure result in its own slot (batch-draft-result.ts), carrying the
+   * gateway's code and its actionable sentence; a fault of ours is
+   * DRAFT_FAILED with the internals withheld and logged here, where the detail
+   * is useful.
    */
-  async batchDraft(req: BatchDocumentRequest): Promise<DocumentDraftResponse[]> {
+  async batchDraft(req: BatchDocumentRequest): Promise<BatchDraftResult[]> {
     const concurrency = req.concurrency || 3;
-    const results: DocumentDraftResponse[] = [];
+    const results: BatchDraftResult[] = [];
 
     // Process in batches
     for (let i = 0; i < req.requests.length; i += concurrency) {
       const batch = req.requests.slice(i, i + concurrency);
-      const batchResults = await Promise.all(
-        batch.map(r => this.draftDocument(r))
-      );
-      results.push(...batchResults);
+      const settled = await Promise.allSettled(batch.map(r => this.draftDocument(r)));
+      settled.forEach((outcome, j) => {
+        if (outcome.status === 'fulfilled') {
+          results.push(outcome.value);
+          return;
+        }
+        results.push(describeBatchDraftFailure(batch[j], outcome.reason));
+      });
     }
 
     return results;
@@ -708,6 +725,31 @@ ${documentContent}`,
 
     return response.content;
   }
+}
+
+const batchLog = createScopedLogger('ana-drafting-batch');
+
+/**
+ * The failure result for one section of a batch. A gateway refusal keeps its
+ * classification and its own actionable sentence (for a size refusal: how big
+ * the request is, the largest window available, how much to cut). Anything
+ * else is a fault of ours — logged with its detail, reported without it, so a
+ * driver message never becomes card copy.
+ */
+function describeBatchDraftFailure(request: DocumentDraftRequest, reason: unknown): BatchDraftFailure {
+  if (isGatewayError(reason)) {
+    const { code, message } = classifyGatewayError(reason);
+    return { error: code, message, sectionType: request.sectionType };
+  }
+  batchLog.error('batch section failed', {
+    sectionType: request.sectionType,
+    err: reason instanceof Error ? reason.message : String(reason),
+  });
+  return {
+    error: 'DRAFT_FAILED',
+    message: 'This section could not be drafted. The problem has been logged.',
+    sectionType: request.sectionType,
+  };
 }
 
 // Export singleton getter

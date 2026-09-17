@@ -15,7 +15,7 @@
  * @module server/bootstrap/register-inline-routes
  */
 
-import express, { type Express, type Request, type Response } from 'express';
+import express, { type Express } from 'express';
 import type { Pool } from 'pg';
 
 import { authMiddleware } from '../auth.js';
@@ -374,6 +374,16 @@ export async function registerInlineAiWorkflowRoutes({
     console.info('✅ Study Design routes mounted (/api/study-design)');
   } catch (error) {
     console.error('❌ Failed to mount Study Design routes:', error);
+  }
+
+  // Biostatistics bridge — study design ↔ biostatistics engines ↔ filing
+  // placement ↔ task board (server/services/biostatistics-bridge).
+  try {
+    const biostatBridgeModule = await import('../routes/biostat-bridge');
+    app.use('/api/biostat-bridge', authMiddleware, biostatBridgeModule.default);
+    console.info('✅ Biostatistics bridge routes mounted (/api/biostat-bridge)');
+  } catch (error) {
+    console.error('❌ Failed to mount Biostatistics bridge routes:', error);
   }
 
   // Financial disclosures — 21 CFR 54 (FCOI, Forms FDA 3454/3455 → Module 1).

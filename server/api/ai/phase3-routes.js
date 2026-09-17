@@ -6,6 +6,10 @@ import { db } from '../../db.js';
 import { components, documentVersions, organizationUsers } from '../../../shared/schema.js';
 import { eq, and, sql } from 'drizzle-orm';
 import { authedOrgId } from '../../utils/authedOrgId.js';
+import { serverError } from '../../lib/api-response.js';
+import { createScopedLogger } from '../../utils/logger.js';
+
+const logger = createScopedLogger('ai-phase3-routes');
 
 const router = express.Router();
 
@@ -332,10 +336,7 @@ router.post('/ai/ner-extract', async (req, res) => {
       organizationId: req.organizationId,
       payload: req.body,
     });
-    res.status(500).json({
-      success: false,
-      error: error.message,
-    });
+    return serverError(res, logger, 'extracting NER', error);
   }
 });
 
@@ -419,10 +420,7 @@ router.post('/ai/generate-embedding', async (req, res) => {
       organizationId: req.organizationId,
       payload: req.body,
     });
-    res.status(500).json({
-      success: false,
-      error: error.message,
-    });
+    return serverError(res, logger, 'generating embedding', error);
   }
 });
 
@@ -479,10 +477,7 @@ router.post('/ai/consistency-check', async (req, res) => {
       organizationId: req.organizationId,
       payload: req.body,
     });
-    res.status(500).json({
-      success: false,
-      error: error.message,
-    });
+    return serverError(res, logger, 'checking consistency', error);
   }
 });
 
@@ -574,10 +569,7 @@ router.post('/ai/global-change/initiate', async (req, res) => {
     });
   } catch (error) {
     console.error('Global change initiation error:', error);
-    res.status(500).json({
-      success: false,
-      error: error.message,
-    });
+    return serverError(res, logger, 'initiating global change', error);
   }
 });
 
@@ -622,10 +614,7 @@ router.post('/ai/global-change/execute', async (req, res) => {
     });
   } catch (error) {
     console.error('Global change execution error:', error);
-    res.status(500).json({
-      success: false,
-      error: error.message,
-    });
+    return serverError(res, logger, 'executing global change', error);
   }
 });
 

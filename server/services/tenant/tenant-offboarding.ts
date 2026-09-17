@@ -533,6 +533,11 @@ export const PURGE_CHILD_TABLES: readonly string[] = Object.freeze([
      tenant's synthetic route, batch sizes and equipment: purged, not left as
      residue. */
   'manufacturing_processes',
+  /* The guided CMC interview's sessions: every answer a staffer gave AnA
+     about their drug substance and product, plus the register ids the commit
+     produced. Tenant content in full. A leaf (FKs to organizations and
+     users only). */
+  'cmc_interview_sessions',
   /* The rendered-leaf register: the per-leaf PDF bytes a sequence was built
      from, addressed by vault version and pinned by sha256/md5. That is the
      tenant's own submission content and its integrity record — a tenant that

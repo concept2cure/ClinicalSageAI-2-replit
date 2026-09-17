@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { I } from '../icons';
 import { connected, useLiveRows, EmptyState } from '../dataConnect';
 import { usePublishSurfaceContext } from '../surfaceContext';
@@ -9,6 +9,17 @@ import { renderSafeMarkdown } from '../../components/ana/renderSafeMarkdown';
 import { saveToAuthoring } from '../authoringHandoff';
 import '../styles/project-home-v2.css';
 import { C2CToast, useToast } from '../toast';
+import { consumeNavParams } from '../navParams';
+import { readShellProject } from '../shellProject';
+import {
+  DesignBridgePanel,
+  FilingPlacementNote,
+  StudyDesignCard,
+  placementForDoc,
+  resolveDesign,
+  useBridgeDesigns,
+  useDesignAssessment,
+} from './biostatBridge';
 
 /* ═══════════════════════════════════════════════════════════════════
    Biostatistics — a document-producing statistical workbench.
@@ -93,8 +104,14 @@ interface BiostatResult {
 
 interface JudgmentDimension {
   name: string;
+  /** 'adequate' | 'marginal' | 'inadequate', or the third state 'not_assessed'
+   *  — this engine had nothing to judge the dimension against. A dimension in
+   *  the third state is excluded from the overall verdict and named in the
+   *  confidence limitations; it is never collapsed into one of the other two. */
   verdict: string;
-  score: number;
+  /** `null` when nothing computed a score. A judgment table cell is allowed to
+   *  say "not assessed"; it is not allowed to carry a number no rule produced. */
+  score: number | null;
   flags: string[];
   rationale: string;
 }
@@ -180,7 +197,10 @@ interface Preset {
 
 /* ─── Deterministic computation engine (computation-engine.ts) ─── */
 
-const BiostatEngine = (() => {
+/* Exported for the judgment tests (`__tests__/biostatUnearnedScores.test.tsx`).
+   The surface itself uses it through the module-local binding below; nothing
+   else in the app imports it. */
+export const BiostatEngine = (() => {
   function normCdf(z: number): number {
     if (z < -8) return 0; if (z > 8) return 1;
     const a1 = 0.254829592, a2 = -0.284496736, a3 = 1.421413741, a4 = -1.453152027, a5 = 1.061405429, p = 0.3275911;
@@ -312,15 +332,38 @@ const BiostatEngine = (() => {
     const dims: JudgmentDimension[] = [];
     const pv = res.power >= input.powerTarget - 0.005 ? 'adequate' : res.power >= input.powerTarget - 0.05 ? 'marginal' : 'inadequate';
     dims.push({ name: 'Power adequacy', verdict: pv, score: Math.round(res.power * 100), flags: pv === 'adequate' ? [] : ['Achieved power below target'], rationale: `Achieved power ${(res.power * 100).toFixed(1)}% vs target ${(input.powerTarget * 100) | 0}%.` });
-    dims.push({ name: 'Effect-size assumption', verdict: 'marginal', score: 60, flags: ['Single most sensitive input'], rationale: `Effect size ${input.effectSize} drives N; verify against prior evidence.` });
+    /* The effect size is the single most sensitive input, and this surface has
+       no prior-evidence source — no literature, no pilot, no registry — to
+       judge the assumed value against. It used to be pushed unconditionally as
+       `marginal / 60`, which is a verdict and a score for a check that never
+       ran (and, being unconditional, made 'adequate' unreachable overall). What
+       IS computed about the effect size is its fragility margin below, and that
+       is reported there rather than restated here as a /100. */
+    dims.push({ name: 'Effect-size assumption', verdict: 'not_assessed', score: null, flags: ['Not assessed — no prior-evidence source', 'Single most sensitive input'],
+      rationale: `Effect size ${input.effectSize} drives N. Its plausibility is not assessed here — this engine has no prior evidence to compare it against; verify it against literature or pilot data. The design's sensitivity to it is reported under Fragility.` });
+    /* Banded on the attrition-adjusted total, which IS computed. The band is
+       all this is: site capacity, screening ratio and enrollment rate are not
+       inputs to this surface, so operational feasibility is not assessed and
+       the band carries no score. */
     const fv = res.adjustedTotal <= 300 ? 'adequate' : res.adjustedTotal <= 800 ? 'marginal' : 'inadequate';
-    dims.push({ name: 'Enrollment feasibility', verdict: fv, score: fv === 'adequate' ? 85 : fv === 'marginal' ? 60 : 35, flags: fv === 'inadequate' ? ['Large N — feasibility risk'] : [], rationale: `${res.adjustedTotal} subjects after ${(input.attritionRate * 100) | 0}% attrition.` });
+    dims.push({ name: 'Enrollment size band', verdict: fv, score: null, flags: fv === 'inadequate' ? ['Large N — confirm feasibility with sites'] : [],
+      rationale: `${res.adjustedTotal} subjects after ${(input.attritionRate * 100) | 0}% attrition — banded (<=300 / <=800 / above). Site capacity and enrollment rate are not available to this engine, so operational feasibility is not assessed.` });
     let bp = input.effectSize; for (let f = 1; f > 0.5; f -= 0.01) { const r2 = compute({ ...input, effectSize: input.effectSize * f }); if (r2.sampleSize.total > res.sampleSize.total * 1.15) { bp = input.effectSize * f; break; } }
     const margin = Math.round((1 - bp / input.effectSize) * 100);
     const cat = margin >= 20 ? 'robust' : margin >= 12 ? 'moderate' : margin >= 6 ? 'fragile' : 'very_fragile';
-    const worst = dims.some(d => d.verdict === 'inadequate') ? 'inadequate' : dims.some(d => d.verdict === 'marginal') ? 'marginal' : 'adequate';
-    const action = worst === 'inadequate' ? 'revise' : worst === 'marginal' ? 'proceed_with_conditions' : 'proceed';
-    const risk = worst === 'inadequate' ? 'high' : worst === 'marginal' ? 'moderate' : 'low';
+    /* The overall verdict is taken over the dimensions that were ASSESSED. A
+       dimension in the third state neither drags the verdict down (it is not a
+       finding) nor is silently treated as adequate (it is not a pass) — it is
+       named in the limitations below, which the document always prints. */
+    const assessed = dims.filter(d => d.verdict !== 'not_assessed');
+    const notAssessed = dims.filter(d => d.verdict === 'not_assessed');
+    const worst = assessed.length === 0 ? 'not_assessed'
+      : assessed.some(d => d.verdict === 'inadequate') ? 'inadequate'
+      : assessed.some(d => d.verdict === 'marginal') ? 'marginal' : 'adequate';
+    // Fail closed: anything that is not a clean 'adequate'/'marginal' — including
+    // an all-unassessed judgment — recommends revision rather than proceeding.
+    const action = worst === 'adequate' ? 'proceed' : worst === 'marginal' ? 'proceed_with_conditions' : 'revise';
+    const risk = worst === 'adequate' ? 'low' : worst === 'marginal' ? 'moderate' : 'high';
     const endpointMethodFit = { fit: 'acceptable', currentMethod: res.method,
       suggestedMethod: input.endpointType === 'time_to_event' ? 'Cox proportional hazards (confirmatory)' : input.endpointType === 'binary' ? 'Logistic regression (covariate-adjusted)' : 'ANCOVA (baseline-adjusted)',
       rationale: `${res.method} is appropriate for a ${input.endpointType} endpoint in a ${input.studyType} design; a covariate-adjusted model is recommended as the confirmatory analysis.`,
@@ -331,7 +374,26 @@ const BiostatEngine = (() => {
     if (fv === 'inadequate') limitations.push('Enrollment target is large; site capacity and timelines should be confirmed.');
     const escalation: string[] = []; if (worst === 'inadequate') escalation.push('Design is underpowered at current assumptions — revise before finalizing.');
     if (cat === 'very_fragile') escalation.push('Very fragile to effect-size assumption — add a blinded sample-size re-estimation.');
-    const conf = { level: worst === 'adequate' ? 'high' : worst === 'marginal' ? 'moderate' : 'low', score: worst === 'adequate' ? 86 : worst === 'marginal' ? 64 : 42, factors: ['Deterministic computation', 'Rule-backed judgment'], limitations };
+    /* Confidence, derived. It used to be one of three literals (86 / 64 / 42)
+       picked by the overall verdict LABEL — a number restating a word, printed
+       as "moderate (64/100)" in the filed document. The rule below is the
+       canonical one, server/services/ana-biostats/judgment-engine.ts
+       assessConfidence(): start at 85 and subtract for what is actually weak —
+       power under the 80% convention, more than two defaulted assumptions, a
+       diagnostic design with no intended-use prevalence. The inputs are this
+       surface's own computed result and assumption provenance. */
+    const cFactors: string[] = ['Deterministic computation', 'Rule-backed judgment'];
+    let cScore = 85;
+    if (res.power >= 0.90) cFactors.push('High power (>=90%)');
+    else if (res.power >= 0.80) cFactors.push('Standard power (>=80%)');
+    else { cScore -= 20; limitations.push(`Achieved power ${(res.power * 100).toFixed(1)}% is below the conventional 80% threshold.`); }
+    const defaulted = res.assumptions.filter(a => a.source === 'default').length;
+    if (defaulted > 2) { cScore -= defaulted * 5; limitations.push(`${defaulted} parameters used default values rather than study-specific ones.`); }
+    else cFactors.push('Most parameters user-specified');
+    if (input.clientTrack === 'diagnostics_ivd' && input.prevalence === undefined) { cScore -= 10; limitations.push('Prevalence not specified — PPV/NPV are estimates at an assumed prevalence.'); }
+    if (notAssessed.length) limitations.push(`Not assessed by this engine: ${notAssessed.map(d => d.name).join(', ')}. The overall verdict covers only the ${assessed.length} dimension${assessed.length === 1 ? '' : 's'} that were assessed.`);
+    cScore = Math.max(0, Math.min(100, cScore));
+    const conf = { level: cScore >= 80 ? 'high' : cScore >= 60 ? 'moderate' : cScore >= 40 ? 'low' : 'very_low', score: cScore, factors: cFactors, limitations };
     const nm = input.indication || 'the study';
     const roleExplanations: Record<string, string> = {
       executive: `The ${input.studyType} design needs about ${res.adjustedTotal} subjects for ${(res.power * 100).toFixed(0)}% power. Overall this design is ${worst}; recommendation is to ${action.replace(/_/g, ' ')}. ${worst !== 'adequate' ? 'A design adjustment now avoids a costly under-powered trial later.' : 'The plan is defensible for ' + (input.regulatoryBody || 'the agency') + '.'}`,
@@ -400,7 +462,11 @@ const BiostatDocs = (() => {
     return s + foot();
   };
   const riskMemo: GenFn = (i, c, j, d, r) => { let s = `# Statistical Risk Memo\n\n## Executive Summary\n\n${j.roleExplanations.executive}\n\n## Risk Classification\n\n- **Overall Risk**: ${j.overallRisk}\n- **Action**: ${j.actionRecommendation}\n- **Confidence**: ${j.confidence.level}\n\n## Dimension Analysis\n\n| Dimension | Verdict | Score | Key Flags |\n|---|---|---|---|\n`;
-    for (const dm of j.dimensions) s += `| ${dm.name} | ${dm.verdict} | ${dm.score}/100 | ${dm.flags.join('; ') || 'None'} |\n`;
+    // A dimension with no score says so. It must never render as "null/100",
+    // and it must never be given a number to fill the column. "not assessed"
+    // and "not scored" are different: the first had no verdict either, the
+    // second has a real verdict and simply no /100 behind it.
+    for (const dm of j.dimensions) s += `| ${dm.name} | ${dm.verdict === 'not_assessed' ? 'not assessed' : dm.verdict} | ${dm.score === null ? (dm.verdict === 'not_assessed' ? 'not assessed' : 'not scored') : `${dm.score}/100`} | ${dm.flags.join('; ') || 'None'} |\n`;
     s += `\n## Fragility Assessment\n\n${j.fragility.narrative}\n\n## Endpoint-Method Fit\n\n- **Fit**: ${j.endpointMethodFit.fit}\n- **Current Method**: ${j.endpointMethodFit.currentMethod}\n- **Suggested Method**: ${j.endpointMethodFit.suggestedMethod}\n- **Rationale**: ${j.endpointMethodFit.rationale}\n\n`;
     if (j.escalationReasons.length) { s += `## Escalation Items\n\n`; for (const e of j.escalationReasons) s += `- ${e}\n`; s += `\n`; }
     if (d.riskFactors.length) { s += `## Domain-Specific Risks (${track(i.clientTrack)})\n\n`; for (const rf of d.riskFactors) s += `- ${rf}\n`; s += `\n`; }
@@ -507,12 +573,47 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
   const [docType, setDocType] = useState('sample_size_rationale');
   const [toast, fireToast] = useToast();
 
+  /* ── The study design bridge ──────────────────────────────────────────────
+     The engine used to take its study from four presets and nothing else. It
+     now loads the program's PERSISTED study designs (the design-as-data spine,
+     GET /api/biostat-bridge/designs) and seeds itself from the one the person
+     picks — or the one the protocol workspace / AnA handed over on the nav
+     channel (`studyId`). The seed is the server adapter's translation of the
+     design (with its honest gaps); the numbers on screen are still this
+     surface's deterministic recompute, exactly as for a preset. */
+  const program = readShellProject();
+  const [designReload, setDesignReload] = useState(0);
+  const designs = useBridgeDesigns(designReload);
+  const [selectedStudyId, setSelectedStudyId] = useState<string | null>(() => consumeNavParams('biostatistics')?.studyId ?? null);
+  const bridge = useDesignAssessment(selectedStudyId);
+  const loadedDesign = bridge.assessment;
+  useEffect(() => {
+    const seed = loadedDesign?.adapter.input;
+    if (!seed) return;
+    // The adapter emits the engine's StatisticalInput; BiostatInput is the same
+    // INPUT vocabulary. That is as far as the correspondence goes: the sizing
+    // math and the document generators are ports, but the Layer-3 judgment in
+    // this file is a smaller browser-side rule set, not a port of
+    // server/services/ana-biostats/judgment-engine.ts — it carries three
+    // dimensions where the server carries a dozen, and its fragility index and
+    // the server's are different quantities. Do not read one's output as the
+    // other's.
+    setInput(seed as unknown as BiostatInput);
+    setPreset('design');
+  }, [loadedDesign]);
+
   // Governed statistical documents — the ONE stored, org-scoped slice of this
   // surface (the design/document body is computed in-browser deterministically).
   // GET /api/ana-biostats/governed-documents reads real persisted artifacts
   // (concept2cure_artifacts, type 'statistical_summary'), org-scoped. Real rows,
   // an honest empty state, or an honest failed-load state — never a fixture.
-  const govDocs = useLiveRows<BiostatPlan>('/api/ana-biostats/governed-documents');
+  // Narrowed to the open program when one is open (the route resolves the
+  // program UUID to the artifact store's project id, tenant-scoped); the card's
+  // sub-label says which scope it is showing.
+  const govDocsPath = program
+    ? '/api/ana-biostats/governed-documents?programId=' + encodeURIComponent(String(program.id))
+    : '/api/ana-biostats/governed-documents';
+  const govDocs = useLiveRows<BiostatPlan>(govDocsPath);
   const set = (k: string, v: unknown) => setInput((s) => ({ ...s, [k]: v }));
   const applyPreset = (k: string) => { setPreset(k); setInput(BS_PRESETS[k].input); };
 
@@ -521,6 +622,11 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
   const dom = useMemo(() => domainAdapt(input), [input]);
   const reg = useMemo(() => regCustom(input), [input]);
   const docDef = BiostatDocs.byId(docType);
+  /* Where THIS document files for the program's application type — from the
+     bridge's placement catalog. Null when no design is loaded or the program
+     has no filing type; the authoring hand-off then keeps its historical M5. */
+  const placement = placementForDoc(loadedDesign, docType);
+  const filingModule = placement?.module ?? 'M5';
   const md = useMemo(() => { try { return res && jud && docDef ? docDef.gen(input, res, jud, dom, reg) : ''; } catch (e: unknown) { return '# Error\n\n' + (e instanceof Error ? e.message : String(e)); } }, [input, res, jud, dom, reg, docType, docDef]);
   const html = useMemo(() => renderSafeMarkdown(md), [md]);
 
@@ -579,7 +685,7 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
       // Statistical documentation files under Module 5; the server would
       // default to M3.
       const r = await saveToAuthoring({
-        title, module: 'M5', code: docDef?.id || 'statistical_document',
+        title, module: filingModule, code: docDef?.id || 'statistical_document',
         content: md, subject: 'the document',
       });
       // Navigate only on a clean write. On a half-failure the document exists
@@ -644,11 +750,15 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
          reporting — the only difference from "Open in editor" is that this one
          does not navigate away. */
       const r = await saveToAuthoring({
-        title: label, module: 'M5', code: docDef?.id || 'statistical_document',
+        title: label, module: filingModule, code: docDef?.id || 'statistical_document',
         content: md, subject: 'the document',
       });
       if (!r.ok) { fireToast(r.message, 'error'); return; }
-      fireToast(label + ' filed to the dossier under Module 5 — open it from Document authoring.');
+      fireToast(
+        placement && placement.required === 'not_applicable'
+          ? label + ' saved under ' + filingModule + ' as an internal design document — it is not a submission document for this filing.'
+          : label + ' filed to the dossier under Module ' + filingModule.slice(1) + (placement?.code ? ' (' + placement.code + ')' : '') + ' — open it from Document authoring.',
+      );
     } finally {
       attachingRef.current = false;
       setAttaching(false);
@@ -672,11 +782,20 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
           ? 'no governed statistical documents persisted yet'
           : govDocs.rows.length + ' governed statistical document(s) persisted (org-scoped)';
     const govFacts = !govDocs.loading && !govDocs.error ? { governedDocumentsPersisted: govDocs.rows.length } : {};
+    const designFacts = loadedDesign
+      ? {
+          loadedStudyDesign: { studyId: loadedDesign.studyId, title: loadedDesign.title, readinessPct: loadedDesign.readiness.percent },
+          blockingDesignGaps: loadedDesign.adapter.gaps.filter((g) => g.severity === 'blocking').map((g) => g.field),
+          applicationType: loadedDesign.filing.applicationType,
+          proposedTasks: loadedDesign.proposedTasks.length,
+          documentFilesUnder: placement ? (placement.code ?? 'not filed') : null,
+        }
+      : { loadedStudyDesign: null, persistedDesignsListed: designs.loading || designs.error ? null : designs.rows.length };
     if (!res || !jud) {
       return {
         summary:
           'Biostatistics — the design engine could not compute a result for the current inputs, so no sample size, power or verdict is on screen; ' + gov + '.',
-        facts: { documentType: docDef?.label ?? null, preset: presetLabel, designComputed: false, ...govFacts },
+        facts: { documentType: docDef?.label ?? null, preset: presetLabel, designComputed: false, ...govFacts, ...designFacts },
       };
     }
     return {
@@ -691,19 +810,30 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
         achievedPowerPct: Number((res.power * 100).toFixed(1)),
         overallVerdict: jud.overallVerdict,
         ...govFacts,
+        ...designFacts,
       },
       availableActions: [
+        'Load one of the program\'s persisted study designs into the engine',
         'Adjust any design input or preset — the document rewrites deterministically',
         'Pick a different statistical document type to generate',
         'Refine the document with AnA',
         'Opening in the editor and attaching to the dossier both file a real governed document (genesis revision + Part 11 audit row) — AnA proposes them in conversation, never through screen controls.',
       ],
     };
-  }, [res, jud, docDef, preset, input.studyType, n, govDocs.loading, govDocs.error, govDocs.empty, govDocs.rows]);
+  }, [res, jud, docDef, preset, input.studyType, n, govDocs.loading, govDocs.error, govDocs.empty, govDocs.rows, loadedDesign, placement, designs.loading, designs.error, designs.rows.length]);
   /* Both actions are pure client-side recomputes of a deterministic design —
      nothing is filed. Opening in the editor and attaching to the dossier stay
      governed human acts. `applyPreset` is the SAME function the chips call. */
   useSurfaceActionHandlers('biostatistics', {
+    'biostatistics.load-design': (params) => {
+      if (designs.loading) return { ok: false, reason: 'The study designs are still loading.', retry: true };
+      if (designs.error) return { ok: false, reason: 'The study designs did not load, so none can be selected.' };
+      const r = resolveDesign(designs.rows, String(params.design ?? ''));
+      if (!r.ok) return { ok: false, reason: r.reason };
+      if (selectedStudyId === r.row.studyId) return { ok: true, detail: `Already loaded "${r.row.title}"` };
+      setSelectedStudyId(r.row.studyId);
+      return { ok: true, detail: `Loading "${r.row.title}" — the engine recomputes from the design; nothing is filed` };
+    },
     'biostatistics.set-preset': (params) => {
       const target = String(params.preset ?? '');
       const meta = BS_PRESETS[target];
@@ -747,8 +877,9 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
       )}
 
       <div className="bs-doc-layout">
-        {/* Left: what to produce + design inputs */}
+        {/* Left: the study, what to produce, design inputs, the assessment */}
         <div className="bs-side">
+          <StudyDesignCard designs={designs} selectedId={selectedStudyId} onSelect={setSelectedStudyId} />
           <div className="pj-card">
             <div className="pj-card-h"><span className="t">Document</span><span className="s">what to produce</span></div>
             <div className="pj-card-b" style={{ padding: 10 }}>
@@ -767,7 +898,10 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
           <div className="pj-card">
             <div className="pj-card-h"><span className="t">Study design</span><span className="s">document rewrites live</span></div>
             <div className="pj-card-b" style={{ padding: 12 }}>
-              <div className="bs-presets">{Object.entries(BS_PRESETS).map(([k, p]) => <button key={k} className={'bs-preset' + (preset === k ? ' on' : '')} onClick={() => applyPreset(k)}>{p.label}</button>)}</div>
+              <div className="bs-presets">
+                {loadedDesign && <button className={'bs-preset' + (preset === 'design' ? ' on' : '')} onClick={() => { const seed = loadedDesign.adapter.input; if (seed) { setInput(seed as unknown as BiostatInput); setPreset('design'); } }} disabled={!loadedDesign.adapter.input} title={loadedDesign.adapter.input ? 'The loaded study design' : 'The loaded design cannot be sized until its blocking gaps are resolved'}>{I.sigma} {loadedDesign.title}</button>}
+                {Object.entries(BS_PRESETS).map(([k, p]) => <button key={k} className={'bs-preset' + (preset === k ? ' on' : '')} onClick={() => applyPreset(k)}>{p.label}</button>)}
+              </div>
               <div className="bs-fields">
                 <label className="bs-f"><span>Track</span><select value={input.clientTrack} onChange={(e) => set('clientTrack', e.target.value)}>{['biotech_pharma', 'medical_device', 'diagnostics_ivd'].map((x) => <option key={x} value={x}>{x.replace(/_/g, ' / ')}</option>)}</select></label>
                 <label className="bs-f"><span>Agency</span><select value={input.regulatoryBody} onChange={(e) => set('regulatoryBody', e.target.value)}>{['FDA', 'EMA', 'MHRA', 'PMDA', 'NMPA', 'TGA', 'Health_Canada'].map((x) => <option key={x}>{x}</option>)}</select></label>
@@ -792,6 +926,15 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
               </div>}
             </div>
           </div>
+          {selectedStudyId && (
+            <DesignBridgePanel
+              state={bridge}
+              onNav={onNav}
+              fireToast={fireToast}
+              onApplied={() => { bridge.reload(); setDesignReload((k) => k + 1); }}
+              onTasksRaised={() => bridge.reload()}
+            />
+          )}
         </div>
 
         {/* Center: the DOCUMENT -- the deliverable */}
@@ -806,7 +949,7 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
                   document with a server origin, on the one line a reviewer reads to
                   find out exactly that. It also printed an API route into customer
                   UI, which the work order forbids outright. */}
-                Deterministic engine — v1.0.0 — draft</span></div>
+                Deterministic engine — v1.0.0 — draft</span>{placement && <span className="bs-doc-prov" style={{ marginLeft: 8 }}><FilingPlacementNote placement={placement} /></span>}</div>
             <div className="bs-doc-bar-a">
               <button className="bs-da" onClick={() => ask('Refine the ' + (docDef?.label || 'document') + ': ' + (docDef?.blurb || ''))}>{I.sparkles} Refine with AnA</button>
               <button className="bs-da primary" onClick={() => void openEditor()} disabled={opening}>{I.penLine} {opening ? 'Saving to the editor…' : 'Open in editor'}</button>
@@ -822,7 +965,7 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
         {/* The list is org-scoped (every persisted statistical_summary artifact for the
             tenant), so the sub-label reads "org-scoped" — not "this project", which would
             misrepresent an organization/portfolio-wide list as a single project's. */}
-        <div className="pj-card-h"><span className="t">Governed statistical documents</span><span className="s">{govDocs.rows.length > 0 ? govDocs.rows.length + ' persisted · org-scoped' : 'org-scoped'}</span></div>
+        <div className="pj-card-h"><span className="t">Governed statistical documents</span><span className="s">{(govDocs.rows.length > 0 ? govDocs.rows.length + ' persisted · ' : '') + (program ? 'this program' : 'org-scoped')}</span></div>
         <div className="pj-card-b" style={{ padding: 8 }}>
           {govDocs.loading ? (
             <div role="status" className="scaf-note" style={{ padding: '18px 10px' }}>Loading governed documents…</div>
