@@ -434,8 +434,25 @@ function deriveNextBestAction(
     });
   }
 
-  // Pick the highest-impact unresolved recommendation
-  const top = recs[0]; // Already sorted by severity
+  // WO-16C #124 follow-up. This read `recs[0]` under the comment "Already
+  // sorted by severity". Nothing had sorted it: deriveNextBestAction is called
+  // from generateRecommendations BEFORE the sort, so recs[0] was whichever
+  // analyzer happened to run first — and the card it builds says
+  // "Highest-priority action", a ranking claim nothing had computed. Same class
+  // as the fabricated confidence this card carried until #124 removed it.
+  //
+  // Unlike most of this work order there IS a real computation available: the
+  // engine declares its own priority order, severity then RULE_PRECEDENCE, and
+  // sorts by exactly that a few lines later. Using it here makes the claim true
+  // rather than deleting it. Sorting a copy keeps this function free of side
+  // effects on its caller's array.
+  const SEVERITY_ORDER: RecommendationSeverity[] = ['critical', 'high', 'medium', 'low', 'info'];
+  const top = [...recs].sort((a, b) => {
+    const sevDiff =
+      SEVERITY_ORDER.indexOf(a.severity) - SEVERITY_ORDER.indexOf(b.severity);
+    if (sevDiff !== 0) return sevDiff;
+    return RULE_PRECEDENCE[a.recommendationType] - RULE_PRECEDENCE[b.recommendationType];
+  })[0];
   return makeRecommendation({
     type: 'next_best_action',
     severity: top.severity,

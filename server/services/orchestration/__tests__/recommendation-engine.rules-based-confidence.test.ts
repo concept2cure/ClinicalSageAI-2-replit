@@ -205,16 +205,61 @@ describe('orchestration recommendation engine — no fabricated confidence', () 
       .map((r) => r.recommendationType);
 
     // Precedence, declared in the engine: how blocking the item is for a
-    // submission. next_best_action restates whichever recommendation is already
-    // top of the list, so it sits last in its band.
+    // submission. next_best_action is NOT in this list: it restates the
+    // highest-priority item, and for this fixture that item is critical, so the
+    // card sits in the critical band. Before the WO-16C #124 follow-up it took
+    // recs[0] from an unsorted array and landed here at 'high' while a critical
+    // validation failure outranked it — see the next case.
     expect(high).toEqual([
       'unvalidated_content',
       'readiness_gap',
       'overdue_task',
       'blocked_workflow',
       'weak_content',
-      'next_best_action',
     ]);
+  });
+
+  /**
+   * WO-16C #124 follow-up, found by an adversarial review of the #124 fix.
+   *
+   * `deriveNextBestAction` builds a card whose reason reads "Highest-priority
+   * action: …" and copies the chosen item's severity. It read `recs[0]` under
+   * the comment "Already sorted by severity" — but it is called from
+   * generateRecommendations BEFORE the sort, so recs[0] was whichever analyzer
+   * ran first. The card asserted a ranking nothing had computed, which is the
+   * same class of claim #124 removed from the confidence chip on this very card.
+   *
+   * Unlike most of this work order a real computation was available: the engine
+   * declares its priority order (severity, then RULE_PRECEDENCE) and sorts by
+   * exactly that a few lines later. The fix uses it, so the claim became true
+   * rather than being deleted.
+   *
+   * RED on the pre-fix engine: severity 'high', restating the unvalidated
+   * document, while a 'critical' validation failure sat above it.
+   */
+  it('derives the next best action from the engine\'s own priority order', () => {
+    const recs = generateRecommendations(PAYLOAD).recommendations;
+    const card = recs.find((r) => r.recommendationType === 'next_best_action');
+    expect(card).toBeDefined();
+
+    const severityOrder = ['critical', 'high', 'medium', 'low', 'info'];
+    const others = recs.filter((r) => r.recommendationType !== 'next_best_action');
+    const best = others
+      .slice()
+      .sort((a, b) => severityOrder.indexOf(a.severity) - severityOrder.indexOf(b.severity))[0];
+
+    // No item outranks the one the card calls highest priority.
+    expect(severityOrder.indexOf(card!.severity)).toBeLessThanOrEqual(
+      severityOrder.indexOf(best.severity),
+    );
+    // This fixture carries a critical validation failure, so that is the answer.
+    expect(card!.severity).toBe('critical');
+    // And the card restates a real item, not a synthesised one.
+    const restated = others.find(
+      (r) => r.targetObjectId === card!.targetObjectId && card!.reason.includes(r.reason),
+    );
+    expect(restated).toBeDefined();
+    expect(restated!.severity).toBe(card!.severity);
   });
 
   it('is deterministic across runs', () => {
