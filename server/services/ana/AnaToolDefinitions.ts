@@ -10,6 +10,7 @@
  */
 
 import type { AnaTool, AnthropicServerTool, AnyAnaTool } from '../ai-gateway/types';
+import { createScopedLogger } from '../../utils/logger';
 // Agentic-workflow tool definitions extracted to their own module (first tranche
 // of decomposing this file). Imported so the enabled-tools array can reference
 // them exactly as before.
@@ -530,6 +531,8 @@ import {
   ALL_REGIONS,
   agencyList,
 } from '../submission-gateways/region-constants.js';
+
+const log = createScopedLogger('ana-tools');
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Evidence & literature tool definitions moved to
@@ -2714,7 +2717,12 @@ export const ALL_ANA_TOOLS: AnaTool[] = ALL_ANA_TOOLS_RAW.filter(
 // ─────────────────────────────────────────────────────────────────────────────
 
 export const WEB_SEARCH_TOOL: AnthropicServerTool = {
-  type: 'web_search_20250305',
+  // The current variant, with dynamic filtering. It was pinned to the 2025
+  // `web_search_20250305` — the basic one — long after the models in the
+  // registry gained this. `_20260209` runs code execution internally to filter
+  // results, which is why declaring `code_execution` alongside it is refused
+  // below rather than left as a deployment note.
+  type: 'web_search_20260209',
   name: 'web_search',
   max_uses: 5,
   // Keep the search surface tight to sources AnA actually cites. The allowlist
@@ -2761,12 +2769,41 @@ export const CODE_EXECUTION_TOOL: AnthropicServerTool = {
  * Returns the subset of Anthropic server tools that are enabled for this
  * environment. Empty array when none are enabled — safe to spread into the
  * tools array unconditionally.
+ *
+ * ── Why this refuses a combination ───────────────────────────────────────────
+ * The `_20260209` web tools run code execution internally to filter results.
+ * Declaring `code_execution` alongside them hands the model two execution
+ * environments and it does not reliably pick the right one. Three independent
+ * env flags made that combination one typo away, and the failure would be a
+ * quiet degradation rather than an error — so the conflict is resolved here, in
+ * code, with the reason stated to whoever set the flags.
+ *
+ * Web search wins: it is the regulatory-currency path (the allowlist above is
+ * the agency set), and its internal execution is not optional. A deployment
+ * that genuinely needs the standalone sandbox turns web search off.
  */
 export function getEnabledServerTools(): AnthropicServerTool[] {
+  const wantsWebSearch = process.env.ANA_ENABLE_WEB_SEARCH === 'true';
+  const wantsWebFetch = process.env.ANA_ENABLE_WEB_FETCH === 'true';
+  const wantsCodeExecution = process.env.ANA_ENABLE_CODE_EXECUTION === 'true';
+
   const enabled: AnthropicServerTool[] = [];
-  if (process.env.ANA_ENABLE_WEB_SEARCH === 'true') enabled.push(WEB_SEARCH_TOOL);
-  if (process.env.ANA_ENABLE_WEB_FETCH === 'true') enabled.push(WEB_FETCH_TOOL);
-  if (process.env.ANA_ENABLE_CODE_EXECUTION === 'true') enabled.push(CODE_EXECUTION_TOOL);
+  if (wantsWebSearch) enabled.push(WEB_SEARCH_TOOL);
+  if (wantsWebFetch) enabled.push(WEB_FETCH_TOOL);
+
+  const webToolCarriesItsOwnSandbox = wantsWebSearch || wantsWebFetch;
+  if (wantsCodeExecution && webToolCarriesItsOwnSandbox) {
+    log.warn(
+      '[ana-tools] ANA_ENABLE_CODE_EXECUTION is set alongside a web tool. The ' +
+        'current web search/fetch tools run code execution internally, and ' +
+        'declaring a second execution environment confuses the model — so the ' +
+        'standalone code_execution tool is NOT offered this turn. Turn the web ' +
+        'tools off if the sandbox is what you need.',
+    );
+  } else if (wantsCodeExecution) {
+    enabled.push(CODE_EXECUTION_TOOL);
+  }
+
   return enabled;
 }
 
