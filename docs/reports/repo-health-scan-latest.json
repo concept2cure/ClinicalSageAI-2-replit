@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-17T05:21:21.655Z",
+  "generatedAt": "2026-09-17T05:36:09.587Z",
   "git": {
-    "sha": "0450538d7f35903f2b50676005b0056eeab8ffa1",
+    "sha": "1442301e82b2505404aaec9c9213882997a8c22b",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2092,6 +2092,10 @@
         "bytes": 114269
       },
       {
+        "file": "server/services/ai-gateway/gateway.ts",
+        "bytes": 113086
+      },
+      {
         "file": "server/routes/concept2cure.ts",
         "bytes": 109695
       },
@@ -2106,10 +2110,6 @@
       {
         "file": "server/services/advanced-therapy/atmp-knowledge.ts",
         "bytes": 108892
-      },
-      {
-        "file": "server/services/ai-gateway/gateway.ts",
-        "bytes": 108775
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/ind-submission.ts",
@@ -2227,7 +2227,7 @@
       },
       {
         "file": "server/services/ai-gateway/gateway.ts",
-        "lines": 2676
+        "lines": 2764
       },
       {
         "file": "client/src/concept2cure/v2/editor/RichSectionEditor.tsx",
