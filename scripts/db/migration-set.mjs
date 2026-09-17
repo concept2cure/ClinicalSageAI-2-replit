@@ -2080,6 +2080,7 @@ export const C2C_MIGRATION_FILES = [
   // clock starts, not after the first record is destroyed.
   'migrations/20260906b_vault_legal_holds.sql',
   'migrations/20260906c_vault_documents_content_hash_idx.sql',
+  'migrations/20260917_vault_documents_storage_version.sql',
 
   // The three IVDR append-only history tables carry no tenant column of their
   // own — their tenant is their parent's, reached by foreign key — so BOTH

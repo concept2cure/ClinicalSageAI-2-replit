@@ -38,6 +38,8 @@ function model(overrides: Partial<ModelConfig>): ModelConfig {
     costPer1kOutput: 0.015,
     capabilities: ['chat', 'general'],
     enabled: true,
+    thinkingMode: 'adaptive',
+    supportsSamplingParams: false,
     ...overrides,
   };
 }

@@ -154,6 +154,16 @@ export interface AnaToolUse {
   id: string;
   name: string;
   input: Record<string, unknown>;
+  /**
+   * Set when the model's tool input arrived but could not be reconstructed —
+   * the streamed `input_json_delta` fragments did not parse, or the stream
+   * ended before the block closed. `input` is `{}` in that case, which is
+   * indistinguishable from a tool that legitimately takes no arguments, so the
+   * caller needs this to tell "asked for nothing" from "we lost what was
+   * asked for". A tool use carrying this must NOT be dispatched: report it as
+   * a failed step instead of running the handler on arguments we do not have.
+   */
+  inputParseError?: string;
 }
 
 /** Tool result to send back to Claude */
@@ -221,6 +231,27 @@ export interface GatewayMessage {
   origin?: 'app' | 'external';
   /** Multi-modal content blocks (images + text) — Claude only */
   contentBlocks?: ContentBlock[];
+  /**
+   * Keep this system message IN `messages[]`, at its position, instead of
+   * hoisting it into the top-level `system` parameter — the OPERATOR CHANNEL.
+   *
+   * A mid-run instruction (a human steering AnA while she works, a mode
+   * switch, injected state) is not the user speaking and is not part of the
+   * persona. Carried as text inside a user turn it is indistinguishable from
+   * anything else that writes into user-visible input — including tool output,
+   * which is the untrusted half of the transcript. Carried as a `role: 'system'`
+   * message it has operator authority and cannot be forged.
+   *
+   * It also preserves the cache. Editing the top-level `system` changes the
+   * prefix ahead of the entire conversation, so every cached turn is
+   * reprocessed; a system message after the history leaves that prefix intact.
+   *
+   * Only honoured on models whose ModelConfig sets `supportsInlineSystem`.
+   * Elsewhere it is folded into the preceding user turn, which is byte-for-byte
+   * what the platform sent before this flag existed.
+   */
+  inlineSystem?: boolean;
+
   /**
    * Mark this message with a prompt-cache breakpoint (Claude only).
    * When `promptCache.enabled` is set on the request, system messages
@@ -344,6 +375,21 @@ export interface GatewayRequest {
   /** Streaming callback for real-time delivery */
   onStream?: StreamCallback;
 
+  /**
+   * Cancel this request. Passed to the provider SDK, so aborting stops
+   * GENERATION rather than only stopping the caller from reading — before
+   * this existed, AnA's stop button dropped the socket and left the model
+   * running to completion at full cost.
+   *
+   * Aborting is terminal and blameless: the gateway raises
+   * `GatewayAbortedError`, which is never retried, never falls back to another
+   * model, and never counts against provider health. An abort that lands
+   * mid-stream is not an error at all — the partial response is returned with
+   * `finishReason: 'aborted'`, because the text the person is already reading
+   * is worth keeping.
+   */
+  signal?: AbortSignal;
+
   /** Multi-modal content blocks (images) — used instead of messages for vision */
   imageContent?: ImageBlock[];
 }
@@ -371,9 +417,9 @@ export interface GatewayResponse {
    * `model` on Anthropic messages).
    *
    * Kept alongside `model` rather than replacing it: `model` is the routing
-   * decision and callers already switch on it (see `isReasoningOnlyModel`),
-   * while this is the fact of which snapshot answered. Undefined when the
-   * provider omits it and on the cached/deterministic paths.
+   * decision and callers switch on it, while this is the fact of which
+   * snapshot answered. Undefined when the provider omits it and on the
+   * cached/deterministic paths.
    */
   resolvedModel?: string;
 
@@ -421,6 +467,17 @@ export interface ProviderConfig {
   models: ModelConfig[];
 }
 
+/**
+ * How a model accepts extended thinking.
+ *
+ *   'adaptive'  the model self-budgets; send `{type:'adaptive'}` and no
+ *               sampling parameters. `budget_tokens` is rejected.
+ *   'budget'    the legacy surface; send `{type:'enabled', budget_tokens}`
+ *               with `temperature: 1`.
+ *   'none'      the model has no extended-thinking surface.
+ */
+export type ThinkingMode = 'adaptive' | 'budget' | 'none';
+
 export interface ModelConfig {
   id: string;
   provider: ProviderName;
@@ -431,6 +488,39 @@ export interface ModelConfig {
   costPer1kOutput: number;
   capabilities: TaskType[];
   enabled: boolean;
+
+  // ── Wire-surface capabilities ────────────────────────────────────────────
+  //
+  // What this model's API actually accepts. These are DATA, deliberately: the
+  // gateway used to infer the reasoning-only surface by running a regex over
+  // the version in `model`, which meant the shape of a request depended on how
+  // a model was NAMED. A model outside the pattern silently fell back to a
+  // surface it rejects with a 400, so bumping the registry to a newer flagship
+  // — the move the registry's own comment calls sanctioned — broke it.
+  //
+  // Declare these per ENTRY, never per family: a Bedrock or Vertex entry runs
+  // the same weights but does not carry the same features, and inheriting a
+  // first-party flag onto a private-cloud entry promises a tenant something
+  // their substrate rejects. Availability, not lineage, decides.
+
+  /** How this model accepts extended thinking. */
+  thinkingMode: ThinkingMode;
+
+  /**
+   * Whether `temperature` / `top_p` / `top_k` may be sent. Reasoning-only
+   * models reject all three with a 400.
+   */
+  supportsSamplingParams: boolean;
+
+  /**
+   * Whether this model accepts a `{role: 'system'}` turn inside `messages[]`
+   * — the operator channel (see `GatewayMessage.inlineSystem`). A model
+   * without it answers `role 'system' is not supported on this model` with a
+   * 400, so the gateway folds the instruction into the preceding user turn
+   * instead. Omitted means false: a capability we have not confirmed for an
+   * entry is one we do not use for it.
+   */
+  supportsInlineSystem?: boolean;
 }
 
 export interface PolicyConfig {

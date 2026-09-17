@@ -487,7 +487,8 @@ export function createDeviceAttachmentResolver(
        file the row recorded. Filing an altered document under a governed
        document's identity is the failure that check exists for. */
     const docRes = await pool.query(
-      `SELECT id, file_name, document_title, mime_type, s3_key, content_hash
+      `SELECT id, file_name, document_title, mime_type, s3_key,
+              storage_version_id, content_hash
          FROM vault.documents
         WHERE id = $1 AND program_id = $2 AND deleted_at IS NULL
           AND EXISTS (
@@ -506,6 +507,7 @@ export function createDeviceAttachmentResolver(
           document_title: string | null;
           mime_type: string | null;
           s3_key: string | null;
+          storage_version_id: string | null;
           content_hash: string | null;
         }
       | undefined;
@@ -515,7 +517,10 @@ export function createDeviceAttachmentResolver(
         reason: `No vault document ${source.documentId} in this program.`,
       };
     }
-    if (!doc.s3_key) {
+    // NEITHER address: dual-read, so a new upload carries a provider version id
+    // and no s3_key while an older row carries the reverse. Testing only the old
+    // one would refuse every new upload as "catalogued without content".
+    if (!doc.storage_version_id && !doc.s3_key) {
       return {
         ok: false,
         reason:
@@ -523,7 +528,15 @@ export function createDeviceAttachmentResolver(
           'the file does not.',
       };
     }
-    const read = await readVerifiedVaultBytes(doc.s3_key, doc.content_hash, doc.id);
+    const read = await readVerifiedVaultBytes(
+      {
+        storageVersionId: doc.storage_version_id,
+        storageKey: doc.s3_key,
+        organizationId: input.organizationId,
+      },
+      doc.content_hash,
+      doc.id,
+    );
     if (!read.ok) {
       return { ok: false, reason: `Vault document ${source.documentId}: ${read.message ?? read.error}` };
     }

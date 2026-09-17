@@ -217,7 +217,12 @@ class UnifiedAIClient {
       ],
       {
         taskType: 'document_drafting',
-        model: 'claude-opus-4-7',
+        // The stable registry ALIAS, not a wire version. These helpers mean
+        // "the Opus tier", and pinning the version string meant every model
+        // bump silently stopped matching — selectModel falls through to normal
+        // routing on an unmatched pin, so the caller asked for one model, got
+        // another, and nothing said so.
+        model: 'claude-opus-4',
         maxTokens: 8192,
         cache: true,
         thinking: { enabled: true, budgetTokens: 10000 },
@@ -241,7 +246,7 @@ class UnifiedAIClient {
       ],
       {
         taskType: 'regulatory_review',
-        model: 'claude-opus-4-7',
+        model: 'claude-opus-4',
         maxTokens: 8192,
         cache: true,
         ...options,
@@ -254,7 +259,7 @@ class UnifiedAIClient {
    */
   async quick(prompt: string, options?: AICompletionOptions): Promise<string> {
     return this.complete(prompt, {
-      model: 'claude-sonnet-4-6',
+      model: 'claude-sonnet-4',
       maxTokens: 2048,
       ...options,
     });
@@ -265,7 +270,7 @@ class UnifiedAIClient {
    */
   async fast(prompt: string, options?: AICompletionOptions): Promise<string> {
     return this.complete(prompt, {
-      model: 'claude-haiku-4-5-20251001',
+      model: 'claude-haiku-4',
       maxTokens: 1024,
       ...options,
     });

@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-17T04:44:13.129Z",
+  "generatedAt": "2026-09-17T05:41:00.333Z",
   "git": {
-    "sha": "bb5013ec7393041344b98f272aed82c22e099715",
+    "sha": "cb8dc65a9e230a285c0878838d8252ee3e259cb7",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -16,7 +16,7 @@
     "contentDuplicateGroups": 0,
     "contentDuplicateFiles": 0,
     "largeFilesByBytes": 42,
-    "largeFilesByLines": 96
+    "largeFilesByLines": 97
   },
   "findings": {
     "duplicateBasenames": [
@@ -1973,7 +1973,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "bytes": 331181
+        "bytes": 329643
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/DocumentAuthoring.tsx",
@@ -2080,6 +2080,10 @@
         "bytes": 116241
       },
       {
+        "file": "server/services/ai-gateway/gateway.ts",
+        "bytes": 115828
+      },
+      {
         "file": "server/services/intelligent-report-engine.ts",
         "bytes": 115224
       },
@@ -2118,10 +2122,6 @@
       {
         "file": "server/services/ana-ri/context-enrichment.ts",
         "bytes": 105559
-      },
-      {
-        "file": "server/services/ai-gateway/gateway.ts",
-        "bytes": 100587
       }
     ],
     "largeFilesByLines": [
@@ -2135,7 +2135,7 @@
       },
       {
         "file": "server/routes/authoring.router.ts",
-        "lines": 7564
+        "lines": 7498
       },
       {
         "file": "server/statistics-service.ts",
@@ -2214,6 +2214,10 @@
         "lines": 2949
       },
       {
+        "file": "server/services/ai-gateway/gateway.ts",
+        "lines": 2833
+      },
+      {
         "file": "server/src/routes/stability.router.ts",
         "lines": 2807
       },
@@ -2236,10 +2240,6 @@
       {
         "file": "server/routes/knowledge-base.ts",
         "lines": 2588
-      },
-      {
-        "file": "server/services/ai-gateway/gateway.ts",
-        "lines": 2509
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/protocol-development.ts",
@@ -2442,12 +2442,12 @@
         "lines": 1785
       },
       {
-        "file": "server/services/ana/submission-chat-handler.ts",
-        "lines": 1756
+        "file": "server/routes/ana-ri/stream.ts",
+        "lines": 1769
       },
       {
-        "file": "server/routes/ana-ri/stream.ts",
-        "lines": 1755
+        "file": "server/services/ana/submission-chat-handler.ts",
+        "lines": 1756
       },
       {
         "file": "server/services/cmc-write-through.ts",
@@ -2506,6 +2506,10 @@
         "lines": 1532
       },
       {
+        "file": "server/routes/c2c/project-vault.ts",
+        "lines": 1504
+      },
+      {
         "file": "server/services/grdhe/grdheService.ts",
         "lines": 1501
       }
@@ -2517,7 +2521,7 @@
       "owner": "Backend Platform (server/routes + server/services owners)",
       "duplicateGroups": 399,
       "largeByBytes": 32,
-      "largeByLines": 79
+      "largeByLines": 80
     },
     {
       "owner": "Unassigned (TBD)",
