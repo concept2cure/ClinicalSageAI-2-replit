@@ -143,6 +143,30 @@ suggestion refused, an explicit unfile honoured, and another organization's
 caller unable to move the document. The taxonomy guard and the tenancy
 predicate were each removed in turn to watch exactly one test go red.
 
+### Both chat paths rehydrate at session start
+
+**Helper:** `sessionBootstrapBlockFor` (`server/services/ana-session-bootstrap.ts`) ·
+**Tripwire:** `server/routes/__tests__/session-bootstrap-wiring.test.ts`
+
+The session-start rehydration — the working summary, the top project and client
+atoms, AnA's own past lessons, and the project-files digest this workstream
+added — was called from exactly one place: `POST /api/chat/send-message`.
+
+The product has two canonical chat endpoints, and it is the other one,
+`POST /api/ana-ri/stream`, that a chat UI actually uses. There the memory was
+query-driven only: it answers what the user just typed and never says a document
+exists. So a streaming session began not knowing the client had uploaded
+anything — the exact failure this workstream was built to end, still true on the
+path that matters most, because the capability had been wired to one of two
+equivalent doors.
+
+The gate, the `ANA_SESSION_BOOTSTRAP_AUTO` kill-switch and the failure path move
+into one helper that both routes call; the streaming path counts its prior turns
+(server history, else the client's) and injects the block as a system turn ahead
+of the user's message when there are none. The tripwire enumerates the canonical
+chat entry points and asserts each one calls the helper, injects what it gets
+back, and does NOT re-implement the gate — which is how the two diverged.
+
 ### The passage corpus becomes reachable
 
 **Service:** `server/services/vault/document-passage-search.ts` · **Tool:** `search_document_passages`

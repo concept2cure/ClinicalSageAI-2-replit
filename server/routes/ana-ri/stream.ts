@@ -584,11 +584,15 @@ export function mountStreamRoute(router: Router): void {
       }
 
       let streamHistoryLoaded = false;
+      /* How many turns preceded this one. It decides whether this is the START
+         of a session, which is the only point the rehydration below fires. */
+      let streamPriorTurns = 0;
       if (threadId) {
         try {
           const serverHistory = await getThreadMessages(threadId);
           // Exclude the message we just saved (it's the current user message)
           const previousMsgs = serverHistory.slice(0, -1);
+          streamPriorTurns = previousMsgs.length;
           if (previousMsgs.length > 0) {
             for (const msg of previousMsgs.slice(-20)) {
               messages.push({ role: msg.role as 'user' | 'assistant', content: msg.content });
@@ -613,7 +617,49 @@ export function mountStreamRoute(router: Router): void {
           if (!msg.role || !['user', 'assistant'].includes(msg.role)) continue;
           if (typeof msg.content !== 'string' || msg.content.length > MAX_MSG_LENGTH) continue;
           messages.push({ role: msg.role as 'user' | 'assistant', content: msg.content });
+          streamPriorTurns += 1;
         }
+      }
+
+      /* Session-start rehydration — the same block POST /api/chat/send-message
+         injects, which this path did not.
+
+         The memory assembled above is QUERY-DRIVEN: it answers what the user
+         just typed. It never tells AnA what the client's project folder holds,
+         where each file is filed, what it is for, or which files the client
+         attached in past conversations — so on the streaming path, the one a
+         chat UI actually uses, she began every session not knowing a document
+         existed until someone named it. That is the "she doesn't remember the
+         file is there" this workstream exists to end, and it was still true
+         here because the rehydration was wired to the other endpoint.
+
+         Fires only at session start (no prior turns), degrades to nothing, and
+         rides as a system turn ahead of the user's message, exactly like the
+         memory and enrichment blocks above. */
+      const { sessionBootstrapBlockFor } = await import('../../services/ana-session-bootstrap.js');
+      /* streamProjectId is whatever the client sent — 'proj_7', '7', 7, or a
+         program UUID — and the project-atom loader takes the numeric projects.id.
+         Normalized here rather than passed through: a UUID reaching an integer
+         column raises 22P02, which the loader's own fault tolerance would
+         swallow into "this project has no memory". Anything that is not a
+         positive integer is simply omitted, and the org-level half of the
+         rehydration (client atoms, lessons, the vault files) still lands. */
+      const streamBootstrapProjectId = ((): number | undefined => {
+        const raw = typeof streamProjectId === 'string'
+          ? streamProjectId.replace(/^proj_/, '')
+          : streamProjectId;
+        const n = Number(raw);
+        return Number.isInteger(n) && n > 0 ? n : undefined;
+      })();
+      const streamBootstrapBlock = await sessionBootstrapBlockFor({
+        priorMessageCount: streamPriorTurns,
+        organizationId: orgId ? Number(orgId) : null,
+        projectId: streamBootstrapProjectId,
+        threadId: threadId ?? undefined,
+        atomLimit: 6,
+      });
+      if (streamBootstrapBlock) {
+        messages.push({ role: 'system', content: streamBootstrapBlock });
       }
 
       // Place a cache breakpoint on the last assistant message in history so

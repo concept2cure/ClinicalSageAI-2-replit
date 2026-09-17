@@ -19,6 +19,7 @@ import { anaOutcomeLog } from 'shared/schema/ana-intelligence';
 import { and, desc, eq, isNotNull } from 'drizzle-orm';
 import {
   formatSessionBootstrap,
+  shouldAutoBootstrap,
   type BootstrapAtom,
   type OutcomeLesson,
 } from './ana-session-bootstrap-format.js';
@@ -63,6 +64,56 @@ export async function loadRecentOutcomeLessons(
     .orderBy(desc(anaOutcomeLog.createdAt))
     .limit(limit);
   return rows as OutcomeLesson[];
+}
+
+/**
+ * The block to inject at session start, or '' — gate, build and fault
+ * tolerance in ONE place.
+ *
+ * Both canonical chat entry points need this, and both had it wrong in
+ * different ways: `POST /api/chat/send-message` carried its own copy of the
+ * gate, the env kill-switch and the try/catch, and `POST /api/ana-ri/stream`
+ * — the STREAMING path, which is the one a chat UI actually uses — carried
+ * none of it. So the recall of the client's project files and past chat
+ * uploads, the thing that stops AnA starting cold on a file the client
+ * uploaded last week, never reached a streaming session at all.
+ *
+ * A capability wired to one of two equivalent paths is the failure this
+ * function exists to make impossible to repeat: there is now one call to make,
+ * and `server/routes/__tests__/session-bootstrap-wiring.test.ts` asserts both
+ * paths make it.
+ *
+ * Returns '' — never throws — when the session is not at its start, when there
+ * is no organization, when ANA_SESSION_BOOTSTRAP_AUTO=false, or when the
+ * rehydration itself fails. Starting a conversation without the recall is a
+ * degraded turn; failing the turn over it would be a worse one.
+ */
+export async function sessionBootstrapBlockFor(opts: {
+  priorMessageCount: number;
+  organizationId?: number | null;
+  projectId?: number;
+  threadId?: string;
+  atomLimit?: number;
+}): Promise<string> {
+  if (
+    !shouldAutoBootstrap({
+      priorMessageCount: opts.priorMessageCount,
+      organizationId: opts.organizationId ?? null,
+      disabled: process.env.ANA_SESSION_BOOTSTRAP_AUTO === 'false',
+    })
+  ) {
+    return '';
+  }
+  try {
+    return await buildSessionBootstrapContext({
+      organizationId: opts.organizationId as number,
+      projectId: opts.projectId,
+      threadId: opts.threadId,
+      atomLimit: opts.atomLimit ?? 6,
+    });
+  } catch {
+    return '';
+  }
 }
 
 export interface SessionBootstrapInput {
