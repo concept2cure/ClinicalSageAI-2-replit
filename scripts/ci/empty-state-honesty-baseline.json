@@ -1,5 +1,8 @@
 {
   "files": [
     "client/src/concept2cure/v2/surfaces/Nonclinical.tsx"
-  ]
+  ],
+  "reasons": {
+    "client/src/concept2cure/v2/surfaces/Nonclinical.tsx": "False positive, checked 2026-09-17. The detector sees `r.findings.length === 0` render \"No findings\" and cannot see that the conditional chain tests `r.error` FIRST (line ~747, rendering \"Not checked — …\" through redactInternals). So the zero branch is reached only when the check actually ran and returned nothing, which is a genuine zero, not a failed read shown as clean. If that error branch is ever removed, this entry stops being true and the line becomes a real defect."
+  }
 }
