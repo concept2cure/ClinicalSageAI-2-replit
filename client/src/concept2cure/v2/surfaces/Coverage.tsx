@@ -118,9 +118,9 @@ export function CodebaseCoverage({
         </div>
         <div className="cv-kpi">
           <span className={`n ${apiConnected ? 'cv-n-ok' : 'cv-n-idle'}`}>
-            {apiConnected ? 'Live' : 'Sample'}
+            {apiConnected ? 'Live' : 'None'}
           </span>
-          <span className="l">Backend link {apiConnected ? 'connected' : '· fixtures'}</span>
+          <span className="l">Backend link {apiConnected ? 'connected' : '· signed out'}</span>
         </div>
       </div>
 

@@ -18,11 +18,12 @@ to one line; edit only your own row to limit merge conflicts.
 
 | Lane | Session | State |
 |---|---|---|
-| WO-15 finding 5 — `c2c_template_specs.doc_types` | `…session_01E2moDuSNSNTBqAHV5GtWoz` | **claimed** 2026-09-17 |
+| WO-15 finding 5 — `c2c_template_specs.doc_types` | `…session_01E2moDuSNSNTBqAHV5GtWoz` | **released** — fixed |
 | WO-15 finding 8 — the two blind gates | `…session_01E2moDuSNSNTBqAHV5GtWoz` | **released** — fixed `b9152a016` |
 | WO-15 finding 4 — `/api/design-risk` | `…session_01J935DZwfFEardJCv85SJds` | **released** — done `153481465` |
 | WO-16C — fabrication sweep (`server/services/`, `server/routes/`) | `…session_01E8btkB8mcLirW4rNvsMNxK` (inferred from commits) | active |
-| WO-15 finding 2 — `project_charters` 27 vs 48 columns | — | **unclaimed** |
+| WO-15 finding 2 — `project_charters` 27 vs 48 columns | `…session_01E2moDuSNSNTBqAHV5GtWoz` | **claimed** 2026-09-17 |
+| WO-15 — `KNOWN_UNLISTED`: 14 of 16 entries fail the list's stated reason | — | **unclaimed**, new, see finding 5 |
 | AnA client-files surface — `server/services/vault/document-*`, `vault-ingest/placement.service.ts`, `server/services/ana/document-*-tools*`, `ana-session-bootstrap*`, `server/startup/document-catalog-bootstrap.ts`, persona's CLIENT'S FILES section | `…session_01DiJJAkasGVrccrxjhYyjxG` | **claimed** 2026-09-17 |
 
 If you are one of the sessions above, correct your own row. If a lane you want
@@ -92,7 +93,7 @@ Nine findings. State as of 2026-09-17:
 | 2 | Open — `project_charters`, 27 columns versus 48 selected |
 | 3 | **Fixed** `0186d8d2d` — charter audit Part 11 append-only triggers |
 | 4 | **Fixed** `153481465` — `/api/design-risk` deleted: 20 endpoints over ten tables that exist on no database |
-| 5 | Open — `c2c_template_specs.doc_types` reaching no populated database. **Next.** |
+| 5 | **Fixed** — `20260716_template_doc_types.sql` listed in the set, its false `KNOWN_UNLISTED` exemption removed. Confirmed, not corrected: the finding was right. |
 | 6 | Fixed (earlier session) |
 | 7 | **Fixed** `4c6f38153` — `contradiction_consequence_log` column name + fabricated `detected_by` default |
 | 8 | **Fixed** `b9152a016` — the installer could not see the `vault` schema, which was hiding `vault.evidence_citations`: declared, INSERTed into by `advancedRAGPipeline.ts:1316`, created by no applier |
@@ -102,12 +103,17 @@ Findings 3 and 7 in `WO-15-...md` each carry a **CORRECTED** block. The original
 finding text is preserved beneath it under "Original finding, as written" — read
 the correction first; in both cases the original headline was wrong.
 
-**Remaining: 5, then 2.** (4 and 8 are done; 1 stays refused.)
+**Remaining: 2.** (4, 5 and 8 are done; 1 stays refused.) Finding 5 also surfaced a
+new item that is NOT part of WO-15's nine: **14 of the 16 `KNOWN_UNLISTED`
+entries in `tests/ops/apply-c2c-migrations-manifest.test.mjs` fail that list's
+own stated reason** — upper bound, at least one known false positive. Each needs
+the per-file treatment finding 5 received.
 
-Finding 5 first step: `c2c_template_specs.doc_types` is reported as reaching no
-populated database. Before fixing anything, re-derive that claim — the
-two-lineage framing in §4 has already been wrong twice in this work order, and
-in finding 7 it understated the defect rather than overstating it.
+Finding 2 first step: `project_charters` is reported as having 27 columns while
+48 are selected. Re-derive it against a canonically provisioned database before
+changing anything — and note that finding 5 is the counter-example to the
+correcting reflex: three findings in a row had wrong headlines, and the fourth
+was right. Check, do not assume either way.
 
 ---
 
