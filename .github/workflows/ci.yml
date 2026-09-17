@@ -355,6 +355,17 @@ jobs:
         # including once in the fix for another instance of itself.
         run: npm run ci:frozen-theme-aliases
 
+      - name: Guardrails — the generated text ramp matches the stylesheets
+        if: "!cancelled() && steps.install.conclusion == 'success'"
+        # surface-text-ramp.css is GENERATED from the tinted-surface rules in the
+        # hand-written sheets, and it re-bases the text ramp so muted type stays
+        # legible on a tint. Nothing ran this check: not .husky/pre-push, not
+        # this workflow. It was stale, and not from one change — regenerating it
+        # picked up .cb-card:hover and .pj-card:hover appearing and
+        # .lm-card:hover going away, from three different sessions that each
+        # left the ramp describing a stylesheet that had moved on.
+        run: npm run ci:surface-text-ramp
+
       - name: Guardrails — tenant-isolation in raw SQL (no regressions)
         if: "!cancelled() && steps.install.conclusion == 'success'"
         run: npm run ci:tenant-isolation:no-regression

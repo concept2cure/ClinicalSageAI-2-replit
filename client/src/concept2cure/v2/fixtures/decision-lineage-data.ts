@@ -24,9 +24,19 @@
  * compliance verdict about the decision or the system.
  * Server shape: DecisionLineageService.Part11RecordCheck.
  */
+export type LineagePart11Element = 'attributed-actor' | 'recorded-timestamp' | 'applied-signature';
+
+/**
+ * Mirrors Part11RecordCheck in server/services/workflow/DecisionLineageService.
+ * WO-16C #70 follow-up added PARTIAL and `notAssessed`: the §11.50 element is
+ * never checked by that service — `workflow_approvals` carries no signature
+ * column and the service reads no signature store — so a record with nothing
+ * missing but an unchecked signature is PARTIAL, not COMPLETE.
+ */
 export interface LineagePart11RecordCheck {
-  status: 'COMPLETE' | 'INCOMPLETE';
-  missing: Array<'attributed-actor' | 'recorded-timestamp' | 'applied-signature'>;
+  status: 'COMPLETE' | 'PARTIAL' | 'INCOMPLETE';
+  missing: LineagePart11Element[];
+  notAssessed: LineagePart11Element[];
 }
 
 export interface LineageRegulatory {

@@ -227,9 +227,14 @@ describe('pdev workflow bridge: the §11.10(e) audit row did not persist', () =>
 
     // ...and the envelope must say, in the third state, that the audit row did not.
     expect(result.auditTrail.persisted).toBe(false);
-    expect(
-      result.auditTrail.persisted === false ? result.auditTrail.reason : '',
-    ).toMatch(/connection slots|53300/i);
+    // WO-16C #133 follow-up: the envelope reaches an authenticated tenant
+    // client, and AuditWriteResult.error is documented "Never surfaced to a
+    // user". A stable code and a safe sentence go on the wire; the Postgres
+    // text stays in the log.
+    const arm = result.auditTrail.persisted === false ? result.auditTrail : null;
+    expect(arm?.code).toBe('AUDIT_ROW_NOT_PERSISTED');
+    expect(arm?.message).toMatch(/audit/i);
+    expect(JSON.stringify(result.auditTrail)).not.toMatch(/connection slots|53300/i);
   });
 
   test('a completing approval reports the lost audit row', async () => {
@@ -244,9 +249,9 @@ describe('pdev workflow bridge: the §11.10(e) audit row did not persist', () =>
     expect(H.tables.pdev_program_activities[0].state).toBe('approved');
 
     expect(result.auditTrail.persisted).toBe(false);
-    expect(
-      result.auditTrail.persisted === false ? result.auditTrail.reason : '',
-    ).toBeTruthy();
+    const armC = result.auditTrail.persisted === false ? result.auditTrail : null;
+    expect(armC?.code).toBe('AUDIT_ROW_NOT_PERSISTED');
+    expect(armC?.message).toBeTruthy();
   });
 
   test('a rejection reports the lost audit row', async () => {
@@ -278,6 +283,6 @@ describe('pdev workflow bridge: the §11.10(e) audit row did not persist', () =>
     // Pre-fix these were byte-identical, which is the defect: a 200 that cannot
     // be told apart from the one where the §11.10(e) row exists.
     expect(lost).not.toEqual(recorded);
-    expect(recorded.auditTrail).toEqual({ persisted: true });
+    expect(recorded.auditTrail).toEqual({ persisted: true, chained: true });
   });
 });
