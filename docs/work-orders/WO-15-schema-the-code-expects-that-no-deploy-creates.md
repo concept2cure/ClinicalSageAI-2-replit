@@ -211,7 +211,80 @@ deploys green.
 It applies exactly one — 044b, at index 11 — and that one is the file creating
 `core.programs`. The comment and the list contradict each other.
 
-## Finding 2 — `project_charters` is 27 columns; the code selects 48
+## Finding 2 — CONFIRMED and FIXED 2026-09-17
+
+> **Confirmed exactly as written**, and it is the most consequential of the
+> nine. Measured on a canonically provisioned database: 27 live columns, 48
+> declared, and all 21 named columns genuinely absent.
+>
+> **AND IT CORRECTS AN ERROR OF MINE.** Finding 3's correction block said the
+> charter tables are "declared in `shared/schema/project-charter.ts`, so
+> `drizzle-kit push` creates them at install-fresh step 2". The first half is
+> true; **the second is false.** `drizzle.config.ts` names only
+> `shared/schema.ts`, `shared/schema/ana-intelligence.ts` and
+> `shared/schema/report-os.ts`. `project-charter.ts` is re-exported from
+> `shared/schema/index.ts`, which is **not** an entrypoint and is not reachable
+> from one:
+>
+> ```
+> project-charter.ts reachable from the drizzle entrypoints: false
+>   project_charters      on push surface: false
+>   charter_sections      on push surface: false
+>   timeline_phases       on push surface: false
+>   project_commitments   on push surface: false
+>   charter_audit_events  on push surface: false
+> ```
+>
+> So the charter tables are outside the push surface entirely. They come from
+> install-fresh's step-3 overlay — `0012_project_charter_timeline.sql` for
+> `project_charters` (27 columns, the only creator anywhere) and `20260629` for
+> the other four. That is *why* the table is frozen: nothing reconciles it, and
+> no file in `C2C_MIGRATION_FILES` had ever created or altered it.
+>
+> The finding-3 fix is unaffected — it is guarded on the table existing, not on
+> what created it — but the wrong mechanism is corrected in all three places it
+> was written: the migration header, the migration-set entry, and finding 3's
+> block above. A wrong reason is how the next person reaches a wrong conclusion.
+>
+> **What was broken, executed:**
+>
+> | Surface | Statement | Result before |
+> |---|---|---|
+> | `charters.ts:403` | `d.select().from(projectCharters)` — unqualified, expands to all 48 | `ERROR: column "pma_config" does not exist` |
+> | `pma-workflow-routes.ts:71` | `SELECT pma_config FROM project_charters` | same |
+> | `:34` / `:43` | `SET pma_config = $1` / `INSERT … pma_config` | same |
+>
+> The PMA workflow-progress feature could not work on any database, and every
+> charter read raised 42703.
+>
+> **FIXED** by `migrations/20260917_project_charters_declared_columns.sql`, new
+> in `C2C_MIGRATION_FILES` (270): the 21 columns with the types the declaration
+> asks for, plus `proj_charter_stage_idx`, the one declared index whose column
+> did not exist. Every name and type read off `shared/schema/project-charter.ts`
+> — nothing invented.
+>
+> ```
+> BEFORE  columns: 27   select: ERROR: column "pma_config" does not exist
+> AFTER   columns: 48   select: resolves     UPDATE pma_config: UPDATE 0
+> ```
+>
+> Applied twice more: idempotent, still 48.
+>
+> **Not converged, recorded instead:** the 27 columns `0012` already makes use
+> `jsonb` and `timestamp` where the declaration says `json` and `timestamptz` —
+> `0012`'s own comment (line 94) acknowledges this. Retyping live columns is a
+> rewrite with data implications, not an additive fix; it belongs to WO-1's
+> schema-authority work. The new columns match the declaration; the old ones keep
+> their shapes.
+>
+> **Also still true and untouched:** `charters.ts:398-401` says `charter_sections`
+> "was dropped by `migrations/20260611_drop_charter_staging_tables.sql`; there is
+> no section count to return." That table EXISTS (22 columns, verified live) —
+> `20260611` is on no applier and `20260629` creates it. The comment is false but
+> changing the endpoint's behaviour is a product decision, not a schema fix.
+
+### Original finding, as written
+
 
 `migrations/0012_project_charter_timeline.sql:10` is the **only** creator of
 `project_charters` in the repository, and no `ALTER TABLE project_charters`
@@ -243,9 +316,20 @@ is one of the 21 that do not exist.
 > **The claim below is half wrong, and the wrong half is the headline.** The
 > four tables do NOT fail to exist. `project_charters`, `charter_sections`,
 > `timeline_phases`, `project_commitments` and `charter_audit_events` are all
-> declared in `shared/schema/project-charter.ts`, so `drizzle-kit push` creates
-> them at install-fresh step 2. Verified present on a canonically provisioned
-> database. Any deployed database has them.
+> declared in `shared/schema/project-charter.ts` and all five EXIST on a
+> canonically provisioned database. Any deployed database has them.
+>
+> **CORRECTED AGAIN 2026-09-17:** this block used to say push creates them at
+> install-fresh step 2. That is **false**, and the error was mine.
+> `drizzle.config.ts` names only `shared/schema.ts`,
+> `shared/schema/ana-intelligence.ts` and `shared/schema/report-os.ts`;
+> `project-charter.ts` is re-exported from `shared/schema/index.ts`, which is
+> **not** an entrypoint and is not reachable from one. The charter tables are
+> outside the push surface entirely — they come from install-fresh's step-3
+> overlay (`0012` for `project_charters`, `20260629` for the other four). The
+> fix below stands unchanged, because it is guarded on the table existing rather
+> than on what created it; the reasoning was wrong, not the code. Finding 2 is
+> the direct consequence of the real mechanism.
 >
 > **What is genuinely on no replaying applier is the Part 11 immutability
 > enforcement.** Drizzle cannot express a trigger, so
