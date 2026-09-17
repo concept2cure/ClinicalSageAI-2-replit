@@ -2107,6 +2107,35 @@ export const C2C_MIGRATION_FILES = [
      20260905b pattern, idempotent. */
   'migrations/20260911_vault_evidence_citations.sql',
 
+  /* c2c_template_specs + its doc_types column, added 2026-09-17 (WO-15
+     finding 5). Self-contained: this file creates the base table IF NOT EXISTS
+     (byte-identical to 20260531_template_specs.sql modulo comments — verified)
+     and then ADDs the column, so listing it alone covers both. 20260531 is a
+     strict subset and stays unlisted.
+
+     The table has NO Drizzle definition — zero hits under shared/ — so push
+     creates nothing, and both creators ran on install-fresh's step-3 overlay and
+     nowhere else. The table therefore exists on every freshly provisioned
+     database and was re-asserted on none. A database provisioned BEFORE
+     20260716 was written has the table from 20260531 and no doc_types, and no
+     applier would ever have added it.
+
+     Proven before the fix: dropped doc_types on a canonically provisioned
+     database, ran deploy-migrate, it reported "safe to roll services" and the
+     column did NOT come back.
+
+     The absence is silent rather than loud, which is why it survived: no
+     statement names doc_types (INSERT lists twelve columns without it, UPDATE
+     sets four, reads are SELECT *), so nothing raises 42703 — row.doc_types is
+     undefined and templateStore.ts:47 maps it to []. Every template reports
+     zero document types, indistinguishable from one that has none.
+
+     NOT claimed: that this makes document-type chips appear. Nothing in the
+     repository writes doc_types — the column is inert on every database,
+     with-column or without. Recorded in the work order as its own finding
+     rather than fixed by inventing a writer. */
+  'migrations/20260716_template_doc_types.sql',
+
   // The three IVDR append-only history tables carry no tenant column of their
   // own — their tenant is their parent's, reached by foreign key — so BOTH
   // sweeps below are blind to them: the integer sweep matches on

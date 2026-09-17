@@ -820,26 +820,43 @@ export default function createProjectVaultRoutes(): Router {
 
       // 4) Per-document live section status (+ owner + timestamp) → display tree.
       const tree: VaultFolder[] = [];
-      for (const doc of docsRes.rows as DocRow[]) {
+      // ONE query for every document's sections, not one per document. This
+      // was a round trip per authored document inside a loop — the tree read
+      // cost grew with the programme, on the surface whose whole job is to show
+      // a programme's documents. The predicate is the only thing that changed
+      // shape (`= $1` became `= ANY($1::text[])`); the EXISTS org re-assertion
+      // is carried over verbatim, because it is what keeps the section read
+      // from widening past the caller's tenant.
+      const docIds = (docsRes.rows as DocRow[]).map((d) => d.id);
+      const liveByDoc = new Map<string, Map<string, LiveSection>>();
+      if (docIds.length > 0) {
         const secRes = await pool.query(
-          // The document_id was already resolved from the org-filtered
+          // The document ids were already resolved from the org-filtered
           // c2c_documents query above; the EXISTS re-asserts that ownership
-          // inline (defense in depth + explicit org_id scoping so the section
-          // read never widens past the caller's tenant).
-          `SELECT ds.section_key, ds.status, ds.version, ds.updated_at,
+          // inline (defense in depth + explicit org_id scoping).
+          `SELECT ds.document_id, ds.section_key, ds.status, ds.version, ds.updated_at,
                   ${sectionHasContentSql('ds.content')} AS has_content,
                   COALESCE(u.name, u.email) AS owner_name
              FROM c2c_document_sections ds
              LEFT JOIN users u ON u.id = ds.owner_id
-            WHERE ds.document_id = $1
+            WHERE ds.document_id = ANY($1::text[])
               AND EXISTS (SELECT 1 FROM c2c_documents d
                            WHERE d.id = ds.document_id AND d.org_id = $2)`,
-          [doc.id, orgId],
+          [docIds, orgId],
         );
-        const live = new Map<string, LiveSection>(
-          (secRes.rows as LiveSection[]).map((r): [string, LiveSection] => [r.section_key, r]),
-        );
-        tree.push(documentFolder(doc, live));
+        for (const r of secRes.rows as Array<LiveSection & { document_id: string }>) {
+          let forDoc = liveByDoc.get(r.document_id);
+          if (!forDoc) {
+            forDoc = new Map<string, LiveSection>();
+            liveByDoc.set(r.document_id, forDoc);
+          }
+          forDoc.set(r.section_key, r);
+        }
+      }
+      for (const doc of docsRes.rows as DocRow[]) {
+        // A document with no rows in the result has no live sections — the same
+        // empty map the per-document query produced for it.
+        tree.push(documentFolder(doc, liveByDoc.get(doc.id) ?? new Map<string, LiveSection>()));
       }
 
       // 5) Derived branches: what the pipelines file for this program. ONE

@@ -39,6 +39,7 @@ import type {
   GatewayUsage,
   AnaGatewayResponse,
   AnaToolUse,
+  GatewayCitation,
   StreamCallback,
   ContentBlock,
 } from './types';
@@ -550,6 +551,31 @@ function resolveStructuredOutputFormat(
 
   if (modelConfig.supportsStructuredOutputs !== true) return { enforced: false };
   return { format: { type: 'json_schema', schema: request.jsonSchema }, enforced: true };
+}
+
+/**
+ * Normalise one wire citation into {@link GatewayCitation}.
+ *
+ * The API emits five location shapes — page, character range, content block,
+ * web-search result, search result — for one idea: this claim came from here.
+ * Callers recording provenance should not have to branch on all five, and a
+ * shape this function does not recognise still yields its `cited_text` rather
+ * than being dropped, because the span is the part that matters most.
+ */
+function normalizeCitation(raw: any): GatewayCitation | null {
+  const citedText = typeof raw?.cited_text === 'string' ? raw.cited_text : '';
+  if (!citedText) return null;
+  return {
+    citedText,
+    locationType: typeof raw?.type === 'string' ? raw.type : 'unknown',
+    ...(typeof raw?.document_title === 'string' ? { documentTitle: raw.document_title } : {}),
+    ...(typeof raw?.title === 'string' ? { documentTitle: raw.title } : {}),
+    ...(typeof raw?.start_page_number === 'number' ? { startPage: raw.start_page_number } : {}),
+    ...(typeof raw?.end_page_number === 'number' ? { endPage: raw.end_page_number } : {}),
+    ...(typeof raw?.start_char_index === 'number' ? { startCharIndex: raw.start_char_index } : {}),
+    ...(typeof raw?.end_char_index === 'number' ? { endCharIndex: raw.end_char_index } : {}),
+    ...(typeof raw?.url === 'string' ? { url: raw.url } : {}),
+  };
 }
 
 /** One buffer per open tool_use block, keyed by the stream event's `index`. */
@@ -1572,9 +1598,18 @@ export class AIGateway {
     let thinking = '';
     const toolUses: AnaToolUse[] = [];
 
+    // On the non-streaming path a cited answer splits into several text blocks,
+    // each carrying the citations for the span it contains — the same facts the
+    // streaming path receives as citations_delta.
+    const nonStreamCitations: GatewayCitation[] = [];
+
     for (const block of response.content || []) {
       if (block.type === 'text') {
         content += block.text;
+        for (const raw of ((block as any).citations || []) as any[]) {
+          const citation = normalizeCitation(raw);
+          if (citation) nonStreamCitations.push(citation);
+        }
       } else if (block.type === 'thinking') {
         thinking += (block as any).thinking || '';
       } else if (block.type === 'tool_use') {
@@ -1623,6 +1658,7 @@ export class AIGateway {
       // Says whether the caller's schema was actually enforced. Without it a
       // constrained answer and a fortunate one look identical.
       structuredOutputEnforced: structured.enforced,
+      citations: nonStreamCitations.length > 0 ? nonStreamCitations : undefined,
     };
   }
 
@@ -1763,6 +1799,9 @@ export class AIGateway {
     // which block a fragment belongs to. `toolIndex` points back at the entry
     // in `toolUses` so the parsed object lands on the right tool.
     const toolInputBuffers: ToolInputBuffers = new Map();
+    // Citations arrive interleaved with the text they support. Collected in
+    // arrival order so a caller can match a claim to its source.
+    const citations: GatewayCitation[] = [];
     let inputTokens = 0;
     let outputTokens = 0;
     let cacheCreationInputTokens = 0;
@@ -1818,6 +1857,11 @@ export class AIGateway {
           } else if (event.delta?.type === 'thinking_delta') {
             thinking += event.delta.thinking;
             onStream('', { type: 'thinking', thinkingContent: event.delta.thinking });
+          } else if (event.delta?.type === 'citations_delta') {
+            // Where the model read it. This branch did not exist, so citations
+            // were produced, billed and dropped before any caller saw one.
+            const citation = normalizeCitation(event.delta.citation);
+            if (citation) citations.push(citation);
           } else if (event.delta?.type === 'input_json_delta') {
             // The model's arguments for a tool, one fragment at a time. Append
             // verbatim; the fragments are only valid JSON once concatenated.
@@ -1914,6 +1958,8 @@ export class AIGateway {
       cacheHit: streamCacheStats ? cacheReadInputTokens > 0 : undefined,
       cacheStats: streamCacheStats,
       structuredOutputEnforced: structured.enforced,
+      // Undefined, not [], when there were none — see GatewayCitation.
+      citations: citations.length > 0 ? citations : undefined,
     } as AnaGatewayResponse;
   }
 
