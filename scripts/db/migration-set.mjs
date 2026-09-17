@@ -1519,10 +1519,25 @@ export const C2C_MIGRATION_FILES = [
      tables "are on no deploy path" and so "may not exist" on a populated
      database. The second half is WRONG and is corrected in that work order:
      project_charters, charter_sections, timeline_phases, project_commitments
-     AND charter_audit_events are all declared in shared/schema/project-charter.ts
-     (projectCharters:76 … charterAuditEvents:446), so drizzle-kit push creates
-     them at install-fresh step 2. Verified present on a canonically
-     provisioned database.
+     AND charter_audit_events all EXIST on a canonically provisioned database —
+     verified by querying one.
+
+     CORRECTED 2026-09-17: this entry used to add "so drizzle-kit push creates
+     them at install-fresh step 2". That is FALSE. They are declared in
+     shared/schema/project-charter.ts, but drizzle.config.ts names only
+     shared/schema.ts, ana-intelligence.ts and report-os.ts, and
+     project-charter.ts is re-exported from shared/schema/index.ts, which is not
+     an entrypoint and is not reachable from one — the same NOT-re-exported
+     pattern already noted at the two entries above. The charter tables are
+     outside the push surface entirely. They come from install-fresh's step-3
+     overlay: 0012_project_charter_timeline.sql for project_charters, and
+     20260629_charter_tables_rebuild.sql for the other four.
+
+     The fix below is unaffected — it is guarded on the table existing, not on
+     what created it — but the reason it gives was wrong, and a wrong reason is
+     how the next person reaches a wrong conclusion. The consequence of the real
+     mechanism is WO-15 finding 2: project_charters is frozen at 0012's 27
+     columns while the declaration names 48.
 
      What Drizzle CANNOT express is a trigger. charter_audit_events_no_update
      and charter_audit_events_no_delete existed only in
@@ -2107,6 +2122,63 @@ export const C2C_MIGRATION_FILES = [
      each other. Guarded on vault.documents, RLS-policied through it on the
      20260905b pattern, idempotent. */
   'migrations/20260911_vault_evidence_citations.sql',
+
+  /* c2c_template_specs + its doc_types column, added 2026-09-17 (WO-15
+     finding 5). Self-contained: this file creates the base table IF NOT EXISTS
+     (byte-identical to 20260531_template_specs.sql modulo comments — verified)
+     and then ADDs the column, so listing it alone covers both. 20260531 is a
+     strict subset and stays unlisted.
+
+     The table has NO Drizzle definition — zero hits under shared/ — so push
+     creates nothing, and both creators ran on install-fresh's step-3 overlay and
+     nowhere else. The table therefore exists on every freshly provisioned
+     database and was re-asserted on none. A database provisioned BEFORE
+     20260716 was written has the table from 20260531 and no doc_types, and no
+     applier would ever have added it.
+
+     Proven before the fix: dropped doc_types on a canonically provisioned
+     database, ran deploy-migrate, it reported "safe to roll services" and the
+     column did NOT come back.
+
+     The absence is silent rather than loud, which is why it survived: no
+     statement names doc_types (INSERT lists twelve columns without it, UPDATE
+     sets four, reads are SELECT *), so nothing raises 42703 — row.doc_types is
+     undefined and templateStore.ts:47 maps it to []. Every template reports
+     zero document types, indistinguishable from one that has none.
+
+     NOT claimed: that this makes document-type chips appear. Nothing in the
+     repository writes doc_types — the column is inert on every database,
+     with-column or without. Recorded in the work order as its own finding
+     rather than fixed by inventing a writer. */
+  'migrations/20260716_template_doc_types.sql',
+
+  /* project_charters — the 21 declared columns no applier ever created, added
+     2026-09-17 (WO-15 finding 2).
+
+     server/routes/charters.ts issues an unqualified d.select().from(
+     projectCharters), which expands to all 48 columns the declaration names.
+     migrations/0012_project_charter_timeline.sql is the ONLY creator of this
+     table in the repository and makes 27, so that select raised 42703 on every
+     database. server/routes/pma-workflow-routes.ts names pma_config explicitly
+     in raw SQL three times, so the PMA workflow-progress feature could not work
+     anywhere.
+
+     CORRECTION TO AN EARLIER NOTE IN THIS FILE: the charter entry above once
+     said drizzle-kit push creates the charter tables. It does NOT.
+     drizzle.config.ts names shared/schema.ts, ana-intelligence.ts and
+     report-os.ts; shared/schema/project-charter.ts is re-exported only from
+     shared/schema/index.ts, which is not an entrypoint and is not reachable
+     from one. The charter tables are outside the push surface entirely and come
+     from install-fresh's overlay — 0012 for project_charters, 20260629 for the
+     other four. The finding-3 fix above is unaffected (it is guarded on the
+     table existing, not on what created it), but its reasoning is corrected
+     here and in the file itself.
+
+     Additive and idempotent: ADD COLUMN IF NOT EXISTS throughout, guarded on
+     the table. The 27 pre-existing columns' jsonb/timestamp-vs-json/timestamptz
+     divergence from the declaration is NOT touched — that is a retype with data
+     implications and belongs to WO-1. */
+  'migrations/20260917_project_charters_declared_columns.sql',
 
   // The three IVDR append-only history tables carry no tenant column of their
   // own — their tenant is their parent's, reached by foreign key — so BOTH

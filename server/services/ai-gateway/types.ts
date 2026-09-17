@@ -193,8 +193,45 @@ export type StreamCallback = (chunk: string, metadata?: {
   thinkingContent?: string;
 }) => void;
 
+/**
+ * A citation the model produced, normalised across the shapes the API emits.
+ *
+ * Anthropic cites by page (a PDF), by character range (a text document), or by
+ * URL (a web-search result). They are one idea — "this claim came from here" —
+ * so callers should not have to branch on five wire types to record provenance.
+ *
+ * This is a stronger claim than anything else AnA returns. `tool-pedigree.ts`
+ * grades model-written content as `model_assisted` — verify before relying — and
+ * a citation is the one case where the span and its source can be checked
+ * directly.
+ */
+export interface GatewayCitation {
+  /** The exact span the model is citing, verbatim from the source. */
+  citedText: string;
+  /** Document title, when the source carried one. */
+  documentTitle?: string;
+  /** 1-indexed page range, for a PDF source. */
+  startPage?: number;
+  endPage?: number;
+  /** Character range, for a plain-text source. */
+  startCharIndex?: number;
+  endCharIndex?: number;
+  /** Source URL, for a web-search result. */
+  url?: string;
+  /** The wire location type, kept so a caller can tell the sources apart. */
+  locationType: string;
+}
+
 /** Claude-enhanced gateway response with thinking and tool use */
 export interface AnaGatewayResponse extends GatewayResponse {
+  /**
+   * Citations the model produced, or undefined when it produced none.
+   *
+   * Undefined rather than `[]` deliberately: an empty array reads as "we looked
+   * and there were none", which for a turn with no cited document is a claim we
+   * cannot make. Undefined says the question does not apply.
+   */
+  citations?: GatewayCitation[];
   /**
    * Whether the caller's `jsonSchema` was actually enforced on the wire.
    *

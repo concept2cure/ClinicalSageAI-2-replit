@@ -154,6 +154,22 @@ export async function searchDocumentPassages(
     coverage = null;
   }
 
+  /* NOTHING IS INDEXED — answer without embedding anything.
+     The two feature flags are independent, and catalog-on/chunking-off is the
+     combination most deployments will actually run: cataloging is free at
+     ingest, the passage index embeds every upload and is not. In that state a
+     search used to embed the query first and then fail at the provider, so the
+     tool reported "the embedding provider is unreachable" — infrastructure
+     blame for a state that is nothing of the sort, and the opposite of what the
+     startup line promises an operator. Even with a healthy provider it was a
+     network round trip to search zero rows.
+     Checked against `indexed`, not `total`: an organization with no documents
+     at all is a different (also honest) message the caller composes from the
+     same coverage. */
+  if (coverage && coverage.total > 0 && coverage.indexed === 0) {
+    return { hits: [], coverage };
+  }
+
   const { ragRouter } = await import('../ragRouter.js');
   let documents;
   try {

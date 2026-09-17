@@ -272,11 +272,19 @@ async function runInvestigation(id: string): Promise<void> {
     },
   });
 
+  // The status guard is not optional, and it is the one this statement was
+  // missing while both of its siblings had it: the failure path writes
+  // `WHERE id = $1 AND status IN ('queued','running')` and the pickup writes
+  // `WHERE id = $1 AND status = 'queued'`. Unguarded, a run that reached a
+  // terminal state while the loop was still working — failed by the error
+  // handler, or cancelled once that lands — is silently rewritten to
+  // 'completed' by whichever writer finishes last. A cancelled investigation
+  // reporting a result is worse than one reporting nothing.
   await pool.query(
     `UPDATE ana_deep_investigations
      SET status = 'completed', result_text = $2, model = $3, provider = $4,
          heartbeat_at = NOW(), completed_at = NOW()
-     WHERE id = $1`,
+     WHERE id = $1 AND status = 'running'`,
     [id, response.content || '', response.model ?? null, response.provider ?? null],
   );
 }

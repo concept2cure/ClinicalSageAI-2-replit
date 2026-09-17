@@ -767,6 +767,14 @@ export function mountStreamRoute(router: Router): void {
                       type: 'document',
                       source: { type: 'base64', media_type: docMime, data: buf.toString('base64') },
                       title: f.fileName,
+                      // Ask for citations. This is what lets AnA say "page 34 of
+                      // Protocol v3.2 says" instead of asserting it unsourced —
+                      // the difference between a draft a reviewer checks line by
+                      // line and one they can spot-check against the document.
+                      // Note this makes the turn ineligible for a JSON schema;
+                      // the gateway refuses that pair rather than letting the
+                      // API 400 it.
+                      citations: { enabled: true },
                     },
                     { type: 'text', text: `Attached document: ${f.fileName}` },
                   ],
