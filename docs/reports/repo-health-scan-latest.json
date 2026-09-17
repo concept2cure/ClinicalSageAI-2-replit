@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-17T06:02:58.682Z",
+  "generatedAt": "2026-09-17T06:11:33.001Z",
   "git": {
-    "sha": "a10e2de2df2514367f196a6b3f0ce349b99d582a",
+    "sha": "29fcf7819b532942e2dd1df7d2f050116e725453",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -1957,7 +1957,7 @@
     "largeFilesByBytes": [
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "bytes": 1027362
+        "bytes": 1027892
       },
       {
         "file": "shared/schema.ts",
@@ -2131,7 +2131,7 @@
       },
       {
         "file": "server/services/ana/AnaToolExecutor.ts",
-        "lines": 19910
+        "lines": 19921
       },
       {
         "file": "server/routes/authoring.router.ts",
@@ -2375,7 +2375,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/Shell.tsx",
-        "lines": 1871
+        "lines": 1884
       },
       {
         "file": "server/services/post-approval/post-approval-knowledge.ts",
@@ -2400,6 +2400,10 @@
       {
         "file": "server/services/vaccine/vaccine-knowledge.ts",
         "lines": 1836
+      },
+      {
+        "file": "server/routes/ana-ri/stream.ts",
+        "lines": 1830
       },
       {
         "file": "server/services/ana/citation-engine.ts",
@@ -2436,10 +2440,6 @@
       {
         "file": "server/services/ana-ri/context-enrichment.ts",
         "lines": 1791
-      },
-      {
-        "file": "server/routes/ana-ri/stream.ts",
-        "lines": 1790
       },
       {
         "file": "server/routes/ana-cortex-ft.ts",
