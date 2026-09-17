@@ -273,18 +273,25 @@ nothing like every other bootstrap source.
 
 ## Known gaps / next steps (deliberately out of scope here)
 
-- **Chat-upload convergence (structural):** discovery is closed —
-  `list_project_documents` surfaces chat uploads with reopenable `fileId`s —
-  but chat uploads still have no `vault.documents` row, no read receipts, and
-  no coverage-gated catalog entry of their own; `remember_document_in_project`
-  (now embedding its entries) is their durable-memory path. A join key from
-  `cre_evidence_sources` to `vault.documents` remains open.
+- **Chat uploads have no catalog of their own:** they are discoverable,
+  recalled at session start, and can be *filed* into the vault
+  (`file_chat_upload_to_vault`), at which point they gain everything. What they
+  do not have is a coverage-gated catalog entry *while still unfiled* —
+  deliberately: the comprehension record hangs off `vault.documents`, and
+  filing is the act that gives a file a governed home. `remember_document_in_project`
+  (now embedding its entries) remains their lighter durable-memory path.
 - **Cataloging is still model-invoked:** Anna reads and catalogs a document
   when the work calls for it; nothing sweeps the backlog of "extracted but not
   yet studied" files on its own. The listing labels them honestly, so the
   backlog is visible rather than hidden.
-- **`vault.documents.page_count`** is still never populated at ingest
-  (`pageCount` is declared and stays null); the catalog records char/word
-  counts and carries `page_count` for when ingest starts supplying it.
-- **Bootstrap recall of chat uploads:** the session-start digest lists vault
-  documents only; chat uploads are reachable via the discovery tool.
+- ~~`vault.documents.page_count` never populated~~ — **closed.** Ingest now
+  reads the count from the PDF itself (`pdfPageCount`, no text-layer census) and
+  writes it to the document and its catalog row. It stays null for a format
+  with no pages or a file that will not parse, so null now means "not
+  applicable or not readable" rather than "nobody looked".
+- ~~Bootstrap recall of chat uploads~~ — **closed.** The session-start digest
+  now carries a second block for files the client attached in past
+  conversations, each with the `file_id` that reopens it, saying plainly that
+  they are not filed and naming the tool that files them. One definition of
+  "the chat uploads this org has" (`listChatUploads`) serves both the digest and
+  the discovery tool.
