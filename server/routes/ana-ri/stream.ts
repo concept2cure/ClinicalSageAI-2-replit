@@ -25,6 +25,7 @@ import type { GatewayMessage } from '../../services/ai-gateway/types.js';
 import {
   resolveEffortLevel,
   resolveEffortStrategy,
+  resolveApiEffort,
   resolveStrategyWithPrecedence,
   resolveModelOverride,
 } from '../../services/ai-gateway/effort.js';
@@ -872,6 +873,20 @@ export function mountStreamRoute(router: Router): void {
         routingPlanStrategy: routingPlan.strategy,
       });
 
+      // The API's own effort — how hard the chosen model works, as opposed to
+      // which model gets chosen. Only the second half was ever sent, so a user
+      // asking for Thorough got a better model that then reasoned at the same
+      // depth as Fast.
+      //
+      // The same governance rule applies: a kernel-pinned strategy always wins,
+      // so a tenant pinned to quality cannot be dropped to 'low' from the
+      // composer. When a policy hint is present the user's effort is not in
+      // force, and sending its API effort would smuggle the override back in
+      // through the other half of the control.
+      const apiEffort = policyHint?.preferredStrategy
+        ? undefined
+        : resolveApiEffort(effortUsed);
+
       // Optional explicit model override. Validated against THIS tenant's enabled
       // model set; an invalid / disabled / absent value is DROPPED SILENTLY and we
       // fall back to the (effort-derived) strategy above. The override does not
@@ -1072,6 +1087,7 @@ export function mountStreamRoute(router: Router): void {
         promptCache: { enabled: true, type: 'ephemeral' },
         // Stop means stop generating, not just stop rendering.
         signal: runSignal,
+        apiEffort,
         ...(streamThinkingConfig ? { thinking: streamThinkingConfig } : {}),
         ...(streamTools.length > 0 ? { tools: streamTools } : {}),
         stream: true,
@@ -1579,6 +1595,10 @@ export function mountStreamRoute(router: Router): void {
               : {}),
             promptCache: { enabled: true, type: 'ephemeral' },
             signal: runSignal,
+            // Pinned per TURN, not per round: changing effort mid-conversation
+            // invalidates the messages cache, and the follow-up rounds are the
+            // same piece of work as the first.
+            apiEffort,
             ...(includeTools && streamTools.length > 0 ? { tools: streamTools } : {}),
             stream: true,
             onStream: (chunk: string, metadata?: any) => {

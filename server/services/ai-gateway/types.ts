@@ -195,6 +195,18 @@ export type StreamCallback = (chunk: string, metadata?: {
 
 /** Claude-enhanced gateway response with thinking and tool use */
 export interface AnaGatewayResponse extends GatewayResponse {
+  /**
+   * Whether the caller's `jsonSchema` was actually enforced on the wire.
+   *
+   * `false` means the answer may be well-formed by luck rather than by
+   * construction — the resolved model could not constrain it, or no schema was
+   * supplied. Undefined on providers and paths that do not participate.
+   *
+   * This exists because the alternative was silence: the schema was dropped and
+   * the response looked identical either way, so a governed caller could not
+   * tell a guaranteed answer from a fortunate one.
+   */
+  structuredOutputEnforced?: boolean;
   /** Extended thinking output (if enabled) */
   thinking?: string;
   /** Tool use requests from Claude */
@@ -305,6 +317,16 @@ export interface GatewayRequest {
 
   /** JSON schema for structured output (requires jsonMode=true) */
   jsonSchema?: Record<string, unknown>;
+
+  /**
+   * The API's `output_config.effort` — how hard the chosen model works, as
+   * opposed to {@link RoutingStrategy}, which is which model gets chosen. The
+   * Composer's Fast/Balanced/Thorough control has always meant both.
+   *
+   * Pin it per turn rather than varying it per round: changing effort
+   * mid-conversation invalidates the messages cache.
+   */
+  apiEffort?: 'low' | 'medium' | 'high' | 'max';
 
   /** Request streaming response */
   stream?: boolean;
@@ -511,6 +533,16 @@ export interface ModelConfig {
    * models reject all three with a 400.
    */
   supportsSamplingParams: boolean;
+
+  /**
+   * Whether this model constrains its output to a JSON schema via
+   * `output_config.format`. Supported on Opus 5, Opus 4.8, Sonnet 5 and
+   * Haiku 4.5 — notably NOT on Sonnet 4.6, which sits directly below Sonnet 5
+   * on the fallback ladder, so the ladder genuinely has a gap in it. That gap
+   * is why this is data rather than a family rule, and why a caller is told
+   * when the guarantee was not applied instead of being left to infer it.
+   */
+  supportsStructuredOutputs?: boolean;
 
   /**
    * Whether this model accepts a `{role: 'system'}` turn inside `messages[]`
