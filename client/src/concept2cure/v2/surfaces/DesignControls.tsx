@@ -3,6 +3,10 @@ import { I } from '../icons';
 import { useLiveRows, EmptyState, isPendingStore } from '../dataConnect';
 import { AnswerLead } from '../AnswerLead';
 import { assessmentStateFor, mayReassure } from '../assessmentState';
+/* One definition of the 820.30 traceability rule and of the pass value, shared
+   with server/routes/mdx-engineering.ts — the other reader of this store, which
+   had its own copy and disagreed with this one over identical rows. */
+import { DESIGN_CONTROL_PASS, isFullyTraced } from '@shared/regulatory/design-controls-trace';
 import type { SurfaceViewProps } from '../surfaceViews';
 import { usePublishSurfaceContext } from '../surfaceContext';
 import { C2CForm } from '../C2CForm';
@@ -100,7 +104,7 @@ const DC_820_30: Dc82030Def[] = [
   { el: 'traceability', label: 'Full requirements<->V&V traceability', ref: '820.30(j) · ISO 13485 §7.3.10',
     derive: (r) => {
       if (!r.length) return 'absent';
-      const traced = r.filter(i => i.outputs && i.outputs.length && i.ver === 'pass' && i.val === 'pass').length;
+      const traced = r.filter(i => isFullyTraced({ ver: i.ver, val: i.val, outputCount: i.outputs?.length ?? 0 })).length;
       return traced === r.length ? 'present' : 'absent';
     } },
 ];
@@ -168,9 +172,9 @@ export function DesignControls({ onAsk }: SurfaceViewProps) {
   const trace = useMemo(() => {
     const total = inputs.length;
     const noOutput = inputs.filter(i => !i.outputs || !i.outputs.length).length;
-    const noVer = inputs.filter(i => i.ver !== 'pass').length;
-    const noVal = inputs.filter(i => i.val !== 'pass').length;
-    const fullyTraced = inputs.filter(i => i.outputs && i.outputs.length && i.ver === 'pass' && i.val === 'pass').length;
+    const noVer = inputs.filter(i => i.ver !== DESIGN_CONTROL_PASS).length;
+    const noVal = inputs.filter(i => i.val !== DESIGN_CONTROL_PASS).length;
+    const fullyTraced = inputs.filter(i => isFullyTraced({ ver: i.ver, val: i.val, outputCount: i.outputs?.length ?? 0 })).length;
     const pct = total ? Math.round(fullyTraced / total * 100) : 0;
     return { total, noOutput, noVer, noVal, fullyTraced, pct };
   }, [inputs]);
@@ -187,7 +191,7 @@ export function DesignControls({ onAsk }: SurfaceViewProps) {
   const untracked = checklist.length - assessable.length;
   const elPct = assessable.length ? Math.round(present / assessable.length * 100) : 0;
 
-  const firstGap = inputs.find(i => !i.outputs || !i.outputs.length) || inputs.find(i => i.ver !== 'pass') || inputs.find(i => i.val !== 'pass');
+  const firstGap = inputs.find(i => !i.outputs || !i.outputs.length) || inputs.find(i => i.ver !== DESIGN_CONTROL_PASS) || inputs.find(i => i.val !== DESIGN_CONTROL_PASS);
 
   /* ── Honest-state sweep, finding 1 ────────────────────────────────────────
      `reassure` on the lead below was one static string, outside every branch:

@@ -179,6 +179,68 @@ describe('GET /api/mdx/engineering/:programId', () => {
     expect(res.body.data).toHaveProperty('dhf');
   });
 
+  /* ── The design-controls traceability panel reads c2c_design_controls, the
+        same store the v2 DesignControls surface reads. Two consumers of one
+        table must not answer a 21 CFR 820.30 question differently, and the
+        row below is the shape the store actually holds: a TEXT id, an `outputs`
+        JSONB array of OBJECTS, and verification PASSED while validation is
+        still PENDING. Verified against a real provisioned table. ───────────── */
+  const TRACE_ROW = {
+    id: 'dc-1757612345678',                       // TEXT, not a number
+    cat: 'performance',
+    req: 'Battery lasts 14 days',
+    risk_ref: 'RSK-004',
+    outputs: [
+      { id: 'DO-1', desc: 'Power management firmware v2.1' },
+      { id: 'DO-2', desc: 'Cell spec sheet' },
+    ],
+    ver: 'pass',
+    ver_ref: 'VER-009',
+    val: 'pending',                               // NOT a pass
+    val_ref: null,
+  };
+
+  function mockTrace(row: Record<string, unknown>) {
+    query.mockResolvedValueOnce({ rows: [{ id: PROGRAM }] }); // tenancy
+    query.mockResolvedValueOnce({ rows: [] });                // risks
+    query.mockResolvedValueOnce({ rows: [row] });              // trace
+    query.mockResolvedValue({ rows: [] });                     // everything after
+  }
+
+  it('does not call a design input verified while its validation is pending', async () => {
+    /* DesignControls.tsx:173 counts a row fully traced only on
+       `outputs.length && ver === 'pass' && val === 'pass'` — the OUTCOME. A
+       presence test (`ver && val`) reads the string 'pending' as truthy and
+       reports 820.30 verification satisfied over a validation that has not
+       happened. */
+    mockTrace(TRACE_ROW);
+    const res = await request(appWith(1)).get(`/api/mdx/engineering/${PROGRAM}`);
+    expect(res.status).toBe(200);
+    expect(res.body.data.trace[0].state).not.toBe('verified');
+    expect(res.body.data.trace[0].state).toBe('in-progress');
+  });
+
+  it('renders the design outputs, not [object Object]', async () => {
+    /* `outputs` is JSONB holding objects. Array.prototype.join stringifies
+       each one to '[object Object]', which then appears in the OUTPUT column
+       of a design history file traceability matrix. */
+    mockTrace(TRACE_ROW);
+    const res = await request(appWith(1)).get(`/api/mdx/engineering/${PROGRAM}`);
+    const out = String(res.body.data.trace[0].output);
+    expect(out).not.toMatch(/\[object Object\]/);
+    expect(out).toMatch(/Power management firmware v2\.1/);
+  });
+
+  it('passes the store id through instead of re-prefixing a TEXT key', async () => {
+    /* The column is TEXT ('dc-<n>'). Typing it as a number and running
+       padStart over it produced 'UN-dc-1757612345678' — a second prefix on an
+       id that already has one, and an identifier that matches nothing the
+       write path or the other consumer of this table ever issued. */
+    mockTrace(TRACE_ROW);
+    const res = await request(appWith(1)).get(`/api/mdx/engineering/${PROGRAM}`);
+    expect(res.body.data.trace[0].id).toBe('dc-1757612345678');
+  });
+
   it('computes DHF completion only over required sections', async () => {
     query.mockResolvedValueOnce({ rows: [{ id: PROGRAM }] }); // tenancy
     query.mockResolvedValueOnce({ rows: [] }); // risks
