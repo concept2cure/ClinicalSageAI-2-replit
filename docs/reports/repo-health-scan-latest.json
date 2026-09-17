@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-17T07:29:26.149Z",
+  "generatedAt": "2026-09-17T17:03:47.638Z",
   "git": {
-    "sha": "7e2f6313a6f50a2b1f3b6c8501670723f38e4fb8",
+    "sha": "c104aca83753e945a95424bb4c2f7700f4854595",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2064,16 +2064,16 @@
         "bytes": 126125
       },
       {
+        "file": "server/services/ai-gateway/gateway.ts",
+        "bytes": 119963
+      },
+      {
         "file": "server/services/__tests__/ana-ri.test.ts",
         "bytes": 119467
       },
       {
         "file": "client/src/concept2cure/v2/editor/RichSectionEditor.tsx",
         "bytes": 116913
-      },
-      {
-        "file": "server/services/ai-gateway/gateway.ts",
-        "bytes": 116663
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/cmcRegisterForms.ts",
@@ -2215,7 +2215,7 @@
       },
       {
         "file": "server/services/ai-gateway/gateway.ts",
-        "lines": 2855
+        "lines": 2925
       },
       {
         "file": "server/src/routes/stability.router.ts",
@@ -2366,16 +2366,16 @@
         "lines": 1912
       },
       {
+        "file": "server/routes/ana-ri/stream.ts",
+        "lines": 1907
+      },
+      {
         "file": "server/routes/regulatory-digital-twin.ts",
         "lines": 1898
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/device-510k.ts",
         "lines": 1888
-      },
-      {
-        "file": "server/routes/ana-ri/stream.ts",
-        "lines": 1887
       },
       {
         "file": "client/src/concept2cure/v2/Shell.tsx",
