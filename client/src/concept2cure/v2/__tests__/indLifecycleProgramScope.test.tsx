@@ -85,7 +85,7 @@ describe('IndLifecycle — program scoping', () => {
     wire(TWO_ROWS);
     render(<IndLifecycle {...surfaceProps()} />);
 
-    expect(await screen.findByRole('heading', { name: /BX-701 -- Initial IND/ })).toBeTruthy();
+    expect(await screen.findByRole('heading', { name: /BX-701 — Initial IND/ })).toBeTruthy();
     const note = screen.getByTestId('indl-scope-note');
     expect(note.textContent).toMatch(/open program's IND \(BX-701 IND\)/);
     expect(note.textContent).toMatch(/1 other IND/);
@@ -100,7 +100,7 @@ describe('IndLifecycle — program scoping', () => {
     wire(TWO_ROWS);
     render(<IndLifecycle {...surfaceProps()} />);
 
-    expect(await screen.findByRole('heading', { name: /AAA-100 -- Initial IND/ })).toBeTruthy();
+    expect(await screen.findByRole('heading', { name: /AAA-100 — Initial IND/ })).toBeTruthy();
     expect(screen.getByTestId('indl-scope-note').textContent).toMatch(
       /open program \(CX-900 IND\) has no IND checklist yet/,
     );
@@ -110,7 +110,7 @@ describe('IndLifecycle — program scoping', () => {
     wire(TWO_ROWS);
     render(<IndLifecycle {...surfaceProps()} />);
 
-    expect(await screen.findByRole('heading', { name: /AAA-100 -- Initial IND/ })).toBeTruthy();
+    expect(await screen.findByRole('heading', { name: /AAA-100 — Initial IND/ })).toBeTruthy();
     expect(screen.getByTestId('indl-scope-note').textContent).toMatch(/Open a program to scope/);
   });
 
@@ -118,7 +118,7 @@ describe('IndLifecycle — program scoping', () => {
     wire([TWO_ROWS[0]]);
     render(<IndLifecycle {...surfaceProps()} />);
 
-    expect(await screen.findByRole('heading', { name: /AAA-100 -- Initial IND/ })).toBeTruthy();
+    expect(await screen.findByRole('heading', { name: /AAA-100 — Initial IND/ })).toBeTruthy();
     expect(screen.queryByTestId('indl-scope-note')).toBeNull();
   });
 });

@@ -105,7 +105,7 @@ export function IvdCompleteness({ onAsk, segment }: SurfaceViewProps) {
   const flags = allItems.filter(i => i.flag);
 
   const blocker = missing.length
-    ? 'The gate to a CE certificate is the ' + (missing.find(m => /PER|performance evaluation/i.test(m.title)) ? 'Performance Evaluation Report' : missing[0].title) + ' -- ' + missing.length + ' requirement' + (missing.length === 1 ? '' : 's') + ' not yet started.'
+    ? 'The gate to a CE certificate is the ' + (missing.find(m => /PER|performance evaluation/i.test(m.title)) ? 'Performance Evaluation Report' : missing[0].title) + ' — ' + missing.length + ' requirement' + (missing.length === 1 ? '' : 's') + ' not yet started.'
     : inflight.length ? inflight.length + ' requirements are still in progress before the technical file is Notified-Body ready.' : 'Every IVDR requirement is evidenced.';
 
   /* What AnA can see of this screen. Published BEFORE the wrong-segment early
@@ -184,7 +184,7 @@ export function IvdCompleteness({ onAsk, segment }: SurfaceViewProps) {
           <span className="ivd-kicker">IVDR technical file — performance evaluation</span>
         </div>
         <h1 className="ivd-title">{data?.program || 'IVD program'}</h1>
-        <div className="ivd-sub">{data?.spine || 'EU IVDR 2017/746 · Annex II/III · Annex XIII'} -- technical-file completeness</div>
+        <div className="ivd-sub">{data?.spine || 'EU IVDR 2017/746 · Annex II/III · Annex XIII'} — technical-file completeness</div>
       </div>
 
       {loading ? (

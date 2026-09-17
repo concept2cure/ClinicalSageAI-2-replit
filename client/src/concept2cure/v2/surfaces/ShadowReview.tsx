@@ -176,7 +176,7 @@ export function ShadowReview({ onAsk, onNav }: SurfaceViewProps) {
         <div className="sr-sub">Agencies run AI on their side of the desk — this runs the reviewer's lens on yours, before they do.</div>
       </div>
 
-      {/* Lens selector -- the 5 real reviewer lenses (canonical catalog) */}
+      {/* Lens selector — the 5 real reviewer lenses (canonical catalog) */}
       <div className="sr-lenses">
         {lenses.map((l) => (
           <button key={l.id} className={'sr-lens' + (l.id === lensId ? ' on' : '')} onClick={() => setLensId(l.id)}>
@@ -186,7 +186,7 @@ export function ShadowReview({ onAsk, onNav }: SurfaceViewProps) {
         ))}
       </div>
 
-      {/* Answer-first lead -- AnA reporting the review (only with real findings) */}
+      {/* Answer-first lead — AnA reporting the review (only with real findings) */}
       {showResults && (
         <div className={'sr-lead tone-' + lead.tone}>
           <div className="sr-lead-ic">{I.eye || I.shieldCheck}</div>
@@ -241,7 +241,7 @@ export function ShadowReview({ onAsk, onNav }: SurfaceViewProps) {
               ))}
             </div>
 
-            {/* The findings -- the reviewer's list */}
+            {/* The findings — the reviewer's list */}
             <div className="sr-findings">
               <div className="sr-findings-hd">
                 <span className="sr-findings-t">{findings.length} finding{findings.length === 1 ? '' : 's'}</span>

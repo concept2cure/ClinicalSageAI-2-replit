@@ -703,7 +703,7 @@ export function Nonclinical({ onAsk, onNav }: SurfaceViewProps) {
       <div className="sp-2col">
         <SpCard
           title="SEND readiness"
-          meta={summary ? `${summary.send.inScope} in-scope -- ${summary.send.risk === 'none' ? 'no conformance risk flagged' : summary.send.risk + ' risk'}` : 'Pinnacle21'}
+          meta={summary ? `${summary.send.inScope} in-scope — ${summary.send.risk === 'none' ? 'no conformance risk flagged' : summary.send.risk + ' risk'}` : 'Pinnacle21'}
         >
           <SummaryBody state={summaryState} emptyTitle="No SEND package data yet">
             {(sum) => (

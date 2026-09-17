@@ -335,7 +335,7 @@ const BiostatEngine = (() => {
     const nm = input.indication || 'the study';
     const roleExplanations: Record<string, string> = {
       executive: `The ${input.studyType} design needs about ${res.adjustedTotal} subjects for ${(res.power * 100).toFixed(0)}% power. Overall this design is ${worst}; recommendation is to ${action.replace(/_/g, ' ')}. ${worst !== 'adequate' ? 'A design adjustment now avoids a costly under-powered trial later.' : 'The plan is defensible for ' + (input.regulatoryBody || 'the agency') + '.'}`,
-      clinical: `To detect the expected effect (${input.effectSize}) in ${nm}, enroll ${res.adjustedTotal} subjects (${res.sampleSize.perGroup}/arm). ${res.events ? `This is event-driven -- ${res.events} events are required, so follow-up duration matters as much as enrollment.` : ''} Watch the effect-size assumption; it is the biggest lever.`,
+      clinical: `To detect the expected effect (${input.effectSize}) in ${nm}, enroll ${res.adjustedTotal} subjects (${res.sampleSize.perGroup}/arm). ${res.events ? `This is event-driven — ${res.events} events are required, so follow-up duration matters as much as enrollment.` : ''} Watch the effect-size assumption; it is the biggest lever.`,
       regulatory: `The sample-size justification uses ${res.method} at a=${input.alpha} (two-sided) with ${(res.power * 100).toFixed(1)}% power, consistent with ${input.regulatoryBody || 'FDA'} expectations. Pre-specify the estimand (ICH E9(R1)) and the missing-data strategy in the SAP before database lock.`,
       technical: `${res.method}. ${res.formula} Attrition-adjusted total ${res.adjustedTotal}. Fragility ${cat} (index ${100 - margin}); ~${margin}% effect-size margin before N must grow >15% to hold power.`,
     };
@@ -467,7 +467,7 @@ const BiostatDocs = (() => {
 
 /* ─── Tiny markdown -> HTML for the document canvas ─── */
 /* Markdown rendering is `renderSafeMarkdown` (marked + DOMPurify), the
-   codebase's one audited markdown-to-HTML path -- see
+   codebase's one audited markdown-to-HTML path — see
    components/ana/renderSafeMarkdown.ts.
 
    This file used to carry its own 13-line `mdToHtml`: a regex approximation of
@@ -481,7 +481,7 @@ const BiostatDocs = (() => {
    The replacement is not merely deduplication. `renderSafeMarkdown` runs a real
    markdown parser and then reduces the result to an explicit tag/attribute
    allowlist, so `<script>`, inline event handlers and `javascript:` URLs are
-   removed rather than depended upon never to arrive -- and it is already
+   removed rather than depended upon never to arrive — and it is already
    covered by its own tests, which the hand-rolled copies never were. */
 
 /* ── Design presets (deterministic engine inputs — not stored data) ── */
@@ -738,7 +738,7 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
         <AnswerLead
           tone={jud.overallVerdict === 'inadequate' ? 'urgent' : jud.overallVerdict === 'adequate' ? 'good' : 'calm'}
           eyebrow={'Your ' + docDef.label.toLowerCase() + ' is ready to review'}
-          headline={<>I've drafted the <b>{docDef.label}</b> for your {input.studyType.replace(/_/g, ' ')} design -- <b>{n} subjects</b>, {(res.power * 100).toFixed(0)}% power, and the design reads as <b>{jud.overallVerdict}</b>.</>}
+          headline={<>I've drafted the <b>{docDef.label}</b> for your {input.studyType.replace(/_/g, ' ')} design — <b>{n} subjects</b>, {(res.power * 100).toFixed(0)}% power, and the design reads as <b>{jud.overallVerdict}</b>.</>}
           body={<>Everything below is written, not just calculated — the method, assumptions, and {jud.fragility.category.replace('_', ' ')} fragility are already in the prose, with a provenance footer for the reviewer. Change any design input and the document rewrites itself.</>}
           reassure={jud.overallVerdict === 'inadequate' ? "I flagged the underpowering honestly in the risk section — better the reviewer sees you addressed it than found it." : "It's drafted to " + (input.regulatoryBody || 'FDA') + " expectations. Read it, adjust, and send it straight to the editor."}
           action={{ label: opening ? 'Saving to the editor…' : 'Open in document editor', onClick: () => void openEditor(), alt: { label: attaching ? 'Filing to the dossier…' : 'File it to the dossier', onClick: () => void attach() } }}
@@ -794,7 +794,7 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
           </div>
         </div>
 
-        {/* Center: the DOCUMENT -- the deliverable */}
+        {/* Center: the DOCUMENT — the deliverable */}
         <div className="bs-doc">
           <div className="bs-doc-bar">
             <div className="bs-doc-bar-l"><span className="bs-doc-kind">{docDef?.label}</span><span className="bs-doc-prov">{/* Provenance describes where THIS document came from, and that never
@@ -860,7 +860,7 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
                     onClick={() => { if (p.doc && def) setDocType(p.doc); }}
                   >
                     <span className="sp-tag" style={{ fontFamily: 'var(--font-mono)' }}>{p.id}</span>
-                    <span className="sp-row-b"><span className="sp-row-t">{p.study}</span><span className="sp-row-s">{p.endpoint ? p.endpoint + ' -- ' : ''}{def?.label || 'Statistical document'}</span></span>
+                    <span className="sp-row-b"><span className="sp-row-t">{p.study}</span><span className="sp-row-s">{p.endpoint ? p.endpoint + ' — ' : ''}{def?.label || 'Statistical document'}</span></span>
                     <span className={'rd-chip tone-' + (p.status === 'approved' ? 'ok' : 'warn')}>{p.status}</span>
                     {!def && <span className="sp-row-note">no recorded type</span>}
                   </button>

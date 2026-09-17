@@ -123,7 +123,7 @@ export function DecisionLineage({ onAsk }: SurfaceViewProps) {
         h: (
           <>
             This artifact is <b>fully defensible</b>. Every step from creation to lock is on an
-            immutable, hash-chained record -- {md.totalDecisions} governed decision
+            immutable, hash-chained record — {md.totalDecisions} governed decision
             {md.totalDecisions === 1 ? '' : 's'}, {md.totalApprovals} approval
             {md.totalApprovals === 1 ? '' : 's'}, all Part-11 signed.
           </>
@@ -346,7 +346,7 @@ export function DecisionLineage({ onAsk }: SurfaceViewProps) {
       </div>
 
       <div className="dl-body">
-        {/* the chain -- the deliverable */}
+        {/* the chain — the deliverable */}
         <div className="dl-chain-wrap">
           <div className="dl-chain-hd">
             <span className="dl-chain-t">Decision trail</span>
@@ -392,7 +392,7 @@ export function DecisionLineage({ onAsk }: SurfaceViewProps) {
                       <div className="dl-node-who">
                         {n.performedBy}
                         {n.performedByRole ? (
-                          <span className="dl-node-role"> -- {n.performedByRole}</span>
+                          <span className="dl-node-role"> — {n.performedByRole}</span>
                         ) : null}
                       </div>
                       {n.details && Object.keys(n.details).length > 0 && (
@@ -417,7 +417,7 @@ export function DecisionLineage({ onAsk }: SurfaceViewProps) {
                                   : n.details.status
                                     ? 'Status: ' +
                                       dlActionLabel(n.details.status) +
-                                      (n.details.version ? ' -- ' + n.details.version : '')
+                                      (n.details.version ? ' — ' + n.details.version : '')
                                     : '')}
                           {n.details.esignature && (
                             <span className="dl-node-esig">
@@ -535,7 +535,7 @@ export function DecisionLineage({ onAsk }: SurfaceViewProps) {
                 <span className="dl-fw-check">{I.check}</span>
                 <span className="dl-fw-main">
                   <span className="dl-fw-name">{f.framework}</span>
-                  <span className="dl-fw-sec">{f.sections.join(' -- ')}</span>
+                  <span className="dl-fw-sec">{f.sections.join(' — ')}</span>
                 </span>
               </div>
             ))}
