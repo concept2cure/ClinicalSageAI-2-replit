@@ -185,8 +185,8 @@ export function SafetyNarrative({ onAsk, onNav }: SurfaceViewProps) {
     return {
       tone: (urgent ? 'urgent' : 'calm') as 'urgent' | 'calm',
       head: urgent
-        ? `${soonest.id} is due in ${soonest.dueDays} days -- ${soonest.clock}`
-        : `${cases.length} case narratives in progress -- ${serious} serious`,
+        ? `${soonest.id} is due in ${soonest.dueDays} days — ${soonest.clock}`
+        : `${cases.length} case narratives in progress — ${serious} serious`,
       body: urgent
         ? `The clock that matters right now is ${soonest.id}${sel.studyId ? ` (${sel.studyId})` : ''}. Its narrative is drafted from the case facts below — complete any missing fields, QC it, and it's ready to file. You have time; work the most urgent one first.`
         : 'Each SAE narrative here is written deterministically from the structured case — the same facts, the same ICH E3 section 16 convention, every time. Nothing is invented. Pick a case, complete what\'s missing, and hand it off.',
@@ -339,7 +339,7 @@ export function SafetyNarrative({ onAsk, onNav }: SurfaceViewProps) {
                       {serious ? 'Serious' : unrecorded ? 'Seriousness not recorded' : 'Non-serious'}
                     </span>
                   </div>
-                  <div className="sn-case-subj">{c.age}{c.sex === 'Female' ? 'F' : c.sex ? 'M' : ''} -- {c.event?.term}</div>
+                  <div className="sn-case-subj">{c.age}{c.sex === 'Female' ? 'F' : c.sex ? 'M' : ''} — {c.event?.term}</div>
                   <div className="sn-case-meta">
                     <span className="sn-case-drug">{c.studyDrug}</span>
                     <span className={'sn-due ' + (c.dueDays <= 3 ? 'urgent' : '')}>{c.due}</span>
@@ -350,7 +350,7 @@ export function SafetyNarrative({ onAsk, onNav }: SurfaceViewProps) {
             })}
           </div>
 
-          <div className="sn-sec">Structured case -- {sel.id}</div>
+          <div className="sn-sec">Structured case — {sel.id}</div>
           {/* Every read below is of the case's `event` sub-record, which a row can
               arrive without (see the lead memo). The empty-string / empty-array
               fallbacks were already here for the individual fields; the `?.` extends
@@ -404,8 +404,8 @@ export function SafetyNarrative({ onAsk, onNav }: SurfaceViewProps) {
           <div className="cm-doc">
             <div className="cm-doc-bar">
               <div>
-                <span className="cm-doc-kind">SAE case narrative -- {sel.id}</span>
-                <span className="cm-doc-prov">{sel.studyId} -- {result.serious ? 'Serious' : 'Non-serious'} -- {result.narrative.split(/\s+/).length} words</span>
+                <span className="cm-doc-kind">SAE case narrative — {sel.id}</span>
+                <span className="cm-doc-prov">{sel.studyId} — {result.serious ? 'Serious' : 'Non-serious'} — {result.narrative.split(/\s+/).length} words</span>
               </div>
               <div style={{ display: 'flex', gap: 8 }}>
                 {/* Parenthetical only when there is a term to put in it — same
@@ -434,7 +434,7 @@ export function SafetyNarrative({ onAsk, onNav }: SurfaceViewProps) {
             <div className="cm-doc-page">
               <div className="cm-doc-render">
                 <h1>Serious adverse event case narrative</h1>
-                <p style={{ fontFamily: 'var(--font-mono,monospace)', fontSize: 12, color: 'var(--text-400)' }}>{sel.id} -- {sel.clock}</p>
+                <p style={{ fontFamily: 'var(--font-mono,monospace)', fontSize: 12, color: 'var(--text-400)' }}>{sel.id} — {sel.clock}</p>
                 {/* Expedited-reporting clock — computed server-side per 21 CFR 312.32(c)
                     / ICH E2A from awareness date + seriousness/causality/expectedness, and
                     returned on every real case row. The static clock line above is the stored label. */}

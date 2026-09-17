@@ -144,8 +144,20 @@ interface VaultDisplayShape {
   tree: VaultFolder[];
   /** Honest signal: the c2c document store is not provisioned in this env. */
   pendingStore?: boolean;
-  /** Uploaded documents awaiting a person's filing decision. */
+  /** Uploaded documents awaiting a person's filing decision. Counted over the
+   *  WHOLE program, not over `uploadsWindow` — a queue derived from a capped
+   *  page would shrink as the backlog grew. */
   unfiledCount?: number;
+  /**
+   * How much of the filing cabinet the tree above actually carries. The vault
+   * is unbounded and the tree read is capped (VAULT_TREE_MAX_DOCS), so a
+   * surface that rendered the page without saying so would state a partial
+   * cabinet as the whole one. `truncated` is the difference; `total` is the
+   * real count. Absent when the uploads store is unavailable — that case is
+   * reported through `unavailable`, and an absent window must not be read as
+   * an empty vault.
+   */
+  uploadsWindow?: { shown: number; total: number; truncated: boolean };
   /** The capture→classify→file pipeline over the project's Data Room. */
   dataRoom?: DataRoomBlock;
   /**
@@ -717,9 +729,45 @@ export default function createProjectVaultRoutes(): Router {
       // 6) Uploaded files → the filing cabinet: the same vault.documents rows
       //    the Upload button ingests, placed where their (suggested or
       //    confirmed) filing says, plus the always-visible Unfiled queue.
+      //
+      //    BOUNDED, because a program's vault is not. This read fetched every
+      //    vault.documents row for the program and held them all in memory to
+      //    render one tree; at data-room scale (the scale this product is for)
+      //    that is the request that takes the server down.
+      //
+      //    A cap is only honest if the facts derived ALONGSIDE it keep
+      //    describing the vault rather than the page, so both moved into SQL:
+      //
+      //      - `unfiledCount` is an aggregate over the whole program. Counted
+      //        from a fetched page it would FALL as the vault grew past the
+      //        cap — a review queue that empties itself as work piles up.
+      //      - a data-room source's `filed` stage is answered by asking the
+      //        database whether that source's checksum exists in this
+      //        program's vault (step 7). Derived from a page it would report
+      //        filed documents as unfiled once the vault outgrew the cap.
+      //        That is a compliance answer, not a display detail.
+      //
+      //    The window itself is reported so the surface can say it is showing
+      //    part of a larger cabinet instead of implying it is the whole of it.
+      const uploadsCap = Math.min(
+        Math.max(parseInt(String(process.env.VAULT_TREE_MAX_DOCS ?? '2000'), 10) || 2000, 1),
+        20000,
+      );
+      /** The program+tenant predicate, shared by the page and its aggregates so
+       *  a count can never be taken over a different set than the rows. */
+      const uploadsWhere = `d.program_id = $1 AND d.deleted_at IS NULL
+              AND EXISTS (
+                SELECT 1 FROM regulatory_programs rp
+                 WHERE rp.id = d.program_id
+                   AND rp.organization_id = $2
+                   AND rp.deleted_at IS NULL
+              )`;
       let uploads: UploadRow[] = [];
       let uploadsStoreMissing = false;
+      let uploadsWindow: { shown: number; total: number; truncated: boolean } | undefined;
+      let unfiledCount = 0;
       try {
+        // cap + 1 detects the overflow without a second round trip.
         const upRes = await pool.query(
           `SELECT d.id, d.document_code, d.document_title, d.document_type,
                   d.version, d.file_name, d.file_size, d.mime_type, d.content_hash,
@@ -729,17 +777,33 @@ export default function createProjectVaultRoutes(): Router {
                   COALESCE(u.name, u.email) AS owner_name
              FROM vault.documents d
              LEFT JOIN users u ON u.id = d.created_by
-            WHERE d.program_id = $1 AND d.deleted_at IS NULL
-              AND EXISTS (
-                SELECT 1 FROM regulatory_programs rp
-                 WHERE rp.id = d.program_id
-                   AND rp.organization_id = $2
-                   AND rp.deleted_at IS NULL
-              )
-            ORDER BY d.updated_at DESC`,
+            WHERE ${uploadsWhere}
+            ORDER BY d.updated_at DESC
+            LIMIT $3`,
+          [id, orgId, uploadsCap + 1],
+        );
+        const truncated = upRes.rows.length > uploadsCap;
+        uploads = (upRes.rows as UploadRow[]).slice(0, uploadsCap);
+
+        // Program-wide totals. Always taken, so `unfiledCount` means the same
+        // thing whether or not the page was truncated.
+        const cntRes = await pool.query(
+          `SELECT COUNT(*)::int AS total,
+                  COUNT(*) FILTER (
+                    WHERE d.folder_id IS NULL
+                       OR COALESCE(d.placement_status, 'unfiled') = 'unfiled'
+                  )::int AS unfiled
+             FROM vault.documents d
+            WHERE ${uploadsWhere}`,
           [id, orgId],
         );
-        uploads = upRes.rows as UploadRow[];
+        const counts = (cntRes.rows[0] ?? {}) as { total?: number; unfiled?: number };
+        unfiledCount = counts.unfiled ?? 0;
+        uploadsWindow = {
+          shown: uploads.length,
+          total: counts.total ?? uploads.length,
+          truncated,
+        };
         tree.push(filingCabinet(view, uploads));
       } catch (err) {
         if (!isMissingStore(err)) throw err;
@@ -749,9 +813,6 @@ export default function createProjectVaultRoutes(): Router {
           reason: 'The vault document store (vault.documents) is not provisioned in this environment.',
         });
       }
-      const unfiledCount = uploads.filter(
-        u => !u.folder_id || (u.placement_status || 'unfiled') === 'unfiled',
-      ).length;
 
       // 7) The Data Room pipeline: every captured source with its DERIVED
       //    stage — 'filed' is a checksum join against the uploads, computed
@@ -768,9 +829,28 @@ export default function createProjectVaultRoutes(): Router {
       } else {
         try {
           const sources = await listClientDocuments(orgId, { programId: id });
-          const vaultHashes = new Set(
-            uploads.map(u => u.content_hash).filter((h): h is string => Boolean(h)),
+          // `filed` asks whether THIS source's bytes already exist in the
+          // program's vault. Ask the database that, about exactly these
+          // checksums, instead of deriving it from the page of documents
+          // fetched for the tree above: that page is capped, and once a vault
+          // outgrew the cap a filed document would start reporting as unfiled.
+          // Bounded by the source list, which the caller already holds.
+          const sourceChecksums = Array.from(
+            new Set(sources.map(s => s.checksum).filter((h): h is string => Boolean(h))),
           );
+          const vaultHashes = new Set<string>();
+          if (sourceChecksums.length > 0) {
+            const matchRes = await pool.query(
+              `SELECT DISTINCT d.content_hash
+                 FROM vault.documents d
+                WHERE ${uploadsWhere}
+                  AND d.content_hash = ANY($3::text[])`,
+              [id, orgId, sourceChecksums],
+            );
+            for (const r of matchRes.rows as Array<{ content_hash: string | null }>) {
+              if (r.content_hash) vaultHashes.add(r.content_hash);
+            }
+          }
           const rows: DataRoomRow[] = sources.map(s => {
             const meta = (s.metadata ?? {}) as Record<string, unknown>;
             const dossier = (meta.dossier ?? null) as
@@ -829,6 +909,7 @@ export default function createProjectVaultRoutes(): Router {
         documentCount: countDocs(tree),
         tree,
         unfiledCount,
+        ...(uploadsWindow ? { uploadsWindow } : {}),
         ...(dataRoom ? { dataRoom } : {}),
         ...(unavailable.length ? { unavailable } : {}),
       };

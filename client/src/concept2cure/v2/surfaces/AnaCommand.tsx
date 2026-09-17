@@ -135,7 +135,18 @@ interface RecommendationSet { recommendations: Rec[] }
 /* POST /api/orchestration/pre-submission-gate response. `ich` is null whenever
    no cmcProjectId is supplied — this surface supplies none, so it is always
    null here (rendered honestly as "not evaluated"). */
-interface GateReadiness { overallScore: number; status: string; scores: Record<string, number> }
+/* `scores.compliance` and `scores.consistency` are `number | null` — null when
+   the readiness engine had no input to measure that dimension from (no
+   validations and no CMC signals; no routed or promoted object to cross-check).
+   `unassessedDimensions` carries the reason for each null. A null is rendered
+   as "not assessed", never as a number and never as a blank chip. */
+interface GateUnassessed { dimension: string; reason: string }
+interface GateReadiness {
+  overallScore: number;
+  status: string;
+  scores: Record<string, number | null>;
+  unassessedDimensions?: GateUnassessed[];
+}
 interface GateRisk { overallRisk: string; riskScore: number }
 interface GateIch { overallStatus: string; counts: Record<string, number> }
 interface Gate {
@@ -458,7 +469,7 @@ export function AnaCommand({ onAsk }: SurfaceViewProps) {
   const topNeed = cont?.needsAttention?.[0];
   const leadHead = cont
     ? (urgent
-        ? `${progLabel} is trending ${traj.t} -- ${topNeed ? topNeed.title : 'act now'}`
+        ? `${progLabel} is trending ${traj.t} — ${topNeed ? topNeed.title : 'act now'}`
         : `${progLabel} is ${traj.t}: ${(cont.newlyReady || []).length} newly ready · ${(cont.needsAttention || []).length} need attention`)
     : progLabel;
 
@@ -537,7 +548,7 @@ export function AnaCommand({ onAsk }: SurfaceViewProps) {
                   : 'No continuity briefing yet for this program.'}
               </p>
               <div className="ac-lead-actions">
-                <button className="ac-lead-go" onClick={() => ask('Walk me through ' + progLabel + ' -- the critical path to filing and what to do first.')}>{I.sparkles} Ask AnA to plan the path</button>
+                <button className="ac-lead-go" onClick={() => ask('Walk me through ' + progLabel + ' — the critical path to filing and what to do first.')}>{I.sparkles} Ask AnA to plan the path</button>
                 <button className="ac-lead-gate" onClick={() => setGateOpen(true)}>{Ico.shieldCheck || Ico.shield || I.check} Run pre-submission gate</button>
               </div>
             </div>
@@ -723,7 +734,12 @@ export function AnaCommand({ onAsk }: SurfaceViewProps) {
                   <div className="ac-gate-cell">
                     <div className="ac-gate-ck">Readiness</div>
                     <div className="ac-gate-cv">{gate.readiness?.overallScore ?? '--'}<span>/100 · {gate.readiness?.status ?? '--'}</span></div>
-                    <div className="ac-gate-sub2">{gate.readiness?.scores && Object.entries(gate.readiness.scores).map(([k, v]) => (<span key={k} className="ac-gate-ss">{k} {v}</span>))}</div>
+                    <div className="ac-gate-sub2">{gate.readiness?.scores && Object.entries(gate.readiness.scores).map(([k, v]) => {
+                      const why = (gate.readiness?.unassessedDimensions || []).find((u) => u.dimension === k)?.reason;
+                      return v === null || v === undefined
+                        ? (<span key={k} className="ac-gate-ss" title={why || 'This dimension was not assessed.'}>{k} not assessed</span>)
+                        : (<span key={k} className="ac-gate-ss">{k} {v}</span>);
+                    })}</div>
                   </div>
                   <div className="ac-gate-cell">
                     <div className="ac-gate-ck">CMC contradictions</div>

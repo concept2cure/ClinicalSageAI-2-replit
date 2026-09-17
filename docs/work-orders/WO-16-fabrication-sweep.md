@@ -429,6 +429,16 @@ have any consequence a customer can reach, none is critical, and the one that
 would have changed the pilot answer — an audit-trail entry whose actor the
 caller could name themselves — is fixed in this pass.**
 
+**Update, same day: all sixteen are now fixed.** The section below was written
+as a backlog, which is what WO-16C asked for. The product owner then asked for
+the backlog to be worked rather than filed, so the thirteen that remained were
+implemented the same way as the first three — one agent per finding, each
+required to prove its test red before the change and green after. The ranked
+tables are kept as written, because the ranking is the evidence for the order
+they were taken in; the **Fixed in this pass** table below now lists all sixteen,
+and the recommended-order section that followed it has been replaced by what
+each fix actually turned out to be.
+
 ## What was run
 
 One verifier agent per finding, then **two adversarial refuters per survivor on
@@ -501,14 +511,56 @@ numbers and unearned labels on screens, not corrupted records.
 
 ## Fixed in this pass
 
-Three, all confirmed by a panel that held on both lenses, all small and local,
-all outside your §5 file list, each proven red before green.
+All sixteen findings that carry a consequence — every high and every medium —
+are fixed. Each survived both refuters, each is outside your §5 file list, and
+each was proven red before green, with the failure injected at the dependency
+wherever there was a dependency to fail.
 
-| # | What it was | Commit |
-|---|---|---|
-| 67 | The Part 11 audit row's printed actor came from the request body | `bb5ec75e3` |
-| 48 | The endpoint recommender asked a model to *write* the FDA/EMA guidance it then cited | `bb5ec75e3` |
-| 71 | Every decision-lineage export certified five frameworks nothing evaluates | `ce703ea54` |
+| # | Final | What it was | Commit |
+|---|---|---|---|
+| 67 | high | The Part 11 audit row's printed actor came from the request body | `bb5ec75e3` |
+| 48 | high | The endpoint recommender asked a model to *write* the FDA/EMA guidance it then cited | `bb5ec75e3` |
+| 71 | high | Every decision-lineage export certified five frameworks nothing evaluates | `ce703ea54` |
+| 45 | high | An unscored statistical dimension became 50 — including an honest 0 | `0671cb461` |
+| 59 | high | Three constants in the dossier-filed judgment table; "adequate" was unreachable | `3f86d566e` |
+| 70 | high | `cfr11Compliant: true` on every node; a pending approval stamped with the export's own build time | `061801441` |
+| 42 | medium | The work board read "0 open, 0 blocking" when a source query failed | `394b14fc1` |
+| 58 | medium | Unmeasured readiness dimensions emitted as "unknown = neutral" 50 | `c02159e05` |
+| 63 | medium | A regulatory screen run on the literal string `Section <id>` | `72c9ac244` |
+| 65 | medium | IND Readiness graded a protocol it never read | `14b03f7d9` |
+| 72 | medium | The chain monitor logged "all links intact" over rows carrying no hashes | `d6aaf61d2` |
+| 99 | medium | A Refuse-to-File gauge painted 0% over a recorded risk of 90 | `1521c31dc` |
+| 107 | medium | Every real audit action displayed as a read; a chain link shown as a signature | `50b93b0fe` |
+| 109 | medium | Every Activity row attributed to "System" | `48a49025c` |
+| 124 | medium | Deterministic rules stamped with invented confidence percentages | `423db8730` |
+| 133 | medium | A PDEV approval returned success identical to a lost Part 11 audit row | `57d7bbfd8` |
+
+**Four of the thirteen turned out to be worse than the panel had established,
+and the implementing agents found it by reading rather than trusting the brief.**
+
+- **#59** — because the effect-size dimension was hardcoded `marginal`, the
+  aggregate could never reach `adequate`. The `adequate / proceed / low` path and
+  its confidence branch were dead code, so *every* design this surface ever filed
+  into the dossier read "marginal / proceed_with_conditions / moderate",
+  including a well-powered one.
+- **#70** — `workflow_approvals.completed_by` exists and was ignored, so a
+  DECIDED approval was also attributed to `assignedTo[0]` rather than to the
+  person who actually completed it, not only a pending one.
+- **#109** — `ownerName` is not a column on `c2c_milestones` at all, so the
+  fallback fired on every row, not merely on rows with a missing actor. The fix
+  goes further than the finding and resolves the real creator from `created_by_id`.
+- **#133** — the pre-existing sibling test's audit mock resolved `undefined`,
+  which would have let the fix pass green without proving anything. The agent
+  corrected the mock in the same change.
+
+**Two corrections against the verification pass, both in its favour.** #72's
+agent showed the brief was wrong that a NULL hash poisons the next comparison —
+the old code produced the same skip, so the set of broken links is byte-identical
+before and after and only the counting and the verdict changed, which is why
+seven pre-existing tests stayed green. #59's agent declined to touch
+`fragilityIndex`, because both refuters had narrowed it out: it derives from the
+real breakpoint search and is a redundant label on a computed margin, not a
+fabricated number.
 
 **#48 is worse than the sweep said, and the refuters found why.**
 `loadRegulatoryGuidance` caches a file only when its parsed content has
@@ -554,35 +606,40 @@ ranked below an equal-severity row both refuters let stand.
 | 65 | high | **medium** | both held | `server/routes/analytics-routes.ts` | mounted, no client caller | small-local | A logged-in customer (or an integration) that POSTs any protocol text to /api/analytics/demo-analysis receives JSON in which `ind_analysis.strengths` states the protocol has "Well-defined primary and secondary endpoints", "Clear inclusion/exclusion criteria", "Appropriate statistical analysis plan"… |
 | 72 | high | **medium** | both held | `server/services/audit/chainIntegrityMonitor.ts` | conditional, 1 client caller | small-local | No screen, no generated document, no export and no persisted record carries this verdict — that is the honest answer, and it is why this is not critical. What a customer can actually get: an authenticated GET to /api/audit/chain-monitor/status (or a POST to .../check) returns `{"success":true,"data… |
 
-## Recommended order, and what each costs
+## What the fixes turned out to need
 
-**Take these four first.** All small, all local, all with a real screen behind them.
+The backlog above proposed an order; this is what each one actually was once
+implemented. The pattern across all sixteen is narrower than "delete the lie":
+in ten of them the code read real input and only its claims about provenance
+were false, so the proportionate fix was to make it describe itself truthfully.
 
-1. **#59** `Biostatistics.tsx` — three fixed constants in a judgment table that is
-   previewed on screen and then filed into the dossier under Module 5. The engine
-   reads real input; only three of its dimensions are typed in. Trap (iii)
-   applies: make those dimensions derive from evidence the surface already has,
-   rather than deleting a working engine.
-2. **#107** `usePathwayTabsData.ts` — the device pathway's Audit tab renders every
-   row under a heading reading "Serves the 21 CFR Part 11 audit trail" and a
-   "Tamper-evident · SHA-256 · N events" badge. Four client callers.
-3. **#42** `unified-work-view.ts` — four `.catch(() => [])` turn a failed source
-   query into "0 open, 0 blocking" on the Workbench board. The WO-16B pattern
-   fits directly: record which source did not run and say so.
-4. **#124** `recommendation-engine.ts` — every "Next best action" card carries an
-   unlabelled percentage chip whose value is a per-rule constant.
+**A value nothing computed is now null, with a reason, and the aggregate is
+renormalised over what was assessed.** #45, #58, #59, #99 and #124 all had the
+same shape: a literal standing in for a measurement, then carried into a mean or
+a sort key where it did work only a real number may do. The trap in each was the
+obvious repair — turning the constant into a 0 deflates the aggregate as surely
+as 50 inflates it — so each fix drops the unassessed dimension out of both the
+numerator and the denominator, and names it in an `unassessed` list.
 
-**#70 is the one that needs a design decision,** not a patch. The lineage graph
-stamps a `21 CFR §11` badge on every node and reports a pending approval as
-performed by its first assignee. The badge is the same class of claim #71 was,
-but fixing it properly means deciding what the badge is asserting per node, which
-is your subsystem's call, not a local edit.
+**A failed read is now distinguishable from an empty one.** #42, #72 and #133
+reuse the WO-16B third state verbatim (`{ran: true, …} | {ran: false, reason}`,
+`persisted`, `unverified`), which is the point of having established it: three
+separate agents reached for the same vocabulary without coordinating.
 
-**#45** `statistical-defensibility-service.ts` is small but sits behind an LLM
-prompt that mandates seven 0–100 scores with no "cannot determine" option. The
-fix is the WO-16B shape — read each dimension with a numeric guard, average only
-what was assessed, return `null` plus an `unassessed` list — and it is worth
-doing next to #59, since both land on the Biostatistics workbench.
+**An unrecorded actor is now unrecorded.** #70, #107 and #109 each substituted a
+plausible name — `'system'`, `'System'`, an assignee, a category — for something
+the record did not say. Two of the three could resolve the real actor once
+someone looked: #109 from `created_by_id`, #70 from `completed_by`.
+
+**Two surfaces had nothing truthful to say and were removed or withheld.** #63's
+handlers are deleted, because a screen fed a literal placeholder has no honest
+version. #65 keeps its real reference material, relabelled as standing guidance,
+and returns `NOT_ASSESSED` for the verdict it was never entitled to.
+
+Five findings widened a shared type (`LineageNode.performedBy`,
+`Recommendation.confidence`, `ReadinessAssessment.scores`, `AuditKind`,
+`UnifiedWorkSummary`). Every consumer was updated in the same change and
+`tsc --noEmit` is clean across all thirteen together.
 
 ## What I did not do, and why
 
@@ -595,7 +652,8 @@ doing next to #59, since both land on the Biostatistics workbench.
   line 283 explicitly asked the model to rate credibility 0–100 and the answer was
   dropped into `analysis`. The fallback 75 the sweep named was the
   better-behaved of the two, because at least it admitted it was a template.
-- **The 49 low findings are real and I am not proposing work on them.** Almost all
+- **The 49 low findings are real and I am still not proposing work on them**,
+  now that the sixteen above are closed. Almost all
   are one of: a route with no client caller, a prompt instruction with no rendered
   effect, or a defensive fallback no reachable code path can trigger. They belong
   in the record, not in a sprint.

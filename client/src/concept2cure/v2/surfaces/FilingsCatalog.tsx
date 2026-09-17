@@ -66,7 +66,7 @@ function FilingDetail({
     <div className="fc-detail-bd" onClick={onClose}>
       <div className="fc-detail" onClick={(e) => e.stopPropagation()}>
         <div className="fc-detail-top">
-          <div className="fc-detail-crumb">{segLabel}{catLabel ? ' -- ' + catLabel : ''}</div>
+          <div className="fc-detail-crumb">{segLabel}{catLabel ? ' — ' + catLabel : ''}</div>
           <button className="fc-detail-x" aria-label="Close" onClick={onClose}>{I.close}</button>
         </div>
         <h2 className="fc-detail-t">{it.n}</h2>
@@ -102,7 +102,7 @@ function FilingDetail({
 
         <div className="fc-detail-actions">
           <button className="fc-detail-go" onClick={onStart}>{hasWf ? 'Open workflow' : 'Start with AnA'} {I.arrowRight}</button>
-          <button className="fc-detail-ask" onClick={() => { onAsk('Tell me about the ' + it.n + ' -- when it\'s required, what it contains, and what evidence I need.'); onClose(); }}>{I.sparkles} Ask AnA</button>
+          <button className="fc-detail-ask" onClick={() => { onAsk('Tell me about the ' + it.n + ' — when it\'s required, what it contains, and what evidence I need.'); onClose(); }}>{I.sparkles} Ask AnA</button>
         </div>
 
         {loop && <>
@@ -211,7 +211,7 @@ export function FilingsCatalog({ onAsk, onNav }: SurfaceViewProps) {
      */
     const surf = FILING_WF_SURFACE[it.wf];
     if (surf && onNav) onNav(surf);
-    else if (onAsk) onAsk('Start a ' + it.n + ' -- set up the document structure and required sections');
+    else if (onAsk) onAsk('Start a ' + it.n + ' — set up the document structure and required sections');
   };
 
   return (

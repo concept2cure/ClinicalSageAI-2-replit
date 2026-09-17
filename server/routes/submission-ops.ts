@@ -1363,16 +1363,19 @@ router.get('/workload', async (req: Request, res: Response) => {
 /**
  * GET /api/submission-ops/unified-work[?projectId=]
  *
- * The portfolio view across ALL THREE systems that track work independently —
+ * The portfolio view across ALL FOUR systems that track work independently —
  * schedule-of-events tasks (project_tasks), review + correspondence work items
- * (c2c_project_work_items), and tracked filings with their FDA review clock
- * (estar_submissions). /workload above returns only the second of those, which
- * is why a milestone slip or an agency hold never appeared beside a review
- * blocker.
+ * (c2c_project_work_items), tracked filings with their FDA review clock
+ * (estar_submissions), and the canonical org board (unified_tasks). /workload
+ * above returns only the second of those, which is why a milestone slip or an
+ * agency hold never appeared beside a review blocker.
  *
  * Read-only and additive: /workload is unchanged, so existing consumers keep
  * their exact shape. Blockers sort first, then soonest due; `summary` carries
- * the roll-up by status and by source.
+ * the roll-up by status and by source, and `sources` says per table whether its
+ * query actually ran — this used to be a hard-coded list of three table names,
+ * which asserted a completeness nothing had checked and had been stale since
+ * unified_tasks became the fourth source.
  */
 router.get('/unified-work', async (req: Request, res: Response) => {
   try {
@@ -1380,7 +1383,7 @@ router.get('/unified-work', async (req: Request, res: Response) => {
     const raw = req.query.projectId ? Number(req.query.projectId) : undefined;
     const projectId = Number.isInteger(raw) && (raw as number) > 0 ? raw : undefined;
     const view = await loadUnifiedWork({ organizationId: orgId, projectId });
-    res.json({ ...view, sources: ['project_tasks', 'c2c_project_work_items', 'estar_submissions'] });
+    res.json(view);
   } catch (e) {
     return serverError(res, logger, 'loading unified work', e);
   }

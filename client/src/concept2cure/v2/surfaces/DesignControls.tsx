@@ -259,7 +259,7 @@ export function DesignControls({ onAsk }: SurfaceViewProps) {
          tick. That is precisely the defect toast.tsx's own header says the
          two-argument signature exists to make unrepresentable; it was
          re-created here by omitting the argument. */
-      fire('Could not add design input -- ' + (e instanceof Error && e.message ? e.message : 'request failed'), 'error');
+      fire('Could not add design input — ' + (e instanceof Error && e.message ? e.message : 'request failed'), 'error');
     }
   };
 
@@ -480,14 +480,14 @@ export function DesignControls({ onAsk }: SurfaceViewProps) {
                     <span className="dc-820-l">{e.label}</span>
                     <span className="dc-820-ref mono">{e.ref}</span>
                     <span className="dc-820-note">Not tracked in this store</span>
-                    <button className="dc-820-fix" onClick={() => ask('How should we evidence ' + e.ref + ' -- ' + e.label + ' -- for this program?')}>Set up</button>
+                    <button className="dc-820-fix" onClick={() => ask('How should we evidence ' + e.ref + ' — ' + e.label + ' — for this program?')}>Set up</button>
                   </>
                 ) : (
                   <>
                     <span className={'dc-820-dot tone-' + (e.state === 'present' ? 'ok' : 'err')}>{e.state === 'present' ? I.check : I.alertTriangle}</span>
                     <span className="dc-820-l">{e.label}</span>
                     <span className="dc-820-ref mono">{e.ref}</span>
-                    {e.state === 'absent' && <button className="dc-820-fix" onClick={() => ask('What is required to satisfy ' + e.ref + ' -- ' + e.label + '?')}>Resolve</button>}
+                    {e.state === 'absent' && <button className="dc-820-fix" onClick={() => ask('What is required to satisfy ' + e.ref + ' — ' + e.label + '?')}>Resolve</button>}
                   </>
                 )}
               </div>

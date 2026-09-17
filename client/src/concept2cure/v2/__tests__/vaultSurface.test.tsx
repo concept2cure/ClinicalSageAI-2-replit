@@ -456,3 +456,52 @@ describe('Vault — search', () => {
     await waitFor(() => expect(document.body.textContent).toContain('1 of 340'));
   });
 });
+
+/**
+ * The filing cabinet is a WINDOW onto the vault, not the vault.
+ *
+ * The server caps the tree read (the vault is unbounded; the read that renders
+ * it used to grow with it). A cap the surface does not mention is worse than
+ * the unbounded read it replaced: a reviewer who searches the cabinet, does not
+ * find a document, and is shown nothing to suggest the cabinet is partial
+ * concludes the document is absent — and in a regulated vault "absent" is a
+ * finding. Same contract as the `unavailable` branches: say what is not shown.
+ */
+describe('Vault — a truncated filing cabinet says so', () => {
+  it('states the window and the real total when the server truncated the page', async () => {
+    mockApi(() =>
+      ok(vaultPayload({ uploadsWindow: { shown: 2000, total: 48213, truncated: true } })),
+    );
+    render(<Vault {...(props() as any)} />);
+    const note = await screen.findByText(/showing the .* most recently updated/i);
+    expect(note.textContent).toMatch(/2,000/);
+    expect(note.textContent).toMatch(/48,213/);
+  });
+
+  it('says nothing when the whole cabinet fits — no note on the common case', async () => {
+    mockApi(() =>
+      ok(vaultPayload({ uploadsWindow: { shown: 12, total: 12, truncated: false } })),
+    );
+    render(<Vault {...(props() as any)} />);
+    // Anchor on the surface having actually loaded the payload (the spine line
+    // comes from it), so "no note" cannot pass merely because nothing rendered.
+    await screen.findByText(/IND · 21 CFR 312/);
+    expect(screen.queryByText(/most recently updated/i)).toBeNull();
+  });
+
+  it('leaves the unfiled queue alone — it is programme-wide, not a page count', async () => {
+    // The server counts unfiled over the whole programme precisely so it stays
+    // right when the page is capped. The surface must not re-derive or qualify
+    // it, or the one number that survived truncation gets caveated into doubt.
+    mockApi(() =>
+      ok(
+        vaultPayload({
+          unfiledCount: 137,
+          uploadsWindow: { shown: 2000, total: 48213, truncated: true },
+        }),
+      ),
+    );
+    render(<Vault {...(props() as any)} />);
+    expect(await screen.findByText(/137 unfiled — needs review/i)).toBeTruthy();
+  });
+});

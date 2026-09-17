@@ -104,8 +104,14 @@ interface BiostatResult {
 
 interface JudgmentDimension {
   name: string;
+  /** 'adequate' | 'marginal' | 'inadequate', or the third state 'not_assessed'
+   *  — this engine had nothing to judge the dimension against. A dimension in
+   *  the third state is excluded from the overall verdict and named in the
+   *  confidence limitations; it is never collapsed into one of the other two. */
   verdict: string;
-  score: number;
+  /** `null` when nothing computed a score. A judgment table cell is allowed to
+   *  say "not assessed"; it is not allowed to carry a number no rule produced. */
+  score: number | null;
   flags: string[];
   rationale: string;
 }
@@ -191,7 +197,10 @@ interface Preset {
 
 /* ─── Deterministic computation engine (computation-engine.ts) ─── */
 
-const BiostatEngine = (() => {
+/* Exported for the judgment tests (`__tests__/biostatUnearnedScores.test.tsx`).
+   The surface itself uses it through the module-local binding below; nothing
+   else in the app imports it. */
+export const BiostatEngine = (() => {
   function normCdf(z: number): number {
     if (z < -8) return 0; if (z > 8) return 1;
     const a1 = 0.254829592, a2 = -0.284496736, a3 = 1.421413741, a4 = -1.453152027, a5 = 1.061405429, p = 0.3275911;
@@ -323,18 +332,57 @@ const BiostatEngine = (() => {
     const dims: JudgmentDimension[] = [];
     const pv = res.power >= input.powerTarget - 0.005 ? 'adequate' : res.power >= input.powerTarget - 0.05 ? 'marginal' : 'inadequate';
     dims.push({ name: 'Power adequacy', verdict: pv, score: Math.round(res.power * 100), flags: pv === 'adequate' ? [] : ['Achieved power below target'], rationale: `Achieved power ${(res.power * 100).toFixed(1)}% vs target ${(input.powerTarget * 100) | 0}%.` });
-    dims.push({ name: 'Effect-size assumption', verdict: 'marginal', score: 60, flags: ['Single most sensitive input'], rationale: `Effect size ${input.effectSize} drives N; verify against prior evidence.` });
+    /* The effect size is the single most sensitive input, and this surface has
+       no prior-evidence source — no literature, no pilot, no registry — to
+       judge the assumed value against. It used to be pushed unconditionally as
+       `marginal / 60`, which is a verdict and a score for a check that never
+       ran (and, being unconditional, made 'adequate' unreachable overall). What
+       IS computed about the effect size is its fragility margin below, and that
+       is reported there rather than restated here as a /100. */
+    dims.push({ name: 'Effect-size assumption', verdict: 'not_assessed', score: null, flags: ['Not assessed — no prior-evidence source', 'Single most sensitive input'],
+      rationale: `Effect size ${input.effectSize} drives N. Its plausibility is not assessed here — this engine has no prior evidence to compare it against; verify it against literature or pilot data. The design's sensitivity to it is reported under Fragility.` });
+    /* Banded on the attrition-adjusted total, which IS computed. The band is
+       all this is: site capacity, screening ratio and enrollment rate are not
+       inputs to this surface, so operational feasibility is not assessed and
+       the band carries no score. */
     const fv = res.adjustedTotal <= 300 ? 'adequate' : res.adjustedTotal <= 800 ? 'marginal' : 'inadequate';
-    dims.push({ name: 'Enrollment feasibility', verdict: fv, score: fv === 'adequate' ? 85 : fv === 'marginal' ? 60 : 35, flags: fv === 'inadequate' ? ['Large N — feasibility risk'] : [], rationale: `${res.adjustedTotal} subjects after ${(input.attritionRate * 100) | 0}% attrition.` });
+    dims.push({ name: 'Enrollment size band', verdict: fv, score: null, flags: fv === 'inadequate' ? ['Large N — confirm feasibility with sites'] : [],
+      rationale: `${res.adjustedTotal} subjects after ${(input.attritionRate * 100) | 0}% attrition — banded (<=300 / <=800 / above). Site capacity and enrollment rate are not available to this engine, so operational feasibility is not assessed.` });
     let bp = input.effectSize; for (let f = 1; f > 0.5; f -= 0.01) { const r2 = compute({ ...input, effectSize: input.effectSize * f }); if (r2.sampleSize.total > res.sampleSize.total * 1.15) { bp = input.effectSize * f; break; } }
     const margin = Math.round((1 - bp / input.effectSize) * 100);
     const cat = margin >= 20 ? 'robust' : margin >= 12 ? 'moderate' : margin >= 6 ? 'fragile' : 'very_fragile';
-    const worst = dims.some(d => d.verdict === 'inadequate') ? 'inadequate' : dims.some(d => d.verdict === 'marginal') ? 'marginal' : 'adequate';
-    const action = worst === 'inadequate' ? 'revise' : worst === 'marginal' ? 'proceed_with_conditions' : 'proceed';
-    const risk = worst === 'inadequate' ? 'high' : worst === 'marginal' ? 'moderate' : 'low';
-    const endpointMethodFit = { fit: 'acceptable', currentMethod: res.method,
+    /* The overall verdict is taken over the dimensions that were ASSESSED. A
+       dimension in the third state neither drags the verdict down (it is not a
+       finding) nor is silently treated as adequate (it is not a pass) — it is
+       named in the limitations below, which the document always prints. */
+    const assessed = dims.filter(d => d.verdict !== 'not_assessed');
+    const notAssessed = dims.filter(d => d.verdict === 'not_assessed');
+    const worst = assessed.length === 0 ? 'not_assessed'
+      : assessed.some(d => d.verdict === 'inadequate') ? 'inadequate'
+      : assessed.some(d => d.verdict === 'marginal') ? 'marginal' : 'adequate';
+    // Fail closed: anything that is not a clean 'adequate'/'marginal' — including
+    // an all-unassessed judgment — recommends revision rather than proceeding.
+    const action = worst === 'adequate' ? 'proceed' : worst === 'marginal' ? 'proceed_with_conditions' : 'revise';
+    const risk = worst === 'adequate' ? 'low' : worst === 'marginal' ? 'moderate' : 'high';
+    // WO-16C #59 follow-up. `fit` was the literal 'acceptable' on every call,
+    // with no branch on any input, and the rationale asserted unconditionally
+    // that the method "is appropriate for" the endpoint. Both print into the
+    // Statistical Risk Memo and both SAP drafts this surface files into the
+    // dossier — a verdict for a comparison that never ran, one section below
+    // the judgment table this work order had just repaired.
+    //
+    // It is NOT repaired by comparing the two strings here. A real assessment
+    // already exists and is canonical: assessEndpointMethodFit in
+    // server/services/ana-biostats/judgment-engine.ts, whose verdict turns on
+    // areMethodsCompatible, a server-side table. Re-deriving it client-side
+    // would be a second implementation of the same capability, which the
+    // working agreement forbids and which is how a fix of this kind entrenches
+    // duplication while resolving the fabrication. This surface has no route to
+    // that assessor, so it says it did not assess the fit — and still shows
+    // both methods, so a reader can see exactly what was not compared.
+    const endpointMethodFit = { fit: 'not_assessed', currentMethod: res.method,
       suggestedMethod: input.endpointType === 'time_to_event' ? 'Cox proportional hazards (confirmatory)' : input.endpointType === 'binary' ? 'Logistic regression (covariate-adjusted)' : 'ANCOVA (baseline-adjusted)',
-      rationale: `${res.method} is appropriate for a ${input.endpointType} endpoint in a ${input.studyType} design; a covariate-adjusted model is recommended as the confirmatory analysis.`,
+      rationale: `Not assessed. The planned method (${res.method}) and the method this endpoint type usually calls for are both stated above, but this surface did not compare them, and it makes no finding either way for this ${input.endpointType} endpoint in a ${input.studyType} design. The comparison belongs to assessEndpointMethodFit in server/services/ana-biostats/judgment-engine.ts, which this surface does not call. Have a statistician confirm the choice of method, or run the ana-biostats assessment.`,
       alternatives: input.endpointType === 'time_to_event' ? ['Stratified log-rank', 'RMST difference'] : input.endpointType === 'binary' ? ['Cochran-Mantel-Haenszel', 'Fisher exact (small N)'] : ['MMRM (longitudinal)', 'Rank-based (non-normal)'] };
     const limitations: string[] = []; if (pv !== 'adequate') limitations.push('Achieved power is below the stated target at the current assumptions.');
     if (cat === 'fragile' || cat === 'very_fragile') limitations.push('The design is sensitive to the assumed effect size — small overestimation materially reduces power.');
@@ -342,11 +390,30 @@ const BiostatEngine = (() => {
     if (fv === 'inadequate') limitations.push('Enrollment target is large; site capacity and timelines should be confirmed.');
     const escalation: string[] = []; if (worst === 'inadequate') escalation.push('Design is underpowered at current assumptions — revise before finalizing.');
     if (cat === 'very_fragile') escalation.push('Very fragile to effect-size assumption — add a blinded sample-size re-estimation.');
-    const conf = { level: worst === 'adequate' ? 'high' : worst === 'marginal' ? 'moderate' : 'low', score: worst === 'adequate' ? 86 : worst === 'marginal' ? 64 : 42, factors: ['Deterministic computation', 'Rule-backed judgment'], limitations };
+    /* Confidence, derived. It used to be one of three literals (86 / 64 / 42)
+       picked by the overall verdict LABEL — a number restating a word, printed
+       as "moderate (64/100)" in the filed document. The rule below is the
+       canonical one, server/services/ana-biostats/judgment-engine.ts
+       assessConfidence(): start at 85 and subtract for what is actually weak —
+       power under the 80% convention, more than two defaulted assumptions, a
+       diagnostic design with no intended-use prevalence. The inputs are this
+       surface's own computed result and assumption provenance. */
+    const cFactors: string[] = ['Deterministic computation', 'Rule-backed judgment'];
+    let cScore = 85;
+    if (res.power >= 0.90) cFactors.push('High power (>=90%)');
+    else if (res.power >= 0.80) cFactors.push('Standard power (>=80%)');
+    else { cScore -= 20; limitations.push(`Achieved power ${(res.power * 100).toFixed(1)}% is below the conventional 80% threshold.`); }
+    const defaulted = res.assumptions.filter(a => a.source === 'default').length;
+    if (defaulted > 2) { cScore -= defaulted * 5; limitations.push(`${defaulted} parameters used default values rather than study-specific ones.`); }
+    else cFactors.push('Most parameters user-specified');
+    if (input.clientTrack === 'diagnostics_ivd' && input.prevalence === undefined) { cScore -= 10; limitations.push('Prevalence not specified — PPV/NPV are estimates at an assumed prevalence.'); }
+    if (notAssessed.length) limitations.push(`Not assessed by this engine: ${notAssessed.map(d => d.name).join(', ')}. The overall verdict covers only the ${assessed.length} dimension${assessed.length === 1 ? '' : 's'} that were assessed.`);
+    cScore = Math.max(0, Math.min(100, cScore));
+    const conf = { level: cScore >= 80 ? 'high' : cScore >= 60 ? 'moderate' : cScore >= 40 ? 'low' : 'very_low', score: cScore, factors: cFactors, limitations };
     const nm = input.indication || 'the study';
     const roleExplanations: Record<string, string> = {
       executive: `The ${input.studyType} design needs about ${res.adjustedTotal} subjects for ${(res.power * 100).toFixed(0)}% power. Overall this design is ${worst}; recommendation is to ${action.replace(/_/g, ' ')}. ${worst !== 'adequate' ? 'A design adjustment now avoids a costly under-powered trial later.' : 'The plan is defensible for ' + (input.regulatoryBody || 'the agency') + '.'}`,
-      clinical: `To detect the expected effect (${input.effectSize}) in ${nm}, enroll ${res.adjustedTotal} subjects (${res.sampleSize.perGroup}/arm). ${res.events ? `This is event-driven -- ${res.events} events are required, so follow-up duration matters as much as enrollment.` : ''} Watch the effect-size assumption; it is the biggest lever.`,
+      clinical: `To detect the expected effect (${input.effectSize}) in ${nm}, enroll ${res.adjustedTotal} subjects (${res.sampleSize.perGroup}/arm). ${res.events ? `This is event-driven — ${res.events} events are required, so follow-up duration matters as much as enrollment.` : ''} Watch the effect-size assumption; it is the biggest lever.`,
       regulatory: `The sample-size justification uses ${res.method} at a=${input.alpha} (two-sided) with ${(res.power * 100).toFixed(1)}% power, consistent with ${input.regulatoryBody || 'FDA'} expectations. Pre-specify the estimand (ICH E9(R1)) and the missing-data strategy in the SAP before database lock.`,
       technical: `${res.method}. ${res.formula} Attrition-adjusted total ${res.adjustedTotal}. Fragility ${cat} (index ${100 - margin}); ~${margin}% effect-size margin before N must grow >15% to hold power.`,
     };
@@ -411,8 +478,12 @@ const BiostatDocs = (() => {
     return s + foot();
   };
   const riskMemo: GenFn = (i, c, j, d, r) => { let s = `# Statistical Risk Memo\n\n## Executive Summary\n\n${j.roleExplanations.executive}\n\n## Risk Classification\n\n- **Overall Risk**: ${j.overallRisk}\n- **Action**: ${j.actionRecommendation}\n- **Confidence**: ${j.confidence.level}\n\n## Dimension Analysis\n\n| Dimension | Verdict | Score | Key Flags |\n|---|---|---|---|\n`;
-    for (const dm of j.dimensions) s += `| ${dm.name} | ${dm.verdict} | ${dm.score}/100 | ${dm.flags.join('; ') || 'None'} |\n`;
-    s += `\n## Fragility Assessment\n\n${j.fragility.narrative}\n\n## Endpoint-Method Fit\n\n- **Fit**: ${j.endpointMethodFit.fit}\n- **Current Method**: ${j.endpointMethodFit.currentMethod}\n- **Suggested Method**: ${j.endpointMethodFit.suggestedMethod}\n- **Rationale**: ${j.endpointMethodFit.rationale}\n\n`;
+    // A dimension with no score says so. It must never render as "null/100",
+    // and it must never be given a number to fill the column. "not assessed"
+    // and "not scored" are different: the first had no verdict either, the
+    // second has a real verdict and simply no /100 behind it.
+    for (const dm of j.dimensions) s += `| ${dm.name} | ${dm.verdict === 'not_assessed' ? 'not assessed' : dm.verdict} | ${dm.score === null ? (dm.verdict === 'not_assessed' ? 'not assessed' : 'not scored') : `${dm.score}/100`} | ${dm.flags.join('; ') || 'None'} |\n`;
+    s += `\n## Fragility Assessment\n\n${j.fragility.narrative}\n\n## Endpoint-Method Fit\n\n- **Fit**: ${j.endpointMethodFit.fit === 'not_assessed' ? 'not assessed — the two methods below were not compared' : j.endpointMethodFit.fit}\n- **Current Method**: ${j.endpointMethodFit.currentMethod}\n- **Suggested Method**: ${j.endpointMethodFit.suggestedMethod}\n- **Rationale**: ${j.endpointMethodFit.rationale}\n\n`;
     if (j.escalationReasons.length) { s += `## Escalation Items\n\n`; for (const e of j.escalationReasons) s += `- ${e}\n`; s += `\n`; }
     if (d.riskFactors.length) { s += `## Domain-Specific Risks (${track(i.clientTrack)})\n\n`; for (const rf of d.riskFactors) s += `- ${rf}\n`; s += `\n`; }
     if (r && r.riskFramingNotes.length) { s += `## Regulatory Risk Framing (${r.body})\n\n`; for (const n of r.riskFramingNotes) s += `- ${n}\n`; s += `\n`; }
@@ -478,7 +549,7 @@ const BiostatDocs = (() => {
 
 /* ─── Tiny markdown -> HTML for the document canvas ─── */
 /* Markdown rendering is `renderSafeMarkdown` (marked + DOMPurify), the
-   codebase's one audited markdown-to-HTML path -- see
+   codebase's one audited markdown-to-HTML path — see
    components/ana/renderSafeMarkdown.ts.
 
    This file used to carry its own 13-line `mdToHtml`: a regex approximation of
@@ -492,7 +563,7 @@ const BiostatDocs = (() => {
    The replacement is not merely deduplication. `renderSafeMarkdown` runs a real
    markdown parser and then reduces the result to an explicit tag/attribute
    allowlist, so `<script>`, inline event handlers and `javascript:` URLs are
-   removed rather than depended upon never to arrive -- and it is already
+   removed rather than depended upon never to arrive — and it is already
    covered by its own tests, which the hand-rolled copies never were. */
 
 /* ── Design presets (deterministic engine inputs — not stored data) ── */
@@ -536,7 +607,13 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
     const seed = loadedDesign?.adapter.input;
     if (!seed) return;
     // The adapter emits the engine's StatisticalInput; BiostatInput is the same
-    // vocabulary (this file's engine is the server engine ported verbatim).
+    // INPUT vocabulary. That is as far as the correspondence goes: the sizing
+    // math and the document generators are ports, but the Layer-3 judgment in
+    // this file is a smaller browser-side rule set, not a port of
+    // server/services/ana-biostats/judgment-engine.ts — it carries three
+    // dimensions where the server carries a dozen, and its fragility index and
+    // the server's are different quantities. Do not read one's output as the
+    // other's.
     setInput(seed as unknown as BiostatInput);
     setPreset('design');
   }, [loadedDesign]);
@@ -807,7 +884,7 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
         <AnswerLead
           tone={jud.overallVerdict === 'inadequate' ? 'urgent' : jud.overallVerdict === 'adequate' ? 'good' : 'calm'}
           eyebrow={'Your ' + docDef.label.toLowerCase() + ' is ready to review'}
-          headline={<>I've drafted the <b>{docDef.label}</b> for your {input.studyType.replace(/_/g, ' ')} design -- <b>{n} subjects</b>, {(res.power * 100).toFixed(0)}% power, and the design reads as <b>{jud.overallVerdict}</b>.</>}
+          headline={<>I've drafted the <b>{docDef.label}</b> for your {input.studyType.replace(/_/g, ' ')} design — <b>{n} subjects</b>, {(res.power * 100).toFixed(0)}% power, and the design reads as <b>{jud.overallVerdict}</b>.</>}
           body={<>Everything below is written, not just calculated — the method, assumptions, and {jud.fragility.category.replace('_', ' ')} fragility are already in the prose, with a provenance footer for the reviewer. Change any design input and the document rewrites itself.</>}
           reassure={jud.overallVerdict === 'inadequate' ? "I flagged the underpowering honestly in the risk section — better the reviewer sees you addressed it than found it." : "It's drafted to " + (input.regulatoryBody || 'FDA') + " expectations. Read it, adjust, and send it straight to the editor."}
           action={{ label: opening ? 'Saving to the editor…' : 'Open in document editor', onClick: () => void openEditor(), alt: { label: attaching ? 'Filing to the dossier…' : 'File it to the dossier', onClick: () => void attach() } }}
@@ -876,7 +953,7 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
           )}
         </div>
 
-        {/* Center: the DOCUMENT -- the deliverable */}
+        {/* Center: the DOCUMENT — the deliverable */}
         <div className="bs-doc">
           <div className="bs-doc-bar">
             <div className="bs-doc-bar-l"><span className="bs-doc-kind">{docDef?.label}</span><span className="bs-doc-prov">{/* Provenance describes where THIS document came from, and that never
@@ -942,7 +1019,7 @@ export function Biostatistics({ onAsk, onNav }: SurfaceViewProps) {
                     onClick={() => { if (p.doc && def) setDocType(p.doc); }}
                   >
                     <span className="sp-tag" style={{ fontFamily: 'var(--font-mono)' }}>{p.id}</span>
-                    <span className="sp-row-b"><span className="sp-row-t">{p.study}</span><span className="sp-row-s">{p.endpoint ? p.endpoint + ' -- ' : ''}{def?.label || 'Statistical document'}</span></span>
+                    <span className="sp-row-b"><span className="sp-row-t">{p.study}</span><span className="sp-row-s">{p.endpoint ? p.endpoint + ' — ' : ''}{def?.label || 'Statistical document'}</span></span>
                     <span className={'rd-chip tone-' + (p.status === 'approved' ? 'ok' : 'warn')}>{p.status}</span>
                     {!def && <span className="sp-row-note">no recorded type</span>}
                   </button>
