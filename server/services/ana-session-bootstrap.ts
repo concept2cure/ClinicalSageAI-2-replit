@@ -144,12 +144,34 @@ export async function buildSessionBootstrapContext(input: SessionBootstrapInput)
     undefined
   );
 
+  // 6. Files the client attached in past conversations. They have no vault row
+  //    — no filed location, no comprehension record — so they were absent from
+  //    session recall entirely: the exact "she doesn't remember the file is
+  //    there" the vault half of this block was added to fix, still true for the
+  //    other half. Bounded and independently fault-tolerant like every source
+  //    above; omitted (not faked) when the catalog is off or the spine is
+  //    unreachable.
+  const chatUploads = await safe(
+    (async () => {
+      const svc = await import('./vault/document-catalog.service.js');
+      if (!(await svc.isDocumentCatalogEnabled(organizationId))) return undefined;
+      const uploads = await svc.listChatUploads(organizationId, null, 8);
+      return uploads.map(u => ({
+        fileName: u.fileName,
+        fileId: u.fileId,
+        uploadedAt: u.uploadedAt,
+      }));
+    })(),
+    undefined
+  );
+
   return formatSessionBootstrap({
     workingMemorySummary,
     projectAtoms,
     clientAtoms,
     outcomeLessons,
     vaultFiles,
+    chatUploads,
     atomLimit,
   });
 }

@@ -509,8 +509,13 @@ export function UsageBilling({ onAsk, surface, onNav }: SurfaceViewProps) {
           <div className="pj-card" style={{ marginBottom: 14 }}>
             <div className="pj-card-h">
               <span className="t">Weekly limits</span>
-              <a
+              {/* A button, not an <a> with no href: this asks AnA a question, it
+                  does not navigate, and without href the anchor was neither
+                  focusable nor activatable from the keyboard. */}
+              <button
+                type="button"
                 className="ub-link"
+                style={{ background: 'none', border: 0, padding: 0, font: 'inherit', cursor: 'pointer' }}
                 onClick={() =>
                   onAsk &&
                   onAsk(
@@ -519,7 +524,7 @@ export function UsageBilling({ onAsk, surface, onNav }: SurfaceViewProps) {
                 }
               >
                 Learn more about usage limits
-              </a>
+              </button>
             </div>
             <div className="pj-card-b">
               <Panel
