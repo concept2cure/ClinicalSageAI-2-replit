@@ -55,6 +55,7 @@ function tooLargeForEveryModel(): GatewayContextWindowError {
     {
       id: 'claude-opus-4', provider: 'anthropic', model: 'claude-opus-4-8', contextWindow: 200_000,
       qualityScore: 99, costPer1kInput: 0, costPer1kOutput: 0, capabilities: ['document_drafting'], enabled: true,
+      thinkingMode: 'adaptive', supportsSamplingParams: false,
     },
   );
   return new GatewayContextWindowError([fit]);

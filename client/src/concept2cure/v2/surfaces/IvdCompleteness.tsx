@@ -115,9 +115,8 @@ export function IvdCompleteness({ onAsk, segment }: SurfaceViewProps) {
   const flags = allItems.filter(i => i.flag);
 
   const blocker = missingFamilies.length
-    ? 'The gate to a CE certificate is the ' + (missingFamilies.find(m => /PER|performance evaluation/i.test(m.label)) ? 'Performance Evaluation Report' : missingFamilies[0].label) + ' -- ' + missingFamilies.length + ' requirement' + (missingFamilies.length === 1 ? '' : 's') + ' not yet started.'
+    ? 'The gate to a CE certificate is the ' + (missingFamilies.find(m => /PER|performance evaluation/i.test(m.label)) ? 'Performance Evaluation Report' : missingFamilies[0].label) + ' — ' + missingFamilies.length + ' requirement' + (missingFamilies.length === 1 ? '' : 's') + ' not yet started.'
     : inflightFamilies.length ? inflightFamilies.length + ' requirements are still in progress before the technical file is Notified-Body ready.' : 'Every IVDR requirement is evidenced.';
-
   /* What AnA can see of this screen. Published BEFORE the wrong-segment early
      return below — that return is a legitimate screen state ("this board is
      IVD-only, you are on another segment") and it is exactly the state a user
@@ -197,7 +196,7 @@ export function IvdCompleteness({ onAsk, segment }: SurfaceViewProps) {
           <span className="ivd-kicker">IVDR technical file — performance evaluation</span>
         </div>
         <h1 className="ivd-title">{data?.program || 'IVD program'}</h1>
-        <div className="ivd-sub">{data?.spine || 'EU IVDR 2017/746 · Annex II/III · Annex XIII'} -- technical-file completeness</div>
+        <div className="ivd-sub">{data?.spine || 'EU IVDR 2017/746 · Annex II/III · Annex XIII'} — technical-file completeness</div>
       </div>
 
       {loading ? (

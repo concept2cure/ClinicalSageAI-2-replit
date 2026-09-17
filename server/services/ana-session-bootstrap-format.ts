@@ -93,6 +93,13 @@ export interface VaultFileDigest {
   purpose?: string | null;
 }
 
+/** A chat-uploaded file the client attached in some past conversation. */
+export interface ChatUploadRecallDigest {
+  fileName: string;
+  fileId: string | null;
+  uploadedAt?: string | null;
+}
+
 export interface SessionBootstrapParts {
   workingMemorySummary?: string | null;
   projectAtoms: BootstrapAtom[];
@@ -100,6 +107,8 @@ export interface SessionBootstrapParts {
   outcomeLessons: OutcomeLesson[];
   /** Project-vault files on record (document catalog); omitted when the catalog is off. */
   vaultFiles?: VaultFileDigest[];
+  /** Files the client attached in past conversations — reachable, not yet filed. */
+  chatUploads?: ChatUploadRecallDigest[];
   atomLimit?: number;
 }
 
@@ -157,6 +166,24 @@ export function formatSessionBootstrap(parts: SessionBootstrapParts): string {
     for (const f of files) lines.push(formatVaultFileLine(f));
     lines.push(
       '_Use list_project_documents for the full folder; read_project_document to study a file (all of it)._'
+    );
+  }
+
+  const uploads = (parts.chatUploads ?? []).slice(0, 8);
+  if (uploads.length) {
+    /* A chat upload is reachable but has no vault row, so it carries no filed
+       location and no comprehension record — saying only "these exist" would
+       invite the same "I can't see it" answer the catalog exists to end. Each
+       line carries the id that reopens it and the fact that filing is what
+       gives it a durable record. */
+    lines.push('### Files the client sent in past conversations');
+    for (const u of uploads) {
+      lines.push(
+        `- **${clip(u.fileName, 90)}**${u.fileId ? ` (${u.fileId})` : ''} — attached earlier, not filed into the vault.`
+      );
+    }
+    lines.push(
+      '_Reopen one with read_uploaded_document; file_chat_upload_to_vault puts it in the project folder so it can be cataloged._'
     );
   }
 

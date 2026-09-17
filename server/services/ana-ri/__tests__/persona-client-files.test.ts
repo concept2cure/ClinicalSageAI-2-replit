@@ -82,6 +82,26 @@ describe('persona — the client files discipline', () => {
     expect(s).toMatch(/a number you inferred is not a number it carries/i);
   });
 
+  it('points at the passage index for a question the text settles, without licensing a sample', () => {
+    // The corpus of passages existed for months with no tool able to read it;
+    // naming the tool here is what turns "she can" into "she does". The second
+    // half matters as much: a passage answers a question, it does not replace
+    // the full read the catalog gate requires.
+    const s = clientFilesSection();
+    expect(s).toContain('search_document_passages');
+    expect(s).toMatch(/not a shortcut|do not comprehend a file/);
+  });
+
+  it('requires the file to be PUT somewhere, and unfiling to be the honest fallback', () => {
+    // A comprehension record that leaves the document in the Unfiled queue is
+    // half the job: the client asked for it to be put in the right place, and
+    // the ingest classifier's guess is not that.
+    const s = clientFilesSection();
+    expect(s).toContain('place_project_document');
+    expect(s).toMatch(/Unfiled queue/);
+    expect(s).toMatch(/unfile:true/);
+  });
+
   it('requires an unreadable file to be reported as such', () => {
     expect(clientFilesSection()).toMatch(/never let an empty read pass for an empty document/i);
   });

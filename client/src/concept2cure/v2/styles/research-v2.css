@@ -218,8 +218,13 @@
   .pd-heat-grid{display:flex;flex-direction:column;gap:3px;}
   .pd-heat-row{display:flex;gap:3px;align-items:center;}
   .pd-heat-axis{width:14px;font-size:10px;font-family:var(--font-mono);color:var(--text-400);text-align:center;}
-  .pd-heat-cell{width:38px;height:38px;border-radius:var(--radius-sm);background:var(--tm);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:transform var(--dur);position:relative;}
-  .pd-heat-cell:hover{transform:scale(1.06);}
+  /* the cell is a <button> now: reset the UA's border/padding/font so the
+     38px square and its centred count are unchanged, and stop an empty
+     cell from offering a pointer and a hover lift for an action it has
+     no risk to perform. */
+  .pd-heat-cell{width:38px;height:38px;border:0;padding:0;font:inherit;border-radius:var(--radius-sm);background:var(--tm);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:transform var(--dur);position:relative;}
+  .pd-heat-cell:not(:disabled):hover{transform:scale(1.06);}
+  .pd-heat-cell:disabled{cursor:default;}
   .pd-heat-n{font-size:12px;font-weight:700;color:var(--t);}
   .pd-heat-xl{display:flex;gap:3px;margin-left:17px;margin-top:3px;}
   .pd-heat-xl span{width:38px;text-align:center;font-size:10px;font-family:var(--font-mono);color:var(--text-400);}
@@ -227,6 +232,8 @@
   .pd-risk-list{display:flex;flex-direction:column;gap:8px;}
   .pd-risk{border:1px solid var(--border);border-radius:var(--radius-lg);padding:12px 14px;background:var(--bg-000);cursor:pointer;transition:border-color var(--dur);}
   .pd-risk:hover{border-color:var(--text-400);}
+  /* role="button" gets no focus ring from the button rule above it. */
+  .pd-risk:focus-visible{outline:2px solid var(--accent-100);outline-offset:2px;}
   .pd-risk.on{border-color:var(--accent-100);background:var(--accent-000);}
   .pd-risk-top{display:flex;align-items:center;gap:10px;}
   .pd-risk-score{width:28px;height:28px;border-radius:var(--radius-md);background:var(--tm);color:var(--t);font-weight:700;font-size:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}

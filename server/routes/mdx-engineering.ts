@@ -42,6 +42,7 @@ import { createScopedLogger } from '../utils/logger';
 import { ok, clientError, orgRequired, notFoundInTenant, serverError } from '../lib/api-response';
 import type { QueryResultRow } from 'pg';
 import { pool } from '../db';
+import { designControlTraceState } from '../../shared/regulatory/design-controls-trace';
 
 const router = Router();
 const log = createScopedLogger('mdx-engineering');
@@ -206,7 +207,7 @@ router.get('/engineering/:programId', async (req: Request, res: Response) => {
 
     /* ── Design-controls traceability — organization-scoped ──────────── */
     const traceRows = await panel<{
-      id: number;
+      id: string;
       cat: string | null;
       req: string;
       risk_ref: string | null;
@@ -224,18 +225,41 @@ router.get('/engineering/:programId', async (req: Request, res: Response) => {
       [orgId],
     );
 
-    const trace = traceRows.map((t) => ({
-      id: `UN-${String(t.id).padStart(3, '0')}`,
-      need: t.req,
-      input: t.cat ?? '—',
-      output: Array.isArray(t.outputs) ? t.outputs.join(' · ') || '—' : '—',
-      verif: t.ver_ref ?? t.ver ?? '—',
-      valid: t.val_ref ?? t.val ?? '—',
-      risk: t.risk_ref ?? '—',
-      /* Verified only when both verification and validation are on
-         record — 820.30 treats them as separate obligations. */
-      state: t.ver && t.val ? 'verified' : t.ver || t.val ? 'in-progress' : 'open',
-    }));
+    const trace = traceRows.map((t) => {
+      /* `outputs` is JSONB holding design-output OBJECTS. Array.prototype.join
+         stringifies each to '[object Object]', which is what the OUTPUT column
+         of the traceability matrix rendered for every traced input. */
+      const outputs = Array.isArray(t.outputs) ? (t.outputs as unknown[]) : [];
+      const outputLabel =
+        outputs
+          .map((o) =>
+            o && typeof o === 'object'
+              ? [(o as { id?: unknown }).id, (o as { desc?: unknown }).desc]
+                  .filter((v) => typeof v === 'string' && v.length)
+                  .join(' ')
+              : String(o),
+          )
+          .filter((label) => label.length)
+          .join(' · ') || '—';
+      return {
+        /* The column is TEXT ('dc-<n>'); it was typed `number` and run through
+           padStart, yielding 'UN-dc-...' — a second prefix on an id that
+           already has one, matching nothing the write path ever issued. */
+        id: t.id,
+        need: t.req,
+        input: t.cat ?? '—',
+        output: outputLabel,
+        verif: t.ver_ref ?? t.ver ?? '—',
+        valid: t.val_ref ?? t.val ?? '—',
+        risk: t.risk_ref ?? '—',
+        /* Outcome, not presence — shared/regulatory/design-controls-trace.ts.
+           `val` holds a status string, so the old `t.ver && t.val` read the
+           literal 'pending' as truthy and called an unvalidated design input
+           verified, contradicting the v2 DesignControls surface over the very
+           same row. 820.30(f) and (g) are separate obligations. */
+        state: designControlTraceState({ ver: t.ver, val: t.val, outputCount: outputs.length }),
+      };
+    });
 
     /* ── DHF sections — organization-scoped ──────────────────────────── */
     const dhfRows = await panel<{

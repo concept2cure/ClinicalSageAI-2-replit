@@ -641,7 +641,7 @@ export function EctdCoauthor({ liveDrive }: OwnedSurfaceViewProps) {
 
   const artTitle = activeDoc ? activeDoc.title : 'eCTD Co-Author';
   const artMeta = activeDoc
-    ? '§' + (activeDoc.moduleNumber || '—') + ' -- ' + (activeDoc.moduleName || ECTD_MODULE_LABELS[moduleOf(activeDoc)] || 'eCTD document')
+    ? '§' + (activeDoc.moduleNumber || '—') + ' — ' + (activeDoc.moduleName || ECTD_MODULE_LABELS[moduleOf(activeDoc)] || 'eCTD document')
     : 'No document selected';
 
   return (
@@ -712,7 +712,7 @@ export function EctdCoauthor({ liveDrive }: OwnedSurfaceViewProps) {
             loading / error / empty ternary above, not a branch of it, so they
             rendered on every pass. While the tree body directly above said
             "Loading eCTD documents…" or "Couldn't load eCTD documents.", this
-            footer printed "Documents 0 -- Approved 0 -- eCTD readiness 0%" in the
+            footer printed "Documents 0 — Approved 0 — eCTD readiness 0%" in the
             vocabulary of a measurement: a specific, computed readiness figure
             for a backbone that had not been read, and a confirmed zero
             document count when the count was unknown.
@@ -747,7 +747,7 @@ export function EctdCoauthor({ liveDrive }: OwnedSurfaceViewProps) {
           <b>AnA</b>
           {/* "live" was asserted from token presence alone, including when every
     read on the surface had failed. */}
-          <span className="hint">co-authoring &sect;{activeRef || '—'} -- bound to the dossier</span>
+          <span className="hint">co-authoring &sect;{activeRef || '—'} — bound to the dossier</span>
           <button
             type="button"
             className="ana-work-toggle"
@@ -914,7 +914,7 @@ export function EctdCoauthor({ liveDrive }: OwnedSurfaceViewProps) {
                     secondary="Or keep drafting — the artifact reflects the saved document."
                   />
                   <h1 className="ec-doc-h1">{activeDoc.title}</h1>
-                  <div className="ec-doc-num">&sect;{activeDoc.moduleNumber || '—'}{activeDoc.moduleName ? ' -- ' + activeDoc.moduleName : ''}</div>
+                  <div className="ec-doc-num">&sect;{activeDoc.moduleNumber || '—'}{activeDoc.moduleName ? ' — ' + activeDoc.moduleName : ''}</div>
                   {/* The canonical editor over the persisted document. An
                       empty document is the editor's placeholder plus its
                       Draft-with-AnA affordance — not a dead end telling the
@@ -982,13 +982,13 @@ export function EctdCoauthor({ liveDrive }: OwnedSurfaceViewProps) {
                     <>
                       <div className="ec-vstat" data-valid={validation.isValid}>
                         <span className={'ec-vbadge ' + (validation.isValid ? 'ok' : 'err')}>{validation.isValid ? 'Valid' : validation.errorCount + ' error' + (validation.errorCount === 1 ? '' : 's')}</span>
-                        <span className="mono">{validation.errorCount} error -- {validation.warningCount} warning -- {validation.totalSections} sections</span>
+                        <span className="mono">{validation.errorCount} error — {validation.warningCount} warning — {validation.totalSections} sections</span>
                       </div>
                       <div className="ec-findings">
                         {validation.findings.map((f, i) => (
                           <div key={i} className="ec-finding" data-sev={f.severity}>
                             <span className="ec-fsev">{f.severity === 'error' ? (I.alertTriangle || I.x) : (I.info || I.alertCircle)}</span>
-                            <div><div className="ec-ftype mono">{f.type}{f.sectionId ? ' -- §' + f.sectionId : ''}{f.module ? ' -- M' + f.module : ''}</div><div className="ec-fmsg">{f.message}</div></div>
+                            <div><div className="ec-ftype mono">{f.type}{f.sectionId ? ' — §' + f.sectionId : ''}{f.module ? ' — M' + f.module : ''}</div><div className="ec-fmsg">{f.message}</div></div>
                           </div>
                         ))}
                       </div>
@@ -1022,7 +1022,7 @@ export function EctdCoauthor({ liveDrive }: OwnedSurfaceViewProps) {
                     <>
                       <div className="ec-cscore">
                         <div className="ec-cscore-num">{compliance.complianceScore}<span className="u">%</span></div>
-                        <div><div className="ec-cscore-l">{compliance.standard} compliance</div><div className="ec-cscore-s mono">{compliance.compliantCount}/{compliance.totalChecks} checks compliant -- {compliance.nonCompliantCount} to resolve</div></div>
+                        <div><div className="ec-cscore-l">{compliance.standard} compliance</div><div className="ec-cscore-s mono">{compliance.compliantCount}/{compliance.totalChecks} checks compliant — {compliance.nonCompliantCount} to resolve</div></div>
                       </div>
                       <div className="ec-checks">
                         {compliance.checks.map((c, i) => (

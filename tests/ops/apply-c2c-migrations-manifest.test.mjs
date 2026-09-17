@@ -251,7 +251,6 @@ const KNOWN_UNLISTED = new Set([
   'migrations/20260705_research_agreements.sql',
   'migrations/20260706_org_user_persona.sql',
   'migrations/20260706_report_definitions.sql',
-  'migrations/20260716_template_doc_types.sql',
   'migrations/20260727_onboarding_proposal_runs.sql',
   'migrations/20260728_chat_thread_store.sql',
   // authoring_reviews is created by the authoring-subsystem provisioner

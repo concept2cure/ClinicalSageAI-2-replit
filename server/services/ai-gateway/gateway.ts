@@ -39,6 +39,7 @@ import type {
   GatewayUsage,
   AnaGatewayResponse,
   AnaToolUse,
+  GatewayCitation,
   StreamCallback,
   ContentBlock,
 } from './types';
@@ -92,6 +93,8 @@ export const DEFAULT_MODELS: ModelConfig[] = [
     id: 'gpt-4o',
     provider: 'openai',
     model: 'gpt-4o',
+    thinkingMode: 'none',
+    supportsSamplingParams: true,
     contextWindow: 128000,
     qualityScore: 95,
     costPer1kInput: 0.005,
@@ -112,6 +115,8 @@ export const DEFAULT_MODELS: ModelConfig[] = [
     id: 'gpt-4o-mini',
     provider: 'openai',
     model: 'gpt-4o-mini',
+    thinkingMode: 'none',
+    supportsSamplingParams: true,
     contextWindow: 128000,
     qualityScore: 82,
     costPer1kInput: 0.00015,
@@ -123,16 +128,35 @@ export const DEFAULT_MODELS: ModelConfig[] = [
   {
     // Internal id kept stable for alias continuity; the `model` field is the
     // actual ID sent to Anthropic and tracks the current flagship release.
-    // Bumping this string is the sanctioned way to move AnA to a newer flagship
-    // — the reasoning-only surface (adaptive thinking, no sampling params) is
-    // auto-detected from the version (see isReasoningOnlyModel).
+    // Bumping this string is the sanctioned way to move AnA to a newer
+    // flagship — and it now works, because the wire surface is DECLARED below
+    // rather than inferred from the version. It used to be read off a regex
+    // over this string, so a newer model fell outside the pattern, got the
+    // legacy surface, and 400'd on the parameters it does not accept.
+    // Bumping `model` means reviewing `thinkingMode` and
+    // `supportsSamplingParams` with it, and updating the approved-models
+    // lockfile (server/services/ai-governance/approved-models.ts), whose drift
+    // gate fails CI on an unreviewed swap.
     id: 'claude-opus-4',
     provider: 'anthropic',
-    model: 'claude-opus-4-8',
-    contextWindow: 200000,
+    model: 'claude-opus-5',
+    thinkingMode: 'adaptive',
+    supportsSamplingParams: false,
+    supportsInlineSystem: true,
+    supportsStructuredOutputs: true,
+    // 1M window. It read 200000 for every Claude entry, which is the Claude 3
+    // figure. Under-declaring it is the harmful direction for the admission
+    // gate (see context-budget.ts): the gate refuses a request the model would
+    // have taken and tells the author to cut a document that fit. Over-
+    // declaring only means the provider refuses it, which is where we already
+    // were.
+    contextWindow: 1000000,
     qualityScore: 99,
-    costPer1kInput: 0.015,
-    costPer1kOutput: 0.075,
+    // $5 / $25 per MTok. These read 0.015/0.075 — Claude 3 Opus pricing —
+    // through four model generations, so recordApiUsageSafe and every cost
+    // report were roughly 3x over.
+    costPer1kInput: 0.005,
+    costPer1kOutput: 0.025,
     capabilities: [
       'chat',
       'document_analysis',
@@ -146,19 +170,24 @@ export const DEFAULT_MODELS: ModelConfig[] = [
     enabled: true,
   },
   {
-    // Opus 4.7 — the previous flagship. Kept enabled as the top intra-provider
-    // fallback rung: if 4.8 is not yet GA for the tenant's tier or is
-    // temporarily unavailable (rate limit, overloaded), the chain drops to 4.7
-    // before Sonnet. It shares the reasoning-only surface (adaptive thinking),
-    // so a fallback preserves the same reasoning behavior. Marginally lower
-    // quality score than 4.8 so the chain prefers 4.8 when both are reachable.
+    // Opus 4.8 — the previous flagship. Kept enabled as the top intra-provider
+    // fallback rung: if Opus 5 is not yet GA for the tenant's tier or is
+    // temporarily unavailable (rate limit, overloaded), the chain drops here
+    // before Sonnet. It shares the reasoning-only surface (adaptive thinking,
+    // no sampling params), so a fallback preserves the same reasoning
+    // behaviour. Marginally lower quality score so the chain prefers Opus 5
+    // when both are reachable.
     id: 'claude-opus-4-legacy',
     provider: 'anthropic',
-    model: 'claude-opus-4-7',
-    contextWindow: 200000,
+    model: 'claude-opus-4-8',
+    thinkingMode: 'adaptive',
+    supportsSamplingParams: false,
+    supportsInlineSystem: true,
+    supportsStructuredOutputs: true,
+    contextWindow: 1000000,
     qualityScore: 98,
-    costPer1kInput: 0.015,
-    costPer1kOutput: 0.075,
+    costPer1kInput: 0.005,
+    costPer1kOutput: 0.025,
     capabilities: [
       'chat',
       'document_analysis',
@@ -176,11 +205,19 @@ export const DEFAULT_MODELS: ModelConfig[] = [
     // the current Sonnet release.
     id: 'claude-sonnet-4',
     provider: 'anthropic',
-    model: 'claude-sonnet-4-6',
-    contextWindow: 200000,
+    model: 'claude-sonnet-5',
+    supportsStructuredOutputs: true,
+    // Sonnet 5 shares the flagship's reasoning-only surface: adaptive
+    // thinking, and temperature/top_p/top_k rejected. Note this differs from
+    // Sonnet 4.6 below, which keeps the legacy budget_tokens surface — the
+    // reason these are per-entry flags rather than a family rule.
+    thinkingMode: 'adaptive',
+    supportsSamplingParams: false,
+    contextWindow: 1000000,
     qualityScore: 97,
-    costPer1kInput: 0.003,
-    costPer1kOutput: 0.015,
+    // $2 / $10 per MTok.
+    costPer1kInput: 0.002,
+    costPer1kOutput: 0.010,
     capabilities: [
       'chat',
       'document_analysis',
@@ -194,13 +231,21 @@ export const DEFAULT_MODELS: ModelConfig[] = [
     enabled: true,
   },
   {
-    // Sonnet 4 legacy — dated snapshot from May 2025. Same role as
-    // opus-4-legacy: intra-provider fallback when 4.6 is unavailable.
+    // Sonnet 4.6 — the previous Sonnet. Same role as claude-opus-4-legacy:
+    // the intra-provider rung below the current Sonnet. Replaces the dated
+    // `claude-sonnet-4-20250514` snapshot that held this slot; a fallback
+    // should be the previous generation, not a year-old pin. It keeps the
+    // LEGACY thinking surface (budget_tokens + temperature), which the entry
+    // above does not — so a drop to this rung changes the request shape, and
+    // the declared flags are what make that safe.
     id: 'claude-sonnet-4-legacy',
     provider: 'anthropic',
-    model: 'claude-sonnet-4-20250514',
-    contextWindow: 200000,
+    model: 'claude-sonnet-4-6',
+    thinkingMode: 'budget',
+    supportsSamplingParams: true,
+    contextWindow: 1000000,
     qualityScore: 93,
+    // $3 / $15 per MTok.
     costPer1kInput: 0.003,
     costPer1kOutput: 0.015,
     capabilities: [
@@ -218,11 +263,18 @@ export const DEFAULT_MODELS: ModelConfig[] = [
   {
     id: 'claude-haiku-4',
     provider: 'anthropic',
-    model: 'claude-haiku-4-5-20251001',
+    // `claude-haiku-4-5` is the complete model id; the date suffix was a
+    // stale-prior artifact. Haiku keeps the 200K window — unlike the Opus and
+    // Sonnet entries above, that figure is correct here.
+    model: 'claude-haiku-4-5',
+    supportsStructuredOutputs: true,
+    thinkingMode: 'budget',
+    supportsSamplingParams: true,
     contextWindow: 200000,
     qualityScore: 85,
-    costPer1kInput: 0.0008,
-    costPer1kOutput: 0.004,
+    // $1 / $5 per MTok.
+    costPer1kInput: 0.001,
+    costPer1kOutput: 0.005,
     capabilities: ['chat', 'general', 'summarization', 'structured_output'],
     enabled: true,
   },
@@ -230,6 +282,8 @@ export const DEFAULT_MODELS: ModelConfig[] = [
     id: 'kimi-k2-0711',
     provider: 'moonshot',
     model: 'kimi-k2-0711-preview',
+    thinkingMode: 'none',
+    supportsSamplingParams: true,
     contextWindow: 131072,
     qualityScore: 88,
     costPer1kInput: 0.0006,
@@ -241,6 +295,8 @@ export const DEFAULT_MODELS: ModelConfig[] = [
     id: 'moonshot-v1-128k',
     provider: 'moonshot',
     model: 'moonshot-v1-128k',
+    thinkingMode: 'none',
+    supportsSamplingParams: true,
     contextWindow: 128000,
     qualityScore: 85,
     costPer1kInput: 0.0008,
@@ -252,6 +308,8 @@ export const DEFAULT_MODELS: ModelConfig[] = [
     id: 'moonshot-v1-32k',
     provider: 'moonshot',
     model: 'moonshot-v1-32k',
+    thinkingMode: 'none',
+    supportsSamplingParams: true,
     contextWindow: 32000,
     qualityScore: 83,
     costPer1kInput: 0.0004,
@@ -372,6 +430,219 @@ function resolveSeed(requested: number | undefined): number {
  */
 export const resolveSeedForTest = resolveSeed;
 
+/**
+ * Split `messages` into the top-level `system` prompt and the body.
+ *
+ * The two Anthropic executors each carried their own copy of
+ * `filter(m => m.role === 'system')` / `filter(m => m.role !== 'system')`.
+ * That filter ignores POSITION: every system message was hoisted to the front
+ * regardless of where it sat, so a mid-conversation operator instruction
+ * silently became part of the persona — and, with prompt caching on (which the
+ * agentic loop always sets), could become the cache breakpoint itself,
+ * invalidating the whole prefix on every steer.
+ *
+ * Here, a system message carrying `inlineSystem` stays in the body at its
+ * position when the model accepts one. When it does not, it is folded into the
+ * preceding user turn as `[User interjection]: …` — byte-for-byte what the
+ * platform sent before this existed, which is what makes the capability safe to
+ * land on its own.
+ *
+ * Placement is the API's, not ours: an inline system turn must follow a user
+ * turn and cannot be first. A message that would violate that is downgraded
+ * rather than sent — an invalid shape is a 400 for the whole turn, and losing
+ * the cache-preserving form is a much smaller cost than losing the answer.
+ */
+function partitionSystemMessages(
+  messages: GatewayMessage[],
+  supportsInlineSystem: boolean
+): { systemMessages: GatewayMessage[]; bodyMessages: GatewayMessage[] } {
+  const systemMessages: GatewayMessage[] = [];
+  const bodyMessages: GatewayMessage[] = [];
+
+  for (const m of messages) {
+    if (m.role !== 'system') {
+      bodyMessages.push(m);
+      continue;
+    }
+    const previousBody = bodyMessages[bodyMessages.length - 1];
+
+    // Two operator instructions in a row are one instruction. Merging them is
+    // not a nicety: the API wants an inline system turn to follow a USER turn,
+    // so a second consecutive one would fail placement — and, before this
+    // branch existed, fell through to the persona, where a mid-run steer would
+    // have silently become part of AnA's identity for the rest of the
+    // conversation. That is the worst available outcome for a steer: not
+    // dropped, not applied, permanently misfiled.
+    if (
+      m.inlineSystem &&
+      supportsInlineSystem &&
+      previousBody?.role === 'system' &&
+      previousBody.inlineSystem
+    ) {
+      bodyMessages[bodyMessages.length - 1] = {
+        ...previousBody,
+        content: `${previousBody.content}\n\n${m.content}`,
+      };
+      continue;
+    }
+
+    const placementOk = previousBody?.role === 'user';
+    if (m.inlineSystem && supportsInlineSystem && placementOk) {
+      bodyMessages.push(m);
+      continue;
+    }
+    if (m.inlineSystem) {
+      // Downgrade. Fold into the preceding user turn when there is one;
+      // otherwise it is an opening instruction after all, and belongs in the
+      // top-level system prompt.
+      const previous = bodyMessages[bodyMessages.length - 1];
+      if (previous && previous.role === 'user') {
+        bodyMessages[bodyMessages.length - 1] = {
+          ...previous,
+          content: `${previous.content}\n\n[User interjection]: ${m.content}`,
+        };
+      } else {
+        systemMessages.push(m);
+      }
+      continue;
+    }
+    systemMessages.push(m);
+  }
+
+  return { systemMessages, bodyMessages };
+}
+
+/**
+ * Resolve the Anthropic structured-output format for a request.
+ *
+ * Returns the `output_config.format` value when the caller supplied a schema AND
+ * the resolved model can enforce it, plus whether that guarantee was applied.
+ *
+ * Three rules worth stating:
+ *
+ *   - **No schema, no format.** Anthropic has no `json_object` mode, so the
+ *     OpenAI path's schema-less fallback has no counterpart. `jsonMode` alone is
+ *     a prompt instruction, not a wire parameter; fabricating an empty schema
+ *     would constrain the model to nothing.
+ *   - **Unsupported model answers anyway.** Around fifteen services call
+ *     `ai.structured()` and the router reaches a model without the capability on
+ *     every fallback. Refusing there trades a silent gap for an outage. The gap
+ *     is reported instead — see `structuredOutputEnforced`.
+ *   - **Citations are mutually exclusive with it.** The API returns a 400 for the
+ *     pair. Refusing here, with a message naming both, is better than finding it
+ *     as a provider error on a governed path.
+ */
+function resolveStructuredOutputFormat(
+  request: GatewayRequest,
+  modelConfig: ModelConfig
+): { format?: { type: 'json_schema'; schema: Record<string, unknown> }; enforced: boolean } {
+  if (!request.jsonSchema) return { enforced: false };
+
+  const usesCitations = (request.messages || []).some(m =>
+    m.contentBlocks?.some(b => b.type === 'document' && b.citations?.enabled)
+  );
+  if (usesCitations) {
+    throw new GatewayPolicyError(
+      'A JSON schema and document citations cannot be requested together — the ' +
+        'Anthropic API refuses the pair. Ask for one or the other: a constrained ' +
+        'shape, or an answer that cites the page it came from.'
+    );
+  }
+
+  if (modelConfig.supportsStructuredOutputs !== true) return { enforced: false };
+  return { format: { type: 'json_schema', schema: request.jsonSchema }, enforced: true };
+}
+
+/**
+ * Normalise one wire citation into {@link GatewayCitation}.
+ *
+ * The API emits five location shapes — page, character range, content block,
+ * web-search result, search result — for one idea: this claim came from here.
+ * Callers recording provenance should not have to branch on all five, and a
+ * shape this function does not recognise still yields its `cited_text` rather
+ * than being dropped, because the span is the part that matters most.
+ */
+function normalizeCitation(raw: any): GatewayCitation | null {
+  const citedText = typeof raw?.cited_text === 'string' ? raw.cited_text : '';
+  if (!citedText) return null;
+  return {
+    citedText,
+    locationType: typeof raw?.type === 'string' ? raw.type : 'unknown',
+    ...(typeof raw?.document_title === 'string' ? { documentTitle: raw.document_title } : {}),
+    ...(typeof raw?.title === 'string' ? { documentTitle: raw.title } : {}),
+    ...(typeof raw?.start_page_number === 'number' ? { startPage: raw.start_page_number } : {}),
+    ...(typeof raw?.end_page_number === 'number' ? { endPage: raw.end_page_number } : {}),
+    ...(typeof raw?.start_char_index === 'number' ? { startCharIndex: raw.start_char_index } : {}),
+    ...(typeof raw?.end_char_index === 'number' ? { endCharIndex: raw.end_char_index } : {}),
+    ...(typeof raw?.url === 'string' ? { url: raw.url } : {}),
+  };
+}
+
+/** One buffer per open tool_use block, keyed by the stream event's `index`. */
+type ToolInputBuffers = Map<number, { toolIndex: number; json: string }>;
+
+/**
+ * Append one `input_json_delta` fragment to its block's buffer. A fragment for
+ * a block we never saw open is dropped rather than starting a buffer with no
+ * tool to attach to.
+ */
+function appendToolInputFragment(
+  buffers: ToolInputBuffers,
+  index: number,
+  fragment: unknown
+): void {
+  const buffered = buffers.get(index);
+  if (buffered) buffered.json += typeof fragment === 'string' ? fragment : '';
+}
+
+/**
+ * Attach a streamed tool input to its tool use.
+ *
+ * `buffered` is the concatenation of the block's `input_json_delta` fragments.
+ * Three cases, and the difference between the last two is the whole point:
+ *
+ *   - empty buffer      the model emitted no fragments, so the tool genuinely
+ *                       takes no arguments. `input` stays `{}` and nothing is
+ *                       flagged.
+ *   - parses            the model's arguments, attached as-is.
+ *   - does not parse    the arguments existed and we could not reconstruct
+ *                       them. `input` stays `{}` — but `inputParseError` says
+ *                       so, because dispatching a handler on `{}` here would
+ *                       run the tool as though the model had asked for
+ *                       nothing, and report back a "missing parameters" error
+ *                       that blames the model for our loss.
+ *
+ * `truncationReason` is for a block that never closed, where even an empty
+ * buffer means arguments that had not arrived yet rather than none at all.
+ *
+ * Never throws: a malformed input is a reportable outcome for one tool call,
+ * not a reason to fail the whole turn.
+ */
+function finalizeToolInput(
+  toolUse: AnaToolUse | undefined,
+  buffered: string,
+  truncationReason?: string
+): void {
+  if (!toolUse) return;
+  if (truncationReason) {
+    // The block never closed. An empty buffer here is not a zero-argument
+    // call — it is a call whose arguments had not arrived yet.
+    toolUse.inputParseError = truncationReason;
+    return;
+  }
+  if (buffered.length === 0) return;
+  try {
+    const parsed = JSON.parse(buffered);
+    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+      toolUse.input = parsed as Record<string, unknown>;
+      return;
+    }
+    toolUse.inputParseError = `tool input was ${Array.isArray(parsed) ? 'an array' : typeof parsed}, not an object`;
+  } catch (err: any) {
+    toolUse.inputParseError = `tool input was not parseable JSON: ${err?.message ?? 'unknown error'}`;
+  }
+}
+
 export class AIGateway {
   private config: GatewayConfig;
   private models: ModelConfig[];
@@ -437,6 +708,9 @@ export class AIGateway {
         // Governance decisions are not transient provider failures. Retrying
         // duplicated denial audits and could never make the placement safe.
         if (err instanceof GatewayPolicyError) throw err;
+        // Neither is a cancel. Retrying it re-runs the work the caller just
+        // stopped — the opposite of what they asked for.
+        if (err instanceof GatewayAbortedError) throw err;
         const status = err?.status || err?.statusCode;
         // Hard client errors (400/401/403/404/422, …) never succeed on retry.
         if (isHardClientError(status)) throw err;
@@ -468,6 +742,11 @@ export class AIGateway {
     const requestId = randomUUID();
     const startTime = Date.now();
     const strategy = request.strategy || this.config.defaultStrategy;
+
+    // Already cancelled before we started — happens whenever a control lands
+    // between agentic rounds. Spend nothing: no classification, no policy
+    // pass, no provider call, no audit row for work that was never done.
+    if (request.signal?.aborted) throw new GatewayAbortedError('pre_call');
 
     // Apply the org's default placement policy (residency / zero-retention) when
     // the request doesn't specify it. Explicit request values always win; if no
@@ -607,6 +886,11 @@ export class AIGateway {
         // Policy denials are terminal. Never retry or cross-provider fallback:
         // doing so would turn a placement refusal into a routing hint.
         if (error instanceof GatewayPolicyError) throw error;
+        // A cancel is terminal for the same shape of reason, and the stakes
+        // are higher: falling back would re-run the entire request the user
+        // just stopped on every remaining rung, and recordFailure would mark a
+        // provider that did nothing wrong as unhealthy for everyone else.
+        if (error instanceof GatewayAbortedError) throw error;
         lastError = error;
         triedModels.push(selectedModel.id);
         this.recordFailure(selectedModel.provider, error);
@@ -635,6 +919,7 @@ export class AIGateway {
         return response;
       } catch (error: any) {
         if (error instanceof GatewayPolicyError) throw error;
+        if (error instanceof GatewayAbortedError) throw error;
         lastError = error;
         triedModels.push(fallback.id);
         this.recordFailure(fallback.provider, error);
@@ -1040,7 +1325,7 @@ export class AIGateway {
     }
 
     const completion = await Promise.race([
-      client.chat.completions.create(params),
+      client.chat.completions.create(params, request.signal ? { signal: request.signal } : undefined),
       new Promise<never>((_, reject) =>
         setTimeout(() => reject(new Error(`${modelConfig.provider} API call timed out after 120s`)), 120_000)
       ),
@@ -1081,39 +1366,59 @@ export class AIGateway {
   }
 
   /**
-   * Opus 4.7 and later removed the sampling parameters (temperature/top_p/top_k)
-   * and the manual extended-thinking shape (thinking.type "enabled" with
-   * budget_tokens) — sending any of them now returns a 400. Matches
-   * claude-opus-4-7 / claude-opus-4-8 and provider-prefixed variants
-   * (anthropic.claude-opus-4-7), but NOT the dated 4.0 snapshot
-   * claude-opus-4-20250514, which still accepts the legacy surface.
+   * Did the model that served this call accept sampling parameters?
+   *
+   * Answered from the registry, by the provider + model string the response
+   * reports. A model the registry does not know returns `false`: the caller
+   * (the audit ledger) must not assert a sampling parameter it cannot show
+   * was transmitted.
    */
-  private isReasoningOnlyModel(model: string): boolean {
-    const m = /claude-opus-4-(\d{1,2})(?!\d)/.exec(model);
-    return m ? Number(m[1]) >= 7 : false;
+  private modelAcceptsSamplingParams(provider: ProviderName, model: string): boolean {
+    const entry = this.models.find(m => m.provider === provider && m.model === model);
+    return entry?.supportsSamplingParams === true;
   }
 
   /**
-   * Apply Anthropic sampling + thinking params in a model-aware way.
+   * Apply Anthropic sampling + thinking params from the registry entry's
+   * declared wire surface.
    *
-   * Reasoning-only models (Opus 4.7/4.8 family) reject sampling params and
-   * manual thinking — they use adaptive thinking with no sampling controls.
-   * Summarized display keeps reasoning visible for the streaming path. Older
-   * Claude models (Sonnet 4.6, Haiku 4.5, the dated 4.0 snapshots) keep the
-   * legacy temperature + budget_tokens surface.
+   * This used to ask a regex — `/claude-opus-4-(\d{1,2})/`, version >= 7 —
+   * whether the model was reasoning-only. That made the shape of a request a
+   * function of how a model was NAMED: any model outside the pattern got the
+   * legacy surface, including newer ones that reject `temperature` and
+   * `budget_tokens` with a 400. The registry's own comment calls bumping the
+   * model string "the sanctioned way to move AnA to a newer flagship", and
+   * that bump was exactly what the regex broke.
+   *
+   * Capability now comes from the entry (`thinkingMode`,
+   * `supportsSamplingParams`), so moving to a new model is a data change and
+   * a substrate that lacks a feature can say so.
    */
   private applyAnthropicSamplingParams(
     params: any,
     modelConfig: ModelConfig,
     request: GatewayRequest
   ): void {
-    if (this.isReasoningOnlyModel(modelConfig.model)) {
+    if (modelConfig.thinkingMode === 'adaptive') {
       if (request.thinking?.enabled) {
         // Adaptive thinking self-budgets — the resolver's budgetTokens is a hint
         // that only the legacy surface below consumes. Summarized display keeps
         // the reasoning stream visible to the client on the SSE path.
         params.thinking = { type: 'adaptive', display: 'summarized' };
       }
+      return;
+    }
+    if (!modelConfig.supportsSamplingParams) {
+      // Declared as rejecting sampling params without adaptive thinking on
+      // offer. Send neither rather than falling through to a surface this
+      // model does not accept.
+      return;
+    }
+    if (modelConfig.thinkingMode === 'none' && request.thinking?.enabled) {
+      // Thinking was asked for and this model has no surface for it. Honour
+      // the sampling half and leave `thinking` off, rather than sending a
+      // shape that 400s.
+      params.temperature = request.temperature ?? 0.7;
       return;
     }
     if (request.thinking?.enabled) {
@@ -1150,9 +1455,14 @@ export class AIGateway {
       return this.executeAnthropicStream(modelConfig, request, requestId, startTime);
     }
 
-    // Convert messages — Anthropic needs system separate
-    const systemMessages = request.messages.filter(m => m.role === 'system');
-    const nonSystemMessages = request.messages.filter(m => m.role !== 'system');
+    // Convert messages — Anthropic needs system separate. Position matters:
+    // an operator turn marked `inlineSystem` stays in the body (see
+    // partitionSystemMessages), so it does not rewrite the persona or move the
+    // cache breakpoint.
+    const { systemMessages, bodyMessages: nonSystemMessages } = partitionSystemMessages(
+      request.messages,
+      modelConfig.supportsInlineSystem === true,
+    );
 
     const cacheEnabled = !!request.promptCache?.enabled;
     const cacheType = request.promptCache?.type;
@@ -1235,9 +1545,20 @@ export class AIGateway {
       }
     }
 
-    // Sampling + extended thinking (model-aware: Opus 4.7+ rejects temperature
-    // and manual budget_tokens thinking; older models keep the legacy surface).
+    // Sampling + extended thinking (model-aware: reasoning-only models reject
+    // temperature and manual budget_tokens thinking; older models keep the
+    // legacy surface).
     this.applyAnthropicSamplingParams(params, modelConfig, request);
+
+    // Structured output. Throws on the citations conflict before anything is
+    // sent, rather than letting the provider 400 it.
+    const structured = resolveStructuredOutputFormat(request, modelConfig);
+    if (structured.format) {
+      params.output_config = { ...(params.output_config ?? {}), format: structured.format };
+    }
+    if (request.apiEffort) {
+      params.output_config = { ...(params.output_config ?? {}), effort: request.apiEffort };
+    }
 
     // Tool use
     if (request.tools && request.tools.length > 0) {
@@ -1253,12 +1574,15 @@ export class AIGateway {
     const usesFilesApiDoc = (request.messages || []).some(m =>
       m.contentBlocks?.some(b => b.type === 'document' && b.source.type === 'file')
     );
-    const reqOptions = usesFilesApiDoc
-      ? { headers: { 'anthropic-beta': 'files-api-2025-04-14' } }
-      : undefined;
+    // Merged, not replaced: the Files-API beta header rides in the same
+    // RequestOptions object, so building one and adding to it is what keeps
+    // both from clobbering each other.
+    const reqOptions: Record<string, unknown> = {};
+    if (usesFilesApiDoc) reqOptions.headers = { 'anthropic-beta': 'files-api-2025-04-14' };
+    if (request.signal) reqOptions.signal = request.signal;
 
     const response = await Promise.race([
-      client.messages.create(params, reqOptions),
+      client.messages.create(params, Object.keys(reqOptions).length > 0 ? reqOptions : undefined),
       new Promise<never>((_, reject) =>
         setTimeout(() => reject(new Error(`${modelConfig.provider} API call timed out after 120s`)), 120_000)
       ),
@@ -1274,9 +1598,18 @@ export class AIGateway {
     let thinking = '';
     const toolUses: AnaToolUse[] = [];
 
+    // On the non-streaming path a cited answer splits into several text blocks,
+    // each carrying the citations for the span it contains — the same facts the
+    // streaming path receives as citations_delta.
+    const nonStreamCitations: GatewayCitation[] = [];
+
     for (const block of response.content || []) {
       if (block.type === 'text') {
         content += block.text;
+        for (const raw of ((block as any).citations || []) as any[]) {
+          const citation = normalizeCitation(raw);
+          if (citation) nonStreamCitations.push(citation);
+        }
       } else if (block.type === 'thinking') {
         thinking += (block as any).thinking || '';
       } else if (block.type === 'tool_use') {
@@ -1322,6 +1655,10 @@ export class AIGateway {
       cacheStats,
       deterministic: false,
       finishReason: response.stop_reason || 'unknown',
+      // Says whether the caller's schema was actually enforced. Without it a
+      // constrained answer and a fortunate one look identical.
+      structuredOutputEnforced: structured.enforced,
+      citations: nonStreamCitations.length > 0 ? nonStreamCitations : undefined,
     };
   }
 
@@ -1342,8 +1679,10 @@ export class AIGateway {
     }
 
     const onStream = request.onStream!;
-    const systemMessages = request.messages.filter(m => m.role === 'system');
-    const nonSystemMessages = request.messages.filter(m => m.role !== 'system');
+    const { systemMessages, bodyMessages: nonSystemMessages } = partitionSystemMessages(
+      request.messages,
+      modelConfig.supportsInlineSystem === true,
+    );
 
     const streamCacheEnabled = !!request.promptCache?.enabled;
     const streamCacheType = request.promptCache?.type;
@@ -1427,14 +1766,42 @@ export class AIGateway {
     const streamUsesFilesApiDoc = (request.messages || []).some(m =>
       m.contentBlocks?.some(b => b.type === 'document' && b.source.type === 'file')
     );
+    // Same structured-output contract as the non-streaming path — including the
+    // citations conflict, which must refuse before a token is streamed.
+    const structured = resolveStructuredOutputFormat(request, modelConfig);
+    if (structured.format) {
+      params.output_config = { ...(params.output_config ?? {}), format: structured.format };
+    }
+    if (request.apiEffort) {
+      params.output_config = { ...(params.output_config ?? {}), effort: request.apiEffort };
+    }
+
+    const streamOptions: Record<string, unknown> = {};
+    if (streamUsesFilesApiDoc) {
+      streamOptions.headers = { 'anthropic-beta': 'files-api-2025-04-14' };
+    }
+    // Aborting the SDK request is what actually stops GENERATION. Without it
+    // a stop only stopped us reading, and the model ran to completion at full
+    // cost — which is what stream.ts's own comment used to say.
+    if (request.signal) streamOptions.signal = request.signal;
     const stream = await client.messages.create(
       params,
-      streamUsesFilesApiDoc ? { headers: { 'anthropic-beta': 'files-api-2025-04-14' } } : undefined
+      Object.keys(streamOptions).length > 0 ? streamOptions : undefined
     );
 
     let content = '';
     let thinking = '';
     const toolUses: AnaToolUse[] = [];
+    // Tool inputs arrive as a run of `input_json_delta` fragments between the
+    // block's start and stop, split at arbitrary points (mid-key, mid-value).
+    // Blocks interleave when the model calls tools in parallel, so the buffer
+    // is keyed by the event's own `index` — the only thing that identifies
+    // which block a fragment belongs to. `toolIndex` points back at the entry
+    // in `toolUses` so the parsed object lands on the right tool.
+    const toolInputBuffers: ToolInputBuffers = new Map();
+    // Citations arrive interleaved with the text they support. Collected in
+    // arrival order so a caller can match a claim to its source.
+    const citations: GatewayCitation[] = [];
     let inputTokens = 0;
     let outputTokens = 0;
     let cacheCreationInputTokens = 0;
@@ -1446,6 +1813,7 @@ export class AIGateway {
     let lastChunkTime = Date.now();
     const chunkTimeoutMs = 30_000;
     let streamStalled = false;
+    let streamAborted = false;
     const chunkWatchdog = setInterval(() => {
       if (Date.now() - lastChunkTime > chunkTimeoutMs) {
         streamStalled = true;
@@ -1471,6 +1839,17 @@ export class AIGateway {
         // Break out if watchdog flagged a stall (race between interval and iterator)
         if (streamStalled) break;
 
+        // The caller cancelled. Stop reading and stop generating — the SDK
+        // holds the same signal, so the request is already on its way down.
+        // What has arrived stays: the person is reading it.
+        if (request.signal?.aborted) {
+          streamAborted = true;
+          try {
+            (stream as any).controller?.abort();
+          } catch { /* best-effort abort, same shape the watchdog uses */ }
+          break;
+        }
+
         if (event.type === 'content_block_delta') {
           if (event.delta?.type === 'text_delta') {
             content += event.delta.text;
@@ -1478,8 +1857,15 @@ export class AIGateway {
           } else if (event.delta?.type === 'thinking_delta') {
             thinking += event.delta.thinking;
             onStream('', { type: 'thinking', thinkingContent: event.delta.thinking });
+          } else if (event.delta?.type === 'citations_delta') {
+            // Where the model read it. This branch did not exist, so citations
+            // were produced, billed and dropped before any caller saw one.
+            const citation = normalizeCitation(event.delta.citation);
+            if (citation) citations.push(citation);
           } else if (event.delta?.type === 'input_json_delta') {
-            // Tool input streaming — accumulate
+            // The model's arguments for a tool, one fragment at a time. Append
+            // verbatim; the fragments are only valid JSON once concatenated.
+            appendToolInputFragment(toolInputBuffers, event.index, event.delta.partial_json);
           }
         } else if (event.type === 'content_block_start') {
           if (event.content_block?.type === 'tool_use') {
@@ -1488,6 +1874,15 @@ export class AIGateway {
               name: event.content_block.name,
               input: {},
             });
+            toolInputBuffers.set(event.index, { toolIndex: toolUses.length - 1, json: '' });
+          }
+        } else if (event.type === 'content_block_stop') {
+          // The block is closed, so its fragments are now a complete JSON
+          // document — parse it onto the tool use it belongs to.
+          const buffered = toolInputBuffers.get(event.index);
+          if (buffered) {
+            toolInputBuffers.delete(event.index);
+            finalizeToolInput(toolUses[buffered.toolIndex], buffered.json);
           }
         } else if (event.type === 'message_delta') {
           stopReason = event.delta?.stop_reason || stopReason;
@@ -1510,6 +1905,22 @@ export class AIGateway {
       if (!content) throw streamErr; // Re-throw if nothing was captured
     } finally {
       clearInterval(chunkWatchdog);
+    }
+
+    // Any buffer still open never saw its content_block_stop — a stall, an
+    // abort, or a dropped connection cut the stream mid-input. Finalize them
+    // anyway so a truncated input is reported as lost rather than silently
+    // reading as a tool that was called with no arguments.
+    for (const [, buffered] of toolInputBuffers) {
+      finalizeToolInput(toolUses[buffered.toolIndex], buffered.json, 'the stream ended before the tool input was complete');
+    }
+    toolInputBuffers.clear();
+
+    // A cancel is not a failure and not a stall: the turn ended because the
+    // person ended it. Say so, so the caller can tell "she was stopped" from
+    // "she finished" — a distinction the transcript has to get right.
+    if (streamAborted) {
+      stopReason = 'aborted';
     }
 
     // If stream stalled but we have partial content, mark finish reason accordingly
@@ -1546,6 +1957,9 @@ export class AIGateway {
       finishReason: stopReason,
       cacheHit: streamCacheStats ? cacheReadInputTokens > 0 : undefined,
       cacheStats: streamCacheStats,
+      structuredOutputEnforced: structured.enforced,
+      // Undefined, not [], when there were none — see GatewayCitation.
+      citations: citations.length > 0 ? citations : undefined,
     } as AnaGatewayResponse;
   }
 
@@ -1589,7 +2003,7 @@ export class AIGateway {
     }
 
     const completion = await Promise.race([
-      this.moonshotClient.chat.completions.create(params),
+      this.moonshotClient.chat.completions.create(params, request.signal ? { signal: request.signal } : undefined),
       new Promise<never>((_, reject) =>
         setTimeout(() => reject(new Error('Moonshot API call timed out after 120s')), 120_000)
       ),
@@ -1665,7 +2079,10 @@ export class AIGateway {
           : { type: 'json_object' };
     }
 
-    const stream = await client.chat.completions.create(params);
+    const stream = await client.chat.completions.create(
+      params,
+      request.signal ? { signal: request.signal } : undefined,
+    );
 
     let content = '';
     let thinking = '';
@@ -1696,10 +2113,23 @@ export class AIGateway {
       }
     }, 5_000);
 
+    let streamAborted = false;
     try {
       for await (const chunk of stream as AsyncIterable<any>) {
         lastChunkTime = Date.now();
         if (streamStalled) break;
+
+        // Same cancel contract as the Anthropic path: stop reading, stop
+        // generating, keep what arrived. AnA falls back across providers, so a
+        // stop that only worked on one of them would be a stop that sometimes
+        // did not.
+        if (request.signal?.aborted) {
+          streamAborted = true;
+          try {
+            (stream as any).controller?.abort();
+          } catch { /* best-effort abort */ }
+          break;
+        }
 
         // Every chunk repeats the resolved model; take the first one that
         // carries it rather than re-assigning on each.
@@ -1729,6 +2159,11 @@ export class AIGateway {
       if (!content) throw streamErr; // nothing captured — surface the failure
     } finally {
       clearInterval(chunkWatchdog);
+    }
+
+    // Ended because the person ended it — not a stall, not a failure.
+    if (streamAborted) {
+      finishReason = 'aborted';
     }
 
     if (streamStalled && content) {
@@ -2142,9 +2577,13 @@ export class AIGateway {
         // `number | undefined`; the writer coalesces it (`entry.temperature ??
         // null`), so the column still stores NULL — the DB outcome is identical
         // and the type is honest.
-        temperature: this.isReasoningOnlyModel(response.model)
-          ? undefined
-          : request.temperature ?? 0.7,
+        // Read from the registry entry that served the call, not from the
+        // model's name. Unknown model ⇒ record nothing: we cannot establish
+        // that a temperature was sent, and by this comment's own rule an
+        // unverifiable assertion is worse than "not applicable".
+        temperature: this.modelAcceptsSamplingParams(response.provider, response.model)
+          ? request.temperature ?? 0.7
+          : undefined,
         // The seed that was actually SENT. Undefined on every Anthropic call —
         // that API has no seed parameter — so the column stays NULL there
         // rather than asserting a value the provider never saw. Exactly the
@@ -2452,6 +2891,29 @@ export class GatewayPolicyError extends Error {
   constructor(message: string) {
     super(message);
     this.name = 'GatewayPolicyError';
+  }
+}
+
+/**
+ * The caller cancelled this request.
+ *
+ * Terminal in exactly the way {@link GatewayPolicyError} is, and for a related
+ * reason: neither is a provider failing. `route()` otherwise treats any throw
+ * as a transient fault — it records a failure against the provider's health
+ * and walks the fallback ladder — which for a cancel would re-run the entire
+ * request the user just stopped, once per rung, and leave a healthy provider
+ * marked unhealthy on the way.
+ *
+ * `phase` says where it was caught: `'pre_call'` before any provider was
+ * contacted, `'pre_stream'` after the request went out but before a token
+ * arrived. An abort DURING a stream is not an error at all — the partial text
+ * is returned with `finishReason: 'aborted'`, because what the model already
+ * said is worth keeping.
+ */
+export class GatewayAbortedError extends Error {
+  constructor(readonly phase: 'pre_call' | 'pre_stream') {
+    super(`AI request cancelled by the caller (${phase})`);
+    this.name = 'GatewayAbortedError';
   }
 }
 

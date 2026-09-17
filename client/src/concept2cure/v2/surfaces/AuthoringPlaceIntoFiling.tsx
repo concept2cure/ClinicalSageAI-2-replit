@@ -7,15 +7,24 @@
  *
  * ── The identity fact this dialog states instead of hiding ───────────────────
  * The editor's store is `authoring_documents` (uuid-keyed; server/routes/
- * authoring.router.ts). The filing core's leaves reference their source
- * document polymorphically as (document_table, document_id) where document_id
- * is an INTEGER (shared/schema/submissions.ts), and the assembler can
- * materialize only the locally-renderable tables — coauthor_documents and
- * unified_documents (server/services/ectd/leaf-source-resolver.ts; anything
- * else fails closed at assembly as an unresolved leaf). A uuid authoring
- * document therefore CANNOT be referenced by a leaf, and nothing links or
- * derives one automatically (its only bridges — concept2cure_artifacts and
- * c2c_documents — are uuid stores too).
+ * authoring.router.ts). A leaf references its source polymorphically, and the
+ * assembler can only materialize the tables it has a branch for — the current
+ * list is `RESOLVABLE_DOCUMENT_TABLES` in
+ * server/services/ectd/leaf-document-tables.ts, and anything else fails closed
+ * at assembly as an unresolved leaf. `authoring_documents` is NOT among them,
+ * and nothing links or derives one automatically (its only bridges —
+ * concept2cure_artifacts and c2c_documents — are uuid stores too). So the
+ * snapshot below is still how an authored document gets filed.
+ *
+ * UPDATED 2026-09-17 — this paragraph used to give the reason as "document_id
+ * is an INTEGER, so a uuid-keyed store cannot be referenced at all". That is no
+ * longer the general rule and repeating it would send the next reader to build
+ * a snapshot workaround they do not need: `submission_leaves` now carries
+ * `document_uuid` beside the integer, and `vault_documents` is resolved
+ * directly through it — a vault PDF is filed as itself, with no copy. What
+ * stops `authoring_documents` is narrower and unchanged: it has no resolver
+ * branch, because its content is authored sections rather than a renderable
+ * document, which is exactly what the snapshot step produces.
  *
  * So placement here is an explicit, stated DERIVATION, the join point the
  * canonical model names (shared/regulatory/canonical-document.ts §"placement"):
@@ -44,6 +53,14 @@
 import React from 'react';
 import { I } from '../icons';
 import { liveGetOrNull } from '../dataConnect';
+import {
+  useFilingTarget,
+  FilingTargetFields,
+  judgeSectionCode,
+  isLocked,
+  type SubmissionRow,
+  type SequenceRow,
+} from './filingTarget';
 import { mutateVerbatim } from './SubmissionSeqWorkspaces';
 import { SC_LIFECYCLE_OPS, SC_SEQ_STATUS } from '../fixtures/submission';
 import type { FireToast } from '../toast';
@@ -52,23 +69,9 @@ import { normalizeCtdCode, ctdFolderSlug } from '@shared/regulatory/section-code
 
 /* ── Server row shapes (only the columns this dialog reads) ── */
 
-/** GET /api/submissions → listSubmissions() rows. */
-interface SubmissionRow {
-  id: number;
-  title: string;
-  applicationType: string;
-  primaryRegion: string;
-  status: string;
-}
-
-/** GET /api/submissions/:id/sequences → listSequences() rows. */
-interface SequenceRow {
-  id: number;
-  sequenceNumber: string;
-  type: string;
-  status: string; // draft|assembling|validated|frozen|dispatched
-  region: string;
-}
+/* SubmissionRow, SequenceRow and isLocked now live in ./filingTarget — the
+   Vault files into a sequence too, and one definition cannot drift from the
+   other. */
 
 /** GET /api/authoring/docs/:docId/sections rows (subset). */
 interface SavedSection {
@@ -84,10 +87,6 @@ interface PlacedLeaf {
   title: string;
   lifecycleOp: string;
 }
-
-/** A frozen or dispatched sequence's leaves are immutable (submission-service
- *  isSequenceLocked) — mirrored here so the picker can say WHY it excludes. */
-const isLocked = (status: string) => status === 'frozen' || status === 'dispatched';
 
 /**
  * The one honest statement of why placement is a derivation. Pinned by test.
@@ -157,13 +156,11 @@ export function AuthoringPlaceIntoFiling({
 }: AuthoringPlaceIntoFilingProps) {
   const [open, setOpen] = React.useState(false);
 
-  // Target submissions — the org's real list, loaded when the dialog opens.
-  const [subs, setSubs] = React.useState<{ state: 'loading' | 'ready' | 'error'; rows: SubmissionRow[]; error?: string }>({ state: 'loading', rows: [] });
-  const [subId, setSubId] = React.useState<number | null>(null);
-
-  // The chosen submission's sequences.
-  const [seqs, setSeqs] = React.useState<{ state: 'idle' | 'loading' | 'ready' | 'error'; rows: SequenceRow[]; error?: string }>({ state: 'idle', rows: [] });
-  const [seqId, setSeqId] = React.useState<number | null>(null);
+  // Where to file. Shared with the Vault's own place-into-submission dialog
+  // (./filingTarget), so the rule that a frozen or dispatched sequence cannot
+  // take a leaf is stated in ONE place rather than two that can drift.
+  const target = useFilingTarget(() => setVerdict(null));
+  const { subs, subId, seqs, seqId, seq, lockedSeqs, pickSubmission } = target;
 
   const [section, setSection] = React.useState('');
   const [op, setOp] = React.useState('new');
@@ -177,41 +174,9 @@ export function AuthoringPlaceIntoFiling({
     setPlacement(null);
     setSection(activeSectionCode ?? '');
     setOp('new');
-    setSubId(null);
-    setSeqId(null);
-    setSeqs({ state: 'idle', rows: [] });
-    setSubs({ state: 'loading', rows: [] });
-    void liveGetOrNull<SubmissionRow[]>('/api/submissions').then((r) => {
-      if (r.error || !Array.isArray(r.data)) {
-        setSubs({ state: 'error', rows: [], error: r.error ?? 'unexpected response shape' });
-        return;
-      }
-      setSubs({ state: 'ready', rows: r.data });
-    });
+    target.load();
   };
 
-  const pickSubmission = (id: number | null) => {
-    setSubId(id);
-    setSeqId(null);
-    setVerdict(null);
-    if (id == null) {
-      setSeqs({ state: 'idle', rows: [] });
-      return;
-    }
-    setSeqs({ state: 'loading', rows: [] });
-    void liveGetOrNull<SequenceRow[]>(`/api/submissions/${id}/sequences`).then((r) => {
-      if (r.error || !Array.isArray(r.data)) {
-        setSeqs({ state: 'error', rows: [], error: r.error ?? 'unexpected response shape' });
-        return;
-      }
-      setSeqs({ state: 'ready', rows: r.data });
-      const firstOpen = r.data.find((s) => !isLocked(s.status));
-      setSeqId(firstOpen ? firstOpen.id : null);
-    });
-  };
-
-  const lockedSeqs = seqs.rows.filter((s) => isLocked(s.status));
-  const seq = seqs.rows.find((s) => s.id === seqId) ?? null;
   /* What the typed section code resolves to, by the SAME rule the write
      boundary and the packager apply (shared/regulatory/section-code). The
      section code decides which module folder the document is filed into, and
@@ -219,27 +184,11 @@ export function AuthoringPlaceIntoFiling({
      discovered after a filing snapshot had already been created for it, and
      before the write boundary was closed it produced a package with a
      top-level folder no eCTD layout defines. */
-  const sectionCanonical = normalizeCtdCode(section);
-  const sectionFolder = ctdFolderSlug(section);
-  const sectionIsPlaceable = sectionCanonical !== null && sectionCanonical.includes('.');
-  const sectionNote: { tone: 'ok' | 'err'; text: string } | null =
-    section.trim() === ''
-      ? null
-      : !sectionIsPlaceable
-        ? {
-            tone: 'err',
-            text:
-              sectionCanonical === null
-                ? `"${section.trim()}" is not a CTD section code. Use one like 1.2, 2.7.3 or 3.2.S.4.2.`
-                : `Module ${sectionCanonical} on its own is a container, not a section a document can be filed at.`,
-          }
-        : {
-            tone: 'ok',
-            text:
-              sectionCanonical!.charAt(0) === '1'
-                ? `Files as ${sectionCanonical} in the regional Module 1 folder (${sectionFolder}/).`
-                : `Files as ${sectionCanonical} at m${sectionCanonical!.charAt(0)}/${sectionFolder}/.`,
-          };
+  const sectionJudged = judgeSectionCode(section);
+  const sectionCanonical = sectionJudged.canonical;
+  const sectionFolder = sectionJudged.folder;
+  const sectionIsPlaceable = sectionJudged.placeable;
+  const sectionNote = sectionJudged.note;
 
   const canPlace =
     !placing && !dirty && seq != null && !isLocked(seq.status) && section.trim() !== '' && sectionIsPlaceable;
@@ -363,80 +312,7 @@ export function AuthoringPlaceIntoFiling({
             </div>
 
             <div className="de-body">
-              {/* ── Target submission ── */}
-              <div className="de-field">
-                <label className="de-label" htmlFor="apf-sub">Target submission</label>
-                {subs.state === 'loading' ? (
-                  <div role="status" className="de-desc">Loading this organization’s submissions…</div>
-                ) : subs.state === 'error' ? (
-                  <div className="de-err" role="status">
-                    Couldn’t load the submissions — {subs.error}. There is no target to place into.
-                  </div>
-                ) : subs.rows.length === 0 ? (
-                  <div className="de-desc">
-                    No submissions in this organization yet — create one in the Submission Center first.
-                  </div>
-                ) : (
-                  <select
-                    id="apf-sub"
-                    className="c2c-input"
-                    value={subId ?? ''}
-                    onChange={(e) => pickSubmission(e.target.value === '' ? null : Number(e.target.value))}
-                  >
-                    <option value="">Choose a submission…</option>
-                    {subs.rows.map((s) => (
-                      <option key={s.id} value={s.id}>
-                        {s.title} · {s.applicationType.toUpperCase()} · {s.primaryRegion.toUpperCase()}
-                      </option>
-                    ))}
-                  </select>
-                )}
-              </div>
-
-              {/* ── Sequence (non-frozen only; the excluded say why) ── */}
-              {subId != null && (
-                <div className="de-field">
-                  <label className="de-label" htmlFor="apf-seq">Sequence</label>
-                  {seqs.state === 'loading' ? (
-                    <div role="status" className="de-desc">Loading the submission’s sequences…</div>
-                  ) : seqs.state === 'error' ? (
-                    <div className="de-err" role="status">
-                      Couldn’t load the sequences — {seqs.error}. There is no sequence to place into.
-                    </div>
-                  ) : seqs.rows.length === 0 ? (
-                    <div className="de-desc">
-                      This submission has no eCTD sequences yet — create sequence 0000 in the
-                      Submission Center first.
-                    </div>
-                  ) : (
-                    <>
-                      <select
-                        id="apf-seq"
-                        className="c2c-input"
-                        value={seqId ?? ''}
-                        onChange={(e) => setSeqId(e.target.value === '' ? null : Number(e.target.value))}
-                      >
-                        <option value="">Choose a sequence…</option>
-                        {seqs.rows.map((s) => (
-                          <option key={s.id} value={s.id} disabled={isLocked(s.status)}>
-                            {s.sequenceNumber} · {s.type} · {SC_SEQ_STATUS[s.status]?.l ?? s.status}
-                            {isLocked(s.status) ? ' — leaves immutable' : ''}
-                          </option>
-                        ))}
-                      </select>
-                      {lockedSeqs.length > 0 && (
-                        <div className="de-desc">
-                          {lockedSeqs.map((s) => s.sequenceNumber).join(', ')}{' '}
-                          {lockedSeqs.length === 1 ? 'is' : 'are'}{' '}
-                          {lockedSeqs.map((s) => SC_SEQ_STATUS[s.status]?.l.toLowerCase() ?? s.status).join(' / ')} —
-                          a frozen or dispatched sequence’s leaves are immutable, so it cannot be
-                          placed into.
-                        </div>
-                      )}
-                    </>
-                  )}
-                </div>
-              )}
+              <FilingTargetFields target={target} idPrefix="apf" />
 
               {/* ── Section code + lifecycle operation ── */}
               <div className="de-field half">

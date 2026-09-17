@@ -71,8 +71,8 @@ function readinessReportMd(
 ): string {
   let s = '# Trial Master File — Inspection-Readiness Package\n\n';
   s += '**Trial:** ' + trialId + '\n\n';
-  s += '**Reference model:** DIA TMF Reference Model (ICH E6(R2) §8)  --  **Scope:** ' + (scope === 'all' ? 'All artifacts' : 'Essential (ICH E6(R2) §8)') + '\n\n';
-  s += '**Verdict (completeness):** ' + (ready ? 'INSPECTION-READY' : 'NOT INSPECTION-READY') + '  --  Zones complete ' + R.summary.zonesComplete + '/' + R.summary.zoneCount + '  --  Open gaps ' + R.summary.totalMissing + '\n\n';
+  s += '**Reference model:** DIA TMF Reference Model (ICH E6(R2) §8)  —  **Scope:** ' + (scope === 'all' ? 'All artifacts' : 'Essential (ICH E6(R2) §8)') + '\n\n';
+  s += '**Verdict (completeness):** ' + (ready ? 'INSPECTION-READY' : 'NOT INSPECTION-READY') + '  —  Zones complete ' + R.summary.zonesComplete + '/' + R.summary.zoneCount + '  —  Open gaps ' + R.summary.totalMissing + '\n\n';
   s += '## Zone index\n\n| Zone | Name | Filed | Status |\n|---|---|---|---|\n';
   (R.zones || []).forEach((z) => { s += '| ' + z.number + ' | ' + z.name + ' | ' + z.present.length + '/' + z.required.length + ' | ' + (z.complete ? 'complete' : (z.required.length - z.present.length) + ' open') + ' |\n'; });
   s += '\n## Open essential documents\n\n';
@@ -385,7 +385,7 @@ export function Etmf({ onAsk, onNav }: SurfaceViewProps) {
       downloadBlob(tid + '_inspection-package.zip', blob);
       const sha = res.headers.get('X-TMF-SHA256');
       const rdy = res.headers.get('X-TMF-Ready');
-      fireToast('Inspection index generated' + (rdy != null ? ' -- ' + ((rdy === 'true' || rdy === '1') ? 'ready' : 'gaps remain') : '') + (sha ? ' -- SHA-256 ' + String(sha).slice(0, 10) + '...' : '') + ' -- index + readiness, not the document bytes');
+      fireToast('Inspection index generated' + (rdy != null ? ' — ' + ((rdy === 'true' || rdy === '1') ? 'ready' : 'gaps remain') : '') + (sha ? ' — SHA-256 ' + String(sha).slice(0, 10) + '...' : '') + ' — index + readiness, not the document bytes');
       finish('zip');
     } catch {
       downloadReport();
@@ -401,7 +401,7 @@ export function Etmf({ onAsk, onNav }: SurfaceViewProps) {
         <div>
           <div className="surface-kicker">{I.vault || I.folder} Vault — CRO / service view — Trial Master File (DIA Reference Model v3)</div>
           <h1>Inspection readiness</h1>
-          <p className="surface-sub">{tid ? 'Trial ' + tid : 'Name a trial to begin'} -- completeness against the DIA TMF Reference Model (ICH E6(R2) §8)</p>
+          <p className="surface-sub">{tid ? 'Trial ' + tid : 'Name a trial to begin'} — completeness against the DIA TMF Reference Model (ICH E6(R2) §8)</p>
         </div>
         <div className="surface-head-actions">
           <input
@@ -463,9 +463,9 @@ export function Etmf({ onAsk, onNav }: SurfaceViewProps) {
             tone={clear ? 'good' : 'urgent'}
             eyebrow={"Whether " + tid + "'s TMF is complete for inspection"}
             headline={clear
-              ? <>{tid}'s TMF holds every required {scope === 'all' ? 'artifact' : 'essential document'} across all {R.summary.zoneCount} DIA Reference-Model zones -- <b>complete</b> on a completeness basis.</>
+              ? <>{tid}'s TMF holds every required {scope === 'all' ? 'artifact' : 'essential document'} across all {R.summary.zoneCount} DIA Reference-Model zones — <b>complete</b> on a completeness basis.</>
               : <>{tid}'s TMF is missing <b>{R.summary.totalMissing} required {scope === 'all' ? 'artifact' : 'essential'} document{R.summary.totalMissing === 1 ? '' : 's'}</b> across {incompleteZones} zone{incompleteZones === 1 ? '' : 's'}.</>}
-            body={<>This assessment is <b>completeness only</b> -- which DIA TMF Reference Model {scope === 'all' ? 'artifacts are' : 'essential documents are'} filed vs missing for this trial, computed from its filed artifacts. Timeliness and QC signals aren't persisted yet, so they are not part of this verdict.</>}
+            body={<>This assessment is <b>completeness only</b> — which DIA TMF Reference Model {scope === 'all' ? 'artifacts are' : 'essential documents are'} filed vs missing for this trial, computed from its filed artifacts. Timeliness and QC signals aren't persisted yet, so they are not part of this verdict.</>}
             /* The single most reassuring sentence on the surface. It may be
                spoken from one state only — an assessment that ran and came back
                with nothing open — which is what mayReassure gates on. */
@@ -477,7 +477,7 @@ export function Etmf({ onAsk, onNav }: SurfaceViewProps) {
                window belonged to a different trial. It now names the trial and
                scope the assessment on screen was actually computed for, and is
                reachable only from the correlated, assessed state. */
-            secondary={'Read live from ' + tid + "'s filed TMF artifacts -- " + scopeLabel + ' scope.'}
+            secondary={'Read live from ' + tid + "'s filed TMF artifacts — " + scopeLabel + ' scope.'}
           />
 
           {/* AnA's read across the inspection lenses */}
@@ -537,7 +537,7 @@ export function Etmf({ onAsk, onNav }: SurfaceViewProps) {
                       <div key={m.code} className="etmf-miss">
                         <div className="etmf-miss-main">
                           <div className="etmf-miss-name">{m.name}</div>
-                          <div className="etmf-miss-zone">Zone {m.zone} -- {m.zoneName} -- <span className="mono">{m.code}</span></div>
+                          <div className="etmf-miss-zone">Zone {m.zone} — {m.zoneName} — <span className="mono">{m.code}</span></div>
                         </div>
                         <button
                           className="btn ghost sm"
@@ -621,7 +621,7 @@ export function Etmf({ onAsk, onNav }: SurfaceViewProps) {
                       </table>)}
 
                   <h3>4 — What this package is</h3>
-                  <p className="etmf-readme">This package is the inspection <b>index and readiness picture</b> -- the manifest of filed artifacts, the completeness assessment, and the zone-by-zone gap list. The document bytes themselves live in the systems of record referenced per artifact; this package does not contain them. It reports completeness only; timeliness and QC signals are not yet persisted for TMF artifacts. Present it to an inspector as the map to the file, not the file itself.</p>
+                  <p className="etmf-readme">This package is the inspection <b>index and readiness picture</b> — the manifest of filed artifacts, the completeness assessment, and the zone-by-zone gap list. The document bytes themselves live in the systems of record referenced per artifact; this package does not contain them. It reports completeness only; timeliness and QC signals are not yet persisted for TMF artifacts. Present it to an inspector as the map to the file, not the file itself.</p>
                 </div>
               </div>
             </div>

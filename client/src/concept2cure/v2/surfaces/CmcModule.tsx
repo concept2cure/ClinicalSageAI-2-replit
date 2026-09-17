@@ -499,7 +499,7 @@ function CmHead({ title, meta, ask, suggest, actions }: CmHeadProps) {
    screen reader, and gains the focus ring. A tile with nothing behind it stays
    a plain <div>: a clickable dead end is noise, not an affordance. */
 function Kpi({ l, v, s, tone, onClick, title }: { l: string; v: React.ReactNode; s?: string; tone?: string; onClick?: () => void; title?: string }) {
-  const body = <><div className="reg-kpi-v">{v}</div><div className="reg-kpi-l">{l}{s ? ' -- ' + s : ''}</div></>;
+  const body = <><div className="reg-kpi-v">{v}</div><div className="reg-kpi-l">{l}{s ? ' — ' + s : ''}</div></>;
   if (onClick) return <button type="button" className="reg-kpi" data-tone={tone} title={title} onClick={onClick}>{body}</button>;
   return <div className="reg-kpi" data-tone={tone}>{body}</div>;
 }
@@ -708,7 +708,7 @@ export function CmOverview({ ask, nav }: { ask: (text: string) => void; nav?: (i
           : port.length === 0
             ? <>No CMC submissions are in scope yet.</>
             : avgRpi != null && lowSub
-              ? <>Your Module 3 averages <b>RPI {avgRpi}</b> -- the <b>{lowSub.sub}</b> at {lowSub.rpi} is what's holding the portfolio back.</>
+              ? <>Your Module 3 averages <b>RPI {avgRpi}</b> — the <b>{lowSub.sub}</b> at {lowSub.rpi} is what's holding the portfolio back.</>
               : <>Your Module 3 spans <b>{port.length}</b> {port.length === 1 ? 'submission' : 'submissions'}{avgRpi != null ? <> at an <b>RPI {avgRpi}</b> average</> : <>, with no preparedness index computed for {port.length === 1 ? 'it' : 'any of them'} yet</>}.</>}
       body={cmcState === 'unreadable'
         ? <>This is a failed read, not an empty register. Nothing shown or omitted here should be taken as the state of your CMC package. Sign in to your tenant and retry.</>
@@ -881,7 +881,7 @@ export function CmOverview({ ask, nav }: { ask: (text: string) => void; nav?: (i
           </div>
           {secs.length > 0 && (
             <div className="pj-card" style={{ marginBottom: 16 }}>
-              <div className="pj-card-h"><span className="t">Module 3 build state</span><span className="s">§3.2.S -- §3.2.P</span></div>
+              <div className="pj-card-h"><span className="t">Module 3 build state</span><span className="s">§3.2.S — §3.2.P</span></div>
               <div className="pj-card-b">
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
                   <div className="cm-projbar" style={{ flex: 1 }}><span className="fill" style={{ width: readyPct + '%', background: readyTone === 'ok' ? 'var(--success)' : readyTone === 'warn' ? 'var(--accent-100)' : 'var(--warning)' }} /></div>
@@ -897,12 +897,12 @@ export function CmOverview({ ask, nav }: { ask: (text: string) => void; nav?: (i
                   )}
                 </div>
                 <div className="cm-meta">
-                  {approved} of {secs.length} sections approved -- {drafts.length} draft
+                  {approved} of {secs.length} sections approved — {drafts.length} draft
                   {!readiness.loading && readiness.data && !readiness.data.exportReady && readinessReasons.length > 0
-                    ? <> -- export blocked: {readinessReasons.join('; ')}</>
+                    ? <> — export blocked: {readinessReasons.join('; ')}</>
                     : null}
                   {!readiness.loading && (readiness.error || !readiness.data)
-                    ? <> -- the export gate's verdict could not be read, so readiness is not established; this is a failed read, not a pass.</>
+                    ? <> — the export gate's verdict could not be read, so readiness is not established; this is a failed read, not a pass.</>
                     : null}
                 </div>
               </div>
@@ -918,13 +918,12 @@ export function CmOverview({ ask, nav }: { ask: (text: string) => void; nav?: (i
           onSign={() => { setSign(review); setReview(null); }}
         />
       )}
-      {sign && <C2CForm config={signForm('Section ' + sign.key + ' -- ' + sign.path)} onCancel={() => setSign(null)} onSubmit={doSign} />}
-      <C2CToast msg={toast} />
+      {sign && <C2CForm config={signForm('Section ' + sign.key + ' — ' + sign.path)} onCancel={() => setSign(null)} onSubmit={doSign} />}      <C2CToast msg={toast} />
     </div>
   );
 }
 
-/* ═══════════ Specifications -- create / edit / approve ═══════════ */
+/* ═══════════ Specifications — create / edit / approve ═══════════ */
 
 /** Extract an honest error string from a failed CMC write response. */
 function specErr(json: unknown, status: number): string {
@@ -1127,7 +1126,7 @@ function CmSpecs({ ask, nav }: { ask: (text: string) => void; nav?: (id: string)
       <CmImpurityProfiles />
       <CmDissolutionProfiles />
       {edit && <C2CForm config={FORM(edit === 'new' ? null : edit)} onCancel={() => setEdit(null)} onSubmit={save} />}
-      {sign && <C2CForm config={signForm(sign.attr + ' -- ' + sign.material)} onCancel={() => setSign(null)} onSubmit={doSign} />}
+      {sign && <C2CForm config={signForm(sign.attr + ' — ' + sign.material)} onCancel={() => setSign(null)} onSubmit={doSign} />}
       <C2CToast msg={toast} />
     </div>
   );
@@ -2005,7 +2004,7 @@ function CmBatch({ ask }: { ask: (text: string) => void }) {
         { key: 'yield', label: 'Yield (%)', type: 'number', min: 0, max: 100, required: true, half: true },
         { key: 'dev', label: 'Open deviations', type: 'number', min: 0, default: '0' },
       ] }} onCancel={() => setForm(false)} onSubmit={add} />}
-      {releasing && <C2CForm config={{ eyebrow: 'Batch disposition -- §11 e-signature', title: 'Release batch ' + releasing.id, sub: 'Signed disposition recorded to the hash-chained audit trail. Released by ' + releasedByName + '.', submitLabel: 'Sign & release', fields: [
+      {releasing && <C2CForm config={{ eyebrow: 'Batch disposition — §11 e-signature', title: 'Release batch ' + releasing.id, sub: 'Signed disposition recorded to the hash-chained audit trail. Released by ' + releasedByName + '.', submitLabel: 'Sign & release', fields: [
         { key: 'decision', label: 'Disposition', type: 'seg', options: ['approved', 'conditional', 'rejected'], default: 'approved', half: true },
         { key: 'reason', label: 'Reason', type: 'textarea', placeholder: 'Disposition rationale (recorded with the signature)…', required: true },
         { key: 'password', label: 'Password', type: 'password', placeholder: 'Re-enter your password', required: true, half: true },
@@ -2055,7 +2054,7 @@ export function CmChange({ ask, nav }: { ask: (text: string) => void; nav?: (id:
     const rec = r.type.risk === 'high' ? 'Do not implement until the highest-tier filing in scope is approved. Sequence the comparability work first.'
       : r.type.risk === 'med' ? 'Prepare the moderate-change filing(s) and implement per each market\'s reporting category; some markets allow do-and-tell.'
       : 'Implement under the annual/notification category; document in the next periodic report.';
-    let s = `# Regulatory Change Impact Assessment\n\n*${r.type.label} -- ${r.markets.map((m) => m.toUpperCase()).join(', ')} -- ${r.type.risk} impact*\n\n`;
+    let s = `# Regulatory Change Impact Assessment\n\n*${r.type.label} — ${r.markets.map((m) => m.toUpperCase()).join(', ')} — ${r.type.risk} impact*\n\n`;
     s += `## 1. Change Description\n\n${r.desc}\n\n## 2. Classification\n\n- **Change type**: ${r.type.label}\n- **Assessed risk**: ${r.type.risk}\n- **Frameworks applied**: SUPAC, ICH Q12 (post-approval change management), ICH Q5E (comparability)\n\n## 3. Filing Path by Market\n\n| Market | Reporting category | Regulatory basis |\n|---|---|---|\n`;
     r.paths.forEach((p) => { s += `| ${p.label} | ${p.path[0]} | ${p.path[1]} |\n`; });
     s += `\n## 4. Comparability Requirement\n\n${compBy}\n\n## 5. Supporting Data Expected\n\n- Side-by-side release testing (pre/post change) against the approved specification\n- Stability commitment on the first post-change ${r.type.risk === 'low' ? 'batch' : 'batches'} (ICH Q1A)\n- Updated §3.2.S / §3.2.P sections and, where applicable, method (re)validation\n\n## 6. Recommendation\n\n${rec}\n\n---\n*Generated from the CMC change model (SUPAC / ICH Q12 rules). Route through change control and e-signature before implementation.*\n`;
@@ -2140,7 +2139,7 @@ export function CmChange({ ask, nav }: { ask: (text: string) => void; nav?: (id:
             </div>
             <div className="cm-doc-page"><div className="cm-doc-render" dangerouslySetInnerHTML={{ __html: renderSafeMarkdown(memoMd(result)) }} /></div>
           </div>
-          <CmPush label={'Change-control package -- ' + result.type.label} nav={nav} bar />
+          <CmPush label={'Change-control package — ' + result.type.label} nav={nav} bar />
         </div>
       )}
       {/* The market matrix over these same changes — one screen, because "what
@@ -2252,7 +2251,7 @@ function CmGlobal({ nav }: { nav?: (id: string) => void }) {
       <div className="pj-card">
         <div className="pj-card-h">
           <span className="t">Filing path by market</span>
-          <span className="s">{open.length} open {open.length === 1 ? 'change' : 'changes'} -- {CMC_MARKETS.length} markets</span>
+          <span className="s">{open.length} open {open.length === 1 ? 'change' : 'changes'} — {CMC_MARKETS.length} markets</span>
         </div>
         <div className="pj-card-b" style={{ padding: 0 }}>
           {open.length === 0 ? (
@@ -3033,7 +3032,7 @@ export function CmPathway({ ask, nav }: { ask: (text: string) => void; nav?: (id
           <div className="pj-card">
             <div className="pj-card-h">
               <span className="t">Contradiction history</span>
-              <span className="s">{resolved.length} resolved -- {open.length} open</span>
+              <span className="s">{resolved.length} resolved — {open.length} open</span>
             </div>
             <div className="pj-card-b" style={{ padding: 0 }}>
               {contradictions.rows.length === 0 ? (

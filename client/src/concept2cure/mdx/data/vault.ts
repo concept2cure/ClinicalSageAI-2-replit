@@ -132,7 +132,15 @@ export function vaultKpisForFiles(files: VaultFile[]): VaultKpi[] {
   return [
     { label: 'Artifacts in vault', metric: String(files.length), meta: `${esig} e-signed · ${review} awaiting review` },
     { label: 'Locked + signed',    metric: String(sealed), meta: 'SHA-256 sealed for active submissions', tone: 'ok' },
-    { label: 'Retention review',   metric: '3', meta: 'Approaching 15-year minimum · audit before purge', tone: 'warn' },
+    /* Retention review is NOT derivable from VaultFile: the shape carries no
+       record date and no retention clock — `updated` is a humanized string
+       like "6 hours ago". This asserted `metric: '3'`, a hardcoded literal
+       sitting between three genuinely derived figures, indistinguishable from
+       them, under a meta line telling the reader to audit before purge. An em
+       dash is this codebase's mark for a figure that is unknown, as against 0
+       for one that is genuinely zero; the warn tone goes with the 3, because
+       there is no longer a count to be alarmed about. */
+    { label: 'Retention review',   metric: '—', meta: 'Not assessed — no retention date is recorded on these artifacts' },
     { label: 'Vault size',         metric: mb.toFixed(1), unit: 'MB', meta: '7-year+ retention across all folders' },
   ];
 }

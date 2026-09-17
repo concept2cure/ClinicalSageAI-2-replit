@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { I } from '../icons';
 import { useLiveRows, liveGetOrNull } from '../dataConnect';
+import { useDialog } from '../useDialog';
 import { apiRequest, serverMessage } from '@/lib/queryClient';
 import {
   SURFACE_CTX, CL_MOD, CL_TYPE, CL_PRI,
@@ -189,7 +190,7 @@ async function loadDirectory(): Promise<void> {
     .filter((p) => p && p.id != null)
     .map((p) => ({
       id: String(p.id),
-      label: p.code ? `${p.name || p.code} -- ${p.code}` : (p.name || String(p.id)),
+      label: p.code ? `${p.name || p.code} — ${p.code}` : (p.name || String(p.id)),
       type: p.projectType || '',
     }));
 
@@ -817,7 +818,7 @@ function CollabDiscuss({ ctx: surfaceCtx, onClose, onCreated }: CollabDiscussPro
         {/* The "@name" prompt only appears once a real teammate is selected;
             with no recipient it used to read "@ -- share context...". */}
         <textarea rows={4} autoFocus value={body} onChange={e => setBody(e.target.value)}
-          placeholder={(C2C.team[to] ? '@' + C2C.team[to].n + ' -- ' : '') + 'share context, ask a question, or route this for action...'} />
+          placeholder={(C2C.team[to] ? '@' + C2C.team[to].n + ' — ' : '') + 'share context, ask a question, or route this for action...'} />
       </div>
       <button type="button" className={`cl-tasktoggle${makeTask ? ' on' : ''}`} onClick={() => setMakeTask(m => !m)}>
         <span className="cl-check">{makeTask ? I.check : ''}</span>
@@ -840,6 +841,60 @@ function CollabDiscuss({ ctx: surfaceCtx, onClose, onCreated }: CollabDiscussPro
         >
           {I.arrowRight} {sending ? 'Sending…' : makeTask ? 'Send & assign' : 'Send'}
         </button>
+      </div>
+    </div>
+  );
+}
+
+/* The modal panel, extracted only so `useDialog` can run — a hook cannot be
+   conditional and this renders solely while open.
+
+   It shipped as a bare pair of <div>s: no role, no accessible name, no keyboard
+   exit, and focus left behind on the FAB that opened it. This layer is mounted
+   once and lives on every screen, so that was the same gap on every screen in
+   the product. The two mode buttons were likewise plain buttons whose selected
+   state was carried by a class, visible to sighted users only. */
+function CollabModal({ tab, setTab, onClose, ctx, onCreated, onGoToBoard }: {
+  tab: string;
+  setTab: (t: string) => void;
+  onClose: () => void;
+  ctx: C2CContext;
+  onCreated: (t?: C2CTask) => void;
+  onGoToBoard: () => void;
+}) {
+  const panel = useDialog(onClose);
+  const tabId = tab === 'task' ? 'cl-tab-task' : 'cl-tab-collab';
+  return (
+    <div className="cl-bd" onClick={onClose}>
+      <div
+        className="cl-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Add a task or collaborate"
+        tabIndex={-1}
+        ref={panel}
+        onClick={e => e.stopPropagation()}
+      >
+        <div className="cl-head">
+          <div className="cl-tabs" role="tablist" aria-label="Launcher mode">
+            <button type="button" id="cl-tab-task" role="tab" aria-selected={tab === 'task'}
+              aria-controls="cl-panel" className={`cl-tab${tab === 'task' ? ' on' : ''}`}
+              onClick={() => setTab('task')}>
+              <span className="ico">{I.checkSquare || I.check}</span>New task
+            </button>
+            <button type="button" id="cl-tab-collab" role="tab" aria-selected={tab === 'collab'}
+              aria-controls="cl-panel" className={`cl-tab${tab === 'collab' ? ' on' : ''}`}
+              onClick={() => setTab('collab')}>
+              <span className="ico">{I.messageSquare}</span>Collaborate
+            </button>
+          </div>
+          <button type="button" className="cl-x" onClick={onClose} aria-label="Close">{I.close}</button>
+        </div>
+        <div className="cl-body" id="cl-panel" role="tabpanel" aria-labelledby={tabId}>
+          {tab === 'task'
+            ? <QuickTask ctx={ctx} onClose={onClose} onCreated={onCreated} onGoToBoard={onGoToBoard} />
+            : <CollabDiscuss ctx={ctx} onClose={onClose} onCreated={onCreated} />}
+        </div>
       </div>
     </div>
   );
@@ -931,27 +986,14 @@ export function CollabLayer({ onNav }: CollabLayerProps) {
 
       {/* the modal */}
       {open && (
-        <div className="cl-bd" onClick={() => setOpen(false)}>
-          <div className="cl-modal" onClick={e => e.stopPropagation()}>
-            <div className="cl-head">
-              <div className="cl-tabs">
-                <button className={`cl-tab${tab === 'task' ? ' on' : ''}`} onClick={() => setTab('task')}>
-                  <span className="ico">{I.checkSquare || I.check}</span>New task
-                </button>
-                <button className={`cl-tab${tab === 'collab' ? ' on' : ''}`} onClick={() => setTab('collab')}>
-                  <span className="ico">{I.messageSquare}</span>Collaborate
-                </button>
-              </div>
-              <button className="cl-x" onClick={() => setOpen(false)} aria-label="Close">{I.close}</button>
-            </div>
-            <div className="cl-body">
-              {tab === 'task'
-                ? <QuickTask ctx={currentCtx} onClose={() => setOpen(false)} onCreated={created}
-                    onGoToBoard={() => { onNav?.('tasks'); setOpen(false); }} />
-                : <CollabDiscuss ctx={currentCtx} onClose={() => setOpen(false)} onCreated={created} />}
-            </div>
-          </div>
-        </div>
+        <CollabModal
+          tab={tab}
+          setTab={setTab}
+          onClose={() => setOpen(false)}
+          ctx={currentCtx}
+          onCreated={created}
+          onGoToBoard={() => { onNav?.('tasks'); setOpen(false); }}
+        />
       )}
 
       {/* toast -- confirms the draft task was captured in the in-session store,
@@ -963,7 +1005,7 @@ export function CollabLayer({ onNav }: CollabLayerProps) {
           {/* A task IS now persisted, so the toast reports the real, server-issued
               taskId. The discuss action is still session-only and keeps saying so. */}
           {toast.type === 'task' && toast.t
-            ? <span className="cl-toast-t">Saved to the org board -- <b>{toast.t.taskId}</b>{toast.t.assignee ? <> for {(C2C.team[toast.t.assignee] || { n: toast.t.assignee }).n}</> : null}.</span>
+            ? <span className="cl-toast-t">Saved to the org board — <b>{toast.t.taskId}</b>{toast.t.assignee ? <> for {(C2C.team[toast.t.assignee] || { n: toast.t.assignee }).n}</> : null}.</span>
             : <span className="cl-toast-t">Captured in this session — not saved to the org board yet.</span>}
           <button className="cl-toast-go" onClick={() => { onNav?.('tasks'); setToast(null); }}>Open board {I.arrowRight}</button>
         </div>

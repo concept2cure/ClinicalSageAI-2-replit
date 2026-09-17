@@ -217,10 +217,10 @@ export function HaqManager({ onAsk }: SurfaceViewProps) {
       ]);
       setForm(false);
       setActiveId(created.id);
-      fireToast('Question logged -- ' + created.id);
+      fireToast('Question logged — ' + created.id);
     } catch (e) {
       fireToast(
-        'Could not log question -- ' +
+        'Could not log question — ' +
           (e instanceof Error && e.message ? e.message : 'request failed'),
         'error',
       );
@@ -238,7 +238,7 @@ export function HaqManager({ onAsk }: SurfaceViewProps) {
           entityId: effActiveId,
           entityLabel:
             (round?.id || effRoundId) +
-            ' -- ' +
+            ' — ' +
             ((q && q.id) || 'question'),
         });
       }
@@ -577,7 +577,7 @@ export function HaqManager({ onAsk }: SurfaceViewProps) {
                 <div className="haq-detail">
                   <div className="haq-d-head">
                     <div className="haq-d-id">
-                      {q.id} -- {q.disc}
+                      {q.id} — {q.disc}
                     </div>
                     <span className={`status-pill ${stPill(q.status)}`}>
                       {stLbl(q.status)}

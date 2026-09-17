@@ -93,7 +93,7 @@ function ChangeDecision({ title, flag, dec }: ChangeDecisionProps) {
             <div className="chg-step-body">
               <div className="chg-step-q"><span>{s.q}</span><span className="chg-step-a" data-a={s.a}>{s.a === 'yes' ? 'Yes' : 'No'}</span></div>
               <div className="chg-step-d">{s.detail}</div>
-              <div className="chg-step-b">{s.gate ? 'Decision gate -- ' : ''}{s.basis}</div>
+              <div className="chg-step-b">{s.gate ? 'Decision gate — ' : ''}{s.basis}</div>
             </div>
           </div>
         ))}
@@ -277,7 +277,7 @@ export function ChangeAssessment({ onAsk }: SurfaceViewProps) {
             <div className="chg-doc">
               <div className="chg-doc-l">{I.fileText} Generates: <b>{item.doc?.kind}</b></div>
               <div className="chg-doc-acts">
-                <button className="reg-doc-open" onClick={() => onAsk && onAsk(`Draft the ${item.doc?.kind} for ${item.id} -- ${item.title}`)}>{I.sparkles} Draft with AnA</button>
+                <button className="reg-doc-open" onClick={() => onAsk && onAsk(`Draft the ${item.doc?.kind} for ${item.id} — ${item.title}`)}>{I.sparkles} Draft with AnA</button>
                 {/* "Open change record" was a dead button — no onClick, and no
                     second view to reach. The .chg-detail pane beside it already
                     IS the change record: id, device, area, raised date, both

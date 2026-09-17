@@ -46,6 +46,7 @@ import { GLOBAL_RI_TOOL_NAMES } from '../global-ri/ana-tools';
 export type DeterminismPedigree =
   | 'deterministic_registry' // pure rule/registry lookup, no LLM, no network (bulletproof)
   | 'deterministic_query' // pure query over governed internal data (reproducible)
+  | 'source_cited' // model-written, but carrying the verbatim span and its location
   | 'rim_learned' // RIM pattern store: tenant-scoped, occurrence-weighted, never fabricated
   | 'external_api_live' // live external authority API (authoritative but time-varying)
   | 'model_assisted'; // LLM-generated or RAG+LLM narrative/advisory (verify before relying)
@@ -63,12 +64,22 @@ export interface PedigreeInfo {
 }
 
 /**
- * The five pedigree descriptors. Trust mapping (per design):
+ * The six pedigree descriptors. Trust mapping (per design):
  *   - deterministic_registry → deterministic, trust 'high'
  *   - deterministic_query    → deterministic, trust 'high'
+ *   - source_cited           → non-deterministic, trust 'high' (the SPAN is verifiable)
  *   - rim_learned            → non-deterministic, trust 'medium' (accumulated org judgment)
  *   - external_api_live      → non-deterministic, trust 'medium' (verify currency)
  *   - model_assisted         → non-deterministic, trust 'requires_verification'
+ *
+ * `source_cited` is the one non-deterministic tier trusted 'high', and the
+ * reason is narrow: the model chose the words around it, but the quoted span
+ * and its location came from the source and can be checked against it. That is
+ * a different kind of claim from `model_assisted` — "page 34 says X" rather
+ * than "the model says X" — and collapsing the two would mean a reviewer has to
+ * treat a quotation they can verify exactly like a sentence they cannot.
+ *
+ * It is NOT deterministic: the same question can produce a different span.
  */
 export const PEDIGREE_LEVELS: Record<DeterminismPedigree, PedigreeInfo> = {
   deterministic_registry: {
@@ -86,6 +97,17 @@ export const PEDIGREE_LEVELS: Record<DeterminismPedigree, PedigreeInfo> = {
     guidance:
       'Pure query over governed internal data — no LLM. Reproducible for the same data snapshot; ' +
       'may be relied on directly (note the data version when the underlying records can change).',
+  },
+  source_cited: {
+    pedigree: 'source_cited',
+    deterministic: false,
+    trust: 'high',
+    guidance:
+      'Model-written, but carrying a verbatim quotation and the location it came from ' +
+      '(a document page, a character range, or a source URL). The wording is the ' +
+      "model's; the QUOTED SPAN is the source's, and can be checked against it directly. " +
+      'Verify the span says what the sentence around it claims — a real quotation can ' +
+      'still be framed wrongly.',
   },
   rim_learned: {
     pedigree: 'rim_learned',

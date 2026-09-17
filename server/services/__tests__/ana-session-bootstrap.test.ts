@@ -128,6 +128,27 @@ describe('formatSessionBootstrap', () => {
     expect(out).toContain('GLP 28-day rat toxicology study report');
   });
 
+  it('recalls files the client sent in past conversations, with the id that reopens them', () => {
+    // A chat upload has no vault row, so it carried no filed location and no
+    // comprehension record — and was therefore absent from session recall
+    // entirely, which is the "she doesn't remember the file is there" this
+    // block exists to end.
+    const out = formatSessionBootstrap({
+      projectAtoms: [],
+      clientAtoms: [],
+      outcomeLessons: [],
+      chatUploads: [
+        { fileName: 'batch-record-23-104.pdf', fileId: 'file_1712345678_ab12cd' },
+      ],
+    });
+    expect(out).toContain('Files the client sent in past conversations');
+    expect(out).toContain('batch-record-23-104.pdf');
+    expect(out).toContain('file_1712345678_ab12cd');
+    // It says what is true of them — reachable, not filed — and how to fix that.
+    expect(out).toContain('not filed into the vault');
+    expect(out).toContain('file_chat_upload_to_vault');
+  });
+
   it('says honestly when a file has not been studied or failed extraction', () => {
     const out = formatSessionBootstrap({
       projectAtoms: [],

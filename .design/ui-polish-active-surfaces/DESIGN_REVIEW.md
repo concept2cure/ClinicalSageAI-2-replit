@@ -213,7 +213,7 @@ elements stuck at `#ad5132`) are both confirmed fixed in a running browser.
 `--accent-200` resolving to `#e8916f` is the direct disproof of the frozen-alias
 bug.
 
-### New: `document.body` keeps the light background in dark mode
+### FIXED: `document.body` kept the light background in dark mode
 
 `getComputedStyle(document.body).backgroundColor` is `rgb(250, 249, 245)` —
 `--bg-000`'s LIGHT value — in both themes. The dark shots look correct because
@@ -222,6 +222,23 @@ today**. It is the same shape as the two root causes above (a value resolving in
 a scope where the dark tokens are not in view), and it would surface as a light
 band on overscroll, behind a shell shorter than the viewport, or in any print or
 screenshot path that captures the body. Filed below rather than fixed here.
+
+**Fixed 2026-09-17.** It was worse than filed: `index.css` pointed the body rule
+at two literal `:root` tokens — `--color-bg: #faf9f5` and
+`--color-text-primary: #141413`, referenced nowhere else in the repo — so body's
+TEXT colour was frozen near-black too, not just its background. Both literals
+are gone; the rule now reads `var(--bg-000)` / `var(--text-100)`, and V2App
+marks BODY with the dark class so those resolve in a scope where the dark
+palette is in view. Marking body rather than `<html>` on purpose: the shell
+already makes every descendant dark, so this adds only body itself and anything
+portalled to it — the part that was actually wrong — whereas marking `<html>`
+would make `:root` dark and change what every alias in the palette resolves to.
+Measured in Chromium: light body stays `rgb(250,249,245)` on `rgb(20,20,19)`;
+dark body is now `rgb(38,38,36)` on `rgb(250,249,245)`.
+
+Worth noting for the next person: `ci:frozen-theme-aliases` does NOT catch this
+one. It looks for a `:root` alias whose value is `var(--x)`; these were literal
+values on a rule, which is a different shape of the same mistake.
 
 ### Must-fix #3 confirmed, with pictures
 
@@ -257,3 +274,83 @@ evidence. The 8 remaining dark contrast failures are also not adjudicated here;
 they were measured per-element by `visual-qa:contrast`, which remains the right
 instrument for them. The `--text-400` on `--canvas-elevated` pair (3.6:1) a
 designer still needs to settle is visible in the dark Projects shots.
+
+---
+
+## Must-fix list, settled 2026-09-17
+
+Each item below is closed against measurement, not against a reading of the
+code. Three of them closed by *disproving the finding*, which is recorded here
+so they are not raised a fourth time.
+
+**#2 — dark-mode contrast: CLOSED, 0 failures.** The review said 8 remained,
+including "3 at `--text-400` on `--canvas-elevated` (3.6:1)". A fresh capture
+(the previous one was 11 days stale, and `visual-qa:contrast` refused to report
+against it) measures **126 surfaces × 2 themes, 8,230 text elements, 0 below
+WCAG 2.2 AA in either theme.**
+
+The `--text-400` / `--canvas-elevated` pair was already settled by an earlier
+pass, and the arithmetic is in `mdx/app.css` beside the rules it affects: the
+token is 4.74:1 on the white light value and 3.93:1 on the `#30302e` dark one,
+so `.eng-awareness-head .section-sub` and the `.docs-*` rows take `--text-300`
+in dark. The review's 3.6:1 is the *pre-fix* `#8a8880` (3.55:1), named in that
+same comment as the reason the fix was made. Nothing is outstanding for a
+designer to settle.
+
+Worth recording: `mdx/app.css` and `pdev/app.css` contain **no dark rules at
+all** — one `[data-theme]` mention, and that is a comment saying so. Both shells
+inherit the theme entirely through the design-system tokens, which is why the
+alias-freeze fix reached all 16 MDX and 8 PDEV surfaces without either sheet
+being touched. Their markup *is* captured (`mdx__*`, `pdev__*`, 24 of the 126
+dumps) and each dump carries its own `.mdx-shell` / `pdev` root, so both shells
+were inside the measurement above.
+
+**#4 — dialogs without semantics: CLOSED.** `FilingsCatalog` was done earlier.
+`CollabLauncher` and both `AnaCommand` gates are done here — see the a11y
+commit. All now carry `role="dialog"`, `aria-modal`, an accessible name, Escape,
+and focus restore. `useDialog` remains a partial trap by design (Tab can leave);
+that is unchanged and still worth a real focus trap one day.
+
+**#6 — keyboard-unreachable controls: CLOSED.** ProtocolDev's heat-map cell and
+risk row, and QmpWorkspace's plan-name cell. `Orchestration.tsx`'s nav chip was
+already done. Held by `riskAndDialogA11y.test.tsx`, revert-proven a half at a
+time.
+
+### Findings that did not survive checking
+
+- **"51 `transition: all` uses."** There are five in the tree. Four are
+  `design-system/preview/*.html` and the README, where `transition: all 200ms`
+  is *documented as the intended global default*; the fifth is
+  `projects-prototype.css`. There is nothing to lint.
+- **"The 40px auth hero breaks the 18–24px title ceiling."** The README's rule
+  reads "`text-lg` (18px) is the max title size **outside marketing**". Both
+  40px rules in the tree are `.auth-brand-h` (the brand entry screen) and
+  `.tier-price` (pricing tiers). Both are marketing surfaces, and both are
+  inside the stated exception.
+- **A crude "does this file mention `sampleMode`" scan** marked 20 of 30 MDX
+  data consumers ungated. It is a false-positive generator: `DataGate` is the
+  other half of the gate, and `EngineeringSurface` passes its fixture as
+  `sample={ENG_DOCUMENTS}` to exactly that. Verified by hand before acting.
+
+### Found while checking, and fixed
+
+`ci:component-class-coverage` refused to report against a stale build. Rebuilt,
+it named four class names rendered with no rule in any shipped chunk, against a
+baseline of 0 — all 6–10 days old, from other sessions:
+
+- `.pj-dim` — real. Three lines in `CmcModule` (the loading note, the compiled
+  completeness figure, the lineage line) drew at full body emphasis where they
+  are meant to be subordinate. Defined now, on the `--text-400` ramp the rest of
+  the `.pj-*` family uses.
+- `.audit-unclassified` — real. The modifier had no rule, so on the 21 CFR
+  Part 11 audit tab the caveat "N rows could not be classified and this filter
+  cannot speak for them" rendered as a second, identical, centred grey sentence
+  beside "No events match this filter." Separated structurally, not by colour,
+  keeping the AA-verified `--text-400`.
+- `.indf-fact` / `.indf-record` — the gate's premise ("a class no stylesheet
+  defines renders as nothing") does not hold for these two: the block is styled
+  inline and renders correctly. Migrated to rules anyway, which is the truthful
+  way to clear it. One substantive change came out of the migration: the border
+  was `1px solid var(--text-400)` — a body-TEXT colour used as a hairline, which
+  put a full-weight box around a quiet restatement of record values. It is
+  `--border` now. `--radius-md` is exactly the 6px literal it replaces.
