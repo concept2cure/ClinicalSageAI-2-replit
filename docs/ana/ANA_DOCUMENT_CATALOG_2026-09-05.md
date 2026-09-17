@@ -53,13 +53,14 @@ knows precisely what is left to read. This is the mechanism that makes "a
 sampled page recorded as reviewed" impossible, and the tests exercise the
 refusal first (`server/services/vault/__tests__/document-catalog.service.test.ts`).
 
-### Five AnA tools (defs `document-catalog-tool-defs.ts`, handlers `document-catalog-tools.ts`)
+### Six AnA tools (defs `document-catalog-tool-defs.ts`, handlers `document-catalog-tools.ts`)
 
 | Tool | What it does |
 |---|---|
 | `list_project_documents` | Enumerates the vault (program-scoped via `projects.regulatory_program_id`, else org-wide): filed location, catalog state per document. Uncataloged and extraction-failed files are labeled as exactly that. Also returns the org's **chat uploads** from the evidence spine (`listClientDocuments`, `currentOnly` — superseded re-uploads excluded) with each one's `fileId`, so a file attached in a past conversation reopens through `read_uploaded_document`. A failed chat-upload listing is reported as an error, never as "no chat uploads". |
-| `read_project_document` | Serves the extracted text in windows, records a receipt per window, reports coverage + remaining unread ranges. On extraction failure it says so with the recorded reason instead of returning empty text. |
+| `read_project_document` | Serves the extracted text in windows, records a receipt per window, reports coverage + remaining unread ranges. On extraction failure it says so with the recorded reason instead of returning empty text. Text produced by OCR carries its mean confidence and an explicit caveat — a recognised digit is not a typed one. |
 | `catalog_project_document` | Writes the comprehension tier — refused below full coverage; embeds the record for semantic recall. |
+| `place_project_document` | Files the document into its dossier folder through the canonical `placeVaultDocument` — governed, audited with both the old and new location, and **refused for a document with no comprehension record**. `unfile:true` is the honest fallback. |
 | `file_chat_upload_to_vault` | Files a chat upload into the project vault through the canonical `ingestVaultDocument`, so it gains a dossier placement, a catalog record, chunks and semantic search. Refuses a vault UUID (already filed) and asks which program rather than guessing one. |
 | `search_project_documents` | Semantic (pgvector cosine) search over the comprehension records (`document-catalog-search.ts`), org-checked. Only cataloged documents are searchable — the response counts the unsearchable ones so absence is never read as nonexistence — and an unreachable embedding provider or a vector-less database is reported as unavailability, never as an empty result. |
 
@@ -104,6 +105,42 @@ end to end (SHA-256, bytes on disk, the audit chain, atomicity, the
 cross-tenant refusal) — plus a new dbtest that files a real chat upload and
 proves the resulting vault document carries the tenant key, the audit row, the
 catalog tier, and is immediately readable.
+
+### One canonical filing, and the tool that reaches it
+
+**Service:** `server/services/vault/vault-placement.service.ts` · **Tool:** `place_project_document`
+
+The same shape as the ingest, one step later in the document's life. The
+classifier in `vault-filing.service.ts` PROPOSES a placement at upload — from a
+filename, a title, and a sample of the text — and `vault-ingest` writes that
+proposal once. Nothing ever revisited it. A document the rules could not place
+sat in the Unfiled queue permanently; one they placed wrongly sat under
+"suggested" permanently. The only writer of a filing decision was 191 lines
+inside `POST /api/c2c/project-vault/:id/file`, reachable only by a person
+clicking in the Vault surface, and covered by no test at all — a §11-audited
+mutation that was believed to work rather than known to.
+
+So the write moved to `placeVaultDocument`, unchanged in behaviour, and both
+callers use it: the route maps its result to HTTP (191 lines → 55) and the tool
+maps the same result to AnA's transcript. The guards travel with it — program
+ownership reported as absence rather than as forbidden, the row taken `FOR
+UPDATE` inside the transaction, a folder validated against the program's *own*
+taxonomy view, and the UPDATE and its hash-chained audit row committing
+together or not at all.
+
+`place_project_document` adds one rule on top, and only for AnA: **she may file
+only a document she has cataloged.** Filing is a claim about what a document
+is, and a placement resting on a filename is the classifier's guess wearing her
+name. Unfiling is exempt, because it retracts a claim rather than making one —
+`unfile:true` puts the document in the visible Unfiled queue with her reason
+recorded, which is the honest answer when she cannot justify a folder.
+
+`tests/db/vault-placement.dbtest.ts` proves the write against real PostgreSQL:
+the filed row and its audit entry (both locations, hash-chained), a folder from
+another modality's taxonomy refused with nothing written, confirm-with-no-
+suggestion refused, an explicit unfile honoured, and another organization's
+caller unable to move the document. The taxonomy guard and the tenancy
+predicate were each removed in turn to watch exactly one test go red.
 
 ### Two id spaces, told apart (`document-catalog-tools.ts`)
 
@@ -280,10 +317,11 @@ nothing like every other bootstrap source.
   deliberately: the comprehension record hangs off `vault.documents`, and
   filing is the act that gives a file a governed home. `remember_document_in_project`
   (now embedding its entries) remains their lighter durable-memory path.
-- **Cataloging is still model-invoked:** Anna reads and catalogs a document
-  when the work calls for it; nothing sweeps the backlog of "extracted but not
-  yet studied" files on its own. The listing labels them honestly, so the
-  backlog is visible rather than hidden.
+- **Cataloging and filing are still model-invoked:** Anna reads, catalogs and
+  files a document when the work calls for it; nothing sweeps the backlog of
+  "extracted but not yet studied" files, or the Unfiled queue, on its own. Both
+  are labeled honestly in the listing and in session recall, so the backlog is
+  visible rather than hidden — but a file nobody asks about stays unstudied.
 - ~~`vault.documents.page_count` never populated~~ — **closed.** Ingest now
   reads the count from the PDF itself (`pdfPageCount`, no text-layer census) and
   writes it to the document and its catalog row. It stays null for a format

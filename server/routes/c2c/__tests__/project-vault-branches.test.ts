@@ -39,7 +39,15 @@ function app(orgId: number) {
   return a;
 }
 
-/** Route SQL in call order: project → documents → (sections per doc) → M3 artifacts → uploads. */
+/**
+ * Route SQL in call order: project → documents → (sections per doc) → M3
+ * artifacts → uploads → upload COUNTS → data-room sources.
+ *
+ * The queue is strict, so a query the route gained and this file did not is an
+ * `undefined` response and a 500 — which is what happened when the filing
+ * cabinet grew its program-wide count. Adding the row here is the fixture
+ * catching up with the route, not a test being loosened.
+ */
 function seedBase() {
   queryMock
     .mockResolvedValueOnce({ rows: [{ id: PROJECT, name: 'BX-204', product_type: 'drug' }] })
@@ -64,6 +72,8 @@ describe('GET /api/c2c/project-vault/:id — derived branches', () => {
       })
       // uploads
       .mockResolvedValueOnce({ rows: [] })
+      // program-wide upload counts (shown/total/unfiled)
+      .mockResolvedValueOnce({ rows: [{ total: 0, unfiled: 0 }] })
       // data room sources (cre_evidence_sources — same mocked pool)
       .mockResolvedValueOnce({ rows: [] });
 
@@ -107,6 +117,8 @@ describe('GET /api/c2c/project-vault/:id — derived branches', () => {
           },
         ],
       })
+      // program-wide upload counts (shown/total/unfiled)
+      .mockResolvedValueOnce({ rows: [{ total: 1, unfiled: 0 }] })
       // data room sources
       .mockResolvedValueOnce({ rows: [] });
 
