@@ -23,7 +23,7 @@ to one line; edit only your own row to limit merge conflicts.
 | WO-15 finding 4 — `/api/design-risk` | `…session_01J935DZwfFEardJCv85SJds` | **released** — done `153481465` |
 | WO-16C — fabrication sweep (`server/services/`, `server/routes/`) | `…session_01E8btkB8mcLirW4rNvsMNxK` (inferred from commits) | active |
 | WO-15 finding 2 — `project_charters` 27 vs 48 columns | `…session_01E2moDuSNSNTBqAHV5GtWoz` | **released** — fixed |
-| WO-15 — `KNOWN_UNLISTED`: 14 of 16 entries fail the list's stated reason | — | **unclaimed**, new, see finding 5 |
+| `KNOWN_UNLISTED` triage — 10 of 15 entries fail the list's stated reason (16 tables) | `…session_01E2moDuSNSNTBqAHV5GtWoz` | **claimed** 2026-09-17 |
 | AnA client-files surface — `server/services/vault/document-*`, `vault-ingest/placement.service.ts`, `server/services/ana/document-*-tools*`, `ana-session-bootstrap*`, `server/startup/document-catalog-bootstrap.ts`, persona's CLIENT'S FILES section | `…session_01DiJJAkasGVrccrxjhYyjxG` | **claimed** 2026-09-17 |
 
 If you are one of the sessions above, correct your own row. If a lane you want
@@ -108,11 +108,12 @@ review and staying refused.** Three had wrong headlines (3, 7 and — in the
 opposite direction — my own correction to 3); two were right as written (5, 2).
 Check each claim, do not assume either way.
 
-One item surfaced here is NOT part of WO-15's nine and remains open: **14 of the
-16 `KNOWN_UNLISTED` entries in `tests/ops/apply-c2c-migrations-manifest.test.mjs`
-fail that list's own stated reason** — an upper bound from a crude heuristic with
-at least one known false positive. Each needs the per-file treatment finding 5
-received.
+One item surfaced here is NOT part of WO-15's nine and is now claimed: **10 of
+the 15 `KNOWN_UNLISTED` entries in `tests/ops/apply-c2c-migrations-manifest.test.mjs`
+fail that list's own stated reason**, covering 16 tables. The first figure
+published here was "14 of 16" from a crude heuristic; re-measured, the list has
+15 entries, four hold their stated reason, and `authoring_reviews` is clean for a
+different verified reason. See WO-15 finding 5 for the full table.
 
 With WO-15 closed, the next unclaimed work is the `KNOWN_UNLISTED` triage above,
 then the untouched orders in §2 — WO-3, WO-5, WO-7, WO-9, WO-10, WO-12 are all
@@ -127,8 +128,12 @@ evidence that the migration *set* is complete.** Finding 3's first attempt added
 `migrations/20260629_charter_tables_rebuild.sql` to `C2C_MIGRATION_FILES` and
 passed a live-database proof. It was wrong: the file has five
 `REFERENCES project_charters(id)` clauses and nothing in the set creates that
-table — Drizzle push does. The live database already had it from install-fresh,
-so the proof could not expose the gap.
+table. (This paragraph first said "Drizzle push does" — it does not, and that
+error is itself WO-15 finding 2's subject: `project-charter.ts` is re-exported
+from `shared/schema/index.ts`, which is not a drizzle entrypoint, so the charter
+tables are outside the push surface and come from install-fresh's overlay.) The
+live database already had the table from install-fresh, so the proof could not
+expose the gap.
 `tests/schema-contract/tenant-isolation-sweep.contract.test.ts` C-33 applies the
 set to a **bare** database and caught it. Run the schema-contract shards before
 believing any change to the set.

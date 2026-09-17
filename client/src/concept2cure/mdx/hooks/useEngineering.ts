@@ -61,7 +61,14 @@ interface EngineeringPayload {
     issues: IssueRow[];
     documents: DocumentRow[];
   };
-  meta?: { scopes?: Record<string, PanelScope> };
+  meta?: {
+    scopes?: Record<string, PanelScope>;
+    /** Panels whose read FAILED (not merely unmigrated). See
+     *  server/routes/mdx-engineering.ts — a panel that errors returns [] so the
+     *  other six still render, and names itself here so this hook can report it
+     *  as an error rather than as an empty regulated record. */
+    unavailable?: string[];
+  };
 }
 
 export interface UseEngineeringResult {
@@ -81,23 +88,45 @@ export interface UseEngineeringResult {
 
 const IDLE = 'The engineering record is held per program.';
 
+/* Shown when the route reports a panel as unavailable. DataGate's error branch
+   already titles it "Could not load <label>"; this says the part that matters
+   to someone reading a regulated record — that a zero is not being claimed.
+   ErrorState redacts server strings, so the detail stays server-side in the
+   log line panel() writes. */
+const UNREADABLE =
+  'The read failed. No figures are reported for it — this is not a count of zero.';
+
 export function useEngineering(programId: string | null): UseEngineeringResult {
   const url = programId
     ? `/api/mdx/engineering/${encodeURIComponent(programId)}`
     : null;
   const { data, loading, error, refresh } = useFetchJson<EngineeringPayload>(url);
 
-  const state = <T,>(rows: T | undefined): DataState<T> =>
-    toDataState(rows ?? null, loading, error, { idleReason: IDLE });
+  /* `data` is the PREVIOUS payload while a new fetch is in flight: useFetchJson
+     clears `error` and keeps `data` on refetch, which is what lets a surface
+     hold its rows instead of flashing. So `unavailable` is stale during a load,
+     and toDataState puts error ahead of loading — meaning a stale failure would
+     outrank the in-flight request and claim the NEW program's panel had failed
+     before any answer arrived. It also made Retry look inert: the error stayed
+     on screen through the refetch that was supposed to clear it. Suppress it
+     while loading; the fresh payload decides. */
+  const unavailable = loading ? [] : data?.meta?.unavailable ?? [];
+
+  /* A whole-request error still wins — it is the more serious fact, and
+     toDataState's precedence puts error first for the same reason. */
+  const state = <T,>(name: string, rows: T | undefined): DataState<T> =>
+    toDataState(rows ?? null, loading, error ?? (unavailable.includes(name) ? UNREADABLE : null), {
+      idleReason: IDLE,
+    });
 
   return {
-    summary: state(data?.data.summary),
-    dhf: state(data?.data.dhf),
-    trace: state(data?.data.trace),
-    risks: state(data?.data.risks),
-    ecrs: state(data?.data.ecrs),
-    issues: state(data?.data.issues),
-    documents: state(data?.data.documents),
+    summary: state('summary', data?.data.summary),
+    dhf: state('dhf', data?.data.dhf),
+    trace: state('trace', data?.data.trace),
+    risks: state('risks', data?.data.risks),
+    ecrs: state('ecrs', data?.data.ecrs),
+    issues: state('issues', data?.data.issues),
+    documents: state('documents', data?.data.documents),
     scopes: data?.meta?.scopes ?? {},
     loading,
     error,

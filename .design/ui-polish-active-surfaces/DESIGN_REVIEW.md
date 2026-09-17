@@ -354,3 +354,83 @@ baseline of 0 — all 6–10 days old, from other sessions:
   was `1px solid var(--text-400)` — a body-TEXT colour used as a hairline, which
   put a full-weight box around a quiet restatement of record values. It is
   `--border` now. `--radius-md` is exactly the 6px literal it replaces.
+
+---
+
+## Fabricated-data audit of the MDX kit, 2026-09-17
+
+The v2 shell's fixtures were swept earlier in this pass. `pdev/data` holds only
+`enums.ts`, `nav.ts` and `types.ts`, and its header records that the fixture rows
+were already stripped. That left the MDX kit — **16 production surfaces**, routed
+at `/concept2cure/mdx` and mounted through `DeviceSurfaces.tsx` → `MdxSurfaceHost`
+→ `surfaceViews.ts`, so it ships — and its 19 data modules had never been audited
+export by export.
+
+Every export of all 19 was classified, each fabricated one traced to its
+consumers, and every "reaches production ungated" claim put to two adversarial
+verifiers on different lenses.
+
+**184 exports · 65 fabricated · 20 asserting something a Part 11 record would.**
+
+### The boundary works, and that is the headline
+
+`lib/sampleMode.ts` force-disables sample mode whenever `import.meta.env.PROD`,
+and is otherwise opt-in only (`?sample=1`, or a top-bar toggle). `DataGate`
+renders its `sample` prop **only** under that flag and always behind a visible
+"Sample data" banner. Of 65 fabricated exports, **61 are correctly behind it** —
+including every one of the worst: fabricated e-signatures (`esigState: 'signed',
+signedBy: 'JC · 2026-04-08'`), a fabricated PMDA 30-day report with
+`eventType: 'death'`, invented FAERS signals, a fabricated acknowledgement
+(`'Jordan Chen, Reg Lead · 2026-04-29 09:55 UTC'`). None of those can reach a
+regulated tenant.
+
+### The four that went around it — all now fixed
+
+1. **`PMA_TRIAL_METRICS` / `PMA_MODULES`** — `PmaSurface` fell back to them via a
+   ternary, on its own admission: *"Falls back to kit fixtures during load + on
+   error."* So an empty tenant, an expired token or a 500 showed
+   `Enrolled 412 / 680 · Behind plan by 3 weeks` and `Adverse events 47 · 3
+   serious · 2 device-related under adjudication` — another company's enrolment
+   and another company's serious adverse events — with no banner. Both go
+   through `DataGate` now.
+2. **`PMA_PHASES`** — carried a hand-written position beside the canonical ten
+   phase labels. Reachable on the no-program branch, where the grid drew an
+   invented programme's progress for a user who had selected nothing. Taxonomy
+   kept, position removed.
+3. **`vaultKpisForFiles`** — three KPIs derived from the file list, the fourth
+   asserting `metric: '3'` under "Approaching 15-year minimum · audit before
+   purge", indistinguishable from the real three. `VaultFile` has no retention
+   date to derive it from. Reads as an em dash now.
+4. **Two inline JSX literals** — `'CV-330 Implantable Monitor'` and
+   `' · PMA filing Q3 2026'` in PmaSurface's header, plus `Math.max(activeIdx, 0)`
+   turning "no active phase" into "Phase 1 of 10" beside ten bars reading 0%.
+   **Found by an adversarial verifier checking a different finding on the same
+   surface** — they are inline literals, so they belong to no data module and no
+   fixture audit or import-based gate could have seen them. A follow-up sweep for
+   record-shaped string fallbacks across all three shells found no others (its
+   only two hits were `SHA-256`).
+
+### What the gate could not see, and now can
+
+`ci:fixture-fallback` exists for exactly defect 1 and did not fire: it keys on
+`live ?? FIXTURE` and on a `FIXTURE_`/`SAMPLE_`/`DEMO_` name, and this was a
+ternary over constants named for the pathway. It now also matches the ternary
+shape structurally — an else-branch that is a bare identifier imported from
+`data/` or `fixtures/` — with two exclusions found by running it against the
+tree, both real and correct code: a condition consulting sample mode
+(`Overview.tsx`), and both branches being imported constants, i.e. a vocabulary
+selector (`Pyramid.tsx`). Proven on the real case: restoring the two lines
+PmaSurface shipped fails the gate at both.
+
+It also could not be *described* without failing — its comment skip was a line
+test for a leading `*`, so a file explaining a removed fallback failed the check
+for the fallback it removed. It strips comments properly now.
+
+### Still open — a product decision, not a code defect
+
+The 61 gated fabrications include fabricated electronic signatures and a
+fabricated patient-death report. They cannot reach production. Whether content
+of that kind should exist as demo material **at all** is a call for the product
+owner, not something to delete unilaterally: sample mode is a deliberate,
+well-built capability and removing it would take the demo story with it. Flagged
+rather than actioned.

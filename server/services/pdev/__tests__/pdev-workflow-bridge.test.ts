@@ -218,6 +218,6 @@ describe('pdevWorkflowBridge.kickoff — orchestration', () => {
 
     // Audit event emitted — and its outcome reported, not assumed.
     expect(AUDIT.calls.some(c => c.action === 'pdev_workflow_kickoff')).toBe(true);
-    expect(result.auditTrail).toEqual({ persisted: true });
+    expect(result.auditTrail).toEqual({ persisted: true, chained: true });
   });
 });

@@ -8,6 +8,8 @@ import { I } from '../icons';
 import { PMA_MODULES, PMA_PHASES, PMA_TRIAL_METRICS, type PmaPhase } from '../data/pma';
 import type { Program } from '../data/programs';
 import { useProgramExtras } from '../hooks/useProgramExtras';
+import { DataGate } from '../components/DataGate';
+import { toDataState } from '../lib/dataState';
 import { useEstarExport, exportStatusLine } from '../hooks/useEstarExport';
 import { PathwayPanes } from './pathway/PathwayPanes';
 import { EstarFilingPanel } from './EstarFilingPanel';
@@ -29,6 +31,9 @@ export interface PmaSurfaceProps {
    pathway has these phases by definition); only the active position +
    progress is dynamic. */
 function derivePhases(program: Program | null): PmaPhase[] {
+  /* With no program selected there is no progress to report. PMA_PHASES is
+     the taxonomy and nothing else now — see its header for the position it
+     used to carry and why it no longer does. */
   if (!program) return PMA_PHASES;
   /* Map kit's 7 stage codes onto the PMA 10-phase grid. The kit's
      stageIdx (0..7) and the PMA grid (0..9) don't line up 1:1 — PMA
@@ -65,15 +70,37 @@ export function PmaSurface({ program, onAskAna, onOpenEditor }: PmaSurfaceProps)
      PMA module taxonomy (preclinical / clinical / manufacturing /
      labeling / statistical / financial). Trial metrics join to
      clinical_ops.studies for the program's enrollment / sites / AE
-     rate / endpoints. Falls back to kit fixtures during load + on error. */
+     rate / endpoints.
+
+     These two read `Falls back to kit fixtures during load + on error`, and
+     did exactly that, through a ternary rather than a `??`:
+
+         extras.pmaTrialMetrics?.length ? extras.pmaTrialMetrics : PMA_TRIAL_METRICS
+
+     which is the pattern ../lib/useSampleRows.ts was written to delete, firing
+     on precisely the occasions a user cannot detect — an empty tenant, an
+     expired token, a 500, a fetch that has not started. What it substituted is
+     not neutral: PMA_TRIAL_METRICS asserts `Enrolled 412 / 680 · Behind plan by
+     3 weeks` and `Adverse events 47 · 3 serious · 2 device-related under
+     adjudication`, and PMA_MODULES describes `CV-330 IDE pivotal — 412/680
+     enrolled · 14 sites` and three facilities under audit. A regulated user
+     whose read failed saw another company's enrolment and another company's
+     serious adverse events as their own programme's, with no banner.
+
+     `ci:fixture-fallback` did not catch it: that gate keys on `live ?? FIXTURE`
+     and on a FIXTURE_/SAMPLE_/DEMO_ name, and this is a ternary over constants
+     named for the pathway.
+
+     Both go through DataGate now, which separates loading from error from empty
+     from idle, and renders the kit content only under explicit sample mode —
+     impossible in a production build — always under its standing banner. */
   const extras = useProgramExtras(program?.id ?? null);
-  const sourceModules = extras.pmaModules && extras.pmaModules.length > 0
-    ? extras.pmaModules
-    : PMA_MODULES;
-  const sourceTrialMetrics = extras.pmaTrialMetrics && extras.pmaTrialMetrics.length > 0
-    ? extras.pmaTrialMetrics
-    : PMA_TRIAL_METRICS;
-  const totalDocs = sourceModules.reduce((s, m) => s + m.docs, 0);
+  const modulesState = toDataState(extras.pmaModules, extras.loading, extras.error, {
+    idleReason: 'Select a program to see how its PMA modules are assembled.',
+  });
+  const trialState = toDataState(extras.pmaTrialMetrics, extras.loading, extras.error, {
+    idleReason: 'Select a program to see its pivotal-trial figures.',
+  });
 
   /* Real export action — POST /api/510k/estar/build with the program's ident
      and useProjectContent. The server reads THIS program's governed PMA
@@ -94,12 +121,22 @@ export function PmaSurface({ program, onAskAna, onOpenEditor }: PmaSurfaceProps)
     <>
       <div className="section-hdr">
         <div>
+          {/* With no PMA program this read "PMA pathway · CV-330 Implantable
+              Monitor" over "Phase 1 of 10 — Pre-submission · PMA filing Q3
+              2026": an invented device, an invented filing date, and a phase
+              claimed as current, all as inline literals with no sample-mode
+              guard, so they shipped to any tenant whose programme list has no
+              pathway === 'pma' row. The phase claim was the quietest of the
+              three — Math.max(activeIdx, 0) turns "no active phase" (-1) into
+              "phase 1", which is then asserted beside ten bars reading 0%.
+              Nothing is named here that the program did not supply. */}
           <div className="section-title">
-            PMA pathway · {program ? program.title : 'CV-330 Implantable Monitor'}
+            PMA pathway{program ? ` · ${program.title}` : ''}
           </div>
           <div className="section-sub">
-            Phase {Math.max(activeIdx, 0) + 1} of {phases.length} — {activeLabel}
-            {program ? ` · ${program.dueLabel}` : ' · PMA filing Q3 2026'}
+            {program
+              ? `Phase ${Math.max(activeIdx, 0) + 1} of ${phases.length} — ${activeLabel} · ${program.dueLabel}`
+              : `${phases.length} phases · select a program to see where it stands`}
           </div>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
@@ -157,8 +194,15 @@ export function PmaSurface({ program, onAskAna, onOpenEditor }: PmaSurfaceProps)
         ))}
       </div>
 
+      <DataGate
+        state={trialState}
+        label="pivotal-trial figures"
+        sample={PMA_TRIAL_METRICS}
+        emptyHint="Enrolment, sites and endpoint figures appear here once this program has a registered study."
+      >
+        {(metrics) => (
       <div className="health">
-        {sourceTrialMetrics.map((d, i) => (
+        {metrics.map((d, i) => (
           <div key={i} className="health-card">
             <div className="health-label">{d.label}</div>
             <div className="health-metric">
@@ -177,17 +221,27 @@ export function PmaSurface({ program, onAskAna, onOpenEditor }: PmaSurfaceProps)
           </div>
         ))}
       </div>
+        )}
+      </DataGate>
 
+      <DataGate
+        state={modulesState}
+        label="PMA modules"
+        sample={PMA_MODULES}
+        emptyHint="Modules appear here once 21 CFR 814.20 sections are authored for this program."
+      >
+        {(mods) => (
+      <>
       <div className="section-hdr">
         <div>
           <div className="section-title">PMA modules</div>
           <div className="section-sub">
-            Section-by-section assembly · {totalDocs} document{totalDocs === 1 ? '' : 's'} total
+            Section-by-section assembly · {mods.reduce((n, m) => n + m.docs, 0)} document{mods.reduce((n, m) => n + m.docs, 0) === 1 ? '' : 's'} total
           </div>
         </div>
       </div>
       <div className="pma-modules">
-        {sourceModules.map(m => (
+        {mods.map(m => (
           <button
             key={m.id}
             className="pma-mod"
@@ -211,6 +265,9 @@ export function PmaSurface({ program, onAskAna, onOpenEditor }: PmaSurfaceProps)
           </button>
         ))}
       </div>
+      </>
+        )}
+      </DataGate>
 
       {/* The official FDA eSTAR PDF — readiness gate, the governed field
           preview and the one Generate control, produced on the same vendored
