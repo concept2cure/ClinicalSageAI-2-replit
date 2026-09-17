@@ -19,6 +19,7 @@
 import { ErrorState } from '../dataConnect';
 import React, { useState } from 'react';
 import { I } from '../icons';
+import { useDialog } from '../useDialog';
 import { useRbmMutation, rbmWrite } from './rbmWrites';
 
 /** The sponsor system-of-record categories the API accepts. */
@@ -139,9 +140,20 @@ export function RbmIngestDialog({ programId, onClose, onReload }: {
     setResult(data);
   });
 
+  /* Declared the role but had no Escape and never moved focus into the panel
+     or back to the opener; the semantics also sat on the scrim, not the panel. */
+  const dialogRef = useDialog(onClose);
+
   return (
-    <div className="rbm-modal-scrim" role="dialog" aria-modal="true" aria-label="Load a metric extract">
-      <div className="rbm-modal rbm-modal-wide">
+    <div className="rbm-modal-scrim">
+      <div
+        className="rbm-modal rbm-modal-wide"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Load a metric extract"
+        tabIndex={-1}
+        ref={dialogRef}
+      >
         <div className="rbm-modal-h">{I.database}<span>Load a metric extract</span></div>
         <div className="rbm-modal-what">
           Land measurements against this study. Study-scope rows update the KRI or QTL whose

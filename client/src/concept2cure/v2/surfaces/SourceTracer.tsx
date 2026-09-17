@@ -281,7 +281,10 @@ export function SourceTracer({ onAsk }: SurfaceViewProps) {
               {sections.map(s => {
                 const nChanged = s.sources.filter(x => x.state === 'changed').length;
                 return (
-                  <button key={s.id} className="sp-row" style={{ width: '100%', textAlign: 'left', borderRadius: 8, padding: '9px 10px', border: selId === s.id ? '1px solid var(--accent-muted)' : '1px solid transparent', background: selId === s.id ? 'var(--accent-000)' : 'transparent' }} onClick={() => setSel(s.id)}>
+                  /* aria-pressed exposes the selection to assistive tech, and the
+                     inset left rule carries it without relying on the accent fill —
+                     WCAG 2.2 SC 1.4.1, colour is never the only signal. */
+                  <button key={s.id} className="sp-row" aria-pressed={selId === s.id} style={{ width: '100%', textAlign: 'left', borderRadius: 8, padding: '9px 10px', border: selId === s.id ? '1px solid var(--accent-muted)' : '1px solid transparent', borderLeftWidth: selId === s.id ? 3 : 1, background: selId === s.id ? 'var(--accent-000)' : 'transparent' }} onClick={() => setSel(s.id)}>
                     <span className="sp-row-b">
                       <span className="sp-row-t">{s.doc}</span>
                       <span className="sp-row-s">{'§'}{s.sec} / {s.sources.length} source{s.sources.length === 1 ? '' : 's'}{nChanged ? ` / ${nChanged} changed` : ''}</span>
