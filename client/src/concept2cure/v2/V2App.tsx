@@ -716,6 +716,29 @@ export function V2App() {
   /* Escape closes the phone-width rail overlay. Gated on the SAME media query
      the overlay css uses, so a desktop Escape never collapses the persistent
      rail — the overlay is the only rail state Escape should dismiss. */
+  /* The shell's own dark marker cannot reach <body>, which sits ABOVE it, so
+     `body { background: var(--bg-000) }` resolved in a scope where the dark
+     palette was never in view. index.css had frozen that further, pointing the
+     rule at two literal :root tokens (--color-bg #faf9f5, --color-text-primary
+     #141413) used nowhere else — light in both themes by construction.
+     Today .c2c-v2 paints the viewport so nothing shows, but the light band is
+     there on overscroll, behind a shell shorter than the viewport, and in any
+     print or screenshot path that captures the body.
+     Marking BODY, not <html>: the shell already makes every descendant dark, so
+     this adds only body itself and anything portalled to it — which is the part
+     that was wrong. Putting it on <html> would instead make :root dark and
+     change what every alias in the palette resolves to. */
+  React.useEffect(() => {
+    const body = document.body;
+    if (!prefs.dark) return undefined;
+    body.classList.add('dark');
+    body.setAttribute('data-theme', 'dark');
+    return () => {
+      body.classList.remove('dark');
+      body.removeAttribute('data-theme');
+    };
+  }, [prefs.dark]);
+
   React.useEffect(() => {
     // The two narrow-width overlays — the rail drawer (≤640px) and the AnA
     // drawer (≤900px) — are the only states Escape should dismiss. The AnA drawer only exists when the

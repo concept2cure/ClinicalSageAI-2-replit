@@ -213,7 +213,7 @@ elements stuck at `#ad5132`) are both confirmed fixed in a running browser.
 `--accent-200` resolving to `#e8916f` is the direct disproof of the frozen-alias
 bug.
 
-### New: `document.body` keeps the light background in dark mode
+### FIXED: `document.body` kept the light background in dark mode
 
 `getComputedStyle(document.body).backgroundColor` is `rgb(250, 249, 245)` —
 `--bg-000`'s LIGHT value — in both themes. The dark shots look correct because
@@ -222,6 +222,23 @@ today**. It is the same shape as the two root causes above (a value resolving in
 a scope where the dark tokens are not in view), and it would surface as a light
 band on overscroll, behind a shell shorter than the viewport, or in any print or
 screenshot path that captures the body. Filed below rather than fixed here.
+
+**Fixed 2026-09-17.** It was worse than filed: `index.css` pointed the body rule
+at two literal `:root` tokens — `--color-bg: #faf9f5` and
+`--color-text-primary: #141413`, referenced nowhere else in the repo — so body's
+TEXT colour was frozen near-black too, not just its background. Both literals
+are gone; the rule now reads `var(--bg-000)` / `var(--text-100)`, and V2App
+marks BODY with the dark class so those resolve in a scope where the dark
+palette is in view. Marking body rather than `<html>` on purpose: the shell
+already makes every descendant dark, so this adds only body itself and anything
+portalled to it — the part that was actually wrong — whereas marking `<html>`
+would make `:root` dark and change what every alias in the palette resolves to.
+Measured in Chromium: light body stays `rgb(250,249,245)` on `rgb(20,20,19)`;
+dark body is now `rgb(38,38,36)` on `rgb(250,249,245)`.
+
+Worth noting for the next person: `ci:frozen-theme-aliases` does NOT catch this
+one. It looks for a `:root` alias whose value is `var(--x)`; these were literal
+values on a rule, which is a different shape of the same mistake.
 
 ### Must-fix #3 confirmed, with pictures
 
