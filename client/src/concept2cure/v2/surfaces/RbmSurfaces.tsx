@@ -59,7 +59,7 @@ export function RiskMatrix({ items, sel, onSel }: { items: { l: number; i: numbe
           const on = sel && sel.l === c.l && sel.i === c.i;
           return (
             <button key={`${c.l}-${c.i}`} className="rbm-mx-cell" data-band={c.band} data-on={on || undefined} data-empty={c.n === 0 || undefined}
-              title={`Likelihood ${c.l} x impact ${c.i} = ${c.l * c.i} (${c.band}) -- ${c.n} item${c.n === 1 ? '' : 's'}`}
+              title={`Likelihood ${c.l} x impact ${c.i} = ${c.l * c.i} (${c.band}) — ${c.n} item${c.n === 1 ? '' : 's'}`}
               onClick={() => onSel(on ? null : { l: c.l, i: c.i })}>
               <span className="rbm-mx-n">{c.n || ''}</span><span className="rbm-mx-s">{c.l * c.i}</span>
             </button>
@@ -104,7 +104,7 @@ export function ThresholdGauge({ current, secondary, threshold, unit }: { curren
         <div className="rbm-gauge-tick" style={{ left: `${pc(secondary)}%` }} title={`Secondary (early warning) ${secondary}${unit}`} />
         <div className="rbm-gauge-tick hard" style={{ left: `${pc(threshold)}%` }} title={`Primary threshold ${threshold}${unit}`} />
       </div>
-      <div className="rbm-gauge-lbl"><span>{current}{unit}</span><span className="mut">warn {secondary}{unit} -- limit {threshold}{unit}</span></div>
+      <div className="rbm-gauge-lbl"><span>{current}{unit}</span><span className="mut">warn {secondary}{unit} — limit {threshold}{unit}</span></div>
     </div>
   );
 }
@@ -227,7 +227,7 @@ export function GovernedApprovalDialog({ what, meaning, onCancel, onSigned }: {
     <div className="rbm-modal-scrim" role="dialog" aria-modal="true" aria-label={`Approve ${what}`}>
       <div className="rbm-modal">
         <div className="rbm-modal-h">{I.lock}<span>Approval requires e-signature</span></div>
-        <div className="rbm-modal-what"><b>{what}</b> -- status will move to <b>active</b>. {meaning}</div>
+        <div className="rbm-modal-what"><b>{what}</b> — status will move to <b>active</b>. {meaning}</div>
         <label className="rbm-field"><span>Reason for change</span>
           <textarea rows={2} value={reason} onChange={e => setReason(e.target.value)} placeholder="State why this version is being approved" /></label>
         <div className="rbm-field-row">
@@ -326,7 +326,7 @@ export function RbmAnaDock({ nav, study, msgs, onAsk, onClose, work }: {
   return (
     <aside className="rbm-ana" aria-label="AnA — risk-based monitoring">
       <div className="rbm-ana-hdr">
-        <div className="rbm-ana-id"><span className="mk">{'✻'}</span><div><div className="nm">AnA — RBM co-monitor</div><div className="md">bound to {study} -- {nav.label}</div></div></div>
+        <div className="rbm-ana-id"><span className="mk">{'✻'}</span><div><div className="nm">AnA — RBM co-monitor</div><div className="md">bound to {study} — {nav.label}</div></div></div>
         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
           {work && (
             <button
@@ -357,7 +357,7 @@ export function RbmAnaDock({ nav, study, msgs, onAsk, onClose, work }: {
       )}
       <div className="rbm-ana-ctx">
         <div className="rbm-ana-ctx-k">On this surface</div>
-        <div className="rbm-ana-ctx-v">{nav.label} -- tool <code>{nav.tool}</code></div>
+        <div className="rbm-ana-ctx-v">{nav.label} — tool <code>{nav.tool}</code></div>
         <div className="rbm-ana-ctx-note">{I.info}AnA runs the same 9 RBM tools the buttons run — ask, and results deep-link into the surface. Advisory outputs (plans, reports) are drafts until approved.</div>
       </div>
       <div className="rbm-ana-scroll" ref={endRef}>

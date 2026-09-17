@@ -54,7 +54,17 @@ let pg: PGlite;
 let detectSequenceGaps: (
   applicationNumber: string,
   newSequenceNumber: string,
+  organizationId: number,
 ) => Promise<Array<{ code: string }>>;
+
+/* The tenant every seeded row below belongs to. `organizationId` became a
+   REQUIRED parameter when the history read was tenant-scoped, and this file is
+   outside tsconfig's `include` (client/src, server, shared, agents), so the
+   compiler could not name these call sites the way it named the four in
+   server/. Passing it explicitly is the point: an omitted tenant now blocks
+   with SEQ_TENANT_SCOPE_MISSING and issues no query at all, which is the right
+   behaviour and would make every assertion below vacuous. */
+const ORG = 1;
 
 /** A pg-Pool-shaped shim: every query in detectSequenceGaps is single-statement. */
 function poolShim(db: PGlite) {
@@ -113,34 +123,45 @@ describe('C-31: the C-31 migration makes ectd_compilations carry the validator c
 
 describe('C-31: the gate runs off ectd_compilations alone when ectd_submissions is absent', () => {
   it('the expected next sequence produces NO findings — and never SEQ_QUERY_FAILED', async () => {
-    const findings = await detectSequenceGaps('IND-1', '0002');
+    const findings = await detectSequenceGaps('IND-1', '0002', ORG);
     expect(codes(findings)).not.toContain('SEQ_QUERY_FAILED');
     expect(findings).toHaveLength(0);
   }, T);
 
   it('a duplicate sequence is caught (history read from compilations)', async () => {
-    const findings = await detectSequenceGaps('IND-1', '0000');
+    const findings = await detectSequenceGaps('IND-1', '0000', ORG);
     expect(codes(findings)).toContain('SEQ_DUPLICATE');
     expect(codes(findings)).not.toContain('SEQ_QUERY_FAILED');
   }, T);
 
   it('a gap is caught', async () => {
-    const findings = await detectSequenceGaps('IND-1', '0005');
+    const findings = await detectSequenceGaps('IND-1', '0005', ORG);
     expect(codes(findings)).toContain('SEQ_GAP');
   }, T);
 
   it('an application with no history requires 0000 first (not a false outage)', async () => {
-    const bad = await detectSequenceGaps('IND-NEW', '0003');
+    const bad = await detectSequenceGaps('IND-NEW', '0003', ORG);
     expect(codes(bad)).toContain('SEQ_FIRST_NOT_0000');
     expect(codes(bad)).not.toContain('SEQ_QUERY_FAILED');
 
-    const ok = await detectSequenceGaps('IND-NEW', '0000');
+    const ok = await detectSequenceGaps('IND-NEW', '0000', ORG);
     expect(ok).toHaveLength(0);
   }, T);
 });
 
 describe('C-31: when ectd_submissions IS present its sequences join the history', () => {
-  it('a sequence recorded only in ectd_submissions is seen by the UNION', async () => {
+  /* THE TABLE'S TWO REAL DEPLOY SHAPES, IN THE ORDER A DEPLOY MEETS THEM.
+     082_ectd_submission_agent.sql puts organization_id on ectd_submissions only
+     on the install-fresh path, so a deploy that predates it has the table
+     WITHOUT the tenant column. The scoped read then fails with SQLSTATE 42703,
+     and the validator drops the source rather than reading it across tenants.
+     That branch is pinned against a mock in
+     server/services/ectd/__tests__/sequence-gap-tenant-scope.test.ts; what a
+     mock cannot establish is that real Postgres actually raises 42703 for this
+     query — and the whole branch turns on that code. This suite exists to run
+     the validator's real SQL against real (PGlite) Postgres, so it proves it
+     here. */
+  it('an ectd_submissions with no organization_id is DROPPED, not read across tenants', async () => {
     await pg.exec(`
       CREATE TABLE ectd_submissions (
         id                 SERIAL PRIMARY KEY,
@@ -150,9 +171,32 @@ describe('C-31: when ectd_submissions IS present its sequences join the history'
       INSERT INTO ectd_submissions (application_number, sequence_number)
       VALUES ('IND-3', '0000');
     `);
-    // No compilations row for IND-3 — history comes entirely from submissions.
-    const findings = await detectSequenceGaps('IND-3', '0000');
+    // No compilations row for IND-3, and the only source holding one cannot be
+    // scoped — so the history is empty. That must read as "first submission
+    // must be 0000", never as a swallowed outage and never as a duplicate
+    // matched against another tenant's row.
+    const findings = await detectSequenceGaps('IND-3', '0001', ORG);
+    expect(codes(findings)).toContain('SEQ_FIRST_NOT_0000');
+    expect(codes(findings)).not.toContain('SEQ_QUERY_FAILED');
+    // Losing a source can only shrink the history, so it fails toward blocking.
+    expect(await detectSequenceGaps('IND-3', '0000', ORG)).toHaveLength(0);
+  }, T);
+
+  it('a sequence recorded only in a SCOPABLE ectd_submissions joins the history', async () => {
+    await pg.exec(`
+      ALTER TABLE ectd_submissions ADD COLUMN organization_id INTEGER;
+      UPDATE ectd_submissions SET organization_id = ${ORG};
+    `);
+    const findings = await detectSequenceGaps('IND-3', '0000', ORG);
     expect(codes(findings)).toContain('SEQ_DUPLICATE');
+  }, T);
+
+  it('and it is scoped: another tenant does not inherit that history', async () => {
+    // The verdict, not the SQL shape — org 2 has filed nothing for IND-3, so
+    // 0000 is its legitimate first sequence rather than a duplicate.
+    const findings = await detectSequenceGaps('IND-3', '0000', ORG + 1);
+    expect(codes(findings)).not.toContain('SEQ_DUPLICATE');
+    expect(findings).toHaveLength(0);
   }, T);
 });
 
@@ -165,7 +209,7 @@ describe('C-31: a genuine DB outage still blocks (invariant preserved)', () => {
       },
     };
     try {
-      const findings = await detectSequenceGaps('IND-1', '0002');
+      const findings = await detectSequenceGaps('IND-1', '0002', ORG);
       expect(codes(findings)).toContain('SEQ_QUERY_FAILED');
     } finally {
       h.pool = saved;

@@ -20,7 +20,7 @@
  */
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, within, waitFor } from '@testing-library/react';
 
 const apiRequest = vi.hoisted(() => vi.fn());
 vi.mock('@/lib/queryClient', async (importOriginal) => ({
@@ -130,6 +130,14 @@ describe('IndLifecycle — a projected 30-day clock never speaks as the regulato
     mockApi(LONG_PAST);
     render(<><IndLifecycle {...props()} /><ClockProbe /></>);
     await screen.findByText('Projected from target date');
+
+    /* Wait for the FACT, not for a proxy for it. The probe reads the surface
+       context through a hook, and that publication is a separate effect from
+       the render this test was waiting on — so under full-suite load the text
+       was on screen while `seenContext` was still null, and the read below got
+       `undefined`. It passed in isolation and failed in the suite, which is the
+       signature of exactly this race rather than of a product defect. */
+    await waitFor(() => expect((seenContext as any)?.facts?.thirtyDayClock).toBeTruthy());
 
     const facts = (seenContext as any)?.facts ?? {};
     expect(facts.thirtyDayClock).toBeTruthy();

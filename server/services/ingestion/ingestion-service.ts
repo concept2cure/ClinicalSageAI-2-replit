@@ -76,12 +76,115 @@ export interface ClassificationResult {
   documentType: string | null;
   confidence: number;
   rationale: string;
+  /** How much of the document the answer is actually based on. */
+  readCoverage?: DocumentReadCoverage;
 }
 
 export interface ExtractionResult {
   structure: Array<{ level: number; heading: string }>;
   extractedClaims: Array<{ text: string; locator: string | null }>;
   referencedSources: string[];
+  /** How much of the document the answer is actually based on. */
+  readCoverage?: DocumentReadCoverage;
+}
+
+// ── How much of the document was actually read ───────────────────────────────
+
+/**
+ * The most text one ingestion request sends to the model.
+ *
+ * This was an inline `slice(0, 60000)` at two call sites and nothing said it
+ * had happened. A 400-page submission document was classified, and had its
+ * structure and claims extracted, from roughly its first fifteen pages — and
+ * the result came back indistinguishable from one drawn from the whole file.
+ * A section that appears only after the bound is not absent from the document;
+ * it is absent from what was read, and a regulated ingestion pipeline may not
+ * blur those two.
+ */
+export const MAX_INGESTION_DOCUMENT_CHARS = 60_000;
+
+/**
+ * How far back from the bound a sentence or paragraph boundary is worth
+ * looking for. Beyond this the boundary search would cost more of the budget
+ * than a clean cut is worth, so the hard bound wins.
+ */
+const BOUNDARY_SEARCH_WINDOW = 2_000;
+
+export interface DocumentReadCoverage {
+  /** Characters actually sent to the model. */
+  charsRead: number;
+  /** Characters the document has. */
+  totalChars: number;
+  /** True when charsRead < totalChars. */
+  truncated: boolean;
+  /** charsRead / totalChars as a whole percentage. 100 when nothing was cut. */
+  percentRead: number;
+}
+
+export interface BoundedDocumentText extends DocumentReadCoverage {
+  /** The prefix to send. Never longer than MAX_INGESTION_DOCUMENT_CHARS. */
+  text: string;
+}
+
+/**
+ * Bound a document to what one request can carry, and report what that cost.
+ *
+ * The cut prefers the last paragraph break, then the last sentence end, within
+ * BOUNDARY_SEARCH_WINDOW of the bound: handing the model a sentence that stops
+ * mid-clause and asking it to classify the document is a worse input than one
+ * ending cleanly, and costs at most a few hundred characters of a 60,000
+ * character budget. It never returns more than the bound.
+ *
+ * The figures are computed HERE, from the text, and are never taken from the
+ * model — a coverage number a model reports about its own reading is not
+ * evidence of anything.
+ */
+export function boundDocumentText(documentText: string): BoundedDocumentText {
+  const source = typeof documentText === 'string' ? documentText : '';
+  const totalChars = source.length;
+  if (totalChars <= MAX_INGESTION_DOCUMENT_CHARS) {
+    return { text: source, charsRead: totalChars, totalChars, truncated: false, percentRead: 100 };
+  }
+
+  const hard = source.slice(0, MAX_INGESTION_DOCUMENT_CHARS);
+  const floor = MAX_INGESTION_DOCUMENT_CHARS - BOUNDARY_SEARCH_WINDOW;
+  let cut = MAX_INGESTION_DOCUMENT_CHARS;
+
+  const paragraph = hard.lastIndexOf('\n\n');
+  if (paragraph >= floor) {
+    cut = paragraph;
+  } else {
+    // The last sentence terminator followed by whitespace — so "Fig. 2" and
+    // "0.05" are not mistaken for sentence ends.
+    const sentence = /[.!?]["')\]]?\s/g;
+    let last = -1;
+    for (let m = sentence.exec(hard); m !== null; m = sentence.exec(hard)) {
+      last = m.index + m[0].length;
+    }
+    if (last >= floor) cut = last;
+  }
+
+  const text = source.slice(0, cut);
+  const charsRead = text.length;
+  return {
+    text,
+    charsRead,
+    totalChars,
+    truncated: true,
+    // Floored: a document 99.6% read must not round to "100%".
+    percentRead: Math.floor((charsRead / totalChars) * 100),
+  };
+}
+
+/** The sentence a caller shows when only part of a document was read. */
+export function describeReadCoverage(c: DocumentReadCoverage): string | null {
+  if (!c.truncated) return null;
+  const n = (v: number) => v.toLocaleString('en-US');
+  return (
+    `Only the first ${n(c.charsRead)} of ${n(c.totalChars)} characters (${c.percentRead}%) ` +
+    'were read. Anything later in the document was not seen, so an item missing ' +
+    'from this result may simply be past that point.'
+  );
 }
 
 // ── Prompt loading (versioned templates on disk; cached) ──────────────────────
@@ -172,11 +275,20 @@ export async function classifyDocument(params: {
   const doc = await loadOwnedDocument(documentId, organizationId);
 
   const documentText = stripHtml(doc.content) || doc.title;
+  // Bounded, and the bound is REPORTED (see boundDocumentText): a
+  // classification drawn from the first fifteen pages of a 400-page document
+  // must not be returned looking like one drawn from all of it.
+  const bounded = boundDocumentText(documentText);
   const systemPrompt = await loadPrompt('document-classify', 'v1.0');
   const userPayload = JSON.stringify({
-    documentText: documentText.slice(0, 60000),
+    documentText: bounded.text,
     fileName: doc.title,
     mimeType: 'text/html',
+    // The model is told too, so it does not describe a partial read as though
+    // it had seen the whole file.
+    ...(bounded.truncated
+      ? { documentTextTruncated: true, documentTextCoverage: describeReadCoverage(bounded) }
+      : {}),
   });
 
   let result: ClassificationResult;
@@ -264,6 +376,14 @@ export async function classifyDocument(params: {
   });
 
   logger.info('Classified document', { documentId, organizationId, sectionCode: result.sectionCode });
+  // Computed here, from the text — never taken from the model. A coverage
+  // figure a model reports about its own reading is not evidence of anything.
+  result.readCoverage = {
+    charsRead: bounded.charsRead,
+    totalChars: bounded.totalChars,
+    truncated: bounded.truncated,
+    percentRead: bounded.percentRead,
+  };
   return result;
 }
 
@@ -297,10 +417,17 @@ export async function extractStructure(params: {
   }
 
   const documentText = stripHtml(doc.content) || doc.title;
+  // Same bound, same reporting. A heading or a claim that appears only after
+  // it is missing from what was READ, which is not the same fact as missing
+  // from the document — and only one of them is this result's to state.
+  const bounded = boundDocumentText(documentText);
   const systemPrompt = await loadPrompt('document-extract', 'v1.0');
   const userPayload = JSON.stringify({
-    documentText: documentText.slice(0, 60000),
+    documentText: bounded.text,
     sectionCode,
+    ...(bounded.truncated
+      ? { documentTextTruncated: true, documentTextCoverage: describeReadCoverage(bounded) }
+      : {}),
   });
 
   let result: ExtractionResult;
@@ -376,6 +503,14 @@ export async function extractStructure(params: {
   });
 
   logger.info('Extracted document structure', { documentId, organizationId, submissionId, claims: claims.length });
+  // Computed here, from the text — never taken from the model. A coverage
+  // figure a model reports about its own reading is not evidence of anything.
+  result.readCoverage = {
+    charsRead: bounded.charsRead,
+    totalChars: bounded.totalChars,
+    truncated: bounded.truncated,
+    percentRead: bounded.percentRead,
+  };
   return result;
 }
 

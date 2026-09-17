@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { I } from './icons';
 import { useLiveData, useLiveRows } from './dataConnect';
 import { apiCall } from './apiCall';

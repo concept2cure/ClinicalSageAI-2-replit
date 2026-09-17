@@ -65,6 +65,8 @@ beforeAll(async () => {
   await pglite.exec(DDL);
   await pglite.exec(migration('db/migrations/20260724_clinical_regulatory_evidence_spine.sql'));
   await pglite.exec(migration('db/migrations/20260803_document_span_lineage.sql'));
+  await pglite.exec(migration('migrations/20260907_span_lineage_accepted_machine_draft.sql'));
+  await pglite.exec(migration('migrations/20260908_span_lineage_machine_draft.sql'));
 }, 90_000);
 afterAll(async () => { await pglite.close(); });
 beforeEach(async () => { await pglite.exec(`DELETE FROM labeling_pi_sections; DELETE FROM document_span_lineage;`); });

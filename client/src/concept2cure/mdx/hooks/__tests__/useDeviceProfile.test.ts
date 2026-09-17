@@ -21,6 +21,7 @@ import {
   recognizedStandardsUrl,
   deviceProfileUrl,
   romanDeviceClass,
+  predicateDevicesOnFile,
   type DeviceProfileView,
 } from '../useDeviceProfile';
 
@@ -369,5 +370,69 @@ describe('romanDeviceClass (openFDA numeric → profile Roman numerals)', () => 
     expect(romanDeviceClass('')).toBeNull();
     expect(romanDeviceClass(null)).toBeNull();
     expect(romanDeviceClass(undefined)).toBeNull();
+  });
+});
+
+/**
+ * The PREDICATE OF RECORD, read back.
+ *
+ * `predicate_devices` is a json column, so what comes back over the wire is
+ * `unknown` and the surface must not simply cast it. What the official eSTAR
+ * fills its predicate fields from is ELEMENT [0] of that column, whatever it
+ * is — so a reader that quietly skipped an unreadable first entry and showed
+ * the second one as "the predicate on file" would tell an operator the form
+ * carries a device it will not carry. `unreadable` is kept separate from the
+ * list for exactly that reason: it is the same distinction the standards
+ * lookup draws between "no dataset" and "an empty answer".
+ */
+describe('predicateDevicesOnFile — reading the json column honestly', () => {
+  it('reads what the governed write stores, in stored order', () => {
+    const onFile = predicateDevicesOnFile([
+      { id: 'K221847', name: 'Dexcom G7 CGM System', kNumber: 'K221847', manufacturer: 'Dexcom, Inc.' },
+      { id: 'K213163', name: 'FreeStyle Libre 3' },
+    ]);
+    expect(onFile.unreadable).toBe(0);
+    expect(onFile.devices.map((d) => d.id)).toEqual(['K221847', 'K213163']);
+    expect(onFile.devices[0].manufacturer).toBe('Dexcom, Inc.');
+  });
+
+  it.each([
+    ['nothing stored', null],
+    ['an empty list', []],
+    ['a non-list', { id: 'K221847', name: 'Dexcom G7' }],
+  ])('reports no predicate for %s, and nothing unreadable', (_label, raw) => {
+    expect(predicateDevicesOnFile(raw)).toEqual({ devices: [], unreadable: 0 });
+  });
+
+  it.each([
+    ['a legacy bare-string list', ['K182234', 'K191435'], 2],
+    ['an entry with no name', [{ id: 'K221847' }], 1],
+    ['an entry with no id', [{ name: 'Dexcom G7' }], 1],
+  ])('counts %s as unreadable rather than inventing a device', (_label, raw, expected) => {
+    const onFile = predicateDevicesOnFile(raw);
+    expect(onFile.devices).toEqual([]);
+    expect(onFile.unreadable).toBe(expected);
+  });
+});
+
+describe('useDeviceProfile — saving the predicate of record', () => {
+  it('PUTs the claimed predicate, and null to withdraw it', async () => {
+    fetchMock.mockResolvedValue(jsonResponse({ profile: PROFILE }));
+    const { result } = renderHook(() => useDeviceProfile(PROFILE.id));
+    await waitFor(() => expect(result.current.profile).not.toBeNull());
+
+    const claim = [{ id: 'K221847', name: 'Dexcom G7 CGM System', kNumber: 'K221847' }];
+    await act(async () => {
+      await result.current.save({ predicateDevices: claim });
+    });
+    await act(async () => {
+      await result.current.save({ predicateDevices: null });
+    });
+
+    const puts = fetchMock.mock.calls.filter(
+      ([, init]) => (init as RequestInit | undefined)?.method === 'PUT',
+    );
+    expect(JSON.parse(puts[0][1].body as string)).toEqual({ predicateDevices: claim });
+    expect(JSON.parse(puts[1][1].body as string)).toEqual({ predicateDevices: null });
   });
 });

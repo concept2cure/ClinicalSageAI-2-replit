@@ -223,6 +223,30 @@ export const RULE_CORPUS: ValidationRule[] = [
     findingCode: 'UNRESOLVED_DOCUMENT',
   },
   {
+    id: 'UNPLACEABLE_DOCUMENT_TABLE',
+    title: 'Every non-delete leaf points at a document table the assembler can materialize',
+    category: 'integrity',
+    regions: ['ich'],
+    severity: 'high',
+    rationale:
+      'submission_leaves.document_table is a polymorphic reference; a value outside the closed set of known source tables (a typo or an invented table) resolves to no file, so the leaf would be dropped from the package while the backbone still references it. The write boundary refuses such a value, and this rule catches rows written before that guard existed.',
+    source: ICH_SPEC,
+    enforcement: 'dispatch-readiness',
+    findingCode: 'UNPLACEABLE_DOCUMENT_TABLE',
+  },
+  {
+    id: 'EXTERNAL_DOCUMENT_NOT_MATERIALIZABLE',
+    title: 'No leaf points at an external store whose bytes cannot be built into the sequence',
+    category: 'integrity',
+    regions: ['ich'],
+    severity: 'high',
+    rationale:
+      'An eCTD backbone has no notion of an external reference — every leaf must resolve to a file physically inside the sequence. A leaf on a documented external store (vault_documents) is a legitimate pointer the write path accepts, but its bytes are not materialized into the package, so transmit fails closed on it; the readiness verdict must say so rather than report the sequence dispatch-clear.',
+    source: ICH_SPEC,
+    enforcement: 'dispatch-readiness',
+    findingCode: 'EXTERNAL_DOCUMENT_NOT_MATERIALIZABLE',
+  },
+  {
     id: 'MD5_PRESENT_AND_CORRECT',
     title: 'Each file has a correct MD5 checksum',
     category: 'integrity',

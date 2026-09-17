@@ -156,3 +156,32 @@ describe('estimateShelfLife — the Q1E extrapolation limit', () => {
     expect(r.cappedByExtrapolationLimit).toBe(false);
   });
 });
+
+describe('estimateShelfLife — the nominal (mean-line) crossing', () => {
+  it('reports where the fitted line itself meets the limit, from the unrounded fit', () => {
+    /* 100 − 0.25·t meets 85 at t = 60 exactly. */
+    const line = [0, 3, 6, 9, 12].map((t) => ({ time: t, value: 100 - 0.25 * t }));
+    const r = estimateShelfLife({ data: line, specLimit: 85, direction: 'decreasing' });
+    expect(r.nominalCrossing).toBe(60);
+    expect(r.statisticalCrossing).toBeCloseTo(60, 1);
+  });
+
+  it('is null when the line heads away from the limit — no crossing exists to report', () => {
+    const rising = [0, 3, 6, 9].map((t) => ({ time: t, value: 98 + 0.1 * t }));
+    expect(estimateShelfLife({ data: rising, specLimit: 95, direction: 'decreasing' }).nominalCrossing).toBeNull();
+    const fallingImpurity = [0, 3, 6, 9].map((t) => ({ time: t, value: 1.0 - 0.05 * t }));
+    expect(estimateShelfLife({ data: fallingImpurity, specLimit: 2.0, direction: 'increasing' }).nominalCrossing).toBeNull();
+  });
+
+  it('is zero, never negative, when the line is already past the limit at t = 0', () => {
+    const bad = [
+      { time: 0, value: 94.0 },
+      { time: 3, value: 93.0 },
+      { time: 6, value: 92.0 },
+    ];
+    const r = estimateShelfLife({ data: bad, specLimit: 95, direction: 'decreasing' });
+    expect(r.nominalCrossing).toBe(0);
+    expect(r.shelfLife).toBe(0);
+  });
+});
+

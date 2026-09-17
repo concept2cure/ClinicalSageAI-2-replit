@@ -64,7 +64,10 @@ beforeEach(async () => {
   app = express();
   app.use(express.json());
   app.use((req: Request, _res: Response, next: NextFunction) => {
-    (req as any).user = { id: 1, name: 'Author', role: 'regulatory-author' };
+    /* The router now refuses any request without an organization context
+       (every IND read, edit and delete is tenant-scoped); the harness caller
+       belongs to org 7, the org the mocked application row belongs to. */
+    (req as any).user = { id: 1, name: 'Author', role: 'regulatory-author', organizationId: 7 };
     next();
   });
   app.use('/api/ind', router);

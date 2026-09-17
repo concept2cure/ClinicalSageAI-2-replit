@@ -22,6 +22,8 @@ import {
 import { addMonths, format } from 'date-fns';
 import { insertAllDayEvent, calendarEnabled } from '../services/calendar';
 import { authedActorName } from '../../utils/authedActor';
+import { serverError } from '../../lib/api-response';
+import { createScopedLogger } from '../../utils/logger';
 
 /**
  * The VERIFIED acting principal, for GxP attribution columns
@@ -43,6 +45,8 @@ function requireActor(req: any): string {
 const BWIPJS = {
   toBuffer: (options: any) => Promise.resolve(Buffer.from('mock-barcode-data')),
 };
+
+const logger = createScopedLogger('stability-router');
 
 const router = Router();
 const upload = multer({ storage: multer.memoryStorage() });
@@ -324,9 +328,7 @@ router.get('/studies', async (req, res) => {
     res.json(out);
   } catch (error: any) {
     console.error('Error fetching stability studies:', error);
-    res
-      .status(500)
-      .json({ error: `Error fetching stability studies: ${error?.message ?? String(error)}` });
+    return serverError(res, logger, 'loading studies', error);
   } finally {
     // Always release the connection back to the pool
     client.release();
@@ -542,7 +544,7 @@ router.post('/studies', async (req, res) => {
     // Rollback transaction on error
     await client.query('ROLLBACK');
     console.error('Error creating study:', error);
-    res.status(500).json({ error: `Failed to create study: ${error?.message ?? String(error)}` });
+    return serverError(res, logger, 'saving studies', error);
   } finally {
     // Always release the connection
     client.release();
@@ -674,9 +676,7 @@ router.get('/studies/:id', async (req, res) => {
     });
   } catch (error: any) {
     console.error('Error fetching study details:', error);
-    res
-      .status(500)
-      .json({ error: `Failed to fetch study details: ${error?.message ?? String(error)}` });
+    return serverError(res, logger, 'loading studies', error);
   } finally {
     client.release();
   }
@@ -712,7 +712,7 @@ router.post('/studies/:id/conditions', async (req, res) => {
     res.json(result.rows[0]);
   } catch (error: any) {
     console.error('Error adding condition:', error);
-    res.status(500).json({ error: `Failed to add condition: ${error?.message ?? String(error)}` });
+    return serverError(res, logger, 'saving conditions', error);
   } finally {
     client.release();
   }
@@ -740,9 +740,7 @@ router.delete('/conditions/:condId', async (req, res) => {
     res.json({ success: true });
   } catch (error: any) {
     console.error('Error deleting condition:', error);
-    res
-      .status(500)
-      .json({ error: `Failed to delete condition: ${error?.message ?? String(error)}` });
+    return serverError(res, logger, 'deleting conditions', error);
   } finally {
     client.release();
   }
@@ -2462,47 +2460,24 @@ router.patch('/assignments/:assignId', async (req, res) => {
   }
 });
 
-// POST request signoff  body:{ stage:'LOCKED'|'REVIEWED'|'APPROVED', email, password, reason? }
-router.post('/studies/:id/request-signoff', async (req, res) => {
-  try {
-    const id = req.params.id;
-    const { stage, email, password, reason } = req.body;
-
-    // Check if methods are linked (guard)
-    const { rows: tests } = await pool.query<any>(
-      `
-      select t.name, m.status
-      from stab_tests t
-      left join cmc_methods m on m.id=t.method_id
-      where t.study_id=$1`,
-      [id]
-    );
-
-    const missingMethods = tests.filter(
-      (t: any) =>
-        !t.method_id || !['VALIDATED', 'APPROVED'].includes((t.status || '').toUpperCase())
-    );
-    if (missingMethods.length > 0) {
-      return res.status(412).json({
-        error: 'Cannot sign off - analytical methods not validated',
-        missingMethods: missingMethods.map(t => t.name),
-      });
-    }
-
-    // Create sign-off
-    const { rows } = await pool.query<any>(
-      `
-      insert into stab_signoffs (study_id, stage, signer_name, signer_email, reason, hash, signed_at)
-      values ($1, $2, $3, $4, $5, $6, now()) returning *`,
-      [id, stage, email.split('@')[0], email, reason || '', `${stage}-${Date.now()}`]
-    );
-
-    await audit(id, 'signoff_add', rows[0], req);
-    res.json(rows[0]);
-  } catch (error) {
-    console.error('Error creating sign-off:', error);
-    res.status(500).json({ error: 'Failed to create sign-off' });
-  }
+// POST request signoff — REMOVED 2026-09-10 (WO-16B finding 30).
+//
+// This route demanded a password it never verified, derived the signer's §11.50
+// printed name from the email's local-part, and stored `${stage}-${Date.now()}`
+// as the signature "hash". Every row it wrote was an invented signature. It had
+// no caller in client/ and is outside the orphan scanner's reach
+// (server/src/routes is not walked), so nothing consumed it. A governed study
+// sign-off has to be built on the one Part 11 signing path
+// (server/services/part11/signature-persistence.ts) before it can exist; until
+// then the route says so rather than recording a stand-in. Reads of
+// stab_signoffs (the dependencies view) are untouched and honestly empty.
+router.post('/studies/:id/request-signoff', (_req, res) => {
+  res.status(410).json({
+    error: 'STABILITY_SIGNOFF_REMOVED',
+    message:
+      'Study sign-off through this route is retired: it recorded a signature without verifying the signer. ' +
+      'No sign-off was recorded. A Part 11 sign-off for stability studies is not yet available.',
+  });
 });
 
 // GET /api/stability/studies/:id/dependencies - data flow lineage

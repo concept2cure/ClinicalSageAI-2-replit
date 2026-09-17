@@ -64,10 +64,10 @@ async function ingest(
 ): Promise<{ rows?: Record<string, unknown>[]; errCode?: string }> {
   const sql = `
     INSERT INTO vault.documents (
-      program_id, document_code, document_title, document_type, version,
+      program_id, organization_id, document_code, document_title, document_type, version,
       s3_bucket, s3_key, file_name, file_size, mime_type, content_hash,
       classification, placement_status, processing_status
-    ) VALUES ($1,$2,'t','CSR',$3,'local',$4,'f.pdf',10,'application/pdf',$5,'INTERNAL','unfiled','PENDING')
+    ) VALUES ($1,1,$2,'t','CSR',$3,'local',$4,'f.pdf',10,'application/pdf',$5,'INTERNAL','unfiled','PENDING')
     ${clause}
     RETURNING id, content_hash, s3_key`;
   try {
@@ -99,6 +99,16 @@ beforeAll(async () => {
     CREATE TABLE vault.documents (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
       program_id UUID NOT NULL,
+      -- The ingest INSERT writes this (added after the fixture was first
+      -- written, by the change that made a new vault upload attributable).
+      -- Omitting it made every statement here fail 42703 rather than exercise
+      -- the ON CONFLICT clause — which is the fixture drifting from the route,
+      -- exactly what extracting the real SQL is meant to surface. It is also
+      -- the tenant key the real table carries (its own migration): the
+      -- retrieval path filters on it, so a row left NULL is an orphan no tenant
+      -- can retrieve. Declared once — two changes each added it, and 42701
+      -- (duplicate column) then failed the whole fixture.
+      organization_id INTEGER,
       document_code TEXT NOT NULL,
       document_title TEXT, document_type TEXT,
       version TEXT DEFAULT '1.0',
@@ -112,10 +122,6 @@ beforeAll(async () => {
       placement_confidence TEXT, placement_rationale TEXT,
       placed_by INT, placed_at TIMESTAMPTZ,
       processing_status TEXT, created_by INT,
-      -- The tenant key the real table carries (its own migration) and the
-      -- ingest writes; the retrieval path filters on it, so a row left NULL is
-      -- an orphan no tenant can retrieve.
-      organization_id INT,
       created_at TIMESTAMPTZ DEFAULT NOW(),
       updated_at TIMESTAMPTZ DEFAULT NOW(),
       CONSTRAINT vault_documents_program_doc_version UNIQUE (program_id, document_code, version)

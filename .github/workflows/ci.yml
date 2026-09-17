@@ -316,6 +316,28 @@ jobs:
         # structurally unable to filter by tenant.
         run: npm run ci:tenant-blind-models
 
+      - name: Guardrails — no per-request table without a tenant key
+        if: "!cancelled() && steps.install.conclusion == 'success'"
+        # The third sibling, and the one underneath the other two. Both of those
+        # operate on tables that HAVE a tenant column — one checks its type, one
+        # checks the model sees it. Neither can see a table with no tenant column
+        # at all, and neither can any RLS sweep here: all four key off
+        # (organization_id, org_id, tenant_id), so a table with none is outside
+        # the population every mechanism operates on.
+        #
+        # Three cross-tenant defects on 2026-09-10 were all exactly that, in
+        # three unrelated subsystems, and 142 gates reported none of them. This
+        # gate is the only one that treats a MISSING column as the finding.
+        run: npm run ci:unkeyed-request-tables
+
+      - name: Guardrails — the unkeyed-table gate can still fail
+        if: "!cancelled() && steps.install.conclusion == 'success'"
+        # A gate only ever seen to pass has not been tested. This writes a real
+        # unkeyed table and a route that reads it, asserts red, then asserts
+        # green for the same table with organization_id — so a gate that failed
+        # on everything would not slip through either.
+        run: npm run ci:unkeyed-request-tables:selftest
+
       - name: Guardrails — WCAG AA contrast on design tokens
         if: "!cancelled() && steps.install.conclusion == 'success'"
         # Contrast is arithmetic on two hex values, so this cannot drift into
@@ -323,6 +345,15 @@ jobs:
         # the light red cascaded onto the dark page at 2.69:1, under even the
         # 3:1 non-text floor.
         run: npm run ci:token-contrast
+
+      - name: Guardrails — theme aliases frozen to their light values
+        if: "!cancelled() && steps.install.conclusion == 'success'"
+        # A custom property is substituted where it is DECLARED, and :root is
+        # never .dark — so `--ink: var(--text-100)` at :root keeps the LIGHT
+        # value for the whole dark theme while every call site still reads
+        # var(--ink) and looks theme-aware. Found five times in one session,
+        # including once in the fix for another instance of itself.
+        run: npm run ci:frozen-theme-aliases
 
       - name: Guardrails — tenant-isolation in raw SQL (no regressions)
         if: "!cancelled() && steps.install.conclusion == 'success'"
@@ -576,25 +607,38 @@ jobs:
         # client/src/concept2cure/{biopharma,pdev}/app.css and
         # client/src/styles/projects-prototype.css (module-scoped --rail-*/--pdev-*
         # layout vars plus --border-100/--border-200/--error-text aliases). The fix
-        # belongs in those stylesheets / the index.css shim. Flip to blocking once
-        # `npm run ci:token-cascade` is clean.
-        continue-on-error: true
+        # belongs in those stylesheets / the index.css shim.
+        #
+        # FLIPPED TO BLOCKING 2026-09-10 (WO-4). The condition recorded above —
+        # "once `npm run ci:token-cascade` is clean" — is met: the gate reports
+        # PASS, all 39 stylesheets resolving, verified on two consecutive runs.
+        # An advisory gate reports; it does not gate, and this one no longer
+        # needs to be advisory.
         run: npm run ci:token-cascade
 
       - name: Audit — repo health scan (no regressions)
         if: "!cancelled() && steps.install.conclusion == 'success'"
         run: npm run audit:repo-health:no-regression
 
-      - name: Audit — orphaned endpoints (threshold 600)
+      - name: Audit — orphaned endpoints (threshold 1184)
         if: "!cancelled() && steps.install.conclusion == 'success'"
         # Regenerates docs/reports/orphan-endpoints-latest.{json,md} and fails
-        # if the orphan count exceeds 570 (current: 556). Ratchet the threshold
+        # if the orphan count exceeds 1184 (current: 1170). Ratchet the threshold
         # down in package.json as the backlog is triaged.
         #
-        # Tightened from 900 -> 600 -> 570. The count had fallen to 556 without
-        # the gate following it, leaving 344 of slack — enough for the backlog
-        # to grow by more than half again while CI reported green. A ratchet
-        # that trails reality by that much is not a ratchet.
+        # Tightened from 900 -> 600 -> 570, then RE-BASED UPWARD to 1184 on
+        # 2026-09-11. The rise is not a regression and nothing was added: the
+        # detector could only see `app.use('/api/x', router)` mounts, so the 111
+        # table-driven `{ path, router }` entries across the six
+        # server/bootstrap/register-*.ts files were absent from the declared set
+        # entirely. Teaching it that form took declared from 865 to 1776 — the
+        # gate had been measuring less than half the mounted API and reporting it
+        # as the whole, which is why a 570 ratchet on 556 read as tight. The real
+        # figure was always four digits.
+        #
+        # Deleting /api/design-risk in the same change removed 20 of them
+        # (1190 -> 1170): 20 endpoints over ten tables that existed on no
+        # database, duplicating the live /api/design-controls path.
         #
         # The 14 of remaining headroom is deliberate, for the reason the 600
         # step gave: a feature branch legitimately adds endpoints before the
@@ -1677,7 +1721,51 @@ jobs:
         run: npm run ci:audit-route-mounts:full-strict
       - name: Repo health audit (strict debt gate)
         run: npm run audit:repo-health:full-strict
+      # The :strict variants of the ratcheted debt gates. Each demands an EMPTY
+      # baseline, so each fails until its work order lands (WO-1 schema
+      # authority, WO-2 blank-database completeness, WO-3 tenant isolation,
+      # WO-10 deletion program). Their NON-strict siblings already run per-PR in
+      # the lint job and hold the line — these say how far the line still is
+      # from zero, which nothing else reports.
+      #
+      # Run as one step that executes all of them and reports every count,
+      # rather than one step each, where the first failure hides the rest.
+      #
+      # ci:unkeyed-request-tables has TWO entries because it has two distances
+      # to zero, and they mean different things. :strict is "no per-request
+      # table lacks a tenant key" — the end state. :unreviewed is "every table
+      # that lacks one has at least been CLASSIFIED global / derived / exempt" —
+      # which is reachable much sooner and is the one that would have caught
+      # the 2026-09-10 disclosures, because all three would have sat in that
+      # baseline unclassified.
+      - name: Strict debt gates (zero-baseline promotion targets)
+        if: always()
+        run: |
+          failed=0
+          for gate in \
+            ci:duplicate-table-ddl:strict \
+            ci:migration-prefix-collisions:strict \
+            ci:unbacked-tables:strict \
+            ci:tenant-isolation:strict \
+            ci:unreferenced-modules:strict \
+            ci:proof-tier:strict \
+            ci:unkeyed-request-tables:strict \
+            ci:unkeyed-request-tables:unreviewed
+          do
+            echo "::group::$gate"
+            if npm run --silent "$gate"; then
+              echo "::notice::$gate — zero-debt, ready to promote into pr-checks.yml"
+            else
+              echo "::warning::$gate — debt remains; see its work order"
+              failed=1
+            fi
+            echo "::endgroup::"
+          done
+          exit $failed
       - name: Upload nightly governance artifacts
+        # always(): the debt gates above are EXPECTED to fail until their work
+        # orders land, and the artifacts are the whole point of the run.
+        if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: governance-audits-nightly

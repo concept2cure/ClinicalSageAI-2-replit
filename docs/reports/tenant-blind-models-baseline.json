@@ -30,11 +30,6 @@
       "table": "stability_studies",
       "tenantColumn": "organization_id",
       "reason": "Same stale cmc-schema.ts definition. Canonical definition: shared/schema.ts::stabilityStudies. Baselined on the same terms as analyticalMethods."
-    },
-    "shared/cmc-schema.ts::complianceTracking": {
-      "table": "compliance_tracking",
-      "tenantColumn": "organization_id",
-      "reason": "Same stale cmc-schema.ts definition. Canonical definition: shared/schema.ts::complianceTracking. Baselined on the same terms as analyticalMethods."
     }
   }
 }

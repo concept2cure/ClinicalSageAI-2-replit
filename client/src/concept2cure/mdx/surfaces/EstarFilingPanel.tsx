@@ -13,7 +13,7 @@
  */
 
 import * as React from 'react';
-import { useEffect, useState } from 'react';
+import { useEffect, useId, useState } from 'react';
 import { EmptyState, ErrorState } from '../../v2/dataConnect';
 import {
   useEstarRegistration,
@@ -32,6 +32,11 @@ import {
   type EstarRegistrationView,
   type FilingReadinessResult,
   type EstarSubmissionView,
+  useRetainedEstarArtifacts,
+  ESTAR_SIGNATURE_MEANINGS,
+  type EstarFilingSignatureInput,
+  type EstarSignatureMeaning,
+  type RetainedEstarArtifactView,
 } from '../hooks/useEstarFiling';
 import { describeSaveFailure, type SaveFailure } from '../hooks/useFetchJson';
 import { notifyOfficialEstarFieldsChanged } from '../hooks/useEstarOfficialFields';
@@ -97,14 +102,239 @@ function ReadinessCard({ r }: { r: FilingReadinessResult }) {
   );
 }
 
+/** Meaning labels, in the order the form offers them. */
+const MEANING_LABEL: Record<EstarSignatureMeaning, string> = {
+  approval: 'Approval',
+  review: 'Review',
+  responsibility: 'Responsibility',
+  authorship: 'Authorship',
+};
+
+const MIN_FILING_REASON = 8;
+
+/** "eSTAR-510k-device · sha256-a1b2… · 7 Sep 2026" — enough to tell two apart. */
+function describeArtifact(a: RetainedEstarArtifactView): string {
+  return `${a.documentCode} · ${a.version} · ${formatDate(a.createdAt) ?? a.createdAt}`;
+}
+
+/**
+ * The filing signature.
+ *
+ * Filing declares a submission made to FDA, and it used to be one unlabelled
+ * button. It now asks for what 21 CFR Part 11 requires and the server enforces:
+ * WHICH retained eSTAR is being filed (the signature binds to that document's
+ * stored hash), WHY, what the signature MEANS (§11.50), and re-authentication
+ * captured now rather than reused from the session (§11.200). The filing date
+ * is absent on purpose — the server stamps it.
+ *
+ * With no retained eSTAR there is nothing to bind to, and the form says exactly
+ * that instead of offering an empty picker.
+ */
+function FilingSignatureForm({
+  artifacts,
+  artifactsLoading,
+  artifactsError,
+  busy,
+  error,
+  onCancel,
+  onSubmit,
+}: {
+  artifacts: RetainedEstarArtifactView[] | null;
+  artifactsLoading: boolean;
+  artifactsError: string | null;
+  busy: boolean;
+  error: string | null;
+  onCancel: () => void;
+  onSubmit: (input: EstarFilingSignatureInput) => void;
+}) {
+  const [documentId, setDocumentId] = useState('');
+  const [reason, setReason] = useState('');
+  const [meaning, setMeaning] = useState<EstarSignatureMeaning>('approval');
+  const [password, setPassword] = useState('');
+  const [totp, setTotp] = useState('');
+  const ids = useId();
+
+  const reasonOk = reason.trim().length >= MIN_FILING_REASON;
+  const canSubmit = !!documentId && reasonOk && password.length > 0 && !busy;
+
+  /* Three different situations, three different answers — through the shared
+     primitives, never a hand-rolled panel. A read that FAILED is not an empty
+     list, and neither is one still in flight. */
+  if (artifactsError) {
+    return (
+      <ErrorState
+        testId="estar-retained-artifacts-error"
+        variant="inline"
+        title="The retained eSTAR list could not be read"
+        message={artifactsError}
+        onDismiss={onCancel}
+      />
+    );
+  }
+  if (artifacts === null || artifactsLoading) {
+    return (
+      <EmptyState
+        testId="estar-retained-artifacts-loading"
+        busy
+        title="Reading the retained eSTARs…"
+      />
+    );
+  }
+  if (artifacts.length === 0) {
+    return (
+      <EmptyState
+        testId="estar-retained-artifacts-empty"
+        title="No retained eSTAR to file against"
+        hint="Produce the official eSTAR first — a filing is signed against the exact bytes it was made with."
+        action={{ label: 'Close', onAct: onCancel }}
+        regulation="Serves the 21 CFR Part 11 signature/record link (§11.70)"
+      />
+    );
+  }
+
+  return (
+    <div style={{ marginTop: 10, display: 'grid', gap: 8 }}>
+      <div>
+        <label htmlFor={`${ids}-doc`} className="pma-mod-desc">
+          eSTAR being filed
+        </label>
+        <select
+          id={`${ids}-doc`}
+          value={documentId}
+          onChange={(e) => setDocumentId(e.target.value)}
+          style={{ width: '100%' }}
+        >
+          <option value="">Select the retained eSTAR…</option>
+          {artifacts.map((a) => (
+            <option key={a.documentId} value={a.documentId}>
+              {describeArtifact(a)}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <div>
+        <label htmlFor={`${ids}-reason`} className="pma-mod-desc">
+          Reason for signing
+        </label>
+        <textarea
+          id={`${ids}-reason`}
+          rows={2}
+          value={reason}
+          onChange={(e) => setReason(e.target.value)}
+          aria-invalid={reason.length > 0 && !reasonOk}
+          aria-describedby={`${ids}-reason-hint`}
+          style={{ width: '100%' }}
+        />
+        <div id={`${ids}-reason-hint`} className="pma-mod-desc">
+          At least {MIN_FILING_REASON} characters.
+        </div>
+      </div>
+
+      <fieldset style={{ border: 0, padding: 0, margin: 0 }}>
+        <legend className="pma-mod-desc">What this signature means</legend>
+        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+          {ESTAR_SIGNATURE_MEANINGS.map((m) => (
+            <label key={m} style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
+              <input
+                type="radio"
+                name={`${ids}-meaning`}
+                value={m}
+                checked={meaning === m}
+                onChange={() => setMeaning(m)}
+              />
+              {MEANING_LABEL[m]}
+            </label>
+          ))}
+        </div>
+      </fieldset>
+
+      <div style={{ display: 'flex', gap: 8 }}>
+        <div style={{ flex: 1 }}>
+          <label htmlFor={`${ids}-pw`} className="pma-mod-desc">
+            Password
+          </label>
+          <input
+            id={`${ids}-pw`}
+            type="password"
+            autoComplete="current-password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            style={{ width: '100%' }}
+          />
+        </div>
+        <div style={{ flex: 1 }}>
+          <label htmlFor={`${ids}-totp`} className="pma-mod-desc">
+            Authenticator code (if enabled)
+          </label>
+          <input
+            id={`${ids}-totp`}
+            inputMode="numeric"
+            autoComplete="one-time-code"
+            value={totp}
+            onChange={(e) => setTotp(e.target.value)}
+            style={{ width: '100%' }}
+          />
+        </div>
+      </div>
+
+      {error && (
+        <ErrorState
+          testId="estar-filing-signature-error"
+          variant="inline"
+          title="The filing was not signed"
+          message={error}
+        />
+      )}
+
+      <div style={{ display: 'flex', gap: 6 }}>
+        <button
+          className="section-more"
+          disabled={!canSubmit}
+          onClick={() =>
+            onSubmit({
+              filedArtifactDocumentId: documentId,
+              reason: reason.trim(),
+              meaning,
+              password,
+              ...(totp.trim() ? { totp: totp.trim() } : {}),
+            })
+          }
+        >
+          Sign and file
+        </button>
+        <button className="section-more" disabled={busy} onClick={onCancel}>
+          Cancel
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function SubmissionCard({
   s,
   busy,
   onAdvance,
+  signing,
+  onStartFiling,
+  onCancelFiling,
+  onFile,
+  filingError,
+  artifacts,
+  artifactsLoading,
+  artifactsError,
 }: {
   s: EstarSubmissionView;
   busy: boolean;
   onAdvance: (id: string, status: string) => void;
+  signing: boolean;
+  onStartFiling: (id: string) => void;
+  onCancelFiling: () => void;
+  onFile: (id: string, input: EstarFilingSignatureInput) => void;
+  filingError: string | null;
+  artifacts: RetainedEstarArtifactView[] | null;
+  artifactsLoading: boolean;
+  artifactsError: string | null;
 }) {
   const due = formatDate(s.decisionDueAt);
   const nexts = NEXT_STATUS[s.status] ?? [];
@@ -118,6 +348,15 @@ function SubmissionCard({
         {s.programType.toUpperCase()} · {s.variant}
         {s.fdaTrackingNumber ? ` · ${s.fdaTrackingNumber}` : ''}
       </div>
+      {/* What this filing was filed WITH. A filing recorded before the binding
+          existed carries none, and says so rather than implying one. */}
+      {s.status !== 'draft' && (
+        <div className="pma-mod-desc">
+          {s.filedArtifactSha256
+            ? `Filed against eSTAR ${s.filedArtifactSha256.slice(0, 16)}…`
+            : 'No eSTAR bound to this filing'}
+        </div>
+      )}
       <div className="pma-mod-foot">
         <span>{due ? `Decision due ${due}` : 'No review clock'}</span>
         <span style={{ display: 'flex', gap: 6 }}>
@@ -126,14 +365,26 @@ function SubmissionCard({
               key={n}
               className="section-more"
               disabled={busy}
-              onClick={() => onAdvance(s.id, n)}
-              title={`Advance to ${formatStatus(n)}`}
+              /* `filed` is a signature, not an advance — it opens the form. */
+              onClick={() => (n === 'filed' ? onStartFiling(s.id) : onAdvance(s.id, n))}
+              title={n === 'filed' ? 'Sign and file this submission' : `Advance to ${formatStatus(n)}`}
             >
-              {formatStatus(n)}
+              {n === 'filed' ? 'Sign and file…' : formatStatus(n)}
             </button>
           ))}
         </span>
       </div>
+      {signing && (
+        <FilingSignatureForm
+          artifacts={artifacts}
+          artifactsLoading={artifactsLoading}
+          artifactsError={artifactsError}
+          busy={busy}
+          error={filingError}
+          onCancel={onCancelFiling}
+          onSubmit={(input) => onFile(s.id, input)}
+        />
+      )}
     </div>
   );
 }
@@ -316,7 +567,17 @@ export function EstarFilingPanel() {
     refresh: refreshSubmissions,
     startTracking,
     advance,
+    file,
   } = useEstarSubmissions();
+  /* What a filing can be signed against. Read once for the panel — every card's
+     form offers the same org-scoped list the server re-checks on write. */
+  const {
+    artifacts,
+    loading: artifactsLoading,
+    error: artifactsError,
+  } = useRetainedEstarArtifacts();
+  const [signingId, setSigningId] = useState<string | null>(null);
+  const [filingError, setFilingError] = useState<string | null>(null);
   const { catalog } = useEstarCatalog();
 
   const [selectedKey, setSelectedKey] = useState<string>('');
@@ -361,6 +622,24 @@ export function EstarFilingPanel() {
     setBusy(id);
     await advance(id, status);
     setBusy(null);
+  }
+  function onStartFiling(id: string) {
+    setFilingError(null);
+    setSigningId(id);
+  }
+  async function onFile(id: string, input: EstarFilingSignatureInput) {
+    setBusy(id);
+    const outcome = await file(id, input);
+    setBusy(null);
+    /* The form stays open on a refusal, holding what was typed, with the
+       server's own reason — a re-auth that failed is not a reason to make the
+       operator start over. */
+    if (outcome.ok) {
+      setSigningId(null);
+      setFilingError(null);
+    } else {
+      setFilingError(outcome.reason);
+    }
   }
 
   return (
@@ -473,7 +752,23 @@ export function EstarFilingPanel() {
       {subError ? null : submissions && submissions.length > 0 ? (
         <div className="pma-modules">
           {submissions.map((s) => (
-            <SubmissionCard key={s.id} s={s} busy={busy === s.id} onAdvance={onAdvance} />
+            <SubmissionCard
+              key={s.id}
+              s={s}
+              busy={busy === s.id}
+              onAdvance={onAdvance}
+              signing={signingId === s.id}
+              onStartFiling={onStartFiling}
+              onCancelFiling={() => {
+                setSigningId(null);
+                setFilingError(null);
+              }}
+              onFile={onFile}
+              filingError={signingId === s.id ? filingError : null}
+              artifacts={artifacts}
+              artifactsLoading={artifactsLoading}
+              artifactsError={artifactsError}
+            />
           ))}
         </div>
       ) : (

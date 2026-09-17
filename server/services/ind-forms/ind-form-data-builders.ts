@@ -45,6 +45,11 @@ export interface BuiltForm {
   /** Ids of ALL required fields (present or not), in declaration order. Lets the
    *  official-fill gate qualify a template on required-field placeability. */
   requiredFields: string[];
+  /** Ids of DERIVED gates — data the builder computes to judge completeness
+   *  (`certification_selected`, `interest_type_selected`), never a box that
+   *  exists on the printed form. A consumer describing what a sponsor still has
+   *  to complete must not list one, and no template can ever place one. */
+  qcOnlyFields: string[];
   /** Deterministic semantic validation findings beyond simple presence checks. */
   validationErrors: Array<{ fieldId: string; code: string; message: string }>;
 }
@@ -227,11 +232,13 @@ function assemble(formId: string, specs: FieldSpec[]): BuiltForm {
   const fields: Record<string, FieldValue> = {};
   const missingRequired: string[] = [];
   const requiredFields: string[] = [];
+  const qcOnlyFields: string[] = [];
   const validationErrors: BuiltForm['validationErrors'] = [];
   for (const spec of specs) {
     fields[spec.id] = spec.value;
     // qcOnly gates stay out of requiredFields (the official-fill placeability
     // gate) but still count toward missingRequired (QC readiness).
+    if (spec.qcOnly) qcOnlyFields.push(spec.id);
     if (spec.required && !spec.qcOnly) requiredFields.push(spec.id);
     if (spec.required && !isPresent(spec.value)) {
       missingRequired.push(spec.id);
@@ -244,7 +251,7 @@ function assemble(formId: string, specs: FieldSpec[]): BuiltForm {
       });
     }
   }
-  return { formId, fields, missingRequired, requiredFields, validationErrors };
+  return { formId, fields, missingRequired, requiredFields, qcOnlyFields, validationErrors };
 }
 
 // ---------------------------------------------------------------------------
@@ -394,7 +401,14 @@ export function buildForm3674(meta: IndProjectMetadata): BuiltForm {
     { id: 'cert_not_applicable', value: basis === 'not_applicable_to_374j', required: false },
     { id: 'cert_requirements_met', value: basis === 'requirements_met', required: false },
     { id: 'cert_submitted_no_data', value: basis === 'submitted_no_data', required: false },
-    // At least one certification basis must be selected.
+    // At least one certification basis must be selected. DERIVED from the three
+    // checkboxes above, so it is `qcOnly` — the same treatment 3455's
+    // `interest_type_selected` gets, and for the same reason: it is a QC verdict,
+    // not a box on the form. Without the flag it sat in `requiredFields`, which
+    // is the official-fill PLACEABILITY gate, so any AcroForm edition of this
+    // form would have been refused as unqualified for a field no template can
+    // ever carry. It still counts toward `missingRequired` — a 3674 with no
+    // certification basis selected is genuinely incomplete.
     {
       id: 'certification_selected',
       value:
@@ -402,6 +416,7 @@ export function buildForm3674(meta: IndProjectMetadata): BuiltForm {
         basis === 'requirements_met' ||
         basis === 'submitted_no_data',
       required: true,
+      qcOnly: true,
     },
   ];
 

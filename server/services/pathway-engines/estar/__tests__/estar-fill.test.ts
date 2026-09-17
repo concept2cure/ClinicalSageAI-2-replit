@@ -5,12 +5,26 @@ import path from 'path';
 import os from 'os';
 import { PDFDocument } from 'pdf-lib';
 import { fillEstarSubmission } from '../estar-fill';
-import { ESTAR_FIELD_MAPS } from '../estar-field-map';
+import { ESTAR_FIELD_MAPS, ESTAR_TEMPLATE_RECOMPUTED_FIELDS } from '../estar-field-map';
+import { createHash } from 'node:crypto';
 import {
+  decryptObjectData,
+  readPdfSecurity,
   readXfaDatasetsValues,
   type OfficialPdfFieldMap,
 } from '../../../forms/fill-official-pdf';
+import { readIndirectObjectText } from '../../../forms/pdf-object-store';
+import { isTemplateAcceptableDataObjectName } from '../estar-attachment-slots';
 import { isUsableEstarTemplate, listVendoredTemplates } from '../estar-template-registry';
+
+/**
+ * The nIVD catalog's names dictionary — object 221, the one carrying the
+ * form's `/JavaScript` name tree. Pinned in
+ * `server/services/forms/__tests__/pdf-attach.test.ts` against both templates;
+ * repeated here because "the attachment went in beside the JavaScript rather
+ * than over it" is only checkable at a known object.
+ */
+const NAMES_OBJECT_NIVD = 221;
 
 // Build a synthetic AcroForm PDF standing in for the official eSTAR template.
 async function makeSyntheticEstar(): Promise<Uint8Array> {
@@ -95,6 +109,45 @@ describe('fillEstarSubmission', () => {
     const out = await PDFDocument.load(r.pdfBytes!);
     expect(out.getForm().getTextField('DeviceName').getText()).toBe('Acme Monitor');
     expect(out.getForm().getCheckBox('IsIvd').isChecked()).toBe(true);
+  });
+
+  it('REFUSES when a key of the registered map has no measured rebuild outcome', async () => {
+    /* `assessOneKey` returns null for a key absent from
+       ESTAR_TEMPLATE_RECOMPUTED_FIELDS, so it contributes nothing to
+       `erasedFields` — which this module documents as "assessed, none", never
+       "not assessed" — and the wrong-entity refusal reads the same findings.
+       An unmeasured key therefore ships a filing with both claims made falsely
+       about it. Simulated by deleting a record from the live table, because
+       every key of every populated map has one today (pinned in
+       estar-field-map.template-behaviour.test.ts); the point is what happens if
+       that ever stops being true in a deployed build. */
+    const templateBytes = await makeSyntheticEstar();
+    const record = ESTAR_TEMPLATE_RECOMPUTED_FIELDS.deviceTradeName;
+    delete (ESTAR_TEMPLATE_RECOMPUTED_FIELDS as Record<string, unknown>).deviceTradeName;
+    try {
+      const r = await fillEstarSubmission({
+        type: '510k',
+        variant: 'device',
+        data: DATA,
+        templateBytes, // registered map (no `fieldMap` override) — the owned one
+      });
+      expect(r.filled).toBe(false);
+      expect(r.pdfBytes).toBeUndefined();
+      expect(r.blockers.join(' ')).toContain('deviceTradeName');
+      expect(r.blockers.join(' ')).toMatch(/no measured template-rebuild outcome/);
+    } finally {
+      (ESTAR_TEMPLATE_RECOMPUTED_FIELDS as Record<string, unknown>).deviceTradeName = record;
+    }
+  });
+
+  it('a CALLER-SUPPLIED map is the caller\'s vocabulary and is not measured against the table', () => {
+    /* The refusal above is scoped to the map this module owns. `input.fieldMap`
+       is a test/injection seam — no production caller supplies one — and its
+       keys (`deviceName`, `isIvd` here) are not canonical eSTAR keys at all, so
+       measuring them against a table enumerated from the FDA template would be
+       a category error that refuses every such fill. This pins the scope, which
+       is the only thing keeping the refusal from being over-broad. */
+    expect(Object.keys(fieldMap).some((k) => k in ESTAR_TEMPLATE_RECOMPUTED_FIELDS)).toBe(false);
   });
 
   it('fails closed (no fabricated PDF) when the official template is not vendored', async () => {
@@ -483,6 +536,299 @@ describe.skipIf(!fsSync.existsSync(NIVD_TEMPLATE))(
       for (const t of vendored) {
         expect(t.integrity, `${t.fileName} integrity`).toBe('verified');
       }
+    });
+  },
+);
+
+// ---------------------------------------------------------------------------
+// Roadmap item 4, slice 5 — documents in named CDRH attachment slots
+// ---------------------------------------------------------------------------
+//
+// Until this, the eSTAR the export produced populated 0 of the template's 113
+// attachment slots: every reason it could not had been removed one slice at a
+// time (the writer, the encrypted objects, the name tree, the slot map), and
+// nothing joined them. These are the join, end to end, against the real
+// vendored template — and, as much as the refusals above, about what the fill
+// REFUSES to hand back.
+
+describe.skipIf(!fsSync.existsSync(NIVD_TEMPLATE))(
+  'fillEstarSubmission with attachments — the official nIVD eSTAR v7.0',
+  () => {
+    useVendoredTemplateDir(path.dirname(NIVD_TEMPLATE));
+
+    const COVER_LETTER = 'root.CoverLetter.CLAddAttachment110';
+    const AT = new Date(Date.UTC(2026, 8, 8, 12, 0, 0));
+    const PDF = Buffer.from('%PDF-1.7 stub attachment bytes');
+
+    const oneAttachment = {
+      type: '510k' as const,
+      variant: 'device' as const,
+      data: DATA,
+      attachments: [
+        { slot: COVER_LETTER, source: { kind: 'vault_document' as const, documentId: 'd1' } },
+      ],
+      attachmentResolver: async () => ({
+        ok: true as const,
+        bytes: PDF,
+        fileName: 'Cover Letter.pdf',
+        mimeType: 'application/pdf',
+      }),
+      attachmentClock: AT,
+    };
+
+    it('writes the manifest token into the form the applicant opens', async () => {
+      const r = await fillEstarSubmission(oneAttachment);
+
+      expect(r.blockers).toEqual([]);
+      expect(r.filled).toBe(true);
+      const back = await readXfaDatasetsValues(r.pdfBytes!, ['root.AttachmentManifest']);
+      expect(back['root.AttachmentManifest']).toBe(
+        '***Start***<<Cover Letter.pdf|/CHAPTER 1/CH1.01/>>',
+      );
+      // FDA's checkRemovedAttachments tests indexOf("<<") > 0, STRICTLY — the
+      // eleven-character seed is what makes its own validator run at all.
+      expect(back['root.AttachmentManifest']!.indexOf('<<')).toBe(11);
+    });
+
+    it('reports what was filed, where, and under what hash', async () => {
+      const r = await fillEstarSubmission(oneAttachment);
+      expect(r.attachmentReport).toEqual({
+        requested: 1,
+        refused: [],
+        manifest: '***Start***<<Cover Letter.pdf|/CHAPTER 1/CH1.01/>>',
+        attached: [
+          {
+            slot: COVER_LETTER,
+            field: 'CLAddAttachment110',
+            chapter: '/CHAPTER 1/CH1.01/',
+            fileName: 'Cover Letter.pdf',
+            dataObjectName: '2026-09-08T12:00:00',
+            description: 'Administrative Documentation | Cover Letter',
+            mimeType: 'application/pdf',
+            byteLength: PDF.length,
+            sha256: createHash('sha256').update(PDF).digest('hex'),
+            token: '<<Cover Letter.pdf|/CHAPTER 1/CH1.01/>>',
+          },
+        ],
+      });
+    });
+
+    it('embeds the bytes, under a name-tree key the eSTAR will not delete', async () => {
+      const r = await fillEstarSubmission(oneAttachment);
+      const out = Buffer.from(r.pdfBytes!);
+      const sec = readPdfSecurity(out);
+
+      // The catalog's names dictionary now carries /EmbeddedFiles beside the
+      // /JavaScript the form runs on — destroying which would destroy the form.
+      const names = readIndirectObjectText(out, sec, NAMES_OBJECT_NIVD)!;
+      expect(names).toMatch(/\/JavaScript/);
+      expect(names).toMatch(/\/EmbeddedFiles/);
+
+      // The key is date-shaped, which is the ONLY thing removeOrphanAttachments
+      // looks at before deleting an attachment on the applicant's first save.
+      const tree = /\/EmbeddedFiles\s*<<\s*\/Names\s*\[\s*<([0-9A-Fa-f]+)>/.exec(names)!;
+      const key = decryptObjectData(
+        sec,
+        NAMES_OBJECT_NIVD,
+        0,
+        Buffer.from(tree[1], 'hex'),
+      ).toString('latin1');
+      expect(key).toBe('2026-09-08T12:00:00');
+      expect(isTemplateAcceptableDataObjectName(key)).toBe(true);
+    });
+
+    it('the file the manifest routes is the file that is in the document', async () => {
+      /* THE ROUTING CONTRACT, and the one thing neither half proves alone. The
+         manifest token carries the data object's PATH — the `/Filespec`'s `/F`
+         and `/UF` — and CDRH reads the token. A build whose token said one name
+         and whose `/Filespec` said another would embed the file, name a file in
+         the manifest, and route nothing: the document opens, the manifest looks
+         filled, and the section arrives empty. */
+      const r = await fillEstarSubmission(oneAttachment);
+      const out = Buffer.from(r.pdfBytes!);
+      const sec = readPdfSecurity(out);
+
+      const names = readIndirectObjectText(out, sec, NAMES_OBJECT_NIVD)!;
+      const filespecNum = Number(
+        /\/EmbeddedFiles\s*<<\s*\/Names\s*\[\s*<[0-9A-Fa-f]+>\s*(\d+) 0 R/.exec(names)![1],
+      );
+      const filespec = readIndirectObjectText(out, sec, filespecNum)!;
+      const f = decryptObjectData(
+        sec,
+        filespecNum,
+        0,
+        Buffer.from(/\/F\s*<([0-9A-Fa-f]+)>/.exec(filespec)![1], 'hex'),
+      ).toString('latin1');
+
+      const manifest = (await readXfaDatasetsValues(out, ['root.AttachmentManifest']))[
+        'root.AttachmentManifest'
+      ]!;
+      expect(manifest).toContain(`<<${f}|`);
+      expect(f).toBe(r.attachmentReport!.attached[0].fileName);
+      // And FDA's own description travelled with it.
+      expect(filespec).toMatch(/\/Desc\s*</);
+    });
+
+    it('is byte-identical across two runs with the same inputs', async () => {
+      const a = await fillEstarSubmission(oneAttachment);
+      const b = await fillEstarSubmission(oneAttachment);
+      expect(Buffer.from(a.pdfBytes!).equals(Buffer.from(b.pdfBytes!))).toBe(true);
+    });
+
+    it('still parses as a PDF to a reader that has never seen this code', async () => {
+      const r = await fillEstarSubmission(oneAttachment);
+      const doc = await PDFDocument.load(r.pdfBytes!, { ignoreEncryption: true });
+      expect(doc.getPageCount()).toBeGreaterThan(0);
+    });
+
+    it('refuses the WHOLE export when one requested document cannot be filed', async () => {
+      // A submission missing a document the operator asked to file, handed back
+      // with a 200 and a note beside it, is the failure this refuses.
+      const r = await fillEstarSubmission({
+        ...oneAttachment,
+        attachments: [
+          { slot: COVER_LETTER, source: { kind: 'vault_document' as const, documentId: 'd1' } },
+          { slot: COVER_LETTER, source: { kind: 'vault_document' as const, documentId: 'd2' } },
+        ],
+      });
+      expect(r.filled).toBe(false);
+      expect(r.pdfBytes).toBeUndefined();
+      expect(r.blockers.join(' ')).toContain('Only a single cover letter is needed.');
+      // The report is still produced, so the caller can see what DID plan.
+      expect(r.attachmentReport!.attached).toHaveLength(1);
+      expect(r.attachmentReport!.refused).toHaveLength(1);
+    });
+
+    it('refuses a blank official form with files stapled to it', async () => {
+      // The manifest is a value the fill writes, so counting it as "a field was
+      // filled" would clear the blank-template check with nothing administrative
+      // written at all — the exact artifact that check exists to refuse.
+      const r = await fillEstarSubmission({ ...oneAttachment, data: {} });
+      expect(r.filled).toBe(false);
+      expect(r.pdfBytes).toBeUndefined();
+      expect(r.blockers.join(' ')).toMatch(/wrote no values/);
+    });
+
+    it('changes nothing when no attachment is requested', async () => {
+      const withNone = await fillEstarSubmission({ type: '510k', variant: 'device', data: DATA });
+      const withEmpty = await fillEstarSubmission({
+        type: '510k',
+        variant: 'device',
+        data: DATA,
+        attachments: [],
+      });
+      expect(withNone.attachmentReport).toBeUndefined();
+      expect(withEmpty.attachmentReport).toBeUndefined();
+      expect(Buffer.from(withNone.pdfBytes!).equals(Buffer.from(withEmpty.pdfBytes!))).toBe(true);
+      const back = await readXfaDatasetsValues(withNone.pdfBytes!, ['root.AttachmentManifest']);
+      // Untouched: the seed, and no token.
+      expect(back['root.AttachmentManifest']).toBe('***Start***');
+    });
+
+    /*
+     * THE CEILING ATTACHMENTS MADE REACHABLE. The official eSTAR was a fixed
+     * ~5.3 MB until this slice, so the delivery layer's 25 MiB limit could not
+     * be hit and throwing there was harmless. A filer mapping real documents
+     * into real slots hits it easily — and the throw lands AFTER the renders,
+     * the vault reads, the encryption and the retention write, so it reaches
+     * the operator as "the problem has been logged" with the bytes already in
+     * the vault and nothing delivered.
+     */
+    it('refuses an oversized submission as a sentence, not an exception', async () => {
+      const fat = Buffer.alloc(3 * 1024 * 1024, 0x41);
+      const r = await fillEstarSubmission({
+        ...oneAttachment,
+        maxOutputBytes: 6 * 1024 * 1024,
+        attachmentResolver: async () => ({
+          ok: true,
+          bytes: fat,
+          fileName: 'Big Report.pdf',
+          mimeType: 'application/pdf',
+        }),
+      });
+
+      expect(r.filled).toBe(false);
+      expect(r.pdfBytes).toBeUndefined();
+      const said = r.blockers.join(' ');
+      // The numbers a filer can act on, and WHICH document is the problem.
+      expect(said).toMatch(/the finished form is [\d.]+ MB and the limit is 6\.0 MB/);
+      expect(said).toContain('"Big Report.pdf" 3.0 MB');
+      expect(said).toMatch(/Remove or reduce one/);
+      // The report still says what was planned, so the operator sees the whole picture.
+      expect(r.attachmentReport!.attached).toHaveLength(1);
+    });
+
+    it('delivers when the output fits, and the ceiling is opt-in', async () => {
+      const under = await fillEstarSubmission({ ...oneAttachment, maxOutputBytes: 25 * 1024 * 1024 });
+      expect(under.filled).toBe(true);
+      // Absent maxOutputBytes, the engine has no opinion — byte-identical output.
+      const none = await fillEstarSubmission(oneAttachment);
+      expect(Buffer.from(none.pdfBytes!).equals(Buffer.from(under.pdfBytes!))).toBe(true);
+    });
+
+    it('still says how many were requested when the template itself refuses', async () => {
+      /* The refusals that happen BEFORE a plan exists — a static AcroForm, or a
+         template whose AttachmentManifest node is missing or already carries
+         tokens — used to produce a 422 with a blocker and no report at all. An
+         operator with thirty placements was told only "Cannot attach documents
+         to this eSTAR". `requested` is a fact from the request and is true on
+         every path. */
+      const already = await fillEstarSubmission({
+        ...oneAttachment,
+        // A template whose manifest is not the pristine seed: feed the OUTPUT of
+        // a successful attached fill back in as the template.
+        templateBytes: (await fillEstarSubmission(oneAttachment)).pdfBytes!,
+      });
+
+      expect(already.filled).toBe(false);
+      expect(already.blockers.join(' ')).toMatch(/not the "\*\*\*Start\*\*\*"/);
+      expect(already.attachmentReport).toEqual({
+        requested: 1,
+        attached: [],
+        refused: [],
+        manifest: null,
+      });
+    });
+
+    it('is a caller bug, not a regulatory refusal, to ask for attachments with no resolver', async () => {
+      await expect(
+        fillEstarSubmission({
+          type: '510k',
+          variant: 'device',
+          data: DATA,
+          attachments: [
+            { slot: COVER_LETTER, source: { kind: 'vault_document' as const, documentId: 'd1' } },
+          ],
+        }),
+      ).rejects.toThrow(/attachmentResolver/);
+    });
+
+    it('files into several slots at once, each under its own chapter', async () => {
+      let n = 0;
+      const r = await fillEstarSubmission({
+        type: '510k',
+        variant: 'device',
+        data: DATA,
+        attachments: [
+          { slot: COVER_LETTER, source: { kind: 'vault_document' as const, documentId: 'a' } },
+          {
+            slot: 'root.AdministrativeDocumentation.ADAddAttachment803',
+            source: { kind: 'vault_document' as const, documentId: 'b' },
+          },
+        ],
+        attachmentResolver: async () => ({
+          ok: true as const,
+          bytes: Buffer.from(`%PDF-1.7 doc ${n}`),
+          fileName: `Doc ${n++}.pdf`,
+          mimeType: 'application/pdf',
+        }),
+        attachmentClock: AT,
+      });
+      expect(r.blockers).toEqual([]);
+      const chapters = r.attachmentReport!.attached.map((a) => a.chapter);
+      expect(new Set(chapters).size).toBe(2);
+      const back = await readXfaDatasetsValues(r.pdfBytes!, ['root.AttachmentManifest']);
+      expect(back['root.AttachmentManifest']!.split('<<').length - 1).toBe(2);
     });
   },
 );

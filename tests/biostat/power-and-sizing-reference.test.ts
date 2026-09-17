@@ -153,7 +153,7 @@ describe('MMRM sizing reduces to the classic formula when the design degenerates
 
     const r = mmrmSampleSize({
       visits: 1,
-      covariance: 'CS',
+      covariance: 'compound_symmetry',
       rho: 0,
       sigma: 1,
       delta: 0.5,
@@ -176,7 +176,7 @@ describe('MMRM sizing reduces to the classic formula when the design degenerates
   ])('σ=%s δ=%s α=%s power=%s reduces correctly', (sigma, delta, alpha, power) => {
     const r = mmrmSampleSize({
       visits: 1,
-      covariance: 'CS',
+      covariance: 'compound_symmetry',
       rho: 0,
       sigma,
       delta,
@@ -192,7 +192,7 @@ describe('MMRM sizing reduces to the classic formula when the design degenerates
     // would be claiming a benefit that does not exist.
     const r = mmrmSampleSize({
       visits: 3,
-      covariance: 'CS',
+      covariance: 'compound_symmetry',
       rho: 0.5,
       sigma: 1,
       delta: 0.5,
@@ -206,10 +206,16 @@ describe('MMRM sizing reduces to the classic formula when the design degenerates
   it('achieves at least the requested power, always', () => {
     // The sample size is rounded UP, so achieved power must never fall short of
     // the target. Rounding the wrong way is a silent under-powering of the trial.
+    /* This said `covariance: 'AR1'` and therefore ran under COMPOUND SYMMETRY:
+       correlationMatrix read `covariance === 'ar1' ? … : compound symmetry`, so
+       any other spelling fell through. The assertion holds under either
+       structure, which is why nothing noticed. mmrmSampleSize now refuses a
+       structure it does not implement rather than substituting one, and this
+       is the AR(1) case it was always meant to be. */
     for (const power of [0.8, 0.85, 0.9, 0.95]) {
       const r = mmrmSampleSize({
         visits: 2,
-        covariance: 'AR1',
+        covariance: 'ar1',
         rho: 0.4,
         sigma: 1,
         delta: 0.4,
@@ -221,7 +227,7 @@ describe('MMRM sizing reduces to the classic formula when the design degenerates
   });
 
   it('rejects an out-of-range correlation rather than inverting a bad matrix', () => {
-    const bad = { visits: 3, covariance: 'CS' as const, sigma: 1, delta: 0.5 };
+    const bad = { visits: 3, covariance: 'compound_symmetry' as const, sigma: 1, delta: 0.5 };
     expect(() => mmrmSampleSize({ ...bad, rho: 1 })).toThrow();
     expect(() => mmrmSampleSize({ ...bad, rho: -0.5 })).toThrow();
   });

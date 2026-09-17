@@ -123,6 +123,12 @@ export const BINDING_BASIS = {
   /** sha256 over the frozen cmc_module3_section_versions snapshot approved at signing time. */
   CMC_MODULE3_SECTION_VERSION: 'cmc-module3-section-version-sha256',
   /**
+   * sha256 of the retained official FDA eSTAR a device filing was made with,
+   * read from the `vault.documents` row at signing time — never from the
+   * client. A real content digest of the exact bytes the sponsor filed.
+   */
+  FILED_ESTAR_ARTIFACT: 'filed-estar-artifact-sha256',
+  /**
    * No content digest is derivable for this target type. The digest column
    * carries the governed action's audit sha256 chain hash instead — a
    * tamper-evident link to the ledger row that records the signed act (target

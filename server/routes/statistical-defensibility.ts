@@ -59,11 +59,16 @@ router.post('/assess', async (req: Request, res: Response) => {
       estimandStrategy,
     });
 
-    // Capture decision record in operating system layer
+    // Capture decision record in operating system layer.
+    // WO-16C finding 45: the record reads "score N/100 (rating)" as an
+    // assertion about the study. When no overall score was computed — the model
+    // left a dimension unscored, or returned nothing — there is no assertion to
+    // record, so none is written; `report.scoreBasis` carries the reason to the
+    // caller in the response instead.
     let decisionRecord;
     const orgId = (req as any).organizationId ?? (req as any).user?.organizationId;
     const projectId = req.body.projectId;
-    if (orgId && projectId) {
+    if (orgId && projectId && report.overallScore !== null && report.overallRating !== null) {
       try {
         const osIntegration = OperatingSystemIntegration.getInstance();
         decisionRecord = await osIntegration.captureFromDefensibilityAssessment({

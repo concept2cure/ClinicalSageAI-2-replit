@@ -17,6 +17,7 @@
  */
 import { generateDocxBuffer } from '../docxGenerator.js';
 import { getPool } from '../../db/runtime.js';
+import { VerificationUnavailableError } from '../../lib/verification-outcome.js';
 import {
   collectArtifactLedger,
   type ArtifactLedger,
@@ -55,6 +56,15 @@ export async function exportArtifactWithLedger(
 
   const ledger = await collectArtifactLedger(artifactId, organizationId);
   if (!ledger) return null;
+  // WO-16B finding 10. A DOCX whose embedded ledger cannot substantiate its
+  // own audit history or signature block is not produced; the route answers
+  // 503 and says why. Producing a clean-looking document would be the defect.
+  if (ledger.signaturesUnavailable) {
+    throw new VerificationUnavailableError('AnALedger signatures', ledger.signaturesUnavailable);
+  }
+  if (ledger.auditLogUnavailable) {
+    throw new VerificationUnavailableError('AnALedger audit log', ledger.auditLogUnavailable);
+  }
 
   // 1. Pull the artifact's content body for the docx body. The collector
   // reads the lighter columns; the content is large so we fetch it
@@ -137,7 +147,11 @@ export function renderProvenanceSummaryText(ledger: ArtifactLedger): string {
   lines.push('');
 
   // Audit
-  lines.push(`Audit log entries: ${ledger.auditLog.length}`);
+  if (ledger.auditLogUnavailable) {
+    lines.push(`Audit log: UNAVAILABLE — ${ledger.auditLogUnavailable}`);
+  } else {
+    lines.push(`Audit log entries: ${ledger.auditLog.length}`);
+  }
   const recentAudit = ledger.auditLog.slice(-5);
   for (const e of recentAudit) {
     lines.push(

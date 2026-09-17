@@ -233,7 +233,7 @@ export function SubmissionTwin(_props: SurfaceViewProps) {
   return (
     <div className="cm-body">
       <div className="pj-card">
-        <div className="pj-card-h"><span className="t">Submission Twin</span><span className="s">Living readiness · drift · reviewer challenges · change impact</span></div>
+        <div className="pj-card-h"><span className="t">Submission twin</span><span className="s">Living readiness · drift · reviewer challenges · change impact</span></div>
         <div className="pj-card-b" style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
           <label style={{ fontSize: 12, color: 'var(--text-400)' }}>Submission package id</label>
           <input className="c2c-input" style={{ height: 30, width: 120 }} inputMode="numeric" value={pkgInput}

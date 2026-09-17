@@ -45,25 +45,12 @@ import type { Region } from '../submission-gateways/types';
  */
 export type PlacementRegion = Region;
 
-/** A syntactically-shaped CTD code: a module digit optionally followed by dotted
- *  sub-sections. Syntax only — see isPlaceableCtdCode for whether it is REAL. */
-const CTD_CODE = /^\s*([1-5])((?:\.[0-9A-Za-z]+)*)\s*$/;
-
-/** Normalize a candidate CTD code's SYNTAX, or null when it is not code-shaped.
- *  Accepts an optional leading 'm' ('m3.2.P.1'). Says nothing about whether the
- *  code exists in the ICH tree — use isPlaceableCtdCode for that. */
-export function normalizeCtdCode(value: string | null | undefined): string | null {
-  if (!value) return null;
-  const stripped = String(value).trim().replace(/^m/i, '');
-  const m = CTD_CODE.exec(stripped);
-  if (!m) return null;
-  // Canonical ICH spelling: alpha segments are uppercase (3.2.S.1, 3.2.P.1,
-  // 2.3.S). ctd_section is free text on the write paths, and '3.2.s.1' and
-  // '3.2.S.1' used to reach the packager as two distinct codes — one heading,
-  // two leaf folders (m3/3-2-s-1 and m3/3-2-S-1). This is the one
-  // normalisation point on the transmit path, so it canonicalises.
-  return `${m[1]}${m[2].toUpperCase()}`;
-}
+/* The CTD-code canonicaliser lives in shared/regulatory/section-code so the
+   placement dialog applies the SAME rule the packager and the write boundary
+   do. Re-exported here because this module is where the transmit path has
+   always imported it from. */
+import { normalizeCtdCode } from '../../../shared/regulatory/section-code';
+export { normalizeCtdCode };
 
 /**
  * Whether a code can be placed at a TERMINAL heading of the ICH tree (Modules

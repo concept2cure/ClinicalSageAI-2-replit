@@ -21,14 +21,15 @@ describe('Migration Files Validation', () => {
   });
 
   describe('Core Cortex Prime Migrations', () => {
+    // 073 and 079 were retired 2026-09-10 (WO-14, Route B) to
+    // db/migrations/_legacy/; the README there records why. 074-078 remain on
+    // install-fresh and CI pending a separate retirement.
     const cortexMigrations = [
-      '073_cortex_prime_unified_brain.sql',
       '074_gcc_regulatory_intuition_engine.sql',
       '075_gcc_epistemic_intelligence.sql',
       '076_gcc_causal_inference_engine.sql',
       '077_gcc_self_evolving_intelligence.sql',
       '078_gcc_cross_domain_transfer.sql',
-      '079_gcc_unified_functions_views.sql',
       '080_gcc_21cfr_part11_compliance.sql'
     ];
 
@@ -87,11 +88,16 @@ describe('Migration Files Validation', () => {
   });
 
   describe('Critical Schema Dependencies', () => {
-    it('should have cortex_prime schema migration', () => {
-      const hasCortexPrime = migrationFiles.some(f => 
-        f.includes('cortex_prime') || f.includes('unified_brain')
+    it('has NO live cortex_prime migration — 073 and 079 are retired (WO-14, Route B)', () => {
+      // The inverse of what this asserted until 2026-09-10. 073 was on no
+      // applier and 079's only consumer was the retired cortexPrimeService;
+      // both live in db/migrations/_legacy/ now. A file with either name
+      // reappearing in db/migrations/ would put a creator back on install-fresh
+      // for a subsystem the product owner retired, so this pins the absence.
+      const revived = migrationFiles.filter(
+        f => f.includes('cortex_prime') || f.includes('unified_brain') || f.includes('unified_functions_views')
       );
-      expect(hasCortexPrime).toBe(true);
+      expect(revived).toEqual([]);
     });
 
     it('should have compliance schema migration', () => {

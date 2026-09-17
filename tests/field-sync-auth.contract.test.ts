@@ -47,9 +47,16 @@ vi.mock('../server/db', () => ({
 
 // The field-sync write path is not under test here — the AUTHORIZATION contract
 // is. Stub the service so a permitted call cannot touch real storage.
+//
+// updateField now RETURNS what happened to the value rather than Promise<void>
+// (ledger L173), because the route used to answer "Field updated and
+// synchronized" whether or not a destination row existed. The stub returns the
+// applied outcome so the positive control below still asserts what its title
+// says — that authorization admits the caller's own project — instead of
+// silently becoming a test of the new no-destination branch.
 vi.mock('../server/services/SmartFieldLinking.js', () => ({
   smartFieldLinking: {
-    updateField: vi.fn(async () => undefined),
+    updateField: vi.fn(async () => ({ status: 'applied' as const, targets: 1, written: 1 })),
     checkFieldCompleteness: vi.fn(async () => ({ complete: 0, total: 0, missing: [] })),
     getFieldLinksForSection: vi.fn(() => []),
     on: vi.fn(),

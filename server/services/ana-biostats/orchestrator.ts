@@ -17,7 +17,7 @@ import { regulatoryCustomizer } from './regulatory-customizer';
 import { documentGenerator } from './document-generator';
 import { workflowIntegrator } from './workflow-integrator';
 import { smeRouter } from './sme-router';
-import type { SMERoutingResult, SMEEnhancement } from './sme-agents';
+import type { SMEEnhancement } from './sme-agents';
 
 import type {
   StatisticalInput,
@@ -91,6 +91,7 @@ export class AnaBiostatsOrchestrator {
         {
           autoAttachToDossier: request.autoAttachToDossier,
           reviewRequired: request.reviewRequired,
+          dossierSectionId: request.dossierSectionId,
         }
       );
     }

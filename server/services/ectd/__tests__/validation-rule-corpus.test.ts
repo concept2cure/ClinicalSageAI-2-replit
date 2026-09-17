@@ -95,6 +95,8 @@ describe('corpus ↔ gate cross-reference invariant', () => {
       { leaves: [leaf()], opts: { sequenceNumber: 'nope' } }, // SEQUENCE_NUMBER_FORMAT
       { leaves: [leaf({ lifecycleOp: 'frobnicate' })] }, // INVALID_LIFECYCLE_OP
       { leaves: [leaf({ documentTable: null, documentId: null })] }, // UNRESOLVED_DOCUMENT
+      { leaves: [leaf({ documentTable: 'coauthor_doccuments' })] }, // UNPLACEABLE_DOCUMENT_TABLE
+      { leaves: [leaf({ documentTable: 'vault_documents' })] }, // EXTERNAL_DOCUMENT_NOT_MATERIALIZABLE
       { leaves: [leaf({ lifecycleOp: 'replace' })], opts: { isOriginalSequence: true } }, // LIFECYCLE_OP_IN_ORIGINAL
       { leaves: [leaf()], opts: { requiredSections: ['1.1'] } }, // MISSING_REQUIRED_SECTION
       { leaves: [leaf(), leaf()] }, // DUPLICATE_NEW_SECTION
@@ -115,6 +117,6 @@ describe('corpus ↔ gate cross-reference invariant', () => {
     }
 
     // Sanity: the battery actually exercised the corpus (not a vacuous pass).
-    expect(emitted.size).toBeGreaterThanOrEqual(7);
+    expect(emitted.size).toBeGreaterThanOrEqual(9);
   });
 });

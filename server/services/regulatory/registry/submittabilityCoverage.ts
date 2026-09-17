@@ -59,7 +59,38 @@ import type {
  *                     map it to a gateway, a rules region, or an M1 backbone.
  *  `no_gateway`     — identity exists but names a gateway that is not registered.
  */
-export type SubmittabilityTier = 'submittable' | 'not_a_filing' | 'no_identity' | 'no_gateway';
+export type SubmittabilityTier =
+  | 'submittable'
+  | 'not_a_filing'
+  | 'no_identity'
+  | 'no_gateway'
+  /**
+   * The filing's own entry names a channel that is a human web portal, so no
+   * gateway can carry it — distinct from `no_gateway`, which means an
+   * integration is missing and could be built.
+   */
+  | 'portal_only';
+
+/**
+ * Submission formats whose channel is a portal with no sponsor-facing machine
+ * submission path.
+ *
+ * Deliberately small, and grounded only in what this repository already
+ * asserts. `EU_CTA` carries `submissionFormat: 'CTIS'` and states in its own
+ * moduleAuthority that "a CTR CTA is a Part I / Part II submission through
+ * CTIS, not an eCTD five-module dossier" — while REGION_IDENTITY.EU routes the
+ * whole region to `cesp`, the medicines dossier gateway. The registry and the
+ * submittability report therefore disagreed, and the report won.
+ *
+ * eSTAR and eCopy are NOT here. server/services/ivd-knowledge/regulatory/
+ * fda-ivd.ts:81 describes CDRH submission as "the CDRH Customer Collaboration
+ * Portal/eSG", which leaves a gateway path open; this module does not settle a
+ * question the codebase itself hedges on. Add a format here only when the
+ * repository states plainly that no machine channel exists.
+ */
+const PORTAL_ONLY_FORMATS: ReadonlyMap<string, string> = new Map([
+  ['CTIS', 'CTIS — the EU Clinical Trials Information System portal (Regulation (EU) 536/2014)'],
+]);
 
 export interface SubmittabilityCoverage {
   id: string;
@@ -76,6 +107,12 @@ export interface SubmittabilityCoverage {
   /** A regional M1 backbone is declared for the region. */
   hasM1Backbone: boolean;
   tier: SubmittabilityTier;
+  /**
+   * When `tier` is `portal_only`, the channel the filing actually goes to.
+   * Named so an operator is sent somewhere rather than told an integration is
+   * missing that was never going to exist.
+   */
+  portalChannel?: string;
 }
 
 /**
@@ -140,6 +177,12 @@ export function getSubmittability(
   // correct, not a gap; reporting it as one trains people to ignore the number.
   if (isNonFiling(entry)) return { ...base, tier: 'not_a_filing' };
   if (!identity) return { ...base, tier: 'no_identity' };
+  /* Before the gateway check, deliberately: the EU region HAS a registered
+     gateway, and that is exactly how an EU CTA came to be reported submittable
+     through CESP when its own entry says CTIS. A registered gateway for the
+     region is not a channel for this filing. */
+  const portalChannel = PORTAL_ONLY_FORMATS.get(String(entry.submissionFormat ?? ''));
+  if (portalChannel) return { ...base, tier: 'portal_only', portalChannel };
   if (!gatewayRegistered) return { ...base, tier: 'no_gateway' };
   return { ...base, tier: 'submittable' };
 }
@@ -149,6 +192,12 @@ export interface SubmittabilityReport {
   byTier: Record<SubmittabilityTier, number>;
   /** Entries that SHOULD be submittable but are not — the actionable list. */
   gaps: SubmittabilityCoverage[];
+  /**
+   * Filings whose channel is a portal. Deliberately NOT in `gaps`: `gaps` is the
+   * integration backlog, and no integration will ever make these transmittable.
+   * Reported separately so they are visible without being mistaken for work.
+   */
+  portalOnly: SubmittabilityCoverage[];
   /** Region-level rollup, which is where a gap is actually fixed. */
   byRegion: Array<{
     region: Region;
@@ -173,6 +222,7 @@ export function buildSubmittabilityReport(): SubmittabilityReport {
     not_a_filing: 0,
     no_identity: 0,
     no_gateway: 0,
+    portal_only: 0,
   };
   for (const c of all) byTier[c.tier] += 1;
 
@@ -197,6 +247,7 @@ export function buildSubmittabilityReport(): SubmittabilityReport {
     total: all.length,
     byTier,
     gaps: all.filter((c) => c.tier === 'no_identity' || c.tier === 'no_gateway'),
+    portalOnly: all.filter((c) => c.tier === 'portal_only'),
     byRegion,
   };
 }

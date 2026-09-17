@@ -143,7 +143,7 @@ describe('Apps — live module subscriptions (fixture-free)', () => {
     await screen.findByText('CMC Wizard');
     fireEvent.click(screen.getByTitle('Toggle admin controls'));
     fireEvent.click(screen.getByTitle('Disable module'));
-    expect(await screen.findByText(/Could not disable CMC Wizard -- Admin access required/)).toBeTruthy();
+    expect(await screen.findByText(/Could not disable CMC Wizard — Admin access required/)).toBeTruthy();
     // reverted — still on, still offering "Disable"
     await waitFor(() => expect(screen.getByTitle('Disable module')).toBeTruthy());
   });

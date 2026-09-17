@@ -65,6 +65,19 @@ import { fileURLToPath } from 'node:url';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const SCAN = path.join(ROOT, 'client', 'src', 'concept2cure');
+// ZERO-DEBT BY DECISION, NOT BY ACCIDENT (recorded 2026-09-10, WO-4).
+//
+// This file does not exist, and that is intentional. An absent baseline reads as
+// an EMPTY one below (`existsSync(BASELINE) ? ... : []`), so every finding is
+// new and the gate fails closed. The count is currently zero, so there is
+// nothing to record and committing an empty JSON file would only invite someone
+// to add to it.
+//
+// The failure mode this note prevents: a reader seeing a baseline path that
+// resolves to nothing cannot tell whether zero-debt was chosen or the file was
+// lost, and "restore the missing baseline" is the wrong repair for the first
+// case. If you ever run --write-baseline here, you are converting a clean gate
+// into a ratchet — do that deliberately and say why.
 const BASELINE = path.join(ROOT, 'scripts', 'ci', 'ungated-fixture-fallback-baseline.json');
 
 const argv = new Set(process.argv.slice(2));

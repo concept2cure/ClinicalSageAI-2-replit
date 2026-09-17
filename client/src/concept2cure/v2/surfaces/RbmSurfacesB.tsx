@@ -200,7 +200,7 @@ export function RbmSignals({ board, onTab, onReload }: SubProps) {
             <RbmChip vocab="severity" value={s.severity} />
             <span className="rbm-sig-src" data-src={s.source}>{SRC_LABEL[s.source] || s.source}</span>
             <span className="rbm-sig-t">{s.title}</span>
-            <span className="rbm-sig-meta">{s.site !== '—' ? `site ${s.site} -- ` : ''}{s.detected}</span>
+            <span className="rbm-sig-meta">{s.site !== '—' ? `site ${s.site} — ` : ''}{s.detected}</span>
             <RbmChip vocab="signal" value={s.status} />
           </button>
           {openId === s.id && (
@@ -229,7 +229,7 @@ export function RbmSignals({ board, onTab, onReload }: SubProps) {
         fields={[{ key: 'title', label: 'Signal', type: 'textarea' }, { key: 'severity', label: 'Severity', type: 'select', options: ['critical', 'high', 'medium', 'low'], labels: { critical: 'Critical', high: 'High', medium: 'Medium', low: 'Low' } }, { key: 'site', label: 'Site (optional)', type: 'text', optional: true }, { key: 'detail', label: 'Detail', type: 'textarea' }]}
         busy={mut.busy} error={mut.error}
         submitLabel="Log signal" onCancel={() => { setLogging(false); mut.clearError(); }} onSubmit={logSignal} />}
-      {invFor && <RbmFormModal title={`Investigate -- ${invFor.title}`}
+      {invFor && <RbmFormModal title={`Investigate — ${invFor.title}`}
         intro={`Document the signal follow-up. The status and notes are written to the signal; choosing a follow-up action creates a monitoring action linked to it.${planId == null ? ' This study has no monitoring plan, so no action can be created yet — the investigation notes will still be saved.' : ''}`}
         fields={invFields}
         initial={{ status: 'investigating', action: 'none' }}
@@ -267,12 +267,12 @@ export function RbmPatients({ board, onReload }: SubProps) {
       )}
       <RbmWriteNote note={mut.note} />
       <div className="rbm-bar">
-        <span className="rbm-bar-info">scorePatientCohort — robust modified z-score — MIN_COHORT 5 -- {board.summary.patients.scored} subjects -- {scannedAt ? `scored ${scannedAt}` : 'never scored'}</span>
+        <span className="rbm-bar-info">scorePatientCohort — robust modified z-score — MIN_COHORT 5 — {board.summary.patients.scored} subjects — {scannedAt ? `scored ${scannedAt}` : 'never scored'}</span>
         <button className="rbm-btn pri" disabled={mut.busy} onClick={scanCohort}>{I.zap}{mut.busy ? 'Scanning…' : 'Scan cohort'}</button>
       </div>
       <div className="rbm-pt-cols">
         <div className="rbm-card">
-          <div className="rbm-card-h">Cohort — ranked by anomaly score<span className="rbm-card-sub">{flagged} flagged -- {review} in review</span></div>
+          <div className="rbm-card-h">Cohort — ranked by anomaly score<span className="rbm-card-sub">{flagged} flagged — {review} in review</span></div>
           <table className="rbm-tbl"><thead><tr><th>Subject</th><th>Site</th><th>Anomaly</th><th>Top dimension</th><th>Status</th></tr></thead>
             <tbody>{P.map(p => (
               <tr key={p.sid} data-on={open === p.sid || undefined} className="rowbtn" onClick={() => setOpen(p.sid)}>
@@ -300,7 +300,7 @@ export function RbmPatients({ board, onReload }: SubProps) {
               );
             })}
               {sel.metrics.length === 0 && <div className="rbm-note" style={{ margin: 0 }}>{I.info}Per-dimension breakdown isn&apos;t available from the profile store for this subject — the anomaly score and status are the scored result.</div>}
-              <div className="rbm-pt-foot"><RbmFreshness at={sel.at ?? '—'} />{sel.status !== 'normal' && <span className="rbm-pt-note">{I.alertTriangle}{sel.status === 'flagged' ? 'Flagged for medical review' : 'Queued for review'} -- dimensions 3+ MAD from cohort median drive the score.</span>}</div>
+              <div className="rbm-pt-foot"><RbmFreshness at={sel.at ?? '—'} />{sel.status !== 'normal' && <span className="rbm-pt-note">{I.alertTriangle}{sel.status === 'flagged' ? 'Flagged for medical review' : 'Queued for review'} — dimensions 3+ MAD from cohort median drive the score.</span>}</div>
             </div>
           </div>
         )}
@@ -334,7 +334,7 @@ export function RbmSites({ board, onReload }: SubProps) {
       )}
       <RbmWriteNote note={mut.note} />
       <div className="rbm-bar">
-        <span className="rbm-bar-info">site-risk-engine — composite from Site Intelligence -- {at ? `scored ${at}` : 'never scored'}</span>
+        <span className="rbm-bar-info">site-risk-engine — composite from Site Intelligence — {at ? `scored ${at}` : 'never scored'}</span>
         <button className="rbm-btn pri" disabled={mut.busy} onClick={recompute}>{I.zap}{mut.busy ? 'Recomputing…' : 'Recompute site risk'}</button>
       </div>
       <div className="rbm-card">
@@ -415,7 +415,7 @@ export function RbmOversight({ board, onTab, onReload }: SubProps) {
                 <td><RbmChip vocab="tier" value={s.tier} /></td>
                 <td>{c.open > 0 ? <button className="rbm-linknum" onClick={() => onTab?.('signals')}>{c.open} open {I.chevRight}</button> : <span className="mut">0</span>}</td>
                 <td>{c.high > 0 ? <button className="rbm-linknum hi" onClick={() => onTab?.('signals')}>{c.high} high {I.chevRight}</button> : <span className="mut">0</span>}</td>
-                <td>{v ? <span className="rbm-visit-set">{I.check}Scheduled — due {v.due} -- {v.owner}</span>
+                <td>{v ? <span className="rbm-visit-set">{I.check}Scheduled — due {v.due} — {v.owner}</span>
                   : <button className="rbm-linkbtn" disabled={mut.busy || planId == null}
                       title={planId == null ? 'This study has no monitoring plan for the visit to attach to' : undefined}
                       onClick={() => setSchedFor(s)}>{I.clock}Schedule visit</button>}</td>
@@ -427,7 +427,7 @@ export function RbmOversight({ board, onTab, onReload }: SubProps) {
       </div>
       <div className="rbm-note">{I.info}SPOT turns risk + signal load into a monitoring assignment: scheduling a visit creates a site_visit action on the monitoring plan. Enhanced-tier sites should carry an on-site visit; reduced-tier sites are remote/central by default. The visit is a tracked action — the monitoring report, findings, follow-up letter and targeted SDV/SDR scope are not modelled yet.</div>
       {schedFor && <RbmFormModal title={`Schedule oversight visit — site ${schedFor.n}`}
-        intro={`${schedFor.name} -- composite ${schedFor.composite ?? '—'} -- ${schedFor.tier} tier. The visit is created as a site_visit action on the monitoring plan.`}
+        intro={`${schedFor.name} — composite ${schedFor.composite ?? '—'} — ${schedFor.tier} tier. The visit is created as a site_visit action on the monitoring plan.`}
         fields={[
           { key: 'type', label: 'Visit type', type: 'select', options: ['on_site', 'remote'], labels: { on_site: 'On-site', remote: 'Remote / central' } },
           { key: 'when', label: 'Target date', type: 'date' },
@@ -497,8 +497,8 @@ export function RbmPlan({ board, onReload }: SubProps) {
         <div className="rbm-asmt">
           <div className="rbm-asmt-l">
             <b>{plan.title}</b>
-            <span>strategy <RbmChip vocab="strategy" value={plan.strategy} /> -- {plan.status === 'active' ? 'active' : 'draft — approval pending'} -- updated {plan.updated ?? '—'}</span>
-            {plan.approval ? <span className="rbm-audit">{I.check}Approved by {plan.approval.by} -- {plan.approval.when} -- &quot;{plan.approval.reason}&quot;</span> : null}
+            <span>strategy <RbmChip vocab="strategy" value={plan.strategy} /> — {plan.status === 'active' ? 'active' : 'draft — approval pending'} — updated {plan.updated ?? '—'}</span>
+            {plan.approval ? <span className="rbm-audit">{I.check}Approved by {plan.approval.by} — {plan.approval.when} — &quot;{plan.approval.reason}&quot;</span> : null}
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 7, alignItems: 'flex-end' }}>
             {plan.status !== 'active' && <button className="rbm-btn pri" disabled={mut.busy} onClick={() => setSignFor(true)}>{I.lock}Approve plan</button>}
@@ -514,17 +514,17 @@ export function RbmPlan({ board, onReload }: SubProps) {
         </div>
       )}
       <div className="rbm-bar" style={{ marginBottom: 11 }}>
-        <span className="rbm-bar-info">{acts.length} actions -- {acts.filter(a => a.overdue).length} overdue — escalations, investigations and scheduled visits land here</span>
+        <span className="rbm-bar-info">{acts.length} actions — {acts.filter(a => a.overdue).length} overdue — escalations, investigations and scheduled visits land here</span>
         <button className="rbm-btn" disabled={mut.busy || !plan} title={!plan ? 'Generate a monitoring plan first' : undefined} onClick={() => setAdding(true)}>{I.zap}Add action</button>
       </div>
       <div className="rbm-board">{cols.map(([st, label]) => (
         <div key={st} className="rbm-col">
-          <div className="rbm-col-h">{label} -- {acts.filter(a => a.status === st).length}</div>
+          <div className="rbm-col-h">{label} — {acts.filter(a => a.status === st).length}</div>
           {acts.filter(a => a.status === st).map(a => (
             <div key={a.id} className="rbm-act" data-overdue={a.overdue || undefined}>
               <div className="rbm-act-top"><span className="rbm-act-type">{RBM_VOCAB.atype[a.type]?.l ?? a.type}</span><RbmChip vocab="severity" value={a.priority} /></div>
               <div className="rbm-act-t">{a.title}</div>
-              <div className="rbm-act-m">{a.owner} -- due {a.due}{a.origin && a.origin !== 'plan' && <span className="rbm-act-origin">from {a.origin}</span>}{a.overdue && <b className="rbm-overdue">overdue</b>}</div>
+              <div className="rbm-act-m">{a.owner} — due {a.due}{a.origin && a.origin !== 'plan' && <span className="rbm-act-origin">from {a.origin}</span>}{a.overdue && <b className="rbm-overdue">overdue</b>}</div>
               {st !== 'done' && <button className="rbm-act-adv" disabled={mut.busy} onClick={() => advance(a.id, a.status)}>{st === 'open' ? 'Start' : 'Complete'} {I.chevRight}</button>}
             </div>
           ))}

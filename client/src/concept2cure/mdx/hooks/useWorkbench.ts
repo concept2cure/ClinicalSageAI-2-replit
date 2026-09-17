@@ -378,6 +378,13 @@ export interface UnifiedWorkSummaryView {
   done: number;
   /** `board` = the canonical unified_tasks org board, now part of the view. */
   bySource: Record<'schedule' | 'review' | 'correspondence' | 'filing' | 'board', number>;
+  /**
+   * True when at least one of the four source queries could not be read, so
+   * every count here is a floor and not a total. Optional only because a body
+   * from before the field existed has no opinion; the surface renders the
+   * caveat on `true` alone and never infers completeness from its absence.
+   */
+  partial?: boolean;
 }
 
 export interface UseUnifiedWorkResult {

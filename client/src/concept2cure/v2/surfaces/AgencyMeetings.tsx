@@ -558,7 +558,7 @@ export function AgencyMeetings({ onAsk, onNav }: SurfaceViewProps) {
             {ready ? nextVal : '--'}
           </div>
           <div className="reg-kpi-l">
-            {ready && nextMtg ? 'Next -- ' + nextMtg.x.type : 'Next meeting'}
+            {ready && nextMtg ? 'Next — ' + nextMtg.x.type : 'Next meeting'}
           </div>
         </div>
         <div className="reg-kpi">

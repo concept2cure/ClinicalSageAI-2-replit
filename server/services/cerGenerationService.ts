@@ -73,6 +73,36 @@ export const CONFORMITY_NOT_ASSESSED = 'Not assessed — no linked evidence';
 export const CONFORMITY_EVIDENCE_LINKED =
   'Evidence linked — conformity assessment pending expert review';
 
+/**
+ * What the device-description section says for a field the platform holds no
+ * source for.
+ *
+ * ── 2026-09-10 ───────────────────────────────────────────────────────────────
+ * The device-description template read eight fields off the `device_profiles`
+ * row. `device_profiles` has ELEVEN columns, verified against the live catalog:
+ * id, organization_id, name, device_name, device_type, manufacturer,
+ * classification, product_code, metadata, created_at, updated_at. Not one of
+ * description, intendedUse, indications, contraindications, targetPopulation,
+ * operationPrinciples, materials or specifications exists, no request field
+ * supplies them, and `db.select().from(deviceProfiles)` emits only the declared
+ * columns — so all eight were `undefined` on every code path.
+ *
+ * Seven of them passed `undefined` through, which renders as a missing field.
+ * The eighth had a fallback:
+ *
+ *     contraindications: data.contraindications || 'None identified',
+ *
+ * so EVERY Clinical Evaluation Report this service generated asserted that the
+ * device has no contraindications — an affirmative clinical safety claim, in an
+ * MDR Annex XIV report, that nothing in the system had ever assessed. It could
+ * not have been anything else: the `||` fired unconditionally.
+ *
+ * `??` rather than `||` below, so a genuine empty string from a future column is
+ * not silently overwritten by this sentinel.
+ */
+export const DEVICE_FIELD_NOT_RECORDED =
+  'Not recorded — the device profile holds no source field for this';
+
 /** Minimal shape of a cer_clinical_evidence row used for evidence derivation. */
 interface LinkedEvidenceLike {
   title?: string | null;
@@ -122,14 +152,15 @@ class CerGenerationService {
     engine.set('device_description', (data: any) => ({
       title: 'Device Description',
       content: {
-        generalDescription: data.description,
-        intendedUse: data.intendedUse,
-        indications: data.indications,
-        contraindications: data.contraindications || 'None identified',
-        targetPopulation: data.targetPopulation,
-        principlesOfOperation: data.operationPrinciples,
-        materials: data.materials,
-        specifications: data.specifications
+        generalDescription: data.description ?? DEVICE_FIELD_NOT_RECORDED,
+        intendedUse: data.intendedUse ?? DEVICE_FIELD_NOT_RECORDED,
+        indications: data.indications ?? DEVICE_FIELD_NOT_RECORDED,
+        // Was `|| 'None identified'` — see DEVICE_FIELD_NOT_RECORDED above.
+        contraindications: data.contraindications ?? DEVICE_FIELD_NOT_RECORDED,
+        targetPopulation: data.targetPopulation ?? DEVICE_FIELD_NOT_RECORDED,
+        principlesOfOperation: data.operationPrinciples ?? DEVICE_FIELD_NOT_RECORDED,
+        materials: data.materials ?? DEVICE_FIELD_NOT_RECORDED,
+        specifications: data.specifications ?? DEVICE_FIELD_NOT_RECORDED
       }
     }));
 

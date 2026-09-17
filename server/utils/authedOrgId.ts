@@ -46,6 +46,26 @@ export function authedOrgId(req: Request): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
+/**
+ * Narrow an untrusted organization id to a USABLE one, or null.
+ *
+ * `authedOrgId` accepts any finite number, which is right for its callers.
+ * This is the stricter form, for code paths where a non-positive id is not an
+ * inert default but an actual grant: `Number(null)` is `0` and
+ * `Number.isFinite(0)` is true, and `organization_id = 0` is an explicit global
+ * carve-out in the artifacts RLS policy
+ * (db/migrations/20260128_concept2cure_foundation.sql:161). So an org that
+ * arrives as 0 is a resolution failure wearing a valid-looking value, and a
+ * predicate built from it widens rather than narrows.
+ *
+ * Deliberately additive: `authedOrgId` and `requireAuthedOrgId` keep their
+ * existing behaviour, because callers depend on it.
+ */
+export function usableOrgId(value: unknown): number | null {
+  const n = typeof value === 'number' ? value : Number(value);
+  return Number.isSafeInteger(n) && n > 0 ? n : null;
+}
+
 interface RequireOk {
   ok: true;
   orgId: number;

@@ -689,8 +689,8 @@ export function LabelingPI({ onAsk }: SurfaceViewProps) {
           {neg && (
             <div className="lp-neg">
               <div className="lp-neg-h">
-                <span className="lp-neg-t">{I.gitBranch || I.alertTriangle} Agency labeling negotiation -- §{active}</span>
-                <span className="lp-neg-m">{neg.round} -- {neg.cycle}</span>
+                <span className="lp-neg-t">{I.gitBranch || I.alertTriangle} Agency labeling negotiation — §{active}</span>
+                <span className="lp-neg-m">{neg.round} — {neg.cycle}</span>
               </div>
               <div className="lp-neg-diff">
                 <div className="lp-neg-row sponsor"><span className="lp-neg-tag">Sponsor</span><p>{neg.sponsor}</p></div>

@@ -50,6 +50,7 @@ for (const proto of [Range.prototype, Element.prototype, Text.prototype] as unkn
 }
 
 import { DocumentAuthoring } from '../surfaces/DocumentAuthoring';
+import { collectSuggestions } from '../editor/suggestions';
 import type { Editor } from '@tiptap/core';
 
 const ok = (payload: unknown) => ({ ok: true, status: 200, json: async () => payload }) as Response;
@@ -339,5 +340,146 @@ describe('the record is only ever written by a deliberate act', () => {
     // "unsaved changes" alone reads as "the app will get to it". It will not:
     // nothing leaves this device until the author saves.
     await waitFor(() => expect(mastMeta()).toMatch(/on this device/i));
+  });
+});
+
+describe('the guard names decisions already recorded, not just unsaved text', () => {
+  /**
+   * Accepting a suggestion strips its mark and POSTs the decision immediately
+   * — independent of Save. The decision is permanent on the audit trail the
+   * moment that POST lands; only the SECTION CONTENT reflecting it waits for
+   * an explicit save. So a reviewer who accepts and then leaves without saving
+   * leaves behind an audit trail that says "accepted" while the saved section
+   * still shows the change as pending. The guard has to say so — "your edits
+   * are cached on this device" is true of ordinary typing, and false of what
+   * actually happened here: a permanent record already exists.
+   */
+  const SUGGESTION_SECTIONS = {
+    success: true,
+    sections: [
+      ...SECTIONS.sections,
+      {
+        id: 'S3',
+        doc_id: 'D1',
+        code: '3.2.S.3',
+        title: 'Elucidation of Structure',
+        content:
+          'The impurity is below the qualification threshold. ' +
+          '<ins data-author-id="ana" data-author-name="AnA (AI draft)" data-at="2026-07-20T10:05:00.000Z">Confirmed by MS/NMR.</ins>',
+        order_index: 2,
+        comment_count: 0,
+        revision_count: 1,
+        citation_count: 0,
+        updated_at: '2026-07-20T10:00:00Z',
+      },
+    ],
+  };
+
+  function mockApiWithSuggestion() {
+    apiRequest.mockImplementation(async (method: string, url: string, body?: unknown) => {
+      if (method === 'GET' && url.startsWith('/api/authoring/docs?')) return ok(DOCS);
+      if (method === 'GET' && url === '/api/authoring/docs/D1/sections') return ok(SUGGESTION_SECTIONS);
+      if (method === 'GET' && url.startsWith('/api/authoring/sections/'))
+        return ok({ success: true, revisions: [], sources: [], citations: [] });
+      if (method === 'GET' && url.startsWith('/api/authoring/documents/D1/comments'))
+        return ok({ success: true, comments: [] });
+      if (method === 'PATCH' && url.startsWith('/api/authoring/sections/')) {
+        const id = url.split('/').pop();
+        const row = SUGGESTION_SECTIONS.sections.find(s => s.id === id)!;
+        return ok({
+          success: true,
+          revision_created: true,
+          section: { ...row, content: String((body as { content?: string })?.content ?? row.content) },
+        });
+      }
+      return ok({ success: true });
+    });
+  }
+
+  /** Accept the one suggestion in the open section via the same command
+   *  RichSectionEditor's review strip uses (RichSectionEditor.tsx). */
+  function acceptTheSuggestion() {
+    const ed = canvasEditor();
+    const [target] = collectSuggestions(ed.state.doc);
+    if (!target) throw new Error('no suggestion mark found in the mounted section');
+    ed.commands.resolveSuggestion(target, 'accept');
+  }
+
+  function decisionPosts(): unknown[][] {
+    return apiRequest.mock.calls.filter(
+      c => c[0] === 'POST' && String(c[1]).includes('/tracked-change-decisions'),
+    );
+  }
+
+  beforeEach(() => {
+    mockApiWithSuggestion();
+  });
+
+  it('accepting, then leaving without saving, names the recorded decision', async () => {
+    render(<DocumentAuthoring {...props()} />);
+    fireEvent.click(await screen.findByRole('button', { name: /3\.2\.S\.3/ }));
+    await waitFor(() => expect(openSectionCode()).toBe('3.2.S.3'));
+
+    acceptTheSuggestion();
+    // The decision POSTs on a microtask, independent of any save.
+    await waitFor(() => expect(decisionPosts()).toHaveLength(1));
+    // Accepting strips the mark, which changes the serialization — the editor
+    // goes dirty from the decision alone, with no further typing.
+    await waitFor(() => expect(mastMeta()).toMatch(/on this device/i));
+
+    fireEvent.click(screen.getByRole('button', { name: /3\.2\.S\.1\s*General Information/ }));
+    const guard = await screen.findByRole('alertdialog', { name: /unsaved changes/i });
+    expect(within(guard).getByText(/One tracked-change decision/i)).toBeTruthy();
+    expect(
+      within(guard).getByText(/already recorded to the audit trail/i),
+    ).toBeTruthy();
+
+    // Leaving without saving does not touch the decision already recorded —
+    // it is not re-sent, not retracted, just left as the only record of what
+    // happened.
+    fireEvent.click(within(guard).getByRole('button', { name: /Leave without saving/i }));
+    await waitFor(() => expect(openSectionCode()).toBe('3.2.S.1'));
+    expect(decisionPosts()).toHaveLength(1);
+  });
+
+  it('an ordinary text edit with no decision does not claim one was recorded', async () => {
+    render(<DocumentAuthoring {...props()} />);
+    fireEvent.click(await screen.findByRole('button', { name: /3\.2\.S\.3/ }));
+    await waitFor(() => expect(openSectionCode()).toBe('3.2.S.3'));
+
+    canvasEditor().chain().focus().insertContentAt(0, 'Prefixed. ').run();
+    await waitFor(() => expect(mastMeta()).toMatch(/on this device/i));
+
+    fireEvent.click(screen.getByRole('button', { name: /3\.2\.S\.1\s*General Information/ }));
+    const guard = await screen.findByRole('alertdialog', { name: /unsaved changes/i });
+    // The paragraph this fix adds is conditional on pendingDecisionCount > 0;
+    // an ordinary edit must not trigger it.
+    expect(within(guard).queryByText(/tracked-change decision/i)).toBeNull();
+    expect(decisionPosts()).toHaveLength(0);
+  });
+
+  it('saving closes out the count — a LATER unrelated edit does not resurrect the old decision count', async () => {
+    render(<DocumentAuthoring {...props()} />);
+    fireEvent.click(await screen.findByRole('button', { name: /3\.2\.S\.3/ }));
+    await waitFor(() => expect(openSectionCode()).toBe('3.2.S.3'));
+
+    acceptTheSuggestion();
+    await waitFor(() => expect(decisionPosts()).toHaveLength(1));
+    fireEvent.change(screen.getByTestId('change-reason'), {
+      target: { value: 'Accepted the confirmed structure elucidation note.' },
+    });
+    await waitFor(() => expect(headerSave().disabled).toBe(false));
+    fireEvent.click(headerSave());
+    await waitFor(() => expect(screen.queryByText(/Saving…/)).toBeNull());
+
+    // A second, unrelated edit after the save.
+    canvasEditor().chain().focus().insertContentAt(0, 'One more note. ').run();
+    await waitFor(() => expect(mastMeta()).toMatch(/on this device/i));
+
+    fireEvent.click(screen.getByRole('button', { name: /3\.2\.S\.1\s*General Information/ }));
+    const guard = await screen.findByRole('alertdialog', { name: /unsaved changes/i });
+    // The save closed out the earlier decision; this dirty state is from the
+    // unrelated edit alone.
+    expect(within(guard).queryByText(/tracked-change decision/i)).toBeNull();
   });
 });

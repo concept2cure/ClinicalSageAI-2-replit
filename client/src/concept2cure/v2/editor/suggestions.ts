@@ -572,6 +572,25 @@ interface TrackChangesStorage {
    * resulting content carries no contribution from the proposer.
    */
   acceptedAuthors: SuggestionAuthor[];
+  /**
+   * The TEXT of every insertion accepted since the last save, with the author
+   * it was accepted from.
+   *
+   * `acceptedAuthors` says WHO contributed to a save. It cannot say which
+   * words, and the lineage table records provenance per clause — so with the
+   * authors alone, every AnA clause is still written down as the reviewer's own
+   * assertion. The save carries these texts to the server, which attributes a
+   * clause to the machine only when the clause is verbatim inside one of them
+   * AND in the saved content. Kept per insertion, not per author, because two
+   * accepted drafts from the same author are two texts.
+   */
+  acceptedInsertions: AcceptedInsertion[];
+}
+
+/** One accepted insertion: whose it was, and what it said. */
+export interface AcceptedInsertion {
+  authorId: string;
+  text: string;
 }
 
 const trackKey = new PluginKey('c2cTrackChanges');
@@ -611,10 +630,16 @@ export function rememberAcceptedAuthor(
   action: 'accept' | 'reject',
   authorId: string | null,
   authorName: string | null,
+  text: string,
 ): void {
   if (kind !== 'insertion' || action !== 'accept') return;
   if (!authorId && !authorName) return;
   const id = authorId ?? authorName!;
+  // The text first, per insertion — before the once-per-author return below,
+  // or a second accepted draft from the same author would lose its words.
+  if (typeof text === 'string' && text.trim().length > 0) {
+    store.acceptedInsertions.push({ authorId: id, text });
+  }
   if (store.acceptedAuthors.some((a) => a.id === id)) return;
   store.acceptedAuthors.push({ id, name: authorName ?? id });
 }
@@ -738,7 +763,7 @@ export const TrackChanges = Extension.create<
   },
 
   addStorage() {
-    return { enabled: this.options.enabled, author: this.options.author, acceptedAuthors: [] };
+    return { enabled: this.options.enabled, author: this.options.author, acceptedAuthors: [], acceptedInsertions: [] };
   },
 
   addExtensions() {
@@ -764,7 +789,7 @@ export const TrackChanges = Extension.create<
         (range: SuggestionRange, action: 'accept' | 'reject') =>
         ({ state, tr, dispatch }) => {
           const { insertion, deletion } = state.schema.marks;
-          rememberAcceptedAuthor(this.storage, range.kind, action, range.authorId, range.authorName);
+          rememberAcceptedAuthor(this.storage, range.kind, action, range.authorId, range.authorName, range.text);
           /* Before the mark is stripped, for the same reason
              rememberAcceptedAuthor is: stripping it erases the text and the
              attribution the decision record is about. */
@@ -790,7 +815,7 @@ export const TrackChanges = Extension.create<
           const removedAt: number[] = [];
           // Descending order so earlier positions stay valid as text is removed.
           for (const r of [...ranges].sort((a, b) => b.from - a.from)) {
-            rememberAcceptedAuthor(this.storage, r.kind, action, r.authorId, r.authorName);
+            rememberAcceptedAuthor(this.storage, r.kind, action, r.authorId, r.authorName, r.text);
             notifyResolved(this.options.onResolve, r, action);
             const keepText = (r.kind === 'insertion') === (action === 'accept');
             if (keepText) {

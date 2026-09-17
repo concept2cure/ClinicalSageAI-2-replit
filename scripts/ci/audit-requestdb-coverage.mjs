@@ -87,10 +87,45 @@ const EXPLICIT_PRE_TENANT_SCOPE_FILES = new Set([
 const ROUTES_DIR = path.join(repoRoot, 'server', 'routes');
 
 // ─── Detection ───────────────────────────────────────────────────────────────
-// Shared pool-bound `db` import: `import { db } from '../db'` /'../../db'
-// /'../db/runtime'`, including multi-binding forms like `{ db, pool }`.
-const SHARED_DB_IMPORT_RE =
-  /import\s*\{[^}]*\bdb\b[^}]*\}\s*from\s*['"](?:\.\.\/)+db(?:\/runtime)?['"]/;
+/**
+ * A module specifier that resolves to the shared database module.
+ *
+ * WIDENED 2026-09-10. The previous form was
+ *   /import\s*\{[^}]*\bdb\b[^}]*\}\s*from\s*['"](?:\.\.\/)+db(?:\/runtime)?['"]/
+ * which required the binding to be literally `db`, inside braces, from a
+ * specifier with no file extension. It therefore saw ONE of the shapes a route
+ * actually uses. It missed `from '../db.js'`, `from '../../db/runtime.js'`,
+ * `import { pool }`, `import { query }`, `import * as dbmod`, and
+ * `const { db } = require('../db')`.
+ *
+ * That is not a hypothetical gap. `server/routes/tenant-section-gating.ts` runs
+ * EIGHT `pool.query(...)` calls on the shared pool and dropped out of this
+ * gate's backlog when an unused-import cleanup rewrote
+ *   `import { db, pool } from '../db'`  ->  `import { pool } from '../db'`.
+ * Nothing was migrated; the gate simply stopped being able to see it, and then
+ * offered to ratchet the backlog down. A ratchet that can be moved by deleting
+ * an unused identifier is not measuring what it claims to measure.
+ *
+ * `pool`, `query` and `transaction` count alongside `db`: each is a shared-pool
+ * handle, and a route holding any of them is on the shared pool no matter which
+ * noun it imported.
+ */
+const SHARED_DB_MODULE = String.raw`(?:\.\.?\/)+db(?:\/runtime)?(?:\.[cm]?[jt]s)?`;
+const SHARED_BINDING = String.raw`(?:db|pool|query|transaction)`;
+
+const SHARED_DB_IMPORT_RES = [
+  // import { db } / { db, pool } / { pool as p } from '../db(.js)'
+  new RegExp(String.raw`import\s*\{[^}]*\b${SHARED_BINDING}\b[^}]*\}\s*from\s*['"]${SHARED_DB_MODULE}['"]`),
+  // import * as anything from '../db'  — the namespace carries every binding
+  new RegExp(String.raw`import\s+\*\s+as\s+\w+\s+from\s*['"]${SHARED_DB_MODULE}['"]`),
+  // const { db } = require('../db') / require('../db.js')
+  new RegExp(String.raw`(?:const|let|var)\s*\{[^}]*\b${SHARED_BINDING}\b[^}]*\}\s*=\s*require\(\s*['"]${SHARED_DB_MODULE}['"]`),
+  // await import('../db') destructured or assigned
+  new RegExp(String.raw`import\(\s*['"]${SHARED_DB_MODULE}['"]\s*\)`),
+];
+
+const matchesSharedDbImport = (src) => SHARED_DB_IMPORT_RES.some((re) => re.test(src));
+
 const GETDB_RE = /\b(?:getDb|getPool)\s*\(/;
 /**
  * `requestPgClient` counts too. It is declared in the same module as
@@ -130,7 +165,7 @@ for (const file of walk(ROUTES_DIR)) {
   const text = fs.readFileSync(file, 'utf8');
 
   const usesRequestDb = REQUESTDB_RE.test(text);
-  const usesSharedPool = SHARED_DB_IMPORT_RE.test(text) || GETDB_RE.test(text);
+  const usesSharedPool = matchesSharedDbImport(text) || GETDB_RE.test(text);
 
   if (usesRequestDb) usingRequestDb.push(rel);
   if (usesRequestDb || usesSharedPool) routeFilesTouchingDb += 1;

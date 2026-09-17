@@ -103,6 +103,17 @@ async function baseSchemaFixture(): Promise<PGlite> {
   // the fixture has to present the same starting state or it fails the set for
   // a gap of its own making.
   await safe(readMig('db/migrations/20260730_manufacturing_processes_reconstruction.sql'));
+  // Same class again, for the same reason, and it is worth stating plainly
+  // because this is now the fourth: estar_submissions is created at index 58 of
+  // the set — before BATCH_START at index 70 — so the batch slice never sees its
+  // creator. migrations/20260908b_estar_submissions_filed_artifact.sql, at index
+  // 255 and IN the batch, does `ALTER TABLE estar_submissions ADD COLUMN IF NOT
+  // EXISTS …`, and ADD COLUMN IF NOT EXISTS does not guard the TABLE's existence
+  // — so pass 1 aborted there and the whole RLS-coverage proof below stopped
+  // running. A real deploy applies the creator first and is unaffected; the
+  // fixture has to present the same starting state or it fails the set for a gap
+  // of its own making.
+  await safe(readMig('migrations/20260730_estar_submission.sql'));
   return pg;
 }
 

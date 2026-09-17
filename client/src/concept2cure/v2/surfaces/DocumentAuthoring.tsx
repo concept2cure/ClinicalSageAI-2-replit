@@ -995,6 +995,18 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
   /** Decisions awaiting their coalesced flush, and whether one is scheduled. */
   const pendingDecisionsRef = useRef<SuggestionDecision[]>([]);
   const decisionFlushRef = useRef(false);
+  /**
+   * Accept/reject decisions recorded for the CURRENT section since it was last
+   * saved. Every decision POSTs and audits immediately — independent of
+   * whether the content that reflects it has been saved (accepting strips the
+   * mark from the live editor doc; only Save/⌘S/the guard's Save persists
+   * that). So a reviewer can accept N changes, then leave without saving, and
+   * the audit trail permanently records N acceptances while the saved section
+   * still shows them pending. This count exists only to make the unsaved-work
+   * guard say so — see UnsavedWorkGuard below — never to block or alter the
+   * decision itself. Reset in applyNav: it belongs to the section being left,
+   * not the one about to be entered. */
+  const pendingDecisionCountRef = useRef(0);
   useEffect(() => {
     activeSectionIdRef.current = activeSectionId ?? null;
   });
@@ -1125,6 +1137,10 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
     // The editor's dirty flag belongs to the mount that is going away; clear
     // it first so the guard cannot re-fire against the section just left.
     setEditorDirty(false);
+    // Same reason: the count of decisions-since-last-save belongs to the
+    // section being left, whether or not it was saved first. The next section
+    // starts its own count at zero.
+    pendingDecisionCountRef.current = 0;
     // The create/export module follows where the author actually IS, so it
     // moves with the navigation and not with the click that proposed one.
     if (target.module) setModule(target.module);
@@ -2202,6 +2218,12 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
            whoever pressed accept. Read-and-clear: an author counts once, for
            the save that carried their text in. */
         const acceptedAuthors = editorRef.current?.takeAcceptedAuthors?.() ?? [];
+        /* And the accepted text itself, per insertion. The author list says
+           WHO contributed to this save; this says WHICH words, so the lineage
+           gate can record the machine's clauses as the machine's. The server
+           keeps only machine authors it names — a colleague's accepted text is
+           simply the document. */
+        const acceptedMachineText = editorRef.current?.takeAcceptedInsertions?.() ?? [];
         /* The concurrency token. `updated_at` is the value THIS editor loaded;
            the server refuses with 409 SECTION_CHANGED if the row has moved
            since. Without it the PATCH is a blind last-write-wins, and two
@@ -2218,6 +2240,7 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
           content: serialized,
           ...(activeSection.updated_at ? { expectedUpdatedAt: activeSection.updated_at } : {}),
           ...(acceptedAuthors.length ? { acceptedAuthors } : {}),
+          ...(acceptedMachineText.length ? { acceptedMachineText } : {}),
           ...(reasonForChange ? { changeReason: reasonForChange } : {}),
         });
         const json = await res.json().catch(() => null);
@@ -2254,6 +2277,11 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
             s.id === activeSection.id ? { ...s, ...(adopted ?? {}), content: persisted } : s
           )
         );
+        // This save just persisted whatever content reflects any decisions
+        // made since the section was last saved — the unsaved-work guard's
+        // count belongs to what is still unsaved, not to what this save
+        // just closed out.
+        pendingDecisionCountRef.current = 0;
         /* "a revision was recorded" was asserted from the 2xx alone. The
            server mints the revision in the same transaction and returns the
            row's counter; the sentence now names what came back, and defers to
@@ -2935,6 +2963,7 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
          reviewer action becomes one write — the bulk endpoint exists for
          exactly this and records it as the single act it was. */
       pendingDecisionsRef.current.push(d);
+      pendingDecisionCountRef.current += 1;
       if (decisionFlushRef.current) return;
       decisionFlushRef.current = true;
       queueMicrotask(() => {
@@ -5013,6 +5042,7 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
               : sections.find(s => s.id === pendingLeave.id)?.code ?? 'another section'
           }
           saving={leaving}
+          pendingDecisionCount={pendingDecisionCountRef.current}
           onSave={() => void saveAndLeave()}
           onLeave={leaveUnsaved}
           onCancel={() => setPendingLeave(null)}
@@ -5034,6 +5064,7 @@ function UnsavedWorkGuard({
   sectionTitle,
   destination,
   saving,
+  pendingDecisionCount,
   onSave,
   onLeave,
   onCancel,
@@ -5042,6 +5073,10 @@ function UnsavedWorkGuard({
   sectionTitle: string;
   destination: string;
   saving: boolean;
+  /** Accept/reject decisions recorded for this section since it was last
+   *  saved — already permanent on the audit trail regardless of what the
+   *  author chooses here. Zero when nothing has been decided this session. */
+  pendingDecisionCount: number;
   onSave: () => void;
   onLeave: () => void;
   onCancel: () => void;
@@ -5072,6 +5107,18 @@ function UnsavedWorkGuard({
           Your edits to {sectionCode} {sectionTitle} are cached on this device and are not in the
           record. Opening {destination} closes this section.
         </p>
+        {pendingDecisionCount > 0 && (
+          <p className="ed-guard-d">
+            {pendingDecisionCount === 1
+              ? 'One tracked-change decision in this section was'
+              : `${pendingDecisionCount} tracked-change decisions in this section were`}{' '}
+            already recorded to the audit trail. Leaving without saving keeps{' '}
+            {pendingDecisionCount === 1 ? 'that decision' : 'those decisions'} on record while the
+            section's saved content still shows {pendingDecisionCount === 1 ? 'it' : 'them'} as
+            pending — deciding {pendingDecisionCount === 1 ? 'it' : 'them'} again later replaces
+            this record rather than conflicting with it.
+          </p>
+        )}
         <p className="ed-guard-d">
           Saving records an auditable revision attributed to you. Leaving keeps the edits on this
           device only — this browser, on this machine — and offers them back when you return to the

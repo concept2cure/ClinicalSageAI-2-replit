@@ -13,9 +13,9 @@ import type { M2Summary } from '../../m2-summary-builders';
 
 const m2Ready: M2QcResult = { ready: true, checked: ['2.3', '2.4'], missingSummaries: [], completenessByKey: {}, findings: [], counts: { errors: 0, warnings: 0 } };
 const m2NotReady: M2QcResult = { ...m2Ready, ready: false, counts: { errors: 2, warnings: 0 } };
-const m4Ready: M4QcResult = { ready: true, checked: ['TX-1'], disciplinesPresent: ['toxicology'], missingCoverage: [], findings: [], counts: { errors: 0, warnings: 1 } };
+const m4Ready: M4QcResult = { ready: true, assessed: true, checked: ['TX-1'], disciplinesPresent: ['toxicology'], missingCoverage: [], findings: [], counts: { errors: 0, warnings: 1 } };
 const m4NotReady: M4QcResult = { ...m4Ready, ready: false, counts: { errors: 1, warnings: 0 } };
-const m5Ready: M5QcResult = { ready: true, checked: ['STUDY-1'], phasesPresent: ['1'], missingPhases: [], findings: [], counts: { errors: 0, warnings: 0 } };
+const m5Ready: M5QcResult = { ready: true, assessed: true, checked: ['STUDY-1'], phasesPresent: ['1'], missingPhases: [], findings: [], counts: { errors: 0, warnings: 0 } };
 const m5NotReady: M5QcResult = { ...m5Ready, ready: false, counts: { errors: 1, warnings: 0 } };
 const m1Ready: M1QcResult = { ready: true, present: ['FDA_1571', 'FDA_1572', 'FDA_3674'], missingForms: [], findings: [], counts: { errors: 0, warnings: 0 } };
 const m1NotReady: M1QcResult = { ...m1Ready, ready: false, counts: { errors: 1, warnings: 0 } };
@@ -98,6 +98,61 @@ describe('aggregateCtdAuthoringReadiness', () => {
       expect(res.ready).toBe(false);
       const ff = res.findings.find((f) => f.code === 'FEED_FORWARD');
       expect(ff?.message).toContain('4.2.3.4');
+    });
+
+    it('a report at the module ROOT does not vouch for every 4.2.x citation', () => {
+      /* THE CHECK THAT DEFEATED ITSELF. The trace test was
+         `s === cited || s.startsWith(cited) || cited.startsWith(s)` — a
+         BIDIRECTIONAL prefix match. The third clause lets a general section
+         stand in for a specific citation, so a single report recorded at the
+         bare '4.2' traced every 4.2.x citation in the overview.
+
+         '4.2' is not a hypothetical value. `ctdSection()` in
+         nonclinical-study-report-builder returns `map[studyType] ?? '4.2'`, so
+         every study type outside its 17-key map — immunotoxicity,
+         phototoxicity, juvenile toxicity, antigenicity, dependence, metabolite
+         and impurity studies, all ordinary in a real program — lands there.
+         runM4NonclinicalQc's PLACEMENT check then requires the report be filed
+         at exactly that section, so the QC itself pushes '4.2' into
+         m4ReportSections. From that point the feed-forward check passed over
+         every citation in Module 4 and the report printed
+         "READY — no blocking findings". */
+      const res = aggregateCtdAuthoringReadiness({
+        m2: m2Ready,
+        m4: m4Ready,
+        // Neither repeat-dose toxicology nor genotoxicity exists in this program.
+        m24Summary: m24(['4.2.3.2', '4.2.3.3']),
+        m4ReportSections: ['4.2'],
+      });
+      const ff = res.findings.filter((f) => f.code === 'FEED_FORWARD');
+      expect(ff.map((f) => f.message).join(' ')).toContain('4.2.3.2');
+      expect(ff.map((f) => f.message).join(' ')).toContain('4.2.3.3');
+      expect(ff).toHaveLength(2);
+      expect(res.ready).toBe(false);
+    });
+
+    it('a MORE SPECIFIC report still satisfies a broader citation', () => {
+      // The other direction is legitimate and must keep working: an overview
+      // citing 4.2.3.2 is answered by a report filed at 4.2.3.2.1.
+      const res = aggregateCtdAuthoringReadiness({
+        m2: m2Ready,
+        m4: m4Ready,
+        m24Summary: m24(['4.2.3.2']),
+        m4ReportSections: ['4.2.3.2.1'],
+      });
+      expect(res.findings.some((f) => f.code === 'FEED_FORWARD')).toBe(false);
+    });
+
+    it('matches on section boundaries, not on characters', () => {
+      // '4.2.3' must not be traced by a report at '4.2.30' — a raw startsWith
+      // says it is.
+      const res = aggregateCtdAuthoringReadiness({
+        m2: m2Ready,
+        m4: m4Ready,
+        m24Summary: m24(['4.2.3']),
+        m4ReportSections: ['4.2.30'],
+      });
+      expect(res.findings.some((f) => f.code === 'FEED_FORWARD')).toBe(true);
     });
 
     it('is skipped when the feed-forward inputs are not supplied', () => {

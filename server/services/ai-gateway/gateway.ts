@@ -19,6 +19,11 @@ import {
   isOverloadStatus,
   OVERLOAD_BASE_DELAY_MS,
 } from './retry-policy.js';
+import {
+  fitsContextWindow,
+  GatewayContextWindowError,
+  type ContextWindowFit,
+} from './context-budget.js';
 import OpenAI from 'openai';
 import Anthropic from '@anthropic-ai/sdk';
 import type {
@@ -563,30 +568,52 @@ export class AIGateway {
     let lastError: Error | null = null;
     const triedModels: string[] = [];
 
+    // Context-window admission (context-budget.ts). A model that cannot hold
+    // the request is skipped BEFORE any SDK call: it goes on the tried list so
+    // the fallback chain moves past it, and it is recorded here so the final
+    // error can say so — but it is NOT a provider failure, so it never reaches
+    // recordFailure and never pushes a healthy provider toward the breaker.
+    // The request may still fit a model with a larger window further down the
+    // chain; that is the graceful path, and the only reason to keep going.
+    const refusedForSize: ContextWindowFit[] = [];
+    const admit = (model: ModelConfig): boolean => {
+      const fit = fitsContextWindow(request, model);
+      if (fit.fits) return true;
+      refusedForSize.push(fit);
+      triedModels.push(model.id);
+      log.warn(
+        `[AI Gateway] ${model.provider}/${model.model} skipped: request is ~${fit.estimatedTokens} tokens, ` +
+          `its context window is ${model.contextWindow}`
+      );
+      return false;
+    };
+
     // Try primary model (per-request retry: 2 attempts, 1s base delay for
     // non-streaming). Streaming is not retried — replaying would re-emit tokens
     // already delivered to request.onStream.
     const isStreaming = Boolean(request.stream && request.onStream);
     const primaryRetries = gatewayRetryAttempts(isStreaming);
     const overloadPolicy = { maxRetries: overloadRetryAttempts(isStreaming), baseDelayMs: OVERLOAD_BASE_DELAY_MS };
-    try {
-      const response = await this.retryWithBackoff(
-        () => this.executeProvider(selectedModel, request, requestId, startTime), primaryRetries, 1000, overloadPolicy
-      );
-      this.recordSuccess(selectedModel.provider, response.latencyMs);
-      this.recordTenantUsage(request, response, true);
-      await this.logAudit(request, response, strategy, true, undefined, triedModels, contentPolicy);
-      return response;
-    } catch (error: any) {
-      // Policy denials are terminal. Never retry or cross-provider fallback:
-      // doing so would turn a placement refusal into a routing hint.
-      if (error instanceof GatewayPolicyError) throw error;
-      lastError = error;
-      triedModels.push(selectedModel.id);
-      this.recordFailure(selectedModel.provider, error);
-      log.warn(
-        `[AI Gateway] ${selectedModel.provider}/${selectedModel.model} failed: ${error.message}`
-      );
+    if (admit(selectedModel)) {
+      try {
+        const response = await this.retryWithBackoff(
+          () => this.executeProvider(selectedModel, request, requestId, startTime), primaryRetries, 1000, overloadPolicy
+        );
+        this.recordSuccess(selectedModel.provider, response.latencyMs);
+        this.recordTenantUsage(request, response, true);
+        await this.logAudit(request, response, strategy, true, undefined, triedModels, contentPolicy);
+        return response;
+      } catch (error: any) {
+        // Policy denials are terminal. Never retry or cross-provider fallback:
+        // doing so would turn a placement refusal into a routing hint.
+        if (error instanceof GatewayPolicyError) throw error;
+        lastError = error;
+        triedModels.push(selectedModel.id);
+        this.recordFailure(selectedModel.provider, error);
+        log.warn(
+          `[AI Gateway] ${selectedModel.provider}/${selectedModel.model} failed: ${error.message}`
+        );
+      }
     }
 
     // Try fallback models — same provider first (quality-desc), then cross-provider.
@@ -596,6 +623,7 @@ export class AIGateway {
       selectedModel.provider,
     );
     for (const fallback of fallbacks) {
+      if (!admit(fallback)) continue;
       try {
         log.debug(`[AI Gateway] Falling back to ${fallback.provider}/${fallback.model}`);
         const response = await this.retryWithBackoff(
@@ -628,13 +656,28 @@ export class AIGateway {
       deterministic: false,
       finishReason: 'error',
     };
+    // When every candidate was refused for size, no provider was ever called.
+    // That is not "all providers failed" — it is "this request cannot be served
+    // in one call" — and it is reported as such, with the numbers the caller
+    // needs to fix it, instead of being dressed as a provider outage.
+    const sizeRefusal =
+      lastError === null && refusedForSize.length > 0
+        ? new GatewayContextWindowError(refusedForSize)
+        : null;
+    const skippedForSize =
+      refusedForSize.length > 0
+        ? ` Skipped for size: ${refusedForSize
+            .map((r) => `${r.provider}/${r.model} (${r.contextWindow}-token window)`)
+            .join(', ')}.`
+        : '';
     this.recordTenantUsage(request, errorResponse, false);
     await this.logAudit(
-      request, errorResponse, strategy, false, lastError?.message, triedModels, contentPolicy
+      request, errorResponse, strategy, false, (sizeRefusal ?? lastError)?.message, triedModels, contentPolicy
     );
 
+    if (sizeRefusal) throw sizeRefusal;
     throw new GatewayAllProvidersFailedError(
-      `All models failed. Tried: ${triedModels.join(', ')}. Last error: ${lastError?.message}`
+      `All models failed. Tried: ${triedModels.join(', ')}. Last error: ${lastError?.message}.${skippedForSize}`
     );
   }
 

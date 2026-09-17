@@ -16,6 +16,14 @@
  * - inconsistency: Cross-reference mismatches detected
  * - readiness_gap: Module-level gaps in submission readiness
  * - next_best_action: Highest-impact next step
+ *
+ * Every rule here is deterministic: it matched project state, or it did not.
+ * So every recommendation is reported as `sourceType: 'rules_based'` with
+ * `confidence: null`. Until WO-16C finding 124 each analyzer instead stamped a
+ * per-rule literal (0.95 / 0.9 / 0.85 / 0.8 / 0.7) that nothing computed; that
+ * constant was the intra-severity tie-break AND was painted as an unlabeled
+ * "95%" chip on the AnA Command surface. Ordering now uses the declared
+ * RULE_PRECEDENCE below, which states its own basis.
  */
 
 import { generateUUID } from '../../utils/id-generator';
@@ -44,6 +52,36 @@ const MIN_DOCS_PER_MODULE: Record<string, number> = {
   'Module 3': 4,
   'Module 4': 3,
   'Module 5': 4,
+};
+
+/**
+ * Tie-break order WITHIN one severity band, lowest first.
+ *
+ * The basis is stated rather than scored: how much the item blocks a
+ * submission. A failed validation and a document that was never validated stop
+ * a filing outright; a module short of its expected content is a gap in the
+ * dossier; a late or stalled task is schedule risk; weak content is a quality
+ * risk; an unrouted document is a filing chore; stale content is a review
+ * reminder. `next_best_action` restates whichever recommendation is already
+ * top of the list, so it sits last in its band rather than duplicating ahead
+ * of the item it points at.
+ *
+ * `missing_content` and `inconsistency` are declared in the shared type but no
+ * analyzer here emits them yet; they are ranked with their nearest kin so the
+ * table stays exhaustive.
+ */
+const RULE_PRECEDENCE: Record<RecommendationType, number> = {
+  validation_failure: 1,
+  unvalidated_content: 2,
+  missing_content: 3,
+  readiness_gap: 4,
+  overdue_task: 5,
+  blocked_workflow: 6,
+  weak_content: 7,
+  inconsistency: 8,
+  unrouted_document: 9,
+  stale_content: 10,
+  next_best_action: 11,
 };
 
 // ---------------------------------------------------------------------------
@@ -86,12 +124,15 @@ export function generateRecommendations(
     filtered = filtered.filter((r) => severityOrder.indexOf(r.severity) <= minIdx);
   }
 
-  // Sort by severity, then confidence
+  // Sort by severity, then by the declared rule precedence. These rules carry
+  // no score, so there is nothing to sort by except an order this file states
+  // (RULE_PRECEDENCE); ties inside one rule keep payload order, and
+  // Array.prototype.sort is stable, so the result is deterministic.
   filtered.sort((a, b) => {
     const sevOrder = ['critical', 'high', 'medium', 'low', 'info'];
     const sevDiff = sevOrder.indexOf(a.severity) - sevOrder.indexOf(b.severity);
     if (sevDiff !== 0) return sevDiff;
-    return b.confidence - a.confidence;
+    return RULE_PRECEDENCE[a.recommendationType] - RULE_PRECEDENCE[b.recommendationType];
   });
 
   // Limit
@@ -148,7 +189,6 @@ function analyzeUnvalidatedContent(
         actionType: 'run_validation' as AIActionType,
         payload: { targetId: d.id, targetType: 'artifact' },
       },
-      confidence: 0.95,
       module: d.module,
       now,
     })
@@ -180,7 +220,6 @@ function analyzeUnroutedDocuments(
         actionType: 'route_document_to_module' as AIActionType,
         payload: { targetId: d.id, targetType: 'document' },
       },
-      confidence: 0.9,
       now,
     })
   );
@@ -211,7 +250,6 @@ function analyzeStaleContent(
           `Stale threshold: ${STALE_THRESHOLD_DAYS} days`,
         ],
         suggestedAction: 'Review and update this document',
-        confidence: 0.7,
         module: d.module,
         now,
       })
@@ -246,7 +284,6 @@ function analyzeValidationFailures(
           actionType: 'refine_with_validation' as AIActionType,
           payload: { targetId: v.documentId, findings: v.findings },
         },
-        confidence: 0.95,
         now,
       });
     });
@@ -278,7 +315,6 @@ function analyzeModuleGaps(
             ...m.missingItems.slice(0, 3),
           ],
           suggestedAction: `Draft or assign content to ${m.module}`,
-          confidence: 0.85,
           module: m.module,
           now,
         })
@@ -309,7 +345,6 @@ function analyzeBlockedTasks(
           t.assignee ? `Assigned to: ${t.assignee}` : 'Unassigned',
         ],
         suggestedAction: 'Investigate and resolve the blocking issue',
-        confidence: 0.9,
         module: t.module,
         now,
       })
@@ -336,7 +371,6 @@ function analyzeOverdueTasks(
           `Priority: ${t.priority}`,
         ],
         suggestedAction: 'Complete or reschedule this task',
-        confidence: 0.95,
         module: t.module,
         now,
       })
@@ -367,7 +401,6 @@ function analyzeWeakContent(
           actionType: 'refine_with_validation' as AIActionType,
           payload: { targetId: v.documentId, findings: v.findings },
         },
-        confidence: 0.8,
         now,
       })
     );
@@ -397,13 +430,29 @@ function deriveNextBestAction(
         actionType: 'submission_readiness_review' as WorkflowTemplateId,
         payload: { projectId: payload.scope.projectId },
       },
-      confidence: 0.7,
       now,
     });
   }
 
-  // Pick the highest-impact unresolved recommendation
-  const top = recs[0]; // Already sorted by severity
+  // WO-16C #124 follow-up. This read `recs[0]` under the comment "Already
+  // sorted by severity". Nothing had sorted it: deriveNextBestAction is called
+  // from generateRecommendations BEFORE the sort, so recs[0] was whichever
+  // analyzer happened to run first — and the card it builds says
+  // "Highest-priority action", a ranking claim nothing had computed. Same class
+  // as the fabricated confidence this card carried until #124 removed it.
+  //
+  // Unlike most of this work order there IS a real computation available: the
+  // engine declares its own priority order, severity then RULE_PRECEDENCE, and
+  // sorts by exactly that a few lines later. Using it here makes the claim true
+  // rather than deleting it. Sorting a copy keeps this function free of side
+  // effects on its caller's array.
+  const SEVERITY_ORDER: RecommendationSeverity[] = ['critical', 'high', 'medium', 'low', 'info'];
+  const top = [...recs].sort((a, b) => {
+    const sevDiff =
+      SEVERITY_ORDER.indexOf(a.severity) - SEVERITY_ORDER.indexOf(b.severity);
+    if (sevDiff !== 0) return sevDiff;
+    return RULE_PRECEDENCE[a.recommendationType] - RULE_PRECEDENCE[b.recommendationType];
+  })[0];
   return makeRecommendation({
     type: 'next_best_action',
     severity: top.severity,
@@ -414,7 +463,6 @@ function deriveNextBestAction(
     evidence: top.evidence,
     suggestedAction: top.suggestedAction,
     actionPayload: top.actionPayload,
-    confidence: top.confidence,
     module: top.module,
     now,
   });
@@ -437,7 +485,6 @@ interface MakeRecommendationParams {
     actionType: AIActionType | WorkflowTemplateId;
     payload: Record<string, unknown>;
   };
-  confidence: number;
   module?: string;
   now: Date;
 }
@@ -454,7 +501,10 @@ function makeRecommendation(params: MakeRecommendationParams): Recommendation {
     evidence: params.evidence,
     suggestedAction: params.suggestedAction,
     actionPayload: params.actionPayload,
-    confidence: params.confidence,
+    // Deterministic rule: it matched, or it was not emitted. There is no score
+    // to report, and a constant reported as one would be fabricated.
+    sourceType: 'rules_based',
+    confidence: null,
     module: params.module,
     generatedAt: params.now.toISOString(),
   };

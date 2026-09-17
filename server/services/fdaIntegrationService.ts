@@ -22,7 +22,7 @@ import {
   pmaSubmissions,
   deviceSubmissionDocuments
 } from '../../shared/schema.js';
-import { eq, and, desc } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
 import axios from 'axios';
 import crypto from 'crypto';
 // @ts-ignore — xml2js has no bundled types

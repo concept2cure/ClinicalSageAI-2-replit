@@ -364,20 +364,41 @@ describe.skipIf(!hasEstarTemplate)('dynamic XFA templates (official FDA eSTAR)',
 // module header for the full measurement). pdf.js cannot stand in for them: its
 // XFA packet whitelist has no `form` entry, so it never fetches the object.
 
-/** The production 510(k) nIVD map — the fields a client actually files. */
-const K510_DEVICE_MAP = ESTAR_FIELD_MAPS['510k-device'];
-const MAPPED_SOM_PATHS = Object.values(K510_DEVICE_MAP).map((spec) => spec.xfaSomPath!);
-/** SOM leaf names: what a node for a mapped field would be called in any packet. */
-const MAPPED_LEAF_NAMES = MAPPED_SOM_PATHS.map((som) => som.split('.').pop()!);
+/**
+ * Both vendored 510(k) templates, each measured on its own — a client filing an
+ * IVD 510(k) is produced on the IVD form, so a `form` packet that shadowed a
+ * datasets write THERE would blank a filed value the nIVD measurement never saw.
+ * `mappedKeys` is pinned per template so a silent map change fails here.
+ */
+const SHADOW_TEMPLATES = [
+  { label: 'nIVD eSTAR 7.0', file: 'eSTAR-510k-non-ivd.pdf', descriptor: '510k-device' as const, mappedKeys: 20 },
+  // 19, not 20: the IVD form does not ask for the Indications for Use citation.
+  { label: 'IVD eSTAR 7.0', file: 'eSTAR-510k-ivd.pdf', descriptor: '510k-ivd' as const, mappedKeys: 19 },
+].map((t) => ({ ...t, path: path.resolve(path.dirname(ESTAR_TEMPLATE), t.file) }));
 
-describe.skipIf(!hasEstarTemplate)('the saved XFA `form` packet does not shadow the datasets write', () => {
+for (const t of SHADOW_TEMPLATES) {
+describe.skipIf(!fsSync.existsSync(t.path))(`${t.label} — the saved XFA \`form\` packet does not shadow the datasets write`, () => {
+  /** The production map for this template — the fields a client actually files. */
+  const MAP = ESTAR_FIELD_MAPS[t.descriptor];
+  const MAPPED_SOM_PATHS = Object.values(MAP).map((spec) => spec.xfaSomPath!);
+  /** SOM leaf names: what a node for a mapped field would be called in any packet.
+   *  Includes the further paths a key also writes (the two SOURCE fields FDA
+   *  rebuilds its summary cells from), which post-date the original measurement. */
+  const MAPPED_LEAF_NAMES = [
+    ...new Set(
+      Object.values(MAP)
+        .flatMap((spec) => [spec.xfaSomPath!, ...(spec.alsoWriteSomPaths ?? [])])
+        .map((som) => som.split('.').pop()!),
+    ),
+  ];
+
   let template: Buffer;
   let packets: XfaPacketInfo[];
   let formPacket: XfaPacketInfo;
   let formXml: string;
 
   beforeAll(async () => {
-    template = await fs.readFile(ESTAR_TEMPLATE);
+    template = await fs.readFile(t.path);
     packets = await listXfaPackets(template);
     formPacket = packets.find((p) => p.name === 'form')!;
     formXml = Buffer.from(formPacket.bytes).toString('utf8');
@@ -395,7 +416,7 @@ describe.skipIf(!hasEstarTemplate)('the saved XFA `form` packet does not shadow 
   });
 
   it('declares no node for any mapped field, so it holds no value to shadow', () => {
-    expect(MAPPED_SOM_PATHS).toHaveLength(20);
+    expect(MAPPED_SOM_PATHS).toHaveLength(t.mappedKeys);
     // A node for a mapped field could only appear as `name="<leaf>"`. Matching on
     // the leaf alone is deliberately over-broad: a hit anywhere in the packet
     // fails this test, which is the safe direction.
@@ -427,9 +448,9 @@ describe.skipIf(!hasEstarTemplate)('the saved XFA `form` packet does not shadow 
 
   it('survives a full production fill untouched, while every value lands in `datasets`', async () => {
     const data = Object.fromEntries(
-      Object.keys(K510_DEVICE_MAP).map((key, i) => [key, `FORMPKT-${key}-${i}`]),
+      Object.keys(MAP).map((key, i) => [key, `FORMPKT-${key}-${i}`]),
     );
-    const out = await fillXfaDatasets(template, K510_DEVICE_MAP, data, {
+    const out = await fillXfaDatasets(template, MAP, data, {
       missingFieldPolicy: 'error',
     });
     expect(out.filled.sort()).toEqual(Object.keys(data).sort());
@@ -455,16 +476,17 @@ describe.skipIf(!hasEstarTemplate)('the saved XFA `form` packet does not shadow 
       expect(identical, `${before.name} packet changed by the fill`).toBe(before.name !== 'datasets');
     }
 
-    // All 20 values are in `datasets`; none of them is anywhere in the form packet.
+    // Every mapped value is in `datasets`; none of them is anywhere in the form packet.
     const back = await readXfaDatasetsValues(out.bytes, MAPPED_SOM_PATHS);
-    const landed = Object.entries(K510_DEVICE_MAP).filter(
+    const landed = Object.entries(MAP).filter(
       ([key, spec]) => back[spec.xfaSomPath!] === data[key],
     );
-    expect(landed).toHaveLength(20);
+    expect(landed).toHaveLength(t.mappedKeys);
     const nowFormXml = Buffer.from(after.find((p) => p.name === 'form')!.bytes).toString('utf8');
     expect(Object.values(data).filter((v) => nowFormXml.includes(v))).toEqual([]);
   });
 });
+}
 
 
 /**

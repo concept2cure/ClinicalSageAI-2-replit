@@ -51,6 +51,25 @@ const logger = createScopedLogger('tenant-full-export');
 const TENANT_KEY_COLUMNS = ['organization_id', 'org_id', 'tenant_id'] as const;
 
 /**
+ * Schemas the catalog sweep covers.
+ *
+ * It was `public` alone — which meant this module's own opening paragraph was
+ * wrong about itself. It says a curated manifest would hand a customer "their
+ * programme records and none of their documents, VAULT CONTENTS, uploads..." and
+ * then discovered no vault table, because vault.documents lives in the `vault`
+ * schema. The export claimed to be catalog-driven and complete while omitting
+ * the customer's actual regulatory documents — the single largest thing they
+ * would expect a data return to contain.
+ *
+ * An explicit list rather than "every schema": this database also carries
+ * cortex, ai, compliance, identity and others holding derived, internal or
+ * cross-tenant state, and sweeping them wholesale would put material in a
+ * customer's data return that is not the customer's. A schema is added here when
+ * someone has decided its contents belong to the tenant.
+ */
+const EXPORT_SCHEMAS: readonly string[] = Object.freeze(['public', 'vault']);
+
+/**
  * Tables deliberately excluded from a tenant export.
  *
  * These are not omissions — each is either cross-tenant infrastructure or a
@@ -115,28 +134,44 @@ export class TenantNotFoundError extends Error {
  */
 export async function discoverTenantTables(
   client: Pool | PoolClient
-): Promise<Array<{ table: string; tenantColumn: string }>> {
-  const { rows } = await client.query<{ table_name: string; column_name: string }>(
-    `SELECT c.table_name, c.column_name
+): Promise<Array<{ schema: string; table: string; tenantColumn: string }>> {
+  const { rows } = await client.query<{
+    table_schema: string;
+    table_name: string;
+    column_name: string;
+  }>(
+    `SELECT c.table_schema, c.table_name, c.column_name
        FROM information_schema.columns c
        JOIN information_schema.tables t
          ON t.table_schema = c.table_schema AND t.table_name = c.table_name
-      WHERE c.table_schema = 'public'
+      WHERE c.table_schema = ANY($2::text[])
         AND t.table_type = 'BASE TABLE'
         AND c.column_name = ANY($1::text[])
-      ORDER BY c.table_name,
+      ORDER BY c.table_schema, c.table_name,
                array_position($1::text[], c.column_name)`,
-    [[...TENANT_KEY_COLUMNS]]
+    [[...TENANT_KEY_COLUMNS], [...EXPORT_SCHEMAS]]
   );
 
   // A table may carry more than one recognized key; take the most preferred.
-  const seen = new Map<string, string>();
+  // Keyed by schema.table, so a name existing in two schemas is two entries
+  // rather than one silently shadowing the other.
+  const seen = new Map<string, { schema: string; table: string; tenantColumn: string }>();
   for (const row of rows) {
-    if (!seen.has(row.table_name)) seen.set(row.table_name, row.column_name);
+    const key = `${row.table_schema}.${row.table_name}`;
+    if (!seen.has(key)) {
+      seen.set(key, {
+        schema: row.table_schema,
+        table: row.table_name,
+        tenantColumn: row.column_name,
+      });
+    }
   }
-  for (const excluded of EXPORT_EXCLUDED_TABLES) seen.delete(excluded);
+  /* Exclusions stay BARE table names, matching how they are written, and are
+     applied per schema — an excluded `public.audit_logs` must not silently
+     exclude a same-named table in another schema nobody considered. */
+  for (const excluded of EXPORT_EXCLUDED_TABLES) seen.delete(`public.${excluded}`);
 
-  return [...seen.entries()].map(([table, tenantColumn]) => ({ table, tenantColumn }));
+  return [...seen.values()];
 }
 
 /**
@@ -187,29 +222,41 @@ export async function exportTenantFull(
   let totalRows = 0;
   let tablesEmpty = 0;
 
-  for (const { table, tenantColumn } of discovered) {
+  for (const { schema, table, tenantColumn } of discovered) {
+    /* Reported schema-qualified whenever it is not `public`, so a reader of the
+       export can tell vault.documents from a public table of the same name, and
+       so the coverage report names what was actually read. */
+    const label = schema === 'public' ? table : `${schema}.${table}`;
     try {
       // Identifiers come from the catalog, never from caller input. The regex is
       // a belt-and-braces assertion on that invariant, matching the same guard
-      // the purge applies to its own frozen table list.
-      if (!/^[a-z_][a-z0-9_]*$/.test(table) || !/^[a-z_][a-z0-9_]*$/.test(tenantColumn)) {
-        tablesFailed.push({ table, error: 'unsafe identifier' });
+      // the purge applies to its own frozen table list. Each part is checked
+      // separately and quoted separately — a single check over "schema.table"
+      // would have to admit a dot, and a dot inside one quoted identifier is a
+      // literal character, not a qualifier.
+      const SAFE = /^[a-z_][a-z0-9_]*$/;
+      if (!SAFE.test(schema) || !SAFE.test(table) || !SAFE.test(tenantColumn)) {
+        tablesFailed.push({ table: label, error: 'unsafe identifier' });
         continue;
       }
       const { rows } = await client.query(
-        `SELECT * FROM "${table}" WHERE "${tenantColumn}"::text = $1 LIMIT ${MAX_ROWS_PER_TABLE + 1}`,
+        `SELECT * FROM "${schema}"."${table}" WHERE "${tenantColumn}"::text = $1 LIMIT ${MAX_ROWS_PER_TABLE + 1}`,
         [String(organizationId)]
       );
       const truncated = rows.length > MAX_ROWS_PER_TABLE;
       const kept = truncated ? rows.slice(0, MAX_ROWS_PER_TABLE) : rows;
-      if (truncated) truncatedTables.push(table);
+      if (truncated) truncatedTables.push(label);
       if (kept.length === 0) tablesEmpty += 1;
       totalRows += kept.length;
-      tables.push({ table, tenantColumn, rowCount: kept.length, truncated, rows: kept });
+      tables.push({ table: label, tenantColumn, rowCount: kept.length, truncated, rows: kept });
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      logger.warn('Tenant export could not read a table', { organizationId, table, error: message });
-      tablesFailed.push({ table, error: message.slice(0, 200) });
+      logger.warn('Tenant export could not read a table', {
+        organizationId,
+        table: label,
+        error: message,
+      });
+      tablesFailed.push({ table: label, error: message.slice(0, 200) });
     }
   }
 

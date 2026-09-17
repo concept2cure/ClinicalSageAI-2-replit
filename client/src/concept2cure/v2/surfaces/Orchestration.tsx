@@ -931,7 +931,7 @@ export function Orchestration({ onAsk, onNav }: SurfaceViewProps) {
         <div>
           <div className="ph-eyebrow">Orchestration{progLabel ? <> {I.dot} {progLabel}</> : null}</div>
           <h1 className="ph-title">Workflow runs &amp; readiness</h1>
-          <div className="ph-sub">The persisted execution engine -- <code>workflowRuns</code> (versioned, pausable, replayable), human-in-the-loop <code>approvalCheckpoints</code>, and deterministic <code>readinessEvaluations</code>. Every step, object touched and output is recorded for Part-11 traceability.</div>
+          <div className="ph-sub">The persisted execution engine — <code>workflowRuns</code> (versioned, pausable, replayable), human-in-the-loop <code>approvalCheckpoints</code>, and deterministic <code>readinessEvaluations</code>. Every step, object touched and output is recorded for Part-11 traceability.</div>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
           <button className="btn ghost" onClick={() => onAsk && onAsk('Run a pre-dispatch readiness evaluation for ' + (progLabel || 'this program'))}>{I.sparkles} Ask AnA</button>
@@ -1137,7 +1137,7 @@ export function Orchestration({ onAsk, onNav }: SurfaceViewProps) {
                 {c.gateType === 'auto_on_pass' ? (
                   <div className="orch-note">{I.zap}<span>Gate fires automatically when its run reports zero validation errors.{c.run ? <> Linked run: <b>{c.run}</b>.</> : null}</span></div>
                 ) : c.approvers.length === 0 ? (
-                  <div className="orch-note">{I.clock}<span>No decisions recorded yet{c.status ? <> -- gate is <b>{c.status.replace(/_/g, ' ')}</b></> : null}.</span></div>
+                  <div className="orch-note">{I.clock}<span>No decisions recorded yet{c.status ? <> — gate is <b>{c.status.replace(/_/g, ' ')}</b></> : null}.</span></div>
                 ) : c.approvers.map((a, i) => (
                   <div key={i} className="orch-appr">
                     <span className="orch-appr-av">{a.who.split(' ').map((p) => p[0]).join('').slice(0, 2)}</span>

@@ -211,6 +211,29 @@ export const submissionOrchestratorRuns = pgTable('submission_orchestrator_runs'
   completedAt: timestamp('completed_at', { withTimezone: true }),
   status: text('status').notNull(),
   steps: jsonb('steps').notNull().default([]),
+  /**
+   * Declared 2026-09-10. Both SQL definitions of this table have always carried
+   * these two — db/migrations/20260725_submission_orchestrator_store_port.sql:74
+   * and migrations/0018_submission_orchestrator.sql — and this model omitted
+   * them. Because drizzle-kit push runs at install-fresh STEP 2, before the
+   * overlay, push created the table without them and both
+   * `CREATE TABLE IF NOT EXISTS` statements were no-ops. Every freshly
+   * provisioned database therefore had a 13-column table while the files
+   * describing it declared 15.
+   *
+   * That is not cosmetic. 0018 also installs
+   * `trg_orchestrator_runs_updated_at`, whose body assigns `NEW.updated_at`, so
+   * every UPDATE raised `42703: record "new" has no field "updated_at"`.
+   * persistRun uses ON CONFLICT (run_id) DO UPDATE, which every step-write and
+   * every resume takes — a run could be started and never advanced or
+   * completed. Reproduced on a database built by scripts/db/provision-test-db.sh.
+   *
+   * Databases that already exist are converged by
+   * migrations/20260817_reconcile_declared_updated_at_columns.sql (deploy-migrate
+   * index 180); declaring them here is what stops NEW installs reproducing it.
+   */
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 });
 
 export const submissionOrchestratorSteps = pgTable('submission_orchestrator_steps', {

@@ -176,6 +176,16 @@ export const regulatoryDocuments = pgTable('regulatory_documents', {
 // Compliance Tracking
 export const complianceTracking = pgTable('compliance_tracking', {
   id: uuid('id').defaultRandom().primaryKey(),
+  // The physical column has always existed (db/migrations/
+  // 20260402_cmc_runtime_ddl_to_migration.sql:23) and shared/schema.ts maps it,
+  // but THIS model — the one server/api/cmc/projectRoutes.ts binds — did not.
+  // So every row the product wrote carried organization_id NULL, and the
+  // check-rules read had to widen to `OR organization_id IS NULL` to find any
+  // of them, which served each sponsor's compliance findings to every other.
+  // Nullable here because the legacy rows exist; the write path always stamps it
+  // and migrations/20260908_compliance_tracking_organization_backfill.sql
+  // attributes the old ones through their project.
+  organizationId: integer('organization_id'),
   projectId: uuid('project_id')
     .notNull()
     .references(() => cmcProjects.id, { onDelete: 'cascade' }),

@@ -226,7 +226,7 @@ export function DesignControls({ onAsk }: SurfaceViewProps) {
       fire('Design input ' + row.id + ' added — untraced');
     } catch (e) {
       setAdded(is => is.filter(i => i.id !== tempId));
-      fire('Could not add design input -- ' + (e instanceof Error && e.message ? e.message : 'request failed'));
+      fire('Could not add design input — ' + (e instanceof Error && e.message ? e.message : 'request failed'));
     }
   };
 
@@ -409,14 +409,14 @@ export function DesignControls({ onAsk }: SurfaceViewProps) {
                     <span className="dc-820-l">{e.label}</span>
                     <span className="dc-820-ref mono">{e.ref}</span>
                     <span className="dc-820-note">Not tracked in this store</span>
-                    <button className="dc-820-fix" onClick={() => ask('How should we evidence ' + e.ref + ' -- ' + e.label + ' -- for this program?')}>Set up</button>
+                    <button className="dc-820-fix" onClick={() => ask('How should we evidence ' + e.ref + ' — ' + e.label + ' — for this program?')}>Set up</button>
                   </>
                 ) : (
                   <>
                     <span className={'dc-820-dot tone-' + (e.state === 'present' ? 'ok' : 'err')}>{e.state === 'present' ? I.check : I.alertTriangle}</span>
                     <span className="dc-820-l">{e.label}</span>
                     <span className="dc-820-ref mono">{e.ref}</span>
-                    {e.state === 'absent' && <button className="dc-820-fix" onClick={() => ask('What is required to satisfy ' + e.ref + ' -- ' + e.label + '?')}>Resolve</button>}
+                    {e.state === 'absent' && <button className="dc-820-fix" onClick={() => ask('What is required to satisfy ' + e.ref + ' — ' + e.label + '?')}>Resolve</button>}
                   </>
                 )}
               </div>

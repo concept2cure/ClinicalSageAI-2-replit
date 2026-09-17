@@ -1,0 +1,66 @@
+{
+  "api": {
+    "status": 200,
+    "body": {
+      "threads": [
+        {
+          "id": "ana-ri_seed_1",
+          "created_at": "2026-09-05T23:29:13.778Z",
+          "updated_at": "2026-09-07T20:29:13.778Z",
+          "program_id": "ab75896b-d316-49f9-b6a9-229ee3359e0e",
+          "title": "Draft the Module 2.5 clinical overview for BX-301"
+        },
+        {
+          "id": "ana-ri_seed_2",
+          "created_at": "2026-09-01T23:29:13.778Z",
+          "updated_at": "2026-09-02T23:29:13.778Z",
+          "program_id": "ab75896b-d316-49f9-b6a9-229ee3359e0e",
+          "title": "What does the FDA expect for the dose-escalation rationale?"
+        }
+      ]
+    }
+  },
+  "apiBad": {
+    "status": 400,
+    "body": {
+      "error": "program_id must be a UUID",
+      "code": "THREAD_PROGRAM_INVALID"
+    }
+  },
+  "errors": [],
+  "reads": [
+    "/api/chat/threads?program_id=ab75896b-d316-49f9-b6a9-229ee3359e0e&limit=8",
+    "/api/chat/threads?program_id=ab75896b-d316-49f9-b6a9-229ee3359e0e&limit=8",
+    "/api/chat/threads/ana-ri_seed_1/messages?limit=100",
+    "/api/chat/threads/ana-ri_seed_1/messages?limit=100"
+  ],
+  "landing": {
+    "rows": [
+      {
+        "title": "Draft the Module 2.5 clinical overview for BX-301",
+        "meta": "Sep 7 · Resume"
+      },
+      {
+        "title": "What does the FDA expect for the dose-escalation rationale?",
+        "meta": "Sep 2 · Resume"
+      }
+    ],
+    "emptyState": false,
+    "errorState": false,
+    "ringInAside": true,
+    "ringInMain": false,
+    "composerBeforeGrid": true
+  },
+  "resumed": {
+    "convo": {
+      "id": "ana-ri_seed_1"
+    },
+    "url": "/concept2cure/conversation-thread",
+    "surface": null,
+    "turns": [
+      "Draft the Module 2.5 clinical overview for BX-301",
+      "✻Here is a first pass at the clinical overview."
+    ],
+    "bodyHasSeed": true
+  }
+}

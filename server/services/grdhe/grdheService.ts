@@ -41,10 +41,6 @@ import {
   TerminologyVersionLock,
   ValidationError,
   ValidationWarning,
-  ElectronicSignature,
-  SignatureMeaning,
-  SignatureRequest,
-  AuthenticationMethod,
   CanonicalAdverseEvent,
   CanonicalProduct,
   GDPRProcessingRecord,
@@ -132,6 +128,73 @@ function setNestedValue(obj: any, path: string, value: any): void {
 // =============================================================================
 // GRDHE SERVICE CLASS
 // =============================================================================
+
+type AuditableTableScope =
+  | { kind: 'tenant'; column: string }
+  | { kind: 'global' }
+  | { kind: 'unscopable' };
+
+/**
+ * Tenant classification for every table auditable through getAuditLog.
+ *
+ * Verified against db/migrations/081_grdhe_regulatory_mapping_layer.sql, which
+ * is on the production applier (scripts/db/migration-set.mjs:705):
+ *
+ *   tenant_id UUID NOT NULL   tenant_data_residency, export_jobs,
+ *                             canonical_adverse_events, canonical_products
+ *   no tenant column          terminology_versions, terminology_mappings,
+ *                             mapping_rules  -- shared reference data by design:
+ *                             MedDRA/SNOMED registries and approved mapping
+ *                             rules are platform-wide, not customer content
+ *   no tenant column, but
+ *   SHOULD have one           electronic_signatures  -- 21 CFR Part 11 signature
+ *                             manifestations stored with no sponsor attribution.
+ *                             Withheld here until it is tenant-scoped; see
+ *                             docs/work-orders/WO-13-grdhe-tenant-scoping.md
+ *
+ * An unlisted table throws. That is the point: this map, not the route's
+ * SQL-injection allowlist, is what decides whether a trail may be served.
+ */
+const AUDITABLE_TABLE_SCOPES = {
+  tenant_data_residency: { kind: 'tenant', column: 'tenant_id' },
+  export_jobs: { kind: 'tenant', column: 'tenant_id' },
+  canonical_adverse_events: { kind: 'tenant', column: 'tenant_id' },
+  canonical_products: { kind: 'tenant', column: 'tenant_id' },
+  terminology_versions: { kind: 'global' },
+  terminology_mappings: { kind: 'global' },
+  mapping_rules: { kind: 'global' },
+  electronic_signatures: { kind: 'unscopable' },
+} as const satisfies Record<string, AuditableTableScope>;
+
+/** Widened lookup: an unlisted table must read as undefined, not as a type error. */
+/**
+ * Why the audit-scope refusals are a typed error rather than a bare `Error`.
+ *
+ * The route used to `catch (err)` around `getAuditLog` and answer 409
+ * AUDIT_NOT_TENANT_SCOPABLE for ANY throw. Three of the things that can throw
+ * in there are deliberate refusals; the rest are database failures on the
+ * EXISTS probe or the audit query. So a transient connection error was reported
+ * to the caller as "this table cannot be tenant-scoped and is withheld" — a
+ * false statement about the schema, produced by an outage, in the same shape a
+ * real policy decision takes.
+ *
+ * That is the defect this whole endpoint's fix exists to remove, reintroduced
+ * one layer out: an error rendered as a more specific claim than the truth. A
+ * caller cannot retry a 409, and an operator reading it would go looking for a
+ * missing tenant column that is not missing.
+ */
+export class AuditScopeError extends Error {
+  constructor(
+    readonly code: 'AUDIT_TENANT_REQUIRED' | 'AUDIT_TABLE_UNCLASSIFIED' | 'AUDIT_NOT_TENANT_SCOPABLE',
+    message: string,
+  ) {
+    super(message);
+    this.name = 'AuditScopeError';
+  }
+}
+
+const auditableTableScope = (table: string): AuditableTableScope | undefined =>
+  (AUDITABLE_TABLE_SCOPES as Record<string, AuditableTableScope>)[table];
 
 export class GRDHEService {
   private static instance: GRDHEService;
@@ -1279,134 +1342,22 @@ export class GRDHEService {
   }
 
   // ===========================================================================
-  // ELECTRONIC SIGNATURES (21 CFR Part 11)
+  // ELECTRONIC SIGNATURES — retired 2026-09-10 (WO-16B findings 28, 29)
   // ===========================================================================
-
-  /**
-   * Create electronic signature
-   */
-  async createElectronicSignature(request: SignatureRequest): Promise<ElectronicSignature> {
-    // In production, validate password against authentication system
-    // This is a placeholder for the actual dual-authentication flow
-    
-    const contentHash = computeHash(
-      request.objectType + '|' + 
-      request.objectId + '|' + 
-      (request.objectVersion || '') + '|' + 
-      new Date().toISOString()
-    );
-
-    const signatureValue = computeHash(
-      contentHash + '|' + 
-      request.userId + '|' + 
-      request.meaning + '|' + 
-      request.reason
-    );
-
-    const result = await db.execute(sql`
-      INSERT INTO regulatory_harmonization.electronic_signatures (
-        signed_object_type, signed_object_id, signed_object_version,
-        content_hash, content_hash_algorithm,
-        signature_meaning, signature_reason,
-        signer_user_id, signer_name, signer_title, signer_organization,
-        authentication_method, authentication_timestamp,
-        signature_value, signature_algorithm
-      ) VALUES (
-        ${request.objectType},
-        ${request.objectId}::uuid,
-        ${request.objectVersion || null},
-        ${contentHash},
-        'SHA-256',
-        ${request.meaning}::regulatory_harmonization.signature_meaning,
-        ${request.reason},
-        ${request.userId},
-        ${request.userId},
-        ${null},
-        ${null},
-        ${request.authMethod || 'password_and_meaning'}::text,
-        NOW(),
-        ${signatureValue},
-        'SHA-256'
-      )
-      RETURNING *
-    `);
-
-    const row = result.rows[0] as any;
-
-    await this.logAudit(
-      'electronic_signatures',
-      row.id,
-      'SIGN',
-      null,
-      { objectType: request.objectType, objectId: request.objectId, meaning: request.meaning },
-      request.reason
-    );
-
-    return {
-      id: row.id,
-      signedObjectType: row.signed_object_type,
-      signedObjectId: row.signed_object_id,
-      signedObjectVersion: row.signed_object_version,
-      contentHash: row.content_hash,
-      contentHashAlgorithm: row.content_hash_algorithm,
-      signatureMeaning: row.signature_meaning,
-      signatureReason: row.signature_reason,
-      signerUserId: row.signer_user_id,
-      signerName: row.signer_name,
-      signerTitle: row.signer_title,
-      signerOrganization: row.signer_organization,
-      signerEmail: row.signer_email,
-      authenticationMethod: row.authentication_method,
-      authenticationTimestamp: new Date(row.authentication_timestamp),
-      authenticationSessionId: row.authentication_session_id,
-      signatureValue: row.signature_value,
-      signatureAlgorithm: row.signature_algorithm,
-      certificateThumbprint: row.certificate_thumbprint,
-      certificateIssuer: row.certificate_issuer,
-      certificateSerialNumber: row.certificate_serial_number,
-      timestampToken: row.timestamp_token,
-      timestampAuthority: row.timestamp_authority,
-      timestampAuthorityUrl: row.timestamp_authority_url,
-      isValid: row.is_valid,
-      invalidatedAt: row.invalidated_at ? new Date(row.invalidated_at) : undefined,
-      invalidationReason: row.invalidation_reason,
-      countersignedBy: row.countersigned_by,
-      createdAt: new Date(row.created_at),
-      ipAddress: row.ip_address,
-      userAgent: row.user_agent
-    };
-  }
-
-  /**
-   * Verify electronic signature
-   */
-  async verifyElectronicSignature(signatureId: string): Promise<{ valid: boolean; reason?: string }> {
-    const result = await db.execute(sql`
-      SELECT * FROM regulatory_harmonization.electronic_signatures
-      WHERE id = ${signatureId}::uuid
-    `);
-
-    if (result.rows.length === 0) {
-      return { valid: false, reason: 'Signature not found' };
-    }
-
-    const row = result.rows[0] as any;
-
-    if (!row.is_valid) {
-      return { valid: false, reason: row.invalidation_reason || 'Signature invalidated' };
-    }
-
-    // Recompute content hash and compare
-    const expectedContentHash = computeHash(
-      row.signed_object_type + '|' + 
-      row.signed_object_id + '|' + 
-      (row.signed_object_version || '') + '|' + 
-      new Date(row.authentication_timestamp).toISOString()
-    );
-
-    // Note: In production, this would verify against stored hash and PKI certificate
-    return { valid: true };
-  }
+  //
+  // `createElectronicSignature` and `verifyElectronicSignature` lived here. The
+  // writer put the user id in the §11.50 printed-name field, hashed
+  // `type|id|version|now()` rather than any content, and recorded an
+  // authentication_method and authentication_timestamp for a password it never
+  // checked. The verifier computed a hash, discarded it, and returned
+  // `{ valid: true }` for every non-invalidated row. Neither can be repaired
+  // into a second signing path: there is ONE conforming writer
+  // (server/services/part11/signature-persistence.ts, behind
+  // /api/esignature/sign, credentials verified by
+  // part11ComplianceService.verifyUserCredentials) and one verifier
+  // (/api/auth/enterprise/electronic-signature/:id/verify). The GRDHE routes
+  // answer 410 and name them. regulatory_harmonization.electronic_signatures
+  // is not dropped; it held no rows on a database provisioned from empty.
 
   // ===========================================================================
   // AUDIT LOGGING
@@ -1438,14 +1389,76 @@ export class GRDHEService {
   }
 
   /**
-   * Get audit log for a record
+   * Get audit log for a record, scoped to the tenant that owns that record.
+   *
+   * ── WHY tenantId IS REQUIRED ────────────────────────────────────────────────
+   * regulatory_harmonization.audit_log has NO tenant column — its only org-ish
+   * field is `user_organization TEXT`, a display string about the ACTOR, not a
+   * tenant key — and the regulatory_harmonization schema carries NO RLS policy
+   * (the public-only sweep in db/migrations/20260801_tenant_isolation_sweep.sql
+   * cannot reach it, and 0021_enable_rls_everywhere selects only tables that
+   * have a tenant column).
+   *
+   * So there was nothing scoping this query. It previously ran as
+   *   SELECT * FROM audit_log WHERE table_name = $1 AND record_id = $2
+   * behind a route whose only check was an allowlist commented "prevent SQL
+   * injection" — an allowlist is not an authorization check. Any authenticated
+   * user of any tenant who supplied another tenant's record UUID received that
+   * record's full Part 11 before/after trail, old_data and new_data included.
+   *
+   * That is the same IDOR shape the header of assertTenantMatchesAuth in
+   * server/routes/grdheRoutes.ts describes PRs #496-#499 closing elsewhere in
+   * this router. This endpoint was missed.
+   *
+   * Ownership is proven by joining the AUDITED table, because that is where the
+   * tenant key lives. Tables are classified explicitly rather than inferred:
+   * silence about a table must fail closed, not fall through.
    */
   async getAuditLog(
     tableName: string,
     recordId: string,
+    tenantId: string,
     options: { limit?: number; offset?: number } = {}
   ): Promise<AuditLogEntry[]> {
     const { limit = 100, offset = 0 } = options;
+
+    if (!tenantId) {
+      throw new AuditScopeError(
+        'AUDIT_TENANT_REQUIRED',
+        'getAuditLog: tenantId is required (tenant scope).',
+      );
+    }
+
+    const scope = auditableTableScope(tableName);
+    if (!scope) {
+      // Not classified => not auditable through this path. Adding a table to the
+      // route's allowlist without classifying it here now fails instead of leaking.
+      throw new AuditScopeError(
+        'AUDIT_TABLE_UNCLASSIFIED',
+        `getAuditLog: ${tableName} is not classified for tenant scoping.`,
+      );
+    }
+    if (scope.kind === 'unscopable') {
+      throw new AuditScopeError(
+        'AUDIT_NOT_TENANT_SCOPABLE',
+        `getAuditLog: ${tableName} carries no tenant column, so ownership cannot be ` +
+          'proven and its audit trail is withheld. See ' +
+          'docs/work-orders/WO-13-grdhe-tenant-scoping.md.',
+      );
+    }
+
+    if (scope.kind === 'tenant') {
+      // Deliberately an EXISTS probe returning [] rather than a 403: a distinct
+      // "exists but not yours" response would itself be a cross-tenant existence
+      // oracle over regulated record ids.
+      const owned = await db.execute(sql`
+        SELECT 1 FROM ${sql.raw(`regulatory_harmonization.${tableName}`)}
+        WHERE id = ${recordId}::uuid
+          AND ${sql.raw(scope.column)} = ${tenantId}::uuid
+        LIMIT 1
+      `);
+      if (owned.rows.length === 0) return [];
+    }
 
     const result = await db.execute(sql`
       SELECT * FROM regulatory_harmonization.audit_log

@@ -360,7 +360,7 @@ export function Inconsistency({ onAsk, onNav }: SurfaceViewProps) {
       const b = gate.blocking[0];
       return {
         tone: 'urgent' as const, eyebrow: 'AnA — path to a clean filing',
-        headline: <>Your <b>{progCode}</b> can't be filed yet -- {gate.blocking.length === 1 ? '1 issue would' : gate.blocking.length + ' issues would'} block it under {reg}.</>,
+        headline: <>Your <b>{progCode}</b> can't be filed yet — {gate.blocking.length === 1 ? '1 issue would' : gate.blocking.length + ' issues would'} block it under {reg}.</>,
         body: b.title + '. ' + b.description,
         reassure: 'This is fixable, and I\'ll do the work with you — one governed change and the block clears.',
         /* ── Was a 1.6-second outline and nothing else ────────────────────
@@ -400,14 +400,14 @@ export function Inconsistency({ onAsk, onNav }: SurfaceViewProps) {
     if (gate.needApproval.length) return {
       tone: 'calm' as const, eyebrow: 'AnA — path to a clean filing',
       headline: <>{progCode} won't be blocked under {reg}, but {gate.needApproval.length} {gate.needApproval.length === 1 ? 'item needs' : 'items need'} sign-off before filing.</>,
-      body: 'Nothing hard-blocks the submission, but these carry a "requires approval" authority under ' + reg + ' -- get them approved and the filing is clean.',
+      body: 'Nothing hard-blocks the submission, but these carry a "requires approval" authority under ' + reg + ' — get them approved and the filing is clean.',
       reassure: 'You\'re close. I\'ll draft the resolutions and route them for approval.',
       action: { label: 'Resolve the open items with AnA', onClick: () => ask('Draft resolutions for the open ' + progCode + ' contradictions and route them for approval.') },
     };
     return {
       tone: 'calm' as const, eyebrow: 'AnA — path to a clean filing',
       headline: <>{progCode} has {openN} open {openN === 1 ? 'inconsistency' : 'inconsistencies'} to tidy before the filing is perfect.</>,
-      body: 'None of them block the submission under ' + reg + ' -- they\'re advisory or review-level — but a perfect filing carries none of them.',
+      body: 'None of them block the submission under ' + reg + ' — they\'re advisory or review-level — but a perfect filing carries none of them.',
       reassure: 'I\'ll clear them with you so the dossier reads as one coherent story.',
       action: { label: 'Clean them up with AnA', onClick: () => ask('Walk me through resolving the open ' + progCode + ' inconsistencies.') },
     };
@@ -482,7 +482,7 @@ export function Inconsistency({ onAsk, onNav }: SurfaceViewProps) {
   const PROP_FORM: C2CFormConfig | null = form ? {
     eyebrow: 'Governed change',
     title: 'Change ' + form.label,
-    sub: 'Current value ' + form.value + ' -- cited in ' + (form.refs ? form.refs.length : 0) + ' sections. AnA propagates the change and flags anything locked for re-approval.',
+    sub: 'Current value ' + form.value + ' — cited in ' + (form.refs ? form.refs.length : 0) + ' sections. AnA propagates the change and flags anything locked for re-approval.',
     governed: 'Governed change — draft sections update inline; approved/locked sections are flagged for re-approval, all on the audit trail.',
     submitLabel: propagating ? 'Propagating…' : 'Propagate change',
     fields: [
@@ -603,7 +603,7 @@ export function Inconsistency({ onAsk, onNav }: SurfaceViewProps) {
       <div className="sp-head">
         <div>
           <div className="sp-eyebrow">AnA {I.dot} Governed intelligence</div>
-          <h1 className="sp-title">{prog ? progCode + ' -- path to a clean filing' : 'Cross-document inconsistency'}</h1>
+          <h1 className="sp-title">{prog ? progCode + ' — path to a clean filing' : 'Cross-document inconsistency'}</h1>
           <p className="sp-state">{prog ? <>{prog.name}{prog.stage ? <> {I.dot} {prog.stage}</> : null}. </> : null}AnA continuously scans every governed record — sections, specs, data and labeling — for anything that contradicts anything else, and clears it with you before it can reach a reviewer.</p>
         </div>
         <button className="sp-primary" onClick={() => void runScan()} disabled={boardState.loading || scanning || !projectId}>{(boardState.loading || scanning) ? I.rotateCcw : I.sparkles} {scanning ? 'AnA is checking...' : boardState.loading ? 'Loading findings...' : 'Re-scan findings'}</button>
@@ -833,7 +833,7 @@ export function Inconsistency({ onAsk, onNav }: SurfaceViewProps) {
                     {decisions.map(d => (
                       <div key={d.id} className="sp-row">
                         <span className={'gi-dec-st st-' + d.actionState}>{d.actionState}</span>
-                        <span className="sp-row-b"><span className="sp-row-t">{d.title}</span><span className="sp-row-s">{d.rationale}{d.executedArtifactId ? ' -- artifact #' + d.executedArtifactId + ' v' + d.executedArtifactVersion : ''}</span></span>
+                        <span className="sp-row-b"><span className="sp-row-t">{d.title}</span><span className="sp-row-s">{d.rationale}{d.executedArtifactId ? ' — artifact #' + d.executedArtifactId + ' v' + d.executedArtifactVersion : ''}</span></span>
                       </div>
                     ))}
                   </div>

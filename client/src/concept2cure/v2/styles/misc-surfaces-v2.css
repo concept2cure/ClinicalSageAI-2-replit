@@ -351,7 +351,15 @@
   .vd-top{ display:flex; align-items:flex-end; gap:16px; padding:20px 24px 14px; border-bottom:1px solid var(--border); flex-wrap:wrap; }
   /* coexistence strip -- works alongside Veeva / SharePoint / OneDrive */
   .vd-coexist{ display:flex; align-items:center; gap:14px; padding:8px 24px; background:var(--bg-050); border-bottom:1px solid var(--border); flex-wrap:wrap; }
-  .vd-coexist-txt{ display:flex; align-items:center; gap:7px; font-size:11.5px; color:var(--text-300); }
+  /* Prose, not a row of boxes. This was `display:flex; gap:7px`, which makes
+     every text node and every <b> its own flex item: the sentence rendered
+     "Works alongside Veeva Vault , SharePoint & OneDrive" — 7px of gap on each
+     side of the comma — and could not line-wrap normally. Flex lays out boxes;
+     it should not be setting type. The icon needs `display:inline` because
+     app-v2.css:164 makes every svg in this shell display:block, which would
+     otherwise break the line on both sides of it. */
+  .vd-coexist-txt{ font-size:11.5px; color:var(--text-300); line-height:1.5; }
+  .vd-coexist-txt > svg{ display:inline; vertical-align:-.12em; margin-right:5px; }
   .vd-coexist-txt b{ font-weight:600; color:var(--text-200); }
   .vd-coexist-txt svg{ width:13px; height:13px; color:var(--text-400); flex-shrink:0; }
   .vd-coexist-cta{ margin-left:auto; border:0; background:none; font-size:11.5px; font-weight:600; color:var(--accent-200); cursor:pointer; padding:2px 0; }
