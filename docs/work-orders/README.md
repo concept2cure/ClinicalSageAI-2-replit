@@ -23,7 +23,7 @@ to one line; edit only your own row to limit merge conflicts.
 | WO-15 finding 4 — `/api/design-risk` | `…session_01J935DZwfFEardJCv85SJds` | **released** — done `153481465` |
 | WO-16C — fabrication sweep (`server/services/`, `server/routes/`) | `…session_01E8btkB8mcLirW4rNvsMNxK` (inferred from commits) | active |
 | WO-15 finding 2 — `project_charters` 27 vs 48 columns | `…session_01E2moDuSNSNTBqAHV5GtWoz` | **released** — fixed |
-| `KNOWN_UNLISTED` triage — 10 of 15 entries fail the list's stated reason (16 tables) | `…session_01E2moDuSNSNTBqAHV5GtWoz` | **claimed** 2026-09-17 |
+| `KNOWN_UNLISTED` triage — 10 entries, 16 tables | `…session_01E2moDuSNSNTBqAHV5GtWoz` | **released** — fixed, all ten now on the applier |
 | AnA client-files surface — `server/services/vault/document-*`, `vault-ingest/placement.service.ts`, `server/services/ana/document-*-tools*`, `ana-session-bootstrap*`, `server/startup/document-catalog-bootstrap.ts`, persona's CLIENT'S FILES section | `…session_01DiJJAkasGVrccrxjhYyjxG` | **claimed** 2026-09-17 |
 
 If you are one of the sessions above, correct your own row. If a lane you want
@@ -120,16 +120,19 @@ review and staying refused.** Three had wrong headlines (3, 7 and — in the
 opposite direction — my own correction to 3); two were right as written (5, 2).
 Check each claim, do not assume either way.
 
-One item surfaced here is NOT part of WO-15's nine and is now claimed: **10 of
-the 15 `KNOWN_UNLISTED` entries in `tests/ops/apply-c2c-migrations-manifest.test.mjs`
-fail that list's own stated reason**, covering 16 tables. The first figure
-published here was "14 of 16" from a crude heuristic; re-measured, the list has
-15 entries, four hold their stated reason, and `authoring_reviews` is clean for a
-different verified reason. See WO-15 finding 5 for the full table.
+One item surfaced here was NOT part of WO-15's nine and is now also **fixed**:
+10 of the 15 `KNOWN_UNLISTED` entries in
+`tests/ops/apply-c2c-migrations-manifest.test.mjs` failed that list's own stated
+reason, covering 16 tables. All ten are now on the applier and their exemptions
+are gone, with `tests/schema-contract/known-unlisted-reason-holds.contract.test.ts`
+enforcing the rule the list only stated in prose. The first figure published here
+was "14 of 16" from a crude heuristic; re-measured it was 10 of 15. See WO-15
+finding 5.
 
-With WO-15 closed, the next unclaimed work is the `KNOWN_UNLISTED` triage above,
-then the untouched orders in §2 — WO-3, WO-5, WO-7, WO-9, WO-10, WO-12 are all
-marked *unverified*, meaning no session has confirmed their status recently.
+With WO-15 and the `KNOWN_UNLISTED` triage both closed, the next unclaimed work
+is the untouched orders in §2 — WO-3, WO-5, WO-7, WO-9, WO-10 and WO-12 are all
+marked *unverified*, meaning no session has confirmed their status recently. Start
+by re-deriving the status rather than trusting the row.
 
 ---
 
