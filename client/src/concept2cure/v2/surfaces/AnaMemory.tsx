@@ -262,7 +262,7 @@ export function AnaMemory({ onAsk }: SurfaceViewProps) {
                           <div className="amem-atom-content">{a.content}</div>
                           <div className="amem-atom-foot">
                             <span className="amem-src">{Ico.file || I.dot} {a.source_document_name}</span>
-                            <button className="amem-atom-ask" onClick={() => ask('About what you remember -- "' + a.title + '": is this still accurate, and what does it change for my filing?')}>{I.sparkles} Ask AnA</button>
+                            <button className="amem-atom-ask" onClick={() => ask('About what you remember — "' + a.title + '": is this still accurate, and what does it change for my filing?')}>{I.sparkles} Ask AnA</button>
                           </div>
                         </div>
                       );

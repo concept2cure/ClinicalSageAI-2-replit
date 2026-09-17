@@ -180,7 +180,7 @@ export function Rbm({ onNav, liveDrive }: OwnedSurfaceViewProps) {
   const Body = SURFACES[tab];
 
   return (
-    <div data-screen-label={`RBM -- ${nav.label}`}>
+    <div data-screen-label={`RBM — ${nav.label}`}>
       <div className="reg-head">
         <div>
           <div className="ph-eyebrow">Clinical — risk-based quality management</div>
@@ -210,7 +210,7 @@ export function Rbm({ onNav, liveDrive }: OwnedSurfaceViewProps) {
           </select>
           <span className="rbm-study-m">
             {bd && bd.programId === study
-              ? `${bd.summary.sites.total} sites -- ${bd.summary.patients.scored} subjects scored`
+              ? `${bd.summary.sites.total} sites — ${bd.summary.patients.scored} subjects scored`
               : 'Live RBM read-model'}
           </span>
         </div>

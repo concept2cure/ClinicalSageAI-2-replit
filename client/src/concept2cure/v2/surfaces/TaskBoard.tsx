@@ -755,7 +755,7 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
               ? <>The critical path is clear — nothing open is blocking the milestone right now.</>
               : <>No task on this board is marked critical-path, so there is no path to report on yet.</>}
         body={critBlocked
-          ? <>{critBlocked.blockedReason || 'It is blocked'} -- nothing downstream on the path can move until it clears. {heaviest && heaviest.open > 3 ? <>{nameOf(heaviest.k)} is also carrying {heaviest.open} open tasks; auto-assign can rebalance.</> : null}</>
+          ? <>{critBlocked.blockedReason || 'It is blocked'} — nothing downstream on the path can move until it clears. {heaviest && heaviest.open > 3 ? <>{nameOf(heaviest.k)} is also carrying {heaviest.open} open tasks; auto-assign can rebalance.</> : null}</>
           : <>{overdue.length ? <>Clear the overdue work first, then the path flows. </> : null}{/* "Workload is balanced across the team." used to fire whenever `heaviest`
     was undefined — i.e. the filter matched zero tasks. Absence of workload
     data was presented as a measured balance. Balance is claimed only when
@@ -789,7 +789,7 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
             </span>
           );
         })}
-        <span className="tb-src-note">unified via <code>crossModuleTaskLinks</code> -- no single reconciliation store</span>
+        <span className="tb-src-note">unified via <code>crossModuleTaskLinks</code> — no single reconciliation store</span>
       </div>
 
       {/* Filters + views */}
@@ -859,7 +859,7 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
                       {t.progress > 0 && t.progress < 100 && <div className="tb-prog"><span style={{ width: t.progress + '%' }} /></div>}
                       <div className="tb-card-foot">
                         <span className="tb-src-tag" data-src={t.source} title={SRC(t.source).t}>{SRC(t.source).l}</span>
-                        {(t.dependsOn.length > 0 || t.blocks.length > 0) && <span className="tb-deps" title={t.dependsOn.length + ' upstream -- ' + t.blocks.length + ' downstream'}>{I.gitCompare}{t.dependsOn.length + t.blocks.length}</span>}
+                        {(t.dependsOn.length > 0 || t.blocks.length > 0) && <span className="tb-deps" title={t.dependsOn.length + ' upstream — ' + t.blocks.length + ' downstream'}>{I.gitCompare}{t.dependsOn.length + t.blocks.length}</span>}
                         {t.comments > 0 && <span className="tb-cmt">{t.comments}</span>}
                         <span className="tb-due" data-over={isOverdue(t) || undefined}>{t.due}</span>
                         <span className="tb-av" title={nameOf(t.assignee)}>{tbAvatar(nameOf(t.assignee))}</span>
@@ -904,7 +904,7 @@ export function TaskBoard({ onAsk }: SurfaceViewProps) {
                   {t.blocked && <span className="tb-path-blk">{I.alertTriangle} blocked</span>}
                   <span className="sp" /><span className="tb-due" data-over={isOverdue(t) || undefined}>{t.due}</span>
                 </div>
-                {t.dependsOn.length > 0 && <div className="tb-path-dep">depends on {t.dependsOn.map(d => (byId(d) || { title: d }).title || d).join(' -- ')}</div>}
+                {t.dependsOn.length > 0 && <div className="tb-path-dep">depends on {t.dependsOn.map(d => (byId(d) || { title: d }).title || d).join(' — ')}</div>}
               </div>
             </div>
           ))}
@@ -1121,7 +1121,7 @@ function TaskDetail({ t, byId, projLabel, onClose, onAsk, onMove, nameOf, onErr,
           <div><label>Assigned by</label><span>{nameOf(t.assignedBy) || '--'}</span></div>
           <div><label>Impact score</label><span>{t.impactScore ?? '—'}/10</span></div>
           <div><label>Due</label><span style={{ color: isOverdue(t) ? 'var(--error)' : 'inherit' }}>{t.due}</span></div>
-          <div><label>Origin store</label><span>{src.l} -- <em style={{ color: 'var(--text-400)' }}>{src.t}</em></span></div>
+          <div><label>Origin store</label><span>{src.l} — <em style={{ color: 'var(--text-400)' }}>{src.t}</em></span></div>
           <div><label>Progress</label><span>{t.progress}%</span></div>
         </div>
         {t.approvalRequired && (
@@ -1459,7 +1459,7 @@ function TaskCreate({ onClose, onCreate, proj, tasks }: TaskCreateProps) {
             <div className="tb-field"><label htmlFor="tb-assignee">Assignee</label><select id="tb-assignee" value={f.assignee} onChange={e => set('assignee', e.target.value)}><option value="auto">Auto — optimal assignee</option>{assignees.rows.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}</select></div>
           </div>
           <div className="tb-frow">
-            <div className="tb-field"><label htmlFor="tb-impact-score-10">Impact score -- {f.impactScore}/10</label><input id="tb-impact-score-10" type="range" min="0" max="10" value={f.impactScore} onChange={e => set('impactScore', +e.target.value)} /></div>
+            <div className="tb-field"><label htmlFor="tb-impact-score-10">Impact score — {f.impactScore}/10</label><input id="tb-impact-score-10" type="range" min="0" max="10" value={f.impactScore} onChange={e => set('impactScore', +e.target.value)} /></div>
             <div className="tb-field"><label htmlFor="tb-due-in-days">Due in (days)</label><input id="tb-due-in-days" type="number" min="0" max="120" value={f.dueDays} onChange={e => set('dueDays', +e.target.value)} /></div>
           </div>
           <div className="tb-field full"><label>Flags</label>
@@ -1478,7 +1478,7 @@ function TaskCreate({ onClose, onCreate, proj, tasks }: TaskCreateProps) {
               ))}
             </div>
           </div>
-          {f.assignee === 'auto' && <div className="tb-auto-note"><span className="ico">{I.sparkles}</span><span>Auto-assign picks the lowest-workload member of this organization for <b>{f.moduleType}</b> -- balanced server-side via <code>getOptimalAssignee()</code>.</span></div>}
+          {f.assignee === 'auto' && <div className="tb-auto-note"><span className="ico">{I.sparkles}</span><span>Auto-assign picks the lowest-workload member of this organization for <b>{f.moduleType}</b> — balanced server-side via <code>getOptimalAssignee()</code>.</span></div>}
           {err && <div className="tb-auto-note" data-warn="true"><span className="ico">{I.alertTriangle}</span><span>{err}</span></div>}
         </div>
         <div className="tb-detail-f">
@@ -1672,7 +1672,7 @@ function WorkflowStart({ proj, onClose, onInstantiate }: WorkflowStartProps) {
                       <span className="wf-task-n">{i + 1}</span>
                       <span className="tb-mod" style={{ '--m': TB_MOD[t.moduleType] || '#888' } as React.CSSProperties}>{t.moduleType}</span>
                       <span className="wf-task-t">{t.title}</span>
-                      <span className="wf-task-d">day +{t.dayOffset} -- {t.duration}d</span>
+                      <span className="wf-task-d">day +{t.dayOffset} — {t.duration}d</span>
                       <span className={`tb-pri pri-${t.priority}`}>{t.priority}</span>
                     </div>
                   ))}

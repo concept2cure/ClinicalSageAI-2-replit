@@ -469,7 +469,7 @@ export function AnaCommand({ onAsk }: SurfaceViewProps) {
   const topNeed = cont?.needsAttention?.[0];
   const leadHead = cont
     ? (urgent
-        ? `${progLabel} is trending ${traj.t} -- ${topNeed ? topNeed.title : 'act now'}`
+        ? `${progLabel} is trending ${traj.t} — ${topNeed ? topNeed.title : 'act now'}`
         : `${progLabel} is ${traj.t}: ${(cont.newlyReady || []).length} newly ready · ${(cont.needsAttention || []).length} need attention`)
     : progLabel;
 
@@ -548,7 +548,7 @@ export function AnaCommand({ onAsk }: SurfaceViewProps) {
                   : 'No continuity briefing yet for this program.'}
               </p>
               <div className="ac-lead-actions">
-                <button className="ac-lead-go" onClick={() => ask('Walk me through ' + progLabel + ' -- the critical path to filing and what to do first.')}>{I.sparkles} Ask AnA to plan the path</button>
+                <button className="ac-lead-go" onClick={() => ask('Walk me through ' + progLabel + ' — the critical path to filing and what to do first.')}>{I.sparkles} Ask AnA to plan the path</button>
                 <button className="ac-lead-gate" onClick={() => setGateOpen(true)}>{Ico.shieldCheck || Ico.shield || I.check} Run pre-submission gate</button>
               </div>
             </div>
