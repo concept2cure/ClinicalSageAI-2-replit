@@ -1417,12 +1417,14 @@ export function mountStreamRoute(router: Router): void {
         // Call the model with the latest tool results, streaming its narration. On
         // the terminal round includeTools is false to force a grounded answer.
         const loopMessages: GatewayMessage[] = [...messages];
-        const callModel = async (
-          results: ToolResultEntry[],
-          priorText: string,
-          round: number,
-          includeTools: boolean
-        ): Promise<ModelTurn> => {
+        /* Stage one round's turns onto loopMessages: what the model said last,
+           the tool results it now has, and any operator steer waiting.
+
+           Separated from callModel below because it is bookkeeping over three
+           closure variables and callModel is where the round's MODEL decisions
+           live; reading them interleaved made both harder to follow, and the
+           mix pushed callModel past the complexity limit. */
+        const stageRound = (results: ToolResultEntry[], priorText: string): void => {
           loopMessages.push({ role: 'assistant', content: priorText || '' });
           // Entries arrive pre-budgeted from executeTools, so the per-result cap
           // here is a no-op safety net. The adaptation note (when a tool failed
@@ -1452,6 +1454,15 @@ export function mountStreamRoute(router: Router): void {
             loopMessages.push(...pendingOperatorTurns);
             pendingOperatorTurns = [];
           }
+        };
+
+        const callModel = async (
+          results: ToolResultEntry[],
+          priorText: string,
+          round: number,
+          includeTools: boolean
+        ): Promise<ModelTurn> => {
+          stageRound(results, priorText);
 
           // Model tiering (S3) — opt-in via ANA_LOOP_TIERING=on, default OFF so
           // production behavior is byte-identical until deliberately enabled and

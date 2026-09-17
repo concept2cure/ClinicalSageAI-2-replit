@@ -163,6 +163,33 @@ export const FILE_CHAT_UPLOAD_TO_VAULT: AnaTool = {
   },
 };
 
+export const SEARCH_DOCUMENT_PASSAGES: AnaTool = {
+  name: 'search_document_passages',
+  description:
+    'Search INSIDE the client\u0027s filed documents and get back the actual passages \u2014 the sentences that ' +
+    'answer the question, with the document and page they came from. This is the tool for "what does the ' +
+    'stability data show at 6 months", "which batch failed", "what did the sponsor commit to in the meeting ' +
+    'minutes": questions the text settles. It searches the passage index built from every vault upload, so it ' +
+    'reaches the contents, not just the titles or the summaries. Prefer it over reading a whole document when ' +
+    'you need a fact; prefer read_project_document when you need to UNDERSTAND a document (and you must read ' +
+    'all of it before cataloging it \u2014 passages are not a substitute for that). Use ' +
+    'search_project_documents instead to find WHICH file covers a topic. The response states how many ' +
+    'documents are not in the passage index, so a miss is never evidence of absence; if the index or the ' +
+    'embedding provider is unavailable it says so rather than returning nothing.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      query: {
+        type: 'string',
+        description:
+          'The question or phrase to find, in the words you expect the document to use. Specific terms \u2014 an assay, a batch id, an endpoint \u2014 retrieve better than a paraphrase.',
+      },
+      limit: { type: 'number', description: 'Maximum passages to return (default 8, max 25).' },
+    },
+    required: ['query'],
+  },
+};
+
 export const PLACE_PROJECT_DOCUMENT: AnaTool = {
   name: 'place_project_document',
   description:
@@ -225,5 +252,6 @@ export const DOCUMENT_CATALOG_TOOLS: AnaTool[] = [
   CATALOG_PROJECT_DOCUMENT,
   PLACE_PROJECT_DOCUMENT,
   SEARCH_PROJECT_DOCUMENTS,
+  SEARCH_DOCUMENT_PASSAGES,
 ];
 

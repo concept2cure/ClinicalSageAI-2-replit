@@ -53,7 +53,7 @@ knows precisely what is left to read. This is the mechanism that makes "a
 sampled page recorded as reviewed" impossible, and the tests exercise the
 refusal first (`server/services/vault/__tests__/document-catalog.service.test.ts`).
 
-### Six AnA tools (defs `document-catalog-tool-defs.ts`, handlers `document-catalog-tools.ts`)
+### Seven AnA tools (defs `document-catalog-tool-defs.ts`, handlers `document-catalog-tools.ts`)
 
 | Tool | What it does |
 |---|---|
@@ -62,6 +62,7 @@ refusal first (`server/services/vault/__tests__/document-catalog.service.test.ts
 | `catalog_project_document` | Writes the comprehension tier — refused below full coverage; embeds the record for semantic recall. |
 | `place_project_document` | Files the document into its dossier folder through the canonical `placeVaultDocument` — governed, audited with both the old and new location, and **refused for a document with no comprehension record**. `unfile:true` is the honest fallback. |
 | `file_chat_upload_to_vault` | Files a chat upload into the project vault through the canonical `ingestVaultDocument`, so it gains a dossier placement, a catalog record, chunks and semantic search. Refuses a vault UUID (already filed) and asks which program rather than guessing one. |
+| `search_document_passages` | Passage search INSIDE the filed documents (`vault.document_chunks`, through the canonical `ragRouter` vault corpus): the sentences that answer a question, with the document and locator that make them citable. States how many documents are not in the passage index, and reports an unavailable index as unavailable. |
 | `search_project_documents` | Semantic (pgvector cosine) search over the comprehension records (`document-catalog-search.ts`), org-checked. Only cataloged documents are searchable — the response counts the unsearchable ones so absence is never read as nonexistence — and an unreachable embedding provider or a vector-less database is reported as unavailability, never as an empty result. |
 
 Definitions are in `ALL_ANA_TOOLS_RAW` (registry-consistency suite holds
@@ -141,6 +142,46 @@ another modality's taxonomy refused with nothing written, confirm-with-no-
 suggestion refused, an explicit unfile honoured, and another organization's
 caller unable to move the document. The taxonomy guard and the tenancy
 predicate were each removed in turn to watch exactly one test go red.
+
+### The passage corpus becomes reachable
+
+**Service:** `server/services/vault/document-passage-search.ts` · **Tool:** `search_document_passages`
+
+The chunk corpus had been written by every ingest since it was built, and swept
+for the legacy backlog. Nothing AnA could call ever read it. The tool that looks
+like it should — `project_knowledge_search` — passes an `artifactScope`, which
+routes retrieval to the project ATOM index (Data Room artifacts) and never to
+the client's uploads; the only readers of the vault corpus were the Cortex query
+route and the RAG eval harness. So the passages of the client's own evidence
+were indexed and unreachable: the same shape as the defect that created the
+corpus (a reader with no store), with the halves swapped.
+
+The tool is a thin adapter over `ragRouter` with `corpus: 'vault'` — no second
+SQL path — with two deliberate departures from the `regulatory_qa` defaults,
+because this runs inside an agent turn rather than behind one request a person
+is waiting on: `strategy: 'basic'` (the default 'advanced' is HyDE plus
+multi-query, two model round trips before a row is read) and
+`useReranking: false` (an LLM-as-judge pass per search). Hybrid retrieval, MMR
+and ±1 context expansion stay on — they are SQL and arithmetic, and a matched
+sentence without its surrounding clause is how a figure gets quoted away from
+the condition attached to it.
+
+Honesty, in three places: a missing tenant identity is REFUSED here rather than
+passed to the pipeline, whose own refusal is an empty array indistinguishable
+from "nothing matched" by the time a model reads it; every answer carries the
+chunking ledger's coverage (indexed / pending / failed of total), so a miss over
+a partly-indexed corpus is never reported as absence; and an unreachable
+embedding provider is stated, never rendered as zero passages.
+
+`tests/db/vault-passage-search.dbtest.ts` proves it end to end against real
+PostgreSQL and a real (stub) embedding endpoint through the governed provider
+seam: two documents uploaded through the ingest route are searchable by their
+CONTENTS in the same session, a stability question returns the stability
+passage and a tox question the tox one (the stub is a deterministic
+bag-of-words projection, not a constant vector, precisely so selection is under
+test), another organization's identical document never appears, and the
+tenant-less call refuses. Routing the search back through `artifactScope` — the
+exact misrouting that made the corpus unreachable — turns four of the six red.
 
 ### Two id spaces, told apart (`document-catalog-tools.ts`)
 
@@ -317,6 +358,11 @@ nothing like every other bootstrap source.
   deliberately: the comprehension record hangs off `vault.documents`, and
   filing is the act that gives a file a governed home. `remember_document_in_project`
   (now embedding its entries) remains their lighter durable-memory path.
+- **Passage search does not narrow to one document.** It searches the
+  organization's whole filed corpus; "what does THIS report say about X" is
+  served by reading that document. Adding a document filter means adding a
+  column to the shared `rag-filters` layer, which is a change to every corpus,
+  not to this tool.
 - **Cataloging and filing are still model-invoked:** Anna reads, catalogs and
   files a document when the work calls for it; nothing sweeps the backlog of
   "extracted but not yet studied" files, or the Unfiled queue, on its own. Both

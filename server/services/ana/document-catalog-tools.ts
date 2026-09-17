@@ -47,6 +47,7 @@ import {
   type RegisterFn,
 } from './document-tools-shared.js';
 import { registerDocumentPlacementHandlers } from './document-placement-tools.js';
+import { registerDocumentPassageHandlers } from './document-passage-tools.js';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Handlers
@@ -544,6 +545,7 @@ export function registerDocumentCatalogHandlers(register: RegisterFn): void {
   // Placement lives in its own module (see document-tools-shared.ts) but is
   // registered here, so the catalog stack still has one entry point.
   registerDocumentPlacementHandlers(register);
+  registerDocumentPassageHandlers(register);
   register(
     'file_chat_upload_to_vault',
     withCaughtErrors('file_chat_upload_to_vault', handleFileChatUploadToVault),

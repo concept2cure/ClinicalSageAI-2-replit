@@ -37,6 +37,7 @@ import {
   CATALOG_PROJECT_DOCUMENT,
   PLACE_PROJECT_DOCUMENT,
   SEARCH_PROJECT_DOCUMENTS,
+  SEARCH_DOCUMENT_PASSAGES,
 } from './document-catalog-tool-defs.js';
 // BLA biologics + CTD nonclinical/clinical tool definitions extracted to their
 // own module (decomposition tranche 2). Imported so the enabled-tools array can
@@ -2208,6 +2209,7 @@ export const ALL_ANA_TOOLS_RAW: AnaTool[] = [
   CATALOG_PROJECT_DOCUMENT,
   PLACE_PROJECT_DOCUMENT,
   SEARCH_PROJECT_DOCUMENTS,
+  SEARCH_DOCUMENT_PASSAGES,
   CHECK_DOSSIER_CONSISTENCY,
   CHECK_NUMERICAL_INTEGRITY,
   COMPUTE_SAMPLE_SIZE,
