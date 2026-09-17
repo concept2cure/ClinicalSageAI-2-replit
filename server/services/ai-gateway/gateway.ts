@@ -141,6 +141,7 @@ export const DEFAULT_MODELS: ModelConfig[] = [
     model: 'claude-opus-5',
     thinkingMode: 'adaptive',
     supportsSamplingParams: false,
+    supportsInlineSystem: true,
     // 1M window. It read 200000 for every Claude entry, which is the Claude 3
     // figure. Under-declaring it is the harmful direction for the admission
     // gate (see context-budget.ts): the gate refuses a request the model would
@@ -179,6 +180,7 @@ export const DEFAULT_MODELS: ModelConfig[] = [
     model: 'claude-opus-4-8',
     thinkingMode: 'adaptive',
     supportsSamplingParams: false,
+    supportsInlineSystem: true,
     contextWindow: 1000000,
     qualityScore: 98,
     costPer1kInput: 0.005,
@@ -422,6 +424,66 @@ function resolveSeed(requested: number | undefined): number {
  * private implementation detail of the provider paths.
  */
 export const resolveSeedForTest = resolveSeed;
+
+/**
+ * Split `messages` into the top-level `system` prompt and the body.
+ *
+ * The two Anthropic executors each carried their own copy of
+ * `filter(m => m.role === 'system')` / `filter(m => m.role !== 'system')`.
+ * That filter ignores POSITION: every system message was hoisted to the front
+ * regardless of where it sat, so a mid-conversation operator instruction
+ * silently became part of the persona — and, with prompt caching on (which the
+ * agentic loop always sets), could become the cache breakpoint itself,
+ * invalidating the whole prefix on every steer.
+ *
+ * Here, a system message carrying `inlineSystem` stays in the body at its
+ * position when the model accepts one. When it does not, it is folded into the
+ * preceding user turn as `[User interjection]: …` — byte-for-byte what the
+ * platform sent before this existed, which is what makes the capability safe to
+ * land on its own.
+ *
+ * Placement is the API's, not ours: an inline system turn must follow a user
+ * turn and cannot be first. A message that would violate that is downgraded
+ * rather than sent — an invalid shape is a 400 for the whole turn, and losing
+ * the cache-preserving form is a much smaller cost than losing the answer.
+ */
+function partitionSystemMessages(
+  messages: GatewayMessage[],
+  supportsInlineSystem: boolean
+): { systemMessages: GatewayMessage[]; bodyMessages: GatewayMessage[] } {
+  const systemMessages: GatewayMessage[] = [];
+  const bodyMessages: GatewayMessage[] = [];
+
+  for (const m of messages) {
+    if (m.role !== 'system') {
+      bodyMessages.push(m);
+      continue;
+    }
+    const placementOk = bodyMessages.length > 0 && bodyMessages[bodyMessages.length - 1].role === 'user';
+    if (m.inlineSystem && supportsInlineSystem && placementOk) {
+      bodyMessages.push(m);
+      continue;
+    }
+    if (m.inlineSystem) {
+      // Downgrade. Fold into the preceding user turn when there is one;
+      // otherwise it is an opening instruction after all, and belongs in the
+      // top-level system prompt.
+      const previous = bodyMessages[bodyMessages.length - 1];
+      if (previous && previous.role === 'user') {
+        bodyMessages[bodyMessages.length - 1] = {
+          ...previous,
+          content: `${previous.content}\n\n[User interjection]: ${m.content}`,
+        };
+      } else {
+        systemMessages.push(m);
+      }
+      continue;
+    }
+    systemMessages.push(m);
+  }
+
+  return { systemMessages, bodyMessages };
+}
 
 /** One buffer per open tool_use block, keyed by the stream event's `index`. */
 type ToolInputBuffers = Map<number, { toolIndex: number; json: string }>;
@@ -1300,9 +1362,14 @@ export class AIGateway {
       return this.executeAnthropicStream(modelConfig, request, requestId, startTime);
     }
 
-    // Convert messages — Anthropic needs system separate
-    const systemMessages = request.messages.filter(m => m.role === 'system');
-    const nonSystemMessages = request.messages.filter(m => m.role !== 'system');
+    // Convert messages — Anthropic needs system separate. Position matters:
+    // an operator turn marked `inlineSystem` stays in the body (see
+    // partitionSystemMessages), so it does not rewrite the persona or move the
+    // cache breakpoint.
+    const { systemMessages, bodyMessages: nonSystemMessages } = partitionSystemMessages(
+      request.messages,
+      modelConfig.supportsInlineSystem === true,
+    );
 
     const cacheEnabled = !!request.promptCache?.enabled;
     const cacheType = request.promptCache?.type;
@@ -1495,8 +1562,10 @@ export class AIGateway {
     }
 
     const onStream = request.onStream!;
-    const systemMessages = request.messages.filter(m => m.role === 'system');
-    const nonSystemMessages = request.messages.filter(m => m.role !== 'system');
+    const { systemMessages, bodyMessages: nonSystemMessages } = partitionSystemMessages(
+      request.messages,
+      modelConfig.supportsInlineSystem === true,
+    );
 
     const streamCacheEnabled = !!request.promptCache?.enabled;
     const streamCacheType = request.promptCache?.type;

@@ -232,6 +232,27 @@ export interface GatewayMessage {
   /** Multi-modal content blocks (images + text) — Claude only */
   contentBlocks?: ContentBlock[];
   /**
+   * Keep this system message IN `messages[]`, at its position, instead of
+   * hoisting it into the top-level `system` parameter — the OPERATOR CHANNEL.
+   *
+   * A mid-run instruction (a human steering AnA while she works, a mode
+   * switch, injected state) is not the user speaking and is not part of the
+   * persona. Carried as text inside a user turn it is indistinguishable from
+   * anything else that writes into user-visible input — including tool output,
+   * which is the untrusted half of the transcript. Carried as a `role: 'system'`
+   * message it has operator authority and cannot be forged.
+   *
+   * It also preserves the cache. Editing the top-level `system` changes the
+   * prefix ahead of the entire conversation, so every cached turn is
+   * reprocessed; a system message after the history leaves that prefix intact.
+   *
+   * Only honoured on models whose ModelConfig sets `supportsInlineSystem`.
+   * Elsewhere it is folded into the preceding user turn, which is byte-for-byte
+   * what the platform sent before this flag existed.
+   */
+  inlineSystem?: boolean;
+
+  /**
    * Mark this message with a prompt-cache breakpoint (Claude only).
    * When `promptCache.enabled` is set on the request, system messages
    * with `cacheControl: true` will carry `cache_control` markers in the
@@ -490,6 +511,16 @@ export interface ModelConfig {
    * models reject all three with a 400.
    */
   supportsSamplingParams: boolean;
+
+  /**
+   * Whether this model accepts a `{role: 'system'}` turn inside `messages[]`
+   * — the operator channel (see `GatewayMessage.inlineSystem`). A model
+   * without it answers `role 'system' is not supported on this model` with a
+   * 400, so the gateway folds the instruction into the preceding user turn
+   * instead. Omitted means false: a capability we have not confirmed for an
+   * entry is one we do not use for it.
+   */
+  supportsInlineSystem?: boolean;
 }
 
 export interface PolicyConfig {
