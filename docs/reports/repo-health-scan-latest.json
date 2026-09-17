@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-11T21:36:56.854Z",
+  "generatedAt": "2026-09-17T04:22:13.016Z",
   "git": {
-    "sha": "6d864793055d753471d5be4d007fff1467460921",
+    "sha": "2b9fa0e4d1648f8a57544bf3a712640cdd445395",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -1989,7 +1989,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
-        "bytes": 184067
+        "bytes": 184081
       },
       {
         "file": "server/routes/ana-features.ts",
@@ -2005,7 +2005,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/AdminSurfaces.tsx",
-        "bytes": 153155
+        "bytes": 153184
       },
       {
         "file": "server/services/regulatory-strategy/regulatory-strategy-knowledge.ts",
@@ -2183,7 +2183,7 @@
       },
       {
         "file": "client/src/concept2cure/v2/surfaces/CmcModule.tsx",
-        "lines": 3229
+        "lines": 3228
       },
       {
         "file": "server/routes/submission-ops.ts",
