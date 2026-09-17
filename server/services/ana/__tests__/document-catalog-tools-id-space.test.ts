@@ -193,3 +193,45 @@ describe('file_chat_upload_to_vault — the affordance the refusal names', () =>
     expect(r.error).toMatch(/file_chat_upload_to_vault/);
   });
 });
+
+describe('read_project_document hands back what was already learned', () => {
+  const cataloged = (status: string) => ({
+    id: VAULT_ID,
+    programId: '11111111-1111-4111-8111-111111111111',
+    fileName: 'stability.pdf',
+    documentTitle: 'Stability summary',
+    contentHash: 'h1',
+    extractedText: 'Assay at six months was 98.4 percent of label claim.',
+    catalog: {
+      status,
+      extractionMethod: 'pdf-text',
+      extractionConfidence: null,
+      extractionError: null,
+      charCount: 51,
+      wordCount: 10,
+      pageCount: 1,
+      documentKind: 'Stability study report',
+      purpose: 'Supports the 24-month retest period.',
+      summary: 'Twelve-month data for batch 23-104.',
+      keyData: { batch: '23-104', assayPct: 98.4 },
+      catalogedAt: '2026-09-17T00:00:00.000Z',
+    },
+  });
+
+  it('returns the comprehension record for a cataloged document', async () => {
+    loadDocumentForOrg.mockResolvedValue(cataloged('cataloged') as never);
+    const out = await call('read_project_document', { document_id: VAULT_ID });
+    expect(out.ok).toBe(true);
+    expect(out.comprehension.documentKind).toBe('Stability study report');
+    expect(out.comprehension.keyData).toMatchObject({ batch: '23-104' });
+  });
+
+  it('omits it entirely for a document nobody has studied', async () => {
+    // Absence has to read as absence. An empty comprehension shape would say
+    // "studied, and there was nothing to say", which is a different claim.
+    loadDocumentForOrg.mockResolvedValue(cataloged('extracted') as never);
+    const out = await call('read_project_document', { document_id: VAULT_ID });
+    expect(out.ok).toBe(true);
+    expect(out.comprehension).toBeUndefined();
+  });
+});

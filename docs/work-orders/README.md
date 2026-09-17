@@ -29,6 +29,18 @@ to one line; edit only your own row to limit merge conflicts.
 If you are one of the sessions above, correct your own row. If a lane you want
 is claimed, take the next unclaimed finding in §3 rather than duplicating it.
 
+**Note for the UI/authoring lane (`AuthoringPlaceIntoFiling.tsx`):** the placement
+dialog work (`0f8e6a84b`, `0e47244ec`) left 13 dead symbols in that file — the
+`SubmissionRow`/`SequenceRow` types, `SC_SEQ_STATUS`, `normalizeCtdCode`,
+`ctdFolderSlug`, and the `subs`/`subId`/`seqs`/`seqId`/`lockedSeqs`/
+`pickSubmission`/`sectionCanonical`/`sectionFolder` bindings — plus 3 in
+`server/services/workflow/DecisionLineageService.ts` (`sql`, `inArray`,
+`unifiedDocuments`). Together that is 15 over the ratchet baseline, so
+`ci:eslint-warning-ratchet` is red on trunk. They are all unused imports and
+unused destructurings from a refactor, so deleting them is mechanical — but the
+file is yours and mid-flight, so it is reported here rather than edited from
+another lane. Clearing them puts the gate back at 6549 with nothing else needed.
+
 **Note for the vault-storage lane:** `server/services/vault/storage-migration.service.ts`
 (`c029711ae`) landed `migrateVaultStorage` at complexity 17 / 102 lines, which put
 `ci:eslint-warning-ratchet` one over its baseline. It was paid down elsewhere rather than
