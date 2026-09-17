@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-17T05:41:00.333Z",
+  "generatedAt": "2026-09-17T05:53:16.310Z",
   "git": {
-    "sha": "cb8dc65a9e230a285c0878838d8252ee3e259cb7",
+    "sha": "662a119c716d88b0f203585fa4bed30c9f793f02",
     "branch": "concept2cure-v2"
   },
   "thresholds": {
@@ -2072,16 +2072,16 @@
         "bytes": 116913
       },
       {
+        "file": "server/services/ai-gateway/gateway.ts",
+        "bytes": 116663
+      },
+      {
         "file": "client/src/concept2cure/v2/surfaces/cmcRegisterForms.ts",
         "bytes": 116307
       },
       {
         "file": "server/services/ana/intelligence-questions/flows/protocol-development.ts",
         "bytes": 116241
-      },
-      {
-        "file": "server/services/ai-gateway/gateway.ts",
-        "bytes": 115828
       },
       {
         "file": "server/services/intelligent-report-engine.ts",
@@ -2215,7 +2215,7 @@
       },
       {
         "file": "server/services/ai-gateway/gateway.ts",
-        "lines": 2833
+        "lines": 2855
       },
       {
         "file": "server/src/routes/stability.router.ts",
@@ -2438,12 +2438,12 @@
         "lines": 1791
       },
       {
-        "file": "server/routes/ana-cortex-ft.ts",
-        "lines": 1785
+        "file": "server/routes/ana-ri/stream.ts",
+        "lines": 1790
       },
       {
-        "file": "server/routes/ana-ri/stream.ts",
-        "lines": 1769
+        "file": "server/routes/ana-cortex-ft.ts",
+        "lines": 1785
       },
       {
         "file": "server/services/ana/submission-chat-handler.ts",
