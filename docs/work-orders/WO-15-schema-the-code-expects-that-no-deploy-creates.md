@@ -379,7 +379,82 @@ IVD/design-controls roadmap."* The IVDR half of that same decision was made on
 `server/services/regulatory/__tests__/iso-14971-risk.test.ts` is green because
 it exercises the engine on in-memory literals and never touches a database.
 
-## Finding 5 — `c2c_template_specs.doc_types` reaches no populated database
+## Finding 5 — CONFIRMED and FIXED 2026-09-17
+
+> **This finding is right**, and the reflex that has corrected findings 3 and 7
+> nearly threw it away. On a canonically provisioned database the table has all
+> 16 columns including `doc_types`, which *looks* like the same wrong headline.
+> It is not. "Reaches no populated database" means a database provisioned
+> **before `20260716` was written** has the table (from `20260531`) and no
+> `doc_types`, and no applier will ever add it. A recently provisioned test
+> database cannot expose that — the same trap as finding 3.
+>
+> All four premises verified: no Drizzle definition (zero hits under `shared/`);
+> only two SQL creators, both in `migrations/`; neither in
+> `C2C_MIGRATION_FILES`; nine runtime references.
+>
+> **Proven before the fix**, on the canonical database — dropped `doc_types`,
+> ran the real `deploy-migrate`:
+>
+> ```
+> ✅ Schema migration complete — safe to roll services.
+>    doc_types present: 0
+> ```
+>
+> The applier declared itself done with the column still missing. After listing
+> the file: `doc_types present: 1`, and applying it twice more is a no-op.
+>
+> **THE ABSENCE IS SILENT, WHICH IS WHY IT SURVIVED.** No statement names
+> `doc_types` — the INSERT lists twelve columns without it, the UPDATE sets
+> four, and every read is `SELECT *` / `RETURNING *`. So nothing raises 42703:
+> `row.doc_types` is `undefined` and `templateStore.ts:47` maps that to `[]`,
+> because `Array.isArray(undefined)` is false. Every template reports zero
+> document types, indistinguishable from a template that genuinely has none.
+>
+> **FIXED** by listing `migrations/20260716_template_doc_types.sql` in
+> `C2C_MIGRATION_FILES` — it is self-contained and its `CREATE TABLE` is
+> byte-identical to `20260531`'s modulo comments (verified by normalised diff),
+> so it covers both; `20260531` is a strict subset and stays unlisted — and by
+> removing the file's now-false `KNOWN_UNLISTED` exemption. The guard fails
+> without the listing, naming the file, and passes 9/9 with it.
+>
+> ### Two things found alongside, neither fixed here
+>
+> **1. Nothing writes `doc_types`.** Not the INSERT, not the UPDATE, not
+> anything else in `server/`, `client/`, `shared/`, `migrations/` or `db/`. The
+> only references are the type, the read that defaults to `[]`, the UI that
+> renders it, and the migration that adds it with `DEFAULT '[]'`. (The `docTypes`
+> hits under `pathway-engines/` and `cerv2-ai-routes` are a different concept —
+> `c2c_documents.doc_type` filters.) So the column is **inert on every
+> database**: one that has it behaves exactly like one that does not, and the
+> template library's document-type chips can never appear. Listing the migration
+> does not change that and is not claimed to. Fixing it means either writing the
+> column or removing the feature, which is a product decision.
+>
+> **2. 14 of the 16 `KNOWN_UNLISTED` entries fail that list's stated reason.**
+> The stated reason is that such files' *"objects come from `shared/schema.ts`
+> via drizzle-kit push and they carry nothing an existing database additionally
+> needs"*, and the list's own comment says *"adding one requires the reason
+> above to actually hold."* Measured by checking each entry's created tables
+> against the Drizzle surface:
+>
+> | | |
+> |---|---|
+> | entries | 16 |
+> | create a table with **no** Drizzle definition, or carry an `ADD COLUMN` | **14** |
+>
+> Among them `protocol_soa_assessments`, `protocol_budget_items`, `dms_plans`,
+> `biosketches`, `other_support_documents`, `export_control_reviews`,
+> `invention_disclosures`, `research_agreements`, `chat_threads`,
+> `canonical_documents`. **This is a crude heuristic and at least one result is
+> a false positive**: `20260728_authoring_reviews.sql` has a real, documented,
+> *different* reason (its provisioner runs on both appliers) that the check
+> cannot see. So the 14 is an upper bound on a real problem, not a verdict on
+> each file. Each needs the same per-file treatment finding 5 just received —
+> too large to fold in here, and too large to leave unrecorded.
+
+### Original finding, as written
+
 
 `c2c_template_specs` has **no Drizzle definition** (zero hits for it in
 `shared/`), so `drizzle-kit push` cannot create it. Its only creators are
