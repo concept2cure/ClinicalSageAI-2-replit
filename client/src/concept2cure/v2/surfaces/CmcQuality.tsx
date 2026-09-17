@@ -663,7 +663,7 @@ function Kpi({ l, v, s, tone }: { l: string; v: React.ReactNode; s?: string; ton
   return (
     <div className="reg-kpi" data-tone={tone}>
       <div className="reg-kpi-v">{v}</div>
-      <div className="reg-kpi-l">{l}{s ? ' -- ' + s : ''}</div>
+      <div className="reg-kpi-l">{l}{s ? ' — ' + s : ''}</div>
     </div>
   );
 }

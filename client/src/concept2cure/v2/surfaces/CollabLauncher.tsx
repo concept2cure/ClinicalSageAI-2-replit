@@ -189,7 +189,7 @@ async function loadDirectory(): Promise<void> {
     .filter((p) => p && p.id != null)
     .map((p) => ({
       id: String(p.id),
-      label: p.code ? `${p.name || p.code} -- ${p.code}` : (p.name || String(p.id)),
+      label: p.code ? `${p.name || p.code} — ${p.code}` : (p.name || String(p.id)),
       type: p.projectType || '',
     }));
 
@@ -817,7 +817,7 @@ function CollabDiscuss({ ctx: surfaceCtx, onClose, onCreated }: CollabDiscussPro
         {/* The "@name" prompt only appears once a real teammate is selected;
             with no recipient it used to read "@ -- share context...". */}
         <textarea rows={4} autoFocus value={body} onChange={e => setBody(e.target.value)}
-          placeholder={(C2C.team[to] ? '@' + C2C.team[to].n + ' -- ' : '') + 'share context, ask a question, or route this for action...'} />
+          placeholder={(C2C.team[to] ? '@' + C2C.team[to].n + ' — ' : '') + 'share context, ask a question, or route this for action...'} />
       </div>
       <button type="button" className={`cl-tasktoggle${makeTask ? ' on' : ''}`} onClick={() => setMakeTask(m => !m)}>
         <span className="cl-check">{makeTask ? I.check : ''}</span>
@@ -963,7 +963,7 @@ export function CollabLayer({ onNav }: CollabLayerProps) {
           {/* A task IS now persisted, so the toast reports the real, server-issued
               taskId. The discuss action is still session-only and keeps saying so. */}
           {toast.type === 'task' && toast.t
-            ? <span className="cl-toast-t">Saved to the org board -- <b>{toast.t.taskId}</b>{toast.t.assignee ? <> for {(C2C.team[toast.t.assignee] || { n: toast.t.assignee }).n}</> : null}.</span>
+            ? <span className="cl-toast-t">Saved to the org board — <b>{toast.t.taskId}</b>{toast.t.assignee ? <> for {(C2C.team[toast.t.assignee] || { n: toast.t.assignee }).n}</> : null}.</span>
             : <span className="cl-toast-t">Captured in this session — not saved to the org board yet.</span>}
           <button className="cl-toast-go" onClick={() => { onNav?.('tasks'); setToast(null); }}>Open board {I.arrowRight}</button>
         </div>

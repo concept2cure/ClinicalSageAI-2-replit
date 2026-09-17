@@ -4,8 +4,7 @@
  * Saves the (otherwise stateless) IVD lifecycle calculator results and generated
  * post-market documents as org-scoped, audited records — the persistence the
  * UI/DB-readiness audit identified as the prerequisite for a regulated,
- * client-facing product. Mirrors the design-risk service conventions
- * (raw SQL via the shared pool, org-scoped reads/writes).
+ * client-facing product. Raw SQL via the shared pool, org-scoped reads/writes.
  */
 
 import { pool } from '../../db';

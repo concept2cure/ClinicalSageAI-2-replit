@@ -213,26 +213,7 @@ export function attributeAssertedParaphraseSpans(
   const multiSource = opts.multiSource ?? true;
   const alreadyQuoted = opts.alreadyQuotedRanges ?? new Set<string>();
 
-  // Only sources actually retrieved can be cited — an assertion naming anything
-  // else is dropped rather than resolved to a guessed id.
-  const validSourceIds = new Set(
-    (Array.isArray(sources) ? sources : [])
-      .filter((s) => s && Number.isInteger(s.sourceId) && s.sourceId > 0)
-      .map((s) => s.sourceId),
-  );
-
-  // Each assertion becomes a normalized haystack tagged with its (valid) source id.
-  const claims = assertions
-    .filter(
-      (a) =>
-        a &&
-        typeof a.quote === 'string' &&
-        Number.isInteger(a.sourceId) &&
-        validSourceIds.has(a.sourceId),
-    )
-    .map((a) => ({ sourceId: a.sourceId, norm: normalizeForMatch(a.quote) }))
-    .filter((a) => a.norm.length > 0);
-
+  const claims = buildParaphraseClaims(sources, assertions);
   if (claims.length === 0) return [];
 
   const out: AttributedSpan[] = [];
@@ -244,25 +225,74 @@ export function attributeAssertedParaphraseSpans(
     const needle = normalizeForMatch(span.text);
     if (needle.length < minChars) continue;
 
-    const seen = new Set<number>();
-    for (const c of claims) {
-      if (seen.has(c.sourceId)) continue;
-      if (c.norm.includes(needle)) {
-        out.push({
-          charStart: span.charStart,
-          charEnd: span.charEnd,
-          sourceId: c.sourceId,
-          usage: 'paraphrased',
-          spanText: span.text,
-        });
-        seen.add(c.sourceId);
-        if (!multiSource) break;
-      }
+    for (const sourceId of claimedSourcesFor(needle, claims, multiSource)) {
+      out.push({
+        charStart: span.charStart,
+        charEnd: span.charEnd,
+        sourceId,
+        usage: 'paraphrased',
+        spanText: span.text,
+      });
     }
   }
 
   out.sort((a, b) => a.charStart - b.charStart || a.charEnd - b.charEnd || a.sourceId - b.sourceId);
   return out;
+}
+
+/** One asserted quote, normalized for matching and tagged with its source id. */
+interface ParaphraseClaim {
+  sourceId: number;
+  norm: string;
+}
+
+/**
+ * The model's assertions, reduced to the ones that can legitimately be matched:
+ * a string quote that normalizes to something, naming a source that was
+ * actually retrieved. An assertion citing anything else is dropped rather than
+ * resolved to a guessed id.
+ */
+function buildParaphraseClaims(
+  sources: RetrievedSource[],
+  assertions: ParaphraseAssertion[],
+): ParaphraseClaim[] {
+  const validSourceIds = new Set(
+    (Array.isArray(sources) ? sources : [])
+      .filter((s) => s && Number.isInteger(s.sourceId) && s.sourceId > 0)
+      .map((s) => s.sourceId),
+  );
+  return assertions
+    .filter(
+      (a) =>
+        a &&
+        typeof a.quote === 'string' &&
+        Number.isInteger(a.sourceId) &&
+        validSourceIds.has(a.sourceId),
+    )
+    .map((a) => ({ sourceId: a.sourceId, norm: normalizeForMatch(a.quote) }))
+    .filter((a) => a.norm.length > 0);
+}
+
+/**
+ * Which retrieved sources the model flagged for this clause — at most one entry
+ * per source, in claim order, and at most one entry in total when multiSource
+ * is off. Empty when the model never quoted these words back.
+ */
+function claimedSourcesFor(
+  needle: string,
+  claims: ParaphraseClaim[],
+  multiSource: boolean,
+): number[] {
+  const hits: number[] = [];
+  const seen = new Set<number>();
+  for (const c of claims) {
+    if (seen.has(c.sourceId)) continue;
+    if (!c.norm.includes(needle)) continue;
+    hits.push(c.sourceId);
+    seen.add(c.sourceId);
+    if (!multiSource) break;
+  }
+  return hits;
 }
 
 /**

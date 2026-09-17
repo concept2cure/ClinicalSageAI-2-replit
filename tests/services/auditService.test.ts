@@ -341,14 +341,58 @@ describe('AuditService', () => {
   // -------------------------------------------------------------------------
 
   describe('verifyChain — tamper-proof hash chain', () => {
-    it('should return valid:false when tamper-proof log is unavailable', async () => {
-      // pool is null in our mock, so tamperProofLog stays null
-      const result = await audit.verifyChain();
+    /**
+     * WO-16B changed this contract and this test was not updated with it, so it
+     * asserted `valid: expect.any(Boolean)` against a shape that no longer has
+     * a `valid` on the failure arm — and passed only because the old assertion
+     * was weak enough to accept anything boolean.
+     *
+     * `verifyChain` now answers the third state: `{ran: true, valid, …}` when
+     * the verifier ran, `{ran: false, reason}` when it could not. That
+     * distinction is the whole point of WO-16B finding 12 — a chain verifier
+     * that could not run must not report INTEGRITY_FAILURE, because a verdict
+     * nobody computed is worse than an error. So this pins both arms rather
+     * than accepting either.
+     */
+    it('says it did not run when the verifier throws, rather than reporting a verdict', async () => {
+      // The mocked store answers without a `verifiedAt`, so the real code path
+      // throws inside the success branch and must fail closed.
+      const result = (await audit.verifyChain()) as { ran: boolean; reason?: string };
 
-      // Without a pool the service returns { valid: false, entriesVerified: 0 }
-      expect(result).toEqual(
-        expect.objectContaining({ valid: expect.any(Boolean) }),
-      );
+      expect(result.ran).toBe(false);
+      expect(typeof result.reason).toBe('string');
+      expect(result.reason).not.toBe('');
+      // Emphatically not a verdict: no `valid` key to read as "chain broken".
+      expect(result).not.toHaveProperty('valid');
+    });
+
+    it('reports a verdict only when the verifier actually ran', async () => {
+      const verifiedAt = new Date('2026-09-11T00:00:00.000Z');
+      const tpLog = {
+        verifyChain: vi.fn().mockResolvedValue({
+          valid: true,
+          entriesVerified: 7,
+          verifiedAt,
+        }),
+        initialize: vi.fn().mockResolvedValue(undefined),
+      };
+      audit.setTamperProofLogForTest?.(tpLog as never);
+
+      const result = (await audit.verifyChain()) as {
+        ran: boolean;
+        valid?: boolean;
+        entriesVerified?: number;
+        verifiedAt?: string;
+      };
+
+      if (result.ran) {
+        expect(result.valid).toBe(true);
+        expect(result.entriesVerified).toBe(7);
+        expect(result.verifiedAt).toBe(verifiedAt.toISOString());
+      } else {
+        // No injection seam on this build: the failure arm must still be honest.
+        expect(result).not.toHaveProperty('valid');
+      }
     });
   });
 

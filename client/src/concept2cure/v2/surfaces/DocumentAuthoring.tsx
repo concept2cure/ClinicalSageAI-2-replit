@@ -3024,6 +3024,7 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
                 is a view filter, not a definition of the tree. */}
             <select
               className="c2c-input"
+              aria-label="Filter documents by status"
               style={{ height: 28, flex: 1 }}
               value={status}
               onChange={e => setStatus(e.target.value)}
@@ -4771,6 +4772,7 @@ export function DocumentAuthoring({ onNav, liveDrive }: OwnedSurfaceViewProps) {
               )}
               <textarea
                 className="c2c-input"
+                aria-label={pendingAnchor ? 'Comment on the selected text' : `Comment on ${activeSection.code}`}
                 value={newComment}
                 onChange={e => setNewComment(e.target.value)}
                 placeholder={

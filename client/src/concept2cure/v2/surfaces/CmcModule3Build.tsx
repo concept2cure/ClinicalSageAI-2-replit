@@ -473,7 +473,7 @@ export function CmModule3Build({ ask, nav }: { ask: (text: string) => void; nav?
                   ? 'Loading contradictions…'
                   : contradictions.error
                     ? 'Couldn’t load contradictions — no count is claimed'
-                    : `${open.length} open${criticalOpen.length ? ` -- ${criticalOpen.length} critical` : ''} -- across specifications, methods, stability, batch and comparability`}
+                    : `${open.length} open${criticalOpen.length ? ` — ${criticalOpen.length} critical` : ''} — across specifications, methods, stability, batch and comparability`}
               </span>
             </div>
             <div className="pj-card-b" style={{ padding: 0 }}>
@@ -896,7 +896,7 @@ function Kpi({ l, v, s, tone }: { l: string; v: React.ReactNode; s?: string; ton
   return (
     <div className="reg-kpi" data-tone={tone}>
       <div className="reg-kpi-v">{v}</div>
-      <div className="reg-kpi-l">{l}{s ? ' -- ' + s : ''}</div>
+      <div className="reg-kpi-l">{l}{s ? ' — ' + s : ''}</div>
     </div>
   );
 }

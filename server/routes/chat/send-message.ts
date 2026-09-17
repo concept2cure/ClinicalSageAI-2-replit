@@ -542,37 +542,29 @@ export const sendMessageHandler = async (req: Request, res: Response) => {
       memoryDiagnostics = diagnostics;
 
       // Session bootstrap — so a conversation never starts cold. At session
-      // start (no prior messages in this thread) rehydrate query-independently:
-      // the latest working summary, the most important project/client atoms,
-      // and AnA's own past lessons (which the query-driven memory assembler
-      // never loads). Gated to session start to avoid re-injecting every turn,
-      // fault-tolerant, and disableable via ANA_SESSION_BOOTSTRAP_AUTO=false.
+      // start rehydrate query-independently: the latest working summary, the
+      // most important project/client atoms, AnA's own past lessons, and what
+      // files the client has (none of which the query-driven assembler above
+      // loads). The gate, the kill-switch and the failure path live in
+      // sessionBootstrapBlockFor, because the streaming endpoint needs the same
+      // three and a second copy is how the two paths came to differ.
       let sessionBootstrapBlock = '';
-      try {
-        const { shouldAutoBootstrap, buildSessionBootstrapContext } = await import(
+      {
+        const { sessionBootstrapBlockFor } = await import(
           '../../services/ana-session-bootstrap.js'
         );
-        if (
-          shouldAutoBootstrap({
-            priorMessageCount: previousMessages.length,
-            organizationId: numericOrgId ?? null,
-            disabled: process.env.ANA_SESSION_BOOTSTRAP_AUTO === 'false',
-          })
-        ) {
-          const pid =
-            typeof project_id === 'string'
-              ? parseInt(project_id.replace(/^proj_/, ''), 10)
-              : project_id;
-          const block = await buildSessionBootstrapContext({
-            organizationId: numericOrgId as number,
-            projectId: Number.isFinite(pid) && (pid as number) > 0 ? (pid as number) : undefined,
-            threadId,
-            atomLimit: 6,
-          });
-          if (block) sessionBootstrapBlock = `\n\n${block}\n`;
-        }
-      } catch (err) {
-        console.warn('[AnA] session bootstrap failed (continuing without):', (err as any)?.message);
+        const pid =
+          typeof project_id === 'string'
+            ? parseInt(project_id.replace(/^proj_/, ''), 10)
+            : project_id;
+        const block = await sessionBootstrapBlockFor({
+          priorMessageCount: previousMessages.length,
+          organizationId: numericOrgId ?? null,
+          projectId: Number.isFinite(pid) && (pid as number) > 0 ? (pid as number) : undefined,
+          threadId,
+          atomLimit: 6,
+        });
+        if (block) sessionBootstrapBlock = `\n\n${block}\n`;
       }
 
       // ── IND Context Injection ──────────────────────────────────────────────────

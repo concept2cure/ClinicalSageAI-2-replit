@@ -473,6 +473,57 @@ export interface VaultDocDigest {
   purpose: string | null;
 }
 
+/** A chat-uploaded file from the evidence spine, with the file_id that reopens it. */
+export interface ChatUploadDigest {
+  sourceId: number;
+  fileId: string | null;
+  fileName: string;
+  version: string | null;
+  extractionStatus: string;
+  dossier: unknown;
+  programId: string | null;
+  uploadedAt: string;
+}
+
+/**
+ * Current (non-superseded) chat uploads, via the canonical evidence-spine
+ * listing. `fileId` comes from the source's recorded provenance — it is what
+ * inspect_uploaded_document / read_uploaded_document take, so a file attached
+ * in a past conversation is reachable again.
+ *
+ * Shared by the discovery tool and the session-start digest: two callers, one
+ * definition of "the chat uploads this organization currently has".
+ */
+export async function listChatUploads(
+  orgId: number,
+  programId: string | null,
+  limit: number,
+): Promise<ChatUploadDigest[]> {
+  const { listClientDocuments } = await import(
+    '../clinical-regulatory-evidence/evidence-spine.service.js'
+  );
+  const sources = await listClientDocuments(orgId, {
+    programId: programId ?? undefined,
+    includeUnscoped: true,
+    currentOnly: true,
+    limit,
+  });
+  return sources.map(s => {
+    const prov = (s.provenance ?? {}) as Record<string, unknown>;
+    const meta = (s.metadata ?? {}) as Record<string, unknown>;
+    return {
+      sourceId: s.id,
+      fileId: typeof prov.fileUploadId === 'string' ? prov.fileUploadId : null,
+      fileName: typeof meta.originalName === 'string' ? meta.originalName : (s.title ?? 'document'),
+      version: s.version ?? null,
+      extractionStatus: s.extractionStatus,
+      dossier: meta.dossier ?? null,
+      programId: s.clientProgramId ?? null,
+      uploadedAt: String(s.createdAt),
+    };
+  });
+}
+
 /**
  * Compact digest of the org's project files for session-start recall — the
  * piece that makes AnA REMEMBER a file exists, where it is filed, and what it

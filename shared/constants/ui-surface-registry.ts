@@ -361,7 +361,7 @@ export const UI_SURFACES: UiSurface[] = [
   },
   {
     id: 'ectd-compile',
-    label: 'Compile & Export eCTD',
+    label: 'Compile & export eCTD',
     navTier: 'project',
     layoutMode: 'submissions',
     icon: 'gitBranch',
@@ -769,7 +769,7 @@ export const UI_SURFACES: UiSurface[] = [
     icon: 'alertTriangle',
     group: 'device',
     uiKit: 'risk',
-    apiPrefixes: ['/api/mdx', '/api/design-risk'],
+    apiPrefixes: ['/api/mdx'],
     anaToolFamilies: [],
     sharedContract: null,
     discoveryCatalog: null,
@@ -918,7 +918,7 @@ export const UI_SURFACES: UiSurface[] = [
   },
   {
     id: 'ana-memory',
-    label: 'AnA Memory',
+    label: 'AnA memory',
     navTier: 'global',
     layoutMode: 'ana-memory',
     icon: 'database',

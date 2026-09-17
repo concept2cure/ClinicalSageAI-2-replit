@@ -284,7 +284,7 @@ replacement exists.
 |---|---|---|---|
 | 0 | Migration-amendment policy, in `CLAUDE.md` | — | **Shipped** — RULE 1, enforced by `ci:migration-drop-safety` in pre-push, with a selftest that fires on the real case in both replay orders. |
 | 1a | `organization_id` on `vault.documents`, backfilled, unattributable rows quarantined | nothing | **Shipped** — `migrations/20260905_vault_documents_organization_id.sql`. |
-| 1b | `submission_leaves.document_id` INTEGER → TEXT + `document_version_id` | nothing | Its own change: ~128 coercion sites, and a surviving `Number()` yields `NaN`, resolves to nothing and ships an incomplete sequence silently. |
+| ~~1b~~ | ~~`submission_leaves.document_id` INTEGER → TEXT + `document_version_id`~~ **WITHDRAWN 2026-09-17** | — | Rejected by the approved identity contract, and would not have sufficed. Replaced by **vault bytes onto `getStorageProvider()`**. See below. |
 | 2 | `regulatory_structure_versions` / `_nodes`, seeded **mechanically from `c2c_rule_packs`** | nothing | Zero transcription risk — the rows already exist. |
 | 3 | `regulatory_document_types` + generated-constant drift test, then the `vault-taxonomy.ts` deletions in one commit | the three vocabularies | The zero-duplication change. |
 | 4 | `document_placements` + the `20260823` amendment | `folder_id`, `ctd_section`, `evidence_kind` | Where the architecture actually lands. |
@@ -318,13 +318,32 @@ Step 0, then step 1. **Both are now done** — step 0 as `RULE 1` in `CLAUDE.md`
 `organization_id`, which cannot be added before `regulatory_document_types` exists in step 3. It
 belongs there, and has moved.
 
-**Step 1b is deliberately not bundled with 1a.** Widening `submission_leaves.document_id` from
-INTEGER to TEXT touches ~128 `documentId` coercion sites across the server. Its failure mode is a
-surviving `Number()` that yields `NaN`, resolves to no leaf, and ships an incomplete sequence with a
-valid-looking checksum — precisely the class `leaf-source-resolver.ts` was written to end.
-Landing that in the same commit as a schema addition is how that bug reaches an agency. Change the
-type first with zero behaviour change, let the compiler enumerate the call sites, and assert in
-`leafSourceKey` that a non-numeric id never reaches `Number()`.
+**Step 1b is WITHDRAWN (2026-09-17). Do not widen `submission_leaves.document_id`.**
 
-So: after 1a, a vault document has a tenant. It still cannot become a leaf until 1b lands. That is
-one of the two blockers removed, not both, and the remaining one is named.
+The original reasoning below was about how to land the widening safely. It was answering the
+wrong question, for two independent reasons found when the step came up for implementation:
+
+1. **It is already adjudicated against.** `docs/DOCUMENT_IDENTITY_CONTRACT_2026-08.md` was
+   APPROVED on 2026-08-13. Its Option A is exactly this widening, rejected because it rewrites
+   `submission_leaves` and `concept2cure_artifacts` — "the two tables where a migration error is
+   least recoverable" — for a benefit its Option C delivers additively. §4 states plainly:
+   *"`submission_leaves` keeps integer `document_id`."* The sanctioned bridge is the alias map,
+   `c2c_document_aliases`, which is already built, already carries `submission_leaves` in its
+   store vocabulary, and already resolves lineage for coauthor leaves.
+
+2. **It would not have worked.** Identity is not the binding constraint. The packager fetches
+   non-local bytes through `getStorageProvider().get(vaultVersionId, organizationId)` — a lookup
+   by a *provider-minted version uuid* under `storage/vault/{orgId}/{projectId}/versions/`. Vault
+   ingest writes to `uploads/vault/{programId}/{contentHash}` and stores that relative **path**
+   in `s3_key`, `s3_bucket='local'`, with no provider sidecar. Different root, different key
+   space. A widened column would have produced a leaf that addresses a document whose bytes the
+   packager still cannot fetch — an unresolved leaf with more coercion sites.
+
+**What replaces it: move vault ingest onto the storage provider.** Persist the provider's version
+id on `vault.documents`, migrate the bytes already written under `uploads/vault/{programId}/`, and
+switch the download path. That is also what retires the third implementation of this layout —
+`server/services/storage/` is canonical, `server/services/vaultService.ts` is a parallel copy, and
+vault ingest writing raw paths is a third. Zero duplication says one of these survives.
+
+So: after 1a a vault document has a tenant. The remaining blocker is the storage seam, not the
+id space — and the identity half of the bridge is largely already built.
