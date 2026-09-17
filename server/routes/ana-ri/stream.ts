@@ -85,6 +85,7 @@ import {
   type ModelTurn,
   type FailedToolCall,
 } from '../../services/ana/agentic-loop.js';
+import { buildSteerMessage } from '../../services/ana/operator-channel.js';
 import type { ProvenanceRecord } from '../../services/evidence/provenance.js';
 import {
   buildTraceEntry,
@@ -872,7 +873,12 @@ export function mountStreamRoute(router: Router): void {
       const controlEvents: HumanControlEvent[] = [];
       // A steering interjection queued by the checkpoint, spliced into the next
       // model turn's user message (same mechanism as the adaptation note).
-      let pendingInterjection = '';
+      // Steers accepted at a round boundary, held as OPERATOR TURNS rather
+      // than a string. They used to be concatenated onto the tool-result user
+      // message, which put a human's redirect in the same turn as tool output
+      // — the untrusted half of the transcript — with nothing to tell the two
+      // apart. See services/ana/operator-channel.ts.
+      let pendingOperatorTurns: GatewayMessage[] = [];
       // Structured record of the tools run this turn (persisted on the assistant
       // message's metadata for cross-turn memory; see tool-trace.ts).
       const toolTrace: ToolTraceEntry[] = [];
@@ -1424,11 +1430,6 @@ export function mountStreamRoute(router: Router): void {
           // instead of retrying the identical call.
           const adaptationSuffix = pendingAdaptationNote ? `\n\n${pendingAdaptationNote}` : '';
           pendingAdaptationNote = '';
-          // A human interjection queued at the round boundary rides the same user
-          // turn as the tool results so the model course-corrects toward the steer
-          // on this round. `pendingInterjection` already carries its own label.
-          const interjectionSuffix = pendingInterjection;
-          pendingInterjection = '';
           loopMessages.push({
             role: 'user',
             content:
@@ -1440,9 +1441,17 @@ export function mountStreamRoute(router: Router): void {
                     )}`
                 )
                 .join('\n\n') +
-              adaptationSuffix +
-              interjectionSuffix,
+              adaptationSuffix,
           });
+          // Steers ride AFTER the tool results, as operator turns. Order
+          // matters twice over: the gateway requires an inline system turn to
+          // follow a user turn, and a redirect read after the evidence is a
+          // redirect the model applies to this round rather than one it has
+          // already reasoned past.
+          if (pendingOperatorTurns.length > 0) {
+            loopMessages.push(...pendingOperatorTurns);
+            pendingOperatorTurns = [];
+          }
 
           // Model tiering (S3) — opt-in via ANA_LOOP_TIERING=on, default OFF so
           // production behavior is byte-identical until deliberately enabled and
@@ -1553,7 +1562,19 @@ export function mountStreamRoute(router: Router): void {
 
           // Interjections: splice each queued steer into the next model turn.
           for (const inj of runControlRegistry.consumeInterjections(runId)) {
-            pendingInterjection += `\n\n[User interjection]: ${inj}`;
+            const framed = buildSteerMessage(inj);
+            if (framed) {
+              pendingOperatorTurns.push({
+                role: 'system',
+                inlineSystem: true,
+                // Scanned, not exempt. It is the operator's channel, but the
+                // words are still typed by a human into a text box, and
+                // `origin: 'app'` is reserved for content our own code
+                // authored verbatim (see GatewayMessage.origin).
+                origin: 'external',
+                content: framed,
+              });
+            }
             emitControl({ type: 'interjected', round: upcomingRound, message: inj });
             recordControl('interject', upcomingRound, inj);
           }

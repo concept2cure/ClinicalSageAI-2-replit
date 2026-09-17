@@ -120,14 +120,25 @@ describe('the operator channel, on a model that accepts it', () => {
     expect(params.system[0].cache_control).toEqual({ type: 'ephemeral' });
   });
 
-  it('carries several steers in the order they were given', async () => {
+  it('merges two steers at one boundary into one directive, in order', async () => {
+    // Two redirects typed at the same round boundary are one redirect. They
+    // must NOT become two consecutive system turns: the API wants an inline
+    // system turn to follow a USER turn, and the second would fail placement
+    // and fall through to the persona — where a mid-run steer would silently
+    // become part of AnA's identity for the rest of the conversation. Not
+    // dropped, not applied, permanently misfiled: the worst of the three.
     const second: GatewayMessage = { role: 'system', inlineSystem: true, content: 'And cite the guidance.' };
     const params = await sentParams(CAPABLE, [PERSONA, ASK, WORKING, RESULTS, STEER, second]);
-    // The second follows a system turn, not a user turn, so the API's
-    // placement rule sends it back to the persona — see the downgrade test.
-    // What must NOT happen is losing it.
-    const everywhere = JSON.stringify(params);
-    expect(everywhere).toContain('And cite the guidance.');
+
+    expect(params.system, 'a steer reached the persona').toBe('You are AnA.');
+    expect(params.messages.map((m: any) => m.role)).toEqual(['user', 'assistant', 'user', 'system']);
+
+    const directive = params.messages[3].content as string;
+    expect(directive).toContain('Narrow to Class III');
+    expect(directive).toContain('And cite the guidance.');
+    expect(directive.indexOf('Narrow to Class III')).toBeLessThan(
+      directive.indexOf('And cite the guidance.'),
+    );
   });
 });
 
