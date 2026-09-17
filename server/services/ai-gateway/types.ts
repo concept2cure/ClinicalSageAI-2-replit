@@ -354,6 +354,21 @@ export interface GatewayRequest {
   /** Streaming callback for real-time delivery */
   onStream?: StreamCallback;
 
+  /**
+   * Cancel this request. Passed to the provider SDK, so aborting stops
+   * GENERATION rather than only stopping the caller from reading — before
+   * this existed, AnA's stop button dropped the socket and left the model
+   * running to completion at full cost.
+   *
+   * Aborting is terminal and blameless: the gateway raises
+   * `GatewayAbortedError`, which is never retried, never falls back to another
+   * model, and never counts against provider health. An abort that lands
+   * mid-stream is not an error at all — the partial response is returned with
+   * `finishReason: 'aborted'`, because the text the person is already reading
+   * is worth keeping.
+   */
+  signal?: AbortSignal;
+
   /** Multi-modal content blocks (images) — used instead of messages for vision */
   imageContent?: ImageBlock[];
 }

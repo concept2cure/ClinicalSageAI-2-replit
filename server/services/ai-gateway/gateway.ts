@@ -553,6 +553,9 @@ export class AIGateway {
         // Governance decisions are not transient provider failures. Retrying
         // duplicated denial audits and could never make the placement safe.
         if (err instanceof GatewayPolicyError) throw err;
+        // Neither is a cancel. Retrying it re-runs the work the caller just
+        // stopped — the opposite of what they asked for.
+        if (err instanceof GatewayAbortedError) throw err;
         const status = err?.status || err?.statusCode;
         // Hard client errors (400/401/403/404/422, …) never succeed on retry.
         if (isHardClientError(status)) throw err;
@@ -584,6 +587,11 @@ export class AIGateway {
     const requestId = randomUUID();
     const startTime = Date.now();
     const strategy = request.strategy || this.config.defaultStrategy;
+
+    // Already cancelled before we started — happens whenever a control lands
+    // between agentic rounds. Spend nothing: no classification, no policy
+    // pass, no provider call, no audit row for work that was never done.
+    if (request.signal?.aborted) throw new GatewayAbortedError('pre_call');
 
     // Apply the org's default placement policy (residency / zero-retention) when
     // the request doesn't specify it. Explicit request values always win; if no
@@ -723,6 +731,11 @@ export class AIGateway {
         // Policy denials are terminal. Never retry or cross-provider fallback:
         // doing so would turn a placement refusal into a routing hint.
         if (error instanceof GatewayPolicyError) throw error;
+        // A cancel is terminal for the same shape of reason, and the stakes
+        // are higher: falling back would re-run the entire request the user
+        // just stopped on every remaining rung, and recordFailure would mark a
+        // provider that did nothing wrong as unhealthy for everyone else.
+        if (error instanceof GatewayAbortedError) throw error;
         lastError = error;
         triedModels.push(selectedModel.id);
         this.recordFailure(selectedModel.provider, error);
@@ -751,6 +764,7 @@ export class AIGateway {
         return response;
       } catch (error: any) {
         if (error instanceof GatewayPolicyError) throw error;
+        if (error instanceof GatewayAbortedError) throw error;
         lastError = error;
         triedModels.push(fallback.id);
         this.recordFailure(fallback.provider, error);
@@ -1156,7 +1170,7 @@ export class AIGateway {
     }
 
     const completion = await Promise.race([
-      client.chat.completions.create(params),
+      client.chat.completions.create(params, request.signal ? { signal: request.signal } : undefined),
       new Promise<never>((_, reject) =>
         setTimeout(() => reject(new Error(`${modelConfig.provider} API call timed out after 120s`)), 120_000)
       ),
@@ -1389,12 +1403,15 @@ export class AIGateway {
     const usesFilesApiDoc = (request.messages || []).some(m =>
       m.contentBlocks?.some(b => b.type === 'document' && b.source.type === 'file')
     );
-    const reqOptions = usesFilesApiDoc
-      ? { headers: { 'anthropic-beta': 'files-api-2025-04-14' } }
-      : undefined;
+    // Merged, not replaced: the Files-API beta header rides in the same
+    // RequestOptions object, so building one and adding to it is what keeps
+    // both from clobbering each other.
+    const reqOptions: Record<string, unknown> = {};
+    if (usesFilesApiDoc) reqOptions.headers = { 'anthropic-beta': 'files-api-2025-04-14' };
+    if (request.signal) reqOptions.signal = request.signal;
 
     const response = await Promise.race([
-      client.messages.create(params, reqOptions),
+      client.messages.create(params, Object.keys(reqOptions).length > 0 ? reqOptions : undefined),
       new Promise<never>((_, reject) =>
         setTimeout(() => reject(new Error(`${modelConfig.provider} API call timed out after 120s`)), 120_000)
       ),
@@ -1563,9 +1580,17 @@ export class AIGateway {
     const streamUsesFilesApiDoc = (request.messages || []).some(m =>
       m.contentBlocks?.some(b => b.type === 'document' && b.source.type === 'file')
     );
+    const streamOptions: Record<string, unknown> = {};
+    if (streamUsesFilesApiDoc) {
+      streamOptions.headers = { 'anthropic-beta': 'files-api-2025-04-14' };
+    }
+    // Aborting the SDK request is what actually stops GENERATION. Without it
+    // a stop only stopped us reading, and the model ran to completion at full
+    // cost — which is what stream.ts's own comment used to say.
+    if (request.signal) streamOptions.signal = request.signal;
     const stream = await client.messages.create(
       params,
-      streamUsesFilesApiDoc ? { headers: { 'anthropic-beta': 'files-api-2025-04-14' } } : undefined
+      Object.keys(streamOptions).length > 0 ? streamOptions : undefined
     );
 
     let content = '';
@@ -1589,6 +1614,7 @@ export class AIGateway {
     let lastChunkTime = Date.now();
     const chunkTimeoutMs = 30_000;
     let streamStalled = false;
+    let streamAborted = false;
     const chunkWatchdog = setInterval(() => {
       if (Date.now() - lastChunkTime > chunkTimeoutMs) {
         streamStalled = true;
@@ -1613,6 +1639,17 @@ export class AIGateway {
 
         // Break out if watchdog flagged a stall (race between interval and iterator)
         if (streamStalled) break;
+
+        // The caller cancelled. Stop reading and stop generating — the SDK
+        // holds the same signal, so the request is already on its way down.
+        // What has arrived stays: the person is reading it.
+        if (request.signal?.aborted) {
+          streamAborted = true;
+          try {
+            (stream as any).controller?.abort();
+          } catch { /* best-effort abort, same shape the watchdog uses */ }
+          break;
+        }
 
         if (event.type === 'content_block_delta') {
           if (event.delta?.type === 'text_delta') {
@@ -1674,6 +1711,13 @@ export class AIGateway {
       finalizeToolInput(toolUses[buffered.toolIndex], buffered.json, 'the stream ended before the tool input was complete');
     }
     toolInputBuffers.clear();
+
+    // A cancel is not a failure and not a stall: the turn ended because the
+    // person ended it. Say so, so the caller can tell "she was stopped" from
+    // "she finished" — a distinction the transcript has to get right.
+    if (streamAborted) {
+      stopReason = 'aborted';
+    }
 
     // If stream stalled but we have partial content, mark finish reason accordingly
     if (streamStalled && content) {
@@ -1752,7 +1796,7 @@ export class AIGateway {
     }
 
     const completion = await Promise.race([
-      this.moonshotClient.chat.completions.create(params),
+      this.moonshotClient.chat.completions.create(params, request.signal ? { signal: request.signal } : undefined),
       new Promise<never>((_, reject) =>
         setTimeout(() => reject(new Error('Moonshot API call timed out after 120s')), 120_000)
       ),
@@ -1828,7 +1872,10 @@ export class AIGateway {
           : { type: 'json_object' };
     }
 
-    const stream = await client.chat.completions.create(params);
+    const stream = await client.chat.completions.create(
+      params,
+      request.signal ? { signal: request.signal } : undefined,
+    );
 
     let content = '';
     let thinking = '';
@@ -1859,10 +1906,23 @@ export class AIGateway {
       }
     }, 5_000);
 
+    let streamAborted = false;
     try {
       for await (const chunk of stream as AsyncIterable<any>) {
         lastChunkTime = Date.now();
         if (streamStalled) break;
+
+        // Same cancel contract as the Anthropic path: stop reading, stop
+        // generating, keep what arrived. AnA falls back across providers, so a
+        // stop that only worked on one of them would be a stop that sometimes
+        // did not.
+        if (request.signal?.aborted) {
+          streamAborted = true;
+          try {
+            (stream as any).controller?.abort();
+          } catch { /* best-effort abort */ }
+          break;
+        }
 
         // Every chunk repeats the resolved model; take the first one that
         // carries it rather than re-assigning on each.
@@ -1892,6 +1952,11 @@ export class AIGateway {
       if (!content) throw streamErr; // nothing captured — surface the failure
     } finally {
       clearInterval(chunkWatchdog);
+    }
+
+    // Ended because the person ended it — not a stall, not a failure.
+    if (streamAborted) {
+      finishReason = 'aborted';
     }
 
     if (streamStalled && content) {
@@ -2619,6 +2684,29 @@ export class GatewayPolicyError extends Error {
   constructor(message: string) {
     super(message);
     this.name = 'GatewayPolicyError';
+  }
+}
+
+/**
+ * The caller cancelled this request.
+ *
+ * Terminal in exactly the way {@link GatewayPolicyError} is, and for a related
+ * reason: neither is a provider failing. `route()` otherwise treats any throw
+ * as a transient fault — it records a failure against the provider's health
+ * and walks the fallback ladder — which for a cancel would re-run the entire
+ * request the user just stopped, once per rung, and leave a healthy provider
+ * marked unhealthy on the way.
+ *
+ * `phase` says where it was caught: `'pre_call'` before any provider was
+ * contacted, `'pre_stream'` after the request went out but before a token
+ * arrived. An abort DURING a stream is not an error at all — the partial text
+ * is returned with `finishReason: 'aborted'`, because what the model already
+ * said is worth keeping.
+ */
+export class GatewayAbortedError extends Error {
+  constructor(readonly phase: 'pre_call' | 'pre_stream') {
+    super(`AI request cancelled by the caller (${phase})`);
+    this.name = 'GatewayAbortedError';
   }
 }
 
