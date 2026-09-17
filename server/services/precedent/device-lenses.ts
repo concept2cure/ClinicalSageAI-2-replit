@@ -219,7 +219,19 @@ function predicateLens(input: { productCode?: string }, precedents: PrecedentRec
       return {
         identifier: p.clearanceNumber as string,
         deviceName: p.deviceName ?? undefined,
-        sameProductCode: input.productCode ? true : undefined,
+        /* NOT `input.productCode ? true : undefined`. That asserted every
+           returned precedent shares the product code because the CALLER supplied
+           one — the precedent record was never consulted. PrecedentRecord
+           carries no product-code field at all (see precedent-engine.ts) and
+           searchUnifiedPrecedents filters on submission_type / product_type /
+           device_class / therapeutic_area only, so product-code sameness cannot
+           be established here and a `true` collected WEIGHTS.productCode toward
+           the adequacy score for a match never shown to exist. Leave it unset:
+           the rubric then reports it as unknown rather than scoring it
+           favourably, which is exactly what the doc comment above promises and
+           what the intended-use and technological-characteristics factors
+           already do. */
+        sameProductCode: undefined,
         clearanceYear: Number.isFinite(year) && year > 1975 ? year : undefined,
         decision: p.decisionOutcome === 'CLEARED' ? ('SE' as const) : ('unknown' as const),
       };
