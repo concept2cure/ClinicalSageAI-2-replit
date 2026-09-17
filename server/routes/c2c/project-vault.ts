@@ -213,6 +213,63 @@ interface SpecNode {
   children: SpecNode[];
 }
 
+/**
+ * Record a governed download BEFORE the bytes leave — 21 CFR 11.10(e).
+ *
+ * This handler served a governed document with no audit row of any kind:
+ * nothing recorded who read what, or when, while the sibling filing route
+ * already wrote a hash-chained row for a MOVE — so a document's placement
+ * changes were attributable and its disclosures were not.
+ *
+ * Returns false rather than throwing, and the caller refuses the download on
+ * false. A read that cannot be recorded is refused rather than served
+ * unrecorded: an inspector asking "who has had this document" must not be
+ * answered with a gap, and an audit trail that drops writes under load is not
+ * one. The filing path takes the same position by writing inside its
+ * transaction.
+ */
+async function recordVaultDownload(
+  req: Request,
+  d: {
+    orgId: number;
+    programId: string;
+    documentId: string;
+    documentTitle: string | null;
+    fileName: string | null;
+    fileSize: string | number | null;
+    contentHash: string | null;
+  },
+): Promise<boolean> {
+  try {
+    await writeChainedAuditRow(pool, {
+      tenantId: d.orgId,
+      userId: (req as any).user?.id ?? undefined,
+      action: 'vault.document.download',
+      resourceType: 'vault_document',
+      resourceId: d.documentId,
+      ipAddress: req.ip,
+      userAgent: req.headers['user-agent'],
+      details: {
+        programId: d.programId,
+        documentTitle: d.documentTitle,
+        fileName: d.fileName,
+        fileSize: d.fileSize,
+        // The hash of the bytes actually served, already verified by the
+        // caller, so the trail records WHICH edition left rather than only
+        // that one did.
+        contentHash: d.contentHash,
+      },
+    });
+    return true;
+  } catch (auditErr) {
+    logger.error('vault download refused: audit write failed', {
+      documentId: d.documentId,
+      err: auditErr instanceof Error ? auditErr.message : String(auditErr),
+    });
+    return false;
+  }
+}
+
 /** The four shapes a `folderId` can arrive in, mapped to what the service reads. */
 function normalizeFolderId(raw: unknown): string | null | undefined {
   if (raw === undefined) return undefined;
@@ -1239,41 +1296,16 @@ export default function createProjectVaultRoutes(): Router {
       }
       const bytes = read.bytes;
 
-      /* AUDIT BEFORE THE BYTES LEAVE — 21 CFR 11.10(e).
-         This handler served a governed document with no audit row of any kind:
-         nothing recorded who read what, or when. The sibling filing route below
-         (:1069) already writes a hash-chained row for a MOVE, so a document's
-         placement changes were attributable and its disclosures were not.
-         Ordered before the response deliberately. A read that cannot be recorded
-         is refused rather than served unrecorded — an inspector asking "who has
-         had this document" must not be answered with a gap, and an audit trail
-         that drops writes under load is not one. The filing route takes the same
-         position by writing inside its transaction. */
-      const actorId: number | null = (req as any).user?.id ?? null;
-      try {
-        await writeChainedAuditRow(pool, {
-          tenantId: orgId,
-          userId: actorId ?? undefined,
-          action: 'vault.document.download',
-          resourceType: 'vault_document',
-          resourceId: documentId,
-          ipAddress: req.ip,
-          userAgent: req.headers['user-agent'],
-          details: {
-            programId: id,
-            documentTitle: doc.document_title,
-            fileName: doc.file_name,
-            fileSize: doc.file_size,
-            // The hash of the bytes actually served, already verified above, so
-            // the trail records WHICH edition left rather than only that one did.
-            contentHash: doc.content_hash,
-          },
-        });
-      } catch (auditErr) {
-        logger.error('vault download refused: audit write failed', {
-          documentId,
-          err: auditErr instanceof Error ? auditErr.message : String(auditErr),
-        });
+      const recorded = await recordVaultDownload(req, {
+        orgId,
+        programId: id,
+        documentId,
+        documentTitle: doc.document_title,
+        fileName: doc.file_name,
+        fileSize: doc.file_size,
+        contentHash: doc.content_hash,
+      });
+      if (!recorded) {
         return res.status(500).json({
           success: false,
           error: 'AUDIT_WRITE_FAILED',

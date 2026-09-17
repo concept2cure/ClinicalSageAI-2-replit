@@ -412,6 +412,91 @@ export interface DeviceAttachmentResolverInput {
 }
 
 /**
+ * The vault half of the device attachment resolver.
+ *
+ * Lifted out of the resolver closure so the authored-section branch and this
+ * one are each readable on their own — and so the ONE rule this branch carries
+ * is not buried in the middle of a hundred-line arrow: the org predicate is
+ * repeated on regulatory_programs rather than trusted from the caller, and the
+ * bytes go through readVerifiedVaultBytes, the one reader that proves a stored
+ * file is the file the row recorded. Filing an altered document under a
+ * governed document's identity is the failure that check exists for.
+ */
+async function resolveVaultAttachment(
+  input: DeviceAttachmentResolverInput,
+  documentId: string,
+): Promise<ResolvedAttachmentContent> {
+  /* The vault branch. The org predicate is repeated on regulatory_programs
+     rather than trusted from the caller, and the bytes go through
+     readVerifiedVaultBytes — the ONE reader that proves a stored file is the
+     file the row recorded. Filing an altered document under a governed
+     document's identity is the failure that check exists for. */
+  const docRes = await pool.query(
+    `SELECT id, file_name, document_title, mime_type, s3_key,
+            storage_version_id, content_hash
+       FROM vault.documents
+      WHERE id = $1 AND program_id = $2 AND deleted_at IS NULL
+        AND EXISTS (
+          SELECT 1 FROM regulatory_programs rp
+           WHERE rp.id = vault.documents.program_id
+             AND rp.organization_id = $3
+             AND rp.deleted_at IS NULL
+        )
+      LIMIT 1`,
+    [documentId, input.programUuid, input.organizationId],
+  );
+  const doc = docRes.rows[0] as
+    | {
+        id: string;
+        file_name: string | null;
+        document_title: string | null;
+        mime_type: string | null;
+        s3_key: string | null;
+        storage_version_id: string | null;
+        content_hash: string | null;
+      }
+    | undefined;
+  if (!doc) {
+    return {
+      ok: false,
+      reason: `No vault document ${documentId} in this program.`,
+    };
+  }
+  // NEITHER address: dual-read, so a new upload carries a provider version id
+  // and no s3_key while an older row carries the reverse. Testing only the old
+  // one would refuse every new upload as "catalogued without content".
+  if (!doc.storage_version_id && !doc.s3_key) {
+    return {
+      ok: false,
+      reason:
+        `Vault document ${documentId} was catalogued without content — the record exists, ` +
+        'the file does not.',
+    };
+  }
+  const read = await readVerifiedVaultBytes(
+    {
+      storageVersionId: doc.storage_version_id,
+      storageKey: doc.s3_key,
+      organizationId: input.organizationId,
+    },
+    doc.content_hash,
+    doc.id,
+  );
+  if (!read.ok) {
+    return { ok: false, reason: `Vault document ${documentId}: ${read.message ?? read.error}` };
+  }
+  const proposed = doc.file_name?.trim() || doc.document_title?.trim() || `document-${doc.id}`;
+  const dot = proposed.lastIndexOf('.');
+  const extension = dot > 0 ? proposed.slice(dot) : '';
+  return {
+    ok: true,
+    bytes: read.bytes,
+    fileName: attachmentFileName(dot > 0 ? proposed.slice(0, dot) : proposed, extension),
+    mimeType: doc.mime_type?.trim() || 'application/octet-stream',
+  };
+}
+
+/**
  * The real resolver: governed sections rendered to PDF, and vault documents
  * served with their recorded hash verified.
  *
@@ -481,74 +566,7 @@ export function createDeviceAttachmentResolver(
       };
     }
 
-    /* The vault branch. The org predicate is repeated on regulatory_programs
-       rather than trusted from the caller, and the bytes go through
-       readVerifiedVaultBytes — the ONE reader that proves a stored file is the
-       file the row recorded. Filing an altered document under a governed
-       document's identity is the failure that check exists for. */
-    const docRes = await pool.query(
-      `SELECT id, file_name, document_title, mime_type, s3_key,
-              storage_version_id, content_hash
-         FROM vault.documents
-        WHERE id = $1 AND program_id = $2 AND deleted_at IS NULL
-          AND EXISTS (
-            SELECT 1 FROM regulatory_programs rp
-             WHERE rp.id = vault.documents.program_id
-               AND rp.organization_id = $3
-               AND rp.deleted_at IS NULL
-          )
-        LIMIT 1`,
-      [source.documentId, input.programUuid, input.organizationId],
-    );
-    const doc = docRes.rows[0] as
-      | {
-          id: string;
-          file_name: string | null;
-          document_title: string | null;
-          mime_type: string | null;
-          s3_key: string | null;
-          storage_version_id: string | null;
-          content_hash: string | null;
-        }
-      | undefined;
-    if (!doc) {
-      return {
-        ok: false,
-        reason: `No vault document ${source.documentId} in this program.`,
-      };
-    }
-    // NEITHER address: dual-read, so a new upload carries a provider version id
-    // and no s3_key while an older row carries the reverse. Testing only the old
-    // one would refuse every new upload as "catalogued without content".
-    if (!doc.storage_version_id && !doc.s3_key) {
-      return {
-        ok: false,
-        reason:
-          `Vault document ${source.documentId} was catalogued without content — the record exists, ` +
-          'the file does not.',
-      };
-    }
-    const read = await readVerifiedVaultBytes(
-      {
-        storageVersionId: doc.storage_version_id,
-        storageKey: doc.s3_key,
-        organizationId: input.organizationId,
-      },
-      doc.content_hash,
-      doc.id,
-    );
-    if (!read.ok) {
-      return { ok: false, reason: `Vault document ${source.documentId}: ${read.message ?? read.error}` };
-    }
-    const proposed = doc.file_name?.trim() || doc.document_title?.trim() || `document-${doc.id}`;
-    const dot = proposed.lastIndexOf('.');
-    const extension = dot > 0 ? proposed.slice(dot) : '';
-    return {
-      ok: true,
-      bytes: read.bytes,
-      fileName: attachmentFileName(dot > 0 ? proposed.slice(0, dot) : proposed, extension),
-      mimeType: doc.mime_type?.trim() || 'application/octet-stream',
-    };
+    return resolveVaultAttachment(input, source.documentId);
   };
 }
 
