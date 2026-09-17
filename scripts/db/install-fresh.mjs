@@ -77,6 +77,7 @@ import {
 } from './authoring-subsystem.mjs';
 import { resolveDatabaseUrl, sslFor, INSTALL_URL_VARS } from './connection.mjs';
 import { provisionAppServiceRole, resolveAppServiceRole } from './provision-app-role.mjs';
+import { declaredTableEntries, unresolvedSchemaReceivers } from './lib/declared-tables.mjs';
 
 dotenv.config();
 
@@ -652,56 +653,26 @@ async function step(label, fn) {
 }
 
 /**
- * Every table name drizzle-kit will create from `shared/schema.ts`.
+ * Every table the configured schema graph declares, as `{ schema, name }`.
  *
- * Scoped exactly the way drizzle scopes it: use every entrypoint named in
- * `drizzle.config.ts`, plus whatever each entrypoint recursively re-exports
- * (`export * from './schema/…'`) — and nothing else under `shared/`. Modules
- * outside that reachable graph are not push inputs. Counting them here would
- * make this gate fail an install that is in fact complete, which is worse than
- * the silence it replaces.
+ * The implementation moved to ./lib/declared-tables.mjs on 2026-09-11 (WO-15
+ * finding 8) so it could be tested: this file runs `main()` at module load, so
+ * no test could import the function while it lived here — and a verification
+ * routine no test can reach is one nobody has checked.
  *
- * Read from source text rather than by importing: this runs against a database
- * that may not exist yet, and importing pulls in the whole Drizzle graph. The
- * declaration form is uniform — `pgTable('name', …)` — so a regex over the
- * reachable files is sufficient and cannot be broken by the module failing to
- * load. Views are excluded (`pgView`/`pgMaterializedView`): push does not
- * create them.
+ * It also stopped being public-only. The old regex matched `pgTable('name')`
+ * and nothing else, while `shared/schema/vault.ts` — reachable, because
+ * `shared/schema.ts` re-exports it — declares six tables as
+ * `vault.table('name')`. The installer verified 465 tables, called the push
+ * surface verified, and had never looked at an entire schema.
  */
+function declaredTables(entrypoints) {
+  return declaredTableEntries(entrypoints, path.resolve(__dirname, '..', '..'));
+}
+
+/** Bare names, public schema only — for the reporting path that says "public". */
 function declaredTableNames(entrypoints) {
-  const repoRoot = path.resolve(__dirname, '..', '..');
-  const files = [];
-  const queued = entrypoints.map((entry) => path.resolve(repoRoot, entry));
-  const seen = new Set();
-
-  // Follow literal re-exports from every configured entrypoint. A queue keeps
-  // this correct if an entrypoint gains a second level of barrel files later;
-  // `seen` prevents cycles from turning installer verification into a hang.
-  while (queued.length > 0) {
-    const file = queued.shift();
-    if (!file || seen.has(file)) continue;
-    seen.add(file);
-    files.push(file);
-    const src = fs.readFileSync(file, 'utf8');
-    for (const m of src.matchAll(/export\s+\*\s+from\s+['"](\.[^'"]+)['"]/g)) {
-      for (const suffix of ['.ts', '/index.ts']) {
-        const candidate = path.resolve(path.dirname(file), `${m[1]}${suffix}`);
-        if (fs.existsSync(candidate)) {
-          queued.push(candidate);
-          break;
-        }
-      }
-    }
-  }
-
-  const names = new Set();
-  for (const f of files) {
-    const src = fs.readFileSync(f, 'utf8');
-    for (const m of src.matchAll(/\bpgTable\(\s*['"`]([a-zA-Z0-9_]+)['"`]/g)) {
-      names.add(m[1]);
-    }
-  }
-  return [...names].sort();
+  return declaredTables(entrypoints).filter((t) => t.schema === 'public').map((t) => t.name);
 }
 
 
@@ -803,13 +774,43 @@ async function main() {
          So the push is verified against the thing it claims to have done:
          every table the configured schema graph declares must now exist. That cannot be
          satisfied by an exit code. */
-      const declared = declaredTableNames(entrypoint.paths);
+      /* Schema-QUALIFIED on both sides (2026-09-11, WO-15 finding 8).
+         Both halves of this check used to be public-only: the declaration
+         regex matched `pgTable('name')` and never `vault.table('name')`, and
+         the existence query filtered `table_schema = 'public'`. Either alone
+         would have hidden the vault schema; together they made the installer
+         print "declared tables verified present" having never looked at it.
+         Comparing qualified names on both sides is what makes the count
+         mean what the message says it means. */
+      const declared = declaredTables(entrypoint.paths);
       const { rows: existing } = await pool.query(
-        `SELECT table_name FROM information_schema.tables
-          WHERE table_schema = 'public' AND table_type = 'BASE TABLE'`,
+        `SELECT table_schema, table_name FROM information_schema.tables
+          WHERE table_type = 'BASE TABLE'
+            AND table_schema NOT IN ('pg_catalog', 'information_schema')`,
       );
-      const have = new Set(existing.map((r) => r.table_name));
-      const missing = declared.filter((t) => !have.has(t));
+      const have = new Set(existing.map((r) => `${r.table_schema}.${r.table_name}`));
+      const missing = declared
+        .filter((t) => !have.has(`${t.schema}.${t.name}`))
+        .map((t) => `${t.schema}.${t.name}`);
+
+      /* A `<ident>.table('…')` whose pgSchema binding cannot be resolved is a
+         declaration form this extractor does not know. Reported rather than
+         skipped: a silent skip is exactly how the vault schema went unchecked
+         for as long as it did. */
+      const unresolved = unresolvedSchemaReceivers(
+        entrypoint.paths,
+        path.resolve(__dirname, '..', '..'),
+      );
+      if (unresolved.length > 0) {
+        throw new Error(
+          `${unresolved.length} schema-qualified table declaration(s) could not be ` +
+            `attributed to a pgSchema() binding, so this install cannot verify them: ` +
+            unresolved.map((u) => `${u.receiver}.table('${u.table}')`).join(', ') +
+            `. Teach scripts/db/lib/declared-tables.mjs the new form rather than ` +
+            `letting it under-report.`,
+        );
+      }
+
       if (missing.length > 0) {
         console.error(res.stdout || '');
         console.error(res.stderr || '');
@@ -821,9 +822,12 @@ async function main() {
             `${missing.length > 25 ? `, …and ${missing.length - 25} more` : ''}`,
         );
       }
+      const bySchema = new Map();
+      for (const t of declared) bySchema.set(t.schema, (bySchema.get(t.schema) ?? 0) + 1);
       console.log(
         `  ✓ schema pushed from ${entrypoint.paths.join(', ')} ` +
-          `(${declared.length} declared tables verified present)`,
+          `(${declared.length} declared tables verified present: ` +
+          `${[...bySchema].map(([sch, n]) => `${n} in ${sch}`).join(', ')})`,
       );
       return;
     }

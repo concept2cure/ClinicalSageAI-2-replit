@@ -1,13 +1,30 @@
 /**
  * Vault Schema — Document storage, versioning, and RAG vector embeddings
  *
- * PARTIALLY ACTIVE:
- * - vaultDocuments: ACTIVE (used by vault routes)
- * - vaultDocumentChunks: INACTIVE — defined but no routes/services query this table
- * - vaultEvidenceCitations: INACTIVE — defined but no routes/services query this table
+ * ── ACTIVITY, CORRECTED 2026-09-11 (WO-15 finding 8) ────────────────────────
+ * This header used to read "PARTIALLY ACTIVE", marking vaultDocumentChunks and
+ * vaultEvidenceCitations as "INACTIVE — defined but no routes/services query
+ * this table". Both claims were false, and believing them is part of why
+ * vault.evidence_citations was missing from every provisioned database for as
+ * long as it was.
  *
- * The inactive tables are intended for RAG-based document retrieval and
- * evidence citation tracking. They have migration DDL but no active queries.
+ * - vaultDocuments: ACTIVE (vault routes)
+ * - vaultDocumentChunks: ACTIVE — advancedRAGPipeline's 'vault' corpus (the
+ *   ragRouter default) runs hybrid dense + full-text retrieval over it, and
+ *   server/services/vault/document-chunking.service.ts writes it. Fifteen
+ *   non-test sites reference it.
+ * - vaultEvidenceCitations: ACTIVE — written by
+ *   server/services/advancedRAGPipeline.ts:1316 on every retrieval that
+ *   requests citation persistence.
+ *
+ * ── A NOTE ON WHAT CREATES THESE ────────────────────────────────────────────
+ * `drizzle-kit push` emits NO vault DDL, so declaring a table here creates
+ * nothing. Every vault table needs a SQL creator on a path an applier actually
+ * walks — see migrations/20260905b_vault_document_chunks.sql and
+ * migrations/20260911_vault_evidence_citations.sql. A creator under
+ * db/migrations/_legacy/ is NOT such a path: both the installer's and CI's
+ * *_gcc_* loops are non-recursive and never descend into it.
+ * tests/schema-contract/declared-table-surface.contract.test.ts enforces this.
  */
 import {
   pgSchema,

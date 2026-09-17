@@ -2080,6 +2080,31 @@ export const C2C_MIGRATION_FILES = [
   // clock starts, not after the first record is destroyed.
   'migrations/20260906b_vault_legal_holds.sql',
 
+  /* vault.evidence_citations — the RAG provenance store, added 2026-09-11
+     (WO-15 finding 8). Placed after the vault chunk store above because its
+     two chunk FKs target it.
+
+     advancedRAGPipeline.ts:1316 INSERTs into this table on every retrieval
+     that requests citation persistence, and the table existed on no
+     provisioned database. Its only creator was
+     db/migrations/_legacy/042_gcc_evidence_vault.sql, which no applier reaches:
+     not this set, and not the *_gcc_* psql loops in install-fresh or CI, both
+     of which are non-recursive and never descend into _legacy/. drizzle-kit
+     push emits no vault DDL either, so the shared/schema/vault.ts declaration
+     created nothing.
+
+     The failure was invisible twice over: the INSERT's 42P01 is caught into a
+     console.warn at advancedRAGPipeline.ts:1533, so the RAG answer returns
+     normally with no provenance recorded; and install-fresh's push-surface
+     check matched only pgTable('name') and queried only table_schema='public',
+     so all six vault tables were outside its view while it reported the surface
+     verified. That half is fixed in scripts/db/lib/declared-tables.mjs.
+
+     Shape taken verbatim from the two existing definitions, which agree with
+     each other. Guarded on vault.documents, RLS-policied through it on the
+     20260905b pattern, idempotent. */
+  'migrations/20260911_vault_evidence_citations.sql',
+
   // The three IVDR append-only history tables carry no tenant column of their
   // own — their tenant is their parent's, reached by foreign key — so BOTH
   // sweeps below are blind to them: the integer sweep matches on
