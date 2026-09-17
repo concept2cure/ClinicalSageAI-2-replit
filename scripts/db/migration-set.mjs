@@ -2081,6 +2081,7 @@ export const C2C_MIGRATION_FILES = [
   'migrations/20260906b_vault_legal_holds.sql',
   'migrations/20260906c_vault_documents_content_hash_idx.sql',
   'migrations/20260917_vault_documents_storage_version.sql',
+  'migrations/20260917b_submission_leaf_document_uuid.sql',
 
   /* vault.evidence_citations — the RAG provenance store, added 2026-09-11
      (WO-15 finding 8). Placed after the vault chunk store above because its

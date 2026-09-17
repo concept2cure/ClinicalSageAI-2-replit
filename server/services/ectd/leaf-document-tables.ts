@@ -34,6 +34,19 @@ export const RESOLVABLE_DOCUMENT_TABLES: ReadonlySet<string> = new Set([
   'ctd_onboarding_documents',
   'rendered_leaf_files',
   'c2c_document_sections',
+  // Moved out of EXTERNAL_DOCUMENT_TABLES on 2026-09-17, once BOTH blockers it
+  // was refused for actually fell:
+  //   - BYTES. Vault ingest now writes through getStorageProvider() and records
+  //     the version id it returns, so the resolver can fetch a vault document
+  //     with the machinery it already uses for rendered_leaf_files. Previously
+  //     the bytes sat at a raw uploads/ path the provider could not address.
+  //   - ID SPACE. submission_leaves carries `document_uuid` alongside the
+  //     integer `document_id` (migrations/20260917b). The integer column is
+  //     untouched — widening it is Option A of the identity contract and stays
+  //     rejected; this is one additive nullable sibling.
+  // A vault leaf is materialized only as an already-valid PDF, tenant-scoped,
+  // and hash-verified against the record — see the resolver's branch.
+  'vault_documents',
 ]);
 
 /**
@@ -49,41 +62,17 @@ export const RESOLVABLE_DOCUMENT_TABLES: ReadonlySet<string> = new Set([
  * to read it, so no caller can reintroduce the prototype-key `in` check.
  */
 const EXTERNAL_DOCUMENT_TABLES: Record<string, string> = {
-  // vault_documents CANNOT be materialized from a leaf today and is intentionally
-  // left unresolved (a guard-stop, not a silent drop). TWO blockers, and both
-  // must fall before this entry can be removed:
+  // Empty since 2026-09-17, when `vault_documents` — its only entry — became
+  // resolvable (see RESOLVABLE_DOCUMENT_TABLES above for what changed).
   //
-  //   1. ID SPACE. submission_leaves.document_id is INTEGER; vault.documents.id
-  //      is a UUID, so an integer cannot address the row. The sanctioned bridge
-  //      is the alias map, NOT widening the column:
-  //      docs/DOCUMENT_IDENTITY_CONTRACT_2026-08.md weighed widening (its
-  //      Option A) and rejected it, and says in terms that submission_leaves
-  //      keeps its integer document_id.
-  //
-  //   2. BYTES. The resolver fetches non-local content through
-  //      getStorageProvider().get(vaultVersionId, organizationId) — a lookup by
-  //      a PROVIDER-MINTED version uuid under storage/vault/{orgId}/{projectId}/
-  //      versions/. A vault document is not there: vault ingest writes to
-  //      uploads/vault/{programId}/{contentHash}, stores that relative PATH in
-  //      s3_key with s3_bucket='local', and mints no provider sidecar. Different
-  //      root, different key space — the provider cannot find it even given a
-  //      correct id. rendered_leaf_files resolves only because
-  //      storeRenderedLeafFile() called the provider's put() and persisted the
-  //      version id it handed back; vault.documents has no such column. Closing
-  //      this means moving vault ingest onto the storage provider, which is an
-  //      infrastructure decision rather than a resolver change.
-  //
-  // CORRECTED 2026-09-17: this entry used to also cite "vault.documents has no
-  // organization_id (it is program-scoped)". That is no longer true —
-  // migrations/20260905_vault_documents_organization_id.sql adds the column and
-  // is on the deploy path. It is nullable and carries no RLS policy, so it is
-  // attribution rather than isolation; either way it is not what stops a vault
-  // leaf, and a stale blocker invites someone to unblock this by fixing
-  // something already fixed.
-  vault_documents:
-    'vault_documents is a binary in the separate `vault` schema (UUID-keyed); a leaf ' +
-    'cannot address it from an integer document_id, and its bytes are not in the ' +
-    'storage provider this resolver fetches through, so it is not materializable here',
+  // KEPT, not deleted, and deliberately so. The guard-stop this map implements
+  // is the reason an unsupported leaf surfaces as an explained "unresolved"
+  // instead of being silently dropped from a package, and that contract is
+  // exercised by `externalDocumentTableReason` and by the readiness gate. The
+  // next store that a leaf may point at but the assembler cannot render — an
+  // external DMS, a sponsor's own vault — belongs here with its reason, and
+  // removing the mechanism would mean rebuilding it under pressure at exactly
+  // the moment someone needs it.
 };
 
 /**
