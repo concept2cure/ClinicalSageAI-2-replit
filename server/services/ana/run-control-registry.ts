@@ -48,6 +48,17 @@ interface RunControlRecord {
   status: RunStatus;
   pendingInterjections: string[];
   updatedAt: number;
+  /**
+   * Aborted when the run is cancelled. Status alone is read at the round
+   * boundary, which is why a stop pressed during a forty-second tool call used
+   * to do nothing until that call finished; this is what the gateway and the
+   * tool dispatcher can be handed so the stop lands while the work is in
+   * flight.
+   *
+   * One controller per run: a shared one would make any stop cancel every
+   * concurrent turn in the process.
+   */
+  cancelController: AbortController;
 }
 
 /** Interjection text length cap — a steer, not a new document. */
@@ -78,6 +89,7 @@ class RunControlRegistry {
       status: 'running',
       pendingInterjections: [],
       updatedAt: this.now(),
+      cancelController: new AbortController(),
     });
   }
 
@@ -96,6 +108,19 @@ class RunControlRegistry {
 
   isCancelled(runId: string): boolean {
     return this.runs.get(runId)?.status === 'cancelled';
+  }
+
+  /**
+   * The run's cancel signal, or null if the run is unknown.
+   *
+   * Pass it to anything that should stop when the human stops the run: the
+   * gateway (so generation stops rather than only our reading of it) and the
+   * tool dispatcher (so an in-flight call is abandoned). Pause and steer
+   * deliberately do NOT abort it — killing a tool to pause throws the work away
+   * and then has to redo it, and a steer is a redirect, not a stop.
+   */
+  cancelSignal(runId: string): AbortSignal | null {
+    return this.runs.get(runId)?.cancelController.signal ?? null;
   }
 
   snapshot(runId: string): RunControlSnapshot | null {
@@ -122,12 +147,17 @@ class RunControlRegistry {
     return true;
   }
 
-  /** Cancel a run — terminal; the loop stops at the next round boundary. */
+  /**
+   * Cancel a run — terminal, and immediate for anything holding the signal.
+   * The loop still closes cleanly at its next checkpoint; the abort is what
+   * stops the work already in flight from running to completion first.
+   */
   requestCancel(runId: string): boolean {
     const rec = this.runs.get(runId);
     if (!rec) return false;
     rec.status = 'cancelled';
     rec.updatedAt = this.now();
+    rec.cancelController.abort();
     return true;
   }
 

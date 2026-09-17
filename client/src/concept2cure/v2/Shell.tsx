@@ -1080,12 +1080,25 @@ export function AnaRail({
           <div className="ana-runctl" role="group" aria-label="Control this run">
             <span className="ana-runctl-state">
               <span
-                className={runStatus === 'paused' ? 'ana-runctl-dot is-paused' : 'ana-runctl-dot'}
+                className={
+                  runStatus === 'paused' || runStatus === 'cancelled'
+                    ? 'ana-runctl-dot is-paused'
+                    : 'ana-runctl-dot'
+                }
                 aria-hidden="true"
               >
                 {runStatus === 'paused' ? I.pause : I.dot}
               </span>
-              {runStatus === 'paused' ? 'Paused after this step' : 'Working'}
+              {/* Pause still lands at a round boundary — deliberately: killing a
+                  tool to pause throws the work away and then redoes it. Stop
+                  now cuts the step in flight, so the copy must stop saying
+                  "after this step" for BOTH, and must not claim stopped before
+                  the server says so. */}
+              {runStatus === 'paused'
+                ? 'Paused after this step'
+                : runStatus === 'cancelled'
+                  ? 'Stopping…'
+                  : 'Working'}
             </span>
 
             {/* ── The box used to empty whether or not the steer was accepted ──

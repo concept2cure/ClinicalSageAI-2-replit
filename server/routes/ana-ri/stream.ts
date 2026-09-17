@@ -80,6 +80,9 @@ import {
   mapWithConcurrency,
   describeToolPlan,
   lostToolInputResult,
+  abortRace,
+  ToolRunCancelled,
+  CANCELLED_TOOL_RESULT,
   type ToolCall,
   type ToolResultEntry,
   type ModelTurn,
@@ -259,6 +262,9 @@ export function mountStreamRoute(router: Router): void {
       // running the whole investigation to completion unseen.
       runId = `run_${randomUUID()}`;
       runControlRegistry.register(runId);
+      // Handed to the gateway and the tool dispatcher so a stop lands on work
+      // already in flight, rather than waiting for the next round boundary.
+      const runSignal = runControlRegistry.cancelSignal(runId) ?? undefined;
       const cancelRun = () => runControlRegistry.requestCancel(runId);
       res.on('close', cancelRun);
       req.on('close', cancelRun);
@@ -1018,6 +1024,8 @@ export function mountStreamRoute(router: Router): void {
           ? { provider: tieredModel.provider, model: tieredModel.model }
           : {}),
         promptCache: { enabled: true, type: 'ephemeral' },
+        // Stop means stop generating, not just stop rendering.
+        signal: runSignal,
         ...(streamThinkingConfig ? { thinking: streamThinkingConfig } : {}),
         ...(streamTools.length > 0 ? { tools: streamTools } : {}),
         stream: true,
@@ -1143,10 +1151,16 @@ export function mountStreamRoute(router: Router): void {
               const handler = getToolHandler(toolUse.name);
               const toolStart = Date.now();
               let resultStr: string;
-              let toolStatus: 'success' | 'error' | 'not_found' = 'success';
+              let toolStatus: 'success' | 'error' | 'not_found' | 'cancelled' = 'success';
               let toolErrorMessage: string | undefined;
               const lostInput = lostToolInputResult(toolUse);
-              if (lostInput) {
+              if (runSignal?.aborted) {
+                // Stopped before this step got its turn. It never ran, and
+                // saying so is the honest record — a step that silently
+                // vanishes reads as one that was never asked for.
+                resultStr = JSON.stringify(CANCELLED_TOOL_RESULT(toolUse.name));
+                toolStatus = 'cancelled';
+              } else if (lostInput) {
                 // The model chose arguments and the stream lost them; never
                 // dispatch on `{}`. See lostToolInputResult for why the
                 // message blames the transport rather than the request.
@@ -1155,22 +1169,40 @@ export function mountStreamRoute(router: Router): void {
                 toolErrorMessage = toolUse.inputParseError;
               } else if (handler) {
                 try {
-                  resultStr = await handler(toolUse.input, {
-                    organizationId: orgId,
-                    userId: userId || null,
-                    projectId: streamProjectId ? Number(streamProjectId) || null : null,
-                    projectRef: streamProjectId ? String(streamProjectId) : null,
-                    // Lets navigate_to tell the model the truth about what its
-                    // directive does this turn (applied live vs offered chip).
-                    liveDrive: driveState.enabled,
-                  });
+                  // Raced against the stop. The handler's own promise is not
+                  // cancellable — an orphaned call settles into a void — but
+                  // the ROUND stops waiting for it, which is the difference
+                  // between a stop that lands in a second and one that waits
+                  // out a forty-second search.
+                  resultStr = await Promise.race([
+                    handler(toolUse.input, {
+                      organizationId: orgId,
+                      userId: userId || null,
+                      projectId: streamProjectId ? Number(streamProjectId) || null : null,
+                      projectRef: streamProjectId ? String(streamProjectId) : null,
+                      // Lets navigate_to tell the model the truth about what its
+                      // directive does this turn (applied live vs offered chip).
+                      liveDrive: driveState.enabled,
+                      signal: runSignal,
+                    }),
+                    abortRace(runSignal),
+                  ]);
                 } catch (toolErr: any) {
+                  if (toolErr instanceof ToolRunCancelled) {
+                    // Not an error: the person stopped it. Falls through to
+                    // the same telemetry and result path as any other outcome,
+                    // so the step is still recorded — just recorded truthfully.
+                    resultStr = JSON.stringify(CANCELLED_TOOL_RESULT(toolUse.name));
+                    toolStatus = 'cancelled';
+                    toolErrorMessage = undefined;
+                  } else {
                   resultStr = JSON.stringify({
                     error: `Tool execution failed: ${toolErr?.message || 'unknown error'}`,
                     tool: toolUse.name,
                   });
                   toolStatus = 'error';
                   toolErrorMessage = toolErr?.message || 'unknown error';
+                  }
                 }
               } else {
                 resultStr = JSON.stringify({
@@ -1206,7 +1238,12 @@ export function mountStreamRoute(router: Router): void {
             // Record this call in the turn's tool-trace memory + evidence corpus.
             toolTrace.push(buildTraceEntry(toolUse.name, stepLabel, toolStatus, resultStr));
             // Failures collected for the round's adaptation note (see below).
-            if (toolStatus !== 'success') {
+            // A cancelled step is NOT a failure to adapt to: the note tells the
+            // model "these did not work, try something else", and the run is
+            // ending — there is no next attempt to steer, and telling her to
+            // work around a step the person stopped would invite her to do the
+            // very thing she was stopped from doing.
+            if (toolStatus !== 'success' && toolStatus !== 'cancelled') {
               roundFailures.push({
                 name: toolUse.name,
                 label: stepLabel,
@@ -1225,6 +1262,8 @@ export function mountStreamRoute(router: Router): void {
                 ? `AnA couldn't finish ${humanStep}. She'll continue with what she has.`
                 : toolStatus === 'not_found'
                 ? `This step (${humanStep}) isn't available here. AnA will work around it.`
+                : toolStatus === 'cancelled'
+                ? `You stopped ${humanStep} before it finished.`
                 : undefined;
             res.write(
               `data: ${JSON.stringify({
@@ -1482,6 +1521,7 @@ export function mountStreamRoute(router: Router): void {
               ? { provider: tieredModel.provider, model: tieredModel.model }
               : {}),
             promptCache: { enabled: true, type: 'ephemeral' },
+            signal: runSignal,
             ...(includeTools && streamTools.length > 0 ? { tools: streamTools } : {}),
             stream: true,
             onStream: (chunk: string, metadata?: any) => {

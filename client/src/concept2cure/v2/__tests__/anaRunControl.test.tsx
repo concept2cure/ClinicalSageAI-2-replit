@@ -117,11 +117,31 @@ describe('mid-run control reaches the rail', () => {
     expect(onSteer).not.toHaveBeenCalled();
   });
 
-  it('never promises an instant stop', () => {
-    // Control lands at a round boundary. "Paused" alone would claim the tool in
-    // flight stopped dead, which is not what the server does.
+  it('pause never promises an instant stop', () => {
+    // Pause still lands at a round boundary, deliberately: killing a tool in
+    // flight to pause throws the work away and then has to redo it. "Paused"
+    // alone would claim the step stopped dead, which is not what pause does.
     const { container } = renderRail({ runStatus: 'paused' });
     expect(container.querySelector('.ana-runctl-state')?.textContent).toContain('after this step');
+  });
+
+  it('stop does not borrow pause\'s promise — it cuts the step in flight', () => {
+    // Stop now aborts generation and abandons the tool in flight, so copy
+    // saying "after this step" would understate it in the other direction.
+    const { container } = renderRail({ runStatus: 'cancelled' });
+    const state = container.querySelector('.ana-runctl-state')?.textContent ?? '';
+    expect(state).not.toContain('after this step');
+  });
+
+  it('never claims stopped before the server has said so', () => {
+    // Abort is not instantaneous. The terminal word belongs to the server's
+    // acknowledgement; until then the state is in progress, or the interface
+    // is overstating what happened — the same fault as the old copy, pointing
+    // the other way.
+    const { container } = renderRail({ runStatus: 'cancelled' });
+    const state = container.querySelector('.ana-runctl-state')?.textContent ?? '';
+    expect(state).toMatch(/Stopping/);
+    expect(state).not.toMatch(/\bStopped\b/);
   });
 
   it('the steer field is separate from the composer draft', () => {

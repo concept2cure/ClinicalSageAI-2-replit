@@ -61,6 +61,62 @@ export interface ToolResultEntry {
  * because the model's only other reading of a bare failure is that the tool
  * cannot answer the question.
  */
+/**
+ * Thrown by {@link abortRace} when the run's cancel signal fires while a tool
+ * handler is still working. Not an error condition — a control outcome — so
+ * callers turn it into a cancelled result rather than an error one.
+ */
+export class ToolRunCancelled extends Error {
+  constructor() {
+    super('Tool run cancelled by the user');
+    this.name = 'ToolRunCancelled';
+  }
+}
+
+/**
+ * A promise that rejects with {@link ToolRunCancelled} when `signal` aborts,
+ * and otherwise never settles. Raced against a tool handler so the ROUND stops
+ * waiting.
+ *
+ * It does not, and cannot, stop the handler: a promise already in flight has no
+ * cancel. A handler that takes a signal can bail early; one that does not keeps
+ * running and settles into a void. That is a real limit and the reason the
+ * cancelled result says the step was stopped rather than claiming it was
+ * undone — some of them will have finished their work, and the honest record is
+ * that we stopped waiting for the answer, not that nothing happened.
+ *
+ * Returns a never-settling promise when there is no signal, so an uncontrolled
+ * run behaves exactly as it did before.
+ */
+export function abortRace(signal?: AbortSignal): Promise<never> {
+  return new Promise<never>((_resolve, reject) => {
+    if (!signal) return;
+    if (signal.aborted) {
+      reject(new ToolRunCancelled());
+      return;
+    }
+    signal.addEventListener('abort', () => reject(new ToolRunCancelled()), { once: true });
+  });
+}
+
+/**
+ * The result body for a step the user stopped.
+ *
+ * Says it was stopped, and says it plainly to the model too: an empty or
+ * missing result for a step the model asked for reads as a tool that had
+ * nothing to say, and the model will draw a conclusion from that. It must also
+ * never imply the work was undone — see {@link abortRace}.
+ */
+export function CANCELLED_TOOL_RESULT(toolName: string): { cancelled: true; tool: string; note: string } {
+  return {
+    cancelled: true,
+    tool: toolName,
+    note:
+      'The person stopped this run before this step finished. Nothing it would ' +
+      'have produced was used. Do not treat this as the tool having no answer.',
+  };
+}
+
 export function lostToolInputResult(call: ToolCall): { error: string; tool: string } | null {
   if (!call.inputParseError) return null;
   return {

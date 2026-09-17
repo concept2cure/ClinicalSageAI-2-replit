@@ -194,6 +194,17 @@ export interface ToolContext {
   userId?: number | null;
   projectId?: number | null;
   /**
+   * Aborted when the person stops the run.
+   *
+   * A handler that reaches the network should pass this to its `fetch` so the
+   * request is dropped rather than left to complete into a result nobody will
+   * read. Handlers that ignore it are not broken — the caller races the whole
+   * dispatch against the same signal, so the ROUND stops either way — but an
+   * ignored signal means the work itself carries on in the background. Honour
+   * it wherever there is something to honour.
+   */
+  signal?: AbortSignal;
+  /**
    * The active project/program id AS SENT by the client (a regulatory_programs
    * uuid under the v2 shell, a legacy integer otherwise). `projectId` above is
    * the integer form and is null for a uuid program — which left every
