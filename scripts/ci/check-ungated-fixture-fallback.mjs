@@ -110,6 +110,29 @@ function walk(dir, out = []) {
   return out;
 }
 
+/**
+ * Blank out comments so prose ABOUT the pattern is not reported as the pattern.
+ *
+ * This was a line test — skip a line that STARTS with `*`, `//` or `/*` — and it
+ * missed the comment style this codebase actually uses, where a block comment's
+ * continuation lines are indented with no leading asterisk:
+ *
+ *     /* ...
+ *        `ci:fixture-fallback` keys on `live ?\u003F FIXTURE` ...   <- not skipped
+ *      *\/
+ *
+ * So the file that explains why a fallback was removed fails the check for the
+ * fallback it removed. Blanking preserves line numbers, so the offsets a real
+ * finding reports still point at the right line.
+ */
+function stripComments(text) {
+  return text
+    .replace(/\/\*[\s\S]*?\*\//g, (m) => m.replace(/[^\n]/g, ' '))
+    .split('\n')
+    .map((l) => l.replace(/\/\/.*$/, ''))
+    .join('\n');
+}
+
 function main() {
   const findings = [];
 
@@ -122,9 +145,7 @@ function main() {
     }
     const rel = path.relative(ROOT, file);
 
-    src.split('\n').forEach((line, i) => {
-      // Comments explain the pattern by naming it; they are not the pattern.
-      if (/^\s*(?:\*|\/\/|\/\*)/.test(line)) return;
+    stripComments(src).split('\n').forEach((line, i) => {
       for (const m of line.matchAll(/\?\?\s*([A-Z][A-Za-z0-9_]{2,})\s*(\[|\.)?/g)) {
         const id = m[1];
         if (!CONTENT_NAME.test(id)) continue;
