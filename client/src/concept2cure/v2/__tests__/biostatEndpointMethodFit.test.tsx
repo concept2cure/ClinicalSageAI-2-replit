@@ -94,7 +94,16 @@ describe('Biostatistics endpoint-method fit: not assessed here, and said so', ()
   });
 
   it('points at the canonical assessor rather than leaving the gap unexplained', () => {
+    /* The gap has to be named in terms the reader can act on. This assertion used
+       to require the module path (`ana-biostats` / `judgment-engine`), which was
+       the copy at the time; `ci:internals-in-copy` forbids exactly that, because
+       this rationale prints into the SAP draft and the Statistical Risk Memo and
+       a regulatory director cannot act on a server path. The intent is unchanged
+       and now pinned on both sides: name the capability and the action, not the
+       module. */
     const rationale = String(judgeOf(TIME_TO_EVENT).endpointMethodFit.rationale);
-    expect(rationale).toMatch(/ana-biostats|judgment-engine|server/i);
+    expect(rationale).toMatch(/biostatistics assessment/i);
+    expect(rationale).toMatch(/statistician|run that assessment/i);
+    expect(rationale).not.toMatch(/judgment-engine|ana-biostats|server\//i);
   });
 });
