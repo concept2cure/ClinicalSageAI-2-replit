@@ -21,9 +21,12 @@
  *   AUDIT_VERIFY_OUT   Output JSON path (default: ./.chain-verify/<ts>.json)
  *
  * Exit codes:
- *   0  chain INTACT
+ *   0  chain INTACT (at least one row was checkable and every link held)
  *   1  chain BROKEN (broken links detected)
  *   2  configuration / runtime error
+ *   3  chain UNVERIFIED — rows were read but none carried a record_hash, so
+ *      nothing was checkable. Not intact and not broken: no integrity
+ *      statement can be made. See WO-16C #72.
  */
 import pg from 'pg';
 import path from 'node:path';
@@ -81,9 +84,31 @@ async function main() {
     params,
   );
 
+  // WO-16C #72 (follow-up). This walk skipped any row carrying a NULL
+  // `record_hash` — it could not compare one — but counted it in
+  // `totalEntries` and never counted the skip, so an audit_events table in
+  // which nothing was hashed produced `verdict: 'INTACT'`, `brokenLinks: 0`,
+  // a totalEntries covering every row, and exit 0, whose documented meaning is
+  // "chain INTACT". That report is written to .chain-verify/ and cited by
+  // docs/operations/database-disaster-recovery.md as audit-integrity evidence.
+  //
+  // Until the hash-chain trigger landed this week, a canonically provisioned
+  // database had NULL record_hash on every row, so this script's steady state
+  // was a green attestation over a chain it had not verified. Counting the
+  // unhashable rows is what makes the difference visible, and an all-unhashed
+  // scan is UNVERIFIED — not INTACT, and not BROKEN either.
   const broken = [];
   const prevByOrg = new Map();
+  let hashedEntries = 0;
+  let unhashedEntries = 0;
   for (const row of rows) {
+    if (row.record_hash === null || row.record_hash === undefined) {
+      unhashedEntries += 1;
+      // Explicit: a row with no hash cannot anchor the next comparison.
+      prevByOrg.set(row.organization_id, null);
+      continue;
+    }
+    hashedEntries += 1;
     const expectedPrev = prevByOrg.get(row.organization_id) ?? null;
     if (
       expectedPrev !== null &&
@@ -101,14 +126,31 @@ async function main() {
   }
 
   const finishedAt = new Date().toISOString();
-  const verdict = rows.length === 0 ? 'EMPTY' : broken.length === 0 ? 'INTACT' : 'BROKEN';
+  const verdict =
+    rows.length === 0
+      ? 'EMPTY'
+      : broken.length > 0
+        ? 'BROKEN'
+        : hashedEntries === 0
+          ? 'UNVERIFIED'
+          : 'INTACT';
   const report = {
-    schemaVersion: '1.0',
+    schemaVersion: '1.1',
     window,
     startedAt,
     finishedAt,
     verdict,
     totalEntries: rows.length,
+    // What the verdict actually rests on. `INTACT` over hashedEntries < total
+    // means the unhashed remainder was not checked by anything.
+    hashedEntries,
+    unhashedEntries,
+    reason:
+      verdict === 'UNVERIFIED'
+        ? `no row in this window carries a record_hash: ${rows.length} row(s) read, none checkable`
+        : verdict === 'EMPTY'
+          ? 'no entries in this window: there is no chain to verify'
+          : undefined,
     organizationsCovered: prevByOrg.size,
     brokenLinks: broken.length,
     brokenLinkSamples: broken.slice(0, 50),
@@ -153,6 +195,18 @@ async function main() {
 
     await pool.end();
     process.exit(1);
+  }
+
+  // WO-16C #72 (follow-up). Exit 0 is documented as "chain INTACT", so a scan
+  // that verified nothing must not take it. It is not exit 1 either: nothing is
+  // known to be broken, and paging an operator for a break that was not found
+  // would be its own false claim. Exit 3 says what happened.
+  if (verdict === 'UNVERIFIED') {
+    console.error(
+      `[chain-verify] UNVERIFIED — ${report.reason}. No integrity statement can be made about this window.`,
+    );
+    await pool.end();
+    process.exit(3);
   }
 
   await pool.end();

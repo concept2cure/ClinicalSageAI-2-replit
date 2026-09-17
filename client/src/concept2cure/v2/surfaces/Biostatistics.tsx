@@ -364,9 +364,25 @@ export const BiostatEngine = (() => {
     // an all-unassessed judgment — recommends revision rather than proceeding.
     const action = worst === 'adequate' ? 'proceed' : worst === 'marginal' ? 'proceed_with_conditions' : 'revise';
     const risk = worst === 'adequate' ? 'low' : worst === 'marginal' ? 'moderate' : 'high';
-    const endpointMethodFit = { fit: 'acceptable', currentMethod: res.method,
+    // WO-16C #59 follow-up. `fit` was the literal 'acceptable' on every call,
+    // with no branch on any input, and the rationale asserted unconditionally
+    // that the method "is appropriate for" the endpoint. Both print into the
+    // Statistical Risk Memo and both SAP drafts this surface files into the
+    // dossier — a verdict for a comparison that never ran, one section below
+    // the judgment table this work order had just repaired.
+    //
+    // It is NOT repaired by comparing the two strings here. A real assessment
+    // already exists and is canonical: assessEndpointMethodFit in
+    // server/services/ana-biostats/judgment-engine.ts, whose verdict turns on
+    // areMethodsCompatible, a server-side table. Re-deriving it client-side
+    // would be a second implementation of the same capability, which the
+    // working agreement forbids and which is how a fix of this kind entrenches
+    // duplication while resolving the fabrication. This surface has no route to
+    // that assessor, so it says it did not assess the fit — and still shows
+    // both methods, so a reader can see exactly what was not compared.
+    const endpointMethodFit = { fit: 'not_assessed', currentMethod: res.method,
       suggestedMethod: input.endpointType === 'time_to_event' ? 'Cox proportional hazards (confirmatory)' : input.endpointType === 'binary' ? 'Logistic regression (covariate-adjusted)' : 'ANCOVA (baseline-adjusted)',
-      rationale: `${res.method} is appropriate for a ${input.endpointType} endpoint in a ${input.studyType} design; a covariate-adjusted model is recommended as the confirmatory analysis.`,
+      rationale: `Not assessed. The planned method (${res.method}) and the method this endpoint type usually calls for are both stated above, but this surface did not compare them, and it makes no finding either way for this ${input.endpointType} endpoint in a ${input.studyType} design. The comparison belongs to assessEndpointMethodFit in server/services/ana-biostats/judgment-engine.ts, which this surface does not call. Have a statistician confirm the choice of method, or run the ana-biostats assessment.`,
       alternatives: input.endpointType === 'time_to_event' ? ['Stratified log-rank', 'RMST difference'] : input.endpointType === 'binary' ? ['Cochran-Mantel-Haenszel', 'Fisher exact (small N)'] : ['MMRM (longitudinal)', 'Rank-based (non-normal)'] };
     const limitations: string[] = []; if (pv !== 'adequate') limitations.push('Achieved power is below the stated target at the current assumptions.');
     if (cat === 'fragile' || cat === 'very_fragile') limitations.push('The design is sensitive to the assumed effect size — small overestimation materially reduces power.');
@@ -467,7 +483,7 @@ const BiostatDocs = (() => {
     // and "not scored" are different: the first had no verdict either, the
     // second has a real verdict and simply no /100 behind it.
     for (const dm of j.dimensions) s += `| ${dm.name} | ${dm.verdict === 'not_assessed' ? 'not assessed' : dm.verdict} | ${dm.score === null ? (dm.verdict === 'not_assessed' ? 'not assessed' : 'not scored') : `${dm.score}/100`} | ${dm.flags.join('; ') || 'None'} |\n`;
-    s += `\n## Fragility Assessment\n\n${j.fragility.narrative}\n\n## Endpoint-Method Fit\n\n- **Fit**: ${j.endpointMethodFit.fit}\n- **Current Method**: ${j.endpointMethodFit.currentMethod}\n- **Suggested Method**: ${j.endpointMethodFit.suggestedMethod}\n- **Rationale**: ${j.endpointMethodFit.rationale}\n\n`;
+    s += `\n## Fragility Assessment\n\n${j.fragility.narrative}\n\n## Endpoint-Method Fit\n\n- **Fit**: ${j.endpointMethodFit.fit === 'not_assessed' ? 'not assessed — the two methods below were not compared' : j.endpointMethodFit.fit}\n- **Current Method**: ${j.endpointMethodFit.currentMethod}\n- **Suggested Method**: ${j.endpointMethodFit.suggestedMethod}\n- **Rationale**: ${j.endpointMethodFit.rationale}\n\n`;
     if (j.escalationReasons.length) { s += `## Escalation Items\n\n`; for (const e of j.escalationReasons) s += `- ${e}\n`; s += `\n`; }
     if (d.riskFactors.length) { s += `## Domain-Specific Risks (${track(i.clientTrack)})\n\n`; for (const rf of d.riskFactors) s += `- ${rf}\n`; s += `\n`; }
     if (r && r.riskFramingNotes.length) { s += `## Regulatory Risk Framing (${r.body})\n\n`; for (const n of r.riskFramingNotes) s += `- ${n}\n`; s += `\n`; }
