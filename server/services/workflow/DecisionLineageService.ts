@@ -56,9 +56,25 @@ export type Part11RecordElement = 'attributed-actor' | 'recorded-timestamp' | 'a
  * into every export and as a badge on every node of the surface.
  */
 export interface Part11RecordCheck {
-  status: 'COMPLETE' | 'INCOMPLETE';
-  /** The required elements this record does not carry. Empty when COMPLETE. */
+  /**
+   * COMPLETE only when every required element was CHECKED and present.
+   * PARTIAL when nothing is missing but an element could not be checked here.
+   * INCOMPLETE when a required element the record should carry is absent.
+   */
+  status: 'COMPLETE' | 'PARTIAL' | 'INCOMPLETE';
+  /** Required elements this record does not carry. */
   missing: Part11RecordElement[];
+  /**
+   * Elements this service cannot speak to. WO-16C #70 follow-up: the first
+   * version counted §11.50 as satisfied whenever `signatureStatus === 'signed'`
+   * — but that value is only `status === 'approved'` relabelled.
+   * `workflow_approvals` has no signature column (id, workflowId, stepId,
+   * stepOrder, status, assignedTo, assignmentType, requiredActions,
+   * completedBy, completedAt, comments), and this service never reads the real
+   * signature store. An approval status is not a signature manifestation, so
+   * the element is reported unchecked rather than met.
+   */
+  notAssessed: Part11RecordElement[];
 }
 
 /**
@@ -73,12 +89,22 @@ export function assessPart11Record(record: {
   signatureStatus?: 'pending' | 'signed' | 'rejected';
 }): Part11RecordCheck {
   const missing: Part11RecordElement[] = [];
+  const notAssessed: Part11RecordElement[] = [];
   if (!record.performedBy) missing.push('attributed-actor');
   if (!record.performedAt) missing.push('recorded-timestamp');
-  if (record.requiresSignature && record.signatureStatus !== 'signed') {
-    missing.push('applied-signature');
+  if (record.requiresSignature) {
+    // Never 'met' from an approval status. Rejected/pending is a positive
+    // statement that no signature was applied; anything else is unchecked,
+    // because no signature store is read here.
+    if (record.signatureStatus === 'rejected' || record.signatureStatus === 'pending') {
+      missing.push('applied-signature');
+    } else {
+      notAssessed.push('applied-signature');
+    }
   }
-  return { status: missing.length === 0 ? 'COMPLETE' : 'INCOMPLETE', missing };
+  const status: Part11RecordCheck['status'] =
+    missing.length > 0 ? 'INCOMPLETE' : notAssessed.length > 0 ? 'PARTIAL' : 'COMPLETE';
+  return { status, missing, notAssessed };
 }
 
 /** A single node in the decision lineage graph */
@@ -185,9 +211,15 @@ export function assessComplianceFrameworks(
 
 /** One cell of the CSV export: `COMPLETE`, or what the record is missing. */
 function formatPart11RecordCheck(check: Part11RecordCheck): string {
-  return check.status === 'COMPLETE'
-    ? 'COMPLETE'
-    : `INCOMPLETE (${check.missing.join('; ')})`;
+  // WO-16C #70 follow-up: PARTIAL is neither of the other two. Rendering it as
+  // INCOMPLETE with an empty parenthesis said a record was missing something
+  // and then named nothing; rendering it as COMPLETE would assert an element
+  // that was never checked.
+  if (check.status === 'COMPLETE') return 'COMPLETE';
+  const parts: string[] = [];
+  if (check.missing.length) parts.push(`missing: ${check.missing.join('; ')}`);
+  if (check.notAssessed.length) parts.push(`not assessed here: ${check.notAssessed.join('; ')}`);
+  return `${check.status}${parts.length ? ` (${parts.join(' | ')})` : ''}`;
 }
 
 /** Filters for lineage queries */
@@ -458,6 +490,20 @@ export class DecisionLineageService {
           // recordDecision in `details.performedBy` and travels in `details`.
           const performedBy = log.userId != null ? String(log.userId) : null;
           const performedAt = log.createdAt?.toISOString() || null;
+          /*
+           * WO-16C #70 follow-up. These two lines used to pass the LITERAL
+           * `requiresSignature: false` into assessPart11Record, so a decision
+           * recorded as requiring a signature and carrying none reported
+           * COMPLETE the moment its user_id was numeric — a default pass, in
+           * the same constructors the fix rewrote and against the "no default
+           * pass" the function's own docstring claims. recordDecision writes
+           * the caller's real value into `details` (auditService stores it in
+           * new_values), so it is read from the record here. No signature
+           * status is knowable for an audit row, so where one IS required the
+           * element comes back not-assessed rather than met.
+           */
+          const recorded = (log.newValues as Record<string, unknown>) || {};
+          const rowRequiresSignature = recorded.requiresSignature === true;
 
           nodes.push({
             id: nodeId,
@@ -472,11 +518,11 @@ export class DecisionLineageService {
             childIds: [],
             regulatory: {
               gxpRelevant: true,
-              requiresSignature: false,
+              requiresSignature: rowRequiresSignature,
               part11RecordCheck: assessPart11Record({
                 performedBy,
                 performedAt,
-                requiresSignature: false,
+                requiresSignature: rowRequiresSignature,
               }),
             },
           });
@@ -559,6 +605,10 @@ export class DecisionLineageService {
         // Same nullable `user_id` as getLineageGraph reads — see the note there.
         const performedBy = row.userId != null ? String(row.userId) : null;
         const performedAt = row.createdAt?.toISOString() || null;
+        // WO-16C #70 follow-up — see the note in getLineageGraph: the literal
+        // `false` here was a default pass on the §11.50 element.
+        const rowRecorded = (row.newValues as Record<string, unknown>) || {};
+        const rowRequiresSignature = rowRecorded.requiresSignature === true;
 
         nodes.push({
           id: `audit-${row.id}`,
@@ -573,11 +623,11 @@ export class DecisionLineageService {
           childIds: [],
           regulatory: {
             gxpRelevant: true,
-            requiresSignature: false,
+            requiresSignature: rowRequiresSignature,
             part11RecordCheck: assessPart11Record({
               performedBy,
               performedAt,
-              requiresSignature: false,
+              requiresSignature: rowRequiresSignature,
             }),
           },
         });
@@ -694,7 +744,7 @@ export class DecisionLineageService {
         <gxp-relevant>${n.regulatory.gxpRelevant}</gxp-relevant>
         <requires-signature>${n.regulatory.requiresSignature}</requires-signature>
         <signature-status>${n.regulatory.signatureStatus || 'none'}</signature-status>
-        <part11-record-elements status="${n.regulatory.part11RecordCheck.status}" missing="${escapeXml(n.regulatory.part11RecordCheck.missing.join(' '))}" />
+        <part11-record-elements status="${n.regulatory.part11RecordCheck.status}" missing="${escapeXml(n.regulatory.part11RecordCheck.missing.join(' '))}" not-assessed="${escapeXml(n.regulatory.part11RecordCheck.notAssessed.join(' '))}" />
       </regulatory>
     </decision-record>`).join('');
 

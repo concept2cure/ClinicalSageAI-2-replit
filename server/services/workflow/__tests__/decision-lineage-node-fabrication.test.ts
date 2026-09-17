@@ -271,14 +271,29 @@ describe('decision-lineage nodes: no node asserts Part 11 conformance nothing ch
       'applied-signature',
     ]);
 
+    /*
+     * WO-16C #70 follow-up, from an adversarial review of the #70 fix.
+     *
+     * An approved approval must NOT read COMPLETE. `workflow_approvals` has no
+     * signature column at all — status, assignedTo, completedBy, completedAt,
+     * comments — so the `signatureStatus: 'signed'` the service derives is an
+     * approval status relabelled, and this service never reads the real
+     * signature store. Counting it as the §11.50 element PRESENT is a
+     * signature manifestation nothing recorded: the same fabrication the fix
+     * narrowed, surviving inside the field that replaced it.
+     *
+     * The signature element is therefore never ASSESSED here, and a record
+     * whose other elements are present but whose signature was not checked is
+     * PARTIAL, not COMPLETE.
+     */
     const signed = g.nodes.find(n => n.id === 'approval-12')!;
-    expect(signed.regulatory.part11RecordCheck).toEqual({ status: 'COMPLETE', missing: [] });
+    expect(signed.regulatory.part11RecordCheck.status).toBe('PARTIAL');
+    expect(signed.regulatory.part11RecordCheck.missing).toEqual([]);
+    expect(signed.regulatory.part11RecordCheck.notAssessed).toEqual(['applied-signature']);
 
     const unattributed = g.nodes.find(n => n.id === `audit-${UNATTRIBUTED_DECISION_ROW.id}`)!;
-    expect(unattributed.regulatory.part11RecordCheck).toEqual({
-      status: 'INCOMPLETE',
-      missing: ['attributed-actor'],
-    });
+    expect(unattributed.regulatory.part11RecordCheck.status).toBe('INCOMPLETE');
+    expect(unattributed.regulatory.part11RecordCheck.missing).toContain('attributed-actor');
   });
 
   it('assessPart11Record is a pure function of the record, with no default pass', () => {
@@ -289,7 +304,7 @@ describe('decision-lineage nodes: no node asserts Part 11 conformance nothing ch
         performedAt: null,
         requiresSignature: false,
       }),
-    ).toEqual({ status: 'INCOMPLETE', missing: ['attributed-actor', 'recorded-timestamp'] });
+    ).toEqual({ status: 'INCOMPLETE', missing: ['attributed-actor', 'recorded-timestamp'], notAssessed: [] });
 
     expect(
       assessPart11Record({
@@ -298,7 +313,32 @@ describe('decision-lineage nodes: no node asserts Part 11 conformance nothing ch
         requiresSignature: true,
         signatureStatus: 'rejected',
       }),
-    ).toEqual({ status: 'INCOMPLETE', missing: ['applied-signature'] });
+    ).toEqual({ status: 'INCOMPLETE', missing: ['applied-signature'], notAssessed: [] });
+
+    /*
+     * WO-16C #70 follow-up. A record that REQUIRES a signature and whose
+     * status merely says 'signed' does not prove one: this service reads no
+     * signature store, and the 'signed' it sees is an approval status
+     * relabelled. The element is unchecked, so the record is PARTIAL — never
+     * COMPLETE, which would assert a §11.50 manifestation nothing recorded.
+     */
+    expect(
+      assessPart11Record({
+        performedBy: 'user-1',
+        performedAt: '2026-05-01T00:00:00.000Z',
+        requiresSignature: true,
+        signatureStatus: 'signed',
+      }),
+    ).toEqual({ status: 'PARTIAL', missing: [], notAssessed: ['applied-signature'] });
+
+    // Nothing required, everything present: the only way to COMPLETE.
+    expect(
+      assessPart11Record({
+        performedBy: 'user-1',
+        performedAt: '2026-05-01T00:00:00.000Z',
+        requiresSignature: false,
+      }),
+    ).toEqual({ status: 'COMPLETE', missing: [], notAssessed: [] });
   });
 });
 
@@ -314,7 +354,11 @@ describe('decision-lineage exports: the downloaded audit file repeats none of it
     expect(data).not.toContain('"awaiting_decision","reviewer-assigned-1"');
     expect(data).toContain('""assignedTo"":[""reviewer-assigned-1"",""reviewer-assigned-2""]');
     expect(data).toContain('Part 11 Record Elements');
-    expect(data).toContain('INCOMPLETE (attributed-actor; recorded-timestamp; applied-signature)');
+    // WO-16C #70 follow-up: the signature element is not checked here, so a
+    // pending approval is missing the actor and the time and carries the
+    // signature as unchecked — never as absent-or-satisfied.
+    expect(data).toContain('INCOMPLETE (missing: attributed-actor; recorded-timestamp');
+    expect(data).toContain('not assessed here: applied-signature');
   });
 
   it('XML marks the absent fields as absent rather than filling them', async () => {
@@ -326,7 +370,14 @@ describe('decision-lineage exports: the downloaded audit file repeats none of it
     expect(data).toContain('<performed-by attributed="false" />');
     expect(data).toContain('<performed-at recorded="false" />');
     expect(data).toContain('<part11-record-elements status="INCOMPLETE"');
-    expect(data).toContain('<part11-record-elements status="COMPLETE" missing="" />');
+    // An approved approval is PARTIAL: nothing missing, signature unchecked.
+    expect(data).toContain(
+      '<part11-record-elements status="PARTIAL" missing="" not-assessed="applied-signature" />',
+    );
+    // A record needing no signature and carrying actor + time is legitimately
+    // COMPLETE; what must not appear is a COMPLETE on one that required a
+    // signature this service never checked.
+    expect(data).not.toMatch(/status="COMPLETE"[^>]*not-assessed="applied-signature"/);
   });
 
   it('JSON carries null, not a stand-in a machine reader would trust', async () => {

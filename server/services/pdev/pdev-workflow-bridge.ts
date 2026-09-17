@@ -74,10 +74,28 @@ const logger = createScopedLogger('pdev-workflow-bridge');
  * row to EXIST before its mutation lands must use
  * `writeChainedAuditRow(client, …)` on its own transaction. What it removes is
  * the silence.
+ *
+ * Two corrections from an adversarial review of the first version of this:
+ *
+ *  - the failure arm carried `reason`, copied from `AuditWriteResult.error`,
+ *    whose own docstring reads "Why it failed, for the caller's own log line.
+ *    Never surfaced to a user." Both routes forward this envelope whole to an
+ *    authenticated tenant client, so a raw Postgres message went on the wire.
+ *    It now carries a stable code and a sentence, the containment WO-16B
+ *    settled on for 503s; the store's text stays in the log line below.
+ *  - the success arm said only `persisted`, but `logAction` computes
+ *    `persisted = chained || tamperProof`. The tamper-proof store alone can
+ *    satisfy it while the chained `audit_logs` row — the one a customer can
+ *    read back or export — is lost. `chained` says which, so "the record
+ *    exists" and "the record is retrievable" are not conflated.
  */
 export type PdevAuditRecordOutcome =
-  | { persisted: true }
-  | { persisted: false; reason: string };
+  | { persisted: true; chained: boolean }
+  | { persisted: false; code: 'AUDIT_ROW_NOT_PERSISTED'; message: string };
+
+/** What the caller may show a user. The detail goes to the log, never here. */
+const AUDIT_NOT_PERSISTED_MESSAGE =
+  'The 21 CFR Part 11 audit entry for this transition could not be written. The action itself completed. This has been logged for follow-up.';
 
 /** The object call form of `auditService.logAction` (its entry type is not exported). */
 type PdevAuditEntry = Extract<Parameters<typeof auditService.logAction>[0], object>;
@@ -98,7 +116,17 @@ async function recordAuditRow(entry: PdevAuditEntry): Promise<PdevAuditRecordOut
     // report an audit row that does not exist.
     thrown = err instanceof Error ? err.message : String(err);
   }
-  if (result?.persisted) return { persisted: true };
+  if (result?.persisted) {
+    // `persisted` is `chained || tamperProof`. Carry which, because only the
+    // chained audit_logs row is the one a customer reads back or exports.
+    if (!result.chained) {
+      logger.warn(
+        'PDEV audit row persisted to the tamper-proof log only — the chained audit_logs row a reader can retrieve does not exist',
+        { action: entry.action, resourceType: entry.resourceType, resourceId: entry.resourceId },
+      );
+    }
+    return { persisted: true, chained: result.chained };
+  }
 
   const reason =
     thrown ??
@@ -113,7 +141,10 @@ async function recordAuditRow(entry: PdevAuditEntry): Promise<PdevAuditRecordOut
       reason,
     },
   );
-  return { persisted: false, reason };
+  // `reason` is deliberately NOT returned: it is the store's own text and the
+  // envelope is forwarded to a tenant client. Find it by the log line above,
+  // keyed on the action and resource id repeated here.
+  return { persisted: false, code: 'AUDIT_ROW_NOT_PERSISTED', message: AUDIT_NOT_PERSISTED_MESSAGE };
 }
 
 const COMPLETED_TARGET_STATES: ReadonlySet<PdevActivityState> = new Set([
