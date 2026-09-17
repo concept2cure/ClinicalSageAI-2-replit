@@ -57,9 +57,7 @@ import {
 } from '../../../shared/constants/domain/vault-taxonomy.js';
 import { sectionHasContentSql, sectionCompletionPct } from '../../services/c2c/section-content.js';
 import {
-  resolveVaultView,
   resolveOrgVaultView,
-  isFolderInView,
   folderLabel,
 } from '../../services/vault/vault-filing.service.js';
 import { listClientDocuments } from '../../services/clinical-regulatory-evidence/evidence-spine.service.js';
@@ -213,6 +211,70 @@ interface LiveSection {
 interface SpecNode {
   spec: SectionSpec;
   children: SpecNode[];
+}
+
+/**
+ * Record a governed download BEFORE the bytes leave — 21 CFR 11.10(e).
+ *
+ * This handler served a governed document with no audit row of any kind:
+ * nothing recorded who read what, or when, while the sibling filing route
+ * already wrote a hash-chained row for a MOVE — so a document's placement
+ * changes were attributable and its disclosures were not.
+ *
+ * Returns false rather than throwing, and the caller refuses the download on
+ * false. A read that cannot be recorded is refused rather than served
+ * unrecorded: an inspector asking "who has had this document" must not be
+ * answered with a gap, and an audit trail that drops writes under load is not
+ * one. The filing path takes the same position by writing inside its
+ * transaction.
+ */
+async function recordVaultDownload(
+  req: Request,
+  d: {
+    orgId: number;
+    programId: string;
+    documentId: string;
+    documentTitle: string | null;
+    fileName: string | null;
+    fileSize: string | number | null;
+    contentHash: string | null;
+  },
+): Promise<boolean> {
+  try {
+    await writeChainedAuditRow(pool, {
+      tenantId: d.orgId,
+      userId: (req as any).user?.id ?? undefined,
+      action: 'vault.document.download',
+      resourceType: 'vault_document',
+      resourceId: d.documentId,
+      ipAddress: req.ip,
+      userAgent: req.headers['user-agent'],
+      details: {
+        programId: d.programId,
+        documentTitle: d.documentTitle,
+        fileName: d.fileName,
+        fileSize: d.fileSize,
+        // The hash of the bytes actually served, already verified by the
+        // caller, so the trail records WHICH edition left rather than only
+        // that one did.
+        contentHash: d.contentHash,
+      },
+    });
+    return true;
+  } catch (auditErr) {
+    logger.error('vault download refused: audit write failed', {
+      documentId: d.documentId,
+      err: auditErr instanceof Error ? auditErr.message : String(auditErr),
+    });
+    return false;
+  }
+}
+
+/** The four shapes a `folderId` can arrive in, mapped to what the service reads. */
+function normalizeFolderId(raw: unknown): string | null | undefined {
+  if (raw === undefined) return undefined;
+  if (raw === null) return null;
+  return typeof raw === 'string' ? raw : '';
 }
 
 const UUID_RE =
@@ -1234,41 +1296,16 @@ export default function createProjectVaultRoutes(): Router {
       }
       const bytes = read.bytes;
 
-      /* AUDIT BEFORE THE BYTES LEAVE — 21 CFR 11.10(e).
-         This handler served a governed document with no audit row of any kind:
-         nothing recorded who read what, or when. The sibling filing route below
-         (:1069) already writes a hash-chained row for a MOVE, so a document's
-         placement changes were attributable and its disclosures were not.
-         Ordered before the response deliberately. A read that cannot be recorded
-         is refused rather than served unrecorded — an inspector asking "who has
-         had this document" must not be answered with a gap, and an audit trail
-         that drops writes under load is not one. The filing route takes the same
-         position by writing inside its transaction. */
-      const actorId: number | null = (req as any).user?.id ?? null;
-      try {
-        await writeChainedAuditRow(pool, {
-          tenantId: orgId,
-          userId: actorId ?? undefined,
-          action: 'vault.document.download',
-          resourceType: 'vault_document',
-          resourceId: documentId,
-          ipAddress: req.ip,
-          userAgent: req.headers['user-agent'],
-          details: {
-            programId: id,
-            documentTitle: doc.document_title,
-            fileName: doc.file_name,
-            fileSize: doc.file_size,
-            // The hash of the bytes actually served, already verified above, so
-            // the trail records WHICH edition left rather than only that one did.
-            contentHash: doc.content_hash,
-          },
-        });
-      } catch (auditErr) {
-        logger.error('vault download refused: audit write failed', {
-          documentId,
-          err: auditErr instanceof Error ? auditErr.message : String(auditErr),
-        });
+      const recorded = await recordVaultDownload(req, {
+        orgId,
+        programId: id,
+        documentId,
+        documentTitle: doc.document_title,
+        fileName: doc.file_name,
+        fileSize: doc.file_size,
+        contentHash: doc.content_hash,
+      });
+      if (!recorded) {
         return res.status(500).json({
           success: false,
           error: 'AUDIT_WRITE_FAILED',
@@ -1294,196 +1331,52 @@ export default function createProjectVaultRoutes(): Router {
     }
   });
 
+  /* Filing decision. The write itself — ownership guards, the FOR UPDATE, the
+     taxonomy check, the UPDATE and its §11 audit row in one transaction — lives
+     in vault-placement.service.ts, because AnA now files documents too and a
+     second copy of a governed write is how the two drift apart. This handler
+     parses the request and renders the outcome. */
   router.post('/:id/file', async (req: Request, res: Response) => {
     const orgId = resolveOrgId(req);
     if (!orgId) return res.status(403).json({ success: false, error: 'FORBIDDEN' });
     const userId: number | null = (req as any).user?.id ?? null;
 
     const id = Array.isArray(req.params.id) ? (req.params.id[0] ?? '') : req.params.id;
-    if (!UUID_RE.test(id)) return res.status(404).json({ success: false, error: 'NOT_FOUND' });
-
     const body = (req.body ?? {}) as {
       documentId?: unknown; confirm?: unknown; folderId?: unknown;
       evidenceKind?: unknown; ctdSection?: unknown; note?: unknown;
     };
-    const documentId = typeof body.documentId === 'string' ? body.documentId.trim() : '';
-    if (!UUID_RE.test(documentId)) {
-      return res.status(400).json({ success: false, error: 'documentId (uuid) is required' });
-    }
-    const confirm = body.confirm === true;
-    const folderIdRaw = body.folderId;
-    const note = typeof body.note === 'string' && body.note.trim() ? body.note.trim() : null;
-    const evidenceKind =
-      typeof body.evidenceKind === 'string' && body.evidenceKind.trim() ? body.evidenceKind.trim() : null;
-    const ctdSection =
-      typeof body.ctdSection === 'string' && body.ctdSection.trim() ? body.ctdSection.trim() : null;
+    const str = (v: unknown): string | null =>
+      typeof v === 'string' && v.trim() ? v.trim() : null;
 
     try {
-      // Program ownership — same guard as the read.
-      const projRes = await pool.query(
-        `SELECT id FROM regulatory_programs
-          WHERE id = $1 AND organization_id = $2 AND deleted_at IS NULL LIMIT 1`,
-        [id, orgId],
-      );
-      if (projRes.rows.length === 0) {
-        return res.status(404).json({ success: false, error: 'NOT_FOUND' });
+      const { placeVaultDocument } = await import('../../services/vault/vault-placement.service.js');
+      const outcome = await placeVaultDocument({
+        programId: id,
+        documentId: typeof body.documentId === 'string' ? body.documentId.trim() : '',
+        organizationId: orgId,
+        userId,
+        confirm: body.confirm === true,
+        /* Four inputs, four meanings, all of which the inline handler
+           distinguished and none of which may collapse into another: absent
+           (confirm in place), null (unfile), a string (file there, blank
+           included so it still reaches NO_TARGET), and anything else — which
+           is not a folder, and is normalized to a blank string so it is
+           refused rather than read as an unfile. */
+        folderId: normalizeFolderId(body.folderId),
+        evidenceKind: str(body.evidenceKind),
+        ctdSection: str(body.ctdSection),
+        note: str(body.note),
+        ipAddress: req.ip,
+        userAgent: req.headers['user-agent'],
+      });
+
+      if (!outcome.ok) {
+        return res
+          .status(outcome.status)
+          .json({ success: false, error: outcome.code, message: outcome.message });
       }
-      const view = await resolveVaultView(id, orgId);
-
-      const client = await pool.connect();
-      try {
-        await client.query('BEGIN');
-        const docRes = await client.query(
-          `SELECT id, document_title, folder_id, evidence_kind, ctd_section,
-                  placement_status, placement_rationale
-             FROM vault.documents
-            WHERE id = $1 AND program_id = $2 AND deleted_at IS NULL
-              AND EXISTS (
-                SELECT 1 FROM regulatory_programs rp
-                 WHERE rp.id = vault.documents.program_id
-                   AND rp.organization_id = $3
-                   AND rp.deleted_at IS NULL
-              )
-            FOR UPDATE`,
-          [documentId, id, orgId],
-        );
-        if (docRes.rows.length === 0) {
-          await client.query('ROLLBACK');
-          return res.status(404).json({ success: false, error: 'DOCUMENT_NOT_FOUND' });
-        }
-        const before = docRes.rows[0] as {
-          id: string; document_title: string | null; folder_id: string | null;
-          evidence_kind: string | null; ctd_section: string | null;
-          placement_status: string | null; placement_rationale: string | null;
-        };
-
-        // Resolve the target placement.
-        let targetFolder: string | null;
-        if (confirm && folderIdRaw === undefined) {
-          if (!before.folder_id) {
-            await client.query('ROLLBACK');
-            return res.status(400).json({
-              success: false,
-              error: 'NOTHING_TO_CONFIRM',
-              message: 'This document has no suggested folder — choose one to file it.',
-            });
-          }
-          targetFolder = before.folder_id;
-        } else if (folderIdRaw === null) {
-          targetFolder = null; // explicit unfile
-        } else if (typeof folderIdRaw === 'string' && folderIdRaw.trim()) {
-          targetFolder = folderIdRaw.trim();
-          if (!isFolderInView(view, targetFolder)) {
-            await client.query('ROLLBACK');
-            return res.status(400).json({
-              success: false,
-              error: 'INVALID_FOLDER',
-              message: `Folder '${targetFolder}' does not exist in this program's ${view} vault taxonomy.`,
-            });
-          }
-        } else {
-          await client.query('ROLLBACK');
-          return res.status(400).json({
-            success: false,
-            error: 'NO_TARGET',
-            message: 'Pass confirm:true, a folderId, or folderId:null to unfile.',
-          });
-        }
-
-        const newStatus = targetFolder ? 'confirmed' : 'unfiled';
-        const rationale =
-          note ??
-          (targetFolder
-            ? confirm
-              ? `Suggested filing confirmed${before.placement_rationale ? ` (${before.placement_rationale})` : ''}.`
-              : 'Filed by user.'
-            : 'Unfiled by user — awaiting a filing decision.');
-
-        const upd = await client.query(
-          `UPDATE vault.documents SET
-             folder_id = $1,
-             evidence_kind = COALESCE($2, evidence_kind),
-             ctd_section = $3,
-             placement_status = $4,
-             placement_confidence = NULL,
-             placement_rationale = $5,
-             placed_by = $6,
-             placed_at = NOW(),
-             updated_at = NOW()
-           WHERE id = $7 AND program_id = $8
-             AND EXISTS (
-               SELECT 1 FROM regulatory_programs rp
-                WHERE rp.id = vault.documents.program_id
-                  AND rp.organization_id = $9
-                  AND rp.deleted_at IS NULL
-             )
-           RETURNING folder_id, evidence_kind, ctd_section, placement_status,
-                     placement_confidence, placement_rationale`,
-          [
-            targetFolder,
-            evidenceKind,
-            // An explicit move to a non-CTD folder clears a stale CTD section;
-            // confirming keeps what the classifier read.
-            ctdSection ?? (confirm ? before.ctd_section : null),
-            newStatus,
-            rationale,
-            userId,
-            documentId,
-            id,
-            orgId,
-          ],
-        );
-        const after = upd.rows[0] as {
-          folder_id: string | null; evidence_kind: string | null; ctd_section: string | null;
-          placement_status: string; placement_rationale: string | null;
-        };
-
-        await writeChainedAuditRow(client, {
-          tenantId: orgId,
-          userId: userId ?? undefined,
-          action: 'vault.document.file',
-          resourceType: 'vault_document',
-          resourceId: documentId,
-          ipAddress: req.ip,
-          userAgent: req.headers['user-agent'],
-          details: {
-            programId: id,
-            documentTitle: before.document_title,
-            view,
-            from: {
-              folderId: before.folder_id,
-              placementStatus: before.placement_status,
-              ctdSection: before.ctd_section,
-            },
-            to: {
-              folderId: after.folder_id,
-              placementStatus: after.placement_status,
-              ctdSection: after.ctd_section,
-            },
-            rationale,
-          },
-        });
-        await client.query('COMMIT');
-
-        return res.json({
-          success: true,
-          filing: {
-            folderId: after.folder_id,
-            folderLabel: folderLabel(view, after.folder_id),
-            evidenceKind: after.evidence_kind,
-            ctdSection: after.ctd_section,
-            placementStatus: after.placement_status,
-            confidence: null,
-            rationale: after.placement_rationale,
-            needsReview: after.placement_status === 'unfiled',
-          },
-        });
-      } catch (txErr) {
-        await client.query('ROLLBACK').catch(() => undefined);
-        throw txErr;
-      } finally {
-        client.release();
-      }
+      return res.json({ success: true, filing: outcome.filing });
     } catch (err: unknown) {
       if ((err as { code?: string })?.code === '42P01' || (err as { code?: string })?.code === '42703') {
         return res.status(409).json({

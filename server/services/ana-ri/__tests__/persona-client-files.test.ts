@@ -82,6 +82,16 @@ describe('persona — the client files discipline', () => {
     expect(s).toMatch(/a number you inferred is not a number it carries/i);
   });
 
+  it('requires the file to be PUT somewhere, and unfiling to be the honest fallback', () => {
+    // A comprehension record that leaves the document in the Unfiled queue is
+    // half the job: the client asked for it to be put in the right place, and
+    // the ingest classifier's guess is not that.
+    const s = clientFilesSection();
+    expect(s).toContain('place_project_document');
+    expect(s).toMatch(/Unfiled queue/);
+    expect(s).toMatch(/unfile:true/);
+  });
+
   it('requires an unreadable file to be reported as such', () => {
     expect(clientFilesSection()).toMatch(/never let an empty read pass for an empty document/i);
   });
