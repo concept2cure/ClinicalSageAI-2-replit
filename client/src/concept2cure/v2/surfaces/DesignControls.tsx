@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { I } from '../icons';
-import { useLiveRows, EmptyState } from '../dataConnect';
+import { useLiveRows, EmptyState, isPendingStore } from '../dataConnect';
 import { AnswerLead } from '../AnswerLead';
 import { assessmentStateFor, mayReassure } from '../assessmentState';
 import type { SurfaceViewProps } from '../surfaceViews';
@@ -131,6 +131,29 @@ export function DesignControls({ onAsk }: SurfaceViewProps) {
 
      Deriving the rendered set from `live.rows` directly closes that window
      rather than narrowing it: there is no second copy left to be stale. */
+  /* ── Honest-state sweep, finding 3 ────────────────────────────────────────
+     A DHF that does not EXIST is not a DHF that is empty.
+
+     `GET /api/design-controls` fails closed on SQLSTATE 42P01 — the table is
+     created only by db/migrations/20260717_design_controls_store.sql, which
+     deploy-migrate applies and install-fresh does not, so an install-fresh-only
+     environment answers every read from no table at all. Failing closed is
+     right: the route returns `{ data: [], meta: { count: 0, pendingStore:
+     true } }` (design-controls.routes.ts:59) rather than a 500.
+
+     The flag then died in transit. `useLiveRows` unwrapped the envelope to the
+     array and dropped `meta`, so `rows` was `[]` with `error` unset — the exact
+     shape of a provisioned store holding nothing. The two states painted
+     byte-identical DOM: "No design inputs defined yet · Add your first with New
+     design input above", under an eyebrow reading "live". Every clause is false
+     of an unprovisioned environment, and the CTA is worse than false — the POST
+     it points at answers 503 PENDING_STORE, so the one action offered cannot
+     succeed.
+
+     Vault.tsx and rbmBoard.ts already branch on this flag. This surface was the
+     deviation, not the precedent. */
+  const pendingStore = isPendingStore(live);
+
   const [added, setAdded] = useState<DcInput[]>([]);
   const inputs = useMemo(
     () => (added.length ? [...live.rows, ...added] : live.rows),
@@ -226,7 +249,13 @@ export function DesignControls({ onAsk }: SurfaceViewProps) {
       fire('Design input ' + row.id + ' added — untraced');
     } catch (e) {
       setAdded(is => is.filter(i => i.id !== tempId));
-      fire('Could not add design input -- ' + (e instanceof Error && e.message ? e.message : 'request failed'));
+      /* Tone, not just text. `fire` defaults to 'ok', which draws
+         `I.checkCircle` in `var(--success)` and announces `role="status"` — so
+         a REFUSED write into a 21 CFR 820.30 controlled record wore the green
+         tick. That is precisely the defect toast.tsx's own header says the
+         two-argument signature exists to make unrepresentable; it was
+         re-created here by omitting the argument. */
+      fire('Could not add design input -- ' + (e instanceof Error && e.message ? e.message : 'request failed'), 'error');
     }
   };
 
@@ -241,7 +270,7 @@ export function DesignControls({ onAsk }: SurfaceViewProps) {
   };
 
   const hasRows = inputs.length > 0;
-  const isLive = !live.loading && !live.error;
+  const isLive = !live.loading && !live.error && !pendingStore;
 
   /* What AnA can see of this screen. A DHF question is always about a specific
      gap — "what is untraced?", "does 820.30(g) hold?" — and until now she had
@@ -260,6 +289,23 @@ export function DesignControls({ onAsk }: SurfaceViewProps) {
           'The design history file could not be read, so this screen is showing no design inputs because ' +
           'of a failure, not because none are recorded.',
         availableActions: ['Retry the design-input read'],
+      };
+    }
+    /* No store, so no completeness claim. The derived summary below reports
+       "820.30 completeness 0% over 5 assessable element(s)" with designInputs,
+       designOutputs, designVerification, designValidation and traceability each
+       `absent` — five positive have-not claims about a device maker's design
+       history file, computed from a table that does not exist. This context
+       rides every AnA turn as `module_context` (V2App.tsx), so she would answer
+       "is 820.30(g) satisfied?" with a confident no. */
+    if (pendingStore) {
+      return {
+        summary:
+          'The design-controls store is not provisioned in this environment, so nothing on this screen ' +
+          'is a statement about the organization\u2019s design history file. No 820.30 completeness or ' +
+          'traceability figure can be computed, and none should be quoted.',
+        facts: { storeProvisioned: false },
+        availableActions: ['Explain that the design-controls store is not provisioned here'],
       };
     }
     return {
@@ -296,7 +342,7 @@ export function DesignControls({ onAsk }: SurfaceViewProps) {
         'Read the 820.30 completeness checklist, including the elements no store evidences',
       ],
     };
-  }, [live.loading, live.error, trace, checklist, assessable.length, present, untracked, elPct, firstGap]);
+  }, [live.loading, live.error, pendingStore, trace, checklist, assessable.length, present, untracked, elPct, firstGap]);
   usePublishSurfaceContext('design-controls', anaContext);
 
   return (
@@ -307,7 +353,12 @@ export function DesignControls({ onAsk }: SurfaceViewProps) {
           <h1 className="sp-title">Design controls {I.dot} DHF</h1>
           <p className="sp-state">Design history file — 21 CFR 820.30 · ISO 13485 §7.3 (QMSR, in force 2 Feb 2026) — inputs {'->'} outputs {'->'} verification {'->'} validation, traced end to end.</p>
         </div>
-        <button className="sp-primary" onClick={() => setForm(true)}>{I.plus} New design input</button>
+        <button
+          className="sp-primary"
+          onClick={() => setForm(true)}
+          disabled={pendingStore}
+          title={pendingStore ? 'The design-controls store is not provisioned in this environment.' : undefined}
+        >{I.plus} New design input</button>
       </div>
 
       {live.loading ? (
@@ -318,6 +369,22 @@ export function DesignControls({ onAsk }: SurfaceViewProps) {
           icon={I.alertTriangle}
           title="Couldn't load the design history file"
           hint="The design-controls store didn't respond. These are your organization's 820.30(c) design inputs — sign in and retry, or check the service is reachable."
+        />
+      ) : pendingStore && !hasRows ? (
+        <EmptyState
+          icon={I.database || I.fileText}
+          title="The design-controls store is not provisioned here"
+          hint={
+            <>
+              This environment has no <span className="mono">c2c_design_controls</span>{' '}
+              table, so the design history file could not be read at all — this
+              is not a finding that your organization has recorded no design
+              inputs. No 820.30 completeness or traceability figure is shown,
+              because none can be computed. Adding an input would fail;
+              provision the store first.
+            </>
+          }
+          regulation="Serves the design history file (21 CFR 820.30 · ISO 13485 §7.3)"
         />
       ) : !hasRows ? (
         <EmptyState
