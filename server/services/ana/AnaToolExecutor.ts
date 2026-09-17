@@ -172,6 +172,7 @@ import {
   type ModelTurn,
   type ToolResultEntry,
   type FailedToolCall,
+  type LoopCheckpoint,
 } from './agentic-loop.js';
 import { registerAgenticWorkflowHandlers } from './agentic-workflow-tools.js';
 import { registerBiotechProgramHandlers } from './biotech-program.js';
@@ -15084,6 +15085,17 @@ export interface AgenticOptions {
   toolContext?: ToolContext;
   /** Abort signal — when aborted, the loop stops before the next round (barge-in). */
   signal?: AbortSignal;
+  /**
+   * Round-boundary control hook — pause, steer, cancel.
+   *
+   * `runAgenticToolLoop` has accepted one since run control shipped, and this
+   * wrapper never passed it, so every caller that came through here (the
+   * non-streaming chat turn, the intelligence route, background deep
+   * investigations, the realtime namespace) had cancel-only control while the
+   * SSE route had all four. The loop was not missing the capability; the
+   * wrapper was not forwarding it.
+   */
+  checkpoint?: LoopCheckpoint;
 }
 
 /**
@@ -15227,7 +15239,7 @@ export async function executeAgenticLoop(
 
   await runAgenticToolLoop(
     { text: finalResponse.content || '', toolCalls: finalResponse.toolUses.map(toToolCall) },
-    { executeTools, callModel },
+    { executeTools, callModel, ...(options?.checkpoint ? { checkpoint: options.checkpoint } : {}) },
     { maxRounds, progressExtension },
   );
 
